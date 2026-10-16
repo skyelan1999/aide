@@ -418,3 +418,7 @@ start.command image `sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af
 ## 2026-10-16 Markdown 历史资源预览修复
 
 `aide-0.1.17.0-RC2-linux-arm64-551eff0003ba-offline.tar.gz`，源码 `6ac147aa`，SHA-256 `db0983ff16f3f0680a80810a54782837feb17bc56375804fdc51875c37ed9e02`。修复整版历史恢复后同名图片仍显示旧内容，支持正文不变时的资源恢复；保留正常重绘URL稳定性。实际Safari PNG/JPEG、磁盘/API完整字节和重复观察去重通过；最终门禁/本机导入/远端main记录见[本轮任务](../docs/tasks/continuity-history-current-20261016.json)。保留52e943e1e8c3完整包回滚；Windows由用户验收，另一设备导入不以本机测试代替。
+
+## 2026-10-16 星图后台续扫候选
+
+完整 ARM64 包 `aide-0.1.17.0-RC2-linux-arm64-c34700922d28-offline.tar.gz`，SHA-256 `ed01417c1a33dffe4fb34093fd9e4377129e28a88fd9d19e73b184e27e10f509`；AMD64 包 `aide-0.1.17.0-RC2-linux-amd64-70605ee3bec1-offline.tar.gz`，SHA-256 `730e3fb33e32eb325a87fb3ca160d51e4345e84dd24e064d3407f3a6a0bc00f1`。源码身份 `f89c16e90f2cc700a86b81db1eed5d8d56b8f9f1b979b91169d9b1e01269014f`，代码提交 `26bf6c57`。内外哈希、启动器、许可证及实际 Docker 导入通过；远端附件与 main 推送尚待最终门禁。详见[本批次记录](../docs/reviews/2026-10-16/starmap-background-progress.md)。原有 e5baab8f 包保留回滚，不以本机验证代替 Windows 或接收设备验收。
