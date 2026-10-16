@@ -17,3 +17,7 @@ No deliberate production fault or model invocation. Temporary test tabs closed a
 ## Frozen source checks
 
 Final focused Go race passed3.127s, including real HTTP roundtrip, prepared download-header cleanup, intact aborted streams, subsequent healthy requests and per-request concurrency/connection ownership. Final quick88 passed. No production crash injection. A later source build/HTTP asset identity and normal native workbench acceptance are still required; earlier screenshot observations do not replace those gates.
+
+## Offline candidate
+
+Image sha256:3f4545df534b26654e12aec95f3fc56bb272839363416afda3e6af8168c8ee95, build2bbc5d63b4c06ff36e4b80dd6a312d25e18ab2bb, source SHA 659fbc83a5fb18e67ed1b0797dad69d2273d3ecf25ab10817b2a9515e1e32f65. Complete offline bundle 706082863 bytes, SHA-256 5d0f8bfb64a532402a17d05f7071852652bef8d1e4924e39b32b5b3d526195ec. Checksums, image tags, license/launcher consistency and actual local import passed; receiving device untested. See [bundle evidence](crash-diagnostics-bundle-proof.json).

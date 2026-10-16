@@ -61,7 +61,8 @@
       "summary": "Frozen JS regressions, actual isolated browser/native copy and Go race3.127s with real HTTP/download-header/stream isolation pass; quick88 pass. Candidate/full/native normal runtime/main/offline delivery pending.",
       "evidence": [
         "docs/reviews/2026-10-16/crash-diagnostics.md",
-        "docs/reviews/2026-10-16/crash-diagnostics-browser-proof.json"
+        "docs/reviews/2026-10-16/crash-diagnostics-browser-proof.json",
+        "docs/reviews/2026-10-16/crash-diagnostics-bundle-proof.json"
       ]
     },
     "documentation": {
@@ -90,5 +91,13 @@
     "fingerprint": "2a821e78ad99aad72c43ae0031bdcc1fabf87b328d9b799ebcf1b77318e052b2",
     "head": "7c94f8c3d91a4aeb591cc6edd68875554135365a"
   },
-  "integration_baseline": "8ccca842e84183d36ec3b7f4ad9596f082e88343"
+  "integration_baseline": "8ccca842e84183d36ec3b7f4ad9596f082e88343",
+  "candidate": {
+    "image": "sha256:3f4545df534b26654e12aec95f3fc56bb272839363416afda3e6af8168c8ee95",
+    "sourceSHA256": "659fbc83a5fb18e67ed1b0797dad69d2273d3ecf25ab10817b2a9515e1e32f65",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "runningBefore": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
+    "buildCommit": "2bbc5d63b4c06ff36e4b80dd6a312d25e18ab2bb",
+    "status": "built_offline_local_import_pass_native_full_pending"
+  }
 }

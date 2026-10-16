@@ -1,3 +1,7 @@
+## 2026-10-16 Crash diagnostic candidate (build record)
+
+Candidate3f4545df534b (build2bbc5d63) adds independent page/asset/promise codes, bounded local metadata, service-instance observation and request-panic isolation. Offline bundle `aide-0.1.17.0-RC2-linux-arm64-3f4545df534b-offline.tar.gz`, 706082863 bytes, SHA-256 `5d0f8bfb64a532402a17d05f7071852652bef8d1e4924e39b32b5b3d526195ec`. Inner/outer checksums, license/launcher and actual local Docker import passed. Full/native/main state: [acceptance report](../docs/reviews/2026-10-16/crash-diagnostics.md). Receiving-device import untested; retain5183a60 rollback.
+
 ## 2026-10-16 Dynamic aurora candidate (build record)
 
 Candidate5183a60ed4be (build414da4da) adds two independently moving soft aurora layers with pause/release controls. Offline bundle `aide-0.1.17.0-RC2-linux-arm64-5183a60ed4be-offline.tar.gz`, 706069936 bytes, SHA-256 `ce4007628097d74852a60430825948c28476606fd5e46c28b9d21f39157ab9bc`. Inner/outer checksums and actual local Docker import passed. Full/native/main delivery state: [acceptance report](../docs/reviews/2026-10-16/aurora-motion.md). Receiving-device import untested; keep8d1957c9 rollback.
