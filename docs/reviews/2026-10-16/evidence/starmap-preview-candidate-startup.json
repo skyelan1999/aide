@@ -1,0 +1,49 @@
+{
+  "status": "pass",
+  "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-696739fa8621-offline.tar.gz",
+  "freshAuthDirectoryPrepared": true,
+  "actualStartCommand": true,
+  "documentLine": {
+    "line": 3,
+    "matchedRawFileHash": true,
+    "blankLineAndCRLFPreserved": true,
+    "actualCompiledImageAPI": true
+  },
+  "image": "sha256:696739fa8621411900b95ab1f8464f7f156e81d189772afd34b52b6d90d0a9bc",
+  "sameImageForWorkbenchAndCAD": true,
+  "noBuildOrPull": true,
+  "nativeGeometry": {
+    "kind": "complete",
+    "engine": "occt-native",
+    "triangles": 120,
+    "segments": 0,
+    "points": 0,
+    "emptyNodes": 0,
+    "parts": 2,
+    "faces": 9,
+    "meshedFaces": 9,
+    "collapsedFaces": 0,
+    "bounds": [
+      [
+        -55.0,
+        -5.0,
+        0.0
+      ],
+      [
+        100.0,
+        20.0,
+        35.0
+      ]
+    ],
+    "unit": "mm",
+    "linearDeflection": 0.1,
+    "recoveredFaces": 0,
+    "nurbsFaces": 0,
+    "seconds": 0.03345316700870171
+  },
+  "privateReadOnlyWorkerCredentialMount": true,
+  "privateNetworkNoHostPorts": true,
+  "productionImageUnchanged": true,
+  "receivingDevice": "not_run",
+  "nativeSafari": "not_run"
+}

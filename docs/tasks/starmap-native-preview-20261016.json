@@ -85,7 +85,7 @@
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Retain main ab8df956/ec1b032 packages and runtime; this external worktree is isolated from the already-gated main publication. No user source files or protected state are changed.",
-  "handoff": "Code08dbbaca and quick102/focused Go race passed. Both candidate images built and complete archives independently checked/imported; metadata index reflects these local-only candidates. Fresh package start.command plus compiled line/hash API check is running (session84957, .agent-state/prebuilt-delivery-20261016/offline-fresh-lines.log). Native Safari, final main full and publication remain pending. Original main batch sourcee5baab8f: ARM64 uploaded and verified, AMD64 actively uploading in Safari editor; keep that page intact.",
+  "handoff": "Code08dbbaca, quick102 and focused Go race passed. ARM64/AMD64 candidates built and complete archives verified/imported. Actual fresh-package start.command plus compiled document line3/full raw hash and native CAD120 passed; fixture stopped and previous slot tag restored. Native Safari and final main full/publication remain pending. Keep separate main sourcee5baab8f upload intact: ARM64 remote verified; AMD64 ec1b03234c08 is uploading in Safari Release editor.",
   "candidatePackages": {
     "status": "local_verified",
     "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
@@ -96,5 +96,19 @@
     ],
     "nativeSafari": "pending",
     "publication": "pending"
+  },
+  "compiledRuntimeSmoke": {
+    "status": "pass",
+    "actualStartCommand": true,
+    "freshData": true,
+    "documentLine": 3,
+    "rawFileHashMatched": true,
+    "CRLFAndBlankLinePreserved": true,
+    "nativeCADTriangles": 120,
+    "productionImagePreserved": true,
+    "ownedFixtureStopped": true,
+    "evidence": [
+      "docs/reviews/2026-10-16/evidence/starmap-preview-candidate-startup.json"
+    ]
   }
 }
