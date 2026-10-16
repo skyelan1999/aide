@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current code baseline f2c7e22 reuses exact-input full86 (source cc114734, server race552.597s/vet). Current9999 reasoning all5 values across2 owned sessions/10 writes, API/disk,409/400 and cleanup pass. Original12 re-audited against latest evidence, all remain in_progress; complete authenticated UI/user-host boundaries remain scoped. Windows user-owned, vectors deferred.",
+      "summary": "Current source6ac147aa full105 PASS including Go race/vet on exact inputs. Current native reasoning write/isolation, resource-only PNG/JPEG restore, complete disk/raw API bytes, unchanged-history dedup and protected cleanup passed. Runtime551 via start.command; offline local import/fresh startup passed. Original12 remain in_progress; Windows user-owned, real vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "All subsequent development uses /Volumes/MY PASSPORT/aide_ws/aide. Clean main migration/cleanup delivery verified1a48d081aae453630a000b4d25d4eab2bc1665f8; runtime9999 b11bb97fed59 built from clean external source, data/home/config/auth/13 sessions preserved, original Harness context retained. Historical full84 and fresh quick82 inputs match. 89.20GiB logical unused/duplicate build and cache removed, original source/user records retained, inherited vendor deletions stashed with external patches. Canonical offline packages retained externally; prior9bc package differs from new b11 runtime image and is not claimed as its export. Original12 workstreams remain in_progress, authenticated Safari deferred by human, Windows user acceptance, real vectors deferred. HTTP single-resource and MCP capability-description actual binary verification delivered0b69dcc; see followup160. SMB real service, variants and full authenticated browser remain separately unverified. Actual isolated Samba SMB1 single-resource indexing/original/hash/credential recovery/restart delivery verified f8f8abe; see followup161. User SMB hosts, versions/encryption and full browser remain separately unverified.",
+  "handoff": "Current continuity-history-current-20261016 passed full105, native mixed-resource restore, reasoning writeback and protected cleanup; finish scoped main gate/push. Then advance original SSH scene/history and authenticated approval/outcome/map workflows. Do not repeat known history-storage previews as missing. Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -293,14 +293,16 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "已有正文/直接资源恢复、外部变化去重、ZIP导出与导入预览/合并、管理预览证据；另已修复损坏历史对象被复用并补实际二进制验收。 Native local mixed Markdown/SVG preview, resource-only external edit detection, scoped two-file whole-version restore, unchanged-history deduplication and final exact bytes/cleanup have direct evidence.",
+        "latestScopedEvidence": "Existing markdown-history-storage-ui-20261015 already proves actual Safari ZIP import/merge, retention and GC preview/cancel. This evidence was stale in the remaining list. Current run additionally reproduces and fixes stale PNG/JPEG after whole-version restore; asset-only unchanged-body restoration and exact disk/raw API verification pass.",
         "evidence": [
           "docs/tasks/markdown-history-storage-ui-20261015.json",
           "docs/reviews/2026-10-15/history-object-integrity.md",
           "docs/reviews/2026-10-15/history-partial-save.md",
-          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json"
+          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json",
+          "docs/tasks/continuity-history-current-20261016.json",
+          "docs/reviews/2026-10-16/evidence/continuity-history-current-proof.json"
         ],
-        "remaining": "Other embedded formats and history storage/backup management UI still need end-to-end checks. Irreversible cleanup/retention actions keep their original approval boundary."
+        "remaining": "Native SSH whole-version restoration and interrupted-operation recovery UI still need direct evidence. Retention/GC apply were deliberately not executed; preview/cancel and ZIP import/merge are already proven. This does not elevate all history/remote variants to complete."
       }
     },
     {
@@ -2853,13 +2855,16 @@
       "remaining": "归位视觉构图不确定；同工作区多标签、跨工作区隔离、服务重启镜头相位尚未实测。"
     }
   },
-  "latest_source_revision": "ba62184",
+  "latest_source_revision": "6ac147aa",
   "release_gate": {
-    "status": "blocked",
+    "status": "in_progress",
     "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
-    "result": "当前预检仍被未完成阶段/非main/继承vendor删除阻止；首个完成full因5处旧夹具失败，ba62184修正后相关race12.369s通过，新full重跑中。不能标记完整验证或全目标完成。",
-    "evidence": ".agent-state/reasoning-default-settings/release-precheck.log",
-    "boundary": "本轮不跳过全目标验收、不合并main或正式Release。"
+    "result": "Root objective is not claimed complete; original12 workstreams remain in_progress and root gate not rerun. Scoped continuity-history-current full105 passed on main34062b96. Former branch/vendor/fixture failure record is historical. Final scoped gate/push pending.",
+    "evidence": [
+      "docs/tasks/continuity-history-current-20261016.json",
+      "docs/reviews/2026-10-16/continuity-history-current.md"
+    ],
+    "boundary": "Continue original scope; scoped incremental main/runtime/offline deliveries do not imply original objective completion."
   },
   "acceptance_followup_20261012": {
     "status": "in_progress",
@@ -7873,5 +7878,37 @@
     "status": "pass",
     "task": "docs/tasks/launcher-data-persistence-20261016.json",
     "summary": "Scoped launcher persistence delivered main50984b99 exact remote; full91/release-check pass. Final598 local9999 verified import156+16 entries preserving14sessions/auth/config and old volumes; real failed-import rollback/deletion recovery, Linux permissions and Safari normal passed. Complete app/dependency offline bundle imported locally. Windows/receiving-device not_run; original12 workstreams remain active."
+  },
+  "continuity_history_current_20261016": {
+    "classification": "progress",
+    "status": "verified_release_pending",
+    "task": "docs/tasks/continuity-history-current-20261016.json",
+    "previousGoalTurn": "Actual lock fixes, full105 verification, main dbb9d122 and runtime52e943e1e8c3 delivered; progress, not a wait.",
+    "reasoning": "Current Safari A high/B medium saved; API and canonical disk equal. Reload B medium and switch A high passed, no model calls; two owned empty sessions removed, originals exact, counter45 to47 only.",
+    "history": "Reproduced body/disk V1 but Safari PNG/JPEG V2. Resource URL revision fix, callback regressions and asset-only actual Safari restore pass. All3 files match disk/raw API V1, repeated history observation stays5, backup6 objects; own files removed and originals exact.",
+    "gate": "Exact current full105 including Go race/vet passed on main34062b96; runtime551 and complete offline bundle local import/fresh startup passed. Final source fingerprint b591063007169e65ef75e2eb84e118ba404d65b76b947e7c784f460b3cf4ca44. Scoped clean-main release gate/push pending.",
+    "original12": "All workstreams remain in_progress; no broad completion claim. Windows user-owned and real vectors deferred."
+  },
+  "historical_release_gate_before_current_reaudit_20261016": {
+    "latest_source_revision": "ba62184",
+    "release_gate": {
+      "status": "blocked",
+      "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
+      "result": "当前预检仍被未完成阶段/非main/继承vendor删除阻止；首个完成full因5处旧夹具失败，ba62184修正后相关race12.369s通过，新full重跑中。不能标记完整验证或全目标完成。",
+      "evidence": ".agent-state/reasoning-default-settings/release-precheck.log",
+      "boundary": "本轮不跳过全目标验收、不合并main或正式Release。"
+    }
+  },
+  "lock_windows_hotfix_20261016": {
+    "status": "scoped_delivered",
+    "task": "docs/tasks/lock-windows-hotfix-20261016.json",
+    "deliveredMain": "dbb9d1227c626378597cb2884268504141b4869d",
+    "scope": "Election and failed persistence unlock-veil races repaired; current full105/native synthetic password/runtime52/offline passed. Original user-endpoint and hardware lock followup boundaries remain separate."
+  },
+  "plugin_online_upgrade_20261016": {
+    "status": "scoped_delivered",
+    "task": "docs/tasks/plugin-online-upgrade-20261016.json",
+    "deliveredMain": "dbb9d1227c626378597cb2884268504141b4869d",
+    "scope": "Upgrade source, staged replacement, backup/recovery and real-network isolated Safari acceptance delivered; original production plugins unchanged."
   }
 }

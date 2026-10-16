@@ -45,29 +45,38 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Actual Safari9999 saved owned A high/B medium; API and canonical disk match, both runs empty. Continue reload and mixed resource history.",
+      "status": "pass",
+      "summary": "All105 final full checks including Go race/vet, runtime assets and CAD passed on exact current inputs. Native reasoning save/switch/reload and asset-only PNG/JPEG history restoration passed. Complete disk/raw API bytes, history dedup, original-data cleanup, runtime identity and offline import/fresh startup passed. Native Windows user-owned; vectors deferred.",
       "evidence": [
-        ".agent-state/continuity-history-current/observations.json"
+        "docs/reviews/2026-10-16/evidence/continuity-history-current-proof.json",
+        "docs/reviews/2026-10-16/continuity-history-current.md"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Added current reasoning/PNG-JPEG source, native browser, raw API and cleanup evidence; corrected stale history storage UI gaps in original ledger without closing original12.",
+      "evidence": [
+        "docs/reviews/2026-10-16/continuity-history-current.md",
+        "docs/plugins/markdown-history.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Two owned empty sessions and3 fixture files removed only after exact ownership/content checks. Original listing/session/settings/auth/sources preserved; monotonic session counter45 to47 documented. Original Safari scene restored, no tabs added; own synthetic history retained without retention/GC.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/continuity-history-current-proof.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final source6ac147aa/image551eff0003ba healthy on9999 via start.command; full offline bundle imported/fresh-started locally. Frozen full105 pass. Main ff merge done; clean-main gate and exact remote push pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/continuity-history-current-proof.json"
+      ]
     }
   },
   "release_authorization": "原目标授权连续开发、测试、文档与增量main推送；不创建版本/tag/正式Release；Windows用户验收、真实向量暂缓。",
-  "rollback": "只清理经身份/空任务校验的自有验收会话及专用文件，保留原会话、认证、设置、来源和历史；不执行保留策略或GC。",
-  "handoff": ""
+  "rollback": "只清理经身份/空任务校验的自有验收会话及专用文件，保留原会话、认证、设置、来源和历史；不执行保留策略或GC。 Application rollback: retain prior image52e943e1e8c3 and matching full offline package; this is a URL-only preview change with no data format migration.",
+  "handoff": "Finish clean-main gate and exact push. Original12 remain in_progress; next direct acceptance targets SSH scene/history and authenticated approval/outcome/map flows. Prior history ZIP/management previews are proven, not missing. Windows user-owned and real vectors deferred."
 }
