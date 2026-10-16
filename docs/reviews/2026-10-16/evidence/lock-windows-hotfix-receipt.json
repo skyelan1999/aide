@@ -59,8 +59,9 @@
   },
   "remotePush": {
     "status": "pass",
-    "confirmedDeliveryCommit": "512f4271",
-    "finalReceiptPush": "pending"
+    "confirmedCodeCommit": "512f4271a257b01dd5175c9a0cbe26ca68c57187",
+    "releaseGates": "both_pass_on_a14f7bb7_after_stage_record_correction",
+    "finalReceiptContainsSourceChanges": false
   },
   "supersededFullRun": "intentionally_stopped_to_fix_additional_reproduced_peer_veil_bug",
   "releaseRecordCorrection": "First documentation finalizer failed with stdin encoding error; stage metadata stayed pending and initial release-check rejected it. Shell continued to push 512f4271 despite that rejection. All 105 final tests already passed. Correct metadata and require successful release-check before the final receipt push."

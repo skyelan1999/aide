@@ -27,3 +27,5 @@ Safari 隔离完整工作台（临时数据、密码 123456）实际验证：错
 全量检查首轮发现额外从页遮罩问题后主动停止，修复完成并重启全量门禁；仅最终门禁可作为发布依据。[脱敏收据](evidence/lock-windows-hotfix-receipt.json)记录最终结果。保留原镜像和离线包；需要回滚可用先前 `aide:offline-5c5876dd6049`，保持现有数据挂载，禁止删卷。无版本升档、tag或GitHub Release，交付为main、本机运行与离线包。
 
 Final full verification: 105 checks passed, including Go race/vet, runtime assets and native CAD. Fingerprint `19a268eceda6c20ec9a7e6d02d33350933d9b29f76b88ff32a3d4e84fa92f68b`; verification tree `935e08286d0c6835507eab141501a87bf65af3ce`. Code delivered as `512f4271`. The initial documentation finalizer failed with a stdin encoding error; release-check rejected stale stage metadata, but the shell continued and pushed. The final test receipt was already PASS. Corrected metadata and rerun gates are required before the final receipt push.
+
+Corrected metadata passed both release gates on `a14f7bb7`; remote main confirmed code delivery `512f4271a257b01dd5175c9a0cbe26ca68c57187`. The final receipt update changes documentation only.

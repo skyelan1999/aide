@@ -66,14 +66,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source bfb120b6 deployed to local9999; image52e943e1e8c3 bundle integrity/import/fresh startup passed. Delivery512f4271 pushed. Correct stage metadata and rerun both release gates before final receipt push.",
+      "status": "pass",
+      "summary": "Code delivery512f4271 verified on remote main. Final source bfb120b6 deployed to local9999, image52e943e1e8c3. Offline bundle integrity, import and fresh startup passed. Both release gates passed on corrected clean metadata a14f7bb7. First metadata finalizer failed and its gate rejection was incorrectly followed by push; this incident and subsequent correction are retained in the receipt. No tag or GitHub Release.",
       "evidence": [
-        "docs/reviews/2026-10-16/evidence/lock-windows-hotfix-receipt.json"
+        "docs/reviews/2026-10-16/evidence/lock-windows-hotfix-receipt.json",
+        "docs/reviews/2026-10-16/lock-windows-hotfix.md"
       ]
     }
   },
   "release_authorization": "用户：需要你尽快修一下然后发布；Windows不用验收，我会测试。沿用 main 推送、本机更新、离线镜像包交付。",
   "rollback": "保留 b7c4eb23 源码和 5c5876dd6049 镜像，以及 dc2cacc1c0f6 离线回滚包；不重置密码或清除用户数据。",
-  "handoff": "All105 full checks passed. Source bfb120b6; local9999 image52e943e1e8c3. Offline bundle import and fresh startup passed. Windows native testing belongs to user; receiving-device import and hardware Touch ID not_run. Initial metadata correction and final receipt push remain."
+  "handoff": "All105 full checks passed; source bfb120b6 deployed through start.command to9999; image52e943e1e8c3 and full offline bundle verified. Code512f4271 verified on upstream main, release gates pass after metadata correction. User config/sessions and45 original plugin inputs preserved. Native Windows testing belongs to user; receiving-device import and hardware Touch ID not_run. Final metadata commit contains no source changes."
 }
