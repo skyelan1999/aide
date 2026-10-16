@@ -47,14 +47,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "101quick structured status pass, focused plugin/bundle/daemon race39.966s pass before final backup-nonce/journal-size guards. Actual native Safari click upgrades isolated0.9.0 to official1.0.0 and newtool callable; original settings/data/rollback retained. Main runtime/finalfull pending.",
+      "status": "pass",
+      "summary": "Final full verification passed all 105 checks, including Go race/vet, runtime assets and native CAD. Final Safari synthetic wrong/correct password and refresh passed. Election, failed peer persistence, stale heartbeat and new-lock revocation regressions passed. Real-network plugin upgrade passed. Native Windows startup is delegated to the user as requested.",
       "evidence": [
-        "internal/server/plugin_upgrade_test.go",
-        "scripts/plugin-upgrade.test.cjs",
-        "internal/server/plugin_upgrade_browser_fixture_test.go",
-        "docs/reviews/2026-10-16/evidence/plugin-online-upgrade-live.png",
-        "docs/reviews/2026-10-16/evidence/plugin-upgrade-source.png"
+        "docs/reviews/2026-10-16/evidence/lock-windows-hotfix-receipt.json",
+        "docs/reviews/2026-10-16/evidence/plugin-online-upgrade-receipt.json",
+        "docs/reviews/2026-10-16/evidence/lock-hotfix-unlocked.png"
       ]
     },
     "documentation": {
@@ -76,12 +74,14 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source bfb120b6 deployed to local9999; image52e943e1e8c3 bundle integrity/import/fresh startup passed. Delivery512f4271 pushed. Correct stage metadata and rerun both release gates before final receipt push.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/lock-windows-hotfix-receipt.json"
+      ]
     }
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized. No version/tag/Release; preserve original sessions/config and existing plugin state.",
   "rollback": "Keep previous DC image/offline package. Plugin swap retains old directory and registry snapshot; startup journal recovers an uncommitted swap.",
-  "handoff": "最终运行源码 bfb120b6，9999镜像52e943e1e8c3；离线包校验/导入/全新目录启动通过；最终full门禁及远端main推送待完成。Windows实机由用户验收，接收设备导入和原生Touch ID未运行。"
+  "handoff": "All105 full checks passed. Source bfb120b6; local9999 image52e943e1e8c3. Offline bundle import and fresh startup passed. Windows native testing belongs to user; receiving-device import and hardware Touch ID not_run. Initial metadata correction and final receipt push remain."
 }

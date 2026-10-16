@@ -48,7 +48,20 @@
   "multiTabElectionAndFailedPersistenceRegressions": "pass",
   "windowsCRLFMockedInstallerRegression": "pass",
   "nativeWindowsStartup": "not_run_user_will_test",
-  "fullVerification": "in_progress",
-  "remotePush": "pending",
-  "supersededFullRun": "intentionally_stopped_to_fix_additional_reproduced_peer_veil_bug"
+  "fullVerification": {
+    "status": "pass",
+    "profile": "full",
+    "fingerprint": "19a268eceda6c20ec9a7e6d02d33350933d9b29f76b88ff32a3d4e84fa92f68b",
+    "head": "935e08286d0c6835507eab141501a87bf65af3ce",
+    "time": "20261016T093913344558Z",
+    "checks": 105,
+    "goRaceVet": "pass"
+  },
+  "remotePush": {
+    "status": "pass",
+    "confirmedDeliveryCommit": "512f4271",
+    "finalReceiptPush": "pending"
+  },
+  "supersededFullRun": "intentionally_stopped_to_fix_additional_reproduced_peer_veil_bug",
+  "releaseRecordCorrection": "First documentation finalizer failed with stdin encoding error; stage metadata stayed pending and initial release-check rejected it. Shell continued to push 512f4271 despite that rejection. All 105 final tests already passed. Correct metadata and require successful release-check before the final receipt push."
 }
