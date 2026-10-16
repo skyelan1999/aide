@@ -44,7 +44,7 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Native OCCT8 isolated CAD service, authenticated private network, one conversion child/job,4GiB container+512MiB temp upper bounds,900s timeout; release STEP reader then mesh individual solids and emit <=16000 triangle batches. Browser receives meshes only and terminates native request on close. Preserve XCAF assembly transforms and face/part colour; original mm coordinates via per-batch double-precision origins. Browser WASM remains compatibility fallback. 204MiB generated geometry now passes native conversion, UI/runtime not yet verified.",
+      "summary": "Native OCCT8 isolated CAD service, authenticated private network, one conversion child/job,4GiB container+512MiB temp upper bounds,900s timeout; release STEP reader then mesh individual solids and emit <=16000 triangle batches. Browser receives meshes only and terminates native request on close. Preserve XCAF assembly transforms and face/part colour; original mm coordinates via per-batch double-precision origins. Browser WASM remains compatibility fallback. 204MiB generated geometry now passes native conversion, actual Safari UI/runtime verified.",
       "evidence": [
         "internal/server/web/step-import-worker.js",
         "internal/server/web/app.js",
@@ -53,7 +53,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Local STEP streaming384MiB, isolated native OCCT service, reader disposal/per-solid tessellation/bounded batches, preserved assembly/part+face colours/mm, original-coordinate measurement/three-point calibration/export, viewer lifecycle cleanup, local/offline CAD runtime packaging, scoped stop scripts and fresh-install auth mount preparation. Full release verification remains in progress.",
+      "summary": "Local STEP streaming384MiB, isolated native OCCT service, reader disposal/per-solid tessellation/bounded batches, preserved assembly/part+face colours/mm, original-coordinate measurement/three-point calibration/export, viewer lifecycle cleanup, local/offline CAD runtime packaging, scoped stop scripts and fresh-install auth mount preparation. Full102 and release-check pass.",
       "evidence": [
         "internal/server/step_native.go",
         "internal/server/step_preview.go",
@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Current focused Go race10.072s, native geometry/unit/normal and credential-scope tests, actual9999 full204MiB surfaces and120triangle assembly colour fixtures, Safari30mm/90deg/frame/export/reset/clear, workbench+standalone, six themes and400%zoom keyboard/scroll pass. Full102 on main is the pending release gate; the earlier pre-freeze full attempt was deliberately stopped and is not used as a pass. Original private model/receiving device/Windows/amd64 remain untested. Integrated remote Windows76fcf066 andCADdirectory ownership7a4a49c5;13launcherData and4Windowsstatic tests pass; finalBDimage/localimport/fresh-start pass.",
+      "summary": "Current focused Go race10.072s, native geometry/unit/normal and credential-scope tests, actual9999 full204MiB surfaces and120triangle assembly colour fixtures, Safari30mm/90deg/frame/export/reset/clear, workbench+standalone, six themes and400%zoom keyboard/scroll pass. Full102 on clean main8c18165c and release-check pass; the earlier pre-freeze full attempt was deliberately stopped and is not used as a pass. Original private model/receiving device/Windows/amd64 remain untested. Integrated remote Windows76fcf066 andCADdirectory ownership7a4a49c5;13launcherData and4Windowsstatic tests pass; finalBDimage/localimport/fresh-start pass.",
       "evidence": [
         "scripts/step-worker.test.cjs",
         "scripts/step-metrology.test.cjs",
@@ -97,9 +97,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Localmain containsCADsource+remoteWindows76fcf066+ownership7a4a49c5; finalBDimage active throughstart.command, completeARM64bundle import/fresh-start pass. Await clean mainfull102/release-check andexactremote push; no version/tag/Release.",
+      "status": "pass",
+      "summary": "Clean main8c18165c passed all102 full checks and release-check, pushed and exact remote main verified. Product7a4a49c5 includes remoteWindows76fcf066; finalBD image active through start.command; completeARM64 offline bundle imported and fresh-start passed. This final receipt changes docs only. No version/tag/Release; receiving device/nativeWindows/amd64 and original private model remain untested.",
       "evidence": [
+        "docs/reviews/2026-10-16/step-measure-large.md",
+        "docs/reviews/2026-10-16/evidence/step-preview-receipt.json",
         "docker-images/README.md",
         "docker-images/SHA256SUMS"
       ]
@@ -107,7 +109,7 @@
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; preserve user data and previous598 image/volumes. No version/tag/Release.",
   "rollback": "Retain main1775bab7 and current598 image/offline bundle; storage bind data/home unchanged, protected snapshot before restart.",
-  "handoff": "Final product7a4a49c5 (includesorigin76fcf066), runtimeBD2ac35b6a62 andmatchingcompletebundle verified. Allpre-release stages pass; now runfull102 oncleanmain,release-check,push andexactremote check. Do not changeDockerREADME/SUMS/code whilefull runs. Userprivatefile/receivingdevice/nativeWindows/amd64 untested; UI restored,3normal+1pinned tabs.",
+  "handoff": "CAD task complete: main8c18165c full102/release-check pass and remote verified; final follow-up updates docs receipts only. RuntimeBD/source71f004b8 active, complete offline bundle imported/fresh-start verified. Original private model/receiving device/nativeWindows/amd64 remain untested. UI restored, no extra tabs, original data/rollback preserved. Other master workstreams are not closed by this task.",
   "clarifications": [
     {
       "user": "有什么区别吗，我需要让其和在正常专业软件上打开保持一致",
@@ -243,5 +245,17 @@
     "launcherDataTests": 13,
     "windowsPortTests": 4,
     "nativeWindows": "not_run"
+  },
+  "full_main_gate": {
+    "status": "pass",
+    "profile": "full",
+    "fingerprint": "1ba33eb09e5c9fc7c0752fd5c887ad038f668665bf6dad70bf14578f398d2d52",
+    "head": "8c18165cf0ddf7251a1960e8f3f0894e5424856b",
+    "time": "20261016T080450722463Z",
+    "log": ".agent-state/verify-20261016T080450722463Z.log",
+    "checks": 102,
+    "releaseCheck": "pass",
+    "verifiedRemoteMain": "8c18165cf0ddf7251a1960e8f3f0894e5424856b",
+    "finalFollowup": "Only docs review/task/evidence receipts follow this verified main; executable inputs unchanged."
   }
 }

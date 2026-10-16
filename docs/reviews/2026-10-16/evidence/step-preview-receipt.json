@@ -139,7 +139,18 @@
   },
   "originalPrivateModel": "not_run;user requested generated fixture instead",
   "receivingDevice": "not_run",
-  "fullMainGate": "pending",
+  "fullMainGate": {
+    "status": "pass",
+    "profile": "full",
+    "fingerprint": "1ba33eb09e5c9fc7c0752fd5c887ad038f668665bf6dad70bf14578f398d2d52",
+    "head": "8c18165cf0ddf7251a1960e8f3f0894e5424856b",
+    "time": "20261016T080450722463Z",
+    "log": ".agent-state/verify-20261016T080450722463Z.log",
+    "checks": 102,
+    "releaseCheck": "pass",
+    "verifiedRemoteMain": "8c18165cf0ddf7251a1960e8f3f0894e5424856b",
+    "finalFollowup": "Only docs review/task/evidence receipts follow this verified main; executable inputs unchanged."
+  },
   "bundle": {
     "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-bd2ac35b6a62-offline.tar.gz",
     "bytes": 770892273,
