@@ -21,6 +21,12 @@ aide 插件系统采用 DSH（Cordis）的插件**形态约定**：一个插件�
 
 **本协议明确不支持**：完整 Cordis 服务注册表与依赖注入、任意 DSH 内部服务（Session/Agent/Model 路由等）、UI Slot 渲染、通用宿主网络或桌面控制。Aide 的电脑控制现为 Aide 内置能力，允许列表保存在 Aide 全局设置中，截图通过受限的视觉证据管线送入支持视觉的模型；点击、输入和有限按键仍由工作流逐次确认。它不向一般插件授予桌面权限。浏览器控制仍通过独立的受限桥接授权。详见 [浏览器与电脑控制状态](plugins/computer-browser-control.md)。
 
+### 1.1 文档写入来源
+
+`write_file` 可选传入 `source`。新交付的 Markdown、文本和 Office 文档默认进入 `system-docs`（自动系统文档）来源，路径相对于工作空间配置的自动系统文档目录；代码和工程文件继续进入工作区。修改已有工作区文件或可写来源文档前，先完整读取或附加原文，应用时校验读取版本。所有 `write_file` 均为审批提案。
+
+启用 PjPlan 插件后，新建文档必须先通过 `pjplan_class_lookup` 确定文档类别，再用 `pjplan_build_filename` 按插件项目设置生成文件名；服务器在需求建档和 office_create 时校验命名，插件未启用时沿用原有命名规则。插件包与命名字段见 [PjPlan 文档规则](plugins/pjplan.md)。
+
 ## 2. 插件形态（DSH / Cordis 兼容子集）
 
 一个合法插件文件（CommonJS，默认导出）：

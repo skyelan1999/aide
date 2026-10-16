@@ -13,6 +13,7 @@
 | 管理文件与大附件 | [Markdown 编辑与导出](architecture/markdown-editing-export.md) · [文件传输](architecture/resumable-file-transfers.md) · [大 Markdown 附件机制与验收](reviews/2026-11-09-large-markdown-attachments.md) |
 | 理解模型窗口、摘要与记忆 | [上下文恢复](architecture/context-recovery.md) · [长会话支持](industrial-long-conversation-support.md) |
 | 浏览知识、代码和文档 | [知识星图](architecture/knowledge-map.md) |
+| 按十进制分类命名项目文档 | [PjPlan 项目文档插件](plugins/pjplan.md) |
 | 使用浏览器与电脑工具 | [控制架构、审批和平台边界](plugins/computer-browser-control.md) |
 | 配置语音 | [语音架构](architecture/assistant-openai-speech.md) |
 | 更新、备份与排障 | [开发运维交接](../HANDOVER.md) · [软件更新](architecture/software-updates.md) · [诊断](architecture/diagnostics.md) |

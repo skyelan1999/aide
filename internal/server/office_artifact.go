@@ -162,6 +162,9 @@ func (a *App) officeCreateTool(wsRoot *os.Root, mode, remotePath, p, kind string
 	if err := safePath(p); err != nil {
 		return "路径无效: " + err.Error()
 	}
+	if err := a.validatePjplanFilename(path.Base(p)); err != nil {
+		return "Office 文档命名未通过 PjPlan 校验: " + err.Error()
+	}
 	if strings.ToLower(path.Ext(p)) != "."+kind {
 		return "文件扩展名必须是 ." + kind
 	}

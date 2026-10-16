@@ -56,7 +56,7 @@ func (a *App) environmentGuide() string {
 			row.Access = "registered read/write; actual mount and server permissions still apply. When the user explicitly selects this reference as a write destination, use write_file with this source ID and a relative path; approval and version checks still apply"
 		}
 		if src.ID == systemDocsSource && strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
-			row.Usage = "Default destination for workflow documents and office_create; tool paths are relative to this binding. Read generated files with source=system-docs. For new text document deliverables use write_file(source=system-docs, path=relative path); file proposals retain approval and version checks. Code edits and explicit workspace files use write_file without source. Never hardcode this directory."
+			row.Usage = "Default destination for workflow documents and office_create; tool paths are relative to this binding. Read generated files with source=system-docs. For new text document deliverables use write_file(source=system-docs, path=relative path); file proposals retain approval and version checks. Code edits and explicit workspace files use write_file without source. Never hardcode this directory. Name new documents with PjPlan when the plugin is enabled."
 		}
 		if src.Type == "local" || src.Type == "skill" {
 			row.Path = guideLabel(src.Config.Path)
