@@ -14,7 +14,7 @@ class Element {
   close() { this.open=false;for(const fn of this.listeners.close||[])fn(); }
 }
 
-function fixture({save,readLatest=async()=>({content:'server current'}),onConflict=()=>{},onSaved=()=>{},blocked=()=>false,recovery=false}) {
+function fixture({save,readLatest=async()=>({content:'server current'}),onConflict=()=>{},onSaved=()=>{},blocked=()=>false,viewVisible=()=>true,recovery=false}) {
   const body=new Element('body'),document={body,activeElement:null,createElement:(tag)=>new Element(tag),addEventListener(){}};
   const windowListeners={},timers=new Map(),snapshots=[],frames=[];let timer=0;
   const window={aideUI:{get:()=>true,subscribe(){}},LockCluster:{on(){}},addEventListener(k,fn){(windowListeners[k] ||= []).push(fn);}};
@@ -23,7 +23,7 @@ function fixture({save,readLatest=async()=>({content:'server current'}),onConfli
   const button=new Element('button'),manual=new Element('button'),context={root:'workspace',source:'',path:'retry-fixture.md',wsId:'test'};
   const errors=[];
   vm.runInNewContext(fs.readFileSync('internal/server/web/file-autosave.js','utf8'),{window,document,AideContinuity:window.AideContinuity,Event:class{constructor(type){this.type=type;}},requestAnimationFrame:fn=>frames.push(fn),setTimeout:(fn,ms)=>{const id=++timer;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)});
-  const controller=window.AideFileAutoSave.bind({editor,button,manual,getContext:()=>context,save,onSaved,readLatest,onConflict,blocked,t:(s)=>s,error:(e)=>errors.push(e)});
+  const controller=window.AideFileAutoSave.bind({editor,button,manual,getContext:()=>context,save,onSaved,readLatest,onConflict,blocked,viewVisible,t:(s)=>s,error:(e)=>errors.push(e)});
   controller.activate();
   const runTimers=ms=>{for(const [id,scheduled]of [...timers])if(scheduled.ms===ms){timers.delete(id);scheduled.fn();}};
   return {body,editor,button,manual,context,errors,controller,retry:()=>button.next.next,runTimers,timers,snapshots,windowListeners,continuity:window.AideContinuity,runFrames:()=>{while(frames.length)frames.shift()();}};
@@ -97,6 +97,29 @@ function fixture({save,readLatest=async()=>({content:'server current'}),onConfli
   for(const fn of recovery.windowListeners.pagehide||[])fn();
   assert.ok(recovery.snapshots.some(item=>item.method==='writeFileDraft'&&item.value.text==='latest text before pagehide'),'pagehide synchronously hands the newest dirty text to tab recovery before async persistence');
   console.log('File recovery snapshots coalesce typing/scroll bursts and flush the latest state on pagehide PASS');
+  let viewIsVisible=true;
+  const closedView=fixture({recovery:true,viewVisible:()=>viewIsVisible,save:async()=>({hash:'saved'})});
+  closedView.editor.setSelectionRange(2,2);closedView.editor.scrollTop=506;
+  closedView.editor.value='unsaved visible text';closedView.editor.dispatchEvent({type:'input'});
+  closedView.editor.dispatchEvent({type:'scroll'});closedView.runTimers(120);closedView.runTimers(180);
+  viewIsVisible=false;closedView.editor.scrollTop=0;
+  closedView.editor.dispatchEvent({type:'scroll'});closedView.runTimers(120);closedView.runTimers(180);
+  for(const fn of closedView.windowListeners.pagehide||[])fn();
+  const recordedViews=closedView.snapshots.filter(item=>item.kind==='file-view');
+  assert.equal(recordedViews.at(-1).value.scrollTop,506,'hidden layout scroll must not replace the last visible view');
+  assert.equal(closedView.snapshots.filter(item=>item.method==='writeFileDraft').at(-1).value.scrollTop,506,'closing must keep the last visible draft position');
+  viewIsVisible=true;closedView.editor.scrollTop=72;
+  closedView.editor.dispatchEvent({type:'scroll'});closedView.runTimers(120);
+  assert.equal(closedView.snapshots.filter(item=>item.kind==='file-view').at(-1).value.scrollTop,72,'visible user scrolling must still persist');
+  let restoreVisible=true;
+  const closingRestore=fixture({recovery:true,viewVisible:()=>restoreVisible,save:async()=>({hash:'saved'})});
+  closingRestore.context.hash='same';let finishView;
+  closingRestore.continuity.readTab=()=>new Promise(resolve=>{finishView=resolve;});
+  const pendingView=closingRestore.controller.restoreView();restoreVisible=false;
+  finishView({hash:'same',start:2,end:2,scrollTop:506});await pendingView;closingRestore.runFrames();
+  assert.equal(closingRestore.editor.scrollTop,0,'pending restoration cannot scroll a closed editor');
+  assert.equal(closingRestore.editor.selectionStart,0,'pending restoration cannot move a closed caret');
+  console.log('Closed editor layout scroll and pending restoration ownership PASS');
   for(const phase of ['read','animation']){
     const view=fixture({recovery:true,save:async()=>({hash:'saved'})});
     view.context.hash='same-content';

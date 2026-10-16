@@ -1,7 +1,7 @@
 /* Debounced saves share one queue with the manual button. Never bypass file hashes. */
 (() => {
   'use strict';
-  function bind({editor,button,manual,getContext,save,onSaved,readLatest,onConflict,blocked,t,error}) {
+  function bind({editor,button,manual,getContext,save,onSaved,readLatest,onConflict,blocked,viewVisible=()=>true,t,error}) {
     let activeKey='', generation=0, baseline=editor.value, timer=0, inFlight=null, suspended=false,historyPending=false, composing=false,recoveryTimer=0,recoveryBanner=null,activeDialog=null,viewChanges=0,emergencyDraftTimer=0,emergencyViewTimer=0,emergencyDraftFailure='',emergencyViewFailure='';
     const label=document.createElement('span'); label.textContent=t('自动保存');
     const rail=document.createElement('span');rail.className='file-autosave-rail';rail.setAttribute('aria-hidden','true');rail.append(document.createElement('i'));
@@ -12,18 +12,27 @@
     const enabled=()=>window.aideUI?.get('editorAutoSave')===true;
     const identity=c=>JSON.stringify([c?.root,c?.source,c?.path,c?.wsId]);
     const scope=c=>c?.recoveryScope||c?.wsId||'';
+    let lastVisibleView=null;
+    const position=()=>({start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
+    function rememberView(c=getContext()){if(viewVisible())lastVisibleView={key:identity(c),hash:c.hash,...position()};}
+    function draftPosition(c){
+      if(viewVisible()){rememberView(c);return position();}
+      const v=lastVisibleView;
+      return v&&v.key===identity(c)&&v.hash===c.hash?{start:v.start,end:v.end,scrollTop:v.scrollTop,scrollLeft:v.scrollLeft}:position();
+    }
     const current=(gen,key)=>gen===generation&&key===activeKey&&key===identity(getContext());
     const writable=()=>identity(getContext())===activeKey && !!getContext()?.path && !editor.readOnly && !manual.disabled && !manual.classList.contains('hidden');
     function cacheEmergencyDraft(){
       const c={...getContext()},gen=generation,key=identity(c),valid=()=>current(gen,key)&&!blocked?.();
       if(!valid()||!c.path||!writable()||!window.AideContinuity?.enabled()||!scope(c)||editor.value===baseline)return;
-      try{window.AideContinuity.cacheTab(scope(c),'file',key,{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},{active:valid});emergencyDraftFailure='';}
+      try{window.AideContinuity.cacheTab(scope(c),'file',key,{text:editor.value,hash:c.hash,...draftPosition(c)},{active:valid});emergencyDraftFailure='';}
       catch(e){if(valid()){status.textContent=t('本地草稿保存失败');const message=String(e.message||e);if(message!==emergencyDraftFailure){emergencyDraftFailure=message;error?.(message);}}}
     }
     function cacheEmergencyView(){
       const c={...getContext()},gen=generation,key=identity(c),valid=()=>current(gen,key)&&!blocked?.();
-      if(!valid()||!c.path||!window.AideContinuity?.enabled()||!scope(c))return;
-      try{window.AideContinuity.cacheTab(scope(c),'file-view',key,{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},{active:valid});emergencyViewFailure='';}
+      if(!valid()||!viewVisible()||!c.path||!window.AideContinuity?.enabled()||!scope(c))return;
+      rememberView(c);
+      try{window.AideContinuity.cacheTab(scope(c),'file-view',key,{hash:c.hash,...position()},{active:valid});emergencyViewFailure='';}
       catch(e){if(valid()){status.textContent=t('本地恢复暂不可用');const message=String(e.message||e);if(message!==emergencyViewFailure){emergencyViewFailure=message;error?.(message);}}}
     }
     function scheduleEmergencyDraft(){clearTimeout(emergencyDraftTimer);emergencyDraftTimer=setTimeout(()=>{emergencyDraftTimer=0;cacheEmergencyDraft();},120);}
@@ -34,21 +43,21 @@
       clearTimeout(recoveryTimer);clearTimeout(emergencyDraftTimer);clearTimeout(emergencyViewTimer);emergencyDraftTimer=emergencyViewTimer=0;const c={...getContext()},gen=generation,key=identity(c);
       if(identity(c)!==activeKey||!c.path||blocked?.()||!window.AideContinuity?.enabled()||!scope(c))return;
       const valid=()=>current(gen,key)&&!blocked?.();
-      AideContinuity.writeTab(scope(c),'file-view',identity(c),{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},{active:valid}).catch(e=>{if(valid())error?.(e.message);});
+      if(viewVisible()){rememberView(c);AideContinuity.writeTab(scope(c),'file-view',identity(c),{hash:c.hash,...position()},{active:valid}).catch(e=>{if(valid())error?.(e.message);});}
       if(!writable())return;
       const dirty=editor.value!==baseline;
       if(!dirty)return;
-      const operation=AideContinuity.writeFileDraft(scope(c),identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},valid);
+      const operation=AideContinuity.writeFileDraft(scope(c),identity(c),{text:editor.value,hash:c.hash,...draftPosition(c)},valid);
       operation.catch(e=>{if(!valid())return;status.textContent=t('本地草稿保存失败');error?.(e.message);});
     }
     async function restoreView(){
       const c={...getContext()},gen=generation,key=identity(c),stamp=viewChanges;
-      if(!window.AideContinuity||!scope(c)||!c.path||key!==activeKey)return;
+      if(!viewVisible()||!window.AideContinuity||!scope(c)||!c.path||key!==activeKey)return;
       try{
         const view=await AideContinuity.readTab(scope(c),'file-view',key);
         if(!view||blocked?.()||gen!==generation||key!==identity(getContext())||view.hash!==c.hash||getContext()?.hash!==c.hash||stamp!==viewChanges)return;
         const apply=()=>{
-          if(blocked?.()||gen!==generation||key!==identity(getContext())||getContext()?.hash!==c.hash||stamp!==viewChanges||editor.classList.contains('hidden')||editor.parentElement?.classList.contains('hidden'))return;
+          if(!viewVisible()||blocked?.()||gen!==generation||key!==identity(getContext())||getContext()?.hash!==c.hash||stamp!==viewChanges||editor.classList.contains('hidden')||editor.parentElement?.classList.contains('hidden'))return;
           const number=(v,max)=>Number.isFinite(v)?Math.max(0,Math.min(max,v)):0;
           const start=number(view.start,editor.value.length),end=Math.max(start,number(view.end,editor.value.length));
           editor.focus({preventScroll:true});editor.setSelectionRange(start,end);editor.scrollTop=number(view.scrollTop,10000000);editor.scrollLeft=number(view.scrollLeft,10000000);
@@ -138,7 +147,7 @@
     button.onclick=()=>{window.aideUI?.set('editorAutoSave',!enabled());suspended=false;paint();schedule();};
     manual.onclick=()=>flush(true);
     retry.onclick=async()=>{if(!retryMode||!writable()||blocked?.())return;const mode=retryMode,context=retryContext,draft=retryDraft,gen=generation,key=identity(context);if(!current(gen,key))return;retry.disabled=true;try{if(mode==='latest'){const latest=await readLatest?.(context);if(!latest)throw new Error(t('服务器未返回当前版本'));if(!current(gen,key)||blocked?.())return;setRetry('');status.textContent=t('服务器版本已读取，请比较后选择');compareRecovery(draft,gen,latest);}else{setRetry('');await flush(true);}}catch(e){if(current(gen,key)){status.textContent=t(mode==='latest'?'读取服务器版本失败，可重试':'保存重试失败，可再次重试');setRetry(mode,context,draft);error?.(e.message||String(e));}}finally{retry.disabled=false;paint();}};
-    editor.addEventListener('input',()=>{recoveryBanner?.remove();recoveryBanner=null;if(historyPending){status.textContent=t(editor.value===baseline?'正文已保存，历史归档失败；自动保存已暂停':'上一版已保存，当前修改未保存；历史归档失败');paint();}scheduleEmergencyDraft();schedule();});for(const event of ['input','scroll','select','keyup','click','blur'])editor.addEventListener(event,()=>{viewChanges++;scheduleEmergencyView();queueRecovery();},{passive:true});document.addEventListener('selectionchange',()=>{if(document.activeElement===editor){viewChanges++;scheduleEmergencyView();queueRecovery();}});window.addEventListener('pagehide',storeRecovery);
+    editor.addEventListener('input',()=>{recoveryBanner?.remove();recoveryBanner=null;if(historyPending){status.textContent=t(editor.value===baseline?'正文已保存，历史归档失败；自动保存已暂停':'上一版已保存，当前修改未保存；历史归档失败');paint();}scheduleEmergencyDraft();schedule();});for(const event of ['input','scroll','select','keyup','click','blur'])editor.addEventListener(event,()=>{if(event==='scroll'&&!viewVisible())return;rememberView();viewChanges++;scheduleEmergencyView();queueRecovery();},{passive:true});document.addEventListener('selectionchange',()=>{if(document.activeElement===editor&&viewVisible()){rememberView();viewChanges++;scheduleEmergencyView();queueRecovery();}});window.addEventListener('pagehide',storeRecovery);
     editor.addEventListener('compositionstart',()=>{composing=true;clearTimeout(timer);});
     editor.addEventListener('compositionend',()=>{composing=false;schedule();});
     window.aideUI?.subscribe(()=>{paint();schedule();});

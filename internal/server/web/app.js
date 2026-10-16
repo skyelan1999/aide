@@ -9076,6 +9076,7 @@ const fileViewHistory = window.AideMarkdownHistory.bind({button:$('file-view-his
 function bindFileAutoSave(editorId, buttonId, manualId, getContext, onSaved) {
   return window.AideFileAutoSave.bind({editor:$(editorId),button:$(buttonId),manual:$(manualId),getContext,t,error:toast,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open,
+    viewVisible:()=>$(editorId).getClientRects().length>0,
     readLatest:async(spec)=>{const q=new URLSearchParams({path:spec.path,root:spec.root||'workspace'});if(spec.source)q.set('source',spec.source);if(spec.wsId)q.set('workspaceId',spec.wsId);return api('/file?'+q);},
     onConflict:latest=>{if(editorId==='editor')state.file.hash=latest.hash;else fileView.hash=latest.hash;},
     save:async(spec,content)=>{const body={path:spec.path,content,hash:spec.hash};if(spec.source)body.source=spec.source;if(spec.wsId)body.workspaceId=spec.wsId;return api('/file',{method:'PUT',body:JSON.stringify(body)});},onSaved});

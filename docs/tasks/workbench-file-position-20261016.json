@@ -17,7 +17,9 @@
     "internal/server/web/app.js lifecycle integration",
     "internal/server/web/index.html module cache version if needed",
     "scripts/file-recovery-scroll.test.cjs",
-    "scripts/file-autosave-retry.test.cjs"
+    "scripts/file-autosave-retry.test.cjs",
+    "docker-images/SHA256SUMS",
+    "docker-images/README.md"
   ],
   "stages": {
     "requirements": {
@@ -29,15 +31,21 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Use native keyboard movement and actual post-restore insertion as exact caret evidence; use visible labelled lines for scroll, no hidden storage read or diagnostic-only product instrumentation.",
+      "summary": "Keep rendered-editor visibility as an explicit binding boundary; ignore hidden layout scroll, preserve last visible draft coordinates within same file/hash, and stop pending restores for closed editors. Existing newer-user and content-revision ownership guards remain.",
       "evidence": [
-        "docs/tasks/workbench-file-position-20261016.json"
+        "internal/server/web/file-autosave.js",
+        "internal/server/web/app.js",
+        "scripts/file-autosave-retry.test.cjs"
       ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Hidden layout-scroll regression fails before fix; visibility-guarded view persistence, last-visible draft metadata and closed-editor restore guard now pass focused tests. Actual Safari repair/full/runtime acceptance still pending.",
+      "evidence": [
+        "internal/server/web/file-autosave.js",
+        "internal/server/web/app.js",
+        "scripts/file-autosave-retry.test.cjs"
+      ]
     },
     "verification": {
       "status": "in_progress",
@@ -70,5 +78,12 @@
   },
   "release_authorization": "Existing incremental test/docs/push/main authorization; no new version/tag or runtime change.",
   "rollback": "Only exact owned fixture may be deleted; preserve original files and data; no global history/cache cleanup.",
-  "handoff": "Continue this task: scroll restoration is reproducibly broken on actual Safari, caret886 exact pass. Inspect view persistence across dialog close/textarea reparent/layout reset and passive scroll events; add red-before/green-after regression before fix. Owned fixture cleaned; original UI restored. No source changes/main push/runtime change yet; original12 retained."
+  "handoff": "Continue actual scroll repair. Focused new hidden-layout test red0-vs506 before fix, green after viewVisible DOM-rect guard plus last-visible draft coordinates. No proof yet that native L023-to-L000 issue is fixed; candidate/full/runtime/UI retest required. Cache versions autosave7/app156. Original12 retained.",
+  "quick_receipt": {
+    "status": "pass",
+    "profile": "quick",
+    "fingerprint": "b7275df5a3d93ea10672680c691541dd2d3bdebb19fb18bac0c1768f0d9edf3d",
+    "head": "bbdc7df0243d6c017a22e9248496042dd4619433",
+    "time": "20261016T004946889264Z"
+  }
 }

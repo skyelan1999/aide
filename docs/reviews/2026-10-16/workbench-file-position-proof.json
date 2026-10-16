@@ -29,5 +29,16 @@
   "runtime": "a8c22d43ccb8",
   "modelsInvoked": 0,
   "productChanged": false,
-  "goalComplete": false
+  "goalComplete": false,
+  "candidateFix": {
+    "status": "focused_and_quick_pass_native_pending",
+    "redFailure": "hidden layout scroll replaced506 with0",
+    "quick": {
+      "status": "pass",
+      "profile": "quick",
+      "time": "20261016T004946889264Z",
+      "fingerprint": "b7275df5a3d93ea10672680c691541dd2d3bdebb19fb18bac0c1768f0d9edf3d"
+    },
+    "nativeRepairVerified": false
+  }
 }
