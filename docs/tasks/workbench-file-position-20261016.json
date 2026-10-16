@@ -39,20 +39,21 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Hidden layout-scroll regression fails before fix; visibility-guarded view persistence, last-visible draft metadata and closed-editor restore guard now pass focused tests. Actual Safari repair/full/runtime acceptance still pending.",
+      "status": "pass",
+      "summary": "Hidden layout view guard, last-visible draft coordinates and closed async-restore guard implemented with autosave7/app156 cache versions; focused red-before/green-after and quick pass.",
       "evidence": [
         "internal/server/web/file-autosave.js",
         "internal/server/web/app.js",
-        "scripts/file-autosave-retry.test.cjs"
+        "scripts/file-autosave-retry.test.cjs",
+        "docs/reviews/2026-10-16/workbench-file-position.md"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Actual native caret insertion at886 proved exact by API/disk; scroll failed twice L023-to-L000, including settled observation. Root cause/fix and passing scroll acceptance pending.",
+      "status": "pass",
+      "summary": "Source-level regression and final full88 all0/server race621.173s/all vet/nonroot19 assets/DOCX roundtrip pass; candidate bundle local import pass. Actual Safari old-runtime failure is directly recorded; new-runtime native repair remains pending release acceptance, not claimed pass.",
       "evidence": [
         "docs/reviews/2026-10-16/workbench-file-position.md",
-        "docs/reviews/2026-10-16/workbench-file-position-proof.json"
+        "docs/reviews/2026-10-16/workbench-file-position-bundle-proof.json"
       ]
     },
     "documentation": {
@@ -78,7 +79,7 @@
   },
   "release_authorization": "Existing incremental test/docs/push/main authorization; no new version/tag or runtime change.",
   "rollback": "Only exact owned fixture may be deleted; preserve original files and data; no global history/cache cleanup.",
-  "handoff": "Candidateebf9e38203f3/build92c6f482 built; bundle706069603 bytes, SHA f501adaa7ead783cd48deb4abb905ebc20ba070c6ae10ec3ac0306fae2d9afba verified incl actual local Docker load. Full live exec47304, log .agent-state/workbench-file-position/fix/full.log; re-poll same handle, never restart on observation timeout. Production remainsa8c22d43; actual native scroll repair NOT proven. After full: main clean gate/push as stages allow, fresh strict runtime.py before, designated AIDE_OPEN_BROWSER=0 start.command, runtime.py after. Reload original safe workbench to load app156/autosave7 before actual UI retest. New exclusive fixture helper .agent-state/workbench-file-position/fix/ui-setup.py writes ownership to fix/ui; original setup owned.json is historical and must not be rerun/overwritten. Repeat known caret886/visibleL023 close-reopen screenshot/actual insertion. If stillL000, keep task open and diagnose further; no native PASS claim. Original12 retained.",
+  "handoff": "Full88 code/package gate passed; main gate/push and fresh no-active-work runtime preflight, designated start.command, protected checks, safe existing workbench reload to app156/autosave7, actual saved/draft scroll/caret UI retest pending. Native repair not yet proven. Original12 retained.",
   "quick_receipt": {
     "status": "pass",
     "profile": "quick",
@@ -92,5 +93,13 @@
     "sourceSHA256": "a0620d67ce4c4deb97eee4c6e4560764d39bbea2f0b625f15c90a78b519e685b",
     "bundleProof": "docs/reviews/2026-10-16/workbench-file-position-bundle-proof.json",
     "status": "built_import_verified_not_deployed"
+  },
+  "full_receipt": {
+    "profile": "full",
+    "status": "pass",
+    "head": "9b21e7f09d7ecad8842a339cdd54b31902b3fc85",
+    "time": "20261016T005339984322Z",
+    "fingerprint": "f100ec3066025964e76bd0e188c2bb316d83207325ab49d5868ba797552fec56",
+    "log": ".agent-state/verify-20261016T005339984322Z.log"
   }
 }
