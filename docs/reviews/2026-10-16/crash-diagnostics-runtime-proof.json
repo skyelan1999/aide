@@ -1,0 +1,54 @@
+{
+  "runtime": {
+    "serverInstanceId": "2026-10-16T03:05:17.026530462Z",
+    "image": "sha256:3f4545df534b26654e12aec95f3fc56bb272839363416afda3e6af8168c8ee95",
+    "imageTag": "sha256:3f4545df534b26654e12aec95f3fc56bb272839363416afda3e6af8168c8ee95",
+    "sourceSHA256": "659fbc83a5fb18e67ed1b0797dad69d2273d3ecf25ab10817b2a9515e1e32f65",
+    "platformManifest": "sha256:cce376c20645f171b06e6dca5af60b82c606e814a523c3f6c0d2c7fda2c30006",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "crash-monitor.js",
+      "crash-monitor.css",
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "preflight": {
+    "image": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
+    "health": "healthy",
+    "sessions": 14,
+    "running": 0,
+    "nonterminal": 0,
+    "queued": 0,
+    "historyBackupSHA256": "3fe1e6575879329380742daa363bf41537cbfd15c49b1c4140fe1b9206713f51"
+  },
+  "nativeNormalWorkbench": {
+    "safeReloadPromptEmptyAndNoTextChild": true,
+    "noUnexpectedErrorNoticeOnStartup": true,
+    "systemLogsDiagnosticEntryVisible": true,
+    "diagnosticDialogOpens": true,
+    "emptyRecordMessageVisible": true,
+    "copyDisabledWithoutRecord": true,
+    "noProductionFaultInjected": true,
+    "settingsClosedAndOriginalAppearanceGroupRestored": true,
+    "backgroundOff22Unchanged": true,
+    "originalSceneAndTabsPreserved": true
+  },
+  "nativeNormalScreenshotSHA256": "0500952fd2cc50b8e932e5776f4e0a7c951e14473c49ff6f6c19cf0f6f7a95c8",
+  "full": "running exec session54311; do not reuse aurora receipt",
+  "main": "pending",
+  "receivingDeviceImport": "not_run"
+}

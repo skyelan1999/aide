@@ -21,3 +21,11 @@ Final focused Go race passed3.127s, including real HTTP roundtrip, prepared down
 ## Offline candidate
 
 Image sha256:3f4545df534b26654e12aec95f3fc56bb272839363416afda3e6af8168c8ee95, build2bbc5d63b4c06ff36e4b80dd6a312d25e18ab2bb, source SHA 659fbc83a5fb18e67ed1b0797dad69d2273d3ecf25ab10817b2a9515e1e32f65. Complete offline bundle 706082863 bytes, SHA-256 5d0f8bfb64a532402a17d05f7071852652bef8d1e4924e39b32b5b3d526195ec. Checksums, image tags, license/launcher consistency and actual local import passed; receiving device untested. See [bundle evidence](crash-diagnostics-bundle-proof.json).
+
+## Local normal-runtime acceptance
+
+Fresh idle preflight and designated start.command updated local9999 to3f4545df534b. Health and instance identity pass;14 HTTP assets including monitor JS/CSS exactly match source. Settings/source/auth/all session bytes, mounts and workspace configuration remain exact.
+
+Native Safari reused the original workbench after verifying an empty prompt. No unexpected error notice appeared. Settings / System logs now opens Crash and error diagnostics; the healthy page correctly shows no incident and disables copy. Closed diagnostics, returned Settings to Appearance and closed Settings; background off22 and original scene/tabs remain. No deliberate production fault or model call. See [normal runtime proof](crash-diagnostics-runtime-proof.json); isolated actual errors/native clipboard evidence is separate.
+
+Fresh full90 is running in exec session54311 on fixed primary-checkout inputs. No source edits or branch switches during this full. Main gate/push is pending; previous aurora full is not reused.

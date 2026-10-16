@@ -7841,11 +7841,12 @@
     "task": "crash-diagnostics-20261016",
     "request": "Add crash detection and diagnostic code display",
     "status": "in_progress",
-    "summary": "Early page/asset/promise diagnostics, bounded metadata, instance-aware liveness and request panic isolation implemented. Frozen focused JS/quick88/Go race3.127s plus isolated browser/native copy pass. Candidate/runtime/full/main pending.",
+    "summary": "Early diagnostics and typed panic isolation implemented; focused JS/quick88/Go race3.127s, isolated fault UI/native clipboard, offline local import and actual9999 normal diagnostic entry/data preservation pass. Runtime3f4545df healthy; full90 session54311 and main pending.",
     "evidence": [
       "docs/architecture/crash-diagnostics.md",
       "docs/reviews/2026-10-16/crash-diagnostics.md",
       "docs/reviews/2026-10-16/crash-diagnostics-browser-proof.json"
-    ]
+    ],
+    "runtimeProof": "docs/reviews/2026-10-16/crash-diagnostics-runtime-proof.json"
   }
 }
