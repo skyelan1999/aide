@@ -1,0 +1,19 @@
+{
+  "enabled": true,
+  "localDataPreserved": true,
+  "newToolCallable": true,
+  "oldCodeBackedUp": true,
+  "packageSHA256": "24a8982afaccb07fecab832c48ee4e1556e40e09c650585075cb85750319c1ec",
+  "registryBackedUp": true,
+  "rememberedSource": "https://github.com/skyelan1999/aide/tree/main/plugins/current-time",
+  "settingsPreserved": true,
+  "version": "1.0.0",
+  "status": "pass",
+  "environment": "isolated full workbench in native Safari; synthetic writable data; actual public GitHub download",
+  "initialVersion": "0.9.0",
+  "privateSourceRejected": true,
+  "tabsCreated": 0,
+  "productionPluginInputsUnchanged": true,
+  "mainRuntime": "pending",
+  "fullMainGate": "pending"
+}

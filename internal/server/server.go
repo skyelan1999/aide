@@ -479,6 +479,9 @@ type App struct {
 	version                   string
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
+	pluginLifecycle           sync.Mutex
+	pluginUpgradeMu           sync.Mutex
+	pluginUpdateClient        *http.Client
 	pluginCalls               pluginCallQueues
 	pluginResources           pluginResourceQueue
 	pluginSurface             []byte
@@ -1437,6 +1440,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
 	mux.HandleFunc("PUT /api/plugins/{id}/settings", a.updatePluginSettings)
+	mux.HandleFunc("POST /api/plugins/{id}/upgrade", a.upgradePlugin)
 	mux.HandleFunc("GET /api/file/history", a.markdownHistoryAPI)
 	mux.HandleFunc("GET /api/file/git-history", a.fileGitHistoryAPI)
 	mux.HandleFunc("GET /api/file/history/backup", a.markdownBackupAPI)

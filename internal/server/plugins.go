@@ -48,6 +48,10 @@ type PluginManifest struct {
 	Settings       map[string]any `json:"settings,omitempty"`
 	SettingsSchema map[string]any `json:"settingsSchema,omitempty"`
 	InstalledAt    string         `json:"installedAt"`
+	UpdateURL      string         `json:"updateURL,omitempty"`
+	PackageSHA256  string         `json:"packageSHA256,omitempty"`
+	UpdatedAt      string         `json:"updatedAt,omitempty"`
+	UpgradeBackup  string         `json:"upgradeBackup,omitempty"`
 }
 
 type pluginRegistry struct {
@@ -70,6 +74,9 @@ func (a *App) loadPlugins() error {
 	}
 	if err := json.Unmarshal(b, &a.pluginRegistry); err != nil {
 		return fmt.Errorf("解析 plugins/registry.json: %w", err)
+	}
+	if err := a.recoverPluginUpgrades(); err != nil {
+		return err
 	}
 	return a.installBundledControlPlugins(os.Getenv("AIDE_BUILTIN_PLUGINS"))
 }
@@ -255,6 +262,7 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 			"id": p.ID, "name": p.Name, "description": p.Description, "version": p.Version,
 			"author": p.Author, "enabled": p.Enabled, "installedAt": p.InstalledAt,
 			"error": a.pluginError(p.ID), "settings": pluginSettingsOrEmpty(p.Settings),
+			"updateURL": pluginUpdateSource(p), "updatedAt": p.UpdatedAt, "upgradeBackup": p.UpgradeBackup,
 			"settingsSchema": a.pluginSettingsSchema(p.ID, p.SettingsSchema),
 		})
 	}
@@ -310,6 +318,8 @@ func pluginSettingsOrEmpty(settings map[string]any) map[string]any {
 
 // updatePluginSettings saves non-secret, workspace-local settings for one plugin.
 func (a *App) updatePluginSettings(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	var in struct {
 		Settings map[string]any `json:"settings"`
 	}
@@ -385,6 +395,8 @@ func (a *App) pluginError(id string) string {
 }
 
 func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	var in struct {
 		ID          string `json:"id"`
 		Name        string `json:"name"`
@@ -473,9 +485,102 @@ func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 201, map[string]any{"id": in.ID, "name": in.Name, "enabled": true, "error": errText})
 }
 
+func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
+	zr, err := zip.NewReader(bytes.NewReader(raw), int64(len(raw)))
+	if err != nil {
+		return PluginManifest{}, nil, fmt.Errorf("插件 ZIP 包无法读取: %w", err)
+	}
+	if len(zr.File) == 0 || len(zr.File) > maxPluginFiles {
+		return PluginManifest{}, nil, fmt.Errorf("插件包文件数必须为 1–%d", maxPluginFiles)
+	}
+	files := make(map[string][]byte, len(zr.File))
+	manifestPath := ""
+	var expanded int64
+	for _, entry := range zr.File {
+		name := strings.ReplaceAll(entry.Name, "\\", "/")
+		if entry.FileInfo().IsDir() {
+			continue
+		}
+		if entry.Mode()&os.ModeSymlink != 0 || name == "" || strings.HasPrefix(name, "/") || pathpkg.Clean(name) != name || strings.Contains(name, ":") {
+			return PluginManifest{}, nil, errors.New("插件包包含不安全路径")
+		}
+		for _, part := range strings.Split(name, "/") {
+			if part == "" || part == "." || part == ".." || strings.HasPrefix(part, ".") {
+				return PluginManifest{}, nil, errors.New("插件包包含不允许的路径")
+			}
+		}
+		if strings.HasPrefix(name, "__MACOSX/") || pathpkg.Base(name) == ".DS_Store" {
+			continue
+		}
+		if _, duplicate := files[name]; duplicate {
+			return PluginManifest{}, nil, fmt.Errorf("插件包存在重复文件: %s", name)
+		}
+		if entry.UncompressedSize64 > 16<<20 || expanded+int64(entry.UncompressedSize64) > maxPluginExpanded {
+			return PluginManifest{}, nil, errors.New("插件包解压后超过限制（单文件 16 MiB，合计 64 MiB）")
+		}
+		reader, openErr := entry.Open()
+		if openErr != nil {
+			return PluginManifest{}, nil, openErr
+		}
+		contents, readErr := io.ReadAll(io.LimitReader(reader, int64(entry.UncompressedSize64)+1))
+		closeErr := reader.Close()
+		if readErr != nil || closeErr != nil || uint64(len(contents)) != entry.UncompressedSize64 {
+			return PluginManifest{}, nil, fmt.Errorf("插件包文件读取失败: %s", name)
+		}
+		expanded += int64(len(contents))
+		files[name] = contents
+		if pathpkg.Base(name) == "manifest.json" {
+			if manifestPath != "" {
+				return PluginManifest{}, nil, errors.New("插件包必须只有一个 manifest.json")
+			}
+			manifestPath = name
+		}
+	}
+	if manifestPath == "" {
+		return PluginManifest{}, nil, errors.New("插件包缺少 manifest.json")
+	}
+	root := pathpkg.Dir(manifestPath)
+	packageFiles := make(map[string][]byte, len(files))
+	for name, contents := range files {
+		rel := name
+		if root != "." {
+			if !strings.HasPrefix(name, root+"/") {
+				return PluginManifest{}, nil, fmt.Errorf("插件包内容必须位于同一目录: %s", name)
+			}
+			rel = strings.TrimPrefix(name, root+"/")
+		}
+		packageFiles[rel] = contents
+	}
+	var manifest PluginManifest
+	manifestBytes := packageFiles["manifest.json"]
+	if len(manifestBytes) == 0 || json.Unmarshal(manifestBytes, &manifest) != nil {
+		return PluginManifest{}, nil, errors.New("插件 manifest.json 无效")
+	}
+	if !pluginIDPattern.MatchString(manifest.ID) || strings.TrimSpace(manifest.Name) == "" || len([]rune(manifest.Name)) > 32 {
+		return PluginManifest{}, nil, errors.New("manifest 必须包含合法 id 和 1–32 字的 name")
+	}
+	main := strings.ReplaceAll(manifest.Main, "\\", "/")
+	if main == "" || strings.HasPrefix(main, "/") || pathpkg.Clean(main) != main || !strings.HasSuffix(main, ".js") || strings.Contains(main, ":") {
+		return PluginManifest{}, nil, errors.New("manifest.main 必须是插件包内的相对 .js 路径")
+	}
+	for _, part := range strings.Split(main, "/") {
+		if part == "" || part == "." || part == ".." || strings.HasPrefix(part, ".") {
+			return PluginManifest{}, nil, errors.New("manifest.main 路径无效")
+		}
+	}
+	code := packageFiles[main]
+	if len(code) == 0 || len(code) > maxPluginCode {
+		return PluginManifest{}, nil, errors.New("插件入口缺失或超过 256 KiB")
+	}
+	manifest.Main = main
+	return manifest, packageFiles, nil
+}
+
 // uploadPluginBundle installs a self-contained ZIP package with a manifest, JS
 // entry point, and optional resources such as Python scripts. It never runs pip.
 func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	r.Body = http.MaxBytesReader(w, r.Body, maxPluginBundle)
 	if err := r.ParseMultipartForm(2 << 20); err != nil {
 		fail(w, 400, fmt.Errorf("插件包上传失败或超过 24 MiB: %w", err))
@@ -495,109 +600,13 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("插件 ZIP 包超过 24 MiB"))
 		return
 	}
-	zr, err := zip.NewReader(bytes.NewReader(raw), int64(len(raw)))
+	manifest, packageFiles, err := parsePluginBundle(raw)
 	if err != nil {
-		fail(w, 400, fmt.Errorf("插件 ZIP 包无法读取: %w", err))
+		fail(w, 400, err)
 		return
 	}
-	if len(zr.File) == 0 || len(zr.File) > maxPluginFiles {
-		fail(w, 400, fmt.Errorf("插件包文件数必须为 1–%d", maxPluginFiles))
-		return
-	}
-	files := make(map[string][]byte, len(zr.File))
-	manifestPath := ""
-	var expanded int64
-	for _, entry := range zr.File {
-		name := strings.ReplaceAll(entry.Name, "\\", "/")
-		if entry.FileInfo().IsDir() {
-			continue
-		}
-		if entry.Mode()&os.ModeSymlink != 0 || name == "" || strings.HasPrefix(name, "/") || pathpkg.Clean(name) != name || strings.Contains(name, ":") {
-			fail(w, 400, errors.New("插件包包含不安全路径"))
-			return
-		}
-		for _, part := range strings.Split(name, "/") {
-			if part == "" || part == "." || part == ".." || strings.HasPrefix(part, ".") {
-				fail(w, 400, errors.New("插件包包含不允许的路径"))
-				return
-			}
-		}
-		if strings.HasPrefix(name, "__MACOSX/") || pathpkg.Base(name) == ".DS_Store" {
-			continue
-		}
-		if _, duplicate := files[name]; duplicate {
-			fail(w, 400, fmt.Errorf("插件包存在重复文件: %s", name))
-			return
-		}
-		if entry.UncompressedSize64 > 16<<20 || expanded+int64(entry.UncompressedSize64) > maxPluginExpanded {
-			fail(w, 400, errors.New("插件包解压后超过限制（单文件 16 MiB，合计 64 MiB）"))
-			return
-		}
-		reader, openErr := entry.Open()
-		if openErr != nil {
-			fail(w, 400, openErr)
-			return
-		}
-		contents, readErr := io.ReadAll(io.LimitReader(reader, int64(entry.UncompressedSize64)+1))
-		closeErr := reader.Close()
-		if readErr != nil || closeErr != nil || uint64(len(contents)) != entry.UncompressedSize64 {
-			fail(w, 400, fmt.Errorf("插件包文件读取失败: %s", name))
-			return
-		}
-		expanded += int64(len(contents))
-		files[name] = contents
-		if pathpkg.Base(name) == "manifest.json" {
-			if manifestPath != "" {
-				fail(w, 400, errors.New("插件包必须只有一个 manifest.json"))
-				return
-			}
-			manifestPath = name
-		}
-	}
-	if manifestPath == "" {
-		fail(w, 400, errors.New("插件包缺少 manifest.json"))
-		return
-	}
-	root := pathpkg.Dir(manifestPath)
-	packageFiles := make(map[string][]byte, len(files))
-	for name, contents := range files {
-		rel := name
-		if root != "." {
-			if !strings.HasPrefix(name, root+"/") {
-				fail(w, 400, fmt.Errorf("插件包内容必须位于同一目录: %s", name))
-				return
-			}
-			rel = strings.TrimPrefix(name, root+"/")
-		}
-		packageFiles[rel] = contents
-	}
-	var manifest PluginManifest
-	manifestBytes := packageFiles["manifest.json"]
-	if len(manifestBytes) == 0 || json.Unmarshal(manifestBytes, &manifest) != nil {
-		fail(w, 400, errors.New("插件 manifest.json 无效"))
-		return
-	}
-	if !pluginIDPattern.MatchString(manifest.ID) || strings.TrimSpace(manifest.Name) == "" || len([]rune(manifest.Name)) > 32 {
-		fail(w, 400, errors.New("manifest 必须包含合法 id 和 1–32 字的 name"))
-		return
-	}
-	main := strings.ReplaceAll(manifest.Main, "\\", "/")
-	if main == "" || strings.HasPrefix(main, "/") || pathpkg.Clean(main) != main || !strings.HasSuffix(main, ".js") || strings.Contains(main, ":") {
-		fail(w, 400, errors.New("manifest.main 必须是插件包内的相对 .js 路径"))
-		return
-	}
-	for _, part := range strings.Split(main, "/") {
-		if part == "" || part == "." || part == ".." || strings.HasPrefix(part, ".") {
-			fail(w, 400, errors.New("manifest.main 路径无效"))
-			return
-		}
-	}
-	code := packageFiles[main]
-	if len(code) == 0 || len(code) > maxPluginCode {
-		fail(w, 400, errors.New("插件入口缺失或超过 256 KiB"))
-		return
-	}
-	if _, err := a.validatePluginCode(string(code)); err != nil {
+	main := manifest.Main
+	if _, err := a.validatePluginCode(string(packageFiles[main])); err != nil {
 		fail(w, 400, err)
 		return
 	}
@@ -672,6 +681,8 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	var in struct {
 		Enabled bool `json:"enabled"`
 	}
@@ -729,6 +740,8 @@ func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	id := r.PathValue("id")
 	// a.mu 内只做注册表快速删除与持久化；daemon 停止与 surface 聚合（慢进程）放锁外。
 	a.mu.Lock()
@@ -784,6 +797,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	a.mu.Lock()
 	scope := a.pluginsPath
 	epoch, workspace := a.wsRevision, a.workPath
+	packageDigest := a.pluginPackageDigestLocked(pluginID)
 	footprint := a.pluginFootprintLocked(pluginID, toolName, args)
 	a.mu.Unlock()
 	if err := parent.Err(); err != nil {
@@ -800,7 +814,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	}
 	defer release()
 	a.mu.Lock()
-	changed := a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace || !reflect.DeepEqual(footprint, a.pluginFootprintLocked(pluginID, toolName, args))
+	changed := packageDigest != a.pluginPackageDigestLocked(pluginID) || a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace || !reflect.DeepEqual(footprint, a.pluginFootprintLocked(pluginID, toolName, args))
 	enabled := false
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.ID == pluginID {

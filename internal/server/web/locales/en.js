@@ -2723,3 +2723,24 @@ Object.assign(window.aideEnglish, {
   '装配包含只有线或点的零件，当前无法生成完整曲面预览。':'The assembly contains wire-only or point-only parts. A complete surface preview is unavailable.',
   '文件中没有可显示的 STEP 曲面。':'The file contains no displayable STEP surfaces.'
 });
+
+Object.assign(window.aideEnglish, {
+  "升级中…": "Upgrading…",
+  "升级": "Upgrade",
+  "插件已是最新版本": "The plugin is already up to date",
+  "插件已升级：{0} → {1}": "Plugin upgraded: {0} → {1}",
+  "插件升级失败": "Plugin upgrade failed",
+  "插件升级：{0}": "Upgrade plugin: {0}",
+  "填写插件的 HTTPS ZIP 地址，成功升级后会记住。内置插件默认使用 AIDE 官方来源。": "Enter the plugin HTTPS ZIP URL. It is saved after a successful upgrade. Built-in plugins use the official AIDE source by default.",
+  "升级来源": "Upgrade source",
+  "SHA-256 校验（可选）": "SHA-256 verification (optional)",
+  "发布方提供的 SHA-256": "SHA-256 supplied by the publisher",
+  "保存来源并升级": "Save source and upgrade",
+  "正在下载、校验并替换插件…": "Downloading, validating and replacing the plugin…",
+  "从已配置来源在线升级": "Upgrade online from the configured source",
+  "设置来源并在线升级": "Set a source and upgrade online"
+});
+
+Object.assign(window.aideEnglish, {'插件已升级，列表刷新失败，请手动刷新':'The plugin was upgraded, but the list could not refresh. Refresh it manually.','升级请求未完成，请刷新列表核对状态':'The upgrade request did not complete. Refresh the list to check its status.'});
+
+Object.assign(window.aideEnglish, {'插件内容已更新，版本 {0}':'Plugin contents updated, version {0}','已有插件正在升级，请稍后重试':'Another plugin is being upgraded. Try again shortly.','升级包缺少版本号':'The upgrade package has no version.','升级包版本低于当前版本，未执行替换':'The package version is older than the installed version. The plugin was not replaced.','请先填写插件的 HTTPS ZIP 升级地址':'Enter the plugin HTTPS ZIP upgrade URL first.','插件下载失败，请检查网络和升级地址':'Plugin download failed. Check the network and upgrade URL.','升级失败，已恢复原插件':'Upgrade failed. The previous plugin was restored.','升级包插件 ID 与当前插件不一致':'The upgrade package plugin ID does not match the installed plugin.','插件包 SHA-256 校验不通过，原插件未替换':'The package SHA-256 verification failed. The installed plugin was not replaced.','升级地址不能指向本机或私有网络':'The upgrade URL cannot point to a local or private network address.','升级地址必须是不含登录凭据的 HTTPS 地址':'Use an HTTPS upgrade URL without login credentials.'});

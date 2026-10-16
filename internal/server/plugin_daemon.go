@@ -261,6 +261,7 @@ func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[st
 	}
 	// 重新进入运行：重置 stopCh 与退避
 	p.mu.Lock()
+	p.pluginPath = pluginMain
 	p.stopCh = make(chan struct{})
 	readyCh := make(chan struct{})
 	p.readyCh = readyCh
@@ -757,6 +758,8 @@ func (a *App) listDaemons(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) daemonStartHandler(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	id := r.PathValue("id")
 	// 仅在 a.mu 内做注册表快速校验与入口路径快照；慢进程（等待 node 宿主 ready，最长 15s）放锁外执行。
 	a.mu.Lock()
@@ -774,6 +777,8 @@ func (a *App) daemonStartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) daemonStopHandler(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	id := r.PathValue("id")
 	// 仅在 a.mu 内做注册表快速校验；慢停止（等待进程退出/宽限后 kill）放锁外执行。
 	a.mu.Lock()
@@ -788,6 +793,8 @@ func (a *App) daemonStopHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) daemonRestartHandler(w http.ResponseWriter, r *http.Request) {
+	a.pluginLifecycle.Lock()
+	defer a.pluginLifecycle.Unlock()
 	id := r.PathValue("id")
 	// 仅在 a.mu 内做注册表快速校验与入口路径快照；慢重启（Stop+Start）放锁外执行。
 	a.mu.Lock()

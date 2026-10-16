@@ -608,6 +608,15 @@
         "sh",
         "-n",
         "docker/cad/install.sh"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/plugin-upgrade.js"
+      ],
+      [
+        "node",
+        "scripts/plugin-upgrade.test.cjs"
       ]
     ],
     "full": [

@@ -6551,6 +6551,11 @@ function openPluginSettings(plugin) {
 $('plugin-settings-rendered').onclick = () => setPluginSettingsMode('rendered');
 $('plugin-settings-raw').onclick = () => setPluginSettingsMode('raw');
 
+function pluginUpgradeServices(){return {api,refresh:loadPluginsPanel,toast,t,el};}
+const pluginUpgradeSourceButton=el('button','quiet',t('升级来源'));
+pluginUpgradeSourceButton.type='button';pluginUpgradeSourceButton.dataset.i18n='升级来源';
+pluginUpgradeSourceButton.onclick=()=>{const plugin=pluginSettingsState.plugin;if(!plugin)return;$('plugin-settings-dialog').close();window.AidePluginUpgrade.openSource(plugin,pluginUpgradeServices());};
+$('plugin-settings-form').querySelector('.dialog-actions').prepend(pluginUpgradeSourceButton);
 function renderPluginList() {
   const query = $('plugin-search').value.trim().toLowerCase();
   const host = $('plugin-list');
@@ -6561,7 +6566,7 @@ function renderPluginList() {
   for (const p of matched) {
     const card = el('div', 'plugin-card' + (p.enabled ? '' : ' disabled'));
     const head = el('div', 'plugin-card-head');
-    head.append(el('span', 'plugin-name', trPlugin(p.name)), el('span', 'plugin-badge', p.id + (p.version ? ' · v' + p.version : '')));
+    head.append(el('span', 'plugin-name', trPlugin(p.name)), el('span', 'plugin-badge', p.id));
     const settings = el('button', 'plugin-settings-button', '⚙ ' + t("设置"));
     settings.type = 'button'; settings.title = t("插件设置");
     settings.onclick = () => openPluginSettings(p);
@@ -6581,7 +6586,7 @@ function renderPluginList() {
       await loadPluginsPanel();
       toast(p.enabled ? t("已停用插件：") + p.name : t("已启用插件：") + p.name);
     });
-    foot.append(el('small', '', p.enabled ? t("启用") : t("停用")), toggle);
+    foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("启用") : t("停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
     card.append(foot);
     host.append(card);
   }
@@ -9507,6 +9512,7 @@ window.AideSessionModelSelection?.install({state, api, t, changed: () => {
 window.AideParallelChat?.install({select: $('chat-parallelism'), mode: () => state.mode, assistant: () => state.session?.kind === 'assistant', t});
 
 window.addEventListener('aide:language', () => {
+  if(state.panel==='plugins')renderPluginList();
   window.AideParallelChat?.sync();
   clearStableMarkdownCache();
   const languageFocused = document.activeElement?.hasAttribute('data-language-button');

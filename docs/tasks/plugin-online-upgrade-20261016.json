@@ -1,0 +1,83 @@
+{
+  "id": "plugin-online-upgrade-20261016",
+  "request": "插件功能需要增加升级按钮，点击升级在线替换",
+  "baseline": "d71f0fa45813ab0dfe9b9f9b1a0042c7ea4b95f7",
+  "initial_status": "",
+  "acceptance": [
+    "Each plugin has an Upgrade button; configured sources upgrade directly without upload. Unknown sources can be entered once; official plugin IDs default to the official immutable GitHub snapshot.",
+    "Bounded authenticated download, safe ZIP and ID validation, optional checksum, retained settings/enablement/data/dependencies and old files/registry rollback set. Failed validation/start/persistence restores the prior plugin; interrupted swaps recover at startup.",
+    "Upgrade waits for active tool calls, serializes lifecycle mutations, prevents duplicate upgrades and invalidates queued calls on replaced code. Actual API, real Safari UI and full main regression required."
+  ],
+  "scope": [
+    "internal/server/plugin_upgrade.go",
+    "internal/server/plugin_upgrade_test.go",
+    "internal/server/plugins.go",
+    "internal/server/plugin_daemon.go",
+    "internal/server/server.go",
+    "internal/server/web",
+    "scripts",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests an upgrade button for online replacement. Optional source clarification pending; default official IDs use AIDE GitHub, custom plugins use manifest/user HTTPS ZIP URL.",
+      "evidence": [
+        "docs/tasks/plugin-online-upgrade-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse ZIP validation; download before exclusive plugin resource admission. Copy bounded local state, probe staged candidate/dependencies, journal rename swap, preserve enablement/settings and rollback set. Recover interrupted swaps on startup. UI busy state and source dialog.",
+      "evidence": [
+        "internal/server/plugin_upgrade.go",
+        "internal/server/web/plugin-upgrade.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Shared ZIP validation, HTTPS download and pinned official snapshot, strict IP policy with fixed-GitHub TUN exception, staged full-state overlay, exclusive call admission, lifecycle serialization, daemon rollback, durable recovery journal, queued-code digest guard and source/busy UI implemented.",
+      "evidence": [
+        "internal/server/plugin_upgrade.go",
+        "internal/server/plugins.go",
+        "internal/server/plugin_daemon.go",
+        "internal/server/web/plugin-upgrade.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "101quick structured status pass, focused plugin/bundle/daemon race39.966s pass before final backup-nonce/journal-size guards. Actual native Safari click upgrades isolated0.9.0 to official1.0.0 and newtool callable; original settings/data/rollback retained. Main runtime/finalfull pending.",
+      "evidence": [
+        "internal/server/plugin_upgrade_test.go",
+        "scripts/plugin-upgrade.test.cjs",
+        "internal/server/plugin_upgrade_browser_fixture_test.go",
+        "docs/reviews/2026-10-16/evidence/plugin-online-upgrade-live.png",
+        "docs/reviews/2026-10-16/evidence/plugin-upgrade-source.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD panel capability, architecture and protocol describe sources, limits, retained state, journal/recovery and unsupported private/authenticated download. Final delivery receipt pending.",
+      "evidence": [
+        "docs/PRD.md",
+        "docs/architecture.md",
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior incremental main/local start.command/offline package updates authorized. No version/tag/Release; preserve original sessions/config and existing plugin state.",
+  "rollback": "Keep previous DC image/offline package. Plugin swap retains old directory and registry snapshot; startup journal recovers an uncommitted swap.",
+  "handoff": "Build source candidate through start.command, reuse Safari original9999 and verify final layout/source controls. Protected original plugin inputs snapshotted. Do not upgrade original source plugins during UI acceptance; isolated real-network fixture already passed. Then offline package/fullmain/releasecheck/push. No version/tag/Release."
+}

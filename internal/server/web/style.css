@@ -1732,3 +1732,7 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 /* Small/zoomed viewports keep metrology reachable below the minimum CAD canvas. */
 .step-viewer{overflow:auto}.step-viewer>.stl-canvas{flex-shrink:0}
 .step-viewer .cad-hint{color:var(--text);opacity:.82}.cad-tools .stl-ctrl,.cad-tools .cad-pick-mode{color:var(--text)}
+
+.plugin-upgrade-button{margin-left:auto;min-height:32px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-alt);color:var(--text);font:inherit;font-size:12px;cursor:pointer}.plugin-upgrade-button:disabled{opacity:.6;cursor:wait}.plugin-card-foot{flex-wrap:wrap;gap:8px}#plugin-upgrade-dialog input{box-sizing:border-box;width:100%;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg-sub);color:var(--text);font:inherit}#plugin-upgrade-dialog details{margin-top:12px}#plugin-upgrade-dialog .dialog-actions{flex-wrap:wrap}
+
+.plugin-card-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:7px;row-gap:5px}.plugin-card-head .plugin-name{grid-column:1;grid-row:1;min-width:0;overflow-wrap:anywhere}.plugin-card-head .plugin-badge{grid-column:1/-1;grid-row:2;justify-self:start;max-width:100%;box-sizing:border-box}.plugin-card-head .plugin-settings-button{grid-column:2;grid-row:1}.plugin-card-head .plugin-delete{grid-column:3;grid-row:1}.plugin-card-foot>small{min-width:0;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

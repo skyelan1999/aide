@@ -1,0 +1,20 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const buttons=[];const document={querySelectorAll:()=>buttons};const window={};
+vm.runInNewContext(fs.readFileSync('internal/server/web/plugin-upgrade.js','utf8'),{window,document});
+const api=window.AidePluginUpgrade;
+const t=(text,...args)=>text.replace(/\{(\d+)\}/g,(_,i)=>args[+i]);
+const el=(_tag,_class,text)=>({dataset:{},textContent:text});
+(async()=>{
+ let calls=0,refreshes=0,resolve,fail=false;const messages=[];
+ const services={t,el,toast:text=>messages.push(text),refresh:async()=>{refreshes++;},api:async(path,options)=>{calls++;assert.equal(path,'/plugins/a%2Fb/upgrade');assert.equal(options.method,'POST');assert.deepEqual(JSON.parse(options.body),{});if(fail){const e=Error('已恢复原插件');e.status=400;throw e;}return new Promise(r=>resolve=r);}};
+ const plugin={id:'a/b',name:'Fixture',version:'1.0.0',updateURL:'https://example.com/latest.zip'};
+ const button=api.button(plugin,services);buttons.push(button);assert.equal(button.textContent,'升级');
+ const first=api.upgrade(plugin,services);assert.equal(button.disabled,true);await api.upgrade(plugin,services);assert.equal(calls,1);resolve({version:'2.0.0'});assert.equal(await first,true);assert.equal(button.disabled,false);assert.equal(refreshes,1);assert(messages.at(-1).includes('1.0.0 → 2.0.0'));
+ fail=true;await assert.rejects(api.upgrade(plugin,services),/已恢复原插件/);assert.equal(button.disabled,false);assert.equal(refreshes,1);
+ fail=false;const unchanged=api.upgrade(plugin,services);resolve({unchanged:true});await unchanged;assert.equal(messages.at(-1),'插件已是最新版本');
+ services.refresh=async()=>{throw Error('refresh offline');};const installed=api.upgrade(plugin,services);resolve({version:'3.0.0'});assert.equal(await installed,true);assert.equal(messages.at(-1),'插件已升级，列表刷新失败，请手动刷新');
+ services.api=async()=>{throw Error('network lost');};await assert.rejects(api.upgrade(plugin,services),/刷新列表核对状态/);assert.equal(button.disabled,false);
+ const app=fs.readFileSync('internal/server/web/app.js','utf8'),index=fs.readFileSync('internal/server/web/index.html','utf8');assert(app.includes('window.AidePluginUpgrade.button(p,pluginUpgradeServices())'));assert(index.indexOf('/plugin-upgrade.js')<index.indexOf('/app.js'));
+ console.log('PASS plugin upgrade: direct request, duplicate guard, busy reset, failure, unchanged, committed-refresh failure and transport uncertainty');
+})().catch(error=>{console.error(error);process.exitCode=1;});
