@@ -1,0 +1,65 @@
+{
+  "status": "partial",
+  "runtimeImage": "ab8df956177b",
+  "nativeSafariAuthenticated": true,
+  "realProjectSourceReadOnly": true,
+  "aiVisibilityOff": true,
+  "partialIndexObserved": [
+    {
+      "nodes": 510,
+      "files": 480,
+      "directories": 30,
+      "pendingDirectories": 58,
+      "capacity": 800
+    },
+    {
+      "nodes": 1124,
+      "files": 1088,
+      "directories": 36,
+      "pendingDirectories": 56,
+      "capacity": 1600
+    },
+    {
+      "nodes": 1497,
+      "files": 1408,
+      "directories": 89,
+      "pendingDirectories": 28,
+      "capacity": 1600
+    }
+  ],
+  "boundedRangeEventuallyObserved": {
+    "nodes": 2077,
+    "files": 1944,
+    "directories": 133,
+    "capacity": 3200,
+    "maximumDepth": 7,
+    "textPrefixBytes": 8192
+  },
+  "originalSearch": {
+    "query": "aide",
+    "mode": "literal original",
+    "range": "owned temporary project source",
+    "locator": "text line 51",
+    "firstBatchScanned": 14,
+    "indexedDocumentCount": 295,
+    "moreAvailable": true,
+    "sameQuoteInActualFile": true,
+    "fileReadOnly": true,
+    "saveAndAutosaveDisabled": true
+  },
+  "nativeQuickPreview": "failed: Safari window.open returned no window and app requested popup permission",
+  "sameExistingTabFileView": "pass; distinct from quick-preview acceptance",
+  "lineNavigation": "not proven: source preview URL did not carry a line field",
+  "afterSourceRemoval": {
+    "removedSourceZeroNodesExplicit": true,
+    "staleSearchResultStillVisible": true,
+    "sourceConfigurationRestoredByteForByte": true,
+    "protectedAuthSettingsSessionsAndMountsPreserved": true
+  },
+  "cleanup": {
+    "noTabsAdded": true,
+    "originalWorkbenchReturned": true,
+    "originalNodeModeEmptyQueryAndSelectedNodeRestored": true
+  },
+  "externalModelOrVectorCalls": false
+}

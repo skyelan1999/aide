@@ -183,5 +183,13 @@
     "pushedMain": "05ba4d20db9b93f6836618c4a85163ca24ce6b95",
     "releaseCheck": "pass",
     "remoteHeadVerified": true
+  },
+  "native_followup_20261016": {
+    "status": "in_progress",
+    "evidence": [
+      "docs/reviews/2026-10-16/knowledge-current-project-native.md",
+      "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
+    ],
+    "observed": "Actual source hit is readable in normal existing-tab file view, but native map quick-preview is blocked by Safari popup restrictions. No popup setting changed. Removed-source search result stale state and absent line parameter also remain."
   }
 }

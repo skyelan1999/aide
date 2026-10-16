@@ -484,14 +484,16 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "本地5000文件和FTP/FTPS选定目录续扫/重启已有证据；HTTP单资源、MCP能力说明、SMB单资源也已补真实服务链。",
+        "latestScopedEvidence": "本地5000文件和FTP/FTPS选定目录续扫/重启已有证据；HTTP单资源、MCP能力说明、SMB单资源也已补真实服务链。 Current authenticated Safari directly observed actual external AIDE source partial nodes/capacity growth, bounded-range completion, literal original-text hits and matching read-only source file. Temporary source and protected state restored.",
         "evidence": [
           "docs/reviews/2026-10-15/source-index-live.md",
           "docs/reviews/2026-10-15/ftps-index-latency.md",
           "docs/reviews/2026-10-15/http-mcp-index-live.md",
-          "docs/reviews/2026-10-15/smb-index-live.md"
+          "docs/reviews/2026-10-15/smb-index-live.md",
+          "docs/reviews/2026-10-16/knowledge-current-project-native.md",
+          "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
         ],
-        "remaining": "当前完整星图对真实目录的首屏、逐批可见、优先范围/预算/覆盖提示仍需联测。单资源HTTP/MCP/SMB证据不能证明其远端目录扫描；大远程库与服务变体属于单列边界。"
+        "remaining": "Current actual local project incremental display/capacity/coverage labels now directly observed; full first-open timing, priority-range controls, arbitrary large remote directories and protocol variants remain unproven. Removed-source original-search results stayed visible until mode/query change and require repair."
       }
     },
     {
@@ -522,13 +524,15 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "FTP/FTPS、HTTP/MCP说明和SMB的字面检索、原文指纹/身份及重启后定位已有实际协议证据。",
+        "latestScopedEvidence": "FTP/FTPS、HTTP/MCP说明和SMB的字面检索、原文指纹/身份及重启后定位已有实际协议证据。 Current authenticated Safari directly observed actual external AIDE source partial nodes/capacity growth, bounded-range completion, literal original-text hits and matching read-only source file. Temporary source and protected state restored.",
         "evidence": [
           "docs/reviews/2026-10-15/source-index-live.md",
           "docs/reviews/2026-10-15/http-mcp-index-live.md",
-          "docs/reviews/2026-10-15/smb-index-live.md"
+          "docs/reviews/2026-10-15/smb-index-live.md",
+          "docs/reviews/2026-10-16/knowledge-current-project-native.md",
+          "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
         ],
-        "remaining": "当前认证浏览器中查询到原文/位置的完整链仍需验证；用户主机/协议变体另列。真实向量提供商按用户要求暂缓，不擅自调用。"
+        "remaining": "Current authenticated literal-search hit and matching read-only source body passed. Quick-preview popup was blocked; preview URL did not carry a line field; removed-source search snippets stayed visible. Repair and native verification remain; user-host/protocol variants are separate, real vectors deferred."
       }
     },
     {
@@ -7935,5 +7939,13 @@
       "docs/reviews/2026-10-16/cad-complex-step-recovery.md"
     ],
     "originalGoal": "All twelve workstreams remain in progress; scoped runtime delivery is not completion. User-host SSH and native scenes, long-open and other explicit acceptance gaps remain."
+  },
+  "knowledge_current_project_native_20261016": {
+    "status": "partial",
+    "evidence": [
+      "docs/reviews/2026-10-16/knowledge-current-project-native.md",
+      "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
+    ],
+    "next": "After current scoped delivery gate: popup-independent same-page preview, structured document line location, removed-source result invalidation; then native Safari verification. Do not count existing-tab manual source navigation as a passed quick-preview click."
   }
 }
