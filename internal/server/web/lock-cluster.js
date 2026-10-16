@@ -164,7 +164,7 @@
     masterGen++;
     emit('role','master');
     masterLocked = !!inheritLocked;
-    localDismiss = localDismiss && !!inheritLocked && backendState?.gen === dismissGen;
+    localDismiss = localDismiss && backendState?.gen === dismissGen;
     masterFrom = tabId;
     clearT(joinTimer); joinTimer = null;
     clearT(electionTimer); electionTimer = null;
@@ -183,7 +183,7 @@
     masterFrom = from;
     masterGen = Number(gen) || 0;
     lastSeenMasterLocked = !!mLocked;
-    localDismiss = keepDismiss && !!mLocked;
+    localDismiss = keepDismiss;
     clearT(joinTimer); joinTimer = null;
     clearT(electionTimer); electionTimer = null;
     scheduleWatchdog();

@@ -100,7 +100,9 @@ function environment(){
  const failedScope=await failedSlave.lc.prepareUnlock();await failedSlave.lc.handleUnlockSuccess(failedScope,{locked:false,gen:f.server.gen});
  assert.equal(failedSlave.lc.effectiveLocked(),false,'valid identity receipt did not dismiss a failed peer lock');
  await f.advance(5500);assert.equal(failedSlave.lc.effectiveLocked(),false,'stale peer heartbeat resurrected a verified veil');
- f.server.failPut=false;await failedMaster.lc.requestLock();await f.advance(30);assert.equal(failedSlave.lc.effectiveLocked(),true,'new persisted lock must revoke verified dismissal');
+ failedMaster.close();await f.advance(1800);assert(failedSlave.lc.isMaster());
+ const revivedMaster=f.tab('/');await f.advance(1800);assert(failedSlave.lc.isSlave());assert.equal(failedSlave.lc.effectiveLocked(),false,'election dropped a verified dismissal at an unlocked authority generation');
+ f.server.failPut=false;await revivedMaster.lc.requestLock();await f.advance(30);assert.equal(failedSlave.lc.effectiveLocked(),true,'new persisted lock must revoke verified dismissal');
  // The app continuation must not hide a new lock arriving across its await.
  const app=fs.readFileSync('internal/server/web/app.js','utf8');
  const dismiss=app.match(/async function dismissAfterUnlock\([^]*?\n}/)[0],veil={hidden:false,classList:{remove(){}}};
