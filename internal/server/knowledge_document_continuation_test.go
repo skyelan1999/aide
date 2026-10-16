@@ -38,6 +38,15 @@ func TestKnowledgeDocumentContinuation(t *testing.T) {
 			t.Fatalf("bad batch bounds %+v", r)
 		}
 		for _, h := range r.Hits {
+			if batch == 0 && len(seen) == 0 {
+				verified, err := a.documentReference(context.Background(), g, h.File.ID, h.Locator, h.Offset, h.Hash)
+				if err != nil || verified.Line != 1 || verified.Hash != h.Hash {
+					t.Fatalf("source reference lost structured line/digest: %+v %v", verified, err)
+				}
+			}
+			if h.Line != 1 {
+				t.Fatalf("lost source line: %+v", h)
+			}
 			if seen[h.File.ID] {
 				t.Fatal("duplicate file across batches")
 			}
@@ -211,4 +220,20 @@ func containsPath(paths []string, target string) bool {
 		}
 	}
 	return false
+}
+
+func TestKnowledgeDocumentLineLocations(t *testing.T) {
+	raw := []byte("heading\r\n\r\n中文 anchor\r\nlast\n")
+	parsed, err := documentParse(context.Background(), raw, ".md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(parsed.Blocks) != 5 || parsed.Blocks[2].Line != 3 || parsed.Blocks[2].Text != "中文 anchor\r" {
+		t.Fatalf("source line mapping changed: %+v", parsed.Blocks)
+	}
+	for index, block := range parsed.Blocks {
+		if block.Line != index+1 {
+			t.Fatalf("wrong line for block %d: %+v", index, block)
+		}
+	}
 }

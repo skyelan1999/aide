@@ -1,0 +1,39 @@
+{
+  "status": "pass",
+  "scope": "Local ARM64 build and non-root shipped resource smoke only",
+  "code": "a4946c2e8f270c019a7868a1f5c1feed7aad4cf3",
+  "sourceSHA256": "199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c",
+  "image": "sha256:950bcbc2d79e0b3ef431cf54eee67623561ac0fba4634ed2828170b828ceb6ed",
+  "platform": "linux/arm64",
+  "buildNetwork": "none",
+  "buildAndVetExit": 0,
+  "resourceSmoke": {
+    "uid": 1000,
+    "readableFiles": 23,
+    "docxRoundTrip": true,
+    "network": "none",
+    "exit": 0
+  },
+  "productionImage": "sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204",
+  "productionReplaced": false,
+  "nativeSafari": "not_run for combined candidate",
+  "full": "running in existing session; no pass claim",
+  "packages": "not_generated for combined candidate",
+  "remotePublication": "not_run",
+  "amd64": {
+    "image": "sha256:79765161aef2eed8fdb5b0e777ffd42c3abeab8ed586aa192cc872d3107271a5",
+    "buildCommit": "cb48bbe6bd7beac7034a7b929de66ca7386c1d42",
+    "sourceSHA256": "199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c",
+    "buildNetwork": "none",
+    "buildAndVetExit": 0,
+    "resourceSmoke": {
+      "uid": 1000,
+      "readableFiles": 23,
+      "docxRoundTrip": true,
+      "network": "none",
+      "exit": 0,
+      "execution": "linux/amd64 under Docker emulation on arm64 host"
+    },
+    "windowsAcceptance": "user_owned_not_run"
+  }
+}

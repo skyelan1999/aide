@@ -1,0 +1,13 @@
+{
+  "status": "pass",
+  "profile": "full",
+  "checks": 106,
+  "allExitsZero": true,
+  "fingerprint": "e9628e3ba32a6994139593ca1543cfba0030f3032c5d29d5c0c8530625af2c02",
+  "receiptHead": "37c0d281c0b3939d602de569d6e3c3e6fd5089c9",
+  "time": "20261016T162210009156Z",
+  "serverRaceSeconds": 812.375,
+  "vet": true,
+  "nativeCAD": true,
+  "scope": "Final v67 implementation and frozen dual-architecture delivery index/metadata; scoped native/package evidence separate."
+}

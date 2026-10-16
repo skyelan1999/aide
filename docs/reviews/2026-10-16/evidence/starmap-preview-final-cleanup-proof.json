@@ -1,0 +1,18 @@
+{
+  "status": "pass",
+  "ownedUnpublishedSupersededArchivesRemoved": [
+    {
+      "name": "aide-0.1.17.0-RC2-linux-arm64-950bcbc2d79e-offline.tar.gz",
+      "bytes": 770912057,
+      "sha256": "29fc21893788bc58a061325dc9006d94d6a52a785b7a0f7c22648b16bc3158d3"
+    },
+    {
+      "name": "aide-0.1.17.0-RC2-linux-amd64-79765161aef2-offline.tar.gz",
+      "bytes": 774125880,
+      "sha256": "99936aa68d21e861db0f7a04b48a7e52eeb30bb6fd423fe99f002b09ddbfc1c6"
+    }
+  ],
+  "freedBytes": 1545037937,
+  "publishedRollbackAndFinalArchivesPreserved": true,
+  "userDataRemoved": false
+}

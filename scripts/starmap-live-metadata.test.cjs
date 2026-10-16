@@ -5,7 +5,7 @@ function harness(providedNodes){
  const els=new Map(),el=id=>{if(!els.has(id))els.set(id,{disabled:false,hidden:false,textContent:'',value:''});return els.get(id);};
  const nodes=providedNodes||[{id:'F1',name:'one.go',kind:'file',region:'workspace',root:'workspace',path:'one.go',text:'old text',readState:'pending',modified:'old',size:3,contentHash:'old-hash',x:.1,y:.2},{id:'F2',name:'two.go',kind:'file',region:'workspace',root:'workspace',path:'two.go',text:'stable',x:.3,y:.4}];
  const graph={workspace:'W',nodes,edges:[{from:'F1',to:'F2',kind:'mention'}],sources:[],warnings:[]};
- const c=vm.createContext({window:{},performance,graph,graphGeneration:1,layoutGeneration:1,documentGeneration:0,pathAbort:null,pathResult:null,liveCursor:'R1',liveWireNodes:new Map(nodes.map(n=>[n.id,JSON.stringify(n,(key,value)=>key==='x'||key==='y'?undefined:value)])),selected:null,nodeByID:new Map(nodes.map(n=>[n.id,n])),edgeAdjacency:new Map(),liveGhosts:[],liveStableScenes:new Map(),liveReconcile:false,liveAnimationUntil:0,cosmicStars:[],cosmicSceneCache:new Map(),cosmicScene:null,cosmos:null,cosmicScopeKey:'',cosmicEnabled:true,locked:false,region:'workspace',codeView:false,edgeMode:'all',focusCode:false,callDepth:'all',cosmicKey:'',cosmicFocusID:'',cosmicHover:'',cosmicSelected:'',graphFade:null,renderNodes:nodes,yaw:.4,pitch:.2,zoom:1.5,$:el,motionEnabled:()=>false,mapPalette:{star:'#fff'},layoutCalls:0,modelBuilds:0,resultCalls:0,refreshCalls:0,redrawCalls:0,clearCalls:0,aiAbort:null,documentAbort:null,filePreview:{close(){c.previewClosed=true}},aiExplorer:{updated(){c.aiUpdated=true;},cancel(){c.aiAbort?.abort();}},
+ const c=vm.createContext({window:{},performance,graph,documentBatch:null,resetDocumentBatch(){c.documentBatch=null;c.resetDocumentCount=(c.resetDocumentCount||0)+1;el('document-next').hidden=true;el('document-progress').hidden=true;},graphGeneration:1,layoutGeneration:1,documentGeneration:0,pathAbort:null,pathResult:null,liveCursor:'R1',liveWireNodes:new Map(nodes.map(n=>[n.id,JSON.stringify(n,(key,value)=>key==='x'||key==='y'?undefined:value)])),selected:null,nodeByID:new Map(nodes.map(n=>[n.id,n])),edgeAdjacency:new Map(),liveGhosts:[],liveStableScenes:new Map(),liveReconcile:false,liveAnimationUntil:0,cosmicStars:[],cosmicSceneCache:new Map(),cosmicScene:null,cosmos:null,cosmicScopeKey:'',cosmicEnabled:true,locked:false,region:'workspace',codeView:false,edgeMode:'all',focusCode:false,callDepth:'all',cosmicKey:'',cosmicFocusID:'',cosmicHover:'',cosmicSelected:'',graphFade:null,renderNodes:nodes,yaw:.4,pitch:.2,zoom:1.5,$:el,motionEnabled:()=>false,mapPalette:{star:'#fff'},layoutCalls:0,modelBuilds:0,resultCalls:0,refreshCalls:0,redrawCalls:0,clearCalls:0,aiAbort:null,documentAbort:null,filePreview:{close(){c.previewClosed=true}},aiExplorer:{updated(){c.aiUpdated=true;},cancel(){c.aiAbort?.abort();}},
   edgeKey:e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']),
   clearEvidencePath(){c.pathResult=null;c.clearCalls++;},syncGraphChrome(){},revealPanel(){},syncCosmicNav(){},renderCodeInsight(n){c.detailHash=n.contentHash;},invalidateView(){c.viewInvalidated=true;},retrievalMode:()=>c.retrieval||'nodes',nodeResults(){c.resultCalls++;c.searchIDs=c.graph.nodes.filter(n=>n.text?.includes(c.query||'')).map(n=>n.id);},refreshView(){c.refreshCalls++;c.renderNodes=c.graph.nodes.filter(n=>!c.region||n.region===c.region);},progressiveSummary:()=>'',say(){},redraw(){c.redrawCalls++;},nodeDetailText:n=>n.readState==='unavailable'?'unavailable':n.readState==='pending'?'pending':n.text||'',search(){}});
  vm.runInContext(fs.readFileSync('internal/server/web/starmap-cosmos.js','utf8'),c);const real=c.window.AideStarCosmos;
@@ -47,6 +47,23 @@ for(const extra of [{nodes:[{id:'F3',name:'new.go',kind:'file',region:'workspace
 {
  const x=harness();x.c.applyLiveUpdate(x.delta({}));assert.equal(x.c.layoutCalls,0);assert.equal(x.c.modelBuilds,0);assert.equal(x.c.graphGeneration,1,'wire-equivalent poll keeps data generation');
 }
+
+
+// A removed source must clear its current excerpts/cursor, while an unrelated
+// progressive body observation must keep valid results usable.
+for(const change of [{removedNodes:['F1'],nodes:[]},{sources:[]},{nodes:[{id:'F1',name:'one.go',kind:'file',region:'workspace',root:'workspace',path:'one.go',origin:'new-origin'}]}]){
+ const x=harness();x.c.graph.sources=[{id:'workspace',state:'partial'}];
+ const file={...x.c.graph.nodes[0],origin:'old-origin'};x.c.documentBatch={hits:[{file,text:'cached excerpt'}],cursor:'old-cursor'};x.c.selected={...file,documentCitation:{hash:'exact-file-hash'}};
+ x.c.applyLiveUpdate(x.delta({}, {sources:[{id:'workspace',state:'partial'}],...change}));
+ assert.equal(x.c.documentBatch,null);assert.equal(x.c.resetDocumentCount,1);assert.equal(x.c.previewClosed,true);assert.equal(x.c.selected,null);assert.match(x.els.get('results').textContent,/重新探索/);
+}
+{
+ const x=harness();x.c.documentBatch={hits:[{file:{...x.c.graph.nodes[1]}}],cursor:'valid-cursor'};
+ x.c.applyLiveUpdate(x.delta({text:'unrelated refreshed text'},{sources:[{id:'workspace',state:'partial'}]}));
+ assert.equal(x.c.documentBatch.cursor,'valid-cursor');assert.equal(x.c.resetDocumentCount,undefined);
+}
+
+console.log('PASS metadata-only live updates preserve layout/cosmos/camera and refresh details/search/citations; structural changes still rebuild');
 {
  const x=harness();x.c.documentAbort={abort(){x.c.documentAborted=true;}};
  x.c.applyLiveUpdate(x.delta({}, {nodes:[{id:'F3',name:'new.md',kind:'file',region:'workspace',root:'workspace',path:'new.md'}]}));
@@ -62,5 +79,17 @@ for(const extra of [{nodes:[{id:'F3',name:'new.go',kind:'file',region:'workspace
  x.c.documentAbort={abort(){x.c.documentAborted=true;}};
  x.c.applyLiveUpdate(x.delta({text:'first available body',readState:undefined,contentHash:'first-hash'}));
  assert.equal(x.c.documentAborted,undefined,'first body discovery is additive, not a modification of a known body');
+}
+{
+ const x=harness();x.c.graph.sources=[{id:'workspace',type:'local',state:'partial'}];
+ x.c.documentBatch={hits:[{file:{...x.c.graph.nodes[1]}}],cursor:'valid-cursor'};
+ x.c.documentAbort={abort(){x.c.documentAborted=true;}};
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[{id:'F3',name:'added.md',kind:'file',region:'workspace',root:'workspace',path:'added.md'}],sources:[{id:'workspace',type:'local',state:'partial'}]}));
+ assert.equal(x.c.documentBatch.cursor,'valid-cursor','merged preview invalidation preserves valid results during additive background indexing');
+ assert.equal(x.c.documentAborted,undefined,'valid continuation remains in flight during additive indexing');
+ x.c.selected={...x.c.graph.nodes[1],documentCitation:{hash:'valid-hash'}};
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[],sources:[]}));
+ assert.equal(x.c.documentBatch,null,'source-only metadata removal clears cached excerpts even without node changes');
+ assert.equal(x.c.documentAborted,true);assert.equal(x.c.selected,null);assert.equal(x.c.previewClosed,true);
 }
 console.log('PASS metadata-only layout preservation and additive-search ownership; structural/content changes retain invalidation');

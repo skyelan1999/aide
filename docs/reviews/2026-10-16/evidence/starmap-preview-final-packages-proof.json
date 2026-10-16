@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "packages": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-d025448dd174-offline.tar.gz",
+      "bytes": 770911001,
+      "sha256": "4dc3442eb6115aac8094297a489662d809c5a8d878748d4fb06e1117d7b57536",
+      "innerImageTarSHA256": "d269be30d8127fcbe49b8eda1595a85c6c823613341bfccefb1fa5654032a423",
+      "image": "sha256:d025448dd17440bda8ca39ab844b5e192f07703399eab4197551344472e77e72",
+      "sourceSHA256": "9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "archive": "aide-0.1.17.0-RC2-linux-amd64-301d9d75ffbc-offline.tar.gz",
+      "bytes": 774135264,
+      "sha256": "4137fb041c495cd86772695bd5c187e33dbc7d52f45009fd38495ed00e1b82bd",
+      "innerImageTarSHA256": "94c596d503e6b50ec0114beb51d67e375121ecdcebcec5cb3565a01944ea1861",
+      "image": "sha256:301d9d75ffbc9849b49acd7155e5a2b4c392a8c36b780c7d180a6d5379e0067d",
+      "sourceSHA256": "9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    }
+  ],
+  "productionImagePreserved": true
+}

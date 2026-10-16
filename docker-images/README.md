@@ -1,3 +1,7 @@
+## Star map preview follow-up snapshots
+
+Product code `08dbbaca`, source identity `59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d`: ARM64 `696739fa8621`, AMD64 `76ef945215d5`. These snapshots implement current-tab read-only preview, allowlisted map return, structured document text lines and removed-source result invalidation. Exact checksums and complete archive names are in the prebuilt manifest. Verification, native acceptance and publication status are tracked in [the follow-up task](../docs/tasks/starmap-native-preview-20261016.json); local export is not remote availability.
+
 ## Default prebuilt startup (ARM64 and AMD64)
 
 Normal source checkouts select a complete runtime from `docker/prebuilt-images.tsv`. They reuse a verified local image, import a matching local archive, or download the matching Release archive and verify its SHA-256 before import. They never fall back to source compilation. Development builds require `AIDE_BUILD_FROM_SOURCE=1` or `install --source`.
@@ -428,3 +432,11 @@ Product code `9ff84f3b`; source `3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4
 `aide-0.1.17.0-RC2-linux-amd64-239c3591fd3a-offline.tar.gz`: 774109455 bytes; SHA-256 `815df5ba0b9ef1fe1d4480e3510498e33fce1e254ba88c18a62b2d9dbfd2529f`.
 
 Exact package/import, native no-focus/link evidence, first busy/stale requests, blocked response readers, startup, release gates and public delivery states are maintained in the [batch record](../docs/reviews/2026-10-16/starmap-background-progress.md). Prior e5baab8f packages remain for rollback. Windows native and receiving-device acceptance are separate.
+
+## 星图原文预览与后台续扫整合包
+
+源码 `199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c`；ARM64 `950bcbc2d79e`、AMD64 `79765161aef2`。完整包包含原生 CAD 与平台启动器，精确大小与哈希在 SHA256SUMS 和预构建索引中维护。实际验收、候选与已发布状态及回滚边界见[本轮记录](../docs/reviews/2026-10-16/starmap-preview-integration.md)；不要将本地导出视作已上传。
+
+## 星图原文预览最终修复候选
+
+源码 `9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035`；ARM64 `d025448dd174`、AMD64 `301d9d75ffbc`。修复原文命中详情丢失星级字段，替代前序950b/7976预览候选。完整包已本机导入，大小和哈希在索引与 SHA256SUMS 中维护。最终原生验收、完整回归、远端发布与回滚状态见[本轮记录](../docs/reviews/2026-10-16/starmap-preview-integration.md)；本地候选不等于已公开交付。

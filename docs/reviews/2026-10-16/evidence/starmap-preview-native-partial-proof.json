@@ -1,0 +1,33 @@
+{
+  "status": "partial",
+  "runtime": "sha256:950bcbc2d79e0b3ef431cf54eee67623561ac0fba4634ed2828170b828ceb6ed",
+  "sourceSHA256": "199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c",
+  "entry": "original external repo start.command, default prebuilt path",
+  "runtimeAssetsMatchedCheckoutBeforeFollowup": true,
+  "nativeSafari": {
+    "sameTabPreview": true,
+    "newTabs": 0,
+    "popupPermissionChanged": false,
+    "readOnly": true,
+    "line": 3,
+    "selectedText": "preview_integrated_marker 原文第三行",
+    "structuredLocatorAndRawHashCarried": true,
+    "returnRestoredChannelQuerySourceAndRetrievalMode": true,
+    "sourceRemovalClearedOldHitsWithoutManualRefresh": true
+  },
+  "cleanup": {
+    "sourceRegistryBytesRestored": true,
+    "originalAuthSettingsSessionsAndUnrelatedMountsPreserved": true,
+    "originalMainTabRestored": true,
+    "starMapQueryEmptyAllSourcesNodeMode": true
+  },
+  "foundDefect": "Replacing selected node with raw retrieval file discarded computed stellar metadata, rendering undefined. New source regression first failed, one-line merge fix and focused tests passed.",
+  "currentSourceFollowup": "starmap.js v67 source fix not yet built/native/full verified",
+  "pending": [
+    "native followup for stellar label",
+    "stale hash rejection UI",
+    "final candidate packages and exact-input full",
+    "main remote push and public assets"
+  ],
+  "startupObservation": "Initial source-build opt-in hashed ignored installed plugin node_modules and rebuilt bc5ee739/f196; controlled source content equal. Default prebuilt restart then activated exact950b without build/pull. Original runtime receipts retained separately."
+}

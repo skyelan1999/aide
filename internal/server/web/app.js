@@ -8880,6 +8880,11 @@ async function openFileViewMode() {
   let spec = null;
   spec = window.AideFileRoute?.read();
   if (!spec) return;
+  const mapReturn=window.AideFileRoute?.returnToMap?.(),back=$('file-view-back');
+  if(back){
+    const label=mapReturn?'返回星图':'← 返回工作台';back.href=mapReturn||'/';
+    back.setAttribute('title',t(label));back.setAttribute('aria-label',t(label));back.setAttribute('data-i18n-title',label);back.setAttribute('data-i18n-aria-label',label);
+  }
   window.AideFileRoute?.pin(spec);
   document.body.classList.add('file-view-mode');
   $('file-view').classList.remove('hidden');
