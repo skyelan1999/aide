@@ -1,0 +1,16 @@
+{
+  "profile": "full",
+  "status": "pass",
+  "fingerprint": "240b63b1b94628a989e2046cb4c8e1c91df162af08b7f492ef0e2e94305e91ac",
+  "head": "3cb45609623c3e92628d62a258e5846f7163a847",
+  "time": "20261016T120346183894Z",
+  "log": ".agent-state/verify-20261016T120346183894Z.log",
+  "checks": 105,
+  "scopedReleaseGates": {
+    "launcher-legacy-container-selection-20261016": "pass",
+    "prebuilt-default-startup-20261016": "pass",
+    "cad-robot-step-20261016": "pass"
+  },
+  "remotePush": "pending",
+  "remoteAssets": "uploading ARM64; not complete"
+}

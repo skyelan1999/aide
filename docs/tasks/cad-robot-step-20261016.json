@@ -75,12 +75,15 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final exact-input full105 and scoped clean-main release-check passed. ARM64 complete archive upload started in the existing authorized GitHub Release editor; no completed remote asset, push or receiving-device success claimed yet.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/prebuilt-release-gates-proof.json",
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md"
+      ]
     }
   },
   "release_authorization": "沿用用户增量测试、代码与镜像发布授权；不包含公开私有STP或几何网格。",
   "rollback": "保留551eff及旧离线包；所有诊断容器UUID隔离且输入只读。原模型SHA256和字节不得变化。",
-  "handoff": "本机完整镜像ab8df956已通过start.command与Safari真实样例验收；仅远端统一发布仍待，full需最终ARM64/AMD64分发清单后执行。AMD64构建session21114，日志.agent-state/prebuilt-amd64-20261016/build.log。Windows由用户验收，真实向量暂缓。"
+  "handoff": "full105 and scoped release gate passed at fingerprint 240b63b1b94628a989e2046cb4c8e1c91df162af08b7f492ef0e2e94305e91ac. GitHub Release editor is uploading ARM64 ab8df956 complete archive: wait for actual size/success row before submitting or navigating. Then upload AMD64 ec1b032 and the two new metadata files, verify remote API asset size/digest, update notes, and push main. Older failed 551 upload placeholder remains in editor (not a published API asset); remove only that failed placeholder. Original assets/tag unchanged. Original goal still active."
 }

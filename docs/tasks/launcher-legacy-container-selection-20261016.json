@@ -70,12 +70,15 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final exact-input full105 and scoped clean-main release-check passed. ARM64 complete archive upload started in the existing authorized GitHub Release editor; no completed remote asset, push or receiving-device success claimed yet.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/prebuilt-release-gates-proof.json",
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md"
+      ]
     }
   },
   "release_authorization": "用户：把docker更新一下免现编译；完整运行镜像在正常仓库也是必要的。既有增量测试、文档与main推送授权继续有效。",
   "rollback": "保留551eff完整镜像包及旧容器/卷；不删除用户数据。真正候选歧义时保留现场，需用标签诊断选择而非清空容器。",
-  "handoff": "Both architecture packages verified/imported; fresh ARM64 start.command smoke passed; AMD64 geometry passed under emulation. Next: merge authorized scoped branch into local main, run final full with Node PATH, gate each scoped task, upload/verify complete Release assets, then push main and update delivery receipts. Do not claim remote or receiving-device success yet."
+  "handoff": "full105 and scoped release gate passed at fingerprint 240b63b1b94628a989e2046cb4c8e1c91df162af08b7f492ef0e2e94305e91ac. GitHub Release editor is uploading ARM64 ab8df956 complete archive: wait for actual size/success row before submitting or navigating. Then upload AMD64 ec1b032 and the two new metadata files, verify remote API asset size/digest, update notes, and push main. Older failed 551 upload placeholder remains in editor (not a published API asset); remove only that failed placeholder. Original assets/tag unchanged. Original goal still active."
 }

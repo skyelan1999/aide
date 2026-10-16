@@ -16,6 +16,6 @@ Machine-readable local artifact and fresh-start evidence is [recorded here](evid
 
 ## Publication status
 
-Local build, package verification/import and fresh ARM64 startup: PASS. Final exact-input full check and main release gate: PENDING. Remote main push and the two new complete Release attachments: PENDING. Manifest URLs are planned destinations until upload and public API checksum/size verification finish. Existing RC2 assets and tag remain intact; original local runtime and offline archives remain available for rollback.
+Local build, package verification/import and fresh ARM64 startup: PASS. Final exact-input full check: PASS (105 checks, Go race/vet and CAD geometry included), fingerprint `240b63b1b94628a989e2046cb4c8e1c91df162af08b7f492ef0e2e94305e91ac`; all three scoped main release gates: PASS. Remote main push and the two new complete Release attachments: PENDING. Manifest URLs are planned destinations until upload and public API checksum/size verification finish. Existing RC2 assets and tag remain intact; original local runtime and offline archives remain available for rollback.
 
 Do not interpret local image/package existence as receiving-device success. Windows native testing belongs to the user; real vector testing remains deferred. The original continuity/history/authorization/outcome/knowledge objective remains open beyond this delivery batch.
