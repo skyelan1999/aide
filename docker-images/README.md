@@ -1,3 +1,7 @@
+## 2026-10-16 Adaptive parallel candidate (build record)
+
+Candidate d1ad0e21d622 (source build25d71378) re-evaluates remaining independent analysis after execution evidence/user updates, keeps round history and isolates scheduling from executor tool protocol. Complete app/dependency bundle `aide-0.1.17.0-RC2-linux-arm64-d1ad0e21d622-offline.tar.gz`, 706096632 bytes, SHA-256 `c37475980a022d2ac5ef616f7bd2ed35738bc6d0672a841b35514454aa11aca7`. Outer/inner checksums, license/launcher and actual local Docker import passed. Actual Qwen5x acceptance read first, then ran3 analysis requests in round2 and reconciled the result; [task and final verification/main status](../docs/tasks/adaptive-parallel-20261016.json). Receiving-device import untested. Retain delivered3f4545df rollback; removed only the owned intermediate7ff30f88 package after its import evidence was retained.
+
 ## 2026-10-16 Crash diagnostic candidate (build record)
 
 Candidate3f4545df534b (build2bbc5d63) adds independent page/asset/promise codes, bounded local metadata, service-instance observation and request-panic isolation. Offline bundle `aide-0.1.17.0-RC2-linux-arm64-3f4545df534b-offline.tar.gz`, 706082863 bytes, SHA-256 `5d0f8bfb64a532402a17d05f7071852652bef8d1e4924e39b32b5b3d526195ec`. Inner/outer checksums, license/launcher and actual local Docker import passed. Full/native/main state: [acceptance report](../docs/reviews/2026-10-16/crash-diagnostics.md). Receiving-device import untested; retain5183a60 rollback.

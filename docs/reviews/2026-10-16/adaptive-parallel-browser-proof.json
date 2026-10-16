@@ -1,0 +1,32 @@
+{
+  "component": {
+    "viewportWidth": 390,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "waitingThenRound2RunningThenCompleted": true,
+    "singlePanel": true,
+    "draftPreserved": true,
+    "horizontalOverflow": false,
+    "viewportReset": true,
+    "ownedTabClosed": true,
+    "serverStopped": true
+  },
+  "nativeWorkbench": {
+    "viaDesignatedStartCommand": true,
+    "readFirstThenFanout": true,
+    "completed3of3": true,
+    "evaluationsVisible": 3,
+    "priorPlannerContextsAndActualMainContextVisible": true,
+    "filePanelRestored": true,
+    "originalSessionRestored": true,
+    "originalTabsPreserved": true
+  },
+  "screenshots": {
+    "component-light-390.png": "86987450876e8ef7f2ff682cbff0c749aa2300683bd9ed901846ffde2fae6320",
+    "component-dark-390.png": "f63e628dc45aee66a2cbe0af52ec29e69f9852b9dae92e3806fd8acd2ab4efd3",
+    "native-final.png": "4e012151f5c164648ae7a868f3708726526172b10f26602ae79f1b96413be9fc"
+  },
+  "scope": "Component injected state is separate from real workbench/provider acceptance."
+}

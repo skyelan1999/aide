@@ -1,0 +1,135 @@
+{
+  "model": "qwen3.8-flash",
+  "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1",
+  "syntheticFileOnly": true,
+  "requestedParallelism": 5,
+  "evaluations": 3,
+  "fanoutRound": 2,
+  "workerCount": 3,
+  "allWorkersCompleted": true,
+  "threeWorkersObservedRunningInOneLiveSnapshot": true,
+  "taskStatus": "completed",
+  "parallelPhase": "completed",
+  "mainTools": [
+    "read_file",
+    "update_plan"
+  ],
+  "duplicateWorkerDispatch": false,
+  "writeOrChildSessionExecution": false,
+  "plannerContexts": [
+    {
+      "inputEstimate": 3823,
+      "outputReserve": 2048,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 5377,
+        "cacheMiss": 5377,
+        "cacheKnown": true,
+        "completion": 4,
+        "total": 5381,
+        "model": "qwen3.8-flash",
+        "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1"
+      }
+    },
+    {
+      "inputEstimate": 3977,
+      "outputReserve": 2048,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 5569,
+        "cacheHit": 4096,
+        "cacheMiss": 1473,
+        "cacheKnown": true,
+        "completion": 108,
+        "total": 5677,
+        "model": "qwen3.8-flash",
+        "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1"
+      }
+    },
+    {
+      "inputEstimate": 7465,
+      "outputReserve": 2048,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 11679,
+        "cacheHit": 5120,
+        "cacheMiss": 6559,
+        "cacheKnown": true,
+        "completion": 4,
+        "total": 11683,
+        "model": "qwen3.8-flash",
+        "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1"
+      }
+    }
+  ],
+  "workerContexts": [
+    {
+      "inputEstimate": 3762,
+      "outputReserve": 2048,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 5403,
+        "cacheHit": 5120,
+        "cacheMiss": 283,
+        "cacheKnown": true,
+        "completion": 844,
+        "total": 6247,
+        "model": "qwen3.8-flash",
+        "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1"
+      }
+    },
+    {
+      "inputEstimate": 3764,
+      "outputReserve": 2048,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 5405,
+        "cacheHit": 5120,
+        "cacheMiss": 285,
+        "cacheKnown": true,
+        "completion": 593,
+        "total": 5998,
+        "model": "qwen3.8-flash",
+        "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1"
+      }
+    },
+    {
+      "inputEstimate": 3745,
+      "outputReserve": 2048,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 5387,
+        "cacheMiss": 5387,
+        "cacheKnown": true,
+        "completion": 1031,
+        "total": 6418,
+        "model": "qwen3.8-flash",
+        "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1"
+      }
+    }
+  ],
+  "mainContext": {
+    "inputEstimate": 13715,
+    "outputReserve": 8192,
+    "contextWindow": 131072,
+    "usage": {
+      "prompt": 20174,
+      "cacheHit": 19712,
+      "cacheMiss": 462,
+      "cacheKnown": true,
+      "completion": 201,
+      "total": 20375,
+      "model": "qwen3.8-flash",
+      "provider": "https://maas.qianwenaiapi.com/compatible-mode/v1"
+    }
+  },
+  "usage": {
+    "prompt": 110776,
+    "completion": 4697,
+    "total": 115473,
+    "model": "qwen3.8-flash"
+  },
+  "finalAnswerSHA256": "6ccc4ae4d7fb023514604fe44b481d12ba22da02ac7ef3623eecbb58fc085ba3",
+  "actualTestsExecuted": false,
+  "scope": "One real provider synthetic design task; three independent model calls observed, not a guarantee for every model or task. Earlier prototype failures separately recorded."
+}

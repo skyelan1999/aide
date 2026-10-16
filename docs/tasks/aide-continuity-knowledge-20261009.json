@@ -7848,5 +7848,15 @@
       "docs/reviews/2026-10-16/crash-diagnostics-browser-proof.json"
     ],
     "runtimeProof": "docs/reviews/2026-10-16/crash-diagnostics-runtime-proof.json"
+  },
+  "adaptive_parallel_followup_20261016": {
+    "task": "adaptive-parallel-20261016",
+    "status": "in_progress",
+    "request": "Discover parallel opportunities throughout execution as new evidence arrives",
+    "summary": "Real5x read-first then round2 three model analyses and final reconciliation pass; component/native/offline checks pass. Fresh full90, original-state cleanup and main pending. Original12 remain active.",
+    "evidence": [
+      "docs/tasks/adaptive-parallel-20261016.json",
+      "docs/reviews/2026-10-16/adaptive-parallel-model-proof.json"
+    ]
   }
 }
