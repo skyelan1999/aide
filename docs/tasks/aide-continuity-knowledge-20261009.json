@@ -410,14 +410,15 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "独立SFTP读写/失败恢复、四个解析器导入已有证据；真实模型读取、图像理解和并行调度也有独立任务记录。 当前真实内置时钟插件经Node宿主、Go派发及能力路由的启停/参数失败/加载故障与恢复专项race2.696s和vet通过；入口读取与执行观察分离。",
+        "latestScopedEvidence": "独立SFTP读写/失败恢复、四个解析器导入已有证据；真实模型读取、图像理解和并行调度也有独立任务记录。 当前真实内置时钟插件经Node宿主、Go派发及能力路由的启停/参数失败/加载故障与恢复专项race2.696s和vet通过；入口读取与执行观察分离。 Native authenticated Safari dashboard initiated workspace root-read, skill-entry and pypdf-import checks; UI state/scope agree with independent API. Write/model stay untested; protected bytes and original scene preserved.",
         "evidence": [
           "docs/reviews/2026-10-15/source-capability-live.md",
           "docs/tasks/provider-output-interruption-20261015.json",
           "docs/tasks/parallel-10x-levels-20261015.json",
-          "docs/reviews/2026-10-16/capability-plugin-lifecycle.md"
+          "docs/reviews/2026-10-16/capability-plugin-lifecycle.md",
+          "docs/reviews/2026-10-16/capability-workbench.md"
         ],
-        "remaining": "完整认证仪表的状态/错误展示、用户SSH目录权限及其他插件完整工作流仍待；当前内置时钟的工具结果/仪表一致性已有协议/API级直接证据。解析器导入不等于任意文档处理。"
+        "remaining": "Authenticated failure-state display, user-host SSH permissions and complete workflows of other plugins remain pending. This pass covers three specific checks and scope labels, not full file processing."
       },
       "evidence_20261016_plugin_lifecycle": {
         "task": "docs/tasks/capability-plugin-lifecycle-20261016.json",

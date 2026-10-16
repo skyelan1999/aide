@@ -1,0 +1,36 @@
+{
+  "runtimeImage": "sha256:ebf9e38203f31bf93ef253a2c271f0581f3dca25448edb20c11b101e286a4371",
+  "client": "Existing native Safari https://localhost:9999/",
+  "checks": [
+    {
+      "kind": "workspace",
+      "name": "工作空间",
+      "state": "pass",
+      "message": "根目录读取通过；未检查写入或文件操作",
+      "durationMs": 4
+    },
+    {
+      "kind": "plugin",
+      "name": "技能",
+      "state": "pass",
+      "message": "入口文件可读，SHA-256 f474be4253920c7f9f4bedb3300ba247120031b8ab45b368792184ee5dbd1d6b；未执行插件或工具",
+      "durationMs": 8
+    },
+    {
+      "kind": "parser",
+      "name": "pypdf",
+      "state": "pass",
+      "message": "依赖隔离导入通过；具体文件提取与渲染尚未检查",
+      "durationMs": 126
+    }
+  ],
+  "workspaceWriteRemainsNotRun": true,
+  "modelRemainsNotRun": true,
+  "protectedBytesMatchPriorNativeCleanupBaseline": true,
+  "notes": [
+    "UI clicks initiated all three checks; API readback confirms results.",
+    "No plugin tool execution, model invocation or write probe.",
+    "Failure display, real SSH permission and broader plugin workflows remain pending."
+  ],
+  "originalSceneRestored": true
+}
