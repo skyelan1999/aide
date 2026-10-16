@@ -26,7 +26,14 @@
     "scripts/file-route-location.test.cjs",
     "scripts/starmap-path.test.cjs",
     "docs/agent/router.json",
-    "docs/architecture/knowledge-map.md"
+    "docs/architecture/knowledge-map.md",
+    "internal/server/knowledge_code.go",
+    "internal/server/knowledge_go_types.go",
+    "internal/server/knowledge_go_types_test.go",
+    "internal/server/knowledge_code_budget_test.go",
+    "docker/prebuilt-images.tsv",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
   ],
   "stages": {
     "requirements": {
@@ -56,7 +63,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old d025 native two-step path/correct original line and changed-file wrong-line reproduced; API six-step chain verified. Fail-before/pass-after Go target1.033s, related race/vet60.347s and quick104 pass. New compiled native/six-step UI/full pending.",
+      "summary": "Candidate7e3 native short/238093-byte CRLF report correct line3; changed prefixes refused, unchanged unindexed tail allowed. Code chain missing: full-graph6500 budget suppresses code edges on20000 catalogue. Negative race0.204s; related Code/Web/GoTypes/Path race7.496s and vet PASS after independent code budget fix. Final build/six-step UI/full pending.",
       "evidence": [
         "docs/reviews/2026-10-17/knowledge-path-native-proof.json",
         "internal/server/knowledge_path_fingerprint_test.go",
@@ -86,5 +93,5 @@
   },
   "release_authorization": "Continue existing user-authorized incremental testing/docs/main publication. No new product or runtime release unless a reproduced defect requires it; Windows user-owned, real vectors deferred.",
   "rollback": "Remove owned temporary source by restoring exact pre-test registry; preserve original auth/settings/sessions/mounts and current d025 runtime. No user file edit, data restore or model invocation.",
-  "handoff": "Branch fix/knowledge-path-source-guard-20261017: native d025 report-path source had no hash and refreshed wrong line3 after insertion. Source fix passes Go target, related race/vet and quick104 fingerprint 25a8a05b7a36912e9addcbd0d5555dba4e96c210f048077248f1e377bacb17cc. Next controlled-snapshot build, native prefix guard on short/long text and six-step UI, freeze complete packages then new full/release gate. Current runtime/remote main remain prior published d025/3ed6164d. Do not reuse full106 for changed source."
+  "handoff": "Code57612 prefix guard then6af08 code budget fix committed. Runtime7e3 candidate, remote main3ed unchanged. Short/long native position guards pass. Old7e3/fbcc packages superseded, not for publication. New final build/six-step UI/full/packages/gate pending; original12 open."
 }

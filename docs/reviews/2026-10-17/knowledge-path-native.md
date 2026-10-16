@@ -25,3 +25,9 @@
 临时来源注册表逐字节恢复，原14会话、鉴权、设置和无关挂载核对保持；样例文件恢复，查询为空、全部来源、路径面板关闭后回原工作台，无新增标签。测试索引观察遵循既有有界历史，更新前备份保留，不声称知识历史字节未变。
 
 当前仍运行已发布d025，远端main仍为3ed6164d。本分支需构建新候选、复验报告旧位置拒绝及六段链实际页面，冻结完整包后跑新的完整回归/发布门禁。原十二项继续，Windows由用户验收，真实向量测试暂缓。
+
+## Candidate runtime follow-up
+
+Candidate7e3 started through original start.command; protected data passed. Native Safari selected report line3; prefix insertion refused old location. A238093-byte UTF-8/CRLF report passed8192-byte proof, unchanged unindexed tail remained locatable, changed prefix refused. No new tabs or model calls.
+
+Actual large-map code path failed: total catalogue edges exceeded6500 and consumed the code budget. New20000-directory regression failed before fix (race0.204s). Independent code budget with shared type-binding cap fixes this; related Code/Web/GoTypes/Path race7.496s and vet pass. Final compiled six-step UI/full/package verification pending. Initial path queries also returned409 during scan revision changes; fresh queries succeeded without weakening identity guards.
