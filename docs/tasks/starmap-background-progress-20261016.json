@@ -21,7 +21,14 @@
     "docs/reviews/2026-10-16",
     "internal/server/knowledge_references.go",
     "internal/server/knowledge_references_equivalence_test.go",
-    "scripts/starmap-live-metadata.test.cjs"
+    "scripts/starmap-live-metadata.test.cjs",
+    "internal/server/knowledge_progressive.go",
+    "internal/server/knowledge_sources.go",
+    "scripts/starmap-progressive-cadence.test.cjs",
+    "scripts/starmap-coverage-state.test.cjs",
+    "docker/prebuilt-images.tsv",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
   ],
   "stages": {
     "requirements": {
@@ -50,9 +57,10 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Scoped Go race PASS 88.223s including request-independent completion and ownership; reference equivalence/20000-node work test pass. Focused VM pass. Final full/native/runtime pending.",
+      "summary": "Go race continuation final2 PASS 43.668s, first-cancel/unequal-source/cancellation covered; hard-limit race PASS 1.020s; reference equivalence/scoped88.223 pass; VM all pass. Native Safari background 1279->2001 files, 2502 entries complete without UI/API activity, target 2000 real relations. Final cap/status image and full still pending; first full stopped intentionally for final cap follow-up.",
       "evidence": [
-        "docs/reviews/2026-10-16/starmap-background-progress.md"
+        "docs/reviews/2026-10-16/starmap-background-progress.md",
+        "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"
       ]
     },
     "documentation": {
@@ -76,5 +84,5 @@
   },
   "release_authorization": "Standing user authorization: incremental implementation/testing/push main, update complete offline Docker packages; no native Windows acceptance.",
   "rollback": "Retain published e5baab8f runtime ab8df956 and complete archives; never remove user data. New candidate runtime requires protected-state snapshot and original start.command.",
-  "handoff": ""
+  "handoff": "Final code1397b7bd sourceb7327dce is building both complete candidate packages. Prior c347 runtime proves background completion and actual 2000 relations; temporary registry restored exactly. Need deploy final cap/status runtime through start.command, native cap UI, final packages/clean main full/gate, public assets and push. Original12 goal remains open."
 }
