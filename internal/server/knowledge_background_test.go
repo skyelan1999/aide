@@ -189,3 +189,19 @@ func TestKnowledgeBackgroundFreezesCompletedSources(t *testing.T) {
 	}
 	t.Fatal("unequal source sizes never reached a common completed view")
 }
+
+func TestKnowledgeBackgroundHardLimitDoesNotSpin(t *testing.T) {
+	c := &knowledgeCoverage{Progressive: true, Pending: 881, DiscoveryBlocked: true, CatalogLimit: knowledgeDiscoveryMaxEntries}
+	g := knowledgeGraph{Truncated: true, Sources: []knowledgeSource{{State: "partial", Coverage: c}}}
+	if knowledgeGraphScanning(g) {
+		t.Fatal("hard-limited directories must not keep a continuation spinning")
+	}
+	c.MaterialPending = 1
+	if !knowledgeGraphScanning(g) {
+		t.Fatal("already-discovered material must still finish at the limit")
+	}
+	c.MaterialPending, c.DiscoveryBlocked = 0, false
+	if !knowledgeGraphScanning(g) {
+		t.Fatal("expandable catalogue must continue")
+	}
+}

@@ -172,6 +172,7 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 		}
 	}
 	coverage.MaterialPending = v.materialPending()
+	coverage.DiscoveryBlocked = b.Pending > 0 && v.Cursor.MaxEntries >= knowledgeDiscoveryMaxEntries && v.Cursor.Reasons["catalog_limit"]
 	cache.localCheckpoints = append(cache.localCheckpoints, knowledgeLocalCheckpoint{ar, knowledgeLocalDiscoveryRevision(p), includeCode, 0, 0, v})
 	state, message := "ready", ""
 	if !b.Complete || len(b.Reasons) > 0 || coverage.MaterialPending > 0 {
@@ -188,6 +189,9 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 	if coverage.MaterialPending > 0 {
 		coverage.Reasons = append(coverage.Reasons, "material_pending")
 		message += fmt.Sprintf("；%d 个条目等待分批复核，未复核区域保留上次观察", coverage.MaterialPending)
+	}
+	if coverage.DiscoveryBlocked && coverage.MaterialPending == 0 {
+		message = "索引目录已达容量上限；仍有未覆盖目录，可缩小索引范围或拆分引用来源"
 	}
 	knowledgeSetSource(g, ar, state, message, len(g.Nodes)-first)
 	for i := range g.Sources {

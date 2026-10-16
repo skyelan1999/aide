@@ -130,6 +130,7 @@ function sourceCoverageState(source){
  if(source.state!=='ready'&&source.state!=='partial')return sourceStateLabel(source.state);
  if(!c)return sourceStateLabel(source.state);
  if(c.refreshProgress)return '更新扫描中 · 保留上次完整星图';
+ if(c.discoveryBlocked&&!c.materialPending)return '范围受限';
  if(c.readErrors>0)return c.progressive&&(c.pending>0||c.materialPending>0)?'分批扫描中 · 正文读取异常':'部分正文不可读';
  if(c.materialPending>0)return '正文与目录分批复核中';
  if(c.reasons?.length)return '范围受限';
@@ -141,7 +142,7 @@ function sourceCoverageLabel(source){
  const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败',material_pending:'正文与目录等待复核','file-read-error':'部分文件正文读取失败',catalog_limit:'索引目录容量上限',scope_missing:'配置范围不存在'};
  const progress=c.refreshProgress?`更新扫描第 ${c.cycle||1} 轮，已发现 ${c.refreshFiles||0} 个文件 / ${c.refreshDirectories||0} 个目录，待扫描 ${c.pending||0} 个目录任务；当前展示上次完整星图`:(c.progressive?`累计索引 ${c.files} 个文件 / ${c.directories} 个目录；单批预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层；第 ${c.cycle||1} 轮；待扫描 ${c.pending||0} 个目录任务；容量上限 ${c.catalogLimit||0} 条`:`已扫描 ${c.files} 个文件 / ${c.directories} 个目录；预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层`);
  const limits=c.reasons?.length?'；受限：'+c.reasons.map(r=>reasons[r]||r).join('、'):'';
- const status=c.refreshProgress?'':c.progressive?((c.pending||c.materialPending)?'；分批扫描与复核中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
+ const status=c.refreshProgress?'':c.progressive?((c.pending&&!c.discoveryBlocked||c.materialPending)?'；分批扫描与复核中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
  return progress+(c.materialPending>0?`；${c.materialPending} 个条目等待复核`:'')+(c.readPending>0?`；${c.readPending} 个文件等待内容复核`:'')+(c.readErrors>0?`；${c.readErrors} 个文件正文暂不可读`:'')+(c.scopePaths?.length?'；索引范围：'+c.scopePaths.join('、'):'')+`；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+limits+status;
 }
 
@@ -159,11 +160,11 @@ function liveReady(){return !locked&&!pageLeaving&&!loading&&(document.hidden||!
 function stopLive(clearCursor=false){clearTimeout(liveTimer);liveTimer=0;liveEpoch++;liveAbort?.abort();liveAbort=null;if(clearCursor)liveCursor='';}
 // Continue unfinished catalogues promptly; completed/failed sources retain their normal cadence.
 function progressiveSummary(g){
- const sources=(g.sources||[]).filter(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0||s.coverage.materialPending>0));
+ const sources=(g.sources||[]).filter(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0&&!s.coverage.discoveryBlocked||s.coverage.materialPending>0));
  return sources.length?'分批扫描中 · 已载入 '+g.nodes.length+' 个节点 · 待扫 '+sources.reduce((sum,s)=>sum+(s.coverage.pending||0),0)+' 个目录任务 · 待复核 '+sources.reduce((sum,s)=>sum+(s.coverage.materialPending||0),0)+' 个条目':'';
 }
 function progressiveDelay(g,duration=0){
- const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0||s.coverage.materialPending>0));
+ const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0&&!s.coverage.discoveryBlocked||s.coverage.materialPending>0));
  return scanning?Math.max(350,Math.min(1500,Math.round(duration*.5))):2000;
 }
 function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||pageLeaving)return;liveTimer=setTimeout(pollLive,document.hidden?Math.max(2000,delay):delay);}
@@ -975,7 +976,7 @@ function applyLiveUpdate(update,initial=false){
  if(documentChanged){documentGeneration++;documentAbort?.abort();}
  if(Array.isArray(update.sources))graph.sources=update.sources;
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
- if(!changed.length&&!removed.size&&!edgesChanged){if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');if(!cosmicScene?.members.length)redraw();return;}
+ if(!changed.length&&!removed.size&&!edgesChanged){say(progressiveSummary(graph)||(update.stale?'正在建立最新索引 · 当前显示上次完整星图':'已同步'));if(!cosmicScene?.members.length)redraw();return;}
  const now=performance.now(),motion=motionEnabled(),selectionID=selected?.id,selectionChanged=changed.some(n=>n.id===selectionID),citation=selected?.documentCitation;
  if(motion)for(const star of cosmicStars){if(removed.has(star.n.id)&&star.p.onScreen)liveGhosts.push({cosmic:true,x:star.x,y:star.y,z:star.z,color:mapPalette.star,radius:1.3,start:now});}
  if(liveGhosts.length>512)liveGhosts=liveGhosts.slice(-512);

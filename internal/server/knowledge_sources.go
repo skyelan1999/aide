@@ -31,6 +31,7 @@ func knowledgeSafePath(p string) bool {
 type knowledgeCoverage struct {
 	ScopePaths         []string `json:"scopePaths,omitempty"`
 	Progressive        bool     `json:"progressive,omitempty"`
+	DiscoveryBlocked   bool     `json:"discoveryBlocked,omitempty"`
 	RefreshProgress    bool     `json:"refreshProgress,omitempty"`
 	RefreshFiles       int      `json:"refreshFiles,omitempty"`
 	RefreshDirectories int      `json:"refreshDirectories,omitempty"`
