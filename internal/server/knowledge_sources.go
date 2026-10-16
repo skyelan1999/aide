@@ -154,6 +154,30 @@ func (a *App) knowledgeAreasLocked(scope, workspaceName, referenceName string) [
 	return areas
 }
 
+// Index the built-in reference mount once, under its existing context node IDs.
+// Keep the full area list for origin validation and legacy/raw source viewers.
+// Explicit aliases and the writable system-docs source retain their identities.
+func knowledgeIndexAreas(areas []knowledgeArea) []knowledgeArea {
+	reference := ""
+	for _, ar := range areas {
+		if ar.root == "context" && ar.source == "" && ar.kind == "local" && ar.enabled {
+			reference = ar.location
+			break
+		}
+	}
+	if reference == "" {
+		return areas
+	}
+	indexed := make([]knowledgeArea, 0, len(areas))
+	for _, ar := range areas {
+		if ar.root == "source" && ar.source == contextSource && ar.src.Builtin && ar.enabled && ar.kind == "local" && strings.TrimSpace(ar.src.Config.Path) == "" && ar.location == reference {
+			continue
+		}
+		indexed = append(indexed, ar)
+	}
+	return indexed
+}
+
 func (a *App) knowledgeAreaCurrent(ar knowledgeArea) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()

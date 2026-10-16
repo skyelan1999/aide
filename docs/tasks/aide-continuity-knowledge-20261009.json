@@ -7765,5 +7765,11 @@
     "report": "docs/reviews/2026-10-16/starmap-live-preview.md",
     "remaining": "Duplicate builtin context scanning proven, needs regression/fix. Large-map latency, SSH and other explicit workflows still pending.",
     "delivery": "Docs evidence pushed8dec691; exact full88 reuse and independent main gate passed. Duplicate scan fix still pending."
+  },
+  "knowledge_context_dedup_20261016": {
+    "status": "in_progress",
+    "task": "docs/tasks/knowledge-context-dedup-20261016.json",
+    "report": "docs/reviews/2026-10-16/knowledge-context-dedup.md",
+    "scope": "Index-only builtin context dedup; focused race/vet pass, full/package/runtime pending; all original12 retained."
   }
 }

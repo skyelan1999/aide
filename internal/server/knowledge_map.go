@@ -146,7 +146,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	if a.reference != nil {
 		referenceName = a.reference.Name()
 	}
-	areas := a.knowledgeAreasLocked(scope, workspaceName, referenceName)
+	areas := knowledgeIndexAreas(a.knowledgeAreasLocked(scope, workspaceName, referenceName))
 	nodes := []knowledgeNode{}
 	sessionsTruncated := false
 	sessionTextPartial := false

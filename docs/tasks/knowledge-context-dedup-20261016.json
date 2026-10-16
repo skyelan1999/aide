@@ -1,0 +1,73 @@
+{
+  "id": "knowledge-context-dedup-20261016",
+  "request": "继续原知识星图目标：修复已证实的内置context重复扫描，保留读取/预览/来源身份，按门禁测试、更新镜像离线包和运行实例",
+  "baseline": "a7464e128839c5a2a04ba1bf3ea52fe3ca5b15a7",
+  "initial_status": "",
+  "acceptance": [
+    "Actual snapshot indexes built-in context only once under stable canonical context identity; custom aliases and distinct docs source retained.",
+    "Existing context/source viewer and raw read paths remain valid with origin/workspace checks; stale origin still refused.",
+    "Focused race test proves red-before/green-after and full gate before main push; runtime/package updates independently checked before claiming delivery."
+  ],
+  "scope": [
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_sources.go",
+    "internal/server/knowledge_context_dedup_test.go",
+    "docs/tasks/knowledge-context-dedup-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/knowledge-context-dedup*",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual Safari two context scans and live builtin empty-path config plus direct area construction prove duplicate; preserve original12.",
+      "evidence": [
+        "docs/reviews/2026-10-16/starmap-live-preview.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Filter redundant built-in context only for graph indexing after full area identities are formed; keep all read/preview identities and custom aliases untouched.",
+      "evidence": [
+        "internal/server/knowledge_map.go",
+        "internal/server/knowledge_sources.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Index-only duplicate builtin filter; complete area identities kept for reads; canonical IDs, custom aliases and docs source retained.",
+      "evidence": [
+        "internal/server/knowledge_map.go",
+        "internal/server/knowledge_sources.go",
+        "docs/reviews/2026-10-16/knowledge-context-dedup.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Real snapshot red-before/green-after and focused race/vet passed, virtual-path fixture correction documented; full/runtime/package pending.",
+      "evidence": [
+        "internal/server/knowledge_context_dedup_test.go",
+        "docs/reviews/2026-10-16/knowledge-context-dedup.md"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User incremental tests/push/main and existing start.command/offline package update authorization. No new version/tag/Release.",
+  "rollback": "Revert scoped source commit or restore retained prior image through designated startup; preserve all sources/user files/session data. No cache/user-data deletion.",
+  "handoff": ""
+}
