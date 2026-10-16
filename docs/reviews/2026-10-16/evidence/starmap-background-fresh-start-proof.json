@@ -1,11 +1,11 @@
 {
   "status": "pass",
-  "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-90eb69899527-offline.tar.gz",
-  "project": "aide-cad-offline-test-a6a2c1e7",
+  "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-08e257e0ad39-offline.tar.gz",
+  "project": "aide-cad-offline-test-e2159af0",
   "root": "private extracted temporary package",
   "freshAuthDirectoryPrepared": true,
   "actualStartCommand": true,
-  "image": "sha256:90eb69899527c6f1e8094708a000ccd4fbd0f3cdf1706b3eefb807ae6a2cdc58",
+  "image": "sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204",
   "sameImageForWorkbenchAndCAD": true,
   "noBuildOrPull": true,
   "nativeGeometry": {
@@ -35,7 +35,7 @@
     "linearDeflection": 0.1,
     "recoveredFaces": 0,
     "nurbsFaces": 0,
-    "seconds": 0.08014337500208057
+    "seconds": 0.033573415988939814
   },
   "privateReadOnlyWorkerCredentialMount": true,
   "privateNetworkNoHostPorts": true,

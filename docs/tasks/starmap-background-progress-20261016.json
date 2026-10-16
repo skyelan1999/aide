@@ -58,11 +58,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Latest full: Go race/vet PASS (server803.806s), 105/106 checks exited0; CAD cancellation fixture raced child reaping versus parent semaphore cleanup. Changed test only to wait on actual gate with1s bound,20 consecutive cancellation runs PASS. Product source3c6f/9ff and both images unchanged. Final whole-input full pending; no failed receipt reused.",
+      "status": "pass",
+      "summary": "Final unchanged-input full106 PASS; all exits0, Go race/vet and native CAD. Native no-focus completion/2000 relations/cap UI, first-busy knowledge/code, stale200, blocked response reader, package integrity/import, fresh ARM64 startup and protected state pass. Windows and receiving-device scope remain separate.",
       "evidence": [
-        "docs/reviews/2026-10-16/starmap-background-progress.md",
-        "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"
+        "docs/reviews/2026-10-16/evidence/starmap-background-full-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-packages-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-fresh-start-proof.json"
       ]
     },
     "documentation": {
@@ -75,16 +77,18 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Reviewed exact owned file list; no user source, sessions, credentials, caches or prior archives removed.",
+      "summary": "Exact outgoing files reviewed; temporary sources restored byte-for-byte, no user session/config/volume/model deletion. Own unpublished intermediates removed, published rollback and final complete packages preserved. Original history backup retained; bounded test index observations are not falsely described as unchanged user history.",
       "evidence": []
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final full106 pass; run clean-main scoped gate, upload/verify four supplemental assets, then main push/ref receipt. No new version/tag.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/starmap-background-full-proof.json"
+      ]
     }
   },
   "release_authorization": "本会话上文用户明确要求“还是一样，做一部分，push一部分，测一部分”“做完这个把所有内容和到main上”，并要求“后续的仓库和release包都应该具备快速导入和启动的能力”。本批次沿用同一 AIDE 项目授权：main 与现有 RC2 补充完整镜像包，不升版、不改原 tag。Windows 由用户验收。",
   "rollback": "Retain published e5baab8f runtime ab8df956 and complete archives; never remove user data. New candidate runtime requires protected-state snapshot and original start.command.",
-  "handoff": "Frozen product 9ff84f3b source3c6f4e12f99c active via original start.command. Both complete packages independently verified after deployment settled. Finish fresh smoke/full/gate, then upload/verify public assets and push main. Do not modify frozen product inputs. Original12 and preview follow-up remain open."
+  "handoff": "Local implementation, full106, native/scoped checks and complete packages pass. Next scoped clean-main gate, upload/verify public archives/metadata/notes, then main push/ref verification. Original12 and independent preview follow-up stay open."
 }

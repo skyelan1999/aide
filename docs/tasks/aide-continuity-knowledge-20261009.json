@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Frozen starmap product 9ff84f3b source3c6f4e12f99c runtime08e257e0ad39 active. Both complete packages and native/scoped evidence verified. Finish fresh smoke/clean-main full/gate, public assets and main push. Prior e5 batch published. Independent preview43d and all original12 stay open; Windows user-owned, vectors deferred.",
+  "handoff": "Starmap no-focus/link task passed final full106 and native/scoped/fresh package checks. Product9ff84f3b/source3c6f4e12 runtime08e257 active through start.command. Finish clean-main gate, public assets/notes validation and main push. Prior e5 published, preview43d and original12 remain open; Windows user-owned, vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7956,8 +7956,8 @@
     "code": "9ff84f3b74a897c79ec3ae865da180fe42785428",
     "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
     "native": "Safari background 1279->2001 files and all2502 entries complete without focus/API activity; target2000 actual relations. Final runtime90eb cap source range-limited and synced observed; source registry/auth/settings/sessions/mounts preserved.",
-    "packages": "Complete ARM64 sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 and AMD64 sha256:239c3591fd3a7438a4316ae3fcbcd7130f58cfbf9e31b7d965323c97c765534d independently verified; remote upload/push pending.",
-    "full": "Last Go race/vet pass, total105/106 checks pass; unrelated existing CAD cancellation assertion timing race corrected with bounded gate wait,20 repeated passes. Product/images unchanged. Final full pending.",
+    "packages": "Final08e257e0ad39/239c3591fd3a complete packages integrity/import/fresh ARM64 start pass; remote assets/push pending.",
+    "full": "PASS full106, all exits0, exact content fingerprint a441e9d60e81f0e7a8030ff302858f31a2bcfabcdfb562b170a1a2319e2e90c9",
     "originalGoal": "Original12 remain open; Windows user-owned and vectors deferred."
   }
 }
