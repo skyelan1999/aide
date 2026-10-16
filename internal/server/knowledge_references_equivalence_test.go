@@ -114,3 +114,22 @@ func TestKnowledgeReferenceLargeRepositoryWork(t *testing.T) {
 	}
 	t.Logf("20000 text/file nodes: legacy=%s indexed=%s", oldTime, newTime)
 }
+
+func TestKnowledgeReferenceHierarchyDoesNotConsumeMentionBudget(t *testing.T) {
+	g := knowledgeGraph{Nodes: []knowledgeNode{referenceNode("from", "from.md", "[a](a.md) [b](b.md)"), referenceNode("a", "a.md", ""), referenceNode("b", "b.md", "")}}
+	for i := 0; i < 5000; i++ {
+		g.Edges = append(g.Edges, knowledgeEdge{From: "directory", To: fmt.Sprint(i), Kind: "contains"})
+	}
+	appendKnowledgeMentions(&g)
+	if len(g.Edges) != 5002 || g.Edges[5000].To != "a" || g.Edges[5001].To != "b" || g.Truncated {
+		t.Fatal("directory edges starved real file references")
+	}
+	limited := knowledgeGraph{Nodes: g.Nodes, Edges: append([]knowledgeEdge(nil), g.Edges[5000:]...)}
+	for len(limited.Edges) < 4000 {
+		limited.Edges = append(limited.Edges, knowledgeEdge{Kind: "mention"})
+	}
+	appendKnowledgeMentions(&limited)
+	if len(limited.Edges) != 4000 || !limited.Truncated {
+		t.Fatal("actual mention budget must remain bounded")
+	}
+}

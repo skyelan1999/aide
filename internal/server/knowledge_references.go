@@ -88,6 +88,12 @@ func knowledgeReferenceLocation(text string, ref knowledgeTextReference) (int, i
 }
 
 func appendKnowledgeMentions(g *knowledgeGraph) {
+	mentions := 0
+	for _, edge := range g.Edges {
+		if edge.Kind == "mention" {
+			mentions++
+		}
+	}
 	pathCounts := map[string]int{}
 	paths := map[string][]int{}
 	ids := map[string][]int{}
@@ -180,13 +186,14 @@ func appendKnowledgeMentions(g *knowledgeGraph) {
 		}
 		sort.Ints(order) // Preserve historical graph order and the bounded edge cap.
 		for _, i := range order {
-			to, ref := g.Nodes[i], refs[i]
-			line, column, evidence := knowledgeReferenceLocation(from.Text, ref)
-			g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention", Line: line, Column: column, Evidence: evidence, Confidence: "explicit_reference"})
-			if len(g.Edges) >= 4000 {
+			if mentions >= 4000 {
 				g.Truncated = true
 				return
 			}
+			to, ref := g.Nodes[i], refs[i]
+			line, column, evidence := knowledgeReferenceLocation(from.Text, ref)
+			g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention", Line: line, Column: column, Evidence: evidence, Confidence: "explicit_reference"})
+			mentions++
 		}
 	}
 }
