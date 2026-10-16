@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current starmap background batch local main code1397/sourceb732 runtime90eb passed native background/link/core and final cap/status checks; both complete packages verified. Finish fresh package smoke, exact clean-main full/gate, public archive upload and main push. Prior e5 batch already published; independent preview branch43d1f759 remains pending native/full/publication. Original12 goal stays active; Windows user-owned and real vectors deferred.",
+  "handoff": "Final starmap batch local main codec557/source1ef36be9 runtimeffbb active through original start.command; both complete packages verified, native no-focus links/cap UI and first-busy/stale Go race pass. Freeze inputs, finish fresh smoke and clean-main full/gate, upload public assets, push main. Prior e5 batch published; independent preview43d branch remains pending native/full/publication. Original12 stays active; Windows user-owned and vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7953,10 +7953,10 @@
   "starmap_background_progress_20261016": {
     "status": "in_progress",
     "task": "docs/tasks/starmap-background-progress-20261016.json",
-    "code": "1397b7bd",
-    "sourceSHA256": "b7327dce1bcb941bc70d610ea89ea3b0ff2ff3aeba22c0fd7b6b3ef036ff1198",
+    "code": "c557668d",
+    "sourceSHA256": "1ef36be914cd07b13109f616f744b22c8cc8de94cb7730581538e769752f6c5b",
     "native": "Safari background 1279->2001 files and all2502 entries complete without focus/API activity; target2000 actual relations. Final runtime90eb cap source range-limited and synced observed; source registry/auth/settings/sessions/mounts preserved.",
-    "packages": "ARM64 90eb69899527 and AMD64 563ea90a460c complete packages, outer/inner/license/entry/import verified locally. Public upload and main push pending.",
+    "packages": "ARM64 ffbb0f6f724a and AMD64 d91524067791 complete packages verified locally; remote assets/push pending.",
     "full": "Previous run intentionally stopped for final hard-cap/status follow-up; final clean-input full pending.",
     "originalGoal": "Original12 remain open; Windows user-owned and vectors deferred."
   }

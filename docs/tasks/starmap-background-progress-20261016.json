@@ -57,7 +57,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Go race continuation final2 PASS 43.668s, first-cancel/unequal-source/cancellation covered; hard-limit race PASS 1.020s; reference equivalence/scoped88.223 pass; VM all pass. Native Safari background 1279->2001 files, 2502 entries complete without UI/API activity, target 2000 real relations. Final cap/status image and full still pending; first full stopped intentionally for final cap follow-up.",
+      "summary": "Scoped race PASS: initial continuation43.668s, busy first knowledge/code requests61.688s, stale200 first response14.099s, hard-limit1.020s; earlier reference equivalence/large graph pass. Native no-focus completion and2000 relations, final cap UI, protected state and complete package imports pass. Final c557 clean-main full and fresh package smoke pending; prior full attempts cancelled for required follow-up and never reused.",
       "evidence": [
         "docs/reviews/2026-10-16/starmap-background-progress.md",
         "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"
@@ -84,5 +84,5 @@
   },
   "release_authorization": "Standing user authorization: incremental implementation/testing/push main, update complete offline Docker packages; no native Windows acceptance.",
   "rollback": "Retain published e5baab8f runtime ab8df956 and complete archives; never remove user data. New candidate runtime requires protected-state snapshot and original start.command.",
-  "handoff": "Final code1397b7bd sourceb7327dce is building both complete candidate packages. Prior c347 runtime proves background completion and actual 2000 relations; temporary registry restored exactly. Need deploy final cap/status runtime through start.command, native cap UI, final packages/clean main full/gate, public assets and push. Original12 goal remains open."
+  "handoff": "Final codec557/source1ef36be9 runtimeffbb is active via start.command with protected state/assets preserved. Both complete packages ffbb/d915 verified. Freeze product inputs, fresh package smoke, exact clean-main full/gate, then upload/verify public assets and push main. Original12 and independent preview follow-up stay open."
 }

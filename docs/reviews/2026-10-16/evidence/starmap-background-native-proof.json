@@ -15,7 +15,7 @@
       "complete": false,
       "validated": 841,
       "unavailable": 0,
-      "noAppRequest": true
+      "observerMadeAppRequest": false
     },
     {
       "observed": "2026-10-16T13:57:55.810Z",
@@ -28,7 +28,7 @@
       "complete": true,
       "validated": 2502,
       "unavailable": 0,
-      "noAppRequest": true
+      "observerMadeAppRequest": false
     },
     {
       "observed": "2026-10-16T13:58:14.995Z",
@@ -41,10 +41,10 @@
       "complete": true,
       "validated": 2502,
       "unavailable": 0,
-      "noAppRequest": true
+      "observerMadeAppRequest": false
     }
   ],
-  "observationMethod": "Read-only local decryption of the owned source checkpoint; no App/API call or UI action between observations. Never publish token/key/envelope or private data.",
+  "observationMethod": "Observer only read/decrypted the owned local checkpoint; it made no extra App/API request or UI action between observations. Hidden browser polling may continue. Independent completion without any further HTTP request is separately proved by Go tests.",
   "nativeReturn": {
     "updatedWithoutRefresh": true,
     "files": 2001,
@@ -60,7 +60,7 @@
     "restoredView": "all regions, empty query, detail closed; returned to original session 39"
   },
   "boundary": "This native proof covers the unchanged continuation/link path before the subsequent hard-limit/status-only follow-up; final image/cap UI/full/publication recorded separately.",
-  "finalRuntime": {
+  "priorCapRuntime": {
     "image": "90eb69899527",
     "sourceSHA256": "b7327dce1bcb941bc70d610ea89ea3b0ff2ff3aeba22c0fd7b6b3ef036ff1198",
     "codeCommit": "1397b7bd",
@@ -81,5 +81,14 @@
       "stale": true
     },
     "nativeCapUI": "range-limited source and synced status observed; no new tabs"
+  },
+  "currentRuntime": {
+    "image": "ffbb0f6f724a",
+    "sourceSHA256": "1ef36be914cd07b13109f616f744b22c8cc8de94cb7730581538e769752f6c5b",
+    "codeCommit": "c557668d",
+    "entry": "start.command",
+    "prebuiltNoCompilation": true,
+    "protectedStateAndExactAssets": "pass",
+    "scope": "Frontend/cap/link bytes unchanged from native evidence; busy first-request knowledge/code and stale response paths passed actual Go HTTP race tests."
   }
 }
