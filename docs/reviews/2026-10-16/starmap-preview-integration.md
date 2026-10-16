@@ -15,3 +15,7 @@
 `starmap-live-metadata.test.cjs`、`starmap-file-preview.test.cjs`、`starmap-background.test.cjs`、`starmap-document-continuation.test.cjs`、`test_i18n.cjs` 和星图语法检查通过。文档检查通过272份 Markdown、886条本地链接。合并后完整回归已启动，原始日志保存在本工作树 `.agent-state/starmap-native-preview-integrated-full.log`；未完成前不标为PASS。
 
 后续必须等待当前完整回归的真实结果，再构建整合候选、从指定 start.command 启动并在 Safari 完整工作台验证预览、精确行号、指纹变化拒绝以及移除来源清理。最终发布门禁、两种架构完整镜像包与公开下载校验仍需完成。生产9999保持08e257修复版本，没有新增浏览器标签，没有改动用户凭据、配置或来源。
+
+## 整合候选构建
+
+源码 `199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c` 的 ARM64 镜像 `950bcbc2d79e` 已在禁网构建中完成 vet/build；普通用户 uid1000 的23项分发资源读取和 DOCX 往返冒烟通过，见[候选构建收据](evidence/starmap-preview-integrated-build-proof.json)。生产仍为08e257，未改用户配置、凭据或挂载。Safari9999原入口只读检查可用，无新增标签；这不是整合候选的页面验收。完整Go回归仍运行，候选尚未导出或发布。
