@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current continuity-history-current-20261016 passed full105, native mixed-resource restore, reasoning writeback and protected cleanup; finish scoped main gate/push. Then advance original SSH scene/history and authenticated approval/outcome/map workflows. Do not repeat known history-storage previews as missing. Windows user-owned, real vectors deferred.",
+  "handoff": "Latest scoped batch delivered: current reasoning write/isolation verified, restored PNG/JPEG preview defect repaired, actual asset-only restore and exact disk/raw bytes proved, data protected, full105 and scoped main gate/push41819964 passed, runtime551/offline local import complete. Continue original SSH scene/history and authenticated approval/outcome/map workflows. Windows user-owned, real vectors deferred. Do not close original objective based only on this scoped release.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -2859,7 +2859,7 @@
   "release_gate": {
     "status": "in_progress",
     "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
-    "result": "Root objective is not claimed complete; original12 workstreams remain in_progress and root gate not rerun. Scoped continuity-history-current full105 passed on main34062b96. Former branch/vendor/fixture failure record is historical. Final scoped gate/push pending.",
+    "result": "Root objective remains incomplete, all original12 workstreams in_progress; root gate not claimed passed. Scoped continuity-history-current full105 and independent clean-main gate passed, code41819964 pushed and exact remote verified. Former branch/vendor/fixture failure retained only as historical evidence.",
     "evidence": [
       "docs/tasks/continuity-history-current-20261016.json",
       "docs/reviews/2026-10-16/continuity-history-current.md"
@@ -7881,13 +7881,14 @@
   },
   "continuity_history_current_20261016": {
     "classification": "progress",
-    "status": "verified_release_pending",
+    "status": "scoped_delivered",
     "task": "docs/tasks/continuity-history-current-20261016.json",
     "previousGoalTurn": "Actual lock fixes, full105 verification, main dbb9d122 and runtime52e943e1e8c3 delivered; progress, not a wait.",
     "reasoning": "Current Safari A high/B medium saved; API and canonical disk equal. Reload B medium and switch A high passed, no model calls; two owned empty sessions removed, originals exact, counter45 to47 only.",
     "history": "Reproduced body/disk V1 but Safari PNG/JPEG V2. Resource URL revision fix, callback regressions and asset-only actual Safari restore pass. All3 files match disk/raw API V1, repeated history observation stays5, backup6 objects; own files removed and originals exact.",
-    "gate": "Exact current full105 including Go race/vet passed on main34062b96; runtime551 and complete offline bundle local import/fresh startup passed. Final source fingerprint b591063007169e65ef75e2eb84e118ba404d65b76b947e7c784f460b3cf4ca44. Scoped clean-main release gate/push pending.",
-    "original12": "All workstreams remain in_progress; no broad completion claim. Windows user-owned and real vectors deferred."
+    "gate": "Exact-input full105 including Go race/vet, independent clean-main scoped gate, push exit0 and exact remote41819964 passed. Runtime551 and complete offline package local import/fresh startup passed. Original12 remain in_progress.",
+    "original12": "All workstreams remain in_progress; no broad completion claim. Windows user-owned and real vectors deferred.",
+    "deliveredMain": "418199649a3cd61c9299094b0e84a90974154dbb"
   },
   "historical_release_gate_before_current_reaudit_20261016": {
     "latest_source_revision": "ba62184",

@@ -27,3 +27,5 @@
 源码为`6ac147aa`，本机经指定start.command更新，镜像`551eff0003ba`。完整离线包内外校验、本机导入和新数据目录无构建/拉取启动通过；另一设备导入未运行。最终全量门禁与main推送按[脱敏收据](evidence/continuity-history-current-proof.json)记录。原12条工作流继续保持进行中。
 
 Final gate: all105 checks passed, including Go race/vet. Exact fingerprint `b591063007169e65ef75e2eb84e118ba404d65b76b947e7c784f460b3cf4ca44`, verified tree `34062b9689c3d1435982bf43c24d4f4e2addadda`. Reasoning observations used the prior52e943e1e8c3 runtime before this batch deployed the resource-only fix551eff0003ba; session-selection implementation is unchanged. Clean-main delivery pending.
+
+Delivery confirmed: clean-main scoped release gate passed; push exit0 and exact upstream `418199649a3cd61c9299094b0e84a90974154dbb` verified. Local9999 and full offline bundle updated. No formal tag/Release. Original12 requirements remain active.
