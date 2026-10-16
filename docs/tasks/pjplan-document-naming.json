@@ -91,11 +91,12 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "阶段性验收后准备提交并推送 Aide 集成和插件包；当前 shell 无法解析 github.com，待网络恢复后推送。",
+      "status": "pass",
+      "summary": "Aide 集成已推送到 fix/history-object-integrity；独立插件包已首次推送到插件仓库 main。",
       "evidence": [
         "User's standing instruction: push completed, verified stages promptly",
-        "git ls-remote failed because github.com DNS resolution is unavailable in the current sandbox"
+        "Aide commit 4ec416d pushed to origin/fix/history-object-integrity",
+        "Plugin package commit c628423 pushed to origin/main at git@github.com:skyelan1999/aide-pkg-PjPlan.git"
       ]
     }
   },
