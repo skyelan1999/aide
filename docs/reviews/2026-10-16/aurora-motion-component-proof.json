@@ -1,0 +1,44 @@
+{
+  "flowA": [
+    "matrix(1.07984, 0.0188486, -0.0188486, 1.07984, 16.64, 9.36)",
+    "matrix(1.01766, -0.0428607, 0.0428607, 1.01766, -59.598, 34.4416)"
+  ],
+  "flowB": [
+    "matrix(1.09184, 0.0400452, -0.0400452, 1.09184, 45.416, 21.132)",
+    "matrix(0.961741, -0.131658, 0.131658, 0.961741, -174.06, 90.4286)"
+  ],
+  "bothLayersMoved": true,
+  "pausedA": {
+    "layers": [
+      {
+        "state": "paused",
+        "transform": "matrix(1.08021, 0.0194888, -0.0194888, 1.08021, 17.5187, 9.71947)"
+      },
+      {
+        "state": "paused",
+        "transform": "matrix(1.10094, 0.156808, -0.156808, 1.10094, 164.035, -74.9441)"
+      }
+    ],
+    "paused": true
+  },
+  "pauseStable": true,
+  "off": {
+    "count": 0,
+    "display": "none"
+  },
+  "narrow": {
+    "horizontalOverflow": false,
+    "layers": 2,
+    "width": 390
+  },
+  "scope": "Production background JS/CSS in isolated component; native workbench runtime not yet updated",
+  "screenshotsSHA256": {
+    "light-a.png": "de4a36a0d7e4179f47ef5ab279a70dff047fe16fa27377aff0a0f7a6d95a5bc6",
+    "light-b.png": "931921d4e82450259458bc7b7522a465432cfbef841fa21c3463dc5db4ee4aaa",
+    "dark.png": "9333a0a5870cecb020208c8a4666351df9d389d6c415c1a707ff25f81d1a0ab0",
+    "narrow.png": "e786fdcc1aa810dcf3968b2d63466d9c83f3d645536cf99781290462645f6725"
+  },
+  "componentTabClosed": true,
+  "viewportOverrideReset": true,
+  "privateServerStopped": true
+}

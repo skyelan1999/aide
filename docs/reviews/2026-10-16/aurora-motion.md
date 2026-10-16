@@ -1,0 +1,7 @@
+# Dynamic aurora background
+
+Task: [aurora-motion-20261016](../../tasks/aurora-motion-20261016.json). The user requests visibly dynamic aurora. The former single faint gradient drifted only slightly over28 seconds. The replacement uses two independent transform-only light layers with12/19-second alternate periods and offset initial phases. Soft contained gradients avoid rotated rectangular edges; existing intensity controls remain. No per-frame JavaScript, network or model calls.
+
+Production JS/CSS was opened in an isolated browser component. Independent computed-transform samples confirm both layers move. Actual motion-control input pauses both, and a later sample confirms stable transforms. Off removes both layers and hides the background; re-enabling creates exactly two running layers. Light/dark screenshots were visually inspected;390px has no horizontal document overflow. See [component evidence](aurora-motion-component-proof.json). This is not native workbench/runtime acceptance.
+
+Existing local video/GIF/WebP lifecycle tests pass, including visibility/lock/reduced-motion, late local media responses, pagehide/pageshow and resource release. Lifecycle regression additionally checks preference refresh does not accumulate aurora layers. Temporary component tab/server closed and viewport override reset. Full gate, candidate/runtime/native acceptance and main/offline delivery remain pending.

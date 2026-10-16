@@ -62,12 +62,17 @@ html[data-background]:not([data-background=off]) :is(.sidebar,.file-panel){backg
 html[data-background]:not([data-background=off]) :is(.topbar,.composer-wrap){background:color-mix(in srgb,var(--bg) 90%,transparent)}
 .workbench-background{background:var(--bg)}
 .workbench-background::before{content:'';position:absolute;inset:0;z-index:1;background:var(--bg);opacity:calc(1 - var(--wb-background-strength,.22))}
-html[data-background=aurora] .workbench-background::after{content:'';position:absolute;inset:-12%;background:radial-gradient(ellipse at 18% 28%,color-mix(in srgb,var(--brand) 26%,transparent),transparent 55%),radial-gradient(ellipse at 76% 74%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 55%);animation:workbench-drift 28s ease-in-out infinite alternate}
+/* Independent compositor motion makes flow visible without animating paint or text. */
+html[data-background=aurora] .workbench-background::before{display:none}
+.workbench-aurora{position:absolute;inset:-15%;opacity:var(--wb-background-strength,.22);transform-origin:center;animation:workbench-flow-primary 12s ease-in-out -6s infinite alternate}
+.workbench-aurora-primary{background:radial-gradient(ellipse 35% 37% at 40% 42%,color-mix(in srgb,var(--brand-hi,var(--brand)) 60%,#75cfc3),transparent 100%),radial-gradient(ellipse 27% 27% at 70% 70%,var(--accent),transparent 100%)}
+.workbench-aurora-secondary{background:radial-gradient(ellipse 32% 30% at 65% 34%,color-mix(in srgb,var(--accent) 65%,#b8a4e0),transparent 100%),radial-gradient(ellipse 29% 27% at 32% 69%,var(--brand),transparent 100%);opacity:calc(var(--wb-background-strength,.22) * .7);animation:workbench-flow-secondary 19s ease-in-out -11s infinite alternate}
+@keyframes workbench-flow-primary{from{transform:translate3d(-10%,-7%,0) rotate(-6deg) scale(1)}to{transform:translate3d(12%,9%,0) rotate(8deg) scale(1.16)}}
+@keyframes workbench-flow-secondary{from{transform:translate3d(11%,-9%,0) rotate(9deg) scale(1.12)}to{transform:translate3d(-12%,11%,0) rotate(-9deg) scale(.96)}}
 .workbench-background :is(video,img){width:100%;height:100%;object-fit:cover}
-html[data-background-paused] .workbench-background::after{animation-play-state:paused}
+html[data-background-paused] .workbench-aurora{animation-play-state:paused}
 html[data-background-paused] .workbench-background video,html[data-background-paused][data-background-media=animated] .workbench-background img{visibility:hidden}
-@keyframes workbench-drift{from{transform:translate3d(-2%,0,0) scale(1)}to{transform:translate3d(2%,3%,0) scale(1.06)}}
-@media(prefers-reduced-motion:reduce){.workbench-background::after{animation:none!important}.workbench-background video{visibility:hidden}}
+@media(prefers-reduced-motion:reduce){.workbench-aurora{animation:none!important}.workbench-background video{visibility:hidden}}
 @media(pointer:coarse){:root{--wb-control:40px}.session-item{min-height:42px}.composer-toolbar :is(button,select){min-height:40px}}
 @media(max-width:760px){.settings-body{gap:10px}.settings-nav{width:104px;flex-basis:104px}.topbar{padding-inline:16px}.global-search input{width:110px}}
 @media(max-width:600px){.topbar{padding-inline:12px;gap:8px}.top-actions{gap:6px}.conversation{padding:16px 12px}.composer-wrap{padding:10px 12px 12px}.composer textarea{font-size:16px}.composer-toolbar{gap:6px;flex-wrap:wrap}.composer-note{flex-wrap:wrap}.starter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.starter{padding:12px;min-height:110px}#timeline :is(.chat-answer,.stage-answer){padding:14px}.settings-sheet.sheet-wide{width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}.settings-nav{width:90px;flex-basis:90px}.settings-content{padding-inline:0}.background-options{gap:4px}.background-options button{padding-inline:4px}}

@@ -32,6 +32,8 @@ function setup(initial='off'){
 (async()=>{
  let h=setup();assert.equal(h.root.dataset.background,'off');assert.equal(h.urls.length,0);assert.equal(h.body.children.length,1);
  h.setMode('aurora');assert.equal(h.root.dataset.background,'aurora');assert.equal(h.urls.length,0);
+ const glows=h.layer().children.slice();assert.equal(glows.length,2);h.update();assert.deepEqual(h.layer().children,glows,'preference refresh must not accumulate animated layers');
+ h.document.hidden=true;h.listeners.visibilitychange();assert.ok(h.root.hasAttribute('data-background-paused'));h.document.hidden=false;h.listeners.visibilitychange();assert.equal(h.root.hasAttribute('data-background-paused'),false);
  h.asset={blob:{},name:'clip.webm',type:'video/webm'};h.setMode('local');await flush();let video=h.layer().children[0];assert.equal(video.tagName,'VIDEO');assert.equal(video.muted,true);assert.ok(video.src);assert.ok(video.plays>0);
  const strengthPanel=h.render(),range=strengthPanel.children[6].children[1];
  range.value='40';range.oninput();await flush();assert.equal(h.root.attrs['--wb-background-strength'],'0.4');assert.equal(h.layer().children[0],video);assert.equal(h.urls.length,1);assert.equal(strengthPanel.children[6].children[2].textContent,'40%');
@@ -41,7 +43,7 @@ function setup(initial='off'){
  h.root.dataset.motion='full';h.events['aide:motion']();assert.equal(h.root.hasAttribute('data-background-paused'),false);
  h.setMode('off');assert.equal(h.layer().children.length,0);assert.equal(video.src,undefined);assert.deepEqual(h.revoked,['blob:0']);
  // Fast switch must not attach a late IndexedDB read to another mode.
- h.setMode('local');h.setMode('aurora');await flush();assert.equal(h.layer().children.length,0);
+ h.setMode('local');h.setMode('aurora');await flush();assert.deepEqual(h.layer().children.map(node=>node.tagName),['SPAN','SPAN'],'late local media must not attach over aurora');
  // A video loaded while locked receives its source and can resume when unlocked.
  h.locked=true;h.setMode('local');await flush();video=h.layer().children[0];assert.ok(video.src);assert.equal(video.plays,0);
  h.locked=false;h.update();assert.ok(video.plays>0);

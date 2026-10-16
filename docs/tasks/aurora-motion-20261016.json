@@ -1,0 +1,72 @@
+{
+  "id": "aurora-motion-20261016",
+  "request": "背景流光要做成动态的",
+  "baseline": "fe9235a418d516e69c3609a3065b16360f3570d3",
+  "initial_status": "",
+  "acceptance": [
+    "Aurora mode visibly flows continuously via two independently moving soft light layers; content stays readable in light/dark and narrow layouts.",
+    "Off/local mode releases aurora layers; strength changes do not duplicate layers; visibility/lock/reduced-motion pause both layers. No per-frame JavaScript, network, or model calls.",
+    "Actual browser samples show changing computed transforms and visible screenshots; lifecycle/quick/full and authorized local runtime/main/offline gates recorded without claiming pending checks pass."
+  ],
+  "scope": [
+    "internal/server/web/workbench-background.js",
+    "internal/server/web/workbench.css",
+    "internal/server/web/index.html cache versions",
+    "scripts/workbench-background.test.cjs",
+    "docs/tasks/aurora-motion-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/aurora-motion*",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests dynamic aurora background. Current single faint 28-second 4-percent drift is visually weak; retain user local background choice and accessibility controls.",
+      "evidence": [
+        "internal/server/web/workbench.css"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Two bounded transform-only gradient layers with offset periods/phases, stronger soft color at existing intensity. Reuse paused lifecycle; remove layers when switching modes. Preserve local media behavior and original preference after acceptance.",
+      "evidence": [
+        "internal/server/web/workbench-background.js",
+        "internal/server/web/workbench.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Two bounded gradient layers animate independently with transform-only compositor motion; no per-frame JS. Existing lifecycle controls and intensity retained. Cache versions3.",
+      "evidence": [
+        "internal/server/web/workbench-background.js",
+        "internal/server/web/workbench.css"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused lifecycle and quick pass; actual isolated browser proves both transforms move and pause/off/resume/narrow behavior. Full/native runtime delivery remains pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/aurora-motion-component-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental main/push/local start.command/offline authorization; no new version/tag/Release.",
+  "rollback": "Keep current8d1957c9 local image and offline bundle; scoped frontend revert; no data migration.",
+  "handoff": "Component visually verified. Preserve full scope; candidate/package/full/native through start.command and main gate remain."
+}

@@ -72,6 +72,14 @@
     mode = next; release(); message = '';
     root.dataset.background = mode;
     lifecycle(); refreshPanels();
+    if (mode === 'aurora') {
+      for (const variant of ['primary', 'secondary']) {
+        const glow = document.createElement('span');
+        glow.className = 'workbench-aurora workbench-aurora-' + variant;
+        layer.append(glow);
+      }
+      return;
+    }
     if (mode !== 'local') return;
     try {
       const asset = await stored('get');
