@@ -1,0 +1,659 @@
+{
+  "profile": "full",
+  "status": "pass",
+  "fingerprint": "c757a1bcc17dfb8b44192388565c125b1619af7036929d339ef97362557e9ec4",
+  "head": "e84d7d37ffa7ed11643624791d7725a2582f90d7",
+  "time": "20261016T035933633084Z",
+  "results": [
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/app.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/live-markdown-scan.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/stable-markdown-cache.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test_reminder_styles.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test_approval_persistence.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/settings-init.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/version.sh",
+        "check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_agent_route.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_docs.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "scripts/install.sh"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "scripts/aide.sh"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_install.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/i18n.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/locales/en.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test_i18n.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test_stream_url.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test_accessibility_port.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_windows_port_lifecycle.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_local_root.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_control_bridge_launchers.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test_ui_click_latency.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-image-path.test.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-download-export.test.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-pdf-layout.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-infrared.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-lensing.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-path.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-timeline.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-topics.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-live-preview.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-template-icons.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/attachment-source-label.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-history-writable.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-document-continuation.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-workspace-scene.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-cache.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-coverage-state.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/toast-lifecycle.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/lock-entry.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/file-recovery-scroll.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/file-autosave-retry.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/file-open-request-ownership.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/continuity-isolation.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/continuity-lock-write.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/workspace-scene-transition.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/outcome-pagination.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/outcome-overview-lifecycle.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/outcome-request-ownership.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/session-render-cache.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/run-activity-cards.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/run-stop-ownership.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/session-run-controls.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/recovery-transfer.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/markdown-code.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-code.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/context-meter.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/starmap-logbook.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-logbook.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/steer-user-bubbles.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/git-history.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/git-history.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/file-unix-metadata.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/parallel-chat.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/parallel-chat.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/session-model-selection.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/session-model-selection.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/pause-session-isolation.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/staged-output.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/reasoning-settings.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_source_fingerprint.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-progressive-cadence.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_maintenance.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_local_dependency_image.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-local-frame.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-live-metadata.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-frame-work.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-stellar-scale.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-empty-state.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/plugin-plans.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/bootstrap-file-recovery.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/markdown-diagrams.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-ai-exploration.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/starmap-file-preview.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/workbench-background.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/knowledge-web-parser.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/crash-monitor.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/crash-monitor.test.cjs"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_runtime_assets.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_go_snapshot.py"
+      ],
+      "exit": 0
+    }
+  ],
+  "privateLog": ".agent-state/verify-20261016T035933633084Z.log",
+  "serverRaceSeconds": 647.882,
+  "goVet": "pass",
+  "buildCommit": "e0f38e02",
+  "runtimeImage": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
+  "scope": "Fresh fixed final inputs; old aborted sessions87179/13456 are not passing receipts. No network or user data mounted into the Go test snapshot."
+}

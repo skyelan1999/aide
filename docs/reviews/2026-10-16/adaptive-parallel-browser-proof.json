@@ -21,7 +21,8 @@
     "priorPlannerContextsAndActualMainContextVisible": true,
     "filePanelRestored": true,
     "originalSessionRestored": true,
-    "originalTabsPreserved": true
+    "originalTabsPreserved": true,
+    "finalImageNormalReloadPass": true
   },
   "screenshots": {
     "component-light-390.png": "86987450876e8ef7f2ff682cbff0c749aa2300683bd9ed901846ffde2fae6320",

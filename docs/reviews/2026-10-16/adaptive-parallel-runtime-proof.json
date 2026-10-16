@@ -53,6 +53,15 @@
     "originalICloudCheckoutUntouched": true,
     "scope": "Private raw synthetic-session records retained; original14 session bytes/auth/source config unchanged. No broad cleanup."
   },
-  "full": "pending fresh full90 after package metadata freeze",
-  "receivingDeviceImport": "not_run"
+  "full": "PASS90/90 receipt20261016T035933633084Z; server race647.882s/vet; fingerprintc757a1bcc17dfb8b44192388565c125b1619af7036929d339ef97362557e9ec4",
+  "receivingDeviceImport": "not_run",
+  "finalImageNativeNormalReload": {
+    "image": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
+    "originalPromptVerifiedEmptyBeforeReload": true,
+    "normalWorkbenchVisible": true,
+    "originalSessionAndFilePanelRestored": true,
+    "originalThreeTabsPreserved": true,
+    "ownedTestPageStateResetBySafeReload": true
+  },
+  "main": "pending independent clean-main gate/push"
 }
