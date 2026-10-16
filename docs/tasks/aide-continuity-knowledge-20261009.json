@@ -205,6 +205,14 @@
           "docs/reviews/2026-10-16/file-recovery-async.md",
           "docs/reviews/2026-10-16/file-recovery-async-proof.json"
         ]
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Current-tab preview returns to the same map channel with query, source filter and retrieval mode restored in authenticated Safari; original view cleanup passed.",
+        "evidence": [
+          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+        ],
+        "remaining": "SSH caret/directory, multi-tab branch/capacity and restart boundaries remain scoped gaps; already-proven local preview return is no longer missing."
       }
     },
     {
@@ -335,6 +343,14 @@
           "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json"
         ],
         "remaining": "Current candidate UI acceptance, SSH workflows, locking and long-open combined tests remain scoped gaps. User-host SSH has not been substituted with fixture evidence. Windows remains user-owned."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Final original start.command prebuilt d025 runtime, protected14-session/config/auth/mount preservation and native preview/star/return/stale-hash/removal passed; complete packages/import and fresh ARM start separately passed.",
+        "evidence": [
+          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+        ],
+        "remaining": "Other original workflows including available SSH editing/history/restore, approval UI, lock and long-open combined behavior remain scoped gaps. Windows remains user-owned."
       }
     },
     {
@@ -494,6 +510,15 @@
           "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
         ],
         "remaining": "Current actual local project incremental display/capacity/coverage labels now directly observed; full first-open timing, priority-range controls, arbitrary large remote directories and protocol variants remain unproven. Removed-source original-search results stayed visible until mode/query change and require repair."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Published background continuation and2000 valid relations passed; final d025 native removal automatically clears cached original-text hits and preserves honest coverage.",
+        "evidence": [
+          "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json",
+          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+        ],
+        "remaining": "Priority-range controls, full first-open timing and large remote directory variants remain separate. Removed-source hit invalidation is repaired and directly proven."
       }
     },
     {
@@ -533,6 +558,14 @@
           "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
         ],
         "remaining": "Current authenticated literal-search hit and matching read-only source body passed. Quick-preview popup was blocked; preview URL did not carry a line field; removed-source search snippets stayed visible. Repair and native verification remain; user-host/protocol variants are separate, real vectors deferred."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Final d025 Safari proves same-tab read-only original-text preview, CRLF line3 selection/raw hash, map return, stale-hash refusal, new line5 and source-removal clearing.",
+        "evidence": [
+          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+        ],
+        "remaining": "Real vectors remain user-deferred. Available SSH/protocol variants and broader document cases remain separate; popup blocking, missing structured text line and removed-source snippets are no longer open defects."
       }
     },
     {
@@ -603,7 +636,15 @@
       "evidence_20261016_http_relations": [
         "docs/reviews/2026-10-16/knowledge-http-evidence.md",
         "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
-      ]
+      ],
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Document-hit source line3 and stale-hash refusal now have native evidence, supplementing existing explicit-reference and HTTP-chain API/component proof.",
+        "evidence": [
+          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+        ],
+        "remaining": "Authenticated multi-step button/service and report/source path UI, path-origin line/paragraph actions and available SSH cases still need direct complete-chain evidence. Document-hit preview does not substitute for full path-chain acceptance."
+      }
     },
     {
       "name": "知识时光",
@@ -7705,16 +7746,16 @@
     "deliveredMain": "7f0e876802905b9327c666b4c76510909ad5e035"
   },
   "latest_evidence_audit": {
-    "date": "2026-10-16",
+    "date": "2026-10-17",
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
     "report": "docs/reviews/2026-10-16/continuity-current-audit.md",
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Fix confirmed manual-mode stale server-saved label on dirty input; then SSH scene/history/autosave, actual approval/outcome/timeline UI and other original requirements. Native local saved/draft caret/scroll now pass. Original12 retained.",
+    "nextIndependentFocus": "After scoped preview publication: authenticated multi-step paths/credibility and knowledge-timeline UI, available SSH recovery/history, authorization controls and outcome cards. Proven reasoning writes/local dirty status/document-preview location and removal are not repeated as unresolved defects.",
     "deliveredMain": "b3bfbe72dd55968f32f96797da36ff908f3626ad",
     "mainGate": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
-    "currentCheckpointGate": "Position fix final full88/race621.173s/vet and independent source main gate/pushb3bfbe72 pass. Runtimeebf9e382 actual native saved/draft L023-to-L023, offsets886/904, exact protected state and cleanup pass; offline import local pass. New stale dirty-status label remains open."
+    "currentCheckpointGate": "Final source9286121f full106, native and complete packages pass; clean-main scoped gate passed. Supplemental assets/public downloads and remote main receipt in progress. Original12 not complete."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7948,7 +7989,7 @@
       "docs/reviews/2026-10-16/knowledge-current-project-native.md",
       "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
     ],
-    "next": "After current scoped delivery gate: popup-independent same-page preview, structured document line location, removed-source result invalidation; then native Safari verification. Do not count existing-tab manual source navigation as a passed quick-preview click."
+    "next": "Current-tab preview, structured text line/raw hash and removed-source results now pass final native d025. Continue complete authenticated multi-step evidence-path/source actions and remaining original requirements; resolved popup/line/removal defects are not reopened."
   },
   "starmap_background_progress_20261016": {
     "status": "pass",
