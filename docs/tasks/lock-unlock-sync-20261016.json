@@ -73,15 +73,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Current958de790 via start.command,16 assets/protected14 and complete offline actual local import pass.90 full current fingerprint pass; main ff/gate/push pending. Scoped code delivery; user-instance/browser/hardware acceptance remains pending.",
+      "status": "pass",
+      "summary": "Scoped code delivery: authorized fast-forward clean main, independent release-check pass, push and exact remote f569b4ba54610875c4626c19f94751de2e13c6ee pass. Local958 image/start.command/16 assets/protected14 and complete offline actual import pass;90 full includes652.176s server race. Final docs-only receipt independently gated/pushed afterwards. No version/tag/Release. Original reported instance, password browser fault injection, hardware WebAuthn and receiving device remain pending/not_run; master followup stays in_progress.",
       "evidence": [
         "docs/reviews/2026-10-16/lock-unlock-sync-full-proof.json",
-        "docs/reviews/2026-10-16/lock-unlock-sync-bundle-proof.json"
+        "docs/reviews/2026-10-16/lock-unlock-sync-runtime-proof.json",
+        "docs/reviews/2026-10-16/lock-unlock-sync-bundle-proof.json",
+        "docs/reviews/2026-10-16/lock-unlock-sync.md"
       ]
     }
   },
   "release_authorization": "Prior user authorization for incremental main pushes/local start.command/offline updates; no version/tag/Release.",
   "rollback": "Retain473463bc offline package and image, original14 sessions/settings/auth/mounts. Isolated acceptance uses disposable data only.",
-  "handoff": "Current958de790 healthy9999; real isolated API/productionJS verified, original local instance passwordless. Exact reported endpoint pending user answer. Password fault-injection browser UI not_run after tool error-page restriction; next UI owner should resume after temporary42 auto cleanup. No production password change; no version/tag/Release."
+  "handoff": "Confirmed failure-path code repair delivered on main, current958de790 healthy9999 with unchanged account/session/config/mounts. Local instance remains passwordless. Await exact reported endpoint and password UI/hardware acceptance; master followup intentionally active. Owned fixture/proxy removed; unretained IAB42 auto turn-end cleanup pending after tool blocked active close. No version/tag/Release."
 }

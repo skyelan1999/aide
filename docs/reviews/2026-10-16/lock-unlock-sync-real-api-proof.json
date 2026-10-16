@@ -113,5 +113,6 @@
       "path": "/api/lock-state",
       "status": 200
     }
-  ]
+  ],
+  "candidateImage": "sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af789e1fa45f8a"
 }

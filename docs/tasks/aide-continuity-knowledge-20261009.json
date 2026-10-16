@@ -7867,6 +7867,6 @@
   "lock_unlock_sync_followup_20261016": {
     "status": "in_progress",
     "task": "docs/tasks/lock-unlock-sync-20261016.json",
-    "summary": "Confirmed unlock-success/secondary-read failure path and newer-lock continuation repaired, native normal/real isolated API passed. Full/main pending; exact reported endpoint/password browser UI/hardware still pending. Original12 workstreams active."
+    "summary": "Confirmed unlock-success/read-failure and newer-lock continuation repaired and delivered mainf569b4ba;full90/native-normal/23 real isolated API/current958/offline passed. Keep followup in_progress for exact user endpoint, password browser fault injection and hardware not_run. Original12 workstreams active."
   }
 }
