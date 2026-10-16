@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "image": "sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af789e1fa45f8a",
+  "image": "sha256:598b0da06a45ce26aae4a202ebecfcd0b1bec61a614ea9afd12de469c9aa9fdc",
   "platform": "linux/arm64",
   "activeTaskRefusedBeforeStop": true,
   "failedImportRestoresOriginalContainer": true,
@@ -14,7 +14,7 @@
     "data": {
       "imported": true,
       "entries": 29,
-      "manifestSHA256": "9a34dcbbd8e809d03e5fe2781915cd245e15eec1764f6cfdfb327153471f79c6"
+      "manifestSHA256": "87a5255c38b744d5e3c301dcd09efd90af9494e74083b71dfdb9e639bc651c13"
     },
     "home": {
       "imported": true,

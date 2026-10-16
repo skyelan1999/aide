@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "results": {
+    "/api/config": 200,
+    "/api/lock-state": 200,
+    "/api/file?path=.aide-data/storage/data/auth/access-token": 400,
+    "/api/file?path=nested/.aide-data/launcher.env": 400
+  }
+}

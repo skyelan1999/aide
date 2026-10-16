@@ -53,30 +53,57 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Migration10 unit tests,6 offline fixture tests, focused Go unsafe-path race passed; true Docker active guard/failed import rollback/old-volume deletion recovery passed. Quick/final runtime/full pending.",
+      "status": "pass",
+      "summary": "Quick89, unit10/offline6, focused unsafe-path Go race pass. Final598 real Docker active guard/failed-copy rollback/deletion recovery pass. Production9999 migrated156+16 entries,14sessions/auth/settings/source preserved; repeat start no build/instance replacement; Safari configured models/references pass. Full pending. Final full91 pass 20261016T052610020429Z, fingerprint 917eff9090cdbf07468481f95c4acc7cce4927c813dac79cdac7d74fad03ef36; server race667.410s, TTS1.514s; no paid model call; Windows native/receiving device not_run.",
       "evidence": [
-        "scripts/test_launcher_data.py",
-        "scripts/test_launcher_data_docker.py"
+        "docs/reviews/2026-10-16/launcher-data-runtime.json",
+        "docs/reviews/2026-10-16/launcher-data-docker.json",
+        "docs/reviews/2026-10-16/launcher-data-api.json",
+        "docs/reviews/2026-10-16/launcher-data-bundle.json",
+        "docs/reviews/2026-10-16/launcher-data-linux-permissions.json",
+        "docs/reviews/2026-10-16/launcher-data-persistence.md"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "README plus Chinese/English user guides and data-layout architecture updated to launcher bind storage, with migration/refusal/rollback, private backup and platform limits. Offline bundle recorded; final report binds full/main receipts.",
+      "evidence": [
+        "README.md",
+        "docs/architecture/launcher-storage.md",
+        "docker-images/README.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/architecture/data-layout.md",
+        "docs/en/architecture/data-layout.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "New files classified and secret-free; .aide-data excluded and private0700/env0600 verified. UUID fixture resources and temporary import tar removed; production legacy volumes,958 rollback image/package and original checkout preserved. No global prune; user Safari tabs/drafts retained.",
+      "evidence": [
+        "docs/reviews/2026-10-16/launcher-data-docker.json",
+        "docs/reviews/2026-10-16/launcher-data-runtime.json",
+        "docs/reviews/2026-10-16/launcher-data-persistence.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source9077870a/current598 runtime/offline/full91 passed. Main fast-forward, release-check and exact remote push pending. No version/tag/Release.",
+      "evidence": [
+        "docs/reviews/2026-10-16/launcher-data-persistence.md",
+        "docs/reviews/2026-10-16/launcher-data-bundle.json"
+      ]
     }
   },
   "release_authorization": "Prior incremental main push/local start.command/offline updates authorized; this user request authorizes data relocation. No deletion of old volumes/checkout, no version/tag/Release.",
   "rollback": "Keep legacy aide_aide-data/aide_aide-home untouched and previous958 image/package; retain exact protected snapshots before cutover. Source/data bind rollback requires old image+old Compose volume mapping, never overwrite host canonical data.",
-  "handoff": ""
+  "handoff": "",
+  "verification_receipt": {
+    "profile": "full",
+    "status": "pass",
+    "fingerprint": "917eff9090cdbf07468481f95c4acc7cce4927c813dac79cdac7d74fad03ef36",
+    "head": "9077870a1d423c10f33991848fe78fde567a4a8c",
+    "time": "20261016T052610020429Z",
+    "log": ".agent-state/verify-20261016T052610020429Z.log"
+  }
 }

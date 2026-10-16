@@ -328,7 +328,7 @@ DeepSeek 价格与节假日安排可能更新；官方模型费率及 2026 年�
 
 **账户**：锁屏密码以 **Argon2id** 慢哈希存储（OWASP 推荐参数：64MB 内存、3 次迭代、4 线程），同时派生 AES-256 密钥加密人格自定义性格与小秘对话历史；空闲超时后回到登录页。从旧版升级的用户首次登录时，系统自动把旧的 SHA-256 哈希平滑升级为 Argon2id，并用新密钥重新封装已有密文（re-wrap），全程透明、无需手动操作。**传输**：0.1.11 起主端口走 HTTPS/TLS（最低 TLS 1.2、AEAD 前向保密套件），首次启动自动生成仅本机回环可用的自签证书，令牌与会话内容不再明文过网；详见 [安全：密码哈希与密钥派生](security/password-hashing.md) 与 [安全：HTTPS/TLS 入口加固](security/tls.md)。
 
-**数据存储与完整性**：你的所有私有状态（会话、记忆、小秘、配置、密钥）都保存在命名卷 `/data`，与具体项目解耦，升级或换项目都不会丢，也不会被写进项目目录随 git 提交。0.1.11 起 `/data` 从旧版平铺的 30+ 个文件自动整理为语义化分层目录（`auth/` `sessions/` `assistant/` `memory/` `config/` `stats/` `audit/` `secrets/` `certs/`）；旧卷首次启动时自动迁移，全程先备份、复制校验通过后才归位，可回滚、可重入，无需手动操作。启动与每 5 分钟运行巡检会校验程序完整性与关键文件可解析性：缺失目录自动重建、可再生数据清空重建、损坏的用户数据移入 `.quarantine/` 隔离（绝不自动删除），程序疑似被篡改时 `/healthz` 标记 `degraded` 并提示重新部署。`GET /healthz` 返回的 `integrity` 字段即当前状态（ok / degraded / corrupted）。详见 [架构：数据目录分层与完整性自愈](architecture/data-layout.md)。
+**数据存储与完整性**：你的所有私有状态（会话、记忆、小秘、配置、密钥）由启动器保存在启动目录 `.aide-data/storage/data`（容器内 `/data`），工具用户目录位于 `.aide-data/storage/home`。它们与所选项目解耦，删除 Docker 容器或旧卷不会删除宿主数据，也不随 git 提交。旧卷迁移及完整备份见[启动目录持久化](architecture/launcher-storage.md)。0.1.11 起 `/data` 从旧版平铺的 30+ 个文件自动整理为语义化分层目录（`auth/` `sessions/` `assistant/` `memory/` `config/` `stats/` `audit/` `secrets/` `certs/`）；旧卷首次启动时自动迁移，全程先备份、复制校验通过后才归位，可回滚、可重入，无需手动操作。启动与每 5 分钟运行巡检会校验程序完整性与关键文件可解析性：缺失目录自动重建、可再生数据清空重建、损坏的用户数据移入 `.quarantine/` 隔离（绝不自动删除），程序疑似被篡改时 `/healthz` 标记 `degraded` 并提示重新部署。`GET /healthz` 返回的 `integrity` 字段即当前状态（ok / degraded / corrupted）。详见 [架构：数据目录分层与完整性自愈](architecture/data-layout.md)。
 
 **语音小秘**：输入框旁麦克风调用浏览器 Web Speech API 实时转写，后端自动甄别"传达给 AI / 背景噪声 / 与他人闲聊"，识别闲聊自动退下；名字可自定义。
 

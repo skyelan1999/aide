@@ -3,7 +3,7 @@
 > 版本：0.1.11.0-RC3 · 分支：feature/permission-panel · 关联：#29 安全 / #30 编号会话 / #38 保险库 / #43 API Key vault / #63 侧车批注
 > 权威方案：`proposals/data-integrity/data-layering-and-self-healing.html`
 
-aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定挂载，用户所有）/ 状态（命名卷，aide 私有）**。
+aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定挂载，用户所有）/ 状态（启动目录私有绑定挂载）**。
 本文描述状态卷 `/data` 从“30+ 平铺文件”重构为语义化分层目录的目标布局、一次性迁移流程，以及启动校验 + 运行巡检 + 自动恢复的闭环。
 
 ## 一、目标目录结构
@@ -135,7 +135,7 @@ flowchart LR
 ## 六、部署注意事项
 
 - **项目记忆**：本地工作区的 aide 长期记忆保存在 `<project>/.cache/aide/memory.md`，不通过全局 `/data` 共享；SSH 工作区目前按 workspace identity 隔离并保存在本机 `.cache/projects/<id>/aide/`，不会随远端仓库同步；详见 `memory-access.md`。
-- **Docker volume 映射**：`/data` 为命名卷，跨项目、跨升级持久；不要把 `/data` 写进用户项目目录。
+- **Docker 数据映射（2026-10-16）**：启动器将 `/data` 绑定到启动目录 `.aide-data/storage/data`，`/home/aide` 绑定到 `.aide-data/storage/home`，与所选项目分开。旧命名卷校验迁入后保留；删除 Docker 卷不删除这些宿主数据。见[启动目录持久化](launcher-storage.md)。
 - **首次启动迁移**：旧平铺卷在首次启动时自动迁移，全程备份可回滚；无需人工干预。
 - **权限**：分层目录 0700，敏感文件 0600。
 - **TLS 路径对齐**：当前运行期 TLS 证书仍写 `data/tls/`（#29/B 任务在改）；`paths.go` 已定义 `certs/` 目标位置，待 B 完成后统一对齐。

@@ -1,3 +1,7 @@
+## 2026-10-16 启动目录持久化候选（构建时记录）
+
+候选598b0da06a45（构建9077870a）将核心数据和工具用户目录迁至启动目录 `.aide-data/storage/`，保留旧卷并支持私有启动配置恢复。完整包 `aide-0.1.17.0-RC2-linux-arm64-598b0da06a45-offline.tar.gz`，706105049字节，SHA-256 `a460c72168d2dfbc6d82eb1851290f1acd0032d6d0128a68c407880481e04fda`。内外摘要、应用/依赖双镜像、平台、全部新增持久化启动辅助脚本、许可证和本机实际导入通过。本机9999的14会话及配置/认证一致、Safari正常；最终full/main结果见[任务](../docs/tasks/launcher-data-persistence-20261016.json)。保留958镜像和旧卷回滚，接收设备导入及Windows原生迁移未验。
+
 ## 2026-10-16 Adaptive parallel candidate (build record)
 
 Candidate7b6321af02c1 (source builde0f38e02) discovers remaining parallel work throughout the main execution lifecycle, without a fixed12-check cutoff. Complete app/dependency bundle `aide-0.1.17.0-RC2-linux-arm64-7b6321af02c1-offline.tar.gz`, 706099390 bytes, SHA-256 `2732376ab4c4d08ac56fda954990484774580c2c2823db5292cdda924e257ca5`. Inner/outer checksums, launcher/license and actual local Docker import passed. Final local9999/start.command health,15 assets and protected state match. Actual Qwen5x read-first/late3-way fanout passed on protocol-identical d1 candidate; the final delta only removes the >12 bypass, with13-check/main-policy race regressions passing. [Task, verification and main status](../docs/tasks/adaptive-parallel-20261016.json). Receiving-device import untested. Delivered3f4545df rollback retained; only owned intermediate7ff/d1 packages removed after preserving import/model evidence.

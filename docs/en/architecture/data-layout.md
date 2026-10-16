@@ -3,7 +3,7 @@
 > Version: 0.1.11.0-RC3 · Branch: feature/permission-panel · Related: #29 security / #30 numbered sessions / #38 vault / #43 API key vault / #63 sidecar comments
 > Authoritative design: `proposals/data-integrity/data-layering-and-self-healing.html`
 
-aide separates storage into three boundaries: **program (read-only image) / projects (bind-mounted, user-owned) / state (named volume, aide-private)**.
+aide separates storage into three boundaries: **program (read-only image) / projects (bind-mounted, user-owned) / state (private bind mounts under the launcher)**.
 This document describes the target layout that refactors the legacy flat `/data` volume (30+ files) into semantic subdirectories, the one-time migration, and the boot-time + runtime + self-heal loop.
 
 ## 1. Target directory structure
@@ -134,7 +134,7 @@ Every check and recovery is appended to `.integrity/recovery.log`; after recover
 ## 6. Deployment notes
 
 - **Project memory**: local aide long-term memory lives at `<project>/.cache/aide/memory.md` and is not shared through global `/data`; SSH workspace memory is currently isolated by workspace identity under the local `.cache/projects/<id>/aide/` and does not sync with the remote repository; see `memory-access.md`.
-- **Docker volume mapping**: `/data` is a named volume, persistent across projects and upgrades; never write `/data` into a user project directory.
+- **Docker storage mapping (2026-10-16)**: launchers bind `/data` to `.aide-data/storage/data` and `/home/aide` to `.aide-data/storage/home` beneath the launcher directory, separate from the selected project. Legacy named volumes are verified, imported and retained. Removing Docker volumes does not remove host data. See [launcher storage and recovery](../../architecture/launcher-storage.md).
 - **First-boot migration**: legacy flat volumes migrate automatically on first boot, with backup and rollback; no manual step required.
 - **Permissions**: layered directories 0700, sensitive files 0600.
 - **TLS path alignment**: at runtime TLS certs are still written to `data/tls/` (#29/B task in progress); `paths.go` already defines the `certs/` target and will align once B completes.

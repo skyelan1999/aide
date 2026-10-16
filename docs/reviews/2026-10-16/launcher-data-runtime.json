@@ -1,0 +1,48 @@
+{
+  "serverInstanceId": "2026-10-16T05:24:28.57868955Z",
+  "image": "sha256:598b0da06a45ce26aae4a202ebecfcd0b1bec61a614ea9afd12de469c9aa9fdc",
+  "imageTag": "sha256:598b0da06a45ce26aae4a202ebecfcd0b1bec61a614ea9afd12de469c9aa9fdc",
+  "sourceSHA256": "0de3f9173e9319627f57e4ebcf6f3c4ae16f6e9c2695e88e34080cba3f3444be",
+  "platformManifest": "sha256:8d86e6ff4f4efe40c6107fae96bc10b6f6070a4c932250bdd23f6cba8baa5650",
+  "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+  "port": "9999",
+  "health": "ok",
+  "protectedFilesAndUnrelatedMountsPreserved": true,
+  "dataHomeBoundUnderLauncher": true,
+  "legacyVolumesRetained": true,
+  "migration": {
+    "format": 1,
+    "status": "complete",
+    "createdAt": 1792128267,
+    "sources": {
+      "data": {
+        "imported": true,
+        "entries": 156,
+        "manifestSHA256": "5f1df0934a28bae056d044ba17169d65eb83b0abe02a3edd3e9927933e0df1cd"
+      },
+      "home": {
+        "imported": true,
+        "entries": 16,
+        "manifestSHA256": "71fe94959613795b1a8202f2dfb302167be50df03f7362f1c17e1d9225b4a54e"
+      }
+    }
+  },
+  "assetsMatch": [
+    "lock-cluster.js",
+    "parallel-chat.js",
+    "crash-monitor.js",
+    "crash-monitor.css",
+    "file-autosave.js",
+    "locales/en.js",
+    "index.html",
+    "settings-init.js",
+    "workbench.css",
+    "workbench-background.js",
+    "starmap.html",
+    "starmap-topics.js",
+    "starmap-timeline.js",
+    "starmap.css",
+    "app.js",
+    "conversation.css"
+  ]
+}
