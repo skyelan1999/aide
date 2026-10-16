@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "asset": "aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz",
+  "id": 647255824,
+  "bytes": 770934573,
+  "digest": "sha256:3009d01b7ae14d099906f060d6e6d6260782bcd7e1df6dae68154685e9dcfa55",
+  "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz",
+  "originalUploadedAssetsPreserved": true,
+  "otherArchitecture": "pending",
+  "remoteMain": "not_pushed"
+}
