@@ -87,7 +87,10 @@ func (a *App) knowledgeContinueLocked(code bool) {
 				return
 			}
 			batch, stop := context.WithTimeout(ctx, 10*time.Second)
-			view, err := a.knowledgeAcquireViewLocked(batch, code, false)
+			// The job already paces batches. A failed first view has no
+			// published coverage yet, so the ordinary 2s refresh throttle
+			// must not turn three 350ms retries into three cached failures.
+			view, err := a.knowledgeAcquireViewLocked(batch, code, true)
 			stop()
 			done := false
 			if err != nil {
