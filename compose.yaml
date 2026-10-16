@@ -84,8 +84,8 @@ services:
       LD_LIBRARY_PATH: /opt/aide-cad/system
     volumes:
       - type: bind
-        source: ./.aide-data/storage/data/auth
-        target: /auth
+        source: ./.aide-data/storage/data/cad-auth
+        target: /cad-auth
         read_only: true
         bind:
           create_host_path: false

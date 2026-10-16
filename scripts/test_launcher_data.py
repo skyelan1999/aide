@@ -38,13 +38,13 @@ class LauncherDataTests(unittest.TestCase):
         before = storage.manifest(self.source)
         result = self.prepare()
         self.assertEqual(result['status'], 'imported')
-        self.assertEqual(storage.manifest(self.persist / 'storage/data'), before)
+        self.assertEqual([r for r in storage.manifest(self.persist / 'storage/data') if r[0] != 'cad-auth'], before)
         self.assertEqual(stat.S_IMODE((self.persist / 'storage/data').stat().st_mode), 0o700)
         receipt = json.loads((self.persist / 'storage/migration.json').read_text())
         self.assertNotIn('synthetic-private-value', json.dumps(receipt))
         shutil.rmtree(self.source)
         self.assertEqual(self.prepare()['status'], 'existing')
-        self.assertEqual(storage.manifest(self.persist / 'storage/data'), before)
+        self.assertEqual([r for r in storage.manifest(self.persist / 'storage/data') if r[0] != 'cad-auth'], before)
 
     def test_fresh_auth_mount_is_prepared_without_user_data_access(self):
         storage.prepare(self.persist, {}, platform='fixture')
@@ -52,6 +52,8 @@ class LauncherDataTests(unittest.TestCase):
         self.assertTrue(auth.is_dir())
         self.assertEqual(stat.S_IMODE(auth.stat().st_mode), 0o700)
         self.assertEqual(list(auth.iterdir()), [])
+        self.assertTrue((auth.parent/'cad-auth').is_dir())
+        self.assertEqual(list((auth.parent/'cad-auth').iterdir()), [])
         auth.rmdir();auth.symlink_to(self.source, target_is_directory=True)
         with self.assertRaisesRegex(RuntimeError, 'Authentication directory'):
             storage.prepare(self.persist, {}, platform='fixture')

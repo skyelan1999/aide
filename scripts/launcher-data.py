@@ -59,15 +59,17 @@ def set_owner(root, uid, gid):
 
 def prepare_auth_directory(target, uid, gid, platform):
     # Compose creates all containers before health dependencies are satisfied.
-    # Create only the empty auth directory so the CAD worker can mount that
-    # subtree read-only; never give it sessions/settings or all of /data.
-    auth = Path(target) / 'data/auth'
-    if auth.is_symlink() or (auth.exists() and not auth.is_dir()):
-        raise RuntimeError('Authentication directory is not a safe directory')
-    if not auth.exists():
-        auth.mkdir(mode=0o700)
-        if platform == 'linux':
-            os.chown(auth, uid, gid)
+    # Create only the empty directories so the CAD worker mounts only its
+    # domain-separated key read-only; never give it sessions/settings or all of /data.
+    for name in ('auth','cad-auth'):
+        auth = Path(target) / 'data' / name
+        if auth.is_symlink() or (auth.exists() and not auth.is_dir()):
+            raise RuntimeError('Authentication directory is not a safe directory')
+        if not auth.exists():
+            auth.mkdir(mode=0o700)
+            if platform == 'linux':
+                os.chown(auth, uid, gid)
+
 
 
 def prepare_locked(root, sources, uid=1000, gid=1000, platform='linux'):

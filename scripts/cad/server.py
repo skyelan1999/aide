@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 LIMIT = 384 << 20
 GATE = threading.BoundedSemaphore(1)
-TOKEN_FILE = os.environ.get('AIDE_CAD_TOKEN_FILE', '/auth/access-token')
+TOKEN_FILE = os.environ.get('AIDE_CAD_TOKEN_FILE', '/cad-auth/token')
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'

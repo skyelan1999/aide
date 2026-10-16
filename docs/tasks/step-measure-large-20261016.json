@@ -31,7 +31,8 @@
     ".dockerignore",
     "start.ps1",
     "scripts/launcher-data.py",
-    ".gitattributes"
+    ".gitattributes",
+    "docker/OFFLINE.md"
   ],
   "stages": {
     "requirements": {
@@ -86,7 +87,7 @@
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; preserve user data and previous598 image/volumes. No version/tag/Release.",
   "rollback": "Retain main1775bab7 and current598 image/offline bundle; storage bind data/home unchanged, protected snapshot before restart.",
-  "handoff": "Current production unchanged. Native204MiB conversion:30870solids/370440triangles,49.31s; assembly/face-colour fixture passes. Focused Go race10.435s, worker native protocol and CAD child cancellation tests pass. Packaging, UI acceptance, complete offline bundle and release gates remain.",
+  "handoff": "Source22bad28b pushed; native204MiB/fullSurface, six theme and400% zoom keyboard access,30mm/90deg/frame/export pass. Security review replaces workbench-token mount with a dedicated domain-separated CAD credential. Old020a bundle import/fresh-start passed but is superseded by this hardening; new runtime/bundle and final main full gate pending. UI actual baseline is comfort+system (not historical professional); restored to comfort+system and Safari100%.",
   "clarifications": [
     {
       "user": "有什么区别吗，我需要让其和在正常专业软件上打开保持一致",

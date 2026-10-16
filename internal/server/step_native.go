@@ -2,16 +2,80 @@ package server
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
 )
 
 var stepNativeGate = make(chan struct{}, 1)
+
+// A compromised converter must not obtain the workbench login credential.
+// The worker receives only this domain-separated key through its own mount.
+func nativeStepKey(token string) string {
+	mac := hmac.New(sha256.New, []byte(token))
+	_, _ = mac.Write([]byte("aide/native-cad/worker/v1"))
+	return hex.EncodeToString(mac.Sum(nil))
+}
+func (a *App) prepareStepNativeToken() (string, error) {
+	dir := filepath.Join(a.dataPath, "cad-auth")
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", err
+	}
+	info, err := os.Lstat(dir)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return "", errors.New("CAD 认证目录无效")
+	}
+	key := nativeStepKey(a.token)
+	target := filepath.Join(dir, "token")
+	if info, err = os.Lstat(target); err == nil {
+		if !info.Mode().IsRegular() {
+			return "", errors.New("CAD 认证文件无效")
+		}
+		if info.Size() <= 65 {
+			file, err := os.Open(target)
+			if err != nil {
+				return "", err
+			}
+			value, err := io.ReadAll(io.LimitReader(file, 66))
+			_ = file.Close()
+			if err == nil && hmac.Equal(value, []byte(key+"\n")) {
+				return key, nil
+			}
+		}
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+	file, err := os.CreateTemp(dir, ".token-*")
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(file.Name())
+	if _, err = file.WriteString(key + "\n"); err == nil {
+		err = file.Sync()
+	}
+	closeErr := file.Close()
+	if err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return "", err
+	}
+	if err = os.Rename(file.Name(), target); err != nil {
+		return "", err
+	}
+	return key, nil
+}
 
 type stepRawHeader struct {
 	status int
@@ -88,7 +152,12 @@ func (a *App) stepNativePreview(w http.ResponseWriter, r *http.Request) {
 		fail(w, 503, errors.New("CAD 服务配置无效"))
 		return
 	}
-	req.Header.Set("Authorization", "Bearer "+a.token)
+	workerToken, err := a.prepareStepNativeToken()
+	if err != nil {
+		fail(w, 503, errors.New("无法准备 CAD 转换凭据"))
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+workerToken)
 	req.Header.Set("Content-Type", "application/step")
 	if size, e := strconv.ParseInt(head.header.Get("Content-Length"), 10, 64); e == nil && size > 0 {
 		req.ContentLength = size

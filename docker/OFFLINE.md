@@ -1,19 +1,21 @@
 # aide 离线启动包
 
-将启动包解压到目标电脑的普通目录。需要 Docker Desktop / Docker Engine 与 Compose v2；应用、Go、Python、Node.js 与文档解析依赖已包含在镜像中。首次启动时，若 Docker 中尚无目标镜像，启动器会从同一 GitHub Release 自动下载镜像与 `SHA256SUMS`，校验 SHA256 和镜像 ID 后导入。首次下载约 500 MB，需联网；离线安装可预先将匹配镜像归档和 `SHA256SUMS` 放入包内 `docker-images/`。
+将完整启动包解压到目标电脑的普通目录。需要 Docker Desktop / Docker Engine 与 Compose v2；应用、Go、Python、Node.js、文档解析与原生 CAD 运行时已包含在镜像中。包内 `docker-images/` 带有匹配镜像及 `SHA256SUMS`，首次启动从本地校验并导入，后续复用已导入的镜像，不构建、不拉取基础镜像、不在线安装 Python 依赖。
 
-macOS 双击 `start.command`；Windows ARM64 双击 `start.bat`；Ubuntu ARM64 执行 `./start.sh`。首次运行会检查 CPU 架构，按需下载、校验并导入镜像，创建 workspace / context 目录和默认 .env，然后启动应用。后续运行复用匹配的镜像。全程不构建、不拉取基础镜像；包内没有 Dockerfile 或 Compose build 配置。
+macOS 双击 `start.command`；Windows 双击 `start.bat`；Ubuntu 执行 `bash start.sh`。启动器检查镜像与 Docker 引擎架构是否匹配，创建 workspace/context 目录和默认 `.env`。启动包没有 Dockerfile 或 Compose build 配置。保留包内镜像归档，可以在清理 Docker 镜像后再次本地导入。
 
-通常在浏览器访问 https://localhost:8097。若该端口已被占用，启动脚本会自动选择并保存下一个可用端口，并在终端显示实际端口。首次使用的自签证书提示需要由使用者确认。启动脚本在桌面环境中会自动打开携带本机登录令牌的页面。服务器环境从容器 `/data/auth/access-token` 获取令牌，勿公开令牌。
+通常在浏览器访问 https://localhost:8097。端口被占用时，启动器选择并保存下一个可用端口，终端显示实际端口。自签证书首次提示由使用者确认。桌面启动器自动打开携带本机登录令牌的页面；服务器可从应用容器 `/data/auth/access-token` 获取令牌，勿公开令牌。
 
-「设置 → 无障碍」可修改宿主机绑定端口；设置保存到持久数据卷，后台启动监视器会自动更新 Compose 端口并重启服务。原设置页会等待新端口就绪后在当前标签页切换过去，避免留下失效旧页或额外打开重复标签。首次启动时，脚本优先使用 8097；若被占用，会自动选择并保存后续可用端口。
+「设置 → 无障碍」可修改宿主机绑定端口。后台监视器更新端口并重启服务，原页面等待新端口就绪后在当前标签页切换。验收时可以设置 `AIDE_OPEN_BROWSER=0` 并复用已有工作台页，避免重复打开标签。
 
-应用默认仅浏览包内 workspace 目录，辅助资料放在 context。需要使用其他目录时编辑 .env 中的路径，并再次启动。端口冲突时修改 AIDE_PORT。包使用独立的 `aide-offline` Compose 项目和持久数据卷。
+核心会话、配置、认证资料位于启动目录 `.aide-data/storage/data/`，工具用户目录位于 `.aide-data/storage/home/`；私有启动配置备份也保存在 `.aide-data/`。这些是宿主目录绑定，删除容器、镜像或构建缓存不会删除它们。搬迁、更新启动包时保留整个 `.aide-data/` 与自己的 `.env`，不要用新包覆盖旧电脑的私有配置。旧版命名卷迁移会校验并保留原卷，迁移记录在 `.aide-data/storage/migration.json`。
 
-RC2 当前 Release 仅提供 `linux/arm64` 镜像：适用于 Apple Silicon、Ubuntu ARM64，以及使用 ARM64 Linux Docker 引擎的 Windows ARM64。Windows x64 与 Ubuntu x64 需要 `linux/amd64` 镜像；当前构建主机没有该架构的本地基础镜像，因此本次不发布虚假的兼容包。运行 Aide 本身可离线启动；AI 对话仍需配置目标环境可访问的模型服务。可选语音模型存于数据卷，未包含在镜像中。
+原生 STEP 预览由同一应用镜像启动的 `cad` 服务完成，使用包内新版 Compose；不需要另拉 CAD 镜像或向云端上传模型。服务只连接内部网络，没有宿主发布端口，只读挂载 CAD 专用派生凭据目录；临时输入在转换结束或取消后清理。工作台限额 2 GiB，CAD 服务限额 4 GiB、一次一个转换；本次 204 MiB 样例在约 7.75 GiB Docker 引擎内存的环境验收，峰值采样约 2.21 GiB。体积相同的不同复杂模型并不保证相同内存与耗时。完整曲面、装配位置、单位和颜色由几何验收检查；测量界面与导出会明确注明预览网格近似精度。
 
-包不包含原电脑的会话、API 密钥、浏览器令牌、宿主项目文件或数据卷。首次启动为空环境；会话与配置以后保存在目标机的 Docker 数据卷中。
+辅助资料放在 context，项目放在 workspace；其他目录通过 `.env` 或工作台工作区配置选择。包使用独立的 `aide-offline` Compose 项目。包不含原电脑的会话、API 密钥、浏览器令牌、宿主项目或数据目录；在新目录首次启动为空环境，镜像包负责程序运行环境，已有数据需另行复制或恢复。
 
-停止应用：macOS 双击 `stop.command`，Windows 双击 `stop.bat`，Linux 执行 `bash stop.sh`；也可运行 `bash scripts/aide.sh stop`。清理未使用构建缓存使用对应平台的 `clean-docker-cache` 入口，缓存为当前引擎默认构建器的共享缓存，不删除镜像或数据卷。不要用 `down -v`，它会删除会话与配置。迁移已有会话需要另行备份和恢复数据卷，镜像包只负责程序运行环境。
+本次快照为 `linux/arm64` 镜像，适用于 Apple Silicon、Ubuntu ARM64，以及使用 ARM64 Linux Docker 引擎的 Windows ARM64。x64 引擎需要另构建并验收 `linux/amd64` 镜像，不能混用架构。Aide 启动及 CAD 预览可离线使用；AI 对话仍需配置可访问的模型服务。可选语音模型在私有数据目录，未包含在镜像中。
 
-BUILD.txt 记录版本、镜像 ID、平台和构建输入指纹；docker-images/SHA256SUMS 校验包内镜像。外层归档的校验文件随交付提供。此包为当前工作树构建快照，正式版本发布状态以仓库发布记录为准。
+停止应用：macOS 双击 `stop.command`，Windows 双击 `stop.bat`，Linux 执行 `bash stop.sh`；也可运行 `bash scripts/aide.sh stop`。停止脚本按当前启动目录定位并停止工作台及 CAD 服务。`clean-docker-cache` 入口仅清理当前引擎默认构建器的未使用构建缓存，不删除镜像、数据目录或工作区。
+
+`BUILD.txt` 记录版本、镜像 ID、平台、构建输入指纹及 CAD 运行时版本；`docker-images/SHA256SUMS` 校验包内镜像，外层归档摘要随交付提供。此包是已验收的构建快照；是否创建正式版本、标签或 GitHub Release，以仓库发布记录为准。
