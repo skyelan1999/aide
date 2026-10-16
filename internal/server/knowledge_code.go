@@ -361,6 +361,21 @@ func codeSnippet(lines []string, line, end int) string {
 
 var knowledgeCodeGate = make(chan struct{}, 2)
 
+const knowledgeCodeEdgeLimit = 6500
+
+// Catalogue membership and document references have their own budgets. They
+// must not prevent a large map from publishing its first code relation.
+func knowledgeCodeEdgeCount(edges []knowledgeEdge) int {
+	count := 0
+	for _, e := range edges {
+		switch e.Kind {
+		case "defines", "imports", "call_candidate", "call_typed", "dom_event", "event_callback", "http_request", "http_route", "route_handler":
+			count++
+		}
+	}
+	return count
+}
+
 func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowledgeCodeFile) {
 	summary := &knowledgeCodeSummary{Files: len(files), Diagnostics: []string{}, Engine: "ast-name-resolution"}
 	recordUnresolved := func(r knowledgeUnresolvedRelation) {
@@ -535,9 +550,11 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 		}
 		return nil
 	}
+	codeEdges := knowledgeCodeEdgeCount(g.Edges)
 	addEdge := func(e knowledgeEdge) bool {
-		if len(g.Edges) < 6500 {
+		if codeEdges < knowledgeCodeEdgeLimit {
 			g.Edges = append(g.Edges, e)
+			codeEdges++
 			return true
 		} else {
 			g.Truncated = true

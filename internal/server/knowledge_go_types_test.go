@@ -46,6 +46,10 @@ func entry(a A,b B,i I,f func()){a.Same();b.Same();i.Same();f();lib.Target();fun
 		g.Nodes = append(g.Nodes, n)
 		kfiles = append(kfiles, knowledgeCodeFile{ID: f.ID, Text: f.Text, Module: f.Module, Node: n})
 	}
+	// Large catalogue membership must not suppress indexed type bindings.
+	for i := 0; i < 20000; i++ {
+		g.Edges = append(g.Edges, knowledgeEdge{From: "catalogue", To: "Fa", Kind: "contains"})
+	}
 	expandKnowledgeCode(context.Background(), &g, kfiles)
 	applyKnowledgeGoTypes(&g, r)
 	if g.Code.TypedCalls != 4 {

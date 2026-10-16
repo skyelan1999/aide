@@ -462,12 +462,14 @@ func applyKnowledgeGoTypes(g *knowledgeGraph, result goTypeResult) {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
+	codeEdges := knowledgeCodeEdgeCount(g.Edges)
 	for _, key := range keys {
-		if len(g.Edges) >= 6500 {
+		if codeEdges >= knowledgeCodeEdgeLimit {
 			g.Truncated = true
 			break
 		}
 		g.Edges = append(g.Edges, replacements[key])
+		codeEdges++
 		accepted[key] = true
 		g.Code.TypedCalls++
 	}
