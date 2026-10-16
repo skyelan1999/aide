@@ -70,8 +70,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "full105 and scoped main gate passed. Both complete runtime archives and instructions/checksums uploaded; public size/digest checks, archive Range probes, exact metadata downloads and notes match passed. Original uploaded assets preserved. Remote main push is pending.",
+      "status": "pass",
+      "summary": "Full105 and all three scoped main gates passed. Both complete archives and metadata are uploaded and publicly verified. Main push succeeded and remote ref independently matched 666310b96251c0527968ead634e56366c3b43345. Original RC2 tag and uploaded assets retained.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/prebuilt-release-gates-proof.json",
         "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
@@ -82,5 +82,5 @@
   },
   "release_authorization": "用户：把docker更新一下免现编译；完整运行镜像在正常仓库也是必要的。既有增量测试、文档与main推送授权继续有效。",
   "rollback": "保留551eff完整镜像包及旧容器/卷；不删除用户数据。真正候选歧义时保留现场，需用标签诊断选择而非清空容器。",
-  "handoff": "All four supplemental assets and final notes are published and independently verified. Run final clean-main scoped gates, push main, verify remote ref, then record completion for this scoped batch. Original continuity goal and preview follow-up branch remain open; Windows user-owned and receiving-device import not claimed."
+  "handoff": "This scoped batch is published on main with verified complete ARM64/AMD64 packages. Receiving-device import and native Windows acceptance are not claimed. The original continuity goal and independent preview follow-up remain open."
 }

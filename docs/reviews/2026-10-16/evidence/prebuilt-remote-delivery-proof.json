@@ -54,6 +54,12 @@
       "downloadContentVerified": true
     }
   ],
-  "remoteMain": "not_pushed_yet",
+  "remoteMain": {
+    "status": "pass",
+    "firstPublishedCommit": "666310b96251c0527968ead634e56366c3b43345",
+    "verifiedBy": "git ls-remote origin refs/heads/main",
+    "originalRC2TagCommit": "a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3",
+    "originalTagUnchanged": true
+  },
   "receivingDevice": "not_run"
 }
