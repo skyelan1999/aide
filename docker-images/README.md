@@ -400,4 +400,6 @@ start.command image `sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af
 
 ## 2026-10-16 插件在线升级与锁屏／Windows 热修复
 
-当前本机候选 `aide-0.1.17.0-RC2-linux-arm64-632d29e04223-offline.tar.gz`，SHA-256 `ed2bca0de6f54440cae0cff84bce8581721240febd4b4489624745ffee6dbd57`；源码 `a476951e`。包含插件在线替换与恢复、跨标签选举期间的锁屏解锁修复，以及 Windows 源码构建 CAD 脚本的 CRLF 兼容。包为 Linux ARM64 镜像，不能作为 Windows x86_64 的架构匹配包；Windows 源码启动需检出最新 main。插件数据／用户账户不随包分发。最终校验、导入、main 推送及未验收项见[热修复记录](../docs/reviews/2026-10-16/lock-windows-hotfix.md)及[插件升级记录](../docs/reviews/2026-10-16/plugin-online-upgrade.md)。保留 dc2cacc1c0f6 与 5c5876dd6049 作为回滚，不创建新版本或正式 Release。
+首轮候选 `aide-0.1.17.0-RC2-linux-arm64-632d29e04223-offline.tar.gz`，SHA-256 `ed2bca0de6f54440cae0cff84bce8581721240febd4b4489624745ffee6dbd57`；源码 `a476951e`。包含插件在线替换与恢复、跨标签选举期间的锁屏解锁修复，以及 Windows 源码构建 CAD 脚本的 CRLF 兼容。包为 Linux ARM64 镜像，不能作为 Windows x86_64 的架构匹配包；Windows 源码启动需检出最新 main。插件数据／用户账户不随包分发。最终校验、导入、main 推送及未验收项见[热修复记录](../docs/reviews/2026-10-16/lock-windows-hotfix.md)及[插件升级记录](../docs/reviews/2026-10-16/plugin-online-upgrade.md)。保留 dc2cacc1c0f6 与 5c5876dd6049 作为回滚，不创建新版本或正式 Release。
+
+最终候选 `aide-0.1.17.0-RC2-linux-arm64-52e943e1e8c3-offline.tar.gz`，源码 `bfb120b6`，SHA-256 `5eb5671d8117fa3315b602511f6a2a4423fd24e60fab3087578a4c30ada6a48f`，另修复升锁写入失败时的从页解锁与旧心跳／选举恢复。前述首轮632包由本包替代；最终检查结果在相同热修复记录中维护。
