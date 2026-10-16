@@ -1,0 +1,112 @@
+{
+  "runtime": {
+    "image": "sha256:8d1957c9b0c92bc376e5a20933f3b81abd10400cd0688625f9f97366d06512f9",
+    "imageTag": "sha256:8d1957c9b0c92bc376e5a20933f3b81abd10400cd0688625f9f97366d06512f9",
+    "sourceSHA256": "e31ef4425069dfeaf86df42bc97fae1f92b0e10495d40885d61e111d7e57b1db",
+    "platformManifest": "sha256:93f98c2987043c492e0a6516ef444748973c7ee0134a9a5eb5565f14b015294c",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "preflight": {
+    "image": "sha256:ebf9e38203f31bf93ef253a2c271f0581f3dca25448edb20c11b101e286a4371",
+    "health": "healthy",
+    "sessions": 14,
+    "running": 0,
+    "nonterminal": 0,
+    "queued": 0,
+    "historyBackupSHA256": "44afa2efe6d0cfcbd9e05ffb73a5d6f0e3959415567fbe621c67013892c77e50"
+  },
+  "full": {
+    "status": "pass",
+    "profile": "full",
+    "time": "20261016T013627048713Z",
+    "fingerprint": "ed6649e0c7dd582f91be849b4a6d3991c5cd7ddcf321db06957f2286f27de59b",
+    "head": "d0d420b12cae63f7a6c4ae5afbae37ed8d8b5535",
+    "log": ".agent-state/verify-20261016T013627048713Z.log"
+  },
+  "fullCommands": 88,
+  "serverRaceSeconds": 588.399,
+  "nativeUI": {
+    "client": "Existing native Safari https://localhost:9999/",
+    "safeReloadOriginalPromptEmpty": true,
+    "autoSaveRemainedOff": true,
+    "inputV1StatusUnsaved": true,
+    "manualV1SavedLabel": true,
+    "inputV2ImmediatelyUnsaved": true,
+    "nativeUndoRestoredV1AndSavedLabel": true,
+    "realConflictDialogServerV3LocalV2": true,
+    "explicitAdoptServerV3SavedLabel": true,
+    "editAfterAdoptionUnsaved": true,
+    "finalManualV4SavedLabel": true,
+    "ownedEditorClosed": true,
+    "originalRootAndSessionRestored": true,
+    "ownedFolderAbsentAfterRefresh": true,
+    "newTabs": 0,
+    "modelCalls": 0
+  },
+  "independentReads": {
+    "v1": {
+      "serverHash": "c643bfb70e8f1887051e792c84721cf6ab56323a57041757c801795c6fe65369",
+      "apiAndDiskExact": true,
+      "expectedContent": "Confirmed manual V1\n",
+      "originalProtectedFilesExact": true
+    },
+    "dirty": {
+      "serverHash": "c643bfb70e8f1887051e792c84721cf6ab56323a57041757c801795c6fe65369",
+      "apiAndDiskExact": true,
+      "expectedContent": "Confirmed manual V1\n",
+      "originalProtectedFilesExact": true
+    },
+    "undo": {
+      "serverHash": "c643bfb70e8f1887051e792c84721cf6ab56323a57041757c801795c6fe65369",
+      "apiAndDiskExact": true,
+      "expectedContent": "Confirmed manual V1\n",
+      "originalProtectedFilesExact": true
+    },
+    "adopt-server": {
+      "apiAndDiskExact": true,
+      "serverHashBeforeAndAfterEqual": true,
+      "serverHash": "7ac57abd2d42c87120b3914353a05f5ccf97d897040b4de96079250d40ef9ad4"
+    },
+    "final": {
+      "serverHash": "5db720be8ea290777e1703b7501567e9fda6972c1cc9e7a5e93fb2671e9e6198",
+      "apiAndDiskExact": true,
+      "expectedContent": "Final manual V4\n",
+      "originalProtectedFilesExact": true
+    }
+  },
+  "cleanup": {
+    "exactOwnedContentsCheckedBeforeDelete": true,
+    "ownedFixtureDeleted": true,
+    "originalFileListingExact": true,
+    "originalProtectedFilesExact": true
+  },
+  "screenshotsSHA256": {
+    "adopt-server-status.png": "cd90e0ecf4197816756c526a205774d4c34e699f1fadf53b5698fbe4f907f242",
+    "final-saved.png": "88721d18aa47a6e833b180b47722f025feeceecb0082d265000bea028fb61f3d",
+    "dirty-status.png": "c869793787aa6d296ea7980beb4896f291ff968c1ff729f43506d7ff58a79a66",
+    "undo-status.png": "2d1166c6a3a357fe301c2127430987428d5f2d5750874664c09e8ed081f6e15d"
+  },
+  "limits": [
+    "Native acceptance covers local source/manual save; not SSH or every workspace variant.",
+    "Delayed local-cleanup interval, partial archive failures and locked acknowledgement ownership covered by behavioral regression; no artificial production failure injection.",
+    "No physical network interruption. Receiving-device import untested.",
+    "Original12 remain in progress; Windows user-owned and real vectors deferred."
+  ]
+}

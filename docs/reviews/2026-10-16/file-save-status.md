@@ -19,3 +19,13 @@ The earlier 7cb76e39 candidate and its full snapshot do not cover this additiona
 ## Replacement candidate
 
 Image sha256:8d1957c9b0c92bc376e5a20933f3b81abd10400cd0688625f9f97366d06512f9, source SHA e31ef4425069dfeaf86df42bc97fae1f92b0e10495d40885d61e111d7e57b1db, build commit22a15eafd57e7664563123cf6783a38d63af1948. Complete bundle docker-images/aide-0.1.17.0-RC2-linux-arm64-8d1957c9b0c9-offline.tar.gz, 706070195 bytes, SHA-256 af0398cd1e350ff516ae6f5a46fee3f945ac015c6bb4c989b87a4a16e33d74bb. Outer/inner checksums, both image tags, launcher/license consistency and actual local Docker import passed; production remained unchanged. See [replacement bundle evidence](file-save-status-bundle-proof.json) and [source regressions](file-save-status-source-proof.json). Fresh full and native Safari acceptance remain pending.
+
+## Final full and native candidate acceptance
+
+Final full88 passed, all exit0; server race588.399s and all-package vet passed. Receipt20261016T013627048713Z, fingerprinted6649e0c7dd582f91be849b4a6d3991c5cd7ddcf321db06957f2286f27de59b. Runtime asset checks cover19 readable resources and DOCX roundtrip under nonroot/network-none conditions.
+
+After a fresh idle preflight (14 sessions, running/nonterminal/queued all0), designated start.command updated local9999 to8d1957c9. Health, source labels,12 HTTP assets and strict original protected bytes/mounts/workspace configuration passed. This was an authorized local candidate acceptance before main publication.
+
+Native Safari reused the existing tab and kept auto-save off. V1 input was unsaved, manual save confirmed exact API/disk V1; V2 input immediately showed unsaved while independent API/disk stayed V1. Native Command-Z returned V1 and saved status with unchanged server hash. An external owned V3 write caused the expected conflict dialog for localV2; explicit adoption of serverV3 displayed saved status, with identical server hash before/after. SubsequentV4 input was unsaved and native manual save matched the whole API/disk text. See [runtime/native proof](file-save-status-runtime-proof.json).
+
+Closed the owned editor and restored the original root/session. Deleted only the unique one-file fixture after exact final-content checks. Original root listing, settings, sources, authentication and all session bytes are identical to the pre-test snapshot. No new browser tab or model call. Three asynchronous/source regressions are not represented as physical production fault tests. Main gate/push remains to be recorded.
