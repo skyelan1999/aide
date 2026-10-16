@@ -24,16 +24,20 @@ func TestConversationParallelAdaptiveEvidence(t *testing.T) {
 					Messages []Message         `json:"messages"`
 					Tools    []any             `json:"tools"`
 					Thinking map[string]string `json:"thinking"`
+					Format   map[string]string `json:"response_format"`
 				}
 				_ = json.NewDecoder(r.Body).Decode(&body)
 				if len(body.Tools) != 0 {
 					t.Error("planner/worker received executable tools")
 				}
 				last := body.Messages[len(body.Messages)-1].Content
-				if body.Messages[len(body.Messages)-1].Role != "system" {
+				if body.Messages[0].Role != "system" || len(body.Messages) != 3 {
 					t.Error("analysis role still inherits executor user-task instructions")
 				}
 				if strings.HasPrefix(last, "[parallel planner]") {
+					if body.Format["type"] != "json_object" {
+						t.Error("scheduler response is not constrained to JSON")
+					}
 					if body.Thinking["type"] != "disabled" {
 						t.Error("scheduling must use its output budget for JSON")
 					}
@@ -90,6 +94,26 @@ func TestConversationParallelAdaptiveEvidence(t *testing.T) {
 	}
 }
 
+func TestConversationParallelAnalysisContextIsolation(t *testing.T) {
+	image := MessageImage{MediaType: "image/png", DataURL: "data:image/png;base64,private-pixels"}
+	input := []Message{{Role: "system", Content: "Executor must maintain a ledger"}, {Role: "user", Content: "Inspect supplied image", Images: []MessageImage{image}, SourceRunID: "local-run-provenance"}, {Role: "assistant", ToolCalls: []ToolCall{readCall("read_file", `{"path":"a"}`)}}, {Role: "tool", ToolCallID: "one", Content: "Real evidence"}}
+	got := parallelAnalysisMessages(input, "[parallel planner]\nReturn tasks JSON", true)
+	if len(got) != 3 || got[0].Role != "system" || !strings.Contains(got[0].Content, "Return ONLY one JSON") || got[1].Role != "user" || len(got[1].Images) != 1 || got[1].Images[0] != image {
+		t.Fatal("component roles/images not isolated")
+	}
+	if strings.Contains(got[1].Content, "private-pixels") || strings.Contains(got[1].Content, "local-run-provenance") {
+		t.Fatal("serialized image payload or local provenance")
+	}
+	if !strings.Contains(got[1].Content, "Real evidence") || !strings.Contains(got[1].Content, "Executor must maintain a ledger") {
+		t.Fatal("execution evidence was discarded")
+	}
+	for _, m := range got {
+		if len(m.ToolCalls) > 0 || m.Role == "tool" {
+			t.Fatal("executor tool protocol is still live in component request")
+		}
+	}
+}
+
 func TestConversationParallelEvidenceIgnoresBookkeepingAndReplay(t *testing.T) {
 	read := readCall("read_file", `{"path":"discovery.md"}`)
 	read.ID = "read-one"
@@ -141,7 +165,7 @@ func TestConversationParallelAdaptiveToolLoop(t *testing.T) {
 			}
 			found := false
 			for _, m := range body.Messages {
-				if m.Role == "tool" && strings.Contains(m.Content, "COMPONENTS: engine, UI") {
+				if strings.HasPrefix(m.Content, "[execution context - reference data]") && strings.Contains(m.Content, "COMPONENTS: engine, UI") {
 					found = true
 				}
 			}

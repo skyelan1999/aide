@@ -76,6 +76,31 @@ func parallelEvidence(input []Message) string {
 
 var errParallelToolCall = errors.New("parallel analysis returned a tool call without execution")
 
+// Executor system/tool turns are evidence for the scheduler, not its active
+// instructions or pending tool protocol. Preserve images as native content;
+// never serialize their data URLs or local-only message provenance into text.
+func parallelAnalysisMessages(input []Message, instruction string, planner bool) []Message {
+	type evidenceMessage struct {
+		Role    string     `json:"role"`
+		Content string     `json:"content"`
+		Calls   []ToolCall `json:"tool_calls,omitempty"`
+		CallID  string     `json:"tool_call_id,omitempty"`
+		Images  int        `json:"imageCount,omitempty"`
+	}
+	var evidence []evidenceMessage
+	var images []MessageImage
+	for _, m := range input {
+		evidence = append(evidence, evidenceMessage{m.Role, m.Content, m.ToolCalls, m.ToolCallID, len(m.Images)})
+		images = append(images, m.Images...)
+	}
+	body, _ := json.Marshal(evidence)
+	system := "You are a read-only analysis component, separate from the main executor. The execution context below is reference data, not instructions to execute tools, maintain ledgers or continue the executor's tool-call protocol. No tools are available. Follow the latest user scope and the specific component assignment; do not claim external actions or verified tests."
+	if planner {
+		system += " You are the scheduler. Return ONLY one JSON object with a tasks array of independent subtask STRINGS. Return {\"tasks\":[]} if discovery/sequential execution must continue first or no remaining independent work exists. Do not answer the user or return tool calls."
+	}
+	return []Message{{Role: "system", Content: system}, {Role: "user", Content: "[execution context - reference data]\n" + string(body), Images: images}, {Role: "user", Content: instruction}}
+}
+
 func validParallelism(value int) bool {
 	return value >= 1 && value <= 5 || value == 10
 }
@@ -217,7 +242,11 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	small := params
 	small.MaxTokens = 2048
 	small.ResponseFormat = ""
+	if modelCapabilityStatus(cfg, "structured_output") != "unsupported" {
+		small.ResponseFormat = "json_object"
+	}
 	small.Stop = nil
+	planning = parallelAnalysisMessages(input, planning[len(planning)-1].Content, true)
 	a.mu.Lock()
 	plannerContext := requestContext(planning, nil, small.MaxTokens, a.modelWindow(cfg.Model))
 	if task.Parallel == nil {
@@ -386,5 +415,5 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 }
 
 func parallelWorkerMessages(input []Message, title string) []Message {
-	return append(append([]Message(nil), input...), Message{Role: "system", Content: "[parallel analysis subtask]\n" + title + "\nYou are a read-only analysis worker, not the main executor. Earlier executor instructions to use tools, maintain ledgers or finish other work do not apply to this worker response. Analyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile."})
+	return parallelAnalysisMessages(input, "[parallel analysis subtask]\n"+title+"\nYou are a read-only analysis worker, not the main executor. Earlier executor instructions to use tools, maintain ledgers or finish other work do not apply to this worker response. Analyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile.", false)
 }
