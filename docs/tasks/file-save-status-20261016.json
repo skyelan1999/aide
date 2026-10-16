@@ -68,14 +68,18 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Full88/race588.399s/vet, actual native local save/dirty/undo/conflict-adoption/resave and strict protected cleanup pass; start.command local9999 image8d1957c9 healthy. Independent clean-main gate and push974a4ae3 exact remote pass. Complete offline local import pass; receiving device untested; no version/tag/Release.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-save-status.md",
+        "docs/reviews/2026-10-16/file-save-status-runtime-proof.json",
+        "docs/reviews/2026-10-16/file-save-status-bundle-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental test/push/main/start.command/offline package authorization; no version/tag/Release.",
   "rollback": "Keep prior ebf9e382 image/offline bundle; scoped frontend revert, no data migration or global cleanup.",
-  "handoff": "Local candidate8d1957c9/native/full/bundle pass. Commit documents, fast-forward authorized main, independent clean-main release-check, push and exact remote confirmation; then record final source receipt. All original12 remain active.",
+  "handoff": "Scoped save-status fix delivered. Native local UI and independent API/disk prove immediate dirty input, original undo baseline, explicit current-server adoption and subsequent manual save. Main974a4ae3/source gate exact, runtime8d1957c9 healthy, all original protected bytes/scene and fixture cleanup pass. Receiving-device bundle import untested. Next SSH scene/history/auto-save and remaining original12; Windows user-owned and vectors deferred.",
   "full_receipt": {
     "status": "pass",
     "profile": "full",
@@ -90,6 +94,13 @@
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "runningBefore": "sha256:ebf9e38203f31bf93ef253a2c271f0581f3dca25448edb20c11b101e286a4371",
     "buildCommit": "22a15eafd57e7664563123cf6783a38d63af1948",
-    "status": "local_candidate_deployed_healthy_native_acceptance_pass"
+    "status": "delivered_main_local_runtime_native_pass"
+  },
+  "source_push": {
+    "main": "974a4ae3f9314f733cedf232bcba9c9f89bed770",
+    "remoteMain": "974a4ae3f9314f733cedf232bcba9c9f89bed770",
+    "exactRemoteMatch": true,
+    "independentCleanMainGate": "pass",
+    "pushExit": 0
   }
 }

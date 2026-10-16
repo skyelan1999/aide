@@ -236,16 +236,17 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "已补真实ENOSPC/权限故障、部分成功返回、准确正文哈希、409和重试；UI部分保存状态也已有修复与组件证据。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。 Native local draft refresh/recovery, serverV4/localV3 conflict comparison and explicit merged save pass with exact saved bytes. A separate stale saved-label defect was directly observed; its three source regressions are fixed and fresh full/native candidate acceptance remains pending.",
+        "latestScopedEvidence": "已补真实ENOSPC/权限故障、部分成功返回、准确正文哈希、409和重试；UI部分保存状态也已有修复与组件证据。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。 Native local draft refresh/recovery, serverV4/localV3 conflict comparison and explicit merged save pass with exact saved bytes. A separate stale saved-label defect was directly observed; its three source regressions are fixed and fresh full/native candidate acceptance remains pending. Save-status candidate subsequently passed full88 and actual9999 Safari manual input/undo/conflict-adoption/resave against API/disk; source main974a4ae3 and healthy8d1957c9 local runtime/offline delivery verified.",
         "evidence": [
           "docs/reviews/2026-10-15/storage-fault-live.md",
           "docs/reviews/2026-10-15/history-partial-save.md",
           "docs/reviews/2026-10-16/file-recovery-async.md",
           "docs/reviews/2026-10-16/file-recovery-async-proof.json",
           "docs/reviews/2026-10-16/workbench-file-continuity-proof.json",
-          "docs/reviews/2026-10-16/file-save-status-source-proof.json"
+          "docs/reviews/2026-10-16/file-save-status-source-proof.json",
+          "docs/reviews/2026-10-16/file-save-status-runtime-proof.json"
         ],
-        "remaining": "Current saved-status candidate native acceptance, SSH history/auto-save coupling and physical network loss remain unverified. Existing local conflict evidence does not cover those boundaries."
+        "remaining": "SSH history/auto-save coupling, physical network-loss boundary and other workspace variants remain unverified. Local save-status repair now has direct native/runtime delivery evidence."
       },
       "evidence_20261016_async_file_recovery": {
         "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
@@ -7822,9 +7823,9 @@
     "observed": "Actual auto-save-off editor keeps server-saved label after new dirty input, while independent server content remains prior saved version. Source schedule does not repaint dirty status.",
     "evidence": "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json",
     "screenshot": "private draft-before-close.png",
-    "next": "Main gate/push receipt, then SSH scene/history and remaining original workflows.",
+    "next": "SSH scene/history/auto-save and original remaining workflows; receiving-device import untested.",
     "task": "file-save-status-20261016",
-    "scope": "Three focused regression fixes, full88, replacement bundle/local import and actual native local save status/undo/conflict adoption/resave with exact server/disk/protected cleanup pass; main receipt pending.",
+    "scope": "Three focused regressions, full88/race588.399s/vet, actual native local dirty/undo/conflict-adoption/resave, protected cleanup, authorized9999 runtime8d1957c9, full offline local import and independent main gate/push974a4ae3 exact remote pass.",
     "runtimeProof": "docs/reviews/2026-10-16/file-save-status-runtime-proof.json"
   }
 }
