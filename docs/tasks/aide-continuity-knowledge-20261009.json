@@ -7836,5 +7836,16 @@
       "docs/reviews/2026-10-16/aurora-motion.md",
       "docs/reviews/2026-10-16/aurora-motion-runtime-proof.json"
     ]
+  },
+  "crash_diagnostics_followup_20261016": {
+    "task": "crash-diagnostics-20261016",
+    "request": "Add crash detection and diagnostic code display",
+    "status": "in_progress",
+    "summary": "Early page/asset/promise diagnostics, bounded metadata, instance-aware liveness and request panic isolation implemented. Frozen focused JS/quick88/Go race3.127s plus isolated browser/native copy pass. Candidate/runtime/full/main pending.",
+    "evidence": [
+      "docs/architecture/crash-diagnostics.md",
+      "docs/reviews/2026-10-16/crash-diagnostics.md",
+      "docs/reviews/2026-10-16/crash-diagnostics-browser-proof.json"
+    ]
   }
 }

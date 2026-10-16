@@ -82,12 +82,13 @@
   },
   "release_authorization": "Existing incremental main/push/local start.command/offline authorization; no version/tag/Release.",
   "rollback": "Preserve current5183a60 image/package and protected state. Revert only diagnostic frontend/health/recovery changes; no data migration.",
-  "handoff": "Crash source frozen in separate worktree. Final quick88 and targeted Go race3.127s pass (root private log go-frozen.log). Root main8ccca842 delivered aura5183a60. Commit scope, merge main and transfer branch to primary checkout before build/start.command so original .env/mounts stay intact; do not reuse aura full. All fixtures stopped/tabs closed; original Safari restored.",
+  "handoff": "Crash branch transferred back to primary external checkout after merging delivered main8ccca842. Original .env/workspace config retained. Detached clean development worktree still under ignored .agent-state/worktrees/crash-diagnostics; source committed. Frozen Go race3.127s and quick88 pass; root candidate/build/runtime/full and main gates remain. No production fault injection; original12 active.",
   "quick_receipt": {
     "profile": "quick",
     "status": "pass",
     "time": "20261016T025743225199Z",
     "fingerprint": "2a821e78ad99aad72c43ae0031bdcc1fabf87b328d9b799ebcf1b77318e052b2",
     "head": "7c94f8c3d91a4aeb591cc6edd68875554135365a"
-  }
+  },
+  "integration_baseline": "8ccca842e84183d36ec3b7f4ad9596f082e88343"
 }
