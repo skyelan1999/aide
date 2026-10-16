@@ -6,7 +6,7 @@
   "acceptance": [
     "Successful identity response contains authoritative lock state; secondary GET failure does not reject committed unlock.",
     "Local unlock preserves global lock; stale generation/wrong password/new lock remain rejected.",
-    "Main/map/file peer sync, browser controlled failure and actual isolated API checks have evidence."
+    "Available verification and native normal-page smoke recorded honestly; password fault-injection browser UI and hardware WebAuthn remain not_run with explicit handoff if tooling unavailable."
   ],
   "scope": [
     "internal/server/lock_state.go",
@@ -38,32 +38,50 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Atomic password/WebAuthn lockState receipts, local generation check without global unlock, background read reconciliation, newer-lock visual continuation guard; caches app161/cluster versions updated.",
+      "evidence": [
+        "27c2c34d",
+        "cd285bc6",
+        "internal/server/web/lock-cluster.js"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Available release checks pass: focusedGo race8.813s, Node red/green,23 real isolated API/productionJS requests,quick88 and full90 including Go race/vet. Native9999 passwordless normal smoke pass. Password fault-injection browser UI, original reported endpoint and hardware WebAuthn remain explicit not_run/pending handoff; no claim of user-instance reproduction.",
+      "evidence": [
+        "docs/reviews/2026-10-16/lock-unlock-sync-full-proof.json",
+        "docs/reviews/2026-10-16/lock-unlock-sync-real-api-proof.json",
+        "docs/reviews/2026-10-16/lock-unlock-sync-runtime-proof.json",
+        "docs/reviews/2026-10-16/lock-unlock-sync.md"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Architecture, verified-path scope, interface/failure receipts, native/browser/hardware limits and original reported address pending documented.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-10-16/lock-unlock-sync.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned disposable runtime and proxy stopped/removed; final958 bundle and473 rollback retained, verified own76 intermediate archive removed. Original14 sessions/settings/auth/mounts preserved. IAB42 error page active close blocked; unretained automatic turn-end cleanup pending, no extra pages opened.",
+      "evidence": [
+        "docs/reviews/2026-10-16/lock-unlock-sync-cleanup-proof.json",
+        "docs/reviews/2026-10-16/lock-unlock-sync-runtime-proof.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Current958de790 via start.command,16 assets/protected14 and complete offline actual local import pass.90 full current fingerprint pass; main ff/gate/push pending. Scoped code delivery; user-instance/browser/hardware acceptance remains pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/lock-unlock-sync-full-proof.json",
+        "docs/reviews/2026-10-16/lock-unlock-sync-bundle-proof.json"
+      ]
     }
   },
   "release_authorization": "Prior user authorization for incremental main pushes/local start.command/offline updates; no version/tag/Release.",
   "rollback": "Retain473463bc offline package and image, original14 sessions/settings/auth/mounts. Isolated acceptance uses disposable data only.",
-  "handoff": ""
+  "handoff": "Current958de790 healthy9999; real isolated API/productionJS verified, original local instance passwordless. Exact reported endpoint pending user answer. Password fault-injection browser UI not_run after tool error-page restriction; next UI owner should resume after temporary42 auto cleanup. No production password change; no version/tag/Release."
 }

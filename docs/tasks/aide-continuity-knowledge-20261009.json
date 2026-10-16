@@ -7863,5 +7863,10 @@
     "status": "pass",
     "task": "docs/tasks/reasoning-live-preview-20261016.json",
     "summary": "Latest reasoning tail and stable disclosure delivered on main2c9bb88d; focused/quick/full90/native/runtime/offline passed. No new upstream model call; receiving-device import pending. Original12 workstreams remain active."
+  },
+  "lock_unlock_sync_followup_20261016": {
+    "status": "in_progress",
+    "task": "docs/tasks/lock-unlock-sync-20261016.json",
+    "summary": "Confirmed unlock-success/secondary-read failure path and newer-lock continuation repaired, native normal/real isolated API passed. Full/main pending; exact reported endpoint/password browser UI/hardware still pending. Original12 workstreams active."
   }
 }
