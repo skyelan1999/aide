@@ -2395,10 +2395,39 @@ function renderAttachments() {
 function fileListRequestKey() {
   return JSON.stringify([recoveryScope(), fileLocationKey(), state.dir, state.fileSearch, state.fileSearchScope, state.fileSearchMatch]);
 }
-function updateFilePathLabel() {
-  const label = state.root === 'context' && state.source ? 'sources/' + (state.sources.find(x => x.id === state.source)?.name || state.source) : state.root;
-  $('file-path').textContent = '/' + label + (state.dir === '.' ? '' : '/' + state.dir);
-  $('file-path').title = $('file-path').textContent;
+function filePathPrefix() {
+  return '/' + (state.root === 'context' && state.source ? 'sources/' + (state.sources.find(x => x.id === state.source)?.name || state.source) : state.root);
+}
+function updateFilePathLabel(force = false) {
+  const input = $('file-path');
+  const path = filePathPrefix() + (state.dir === '.' ? '' : '/' + state.dir);
+  if (force || input.title !== path || document.activeElement !== input) input.value = path;
+  input.title = path;
+}
+function resolveFilePath(value) {
+  const path = value.trim();
+  if (!path) return state.dir;
+  const prefix = filePathPrefix();
+  let relative = path;
+  if (path === prefix || path === '/') return '.';
+  if (path.startsWith(prefix + '/')) relative = path.slice(prefix.length + 1);
+  else if (path.startsWith('/')) throw new Error(t('请输入当前文件来源内的路径'));
+  else relative = (state.dir === '.' ? '' : state.dir + '/') + path;
+  const parts = [];
+  for (const part of relative.split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      if (!parts.length) throw new Error(t('请输入当前文件来源内的路径'));
+      parts.pop();
+    } else parts.push(part);
+  }
+  return parts.join('/') || '.';
+}
+let filePathNavigationSequence = 0;
+async function navigateFilePath(value) {
+  const sequence = ++filePathNavigationSequence;
+  const dir = resolveFilePath(value);
+  await loadFiles(false, { dir, isCurrent: () => sequence === filePathNavigationSequence });
 }
 function renderFileListFailure(error) {
   state.fileListError = true;
@@ -2426,22 +2455,24 @@ async function loadInitialFilePanel() {
     catch (retryError) { if (retryError.status === 401) throw retryError; }
   }
 }
-async function loadFiles(auto) {
+async function loadFiles(auto, navigation) {
   const requestKey = fileListRequestKey();
+  const isCurrent = () => requestKey === fileListRequestKey() && (!navigation || navigation.isCurrent());
   if (auto) { const _r = document.querySelector('#files input.file-rename'); if (_r && document.activeElement === _r) return; } // 自动刷新且正在重命名 → 跳过，不打断
   try {
   const query = state.root === 'context' && state.source ? '/files?source=' + encodeURIComponent(state.source) + '&path=' : '/files?root=' + state.root + '&path=';
   const search = state.fileSearch.trim();
   const searchParams = search ? '&search=' + encodeURIComponent(search) + '&scope=' + encodeURIComponent(state.fileSearchScope) + '&match=' + encodeURIComponent(state.fileSearchMatch) : '';
   // 直接 fetch 以便读取搜索截断响应头（api() 只返回 body）。
-  const filesResp = await fetch('/api' + query + encodeURIComponent(state.dir) + searchParams, { headers: { 'Authorization': 'Bearer ' + state.token } });
+  const filesResp = await fetch('/api' + query + encodeURIComponent(navigation ? navigation.dir : state.dir) + searchParams, { headers: { 'Authorization': 'Bearer ' + state.token } });
   const files = await filesResp.json();
-  if (requestKey !== fileListRequestKey()) return;
+  if (!isCurrent()) return;
   if (!filesResp.ok) {
     const error = new Error(t(files && files.error) || t('请求失败'));
     error.status = filesResp.status;
     throw error;
   }
+  if (navigation) state.dir = navigation.dir;
   state.fileSearchTruncated = filesResp.headers.get('X-Search-Truncated') === '1';
   state.fileSearchDirLimit = filesResp.headers.get('X-Search-Dir-Limit') || '200';
   state.fileSearchResultLimit = filesResp.headers.get('X-Search-Result-Limit') || '500';
@@ -2461,10 +2492,10 @@ async function loadFiles(auto) {
   else renderFileEntries();
   rememberFileLocation();scheduleChatRecovery();
   } catch (error) {
-    if (requestKey !== fileListRequestKey()) return;
+    if (!isCurrent()) return;
     if (error.status === 401) {
       if (!$('login-dialog').open) $('login-dialog').showModal();
-    } else renderFileListFailure(error);
+    } else if (!navigation) renderFileListFailure(error);
     throw error;
   }
 }
@@ -3191,6 +3222,18 @@ async function navigateParentDirectory() {
   state.dir = state.dir.includes('/') ? state.dir.slice(0, state.dir.lastIndexOf('/')) : '.';
   await loadFiles();
 }
+$('file-path').addEventListener('keydown', event => {
+  if (event.isComposing || event.keyCode === 229) return;
+  if (event.key === 'Escape') {
+    ++filePathNavigationSequence;
+    updateFilePathLabel(true);
+    event.preventDefault();
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    navigateFilePath(event.currentTarget.value).catch(error => toast(error.message || String(error)));
+  }
+});
+$('file-path').addEventListener('blur', () => updateFilePathLabel(true));
 $('parent-dir').onclick = action(async event => {
   if (Date.now() < fileNavigationGesture.suppressClickUntil) { event?.preventDefault(); event?.stopPropagation(); return; }
   await navigateParentDirectory();

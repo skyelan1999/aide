@@ -1,6 +1,8 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "目录路径，按回车进入": "Directory path, press Enter to open",
+  "请输入当前文件来源内的路径": "Enter a path within the current file source",
   "页面脚本异常": "Page script error",
   "异步操作未处理异常": "Unhandled asynchronous error",
   "工作台资源加载失败": "Workbench resource failed to load",

@@ -75,7 +75,8 @@
 .composer-toolbar{flex-wrap:wrap}
 
 #timeline .chat-answer[hidden]{display:none}
-.stage-outputs{display:grid;gap:12px;margin:12px 0}
+.stage-outputs{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:12px 0;min-width:0;max-width:100%}
+.stage-output{min-width:0;max-width:100%}
 .stage-label{font-size:11px;color:var(--muted);margin:0 0 5px}
 
 /* One compact, session-owned run strip. Checkpoint pause is a secondary action. */

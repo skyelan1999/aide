@@ -59,7 +59,9 @@ dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
 html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background{display:block}
 html[data-background]:not([data-background=off]) body{isolation:isolate;background:transparent}
 html[data-background]:not([data-background=off]) :is(.sidebar,.file-panel){background:color-mix(in srgb,var(--panel) 95%,transparent)}
-html[data-background]:not([data-background=off]) :is(.topbar,.composer-wrap){background:color-mix(in srgb,var(--bg) 90%,transparent)}
+html[data-background]:not([data-background=off]) .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
+/* Continue the background around the input; the composer retains its reading surface. */
+html[data-background]:not([data-background=off]) .composer-wrap{background:transparent}
 .workbench-background{background:var(--bg)}
 .workbench-background::before{content:'';position:absolute;inset:0;z-index:1;background:var(--bg);opacity:calc(1 - var(--wb-background-strength,.22))}
 /* Independent compositor motion makes flow visible without animating paint or text. */
@@ -112,3 +114,15 @@ main,.conversation,.composer-wrap,.top-actions{min-width:0}
   .file-panel,.plugin-panel{top:92px}
 }
 @media(pointer:coarse){.background-intensity input{min-height:40px}}
+
+/* One compact row for terminal icon, title, path and disclosure state. */
+.terminal-heading{min-height:36px;padding:8px 24px;align-items:center;gap:12px;line-height:1.4}
+.terminal-heading>span:first-child{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}
+.terminal-heading>span:first-child>i18n-text,.terminal-heading .ui-icon,.terminal-heading .command-mode{flex-shrink:0}
+.terminal-heading small{min-width:0;margin-left:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#terminal-state{flex-shrink:0;white-space:nowrap}
+@media(max-width:700px){.terminal-heading{padding:8px 14px;gap:8px}}
+@media(pointer:coarse){.terminal-heading{min-height:40px}}
+
+/* Editable file address stays within the sidebar's flex row. */
+#file-panel #file-path{min-width:0;width:0;flex:1;outline-offset:2px}

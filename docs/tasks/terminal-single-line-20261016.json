@@ -1,0 +1,75 @@
+{
+  "id": "terminal-single-line-20261016",
+  "request": "命令面板要放到一行里",
+  "baseline": "d201874b1b6f58174e612cedd89274756c82e31d",
+  "initial_status": "M internal/server/web/index.html\n M internal/server/web/workbench.css\n?? docs/tasks/composer-transparent-20261016.json",
+  "acceptance": [
+    "底部命令面板图标、标题、路径、本地状态及展开入口处于同一行。",
+    "长路径可省略，不挤掉展开入口；原展开/收起行为不变。"
+  ],
+  "scope": [
+    "internal/server/web/index.html",
+    "internal/server/web/workbench.css",
+    "docs/tasks/terminal-single-line-20261016.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "使用标题组inline flex对齐和路径省略，36px最小栏高，触控设备40px。",
+      "evidence": [
+        "internal/server/web/workbench.css"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用标题组inline flex对齐和路径省略，36px最小栏高，触控设备40px。",
+      "evidence": [
+        "internal/server/web/workbench.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Terminal header group now uses flex alignment, no-wrap labels and ellipsis for long paths.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/terminal-single-line-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/terminal-single-line/actual-safari.jpg"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Source build/vet and startup passed. Actual Safari shows one compact row. Expand and collapse were both verified. Background regression and diff check passed.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/terminal-single-line-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/terminal-single-line/actual-safari.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scope and browser evidence recorded in this task.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/terminal-single-line-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/terminal-single-line/actual-safari.jpg"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped frontend files changed; no new dependencies or temporary product files.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/terminal-single-line-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/terminal-single-line/actual-safari.jpg"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local candidate only. No commit, push or formal release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore this task terminal CSS and markup, retaining the earlier composer transparency change.",
+  "handoff": "Local 9999 source candidate active. Default startup prefers prebuilt; source candidate restart requires AIDE_BUILD_FROM_SOURCE=1."
+}
