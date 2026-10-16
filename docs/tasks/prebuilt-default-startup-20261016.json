@@ -50,7 +50,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "21 launcher/import tests及4 installer tests通过；102项quick已通过（后续打包接入修改需再验）；真实Docker普通源码目录缺少Dockerfile/Go/Git仍通过start.command复用预构建启动，原8项受保护内容权限一致。第一轮full尚运行，输入扩展及初始Node PATH缺失使该收据不能用于最终发布；最终输入需重跑。",
+      "summary": "21 launcher/import tests, 4 installer tests and 102 quick checks passed. Actual ordinary checkout without Dockerfile/Go/Git reused a prebuilt image through start.command; production 9999 also started ab8df956 without compilation. Protected settings, sessions, authentication and mounts matched after real STEP UI acceptance. The first full check failed because Node PATH was missing and inputs changed; it is NOT a release receipt. Re-run full after AMD64 and final manifest are complete.",
       "evidence": [
         "scripts/test_launcher_data.py",
         "scripts/test_launcher_data_docker.py"
@@ -74,5 +74,5 @@
   },
   "release_authorization": "用户要求源码仓库与Release包也必须具备完整运行镜像快速导入/启动能力；沿用先前main推送授权，允许上传本仓库发布附件。",
   "rollback": "保留551eff及历史发布附件和私有数据；下载或身份校验失败不切换，旧目标镜像保留回滚标签；不删除用户容器或卷。",
-  "handoff": "尚未发布新启动策略；当前公开RC2页只补充了说明附件，新完整镜像尚未上传成功。最终ARM64候选需重新构建导出；AMD64产物未生成，不声称x64已可用。Windows原生用户验收、真实向量暂缓。真实STP样例转换在现有重型回归后排队。"
+  "handoff": "ARM64 ab8df956 complete bundle exported and indexed; ordinary start.command used the exact prebuilt image without compilation. Real private STEP and Safari metrology passed. The manifest URL has NOT been uploaded or remotely verified yet. AMD64 buildx is running in session 21114, log .agent-state/prebuilt-amd64-20261016/build.log. Finish AMD64 export and smoke tests, final-input full check, main release gate, then GitHub upload and remote checksum verification. Windows native acceptance belongs to the user; real vector testing deferred."
 }
