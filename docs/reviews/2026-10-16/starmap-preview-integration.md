@@ -57,3 +57,5 @@ AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d122
 最终冻结输入的完整回归106项全部通过，Go服务端race812.375秒、vet及原生CAD通过，指纹 `e9628e3ba32a6994139593ca1543cfba0030f3032c5d29d5c0c8530625af2c02`，见[最终完整回归收据](evidence/starmap-preview-final-full-proof.json)。当前进入干净main门禁、四项补充附件与公开下载核对及main推送收尾，尚未把本地结果记成远端发布。
 
 四项补充附件已在既有RC2公开上传，核对精确字节/GitHub SHA-256、两份镜像的HTTP206下载探针和两份元数据全文。发布说明仅换行按CRLF归一化后与准备稿一致；原17项附件的名称、状态、大小、摘要和内容类型均保持，原标签和预发布状态保持，见[远端收据](evidence/starmap-preview-final-remote-proof.json)。main推送及远端引用核对待收尾；接收设备实际导入不以本机或下载探针代验。
+
+main首批发布提交 `42005bab1beaef469159035f89fbf7b42b2b9a49` 已推送并经git ls-remote精确核对，RC2标签仍解引用到 `a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3`。后续仅补本条文档回执，不改变产品/交付指纹；Safari恢复原工作台页、无新增标签。本子任务完成交付，不代表原十二项总体目标已完成，Windows与真实向量边界保持。

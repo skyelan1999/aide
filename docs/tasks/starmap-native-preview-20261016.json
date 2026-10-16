@@ -87,8 +87,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Clean-main scoped gate passed. Four supplemental public assets verified: exact bytes/GitHub SHA256, two archive HTTP206 probes, exact metadata downloads and CRLF-normalized notes. Original17 assets names/state/bytes/digests/content types, tag and prerelease preserved. Main push pending.",
+      "status": "pass",
+      "summary": "Final full106/native/packages and clean-main scoped gate passed. Four supplemental public assets, exact bytes/SHA256/download probes/metadata and normalized notes verified; original17 identities/tag/prerelease preserved. Main first published 42005bab1beaef469159035f89fbf7b42b2b9a49 and exact remote ref verified. Later documentation-only receipt is separate.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-remote-proof.json"
@@ -97,7 +97,7 @@
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Final source9286121f/code26256161 ARMd025/AMD301d local/native/full106 and clean-main gate pass. Four supplemental RC2 assets/public probes/metadata/notes verified, original17 identities and tag preserved. Main push/ref receipt pending; original12 active, Windows user-owned and vectors deferred.",
+  "handoff": "This scoped preview batch is delivered on main and existing RC2 supplemental ARMd025/AMD301d complete packages, final full106/native/gate/public downloads and refs verified. Original browser main tab restored, no added tabs. Original12 broader workflows remain open; Windows user-owned and real vectors deferred.",
   "candidatePackages": {
     "status": "historical_pre_merge_only",
     "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
@@ -125,8 +125,8 @@
     ]
   },
   "integration": {
-    "status": "in_progress",
-    "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
+    "status": "pass",
+    "code": "262561611458102f46d1307718d51cf2f6629f19",
     "publishedBase": "0ac5f757ed92d09330c0bf93c5ccaaeda7689c0d",
     "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
     "full": "PASS final full106, exact fingerprint e9628e3ba32a6994139593ca1543cfba0030f3032c5d29d5c0c8530625af2c02",
@@ -141,8 +141,9 @@
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-packages-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-fresh-start-proof.json"
       ],
-      "remote": "PASS public4 assets and notes/downloads; original17 assets preserved",
+      "remote": "PASS4 uploaded/download-probed assets and notes; original17 preserved; main 42005bab1beaef469159035f89fbf7b42b2b9a49 verified",
       "nativeSafari": "pass"
-    }
+    },
+    "firstPublishedMain": "42005bab1beaef469159035f89fbf7b42b2b9a49"
   }
 }
