@@ -1,0 +1,77 @@
+{
+  "status": "native_and_packages_pass_full_pending",
+  "candidateImage": "7e3d30e9945f42a3f0764262d1a50454969d2f7bc3e913849947cf95b881fbd4",
+  "nativeSafari": {
+    "sameTab": true,
+    "twoStepReport": true,
+    "shortText": {
+      "line": 3,
+      "indexedTextBytes": 88,
+      "changedPrefixRefused": true
+    },
+    "longText": {
+      "fileBytes": 238093,
+      "indexedTextBytes": 8192,
+      "utf8AndCRLF": true,
+      "selectedLine": 3,
+      "unindexedTailChangeAllowed": true,
+      "changedPrefixRefused": true
+    },
+    "codeSixStep": "failed_due_to_large_map_budget"
+  },
+  "codeBudget": {
+    "rootCause": "AST and Go type relation limits incorrectly counted catalogue and text edges. Current20000-node catalogue suppressed all code relations.",
+    "oldNegativeRace": {
+      "status": "expected_failure",
+      "seconds": 0.204,
+      "fixtureDirectoryEdges": 20000,
+      "pathFound": false
+    },
+    "sourceFixRelatedRaceAndVet": {
+      "status": "pass",
+      "seconds": 7.496,
+      "pattern": "^TestKnowledge(Code|Web|GoTypes|Path)"
+    },
+    "bounds": "6500 total code relation edges; catalogue and text references retain independent existing limits",
+    "finalRuntimeVerification": "pass"
+  },
+  "preservation": {
+    "sourceRegistryRestoredByteForByte": true,
+    "originalProtectedAuthSettings14SessionsAndMounts": true,
+    "newTabs": 0,
+    "modelCalls": 0
+  },
+  "screenshots": [
+    "candidate-report-line3.png",
+    "candidate-stale-refused.png",
+    "candidate-long-line3.png",
+    "candidate-long-stale.png",
+    "final-six-step-path.png",
+    "final-service-line4.png",
+    "final-report-line5.png"
+  ],
+  "evidenceLocation": "Ignored owned native acceptance directory; no user document content published",
+  "release": "not_run",
+  "finalRuntime": {
+    "image": "9d2b90b72922b62ca6e61f193238d93f4b4aff53df6d941ddbd104f1d2a1b9a9",
+    "source": "eaa5a6a116a052b9be5c238d23159124c8732eca5538e8452ce14f4eccecc3c6",
+    "code": "6b0111707adfed7600709153da15820fe6c58994",
+    "healthy": true,
+    "originalStartCommand": true,
+    "sixStepPath": true,
+    "labels": [
+      "DOM selector candidate",
+      "lexical binding",
+      "HTTP source declaration",
+      "method/path candidate",
+      "handler name candidate",
+      "call name candidate"
+    ],
+    "exactServiceCallLine4Selected": true,
+    "updatedReportTwoStepPath": true,
+    "updatedReportLine5Selected": true,
+    "readOnlySameTabWithSafeMapReturn": true,
+    "protectedOriginal14SessionsAndAuthSettingsMounts": true,
+    "noNewTabsOrModelCalls": true
+  }
+}

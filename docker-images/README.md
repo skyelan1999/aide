@@ -440,3 +440,12 @@ Exact package/import, native no-focus/link evidence, first busy/stale requests, 
 ## 星图原文预览最终修复候选
 
 源码 `9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035`；ARM64 `d025448dd174`、AMD64 `301d9d75ffbc`。修复原文命中详情丢失星级字段，替代前序950b/7976预览候选。完整包已本机导入，大小和哈希在索引与 SHA256SUMS 中维护。最终原生验收、完整回归、远端发布与回滚状态见[本轮记录](../docs/reviews/2026-10-16/starmap-preview-integration.md)；本地候选不等于已公开交付。
+
+## 2026-10-17 indexed path positions and large-map code links
+
+Controlled product source `eaa5a6a116a052b9be5c238d23159124c8732eca5538e8452ce14f4eccecc3c6`, code `6b0111707adfed7600709153da15820fe6c58994`. Path-origin jumps verify exact indexed UTF-8 text prefixes (or existing full code hashes), refuse stale or unbound map positions, and guard delayed viewer responses. Code relations have an independent6500-edge budget shared with optional type bindings; catalogue membership and document references do not consume it. Current-tab preview retains safe map return.
+
+- linux/arm64: `aide-0.1.17.0-RC2-linux-arm64-9d2b90b72922-offline.tar.gz`, 770921360 bytes, SHA-256 `901478ad37622cda16906efdb094316485673f2cf19bae6f35e9202e565ff02d`, image `sha256:9d2b90b72922b62ca6e61f193238d93f4b4aff53df6d941ddbd104f1d2a1b9a9`.
+- linux/amd64: `aide-0.1.17.0-RC2-linux-amd64-6f670e67bc88-offline.tar.gz`, 774147556 bytes, SHA-256 `fc5392e2b31b160183efaf723caee6a7fa21411af83e544ee710e6d62df48de1`, image `sha256:6f670e67bc88facbddc7c3c49231f04fb0e08e842e682197e921659264a2fdbb`.
+
+Extract the matching complete archive and run its included platform launcher with Docker available. It imports the bundled full runtime, including native CAD, without source compilation or separate dependency downloads. Verification and publication states: `docs/tasks/knowledge-path-native-20261017.json`. Native Windows and receiving-device acceptance remain separate; real vector tests are deferred.

@@ -62,12 +62,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Candidate7e3 native short/238093-byte CRLF report correct line3; changed prefixes refused, unchanged unindexed tail allowed. Code chain missing: full-graph6500 budget suppresses code edges on20000 catalogue. Negative race0.204s; related Code/Web/GoTypes/Path race7.496s and vet PASS after independent code budget fix. Final build/six-step UI/full pending.",
+      "status": "pass",
+      "summary": "Focused race/vet, quick104 and native Safari report/source guards plus final9d2 six-step candidate/confidence/line4 and updated reportline5 pass. Both complete package hashes/licenses/scripts/import and fresh ARM64 original-launcher/CAD pass. Final full/main release gate remains release prerequisite.",
       "evidence": [
-        "docs/reviews/2026-10-17/knowledge-path-native-proof.json",
-        "internal/server/knowledge_path_fingerprint_test.go",
-        "scripts/file-route-location.test.cjs"
+        "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-final-packages-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-final-fresh-proof.json"
       ]
     },
     "documentation": {
@@ -80,7 +80,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Owned report and original source registry restored, protected14 sessions/auth/settings/mounts exact; view/original tab restored, no model calls/new tabs. No user data or history overwrite.",
+      "summary": "Owned source registry exact restore; short/long report baseline bytes restored, original auth/settings14sessions/mounts preserved. No model calls/new tabs. Superseded private snapshots retained until final release; published rollback untouched.",
       "evidence": [
         "docs/reviews/2026-10-17/knowledge-path-native-proof.json"
       ]
@@ -93,5 +93,5 @@
   },
   "release_authorization": "Continue existing user-authorized incremental testing/docs/main publication. No new product or runtime release unless a reproduced defect requires it; Windows user-owned, real vectors deferred.",
   "rollback": "Remove owned temporary source by restoring exact pre-test registry; preserve original auth/settings/sessions/mounts and current d025 runtime. No user file edit, data restore or model invocation.",
-  "handoff": "Code57612 prefix guard then6af08 code budget fix committed. Runtime7e3 candidate, remote main3ed unchanged. Short/long native position guards pass. Old7e3/fbcc packages superseded, not for publication. New final build/six-step UI/full/packages/gate pending; original12 open."
+  "handoff": "Final runtime9d2 healthy, sourceeaa5/code6b011170. Native six-step/line4 and reportline5 pass; prior identical-frontend long prefix/tail guards pass. Complete ARM9d2/AMD6f670 verified and fresh ARM launch/CAD pass. Final full107/main scoped gate and RC2 supplemental upload/public verification/push pending; original12 active."
 }

@@ -1,0 +1,48 @@
+{
+  "status": "pass",
+  "archive": "aide-0.1.17.0-RC2-linux-arm64-9d2b90b72922-offline.tar.gz",
+  "freshAuthDirectoryPrepared": true,
+  "actualStartCommand": true,
+  "documentLine": {
+    "line": 3,
+    "matchedRawFileHash": true,
+    "blankLineAndCRLFPreserved": true,
+    "actualCompiledImageAPI": true
+  },
+  "image": "sha256:9d2b90b72922b62ca6e61f193238d93f4b4aff53df6d941ddbd104f1d2a1b9a9",
+  "sameImageForWorkbenchAndCAD": true,
+  "noBuildOrPull": true,
+  "nativeGeometry": {
+    "kind": "complete",
+    "engine": "occt-native",
+    "triangles": 120,
+    "segments": 0,
+    "points": 0,
+    "emptyNodes": 0,
+    "parts": 2,
+    "faces": 9,
+    "meshedFaces": 9,
+    "collapsedFaces": 0,
+    "bounds": [
+      [
+        -55.0,
+        -5.0,
+        0.0
+      ],
+      [
+        100.0,
+        20.0,
+        35.0
+      ]
+    ],
+    "unit": "mm",
+    "linearDeflection": 0.1,
+    "recoveredFaces": 0,
+    "nurbsFaces": 0,
+    "seconds": 0.057320709005580284
+  },
+  "privateReadOnlyWorkerCredentialMount": true,
+  "privateNetworkNoHostPorts": true,
+  "productionImageUnchanged": true,
+  "receivingDevice": "not_run"
+}

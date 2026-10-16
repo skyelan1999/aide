@@ -31,3 +31,9 @@
 Candidate7e3 started through original start.command; protected data passed. Native Safari selected report line3; prefix insertion refused old location. A238093-byte UTF-8/CRLF report passed8192-byte proof, unchanged unindexed tail remained locatable, changed prefix refused. No new tabs or model calls.
 
 Actual large-map code path failed: total catalogue edges exceeded6500 and consumed the code budget. New20000-directory regression failed before fix (race0.204s). Independent code budget with shared type-binding cap fixes this; related Code/Web/GoTypes/Path race7.496s and vet pass. Final compiled six-step UI/full/package verification pending. Initial path queries also returned409 during scan revision changes; fresh queries succeeded without weakening identity guards.
+
+## Final runtime and offline acceptance
+
+Final9d2 (source eaa5a6a116a0, code6b011170) passes actual authenticated Safari six-step button/event/callback/HTTP/route/handler/service path. Each step distinguishes candidate/binding/declaration evidence; final source action selects server.go line4 with full hash and read-only same-tab return. Updated report path carries new prefix proof and selects line5. The238093-byte CRLF prefix/tail cases above use identical frontend files from the prior candidate; the final product adds the independent code budget.
+
+Both complete ARM64/AMD64 archives pass outer/inner hashes, exact launcher/license bytes and real local image import. Fresh ARM64 package original start.command runs without build/pull; raw CRLF document line/hash and120-triangle native CAD pass. Original auth/settings14sessions/mounts and exact source registry preserved; owned report baselines restored. Final full107 and clean-main gate/public RC2 assets remain pending.

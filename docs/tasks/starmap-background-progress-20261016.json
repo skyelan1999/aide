@@ -98,7 +98,9 @@
     "status": "verified_local",
     "summary": "Rechecked repeated report against current localhost:9999: running d025 and actual served starmap bytes equal published HEAD; background/pacing regressions and isolated Go background race PASS 75.400s. Live source remains capped at 20000 nodes, 881 directories uncovered, 13391 body read errors; these are index coverage gaps, not evidence of paused background scanning. User observation device pending clarification. Existing independent uncommitted path-location work preserved.",
     "evidence": [
-      "docs/reviews/2026-10-17/starmap-background-recheck.json"
-    ]
+      "docs/reviews/2026-10-17/starmap-background-recheck.json",
+      "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json"
+    ],
+    "additional_reproduced_defect": "Native six-step follow-up found a separate6500 code-edge budget counting entire20000-edge catalogue, suppressing code links. Source6af08 fixes independent code/type budget; related race/vet passes; final runtime/full/release pending in knowledge-path-native-20261017."
   }
 }

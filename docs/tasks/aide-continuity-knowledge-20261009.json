@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Bounded indexed UTF-8 text fingerprint and viewer ownership fix; fail-before/pass-after Go1.033, related race/vet60.347, quick104 pass. Next new build/native path-source guard and six-step UI, then final full/packages/gates; original12 active, Windows user-owned and real vectors deferred.",
+  "handoff": "Continue final knowledge-path-native-20261017 full107/release gate and scoped RC2 complete-package publication. Original12 scope retained; native SSH/capacity/auth/outcome/time-history remain scoped follow-ups; Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -8029,9 +8029,9 @@
   "knowledge_path_native_20261017": {
     "status": "in_progress",
     "task": "docs/tasks/knowledge-path-native-20261017.json",
-    "proof": "docs/reviews/2026-10-17/knowledge-path-native-proof.json",
-    "native": "Old d025 report path2/source line3 passes; changed-file stale source route still selected wrong line3. Six-step chain API passed, native UI pending.",
-    "source": "Bounded indexed UTF-8 text fingerprint and viewer ownership fix; fail-before/pass-after Go1.033, related race/vet60.347, quick104 pass.",
-    "runtime": "Prior published d025 remains; new candidate/full/native not yet done."
+    "summary": "Final9d2 native reportline5 and six-step static button/service candidate chain/source line4 pass; prefix guard and independent code/type budget fixed. ARM/AMD complete package hashes/import and fresh ARM/CAD pass. New full107/main gate/public RC2 upload and push pending; original12 active.",
+    "evidence": [
+      "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json"
+    ]
   }
 }
