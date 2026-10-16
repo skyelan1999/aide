@@ -1,0 +1,51 @@
+{
+  "protocol": {
+    "status": "pass",
+    "releasedBinaryRealSSH": true,
+    "remoteResourceOnlyChangeObserved": true,
+    "staleRemotePreview409AndBytesPreserved": true,
+    "freshRestoreVerifiedFiles": 2,
+    "completeRemoteBodyAndResourceBytesMatchV1": true,
+    "historyVersions": 4,
+    "repeatedObservationDeduplicates": true,
+    "zipBytes": 2694,
+    "zipSHA256": "2fc83aa004c9e866448bb8ac493741837ff8a819f764ea712b910dfaced7dce1",
+    "zipEntries": 5,
+    "workspaceId": "ssh|/home/fixture/project|ssh-fixture",
+    "modelCalls": 0,
+    "nativeBrowser": "pending_certificate_handoff"
+  },
+  "restart": {
+    "status": "pass",
+    "realSSHAfterReleasedBinaryRestart": true,
+    "startCommandUsed": true,
+    "differentServerInstance": true,
+    "remoteFilesIncludingHistoryUnchanged": true,
+    "remoteFileCount": 3,
+    "authAndConfigurationHashesUnchanged": true,
+    "sshServiceStayedRunning": true,
+    "connectionTest": {
+      "ok": true,
+      "path": "/home/fixture/project"
+    },
+    "historyVersions": 4,
+    "repeatedObservationDeduplicates": true,
+    "modelCalls": 0,
+    "nativeSceneCaretScrollDraft": "not_run_certificate_handoff"
+  },
+  "partialRestore": {
+    "status": "pass",
+    "realSSH": true,
+    "ownedRemotePermissionFault": true,
+    "partialRestore409": true,
+    "assetAppliedAndVerifiedBeforeBodyFailure": true,
+    "bodyNotOverwrittenOnFailure": true,
+    "incompleteJournalVerifiedOnDisk": true,
+    "freshPreviewAndRetryCompleted": true,
+    "bodyAndResourceMatchV1": true,
+    "backupZIPCRC": true,
+    "zipSHA256": "cefe1da8d69fed3adc2ca4c11e71c598568e571206f2c4f348338a8642817f84",
+    "modelCalls": 0,
+    "nativeBrowser": "not_run_certificate_handoff"
+  }
+}

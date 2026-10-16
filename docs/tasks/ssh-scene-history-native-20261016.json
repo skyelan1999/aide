@@ -1,0 +1,67 @@
+{
+  "id": "ssh-scene-history-native-20261016",
+  "request": "继续原连续工作目标，使用当前发布镜像与隔离真实SSH服务，实际Safari验证目录、光标、滚动、草稿和远端历史恢复；保全生产9999，Windows用户验收，向量暂缓",
+  "baseline": "341458d6bb7d2e6af99e33a960d886e57d6566a4",
+  "initial_status": "",
+  "acceptance": [
+    "Current released binary with separate data/auth and real private SSH server; launch through start.command without extra browser tabs or production changes",
+    "Native Safari SSH directory, saved-file caret/scroll and dirty-draft restoration with exact remote bytes and no automatic send",
+    "Native remote Markdown history baseline/external resource observation and whole-version restore checked by SSH filesystem and authenticated API",
+    "Preserve production config/auth/sessions/workspace/mounts, stop only owned fixture resources, document scoped limits and release via exact-input gates"
+  ],
+  "scope": [
+    "docs/tasks",
+    "docs/reviews",
+    "private owned runtime harness under .agent-state/ssh-scene-history-native"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue original SSH scene/history gaps with native full-workbench evidence. This does not substitute for a user-host claim. Optional user SSH host requested while independent work continues.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Same551 image in separate Compose project and private SSH-only network; AIDE has its normal host loopback bridge plus SSH-private network. Reuse trusted localhost TLS via read-only certificate/key mounts; separate auth/data, no SSH host ports or configured external model. First all-internal network prevented Docker host port publishing, so frontend bridge was corrected before acceptance.",
+      "evidence": [
+        "start.command",
+        "docker/compose.offline.yaml",
+        "internal/server/ssh_live_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Same released binary launched by start.command against separate auth/data and real isolated SSH server; protocol and restart harness complete. No product code changes for this task.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/ssh-scene-history-protocol-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Real SSH resource-only observation, stale-preview 409 without overwrite, whole-version two-file restore, ZIP CRC, dedup, stop/start persistence and production protected state preservation passed. Native Safari directory/caret/scroll/dirty draft remains unverified at certificate handoff. A separate remote fixture injected a root-owned read-only SFTP temporary target: asset restore completed before body write failed with409; body V2 preserved, actual incomplete journal persisted; fresh preview and retry restored V1 and ZIP CRC passed. Initial harness ownership and journal-root assumptions were corrected against live UID/path before final passing run.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/ssh-scene-history-protocol-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User authorized continuing original goal, incremental testing/docs/main delivery. Windows user-owned and real vector tests deferred. No production credential or workspace replacement.",
+  "rollback": "Stop/remove only owned fixture project and isolated data registrations. Production service/data remain untouched; retain current551 runtime and offline package.",
+  "handoff": "SSH fixture remains healthy at localhost:18621. Safari required user certificate confirmation; no bypass performed. Browser main tab temporarily reused for user-authorized GitHub artifact upload. Original objective native SSH scene/history still open. User-host and Windows acceptance not claimed; vectors deferred. Launcher hotfix takes priority per latest user report."
+}
