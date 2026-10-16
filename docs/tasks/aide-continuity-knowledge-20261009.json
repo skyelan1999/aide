@@ -7691,7 +7691,7 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Exact file cursor/scroll and SSH scene/history/autosave restore, actual approval/outcome/timeline UI. Local Markdown/SVG draft/history/conflict flows now directly verified; original12 retained.",
+    "nextIndependentFocus": "Fix actual Safari scroll-reopen failure L023-to-L000 with deterministic regression and UI retest; caret886 exact passes. Then SSH scene/history/autosave and remaining approval/outcome/timeline. All original12 retained.",
     "deliveredMain": "f62f2449e12fbd6f188c4877d095a73076da6dff",
     "mainGate": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
     "currentCheckpointGate": "Actual native local file save/history/SVG full restore/refresh draft/conflict merge and exact protected cleanup pass; docs-only exact full88 reuse, independent main gate and remotef62f2449 exact. Original12 retained."
@@ -7799,5 +7799,13 @@
     "report": "docs/reviews/2026-10-16/workbench-file-continuity.md",
     "evidence": "Actual native local Markdown/SVG save/history/full restore, explicit refresh draft recovery and conflict merge; API/disk exact, original protected files/listing exact after owned cleanup. No model calls. SSH/caret/scroll/other original workflows remain open.",
     "delivery": "Independent clean-main gate and exact remotef62f2449 verified, exact-input full88 reuse; no runtime change."
+  },
+  "workbench_file_position_20261016": {
+    "status": "in_progress",
+    "task": "docs/tasks/workbench-file-position-20261016.json",
+    "report": "docs/reviews/2026-10-16/workbench-file-position.md",
+    "caret": "Actual native insertion offset886 exact API/disk pass",
+    "scroll": "Actual Safari twice L023-to-L000 after reopen; fix pending",
+    "cleanup": "Owned fixture deleted, original listing/config/auth/source/session bytes exact"
   }
 }

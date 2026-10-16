@@ -1,0 +1,74 @@
+{
+  "id": "workbench-file-position-20261016",
+  "request": "继续原工作现场恢复：在真实Safari用具名行文本和恢复后实际插入结果验证精确光标及滚动现场，不读取隐藏浏览器存储，保护原文件会话",
+  "baseline": "3b5b96cf3a60cb46a19660330df02162a9c2f3cc",
+  "initial_status": "",
+  "acceptance": [
+    "Native keyboard establishes a known caret offset in an owned line-numbered text file; after close/reopen actual inserted marker lands at exactly that offset in API and disk content.",
+    "Before/after screenshots visibly retain the same labelled scroll region; report pixel-offset limits precisely.",
+    "Restore original scene and delete only exact owned fixture; original listing/settings/auth/sources/sessions unchanged; preserve original12 and defer Windows/vectors."
+  ],
+  "scope": [
+    "docs/tasks/workbench-file-position-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/workbench-file-position*",
+    "Owned temporary system-docs position fixture",
+    "internal/server/web/file-autosave.js",
+    "internal/server/web/app.js lifecycle integration",
+    "internal/server/web/index.html module cache version if needed",
+    "scripts/file-recovery-scroll.test.cjs",
+    "scripts/file-autosave-retry.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Use native keyboard movement and actual post-restore insertion as exact caret evidence; use visible labelled lines for scroll, no hidden storage read or diagnostic-only product instrumentation.",
+      "evidence": [
+        "docs/tasks/workbench-file-position-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use native keyboard movement and actual post-restore insertion as exact caret evidence; use visible labelled lines for scroll, no hidden storage read or diagnostic-only product instrumentation.",
+      "evidence": [
+        "docs/tasks/workbench-file-position-20261016.json"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Actual native caret insertion at886 proved exact by API/disk; scroll failed twice L023-to-L000, including settled observation. Root cause/fix and passing scroll acceptance pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-position.md",
+        "docs/reviews/2026-10-16/workbench-file-position-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Separate proved caret success from reproduced scroll failure and unproven root-cause candidates; no completion claim.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-position.md",
+        "docs/reviews/2026-10-16/workbench-file-position-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned single-file fixture deleted only after exact checks; original listing/protected bytes and scene restored, no new tabs/model calls.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-position-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental test/docs/push/main authorization; no new version/tag or runtime change.",
+  "rollback": "Only exact owned fixture may be deleted; preserve original files and data; no global history/cache cleanup.",
+  "handoff": "Continue this task: scroll restoration is reproducibly broken on actual Safari, caret886 exact pass. Inspect view persistence across dialog close/textarea reparent/layout reset and passive scroll events; add red-before/green-after regression before fix. Owned fixture cleaned; original UI restored. No source changes/main push/runtime change yet; original12 retained."
+}

@@ -1,0 +1,33 @@
+{
+  "caret": {
+    "expectedOffset": 886,
+    "actualOffset": 886,
+    "markerCount": 1,
+    "serverAndDiskExact": true,
+    "entireContentExpected": true
+  },
+  "scroll": {
+    "status": "reproduced_failure",
+    "attempts": 2,
+    "visibleFirstLineBefore": "L023",
+    "visibleFirstLineAfter": "L000",
+    "secondObservationAfterIndependentServerRead": true,
+    "precisePixelOffsetNotAsserted": true
+  },
+  "cleanup": {
+    "ownedFixtureDeletedAfterExactChecks": true,
+    "originalFileListingExact": true,
+    "originalProtectedFilesExact": true
+  },
+  "screenshotsSHA256": {
+    "after-reopen-second-settled.png": "0e47509f02e1b59e28e209b717f8fd0ecabaf5517a8d1b4a478bc2faac02aef2",
+    "before-close.png": "5706bbce098d0f0ac69975c81ac385260b4528d8b38bcf9774866e560d6c7033",
+    "after-reopen.png": "a4a5786d0017b4efa178b828787c46b8f4315d958d867f32c8674e57ed678081",
+    "before-close-second.png": "d63c00bf4d0e6a87afc4ca8d72a1027c771c45bc02c79b7ef1dcc9c88933b8f5"
+  },
+  "actualNativeSafari": true,
+  "runtime": "a8c22d43ccb8",
+  "modelsInvoked": 0,
+  "productChanged": false,
+  "goalComplete": false
+}
