@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "packages": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-08e257e0ad39-offline.tar.gz",
+      "bytes": 770925382,
+      "sha256": "49f88c8e5f56e06c030ffba5dd1d64c62f6ed78c2304ac2335ba14fe9e372ce9",
+      "innerImageTarSHA256": "20b403295297cf1a372acd31b0b111facd469d9910b8453b9eade3c0fa3c5db7",
+      "image": "sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204",
+      "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-amd64-239c3591fd3a-offline.tar.gz",
+      "bytes": 774109455,
+      "sha256": "815df5ba0b9ef1fe1d4480e3510498e33fce1e254ba88c18a62b2d9dbfd2529f",
+      "innerImageTarSHA256": "8109ee3fb5d8a50dd61189b1d65b45f134bdabcb3d0562164757934410c91171",
+      "image": "sha256:239c3591fd3a7438a4316ae3fcbcd7130f58cfbf9e31b7d965323c97c765534d",
+      "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    }
+  ],
+  "productionImagePreserved": true
+}

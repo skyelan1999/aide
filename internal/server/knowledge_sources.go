@@ -31,6 +31,7 @@ func knowledgeSafePath(p string) bool {
 type knowledgeCoverage struct {
 	ScopePaths         []string `json:"scopePaths,omitempty"`
 	Progressive        bool     `json:"progressive,omitempty"`
+	DiscoveryBlocked   bool     `json:"discoveryBlocked,omitempty"`
 	RefreshProgress    bool     `json:"refreshProgress,omitempty"`
 	RefreshFiles       int      `json:"refreshFiles,omitempty"`
 	RefreshDirectories int      `json:"refreshDirectories,omitempty"`
@@ -252,6 +253,11 @@ func (a *App) knowledgeRemoteCached(ctx context.Context, ar knowledgeArea, code 
 				}
 			}
 			interval := knowledgeRemoteInterval
+			if knowledgeFinishingCycle(ctx) && progressive && memo.result.coverage != nil && memo.result.coverage.Pending == 0 && memo.result.coverage.MaterialPending == 0 {
+				result := memo.result
+				state.remoteMu.Unlock()
+				return result
+			}
 			if progressive && memo.result.state != "unavailable" && memo.result.coverage != nil && memo.result.coverage.Pending > 0 {
 				interval = knowledgeProgressiveInterval
 			}

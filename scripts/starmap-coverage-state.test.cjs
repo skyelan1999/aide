@@ -5,6 +5,8 @@ vm.runInContext(source.slice(source.indexOf('function sourceCoverageState('),sou
 for(const [input,expected] of [
  [{state:'partial',coverage:{progressive:true,pending:3}},'分批扫描中'],
  [{state:'partial',coverage:{progressive:true,pending:0,reasons:['catalog_limit']}},'范围受限'],
+ [{state:'partial',coverage:{progressive:true,pending:881,discoveryBlocked:true,readErrors:5,reasons:['catalog_limit']}},'范围受限'],
+ [{state:'partial',coverage:{progressive:true,pending:881,discoveryBlocked:true,materialPending:3}},'正文与目录分批复核中'],
  [{state:'ready',coverage:{progressive:true,pending:0}},'限定范围已扫描'],
  [{state:'partial'},'部分索引'],
  [{state:'partial',coverage:{progressive:true,pending:3,readErrors:1,reasons:['file-read-error']}},'分批扫描中 · 正文读取异常'],

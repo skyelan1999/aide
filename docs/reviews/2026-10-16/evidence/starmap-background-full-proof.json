@@ -1,0 +1,16 @@
+{
+  "profile": "full",
+  "status": "pass",
+  "fingerprint": "a441e9d60e81f0e7a8030ff302858f31a2bcfabcdfb562b170a1a2319e2e90c9",
+  "head": "fd85cddb5f09e53b539175529d803ef38aef628b",
+  "time": "20261016T151624693952Z",
+  "log": ".agent-state/verify-20261016T151624693952Z.log",
+  "checkCount": 106,
+  "allExitZero": true,
+  "environment": "isolated Docker Linux ARM64, Go race/vet and native CAD geometry; no model invocation",
+  "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
+  "productCode": "9ff84f3b74a897c79ec3ae865da180fe42785428",
+  "runtimeImage": "sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204",
+  "windowsNative": "user-owned not_run",
+  "receivingDevice": "not_run"
+}

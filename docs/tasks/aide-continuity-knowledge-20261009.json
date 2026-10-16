@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Runtime source e5baab8f batch is published on main 666310b96251c0527968ead634e56366c3b43345 with full105, scoped gates, both complete archives and verified public downloads. Independent preview branch43d1f759 has local candidate packages and compiled API smoke; native Safari, final full and publication remain pending for that follow-up. All original twelve workstreams remain open; Windows user-owned, real vectors deferred.",
+  "handoff": "Starmap no-focus/link task passed final full106 and native/scoped/fresh package checks. Product9ff84f3b/source3c6f4e12 runtime08e257 active through start.command. Finish clean-main gate, public assets/notes validation and main push. Prior e5 published, preview43d and original12 remain open; Windows user-owned, vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7949,5 +7949,16 @@
       "docs/reviews/2026-10-16/evidence/knowledge-current-project-native-proof.json"
     ],
     "next": "After current scoped delivery gate: popup-independent same-page preview, structured document line location, removed-source result invalidation; then native Safari verification. Do not count existing-tab manual source navigation as a passed quick-preview click."
+  },
+  "starmap_background_progress_20261016": {
+    "status": "pass",
+    "task": "docs/tasks/starmap-background-progress-20261016.json",
+    "code": "9ff84f3b74a897c79ec3ae865da180fe42785428",
+    "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
+    "native": "Safari no-focus observation completed 1279->2001 files/all2502 entries with no observer API calls; browser hidden polling may continue. Target2000 actual relations. Separate Go regression proves no subsequent HTTP needed. Cap source range-limited/synced observed; final08e runtime assets and protected state verified.",
+    "packages": "Final08e257e0ad39/239c3591fd3a integrity/import/fresh ARM64 start pass. Four public Release assets verified by exact bytes/SHA256, public downloads and CRLF-normalized notes. Original assets/tag preserved; main 31084089070c54506308b25fa85a43780982ed65 pushed and remote ref verified.",
+    "full": "PASS full106, all exits0, exact content fingerprint a441e9d60e81f0e7a8030ff302858f31a2bcfabcdfb562b170a1a2319e2e90c9",
+    "originalGoal": "Original12 remain open; Windows user-owned and vectors deferred.",
+    "firstPublishedMain": "31084089070c54506308b25fa85a43780982ed65"
   }
 }

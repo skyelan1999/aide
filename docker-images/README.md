@@ -418,3 +418,13 @@ start.command image `sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af
 ## 2026-10-16 Markdown 历史资源预览修复
 
 `aide-0.1.17.0-RC2-linux-arm64-551eff0003ba-offline.tar.gz`，源码 `6ac147aa`，SHA-256 `db0983ff16f3f0680a80810a54782837feb17bc56375804fdc51875c37ed9e02`。修复整版历史恢复后同名图片仍显示旧内容，支持正文不变时的资源恢复；保留正常重绘URL稳定性。实际Safari PNG/JPEG、磁盘/API完整字节和重复观察去重通过；最终门禁/本机导入/远端main记录见[本轮任务](../docs/tasks/continuity-history-current-20261016.json)。保留52e943e1e8c3完整包回滚；Windows由用户验收，另一设备导入不以本机测试代替。
+
+## 2026-10-16 Starmap background continuation runtime
+
+Product code `9ff84f3b`; source `3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008`. Complete packages include CAD and launchers.
+
+`aide-0.1.17.0-RC2-linux-arm64-08e257e0ad39-offline.tar.gz`: 770925382 bytes; SHA-256 `49f88c8e5f56e06c030ffba5dd1d64c62f6ed78c2304ac2335ba14fe9e372ce9`.
+
+`aide-0.1.17.0-RC2-linux-amd64-239c3591fd3a-offline.tar.gz`: 774109455 bytes; SHA-256 `815df5ba0b9ef1fe1d4480e3510498e33fce1e254ba88c18a62b2d9dbfd2529f`.
+
+Exact package/import, native no-focus/link evidence, first busy/stale requests, blocked response readers, startup, release gates and public delivery states are maintained in the [batch record](../docs/reviews/2026-10-16/starmap-background-progress.md). Prior e5baab8f packages remain for rollback. Windows native and receiving-device acceptance are separate.

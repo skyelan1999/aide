@@ -12,5 +12,8 @@ assert.equal(c.progressiveDelay(pending,2000),1000);
 assert.equal(c.progressiveDelay(pending,9000),1500);
 assert.equal(c.progressiveDelay({sources:[{state:'unavailable',coverage:{progressive:true,pending:5}}]},10),2000);
 assert.equal(c.progressiveDelay({sources:[]},10),2000);
+const capped={nodes:[{}],sources:[{state:'partial',coverage:{progressive:true,pending:881,discoveryBlocked:true,catalogLimit:20000}}]};
+assert.equal(c.progressiveDelay(capped,10),2000,'hard limit is not an active scan');assert.equal(c.progressiveSummary(capped),'');
+capped.sources[0].coverage.materialPending=2;assert.equal(c.progressiveDelay(capped,10),350,'known material still finishes');
 assert.match(source,/else scheduleLive\(progressiveDelay\(graph\)\)/);
 console.log('PASS progressive scan pacing, slow-source backpressure and completion cadence');

@@ -1,0 +1,94 @@
+{
+  "status": "pass",
+  "runtime": "c34700922d28",
+  "sourceSHA256": "f89c16e90f2cc700a86b81db1eed5d8d56b8f9f1b979b91169d9b1e01269014f",
+  "hiddenAt": "2026-10-16T13:57:31.663Z",
+  "observations": [
+    {
+      "observed": "2026-10-16T13:57:38.646Z",
+      "checkpointModified": "2026-10-16T13:57:37.830Z",
+      "files": 1279,
+      "entries": 1600,
+      "materials": 642,
+      "queue": 181,
+      "cycle": 1,
+      "complete": false,
+      "validated": 841,
+      "unavailable": 0,
+      "observerMadeAppRequest": false
+    },
+    {
+      "observed": "2026-10-16T13:57:55.810Z",
+      "checkpointModified": "2026-10-16T13:57:54.703Z",
+      "files": 2001,
+      "entries": 2502,
+      "materials": 2001,
+      "queue": 0,
+      "cycle": 1,
+      "complete": true,
+      "validated": 2502,
+      "unavailable": 0,
+      "observerMadeAppRequest": false
+    },
+    {
+      "observed": "2026-10-16T13:58:14.995Z",
+      "checkpointModified": "2026-10-16T13:58:05.069Z",
+      "files": 2001,
+      "entries": 2502,
+      "materials": 2001,
+      "queue": 0,
+      "cycle": 1,
+      "complete": true,
+      "validated": 2502,
+      "unavailable": 0,
+      "observerMadeAppRequest": false
+    }
+  ],
+  "observationMethod": "Observer only read/decrypted the owned local checkpoint; it made no extra App/API request or UI action between observations. Hidden browser polling may continue. Independent completion without any further HTTP request is separately proved by Go tests.",
+  "nativeReturn": {
+    "updatedWithoutRefresh": true,
+    "files": 2001,
+    "directories": 501,
+    "targetIncidentEdges": 2001,
+    "targetUniqueRelations": 2000,
+    "screenshot": "private local evidence only"
+  },
+  "cleanup": {
+    "sourceRegistryBytesRestored": true,
+    "originalSessionsSettingsAuthAndMountsPreserved": true,
+    "newTabs": 0,
+    "restoredView": "all regions, empty query, detail closed; returned to original session 39"
+  },
+  "boundary": "This native proof covers the unchanged continuation/link path before the subsequent hard-limit/status-only follow-up; final image/cap UI/full/publication recorded separately.",
+  "priorCapRuntime": {
+    "image": "90eb69899527",
+    "sourceSHA256": "b7327dce1bcb941bc70d610ea89ea3b0ff2ff3aeba22c0fd7b6b3ef036ff1198",
+    "codeCommit": "1397b7bd",
+    "entry": "start.command",
+    "prebuiltNoCompilation": true,
+    "protectedStateAndAssets": "pass",
+    "capAPI": {
+      "source": "context",
+      "state": "partial",
+      "nodeCount": 20000,
+      "coverage": {
+        "pending": 881,
+        "materialPending": null,
+        "discoveryBlocked": true,
+        "catalogLimit": 20000,
+        "readErrors": 13391
+      },
+      "stale": true
+    },
+    "nativeCapUI": "range-limited source and synced status observed; no new tabs"
+  },
+  "currentRuntime": {
+    "image": "sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204",
+    "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
+    "codeCommit": "9ff84f3b74a897c79ec3ae865da180fe42785428",
+    "entry": "start.command",
+    "prebuiltNoCompilation": true,
+    "protectedStateAndExactAssets": "pass",
+    "scope": "Browser/link/cap bytes match prior native evidence. New slow-writer, first-busy and stale-response routes passed actual Go race tests. Native proof versions remain explicit."
+  }
+}

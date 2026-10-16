@@ -1,0 +1,57 @@
+{
+  "removed": [
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-arm64-49b188d1873d-offline.tar.gz",
+      "bytes": 770929966,
+      "reason": "own unpublished intermediate package; final complete package verified; original published rollback archives preserved"
+    },
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-amd64-2792aea2bf80-offline.tar.gz",
+      "bytes": 774105973,
+      "reason": "own unpublished intermediate package; final complete package verified; original published rollback archives preserved"
+    },
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-arm64-c34700922d28-offline.tar.gz",
+      "bytes": 770923944,
+      "reason": "own unpublished intermediate package; final complete package verified; original published rollback archives preserved"
+    },
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-amd64-70605ee3bec1-offline.tar.gz",
+      "bytes": 774104839,
+      "reason": "own unpublished intermediate package; final complete package verified; original published rollback archives preserved"
+    },
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-arm64-90eb69899527-offline.tar.gz",
+      "bytes": 770926456,
+      "reason": "own unpublished intermediate, superseded by final verified complete image package"
+    },
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-amd64-563ea90a460c-offline.tar.gz",
+      "bytes": 774105366,
+      "reason": "own unpublished intermediate, superseded by final verified complete image package"
+    },
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-arm64-ffbb0f6f724a-offline.tar.gz",
+      "bytes": 770924552,
+      "reason": "own unpublished intermediate, superseded by final verified complete image package"
+    },
+    {
+      "path": "docker-images/aide-0.1.17.0-RC2-linux-amd64-d91524067791-offline.tar.gz",
+      "bytes": 774106572,
+      "reason": "own unpublished intermediate, superseded by final verified complete image package"
+    }
+  ],
+  "bytesFreed": 6180127668,
+  "userDataDeleted": false,
+  "dockerVolumesDeleted": false,
+  "finalPackagesAndPublishedRollbackPreserved": true,
+  "status": "pass",
+  "outgoingTrackedFilesReviewed": true,
+  "temporarySourceRegistryRestoredByteForByte": true,
+  "protectedAuthSettingsSessionsWorkspaceAndUnrelatedMountsPreserved": true,
+  "originalHistoryBackupRetained": true,
+  "testIndexHistoryNotClaimedUnchanged": true,
+  "finalRuntimeImagesAndCompletePackagesRetained": true,
+  "publishedRollbackRetained": true,
+  "nativeBrowserNewTabs": 0
+}

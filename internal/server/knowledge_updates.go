@@ -19,7 +19,7 @@ const knowledgeBatchDuration = 350 * time.Millisecond
 
 func knowledgeGraphScanning(g knowledgeGraph) bool {
 	for _, source := range g.Sources {
-		if source.State != "unavailable" && source.Coverage != nil && source.Coverage.Progressive && (source.Coverage.Pending > 0 || source.Coverage.MaterialPending > 0) {
+		if source.State != "unavailable" && source.Coverage != nil && source.Coverage.Progressive && (source.Coverage.Pending > 0 && !source.Coverage.DiscoveryBlocked || source.Coverage.MaterialPending > 0) {
 			return true
 		}
 	}
@@ -38,6 +38,8 @@ type knowledgeUpdateState struct {
 	policy     string
 	views      [2]*knowledgeUpdateView
 	published  [2]atomic.Pointer[knowledgePublishedView]
+	continuing [2]*knowledgeContinuation // Protected by gate; at most one owner per mode.
+	starting   [2]atomic.Bool            // Deduplicate first requests waiting for the scan gate.
 	remoteMu   sync.Mutex
 	remote     map[string]*knowledgeRemoteMemo
 	originOnce sync.Once
@@ -118,6 +120,7 @@ type knowledgeCodeMemo struct {
 }
 
 type knowledgeScanCache struct {
+	finishCycle      bool            // Do not restart completed sources while finishing others.
 	priorGraph       *knowledgeGraph // One immutable view, scoped to this candidate scan only.
 	localCheckpoints []knowledgeLocalCheckpoint
 	discovery        map[string]*knowledgeDiscoveryView
@@ -499,9 +502,14 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 	}
 	if force || view.checked.IsZero() || time.Since(view.checked) >= interval {
 		cache := newKnowledgeScanCache(view.cache)
+		cache.finishCycle = state.continuing[mode] != nil
 		prior := view.graph
 		cache.priorGraph = &prior
-		g := a.knowledgeSnapshotModeCached(ctx, mode == 1, cache)
+		scanCtx := ctx
+		if cache.finishCycle {
+			scanCtx = context.WithValue(ctx, knowledgeContinuationContext{}, true)
+		}
+		g := a.knowledgeSnapshotModeCached(scanCtx, mode == 1, cache)
 		view.checked = time.Now() // Also throttle failed/cancelled attempts.
 		if a.knowledgeContextErr(ctx) != nil || cache.err != nil {
 			// Keep the discovery cursor/cache produced before cancellation. A
@@ -608,11 +616,27 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	view, release, stale, err := a.knowledgeAcquireUpdatesView(ctx, r.URL.Query().Get("code") == "1")
 	if err != nil {
+		if r.URL.Query().Get("background") == "1" {
+			a.knowledgeContinueFailed(r.URL.Query().Get("code") == "1")
+		}
 		knowledgeSyncFail(w, err)
 		return
 	}
-	defer release()
+	var released sync.Once
+	unlock := func() { released.Do(release) }
+	defer unlock()
+	if r.URL.Query().Get("background") == "1" && stale {
+		a.knowledgeContinueFailed(r.URL.Query().Get("code") == "1")
+	}
+	// Only the live-map client opts into finishing the current catalogue in
+	// the server. Other snapshot/search callers keep their request lifecycle.
+	if r.URL.Query().Get("background") == "1" && !stale && knowledgeGraphScanning(view.graph) {
+		a.knowledgeContinueLocked(r.URL.Query().Get("code") == "1")
+	}
 	response := knowledgeDelta(view, cursor)
+	// Published graph data is immutable. A slow/frozen client must not hold
+	// the scan gate while JSON encoding or socket writes wait for its reader.
+	unlock()
 	response.Stale = stale
 	if stale {
 		response.Warnings = append(response.Warnings, "当前展示上次完整索引；新扫描进行中，完成后会自动追平")
