@@ -7841,7 +7841,7 @@
     "task": "crash-diagnostics-20261016",
     "request": "Add crash detection and diagnostic code display",
     "status": "in_progress",
-    "summary": "Early diagnostics and typed panic isolation implemented; focused JS/quick88/Go race3.127s, isolated fault UI/native clipboard, offline local import and actual9999 normal diagnostic entry/data preservation pass. Runtime3f4545df healthy; full90 session54311 and main pending.",
+    "summary": "Fresh full90 PASS (server race676.113s/vet), isolated actual fault/native copy and actual9999 normal diagnostic/protected-state checks pass. Runtime3f4545df healthy and complete offline local import pass; cleanup complete, main gate/push pending.",
     "evidence": [
       "docs/architecture/crash-diagnostics.md",
       "docs/reviews/2026-10-16/crash-diagnostics.md",

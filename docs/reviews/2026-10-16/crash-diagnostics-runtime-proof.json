@@ -48,7 +48,7 @@
     "originalSceneAndTabsPreserved": true
   },
   "nativeNormalScreenshotSHA256": "0500952fd2cc50b8e932e5776f4e0a7c951e14473c49ff6f6c19cf0f6f7a95c8",
-  "full": "running exec session54311; do not reuse aurora receipt",
+  "full": "pass 90/90, server race676.113s plus vet; see full proof",
   "main": "pending",
   "receivingDeviceImport": "not_run"
 }
