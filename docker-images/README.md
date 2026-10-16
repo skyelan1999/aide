@@ -1,3 +1,9 @@
+## 2026-10-16 Mermaid 黑色渲染修复候选
+
+候选 `dc2cacc1c0f6`（代码 `105fbcef`，构建输入 `d3756091d14e88a668883f9d154dd2fefb049ba3d5d5ee5e4f3c0b20c52c6800`）修复严格 CSP 下 Mermaid 样式被拦截导致的黑色图表，并统一文字测量和 SVG 标签。实际 Safari 工作台 Markdown 预览及严格 CSP 明暗/作者配色/四种图表验收通过。
+
+完整 ARM64 离线包 `aide-0.1.17.0-RC2-linux-arm64-dc2cacc1c0f6-offline.tar.gz`，770897708 字节，SHA-256 `c37de7ee4a8c5c0ba18c988add66fe5aa4fac9eea8f5f52cff20441f3c81c7b1`；内外摘要和实际 Docker 导入通过。保留上一版 `bd2ac35b6a62` 镜像及离线包回滚，接收设备导入未验。最终 main 门禁、运行和空目录新装结果见[任务账本](../docs/tasks/mermaid-black-20261016.json)。不升版、不打标签、不创建正式 Release。
+
 ## 2026-10-16 大型 STEP 完整曲面与测量候选
 
 候选 `bd2ac35b6a62`（源码 `7a4a49c5`，构建输入 `71f004b8ff36d9d9a25f54a477e5bf9c4497ba4197ef33ac12295703ba090a35`）支持原生 STEP 完整曲面分批预览、装配位置/单位/面色保留、距离/夹角/XYZ 与三点标定。204 MiB 生成样例得到全部 370,440 个预期三角面；测量为明确标注的预览网格近似值。CAD 服务独立限额 4 GiB，私有网络、CAD 专用派生凭据，不读取工作台登录凭据。

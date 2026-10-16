@@ -12,7 +12,9 @@
     "internal/server/web/markdown-diagrams.js",
     "scripts/markdown-diagrams.test.cjs",
     "scripts/fixtures",
-    "docs"
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
   ],
   "stages": {
     "requirements": {
@@ -39,13 +41,15 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Node lifecycle/theme/source/contrast regression and actual strict-CSP Safari four diagram types/light-dark/author colours pass. Baseline independently reproduces rgb(0,0,0). Runtime update/full main pending.",
+      "status": "pass",
+      "summary": "Node CSSOM lifecycle/theme/source/contrast regression passes. Safari strict-CSP baseline reproduces black; fixed light/dark four diagram types, author colours, detached cleanup and actual9999 Markdown preview pass. Runtime/protected-data and bundle import pass; full main pending.",
       "evidence": [
         "scripts/markdown-diagrams.test.cjs",
         "scripts/fixtures/serve-mermaid-csp.py",
         "docs/reviews/2026-10-16/evidence/mermaid-csp-light.png",
-        "docs/reviews/2026-10-16/evidence/mermaid-csp-dark.png"
+        "docs/reviews/2026-10-16/evidence/mermaid-csp-dark.png",
+        "docs/reviews/2026-10-16/evidence/mermaid-csp-receipt.json",
+        "docs/reviews/2026-10-16/evidence/mermaid-workbench.png"
       ]
     },
     "documentation": {
@@ -56,17 +60,131 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned temporary MD fixture removed and file list refreshed; both fixture HTTP servers stopped; Safari original session/theme/zoom restored,0newtabs. Source reviewed; prior runtime/image/bundle and user data retained.",
+      "evidence": [
+        "docs/reviews/2026-10-16/mermaid-black.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source105fbcef running throughstart.command on9999; completeARM64bundle verified/imported. Fresh offline pass; await fullmain/releasecheck/push. No version/tag/Release.",
+      "evidence": [
+        "docker-images/README.md",
+        "docker-images/SHA256SUMS"
+      ]
     }
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; no version/tag/Release.",
   "rollback": "Revert task source commit; preserve existing runtime image bd2ac35b6a62, offline bundle and all user data.",
-  "handoff": "Source ready; build/start through start.command with no new Safari tabs, actual Markdown acceptance, offline export, full main and push remain."
+  "handoff": "Runtime/UI/offline/import/fresh-start pass. Freeze executable inputs andDockerREADME/SUMS; cleanmain full102, releasecheck andpush remain. Only docs receipts should change after full.",
+  "runtime": {
+    "serverInstanceId": "2026-10-16T08:25:56.272862256Z",
+    "image": "sha256:dc2cacc1c0f68cfdb2992540ea24fbebcd0aabede41bb6aee4ca13ecd436af91",
+    "imageTag": "sha256:dc2cacc1c0f68cfdb2992540ea24fbebcd0aabede41bb6aee4ca13ecd436af91",
+    "sourceSHA256": "d3756091d14e88a668883f9d154dd2fefb049ba3d5d5ee5e4f3c0b20c52c6800",
+    "platformManifest": "sha256:28c8b8d70b1ebc66beb4de490a4749e8867d53dd4043fa415d7b07ff429f8a03",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndUnrelatedMountsPreserved": true,
+    "dataHomeBoundUnderLauncher": true,
+    "legacyVolumesRetained": true,
+    "migration": {
+      "format": 1,
+      "status": "complete",
+      "createdAt": 1792128267,
+      "sources": {
+        "data": {
+          "imported": true,
+          "entries": 156,
+          "manifestSHA256": "5f1df0934a28bae056d044ba17169d65eb83b0abe02a3edd3e9927933e0df1cd"
+        },
+        "home": {
+          "imported": true,
+          "entries": 16,
+          "manifestSHA256": "71fe94959613795b1a8202f2dfb302167be50df03f7362f1c17e1d9225b4a54e"
+        }
+      }
+    },
+    "assetsMatch": [
+      "markdown-diagrams.js",
+      "step-preview.js",
+      "step-metrology.js",
+      "step-import-worker.js",
+      "style.css",
+      "lock-cluster.js",
+      "parallel-chat.js",
+      "crash-monitor.js",
+      "crash-monitor.css",
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "bundle": {
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-dc2cacc1c0f6-offline.tar.gz",
+    "bytes": 770897708,
+    "sha256": "c37de7ee4a8c5c0ba18c988add66fe5aa4fac9eea8f5f52cff20441f3c81c7b1",
+    "innerImageTarSHA256": "b12adb3ef0f20bce1c45df560b509a4b638e5e86b1458534fc7ad273c050c15b",
+    "image": "sha256:dc2cacc1c0f68cfdb2992540ea24fbebcd0aabede41bb6aee4ca13ecd436af91",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "build": {
+      "version": "0.1.17.0-RC2",
+      "image": "sha256:dc2cacc1c0f68cfdb2992540ea24fbebcd0aabede41bb6aee4ca13ecd436af91",
+      "platform": "linux/arm64",
+      "srcsha": "d3756091d14e88a668883f9d154dd2fefb049ba3d5d5ee5e4f3c0b20c52c6800",
+      "cadRuntime": "8.0.1.1.0",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "licenseInBundle": true,
+    "licenseInImage": true,
+    "outerAndInnerChecksums": "pass",
+    "localDockerImport": "pass",
+    "runningImagePreserved": true,
+    "receivingDeviceImport": "not_run"
+  },
+  "offlineFresh": {
+    "status": "pass",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-dc2cacc1c0f6-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "image": "sha256:dc2cacc1c0f68cfdb2992540ea24fbebcd0aabede41bb6aee4ca13ecd436af91",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "parts": 2,
+      "faces": 9,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "seconds": 0.022984790994087234
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  }
 }
