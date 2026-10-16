@@ -7957,7 +7957,7 @@
     "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
     "native": "Safari background 1279->2001 files and all2502 entries complete without focus/API activity; target2000 actual relations. Final runtime90eb cap source range-limited and synced observed; source registry/auth/settings/sessions/mounts preserved.",
     "packages": "Complete ARM64 sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 and AMD64 sha256:239c3591fd3a7438a4316ae3fcbcd7130f58cfbf9e31b7d965323c97c765534d independently verified; remote upload/push pending.",
-    "full": "Prior full failed on an outdated empty-state VM fixture and input drift. Fixture corrected; final unchanged-product full pending. Never used as a release receipt.",
+    "full": "Last Go race/vet pass, total105/106 checks pass; unrelated existing CAD cancellation assertion timing race corrected with bounded gate wait,20 repeated passes. Product/images unchanged. Final full pending.",
     "originalGoal": "Original12 remain open; Windows user-owned and vectors deferred."
   }
 }

@@ -29,7 +29,8 @@
     "docker/prebuilt-images.tsv",
     "docker-images/README.md",
     "docker-images/SHA256SUMS",
-    "scripts/starmap-empty-state.test.cjs"
+    "scripts/starmap-empty-state.test.cjs",
+    "scripts/test_cad_service.py"
   ],
   "stages": {
     "requirements": {
@@ -58,7 +59,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Native no-focus completion/2000 relations/cap UI and all scoped Go race paths pass. Prior full failed: old empty-state VM fixture lacked say/progressiveSummary after metadata progress changed; later product inputs also changed. Corrected VM fixture now passes. No prior full receipt is reused. Final unchanged-product full pending.",
+      "summary": "Latest full: Go race/vet PASS (server803.806s), 105/106 checks exited0; CAD cancellation fixture raced child reaping versus parent semaphore cleanup. Changed test only to wait on actual gate with1s bound,20 consecutive cancellation runs PASS. Product source3c6f/9ff and both images unchanged. Final whole-input full pending; no failed receipt reused.",
       "evidence": [
         "docs/reviews/2026-10-16/starmap-background-progress.md",
         "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"

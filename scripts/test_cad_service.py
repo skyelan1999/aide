@@ -53,5 +53,10 @@ print(json.dumps({'kind':'complete','triangles':12}),flush=True)
             except ProcessLookupError:break
             time.sleep(.05)
         else:self.fail('conversion child survived client cancellation')
-        self.assertTrue(self.module.GATE.acquire(blocking=False));self.module.GATE.release()
+        # The child can be reaped just before the handler closes its pipe and
+        # releases the semaphore. Wait on that actual cleanup boundary rather
+        # than treating process exit and parent cleanup as one atomic event.
+        acquired=self.module.GATE.acquire(timeout=1)
+        self.assertTrue(acquired,'CAD handler did not release its gate after child cancellation')
+        self.module.GATE.release()
 if __name__=='__main__':unittest.main()
