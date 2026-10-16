@@ -1,0 +1,12 @@
+{
+  "status": "pass",
+  "profile": "full",
+  "checks": 106,
+  "allExitsZero": true,
+  "fingerprint": "e3e77c8fabcd71736324498185d9413f7da3b8c489e77fae354dbaccb2dd7c31",
+  "receiptHead": "30c8c00e79a32c8852fc6bea45a760d689db5325",
+  "time": "20261016T154742108292Z",
+  "serverRaceSeconds": 899.155,
+  "vet": true,
+  "scope": "Integrated source before final delivery-index freeze; native UI and final delivery gate remain pending."
+}

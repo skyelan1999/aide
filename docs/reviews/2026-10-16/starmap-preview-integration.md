@@ -25,3 +25,5 @@
 ## 完整离线包与新目录启动
 
 两份整合包已通过内外 SHA-256、精确启动器和 CAD 许可证核对、隐私数据排除及实际 Docker 导入，见[包收据](evidence/starmap-preview-integrated-packages-proof.json)。新数据目录使用包内原始 start.command 无构建/拉取启动，通过编译版本的 CRLF/空行第三行定位与原始文件完整哈希、120三角形原生 CAD，见[启动收据](evidence/starmap-preview-integrated-fresh-start-proof.json)。临时实例已停止并恢复原 slot 标签，生产仍为08e257。测试使用现有 Docker 引擎与单独导入，不能称为空白引擎或接收设备验收；完整 Safari 与公开发布仍待。
+
+整合后的完整回归106项全部通过，服务端 race899.155秒及vet通过，指纹 `e3e77c8fabcd71736324498185d9413f7da3b8c489e77fae354dbaccb2dd7c31`，见[整合回归收据](evidence/starmap-preview-integrated-full-proof.json)。这是当前实现与现有发布索引组合的证据；实际Safari与最终交付索引冻结后的门禁分开记录，不能提前宣称发布完成。

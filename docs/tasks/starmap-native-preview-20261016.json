@@ -55,11 +55,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Merged branch focused preview/background/metadata/continuation/i18n checks pass, including additive indexing with active document continuation and source-only removal invalidation. Prior quick102 and Go proof belong to pre-merge code; final combined quick/full/native runtime pending.",
+      "summary": "Integrated exact-input full106 all exit0, server race899.155s and vet pass; complete bundles/import/fresh ARM64 compiled line/hash/CAD checks pass. Native Safari on combined runtime and final frozen-delivery gate remain pending.",
       "evidence": [
         "scripts/starmap-file-preview.test.cjs",
         "scripts/starmap-live-metadata.test.cjs",
-        "internal/server/knowledge_document_continuation_test.go"
+        "internal/server/knowledge_document_continuation_test.go",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-full-proof.json"
       ]
     },
     "documentation": {
@@ -118,7 +119,7 @@
     "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
     "publishedBase": "0ac5f757ed92d09330c0bf93c5ccaaeda7689c0d",
     "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
-    "full": "running; final receipt required; old pre-merge receipts not reusable",
+    "full": "PASS full106, exact fingerprint e3e77c8fabcd71736324498185d9413f7da3b8c489e77fae354dbaccb2dd7c31; native/final delivery gate pending",
     "native": "pending on combined runtime",
     "candidate": "sha256:950bcbc2d79e0b3ef431cf54eee67623561ac0fba4634ed2828170b828ceb6ed",
     "sourceSHA256": "199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c",
