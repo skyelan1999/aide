@@ -205,3 +205,59 @@ func TestKnowledgeBackgroundHardLimitDoesNotSpin(t *testing.T) {
 		t.Fatal("expandable catalogue must continue")
 	}
 }
+
+func TestKnowledgeBackgroundFirstBusyRequestIsQueued(t *testing.T) {
+	for _, code := range []bool{false, true} {
+		t.Run(fmt.Sprint(code), func(t *testing.T) {
+			a := backgroundKnowledgeFixture(t)
+			s := &a.knowledgeUpdates
+			s.once.Do(func() { s.gate = make(chan struct{}, 1) })
+			s.gate <- struct{}{}
+			url, mode := "/api/knowledge-map/updates?background=1", 0
+			if code {
+				url, mode = url+"&code=1", 1
+			}
+			r := request(a, "GET", url, nil)
+			<-s.gate
+			requireStatus(t, r, 503)
+			deadline := time.Now().Add(15 * time.Second)
+			for time.Now().Before(deadline) {
+				p := s.published[mode].Load()
+				if p != nil && !knowledgeGraphScanning(p.view.graph) {
+					if progressiveFileCount(p.view.graph) != 170 {
+						t.Fatal("queued first request lost files")
+					}
+					return
+				}
+				time.Sleep(40 * time.Millisecond)
+			}
+			t.Fatal("busy first request required browser activity to retry")
+		})
+	}
+}
+
+func TestKnowledgeBackgroundStaleResponseContinues(t *testing.T) {
+	a := backgroundKnowledgeFixture(t)
+	requireStatus(t, request(a, "GET", "/api/knowledge-map/updates", nil), 200)
+	s := &a.knowledgeUpdates
+	s.gate <- struct{}{}
+	r := request(a, "GET", "/api/knowledge-map/updates?background=1", nil)
+	<-s.gate
+	requireStatus(t, r, 200)
+	var response knowledgeUpdateResponse
+	if err := json.Unmarshal(r.Body.Bytes(), &response); err != nil || !response.Stale {
+		t.Fatal("fixture must serve a stale snapshot while the scan gate is busy")
+	}
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		p := s.published[0].Load()
+		if p != nil && !knowledgeGraphScanning(p.view.graph) {
+			if progressiveFileCount(p.view.graph) != 170 {
+				t.Fatal("stale response continuation dropped files")
+			}
+			return
+		}
+		time.Sleep(40 * time.Millisecond)
+	}
+	t.Fatal("stale 200 response needed a browser retry")
+}

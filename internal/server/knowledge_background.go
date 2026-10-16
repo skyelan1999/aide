@@ -22,22 +22,44 @@ func knowledgeFinishingCycle(ctx context.Context) bool {
 // Resume those too; waiting for a successful first publication would recreate
 // the dependency on browser retries for large or slow initial catalogues.
 func (a *App) knowledgeContinueFailed(code bool) {
-	state := &a.knowledgeUpdates
-	select {
-	case state.gate <- struct{}{}:
-		defer func() { <-state.gate }()
-	default:
-		return // Another scan/continuation already owns the catalogue.
+	if a.bgCtx == nil || a.bgCtx.Err() != nil {
+		return
 	}
+	state := &a.knowledgeUpdates
 	mode := 0
 	if code {
 		mode = 1
 	}
 	workspace, epoch, policy := a.knowledgeUpdatesIdentity()
-	view := state.views[mode]
-	if workspace == state.workspace && epoch == state.epoch && policy == state.policy && view != nil && view.failed && view.cache != nil {
-		a.knowledgeContinueLocked(code)
+	if !state.starting[mode].CompareAndSwap(false, true) {
+		return
 	}
+	a.background(func() {
+		defer state.starting[mode].Store(false)
+		ctx, cancel := context.WithTimeout(a.bgCtx, 30*time.Second)
+		defer cancel()
+		select {
+		case <-ctx.Done():
+			return
+		case state.gate <- struct{}{}:
+		}
+		defer func() { <-state.gate }()
+		currentWorkspace, currentEpoch, currentPolicy := a.knowledgeUpdatesIdentity()
+		if ctx.Err() != nil || workspace != currentWorkspace || epoch != currentEpoch || policy != currentPolicy {
+			return
+		}
+		// A first code/knowledge request can arrive while the other mode
+		// owns the gate, before this mode has any saved view at all.
+		batch, stop := context.WithTimeout(ctx, 10*time.Second)
+		view, err := a.knowledgeAcquireViewLocked(batch, code, false)
+		stop()
+		if err != nil {
+			view = state.views[mode]
+		}
+		if view != nil && (view.failed && view.cache != nil || !view.failed && knowledgeGraphScanning(view.graph)) {
+			a.knowledgeContinueLocked(code)
+		}
+	})
 }
 
 // Called with the scan gate held. Finish an explicitly requested progressive
