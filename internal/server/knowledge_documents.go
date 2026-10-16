@@ -24,6 +24,7 @@ import (
 var documentAssets embed.FS
 
 type documentBlock struct {
+	Line    int    `json:"line,omitempty"`
 	Locator string `json:"locator"`
 	Text    string `json:"text"`
 }
@@ -32,6 +33,7 @@ type documentExtract struct {
 	Truncated bool            `json:"truncated"`
 }
 type documentHit struct {
+	Line    int           `json:"line,omitempty"`
 	ID      string        `json:"id"`
 	File    knowledgeNode `json:"file"`
 	Locator string        `json:"locator"`
@@ -147,7 +149,7 @@ func documentParse(ctx context.Context, b []byte, ext string) (documentExtract, 
 				out.Truncated = true
 				break
 			}
-			out.Blocks = append(out.Blocks, documentBlock{Locator: fmt.Sprintf("文本行 %d", i+1), Text: line})
+			out.Blocks = append(out.Blocks, documentBlock{Locator: fmt.Sprintf("文本行 %d", i+1), Text: line, Line: i + 1})
 			total += len(line)
 		}
 		return out, nil
@@ -418,7 +420,7 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 					result.Truncated = true
 					break
 				}
-				hit := documentHit{ID: n.ID + "-" + hash([]byte(h + block.Locator + fmt.Sprint(off)))[:10], File: n, Locator: block.Locator, Text: text, Hash: h, Offset: off}
+				hit := documentHit{ID: n.ID + "-" + hash([]byte(h + block.Locator + fmt.Sprint(off)))[:10], File: n, Line: block.Line, Locator: block.Locator, Text: text, Hash: h, Offset: off}
 				if streamOriginal {
 					if strings.Contains(text, in.Query) {
 						if len(result.Hits) >= 40 {
@@ -635,7 +637,7 @@ func (a *App) documentReference(ctx context.Context, g knowledgeGraph, id, locat
 			if offset < 0 || offset >= len(r) || offset%800 != 0 {
 				return documentHit{}, fmt.Errorf("片段位置无效")
 			}
-			return documentHit{ID: id + "-" + hash([]byte(digest + locator + fmt.Sprint(offset)))[:10], File: n, Locator: locator, Offset: offset, Hash: digest, Text: string(r[offset:min(offset+1000, len(r))])}, nil
+			return documentHit{ID: id + "-" + hash([]byte(digest + locator + fmt.Sprint(offset)))[:10], File: n, Line: block.Line, Locator: locator, Offset: offset, Hash: digest, Text: string(r[offset:min(offset+1000, len(r))])}, nil
 		}
 		return documentHit{}, fmt.Errorf("片段定位不存在")
 	}

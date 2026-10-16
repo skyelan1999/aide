@@ -2748,3 +2748,5 @@ Object.assign(window.aideEnglish, {'插件内容已更新，版本 {0}':'Plugin 
 Object.assign(window.aideEnglish, {'线段':'Segments','点':'Points'});
 
 Object.assign(window.aideEnglish, {'退化面 {0}，已保留边界':'Degenerate faces: {0}; original boundaries retained'});
+
+Object.assign(window.aideEnglish, {'返回星图':'Return to constellation','检索来源已变化，请重新探索文档正文。':'Search sources changed. Search the document text again.'});

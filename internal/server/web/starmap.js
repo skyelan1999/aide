@@ -937,6 +937,20 @@ function drawLiveGhosts(now,drift){
 }
 function applyLiveUpdate(update,initial=false){
  if(!update||typeof update.revision!=='string'||!Array.isArray(update.nodes)||!Array.isArray(update.edges))throw Error('自动同步响应不完整');
+ if(documentBatch){
+  const incoming=new Map(update.nodes.map(node=>[node.id,node])),removed=new Set(update.removedNodes||[]);
+  const activeSources=Array.isArray(update.sources)?new Set(update.sources.filter(source=>!['removed','disabled'].includes(source.state)).map(source=>source.id)):null;
+  const invalidHits=(documentBatch.hits||[]).filter(hit=>{
+   const file=hit.file,current=incoming.get(file.id);
+   if(graph.workspace!==update.workspace||removed.has(file.id)||(update.reset&&!current))return true;
+   if(activeSources&&!activeSources.has(file.source||file.root||file.region))return true;
+   return current&&['origin','path','source','contentHash','modified','size'].some(field=>file[field]!==undefined&&current[field]!==undefined&&file[field]!==current[field]);
+  });
+  if(graph.workspace!==update.workspace||invalidHits.length){
+   documentGeneration++;documentAbort?.abort();resetDocumentBatch();$('results').textContent='检索来源已变化，请重新探索文档正文。';$('document-insight').hidden=true;
+   if(selected?.documentCitation&&invalidHits.some(hit=>hit.file.id===selected.id)){filePreview.close();selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
+  }
+ }
  if(initial||update.workspace!==graph.workspace)clearEvidencePath('星图已同步，请选择路径节点。',true);
  else if(update.revision!==liveCursor){
   if(pathAbort)clearEvidencePath('查询期间索引已更新，请重新查询。');
@@ -969,6 +983,7 @@ function applyLiveUpdate(update,initial=false){
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
  if(!changed.length&&!removed.size&&!edgesChanged){if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');if(!cosmicScene?.members.length)redraw();return;}
  const now=performance.now(),motion=motionEnabled(),selectionID=selected?.id,selectionChanged=changed.some(n=>n.id===selectionID),citation=selected?.documentCitation;
+ if(selectionChanged&&incoming.get(selectionID)?.origin!==selected?.origin)filePreview.close();
  if(motion)for(const star of cosmicStars){if(removed.has(star.n.id)&&star.p.onScreen)liveGhosts.push({cosmic:true,x:star.x,y:star.y,z:star.z,color:mapPalette.star,radius:1.3,start:now});}
  if(liveGhosts.length>512)liveGhosts=liveGhosts.slice(-512);
  for(const id of removed){oldNodes.delete(id);liveWireNodes.delete(id);}
@@ -976,7 +991,7 @@ function applyLiveUpdate(update,initial=false){
  if(motion)for(const [i,raw]of added.entries())oldNodes.get(raw.id).bornAt=now+Math.min(i,20)*32;
  graph.nodes=[...oldNodes.values()];graph.edges=[...nextEdges.values()];graphGeneration++;documentGeneration++;documentAbort?.abort();
  aiExplorer.updated();
- if(selectionID&&!oldNodes.has(selectionID)){selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
+ if(selectionID&&!oldNodes.has(selectionID)){filePreview.close();selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
  else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
  if(layoutChanged)layout(true);else invalidateView();if(selected&&citation&&!selectionChanged)selected={...nodeByID.get(selectionID),documentCitation:citation};if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent='当前原文已更新；保留检索结果，重新探索可核对最新摘录。';}
  refreshView();ensureCosmicView();syncGraphChrome();
@@ -1043,8 +1058,8 @@ canvas.addEventListener('wheel',e=>{
  redraw();
 },{passive:false});
 $('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?'请依据原文关键词 '+$('search').value+' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。':codeView?'请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。':'请解释这个节点的内容、相关文件与证据缺口。';$('question').focus();askAI(false)};
-const filePreview=window.AideStarmapPreview.create({origin:location.origin,workspace:()=>graph.workspace,locked:()=>locked,openWindow:href=>window.open(href,'_blank'),note:message=>say(message),key:crypto.randomUUID()});
-function openNodePreview(n){const href=pathSourceLink(n);if(href)filePreview.open(href);}
+const filePreview=window.AideStarmapPreview.create({origin:location.origin,workspace:()=>graph.workspace,locked:()=>locked,navigate:href=>{persistSkyView();location.assign(href);},returnTo:()=>location.pathname+location.search,openWindow:href=>window.open(href,'_blank'),note:message=>say(message),key:crypto.randomUUID()});
+function openNodePreview(n){const href=pathSourceLink(selected?.id===n?.id&&selected.documentCitation?selected:n);if(href)filePreview.open(href);}
 document.addEventListener('click',event=>{
  const link=event.target.closest?.('a[data-file-preview]');
  if(!link||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
@@ -1125,7 +1140,13 @@ window.aideUI?.subscribe(syncMapPalette);
 matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
 
 $('retrieval-mode').onchange=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiExplorer.cancel();$('ai-found').replaceChildren();$('answer').textContent='';$('usage').textContent='';selected=null;revealPanel($('detail'),false);search();};
-function selectDocument(hit){select(hit.file);const origin=hit.file.origin||selected.origin||'';selected={...selected,format:hit.file.format||selected.format,origin,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin}};syncNodeSourceChrome();$('detail-text').textContent=hit.text;$('document-insight').hidden=false;$('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;const spec={root:hit.file.root,path:hit.file.path,readOnly:true,origin,knowledgeWorkspace:graph.workspace};if(hit.file.source)spec.source=hit.file.source;if(hit.file.format)spec.format=hit.file.format;$('document-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));}
+function selectDocument(hit){
+ select(hit.file);selected={...hit.file,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin:hit.file.origin||''}};
+ if(Number.isSafeInteger(hit.line)&&hit.line>0){selected.line=hit.line;selected.endLine=hit.line;selected.contentHash=hit.hash;}
+ syncNodeSourceChrome();$('detail-text').textContent=hit.text;$('document-insight').hidden=false;
+ $('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;
+ $('document-open').href=pathSourceLink(selected);
+}
 function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>{selectDocument(hit);if(id==='ai-found')openNodePreview(hit.file);};box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent='未检索到匹配原文；请检查关键词、来源范围与提取诊断。';box.append(p);}}
 async function searchDocuments(continuing=false){
  if(locked||loading)return;

@@ -1,0 +1,87 @@
+{
+  "id": "starmap-native-preview-20261016",
+  "request": "继续原目标：当前Safari星图快速预览被弹窗限制阻止、原文结果未携带结构化行号、来源移除后旧检索片段仍显示。修复并实际验收，不修改浏览器弹窗权限。",
+  "baseline": "e5224deb6d7417a7f412f201df6bfd1b101e3169",
+  "initial_status": "",
+  "acceptance": [
+    "Native Safari file preview navigates the existing tab without popup permission or additional tabs and offers an explicit return to the same map channel/mode.",
+    "Plain-text document hits carry structured source line and exact file digest; the normal read-only viewer selects the matching line and refuses stale hash navigation. Office page/cell/paragraph locators are not mislabeled as text lines.",
+    "Explicit removal/origin changes invalidate current document search hits and continuation; unrelated incremental indexing keeps valid hits usable.",
+    "Returning from preview, locking and page exit release ordinary file-view resources; no user edits or new tabs are introduced.",
+    "Focused tests, actual start.command/native Safari verification, final full and scoped release gates are recorded separately from local build and remote publication."
+  ],
+  "scope": [
+    "internal/server/knowledge_documents.go",
+    "internal/server/knowledge_document_continuation_test.go",
+    "internal/server/web/starmap-preview.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/locales/en.js",
+    "scripts/starmap-file-preview.test.cjs",
+    "scripts/starmap-live-metadata.test.cjs",
+    "docs",
+    "internal/server/web/file-route.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual authenticated native evidence proves popup-blocked preview, absent line parameter and stale removed-source snippets. Preserve the original read-only/source/workspace guarantees and bounded progressive indexing.",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-current-project-native.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse the existing standalone read-only file viewer in the same tab, with allowlisted map/channel/mode return navigation. Default frame-ancestors none stays unchanged. Structured plain-text line plus full raw-file hash feeds existing exact viewer selection; Office locators stay distinct. Clear only explicitly invalidated current hit targets, preserving unrelated progressive updates.",
+      "evidence": [
+        "internal/server/web/starmap-preview.js",
+        "internal/server/knowledge_documents.go",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Current-tab preview and allowlisted map return reuse the existing file viewer without popup requests or CSP weakening. Structured text lines/full hash feed source selection. Explicit source/target invalidation clears excerpts/cursor while unrelated progressive changes retain results.",
+      "evidence": [
+        "internal/server/web/starmap-preview.js",
+        "internal/server/web/file-route.js",
+        "internal/server/knowledge_documents.go",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Current quick102 passed with all exit codes zero. Focused source-aware current-tab/return, structured line/hash, source-removal/unrelated-update, i18n and Go race line/continuation/reference checks passed. Actual native runtime, final full and remote publication remain pending.",
+      "evidence": [
+        "scripts/starmap-file-preview.test.cjs",
+        "scripts/starmap-live-metadata.test.cjs",
+        "internal/server/knowledge_document_continuation_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture records current-tab workflow, default framing protection, safe return, plain-text versus Office positions and invalidation semantics. Native and publication status remain explicitly pending.",
+      "evidence": [
+        "docs/architecture/starmap-file-preview.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed; only owned code/tests/docs are staged. Default CSP unchanged, no user files/configuration touched, all compiler/test caches remain under this external worktree .agent-state. Main publication tree remains separate.",
+      "evidence": [
+        "docs/architecture/starmap-file-preview.md",
+        "scripts/starmap-file-preview.test.cjs"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
+  "rollback": "Retain main ab8df956/ec1b032 packages and runtime; this external worktree is isolated from the already-gated main publication. No user source files or protected state are changed.",
+  "handoff": "Code and quick102/focused Go race checks complete in the independent external branch. Build candidate and perform actual start.command/native Safari after current main artifact publication. Final full and image/archive/remote delivery remain pending. No successful native preview claim yet."
+}
