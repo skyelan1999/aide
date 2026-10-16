@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 )
@@ -260,4 +263,53 @@ func TestKnowledgeBackgroundStaleResponseContinues(t *testing.T) {
 		time.Sleep(40 * time.Millisecond)
 	}
 	t.Fatal("stale 200 response needed a browser retry")
+}
+
+type knowledgeBlockedWriter struct {
+	header  http.Header
+	writing chan struct{}
+	resume  <-chan struct{}
+	once    sync.Once
+}
+
+func (w *knowledgeBlockedWriter) Header() http.Header { return w.header }
+func (w *knowledgeBlockedWriter) WriteHeader(int)     {}
+func (w *knowledgeBlockedWriter) Write(b []byte) (int, error) {
+	w.once.Do(func() { close(w.writing) })
+	<-w.resume
+	return len(b), nil
+}
+
+func TestKnowledgeBackgroundSlowResponseDoesNotHoldScanGate(t *testing.T) {
+	a := backgroundKnowledgeFixture(t)
+	resume := make(chan struct{})
+	t.Cleanup(func() { close(resume) })
+	w := &knowledgeBlockedWriter{header: http.Header{}, writing: make(chan struct{}), resume: resume}
+	responseDone := make(chan struct{})
+	go func() {
+		a.knowledgeMapUpdates(w, httptest.NewRequest(http.MethodGet, "/api/knowledge-map/updates?background=1", nil))
+		close(responseDone)
+	}()
+	select {
+	case <-w.writing:
+	case <-time.After(10 * time.Second):
+		t.Fatal("first response did not reach the blocked reader")
+	}
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		p := a.knowledgeUpdates.published[0].Load()
+		if p != nil && !knowledgeGraphScanning(p.view.graph) {
+			if progressiveFileCount(p.view.graph) != 170 {
+				t.Fatal("slow response lost indexed files")
+			}
+			select {
+			case <-responseDone:
+				t.Fatal("response must remain blocked while indexing finishes")
+			default:
+			}
+			return
+		}
+		time.Sleep(40 * time.Millisecond)
+	}
+	t.Fatal("client socket backpressure still held the scan gate")
 }

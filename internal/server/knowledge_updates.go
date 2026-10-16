@@ -622,7 +622,9 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 		knowledgeSyncFail(w, err)
 		return
 	}
-	defer release()
+	var released sync.Once
+	unlock := func() { released.Do(release) }
+	defer unlock()
 	if r.URL.Query().Get("background") == "1" && stale {
 		a.knowledgeContinueFailed(r.URL.Query().Get("code") == "1")
 	}
@@ -632,6 +634,9 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 		a.knowledgeContinueLocked(r.URL.Query().Get("code") == "1")
 	}
 	response := knowledgeDelta(view, cursor)
+	// Published graph data is immutable. A slow/frozen client must not hold
+	// the scan gate while JSON encoding or socket writes wait for its reader.
+	unlock()
 	response.Stale = stale
 	if stale {
 		response.Warnings = append(response.Warnings, "当前展示上次完整索引；新扫描进行中，完成后会自动追平")
