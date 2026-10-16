@@ -10,7 +10,7 @@ def fn(name):
     start=re.search(r'^(?:async )?function '+name+r'\(',source,re.M).start()
     eol=source.index('\n',start)
     return source[start:eol] if source[eol-1]=='}' else source[start:source.index('\n}',start)+2]
-names=['currentPauseRun','syncPauseControl','composerControlRun','composerHasDraft','setSendMode','pauseRunById','stopRunById','renderSession','renderSteerMessages','renderStepThinking','runReasoningText','renderRunStatusInto','updateThinkingSummary','renderToolRow','phaseLabel','formatElapsed','thinkAtBottom','runWaitingForUser','renderLiveAnswer','newLiveBoundaryState','advanceLiveBoundary','updatePlainLiveTail','fixCjkEmphasis','sanitizeHtml','renderMarkdown']
+names=['currentPauseRun','syncPauseControl','composerControlRun','composerHasDraft','setSendMode','pauseRunById','stopRunById','renderSession','renderSteerMessages','renderStepThinking','runReasoningText','renderRunStatusInto','updateThinkingSummary','bindThinkingDisclosure','renderToolRow','phaseLabel','formatElapsed','thinkAtBottom','runWaitingForUser','renderLiveAnswer','newLiveBoundaryState','advanceLiveBoundary','updatePlainLiveTail','fixCjkEmphasis','sanitizeHtml','renderMarkdown']
 css='\n'.join((web/p).read_text() for p in ['themes/dark/tokens.css','themes/light/tokens.css','themes/green.css','themes/comfort.css','style.css','macos.css','experience.css','sanctum.css','conversation.css'])
 default_queue=re.search(r'queueMode: (true|false)',source).group(1)
 index=(web/'index.html').read_text();start=index.index('<div id="run-controls"');controls=index[start:index.index('<div class="composer-toolbar">',start)]+'</form>'+re.search(r'<button[^>]+id="queue-toggle".*?</button>',index).group(0)

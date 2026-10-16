@@ -1,0 +1,65 @@
+{
+  "id": "reasoning-live-preview-20261016",
+  "request": "思考过程折叠时显示最新内容，修复无法展开及流式刷新收起",
+  "baseline": "ac8e1dcc74bf2e3136332fc14e1000615e35edbe",
+  "initial_status": "",
+  "acceptance": [
+    "Collapsed thinking shows latest nonempty line and bounded tail while streaming.",
+    "Pointer and keyboard disclosure survive streaming and poll replacement; detached cards cannot change current state.",
+    "Open body tracks retained reasoning replacement; hidden body remains empty.",
+    "Browser UI, focused regressions and release checks record actual outcomes."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/run-activity-cards.test.cjs",
+    "scripts/fixtures",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current user request scoped to reasoning preview/disclosure; baseline clean external checkout.",
+      "evidence": [
+        "ac8e1dcc74bf2e3136332fc14e1000615e35edbe"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Stable summary children, synchronous click intent, connected toggle ownership, latest-line tail and retained-body reconciliation.",
+      "evidence": [
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User previously requested incremental testing/push/merge to main and local runtime/offline updates; no version/tag/Release.",
+  "rollback": "Retain previous 7b6321af02c1 offline package and image; preserve all auth/config/session/workspace mounts.",
+  "handoff": ""
+}

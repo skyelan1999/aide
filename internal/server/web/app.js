@@ -1067,7 +1067,7 @@ function openStream(run) {
       const box = document.querySelector('#timeline .run[data-run="' + run.id + '"]');
       const details = box?.querySelector('.rsp-thinking');
       if (details?.open) renderRunStatus(run.id);
-      else if (details) updateThinkingSummary(details, state.liveReasoning[run.id], false);
+      else if (details) updateThinkingSummary(details, state.liveReasoning[run.id], !ph.done);
       else renderRunStatus(run.id);
     }
   });
@@ -1673,7 +1673,7 @@ function renderRunStatusInto(box, runId) {
       panel.append(det);
       follow.classList.add('hidden');
       body.addEventListener('scroll', () => follow.classList.toggle('hidden', thinkAtBottom(body)));
-      det.addEventListener('toggle', () => {
+      bindThinkingDisclosure(det, () => {
         if (!det.open) { state.thinkingOpen.delete(runId); body.replaceChildren(); body.dataset.len = '0'; return; }
         state.thinkingOpen.add(runId);
         body.textContent = runReasoningText(runId);
@@ -1686,10 +1686,11 @@ function renderRunStatusInto(box, runId) {
     const body = det.querySelector('.rsp-think-body');
     const follow = det.querySelector('.rsp-follow');
     // 展开时批量更新；收起时不在隐藏 DOM 中积累 token 文本节点。
-    const rendered = Number(body.dataset.len || 0);
-    if (det.open && reasoning.length > rendered) {
+    const renderedText = det.open ? body.textContent : '';
+    if (det.open && reasoning !== renderedText) {
       const atBottom = thinkAtBottom(body);
-      body.append(document.createTextNode(reasoning.slice(rendered)));
+      if (reasoning.startsWith(renderedText)) body.append(document.createTextNode(reasoning.slice(renderedText.length)));
+      else body.textContent = reasoning; // Retention may replace the middle, not just append.
       body.dataset.len = String(reasoning.length);
       if (atBottom) body.scrollTop = body.scrollHeight; // 未上翻时跟随最新；手动上翻则保持位置不吸回
     }
@@ -1707,13 +1708,33 @@ function renderRunStatusInto(box, runId) {
 function updateThinkingSummary(details, reasoning, running) {
   const summary = details?.querySelector('summary');
   if (!summary) return;
-  const firstLine = String(reasoning || '').split(/\r?\n/, 1)[0].replace(/\s+/g, ' ').trim();
-  const preview = firstLine.length > 110 ? firstLine.slice(0, 109) + '…' : firstLine;
-  summary.replaceChildren(el('span', 'rsp-think-label', t(running ? '思考中' : '思考过程')));
-  if (preview) summary.append(el('span', 'rsp-think-preview', preview));
+  // Read only a bounded tail. Keep the clickable children stable while tokens
+  // arrive: replacing a pointer-down target before pointer-up can lose clicks.
+  const tail = String(reasoning || '').trimEnd().slice(-512);
+  const latestLine = tail.slice(Math.max(tail.lastIndexOf('\n'), tail.lastIndexOf('\r')) + 1).replace(/\s+/g, ' ').trim();
+  const preview = latestLine.length > 110 ? '…' + latestLine.slice(-109) : latestLine;
+  let label = summary.querySelector('.rsp-think-label');
+  let excerpt = summary.querySelector('.rsp-think-preview');
+  if (!label) { label = el('span', 'rsp-think-label'); summary.append(label); }
+  if (!excerpt) { excerpt = el('span', 'rsp-think-preview'); summary.append(excerpt); }
+  const labelText = t(running ? '思考中' : '思考过程');
+  if (label.textContent !== labelText) label.textContent = labelText;
+  if (excerpt.textContent !== preview) excerpt.textContent = preview;
   // Keep collapsed reasoning limited to the visible one-line preview. A title
   // tooltip would expose a large hidden excerpt without the user expanding it.
   summary.removeAttribute('title');
+}
+function bindThinkingDisclosure(details, sync) {
+  // Native toggle is asynchronous. Persist user intent in the click turn so a
+  // poll replacing the card cannot restore the previous state in between.
+  details.querySelector('summary').addEventListener('click', event => {
+    event.preventDefault();
+    details.open = !details.open;
+    sync();
+  });
+  details.addEventListener('toggle', () => {
+    if (details.isConnected) sync(); // A detached predecessor no longer owns state.
+  });
 }
 function runReasoningText(runId) {
   const live=state.liveReasoning[runId]||'',run=state.session?.runs?.find(item=>item.id===runId);
@@ -1725,13 +1746,14 @@ function renderStepThinking(box, run, step, index) {
   // recovery. Older steps and terminal runs keep their persisted evidence.
   if (!step.reasoning || (['running','awaiting_clarification'].includes(run.status) && state.runPhase[run.id] && index===run.steps.length-1)) return;
   const rd=el('details','rsp-thinking rsp-thinking-done'),thinkingKey=run.id+':'+index;
-  rd.open=state.thinkingOpen.has(run.id)||state.thinkingOpen.has(thinkingKey);
+  const latestStep=index===run.steps.length-1;
+  rd.open=(latestStep&&state.thinkingOpen.has(run.id))||state.thinkingOpen.has(thinkingKey);
   const summary=el('summary','rsp-think-summary'),body=el('div','rsp-think-body');
   if(rd.open)body.textContent=step.reasoning;
   rd.append(summary,body);updateThinkingSummary(rd,step.reasoning,false);
-  rd.addEventListener('toggle',()=>{
-    if(rd.open){state.thinkingOpen.add(run.id);state.thinkingOpen.add(thinkingKey);body.textContent=step.reasoning;}
-    else{state.thinkingOpen.delete(run.id);state.thinkingOpen.delete(thinkingKey);body.replaceChildren();}
+  bindThinkingDisclosure(rd,()=>{
+    if(rd.open){if(latestStep)state.thinkingOpen.add(run.id);state.thinkingOpen.add(thinkingKey);body.textContent=step.reasoning;}
+    else{if(latestStep)state.thinkingOpen.delete(run.id);state.thinkingOpen.delete(thinkingKey);body.replaceChildren();}
   });
   box.append(rd);
 }
