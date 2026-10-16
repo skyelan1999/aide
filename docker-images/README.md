@@ -432,3 +432,7 @@ Product code `9ff84f3b`; source `3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4
 `aide-0.1.17.0-RC2-linux-amd64-239c3591fd3a-offline.tar.gz`: 774109455 bytes; SHA-256 `815df5ba0b9ef1fe1d4480e3510498e33fce1e254ba88c18a62b2d9dbfd2529f`.
 
 Exact package/import, native no-focus/link evidence, first busy/stale requests, blocked response readers, startup, release gates and public delivery states are maintained in the [batch record](../docs/reviews/2026-10-16/starmap-background-progress.md). Prior e5baab8f packages remain for rollback. Windows native and receiving-device acceptance are separate.
+
+## 星图原文预览与后台续扫整合包
+
+源码 `199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c`；ARM64 `950bcbc2d79e`、AMD64 `79765161aef2`。完整包包含原生 CAD 与平台启动器，精确大小与哈希在 SHA256SUMS 和预构建索引中维护。实际验收、候选与已发布状态及回滚边界见[本轮记录](../docs/reviews/2026-10-16/starmap-preview-integration.md)；不要将本地导出视作已上传。

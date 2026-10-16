@@ -27,3 +27,11 @@
 两份整合包已通过内外 SHA-256、精确启动器和 CAD 许可证核对、隐私数据排除及实际 Docker 导入，见[包收据](evidence/starmap-preview-integrated-packages-proof.json)。新数据目录使用包内原始 start.command 无构建/拉取启动，通过编译版本的 CRLF/空行第三行定位与原始文件完整哈希、120三角形原生 CAD，见[启动收据](evidence/starmap-preview-integrated-fresh-start-proof.json)。临时实例已停止并恢复原 slot 标签，生产仍为08e257。测试使用现有 Docker 引擎与单独导入，不能称为空白引擎或接收设备验收；完整 Safari 与公开发布仍待。
 
 整合后的完整回归106项全部通过，服务端 race899.155秒及vet通过，指纹 `e3e77c8fabcd71736324498185d9413f7da3b8c489e77fae354dbaccb2dd7c31`，见[整合回归收据](evidence/starmap-preview-integrated-full-proof.json)。这是当前实现与现有发布索引组合的证据；实际Safari与最终交付索引冻结后的门禁分开记录，不能提前宣称发布完成。
+
+## 2026-10-17 实际Safari与后续修复
+
+原启动入口先因主目录已安装、被Git忽略的插件 node_modules 进入源码摘要而重建；与候选工作树对比，受控源码无差异。随后默认预构建路径准确启用完整包950b，无编译/拉取，并核对实际资源字节、原鉴权/设置/14会话和挂载。详见[原生分范围收据](evidence/starmap-preview-native-partial-proof.json)。
+
+Safari 原有星图页查询专用只读来源，命中 CRLF 文件第三行；点击预览在同一标签直接打开只读页并实际选中第三行，返回恢复同 channel、关键词、来源与逐字检索模式。移除专用来源后旧命中自动清空并提示重新探索。来源注册表逐字节恢复，原受保护文件与无关挂载保持，查询/筛选/默认模式复原后回原工作台，无新增标签和模型调用。
+
+同时现场发现，原文命中替换 selected 时丢失计算后的 stellarBand 等字段，详情出现 undefined。已添加失败前置回归，改为保留选中节点的计算字段并以命中文件覆盖来源/定位，明确清空缺失origin；修复后预览、元数据、后台和星级尺度回归通过，脚本缓存升为67。该改动发生在106项回归及950b验收之后，因此前述full与镜像均不证明新修复已交付；新候选、原生复验、过期哈希拒绝与最终门禁/公开发布继续待办。

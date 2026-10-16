@@ -38,10 +38,11 @@ for(const [value,expected] of [['/starmap.html?channel=owned&code=1&access_token
 
 // Document text locations use the server's structured line and raw-file hash,
 // never infer a line from translated page/paragraph/cell locator text.
-const elements=new Map();locator.$=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};locator.select=()=>{};locator.syncNodeSourceChrome=()=>{};
+const elements=new Map();locator.$=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};locator.select=file=>{locator.selected={...file,connectionCount:3,stellarLevel:2,stellarBand:'金色星',nextStellarThreshold:7};};locator.syncNodeSourceChrome=()=>{};
 vm.runInContext(source.slice(source.indexOf('function selectDocument('),source.indexOf('function renderDocumentResults(')),locator);
 const plainFile={id:'Fdoc',kind:'file',root:'context',source:'ssh-reference',path:'docs/guide.md',origin:'origin-1',format:'.md',contentHash:'indexed-prefix'};
 vm.runInContext('selectDocument('+JSON.stringify({file:plainFile,line:51,locator:'text line 51',offset:0,hash:'a'.repeat(64),text:'exact excerpt'})+')',locator);
+assert.equal(locator.selected.stellarBand,'金色星','selecting original-text hit preserves computed star metadata');assert.equal(locator.selected.connectionCount,3);assert.equal(locator.selected.nextStellarThreshold,7);
 const documentSpec=JSON.parse(decodeURIComponent(elements.get('document-open').href.split('=')[1]));assert.equal(documentSpec.line,51);assert.equal(documentSpec.endLine,51);assert.equal(documentSpec.codeHash,'a'.repeat(64));assert.equal(documentSpec.source,'ssh-reference');assert.equal(documentSpec.readOnly,true);
 vm.runInContext('selectDocument('+JSON.stringify({file:{...plainFile,format:'.docx'},locator:'paragraph 51',offset:0,hash:'b'.repeat(64),text:'office paragraph'})+')',locator);
 const officeSpec=JSON.parse(decodeURIComponent(elements.get('document-open').href.split('=')[1]));assert.equal(officeSpec.line,undefined);assert.equal(officeSpec.codeHash,undefined);

@@ -24,7 +24,8 @@
     "internal/server/web/app.js",
     "internal/server/web/index.html",
     "docker/prebuilt-images.tsv",
-    "docker-images distribution metadata"
+    "docker-images distribution metadata",
+    "scripts/starmap-file-preview.test.cjs native stellar metadata regression"
   ],
   "stages": {
     "requirements": {
@@ -55,12 +56,13 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Integrated exact-input full106 all exit0, server race899.155s and vet pass; complete bundles/import/fresh ARM64 compiled line/hash/CAD checks pass. Native Safari on combined runtime and final frozen-delivery gate remain pending.",
+      "summary": "Pre-followup full106 pass (race899.155/vet). Exact950b start.command runtime native same-tab read-only line3 selection, return state and removed-source clearing passed. Native found lost stellar metadata; regression failed before and passes after source fix. v67 requires new candidate/full/native plus stale-hash UI before final release.",
       "evidence": [
         "scripts/starmap-file-preview.test.cjs",
         "scripts/starmap-live-metadata.test.cjs",
         "internal/server/knowledge_document_continuation_test.go",
-        "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-full-proof.json"
+        "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-full-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-native-partial-proof.json"
       ]
     },
     "documentation": {
@@ -87,7 +89,7 @@
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Retain main ab8df956/ec1b032 packages and runtime; this external worktree is isolated from the already-gated main publication. No user source files or protected state are changed.",
-  "handoff": "Integrated source199a24cc ARM950bcbc2/AMD79765161 candidates built offline, normal-user resource checks and complete bundle outer/inner hashes/licenses/exact launchers/actual Docker loads passed. Fresh ARM package start.command, line3/full raw hash (CRLF/blank lines) and native CAD120 passed, fixture stopped/slot restored and production08e unchanged. Current full session63300 remains running; native combined UI and final main/publication gates pending. Earlier59ebe packages historical only.",
+  "handoff": "Current development branch fix/starmap-preview-native-finish-20261017 on external main checkout; local main1f10c4b2, remote main0ac5f757 unchanged. Native950b passes same-tab/line3/read-only/return/removal; discovered lost star fields fixed in v67 with fail-before/pass-after regression. Current production950b still pre-fix. Original protected files/mounts and registry exact; UI restored/no tabs added. Next build/repackage v67, native stellar/stale-hash checks, final full/frozen-index gate and public assets/main. Full session63300 terminal PASS pre-followup; do not poll/restart it as live.",
   "candidatePackages": {
     "status": "historical_pre_merge_only",
     "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
@@ -119,14 +121,14 @@
     "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
     "publishedBase": "0ac5f757ed92d09330c0bf93c5ccaaeda7689c0d",
     "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
-    "full": "PASS full106, exact fingerprint e3e77c8fabcd71736324498185d9413f7da3b8c489e77fae354dbaccb2dd7c31; native/final delivery gate pending",
-    "native": "pending on combined runtime",
+    "full": "Pre-v67 full106 PASS only; current source changed, final full pending",
+    "native": "partial: current-tab/line3/return/removal pass; stellar followup and stale hash UI pending",
     "candidate": "sha256:950bcbc2d79e0b3ef431cf54eee67623561ac0fba4634ed2828170b828ceb6ed",
     "sourceSHA256": "199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c",
     "buildProof": "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-build-proof.json",
     "amd64Candidate": "sha256:79765161aef2eed8fdb5b0e777ffd42c3abeab8ed586aa192cc872d3107271a5",
     "packages": {
-      "status": "local_verified",
+      "status": "pre-v67_local_verified_only",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-packages-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-fresh-start-proof.json"

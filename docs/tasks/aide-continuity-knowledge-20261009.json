@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Published starmap background batch main0ac5f757/08e257 with full106 and four public assets verified. Continuing existing preview branch: integrated main at4e260323; focused merged regressions pass; exact-input full running, combined native/runtime/packages/gates pending. Original12 remain open; reasoning write priority already has direct Safari/API/disk evidence. Windows user-owned, vectors deferred.",
+  "handoff": "Remote main0ac5f757 background release remains published. Preview integrated locally main1f10c4b2; active finish branch fixes native-discovered star metadata loss in v67. Pre-fix full106 and both complete packages/import/fresh startup passed; exact950b runtime native preview/line3/return/removal passed. Current source changed, final new runtime/full/publication pending; original12 stay open, Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7967,6 +7967,7 @@
     "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
     "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
     "classification": "progress",
-    "scope": "Integrate existing source-aware same-tab preview with published background progress; no main/runtime release yet."
+    "scope": "Integrate existing source-aware same-tab preview with published background progress; no main/runtime release yet.",
+    "native": "Exact950b native current-tab read-only line3/return/source-removal pass; lost stellar fields found and source-fixed, final native/full pending."
   }
 }

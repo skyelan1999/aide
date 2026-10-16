@@ -1150,7 +1150,7 @@ matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
 
 $('retrieval-mode').onchange=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiExplorer.cancel();$('ai-found').replaceChildren();$('answer').textContent='';$('usage').textContent='';selected=null;revealPanel($('detail'),false);search();};
 function selectDocument(hit){
- select(hit.file);selected={...hit.file,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin:hit.file.origin||''}};
+ select(hit.file);selected={...selected,...hit.file,origin:hit.file.origin||'',documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin:hit.file.origin||''}};
  if(Number.isSafeInteger(hit.line)&&hit.line>0){selected.line=hit.line;selected.endLine=hit.line;selected.contentHash=hit.hash;}
  syncNodeSourceChrome();$('detail-text').textContent=hit.text;$('document-insight').hidden=false;
  $('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;
