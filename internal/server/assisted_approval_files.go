@@ -49,7 +49,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	paths := []string{}
 	for _, f := range files {
 		paths = append(paths, f.Path)
-		if f.BaseHash != "" || f.Before != "" || f.Applied || safePath(f.Path) != nil || checkVersion(a.workspace, f.Path, "") != nil {
+		if f.SourceID != "" || f.BaseHash != "" || f.Before != "" || f.Applied || safePath(f.Path) != nil || checkVersion(a.workspace, f.Path, "") != nil {
 			eligible = false
 		}
 	}

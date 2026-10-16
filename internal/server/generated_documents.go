@@ -28,6 +28,20 @@ func (a *App) generatedDocumentSource() (Source, bool) {
 	return src, true
 }
 
+// effectiveSystemDocsSource resolves the independent automatic-document store.
+// When no user binding exists, keep generated documents under Aide's private
+// cache instead of falling through to the read-only /context reference root.
+func (a *App) effectiveSystemDocsSource() (Source, error) {
+	if src, bound := a.generatedDocumentSource(); bound {
+		return src, nil
+	}
+	root := filepath.Join(a.cacheContainer, "system-docs")
+	if err := os.MkdirAll(root, 0700); err != nil {
+		return Source{}, err
+	}
+	return Source{ID: systemDocsSource, Name: "自动系统文档", Type: "local", Enabled: true, RW: true, Builtin: true, Config: SourceConfig{Path: root}}, nil
+}
+
 // prepareGeneratedDocDir gives the existing numbering/index code a temporary
 // working copy. Only the explicitly created document and index are published;
 // temporary copies never become the authoritative document location.

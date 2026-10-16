@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 )
@@ -55,12 +56,22 @@ func (a *App) environmentGuide() string {
 		if src.RW {
 			row.Access = "registered read/write; actual mount and server permissions still apply"
 		}
-		if src.ID == systemDocsSource && strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
-			row.Usage = "Default destination for workflow documents and office_create; tool paths are relative to this binding. Read generated files with source=system-docs. Generic write_file proposals still target the workspace."
+		if src.ID == systemDocsSource {
+			row.Access = "AI read/write; sandbox, binding and host permissions still apply"
+			row.Usage = "Default destination for authored documents. Use PjPlan to name new files; write_file proposals retain this source and require approval. Read with source=system-docs."
+			if strings.TrimSpace(a.wsConfig.Docs.Path) == "" {
+				row.Path = "Aide private automatic-documents cache"
+			}
 		}
 		if src.Type == "local" || src.Type == "skill" {
-			row.Path = guideLabel(src.Config.Path)
-			container, _, err := a.resolveHostPath(src.Config.Path)
+			sourcePath := src.Config.Path
+			if src.ID == systemDocsSource && strings.TrimSpace(sourcePath) == "" {
+				sourcePath = filepath.Join(a.cacheContainer, "system-docs")
+			}
+			if row.Path == "" {
+				row.Path = guideLabel(sourcePath)
+			}
+			container, _, err := a.resolveHostPath(sourcePath)
 			if err == nil && container != "" {
 				root, openErr := os.OpenRoot(container)
 				if openErr == nil {

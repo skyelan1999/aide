@@ -17,6 +17,54 @@ import (
 	"time"
 )
 
+func sourceVersionKey(id, p string) string { return id + "\x00" + path.Clean(p) }
+
+func isAuthoredDocumentPath(p string) bool {
+	switch strings.ToLower(path.Ext(p)) {
+	case ".md", ".markdown", ".txt", ".rst", ".adoc", ".html", ".htm", ".csv", ".json", ".pdf", ".docx", ".xlsx", ".pptx", ".drawio", ".svg":
+		return true
+	default:
+		return false
+	}
+}
+
+func sourceWriteIdentity(src Source) string {
+	b, _ := json.Marshal(struct {
+		ID, Type, Path, URL, Host, Username, Auth string
+		Port                                   int
+	}{src.ID, src.Type, src.Config.Path, src.Config.URL, src.Config.Host, src.Config.Username, src.Config.Auth, src.Config.Port})
+	return hash(b)
+}
+
+// writableAISource returns the current, AI-visible write target. The stored
+// system-docs registry entry supplies per-workspace visibility; its effective
+// path comes from the binding or Aide's isolated fallback cache.
+func (a *App) writableAISource(id string) (Source, error) {
+	a.mu.Lock()
+	stored, ok := a.findSource(id)
+	allowed := ok && sourceAIVisible(stored, a.wsID())
+	a.mu.Unlock()
+	if !allowed {
+		return Source{}, errors.New("引用来源不存在或当前工作区 AI 不可见")
+	}
+	if !stored.RW {
+		return Source{}, errors.New("该引用来源为只读")
+	}
+	if id == systemDocsSource {
+		effective, err := a.effectiveSystemDocsSource()
+		if err != nil {
+			return Source{}, err
+		}
+		stored = effective
+	}
+	switch stored.Type {
+	case "local", "skill", "sftp", "workspace-sftp":
+		return stored, nil
+	default:
+		return Source{}, errors.New("该类型引用来源不支持写入")
+	}
+}
+
 // 辅助资料多来源注册表（FR-82~FR-84 / LIM-30）：
 // 登记记录存缓存目录 sources.json；密码/密钥存 /data/sources-secrets.json（0600）。
 
@@ -182,6 +230,13 @@ func (a *App) ensureBuiltinSources() {
 // localSourceRoot 本地类来源根：空路径回落参考根（/context）。
 func (a *App) localSourceRoot(src Source) (*os.Root, error) {
 	if strings.TrimSpace(src.Config.Path) == "" {
+		if src.ID == systemDocsSource {
+			root := filepath.Join(a.cacheContainer, "system-docs")
+			if err := os.MkdirAll(root, 0700); err != nil {
+				return nil, err
+			}
+			return a.openLocalSourceRoot(context.Background(), root)
+		}
 		return a.openLocalSourceRoot(context.Background(), a.reference.Name())
 	}
 	cp, _, err := a.resolveHostPath(src.Config.Path)

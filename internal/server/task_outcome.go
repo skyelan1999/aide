@@ -14,6 +14,7 @@ import (
 // proposal, a returned tool result and a verification report remain distinct.
 type outcomeFile struct {
 	Path          string `json:"path"`
+	SourceID      string `json:"sourceId,omitempty"`
 	State         string `json:"state"`
 	BeforeHash    string `json:"beforeHash"`
 	ProposedHash  string `json:"proposedHash"`
@@ -313,7 +314,7 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		if f.Applied || task.Applied {
 			state = "application_recorded"
 		}
-		files = append(files, outcomeFile{f.Path, state, f.BaseHash, hash([]byte(f.Content)), len(f.Content)})
+		files = append(files, outcomeFile{Path: f.Path, SourceID: f.SourceID, State: state, BeforeHash: f.BaseHash, ProposedHash: hash([]byte(f.Content)), ProposedBytes: len(f.Content)})
 	}
 	eEnd := min(len(task.ToolUses), executionOffset+limit)
 	for i := min(executionOffset, len(task.ToolUses)); i < eEnd; i++ {

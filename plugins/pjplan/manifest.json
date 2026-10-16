@@ -1,0 +1,54 @@
+{
+  "id": "pjplan",
+  "name": "PjPlan 项目文档",
+  "description": "依据十进制分类目录检索项目文档类型并生成中性文件名与项目计划模板。",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "settings": {
+    "projectIdentifier": "",
+    "versionTrack": "P",
+    "majorVersion": "A",
+    "minorVersion": "1"
+  },
+  "settingsSchema": {
+    "type": "object",
+    "title": "PjPlan 项目命名参数",
+    "description": "设置当前项目标识和文档版本。P 表示评审版，R 表示发布版；A、B、C 为大版本，数字为小版本。",
+    "required": ["projectIdentifier", "versionTrack", "majorVersion", "minorVersion"],
+    "properties": {
+      "projectIdentifier": {
+        "type": "string",
+        "title": "项目标识",
+        "placeholder": "1234567",
+        "description": "用于文件名中的项目代码；仅字母、数字、点、下划线和连字符。"
+      },
+      "versionTrack": {
+        "type": "string",
+        "title": "文档阶段",
+        "enum": ["P", "R"],
+        "default": "P",
+        "description": "P 为评审版，R 为发布版。"
+      },
+      "majorVersion": {
+        "type": "string",
+        "title": "大版本",
+        "enum": ["A", "B", "C"],
+        "default": "A"
+      },
+      "minorVersion": {
+        "type": "string",
+        "title": "小版本",
+        "default": "1",
+        "placeholder": "1"
+      }
+    },
+    "additionalProperties": true
+  },
+  "tools": [
+    {"name": "pjplan_class_lookup", "kind": "read", "readonlyDefault": true},
+    {"name": "pjplan_build_filename", "kind": "read", "readonlyDefault": true},
+    {"name": "pjplan_document_template", "kind": "read", "readonlyDefault": true}
+  ]
+}

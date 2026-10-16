@@ -28,7 +28,8 @@
 | 维护独立产品主页 | [主页预览与手动 Pages 发布](website.md) · [主页任务](tasks/homepage-20261008.json) |
 | 配置执行循环、模型路由与命令审批 | [执行策略](architecture/execution-policy.md) · [能力仪表](architecture/capability-dashboard.md) · [审批检查点](reviews/approval-checkpoint-20261009.md) · [Harness 集成](architecture/harness-integration.md) |
 | 看系统整体方案、状态机和运行机制 | [系统方案总览](system-overview.md) |
-| 写插件 | [插件协议 v1.1](plugin-protocol.md) |
+| 写插件 | [插件协议 v1.2](plugin-protocol.md) |
+| 按十进制分类规则命名项目文档 | [PjPlan 项目文档插件](plugins/pjplan.md) |
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入与 skill 路由](agent/ADAPTERS.md) · `python3 scripts/agent-route.py route --request "需求原文"` |
 | 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |

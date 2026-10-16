@@ -34,10 +34,10 @@ func approvalFingerprint(text string) string {
 }
 func approvalFilesFingerprint(files []Change) string {
 	// Applied flags are execution state; paths, original hashes and full contents are authorization.
-	type item struct{ Path, BaseHash, Content string }
+	type item struct{ SourceID, SourceIdentity, Path, BaseHash, Content string }
 	values := make([]item, 0, len(files))
 	for _, f := range files {
-		values = append(values, item{f.Path, f.BaseHash, f.Content})
+		values = append(values, item{f.SourceID, f.SourceIdentity, f.Path, f.BaseHash, f.Content})
 	}
 	b, _ := json.Marshal(values)
 	return string(b)

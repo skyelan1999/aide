@@ -14,6 +14,7 @@
 | Back up, upgrade, and recover | [Operations](../../HANDOVER.md) |
 | Develop with an AI client | [Workflow](../agent/WORKFLOW.md) · [Adapters](../agent/ADAPTERS.md) |
 | Implement plugins | [Plugin protocol](../plugin-protocol.md) |
+| Name project documents with the decimal-class catalogue | [PjPlan project document plugin](plugins/pjplan.md) |
 | Check feature scope | [Requirements](../PRD.md) |
 | Maintain translations | [Localization](localization.md) |
 

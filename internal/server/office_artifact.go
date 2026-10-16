@@ -137,41 +137,28 @@ func (a *App) officeCreateTool(wsRoot *os.Root, mode, remotePath, p, kind string
 	if strings.ToLower(path.Ext(p)) != "."+kind {
 		return "文件扩展名必须是 ." + kind
 	}
+	if err := a.validatePjplanFilename(path.Base(p)); err != nil {
+		return "Office 文档命名未通过 PjPlan 校验: " + err.Error()
+	}
 	b, err := officeCreateBytes(kind, spec)
 	if err != nil {
 		return "Office 生成失败: " + err.Error()
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
-	if src, bound := a.generatedDocumentSource(); bound {
-		if _, readErr := a.readSourceRaw(src, p); readErr == nil {
-			return "文件已存在，不会覆盖: " + p
-		} else if !errors.Is(readErr, os.ErrNotExist) && !isSFTPNotExistErr(readErr) {
-			return "检查自动系统文档失败: " + readErr.Error()
-		}
-		if err := a.writeSourceText(src, p, b); err != nil {
-			return "Office 写入失败: " + err.Error()
-		}
-		return fmt.Sprintf("已生成 %s（%d 字节）；来源 system-docs，请从自动系统文档打开验证", path.Join(src.Config.Path, p), len(b))
-	}
-	if mode == "ssh" {
-		remoteFile := pathJoinRemote(remotePath, p)
-		if a.sftpExists(remoteFile) {
-			return "文件已存在，不会覆盖: " + p
-		}
-		err = a.sftpWrite(remoteFile, b)
-	} else {
-		if _, statErr := wsRoot.Stat(p); statErr == nil {
-			return "文件已存在，不会覆盖: " + p
-		} else if !errors.Is(statErr, os.ErrNotExist) {
-			return "检查文件失败: " + statErr.Error()
-		}
-		err = putText(wsRoot, p, b)
-	}
+	src, err := a.effectiveSystemDocsSource()
 	if err != nil {
+		return "解析自动系统文档来源失败: " + err.Error()
+	}
+	if _, readErr := a.readSourceRaw(src, p); readErr == nil {
+		return "文件已存在，不会覆盖: " + p
+	} else if !errors.Is(readErr, os.ErrNotExist) && !isSFTPNotExistErr(readErr) {
+		return "检查自动系统文档失败: " + readErr.Error()
+	}
+	if err := a.writeSourceText(src, p, b); err != nil {
 		return "Office 写入失败: " + err.Error()
 	}
-	return fmt.Sprintf("已生成 %s（%d 字节）；请从工作目录打开验证", p, len(b))
+	return fmt.Sprintf("已生成 %s（%d 字节）；来源 system-docs，请从自动系统文档打开验证", path.Join(src.Config.Path, p), len(b))
 }
 
 func (a *App) officeReadBytes(p, sourceID string) ([]byte, Source, error) {

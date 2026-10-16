@@ -42,11 +42,13 @@ type Step struct {
 	Reasoning      string          `json:"reasoning,omitempty"` // 模型思考链（折叠回看，不并入正文）
 }
 type Change struct {
-	Path     string `json:"path"`
-	Content  string `json:"content"`
-	BaseHash string `json:"baseHash"`
-	Before   string `json:"before"`
-	Applied  bool   `json:"applied,omitempty"`
+	Path           string `json:"path"`
+	Content        string `json:"content"`
+	BaseHash       string `json:"baseHash"`
+	Before         string `json:"before"`
+	SourceID       string `json:"sourceId,omitempty"`
+	SourceIdentity string `json:"sourceIdentity,omitempty"`
+	Applied        bool   `json:"applied,omitempty"`
 }
 type ToolUse struct {
 	Tool    string `json:"tool"`
@@ -175,7 +177,7 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_list_comments", "description": "列出 .docx 文件内的原生 Word 批注及精确锚点；支持本地和 SSH 工作区。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_add_comment", "description": "给 .docx 精确选中的 quote 原文添加原生 Word 批注；支持本地和 SSH 工作区。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "quote": map[string]any{"type": "string", "description": "文档中已存在的原文片段"}, "text": map[string]any{"type": "string", "description": "批注内容"}, "author": map[string]any{"type": "string", "description": "可选，默认 aide"}, "anchorIndex": map[string]any{"type": "integer", "description": "可选：quote 第几次出现（0 起始），默认 0"}}, "required": []string{"path", "quote", "text"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_resolve_comment", "description": "把 .docx 的原生批注标记为已解决（Word 2016+ commentsExtended 格式）。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "id": map[string]any{"type": "string", "description": "批注 id（docx_list_comments 返回的 id）"}}, "required": []string{"path", "id"}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；本轮模型结束后进行辅助审核或人工确认）。不要提前读回新文件或重复重试，最终应用及实际读回结果由系统回执补充。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；本轮结束后审批应用）。主动撰写的文档默认保存到自动系统文档来源；修改引用中的文件时需传 source 为该来源 ID，且该来源必须对 AI 可见并允许写入。代码和工程文件保存在工作区。使用 PjPlan 时，先查询分类并按插件设置生成文件名。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}, "source": map[string]any{"type": "string", "description": "目标引用来源 ID；省略时 Markdown/Office/文本文档默认自动系统文档，其他文件写入工作区"}}, "required": []string{"path", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox. Read-only commands run immediately; commands that may write files, change external state, or use the network pause for explicit user confirmation.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "agent": map[string]any{"type": "string", "description": "Optional configured agent name from the catalog"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_skill", "description": "Read an operator-configured Skill by its catalog name. Skill instructions do not grant tool permissions.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"name": map[string]any{"type": "string"}}, "required": []string{"name"}}}},
@@ -773,20 +775,73 @@ func (a *App) acceptProposal(s *Session, task *Task, raw string, versions map[st
 			return errors.New("方案含重复或无效路径")
 		}
 		seen[f.Path] = true
+		if f.SourceID == "" && isAuthoredDocumentPath(f.Path) {
+			if _, attachedWorkspaceFile := versions[f.Path]; attachedWorkspaceFile {
+				// An attached workspace document keeps its original target.
+			} else {
+				for key, version := range versions {
+					if strings.HasSuffix(key, "\x00"+f.Path) && version.SourceID != "" {
+						// Preserve an attached reference document's source when an
+						// older model omits the explicit source field in its proposal.
+						f.SourceID = version.SourceID
+						f.SourceIdentity = version.SourceIdentity
+						break
+					}
+				}
+				if f.SourceID == "" {
+					f.SourceID = systemDocsSource
+				}
+			}
+		}
+		if f.SourceID != "" {
+			src, err := a.writableAISource(f.SourceID)
+			if err != nil {
+				return err
+			}
+			if f.SourceIdentity != "" && f.SourceIdentity != sourceWriteIdentity(src) {
+				return errors.New("方案引用来源配置已变化，请重新生成")
+			}
+			f.SourceIdentity = sourceWriteIdentity(src)
+		}
 		total += len(f.Content)
 		if len(f.Content) > maxFile || total > maxProposalTotal {
 			return fmt.Errorf("方案文件太大（单文件 %d MiB / 提案合计 %d MiB 上限）", maxFile>>20, maxProposalTotal>>20)
 		}
 		f.Applied = false
-		if v, ok := versions[f.Path]; ok {
+		versionKey := f.Path
+		if f.SourceID != "" {
+			versionKey = sourceVersionKey(f.SourceID, f.Path)
+		}
+		if v, ok := versions[versionKey]; ok {
+			if f.SourceID != "" && (v.SourceID != f.SourceID || v.SourceIdentity != f.SourceIdentity) {
+				return errors.New("方案附件与写入来源不一致")
+			}
 			f.BaseHash = v.BaseHash
 			f.Before = v.Before
+		} else if f.SourceID != "" {
+			src, err := a.writableAISource(f.SourceID)
+			if err != nil {
+				return err
+			}
+			_, readErr := a.readSourceRaw(src, f.Path)
+			if readErr == nil {
+				return fmt.Errorf("现有引用文件 %s 未附加到任务，请先附加再生成修改", f.Path)
+			}
+			if !os.IsNotExist(readErr) && !isSFTPNotExistErr(readErr) {
+				return fmt.Errorf("无法确认引用文件状态: %w", readErr)
+			}
+			f.BaseHash, f.Before = "", ""
 		} else {
 			if a.workspaceStatExists(f.Path) {
 				return fmt.Errorf("现有文件 %s 未附加到任务，请先附加再生成修改", f.Path)
 			}
 			f.BaseHash = ""
 			f.Before = ""
+		}
+		if isAuthoredDocumentPath(f.Path) && f.BaseHash == "" {
+			if err := a.validatePjplanFilename(path.Base(f.Path)); err != nil {
+				return err
+			}
 		}
 	}
 	a.mu.Lock()
@@ -1294,14 +1349,54 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		return
 	}
 	if a.workspaceMode() == "ssh" {
-		a.applySSHProposalLocked(w, r, s, task)
-		return
+		hasWorkspaceTarget, hasSourceTarget := false, false
+		for _, f := range task.Files {
+			if f.Applied {
+				continue
+			}
+			if f.SourceID == "" {
+				hasWorkspaceTarget = true
+			} else {
+				hasSourceTarget = true
+			}
+		}
+		if hasWorkspaceTarget && hasSourceTarget {
+			fail(w, 409, errors.New("SSH 工作区与引用来源提案不能在同一轮混合应用，请拆分为两轮"))
+			return
+		}
+		if hasWorkspaceTarget {
+			a.applySSHProposalLocked(w, r, s, task)
+			return
+		}
 	}
 	for _, f := range task.Files {
 		if f.Applied {
 			continue
 		}
-		if err := checkVersion(a.workspace, f.Path, f.BaseHash); err != nil {
+		if f.SourceID != "" {
+			a.mu.Unlock()
+			src, err := a.writableAISource(f.SourceID)
+			var current []byte
+			var readErr error
+			if err == nil && sourceWriteIdentity(src) == f.SourceIdentity {
+				current, readErr = a.readSourceRaw(src, f.Path)
+			}
+			latest, latestErr := a.writableAISource(f.SourceID)
+			a.mu.Lock()
+			if err != nil || latestErr != nil || sourceWriteIdentity(src) != f.SourceIdentity || sourceWriteIdentity(latest) != f.SourceIdentity {
+				fail(w, 409, fmt.Errorf("%s: 引用来源已停用、不可见、只读或配置已变化", f.Path))
+				return
+			}
+			if readErr != nil {
+				if f.BaseHash != "" || (!os.IsNotExist(readErr) && !isSFTPNotExistErr(readErr)) {
+					fail(w, 409, fmt.Errorf("%s: 无法确认引用文件版本: %w", f.Path, readErr))
+					return
+				}
+			} else if hash(current) != f.BaseHash {
+				fail(w, 409, fmt.Errorf("%s: 引用文件已改变，请重新生成提案", f.Path))
+				return
+			}
+		} else if err := checkVersion(a.workspace, f.Path, f.BaseHash); err != nil {
 			fail(w, 409, fmt.Errorf("%s: %w", f.Path, err))
 			return
 		}
@@ -1318,6 +1413,40 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		original := *f
 		root := a.workspace
 		identity := a.wsID()
+		if original.SourceID != "" {
+			a.mu.Unlock()
+			src, sourceErr := a.writableAISource(original.SourceID)
+			a.mu.Lock()
+			if sourceErr != nil || sourceWriteIdentity(src) != original.SourceIdentity {
+				fail(w, 409, fmt.Errorf("%s: 引用来源配置已变化，未应用提案", original.Path))
+				return
+			}
+			a.mu.Unlock()
+			writeErr := a.writeSourceText(src, original.Path, []byte(original.Content))
+			a.mu.Lock()
+			if i >= len(task.Files) || task.Files[i] != original || a.wsID() != identity {
+				fail(w, 409, errors.New("保存期间提案或工作区已变化，请检查文件状态"))
+				return
+			}
+			f = &task.Files[i]
+			if writeErr != nil {
+				task.Error = "部分应用失败: " + writeErr.Error()
+				_ = a.save(s)
+				fail(w, 500, errors.New(task.Error))
+				return
+			}
+			f.Applied = true
+			if task.Status != "awaiting_approval" {
+				_ = a.save(s)
+				fail(w, 409, errors.New("文件已保存，但任务状态已变化"))
+				return
+			}
+			if err := a.save(s); err != nil {
+				fail(w, 500, fmt.Errorf("文件已写入，但记录保存失败: %w", err))
+				return
+			}
+			continue
+		}
 		a.mu.Unlock()
 		writeErr := a.withMarkdownHistory("workspace:"+identity, original.Path, []byte(original.Content), func(p string) ([]byte, error) { return readRawBytes(root, p) }, func() error { return putText(root, original.Path, []byte(original.Content)) })
 		a.mu.Lock()
@@ -2656,16 +2785,18 @@ func (a *App) nextRequirementNumber(dir string) int {
 	if err != nil {
 		return 1
 	}
-	re := regexp.MustCompile(`^REQ-(\d+)-`)
+	re := regexp.MustCompile(`- 编号：REQ-(\d+)`)
 	max := 0
 	for _, e := range entries {
-		if e.IsDir() {
+		if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".md") {
 			continue
 		}
-		m := re.FindStringSubmatch(e.Name())
-		if m == nil {
+		body, readErr := os.ReadFile(filepath.Join(dir, e.Name()))
+		if readErr != nil {
 			continue
 		}
+		m := re.FindStringSubmatch(string(body))
+		if m == nil { continue }
 		var n int
 		if _, err := fmt.Sscanf(m[1], "%d", &n); err == nil && n > max {
 			max = n
@@ -2733,7 +2864,14 @@ func (a *App) createRequirement(title, content, related string) string {
 	}
 	num := a.nextRequirementNumber(dir)
 	id := fmt.Sprintf("REQ-%03d", num)
-	fileName := fmt.Sprintf("REQ-%03d-%s.md", num, sanitizeReqTitle(title))
+	fileName, err := a.pjplanNextAvailableFilename(dir, "19812", "md")
+	if err != nil {
+		return "PjPlan 文档命名失败: " + err.Error()
+	}
+	indexFile, err := a.pjplanFilename("1202", "md")
+	if err != nil {
+		return "PjPlan 索引命名失败: " + err.Error()
+	}
 	filePath := filepath.Join(dir, fileName)
 	now := time.Now().Format("2006-01-02 15:04:05")
 	relatedDisp := strings.TrimSpace(related)
@@ -2779,17 +2917,17 @@ func (a *App) createRequirement(title, content, related string) string {
 	if err := os.WriteFile(filePath, []byte(doc), 0644); err != nil {
 		return "写入需求文档失败: " + err.Error()
 	}
-	if err := a.rewriteRequirementsIndex(dir); err != nil {
+	if err := a.rewriteRequirementsIndex(dir, indexFile); err != nil {
 		return "需求已建档，但索引更新失败: " + err.Error()
 	}
-	if err := publish(filepath.Base(filePath), "requirements-index.md"); err != nil {
+	if err := publish(filepath.Base(filePath), indexFile); err != nil {
 		return "同步文档失败: " + err.Error()
 	}
 	return fmt.Sprintf("需求已建档：%s · %s\n文件：%s\n索引已更新", id, title, path.Join(destination, filepath.Base(filePath)))
 }
 
 // rewriteRequirementsIndex 扫描目录下所有 REQ-*.md，重写 requirements-index.md。
-func (a *App) rewriteRequirementsIndex(dir string) error {
+func (a *App) rewriteRequirementsIndex(dir, indexFile string) error {
 	type info struct {
 		num                                int
 		id, name, status, created, related string
@@ -2798,21 +2936,23 @@ func (a *App) rewriteRequirementsIndex(dir string) error {
 	if err != nil {
 		return err
 	}
-	re := regexp.MustCompile(`^REQ-(\d+)-`)
+	re := regexp.MustCompile(`- 编号：REQ-(\d+)`)
 	var list []info
 	for _, e := range entries {
-		if e.IsDir() {
+		if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".md") {
 			continue
 		}
-		m := re.FindStringSubmatch(e.Name())
-		if m == nil {
+		body, readErr := os.ReadFile(filepath.Join(dir, e.Name()))
+		if readErr != nil {
 			continue
 		}
+		m := re.FindStringSubmatch(string(body))
+		if m == nil { continue }
 		var n int
 		fmt.Sscanf(m[1], "%d", &n)
 		row := info{num: n, id: fmt.Sprintf("REQ-%03d", n), name: strings.TrimSuffix(e.Name(), ".md"), status: "待评审", created: "", related: "无"}
-		if b, err := os.ReadFile(filepath.Join(dir, e.Name())); err == nil {
-			for _, ln := range strings.Split(string(b), "\n") {
+		{
+			for _, ln := range strings.Split(string(body), "\n") {
 				t := strings.TrimSpace(ln)
 				switch {
 				case strings.HasPrefix(t, "# REQ-"):
@@ -2840,7 +2980,7 @@ func (a *App) rewriteRequirementsIndex(dir string) error {
 		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", r.id, r.name, r.status, r.created, r.related)
 	}
 	fmt.Fprintf(&b, "\n共 %d 个需求\n", len(list))
-	return os.WriteFile(filepath.Join(dir, "requirements-index.md"), []byte(b.String()), 0644)
+	return os.WriteFile(filepath.Join(dir, indexFile), []byte(b.String()), 0644)
 }
 
 // designPhasePrompt 设计阶段强流程提示。
@@ -2880,6 +3020,8 @@ const problemSolvingPhasePrompt = `
 type phaseDocSpec struct {
 	prefix     string   // REQ / DESIGN / IMPL / TEST
 	subdir     string   // system-docs 下子目录名
+	classCode  string   // PjPlan 文档类别
+	indexCode  string   // PjPlan 文档索引类别
 	indexFile  string   // 索引文件名
 	indexTitle string   // 索引标题
 	sections   []string // 文档模板章节
@@ -2892,12 +3034,18 @@ func nextDocNumber(dir, prefix string) int {
 		return 1
 	}
 	re := regexp.MustCompile("^" + regexp.QuoteMeta(prefix) + `-(\d+)-`)
+	bodyRE := regexp.MustCompile(`- 编号：` + regexp.QuoteMeta(prefix) + `-(\d+)`)
 	max := 0
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
 		}
 		m := re.FindStringSubmatch(e.Name())
+		if m == nil && strings.HasSuffix(strings.ToLower(e.Name()), ".md") {
+			if body, err := os.ReadFile(filepath.Join(dir, e.Name())); err == nil {
+				m = bodyRE.FindStringSubmatch(string(body))
+			}
+		}
 		if m == nil {
 			continue
 		}
@@ -2920,19 +3068,24 @@ func rewriteDocIndex(dir, prefix, indexFile, indexTitle string) error {
 		return err
 	}
 	re := regexp.MustCompile("^" + regexp.QuoteMeta(prefix) + `-(\d+)-`)
+	bodyRE := regexp.MustCompile(`- 编号：` + regexp.QuoteMeta(prefix) + `-(\d+)`)
 	var list []row
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
 		}
 		m := re.FindStringSubmatch(e.Name())
+		body, bodyErr := os.ReadFile(filepath.Join(dir, e.Name()))
+		if m == nil && bodyErr == nil {
+			m = bodyRE.FindStringSubmatch(string(body))
+		}
 		if m == nil {
 			continue
 		}
 		var n int
 		fmt.Sscanf(m[1], "%d", &n)
 		r := row{num: n, id: fmt.Sprintf("%s-%03d", prefix, n), name: strings.TrimSuffix(e.Name(), ".md"), status: "待评审", created: "", related: "无"}
-		if body, err := os.ReadFile(filepath.Join(dir, e.Name())); err == nil {
+		if bodyErr == nil {
 			for _, ln := range strings.Split(string(body), "\n") {
 				t := strings.TrimSpace(ln)
 				switch {
@@ -2982,7 +3135,14 @@ func (a *App) createDoc(spec phaseDocSpec, title, content, related string) strin
 	}
 	num := nextDocNumber(dir, spec.prefix)
 	id := fmt.Sprintf("%s-%03d", spec.prefix, num)
-	fileName := fmt.Sprintf("%s-%03d-%s.md", spec.prefix, num, sanitizeReqTitle(title))
+	fileName, err := a.pjplanNextAvailableFilename(dir, spec.classCode, "md")
+	if err != nil {
+		return "PjPlan 文档命名失败: " + err.Error()
+	}
+	indexFile, err := a.pjplanFilename(spec.indexCode, "md")
+	if err != nil {
+		return "PjPlan 索引命名失败: " + err.Error()
+	}
 	filePath := filepath.Join(dir, fileName)
 	now := time.Now().Format("2006-01-02 15:04:05")
 	relatedDisp := strings.TrimSpace(related)
@@ -3001,10 +3161,10 @@ func (a *App) createDoc(spec phaseDocSpec, title, content, related string) strin
 	if err := os.WriteFile(filePath, []byte(b.String()), 0644); err != nil {
 		return "写入文档失败: " + err.Error()
 	}
-	if err := rewriteDocIndex(dir, spec.prefix, spec.indexFile, spec.indexTitle); err != nil {
+	if err := rewriteDocIndex(dir, spec.prefix, indexFile, spec.indexTitle); err != nil {
 		return "已建档，但索引更新失败: " + err.Error()
 	}
-	if err := publish(fileName, spec.indexFile); err != nil {
+	if err := publish(fileName, indexFile); err != nil {
 		return "同步文档失败: " + err.Error()
 	}
 	return fmt.Sprintf("已建档：%s · %s\n文件：%s\n索引已更新", id, title, path.Join(destination, fileName))
@@ -3024,7 +3184,7 @@ func joinRelated(parts ...string) string {
 // createDesign 设计阶段建档工具。
 func (a *App) createDesign(title, content, reqId, related string) string {
 	return a.createDoc(phaseDocSpec{
-		prefix: "DESIGN", subdir: "designs", indexFile: "designs-index.md", indexTitle: "设计索引",
+		prefix: "DESIGN", subdir: "designs", classCode: "10262", indexCode: "1202", indexFile: "designs-index.md", indexTitle: "设计索引",
 		sections: []string{"开发流程", "依赖条件", "架构需求", "待确认项", "变更记录"},
 	}, title, content, joinRelated(reqId, related))
 }
@@ -3032,7 +3192,7 @@ func (a *App) createDesign(title, content, reqId, related string) string {
 // recordImplementation 实施阶段记录工具。
 func (a *App) recordImplementation(title, content, reqId, designId string) string {
 	return a.createDoc(phaseDocSpec{
-		prefix: "IMPL", subdir: "implementations", indexFile: "implementations-index.md", indexTitle: "实施索引",
+		prefix: "IMPL", subdir: "implementations", classCode: "3643", indexCode: "1202", indexFile: "implementations-index.md", indexTitle: "实施索引",
 		sections: []string{"实现内容", "修改文件", "验证结果", "遗留事项"},
 	}, title, content, joinRelated(reqId, designId))
 }
@@ -3040,7 +3200,7 @@ func (a *App) recordImplementation(title, content, reqId, designId string) strin
 // recordVerification 验证阶段记录工具。
 func (a *App) recordVerification(title, content, reqId, designId, implId string) string {
 	return a.createDoc(phaseDocSpec{
-		prefix: "TEST", subdir: "verifications", indexFile: "verifications-index.md", indexTitle: "验证索引",
+		prefix: "TEST", subdir: "verifications", classCode: "10267", indexCode: "1202", indexFile: "verifications-index.md", indexTitle: "验证索引",
 		sections: []string{"测试环境", "测试用例", "运行结果", "结论与缺陷"},
 	}, title, content, joinRelated(reqId, designId, implId))
 }
@@ -3054,7 +3214,7 @@ func (a *App) recordProblemReport(title, content, diagramPath string) string {
 		content = strings.TrimSpace(content) + "\n\n## RCA 图\n" + diagramPath + "\n"
 	}
 	return a.createDoc(phaseDocSpec{
-		prefix: "RCA", subdir: "problem-reports", indexFile: "problem-reports-index.md", indexTitle: "问题解决报告索引",
+		prefix: "RCA", subdir: "problem-reports", classCode: "1403", indexCode: "1202", indexFile: "problem-reports-index.md", indexTitle: "问题解决报告索引",
 		sections: []string{"问题", "背景", "排查方向", "RCA 图", "测试", "结论", "建议"},
 	}, title, content, "draw.io: "+diagramPath)
 }
@@ -3919,36 +4079,47 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	}
 	sourceID := str("source")
 	var source Source
+	if _, attachedWorkspaceFile := versions[path.Clean(str("path"))]; call.Function.Name == "write_file" && sourceID == "" && isAuthoredDocumentPath(str("path")) && !attachedWorkspaceFile {
+		sourceID = systemDocsSource
+	}
 	if sourceID != "" {
-		if call.Function.Name != "list_files" && call.Function.Name != "read_file" && call.Function.Name != "mcp_call" && call.Function.Name != "semantic_search" && call.Function.Name != "document_search" && call.Function.Name != "office_document_search" {
+		if call.Function.Name != "list_files" && call.Function.Name != "read_file" && call.Function.Name != "mcp_call" && call.Function.Name != "semantic_search" && call.Function.Name != "document_search" && call.Function.Name != "office_document_search" && call.Function.Name != "write_file" {
 			return "Reference sources are read-only for AI tools"
 		}
-		a.mu.Lock()
-		src, ok := a.findSource(sourceID)
-		allowed := ok && sourceAIVisible(src, a.wsID())
-		a.mu.Unlock()
-		if !allowed {
-			return "Reference source does not exist or is disabled"
+		if call.Function.Name == "write_file" {
+			src, err := a.writableAISource(sourceID)
+			if err != nil {
+				return "写入提案被拒绝: " + err.Error()
+			}
+			source = src
+		} else {
+			a.mu.Lock()
+			src, ok := a.findSource(sourceID)
+			allowed := ok && sourceAIVisible(src, a.wsID())
+			a.mu.Unlock()
+			if !allowed {
+				return "Reference source does not exist or is disabled"
+			}
+			source = src
 		}
-		source = src
 		if call.Function.Name == "mcp_call" {
-			if src.Type != "mcp" {
+			if source.Type != "mcp" {
 				return "mcp_call requires an MCP reference source"
 			}
-		} else if src.Type == "mcp" {
+		} else if source.Type == "mcp" {
 			return "MCP reference tools must be called with mcp_call"
 		} else {
 			listDir = func(p string) ([]map[string]any, error) {
 				if err := safePath(p); err != nil {
 					return nil, err
 				}
-				return a.listSourceDir(src, p)
+				return a.listSourceDir(source, p)
 			}
 			readTextFile = func(p string) ([]byte, error) {
 				if err := safePath(p); err != nil {
 					return nil, err
 				}
-				return a.readSourceText(src, p)
+				return a.readSourceText(source, p)
 			}
 		}
 	}
@@ -3969,8 +4140,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			if sourceAIVisible(src, a.wsID()) {
 				row := map[string]any{"id": src.ID, "name": guideLabel(src.Name), "type": src.Type, "readable": src.Type != "mcp", "builtin": src.Builtin, "aiAccess": "read-only"}
 				row["rw"] = src.RW
-				if src.ID == systemDocsSource && strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
-					row["aiAccess"] = "read; write via workflow document tools and office_create"
+				if src.ID == systemDocsSource {
+					row["aiAccess"] = "read; write via write_file and workflow document tools; independent private cache when no path is bound"
 				}
 				if src.Type == "mcp" {
 					row["readable"] = false
@@ -4082,7 +4253,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	case "docx_resolve_comment":
 		return a.docxTool(wsRoot, mode, str("path"), "docx_resolve_comment.py", str("id"))
 	case "office_create":
-		if src, bound := a.generatedDocumentSource(); bound && !a.sourceAIAllowed(src.ID) {
+		if !a.sourceAIAllowed(systemDocsSource) {
 			return "自动系统文档对当前工作区 AI 不可见"
 		}
 		if a.pluginOwnerOf("office_create") != "office" {
@@ -4140,7 +4311,12 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return string(raw)
 	case "write_file":
 		pathStr, content := str("path"), rawStr("content")
-		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "path": pathStr, "content": content})
+		proposal := map[string]any{"type": "file", "path": pathStr, "content": content}
+		if sourceID != "" {
+			proposal["sourceId"] = sourceID
+			proposal["sourceIdentity"] = sourceWriteIdentity(source)
+		}
+		msg, err := a.recordToolProposal(task, versions, proposal)
 		if err != nil {
 			return "写入提案被拒绝: " + err.Error()
 		}
@@ -4510,10 +4686,39 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 		if totalBytes > maxProposalTotal {
 			return "", fmt.Errorf("提案内容总量超过 %d MiB", maxProposalTotal>>20)
 		}
-		change := Change{Path: pathStr, Content: content, Applied: false}
-		if v, ok := versions[pathStr]; ok {
+		sourceID, _ := p["sourceId"].(string)
+		sourceIdentity, _ := p["sourceIdentity"].(string)
+		change := Change{Path: pathStr, Content: content, SourceID: sourceID, SourceIdentity: sourceIdentity, Applied: false}
+		versionKey := pathStr
+		if sourceID != "" {
+			versionKey = sourceVersionKey(sourceID, pathStr)
+			currentSource, err := a.writableAISource(sourceID)
+			if err != nil {
+				return "", err
+			}
+			if sourceIdentity == "" || sourceWriteIdentity(currentSource) != sourceIdentity {
+				return "", errors.New("引用来源配置已变化，请重新生成提案")
+			}
+		}
+		if v, ok := versions[versionKey]; ok {
+			if sourceID != "" && (v.SourceID != sourceID || v.SourceIdentity != sourceIdentity) {
+				return "", errors.New("附件来源与目标来源不一致")
+			}
 			change.BaseHash = v.BaseHash
 			change.Before = v.Before
+		} else if sourceID != "" {
+			src, err := a.writableAISource(sourceID)
+			if err != nil {
+				return "", err
+			}
+			_, readErr := a.readSourceRaw(src, pathStr)
+			if readErr == nil {
+				return "", fmt.Errorf("现有引用文件 %s 未附加到任务，请先附加再生成修改", pathStr)
+			}
+			if !os.IsNotExist(readErr) && !isSFTPNotExistErr(readErr) {
+				return "", fmt.Errorf("无法确认引用文件状态: %w", readErr)
+			}
+			change.BaseHash, change.Before = "", ""
 		} else {
 			if a.workspaceStatExists(pathStr) {
 				return "", fmt.Errorf("现有文件 %s 未附加到任务，请先附加再生成修改", pathStr)
@@ -4521,10 +4726,15 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 			change.BaseHash = ""
 			change.Before = ""
 		}
+		if isAuthoredDocumentPath(pathStr) && change.BaseHash == "" {
+			if err := a.validatePjplanFilename(path.Base(pathStr)); err != nil {
+				return "", err
+			}
+		}
 		a.mu.Lock()
 		defer a.mu.Unlock()
 		for i := range task.Files {
-			if task.Files[i].Path == pathStr {
+			if task.Files[i].Path == pathStr && task.Files[i].SourceID == sourceID {
 				task.Files[i] = change
 				return "已更新文件修改提案：" + pathStr + "（等待用户批准应用）", nil
 			}

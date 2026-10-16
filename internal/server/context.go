@@ -330,6 +330,16 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 		}
 		if att.Root == "workspace" || att.Root == "" {
 			versions[path.Clean(att.Path)] = Change{BaseHash: hash(b), Before: string(b)}
+		} else if att.Root == "source" {
+			src, srcErr := a.writableAISource(att.Source)
+			if srcErr != nil {
+				a.mu.Lock()
+				src, _ = a.findSource(att.Source)
+				a.mu.Unlock()
+			}
+			if src.ID != "" {
+				versions[sourceVersionKey(att.Source, att.Path)] = Change{BaseHash: hash(b), Before: string(b), SourceID: att.Source, SourceIdentity: sourceWriteIdentity(src)}
+			}
 		}
 	}
 	return contextText, images, versions, nil
@@ -369,6 +379,7 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 	if enabled, embedded := a.markdownHistoryConfig(); enabled {
 		history[0].Content += fmt.Sprintf("\nMarkdown 历史追踪已启用（嵌入资源追踪=%t）。先读取现有 MD，再通过 write_file 提案修改原文件，不为备份另建副本；除非用户明确要求复制。实际保存才归档，未保存不算历史。可用 markdown_history 核实状态及版本。shell 或外部编辑不经过保存钩子，不能宣称已记录历史。", embedded)
 	}
+	history[0].Content += "\nPjPlan 文档规则：主动新建 Markdown、文本、表格和 Office 等文档前，先用 pjplan_class_lookup 确认分类，再用 pjplan_build_filename 生成完整文件名；PjPlan 项目标识和版本设置缺失时向用户询问/提示配置，不猜分类或文件名。新建文档通过 write_file 默认进入独立的自动系统文档来源；若目标是其他引用来源，显式传入 source，且仅能写入当前工作区对 AI 可见并已配置为读写的来源。编辑引用文件前先附加原文件并使用其来源 ID。代码及工程文件继续写入工作区。所有 write_file 都是审批提案，未收到应用回执前不声称已保存。"
 	if guide := a.environmentGuide(); guide != "" {
 		history[0].Content += "\n" + guide
 	}

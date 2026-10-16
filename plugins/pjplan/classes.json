@@ -1,0 +1,802 @@
+[
+  {
+    "code": "1003",
+    "name": "Information And Instructions Concerning Group And Company Standard",
+    "nameZh": "关于集团和公司标准的信息和指示"
+  },
+  {
+    "code": "1004",
+    "name": "Local Standard",
+    "nameZh": "当地标准"
+  },
+  {
+    "code": "1006",
+    "name": "Cm Plan",
+    "nameZh": "配置管理计划"
+  },
+  {
+    "code": "1056",
+    "name": "Requirements Spec",
+    "nameZh": "需求规格"
+  },
+  {
+    "code": "1077",
+    "name": "Outline And Hole Inf",
+    "nameZh": "轮廓和孔径信息"
+  },
+  {
+    "code": "1078",
+    "name": "Mounting Drawing",
+    "nameZh": "安装图"
+  },
+  {
+    "code": "1090",
+    "name": "Unit Journal. Master Config Index",
+    "nameZh": "单位日志，主配置索引"
+  },
+  {
+    "code": "1091",
+    "name": "Document Management",
+    "nameZh": "文件管理"
+  },
+  {
+    "code": "1201",
+    "name": "Product Plan",
+    "nameZh": "产品计划"
+  },
+  {
+    "code": "1202",
+    "name": "Project Plan",
+    "nameZh": "项目计划"
+  },
+  {
+    "code": "1252",
+    "name": "Supplier Information",
+    "nameZh": "供应商信息"
+  },
+  {
+    "code": "1301",
+    "name": "Product Spec",
+    "nameZh": "产品规格"
+  },
+  {
+    "code": "1315",
+    "name": "Product Structure",
+    "nameZh": "产品结构"
+  },
+  {
+    "code": "1319",
+    "name": "Mounting Info (Pick And Place Info)",
+    "nameZh": "安装信息（取放信息）"
+  },
+  {
+    "code": "1401",
+    "name": "Key Component List",
+    "nameZh": "关键部件清单"
+  },
+  {
+    "code": "1402",
+    "name": "Generic Configuration Management Rules",
+    "nameZh": "通用配置管理规则"
+  },
+  {
+    "code": "1403",
+    "name": "8D Report",
+    "nameZh": "质量纠正措施报告"
+  },
+  {
+    "code": "1404",
+    "name": "Po Bom",
+    "nameZh": "用于购买订单的材料清单"
+  },
+  {
+    "code": "1405",
+    "name": "Iqc Report",
+    "nameZh": "来料检验记录单"
+  },
+  {
+    "code": "1406",
+    "name": "Training",
+    "nameZh": "培训"
+  },
+  {
+    "code": "1407",
+    "name": "Training Examination",
+    "nameZh": "培训考试"
+  },
+  {
+    "code": "1408",
+    "name": "Training Examination Answer",
+    "nameZh": "培训考试答案"
+  },
+  {
+    "code": "1424",
+    "name": "Pressure Original",
+    "nameZh": "压力原件"
+  },
+  {
+    "code": "1510",
+    "name": "Manufacturing Instr",
+    "nameZh": "制造说明"
+  },
+  {
+    "code": "1521",
+    "name": "Test Instructions",
+    "nameZh": "测试说明"
+  },
+  {
+    "code": "1523",
+    "name": "Test Record",
+    "nameZh": "测试记录"
+  },
+  {
+    "code": "1524",
+    "name": "Test Requirements",
+    "nameZh": "测试需求"
+  },
+  {
+    "code": "1528",
+    "name": "Method Specification",
+    "nameZh": "方法说明"
+  },
+  {
+    "code": "1531",
+    "name": "Installation Instr",
+    "nameZh": "安装说明"
+  },
+  {
+    "code": "1541",
+    "name": "Maintenance Instr",
+    "nameZh": "维护说明书"
+  },
+  {
+    "code": "1543",
+    "name": "Operation Directions",
+    "nameZh": "操作指南"
+  },
+  {
+    "code": "1545",
+    "name": "Fault Tracing Info",
+    "nameZh": "故障跟踪信息"
+  },
+  {
+    "code": "1550",
+    "name": "Description",
+    "nameZh": "说明"
+  },
+  {
+    "code": "1551",
+    "name": "Description",
+    "nameZh": "说明"
+  },
+  {
+    "code": "1553",
+    "name": "Directions For Use",
+    "nameZh": "使用说明"
+  },
+  {
+    "code": "1597",
+    "name": "Analysis (Internal Analysis Of Design, Test, Failures, Etc.)",
+    "nameZh": "分析（设计、测试、故障的内部分析等等）"
+  },
+  {
+    "code": "1735",
+    "name": "Quality Plan",
+    "nameZh": "质量计划"
+  },
+  {
+    "code": "1751",
+    "name": "Fault Announcement",
+    "nameZh": "故障公告"
+  },
+  {
+    "code": "1776",
+    "name": "Product Check",
+    "nameZh": "产品检查（PRA RELEASE CHECKLIST）"
+  },
+  {
+    "code": "1778",
+    "name": "Auditing Report",
+    "nameZh": "审计报告"
+  },
+  {
+    "code": "1784",
+    "name": "Summary",
+    "nameZh": "摘要"
+  },
+  {
+    "code": "1911",
+    "name": "Circuit Diagram",
+    "nameZh": "电路图"
+  },
+  {
+    "code": "1913",
+    "name": "Block Diagram",
+    "nameZh": "方框图"
+  },
+  {
+    "code": "2223",
+    "name": "Tender",
+    "nameZh": "招标"
+  },
+  {
+    "code": "2243",
+    "name": "Proposal Request",
+    "nameZh": "建议申请"
+  },
+  {
+    "code": "2882",
+    "name": "Presentation Mtrl",
+    "nameZh": "演示"
+  },
+  {
+    "code": "3641",
+    "name": "Decision (Comprises Information About Any General)",
+    "nameZh": "决定（包括任何一般信息)"
+  },
+  {
+    "code": "3642",
+    "name": "Decision (Comprises Information )",
+    "nameZh": "决定（包括信息)"
+  },
+  {
+    "code": "3643",
+    "name": "Milestone Record",
+    "nameZh": "里程碑记录"
+  },
+  {
+    "code": "3644",
+    "name": "Tollgate Decision",
+    "nameZh": "关卡决定"
+  },
+  {
+    "code": "10262",
+    "name": "Design Specification",
+    "nameZh": "设计规范（设计方案）"
+  },
+  {
+    "code": "10264",
+    "name": "Verification Specification",
+    "nameZh": "验证规范"
+  },
+  {
+    "code": "10265",
+    "name": "Verification Record",
+    "nameZh": "验证记录"
+  },
+  {
+    "code": "10267",
+    "name": "Verification Report",
+    "nameZh": "验证报告（测试报告）"
+  },
+  {
+    "code": "10270",
+    "name": "Verification Instruction",
+    "nameZh": "验证说明"
+  },
+  {
+    "code": "10565",
+    "name": "Mrs",
+    "nameZh": "客户需求文档（由客户提供）"
+  },
+  {
+    "code": "10731",
+    "name": "Wiring Diagram",
+    "nameZh": "射频线缆拓补图"
+  },
+  {
+    "code": "10733",
+    "name": "Wiring Information",
+    "nameZh": "接线信息"
+  },
+  {
+    "code": "10764",
+    "name": "Soldering Paste Info",
+    "nameZh": "焊膏信息"
+  },
+  {
+    "code": "10773",
+    "name": "Location Information (Panel Drawing)",
+    "nameZh": "面板图位置信息（拼板文件）"
+  },
+  {
+    "code": "10903",
+    "name": "Baseline Report",
+    "nameZh": "基准报告"
+  },
+  {
+    "code": "10921",
+    "name": "Product Rev. Info",
+    "nameZh": "产品版本说明"
+  },
+  {
+    "code": "10924",
+    "name": "Document Rev. Info",
+    "nameZh": "文档版本说明"
+  },
+  {
+    "code": "10941",
+    "name": "Document Plan",
+    "nameZh": "文档计划"
+  },
+  {
+    "code": "10942",
+    "name": "Info Structure Spec",
+    "nameZh": "信息结构规范"
+  },
+  {
+    "code": "12021",
+    "name": "Progress Report",
+    "nameZh": "进展报告"
+  },
+  {
+    "code": "12022",
+    "name": "Verification Plan",
+    "nameZh": "验证计划"
+  },
+  {
+    "code": "12261",
+    "name": "Task Specification",
+    "nameZh": "任务规范"
+  },
+  {
+    "code": "12702",
+    "name": "Project Spec",
+    "nameZh": "项目规格"
+  },
+  {
+    "code": "13011",
+    "name": "Process Spec",
+    "nameZh": "程序规格"
+  },
+  {
+    "code": "13022",
+    "name": "Component List",
+    "nameZh": "组件清单"
+  },
+  {
+    "code": "13031",
+    "name": "Product Info Cad",
+    "nameZh": "产品信息CAD"
+  },
+  {
+    "code": "13042",
+    "name": "Geometry Model",
+    "nameZh": "几何模型"
+  },
+  {
+    "code": "13121",
+    "name": "Packing List Or Packing Specification",
+    "nameZh": "装箱清单"
+  },
+  {
+    "code": "13122",
+    "name": "Product List",
+    "nameZh": "产品清单"
+  },
+  {
+    "code": "13132",
+    "name": "Manufacturing Spec",
+    "nameZh": "制造规格"
+  },
+  {
+    "code": "13161",
+    "name": "Structure Spec",
+    "nameZh": "结构规格"
+  },
+  {
+    "code": "13162",
+    "name": "Ordering Information",
+    "nameZh": "订购信息"
+  },
+  {
+    "code": "13163",
+    "name": "Program Storage Info",
+    "nameZh": "程序存储信息"
+  },
+  {
+    "code": "15181",
+    "name": "Assembly List",
+    "nameZh": "装配清单"
+  },
+  {
+    "code": "15186",
+    "name": "Marking Drawing",
+    "nameZh": "标记图"
+  },
+  {
+    "code": "15188",
+    "name": "Assembly Drawing",
+    "nameZh": "装配图"
+  },
+  {
+    "code": "15201",
+    "name": "Test Document Survey",
+    "nameZh": "测试文件调查"
+  },
+  {
+    "code": "15212",
+    "name": "Trimming Instruction",
+    "nameZh": "精整指导"
+  },
+  {
+    "code": "15241",
+    "name": "Test Specification",
+    "nameZh": "测试规范"
+  },
+  {
+    "code": "15281",
+    "name": "Test Plan",
+    "nameZh": "测试计划"
+  },
+  {
+    "code": "15282",
+    "name": "Test Case",
+    "nameZh": "测试用例"
+  },
+  {
+    "code": "15285",
+    "name": "Test Record",
+    "nameZh": "测试记录"
+  },
+  {
+    "code": "15286",
+    "name": "Sql Script",
+    "nameZh": "SQL脚本"
+  },
+  {
+    "code": "15288",
+    "name": "Software Communication Protocol Description",
+    "nameZh": "软件通信协议对接说明"
+  },
+  {
+    "code": "15289",
+    "name": "Image File",
+    "nameZh": "FPGA执行文件（镜像）"
+  },
+  {
+    "code": "15519",
+    "name": "Interwork Descr",
+    "nameZh": "内部接口描述（或API文档、接口文档，曾使用过15287）"
+  },
+  {
+    "code": "15520",
+    "name": "Goals/Strategy Descr",
+    "nameZh": "目标或战略说明"
+  },
+  {
+    "code": "15901",
+    "name": "Checklist",
+    "nameZh": "检查清单（PR1 RELEASE CHECKLIST）"
+  },
+  {
+    "code": "15941",
+    "name": "Implement. Proposal",
+    "nameZh": "实施提案"
+  },
+  {
+    "code": "15961",
+    "name": "Design Report",
+    "nameZh": "设计报告"
+  },
+  {
+    "code": "17004",
+    "name": "Exemption",
+    "nameZh": "豁免ER（例如：23/17004代表这个产品的第23个ER）"
+  },
+  {
+    "code": "17014",
+    "name": "Results Evaluation",
+    "nameZh": "结果评估"
+  },
+  {
+    "code": "17015",
+    "name": "Improvement Program",
+    "nameZh": "改进计划"
+  },
+  {
+    "code": "17131",
+    "name": "Calibrat. Instrucs",
+    "nameZh": "校准器说明书"
+  },
+  {
+    "code": "17351",
+    "name": "Plan Of Corrections",
+    "nameZh": "整改计划"
+  },
+  {
+    "code": "17626",
+    "name": "Inspection Report",
+    "nameZh": "检查报告"
+  },
+  {
+    "code": "17763",
+    "name": "Check Report",
+    "nameZh": "检查报告"
+  },
+  {
+    "code": "17781",
+    "name": "Auditing Plan",
+    "nameZh": "审计计划"
+  },
+  {
+    "code": "19002",
+    "name": "Printout Spec",
+    "nameZh": "打印规格"
+  },
+  {
+    "code": "19003",
+    "name": "Target Program",
+    "nameZh": "目标程序"
+  },
+  {
+    "code": "19004",
+    "name": "Processing Spec",
+    "nameZh": "加工规格"
+  },
+  {
+    "code": "19006",
+    "name": "Generation Info",
+    "nameZh": "生成软件产品信息"
+  },
+  {
+    "code": "19008",
+    "name": "Container File (Gerber Container File)",
+    "nameZh": "容器文件（GERBER容器文件）"
+  },
+  {
+    "code": "19009",
+    "name": "Container File (Incl. 190 08-/1077-/1301-)",
+    "nameZh": "容器文件（包括190 08-/1077-/1301-文档）"
+  },
+  {
+    "code": "19055",
+    "name": "Source Program Info",
+    "nameZh": "源程序信息/软件原始代码/源代码（包括配置信息）"
+  },
+  {
+    "code": "19059",
+    "name": "Appl Parameter List",
+    "nameZh": "应用参数表"
+  },
+  {
+    "code": "19060",
+    "name": "Rules Comparison Table",
+    "nameZh": "规则对照表"
+  },
+  {
+    "code": "19082",
+    "name": "Command Description",
+    "nameZh": "软件命令描述"
+  },
+  {
+    "code": "19089",
+    "name": "Software Record",
+    "nameZh": "软件记录"
+  },
+  {
+    "code": "19090",
+    "name": "Doc Container File",
+    "nameZh": "文档容器文件"
+  },
+  {
+    "code": "19093",
+    "name": "Code Generation Info",
+    "nameZh": "代码工具版本信息"
+  },
+  {
+    "code": "19112",
+    "name": "Burn-In Information",
+    "nameZh": "老化信息"
+  },
+  {
+    "code": "19581",
+    "name": "Network Diagram",
+    "nameZh": "网络图"
+  },
+  {
+    "code": "19811",
+    "name": "Requirements Spec",
+    "nameZh": "需求规格"
+  },
+  {
+    "code": "19812",
+    "name": "Product Requirements Document",
+    "nameZh": "产品需求文档（PRD）"
+  },
+  {
+    "code": "19813",
+    "name": "Security Design Document",
+    "nameZh": "安全设计文档"
+  },
+  {
+    "code": "19817",
+    "name": "User Instructions",
+    "nameZh": "用户指南"
+  },
+  {
+    "code": "19818",
+    "name": "Product Brochure",
+    "nameZh": "产品宣传手册"
+  },
+  {
+    "code": "36401",
+    "name": "Budget",
+    "nameZh": "预算"
+  },
+  {
+    "code": "00021",
+    "name": "Working Instructions",
+    "nameZh": "工作说明"
+  },
+  {
+    "code": "00121",
+    "name": "Cross Index",
+    "nameZh": "交叉索引"
+  },
+  {
+    "code": "0062",
+    "name": "Memorandum",
+    "nameZh": "备忘录"
+  },
+  {
+    "code": "0064",
+    "name": "Minutes Of Meeting",
+    "nameZh": "会议记录"
+  },
+  {
+    "code": "00651",
+    "name": "List",
+    "nameZh": "列表"
+  },
+  {
+    "code": "00661",
+    "name": "Rules",
+    "nameZh": "规则"
+  },
+  {
+    "code": "00665",
+    "name": "Hand-Over Record",
+    "nameZh": "交接记录"
+  },
+  {
+    "code": "00671",
+    "name": "Plan",
+    "nameZh": "计划"
+  },
+  {
+    "code": "01101",
+    "name": "Policy",
+    "nameZh": "政策"
+  },
+  {
+    "code": "0113",
+    "name": "Guidelines",
+    "nameZh": "指南"
+  },
+  {
+    "code": "0120",
+    "name": "Organization Plan",
+    "nameZh": "组织计划"
+  },
+  {
+    "code": "0121",
+    "name": "Responsibility List",
+    "nameZh": "责任清单"
+  },
+  {
+    "code": "0123",
+    "name": "Operation Descript",
+    "nameZh": "操作说明"
+  },
+  {
+    "code": "0125",
+    "name": "Organization Plan",
+    "nameZh": "组织计划"
+  },
+  {
+    "code": "0207",
+    "name": "Job Description",
+    "nameZh": "职位描述"
+  },
+  {
+    "code": "0209",
+    "name": "Competence Descr",
+    "nameZh": "能力描述"
+  },
+  {
+    "code": "0261",
+    "name": "Personnel List",
+    "nameZh": "人员名单"
+  },
+  {
+    "code": "03151",
+    "name": "Distribution List",
+    "nameZh": "分发名单"
+  },
+  {
+    "code": "03401",
+    "name": "Directive",
+    "nameZh": "指示"
+  },
+  {
+    "code": "0341",
+    "name": "Introduction",
+    "nameZh": "引言"
+  },
+  {
+    "code": "0360",
+    "name": "Report",
+    "nameZh": "报告"
+  },
+  {
+    "code": "0362",
+    "name": "Action Reports (Project Report)",
+    "nameZh": "行动报告（项目报告）"
+  },
+  {
+    "code": "03621",
+    "name": "Final Report",
+    "nameZh": "最终报告"
+  },
+  {
+    "code": "0363",
+    "name": "Technical Report",
+    "nameZh": "技术报告"
+  },
+  {
+    "code": "0604",
+    "name": "Method Description",
+    "nameZh": "方法说明"
+  },
+  {
+    "code": "0913",
+    "name": "Investigation",
+    "nameZh": "调查"
+  },
+  {
+    "code": "1/10262",
+    "name": "Database Design Spec",
+    "nameZh": "数据库设计说明书"
+  },
+  {
+    "code": "1/12261",
+    "name": "Assignment Contract",
+    "nameZh": "转让合同"
+  },
+  {
+    "code": "1/1301",
+    "name": "Component Datasheet",
+    "nameZh": "元器件数据表"
+  },
+  {
+    "code": "1/19055",
+    "name": "Client Source Code",
+    "nameZh": "客户端源代码"
+  },
+  {
+    "code": "2/10262",
+    "name": "System Design Spec",
+    "nameZh": "系统设计说明书"
+  },
+  {
+    "code": "2/1776",
+    "name": "Product Check",
+    "nameZh": "产品检查（PR2 RELEASE CHECKLIST）"
+  },
+  {
+    "code": "2/19055",
+    "name": "Server Source Code",
+    "nameZh": "服务端源代码"
+  },
+  {
+    "code": "61/13031",
+    "name": "Design Database",
+    "nameZh": "设计数据库"
+  },
+  {
+    "code": "7/13031",
+    "name": "Mentor Pba Database",
+    "nameZh": "PBA数据库CAD信息"
+  }
+]

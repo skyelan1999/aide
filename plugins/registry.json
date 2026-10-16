@@ -112,6 +112,22 @@
       "installedAt": "2026-09-29T00:00:00Z"
     },
     {
+      "id": "pjplan",
+      "name": "PjPlan 项目文档",
+      "description": "依据十进制分类目录检索项目文档类型并生成中性文件名与项目计划模板。",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "settings": {
+        "projectIdentifier": "",
+        "versionTrack": "P",
+        "majorVersion": "A",
+        "minorVersion": "1"
+      },
+      "installedAt": ""
+    },
+    {
       "id": "current-time",
       "name": "当前日期时间",
       "description": "查询运行环境的当前日期、时间和时区；可指定 IANA 时区",
