@@ -68,18 +68,21 @@ class LauncherDataTests(unittest.TestCase):
         self.assertFalse((self.persist / 'storage/data/socket').exists())
 
     def test_windows_import_sets_container_user_ownership(self):
-        with mock.patch.object(storage, 'set_owner') as owner:
+        with mock.patch.object(storage, 'set_owner') as owner, mock.patch.object(storage.os, 'chown') as direct_owner:
             storage.prepare(self.persist, {}, platform='windows')
         owner.assert_called_once()
         self.assertEqual(owner.call_args.args[1:], (1000, 1000))
+        self.assertEqual({call.args[0].name for call in direct_owner.call_args_list}, {'auth','cad-auth'})
+        self.assertTrue(all(call.args[1:] == (1000,1000) for call in direct_owner.call_args_list))
 
     def test_windows_existing_storage_repairs_root_ownership(self):
         self.prepare()
         info = (self.persist / 'storage').stat()
         uid, gid = info.st_uid + 1, info.st_gid + 1
-        with mock.patch.object(storage, 'set_owner') as owner:
+        with mock.patch.object(storage, 'set_owner') as owner, mock.patch.object(storage.os, 'chown') as direct_owner:
             storage.prepare(self.persist, {}, uid=uid, gid=gid, platform='windows')
         owner.assert_called_once_with(self.persist / 'storage', uid, gid)
+        self.assertEqual({call.args[0].name for call in direct_owner.call_args_list}, {'auth','cad-auth'})
 
     def test_unverified_existing_destination_is_never_overwritten(self):
         target = self.persist / 'storage'

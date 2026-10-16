@@ -67,8 +67,10 @@ def prepare_auth_directory(target, uid, gid, platform):
             raise RuntimeError('Authentication directory is not a safe directory')
         if not auth.exists():
             auth.mkdir(mode=0o700)
-            if platform == 'linux':
-                os.chown(auth, uid, gid)
+        # Windows also executes this helper in Linux. Newly added private
+        # directories must receive the configured container user's ownership.
+        if platform in ('linux', 'windows') and (auth.stat().st_uid, auth.stat().st_gid) != (uid, gid):
+            os.chown(auth, uid, gid)
 
 
 
