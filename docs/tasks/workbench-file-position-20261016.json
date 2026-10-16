@@ -78,12 +78,19 @@
   },
   "release_authorization": "Existing incremental test/docs/push/main authorization; no new version/tag or runtime change.",
   "rollback": "Only exact owned fixture may be deleted; preserve original files and data; no global history/cache cleanup.",
-  "handoff": "Continue actual scroll repair. Focused new hidden-layout test red0-vs506 before fix, green after viewVisible DOM-rect guard plus last-visible draft coordinates. No proof yet that native L023-to-L000 issue is fixed; candidate/full/runtime/UI retest required. Cache versions autosave7/app156. Original12 retained.",
+  "handoff": "Candidateebf9e38203f3/build92c6f482 built; bundle706069603 bytes, SHA f501adaa7ead783cd48deb4abb905ebc20ba070c6ae10ec3ac0306fae2d9afba verified incl actual local Docker load. Full live exec47304, log .agent-state/workbench-file-position/fix/full.log; re-poll same handle, never restart on observation timeout. Production remainsa8c22d43; actual native scroll repair NOT proven. After full: main clean gate/push as stages allow, fresh strict runtime.py before, designated AIDE_OPEN_BROWSER=0 start.command, runtime.py after. Reload original safe workbench to load app156/autosave7 before actual UI retest. New exclusive fixture helper .agent-state/workbench-file-position/fix/ui-setup.py writes ownership to fix/ui; original setup owned.json is historical and must not be rerun/overwritten. Repeat known caret886/visibleL023 close-reopen screenshot/actual insertion. If stillL000, keep task open and diagnose further; no native PASS claim. Original12 retained.",
   "quick_receipt": {
     "status": "pass",
     "profile": "quick",
     "fingerprint": "b7275df5a3d93ea10672680c691541dd2d3bdebb19fb18bac0c1768f0d9edf3d",
     "head": "bbdc7df0243d6c017a22e9248496042dd4619433",
     "time": "20261016T004946889264Z"
+  },
+  "candidate": {
+    "image": "sha256:ebf9e38203f31bf93ef253a2c271f0581f3dca25448edb20c11b101e286a4371",
+    "buildCommit": "92c6f4826d79a8d6db1a4bcccf0314f4b4802706",
+    "sourceSHA256": "a0620d67ce4c4deb97eee4c6e4560764d39bbea2f0b625f15c90a78b519e685b",
+    "bundleProof": "docs/reviews/2026-10-16/workbench-file-position-bundle-proof.json",
+    "status": "built_import_verified_not_deployed"
   }
 }

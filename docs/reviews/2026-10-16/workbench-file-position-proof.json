@@ -28,7 +28,6 @@
   "actualNativeSafari": true,
   "runtime": "a8c22d43ccb8",
   "modelsInvoked": 0,
-  "productChanged": false,
   "goalComplete": false,
   "candidateFix": {
     "status": "focused_and_quick_pass_native_pending",
@@ -40,5 +39,8 @@
       "fingerprint": "b7275df5a3d93ea10672680c691541dd2d3bdebb19fb18bac0c1768f0d9edf3d"
     },
     "nativeRepairVerified": false
-  }
+  },
+  "initialNativeReproductionProductChanged": false,
+  "candidateSourceChanged": true,
+  "nativeRepairVerified": false
 }
