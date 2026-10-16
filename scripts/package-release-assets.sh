@@ -50,18 +50,18 @@ rm -rf "$UPDATE_STAGING"
 
 STAGING="$(mktemp -d "$ROOT/.agent-state/release-package.XXXXXX")"
 trap 'rm -rf "$STAGING"' EXIT
-for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
+for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATFORM#linux/}; do
   case "$TARGET" in
-    macos-arm64) LAUNCHERS=(start.command stop.command clean-docker-cache.command);;
-    windows-arm64) LAUNCHERS=(start.bat start.ps1 stop.bat stop.ps1 clean-docker-cache.bat clean-docker-cache.ps1);;
-    ubuntu-arm64) LAUNCHERS=(start.sh stop.sh clean-docker-cache.sh);;
+    macos-*) LAUNCHERS=(start.command stop.command clean-docker-cache.command);;
+    windows-*) LAUNCHERS=(start.bat start.ps1 stop.bat stop.ps1 clean-docker-cache.bat clean-docker-cache.ps1);;
+    ubuntu-*) LAUNCHERS=(start.sh stop.sh clean-docker-cache.sh);;
   esac
   PACKAGE="$STAGING/aide-$TAG-$TARGET"
   mkdir -p "$PACKAGE/scripts" "$PACKAGE/docker-images" "$PACKAGE/workspace" "$PACKAGE/context"
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
   cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/aide.sh" "$PACKAGE/scripts/"
-  cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$PACKAGE/scripts/"
+  cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/prebuilt-image.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
   if [[ "$TARGET" == windows-arm64 ]]; then cp "$ROOT/scripts/watch-port.ps1" "$PACKAGE/scripts/"; fi
   cp "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
@@ -101,7 +101,7 @@ cp "$ROOT"/stop.{command,sh,ps1,bat} "$ROOT"/clean-docker-cache.{command,sh,ps1,
 cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.ps1" "$ROOT/start.bat" "$FULL_PACKAGE/"
 cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
-cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/prebuilt-image.ps1" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
 cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
 copy_control_runtime "$FULL_PACKAGE/scripts"
@@ -130,13 +130,19 @@ EOF
 chmod +x "$FULL_PACKAGE/start.command" "$FULL_PACKAGE/start.sh" "$FULL_PACKAGE/scripts/"*.sh
 (cd "$STAGING" && zip -0qr "$OUT/aide-$TAG-full-linux-${PLATFORM#linux/}.zip" "$FULL_TARGET")
 
+# Also ship the complete archive referenced by ordinary source checkouts.
+AIDE_IMAGE="$IMAGE" bash scripts/aide.sh export-bundle
+SNAPSHOT="aide-$(bash scripts/version.sh show | tr ' ' '-')-${PLATFORM//\//-}-$SHORT_ID-offline.tar.gz"
+cp "$ROOT/docker-images/$SNAPSHOT" "$OUT/$SNAPSHOT"
+
 cat > "$OUT/RELEASE-ASSETS.txt" <<EOF
 aide $VERSION release assets
 Docker image: $IMAGE_ASSET ($PLATFORM, $IMAGE_ID)
-Launchers: macOS Apple Silicon, Windows ARM64, Ubuntu ARM64
+Complete checkout bootstrap archive: $SNAPSHOT
+Launchers: macOS, Windows, Ubuntu (${PLATFORM#linux/} Docker engine)
 Unified full runtime + upgrade package: aide-$TAG-full-linux-${PLATFORM#linux/}.zip (all launchers and one image archive; use the same ZIP for first run or the in-app updater)
-Windows x64 and Ubuntu x64 image bundles are omitted because no local linux/amd64 candidate image is available.
+This asset set contains only the stated Docker engine architecture. Build and verify the other architecture separately before advertising it.
 EOF
-(cd "$OUT" && shasum -a 256 "$IMAGE_ASSET" ./*.zip RELEASE-ASSETS.txt > SHA256SUMS)
+(cd "$OUT" && shasum -a 256 "$IMAGE_ASSET" "$SNAPSHOT" ./*.zip RELEASE-ASSETS.txt > SHA256SUMS)
 echo "Created release assets in $OUT"
 ls -lh "$OUT"

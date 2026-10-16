@@ -1,0 +1,78 @@
+{
+  "id": "prebuilt-default-startup-20261016",
+  "request": "后续所有设备的源码仓库和Release包都需要快速导入完整Docker镜像并启动，默认禁止现场编译，开发构建显式选择；确保匹配架构并发布可下载完整镜像和校验文件",
+  "baseline": "081aa28054c0da7bc4e1f5e07089109770f51457",
+  "initial_status": "M docs/installation.md\n M scripts/aide.sh\n M scripts/install.sh\n M scripts/package-release-assets.sh\n M scripts/test_launcher_data.py\n M scripts/test_launcher_data_docker.py\n M start.ps1\n?? docker/prebuilt-images.tsv\n?? scripts/prebuilt-image.ps1\n?? scripts/prebuilt-image.sh",
+  "acceptance": [
+    "普通源码入口与Release解压入口默认导入预构建镜像，缺失时校验下载，无编译或基础镜像拉取回退。",
+    "按Docker引擎架构选择唯一清单行，验证归档SHA256、镜像ID、平台、源码和CAD运行时；失败不切换镜像或开始数据迁移。",
+    "显式AIDE_BUILD_FROM_SOURCE=1与install --source保留开发构建。",
+    "真实Docker普通源码目录在没有Dockerfile或编译器时启动，迁移与数据内容权限保持；Windows静态与脚本回归，宿主由用户验收。",
+    "后续packaging自动生成/交付清单引用的完整镜像包及校验记录；最终主分支、离线包和远端附件分别验证，不能把本地准备等同上传成功。"
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/prebuilt-image.sh",
+    "scripts/prebuilt-image.ps1",
+    "scripts/install.sh",
+    "scripts/package-release-assets.sh",
+    "scripts/test_launcher_data.py",
+    "scripts/test_launcher_data_docker.py",
+    "start.ps1",
+    "docker/prebuilt-images.tsv",
+    "docker-images distribution metadata",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确这是所有设备的启动分发规则，不仅另一台Mac的临时处理；源码构建应为显式开发动作。",
+      "evidence": [
+        "docs/installation.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仓库携带每架构固定清单（非可执行数据）；先命中镜像/本地包，否则仅从本仓库HTTPS Release下载，逐层校验后按既有绑定/迁移启动。Release完整包沿用本地导入，无联网构建。",
+      "evidence": [
+        "scripts/prebuilt-image.sh",
+        "scripts/prebuilt-image.ps1"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "普通POSIX/Windows入口已接入预构建导入，开发构建显式开关；导出/打包维护完整归档及清单，待最终镜像/清单生成和发布。",
+      "evidence": [
+        "scripts/aide.sh",
+        "start.ps1",
+        "scripts/package-release-assets.sh"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "21 launcher/import tests及4 installer tests通过；102项quick已通过（后续打包接入修改需再验）；真实Docker普通源码目录缺少Dockerfile/Go/Git仍通过start.command复用预构建启动，原8项受保护内容权限一致。第一轮full尚运行，输入扩展及初始Node PATH缺失使该收据不能用于最终发布；最终输入需重跑。",
+      "evidence": [
+        "scripts/test_launcher_data.py",
+        "scripts/test_launcher_data_docker.py"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户要求源码仓库与Release包也必须具备完整运行镜像快速导入/启动能力；沿用先前main推送授权，允许上传本仓库发布附件。",
+  "rollback": "保留551eff及历史发布附件和私有数据；下载或身份校验失败不切换，旧目标镜像保留回滚标签；不删除用户容器或卷。",
+  "handoff": "尚未发布新启动策略；当前公开RC2页只补充了说明附件，新完整镜像尚未上传成功。最终ARM64候选需重新构建导出；AMD64产物未生成，不声称x64已可用。Windows原生用户验收、真实向量暂缓。真实STP样例转换在现有重型回归后排队。"
+}

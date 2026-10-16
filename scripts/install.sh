@@ -73,5 +73,5 @@ if [[ "$MODE" == --image ]]; then
   echo "Starting $AIDE_IMAGE. For subsequent start-image calls set AIDE_IMAGE=$AIDE_IMAGE in .env."
   bash scripts/aide.sh start-image
 else
-  bash scripts/aide.sh start
+  AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start
 fi

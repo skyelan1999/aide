@@ -9,7 +9,7 @@ source_sha() {
   (
     find cmd internal plugins vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
+    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -22,6 +22,14 @@ record_archive_sum() {
   if [[ -f docker-images/SHA256SUMS ]]; then awk -v name="$archive_name" '$2 != name' docker-images/SHA256SUMS > "$temporary"; fi
   printf '%s  %s\n' "$checksum" "$archive_name" >> "$temporary"
   mv "$temporary" docker-images/SHA256SUMS
+}
+record_prebuilt_image() {
+  local platform="$1" image="$2" source="$3" archive="$4" tag="$5" checksum temporary
+  checksum="$(shasum -a 256 "$archive" | awk '{print $1}')"
+  temporary="$(mktemp docker/prebuilt-images.XXXXXX)"
+  if [[ -f docker/prebuilt-images.tsv ]]; then awk -v p="$platform" '$1!=p' docker/prebuilt-images.tsv > "$temporary"; fi
+  printf '%s %s %s %s https://github.com/skyelan1999/aide/releases/download/%s/%s bundle\n' "$platform" "$image" "$source" "$checksum" "$tag" "$(basename "$archive")" >> "$temporary"
+  mv "$temporary" docker/prebuilt-images.tsv
 }
 if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
 if [[ "$MODE" == stop || "$MODE" == clean-cache ]]; then
@@ -225,6 +233,13 @@ case "$MODE" in
       fi
     fi
     export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
+    if [[ "$MODE" == start && "${AIDE_BUILD_FROM_SOURCE:-0}" != 1 ]]; then
+      source scripts/prebuilt-image.sh
+      IMG="$("$DOCKER_BIN" compose config --images aide)"
+      launcher_prebuilt_image "$DOCKER_BIN" "$IMG"
+      export AIDE_IMAGE="$IMG"
+      MODE=start-image
+    fi
     if [[ "$MODE" == start-image ]]; then
       IMG="$("$DOCKER_BIN" compose config --images aide)"
     else
@@ -334,7 +349,7 @@ case "$MODE" in
     cp start.command start.sh start.bat start.ps1 stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
     cp scripts/aide-maintenance.sh scripts/aide-maintenance.ps1 "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/watch-port.ps1 scripts/update-agent.sh scripts/update-agent.ps1 "$BUNDLE/scripts/"
-    cp scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py "$BUNDLE/scripts/"
+    cp scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 "$BUNDLE/scripts/"
     cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js \
       scripts/build-native-computer-bridge.sh scripts/native-computer-bridge.swift scripts/headless-browser-control.sh scripts/headless-browser-bridge.js "$BUNDLE/scripts/"
     mkdir -p "$BUNDLE/scripts/browser-runtime"
@@ -363,6 +378,7 @@ case "$MODE" in
     COPYFILE_DISABLE=1 tar -czf "$ARCHIVE.partial" -C "$STAGING" aide-offline
     mv "$ARCHIVE.partial" "$ARCHIVE"
     record_archive_sum "$ARCHIVE"
+    record_prebuilt_image "$PLATFORM" "$IMAGE_ID" "$(source_sha)" "$ARCHIVE" "v$VERSION"
     echo "离线启动包已导出：$ARCHIVE"
     ;;
   load) "$DOCKER_BIN" image load -i "$PROJECT_DIR/docker-images/aide-local.tar.gz" ;;

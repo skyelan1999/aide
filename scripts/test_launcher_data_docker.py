@@ -67,7 +67,7 @@ try:
         port = probe.getsockname()[1]
     (folder / 'workspace').mkdir(); (folder / 'context').mkdir(); (folder / 'scripts').mkdir()
     for name in ('start.command',): shutil.copy2(ROOT / name, folder / name)
-    for name in ('aide.sh', 'launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'watch-port.sh'):
+    for name in ('aide.sh', 'launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'watch-port.sh', 'prebuilt-image.sh'):
         shutil.copy2(ROOT / 'scripts' / name, folder / 'scripts' / name)
     shutil.copy2(ROOT / 'docker/offline.env.example', folder / '.env.example')
     (folder / '.aide-image').write_text(f'{tag} {info["Id"]} {info["Os"]}/{info["Architecture"]}\n')
@@ -138,9 +138,24 @@ p=Path('/data/sessions/active/persistence-guard.json');p.parent.mkdir(parents=Tr
     cid = ready(); assert snapshot(cid) == before
     assert hashlib.sha256((folder / '.env').read_bytes()).hexdigest() == environment_digest
     assert (folder / '.aide-image').is_file()
+    # An ordinary checkout launcher must also work without a Dockerfile, Go,
+    # Git checkout, or source compiler. The already-imported manifest image is
+    # reused and no source-build fallback is allowed.
+    (folder / '.aide-image').unlink()
+    (folder / '.aide-data/image').unlink()
+    (folder / 'docker').mkdir(exist_ok=True)
+    (folder / 'docker/prebuilt-images.tsv').write_text(' '.join([
+        info['Os']+'/'+info['Architecture'],info['Id'],info['Config']['Labels']['aide.srcsha'],'0'*64,
+        'https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/fixture.tar.gz','bundle'])+'\n')
+    normal = start('docker-normal-prebuilt.log')
+    assert normal.returncode == 0, 'see private docker-normal-prebuilt.log'
+    assert b'Prebuilt runtime ready:' in normal.stderr + normal.stdout
+    assert not (folder / '.aide-image').exists()
+    cid=ready();assert snapshot(cid)==before
+    assert command(['docker','inspect','--format','{{.Image}}',cid]).stdout.decode().strip()==info['Id']
     receipt = json.loads((folder / '.aide-data/storage/migration.json').read_text())
     result = {'status': 'pass', 'image': info['Id'], 'platform': info['Os'] + '/' + info['Architecture'],
-              'oneoffAndForeignProjectContainersIgnored': True, 'activeTaskRefusedBeforeStop': True, 'failedImportRestoresOriginalContainer': True, 'protectedFiles': len(before),
+              'ordinaryCheckoutUsesPrebuiltWithoutDockerfileOrCompiler': True, 'oneoffAndForeignProjectContainersIgnored': True, 'activeTaskRefusedBeforeStop': True, 'failedImportRestoresOriginalContainer': True, 'protectedFiles': len(before),
               'bytesAndPermissionsPreserved': True, 'dataAndHomeBindUnderLauncher': True,
               'ownedLegacyVolumesDeletedAfterMigration': True, 'containerEnvironmentImageMarkerAndCacheRecreated': True,
               'environmentRestoredExactly': True, 'sources': receipt['sources'], 'userDataUsed': False}

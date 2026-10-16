@@ -1,6 +1,6 @@
 ﻿# aide Windows 启动脚本（PowerShell 5.1+ / 7）。
 # 前置：Docker Desktop（推荐 WSL2 后端）；Windows 10/11。
-# 与 scripts/aide.sh start 对齐：等待引擎 → compose up -d --build → 健康检查 → 读令牌 → 打开浏览器。
+# 与 scripts/aide.sh start 对齐：等待引擎 → 导入预构建镜像 → 健康检查 → 读令牌 → 打开浏览器。
 # 兼容性要点：
 #   1) 本机常见故障：~/.docker/config.json 缺少 cliPluginsExtraDirs，docker CLI 找不到自带 compose 插件；
 #      此时自动补齐该字段（先备份），仍不可用则回退独立版 docker-compose；
@@ -250,10 +250,18 @@ if (-not (Test-Docker)) {
 }
 
 Remove-Item -LiteralPath '.cache/aide-manual-stop' -ErrorAction SilentlyContinue
-Write-Host "构建并启动 aide…"
+$sourceBuild = (-not $offlineBundle -and $env:AIDE_BUILD_FROM_SOURCE -eq '1')
+if (-not $offlineBundle -and -not $sourceBuild) {
+    . (Join-Path $PSScriptRoot 'scripts/prebuilt-image.ps1')
+    $prebuiltTarget = Get-ComposeResult config --images aide
+    if ($prebuiltTarget.Code -ne 0 -or -not $prebuiltTarget.Text -or $prebuiltTarget.Text -match '\r|\n') { throw 'Cannot resolve prebuilt image target.' }
+    Import-AidePrebuiltImage $PSScriptRoot $dockerExe $prebuiltTarget.Text
+    $env:AIDE_IMAGE = $prebuiltTarget.Text
+}
+Write-Host "启动 aide（默认使用预构建镜像）…"
 # A retained dependency image survives BuildKit cache cleanup. Source builds
 # using it run with networking disabled; offline bundles already have an app image.
-if (-not $offlineBundle -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
+if ($sourceBuild -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
     $localBase = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:dependencies-v1','--format','{{index .Config.Labels "aide.local-base"}}') -Capture
     if ($localBase.Code -eq 0 -and $localBase.Text -eq 'v1') {
         $cadBase = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:cad-dependencies-v1','--format','{{index .Config.Labels "aide.cad-runtime"}}') -Capture
@@ -369,7 +377,7 @@ if ($offlineBundle) {
       Write-Host "端口 $configuredPort 已占用，离线包改用端口 $selectedPort。"
   }
 }
-if (-not $offlineBundle -and (Invoke-Compose build aide).Code -ne 0) { throw 'Source image build failed; data migration not started.' }
+if ($sourceBuild -and (Invoke-Compose build aide).Code -ne 0) { throw 'Source image build failed; data migration not started.' }
 $dataImage = Get-ComposeResult config --images aide
 if ($dataImage.Code -ne 0 -or -not $dataImage.Text) { throw 'Cannot resolve application image for data migration.' }
 Prepare-AideLauncherData $PSScriptRoot $dockerExe $dataImage.Text

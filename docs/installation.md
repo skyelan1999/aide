@@ -184,3 +184,14 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 镜像已内置 sherpa-onnx 合成器（Apache-2.0，离线），但中文音色模型外置在 `/data/tts/` 以控体积。
 联网环境在容器内执行 `scripts/tts-setup --model huayan` 下载默认女声（约 67MB，含 SHA256 校验）；
 保密/空气隙环境按 [本地离线 TTS](security/tts-local.md) 手动放入模型。装完重启后，设置页「语音引擎」选「自动」即优先本地离线，文本不出本机。
+
+
+## 普通设备快速启动与开发构建
+
+源码仓库和 Release 启动包都默认使用预构建完整镜像。源码目录的 start.command、start.sh 和 start.bat/start.ps1 按 docker/prebuilt-images.tsv 选择 Docker 引擎架构匹配的镜像；优先复用已导入镜像及本地归档，缺少时从该仓库的 Release 下载，校验 SHA256、镜像 ID、平台、源码指纹和原生 CAD 运行时后启动。不会因为清理 Docker 缓存或本地源码指纹变化而自动编译。已有私有 .env、.aide-data 和工作区继续保留。
+
+开发者需要运行尚未发布的本地代码时，macOS/Linux 执行 `AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start`；PowerShell 设置 `$env:AIDE_BUILD_FROM_SOURCE='1'` 后运行 start.ps1。`scripts/install.sh --source` 也会显式选择源码构建。预构建模式使用清单指定的发布快照，不执行未打包的本地改动。
+
+完整 Release 包解压后启动时直接校验并导入包内镜像，后续复用本地镜像。缺少匹配架构的已发布镜像会明确停止并指出需要对应包，不会误用 ARM64 镜像启动 x64 引擎，也不会悄悄回退到编译。当前 ARM64 验收不代表 x64 或 Windows 实机通过。Windows 源码目录的首次完整包导入使用 tar.exe 临时解压内层镜像，需预留磁盘空间；导入后删除本次临时解压文件，保留压缩包供下次离线恢复。
+
+发布时须从已验证镜像执行 export-bundle（package-release-assets.sh 已接入），一同提交更新后的预构建清单与校验记录，并上传清单引用的完整包及 SHA256SUMS。仓库入口与 Release 解压入口都要实际验收，核对下载附件的大小、摘要和镜像身份；不能只推代码或薄启动器。保留旧附件作为回滚，不覆盖已发布的同名文件。

@@ -189,4 +189,63 @@ class LegacyOwnerSelectionTests(unittest.TestCase):
                     self.assertEqual(result.stdout.strip(),expected)
 
 
+class PrebuiltImportTests(unittest.TestCase):
+    def setUp(self):
+        import tarfile,io,hashlib,sys
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
+        self.root=Path(self.temp.name);(self.root/'docker-images').mkdir();(self.root/'docker').mkdir()
+        self.image='sha256:'+'1'*64;self.source='2'*64
+        self.archive=self.root/'payload.tar.gz'
+        with tarfile.open(self.archive,'w:gz') as t:
+            data=b'owned synthetic docker image stream';info=tarfile.TarInfo('aide-offline/docker-images/aide-local.tar');info.size=len(data);t.addfile(info,io.BytesIO(data))
+        self.digest=hashlib.sha256(self.archive.read_bytes()).hexdigest()
+        self.url='https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/fixture.tar.gz'
+        self.manifest=self.root/'docker/prebuilt-images.tsv';self.write_manifest()
+        self.bin=self.root/'bin';self.bin.mkdir()
+        program='#!'+sys.executable+r"""
+import os,sys,pathlib,json,shutil
+args=sys.argv[1:];root=pathlib.Path(os.environ['FIX_ROOT'])
+with (root/'calls').open('a') as f:f.write(json.dumps([pathlib.Path(sys.argv[0]).name]+args)+'\n')
+if pathlib.Path(sys.argv[0]).name=='curl':
+ shutil.copyfile(root/'payload.tar.gz',root/args[args.index('--output')+1]);sys.exit(0)
+image='sha256:'+'1'*64
+if args[0]=='info':print('linux/arm64');sys.exit(0)
+if args[:2]==['image','load']:
+ sys.stdin.buffer.read();(root/'loaded').touch();sys.exit(0)
+if args[:2]==['image','tag']:sys.exit(0)
+if args[:2]==['image','inspect']:
+ if args[2]=='aide:local':print('sha256:'+'3'*64);sys.exit(0)
+ if not (root/'loaded').exists():sys.exit(1)
+ print(image+'|linux/arm64|'+'2'*64+'|8.0.1.1.0' if '|' in args[-1] else image);sys.exit(0)
+sys.exit(91)
+"""
+        for name in ['docker','curl']:
+            f=self.bin/name;f.write_text(program);f.chmod(0o755)
+        self.env=dict(os.environ,PATH=str(self.bin)+os.pathsep+os.environ['PATH'],FIX_ROOT=str(self.root))
+    def write_manifest(self,platform='linux/arm64',url=None):
+        self.manifest.write_text(' '.join([platform,self.image,self.source,self.digest,url or self.url,'bundle'])+'\n')
+    def run_import(self):
+        return subprocess.run(['bash','-ec','source "$1"; launcher_prebuilt_image docker aide:local','fixture',str(ROOT/'scripts/prebuilt-image.sh')],cwd=self.root,env=self.env,text=True,capture_output=True)
+    def calls(self):return (self.root/'calls').read_text() if (self.root/'calls').exists() else ''
+    def test_existing_image_needs_no_download_or_load(self):
+        (self.root/'loaded').touch();r=self.run_import();self.assertEqual(r.returncode,0,r.stderr)
+        self.assertNotIn('"curl"',self.calls());self.assertNotIn('"load"',self.calls());self.assertIn('rollback-',self.calls())
+    def test_local_archive_imports_without_network_or_build(self):
+        shutil.copyfile(self.archive,self.root/'docker-images/fixture.tar.gz');r=self.run_import();self.assertEqual(r.returncode,0,r.stderr)
+        self.assertIn('"load"',self.calls());self.assertNotIn('"curl"',self.calls());self.assertNotIn('"build"',self.calls())
+    def test_missing_archive_downloads_verifies_and_streams(self):
+        r=self.run_import();self.assertEqual(r.returncode,0,r.stderr);self.assertIn('"curl"',self.calls());self.assertTrue((self.root/'docker-images/fixture.tar.gz').is_file());self.assertNotIn('"build"',self.calls())
+    def test_bad_checksum_never_loads_or_retags(self):
+        (self.root/'docker-images/fixture.tar.gz').write_bytes(b'corrupt');r=self.run_import();self.assertNotEqual(r.returncode,0);self.assertIn('checksum mismatch',r.stderr);self.assertNotIn('"load"',self.calls());self.assertNotIn('"tag"',self.calls())
+    def test_wrong_platform_and_untrusted_url_never_download(self):
+        for platform,url in [('linux/amd64',self.url),('linux/arm64','https://example.invalid/image.tar.gz')]:
+            self.write_manifest(platform,url);r=self.run_import();self.assertNotEqual(r.returncode,0);self.assertNotIn('"curl"',self.calls())
+    def test_duplicate_manifest_is_refused(self):
+        self.manifest.write_text(self.manifest.read_text()*2);r=self.run_import();self.assertNotEqual(r.returncode,0);self.assertNotIn('"load"',self.calls())
+    def test_source_and_windows_entry_require_explicit_build(self):
+        shell=(ROOT/'scripts/aide.sh').read_text();ps=(ROOT/'start.ps1').read_text(encoding='utf-8-sig')
+        self.assertIn('${AIDE_BUILD_FROM_SOURCE:-0}',shell);self.assertIn('launcher_prebuilt_image "$DOCKER_BIN" "$IMG"',shell)
+        self.assertIn("$env:AIDE_BUILD_FROM_SOURCE -eq '1'",ps);self.assertIn('if ($sourceBuild -and (Invoke-Compose build aide)',ps)
+        self.assertIn('AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start',(ROOT/'scripts/install.sh').read_text())
+
 if __name__ == '__main__': unittest.main()
