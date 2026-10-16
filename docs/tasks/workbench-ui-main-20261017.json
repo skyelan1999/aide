@@ -92,16 +92,20 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User authorized Git push to main. Full gate passed; checking release prerequisites before push. No version bump/tag/GitHub Release or deployment requested.",
+      "status": "pass",
+      "summary": "Git main push complete: origin/main verified as 18b82a0fa3c072f8ad60b998b57a9c3255bb7310, matching local HEAD, with clean worktree. Final receipt-only documentation commit follows. No version bump, tag, GitHub Release or deployment performed.",
       "evidence": [
-        ".agent-state/full.json"
+        "python3 scripts/agent-route.py release-check workbench-ui-main-20261017",
+        "git push origin main",
+        "git ls-remote origin refs/heads/main",
+        "git status --short --branch"
       ]
     }
   },
   "release_authorization": "User: 整理一下，推到main (2026-10-17). Authorizes Git commit and push to main; not version bump, tag or GitHub Release.",
   "rollback": "Use a new revert commit for the UI commit if needed; do not reset or force-push shared main.",
-  "handoff": "Full current-input checks pass. Two remote main updates integrated with no loss of either feature. First push safely rejected after remote advancement; rechecking gate before retry. No version bump/tag/Release or deployment.",
+  "handoff": "Five UI fixes committed in fe0cca12 and pushed to main with all concurrent remote work preserved. Final 106-check full suite and release gate passed. Source fingerprint unchanged by final documentation-only merges/receipts. Existing local service unchanged during integration; no new product release or runtime packaging.",
   "verification_fingerprint": "6927488097566bf4ee65645862bf03409f34e3bd6c711a459886a10f6a2f04bf",
-  "verified_code_head": "c9e3c21bb0f342c5b2803a8c9097c1ff3f70be60"
+  "verified_code_head": "c9e3c21bb0f342c5b2803a8c9097c1ff3f70be60",
+  "verified_remote_main": "18b82a0fa3c072f8ad60b998b57a9c3255bb7310"
 }
