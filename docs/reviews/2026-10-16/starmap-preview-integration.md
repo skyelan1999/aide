@@ -21,3 +21,7 @@
 源码 `199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c` 的 ARM64 镜像 `950bcbc2d79e` 已在禁网构建中完成 vet/build；普通用户 uid1000 的23项分发资源读取和 DOCX 往返冒烟通过，见[候选构建收据](evidence/starmap-preview-integrated-build-proof.json)。生产仍为08e257，未改用户配置、凭据或挂载。Safari9999原入口只读检查可用，无新增标签；这不是整合候选的页面验收。完整Go回归仍运行，候选尚未导出或发布。
 
 同一源码的 AMD64 镜像 `79765161aef2` 也已禁网构建，vet/build通过；Docker ARM64 主机上的 AMD64 模拟执行完成 uid1000、23项资源读取及 DOCX 往返。该证据不是 Windows 原生验收。原生验收的专用两份只读 Markdown 样例与保护状态检查脚本已备妥，尚未注册来源或替换生产。
+
+## 完整离线包与新目录启动
+
+两份整合包已通过内外 SHA-256、精确启动器和 CAD 许可证核对、隐私数据排除及实际 Docker 导入，见[包收据](evidence/starmap-preview-integrated-packages-proof.json)。新数据目录使用包内原始 start.command 无构建/拉取启动，通过编译版本的 CRLF/空行第三行定位与原始文件完整哈希、120三角形原生 CAD，见[启动收据](evidence/starmap-preview-integrated-fresh-start-proof.json)。临时实例已停止并恢复原 slot 标签，生产仍为08e257。测试使用现有 Docker 引擎与单独导入，不能称为空白引擎或接收设备验收；完整 Safari 与公开发布仍待。

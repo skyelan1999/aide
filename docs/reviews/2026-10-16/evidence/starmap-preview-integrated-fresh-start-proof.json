@@ -1,0 +1,52 @@
+{
+  "status": "pass",
+  "archive": "aide-0.1.17.0-RC2-linux-arm64-950bcbc2d79e-offline.tar.gz",
+  "project": "aide-cad-offline-test-df68a739",
+  "freshAuthDirectoryPrepared": true,
+  "actualStartCommand": true,
+  "documentLine": {
+    "line": 3,
+    "matchedRawFileHash": true,
+    "blankLineAndCRLFPreserved": true,
+    "actualCompiledImageAPI": true
+  },
+  "image": "sha256:950bcbc2d79e0b3ef431cf54eee67623561ac0fba4634ed2828170b828ceb6ed",
+  "sameImageForWorkbenchAndCAD": true,
+  "noBuildOrPull": true,
+  "nativeGeometry": {
+    "kind": "complete",
+    "engine": "occt-native",
+    "triangles": 120,
+    "segments": 0,
+    "points": 0,
+    "emptyNodes": 0,
+    "parts": 2,
+    "faces": 9,
+    "meshedFaces": 9,
+    "collapsedFaces": 0,
+    "bounds": [
+      [
+        -55.0,
+        -5.0,
+        0.0
+      ],
+      [
+        100.0,
+        20.0,
+        35.0
+      ]
+    ],
+    "unit": "mm",
+    "linearDeflection": 0.1,
+    "recoveredFaces": 0,
+    "nurbsFaces": 0,
+    "seconds": 0.030423124990193173
+  },
+  "privateReadOnlyWorkerCredentialMount": true,
+  "privateNetworkNoHostPorts": true,
+  "productionImageUnchanged": true,
+  "receivingDevice": "not_run",
+  "ownedFixtureStopped": true,
+  "slotTagRestored": true,
+  "scope": "Fresh local data and actual image import/start; not a blank Docker engine, native Safari or receiving-device acceptance."
+}

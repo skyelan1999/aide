@@ -86,7 +86,7 @@
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Retain main ab8df956/ec1b032 packages and runtime; this external worktree is isolated from the already-gated main publication. No user source files or protected state are changed.",
-  "handoff": "Combined code4e260323 (build metadata a4946c2e) source199a24cc, ARM64 image950bcbc2 built offline and normal uid1000 resources/DOCX smoke passed; actual production08e preserved. Existing full session63300/container aide-verify-46bf77052326 still running, do not restart solely for observation expiry. AMD64 79765161 also built offline; emulated uid1000 resource/DOCX check passed. Combined native/packages/final gate and public main delivery pending. Old59ebe candidates remain historical only.",
+  "handoff": "Integrated source199a24cc ARM950bcbc2/AMD79765161 candidates built offline, normal-user resource checks and complete bundle outer/inner hashes/licenses/exact launchers/actual Docker loads passed. Fresh ARM package start.command, line3/full raw hash (CRLF/blank lines) and native CAD120 passed, fixture stopped/slot restored and production08e unchanged. Current full session63300 remains running; native combined UI and final main/publication gates pending. Earlier59ebe packages historical only.",
   "candidatePackages": {
     "status": "historical_pre_merge_only",
     "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
@@ -123,6 +123,15 @@
     "candidate": "sha256:950bcbc2d79e0b3ef431cf54eee67623561ac0fba4634ed2828170b828ceb6ed",
     "sourceSHA256": "199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c",
     "buildProof": "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-build-proof.json",
-    "amd64Candidate": "sha256:79765161aef2eed8fdb5b0e777ffd42c3abeab8ed586aa192cc872d3107271a5"
+    "amd64Candidate": "sha256:79765161aef2eed8fdb5b0e777ffd42c3abeab8ed586aa192cc872d3107271a5",
+    "packages": {
+      "status": "local_verified",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-packages-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-fresh-start-proof.json"
+      ],
+      "remote": "pending",
+      "nativeSafari": "pending"
+    }
   }
 }
