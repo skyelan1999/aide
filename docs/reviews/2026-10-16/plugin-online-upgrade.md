@@ -8,6 +8,6 @@
 
 ![真实联网升级后的隔离工作台](evidence/plugin-online-upgrade-live.png)
 
-[脱敏收据](evidence/plugin-online-upgrade-receipt.json)保存源版本、新版、摘要、数据/备份/新工具校验。测试没有升级用户原插件；原代码、manifest、registry输入摘要一致。隔离HTTP工作台只暴露本机回环，没有用户模型和私密数据；完成即停。真正的9999更新仍通过用户指定start.command，复用原Safari标签，实际运行和最终截图在后续收据补全。
+[脱敏收据](evidence/plugin-online-upgrade-receipt.json)保存源版本、新版、摘要、数据/备份/新工具校验。测试没有升级用户原插件；原代码、manifest、registry输入摘要一致。隔离HTTP工作台只暴露本机回环，没有用户模型和私密数据；完成即停。真正的9999已通过用户指定start.command更新，复用原Safari标签完成最终卡片布局及升级来源对话框观测，未触发用户原插件升级；实际来源对话框截图见 evidence/plugin-upgrade-main-source.png。最终交付合并锁屏／Windows热修复，运行镜像、离线包与验收结果见[联合发布收据](evidence/lock-windows-hotfix-receipt.json)。
 
 保留旧DC镜像和完整离线包。源码模式下插件目录属于启动工程，主动升级会更新该目录中文件；本轮验收避免因此污染用户插件源码。插件持久数据通过复制原树并覆盖新版文件保留，设置/启用状态单独继承；不会自动npm/pip安装依赖。私网/认证更新服务器、所有第三方插件、接收设备、原生Windows/amd64未验证，插件apply与外部系统副作用也不是文件事务的撤回范围。当前无应用内手动回退按钮，备份可在停服务后人工恢复。

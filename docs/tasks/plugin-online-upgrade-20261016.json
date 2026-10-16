@@ -67,9 +67,13 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "原45项插件输入及认证/配置/会话/挂载一致；隔离浏览器与临时容器关闭、source tar清理，未删除用户数据；仅清理可再生DS_Store。保留回滚镜像包。",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/lock-windows-hotfix-receipt.json",
+        "git status --short",
+        "scripts/agent-route.py audit / clean"
+      ]
     },
     "release": {
       "status": "pending",
@@ -79,5 +83,5 @@
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized. No version/tag/Release; preserve original sessions/config and existing plugin state.",
   "rollback": "Keep previous DC image/offline package. Plugin swap retains old directory and registry snapshot; startup journal recovers an uncommitted swap.",
-  "handoff": "Build source candidate through start.command, reuse Safari original9999 and verify final layout/source controls. Protected original plugin inputs snapshotted. Do not upgrade original source plugins during UI acceptance; isolated real-network fixture already passed. Then offline package/fullmain/releasecheck/push. No version/tag/Release."
+  "handoff": "最终运行源码 bfb120b6，9999镜像52e943e1e8c3；离线包校验/导入/全新目录启动通过；最终full门禁及远端main推送待完成。Windows实机由用户验收，接收设备导入和原生Touch ID未运行。"
 }

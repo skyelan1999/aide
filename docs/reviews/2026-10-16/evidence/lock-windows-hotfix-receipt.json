@@ -1,0 +1,54 @@
+{
+  "sourceCommit": "bfb120b6",
+  "runtime": {
+    "image": "sha256:52e943e1e8c3441b2e58d915d288e563e9d84035b075b640c96c3a24b037d661",
+    "sourceSHA256": "d1ee8fc8a334b82e7e7a87450d0301ec0af4440e60ee0672995a1385765b3100",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndUnrelatedMountsPreserved": true,
+    "dataHomeBoundUnderLauncher": true
+  },
+  "bundle": {
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-52e943e1e8c3-offline.tar.gz",
+    "bytes": 770931075,
+    "sha256": "5eb5671d8117fa3315b602511f6a2a4423fd24e60fab3087578a4c30ada6a48f",
+    "innerImageTarSHA256": "12918b8532b23485cd96d963d4361a56f037548ee280748a3a401e9706b27532",
+    "image": "sha256:52e943e1e8c3441b2e58d915d288e563e9d84035b075b640c96c3a24b037d661",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "build": {
+      "version": "0.1.17.0-RC2",
+      "image": "sha256:52e943e1e8c3441b2e58d915d288e563e9d84035b075b640c96c3a24b037d661",
+      "platform": "linux/arm64",
+      "srcsha": "d1ee8fc8a334b82e7e7a87450d0301ec0af4440e60ee0672995a1385765b3100",
+      "cadRuntime": "8.0.1.1.0",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "licenseInBundle": true,
+    "licenseInImage": true,
+    "outerAndInnerChecksums": "pass",
+    "localDockerImport": "pass",
+    "runningImagePreserved": true,
+    "receivingDeviceImport": "not_run"
+  },
+  "freshOffline": {
+    "status": "pass",
+    "noBuildOrPull": true,
+    "freshAuthDirectoryPrepared": true,
+    "privateReadOnlyWorkerCredentialMount": true,
+    "productionImageUnchanged": true
+  },
+  "originalPluginInputsPreserved": 45,
+  "lockBrowser": {
+    "wrongPassword": "pass",
+    "correctPassword": "pass",
+    "refreshAfterUnlock": "pass",
+    "syntheticDataOnly": true,
+    "finalSourceSnapshot": true
+  },
+  "multiTabElectionAndFailedPersistenceRegressions": "pass",
+  "windowsCRLFMockedInstallerRegression": "pass",
+  "nativeWindowsStartup": "not_run_user_will_test",
+  "fullVerification": "in_progress",
+  "remotePush": "pending",
+  "supersededFullRun": "intentionally_stopped_to_fix_additional_reproduced_peer_veil_bug"
+}
