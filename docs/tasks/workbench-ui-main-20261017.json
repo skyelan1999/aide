@@ -61,13 +61,11 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Focused tests and actual Safari evidence recorded in individual task files. Full current-input gate follows clean commit.",
+      "summary": "All 106 full-profile commands passed, including current-input JS/UI regressions, isolated Go race/vet and CAD geometry. UI commit fe0cca12 merged with remote main without conflicts. Focused new file-path test also passed separately.",
       "evidence": [
-        "docs/tasks/file-path-navigation-20261017.json",
-        "docs/tasks/conversation-overflow-20261016.json",
-        "docs/tasks/markdown-image-bounds-20261017.json",
-        "docs/tasks/terminal-single-line-20261016.json",
-        "docs/tasks/composer-transparent-20261016.json"
+        "python3 scripts/agent-route.py verify full",
+        ".agent-state/verify-20261016T163556559726Z.log",
+        "node scripts/file-path-navigation.test.cjs"
       ]
     },
     "documentation": {
@@ -93,12 +91,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "User authorized Git push to main. Full gate passed; checking release prerequisites before push. No version bump/tag/GitHub Release or deployment requested.",
+      "evidence": [
+        ".agent-state/full.json"
+      ]
     }
   },
   "release_authorization": "User: 整理一下，推到main (2026-10-17). Authorizes Git commit and push to main; not version bump, tag or GitHub Release.",
   "rollback": "Use a new revert commit for the UI commit if needed; do not reset or force-push shared main.",
-  "handoff": "Local9999 runs the source candidate verified in Safari. Individual records retain browser evidence and limits. Full verification and remote main proof pending."
+  "handoff": "Full checks pass. Local9999 remains on previously Safari-verified UI source candidate; merged remote starmap changes were tested in isolated full suite, not deployed by this integration. Main push pending gate.",
+  "verification_fingerprint": "4da4003ba1ca42df5d839718548b3c16839835694cb6edb8daded6e9b3d3f2a2",
+  "verified_code_head": "522f79ca413659339a571c87cdfd226e1cdbc9f9"
 }
