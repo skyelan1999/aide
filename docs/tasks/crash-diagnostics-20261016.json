@@ -84,14 +84,19 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Authorized fast-forward main, independent clean-main release-check PASS, push and exact ls-remote49dc2cd32f79f4be615e9ea1cf295ca5e7026817 PASS. Local candidate3f4545df actual9999/native/protected-state and complete offline local import PASS. No version/tag/Release. Receiving-device import not_run. Final documentation-only receipt commit requires its own clean-main gate/push.",
+      "evidence": [
+        "docs/reviews/2026-10-16/crash-diagnostics.md",
+        "docs/reviews/2026-10-16/crash-diagnostics-full-proof.json",
+        "docs/reviews/2026-10-16/crash-diagnostics-runtime-proof.json",
+        "docs/reviews/2026-10-16/crash-diagnostics-bundle-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental main/push/local start.command/offline authorization; no version/tag/Release.",
   "rollback": "Preserve current5183a60 image/package and protected state. Revert only diagnostic frontend/health/recovery changes; no data migration.",
-  "handoff": "Full90 pass; source fixed, owned fixtures/worktree cleaned, runtime3f4545df and complete offline local-import/native normal checks pass. Next clean main independent release-check, authorized ff/push and exact remote proof. Original12 active; receiving device/Windows not_run, vectors deferred.",
+  "handoff": "Scoped crash diagnostics delivered to main; full90/independent clean-main gate, exact remote49dc2cd3, actual9999 image3f4545df, native normal/isolated fault/copy and complete offline local import pass. Final docs-only commit independently gate/push/exact remote checked after commit. Original12 remain active; receiving-device/Windows not_run, vectors deferred. No owned fixture/server/worktree remains.",
   "quick_receipt": {
     "profile": "quick",
     "status": "pass",
@@ -106,7 +111,7 @@
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "runningBefore": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
     "buildCommit": "2bbc5d63b4c06ff36e4b80dd6a312d25e18ab2bb",
-    "status": "local_native_normal_offline_full_pass_main_pending"
+    "status": "main_pushed_local_native_offline_pass_receiving_not_run"
   },
   "full_receipt": {
     "profile": "full",

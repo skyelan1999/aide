@@ -49,6 +49,6 @@
   },
   "nativeNormalScreenshotSHA256": "0500952fd2cc50b8e932e5776f4e0a7c951e14473c49ff6f6c19cf0f6f7a95c8",
   "full": "pass 90/90, server race676.113s plus vet; see full proof",
-  "main": "pending",
+  "main": "49dc2cd32f79f4be615e9ea1cf295ca5e7026817 pushed, exact remote verified; final docs-only receipt commit independently gated/pushed afterwards",
   "receivingDeviceImport": "not_run"
 }

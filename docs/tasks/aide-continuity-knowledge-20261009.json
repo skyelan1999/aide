@@ -7840,8 +7840,8 @@
   "crash_diagnostics_followup_20261016": {
     "task": "crash-diagnostics-20261016",
     "request": "Add crash detection and diagnostic code display",
-    "status": "in_progress",
-    "summary": "Fresh full90 PASS (server race676.113s/vet), isolated actual fault/native copy and actual9999 normal diagnostic/protected-state checks pass. Runtime3f4545df healthy and complete offline local import pass; cleanup complete, main gate/push pending.",
+    "status": "pass",
+    "summary": "Scoped crash diagnostics delivered: full90/server race676.113s/vet and independent clean-main gate pass; main49dc2cd3 pushed/exact remote. Runtime3f4545df actual9999 healthy, isolated actual fault/native clipboard and normal diagnostic/protected-state checks pass, complete offline local import pass. Cleanup complete; final docs-only commit independently gate/push checked. Receiving device/Windows not_run; original12 remain active.",
     "evidence": [
       "docs/architecture/crash-diagnostics.md",
       "docs/reviews/2026-10-16/crash-diagnostics.md",
