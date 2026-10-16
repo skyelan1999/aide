@@ -1,0 +1,77 @@
+{
+  "id": "ssh-trusted-native-20261017",
+  "request": "Continue original continuity goal: trusted9999 native real SFTP source caret/draft/history and path acceptance with exact cleanup; no model calls or new tabs.",
+  "baseline": "4d79a3034b413a51811ce840d69c5cfe3bfb43e5",
+  "initial_status": "",
+  "acceptance": [
+    "Actual trusted Safari real SFTP source edit/save and exact API/remote bytes",
+    "Saved caret/scroll and explicit dirty draft recovery across close/reopen/refresh with no auto-send",
+    "Native whole-version body+SVG restore and actual six-step path/source line4",
+    "Restore original registry, encrypted credential entries, networks,14sessions/config/mounts and view; only own fixture cleanup"
+  ],
+  "scope": [
+    "docs/tasks/ssh-trusted-native-20261017.json",
+    "docs/tasks/ssh-scene-history-native-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17",
+    "ignored owned fixtures only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue original available-SSH native gaps with independent source scope and protected current workspace.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+        "docs/reviews/2026-10-17/ssh-trusted-native.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use trusted9999 and temporary existing private SSH-network connection; own remote root and AI-hidden source; restore encrypted entries and original endpoints.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+        "docs/reviews/2026-10-17/ssh-trusted-native.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Existing software exercised; no product source changes. Owned harness registers and removes only temporary source/network/files.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+        "docs/reviews/2026-10-17/ssh-trusted-native.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual native edit/caret/draft/history/path plus whole remote bytes pass; existing frozen product full107/race/vet/CAD passes.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+        "docs/reviews/2026-10-17/ssh-trusted-native.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped observations, failed preparation/input transport and remaining variants documented.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+        "docs/reviews/2026-10-17/ssh-trusted-native.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Exact source registry and canonical encrypted entries/network endpoints, original14 sessions/config/mounts and scene restored; seven verified own files removed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+        "docs/reviews/2026-10-17/ssh-trusted-native.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user authorization for incremental AIDE tests/docs/main publication in this conversation; no version/tag change.",
+  "rollback": "Original registry/network/vault state verified restored; own fixtures only. Preserve pre-existing SSH project and published rollback packages.",
+  "handoff": "Scoped native independent SFTP source PASS; docs-only clean-main gate/publication pending alongside current path batch. Does not complete original SSH-workspace-mode task or original12."
+}

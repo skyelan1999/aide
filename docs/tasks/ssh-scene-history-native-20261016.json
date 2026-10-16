@@ -63,5 +63,12 @@
   },
   "release_authorization": "User authorized continuing original goal, incremental testing/docs/main delivery. Windows user-owned and real vector tests deferred. No production credential or workspace replacement.",
   "rollback": "Stop/remove only owned fixture project and isolated data registrations. Production service/data remain untouched; retain current551 runtime and offline package.",
-  "handoff": "SSH fixture remains healthy at localhost:18621. Safari required user certificate confirmation; no bypass performed. Browser main tab temporarily reused for user-authorized GitHub artifact upload. Original objective native SSH scene/history still open. User-host and Windows acceptance not claimed; vectors deferred. Launcher hotfix takes priority per latest user report."
+  "handoff": "SSH fixture remains healthy at localhost:18621. Safari required user certificate confirmation; no bypass performed. Browser main tab temporarily reused for user-authorized GitHub artifact upload. Original objective native SSH scene/history still open. User-host and Windows acceptance not claimed; vectors deferred. Launcher hotfix takes priority per latest user report.",
+  "trusted_source_followup_20261017": {
+    "status": "scoped_pass",
+    "summary": "Trusted9999 independent SFTP source native caret/draft/history whole-version/body+SVG/path-line4 passed with exact cleanup. Original18621 SSH workspace mode remains distinct and incomplete.",
+    "evidence": [
+      "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
+    ]
+  }
 }

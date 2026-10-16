@@ -63,12 +63,14 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Current-main integrated runtimee729/codeba9 native six-step and exact source line4, earlier short/long prefix guards/reportline5, merged quick104 and focused race/vet pass. Both integrated complete archive identities/scripts/licenses/import, fresh ARM original-launcher/raw CRLF hash and native CAD pass. Final full107 and clean-main release gate pending.",
+      "summary": "Current-main integrated runtimee729/codeba9 native six-step and exact source line4, earlier short/long prefix guards/reportline5, merged quick104 and focused race/vet pass. Both integrated complete archive identities/scripts/licenses/import, fresh ARM original-launcher/raw CRLF hash and native CAD pass. Final full107 and clean-main release gate pending. Final frozen-input full107 PASS, Go server race962.824s/vet/CAD; actual independent SFTP six-step/source line4 additionally passed.",
       "evidence": [
         "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json",
         "docs/reviews/2026-10-17/knowledge-path-final-packages-proof.json",
         "docs/reviews/2026-10-17/knowledge-path-final-fresh-proof.json",
-        "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json"
+        "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json",
+        "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
       ]
     },
     "documentation": {
@@ -94,5 +96,5 @@
   },
   "release_authorization": "Continue existing user-authorized incremental testing/docs/main publication. No new product or runtime release unless a reproduced defect requires it; Windows user-owned, real vectors deferred.",
   "rollback": "Remove owned temporary source by restoring exact pre-test registry; preserve original auth/settings/sessions/mounts and current d025 runtime. No user file edit, data restore or model invocation.",
-  "handoff": "Integrated codeba9/source3e5b, runtimee729 healthy; native and complete package/import/freshARM pass. Source inputs frozen. Next clean main FF, full107, scoped release gate, RC2 four supplemental assets/publicverification then main push. Original12 remain active; Windows user-owned, vectors deferred."
+  "handoff": "Full107 fingerprint98ebc999 pass; runtimee729 and complete ARM/AMD packages/freshARM verified. Native local and actual independent SFTP paths pass, cleanup exact. Next main clean gate, four prepared RC2 assets/additive notes, public verification and main push. Original12 active."
 }

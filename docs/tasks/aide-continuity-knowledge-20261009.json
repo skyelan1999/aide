@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Current-main integration runtimee729 native pass; finish integrated fresh ARM/full107/main scoped gate/RC2 package publication and push. Then available SSH native workflows (consider owned SSH source in trusted9999 instead of blocked18621 browser), original12 remaining. Windows user-owned, vectors deferred.",
+  "handoff": "Complete knowledge-path-native-20261017 and docs-only SSH clean-main gates, current RC2 four supplemental assets/public verification and main push. Full107 current98ebc999 pass. Then original12: SSH workspace-mode, recovered branch lifecycle, approval/outcome/timeline/combined workflows. Windows user-owned; real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -207,11 +207,13 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Current-tab preview returns to the same map channel with query, source filter and retrieval mode restored in authenticated Safari; original view cleanup passed.",
+        "latestScopedEvidence": "Native real SFTP source close/reopen caret and visible scroll, explicit dirty draft recovery across refresh and exact adjacent insertions/API/remote bytes now pass.",
         "evidence": [
-          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
         ],
-        "remaining": "SSH caret/directory, multi-tab branch/capacity and restart boundaries remain scoped gaps; already-proven local preview return is no longer missing."
+        "remaining": "SSH workspace-mode isolation, multi-tab branch/capacity and restart boundaries remain; source caret is no longer wholly untested."
       }
     },
     {
@@ -310,6 +312,16 @@
           "docs/reviews/2026-10-16/evidence/continuity-history-current-proof.json"
         ],
         "remaining": "Native SSH whole-version restoration and interrupted-operation recovery UI still need direct evidence. Retention/GC apply were deliberately not executed; preview/cancel and ZIP import/merge are already proven. This does not elevate all history/remote variants to complete."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Native trusted9999 real SFTP source shows V2 body+SVG then restores both to initialV1 with exact remote bytes and no-op observation stable.",
+        "evidence": [
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+        ],
+        "remaining": "SSH workspace-mode and interrupted/connection-loss restore UI remain; independent SFTP whole-version restore now has native proof."
       }
     },
     {
@@ -345,11 +357,13 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Final original start.command prebuilt d025 runtime, protected14-session/config/auth/mount preservation and native preview/star/return/stale-hash/removal passed; complete packages/import and fresh ARM start separately passed.",
+        "latestScopedEvidence": "Current integratede729 native local and real independent SFTP source editing/caret/draft/history/path proof, source/vault/network and14-session preservation pass.",
         "evidence": [
-          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
         ],
-        "remaining": "Other original workflows including available SSH editing/history/restore, approval UI, lock and long-open combined behavior remain scoped gaps. Windows remains user-owned."
+        "remaining": "SSH workspace-mode, native creation and cross-session approval/lock/long-open combined workflows remain; Windows user-owned."
       }
     },
     {
@@ -594,6 +608,16 @@
           "docs/tasks/knowledge-language-service-20261009.json"
         ],
         "remaining": "当前完整浏览器的可信度标识和诊断联动仍需验收；完整依赖项目及其他语言未证明。已有外部调用保持未解析，不能将其描述为已完成跨依赖类型绑定。"
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Authenticated Safari local and SFTP six-step paths distinguish DOM/name/HTTP candidates from lexical binding/source declaration, plus5 unresolved calls in summary; exact source line4 passes.",
+        "evidence": [
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+        ],
+        "remaining": "Optional type-service controls and diagnostic interaction, broader indexed dependencies/languages remain separate."
       }
     },
     {
@@ -638,12 +662,13 @@
       ],
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Authenticated actual Safari two-step report/source chain, changed-prefix refusal, updatedline5, six-step static button/service chain and exact source line4 now directly pass. Large-map6500 total-edge suppression reproduced and fixed with independent code budget; current-main integrated runtime reverified.",
+        "latestScopedEvidence": "Authenticated local report/source and long-prefix guards plus local and real independent SFTP six-step/source line4 pass on integratede729. Frozen full107/race/vet/CAD and complete packages pass.",
         "evidence": [
-          "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json"
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
         ],
-        "remaining": "Final integrated full/packages/main release gate/publication; available SSH native complete-chain and associated scope variants still need direct evidence. Static HTTP candidates do not prove runtime execution."
+        "remaining": "Public RC2/main delivery, SSH workspace-mode and associated responsive/theme scope remain separate; no runtime execution claim."
       }
     },
     {
@@ -8030,9 +8055,17 @@
   "knowledge_path_native_20261017": {
     "status": "in_progress",
     "task": "docs/tasks/knowledge-path-native-20261017.json",
-    "summary": "Merged remote UI/path-navigation main9740; rebuilt e729/source3e5b/codeba9. Actual native six-step/source line4 and protected14sessions pass; earlier short/long guards/reportline5 retained. Both integrated complete packages verified/imported. Fresh ARM smoke/full107/main gate/RC2 upload/push pending.",
+    "summary": "Frozen integrated full107/race962.824s/vet/CAD pass; local and real SFTP native paths/source locations, complete packages/import/freshARM pass. Main gate/publicRC2supplement/push pending.",
     "evidence": [
       "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json"
     ]
+  },
+  "ssh_trusted_native_20261017": {
+    "status": "scoped_pass",
+    "task": "docs/tasks/ssh-trusted-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
+    ],
+    "summary": "Native real independent SFTP source saved caret/scroll, explicit dirty draft refresh recovery, whole-version body+SVG restore and six-step source line4 pass. Registry/encrypted entries/networks/14sessions/config/mounts restored. SSH-workspace mode and remaining original12 gaps remain."
   }
 }

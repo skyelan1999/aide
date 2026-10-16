@@ -1,0 +1,76 @@
+{
+  "status": "scoped_native_pass",
+  "runtime": "e729ba4f061bb87321e6296be10d600d2dbbf4e867437d2f589e584f4fe2b54d",
+  "mode": "Independent real SFTP source in trusted9999, not SSH workspace mode",
+  "newTabs": 0,
+  "modelCalls": 0,
+  "saved": {
+    "status": "pass",
+    "actualNativeInput": true,
+    "lineMarker": 23,
+    "insertedText": " SSH-SAVED-CURSOR",
+    "inputTransportNote": "Native typeText omitted square brackets; exact observed plain marker and entire document independently checked.",
+    "exactWholeBodyAndRemoteBytes": true,
+    "sha256": "224337234277a298e2e6927fc4d185fba704ca3b334984f415299fbdd815c922"
+  },
+  "caret": {
+    "status": "pass",
+    "nativeCloseReopenEdit": true,
+    "caretProvedByAdjacentSecondInsertion": true,
+    "wholeRemoteBytesExact": true,
+    "sha256": "192450259b9145fae2e4f049ab27d2a641b1f1bf80092636ec295ba8a0853c3d"
+  },
+  "draft": {
+    "status": "pass",
+    "nativeBrowserRefreshAndExplicitRecovery": true,
+    "fileAutomaticallyReopened": true,
+    "unsavedRemoteFileUnchangedBeforeRecovery": true,
+    "caretProvedByAdjacentRecoveredInsertion": true,
+    "wholeRemoteBytesExact": true,
+    "sha256": "84c865bdd3bebe11665b8870652a091595f8b4db2c3189a63d47ab41eaf5b3f6"
+  },
+  "history": {
+    "status": "pass",
+    "nativeWholeVersionRestore": true,
+    "bodyAndEmbeddedSVGBothRestoredExact": true,
+    "nativeV2ThenV1ImageLabelsObserved": true,
+    "noOpObservationDoesNotAppend": true,
+    "historyTotalAfterRestore": 6,
+    "bodySHA256": "8fe7805b7d5d471dddec8f6a8fb99e1e6a4cfcb9b800503d40056b04901ac2b9"
+  },
+  "path": {
+    "actualNativeSixSteps": true,
+    "staticCandidatesNotExecutionTrace": true,
+    "sameTabReadOnlySourceLine4Selected": true
+  },
+  "cleanup": {
+    "status": "pass",
+    "sourceRegistryBytesRestored": true,
+    "originalEncryptedVaultEntriesExact": true,
+    "originalNetworkEndpointsExact": true,
+    "onlyOwnReferenceAndCredentialRemoved": true
+  },
+  "remoteCleanup": {
+    "status": "pass",
+    "onlyOwnedSevenFilesRemoved": true,
+    "parentProjectPreserved": true,
+    "restoredBytesHashes": {
+      "server.go": "104fbea85caf04d4f6879e37904aea3ceddd799609f67b7be0459d4a81a53ca1",
+      "app.js": "7ce4a0e8bdcd0462e582933a9781015bd378dc8a1900a9c24e1c54f84c80d0fb",
+      "index.html": "c8b1465c13c4d691f4259cfbb2a688da9cc6bf8ebabd766cc89b95cef5d93411",
+      "scene notes/notes.md": "8fe7805b7d5d471dddec8f6a8fb99e1e6a4cfcb9b800503d40056b04901ac2b9",
+      "scene notes/diagram.svg": "5fe7f71e3c5d61efa676d0f9b17ee10214f58253d4b61fb55c0212ac08981eee",
+      "reports/summary.md": "684b6ba3feb889e3a3c2571bceca68cf27fa5f8ae0d69b0ec286ba380e9f408c",
+      "evidence/analysis notes.md": "469dae9c5869f90ff257c83352b00fb69ee3c7ecf01ce5bd56547f558f38a026"
+    }
+  },
+  "protectedOriginal14SessionsAuthSettingsMounts": true,
+  "originalMapAndWorkbenchSceneRestored": true,
+  "remaining": [
+    "SSH workspace mode isolation",
+    "Interrupted restore UI and connection-loss boundaries",
+    "Approval and lock combined workflows",
+    "Recovered branch lifecycle audit",
+    "Windows user-owned; real vectors deferred"
+  ]
+}
