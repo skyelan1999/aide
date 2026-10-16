@@ -63,11 +63,13 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "候选构建已通过 go vet 和 Go build，Safari 9999 已确认 PjPlan 已启用且设置页提供项目标识、P/R 阶段及版本配置。来源目标审批/应用到真实文件的端到端写入尚未验收；按仓库约定未运行测试。",
+      "summary": "候选构建已通过 go vet 和 Go build；Safari 9999 确认 PjPlan 已启用且设置页提供项目标识、P/R 阶段及版本配置。Aide 实际只读调用验证了分类查询；文件名生成因当前项目标识为空按预期拒绝。来源目标审批/应用到真实文件的端到端写入尚未验收；按仓库约定未运行测试。",
       "evidence": [
         "Approved start workflow completed Node checks, go vet -mod=vendor ./..., and CGO_ENABLED=0 Go build; AIDE_RUN_TESTS=0",
         "Safari system browser at https://localhost:9999 showed PjPlan 项目文档 pjplan · v1.0.0 as 使用中; plugin surface had no load error and registered class_lookup/build_filename/document_template",
         "Safari PjPlan settings rendered 项目标识, 大版本 A/B/C, 小版本, 文档阶段 P/R controls; settings were canceled without saving",
+        "Aide session #52 called pjplan_class_lookup for 10262 and 1402: both returned expected catalogue entries; pjplan_build_filename rejected the call because projectIdentifier is empty",
+        "The Aide call created no files and changed no settings",
         "git diff --check, node --check plugins/pjplan/index.js, and JSON parsing passed; no test suite was run",
         "End-to-end approval/application to a real system-documents file was not performed"
       ]
