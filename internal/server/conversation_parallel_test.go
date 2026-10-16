@@ -30,6 +30,9 @@ func TestConversationParallelAdaptiveEvidence(t *testing.T) {
 					t.Error("planner/worker received executable tools")
 				}
 				last := body.Messages[len(body.Messages)-1].Content
+				if body.Messages[len(body.Messages)-1].Role != "system" {
+					t.Error("analysis role still inherits executor user-task instructions")
+				}
 				if strings.HasPrefix(last, "[parallel planner]") {
 					if body.Thinking["type"] != "disabled" {
 						t.Error("scheduling must use its output budget for JSON")
@@ -84,6 +87,33 @@ func TestConversationParallelAdaptiveEvidence(t *testing.T) {
 				t.Fatal("planner altered session configuration")
 			}
 		})
+	}
+}
+
+func TestConversationParallelEvidenceIgnoresBookkeepingAndReplay(t *testing.T) {
+	read := readCall("read_file", `{"path":"discovery.md"}`)
+	read.ID = "read-one"
+	input := []Message{{Role: "user", Content: "Inspect first"}, {Role: "assistant", ToolCalls: []ToolCall{read}}, {Role: "tool", ToolCallID: read.ID, Content: "[工具记录1]\nObserved components"}}
+	base := parallelEvidence(input)
+	ledger := readCall("record_research_finding", `{"name":"components"}`)
+	ledger.ID = "ledger-one"
+	input = append(input, Message{Role: "assistant", ToolCalls: []ToolCall{ledger}}, Message{Role: "tool", ToolCallID: ledger.ID, Content: "[工具记录2]\nRecorded"}, Message{Role: "assistant", Content: "A draft"}, Message{Role: "user", Content: "A completion review nudge"})
+	if parallelEvidence(input) != base {
+		t.Fatal("internal bookkeeping/review became discovery")
+	}
+	read.ID = "read-two"
+	input = append(input, Message{Role: "assistant", ToolCalls: []ToolCall{read}}, Message{Role: "tool", ToolCallID: read.ID, Content: "[工具记录3]\nObserved components"})
+	if parallelEvidence(input) != base {
+		t.Fatal("identical tool replay became new evidence")
+	}
+	input = append(input, Message{Role: "tool", ToolCallID: read.ID, Content: "[工具记录4]\nChanged component dependency"})
+	if parallelEvidence(input) == base {
+		t.Fatal("changed real tool result was ignored")
+	}
+	before := parallelEvidence(input)
+	input = append(input, Message{Role: "user", Content: wrapSteer("Inspect deployment too")})
+	if parallelEvidence(input) == before {
+		t.Fatal("user steer ignored")
 	}
 }
 
@@ -285,7 +315,7 @@ func parallelFanout(t *testing.T, limit int) {
 	if maximum.Load() != int32(limit) {
 		t.Fatalf("maximum %d", maximum.Load())
 	}
-	if len(merged) != 2 || !strings.Contains(merged[1].Content, fmt.Sprintf("analysis-section-%d", limit)) || !strings.Contains(merged[1].Content, "ONE coherent final answer") {
+	if len(merged) != 2 || !strings.Contains(merged[1].Content, fmt.Sprintf("analysis-section-%d", limit)) || !strings.Contains(merged[1].Content, "ONE coherent final answer") || !strings.Contains(merged[1].Content, "Do not redispatch") {
 		t.Fatalf("bad merge: %+v", merged)
 	}
 	a.mu.Lock()

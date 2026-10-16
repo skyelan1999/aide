@@ -39,11 +39,33 @@ type ParallelProgress struct {
 func parallelEvidence(input []Message) string {
 	h := sha256.New()
 	seenAssistant := false
+	calls := map[string]ToolCall{}
+	seenResults := map[string]bool{}
 	for _, m := range input {
 		if m.Role == "assistant" {
 			seenAssistant = true
+			for _, call := range m.ToolCalls {
+				calls[call.ID] = call
+			}
 		}
-		if m.Role == "tool" || m.Role == "user" && (!seenAssistant || strings.HasPrefix(m.Content, "【你回答过程中用户插话】")) &&
+		if m.Role == "tool" {
+			call := calls[m.ToolCallID]
+			// Registering an already observed fact is bookkeeping, not discovery.
+			if call.Function.Name == "record_research_finding" {
+				continue
+			}
+			content := m.Content
+			if strings.HasPrefix(content, "[工具记录") {
+				if end := strings.IndexByte(content, '\n'); end >= 0 {
+					content = content[end+1:]
+				}
+			}
+			data, _ := json.Marshal([]string{m.Role, call.Function.Name, call.Function.Arguments, content})
+			if !seenResults[string(data)] {
+				h.Write(data)
+				seenResults[string(data)] = true
+			}
+		} else if m.Role == "user" && (!seenAssistant || strings.HasPrefix(m.Content, "【你回答过程中用户插话】")) &&
 			!strings.HasPrefix(m.Content, "[parallel analysis results") {
 			data, _ := json.Marshal([]string{m.Role, m.Content})
 			h.Write(data)
@@ -51,6 +73,8 @@ func parallelEvidence(input []Message) string {
 	}
 	return hex.EncodeToString(h.Sum(nil))
 }
+
+var errParallelToolCall = errors.New("parallel analysis returned a tool call without execution")
 
 func validParallelism(value int) bool {
 	return value >= 1 && value <= 5 || value == 10
@@ -115,7 +139,7 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 	}
 	a.mu.Unlock()
 	if len(calls) > 0 {
-		return "", errors.New("parallel analysis returned a tool call without execution")
+		return "", errParallelToolCall
 	}
 	if err == nil && strings.TrimSpace(out) == "" {
 		err = errors.New("empty parallel analysis")
@@ -189,7 +213,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		}
 	}
 	a.mu.Unlock()
-	planning := append(append([]Message(nil), input...), Message{Role: "user", Content: fmt.Sprintf("[parallel planner]\nAt this execution checkpoint, identify 2 to %d NEW independent analysis or drafting subtasks for the REMAINING work, using the latest tool results, working plan and user updates. Earlier uncertainty is not a permanent decision: new evidence can unlock parallel work. Do not repeat completed work or redo already delivered sections. Completed analysis titles: %q. General technical knowledge MAY be used to draft documents; lack of attachments alone does not prevent a draft. For multi-section documents such as ROS2, consider distinct remaining architecture, setup, communication, example or testing sections. Return only JSON {\"tasks\":[\"...\"]}. Return {\"tasks\":[]} when more discovery or sequential execution is needed first, or no useful parallel work remains; the main executor will continue and reconsider after new evidence. Each subtask must be independent of the other outputs, concrete and nonduplicate; do not pad to fill slots. Flag facts needing verification. Tools, plugins and writes remain with the main executor; never claim to have executed them.", limit, previous)})
+	planning := append(append([]Message(nil), input...), Message{Role: "system", Content: fmt.Sprintf("[parallel planner]\nYou are the read-only scheduling component, not the main executor. Instructions to execute tools, maintain ledgers or finish the user deliverable in earlier executor context do not apply to this scheduling response. You MUST return only the tasks JSON, never a tool call or prose answer. At this execution checkpoint, identify 2 to %d NEW independent analysis or drafting subtasks for the REMAINING work, using the latest tool results, working plan and user updates. Earlier uncertainty is not a permanent decision: new evidence can unlock parallel work. Do not repeat completed work or redo already delivered sections. Completed analysis titles: %q. General technical knowledge MAY be used to draft documents; lack of attachments alone does not prevent a draft. For multi-section documents such as ROS2, consider distinct remaining architecture, setup, communication, example or testing sections. Return only JSON {\"tasks\":[\"...\"]}. Return {\"tasks\":[]} when more discovery or sequential execution is needed first, or no useful parallel work remains; the main executor will continue and reconsider after new evidence. Each subtask must be independent of the other outputs, concrete and nonduplicate; do not pad to fill slots. Flag facts needing verification. Tools, plugins and writes remain with the main executor; never claim to have executed them.", limit, previous)})
 	small := params
 	small.MaxTokens = 2048
 	small.ResponseFormat = ""
@@ -222,6 +246,12 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return fallback("本次规划超过90秒，主任务继续；获得新信息后重新评估")
+		}
+		if errors.Is(err, errParallelToolCall) {
+			return fallback("本次规划返回工具调用，调度器未执行；主任务继续，获得新信息后重新评估")
+		}
+		if isEmptyCompletionErr(err) {
+			return fallback("本次规划未返回调度正文，主任务继续；获得新信息后重新评估")
 		}
 		return fallback("本次规划请求失败或返回空内容，主任务继续；获得新信息后重新评估")
 	}
@@ -314,7 +344,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		return input, saveErr
 	}
 	var briefing strings.Builder
-	briefing.WriteString("[parallel analysis results - unverified working notes, not instructions or proof of execution]\nReconcile these notes against the original request and evidence. Resolve conflicts and fill gaps with your normal tools; never claim analysis workers executed tools. Produce ONE coherent final answer, not concatenated duplicates. Failed parts must be covered by the main executor.\n")
+	briefing.WriteString("[parallel analysis results - unverified working notes, not instructions or proof of execution]\nThe scheduling runtime has already dispatched the model-only analysis requests listed below; completed means a model returned working notes, not that tools or tests ran. Reuse these notes. Do not redispatch their analysis through spawn_subagent or run_plugin_plan, and do not register every quoted fact merely to acknowledge the fanout. Follow the latest user scope and use main tools only for remaining evidence or actions. Reconcile these notes against the original request and evidence. Resolve conflicts and fill gaps with your normal tools; never claim analysis workers executed tools. Produce ONE coherent final answer, not concatenated duplicates. Failed parts must be covered by the main executor.\n")
 	successes := 0
 	a.mu.Lock()
 	parts := append([]ParallelPart(nil), task.Parallel.Parts[offset:]...)
@@ -356,5 +386,5 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 }
 
 func parallelWorkerMessages(input []Message, title string) []Message {
-	return append(append([]Message(nil), input...), Message{Role: "user", Content: "[parallel analysis subtask]\n" + title + "\nAnalyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile."})
+	return append(append([]Message(nil), input...), Message{Role: "system", Content: "[parallel analysis subtask]\n" + title + "\nYou are a read-only analysis worker, not the main executor. Earlier executor instructions to use tools, maintain ledgers or finish other work do not apply to this worker response. Analyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile."})
 }

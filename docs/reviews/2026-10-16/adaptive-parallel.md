@@ -9,3 +9,9 @@
 验证：初次编译暴露新增测试的未使用变量，已修复；第一次针对既有与新动态路径的race通过14.229s，加入12轮预算及真实read_file工具链后，冻结专项race通过19.318s。命令：隔离Docker当前源码快照，`go test -mod=vendor -race -count=1 -timeout=180s -run '^Test(ConversationParallel|ModelLed|Context.*Parallel|RunControl|Pause)' ./internal/server`，无网络和用户数据挂载。涵盖初始空/无效JSON后新证据解锁、同检查点不重放、JSON恢复、完成标题过滤、多轮累计/用量、12次边界、取消，以及主工具循环先读文件后并行。模拟提供商不能证明真实模型规划质量。
 
 Node进度卡回归通过：运行中等待机会、终态主任务处理、多轮任务显示与历史规划上下文行。实际工作台/模型、quick/full、镜像包和main尚待验收。
+
+真实千问qwen3.8-flash首轮验收先因测试文件误放`/workspace`而失败，当前选择工作根实际为Downloads；已按任务AgentRoot移动自建合成资料并逐字节验证，未改用户工作区配置。正向候选b16f253b实际read_file成功，第2次规划未完成，第3次因主任务update_plan后获得两路模块分析；两路返回并进入主汇总。但内部record_research_finding也触发了多次无效评估，直到12次上限；主模型还尝试重复派发子代理，因角色未配置而被拒绝。这一候选只证明动态机会已接通，不作为最终效率验收。
+
+据真实问题修订：证据键排除研究记账，工具结果去除记录编号后按工具/参数/正文去重；规划/子分析组件system指令明确角色，汇总提示分析请求已经派发，不得再用spawn_subagent/run_plugin_plan重复派发。无执行权限转交。规划返回工具调用与空正文分别给出固定原因，不暴露上游错误秘密。修订专项race20.518s通过；加入主汇总防重复说明后的冻结专项race21.149s、quick88通过。
+
+第一次完整检查session87179因上述真实验收问题主动中止，精确停止其owner55364和唯一测试容器aide-verify-ffb27601ad7b，未停止生产/用户任务；未生成或采用PASS收据。后续必须对修订冻结输入重新运行full。

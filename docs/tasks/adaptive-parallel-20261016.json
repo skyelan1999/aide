@@ -53,7 +53,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Frozen focused Docker race19.318s and quick88 pass. Actual runtime/model/browser and fresh full90 pending.",
+      "summary": "Revised frozen focused race21.149s/quick88 pass. Real b16 candidate proved late fanout but exposed bookkeeping-induced extra checks and executor instruction overlap, now corrected; first full87179 intentionally aborted, not a release receipt. Revised real runtime/model/full/offline pending.",
       "evidence": [
         "docs/reviews/2026-10-16/adaptive-parallel.md"
       ]
@@ -79,12 +79,12 @@
   },
   "release_authorization": "Prior explicit incremental test/push/main/local designated start.command/offline-image-package authorization; no version/tag/Release.",
   "rollback": "No data migration. Preserve prior3f4545df image/package and user state; revert scoped adaptive planning/UI changes.",
-  "handoff": "Quick88 and frozen focused race19.318s pass. Source ready for designated start.command candidate and real model/browser validation; no full receipt reused. Keep fixed product inputs during full. Original12 active.",
+  "handoff": "Revised source frozen after real candidate diagnosis; final focused race21.149s and quick88 pass. Next commit, idle preflight/designated start.command, new synthetic live-model session, offline and fresh full. Original owned synthetic session42/fixture recorded in .agent-state/adaptive-parallel/live-owner.json; preserve evidence and cleanup only owned test data. No current full pass; original12 active.",
   "quick_receipt": {
     "profile": "quick",
     "status": "pass",
-    "fingerprint": "40293541a3661129bf77466e169fdb95cb6a4da6b387af10f25dde11da2a6301",
-    "head": "17779287c1ba5610aa897c4b35e6457ade7928fc",
-    "time": "20261016T032820591348Z"
+    "fingerprint": "d7b76f338a5cfbd50ddc8def13270384b05e35373e4d6c26afa6b048ee3a2cfe",
+    "head": "92b5175a67015246216181a3e837fbbad42be307",
+    "time": "20261016T033801281179Z"
   }
 }
