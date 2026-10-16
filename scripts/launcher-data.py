@@ -75,7 +75,7 @@ def prepare_locked(root, sources, uid=1000, gid=1000, platform='linux'):
         for name in ('data', 'home'):
             if (target / name).is_symlink() or not (target / name).is_dir():
                 raise RuntimeError('Storage directory is missing or symbolic; refuse empty reinitialization')
-        if platform == 'linux' and (target.stat().st_uid, target.stat().st_gid) != (uid, gid):
+        if platform in ('linux', 'windows') and (target.stat().st_uid, target.stat().st_gid) != (uid, gid):
             set_owner(target, uid, gid)
         return {'status': 'existing', 'root': str(target)}
     stage = root / ('.storage-import-' + uuid.uuid4().hex)
@@ -103,7 +103,9 @@ def prepare_locked(root, sources, uid=1000, gid=1000, platform='linux'):
         output.flush()
         os.fsync(output.fileno())
     receipt.chmod(0o600)
-    if platform == 'linux':
+    # Windows launchers also run this helper inside a Linux container. Docker
+    # Desktop can preserve POSIX ownership on bind mounts, including mode 0700.
+    if platform in ('linux', 'windows'):
         set_owner(stage, uid, gid)
     # A single rename commits both trees and their receipt together. Interrupted
     # imports remain separate staging folders; never resume by mixing old/new data.

@@ -1,0 +1,70 @@
+{
+  "id": "fix-windows-compose-args",
+  "request": "修一下然后尝试启动：Windows Compose 数组参数报错",
+  "baseline": "1775bab7e7d9983588209f4a81323c4b57c2ea7b",
+  "initial_status": "",
+  "acceptance": [
+    "Compose build/config arguments remain separate",
+    "Attempt source build and startup and record actual health result",
+    "Windows Docker storage is writable by UID/GID 1000 without relaxing private directory modes"
+  ],
+  "scope": [
+    "start.ps1",
+    "docs/tasks/fix-windows-compose-args.json",
+    "scripts/launcher-data.py",
+    "scripts/test_launcher_data.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorized launcher fix and startup attempt.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use positional arguments for helpers consuming automatic args; preserve existing startup lifecycle.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Fixed Compose positional arguments and Windows Docker storage ownership on import and existing storage repair.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Startup exit 0; aide-aide-1 healthy on localhost:8097; health status ok and integrity ok. Twelve migration tests passed in isolated Linux container with temporary LF-normalized fixture copies.",
+      "evidence": [
+        "PowerShell AST parse PASS",
+        "Extracted helper checks: plugin and standalone build/config/up argument forwarding PASS",
+        "git diff --check PASS",
+        "Docker build Go vet/build completed; Python dependencies installed; image export in progress",
+        "Initial startup exposed root-owned mode-0700 storage; repaired using existing set_owner helper for Windows Docker platform",
+        "Initial direct-mounted test run: 10 passed, 2 existing shell tests failed due CRLF; temporary LF copies: 12/12 PASS",
+        "Second start.ps1: image built, health check passed, exit 0",
+        "docker ps: aide-aide-1 healthy, 127.0.0.1:8097->8080/tcp",
+        "GET container /healthz: service aide, status ok, integrity ok",
+        "start.ps1 SHA256 4469053F867463CFB3D0D0AD3315988B9F5633C1A4C6D81091B5C7325D525516",
+        "scripts\\launcher-data.py SHA256 626DB08423129BDBE8B36591F2A88C4FC911B37F94A4D294C752FC7472E5859C",
+        "scripts\\test_launcher_data.py SHA256 1F2743FEF0658DBCEF5887F073975220A8F08D8F91D3FD30C3EB77327DD8ED14"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Task record contains fixes, actual validation and startup outcome.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed focused diff; no data deletion or unrelated source edits.",
+      "evidence": []
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User authorized commit and push on main; fetched origin/main before commit. Version bump, public release and image export are outside this request.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户：帮我push一下，合到main上。授权本次四个文件提交并推送 main；未要求升版或 GitHub Release。",
+  "rollback": "Revert the focused source changes if needed; storage contents retained, private modes retained, owner corrected to application UID/GID 1000.",
+  "handoff": "Local aide-aide-1 verified healthy at https://localhost:8097/. Focused launcher and migration tests passed. Browser UI NOT_RUN (no UI change). Optional sherpa TTS download skipped. Preparing main commit and push."
+}

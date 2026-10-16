@@ -359,8 +359,8 @@ if ($offlineBundle) {
       Write-Host "端口 $configuredPort 已占用，离线包改用端口 $selectedPort。"
   }
 }
-if (-not $offlineBundle -and (Invoke-Compose @('build','aide')).Code -ne 0) { throw 'Source image build failed; data migration not started.' }
-$dataImage = Get-ComposeResult @('config','--images','aide')
+if (-not $offlineBundle -and (Invoke-Compose build aide).Code -ne 0) { throw 'Source image build failed; data migration not started.' }
+$dataImage = Get-ComposeResult config --images aide
 if ($dataImage.Code -ne 0 -or -not $dataImage.Text) { throw 'Cannot resolve application image for data migration.' }
 Prepare-AideLauncherData $PSScriptRoot $dockerExe $dataImage.Text
 Save-AideLauncherEnvironment $PSScriptRoot
