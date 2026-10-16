@@ -4,9 +4,11 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestStepLargeStreamingAndRange(t *testing.T) {
@@ -85,4 +87,33 @@ func TestStepRemoteConcurrencyBound(t *testing.T) {
 	stepRemotePreviewGate <- struct{}{}
 	defer func() { <-stepRemotePreviewGate }()
 	requireStatus(t, request(a, "GET", "/api/file/raw?source=cad-mcp&path=model.step", nil), 429)
+}
+
+func TestStepNamedPipeRejectedBeforeOpen(t *testing.T) {
+	if _, err := exec.LookPath("mkfifo"); err != nil {
+		t.Skip("mkfifo unavailable")
+	}
+	a := testApp(t)
+	file := filepath.Join(a.workPath, "blocking.step")
+	if err := exec.Command("mkfifo", file).Run(); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan int, 1)
+	go func() {
+		w := httptest.NewRecorder()
+		a.readFileRaw(w, httptest.NewRequest("GET", "/api/file/raw?path=blocking.step", nil))
+		done <- w.Code
+	}()
+	select {
+	case status := <-done:
+		if status != 400 {
+			t.Fatalf("status=%d", status)
+		}
+	case <-time.After(time.Second):
+		// A regression must not strand an Open syscall after the test fails.
+		if writer, err := os.OpenFile(file, os.O_WRONLY, 0600); err == nil {
+			writer.Close()
+		}
+		t.Fatal("named pipe blocked the STEP reader")
+	}
 }

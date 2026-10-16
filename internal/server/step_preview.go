@@ -75,6 +75,11 @@ func (a *App) streamStepRaw(w http.ResponseWriter, r *http.Request) bool {
 			fail(w, 400, fmt.Errorf("不预览符号链接"))
 			return true
 		}
+		// Reject FIFO/device leaves before Open, which could otherwise block.
+		if i == len(parts)-1 && !info.Mode().IsRegular() {
+			fail(w, 400, fmt.Errorf("STEP 预览仅支持普通文件"))
+			return true
+		}
 	}
 	f, err := root.Open(p)
 	if err != nil {

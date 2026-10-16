@@ -2691,3 +2691,35 @@ Object.assign(window.aideEnglish, {
 Object.assign(window.aideEnglish, {'已有 STEP 模型正在解析，请关闭或等待后重试。':'Another STEP model is being parsed. Close it or wait, then retry.'});
 
 Object.assign(window.aideEnglish, {"正在生成完整曲面…":"Generating complete surfaces…","曲面":"faces"});
+Object.assign(window.aideEnglish, {
+  '当前环境没有原生 CAD 服务，浏览器兼容预览仅支持 64 MiB。请通过新版 start.command 启动。':'Native CAD conversion is unavailable. Browser compatibility preview is limited to 64 MiB. Start with the updated start.command.',
+  '当前浏览器不支持有界 CAD 读取，请使用更新的浏览器。':'This browser does not support bounded CAD reads. Use a newer browser.',
+  '当前浏览器不支持 CAD 流式预览。':'This browser does not support streaming CAD previews.',
+  'CAD 网格块格式无效。':'Invalid CAD mesh batch.',
+  'CAD 输出块超过安全预算。':'The CAD output batch exceeds the size budget.',
+  'CAD 网格包含无效几何。':'The CAD mesh contains invalid geometry.',
+  '模型超过预览几何预算。':'The model exceeds the preview geometry budget.',
+  'CAD 曲面转换未完整结束。':'CAD surface conversion did not finish completely.',
+  'STEP 预览仅支持普通文件':'STEP preview supports regular files only.',
+  '仅支持 STEP 文件':'Only STEP files are supported.',
+  '当前运行环境未安装原生 CAD 转换服务':'Native CAD conversion is not installed in this environment.',
+  '已有 CAD 模型正在转换，请等待或取消后重试':'Another CAD conversion is running. Wait or cancel it before retrying.',
+  '无法准备 CAD 转换凭据':'Could not prepare the CAD worker credential.',
+  '原生 CAD 服务未响应，请检查转换服务状态':'The native CAD service did not respond. Check its status.',
+  'CAD 服务配置无效':'Invalid CAD service configuration.',
+  'CAD 服务尚未就绪。':'The CAD service is not ready.',
+  'CAD 服务认证失败。':'CAD service authentication failed.',
+  '未知 CAD 接口。':'Unknown CAD endpoint.',
+  'STEP 文件大小无效或超过 384 MiB。':'The STEP file size is invalid or exceeds 384 MiB.',
+  'STEP 文件为空。':'The STEP file is empty.',
+  'CAD 转换超时，转换进程已终止。':'CAD conversion timed out and its process was stopped.',
+  'CAD 传输块格式无效。':'Invalid CAD transfer chunk.',
+  'CAD 传输结尾无效。':'Invalid CAD transfer ending.',
+  'STEP 几何转换失败，文件可能不完整或包含不支持的实体。':'STEP geometry conversion failed. The file may be incomplete or contain unsupported entities.',
+  '装配包含无法读取的零件，未输出不完整模型。':'The assembly contains an unreadable part. The incomplete model was discarded.',
+  '存在未生成曲面的 CAD 面，未输出不完整模型。':'A CAD face could not be meshed. The incomplete model was discarded.',
+  '模型超过三百万三角面预算，未完成的模型已丢弃。':'The model exceeds three million triangles. The incomplete model was discarded.',
+  'CAD 几何包含无效坐标。':'The CAD geometry contains invalid coordinates.',
+  '装配包含只有线或点的零件，当前无法生成完整曲面预览。':'The assembly contains wire-only or point-only parts. A complete surface preview is unavailable.',
+  '文件中没有可显示的 STEP 曲面。':'The file contains no displayable STEP surfaces.'
+});
