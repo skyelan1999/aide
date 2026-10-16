@@ -7830,8 +7830,8 @@
   },
   "aurora_motion_followup_20261016": {
     "task": "aurora-motion-20261016",
-    "status": "in_progress",
-    "summary": "User requests visibly dynamic aurora. Two independent transform-only soft light layers, component pause/off/resume/narrow and native local5183a60 frame changes/protected restoration pass. Full4595 and main delivery pending.",
+    "status": "pass",
+    "summary": "Two moving layers, component lifecycle/light/dark390, native frame/restoration, frozen full88/race601.801s/vet and independent source gate/push08ccb097 exact pass. Runtime5183a60 healthy; offline local import pass; receiving device untested.",
     "evidence": [
       "docs/reviews/2026-10-16/aurora-motion.md",
       "docs/reviews/2026-10-16/aurora-motion-runtime-proof.json"
