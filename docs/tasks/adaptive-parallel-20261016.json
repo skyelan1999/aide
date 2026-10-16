@@ -80,14 +80,19 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Authorized fast-forward main, independent clean-main release-check PASS, push and exact ls-remote7220166f11f72da7faf7afc297c9727d1a89cfa0 PASS. Final local7b image/start.command/15 assets/protected14/native-normal and complete offline actual import PASS; real model transfer scope retained. No version/tag/Release. Final docs-only receipt independently gated/pushed afterwards; exact final HEAD is in private terminal receipt. Receiving device/Windows not_run.",
+      "evidence": [
+        "docs/reviews/2026-10-16/adaptive-parallel.md",
+        "docs/reviews/2026-10-16/adaptive-parallel-full-proof.json",
+        "docs/reviews/2026-10-16/adaptive-parallel-runtime-proof.json",
+        "docs/reviews/2026-10-16/adaptive-parallel-bundle-proof.json"
+      ]
     }
   },
   "release_authorization": "Prior explicit incremental test/push/main/local designated start.command/offline-image-package authorization; no version/tag/Release.",
   "rollback": "No data migration. Preserve prior3f4545df image/package and user state; revert scoped adaptive planning/UI changes.",
-  "handoff": "Final full90 PASS receipt20261016T035933633084Z, fingerprintc757a1bcc17dfb8b44192388565c125b1619af7036929d339ef97362557e9ec4; codee0/runtime7b/local native/complete offline/protected14 and cleanup pass. Next independent clean-main gate, authorized ff/push/exact remote, then final docs-only receipt/gate/push. Original12 active; Windows/receiving device not_run, vectors deferred.",
+  "handoff": "Scoped adaptive parallel lifecycle delivered: full90 PASS647.882s/vet, independent clean-main gate and exact remote7220166f, final runtime7b/sourcee0/protected14/native normal/complete offline import pass. Real5x source-equivalent normal path and13th-evidence/main-policy race scopes recorded. All owned tests/pages/server/intermediate archives removed, original Safari scene restored; settings only session sequence+3. Final docs-only commit separately gate/push/exact remote checked. Original12 remain active; Windows/receiving-device not_run, vectors deferred.",
   "quick_receipt": {
     "profile": "quick",
     "status": "pass",
@@ -131,5 +136,6 @@
     "fingerprint": "c757a1bcc17dfb8b44192388565c125b1619af7036929d339ef97362557e9ec4",
     "head": "e84d7d37ffa7ed11643624791d7725a2582f90d7",
     "time": "20261016T035933633084Z"
-  }
+  },
+  "delivery_main": "7220166f11f72da7faf7afc297c9727d1a89cfa0"
 }

@@ -7851,9 +7851,9 @@
   },
   "adaptive_parallel_followup_20261016": {
     "task": "adaptive-parallel-20261016",
-    "status": "in_progress",
+    "status": "pass",
     "request": "Discover parallel opportunities throughout execution as new evidence arrives",
-    "summary": "Final full90 PASS/server race647.882s/vet; focused22.487s covers13th discovery/main budgets. Real5x late3-way fanout, final7b normal native/protected14/complete offline local import and cleanup pass. Main gate/push pending; original12 remain active.",
+    "summary": "Scoped adaptive parallel delivered: full90/server race647.882s/vet and independent clean-main gate PASS; main7220166f pushed/exact remote. Final runtime7b/protected14/native-normal/complete offline import and cleanup pass. Real5x normal-path protocol and13th-discovery/main-policy tests separately scoped. Final docs-only commit independently gate/push checked. Original12 remain active; Windows/receiving-device not_run.",
     "evidence": [
       "docs/tasks/adaptive-parallel-20261016.json",
       "docs/reviews/2026-10-16/adaptive-parallel-model-proof.json"
