@@ -1,0 +1,77 @@
+{
+  "runtime": {
+    "image": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
+    "imageTag": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
+    "sourceSHA256": "42932fbc14e9692584880674b975bec2ca2fd814b0eaa4f89056d3fb3fb867f1",
+    "platformManifest": "sha256:d166efe008e9fdcd58c0ff4c6874c5637fa43241463149dcdc402e56860ab88f",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "preflight": {
+    "image": "sha256:8d1957c9b0c92bc376e5a20933f3b81abd10400cd0688625f9f97366d06512f9",
+    "health": "healthy",
+    "sessions": 14,
+    "running": 0,
+    "nonterminal": 0,
+    "queued": 0,
+    "historyBackupSHA256": "44afa2efe6d0cfcbd9e05ffb73a5d6f0e3959415567fbe621c67013892c77e50"
+  },
+  "nativeSafari": {
+    "reusedExistingWorkbenchTab": true,
+    "cacheVersions": {
+      "workbenchCSS": 3,
+      "workbenchBackgroundJS": 3
+    },
+    "temporarilySelectedAuroraAt22Percent": true,
+    "noNativeInputBetweenTwoScreenshots": true,
+    "originalBackgroundRestored": "off",
+    "originalStrengthRestored": 22,
+    "settingsClosed": true,
+    "originalRootSessionAndBlankPromptRestored": true,
+    "newTabs": 0,
+    "models": 0
+  },
+  "pixelSample": {
+    "nativeScreenshotsSameSize": [
+      1325,
+      940
+    ],
+    "noNativeInputBetweenSamples": true,
+    "backgroundRegion": [
+      280,
+      850,
+      1040,
+      930
+    ],
+    "meanAbsoluteChannelDifference": [
+      0.20529605263157893,
+      0.20529605263157893,
+      0.21598684210526317
+    ],
+    "changedPixels": 11155,
+    "totalRegionPixels": 60800
+  },
+  "screenshotsSHA256": {
+    "native-settings-b.png": "a16a9349a968f35b118c8c4bed9d67fc7de08ccd5c10a3f72dfc2a28812105d4",
+    "native-settings-a.png": "f1a198dd5ee78bef9553c5175a9e5508d1139ecb723eb90fb549d660a71fba3e"
+  },
+  "scope": "Native fixed-region screenshot change plus production asset identity; component computed-transform proof independently verifies animation. Not a frame-rate or resource benchmark.",
+  "fullGate": "running session4595",
+  "mainDelivery": "pending"
+}

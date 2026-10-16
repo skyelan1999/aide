@@ -7827,5 +7827,14 @@
     "task": "file-save-status-20261016",
     "scope": "Three focused regressions, full88/race588.399s/vet, actual native local dirty/undo/conflict-adoption/resave, protected cleanup, authorized9999 runtime8d1957c9, full offline local import and independent main gate/push974a4ae3 exact remote pass.",
     "runtimeProof": "docs/reviews/2026-10-16/file-save-status-runtime-proof.json"
+  },
+  "aurora_motion_followup_20261016": {
+    "task": "aurora-motion-20261016",
+    "status": "in_progress",
+    "summary": "User requests visibly dynamic aurora. Two independent transform-only soft light layers, component pause/off/resume/narrow and native local5183a60 frame changes/protected restoration pass. Full4595 and main delivery pending.",
+    "evidence": [
+      "docs/reviews/2026-10-16/aurora-motion.md",
+      "docs/reviews/2026-10-16/aurora-motion-runtime-proof.json"
+    ]
   }
 }

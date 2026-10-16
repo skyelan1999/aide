@@ -45,20 +45,26 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused lifecycle and quick pass; actual isolated browser proves both transforms move and pause/off/resume/narrow behavior. Full/native runtime delivery remains pending.",
+      "summary": "Focused/quick86 pass. Isolated actual browser proves moving transforms, pause/off/resume and390px. Native9999 candidate5183a60 shows background frame changes, protected bytes exact and original preference/scene restored. Fresh full session4595 running; main pending.",
       "evidence": [
-        "docs/reviews/2026-10-16/aurora-motion-component-proof.json"
+        "docs/reviews/2026-10-16/aurora-motion-component-proof.json",
+        "docs/reviews/2026-10-16/aurora-motion-runtime-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Candidate/component/native/rollback and pending full/main state documented without claiming component is full runtime.",
+      "evidence": [
+        "docs/reviews/2026-10-16/aurora-motion.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Temporary component tab/server closed, viewport reset. Native preference off/22 and original scene restored, protected bytes exact. No new workbench tab or model call.",
+      "evidence": [
+        "docs/reviews/2026-10-16/aurora-motion-component-proof.json",
+        "docs/reviews/2026-10-16/aurora-motion-runtime-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -68,5 +74,13 @@
   },
   "release_authorization": "Existing incremental main/push/local start.command/offline authorization; no new version/tag/Release.",
   "rollback": "Keep current8d1957c9 local image and offline bundle; scoped frontend revert; no data migration.",
-  "handoff": "Component visually verified. Preserve full scope; candidate/package/full/native through start.command and main gate remain."
+  "handoff": "Fresh full verification is live in exec session4595, log.agent-state/aurora-motion/full.log. Poll same handle; no restart on timeout. Runtime5183a60 is healthy and native candidate acceptance passed; original off/22 restored. Candidate build414da4da, offline bundle/local import pass. Need full completion/exact receipt, verification stage pass, clean-main independent release-check, authorized ff/push/exact remote and final documentation. Original goal12 remains active.",
+  "candidate": {
+    "image": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
+    "sourceSHA256": "42932fbc14e9692584880674b975bec2ca2fd814b0eaa4f89056d3fb3fb867f1",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "runningBefore": "sha256:8d1957c9b0c92bc376e5a20933f3b81abd10400cd0688625f9f97366d06512f9",
+    "buildCommit": "414da4dabe1c9ffd9c315692efe1dd2e1816e46d",
+    "status": "local_native_candidate_pass_full_main_pending"
+  }
 }
