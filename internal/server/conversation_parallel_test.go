@@ -202,7 +202,7 @@ func TestConversationParallelAdaptiveToolLoop(t *testing.T) {
 	}
 }
 
-func TestConversationParallelAdaptiveWavesAndBudget(t *testing.T) {
+func TestConversationParallelAdaptiveWavesAndLifecycle(t *testing.T) {
 	a, s, task := parallelFixture(t, 2)
 	var plans atomic.Int32
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -234,14 +234,42 @@ func TestConversationParallelAdaptiveWavesAndBudget(t *testing.T) {
 	}
 	input = append(input, Message{Role: "tool", Content: "next discovery"})
 	_, err := a.prepareParallel(context.Background(), s, task, cfg, input, params)
-	if err != nil || plans.Load() != 12 || task.Parallel.Round != 12 || task.Usage.Total != 12*60 {
-		t.Fatal("checkpoint budget/accounting not bounded")
+	if err != nil || plans.Load() != 13 || task.Parallel.Round != 13 || task.Usage.Total != 13*60 {
+		t.Fatal("new evidence after12 checkpoints was permanently disabled or usage lost")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	_, err = a.prepareParallel(ctx, s, task, cfg, input, params)
-	if err != context.Canceled || plans.Load() != 12 {
+	if err != context.Canceled || plans.Load() != 13 {
 		t.Fatal("cancelled checkpoint dispatched a planner")
+	}
+}
+
+func TestConversationParallelUsesMainRoundBudget(t *testing.T) {
+	a, _, task := parallelFixture(t, 2)
+	task.ExecutionPolicy = &ExecutionPolicy{ToolMaxRounds: 2}
+	task.Steer = make(chan string, 1)
+	if err := os.WriteFile(filepath.Join(a.workPath, "budget.txt"), []byte("same observed fact"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var plans, mains atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if strings.HasPrefix(body.Messages[len(body.Messages)-1].Content, "[parallel planner]") {
+			plans.Add(1)
+			parallelReply(w, `{"tasks":[]}`)
+			return
+		}
+		mains.Add(1)
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", ToolCalls: []ToolCall{readCall("read_file", `{"path":"budget.txt"}`)}}}}})
+	}))
+	defer provider.Close()
+	_, _, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: "Read the fact"}}, ProfileParams{MaxTokens: 4096}, builtinTools, task, map[string]Change{}, 0)
+	if err != nil || mains.Load() != 2 || plans.Load() != 2 || len(task.ToolUses) != 2 {
+		t.Fatalf("main round policy not respected: %v main%d plans%d", err, mains.Load(), plans.Load())
 	}
 }
 

@@ -186,12 +186,11 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		task.Parallel.Evidence = evidence
 	}
 	unchanged := task.Parallel != nil && task.Parallel.Evidence == evidence
-	exhausted := task.Parallel != nil && task.Parallel.Round >= 12
 	a.mu.Unlock()
 	if limit <= 1 {
 		return input, nil
 	}
-	if prepared && (unchanged || exhausted) {
+	if prepared && unchanged {
 		a.mu.Lock()
 		var err error
 		if task.Parallel != nil && task.Parallel.Phase == "interrupted" {

@@ -5,7 +5,7 @@
   "initial_status": "",
   "acceptance": [
     "Re-evaluate useful parallel analysis after real tool results and user steer; initial empty/invalid plan must not permanently disable fanout. No duplicate check on unchanged/recovered evidence or artificial completion nudges.",
-    "Keep concurrency at selected1-5/10 per wave, preserve prior notes and per-request contexts/usage, reject already completed exact titles, bound automatic checkpoint evaluations to12 per run. Single main executor retains tools/writes/approvals; cancellation stops current requests without replaying writes.",
+    "Keep concurrency at selected1-5/10 per wave, preserve prior notes and per-request contexts/usage, reject already completed exact titles. Evaluate throughout the existing main task rounds/time/cancellation budget; no fixed-count permanent disable. Single main executor retains tools/writes/approvals; cancellation stops requests without replaying writes.",
     "Distinguish temporary sequential discovery from failed planning; show multiple rounds and historical planner contexts. Focused race and workflow/browser validation, quick/full, docs/runtime/offline/main gates with scoped evidence."
   ],
   "scope": [
@@ -35,7 +35,7 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Evidence-keyed bounded checkpoint planning at main loop boundaries; persist key for resume, retain all wave parts/prior planner contexts, completed-title ledger,90s planner with reasoning off only for scheduler. Main/worker reasoning remains selected. No tool fanout added.",
+      "summary": "Evidence-keyed checkpoint planning at main loop boundaries; persist key for resume, retain all wave parts/prior planner contexts, completed-title ledger, isolated reference-data component protocol, JSON-object scheduler and90s timeout with scheduler-only reasoning off. Reuse main task rounds/time/cancel budget; no arbitrary12-check cutoff or new tool fanout.",
       "evidence": [
         "internal/server/conversation_parallel.go",
         "internal/server/workflow.go"
@@ -43,7 +43,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Evidence-triggered re-evaluation at chat tool-loop boundaries, persisted12-check budget/dedup key, cumulative round ledger/planner contexts and completed-title exclusion, single tool executor. Multi-round UI/context rows and cache versions updated.",
+      "summary": "Evidence-triggered re-evaluation through existing chat tool-loop lifecycle, persisted evidence-key dedup, cumulative round ledger/planner contexts, component request isolation/JSON mode and completed-title exclusion. Multi-round UI/context rows and cache versions updated; no permanent cutoff after12 checks.",
       "evidence": [
         "internal/server/conversation_parallel.go",
         "internal/server/workflow.go",
@@ -53,7 +53,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Final source focused race22.253s/quick88 pass. Actual Qwen5x: read first, round2 three model analyses observed concurrently/completed, round3 no remaining fanout, coherent final tests-design answer; only read_file/update_plan. Native actual9999 and390 light/dark component pass. Complete offline local import pass. Fresh full90/main pending.",
+      "summary": "Final lifecycle focused race22.487s including13th new-evidence fanout/main2-round policy/task-budget regressions and quick88 PASS. Actual Qwen5x3-round path on protocol-identical d1 candidate PASS; final change only removes >12 bypass. Native/component/offline acceptance scopes recorded; final runtime/package/full/main pending.",
       "evidence": [
         "docs/reviews/2026-10-16/adaptive-parallel.md",
         "docs/reviews/2026-10-16/adaptive-parallel-model-proof.json",
@@ -70,9 +70,12 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "All3 owned synthetic sessions and exact-hash fixture removed; original14 session bytes/auth/sources unchanged, settings only sequence42->45, mounts/workspace config unchanged. Safari original scene/file panel/tabs restored; owned IAB preview closed/viewport reset/server stopped. Owned7ff intermediate archive removed after preserving evidence; delivered3f rollback retained. Final image package will replace remaining owned d1 intermediate archive after verification.",
+      "evidence": [
+        "docs/reviews/2026-10-16/adaptive-parallel-cleanup-proof.json",
+        "docs/reviews/2026-10-16/adaptive-parallel-browser-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -82,13 +85,13 @@
   },
   "release_authorization": "Prior explicit incremental test/push/main/local designated start.command/offline-image-package authorization; no version/tag/Release.",
   "rollback": "No data migration. Preserve prior3f4545df image/package and user state; revert scoped adaptive planning/UI changes.",
-  "handoff": "Final runtime d1ad0e21d622 source25d71378 passed actual Qwen5x late3-way fanout, native actual UI and offline import. Next fresh full90 on frozen source plus final docker-images README/SHA metadata; no source/metadata edits or branch switching during full. Cleanup owned sessions42/43/44 and fixture with strict original14-file preservation, then independent main gate/push. Original12 active; Windows/receiving device not_run.",
+  "handoff": "Final lifecycle source frozen; focused race22.487s/quick88 pass, actual Qwen/native model path verified before two-line >12 cutoff removal. Next commit/start.command idle14 verification, final complete bundle import/owned intermediate cleanup, freeze README/SHA, fresh full. Original12 active.",
   "quick_receipt": {
     "profile": "quick",
     "status": "pass",
-    "fingerprint": "cc535bcaf62f77e3d29cb285971031824eb8620c8b75380f4b10705638fef1a4",
-    "head": "415861d31a4cc4308ab5d76d0583e71444961db7",
-    "time": "20261016T034516119887Z"
+    "fingerprint": "8cbaebaba7d3e238eaf9b7abd1591e4db2b0b81a748816e60fd698d96210f5f5",
+    "head": "41fa136f53d4ef016471d139fb34f4f675620b8c",
+    "time": "20261016T035600918896Z"
   },
   "candidate": {
     "serverInstanceId": "2026-10-16T03:46:25.722821049Z",

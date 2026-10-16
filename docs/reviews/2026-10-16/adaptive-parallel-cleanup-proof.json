@@ -1,0 +1,14 @@
+{
+  "originalSessionFiles": 14,
+  "ownedSessionsRemoved": 3,
+  "originalAuthSourcesAndSessionBytesPreserved": true,
+  "mountsAndWorkspaceConfigPreserved": true,
+  "settingsOnlyDifference": "session sequence advanced by3 for owned tests; not rewound",
+  "sequenceBefore": 42,
+  "sequenceAfter": 45,
+  "ownedFixtureRemovedAfterExactSHA256Check": "e2f97564e17a9e388ab2cdd4f4605cb7d0e80093fcde478bcde6d041785decc5",
+  "ownedPreviewClosedAndServerStopped": true,
+  "originalSafariSceneAndFilePanelRestored": true,
+  "originalICloudCheckoutUntouched": true,
+  "scope": "Private raw synthetic-session records retained; original14 session bytes/auth/source config unchanged. No broad cleanup."
+}

@@ -131,5 +131,7 @@
   },
   "finalAnswerSHA256": "6ccc4ae4d7fb023514604fe44b481d12ba22da02ac7ef3623eecbb58fc085ba3",
   "actualTestsExecuted": false,
-  "scope": "One real provider synthetic design task; three independent model calls observed, not a guarantee for every model or task. Earlier prototype failures separately recorded."
+  "scope": "One real provider synthetic design task; three independent model calls observed, not a guarantee for every model or task. Earlier prototype failures separately recorded.",
+  "acceptanceImage": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
+  "finalRevisionScope": "Final revision removes only the fixed12-check bypass; the observed3-check request/fanout protocol path is unchanged. >12 checks and existing main-budget behavior covered separately by race tests."
 }
