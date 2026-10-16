@@ -51,23 +51,28 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "旧551镜像35.5秒失败；同依赖叠加当前转换器真实私有文件81.74秒成功，无OOM，776零件实例、95641面实例（95622网格面+19退化边界）、2297064三角面、152线段。合成几何回归通过。实际页面、最终镜像和发布门禁尚待。",
+      "status": "pass",
+      "summary": "真实私有样例转换成功并在完整ab8df956镜像/Safari9999整模显示；旋转、坐标、距离、三点标定实际通过。回归覆盖曲面、混合线点、严格退化判定、背压与单位。关闭后无子进程或临时目录，数据与输入哈希不变。发布full门禁仍待最终分发输入。",
       "evidence": [
+        "docs/reviews/2026-10-16/cad-complex-step-recovery.md",
         "scripts/test_cad_geometry.py",
-        "scripts/step-worker.test.cjs",
-        "docs/architecture/cad-preview.md"
+        "scripts/step-worker.test.cjs"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "架构与脱敏验收记录说明恢复规则、退化边界、线点协议、测量近似性及本机/远端发布边界；不公开真实模型。",
+      "evidence": [
+        "docs/reviews/2026-10-16/cad-complex-step-recovery.md",
+        "docs/architecture/cad-preview.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "差异逐项审阅；私有输入派生物仅.agent-state，成功诊断容器已移除，失败容器保留作证据；生产转换进程和临时目录已释放，浏览器回原工作台且无新标签。原始文件和用户数据未删除。",
+      "evidence": [
+        "docs/reviews/2026-10-16/cad-complex-step-recovery.md"
+      ]
     },
     "release": {
       "status": "pending",
@@ -77,5 +82,5 @@
   },
   "release_authorization": "沿用用户增量测试、代码与镜像发布授权；不包含公开私有STP或几何网格。",
   "rollback": "保留551eff及旧离线包；所有诊断容器UUID隔离且输入只读。原模型SHA256和字节不得变化。",
-  "handoff": "真实文件转换层已通过；最终镜像及Safari整模显示/旋转/测量待验收，尚未push或发布。预构建默认启动分发仍需最终清单与完整镜像。Windows原生用户验收，真实向量暂缓。"
+  "handoff": "本机完整镜像ab8df956已通过start.command与Safari真实样例验收；仅远端统一发布仍待，full需最终ARM64/AMD64分发清单后执行。AMD64构建session21114，日志.agent-state/prebuilt-amd64-20261016/build.log。Windows由用户验收，真实向量暂缓。"
 }
