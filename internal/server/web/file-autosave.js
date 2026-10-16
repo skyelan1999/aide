@@ -3,7 +3,7 @@
   'use strict';
   function bind({editor,button,manual,getContext,save,onSaved,readLatest,onConflict,blocked,viewVisible=()=>true,t,error}) {
     let activeKey='', generation=0, baseline=editor.value, timer=0, inFlight=null, suspended=false,historyPending=false, composing=false,recoveryTimer=0,recoveryBanner=null,activeDialog=null,viewChanges=0,emergencyDraftTimer=0,emergencyViewTimer=0,emergencyDraftFailure='',emergencyViewFailure='';
-    let baselineHash,baselineConfirmed=false,savePendingVerification=false;
+    let baselineHash,baselineConfirmed=false,savePendingVerification=false,saveAcknowledged=false;
     const label=document.createElement('span'); label.textContent=t('自动保存');
     const rail=document.createElement('span');rail.className='file-autosave-rail';rail.setAttribute('aria-hidden','true');rail.append(document.createElement('i'));
     const status=document.createElement('span');status.className='file-autosave-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -42,7 +42,7 @@
     function setRetry(mode,context=null,draft=null){retryMode=mode;retryContext=context;retryDraft=draft;paint();}
     function paintInputStatus(){
       if(historyPending)status.textContent=t(editor.value===baseline?'正文已保存，历史归档失败；自动保存已暂停':'上一版已保存，当前修改未保存；历史归档失败');
-      else if(writable()&&!blocked?.()&&!suspended&&!inFlight&&!savePendingVerification)status.textContent=t(editor.value===baseline&&baselineConfirmed&&getContext()?.hash===baselineHash?'服务器已保存':'尚未保存');
+      else if(writable()&&!blocked?.()&&!suspended&&(!inFlight||saveAcknowledged)&&!savePendingVerification)status.textContent=t(editor.value===baseline&&baselineConfirmed&&getContext()?.hash===baselineHash?'服务器已保存':'尚未保存');
     }
     function storeRecovery(){
       clearTimeout(recoveryTimer);clearTimeout(emergencyDraftTimer);clearTimeout(emergencyViewTimer);emergencyDraftTimer=emergencyViewTimer=0;const c={...getContext()},gen=generation,key=identity(c);
@@ -119,13 +119,13 @@
       if(!writable() || blocked?.() || composing || (!manualRequest && (!enabled() || suspended || contextAutoDisabled())))return;
       const content=editor.value; if(!manualRequest && content===baseline)return;
       const context={...getContext()},key=identity(context),gen=generation;
-      status.textContent=t('正在保存…'); button.classList.add('saving');
+      saveAcknowledged=false;status.textContent=t('正在保存…'); button.classList.add('saving');
       inFlight=(async()=>{
         try {
           const result=await save(context,content);
           if(!current(gen,key)||blocked?.())return;
           baseline=content;suspended=false;historyPending=false;setRetry('');onSaved?.(context,content,result,manualRequest);
-          baselineHash=getContext()?.hash;baselineConfirmed=true;savePendingVerification=false;
+          baselineHash=getContext()?.hash;baselineConfirmed=true;savePendingVerification=false;saveAcknowledged=true;
           status.textContent=t(editor.value===content?'服务器已保存':'上一版已保存，当前修改未保存');
           if(window.AideContinuity?.enabled()&&scope(context))await AideContinuity.savedFileDraft(scope(context),identity(context),content).catch(e=>{if(current(gen,key))error?.(e.message);});
           if(current(gen,key))storeRecovery();
@@ -150,7 +150,7 @@
       const pending=inFlight;
       try{await pending;}finally{if(inFlight===pending)inFlight=null;if(current(gen,key))schedule();}
     }
-    function activate(){activeDialog?.close();generation++;activeKey=identity(getContext());clearTimeout(timer);clearTimeout(recoveryTimer);clearTimeout(emergencyDraftTimer);clearTimeout(emergencyViewTimer);emergencyDraftTimer=emergencyViewTimer=0;recoveryBanner?.remove();recoveryBanner=null;baseline=editor.value;baselineHash=getContext()?.hash;baselineConfirmed=typeof baselineHash==='string'&&baselineHash.length>0;savePendingVerification=false;suspended=false;historyPending=false;composing=false;emergencyDraftFailure=emergencyViewFailure='';status.textContent='';setRetry('');button.classList.remove('saving');paint();offerRecovery(generation);}
+    function activate(){activeDialog?.close();generation++;activeKey=identity(getContext());clearTimeout(timer);clearTimeout(recoveryTimer);clearTimeout(emergencyDraftTimer);clearTimeout(emergencyViewTimer);emergencyDraftTimer=emergencyViewTimer=0;recoveryBanner?.remove();recoveryBanner=null;baseline=editor.value;baselineHash=getContext()?.hash;baselineConfirmed=typeof baselineHash==='string'&&baselineHash.length>0;savePendingVerification=false;saveAcknowledged=false;suspended=false;historyPending=false;composing=false;emergencyDraftFailure=emergencyViewFailure='';status.textContent='';setRetry('');button.classList.remove('saving');paint();offerRecovery(generation);}
     button.onclick=()=>{window.aideUI?.set('editorAutoSave',!enabled());suspended=false;paint();schedule();};
     manual.onclick=()=>flush(true);
     retry.onclick=async()=>{if(!retryMode||!writable()||blocked?.())return;const mode=retryMode,context=retryContext,draft=retryDraft,gen=generation,key=identity(context);if(!current(gen,key))return;retry.disabled=true;try{if(mode==='latest'){const latest=await readLatest?.(context);if(!latest)throw new Error(t('服务器未返回当前版本'));if(!current(gen,key)||blocked?.())return;setRetry('');status.textContent=t('服务器版本已读取，请比较后选择');compareRecovery(draft,gen,latest);}else{setRetry('');await flush(true);}}catch(e){if(current(gen,key)){status.textContent=t(mode==='latest'?'读取服务器版本失败，可重试':'保存重试失败，可再次重试');setRetry(mode,context,draft);error?.(e.message||String(e));}}finally{retry.disabled=false;paint();}};

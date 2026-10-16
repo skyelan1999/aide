@@ -52,6 +52,16 @@ function fixture({save,readLatest=async()=>({content:'server current'}),onConfli
   assert.equal(savingStatus.button.next.textContent,'正在保存…','input cannot erase in-flight state');
   finishStatus({hash:'saved'});await statusPending;
   assert.equal(savingStatus.button.next.textContent,'上一版已保存，当前修改未保存');
+  let finishDraftCleanup,acknowledged,notifyCleanup;
+  const cleanupEntered=new Promise(resolve=>{notifyCleanup=resolve;});
+  acknowledged=fixture({autoSave:false,recovery:true,save:async()=>({hash:'confirmed-hash'}),onSaved:(_c,_text,result)=>{acknowledged.context.hash=result.hash;}});
+  acknowledged.continuity.savedFileDraft=()=>new Promise(resolve=>{finishDraftCleanup=resolve;notifyCleanup();});
+  acknowledged.editor.value='confirmed before cleanup';const cleanupPending=acknowledged.manual.onclick();
+  await cleanupEntered;assert.equal(typeof finishDraftCleanup,'function');
+  assert.equal(acknowledged.button.next.textContent,'服务器已保存');
+  acknowledged.editor.value='new while local cleanup waits';acknowledged.editor.dispatchEvent({type:'input'});
+  assert.equal(acknowledged.button.next.textContent,'尚未保存','a confirmed response with pending local cleanup must not hide newer input');
+  finishDraftCleanup();await cleanupPending;
   const failedStatus=fixture({autoSave:false,save:async()=>{throw new Error('offline');}});
   await failedStatus.manual.onclick();const failureLabel=failedStatus.button.next.textContent;
   failedStatus.editor.value='new after failure';failedStatus.editor.dispatchEvent({type:'input'});
