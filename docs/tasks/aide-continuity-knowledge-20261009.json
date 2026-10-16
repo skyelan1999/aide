@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Starmap no-focus/link task passed final full106 and native/scoped/fresh package checks. Product9ff84f3b/source3c6f4e12 runtime08e257 active through start.command. Finish clean-main gate, public assets/notes validation and main push. Prior e5 published, preview43d and original12 remain open; Windows user-owned, vectors deferred.",
+  "handoff": "Published starmap background batch main0ac5f757/08e257 with full106 and four public assets verified. Continuing existing preview branch: integrated main at4e260323; focused merged regressions pass; exact-input full running, combined native/runtime/packages/gates pending. Original12 remain open; reasoning write priority already has direct Safari/API/disk evidence. Windows user-owned, vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7960,5 +7960,13 @@
     "full": "PASS full106, all exits0, exact content fingerprint a441e9d60e81f0e7a8030ff302858f31a2bcfabcdfb562b170a1a2319e2e90c9",
     "originalGoal": "Original12 remain open; Windows user-owned and vectors deferred.",
     "firstPublishedMain": "31084089070c54506308b25fa85a43780982ed65"
+  },
+  "starmap_native_preview_integration_20261016": {
+    "status": "in_progress",
+    "task": "docs/tasks/starmap-native-preview-20261016.json",
+    "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
+    "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
+    "classification": "progress",
+    "scope": "Integrate existing source-aware same-tab preview with published background progress; no main/runtime release yet."
   }
 }

@@ -66,7 +66,8 @@
       "status": "pass",
       "summary": "Architecture records current-tab workflow, default framing protection, safe return, plain-text versus Office positions and invalidation semantics. Native and publication status remain explicitly pending.",
       "evidence": [
-        "docs/architecture/starmap-file-preview.md"
+        "docs/architecture/starmap-file-preview.md",
+        "docs/reviews/2026-10-16/starmap-preview-integration.md"
       ]
     },
     "cleanup": {
@@ -111,5 +112,13 @@
     "evidence": [
       "docs/reviews/2026-10-16/evidence/starmap-preview-candidate-startup.json"
     ]
+  },
+  "integration": {
+    "status": "in_progress",
+    "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
+    "publishedBase": "0ac5f757ed92d09330c0bf93c5ccaaeda7689c0d",
+    "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
+    "full": "running; final receipt required; old pre-merge receipts not reusable",
+    "native": "pending on combined runtime"
   }
 }
