@@ -186,14 +186,16 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "草稿导航、文件位置和星图镜头恢复有先前页面/组件证据；当前full覆盖恢复代际与会话/工作区隔离回归。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。",
+        "latestScopedEvidence": "草稿导航、文件位置和星图镜头恢复有先前页面/组件证据；当前full覆盖恢复代际与会话/工作区隔离回归。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。 Native local saved-file and recovered-draft close/reopen now directly pass same visible top line L023 and exact caret insertions886/904 against entire API/disk content.",
         "evidence": [
           "docs/tasks/chat-draft-navigation-20261015.json",
           "docs/architecture/continuity-roadmap.md",
           "docs/reviews/2026-10-16/file-recovery-async.md",
-          "docs/reviews/2026-10-16/file-recovery-async-proof.json"
+          "docs/reviews/2026-10-16/file-recovery-async-proof.json",
+          "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json",
+          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json"
         ],
-        "remaining": "当前完整工作台的刷新/重开、SSH文件光标与目录现场、多标签恢复分支和容量边界仍需直接验收。"
+        "remaining": "SSH file caret/directory recovery, multi-workspace/tab branches and capacity boundaries still need scoped direct evidence. Do not repeat the already-proven local close/reopen as if missing."
       },
       "evidence_20261016_async_file_recovery": {
         "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
@@ -234,14 +236,16 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "已补真实ENOSPC/权限故障、部分成功返回、准确正文哈希、409和重试；UI部分保存状态也已有修复与组件证据。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。",
+        "latestScopedEvidence": "已补真实ENOSPC/权限故障、部分成功返回、准确正文哈希、409和重试；UI部分保存状态也已有修复与组件证据。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。 Native local draft refresh/recovery, serverV4/localV3 conflict comparison and explicit merged save pass with exact saved bytes. A separate stale saved-label defect was directly observed; its three source regressions are fixed and fresh full/native candidate acceptance remains pending.",
         "evidence": [
           "docs/reviews/2026-10-15/storage-fault-live.md",
           "docs/reviews/2026-10-15/history-partial-save.md",
           "docs/reviews/2026-10-16/file-recovery-async.md",
-          "docs/reviews/2026-10-16/file-recovery-async-proof.json"
+          "docs/reviews/2026-10-16/file-recovery-async-proof.json",
+          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json",
+          "docs/reviews/2026-10-16/file-save-status-source-proof.json"
         ],
-        "remaining": "当前认证工作台中的SSH历史恢复/自动保存联动、保存状态与冲突对比交互仍需复核。物理网络中断属于尚未测到的边界，不用ENOSPC替代。"
+        "remaining": "Current saved-status candidate native acceptance, SSH history/auto-save coupling and physical network loss remain unverified. Existing local conflict evidence does not cover those boundaries."
       },
       "evidence_20261016_async_file_recovery": {
         "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
@@ -288,13 +292,14 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "已有正文/直接资源恢复、外部变化去重、ZIP导出与导入预览/合并、管理预览证据；另已修复损坏历史对象被复用并补实际二进制验收。",
+        "latestScopedEvidence": "已有正文/直接资源恢复、外部变化去重、ZIP导出与导入预览/合并、管理预览证据；另已修复损坏历史对象被复用并补实际二进制验收。 Native local mixed Markdown/SVG preview, resource-only external edit detection, scoped two-file whole-version restore, unchanged-history deduplication and final exact bytes/cleanup have direct evidence.",
         "evidence": [
           "docs/tasks/markdown-history-storage-ui-20261015.json",
           "docs/reviews/2026-10-15/history-object-integrity.md",
-          "docs/reviews/2026-10-15/history-partial-save.md"
+          "docs/reviews/2026-10-15/history-partial-save.md",
+          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json"
         ],
-        "remaining": "完整工作台的嵌入内容展示、恢复后状态与管理操作尚未形成全流程证据；不可逆清理/保留策略实际执行仍按原审批边界处理。"
+        "remaining": "Other embedded formats and history storage/backup management UI still need end-to-end checks. Irreversible cleanup/retention actions keep their original approval boundary."
       }
     },
     {
@@ -317,14 +322,16 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "本地及隔离真实SSH协议链、跨会话审批与旧Safari锁态已有分范围证据；当前9999健康、配置/会话保全也已核对。 本次已恢复真实认证Safari入口，完成会话推理强度五档/双会话/10次UI写回和刷新/API/磁盘核对；不代表其余文件/SSH/锁屏流程。",
+        "latestScopedEvidence": "本地及隔离真实SSH协议链、跨会话审批与旧Safari锁态已有分范围证据；当前9999健康、配置/会话保全也已核对。 本次已恢复真实认证Safari入口，完成会话推理强度五档/双会话/10次UI写回和刷新/API/磁盘核对；不代表其余文件/SSH/锁屏流程。 Native local edit/save/reopen/draft restore/conflict and whole-version restore have direct evidence with protected cleanup. Local exact file view restoration was subsequently repaired and verified.",
         "evidence": [
           "docs/reviews/2026-10-15/ssh-approval-lifecycle.md",
           "docs/reviews/2026-10-16/workbench-polish.md",
           "docs/reviews/2026-10-16/workbench-live-reasoning.md",
-          "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+          "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json",
+          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json",
+          "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json"
         ],
-        "remaining": "当前完整工作台的创建/修改/保存/重开/恢复、锁屏与长期打开联测仍缺；用户SSH主机未代验。Windows继续由用户验收。"
+        "remaining": "Current candidate UI acceptance, SSH workflows, locking and long-open combined tests remain scoped gaps. User-host SSH has not been substituted with fixture evidence. Windows remains user-owned."
       }
     },
     {
