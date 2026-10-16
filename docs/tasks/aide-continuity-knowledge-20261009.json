@@ -7692,9 +7692,9 @@
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
     "nextIndependentFocus": "Exact file cursor/scroll and SSH scene/history/autosave restore, actual approval/outcome/timeline UI. Local Markdown/SVG draft/history/conflict flows now directly verified; original12 retained.",
-    "deliveredMain": "a0ec89b03bd97aac18089f1d9b31250d980f67ae",
+    "deliveredMain": "f62f2449e12fbd6f188c4877d095a73076da6dff",
     "mainGate": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
-    "currentCheckpointGate": "Dedup full88/server race679.813s/vet pass, independent main gate and exact source pusha0ec89b0 verified. Runtimea8c22d43 actual Safari20052/single context, DOCX preview/cleanup and offline local import pass. Exact session39 startup approvalState-only normalization documented, all other protected state preserved."
+    "currentCheckpointGate": "Actual native local file save/history/SVG full restore/refresh draft/conflict merge and exact protected cleanup pass; docs-only exact full88 reuse, independent main gate and remotef62f2449 exact. Original12 retained."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7794,9 +7794,10 @@
     "scope": "Final full88 and main gate/pusha0ec89b0 pass; runtimea8c22d43/start.command, actual Safari20052/single context and DOCX preview pass;14 sessions retained with exact startup review-state-only normalization proof. Offline local import pass, receiving device pending. Original12 retained."
   },
   "workbench_file_continuity_20261016": {
-    "status": "scoped_pass",
+    "status": "scoped_delivered",
     "task": "docs/tasks/workbench-file-continuity-20261016.json",
     "report": "docs/reviews/2026-10-16/workbench-file-continuity.md",
-    "evidence": "Actual native local Markdown/SVG save/history/full restore, explicit refresh draft recovery and conflict merge; API/disk exact, original protected files/listing exact after owned cleanup. No model calls. SSH/caret/scroll/other original workflows remain open."
+    "evidence": "Actual native local Markdown/SVG save/history/full restore, explicit refresh draft recovery and conflict merge; API/disk exact, original protected files/listing exact after owned cleanup. No model calls. SSH/caret/scroll/other original workflows remain open.",
+    "delivery": "Independent clean-main gate and exact remotef62f2449 verified, exact-input full88 reuse; no runtime change."
   }
 }
