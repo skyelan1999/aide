@@ -119,6 +119,7 @@ type knowledgeCodeMemo struct {
 }
 
 type knowledgeScanCache struct {
+	finishCycle      bool            // Do not restart completed sources while finishing others.
 	priorGraph       *knowledgeGraph // One immutable view, scoped to this candidate scan only.
 	localCheckpoints []knowledgeLocalCheckpoint
 	discovery        map[string]*knowledgeDiscoveryView
@@ -500,9 +501,14 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 	}
 	if force || view.checked.IsZero() || time.Since(view.checked) >= interval {
 		cache := newKnowledgeScanCache(view.cache)
+		cache.finishCycle = state.continuing[mode] != nil
 		prior := view.graph
 		cache.priorGraph = &prior
-		g := a.knowledgeSnapshotModeCached(ctx, mode == 1, cache)
+		scanCtx := ctx
+		if cache.finishCycle {
+			scanCtx = context.WithValue(ctx, knowledgeContinuationContext{}, true)
+		}
+		g := a.knowledgeSnapshotModeCached(scanCtx, mode == 1, cache)
 		view.checked = time.Now() // Also throttle failed/cancelled attempts.
 		if a.knowledgeContextErr(ctx) != nil || cache.err != nil {
 			// Keep the discovery cursor/cache produced before cancellation. A
@@ -609,6 +615,9 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	view, release, stale, err := a.knowledgeAcquireUpdatesView(ctx, r.URL.Query().Get("code") == "1")
 	if err != nil {
+		if r.URL.Query().Get("background") == "1" {
+			a.knowledgeContinueFailed(r.URL.Query().Get("code") == "1")
+		}
 		knowledgeSyncFail(w, err)
 		return
 	}

@@ -55,7 +55,7 @@ func (c *knowledgeScanCache) discover(ctx context.Context, root *os.Root, ar kno
 		v.Cursor.MaxEntries = limit
 	}
 	v.prepareMaterial()
-	if v.Cursor.Complete && v.materialPending() == 0 {
+	if v.Cursor.Complete && v.materialPending() == 0 && !c.finishCycle {
 		v.Cursor = newKnowledgeDiscovery(v.Cursor.MaxEntries)
 		v.Cycle++
 		v.prepareMaterial()

@@ -11,6 +11,35 @@ type knowledgeContinuation struct {
 	policy    string
 }
 
+type knowledgeContinuationContext struct{}
+
+func knowledgeFinishingCycle(ctx context.Context) bool {
+	value, _ := ctx.Value(knowledgeContinuationContext{}).(bool)
+	return value
+}
+
+// A cancelled first response can already own useful discovery/material cursors.
+// Resume those too; waiting for a successful first publication would recreate
+// the dependency on browser retries for large or slow initial catalogues.
+func (a *App) knowledgeContinueFailed(code bool) {
+	state := &a.knowledgeUpdates
+	select {
+	case state.gate <- struct{}{}:
+		defer func() { <-state.gate }()
+	default:
+		return // Another scan/continuation already owns the catalogue.
+	}
+	mode := 0
+	if code {
+		mode = 1
+	}
+	workspace, epoch, policy := a.knowledgeUpdatesIdentity()
+	view := state.views[mode]
+	if workspace == state.workspace && epoch == state.epoch && policy == state.policy && view != nil && view.failed && view.cache != nil {
+		a.knowledgeContinueLocked(code)
+	}
+}
+
 // Called with the scan gate held. Finish an explicitly requested progressive
 // catalogue independently of HTTP cancellation, Safari timers or paint frames.
 // This is a finite job, not a perpetual filesystem watcher.

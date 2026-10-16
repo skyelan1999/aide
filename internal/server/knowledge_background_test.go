@@ -142,3 +142,50 @@ func TestKnowledgeBackgroundRequestCancellationIsIndependent(t *testing.T) {
 	}
 	t.Fatal("request cancellation stopped app-owned continuation")
 }
+
+func TestKnowledgeBackgroundCancelledFirstBatchResumes(t *testing.T) {
+	a := backgroundKnowledgeFixture(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	s := &a.knowledgeUpdates
+	s.once.Do(func() { s.gate = make(chan struct{}, 1) })
+	s.gate <- struct{}{}
+	_, err := a.knowledgeAcquireViewLocked(ctx, false, true)
+	<-s.gate
+	if err == nil {
+		t.Fatal("cancelled first scan unexpectedly published")
+	}
+	a.knowledgeContinueFailed(false)
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		p := a.knowledgeUpdates.published[0].Load()
+		if p != nil && !knowledgeGraphScanning(p.view.graph) {
+			if progressiveFileCount(p.view.graph) != 170 {
+				t.Fatal("incomplete resumed scan")
+			}
+			return
+		}
+		time.Sleep(40 * time.Millisecond)
+	}
+	t.Fatal("first failed scan still needed a browser retry")
+}
+
+func TestKnowledgeBackgroundFreezesCompletedSources(t *testing.T) {
+	a := backgroundKnowledgeFixture(t)
+	requireStatus(t, request(a, "GET", "/api/knowledge-map/updates?background=1", nil), 200)
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		p := a.knowledgeUpdates.published[0].Load()
+		if p != nil && !knowledgeGraphScanning(p.view.graph) {
+			a.Close()
+			for _, v := range a.knowledgeUpdates.views[0].cache.discovery {
+				if v.Cycle != 1 {
+					t.Fatalf("finished source was repeatedly rescanned: cycle %d", v.Cycle)
+				}
+			}
+			return
+		}
+		time.Sleep(40 * time.Millisecond)
+	}
+	t.Fatal("unequal source sizes never reached a common completed view")
+}

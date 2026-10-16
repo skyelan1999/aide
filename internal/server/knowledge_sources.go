@@ -252,6 +252,11 @@ func (a *App) knowledgeRemoteCached(ctx context.Context, ar knowledgeArea, code 
 				}
 			}
 			interval := knowledgeRemoteInterval
+			if knowledgeFinishingCycle(ctx) && progressive && memo.result.coverage != nil && memo.result.coverage.Pending == 0 && memo.result.coverage.MaterialPending == 0 {
+				result := memo.result
+				state.remoteMu.Unlock()
+				return result
+			}
 			if progressive && memo.result.state != "unavailable" && memo.result.coverage != nil && memo.result.coverage.Pending > 0 {
 				interval = knowledgeProgressiveInterval
 			}

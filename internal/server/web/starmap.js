@@ -190,6 +190,9 @@ async function pollLive(){
  const timeout=setTimeout(()=>controller.abort(),14000);
  try{const update=await api('/updates?background=1&code='+(mode?'1':'0')+'&cursor='+encodeURIComponent(cursor),{signal:controller.signal});
   if(epoch!==liveEpoch||mode!==codeView||!liveReady())return;
+  // The server keeps scanning even if Safari freezes this page. Retain the
+  // old cursor and catch up on visibility; don't rebuild a large hidden scene.
+  if(document.hidden){liveFailures=0;return;}
   if(graph.workspace&&update.workspace!==graph.workspace){persistSkyView();load();return;}
   applyLiveUpdate(update);liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();
  }catch(e){if(epoch===liveEpoch&&!locked&&!pageLeaving){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
