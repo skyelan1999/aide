@@ -421,10 +421,10 @@ start.command image `sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af
 
 ## 2026-10-16 Starmap background continuation runtime
 
-Product code `c557668d`; source `1ef36be914cd07b13109f616f744b22c8cc8de94cb7730581538e769752f6c5b`. Complete packages include CAD and launchers.
+Product code `9ff84f3b`; source `3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008`. Complete packages include CAD and launchers.
 
-`aide-0.1.17.0-RC2-linux-arm64-ffbb0f6f724a-offline.tar.gz`: 770924552 bytes; SHA-256 `108af821581f655fcfc56b96b6a29c9a9d86b367702c4114f0f2b2b639cbdd4d`.
+`aide-0.1.17.0-RC2-linux-arm64-08e257e0ad39-offline.tar.gz`: 770925382 bytes; SHA-256 `49f88c8e5f56e06c030ffba5dd1d64c62f6ed78c2304ac2335ba14fe9e372ce9`.
 
-`aide-0.1.17.0-RC2-linux-amd64-d91524067791-offline.tar.gz`: 774106572 bytes; SHA-256 `a83a67203c238faba582b400e596065f926977f20c1e99fe2120ecafcbc9bcca`.
+`aide-0.1.17.0-RC2-linux-amd64-239c3591fd3a-offline.tar.gz`: 774109455 bytes; SHA-256 `815df5ba0b9ef1fe1d4480e3510498e33fce1e254ba88c18a62b2d9dbfd2529f`.
 
-Exact package/import, native background/link and final startup evidence, release gates and public delivery states are maintained in the [batch record](../docs/reviews/2026-10-16/starmap-background-progress.md). Prior e5baab8f packages remain for rollback. Windows native and receiving-device acceptance are separate.
+Exact package/import, native no-focus/link evidence, first busy/stale requests, blocked response readers, startup, release gates and public delivery states are maintained in the [batch record](../docs/reviews/2026-10-16/starmap-background-progress.md). Prior e5baab8f packages remain for rollback. Windows native and receiving-device acceptance are separate.

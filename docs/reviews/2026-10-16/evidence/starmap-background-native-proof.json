@@ -83,12 +83,12 @@
     "nativeCapUI": "range-limited source and synced status observed; no new tabs"
   },
   "currentRuntime": {
-    "image": "ffbb0f6f724a",
-    "sourceSHA256": "1ef36be914cd07b13109f616f744b22c8cc8de94cb7730581538e769752f6c5b",
-    "codeCommit": "c557668d",
+    "image": "sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204",
+    "sourceSHA256": "3c6f4e12f99c9f9c7bcf814473f929d849c9c0bfac973a4517d280024051d008",
+    "codeCommit": "9ff84f3b74a897c79ec3ae865da180fe42785428",
     "entry": "start.command",
     "prebuiltNoCompilation": true,
     "protectedStateAndExactAssets": "pass",
-    "scope": "Frontend/cap/link bytes unchanged from native evidence; busy first-request knowledge/code and stale response paths passed actual Go HTTP race tests."
+    "scope": "Browser/link/cap bytes match prior native evidence. New slow-writer, first-busy and stale-response routes passed actual Go race tests. Native proof versions remain explicit."
   }
 }

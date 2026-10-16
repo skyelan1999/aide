@@ -57,7 +57,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Scoped race PASS: initial continuation43.668s, busy first knowledge/code requests61.688s, stale200 first response14.099s, hard-limit1.020s; earlier reference equivalence/large graph pass. Native no-focus completion and2000 relations, final cap UI, protected state and complete package imports pass. Final c557 clean-main full and fresh package smoke pending; prior full attempts cancelled for required follow-up and never reused.",
+      "summary": "Native no-focus 2001 files/2502 entries and2000 real relations pass; cap/source status and protected state pass. Go race: busy first knowledge/code61.688s, stale20014.099s, blocked response9.950s; reference/cap/ownership tests pass. Final immutable input full and fresh smoke pending. Previous all106 commands exited0 but fingerprint changed for slow-writer follow-up, so receipt failed and is not reused.",
       "evidence": [
         "docs/reviews/2026-10-16/starmap-background-progress.md",
         "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"
@@ -84,5 +84,5 @@
   },
   "release_authorization": "Standing user authorization: incremental implementation/testing/push main, update complete offline Docker packages; no native Windows acceptance.",
   "rollback": "Retain published e5baab8f runtime ab8df956 and complete archives; never remove user data. New candidate runtime requires protected-state snapshot and original start.command.",
-  "handoff": "Final codec557/source1ef36be9 runtimeffbb is active via start.command with protected state/assets preserved. Both complete packages ffbb/d915 verified. Freeze product inputs, fresh package smoke, exact clean-main full/gate, then upload/verify public assets and push main. Original12 and independent preview follow-up stay open."
+  "handoff": "Frozen product 9ff84f3b source3c6f4e12f99c active via original start.command. Both complete packages independently verified after deployment settled. Finish fresh smoke/full/gate, then upload/verify public assets and push main. Do not modify frozen product inputs. Original12 and preview follow-up remain open."
 }
