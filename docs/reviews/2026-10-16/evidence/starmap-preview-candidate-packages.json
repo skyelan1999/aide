@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "packages": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-696739fa8621-offline.tar.gz",
+      "bytes": 770912786,
+      "sha256": "e8944d9a83d813f01c6e77c29ff1ab8d11ce3be7b68db9754e7abc4bf566e9d2",
+      "innerImageTarSHA256": "cde92f9cdae4dcf67970c406882454279dcc137759265aa111df87c945c38e16",
+      "image": "sha256:696739fa8621411900b95ab1f8464f7f156e81d189772afd34b52b6d90d0a9bc",
+      "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-amd64-76ef945215d5-offline.tar.gz",
+      "bytes": 631417323,
+      "sha256": "a42882f01438993fecd69ff3830f79ecb19097a3a8d00ead26a3dc489520807c",
+      "innerImageTarSHA256": "fec1d1b2bd659634c6e1b339c8dbd0019226d494dcd184b39300beca3b6a4bf0",
+      "image": "sha256:76ef945215d5a4df5b6910d60128839455eea665c946033550233bbfc0b306f9",
+      "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    }
+  ],
+  "productionImagePreserved": true,
+  "publication": "not_run; candidate branch only",
+  "nativeSafari": "not_run"
+}

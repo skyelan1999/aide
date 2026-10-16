@@ -22,7 +22,9 @@
     "docs",
     "internal/server/web/file-route.js",
     "internal/server/web/app.js",
-    "internal/server/web/index.html"
+    "internal/server/web/index.html",
+    "docker/prebuilt-images.tsv",
+    "docker-images distribution metadata"
   ],
   "stages": {
     "requirements": {
@@ -83,5 +85,16 @@
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Retain main ab8df956/ec1b032 packages and runtime; this external worktree is isolated from the already-gated main publication. No user source files or protected state are changed.",
-  "handoff": "Code and quick102/focused Go race checks complete in the independent external branch. Build candidate and perform actual start.command/native Safari after current main artifact publication. Final full and image/archive/remote delivery remain pending. No successful native preview claim yet."
+  "handoff": "Code08dbbaca and quick102/focused Go race passed. Both candidate images built and complete archives independently checked/imported; metadata index reflects these local-only candidates. Fresh package start.command plus compiled line/hash API check is running (session84957, .agent-state/prebuilt-delivery-20261016/offline-fresh-lines.log). Native Safari, final main full and publication remain pending. Original main batch sourcee5baab8f: ARM64 uploaded and verified, AMD64 actively uploading in Safari editor; keep that page intact.",
+  "candidatePackages": {
+    "status": "local_verified",
+    "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
+    "arm64": "696739fa8621",
+    "amd64": "76ef945215d5",
+    "evidence": [
+      "docs/reviews/2026-10-16/evidence/starmap-preview-candidate-packages.json"
+    ],
+    "nativeSafari": "pending",
+    "publication": "pending"
+  }
 }

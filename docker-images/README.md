@@ -1,3 +1,7 @@
+## Star map preview follow-up snapshots
+
+Product code `08dbbaca`, source identity `59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d`: ARM64 `696739fa8621`, AMD64 `76ef945215d5`. These snapshots implement current-tab read-only preview, allowlisted map return, structured document text lines and removed-source result invalidation. Exact checksums and complete archive names are in the prebuilt manifest. Verification, native acceptance and publication status are tracked in [the follow-up task](../docs/tasks/starmap-native-preview-20261016.json); local export is not remote availability.
+
 ## Default prebuilt startup (ARM64 and AMD64)
 
 Normal source checkouts select a complete runtime from `docker/prebuilt-images.tsv`. They reuse a verified local image, import a matching local archive, or download the matching Release archive and verify its SHA-256 before import. They never fall back to source compilation. Development builds require `AIDE_BUILD_FROM_SOURCE=1` or `install --source`.
