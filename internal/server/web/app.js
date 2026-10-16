@@ -2712,11 +2712,18 @@ function addKnowledgeViewerIdentity(query, spec) {
   query.set('knowledgeWorkspace', spec.knowledgeWorkspace);
   return true;
 }
+// Keep ordinary previews stable, but make replaced bytes a new browser image.
+function invalidateMarkdownResources(spec, revision) {
+  const value = String(revision || crypto.randomUUID());
+  if (spec) spec.resourceRevision = value;
+  return value;
+}
 function fileRawUrl(filePath, root, source, viewerSpec) {
   const token = state.token || (state.config && state.config.accessToken) || '';
   const qp = new URLSearchParams(); qp.set('path', filePath);
   if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
   addKnowledgeViewerIdentity(qp, viewerSpec);
+  if (viewerSpec?.resourceRevision) qp.set('resourceRevision', viewerSpec.resourceRevision);
   if (token) qp.set('access_token', token);
   return '/api/file/raw?' + qp.toString();
 }
@@ -8761,7 +8768,8 @@ function setupMarkdownPreview(host, text, path, spec) {
       const svg=await window.AideMarkdownMedia.diagram(original.content,t);
       const content=await svg.text();
       await api('/file',{method:'PUT',body:JSON.stringify({path:relative,content,hash:original.hash,source:captured.source||'',workspaceId:original.workspaceId||captured.wsId||''})});
-      img.src=fileRawUrl(relative,captured.root,captured.source,captured)+'&v='+Date.now();toast(t('draw.io 已保存'));
+      captured.resourceRevision=invalidateMarkdownResources(spec);
+      img.src=fileRawUrl(relative,captured.root,captured.source,captured);toast(t('draw.io 已保存'));
     };
     const wrap=el('figure','md-diagram');img.replaceWith(wrap);wrap.append(img);
     const button=el('button','quiet quiet-sm',t('编辑 draw.io 图'));button.type='button';
@@ -8996,8 +9004,8 @@ for(const [editorId,previewId,panelId,getSpec] of [['editor','editor-preview','e
 $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview');
 function isDrawioPathForSave(path){return /\.drawio$/i.test(path||'');}
-const editorHistory = window.AideMarkdownHistory.bind({button:$('editor-history'),editor:$('editor'),getContext:()=>state.file,api,t,error:e=>toast(e.message),isDirty:()=>editorAutoSave.dirty()||editorAutoSave.busy(),onRestored:result=>{state.file.hash=result.hash;state.file.content=result.content;$('editor').value=result.content;$('editor').dispatchEvent(new Event('input'));editorAutoSave.activate();loadFiles().catch(()=>{});toast(t('✓ 历史版本已恢复'));}});
-const fileViewHistory = window.AideMarkdownHistory.bind({button:$('file-view-history'),editor:$('file-view-editor'),getContext:()=>({...fileView.spec,wsId:fileView.wsId}),api,t,error:e=>toast(e.message),isDirty:()=>fileViewAutoSave.dirty()||fileViewAutoSave.busy(),onRestored:result=>{fileView.hash=result.hash;$('file-view-editor').value=result.content;$('file-view-editor').dispatchEvent(new Event('input'));fileViewAutoSave.activate();toast(t('✓ 历史版本已恢复'));}});
+const editorHistory = window.AideMarkdownHistory.bind({button:$('editor-history'),editor:$('editor'),getContext:()=>state.file,api,t,error:e=>toast(e.message),isDirty:()=>editorAutoSave.dirty()||editorAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(state.file,result.journal);state.file.hash=result.hash;state.file.content=result.content;$('editor').value=result.content;$('editor').dispatchEvent(new Event('input'));editorAutoSave.activate();loadFiles().catch(()=>{});toast(t('✓ 历史版本已恢复'));}});
+const fileViewHistory = window.AideMarkdownHistory.bind({button:$('file-view-history'),editor:$('file-view-editor'),getContext:()=>({...fileView.spec,wsId:fileView.wsId}),api,t,error:e=>toast(e.message),isDirty:()=>fileViewAutoSave.dirty()||fileViewAutoSave.busy(),onRestored:result=>{invalidateMarkdownResources(fileView.spec,result.journal);fileView.hash=result.hash;$('file-view-editor').value=result.content;$('file-view-editor').dispatchEvent(new Event('input'));fileViewAutoSave.activate();toast(t('✓ 历史版本已恢复'));}});
 function bindFileAutoSave(editorId, buttonId, manualId, getContext, onSaved) {
   return window.AideFileAutoSave.bind({editor:$(editorId),button:$(buttonId),manual:$(manualId),getContext,t,error:toast,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open,

@@ -1,0 +1,73 @@
+{
+  "id": "continuity-history-current-20261016",
+  "request": "继续主目标：当前实例复核推理强度写回隔离，验收Markdown历史存储管理和备份界面；Windows由用户验收，真实向量暂缓",
+  "baseline": "dbb9d1227c626378597cb2884268504141b4869d",
+  "initial_status": "",
+  "acceptance": [
+    "当前9999两个专用空会话推理强度通过UI写入，API与磁盘一致，切换与刷新不串值",
+    "核对历史备份/管理既有直接证据，避免把已验证项目继续列为未验",
+    "实际工作台验证专用Markdown混合PNG/JPEG资源版本恢复，并逐项核对完整字节",
+    "保全原会话、配置与来源，记录原目标仍缺项；沿用当前精确指纹full105门禁并推送文档"
+  ],
+  "scope": [
+    "docs/tasks",
+    "docs/reviews",
+    "docs/plugins/markdown-history.md",
+    "仅专用空会话和自有临时文件/历史",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/markdown-image-path.test.js",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "继续原12项，不因局部验收重定义整体完成。发现历史管理已有实际Safari证据，主账本旧待办需纠正。",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/tasks/markdown-history-storage-ui-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reproduced disk-restored V1 with Safari still displaying V2 PNG/JPEG. Bind resource URL revision to restore journal before preview input; ordinary renders stay stable. Also retain draw.io mutation revision across re-renders and export.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/history-mixed-resource-stale.png",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Both editor history callbacks invalidate resource URLs before preview events; shared raw URL preserves source/workspace/auth identity and adds only resource revision. Draw.io uses same persistent revision. Failure-before/pass-after focused regression.",
+      "evidence": [
+        "scripts/markdown-image-path.test.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Actual Safari9999 saved owned A high/B medium; API and canonical disk match, both runs empty. Continue reload and mixed resource history.",
+      "evidence": [
+        ".agent-state/continuity-history-current/observations.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "原目标授权连续开发、测试、文档与增量main推送；不创建版本/tag/正式Release；Windows用户验收、真实向量暂缓。",
+  "rollback": "只清理经身份/空任务校验的自有验收会话及专用文件，保留原会话、认证、设置、来源和历史；不执行保留策略或GC。",
+  "handoff": ""
+}
