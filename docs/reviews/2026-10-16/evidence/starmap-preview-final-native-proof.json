@@ -1,0 +1,69 @@
+{
+  "status": "pass",
+  "code": "262561611458102f46d1307718d51cf2f6629f19",
+  "sourceSHA256": "9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035",
+  "image": "sha256:d025448dd17440bda8ca39ab844b5e192f07703399eab4197551344472e77e72",
+  "port": "9999",
+  "entry": "original external repo start.command default prebuilt path",
+  "noCompilationOrPull": true,
+  "assetsMatch": [
+    "starmap.js",
+    "starmap-cosmos.js",
+    "starmap-preview.js",
+    "plugin-upgrade.js",
+    "markdown-diagrams.js",
+    "step-preview.js",
+    "step-metrology.js",
+    "step-import-worker.js",
+    "style.css",
+    "lock-cluster.js",
+    "parallel-chat.js",
+    "crash-monitor.js",
+    "crash-monitor.css",
+    "file-autosave.js",
+    "locales/en.js",
+    "index.html",
+    "settings-init.js",
+    "workbench.css",
+    "workbench-background.js",
+    "starmap.html",
+    "starmap-topics.js",
+    "starmap-timeline.js",
+    "starmap.css",
+    "app.js",
+    "conversation.css"
+  ],
+  "nativeSafari": {
+    "sameTabReadOnlyPreview": true,
+    "thirdLineSelectedText": "preview_final_marker 原文第三行",
+    "stellarDetails": "1 个有效关联 · 1级恒星 · 暖红星 · 下一级 3 个关联",
+    "noUndefinedStellarFields": true,
+    "returnRestoresChannelQuerySourceAndRetrievalMode": true,
+    "staleHash": {
+      "ownedFixtureOnly": true,
+      "oldSHA256": "302399f4a7b7894e2a52416bb159d53c376a26e6532fd9cfb268b6a5f9462cc5",
+      "newSHA256": "469740a9be58f29dad506558cf4c278fea9914d9886755c9e82cb69921e400a1",
+      "oldLine": 3,
+      "newLine": 5,
+      "noticeObserved": "源码已变更，请刷新星图后重新定位。",
+      "oldL3RangeRemovedFromHeader": true,
+      "newQueryLine": 5
+    },
+    "sourceRemovalClearsCachedHits": true,
+    "noNewTabs": true,
+    "popupPermissionsUnchanged": true,
+    "noModelCalls": true
+  },
+  "cleanup": {
+    "sourceRegistryBytesRestored": true,
+    "originalAuthSettingsAll14SessionsAndUnrelatedMountsPreserved": true,
+    "emptyQueryAllSourcesNodeModeRestored": true,
+    "returnedOriginalMainTab": true
+  },
+  "boundaries": [
+    "Windows user-owned",
+    "receiving-device import not_run",
+    "original12 not_complete",
+    "final frozen-input full and publication pending"
+  ]
+}

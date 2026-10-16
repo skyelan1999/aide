@@ -56,13 +56,17 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Pre-followup full106 pass (race899.155/vet). Exact950b start.command runtime native same-tab read-only line3 selection, return state and removed-source clearing passed. Native found lost stellar metadata; regression failed before and passes after source fix. v67 requires new candidate/full/native plus stale-hash UI before final release.",
+      "summary": "Final v67 ARM d025/AMD301d complete packages/imports and fresh ARM start/CAD/line-hash pass. Exact d025 native same-tab read-only line3, repaired stellar fields, preserved return state, stale-hash refusal/newline5 and source-removal clearing pass. Final frozen-input full pending; previous full106 only pre-v67.",
       "evidence": [
         "scripts/starmap-file-preview.test.cjs",
         "scripts/starmap-live-metadata.test.cjs",
         "internal/server/knowledge_document_continuation_test.go",
         "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-full-proof.json",
-        "docs/reviews/2026-10-16/evidence/starmap-preview-native-partial-proof.json"
+        "docs/reviews/2026-10-16/evidence/starmap-preview-native-partial-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-packages-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-fresh-start-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-cleanup-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
       ]
     },
     "documentation": {
@@ -75,10 +79,10 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Scoped diff reviewed; only owned code/tests/docs are staged. Default CSP unchanged, no user files/configuration touched, all compiler/test caches remain under this external worktree .agent-state. Main publication tree remains separate.",
+      "summary": "Temporary source restored byte-for-byte, original14 sessions/auth/settings/mounts exact; original view and tab restored. Two exact-hash owned unpublished superseded archives removed after checking public asset names absent; published rollback and final archives retained, no user data deletion.",
       "evidence": [
-        "docs/architecture/starmap-file-preview.md",
-        "scripts/starmap-file-preview.test.cjs"
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-cleanup-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
       ]
     },
     "release": {
@@ -89,7 +93,7 @@
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Retain main ab8df956/ec1b032 packages and runtime; this external worktree is isolated from the already-gated main publication. No user source files or protected state are changed.",
-  "handoff": "Current development branch fix/starmap-preview-native-finish-20261017 on external main checkout; local main1f10c4b2, remote main0ac5f757 unchanged. Native950b passes same-tab/line3/read-only/return/removal; discovered lost star fields fixed in v67 with fail-before/pass-after regression. Current production950b still pre-fix. Original protected files/mounts and registry exact; UI restored/no tabs added. Next build/repackage v67, native stellar/stale-hash checks, final full/frozen-index gate and public assets/main. Full session63300 terminal PASS pre-followup; do not poll/restart it as live.",
+  "handoff": "Final code26256161/source9286121f ARMd025/AMD301d packages and imports/fresh startup passed. Actual original start.command prebuilt d025 native line3/star/return/stale-hash/newline5/removal passed; original protected data/view restored, two owned superseded archives cleaned. Inputs and delivery index frozen; next final full, clean-main scoped gate, four supplemental Release assets/notes verification and remote main. Original12 stay open, Windows user-owned, vectors deferred.",
   "candidatePackages": {
     "status": "historical_pre_merge_only",
     "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
@@ -121,20 +125,20 @@
     "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
     "publishedBase": "0ac5f757ed92d09330c0bf93c5ccaaeda7689c0d",
     "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
-    "full": "Pre-v67 full106 PASS only; current source changed, final full pending",
-    "native": "partial: current-tab/line3/return/removal pass; stellar followup and stale hash UI pending",
-    "candidate": "sha256:950bcbc2d79e0b3ef431cf54eee67623561ac0fba4634ed2828170b828ceb6ed",
-    "sourceSHA256": "199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c",
+    "full": "pending final frozen-input regression",
+    "native": "PASS final d025 actual Safari; line3, stars, return, stale hash/newline5 and removal",
+    "candidate": "sha256:d025448dd17440bda8ca39ab844b5e192f07703399eab4197551344472e77e72",
+    "sourceSHA256": "9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035",
     "buildProof": "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-build-proof.json",
-    "amd64Candidate": "sha256:79765161aef2eed8fdb5b0e777ffd42c3abeab8ed586aa192cc872d3107271a5",
+    "amd64Candidate": "sha256:301d9d75ffbc9849b49acd7155e5a2b4c392a8c36b780c7d180a6d5379e0067d",
     "packages": {
-      "status": "pre-v67_local_verified_only",
+      "status": "local_verified_final_v67",
       "evidence": [
-        "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-packages-proof.json",
-        "docs/reviews/2026-10-16/evidence/starmap-preview-integrated-fresh-start-proof.json"
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-packages-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-fresh-start-proof.json"
       ],
       "remote": "pending",
-      "nativeSafari": "pending"
+      "nativeSafari": "pass"
     }
   }
 }

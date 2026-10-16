@@ -436,3 +436,7 @@ Exact package/import, native no-focus/link evidence, first busy/stale requests, 
 ## 星图原文预览与后台续扫整合包
 
 源码 `199a24cc8aba1491efa0e8caa927c0672f943541f7500076c6683f6241c3270c`；ARM64 `950bcbc2d79e`、AMD64 `79765161aef2`。完整包包含原生 CAD 与平台启动器，精确大小与哈希在 SHA256SUMS 和预构建索引中维护。实际验收、候选与已发布状态及回滚边界见[本轮记录](../docs/reviews/2026-10-16/starmap-preview-integration.md)；不要将本地导出视作已上传。
+
+## 星图原文预览最终修复候选
+
+源码 `9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035`；ARM64 `d025448dd174`、AMD64 `301d9d75ffbc`。修复原文命中详情丢失星级字段，替代前序950b/7976预览候选。完整包已本机导入，大小和哈希在索引与 SHA256SUMS 中维护。最终原生验收、完整回归、远端发布与回滚状态见[本轮记录](../docs/reviews/2026-10-16/starmap-preview-integration.md)；本地候选不等于已公开交付。
