@@ -1,0 +1,28 @@
+{
+  "serverInstanceId": "2026-10-16T04:19:15.767771419Z",
+  "image": "sha256:473463bc456fbb0caddaad54ca820f34ab0ee494c9564f7617a2f2adbc3b1f36",
+  "imageTag": "sha256:473463bc456fbb0caddaad54ca820f34ab0ee494c9564f7617a2f2adbc3b1f36",
+  "sourceSHA256": "0aab8434a42d5c834c987a173a06b108a721679d503d395f8b55a690407d6f46",
+  "platformManifest": "sha256:63aa82edce37c0d25ed02b826ee10037323d092bce60b52396043e4cb8a05301",
+  "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+  "port": "9999",
+  "health": "ok",
+  "protectedFilesAndMountsPreserved": true,
+  "assetsMatch": [
+    "parallel-chat.js",
+    "crash-monitor.js",
+    "crash-monitor.css",
+    "file-autosave.js",
+    "locales/en.js",
+    "index.html",
+    "settings-init.js",
+    "workbench.css",
+    "workbench-background.js",
+    "starmap.html",
+    "starmap-topics.js",
+    "starmap-timeline.js",
+    "starmap.css",
+    "app.js",
+    "conversation.css"
+  ]
+}

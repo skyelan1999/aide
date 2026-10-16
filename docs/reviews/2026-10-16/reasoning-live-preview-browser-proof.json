@@ -1,0 +1,26 @@
+{
+  "component": "production JS functions/CSS, synthetic reasoning, IAB one owned tab41 closed",
+  "streamingIntervalMs": 75,
+  "observedLatestItem": 60,
+  "streamingClickExpanded": "pass",
+  "pollKeepsExpanded": "pass",
+  "retainedBodyReplacement": "pass",
+  "enterCollapseHiddenBodyChars": 0,
+  "spaceExpandAndTerminalHandoff": "pass",
+  "narrowWidth": 390,
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "horizontalOverflow": false,
+  "nativeSafari": "Existing localhost:9999 original session39 preview shows latest tail, mouse expand and Return collapse pass; no model calls made",
+  "userTabsPreserved": 3,
+  "ownedTabsRemaining": 0,
+  "viewportReset": true,
+  "screenshots": [
+    ".agent-state/reasoning-live-preview/component-light-390.png",
+    ".agent-state/reasoning-live-preview/component-dark-390.png",
+    ".agent-state/reasoning-live-preview/native-expanded.png"
+  ],
+  "limits": "Controlled stream component is not a real upstream reasoning-stream test; native acceptance used persisted user run."
+}

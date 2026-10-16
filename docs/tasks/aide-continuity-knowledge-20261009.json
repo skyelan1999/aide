@@ -7858,5 +7858,10 @@
       "docs/tasks/adaptive-parallel-20261016.json",
       "docs/reviews/2026-10-16/adaptive-parallel-model-proof.json"
     ]
+  },
+  "reasoning_live_preview_followup_20261016": {
+    "status": "in_progress",
+    "task": "docs/tasks/reasoning-live-preview-20261016.json",
+    "summary": "Latest reasoning tail and stable disclosure implemented; focused/quick/native/runtime/offline pass,full/main pending. Original12 workstreams remain active."
   }
 }
