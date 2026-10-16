@@ -1,0 +1,105 @@
+{
+  "format": "aide-cad-metrology-v1",
+  "file": "Volumes/MY PASSPORT/aide_ws/aide/scripts/fixtures/cad/fidelity.step",
+  "unit": "mm",
+  "precision": "preview-mesh",
+  "frame": {
+    "origin": [
+      80,
+      10.000000000000002,
+      5
+    ],
+    "x": [
+      0,
+      0,
+      1
+    ],
+    "y": [
+      1,
+      -8.881784197001252e-17,
+      0
+    ],
+    "z": [
+      8.881784197001252e-17,
+      1,
+      0
+    ]
+  },
+  "records": [
+    {
+      "kind": "distance",
+      "label": "P1",
+      "points": [
+        [
+          80,
+          10.000000000000002,
+          35
+        ],
+        [
+          80,
+          10.000000000000002,
+          5
+        ]
+      ],
+      "coordinates": [
+        [
+          30,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "measurement": {
+        "distance": 30,
+        "delta": [
+          -30,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "kind": "angle",
+      "label": "P2",
+      "points": [
+        [
+          80,
+          10.000000000000002,
+          5
+        ],
+        [
+          80,
+          10.000000000000002,
+          35
+        ],
+        [
+          100,
+          10,
+          35
+        ]
+      ],
+      "coordinates": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          30,
+          0,
+          0
+        ],
+        [
+          30,
+          20,
+          -1.9721522630525295e-31
+        ]
+      ],
+      "degrees": 90
+    }
+  ]
+}

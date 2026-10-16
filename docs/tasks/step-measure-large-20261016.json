@@ -65,33 +65,174 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused Go race10.435s pass; quick96 checks pass; native protocol+child cancellation tests pass. Actual9999 204MiB API full geometry370440triangles/24batches/57.50s, sampledCADpeak2.206GiB andworkbenchinstance unchanged. Safari nestedassemblycolourpreview,30mm edge,90degreeangle,customframe rebase andJSONexport passed. Large Safari preview is in progress. Full suite/offline export/import not yet run. ActualSafari204MiB preview andnativecancel cleanup passed; workbench CAD dialog120triangles andcontrols passed. Viewport zooming uncovered clipped controls in short screens; overflow fix awaits final UI retest. Final source/launch metadata andfull suite pending.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Current focused Go race10.072s, native geometry/unit/normal and credential-scope tests, actual9999 full204MiB surfaces and120triangle assembly colour fixtures, Safari30mm/90deg/frame/export/reset/clear, workbench+standalone, six themes and400%zoom keyboard/scroll pass. Full102 on main is the pending release gate; the earlier pre-freeze full attempt was deliberately stopped and is not used as a pass. Original private model/receiving device/Windows/amd64 remain untested.",
+      "evidence": [
+        "scripts/step-worker.test.cjs",
+        "scripts/step-metrology.test.cjs",
+        "scripts/test_cad_geometry.py",
+        "internal/server/step_native_test.go",
+        "internal/server/step_preview_test.go",
+        "docs/reviews/2026-10-16/step-measure-large.md",
+        "docs/reviews/2026-10-16/evidence/step-preview-receipt.json"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "PRD/architecture/CAD design, correct launcher-bound storage and offline instructions, explicit approximate metrology, runtime identity, full package checksums/fresh-start and factual UI limits updated. check_docs261 Markdown/849links pass.",
+      "evidence": [
+        "docs/PRD.md",
+        "docs/architecture/cad-preview.md",
+        "docker/OFFLINE.md",
+        "docker-images/README.md",
+        "docs/reviews/2026-10-16/step-measure-large.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "All source paths owned/reviewed; removed891MB logical reproducible experimental caches and ownedUI fixtures/exports, retained canonical204MiB input/logs/userdata/original598bundle/legacyvolumes. Removed only superseded020/c97 packages. No global Docker prune, no original project deletion.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/step-preview-receipt.json",
+        "docs/reviews/2026-10-16/step-measure-large.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source batches pushed on task branch; final04789c image active through start.command; complete localARM64bundle checksums/import/fresh-start passed. Await clean main full102, release-check and exact remote main push; no version/tag/Release.",
+      "evidence": [
+        "docker-images/README.md",
+        "docker-images/SHA256SUMS"
+      ]
     }
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; preserve user data and previous598 image/volumes. No version/tag/Release.",
   "rollback": "Retain main1775bab7 and current598 image/offline bundle; storage bind data/home unchanged, protected snapshot before restart.",
-  "handoff": "Source22bad28b pushed; native204MiB/fullSurface, six theme and400% zoom keyboard access,30mm/90deg/frame/export pass. Security review replaces workbench-token mount with a dedicated domain-separated CAD credential. Old020a bundle import/fresh-start passed but is superseded by this hardening; new runtime/bundle and final main full gate pending. UI actual baseline is comfort+system (not historical professional); restored to comfort+system and Safari100%.",
+  "handoff": "Ready for authorized fast-forward main and required full102/release gate, then push/remote verification. Product sourcef367c6b3; runtime04789c, privateCADderivedcredential only; package770894139 bytes/ff88e92f... . User original private file, receiving device,Windows native/amd64 not run. Main workbench restored to original session39/emptydraft, comfort+system,100%,3normal+1pinned tabs.",
   "clarifications": [
     {
       "user": "有什么区别吗，我需要让其和在正常专业软件上打开保持一致",
       "interpretation": "Full shaded CAD geometry, original assembly placement, units and colours are acceptance criteria. Wireframe-only, empty-mesh success or hidden missing parts are not acceptable. Exact private 200+MB model is unavailable; synthetic fixtures cannot establish all CAD compatibility."
     }
-  ]
+  ],
+  "code_commits": [
+    "22bad28b90163d04013266d566d24683105bfc5a",
+    "e7342840903256aaf180a2ffe1b5f8c1b9fef0f9",
+    "f367c6b39e8a2520415981202289ef2eb6fb340f"
+  ],
+  "runtime": {
+    "serverInstanceId": "2026-10-16T07:46:49.209698669Z",
+    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "imageTag": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "sourceSHA256": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
+    "platformManifest": "sha256:d240f199de53cfca2f3eeb7816ad2dfaaedc4e2147c65c576dc7ae44aac8240f",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndUnrelatedMountsPreserved": true,
+    "dataHomeBoundUnderLauncher": true,
+    "legacyVolumesRetained": true,
+    "migration": {
+      "format": 1,
+      "status": "complete",
+      "createdAt": 1792128267,
+      "sources": {
+        "data": {
+          "imported": true,
+          "entries": 156,
+          "manifestSHA256": "5f1df0934a28bae056d044ba17169d65eb83b0abe02a3edd3e9927933e0df1cd"
+        },
+        "home": {
+          "imported": true,
+          "entries": 16,
+          "manifestSHA256": "71fe94959613795b1a8202f2dfb302167be50df03f7362f1c17e1d9225b4a54e"
+        }
+      }
+    },
+    "assetsMatch": [
+      "step-preview.js",
+      "step-metrology.js",
+      "step-import-worker.js",
+      "style.css",
+      "lock-cluster.js",
+      "parallel-chat.js",
+      "crash-monitor.js",
+      "crash-monitor.css",
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "bundle": {
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
+    "bytes": 770894139,
+    "sha256": "ff88e92fcff50cfdb26e378b70553678599c1b6f646e0a7c2e11333a42b8bc14",
+    "innerImageTarSHA256": "57ca8057186b8d13905f9299445009bf48f5f6af45a7a8f3a31918850e0f09fd",
+    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "build": {
+      "version": "0.1.17.0-RC2",
+      "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+      "platform": "linux/arm64",
+      "srcsha": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
+      "cadRuntime": "8.0.1.1.0",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "licenseInBundle": true,
+    "licenseInImage": true,
+    "outerAndInnerChecksums": "pass",
+    "localDockerImport": "pass",
+    "runningImagePreserved": true,
+    "receivingDeviceImport": "not_run"
+  },
+  "offline_fresh": {
+    "status": "pass",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "parts": 2,
+      "faces": 9,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "seconds": 0.022978249995503575
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  },
+  "ui_baseline": {
+    "palette": "comfort",
+    "mode": "system",
+    "safariZoom": "100%",
+    "extraTabsCreated": 0,
+    "originalSession": "39",
+    "originalDraft": "empty"
+  }
 }

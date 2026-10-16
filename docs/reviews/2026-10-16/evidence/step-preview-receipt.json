@@ -1,0 +1,207 @@
+{
+  "codeCommits": [
+    "22bad28b90163d04013266d566d24683105bfc5a",
+    "e7342840903256aaf180a2ffe1b5f8c1b9fef0f9",
+    "f367c6b39e8a2520415981202289ef2eb6fb340f"
+  ],
+  "runtime": {
+    "serverInstanceId": "2026-10-16T07:46:49.209698669Z",
+    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "imageTag": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "sourceSHA256": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
+    "platformManifest": "sha256:d240f199de53cfca2f3eeb7816ad2dfaaedc4e2147c65c576dc7ae44aac8240f",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndUnrelatedMountsPreserved": true,
+    "dataHomeBoundUnderLauncher": true,
+    "legacyVolumesRetained": true,
+    "migration": {
+      "format": 1,
+      "status": "complete",
+      "createdAt": 1792128267,
+      "sources": {
+        "data": {
+          "imported": true,
+          "entries": 156,
+          "manifestSHA256": "5f1df0934a28bae056d044ba17169d65eb83b0abe02a3edd3e9927933e0df1cd"
+        },
+        "home": {
+          "imported": true,
+          "entries": 16,
+          "manifestSHA256": "71fe94959613795b1a8202f2dfb302167be50df03f7362f1c17e1d9225b4a54e"
+        }
+      }
+    },
+    "assetsMatch": [
+      "step-preview.js",
+      "step-metrology.js",
+      "step-import-worker.js",
+      "style.css",
+      "lock-cluster.js",
+      "parallel-chat.js",
+      "crash-monitor.js",
+      "crash-monitor.css",
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "credentialIsolation": {
+    "status": "pass",
+    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "geometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "parts": 2,
+      "faces": 9,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "seconds": 0.027712082999642007
+    },
+    "partAndFaceColours": true,
+    "workerCredentialScoped": true,
+    "workerCannotLoginToWorkbench": true,
+    "credentialMode": "0600",
+    "onlyWorkerCredentialMounted": true,
+    "workbenchLoginCredentialNotMounted": true,
+    "privateNetworkNoPublishedPorts": true
+  },
+  "largeFile": {
+    "status": "pass",
+    "bytes": 214184920,
+    "triangles": 370440,
+    "batches": 24,
+    "complete": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 370440,
+      "parts": 1,
+      "faces": 185220,
+      "bounds": [
+        [
+          -160.0,
+          -140.0,
+          0.0
+        ],
+        [
+          31740.0,
+          31760.0,
+          1900.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "seconds": 54.77695094200317
+    },
+    "seconds": 57.504397999999995,
+    "workbenchInstanceUnchanged": true
+  },
+  "highestObservedCADMemory": "2.206 GiB (sampling, not an exact peak)",
+  "generatedFileSHA256": "0e3900b78ae0eea0aa1042604081e479e48bbf668909a209908b706f57509de6",
+  "ui": {
+    "largeModel": "370440 triangles;31900x31900x1900mm",
+    "measurements": "30mm/90deg/frame/export/reset/clear pass",
+    "themes": [
+      "professional-light",
+      "professional-dark",
+      "comfort-light",
+      "comfort-dark",
+      "classic-light",
+      "classic-dark"
+    ],
+    "narrow": "Safari400percent zoom;wrapped controls reachable by keyboard and scrolling",
+    "restored": "comfort+system;Safari100percent;no extra tabs"
+  },
+  "originalPrivateModel": "not_run;user requested generated fixture instead",
+  "receivingDevice": "not_run",
+  "fullMainGate": "pending",
+  "bundle": {
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
+    "bytes": 770894139,
+    "sha256": "ff88e92fcff50cfdb26e378b70553678599c1b6f646e0a7c2e11333a42b8bc14",
+    "innerImageTarSHA256": "57ca8057186b8d13905f9299445009bf48f5f6af45a7a8f3a31918850e0f09fd",
+    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "build": {
+      "version": "0.1.17.0-RC2",
+      "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+      "platform": "linux/arm64",
+      "srcsha": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
+      "cadRuntime": "8.0.1.1.0",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "licenseInBundle": true,
+    "licenseInImage": true,
+    "outerAndInnerChecksums": "pass",
+    "localDockerImport": "pass",
+    "runningImagePreserved": true,
+    "receivingDeviceImport": "not_run"
+  },
+  "offlineFresh": {
+    "status": "pass",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "parts": 2,
+      "faces": 9,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "seconds": 0.022978249995503575
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  },
+  "cleanup": {
+    "ownedEntriesRemoved": 11,
+    "reproducibleLogicalBytes": 890963216,
+    "canonical204MiBFixtureRetained": true,
+    "userDataAndRollbackPreserved": true,
+    "supersededOwnArchivesRemoved": [
+      "020a3fc909e0",
+      "c97d447d22a5"
+    ]
+  }
+}
