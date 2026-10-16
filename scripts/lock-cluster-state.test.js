@@ -95,6 +95,12 @@ function environment(){
  assert.equal(r.server.locked,true,'local receipt cleared global authority');
  await r.advance(5500);assert.equal(follower.lc.effectiveLocked(),false,'same-generation poll lost verified dismissal');
  await follower.lc.requestLock();assert.equal(follower.lc.effectiveLocked(),true,'new manual lock must revoke local dismissal');
+ const f=environment(),failedMaster=f.tab('/');await f.advance(1800);const failedSlave=f.tab('/starmap.html');await f.advance(1800);
+ f.server.failPut=true;await assert.rejects(failedMaster.lc.requestLock());await f.advance(30);
+ const failedScope=await failedSlave.lc.prepareUnlock();await failedSlave.lc.handleUnlockSuccess(failedScope,{locked:false,gen:f.server.gen});
+ assert.equal(failedSlave.lc.effectiveLocked(),false,'valid identity receipt did not dismiss a failed peer lock');
+ await f.advance(5500);assert.equal(failedSlave.lc.effectiveLocked(),false,'stale peer heartbeat resurrected a verified veil');
+ f.server.failPut=false;await failedMaster.lc.requestLock();await f.advance(30);assert.equal(failedSlave.lc.effectiveLocked(),true,'new persisted lock must revoke verified dismissal');
  // The app continuation must not hide a new lock arriving across its await.
  const app=fs.readFileSync('internal/server/web/app.js','utf8');
  const dismiss=app.match(/async function dismissAfterUnlock\([^]*?\n}/)[0],veil={hidden:false,classList:{remove(){}}};

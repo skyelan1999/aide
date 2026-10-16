@@ -347,10 +347,11 @@
       send('unlock',{masterLocked:false});send('state');
       emit('effective',false);
     } else {
-      if(!current.locked){emit('effective',false);return;}
       // The server verified this generation. A leader election during password
       // hashing changes the tab role, not the validity of the identity receipt.
       if(current.gen!==scope?.gen)throw new Error('锁屏状态已变化，请重新解锁');
+      // A peer may still advertise a lock whose persistence failed. The
+      // verified server receipt also dismisses that veil at this generation.
       localDismiss=true;dismissGen=current.gen;
       emit('effective',effectiveLocked());
     }
