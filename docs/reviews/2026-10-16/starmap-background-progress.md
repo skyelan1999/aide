@@ -23,7 +23,7 @@
 
 临时来源注册表逐字节恢复，鉴权、设置、会话、工作区及无关挂载核对保持；返回原会话 #39。没有新增标签页。一次原生 AX 清理请求超时后先只读截图确认已清空查询、关闭详情并恢复全部星域，再切回现有工作台；没有重复执行未知状态动作或关闭用户页面。系统检查剩余内存约 47%，容器无 OOM／重启，不能把该工具超时称作产品崩溃。
 
-最终 ARM64 `08e257e0ad39`／AMD64 `239c3591fd3a` 完整包已验证内外哈希、启动器、许可证及实际 Docker 导入，见[包证据](evidence/starmap-background-packages-proof.json)。新数据目录的 ARM64 启动及原生 CAD 冒烟通过。最终完整回归 106 项全部通过，输入指纹 `a441e9d60e81f0e7a8030ff302858f31a2bcfabcdfb562b170a1a2319e2e90c9`，见[完整回归收据](evidence/starmap-background-full-proof.json)及[新目录启动收据](evidence/starmap-background-fresh-start-proof.json)。当前进行门禁、远端附件和 main 推送收尾。
+最终 ARM64 `08e257e0ad39`／AMD64 `239c3591fd3a` 完整包已验证内外哈希、启动器、许可证及实际 Docker 导入，见[包证据](evidence/starmap-background-packages-proof.json)。新数据目录的 ARM64 启动及原生 CAD 冒烟通过。最终完整回归 106 项全部通过，输入指纹 `a441e9d60e81f0e7a8030ff302858f31a2bcfabcdfb562b170a1a2319e2e90c9`，见[完整回归收据](evidence/starmap-background-full-proof.json)及[新目录启动收据](evidence/starmap-background-fresh-start-proof.json)。干净 main 发布门禁通过；四项补充附件已公开上传并验证大小、GitHub SHA-256、两份镜像的 HTTP 206 实际下载探针和两份元数据全文。网页表单将说明换行转为 CRLF，归一化后与准备稿一致，原有 13 项附件、标签及预发布状态保持，见[远端发布证据](evidence/starmap-background-remote-proof.json)。main 推送待收尾。
 
 早期 full 因追加实现、旧空场景 VM 夹具缺少回调而未通过；上一轮 Go race/vet 已通过（server 803.806 秒），整体仍因 CAD 取消夹具过早断言父线程释放锁而失败。夹具改为在一秒内等待真实信号，连续 20 次取消回归和最终完整回归均通过；所有失败收据不用于发布门禁。产品实现和镜像没有为夹具修正而改变。
 
