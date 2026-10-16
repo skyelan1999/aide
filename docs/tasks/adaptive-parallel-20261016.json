@@ -1,0 +1,90 @@
+{
+  "id": "adaptive-parallel-20261016",
+  "request": "多倍并行时总是规划失败；应在执行过程中持续识别并行机会，随着信息补齐动态拆分，而不是只依赖最早一句话规划",
+  "baseline": "17779287c1ba5610aa897c4b35e6457ade7928fc",
+  "initial_status": "",
+  "acceptance": [
+    "Re-evaluate useful parallel analysis after real tool results and user steer; initial empty/invalid plan must not permanently disable fanout. No duplicate check on unchanged/recovered evidence or artificial completion nudges.",
+    "Keep concurrency at selected1-5/10 per wave, preserve prior notes and per-request contexts/usage, reject already completed exact titles, bound automatic checkpoint evaluations to12 per run. Single main executor retains tools/writes/approvals; cancellation stops current requests without replaying writes.",
+    "Distinguish temporary sequential discovery from failed planning; show multiple rounds and historical planner contexts. Focused race and workflow/browser validation, quick/full, docs/runtime/offline/main gates with scoped evidence."
+  ],
+  "scope": [
+    "internal/server/conversation_parallel.go",
+    "internal/server/conversation_parallel_test.go",
+    "internal/server/workflow.go",
+    "internal/server/web/parallel-chat.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/parallel-chat.test.cjs",
+    "docs/architecture/adaptive-parallel.md",
+    "docs/tasks/adaptive-parallel-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/adaptive-parallel*",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests continual opportunity discovery as execution reveals dependencies. Existing single-shot ParallelPrepared permanently bypasses later planning; planner35s/small output may fail with hidden reasoning. Preserve single tool executor and existing write/approval semantics.",
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "docs/tasks/adaptive-parallel-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Evidence-keyed bounded checkpoint planning at main loop boundaries; persist key for resume, retain all wave parts/prior planner contexts, completed-title ledger,90s planner with reasoning off only for scheduler. Main/worker reasoning remains selected. No tool fanout added.",
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Evidence-triggered re-evaluation at chat tool-loop boundaries, persisted12-check budget/dedup key, cumulative round ledger/planner contexts and completed-title exclusion, single tool executor. Multi-round UI/context rows and cache versions updated.",
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "internal/server/workflow.go",
+        "internal/server/web/parallel-chat.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Frozen focused Docker race19.318s and quick88 pass. Actual runtime/model/browser and fresh full90 pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/adaptive-parallel.md"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Architecture and scoped evidence written; runtime/full/main outcomes pending.",
+      "evidence": [
+        "docs/architecture/adaptive-parallel.md",
+        "docs/reviews/2026-10-16/adaptive-parallel.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior explicit incremental test/push/main/local designated start.command/offline-image-package authorization; no version/tag/Release.",
+  "rollback": "No data migration. Preserve prior3f4545df image/package and user state; revert scoped adaptive planning/UI changes.",
+  "handoff": "Quick88 and frozen focused race19.318s pass. Source ready for designated start.command candidate and real model/browser validation; no full receipt reused. Keep fixed product inputs during full. Original12 active.",
+  "quick_receipt": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "40293541a3661129bf77466e169fdb95cb6a4da6b387af10f25dde11da2a6301",
+    "head": "17779287c1ba5610aa897c4b35e6457ade7928fc",
+    "time": "20261016T032820591348Z"
+  }
+}

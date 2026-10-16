@@ -30,7 +30,7 @@
   function render(run, {el, t, open, initial = false}) {
     const progress = run.parallel;
     if (!progress || !(run.parallelism > 1)) return null;
-    const phases = {planning:'规划拆分', running:'并行分析', merging:'汇总回答', completed:'已汇总', fallback:'主任务处理', interrupted:'已中断'};
+    const phases = {planning:'规划拆分', running:'并行分析', merging:'汇总回答', completed:'已汇总', fallback:run.status === 'running' ? '继续执行，等待并行机会' : '主任务处理', interrupted:'已中断'};
     const statuses = {running:'分析中', completed:'已完成', failed:'未完成', cancelled:'已取消'};
     const parts = progress.parts || [];
     const finished = parts.filter(part => part.status !== 'running').length;
@@ -38,10 +38,11 @@
     panel.dataset.key = run.id + ':parallel'; panel.open = !!open?.has(panel.dataset.key) || (initial && ['planning', 'running', 'merging'].includes(progress.phase));
     const label = t('并行 {0}x · {1}', run.parallelism, t(phases[progress.phase] || '并行分析'));
     panel.append(el('summary', '', label + (parts.length ? ' · ' + finished + '/' + parts.length : '')));
+    if (progress.round > 1) panel.append(el('p', 'parallel-reason', t('已评估 {0} 轮；下方累计保留各轮分析', progress.round)));
     if (progress.reason) panel.append(el('p', 'parallel-reason', progress.reason));
     for (const part of parts) {
       const row = el('div', 'parallel-part');
-      row.append(el('span', '', part.title), el('small', '', t(statuses[part.status] || '等待')));
+      row.append(el('span', '', progress.round > 1 ? t('第 {0} 轮 · {1}', part.round || 1, part.title) : part.title), el('small', '', t(statuses[part.status] || '等待')));
       panel.append(row);
     }
     return panel;

@@ -6091,6 +6091,7 @@ function renderParallelContextDetail(detail) {
     detail.append(el('p', 'context-card-actual context-parallel-detail', t('{0}：输入 {1} / 独立窗口 {2} · {3}', t(label), fmtTokens(input || 0), fmtTokens(context.contextWindow || 0), t(actual ? '上游实际' : '估算'))));
   };
   row('标题辅助请求', run.topicContext);
+  for (const [index, context] of (progress?.plannerHistory || []).entries()) row(t('第 {0} 轮规划请求', index + 1), context);
   row('规划请求', progress?.plannerContext);
   const contexts = (progress?.parts || []).map(part => part.context).filter(Boolean);
   if (contexts.length) {

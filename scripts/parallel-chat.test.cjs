@@ -28,3 +28,17 @@ choices.api.set('10');assert.equal(choices.api.value('chat',false),10);assert.eq
 assert.match(app,/for \(const \[value, description\] of window.AideParallelChat.choices\)/,'visible menu uses shared choices');
 const html=fs.readFileSync('internal/server/web/index.html','utf8');assert.match(html,/<option value="10">10x<\/option>/,'hidden select must retain 10x during sync');
 console.log('parallel 10x PASS: exact requested labels, persisted 10, invalid gaps rejected and visible/hidden controls agree');
+
+const watching = api.render({id:'discover',status:'running',parallelism:3,parallel:{phase:'fallback',round:2,reason:'New evidence needed',parts:[{round:1,title:'first wave',status:'completed'},{round:2,title:'second wave',status:'running'}]}},{el,t});
+assert.match(watching.children[0].textContent,/继续执行，等待并行机会/);
+assert.match(watching.children[1].textContent,/已评估 2 轮/);
+assert.equal(watching.children[3].children[0].textContent,'第 1 轮 · first wave');
+assert.equal(watching.children[4].children[0].textContent,'第 2 轮 · second wave');
+assert.match(api.render({id:'done',status:'completed',parallelism:3,parallel:{phase:'fallback'}},{el,t}).children[0].textContent,/主任务处理/);
+const detailStart=app.indexOf('function renderParallelContextDetail('),detailEnd=app.indexOf('function renderContextMeter(',detailStart);
+const meter={state:{session:{runs:[{parallelism:2,parallel:{plannerHistory:[{inputEstimate:31,contextWindow:1000}],plannerContext:{inputEstimate:41,contextWindow:1000},parts:[]}}]}},el,t,fmtTokens:n=>String(n)};
+vm.createContext(meter);vm.runInContext(app.slice(detailStart,detailEnd),meter);
+const detail=el('div');meter.renderParallelContextDetail(detail);
+assert.ok(detail.children.some(n=>n.textContent?.includes('第 1 轮规划请求')&&n.textContent.includes('31')),'prior planner has its own context row');
+assert.ok(detail.children.some(n=>n.textContent?.includes('规划请求')&&n.textContent.includes('41')),'latest planner context is retained');
+console.log('adaptive parallel PASS: sequential discovery, multi-wave ledger, terminal labels and separate historical planner contexts');

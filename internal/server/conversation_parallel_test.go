@@ -6,11 +6,190 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 )
+
+func TestConversationParallelAdaptiveEvidence(t *testing.T) {
+	for _, first := range []string{`{"tasks":[]}`, `invalid JSON`} {
+		t.Run(first, func(t *testing.T) {
+			a, s, task := parallelFixture(t, 2)
+			var plans, workers atomic.Int32
+			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var body struct {
+					Messages []Message         `json:"messages"`
+					Tools    []any             `json:"tools"`
+					Thinking map[string]string `json:"thinking"`
+				}
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				if len(body.Tools) != 0 {
+					t.Error("planner/worker received executable tools")
+				}
+				last := body.Messages[len(body.Messages)-1].Content
+				if strings.HasPrefix(last, "[parallel planner]") {
+					if body.Thinking["type"] != "disabled" {
+						t.Error("scheduling must use its output budget for JSON")
+					}
+					switch plans.Add(1) {
+					case 1:
+						parallelReply(w, first)
+					case 2:
+						parallelReply(w, `{"tasks":["architecture","tests"]}`)
+					default:
+						parallelReply(w, `{"tasks":["architecture","deployment"]}`) // one already done: do not launch duplicates
+					}
+					return
+				}
+				workers.Add(1)
+				parallelReply(w, "new working note")
+			}))
+			defer provider.Close()
+			cfg := Settings{BaseURL: provider.URL, Model: "fixture", ReasoningEffort: "high"}
+			input := []Message{{Role: "user", Content: "Inspect before deciding how to split."}}
+			input, err := a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 4096})
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _ = a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 4096})
+			if plans.Load() != 1 {
+				t.Fatal("unchanged checkpoint repeated planning")
+			}
+			input = append(input, Message{Role: "tool", ToolCallID: "read", Content: "Observed two independent components."})
+			input, err = a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 4096})
+			if err != nil || plans.Load() != 2 || workers.Load() != 2 || task.Parallel.Round != 2 || len(task.Parallel.PlannerHistory) != 1 || task.Parallel.Phase != "merging" {
+				t.Fatalf("new evidence did not unlock fanout: %v %+v", err, task.Parallel)
+			}
+			// Persist/recover the complete state. No new evidence must not replay workers.
+			raw, _ := json.Marshal(task)
+			var restored Task
+			_ = json.Unmarshal(raw, &restored)
+			s.Runs[0] = &restored
+			_, err = a.prepareParallel(context.Background(), s, &restored, cfg, input, ProfileParams{MaxTokens: 4096})
+			if err != nil || plans.Load() != 2 || workers.Load() != 2 {
+				t.Fatal("resume replayed completed wave")
+			}
+			input = append(input, Message{Role: "user", Content: wrapSteer("Also inspect deployment.")})
+			_, err = a.prepareParallel(context.Background(), s, &restored, cfg, input, ProfileParams{MaxTokens: 4096})
+			if err != nil || plans.Load() != 3 || workers.Load() != 2 || len(restored.Parallel.Parts) != 2 || len(restored.Parallel.PlannerHistory) != 2 {
+				t.Fatalf("duplicate completed work dispatched: %v %+v", err, restored.Parallel)
+			}
+			if restored.Usage.Total != 100 || restored.Parallel.Parts[0].Round != 2 {
+				t.Fatal("multi-round usage/ledger lost")
+			}
+			if cfg.ReasoningEffort != "high" {
+				t.Fatal("planner altered session configuration")
+			}
+		})
+	}
+}
+
+func TestConversationParallelAdaptiveToolLoop(t *testing.T) {
+	a, _, task := parallelFixture(t, 2)
+	task.Prompt = "Read discovery.txt and analyse the components."
+	task.Steer = make(chan string, 1)
+	if err := os.WriteFile(filepath.Join(a.workPath, "discovery.txt"), []byte("COMPONENTS: engine, UI"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var plans, mains, workers atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+			Tools    []any     `json:"tools"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		last := body.Messages[len(body.Messages)-1].Content
+		switch {
+		case strings.HasPrefix(last, "[parallel planner]"):
+			n := plans.Add(1)
+			if n == 1 {
+				parallelReply(w, `{"tasks":[]}`)
+				return
+			}
+			found := false
+			for _, m := range body.Messages {
+				if m.Role == "tool" && strings.Contains(m.Content, "COMPONENTS: engine, UI") {
+					found = true
+				}
+			}
+			if !found {
+				t.Error("planner did not receive real tool evidence")
+			}
+			parallelReply(w, `{"tasks":["engine review","UI review"]}`)
+		case strings.HasPrefix(last, "[parallel analysis subtask]"):
+			workers.Add(1)
+			if len(body.Tools) != 0 {
+				t.Error("worker can execute tools")
+			}
+			parallelReply(w, "component analysis")
+		default:
+			n := mains.Add(1)
+			if n == 1 {
+				jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", ToolCalls: []ToolCall{readCall("read_file", `{"path":"discovery.txt"}`)}}}}})
+				return
+			}
+			if n == 2 && !strings.HasPrefix(last, "[parallel analysis results") {
+				t.Error("main did not receive late working notes")
+			}
+			parallelReply(w, "The two components have been analysed.")
+		}
+	}))
+	defer provider.Close()
+	input := []Message{{Role: "user", Content: task.Prompt}}
+	out, chain, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, input, ProfileParams{MaxTokens: 4096}, builtinTools, task, map[string]Change{}, 0)
+	if err != nil || !strings.Contains(out, "two components") || plans.Load() != 2 || workers.Load() != 2 || len(task.ToolUses) != 1 || len(chain) < 4 {
+		t.Fatalf("late fanout failed: %q %v plans%d workers%d tools%d", out, err, plans.Load(), workers.Load(), len(task.ToolUses))
+	}
+	if task.Parallel.PlannerHistory[0].Usage.Total != 20 || task.Parallel.PlannerContext.Usage.Total != 20 || task.Parallel.MainContext == nil {
+		t.Fatal("per-request context history lost")
+	}
+}
+
+func TestConversationParallelAdaptiveWavesAndBudget(t *testing.T) {
+	a, s, task := parallelFixture(t, 2)
+	var plans atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if strings.HasPrefix(body.Messages[len(body.Messages)-1].Content, "[parallel planner]") {
+			n := plans.Add(1)
+			parallelReply(w, fmt.Sprintf(`{"tasks":["wave%d-a","wave%d-b"]}`, n, n))
+			return
+		}
+		parallelReply(w, "bounded note")
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "fixture"}
+	params := ProfileParams{MaxTokens: 4096}
+	input := []Message{{Role: "user", Content: "Investigate incrementally"}}
+	for wave := 1; wave <= 12; wave++ {
+		input = append(input, Message{Role: "tool", Content: fmt.Sprintf("new discovery%d", wave)})
+		var err error
+		input, err = a.prepareParallel(context.Background(), s, task, cfg, input, params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(task.Parallel.Parts) != wave*2 || len(task.Parallel.PlannerHistory) != wave-1 {
+			t.Fatal("earlier wave ledger lost")
+		}
+	}
+	input = append(input, Message{Role: "tool", Content: "next discovery"})
+	_, err := a.prepareParallel(context.Background(), s, task, cfg, input, params)
+	if err != nil || plans.Load() != 12 || task.Parallel.Round != 12 || task.Usage.Total != 12*60 {
+		t.Fatal("checkpoint budget/accounting not bounded")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err = a.prepareParallel(ctx, s, task, cfg, input, params)
+	if err != context.Canceled || plans.Load() != 12 {
+		t.Fatal("cancelled checkpoint dispatched a planner")
+	}
+}
 
 func TestConversationParallelPlan(t *testing.T) {
 	for _, text := range []string{`{"tasks":["a","b"]}`, "```json\n{\"tasks\":[\"a\",\"b\"]}\n```"} {

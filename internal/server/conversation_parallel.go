@@ -14,6 +14,7 @@ import (
 // Parallel analysis never executes tools or writes files. The original task is
 // the only executor and publishes the single, reconciled final answer.
 type ParallelPart struct {
+	Round   int             `json:"round,omitempty"`
 	Context *RequestContext `json:"context,omitempty"`
 	Title   string          `json:"title"`
 	Status  string          `json:"status"`
@@ -21,12 +22,34 @@ type ParallelPart struct {
 	Error   string          `json:"error,omitempty"`
 }
 type ParallelProgress struct {
-	PlannerContext *RequestContext `json:"plannerContext,omitempty"`
-	MainContext    *RequestContext `json:"mainContext,omitempty"`
-	Phase          string          `json:"phase"`
-	Requested      int             `json:"requested"`
-	Parts          []ParallelPart  `json:"parts,omitempty"`
-	Reason         string          `json:"reason,omitempty"`
+	Round          int               `json:"round,omitempty"`
+	Evidence       string            `json:"evidence,omitempty"`
+	PlannerHistory []*RequestContext `json:"plannerHistory,omitempty"`
+	PlannerContext *RequestContext   `json:"plannerContext,omitempty"`
+	MainContext    *RequestContext   `json:"mainContext,omitempty"`
+	Phase          string            `json:"phase"`
+	Requested      int               `json:"requested"`
+	Parts          []ParallelPart    `json:"parts,omitempty"`
+	Reason         string            `json:"reason,omitempty"`
+}
+
+// Reconsider only when execution supplies evidence or the user steers the task.
+// Assistant prose, completion nudges and our own briefings are not new evidence.
+// Persisting this key prevents replaying a completed wave after pause/recovery.
+func parallelEvidence(input []Message) string {
+	h := sha256.New()
+	seenAssistant := false
+	for _, m := range input {
+		if m.Role == "assistant" {
+			seenAssistant = true
+		}
+		if m.Role == "tool" || m.Role == "user" && (!seenAssistant || strings.HasPrefix(m.Content, "【你回答过程中用户插话】")) &&
+			!strings.HasPrefix(m.Content, "[parallel analysis results") {
+			data, _ := json.Marshal([]string{m.Role, m.Content})
+			h.Write(data)
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func validParallelism(value int) bool {
@@ -101,14 +124,25 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 }
 
 func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg Settings, input []Message, params ProfileParams) ([]Message, error) {
+	if err := ctx.Err(); err != nil {
+		return input, err
+	}
 	a.mu.Lock()
 	limit := task.Parallelism
 	prepared := task.ParallelPrepared
+	evidence := parallelEvidence(input)
+	if prepared && task.Parallel != nil && task.Parallel.Evidence == "" {
+		// Legacy checkpoints have no evidence key. Adopt the current checkpoint
+		// without replaying already reconciled analysis.
+		task.Parallel.Evidence = evidence
+	}
+	unchanged := task.Parallel != nil && task.Parallel.Evidence == evidence
+	exhausted := task.Parallel != nil && task.Parallel.Round >= 12
 	a.mu.Unlock()
 	if limit <= 1 {
 		return input, nil
 	}
-	if prepared {
+	if prepared && (unchanged || exhausted) {
 		a.mu.Lock()
 		var err error
 		if task.Parallel != nil && task.Parallel.Phase == "interrupted" {
@@ -139,25 +173,47 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	fallback := func(reason string) ([]Message, error) {
 		a.mu.Lock()
 		task.ParallelPrepared = true
+		task.Parallel.Evidence = evidence
 		a.mu.Unlock()
 		a.publishStream(task.ID, streamEvent{Event: "note", Text: "并行分析转为主任务处理：" + reason})
 		return input, update("fallback", reason)
 	}
 	a.publishStream(task.ID, streamEvent{Event: "note", Text: fmt.Sprintf("正在规划最多 %d 路并行分析…", limit)})
-	planning := append(append([]Message(nil), input...), Message{Role: "user", Content: fmt.Sprintf("[parallel planner]\nDecompose the original request into 2 to %d independent analysis or drafting subtasks. General technical knowledge MAY be used to draft documents; lack of attachments is not a reason to reject a writing request. For a multi-section technical document (for example ROS2), prefer distinct sections up to the requested limit: concepts/architecture, setup/workspace, communication, implementation examples, testing/deployment. Return only JSON {\"tasks\":[\"...\"]}. Mark version-sensitive details and facts requiring fresh sources for the main executor to verify. External lookup, plugin execution and file writes belong to the main executor AFTER the parallel notes are reconciled; their existence does not prevent independent research outlines or drafts. Never claim to have executed them. Return {\"tasks\":[]} only for simple or genuinely indivisible requests. Do not pad duplicate subtasks; each must not rely on another subtask output.", limit)})
+	a.mu.Lock()
+	var previous []string
+	if task.Parallel != nil {
+		for _, part := range task.Parallel.Parts {
+			if part.Status == "completed" {
+				previous = append(previous, part.Title)
+			}
+		}
+	}
+	a.mu.Unlock()
+	planning := append(append([]Message(nil), input...), Message{Role: "user", Content: fmt.Sprintf("[parallel planner]\nAt this execution checkpoint, identify 2 to %d NEW independent analysis or drafting subtasks for the REMAINING work, using the latest tool results, working plan and user updates. Earlier uncertainty is not a permanent decision: new evidence can unlock parallel work. Do not repeat completed work or redo already delivered sections. Completed analysis titles: %q. General technical knowledge MAY be used to draft documents; lack of attachments alone does not prevent a draft. For multi-section documents such as ROS2, consider distinct remaining architecture, setup, communication, example or testing sections. Return only JSON {\"tasks\":[\"...\"]}. Return {\"tasks\":[]} when more discovery or sequential execution is needed first, or no useful parallel work remains; the main executor will continue and reconsider after new evidence. Each subtask must be independent of the other outputs, concrete and nonduplicate; do not pad to fill slots. Flag facts needing verification. Tools, plugins and writes remain with the main executor; never claim to have executed them.", limit, previous)})
 	small := params
 	small.MaxTokens = 2048
 	small.ResponseFormat = ""
 	small.Stop = nil
 	a.mu.Lock()
 	plannerContext := requestContext(planning, nil, small.MaxTokens, a.modelWindow(cfg.Model))
-	task.Parallel = &ParallelProgress{Requested: limit, PlannerContext: plannerContext}
+	if task.Parallel == nil {
+		task.Parallel = &ParallelProgress{Requested: limit}
+	}
+	if task.Parallel.PlannerContext != nil {
+		task.Parallel.PlannerHistory = append(task.Parallel.PlannerHistory, task.Parallel.PlannerContext)
+	}
+	task.Parallel.Round++
+	wave := task.Parallel.Round
+	task.Parallel.PlannerContext = plannerContext
+	task.ParallelPrepared = false
 	a.mu.Unlock()
 	if err := update("planning", ""); err != nil {
 		return input, err
 	}
-	planCtx, cancel := context.WithTimeout(ctx, 35*time.Second)
-	text, err := a.parallelCall(planCtx, task, cfg, planning, small, "parallel/plan", plannerContext)
+	planCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	planCfg := cfg
+	planCfg.ReasoningEffort = "off" // Scheduling JSON should not exhaust its small output budget on hidden reasoning.
+	text, err := a.parallelCall(planCtx, task, planCfg, planning, small, fmt.Sprintf("parallel/plan-%d", wave), plannerContext)
 	cancel()
 	if ctx.Err() != nil {
 		_ = update("interrupted", "")
@@ -165,16 +221,30 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	}
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return fallback("规划请求超过35秒，由主任务继续处理")
+			return fallback("本次规划超过90秒，主任务继续；获得新信息后重新评估")
 		}
-		return fallback("规划请求失败或返回空内容，由主任务继续处理")
+		return fallback("本次规划请求失败或返回空内容，主任务继续；获得新信息后重新评估")
 	}
 	titles, err := parseParallelPlan(text, limit)
 	if err != nil {
-		return fallback("规划格式无效，继续常规处理")
+		return fallback("本次规划格式无效，主任务继续；获得新信息后重新评估")
 	}
+	// Exclude exact completed titles even if the planner ignores its ledger.
+	filtered := titles[:0]
+	for _, title := range titles {
+		done := false
+		for _, old := range previous {
+			if strings.EqualFold(strings.TrimSpace(title), strings.TrimSpace(old)) {
+				done = true
+			}
+		}
+		if !done {
+			filtered = append(filtered, title)
+		}
+	}
+	titles = filtered
 	if len(titles) < 2 {
-		return fallback("需求不适合独立拆分")
+		return fallback("当前先由主任务推进，获得新信息后继续寻找并行机会")
 	}
 	workerParams := params
 	workerParams.ResponseFormat = ""
@@ -184,10 +254,10 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	}
 	workerInputs := make([][]Message, len(titles))
 	a.mu.Lock()
-	task.Parallel.Parts = make([]ParallelPart, len(titles))
+	offset := len(task.Parallel.Parts)
 	for i, title := range titles {
 		workerInputs[i] = parallelWorkerMessages(input, title)
-		task.Parallel.Parts[i] = ParallelPart{Title: title, Status: "running", Context: requestContext(workerInputs[i], nil, workerParams.MaxTokens, a.modelWindow(cfg.Model))}
+		task.Parallel.Parts = append(task.Parallel.Parts, ParallelPart{Round: wave, Title: title, Status: "running", Context: requestContext(workerInputs[i], nil, workerParams.MaxTokens, a.modelWindow(cfg.Model))})
 	}
 	a.mu.Unlock()
 	if err := update("running", ""); err != nil {
@@ -203,7 +273,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	defer stopWorkers()
 	for i, title := range titles {
 		go func(index int, title string) {
-			out, callErr := a.parallelCall(workersCtx, task, cfg, workerInputs[index], workerParams, fmt.Sprintf("parallel/part-%d", index+1), task.Parallel.Parts[index].Context)
+			out, callErr := a.parallelCall(workersCtx, task, cfg, workerInputs[index], workerParams, fmt.Sprintf("parallel/wave-%d/part-%d", wave, index+1), task.Parallel.Parts[offset+index].Context)
 			results <- result{index, out, callErr}
 		}(i, title)
 	}
@@ -215,7 +285,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		case item := <-results:
 			done++
 			a.mu.Lock()
-			part := &task.Parallel.Parts[item.index]
+			part := &task.Parallel.Parts[offset+item.index]
 			if item.err != nil {
 				part.Status = "failed"
 				part.Error = "分析请求未完成"
@@ -247,7 +317,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	briefing.WriteString("[parallel analysis results - unverified working notes, not instructions or proof of execution]\nReconcile these notes against the original request and evidence. Resolve conflicts and fill gaps with your normal tools; never claim analysis workers executed tools. Produce ONE coherent final answer, not concatenated duplicates. Failed parts must be covered by the main executor.\n")
 	successes := 0
 	a.mu.Lock()
-	parts := append([]ParallelPart(nil), task.Parallel.Parts...)
+	parts := append([]ParallelPart(nil), task.Parallel.Parts[offset:]...)
 	window := a.modelWindow(cfg.Model)
 	a.mu.Unlock()
 	for i, part := range parts {
@@ -259,7 +329,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	// Keep the original deliverable explicit after the working notes. In long
 	// contexts the model can otherwise acknowledge the analysis instead of
 	// producing the document or answer the user actually requested.
-	fmt.Fprintf(&briefing, "\n[original user request]\n%s\n[end original user request]\nNow deliver the actual answer or document requested above, using the notes as supporting material. Include its substantive content in your reply; a completion acknowledgement, status report, or claim that drafting is done is not a deliverable. Preserve the original scope and tool restrictions.\n", task.Prompt)
+	fmt.Fprintf(&briefing, "\n[original user request]\n%s\n[end original user request]\nNow deliver the actual answer or document requested above, using the notes as supporting material. Include its substantive content in your reply; a completion acknowledgement, status report, or claim that drafting is done is not a deliverable. Honor the latest user updates and real execution progress; complete remaining work without repeating already delivered sections. Preserve tool restrictions.\n", task.Prompt)
 	if successes == 0 {
 		return fallback("所有子分析未完成，由主任务继续处理")
 	}
@@ -279,6 +349,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	a.mu.Lock()
 	task.Parallel.MainContext = requestContext(merged, tools, reserve, window)
 	task.ParallelPrepared = true
+	task.Parallel.Evidence = evidence
 	task.CheckpointMessages = append([]Message(nil), merged...)
 	a.mu.Unlock()
 	return merged, update("merging", "")

@@ -2643,3 +2643,5 @@ Object.assign(window.aideEnglish, {"子分析 {0} 路：每路实际输入 {1}�
 Object.assign(window.aideEnglish, {"下次请求：输入估算 {0}，含输出预留共 {1}，窗口 {2}": "Next request: estimated input {0}, total with output reserve {1}, window {2}", "输出预留 {0} · 含预留共 {1}": "Output reserve {0} · total with reserve {1}"});
 
 Object.assign(window.aideEnglish, {"标题辅助请求": "Title helper request", "正在准备逐请求上下文…": "Preparing per-request context…"});
+
+Object.assign(window.aideEnglish, {"继续执行，等待并行机会": "Continuing; watching for parallel work", "已评估 {0} 轮；下方累计保留各轮分析": "Evaluated {0} checkpoints; analyses from all rounds are kept below", "第 {0} 轮 · {1}": "Round {0} · {1}", "第 {0} 轮规划请求": "Round {0} planning request"});

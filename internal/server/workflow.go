@@ -691,9 +691,10 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 	}
 	a.rememberTaskOutputLocked(s, task, answer)
-	if task.Parallel != nil && task.Parallel.Phase == "merging" {
+	if task.Parallel != nil && (task.Parallel.Phase == "merging" || task.Parallel.Phase == "fallback" && task.Parallel.MainContext != nil) {
 		if err == nil {
 			task.Parallel.Phase = "completed"
+			task.Parallel.Reason = ""
 		} else {
 			task.Parallel.Phase = "interrupted"
 		}
@@ -1813,6 +1814,16 @@ func maxToolCallsForRounds(rounds int) int {
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
 func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int, checkpoints ...func(string, []Message)) (string, []Message, error) {
 	a.mu.Lock()
+	var parallelSession *Session
+	if task.Mode == "chat" && task.Parallelism > 1 {
+		for _, session := range a.sessions {
+			for _, run := range session.Runs {
+				if run == task {
+					parallelSession = session
+				}
+			}
+		}
+	}
 	stepName := "step"
 	if stepIndex >= 0 && stepIndex < len(task.Steps) {
 		stepName = task.Steps[stepIndex].Name
@@ -1854,6 +1865,14 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 	for round := 0; round < maxRounds; round++ {
 		if err := a.checkpointExecution(task, stepName, input, "model_request", nil, ""); err != nil {
 			return "", input, err
+		}
+		if parallelSession != nil && stepName == "chat" {
+			var err error
+			input, err = a.prepareParallel(ctx, parallelSession, task, cfg, input, params)
+			if err != nil {
+				return "", input, err
+			}
+			saveCheckpoint()
 		}
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
