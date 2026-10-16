@@ -7691,10 +7691,10 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Fix actual Safari scroll-reopen failure L023-to-L000 with deterministic regression and UI retest; caret886 exact passes. Then SSH scene/history/autosave and remaining approval/outcome/timeline. All original12 retained.",
-    "deliveredMain": "f62f2449e12fbd6f188c4877d095a73076da6dff",
+    "nextIndependentFocus": "Fix confirmed manual-mode stale server-saved label on dirty input; then SSH scene/history/autosave, actual approval/outcome/timeline UI and other original requirements. Native local saved/draft caret/scroll now pass. Original12 retained.",
+    "deliveredMain": "b3bfbe72dd55968f32f96797da36ff908f3626ad",
     "mainGate": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
-    "currentCheckpointGate": "Actual native local file save/history/SVG full restore/refresh draft/conflict merge and exact protected cleanup pass; docs-only exact full88 reuse, independent main gate and remotef62f2449 exact. Original12 retained."
+    "currentCheckpointGate": "Position fix final full88/race621.173s/vet and independent source main gate/pushb3bfbe72 pass. Runtimeebf9e382 actual native saved/draft L023-to-L023, offsets886/904, exact protected state and cleanup pass; offline import local pass. New stale dirty-status label remains open."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7801,11 +7801,19 @@
     "delivery": "Independent clean-main gate and exact remotef62f2449 verified, exact-input full88 reuse; no runtime change."
   },
   "workbench_file_position_20261016": {
-    "status": "in_progress",
+    "status": "scoped_delivered",
     "task": "docs/tasks/workbench-file-position-20261016.json",
     "report": "docs/reviews/2026-10-16/workbench-file-position.md",
-    "caret": "Actual native insertion offset886 exact API/disk pass",
-    "scroll": "Actual Safari twice L023-to-L000 after reopen; fix pending",
-    "cleanup": "Owned fixture deleted, original listing/config/auth/source/session bytes exact"
+    "caret": "New runtime actual native offsets886/904 exact whole API/disk content pass",
+    "scroll": "New runtime saved and dirty drafts both L023-to-L023 after explicit reopen/recovery",
+    "cleanup": "Both fixture rounds removed after exact checks; original listing/config/auth/source/session bytes exact",
+    "runtimeProof": "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json"
+  },
+  "manual_save_dirty_status_followup_20261016": {
+    "status": "pending",
+    "observed": "Actual auto-save-off editor keeps server-saved label after new dirty input, while independent server content remains prior saved version. Source schedule does not repaint dirty status.",
+    "evidence": "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json",
+    "screenshot": "private draft-before-close.png",
+    "next": "Regression then fix status transition without losing partial-save/history-failure/conflict states."
   }
 }

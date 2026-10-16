@@ -50,18 +50,19 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Source-level regression and final full88 all0/server race621.173s/all vet/nonroot19 assets/DOCX roundtrip pass; candidate bundle local import pass. Actual Safari old-runtime failure is directly recorded; new-runtime native repair remains pending release acceptance, not claimed pass.",
+      "summary": "Red-before/green-after hidden layout regression, final full88/race621.173s/vet and actual current9999 Safari saved/draft L023-to-L023 pass; actual insertion offsets886/904 and entire API/disk content exact. Protected state/owned cleanup exact. Separate stale dirty-status label tracked for next fix.",
       "evidence": [
         "docs/reviews/2026-10-16/workbench-file-position.md",
+        "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json",
         "docs/reviews/2026-10-16/workbench-file-position-bundle-proof.json"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Separate proved caret success from reproduced scroll failure and unproven root-cause candidates; no completion claim.",
+      "summary": "Final fix, original failures, native saved/draft evidence, full/source/runtime/offline identities, exact cleanup and separate dirty-status issue documented without marking original goal complete.",
       "evidence": [
         "docs/reviews/2026-10-16/workbench-file-position.md",
-        "docs/reviews/2026-10-16/workbench-file-position-proof.json"
+        "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json"
       ]
     },
     "cleanup": {
@@ -72,14 +73,18 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Final full88 and independent clean-main gate/pushb3bfbe72 exact remote pass. start.command updated9999 toebf9e382;14 session/settings/source/auth/mount/workspace bytes exact. Native saved/draft L023-to-L023 and actual insert offsets886/904 with API/disk exact pass, owned cleanup exact. Offline local import pass, receiving device pending. Independent stale dirty-status issue tracked, original12 retained.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-position.md",
+        "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json",
+        "docs/reviews/2026-10-16/workbench-file-position-bundle-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental test/docs/push/main authorization; no new version/tag or runtime change.",
   "rollback": "Only exact owned fixture may be deleted; preserve original files and data; no global history/cache cleanup.",
-  "handoff": "Full88 code/package gate passed; main gate/push and fresh no-active-work runtime preflight, designated start.command, protected checks, safe existing workbench reload to app156/autosave7, actual saved/draft scroll/caret UI retest pending. Native repair not yet proven. Original12 retained.",
+  "handoff": "Scoped native scroll/caret repair delivered. Saved and dirty drafts retainL023; exact offsets886/904 pass. Next fix confirmed stale server-saved label after editing in manual mode, then SSH scene/history and original remaining workflows. All original12 retained; Windows user-owned, real vectors deferred.",
   "quick_receipt": {
     "status": "pass",
     "profile": "quick",
@@ -92,7 +97,7 @@
     "buildCommit": "92c6f4826d79a8d6db1a4bcccf0314f4b4802706",
     "sourceSHA256": "a0620d67ce4c4deb97eee4c6e4560764d39bbea2f0b625f15c90a78b519e685b",
     "bundleProof": "docs/reviews/2026-10-16/workbench-file-position-bundle-proof.json",
-    "status": "built_import_verified_not_deployed"
+    "status": "deployed_healthy_actual_native_saved_and_draft_positions_pass"
   },
   "full_receipt": {
     "profile": "full",

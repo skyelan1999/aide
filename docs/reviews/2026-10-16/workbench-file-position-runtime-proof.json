@@ -1,0 +1,93 @@
+{
+  "runtime": {
+    "image": "sha256:ebf9e38203f31bf93ef253a2c271f0581f3dca25448edb20c11b101e286a4371",
+    "imageTag": "sha256:ebf9e38203f31bf93ef253a2c271f0581f3dca25448edb20c11b101e286a4371",
+    "sourceSHA256": "a0620d67ce4c4deb97eee4c6e4560764d39bbea2f0b625f15c90a78b519e685b",
+    "platformManifest": "sha256:aa6cb33661319d515e522d49346f83de97cfbc98f493ff3a7c8e044bd50fe316",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "preflight": {
+    "image": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d",
+    "health": "healthy",
+    "sessions": 14,
+    "running": 0,
+    "nonterminal": 0,
+    "queued": 0,
+    "historyBackupSHA256": "44afa2efe6d0cfcbd9e05ffb73a5d6f0e3959415567fbe621c67013892c77e50"
+  },
+  "savedView": {
+    "actualNativeSavedFileReopen": true,
+    "visibleFirstLineBefore": "L023",
+    "visibleFirstLineAfter": "L023",
+    "expectedOffset": 886,
+    "actualOffset": 886,
+    "APIAndDiskEntireContentExact": true
+  },
+  "dirtyDraftView": {
+    "actualNativeDirtyDraftReopenAndExplicitRecovery": true,
+    "visibleFirstLineBefore": "L023",
+    "visibleFirstLineAfter": "L023",
+    "expectedOffset": 904,
+    "actualOffset": 904,
+    "entireAPIAndDiskExact": true,
+    "serverUnchangedUntilManualSave": true
+  },
+  "cleanup": {
+    "ownedFixtureDeletedAfterExactFinalContentCheck": true,
+    "originalFileListingExact": true,
+    "originalProtectedFilesExact": true
+  },
+  "actualNativeSafari": true,
+  "safeWorkbenchReload": {
+    "originalPromptHadNoText": true,
+    "assetVersions": {
+      "app": 156,
+      "fileAutosave": 7
+    }
+  },
+  "sourcePush": {
+    "main": "b3bfbe72dd55968f32f96797da36ff908f3626ad",
+    "independentGate": "pass",
+    "pushExit": 0,
+    "exactRemoteMatch": true
+  },
+  "screenshotsSHA256": {
+    "before-close.png": "cea15765b0ab93f096251976565766cac38282d10a925d8c2cfc7d3fb959ea8e",
+    "after-reopen.png": "574c7eb115d44c8fdc85078d9845d01050b52db3d1cb9dd4b013a6f89bac3868",
+    "draft-after-reopen.png": "c784aa17451790431e982e877622a3020f121c387febe60273a486e7a643bee4",
+    "draft-before-close.png": "128654c79b9ffad9c73896577ecf0fbedf65a8e81251bdaa03827957dd294a06",
+    "draft-recovered.png": "0807be30c46ab5d738a5d00e1edcb80ea702e1b21913ac069c01c0d78c12d11d"
+  },
+  "followupDirtyStatus": {
+    "reproduced": true,
+    "autoSaveOff": true,
+    "dirtyInputVisible": true,
+    "serverStillPriorSavedContent": true,
+    "serverSavedLabelRemained": true,
+    "screenshot": "draft-before-close.png",
+    "fixPending": true
+  },
+  "limits": [
+    "Visible same top labelled line; raw pixel offset not read",
+    "Local source editor only, not SSH or all workspace variants",
+    "Original12 remain in_progress",
+    "Windows user-owned and real vectors deferred"
+  ]
+}
