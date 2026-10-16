@@ -17,3 +17,7 @@ Designated start.command updated local9999 to5183a60ed4be for candidate acceptan
 Reused native Safari without another workbench tab. Original background was off at22 percent. Temporarily selected aurora, then captured two screenshots without intervening native input. A fixed background region outside the opaque settings sheet changed11155 of60800 pixels; per-channel mean absolute difference about0.21 under the settings backdrop. This supports visible-frame change, not frame-rate performance. Component computed-transform samples provide the separate direct animation proof. Restored off/22 percent, closed settings and kept original root/session and blank prompt. No model calls or user-file changes. See [native/runtime evidence](aurora-motion-runtime-proof.json).
 
 Fresh full is running in exec session4595; do not reuse the previous save-status full for these changed product inputs. Main gate/push remains pending.
+
+## Frozen full gate
+
+First full had all88 commands exit0, but its final input-change guard failed during shared-checkout task work; that receipt was retained as failed and was never promoted. Crash development moved to a separate ignored Git worktree. A fresh frozen-input full88 passed: receipt20261016T021515838177Z, fingerprinted0b67ae5e4295c9e9725f7f629cbc0ea26e8bc4b9a9f676c35d2773d7c65045, server race601.801s and all-package vet. See [full proof](aurora-motion-full-proof.json). Main gate/push is the remaining delivery step.

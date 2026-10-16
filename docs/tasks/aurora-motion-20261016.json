@@ -44,11 +44,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused/quick86 pass. Isolated actual browser proves moving transforms, pause/off/resume and390px. Native9999 candidate5183a60 shows background frame changes, protected bytes exact and original preference/scene restored. Fresh full session4595 running; main pending.",
+      "status": "pass",
+      "summary": "Focused lifecycle/quick, actual component moving transforms/pause/off/resume/light/dark390 and native9999 frame changes/restored off22 pass. Frozen-input full88/race601.801s/vet passed after retaining initial input-change failure. Local full offline import passed.",
       "evidence": [
         "docs/reviews/2026-10-16/aurora-motion-component-proof.json",
-        "docs/reviews/2026-10-16/aurora-motion-runtime-proof.json"
+        "docs/reviews/2026-10-16/aurora-motion-runtime-proof.json",
+        "docs/reviews/2026-10-16/aurora-motion-full-proof.json",
+        "docs/reviews/2026-10-16/aurora-motion-bundle-proof.json"
       ]
     },
     "documentation": {
@@ -74,7 +76,7 @@
   },
   "release_authorization": "Existing incremental main/push/local start.command/offline authorization; no new version/tag/Release.",
   "rollback": "Keep current8d1957c9 local image and offline bundle; scoped frontend revert; no data migration.",
-  "handoff": "Fresh full verification is live in exec session4595, log.agent-state/aurora-motion/full.log. Poll same handle; no restart on timeout. Runtime5183a60 is healthy and native candidate acceptance passed; original off/22 restored. Candidate build414da4da, offline bundle/local import pass. Need full completion/exact receipt, verification stage pass, clean-main independent release-check, authorized ff/push/exact remote and final documentation. Original goal12 remains active.",
+  "handoff": "All scoped verification passed. Independent clean-main release-check, authorized push/exact remote and final source receipt remain. Crash development isolated in external-root ignored worktree.",
   "candidate": {
     "image": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
     "sourceSHA256": "42932fbc14e9692584880674b975bec2ca2fd814b0eaa4f89056d3fb3fb867f1",
@@ -82,5 +84,13 @@
     "runningBefore": "sha256:8d1957c9b0c92bc376e5a20933f3b81abd10400cd0688625f9f97366d06512f9",
     "buildCommit": "414da4dabe1c9ffd9c315692efe1dd2e1816e46d",
     "status": "local_native_candidate_pass_full_main_pending"
+  },
+  "full_receipt": {
+    "status": "pass",
+    "profile": "full",
+    "head": "096cf05534cbefd0c177ba3d59f24a0c5aeff31e",
+    "time": "20261016T021515838177Z",
+    "fingerprint": "ed0b67ae5e4295c9e9725f7f629cbc0ea26e8bc4b9a9f676c35d2773d7c65045",
+    "log": ".agent-state/verify-20261016T021515838177Z.log"
   }
 }

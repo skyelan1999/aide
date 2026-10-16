@@ -1,0 +1,19 @@
+{
+  "full": {
+    "status": "pass",
+    "profile": "full",
+    "head": "096cf05534cbefd0c177ba3d59f24a0c5aeff31e",
+    "time": "20261016T021515838177Z",
+    "fingerprint": "ed0b67ae5e4295c9e9725f7f629cbc0ea26e8bc4b9a9f676c35d2773d7c65045",
+    "log": ".agent-state/verify-20261016T021515838177Z.log"
+  },
+  "commands": 88,
+  "serverRaceSeconds": 601.801,
+  "vet": "pass",
+  "earlierReceipt": {
+    "status": "fail",
+    "commandsAllExitZero": true,
+    "reason": "Input-change guard while sharing checkout; original failed receipt preserved, not promoted to pass."
+  },
+  "isolation": "Crash diagnostics now in separate ignored Git worktree; frozen aurora input rerun passed."
+}
