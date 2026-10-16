@@ -8,3 +8,6 @@ scripts/fixtures/cad/fidelity.step whitespace=-blank-at-eol
 *.sh text eol=lf
 *.command text eol=lf
 docker/cad/requirements.txt text eol=lf
+
+# The prebuilt runtime index is shared by POSIX and Windows launchers.
+docker/prebuilt-images.tsv text eol=lf

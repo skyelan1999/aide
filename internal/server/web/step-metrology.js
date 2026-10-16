@@ -91,11 +91,16 @@
       const bounds=canvas.getBoundingClientRect();if(!bounds.width||!bounds.height)return;
       scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
       const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1,-(event.clientY-bounds.top)/bounds.height*2+1),camera);
+      ray.params.Line.threshold=ray.params.Points.threshold=Math.max(scale/500,.001);
       const hit=ray.intersectObjects(group.children,true)[0];if(!hit){inform('未选中模型，请点击可见几何。');return;}
       let world=hit.point;
       if(snap.value==='vertex'&&hit.face) {
         const position=hit.object.geometry.attributes.position;
         world=[hit.face.a,hit.face.b,hit.face.c].map(index=>new THREE.Vector3().fromBufferAttribute(position,index).applyMatrix4(hit.object.matrixWorld)).sort((a,b)=>a.distanceToSquared(hit.point)-b.distanceToSquared(hit.point))[0];
+      }
+      if(snap.value==='vertex'&&!hit.face&&Number.isInteger(hit.index)) {
+        const position=hit.object.geometry.attributes.position,indices=hit.object.isLineSegments?[hit.index,hit.index+1]:[hit.index];
+        world=indices.filter(index=>index<position.count).map(index=>new THREE.Vector3().fromBufferAttribute(position,index).applyMatrix4(hit.object.matrixWorld)).sort((a,b)=>a.distanceToSquared(hit.point)-b.distanceToSquared(hit.point))[0]||world;
       }
       accept(world.clone().add(center).toArray());
     }

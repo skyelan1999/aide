@@ -1,0 +1,81 @@
+{
+  "id": "cad-robot-step-20261016",
+  "request": "用户提供约173MiB真实机器人STP文件，当前无法打开；本机复现并修复完整曲面预览，不以结构线框或静默丢面代替专业CAD显示一致性",
+  "baseline": "14ffdf10cdb4486bd546a38bb5d7da1142d1cee6",
+  "initial_status": "",
+  "acceptance": [
+    "真实用户173MiB样例在原发布镜像复现并记录时间、错误和内存；文件不上传仓库或第三方。",
+    "修复有效曲面无法生成网格引起整模失败，保留装配、单位、颜色、正常曲面与全部有面积的几何，不静默删面或降为线框。",
+    "修复后真实文件完整转换通过，并回归现有CAD几何、流式加载与测量坐标校验；完整图形界面验收单独记录边界。",
+    "维持有界内存、可取消及失败丢弃不完整网格；按代码、运行镜像、离线包分别记录验证发布。"
+  ],
+  "scope": [
+    "scripts/cad/convert.py",
+    "scripts/test_cad_service.py",
+    "scripts/test_cad_geometry.py",
+    "scripts/fixtures/cad synthetic fixtures only",
+    "docs/tasks",
+    "docs/reviews",
+    "private user-file harness under .agent-state/cad-user-robot-20261016",
+    "internal/server/web/step-import-worker.js",
+    "internal/server/web/step-preview.js",
+    "internal/server/web/step-metrology.js",
+    "internal/server/web/app.js and index.html cache versions",
+    "internal/server/web/locales/en.js",
+    "scripts/step-worker.test.cjs",
+    "docs/architecture/cad-preview.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户提供真实私有STEP样例；要求保持正常专业软件打开时的完整模型，不能用丢面或结构线框替代。",
+      "evidence": [
+        "scripts/cad/convert.py"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "正常曲面采用细化与NURBS恢复；严格公差包围或精确零宽UV且零面积才能按退化面保留边界。协议保留独立曲线和孤立点并核对完成数量。输入只读，保留装配位置和原面样式；普通失败仍报错。",
+      "evidence": [
+        "scripts/cad/convert.py",
+        "docs/architecture/cad-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现曲面恢复、退化边界和混合线点几何、流式背压、计数验证及线点拾取；客户端资源版本同步更新。",
+      "evidence": [
+        "scripts/cad/convert.py",
+        "internal/server/web/step-preview.js",
+        "scripts/step-worker.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧551镜像35.5秒失败；同依赖叠加当前转换器真实私有文件81.74秒成功，无OOM，776零件实例、95641面实例（95622网格面+19退化边界）、2297064三角面、152线段。合成几何回归通过。实际页面、最终镜像和发布门禁尚待。",
+      "evidence": [
+        "scripts/test_cad_geometry.py",
+        "scripts/step-worker.test.cjs",
+        "docs/architecture/cad-preview.md"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户增量测试、代码与镜像发布授权；不包含公开私有STP或几何网格。",
+  "rollback": "保留551eff及旧离线包；所有诊断容器UUID隔离且输入只读。原模型SHA256和字节不得变化。",
+  "handoff": "真实文件转换层已通过；最终镜像及Safari整模显示/旋转/测量待验收，尚未push或发布。预构建默认启动分发仍需最终清单与完整镜像。Windows原生用户验收，真实向量暂缓。"
+}

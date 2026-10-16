@@ -7658,7 +7658,7 @@ async function setupStepPreview(container, filePath, root, source, viewerSpec) {
   teardownViewer(container);
   let canceled=false;
   bindViewerTeardown(container,()=>{canceled=true;});
-  try { await ensureVendorScript('/step-preview.js', () => !!window.AideStepPreview); }
+  try { await ensureVendorScript('/step-preview.js?v=2', () => !!window.AideStepPreview); }
   catch(error) {
     if(canceled||!container.isConnected)return;
     teardownViewer(container);

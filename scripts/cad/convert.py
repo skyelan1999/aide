@@ -17,6 +17,9 @@ import time
 
 MAX_TRIANGLES = 3_000_000
 BATCH_TRIANGLES = 16_000
+MAX_SEGMENTS = 500_000
+MAX_POINTS = 200_000
+BATCH_PRIMITIVES = 16_000
 
 def emit(value):
     sys.stdout.write(json.dumps(value, separators=(',', ':'), allow_nan=False) + '\n')
@@ -27,6 +30,95 @@ def binary(values):
         values.byteswap()
     return base64.b64encode(values.tobytes()).decode('ascii')
 
+def is_tolerance_collapsed_face(face):
+    """Require the whole exact bounding box inside EVERY vertex tolerance.
+
+    Such a face is smaller than its own declared topological uncertainty. Keep
+    its original edges/vertices, and report it; never discard ordinary faces
+    merely because their mesher failed or their area looks small.
+    """
+    from OCP.Bnd import Bnd_Box
+    from OCP.BRepBndLib import BRepBndLib
+    from OCP.TopExp import TopExp_Explorer
+    from OCP.TopAbs import TopAbs_VERTEX
+    from OCP.TopoDS import TopoDS
+    from OCP.BRep import BRep_Tool
+    from itertools import product
+    box = Bnd_Box()
+    BRepBndLib.AddOptimal_s(face, box, False, False)
+    if box.IsVoid() or box.IsWhole():
+        return False
+    low, high = box.CornerMin(), box.CornerMax()
+    corners = list(product(*zip((low.X(), low.Y(), low.Z()), (high.X(), high.Y(), high.Z()))))
+    iterator = TopExp_Explorer(face, TopAbs_VERTEX)
+    if not iterator.More():
+        return False
+    while iterator.More():
+        vertex = TopoDS.Vertex(iterator.Current())
+        point = BRep_Tool.Pnt_s(vertex)
+        center = (point.X(), point.Y(), point.Z())
+        tolerance = BRep_Tool.Tolerance_s(vertex)
+        if not math.isfinite(tolerance) or tolerance <= 0 or any(math.dist(center, corner) > tolerance for corner in corners):
+            return False
+        iterator.Next()
+    return True
+
+def is_parametric_collapsed_face(face):
+    """A zero-width UV trim has no surface interior; retain its boundaries.
+
+    Require an exactly collapsed finite parameter interval AND exactly zero
+    integrated area. Small areas, narrow but nonzero trims, or mesher failures
+    alone never qualify. The supporting surface may still have a large extent.
+    """
+    from OCP.BRepTools import BRepTools
+    from OCP.BRepGProp import BRepGProp
+    from OCP.GProp import GProp_GProps
+    bounds = BRepTools.UVBounds_s(face)
+    if not all(math.isfinite(value) for value in bounds):
+        return False
+    if bounds[0] != bounds[1] and bounds[2] != bounds[3]:
+        return False
+    properties = GProp_GProps()
+    BRepGProp.SurfaceProperties_s(face, properties)
+    return properties.Mass() == 0
+
+def recover_face_mesh(face):
+    """Retain the face: retry finer sampling, then an OCCT NURBS copy.
+
+    Some narrow valid trimmed surfaces fail the analytical mesher at ordinary
+    deflection. Converting their support geometry avoids that parameterization
+    failure; it does not replace the face with a box or omit its boundaries.
+    """
+    from OCP.BRep import BRep_Tool
+    from OCP.BRepTools import BRepTools
+    from OCP.BRepMesh import BRepMesh_IncrementalMesh
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_NurbsConvert
+    from OCP.BRepCheck import BRepCheck_Analyzer
+    from OCP.TopoDS import TopoDS
+    from OCP.TopLoc import TopLoc_Location
+
+    def attempt(candidate):
+        for deflection in (.1, .01, .001, .0001):
+            BRepTools.Clean_s(candidate)
+            BRepMesh_IncrementalMesh(candidate, deflection, False, .45, False)
+            location = TopLoc_Location()
+            mesh = BRep_Tool.Triangulation_s(candidate, location)
+            if mesh and mesh.NbTriangles() > 0:
+                return mesh, location
+        return None
+
+    recovered = attempt(face)
+    if recovered:
+        return face, *recovered, 'refined'
+    converted = TopoDS.Face(BRepBuilderAPI_NurbsConvert(face, True).Shape())
+    if not converted.IsNull() and BRepCheck_Analyzer(converted).IsValid():
+        recovered = attempt(converted)
+        if recovered:
+            return converted, *recovered, 'nurbs'
+    if is_tolerance_collapsed_face(face) or is_parametric_collapsed_face(face):
+        return face, None, None, 'collapsed'
+    raise ValueError('存在无法生成完整网格的 CAD 面；细化采样和 NURBS 转换均未成功，未输出不完整模型。')
+
 def convert(path):
     from OCP.STEPCAFControl import STEPCAFControl_Reader
     from OCP.TDocStd import TDocStd_Document
@@ -36,12 +128,14 @@ def convert(path):
     from OCP.collections import IndexedDataMap_TopoDS_Shape_XCAFPrs_Style_TopTools_ShapeMapHasher
     from OCP.BRepMesh import BRepMesh_IncrementalMesh
     from OCP.TopExp import TopExp_Explorer
-    from OCP.TopAbs import TopAbs_FACE, TopAbs_SOLID, TopAbs_REVERSED
+    from OCP.TopAbs import TopAbs_FACE, TopAbs_SOLID, TopAbs_REVERSED, TopAbs_EDGE, TopAbs_VERTEX
     from OCP.TopoDS import TopoDS
     from OCP.BRep import BRep_Tool
     from OCP.TopLoc import TopLoc_Location
     from OCP.Interface import Interface_Static
     from OCP.Quantity import Quantity_TOC_RGB
+    from OCP.BRepAdaptor import BRepAdaptor_Curve
+    from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
     # OCCT's process-global settings are isolated to this one conversion child.
     Interface_Static.SetCVal_s('xstep.cascade.unit', 'MM')
@@ -61,6 +155,7 @@ def convert(path):
     tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
     explorer = XCAFPrs_DocumentExplorer(doc, 0)
     total = parts = faces = 0
+    recovered_faces = nurbs_faces = empty_nodes = collapsed_faces = 0
     lower = [math.inf]*3
     upper = [-math.inf]*3
     positions, normals, colors = array.array('f'), array.array('f'), array.array('f')
@@ -75,6 +170,34 @@ def convert(path):
         positions, normals, colors = array.array('f'), array.array('f'), array.array('f')
         origin = None
         batch_parts = 0
+
+    primitive_counts = {'native-lines': 0, 'native-points': 0}
+    primitive_buffers = {kind: [array.array('f'), array.array('f'), None] for kind in primitive_counts}
+
+    def flush_primitive(kind):
+        buffer = primitive_buffers[kind]
+        if buffer[0]:
+            emit(dict(kind=kind, positions=binary(buffer[0]), colors=binary(buffer[1]), origin=buffer[2], sourceCount=1))
+            primitive_buffers[kind] = [array.array('f'), array.array('f'), None]
+
+    def primitive(kind, vertices, color):
+        primitive_counts[kind] += 1
+        if primitive_counts[kind] > (MAX_SEGMENTS if kind == 'native-lines' else MAX_POINTS):
+            raise ValueError('模型超过线或点几何预算，未输出不完整模型。')
+        buffer = primitive_buffers[kind]
+        if buffer[2] is None:
+            buffer[2] = vertices[0]
+        for xyz in vertices:
+            if not all(math.isfinite(v) for v in xyz):
+                raise ValueError('CAD 几何包含无效坐标。')
+            for axis in range(3):
+                lower[axis] = min(lower[axis], xyz[axis])
+                upper[axis] = max(upper[axis], xyz[axis])
+                buffer[0].append(xyz[axis]-buffer[2][axis])
+            buffer[1].extend(color)
+        stride = 6 if kind == 'native-lines' else 3
+        if len(buffer[0]) >= BATCH_PRIMITIVES*stride:
+            flush_primitive(kind)
 
     while explorer.More():
         node = explorer.Current()
@@ -96,23 +219,32 @@ def convert(path):
         while solids.More():
             BRepMesh_IncrementalMesh(solids.Current(), .1, False, .45, False)
             solids.Next()
+        collapsed_shapes = []
         part_start_faces = faces
+        part_start_primitives = sum(primitive_counts.values())
         face_iter = TopExp_Explorer(shape, TopAbs_FACE)
         while face_iter.More():
             face = TopoDS.Face(face_iter.Current())
+            source_face = face
             loc = TopLoc_Location()
             mesh = BRep_Tool.Triangulation_s(face, loc)
-            if not mesh:
-                # Open shells and single surfaces are valid STEP geometry too.
-                BRepMesh_IncrementalMesh(face, .1, False, .45, False)
-                mesh = BRep_Tool.Triangulation_s(face, loc)
             if not mesh or mesh.NbTriangles() == 0:
-                raise ValueError('存在未生成曲面的 CAD 面，未输出不完整模型。')
+                # Keep every nonempty face, including open shells and narrow
+                # trimmed surfaces that require a finer or NURBS meshing path.
+                face, mesh, loc, recovery = recover_face_mesh(face)
+                recovered_faces += 1
+                nurbs_faces += recovery == 'nurbs'
+                if recovery == 'collapsed':
+                    collapsed_faces += 1
+                    collapsed_shapes.append(source_face)
+                    faces += 1
+                    face_iter.Next()
+                    continue
             if not mesh.HasNormals():
                 mesh.ComputeNormals()
             trsf = node.Location.Multiplied(loc).Transformation()
             color = default_color
-            styled_face = face.Moved(prototype_location)
+            styled_face = source_face.Moved(prototype_location)
             if styles.Contains(styled_face):
                 face_style = styles.FindFromKey(styled_face)
                 if face_style.IsSetColorSurf():
@@ -146,8 +278,55 @@ def convert(path):
             if faces % 5000 == 0:
                 emit(dict(kind='progress', phase='tessellate', parts=parts, faces=faces, triangles=total))
             face_iter.Next()
-        if faces == part_start_faces:
-            raise ValueError('装配包含只有线或点的零件，当前无法生成完整曲面预览。')
+        # Preserve explicit wire/point geometry without drawing every surface
+        # boundary twice. The curve adaptor already applies the edge location.
+        curve_color = style.GetColorCurv().Values(Quantity_TOC_RGB) if style.IsSetColorCurv() else default_color
+        placement = node.Location.Transformation()
+        edge_groups = [(TopExp_Explorer(shape, TopAbs_EDGE, TopAbs_FACE), curve_color, None)]
+        for collapsed in collapsed_shapes:
+            retained_color = curve_color
+            original_style = collapsed.Moved(prototype_location)
+            if styles.Contains(original_style) and styles.FindFromKey(original_style).IsSetColorSurf():
+                retained_color = styles.FindFromKey(original_style).GetColorSurf().Values(Quantity_TOC_RGB)
+            edge_groups.append((TopExp_Explorer(collapsed, TopAbs_EDGE), retained_color, collapsed))
+        for edge_iter, retained_color, collapsed in edge_groups:
+            before_lines = primitive_counts['native-lines']
+            while edge_iter.More():
+                edge = TopoDS.Edge(edge_iter.Current())
+                if not BRep_Tool.Degenerated_s(edge):
+                    curve = BRepAdaptor_Curve(edge)
+                    samples = GCPnts_QuasiUniformDeflection(curve, .1)
+                    if not samples.IsDone() or samples.NbPoints() < 2:
+                        raise ValueError('CAD 曲线无法完整离散，未输出不完整模型。')
+                    edge_color = retained_color
+                    styled_edge = edge.Moved(prototype_location)
+                    if styles.Contains(styled_edge):
+                        edge_style = styles.FindFromKey(styled_edge)
+                        if edge_style.IsSetColorCurv():
+                            edge_color = edge_style.GetColorCurv().Values(Quantity_TOC_RGB)
+                    previous = None
+                    for i in range(1, samples.NbPoints()+1):
+                        point = samples.Value(i).Transformed(placement)
+                        xyz = (point.X(), point.Y(), point.Z())
+                        if previous is not None:
+                            primitive('native-lines', (previous, xyz), edge_color)
+                        previous = xyz
+                edge_iter.Next()
+            if collapsed is not None and primitive_counts['native-lines'] == before_lines:
+                retained_vertices = TopExp_Explorer(collapsed, TopAbs_VERTEX)
+                while retained_vertices.More():
+                    point = BRep_Tool.Pnt_s(TopoDS.Vertex(retained_vertices.Current())).Transformed(placement)
+                    primitive('native-points', ((point.X(), point.Y(), point.Z()),), retained_color)
+                    retained_vertices.Next()
+        vertex_iter = TopExp_Explorer(shape, TopAbs_VERTEX, TopAbs_EDGE)
+        while vertex_iter.More():
+            point = BRep_Tool.Pnt_s(TopoDS.Vertex(vertex_iter.Current())).Transformed(placement)
+            primitive('native-points', ((point.X(), point.Y(), point.Z()),), curve_color)
+            vertex_iter.Next()
+        if faces == part_start_faces and sum(primitive_counts.values()) == part_start_primitives:
+            empty_nodes += 1
+            explorer.Next()
+            continue
         parts += 1
         batch_parts += 1
         if parts % 128 == 0:
@@ -155,9 +334,11 @@ def convert(path):
             emit(dict(kind='progress', phase='tessellate', parts=parts, faces=faces, triangles=total))
         explorer.Next()
     flush()
-    if total == 0:
+    for kind in primitive_buffers:
+        flush_primitive(kind)
+    if total == 0 and not sum(primitive_counts.values()):
         raise ValueError('文件中没有可显示的 STEP 曲面。')
-    emit(dict(kind='complete', engine='occt-native', triangles=total, parts=parts, faces=faces, bounds=[lower,upper], unit='mm', linearDeflection=.1, seconds=time.monotonic()-start))
+    emit(dict(kind='complete', engine='occt-native', triangles=total, segments=primitive_counts['native-lines'], points=primitive_counts['native-points'], emptyNodes=empty_nodes, parts=parts, faces=faces, meshedFaces=faces-collapsed_faces, collapsedFaces=collapsed_faces, bounds=[lower,upper], unit='mm', linearDeflection=.1, recoveredFaces=recovered_faces, nurbsFaces=nurbs_faces, seconds=time.monotonic()-start))
 
 if __name__ == '__main__':
     # Exchange readers can write diagnostics to C++ stdout, corrupting NDJSON.

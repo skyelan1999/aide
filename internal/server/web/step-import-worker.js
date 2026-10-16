@@ -47,7 +47,7 @@ async function importNative(rawUrl) {
   if(response.status===501){await response.body?.cancel();return false;}
   if(!response.ok){let message;try{message=(await response.json()).error;}catch(_){}throw new Error(message||('HTTP '+response.status));}
   if(!response.body?.getReader)throw new Error('当前浏览器不支持 CAD 流式预览。');
-  const reader=response.body.getReader(),decoder=new TextDecoder();let pending='',id=0,triangles=0,complete=false;
+  const reader=response.body.getReader(),decoder=new TextDecoder();let pending='',id=0,triangles=0,segments=0,points=0,complete=false;
   const decode=text=>{const raw=atob(text);if(raw.length%4)throw new Error('CAD 网格块格式无效。');const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));return new Float32Array(bytes.buffer);};
   try {
     while(true){
@@ -65,8 +65,16 @@ async function importNative(rawUrl) {
           const acknowledged=new Promise(resolve=>{waiting={id:current,resolve};});
           self.postMessage({kind:'meshes',id:current,meshes:[{attributes:{position:{array:p},normal:{array:n},color:{array:c}},index:{array:indices},origin:item.origin,sourceCount:item.sourceCount}],total:0},[p.buffer,n.buffer,c.buffer,indices.buffer]);
           await acknowledged;
+        } else if(item.kind==='native-lines'||item.kind==='native-points'){
+          const p=decode(item.positions),c=decode(item.colors),isLine=item.kind==='native-lines',stride=isLine?6:3;
+          if(!p.length||p.length%stride||p.length!==c.length||!Array.isArray(item.origin)||item.origin.length!==3||!item.origin.every(Number.isFinite)||!p.every(Number.isFinite)||!c.every(Number.isFinite))throw new Error('CAD 网格包含无效几何。');
+          if(isLine)segments+=p.length/6;else points+=p.length/3;
+          if(segments>500000||points>200000)throw new Error('模型超过预览几何预算。');
+          const current=id++,acknowledged=new Promise(resolve=>{waiting={id:current,resolve};});
+          self.postMessage({kind:'meshes',id:current,meshes:[{primitive:isLine?'lines':'points',attributes:{position:{array:p},color:{array:c}},origin:item.origin,sourceCount:item.sourceCount}],total:0},[p.buffer,c.buffer]);
+          await acknowledged;
         } else if(item.kind==='complete'){
-          if(complete||!triangles||item.triangles!==triangles||item.unit!=='mm')throw new Error('CAD 曲面转换未完整结束。');
+          if(complete||!(triangles||segments||points)||item.triangles!==triangles||(item.segments||0)!==segments||(item.points||0)!==points||item.unit!=='mm')throw new Error('CAD 曲面转换未完整结束。');
           complete=true;self.postMessage({...item,coarse:false});
         } else if(item.kind==='progress')self.postMessage({...item,engine:'occt-native'});
       }

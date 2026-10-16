@@ -2744,3 +2744,7 @@ Object.assign(window.aideEnglish, {
 Object.assign(window.aideEnglish, {'插件已升级，列表刷新失败，请手动刷新':'The plugin was upgraded, but the list could not refresh. Refresh it manually.','升级请求未完成，请刷新列表核对状态':'The upgrade request did not complete. Refresh the list to check its status.'});
 
 Object.assign(window.aideEnglish, {'插件内容已更新，版本 {0}':'Plugin contents updated, version {0}','已有插件正在升级，请稍后重试':'Another plugin is being upgraded. Try again shortly.','升级包缺少版本号':'The upgrade package has no version.','升级包版本低于当前版本，未执行替换':'The package version is older than the installed version. The plugin was not replaced.','请先填写插件的 HTTPS ZIP 升级地址':'Enter the plugin HTTPS ZIP upgrade URL first.','插件下载失败，请检查网络和升级地址':'Plugin download failed. Check the network and upgrade URL.','升级失败，已恢复原插件':'Upgrade failed. The previous plugin was restored.','升级包插件 ID 与当前插件不一致':'The upgrade package plugin ID does not match the installed plugin.','插件包 SHA-256 校验不通过，原插件未替换':'The package SHA-256 verification failed. The installed plugin was not replaced.','升级地址不能指向本机或私有网络':'The upgrade URL cannot point to a local or private network address.','升级地址必须是不含登录凭据的 HTTPS 地址':'Use an HTTPS upgrade URL without login credentials.'});
+
+Object.assign(window.aideEnglish, {'线段':'Segments','点':'Points'});
+
+Object.assign(window.aideEnglish, {'退化面 {0}，已保留边界':'Degenerate faces: {0}; original boundaries retained'});
