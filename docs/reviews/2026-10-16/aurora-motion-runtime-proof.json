@@ -72,6 +72,13 @@
     "native-settings-a.png": "f1a198dd5ee78bef9553c5175a9e5508d1139ecb723eb90fb549d660a71fba3e"
   },
   "scope": "Native fixed-region screenshot change plus production asset identity; component computed-transform proof independently verifies animation. Not a frame-rate or resource benchmark.",
-  "fullGate": "running session4595",
-  "mainDelivery": "pending"
+  "fullGate": "pass, frozen receipt20261016T021515838177Z",
+  "mainDelivery": "source pushed with exact remote identity",
+  "sourcePush": {
+    "main": "08ccb0976623847150f2b26317d4282fec7e2240",
+    "remoteMain": "08ccb0976623847150f2b26317d4282fec7e2240",
+    "exactRemoteMatch": true,
+    "independentCleanMainGate": "pass",
+    "pushExit": 0
+  }
 }
