@@ -1,0 +1,11 @@
+{
+  "ownedContainerRemoved": "aide-lock-sync-fixture-20261016",
+  "ownedProxyStopped": 18768,
+  "prototypeArchiveRemoved": "docker-images/aide-0.1.17.0-RC2-linux-arm64-76c876ecf93d-offline.tar.gz",
+  "finalArchive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-958de7901ce7-offline.tar.gz",
+  "rollbackRetained": "473463bc456f",
+  "userSessionsPreserved": 14,
+  "originalSafariTabsPreserved": 3,
+  "browserUIFaultInjection": "not_run",
+  "ownedIABPage42": "navigation/close blocked by Browser Use URL policy on generated data error page; not marked retained, automatic turn-end cleanup pending"
+}

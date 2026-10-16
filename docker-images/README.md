@@ -375,3 +375,9 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 ## 2026-10-15 中断正文上下文候选
 
 `aide-0.1.17.0-RC2-linux-arm64-d9e90810dea4-offline.tar.gz`，705670006 字节，SHA-256 `68781730cc5af999ce0a936b9a92370e1c3a79b9bda763f9fbd0310fce50a2f8`，源码 `08f0027`，源指纹 `97b5cd89f03a15dfef0c40a67e4fa74634ef8f03b872bdf46e75b30c7c0c1ba7`。保留公开阶段/中断尾段、旧历史可确认归属补回、上下文统计/指纹/压缩一致性与暂停尾段续接。本地归属元数据不发送模型。quick79及定向race/vet、真实千问停止后请求和实际重启恢复通过；完整UI、干净full81、main/tag及接收端尚待验收。指定start.command更新9999，配置/挂载一致，仅两个验收会话使编号计数增加2，已逐字节哈希反证其他设置未变。完整应用与依赖镜像内外哈希/标签/平台/启动器/实际导入及两本地副本通过。见[验收记录](../docs/reviews/2026-10-15/cancelled-output-context.md)。
+
+## 2026-10-16 lock unlock sync candidate
+
+Identity verification returns atomic lockState; local dismissal preserves global lock, newer generation wins, failed follow-up GET does not reject committed unlock.23 real isolated API/production-JS requests pass; native Safari normal startup pass. Password fault-injection browser UI not_run due browser error-page tool restriction. See [task](../docs/tasks/lock-unlock-sync-20261016.json).
+
+start.command image `sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af789e1fa45f8a`, source SHA `5c07cf365917692999ebe17a4eac9b861897e62d246d1fc564b7070b9e35c980`. Complete app+dependency bundle `aide-0.1.17.0-RC2-linux-arm64-958de7901ce7-offline.tar.gz`, 706097697 bytes, SHA-256 `0faf867ae3502b866040758265dc52f034e53ee603cd2023606ff6f952411d69`. Inner/outer hashes, licenses, launcher and actual local docker load pass. Receiving device import not_run. Own76 intermediate archive removed;473 rollback retained. No version/tag/Release. Full/main results recorded in task receipts.

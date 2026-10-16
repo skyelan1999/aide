@@ -1,0 +1,117 @@
+{
+  "status": "pass",
+  "environment": "Candidate binary in disposable tmpfs container, real HTTPS with pinned fixture certificate; production lock-cluster/app unlock functions in Node VM, real BroadcastChannel; not a browser UI test",
+  "localUnlockPreservesGlobal": true,
+  "wrongPasswordRejected": true,
+  "committedGlobalUnlockSurvivesFailedRead": true,
+  "peerFollowsGlobalUnlock": true,
+  "staleGenerationRejected": true,
+  "failedPostVerificationReads": {
+    "main": 1,
+    "peer": 1
+  },
+  "requests": [
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/account/verify-password",
+      "status": 200,
+      "lockState": {
+        "locked": true,
+        "gen": 1,
+        "updatedAt": 1792125817
+      }
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/account/verify-password",
+      "status": 401
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/account/verify-password",
+      "status": 200,
+      "lockState": {
+        "locked": false,
+        "gen": 3,
+        "updatedAt": 1792125817
+      }
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    },
+    {
+      "path": "/api/account/verify-password",
+      "status": 409
+    },
+    {
+      "path": "/api/lock-state",
+      "status": 200
+    }
+  ]
+}
