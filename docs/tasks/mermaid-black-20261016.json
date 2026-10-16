@@ -1,0 +1,72 @@
+{
+  "id": "mermaid-black-20261016",
+  "request": "Md 的Mermaid渲染显示的是黑色的",
+  "baseline": "e4332bf8bbd91780de01a21fd30433f78b1b1c9b",
+  "initial_status": "",
+  "acceptance": [
+    "Real Mermaid diagrams retain legible node/text/edge colours under the unchanged production style-src self CSP in light and dark themes.",
+    "Author classDef colours and export SVG styling survive; theme changes and detached diagrams release CSSOM styles.",
+    "Existing render queue/source/theme race tests and actual Safari strict-CSP page pass."
+  ],
+  "scope": [
+    "internal/server/web/markdown-diagrams.js",
+    "scripts/markdown-diagrams.test.cjs",
+    "scripts/fixtures",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports Mermaid displays black; production CSP blocks inline SVG styles.",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js",
+        "internal/server/server.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Apply Mermaid-generated SVG CSS using constructed CSSStyleSheet and individual CSSOM declarations; retain inline serialized styles for exports. Preserve CSP, clean up sheets on replacement/removal.",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js",
+        "internal/server/server.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "CSSOM applies generated SVG styles during measurement and final display; default SVG text labels avoid blocked foreignObject layout. Per-diagram sheets cleaned on theme/error/removal and restored on reattach. CSP unchanged.",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Node lifecycle/theme/source/contrast regression and actual strict-CSP Safari four diagram types/light-dark/author colours pass. Baseline independently reproduces rgb(0,0,0). Runtime update/full main pending.",
+      "evidence": [
+        "scripts/markdown-diagrams.test.cjs",
+        "scripts/fixtures/serve-mermaid-csp.py",
+        "docs/reviews/2026-10-16/evidence/mermaid-csp-light.png",
+        "docs/reviews/2026-10-16/evidence/mermaid-csp-dark.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture records CSP-compatible CSSOM and SVG text rendering; current261Markdown849links pass. Final receipt pending.",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; no version/tag/Release.",
+  "rollback": "Revert task source commit; preserve existing runtime image bd2ac35b6a62, offline bundle and all user data.",
+  "handoff": "Source ready; build/start through start.command with no new Safari tabs, actual Markdown acceptance, offline export, full main and push remain."
+}
