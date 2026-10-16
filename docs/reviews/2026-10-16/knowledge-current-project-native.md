@@ -10,7 +10,7 @@ Literal original-text search scoped to that source returned real AIDE document h
 
 The ordinary map quick-preview click failed in this Safari environment: `window.open` returned no usable window and the application requested popup permission. No browser popup permission was changed. Navigating the observed source URL in the existing trusted workbench tab succeeded, but that is a separate file-view check and does not pass quick-preview acceptance. The source URL did not contain a line field, so exact line navigation is also unproven.
 
-After temporary source removal the map correctly marked the source removed with zero nodes, but old original-search result buttons/snippets remained visible until changing retrieval/query state. This stale UI must be invalidated when its source disappears; API protection is not a substitute for clearing stale current results.
+After temporary source removal the map correctly marked the source removed with zero nodes, but old original-search result buttons/snippets remained visible until changing retrieval/query state. A fresh authenticated read using that removed source was refused with HTTP 400. This stale UI must still be invalidated when its source disappears; API protection is not a substitute for clearing stale current results.
 
 Original source registry bytes, authentication, settings, sessions, workspace configuration and unrelated mounts were verified restored/preserved. No project file was modified. No tab was added. The original node search mode, empty query, selected node and workbench tab were restored. Screenshots and full AX/logs remain private; [sanitized evidence](evidence/knowledge-current-project-native-proof.json) records the observed counts and limitations.
 

@@ -54,7 +54,8 @@
     "removedSourceZeroNodesExplicit": true,
     "staleSearchResultStillVisible": true,
     "sourceConfigurationRestoredByteForByte": true,
-    "protectedAuthSettingsSessionsAndMountsPreserved": true
+    "protectedAuthSettingsSessionsAndMountsPreserved": true,
+    "readRefusedHTTP": 400
   },
   "cleanup": {
     "noTabsAdded": true,
