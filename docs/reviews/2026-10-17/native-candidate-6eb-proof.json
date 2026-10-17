@@ -49,7 +49,7 @@
   "realModelOrVectorCalls": 0,
   "remoteMainPushed": false,
   "productionReplaced": false,
-  "nextRequiredAction": "Current candidate is running with one owned Safari warning tab open. User personally completes certificate handoff; current native approval/outcome checks can then resume.",
+  "nextRequiredAction": "Use merged-main runtime task continuity-runtime-main-20261017; obsolete6eb candidate stopped and owned tab closed. Native approval/outcome acceptance remains pending.",
   "resumedHandoff": {
     "observedUTC": "2026-10-17T10:07:06.334585+00:00",
     "originalLauncherExit": 0,
@@ -64,5 +64,15 @@
     "ownedTabOpenForUserHandoff": true,
     "runtimeRetainedForUserHandoff": true,
     "liveBackgroundTestProcess": false
+  },
+  "supersededAfterMainMerge": {
+    "status": "pass",
+    "ownedTabClosed": true,
+    "oldCandidateProject": "aide-continuity-6eb-arm-20261017",
+    "originalStopExit": 0,
+    "stoppedContainersRemoved": 2,
+    "emptyNetworksRemoved": 2,
+    "dataAndImagesRetained": true,
+    "productionIdentityAnd22FilesUnchanged": true
   }
 }
