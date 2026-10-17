@@ -197,6 +197,18 @@
       ]
     },
     {
+      "id": "agent-management",
+      "title": "AI 管理权限",
+      "description": "分别控制助理与 aide 对插件和引用的管理动作。",
+      "controls": [
+        {
+          "id": "agent-management",
+          "type": "agent-management",
+          "label": "AI 管理权限"
+        }
+      ]
+    },
+    {
       "id": "knowledge-index",
       "title": "知识索引",
       "controls": [

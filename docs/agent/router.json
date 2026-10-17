@@ -683,6 +683,15 @@
       [
         "node",
         "scripts/document-proposals.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/management.js"
+      ],
+      [
+        "node",
+        "scripts/management-permissions.test.cjs"
       ]
     ],
     "full": [

@@ -27,7 +27,7 @@ import (
 
 const officialPluginPrefix = "https://github.com/skyelan1999/aide/tree/main/plugins/"
 
-var officialPluginIDs = strings.Fields("archive-tools browser-control computer-control comm-serial comm-ssh comm-tcp comm-udp current-time environment-guide feedback goal lunar-calendar markdown-history office plan propeller-aero skill sqlite subagent terminal todo workflow")
+var officialPluginIDs = strings.Fields("archive-tools browser-control computer-control comm-serial comm-ssh comm-tcp comm-udp current-time environment-guide feedback goal lunar-calendar markdown-history office plan plugin-authoring propeller-aero skill sqlite subagent terminal todo workflow")
 
 func pluginUpdateSource(p PluginManifest) string {
 	if p.UpdateURL != "" {
@@ -576,6 +576,11 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	}
 	id := r.PathValue("id")
 	a.mu.Lock()
+	if err := managementGuardLocked(a, r); err != nil {
+		a.mu.Unlock()
+		fail(w, 409, err)
+		return
+	}
 	scope, epoch := a.pluginsPath, a.wsRevision
 	var old PluginManifest
 	for _, p := range a.pluginRegistry.Plugins {
@@ -589,17 +594,20 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("插件不存在"))
 		return
 	}
+	localBundle, hasLocalBundle := r.Context().Value(managementBundleKey{}).([]byte)
 	source := strings.TrimSpace(in.URL)
 	if source == "" {
 		source = pluginUpdateSource(old)
 	}
-	if source == "" {
+	if source == "" && !hasLocalBundle {
 		fail(w, 400, errors.New("请先填写插件的 HTTPS ZIP 升级地址"))
 		return
 	}
-	if _, err := pluginUpdateURL(source); err != nil {
-		fail(w, 400, err)
-		return
+	if !hasLocalBundle {
+		if _, err := pluginUpdateURL(source); err != nil {
+			fail(w, 400, err)
+			return
+		}
 	}
 	expected := strings.ToLower(strings.TrimSpace(in.SHA256))
 	if expected != "" {
@@ -618,7 +626,10 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	}
 	var raw []byte
 	var err error
-	if source == officialPluginPrefix+id {
+	if hasLocalBundle {
+		raw = localBundle
+		source = old.UpdateURL
+	} else if source == officialPluginPrefix+id {
 		raw, err = officialPluginBundle(downloadCtx, client, id)
 	} else {
 		raw, err = pluginFetch(downloadCtx, client, source, maxPluginBundle)
@@ -672,6 +683,11 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 			}
 			break
 		}
+	}
+	if err := managementGuardLocked(a, r); err != nil {
+		a.mu.Unlock()
+		fail(w, 409, err)
+		return
 	}
 	changed := a.pluginsPath != scope || a.wsRevision != epoch
 	a.mu.Unlock()
@@ -775,13 +791,21 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	destination := filepath.Join(scope, id)
 	backup := filepath.Join(scope, journal.Backup)
 	a.mu.Lock()
+	if err := managementGuardLocked(a, r); err != nil {
+		a.mu.Unlock()
+		_ = os.Remove(journalPath)
+		restartOld()
+		fail(w, 409, err)
+		return
+	}
 	registrySnapshot, _ := json.Marshal(a.pluginRegistry)
 	a.mu.Unlock()
 	// Once swapping begins finish the transaction even if the client disconnects.
 	a.mu.Lock()
 	changed = a.pluginsPath != scope || a.wsRevision != epoch
+	guardErr := managementGuardLocked(a, r)
 	a.mu.Unlock()
-	if changed {
+	if changed || guardErr != nil {
 		_ = os.Remove(journalPath)
 		restartOld()
 		fail(w, 409, errors.New("工作区已变化，原插件未替换"))

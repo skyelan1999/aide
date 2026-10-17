@@ -1,6 +1,14 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+"AI 管理权限":"AI management permissions",
+"分别控制助理与 aide 对插件和引用的管理动作。":"Control assistant and aide management of plugins and references independently.",
+"仅控制创建、修改、安装、启停和删除等管理动作。已启用插件的日常调用、引用文件的读取与写入仍遵循现有权限；不会解开引用的可见或可写锁。":"Only controls creating, editing, installing, enabling, disabling and deleting. Daily tool use and reference file access retain existing permissions and visibility and write locks.",
+"管理变更先生成提案，由你审阅确认后执行。关闭权限后，尚未执行的提案也会被阻止。":"Management changes require your review and confirmation. Disabling permission also blocks pending proposals.",
+"AI 管理权限已保存":"AI management permissions saved",
+"管理插件":"Manage plugins",
+"管理引用":"Manage references",
+
 "普通会话的麦克风会过滤背景声并把指令交给当前会话；小秘会话支持持续语音，识别后直接处理，回复后继续聆听。自主跟进只在当前页面开启，暂停、离开或锁屏即停止。": "Regular chat keeps its existing voice routing. The assistant processes speech directly, then resumes listening after replying. Follow-up runs only in the open page and stops when paused, left or locked.",
 "开始持续语音":"Start continuous voice",
 "结束持续语音":"End continuous voice",

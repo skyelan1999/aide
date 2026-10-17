@@ -48,7 +48,7 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `config_backup.go` | 配置备份信封 `aide-config-backup`：导出/导入设置快照、来源与工作区密钥、小秘历史 |
 | `voice_agent.go` | 语音小秘：send/ignore/standby 研判、VoiceHistoryEntry 记录、AES-256-GCM 历史加解密、双向朗读 |
 | `environment_guide.go` | 系统文档自动挂载与环境引导 |
-| `plugins.go` / `plugin_host.js` | 插件登记、加载、schema 和 handler；在线替换见[插件协议](plugin-protocol.md#在线升级与恢复) |
+| `plugins.go` / `plugin_host.js` / `management.go` | 插件登记、加载、schema 和 handler；在线替换见[插件协议](plugin-protocol.md#在线升级与恢复) |
 | `web/settings-init.js` | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
 | `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互；SSE 流式渲染（rAF 批量、live 文本/光标/工具行、会话快照去重）；排队/插话/暂停（运行时输入框旁固定显示暂停控制，发送键保留停止操作） |
 | `web/themes/**` / `style.css` / `macos.css` | 颜色变量、既有样式与新版表现层 |

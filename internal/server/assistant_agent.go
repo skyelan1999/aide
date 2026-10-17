@@ -93,6 +93,7 @@ func assistantAgentToolSchemas(allowSilent bool) []any {
 func (a *App) assistantAgentTools(allowSilent bool) []any {
 	tools := assistantAgentToolSchemas(allowSilent)
 	tools = append(tools, a.messageAssistantTools()...)
+	tools = append(tools, a.pluginToolSchemasForOwner("plugin-authoring")...)
 	tools = append(tools, a.pluginToolSchemasForOwner("current-time")...)
 	tools = append(tools, a.pluginToolSchemasForOwner("lunar-calendar")...)
 	a.mu.Lock()
@@ -108,6 +109,9 @@ func (a *App) assistantAgentTools(allowSilent bool) []any {
 // heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）；inputSource=text/voice。
 // 调用方不持 a.mu（循环内部按需加锁）；cfg 已注入 APIKey。
 func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx, inputSource string, avatarFeedback ...bool) (assistantDecision, error) {
+	a.mu.Lock()
+	managementWorkspace := a.wsID()
+	a.mu.Unlock()
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
 	// 注意：va 可能为 nil（未初始化/降级路径），必须先判空再解引用 va.memory。
@@ -184,7 +188,12 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		for _, call := range calls {
 			name := call.Function.Name
 			toolsUsed = append(toolsUsed, name)
-			result := a.execAssistantTool(call, &dec, heard)
+			var result string
+			if name == "manage_plugins" || name == "manage_references" {
+				result = a.executeManagementTool(ctx, call, &Task{WorkspaceID: managementWorkspace, AssistantManaged: true}, "assistant")
+			} else {
+				result = a.execAssistantTool(call, &dec, heard)
+			}
 			messages = append(messages, Message{Role: "tool", ToolCallID: call.ID, Content: result})
 		}
 		// dispatch 与静默的最终文案由 handler 按确定的结果生成，无需再请求一次
@@ -345,6 +354,9 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision, authoriza
 		}
 		return fmt.Sprintf("已向会话 #%d（%s）提交执行，忙碌时会排队。", number, title)
 	default:
+		if call.Function.Name == "manage_plugins" || call.Function.Name == "manage_references" {
+			return a.executeManagementTool(context.Background(), call, nil, "assistant")
+		}
 		if strings.HasPrefix(call.Function.Name, "reminder_") {
 			return a.dispatchAssistantReminderTool(call)
 		}
