@@ -1,0 +1,81 @@
+{
+  "id": "knowledge-timeline-ssh-native-20261017",
+  "request": "继续原总目标，验收当前ce0c完整Safari的真实SSH工作区知识时间线、历史结论依据与主题、断连历史读取及重连观察；保护生产，真实向量暂缓、Windows用户验收",
+  "baseline": "8ccd3ba3b8efe01726864db1544a0f01e2e5a257",
+  "initial_status": "",
+  "acceptance": [
+    "Original start.command current79a0 isolated app plus bounded real OpenSSH fixture, SSH workspace not independent source mode; no user mounts/production mutation.",
+    "Native authenticated Safari observes remote before/after conclusion and basis, node add/remove, honest saved-scope labels and manual theme.",
+    "Stop only SSH endpoint and verify native historical compare still reads old snapshots, not current remote text; restart same endpoint/hostkeys and observe new remote changes without replacing historical comparison.",
+    "Original app stop/start and exact compare/topic persistence across process restart; cleanup owned tabs/containers/networks and production22 unchanged.",
+    "Scoped source docs/main delivery after exact full fingerprint and current gate; original12 remain, Windows user-owned, real vectors deferred."
+  ],
+  "scope": [
+    "docs/tasks/knowledge-timeline-ssh-native-20261017.json",
+    "docs/tasks/knowledge-timeline-20261009.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+    "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Follow remaining original12 native SSH timeline acceptance with real isolated protocol and current source; existing local native proof retained.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Follow remaining original12 native SSH timeline acceptance with real isolated protocol and current source; existing local native proof retained.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Isolated current original launcher and bounded real OpenSSH workspace prepared; actual remote observations, no product source change.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Native SSH timeline conclusion/basis/add/remove, explicit theme, fresh comparison while endpoint stopped, same-hostkey reconnect/new observation, original app restart and full-page historical readback pass; independent exact API compare/topics/body hashes.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped report/proof, original timeline and original12 ledger updated; local and SSH native comparison no longer missing.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Original stop0; owned2 pages/3 containers/3 networks cleaned; production identity22files exact; images/data/remote files retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Scoped docs/main delivery and gate pending; no new runtime publication claim.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "User authorized incremental push/test and main merge; no production replacement.",
+  "rollback": "Own new fixtures and data only; stop through original launcher, retain files/images and protected production. SSH fixture same host keys retained through disconnect.",
+  "handoff": "Local and real SSH complete Safari historical comparison and restart pass. Continue authorization concurrent revoke/reverse cross-session synchronization, outcome receipt/live interactions and original12 remaining scoped requirements. Public package upload separate; Windows user-owned, real vectors deferred."
+}

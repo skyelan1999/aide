@@ -47,7 +47,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "旧组件和API证据保留；本轮start.command隔离实例系统Safari实际本地增改移除、前后原文及淘汰显示通过。SSH浏览器、主题/窄屏、存储故障和性能仍待验收。",
+      "summary": "Current local and SSH full authenticated Safari conclusion/basis/manual theme comparisons and original process restart pass; actual SSH disconnect/reconnect with immutable old snapshots and honest unmarked-pair boundary pass. Original broader responsive/theme/long-term scope remains separate.",
       "evidence": [
         "Docker aide:local go test -buildvcs=false -race ./internal/server -run TestKnowledge -count=1 -timeout=180s PASS 19.405s",
         "node scripts/starmap-timeline.test.cjs PASS metadata/comparison/literal excerpts/scope/late locked response",
@@ -58,7 +58,9 @@
         ".agent-state/timeline-preview/desktop.jpg",
         ".agent-state/continuity-runtime/timeline-before-after-safari-20261010.png",
         ".agent-state/continuity-runtime/timeline-removed-safari-20261010.png",
-        "2026-10-13 当前工作树：docker run --rm --network none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor -race ./internal/server -run '^TestKnowledge(Code|Path|Timeline)' -count=1 -timeout=120s：PASS（10项，5.356s）。本机代码关系/路径/时间线定向 race 回归；未替代真实工作区、SSH、Safari或大规模性能验收。"
+        "2026-10-13 当前工作树：docker run --rm --network none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor -race ./internal/server -run '^TestKnowledge(Code|Path|Timeline)' -count=1 -timeout=120s：PASS（10项，5.356s）。本机代码关系/路径/时间线定向 race 回归；未替代真实工作区、SSH、Safari或大规模性能验收。",
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
       ]
     },
     "documentation": {
@@ -134,5 +136,14 @@
       "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
     ],
     "remaining": "SSH native timeline, responsive/theme, user-host/long-term and receiving-device still separate."
+  },
+  "native_ssh_current_20261017": {
+    "status": "scoped_pass",
+    "task": "docs/tasks/knowledge-timeline-ssh-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+      "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+    ],
+    "remaining": "Responsive/theme, long-term large-library and receiving-device remain separately unverified."
   }
 }

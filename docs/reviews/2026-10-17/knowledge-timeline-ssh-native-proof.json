@@ -1,0 +1,121 @@
+{
+  "status": "scoped_native_ssh_timeline_pass",
+  "observedUTC": "2026-10-17T14:05:10.569020+00:00",
+  "image": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+  "productCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+  "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+  "priorExactFull127Pass": true,
+  "servedTimelineJavaScriptExact": true,
+  "servedTimelineSHA256": "6e16ae6f50b300df98482f0af310e6cfa879ccad4f59b7cb1b78a2ab4f124590",
+  "fixture": {
+    "realOpenSSH": true,
+    "mode": "SSH workspace, not independent source mode",
+    "workspaceId": "ssh|/home/fixture/project|ssh-fixture",
+    "hostPorts": 0,
+    "memoryBytes": 402653184,
+    "cpus": 1,
+    "pids": 128,
+    "ownedMountsOnly": true,
+    "originalPackageLauncher": true,
+    "samePreviouslyUserClearedCertificateAndOrigin": true
+  },
+  "native": {
+    "client": "Safari complete authenticated workbench and actual map button",
+    "origin": "https://localhost:58320/",
+    "SSHWorkspaceLabelAndActualRemoteFiles": true,
+    "conclusionChange": 1,
+    "basisChange": 1,
+    "addedNode": 1,
+    "changedNode": 2,
+    "removedNode": 1,
+    "beforeAndAfterHistoricalQuotesExpanded": true,
+    "beforeBasisMarker": "SSH_TIMELINE_BEFORE_CE0C",
+    "afterBasisMarker": "SSH_TIMELINE_AFTER_CE0C",
+    "referenceLocations": [
+      "L5:11",
+      "L5:23"
+    ],
+    "manualTheme": "远端分批策略",
+    "explicitWholeQuotesSelectedAndSaved": true,
+    "whileSSHStoppedFreshCompareAndHistoricalBasisRead": true,
+    "afterReconnectionNew777ObservationShown": true,
+    "unmarkedPairDoesNotInferWithdrawal": true,
+    "actualScreenshotReadablePathHashOriginalAndScope": true,
+    "afterAppRestartFullPageRefreshReselectedOriginalPair": true,
+    "persistedThemeAnd140_90BasisExpandedAfterRestart": true,
+    "noCurrentSourceJumpClaim": true
+  },
+  "disconnect": {
+    "status": "pass",
+    "realSSHWorkspace": true,
+    "pair": {
+      "before": "Hd0ba2178989dfa631c9c9570",
+      "after": "H30ea169f4f9e365da42f95ed"
+    },
+    "historicalCompareExactlyEqualWhileSSHDStopped": true,
+    "remoteNewContentPreparedWhileOffline": true,
+    "conclusionChanges": 1,
+    "basisChanges": 1,
+    "manualThemes": 1,
+    "added": 1,
+    "changed": 2,
+    "removed": 1,
+    "nativeOfflineCompare": "pass"
+  },
+  "reconnect": {
+    "status": "pass",
+    "nativeOfflineCompareExpandedOriginalBasis": true,
+    "sameFixtureIdAndHostKeys": true,
+    "actualSSHReconnectionTest": true,
+    "oldPairUnchangedAfterReconnection": true,
+    "newObservation": "Hdbf4d48eca7456238e178501",
+    "newObservationContainsLatest777Basis": true,
+    "elapsedSecondsToObservation": 4.611,
+    "explicitUpdateRequests": 0
+  },
+  "restart": {
+    "status": "pass",
+    "originalStopStart": true,
+    "sameImage": true,
+    "sameContainer": true,
+    "newProcess": true,
+    "SSHWorkspaceAndCredentialsPersisted": true,
+    "oldHistoricalCompareExact": true,
+    "manualTopicsExact": true,
+    "reconnectedComparisonExact": true,
+    "unmarkedObservationDoesNotInferWithdrawal": true,
+    "remoteBodiesUnchanged": true,
+    "nativeRefresh": "pass",
+    "newObservation": "Hdbf4d48eca7456238e178501"
+  },
+  "harnessNotes": [
+    "Initial remote move to container writable layer hit EXDEV after other writes; moved only owned mounted file on host same volume, preserved it; actual browser retained two valid final observations.",
+    "No explicit updates endpoint calls during mutations/reconnection; real browser automatic sync produced observations."
+  ],
+  "limits": {
+    "receivingDevice": "NOT_RUN",
+    "userHostDifferentNetwork": "NOT_RUN",
+    "narrowAndThemeVariants": "NOT_RUN in this task",
+    "longTermLargeLibrary": "NOT_RUN",
+    "Windows": "user-owned",
+    "realVectors": "deferred",
+    "realModelVectorCalls": 0,
+    "newPackagePublicUpload": "separate pending task",
+    "original12Complete": false
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": 3,
+    "ownedEmptyNetworksRemoved": 3,
+    "originalUserBrowserTabsRestored": true,
+    "onlyProductionTwoContainersRemain": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "imagesDataAndRemoteFilesRetained": true,
+    "observedUTC": "2026-10-17T14:05:38.157031+00:00"
+  },
+  "sourceDelivery": {
+    "status": "pending"
+  }
+}
