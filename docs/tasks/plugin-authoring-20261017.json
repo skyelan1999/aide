@@ -76,18 +76,21 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User-authorized main integration: preserve origin/main at 662cffa6, merge plugin workshop commit ee34c704. Resolve sole index.html conflict by retaining remote assets plus workshop assets and advancing shared cache revisions. Further tests explicitly waived; push pending.",
+      "status": "pass",
+      "summary": "User-requested main integration and push completed. Remote main verified at merge commit 392cffe67887378f5678b5516f77c3b2584bd889, containing workshop commit ee34c704 and origin/main updates through 662cffa6. Further testing explicitly waived; no tag, version bump, formal Release or additional deployment.",
       "evidence": [
         "AIDE_BUILD_FROM_SOURCE=1 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start: exit 0",
         "Running image sha256:13370eae90ca48a426fb9c70d9cc761d4da09603bcc542c30cdf98d2b8a43f0c: healthy",
         "Current source and image aide.srcsha match: 0e9d2080452456e4bec478831b47c177f973fcb3743f93cb0dccf3cb11aa027a",
         "Read-only merge preview identified six overlapping files; only index.html required explicit conflict resolution.",
-        "Existing runtime remains the previously verified local development image; merged source is not rebuilt or re-tested for this requested push."
+        "Existing runtime remains the previously verified local development image; merged source is not rebuilt or re-tested for this requested push.",
+        "git push origin main: 662cffa6..392cffe6 main -> main",
+        "git ls-remote origin refs/heads/main: 392cffe67887378f5678b5516f77c3b2584bd889",
+        "git status --short --branch after integration push: clean main synchronized with origin/main"
       ]
     }
   },
   "release_authorization": "User explicitly requested pushing this update, then instructed no further testing and to include it directly on 2026-10-17. Commit/push main only; no version bump, tag or GitHub Release. User explicitly confirmed merging the 50 additional origin/main commits before push; no further tests or force push.",
   "rollback": "Previous image sha256:e25c6a7624143c4213975ca2c39cda207cfc6fac87e268a46eb319ae4f535a1f. Registry snapshot /data/backups/plugin-authoring-20261017-registry-before.json excludes newly added workshop and preserves other entries. Stop service, restore /workspace/plugins/registry.json if needed, then AIDE_IMAGE=<previous-image-id> AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. Preserve new proposal queue; do not replay it on old server.",
-  "handoff": "Scoped plugin workshop update committed; remote main updates preserved in merge. User waived post-merge testing; no new runtime restart or formal release. Push confirmation pending."
+  "handoff": "Workshop update merged and pushed to main with remote updates preserved. User waived further/post-merge tests. Previously recorded tests apply to pre-merge candidate only; running local image remains the earlier verified candidate. No new restart, version bump, tag or formal Release. This documentation records the verified integration push."
 }
