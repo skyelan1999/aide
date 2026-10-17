@@ -73,11 +73,11 @@
     },
     "release": {
       "status": "pending",
-      "summary": "Local tested candidate and two complete offline packages ready; publication pending large GitHub attachment upload failure. Remote main held5fac. Do not treat local tests/imports as public release or receiving-device acceptance.",
+      "summary": "Local tested candidate and two complete offline packages ready; publication pending large GitHub attachment upload failure. Remote main held5fac. Do not treat local tests/imports as public release or receiving-device acceptance. Local main fast-forward and release-check pass at7b57aea0; public release remains pending, not pass.",
       "evidence": []
     }
   },
   "release_authorization": "Existing user authorization for incremental acceptance/docs/main; no paid model calls or new version.",
   "rollback": "Stop the instance before downgrading; retain each compressed v2 history file separately, then restore the matching original encrypted v1 before-gzip-v2 fingerprint backup (or verified pre-activation encrypted archive for that exact workspace/code identity). Preserve auth/settings/sessions/vault/source registrations and original directories. Never point an old binary at v2 or delete the entire cache/data directory. Existing known-good image retained; temporary QA files already removed.",
-  "handoff": "6e3d3e16 backend retention candidate now running via original start.command. Native distinct history/conclusion/evidence passes; old encrypted history byte-exact backup and14 original sessions/config preserved. Canonical ARM37da and AMDab31 complete bundles imported; fresh ARM start passes. Full107 terminal PASS on frozen source; exact receipt in timeline-retention-proof.json. No main merge/push or public candidate upload; existing22public assets unchanged. Earlier aside CSS collision and source-sha ignored node_modules discrepancy remain recorded separate concerns."
+  "handoff": "6e3d3e16 backend retention candidate now running via original start.command. Native distinct history/conclusion/evidence passes; old encrypted history byte-exact backup and14 original sessions/config preserved. Canonical ARM37da and AMDab31 complete bundles imported; fresh ARM start passes. Full107 terminal PASS on frozen source; exact receipt in timeline-retention-proof.json. No main merge/push or public candidate upload; existing22public assets unchanged. Earlier aside CSS collision and source-sha ignored node_modules discrepancy remain recorded separate concerns. Local main fast-forward7b57aea0 and scoped release-check PASS; remote main remains5fac. Following commit only records ordinary docs; code/full input fingerprint unchanged."
 }

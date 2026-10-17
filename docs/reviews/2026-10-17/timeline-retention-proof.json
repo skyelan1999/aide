@@ -176,5 +176,13 @@
     "offlineArchivesRetained": true,
     "historyRollbackBackupRetained": true,
     "originalDirectoriesUntouched": true
+  },
+  "localMainGate": {
+    "status": "pass",
+    "head": "7b57aea0",
+    "command": "python3 scripts/agent-route.py release-check timeline-native-20261017",
+    "remoteMain": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+    "remoteMainPushed": false,
+    "newReleaseAssetsUploaded": false
   }
 }
