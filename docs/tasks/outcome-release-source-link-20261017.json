@@ -76,13 +76,14 @@
     "log": ".agent-state/verify-20261017T055717868235Z.log"
   },
   "native_candidate": {
-    "status": "prepared_not_started",
+    "status": "superseded_before_start",
     "sourceCommit": "21fc40a12da18c7c1f08fc1c13c7e7022be72534",
     "isolatedProject": "aide-continuity-native-20261017",
     "productionDataMounted": false,
     "allUserRunsTerminalAtPreparation": true,
     "protectedFilesBaseline": 22,
-    "fullStatus": "running; wait for exact-source pass before building",
-    "privateState": ".agent-state/outcome-release-source-link-20261017/native-owner.json"
+    "fullStatus": "interrupted exit130 after independent authorization expiry negative; no full pass",
+    "privateState": ".agent-state/outcome-release-source-link-20261017/native-owner.json",
+    "followup": "docs/tasks/approval-expiry-synced-main-20261017.json"
   }
 }

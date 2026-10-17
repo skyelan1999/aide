@@ -124,3 +124,49 @@ function client() {
   const manual=pollClient('awaiting_approval','manual');manual.run();assert.equal(manual.metrics().timer,false);
   console.log('PASS: file-review poll survives model completion, approved/manual transitions and transient outage');
 })().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Authorization management stays current without destroying an expiry draft.
+(async () => {
+  class Element {
+    constructor(tag,cls='',text=''){this.tag=tag;this.className=cls;this.textContent=text;this.children=[];this.listeners={};this.value='';this.open=false;this.disabled=false;}
+    append(...items){for(const item of items){item.parent=this;this.children.push(item);}}
+    replaceChildren(...items){this.children=[];this.append(...items);}
+    setAttribute(){} focus(){doc.activeElement=this;}
+    contains(item){return item===this||this.children.some(child=>child.contains?.(item));}
+    addEventListener(name,fn){this.listeners[name]=fn;}
+    showModal(){this.open=true;} close(){this.open=false;this.listeners.close?.();}
+    remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}
+  }
+  const doc={body:null,activeElement:null,hidden:false};doc.body=new Element('body');
+  let serverRules={revision:7,rules:[{id:'owned',kind:'shell',workspace:'fixture',root:{containerAbs:'/fixture'},fingerprint:'exact-print',createdAt:'2026-10-17T00:00:00Z',expiresAt:'2026-10-18T00:00:00Z',active:true}]};
+  const timers=new Map();let timerId=0,reads=0,holdRead=null;
+  const c=vm.createContext({document:doc,lockScreen:{locked:false},state:{token:'fixture'},JSON,Map,Date,encodeURIComponent,
+    el:(...args)=>new Element(...args),t:x=>x,toast:()=>{},confirm:()=>true,$:()=>new Element('button'),refreshApprovalPolicy:async()=>{},
+    setInterval:fn=>{timers.set(++timerId,fn);return timerId;},clearInterval:id=>timers.delete(id),
+    api:async(path,options)=>{assert.equal(path,'/approval-policy/rules');assert.equal(options,undefined);reads++;if(holdRead)return holdRead;return JSON.parse(JSON.stringify(serverRules));}
+  });
+  vm.runInContext('let approvalRulesDialog=null;\n'+extract('openApprovalRules'),c);
+  const nodes=(root=doc.body)=>[root,...root.children.flatMap(child=>nodes(child))];
+  const tick=async()=>{assert.equal(timers.size,1,'Open authorization dialog must reconcile expiry');await [...timers.values()][0]();};
+  await vm.runInContext('openApprovalRules()',c);
+  assert.ok(nodes().some(n=>n.textContent.startsWith?.('有效 ·')));
+  serverRules.rules[0].active=false;
+  await tick();
+  assert.ok(nodes().some(n=>n.textContent.startsWith?.('已到期 ·')),'Natural expiry must remove active status even without a revision change');
+  const input=nodes().find(n=>n.tag==='input');input.value='2026-10-19T10:00';doc.activeElement=input;
+  serverRules.revision++;serverRules.rules[0].expiresAt='2026-10-20T00:00:00Z';serverRules.rules[0].active=true;
+  await tick();
+  assert.equal(nodes().find(n=>n.tag==='input'),input,'Background refresh must retain the focused input');
+  assert.equal(input.value,'2026-10-19T10:00','External change must not overwrite an unsaved expiry');
+  assert.ok(nodes().find(n=>n.textContent==='保存有效期').disabled,'A stale draft must not save with an adopted newer revision');
+  const count=reads;c.lockScreen.locked=true;await tick();assert.equal(reads,count,'Lock must pause reads');c.lockScreen.locked=false;
+  doc.hidden=true;await tick();assert.equal(reads,count,'Hidden page must pause reads');doc.hidden=false;
+  let release;holdRead=new Promise(resolve=>{release=resolve;});const pending=tick();
+  const dialog=nodes().find(n=>n.tag==='dialog');dialog.close();assert.equal(timers.size,0,'Close must dispose timer');
+  release({revision:99,rules:[]});await pending;holdRead=null;
+  assert.equal(doc.body.children.length,0,'Delayed read must not resurrect a closed dialog');
+  await vm.runInContext('openApprovalRules()',c);assert.equal(timers.size,1);
+  await vm.runInContext('openApprovalRules()',c);assert.equal(timers.size,1,'Reopening must not leak old timers');
+  nodes().find(n=>n.tag==='dialog').close();assert.equal(timers.size,0);
+  console.log('PASS: native authorization expiry reconciliation, dirty/focus preservation, stale-save guard, lock/visibility and close/reopen ownership');
+})().catch(error=>{console.error(error);process.exitCode=1;});
