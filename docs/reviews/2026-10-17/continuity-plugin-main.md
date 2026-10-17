@@ -19,3 +19,5 @@
 修复提交 `7c14193a` 已推送任务分支，冻结源码身份 `eb0af3efd5f775e84813e5888c5b6c2f1a813346977e950f2d3029fd8a07aa87`。修正后的full127已启动并进入隔离Go快照，指纹 `b5b10f62d2216e13e73a049a00c6efafe5cb1f4b51838e4cfbbc38d471b0ff5b`；当前仍在运行，不记为通过。当前[机器可读进展](continuity-plugin-main-proof.json)记录负例和具体运行句柄；后续需核对实际进程终态，不能仅依赖此记录推断任务仍在执行。尚未开始新的重型镜像构建，避免与完整回归并行占用Docker内存。
 
 该次full随后在第3分片失败：`TestBundledControlPluginsUpgradeExistingWorkspace` 仍按四个内置插件加一个用户插件断言总数5，实际新增工坊后为6。空工作区测试也保留旧数量和默认启用表。已同步为五个内置插件，保留重复启动不重复注册、用户设置与代码不覆盖、显式移除不复活等断言，并补充用户插件设置保持的直接检查。上述失败日志保留，核实归属后停止已失效的full及其隔离容器，工具终态143；先跑相关专项race，再启动修正后的全量。旧full进展段是历史状态，不代表仍在运行或已通过。
+
+同步后的内置插件、管理权限及文档提案专项race实际通过：`go test -mod=vendor -race -count=1 -timeout=6m ./internal/server -run "TestBundledControlPlugins|TestManagement|TestAuthoring|TestSourceProposal|TestDocumentProposal"`，19.173秒，隔离快照无网络/用户挂载。提交 `297c8b08` 已包含修正，随后启动full127第二轮；当前状态以机器可读证据的 `repairedFullV2` 为准，未记为通过，亦未启动新镜像构建。

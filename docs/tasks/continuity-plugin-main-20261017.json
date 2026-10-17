@@ -42,7 +42,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Full127 reached976 server entries; shard3 failed old builtin registry count(defaults also outdated). Confirmed failure retained; exact owned verifier/container stopped, no PASS. Both existing/empty-workspace fixtures updated to five builtins, preservation and no-resurrection assertions retained; focused race running before new full.",
+      "summary": "Packaging source omissions and prior-image negative confirmed; old builtin-count/default fixture fixed, focused related race PASS19.173s. New exact full127 v2 running; former failed/stopped runs retained, never promoted. Candidate fresh-start acceptance pending.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-plugin-main.md",
         "docs/reviews/2026-10-17/continuity-plugin-main-proof.json"
