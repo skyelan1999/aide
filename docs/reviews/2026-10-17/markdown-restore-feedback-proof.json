@@ -1,5 +1,5 @@
 {
-  "status": "targeted_pass_full_native_pending",
+  "status": "targeted_quick_pass_exact_full_running_native_pending",
   "negative": {
     "status": "expected_failure",
     "command": "node scripts/markdown-history-writable.test.cjs",
@@ -24,7 +24,21 @@
     "command": "node --check internal/server/web/markdown-history.js",
     "exit": 0
   },
-  "full": "NOT_RUN final source",
+  "full": {
+    "status": "running",
+    "processSession": 16520,
+    "container": "aide-verify-f11e81f3e692",
+    "containerId": "650ecc60c1d9aa4e977087430c35dfa475745a91ea18f44eea2b2cc58bd2424c",
+    "containerStartedAt": "2026-10-17T12:49:32.56654834Z",
+    "memoryLimit": 4294967296,
+    "nanoCPUs": 2000000000,
+    "network": "none",
+    "serverInventory": 976,
+    "shards": 12,
+    "completedShardsAtCheckpoint": 1,
+    "log": ".agent-state/verify-20261017T124847063883Z.log",
+    "noPassClaimBeforeTerminal": true
+  },
   "native": "NOT_RUN new source candidate",
   "productionReplaced": false,
   "realModelOrVectorCalls": 0,
@@ -34,5 +48,9 @@
     "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
     "log": ".agent-state/verify-20261017T124714659841Z.log",
     "commands": 124
-  }
+  },
+  "sourceCommit": "4469686e3f128bdaff6da0f053d192c88e87d879",
+  "sourceSHA": "2adcbede85b71dca30cfde3052a097ea0011f24f1aa2c54e9405bcff564c61e1",
+  "fullFingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+  "observedUTC": "2026-10-17T12:51:35.427904+00:00"
 }

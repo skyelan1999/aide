@@ -40,7 +40,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Two independent negative-to-positive regressions and targeted source VM/syntax pass. Exact full and current native pending.",
+      "summary": "Two negative-to-positive regressions, targeted VM/syntax and124 quick checks pass. Exact full live in owned4GiB/2CPU network-none container,976 entries/12 shards first1 pass; native/new runtime pending. Follow same live session16520, do not restart on observation timeout.",
       "evidence": [
         "docs/reviews/2026-10-17/markdown-restore-feedback.md",
         "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
@@ -73,5 +73,5 @@
   },
   "release_authorization": "Existing incremental source/test/doc/push authorization; no production replacement or public Release before gates.",
   "rollback": "Revert owned source commit; no data migration.",
-  "handoff": "Original12 continue; Windows user-owned; real vectors deferred."
+  "handoff": "Exact full session16520/container aide-verify-f11e81f3e692 live at checkpoint. After terminal pass and matching fingerprint, run private build.py then prepare-native.py; these are unexecuted preparations, not pass evidence. Next native actual SSH interruption/retry, cleanup, docs and gates. Original12/Windows/vector scope unchanged."
 }

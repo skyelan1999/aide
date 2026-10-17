@@ -8323,12 +8323,12 @@
     "summary": "SSH workspace native full save bytes, explicit refresh draft recovery, body+SVG version1 restore, disconnected prewrite bytes and reconnect retry pass. Persistent inline failure reason absent; no overall completion. Production22 exact; tests stopped."
   },
   "markdown_restore_feedback_20261017": {
-    "status": "targeted_pass_full_native_pending",
+    "status": "targeted_quick_pass_exact_full_running_native_pending",
     "task": "docs/tasks/markdown-restore-feedback-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/markdown-restore-feedback.md",
       "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
     ],
-    "summary": "Direct native disconnect feedback gap and independent late-version success gap reproduced; minimal guarded persistent error source repair and targeted regression pass. Final current full/runtime/native remain pending."
+    "summary": "Source4469686e persistent guarded restore errors and late-version response repair: two independent negatives then targeted/124quick pass. Exact full running976/12 first1 pass in bounded owned container; no current full/native pass claim or production replacement."
   }
 }
