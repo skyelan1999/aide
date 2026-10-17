@@ -1,19 +1,26 @@
 {
   "id": "timeline-native-20261017",
-  "request": "继续原目标知识时光：现有认证Safari星图历史选择、节点与结论依据比较及原文定位的原生只读验收，保全原会话和配置，不调用模型。",
+  "request": "继续原目标知识时光：现有认证Safari星图历史选择、节点与结论依据比较及原文定位的原生只读验收，保全原会话和配置，不调用模型。 验收实际发现大星图只保留一次观察，继续修复有界历史保留并保全旧加密数据。",
   "baseline": "99d5652b3c75b6134de3416052dcd91bad55f323",
   "initial_status": "",
   "acceptance": [
     "Inspect actual authenticated star-map timeline availability and distinct saved-observation selection",
     "Native comparison renders node/edge and saved conclusion/evidence changes with explicit unknown/coverage boundaries",
     "Open saved historical excerpt without claiming current-file identity; verify against independent timeline API",
-    "Restore original star and main view, preserve original14sessions/auth/settings/sources/vault and mounts"
+    "Restore original star and main view, preserve original14sessions/auth/settings/sources/vault and mounts",
+    "A 20052-node graph with two distinct ~7MB observations survives encrypted persistence and retains exact before/after evidence",
+    "Legacy encrypted v1 remains readable; first compressed-format write preserves byte-exact encrypted rollback backup; corrupt/oversize streams fail closed",
+    "New envelope physical file <=8MiB, decoded JSON <=32MiB, at most32 observations; no fabricated recovery of previously evicted snapshots"
   ],
   "scope": [
     "docs/tasks/timeline-native-20261017.json",
     "docs/tasks/aide-continuity-knowledge-20261009.json",
     "docs/reviews/2026-10-17",
-    "ignored owned timeline observations"
+    "ignored owned timeline observations",
+    "internal/server/knowledge_timeline*.go",
+    "internal/server/knowledge_conclusion_migration.go",
+    "internal/server/knowledge_conclusion_body_test.go",
+    "docs/prd/2026-10-16-knowledge-conclusion-evolution.md"
   ],
   "stages": {
     "requirements": {
@@ -25,21 +32,24 @@
       ]
     },
     "design": {
-      "status": "in_progress",
-      "summary": "Actual20052-node map has only one7.3MB serialized observation under8MiB total history budget; two current-size snapshots cannot coexist. Need bounded retention design, not synthetic same-snapshot comparison. Also observe aside restart-notice CSS collision. No product input changes while approval full is live.",
+      "status": "pass",
+      "summary": "Dedicated timeline envelope v2: gzip BestSpeed before AES-GCM, unchanged payload versions1–3. Keep legacy v1 reader capped8MiB plaintext/16MiB file, cap new8MiB physical/32MiB expanded/32 entries. Original encrypted v1 backup keyed by fingerprint before upgrade, use existing stale-source/backup guards. No changes to vector codec. Reject corrupt/trailing gzip and expansion bombs. No read-time rewriting or invented observations. Native restart-notice CSS collision remains separate pending issue.",
       "evidence": [
-        "docs/reviews/2026-10-17/timeline-native.md",
-        "docs/reviews/2026-10-17/timeline-native-proof.json"
+        "internal/server/knowledge_timeline_codec.go",
+        "docs/reviews/2026-10-17/timeline-native.md"
       ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "No retention/style fix implemented yet; current branch adds read-only direct evidence only.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Dedicated gzip/encrypted envelope with bounded retention, legacy backup and accurate stored-encoding API field implemented; product and targeted regressions reviewed. UI layout issue remains outside this backend change.",
+      "evidence": [
+        "internal/server/knowledge_timeline_codec.go",
+        "internal/server/knowledge_timeline_codec_test.go"
+      ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Native current timeline and independent API agree on one snapshot and151 evictions, exact ciphertext/plaintext sizes checked; distinct native comparison cannot be performed. Do not mark requirement passed.",
+      "summary": "Isolated Docker race TestKnowledge(Timeline|Conclusion|AI) passed24.916s including independent physical and expanded limits; quick104 checks passed before final capacity test additions. Runtime/native/full checks pending.",
       "evidence": [
         "docs/reviews/2026-10-17/timeline-native-proof.json"
       ]
@@ -64,5 +74,5 @@
   },
   "release_authorization": "Existing user authorization for incremental acceptance/docs/main; no paid model calls or new version.",
   "rollback": "Read-only existing observations, restore original star/main tab/view. Do not delete timeline or user records.",
-  "handoff": "Read-only real large-map gap reproduced, retention fix/design pending and restart-notice aside layout issue recorded. Parent approval source/full inputs unchanged. Do not treat one entry/self comparison as completed knowledge-time requirement."
+  "handoff": "Branch fix/timeline-retention-20261017 contains backend retention candidate. Existing approval source/full107 remains separately attested on local main0564007a; origin/main held5fac pending large asset upload. No production migration performed yet. Native distinct-history comparison, full verification and release pending."
 }
