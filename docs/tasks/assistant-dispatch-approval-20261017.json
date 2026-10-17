@@ -29,7 +29,8 @@
     "internal/server/web/conversation.css",
     "scripts/assistant-delegation.test.cjs",
     "docs/agent/router.json",
-    "scripts/steer-user-bubbles.test.cjs"
+    "scripts/steer-user-bubbles.test.cjs",
+    "internal/server/voice_identity_test.go"
   ],
   "stages": {
     "requirements": {
@@ -58,12 +59,15 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "116 quick checks pass; focused Go race and vet pass. Production Safari Settings visible and option remains off; isolated browser renders delegated prompts/followups distinct from human input. No live paid-model approval claim.",
+      "summary": "116 quick checks pass; focused Go race and vet pass. Production Safari Settings visible and option remains off; isolated browser renders delegated prompts/followups distinct from human input. No live paid-model approval claim. Push follow-up: current committed inputs passed verify full (119 checks; 949 server tests across 12 shards; all other Go packages race and vet; runtime assets and CAD geometry). Updated legacy voice-identity assertion to check coordinator duties and execution boundaries.",
       "evidence": [
         ".agent-state/assistant-delegation-quick.log",
         ".agent-state/assistant-delegation-go.log",
         "/private/tmp/aide-assistant-approval-settings-20261017.png",
-        "/private/tmp/aide-assistant-origin-label-20261017.png"
+        "/private/tmp/aide-assistant-origin-label-20261017.png",
+        ".agent-state/verify-20261017T093759686684Z.log",
+        "full fingerprint 4a2e185eeeefde587896d123a9b87121bbc52b5010a358d8abae028c4c75d07b",
+        "282bc76e"
       ]
     },
     "documentation": {
@@ -82,7 +86,7 @@
     },
     "release": {
       "status": "pass",
-      "summary": "Local source rebuild and restart complete; container healthy. No commit, push or remote release.",
+      "summary": "Local source rebuild and restart complete; container healthy. No commit, push or remote release. Full validation and release-check passed. Push to configured origin/main was blocked before execution by automatic approval: requires explicit human confirmation of destination git@github.com:skyelan1999/aide.git. No remote push, tag or Release performed.",
       "evidence": [
         ".agent-state/startup/assistant-delegation.log",
         "sha256:24a658d92bf547b7c8b2362d33cb1bd63ed7c01a20e005eb17ab5a4700423823"
