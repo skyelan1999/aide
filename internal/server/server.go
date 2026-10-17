@@ -492,6 +492,8 @@ type App struct {
 	pluginLifecycle           sync.Mutex
 	pluginUpgradeMu           sync.Mutex
 	pluginUpdateClient        *http.Client
+	marketMu                  sync.Mutex
+	marketInstallMu           sync.Mutex
 	pluginCalls               pluginCallQueues
 	pluginResources           pluginResourceQueue
 	pluginSurface             []byte
@@ -1457,6 +1459,9 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/management-proposals/{id}", a.getManagementProposal)
 	mux.HandleFunc("POST /api/management-proposals/{id}/{action}", a.resolveManagementProposal)
 	mux.HandleFunc("GET /api/management-proposals/{id}/package", a.downloadManagementPackage)
+	mux.HandleFunc("GET /api/plugin-market", a.marketCatalogAPI)
+	mux.HandleFunc("POST /api/plugin-market/{id}/install", a.marketInstall)
+	mux.HandleFunc("GET /api/plugin-market/{id}/download", a.marketDownload)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
 	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)

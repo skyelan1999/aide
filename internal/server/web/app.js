@@ -6599,6 +6599,7 @@ async function loadPluginsPanel() {
   renderPluginList();
   const surface = await api('/plugin-surface');
   renderPluginSurface(surface.plugins || []);
+  window.AidePluginMarket?.syncInstalled?.(state.plugins);
 }
 const PLUGIN_I18N = {
   "技能": { en: "Skill" },
@@ -6808,7 +6809,8 @@ $('plugins-toggle').onclick = action(async () => {
   });
   await loadPluginsPanel();
 });
-$('refresh-plugins').onclick = action(loadPluginsPanel);
+window.AidePluginMarket.mount({api,raw:(path,options={})=>fetch('/api'+path,{...options,headers:{Authorization:'Bearer '+state.token,...options.headers}}),t,el,refreshInstalled:loadPluginsPanel,paintInstalled:renderPluginList,blocked:()=>lockScreen.locked||!state.token});
+$('refresh-plugins').onclick = action(()=>window.AidePluginMarket.refresh());
 $('plugin-search').addEventListener('input', renderPluginList);
 $('plugin-settings-form').onsubmit = action(async event => {
   event.preventDefault();
@@ -11598,6 +11600,7 @@ function refreshLockAvatar(status, running) {
 }
 /* 视觉层：把 effectiveLocked=true 落到本地遮罩 + 小秘退下（幂等，可重复调用）。 */
 function applyLockVisual() {
+  window.AidePluginMarket?.close?.();
   if (!state.config || !state.config.hasPassword) return;
   const veil = $('lock-screen');
   if (lockScreen.locked) { refreshLockStatus(); return; }

@@ -1,0 +1,110 @@
+{
+  "id": "plugin-market-20261018",
+  "request": "实现官方插件市场：aide-pkg-shop目录与网站，Aide内市场浏览搜索、详情、官方下载、安装更新，保留权限设置与回滚",
+  "baseline": "4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94",
+  "initial_status": "M plugins/registry.json",
+  "acceptance": [
+    "官方目录固定来源和快照，包摘要/大小/ID/版本匹配才可安装",
+    "市场网站可搜索分类、看详情并直接下载真实官方ZIP",
+    "Aide插件面板有市场/已安装入口、详情确认、下载和安装/升级状态",
+    "升级保留现有设置/启用/数据并复用备份；锁屏/工作空间变化/只读不落盘",
+    "离线目录回退明确标识，缓存有大小边界；Safari实见新入口和布局"
+  ],
+  "scope": [
+    "internal/server/plugin_market.go",
+    "internal/server/plugin_market_test.go",
+    "internal/server/server.go",
+    "internal/server/plugins.go",
+    "internal/server/web/plugin-market.js",
+    "internal/server/web/plugin-market.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/plugin-market.test.cjs",
+    "docs/architecture/plugin-market.md",
+    "../aide-pkg-shop"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "实现用户同意的第一版，官方受控目录；无账号、评论、第三方自动收录。",
+      "evidence": [
+        "internal/server/plugin_market.go",
+        "internal/server/plugin_market_test.go",
+        "internal/server/server.go",
+        "internal/server/plugins.go",
+        "internal/server/web/plugin-market.js",
+        "internal/server/web/plugin-market.css",
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "scripts/plugin-market.test.cjs",
+        "docs/architecture/plugin-market.md",
+        "../aide-pkg-shop"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "市场仓库保存静态目录和确定性ZIP；Aide固定读取该仓库不可变快照，安装前确认摘要及宿主版本，复用既有安装升级，权限不放宽。",
+      "evidence": [
+        "internal/server/plugin_market.go",
+        "internal/server/plugin_market_test.go",
+        "internal/server/server.go",
+        "internal/server/plugins.go",
+        "internal/server/web/plugin-market.js",
+        "internal/server/web/plugin-market.css",
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "scripts/plugin-market.test.cjs",
+        "docs/architecture/plugin-market.md",
+        "../aide-pkg-shop"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented fixed official catalog snapshots, bounded cache, verified download/install/update, candidate loading probes, installed-source revocation guard, market UI, and public market website with 23 actual packages.",
+      "evidence": [
+        "internal/server/plugin_market.go",
+        "internal/server/web/plugin-market.js",
+        "https://github.com/skyelan1999/aide-pkg-shop/commit/e489d34"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "127 final quick checks passed. Race integration for market/upgrade/management/skill passed (52.371s), real 23-package isolated installations passed (20.573s), final market and upgrade guards passed (132.044s). Public Pages site, search, details, MIT/dependency notes and actual hash-verified download observed. Safari narrow plugin panel/details observed. No paid model, real hardware, or Windows/Linux browser acceptance; full product release gate not run.",
+      "evidence": [
+        ".agent-state/market-quick-release.log",
+        ".agent-state/market-go-final.log",
+        ".agent-state/market-published-packages.log",
+        ".agent-state/market-go-upgrade-guard.log",
+        ".agent-state/market/site.png",
+        ".agent-state/market/aide-market.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented catalog, cache, endpoints, compatibility, trust boundaries, publication, dependencies and rollback. Actual public website screenshot retained; no mock screenshot or private workspace screenshot published.",
+      "evidence": [
+        "docs/architecture/plugin-market.md",
+        "docs/architecture/modules.md",
+        "docs/plugin-protocol.md",
+        "docs/reviews/2026-10-18/plugin-market-site.png"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Preserve unrelated runtime registry changes unstaged. Remove only own isolated container and preview server after final runtime checks.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Market repository e489d34 pushed, Pages workflow 39059666741 succeeded and site/download checked. Aide source push and final local build pending; no version bump or product Release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39059666741"
+      ]
+    }
+  },
+  "release_authorization": "User: do it; implements the proposed official repository/Pages market. Local update continues earlier installation/update authorization.",
+  "rollback": "Revert marketplace source/image together while preserving data volume, registry settings and installed plugin data. Revert market catalog commit for website recommendations. Existing plugin updates retain their upgrade backups; do not purge shared caches or user plugins.",
+  "handoff": "Official site https://skyelan1999.github.io/aide-pkg-shop/ . Catalog e489d34 has 23 packages, 120983 bytes. First-party repository HTTPS and pinned Git snapshots establish source trust; independent release signing is not implemented. Existing user plugins are not upgraded as a UI acceptance probe. Runtime registry remains local."
+}

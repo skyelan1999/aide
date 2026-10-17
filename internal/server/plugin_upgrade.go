@@ -582,6 +582,7 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	scope, epoch := a.pluginsPath, a.wsRevision
+	marketBase, marketGen, marketWS := a.managementBaseLocked("plugins", id), a.loadLockStateLocked().Gen, a.wsID()
 	var old PluginManifest
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.ID == id {
@@ -609,6 +610,37 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// The installed-list upgrade button must retain the same market revocation boundary.
+	if source == marketUpdatePrefix+id && !hasLocalBundle {
+		parent := r.Context()
+		prior, _ := parent.Value(managementGuardKey{}).(func() error)
+		guard := func() error {
+			if err := parent.Err(); err != nil {
+				return err
+			}
+			if prior != nil {
+				if err := prior(); err != nil {
+					return err
+				}
+			}
+			lock := a.loadLockStateLocked()
+			if lock.Locked || lock.Gen != marketGen || sandboxMode(a.settings.SandboxMode) == "read-only" {
+				return errors.New("锁定或只读状态不能更新市场插件")
+			}
+			if a.wsID() != marketWS || a.wsRevision != epoch || a.pluginsPath != scope || a.managementBaseLocked("plugins", id) != marketBase {
+				return errors.New("工作空间或插件已变化，请重新确认")
+			}
+			return nil
+		}
+		a.mu.Lock()
+		err := guard()
+		a.mu.Unlock()
+		if err != nil {
+			fail(w, 409, err)
+			return
+		}
+		r = r.WithContext(context.WithValue(parent, managementGuardKey{}, guard))
+	}
 	expected := strings.ToLower(strings.TrimSpace(in.SHA256))
 	if expected != "" {
 		if b, err := hex.DecodeString(expected); err != nil || len(b) != 32 {
@@ -629,6 +661,27 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	if hasLocalBundle {
 		raw = localBundle
 		source = old.UpdateURL
+	} else if source == marketUpdatePrefix+id {
+		var snapshot marketSnapshot
+		snapshot, _, err = a.loadMarket(downloadCtx, true)
+		if err == nil {
+			found := false
+			for _, entry := range snapshot.Catalog.Plugins {
+				if entry.ID != id {
+					continue
+				}
+				found = true
+				if compatible, reason := marketCompatible(entry, a.buildVersion); !compatible {
+					err = errors.New(reason)
+					break
+				}
+				raw, err = a.marketPackage(downloadCtx, snapshot, entry)
+				break
+			}
+			if !found {
+				err = errors.New("官方市场未收录此插件")
+			}
+		}
 	} else if source == officialPluginPrefix+id {
 		raw, err = officialPluginBundle(downloadCtx, client, id)
 	} else {

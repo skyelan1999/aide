@@ -717,6 +717,15 @@
       [
         "node",
         "scripts/management-permissions.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/plugin-market.js"
+      ],
+      [
+        "node",
+        "scripts/plugin-market.test.cjs"
       ]
     ],
     "full": [

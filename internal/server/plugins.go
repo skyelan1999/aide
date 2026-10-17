@@ -649,11 +649,44 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	manifest.Main = main
+	if receipt, ok := r.Context().Value(marketInstallReceipt{}).(marketInstallReceipt); ok {
+		if receipt.ID != manifest.ID {
+			fail(w, 400, errors.New("市场包标识不匹配"))
+			return
+		}
+		manifest.PackageSHA256 = receipt.SHA256
+		manifest.UpdateURL = marketUpdatePrefix + manifest.ID
+	}
 	manifest.Enabled = true
 	manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
 	if err := atomicJSON(filepath.Join(stage, "manifest.json"), manifest); err != nil {
 		fail(w, 500, err)
 		return
+	}
+	if _, market := r.Context().Value(marketInstallReceipt{}).(marketInstallReceipt); market {
+		probe, err := os.MkdirTemp("", "aide-market-probe-")
+		if err != nil {
+			fail(w, 500, err)
+			return
+		}
+		defer os.RemoveAll(probe)
+		if err = copyPluginForUpgrade(stage, filepath.Join(probe, manifest.ID)); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		a.mu.Lock()
+		entries := append([]PluginManifest(nil), a.pluginRegistry.Plugins...)
+		before := append([]byte(nil), a.pluginSurface...)
+		a.mu.Unlock()
+		entries = append(entries, manifest)
+		after, err := a.probePluginUpgrade(r.Context(), probe, manifest.ID, entries)
+		if err == nil {
+			err = validatePluginUpgradeDependents(before, after, manifest.ID)
+		}
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
 	}
 	a.mu.Lock()
 	if err := managementGuardLocked(a, r); err != nil {

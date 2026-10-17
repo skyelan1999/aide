@@ -299,3 +299,7 @@ module.exports = {
 搜索是普通公开资料读取；prepare 和确认登记要求对应 Aide/助理的引用管理权限，复用 `ManagementProposal` 的人确认与基准校验。新引用只读，更新保留原启用、可见和读写锁；隐藏/停用的同 ID 引用不由该工具重新打开。工作空间、插件状态/源码/设置、权限、锁屏或缓存摘要变化会拒绝旧提案。已有引用仍走原读写工具，Skill 的 allowed-tools 或正文不会授予权限。
 
 源代码与使用/打包说明见 [技能库 README](../plugins/skill/README.md)。已有 `skill` 插件用既有升级流程保留设置和启停状态；不要直接重复导入同 ID。该源码功能、可上传 ZIP、真实网络检查与正式实例安装/发布状态分开记录于 [任务记录](tasks/skill-reference-plugin-20261018.json)。
+
+## 官方市场安装
+
+用户可以从插件面板的「市场」浏览官方条目，核对依赖与权限后安装/更新；也可从[市场网站](https://skyelan1999.github.io/aide-pkg-shop/)下载经摘要核对的 ZIP 后上传。目录和包固定到同一提交，安装沿用现有 manifest、ZIP、加载和升级规则；不自动安装 npm/系统依赖。数据模型、缓存、兼容性及未实现的签名边界见[官方插件市场](architecture/plugin-market.md)。
