@@ -164,7 +164,7 @@
     "newDeviceDownloadAndImport": "not_run",
     "Windows": "user-owned"
   },
-  "browserCleanup": "no new tabs; original right AIDE39 restored, empty input; unsaved GitHub form retained without submission",
+  "browserCleanup": "Own final PR-update tab closed; original4 nonpinned tabs+1 pinned retained; original right AIDE39 restored with empty input, unsaved Release form preserved",
   "finalFull": {
     "status": "pass",
     "profile": "full",
@@ -359,5 +359,20 @@
     ],
     "mainPushHeld": true,
     "reason": "two explicit native acceptance prerequisites remain user-deferred"
+  },
+  "finalDraftPR": {
+    "status": "pass",
+    "url": "https://github.com/skyelan1999/aide/pull/4",
+    "draft": true,
+    "head": "b39bda3239e78de931cee7e7ab22a79ce0055b27",
+    "base": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "rawBodySHA256": "1651898af0736352e41ad3a0c4949c41bc95195662932aaaa738730fd1225580",
+    "expectedLfSHA256": "ec9ca176a870ec1dca9c2cb1c6bd606b8043e8c35de42d3ca817fe36367cfac2",
+    "rawBodyBytesExact": false,
+    "lfNormalizedBodyExact": true,
+    "normalization": "GitHub native edit form uses CRLF; first raw equality assertion failed and was investigated, content matches exactly after CRLF-to-LF only",
+    "finalFull114Visible": true,
+    "sixPassTwoNativeGatesVisible": true,
+    "checkedUTC": "2026-10-17T08:38:11.880280+00:00"
   }
 }

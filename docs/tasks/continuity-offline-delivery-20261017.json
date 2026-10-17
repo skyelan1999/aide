@@ -62,7 +62,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Current defaults, public identities, actual source startup, final full114, retained missing-Node failure and actual6-pass/2-blocked child gate matrix documented; historical pagination/capability summaries corrected with explicit scope.",
+      "summary": "Current defaults, public identities, actual source startup, final full114, retained missing-Node failure and actual6-pass/2-blocked child gate matrix documented; historical pagination/capability summaries corrected with explicit scope. Final PR body publicly verified exact after explicitly documented CRLF normalization; final check_docs288/930 passed.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -77,8 +77,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Actual clean-main release-check exit0 including verified public default pair. Source branch and draft PR4 published; aggregate remote-main delivery remains held by separate approval/outcome native gates, no production replacement.",
+      "status": "blocked",
+      "summary": "Public full packages/supplements and review branch delivered; draft PR4 updated with final official full114 and actual6-pass/2-blocked child gate matrix. This task own clean-main gate passed, but aggregate main delivery is held by required native approval/outcome verification user-deferred. Remote main/production unchanged.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -87,5 +87,5 @@
   },
   "release_authorization": "Existing user incremental push/main/Release distribution authorization retained by parent goal ledger; current task stages exact complete image assets and qualifies default manifest, not production replacement. User requested repository and release bundles fast import/start; Windows user-owned, native workbench deferred, real vectors deferred.",
   "rollback": "Preserve existing published assets, old tracked manifest/checksum history, production6a8 image/data and current local complete packages. Do not replace production or restore old data; defaults only after verified new assets.",
-  "handoff": "Final full114 and six local child gates passed. Approval expiry and outcome source-link gates actually BLOCKED verification due user-deferred native acceptance. Update draft PR4 full-result paragraph with guarded existing-body check; push ordinary-doc evidence to review branch only. Keep remote main and production unchanged, no repeated certificate prompt. Full receipt8fe remains exact after ordinary docs."
+  "handoff": "Do not rerun successful full114 for ordinary-doc updates. PR4 remains draft and review branch contains final evidence. Two actual native child gates still blocked; remote main and production unchanged. Continue original remaining acceptance using isolated owned fixtures where useful; current full-workbench UI user-deferred, no repeated certificate question, Windows user-owned and real vectors deferred."
 }

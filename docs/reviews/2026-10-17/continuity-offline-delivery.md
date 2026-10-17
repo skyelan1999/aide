@@ -57,7 +57,7 @@ AMD64 附件 ID `649902301`、state uploaded、916933833 字节、SHA256 `df892d
 
 前一整轮 exit1：宿主 PATH 缺少 node，88项 Node 命令未执行，其余26项含 Go/race/vet/CAD 退出0。该失败日志保留在 `.agent-state/verify-20261017T075944366264Z.log`。设置现有捆绑 Node 的进程 PATH 后，quick111 先通过，再重跑正式 full114，通过日志 `.agent-state/verify-20261017T081611200593Z.log`；未手工拼接或伪造 full 收据。产品源码未因此改变，运行源码 SHA 仍为07cdef2d4719开头的同一身份。
 
-源码任务分支已实际推送，独立远端核对 head8aedbca3；创建并验证[草稿 PR #4](https://github.com/skyelan1999/aide/pull/4)，基线 main 仍为ceb82481。PR说明列出全量运行状态和原生验收边界，测试结束后会更新正式结果。自有审阅标签已关闭，原4个非固定标签及固定页保留，恢复#39空输入。
+源码任务分支已实际推送，独立远端核对 head8aedbca3；创建并验证[草稿 PR #4](https://github.com/skyelan1999/aide/pull/4)，基线 main 仍为ceb82481。PR说明已更新正式full114通过和实际6 PASS/2 BLOCKED门禁，保持草稿。自有审阅标签已关闭，原4个非固定标签及固定页保留，恢复#39空输入。
 
 审批有效期任务 acceptance3 明确要求 “Run exact-source quick/full and native candidate before release”；其当前原生候选验收仍由用户暂缓。成果来源链接任务的完整工作台验收也仍在进行。两项保留 verification=in_progress，不能用镜像交付任务自身通过来替代它们。下一步实际检查各子任务门禁，远端 main 合入与生产替换继续保持待办。
 
@@ -83,3 +83,5 @@ AMD64 附件 ID `649902301`、state uploaded、916933833 字节、SHA256 `df892d
 | continuity-offline-delivery-20261017 | PASS |
 
 通过项同时验证了当前公开双架构默认附件。[审批有效期子任务](../../tasks/approval-expiry-synced-main-20261017.json)和[成果来源链接子任务](../../tasks/outcome-release-source-link-20261017.json)的当前原生验收仍由用户暂缓，两次实际门禁均返回 `BLOCKED: Incomplete stage: verification`。整批源码继续在任务分支与草稿PR中审阅，远端main未推送、生产未替换；无需重复运行已通过且输入未变的全量测试。
+
+最终 PR 说明经公开 API 复核，草稿状态、分支及全文均正确；GitHub 原生编辑表单把行尾转为CRLF，第一次原始字节等值检查因此失败，逐行核对仅CRLF差异后以明确的LF规范化比较确认内容完全一致，原始及规范化SHA分别保留。未标记Ready、未合并、未提交Release说明。最后一个自有PR页已关闭并恢复原#39空输入，原4个非固定标签和固定页保留。
