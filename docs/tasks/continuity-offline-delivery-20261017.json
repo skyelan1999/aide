@@ -1,0 +1,73 @@
+{
+  "id": "continuity-offline-delivery-20261017",
+  "request": "沿用既有增量推送与Release交付授权，继续当前双架构完整离线包的公开附件、默认下载清单与main门禁；Windows用户验收、原生工作台暂缓、真实向量暂缓。",
+  "baseline": "3b42bd6e0ca44f43bb47f1f05001b8341f1cfbde",
+  "initial_status": "",
+  "acceptance": [
+    "Use current full114 runtime source and locally verified ARM64/AMD64 complete archives; preserve all prior release assets and unsaved release form content.",
+    "Stage only immutable new archive filenames in existing public RC2 pre-release; verify uploaded state, positive size, exact SHA256/URL and common source via actual public API before default activation.",
+    "Update public default manifest and package checksums only to verified qualified assets; rerun full after tracked delivery-input changes and follow clean-main release-check before push.",
+    "Preserve production identity/data, existing rollback images/packages and user UI; record native workbench user-deferred, AMD64 native/Windows user-owned NOT_RUN, real vectors deferred."
+  ],
+  "scope": [
+    "docker/prebuilt-images.tsv",
+    "docker-images/SHA256SUMS",
+    "docker-images/README.md",
+    "docs/tasks/continuity-offline-delivery-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+    "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Existing user requires repository and Release fast import/start, incremental main delivery and offline image bundles; native Windows user-owned and UI deferred.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Stage exact immutable same-source local archives in existing public RC2 pre-release; read-only API validation before manifest activation; preserve existing assets/notes/production. No new version/tag or unverified default URLs.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Actual public RC2 inventory23 assets; both new names absent. Started ARM immutable archive upload through existing signed-in Safari file input; AMD pending. No default activation.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Recorded clean candidates, actual upload started versus completion distinction and pending public/main/native gates.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user incremental push/main/Release distribution authorization retained by parent goal ledger; current task stages exact complete image assets and qualifies default manifest, not production replacement. User requested repository and release bundles fast import/start; Windows user-owned, native workbench deferred, real vectors deferred.",
+  "rollback": "Preserve existing published assets, old tracked manifest/checksum history, production6a8 image/data and current local complete packages. Do not replace production or restore old data; defaults only after verified new assets.",
+  "handoff": "Before mutations complete actual public asset inventory; gh CLI unavailable, use existing signed-in GitHub release UI without changing/submitting unsaved notes. Public files are reviewed clean runtime archives, no host data. Native AMD64 startup not proven."
+}

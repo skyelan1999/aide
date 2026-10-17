@@ -1,0 +1,33 @@
+{
+  "status": "in_progress",
+  "releaseId": 406597437,
+  "tag": "v0.1.17.0-RC2",
+  "assetCountBefore": 23,
+  "existingBodySHA256": "5eae475abf0edb7015e4859e650338c257bb3cbccdda9f37f5022c7153f94cb5",
+  "candidateSourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+  "candidates": [
+    {
+      "name": "aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+      "sha256": "d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+      "bytes": 771016230,
+      "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+      "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def"
+    },
+    {
+      "name": "aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz",
+      "sha256": "df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c",
+      "bytes": 916933833,
+      "image": "sha256:382c90e72fca8e938cfbc2937577edb1d421f94250b4eb80bae3200e77176517",
+      "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def"
+    }
+  ],
+  "ARM64Upload": "started via existing native Safari edit-release file input; visible Uploading your file now",
+  "AMD64Upload": "not_started",
+  "publicDefaultManifest": "unchanged; activation pending actual uploaded metadata",
+  "releaseFormSubmitted": false,
+  "mainPush": "not_done",
+  "Windows": "user-owned",
+  "nativeFullWorkbench": "user-deferred",
+  "realVectors": "deferred",
+  "uploadObservationUTC": "2026-10-17T07:41:49.724470+00:00"
+}
