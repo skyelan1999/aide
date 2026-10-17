@@ -3987,6 +3987,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	if call.Function.Name == "manage_plugins" || call.Function.Name == "manage_references" {
 		return a.executeManagementTool(ctx, call, task, "")
 	}
+	if call.Function.Name == "skill_library" {
+		return a.executeSkillLibrary(ctx, call, task, "")
+	}
 	if call.Function.Name == "manage_messages" {
 		return a.executeMessageAssistant(ctx, call)
 	}

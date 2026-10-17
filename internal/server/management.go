@@ -26,23 +26,25 @@ type AgentManagementPermissions struct {
 	AssistantReferences bool `json:"assistantReferences"`
 }
 type ManagementProposal struct {
-	ID        string            `json:"id"`
-	Workspace string            `json:"workspace"`
-	Revision  uint64            `json:"revision"`
-	Actor     string            `json:"actor"`
-	Kind      string            `json:"kind"`
-	Action    string            `json:"action"`
-	Target    string            `json:"target"`
-	Reason    string            `json:"reason"`
-	Status    string            `json:"status"`
-	Created   string            `json:"created"`
-	Result    string            `json:"result,omitempty"`
-	Base      string            `json:"base"`
-	Manifest  map[string]any    `json:"manifest,omitempty"`
-	Files     map[string]string `json:"files,omitempty"`
-	Source    *Source           `json:"source,omitempty"`
-	SHA256    string            `json:"sha256,omitempty"`
-	FileBases map[string]string `json:"fileBases,omitempty"`
+	ID              string             `json:"id"`
+	Workspace       string             `json:"workspace"`
+	Revision        uint64             `json:"revision"`
+	Actor           string             `json:"actor"`
+	Kind            string             `json:"kind"`
+	Action          string             `json:"action"`
+	Target          string             `json:"target"`
+	Reason          string             `json:"reason"`
+	Status          string             `json:"status"`
+	Created         string             `json:"created"`
+	Result          string             `json:"result,omitempty"`
+	Base            string             `json:"base"`
+	Manifest        map[string]any     `json:"manifest,omitempty"`
+	Files           map[string]string  `json:"files,omitempty"`
+	Source          *Source            `json:"source,omitempty"`
+	SHA256          string             `json:"sha256,omitempty"`
+	FileBases       map[string]string  `json:"fileBases,omitempty"`
+	Skill           *SkillCacheReceipt `json:"skill,omitempty"`
+	SkillPluginBase string             `json:"skillPluginBase,omitempty"`
 }
 type managementGuardKey struct{}
 type managementBundleKey struct{}
@@ -149,7 +151,7 @@ func (a *App) managementProposalCurrentLocked(p ManagementProposal) error {
 	if a.managementBaseLocked(p.Kind, p.Target) != p.Base {
 		return errors.New("插件或引用已变化，请重新生成管理提案")
 	}
-	return nil
+	return a.skillProposalCurrentLocked(p)
 }
 func (a *App) appendManagementProposal(p ManagementProposal) (ManagementProposal, error) {
 	a.managementMu.Lock()

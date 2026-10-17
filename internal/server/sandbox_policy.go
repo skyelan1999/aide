@@ -61,7 +61,7 @@ func (a *App) sandboxToolError(name string) error {
 	switch name {
 	case "create_diagram", "create_requirement", "create_design", "record_implementation", "record_verification", "record_problem_report", "docx_add_comment", "docx_resolve_comment", "office_create", "office_comment_edit", "archive_compress", "archive_extract":
 		return errors.New("沙箱模式 read-only：该工具会写入工作区，未执行")
-	case "manage_plugins", "manage_references":
+	case "manage_plugins", "manage_references", "skill_library":
 		return nil // Each management action enforces its own read/write boundary.
 	case "docx_structure", "docx_list_comments", "office_comments", "document_search", "office_document_search", "semantic_search", "markdown_history":
 		return nil

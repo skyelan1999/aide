@@ -94,6 +94,7 @@ func (a *App) assistantAgentTools(allowSilent bool) []any {
 	tools := assistantAgentToolSchemas(allowSilent)
 	tools = append(tools, a.messageAssistantTools()...)
 	tools = append(tools, a.pluginToolSchemasForOwner("plugin-authoring")...)
+	tools = append(tools, a.pluginToolSchemasForOwner("skill")...)
 	tools = append(tools, a.pluginToolSchemasForOwner("current-time")...)
 	tools = append(tools, a.pluginToolSchemasForOwner("lunar-calendar")...)
 	a.mu.Lock()
@@ -191,6 +192,8 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 			var result string
 			if name == "manage_plugins" || name == "manage_references" {
 				result = a.executeManagementTool(ctx, call, &Task{WorkspaceID: managementWorkspace, AssistantManaged: true}, "assistant")
+			} else if name == "skill_library" {
+				result = a.executeSkillLibrary(ctx, call, &Task{WorkspaceID: managementWorkspace, AssistantManaged: true}, "assistant")
 			} else {
 				result = a.execAssistantTool(call, &dec, heard)
 			}
@@ -354,6 +357,9 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision, authoriza
 		}
 		return fmt.Sprintf("已向会话 #%d（%s）提交执行，忙碌时会排队。", number, title)
 	default:
+		if call.Function.Name == "skill_library" {
+			return a.executeSkillLibrary(context.Background(), call, nil, "assistant")
+		}
 		if call.Function.Name == "manage_plugins" || call.Function.Name == "manage_references" {
 			return a.executeManagementTool(context.Background(), call, nil, "assistant")
 		}

@@ -1,17 +1,41 @@
 {
   "id": "skill",
-  "name": "技能",
-  "description": "DSH skill 能力预设：可复用技能的定义与调度",
-  "version": "1.0.0",
+  "name": "技能库 / Skill Library",
+  "description": "按任务寻找公开 GitHub Skill，校验缓存并准备为只读引用；保留原有引用权限和管理确认。",
+  "version": "1.1.0",
   "author": "aide",
   "main": "index.js",
   "enabled": true,
-  "installedAt": "2026-09-21T18:00:34Z",
-  "settingsSchema":   {
+  "settingsSchema": {
     "type": "object",
-    "title": "插件参数",
-    "description": "此插件暂未声明专属选项。可在扩展参数中添加插件会读取的设置，也可切换到文本模式直接编辑 JSON。",
-    "properties": {},
-    "additionalProperties": true
-  }
+    "title": "技能目录 / Skill catalogs",
+    "properties": {
+      "repositories": {
+        "type": "array",
+        "title": "公开 GitHub 仓库 / Public GitHub repositories",
+        "items": {
+          "type": "string"
+        },
+        "default": [
+          "openai/skills",
+          "anthropics/skills"
+        ],
+        "description": "每行 owner/repository，最多四个；留空使用默认目录。不能填写令牌。"
+      },
+      "catalogTTLMinutes": {
+        "type": "integer",
+        "title": "目录缓存分钟数 / Catalog cache minutes",
+        "minimum": 5,
+        "maximum": 1440,
+        "default": 60
+      }
+    },
+    "additionalProperties": false
+  },
+  "tools": [
+    {
+      "name": "skill_library",
+      "kind": "write"
+    }
+  ]
 }

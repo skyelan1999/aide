@@ -191,6 +191,9 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	if p == "" {
 		return "", "", nil
 	}
+	if resolved, matched, err := a.resolveSkillCachePath(p); matched {
+		return resolved, p, err
+	}
 	if strings.HasPrefix(p, "~/") {
 		p = strings.TrimRight(a.hostLocal, "/") + strings.TrimPrefix(p, "~")
 	}

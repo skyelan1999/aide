@@ -1,0 +1,78 @@
+{
+  "id": "skill-reference-plugin-20261018",
+  "request": "制作一个插件，使aide可以自动寻找对应的skill并安装进引用中，这种skill一般都是放到aide的自身缓存目录中的",
+  "baseline": "19e7c94d5a769dae444f31c5a0b54d7b30a133e9",
+  "initial_status": "M plugins/registry.json",
+  "acceptance": [
+    "Upgrade the existing skill preset into an uploadable executable plugin: search public GitHub skills by task keywords, prepare a pinned skill URL/repository directory, list visible installed references.",
+    "Default catalog uses openai/skills and anthropics/skills; configurable public repositories and explicit GitHub Skill URLs are supported, without credentials.",
+    "Store downloaded instructions/resources/scripts in Aide-owned cache, never an assumed workspace or Codex skill directory; register as a Skill reference after existing management confirmation.",
+    "Preserve separate Aide/assistant reference management permissions, workspace revision, hidden/disabled/read-write locks, plugin enable/deny and locked/read-only refusal. Never execute downloaded scripts or install dependencies.",
+    "Pin commit and Git blob integrity, bound downloads/files/paths, reject unsafe URLs/symlinks/submodules, reuse cache safely, retain provenance/license, package ZIP and test against real plugin host and isolated HTTP/Go integration."
+  ],
+  "scope": [
+    "plugins/skill manifest, self-contained entry, documentation and package builder",
+    "internal/server skill catalog/cache/management integration and focused tests",
+    "minimal workflow/assistant dispatch, source virtual cache path and documentation/task records"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed public GitHub with OpenAI/Anthropic defaults, configurable repositories or pasted skill links. Existing management confirmation and reference locks remain in force.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Upgrade existing skill preset; native executor owns downloads/cache paths and preserves role/workspace/plugin/lock boundaries. Content-addressed immutable cache in AIDE_DATA with narrow virtual reference root. Existing human-confirmed reference proposals only.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added public GitHub catalog search/configured sources/precise URLs, commit/blob verification, full bounded resources/license caching, reviewable reference registration, duplicate/version handling and Aide/assistant native dispatch. ZIP is reproducible and independently host-validated.",
+      "evidence": [
+        "plugins/skill/index.js",
+        "plugins/skill/manifest.json",
+        "internal/server/skill_catalog.go",
+        "internal/server/skill_library.go",
+        "plugins/skill/package.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "125 quick checks; isolated server Skill/Management/Authoring race regression; relevant Go vet and main build; macOS native tests and actual public GitHub catalog/download checks. Real ZIP import/native ownership, reference confirmation/read-only access, denial/cancel/tamper transitions verified on synthetic instances. Browser/paid model/production installation not run.",
+      "evidence": [
+        "docs/reviews/2026-10-18/skill-reference-plugin.md",
+        ".agent-state/skill-library/check-release.log",
+        ".agent-state/skill-library/native-final.log",
+        ".agent-state/skill-library/quick-final.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented plugin installation/upgrade, native-host requirement, settings, cache path/limits, compatibility parsing, safety boundary and exact test/production status.",
+      "evidence": [
+        "plugins/skill/README.md",
+        "docs/plugin-protocol.md",
+        "docs/architecture/modules.md",
+        "docs/reviews/2026-10-18/skill-reference-plugin.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed own isolated test container and native test executable. Preserved deliverable ZIP, package metadata and ignored verification logs. Unrelated plugins/registry.json kept untouched and unstaged.",
+      "evidence": [
+        "docs/reviews/2026-10-18/skill-reference-plugin.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No push, version bump, release, production restart or production plugin/reference mutation requested or performed. Local plugin ZIP is the deliverable.",
+      "evidence": [
+        ".agent-state/skill-library/package.json"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Disable the skill plugin first; reject pending skill reference proposals. Restore prior source/image/plugin together if rolling back native support. Do not delete shared skill-cache versions until all references using them are removed; installed references are read-only by default and no dependency/script was executed.",
+  "handoff": "Uploadable ZIP .agent-state/packages/aide-pkg-skill-v1.1.0.zip (6036 bytes, SHA256 ab7e49c3e8a90ec8b11453813ce6c0536f27dd4d4028b0acfd69a2afc509e9f7). Requires an Aide build containing the native skill_library executor; ZIP alone cannot update an older host. Existing skill ID uses the supported upgrade/Plugin Workshop prepare flow. No source pushed and running product unchanged. Preserve unrelated registry modifications."
+}

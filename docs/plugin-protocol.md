@@ -287,3 +287,15 @@ module.exports = {
 队列按工作空间持久化，最多保留 12 个待确认提案，内容总量 10 MiB；执行中写入运行回执，避免刷新重放。异常中断后不能自动重试已进入执行的操作，应先核对实际安装/引用状态。
 
 这些设置约束 Aide 原生管理工具，不是 Node 或 shell 的操作系统沙箱。已安装插件仍是可信代码执行器；既有 shell、容器挂载和插件代码权限边界不因这些开关而改变。
+
+## Skill Library：公开技能缓存与引用
+
+2026-10-18 源码把原 `skill` 占位插件升级为技能库，工具为 `skill_library(action=search|prepare|installed)`。默认目录为公开 `openai/skills`、`anthropics/skills`，可设置最多四个公开仓库，也可用明确的 GitHub tree/blob/raw 链接。按当前任务关键词搜索、由模型选择候选；没有全网后台抓取或向量语义匹配承诺。
+
+`skill_catalog.go` 负责固定提交、目录和 Git blob 摘要校验、有界元数据检索；`skill_library.go` 负责 Aide 自有缓存、角色权限与现有引用管理提案。Node 入口只声明工具，下载和登记使用宿主的受限原生执行器，不能从任意插件伪造工具归属。**旧宿主只安装 ZIP 不会获得原生执行器**。
+
+缓存位于 `AIDE_DATA/cache/skills/installed/<SHA256>`，引用配置以 `/skill-cache/<SHA256>` 映射到该版本，不能映射整个 `/data` 或向上越界。保留 scripts/references/assets、根许可证和来源回执；下载不执行代码、不安装依赖。每份最多128文件/8MiB，单文件4MiB、SKILL.md 256KiB；目录每仓库128技能，缓存至多64版本。目录缓存时间默认60分钟，可配置5–1440分钟，离线旧结果会标记警告。超长说明仅在有界兼容范围内接受，检索摘要截断，完整原文保留；不是完整 YAML schema 验证器。
+
+搜索是普通公开资料读取；prepare 和确认登记要求对应 Aide/助理的引用管理权限，复用 `ManagementProposal` 的人确认与基准校验。新引用只读，更新保留原启用、可见和读写锁；隐藏/停用的同 ID 引用不由该工具重新打开。工作空间、插件状态/源码/设置、权限、锁屏或缓存摘要变化会拒绝旧提案。已有引用仍走原读写工具，Skill 的 allowed-tools 或正文不会授予权限。
+
+源代码与使用/打包说明见 [技能库 README](../plugins/skill/README.md)。已有 `skill` 插件用既有升级流程保留设置和启停状态；不要直接重复导入同 ID。该源码功能、可上传 ZIP、真实网络检查与正式实例安装/发布状态分开记录于 [任务记录](tasks/skill-reference-plugin-20261018.json)。

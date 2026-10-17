@@ -467,6 +467,8 @@ type App struct {
 	mu                        sync.Mutex
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
+	skillLibraryMu            sync.Mutex
+	skillLibraryGate          chan struct{}
 	workspace, reference      *os.Root
 	workPath, dataPath, token string
 	settings                  Settings
