@@ -26,7 +26,9 @@ def partition_tests(names, count):
     return groups
 
 
-def run_shards(command, names, cwd, count=3, timeout=1000):
+def run_shards(command, names, cwd, count=12, timeout=1000, workers=1):
+    if workers < 1:
+        raise ValueError("workers must be positive")
     groups = partition_tests(names, count)
     env = dict(os.environ, PWD=str(Path(cwd).resolve()))
 
@@ -49,9 +51,9 @@ def run_shards(command, names, cwd, count=3, timeout=1000):
         return index, len(group), code, time.monotonic() - started, log
 
     print(f'Server inventory: {len(names)} top-level tests/fuzz seeds/examples; '
-          f'{len(groups)} disjoint shards; none omitted', flush=True)
+          f'{len(groups)} disjoint shards; {workers} worker(s); none omitted', flush=True)
     failed = []
-    with ThreadPoolExecutor(max_workers=len(groups)) as pool:
+    with ThreadPoolExecutor(max_workers=min(workers, len(groups))) as pool:
         futures = [pool.submit(run, i + 1, group) for i, group in enumerate(groups)]
         for future in as_completed(futures):
             index, size, code, elapsed, log = future.result()

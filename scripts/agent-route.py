@@ -31,10 +31,10 @@ def task_path(name):
 
 
 def check_timeout(command):
-    # The snapshot runner bounds Docker at1250s and its owned-container cleanup
+    # The snapshot runner bounds Docker at2750s and its owned-container cleanup
     # at10s. Do not kill that owner at the ordinary600s command deadline.
     if command[:2] == ['python3', 'scripts/test_go_snapshot.py']:
-        return 1300
+        return 2800
     return 1200 if command[:3] == ['bash', 'scripts/aide.sh', 'test'] else 600
 
 

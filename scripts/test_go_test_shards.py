@@ -25,6 +25,18 @@ class ShardTests(unittest.TestCase):
         for invalid in ('', 'TestOne\nTestOne'):
             with self.assertRaises(ValueError): shards.test_names(invalid)
 
+    def test_default_workers_do_not_overlap(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            fake = root / 'serial.py'
+            fake.write_text('import time\nfrom pathlib import Path\n'
+                            'lock=Path("active")\nlock.mkdir()\n'
+                            'time.sleep(0.03)\nlock.rmdir()\n')
+            with contextlib.redirect_stdout(io.StringIO()):
+                shards.run_shards([sys.executable, str(fake)],
+                                  ['TestA', 'TestB', 'TestC'], root)
+            self.assertFalse((root / 'active').exists())
+
     def test_all_shards_finish_and_failure_is_not_hidden(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -38,7 +50,7 @@ class ShardTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(RuntimeError, 'shards failed'):
                     shards.run_shards([sys.executable, str(fake)],
-                                      ['TestPass', 'TestFail', 'Example', 'FuzzSeeds'], root)
+                                      ['TestPass', 'TestFail', 'Example', 'FuzzSeeds'], root, count=3)
             self.assertEqual(len(list(root.glob('result-*'))), 3,
                              'one failed worker must not prevent the other shards from running')
 

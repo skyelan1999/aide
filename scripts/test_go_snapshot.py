@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # in separate processes. Other packages and vet retain their ordinary paths.
 COMMAND = ('set -euo pipefail; snapshot=$(mktemp -d /tmp/aide-verify.XXXXXX); '
            'tar --no-same-owner -xf - -C "$snapshot"; cd "$snapshot"; '
-           'timeout --signal=TERM --kill-after=10s 20m bash -c '
+           'timeout --signal=TERM --kill-after=10s 45m bash -c '
            "'go test -mod=vendor -race -c -o server.test ./internal/server && "
            'python3 scripts/run_go_test_shards.py "$PWD/server.test" --cwd internal/server && '
            'go test -mod=vendor -race -count=1 -timeout=18m '
@@ -49,7 +49,7 @@ def main():
         try:
             subprocess.run(['docker', 'run', '--rm', '-i', '--network', 'none', '--no-healthcheck',
                             '--name', container, '--workdir', '/tmp', '-e', 'AIDE_BUILTIN_PLUGINS=', '--entrypoint',
-                            'bash', image, '-c', COMMAND], stdin=payload, check=True, timeout=1250)
+                            'bash', image, '-c', COMMAND], stdin=payload, check=True, timeout=2750)
         finally:
             # A failed run or interrupt must not leave this runner's container behind.
             try:
