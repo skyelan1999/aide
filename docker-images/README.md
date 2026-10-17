@@ -449,3 +449,8 @@ Integrated product source `3e5b6439ba07e2eaff86fa652b3f8ac6ca92b611585f3734d4b45
 - linux/amd64: `aide-0.1.17.0-RC2-linux-amd64-2e17e83905d2-offline.tar.gz`, 774146451 bytes, SHA-256 `482ac15adb97a5e9331b9034e53929303dfdaf8d7425e245b38806bb328d04f3`, image `sha256:2e17e83905d237c7e40f4bb84cda35dca63183284b794d353697be2df73fbdc9`.
 
 Extract the matching complete archive and run its included platform launcher with Docker available. It imports the bundled full runtime, including native CAD, without source compilation or separate dependency downloads. Verification and publication states: `docs/tasks/knowledge-path-native-20261017.json`. Native Windows and receiving-device acceptance remain separate; real vector tests are deferred.
+
+
+## Approval dialog expiry candidate (2026-10-17)
+
+Code `060d10f1`, source `24069d5ad1b460ba140586ad981c7183f908938d9db3baa0267b31e0b32bb91d`. ARM64 `8f3618fe2be0`, AMD64 `37cb455fa3e0` complete local archives are prepared for verification. The manifest is a candidate on this task branch: public Release uploads and default-download availability are NOT verified. Do not merge these default URLs until public digest/download verification succeeds. Existing main also references the unpublished prior e729/2e17 pair; this delivery gap is explicitly pending, with d025/301 the last observed published complete pair. See [task](../docs/tasks/approval-dialog-expiry-20261017.json).
