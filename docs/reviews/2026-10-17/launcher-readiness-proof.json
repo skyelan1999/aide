@@ -49,5 +49,18 @@
     "launcherDataStatus": "pass",
     "prebuiltPublicationTests": 7,
     "prebuiltPublicationStatus": "pass"
+  },
+  "quick": {
+    "status": "pass",
+    "commands": 112,
+    "fingerprint": "5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04",
+    "head": "d7af50b3b686ce64acfe313dc287b9997356fc07",
+    "time": "20261017T090459584083Z"
+  },
+  "full": {
+    "status": "running",
+    "head": "d7af50b3b686ce64acfe313dc287b9997356fc07",
+    "fingerprint": "5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04",
+    "scope": "Official full includes112 quick commands plus3 Docker/runtime checks; result not yet claimed"
   }
 }

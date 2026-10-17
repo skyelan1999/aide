@@ -46,7 +46,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old negative9 failing subcases; patched initial11 pass; real no-published-port exit1 and normal exit0; exact new quick/full pending.",
+      "summary": "Old negative9 failing subcases; current13 offline/resource7/data21/publication7 pass; real noport exit1 and normal exit0; exact quick112 PASS5ecbd493, official full115 running without production mounts.",
       "evidence": [
         "docs/reviews/2026-10-17/launcher-readiness.md",
         "docs/reviews/2026-10-17/launcher-readiness-proof.json"
