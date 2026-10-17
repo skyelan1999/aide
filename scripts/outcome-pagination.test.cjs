@@ -119,7 +119,7 @@ async function overviewRefreshScenario(){
  const complete={...session,updated:'later',runs:[{...session.runs[0],status:'completed',steps:[{name:'chat',status:'completed',content:'The final answer'}]}]};
  const mounted=context.window.AideTaskOutcome.sessionOverview(content,{session,t:x=>x,selectRun(){},loadOlder(){},api:async()=>{calls++;return complete;},revision:s=>s.updated||'initial',blocked:()=>false,onSession:s=>{updated=s;}});
  assert.equal(timers.length,1);assert.equal(timers[0].ms,2500);assert.ok(descendants(content).some(e=>e.textContent==='正在生成回复…'));
- await timers[0].fn();assert.equal(calls,1);assert.equal(updated.runs[0].status,'completed');assert.equal(updated.runs[0].steps[0].content,'The final answer');
+ await mounted.ready;await timers[0].fn();assert.equal(calls,1);assert.equal(updated.runs[0].status,'completed');assert.equal(updated.runs[0].steps[0].content,'The final answer');
  mounted.close();assert.ok(cleared.includes(1),'overview polling stops when the view closes');
 }
 (async()=>{await releaseSourceScenario();overviewScenario();overviewReplyCountScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();await executionJournalScenario();await terminalJournalDrainScenario();await journalRetryScenario();console.log('PASS outcome overview reply counts, live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload, running refresh, lazy execution journal, terminal journal drain and retry');})().catch(e=>{console.error(e);process.exitCode=1;});

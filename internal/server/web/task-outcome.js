@@ -105,7 +105,7 @@
    }catch{/* Keep the last readable overview; active polling or a later event retries. */}
    finally{polling=false;if(refreshQueued&&valid()){refreshQueued=false;void refresh();}}
   }
-  function poll(){if(!valid()){stop();return;}if(needsPolling(current))return refresh();}
+  function poll(){if(!valid()){stop();return;}if(needsPolling(current)&&!polling)return refresh();}
   syncPolling();
   // The workbench snapshot may predate this panel (for example while a single
   // task was selected). Read once on entry; idle views then rely on global events.

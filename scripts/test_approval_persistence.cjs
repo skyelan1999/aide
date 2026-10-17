@@ -17,7 +17,7 @@ function client() {
   const listeners = new Map(), notices = [], selected = [];
   let renders = 0, polls = 0;
   const state = {approvalPolicy: null, approvalModeBusy: false, session: null, token: 'fixture'};
-  const context = vm.createContext({state, JSON, encodeURIComponent,
+  const context = vm.createContext({state, JSON, encodeURIComponent, window:{},
     api: async (path, options) => {
       assert.equal(path, '/approval-policy');
       if (options?.method === 'PUT') {

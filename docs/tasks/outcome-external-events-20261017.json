@@ -20,7 +20,9 @@
     "docs/continuity-handoff.md",
     "docs/architecture/continuity-roadmap.md",
     "docs/reviews/2026-10-17/outcome-external-events.md",
-    "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+    "docs/reviews/2026-10-17/outcome-external-events-proof.json",
+    "scripts/test_approval_persistence.cjs",
+    "scripts/outcome-pagination.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -52,7 +54,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old source fails external event assertion0vs1; focused lifecycle/app bridge and10 detail ownership tests pass. Exact quick/full and native candidate next.",
+      "summary": "First full failed2 VM fixtures: missing window mock and old initial-read count. Go976/12 shards, other packages/vet and CAD passed. Correct fixtures and overlapping interval skip, rerun all focused/quick/full; no full pass claimed.",
       "evidence": [
         "scripts/outcome-overview-lifecycle.test.cjs",
         "scripts/outcome-request-ownership.test.cjs"
