@@ -22,7 +22,9 @@
     "docs/reviews/2026-10-17/outcome-external-events.md",
     "docs/reviews/2026-10-17/outcome-external-events-proof.json",
     "scripts/test_approval_persistence.cjs",
-    "scripts/outcome-pagination.test.cjs"
+    "scripts/outcome-pagination.test.cjs",
+    "docs/tasks/continuity-runtime-ce0c-20261017.json",
+    "docs/documentation-map.md"
   ],
   "stages": {
     "requirements": {
@@ -53,22 +55,28 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "First full failed2 VM fixtures: missing window mock and old initial-read count. Go976/12 shards, other packages/vet and CAD passed. Correct fixtures and overlapping interval skip, rerun all focused/quick/full; no full pass claimed.",
+      "status": "pass",
+      "summary": "Final quick124/full12768a145c0 pass; actual current5dc Safari32to64 external, detail return65, terminal/restart66, close/switch isolation67 and original restart/full refresh pass. Initial full125/127FAIL and harness failures retained.",
       "evidence": [
-        "scripts/outcome-overview-lifecycle.test.cjs",
-        "scripts/outcome-request-ownership.test.cjs"
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Detailed report/proof, current source/runtime/public distinctions, parent ledger and handoff updated; picker relative numbering and live partial body limits explicit.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Original stop0, own1 page/3 stopped containers/2 empty networks removed, images/data retained; production identity and22 exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -78,5 +86,10 @@
   },
   "release_authorization": "Existing user incremental work/push/test and main merge. No production replacement.",
   "rollback": "Revert owned source commit, verify isolated runtime; keep production/data/images unchanged.",
-  "handoff": ""
+  "handoff": "Scoped refresh fix ready for clean-main gate and source push. Current406 dual packages/public pending; original12 remain, picker absolute numbering follow-up.",
+  "sourceIdentity": {
+    "commit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+    "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+    "fullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff"
+  }
 }

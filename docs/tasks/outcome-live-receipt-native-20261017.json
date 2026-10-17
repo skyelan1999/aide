@@ -80,5 +80,13 @@
   },
   "release_authorization": "Existing user incremental work/push/test and main merge; production replacement not authorized.",
   "rollback": "Owned runtime stop and exact fixture cleanup only; preserve images and data. No product change planned.",
-  "handoff": "Fix external activity in initially terminal outcome overview; reproduce native30/32 versus backend64/running1, add regression and actual candidate retest. Runtime stopped and removed; preserve original12/public pending."
+  "handoff": "Original stale total counter defect repaired and actual current candidate native pass. Keep remaining absolute picker numbering, live partial-body scope and public package delivery distinct. Historical receipt/import and detail-final proofs remain scoped; no overall12 completion.",
+  "followupExternalRefresh": {
+    "task": "docs/tasks/outcome-external-events-20261017.json",
+    "status": "native_fix_pass_source_delivery_pending",
+    "evidence": [
+      "docs/reviews/2026-10-17/outcome-external-events.md",
+      "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+    ]
+  }
 }

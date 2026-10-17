@@ -162,7 +162,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Detailed current handoff: docs/continuity-handoff.md. New native defect: initially terminal outcome overview does not adopt external activity (native30/32 vs backend64/running1); fix regression/event ownership then native retest. Native receipt commit, single-run terminal, stale409, duplicate and restart now proven. Keep original12, workspace boundaries and newce0c public upload open; Windows user-owned, real vectors deferred.",
+  "handoff": "Current752/source406 refresh repair exact full12768a and native5dc original launcher pass; source main delivery next. Detailed docs updated. Next: absolute outcome picker numbering, remaining workspace/capacity/SSH scopes and current source dual-package export/public delivery. Old ce0c pair does not contain752; old07c defaults and production unchanged. Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -433,16 +433,18 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Native committed receipt file chooser/preview/confirm/operator card, running detail automatic terminal and restart exact now passed; duplicate and old live snapshot409 API proved separately. Existing101 paging/raw evidence remains valid.",
+        "latestScopedEvidence": "Native committed receipt file chooser/preview/confirm/operator card, running detail automatic terminal and restart exact now passed; duplicate and old live snapshot409 API proved separately. Existing101 paging/raw evidence remains valid. Current406 native external overview32to64, preserved detail then fresh65, terminal/new66, closed/switch67 and original restart/full refresh now pass.",
         "evidence": [
           "docs/reviews/2026-10-17/outcome-native-proof.json",
           "docs/reviews/2026-10-17/outcome-release-source-link.md",
           "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
           "docs/reviews/2026-10-17/native-plugin-candidate-proof.json",
           "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
-          "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+          "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json",
+          "docs/reviews/2026-10-17/outcome-external-events.md",
+          "docs/reviews/2026-10-17/outcome-external-events-proof.json"
         ],
-        "remaining": "Reproduced current79a0 native defect: initially terminal overview stays30/32 while external activity yields backend64/running1 outside loaded30. Explicit older history reads60/64 and single-run polling works; automatic new-activity adoption needs fix and native retest. Public new assets remain pending."
+        "remaining": "External-activity stale overview defect fixed in scoped current406 candidate. Absolute picker numbering still relative to loaded window; live partial-body outcome scope not claimed; public current-source dual packages pending. Other original12 gates remain."
       }
     },
     {
@@ -741,7 +743,7 @@
           "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
           "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
         ],
-        "remaining": "Path source repairs already on main; current ce0c public asset upload remains pending. SSH workspace-mode complete native paths and responsive/theme scope still separate; no runtime execution claim."
+        "remaining": "Path source repairs already on main; current current-source public asset delivery remains pending. SSH workspace-mode complete native paths and responsive/theme scope still separate; no runtime execution claim."
       }
     },
     {
@@ -8364,7 +8366,7 @@
       "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
     ],
     "summary": "ce0c/492 dual complete packages actually imported; ARM original launcher cold import/reasoning10/CAS/restart and AMD emulated assets/CAD/guard pass. Safari ARM upload failed twice; public candidate check exit1. Existing07c defaults retained, production22 exact. Source492 already main; original12 remain incomplete.",
-    "next": "Upload exact new package pair and metadata; verify server digest/state/size before promotion; promotion requires new exact full and main release gate."
+    "next": "Source superseded by752/406. Preserve old qualified ce0c pair; build/qualify current-source ARM/AMD complete packages, upload and verify metadata before promotion; new exact full if build inputs change."
   },
   "timeline_native_current_20261017": {
     "status": "scoped_pass_delivered_main",
@@ -8405,5 +8407,14 @@
     ],
     "summary": "Current79a0 native receipt commit and live single-run final/restart pass; terminal overview external activity stale reproduced, not fixed. Production22 exact."
   },
-  "detailedHandoff": "docs/continuity-handoff.md"
+  "detailedHandoff": "docs/continuity-handoff.md",
+  "outcome_external_events_20261017": {
+    "status": "scoped_native_pass_source_delivery_pending",
+    "task": "docs/tasks/outcome-external-events-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/outcome-external-events.md",
+      "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+    ],
+    "summary": "Final752/source406/ARM5dc full12768a and native external adoption/detail entry/restart/close isolation pass; production22 unchanged; current dual-package public delivery pending."
+  }
 }

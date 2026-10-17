@@ -80,7 +80,7 @@
   },
   "release_authorization": "Existing direct user requests: push/merge main, Docker complete images in ordinary repo and Release, same image-package distribution with receiving device import; original recurring goal release gates. No production replacement requested in this task.",
   "rollback": "Preserve old07c manifest and all named images/packages; revert owned default metadata if needed; never delete production/user data or existing public assets.",
-  "handoff": "Resume exact package uploads via authorized GitHub channel; verify both public assets before promoting defaults and new exact full/main release gate. Product492 already on main. Windows native user-owned; real vectors deferred; original12 continue.",
+  "handoff": "ce0c local package evidence and failed public uploads remain historical and retained. Source now superseded by752/406; do not promote old pair as current. Current-source dual packages and public gate next; old07c defaults and production unchanged.",
   "source_delivery": {
     "status": "pass",
     "observedRemoteMain": "716859b724c89320e7c65a17be4f2025ddbb373d",
@@ -89,5 +89,11 @@
   "release_check": {
     "exit": 0,
     "scope": "Current exact local full and old07c defaults only; candidate ce0c public check separately exit1"
+  },
+  "currentSourceSupersededBy": {
+    "commit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+    "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+    "task": "docs/tasks/outcome-external-events-20261017.json",
+    "scope": "Old ce0c artifacts retained; not current binaries for refresh repair. Build/qualify current dual package pair before promotion."
   }
 }
