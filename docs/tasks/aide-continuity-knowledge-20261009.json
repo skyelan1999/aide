@@ -8133,5 +8133,13 @@
     "verification": "Focused race passed21.098s; old full6dd fingerprint cannot attest this new backend change. Native user-deferred; next full follows retained-change reconciliation.",
     "retainedWorkAudit": "Backup main has other authorized startup/cache/resource/layout repairs not in current branch. Reconcile scoped changes while preserving upstream UI and sharded test runner; do not restore rejected history-object-integrity merge.",
     "scope": "Original twelve streams remain in_progress; Windows user-owned, real vectors deferred."
+  },
+  "docker_resource_guard_synced_main_20261017": {
+    "status": "implemented_targeted_and_quick_pass_full_pending",
+    "task": "docs/tasks/docker-resource-guard-synced-main-20261017.json",
+    "report": "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md",
+    "nativeUI": "user-deferred",
+    "production": "unchanged",
+    "next": "Reconcile generated dependency fingerprint/notice layout and then exact-source full; preserve newer main UI and shards."
   }
 }

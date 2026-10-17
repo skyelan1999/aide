@@ -63,6 +63,11 @@ services:
     networks: [default, cad-private]
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
@@ -97,6 +102,11 @@ services:
     pids_limit: 64
     mem_limit: 4g
     cpus: 2
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
     healthcheck:
       disable: true

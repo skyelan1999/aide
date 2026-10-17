@@ -16,6 +16,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-Location -Path $PSScriptRoot
+. (Join-Path $PSScriptRoot 'scripts/resource-guard.ps1')
+if (-not $DryRun) { Test-AideDiskBudget $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'scripts/launcher-data.ps1')
 if (-not $DryRun) { Restore-AideLauncherEnvironment $PSScriptRoot }
 
@@ -249,8 +251,11 @@ if (-not (Test-Docker)) {
     if (-not (Test-Docker)) { Write-Error "Docker 引擎未能启动，请手动启动 Docker Desktop 后重试。" }
 }
 
+Test-AideEngineBudget $dockerExe
+
 Remove-Item -LiteralPath '.cache/aide-manual-stop' -ErrorAction SilentlyContinue
 $sourceBuild = (-not $offlineBundle -and $env:AIDE_BUILD_FROM_SOURCE -eq '1')
+if ($sourceBuild) { Test-AideDiskBudget $PSScriptRoot -Build }
 if (-not $offlineBundle -and -not $sourceBuild) {
     . (Join-Path $PSScriptRoot 'scripts/prebuilt-image.ps1')
     $prebuiltTarget = Get-ComposeResult config --images aide

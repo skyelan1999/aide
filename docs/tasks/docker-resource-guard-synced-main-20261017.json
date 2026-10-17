@@ -1,0 +1,89 @@
+{
+  "id": "docker-resource-guard-synced-main-20261017",
+  "request": "恢复已授权的 Docker 磁盘预算和日志上限，保留新版分片测试并预设测试容器资源限制；浏览器证书验收用户暂不方便，Windows 用户自测。",
+  "baseline": "619f6995afec2646625e05c4a510fd0dc895bd82",
+  "initial_status": "",
+  "acceptance": [
+    "Stop before data migration on less than10GiB free; source build needs20GiB; fail closed on unknown disk or engine reports.",
+    "Reject Docker engines below4GiB without modifying global settings; bound both app/CAD logs to3x10MiB.",
+    "Bound full Go snapshot to4GiB/2CPU/512PIDs while preserving current45m command,12 shards and2750s owner timeout.",
+    "Preserve data mounts, image URLs, production lifecycle and deferred native UI; Windows runtime remains user-owned."
+  ],
+  "scope": [
+    "compose.yaml",
+    "docker/compose.offline.yaml",
+    "scripts/aide.sh",
+    "scripts/resource-guard.sh",
+    "scripts/resource-guard.ps1",
+    "scripts/test_resource_guard.py",
+    "scripts/test_go_snapshot.py",
+    "start.ps1",
+    "docs/agent/router.json",
+    "docs/architecture/software-updates.md",
+    "docs/tasks/docker-resource-guard-synced-main-20261017.json",
+    "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "scripts/package-release-assets.sh"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Recover scoped own commit66b0a89a; existing user requests require preset resource guards.",
+      "evidence": [
+        "AGENTS.md",
+        "scripts/test_go_snapshot.py"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Read-only checks before startup migration, explicit Compose log rotation and bounded snapshot runner; preserve upstream sharding.",
+      "evidence": [
+        "AGENTS.md",
+        "scripts/test_go_snapshot.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Recovered selected66b0a89a paths without merging old branch; preserved current sharding/timeouts and additionally shipped guards through both release package copy paths.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Seven focused resource tests and targeted lifecycle tests pass; both Compose configs and live read-only budgets pass. Quick109 PASS. Exact-source full remains pending retained-change reconciliation; native UI user-deferred; Windows runtime user-owned.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md",
+        ".agent-state/verify-20261017T064312424334Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated startup resource budgets and limitations; full/current native acceptance remains pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only temporary isolated fixtures created and automatically removed; no production restart, image/data deletion or settings mutation.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental work/test/push authorization retained; this batch does not deploy or publish.",
+  "rollback": "Revert only scoped source commit; no user data migration or production restart performed.",
+  "handoff": "Full exact-source verification after retained-change reconciliation; native UI deferred by user, Windows self-test.",
+  "quickReceipt": {
+    "status": "pass",
+    "fingerprint": "436e7b0cede0f6f4498b41571371542fa55a76dd854116f47fb6553c1aeb7e0e",
+    "head": "619f6995afec2646625e05c4a510fd0dc895bd82",
+    "log": ".agent-state/verify-20261017T064312424334Z.log"
+  }
+}

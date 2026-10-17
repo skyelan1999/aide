@@ -9,7 +9,7 @@ source_sha() {
   (
     find cmd internal plugins vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
+    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -42,6 +42,8 @@ if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
   exit
 fi
 if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
+  source scripts/resource-guard.sh
+  aide_check_disk start
   source scripts/launcher-data.sh
   launcher_env_restore
   if [[ "$MODE" == start && -f .aide-image ]]; then MODE=start-bundle; fi
@@ -54,6 +56,10 @@ if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
   echo "等待 Docker 引擎…"
   for attempt in {1..60}; do if "$DOCKER_BIN" info >/dev/null 2>&1; then break; fi; sleep 1; done
   "$DOCKER_BIN" info >/dev/null
+fi
+
+if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
+  aide_check_engine_resources
 fi
 
 # A/B restarts must address the Compose project that owns the already-running
@@ -262,6 +268,7 @@ case "$MODE" in
       if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" && "${AIDE_FORCE_REBUILD:-0}" != 1 ]]; then
         echo "== 源码哈希未变（${SRCSHA}）→ 快捷路径：跳过构建，直接启动 =="
       else
+        aide_check_disk build
         echo "== 源码哈希变化（image=${cur_label:-<无>} → worktree=${SRCSHA}）→ 重新构建（默认不跑全量 test，仅 vet+build）=="
         export AIDE_SRC_SHA="$SRCSHA"
         if [[ "${AIDE_LOCAL_DEPENDENCIES:-1}" != 0 ]]; then
@@ -349,7 +356,7 @@ case "$MODE" in
     cp start.command start.sh start.bat start.ps1 stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
     cp scripts/aide-maintenance.sh scripts/aide-maintenance.ps1 "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/watch-port.ps1 scripts/update-agent.sh scripts/update-agent.ps1 "$BUNDLE/scripts/"
-    cp scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 "$BUNDLE/scripts/"
+    cp scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 "$BUNDLE/scripts/"
     cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js \
       scripts/build-native-computer-bridge.sh scripts/native-computer-bridge.swift scripts/headless-browser-control.sh scripts/headless-browser-bridge.js "$BUNDLE/scripts/"
     mkdir -p "$BUNDLE/scripts/browser-runtime"
