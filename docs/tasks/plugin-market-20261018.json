@@ -69,14 +69,18 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "127 final quick checks passed. Race integration for market/upgrade/management/skill passed (52.371s), real 23-package isolated installations passed (20.573s), final market and upgrade guards passed (132.044s). Public Pages site, search, details, MIT/dependency notes and actual hash-verified download observed. Safari narrow plugin panel/details observed. No paid model, real hardware, or Windows/Linux browser acceptance; full product release gate not run.",
+      "summary": "127 final quick checks passed. Race integration for market/upgrade/management/skill passed (52.371s), real 23-package isolated installations passed (20.573s), final market and upgrade guards passed (132.044s). Public Pages site, search, details, MIT/dependency notes and actual hash-verified download observed. Safari narrow plugin panel/details observed. No paid model, real hardware, or Windows/Linux browser acceptance; full product release gate not run. Final input receipt fb508f6c474fb470bc5f1434822d60c3e297ef1b8112445c083c489651390f11 passed all 127 checks. Final authenticated local API reports 23 entries at b05b327, fresh catalog, actual ZIP hash verified and health 200. Safari final search/details and Escape observed; native AX did not expose dynamic-dialog descendants, so full screen-reader acceptance is not claimed.",
       "evidence": [
         ".agent-state/market-quick-release.log",
         ".agent-state/market-go-final.log",
         ".agent-state/market-published-packages.log",
         ".agent-state/market-go-upgrade-guard.log",
         ".agent-state/market/site.png",
-        ".agent-state/market/aide-market.png"
+        ".agent-state/market/aide-market.png",
+        ".agent-state/market-quick-delivery.log",
+        ".agent-state/market/live-check.json",
+        ".agent-state/market/aide-market-final.png",
+        ".agent-state/market/detail-final.png"
       ]
     },
     "documentation": {
@@ -90,21 +94,24 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Preserve unrelated runtime registry changes unstaged. Remove only own isolated container and preview server after final runtime checks.",
+      "status": "pass",
+      "summary": "Removed own aide-market-dev container and stopped own loopback preview server; closed temporary browser acceptance tab. Preserved user browser tabs and pre-existing plugins/registry.json changes unstaged. Logs/screenshots retained as local evidence.",
       "evidence": [
-        "git diff --check"
+        "git status --short",
+        ".agent-state/market/"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Market repository e489d34 pushed, Pages workflow 39059666741 succeeded and site/download checked. Aide source push and final local build pending; no version bump or product Release.",
+      "status": "pass",
+      "summary": "Market repository b05b327 pushed; Pages workflow 39062003227 succeeded. Aide source fdada43a pushed to main, built through start.command with vet/build and deployed locally; container healthy. Build reports fdada43a-dirty because the pre-existing local runtime registry is preserved. Subsequent delivery-record edit is documentation only. No version bump or GitHub product Release; full product release gate not run.",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39059666741"
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39062003227",
+        ".agent-state/market-start-delivery.log",
+        ".agent-state/market/live-check.json"
       ]
     }
   },
   "release_authorization": "User: do it; implements the proposed official repository/Pages market. Local update continues earlier installation/update authorization.",
   "rollback": "Revert marketplace source/image together while preserving data volume, registry settings and installed plugin data. Revert market catalog commit for website recommendations. Existing plugin updates retain their upgrade backups; do not purge shared caches or user plugins.",
-  "handoff": "Official site https://skyelan1999.github.io/aide-pkg-shop/ . Catalog b05b327 has 23 packages, 120983 bytes. First-party repository HTTPS and pinned Git snapshots establish source trust; independent release signing is not implemented. Existing user plugins are not upgraded as a UI acceptance probe. Runtime registry remains local."
+  "handoff": "Live official market: https://skyelan1999.github.io/aide-pkg-shop/ . Aide entry: Plugins > Marketplace. 23 real packages, 120983 bytes; catalog b05b327; installed user plugins were not upgraded for UI acceptance. Aide source fdada43a is pushed and running locally. Existing runtime registry remains modified only on this machine. Independent publishing signatures, third-party submissions, all-platform hardware/browser and full screen-reader acceptance are not implemented or claimed."
 }
