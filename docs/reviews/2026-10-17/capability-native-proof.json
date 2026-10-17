@@ -1,0 +1,121 @@
+{
+  "status": "pass",
+  "runtimeImage": "sha256:e729ba4f061bb87321e6296be10d600d2dbbf4e867437d2f589e584f4fe2b54d",
+  "sourceCode": "ba9e5a3b847add8f643c42869b1658c90a00ba1d",
+  "sourceSHA256": "3e5b6439ba07e2eaff86fa652b3f8ac6ca92b611585f3734d4b45e12e4d45489",
+  "client": "native Safari existing authenticated localhost9999 tab",
+  "initialAllNotRun": 31,
+  "checks": [
+    {
+      "key": "workspace",
+      "name": "工作空间",
+      "receipt": {
+        "state": "pass",
+        "at": "2026-10-17T00:43:33.580719836Z",
+        "durationMs": 3,
+        "message": "根目录读取通过；未检查写入或文件操作"
+      }
+    },
+    {
+      "key": "plugin:skill",
+      "name": "技能",
+      "receipt": {
+        "state": "pass",
+        "at": "2026-10-17T00:43:38.390996171Z",
+        "durationMs": 6,
+        "message": "入口文件可读，SHA-256 f474be4253920c7f9f4bedb3300ba247120031b8ab45b368792184ee5dbd1d6b；未执行插件或工具"
+      }
+    },
+    {
+      "key": "parser:pypdf",
+      "name": "pypdf",
+      "receipt": {
+        "state": "pass",
+        "at": "2026-10-17T00:43:52.712585053Z",
+        "durationMs": 176,
+        "message": "依赖隔离导入通过；具体文件提取与渲染尚未检查"
+      }
+    },
+    {
+      "key": "parser:docx",
+      "name": "docx",
+      "receipt": {
+        "state": "pass",
+        "at": "2026-10-17T00:43:55.664608971Z",
+        "durationMs": 80,
+        "message": "依赖隔离导入通过；具体文件提取与渲染尚未检查"
+      }
+    },
+    {
+      "key": "parser:openpyxl",
+      "name": "openpyxl",
+      "receipt": {
+        "state": "pass",
+        "at": "2026-10-17T00:44:01.586043418Z",
+        "durationMs": 282,
+        "message": "依赖隔离导入通过；具体文件提取与渲染尚未检查"
+      }
+    },
+    {
+      "key": "parser:pptx",
+      "name": "pptx",
+      "receipt": {
+        "state": "pass",
+        "at": "2026-10-17T00:44:04.759792128Z",
+        "durationMs": 116,
+        "message": "依赖隔离导入通过；具体文件提取与渲染尚未检查"
+      }
+    },
+    {
+      "key": "source:context",
+      "name": "引用",
+      "receipt": {
+        "state": "pass",
+        "at": "2026-10-17T00:46:22.122263303Z",
+        "durationMs": 3,
+        "message": "来源根目录读取通过；未验证写权限"
+      }
+    }
+  ],
+  "pluginEntryDiskHashMatches": true,
+  "disabledPluginControls": [
+    "plugin:comm-tcp",
+    "plugin:comm-udp",
+    "plugin:comm-serial",
+    "plugin:comm-ssh"
+  ],
+  "providerCheck": "not_run",
+  "writeChecks": "not_run",
+  "pluginToolExecution": "not_run",
+  "expiryNative": {
+    "status": "pass",
+    "naturalWallTime": true,
+    "noManualRefresh": true,
+    "nativeWorkspaceAndPluginStale": true,
+    "apiSixChecksStale": [
+      "workspace",
+      "plugin:skill",
+      "parser:pypdf",
+      "parser:docx",
+      "parser:openpyxl",
+      "parser:pptx"
+    ],
+    "originalReceiptTimestampRetained": true
+  },
+  "protected": {
+    "status": "pass",
+    "protectedFilesExact": 22,
+    "imageMountsNetworksExact": true
+  },
+  "limits": [
+    "Local workspace and parser imports only; no arbitrary document extraction claim",
+    "Plugin entry hash is not tool execution proof; earlier lifecycle evidence is separate",
+    "One existing local reference root listing passed; individual file bodies, SSH/user-host/model checks not run"
+  ],
+  "restoredView": {
+    "originalSession39": true,
+    "originalSystemDocsRoot": true,
+    "noNewTabs": true,
+    "settingsClosed": true
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "id": "capability-native-20261017",
+  "request": "继续原目标：完整认证Safari能力仪表读状态与本地工作区、解析器和插件检查实际呈现及后端一致性；不调用模型、不改用户配置。",
+  "baseline": "32d7e36542bea52ba1be795ea2a7579ac07db73a",
+  "initial_status": "",
+  "acceptance": [
+    "Existing authenticated Safari renders capability cards with explicit not-run and bounded check descriptions",
+    "Native workspace and four isolated parser checks agree with independent authenticated API receipts",
+    "Native plugin entry-read check agrees with actual entry SHA-256; no tool execution or provider request",
+    "Protected original sessions/auth/settings/sources/vault/mounts remain unchanged; restore original view",
+    "Natural five-minute expiry changes native dashboard and API to stale without manual refresh"
+  ],
+  "scope": [
+    "docs/tasks/capability-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17",
+    "ignored owned capability acceptance evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Exercise existing authenticated native dashboard. Read probes only; no model/source network probe, plugin execution, configuration or user file edits.",
+      "evidence": [
+        "internal/server/capabilities.go",
+        "internal/server/web/capabilities.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Exercise existing authenticated native dashboard. Read probes only; no model/source network probe, plugin execution, configuration or user file edits.",
+      "evidence": [
+        "internal/server/capabilities.go",
+        "internal/server/web/capabilities.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Exercise existing authenticated native dashboard. Read probes only; no model/source network probe, plugin execution, configuration or user file edits.",
+      "evidence": [
+        "internal/server/capabilities.go",
+        "internal/server/web/capabilities.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Native seven read checks, independent API and actual plugin entry hash agree; natural five-minute workspace/plugin expiry visible and API six original checks stale. Restored session39/source view,22 protected files including14sessions and image/mounts/networks exact. Docs/link/diff checks pass; no product inputs changed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-native.md",
+        "docs/reviews/2026-10-17/capability-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Native seven read checks, independent API and actual plugin entry hash agree; natural five-minute workspace/plugin expiry visible and API six original checks stale. Restored session39/source view,22 protected files including14sessions and image/mounts/networks exact. Docs/link/diff checks pass; no product inputs changed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-native.md",
+        "docs/reviews/2026-10-17/capability-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Native seven read checks, independent API and actual plugin entry hash agree; natural five-minute workspace/plugin expiry visible and API six original checks stale. Restored session39/source view,22 protected files including14sessions and image/mounts/networks exact. Docs/link/diff checks pass; no product inputs changed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-native.md",
+        "docs/reviews/2026-10-17/capability-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user authorization for incremental tests/docs/main push; no new version, runtime replacement or paid model invocation.",
+  "rollback": "No config edits or runtime replacement; close settings and preserve original workspace/session/file view; capability check receipts expire in five minutes and restart clears them.",
+  "handoff": "Scoped native capability acceptance passed; docs-only source fingerprint unchanged from full107. Clean-main gate and push next. Continue original SSH workspace-mode/authorization/outcome/timeline gaps; image uploads independently pending."
+}

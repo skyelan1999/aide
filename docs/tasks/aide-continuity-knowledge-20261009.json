@@ -469,6 +469,12 @@
           "docs/reviews/2026-10-16/capability-plugin-lifecycle.md",
           "docs/reviews/2026-10-16/capability-plugin-lifecycle-proof.json"
         ]
+      },
+      "evidence_20261017_native": {
+        "status": "scoped_pass",
+        "task": "docs/tasks/capability-native-20261017.json",
+        "report": "docs/reviews/2026-10-17/capability-native.md",
+        "summary": "Native seven read checks, actual plugin disk hash and independent API pass; natural five-minute stale state shown without manual refresh, six API checks stale. Original14sessions/22protected files/image/mounts/networks exact and original session/source view restored. No model, plugin tool, write or SSH test this task."
       }
     },
     {
@@ -7777,10 +7783,11 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Finish reproduced path-panel source fingerprint guard, native six-step path and final delivery; then continue original remaining confidence/timeline, available SSH recovery/history, authorization and outcome UI.",
-    "deliveredMain": "42005bab1beaef469159035f89fbf7b42b2b9a49",
-    "mainGate": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
-    "currentCheckpointGate": "Last published3ed6164d has full106 and scoped preview release. Current path guard source changed; quick104 and related race/vet pass, new candidate/full/native required. Original12 remain active."
+    "nextIndependentFocus": "Continue SSH workspace-mode scene/history and native authorization/outcome/timeline gaps; native capability seven checks/expiry/cleanup now passed. Complete archive public upload remains independently pending.",
+    "deliveredMain": "32d7e365",
+    "currentCheckpointGate": "Frozen integrated product full107 PASS fingerprint98ebc999, server race962.824s/vet/native CAD; clean-main path and SFTP gates PASS, main32d7e365 pushed. Both final complete archives verified locally; GitHub large uploads rejected while README uploaded. Original RC2 notes/tag/21 assets retained.",
+    "historicalMainGateBeforeCurrent20261017": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
+    "mainGate": "Latest published main32d7e365 path/SFTP scoped gates pass with exact frozen full107 inputs; capability docs-only gate/push follows separately."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -8055,9 +8062,10 @@
   "knowledge_path_native_20261017": {
     "status": "in_progress",
     "task": "docs/tasks/knowledge-path-native-20261017.json",
-    "summary": "Frozen integrated full107/race962.824s/vet/CAD pass; local and real SFTP native paths/source locations, complete packages/import/freshARM pass. Main gate/publicRC2supplement/push pending.",
+    "summary": "Frozen integrated full107/race962.824s/vet/CAD, native local/SFTP source paths, complete local packages/import/freshARM and clean-main gates pass. Code/docs main32d7e365 pushed; complete archive Release uploads pending after reproducible GitHub Safari rejection; original notes/tag/assets retained.",
     "evidence": [
-      "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json"
+      "docs/reviews/2026-10-17/knowledge-path-runtime-candidate-proof.json",
+      "docs/reviews/2026-10-17/knowledge-path-publication-proof.json"
     ]
   },
   "ssh_trusted_native_20261017": {
@@ -8067,5 +8075,13 @@
       "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
     ],
     "summary": "Native real independent SFTP source saved caret/scroll, explicit dirty draft refresh recovery, whole-version body+SVG restore and six-step source line4 pass. Registry/encrypted entries/networks/14sessions/config/mounts restored. SSH-workspace mode and remaining original12 gaps remain."
+  },
+  "capability_native_20261017": {
+    "status": "scoped_pass",
+    "task": "docs/tasks/capability-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/capability-native-proof.json"
+    ],
+    "summary": "Native seven read checks, actual plugin disk hash and independent API pass; natural five-minute stale state shown without manual refresh, six API checks stale. Original14sessions/22protected files/image/mounts/networks exact and original session/source view restored. No model, plugin tool, write or SSH test this task."
   }
 }
