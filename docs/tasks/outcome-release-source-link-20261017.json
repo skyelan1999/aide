@@ -65,9 +65,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "Gate pending: native verification incomplete and current task branch is not main. Existing incremental authorization recorded; no new approval requested or remote publication performed.",
-      "evidence": []
+      "status": "blocked",
+      "summary": "Actual clean-main release-check exit1: Incomplete stage verification; required current native acceptance user-deferred. Final full114 passes; source branch/PR4 available for review, no remote main or production delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing user instruction: incremental work/push/test. Latest main-only sync instruction was honored by undoing the unrelated merge and syncing main. This checkpoint prepares and verifies scoped repairs only; no main push, version, tag, deployment or Release is executed while native acceptance remains deferred.",

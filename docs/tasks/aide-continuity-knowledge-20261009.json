@@ -125,7 +125,7 @@
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。 2026-10-11 审批幽灵审核修复、full38/38及Safari模式同步证据已录入子任务与恢复验收续记；向量检索按用户要求暂缓；Windows由用户实测并从当前验收待办移除。 2026-10-12：补齐 RC2 源码候选的用户指南、工业长对话、Markdown 编辑、插件 schema、星图关系与密钥保险库说明；英文界面键覆盖复核运行时 t()、HTML data-i18n 属性及所有插件 settingsSchema 标签，零缺项。`node scripts/test_i18n.cjs` 与 `python3 scripts/check_docs.py` 通过（187 Markdown / 535 本地链接）。 2026-10-17 当前分支补齐大历史兼容、审批期限、Docker资源保护、MCP HTTP与公开附件门禁说明及精确full114证据；当前ARM原始启动、会话设置/MCP进程重启、离线包导入/解压启动结果已入账。未用这些专项结果宣称原始12项全部完成。",
+      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。 2026-10-11 审批幽灵审核修复、full38/38及Safari模式同步证据已录入子任务与恢复验收续记；向量检索按用户要求暂缓；Windows由用户实测并从当前验收待办移除。 2026-10-12：补齐 RC2 源码候选的用户指南、工业长对话、Markdown 编辑、插件 schema、星图关系与密钥保险库说明；英文界面键覆盖复核运行时 t()、HTML data-i18n 属性及所有插件 settingsSchema 标签，零缺项。`node scripts/test_i18n.cjs` 与 `python3 scripts/check_docs.py` 通过（187 Markdown / 535 本地链接）。 2026-10-17 当前分支补齐大历史兼容、审批期限、Docker资源保护、MCP HTTP与公开附件门禁说明及精确full114证据；当前ARM原始启动、会话设置/MCP进程重启、离线包导入/解压启动结果已入账。未用这些专项结果宣称原始12项全部完成。 2026-10-17：最终114项full通过（8fe指纹）、88项缺Node的旧失败保留；六项子任务门禁通过、审批/成果来源链接两项原生门禁实际BLOCKED。17日成果分页101条及能力7项/自然过期证据已校正旧摘要，未据此提升全部工作流。",
       "evidence": [
         "docs/architecture/continuity-roadmap.md",
         "docs/reviews/approval-checkpoint-20261009.md",
@@ -140,14 +140,14 @@
     },
     "cleanup": {
       "status": "in_progress",
-      "summary": "Current runtime batch removed6 exact-owned stopped superseded/source/offline containers after ownership/status checks; all data/images retained. Reclaimed2.413GB unused rebuildable builder cache after serial exports/load. Only production app/CAD running; identity/22 protected files unchanged.",
+      "summary": "Across current runtime and ordinary-source acceptance removed8 exact-owned stopped containers and2 empty owned networks, retaining images/data. Reclaimed reported2.413GB rebuildable builder cache and1695769600 duplicate extracted tar bytes; latest full verifier auto-removed. Only production app/CAD remain; identity/22 protected files exact. Original browser4 tabs plus pinned page restored, no new test tabs retained.",
       "evidence": [
         ".agent-state/continuity-preview/"
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "Current same-source complete ARM4b784/AMD382c packages and supplements publicly verified; task branch8aed and draft PR4 published. Final full114 passes. Remote main remainsceb82481 because approval/outcome explicit native prerequisites remain in_progress; no new version/tag/production replacement. Original12 not complete.",
+      "summary": "Public complete ARM4b784/AMD382c packages and supplements verified; task branch/draft PR4 published. Final full114 passes and6 child gates pass; approval/outcome gates actually BLOCKED verification due user-deferred native acceptance. Remote main remainsceb82481; no new tag/version/production replacement. Original12 incomplete.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-remote-proof.json",
@@ -157,7 +157,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Final corrected full114 passed; task branch8aed and draft PR4 are remote, main stillceb82481. Check child gates and retain required native approval/outcome acceptance in_progress; update ordinary-doc proof and PR body, push review branch only until gates met. Original12 broader native/SSH/workspace/combined boundaries remain; no repeated certificate prompt, Windows user-owned, vectors deferred.",
+  "handoff": "Final corrected full114 passed and actual child matrix is6 PASS/2 BLOCKED. Preserve required native approval/outcome gates until current candidate can be accepted; source/review PR4 and public bundles available, remote main unchanged. Finish guarded PR body/full-result update and review-branch doc push; original12 broader native/SSH/workspace/combined requirements remain. Windows user-owned; vectors deferred; do not ask again for certificate bypass while user unavailable.",
   "workstreams": [
     {
       "name": "工作现场恢复",

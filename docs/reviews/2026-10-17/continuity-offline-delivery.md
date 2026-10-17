@@ -66,3 +66,20 @@ AMD64 附件 ID `649902301`、state uploaded、916933833 字节、SHA256 `df892d
 [17日成果舱原生证据](outcome-native-proof.json)已证明历史e729实例的101条原生分页、原始摘要一致及完整摘要下载；旧16日待办中的“分页未测”不再适用。发布记录提交卡片、隐藏运行活动及运行中快照变化仍是独立待验收项，不把历史证据提升为当前整页通过。
 
 [17日能力仪表证据](capability-native-proof.json)已有7项检查及自然过期显示，超过旧16日仅3项检查的摘要；它们仍只证明根目录、插件入口和依赖导入，不证明写入、文档处理或用户主机权限。
+
+## 实际发布门禁矩阵
+
+在干净的本地 main `c75764b8`，逐个执行 `python3 scripts/agent-route.py release-check <任务号>`，结果如下。源码指纹仍与最终 full 一致；没有手改收据。
+
+| 子任务 | 结果 |
+| --- | --- |
+| timeline-retention-synced-main-20261017 | PASS |
+| approval-expiry-synced-main-20261017 | BLOCKED：verification 未完成 |
+| outcome-release-source-link-20261017 | BLOCKED：verification 未完成 |
+| docker-resource-guard-synced-main-20261017 | PASS |
+| startup-inputs-notice-synced-main-20261017 | PASS |
+| mcp-http-synced-main-20261017 | PASS |
+| prebuilt-publication-gate-20261017 | PASS |
+| continuity-offline-delivery-20261017 | PASS |
+
+通过项同时验证了当前公开双架构默认附件。[审批有效期子任务](../../tasks/approval-expiry-synced-main-20261017.json)和[成果来源链接子任务](../../tasks/outcome-release-source-link-20261017.json)的当前原生验收仍由用户暂缓，两次实际门禁均返回 `BLOCKED: Incomplete stage: verification`。整批源码继续在任务分支与草稿PR中审阅，远端main未推送、生产未替换；无需重复运行已通过且输入未变的全量测试。

@@ -62,7 +62,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Current default pair, archive/source identities, public-versus-native limits, fresh repository startup and production protection documented; check_docs288/926 pass.",
+      "summary": "Current defaults, public identities, actual source startup, final full114, retained missing-Node failure and actual6-pass/2-blocked child gate matrix documented; historical pagination/capability summaries corrected with explicit scope.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -78,7 +78,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Both complete packages/supplements publicly verified and task branch8aed pushed; draft PR4 open. Remote main remainsceb82481; approval/outcome current-native child prerequisites still in_progress, actual combined gate audit next.",
+      "summary": "Actual clean-main release-check exit0 including verified public default pair. Source branch and draft PR4 published; aggregate remote-main delivery remains held by separate approval/outcome native gates, no production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -87,5 +87,5 @@
   },
   "release_authorization": "Existing user incremental push/main/Release distribution authorization retained by parent goal ledger; current task stages exact complete image assets and qualifies default manifest, not production replacement. User requested repository and release bundles fast import/start; Windows user-owned, native workbench deferred, real vectors deferred.",
   "rollback": "Preserve existing published assets, old tracked manifest/checksum history, production6a8 image/data and current local complete packages. Do not replace production or restore old data; defaults only after verified new assets.",
-  "handoff": "Official full114 passed; preserve receipt fingerprint8fe and runtime source07c. Check all impacted child gates on clean locally integrated main, keep native-required approval/outcome pending. Update draft PR4 with final full, push ordinary-doc proof to task branch only; remote main/production remain held, no repeated native certificate prompt."
+  "handoff": "Final full114 and six local child gates passed. Approval expiry and outcome source-link gates actually BLOCKED verification due user-deferred native acceptance. Update draft PR4 full-result paragraph with guarded existing-body check; push ordinary-doc evidence to review branch only. Keep remote main and production unchanged, no repeated certificate prompt. Full receipt8fe remains exact after ordinary docs."
 }

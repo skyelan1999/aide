@@ -77,9 +77,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Actual clean-main release-check exit0 including verified public default pair. Source branch and draft PR4 published; aggregate remote-main delivery remains held by separate approval/outcome native gates, no production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing user image/repository/release and incremental work/test/push instructions; no upload, default activation, merge or production replacement by this task.",

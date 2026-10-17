@@ -302,5 +302,62 @@
     "bodyStatesFullRunning": true,
     "checkedUTC": "2026-10-17T08:20:20.511552+00:00"
   },
-  "mainChildGates": "approval expiry and outcome source link verification remain in_progress due explicitly required native acceptance; actual gate checks next"
+  "mainChildGates": {
+    "checkedUTC": "2026-10-17T08:33:13.853427+00:00",
+    "localMainHead": "c75764b8",
+    "fingerprint": "8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24",
+    "commands": "python3 scripts/agent-route.py release-check <task>",
+    "results": [
+      {
+        "task": "timeline-retention-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "approval-expiry-synced-main-20261017",
+        "exit": 1,
+        "status": "blocked",
+        "result": "Incomplete stage: verification"
+      },
+      {
+        "task": "outcome-release-source-link-20261017",
+        "exit": 1,
+        "status": "blocked",
+        "result": "Incomplete stage: verification"
+      },
+      {
+        "task": "docker-resource-guard-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "startup-inputs-notice-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "mcp-http-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "prebuilt-publication-gate-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "continuity-offline-delivery-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      }
+    ],
+    "mainPushHeld": true,
+    "reason": "two explicit native acceptance prerequisites remain user-deferred"
+  }
 }
