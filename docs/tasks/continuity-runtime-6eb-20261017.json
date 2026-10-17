@@ -1,0 +1,80 @@
+{
+  "id": "continuity-runtime-6eb-20261017",
+  "request": "补齐启动器修复后当前6eb源码的ARM64和AMD64完整离线交付候选，使用本地基础镜像串行断网构建、导出、导入和原始脚本启动验收；不替换生产或提前激活默认清单。",
+  "baseline": "05295539906f51f71f1005b431ff53e449b0955a",
+  "initial_status": "",
+  "acceptance": [
+    "Freeze current runtime source6eb with exact full115 fingerprint5ec; current ARM/AMD local bases inspected, no source/product mutations.",
+    "Serial --pull=false --network=none builds using existing Dockerfile.local; exact version0.1.17.0 RC2/source/commit/CAD labels and architecture recorded. No concurrent heavy jobs; engine resource/disk checks before each build.",
+    "Export via existing export-bundle in own frozen checkout; validate archive metadata, no host data, inner+outer SHA256, actual docker load identities. Do not update public defaults or tracked sums before qualification.",
+    "Fresh ARM extracted bundle original start/stop verifies pinned HTTPS host/same instance, authenticated API identity, native CAD imports and no source rebuild/download. AMD architecture guard must reject ARM host, native Windows user-owned.",
+    "Retain owned evidence/data/rollback images; remove only owned stopped test containers/empty networks; production identity and22 files unchanged. Native approval/outcome prerequisites remain pending."
+  ],
+  "scope": [
+    "docs/tasks/continuity-runtime-6eb-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
+    "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current source/package mismatch observed; original user requires complete reusable images, candidate stage only until all release prerequisites.",
+      "evidence": [
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Frozen own source checkout; reuse validated local ARM4b784 and AMD0c173 native CAD/toolchain bases; existing recipe/export only, serial offline builds.",
+      "evidence": [
+        "Dockerfile.local",
+        "scripts/aide.sh",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "ARM built/exported/imported with existing recipe; AMD build now running serially after ARM cleanup.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
+        "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "ARM original offline launcher, auth401/version/commit/CAD plus10 reasoning writes/stale409/restart passed; AMD/native/public distribution still pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
+        "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Partial controlled report/proof distinguishes local ARM from pending AMD and public/native scope.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
+        "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "ARM2 owned stopped containers/2 empty networks and verified duplicate tar removed; data/images/outer package retained; final AMD cleanup pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
+        "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "AMD candidate still building; current-source public pair/default qualification and original native approval/outcome prerequisites incomplete. No main/production delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
+        "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing user incremental code/test/image distribution authorization; candidate construction/import/startup allowed, no production switch or remote main push while native gates pending.",
+  "rollback": "Keep previous images/archives and all user data; original stop for owned fixture, remove only exact stopped owned containers/networks.",
+  "handoff": ""
+}
