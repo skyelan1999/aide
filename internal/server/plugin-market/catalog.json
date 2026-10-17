@@ -1,5 +1,5 @@
 {
-  "revision": "e489d3448e98aee9baec5760c20a6bac3a8861af",
+  "revision": "b05b32753bfe4cbdb0739ef87ca1b1fd9ac7e9d8",
   "fetched": 0,
   "catalog": {
     "schemaVersion": 1,
@@ -110,7 +110,9 @@
           "macos",
           "linux"
         ],
-        "dependencies": [],
+        "dependencies": [
+          "需要包含 skill_library 原生执行器的 Aide 源码构建（192b80f3 及后续）；旧版仅上传 ZIP 不足以启用"
+        ],
         "permissions": "可向 Aide 提交文件、命令或引用管理提案；相关操作沿用现有授权。",
         "trustNotice": "Node 插件在宿主中执行；目录审核和摘要校验不等于权限沙箱。安装会注册并启用插件。",
         "features": [
@@ -140,7 +142,9 @@
           "macos",
           "linux"
         ],
-        "dependencies": [],
+        "dependencies": [
+          "需要 Aide 原生 manage_plugins / manage_references 管理执行器；管理动作遵守角色开关与人工确认"
+        ],
         "permissions": "可向 Aide 提交文件、命令或引用管理提案；相关操作沿用现有授权。",
         "trustNotice": "Node 插件在宿主中执行；目录审核和摘要校验不等于权限沙箱。安装会注册并启用插件。",
         "features": [
