@@ -49,16 +49,17 @@ type Source struct {
 // A reference source is never executed through a shell, so spaces, quoting and
 // shell metacharacters in a command field cannot turn into an extra command.
 type SourceConfig struct {
-	Path      string    `json:"path,omitempty"`      // local/skill 宿主机路径
-	URL       string    `json:"url,omitempty"`       // link/ftp/ftps/smb
-	Host      string    `json:"host,omitempty"`      // sftp
-	Port      int       `json:"port,omitempty"`      // sftp
-	Username  string    `json:"username,omitempty"`  // sftp
-	Auth      string    `json:"auth,omitempty"`      // sftp: password | key | none
-	Command   string    `json:"command,omitempty"`   // mcp: executable only, never a shell string
-	Args      []string  `json:"args,omitempty"`      // mcp: one process argument per item
-	Transport string    `json:"transport,omitempty"` // mcp: currently stdio
-	MCPTools  []MCPTool `json:"mcpTools,omitempty"`  // safe, bounded discovery summary
+	Path          string    `json:"path,omitempty"`          // local/skill 宿主机路径
+	URL           string    `json:"url,omitempty"`           // link/ftp/ftps/smb
+	Host          string    `json:"host,omitempty"`          // sftp
+	Port          int       `json:"port,omitempty"`          // sftp
+	Username      string    `json:"username,omitempty"`      // sftp
+	Auth          string    `json:"auth,omitempty"`          // sftp: password | key | none
+	Command       string    `json:"command,omitempty"`       // mcp: executable only, never a shell string
+	Args          []string  `json:"args,omitempty"`          // mcp: one process argument per item
+	DockerGateway bool      `json:"dockerGateway,omitempty"` // local authenticated Docker Desktop gateway behind host.docker.internal
+	Transport     string    `json:"transport,omitempty"`     // mcp: stdio | streamable-http
+	MCPTools      []MCPTool `json:"mcpTools,omitempty"`      // safe, bounded discovery summary
 }
 
 type MCPTool struct {

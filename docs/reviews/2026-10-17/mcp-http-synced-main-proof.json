@@ -1,0 +1,35 @@
+{
+  "status": "pass",
+  "scope": "integrated current working source, focused server race plus quick",
+  "quick": {
+    "status": "pass",
+    "fingerprint": "e75edaae950e01f2e0179b4b9a6637b7e636304ebfd28deb7b596d48cab384ec",
+    "head": "c28b6f60236df34406e601af88d36b1072f46521",
+    "log": ".agent-state/verify-20261017T070223636611Z.log"
+  },
+  "quickCommands": 110,
+  "raceNames": [
+    "TestCapabilityMCPDiscoveryDoesNotCallTools",
+    "TestMCPExistingHTTPConfigurationRoundTrip",
+    "TestMCPHTTPSourceDiscoveryAndReadOnlyCall",
+    "TestMCPHTTPRejectsUnsafeURLAndMixedCommand",
+    "TestMCPHTTPAuthRedirectAndBoundedResponses",
+    "TestMCPHTTPCancellationDoesNotWaitForGateway",
+    "TestDockerMCPGatewayVirtualHostRequiresPrivateEndpointAndToken",
+    "TestMCPHTTPRejectsStaleConnectionBeforeSending",
+    "TestMCPHTTPRevocationAndDiscoveryCompareAndSwap",
+    "TestMCPReferenceDiscoveryAndReadOnlyCall"
+  ],
+  "raceSeconds": 6.092,
+  "negativeConfig": "Current-source JSON read/save loses dockerGateway=true; isolated regression exit1 before fix",
+  "positiveConfig": "Exact integrated regression pass",
+  "nativeForm": "Synthetic Safari component only; applied app/CSS/test bytes matched prepared candidate hashes",
+  "actualDockerGateway": "pending",
+  "full": "Prior112/becfae proof is historical after HTTP integration; new exact-source full pending",
+  "production": "unchanged",
+  "network": "none; httptest loopback inside isolated container",
+  "userDataMounts": false,
+  "resources": "4GiB/2CPU/512PIDs",
+  "ownedContainers": "removed",
+  "temporaryTar": "removed"
+}

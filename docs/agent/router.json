@@ -650,6 +650,10 @@
       [
         "python3",
         "scripts/test_resource_guard.py"
+      ],
+      [
+        "node",
+        "scripts/mcp-source-form.test.cjs"
       ]
     ],
     "full": [

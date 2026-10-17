@@ -7401,6 +7401,10 @@ function openSourceEditor(src) {
     $('src-user').value = src.config.username || '';
     $('src-remote').value = src.config.path || '';
   } else if (src.type === 'mcp') {
+    $('src-mcp-transport').value = src.config.transport || 'stdio';
+    $('src-mcp-transport').dispatchEvent(new Event('change'));
+    $('src-url').value = src.config.url || '';
+    $('src-mcp-docker').checked = !!src.config.dockerGateway;
     $('src-command').value = src.config.command || '';
     $('src-mcp-args').value = (src.config.args || []).join('\n');
   } else {
@@ -7432,13 +7436,22 @@ function renderSourceFields() {
     if (type !== 'link') { addField(t('用户名'), 'src-user', ''); addField(t('密码（可选）'), 'src-password', editingSourceID ? t('留空 = 保留现有凭据') : '').type = 'password'; }
   }
   else if (type === 'mcp') {
-    addField(t('启动程序'), 'src-command', 'npx');
+    const transportLabel = el('label', '', t('MCP 传输方式'));
+    const transport = el('select'); transport.id = 'src-mcp-transport';
+    [['stdio', t('本地程序（stdio）')], ['streamable-http', t('HTTP 网关（Streamable HTTP）')]].forEach(([value, title]) => { const option = el('option', '', title); option.value = value; transport.append(option); });
+    transportLabel.append(transport); host.append(transportLabel);
+    const urlInput = addField(t('MCP 网关地址'), 'src-url', 'http://host.docker.internal:8811/mcp');
+    const tokenInput = addField(t('Bearer 令牌（可选，保存在加密保险库）'), 'src-password', editingSourceID ? t('留空 = 保留现有凭据') : ''); tokenInput.type = 'password';
+    const dockerLabel = el('label', 'checkbox source-mcp-flag'); const dockerMode = el('input'); dockerMode.id = 'src-mcp-docker'; dockerMode.type = 'checkbox'; dockerLabel.append(dockerMode, document.createTextNode(t('Docker Desktop 本机网关'))); host.append(dockerLabel);
+    const commandInput = addField(t('启动程序'), 'src-command', 'npx');
     const argsLabel = el('label', '', t('参数（每行一个）'));
     const args = el('textarea', ''); args.id = 'src-mcp-args'; args.rows = 4; args.placeholder = '-y\n@wisflux/docmost-local-mcp\n--base-url=http://docs.example.com'; args.autocomplete = 'off'; argsLabel.append(args); host.append(argsLabel);
     const template = el('button', 'quiet', t('填入 Docmost 模板')); template.type = 'button';
     template.onclick = () => { $('src-command').value = 'npx'; args.value = '-y\n@wisflux/docmost-local-mcp\n--base-url=http://docs.example.com'; };
     host.append(template);
-    host.append(el('p', 'muted', t('MCP 程序由 AIDE 运行时启动。测试会发现工具；AI 仅能调用服务声明为只读的工具。首次认证由该 MCP 服务自行处理。')));
+    transport.onchange = () => { const httpMode = transport.value === 'streamable-http'; urlInput.parentNode.hidden = !httpMode; tokenInput.parentNode.hidden = !httpMode; dockerLabel.hidden = !httpMode; commandInput.parentNode.hidden = httpMode; argsLabel.hidden = httpMode; template.hidden = httpMode; };
+    transport.onchange();
+    host.append(el('p', 'muted', t('本地程序在 AIDE 容器内运行。Docker MCP 可连接宿主机 HTTP 网关；测试仅发现工具，AI 仍只调用服务明确声明为只读的工具。')));
   }
   else if (type === 'sftp') {
     addField(t("主机"), 'src-host', '192.168.1.10');
@@ -7468,6 +7481,7 @@ function suggestedSourceName(type) {
     try { return new URL(value).hostname || type.toUpperCase(); } catch { return type.toUpperCase(); }
   }
   if (type === 'mcp') {
+    if ($('src-mcp-transport')?.value === 'streamable-http') { try { return new URL(($('src-url')?.value || '').trim()).hostname; } catch { return 'MCP HTTP'; } }
     const args = ($('src-mcp-args')?.value || '').split(/\r?\n/).map(x => x.trim()).filter(x => x && !x.startsWith('-'));
     const command = ($('src-command')?.value || '').trim();
     return args.pop()?.split(/[\\/]/).filter(Boolean).pop() || command.split(/[\\/]/).filter(Boolean).pop() || 'MCP';
@@ -7483,7 +7497,7 @@ $('source-form').onsubmit = action(async event => {
   const src = { id, name, type, enabled: previous?.enabled ?? true, rw: $('src-rw').checked, config: {} };
   const secrets = {};
   if (type === 'local' || type === 'skill') src.config.path = $('src-path').value.trim();
-  else if (type === 'mcp') { src.config = { transport: 'stdio', command: ($('src-command')?.value || '').trim(), args: ($('src-mcp-args')?.value || '').split(/\r?\n/).filter(value => value.length > 0) }; }
+  else if (type === 'mcp') { src.config = $('src-mcp-transport')?.value === 'streamable-http' ? { transport: 'streamable-http', url: ($('src-url')?.value || '').trim(), dockerGateway: !!$('src-mcp-docker')?.checked } : { transport: 'stdio', command: ($('src-command')?.value || '').trim(), args: ($('src-mcp-args')?.value || '').split(/\r?\n/).filter(value => value.length > 0) }; if (src.config.transport === 'streamable-http' && $('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
   else if (type === 'sftp') { const pw = $('src-password').value, key = $('src-key').value; src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: key ? 'key' : pw ? 'password' : previous?.config.auth || 'none' }; if (pw || key) secrets[id] = { password: pw, key }; }
   else { src.config.url = $('src-url').value.trim(); if ($('src-user')) src.config.username = $('src-user').value.trim(); if ($('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
   const payload = previous

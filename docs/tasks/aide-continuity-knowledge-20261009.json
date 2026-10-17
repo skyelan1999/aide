@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Reconciled runtime source0b572c85 full112 PASS on exact fingerprintbecfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780;938 server entries in12 disjoint serial shards/race/vet/CAD all pass. Original12 remain in_progress; current whole-workbench native UI user-deferred, Windows user-owned, real vectors deferred. MCP HTTP and public default-download gaps recorded before production replacement.",
+      "summary": "Prior reconciled source full112/becfae passed, including938 entries/12 shards/race/vet/CAD. Current HTTP-integrated source quick110 PASS and10 MCP race PASS6.092s; new exact-source full/real Docker gateway pending. Original12 remain in_progress; native full-workbench user-deferred, Windows user-owned, real vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -8163,5 +8163,14 @@
     "commands": 112,
     "serverEntries": 938,
     "evidence": "docs/reviews/2026-10-17/reconciled-continuity-full-proof.json"
+  },
+  "mcp_http_synced_main_20261017": {
+    "status": "integrated_focused_race_and_quick_pass",
+    "task": "docs/tasks/mcp-http-synced-main-20261017.json",
+    "report": "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
+    "full": "new_exact_source_pending",
+    "actualDockerGateway": "pending",
+    "publicDefaultDownloads": "Both current manifest filenames absent from public API; exact final assets require verification before manifest switch.",
+    "production": "unchanged"
   }
 }
