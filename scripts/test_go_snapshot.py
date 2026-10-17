@@ -43,6 +43,8 @@ def main():
         print(f'Go snapshot: {count} current files; container-local source; network none', flush=True)
         try:
             subprocess.run(['docker', 'run', '--rm', '-i', '--network', 'none', '--no-healthcheck',
+                            '--memory', '4g', '--memory-swap', '4g', '--cpus', '2', '--pids-limit', '512',
+                            '--log-driver', 'local', '--log-opt', 'max-size=10m', '--log-opt', 'max-file=3',
                             '--name', container, '--workdir', '/tmp', '-e', 'AIDE_BUILTIN_PLUGINS=', '--entrypoint',
                             'bash', image, '-c', COMMAND], stdin=payload, check=True, timeout=1250)
         finally:

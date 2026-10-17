@@ -1,0 +1,78 @@
+{
+  "id": "docker-resource-guard-20261017",
+  "request": "磁盘恢复后先清理旧 AIDE 可再生 Docker 内容，注意内存磁盘占用；提前在脚本预设好",
+  "baseline": "d3b5e26fd718c7f7571ba0bbfb4b0becf0d77b6d",
+  "initial_status": "",
+  "acceptance": [
+    "现有Docker对象先盘点；仅清理确认可再生内容，20条保护文件和14会话保持",
+    "Bash/PowerShell启动有低空间保护，源码构建要求更高余量，离线包携带辅助脚本",
+    "服务内存CPU及日志有上限，重复启动不重建或重启",
+    "Windows原生由用户验收；完整回归与公开发布不得冒称通过"
+  ],
+  "scope": [
+    "scripts/resource-guard.sh",
+    "scripts/resource-guard.ps1",
+    "scripts/aide.sh",
+    "start.ps1",
+    "compose.yaml",
+    "docker/compose.offline.yaml",
+    "scripts/test_resource_guard.py",
+    "scripts/test_go_snapshot.py",
+    "docs/agent/router.json",
+    "docs/tasks",
+    "docs/reviews",
+    "docs/architecture/software-updates.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requested preconfigured resource protection and cleanup before recreation.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Fail closed on low host disk/memory; preserve data and global Desktop settings.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Host guards, package helper inclusion, rotating logs and bounded verification runner added.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "37 focused checks and quick105 passed using bundled Node on PATH; real local archive start, 14 sessions, 20 protected entries and repeated container identity passed. Scope excludes new full race/vet and Windows native; release gate stays pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recovery observations, scope and pending full/Windows/public-release limits recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Engine initially empty; 9 exact orphan Docker agents terminated; data and preserved archives retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-resource-guard.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User prior incremental push/main authorization; no new version/tag. Full gate/public package availability still required.",
+  "rollback": "Revert launcher/Compose changes and restart with original local image. Preserve .aide-data, credentials and version2 timeline backups; never reset Docker as rollback.",
+  "handoff": "Runtime recovered on9999 from local6ad image without compilation. Global Desktop4CPU/6GiB applied; disk shrink cancelled. Full gate/main/offline repack and public upload pending."
+}
