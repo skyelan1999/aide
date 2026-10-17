@@ -41,30 +41,32 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Exact repaired full127 PASS87f8ea0272dd4cb13babfcd5a3832cd77797631c0d77287d91fb06308fa029b1;976 entries/12 serial shards/race/vet/CAD; focused19.173s pass. ARM candidate building; fresh-runtime installation/assets still pending.",
+      "status": "pass",
+      "summary": "Exact full127 PASS87f8ea02;976 entries/12 shards/race/vet/CAD; real ARM/AMD workshop assets pass (AMD emulated). Both full packages actual import and hashes pass; fresh ARM original startup auto-installs workshop with permissions off,10 reasoning writes/stale409/restart pass. AMD guard pass; native workbench/Windows/public qualification not promoted.",
       "evidence": [
-        "docs/reviews/2026-10-17/continuity-plugin-main.md",
-        "docs/reviews/2026-10-17/continuity-plugin-main-proof.json"
+        "docs/reviews/2026-10-17/continuity-plugin-main-proof.json",
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Record concrete omission and narrow verification without relying on upstream task summary as live runtime proof.",
+      "status": "pass",
+      "summary": "Failures, superseded runs, exact full and both current package identities with scoped evidence recorded.",
       "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main-proof.json",
         "docs/reviews/2026-10-17/continuity-plugin-main.md"
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Only owned superseded verifier terminated after stdout/PID-tree confirmation; production current22 baseline retained.",
+      "status": "pass",
+      "summary": "Own ARM runtime original stop,2 stopped containers/2 empty networks removed. Verified duplicate inner tar919929856 bytes removed; outer packages/data/images retained. Only production2 running; current production22 files/identity exact.",
       "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main-proof.json",
         "docs/reviews/2026-10-17/continuity-plugin-main.md"
       ]
     },
     "release": {
       "status": "blocked",
-      "summary": "Current repaired full/runtime/native/public gates pending.",
+      "summary": "Source main delivery authorized separately and pending. Public candidate checker exit1 missing uploaded asset; defaults unchanged. Current native full-workbench gates pending. No public Release/tag or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-plugin-main.md"
       ]
