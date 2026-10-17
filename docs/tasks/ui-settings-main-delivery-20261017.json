@@ -69,17 +69,23 @@
         "git status --short --branch",
         "docs/tasks/control-spacing-polish-20261017.json",
         "docs/tasks/task-action-hub-20261017.json",
-        "docs/agent/router.json"
+        "docs/agent/router.json",
+        "4167aae6",
+        "0e8d25f6",
+        "bb96e176",
+        "a08bdba6"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "首次完整服务器包18分钟总时限失败；三进程分片又触发Docker VM OOM kill（memory.events oom_kill=1）。改为12个互斥分片单进程依次执行，缩短单进程生命周期并限制峰值内存；全量保留race、所有测试与vet，总任务上限45分钟。重新验证。 全部功能与race/vet通过，但route测试旧上限断言1800秒未同步；调整为3000秒硬上限，保留父进程期限大于执行与清理之和的验证，重新全量运行。",
+      "status": "pass",
+      "summary": "当前源码完整验证110项全部通过；933项服务器Test/Fuzz/Example在12个互斥顺序分片执行，全部成功，其他Go包race/vet、前端、资源、文档、CAD几何均通过。保留前次总时限、OOM和旧时限断言失败证据，未将失败当作成功。",
       "evidence": [
         ".agent-state/verify-20261017T032913274794Z.log:727-729",
         "python3 scripts/test_go_test_shards.py PASS: inventory completeness, fuzz/examples, disjoint shards, failure propagation and original working directory",
         ".agent-state/verify-20261017T035218876392Z.log: Server shard 1 exit=-9; Docker memory.events oom_kill=1",
-        ".agent-state/verify-20261017T035843966402Z.log: 933 server tests + race/vet + geometry passed; only outdated route timeout upper-bound assertion failed"
+        ".agent-state/verify-20261017T035843966402Z.log: 933 server tests + race/vet + geometry passed; only outdated route timeout upper-bound assertion failed",
+        ".agent-state/verify-20261017T042937282902Z.log",
+        ".agent-state/full.json: profile=full status=pass 110 results all exit=0 head=a08bdba60d237073ab422eda86eb306c1def15fa"
       ]
     },
     "documentation": {
@@ -104,7 +110,7 @@
     },
     "release": {
       "status": "pending",
-      "summary": "尚未推送，等待完整验证。",
+      "summary": "完整验证已通过，准备门禁后普通推送main。",
       "evidence": []
     }
   },
