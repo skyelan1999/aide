@@ -67,7 +67,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Docs-only review branch checkpoint; no main merge or production replacement.",
+      "summary": "Scoped evidence commit d43e8fbc pushed and remote exact. Aggregate main release remains blocked by deferred native prerequisites; no production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/knowledge-real-repo.md",
         "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
@@ -76,5 +76,12 @@
   },
   "release_authorization": "Existing incremental engineering/test/source branch authorization; this is scoped real-directory acceptance, not main merge, production replacement or paid model/vector calls.",
   "rollback": "Stop and remove only exact owned project containers/networks, retain current images and owned data. Production sources/settings/mounts untouched; real project mount read-only.",
-  "handoff": "Prepare/inspect readonly Compose config before original launcher; API results remain separate from native UI. Do not rerun full114 for docs-only work."
+  "handoff": "Prepare/inspect readonly Compose config before original launcher; API results remain separate from native UI. Do not rerun full114 for docs-only work.",
+  "sourceCheckpoint": {
+    "commit": "d43e8fbc26f43fed7a4d1f339b8988f829d363e2",
+    "branch": "test/knowledge-real-repo-20261017",
+    "remoteExact": true,
+    "mainPushed": false,
+    "productionReplaced": false
+  }
 }
