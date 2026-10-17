@@ -1,0 +1,161 @@
+{
+  "status": "scoped_native_approval_pass",
+  "observedUTC": "2026-10-17T14:25:37.811076+00:00",
+  "productCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+  "image": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+  "preparation": {
+    "status": "pass",
+    "twoRulesThroughNormalRememberFlow": true,
+    "firstSessionExactLiteralTools": 2,
+    "secondSessionRememberedTool": 1,
+    "durableRememberedRuleExact": true,
+    "noQuestionOnRememberedB1": true,
+    "sameWorkspaceRootPayload": true,
+    "providerPublishedPorts": 0,
+    "realModelOrVectorCalls": 0,
+    "sessionNumbers": [
+      2,
+      3
+    ]
+  },
+  "race": {
+    "status": "pass",
+    "nativeSecondaryRuleRevokeVerified": true,
+    "sameRevision": 4,
+    "concurrentResults": [
+      {
+        "method": "DELETE",
+        "status": 200,
+        "body": {
+          "ok": true,
+          "revision": 5
+        }
+      },
+      {
+        "method": "PUT",
+        "status": 409,
+        "body": {
+          "error": "审批规则已变化，请重新读取"
+        }
+      }
+    ],
+    "oneSuccessOne409": true,
+    "extraFreshRevokeNeeded": false,
+    "finalRevision": 5,
+    "rulesRemaining": 0,
+    "staleEdit409NoResurrection": true,
+    "canonicalDiskExact": true,
+    "pastRememberedReceiptUnchanged": true,
+    "nativeDirtyInput": "2027-01-01T00:00",
+    "nativeDialogStaleState": "pass"
+  },
+  "sse": {
+    "status": "pass",
+    "newIdenticalCommandAfterRevocation": "manual pending, no execution",
+    "refusedVia": "B2 normal API; separate B3 native UI verified",
+    "afterRefusalStatus": "completed",
+    "rulesRemaining": 0,
+    "twoIndependentSSEClients": true,
+    "bidirectionalModeChanges": [
+      {
+        "enabled": true,
+        "rememberedRules": 0,
+        "revision": 6
+      },
+      {
+        "enabled": false,
+        "rememberedRules": 0,
+        "revision": 7
+      },
+      {
+        "enabled": true,
+        "rememberedRules": 0,
+        "revision": 8
+      },
+      {
+        "enabled": false,
+        "rememberedRules": 0,
+        "revision": 9
+      }
+    ],
+    "bothClientsObservedExactRevisions": true,
+    "realModelVectorCalls": 0,
+    "nativeModeSwitching": "separate native pass at revisions10/11",
+    "authoritativeNoExecutionEvidence": "B2 and B3 outcome execution preview: 用户未批准执行该命令；命令没有运行。"
+  },
+  "restart": {
+    "status": "pass",
+    "sameContainerSameImageNewProcess": true,
+    "originalStopStart": true,
+    "policyAndRevocationPersisted": true,
+    "canonicalPolicyBytesExact": true,
+    "rememberedReceiptAndActualPrintPersisted": true,
+    "humanDeclinedReceiptAndNoExecutionPreviewPersisted": true,
+    "noNewRuleAfterRefusal": true,
+    "twoSSEClientsAlreadyStopped": true
+  },
+  "final": {
+    "policyRevision": 11,
+    "nativeRefusalPersistedAfterRestart": true,
+    "nativeFullRefreshManualAndHumanDeclinedVisible": true,
+    "rulesRemaining": 0,
+    "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+    "priorExactFullPass": true,
+    "servedAppJavaScriptExact": true,
+    "servedAppSHA256": "e8245efe4b46029dc041e10e8d8b9da740f58613a0ccf4a3b34c356a74024095",
+    "sessionNumbers": [
+      2,
+      3
+    ]
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": 3,
+    "ownedEmptyNetworksRemoved": 2,
+    "onlyOwnedBrowserTabClosed": true,
+    "userPagesPreserved": true,
+    "onlyProductionTwoContainersRemain": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "imagesAndDataRetained": true,
+    "observedUTC": "2026-10-17T14:24:51.673636+00:00"
+  },
+  "native": {
+    "client": "Safari complete authenticated workbench",
+    "origin": "https://localhost:58320/",
+    "secondaryRuleRevokedWithConfirmation": true,
+    "dirty2027DateRetainedOnConcurrentChange": true,
+    "staleNoticeAndBothActionsDisabled": true,
+    "rereadDiscardConfirmationAndEmptyList": true,
+    "rememberedReceiptExactScopeReasonExpanded": true,
+    "BToAAssistedThenAToBManual": true,
+    "authoritativeRevisions": [
+      10,
+      11
+    ],
+    "B3PendingExactCommandThenNativeRefused": true,
+    "B3HumanDeclinedExpandedAfterOriginalRestartAndFullRefresh": true
+  },
+  "harnessNotes": [
+    "Initial settings fixture lacked activeModel; fixed fixture selection before runs, no product defect claimed.",
+    "Initial A1 fixture consumed tool marker on auxiliary request and executed no tools. Corrected fixture availability detection; actual A3/A2/B1 have approvals and executions.",
+    "Safari user tab switching interrupted earlier actions; B2 refused through normal API. After availability B3 was separately refused in actual native UI. User GitHub navigation preserved.",
+    "Two SSE readers prove actual event delivery independently; native session-switch observations are separate assertions."
+  ],
+  "limits": {
+    "original12Complete": false,
+    "realModelVectorCalls": 0,
+    "Windows": "user-owned",
+    "realVectors": "deferred",
+    "userHostSSH": "NOT_RUN in this task",
+    "newCe0cPublicAssets": "still pending, defaults unchanged",
+    "productionReplaced": false
+  },
+  "sourceDelivery": {
+    "status": "pending"
+  },
+  "releaseCheck": {
+    "status": "pending"
+  }
+}

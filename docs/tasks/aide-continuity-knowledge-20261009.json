@@ -162,7 +162,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Current main has492 repair and current local/SSH native history comparison evidence. Continue original12 acceptance: authorization concurrent revoke/reverse cross-session sync, outcome receipt/live snapshots, workspace/tab/capacity and remaining scoped gates. Newce0c public upload failed; old07c defaults and production preserved. Windows user-owned, real vectors deferred.",
+  "handoff": "Current main source492; local/SSH native timeline and current local authorization concurrent revoke/reverse cross-session modes/native refusal/restart passed. Continue original12 outcome receipt/live snapshots, workspace/tab/capacity and scoped remaining gates. Newce0c public upload failed; old07c defaults and production preserved. Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -473,10 +473,13 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "remaining": "Current native natural expiry/dirty focus/external revision disabled actions/reread passed. Concurrent revoke, reverse cross-session synchronization and user-host SSH approval remain.",
+        "remaining": "Current native natural expiry/dirty stale controls plus concurrent revoke, reverse cross-session mode synchronization and native refusal/restart now passed. User-host SSH, combined lock/long-open and plugin graph native approval remain scoped gaps.",
         "evidence": [
-          "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
-        ]
+          "docs/reviews/2026-10-17/native-plugin-candidate-proof.json",
+          "docs/reviews/2026-10-17/approval-cross-session-native.md",
+          "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+        ],
+        "latestScopedEvidence": "Current79a0 full Safari: normal remembered local printf across2 sessions, native revoke, same-revision DELETE200/PUT409 with no resurrection, dirty input reread, B3 native decline/no execution, bidirectional global policy and final rev11 restart. Two independent SSE clients separately agree."
       }
     },
     {
@@ -8380,5 +8383,14 @@
     ],
     "summary": "Current492/ce0c/79a0 native realSSH workspace conclusion/basis/manual theme, stopped-endpoint historical compare, same-hostkey reconnect with new observation and original app restart/full-page readback pass; production22 exact. Original12 remain.",
     "observedRemoteMain": "2b2b05982db1d8b0f286e10f101e9ab4620573c5"
+  },
+  "approval_cross_session_native_20261017": {
+    "status": "scoped_pass_delivery_pending",
+    "task": "docs/tasks/approval-cross-session-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/approval-cross-session-native.md",
+      "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+    ],
+    "summary": "Current79a0 local complete Safari and independent CAS/SSE/restart acceptance pass; production22 exact; no source/real model/vector/production change; original12 remain."
   }
 }

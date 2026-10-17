@@ -1,0 +1,80 @@
+{
+  "id": "approval-cross-session-native-20261017",
+  "request": "继续原授权工作流：当前完整Safari跨会话审批模式双向同步、并发撤销与旧规则版本拒绝、撤销后相同命令重新审批；只使用隔离固定printf协议样例，保护生产和真实模型向量暂缓边界",
+  "baseline": "274760ef78c5510bec14d7e61ee38abdc2db00a7",
+  "initial_status": "",
+  "acceptance": [
+    "Original current79a0 launcher isolated runtime, actual normal approval+remember fixed literal printf, no real model/provider or production mutation.",
+    "Same remembered literal in a second session executes with durable exact-scope remembered receipt; distinct rule prepared for actual native revoke.",
+    "Native per-rule revoke, then same-revision concurrent revoke/update yields one accepted mutation and one409; old revisions cannot resurrect deleted rule and dirty dialog reread state is honest.",
+    "After all relevant rules revoked, new identical command in another session returns to manual pending with no tool execution; native refusal does not recreate authorization.",
+    "Native switch global assisted/manual in both session directions and read API authoritative state; original process restart retains policy/rule revocation and manual gate.",
+    "Cleanup owned runtime/provider/pages and preserve production22; exact input fingerprint, docs and scoped main gate/delivery; original12 and public package issue remain."
+  ],
+  "scope": [
+    "docs/tasks/approval-cross-session-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/approval-cross-session-native.md",
+    "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Use current exact source and normal deterministic local protocol pipeline with harmless literal print; CAS concurrency, native dialogs and cross-session global policy are independent assertions.",
+      "evidence": [
+        "internal/server/approval_rules.go",
+        "internal/server/approval_policy.go",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use current exact source and normal deterministic local protocol pipeline with harmless literal print; CAS concurrency, native dialogs and cross-session global policy are independent assertions.",
+      "evidence": [
+        "internal/server/approval_rules.go",
+        "internal/server/approval_policy.go",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "No product source change; bounded deterministic protocol fixture and normal approval flows, actual original current-image launcher.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-cross-session-native.md",
+        "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Native revoke/dirty409/reread, bidirectional session modes and B3 refusal pass; independent two-client SSE, CAS and final rev11 restart pass; unchanged exact full127 receipt.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-cross-session-native.md",
+        "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped report/proof and original12 ledger updated; harness failures, model/SSH/public boundaries explicit.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-cross-session-native.md",
+        "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned page/3 containers/2 networks removed; images/data retained, production identity and22 files unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-cross-session-native.md",
+        "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User authorized incremental push/test and main merge, no production replacement.",
+  "rollback": "Owned fixtures only; stop original launcher, remove owned stopped containers, keep data/images and protected production unchanged.",
+  "handoff": "Scoped native local approval acceptance complete; clean main gate and delivery next. Original12 active; user-host SSH and outcome live/receipt gaps remain; newce0c public upload not qualified."
+}
