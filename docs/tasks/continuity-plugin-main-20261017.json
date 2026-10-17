@@ -41,9 +41,10 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Both individual source omission negatives rejected; actual prior ARM image fails workshop asset check as expected. New exact-source full/candidate startup pending. Superseded pre-repair full stopped before Go snapshot, exit143; not claimed pass.",
+      "summary": "Two source omission negatives and prior actual ARM image negative confirmed. Exact repaired fingerprint b5b10f62 full127 currently running in isolated4GiB/2CPU snapshot; no PASS claim yet. New candidate original-start workshop discovery pending.",
       "evidence": [
-        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+        "docs/reviews/2026-10-17/continuity-plugin-main.md",
+        "docs/reviews/2026-10-17/continuity-plugin-main-proof.json"
       ]
     },
     "documentation": {

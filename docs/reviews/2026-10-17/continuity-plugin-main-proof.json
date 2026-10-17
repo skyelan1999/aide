@@ -1,0 +1,39 @@
+{
+  "status": "source_fix_negative_checks_pass_full_running",
+  "sourceCommit": "7c14193a0c679e1600f791430d4bced8f3e76b02",
+  "sourceSHA": "eb0af3efd5f775e84813e5888c5b6c2f1a813346977e950f2d3029fd8a07aa87",
+  "fingerprint": "b5b10f62d2216e13e73a049a00c6efafe5cb1f4b51838e4cfbbc38d471b0ff5b",
+  "negative": {
+    "sourceNegativeCases": [
+      {
+        "missingIn": "Dockerfile",
+        "rejected": true
+      },
+      {
+        "missingIn": "Dockerfile.local",
+        "rejected": true
+      }
+    ],
+    "fixedSourceContract": "pass",
+    "priorImageMissingPluginExit": 1,
+    "priorImage": "sha256:e54b16bb89506e9e9c675adc41abb86e6e05d339d3a8f3e1598711e67dcdc42a"
+  },
+  "supersededVerifier": {
+    "status": "intentionally_stopped_before_go_snapshot",
+    "reason": "Confirmed missing plugin workshop in both runtime Dockerfiles; repair changes fingerprint. No superseded full receipt will be treated as pass.",
+    "ownedPid": 46621,
+    "ownedDescendants": [
+      49612
+    ]
+  },
+  "full": {
+    "status": "running",
+    "commands": 127,
+    "session": 34095,
+    "wrapperLog": ".agent-state/continuity-plugin-main-20261017/repaired-full.log",
+    "container": "aide-verify-a60b5e15d6d7"
+  },
+  "candidateImageBuilt": false,
+  "nativeWorkbench": "NOT_RUN",
+  "productionReplaced": false
+}
