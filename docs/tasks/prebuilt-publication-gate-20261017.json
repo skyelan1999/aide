@@ -21,7 +21,8 @@
     "docker-images/README.md",
     "docs/tasks/prebuilt-publication-gate-20261017.json",
     "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
-    "docs/tasks/aide-continuity-knowledge-20261009.json"
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -49,11 +50,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Direct exporter negative reproduced;7 publication tests,6 route tests,21 launcher tests pass; quick111 PASS. Actual online default check correctly FAILS missing uploaded asset with mutations=false. New exact combined full pending; existing default URL defect not closed.",
+      "summary": "Direct exporter negative reproduced;7 publication tests,6 route tests,21 launcher tests pass; quick111 PASS. Actual online default check correctly FAILS missing uploaded asset with mutations=false. New exact combined full pending; existing default URL defect not closed. Actual public API positive on temporary published294b2be7 d025/301 pair passes; tracked defaults unchanged and still fail. No historical runtime activated.",
       "evidence": [
         "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
         ".agent-state/verify-20261017T070648401457Z.log",
-        ".agent-state/prebuilt-publication-live-audit.json"
+        ".agent-state/prebuilt-publication-live-audit.json",
+        "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json"
       ]
     },
     "documentation": {

@@ -1,0 +1,34 @@
+{
+  "historicalPublishedPair": {
+    "status": "pass",
+    "tag": "v0.1.17.0-RC2",
+    "source": "9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035",
+    "assets": [
+      {
+        "platform": "linux/arm64",
+        "asset": "aide-0.1.17.0-RC2-linux-arm64-d025448dd174-offline.tar.gz",
+        "bytes": 770911001,
+        "sha256": "4dc3442eb6115aac8094297a489662d809c5a8d878748d4fb06e1117d7b57536",
+        "status": "pass"
+      },
+      {
+        "platform": "linux/amd64",
+        "asset": "aide-0.1.17.0-RC2-linux-amd64-301d9d75ffbc-offline.tar.gz",
+        "bytes": 774135264,
+        "sha256": "4137fb041c495cd86772695bd5c187e33dbc7d52f45009fd38495ed00e1b82bd",
+        "status": "pass"
+      }
+    ],
+    "scope": "Public attachment metadata only; actual image import/runtime are separate",
+    "mutations": false
+  },
+  "currentDefaults": {
+    "status": "fail",
+    "error": "linux/arm64: no unique uploaded public asset",
+    "mutations": false
+  },
+  "defaultManifestChanged": false,
+  "runtimeActivated": false,
+  "scope": "Read-only actual GitHub Release metadata, not image payload/import or current candidate publication",
+  "initialFixtureSelection": "Initial4d79a303 reference still contained current missing filenames and was rejected; corrected fixture294b2be7 contains published d025/301 pair."
+}
