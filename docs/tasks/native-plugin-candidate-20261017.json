@@ -42,8 +42,8 @@
       ]
     },
     "verification": {
-      "status": "blocked",
-      "summary": "Safari58320 reaches privacy interstitial, not AIDE. Native expiry/dirty/stale/focus and full outcome UI NOT_RUN; current API fixtures verified only scoped preparation.",
+      "status": "pass",
+      "summary": "Human certificate handoff completed. Actual Safari current workbench natural expiry/dirty focus/external revision/reread confirmation and saved operator source-link exact destination PASS. Hidden/locked disposal and unsafe URL cases remain regression scope; UI receipt import not repeated.",
       "evidence": [
         "docs/reviews/2026-10-17/native-plugin-candidate.md",
         "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
@@ -51,15 +51,15 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Current identity/browser barrier/fixture provenance and actual failed/retried preparation recorded.",
+      "summary": "Historical certificate barrier retained separately; actual native observations, scoped limits and completed cleanup recorded.",
       "evidence": [
         "docs/reviews/2026-10-17/native-plugin-candidate.md",
         "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Protocol fixture removed; candidate and one owned Safari warning tab retained for required user handoff. Final tab/fixture-data/candidate cleanup pending; production22 exact.",
+      "status": "pass",
+      "summary": "Own candidate and link tabs closed; original9999 restored. Original stop0, exact own two containers/default network removed. Fixtures privately archived outside runtime; original settings/vault byte-exact and absent policy restored. Production identity/22files exact.",
       "evidence": [
         "docs/reviews/2026-10-17/native-plugin-candidate.md",
         "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
@@ -67,7 +67,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "Native child gates and public current236 assets not qualified; no production replacement or public Release.",
+      "summary": "Core current native checks now pass; complete236 ARM/AMD packages remain local, uploaded public asset gate still unqualified. No public Release or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/native-plugin-candidate.md",
         "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
@@ -76,5 +76,5 @@
   },
   "release_authorization": "Existing user-authorized incremental tests/docs; source main already delivered. No new public Release, production replacement or browser-trust change.",
   "rollback": "Close own tab, original stop, remove only exact stopped own containers/empty networks; retain data/images and original user tabs.",
-  "handoff": "https://localhost:58320/ is running with one Safari privacy warning tab. Human must personally complete certificate handoff; no background verification process remains."
+  "handoff": "No owned candidate containers or browser tabs remain. Current complete package images/data retained, fixture archived outside runtime. Public236 asset qualification remains pending; Windows native user-owned."
 }
