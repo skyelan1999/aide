@@ -1,0 +1,88 @@
+{
+  "id": "timeline-retention-synced-main-20261017",
+  "request": "Continue original knowledge-time goal: reproduce large-map single-observation retention on synced main, repair bounded encrypted history without merging old branches",
+  "baseline": "4e3bb2893adfed1ff6534c5b529051d2481e622e",
+  "initial_status": "",
+  "acceptance": [
+    "Reproduce current-source loss of one of two distinct 20052-node observations before changing code.",
+    "Retain exact before/after evidence after bounded compressed encrypted persistence; keep legacy encrypted files readable with byte-exact rollback backup.",
+    "Enforce at most32 observations, <=8MiB encoded and <=32MiB decoded, rejecting corrupt/trailing/bomb input and stale migration.",
+    "Run focused race and exact-source gates; current native UI remains user-deferred, original twelve streams not declared complete."
+  ],
+  "scope": [
+    "internal/server/knowledge_timeline.go",
+    "internal/server/knowledge_timeline_codec.go",
+    "internal/server/knowledge_timeline_codec_test.go",
+    "internal/server/knowledge_conclusion_migration.go",
+    "internal/server/knowledge_conclusion_body_test.go",
+    "internal/server/knowledge_timeline_test.go",
+    "docs/tasks/timeline-retention-synced-main-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/timeline-retention-synced-main.md",
+    "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+    "docs/reviews/2026-10-17/timeline-retention-synced-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Original knowledge-time comparison requires at least distinct observations; preserve data and isolate negative/positive fixtures.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bounded compression before existing AES-GCM; preserve legacy and existing v2 reads, encrypted rollback bytes and unchanged vector codec.",
+      "evidence": [
+        "docs/reviews/2026-10-17/timeline-retention-synced-main.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Minimal six-file repair patch plus independent existing-v2 reader regression applied; no branch merge.",
+      "evidence": [
+        "docs/reviews/2026-10-17/timeline-retention-synced-main.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Both direct negatives reproduced, then 53 focused race tests pass21.098s on formatted code; quick107 pass on fingerprint e56dd953295511aab109221603763ea0dbff2bcf5fe2b11b5e315e5a5202f6b5. New full gate pending retained-change reconciliation; native user-deferred.",
+      "evidence": [
+        "docs/reviews/2026-10-17/timeline-retention-synced-main.md",
+        "docs/reviews/2026-10-17/timeline-retention-synced-proof.json",
+        ".agent-state/verify-20261017T063814114051Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated precise budgets, existing-v2 compatibility, encrypted rollback and source/acceptance boundaries.",
+      "evidence": [
+        "docs/reviews/2026-10-17/timeline-retention-synced-main.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned negative/positive containers and temporary tar snapshots removed; no production data mounted or model calls. Existing production envelope inspection was metadata-only.",
+      "evidence": [
+        "docs/reviews/2026-10-17/timeline-retention-synced-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental work/test/push instruction retained; this batch does not merge the rejected feature branch or publish main/version/Release without completed gates.",
+  "rollback": "Retain original legacy ciphertext before first new-format write; do not rewrite data during reads or restore previously evicted observations.",
+  "handoff": "Windows user-owned, real vectors deferred; no old feature branch merge and no production mutation.",
+  "retainedWorkAudit": {
+    "backupRef": "backup/main-before-sync-20261017-rollback",
+    "confirmedMissingAfterMainSync": [
+      "a331b6f8 generated-dependency isolation and notice layout",
+      "66b0a89a resource budgets and log bounds"
+    ],
+    "mustPreserveUpstream": "New workbench UI and 12-shard/45-minute full runner; do not replace with older whole files.",
+    "distributionBoundary": "Do not restore default prebuilt URLs for unpublished local packages."
+  }
+}

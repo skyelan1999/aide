@@ -8124,5 +8124,14 @@
       "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
       "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json"
     ]
+  },
+  "timeline_retention_synced_main_20261017": {
+    "status": "in_progress",
+    "task": "docs/tasks/timeline-retention-synced-main-20261017.json",
+    "negative": "20052 nodes: two distinct observations retained only one; existing compressed v2 history rejected by synced main reader. Both independently reproduced.",
+    "implementation": "Minimal bounded compressed encrypted codec repair restored without branch merge; added independently encoded existing-v2 read-only test.",
+    "verification": "Focused race passed21.098s; old full6dd fingerprint cannot attest this new backend change. Native user-deferred; next full follows retained-change reconciliation.",
+    "retainedWorkAudit": "Backup main has other authorized startup/cache/resource/layout repairs not in current branch. Reconcile scoped changes while preserving upstream UI and sharded test runner; do not restore rejected history-object-integrity merge.",
+    "scope": "Original twelve streams remain in_progress; Windows user-owned, real vectors deferred."
   }
 }
