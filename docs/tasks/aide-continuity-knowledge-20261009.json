@@ -8334,5 +8334,15 @@
       "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71"
     },
     "releaseCheck": "exit0 existing07c public pair metadata and current795 local full; newce0c complete packages still pending"
+  },
+  "runtime_ce0c_packages_20261017": {
+    "status": "local_pass_public_upload_failed_defaults_unchanged",
+    "task": "docs/tasks/continuity-runtime-ce0c-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+      "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+    ],
+    "summary": "ce0c/492 dual complete packages actually imported; ARM original launcher cold import/reasoning10/CAS/restart and AMD emulated assets/CAD/guard pass. Safari ARM upload failed twice; public candidate check exit1. Existing07c defaults retained, production22 exact. Source492 already main; original12 remain incomplete.",
+    "next": "Upload exact new package pair and metadata; verify server digest/state/size before promotion; promotion requires new exact full and main release gate."
   }
 }
