@@ -38,7 +38,7 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `provider.go` | 模型请求、参数、usage、超时；complete（非流式）+ completeStream（SSE，400 时去 stream_options 重试） |
 | `profiles.go` | 内置/用户 Profile、策略文件、参数校验 |
 | `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
-| `files.go` / `sources.go` / `mcp_source.go` | 路径/内容策略、读写冲突、引用来源与受限 stdio MCP 驱动 |
+| `files.go` / `sources.go` / `mcp_source.go` | 路径/内容策略、读写冲突、引用来源与受限 stdio / Streamable HTTP MCP 驱动 |
 | `knowledge_map.go` / `knowledge_updates.go` / `knowledge_sources.go` | 多来源有界知识索引、来源身份重查、版本差量与文件／代码缓存 |
 | `knowledge_code.go` / `code_analysis/` | Go／JavaScript／Python AST与静态调用候选 |
 | `knowledge_documents.go` / `document_analysis/` | 文档原文提取、本地TF-IDF RAG与原文指纹回填 |
@@ -110,7 +110,7 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 | PUT / DELETE | `/api/approval-policy/rules/{rule}` | revision 校验下更新有效期或单条撤销 |
 | GET / PUT | `/api/sources` | 引用来源注册表 |
 | PUT | `/api/sources/ai-visibility` | 按工作区保存来源 AI 可见性；保留手动浏览，不替代操作系统权限 |
-| POST | `/api/sources/{id}/test` | 初始化 stdio MCP 并发现工具（仅保存安全摘要） |
+| POST | `/api/sources/{id}/test` | 初始化 stdio / Streamable HTTP MCP 并发现工具（仅保存安全摘要） |
 | GET | `/api/files`、`/api/file` | 目录/文本读取 |
 | GET | `/api/file/git-history` | 本地文件 Git 探测／最近提交／HEAD、提交、暂存区和磁盘的只读比较；参见[文件历史](architecture/markdown-editing-export.md#git-文件历史比较--git-file-history-comparison) |
 | PUT | `/api/file` | 保存；包含路径、正文、哈希和工作区身份 |
@@ -236,7 +236,7 @@ stateDiagram-v2
 
 变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。
 
-待独立规划：PTY、目录分页、streamable HTTP MCP 与统一插件文件驱动。stdio MCP 引用已落地：程序和参数以 `exec.Command` 启动、不经 shell；测试发现工具；AI 仅能调用服务实时声明为只读的工具。会话归档（pinned/archived、子会话自动归档与折叠组）、SSE 流式输出已落地。
+待独立规划：PTY、目录分页与统一插件文件驱动。MCP 引用支持 stdio 与 Streamable HTTP（见[Docker MCP 接入](plugins/docker-mcp.md)）：程序和参数以 `exec.Command` 启动、不经 shell；测试发现工具；AI 仅能调用服务实时声明为只读的工具。会话归档（pinned/archived、子会话自动归档与折叠组）、SSE 流式输出已落地。
 
 ## 外部 AI 诊断接口（/api/debug）
 

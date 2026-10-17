@@ -126,3 +126,10 @@ main,.conversation,.composer-wrap,.top-actions{min-width:0}
 
 /* Editable file address stays within the sidebar's flex row. */
 #file-panel #file-path{min-width:0;width:0;flex:1;outline-offset:2px}
+
+/* Source controls must honor their transport's visibility over palette labels. */
+#src-fields [hidden]{display:none!important}
+#source-form #src-fields select,#source-form #src-fields textarea{box-sizing:border-box;width:100%;min-height:36px;font:inherit}
+#source-form #src-fields textarea{min-height:96px;resize:vertical}
+#source-form #src-fields .source-mcp-flag{display:flex;align-items:center;gap:8px;margin-block:10px}
+#source-form #src-fields .source-mcp-flag input[type=checkbox]{display:inline-block;width:auto;min-height:0;margin:0;flex:none}

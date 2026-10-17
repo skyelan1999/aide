@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "protectedFilesUnchanged": 18,
+  "nativeHTTPForm": true,
+  "nativeStdioToggle": true,
+  "blankTokenSaved": true,
+  "nativeDiscoveredTools": 10,
+  "nativeReadOnlyTools": 0,
+  "image": "sha256:ef7cd6bf441003ba00dde92193d7890aae5eb7535218455aa29cb8a2f5251255",
+  "startedAt": "2026-10-17T04:52:52.735857254Z",
+  "sourceSHA": "40fda58e51eed211b13ea23e6638181694d06235f901ec33679d49c0f68def24",
+  "head": "5ab36ca2403ae12243fd9eca27d92710ad20a273",
+  "uncommittedSource": true
+}

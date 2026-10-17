@@ -1,0 +1,82 @@
+{
+  "id": "docker-mcp-integration-20261017",
+  "request": "下一步需要你调试MCP功能，你可以尝试把docker的MCP功能添加进去，然后用aide测试链接是否正常",
+  "baseline": "5ab36ca2403ae12243fd9eca27d92710ad20a273",
+  "initial_status": "",
+  "acceptance": [
+    "保留 stdio 来源兼容性，新增 Streamable HTTP 配置与工具发现。",
+    "Bearer 独立加密保存；改配、停用、凭据更新后拒绝旧请求和旧工具发现结果。",
+    "Docker Desktop 本机认证网关在实际 AIDE 页面完成连接与工具发现；不挂载 Docker socket。",
+    "工具调用维持实时 readOnlyHint 限制，缺少声明不伪装为可调用。",
+    "记录真实验证、网关生命周期、资源限制、镜像与未完成发布状态。"
+  ],
+  "scope": [
+    "internal/server/mcp_source.go",
+    "internal/server/mcp_http.go",
+    "internal/server/mcp_http_test.go",
+    "internal/server/sources.go",
+    "internal/server/web/",
+    "scripts/mcp-source-form.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/plugins/docker-mcp.md",
+    "docs/tasks/docker-mcp-integration-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求添加 Docker MCP 并在 AIDE 测试连接；禁止以单独协议探针替代工作台验证。",
+      "evidence": [
+        "用户请求",
+        "docs/plugins/docker-mcp.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "容器通过 host.docker.internal 访问宿主机 loopback 认证网关；新增原生 HTTP 客户端，凭据在现有保险库，保留只读声明门禁。",
+      "evidence": [
+        "internal/server/mcp_http.go",
+        "internal/server/mcp_source.go"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "HTTP 与来源表单已实现；追加配置/凭据一致性检查与失效发现结果保护。网关自动生命周期尚未完成。",
+      "evidence": [
+        "internal/server/mcp_http_test.go",
+        "scripts/mcp-source-form.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "针对性 race 8.073s + vet、quick 通过。新候选由原始 start.command 显式源码构建；Safari HTTP表单与stdio切换、令牌留空保存、Docker10工具发现通过；18个鉴权/凭据/会话文件哈希未变。无真实模型调用，Docker工具无只读声明，不能作为实际AIDE工具执行通过。全量回归将运行。",
+      "evidence": [
+        ".agent-state/docker-mcp-integration-20261017/focused.log",
+        ".agent-state/docker-mcp-integration-20261017/quick-current.log",
+        ".agent-state/verify-20261017T045129221108Z.log",
+        ".agent-state/startup/start-20261017T125013-79398.log",
+        "docs/reviews/2026-10-17/docker-mcp-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "补充 HTTP 安全边界、Docker 实际发现结果和生命周期待办。",
+      "evidence": [
+        "docs/plugins/docker-mcp.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "准备推送当前开发分支检查点；本机新候选原生验证已通过，全量session62601/container aide-verify-54ea16442d3e运行中，未宣称PASS。未合main、未发布镜像或Release。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户“做一部分，push一部分，测一部分”及维护文档授权。本次仅当前开发分支检查点；按用户最新要求只同步main，不合其他远端功能分支。main与Release仍受完整门禁约束。",
+  "rollback": "本地改动保留于当前工作区；同步前恢复点 23de3ae2225407e8997ff95b116963f25dcfda64，撤销误合并前恢复点 39a6854c0ab03170641db0091a72fdd30f72e89b。MCP 认证来源是本次用户授权新增，原有凭据与会话须保留；不得用清库回滚。",
+  "handoff": "2026-10-17 按用户纠正“撤销这次本地合并，只同步 main”：已撤销本地合并 64a09479，当前 HEAD 恢复 5ab36ca2；fetch 后 origin/main=5fac564d，已包含于当前分支，ff-only 同步显示 Already up to date。未合入另一设备 feature 分支。MCP 未提交修改已恢复，保留两次 stash 恢复点。未推送远端、未替换运行镜像。之前 quick PASS 绑定已撤销合并的指纹，不作为当前发布证据。"
+}

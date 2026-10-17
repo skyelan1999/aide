@@ -2755,3 +2755,13 @@ Object.assign(window.aideEnglish, {'退化面 {0}，已保留边界':'Degenerate
 Object.assign(window.aideEnglish, {'返回星图':'Return to constellation','检索来源已变化，请重新探索文档正文。':'Search sources changed. Search the document text again.'});
 
 Object.assign(window.aideEnglish, {'重新读取':'Read again','审批规则已变化，请重新读取':'Approval rules changed. Read them again.','当前有效期尚未保存，重新读取将放弃输入。继续？':'The expiry has not been saved. Reading again will discard this input. Continue?'});
+
+Object.assign(window.aideEnglish, {
+  'MCP 传输方式':'MCP transport',
+  '本地程序（stdio）':'Local program (stdio)',
+  'HTTP 网关（Streamable HTTP）':'HTTP gateway (Streamable HTTP)',
+  'MCP 网关地址':'MCP gateway endpoint',
+  'Bearer 令牌（可选，保存在加密保险库）':'Bearer token (optional, stored in the encrypted vault)',
+  '本地程序在 AIDE 容器内运行。Docker MCP 可连接宿主机 HTTP 网关；测试仅发现工具，AI 仍只调用服务明确声明为只读的工具。':'Local programs run inside the AIDE container. Docker MCP can connect through the host HTTP gateway. Testing discovers tools only; AI calls still require the server to declare a tool read-only.'
+});
+Object.assign(window.aideEnglish, {'Docker Desktop 本机网关':'Local Docker Desktop gateway'});
