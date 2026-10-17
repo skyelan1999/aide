@@ -1,0 +1,39 @@
+{
+  "status": "insufficient_real_history",
+  "workspace": "Fc5ffa1008258",
+  "entries": [
+    {
+      "id": "Heb0c15ac5c2b3a51970727ae",
+      "observed": "2026-10-17T01:01:10.893891672Z",
+      "digest": "08cc491ae7349c48995fdb4c9ce61d8c7ce579170106b98b1ce23ed3778e3327",
+      "nodes": 20052,
+      "edges": 20035,
+      "truncated": true
+    }
+  ],
+  "entriesCount": 1,
+  "dropped": 151,
+  "limit": 32,
+  "bytesLimit": 8388608,
+  "sizes": {
+    "encryptedFileBytes": 9735337,
+    "envelopeKeys": [
+      "version",
+      "ciphertext",
+      "nonce"
+    ],
+    "ciphertextDecodedBytes": 7301449,
+    "serializedPlainBytes": 7301433
+  },
+  "nativeCompareUnavailable": true,
+  "noSyntheticComparisonClaim": true,
+  "interpretation": "Two observations of current size cannot fit the8MiB serialized-plaintext retention budget; source evicts whole oldest snapshots",
+  "nativeNoticeOverflow": "Observed large aside notice; dismissed without deleting diagnostics; CSS inheritance diagnosis, no fix claim",
+  "protected": {
+    "status": "pass",
+    "protectedFilesExact": 22,
+    "imageMountsNetworksExact": true
+  },
+  "restoredMainSession39": true,
+  "starLogAndTimelineClosed": true
+}

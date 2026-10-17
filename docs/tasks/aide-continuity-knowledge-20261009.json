@@ -741,6 +741,13 @@
           "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
           "docs/reviews/2026-10-16/workbench-runtime-delivery.md"
         ]
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "evidence": [
+          "docs/reviews/2026-10-17/timeline-native-proof.json"
+        ],
+        "remaining": "Actual large-map retention budget only permits one current-size observation, so native two-time comparison and conclusion/evidence workflow cannot be completed. Fix bounded retention then revalidate; do not count self-comparison."
       }
     }
   ],
@@ -8109,5 +8116,11 @@
     "task": "docs/tasks/approval-dialog-expiry-20261017.json",
     "report": "docs/reviews/2026-10-17/approval-dialog-expiry.md",
     "summary": "Actual old Safari/API natural expiry mismatch repaired. Current8f native expiry/dirty/version/save/revoke, original launcher/14sessions preservation, both complete local packages/import/freshARM passed. Full still live; default image URLs require public availability before merge. Main remains5fac564d until gates."
+  },
+  "timeline_native_20261017": {
+    "status": "in_progress",
+    "task": "docs/tasks/timeline-native-20261017.json",
+    "report": "docs/reviews/2026-10-17/timeline-native.md",
+    "summary": "Actual current map20052 nodes/20035edges has only one snapshot and151 evictions; serialized plaintext7.30MB with8MiB total budget cannot retain two current-size observations. Native comparison incomplete; bounded retention fix required. Diagnostic aside overlay issue also observed. Original22protected files/14sessions preserved; no product source change."
   }
 }
