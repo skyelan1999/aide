@@ -8103,5 +8103,11 @@
     ],
     "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate.",
     "deliveredMain": "52322b7cccaae9014559f435c1757ca938f1adc3"
+  },
+  "approval_dialog_expiry_20261017": {
+    "status": "in_progress",
+    "task": "docs/tasks/approval-dialog-expiry-20261017.json",
+    "report": "docs/reviews/2026-10-17/approval-dialog-expiry.md",
+    "summary": "Actual old Safari/API natural expiry mismatch repaired. Current8f native expiry/dirty/version/save/revoke, original launcher/14sessions preservation, both complete local packages/import/freshARM passed. Full still live; default image URLs require public availability before merge. Main remains5fac564d until gates."
   }
 }

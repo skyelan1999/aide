@@ -50,21 +50,27 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old actual Safari/API expiry mismatch and native own-rule revoke pass; corrected specialized + quick104 pass. New runtime/native/full pending.",
+      "summary": "Old real expiry mismatch fixed in8f current original-launcher runtime; native natural expiry, focused date preservation under external revision, stale-save disable, reread cancel/confirm, native expiry save/API exact and revoke passed. Both complete packages/import and freshARM original-launcher/document/CAD pass. Current frozen full running; old full107 not applicable.",
       "evidence": [
         "docs/reviews/2026-10-17/approval-dialog-expiry.md",
-        "docs/reviews/2026-10-17/approval-dialog-expiry-proof.json"
+        "docs/reviews/2026-10-17/approval-dialog-expiry-proof.json",
+        "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Current native/runtime/packages, actual prior failures and pending full/public main delivery documented. Final full/release receipt pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-dialog-expiry.md",
+        "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Both owned protocol rounds removed with actual native revoke. Original14sessions/auth/sources/vault preserved; settings only48to49to50 and policy monotonic1to7to14, original mode/rules restored. Fresh package project stopped/removed, prior slot restored, current8f protected. No new tabs or user file deletion.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -74,5 +80,5 @@
   },
   "release_authorization": "Existing user-authorized incremental testing/fixes/main/runtime/offline package delivery; no new version/tag or real model request.",
   "rollback": "Remove own fixture rule/session/provider/model/listener and restore original enabled mode/rules/settings/vault; never rewind policy revision or session sequence. Preserve original sessions and published rollback packages.",
-  "handoff": "Original e729 runtime still active; source fix needs controlled current-commit build/native/full, packages and delivery. Preparation fixtures removed, original14sessions preserved. Node must be on process PATH via existing bundled executable. No source release claim."
+  "handoff": "Current branchfc107a2a has source060d10f1, full live session56885/containeraide-verify-fe908e2597e5; poll same handle, no restart on timeout. Current8f runtime/native/fresh/both archives/import verified, fixtures cleaned,14sessions preserved. Candidate manifest8f/37cb remains task-branch-only; new/previous e729 default URLs not publicly available. Full and public downloads must pass before main merge. Node PATH uses bundled runtime."
 }

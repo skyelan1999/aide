@@ -1,0 +1,152 @@
+{
+  "status": "runtime_native_packages_pass_full_pending",
+  "runtime": {
+    "serverInstanceId": "2026-10-17T01:13:41.998558589Z",
+    "image": "sha256:8f3618fe2be0bf986d8db334029289949ef1638a580e3be8ad0a9f017a6ffce4",
+    "imageTag": "sha256:8f3618fe2be0bf986d8db334029289949ef1638a580e3be8ad0a9f017a6ffce4",
+    "sourceSHA256": "24069d5ad1b460ba140586ad981c7183f908938d9db3baa0267b31e0b32bb91d",
+    "platformManifest": "sha256:25052792efd42d87f2cfcf5163329ea8ca72ff355c378fdc285e30b9af689f57",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "parallel-chat.js",
+      "crash-monitor.js",
+      "crash-monitor.css",
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "packages": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-8f3618fe2be0-offline.tar.gz",
+      "bytes": 770932177,
+      "sha256": "7eb039b9c67795a2714f3af7deed45aa7daabf3d73e7ee0fcd9ced0e4c91cf71",
+      "innerImageTarSHA256": "520ee51ee61d6802326e65c69f9b36182a1937b90afe284593af53815510e3aa",
+      "image": "sha256:8f3618fe2be0bf986d8db334029289949ef1638a580e3be8ad0a9f017a6ffce4",
+      "sourceSHA256": "24069d5ad1b460ba140586ad981c7183f908938d9db3baa0267b31e0b32bb91d",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "archive": "aide-0.1.17.0-RC2-linux-amd64-37cb455fa3e0-offline.tar.gz",
+      "bytes": 774145993,
+      "sha256": "a7899428c7ec395ea29ac44654669caa1850bcce1314e252ae4bb5dbfd6070f2",
+      "innerImageTarSHA256": "d561675a7f110a9d3e44e5c65383f1445ae7ba7011655699877ba912eace993b",
+      "image": "sha256:37cb455fa3e0c3f965558cc08f2f67805146fe5a3b09839123cb6ecc600770ae",
+      "sourceSHA256": "24069d5ad1b460ba140586ad981c7183f908938d9db3baa0267b31e0b32bb91d",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    }
+  ],
+  "freshARM": {
+    "status": "pass",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-8f3618fe2be0-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "actualStartCommand": true,
+    "documentLine": {
+      "line": 3,
+      "matchedRawFileHash": true,
+      "blankLineAndCRLFPreserved": true,
+      "actualCompiledImageAPI": true
+    },
+    "image": "sha256:8f3618fe2be0bf986d8db334029289949ef1638a580e3be8ad0a9f017a6ffce4",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "segments": 0,
+      "points": 0,
+      "emptyNodes": 0,
+      "parts": 2,
+      "faces": 9,
+      "meshedFaces": 9,
+      "collapsedFaces": 0,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "recoveredFaces": 0,
+      "nurbsFaces": 0,
+      "seconds": 0.03438108300906606
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  },
+  "native": {
+    "status": "pass",
+    "naturalExpiryNative": true,
+    "dirtyDay18RetainedAfterExternalRevision": true,
+    "staleSaveDisabled": true,
+    "explicitRereadCancelRetainedDraft": true,
+    "explicitRereadConfirmedServerDate": true,
+    "nativeSaveExpiresAt": "2026-10-18T01:16:00Z",
+    "apiReadbackActive": true
+  },
+  "nativeRevoke": "pass: actual confirm and empty list",
+  "cleanup": {
+    "status": "pass",
+    "original14SessionsByteExact": true,
+    "authSourceVaultBytesExact": true,
+    "settings": {
+      "status": "pass",
+      "settingsExactExceptSequence": true,
+      "sequence": [
+        49,
+        50
+      ],
+      "encryptedVaultEntriesExact": true,
+      "ownedSessionProviderModelRemoved": true
+    },
+    "policy": {
+      "status": "pass",
+      "originalModeAndRulesExact": true,
+      "revisions": [
+        7,
+        14
+      ]
+    },
+    "imageMountsNetworksExact": true,
+    "onlyOwnedLoopbackProviderStopped": true
+  },
+  "sourceCommit": "060d10f16e6efef2eb4d4f3610a6849f5b702252",
+  "frozenInputFingerprint": "c77f98086e668d3eadea04f7a3da14305a349de86926eedb4de433730053224f",
+  "full": "running; previous full107 is not proof for changed code",
+  "mainMerge": "pending",
+  "publicReleaseAssets": "pending; do not merge candidate default URLs without public verification"
+}
