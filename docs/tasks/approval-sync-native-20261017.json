@@ -64,11 +64,13 @@
     },
     "release": {
       "status": "pending",
-      "summary": "普通文档验收检查点待分支推送；main与RC2公开附件仍由原分发门禁管理，未宣称已经交付main。",
-      "evidence": []
+      "summary": "本轮普通文档检查点475f973f991d450af43e3850c5265484639182b2已推送test/approval-sync-native-20261017并精确ls-remote核对；复用同输入full109，不改版本/镜像。独立main与公开分发门禁尚未推进，保持pending。",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-sync-native.md"
+      ]
     }
   },
   "release_authorization": "沿用原持续目标与分批测试/文档/push授权；本轮只读验收和自建测试数据，不新建版本，不合外部功能分支。",
   "rollback": "仅撤销本轮创建的精确命令规则、会话和本地提供商；校验原设置/加密条目，保留合法递增计数，不覆盖外部变化。",
-  "handoff": "本轮原生/API验收与清理已完成，不保留测试会话、授权、提供商或监听。无需重新运行fixture setup；其owned.json是历史证据。后续仅文档分支推送和原整体目标剩余项；GitHub上传页仍单独等待回执/开发者设置确认。"
+  "handoff": "本轮原生/API及清理已完成，分支检查点475f973f精确推送核对。追加仅普通收据，不重复fixture setup；owned.json为历史记录，所有专用会话/规则/提供商/监听已移除。后续继续原整体目标剩余项；GitHub单一上传页仍单独等待回执/开发者设置确认。"
 }

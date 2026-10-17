@@ -19,3 +19,5 @@ B编辑未保存有效期14:30；A实际输入并保存14:45，API读回UTC06:45
 没有产品源码修改；精确输入继续匹配full109（server race768.615秒/vet/CAD），没有重跑或虚构新full。用户SSH主机、跨工作区身份负例的原生界面、后台严格延迟以及真实辅助模型审核仍属于其他分范围验收；Windows用户负责，真实向量暂缓。原12项总目标继续。
 
 证明：[原生/API与清理摘要](approval-sync-native-proof.json)。私有原始AX、截图、工具返回和恢复快照保留在`.agent-state/approval-sync-native-20261017/`，不发布原始会话或密钥材料。
+
+分支检查点`475f973f`已推送并与远端`test/approval-sync-native-20261017`精确核对，追加仅普通收据；未据此合入main、变更版本或发布镜像。

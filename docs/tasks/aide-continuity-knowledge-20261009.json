@@ -8210,6 +8210,8 @@
     "status": "pass_scoped",
     "task": "docs/tasks/approval-sync-native-20261017.json",
     "report": "docs/reviews/2026-10-17/approval-sync-native.md",
-    "remaining": "用户SSH主机、跨工作区身份的原生负例、严格后台时限及真实辅助模型的额外联调仍分开记录。"
+    "remaining": "用户SSH主机、跨工作区身份的原生负例、严格后台时限及真实辅助模型的额外联调仍分开记录。",
+    "branch": "test/approval-sync-native-20261017",
+    "deliveredCheckpoint": "475f973f991d450af43e3850c5265484639182b2"
   }
 }
