@@ -98,5 +98,12 @@
   },
   "release_authorization": "用户原目标成果追踪、会话分段式结论、不等全做完覆盖；既有分批push/test和main授权。仅隔离本地协议模型，不替换当前用户服务。",
   "rollback": "Revert scoped projection/rendering commits; no persisted schema migration or user data rewrite. Keep prior runtime/images.",
-  "handoff": "full正在独立验证容器运行；不可复用旧source94e/7e43收据。通过后补文档、审阅、main/release-check/push；总体原12及升级包交付仍未完成。"
+  "handoff": "当前full句柄49247、验证容器aide-verify-ea375cf75f2b仍运行，已5/12组；不要重启。主工作目录main已仅ff同步远端19e7c94d，未部署。候选分支需在本轮full终态后集成origin/main并重新验证精确输入，旧baseline收据不可用于集成main发布。原12继续。",
+  "integration_followup": {
+    "remoteMain": "19e7c94d5a769dae444f31c5a0b54d7b30a133e9",
+    "primaryMainSynced": true,
+    "candidateMergedRemoteMain": false,
+    "changes": "LAN discovery host bridge changes Docker/startup/build/verification inputs; no direct overlap with staged outcome files",
+    "required": "finish this baseline full without changing inputs, integrate latest origin/main on task branch, rerun affected validation and qualify exact integrated fingerprint; do not apply baseline receipt to merged code"
+  }
 }
