@@ -79,5 +79,12 @@
       "native-form-proof.json"
     ],
     "implementationBoundary": "Prepared isolated candidate only; repository runtime sources unchanged."
+  },
+  "distributionAudit": {
+    "currentManifest": "Both default filenames absent from live public Release API; do not deploy new defaults before uploaded assets/digests verified.",
+    "publicARM6a": "uploaded confirmed by API; no release note draft submission",
+    "publicCountAtAudit": 23,
+    "production": "unchanged",
+    "evidence": "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
   }
 }

@@ -30,3 +30,11 @@
 Safari 原生在唯一自建 HTTP 组件页操作真实候选表单函数：选择 HTTP，填入合成端点及合成令牌，勾选 Docker 本机网关后提交；可见输出为 streamable-http、端点和 dockerGateway=true，配置中无令牌，独立秘密字段存在。重新打开样例、切换 stdio 后，HTTP 字段隐藏；node 与三个参数（含 with spaces）正确提交，secretPresent=false。
 
 该组件的后端只是内存中的合成提交接收器，没有调用 /api/sources、修改真实保险库、启动程序或连接 Docker MCP。它不证明真实认证与发现通过。组件标签关闭、服务受控停止，原工作台 #39 与空输入恢复，未提交 GitHub 编辑页。候选 app/CSS/测试内容哈希和操作结论保存在私有 native-form-proof.json；后续应用到开发分支须核对一致，后端 race 和真实连接仍待。
+
+## 公开镜像清单核对
+
+实时读取 GitHub RC2 Release API：共 23 个附件。当前 `docker/prebuilt-images.tsv` 的 ARM e729ba4f061b 与 AMD 2e17e83905d2 两个离线包均不在附件列表，不能作为新设备默认下载入口。已公开 ARM 6a8a2dcb290b 包状态为 uploaded，770960523 字节，API 摘要与先前本地记录一致（sha256:252f364df84a4b36bffc823e0320631e83d30715dd36a3295198d9bd2ab443aa）；这更新了先前“上传中/未知”的观察，只证明该文件已上传，未提交浏览器中的发行说明草稿。
+
+本轮没有更改清单，运行中的 full 仍绑定既有输入。后续应完成当前候选的双架构完整包、实际导入与公开附件摘要核验后再切默认清单；不能把早期包存在当成新修复已发布或可以安全读取所有现有历史。原始脱敏证据为私有 public-manifest-audit.json。数据来源：[GitHub RC2 Release API](https://api.github.com/repos/skyelan1999/aide/releases/tags/v0.1.17.0-RC2)。
+
+生产与候选的 localhost 证书文件哈希实查相同；没有更改证书或信任设置，也没有重开被用户延后的告警页面。
