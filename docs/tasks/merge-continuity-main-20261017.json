@@ -62,10 +62,10 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Authorized source main push pending full; no version/tag/Release publication or production replacement requested.",
+      "status": "pass",
+      "summary": "User-requested source merge pushed to remote main16722de3 and independently read back; PR4 API merged=true/closed. This stage covers source delivery only; native/workbench/image/public Release/production stages remain pending in child tasks.",
       "evidence": [
-        "docs/reviews/2026-10-17/merge-continuity-main.md"
+        "docs/reviews/2026-10-17/merge-continuity-main-proof.json"
       ]
     }
   },

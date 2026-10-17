@@ -20,5 +20,15 @@
   ],
   "nativeWorkbench": "pending_certificate_handoff",
   "publicImageForMergedSource": "not_built",
-  "productionReplaced": false
+  "productionReplaced": false,
+  "sourceDelivery": {
+    "status": "pass",
+    "remoteMainVerified": "16722de3c906cde7b19b25a7d56b187e4956dc4f",
+    "priorRemoteMain": "f0f7d775559efd19d51e175ed4ba33f8b7032705",
+    "forcePush": false,
+    "pr": 4,
+    "prState": "closed",
+    "prMerged": true,
+    "mergedAtUTC": "2026-10-17T11:16:38Z"
+  }
 }
