@@ -125,5 +125,14 @@
     ],
     "scope": "real OpenSSH and published ff1553153a55 runtime in private temporary Docker network; no user mounts or host ports; temporary containers/network cleaned",
     "limits": "API acceptance, not browser SSH/theme/narrow/fault or process-restart acceptance; no semantic conclusion evolution inference"
+  },
+  "native_local_current_20261017": {
+    "status": "scoped_pass",
+    "task": "docs/tasks/knowledge-timeline-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+      "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+    ],
+    "remaining": "SSH native timeline, responsive/theme, user-host/long-term and receiving-device still separate."
   }
 }

@@ -1,0 +1,93 @@
+{
+  "status": "scoped_native_pass",
+  "observedUTC": "2026-10-17T13:55:35.253527+00:00",
+  "runtimeImage": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+  "productCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+  "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+  "priorExactFull127Pass": true,
+  "servedTimelineJavaScriptExact": true,
+  "servedTimelineSHA256": "6e16ae6f50b300df98482f0af310e6cfa879ccad4f59b7cb1b78a2ab4f124590",
+  "native": {
+    "client": "Safari full workbench then map via actual button",
+    "origin": "https://localhost:58320/",
+    "originalLauncher": true,
+    "samePreviouslyClearedCertificateAndOrigin": true,
+    "newPortWarningClosedWithoutBypass": true,
+    "beforeBasisAfterCompare": true,
+    "equalConclusionHashAndDifferentBasisHashes": true,
+    "explicitReferenceLocation": "L5:11 before and L5:21 after conclusion edit",
+    "conclusionEditAddAndRemovedNodeExpanded": true,
+    "manualTopicSavedViaUI": "分批索引策略的变化",
+    "manualBeforeAndAfterWholeQuoteExplicitlySelected": true,
+    "actualScreenshotReadableHistoryAndPathHash": true,
+    "restartThenFullPageRefreshAndPairReselection": true,
+    "afterRestartNativeCompareAndBothHistoricalBasisExpanded": true,
+    "oldFilesAbsentFromCurrentIndex": true,
+    "currentIndexedNodesAfterRemoval": 21,
+    "historicNodesPerObservation": 25,
+    "knownLimitsVisible": true,
+    "noHistoricalJumpToCurrentSourceClaim": true
+  },
+  "basisOnly": {
+    "workspace": "F0c57a8bb7ff8",
+    "before": "H963b30940b87f59a13d2bf4f",
+    "basisAfter": "H7a19243d639eeb767c76bfe2",
+    "historyCount": 2,
+    "equalConclusionHash": "35733cb37c9b1c72baaa112bb33395e6f224827cc1fd38b4dba0ca3c31e4cf98",
+    "beforeBasisHash": "a8dca02b72e45cabda67946fb44bcd2a1698969725d33cde215027bd0686b7df",
+    "afterBasisHash": "621d13f6a1266479baa26255a34cda73b39dda53a15dfc18fdbf48f040091562",
+    "nativeExpandedBoth": true,
+    "nativeLineColumn": "5:11"
+  },
+  "restart": {
+    "status": "pass",
+    "pair": {
+      "before": "H963b30940b87f59a13d2bf4f",
+      "after": "H11b97036a28d28bb87c7aff9"
+    },
+    "workspace": "F0c57a8bb7ff8",
+    "beforeStopHistoryCount": 3,
+    "sameContainer": true,
+    "sameImage": true,
+    "newProcess": true,
+    "originalStopStart": true,
+    "compareExactlyEqualAfterRestart": true,
+    "topicsExactlyEqualAfterRestart": true,
+    "currentOriginalFilesAbsent": true,
+    "currentFilesPreservedOutsideIndex": true,
+    "encryptedKnowledgeFiles": 1,
+    "plaintextMarkersAbsent": true,
+    "manualThemeNativeSaved": true,
+    "conclusionChanges": 1,
+    "basisChanges": 1,
+    "manualChanges": 1,
+    "addedFiles": 1,
+    "removedFiles": 1,
+    "modelVectorCalls": 0
+  },
+  "scope": {
+    "localOwnedMarkdown": true,
+    "SSHNativeTimeline": "NOT_RUN",
+    "responsiveThemes": "NOT_RUN in this task",
+    "userHostLongTermLargeLibrary": "NOT_RUN",
+    "Windows": "user-owned",
+    "realVectors": "deferred",
+    "modelOrVectorCalls": 0,
+    "productionReplaced": false
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": 2,
+    "ownedEmptyNetworksRemoved": 2,
+    "originalUserBrowserTabsRestored": true,
+    "onlyProductionTwoContainersRemain": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "imagesDataAndOriginalFilesRetained": true,
+    "observedUTC": "2026-10-17T13:56:03.005114+00:00"
+  },
+  "sourceDelivery": {
+    "status": "pending"
+  }
+}
