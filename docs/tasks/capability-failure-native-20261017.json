@@ -1,0 +1,74 @@
+{
+  "id": "capability-failure-native-20261017",
+  "request": "继续能力仪表真实认证Safari失败状态与恢复验收，不触碰真实来源目录，不调用模型",
+  "baseline": "66b0a89aacc4099eb12b023cdd16919bcd865552",
+  "initial_status": "",
+  "acceptance": [
+    "原生Safari认证页触发真实本地来源根目录缺失，失败消息与API一致且不泄漏路径",
+    "同一来源指纹目录恢复后原生重试通过，读检查不声称写入已验证",
+    "移除自己的来源与空目录，原22文件精确一致、临时卡片消失、原页面恢复"
+  ],
+  "scope": [
+    "docs/tasks/capability-failure-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/capability-failure-native*"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Original workstream7 needs authenticated failure-state display; user authorizes continuation.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-failure-native.md",
+        "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Own AI-hidden read-only source; remove/recreate only own empty directory, independent API and protected bytes.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-failure-native.md",
+        "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "No product change needed. Native local real filesystem failure/recovery evidence captured.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-failure-native.md",
+        "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Native failed/pass states, matching API timestamps/fingerprint, no write claim and private path omission passed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-failure-native.md",
+        "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Native scope and untested remote/plugin/model boundaries recorded with sanitized proof.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-failure-native.md",
+        "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "22 protected files exact, original registry exact, own source/directory removed; native card absent and original main39 restored; no new tabs.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-failure-native.md",
+        "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental push/main authorization; no new version/tag. Scoped docs await current full receipt/clean-main gate.",
+  "rollback": "Docs-only revert; temporary source/directory already removed, original registry and22protected bytes retained.",
+  "handoff": "Native local failure/retry/cleanup scoped pass. Current source frozen66b0a89a full runner88882/container aide-verify-ad209cfeb703 still live. No duplicate full. Overall12 continue."
+}

@@ -1,0 +1,35 @@
+{
+  "status": "scoped_native_pass",
+  "runtimeImage": "sha256:6ad1d1179c2c6aa8b334cf98663626dcb52441cea105f318a8751292244486e7",
+  "client": "existing native Safari authenticated localhost9999",
+  "failure": {
+    "state": "failed",
+    "at": "2026-10-17T04:26:17.984562335Z",
+    "durationMs": 0,
+    "message": "来源根目录读取失败；请核对路径、凭据和连接"
+  },
+  "recovered": {
+    "state": "pass",
+    "at": "2026-10-17T04:26:40.117854179Z",
+    "durationMs": 0,
+    "message": "来源根目录读取通过；未验证写权限"
+  },
+  "sameSourceFingerprint": true,
+  "writeStateNotRunBoth": true,
+  "failureMessageOmitsPrivatePath": true,
+  "temporaryCardRemovedNative": true,
+  "cleanup": {
+    "status": "pass",
+    "protectedFilesExact": 22,
+    "originalRegistryExact": true,
+    "temporarySourceRemoved": true,
+    "onlyOwnedEmptyDirectoryRemoved": true,
+    "modelCalls": 0,
+    "newBrowserTabs": 0
+  },
+  "limits": [
+    "local read-only source root disappearance/recovery only",
+    "no SSH/FTP/plugin/model failure acceptance",
+    "Windows user-owned; real vectors deferred"
+  ]
+}

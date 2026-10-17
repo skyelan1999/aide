@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Complete knowledge-path-native-20261017 and docs-only SSH clean-main gates, current RC2 four supplemental assets/public verification and main push. Full107 current98ebc999 pass. Then original12: SSH workspace-mode, recovered branch lifecycle, approval/outcome/timeline/combined workflows. Windows user-owned; real vectors deferred.",
+  "handoff": "Priority reasoning native5-level/10write isolation already accepted. Docker recovered with original14sessions; current resource-guard full88882/container aide-verify-ad209cfeb703 live, no duplicate run. Native capability local failure/retry/cleanup now passed. Finish frozen full, host-guard offline ARM/AMD delivery/public assets and clean-main gate; then remaining12-workstream gaps. Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -404,6 +404,15 @@
           "docs/reviews/2026-10-17/outcome-native-proof.json"
         ],
         "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Native real cancelled historical run51 and synthetic normal-path101 records across100+1pages/allIDs/export already passed; import preview/cancel and real summary download separately passed.",
+        "evidence": [
+          "docs/reviews/2026-10-17/outcome-native-proof.json",
+          "docs/reviews/2026-10-16/evidence/outcome-native-controls-proof.json"
+        ],
+        "remaining": "Current native hidden-active visibility, committed release-receipt cards and combined authorization/workspace lifecycle remain. Synthetic101 pagination evidence is separate from real-provider hidden activity."
       }
     },
     {
@@ -484,6 +493,15 @@
         "task": "docs/tasks/capability-native-20261017.json",
         "report": "docs/reviews/2026-10-17/capability-native.md",
         "summary": "Native seven read checks, actual plugin disk hash and independent API pass; natural five-minute stale state shown without manual refresh, six API checks stale. Original14sessions/22protected files/image/mounts/networks exact and original session/source view restored. No model, plugin tool, write or SSH test this task."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Native workspace/source read, plugin entry and four parser dependency imports/natural expiry already passed. Additional same-fingerprint local source root disappearance and recovery now shows failed/pass in Safari and API;22 protected bytes preserved.",
+        "evidence": [
+          "docs/reviews/2026-10-17/capability-native-proof.json",
+          "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+        ],
+        "remaining": "SSH user-host/workspace permissions, remote protocol and other plugin/model failure and complete execution workflows remain; local authenticated failure-state is no longer untested."
       }
     },
     {
@@ -8134,5 +8152,17 @@
     "progress": "Source/context parity, real compact restart notice/diagnostics/detail/dismiss at1325/707px, current complete runtime imports/fresh ARM and ordinary repeated default start passed; no new tabs/model calls.",
     "remaining": "New full handle14001 still awaiting Docker after host disk exhaustion; Engine stopping/API timeout/9999 refused. Normal quit failed to stop backend. Force recovery user confirmation pending; do not force or start replacement full without authoritative terminal and recovered space. Main/public upload still held.",
     "dataProtection": "Direct host20protected entries including14sessions exact. Two old /tmp code copies preserved outside disposable state with SHA/mode/link verification and original aliases; archive /Volumes/MY PASSPORT/aide_ws/preserved-temp-workspaces-20261017 must not be deleted as cache."
+  },
+  "docker_resource_recovery_20261017": {
+    "status": "scoped_runtime_pass",
+    "task": "docs/tasks/docker-resource-guard-20261017.json",
+    "summary": "Drive/engine restored; clean Docker inventory before local6ad archive start,14sessions/20protected entries and idempotent repeat passed. Startup10GiB/build20GiB guards/log rotation and bounded full runner pushed66b0a89a. Full88882 currently running; main/public assets still pending."
+  },
+  "capability_failure_native_20261017": {
+    "status": "scoped_native_pass",
+    "task": "docs/tasks/capability-failure-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+    ]
   }
 }
