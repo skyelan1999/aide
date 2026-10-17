@@ -236,6 +236,10 @@
       ],
       [
         "python3",
+        "scripts/test_go_test_shards.py"
+      ],
+      [
+        "python3",
         "scripts/check_docs.py"
       ],
       [

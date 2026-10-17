@@ -14,13 +14,18 @@ import tempfile
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-# A cold ARM64 race suite reached its former15m package deadline while the
-# current test was only1s old. Keep every test and reserve2m for vet inside
-# the existing20m process limit and1250s Docker owner deadline.
+# Keep every server test while avoiding one package-wide deadline for the
+# growing suite. Compile race instrumentation once, then run disjoint shards
+# in separate processes. Other packages and vet retain their ordinary paths.
 COMMAND = ('set -euo pipefail; snapshot=$(mktemp -d /tmp/aide-verify.XXXXXX); '
            'tar --no-same-owner -xf - -C "$snapshot"; cd "$snapshot"; '
            'timeout --signal=TERM --kill-after=10s 20m bash -c '
-           "'go test -mod=vendor -race -count=1 -timeout=18m ./... && go vet -mod=vendor ./...'")
+           "'go test -mod=vendor -race -c -o server.test ./internal/server && "
+           'python3 scripts/run_go_test_shards.py "$PWD/server.test" --cwd internal/server && '
+           'go test -mod=vendor -race -count=1 -timeout=18m '
+           "$(go list -mod=vendor ./... | sed \"\\|^aide/internal/server$|d\") && "
+           "go vet -mod=vendor ./...'")
+
 
 
 def main():

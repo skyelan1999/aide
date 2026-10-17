@@ -34,7 +34,11 @@
     "docs/tasks/xiaomi-model-picker-20261017.json",
     "docs/tasks/control-spacing-polish-20261017.json",
     "docs/tasks/context-usage-panel-20261017.json",
-    "docs/tasks/ui-settings-main-delivery-20261017.json"
+    "docs/tasks/ui-settings-main-delivery-20261017.json",
+    "scripts/test_go_snapshot.py",
+    "scripts/run_go_test_shards.py",
+    "scripts/test_go_test_shards.py",
+    "docs/agent/WORKFLOW.md"
   ],
   "stages": {
     "requirements": {
@@ -59,7 +63,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "任务操作区、紧凑输入与设置留白、实际消耗/压缩动画、助理模型选择、普通更新提示；将新增两个前端回归加入quick。",
+      "summary": "任务操作区、紧凑输入与设置留白、实际消耗/压缩动画、助理模型选择、普通更新提示；将新增两个前端回归加入quick。 推送门禁遇服务器包总时长上限，增加全量测试分片执行；保留每个注册项、race、panic-on-exit与原包工作目录，任一分片失败则整体验证失败。",
       "evidence": [
         "git status --short --branch",
         "docs/tasks/control-spacing-polish-20261017.json",
@@ -69,10 +73,10 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "逐项回归此前已通过；推送前执行包含106项quick检查的full及隔离Go race/vet。",
+      "summary": "首次完整验证的服务器包触达18分钟总时限，当时当前单项仅执行2秒；其余检查通过。改为编译一次后将全部顶层Test/Fuzz/Example注册项划分为3个互斥子进程，原其他包和vet保持，重新全量验证。",
       "evidence": [
-        "prior quick PASS: .agent-state/verify-20261017T032200165796Z.log",
-        "git fetch origin: HEAD...origin/main = 0 0"
+        ".agent-state/verify-20261017T032913274794Z.log:727-729",
+        "python3 scripts/test_go_test_shards.py PASS: inventory completeness, fuzz/examples, disjoint shards, failure propagation and original working directory"
       ]
     },
     "documentation": {
