@@ -49,9 +49,9 @@
  window.LockCluster?.on('effective',value=>{if(value)close();});
  window.addEventListener('pagehide',close);
  function sessionOverview(content,{session,t,selectRun,loadOlder,renderMarkdown,api,revision,blocked,onSession}){
-  close();const gen=++generation;let current=session,pollTimer=null,polling=false,closed=false;
+  close();const gen=++generation;let current=session,pollTimer=null,polling=false,refreshQueued=false,closed=false;
   const valid=()=>!closed&&gen===generation&&content.isConnected&&!blocked?.();
-  const stop=()=>{closed=true;if(pollTimer!==null)clearInterval(pollTimer);pollTimer=null;if(active?.close===stop)active=null;};active={close:stop};
+  const stop=()=>{closed=true;if(pollTimer!==null)clearInterval(pollTimer);pollTimer=null;if(active?.close===stop)active=null;};active={close:stop,sessionId:session.id,refresh};
   function draw(){session=current;content.replaceChildren();
   const runs=session.runs||[],intro=node('div','outcome-intro');
   intro.append(node('h3','',t('当前会话 · 输入与输出')),node('p','muted','#'+(session.number||'?')+' · '+session.title),node('p','muted',t('已展示 {0} / {1} 轮任务',runs.length,session.runsTotal??runs.length)));content.append(intro);
@@ -90,13 +90,27 @@
   }
   draw();
   const needsPolling=value=>(value.runs||[]).some(run=>run?.status==='running')||value.runningRuns>0||(!Number.isInteger(value.runningRuns)&&value.hasOlder);
-  if(api&&needsPolling(current)){
-   const initialRevision=revision?revision(current):JSON.stringify(current);
-   let lastRevision=initialRevision;
-   const poll=async()=>{if(!valid()){stop();return;}if(polling)return;polling=true;try{const next=await api();if(!valid())return;const nextRevision=revision?revision(next):JSON.stringify(next);current=next;if(!needsPolling(next))stop();if(nextRevision!==lastRevision){lastRevision=nextRevision;if(onSession)onSession(next);else draw();}}catch{/* Preserve the last readable overview and retry on the next interval. */}finally{polling=false;}};
-   pollTimer=setInterval(poll,2500);
+  let lastRevision=revision?revision(current):JSON.stringify(current);
+  function syncPolling(){
+   if(api&&valid()&&needsPolling(current)){if(pollTimer===null)pollTimer=setInterval(poll,2500);}
+   else if(pollTimer!==null){clearInterval(pollTimer);pollTimer=null;}
   }
-  return {close:stop};
+  async function refresh(){
+   if(!valid()){stop();return;}if(!api)return;
+   if(polling){refreshQueued=true;return;}polling=true;
+   try{
+    const next=await api();if(!valid()||next.id!==session.id)return;
+    const nextRevision=revision?revision(next):JSON.stringify(next);current=next;syncPolling();
+    if(nextRevision!==lastRevision){lastRevision=nextRevision;if(onSession)onSession(next);else draw();}
+   }catch{/* Keep the last readable overview; active polling or a later event retries. */}
+   finally{polling=false;if(refreshQueued&&valid()){refreshQueued=false;void refresh();}}
+  }
+  function poll(){if(!valid()){stop();return;}if(needsPolling(current))return refresh();}
+  syncPolling();
+  // The workbench snapshot may predate this panel (for example while a single
+  // task was selected). Read once on entry; idle views then rely on global events.
+  const ready=refresh();
+  return {close:stop,ready};
  }
  async function mount(content,{sessionId,runId,api,blocked,t,error,renderMarkdown}){
    close();const gen=++generation;let pollTimer=null,closed=false,recordGeneration=0;const stop=()=>{closed=true;recordGeneration++;if(pollTimer!==null)clearInterval(pollTimer);pollTimer=null;if(active?.close===stop)active=null;};active={close:stop};
@@ -234,5 +248,6 @@
    try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;writeTargets=data.writeTargets||[];render();syncPolling();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}
    return {close:stop};
  }
- window.AideTaskOutcome={mount,sessionOverview,close};
+ function refreshSession(sessionId){if(active?.sessionId&&(!sessionId||sessionId===active.sessionId))return active.refresh?.();}
+ window.AideTaskOutcome={mount,sessionOverview,close,refreshSession};
 })();

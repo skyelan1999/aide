@@ -734,8 +734,8 @@ async function loadSessions() {
 }
 // 全局 SSE（#60）：后端在会话创建/归档/置顶/状态变更时广播 sessions-changed，前端自动刷新侧栏。
 // - 300ms 节流合并；subGroupState 跨重渲染保留（折叠/展开不丢）；
-// - 仅刷新侧栏列表，不抢输入焦点、不打断正在流式查看的会话；
-// - 运行中的 run 完成由各自 SSE 处理本会话视图，这里只同步列表。
+// - 侧栏刷新不抢输入焦点；当前成果总览独立按会话事件读取，不受输入聚焦跳过影响。
+// - 单轮成果保持自己的快照／轮询归属，重连时只唤醒仍打开的总览。
 let sessionsEv = null, sessionsEvTimer = 0;
 function scheduleSessionsRefresh() {
   if (sessionsEvTimer) return; // 300ms 内多次事件合并为一次
@@ -750,11 +750,14 @@ function setupGlobalEvents() {
   if (sessionsEv || typeof EventSource !== 'function') return;
   try {
     sessionsEv = new EventSource('/api/events?access_token=' + encodeURIComponent(state.token));
-    sessionsEv.addEventListener('sessions-changed', () => {scheduleSessionsRefresh();window.AideManagement?.refresh();});
+    sessionsEv.addEventListener('sessions-changed', event => {
+      scheduleSessionsRefresh();window.AideManagement?.refresh();
+      try{const changed=JSON.parse(event.data);if(typeof changed.sessionId==='string')window.AideTaskOutcome?.refreshSession(changed.sessionId);}catch{}
+    });
     sessionsEv.addEventListener('approval-policy-changed', async () => {
       try { await refreshApprovalPolicy(); if(state.session) await selectSession(state.session.id); } catch (_) {}
     });
-    sessionsEv.addEventListener('open', () => refreshApprovalPolicy().catch(() => {}));
+    sessionsEv.addEventListener('open', () => {refreshApprovalPolicy().catch(() => {});window.AideTaskOutcome?.refreshSession();});
     sessionsEv.onerror = () => { /* 浏览器自动重连；不关闭 */ };
   } catch (_) { sessionsEv = null; }
 }
@@ -9289,11 +9292,11 @@ function renderTrajectoryOutcome(host, session) {
   bar.append(label, select);
   const content = el('div', 'outcome-content traj-outcome-content'); host.append(bar, content);
   if(!selected){window.AideTaskOutcome?.sessionOverview(content,{session,t,renderMarkdown,api:()=>getSessionWindow(session.id),revision:sessionRevision,
-    blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id!==session.id || trajView!=='outcome' || !host.isConnected,
+    blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id!==session.id || trajView!=='outcome' || !host.isConnected || !$('trajectory-sheet').classList.contains('open'),
     onSession:next=>{if(state.session?.id!==session.id||trajView!=='outcome')return;state.session=next;state.sessionJSON=sessionRevision(next);renderTrajectory();},
     selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
   window.AideTaskOutcome?.mount(content, {sessionId:session.id, runId:selected.id, api, t, error:toast, renderMarkdown,
-    blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id !== session.id || trajView !== 'outcome'});
+    blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id !== session.id || trajView !== 'outcome' || !$('trajectory-sheet').classList.contains('open')});
 }
 function buildTrajectoryMarkdown(s) {
   const subs = (state.sessions || []).filter(x => x.parentId === s.id);
@@ -9458,8 +9461,8 @@ function openTrajectory() {
   closeSettingsSheet();
   closeWorkspaceSheet();
   ensureTrajectoryTabs();
-  renderTrajectory();
   $('trajectory-sheet').classList.add('open');
+  renderTrajectory();
   $('settings-backdrop').classList.add('open');
 }
 function openRunOutcome(runId, sessionId) {

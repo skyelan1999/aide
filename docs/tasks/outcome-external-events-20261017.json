@@ -1,0 +1,80 @@
+{
+  "id": "outcome-external-events-20261017",
+  "request": "修复实际Safari已复现：终态成果总览不采用其他客户端新活动，30/32滞留但后端64且running1；保留会话/锁态/关闭请求归属、空闲停止轮询和详情快照一致性，复测并更新详细文档及main",
+  "baseline": "81d4d44e7c178b672467171c64ef9e01c79205d4",
+  "initial_status": "",
+  "acceptance": [
+    "Regression fails on old source: initial terminal overview does not adopt externally started hidden activity.",
+    "Open overview reads authoritative session once; matching global events and reconnect refresh idle view, unrelated sessions ignored; no idle interval.",
+    "Requests coalesce with one trailing read; close/lock/switch/wrong-session responses cannot overwrite current view; detail import/snapshot ownership unaffected.",
+    "Current candidate built from exact source; original launcher and real full Safari demonstrate external activity and terminal adoption; production22 unchanged.",
+    "Focused and exact full gates, detailed docs, scoped cleanup and main delivery; original12/public image gates remain."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/task-outcome.js",
+    "scripts/outcome-overview-lifecycle.test.cjs",
+    "docs/tasks/outcome-external-events-20261017.json",
+    "docs/tasks/outcome-live-receipt-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/continuity-handoff.md",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/reviews/2026-10-17/outcome-external-events.md",
+    "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Native stale30/32 vs API64/running1 is authoritative prior reproduction. Refresh only owned overview via initial read and scoped global events; keep terminal idle and detail snapshot boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native stale30/32 vs API64/running1 is authoritative prior reproduction. Refresh only owned overview via initial read and scoped global events; keep terminal idle and detail snapshot boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Initial authoritative read, global matching event/reconnect bridge, idle timer separate from view ownership, coalesced trailing read and wrong-session guard; no UI copy/style change.",
+      "evidence": [
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js",
+        "scripts/outcome-overview-lifecycle.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Old source fails external event assertion0vs1; focused lifecycle/app bridge and10 detail ownership tests pass. Exact quick/full and native candidate next.",
+      "evidence": [
+        "scripts/outcome-overview-lifecycle.test.cjs",
+        "scripts/outcome-request-ownership.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user incremental work/push/test and main merge. No production replacement.",
+  "rollback": "Revert owned source commit, verify isolated runtime; keep production/data/images unchanged.",
+  "handoff": ""
+}
