@@ -1,0 +1,38 @@
+{
+  "status": "targeted_pass_full_native_pending",
+  "negative": {
+    "status": "expected_failure",
+    "command": "node scripts/markdown-history-writable.test.cjs",
+    "exit": 1,
+    "assertion": "connection failure must persist inside the restore dialog without a journal",
+    "actual": 0,
+    "expected": 1,
+    "additionalNegative": {
+      "assertion": "late success must not apply another selected version",
+      "actual": false,
+      "expected": "undefined",
+      "exit": 1,
+      "context": "Adding selection-change coverage independently exposed missing post-response selection guard."
+    }
+  },
+  "targeted": {
+    "command": "node scripts/markdown-history-writable.test.cjs",
+    "exit": 0,
+    "scope": "Actual confirm handler in source VM; not full workbench UI"
+  },
+  "syntax": {
+    "command": "node --check internal/server/web/markdown-history.js",
+    "exit": 0
+  },
+  "full": "NOT_RUN final source",
+  "native": "NOT_RUN new source candidate",
+  "productionReplaced": false,
+  "realModelOrVectorCalls": 0,
+  "quick": {
+    "status": "pass",
+    "head": "ceca57e2e90e53c23c9b7e93f46f8529062d02b1",
+    "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+    "log": ".agent-state/verify-20261017T124714659841Z.log",
+    "commands": 124
+  }
+}

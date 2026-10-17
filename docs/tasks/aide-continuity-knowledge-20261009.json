@@ -8321,5 +8321,14 @@
       "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
     ],
     "summary": "SSH workspace native full save bytes, explicit refresh draft recovery, body+SVG version1 restore, disconnected prewrite bytes and reconnect retry pass. Persistent inline failure reason absent; no overall completion. Production22 exact; tests stopped."
+  },
+  "markdown_restore_feedback_20261017": {
+    "status": "targeted_pass_full_native_pending",
+    "task": "docs/tasks/markdown-restore-feedback-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+      "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+    ],
+    "summary": "Direct native disconnect feedback gap and independent late-version success gap reproduced; minimal guarded persistent error source repair and targeted regression pass. Final current full/runtime/native remain pending."
   }
 }

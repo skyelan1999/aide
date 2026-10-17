@@ -1,0 +1,77 @@
+{
+  "id": "markdown-restore-feedback-20261017",
+  "request": "修复真实SSH工作区断连恢复时失败原因仅短暂提示、对话框中消失的问题；保持脏草稿、锁态、旧工作区与恢复回执边界",
+  "baseline": "ceca57e2e90e53c23c9b7e93f46f8529062d02b1",
+  "initial_status": "",
+  "acceptance": [
+    "Actual old source fails focused assertion: failed confirm without journal has no persistent dialog alert.",
+    "Failed restore confirm retains visible reason and any partial journal/applied paths, using textContent; no false success or automatic retry.",
+    "Retry replaces prior error, preserves editor writability and controls; late responses after lock/close/workspace/version change do not expose details.",
+    "Focused tests, quick/full exact source and actual browser acceptance remain separately recorded; no production change or release before gates."
+  ],
+  "scope": [
+    "internal/server/web/markdown-history.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/markdown-history-writable.test.cjs",
+    "docs/tasks/markdown-restore-feedback-20261017.json",
+    "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+    "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Direct currentfe80 Safari disconnect leaves no persistent reason; new old-source assertion failed0vs1.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "One local role=alert text row replaces toast-only failure; keep partial journal and applied paths; suppress stale/locked/detached details.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Persistent confirm-error alert/partial journal and stale version/workspace/lock/close guards; cache/i18n updated.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Two independent negative-to-positive regressions and targeted source VM/syntax pass. Exact full and current native pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Observed defect, implementation, actual negatives/positives and pending final scope recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "No new runtime; previous SSH owned fixtures cleaned. Current verification logs retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "New source not yet exact full/native qualified; prior236 receipt cannot be reused.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental source/test/doc/push authorization; no production replacement or public Release before gates.",
+  "rollback": "Revert owned source commit; no data migration.",
+  "handoff": "Original12 continue; Windows user-owned; real vectors deferred."
+}

@@ -64,12 +64,19 @@
         const description=document.createElement('p');description.textContent=t('仅恢复下列文件；不删除其他资源。恢复前会记录快照。');changes.append(description);
         for(const f of plan.files){const row=document.createElement('p');row.textContent=f.path+' · '+(f.before===f.after?t('内容不变'):t('将恢复'))+' · '+f.before.slice(0,12)+' → '+f.after.slice(0,12);changes.append(row);}
         const confirm=document.createElement('button');confirm.type='button';confirm.className='primary';confirm.textContent=t('确认恢复此版本');changes.append(confirm);
-        confirm.onclick=async()=>{confirm.disabled=true;checkbox.disabled=true;const wasReadOnly=editor.readOnly;let restoring=false;try{
-         if(blocked()||isDirty()||editor.value!==currentText||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))throw Error(t('编辑状态已变化，请重新对比。'));
+        let failure=null;
+        confirm.onclick=async()=>{failure?.remove();failure=null;confirm.disabled=true;checkbox.disabled=true;const wasReadOnly=editor.readOnly;let restoring=false;try{
+         if(blocked()||pick!==selection||isDirty()||editor.value!==currentText||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))throw Error(t('编辑状态已变化，请重新对比。'));
          editor.readOnly=true;restoring=true;const result=await api('/file/history/restore',{method:'POST',body:JSON.stringify({path:spec.path,source:spec.source||'',workspaceId:spec.wsId||'',revision:v.id,identity:plan.identity,assets:restoreAssets,expected:Object.fromEntries(plan.files.map(f=>[f.path,f.before]))})});
-         if(blocked()||!dialog.open||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
+         if(blocked()||!dialog.open||pick!==selection||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
          editor.readOnly=wasReadOnly;onRestored(result);dialog.close();
-        }catch(e){if(e.data?.journal){const receipt=document.createElement('p');receipt.textContent=t('恢复未完成，操作记录：')+e.data.journal+' · '+(e.data.files||[]).filter(f=>f.applied).map(f=>f.path).join(', ');changes.append(receipt);}error(e);}finally{if(restoring&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))editor.readOnly=wasReadOnly;confirm.disabled=false;checkbox.disabled=false;}};
+        }catch(e){
+         if(!blocked()&&dialog.open&&pick===selection&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||''))){
+          failure=document.createElement('p');failure.className='task-error';failure.setAttribute('role','alert');failure.textContent=t('恢复未完成：')+(e.message||String(e));
+          if(e.data?.journal)failure.textContent+=' '+t('恢复未完成，操作记录：')+e.data.journal+' · '+(e.data.files||[]).filter(f=>f.applied).map(f=>f.path).join(', ');
+          changes.append(failure);error(e);
+         }
+        }finally{if(restoring&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))editor.readOnly=wasReadOnly;confirm.disabled=false;checkbox.disabled=false;}};
        }catch(e){error(e);}finally{preview.disabled=false;}};
        checkbox.onchange=()=>changes.replaceChildren();restoreArea.append(label,preview,changes);detail.append(restoreArea);
       }
