@@ -8269,5 +8269,14 @@
       "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
       "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
     ]
+  },
+  "native_candidate_6eb_20261017": {
+    "status": "blocked_browser_certificate",
+    "task": "docs/tasks/native-candidate-6eb-20261017.json",
+    "summary": "Current6eb da290 original launcher healthy, identical cert to production; actual Safari50167 shows privacy interstitial before app. Own tab/runtime cleaned, production22 exact. Approval/outcome native gates retained, no repeated handoff prompt or bypass.",
+    "evidence": [
+      "docs/reviews/2026-10-17/native-candidate-6eb.md",
+      "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+    ]
   }
 }

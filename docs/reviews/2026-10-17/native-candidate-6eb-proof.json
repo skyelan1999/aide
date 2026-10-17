@@ -1,0 +1,53 @@
+{
+  "status": "blocked_native_certificate_handoff",
+  "runtime": {
+    "status": "pass",
+    "originalStart": true,
+    "image": "sha256:da290c0e50fe3087a736435c20e22f077aa9492f0553f0b852309ccd4397f46b",
+    "healthy": true,
+    "ownMountsOnly": true,
+    "candidatePort": 50167,
+    "hostCertificateSameAsProduction": true,
+    "nativePage": "pending"
+  },
+  "observedUTC": "2026-10-17T09:41:25.979861+00:00",
+  "browser": {
+    "app": "Safari",
+    "candidateURL": "https://localhost:50167/",
+    "windowTitle": "此连接非私人连接",
+    "interstitialURL": "safari-resource:/CertificateWarningFall2023.html",
+    "visibleButtons": [
+      "关闭页面",
+      "显示详细信息"
+    ],
+    "applicationPageReached": false,
+    "certificateWarningBypassed": false,
+    "systemTrustChanged": false,
+    "ownedTabClosed": true,
+    "originalFourNonPinnedAndOnePinnedTabsRetained": true,
+    "originalRightAIDE9999Restored": true,
+    "unsavedReleaseFormPreservedNotSubmitted": true
+  },
+  "approvalExpiryNative": "NOT_RUN",
+  "outcomeSourceLinkFullWorkbench": "NOT_RUN",
+  "cleanup": {
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": [
+      "aide-continuity-6eb-arm-20261017-cad-1",
+      "aide-continuity-6eb-arm-20261017-aide-1"
+    ],
+    "emptyOwnedNetworksRemoved": 2,
+    "dataAndImagesRetained": true,
+    "productionIdentityAnd22FilesUnchanged": true
+  },
+  "full": {
+    "status": "pass",
+    "commands": 115,
+    "fingerprint": "5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04",
+    "head": "0f472ca2e842f6803d1495fa204857537aaa6566"
+  },
+  "realModelOrVectorCalls": 0,
+  "remoteMainPushed": false,
+  "productionReplaced": false,
+  "nextRequiredAction": "User personally completes browser certificate handoff when available, then current native approval/outcome checks can resume; no repeated prompt issued."
+}

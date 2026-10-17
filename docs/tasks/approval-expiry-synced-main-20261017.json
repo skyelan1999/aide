@@ -45,12 +45,14 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Exact-source full110 pass; isolated candidate healthy, two-session five-level API/disk writes and stale409 pass; actual stop/start persists selections without rebuild/pull. Current browser UI user-deferred; verification remains in progress. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded. Required current native candidate/full-workbench acceptance still user-deferred; do not pass this task or bypass its release gate.",
+      "summary": "Exact-source full110 pass; isolated candidate healthy, two-session five-level API/disk writes and stale409 pass; actual stop/start persists selections without rebuild/pull. Current browser UI user-deferred; verification remains in progress. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded. Required current native candidate/full-workbench acceptance still user-deferred; do not pass this task or bypass its release gate. Current6eb candidate original launcher/API healthy and exact full115 pass; normal Safari50167 observed certificate interstitial, application not reached. Actual current native scope still NOT_RUN, no trust bypass; owned resources cleaned.",
       "evidence": [
         "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
         ".agent-state/verify-20261017T060408753181Z.log",
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
-        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
+        "docs/reviews/2026-10-17/native-candidate-6eb.md",
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
       ]
     },
     "documentation": {
@@ -98,5 +100,18 @@
   },
   "fullProof": "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
   "candidateRuntimeProof": "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json",
-  "uiDeferral": "User: now unavailable for Safari certificate hand-off. Current full workbench UI remains NOT_RUN; old component/runtime evidence not promoted."
+  "uiDeferral": "User: now unavailable for Safari certificate hand-off. Current full workbench UI remains NOT_RUN; old component/runtime evidence not promoted.",
+  "current_native_candidate_6eb": {
+    "status": "blocked_browser_certificate",
+    "image": "sha256:da290c0e50fe3087a736435c20e22f077aa9492f0553f0b852309ccd4397f46b",
+    "port": 50167,
+    "certificateSameAsProduction": true,
+    "applicationPageReached": false,
+    "originalLauncherHealthy": true,
+    "ownedRuntimeStoppedAndRemoved": true,
+    "evidence": [
+      "docs/reviews/2026-10-17/native-candidate-6eb.md",
+      "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+    ]
+  }
 }
