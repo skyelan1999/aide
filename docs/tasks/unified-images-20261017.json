@@ -71,5 +71,18 @@
   },
   "release_authorization": "Existing incremental push/main/offline package authorization. Local requested deliverables complete; public/main still separately gated.",
   "rollback": "Retain prior complete offline packages. Restored ARM canonical tags after AMD export/import; raw packages contain no personal data.",
-  "handoff": "Local raw single-import ARM/AMD images verified; existing runtime6ad/0c, not rebuilt66 binary. Source script guards in repo66. Public release/new full runtime packaging pending. Next user task Docker MCP integration; full runner88882 still same live process."
+  "handoff": "Local raw single-import ARM/AMD images verified; existing runtime6ad/0c, not rebuilt66 binary. Source script guards in repo66. Public release/new full runtime packaging pending. Next user task Docker MCP integration; full runner88882 still same live process.",
+  "mcp_current_followup_20261017": {
+    "status": "local_verified_publication_pending",
+    "code": "e58dcb201f3d1ab1b7e6ccf1e067d22a2cb50eb2",
+    "images": [
+      "6a8a2dcb290b",
+      "e4742f02031a"
+    ],
+    "report": "docs/reviews/2026-10-17/docker-mcp-delivery.md",
+    "evidence": [
+      "docs/reviews/2026-10-17/docker-mcp-unified-images-proof.json"
+    ],
+    "summary": "新MCP规范候选已分别重建直接Docker单文件归档，全部blob摘要与实际load通过；原标签/容器/22保护文件保全，构建缓存仍0。可选Time服务镜像不在应用归档内。"
+  }
 }

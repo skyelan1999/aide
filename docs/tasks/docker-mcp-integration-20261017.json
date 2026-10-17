@@ -62,7 +62,8 @@
         "docs/reviews/2026-10-17/docker-mcp-full-proof.json",
         "docs/reviews/2026-10-17/docker-mcp-packages-proof.json",
         "docs/reviews/2026-10-17/docker-mcp-canonical-runtime-proof.json",
-        "docs/reviews/2026-10-17/docker-mcp-fresh-proof.json"
+        "docs/reviews/2026-10-17/docker-mcp-fresh-proof.json",
+        "docs/reviews/2026-10-17/docker-mcp-unified-images-proof.json"
       ]
     },
     "documentation": {
@@ -93,5 +94,5 @@
   },
   "release_authorization": "沿用用户“做一部分，push一部分，测一部分”及维护文档授权。本次仅当前开发分支检查点；按用户最新要求只同步main，不合其他远端功能分支。main与Release仍受完整门禁约束。",
   "rollback": "本地改动保留于当前工作区；同步前恢复点 23de3ae2225407e8997ff95b116963f25dcfda64，撤销误合并前恢复点 39a6854c0ab03170641db0091a72fdd30f72e89b。MCP 认证来源是本次用户授权新增，原有凭据与会话须保留；不得用清库回滚。",
-  "handoff": "当前full109 PASS，原进程62601已终态，不再等待。build-export61673、verify87620、fresh27928、cache28700均已退出0；首次fresh36260因测试脚本误交内置来源返回400，修正为实际UI过滤方式后复测通过，原失败日志保留。ARM6a8a/AMDe474完整包在docker-images，已导入校验；production ARM6a8a健康，22保护文件和挂载不变。下一步公开RC2附件及默认清单更新、精确门禁和main交付；原总目标12项仍进行。"
+  "handoff": "当前full109 PASS，原进程62601已终态，不再等待。build-export61673、verify87620、fresh27928、cache28700均已退出0；首次fresh36260因测试脚本误交内置来源返回400，修正为实际UI过滤方式后复测通过，原失败日志保留。ARM6a8a/AMDe474完整包在docker-images，已导入校验；production ARM6a8a健康，22保护文件和挂载不变。下一步公开RC2附件及默认清单更新、精确门禁和main交付；原总目标12项仍进行。 新规范双架构直接docker-load单文件归档均已生成、实际load和blob/重复成员检查通过；原local/CAD标签、原容器及22保护文件保全。公开ARM64附件页面Uploading但无成功回执，API仍22；不要重复提交或关闭该自建GitHub上传页。Safari开发者工具设置确认异步问题待答，尚未更改设置。"
 }

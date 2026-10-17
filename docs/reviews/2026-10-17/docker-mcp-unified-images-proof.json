@@ -1,0 +1,47 @@
+{
+  "status": "pass",
+  "packages": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "image": "sha256:6a8a2dcb290be897de5a27ce8a10436d92dd601e9fedef9153a4621b4f4c0107",
+      "code": "e58dcb201f3d1ab1b7e6ccf1e067d22a2cb50eb2",
+      "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-images-0.1.17.0-RC2-linux-arm64-6a8a2dcb290b.tar.gz",
+      "bytes": 770965882,
+      "sha256": "e3d58d7a4375e7c1a907b330b3016900be888d88eaf7265a329abd81299fc21b",
+      "tags": [
+        "aide:offline-6a8a2dcb290b",
+        "aide:local",
+        "aide:cad-dependencies-v1",
+        "aide:dependencies-v1"
+      ],
+      "distinctImages": 2,
+      "contentAddressedBlobsVerified": true,
+      "actualSingleLoad": true,
+      "privateVolumesOrConfigIncluded": false,
+      "optionalMCPTimeImageIncluded": false
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "image": "sha256:e4742f02031aede574b21f515f4e66a0523899084f554fd3b72ab4a58ba6fc85",
+      "code": "e58dcb201f3d1ab1b7e6ccf1e067d22a2cb50eb2",
+      "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-images-0.1.17.0-RC2-linux-amd64-e4742f02031a.tar.gz",
+      "bytes": 916897033,
+      "sha256": "b92d119e351d9b1893bacbd6fb96d5f809165de7ef79618230d16d866df4f6a5",
+      "tags": [
+        "aide:offline-e4742f02031a",
+        "aide:local",
+        "aide:cad-dependencies-v1"
+      ],
+      "distinctImages": 1,
+      "contentAddressedBlobsVerified": true,
+      "actualSingleLoad": true,
+      "privateVolumesOrConfigIncluded": false,
+      "optionalMCPTimeImageIncluded": false
+    }
+  ],
+  "originalAliasesRestored": true,
+  "productionContainerUnchanged": true,
+  "protectedFilesUnchanged": 22
+}
