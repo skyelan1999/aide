@@ -1,0 +1,80 @@
+{
+  "id": "startup-inputs-notice-20261017",
+  "request": "继续原目标：修复已实测的星图重启提示aside样式冲突；排除可再生插件node_modules对源码指纹和构建上下文的影响，使工作树与Git快照构建一致。保留用户数据与缓存，不新增版本。",
+  "baseline": "a7675408a89bdf409e42c3a32ffb9db4e362a683",
+  "initial_status": "",
+  "acceptance": [
+    "Adding/changing/removing nested plugin node_modules does not change source hash; plugin code/lockfiles still do",
+    "Docker build contexts exclude host node_modules; source checkout and clean Git snapshot have identical input fingerprints",
+    "Native Safari existing star tab shows compact restart notice without stretching across log or detail panel; dismiss and diagnostic actions still work",
+    "Use original start.command; preserve14sessions/auth/config/vault/source registrations and mounts; no new browser tabs or model calls",
+    "Related focused checks, full current fingerprint, docs and offline package gates are recorded separately from public upload",
+    "After verified package export/import, ordinary local start.command selects current codec-capable runtime without build/pull or version downgrade; remote main remains held until public package availability"
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/test_source_fingerprint.py",
+    ".dockerignore",
+    "internal/server/web/crash-monitor.css",
+    "internal/server/web/starmap.css",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.html",
+    "docs/tasks",
+    "docs/reviews/2026-10-17",
+    "docs/architecture",
+    "docker/prebuilt-images.tsv",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Direct prior native screenshot reproduces aside notice stretching; current source uses generic aside selectors. Actual worktree vs clean archive hashes differ only due419 ignored plugin node_modules files. Scope excludes deleting user/plugin caches or changing production data.",
+      "evidence": [
+        "docs/reviews/2026-10-17/timeline-native.md",
+        "internal/server/web/starmap.css",
+        "scripts/aide.sh"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Prune generated node_modules from source enumeration and Docker context; retain non-Git standalone fixture/release compatibility and include plugin code/lockfiles. Scope map panel CSS to #detail, reset shared notice inset/sizing and bump asset URLs. Native notice triggered by ordinary service restart; no developer preference change.",
+      "evidence": [
+        "scripts/test_source_fingerprint.py",
+        "internal/server/web/crash-monitor.css"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Generated dependency pruning, Docker context exclusion, scoped #detail CSS and bounded shared notice sizing/cache bumps implemented. Quick104 pass and real Docker context exclusion pass; native/final bundle/default-manifest/full checks pending.",
+      "evidence": [
+        "scripts/test_source_fingerprint.py",
+        "internal/server/web/crash-monitor.css"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Old script negative fails generated-dependency stability; corrected source tests2 pass; actual scratch Docker context excludes host node_modules and retains plugin manifest, caches retained; quick104 pass. No native layout claim yet.",
+      "evidence": [
+        "scripts/test_source_fingerprint.py"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user instructions to incrementally fix/test/document/push/main and distribute complete offline bundles; no new tag/version, Windows native user-owned.",
+  "rollback": "Retain previous image and all protected data; restore prior code/image on failure, leaving new compressed timeline histories and their matching encrypted legacy backups intact. Do not downgrade history format blindly. No real plugin caches deleted.",
+  "handoff": "Implementation begins on clean task branch from a7675408; public asset upload still pending Safari diagnostic preference permission, no changes to that setting."
+}

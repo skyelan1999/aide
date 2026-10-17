@@ -7,7 +7,7 @@ MODE="${1:-start}"
 # 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
 source_sha() {
   (
-    find cmd internal plugins vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
+    find cmd internal plugins vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
     for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
