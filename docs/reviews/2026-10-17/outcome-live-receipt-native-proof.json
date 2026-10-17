@@ -82,7 +82,12 @@
     "original12Complete": false
   },
   "delivery": {
-    "status": "pending documentation only; product task remains open"
+    "status": "documentation_pushed_product_defect_remains_open",
+    "observedRemoteMain": "0c18f4d3719c022daa54eda82b9662de184e97f1",
+    "pushExit": 0,
+    "independentRemoteExact": true,
+    "docsTaskGateExit": 0,
+    "scope": "Documentation completion only; outcome product task incomplete; existing07c public defaults, no deployment."
   },
   "documentationChecks": {
     "checkDocs": "PASS314 Markdown1182 local links",

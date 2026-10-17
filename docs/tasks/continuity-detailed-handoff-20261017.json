@@ -83,12 +83,15 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Detailed documentation pushed main0c18f4d3 and independent remote exact; clean-main scoped documentation release-check exit0, exact full795 and existing07c assets. Product outcome task still open; no tag/new assets/production.",
+      "evidence": [
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+      ]
     }
   },
   "release_authorization": "User: 把文档该补的都补好，做的详细一些; existing incremental push/test and main merge.",
   "rollback": "Revert scoped documentation commit; no source/runtime/default image/production mutation.",
-  "handoff": "Detailed docs ready for scoped main gate/push. Original outcome product task remains in_progress; new defect not fixed."
+  "handoff": "Detailed documentation delivered. Next product task: fix initially terminal overview not adopting external activity; source unchanged and outcome task remains in_progress. Original12 and newce0c public upload stay open."
 }
