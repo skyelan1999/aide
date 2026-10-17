@@ -53,10 +53,10 @@ func (a *App) environmentGuide() string {
 		}
 		row := item{ID: src.ID, Name: guideLabel(src.Name), Kind: src.Type, Access: "read-only", Usage: "Use list_files/read_file with this source ID and a relative path; or attach files through References. Registration does not mean contents have been read.", Inventory: "Not scanned: remote source metadata only."}
 		if src.RW {
-			row.Access = "registered read/write; actual mount and server permissions still apply"
+			row.Access = "registered read/write; actual mount and server permissions still apply. When the user explicitly selects this reference as a write destination, use write_file with this source ID and a relative path; approval and version checks still apply"
 		}
 		if src.ID == systemDocsSource && strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
-			row.Usage = "Default destination for workflow documents and office_create; tool paths are relative to this binding. Read generated files with source=system-docs. Generic write_file proposals still target the workspace."
+			row.Usage = "Default destination for workflow documents and office_create; tool paths are relative to this binding. Read generated files with source=system-docs. For new text document deliverables use write_file(source=system-docs, path=relative path); file proposals retain approval and version checks. Code edits and explicit workspace files use write_file without source. Never hardcode this directory."
 		}
 		if src.Type == "local" || src.Type == "skill" {
 			row.Path = guideLabel(src.Config.Path)

@@ -679,6 +679,10 @@
       [
         "node",
         "scripts/assistant-delegation.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/document-proposals.test.cjs"
       ]
     ],
     "full": [

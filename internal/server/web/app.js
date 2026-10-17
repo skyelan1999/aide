@@ -827,7 +827,7 @@ function sessionRunRenderSignature(run, view = {}) {
     run.strategy, run.profile, run.autoReview, run.assistantManaged, run.approvalState, run.approvalReviews,
     run.pendingQuestion, run.canResume, run.pauseRequested, run.stopRequested, run.attachments, run.steers,
     run.steps?.map(step => [step.name, step.status, step.content, step.reasoning, step.outputSegments]),
-    run.files?.map(file => [file.path, file.before, file.content, file.applied]),
+    run.files?.map(file => [file.source, file.targetPath, file.binding, file.path, file.before, file.content, file.applied]),
     run.commands, run.toolUses, view.language, view.ignoredProposal,
   ];
   return sessionValueFingerprint(rendered);
@@ -2102,6 +2102,10 @@ function renderSteerMessages(run, box) {
     box.append(bubble);
   }
 }
+function proposalFileLabel(file) {
+  if (!file.source) return file.path;
+  return (file.source === 'system-docs' ? t('自动系统文档') : t('引用') + ' ' + file.source) + ' / ' + file.path + ' · ' + file.targetPath;
+}
 function renderTaskPrompt(run){
   const bubble=el('div','user-message',run.prompt);
   if(run.assistantManaged)bubble.prepend(el('span','run-origin-label',t('助理代发')));
@@ -2300,8 +2304,8 @@ function renderSession() {
     if (run.files?.length) {
       const proposal = el('div', 'proposal'); proposal.append(el('h4', '', t("文件修改 · {0} 个文件", run.files.length)));
       for (const file of run.files) {
-        const details = el('details'); details.dataset.key = run.id + ':' + file.path; details.open = openDetails.has(details.dataset.key);
-        details.append(el('summary', '', (file.applied ? '✓ ' : '+ ') + file.path));
+        const details = el('details'); details.dataset.key = run.id + ':' + (file.source || '') + ':' + file.path; details.open = openDetails.has(details.dataset.key);
+        details.append(el('summary', '', (file.applied ? '✓ ' : '+ ') + proposalFileLabel(file)));
         const diff = el('div', 'diff-columns'); const before = el('div'); before.append(el('small', '', t("原内容")), el('pre', '', file.before || t("（新文件）")));
         const after = el('div'); after.append(el('small', '', t("建议内容")), el('pre', '', file.content)); diff.append(before, after); details.append(diff); proposal.append(details);
       }
@@ -2318,7 +2322,7 @@ function renderSession() {
             apply.disabled = true;
             try {
               await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: JSON.stringify({remember,expiresAt}) });
-              toast(t("文件修改已写入本地挂载目录"));
+              toast(t("文件修改已写入各自的目标目录"));
               await selectSession(state.session.id);
               await loadFiles();
             } catch (e) {
@@ -2331,7 +2335,7 @@ function renderSession() {
           const always=el('button','quiet',t('永远记住并应用')); always.title=t('记住相同路径、原版本和完整新内容');const validity=approvalValidityPicker(always,'永远记住并应用','记住并应用');always.onclick=()=>applyFiles(true,validity.expiresAt());
           const ignore = el('button', 'quiet', t("忽略此提案"));
           ignore.onclick = () => { ignoredProposals.add(run.id); renderSession(); };
-          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply, validity.node, always, ignore);
+          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后写入各文件标明的目标目录；验证命令需要单独运行。")), apply, validity.node, always, ignore);
         }
       }
       else if (run.applied) proposal.append(el('p', 'muted', t("✓ 已应用文件修改。命令验证结果以命令面板为准。")));

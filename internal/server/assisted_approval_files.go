@@ -48,8 +48,8 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	eligible := keyErr == nil && authorized && a.settings.SandboxMode != "read-only" && a.workspaceMode() != "ssh"
 	paths := []string{}
 	for _, f := range files {
-		paths = append(paths, f.Path)
-		if f.BaseHash != "" || f.Before != "" || f.Applied || safePath(f.Path) != nil || checkVersion(a.workspace, f.Path, "") != nil {
+		paths = append(paths, proposalDisplayPath(f))
+		if f.BaseHash != "" || f.Before != "" || f.Applied || safePath(f.Path) != nil || !a.newProposalTargetEligibleLocked(f) {
 			eligible = false
 		}
 	}
@@ -70,7 +70,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	reason := "现有文件覆盖、远程写入、只读沙箱或已变化的提案需要手动确认"
 	var usage TokenUsage
 	if eligible {
-		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "create new files using write_file; no existing file replacement", "files": files})
+		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "create new files using write_file; no existing file replacement", "files": files, "documentDestination": "system-docs is the configured document binding; authorize only the exact recorded targetPath, never arbitrary external paths"})
 		if len(payload) <= 64000 {
 			out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy + "\n本次待审对象是 files 新文件提案，不是 shell command。逐项判断路径与完整内容是否符合用户授权。"}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
 			usage = u

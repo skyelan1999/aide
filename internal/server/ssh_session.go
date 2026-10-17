@@ -1086,14 +1086,30 @@ func (a *App) ensureSourceSessionCredentials(ctx context.Context, src Source, se
 }
 
 func (a *App) sftpBatchSource(src Source, batch string) (string, error) {
+	return a.sftpBatchSourceExpected(src, batch, nil, false)
+}
+
+func (a *App) sftpBatchSourceExpected(src Source, batch string, expected *uint64, write bool) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sftpTimeout)
 	defer cancel()
 	generation := a.sshSessionGeneration(sourceSocket(src.ID))
+	if expected != nil && generation != *expected {
+		return "", fmt.Errorf("SFTP 连接配置已变化，请重新生成提案")
+	}
 	if err := a.ensureSourceSession(ctx, src); err != nil {
 		return "", err
 	}
 	if generation != a.sshSessionGeneration(sourceSocket(src.ID)) {
 		return "", fmt.Errorf("SFTP 连接配置已变化，请重新访问目录")
+	}
+	if write {
+		a.mu.Lock()
+		current, ok := a.findSource(src.ID)
+		allowed := ok && current.RW && sourceAIVisible(current, a.wsID()) && markdownSourceIdentity(current) == markdownSourceIdentity(src)
+		a.mu.Unlock()
+		if !allowed {
+			return "", fmt.Errorf("引用来源的可见或可写权限已变化，写入未执行")
+		}
 	}
 	port := src.Config.Port
 	if port == 0 {
@@ -1161,6 +1177,9 @@ func parseSourceSFTPListing(out, p string) []map[string]any {
 }
 
 func (a *App) sftpReadSource(src Source, p string) ([]byte, error) {
+	return a.sftpReadSourceExpected(src, p, nil)
+}
+func (a *App) sftpReadSourceExpected(src Source, p string, expected *uint64) ([]byte, error) {
 	remoteFile := pathJoinRemote(src.Config.Path, p)
 	tmp, err := os.CreateTemp("", "aide-src-sftp-*")
 	if err != nil {
@@ -1169,13 +1188,16 @@ func (a *App) sftpReadSource(src Source, p string) ([]byte, error) {
 	tmpPath := tmp.Name()
 	tmp.Close()
 	defer os.Remove(tmpPath)
-	if _, err := a.sftpBatchSource(src, "get "+shellQuoteRemote(remoteFile)+" "+shellQuoteRemote(tmpPath)+"\n"); err != nil {
+	if _, err := a.sftpBatchSourceExpected(src, "get "+shellQuoteRemote(remoteFile)+" "+shellQuoteRemote(tmpPath)+"\n", expected, false); err != nil {
 		return nil, err
 	}
 	return os.ReadFile(tmpPath)
 }
 
 func (a *App) sftpWriteSource(src Source, p string, b []byte) error {
+	return a.sftpWriteSourceExpected(src, p, b, nil)
+}
+func (a *App) sftpWriteSourceExpected(src Source, p string, b []byte, expected *uint64) error {
 	remoteFile := pathJoinRemote(src.Config.Path, p)
 	tmp, err := os.CreateTemp("", "aide-src-sftp-*")
 	if err != nil {
@@ -1190,7 +1212,7 @@ func (a *App) sftpWriteSource(src Source, p string, b []byte) error {
 	tmp.Close()
 	defer os.Remove(tmpPath)
 	tmpRemote := remoteFile + ".aide-tmp"
-	if _, err := a.sftpBatchSource(src, "put -P "+shellQuoteRemote(tmpPath)+" "+shellQuoteRemote(tmpRemote)+"\nrename "+shellQuoteRemote(tmpRemote)+" "+shellQuoteRemote(remoteFile)+"\n"); err != nil {
+	if _, err := a.sftpBatchSourceExpected(src, "put -P "+shellQuoteRemote(tmpPath)+" "+shellQuoteRemote(tmpRemote)+"\nrename "+shellQuoteRemote(tmpRemote)+" "+shellQuoteRemote(remoteFile)+"\n", expected, expected != nil); err != nil {
 		return err
 	}
 	return nil
