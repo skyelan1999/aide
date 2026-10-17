@@ -68,12 +68,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Docs-only scoped clean-main gate PASS; push exit0 and independent remote main52322b7cccaae9014559f435c1757ca938f1adc3 exact. Frozen product full107 inputs unchanged; no new runtime/image publication. Final ordinary documentation receipt independently gated/pushed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-native.md",
+        "docs/reviews/2026-10-17/outcome-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental tests/docs/main delivery authorization; no provider call, new version or runtime change.",
   "rollback": "Close trajectory and preserve original view; remove only owned temporary session/provider/model and loopback listener. Original settings/vault verified restored except legitimate monotonic session counter. No original task replay, approvals or release receipt edits.",
-  "handoff": "Scoped native overview/pagination/raw digest/export passed and fixtures cleaned. Docs-only clean-main gate/push next; native hidden-running activity/release import and other original goal workstreams remain."
+  "handoff": "Scoped native overview/pagination/raw digest/export delivered and cleaned. Continue native hidden-active outcome and committed release receipt cards, approval synchronization, SSH workspace-mode and timeline. Earlier release preview/cancel already has scoped evidence; do not repeat it as wholly untested. Complete image public upload still pending."
 }

@@ -25,3 +25,8 @@
 按唯一127.0.0.1:19043监听socket及准确进程命令确认归属后终止专用响应器，原应用保持 healthy，镜像、挂载和网络端点一致。导出下载副本已在校验后保留到私有证据目录，再移除此次专用下载；未删除用户文件。关闭轨迹后，原会话、自动系统文档根目录、策略及既有标签均保留。私有AX/API/截图/下载在 `.agent-state/outcome-native-20261017/`，不随仓库发布。
 
 本批补齐成果总览、超过一页记录、原始证据和摘要导出的原生交互证明。隐藏运行活动、发布记录导入和运行中快照变化的原生页面仍未在本批验收；其他原目标保持进行。Windows由用户验收，真实向量测试暂缓。完整离线镜像的公开上传仍是独立待办。
+
+
+## Main delivery
+
+Scoped clean-main gate passed; push exited0 and independent remote main matched `52322b7cccaae9014559f435c1757ca938f1adc3`. Frozen full107 inputs remain identical, so ordinary documentation reused that receipt without rebuilding. Final receipt documentation is independently gated and pushed. Prior native release-import preview/cancel evidence remains valid; committed release cards and hidden-running activity remain the next distinct outcome cases.

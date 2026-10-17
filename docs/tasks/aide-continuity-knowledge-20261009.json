@@ -7792,7 +7792,7 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Continue native hidden-running outcome/release receipt import, authorization expiry/revoke synchronization, SSH workspace-mode and timeline gaps. Native outcome overview/pagination/raw digest/export passed; complete image public upload independently pending.",
+    "nextIndependentFocus": "Continue native hidden-running outcome and committed release receipt cards (earlier preview/cancel already passed), approval expiry/revoke synchronization, SSH workspace-mode and timeline gaps. Native outcome overview/pagination/raw digest/export delivered; complete image public upload independently pending.",
     "deliveredMain": "32d7e365",
     "currentCheckpointGate": "Frozen integrated product full107 PASS fingerprint98ebc999, server race962.824s/vet/native CAD; clean-main path and SFTP gates PASS, main32d7e365 pushed. Both final complete archives verified locally; GitHub large uploads rejected while README uploaded. Original RC2 notes/tag/21 assets retained.",
     "historicalMainGateBeforeCurrent20261017": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
@@ -8095,12 +8095,13 @@
     "deliveredMain": "f2a6cea41f93def561742521269816e58717eeff"
   },
   "outcome_native_20261017": {
-    "status": "scoped_pass",
+    "status": "scoped_delivered",
     "task": "docs/tasks/outcome-native-20261017.json",
     "report": "docs/reviews/2026-10-17/outcome-native.md",
     "evidence": [
       "docs/reviews/2026-10-17/outcome-native-proof.json"
     ],
-    "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate."
+    "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate.",
+    "deliveredMain": "52322b7cccaae9014559f435c1757ca938f1adc3"
   }
 }
