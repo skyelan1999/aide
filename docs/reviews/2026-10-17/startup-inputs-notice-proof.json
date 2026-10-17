@@ -1,0 +1,140 @@
+{
+  "status": "pass_scoped",
+  "code": "a331b6f852e0b834c97b353b661fcee461b57f92",
+  "runtime": {
+    "health": "ok",
+    "image": "sha256:6ad1d1179c2c6aa8b334cf98663626dcb52441cea105f318a8751292244486e7",
+    "sourceSHA256": "2b0f9c65000ccee3d1537d9018480fd975f97883cb417444d1fe737c631eda07",
+    "code": "a331b6f852e0b834c97b353b661fcee461b57f92",
+    "protectedFilesAndMountsPreserved": true,
+    "sessions": 14
+  },
+  "sourceParity": {
+    "status": "pass",
+    "worktreeSourceSHA256": "2b0f9c65000ccee3d1537d9018480fd975f97883cb417444d1fe737c631eda07",
+    "cleanGitArchiveImageSourceSHA256": "2b0f9c65000ccee3d1537d9018480fd975f97883cb417444d1fe737c631eda07",
+    "ignoredHostDependenciesRetained": true,
+    "code": "a331b6f852e0b834c97b353b661fcee461b57f92"
+  },
+  "dockerContext": {
+    "status": "pass",
+    "hostPluginDependenciesExcludedFromActualDockerContext": true,
+    "pluginManifestStillIncluded": true,
+    "originalCachesRetained": true
+  },
+  "negativeOldFingerprint": "expected_failure_new_generated_dependency_assertion",
+  "quick": {
+    "status": "pass",
+    "checks": 104
+  },
+  "native": {
+    "actualOldCSSLargeBlankNoticeReproduced": true,
+    "actualNewCSSCompactServiceRestartNotice": true,
+    "diagnosticDialogOpensWithMatchingRestartCode": true,
+    "nodeDetailOpensAndCloses": true,
+    "dismissPass": true,
+    "narrow707pxAndRestored1325px": true,
+    "below700px": "not_run_native_window_minimum_or_resize_limit",
+    "newTabs": 0,
+    "modelCalls": 0,
+    "screenshots": [
+      "native-old-css-notice.png",
+      "native-fixed-notice.png",
+      "native-narrow-notice.png",
+      "native-detail-and-notice.png"
+    ]
+  },
+  "defaultStart": {
+    "originalStartCommand": true,
+    "overrideSourceBuild": false,
+    "noBuildOrPull": true,
+    "currentCanonicalImage": "sha256:6ad1d1179c2c6aa8b334cf98663626dcb52441cea105f318a8751292244486e7",
+    "protected14SessionsAndConfigExact": true
+  },
+  "packages": {
+    "status": "pass",
+    "packages": [
+      {
+        "status": "pass",
+        "platform": "linux/arm64",
+        "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-arm64-6ad1d1179c2c-offline.tar.gz",
+        "bytes": 770933872,
+        "sha256": "29cdec3b4ca3e112880dd846b41a16692ef67ce2ca1db77d6b71bbe5f24e9b81",
+        "innerImageTarSHA256": "3242efc333d0cb3af18d872dc90f17da351e813602ca78a71d9fb4796776e644",
+        "image": "sha256:6ad1d1179c2c6aa8b334cf98663626dcb52441cea105f318a8751292244486e7",
+        "sourceSHA256": "2b0f9c65000ccee3d1537d9018480fd975f97883cb417444d1fe737c631eda07",
+        "exactLaunchersAndLicenses": true,
+        "localImport": true,
+        "privateDataAbsent": true,
+        "remoteUpload": "pending",
+        "receivingDevice": "not_run"
+      },
+      {
+        "status": "pass",
+        "platform": "linux/amd64",
+        "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-amd64-0c173c73296e-offline.tar.gz",
+        "bytes": 774157923,
+        "sha256": "ca198f6939628628de800c69251903fe7e7e94436451b641c43e2a9971220675",
+        "innerImageTarSHA256": "153faed903c61ac7df9988c3c000dca3fbbc45aa3d170088b66baa30b6ae5ea9",
+        "image": "sha256:0c173c73296efc4867142df1c85063c68109c78c9b6e7a53b6c9af43be01face",
+        "sourceSHA256": "2b0f9c65000ccee3d1537d9018480fd975f97883cb417444d1fe737c631eda07",
+        "exactLaunchersAndLicenses": true,
+        "localImport": true,
+        "privateDataAbsent": true,
+        "remoteUpload": "pending",
+        "receivingDevice": "not_run"
+      }
+    ],
+    "productionImagePreserved": true
+  },
+  "fullRegression": "pending",
+  "release": "public_upload_pending_do_not_push_main",
+  "freshARM": {
+    "status": "pass",
+    "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-arm64-6ad1d1179c2c-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "actualStartCommand": true,
+    "documentLine": {
+      "line": 3,
+      "matchedRawFileHash": true,
+      "blankLineAndCRLFPreserved": true,
+      "actualCompiledImageAPI": true
+    },
+    "image": "sha256:6ad1d1179c2c6aa8b334cf98663626dcb52441cea105f318a8751292244486e7",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "segments": 0,
+      "points": 0,
+      "emptyNodes": 0,
+      "parts": 2,
+      "faces": 9,
+      "meshedFaces": 9,
+      "collapsedFaces": 0,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "recoveredFaces": 0,
+      "nurbsFaces": 0,
+      "seconds": 0.04568687500432134
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  }
+}

@@ -44,24 +44,30 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Generated dependency pruning, Docker context exclusion, scoped #detail CSS and bounded shared notice sizing/cache bumps implemented. Quick104 pass and real Docker context exclusion pass; native/final bundle/default-manifest/full checks pending.",
+      "status": "pass",
+      "summary": "Generated node_modules excluded consistently from source hash and Docker context; plugin code and lockfiles retained. Map panel selectors scoped to #detail; shared notice sizing/insets bounded; asset cache versions bumped. Verified complete package metadata now points local default launch to codec-capable canonical6ad/0c17, no source-build override needed.",
       "evidence": [
-        "scripts/test_source_fingerprint.py",
-        "internal/server/web/crash-monitor.css"
+        "scripts/aide.sh",
+        ".dockerignore",
+        "internal/server/web/crash-monitor.css",
+        "internal/server/web/starmap.css",
+        "docker/prebuilt-images.tsv"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old script negative fails generated-dependency stability; corrected source tests2 pass; actual scratch Docker context excludes host node_modules and retains plugin manifest, caches retained; quick104 pass. No native layout claim yet.",
+      "summary": "Old fingerprint negative fails as expected; corrected focused tests2 and quick104 pass. Actual Docker context excludes host generated modules and retains manifest; clean Git source fingerprint matches worktree2b0f9c65. Native old CSS reproduces tall blank card; new compact notice/diagnostic/detail/dismiss pass at1325px and707px, original size restored; below700 not run. Both canonical packages imported, fresh ARM original start with CAD/line/hash passed; default ordinary start no build/pull and14sessions/config exact. Frozen full pending.",
       "evidence": [
-        "scripts/test_source_fingerprint.py"
+        "scripts/test_source_fingerprint.py",
+        "docs/reviews/2026-10-17/startup-inputs-notice-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Scoped proof reports exact code/source/images and native width limitations; final full receipt and publication gate pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/startup-inputs-notice-proof.json"
+      ]
     },
     "cleanup": {
       "status": "pending",
@@ -76,5 +82,5 @@
   },
   "release_authorization": "Existing user instructions to incrementally fix/test/document/push/main and distribute complete offline bundles; no new tag/version, Windows native user-owned.",
   "rollback": "Retain previous image and all protected data; restore prior code/image on failure, leaving new compressed timeline histories and their matching encrypted legacy backups intact. Do not downgrade history format blindly. No real plugin caches deleted.",
-  "handoff": "Implementation begins on clean task branch from a7675408; public asset upload still pending Safari diagnostic preference permission, no changes to that setting."
+  "handoff": "Native and offline scoped checks passed. New default local start selects6ad codec-capable runtime, ordinary no build/pull proven; public new archives unavailable and remote main held5fac. Freeze manifest/checksum metadata then run full; previous e35 receipt cannot authorize changed source. No Safari developer preference changed."
 }
