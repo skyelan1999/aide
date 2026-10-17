@@ -8,6 +8,7 @@ import shutil
 import socket
 import stat
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -242,10 +243,45 @@ sys.exit(91)
             self.write_manifest(platform,url);r=self.run_import();self.assertNotEqual(r.returncode,0);self.assertNotIn('"curl"',self.calls())
     def test_duplicate_manifest_is_refused(self):
         self.manifest.write_text(self.manifest.read_text()*2);r=self.run_import();self.assertNotEqual(r.returncode,0);self.assertNotIn('"load"',self.calls())
-    def test_source_and_windows_entry_require_explicit_build(self):
+    def test_source_checkout_and_windows_entry_build_policy(self):
         shell=(ROOT/'scripts/aide.sh').read_text();ps=(ROOT/'start.ps1').read_text(encoding='utf-8-sig')
-        self.assertIn('${AIDE_BUILD_FROM_SOURCE:-0}',shell);self.assertIn('launcher_prebuilt_image "$DOCKER_BIN" "$IMG"',shell)
+        self.assertIn('launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}"',shell);self.assertIn('launcher_prebuilt_image "$DOCKER_BIN" "$IMG"',shell)
         self.assertIn("$env:AIDE_BUILD_FROM_SOURCE -eq '1'",ps);self.assertIn('if ($sourceBuild -and (Invoke-Compose build aide)',ps)
         self.assertIn('AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start',(ROOT/'scripts/install.sh').read_text())
+
+class RunningRuntimeReuseTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
+        root=Path(self.temp.name);self.docker=root/'docker'
+        self.docker.write_text("#!"+sys.executable+"\n"+r"""
+import sys,os,json
+args=sys.argv[1:];state=os.environ.get('FIX_STATE','healthy')
+if args[:3]==['compose','ps','--status']:
+ print('a'*64 if state!='stopped' else '');sys.exit(0)
+if args[:3]==['compose','exec','-T']:
+ if state=='unhealthy':sys.exit(22)
+ print(json.dumps({'service':'other' if state=='foreign' else 'aide','status':'ok'},separators=(',',':')));sys.exit(0)
+if args[0]=='info':print('linux/arm64');sys.exit(0)
+if args[:2]==['image','inspect']:
+ if state=='missing':sys.exit(1)
+ print('sha256:'+'1'*64+'|'+('linux/amd64' if state=='wrong-platform' else 'linux/arm64')+'|'+'2'*64+'|'+('' if state=='incomplete' else '8.0.1.1.0'));sys.exit(0)
+sys.exit(90)
+""");self.docker.chmod(0o755)
+    def probe(self,kind,state):
+        return subprocess.run(['bash','-ec','source "$1"; '+kind+' "$2" aide:local','fixture',str(ROOT/'scripts/prebuilt-image.sh'),str(self.docker)],env=dict(os.environ,FIX_STATE=state),capture_output=True,text=True)
+    def test_source_selection_respects_checkout_and_explicit_override(self):
+        root=self.docker.parent
+        def selected(mode):
+            return subprocess.run(['bash','-ec','source "$1"; launcher_should_build_source "$2" "$3"','fixture',str(ROOT/'scripts/prebuilt-image.sh'),mode,str(root)],capture_output=True).returncode==0
+        self.assertFalse(selected('auto'));self.assertTrue(selected('1'))
+        marker=root/'.git';marker.mkdir();self.assertTrue(selected('auto'));self.assertFalse(selected('0'))
+        marker.rmdir();marker.write_text('gitdir: owned-worktree-fixture')
+        self.assertTrue(selected('auto'));self.assertFalse(selected('0'))
+    def test_running_instance_requires_local_service_health(self):
+        for state,success in [('healthy',True),('stopped',False),('unhealthy',False),('foreign',False)]:
+            with self.subTest(state=state):self.assertEqual(self.probe('launcher_running_ready',state).returncode==0,success)
+    def test_installed_runtime_requires_platform_and_complete_metadata(self):
+        for state,success in [('healthy',True),('missing',False),('wrong-platform',False),('incomplete',False)]:
+            with self.subTest(state=state):self.assertEqual(self.probe('launcher_local_runtime_ready',state).returncode==0,success)
 
 if __name__ == '__main__': unittest.main()

@@ -336,10 +336,12 @@ async function api(path, options = {}) {
   const data = await response.json();
   if (!response.ok) {
     window.AideCrash?.reportServer(data);
-    // A wrong lock-screen password is also HTTP 401, but it does not mean the
-    // browser's access token expired. Keep the lock screen visible so its own
-    // handler can show the password error instead of opening the login dialog.
-    if (response.status === 401 && path !== '/account/verify-password' && !$('login-dialog').open) $('login-dialog').showModal();
+    // Password/Passkey reauthentication failures also return 401. Only the
+    // access-token middleware can mark those paths as requiring a new login;
+    // otherwise keep the current identity dialog and its local error visible.
+    const identityCheck = path === '/account/verify-password' || path === '/auth/verify' || path.startsWith('/webauthn/') || /^\/sessions\/[^/]+\/unlock-assistant$/.test(path);
+    const tokenRequired = response.headers?.get('X-Aide-Auth-Required') === 'token';
+    if (response.status === 401 && (!identityCheck || tokenRequired) && !$('login-dialog').open) $('login-dialog').showModal();
     const error = new Error(t(data.error) || t("请求失败"));
     error.status = response.status;
     error.data = data;
@@ -616,7 +618,7 @@ function renderAssistantEntry(s) {
   entry.title = voiceAssistantDisplayName();
   entry.classList.toggle('active', (state.pendingSessionId || state.session?.id) === s.id);
   entry.classList.toggle('loading', state.pendingSessionId === s.id);
-  const running = s.status === 'running';
+  const running = s.status === 'running'||!!window.aideAssistantLive?.snapshot().enabled;
   entry.querySelector('.assistant-entry-dot').classList.toggle('live', running);
   entry.onclick = action(() => openAssistantGate(s.id, s.title));
 }
@@ -822,10 +824,10 @@ function sessionRunRenderSignature(run, view = {}) {
     sessionPluginPlanView(run),
     run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
     run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
-    run.strategy, run.profile, run.autoReview, run.approvalState, run.approvalReviews,
+    run.strategy, run.profile, run.autoReview, run.assistantManaged, run.approvalState, run.approvalReviews,
     run.pendingQuestion, run.canResume, run.pauseRequested, run.stopRequested, run.attachments, run.steers,
     run.steps?.map(step => [step.name, step.status, step.content, step.reasoning, step.outputSegments]),
-    run.files?.map(file => [file.path, file.before, file.content, file.applied]),
+    run.files?.map(file => [file.source, file.targetPath, file.binding, file.path, file.before, file.content, file.applied]),
     run.commands, run.toolUses, view.language, view.ignoredProposal,
   ];
   return sessionValueFingerprint(rendered);
@@ -899,11 +901,11 @@ async function selectSession(id) {
   state.pendingSessionId = id;
   if (!sameSession && typeof resetContextMeter === 'function') resetContextMeter();
   paintSessionSelection(id, true); // 首帧反馈不等待 GET 或「已读」磁盘写入
-  if (!sameSession && typeof stopXiaomiDictation === 'function') stopXiaomiDictation();
+  if (!sameSession) window.aideAssistantLive?.setMicrophone(false);
   // 离开小秘会话时收起聆听面板并硬停止识别，避免麦克风继续监听或把后续语音送到新会话。
   if (!sameSession && typeof voiceHardStop === 'function' && !$('voice-panel').classList.contains('hidden')) voiceHardStop();
   clearTimeout(state.poll); closeStream();
-  ttsCancel();
+  if (!sameSession || !window.aideAssistantLive?.snapshot().enabled) ttsCancel();
   if (!sameSession) {
     // live 文本按 run 归属：切换会话才失效；同会话刷新（排队/插话等）保留流式状态，
     // 避免打断正在流式渲染的回答（closeStream 后 schedulePoll 会重连，live 丢失会造成文本回退）
@@ -934,6 +936,7 @@ async function selectSession(id) {
     scheduleChatRecovery();
     if (loaded.pendingPrompt && !$('prompt').value.trim()) $('prompt').value = loaded.pendingPrompt;
     if (changed || !sameSession) renderSession(); // 数据未变时跳过重渲染，点击更轻快
+    if(loaded.kind==='assistant')window.aideAssistantLiveSync?.();
     refreshCompactInfo();
     schedulePoll();
     $('prompt').focus(); // 不等待侧栏刷新即可继续输入
@@ -1414,19 +1417,19 @@ async function stopRunById(runId) {
   if (!actions || document.getElementById('reminder-center')) return;
   const button = document.createElement('button');
   button.id = 'reminder-center-button'; button.type = 'button'; button.className = 'quiet';
-  button.setAttribute('aria-label', t('提醒')); button.setAttribute('aria-pressed', 'false');
+  button.setAttribute('aria-label', t('消息')); button.dataset.i18nAriaLabel='消息'; button.setAttribute('aria-pressed', 'false');
   const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   icon.setAttribute('class', 'reminder-center-icon'); icon.setAttribute('viewBox', '0 0 24 24');
   icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
   icon.setAttribute('stroke-width', '1.7'); icon.setAttribute('stroke-linecap', 'round');
   icon.setAttribute('stroke-linejoin', 'round'); icon.setAttribute('aria-hidden', 'true');
-  icon.innerHTML = '<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/><circle cx="18.5" cy="5.5" r="2.5" fill="var(--brand)" stroke="var(--bg)"/>';
-  button.append(icon, document.createTextNode(t('提醒')));
+  icon.innerHTML = '<path d="M20 11a8 8 0 0 1-8 8H7l-4 3v-7a8 8 0 1 1 17-4Z"/><path d="M7 9h8M7 13h5"/>';
+  const messageLabel=document.createElement('span');messageLabel.dataset.i18n='消息';messageLabel.textContent=t('消息');button.append(icon,messageLabel);
   const badge = document.createElement('span'); badge.className = 'reminder-count hidden'; button.append(badge);
   document.querySelector('.panel-switch').insertBefore(button, $('plugins-toggle'));
   document.body.insertAdjacentHTML('beforeend', `
     <aside id="reminder-center" class="reminder-center-panel" aria-labelledby="reminder-center-title">
-      <header class="reminder-center-head"><h2 id="reminder-center-title" data-i18n="提醒">提醒</h2><div class="reminder-panel-actions"><button type="button" id="reminder-create-toggle" aria-label="新建提醒" title="新建提醒" data-i18n-aria-label="新建提醒" data-i18n-title="新建提醒">＋</button><button type="button" class="icon-button" id="reminder-center-close" aria-label="关闭" data-i18n-aria-label="关闭">×</button></div></header>
+      <header class="reminder-center-head"><h2 id="reminder-center-title" data-i18n="消息">消息</h2><div class="reminder-panel-actions"><button type="button" id="reminder-create-toggle" aria-label="新建提醒" title="新建提醒" data-i18n-aria-label="新建提醒" data-i18n-title="新建提醒">＋</button><button type="button" class="icon-button" id="reminder-center-close" aria-label="关闭" data-i18n-aria-label="关闭"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></header>
       <div class="reminder-center-body">
         <form class="reminder-create" id="reminder-form"><h3 id="reminder-form-title" data-i18n="新建提醒">新建提醒</h3>
           <label><span data-i18n="标题">标题</span><input id="reminder-title" maxlength="200" required></label>
@@ -1437,7 +1440,7 @@ async function stopRunById(runId) {
           <label><span data-i18n="提醒方式">提醒方式</span><select id="reminder-notify"><option value="both" data-i18n="弹窗 + 小秘">弹窗 + 小秘</option><option value="popup" data-i18n="仅弹窗">仅弹窗</option><option value="xiaomi" data-i18n="仅小秘">仅小秘</option><option value="none" data-i18n="不主动通知">不主动通知</option></select></label>
           <div class="reminder-form-actions"><button class="quiet hidden" type="button" id="reminder-edit-cancel" data-i18n="取消编辑">取消编辑</button><button class="primary" type="submit" id="reminder-save" data-i18n="保存提醒">保存提醒</button></div>
         </form>
-        <section class="reminder-list"><div class="reminder-section-head"><h3 data-i18n="提醒事项">提醒事项</h3><button type="button" class="quiet" id="reminder-refresh" data-i18n="刷新">刷新</button></div>
+        <section class="reminder-list"><div class="reminder-section-head"><h3 data-i18n="提醒事项">提醒事项</h3><button type="button" class="quiet" id="reminder-refresh"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg><span data-i18n="刷新">刷新</span></button></div>
           <input id="reminder-search" class="reminder-search" type="search" placeholder="搜索提醒…" aria-label="搜索提醒" data-i18n-placeholder="搜索提醒…" data-i18n-aria-label="搜索提醒">
           <div class="reminder-filters"><button type="button" class="reminder-filter active" data-reminder-area="all" data-i18n="全部区域">全部区域</button><button type="button" class="reminder-filter" data-reminder-area="global" data-i18n="全局">全局</button><button type="button" class="reminder-filter" data-reminder-area="workspace" data-i18n="工作区">工作区</button><button type="button" class="reminder-filter" data-reminder-status="completed" data-i18n="已完成">已完成</button></div>
           <div id="reminder-items" class="reminder-items" aria-live="polite"></div>
@@ -1458,10 +1461,17 @@ async function stopRunById(runId) {
       $('file-panel').classList.remove('mobile-open'); state.panel = 'reminders'; syncPanelButtons();
     });
     await loadList();
+    messageUI?.open();
   };
   const resetForm = () => { editingID = ''; form.reset(); $('reminder-priority').value = 'normal'; $('reminder-area').value = 'workspace'; $('reminder-notify').value = 'both'; $('reminder-form-title').textContent = t('新建提醒'); $('reminder-save').textContent = t('保存提醒'); $('reminder-edit-cancel').classList.add('hidden'); };
-  const showCreateForm = focus => { window.aideExperience?.reopen(form); form.classList.add('open'); $('reminder-create-toggle').textContent = '×'; $('reminder-create-toggle').setAttribute('aria-expanded', 'true'); if (focus) $('reminder-title').focus(); };
-  const hideCreateForm = () => { leaveUISurface(form, () => form.classList.remove('open')); $('reminder-create-toggle').textContent = '＋'; $('reminder-create-toggle').setAttribute('aria-expanded', 'false'); };
+  const setReminderCreateIcon = open => {
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    for(const [key,value] of Object.entries({class:'ui-icon',viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':'1.7','stroke-linecap':'round','aria-hidden':'true'}))svg.setAttribute(key,value);
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',open?'m6 6 12 12M18 6 6 18':'M12 5v14M5 12h14');svg.append(path);$('reminder-create-toggle').replaceChildren(svg);
+  };
+  setReminderCreateIcon(false);
+  const showCreateForm = focus => { window.aideExperience?.reopen(form); form.classList.add('open'); setReminderCreateIcon(true); $('reminder-create-toggle').setAttribute('aria-expanded', 'true'); if (focus) $('reminder-title').focus(); };
+  const hideCreateForm = () => { leaveUISurface(form, () => form.classList.remove('open')); setReminderCreateIcon(false); $('reminder-create-toggle').setAttribute('aria-expanded', 'false'); };
   const fmt = value => { if (!value) return ''; const d = new Date(value); return Number.isNaN(d.valueOf()) ? value : d.toLocaleString(); };
   const tag = (text, cls = '') => { const node = el('span', 'reminder-tag ' + cls, text); return node; };
   async function loadList() {
@@ -1534,8 +1544,13 @@ async function stopRunById(runId) {
   $('reminder-create-toggle').onclick = () => { if (form.classList.contains('open')) { resetForm(); hideCreateForm(); } else { resetForm(); showCreateForm(true); } };
   $('reminder-refresh').onclick = () => { loadList(); refreshBadge(); };
   $('reminder-search').oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadList, 180); };
-  center.querySelectorAll('[data-reminder-area]').forEach(b => b.onclick = () => { filterArea=b.dataset.reminderArea; filterStatus='pending'; center.querySelectorAll('.reminder-filter').forEach(x=>x.classList.toggle('active',x===b)); loadList(); });
-  center.querySelector('[data-reminder-status="completed"]').onclick = e => { filterStatus=filterStatus==='completed'?'pending':'completed'; filterArea='all'; center.querySelectorAll('.reminder-filter').forEach(x=>x.classList.toggle('active',x===e.currentTarget)); loadList(); };
+  const syncReminderFilters = () => center.querySelectorAll('.reminder-filter').forEach(b => {
+    const selected=filterStatus==='completed'?b.dataset.reminderStatus==='completed':b.dataset.reminderArea===filterArea;
+    b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected));
+  });
+  center.querySelectorAll('[data-reminder-area]').forEach(b => b.onclick = () => { filterArea=b.dataset.reminderArea; filterStatus='pending'; syncReminderFilters(); loadList(); });
+  center.querySelector('[data-reminder-status="completed"]').onclick = () => { filterStatus=filterStatus==='completed'?'pending':'completed'; filterArea='all'; syncReminderFilters(); loadList(); };
+  syncReminderFilters();
   $('reminder-edit-cancel').onclick = () => { resetForm(); hideCreateForm(); };
   form.onsubmit = async event => {
     event.preventDefault();
@@ -1546,11 +1561,18 @@ async function stopRunById(runId) {
   };
   const closeAlert = () => { $('reminder-alert').close(); popupBusy=false; };
   $('reminder-alert-close').onclick = closeAlert; $('reminder-alert-done').onclick = closeAlert;
-  $('reminder-alert-open').onclick = () => { closeAlert(); openCenter(true); };
+  $('reminder-alert-open').onclick = () => { closeAlert(); messageUI?.selectTab('reminders'); openCenter(true); };
   $('reminder-alert').addEventListener('close', () => { popupBusy=false; });
   refreshBadge(); checkDuePopups();
   setInterval(() => { refreshBadge(); checkDuePopups(); }, 30000);
   window.addEventListener('focus', checkDuePopups);
+  const messageUI = window.AideMessageCenter?.mount({center, api, t, toast,
+    openSettings: async section => { settingsPanel.active=section; await openSettingsSheet(); },
+    raw: (path, options={}) => fetch('/api'+path,{...options,headers:{Authorization:'Bearer '+state.token,...options.headers}}),
+    isLocked: () => !$('lock-screen')?.hidden || window.LockCluster?.snapshot()?.locked === true
+  });
+  center.messageUI=messageUI;
+
 })();
 function currentPauseRun() {
   if (state.pendingSessionId || state.session?.kind === 'assistant') return null;
@@ -1959,7 +1981,7 @@ function renderApprovalReviews(run, box) {
   run.approvalReviews.forEach(r => {
     const item = el('div', 'approval-review');
     item.append(el('strong', '', t(labels[r.status] || '需手动确认')), el('p', '', r.reason), el('small','muted',r.at?new Date(r.at).toLocaleString():''), el('pre', '', r.command));
-    const sources={model:'模型独立审核',human:'人工确认',remembered:'授权规则匹配'};item.append(el('small','muted',t(sources[r.source]||'历史来源未记录')));if(r.workspace)item.append(el('p','muted',r.workspace+' · '+(r.root?.displayHost||r.root?.containerAbs||'—')));if(r.ruleId)item.append(el('code','outcome-digest',r.ruleId),el('p','muted',r.expiresAt?new Date(r.expiresAt).toLocaleString():t('永久')));
+    const sources={assistant:'助理代审',model:'模型独立审核',human:'人工确认',remembered:'授权规则匹配'};item.append(el('small','muted',t(sources[r.source]||'历史来源未记录')));if(r.workspace)item.append(el('p','muted',r.workspace+' · '+(r.root?.displayHost||r.root?.containerAbs||'—')));if(r.ruleId)item.append(el('code','outcome-digest',r.ruleId),el('p','muted',r.expiresAt?new Date(r.expiresAt).toLocaleString():t('永久')));
     details.append(item);
   });
   box.append(details);
@@ -2076,8 +2098,18 @@ function renderSteerMessages(run, box) {
   for (const steer of run.steers || []) {
     if (steer.queued) continue;
     const bubble = el('div', 'user-message steer-message', steer.content);
+    if(steer.assistantManaged)bubble.prepend(el('span','run-origin-label',t('助理代发')));
     box.append(bubble);
   }
+}
+function proposalFileLabel(file) {
+  if (!file.source) return file.path;
+  return (file.source === 'system-docs' ? t('自动系统文档') : t('引用') + ' ' + file.source) + ' / ' + file.path + ' · ' + file.targetPath;
+}
+function renderTaskPrompt(run){
+  const bubble=el('div','user-message',run.prompt);
+  if(run.assistantManaged)bubble.prepend(el('span','run-origin-label',t('助理代发')));
+  return bubble;
 }
 function renderSession() {
   const pluginPlanFocus = document.activeElement?.dataset?.pluginPlanFocus;
@@ -2098,6 +2130,7 @@ function renderSession() {
   const openDetails = new Set([...$('timeline').querySelectorAll('details[open][data-key]')].map(d => d.dataset.key));
   const isAssistantSess = state.session?.kind === 'assistant';
   document.body.classList.toggle('assistant-mode', !!isAssistantSess);
+  window.aideAssistantLiveUI?.();
   syncAssistantModeControls(!!isAssistantSess);
   syncComposerApproval();
   $('prompt').placeholder = isAssistantSess ? t('对{0}说点什么…', voiceAssistantDisplayName()) : '';
@@ -2119,9 +2152,9 @@ function renderSession() {
   // #62：小蜜空状态——历史为空时显示专属引导，绝不显示通用欢迎页
   if (isAssistantSess && !(state.session?.runs || []).length && !(state.session?.messages || []).length) {
     const es = el('div', 'assistant-empty');
-    es.append(el('div', 'assistant-empty-icon'));
+    const readyIcon=el('div','assistant-empty-icon assistant-ready-icon');const mic=$('voice-btn')?.querySelector?.('svg')?.cloneNode(true);if(mic)readyIcon.append(mic);es.append(readyIcon);
     es.append(el('p', 'assistant-empty-title', state.session?.title || t('小秘')));
-    es.append(el('p', 'assistant-empty-sub', t('还没有对话，点麦克风开始')));
+    es.append(el('p', 'assistant-empty-sub', t('我会自动统筹交办的工作、跟进进展；空闲时也可以和我聊聊。')));
     $('timeline').append(es);
     return;
   }
@@ -2156,7 +2189,7 @@ function renderSession() {
       ignoredProposal: ignoredProposals.has(run.id),
     });
     if (appendCachedSessionRun(run, renderSignature, previousRuns, $('timeline'))) continue;
-    const box = el('article', 'run'); box.dataset.run = run.id; box.append(el('div', 'user-message', run.prompt));
+    const box = el('article', 'run'); box.dataset.run = run.id;box.append(renderTaskPrompt(run));
     box.dataset.renderSignature = renderSignature;
     const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
     if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume && run !== state.session.runs.at(-1)) {
@@ -2271,8 +2304,8 @@ function renderSession() {
     if (run.files?.length) {
       const proposal = el('div', 'proposal'); proposal.append(el('h4', '', t("文件修改 · {0} 个文件", run.files.length)));
       for (const file of run.files) {
-        const details = el('details'); details.dataset.key = run.id + ':' + file.path; details.open = openDetails.has(details.dataset.key);
-        details.append(el('summary', '', (file.applied ? '✓ ' : '+ ') + file.path));
+        const details = el('details'); details.dataset.key = run.id + ':' + (file.source || '') + ':' + file.path; details.open = openDetails.has(details.dataset.key);
+        details.append(el('summary', '', (file.applied ? '✓ ' : '+ ') + proposalFileLabel(file)));
         const diff = el('div', 'diff-columns'); const before = el('div'); before.append(el('small', '', t("原内容")), el('pre', '', file.before || t("（新文件）")));
         const after = el('div'); after.append(el('small', '', t("建议内容")), el('pre', '', file.content)); diff.append(before, after); details.append(diff); proposal.append(details);
       }
@@ -2289,7 +2322,7 @@ function renderSession() {
             apply.disabled = true;
             try {
               await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: JSON.stringify({remember,expiresAt}) });
-              toast(t("文件修改已写入本地挂载目录"));
+              toast(t("文件修改已写入各自的目标目录"));
               await selectSession(state.session.id);
               await loadFiles();
             } catch (e) {
@@ -2302,7 +2335,7 @@ function renderSession() {
           const always=el('button','quiet',t('永远记住并应用')); always.title=t('记住相同路径、原版本和完整新内容');const validity=approvalValidityPicker(always,'永远记住并应用','记住并应用');always.onclick=()=>applyFiles(true,validity.expiresAt());
           const ignore = el('button', 'quiet', t("忽略此提案"));
           ignore.onclick = () => { ignoredProposals.add(run.id); renderSession(); };
-          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply, validity.node, always, ignore);
+          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后写入各文件标明的目标目录；验证命令需要单独运行。")), apply, validity.node, always, ignore);
         }
       }
       else if (run.applied) proposal.append(el('p', 'muted', t("✓ 已应用文件修改。命令验证结果以命令面板为准。")));
@@ -2352,7 +2385,7 @@ function renderQueueBar() {
     const idx = qi++;
     const item = el('div', 'queue-item');
     const arrow = el('span', 'q-arrow', '↳');
-    const content = el('span', 'q-content', st.content);
+    const content = el('span', 'q-content', st.content);if(st.assistantManaged)content.prepend(el('span','run-origin-label',t('助理代发')));
     const editBtn = el('button', 'q-btn', t('修改'));
     const delBtn = el('button', 'q-btn', t('删除'));
     const steerBtn = el('button', 'q-btn primary', t('插话'));
@@ -3487,7 +3520,6 @@ $('files').addEventListener('drop', action(async event => {
 $('task-form').onsubmit = action(async event => {
   event.preventDefault();
   if (state.submitting || state.approvalModeBusy) return; // Enter 连击与点击不可重复创建 run
-  if (xiaomiDictation.active || xiaomiDictation.starting) { toast(t('请先停止语音转写，再检查并发送文字')); return; }
   const prompt = $('prompt').value.trim(); if (!prompt) return;
   if (!state.config?.configured) { openSettings(); return; }
   if (state.previewOverLimit) { toast(t("上下文预算超限：请缩短任务或减少附件后再发送")); return; }
@@ -3527,12 +3559,17 @@ $('task-form').onsubmit = action(async event => {
         }
         // 小秘文字会话不经过 aide 的 run/done 流；直接朗读本次小秘回复。
         // 静默/忽略动作没有面向用户的回复，不触发 TTS。
-        if (resp.action !== 'silent' && resp.action !== 'ignore' && resp.reply) speakReply(resp.reply);
         await clearSubmittedDraft();
         if(recoveryScope()===submittedScope&&state.session?.id===target.id&&chatContent({text:$('prompt').value,attachments:state.attachments})===chatContent(submittedDraft)){ $('prompt').value = ''; state.attachments = []; renderAttachments(); }
         // 转交成功后立即打开后端刚创建的 aide 会话。此前固定回到小秘，
         // 导致新会话虽已出现在侧栏，主区域仍停留在欢迎页或小秘历史。
-        await selectSession(resp.dispatched?.sessionId || target.id);
+        await selectSession(window.aideAssistantLive?.snapshot().enabled?target.id:(resp.dispatched?.sessionId||target.id));
+        // Refresh/select first: selectSession cancels old speech. Starting TTS
+        // before it either killed the new reply or skipped it in companion mode.
+        if(resp.action!=='silent'&&resp.action!=='ignore'&&resp.reply&&recoveryScope()===submittedScope&&state.session?.id===target.id){
+          if(window.aideAssistantLive?.snapshot().enabled)window.aideAssistantLive.reply(resp.reply);
+          else speakReply(resp.reply);
+        }
         // 按 action 分流提示
         if (resp.action === 'dispatch' && resp.dispatched) {
           if (resp.dispatched.started) toast(t('已启动 aide 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
@@ -5268,6 +5305,7 @@ function renderSettingsSheet() {
   const section = sections.find(x => x.id === settingsPanel.active);
   if (!section) return;
   content.append(el('h3', 'settings-page-title', section.title));
+  if(section.id==='messages'){const host=el('div','message-settings-page');content.append(host);document.getElementById('reminder-center')?.messageUI?.renderSettings(host);settingsPanel.rendered=true;return;}
   if (section.children?.length) {
     const sub = el('div', 'settings-subnav');
     const children = section.children;
@@ -9943,13 +9981,15 @@ function ttsSegments(text) {
 }
 /* TTSPlayer：逐句 fetch /api/tts/synthesize → Audio 队列顺序播放；可中断/暂停/继续 */
 const ttsPlayer = {
-  cancelled: false, paused: false,
-  _ctrl: null, _audio: null, _wake: null,
+  cancelled: false, paused: false, generation: 0,
+  _ctrl: null, _audio: null, _wake: null, _element: null, _finish: null, _unlocked: false,
   halt() {
     window.aideAvatarSignal?.('speaking', false);
-    this.cancelled = true; this.paused = false;
+    this.generation++; this.cancelled = true; this.paused = false;
     if (this._ctrl) { try { this._ctrl.abort(); } catch (_) {} this._ctrl = null; }
     if (this._audio) { try { this._audio.pause(); } catch (_) {} this._audio = null; }
+    this._finish?.();
+    ttsPlaybackStatus('idle');
     if (this._wake) { const w = this._wake; this._wake = null; w(); }
   },
   setPaused(p) {
@@ -9959,6 +9999,34 @@ const ttsPlayer = {
     else { if (this._audio) this._audio.play().catch(() => {}); if (this._wake) { const w = this._wake; this._wake = null; w(); } }
   },
 };
+// Safari grants autoplay per element. Prime this SAME element in the user's
+// gesture, before awaiting microphone permission, the model or cloud synthesis.
+function ttsAudioElement() {
+  if(!ttsPlayer._element){const a=new Audio();a.id='tts-audio';a.hidden=true;a.preload='auto';document.body.append(a);ttsPlayer._element=a;}
+  return ttsPlayer._element;
+}
+function ttsUnlockAudio() {
+  if (ttsPlayer._unlocked || ttsPlayer._audio || ttsPlayer._unlocking) return;
+  ttsPlayer._unlocking=true;
+  const a=ttsAudioElement();
+  const wav=new Uint8Array(44+1600),view=new DataView(wav.buffer);
+  const tag=(at,value)=>{for(let i=0;i<value.length;i++)wav[at+i]=value.charCodeAt(i);};
+  tag(0,'RIFF');view.setUint32(4,wav.length-8,true);tag(8,'WAVE');tag(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,8000,true);view.setUint32(28,16000,true);view.setUint16(32,2,true);view.setUint16(34,16,true);tag(36,'data');view.setUint32(40,1600,true);
+  const url=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));a.src=url;
+  const clean=()=>{ttsPlayer._unlocking=false;if(a.src===url){a.pause();a.removeAttribute('src');}URL.revokeObjectURL(url);};
+  a.play().then(()=>{ttsPlayer._unlocked=true;clean();},clean);
+}
+function ttsPlaybackStatus(phase, detail='', retry=null) {
+  state.ttsPlaybackPhase=phase;
+  document.getElementById('tts-playback-notice')?.remove();
+  // Normal playback has no permanent toolbar. Only a browser-blocked play
+  // needs a user gesture; preserve its existing audio instead of synthesizing again.
+  if(phase!=='blocked'||!retry)return;
+  const notice=el('div','toast');notice.id='tts-playback-notice';notice.setAttribute('role','alert');
+  const button=el('button','quiet',t('点击播放语音'));button.type='button';button.onclick=retry;
+  notice.append(el('span','',detail||t('浏览器等待播放授权')),button);
+  (document.querySelector('dialog[open]')||document.body).append(notice);
+}
 function ttsWantsEdge(overrideProvider) {
   const p = overrideProvider != null ? overrideProvider : ((state.config && state.config.ttsProvider) || 'auto');
   if (p === 'webspeech') return false;
@@ -9969,53 +10037,77 @@ function ttsWantsEdge(overrideProvider) {
   }
   return true; // 后端合成失败或浏览器音频无法播放时，ttsSpeak 会降级 Web Speech。
 }
-async function ttsEdgeSynthOne(seg, overrideVoice) {
+async function ttsEdgeSynthOne(seg, overrideVoice, overrideProvider) {
   const ctrl = new AbortController();
   ttsPlayer._ctrl = ctrl;
   // 客户端 20s 硬超时：后端 sherpa 冷启动/edge 挂起时主动 abort，避免 fetch 永不返回卡死播放队列。
-  const timer = setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, 20000);
+  const provider = overrideProvider || state.config?.ttsProvider || 'auto';
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, provider === 'qwen' ? 60000 : 20000);
   const voice = overrideVoice != null ? overrideVoice : ((state.config && state.config.ttsVoice) || '');
-  let res;
   try {
-    res = await fetch('/api/tts/synthesize', {
+    const res = await fetch('/api/tts/synthesize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.token },
-      body: JSON.stringify({ text: seg, voice: voice, gender: (state.config && state.config.voiceReplyGender) || 'female' }),
+      body: JSON.stringify({ text: seg, voice, provider, gender: state.config?.voiceReplyGender || 'female' }),
       signal: ctrl.signal,
     });
+    if (!res.ok) {
+      let detail=''; try { detail=(await res.json()).error||''; } catch (_) {}
+      throw new Error(detail || 'TTS HTTP ' + res.status);
+    }
+    const blob = await res.blob();
+    if (!blob.size) throw new Error(t('语音服务返回空音频'));
+    return URL.createObjectURL(blob);
   } finally {
     clearTimeout(timer);
+    if(ttsPlayer._ctrl===ctrl)ttsPlayer._ctrl=null;
   }
-  ttsPlayer._ctrl = null;
-  if (!res.ok) throw new Error('edge-tts http ' + res.status);
-  const blob = await res.blob();
-  return URL.createObjectURL(blob);
 }
-function ttsPlayOne(url) {
+function ttsPlayOne(url, provider) {
   return new Promise((resolve, reject) => {
-    const a = new Audio(url);
+    const a = ttsAudioElement();
+    a.src=url;
+    a.playbackRate=1;
+    if((provider || state.config?.ttsProvider)==='qwen'){a.playbackRate=Number(state.config?.ttsRate)||1;a.preservesPitch=true;}
     ttsPlayer._audio = a;
     let done = false;
+    const generation=ttsPlayer.generation;
     let timer = 0;
+    let blocked=false,starting=false,startedAt=Date.now();
     const cleanup = () => {
       window.aideAvatarSignal?.('speaking', false);
       if (ttsPlayer._audio === a) ttsPlayer._audio = null;
+      if(ttsPlayer._finish===finish)ttsPlayer._finish=null;
       if (timer) clearInterval(timer);
+      a.onplaying=a.onpause=a.onended=a.onerror=null;
+      a.pause();a.removeAttribute('src');
       URL.revokeObjectURL(url);
     };
     const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
     const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error('合成音频无法播放')); };
-    a.onplaying = () => window.aideAvatarSignal?.('speaking', true);
+    ttsPlayer._finish=finish;
+    const play=()=>{
+      if(done||starting||ttsPlayer.cancelled||generation!==ttsPlayer.generation)return;
+      starting=true;blocked=false;startedAt=Date.now();
+      a.play().then(()=>{starting=false;ttsPlayer._unlocked=true;},error=>{
+        starting=false;if(done)return;
+        if(error.name==='NotAllowedError'){
+          blocked=true;ttsPlaybackStatus('blocked',t('浏览器等待播放授权'),play);
+        }else fail(error);
+      });
+    };
+    a.onplaying = () => {ttsPlaybackStatus('playing');window.aideAvatarSignal?.('speaking', true);};
     a.onpause = () => window.aideAvatarSignal?.('speaking', false);
     a.onended = finish;
     a.onerror = () => fail(new Error('合成音频解码或播放失败'));
     timer = setInterval(() => {
       if (done) { clearInterval(timer); return; }
-      if (ttsPlayer.cancelled) { a.pause(); clearInterval(timer); finish(); return; }
+      if (ttsPlayer.cancelled || generation!==ttsPlayer.generation) { a.pause(); clearInterval(timer); finish(); return; }
       if (ttsPlayer.paused) { if (!a.paused) a.pause(); }
-      else if (a.paused && !a.ended) a.play().catch(fail);
+      else if (!blocked && a.paused && !a.ended) play();
+      if(!blocked&&!ttsPlayer.paused&&a.currentTime===0&&Date.now()-startedAt>15000)fail(new Error(t('音频未能开始播放，请检查浏览器声音设置')));
     }, 150);
-    a.play().catch(fail);
+    play();
   });
 }
 // 朗读入口：awaitMode=true 返回 Promise（导览讲解），否则即发即忘（对话回复）。
@@ -10028,7 +10120,19 @@ function notifyDegraded() {
   _lastDegradeToastAt = now;
   toast(t('神经音暂不可用，当前为浏览器机械音（联网恢复后自动切回）'));
 }
+function qwenTTSSegments(text) {
+  const flat=String(text).replace(/[#*`>\[\]]/g,' ').replace(/\s+/g,' ').trim();
+  const chars=Array.from(flat),out=[];for(let i=0;i<chars.length;i+=280)out.push(chars.slice(i,i+280).join(''));
+  return out;
+}
+function showTTSError(message){
+  state.ttsLastError=message;const node=document.querySelector('[data-tts-error]');if(node)node.textContent=message;
+  ttsPlaybackStatus('error',message);
+  toast(message);
+}
 async function ttsSpeak(text, { awaitMode = false, colloquial = false, voice = null, provider = null } = {}) {
+  const generation=ttsPlayer.generation;
+  const cancelled=()=>ttsPlayer.cancelled||generation!==ttsPlayer.generation;
   ttsPlayer.cancelled = false;
   ttsPlayer.paused = false;
   if (!text) return;
@@ -10041,22 +10145,31 @@ async function ttsSpeak(text, { awaitMode = false, colloquial = false, voice = n
       if (r && r.spoken) spoken = r.spoken;
     } catch (_) { spoken = text; }
   }
-  const segs = ttsSegments(spoken);
-  if (!segs.length) return;
+  const selected=provider||state.config?.ttsProvider||'auto';
+  const segs = selected==='qwen'?qwenTTSSegments(spoken):ttsSegments(spoken);
+  if (!segs.length || cancelled()) return;
+  let index=0;
   try {
-    for (let i = 0; i < segs.length; i++) {
-      if (ttsPlayer.cancelled) return;
-      if (awaitMode && narration.paused) await new Promise(res => { ttsPlayer._wake = res; });
-      if (ttsPlayer.cancelled) return;
-      const url = await ttsEdgeSynthOne(segs[i], voice);
-      if (ttsPlayer.cancelled) { URL.revokeObjectURL(url); return; }
-      await ttsPlayOne(url);
+    for (; index < segs.length; index++) {
+      if (cancelled()) return;
+      if (awaitMode && narration.active && narration.paused) await new Promise(res => { ttsPlayer._wake = res; });
+      if (cancelled()) return;
+      ttsPlaybackStatus('synthesizing');
+      const url = await ttsEdgeSynthOne(segs[index], voice, selected);
+      if (cancelled()) { URL.revokeObjectURL(url); return; }
+      await ttsPlayOne(url, selected);
     }
-  } catch (_) {
-    // edge 不可用/超时 → 降级浏览器 Web Speech（用口语化后的文本），并显著提示
-    notifyDegraded();
-    if (awaitMode) return webSpeakAwait(spoken);
-    return webSpeakReply(spoken);
+    state.ttsLastError='';
+    if(!cancelled())ttsPlaybackStatus('complete');
+  } catch (error) {
+    if(cancelled())return; // A user's interruption must never start another voice.
+    const fallback=selected!=='qwen'||state.config?.ttsBrowserFallback===true;
+    const reason=error.name==='AbortError'?t('语音合成超时'):String(error.message||t('语音播放失败'));
+    showTTSError(reason+' · '+t(fallback?'已切换浏览器语音':'已保留文字，未切换机械声'));
+    if(!fallback)return;
+    const remaining=segs.slice(index).join('');
+    if (awaitMode) return webSpeakAwait(remaining);
+    return webSpeakReply(remaining);
   }
 }
 
@@ -10115,151 +10228,59 @@ async function typeIntoPrompt(text) {
   }
 }
 
-// 小秘专属会话使用听写模式：语音停顿后自动结束，识别结果回到输入框供用户编辑和发送。
-const xiaomiDictation = { token: 0, recognition: null, stream: null, active: false, starting: false, finalText: '', interim: '', baseText: '', lastRendered: '', silenceTimer: 0 };
-function scheduleXiaomiDictationFinish(token) {
-  clearTimeout(xiaomiDictation.silenceTimer);
-  xiaomiDictation.silenceTimer = setTimeout(() => {
-    if (token === xiaomiDictation.token && xiaomiDictation.active) stopXiaomiDictation();
-  }, 1200);
-}
-function renderXiaomiDictationText() {
-  const prompt = $('prompt');
-  const recognized = xiaomiDictation.finalText + xiaomiDictation.interim;
-  const separator = xiaomiDictation.baseText && recognized && !/[\s\n]$/.test(xiaomiDictation.baseText) ? '\n' : '';
-  prompt.value = xiaomiDictation.baseText + separator + recognized;
-  xiaomiDictation.lastRendered = prompt.value;
-  const host = $('voice-text');
-  host.replaceChildren();
-  if (xiaomiDictation.finalText) host.append(el('div', 'voice-log-line', xiaomiDictation.finalText));
-  if (xiaomiDictation.interim) host.append(el('div', 'voice-log-interim', '… ' + xiaomiDictation.interim));
-  host.scrollTop = host.scrollHeight;
-}
-function releaseXiaomiDictationStream() {
-  if (xiaomiDictation.stream) {
-    try { xiaomiDictation.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
-    xiaomiDictation.stream = null;
-  }
-}
-function finishXiaomiDictation(token, showResult = true) {
-  if (token !== xiaomiDictation.token) return;
-  xiaomiDictation.active = false;
-  xiaomiDictation.starting = false;
-  if (showResult && xiaomiDictation.interim.trim()) xiaomiDictation.finalText += xiaomiDictation.interim;
-  xiaomiDictation.interim = '';
-  clearTimeout(xiaomiDictation.silenceTimer);
-  xiaomiDictation.silenceTimer = 0;
-  if (xiaomiDictation.recognition) {
-    try { xiaomiDictation.recognition.onend = null; xiaomiDictation.recognition.stop(); } catch (_) {}
-    xiaomiDictation.recognition = null;
-  }
-  releaseXiaomiDictationStream();
-  xiaomiDictation.token++;
-  $('prompt').disabled = false;
-  $('voice-btn').classList.remove('recording');
-  $('voice-panel').classList.add('hidden');
-  renderXiaomiDictationText();
-  if (showResult && xiaomiDictation.finalText.trim()) {
-    // Programmatic value updates do not notify the composer. Emit the same event
-    // as typed input so context preview, send state, and other listeners refresh.
-    const prompt = $('prompt');
-    if (typeof Event === 'function' && typeof prompt.dispatchEvent === 'function') prompt.dispatchEvent(new Event('input', { bubbles: true }));
-    if (typeof prompt.focus === 'function') prompt.focus();
-    toast(t('语音已转写，可编辑后发送'));
-  }
-}
-function stopXiaomiDictation() {
-  if (!xiaomiDictation.active && !xiaomiDictation.starting) return;
-  const token = xiaomiDictation.token;
-  clearTimeout(xiaomiDictation.silenceTimer);
-  xiaomiDictation.silenceTimer = 0;
-  xiaomiDictation.active = false;
-  xiaomiDictation.starting = false;
-  $('voice-btn').classList.remove('recording');
-  voiceSetStatus('standby', t('说完后可编辑并发送'));
-  if (xiaomiDictation.recognition) {
-    try { xiaomiDictation.recognition.stop(); } catch (_) {}
-    // 某些 Web Speech 实现不触发 onend；最终转写应保留，麦克风也要及时释放。
-    setTimeout(() => finishXiaomiDictation(token), 900);
-  } else finishXiaomiDictation(token);
-}
-async function startXiaomiDictation() {
-  if (xiaomiDictation.active || xiaomiDictation.starting) return;
-  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!voice.supported || !Ctor) {
-    const message = t('当前浏览器不支持语音识别，请用 Chrome/Edge，并通过 HTTPS 或 localhost 访问');
-    toast(message); return;
-  }
-  const token = ++xiaomiDictation.token;
-  xiaomiDictation.starting = true;
-  xiaomiDictation.active = false;
-  xiaomiDictation.finalText = '';
-  xiaomiDictation.interim = '';
-  xiaomiDictation.baseText = $('prompt').value;
-  $('prompt').disabled = true;
-  $('voice-title').textContent = voice.name();
-  $('voice-panel').classList.remove('hidden');
-  $('voice-btn').classList.remove('recording');
-  voiceSetStatus('requesting', t('正在请求麦克风…'));
-  renderXiaomiDictationText();
-  try {
-    const deviceId = state.config && state.config.voiceInputDevice;
-    if (deviceId && navigator.mediaDevices?.getUserMedia) {
-      try { xiaomiDictation.stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } }); }
-      catch (_) { toast(t('无法使用所选麦克风，将使用系统默认')); }
+// 小秘持续会话：语音直接进入助理工具循环，保留手工输入草稿。
+const xiaomiDictation = {get active(){return !!window.aideAssistantLive?.snapshot().enabled;},get starting(){return window.aideAssistantLive?.snapshot().phase==='requesting';}};
+function stopXiaomiDictation(){window.aideAssistantLive?.setMicrophone(false);}
+async function startXiaomiDictation(){ttsUnlockAudio();if(!window.aideAssistantLive)initAssistantLive();await window.aideAssistantLive?.start(true);}
+function initAssistantLive(){
+  if(!window.AideAssistantLive||window.aideAssistantLive)return;
+  const work=el('details','assistant-work-summary');work.id='assistant-work-summary';
+  const workTitle=el('summary','',t('工作统筹'));const workItems=el('div','assistant-work-items');work.append(workTitle,workItems);document.querySelector('.composer-wrap')?.prepend(work);
+  const valid=()=>!!assistantEntrySession?.id&&!lockScreen.locked&&$('lock-screen').hidden&&!$('login-dialog').open;
+  const names={off:'等待身份验证',requesting:'正在连接语音',listening:'持续聆听中',thinking:'正在统筹处理',speaking:'正在汇报',watching:'工作统筹中',paused:'等待连接恢复',recovering:'连接恢复中，工作记录已保留'};
+  const paintWork=events=>{
+    workItems.replaceChildren();const items=events.slice().sort((a,b)=>(b.priority||0)-(a.priority||0));
+    const urgent=items.filter(item=>item.priority>=3).length;
+    workTitle.textContent=t('工作统筹')+' · '+(items.length?t('{0} 项跟进',items.length):t('暂无待跟进工作'))+(urgent?' · '+t('{0} 项待处理',urgent):'');
+    if(!items.length)workItems.append(el('small','',t('交办工作后自动跟进，空闲时可以直接和我聊天。')));
+    for(const event of items.slice(0,8)){
+      const row=el('div','assistant-work-item');const label=event.sessionId?el('button','quiet',event.text):el('span','',event.text);
+      if(event.sessionId){label.type='button';label.onclick=action(()=>selectSession(event.sessionId));}
+      row.append(label);if(event.detail)row.append(el('small','',event.detail));workItems.append(row);
     }
-    if (token !== xiaomiDictation.token || !xiaomiDictation.starting) {
-      releaseXiaomiDictationStream();
-      return;
-    }
-    const rec = new Ctor();
-    rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
-    xiaomiDictation.recognition = rec;
-    rec.onstart = () => {
-      if (token !== xiaomiDictation.token || xiaomiDictation.recognition !== rec) return;
-      if (!xiaomiDictation.starting) { finishXiaomiDictation(token); return; }
-      xiaomiDictation.starting = false; xiaomiDictation.active = true;
-      $('voice-btn').classList.add('recording');
-      voiceSetStatus('listening', t('说完后可编辑并发送'));
-    };
-    rec.onresult = event => {
-      if (token !== xiaomiDictation.token) return;
-      let interim = '';
-      let receivedFinal = false;
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) { xiaomiDictation.finalText += result[0].transcript; receivedFinal = true; }
-        else interim += result[0].transcript;
-      }
-      xiaomiDictation.interim = interim;
-      renderXiaomiDictationText();
-      if (receivedFinal) scheduleXiaomiDictationFinish(token);
-    };
-    rec.onspeechstart = () => clearTimeout(xiaomiDictation.silenceTimer);
-    rec.onspeechend = () => scheduleXiaomiDictationFinish(token);
-    rec.onerror = event => {
-      if (token !== xiaomiDictation.token) return;
-      const denied = event.error === 'not-allowed' || event.error === 'service-not-allowed';
-      const message = denied ? t('麦克风权限被拒绝，请在浏览器地址栏允许麦克风访问后重试') : t('语音识别暂不可用，请检查麦克风后重试');
-      finishXiaomiDictation(token, false);
-      toast(message);
-    };
-    rec.onend = () => {
-      if (token !== xiaomiDictation.token) return;
-      if (xiaomiDictation.active) { try { rec.start(); } catch (_) {} }
-      else finishXiaomiDictation(token);
-    };
-    ttsCancel();
-    const audioTrack = xiaomiDictation.stream?.getAudioTracks?.()[0];
-    if (audioTrack) {
-      try { rec.start(audioTrack); }
-      catch (_) { releaseXiaomiDictationStream(); toast(t('当前浏览器不支持所选麦克风，将使用系统默认')); rec.start(); }
-    } else rec.start();
-  } catch (_) {
-    finishXiaomiDictation(token, false);
-    toast(t('无法启动语音识别，请检查麦克风后重试'));
-  }
+  };
+  const paint=()=>{
+    const value=window.aideAssistantLive?.snapshot()||{enabled:false,phase:'off'};
+    work.hidden=state.session?.kind!=='assistant';if(state.session?.kind!=='assistant'&&!value.enabled){$('voice-btn').setAttribute('aria-label',t('语音输入'));return;}
+    if(value.enabled&&value.microphone&&state.session?.kind==='assistant'){if(value.phase!=='listening')voice.interim='';$('voice-panel').classList.remove('hidden');$('voice-title').textContent=voice.name();voiceSetStatus(value.phase==='listening'?'listening':'standby',t(names[value.phase]||'工作统筹中'));}
+    else{$('voice-panel').classList.add('hidden');}
+    if(assistantEntrySession)$('assistant-entry')?.querySelector('.assistant-entry-dot')?.classList.toggle('live',value.enabled&&!value.paused);
+    $('voice-btn').classList.toggle('recording',value.enabled&&value.microphone&&!value.paused);$('voice-btn').setAttribute('aria-label',t(value.enabled&&value.microphone?'结束持续语音':'开始持续语音'));
+  };
+  window.aideAssistantLive=window.AideAssistantLive.create({valid,state:paint,
+    openMicrophone:async()=>{
+      const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Ctor)throw new Error(t('当前浏览器不支持语音识别'));
+      const recognition=new Ctor();recognition.lang=document.documentElement.lang.startsWith('en')?'en-US':'zh-CN';recognition.continuous=true;recognition.interimResults=true;
+      const device=state.config?.voiceInputDevice;let stream=null;
+      if(navigator.mediaDevices?.getUserMedia)stream=await navigator.mediaDevices.getUserMedia({audio:{...(device?{deviceId:{exact:device}}:{}),echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+      return {recognition,stream};
+    },
+    send:(text,signal)=>api(`/sessions/${state.session.id}/assistant-message`,{method:'POST',signal,body:JSON.stringify({text,inputSource:'voice',avatarFeedback:!!window.aideAvatarEnabled?.()})}),
+    reply:async(result,text)=>{voiceLog('sent',text);if(result.avatarCue)window.aideAvatarCue?.(result.avatarCue);if(result.reply)voiceLog('reply',result.reply);const id=state.session?.id;if(id)await selectSession(id);},
+    watch:async()=>{const result=await api(`/sessions/${assistantEntrySession.id}/assistant-watch`);return result.events||[];},
+    work:paintWork,
+    events:events=>{for(const event of events)voiceLog('reply',event.text,t('主动跟进'));},
+    speak:text=>state.config?.voiceReplyEnabled&&document.visibilityState!=='hidden'?ttsSpeak(stripMarkdownForSpeech(text),{awaitMode:true,colloquial:false}):Promise.resolve(),
+    interrupted:()=>{voiceLog('standby',t('已打断，正在听你说'));},
+    cancelSpeech:ttsCancel,error:message=>{if(message)toast(t(message));},
+    transcript:(final,interim)=>{voice.interim=final+interim;voiceRenderStatus();}
+  });
+  window.aideAssistantLiveSync=()=>{if(!valid())return;const value=window.aideAssistantLive.snapshot();if(!value.enabled)void window.aideAssistantLive.start(false);else if(value.paused)window.aideAssistantLive.resume();};
+  window.aideAssistantLiveUI=paint;paintWork([]);paint();
+  window.addEventListener('pagehide',()=>window.aideAssistantLive.stop());
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){window.aideAssistantLive.setMicrophone(false);ttsCancel();}else window.aideAssistantLiveSync();});
 }
+if(window.AideAssistantLive)initAssistantLive();
 
 async function voiceStart() {
   if (voice.starting || voice.listening) return;
@@ -10420,13 +10441,16 @@ function voiceReleaseMicStream() {
 }
 $('voice-btn').onclick = action(() => {
   if (state.session?.kind === 'assistant') {
-    (xiaomiDictation.active || xiaomiDictation.starting) ? stopXiaomiDictation() : startXiaomiDictation();
+    window.aideAssistantLive?.snapshot().microphone ? stopXiaomiDictation() : startXiaomiDictation();
     return;
   }
   // 主会话和小秘会话统一进入小秘语音：实时断句、AI 甄别并直接发送。
   (voice.listening || voice.starting) ? voiceStopAndFlush() : voiceStart();
 });
-$('voice-stop').onclick = action(() => state.session?.kind === 'assistant' ? stopXiaomiDictation() : voiceHardStop());
+$('voice-stop').onclick = action(() => {
+  if(state.session?.kind==='assistant'){stopXiaomiDictation();ttsCancel();}
+  else voiceHardStop();
+});
 // ===== 小秘语音导览：朗读 AI 输出并自动滚动跟随；讲方案时先打开产物文件再讲解 =====
 const narration = { active:false, steps:[], index:0, paused:false, cancelled:false, jump:0 };
 function narrSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -10478,7 +10502,10 @@ function narrationGate(){
 }
 // 浏览器 Web Speech 导览讲解兜底（await 版）
 function webSpeakAwait(text){
+  const generation=ttsPlayer.generation;
   return new Promise(resolve=>{
+    let timer;const res=()=>{clearInterval(timer);resolve();};
+    timer=setInterval(()=>{if(ttsPlayer.cancelled||generation!==ttsPlayer.generation)res();},80);
     if(!('speechSynthesis' in window)){ narrSleep(500).then(res); return; }
     const segs = ttsSegments(text);
     if(!segs.length) return res();
@@ -10488,7 +10515,7 @@ function webSpeakAwait(text){
     const basePitch = isMale?0.99:1.1, baseRate=1.04;
     let i=0;
     function step(){
-      if(narration.cancelled){ try{synth.cancel();}catch(_){} return res(); }
+      if(ttsPlayer.cancelled||generation!==ttsPlayer.generation||(narration.active&&narration.cancelled)){ try{synth.cancel();}catch(_){} return res(); }
       if(i>=segs.length) return res();
       const seg=segs[i];
       const u=new SpeechSynthesisUtterance(seg);
@@ -10503,12 +10530,12 @@ function webSpeakAwait(text){
       synth.speak(u);
     }
     function next(){
-      if(narration.cancelled){ try{synth.cancel();}catch(_){} return res(); }
-      if(narration.paused){
+      if(ttsPlayer.cancelled||generation!==ttsPlayer.generation||(narration.active&&narration.cancelled)){ try{synth.cancel();}catch(_){} return res(); }
+      if(narration.active&&narration.paused){
         try{ synth.pause(); }catch(_){}
         (function w(){
-          if(narration.cancelled){ try{synth.cancel();}catch(_){} return res(); }
-          if(narration.paused) return setTimeout(w,180);
+          if(ttsPlayer.cancelled||generation!==ttsPlayer.generation||(narration.active&&narration.cancelled)){ try{synth.cancel();}catch(_){} return res(); }
+          if(narration.active&&narration.paused) return setTimeout(w,180);
           try{ synth.resume(); }catch(_){}
           step();
         })();
@@ -10740,6 +10767,16 @@ function renderXiaomiModelControl() {
   return wrap;
 }
 controlRenderers['xiaomi-model'] = renderXiaomiModelControl;
+function renderAssistantApprovalControl(){
+  const wrap=el('div','settings-control');
+  const row=el('label','voice-reply-row');const checkbox=el('input');checkbox.type='checkbox';checkbox.checked=!!state.config?.assistantAutoReview;
+  row.append(checkbox,el('span','',t('允许助理代审交办任务')));
+  const save=el('button','primary',t('保存'));save.type='button';
+  save.onclick=action(async()=>{await api('/settings',{method:'PUT',body:JSON.stringify({assistantAutoReview:checkbox.checked})});await refreshConfig();toast(t('助理审批设置已保存'));});
+  wrap.append(el('div','control-label',t('助理审批')),row,el('small','',t('作用于助理交办的任务及其子任务，复用独立审批器判断具体命令和新文件提案并记录原因。无法确认授权、现有文件覆盖或受保护操作交由用户决定；不会代答业务澄清、指纹验证或消息邀请。关闭后遵循工作台原有审批模式。')),save);
+  return wrap;
+}
+controlRenderers['assistant-approval']=renderAssistantApprovalControl;
 // voice-history 控制项已移除：小秘对话入口从设置面板删除
 function renderVoiceReplyControl() {
   const wrap = el('div', 'settings-control');
@@ -10819,10 +10856,10 @@ function renderTTSEngineControl() {
   const cfg = state.config || {};
 
   // 引擎下拉
-  const engRow = el('div', 'voice-reply-row');
+  const engRow = el('div', 'voice-reply-row tts-engine-select');
   engRow.append(el('span', '', t('TTS引擎')));
   const eng = el('select');
-  [['auto', t('自动（不可用时浏览器兜底）')], ['sherpa', t('本地离线')], ['edge', t('edge-tts 联网')], ['clone', t('克隆音色（自托管）')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
+  [['auto', t('自动（不可用时浏览器兜底）')], ['sherpa', t('本地离线')], ['edge', t('edge-tts 联网')], ['qwen', t('阿里云百炼 · 千问 TTS')], ['clone', t('克隆音色（自托管）')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
     const o = el('option', '', label); o.value = v; eng.append(o);
   });
   eng.value = cfg.ttsProvider || 'auto';
@@ -10844,6 +10881,50 @@ function renderTTSEngineControl() {
   });
   voice.value = cfg.ttsVoice || ''; // 回显已保存的音色；空值选中"默认（按性别）"
   voiceRow.append(voice);
+
+  const qwenBox = el('div', 'tts-qwen-settings');
+  const field = (label, input) => {
+    const row = el('label', 'voice-reply-row'); input.setAttribute('aria-label',t(label)); row.append(el('span', '', t(label)), input); qwenBox.append(row);
+  };
+  const region = el('select');
+  [['beijing', t('北京')], ['singapore', t('新加坡')]].forEach(([v, label]) => {
+    const o = el('option', '', label); o.value = v; region.append(o);
+  });
+  region.value = cfg.ttsRegion || 'beijing'; field('百炼地域', region);
+  const model = el('select'); field('TTS 模型', model);
+  const qwenVoice = el('select'); field('音色', qwenVoice);
+  const fillOptions=(select,items,value)=>{
+    select.replaceChildren();
+    for(const item of items){const o=el('option','',item.name&&item.name!==item.id?item.name+' · '+item.id:item.id);o.value=item.id;select.append(o);}
+    if(value&&!items.some(item=>item.id===value)){const o=el('option','',value+' · '+t('已保存，未在目录中'));o.value=value;select.append(o);}
+    select.value=value||items[0]?.id||'';
+  };
+  const catalogStatus=el('small');let catalogLoaded=false,catalogEpoch=0;
+  const paintCatalog=(catalog)=>{
+    fillOptions(model,catalog.models||[],model.value||cfg.ttsModel||'qwen3-tts-flash');
+    fillOptions(qwenVoice,catalog.voices||[],qwenVoice.value||(cfg.ttsProvider==='qwen'?cfg.ttsVoice:'')||'Cherry');
+    catalogStatus.textContent=t(catalog.modelSource==='api'?'模型：百炼接口目录（未验证账户调用权限）':'模型：内置兼容目录')+' · '+t(catalog.voiceSource==='official'?'音色：已同步官方目录':'音色：内置官方目录')+(catalog.warning?' · '+catalog.warning:'');
+  };
+  paintCatalog(cfg.qwenTTSCatalog||{models:[{id:'qwen3-tts-flash',name:'千问3 TTS Flash'}],voices:[{id:'Cherry',name:'芊悦'}]});
+  const key = el('input'); key.type = 'password'; key.autocomplete = 'new-password';
+  key.placeholder = cfg.hasTTSKey ? t('已配置，留空保留') : t('填写百炼 API Key'); field('API Key', key);
+  const clearKey = el('input'); clearKey.type = 'checkbox'; field('清除已保存的 TTS 密钥', clearKey);
+  const fallback = el('input'); fallback.type='checkbox';fallback.checked=cfg.ttsBrowserFallback===true;field('失败时使用浏览器语音',fallback);
+  const refreshCatalog=el('button','quiet',t('刷新模型与音色'));refreshCatalog.type='button';
+  const loadCatalog=async()=>{
+    if(refreshCatalog.disabled)return;
+    const generation=++catalogEpoch,chosenRegion=region.value,chosenKey=key.value;
+    refreshCatalog.disabled=true;catalogStatus.textContent=t('正在查询模型与音色…');
+    try{const catalog=await api('/tts/catalog',{method:'POST',body:JSON.stringify({region:chosenRegion,apiKey:chosenKey.trim()})});
+      if(generation!==catalogEpoch||!qwenBox.isConnected||chosenRegion!==region.value||chosenKey!==key.value)return;
+      paintCatalog(catalog);catalogLoaded=true;
+    }catch(error){catalogStatus.textContent=error.message||t('目录查询失败，保留当前列表');}
+    finally{refreshCatalog.disabled=false;}
+  };
+  refreshCatalog.onclick=action(loadCatalog);qwenBox.append(refreshCatalog,catalogStatus,
+    el('small','',t('地域须与密钥一致。模型只显示当前非实时接口兼容型号；音色自动同步官方目录，网络不可用时保留内置列表。语速调整播放倍率并保持音调。合成文本会发送至百炼并计费；失败默认保留文字，不切换机械声。')));
+  region.onchange=()=>{catalogLoaded=false;catalogEpoch++;};
+
 
   // 语速滑块
   const rateRow = el('div', 'voice-reply-row');
@@ -10869,14 +10950,21 @@ function renderTTSEngineControl() {
   const preview = el('button', 'quiet', t('试听')); preview.type = 'button';
   save.onclick = action(async () => {
     await api('/settings', { method: 'PUT', body: JSON.stringify({
-      ttsProvider: eng.value, ttsVoice: voice.value,
+      ttsProvider: eng.value, ttsVoice: eng.value === 'qwen' ? qwenVoice.value.trim() || 'Cherry' : voice.value,
+      ttsModel: model.value.trim(), ttsRegion: region.value, ttsAPIKey: key.value.trim(), clearTTSKey: clearKey.checked, ttsBrowserFallback: fallback.checked,
       ttsRate: parseFloat(rate.value), ttsExpressiveness: parseFloat(exp.value),
       activeModel: state.config ? state.config.activeModel : '',
     }) });
+    key.value = ''; clearKey.checked = false;
     await refreshConfig();
     toast(t('语音引擎设置已保存'));
   });
   preview.onclick = action(async () => {
+    ttsUnlockAudio();
+    const savedTTS = state.config || {};
+    if (eng.value === 'qwen' && (savedTTS.ttsProvider !== 'qwen' || key.value || clearKey.checked || model.value.trim() !== (savedTTS.ttsModel || 'qwen3-tts-flash') || region.value !== (savedTTS.ttsRegion || 'beijing'))) {
+      toast(t('请先保存千问 TTS 设置，再试听')); return;
+    }
     ttsCancel();
     const savedLabel = preview.textContent;
     preview.disabled = true; preview.textContent = t('播放中…');
@@ -10886,9 +10974,9 @@ function renderTTSEngineControl() {
       await Promise.race([
         ttsSpeak('你好，我是小秘，这是试听效果。', {
           awaitMode: true, colloquial: false,
-          voice: voice.value, provider: eng.value,
+          voice: eng.value === 'qwen' ? qwenVoice.value.trim() || 'Cherry' : voice.value, provider: eng.value,
         }),
-        new Promise(res => setTimeout(res, 8000)),
+        new Promise(res => setTimeout(res, eng.value==='qwen'?65000:8000)),
       ]);
     } finally {
       ttsCancel();
@@ -10904,7 +10992,7 @@ function renderTTSEngineControl() {
   if (prov === 'sherpa' && !cfg.sherpaAvailable) {
     warn.textContent = '⚠ ' + t('本地离线模型未安装') + '。' + t('请在容器内运行 scripts/tts-setup 下载模型到 /data/tts/，或手动放入后重启；当前回退联网/浏览器。');
     warn.style.color = '#c0392b';
-  } else if (prov !== 'webspeech' && cfg.edgeAvailable === false && !cfg.sherpaAvailable) {
+  } else if ((prov === 'auto' || prov === 'edge' || prov === 'clone') && cfg.edgeAvailable === false && !cfg.sherpaAvailable) {
     warn.textContent = '⚠ ' + t('神经音当前不可用') + (cfg.edgeLastError ? '（' + cfg.edgeLastError + '）' : '') + '，' + t('已临时使用浏览器机械音；联网恢复后自动切回神经音。');
     warn.style.color = '#c0392b';
   }
@@ -10918,17 +11006,29 @@ function renderTTSEngineControl() {
     const nv = (cfg.sherpaVoices && cfg.sherpaVoices.length) ? cfg.sherpaVoices.map(v=>v.name||v.dir).join('、') : '';
     engStatus.textContent = t('当前引擎') + ': 本地离线 sherpa-onnx ✓' + (nv ? '（' + nv + '）' : '');
     engStatus.style.color = '#27ae60';
+  } else if (cur === 'qwen') {
+    engStatus.textContent = t('当前引擎') + ': ' + t('阿里云百炼 · 千问 TTS') + ' ✓';
+    engStatus.style.color = '#27ae60';
   } else if (cur === 'edge' || cur === 'azure') {
     engStatus.textContent = t('当前引擎') + ': ' + (cur === 'edge' ? 'edge-tts 神经音' : 'Azure 神经音') + ' ✓' + (cfg.sherpaAvailable ? '（本地已装，下次优先本地）' : '');
     engStatus.style.color = '#27ae60';
   } else if (cur === 'unavailable') {
-    engStatus.textContent = t('当前引擎') + ': ⚠ ' + t('神经音不可用，已降级浏览器机械音');
+    engStatus.textContent = t('当前引擎') + ': ⚠ ' + t(prov === 'qwen' && !cfg.ttsBrowserFallback ? '已保留文字，未切换机械声' : '神经音不可用，已降级浏览器机械音');
     engStatus.style.color = '#c0392b';
   } else {
     engStatus.textContent = t('当前引擎') + ': ' + (cfg.sherpaAvailable ? t('本地离线已就绪，待首次合成确认') : t('待检测（合成一次后显示）'));
     engStatus.style.color = '#888';
   }
-  wrap.append(head, engRow, voiceRow, engStatus, rateRow, expRow, btnRow, warn,
+  const paintProvider = () => {
+    const qwen = eng.value === 'qwen';
+    qwenBox.classList.toggle('hidden', !qwen); voiceRow.classList.toggle('hidden', qwen);
+    warn.classList.toggle('hidden', qwen);
+    rateRow.classList.remove('hidden'); expRow.classList.toggle('hidden', qwen);
+    if(qwen&&!catalogLoaded)void loadCatalog();
+  };
+  eng.onchange = paintProvider; paintProvider();
+  const failureStatus=el('small','',state.ttsLastError||'');failureStatus.dataset.ttsError='';failureStatus.setAttribute('role','status');
+  wrap.append(head, engRow, voiceRow, qwenBox, engStatus, rateRow, expRow, btnRow, failureStatus, warn,
     el('small', '', t('自动模式依次尝试本地离线和可用的联网神经音；都不可用或播放失败时直接回退浏览器合成。可手动选择浏览器合成。主聊天的机械朗读按钮不受此设置影响。')));
   return wrap;
 }
@@ -11505,7 +11605,7 @@ function applyLockVisual() {
   // 小秘退下：停止听写 + 取消朗读（解锁后按原状态恢复）
   lockScreen.wasVoiceListening = !!voice.listening;
   if (voice.listening) voiceClose();
-  if (xiaomiDictation.active || xiaomiDictation.starting) stopXiaomiDictation();
+  window.aideAssistantLive?.stop();
   ttsCancel();
   veil.hidden = false;
   veil.classList.remove('joining');

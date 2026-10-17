@@ -13,6 +13,8 @@ import (
 // Outcome cards are projections of durable task records. A model plan, a file
 // proposal, a returned tool result and a verification report remain distinct.
 type outcomeFile struct {
+	Source        string `json:"source,omitempty"`
+	TargetPath    string `json:"targetPath,omitempty"`
 	Path          string `json:"path"`
 	State         string `json:"state"`
 	BeforeHash    string `json:"beforeHash"`
@@ -318,7 +320,7 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		if f.Applied || task.Applied {
 			state = "application_recorded"
 		}
-		files = append(files, outcomeFile{f.Path, state, f.BaseHash, hash([]byte(f.Content)), len(f.Content)})
+		files = append(files, outcomeFile{Source: f.Source, TargetPath: f.TargetPath, Path: f.Path, State: state, BeforeHash: f.BaseHash, ProposedHash: hash([]byte(f.Content)), ProposedBytes: len(f.Content)})
 	}
 	eEnd := min(len(task.ToolUses), executionOffset+limit)
 	for i := min(executionOffset, len(task.ToolUses)); i < eEnd; i++ {

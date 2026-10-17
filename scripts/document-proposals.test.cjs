@@ -1,0 +1,12 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const start=source.indexOf('function proposalFileLabel('),end=source.indexOf('\n}',start)+2;
+const ctx={t:x=>x};vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);
+assert.equal(ctx.proposalFileLabel({source:'system-docs',path:'report.md',targetPath:'/configured/docs/report.md'}),'自动系统文档 / report.md · /configured/docs/report.md');
+assert.equal(ctx.proposalFileLabel({path:'src/main.go'}),'src/main.go');
+assert.match(ctx.proposalFileLabel({source:'system-docs',path:'report.md',targetPath:'/other/docs/report.md'}),/\/other\/docs\/report.md$/);
+assert.match(source,/file\.source, file\.targetPath, file\.binding/,'destination changes invalidate cached proposal rendering');
+assert.equal(ctx.proposalFileLabel({source:'user-ref',path:'report.md',targetPath:'/reference/report.md'}),'引用 user-ref / report.md · /reference/report.md');
+assert.match(source,/应用后写入各文件标明的目标目录/);
+console.log('PASS document proposal labels show configured targets and keep workspace file labels unchanged');

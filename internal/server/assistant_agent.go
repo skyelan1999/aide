@@ -38,6 +38,9 @@ type assistantDecision struct {
 // assistantAgentPrinciples 写进小秘 system prompt 的动作原则。
 // 系统侧只给原则，不写死分支；具体调哪个工具由小秘自行判断。
 const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只回一个分类 JSON——你手上有一组工具，像真人秘书一样边判断边调工具：
+- 首要职责是工作统筹：理解目标、确定优先级与依赖、交办给 aide、持续跟进结果和阻塞、必要时整理下一步。用户交办的任务由执行器持续推进，不要把自主工作说成需要开启的“陪伴模式”，不要只回一句“已转交”就当工作结束。
+- 先处理正在交办的工作及待确认事项，空闲时再自然陪伴；性格设置影响语气，不改变工作优先的职责。没有新信息时保持安静，不为显得主动而创建新任务、反复汇报或调用模型。
+- 用户要查看消息模块：有 manage_messages 权限时直接读取并回答，不要转交工作台；无权限时说明需要在设置 → 消息开启助理访问，禁止绕过。发送消息必须得到用户明确指令，联系人、通话、群组和文件同意仍由用户操作。
 - 用户只是在跟你闲聊、倾诉、问生活问题、表达情绪：什么工具都不用调，直接用一句简短、温暖、口语的话回复他（这就是"陪聊"，回复只留在本会话，绝不打扰 aide）。
 - 用户明确要做一件工作（写代码、改文件、跑命令、查资料、产出正式内容）：调用 dispatch_to_aide，把啰嗦/重复/口头禅去掉，总结成一句清晰可执行的意图放进 summary；mode 默认 queue，只有"马上/立刻/现在就要"或中止止损（停/取消/不对/等一下）才用 insert；中止止损把 urgent 设为 true。aide 会话创建后会立即排队启动任务；如果必要条件缺失或启动失败，如实告诉用户原因和会话编号。
 - 听上去是电视/广播/视频的背景声，或用户在跟身边真人打电话、闲聊：调用 be_silent，不要转达、不要搭话。
@@ -89,6 +92,7 @@ func assistantAgentToolSchemas(allowSilent bool) []any {
 
 func (a *App) assistantAgentTools(allowSilent bool) []any {
 	tools := assistantAgentToolSchemas(allowSilent)
+	tools = append(tools, a.messageAssistantTools()...)
 	tools = append(tools, a.pluginToolSchemasForOwner("current-time")...)
 	tools = append(tools, a.pluginToolSchemasForOwner("lunar-calendar")...)
 	a.mu.Lock()
@@ -180,7 +184,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		for _, call := range calls {
 			name := call.Function.Name
 			toolsUsed = append(toolsUsed, name)
-			result := a.execAssistantTool(call, &dec)
+			result := a.execAssistantTool(call, &dec, heard)
 			messages = append(messages, Message{Role: "tool", ToolCallID: call.ID, Content: result})
 		}
 		// dispatch 与静默的最终文案由 handler 按确定的结果生成，无需再请求一次
@@ -205,7 +209,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 // execAssistantTool 执行小秘 agentic 循环里的单个工具调用。
 // 与 executeToolCall 不同：不绑定 Task、不流转发流、不做文件/shell——只做调度与记忆。
 // 调用方不持 a.mu；内部按需加锁。结果作为 tool 消息回灌给模型。
-func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision) string {
+func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision, authorization ...string) string {
 	if a.toolDenied(call.Function.Name) {
 		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
 	}
@@ -216,6 +220,9 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision) string {
 	}
 	str := func(k string) string { v, _ := args[k].(string); return strings.TrimSpace(v) }
 	rawStr := func(k string) string { v, _ := args[k].(string); return v }
+	if call.Function.Name == "manage_messages" {
+		return a.executeMessageAssistant(context.Background(), call)
+	}
 	switch call.Function.Name {
 	case "dispatch_to_aide":
 		summary := strings.TrimSpace(rawStr("summary"))
@@ -309,8 +316,7 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision) string {
 			}
 			target = &Session{
 				ID: newID(), Title: string(titleRunes), Created: now, Updated: now,
-				Messages: []Message{{Role: "user", Content: msg}},
-				Runs:     []*Task{},
+				Messages: []Message{}, Runs: []*Task{}, PendingPrompt: msg, FollowedByAssistant: true,
 			}
 			a.assignSessionNumber(target)
 			a.sessions[target.ID] = target
@@ -323,18 +329,21 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision) string {
 				a.mu.Unlock()
 				return "会话不存在: " + ref
 			}
-			target.Messages = append(target.Messages, Message{
-				Role:    "user",
-				Content: "[小秘转交] " + msg,
-			})
+			target.FollowedByAssistant = true
 			target.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 			_ = a.save(target)
 		}
+		number, title, id := target.Number, target.Title, target.ID
 		a.mu.Unlock()
-		if created {
-			return fmt.Sprintf("已新建会话 #%d（%s）并写入任务：%s。", target.Number, target.Title, msg)
+		dispatch := map[string]any{"sessionId": id}
+		a.startDispatchedAssistantTask(dispatch, msg, false, authorization...)
+		if dispatch["started"] != true {
+			return fmt.Sprintf("会话 #%d 的任务未启动：%v。", number, dispatch["startError"])
 		}
-		return fmt.Sprintf("已向会话 #%d（%s）推送：%s", target.Number, target.Title, msg)
+		if created {
+			return fmt.Sprintf("已创建并启动会话 #%d（%s）的任务。", number, title)
+		}
+		return fmt.Sprintf("已向会话 #%d（%s）提交执行，忙碌时会排队。", number, title)
 	default:
 		if strings.HasPrefix(call.Function.Name, "reminder_") {
 			return a.dispatchAssistantReminderTool(call)

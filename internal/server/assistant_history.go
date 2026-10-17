@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -354,11 +355,16 @@ func (a *App) recentAssistantConversation() []Message {
 func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Text           string `json:"text"`
+		InputSource    string `json:"inputSource,omitempty"`
 		Context        string `json:"context"`
 		AvatarFeedback bool   `json:"avatarFeedback,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		return
+	}
+	source := "text"
+	if in.InputSource == "voice" {
+		source = "voice"
 	}
 	text := strings.TrimSpace(in.Text)
 	if text == "" {
@@ -370,6 +376,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	s := a.sessions[r.PathValue("id")]
 	cfg, cfgErr := a.xiaomiModelConfigLocked()
 	va := a.voiceAgent
+	requiresUnlock := a.settings.UserPasswordHash != ""
 	a.mu.Unlock()
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
@@ -384,7 +391,15 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !a.isAssistantUnlocked(s.ID) && (source == "voice" || requiresUnlock) {
+		jsonOut(w, 200, map[string]any{"action": "locked", "reason": "请先解锁小秘会话"})
+		return
+	}
 	runFallback := func(reason string) {
+		if source == "voice" {
+			fail(w, 503, errors.New("语音助理暂不可用，请检查模型设置后重试"))
+			return
+		}
 		a.mu.Lock()
 		var entry VoiceHistoryEntry
 		if va != nil {
@@ -396,7 +411,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		disp := a.dispatchToAideLocked(entry.Text)
 		a.mu.Unlock()
 		if disp != nil {
-			a.startDispatchedAssistantTask(disp, entry.Text, in.AvatarFeedback)
+			a.startDispatchedAssistantTask(disp, entry.Text, in.AvatarFeedback, text)
 		}
 		jsonOut(w, 200, map[string]any{
 			"action": entry.Action, "text": entry.Text, "reply": describeVoiceEntry(entry),
@@ -415,7 +430,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
-	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "text", in.AvatarFeedback)
+	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, source, in.AvatarFeedback)
 	if err != nil {
 		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
 		detail := strings.ReplaceAll(err.Error(), cfg.BaseURL, "<model-endpoint>")
@@ -426,7 +441,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	var disp map[string]any
 	a.mu.Lock()
-	a.recordAgenticExchangeLocked(text, dec, "text")
+	a.recordAgenticExchangeLocked(text, dec, source)
 	if dec.Action == "dispatch" {
 		disp = a.dispatchToAideLocked(dec.DispatchText)
 		fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
@@ -442,7 +457,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		a.mu.Unlock()
 	}
 	if dec.Action == "dispatch" && disp != nil {
-		a.startDispatchedAssistantTask(disp, dec.DispatchText, in.AvatarFeedback)
+		a.startDispatchedAssistantTask(disp, dec.DispatchText, in.AvatarFeedback, text)
 	}
 	replyOut := dec.Reply
 	if dec.Action == "dispatch" {
@@ -476,7 +491,7 @@ func (a *App) dispatchToAideLocked(intent string) map[string]any {
 	target := &Session{
 		ID: newID(), Title: string(titleRunes), Created: now, Updated: now,
 		Messages: []Message{},
-		Runs:     []*Task{}, PendingPrompt: intent,
+		Runs:     []*Task{}, PendingPrompt: intent, FollowedByAssistant: true,
 	}
 	a.assignSessionNumber(target)
 	a.sessions[target.ID] = target
@@ -492,7 +507,7 @@ func (a *App) dispatchToAideLocked(intent string) map[string]any {
 // startDispatchedAssistantTask makes Xiaomi's explicit aide delegation an active run.
 // It calls the same validated startTask path as the composer, preserving queue,
 // context-budget, model, permission, and run-limit checks.
-func (a *App) startDispatchedAssistantTask(dispatch map[string]any, prompt string, avatarFeedback bool) {
+func (a *App) startDispatchedAssistantTask(dispatch map[string]any, prompt string, avatarFeedback bool, authorization ...string) {
 	sessionID, _ := dispatch["sessionId"].(string)
 	if sessionID == "" || strings.TrimSpace(prompt) == "" {
 		dispatch["started"] = false
@@ -506,6 +521,11 @@ func (a *App) startDispatchedAssistantTask(dispatch map[string]any, prompt strin
 	req := httptest.NewRequest(http.MethodPost, "/api/sessions/"+sessionID+"/runs", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", sessionID)
+	request := ""
+	if len(authorization) > 0 {
+		request = authorization[0]
+	}
+	req = req.WithContext(context.WithValue(req.Context(), assistantDispatchKey{}, request))
 	recorder := httptest.NewRecorder()
 	a.startTask(recorder, req)
 	if recorder.Code != http.StatusAccepted {

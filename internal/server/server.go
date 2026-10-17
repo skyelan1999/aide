@@ -75,6 +75,7 @@ type providerKeyWrite struct {
 }
 
 type Settings struct {
+	AssistantAutoReview    bool                   `json:"assistantAutoReview,omitempty"`
 	BaseURL                string                 `json:"baseURL"`
 	XiaomiModelSource      string                 `json:"xiaomiModelSource,omitempty"` // inherit | configured | custom
 	XiaomiBaseURL          string                 `json:"xiaomiBaseURL,omitempty"`
@@ -113,14 +114,17 @@ type Settings struct {
 	DebugTokenExpiresAt string   `json:"debugTokenExpiresAt,omitempty"` // 调试令牌过期时间 RFC3339
 	DebugAllowOrigins   []string `json:"debugAllowOrigins,omitempty"`   // 浏览器来源白名单（curl 无 Origin 不受限）
 	// ── TTS 自然度：可插拔引擎（edge-tts 神经音 + 浏览器 Web Speech 兜底）──
-	TTSProvider       string  `json:"ttsProvider,omitempty"`       // auto | edge | webspeech
-	TTSVoice          string  `json:"ttsVoice,omitempty"`          // edge 音色 id，空=按性别映射
-	TTSEndpoint       string  `json:"ttsEndpoint,omitempty"`       // 预留：自定义 edge/云端端点
-	TTSAPIKey         string  `json:"ttsAPIKey,omitempty"`         // 预留：云端引擎 key（edge 不需要，不回显）
-	TTSRate           float64 `json:"ttsRate,omitempty"`           // 语速倍率 0.8-1.3，默认 1.0
-	TTSExpressiveness float64 `json:"ttsExpressiveness,omitempty"` // 表现力 0-1，映射 edge styledegree
-	TTSAzureKey       string  `json:"ttsAzureKey,omitempty"`       // Azure 官方 Speech key（可选，edge 后备；不回显）
-	TTSAzureRegion    string  `json:"ttsAzureRegion,omitempty"`    // Azure region，如 eastasia
+	TTSBrowserFallback bool    `json:"ttsBrowserFallback,omitempty"`
+	TTSModel           string  `json:"ttsModel,omitempty"`
+	TTSRegion          string  `json:"ttsRegion,omitempty"`
+	TTSProvider        string  `json:"ttsProvider,omitempty"`       // auto | edge | webspeech
+	TTSVoice           string  `json:"ttsVoice,omitempty"`          // edge 音色 id，空=按性别映射
+	TTSEndpoint        string  `json:"ttsEndpoint,omitempty"`       // 预留：自定义 edge/云端端点
+	TTSAPIKey          string  `json:"ttsAPIKey,omitempty"`         // 预留：云端引擎 key（edge 不需要，不回显）
+	TTSRate            float64 `json:"ttsRate,omitempty"`           // 语速倍率 0.8-1.3，默认 1.0
+	TTSExpressiveness  float64 `json:"ttsExpressiveness,omitempty"` // 表现力 0-1，映射 edge styledegree
+	TTSAzureKey        string  `json:"ttsAzureKey,omitempty"`       // Azure 官方 Speech key（可选，edge 后备；不回显）
+	TTSAzureRegion     string  `json:"ttsAzureRegion,omitempty"`    // Azure region，如 eastasia
 	// ── 少样本音色克隆（#36）：自托管克隆服务接入，仅小秘可选；未配置不影响 edge/webspeech ──
 	CloneTTSBaseURL string `json:"cloneTTSBaseURL,omitempty"` // 克隆服务 BaseURL（如 http://127.0.0.1:9880），空=未配置
 	CloneTTSAPIKey  string `json:"cloneTTSAPIKey,omitempty"`  // 克隆服务 Bearer token（可选，不回显）
@@ -470,6 +474,9 @@ type App struct {
 	capabilityChecking        bool
 	sessions                  map[string]*Session
 	reminders                 []Reminder
+	messageMu                 sync.Mutex
+	messages                  *messageCenter
+	messageError              string
 	cancels                   map[string]context.CancelFunc
 	commands                  chan struct{}
 	commandInputMu            sync.Mutex
@@ -1113,6 +1120,7 @@ func New(work, reference, data string) (*App, error) {
 	// #30：启动幂等确保恰好一个小秘系统会话（永久置顶、密码进入）。
 	a.ensureAssistantSession()
 	a.background(func() { a.reminderLoop(a.bgCtx) })
+	a.startMessagesIfEnabled()
 	return a, nil
 }
 func (a *App) Close() {
@@ -1131,6 +1139,12 @@ func (a *App) Close() {
 			cancel()
 		}
 		a.mu.Unlock()
+		a.messageMu.Lock()
+		if a.messages != nil {
+			a.messages.close()
+			a.messages = nil
+		}
+		a.messageMu.Unlock()
 		a.bgWg.Wait()
 
 		if a.webAuthn != nil {
@@ -1531,7 +1545,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("PUT /api/sessions/{id}/model-selection", a.sessionModelSelectionHandler)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
-	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession)   // #30 小秘会话密码门
+	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession) // #30 小秘会话密码门
+	mux.HandleFunc("GET /api/sessions/{id}/assistant-watch", a.assistantWatch)
 	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler) // 小秘键盘消息，不经过语音环境过滤
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/pause", a.pauseTask)
@@ -1548,6 +1563,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("DELETE /api/approval-policy/rules/{rule}", a.updateApprovalRule)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/answer", a.answerTask)
 	mux.HandleFunc("PUT /api/sessions/{id}/runs/{run}/approval-mode", a.setApprovalMode)
+	mux.HandleFunc("/api/messages/", a.messageAPI)
 	mux.HandleFunc("GET /api/reminders", a.listRemindersHandler)
 	mux.HandleFunc("GET /api/reminders/due", a.dueRemindersHandler)
 	mux.HandleFunc("POST /api/reminders", a.createReminderHandler)
@@ -1571,6 +1587,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/voice-filter", a.voiceFilter)
 	mux.HandleFunc("POST /api/voice-narrate", a.voiceNarrate)
 	mux.HandleFunc("POST /api/tts/synthesize", a.ttsSynthesize)
+	mux.HandleFunc("GET /api/tts/catalog", a.ttsCatalog)
+	mux.HandleFunc("POST /api/tts/catalog", a.ttsCatalog)
 	mux.HandleFunc("POST /api/tts/colloquialize", a.ttsColloquialize)
 	// ── 少样本音色克隆 + 性格推断（#36）──
 	mux.HandleFunc("POST /api/voice-sample/upload", a.voiceSampleUpload)
@@ -1664,6 +1682,7 @@ func (a *App) buildHandler() {
 				token = r.URL.Query().Get("access_token")
 			}
 			if subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
+				w.Header().Set("X-Aide-Auth-Required", "token")
 				fail(w, 401, errors.New("请输入访问令牌，或用 start.command 打开"))
 				return
 			}
@@ -1684,7 +1703,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -1740,16 +1759,19 @@ func (a *App) putVirtualAvatarSettings(w http.ResponseWriter, r *http.Request) {
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
-		ModelInput            *string            `json:"model,omitempty"`
-		ActiveModelInput      *string            `json:"activeModel,omitempty"`
-		ProviderKeyWrites     []providerKeyWrite `json:"providerKeyWrites,omitempty"`
-		ClearKey              bool               `json:"clearKey"`
-		VoiceReplyEnabled     *bool              `json:"voiceReplyEnabled,omitempty"`
-		AccessibilityAutoRead *bool              `json:"accessibilityAutoRead,omitempty"`
-		AccessibilityHostPort *int               `json:"accessibilityHostPort,omitempty"`
-		VoiceReplyGender      string             `json:"voiceReplyGender,omitempty"`
+		AssistantAutoReviewInput *bool              `json:"assistantAutoReview,omitempty"`
+		ModelInput               *string            `json:"model,omitempty"`
+		ActiveModelInput         *string            `json:"activeModel,omitempty"`
+		ProviderKeyWrites        []providerKeyWrite `json:"providerKeyWrites,omitempty"`
+		TTSBrowserFallback       *bool              `json:"ttsBrowserFallback,omitempty"`
+		ClearTTSKey              bool               `json:"clearTTSKey"`
+		ClearKey                 bool               `json:"clearKey"`
+		VoiceReplyEnabled        *bool              `json:"voiceReplyEnabled,omitempty"`
+		AccessibilityAutoRead    *bool              `json:"accessibilityAutoRead,omitempty"`
+		AccessibilityHostPort    *int               `json:"accessibilityHostPort,omitempty"`
+		VoiceReplyGender         string             `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
-		UserName         string  `json:"userName,omitempty"`
+		UserName         *string `json:"userName,omitempty"`
 		LockTimeoutSec   *int    `json:"lockTimeoutSec,omitempty"`
 		VoiceInputDevice *string `json:"voiceInputDevice,omitempty"`
 		OldPassword      string  `json:"oldPassword,omitempty"`
@@ -1786,6 +1808,7 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("无效语音插队敏感度"))
 		return
 	}
+	defer a.syncMessageAccount()
 	modelsOmitted := in.Models == nil
 	// 前端部分更新（如仅切换 activeModel）时，用已存值补全后再校验
 	a.mu.Lock()
@@ -1871,6 +1894,11 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	in.Settings.ActivePersona = a.settings.ActivePersona
 	in.Settings.PersonaCiphers = a.settings.PersonaCiphers
 	in.Settings.PersonaEnabled = a.settings.PersonaEnabled
+	if in.AssistantAutoReviewInput != nil {
+		in.Settings.AssistantAutoReview = *in.AssistantAutoReviewInput
+	} else {
+		in.Settings.AssistantAutoReview = a.settings.AssistantAutoReview
+	}
 	if in.VoiceReplyEnabled != nil {
 		in.Settings.VoiceReplyEnabled = *in.VoiceReplyEnabled
 	} else {
@@ -1919,10 +1947,10 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.DebugTokenExpiresAt = ""
 	}
 	// 账户字段：未传则保留已存值；密码哈希永远不接受前端直传，只经 OldPassword/NewPassword 流程变更
-	if in.UserName == "" {
+	if in.UserName == nil {
 		in.Settings.UserName = a.settings.UserName
 	} else {
-		in.Settings.UserName = strings.TrimSpace(in.UserName)
+		in.Settings.UserName = strings.TrimSpace(*in.UserName)
 	}
 	if in.LockTimeoutSec != nil {
 		sec := *in.LockTimeoutSec
@@ -1961,16 +1989,29 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.VoiceInputDevice = a.settings.VoiceInputDevice
 	}
 	// TTS 引擎：未传（零值/空）保留已存值；TTSAPIKey 同 apiKey 模式，空且未 clear 时保留
+	if in.TTSBrowserFallback != nil {
+		in.Settings.TTSBrowserFallback = *in.TTSBrowserFallback
+	} else {
+		in.Settings.TTSBrowserFallback = a.settings.TTSBrowserFallback
+	}
+	if in.Settings.TTSModel == "" {
+		in.Settings.TTSModel = a.settings.TTSModel
+	}
+	if in.Settings.TTSRegion == "" {
+		in.Settings.TTSRegion = a.settings.TTSRegion
+	}
 	if in.Settings.TTSProvider == "" {
 		in.Settings.TTSProvider = a.settings.TTSProvider
 	}
-	if in.Settings.TTSVoice == "" {
+	if in.Settings.TTSVoice == "" && in.Settings.TTSProvider == a.settings.TTSProvider {
 		in.Settings.TTSVoice = a.settings.TTSVoice
 	}
 	if in.Settings.TTSEndpoint == "" {
 		in.Settings.TTSEndpoint = a.settings.TTSEndpoint
 	}
-	if in.Settings.TTSAPIKey == "" {
+	if in.ClearTTSKey {
+		in.Settings.TTSAPIKey = ""
+	} else if in.Settings.TTSAPIKey == "" {
 		in.Settings.TTSAPIKey = a.settings.TTSAPIKey
 	}
 	if in.Settings.TTSRate == 0 {
@@ -2179,7 +2220,11 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	assistantApprovalChanged := a.settings.AssistantAutoReview != in.Settings.AssistantAutoReview
 	a.settings = in.Settings
+	if assistantApprovalChanged {
+		a.refreshAssistantReviewsLocked()
+	}
 	// #30：VoiceAssistantName 变更后，小秘系统会话标题跟随
 	for _, sess := range a.sessions {
 		if sess.Kind == assistantSessionKind {
@@ -2201,6 +2246,8 @@ func voiceReplyGender(g string) string {
 // ttsProviderName 归一化 TTS 引擎名，空=auto。
 func ttsProviderName(p string) string {
 	switch strings.ToLower(strings.TrimSpace(p)) {
+	case "qwen":
+		return "qwen"
 	case "edge", "edge-tts", "edgetts":
 		return "edge"
 	case "sherpa", "local", "offline", "sherpa-onnx":
@@ -3405,6 +3452,8 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 		Voice:          in.Voice,
 		Endpoint:       cfg.TTSEndpoint,
 		APIKey:         cfg.TTSAPIKey,
+		Model:          cfg.TTSModel,
+		Region:         cfg.TTSRegion,
 		Rate:           rate,
 		Expressiveness: cfg.TTSExpressiveness,
 		Gender:         gender,
@@ -3430,7 +3479,9 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	// 多引擎编排：edge → azure(若配 key)。任一可用即返回实际引擎。
 	rc, engineUsed, err := tts.ChainSynth(r.Context(), text, opts, pcfg)
 	if err != nil {
-		a.updateEdgeHealth(false, err)
+		if ttsProviderName(providerName) == "auto" || ttsProviderName(providerName) == "edge" {
+			a.updateEdgeHealth(false, err)
+		}
 		a.setTTSEngine("unavailable")
 		fail(w, 502, err)
 		return
@@ -3441,16 +3492,20 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	var first [8192]byte
 	n, err := rc.Read(first[:])
 	if n == 0 {
-		a.updateEdgeHealth(false, err)
+		if ttsProviderName(providerName) == "auto" || ttsProviderName(providerName) == "edge" {
+			a.updateEdgeHealth(false, err)
+		}
 		fail(w, 502, fmt.Errorf("TTS 首包超时或失败：%w", err))
 		return
 	}
-	a.updateEdgeHealth(true, nil) // 首包到达：edge 可用，刷新健康缓存
+	if engineUsed == "edge" {
+		a.updateEdgeHealth(true, nil)
+	} // 只有 edge 的结果刷新其健康缓存
 	a.setTTSEngine(engineUsed)
 	w.Header().Set("X-TTS-Engine", engineUsed)
 	// sherpa 本地离线输出 WAV；edge/azure 输出 MP3。前端经 blob 播放，按此 Content-Type 正确解码。
 	ct := "audio/mpeg"
-	if engineUsed == "sherpa" {
+	if engineUsed == "sherpa" || engineUsed == "qwen" {
 		ct = "audio/wav"
 	}
 	w.Header().Set("Content-Type", ct)

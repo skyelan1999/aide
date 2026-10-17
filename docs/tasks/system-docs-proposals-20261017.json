@@ -1,0 +1,96 @@
+{
+  "id": "system-docs-proposals-20261017",
+  "request": "文档写入跟随工作空间配置的自动系统文档目录，不写死目录；审批与读回使用同一绑定",
+  "baseline": "cb5855ec77cc1a45e81a14627eec5bf1d3252966",
+  "initial_status": "",
+  "acceptance": [
+    "New document proposals use the configurable system-docs binding, not a hardcoded directory.",
+    "Explicit reference destinations require current AI visibility and RW permission; no lock changes or destination fallback.",
+    "Proposal destination and binding participate in approval fingerprint, display, version checks, persistence and readback.",
+    "Binding/path/visibility/write changes reject old proposals; workspace code edits keep their destination.",
+    "Focused local and stubbed remote race tests, quick checks and isolated browser rendering."
+  ],
+  "scope": [
+    "internal/server/document_proposals.go",
+    "internal/server/document_proposals_test.go",
+    "internal/server/workflow.go",
+    "internal/server/context.go",
+    "internal/server/approval_policy.go",
+    "internal/server/approval_file_result.go",
+    "internal/server/assisted_approval_files.go",
+    "internal/server/environment_guide.go",
+    "internal/server/task_outcome.go",
+    "internal/server/ssh_session.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/document-proposals.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/assistant-live.md",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirms workspace-configured dynamic document binding, and explicit reference writes subject to visibility and write locks.",
+      "evidence": [
+        "Current human clarification and reference-lock requirement"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Extend source-aware proposals with a server-resolved binding snapshot; pin local roots and remote connection generations; preserve workspace defaults and approval gates.",
+      "evidence": [
+        "Existing generatedDocumentSource and source RW/AIHiddenWorkspaces",
+        "New source-aware proposal target helper"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added source-aware file proposals with workspace-configured system-docs or explicit RW references, destination fingerprints, source-version attachment keys, pinned local/SFTP application, lock checks and source readback. UI identifies actual destinations.",
+      "evidence": [
+        "internal/server/document_proposals.go",
+        "internal/server/ssh_session.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused Go race tests and vet passed, including actual configured local writes, mixed same-name paths, binding change rejection, attached-original/version conflicts, local source lock matrix and independent SFTP client fixture write. 117 quick checks passed. Browser review in progress; real remote servers and paid model choice are not acceptance claims. Isolated browser confirmed both configured document and chosen-reference labels plus accurate apply hint after refresh. Push follow-up: a new verify full was started, then cancelled at the user’s explicit request 不测了这次. Existing focused race/vet, 117 quick checks and browser evidence remain the completed validation; this follow-up has no full-suite PASS.",
+      "evidence": [
+        ".agent-state/document-proposals-go-final.log",
+        ".agent-state/document-proposals-quick.log",
+        "/private/tmp/aide-document-proposal-targets-20261017.png",
+        ".agent-state/document-proposals-quick-final.log",
+        ".agent-state/document-proposals-docs.log",
+        ".agent-state/push-document-proposals-full.log (cancelled by user)"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented dynamic document binding, explicit reference destinations, both locks, approval and persistence boundaries.",
+      "evidence": [
+        "docs/architecture/assistant-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed own synthetic browser page and stopped/removing its proxy, disposable server and internal network; retained screenshot evidence. No production user files or settings used as fixtures.",
+      "evidence": [
+        "Own fixture cleanup command",
+        "/private/tmp/aide-document-proposal-targets-20261017.png"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Local source rebuild/restart completed. Healthy image serves new source/destination UI. Existing user document directory and ordinary-reference RW=false locks remained unchanged. No commit, push, version tag or GitHub Release for this follow-up; full release suite not repeated. Implementation committed as 37a5605b. User authorized pushing this update to the previously confirmed skyelan1999/aide main and explicitly waived additional full testing. Remote push follows this local record.",
+      "evidence": [
+        ".agent-state/startup/document-proposals.log",
+        "sha256:e25c6a7624143c4213975ca2c39cda207cfc6fac87e268a46eb319ae4f535a1f",
+        "Authenticated read-only API smoke: system-docs RW=true, visible=true; ordinary references RW=false; docs path /Users/skyelan/Downloads preserved"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested 把这次的更新也 push 一下 on 2026-10-17, following confirmed destination GitHub skyelan1999/aide main. Authorizes commit/push only, no tag or GitHub Release. User then explicitly said 不测了这次: stop this full-suite run and push without waiting for a new full verification. This overrides the repository full-suite gate for this push only; do not claim full PASS.",
+  "rollback": "Restore task-scoped edits only; previous production image sha256:24a658d92bf547b7c8b2362d33cb1bd63ed7c01a20e005eb17ab5a4700423823. Preserve user configured workspace/reference paths.",
+  "handoff": "Refresh the existing page to load app.js v185. New text documents are directed to system-docs; explicit file references must be AI-visible and RW. Source-aware proposals show configured destinations and do not bypass approval. 117 quick checks, focused race/vet, stubbed SFTP and isolated browser rendering passed; real cloud model routing and live remote hosts not re-tested. For this push only, full-suite requirement was waived by the explicit human instruction 不测了这次; no tests were represented as passing when cancelled."
+}

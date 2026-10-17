@@ -9,11 +9,15 @@ import (
 
 // A pending proposal is not a failed disk write. Never return its proposed
 // contents as if read_file had read them from disk.
-func (a *App) pendingNewFileRead(task *Task, p string) string {
+func (a *App) pendingNewFileRead(task *Task, p string, sources ...string) string {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	source := ""
+	if len(sources) > 0 {
+		source = sources[0]
+	}
 	for _, f := range task.Files {
-		if f.Path == path.Clean(p) && !f.Applied && f.BaseHash == "" && f.Before == "" {
+		if f.Source == source && f.Path == path.Clean(p) && !f.Applied && f.BaseHash == "" && f.Before == "" {
 			return "文件状态：待审批的新文件提案，尚未写入磁盘。审批在本轮模型结束后执行；这不是读取失败。不要重复读取或改用其他工具绕过审批，也不要断言最终写入失败。请结束本轮并说明待审批，最终应用结果由系统回执补充。"
 		}
 	}
@@ -45,15 +49,15 @@ func (a *App) recordReviewedFileResult(task *Task) {
 		lines = append(lines, "应用记录显示已写入；当前工作区已变化或为远程环境，未进行本地字节读回验证。")
 	} else {
 		for _, f := range task.Files {
-			b, err := readRawBytes(a.workspace, f.Path)
+			b, err := a.readAppliedProposalLocked(f)
 			if err != nil {
-				lines = append(lines, fmt.Sprintf("- `%s`：应用后读回失败：%v。", f.Path, err))
+				lines = append(lines, fmt.Sprintf("- `%s`：应用后读回失败：%v。", proposalDisplayPath(f), err))
 				status = "failed"
 			} else if string(b) != f.Content {
-				lines = append(lines, fmt.Sprintf("- `%s`：应用后内容已变化，当前字节与提案不一致。", f.Path))
+				lines = append(lines, fmt.Sprintf("- `%s`：应用后内容已变化，当前字节与提案不一致。", proposalDisplayPath(f)))
 				status = "failed"
 			} else {
-				lines = append(lines, fmt.Sprintf("- `%s`：已实际写入并读回一致，%d 字节，SHA-256 `%x`。", f.Path, len(b), sha256.Sum256(b)))
+				lines = append(lines, fmt.Sprintf("- `%s`：已实际写入并读回一致，%d 字节，SHA-256 `%x`。", proposalDisplayPath(f), len(b), sha256.Sum256(b)))
 			}
 		}
 	}

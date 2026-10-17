@@ -92,7 +92,12 @@ func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("缺少 challenge"))
 		return
 	}
-	if err := a.validateAssertion(challengeB64, in.Assertion); err != nil {
+	origin, originOK := webAuthnOrigin(r)
+	if !originOK {
+		fail(w, http.StatusForbidden, errors.New("Passkey 仅支持通过 localhost 打开工作台"))
+		return
+	}
+	if err := a.validateAssertion(origin, challengeB64, in.Assertion); err != nil {
 		a.vaultAudit("master-auth:failed:webauthn")
 		fail(w, 401, errors.New("指纹验证失败"))
 		return
@@ -123,14 +128,16 @@ func (a *App) unlockAssistantAfterMasterAuth(id string) error {
 
 // validateAssertion 校验一次 WebAuthn 登录断言（与 /api/webauthn/assertion/finish 同一流程）。
 // body 为浏览器端 assertionToJSON 产出的原始 JSON。
-func (a *App) validateAssertion(challengeB64 string, body []byte) error {
+func (a *App) validateAssertion(origin, challengeB64 string, body []byte) error {
 	a.webAuthn.mu.Lock()
 	session, ok := a.webAuthn.sessions[challengeB64]
-	if !ok {
+	boundOrigin, bound := a.webAuthn.origins[challengeB64]
+	if !ok || !bound || origin != boundOrigin {
 		a.webAuthn.mu.Unlock()
 		return errors.New("会话无效或已过期")
 	}
 	delete(a.webAuthn.sessions, challengeB64)
+	delete(a.webAuthn.origins, challengeB64)
 	user := a.webAuthn.userLocked()
 	a.webAuthn.mu.Unlock()
 
@@ -138,7 +145,7 @@ func (a *App) validateAssertion(challengeB64 string, body []byte) error {
 	if err != nil {
 		return err
 	}
-	cred, err := a.webAuthn.wa.ValidateLogin(user, *session, parsed)
+	cred, err := a.webAuthn.forOrigin(boundOrigin).ValidateLogin(user, *session, parsed)
 	if err != nil {
 		return err
 	}

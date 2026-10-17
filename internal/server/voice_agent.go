@@ -16,15 +16,15 @@ import (
 type VoiceHistoryEntry struct {
 	AvatarCue  *AvatarCue `json:"avatarCue,omitempty"`
 	Time       string     `json:"time"`
-	Heard      string     `json:"heard"`          // 原始听到的口语
-	Summarized string     `json:"summarized"`     // 总结后的清晰意图
-	Action     string     `json:"action"`         // send | ignore | standby | ask
-	Text       string     `json:"text"`           // action=send 时=总结后的意图（前端据此发送）
-	Ask        string     `json:"ask"`            // action=ask 时的单个追问
+	Heard      string     `json:"heard"`           // 原始听到的口语
+	Summarized string     `json:"summarized"`      // 总结后的清晰意图
+	Action     string     `json:"action"`          // send | ignore | standby | ask
+	Text       string     `json:"text"`            // action=send 时=总结后的意图（前端据此发送）
+	Ask        string     `json:"ask"`             // action=ask 时的单个追问
 	Reply      string     `json:"reply,omitempty"` // action=ignore 且为陪聊时，小秘实际回复的正文
-	Reason     string     `json:"reason"`         // 小秘的分析理由
-	Mode       string     `json:"mode,omitempty"` // #41：action=send 时的发送调度 queue(默认,排队) | insert(插队,打断当前 run)
-	Stop       bool       `json:"stop,omitempty"` // #41：本条是否为中止/止损类指令（始终插队、不受冷却限制）
+	Reason     string     `json:"reason"`          // 小秘的分析理由
+	Mode       string     `json:"mode,omitempty"`  // #41：action=send 时的发送调度 queue(默认,排队) | insert(插队,打断当前 run)
+	Stop       bool       `json:"stop,omitempty"`  // #41：本条是否为中止/止损类指令（始终插队、不受冷却限制）
 }
 
 // VoiceMemory 小秘的长期记忆：与主记忆区分，记录用户习惯/偏好。
@@ -202,7 +202,7 @@ func voiceIdentityPrompt(cfg Settings) string {
 	}
 	return fmt.Sprintf(`【你是谁】你是「%s」，用户专属的私人秘书与伙伴。你就是你自己——你不是 aide，也不是一个泛用问答助手。在任何回答、讲解、自言自语里，都用第一人称自称：说"我"，说"我是%s"；不要用第三人称指代自己，也不要把自己介绍成 aide 或某个通用助手。
 
-【你和 aide 的分工】aide 是负责实际干活的 AI 工作台：写代码、跑命令、操作文件、产出正式内容，它的主聊天不主动说话。你是用户与 aide 之间的桥梁：倾听、听懂真实意图、把意图传达调度给 aide、总结 aide 的成果、用大白话口头讲解、跟进待办与提醒；你同时也是用户的生活助理与伙伴。专业、正式的产出交给 aide，你不越权替它写代码或造内容。
+【你和 aide 的分工】你首先是工作统筹助理：理解目标、梳理优先级与依赖、调度 aide 执行、跟进成果和阻塞、汇总下一步。aide 负责写代码、跑命令、操作文件和专业产出。你默认自动统筹已经交办的工作，不要求用户开启“陪伴模式”；工作优先，闲暇时再负责自然交流与陪伴。性格提示只影响表达风格，不改变以上职责。
 
 【你能做什么】
 - 语音意图判断：判断听到的话属于 send（转达给 aide）、ignore（电视/广播等背景声或旁人闲聊）、standby（用户打电话或深入交谈时退下）还是 ask（意图不清时只追问最关键的一句）。

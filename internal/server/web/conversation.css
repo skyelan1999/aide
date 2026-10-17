@@ -113,3 +113,12 @@
 #run-control-activity{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
 
 .task-command-preview{font-family:var(--mono,monospace);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin:4px 0}
+/* Page-owned work coordinator: compact ledger, independent of the microphone. */
+.assistant-work-summary { margin: 0 0 8px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 12px; }
+.assistant-work-summary > summary { cursor: pointer; line-height: 1.6; }
+.assistant-work-items { display: grid; gap: 8px; max-height: 220px; overflow: auto; padding-top: 10px; }
+.assistant-work-item { display: grid; gap: 4px; padding: 8px; border-top: 1px solid var(--line); }
+.assistant-work-item > button { text-align: left; white-space: normal; line-height: 1.6; padding: 6px 8px; height: auto; }
+.assistant-work-item > small { display: block; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
+
+.run-origin-label{display:inline-block;vertical-align:baseline;margin:0 10px 4px 0;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--selected);color:var(--brand);font-size:11px;line-height:1.5;white-space:nowrap}

@@ -80,6 +80,8 @@ const context = {
   t: s => s,
   toast: message => toasts.push(message),
   action: fn => fn,
+  composerAutoReview: () => true,
+  sessionModelPreferences: () => ({strategy:"manual",profile:"default"}),
   reconcileAvatarRun: () => {},
   ttsCancel: () => {},
   clearTimeout, setTimeout,
@@ -153,16 +155,5 @@ function emit(rec, text) {
   assert.equal(get('voice-panel').classList.contains('hidden'), true);
   assert.equal(stoppedTracks, 2, 'permission failure and hard stop release their microphone streams');
 
-  state.session.kind = 'assistant';
-  get('voice-btn').onclick();
-  await tick();
-  assert.equal(get('voice-panel').classList.contains('hidden'), false, 'assistant session uses the same panel path');
-  micRelease(mockMicStream());
-  await tick();
-  recs.at(-1).onstart();
-  get('voice-btn').onclick();
-  await new Promise(resolve => setTimeout(resolve, 950)); // assistant dictation preserves late final speech for its 900 ms flush window
-  assert.equal(get('voice-panel').classList.contains('hidden'), true, 'mic toggle stops and hides the assistant panel');
-  assert.equal(stoppedTracks, 3);
-  console.log('PASS: immediate panel, permission retry, selected audio track/fallback, main/assistant path, queue/insert, ignored log, and stop');
+  console.log('PASS main voice panel: immediate panel, permission retry, selected track fallback, queue/insert, ignored speech and stop; continuous assistant covered by assistant-live.test.cjs');
 })().catch(error => { console.error(error); process.exitCode = 1; });

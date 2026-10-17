@@ -36,9 +36,11 @@ func TestVoiceIdentityAideDivision(t *testing.T) {
 	if !strings.Contains(got, "aide") {
 		t.Fatalf("身份提示未提及 aide: %q", got)
 	}
-	// 小秘是桥梁，专业产出交给 aide
-	if !strings.Contains(got, "桥梁") {
-		t.Fatalf("身份提示未说明小秘是用户与 aide 之间的桥梁: %q", got)
+	// 小秘统筹已交办工作，专业产出交给 aide
+	for _, responsibility := range []string{"工作统筹助理", "调度 aide 执行", "跟进成果和阻塞", "默认自动统筹已经交办的工作"} {
+		if !strings.Contains(got, responsibility) {
+			t.Fatalf("身份提示缺少统筹职责 %q: %q", responsibility, got)
+		}
 	}
 	if !strings.Contains(got, "产出交给 aide") {
 		t.Fatalf("身份提示未说明专业产出交给 aide: %q", got)

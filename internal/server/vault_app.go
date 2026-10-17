@@ -73,7 +73,13 @@ func (a *App) listWorkspaceSecrets(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"entries": []VaultMeta{}, "unlocked": false})
 		return
 	}
-	jsonOut(w, 200, map[string]any{"entries": a.vault.List(), "unlocked": a.vault.Unlocked()})
+	entries := []VaultMeta{}
+	for _, entry := range a.vault.List() {
+		if entry.Type != VaultTypeMessageIdentity && entry.Type != VaultTypeMessageStorage {
+			entries = append(entries, entry)
+		}
+	}
+	jsonOut(w, 200, map[string]any{"entries": entries, "unlocked": a.vault.Unlocked()})
 }
 
 // deleteWorkspaceSecret 删除指定条目（路径参数 id）。不允许删除正在被引用的固定条目之外的越权操作；
@@ -88,6 +94,10 @@ func (a *App) deleteWorkspaceSecret(w http.ResponseWriter, r *http.Request) {
 	defer a.mu.Unlock()
 	if a.vault == nil {
 		fail(w, 500, errors.New("保险库未初始化"))
+		return
+	}
+	if entry, exists := a.vault.entries[id]; exists && (entry.Type == VaultTypeMessageIdentity || entry.Type == VaultTypeMessageStorage) {
+		fail(w, 403, errors.New("设备身份与消息存储密钥不能通过通用凭据接口删除"))
 		return
 	}
 	a.vault.Delete(id)

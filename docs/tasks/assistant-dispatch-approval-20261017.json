@@ -1,0 +1,99 @@
+{
+  "id": "assistant-dispatch-approval-20261017",
+  "request": "助理创建的任务不会自动运行，还有一个，助理也可以代替用户做对应的审批决策",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M HANDOVER.md\n M docs/agent/router.json\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/context.go\n M internal/server/persona.go\n M internal/server/server.go\n M internal/server/tts/provider.go\n M internal/server/vault_app.go\n M internal/server/voice_agent.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M scripts/aide.sh\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_data.py\n M scripts/test_voice_panel.cjs\n?? cmd/aide-message-relay/\n?? docs/architecture/assistant-live.md\n?? docs/architecture/decentralized-messages.md\n?? docs/tasks/assistant-audible-reply-20261017.json\n?? docs/tasks/assistant-live-20261017.json\n?? docs/tasks/assistant-passkey-login-20261017.json\n?? docs/tasks/assistant-work-coordinator-20261017.json\n?? docs/tasks/encrypted-message-center-20261017.json\n?? docs/tasks/icon-alignment-20261017.json\n?? docs/tasks/launcher-browser-recovery-20261017.json\n?? docs/tasks/qwen-tts-20261017.json\n?? docs/tasks/reminder-controls-20261017.json\n?? docs/tasks/tts-discovery-reliability-20261017.json\n?? internal/messaging/\n?? internal/server/assistant_watch.go\n?? internal/server/assistant_watch_test.go\n?? internal/server/auth_passkey_origin_test.go\n?? internal/server/message_assistant.go\n?? internal/server/message_center.go\n?? internal/server/message_center_test.go\n?? internal/server/qwen_tts_test.go\n?? internal/server/tts/qwen.go\n?? internal/server/tts/qwen_catalog.go\n?? internal/server/tts/qwen_catalog_test.go\n?? internal/server/tts/qwen_test.go\n?? internal/server/tts_catalog.go\n?? internal/server/web/assistant-live.js\n?? internal/server/web/message-center.css\n?? internal/server/web/message-center.js\n?? scripts/assistant-live.test.cjs\n?? scripts/identity-login-routing.test.cjs\n?? scripts/message-center.test.cjs\n?? scripts/qwen-tts.test.cjs\n?? scripts/tts-playback.test.cjs",
+  "acceptance": [
+    "push_to_session starts/queues real runs and reports actual failure rather than merely appending messages",
+    "Assistant approval is configured in main Settings; default off; unrelated settings patches preserve its value",
+    "Only internally marked assistant-delegated tasks inherit this optional reviewer; ordinary tasks retain global approval behavior",
+    "Existing exact-operation audit, sandbox, stale-request and manual-review boundaries preserved; disabling cancels pending delegated review",
+    "Run focused race/integration tests with local mock models, UI checks and local deployment",
+    "Assistant-created task and queued/follow-up messages carry a persistent origin label distinct from human text"
+  ],
+  "scope": [
+    "internal/server/assistant_agent.go",
+    "internal/server/assistant_history.go",
+    "internal/server/workflow.go",
+    "internal/server/server.go",
+    "internal/server/approval_policy.go",
+    "internal/server/assisted_approval.go",
+    "internal/server/assisted_approval_files.go",
+    "internal/server/assistant_delegation.go",
+    "internal/server/assistant_delegation_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/assistant-live.md",
+    "internal/server/web/conversation.css",
+    "scripts/assistant-delegation.test.cjs",
+    "docs/agent/router.json",
+    "scripts/steer-user-bubbles.test.cjs",
+    "internal/server/voice_identity_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests reliable auto-run and optional approval delegation managed in main settings.",
+      "evidence": [
+        "Current user messages"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse validated startTask and independent exact-operation approval pipeline; server-only origin marker prevents request payload spoofing. Dedicated saved setting applies to delegated tasks, not all followed sessions.",
+      "evidence": [
+        "push_to_session currently only writes messages",
+        "Existing approvalPolicy/reviewPendingCommand/reviewPendingFiles"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Validated task start/queue, persisted server-only provenance and task/message labels; optional main Settings reviewer with revocation.",
+      "evidence": [
+        "internal/server/assistant_delegation.go",
+        "internal/server/assistant_agent.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "116 quick checks pass; focused Go race and vet pass. Production Safari Settings visible and option remains off; isolated browser renders delegated prompts/followups distinct from human input. No live paid-model approval claim. Push follow-up: current committed inputs passed verify full (119 checks; 949 server tests across 12 shards; all other Go packages race and vet; runtime assets and CAD geometry). Updated legacy voice-identity assertion to check coordinator duties and execution boundaries.",
+      "evidence": [
+        ".agent-state/assistant-delegation-quick.log",
+        ".agent-state/assistant-delegation-go.log",
+        "/private/tmp/aide-assistant-approval-settings-20261017.png",
+        "/private/tmp/aide-assistant-origin-label-20261017.png",
+        ".agent-state/verify-20261017T093759686684Z.log",
+        "full fingerprint 4a2e185eeeefde587896d123a9b87121bbc52b5010a358d8abae028c4c75d07b",
+        "282bc76e"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented delegation, original human authority, origin badges and manual boundaries.",
+      "evidence": [
+        "docs/architecture/assistant-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed fixture browser tab and removed owned isolated container/network/proxy; production unchanged. Origin labels persist after reload.",
+      "evidence": [
+        "Isolated browser reload observed 助理代发 on prompt/followup and no badge on human input"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Local source rebuild and restart complete; container healthy. No commit, push or remote release. Full validation and release-check passed. Push to configured origin/main was blocked before execution by automatic approval: requires explicit human confirmation of destination git@github.com:skyelan1999/aide.git. No remote push, tag or Release performed.",
+      "evidence": [
+        ".agent-state/startup/assistant-delegation.log",
+        "sha256:24a658d92bf547b7c8b2362d33cb1bd63ed7c01a20e005eb17ab5a4700423823"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested push一下 on 2026-10-17; authorize commit and push current Aide updates to origin/main, no tag or GitHub Release.",
+  "rollback": "Restore task-scoped changes from baseline only after preserving inherited modifications; prior runtime image sha256:004375fd542c501f6507bd0a7635c3774430adf47f3782e756939b9791e69000.",
+  "handoff": "New assistant-origin task messages show 助理代发; existing unknown-origin history is not relabeled. Main Settings > 语音助理 > 助理审批 remains off. Real-model review quality and production delegated voice interaction are not re-run."
+}

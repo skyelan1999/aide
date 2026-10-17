@@ -221,6 +221,7 @@ func (a *App) contextTools() []any {
 		tools = append(tools, t)
 	}
 	tools = append(tools, filterDisabledToolSchemas(a.pluginToolSchemas(), disabled)...)
+	tools = append(tools, filterDisabledToolSchemas(a.messageAssistantTools(), disabled)...)
 	return tools
 }
 
@@ -350,6 +351,9 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 		}
 		if err := addText(att.Root, att.Path, string(b)); err != nil {
 			return "", nil, nil, err
+		}
+		if att.Root == "source" {
+			versions[sourceVersionKey(att.Source, att.Path)] = Change{Source: att.Source, BaseHash: hash(b), Before: string(b)}
 		}
 		if att.Root == "workspace" || att.Root == "" {
 			versions[path.Clean(att.Path)] = Change{BaseHash: hash(b), Before: string(b)}

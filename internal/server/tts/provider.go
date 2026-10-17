@@ -32,7 +32,9 @@ type SynthOpts struct {
 
 // Config 是创建 Provider 所需的外部配置（由 server.Settings 转换而来，避免循环依赖）。
 type Config struct {
-	Provider       string // auto | edge | webspeech
+	Provider       string // auto | edge | webspeech | qwen
+	Model          string // Qwen non-realtime model
+	Region         string // beijing | singapore
 	Voice          string
 	Endpoint       string // 预留：自定义 edge 端点/云端地址
 	APIKey         string // 预留：云端引擎 key（edge-tts 不需要）
@@ -45,10 +47,10 @@ type Config struct {
 	SherpaBin string // sherpa-onnx-offline-tts 路径（空=默认 /usr/local/bin，可用 SHERPA_BIN 覆盖）
 	SherpaDir string // 模型目录（空=默认 /data/tts，可用 SHERPA_TTS_DIR 覆盖）
 	// ── 少样本音色克隆（#36）：自托管克隆服务接入 ──
-	CloneBaseURL  string // 克隆服务 BaseURL（如 http://127.0.0.1:9880）；空=未配置
-	CloneAPIKey   string // 克隆服务 Bearer token（可选，不回显）
-	CloneVoiceID  string // 克隆出的音色 ID（创建音色后由克隆服务返回）
-	CloneBackend  string // openai | gpt-sovits | indextts2 | cosyvoice2 | openvoice
+	CloneBaseURL string // 克隆服务 BaseURL（如 http://127.0.0.1:9880）；空=未配置
+	CloneAPIKey  string // 克隆服务 Bearer token（可选，不回显）
+	CloneVoiceID string // 克隆出的音色 ID（创建音色后由克隆服务返回）
+	CloneBackend string // openai | gpt-sovits | indextts2 | cosyvoice2 | openvoice
 }
 
 // TTSProvider 一个具体的语音合成引擎。实现必须是并发安全的（每次 Synth 独立连接/会话）。
@@ -122,6 +124,8 @@ func NewProvider(name string, cfg Config) (TTSProvider, error) {
 		return newSherpa(cfg.SherpaBin, cfg.SherpaDir), nil
 	case "webspeech", "browser", "web":
 		return nil, ErrBrowserOnly
+	case "qwen":
+		return newQwen(cfg), nil
 	case "clone", "voice-clone", "cloned":
 		return newClone(cfg), nil
 	default:
@@ -168,6 +172,8 @@ func ChainSynth(ctx context.Context, text string, opts SynthOpts, cfg Config) (i
 func buildChain(cfg Config) []TTSProvider {
 	var chain []TTSProvider
 	switch strings.ToLower(strings.TrimSpace(cfg.Provider)) {
+	case "qwen":
+		return []TTSProvider{newQwen(cfg)}
 	case "clone", "voice-clone", "cloned":
 		if c := newClone(cfg); c.Available() {
 			chain = append(chain, c)

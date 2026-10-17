@@ -1,0 +1,91 @@
+{
+  "id": "tts-discovery-reliability-20261017",
+  "request": "千问TTS经常调用失败回退机械声；自动获取音色ID和可用模型；用户补充：自己的声音随时打断助理朗读",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M HANDOVER.md\n M docs/agent/router.json\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/context.go\n M internal/server/server.go\n M internal/server/tts/provider.go\n M internal/server/vault_app.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M scripts/aide.sh\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_data.py\n M scripts/test_voice_panel.cjs\n?? cmd/aide-message-relay/\n?? docs/architecture/assistant-live.md\n?? docs/architecture/decentralized-messages.md\n?? docs/tasks/assistant-live-20261017.json\n?? docs/tasks/assistant-passkey-login-20261017.json\n?? docs/tasks/encrypted-message-center-20261017.json\n?? docs/tasks/icon-alignment-20261017.json\n?? docs/tasks/launcher-browser-recovery-20261017.json\n?? docs/tasks/qwen-tts-20261017.json\n?? docs/tasks/reminder-controls-20261017.json\n?? internal/messaging/\n?? internal/server/assistant_watch.go\n?? internal/server/assistant_watch_test.go\n?? internal/server/auth_passkey_origin_test.go\n?? internal/server/message_assistant.go\n?? internal/server/message_center.go\n?? internal/server/message_center_test.go\n?? internal/server/qwen_tts_test.go\n?? internal/server/tts/qwen.go\n?? internal/server/tts/qwen_test.go\n?? internal/server/web/assistant-live.js\n?? internal/server/web/message-center.css\n?? internal/server/web/message-center.js\n?? scripts/assistant-live.test.cjs\n?? scripts/identity-login-routing.test.cjs\n?? scripts/message-center.test.cjs\n?? scripts/qwen-tts.test.cjs",
+  "acceptance": [
+    "自动查询百炼模型目录并过滤当前协议不支持的型号；系统音色自动同步官方目录，内置可用回退目录并明确来源",
+    "修复过细分句、超时与取消后误降级；失败显示具体阶段与原因，千问默认不自动换机械声",
+    "助理朗读期间继续识别，用户新语音打断朗读并提交，过滤自身回声，停止/锁屏不重开麦克风",
+    "模拟协议/前端取消/语音打断测试、隔离浏览器设置验证；真实Safari麦克风回声环境单列验证状态"
+  ],
+  "scope": [
+    "internal/server/tts/",
+    "internal/server/tts_catalog.go",
+    "internal/server/qwen_tts_test.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/assistant-live.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/qwen-tts.test.cjs",
+    "scripts/assistant-live.test.cjs",
+    "docs/architecture/assistant-live.md",
+    "docs/tasks/tts-discovery-reliability-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Use native model-list API and official preset-voice documentation; keep device/page lifecycle; allow recognition during playback with echo-text filtering and cancel-safe TTS. No paid synthesis required for metadata queries.",
+      "evidence": [
+        "https://help.aliyun.com/zh/model-studio/list-models",
+        "https://help.aliyun.com/zh/model-studio/qwen-tts-voice-list"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use native model-list API and official preset-voice documentation; keep device/page lifecycle; allow recognition during playback with echo-text filtering and cancel-safe TTS. No paid synthesis required for metadata queries.",
+      "evidence": [
+        "https://help.aliyun.com/zh/model-studio/list-models",
+        "https://help.aliyun.com/zh/model-studio/qwen-tts-voice-list"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented native model discovery, official article JSON/HTML voice sync with bundled fallback, protocol filtering, grouped Qwen chunks, stage-specific errors, opt-in mechanical fallback, playback-speed control, active ASR during TTS, echo filtering and generation-safe cancellation.",
+      "evidence": [
+        "internal/server/tts/qwen_catalog.go",
+        "internal/server/tts_catalog.go",
+        "internal/server/web/assistant-live.js",
+        "scripts/qwen-tts.test.cjs",
+        "scripts/assistant-live.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "114 quick checks passed; focused Go tts/server race and vet passed. Actual read-only provider model-list query succeeded; public article JSON yielded 48 preset IDs. Isolated browser verified voice/model selectors, refresh fallback/source labeling, mechanical fallback off by default, voice selection and 1.05x rate. Real Safari acoustic barge-in and intermittent upstream failure reproduction remain NOT_RUN. Live updated backend catalog returned API model qwen3-tts-flash and 48 official voices; one two-character synthetic greeting returned HTTP 200 WAV (26924 bytes, 0.49s). This does not prove intermittent failures cannot recur. Physical Safari acoustic barge-in remains NOT_RUN.",
+      "evidence": [
+        ".agent-state/tts-reliability-go.log",
+        ".agent-state/verify-20261017T081823525862Z.log",
+        "/private/tmp/aide-tts-catalog-20261017.png",
+        "scripts/assistant-live.test.cjs",
+        "scripts/qwen-tts.test.cjs",
+        ".agent-state/tts-reliability-live.json",
+        ".agent-state/verify-20261017T082200842247Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated page-lifecycle, barge-in, catalog source/access limitations and cancellation/fallback behavior.",
+      "evidence": [
+        "docs/architecture/assistant-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Disposable fixture tab, proxy, container and network removed; actual user data, Safari and inherited changes preserved.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Local source build/restart completed; healthy container, healthz 200, image source label matches current source. No commit/push/tag or remote image publication. Existing health integrity remains degraded; no global integrity claim.",
+      "evidence": [
+        ".agent-state/startup/tts-reliability-final.log",
+        ".agent-state/tts-reliability-runtime.json"
+      ]
+    }
+  },
+  "release_authorization": "Continuing local update/restart authorization in this application-development conversation; no remote publication.",
+  "rollback": "Previous local image sha256:fa33af7bfffa08fcaf643c577e640406143c5c7375a98e57663014abfa6ad4d7 retained as a possible rollback; user data mounts preserved; rollback not exercised.",
+  "handoff": "Refresh the user page to load new playback/recognition code. Real provider directory and one two-character WAV synthesis succeeded. Acoustic microphone interruption on the user Safari/hardware remains NOT_RUN; mock state-machine covers interim barge-in, echo text, stop and cancellation. Default explicit-Qwen errors keep text instead of switching voices. Original Safari was not refreshed or manipulated."
+}

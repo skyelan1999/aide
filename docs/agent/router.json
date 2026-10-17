@@ -662,6 +662,48 @@
       [
         "python3",
         "scripts/test_offline_bundle.py"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/message-center.js"
+      ],
+      [
+        "node",
+        "scripts/message-center.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/identity-login-routing.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/assistant-live.js"
+      ],
+      [
+        "node",
+        "scripts/assistant-live.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_voice_panel.cjs"
+      ],
+      [
+        "node",
+        "scripts/qwen-tts.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/tts-playback.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/assistant-delegation.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/document-proposals.test.cjs"
       ]
     ],
     "full": [

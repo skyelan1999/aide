@@ -16,7 +16,8 @@ bash scripts/aide.sh status
 
 ## 本地运行与诊断
 
-- 常规启动：`./start.command` 或 `bash scripts/aide.sh start`。这会构建/启动 Compose 服务，使用前确认工作树和目标实例。
+- 常规启动：`./start.command` 或 `bash scripts/aide.sh start`。Git 开发仓库自动对比源码哈希：有变化就构建并更新，没有变化就跳过构建。离线发行包/非 Git 安装复用健康实例或本地完整镜像，缺少镜像时才获取经校验的预构建包。
+- 应用源码修改并更新本机：`AIDE_BUILD_FROM_SOURCE=1 ./start.command`。可显式强制选择源码路径；`AIDE_BUILD_FROM_SOURCE=0` 则只用已安装版本。原数据挂载保留，执行前确认目标实例和更新授权。
 - 只读状态：`bash scripts/aide.sh status`；日志：`bash scripts/aide.sh logs`。
 - 默认端口 `8097`，由 `.env` 的 `AIDE_PORT` 控制。生产或用户正在使用的服务不得作为测试实例；在临时实例上验证。
 - Go 服务嵌入前端。改动后必须重建目标测试镜像；仅刷新页面不会更新旧二进制。

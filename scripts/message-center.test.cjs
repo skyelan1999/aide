@@ -1,0 +1,23 @@
+'use strict';
+const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:assert/strict');
+const {webcrypto, createHash} = require('node:crypto');
+const {File} = require('node:buffer');
+const source = fs.readFileSync('internal/server/web/message-center.js','utf8');
+const scope = {window:{},crypto:webcrypto,DOMException,Uint8Array};
+vm.runInNewContext(source,scope);
+const {manifest,sameManifest}=scope.window.AideMessageCenter;
+(async()=>{
+ const content=Buffer.alloc(1024*1024+19,42),file=new File([content],'../unsafe-name.html');
+ const progress=[];const actual=await manifest(file,n=>progress.push(n));
+ assert.equal(actual.size,content.length);assert.equal(actual.hashes.length,2);
+ assert.equal(actual.hashes[0],createHash('sha256').update(content.subarray(0,1024*1024)).digest('hex'));
+ assert.equal(actual.hashes[1],createHash('sha256').update(content.subarray(1024*1024)).digest('hex'));
+ assert.deepEqual(progress,[99,100]);assert.equal(sameManifest(actual,{...actual,name:'renamed'}),true);
+ assert.equal(sameManifest(actual,{...actual,hashes:[actual.hashes[1],actual.hashes[0]]}),false);
+ assert.equal(sameManifest(actual,{...actual,size:actual.size-1}),false);
+ const empty=await manifest(new File([],'empty'));assert.equal(empty.hashes.length,0);
+ let touched=false;await assert.rejects(manifest({size:1024*1024*1024+1,slice(){touched=true;}}));assert.equal(touched,false);
+ await assert.rejects(manifest(file,null,()=>false),error=>error.name==='AbortError');
+ assert.doesNotMatch(source,/\.innerHTML\s*=|insertAdjacentHTML|\beval\(/,'peer names, texts, and filenames must use safe DOM APIs');
+ console.log('PASS message file manifests: real chunk hashes, empty/oversized/cancelled files, content-bound resume; no peer HTML sinks');
+})().catch(error=>{console.error(error);process.exitCode=1;});

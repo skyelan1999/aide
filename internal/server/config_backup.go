@@ -238,7 +238,7 @@ func excludeCustodyKeysFromEnvelope(raw []byte) []byte {
 	}
 	entries := env.Entries[:0]
 	for _, entry := range env.Entries {
-		if entry.Type != VaultTypeCustodyKey {
+		if entry.Type != VaultTypeCustodyKey && entry.Type != VaultTypeMessageIdentity && entry.Type != VaultTypeMessageStorage {
 			entries = append(entries, entry)
 		}
 	}

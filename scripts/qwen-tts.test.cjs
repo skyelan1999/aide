@@ -1,0 +1,25 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const src=fs.readFileSync('internal/server/web/app.js','utf8');
+const part=src.slice(src.indexOf('async function ttsEdgeSynthOne('),src.indexOf('\nfunction ttsPlayOne('));
+let request;
+const ctx={AbortController,setTimeout,clearTimeout,ttsPlayer:{},URL:{createObjectURL:()=> 'blob:test'},state:{token:'fixture-token',config:{ttsVoice:'Cherry'}},fetch:async (url,opt)=>{request={url,...JSON.parse(opt.body)};return{ok:true,blob:async()=>new Blob(['RIFF'])};},Blob};
+vm.createContext(ctx);vm.runInContext(part,ctx);
+(async()=>{
+ await ctx.ttsEdgeSynthOne('你好','Cherry','qwen');
+ assert.equal(request.provider,'qwen');assert.equal(request.voice,'Cherry');assert.equal(request.text,'你好');
+ assert(!request.ttsAPIKey,'client must not send provider key in synthesis request');
+ const speakStart=src.indexOf('function qwenTTSSegments('),speakEnd=src.indexOf('\n/* ── 浏览器 Web Speech',speakStart);
+ let fallbackCalls=0,errors=[],chunks=[];
+ const player={generation:0,cancelled:false,paused:false};
+ const c={ttsPlayer:player,ttsPlaybackStatus:()=>{},state:{config:{ttsProvider:'qwen',ttsBrowserFallback:false}},document:{querySelector:()=>null},t:x=>x,toast:x=>errors.push(x),ttsWantsEdge:()=>true,ttsSegments:x=>[x],narration:{active:false},ttsPlayOne:async()=>{},ttsEdgeSynthOne:async()=>{throw Error('HTTP 429 quota');},webSpeakAwait:async x=>{fallbackCalls++;chunks.push(x);},webSpeakReply:()=>{fallbackCalls++;},URL:{revokeObjectURL(){}},api:async()=>({})};
+ vm.createContext(c);vm.runInContext(src.slice(speakStart,speakEnd),c);
+ const long='今天的天气不错。'.repeat(100);const parts=c.qwenTTSSegments(long);assert.equal(parts.join(''),long);assert(parts.every(x=>Array.from(x).length<=280));
+ await c.ttsSpeak('测试',{awaitMode:true});assert.equal(fallbackCalls,0,'explicit Qwen failure must not switch voices by default');assert(errors.at(-1).includes('HTTP 429'));
+ errors=[];c.ttsEdgeSynthOne=async()=>{player.generation++;player.cancelled=true;throw Object.assign(Error('interrupted'),{name:'AbortError'});};
+ await c.ttsSpeak('用户打断',{awaitMode:true});assert.equal(fallbackCalls,0);assert.equal(errors.length,0,'user cancellation is not a backend failure');
+ player.cancelled=false;c.state.config.ttsBrowserFallback=true;let requestCount=0;c.ttsEdgeSynthOne=async()=>{if(requestCount++===0)return 'blob:ok';throw Error('later failure');};
+ await c.ttsSpeak('甲'.repeat(280)+'乙'.repeat(100),{awaitMode:true});assert.equal(chunks.at(-1),'乙'.repeat(100),'fallback must not reread completed chunks');
+ console.log('PASS Qwen batching, detailed failures, opt-in fallback, partial fallback and cancellation');
+ console.log('PASS TTS preview honors selected provider and voice without provider key');
+})().catch(e=>{console.error(e);process.exit(1)});
