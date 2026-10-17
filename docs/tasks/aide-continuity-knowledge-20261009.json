@@ -8320,13 +8320,19 @@
     "summary": "SSH workspace native full save bytes, explicit refresh draft recovery, body+SVG version1 restore, disconnected prewrite bytes and reconnect retry pass. Persistent inline failure reason absent; no overall completion. Production22 exact; tests stopped."
   },
   "markdown_restore_feedback_20261017": {
-    "status": "exact_full127_native_cleanup_pass_source_delivery_pending",
+    "status": "scoped_source_main_delivered_runtime_public_pending",
     "task": "docs/tasks/markdown-restore-feedback-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/markdown-restore-feedback.md",
       "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
     ],
     "summary": "Final492/sourcece0c/795dd892 full127 pass; actual79a0 original launcher and Safari visible-before-confirm8s one-row repeated failure/reconnect/manual body+SVG retry pass. Own resources cleaned, production22 unchanged. Public current dual packages/defaults next, original12 continue.",
-    "next": "Qualify current ARM64/AMD64 complete packages, upload and verify public assets, promote defaults only after publication gate; retain remaining original12 native gaps."
+    "next": "Qualify current ARM64/AMD64 complete packages, upload and verify public assets, promote defaults only after publication gate; retain remaining original12 native gaps.",
+    "sourceMainDelivery": {
+      "status": "pass",
+      "observedMain": "fc4130d8271ff3e57d927603b4c884d37e536feb",
+      "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71"
+    },
+    "releaseCheck": "exit0 existing07c public pair metadata and current795 local full; newce0c complete packages still pending"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "status": "exact_full127_native_visible_retry_cleanup_pass_public_pending",
+  "status": "source_main_delivered_full127_native_cleanup_pass_new_runtime_public_pending",
   "negative": {
     "status": "expected_failure",
     "command": "node scripts/markdown-history-writable.test.cjs",
@@ -170,5 +170,42 @@
     "originalBrowserTabsRestored": true,
     "observedUTC": "2026-10-17T13:27:45.837550+00:00"
   },
-  "publicRelease": "NOT_RUN new source complete packages/default promotion; production unchanged"
+  "publicRelease": "NOT_RUN new source complete packages/default promotion; production unchanged",
+  "sourceDelivery": {
+    "status": "pass",
+    "branch": "main",
+    "observedRemoteMain": "fc4130d8271ff3e57d927603b4c884d37e536feb",
+    "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "remoteHeadIndependentlyVerified": true
+  },
+  "releaseCheck": {
+    "status": "pass",
+    "exit": 0,
+    "localExactFullPrerequisites": true,
+    "defaultAssetMetadata": {
+      "status": "pass",
+      "tag": "v0.1.17.0-RC2",
+      "source": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+      "assets": [
+        {
+          "platform": "linux/arm64",
+          "asset": "aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+          "bytes": 771016230,
+          "sha256": "d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+          "status": "pass"
+        },
+        {
+          "platform": "linux/amd64",
+          "asset": "aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz",
+          "bytes": 916933833,
+          "sha256": "df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c",
+          "status": "pass"
+        }
+      ],
+      "scope": "Public attachment metadata only; actual image import/runtime are separate",
+      "mutations": false
+    },
+    "currentCe0cCandidatePublicQualification": false,
+    "mutations": false
+  }
 }
