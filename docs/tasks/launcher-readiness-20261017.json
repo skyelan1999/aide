@@ -45,16 +45,16 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Old negative9 failing subcases; current13 offline/resource7/data21/publication7 pass; real noport exit1 and normal exit0; exact quick112 PASS5ecbd493, official full115 running without production mounts.",
+      "status": "pass",
+      "summary": "Old negative9 failing subcases; offline13/resource7/data21/publication7 pass; actual noport exit1 and normal exit0. Exact quick112 and official full115 PASS5ecbd493,946 entries/12 serial groups/race/vet/CAD; verifier removed and production22 exact.",
       "evidence": [
         "docs/reviews/2026-10-17/launcher-readiness.md",
         "docs/reviews/2026-10-17/launcher-readiness-proof.json"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Current report/proof distinguish launcher source from old application image and pending full/distribution.",
+      "status": "pass",
+      "summary": "Current report/proof records exact full115, observed resources, current source6eb vs published07c mismatch, and remaining native/distribution gates.",
       "evidence": [
         "docs/reviews/2026-10-17/launcher-readiness.md",
         "docs/reviews/2026-10-17/launcher-readiness-proof.json"
@@ -70,7 +70,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "No main release while exact new full and existing native approval/outcome prerequisites incomplete; current packages not replaced.",
+      "summary": "Exact full115 passed. Hold remote main and production until existing approval/outcome native prerequisites and current6eb-source image/package delivery are qualified; old07c public metadata is not current delivery.",
       "evidence": [
         "docs/reviews/2026-10-17/launcher-readiness.md",
         "docs/reviews/2026-10-17/launcher-readiness-proof.json"

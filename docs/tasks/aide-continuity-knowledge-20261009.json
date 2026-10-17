@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Final current-input full114 PASS8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 groups/race/vet/CAD. Earlier missing-Node overall failure retained; corrected quick111 and official full succeeded. Current ARM reasoning/MCP/restarts, both public package/import/download and fresh default source startup pass; production22 files exact. Original12 remain in_progress; native full-workbench user-deferred and specific approval/outcome release prerequisites incomplete, Windows user-owned, real vectors deferred.",
+      "summary": "Current launcher source full115 PASS5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04:946 entries/12 serial groups/race/vet/CAD, quick112 and actual original launcher negative/positive pass. Prior07c ARM reasoning/MCP/restarts and public package evidence retained; new6eb-source distribution not yet qualified. Real external directory background scan and SSH workspace protocol accepted; original12 native full-workbench gaps remain, Windows user-owned and vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -120,7 +120,8 @@
         "docs/tasks/outcome-overview-polling-20261015.json",
         "docs/reviews/2026-10-16/continuity-current-audit.md",
         "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
-        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
       ]
     },
     "documentation": {
@@ -8250,9 +8251,9 @@
     ]
   },
   "launcher_readiness_20261017": {
-    "status": "implementation_and_actual_paths_pass_full_pending",
+    "status": "scoped_verification_pass_delivery_pending",
     "task": "docs/tasks/launcher-readiness-20261017.json",
-    "summary": "Bash published-port and pinned host TLS/same-instance guard; actual original launcher noport negative and normal positive pass; production22 exact. New full/distribution pending, Windows separate.",
+    "summary": "Bash published-port/pinned TLS/same-instance actual paths, quick112 and official full115 PASS5ecbd493;946 entries/12 serial groups/race/vet/CAD; production22 unchanged. Current6eb-source image/packages and native approval/outcome prerequisites pending; no remote main/production change.",
     "evidence": [
       "docs/reviews/2026-10-17/launcher-readiness.md",
       "docs/reviews/2026-10-17/launcher-readiness-proof.json"

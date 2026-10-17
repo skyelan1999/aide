@@ -1,5 +1,5 @@
 {
-  "status": "in_progress",
+  "status": "scoped_verification_pass_delivery_pending",
   "scope": "Bash launcher readiness on macOS/Linux; Windows native user-owned",
   "baselineLauncherSHA256": "1e3d72e8800fe187af6f6d69577fc3ab8ba46687f8e4b783a96495f1ae191a28",
   "newLauncherSHA256": "1e6ba22c318fa9afcca06471be21826400144338918c7b7f795edcf84925a888",
@@ -35,10 +35,10 @@
   },
   "limits": [
     "New launcher was copied into owned ordinary-source fixture and exercised with existing current ARM application image. No new application image built or archive replaced.",
-    "Existing full114 receipt belongs to prior fingerprint and is not accepted for this changed input. Exact quick/full pending.",
     "Windows PowerShell equivalent remains separate; no claim of Windows native validation.",
     "No browser opened or certificate warning bypassed; host TLS uses explicit saved service certificate.",
-    "Main remains gated by deferred approval/outcome native prerequisites."
+    "Main remains gated by deferred approval/outcome native prerequisites.",
+    "Exact full115 now passed; current source6ebd16a44ea2 does not match published default pair07cdef2d4719. New image/package delivery and native approval/outcome gates remain pending."
   ],
   "focused": {
     "offlineBootstrapTests": 13,
@@ -58,9 +58,107 @@
     "time": "20261017T090459584083Z"
   },
   "full": {
-    "status": "running",
-    "head": "d7af50b3b686ce64acfe313dc287b9997356fc07",
+    "status": "pass",
+    "commands": 115,
     "fingerprint": "5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04",
-    "scope": "Official full includes112 quick commands plus3 Docker/runtime checks; result not yet claimed"
+    "receiptHead": "0f472ca2e842f6803d1495fa204857537aaa6566",
+    "receiptTime": "20261017T090552752734Z",
+    "log": ".agent-state/verify-20261017T090552752734Z.log",
+    "logSHA256": "5c89f90a40087a3b8da12e373d5beab72dd1be661dba8ddf165a3bdf811834b1",
+    "serverRegisteredEntries": 946,
+    "serverDisjointSerialGroups": 12,
+    "serverGroups": [
+      {
+        "group": 1,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 72.2
+      },
+      {
+        "group": 2,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 59.0
+      },
+      {
+        "group": 3,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 55.0
+      },
+      {
+        "group": 4,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 69.6
+      },
+      {
+        "group": 5,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 107.4
+      },
+      {
+        "group": 6,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 59.8
+      },
+      {
+        "group": 7,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 70.2
+      },
+      {
+        "group": 8,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 63.2
+      },
+      {
+        "group": 9,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 74.2
+      },
+      {
+        "group": 10,
+        "entries": 79,
+        "exit": 0,
+        "seconds": 51.2
+      },
+      {
+        "group": 11,
+        "entries": 78,
+        "exit": 0,
+        "seconds": 47.0
+      },
+      {
+        "group": 12,
+        "entries": 78,
+        "exit": 0,
+        "seconds": 44.1
+      }
+    ],
+    "otherPackagesRaceVetAndCAD": "pass per official commands/log",
+    "actualVerifierResources": {
+      "running": true,
+      "memoryBytes": 4294967296,
+      "memorySwapBytes": 4294967296,
+      "nanoCPUs": 2000000000,
+      "pidsLimit": 512,
+      "networkMode": "none",
+      "mountCount": 0,
+      "logConfig": {
+        "Type": "local",
+        "Config": {
+          "max-file": "3",
+          "max-size": "10m"
+        }
+      }
+    },
+    "verifierContainerRemoved": true,
+    "productionIdentityAnd22FilesUnchangedAfterFull": true
   }
 }
