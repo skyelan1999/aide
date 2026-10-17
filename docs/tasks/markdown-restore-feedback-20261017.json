@@ -40,7 +40,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "First version exact full127 and current built native persistent8s/retry/full remote bytes pass, but actual screenshot shows error below visible bottom. Independent DOM order negative then before-confirm placement patch; final exact full/native pending. Prior full not reused.",
+      "summary": "First446 exact full127 and919 actual native persistent8s error/reconnect/full bytes pass, visual placement failed. New492 before-confirm/cache8 DOM regression passes; exact full-v2 session70217 is live. Final source795dd892 requires its own receipt and native candidate.",
       "evidence": [
         "docs/reviews/2026-10-17/markdown-restore-feedback.md",
         "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
@@ -73,5 +73,5 @@
   },
   "release_authorization": "Existing incremental source/test/doc/push authorization; no production replacement or public Release before gates.",
   "rollback": "Revert owned source commit; no data migration.",
-  "handoff": "Prior full session16520 terminal0; first candidate stopped/cleaned. New before-confirm placement and cache8 require fresh full and source-v2 candidate. Follow actual new process only once launched; do not claim old receipt covers new placement."
+  "handoff": "Follow live full-v2 session70217 (driver full-v2.log); prior16520 terminal0. Current build-owner points frozen source-v2 commit492489ea/sourcece0c9e871e4c/fingerprint795dd892. After matching terminal full pass run private build.py then prepare-native.py, prepare-ssh.py, mark-v2.py; actual Safari same58320 disconnected restore must show message visibly before confirm for8s, then same SSH docker start/socket readiness, hash equality, manual retry, cleanup-native.py and docs/gates. Native-v1 archived separately; no owned candidate containers/pages remain. Do not reuse919/087 receipt for new placement."
 }

@@ -8323,12 +8323,12 @@
     "summary": "SSH workspace native full save bytes, explicit refresh draft recovery, body+SVG version1 restore, disconnected prewrite bytes and reconnect retry pass. Persistent inline failure reason absent; no overall completion. Production22 exact; tests stopped."
   },
   "markdown_restore_feedback_20261017": {
-    "status": "first_full_native_partial_pass_visual_fix_final_full_pending",
+    "status": "final_placement_targeted_pass_exact_full_v2_running",
     "task": "docs/tasks/markdown-restore-feedback-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/markdown-restore-feedback.md",
       "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
     ],
-    "summary": "First446 source full127 and actual919 candidate persistent8s error/manual retry bytes pass; screenshot proved row below visible bottom. Independent DOM order negative then before-confirm/cache8 fix; final full/native require fresh qualification. Own3 containers/pages cleaned, production22 exact."
+    "summary": "First446 full127/current919 native persistent8s/retry bytes pass but screenshot shows below-fold error. Independent placement negative then492 before-confirm/cache8 fix; exact final full-v2 session70217 live, final candidate pending. Own runtime/pages cleaned, production22 unchanged."
   }
 }

@@ -1,5 +1,5 @@
 {
-  "status": "visual_followup_targeted_pass_current_full_native_pending",
+  "status": "final_placement_targeted_pass_full_v2_running_native_pending",
   "negative": {
     "status": "expected_failure",
     "command": "node scripts/markdown-history-writable.test.cjs",
@@ -34,7 +34,7 @@
     "log": ".agent-state/verify-20261017T124714659841Z.log",
     "commands": 124
   },
-  "observedUTC": "2026-10-17T12:51:35.427904+00:00",
+  "observedUTC": "2026-10-17T13:09:55.019973+00:00",
   "previousFull127": {
     "status": "pass",
     "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
@@ -78,7 +78,12 @@
     "actual": false,
     "expected": true
   },
-  "full": "NOT_RUN final before-confirm placement",
+  "full": {
+    "status": "running",
+    "processSession": 70217,
+    "driverLog": ".agent-state/markdown-restore-feedback-20261017/full-v2.log",
+    "scope": "Final before-confirm placement; first full127 remains separately qualified."
+  },
   "previousNativeCleanup": {
     "status": "pass",
     "originalStopExit": 0,
@@ -96,5 +101,8 @@
   "previousSourceCommit": "4469686e3f128bdaff6da0f053d192c88e87d879",
   "previousSourceSHA": "2adcbede85b71dca30cfde3052a097ea0011f24f1aa2c54e9405bcff564c61e1",
   "previousFingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
-  "finalPlacementSource": "pending exact source freeze and full"
+  "finalPlacementSource": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+  "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8"
 }
