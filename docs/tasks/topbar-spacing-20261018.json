@@ -1,0 +1,80 @@
+{
+  "id": "topbar-spacing-20261018",
+  "request": "重做消息图标；统一消息插件文件高度；修复轨迹与搜索重叠",
+  "baseline": "192b80f3e32bcb5472e68ff9ba41c104e69c07b9",
+  "initial_status": "M plugins/registry.json",
+  "acceptance": [
+    "Safari 顶部搜索与轨迹无重叠，搜索无重复快捷键提示",
+    "消息插件文件切换按钮36px同高，侧栏标题42px同高，触摸46px",
+    "消息采用统一18px圆角对话图标，切换功能正常"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/workbench.css",
+    "internal/server/web/message-center.css",
+    "docs/tasks/topbar-spacing-20261018.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户截图修复顶部与面板标题，保留其余布局。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/workbench.css",
+        "internal/server/web/message-center.css"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "搜索输入宽度跟随容器；按钮统一尺寸；窄屏收起文本，保留可访问标签。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/workbench.css",
+        "internal/server/web/message-center.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "重绘消息SVG，统一顶栏按钮与侧栏标题。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/workbench.css",
+        "internal/server/web/message-center.css"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Safari 刷新后实见新图标、搜索与轨迹分开、三侧栏标题对齐且可切换；125项快速命令退出均为0，但运行期间安装改变输入指纹，需合并后重跑。",
+      "evidence": [
+        ".agent-state/topbar/plugins.png",
+        ".agent-state/topbar-quick-final.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务记录写明布局原因、修改、真实Safari观察和验证边界。",
+      "evidence": [
+        "docs/tasks/topbar-spacing-20261018.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅变更四个前端文件与任务记录；运行注册表修改留在本地，不纳入提交。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户已授权安装更新并 push",
+  "rollback": "",
+  "handoff": ""
+}

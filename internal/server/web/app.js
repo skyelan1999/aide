@@ -1423,11 +1423,11 @@ async function stopRunById(runId) {
   button.id = 'reminder-center-button'; button.type = 'button'; button.className = 'quiet';
   button.setAttribute('aria-label', t('消息')); button.dataset.i18nAriaLabel='消息'; button.setAttribute('aria-pressed', 'false');
   const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  icon.setAttribute('class', 'reminder-center-icon'); icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('class', 'ui-icon reminder-center-icon'); icon.setAttribute('viewBox', '0 0 24 24');
   icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
   icon.setAttribute('stroke-width', '1.7'); icon.setAttribute('stroke-linecap', 'round');
   icon.setAttribute('stroke-linejoin', 'round'); icon.setAttribute('aria-hidden', 'true');
-  icon.innerHTML = '<path d="M20 11a8 8 0 0 1-8 8H7l-4 3v-7a8 8 0 1 1 17-4Z"/><path d="M7 9h8M7 13h5"/>';
+  icon.innerHTML = '<path d="M7 18l-4 3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3Z"/><path d="M7 8h10M7 12h6"/>';
   const messageLabel=document.createElement('span');messageLabel.dataset.i18n='消息';messageLabel.textContent=t('消息');button.append(icon,messageLabel);
   const badge = document.createElement('span'); badge.className = 'reminder-count hidden'; button.append(badge);
   document.querySelector('.panel-switch').insertBefore(button, $('plugins-toggle'));

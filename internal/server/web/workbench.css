@@ -8,12 +8,28 @@ button,select,input,textarea{touch-action:manipulation}
 .sidebar{padding-inline:14px;gap:2px}
 .sidebar :is(.new-session,.workspace-label,.assistant-entry){border-radius:var(--wb-radius)}
 .session-item{min-height:38px;border-radius:8px;padding:9px 10px;line-height:1.5}
-.topbar{padding-inline:24px;gap:12px}
-.top-actions{gap:10px}
-.panel-switch{align-items:center}
-.global-search{min-width:0}
-.global-search input{min-height:32px;width:clamp(100px,15vw,190px);font-size:12px}
-.breadcrumb{min-width:0;line-height:1.5}
+/* Search owns its field width; intrinsic input sizing must not spill into actions. */
+.topbar{padding-inline:24px;gap:12px;justify-content:flex-start}
+.topbar .breadcrumb{flex:1 1 120px;min-width:0;overflow:hidden;line-height:1.5}
+.topbar .global-search{flex:0 1 190px;width:190px;min-width:100px;margin:0}
+.topbar .global-search input{width:100%;min-width:0;min-height:36px;font-size:12px;padding-inline:31px 44px}
+.topbar .top-actions{flex:0 0 auto;gap:8px;margin-left:0}
+.topbar .panel-switch{align-items:center;gap:4px;padding:0;background:none;border:0}
+.topbar .top-actions .quiet{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;min-height:36px;padding:0 10px;border:0;border-radius:8px;line-height:1;white-space:nowrap}
+.topbar .top-actions .quiet>svg{display:block;width:18px;height:18px;flex:0 0 18px;margin:0}
+@media(min-width:701px) and (max-width:1100px){
+  .topbar .top-actions .quiet>span:not(.reminder-count){display:none}
+  .topbar .top-actions .quiet{width:36px;padding:0}
+  .topbar .top-actions .quiet>svg{display:block}
+}
+@media(max-width:700px){
+  .topbar .breadcrumb{grid-row:1;grid-column:2 / -1}
+  .topbar .global-search{grid-row:2;grid-column:1 / 3;width:100%;min-width:0}
+  .topbar .top-actions{grid-row:2;grid-column:3;gap:4px}
+  .topbar .top-actions .quiet{width:32px;height:32px;min-height:32px;padding:0}
+  .topbar .top-actions .quiet>span:not(.reminder-count){display:none}
+  .topbar .global-search input{min-height:32px}
+}
 .conversation{padding:24px clamp(16px,3vw,40px);scrollbar-gutter:stable}
 #timeline,.welcome{width:100%;max-width:var(--wb-reading);margin-inline:auto;min-width:0}
 .welcome{margin-block:clamp(20px,5vh,55px) 28px}

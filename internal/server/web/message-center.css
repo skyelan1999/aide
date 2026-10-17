@@ -7,7 +7,9 @@
 .message-center input[type=checkbox]{width:17px;height:17px;min-height:17px;flex:none;accent-color:var(--brand)}
 .message-center textarea{resize:vertical;max-height:160px}
 .message-center h3{font-size:13px;margin:3px 0 0;font-weight:650}
-.message-center .reminder-center-head{flex:none;padding:12px 14px;min-height:52px;box-sizing:border-box;gap:10px}
+.message-center .reminder-center-head{flex:none;padding:0 12px;height:42px;min-height:42px;box-sizing:border-box;gap:10px}
+#plugin-panel .plugin-panel-heading{height:42px;min-height:42px;padding-inline:12px}
+@media(pointer:coarse){#plugin-panel .plugin-panel-heading,.message-center .reminder-center-head{height:46px;min-height:46px}}
 .message-center .reminder-center-head h2{margin:0;font-size:15px}
 .message-center .reminder-panel-actions{gap:6px}
 .message-center .reminder-panel-actions button{width:32px;height:32px;min-height:32px;padding:6px}
@@ -91,7 +93,7 @@
 .message-center .reminder-panel-actions svg,.sheet-head .icon-button>svg{width:18px;height:18px;display:block;margin:0;flex:none}
 .topbar .panel-switch>button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;line-height:1.2}
 .topbar .panel-switch>button>svg{display:block;width:18px;height:18px;flex:0 0 18px;margin:0}
-.topbar .global-search{margin-inline-end:8px}
+
 
 /* Reminder controls retain compact geometry inside the shared message panel. */
 .message-center .reminder-filters{grid-template-columns:minmax(0,1.25fr) repeat(3,minmax(0,1fr));gap:3px;padding:4px}
