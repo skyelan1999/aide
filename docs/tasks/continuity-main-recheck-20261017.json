@@ -1,0 +1,74 @@
+{
+  "id": "continuity-main-recheck-20261017",
+  "request": "继续原始十二项目标：同步 main 后复核推理强度源码与运行边界，完成遗留成果记录夹具验证与清理；不合并其他功能分支，不部署。",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "acceptance": [
+    "当前源码专项验证会话独立推理设置、串行保存和 409 冲突保护。",
+    "验证遗留专用成果记录导入幂等、旧快照和来源伪造拒绝，清理专用会话、配置与监听器。",
+    "区分源码检查和运行镜像验收，原始十二项保持进行中。"
+  ],
+  "scope": [
+    "docs/tasks/continuity-main-recheck-20261017.json",
+    "docs/reviews/2026-10-17/continuity-main-recheck.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "本轮仅复核与清理，证据见报告。",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-main-recheck.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "本轮仅复核与清理，证据见报告。",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-main-recheck.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "本轮仅复核与清理，证据见报告。",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-main-recheck.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Current-source targeted reasoning/session/context/run-controls tests and all 107 quick checks pass. Runtime-only receipt negatives and fixture cleanup pass; current-main full/native UI not asserted.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-main-recheck.md",
+        ".agent-state/verify-20261017T055310854198Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本轮仅复核与清理，证据见报告。",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-main-recheck.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned session returns 404; model/provider/listener absent. Settings preserved except monotonic 52 to 53; encrypted vault entries exact. Existing Safari restored to session 39 without adding tabs.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-main-recheck.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "No source merge, push, deployment, version or Release. Original goal remains active.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-main-recheck.md"
+      ]
+    }
+  },
+  "rollback": "文档可 revert；运行服务不替换，不恢复旧配置覆盖用户数据。",
+  "handoff": "Windows 用户验收；真实向量暂缓。当前运行镜像不是同步后的 main，尚未验证新版完整浏览器行为。",
+  "quick": {
+    "status": "pass",
+    "fingerprint": "b8f1c24b69d9a53904ebff54548d26d23a5c2361efb2331d7ecbc24e639e1883",
+    "head": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "log": ".agent-state/verify-20261017T055310854198Z.log"
+  }
+}
