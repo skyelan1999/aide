@@ -69,12 +69,15 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Scoped documentation merged and pushed main99a4375a, independently matched remote; clean-main release-check exit0 current full and existing07c assets only. No tag/image/production deployment.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-cross-session-native.md",
+        "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+      ]
     }
   },
   "release_authorization": "User authorized incremental push/test and main merge, no production replacement.",
   "rollback": "Owned fixtures only; stop original launcher, remove owned stopped containers, keep data/images and protected production unchanged.",
-  "handoff": "Scoped native local approval acceptance complete; clean main gate and delivery next. Original12 active; user-host SSH and outcome live/receipt gaps remain; newce0c public upload not qualified."
+  "handoff": "Scoped native local approval acceptance delivered main. Continue original12 outcome receipt/live snapshots and workspace boundaries; user-host SSH/combined approval boundaries remain. Newce0c public upload not qualified."
 }

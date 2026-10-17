@@ -153,9 +153,21 @@
     "productionReplaced": false
   },
   "sourceDelivery": {
-    "status": "pending"
+    "status": "pass",
+    "observedRemoteMain": "99a4375aff6d0a0739efb21fa7382d5b42ac91fb",
+    "pushExit": 0,
+    "independentRemoteExact": true,
+    "scope": "Scoped native approval acceptance documentation only; no source/image/production change"
   },
   "releaseCheck": {
-    "status": "pending"
+    "exit": 0,
+    "exactFullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+    "defaultPublicSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "newCe0cAssetsQualified": false,
+    "mutations": false
+  },
+  "documentationChecks": {
+    "checkDocs": "PASS312 Markdown1153 local links",
+    "diffCheck": "pass"
   }
 }

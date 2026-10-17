@@ -8385,12 +8385,13 @@
     "observedRemoteMain": "2b2b05982db1d8b0f286e10f101e9ab4620573c5"
   },
   "approval_cross_session_native_20261017": {
-    "status": "scoped_pass_delivery_pending",
+    "status": "scoped_pass_delivered_main",
     "task": "docs/tasks/approval-cross-session-native-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/approval-cross-session-native.md",
       "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
     ],
-    "summary": "Current79a0 local complete Safari and independent CAS/SSE/restart acceptance pass; production22 exact; no source/real model/vector/production change; original12 remain."
+    "summary": "Current79a0 local complete Safari and independent CAS/SSE/restart acceptance pass; production22 exact; no source/real model/vector/production change; original12 remain.",
+    "observedRemoteMain": "99a4375aff6d0a0739efb21fa7382d5b42ac91fb"
   }
 }
