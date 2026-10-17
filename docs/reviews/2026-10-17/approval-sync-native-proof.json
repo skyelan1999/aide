@@ -1,0 +1,56 @@
+{
+  "status": "pass_scoped_native_and_api",
+  "sourceBaseline": "a119dad78f790f9c6c2a404dcfcf98263b235d94",
+  "runtime": "6a8a2dcb290b",
+  "sessions": [
+    50,
+    51
+  ],
+  "sameExactPrintCrossSession": true,
+  "secondApprovalSource": "remembered",
+  "twoExitZeroLiteralPrints": true,
+  "globalAssistedFromAPIObservedBothTabs": true,
+  "globalManualFromNativeUIObservedOtherTab": true,
+  "nativeAExpiryUTC": "2026-10-17T06:45:00Z",
+  "nativeBDirtyInputPreserved": "2026-10-17 14:30 Asia/Shanghai",
+  "staleSaveAndRevokeDisabled": true,
+  "explicitDiscardThenReloadedGlobalExpiry": true,
+  "nativeRevocationObservedBothTabs": true,
+  "sameCommandAfterRevokeAwaitedConfirmation": true,
+  "unapprovedThirdExecutions": 0,
+  "newBrowserTabs": 0,
+  "paidModelTasks": 0,
+  "localProtocolFixtureOnly": true,
+  "fixtureProcessStop": "owned SIGTERM exit143",
+  "cleanup": {
+    "status": "pass",
+    "originalFileCount": 22,
+    "byteIdenticalOriginalFiles": 20,
+    "changedFiles": [
+      "config/settings.json",
+      "config/approval-policy.json"
+    ],
+    "originalSessionsAuthSourcesExact": true,
+    "settingsExactExceptMonotonicSequence": true,
+    "sessionSequence": [
+      50,
+      52
+    ],
+    "originalEncryptedVaultEntriesExact": true,
+    "originalApprovalModeAndRulesExact": true,
+    "policyRevisions": [
+      14,
+      21
+    ],
+    "onlyOwnProviderListenerTerminated": true,
+    "twoOwnedSessions404": true,
+    "noAdditionalProtectedFiles": true,
+    "temporaryProviderAndModelAbsent": true,
+    "productionContainerUnchanged": true
+  },
+  "fullReuse": {
+    "checks": 109,
+    "fingerprint": "3f83d6589f314321251067a536c335c37e5f0fcb90adacbc56486aa999cd3d94",
+    "newFullRun": false
+  }
+}

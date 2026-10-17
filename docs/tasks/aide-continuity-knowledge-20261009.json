@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "MCP代码full109已通过；规范ARM6a8a/AMDe474完整包均已导入校验，全新ARM原始入口无构建无拉取及MCP/文件验收通过，临时实例已清理。本机9999运行规范ARM6a8a，22保护文件/挂载保全。所有本轮构建/验证/清理进程终态0，构建缓存0。详见docker-mcp-delivery.md。下一步公开Release附件、更新默认manifest并完成精确输入/干净main门禁；当前默认manifest仍旧6ad/0c。Windows用户验收、真实向量暂缓，原12条目标完整保留继续。",
+  "handoff": "最新分范围进展：approval-sync-native-20261017已完成本机真实双会话/双标签模式同步、授权跨会话复用、脏有效期保护、撤销后重新提问和清理；原14会话/鉴权/来源/密钥库等20文件字节一致，设置序号50→52、策略revision14→21是合法增量，原模式恢复。没有产品源码修改，仍匹配full109。MCP规范双架构完整包及直接docker-load单文件包均本地验证；公开ARM上传尚无成功回执，Safari开发者设置确认待答，不提前改默认清单或main。后续继续SSH工作区模式、隐藏活动/发布记录卡等原12项其余直接证据；Windows用户负责，真实向量暂缓。",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -456,11 +456,12 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "真实自然过期对话框失配已修复，原生到期、脏编辑、版本冲突、保存和撤销已有证据。",
-        "remaining": "跨会话/多标签即时同步、用户SSH环境及完整发布仍待；过期修复局部通过不代表全授权系统验收。",
+        "latestScopedEvidence": "真实自然过期对话框失配已修复，原生到期、脏编辑、版本冲突、保存和撤销已有证据。 后续原生双会话/标签模式切换、记忆授权跨会话执行、有效期脏编辑保护与撤销后重新提问通过。",
+        "remaining": "本机跨标签/会话同步已补直接证据；用户SSH、跨工作区身份的原生负例、后台严格时限和真实辅助模型其余场景仍需单独验收。",
         "evidence": [
           "docs/reviews/2026-10-17/approval-dialog-expiry-proof.json",
-          "docs/reviews/2026-10-17/approval-dialog-full-proof.json"
+          "docs/reviews/2026-10-17/approval-dialog-full-proof.json",
+          "docs/reviews/2026-10-17/approval-sync-native-proof.json"
         ],
         "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
@@ -7844,7 +7845,7 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "等待唯一MCP全量session62601终态；之后处理网关生命周期和交付。原目标下一项是SSH工作区模式/跨标签授权/隐藏活动及发布卡等直接验收；不重复已经通过的本机和独立SFTP来源场景。",
+    "nextIndependentFocus": "MCP公开上传仍无回执，开发者设置确认待答，默认清单/main不提前推进。本机授权跨会话/标签已验收；继续SSH工作区模式、隐藏活动/发布记录卡等原12项剩余直接证据。",
     "deliveredMain": "5fac564d",
     "currentCheckpointGate": "MCP精确输入full109终态PASS，指纹3f83d6589f314321251067a536c335c37e5f0fcb90adacbc56486aa999cd3d94，server race768.615s/vet/CAD；验证容器已移除。ARM/AMD规范包待构建。",
     "historicalMainGateBeforeCurrent20261017": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
@@ -8204,5 +8205,11 @@
     "full": "109 PASS, server race768.615s/vet/CAD, fingerprint3f83d6589f314321251067a536c335c37e5f0fcb90adacbc56486aa999cd3d94",
     "runtime": "Canonical ARM/native/API22 protected files pass; both complete package actual imports and fresh ARM start without build/pull passed, fresh project removed. Build cache0 with original named images/container/data preserved.",
     "next": "Publish actual complete assets, update default manifest with exact hashes, rerun required exact-input gate and clean-main delivery; original12 remaining direct workflows continue."
+  },
+  "approval_sync_native_20261017": {
+    "status": "pass_scoped",
+    "task": "docs/tasks/approval-sync-native-20261017.json",
+    "report": "docs/reviews/2026-10-17/approval-sync-native.md",
+    "remaining": "用户SSH主机、跨工作区身份的原生负例、严格后台时限及真实辅助模型的额外联调仍分开记录。"
   }
 }

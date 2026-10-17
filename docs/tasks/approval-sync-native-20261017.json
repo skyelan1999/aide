@@ -1,0 +1,74 @@
+{
+  "id": "approval-sync-native-20261017",
+  "request": "继续原目标：真实Safari跨会话和标签页全局审批模式、授权有效期及撤销同步验收；使用本地协议夹具，不调用付费模型，保护原会话与配置",
+  "baseline": "a119dad78f790f9c6c2a404dcfcf98263b235d94",
+  "initial_status": "",
+  "acceptance": [
+    "两个专用会话中观察全局人工/辅助审批切换，不发送原有用户任务。",
+    "两个实际Safari标签的授权管理状态跟随当前全局规则；到期修改与撤销不误覆盖脏编辑。",
+    "本地提供商夹具触发精确printf审批，记住后跨会话复用；撤销后同命令重新要求确认，不调用付费模型。",
+    "清理自建会话、规则、提供商、进程，保留原会话、配置、密钥库条目；仅保留合法递增revision和会话序号。"
+  ],
+  "scope": [
+    "docs/tasks/approval-sync-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/approval-sync-native*",
+    "ignored owned local protocol fixture and native observations only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "原12项授权全局同步的原生跨会话/标签验收缺口，保留原目标范围。",
+      "evidence": [
+        "docs/tasks/approval-global-memory-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用已验收本地协议夹具，精确打印无写入；两专用会话，原始数据备份、活动任务空闲校验和清理。",
+      "evidence": [
+        ".agent-state/approval-dialog-expiry-20261017/fixture.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "复用现有产品，无源码修改；两专用会话、本地提供商和精确打印规则完成可恢复验收。",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-sync-native.md",
+        "docs/reviews/2026-10-17/approval-sync-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "真实双标签模式同步、跨会话记忆授权、未保存有效期保护/确认重读、撤销传播与后续重新审批通过；工具执行2次exit0，撤销后无执行，无付费模型。",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-sync-native.md",
+        "docs/reviews/2026-10-17/approval-sync-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录API发起辅助与UI发起手动的区分、显式刷新边界、旧标签AX缺口、清理计数和剩余范围。",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-sync-native.md",
+        "docs/reviews/2026-10-17/approval-sync-native-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅移除两专用会话/规则/提供商/模型/监听。原14会话与密钥库等20文件字节一致，仅序号与策略revision合法递增；原模式、两标签和来源视图恢复。",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-sync-native.md",
+        "docs/reviews/2026-10-17/approval-sync-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "普通文档验收检查点待分支推送；main与RC2公开附件仍由原分发门禁管理，未宣称已经交付main。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用原持续目标与分批测试/文档/push授权；本轮只读验收和自建测试数据，不新建版本，不合外部功能分支。",
+  "rollback": "仅撤销本轮创建的精确命令规则、会话和本地提供商；校验原设置/加密条目，保留合法递增计数，不覆盖外部变化。",
+  "handoff": "本轮原生/API验收与清理已完成，不保留测试会话、授权、提供商或监听。无需重新运行fixture setup；其owned.json是历史证据。后续仅文档分支推送和原整体目标剩余项；GitHub上传页仍单独等待回执/开发者设置确认。"
+}

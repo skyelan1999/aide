@@ -121,5 +121,11 @@
   "regression_checkpoint": {
     "status": "in_progress",
     "summary": "Replaced obsolete per-session JS regression with current global policy, SSE, reconnect, stale GET and failed save tests. VM fixture passed; real browser/model remains pending. Added regression to quick gate."
+  },
+  "native_sync_followup_20261017": {
+    "status": "pass_scoped",
+    "task": "docs/tasks/approval-sync-native-20261017.json",
+    "report": "docs/reviews/2026-10-17/approval-sync-native.md",
+    "summary": "原生双会话/标签模式、同命令授权复用、有效期脏编辑保护与撤销后重新审批通过；原数据及合法递增计数保全，未调用付费模型。未将用户SSH/其他边界提升为完成。"
   }
 }
