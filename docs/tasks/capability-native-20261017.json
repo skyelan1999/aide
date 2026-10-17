@@ -69,12 +69,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Docs-only native acceptance delivered mainf2a6cea41f93def561742521269816e58717eeff; clean-main scoped gate PASS, git push exit0 and independent ls-remote exact. Product inputs unchanged; reuse existing full107 fingerprint98ebc999, no rebuild or new package. Offline image public upload remains separate pending task.",
+      "evidence": [
+        "docs/reviews/2026-10-17/capability-native.md",
+        "docs/reviews/2026-10-17/capability-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing user authorization for incremental tests/docs/main push; no new version, runtime replacement or paid model invocation.",
   "rollback": "No config edits or runtime replacement; close settings and preserve original workspace/session/file view; capability check receipts expire in five minutes and restart clears them.",
-  "handoff": "Scoped native capability acceptance passed; docs-only source fingerprint unchanged from full107. Clean-main gate and push next. Continue original SSH workspace-mode/authorization/outcome/timeline gaps; image uploads independently pending."
+  "handoff": "Scoped native capability acceptance and docs main delivery passed. Continue SSH workspace-mode, native authorization/outcome/timeline gaps. Final docs receipt also independently gated/pushed; no product input/runtime/image change."
 }

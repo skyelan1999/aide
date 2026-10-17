@@ -20,3 +20,6 @@
 
 
 An additional existing local reference root check passed in native Safari and API. This proves directory listing only, not individual file body readability; no source configuration was changed.
+
+
+Clean-main scoped release gate passed. Documentation was pushed and independently verified at main `f2a6cea41f93def561742521269816e58717eeff`. Existing exact-input full107 receipt was reused; no new build, runtime replacement, or image publication is claimed. This final receipt changes ordinary documentation only.

@@ -8077,11 +8077,12 @@
     "summary": "Native real independent SFTP source saved caret/scroll, explicit dirty draft refresh recovery, whole-version body+SVG restore and six-step source line4 pass. Registry/encrypted entries/networks/14sessions/config/mounts restored. SSH-workspace mode and remaining original12 gaps remain."
   },
   "capability_native_20261017": {
-    "status": "scoped_pass",
+    "status": "scoped_delivered",
     "task": "docs/tasks/capability-native-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/capability-native-proof.json"
     ],
-    "summary": "Native seven read checks, actual plugin disk hash and independent API pass; natural five-minute stale state shown without manual refresh, six API checks stale. Original14sessions/22protected files/image/mounts/networks exact and original session/source view restored. No model, plugin tool, write or SSH test this task."
+    "summary": "Native seven read checks, actual plugin disk hash and independent API pass; natural five-minute stale state shown without manual refresh, six API checks stale. Original14sessions/22protected files/image/mounts/networks exact and original session/source view restored. No model, plugin tool, write or SSH test this task.",
+    "deliveredMain": "f2a6cea41f93def561742521269816e58717eeff"
   }
 }
