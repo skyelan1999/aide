@@ -23,7 +23,14 @@
     "native-comparison.png",
     "native-basis.png"
   ],
-  "fullRegression": "in_progress",
+  "fullRegression": {
+    "status": "pass",
+    "checks": 107,
+    "fingerprint": "e35aaaffa0dbcd4876350f1239b1117eae2ff606da3ceda77290db45139f1a05",
+    "receiptHead": "8580915a02af0621fd13a3e6fe56326d56a84318",
+    "startedUTC": "20261017T014611899619Z",
+    "log": ".agent-state/verify-20261017T014611899619Z.log"
+  },
   "release": "pending",
   "targetedRaceSeconds": 24.916,
   "targetedLargeFixture": {
@@ -131,5 +138,43 @@
     "notesTagAndPrereleasePreserved": true,
     "newTimelineArchivesPresent": false,
     "publicURL": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2"
+  },
+  "finalHistoryAfterCleanup": {
+    "status": "pass",
+    "observationsAfterFixtureRemoval": 4,
+    "pairStillRetained": {
+      "before": "Hb11815c189f7c57f4303521d",
+      "after": "H9c1fac65f9c06528d1e8fe92"
+    },
+    "priorDropped": 151,
+    "currentDropped": 152,
+    "physicalFiles": [
+      {
+        "name": "9490aeef008fea6fee0b5bb855bb22153dfa27394b939543bbe28a0146b45c7d.json",
+        "bytes": 6288137,
+        "version": 2
+      },
+      {
+        "name": "9e734eabd2ae9d9aa19dca0aff10d86dacd7a3dedf2c9ed3c69d154bdd304163.json",
+        "bytes": 11183369,
+        "version": 1
+      },
+      {
+        "name": "07961c0ac6bbaa115c27dac12549588619a83b747a8c7257775b5f1171bcb4a1.json",
+        "bytes": 9741749,
+        "version": 1
+      }
+    ],
+    "nativeSavedTextAfterRemoval": true,
+    "probeCorrection": "Initial probe incorrectly required dropped==151. Removing fixtures across sources generated two progressive observations, and bounded retention correctly evicted the oldest pre-fixture observation. The distinct A/B pair is retained; no history was edited to hide this result."
+  },
+  "cleanup": {
+    "status": "pass",
+    "ownedSourceSnapshotRemoved": true,
+    "ownedFreshAppDirectoryRemoved": true,
+    "freshProjectStoppedAndRemoved": true,
+    "offlineArchivesRetained": true,
+    "historyRollbackBackupRetained": true,
+    "originalDirectoriesUntouched": true
   }
 }
