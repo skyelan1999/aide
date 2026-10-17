@@ -1,0 +1,73 @@
+{
+  "id": "continuity-plugin-main-20261017",
+  "request": "Continue continuity/authorization/outcome/knowledge acceptance after concurrent plugin workshop main update, ensuring complete runtime distribution.",
+  "baseline": "6a8927aed300c2f210b2ae2f29647b3fdd901623",
+  "acceptance": [
+    "Retain latest upstream workshop and continuity fixes, use isolated full verification without changing production.",
+    "Both Docker runtime builds ship plugin-authoring independently of user workspace; negative checks detect either omission.",
+    "Actual candidate image non-root asset check requires workshop; original launcher fresh workspace discovers bundled workshop without manual installation.",
+    "Run exact repaired-source full and record current fingerprint; previous full125 applies only frozen662 source.",
+    "Record actual image/package/native/public states and keep Windows user-owned, real vectors deferred."
+  ],
+  "scope": [
+    "Dockerfile",
+    "Dockerfile.local",
+    "scripts/test_runtime_assets.py",
+    "docs/tasks/continuity-plugin-main-20261017.json",
+    "docs/reviews/2026-10-17/continuity-plugin-main.md",
+    "docs/reviews/2026-10-17/continuity-plugin-main-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Persistent continuity goal and complete offline runtime user requirement; concurrent main workshop functionality must reach fresh installations.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Copy plugin to bundled runtime location in both builds; source contract plus explicit new-candidate required-plugin check preserves old dependency image full profile compatibility.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Both runtime COPY omissions repaired; source check enforces five shipped plugins; explicit candidate flag verifies plugin-authoring as non-root.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Both individual source omission negatives rejected; actual prior ARM image fails workshop asset check as expected. New exact-source full/candidate startup pending. Superseded pre-repair full stopped before Go snapshot, exit143; not claimed pass.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Record concrete omission and narrow verification without relying on upstream task summary as live runtime proof.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Only owned superseded verifier terminated after stdout/PID-tree confirmation; production current22 baseline retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Current repaired full/runtime/native/public gates pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-plugin-main.md"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental source/tests/docs and complete image preparation requests; latest explicit user main merge authorization persists. No production replacement or credential trust changes.",
+  "rollback": "Revert scoped packaging/test changes if needed; preserve production, rollback images, data and original browser tabs."
+}
