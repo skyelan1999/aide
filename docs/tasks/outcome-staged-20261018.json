@@ -76,7 +76,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "专项报告/proof、主账本/交接/操作/架构及旧编号续验已补；豆包交接全文已编写并明确未完成与当前交付状态，main推送回执将在门禁后追加。链接检查通过，普通文档不代替精确full。",
+      "summary": "专项、原任务账本/交接/操作/架构、旧编号续验及豆包详细交接已更新；明确当前源码交付、实际验收、剩余范围和独立包/生产边界。普通文档另做链接/人工审阅，不冒充源码full。",
       "evidence": [
         "docs/reviews/2026-10-18/outcome-staged.md",
         "docs/reviews/2026-10-18/outcome-staged-proof.json",
@@ -93,16 +93,17 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "集成源码验证通过，待主目录main干净合入、匹配收据与门禁、push及独立远端核对；不含完整新双架构包/公开Release或生产更新。",
+      "status": "pass",
+      "summary": "干净main匹配当前full指纹后门禁通过；源码936696c2已push，独立ls-remote一致。门禁公开附件仍07c元数据，不代表当前镜像包；未部署生产/未发布新双架构包。",
       "evidence": [
-        "docs/reviews/2026-10-18/outcome-staged-proof.json"
+        "docs/reviews/2026-10-18/outcome-staged-proof.json",
+        "docs/reviews/2026-10-18/outcome-staged.md"
       ]
     }
   },
   "release_authorization": "用户原目标成果追踪、会话分段式结论、不等全做完覆盖；既有分批push/test和main授权。仅隔离本地协议模型，不替换当前用户服务。",
   "rollback": "Revert scoped projection/rendering commits; no persisted schema migration or user data rewrite. Keep prior runtime/images.",
-  "handoff": "集成full50124已终态pass128/981，验证容器自动清理；下一步main门禁/push、交接定稿。原12仍进行，发布包/桥普通Terminal和双机范围保留。",
+  "handoff": "专项源码已交付main936696c2并独立核对，quick125/full128/981项及核心原生通过，用户生产不变。本轮文档定稿提交后再核对远端与干净状态；原12继续，豆包按详细交接接手，Windows用户验收，向量暂缓。",
   "integration_followup": {
     "remoteMain": "19e7c94d5a769dae444f31c5a0b54d7b30a133e9",
     "primaryMainSynced": true,
@@ -113,7 +114,8 @@
   },
   "handoff_document": {
     "path": "docs/doubao-handoff-20261018.md",
-    "status": "draft_until_round_completion",
-    "user_request": "本轮完成之后写一个交接文档，后面由豆包来交接你的目标"
+    "status": "ready",
+    "user_request": "本轮完成之后写一个交接文档，后面由豆包来交接你的目标",
+    "goalContinuation": "用户明确要求：完成本轮后暂停，交给豆包；最终文档push确认后执行暂停，不标整体完成。"
   }
 }

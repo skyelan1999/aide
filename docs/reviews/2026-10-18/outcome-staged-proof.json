@@ -1,5 +1,5 @@
 {
-  "status": "verified_pending_main_delivery",
+  "status": "source_delivered_main_scoped_pass",
   "quick": {
     "status": "pass",
     "commands": 125,
@@ -61,11 +61,13 @@
   },
   "fixtureLimit": "local synthetic protocol only, no paid model or real vector. Initial held request exceeded the content idle timeout; later fresh session completed two stages normally.",
   "delivery": {
-    "mergedMain": false,
-    "pushed": false,
+    "mergedMain": true,
+    "pushed": true,
     "productionReplaced": false,
     "newDualArchitecturePackages": false,
-    "publicRelease": false
+    "publicRelease": false,
+    "verifiedMain": "936696c2d6752e3026c2d2aeb3ca89681e06d108",
+    "releaseCheck": "pass clean main; exact full and old07c public attachment metadata only"
   },
   "baselineFull": {
     "status": "pass",
@@ -138,5 +140,11 @@
   "baselineCandidateImage": "sha256:2913ea53d348ad5e6f1fd4915abc3f946f322aea3741b55397ebb9be846e315a",
   "sourceCommit": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c",
   "sourceSHA": "2239861e3902cced4bdb9a772b489ee3a95340b7fb1bd70646c60ce3979d282e",
-  "candidateImage": "sha256:07172e63ff04662f4f91757cc15e253d138e4c192a62f1d81136c8f9059bdfd1"
+  "candidateImage": "sha256:07172e63ff04662f4f91757cc15e253d138e4c192a62f1d81136c8f9059bdfd1",
+  "handoffDocument": "docs/doubao-handoff-20261018.md",
+  "finalProductionProtection": {
+    "containerUnchanged": true,
+    "hashesUnchanged": 22,
+    "ownTestsAndWindowsCleaned": true
+  }
 }
