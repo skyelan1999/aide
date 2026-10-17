@@ -35,7 +35,13 @@
 
 切换由用户在目标槽点击「手动激活」后开始。服务器创建待处理操作；宿主代理拉取受令牌保护的命令、复核 SHA256、导入镜像，并使用原 Compose project 重建唯一 aide 服务。新服务 `/healthz` 检查通过后确认切换；超时或失败时恢复旧 `.aide-image` 并启动原槽。
 
-A/B 两槽使用同一 Compose project 和相同的 `aide-data`、`aide-home` named volumes，因此会话、设置、模型配置与容器 home 共用。`workspace/` 和 `context/` 仍由启动目录挂载。切换按停旧再启新执行，期间服务会短暂不可用，但不会有两个 aide 实例同时写数据。
+A/B 两槽使用同一 Compose project 和启动目录下的`.aide-data/storage/data`、`.aide-data/storage/home`绑定目录，分别挂载到`/data`和`/home/aide`，因此会话、设置、模型配置与容器home共用。旧named volume由启动器按明确归属迁移，不能在多个旧容器之间任意选取。工作区和引用目录继续按启动配置挂载。切换按停旧再启新执行，期间服务会短暂不可用，但不会有两个aide实例同时写数据。清理Docker缓存不能替代清理或删除这些宿主持久化目录。
+
+## 仓库启动与源码构建指纹
+
+普通仓库启动使用`docker/prebuilt-images.tsv`中的完整运行包，校验架构、源码身份、镜像ID和归档SHA256后复用本机镜像或导入本地包；仅本地包缺失时下载，不自动转为源码编译。主动源码开发构建使用`AIDE_BUILD_FROM_SOURCE=1`。补充候选包的清单在公开可下载之前不能推到稳定main；本机候选验收和公开发行是两个不同门禁。
+
+源码哈希包括应用代码、构建脚本、插件代码与锁文件，排除生成的`plugins/surface.json`、Python缓存和各层`node_modules`。Docker上下文也排除宿主`node_modules`，避免宿主平台生成依赖污染容器构建；此排除不删除实际插件缓存，也不改变插件安装流程。工作树与干净Git快照的哈希应一致，真实代码或锁文件修改仍应改变指纹。2026-10-17修复的局部验收及当前公开分发限制见[启动指纹与重启提示记录](../reviews/2026-10-17/startup-inputs-notice.md)。
 
 ## 进度与恢复
 

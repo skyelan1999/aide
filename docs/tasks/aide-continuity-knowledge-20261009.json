@@ -8124,5 +8124,15 @@
     "task": "docs/tasks/timeline-native-20261017.json",
     "report": "docs/reviews/2026-10-17/timeline-native.md",
     "summary": "Actual current map20052 nodes/20035edges has only one snapshot and151 evictions; serialized plaintext7.30MB with8MiB total budget cannot retain two current-size observations. Native comparison incomplete; bounded retention fix required. Diagnostic aside overlay issue also observed. Original22protected files/14sessions preserved; no product source change."
+  },
+  "startup_inputs_notice_20261017": {
+    "status": "in_progress",
+    "task": "docs/tasks/startup-inputs-notice-20261017.json",
+    "code": "a331b6f8",
+    "distributionFreeze": "b4cb4afb",
+    "evidence": "docs/reviews/2026-10-17/startup-inputs-notice-proof.json",
+    "progress": "Source/context parity, real compact restart notice/diagnostics/detail/dismiss at1325/707px, current complete runtime imports/fresh ARM and ordinary repeated default start passed; no new tabs/model calls.",
+    "remaining": "New full handle14001 still awaiting Docker after host disk exhaustion; Engine stopping/API timeout/9999 refused. Normal quit failed to stop backend. Force recovery user confirmation pending; do not force or start replacement full without authoritative terminal and recovered space. Main/public upload still held.",
+    "dataProtection": "Direct host20protected entries including14sessions exact. Two old /tmp code copies preserved outside disposable state with SHA/mode/link verification and original aliases; archive /Volumes/MY PASSPORT/aide_ws/preserved-temp-workspaces-20261017 must not be deleted as cache."
   }
 }

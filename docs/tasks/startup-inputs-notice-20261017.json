@@ -56,23 +56,26 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old fingerprint negative fails as expected; corrected focused tests2 and quick104 pass. Actual Docker context excludes host generated modules and retains manifest; clean Git source fingerprint matches worktree2b0f9c65. Native old CSS reproduces tall blank card; new compact notice/diagnostic/detail/dismiss pass at1325px and707px, original size restored; below700 not run. Both canonical packages imported, fresh ARM original start with CAD/line/hash passed; default ordinary start no build/pull and14sessions/config exact. Frozen full pending.",
+      "summary": "Old fingerprint negative fails as expected; corrected focused tests2 and quick104 pass. Actual Docker context excludes host generated modules and retains manifest; clean Git source fingerprint matches worktree2b0f9c65. Native old CSS reproduces tall blank card; new compact notice/diagnostic/detail/dismiss pass at1325px and707px, original size restored; below700 not run. Both canonical packages imported, fresh ARM original start with CAD/line/hash passed; default ordinary start no build/pull and14sessions/config exact. Frozen full pending. New full handle14001/container9c9bd0d1a334 still awaiting Docker after host space exhaustion; no terminal result, no replacement run. Direct-host20protected entries exact and actual native service-unreachable notice preserved main39. Ordinary repeat start passed without container restart before fault.",
       "evidence": [
         "scripts/test_source_fingerprint.py",
         "docs/reviews/2026-10-17/startup-inputs-notice-proof.json"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Scoped proof reports exact code/source/images and native width limitations; final full receipt and publication gate pending.",
+      "status": "pass",
+      "summary": "Scoped native/source/context/offline/default-repeat proof and actual host-space/Docker fault with explicit pending full/permission state recorded.",
       "evidence": [
+        "docs/reviews/2026-10-17/startup-inputs-notice.md",
         "docs/reviews/2026-10-17/startup-inputs-notice-proof.json"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Original main39/window restored; owned source snapshot and stopped fresh fixture removed; original plugin caches/archives/history rollback kept. Two old /tmp copies preserved outside disposable state after exact validation with original aliases. Docker/full recovery remains pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/startup-inputs-notice-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -82,5 +85,5 @@
   },
   "release_authorization": "Existing user instructions to incrementally fix/test/document/push/main and distribute complete offline bundles; no new tag/version, Windows native user-owned.",
   "rollback": "Retain previous image and all protected data; restore prior code/image on failure, leaving new compressed timeline histories and their matching encrypted legacy backups intact. Do not downgrade history format blindly. No real plugin caches deleted.",
-  "handoff": "Native and offline scoped checks passed. New default local start selects6ad codec-capable runtime, ordinary no build/pull proven; public new archives unavailable and remote main held5fac. Freeze manifest/checksum metadata then run full; previous e35 receipt cannot authorize changed source. No Safari developer preference changed."
+  "handoff": "Code a331b6f8/meta b4cb4afb; scoped native/source/cache/context/offline/default-repeat passed. NEW full handle14001/container aide-verify-9c9bd0d1a334 has no terminal result; Docker API unavailable/Engine stopping after host113MiB free. Rescued ~738MiB by verified /tmp copies relocation OUTSIDE .agent-state to /Volumes/MY PASSPORT/aide_ws/preserved-temp-workspaces-20261017; NEVER delete this archive as cache. Direct-host20protected entries exact. Normal Docker quit did not stop backend; user confirmation for forced backend recovery PENDING, do not force without answer. Safari developer permission separately pending. No replacement full until authoritative terminal/recovery, no old e35 receipt reuse. Default local manifest current6ad/0c17 package URLs not public, origin/main held5fac. Restore service via original start.command after engine recovery."
 }

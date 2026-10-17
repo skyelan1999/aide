@@ -42,7 +42,8 @@
       "native-fixed-notice.png",
       "native-narrow-notice.png",
       "native-detail-and-notice.png"
-    ]
+    ],
+    "restoredMain39AndOriginalWindowAndClosedPanels": true
   },
   "defaultStart": {
     "originalStartCommand": true,
@@ -87,7 +88,7 @@
     ],
     "productionImagePreserved": true
   },
-  "fullRegression": "pending",
+  "fullRegression": "pending_current_handle14001_runtime_unavailable_do_not_restart_solely_on_timeout",
   "release": "public_upload_pending_do_not_push_main",
   "freshARM": {
     "status": "pass",
@@ -136,5 +137,42 @@
     "privateNetworkNoHostPorts": true,
     "productionImageUnchanged": true,
     "receivingDevice": "not_run"
+  },
+  "defaultRepeat": {
+    "status": "pass",
+    "ordinaryOriginalStartCommand": true,
+    "sourceBuildOverride": false,
+    "noBuildOrPull": true,
+    "containerIdentityAndStartTimeUnchanged": true,
+    "image": "sha256:6ad1d1179c2c6aa8b334cf98663626dcb52441cea105f318a8751292244486e7"
+  },
+  "cleanup": {
+    "status": "pass",
+    "ownedSourceSnapshotAndTerminalFreshRuntimeRemoved": true,
+    "freshJobTerminalExitZero": true,
+    "originalPluginCachesRetained": true,
+    "offlinePackagesAndRollbackEvidenceRetained": true,
+    "relocatedHistoricalTmpCopiesPreservedOutsideAgentState": true
+  },
+  "storageFault": {
+    "status": "runtime_unavailable_host_space_exhausted",
+    "hostAvailableMiBBefore": 116,
+    "hostAvailableMiBAfterApprox": 890,
+    "dockerRawAllocatedGiBApprox": 115,
+    "dockerAPI": "timeout",
+    "health9999": "connection_refused",
+    "normalDesktopRestart": "disabled_engine_stopping",
+    "fullOuterProcess": "still_waiting_no_terminal_result",
+    "fullHandle": 14001,
+    "container": "aide-verify-9c9bd0d1a334",
+    "forceRecoveryApproval": "pending",
+    "protected": {
+      "status": "pass",
+      "protectedFilesExact": 20,
+      "directHostReadDuringDockerFailure": true,
+      "originalSessionConfigAuthVaultBytesPreserved": true
+    },
+    "realNativeOutageNoticeAndOriginalMain39Visible": true,
+    "preservedTemporaryCopiesOutsideAgentState": true
   }
 }
