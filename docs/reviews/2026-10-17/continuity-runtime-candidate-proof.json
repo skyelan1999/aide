@@ -126,5 +126,56 @@
     "otherDevice": "not_run",
     "nativeUI": "user-deferred"
   },
-  "AMD64": "build_in_progress"
+  "AMD64": {
+    "build": {
+      "status": "pass",
+      "scope": "local offline AMD64 build under ARM emulation, not native Windows acceptance",
+      "tag": "aide:continuity-current-amd64-db02c58f",
+      "image": "sha256:382c90e72fca8e938cfbc2937577edb1d421f94250b4eb80bae3200e77176517",
+      "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+      "commit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+      "network": "none",
+      "base": "sha256:0c173c73296efc4867142df1c85063c68109c78c9b6e7a53b6c9af43be01face",
+      "public": false
+    },
+    "offlinePackage": {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "image": "sha256:382c90e72fca8e938cfbc2937577edb1d421f94250b4eb80bae3200e77176517",
+      "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+      "buildCommit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz",
+      "bytes": 916933833,
+      "sha256": "df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c",
+      "innerImageArchiveSHA256": "41725ab75c2dfe0b876c8c65003e46fa8053162f341dbe17a0f1b6da763aec10",
+      "archivePathsAndNoHostData": true,
+      "dockerLoadExit": 0,
+      "loadedIdentityExact": true,
+      "publicDefaultManifestUnchanged": true,
+      "published": false,
+      "otherDeviceImport": "not_run",
+      "buildInfo": "version=0.1.17.0-RC2\nimage=sha256:382c90e72fca8e938cfbc2937577edb1d421f94250b4eb80bae3200e77176517\nplatform=linux/amd64\nsrcsha=07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def\ncadRuntime=8.0.1.1.0\n"
+    },
+    "startup": {
+      "status": "not_run",
+      "scope": "native AMD64 startup",
+      "architectureGuard": "pass: original start.command rejected AMD64 bundle on ARM64 engine before container creation",
+      "launcherExit": 1,
+      "containersCreated": 0,
+      "emulatedBuild": "pass",
+      "actualDockerLoad": "pass",
+      "Windows": "user-owned",
+      "guardBypassed": false
+    }
+  },
+  "cleanup": {
+    "ownedStoppedContainersRemovedAfterARMTests": 4,
+    "earlierSupersededContainersRemoved": 2,
+    "imagesAndDataRetained": true,
+    "rebuildableBuildCacheReclaimed": "2.413GB reported by docker builder prune",
+    "runningContainers": "production app and CAD only",
+    "productionIdentityAnd22FilesExactAfterCleanup": true,
+    "verifiedDuplicateExtractedArchiveBytesRemoved": 1695769600,
+    "completeOuterArchivesAndDataRetained": true
+  }
 }
