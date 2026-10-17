@@ -143,5 +143,27 @@
     "bodyUnchanged": true,
     "supplementActualDownloadBytesExact": true
   },
-  "sourceCheckoutStartup": "pending"
+  "sourceCheckoutStartup": {
+    "status": "pass",
+    "scope": "fresh ordinary source checkout original start.command, already-local verified default image, then stop.command",
+    "sourceCheckout": "4c22dc5aca4c8f0afdfdc59ebfa9e103379d11a1",
+    "runtimeBuildCommit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+    "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+    "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "noImageOverride": true,
+    "noSourceBuildOptIn": true,
+    "healthy": true,
+    "auth401": true,
+    "nativeCADImport": true,
+    "noCompilationOrImageDownload": true,
+    "ownedContainersStoppedAndRemoved": 2,
+    "ownedEmptyNetworksRemoved": 2,
+    "testDataAndImagesRetained": true,
+    "productionIdentityAnd22FilesExact": true,
+    "nativeUI": "user-deferred",
+    "newDeviceDownloadAndImport": "not_run",
+    "Windows": "user-owned"
+  },
+  "browserCleanup": "no new tabs; original right AIDE39 restored, empty input; unsaved GitHub form retained without submission",
+  "finalFull": "pending after tracked delivery-input change; prior full114 runtime evidence retained"
 }

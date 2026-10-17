@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current combined full114 PASS:946 server entries/12 shards/race/vet/CAD. Newly built exact-source ARM runtime passed10 cross-session reasoning writes/stale409/disk/API/original stop-start persistence, actual Docker MCP10 tools/description and restart credential persistence; production22 files unchanged. Original12 remain in_progress; full native UI user-deferred, Windows user-owned, real vectors deferred; ARM export/load/extracted original start-stop health/auth/nativeCAD passed without rebuild/pull. AMD64 same-source build/export/actual load passed; original launcher correctly refused ARM engine before container creation, native AMD/Windows user-owned NOT_RUN. Public assets/default manifest/main delivery pending.",
+      "summary": "Runtime code full114 PASS946 entries/race/vet/CAD; exact-source ARM reasoning10 writes/stale409/restarts and actual MCP10 tool discovery/credential persistence pass. Both complete packages publicly uploaded/digest/size and download smoke verified; tracked defaults updated; fresh ordinary-source default start/stop/auth/CAD passed with22 production files exact. Current final full pending due delivery-input fingerprint change. Original12 remain in_progress; native full-workbench user-deferred, Windows user-owned, real vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -147,7 +147,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Earlier scoped continuity/preview batches were delivered, but current reconciled source on fix/continuity-runtime-candidate-20261017 has not been merged/pushed to main or published. Exact current full114 passed; current ARM complete package locally loaded and extracted launcher startup passed. AMD64, public default asset replacement and release gates remain; original12 acceptance is not declared complete.",
+      "summary": "Earlier scoped batches delivered. Current runtime4b784/382c complete packages and README/SUMS now publicly staged in existing RC2 with exact metadata/download proof, existing23 assets and body retained. Local defaults fixed after qualification; final full/main/release-check pending, no new tag/version/production replacement. Original12 not declared complete.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-remote-proof.json",
@@ -157,7 +157,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Continue continuity-offline-delivery-20261017 on fix/continuity-offline-delivery-20261017: ARM4b784 uploaded publicly/size/SHA/HTTP206 prefix validated; same existing Safari RC2 tab now uploading AMD382c, poll that same upload before retry. Defaults unchanged; verify pair, append prepared supplements, then full/main gates. Original12 broader native/SSH/workspace/combined boundaries remain; native full-workbench user-deferred, Windows user-owned, real vectors deferred.",
+  "handoff": "Continue continuity-offline-delivery-20261017: public27 assets qualified and local defaults corrected; fresh ordinary source launcher passed with local exact image, no build or pull. Run final full on clean integrated main, release-check then approved incremental push. Original12 broader native/SSH/workspace/combined boundaries remain; native full-workbench user-deferred, Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
