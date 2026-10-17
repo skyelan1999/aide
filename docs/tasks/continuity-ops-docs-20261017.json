@@ -72,16 +72,19 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "准备按已有授权合并并推送main；不发布tag／附件或部署。",
+      "status": "pass",
+      "summary": "文档提交cc061baba9c3d3ee629ac4d3da622de10cabc27e已快进合入main并push；独立ls-remote精确一致。干净main release-check退出0，仅核对精确既有full及旧07c默认公开附件；不表示新406发布。",
       "evidence": [
         "docs/continuity-operations.md",
-        "docs/continuity-handoff.md",
-        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+        "docs/continuity-handoff.md"
       ]
     }
   },
   "release_authorization": "用户：你把文档该补的都补好，做的详细一些；先前授权做一部分push一部分、合到main。仅文档提交，不含新tag、附件或生产替换。",
   "rollback": "Revert this scoped documentation commit; no runtime/data/config migration.",
-  "handoff": "原12项继续；406本地包已验收但公开上传失败、默认未提升、生产未替换。后续按手册复测不能直接计为PASS。"
+  "handoff": "原12项继续；406本地包已验收但公开上传失败、默认未提升、生产未替换。后续按手册复测不能直接计为PASS。",
+  "verification_notes": [
+    "首次误用agent-route.py check TASK-ID参数被拒绝，未执行检查；改为agent-route.py check后PASS。",
+    "本轮为普通文档，不重建Docker、不新增浏览器页、不重复full；已独立核对当前内容指纹与既有full PASS一致。"
+  ]
 }
