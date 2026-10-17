@@ -25,7 +25,8 @@
     "docs/tasks/aide-continuity-knowledge-20261009.json",
     "internal/server/mcp_existing_configuration_test.go",
     "docs/architecture.md",
-    "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json"
+    "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
+    "docs/plugins/docker-mcp.md"
   ],
   "stages": {
     "requirements": {
@@ -64,7 +65,8 @@
       "evidence": [
         "docs/architecture.md",
         "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
-        "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json"
+        "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
+        "docs/plugins/docker-mcp.md"
       ]
     },
     "cleanup": {
@@ -106,5 +108,12 @@
     "fingerprint": "e75edaae950e01f2e0179b4b9a6637b7e636304ebfd28deb7b596d48cab384ec",
     "head": "c28b6f60236df34406e601af88d36b1072f46521",
     "log": ".agent-state/verify-20261017T070223636611Z.log"
+  },
+  "combinedFull": {
+    "status": "running",
+    "ownerSession": 44564,
+    "sourceCommit": "67738355",
+    "privateLog": ".agent-state/mcp-publication-combined-full-20261017.log",
+    "noConcurrentGo": "true"
   }
 }

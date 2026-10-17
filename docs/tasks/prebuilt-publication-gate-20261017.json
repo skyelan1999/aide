@@ -84,5 +84,11 @@
     "fingerprint": "51be8d4e281ae23ccae1e880b84c89b40f274662776e05c5737d103704beee34",
     "head": "a44a2f68d618b540ba0dcf93c915f375abf6a7be",
     "log": ".agent-state/verify-20261017T070648401457Z.log"
+  },
+  "combinedFull": {
+    "status": "running",
+    "ownerSession": 44564,
+    "sourceCommit": "67738355",
+    "privateLog": ".agent-state/mcp-publication-combined-full-20261017.log"
   }
 }
