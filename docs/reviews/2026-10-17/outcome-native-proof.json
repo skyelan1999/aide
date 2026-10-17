@@ -1,0 +1,86 @@
+{
+  "existing": {
+    "selectedEvidence": "E0001",
+    "digest": "3e5926189d2c016855461ae216a74caa55ddd5caec07caddc296aab252241e1b",
+    "diskRawAPINativeHashAgree": true,
+    "executionsTotal": 51,
+    "snapshot": "9475c3597f72847d51237201cc9ddaf8d9c72ab65e2e0a96ce6723847525ca60",
+    "status": "cancelled"
+  },
+  "synthetic": {
+    "selectedEvidence": "E0101",
+    "digest": "8098db78f0e190bb51149668966316d2e2e6c61ad28160181bde1a58254701c1",
+    "diskRawAPINativeHashAgree": true,
+    "executionsTotal": 101,
+    "snapshot": "f7b9d4381d3f9356f33599af7cbb1a0cb7ca60e72e1a80d5f896b38253947baa",
+    "status": "completed"
+  },
+  "pagination": {
+    "firstPage": 100,
+    "lastPage": 1,
+    "totalUnique": 101,
+    "snapshotExact": true,
+    "nativeE0100ThenE0101": true,
+    "nativeLoadMoreRemoved": true,
+    "wrongSnapshotRejected": 409,
+    "wrongEvidenceDigestRejected": 409,
+    "nativeAll101IDsAcrossScrollPositions": true
+  },
+  "status": "pass",
+  "client": "Existing authenticated native Safari localhost9999",
+  "sourceCode": "ba9e5a3b847add8f643c42869b1658c90a00ba1d",
+  "sourceSHA256": "3e5b6439ba07e2eaff86fa652b3f8ac6ca92b611585f3734d4b45e12e4d45489",
+  "fixture": {
+    "provider": "deterministic loopback-only protocol handler; not AI reasoning",
+    "normalTaskExecution": true,
+    "readOnlyMissingFileProbes": 101,
+    "status": "completed",
+    "realProviderRequests": 0,
+    "noClaimOfSuccessfulFileReads": true,
+    "nativeAll101IDsAcrossScrollPositions": true
+  },
+  "export": {
+    "status": "pass",
+    "executions": 101,
+    "bytes": 50755,
+    "sha256": "05b773a9e541478ceb81cb7e44f0bec14e59e5f50fbfe0c9e74373f8ffecee60",
+    "snapshot": "f7b9d4381d3f9356f33599af7cbb1a0cb7ca60e72e1a80d5f896b38253947baa",
+    "exportScope": {
+      "kind": "summary",
+      "snapshot": "f7b9d4381d3f9356f33599af7cbb1a0cb7ca60e72e1a80d5f896b38253947baa",
+      "consistentSnapshot": true,
+      "allPagesLoaded": true,
+      "rawEvidenceIncluded": false,
+      "textTruncated": false
+    }
+  },
+  "protected": {
+    "status": "pass",
+    "protectedFilesTotal": 22,
+    "protectedFilesByteExact": 21,
+    "original14SessionFilesByteExact": true,
+    "settingsExactExceptMonotonicSequence": true,
+    "sequence": [
+      47,
+      48
+    ],
+    "originalVaultBytesExact": true,
+    "sourceAuthBytesExact": true,
+    "imageMountsNetworksExact": true,
+    "fixtureSessionProviderModelRemoved": true,
+    "localProtocolListenerTerminated": {
+      "status": "pass",
+      "onlyOwnedLocalListenerTerminated": true,
+      "port": 19043
+    },
+    "downloadCopyRetainedInPrivateEvidenceAndOwnedDownloadRemoved": true,
+    "viewRestored": true,
+    "noNewTabs": true,
+    "strictBeforeAfterHashCheck": "Expected difference in settings sequence only; independently validated full settings JSON except counter"
+  },
+  "limits": [
+    "No real-model invocation this task; existing historical run independently observed",
+    "No native release-receipt import, hidden-running activity or live snapshot-change interaction acceptance in this task",
+    "Wrong snapshot and evidence digest checks are actual API409, not native race injection"
+  ]
+}

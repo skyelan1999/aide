@@ -1,0 +1,79 @@
+{
+  "id": "outcome-native-20261017",
+  "request": "继续原目标成果舱完整认证Safari会话任务列表、分页、原始证据及API快照/摘要一致性验收；不运行模型，不改用户内容。",
+  "baseline": "c1dfa3dcf5e4037676cfbcf3e76aebb2438a22ac",
+  "initial_status": "",
+  "acceptance": [
+    "Actual native current session overview lists recorded inputs/outputs with stopped-state boundary",
+    "Open existing run outcome and page through all execution records without mixed snapshots",
+    "Open original evidence and match digest with independent API and stored tool use",
+    "Restore original view and verify14original sessions/auth/sources/vault/image/mounts/networks unchanged; settings identical except legitimate monotonic new-session sequence",
+    "Native export after paging contains all101 unique executions and explicit summary/snapshot/raw-evidence boundaries"
+  ],
+  "scope": [
+    "docs/tasks/outcome-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17",
+    "ignored owned outcome observations",
+    "Owned local loopback deterministic protocol provider and temporary provider/model/session registrations with exact cleanup"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Exercise existing current workbench task overview/outcome with independent API and storage fingerprints. Read only; no model calls or task replay.",
+      "evidence": [
+        "internal/server/web/task-outcome.js",
+        "internal/server/task_outcome.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Existing historical cancelled run51 records native/API/disk proof; create own normal-path task with loopback-only deterministic protocol response and101 read-only missing-file probes to trigger real100+1 native pagination. Original active model retained; owned session/provider/model removed and original settings/vault restored except monotonic session sequence. No product source edits, real-model requests or replay of original tasks.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-native-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Existing historical cancelled run51 records native/API/disk proof; create own normal-path task with loopback-only deterministic protocol response and101 read-only missing-file probes to trigger real100+1 native pagination. Original active model retained; owned session/provider/model removed and original settings/vault restored except monotonic session sequence. No product source edits, real-model requests or replay of original tasks.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual native overview, historical51 raw evidence, owned101 native/API pages and all IDs, exact raw digest versus disk, API409 negatives, native full-summary export verified. Original14sessions/21protected files exact, settings only sequence47to48, vault exact, view restored and fixture listener terminated. Product inputs unchanged; existing full107 reused.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-native.md",
+        "docs/reviews/2026-10-17/outcome-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Actual native overview, historical51 raw evidence, owned101 native/API pages and all IDs, exact raw digest versus disk, API409 negatives, native full-summary export verified. Original14sessions/21protected files exact, settings only sequence47to48, vault exact, view restored and fixture listener terminated. Product inputs unchanged; existing full107 reused.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-native.md",
+        "docs/reviews/2026-10-17/outcome-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Actual native overview, historical51 raw evidence, owned101 native/API pages and all IDs, exact raw digest versus disk, API409 negatives, native full-summary export verified. Original14sessions/21protected files exact, settings only sequence47to48, vault exact, view restored and fixture listener terminated. Product inputs unchanged; existing full107 reused.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-native.md",
+        "docs/reviews/2026-10-17/outcome-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental tests/docs/main delivery authorization; no provider call, new version or runtime change.",
+  "rollback": "Close trajectory and preserve original view; remove only owned temporary session/provider/model and loopback listener. Original settings/vault verified restored except legitimate monotonic session counter. No original task replay, approvals or release receipt edits.",
+  "handoff": "Scoped native overview/pagination/raw digest/export passed and fixtures cleaned. Docs-only clean-main gate/push next; native hidden-running activity/release import and other original goal workstreams remain."
+}
