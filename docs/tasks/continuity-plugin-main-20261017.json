@@ -15,7 +15,8 @@
     "scripts/test_runtime_assets.py",
     "docs/tasks/continuity-plugin-main-20261017.json",
     "docs/reviews/2026-10-17/continuity-plugin-main.md",
-    "docs/reviews/2026-10-17/continuity-plugin-main-proof.json"
+    "docs/reviews/2026-10-17/continuity-plugin-main-proof.json",
+    "internal/server/plugins_builtin_test.go"
   ],
   "stages": {
     "requirements": {
@@ -41,7 +42,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Two source omission negatives and prior actual ARM image negative confirmed. Exact repaired fingerprint b5b10f62 full127 currently running in isolated4GiB/2CPU snapshot; no PASS claim yet. New candidate original-start workshop discovery pending.",
+      "summary": "Full127 reached976 server entries; shard3 failed old builtin registry count(defaults also outdated). Confirmed failure retained; exact owned verifier/container stopped, no PASS. Both existing/empty-workspace fixtures updated to five builtins, preservation and no-resurrection assertions retained; focused race running before new full.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-plugin-main.md",
         "docs/reviews/2026-10-17/continuity-plugin-main-proof.json"
