@@ -40,11 +40,12 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "HTTP 与来源表单已实现；追加配置/凭据一致性检查与失效发现结果保护。网关自动生命周期尚未完成。",
+      "status": "pass",
+      "summary": "HTTP客户端、加密Bearer表单、失效配置保护、工具发现及虚拟说明已实现并验收。本机网关为手动宿主机进程，启动目录profile可导入恢复；不宣称已有自动启动。",
       "evidence": [
-        "internal/server/mcp_http_test.go",
-        "scripts/mcp-source-form.test.cjs"
+        "internal/server/mcp_http.go",
+        "internal/server/mcp_source.go",
+        "docs/reviews/2026-10-17/docker-mcp-profile-recovery-proof.json"
       ]
     },
     "verification": {
@@ -62,20 +63,25 @@
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "已补HTTP安全边界、Docker实际发现、虚拟工具说明预览、启动目录profile导入复原验证与手动恢复方法；自动生命周期与最终离线交付仍未完成。",
+      "status": "pass",
+      "summary": "接入方法、安全边界、原生与全量证明、手动生命周期和启动目录配置恢复已记录。最终公开交付未完成。",
       "evidence": [
-        "docs/plugins/docker-mcp.md"
+        "docs/plugins/docker-mcp.md",
+        "docs/reviews/2026-10-17/docker-mcp-full-proof.json"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "源码逐项提交，原生临时修改已恢复；18个保护文件字节保留，临时恢复profile及专项/全量测试容器已清理。新增MCP来源、私有凭据及网关是授权连接，保留。构建快照与回滚档案有归属。",
+      "evidence": [
+        "docs/reviews/2026-10-17/docker-mcp-native-proof.json",
+        "docs/reviews/2026-10-17/docker-mcp-tool-preview-proof.json",
+        "docs/reviews/2026-10-17/docker-mcp-profile-recovery-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
-      "summary": "开发检查点2cbf0d339dad43a8213470c68c34c43e2cb3cccb已推送且ls-remote精确一致；不是最终交付。当前全量session62601/container aide-verify-54ea16442d3e运行中，未宣称PASS。未合main、未发布新镜像或Release。",
+      "summary": "源码检查点e58dcb20已推送精确核对；full109通过。ARM64规范镜像6a8a2dcb290b及完整包已导出，AMD64构建中；内容校验/实际导入、main门禁与公开分发尚未完成。",
       "evidence": []
     }
   },
