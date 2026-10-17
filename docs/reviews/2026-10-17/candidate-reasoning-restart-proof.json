@@ -1,0 +1,82 @@
+{
+  "scope": "Isolated candidate authenticated API/disk and actual launcher restart; browser UI deferred by user",
+  "runtime": {
+    "status": "pass",
+    "scope": "candidate API after actual stop.command/start.command process restart; UI deferred",
+    "image": "sha256:a8231eb81c07c09096b601b721df0080c61a789c9258d8243beecd6447c614c0",
+    "buildCommit": "221572038913c72ea2774f31e1a2d4c4894a1ad4",
+    "healthy": true,
+    "sameImageAndContainerNewProcess": true,
+    "reasoningSelectionsPersisted": [
+      "high",
+      "auto"
+    ],
+    "revisionsPersisted": [
+      6,
+      6
+    ],
+    "noRebuildOrPull": true,
+    "productionContainerUnchanged": true,
+    "productionProtectedFilesExact": 22
+  },
+  "reasoning": {
+    "status": "pass",
+    "scope": "actual API and canonical disk; not browser UI",
+    "levels": [
+      {
+        "A": "auto",
+        "B": "high",
+        "apiDiskExact": true,
+        "concurrentDifferentSessionWrites": true
+      },
+      {
+        "A": "off",
+        "B": "medium",
+        "apiDiskExact": true,
+        "concurrentDifferentSessionWrites": true
+      },
+      {
+        "A": "low",
+        "B": "low",
+        "apiDiskExact": true,
+        "concurrentDifferentSessionWrites": true
+      },
+      {
+        "A": "medium",
+        "B": "off",
+        "apiDiskExact": true,
+        "concurrentDifferentSessionWrites": true
+      },
+      {
+        "A": "high",
+        "B": "auto",
+        "apiDiskExact": true,
+        "concurrentDifferentSessionWrites": true
+      }
+    ],
+    "staleWriteStatus": 409,
+    "staleWriteDidNotOverwrite": true,
+    "globalsUnchanged": true,
+    "writes": 10,
+    "realProviderCalls": 0
+  },
+  "cleanup": {
+    "status": "pass",
+    "candidateContainersStopped": 2,
+    "candidateDataRetained": true,
+    "candidateImageRetained": "sha256:a8231eb81c07c09096b601b721df0080c61a789c9258d8243beecd6447c614c0",
+    "productionContainerUnchanged": true,
+    "productionProtectedFilesExact": 22,
+    "UIStatus": "user_deferred_certificate_hand_off",
+    "originalBrowserTabsPreserved": true
+  },
+  "modelProtocol": "Local deterministic fixture only; one literal print tool execution, four synthetic SSE responses; no real provider quality or billing claim",
+  "cacheCleanup": {
+    "dockerReportedTotal": "3.204GB",
+    "buildCacheEntriesAfter": 0,
+    "buildCacheBytesAfter": 0,
+    "method": "original clean-docker-cache.command; no image/volume/data deletion"
+  },
+  "ui": "NOT_RUN on current full workbench: Safari certificate hand-off; user currently unavailable",
+  "fullProof": "approval-repaired-full-proof.json"
+}

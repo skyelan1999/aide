@@ -8110,17 +8110,19 @@
     "syncedRemoteMain": "ceb824814034860d1881ded6d27394ebd12fef9d",
     "currentProductCommit": "221572038913c72ea2774f31e1a2d4c4894a1ad4",
     "branch": "fix/approval-expiry-synced-main-20261017",
-    "priorityReasoning": "Current source targeted serialized-save, isolation and CAS checks pass. New full workbench candidate still pending; old-runtime native evidence is not promoted to current-source acceptance.",
+    "priorityReasoning": "Current source targeted serialization/isolation/CAS pass; actual candidate ten fully checked API writes across five efforts/two sessions, exact canonical disk and process restart persistence pass. Current full workbench UI still NOT_RUN, user-deferred.",
     "authorization": "Directly reproduced missing expiry refresh on synced main. Minimal patch and negative-to-positive regression pass; no feature branch merge. Current 107 quick checks pass.",
     "outcome": "Saved operator release URL link implemented; native synthetic component and safe URL negative cases pass. Full workbench import/link still pending. Prior production-only receipt dedup/stale/forgery tests and owned fixture cleanup pass.",
-    "nativeCandidate": "Frozen independent data/port; production data not mounted; owned workspace seeds only, not feature acceptance. Full running serially with 2 CPU and 4 GiB limit; no full pass claimed.",
+    "nativeCandidate": "Full110 pass and isolated ARM candidate actual startup/restart pass; two-session five-level API/disk write/CAS pass. Safari certificate hand-off user-deferred. Owned candidate stopped and build cache0; retain named image/data for native resumption.",
     "production": "Original 9999 unchanged; 22 protected files byte-exact after superseded candidate cleanup. No main push, deployment, version/tag or Release this batch.",
     "originalScope": "All original twelve workstreams remain in_progress. Windows user-owned; real vectors deferred.",
     "evidence": [
       "docs/tasks/continuity-main-recheck-20261017.json",
       "docs/tasks/outcome-release-source-link-20261017.json",
       "docs/tasks/approval-expiry-synced-main-20261017.json",
-      "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
+      "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
+      "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
+      "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json"
     ]
   }
 }

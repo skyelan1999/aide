@@ -14,7 +14,9 @@
     "scripts/outcome-pagination.test.cjs",
     "docs/architecture/continuity-roadmap.md",
     "docs/tasks/outcome-release-source-link-20261017.json",
-    "docs/reviews/2026-10-17/outcome-release-source-link.md"
+    "docs/reviews/2026-10-17/outcome-release-source-link.md",
+    "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
+    "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -40,7 +42,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused outcome link/security and existing regression pass; actual Safari component link open/inert text and final layout observed; all 107 quick checks pass. Full workbench candidate and full race/vet remain pending.",
+      "summary": "Exact-source full110 pass; isolated candidate healthy, two-session five-level API/disk writes and stale409 pass; actual stop/start persists selections without rebuild/pull. Current browser UI user-deferred; verification remains in progress.",
       "evidence": [
         "docs/reviews/2026-10-17/outcome-release-source-link.md",
         ".agent-state/verify-20261017T055717868235Z.log"
@@ -85,5 +87,8 @@
     "fullStatus": "interrupted exit130 after independent authorization expiry negative; no full pass",
     "privateState": ".agent-state/outcome-release-source-link-20261017/native-owner.json",
     "followup": "docs/tasks/approval-expiry-synced-main-20261017.json"
-  }
+  },
+  "fullProof": "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
+  "candidateRuntimeProof": "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json",
+  "uiDeferral": "User: now unavailable for Safari certificate hand-off. Current full workbench UI remains NOT_RUN; old component/runtime evidence not promoted."
 }
