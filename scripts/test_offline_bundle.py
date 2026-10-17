@@ -20,7 +20,7 @@ class OfflineBundleTests(unittest.TestCase):
             (self.root / name).mkdir()
         shutil.copy(ROOT / 'start.command', self.root)
         shutil.copy(ROOT / 'scripts/aide.sh', self.root / 'scripts')
-        for name in ('launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'resource-guard.sh'):
+        for name in ('launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'resource-guard.sh', 'prebuilt-image.sh'):
             shutil.copy(ROOT / 'scripts' / name, self.root / 'scripts')
         shutil.copy(ROOT / 'docker/compose.offline.yaml', self.root / 'compose.yaml')
         shutil.copy(ROOT / 'docker/offline.env.example', self.root / '.env.example')
