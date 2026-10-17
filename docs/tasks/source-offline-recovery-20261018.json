@@ -17,7 +17,10 @@
     "docs/architecture/software-updates.md",
     "docs/continuity-operations.md",
     "docs/reviews/2026-10-18/source-offline-recovery.md",
-    "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
+    "docs/reviews/2026-10-18/source-offline-recovery-proof.json",
+    "docs/continuity-handoff.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/documentation-map.md"
   ],
   "stages": {
     "requirements": {
@@ -50,31 +53,39 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Bash语法、32启动存储测试、13离线包测试、7发布清单测试及quick124通过；实际Docker隔离恢复/编译、full待运行。",
+      "status": "pass",
+      "summary": "32启动存储、13离线包、7发布清单、quick124及精确full127/ac10全部通过；976server/12串行，其他Go race/vet/CAD。实际旧07c seed导入、派生、编译94e、原始start TLS/API/401/force/default、候选25assets/5plugins/DOCX/CAD通过。未清空用户Engine，非全冷机；无新UI。",
       "evidence": [
-        "scripts/test_launcher_data.py",
-        "scripts/test_offline_bundle.py",
-        "scripts/test_prebuilt_publication.py"
+        "docs/reviews/2026-10-18/source-offline-recovery.md",
+        "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "报告/proof/主账本/总交接/操作与升级说明同步真实身份与Bash范围，保留源码首次联网、PS未覆盖、94e包未发布和生产48e不变边界。",
+      "evidence": [
+        "docs/reviews/2026-10-18/source-offline-recovery.md",
+        "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "原始stop退出0，准确删除自建2个停止容器和2空网络；full与候选资产/CAD --rm测试已结束；用户容器身份22hash再次一致，仅余生产2，数据包/镜像保留，无新浏览器页。",
+      "evidence": [
+        "docs/reviews/2026-10-18/source-offline-recovery.md",
+        "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "准备精确内容main门禁与推送；仅源码交付，不部署或发布新附件。",
+      "evidence": [
+        "docs/reviews/2026-10-18/source-offline-recovery.md",
+        "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
+      ]
     }
   },
   "release_authorization": "用户此前要求脚本预设Docker恢复、仓库/release完整导入启动、清理Docker后重新编译；既有分批push/main授权。仅隔离验收，不替换当前用户服务。",
   "rollback": "Revert scoped launcher changes; retain data/images/current48e service. No data migration.",
-  "handoff": ""
+  "handoff": "本批Bash修复及隔离full/runtime已通过，完成main交付后继续原12；成果段落投影静态确认遗漏OutputSegments，绝对编号修复仍独立分支；PS显式源码和新双架构包/公开交付未闭环。"
 }

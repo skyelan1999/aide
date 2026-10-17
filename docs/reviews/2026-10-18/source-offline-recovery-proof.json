@@ -1,0 +1,101 @@
+{
+  "status": "pass",
+  "sourceCommit": "ff9fd249860a281feded56aa8d347b25e0742746",
+  "sourceSHA": "94e14983ae65e3dd55a89b7668f166c52f2a5adbae4042b3883d04a04bed2e55",
+  "seedImage": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+  "seedSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+  "applicationImage": "sha256:ab80d585e0a04dc225345e1eb4e0c295567cb75de1c5202cf0224c403f477f07",
+  "applicationSourceDifferentFromSeed": true,
+  "originalStartCommand": true,
+  "actualLocalBundleStreamLoad": true,
+  "actualDependencyDerivation": true,
+  "actualCurrentSourceVetBuild": true,
+  "privateNamespaceInitiallyMissingTargetAndBases": true,
+  "coldEngine": "NOT_RUN; real Docker namespace mapping retained user images and masked seed until this import",
+  "noApplicationRetagFromOldSeed": true,
+  "forceSameSourceInvokesBuild": true,
+  "normalSameSourceSkipsBuild": true,
+  "noRepeatedImports": true,
+  "TLSHealth": true,
+  "authenticatedConfigCommitExact": true,
+  "unauthenticated401": true,
+  "CADSameCurrentImage": true,
+  "isolatedMounts": true,
+  "productionContainerAnd22FilesExact": true,
+  "newBrowserPages": 0,
+  "realModelVectorCalls": 0,
+  "Windows": "user-owned NOT_RUN",
+  "cleanup": {
+    "originalStopExit": 0,
+    "ownedContainersRemoved": 2,
+    "emptyOwnedNetworksRemoved": 2,
+    "dataArchivesAndImagesRetained": true
+  },
+  "verification": {
+    "syntax": "pass",
+    "launcherStorageTests": 32,
+    "offlineBundleTests": 13,
+    "publicationTests": 7,
+    "quickCommands": 124,
+    "quick": "pass",
+    "full": "pass",
+    "fullCommands": 127,
+    "fullFingerprint": "ac10f3c97be82b3901ac810692f99e51940044439c124100b0356d76adca84ad",
+    "serverRegisteredItems": 976,
+    "serverShards": 12,
+    "serverShardsSerial": true,
+    "candidateRuntimeAssets": {
+      "status": "pass",
+      "uid": 1000,
+      "readableFiles": 25,
+      "docxRoundTrip": true,
+      "network": "none"
+    },
+    "candidateGeometry": {
+      "status": "pass",
+      "nestedAssemblyPlacement": true,
+      "partAndFaceColours": true,
+      "allFacesMeshed": true,
+      "nurbsFallbackRetainsTrimmedFace": true,
+      "mixedAndPureWirePointGeometry": true,
+      "collapsedFacesRetainBoundaryAndWarning": true,
+      "zeroWidthTrimOnly": true,
+      "mmMetreInch": true,
+      "finiteNormalsAndBatchBounds": true
+    },
+    "guardScenarios": [
+      {
+        "scenario": "complete-runtime",
+        "selected": "owned-app",
+        "status": "pass"
+      },
+      {
+        "scenario": "complete-bases",
+        "selected": "owned-app",
+        "status": "pass"
+      },
+      {
+        "scenario": "missing-cad",
+        "selected": "recovered-seed",
+        "status": "pass"
+      }
+    ]
+  },
+  "securityReview": {
+    "coordinatorReview": "pass; same agent sequential source/negative-path review",
+    "trustedManifestOnly": true,
+    "outerArchiveDigestRequired": true,
+    "noGlobalApplicationTagFromSeed": true,
+    "invalidLoadCodeNotMissing": true,
+    "symlinkRejectedBeforeMissingClassification": true
+  },
+  "delivery": {
+    "mainMerged": false,
+    "publicPackage": false,
+    "productionReplaced": false
+  },
+  "productionPostFull": {
+    "containerAnd22FilesExact": true,
+    "onlyProductionTwoContainersRemain": true
+  }
+}

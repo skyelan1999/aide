@@ -18,7 +18,9 @@
 
 `export-bundle`生成的`*-offline.tar.gz`是启动归档，不能直接作为应用内ZIP升级包上传。`package-release-assets.sh`还生成含manifest的统一完整ZIP与升级ZIP；打包脚本本身不保证输入镜像的buildRuntimeMode为release-image，发行验收必须通过运行API独立核对，不能仅因包名是Release就宣称支持A/B。
 
-2026-10-18实机已复现：Git源码目录清掉镜像后直接运行start.command，在缺少CAD基础镜像时中止；当前源码模式没有自动扫描旁边完整tar包并恢复编译依赖。此次已人工校验本地包、恢复依赖并强制重编译，恢复当前设备启动；通用自动恢复仍是待完善项，不能将本次人工恢复写成脚本已自动实现。见[本机重编译收据](../reviews/2026-10-18/startup-runtime-recovery.md)。
+2026-10-18实机曾复现：Git源码目录清掉镜像后运行start.command，因缺CAD基础镜像中止；当时通过[人工恢复与重编译](../reviews/2026-10-18/startup-runtime-recovery.md)恢复本机。后续Bash启动器增加[本地依赖seed恢复](../reviews/2026-10-18/source-offline-recovery.md)：仅当配置的应用镜像不完整且基础依赖缺失时，按受控默认清单选择本地已有完整包或已导入镜像，校验后放入独立依赖标签，供prepare-local/CAD使用；旧包不直接变成当前程序，仍构建当前源码。完整bases已有时不额外导入。损坏摘要、符号链接、架构／身份错误和导入失败均停止，不转联网掩盖失败。
+
+恢复依赖本身不下载、不选择最新文件或扫描任意tar包；只使用`docker/prebuilt-images.tsv`登记的平台与身份。对应本地包缺失返回明确不可用，既有首次源码构建流程仍可能走原始联网构建；需要完全离线时应预先放入完整包，不能把“本地恢复不联网”扩大为“所有首次源码构建都离线”。`AIDE_LOCAL_DEPENDENCIES=0`保留原构建方式，`AIDE_FORCE_REBUILD=1`仍请求构建；普通相同源码启动仍跳过编译。此恢复改动适用于macOS/Linux的Bash源码启动器；PowerShell显式源码重建未加入同等恢复路径，Windows原生验收仍由用户进行。
 
 ## 安装方式
 
