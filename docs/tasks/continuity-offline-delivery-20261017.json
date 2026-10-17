@@ -44,9 +44,12 @@
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Actual new-candidate public gate exit1/no unique uploaded ARM asset/mutations=false while same ARM upload continues. Local packages are already verified; public positive proof and final full/main gates pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
     },
     "documentation": {
       "status": "in_progress",

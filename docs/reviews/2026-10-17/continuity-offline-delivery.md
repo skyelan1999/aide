@@ -18,3 +18,9 @@
 ## 后续门禁
 
 两个公开附件精确校验通过后才更新默认清单及摘要；交付输入变化后重新执行 full，随后按干净 main 和 release-check 门禁推进。保留已有公开附件、镜像与数据作为回滚依据。
+
+## 上传期间的门禁与配套资料
+
+对本轮真实候选清单运行 `scripts/verify_prebuilt_assets.py`，返回 exit1：`linux/arm64: no unique uploaded public asset`，mutations=false。公开附件尚未就绪，门禁按预期拒绝，未激活默认地址。
+
+已准备独立 `AIDE-runtime-07cdef2d4719-README.txt` 和 `AIDE-runtime-07cdef2d4719-SHA256SUMS.txt`，写明两架构归档身份、启动步骤、资料保留、原生 AMD64 / Windows 和完整工作台验收边界；未修改现有 Release 说明，也未覆盖旧摘要附件。配套资料待主归档上传后追加。

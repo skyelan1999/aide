@@ -30,5 +30,25 @@
   "nativeFullWorkbench": "user-deferred",
   "realVectors": "deferred",
   "uploadObservationUTC": "2026-10-17T07:41:49.724470+00:00",
-  "memoryObservation": "memory_pressure -Q reported40% system-wide free; only production2 containers running"
+  "memoryObservation": "memory_pressure -Q reported40% system-wide free; only production2 containers running",
+  "candidateGateBeforeUploadComplete": {
+    "exit": 1,
+    "status": "fail",
+    "error": "linux/arm64: no unique uploaded public asset",
+    "mutations": false
+  },
+  "supplementPrepared": [
+    {
+      "name": "AIDE-runtime-07cdef2d4719-README.txt",
+      "bytes": 2520,
+      "sha256": "d9a1868d1c7d3fceae6b3c015b93bd90b72c7756f9c4d957f066bb72ca61c068",
+      "uploaded": false
+    },
+    {
+      "name": "AIDE-runtime-07cdef2d4719-SHA256SUMS.txt",
+      "bytes": 248,
+      "sha256": "884dc420b4a2c319eaceaddff2be3cd015b05e22bfeda4f194bdaf3fe9d3c59f",
+      "uploaded": false
+    }
+  ]
 }
