@@ -1,0 +1,99 @@
+{
+  "status": "pass",
+  "profile": "full",
+  "runtimeSourceCommit": "0b572c85",
+  "receiptHead": "715d5a3021470c52d1922f0a46eac10c3414bd07",
+  "fingerprint": "becfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780",
+  "commands": 112,
+  "allCommandsExitZero": true,
+  "serverRegisteredEntries": 938,
+  "disjointSerialShards": [
+    {
+      "group": 1,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 58.2
+    },
+    {
+      "group": 2,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 58.7
+    },
+    {
+      "group": 3,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 55.8
+    },
+    {
+      "group": 4,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 61.3
+    },
+    {
+      "group": 5,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 122.6
+    },
+    {
+      "group": 6,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 52.9
+    },
+    {
+      "group": 7,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 67.3
+    },
+    {
+      "group": 8,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 59.9
+    },
+    {
+      "group": 9,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 74.5
+    },
+    {
+      "group": 10,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 56.4
+    },
+    {
+      "group": 11,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 47.3
+    },
+    {
+      "group": 12,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 54.4
+    }
+  ],
+  "raceAndVet": "pass",
+  "CAD": "pass",
+  "runtimeAssets": "pass on existing image as toolchain/assets, not rebuilt current runtime",
+  "sourceSnapshot": "container-local/no network/no user-data mounts",
+  "limits": {
+    "memoryBytes": 4294967296,
+    "cpus": 2,
+    "pids": 512
+  },
+  "privateLog": ".agent-state/verify-20261017T064638910162Z.log",
+  "nativeWorkbench": "user-deferred",
+  "Windows": "user-owned",
+  "realVectors": "deferred",
+  "production": "unchanged",
+  "pushMainRelease": "not_done"
+}

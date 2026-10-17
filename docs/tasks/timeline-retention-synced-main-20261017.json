@@ -46,11 +46,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Both direct negatives reproduced, then 53 focused race tests pass21.098s on formatted code; quick107 pass on fingerprint e56dd953295511aab109221603763ea0dbff2bcf5fe2b11b5e315e5a5202f6b5. New full gate pending retained-change reconciliation; native user-deferred.",
+      "summary": "Both direct negatives reproduced, then 53 focused race tests pass21.098s on formatted code; quick107 pass on fingerprint e56dd953295511aab109221603763ea0dbff2bcf5fe2b11b5e315e5a5202f6b5. New full gate pending retained-change reconciliation; native user-deferred. New exact-source full112 PASS including938 server entries/12 serial shards/race/vet/CAD; native whole-workbench remains user-deferred, Windows user-owned.",
       "evidence": [
         "docs/reviews/2026-10-17/timeline-retention-synced-main.md",
         "docs/reviews/2026-10-17/timeline-retention-synced-proof.json",
-        ".agent-state/verify-20261017T063814114051Z.log"
+        ".agent-state/verify-20261017T063814114051Z.log",
+        "docs/reviews/2026-10-17/reconciled-continuity-full-proof.json"
       ]
     },
     "documentation": {
@@ -84,5 +85,11 @@
     ],
     "mustPreserveUpstream": "New workbench UI and 12-shard/45-minute full runner; do not replace with older whole files.",
     "distributionBoundary": "Do not restore default prebuilt URLs for unpublished local packages."
+  },
+  "fullReceipt": {
+    "status": "pass",
+    "fingerprint": "becfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780",
+    "head": "715d5a3021470c52d1922f0a46eac10c3414bd07",
+    "log": ".agent-state/verify-20261017T064638910162Z.log"
   }
 }

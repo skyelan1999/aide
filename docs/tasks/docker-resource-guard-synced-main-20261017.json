@@ -50,11 +50,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Seven focused resource tests and targeted lifecycle tests pass; both Compose configs and live read-only budgets pass. Quick109 PASS. Exact-source full remains pending retained-change reconciliation; native UI user-deferred; Windows runtime user-owned.",
+      "status": "pass",
+      "summary": "Seven focused resource tests and targeted lifecycle tests pass; both Compose configs and live read-only budgets pass. Quick109 PASS. Exact-source full remains pending retained-change reconciliation; native UI user-deferred; Windows runtime user-owned. New exact-source full112 PASS including938 server entries/12 serial shards/race/vet/CAD; native whole-workbench remains user-deferred, Windows user-owned.",
       "evidence": [
         "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md",
-        ".agent-state/verify-20261017T064312424334Z.log"
+        ".agent-state/verify-20261017T064312424334Z.log",
+        "docs/reviews/2026-10-17/reconciled-continuity-full-proof.json"
       ]
     },
     "documentation": {
@@ -85,5 +86,11 @@
     "fingerprint": "436e7b0cede0f6f4498b41571371542fa55a76dd854116f47fb6553c1aeb7e0e",
     "head": "619f6995afec2646625e05c4a510fd0dc895bd82",
     "log": ".agent-state/verify-20261017T064312424334Z.log"
+  },
+  "fullReceipt": {
+    "status": "pass",
+    "fingerprint": "becfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780",
+    "head": "715d5a3021470c52d1922f0a46eac10c3414bd07",
+    "log": ".agent-state/verify-20261017T064638910162Z.log"
   }
 }

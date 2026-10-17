@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current reconciled source0b572c85 quick109 PASS on fingerprintbecfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780. New exact-source full RUNNING; prior6ac147aa/6dd full receipts are historical and do not attest current combined source. Timeline53 focused race PASS; reasoning API/disk/restart proof was isolated older22157203 candidate, full native current-workbench UI user-deferred. Twelve workstreams remain in_progress; Windows user-owned, real vectors deferred.",
+      "summary": "Reconciled runtime source0b572c85 full112 PASS on exact fingerprintbecfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780;938 server entries in12 disjoint serial shards/race/vet/CAD all pass. Original12 remain in_progress; current whole-workbench native UI user-deferred, Windows user-owned, real vectors deferred. MCP HTTP and public default-download gaps recorded before production replacement.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -8151,12 +8151,17 @@
     "next": "Exact current-source full with preset4GiB/2CPU limits; audit MCP preservation separately before any production change."
   },
   "reconciled_full_20261017": {
-    "status": "running",
+    "status": "pass",
     "sourceCommit": "0b572c85",
     "session": 63551,
     "log": ".agent-state/continuity-reconciled-full-20261017.log",
     "limits": "Go source snapshot4GiB/2CPU/512PIDs/no network/no user mounts;12 serial shards;45m internal2750s owner",
     "production": "unchanged",
-    "deploymentPrerequisite": "Existing production MCP HTTP configuration compatibility must be restored and verified separately before production replacement."
+    "deploymentPrerequisite": "Existing production MCP HTTP configuration compatibility must be restored and verified separately before production replacement.",
+    "receiptHead": "715d5a3021470c52d1922f0a46eac10c3414bd07",
+    "fingerprint": "becfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780",
+    "commands": 112,
+    "serverEntries": 938,
+    "evidence": "docs/reviews/2026-10-17/reconciled-continuity-full-proof.json"
   }
 }
