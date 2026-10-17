@@ -606,6 +606,10 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if err := managementGuardLocked(a, r); err != nil {
+		fail(w, 409, err)
+		return
+	}
 	// Validate every patch before storing any credentials or retiring a master.
 	// A sealed entry is absent from the fallback map; partial updates must merge
 	// the decrypted payload instead of silently dropping its other field.

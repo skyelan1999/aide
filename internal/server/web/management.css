@@ -1,0 +1,27 @@
+.agent-management-settings{gap:16px}
+.agent-management-settings>p{margin:0;line-height:1.65}
+.agent-management-group{min-width:0;margin:0;padding:14px 18px 16px;border:1px solid var(--line-soft-2);border-radius:12px;display:flex;flex-wrap:wrap;gap:12px 28px}
+.agent-management-group legend{padding:0 8px;font-weight:600}
+.agent-management-option{display:flex;align-items:center;gap:10px;min-height:32px;cursor:pointer}
+.agent-management-option input{margin:0;width:18px;height:18px;flex:none;accent-color:var(--brand-text)}
+.management-proposals:empty{display:none}
+.management-proposals{display:grid;gap:8px;max-height:36vh;overflow:auto;margin-bottom:8px;padding:2px}
+.management-proposal{padding:14px 16px;background:var(--surface);color:var(--text);border:1px solid var(--line-soft-2);border-radius:12px;min-width:0}
+.management-proposal-head,.management-proposal-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.management-proposal-head strong{flex:1;overflow-wrap:anywhere}
+.management-actor{font-size:12px;color:var(--muted);padding:3px 8px;border:1px solid var(--line-soft-2);border-radius:6px}
+.management-reason,.management-result{margin:8px 0;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap;font-size:13px}
+.management-proposal summary{padding:9px 0;cursor:pointer;min-height:32px}
+.management-proposal-actions{justify-content:flex-end;margin-top:4px}
+.management-proposal-actions button,.management-preview button{padding:8px 14px;min-height:36px}
+.management-preview{padding:8px 0;min-width:0}
+.management-preview pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;padding:12px 14px;background:var(--bg-inset);border:1px solid var(--line-soft-2);border-radius:8px;line-height:1.5;font-size:12px}
+.management-digest{display:block;overflow-wrap:anywhere;color:var(--muted);margin:8px 0}
+@media(max-width:600px){.agent-management-group{padding:12px;gap:8px 18px}.management-proposal{padding:12px}.management-proposals{max-height:40vh}}
+/* Keep decisions visible while scrolling a long source preview. */
+.management-proposal{display:flex;flex-direction:column;max-height:34vh}
+.management-proposal-head,.management-proposal-actions{flex-shrink:0}
+.management-reason,.management-result{flex-shrink:0;max-height:64px;overflow:auto}
+.management-proposal details{min-height:0;overflow:auto}
+.management-proposal summary{position:sticky;top:0;background:var(--surface);z-index:1}
+.management-proposal-actions{padding-top:6px}

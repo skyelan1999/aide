@@ -554,6 +554,7 @@ async function refreshConfig() {
   const workspaceChanged=!!previousScope&&previousScope!==nextConfig.workspaceId;
   if(workspaceChanged){await persistChatDraft();recoveryReady=false;clearTimeout(recoveryTimer);++sessionSeq.value;}
   state.config = nextConfig;
+  window.AideManagement?.refresh();
   await refreshApprovalPolicy();
   $('connection').textContent = t("● 本地服务已连接"); $('connection').classList.add('ready');
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
@@ -749,7 +750,7 @@ function setupGlobalEvents() {
   if (sessionsEv || typeof EventSource !== 'function') return;
   try {
     sessionsEv = new EventSource('/api/events?access_token=' + encodeURIComponent(state.token));
-    sessionsEv.addEventListener('sessions-changed', () => scheduleSessionsRefresh());
+    sessionsEv.addEventListener('sessions-changed', () => {scheduleSessionsRefresh();window.AideManagement?.refresh();});
     sessionsEv.addEventListener('approval-policy-changed', async () => {
       try { await refreshApprovalPolicy(); if(state.session) await selectSession(state.session.id); } catch (_) {}
     });
@@ -12341,3 +12342,20 @@ $('open-starmap').onclick = () => {
 };
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden && state.config) refreshApprovalPolicy().catch(() => {}); });
+
+function renderAgentManagementControl() {
+  const wrap=el('div','settings-control agent-management-settings');
+  const description=el('p','muted',t('仅控制创建、修改、安装、启停和删除等管理动作。已启用插件的日常调用、引用文件的读取与写入仍遵循现有权限；不会解开引用的可见或可写锁。'));
+  wrap.append(description);
+  const values={};
+  for(const [role,items] of [['助理',[['assistantPlugins','管理插件'],['assistantReferences','管理引用']]],['aide',[['aidePlugins','管理插件'],['aideReferences','管理引用']]]]){
+    const group=el('fieldset','agent-management-group');group.append(el('legend','',t(role)));
+    for(const [key,label] of items){const row=el('label','agent-management-option'),input=el('input');input.type='checkbox';input.checked=!!state.config?.agentManagement?.[key];input.name=key;values[key]=input;row.append(input,el('span','',t(label)));group.append(row);}
+    wrap.append(group);
+  }
+  const save=el('button','primary',t('保存'));save.type='button';
+  save.onclick=action(async()=>{await api('/settings',{method:'PUT',body:JSON.stringify({agentManagement:Object.fromEntries(Object.entries(values).map(([k,v])=>[k,v.checked]))})});await refreshConfig();toast(t('AI 管理权限已保存'));});
+  wrap.append(el('small','muted',t('管理变更先生成提案，由你审阅确认后执行。关闭权限后，尚未执行的提案也会被阻止。')),save);
+  return wrap;
+}
+controlRenderers['agent-management']=renderAgentManagementControl;

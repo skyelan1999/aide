@@ -218,7 +218,7 @@
     },
     {
       "id": "propeller-aero",
-      "name": "桨叶建模与气动 / Propeller CAD \u0026 BEMT",
+      "name": "桨叶建模与气动 / Propeller CAD & BEMT",
       "description": "官方尺寸约束重建、封闭桨叶 STL、气动 CSV 与图表；纯 Python 标准库，可离线复现，假设透明，文件经现有提案审批。",
       "version": "1.0.0",
       "author": "aide",
@@ -253,6 +253,16 @@
         "title": "压缩文件工具参数",
         "type": "object"
       },
+      "installedAt": ""
+    },
+    {
+      "id": "plugin-authoring",
+      "name": "插件工坊",
+      "description": "按 aide 插件协议制作、检查和打包插件；管理插件与引用的变更先形成待确认提案。",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
       "installedAt": ""
     }
   ]

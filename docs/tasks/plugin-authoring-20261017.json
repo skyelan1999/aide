@@ -1,0 +1,96 @@
+{
+  "id": "plugin-authoring-20261017",
+  "request": "为 aide 添加针对自身插件制作插件的能力，根据用户提供的信息将功能添加到插件或引用",
+  "baseline": "f0f7d775559efd19d51e175ed4ba33f8b7032705",
+  "initial_status": "",
+  "acceptance": [
+    "插件工坊提供协议、现有插件查看、自包含插件 ZIP 制作与扩展提案",
+    "主设置中四项管理权限独立持久化并由服务端执行，默认关闭",
+    "管理权限不影响日常工具调用及已授权引用文件访问",
+    "引用管理不解除可见/可写锁；管理提案人工确认且执行前重新校验",
+    "实际页面验收设置与提案入口"
+  ],
+  "scope": [
+    "internal/server",
+    "plugins/plugin-authoring",
+    "plugins/registry.json",
+    "scripts",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认四项权限仅控制管理动作",
+      "evidence": [
+        "用户答复：仅控制管理动作"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "内置插件协议指导、原生受控管理工具与持久提案队列，复用安装/升级及引用管理实现",
+      "evidence": [
+        "internal/server/management.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Bundled plugin workshop, four independent management permissions, persistent native proposals and compact review UI implemented.",
+      "evidence": [
+        "plugins/plugin-authoring/index.js",
+        "internal/server/management.go",
+        "internal/server/web/management.js",
+        "internal/server/web/settings-schema.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused Go race/vet, final quick checks, UI regression and actual Safari settings acceptance passed. No paid model calls or full suite.",
+      "evidence": [
+        "go test -mod=vendor -race -count=1 -timeout=6m ./internal/server -run TestManagement|TestAuthoring|TestPluginUpgrade|TestSourceProposal|TestDocumentProposal: PASS 90.713s in isolated Docker snapshot",
+        "go vet -mod=vendor ./internal/server: exit 0 in same snapshot",
+        "python3 scripts/agent-route.py verify quick: PASS; .agent-state/verify-20261017T111426025204Z.log. Initial socket-dependent checks were sandbox-blocked; all quick checks passed after rerun with local socket access.",
+        "node scripts/management-permissions.test.cjs: PASS; settings payload, review gate, text-only code preview and lock cleanup",
+        "Safari https://localhost:9999 refreshed; Settings > AI management permissions shows four unchecked controls; /private/tmp/aide-management-settings-safari.png",
+        "Isolated proposal UI: source scrolls while Confirm/Reject remain visible. No example installed via browser. /private/tmp/aide-management-proposal-final.png",
+        "Runtime API: plugin-authoring enabled, version 1.0.0; surface error empty; manage_plugins/manage_references registered; existing references s-mh2dmp/s-kf81dh remain rw=false, aiVisible=true",
+        "Isolated proxy reload once showed existing highlight.js hljs-not-defined diagnostics. Actual Go-served Safari settings acceptance had no such notice. Highlight vendor files unchanged."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Plugin protocol records permissions, static candidate validation, confirmation, reference locks and trusted Node boundary.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "docs/architecture.md",
+        "python3 scripts/check_docs.py: PASS"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed; user data retained; owned fixture tab, proxy, container and network removed. User Safari left on new settings page.",
+      "evidence": [
+        "git diff --check: PASS",
+        "aide-assistant-live-fixture-20261017 removed",
+        "aide-assistant-live-fixture-net-20261017 removed",
+        "Only temporary logs/screenshots retained as evidence; no user directory cleanup"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "User-requested main integration and push completed. Remote main verified at merge commit 392cffe67887378f5678b5516f77c3b2584bd889, containing workshop commit ee34c704 and origin/main updates through 662cffa6. Further testing explicitly waived; no tag, version bump, formal Release or additional deployment.",
+      "evidence": [
+        "AIDE_BUILD_FROM_SOURCE=1 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start: exit 0",
+        "Running image sha256:13370eae90ca48a426fb9c70d9cc761d4da09603bcc542c30cdf98d2b8a43f0c: healthy",
+        "Current source and image aide.srcsha match: 0e9d2080452456e4bec478831b47c177f973fcb3743f93cb0dccf3cb11aa027a",
+        "Read-only merge preview identified six overlapping files; only index.html required explicit conflict resolution.",
+        "Existing runtime remains the previously verified local development image; merged source is not rebuilt or re-tested for this requested push.",
+        "git push origin main: 662cffa6..392cffe6 main -> main",
+        "git ls-remote origin refs/heads/main: 392cffe67887378f5678b5516f77c3b2584bd889",
+        "git status --short --branch after integration push: clean main synchronized with origin/main"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested pushing this update, then instructed no further testing and to include it directly on 2026-10-17. Commit/push main only; no version bump, tag or GitHub Release. User explicitly confirmed merging the 50 additional origin/main commits before push; no further tests or force push.",
+  "rollback": "Previous image sha256:e25c6a7624143c4213975ca2c39cda207cfc6fac87e268a46eb319ae4f535a1f. Registry snapshot /data/backups/plugin-authoring-20261017-registry-before.json excludes newly added workshop and preserves other entries. Stop service, restore /workspace/plugins/registry.json if needed, then AIDE_IMAGE=<previous-image-id> AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. Preserve new proposal queue; do not replay it on old server.",
+  "handoff": "Workshop update merged and pushed to main with remote updates preserved. User waived further/post-merge tests. Previously recorded tests apply to pre-merge candidate only; running local image remains the earlier verified candidate. No new restart, version bump, tag or formal Release. This documentation records the verified integration push."
+}

@@ -85,7 +85,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 	if bundlePath == "" {
 		return nil
 	}
-	for _, id := range []string{"browser-control", "computer-control", "markdown-history", "archive-tools"} {
+	for _, id := range []string{"browser-control", "computer-control", "markdown-history", "archive-tools", "plugin-authoring"} {
 		found := false
 		for _, removed := range a.pluginRegistry.RemovedBuiltins {
 			if removed == id {
@@ -102,7 +102,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 			continue
 		}
 		source := filepath.Join(bundlePath, id)
-		if id == "markdown-history" {
+		if id == "markdown-history" || id == "plugin-authoring" {
 			if _, err := os.Stat(filepath.Join(source, "manifest.json")); errors.Is(err, os.ErrNotExist) {
 				continue
 			}
@@ -137,7 +137,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 			if statErr != nil || !entry.Mode().IsRegular() {
 				return fmt.Errorf("control plugin entry is not a regular file: %s", id)
 			}
-			manifest.Enabled = id == "markdown-history" || id == "archive-tools"
+			manifest.Enabled = id == "markdown-history" || id == "archive-tools" || id == "plugin-authoring"
 			a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
 			if err := a.savePluginRegistry(); err != nil {
 				a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
@@ -151,7 +151,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 		if err != nil {
 			return err
 		}
-		manifest.Enabled = id == "markdown-history" || id == "archive-tools"
+		manifest.Enabled = id == "markdown-history" || id == "archive-tools" || id == "plugin-authoring"
 		manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
 		err = os.WriteFile(filepath.Join(stage, "index.js"), code, 0644)
 		if err == nil {
@@ -581,6 +581,13 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 	a.pluginLifecycle.Lock()
 	defer a.pluginLifecycle.Unlock()
+	a.mu.Lock()
+	guardErr := managementGuardLocked(a, r)
+	a.mu.Unlock()
+	if guardErr != nil {
+		fail(w, 409, guardErr)
+		return
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxPluginBundle)
 	if err := r.ParseMultipartForm(2 << 20); err != nil {
 		fail(w, 400, fmt.Errorf("插件包上传失败或超过 24 MiB: %w", err))
@@ -649,6 +656,11 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
+	if err := managementGuardLocked(a, r); err != nil {
+		a.mu.Unlock()
+		fail(w, 409, err)
+		return
+	}
 	if len(a.pluginRegistry.Plugins) >= maxPlugins {
 		a.mu.Unlock()
 		fail(w, 400, fmt.Errorf("插件最多 %d 个", maxPlugins))
@@ -693,6 +705,11 @@ func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	// a.mu 内只做注册表快速变更与持久化；daemon 启停与 surface 聚合（慢进程）放锁外。
 	a.mu.Lock()
+	if err := managementGuardLocked(a, r); err != nil {
+		a.mu.Unlock()
+		fail(w, 409, err)
+		return
+	}
 	found := false
 	var wantStart bool
 	var wantStop bool
@@ -745,6 +762,11 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	// a.mu 内只做注册表快速删除与持久化；daemon 停止与 surface 聚合（慢进程）放锁外。
 	a.mu.Lock()
+	if err := managementGuardLocked(a, r); err != nil {
+		a.mu.Unlock()
+		fail(w, 409, err)
+		return
+	}
 	found := false
 	needStop := false
 	for i := range a.pluginRegistry.Plugins {
@@ -763,7 +785,7 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pluginsPath := a.pluginsPath
-	if id == "browser-control" || id == "computer-control" || id == "markdown-history" || id == "archive-tools" {
+	if id == "browser-control" || id == "computer-control" || id == "markdown-history" || id == "archive-tools" || id == "plugin-authoring" {
 		a.pluginRegistry.RemovedBuiltins = append(a.pluginRegistry.RemovedBuiltins, id)
 	}
 	if err := a.savePluginRegistry(); err != nil {

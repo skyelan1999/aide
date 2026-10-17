@@ -75,38 +75,39 @@ type providerKeyWrite struct {
 }
 
 type Settings struct {
-	AssistantAutoReview    bool                   `json:"assistantAutoReview,omitempty"`
-	BaseURL                string                 `json:"baseURL"`
-	XiaomiModelSource      string                 `json:"xiaomiModelSource,omitempty"` // inherit | configured | custom
-	XiaomiBaseURL          string                 `json:"xiaomiBaseURL,omitempty"`
-	XiaomiModel            string                 `json:"xiaomiModel,omitempty"`
-	Model                  string                 `json:"model"`
-	APIKey                 string                 `json:"apiKey,omitempty"`
-	Models                 []ModelRef             `json:"models,omitempty"`
-	ModelProviders         []ModelProvider        `json:"modelProviders,omitempty"`
-	ActiveModel            string                 `json:"activeModel,omitempty"`
-	SandboxMode            string                 `json:"sandboxMode,omitempty"`   // read-only | workspace-write | danger-full-access
-	ToolMaxRounds          int                    `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
-	ShellTimeout           int                    `json:"shellTimeout,omitempty"`  // run_shell 超时秒数，默认 60，最大 300
-	PersonaEnabled         bool                   `json:"personaEnabled,omitempty"`
-	PersonaCipher          string                 `json:"personaCipher,omitempty"`          // 兼容旧字段：单人格时代的性格密文
-	ActivePersona          string                 `json:"activePersona,omitempty"`          // 当前活动人格 id（aide | xiaomi），默认 aide
-	PersonaCiphers         map[string]string      `json:"personaCiphers,omitempty"`         // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
-	Personalities          map[string]Personality `json:"personalities,omitempty"`          // 可演化性格（aide/xiaomi），明文
-	DisabledTools          []string               `json:"disabledTools,omitempty"`          // 被禁用的工具名列表
-	ReasoningEffort        string                 `json:"reasoningEffort,omitempty"`        // 推理强度：auto/off/low/medium/high
-	VoiceAssistantName     string                 `json:"voiceAssistantName,omitempty"`     // 语音小秘名字，默认"小秘"
-	VoiceReplyEnabled      bool                   `json:"voiceReplyEnabled,omitempty"`      // 双向语音：语音回复模式
-	VoiceReplyGender       string                 `json:"voiceReplyGender,omitempty"`       // 回复音色 male | female
-	VoiceReplyVerbosity    string                 `json:"voiceReplyVerbosity,omitempty"`    // 语音回复详细度 brief(默认) | full
-	VoiceInputDevice       string                 `json:"voiceInputDevice,omitempty"`       // 小秘语音输入设备 deviceId，空=系统默认
-	VoiceDefaultSendMode   string                 `json:"voiceDefaultSendMode,omitempty"`   // #41：小秘默认发送调度 queue(默认,排队) | insert(插队)；模型拿不准时回落此值
-	VoiceInsertSensitivity string                 `json:"voiceInsertSensitivity,omitempty"` // #41：插队敏感度 conservative(默认,5s冷却) | normal(3s) | aggressive(1s)
-	UserName               string                 `json:"userName,omitempty"`               // 账户用户名（锁屏欢迎语用，可空）
-	UserPasswordHash       string                 `json:"userPasswordHash,omitempty"`       // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
-	LockTimeoutSec         int                    `json:"lockTimeoutSec,omitempty"`         // 空闲锁屏秒数，0 = 不锁屏
-	AccessibilityAutoRead  bool                   `json:"accessibilityAutoRead,omitempty"`  // 无障碍：输出完成后由小秘自动朗读讲解
-	AccessibilityHostPort  int                    `json:"accessibilityHostPort,omitempty"`  // 离线启动包宿主机绑定端口
+	AgentManagement        AgentManagementPermissions `json:"agentManagement"`
+	AssistantAutoReview    bool                       `json:"assistantAutoReview,omitempty"`
+	BaseURL                string                     `json:"baseURL"`
+	XiaomiModelSource      string                     `json:"xiaomiModelSource,omitempty"` // inherit | configured | custom
+	XiaomiBaseURL          string                     `json:"xiaomiBaseURL,omitempty"`
+	XiaomiModel            string                     `json:"xiaomiModel,omitempty"`
+	Model                  string                     `json:"model"`
+	APIKey                 string                     `json:"apiKey,omitempty"`
+	Models                 []ModelRef                 `json:"models,omitempty"`
+	ModelProviders         []ModelProvider            `json:"modelProviders,omitempty"`
+	ActiveModel            string                     `json:"activeModel,omitempty"`
+	SandboxMode            string                     `json:"sandboxMode,omitempty"`   // read-only | workspace-write | danger-full-access
+	ToolMaxRounds          int                        `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
+	ShellTimeout           int                        `json:"shellTimeout,omitempty"`  // run_shell 超时秒数，默认 60，最大 300
+	PersonaEnabled         bool                       `json:"personaEnabled,omitempty"`
+	PersonaCipher          string                     `json:"personaCipher,omitempty"`          // 兼容旧字段：单人格时代的性格密文
+	ActivePersona          string                     `json:"activePersona,omitempty"`          // 当前活动人格 id（aide | xiaomi），默认 aide
+	PersonaCiphers         map[string]string          `json:"personaCiphers,omitempty"`         // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
+	Personalities          map[string]Personality     `json:"personalities,omitempty"`          // 可演化性格（aide/xiaomi），明文
+	DisabledTools          []string                   `json:"disabledTools,omitempty"`          // 被禁用的工具名列表
+	ReasoningEffort        string                     `json:"reasoningEffort,omitempty"`        // 推理强度：auto/off/low/medium/high
+	VoiceAssistantName     string                     `json:"voiceAssistantName,omitempty"`     // 语音小秘名字，默认"小秘"
+	VoiceReplyEnabled      bool                       `json:"voiceReplyEnabled,omitempty"`      // 双向语音：语音回复模式
+	VoiceReplyGender       string                     `json:"voiceReplyGender,omitempty"`       // 回复音色 male | female
+	VoiceReplyVerbosity    string                     `json:"voiceReplyVerbosity,omitempty"`    // 语音回复详细度 brief(默认) | full
+	VoiceInputDevice       string                     `json:"voiceInputDevice,omitempty"`       // 小秘语音输入设备 deviceId，空=系统默认
+	VoiceDefaultSendMode   string                     `json:"voiceDefaultSendMode,omitempty"`   // #41：小秘默认发送调度 queue(默认,排队) | insert(插队)；模型拿不准时回落此值
+	VoiceInsertSensitivity string                     `json:"voiceInsertSensitivity,omitempty"` // #41：插队敏感度 conservative(默认,5s冷却) | normal(3s) | aggressive(1s)
+	UserName               string                     `json:"userName,omitempty"`               // 账户用户名（锁屏欢迎语用，可空）
+	UserPasswordHash       string                     `json:"userPasswordHash,omitempty"`       // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
+	LockTimeoutSec         int                        `json:"lockTimeoutSec,omitempty"`         // 空闲锁屏秒数，0 = 不锁屏
+	AccessibilityAutoRead  bool                       `json:"accessibilityAutoRead,omitempty"`  // 无障碍：输出完成后由小秘自动朗读讲解
+	AccessibilityHostPort  int                        `json:"accessibilityHostPort,omitempty"`  // 离线启动包宿主机绑定端口
 	// ── 外部 AI 诊断接口（/api/debug）：默认关、只读、独立令牌、审计脱敏 ──
 	DebugAccessEnabled  bool     `json:"debugAccessEnabled,omitempty"`  // 总开关，默认 false；关闭时 /api/debug/* 整体 404
 	DebugTokenHash      string   `json:"debugTokenHash,omitempty"`      // 调试令牌 SHA-256 哈希（绝不存明文）
@@ -507,6 +508,7 @@ type App struct {
 	// 不落盘（内存中即 settings.APIKey 的待迁移副本），解锁入库后清空。
 	pendingLegacyAPIKey       string
 	sshBin, sftpBin           string
+	managementMu              sync.Mutex
 	sshLifecycleMu            sync.Mutex
 	sshLifecycles             map[string]*sshSessionLifecycle
 	sshGenerations            map[string]sshSessionVersion
@@ -1449,6 +1451,10 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/models", a.listModels)
 	mux.HandleFunc("GET /api/balance", a.listBalance)
 	mux.HandleFunc("GET /api/profiles", a.listProfiles)
+	mux.HandleFunc("GET /api/management-proposals", a.listManagementProposals)
+	mux.HandleFunc("GET /api/management-proposals/{id}", a.getManagementProposal)
+	mux.HandleFunc("POST /api/management-proposals/{id}/{action}", a.resolveManagementProposal)
+	mux.HandleFunc("GET /api/management-proposals/{id}/package", a.downloadManagementPackage)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
 	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)
@@ -1703,7 +1709,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -1759,17 +1765,18 @@ func (a *App) putVirtualAvatarSettings(w http.ResponseWriter, r *http.Request) {
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
-		AssistantAutoReviewInput *bool              `json:"assistantAutoReview,omitempty"`
-		ModelInput               *string            `json:"model,omitempty"`
-		ActiveModelInput         *string            `json:"activeModel,omitempty"`
-		ProviderKeyWrites        []providerKeyWrite `json:"providerKeyWrites,omitempty"`
-		TTSBrowserFallback       *bool              `json:"ttsBrowserFallback,omitempty"`
-		ClearTTSKey              bool               `json:"clearTTSKey"`
-		ClearKey                 bool               `json:"clearKey"`
-		VoiceReplyEnabled        *bool              `json:"voiceReplyEnabled,omitempty"`
-		AccessibilityAutoRead    *bool              `json:"accessibilityAutoRead,omitempty"`
-		AccessibilityHostPort    *int               `json:"accessibilityHostPort,omitempty"`
-		VoiceReplyGender         string             `json:"voiceReplyGender,omitempty"`
+		AgentManagementInput     *AgentManagementPermissions `json:"agentManagement,omitempty"`
+		AssistantAutoReviewInput *bool                       `json:"assistantAutoReview,omitempty"`
+		ModelInput               *string                     `json:"model,omitempty"`
+		ActiveModelInput         *string                     `json:"activeModel,omitempty"`
+		ProviderKeyWrites        []providerKeyWrite          `json:"providerKeyWrites,omitempty"`
+		TTSBrowserFallback       *bool                       `json:"ttsBrowserFallback,omitempty"`
+		ClearTTSKey              bool                        `json:"clearTTSKey"`
+		ClearKey                 bool                        `json:"clearKey"`
+		VoiceReplyEnabled        *bool                       `json:"voiceReplyEnabled,omitempty"`
+		AccessibilityAutoRead    *bool                       `json:"accessibilityAutoRead,omitempty"`
+		AccessibilityHostPort    *int                        `json:"accessibilityHostPort,omitempty"`
+		VoiceReplyGender         string                      `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
 		UserName         *string `json:"userName,omitempty"`
 		LockTimeoutSec   *int    `json:"lockTimeoutSec,omitempty"`
@@ -1894,6 +1901,11 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	in.Settings.ActivePersona = a.settings.ActivePersona
 	in.Settings.PersonaCiphers = a.settings.PersonaCiphers
 	in.Settings.PersonaEnabled = a.settings.PersonaEnabled
+	if in.AgentManagementInput != nil {
+		in.Settings.AgentManagement = *in.AgentManagementInput
+	} else {
+		in.Settings.AgentManagement = a.settings.AgentManagement
+	}
 	if in.AssistantAutoReviewInput != nil {
 		in.Settings.AssistantAutoReview = *in.AssistantAutoReviewInput
 	} else {
