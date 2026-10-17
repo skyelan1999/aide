@@ -8248,5 +8248,14 @@
       "docs/reviews/2026-10-17/ssh-workspace-current.md",
       "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
     ]
+  },
+  "launcher_readiness_20261017": {
+    "status": "implementation_and_actual_paths_pass_full_pending",
+    "task": "docs/tasks/launcher-readiness-20261017.json",
+    "summary": "Bash published-port and pinned host TLS/same-instance guard; actual original launcher noport negative and normal positive pass; production22 exact. New full/distribution pending, Windows separate.",
+    "evidence": [
+      "docs/reviews/2026-10-17/launcher-readiness.md",
+      "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+    ]
   }
 }

@@ -20,7 +20,7 @@ class OfflineBundleTests(unittest.TestCase):
             (self.root / name).mkdir()
         shutil.copy(ROOT / 'start.command', self.root)
         shutil.copy(ROOT / 'scripts/aide.sh', self.root / 'scripts')
-        for name in ('launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py'):
+        for name in ('launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'resource-guard.sh'):
             shutil.copy(ROOT / 'scripts' / name, self.root / 'scripts')
         shutil.copy(ROOT / 'docker/compose.offline.yaml', self.root / 'compose.yaml')
         shutil.copy(ROOT / 'docker/offline.env.example', self.root / '.env.example')
@@ -36,7 +36,10 @@ a=sys.argv[1:]; root=pathlib.Path(os.environ['FIXTURE_ROOT'])
 with (root/'calls').open('a') as f: f.write(json.dumps(a)+'\\n')
 if a == ['info']: pass
 elif a[:1] == ['ps']: pass
-elif a[:2] == ['info','--format']: print(os.environ.get('ENGINE_PLATFORM','linux/aarch64'))
+elif a[:2] == ['info','--format']:
+    if a[2] == '{{.MemTotal}}': print(6*1024**3)
+    elif a[2] == '{{.NCPU}}': print(4)
+    else: print(os.environ.get('ENGINE_PLATFORM','linux/aarch64'))
 elif a[:2] == ['image','inspect']:
     if not (root/'image-id').exists(): sys.exit(1)
     print((root/'image-id').read_text())
@@ -46,8 +49,16 @@ elif a[:2] == ['volume','inspect']: sys.exit(1)
 elif a[:1] == ['run']:
     import subprocess
     subprocess.run([sys.executable,str(root/'scripts/launcher-data.py'),'--root',str(root/'.aide-data'),'--platform','fixture'],check=True)
+    cert=root/'.aide-data/storage/data/certs/cert.pem'
+    cert.parent.mkdir(parents=True,exist_ok=True)
+    if os.environ.get('NO_HOST_CERT') != '1':
+        cert.write_text('fixture certificate for mocked host curl')
 elif a[:3] == ['compose','config','--images']: print('aide:slot-a')
-elif a[:3] == ['compose','port','aide']: print('127.0.0.1:18097')
+elif a[:3] == ['compose','port','aide']:
+    print(os.environ.get('PORT_OUTPUT','127.0.0.1:18097'))
+    sys.exit(int(os.environ.get('PORT_EXIT','0')))
+elif a[:4] == ['compose','exec','-T','aide'] and 'curl' in a:
+    print(json.dumps({'status':'ok','service':'aide','instanceId':os.environ.get('CONTAINER_INSTANCE','fixture-instance')}))
 elif a[:2] == ['compose','up']:
     assert '--no-build' in a and '--pull' in a and a[a.index('--pull')+1] == 'never'
 elif a[:2] in (['compose','ps'], ['compose','run']): pass
@@ -58,6 +69,18 @@ else: sys.exit('Unexpected docker operation: '+repr(a))
         opener = self.root / 'bin/open'
         opener.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$FIXTURE_ROOT/opened-url"\n')
         opener.chmod(0o755)
+        curl = self.root / 'bin/curl'
+        curl.write_text('''#!/usr/bin/env python3
+import json, os, pathlib, sys
+a=sys.argv[1:]; root=pathlib.Path(os.environ['FIXTURE_ROOT'])
+with (root/'host-probes').open('a') as f: f.write(json.dumps(a)+'\\n')
+assert '--cacert' in a and '--noproxy' in a and '--max-time' in a
+assert not any(x in a for x in ['-k','--insecure','-L','--location'])
+assert a[-1] == 'https://localhost:18097/healthz'
+print(json.dumps({'status':'ok','service':'aide','instanceId':os.environ.get('HOST_INSTANCE','fixture-instance')}))
+sys.exit(int(os.environ.get('HOST_HEALTH_EXIT','0')))
+''')
+        curl.chmod(0o755)
         self.env = dict(os.environ, PATH=str(docker.parent) + os.pathsep + os.environ['PATH'],
                         FIXTURE_ROOT=str(self.root), EXPECTED_ID=IMAGE_ID, AIDE_OPEN_BROWSER='0', AIDE_PORT='18097')
 
@@ -95,6 +118,63 @@ else: sys.exit('Unexpected docker operation: '+repr(a))
         self.assertNotIn('"load"', self.calls())
         self.assertNotIn('"compose"', self.calls())
 
+    def test_invalid_published_ports_never_report_ready_or_open(self):
+        for address in ('', 'invalid IP:0', '127.0.0.1:0', '127.0.0.1:65536',
+                        '127.0.0.1:no', '127.0.0.1:18097\n[::]:18098'):
+            with self.subTest(address=address):
+                self.env.update(PORT_OUTPUT=address, AIDE_OPEN_BROWSER='1')
+                result = self.run_start()
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertNotIn('aide 已就绪', result.stdout)
+                self.assertFalse((self.root/'opened-url').exists())
+                self.assertNotIn('cat /data/auth/access-token', self.calls())
+                self.assertFalse((self.root/'host-probes').exists())
+
+    def test_failed_port_query_never_reports_ready(self):
+        self.env.update(PORT_EXIT='1', AIDE_OPEN_BROWSER='1')
+        result = self.run_start()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn('aide 已就绪', result.stdout)
+        self.assertFalse((self.root/'opened-url').exists())
+
+    def test_host_connection_or_certificate_failure_never_opens(self):
+        for code in ('7', '60'):
+            with self.subTest(curl_exit=code):
+                self.env.update(HOST_HEALTH_EXIT=code, AIDE_OPEN_BROWSER='1')
+                result = self.run_start()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn('aide 已就绪', result.stdout)
+                self.assertFalse((self.root/'opened-url').exists())
+                self.assertNotIn('cat /data/auth/access-token', self.calls())
+
+    def test_other_host_instance_never_opens(self):
+        self.env.update(HOST_INSTANCE='another-instance', AIDE_OPEN_BROWSER='1')
+        result = self.run_start()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn('aide 已就绪', result.stdout)
+        self.assertFalse((self.root/'opened-url').exists())
+
+    def test_missing_container_identity_never_opens_or_probes(self):
+        self.env.update(CONTAINER_INSTANCE='', AIDE_OPEN_BROWSER='1')
+        result = self.run_start()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root/'opened-url').exists())
+        self.assertFalse((self.root/'host-probes').exists())
+
+    def test_missing_saved_certificate_never_opens_or_probes(self):
+        self.env.update(NO_HOST_CERT='1', AIDE_OPEN_BROWSER='1')
+        result = self.run_start()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root/'opened-url').exists())
+        self.assertFalse((self.root/'host-probes').exists())
+
+    def test_ipv4_and_ipv6_bindings_share_one_verified_port(self):
+        self.env.update(PORT_OUTPUT='0.0.0.0:18097\n[::]:18097', AIDE_OPEN_BROWSER='1')
+        result = self.run_start()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('aide 已就绪', result.stdout)
+        self.assertEqual((self.root/'opened-url').read_text().strip(), 'https://localhost:18097/')
+
     def test_corrupt_archive_never_loads(self):
         (self.root / 'docker-images/aide-local.tar').write_bytes(b'corrupt')
         self.assertNotEqual(self.run_start().returncode, 0)
@@ -119,6 +199,9 @@ else: sys.exit('Unexpected docker operation: '+repr(a))
         curl.write_text('''#!/usr/bin/env python3
 import os, pathlib, sys
 a=sys.argv[1:]; root=pathlib.Path(os.environ['FIXTURE_ROOT'])
+if a[-1].endswith('/healthz'):
+    print('{"status":"ok","service":"aide","instanceId":"fixture-instance"}')
+    sys.exit(0)
 out=pathlib.Path(a[a.index('--output')+1]); url=a[-1]
 if url.endswith('/SHA256SUMS'):
     name=os.environ['ARCHIVE_NAME']; digest=os.environ['ARCHIVE_HASH']

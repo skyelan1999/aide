@@ -1,0 +1,83 @@
+{
+  "id": "launcher-readiness-20261017",
+  "request": "修复真实隔离验收中已复现的启动误报：Docker仅内部网络时宿主端口未发布，启动器仍输出已就绪及invalid IP:0；正常发布端口需经宿主TLS健康与实例身份核对后才打开浏览器。",
+  "baseline": "df0f42b6a2ac3f2d155e6c018290b0e738af758f",
+  "initial_status": "",
+  "acceptance": [
+    "Old actual all-internal fixture reproduces false ready/invalid IP:0; targeted negative test fails before product patch.",
+    "Reject failed/empty/malformed/zero/out-of-range or conflicting published ports before token read, watchers or browser opening; accept valid IPv4/IPv6 mappings.",
+    "Host HTTPS health probe uses saved certificate, no proxy/redirect or insecure TLS; require same instance as healthy container, bounded retry and no browser launch on failure.",
+    "Original start.command actual isolated no-published-port negative and normal current runtime positive; preserve production identity and22 files.",
+    "Focused launcher/resource/packaging tests and exact quick/full; document changed launcher vs unchanged app image and no main/production release while native gates pending."
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/test_offline_bundle.py",
+    "docs/agent/router.json",
+    "docs/architecture/software-updates.md",
+    "docs/tasks/launcher-readiness-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/launcher-readiness.md",
+    "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual current SSH candidate failure and user launcher lifecycle expectations; no Windows native acceptance requested.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-current.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Validate mappings then certificate-pinned same-instance host probe before token/watchers/browser; existing inline launcher avoids new host runtime dependency beyond curl.",
+      "evidence": [
+        "docs/reviews/2026-10-17/launcher-readiness.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Inline Bash guard and extended existing offline bootstrap regression included in quick/full.",
+      "evidence": [
+        "docs/reviews/2026-10-17/launcher-readiness.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Old negative9 failing subcases; patched initial11 pass; real no-published-port exit1 and normal exit0; exact new quick/full pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/launcher-readiness.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Current report/proof distinguish launcher source from old application image and pending full/distribution.",
+      "evidence": [
+        "docs/reviews/2026-10-17/launcher-readiness.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Actual original stop,2 owned stopped containers and2 empty networks removed; production identity/22 files exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/launcher-readiness.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "No main release while exact new full and existing native approval/outcome prerequisites incomplete; current packages not replaced.",
+      "evidence": [
+        "docs/reviews/2026-10-17/launcher-readiness.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental work/push/test authorization; scoped source branch only until aggregate native release prerequisites pass.",
+  "rollback": "Revert scoped launcher patch, preserve all data/images; only own test containers/networks cleanup.",
+  "handoff": ""
+}

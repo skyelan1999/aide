@@ -1,0 +1,53 @@
+{
+  "status": "in_progress",
+  "scope": "Bash launcher readiness on macOS/Linux; Windows native user-owned",
+  "baselineLauncherSHA256": "1e3d72e8800fe187af6f6d69577fc3ab8ba46687f8e4b783a96495f1ae191a28",
+  "newLauncherSHA256": "1e6ba22c318fa9afcca06471be21826400144338918c7b7f795edcf84925a888",
+  "currentFingerprint": "5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04",
+  "currentSourceSHA": "6ebd16a44ea26bf2e37cf3f55f68e51b7283e094568c394a9892c1af90ec3aca",
+  "oldSourceNegative": "11 tests,9 failing subcases before Bash product patch; retained full log",
+  "negativeLogSHA256": "7efe4d8c1294551be4fc99c5e8014468c3ec85ad68d11e4ff207d6e38e94c737",
+  "live": {
+    "status": "pass",
+    "negativeExit": 1,
+    "healthyContainerNoPublishedPort": true,
+    "noReadyMessage": true,
+    "ownedMountsOnly": true,
+    "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+    "realModelOrVectorCalls": 0,
+    "positiveExit": 0,
+    "pinnedHostTLSAndSameInstancePassed": true,
+    "publishedPort": 64728,
+    "nativeBrowserOpened": false
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": [
+      "aide-launcher-readiness-20261017-cad-1",
+      "aide-launcher-readiness-20261017-aide-1"
+    ],
+    "emptyOwnedNetworksRemoved": 2,
+    "imagesAndDataRetained": true,
+    "productionIdentityUnchanged": true,
+    "productionProtectedFilesChecked": 22,
+    "productionProtectedFilesChanged": []
+  },
+  "limits": [
+    "New launcher was copied into owned ordinary-source fixture and exercised with existing current ARM application image. No new application image built or archive replaced.",
+    "Existing full114 receipt belongs to prior fingerprint and is not accepted for this changed input. Exact quick/full pending.",
+    "Windows PowerShell equivalent remains separate; no claim of Windows native validation.",
+    "No browser opened or certificate warning bypassed; host TLS uses explicit saved service certificate.",
+    "Main remains gated by deferred approval/outcome native prerequisites."
+  ],
+  "focused": {
+    "offlineBootstrapTests": 13,
+    "offlineBootstrapStatus": "pass",
+    "resourceGuardTests": 7,
+    "resourceGuardStatus": "pass",
+    "launcherDataTests": 21,
+    "launcherDataStatus": "pass",
+    "prebuiltPublicationTests": 7,
+    "prebuiltPublicationStatus": "pass"
+  }
+}

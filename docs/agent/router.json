@@ -658,6 +658,10 @@
       [
         "python3",
         "scripts/test_prebuilt_publication.py"
+      ],
+      [
+        "python3",
+        "scripts/test_offline_bundle.py"
       ]
     ],
     "full": [
