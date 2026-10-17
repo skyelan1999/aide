@@ -1,0 +1,60 @@
+{
+  "status": "blocked_native_certificate_handoff_fixtures_ready",
+  "observedUTC": "2026-10-17T12:07:50.570850+00:00",
+  "runtime": {
+    "status": "pass",
+    "originalStartExit": 0,
+    "healthy": true,
+    "image": "sha256:fe80b2eb483d8566fc4016dd0175c4c78b17e96b80f48108e7dc28a446e2cdb2",
+    "ownMountsOnly": true,
+    "port": 58320,
+    "productionIdentityAnd22FilesBeforeExact": true
+  },
+  "browser": {
+    "candidateURL": "https://localhost:58320/",
+    "windowTitle": "此连接非私人连接",
+    "interstitialURL": "safari-resource:/CertificateWarningFall2023.html",
+    "applicationPageReached": false,
+    "warningBypassed": false,
+    "systemTrustChanged": false,
+    "tokenSubmittedToBrowser": false,
+    "ownedTabRetainedForHandoff": true,
+    "originalUserTabsRetained": true
+  },
+  "fixtures": {
+    "status": "prepared_api_verified_native_not_run",
+    "candidatePort": 58320,
+    "sessionNumber": 4,
+    "session": "e5a1e336c11fb8d664586d514cb23cde",
+    "run": "6e3ecc27a24a95fbc658451db74677e4",
+    "rule": "81e81af44bca7988ed8312846e28bcb36f0e529e9ce34cb1e518236db62ecf8b",
+    "literalPrintTools": 1,
+    "taskCompleted": true,
+    "approvalRuleCreatedThroughNormalRememberFlow": true,
+    "savedReleaseReceiptOperatorOnly": true,
+    "syntheticURL": "https://example.invalid/native-release-fixture",
+    "staleReceipt409": true,
+    "deduplicatedReceipt": true,
+    "mockRemovedAfterUse": true,
+    "publicPortsForMock": 0,
+    "realModelOrVectorCalls": 0,
+    "nativeWorkbench": "NOT_RUN certificate handoff",
+    "actualPublicReleaseVerified": false
+  },
+  "fixtureFirstAttempt": {
+    "status": "terminal_failed_before_tools",
+    "error": "local protocol fixture socket not yet ready",
+    "normalRetryAfterReadiness": "pass",
+    "noProviderOrSessionDuplicated": true
+  },
+  "cleanup": {
+    "mockContainerRemoved": true,
+    "candidateRunningForHandoff": true,
+    "finalCandidateStopPending": true,
+    "productionIdentityAnd22FilesUnchanged": true
+  },
+  "fullWorkbenchApprovalExpiry": "NOT_RUN",
+  "fullWorkbenchOutcomeSourceLink": "NOT_RUN",
+  "realModelOrVectorCalls": 0,
+  "productionReplaced": false
+}

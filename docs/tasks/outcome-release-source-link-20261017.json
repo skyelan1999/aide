@@ -110,5 +110,17 @@
       "docs/reviews/2026-10-17/native-candidate-6eb.md",
       "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
     ]
+  },
+  "current_native_plugin_candidate": {
+    "task": "docs/tasks/native-plugin-candidate-20261017.json",
+    "image": "fe80b2eb483d",
+    "sourceSHA": "236499a59200641e50a6ddf4838bbf8d753d1b8a2cf262ad4a209c65df187e6b",
+    "port": 58320,
+    "status": "blocked_certificate_handoff_fixtures_ready",
+    "fullWorkbench": "NOT_RUN",
+    "evidence": [
+      "docs/reviews/2026-10-17/native-plugin-candidate.md",
+      "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
+    ]
   }
 }
