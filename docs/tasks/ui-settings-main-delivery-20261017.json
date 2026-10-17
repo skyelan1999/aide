@@ -38,7 +38,8 @@
     "scripts/test_go_snapshot.py",
     "scripts/run_go_test_shards.py",
     "scripts/test_go_test_shards.py",
-    "docs/agent/WORKFLOW.md"
+    "docs/agent/WORKFLOW.md",
+    "scripts/test_agent_route.py"
   ],
   "stages": {
     "requirements": {
@@ -73,11 +74,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "首次完整服务器包18分钟总时限失败；三进程分片又触发Docker VM OOM kill（memory.events oom_kill=1）。改为12个互斥分片单进程依次执行，缩短单进程生命周期并限制峰值内存；全量保留race、所有测试与vet，总任务上限45分钟。重新验证。",
+      "summary": "首次完整服务器包18分钟总时限失败；三进程分片又触发Docker VM OOM kill（memory.events oom_kill=1）。改为12个互斥分片单进程依次执行，缩短单进程生命周期并限制峰值内存；全量保留race、所有测试与vet，总任务上限45分钟。重新验证。 全部功能与race/vet通过，但route测试旧上限断言1800秒未同步；调整为3000秒硬上限，保留父进程期限大于执行与清理之和的验证，重新全量运行。",
       "evidence": [
         ".agent-state/verify-20261017T032913274794Z.log:727-729",
         "python3 scripts/test_go_test_shards.py PASS: inventory completeness, fuzz/examples, disjoint shards, failure propagation and original working directory",
-        ".agent-state/verify-20261017T035218876392Z.log: Server shard 1 exit=-9; Docker memory.events oom_kill=1"
+        ".agent-state/verify-20261017T035218876392Z.log: Server shard 1 exit=-9; Docker memory.events oom_kill=1",
+        ".agent-state/verify-20261017T035843966402Z.log: 933 server tests + race/vet + geometry passed; only outdated route timeout upper-bound assertion failed"
       ]
     },
     "documentation": {
