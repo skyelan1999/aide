@@ -1,0 +1,82 @@
+{
+  "id": "launcher-browser-recovery-20261017",
+  "request": "start command启动不了界面了，浏览器没弹窗",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "M Dockerfile\n M docs/agent/router.json\n M internal/server/config_backup.go\n M internal/server/server.go\n M internal/server/vault_app.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n?? cmd/aide-message-relay/\n?? docs/architecture/decentralized-messages.md\n?? docs/tasks/encrypted-message-center-20261017.json\n?? internal/messaging/\n?? internal/server/message_center.go\n?? internal/server/message_center_test.go\n?? internal/server/web/message-center.css\n?? internal/server/web/message-center.js\n?? scripts/message-center.test.cjs",
+  "acceptance": [
+    "Git development checkout: normal start builds when source hash changes; skips when unchanged",
+    "Release/non-Git installation: reuse healthy current instance or complete platform-matching local image; keep fresh install checksum verification",
+    "Cache cleanup preserves images, containers, Git source and user data",
+    "Exact ordinary start.command builds and updates the message-enabled image; unchanged-source second start does not recreate the container"
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/prebuilt-image.sh",
+    "scripts/test_launcher_data.py",
+    "docs/tasks/launcher-browser-recovery-20261017.json",
+    "Dockerfile.local",
+    "HANDOVER.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Startup logs show prebuilt Release download 404 before browser open; existing Compose service is reachable.",
+      "evidence": [
+        ".agent-state/startup/start-20261017T142338-14522.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Revised per user clarification: Git checkout chooses source path automatically; release installs retain local-image mode. Explicit 0/1 overrides auto. Existing source-hash fast path controls rebuild.",
+      "evidence": [
+        "scripts/aide.sh",
+        "scripts/prebuilt-image.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added source-installation selection and aligned Dockerfile.local with messaging syntax check and relay binary. Documented plain-start and cache-clean semantics.",
+      "evidence": [
+        "scripts/aide.sh",
+        "scripts/prebuilt-image.sh"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "24 launcher/data tests passed; syntax/diff checks passed. Actual plain start rebuilt changed source, then second plain start skipped build and kept same container ID/StartedAt. Source hash matches running image label. Safari showed Messages and four tabs.",
+      "evidence": [
+        "python3 scripts/test_launcher_data.py: 24 tests OK",
+        ".agent-state/startup/message-default-build.log",
+        ".agent-state/startup/message-default-fast.log",
+        ".agent-state/startup/message-fast-before.txt",
+        ".agent-state/startup/message-fast-after.txt",
+        "Safari native AX: Messages, Chats/Contacts/Transfers/Reminders"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "HANDOVER now distinguishes Git source auto-build, installed release image reuse and explicit build override; clean-cache only prunes build cache.",
+      "evidence": [
+        "docs/tasks/launcher-browser-recovery-20261017.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped startup scripts/tests/task record changed; preserved all inherited messaging work and user data. Kept local logs; no temporary service or container created.",
+      "evidence": [
+        "git diff --check",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local development image updated and restarted under user authorization. No Git commit/push, version bump or formal Release. Previous image preserved as aide:before-message-center-20261017.",
+      "evidence": [
+        "identical container ID and StartedAt"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Normal start in this Git checkout now builds on source changes, skips if unchanged. Local message-enabled image is active: sha256:d08bbc8565cad644efa3dc0e7d0de681e8c34ee1eefda6df3dfa81f7186b9a6a, source 9acf5dd81daab2a126c1732c9207fba218433a8e149a8b7a4e2687376a0bbacc. Data mounts preserved."
+}

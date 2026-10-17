@@ -1,0 +1,88 @@
+{
+  "id": "icon-alignment-20261017",
+  "request": "图标为什么就不能做好，从来都不能放齐；消息设置移入主设置，增加默认关闭的助理读取管理权限；设备名称复用账户名，空名禁止启用",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M HANDOVER.md\n M docs/agent/router.json\n M internal/server/config_backup.go\n M internal/server/server.go\n M internal/server/vault_app.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M scripts/aide.sh\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_data.py\n?? cmd/aide-message-relay/\n?? docs/architecture/decentralized-messages.md\n?? docs/tasks/encrypted-message-center-20261017.json\n?? docs/tasks/launcher-browser-recovery-20261017.json\n?? internal/messaging/\n?? internal/server/message_center.go\n?? internal/server/message_center_test.go\n?? internal/server/web/message-center.css\n?? internal/server/web/message-center.js\n?? scripts/message-center.test.cjs",
+  "acceptance": [
+    "消息设置仅在主设置的消息页呈现",
+    "账户名为空时前后端拒绝启用；不采纳客户端设备名",
+    "助理权限默认关闭，执行时重检，撤销后旧工具调用被拒绝",
+    "既有联系人、群组、语音和文件同意流程不被助理绕过",
+    "消息及设置图标统一尺寸居中，实际 Safari 验证"
+  ],
+  "scope": [
+    "internal/server/web",
+    "internal/server/message_center*.go",
+    "internal/server/message_assistant.go",
+    "internal/server/server.go",
+    "internal/server/context.go",
+    "internal/server/assistant_agent.go",
+    "internal/server/workflow.go",
+    "internal/messaging/service.go",
+    "docs/architecture/decentralized-messages.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "采纳用户连续 UI 与权限要求",
+      "evidence": [
+        "本轮用户消息"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "主设置独立消息页；账户名为唯一展示名；权限持久化并在工具执行时检查，服务生命周期锁保护撤销",
+      "evidence": [
+        "internal/server/message_assistant.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "消息配置迁入主设置；移除设备名称与侧栏齿轮；统一关闭/新增图标 SVG 几何；账户空名阻止启用并停止已运行通信；助理访问权限默认关闭，工具执行重检，拒绝代替用户接受邀请。",
+      "evidence": [
+        "internal/server/web/message-center.js",
+        "internal/server/message_assistant.go",
+        "internal/server/message_center_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go race：messaging 与 TestMessageCenter/TestAccount/TestAssistantAgent/TestContextTools 通过；Go vet 通过；quick 109 项通过；Safari 实际主设置消息页、账户名只读、助理开关未勾选、高级网络展开/折叠、侧栏四分区与关闭 SVG 对齐确认。账户空名与撤销权限由隔离服务测试验证，未修改真实账户或开启助理权限。",
+      "evidence": [
+        ".agent-state/message-settings-tests.log",
+        ".agent-state/verify-20261017T065130709201Z.log",
+        "/private/tmp/aide-message-settings-20261017.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录主设置入口、账户身份与助理模型处理边界",
+      "evidence": [
+        "docs/architecture/decentralized-messages.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "diff --check 通过；测试容器自动删除，未更改真实消息/联系人/账户数据；保留既有工作区改动",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "仅本地源码构建更新：start.command 成功，容器 healthy，Safari 实际已加载；无 Git 推送或官方发布。",
+      "evidence": [
+        ".agent-state/startup/message-settings-update.log",
+        "image sha256:63a1c1dfa9aff819ab468df6a2a5aa417a52d52809564ef7cfb17424bfcfa081",
+        "source bc33c22d13449b97e0fb4ffd18ae749662b63ec26fb3d172848007a317abc425"
+      ]
+    }
+  },
+  "release_authorization": "沿用用户直接更新重启并在 Safari 查看效果的授权；未扩展到真实权限开启或远端推送",
+  "rollback": "",
+  "handoff": "",
+  "limitations": [
+    "本轮实际视觉验收为 Safari 桌面浅色，未新增窄屏/深色截图。",
+    "本轮未调用真实外部模型或发送真实消息；权限执行使用隔离服务测试。"
+  ]
+}

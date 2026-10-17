@@ -1,0 +1,81 @@
+{
+  "id": "assistant-audible-reply-20261017",
+  "request": "语音回复没成功：排查实际Safari持续语音中的合成/播放/打断边界",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M HANDOVER.md\n M docs/agent/router.json\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/context.go\n M internal/server/server.go\n M internal/server/tts/provider.go\n M internal/server/vault_app.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M scripts/aide.sh\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_data.py\n M scripts/test_voice_panel.cjs\n?? cmd/aide-message-relay/\n?? docs/architecture/assistant-live.md\n?? docs/architecture/decentralized-messages.md\n?? docs/tasks/assistant-live-20261017.json\n?? docs/tasks/assistant-passkey-login-20261017.json\n?? docs/tasks/encrypted-message-center-20261017.json\n?? docs/tasks/icon-alignment-20261017.json\n?? docs/tasks/launcher-browser-recovery-20261017.json\n?? docs/tasks/qwen-tts-20261017.json\n?? docs/tasks/reminder-controls-20261017.json\n?? docs/tasks/tts-discovery-reliability-20261017.json\n?? internal/messaging/\n?? internal/server/assistant_watch.go\n?? internal/server/assistant_watch_test.go\n?? internal/server/auth_passkey_origin_test.go\n?? internal/server/message_assistant.go\n?? internal/server/message_center.go\n?? internal/server/message_center_test.go\n?? internal/server/qwen_tts_test.go\n?? internal/server/tts/qwen.go\n?? internal/server/tts/qwen_catalog.go\n?? internal/server/tts/qwen_catalog_test.go\n?? internal/server/tts/qwen_test.go\n?? internal/server/tts_catalog.go\n?? internal/server/web/assistant-live.js\n?? internal/server/web/message-center.css\n?? internal/server/web/message-center.js\n?? scripts/assistant-live.test.cjs\n?? scripts/identity-login-routing.test.cjs\n?? scripts/message-center.test.cjs\n?? scripts/qwen-tts.test.cjs",
+  "acceptance": [
+    "Reuse one user-activated audio element across asynchronous TTS chunks",
+    "Expose synthesis, playback, blocked and error states; retry blocked audio without another paid synthesis",
+    "Cancellation resolves pending playback and never restarts a stale chunk",
+    "Run focused tests and inspect actual Safari preview; distinguish playback events from audible hardware acceptance"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/tts-playback.test.cjs",
+    "docs/architecture/assistant-live.md",
+    "internal/server/web/assistant-live.js",
+    "scripts/assistant-live.test.cjs",
+    "scripts/qwen-tts.test.cjs",
+    "docs/agent/router.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "User reports complete silence during page-open continuous assistant voice. Preserve voice interruption.",
+      "evidence": [
+        "User clarification: completely no sound"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "Reuse a gesture-activated audio element; surface blocking with gesture retry; make playback lifecycle cancel-safe. Historical synthesis succeeded but actual current audible failure cause remains unconfirmed.",
+      "evidence": [
+        "WebKit autoplay policy is per media element",
+        "app.js creates new Audio(url) after async synthesis"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "Reused gesture-activated player with visible phases and blocked retry; fixed text replies skipped in companion mode and cancelled by subsequent selectSession otherwise.",
+      "evidence": [
+        "scripts/tts-playback.test.cjs",
+        "scripts/assistant-live.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "114 quick checks pass. Updated native Safari companion text-response path progressed through synthesizing, playing and completed. User explicitly confirmed hearing the actual reply. Actual microphone barge-in latency/echo was not retested in this turn.",
+      "evidence": [
+        ".agent-state/verify-20261017T083530994711Z.log",
+        "scripts/tts-playback.test.cjs",
+        "scripts/assistant-live.test.cjs",
+        "/private/tmp/aide-voice-reply-playing-20261017.png",
+        "User: heard preview; after update heard actual assistant reply"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "Documented Safari autoplay, response routing, cancellation and hardware acceptance boundaries.",
+      "evidence": [
+        "docs/architecture/assistant-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "Closed developer tools. No test containers, temporary browser tabs or settings changes. Existing user tabs/data preserved.",
+      "evidence": []
+    },
+    "release": {
+      "status": "complete",
+      "summary": "Local source build and restart completed; container healthy; app.js v181 and assistant-live.js v3 verified. Image sha256:0bf8cae5e89fab010bf95b5f411c8d3ab69c3d60db239ec9fc018a803381e828. Remote push/release not performed.",
+      "evidence": [
+        ".agent-state/startup/audible-reply-final.log"
+      ]
+    }
+  },
+  "release_authorization": "Prior explicit authorization to update and restart local service only; no remote push/release.",
+  "rollback": "Previous local image sha256:465a0b8586e1080203c062a1e6d2a4e6d11fe8fd3acb684f64a2279ab87f1f2b; preserve existing data mounts.",
+  "handoff": "Actual reply audibility accepted by user. Continuous microphone restored; hardware barge-in/echo remains untested this turn."
+}

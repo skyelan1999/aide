@@ -1,0 +1,86 @@
+{
+  "id": "qwen-tts-20261017",
+  "request": "助理语音支持第三方TTS大模型，用户指定阿里云百炼通义千问",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M HANDOVER.md\n M docs/agent/router.json\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/context.go\n M internal/server/server.go\n M internal/server/vault_app.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M scripts/aide.sh\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_data.py\n M scripts/test_voice_panel.cjs\n?? cmd/aide-message-relay/\n?? docs/architecture/assistant-live.md\n?? docs/architecture/decentralized-messages.md\n?? docs/tasks/assistant-live-20261017.json\n?? docs/tasks/assistant-passkey-login-20261017.json\n?? docs/tasks/encrypted-message-center-20261017.json\n?? docs/tasks/icon-alignment-20261017.json\n?? docs/tasks/launcher-browser-recovery-20261017.json\n?? docs/tasks/reminder-controls-20261017.json\n?? internal/messaging/\n?? internal/server/assistant_watch.go\n?? internal/server/assistant_watch_test.go\n?? internal/server/auth_passkey_origin_test.go\n?? internal/server/message_assistant.go\n?? internal/server/message_center.go\n?? internal/server/message_center_test.go\n?? internal/server/web/assistant-live.js\n?? internal/server/web/message-center.css\n?? internal/server/web/message-center.js\n?? scripts/assistant-live.test.cjs\n?? scripts/identity-login-routing.test.cjs\n?? scripts/message-center.test.cjs",
+  "acceptance": [
+    "语音设置提供千问TTS、地域、模型、音色、独立密钥；默认不改变已有引擎",
+    "原生DashScope协议输出WAV，可供小秘持续语音使用；显式试听使用当前引擎",
+    "密钥不回显且支持留空保留/明确清除；下载音频不带密钥且限制官方地址",
+    "mock协议与设置回归通过，真实付费合成未运行"
+  ],
+  "scope": [
+    "internal/server/tts/qwen.go",
+    "internal/server/tts/qwen_test.go",
+    "internal/server/tts/provider.go",
+    "internal/server/server.go",
+    "internal/server/qwen_tts_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/message-center.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/assistant-live.md",
+    "docs/tasks/qwen-tts-20261017.json",
+    "scripts/qwen-tts.test.cjs",
+    "docs/agent/router.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户指定阿里云百炼千问TTS",
+      "evidence": [
+        "https://help.aliyun.com/zh/model-studio/qwen-tts-api",
+        "internal/server/tts/qwen.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用现有TTSProvider，独立地域/模型配置，官方DashScope非实时协议与受限音频下载",
+      "evidence": [
+        "https://help.aliyun.com/zh/model-studio/qwen-tts-api",
+        "internal/server/tts/qwen.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现provider、配置与语音设置入口；不修改用户引擎选择或调用付费服务",
+      "evidence": [
+        "https://help.aliyun.com/zh/model-studio/qwen-tts-api",
+        "internal/server/tts/qwen.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "114项quick检查通过，最终Go tts与server定向race及vet通过；隔离真实浏览器验证千问面板、保存/重开地域模型音色及密钥不回显。未调用百炼真实API，实际音质和延迟NOT_RUN。",
+      "evidence": [
+        ".agent-state/qwen-tts-tests-final.log",
+        ".agent-state/verify-20261017T073153180035Z.log",
+        "/private/tmp/aide-qwen-tts-settings-20261017.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录配置路径、原生协议、密钥/下载隔离、调用计费和非实时边界",
+      "evidence": [
+        "docs/architecture/assistant-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已关闭隔离测试页/代理，移除专用无用户数据的测试容器和网络。用户Safari设置页未刷新，继承修改未清理或提交。",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Local build and restart only. Container healthy; localhost:9999 assets return 200. Image source label equals current source hash. No commit, push, tag or remote image publication. Existing healthz integrity remains degraded; global integrity is not claimed.",
+      "evidence": [
+        ".agent-state/startup/qwen-tts-update.log",
+        "image sha256:fa33af7bfffa08fcaf643c577e640406143c5c7375a98e57663014abfa6ad4d7",
+        "srcsha 4899b58b36070542bd75d7dc8ee96fa8f7e86e96fa08182e8174a82d3a613ed3"
+      ]
+    }
+  },
+  "release_authorization": "User authorized local update and restart in this continuing task. Remote publication not performed.",
+  "rollback": "Existing data mounts preserved. Retained aide:before-message-center-20261017 image is available; rollback not exercised.",
+  "handoff": "Local service updated. Original Safari settings page was preserved without refresh to protect unsaved input. Save edits, then refresh. Continuous voice is page-scoped. Qwen requires a separate TTS key configured by the user. Real microphone recognition, paid cloud synthesis, latency and audio quality remain NOT_RUN."
+}

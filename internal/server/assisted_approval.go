@@ -120,6 +120,9 @@ func (a *App) reviewPendingCommand(task *Task) {
 		cwd = a.containerAbs
 	}
 	record := ApprovalReview{Command: q.Command, Status: "reviewing", Reason: "正在独立审核具体命令", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "shell", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(q.Command)}
+	if task.AssistantManaged && a.settings.AssistantAutoReview {
+		record.Source = "assistant"
+	}
 	if len(task.ApprovalReviews) >= 50 {
 		task.ApprovalReviews = task.ApprovalReviews[len(task.ApprovalReviews)-49:]
 	}
@@ -248,9 +251,15 @@ func (a *App) approvalAuthorizationLocked(task *Task) (string, bool) {
 		}
 		s = parent
 	}
+	if rootTask.AssistantManaged {
+		if strings.TrimSpace(rootTask.AssistantAuthorization) == "" {
+			return "", false
+		}
+		return rootTask.AssistantAuthorization, true
+	}
 	requests := []string{}
 	for _, message := range s.Messages {
-		if message.Role == "user" {
+		if message.Role == "user" && message.Type != assistantTaskMessageType {
 			requests = append(requests, message.Content)
 		}
 	}
@@ -259,7 +268,7 @@ func (a *App) approvalAuthorizationLocked(task *Task) (string, bool) {
 	}
 	requests = append(requests, "当前真实用户任务："+rootTask.Prompt)
 	for _, steer := range rootTask.Steers {
-		if !steer.Queued {
+		if !steer.Queued && !steer.AssistantManaged {
 			requests = append(requests, steer.Content)
 		}
 	}

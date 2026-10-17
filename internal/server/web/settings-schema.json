@@ -304,7 +304,7 @@
     {
       "id": "voice",
       "title": "语音助理",
-      "description": "普通会话的麦克风会过滤背景声并把指令交给当前会话；小秘会话中麦克风先转写到输入框，编辑后再发送。",
+      "description": "工作统筹通过身份验证后自动运行，持续跟进交办任务、提醒和已授权消息；麦克风只控制收听。切换工作会话继续跟进，隐藏页面停止收听，锁屏或关闭页面停止统筹。工作优先，空闲时自然交流。",
       "controls": [
         {
           "id": "voiceAssistantName",
@@ -315,6 +315,11 @@
           "id": "xiaomi-model",
           "type": "xiaomi-model",
           "label": "小秘模型"
+        },
+        {
+          "id": "assistant-approval",
+          "type": "assistant-approval",
+          "label": "助理审批"
         },
         {
           "id": "personalityXiaomi",
@@ -429,6 +434,12 @@
           "label": "配置导出与导入"
         }
       ]
+    },
+    {
+      "id": "messages",
+      "title": "消息",
+      "description": "设备通信、账户身份和助理访问权限。",
+      "controls": []
     },
     {
       "id": "account",

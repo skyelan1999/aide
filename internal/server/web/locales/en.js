@@ -1,6 +1,31 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+"普通会话的麦克风会过滤背景声并把指令交给当前会话；小秘会话支持持续语音，识别后直接处理，回复后继续聆听。自主跟进只在当前页面开启，暂停、离开或锁屏即停止。": "Regular chat keeps its existing voice routing. The assistant processes speech directly, then resumes listening after replying. Follow-up runs only in the open page and stops when paused, left or locked.",
+"开始持续语音":"Start continuous voice",
+"结束持续语音":"End continuous voice",
+
+  "未开启陪伴": "Companion off",
+  "正在连接语音": "Connecting voice",
+  "持续聆听中": "Listening continuously",
+  "助理正在处理": "Assistant working",
+  "助理正在说话": "Assistant speaking",
+  "自主跟进中": "Following up",
+  "陪伴已暂停": "Companion paused",
+  "结束陪伴": "End companion",
+  "开启自主跟进": "Start follow-up",
+  "继续陪伴": "Resume companion",
+  "暂停陪伴": "Pause companion",
+  "主动跟进": "Proactive follow-up",
+  "语音回复": "Spoken replies",
+  "开启语音可连续交谈，也可开启自主跟进": "Start voice for continuous conversation, or enable follow-up",
+  "语音连接中断，请点击继续重试": "Voice disconnected. Resume to retry.",
+  "语音连接频繁中断，已暂停，请点击继续": "Voice repeatedly disconnected. Paused; resume to retry.",
+  "当前浏览器不支持语音识别": "This browser does not support speech recognition",
+  "麦克风权限被拒绝，请允许后重试": "Microphone access denied. Allow access and retry.",
+
+  "设备通信、账户身份和助理访问权限。": "Device communication, account identity and assistant access.",
+  "消息": "Messages",
   "待你处理 · 前往任务操作区": "Action required · Go to task controls",
   "查看完整命令 · {0} 行": "View full command · {0} lines",
   "查看任务记录": "View task history",
@@ -2797,3 +2822,22 @@ Object.assign(window.aideEnglish, {'线段':'Segments','点':'Points'});
 Object.assign(window.aideEnglish, {'退化面 {0}，已保留边界':'Degenerate faces: {0}; original boundaries retained'});
 
 Object.assign(window.aideEnglish, {'返回星图':'Return to constellation','检索来源已变化，请重新探索文档正文。':'Search sources changed. Search the document text again.'});
+
+Object.assign(window.aideEnglish, {
+'阿里云百炼 · 千问 TTS':'Alibaba Cloud Model Studio · Qwen TTS',
+'百炼地域':'Model Studio region', '北京':'Beijing', '新加坡':'Singapore',
+'TTS 模型':'TTS model', '音色 ID':'Voice ID', '已配置，留空保留':'Configured; leave blank to keep',
+'填写百炼 API Key':'Enter your Model Studio API key', '清除已保存的 TTS 密钥':'Clear saved TTS key',
+'请先保存千问 TTS 设置，再试听':'Save Qwen TTS settings before previewing',
+'地域须与密钥一致。默认模型 qwen3-tts-flash、音色 Cherry；支持填写其他非实时模型与对应音色 ID。保存后试听，合成文本会发送至阿里云百炼并按服务计费。千问接口不使用下方语速和表现力参数。':'The region must match your key. Defaults: qwen3-tts-flash and Cherry. Other non-realtime models and their voice IDs may be entered. Save before previewing. Synthesis sends text to Alibaba Cloud Model Studio and is billed by the provider. Qwen does not use the rate or expressiveness controls below.'
+});
+
+Object.assign(window.aideEnglish, {"已打断，正在听你说": "Interrupted; listening to you", "刷新模型与音色": "Refresh models and voices", "正在查询模型与音色…": "Loading models and voices…", "已保存，未在目录中": "Saved; not in catalog", "目录查询失败，保留当前列表": "Catalog unavailable; keeping current choices", "模型：百炼接口目录（未验证账户调用权限）": "Models: provider catalog (account access not verified)", "模型：内置兼容目录": "Models: bundled compatible catalog", "音色：已同步官方目录": "Voices: synced official catalog", "音色：内置官方目录": "Voices: bundled official catalog", "失败时使用浏览器语音": "Use browser speech on failure", "语音服务返回空音频": "Speech service returned empty audio", "语音合成超时": "Speech synthesis timed out", "语音播放失败": "Audio playback failed", "已切换浏览器语音": "Switched to browser speech", "已保留文字，未切换机械声": "Text preserved; no automatic voice switch", "地域须与密钥一致。模型只显示当前非实时接口兼容型号；音色自动同步官方目录，网络不可用时保留内置列表。语速调整播放倍率并保持音调。合成文本会发送至百炼并计费；失败默认保留文字，不切换机械声。": "The region must match your key. Only models compatible with this non-realtime API are listed. Voices sync from the official catalog, with bundled choices when unavailable. Speed changes playback rate while preserving pitch. Synthesis sends text to Model Studio and is billed. Failures preserve text without changing voices by default."});
+
+Object.assign(window.aideEnglish, {"\u6b63\u5728\u5408\u6210\u8bed\u97f3\u2026": "Synthesizing speech...", "\u6b63\u5728\u64ad\u653e\u8bed\u97f3": "Playing speech", "\u8bed\u97f3\u64ad\u653e\u5b8c\u6210": "Speech playback finished", "\u6d4f\u89c8\u5668\u7b49\u5f85\u64ad\u653e\u6388\u6743": "Browser needs permission to play audio", "\u8bed\u97f3\u56de\u590d\u5931\u8d25": "Voice reply failed", "\u70b9\u51fb\u64ad\u653e\u8bed\u97f3": "Play voice reply", "\u97f3\u9891\u672a\u80fd\u5f00\u59cb\u64ad\u653e\uff0c\u8bf7\u68c0\u67e5\u6d4f\u89c8\u5668\u58f0\u97f3\u8bbe\u7f6e": "Audio did not start; check browser sound settings"});
+
+Object.assign(window.aideEnglish, {"\u5de5\u4f5c\u7edf\u7b79": "Work coordination", "\u6682\u65e0\u5f85\u8ddf\u8fdb\u5de5\u4f5c": "No work to follow up", "{0} \u9879\u8ddf\u8fdb": "{0} items followed", "{0} \u9879\u5f85\u5904\u7406": "{0} need attention", "\u7b49\u5f85\u8eab\u4efd\u9a8c\u8bc1": "Waiting for identity verification", "\u6b63\u5728\u7edf\u7b79\u5904\u7406": "Coordinating work", "\u6b63\u5728\u6c47\u62a5": "Reporting progress", "\u5de5\u4f5c\u7edf\u7b79\u4e2d": "Coordinating work", "\u7b49\u5f85\u8fde\u63a5\u6062\u590d": "Waiting for reconnection", "\u8fde\u63a5\u6062\u590d\u4e2d\uff0c\u5de5\u4f5c\u8bb0\u5f55\u5df2\u4fdd\u7559": "Reconnecting; work records preserved", "\u4ea4\u529e\u5de5\u4f5c\u540e\u81ea\u52a8\u8ddf\u8fdb\uff0c\u7a7a\u95f2\u65f6\u53ef\u4ee5\u76f4\u63a5\u548c\u6211\u804a\u5929\u3002": "I follow assigned work automatically. We can chat when things are quiet.", "\u6211\u4f1a\u81ea\u52a8\u7edf\u7b79\u4ea4\u529e\u7684\u5de5\u4f5c\u3001\u8ddf\u8fdb\u8fdb\u5c55\uff1b\u7a7a\u95f2\u65f6\u4e5f\u53ef\u4ee5\u548c\u6211\u804a\u804a\u3002": "I automatically coordinate assigned work and follow progress. We can also chat when things are quiet."});
+
+Object.assign(window.aideEnglish, {"\u5de5\u4f5c\u7edf\u7b79\u901a\u8fc7\u8eab\u4efd\u9a8c\u8bc1\u540e\u81ea\u52a8\u8fd0\u884c\uff0c\u6301\u7eed\u8ddf\u8fdb\u4ea4\u529e\u4efb\u52a1\u3001\u63d0\u9192\u548c\u5df2\u6388\u6743\u6d88\u606f\uff1b\u9ea6\u514b\u98ce\u53ea\u63a7\u5236\u6536\u542c\u3002\u5207\u6362\u5de5\u4f5c\u4f1a\u8bdd\u7ee7\u7eed\u8ddf\u8fdb\uff0c\u9690\u85cf\u9875\u9762\u505c\u6b62\u6536\u542c\uff0c\u9501\u5c4f\u6216\u5173\u95ed\u9875\u9762\u505c\u6b62\u7edf\u7b79\u3002\u5de5\u4f5c\u4f18\u5148\uff0c\u7a7a\u95f2\u65f6\u81ea\u7136\u4ea4\u6d41\u3002": "Work coordination starts automatically after identity verification, following assigned tasks, reminders and authorized messages. The microphone only controls listening. Follow-up continues across work sessions. Hiding the page stops listening; locking or closing the page stops coordination. Work comes first, with friendly conversation when idle."});
+
+Object.assign(window.aideEnglish, {"\u52a9\u7406\u4ee3\u53d1": "Sent by assistant", "\u52a9\u7406\u4ee3\u5ba1": "Assistant review", "\u52a9\u7406\u5ba1\u6279": "Assistant approvals", "\u5141\u8bb8\u52a9\u7406\u4ee3\u5ba1\u4ea4\u529e\u4efb\u52a1": "Allow assistant review for delegated tasks", "\u52a9\u7406\u5ba1\u6279\u8bbe\u7f6e\u5df2\u4fdd\u5b58": "Assistant approval settings saved", "\u4f5c\u7528\u4e8e\u52a9\u7406\u4ea4\u529e\u7684\u4efb\u52a1\u53ca\u5176\u5b50\u4efb\u52a1\uff0c\u590d\u7528\u72ec\u7acb\u5ba1\u6279\u5668\u5224\u65ad\u5177\u4f53\u547d\u4ee4\u548c\u65b0\u6587\u4ef6\u63d0\u6848\u5e76\u8bb0\u5f55\u539f\u56e0\u3002\u65e0\u6cd5\u786e\u8ba4\u6388\u6743\u3001\u73b0\u6709\u6587\u4ef6\u8986\u76d6\u6216\u53d7\u4fdd\u62a4\u64cd\u4f5c\u4ea4\u7531\u7528\u6237\u51b3\u5b9a\uff1b\u4e0d\u4f1a\u4ee3\u7b54\u4e1a\u52a1\u6f84\u6e05\u3001\u6307\u7eb9\u9a8c\u8bc1\u6216\u6d88\u606f\u9080\u8bf7\u3002\u5173\u95ed\u540e\u9075\u5faa\u5de5\u4f5c\u53f0\u539f\u6709\u5ba1\u6279\u6a21\u5f0f\u3002": "Applies to assistant-delegated tasks and their child tasks. The independent reviewer evaluates exact commands and new-file proposals and records reasons. Unclear authorization, overwriting existing files and protected operations return to you. It does not answer business clarifications, biometric prompts or message invitations. When off, the existing workbench approval mode applies."});

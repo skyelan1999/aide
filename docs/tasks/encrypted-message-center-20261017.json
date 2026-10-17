@@ -1,0 +1,112 @@
+{
+  "id": "encrypted-message-center-20261017",
+  "request": "把提醒改成消息，保留提醒并增加聊天、语音、多人语音、群组、文件分块断点传送；以绑定设备密钥的6位码查找设备，联系人双向同意、拉黑，群组通话文件均需接收方同意，三平台去中心化加密",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "",
+  "acceptance": [
+    "保留原提醒CRUD与到期通知；消息中心提供消息/联系人/文件/提醒清晰分区",
+    "持久设备密钥与完整指纹独立于IP和网卡，6位码只做发现索引；碰撞必须明确处理",
+    "联系人双方同意后才可聊天，拒绝/撤销/拉黑不能被重放绕过",
+    "每次群组、单人/多人通话、文件邀请独立同意；同意前不采集麦克风或发送文件内容",
+    "分块校验、显式接收授权、持久接收进度、断点续传与取消清理",
+    "采用成熟标准加密传输和身份认证；发现或中继不能解密内容；明确端点和元数据威胁边界",
+    "记录Windows/macOS/Linux和真实双机浏览器测试的实际状态，禁止以mock替代真实联网证明"
+  ],
+  "scope": [
+    "internal/messaging",
+    "internal/server/message_center.go",
+    "internal/server/web/message-center.js",
+    "internal/server/web/message-center.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/server.go",
+    "docs/architecture/decentralized-messages.md",
+    "docs/tasks/encrypted-message-center-20261017.json",
+    "scripts/message-center.test.cjs",
+    "cmd/aide-message-relay",
+    "Dockerfile",
+    "internal/server/config_backup.go",
+    "internal/server/vault_app.go",
+    "internal/server/message_center_test.go",
+    "internal/server/web/starmap.html",
+    "docs/agent/router.json",
+    "Dockerfile.local",
+    "HANDOVER.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户已确认局域网直连、可配置自托管引导/中继及Windows/macOS/Linux。6位码只作索引，完整持久公钥指纹绑定设备安装；每类资源独立同意。",
+      "evidence": [
+        "用户异步答复：符合，按这个设计推进",
+        "docs/architecture/decentralized-messages.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "独立默认关闭的设备mTLS监听器；标准TLS1.3双向公钥认证，中继只转发内层TLS字节；WebRTC DTLS-SRTP音频，设备签名入群证明，块级SHA256及AES-GCM存储，复用工作台鉴权/锁屏与本机保险库。",
+      "evidence": [
+        "docs/architecture/decentralized-messages.md",
+        "internal/messaging/transport.go",
+        "internal/messaging/consent.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "消息四分区、稳定密钥身份/短码碰撞、双向联系人、独立群组/语音/文件许可、拉黑、分块续传、加密存储、LAN及自托管中继已实现；补齐挂载文件选择器、内联保存、刷新条件、离线撤销确认、配额和配置回滚。",
+      "evidence": [
+        "internal/messaging",
+        "internal/server/message_center.go",
+        "internal/server/web/message-center.js",
+        "internal/server/web/message-center.css"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "当前源码109项quick通过；通信包全量race、TestMessageCenter集成、相关vet和平台构建通过；隔离浏览器聊天/文件/提醒/布局验证通过。真实两机与多人声音、TURN跨NAT、Safari及Windows/Linux浏览器未完成，禁止视为完整通信验收。",
+      "evidence": [
+        ".agent-state/quick.json",
+        ".agent-state/verify-20261017T061545954097Z.log",
+        ".agent-state/message-fixture/final-verification.log",
+        "docs/architecture/decentralized-messages.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录实际协议、身份复制边界、中继证书/部署、浏览器安全上下文、Docker网络及Windows现有运行架构、存储/群规模上限和未通过项目。",
+      "evidence": [
+        "docs/architecture/decentralized-messages.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅全部范围内修改与新增文件；audit列出的新文件均归属本任务。已关闭正常自建测试页，移除隔离容器/网络/回环代理，仅保留验证日志和预览；未改动用户运行数据或正式服务。",
+      "evidence": [
+        "git diff --check",
+        "python3 scripts/agent-route.py audit",
+        ".agent-state/message-fixture/final-verification.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "按后续用户授权已构建并更新本机开发实例，Safari实际显示消息四分区。未推送/升版/正式Release；双机与多人真实媒体未验收。",
+      "evidence": [
+        "用户确认范围为设计推进；未应用于真实联系人或数据"
+      ]
+    }
+  },
+  "release_authorization": "本轮授权实现与隔离验证；未授权将新增通信配置应用于真实联系人、开放真实设备端口、推送或替换正式服务。",
+  "rollback": "保留原/api/reminders与数据格式；新消息独立目录和功能开关。禁止自动迁移或删除原提醒、真实通信数据。",
+  "handoff": "本机开发实例已更新，普通start在Git仓库自动按源码哈希构建。消息入口和四分区已在Safari确认。通信默认关闭，未启用真实联系人/文件/麦克风；真实双机/多人声音仍待联调。",
+  "verified_source_fingerprint": "fa37017f6f3d4a144663c07334df8c68178c8ad59a98d7c5720997c125686453",
+  "platform_status": {
+    "linux_arm64": "主程序及中继交叉构建通过；当前隔离Linux容器通信后端测试通过",
+    "macos_arm64": "主程序及中继交叉构建通过；未原生启动候选主程序",
+    "windows_amd64": "通信包及中继交叉构建通过；主程序既有Unix接口不支持原生编译；Windows沿用Docker，未实机运行"
+  },
+  "local_update_authorization": "用户：还是没有啊，根本构建不出来啊。按当前上下文授权修复实际源码构建并更新本机工作台，保留原数据与回退镜像；不含推送或正式Release。",
+  "local_update_status": "complete: normal start.command built and activated the source image; source hash 9acf5dd81daab2a126c1732c9207fba218433a8e149a8b7a4e2687376a0bbacc",
+  "local_image": "sha256:d08bbc8565cad644efa3dc0e7d0de681e8c34ee1eefda6df3dfa81f7186b9a6a",
+  "local_rollback_image": "aide:before-message-center-20261017"
+}

@@ -1,0 +1,91 @@
+{
+  "id": "assistant-live-20261017",
+  "request": "小秘持续语音直接处理，不再听写到输入框；页面开启期间自主跟进工作、提醒、已授权消息",
+  "baseline": "ceb824814034860d1881ded6d27394ebd12fef9d",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M HANDOVER.md\n M docs/agent/router.json\n M internal/server/assistant_agent.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/context.go\n M internal/server/server.go\n M internal/server/vault_app.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M scripts/aide.sh\n M scripts/prebuilt-image.sh\n M scripts/test_launcher_data.py\n?? cmd/aide-message-relay/\n?? docs/architecture/decentralized-messages.md\n?? docs/tasks/assistant-passkey-login-20261017.json\n?? docs/tasks/encrypted-message-center-20261017.json\n?? docs/tasks/icon-alignment-20261017.json\n?? docs/tasks/launcher-browser-recovery-20261017.json\n?? docs/tasks/reminder-controls-20261017.json\n?? internal/messaging/\n?? internal/server/auth_passkey_origin_test.go\n?? internal/server/message_assistant.go\n?? internal/server/message_center.go\n?? internal/server/message_center_test.go\n?? internal/server/web/message-center.css\n?? internal/server/web/message-center.js\n?? scripts/identity-login-routing.test.cjs\n?? scripts/message-center.test.cjs",
+  "acceptance": [
+    "用户确认仅页面开启期间运行，支持明确开启/暂停/继续/结束",
+    "小秘语音直接进入助理工具循环，不写入或清空手动草稿，回复后恢复聆听",
+    "播放期间停止识别避免自我回声；停止/锁屏/离开/权限拒绝与迟到结果均不重启采集",
+    "主动跟进已交办任务、到期提醒、已授权未读消息，基线和重复事件不重复播报，无新事件不空转模型",
+    "保留既有消息授权与邀请同意机制；语音模型失败不自动派发未知背景声",
+    "实际 Safari 验证页面和控制入口，明确真实麦克风/扬声器验证限制"
+  ],
+  "scope": [
+    "internal/server/web/assistant-live.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/message-center.css",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/locales/en.js",
+    "internal/server/assistant_watch.go",
+    "internal/server/assistant_watch_test.go",
+    "internal/server/assistant_history.go",
+    "internal/server/assistant_agent.go",
+    "internal/server/server.go",
+    "scripts/assistant-live.test.cjs",
+    "scripts/test_voice_panel.cjs",
+    "docs/agent/router.json",
+    "Dockerfile",
+    "Dockerfile.local",
+    "docs/architecture/assistant-live.md",
+    "docs/tasks/assistant-live-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确选择页面开启期间持续运行，非关闭页面后台服务",
+      "evidence": [
+        "本轮澄清答复"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "页面拥有语音生命周期，现有工具循环负责工作执行，独立只读事件跟进避免空转模型和绕过权限",
+      "evidence": [
+        "docs/architecture/assistant-live.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "持续会话状态机、直接语音入口、事件跟进API、暂停/结束控件和语音回复；默认不自动开启麦克风或调用真实模型",
+      "evidence": [
+        "internal/server/web/assistant-live.js",
+        "internal/server/assistant_watch.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "113项quick检查、持续语音状态机/原主会话语音测试、助理和消息后端Go race及vet通过；隔离浏览器实际验证自主跟进开启/暂停/恢复/结束，草稿保留，无控制台错误。真实麦克风/扬声器与用户Safari实际音频为NOT_RUN。",
+      "evidence": [
+        ".agent-state/assistant-live-tests.log",
+        ".agent-state/verify-20261017T071905348594Z.log",
+        "/private/tmp/aide-assistant-live-20261017.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录页面生命周期、ASR/模型/TTS边界与已交办任务的独立生命周期",
+      "evidence": [
+        "docs/architecture/assistant-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已关闭隔离浏览器和专用代理，移除无用户数据的专用测试容器/网络，保留用户Safari原设置页及继承修改",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Local build and restart only. Container healthy; localhost:9999 assets return 200. Image source label equals current source hash. No commit, push, tag or remote image publication. Existing healthz integrity remains degraded; global integrity is not claimed.",
+      "evidence": [
+        ".agent-state/startup/qwen-tts-update.log",
+        "image sha256:fa33af7bfffa08fcaf643c577e640406143c5c7375a98e57663014abfa6ad4d7",
+        "srcsha 4899b58b36070542bd75d7dc8ee96fa8f7e86e96fa08182e8174a82d3a613ed3"
+      ]
+    }
+  },
+  "release_authorization": "User authorized local update and restart in this continuing task. Remote publication not performed.",
+  "rollback": "Existing data mounts preserved. Retained aide:before-message-center-20261017 image is available; rollback not exercised.",
+  "handoff": "Local service updated. Original Safari settings page was preserved without refresh to protect unsaved input. Save edits, then refresh. Continuous voice is page-scoped. Qwen requires a separate TTS key configured by the user. Real microphone recognition, paid cloud synthesis, latency and audio quality remain NOT_RUN."
+}

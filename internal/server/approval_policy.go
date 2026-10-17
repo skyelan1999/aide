@@ -145,14 +145,14 @@ func (a *App) changeGlobalApprovalMode(w http.ResponseWriter, enabled bool) {
 				continue
 			}
 			changed = true
-			task.AutoReview = enabled
+			task.AutoReview = a.taskAutoReviewLocked(task)
 			task.approvalGeneration++
 			if task.approvalCancel != nil {
 				task.approvalCancel()
 			}
 			task.ApprovalState = ""
 			if hasPendingApproval(task) {
-				if enabled {
+				if task.AutoReview {
 					task.ApprovalState = "reviewing"
 					pending = append(pending, task)
 				} else {

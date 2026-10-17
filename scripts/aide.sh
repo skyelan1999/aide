@@ -233,13 +233,24 @@ case "$MODE" in
       fi
     fi
     export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
-    if [[ "$MODE" == start && "${AIDE_BUILD_FROM_SOURCE:-0}" != 1 ]]; then
-      source scripts/prebuilt-image.sh
-      IMG="$("$DOCKER_BIN" compose config --images aide)"
-      launcher_prebuilt_image "$DOCKER_BIN" "$IMG"
-      export AIDE_IMAGE="$IMG"
-      MODE=start-image
+    REUSE_RUNNING=0
+    source scripts/prebuilt-image.sh
+    if [[ "$MODE" == start ]] && ! launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
+      if launcher_running_ready "$DOCKER_BIN"; then
+        echo "== Aide 已在运行且健康，直接打开现有界面；不下载或替换镜像 =="
+        REUSE_RUNNING=1
+      else
+        IMG="$("$DOCKER_BIN" compose config --images aide)"
+        if launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
+          echo "== 使用本地已安装的完整运行镜像；启动无需下载，更新请使用软件升级 =="
+        else
+          launcher_prebuilt_image "$DOCKER_BIN" "$IMG"
+        fi
+        export AIDE_IMAGE="$IMG"
+        MODE=start-image
+      fi
     fi
+    if [[ "$REUSE_RUNNING" != 1 ]]; then
     if [[ "$MODE" == start-image ]]; then
       IMG="$("$DOCKER_BIN" compose config --images aide)"
     else
@@ -288,6 +299,7 @@ case "$MODE" in
     launcher_env_save
     rm -f .cache/aide-manual-stop
     "$DOCKER_BIN" compose up -d --no-build --pull never
+    fi
     if [[ "$(uname -s)" == Darwin ]] && command -v node >/dev/null 2>&1; then
       bash scripts/safari-bridge-control.sh start || echo "Safari 桥接未启动；Aide 其他功能仍可用。"
       bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
