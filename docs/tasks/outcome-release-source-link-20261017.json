@@ -74,5 +74,15 @@
     "fingerprint": "b85fb877e8b829b28d3c1a0ef6cdbc4d4e7fe4a3a3d1ccb598aa09cb9cb7d93c",
     "head": "dd20b1b5e48e62616e81a248ed2a0b0283e8cec8",
     "log": ".agent-state/verify-20261017T055717868235Z.log"
+  },
+  "native_candidate": {
+    "status": "prepared_not_started",
+    "sourceCommit": "21fc40a12da18c7c1f08fc1c13c7e7022be72534",
+    "isolatedProject": "aide-continuity-native-20261017",
+    "productionDataMounted": false,
+    "allUserRunsTerminalAtPreparation": true,
+    "protectedFilesBaseline": 22,
+    "fullStatus": "running; wait for exact-source pass before building",
+    "privateState": ".agent-state/outcome-release-source-link-20261017/native-owner.json"
   }
 }
