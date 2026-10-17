@@ -133,7 +133,9 @@ async function stagedOutcomeScenario(){
  await c.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api:async()=>++calls===1?first:last,t:x=>x,blocked:()=>false});
  const shown=text=>descendants(content).filter(e=>e.className==='outcome-io-answer md-body'&&e.textContent===text).length;
  assert.equal(shown(one.content),1,'saved conclusion must be visible while next request is still running');
+ assert.ok(descendants(content).some(e=>e.textContent==='任务仍在运行，以下是已保存的阶段正文。'));
  await timers[0]();assert.equal(shown(one.content),1);assert.equal(shown(two.content),1,'final body matching a saved segment must not be rendered twice');
+ assert.ok(!descendants(content).some(e=>e.textContent==='任务仍在运行，以下是已保存的阶段正文。'||e.textContent==='以下是已保存的阶段正文；任务尚未正常完成。'),'completed replies must not retain a running or incomplete notice');
  descendants(content).find(e=>e.textContent==='导出成果 JSON').onclick();assert.equal(blob.outputs[0].segments.length,2);assert.equal(blob.exportScope.outputTextComplete,true);
  const truncated={...last,outputs:[{...last.outputs[0],segmentsOmitted:1,segmentsTotal:3}]};
  await c.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api:async()=>truncated,t:x=>x,blocked:()=>false});
@@ -148,6 +150,7 @@ function stagedOverviewScenario(){
  const session={id:'s',title:'Saved stages',runsTotal:1,runs:[{id:'r',mode:'chat',status:'paused',steps:[{name:'chat',status:'paused',content:'SAME_TEXT',reasoning:'PRIVATE_REASONING',outputSegments:[{id:'a',round:0,content:'SAME_TEXT'},{id:'b',round:1,content:'SAME_TEXT'}]}]}]};
  c.window.AideTaskOutcome.sessionOverview(content,{session,t:x=>x,selectRun(){},loadOlder(){}});
  let all=descendants(content);assert.equal(all.filter(e=>e.className==='outcome-io-answer md-body'&&e.textContent==='SAME_TEXT').length,2,'distinct saved stages with repeated text remain; only duplicate legacy final is omitted');assert.ok(!all.some(e=>e.textContent==='PRIVATE_REASONING'));
+ assert.ok(all.some(e=>e.textContent==='以下是已保存的阶段正文；任务尚未正常完成。'),'paused replies retain an explicit incomplete notice');
  const metrics=all.find(e=>e.className==='outcome-metrics outcome-io-metrics');assert.equal(metrics.children[1].children[0].textContent,'1','stages still represent one assistant turn');
  session.runs[0].steps[0].content='';session.runs[0].steps[0].outputSegments=Array.from({length:120},(_,i)=>({id:String(i),round:i,content:'界'.repeat(9000)}));
  c.window.AideTaskOutcome.sessionOverview(content,{session,t:x=>x,selectRun(){},loadOlder(){}});all=descendants(content);const bodies=all.filter(e=>e.className==='outcome-io-answer md-body');assert.equal(bodies.length,4);assert.equal(bodies.reduce((n,e)=>n+Array.from(e.textContent).length,0),32000,'overview uses a bounded Unicode preview as well as the API');

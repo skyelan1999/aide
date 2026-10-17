@@ -36,7 +36,8 @@
   const parts=replyPieces(step,mode);
   const body=(parent,text)=>{const e=node('div','outcome-io-answer md-body');if(renderMarkdown)e.innerHTML=renderMarkdown(text);else e.textContent=text;parent.append(e);};
   if(parts.segments.length){
-   host.append(node('p','muted',t('已保存阶段正文；任务可能仍在运行，不代表独立验收。')));
+   if(step.status==='running')host.append(node('p','muted',t('任务仍在运行，以下是已保存的阶段正文。')));
+   else if(step.status!=='completed')host.append(node('p','muted',t('以下是已保存的阶段正文；任务尚未正常完成。')));
    for(const segment of parts.segments){const block=node('div','outcome-io-segment');block.append(node('p','outcome-io-model',t('已保存片段 {0}',segment.index)));body(block,segment.content);if(segment.truncated)block.append(node('p','muted',t('片段预览已截断，完整正文见会话记录')));host.append(block);}
    if(parts.total>parts.segments.length)host.append(node('p','muted',t('片段预览已展示 {0} / {1}，更早内容见会话记录',parts.segments.length,parts.total)));
   }

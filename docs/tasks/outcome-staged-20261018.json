@@ -62,7 +62,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "旧Go API与JS阶段显示回归均失败复现；修复后Outcome/TaskOutcome/StagedOutput聚焦Go测试退出0，JS分页/阶段/生命周期通过；quick/full及当前原生候选待执行。",
+      "summary": "Go聚焦和JS阶段/分页/生命周期已通过；首版quick124通过，原生Safari已确认30/64轮和#64/#40绝对编号，以及超时失败后API/详情仍显示持久第一段。第二次请求超过3分钟无有效内容而失败，不能记为正常终态通过。已收紧提示：运行中/未正常完成分别显示，完成任务不重复提示；JS回归通过，新quick运行中，最终候选原生和full待完成。",
       "evidence": [
         "internal/server/outcome_staged_test.go",
         "internal/server/staged_output_test.go",
