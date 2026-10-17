@@ -1,5 +1,5 @@
 {
-  "status": "in_progress",
+  "status": "local_candidates_pass_public_native_pending",
   "scope": "Local current-source offline delivery candidates; not public distribution or native full workbench acceptance",
   "sourceSHA": "6ebd16a44ea26bf2e37cf3f55f68e51b7283e094568c394a9892c1af90ec3aca",
   "buildCommit": "05295539906f51f71f1005b431ff53e449b0955a",
@@ -143,11 +143,78 @@
     }
   },
   "amd64": {
-    "status": "building_serially_after_ARM_cleanup",
-    "nativeAcceptance": "NOT_RUN; Windows user-owned"
+    "build-amd64-proof": {
+      "status": "pass",
+      "scope": "Local offline AMD64 candidate build under ARM emulation, not native Windows acceptance",
+      "arch": "amd64",
+      "tag": "aide:continuity-6eb-amd64-05295539",
+      "image": "sha256:ff55d85c32ed10bda484ff88add09501dd4e716aa9a1b7041ff16c04b1eca0ec",
+      "sourceSHA": "6ebd16a44ea26bf2e37cf3f55f68e51b7283e094568c394a9892c1af90ec3aca",
+      "commit": "05295539906f51f71f1005b431ff53e449b0955a",
+      "base": "sha256:0c173c73296efc4867142df1c85063c68109c78c9b6e7a53b6c9af43be01face",
+      "network": "none",
+      "pull": false,
+      "buildTests": 0,
+      "exactSourceFull": "previous official full115 pass",
+      "runtimeMode": "source",
+      "DockerfileSHA256": "673505ad9325cf721326d7d38b40e76580f5da600be7b1d1a699c906e7514dfc",
+      "logSHA256": "6a5965c2c82c888877d5f007a5a35b62ddb1f8a41de722c78f39f8092a5b2288",
+      "resourceScope": "Serial build within existing global Docker engine budget; no per-build cgroup limit claimed",
+      "engineMemoryBytes": 6210576384,
+      "engineCPUs": 4,
+      "public": false
+    },
+    "export-amd64-proof": {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "image": "sha256:ff55d85c32ed10bda484ff88add09501dd4e716aa9a1b7041ff16c04b1eca0ec",
+      "sourceSHA": "6ebd16a44ea26bf2e37cf3f55f68e51b7283e094568c394a9892c1af90ec3aca",
+      "buildCommit": "05295539906f51f71f1005b431ff53e449b0955a",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-amd64-ff55d85c32ed-offline.tar.gz",
+      "bytes": 916903091,
+      "sha256": "0792b059ca90ed535395581deeb3cb35337601d04d8a05615fe7753503dd8b4e",
+      "innerImageArchiveSHA256": "4e931ca6f2903e14e6abb42d23b3abf75d46e11c2726a29272293e4afc814365",
+      "archiveNoHostData": true,
+      "packagedLauncherExact": true,
+      "newPinnedHostReadinessIncluded": true,
+      "actualDockerLoadExit": 0,
+      "loadedIdentityExact": true,
+      "publicDefaultsAndTrackedSumsUnchanged": true,
+      "published": false,
+      "otherDeviceImport": "NOT_RUN",
+      "buildInfo": "version=0.1.17.0-RC2\nimage=sha256:ff55d85c32ed10bda484ff88add09501dd4e716aa9a1b7041ff16c04b1eca0ec\nplatform=linux/amd64\nsrcsha=6ebd16a44ea26bf2e37cf3f55f68e51b7283e094568c394a9892c1af90ec3aca\ncadRuntime=8.0.1.1.0\n"
+    },
+    "amd-guard-proof": {
+      "status": "pass",
+      "originalStartCommand": true,
+      "exit": 1,
+      "AMDPackageRejectedByARMEngine": true,
+      "noContainerCreated": true,
+      "guardNotBypassed": true,
+      "innerImageTarNotExtractedBecauseOnlyGuardTested": true,
+      "actualImageImport": "pass separately",
+      "nativeAMDOrWindowsRuntime": "NOT_RUN user-owned",
+      "nativeBrowserOpened": false
+    }
   },
   "publicDefaultManifestAndTrackedSumsUnchanged": true,
   "nativeApprovalOutcomeGates": "pending user-deferred candidate browser acceptance",
   "productionReplaced": false,
-  "remoteMainPushed": false
+  "remoteMainPushed": false,
+  "finalLocalQualification": {
+    "status": "pass",
+    "candidateStructureAndCommonSource": true,
+    "unpublishedCandidatePublicGateExit": 1,
+    "unpublishedCandidateRefused": true,
+    "publicGateOutput": "{\"status\": \"fail\", \"error\": \"linux/arm64: no unique uploaded public asset\", \"mutations\": false}",
+    "productionIdentityAnd22FilesUnchanged": true,
+    "oldLocalImageTagUnchanged": true,
+    "defaultManifestUnchanged": true,
+    "fullFingerprintUnchanged": true,
+    "ownedTestContainersAbsent": true,
+    "actualRunningContainers": [
+      "aide-cad-1",
+      "aide-aide-1"
+    ]
+  }
 }

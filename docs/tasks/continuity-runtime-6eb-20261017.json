@@ -34,32 +34,32 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "ARM built/exported/imported with existing recipe; AMD build now running serially after ARM cleanup.",
+      "status": "pass",
+      "summary": "Both current6eb source candidates built serially/offline and exported via existing recipe; no product changes or default activation.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
         "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "ARM original offline launcher, auth401/version/commit/CAD plus10 reasoning writes/stale409/restart passed; AMD/native/public distribution still pending.",
+      "status": "pass",
+      "summary": "Both archive/digest/actual Docker load identities pass; ARM original startup/auth/CAD plus10 reasoning writes/stale409/restart pass; AMD guard correctly rejects ARM engine without containers. Exact full115 inputs remain unchanged; public candidate verifier correctly rejects missing new assets.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
         "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Partial controlled report/proof distinguishes local ARM from pending AMD and public/native scope.",
+      "status": "pass",
+      "summary": "Controlled report/proof distinguishes ARM native, AMD emulation/import/guard, public attachment refusal, native UI and Windows boundaries.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
         "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "ARM2 owned stopped containers/2 empty networks and verified duplicate tar removed; data/images/outer package retained; final AMD cleanup pending.",
+      "status": "pass",
+      "summary": "ARM2 owned stopped containers/2 empty networks and917087232-byte verified duplicate tar removed; no AMD runtime containers created; data/images/outer archives retained, production22 unchanged.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
         "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
@@ -67,7 +67,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "AMD candidate still building; current-source public pair/default qualification and original native approval/outcome prerequisites incomplete. No main/production delivery.",
+      "summary": "Local candidates qualified only. Actual public candidate verifier exit1: no unique uploaded ARM asset; defaults stay prior07c. Original approval/outcome native prerequisites user-deferred. No remote main or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
         "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
