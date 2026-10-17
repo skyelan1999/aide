@@ -109,9 +109,14 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "完整验证已通过，准备门禁后普通推送main。",
-      "evidence": []
+      "status": "pass",
+      "summary": "main已普通推送origin，首次交付提交a5d77311b31420faeeb3ac5e623fdedc58e2bff0与远端refs/heads/main一致，工作树干净；未重启、升版、打tag或创建Release。当前文档提交补记实际回执。",
+      "evidence": [
+        "python3 scripts/agent-route.py release-check ui-settings-main-delivery-20261017 PASS",
+        "git push origin main: 5fac564d..a5d77311 main -> main",
+        "git ls-remote origin refs/heads/main: a5d77311b31420faeeb3ac5e623fdedc58e2bff0",
+        "git status --short --branch: main...origin/main clean"
+      ]
     }
   },
   "release_authorization": "用户：push一下（2026-10-17），延续本会话此前推到main的目标。仅授权本轮源码与记录提交推送，不授权重启、正式版本或Release。",
