@@ -37,7 +37,7 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "Actual public RC2 inventory23 assets; both new names absent. Started ARM immutable archive upload through existing signed-in Safari file input; AMD pending. No default activation.",
+      "summary": "Current ARM immutable archive publicly uploaded as649882716 with exact SHA/size; all23 original assets/body retained. AMD382c selected and upload started serially in same existing Safari tab; default unchanged.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Actual new-candidate public gate exit1/no unique uploaded ARM asset/mutations=false while same ARM upload continues. Local packages are already verified; public positive proof and final full/main gates pending.",
+      "summary": "ARM public uploaded/size/SHA exact; actual unauthenticated public Range first1024 bytes HTTP206/gzip and total size pass. Candidate public gate now rejects only unavailable AMD64 with mutations=false. AMD upload live, paired positive/full/main gates pending.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -72,5 +72,5 @@
   },
   "release_authorization": "Existing user incremental push/main/Release distribution authorization retained by parent goal ledger; current task stages exact complete image assets and qualifies default manifest, not production replacement. User requested repository and release bundles fast import/start; Windows user-owned, native workbench deferred, real vectors deferred.",
   "rollback": "Preserve existing published assets, old tracked manifest/checksum history, production6a8 image/data and current local complete packages. Do not replace production or restore old data; defaults only after verified new assets.",
-  "handoff": "Before mutations complete actual public asset inventory; gh CLI unavailable, use existing signed-in GitHub release UI without changing/submitting unsaved notes. Public files are reviewed clean runtime archives, no host data. Native AMD64 startup not proven."
+  "handoff": "Poll same existing Safari RC2 AMD382c upload/public API; ARM4b784 uploaded/validated, do not restart either upload from absence alone. After AMD completion verify pair, append prepared small README/SUMS, then default/full/main gates. Preserve unsaved Release notes; Windows native user-owned NOT_RUN."
 }

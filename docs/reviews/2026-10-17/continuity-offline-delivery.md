@@ -10,7 +10,7 @@
 
 ## 当前状态
 
-- ARM64 附件上传进行中；AMD64 尚未开始上传，串行处理。
+- ARM64 附件公开校验通过；AMD64 同一页面串行开始上传，仍待公开完成。
 - 默认清单、仓库校验文件尚未修改；只准备本地候选清单。
 - main 未合入或推送；未升版、打标签或提交 Release 编辑表单。
 - 生产实例保持；完整原生工作台验收暂缓，Windows 用户验收，真实向量暂缓。
@@ -24,3 +24,11 @@
 对本轮真实候选清单运行 `scripts/verify_prebuilt_assets.py`，返回 exit1：`linux/arm64: no unique uploaded public asset`，mutations=false。公开附件尚未就绪，门禁按预期拒绝，未激活默认地址。
 
 已准备独立 `AIDE-runtime-07cdef2d4719-README.txt` 和 `AIDE-runtime-07cdef2d4719-SHA256SUMS.txt`，写明两架构归档身份、启动步骤、资料保留、原生 AMD64 / Windows 和完整工作台验收边界；未修改现有 Release 说明，也未覆盖旧摘要附件。配套资料待主归档上传后追加。
+
+## ARM 公开附件已完成
+
+公开 API 返回 ARM 附件 ID `649882716`、state `uploaded`、771016230 字节，SHA256 与本地 `d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283` 一致。原 23 个附件全部保留，公开 Release 正文哈希不变。
+
+实际访问[ARM 完整离线包](https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz)，Range 0–1023 返回 HTTP206，Content-Range 总大小正确，读取 1024 字节且 gzip 头正确。这是公开下载入口冒烟，不是网络全包下载或另一设备导入验收。
+
+本轮候选公开门禁已推进到 `linux/amd64: no unique uploaded public asset`，exit1/mutations=false；ARM 对应项已通过，仍不激活双架构默认清单。随后在同一现有 Safari 页面选择精确 AMD64 `382c90e72fca` 包开始上传，未重复上传 ARM，未提交说明表单。

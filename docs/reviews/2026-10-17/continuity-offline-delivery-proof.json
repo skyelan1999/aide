@@ -21,15 +21,35 @@
       "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def"
     }
   ],
-  "ARM64Upload": "same native Safari file input upload visibly progressing (blue progress bar approximately 10%); no duplicate/retry/new tab",
-  "AMD64Upload": "not_started",
+  "ARM64Upload": {
+    "status": "pass",
+    "asset": {
+      "id": 649882716,
+      "name": "aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+      "state": "uploaded",
+      "size": 771016230,
+      "digest": "sha256:d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz"
+    },
+    "bodyUnchanged": true,
+    "originalAssetsRetained": true,
+    "downloadSmoke": {
+      "status": "pass",
+      "http": 206,
+      "bytesRead": 1024,
+      "gzipMagic": true,
+      "contentRange": "bytes 0-1023/771016230",
+      "scope": "public URL first1024bytes only; not complete network download/import"
+    }
+  },
+  "AMD64Upload": "started through same existing Safari file input; correct382c90e72fca filename observed; await completion before retry",
   "publicDefaultManifest": "unchanged; activation pending actual uploaded metadata",
   "releaseFormSubmitted": false,
   "mainPush": "not_done",
   "Windows": "user-owned",
   "nativeFullWorkbench": "user-deferred",
   "realVectors": "deferred",
-  "uploadObservationUTC": "2026-10-17T07:41:49.724470+00:00",
+  "uploadObservationUTC": "2026-10-17T07:53:13.379038+00:00",
   "memoryObservation": "memory_pressure -Q reported40% system-wide free; only production2 containers running",
   "candidateGateBeforeUploadComplete": {
     "exit": 1,
@@ -50,5 +70,11 @@
       "sha256": "884dc420b4a2c319eaceaddff2be3cd015b05e22bfeda4f194bdaf3fe9d3c59f",
       "uploaded": false
     }
-  ]
+  ],
+  "candidateGateAfterARM": {
+    "status": "fail",
+    "exit": 1,
+    "error": "linux/amd64: no unique uploaded public asset",
+    "mutations": false
+  }
 }
