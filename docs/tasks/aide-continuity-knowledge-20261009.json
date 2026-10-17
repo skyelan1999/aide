@@ -8360,12 +8360,13 @@
     "next": "Upload exact new package pair and metadata; verify server digest/state/size before promotion; promotion requires new exact full and main release gate."
   },
   "timeline_native_current_20261017": {
-    "status": "scoped_pass_delivery_pending",
+    "status": "scoped_pass_delivered_main",
     "task": "docs/tasks/knowledge-timeline-native-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/knowledge-timeline-native.md",
       "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
     ],
-    "summary": "Current492/ce0c/79a0 authenticated Safari basis-only, changed conclusion/add/remove, explicit topic and original stop/start plus full page refresh with original files absent pass. Production22 exact; original12 continue."
+    "summary": "Current492/ce0c/79a0 authenticated Safari basis-only, changed conclusion/add/remove, explicit topic and original stop/start plus full page refresh with original files absent pass. Production22 exact; original12 continue.",
+    "observedRemoteMain": "c63dc75b0810a0770571cebff13fc4e9d41279b8"
   }
 }

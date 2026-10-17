@@ -67,10 +67,9 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "Scoped documentation main delivery and current gate pending; no runtime publication claim.",
+      "status": "pass",
+      "summary": "Scoped documentation merged/pushed mainc63dc75b, independent remote exact; main release-check0 exact full and existing07c public metadata only. No software version/tag, new package or production deployment.",
       "evidence": [
-        "docs/reviews/2026-10-17/knowledge-timeline-native.md",
         "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
       ]
     }
