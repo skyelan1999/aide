@@ -1,0 +1,108 @@
+{
+  "id": "context-usage-panel-20261017",
+  "request": "多倍速运行时上下文统计渲染异常，应该显示实际消耗，上下文压缩时显示动态效果",
+  "baseline": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+  "initial_status": "M internal/server/assistant_history.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/crash-monitor.css\n M internal/server/web/crash-monitor.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.html\n M scripts/crash-monitor.test.cjs\n?? docs/tasks/service-update-notice-20261017.json\n?? docs/tasks/xiaomi-model-picker-20261017.json\n?? internal/server/xiaomi_model_selection_test.go\n?? scripts/xiaomi-model-picker.test.cjs",
+  "acceptance": [
+    "Primary sidebar statistic shows cumulative returned token usage, with input/output totals and explicit estimate labeling when needed.",
+    "Parallel per-request context is separate from cumulative cost; long histories collapsed by default with bounded internal scrolling.",
+    "Compaction status remains visible outside collapsed details, animates only active work, and shows before/after estimates on completion without reducing cumulative usage.",
+    "Session/workspace switches, preview failures and drafts do not leak or replace actual usage."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/workbench.css",
+    "internal/server/web/locales/en.js",
+    "scripts/context-meter.test.cjs",
+    "scripts/test_context_compaction_ui.cjs",
+    "docs/tasks/context-usage-panel-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports parallel usage overflow and requests actual consumption plus visible compression dynamics.",
+      "evidence": [
+        "User screenshot: long uncollapsed planning history in sidebar footer."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use existing sessionUsage/lifetime aggregate as primary; do not divide cumulative usage by a single model window. Latest single request gets a separate bar, estimated preview stays inside details. Compaction has its own pinned status slot and semantic phase animation. No backend accounting changes or fabricated counters.",
+      "evidence": [
+        "internal/server/server.go: makeSessionHistoryView",
+        "internal/server/context.go: ContextUsageAnchor and RequestContext",
+        "internal/server/web/app.js: paintContextUsage and renderContextCompactionState"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Primary actual cumulative total/input/output, per-request usage/window bar, collapsed bounded planner/parallel history, explicit mixed-estimate labeling. Actual totals remain visible during failed/pending draft estimates. Dedicated compaction slot with active fold animation, stalled state, elapsed/batch details and completed shrink result.",
+      "evidence": [
+        "node scripts/context-meter.test.cjs",
+        "node scripts/test_context_compaction_ui.cjs",
+        "node scripts/parallel-chat.test.cjs",
+        ".agent-state/verify-20261017T022402746572Z.log",
+        ".agent-state/context-usage-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-safari.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-expanded.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/compressing.jpg"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS: 104 quick checks, targeted usage/parallel/compaction regressions and source build/vet/startup. Actual Safari session displays 3.26M total, input 3,077,175/output 184,397; closed and expanded detail panel remains bounded and runtime/settings remain visible. Browser replay: 15 planning rounds/59 parts, no horizontal overflow, detail scroll713px within144px; compression animation transform changed over time and is outside disclosure; completion 59000→18000 retained total3.26M; 640x560 light view footer bottom548.",
+      "evidence": [
+        "node scripts/context-meter.test.cjs",
+        "node scripts/test_context_compaction_ui.cjs",
+        "node scripts/parallel-chat.test.cjs",
+        ".agent-state/verify-20261017T022402746572Z.log",
+        ".agent-state/context-usage-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-safari.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-expanded.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/compressing.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded accounting boundary, tests, actual Safari and replay evidence, and limits.",
+      "evidence": [
+        "node scripts/context-meter.test.cjs",
+        "node scripts/test_context_compaction_ui.cjs",
+        "node scripts/parallel-chat.test.cjs",
+        ".agent-state/verify-20261017T022402746572Z.log",
+        ".agent-state/context-usage-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-safari.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-expanded.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/compressing.jpg"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Diff reviewed, prior pending changes preserved. Replayed component tab closed, owned loopback fixture stopped. Actual Safari retained with details collapsed. No real model invocation, task submission or user-session compression.",
+      "evidence": [
+        "node scripts/context-meter.test.cjs",
+        "node scripts/test_context_compaction_ui.cjs",
+        "node scripts/parallel-chat.test.cjs",
+        ".agent-state/verify-20261017T022402746572Z.log",
+        ".agent-state/context-usage-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-safari.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/actual-expanded.jpg",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/context-usage/compressing.jpg"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source candidate active; no new commit/push/version/tag/package release requested in this turn.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore only scoped usage rendering, sidebar markup/CSS/locales and tests; preserve previous service notice and assistant model picker changes.",
+  "handoff": "Local9999 healthy with new usage sidebar. Lifetime usage remains server-provided and includes parallel auxiliary calls; context occupancy represents one provider request. Primary title marks estimates if upstream totals include estimated calls. Compaction before/after is explicitly an active-context estimate and does not change historical consumption.",
+  "verification_limits": [
+    "Compaction visual behavior verified using real production renderer/CSS and simulated event phases in a browser; no deliberate compaction of user conversation or external model calls.",
+    "Usage updates when provider results are returned; in-flight requests without returned usage are not assigned fabricated token counts.",
+    "Historical sessions without lifetime aggregate show latest-task usage rather than treating paginated runs as all-time totals."
+  ]
+}

@@ -9,7 +9,6 @@
     'AIDE-WEB-ASSET': '工作台资源加载失败',
     'AIDE-WEB-UNCLEAN': '上次页面可能未正常结束',
     'AIDE-SERVICE-UNREACHABLE': '服务暂时无法连接，原因待确认',
-    'AIDE-SERVICE-RESTARTED': '检测到服务实例变化，原因待确认',
     'AIDE-SERVER-PANIC': '服务请求发生内部异常'
   };
   const t = value => window.aideI18n?.t(value) || value;
@@ -32,6 +31,7 @@
     catch (_) { return []; }
   };
   let reports = read(), selected = null, notice, dialog, summary, detail, copy, list, timer, controller;
+  let updateNotice, updateMessage, updateRefresh, updateDismiss, updatePending = false;
   const ui = {};
   let dismissed = true, failures = 0, instance = '', connectionReport = null, busy = false, disposed = false;
   const locked = () => !!document.querySelector('#login-dialog[open],#lock-screen:not([hidden])') || document.body?.classList.contains('map-locked');
@@ -50,6 +50,23 @@
       report.message || '', report.stack || t(report.current ? '本次异常未提供浏览器堆栈。' : '此历史记录仅保留诊断元数据，不保存异常正文和堆栈。')].filter(Boolean).join('\n');
   }
   function element(tag, value) { const node = document.createElement(tag); if (value) node.textContent = value; return node; }
+  function paintUpdateNotice() {
+    if (!document.body) return;
+    if (!updateNotice) {
+      updateNotice = element('aside'); updateNotice.id = 'aide-service-update-notice';
+      updateNotice.setAttribute('role','status'); updateNotice.setAttribute('aria-live','polite');
+      updateMessage = element('span');
+      updateRefresh = element('button'); updateRefresh.type = 'button';
+      updateRefresh.onclick = () => location.reload();
+      updateDismiss = element('button','×'); updateDismiss.type = 'button';
+      updateDismiss.onclick = () => { updatePending = false; paintUpdateNotice(); };
+      updateNotice.append(updateMessage,updateRefresh,updateDismiss); document.body.append(updateNotice);
+    }
+    updateMessage.textContent = t('服务已更新，请刷新页面');
+    updateRefresh.textContent = t('刷新页面');
+    updateDismiss.setAttribute('aria-label',t('收起更新提示'));
+    updateNotice.hidden = !updatePending || locked() || (!dismissed && reports.length > 0);
+  }
   function paint() {
     if (!document.body) return;
     if (!notice) {
@@ -71,6 +88,7 @@
       Object.assign(ui,{heading,note,close});dialog.append(heading,list,detail,note,copy,close); document.body.append(dialog);
     }
     ui.heading.textContent=t('崩溃与异常诊断');ui.note.textContent=t('诊断仅保存在本机。不会自动刷新、重发任务或中断其他会话。');ui.close.textContent=t('关闭');ui.dismiss.setAttribute('aria-label',t('收起异常提示'));list.setAttribute('aria-label',t('选择异常记录'));
+    paintUpdateNotice();
     if (locked()) { notice.hidden = true; if (dialog.open) dialog.close(); return; }
     notice.hidden = dismissed || !reports.length;
     if (reports.length) summary.textContent = t(labels[reports.at(-1).code]) + ' · ' + reports.at(-1).code + ' · ' + t('查看诊断');
@@ -123,7 +141,7 @@
       if (disposed || document.hidden || locked()) return;
       failures = 0;
       if (connectionReport) { connectionReport.recovered = true; paint(); connectionReport = null; }
-      if (typeof data.instanceId === 'string') { if (instance && instance !== data.instanceId) record('AIDE-SERVICE-RESTARTED'); instance = data.instanceId; }
+      if (typeof data.instanceId === 'string') { if (instance && instance !== data.instanceId) { updatePending = true; paintUpdateNotice(); } instance = data.instanceId; }
     } catch (_) {
       if (!disposed && !document.hidden && !locked() && navigator.onLine !== false && ++failures >= 3 && !connectionReport) connectionReport = record('AIDE-SERVICE-UNREACHABLE');
     } finally { clearTimeout(timeout); controller = null; busy = false; }

@@ -1,0 +1,97 @@
+{
+  "id": "task-action-hub-20261017",
+  "request": "实际使用信息分散不好操控，集中当前任务和审批操作",
+  "baseline": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+  "initial_status": "M internal/server/assistant_history.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/crash-monitor.css\n M internal/server/web/crash-monitor.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.html\n M internal/server/web/workbench.css\n M scripts/context-meter.test.cjs\n M scripts/crash-monitor.test.cjs\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/context-usage-panel-20261017.json\n?? docs/tasks/service-update-notice-20261017.json\n?? docs/tasks/xiaomi-model-picker-20261017.json\n?? internal/server/xiaomi_model_selection_test.go\n?? scripts/xiaomi-model-picker.test.cjs",
+  "acceptance": [
+    "当前待审批操作固定集中到输入框上方，保留原始命令和审批语义",
+    "历史卡指向当前操作区，不产生重复审批按钮",
+    "重复刷新不重建相同问题，切换会话和问题后拒绝陈旧提交",
+    "长命令及窄屏不撑出边界；不代用户审批；用户后续明确授权更新重启。",
+    "常规运行栏同一行展示，标题不呈现输入框外观",
+    "输入区默认两行，长草稿自动增高到有界高度",
+    "空草稿只有明确的停止入口，输入草稿显示发送且停止仍可用"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/conversation.css",
+    "internal/server/web/locales/en.js",
+    "scripts/task-action-hub.test.cjs",
+    "docs/tasks/task-action-hub-20261017.json",
+    "docs/architecture.md",
+    "scripts/session-run-controls.test.cjs",
+    "internal/server/web/workbench.css"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "固定任务操作区复用原审批渲染器及 answer API；历史保留定位入口；不改服务端审批策略。",
+      "evidence": [
+        "app.js renderClarification / syncTaskActionHub / setSendMode"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "固定任务操作区复用原审批渲染器及 answer API；历史保留定位入口；不改服务端审批策略。",
+      "evidence": [
+        "app.js renderClarification / syncTaskActionHub / setSendMode"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "固定操作区集中任务、状态、工具与并行档位；审批唯一入口、命令独立滚动、显式停止按钮；校验旧问题的会话和工作区。 后续紧凑化：36px单行任务栏，去掉标题边框，默认两行输入并有界自动增高；移除重复停止图标。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/conversation.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "紧凑版源码回归及真实浏览器组件回放通过；准备用户刷新实际服务验收。",
+      "evidence": [
+        "node scripts/task-action-hub.test.cjs PASS",
+        "node scripts/session-run-controls.test.cjs PASS",
+        "node scripts/run-activity-cards.test.cjs PASS",
+        "node scripts/steer-user-bubbles.test.cjs PASS",
+        "node scripts/session-render-cache.test.cjs PASS",
+        "verify quick PASS: .agent-state/verify-20261017T024816729409Z.log",
+        "IAB real renderer / CSS: 161-line command scrolls internally; refresh preserves disclosure; simulated decision submitted once; 640x560 light no horizontal overflow; action bottom417.6 / input bottom505.6",
+        "Safari read-only: live car generation still awaits shell approval; no action clicked",
+        "Screenshot directory: /Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/task-control-hub",
+        "Compact component browser: run bar36px; default input58px; long draft163px; Send hidden for empty running draft and visible for queued draft",
+        "640x560 light: no horizontal overflow; expanded161-line command actions bottom395.8 input top406.8",
+        "Screenshots: task-control-hub/compact-running.jpg and compact-narrow.jpg",
+        "Compact final quick PASS: .agent-state/verify-20261017T025516684904Z.log (104 checks)"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补充任务操作区架构及审批边界。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留此前未提交改动；关闭独立验收页和临时监听服务，不动用户数据。",
+      "evidence": [
+        "git diff --check PASS"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "紧凑版已按本轮直接更新重启授权部署，本地健康和静态文件逐字节核对通过。未提交推送或正式发布。",
+      "evidence": [
+        ".agent-state/task-action-compact-start.log",
+        ".agent-state/startup/start-20261017T105612-79153.log",
+        "GET /healthz ok",
+        "app.js?v=172 and workbench.css?v=8 match source"
+      ]
+    }
+  },
+  "release_authorization": "用户：直接更新重启吧，我刷新看看效果（2026-10-17）；授权替换本地服务和中断当前等待任务，不包含推送或发布。",
+  "rollback": "本次未部署；后续只回退本任务差异，保留此前改动。",
+  "handoff": "紧凑版已更新到本地运行服务，用户刷新查看；真实用户任务不代审批或重新提交。桌面及窄屏通过组件浏览器验收，部署后实际会话交互留给用户验收。",
+  "followup": "UI还得调整一下，然后让下面紧凑一点（2026-10-17）"
+}

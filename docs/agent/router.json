@@ -416,6 +416,10 @@
       ],
       [
         "node",
+        "scripts/task-action-hub.test.cjs"
+      ],
+      [
+        "node",
         "scripts/recovery-transfer.test.cjs"
       ],
       [
@@ -474,6 +478,10 @@
       [
         "node",
         "scripts/session-model-selection.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/xiaomi-model-picker.test.cjs"
       ],
       [
         "node",

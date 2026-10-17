@@ -8,3 +8,11 @@
 #aide-crash-dialog p{font-size:12px;line-height:1.6;color:var(--muted,#667)}
 #aide-crash-dialog button{min-height:36px;margin-right:8px}
 @media(max-width:700px){#aide-crash-notice{top:104px}#aide-crash-dialog{padding:16px}}
+
+/* Service replacement is an informational update, separate from diagnostics. */
+#aide-service-update-notice{box-sizing:border-box;position:fixed;z-index:79;top:72px;right:16px;display:flex;align-items:center;gap:8px;max-width:min(540px,calc(100vw - 32px));padding:8px 12px;border:1px solid var(--line,#cbd5e1);border-radius:10px;background:var(--surface,#fff);color:var(--text,#242b32);box-shadow:0 4px 18px #0002;font-size:12px}
+#aide-service-update-notice[hidden]{display:none}
+#aide-service-update-notice span{overflow-wrap:anywhere}
+#aide-service-update-notice button{color:inherit;background:transparent;border:0;padding:6px;min-height:32px;white-space:nowrap}
+#aide-service-update-notice button:first-of-type{color:var(--brand,#3574c8)}
+@media(max-width:700px){#aide-service-update-notice{top:104px}}

@@ -76,7 +76,7 @@ type providerKeyWrite struct {
 
 type Settings struct {
 	BaseURL                string                 `json:"baseURL"`
-	XiaomiModelSource      string                 `json:"xiaomiModelSource,omitempty"` // inherit | custom
+	XiaomiModelSource      string                 `json:"xiaomiModelSource,omitempty"` // inherit | configured | custom
 	XiaomiBaseURL          string                 `json:"xiaomiBaseURL,omitempty"`
 	XiaomiModel            string                 `json:"xiaomiModel,omitempty"`
 	Model                  string                 `json:"model"`
@@ -2288,9 +2288,6 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	}
 	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。
 	// 注入模型 API Key 后跑循环；失败则回落到既有 analyze 甄别（保留能力不删）。
-	if cfg.XiaomiModelSource != "custom" {
-		cfg.APIKey, _ = a.modelAPIKeyLocked()
-	}
 	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice", in.AvatarFeedback)
 	if aerr != nil {
 		entry, err := va.analyze(r.Context(), cfg, text, in.Context)

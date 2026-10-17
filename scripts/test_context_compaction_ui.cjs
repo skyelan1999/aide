@@ -49,7 +49,7 @@ const context = {
   fmtTokens: value => `${Number(value).toLocaleString()} tokens`,
   t: (key, ...args) => key.replace(/\{(\d+)\}/g, (_, index) => args[Number(index)] ?? ''),
   el: (tag, className = '', text = '') => ({
-    tag, className, textContent: text, statusRow: className.startsWith('context-compaction-status'),
+    tag, className, textContent: text, style:{}, statusRow: className.startsWith('context-compaction-status'),
     setAttribute() {}, append(child) { (this.children ||= []).push(child); },
   }),
   renderContextMeter() {},
@@ -76,7 +76,7 @@ assert.equal(detail.children.at(-1).children[1].textContent.includes('正在整�
 context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600, batchStage: 'map', batch: 2, batches: 5, startedAt: Date.now() - 65000 });
 context.renderContextCompactionState(detail);
 assert.equal(detail.children.at(-1).children[1].textContent.includes('分段整理 2/5'), true, 'automatic compaction shows map batch progress');
-assert.equal(detail.children.at(-1).children.at(-1).textContent.includes('已用时 1 分 5 秒'), true, 'active compaction exposes elapsed time');
+assert.equal(detail.children.at(-1).children.find(child=>child.className==='context-compaction-elapsed').textContent.includes('已用时 1 分 5 秒'), true, 'active compaction exposes elapsed time');
 
 context.state.session = { id: sessionA };
 context.renderContextCompactionState(detail);
@@ -100,7 +100,7 @@ assert.equal(card.classList.contains('is-compacting'), false, 'stale progress st
 assert.equal(card.classList.contains('is-compaction-stalled'), true, 'stale progress gets a distinct card state');
 assert.equal(detail.children.at(-1).className.includes('stalled'), true, 'stale progress gets a warning status row');
 assert.equal(detail.children.at(-1).children[1].textContent.includes('最近 3 分钟无更新'), true, 'stale status shows its quiet interval');
-assert.equal(detail.children.at(-1).children.at(-1).textContent.includes('已用时 4 分 0 秒'), true, 'elapsed time continues while stale');
+assert.equal(detail.children.at(-1).children.find(child=>child.className==='context-compaction-elapsed').textContent.includes('已用时 4 分 0 秒'), true, 'elapsed time continues while stale');
 assert.equal(vm.runInContext(`contextCompactionElapsedTimers.has('${sessionC}')`, context), true, 'elapsed timer remains active while stalled');
 context.showContextCompaction({ sessionId: sessionC, phase: 'cancelled', text: '压缩已取消，原会话内容已保留' });
 
@@ -115,5 +115,13 @@ context.renderContextCompactionState(detail);
 assert.equal(detail.children.at(-1).className.includes('cancelled'), true, 'cancelled compaction receives a terminal status row');
 assert.equal(detail.children.at(-1).children[1].textContent.includes('原会话内容已保留'), true, 'cancelled status explains that history was preserved');
 assert.equal(card.classList.contains('is-compacting'), false, 'cancelled progress stops its animation');
+
+const pinned = element('context-compaction-slot');
+context.$ = id => ({'context-card':card,'context-card-detail':detail,'context-compaction-slot':pinned})[id];
+context.showContextCompaction({sessionId:sessionB,phase:'started',folded:4,beforeTokens:9000});
+assert.equal(pinned.children.length,1,'compaction renders in the always-visible slot outside usage details');
+assert.match(pinned.children[0].children[1].textContent,/上下文压缩中/);
+context.showContextCompaction({sessionId:sessionB,phase:'completed',folded:4,beforeTokens:9000,afterTokens:3000});
+assert.equal(pinned.children.at(-1).children.at(-1).children[0].style.width,'33.33333333333333%','completion fill reflects remaining active context');
 
 console.log('PASS: compaction progress session scope, active timing, stalled timing, and terminal states');

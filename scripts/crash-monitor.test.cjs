@@ -6,19 +6,21 @@ class Node {
  setAttribute(k,v){this.attrs[k]=v;}showModal(){this.open=true;}close(){this.open=false;}focus(){}
 }
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
-function fixture({previous=null,storageDenied=false,navigationType='reload'}={}){
+function fixture({previous=null,storageDenied=false,navigationType='reload',legacyReports=[]}={}){
  const events={},documentEvents={},timers=new Map(),local=new Map(),session=new Map(),requests=[],copied=[];let next=0,locked=false,health={status:'ok',service:'aide',instanceId:'one'},failure=false,observer;
+ local.set('aide.crash.metadata.v1',JSON.stringify(legacyReports));
  if(previous)session.set('aide.crash.tab.v1',JSON.stringify(previous));
  const storage=map=>({getItem:k=>{if(storageDenied)throw Error('denied');return map.get(k)||null;},setItem:(k,v)=>{if(storageDenied)throw Error('denied');map.set(k,v);}});
  const body=new Node('body'),document={body:null,hidden:false,readyState:'loading',createElement:t=>new Node(t),querySelector:()=>locked?{}:null,querySelectorAll:()=>[new Node('div')],addEventListener:(k,f)=>documentEvents[k]=f};
  const window={performance:{getEntriesByType:()=>[{type:navigationType}]},crypto:{randomUUID:()=>`test-event-${++next}`},addEventListener:(k,f)=>events[k]=f};
- const location={href:'https://localhost:9999/',origin:'https://localhost:9999'};
+ let reloads=0;
+ const location={reload:()=>reloads++,href:'https://localhost:9999/',origin:'https://localhost:9999'};
  const navigator={onLine:true,clipboard:{writeText:async text=>copied.push(text)}};
  vm.runInNewContext(fs.readFileSync('internal/server/web/crash-monitor.js','utf8'),{window,document,location,navigator,localStorage:storage(local),sessionStorage:storage(session),URL,Date,Math,JSON,Map,Number,String,AbortController,MutationObserver:class{constructor(f){observer=f;}observe(){}},setTimeout:(fn,ms)=>{const id=++next;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),fetch:async(path,options)=>{requests.push({path,options});if(failure)throw Error('unreachable');return {ok:true,json:async()=>health};}});
  const find=(id,node=body)=>node.id===id?node:node.children.map(c=>find(id,c)).find(Boolean);
  const metadata=()=>JSON.parse(local.get('aide.crash.metadata.v1')||'[]');
  const runTimer=async ms=>{for(const [id,t]of [...timers])if(t.ms===ms){timers.delete(id);t.fn();}await flush();};
- return {window,document,events,documentEvents,body,local,session,requests,copied,find,metadata,navigator,ready:async()=>{document.body=body;documentEvents.DOMContentLoaded();await flush();},runTimer,set health(v){health=v;},set failure(v){failure=v;},set locked(v){locked=v;observer?.();},error:(message='boom',line=12)=>events.error({target:window,message,filename:'https://localhost:9999/app.js?access_token=private',lineno:line,colno:3,error:{stack:'Error: '+message+'\n at https://localhost:9999/app.js?access_token=private:12:3'}})};
+ return {reloads:()=>reloads,window,document,events,documentEvents,body,local,session,requests,copied,find,metadata,navigator,ready:async()=>{document.body=body;documentEvents.DOMContentLoaded();await flush();},runTimer,set health(v){health=v;},set failure(v){failure=v;},set locked(v){locked=v;observer?.();},error:(message='boom',line=12)=>events.error({target:window,message,filename:'https://localhost:9999/app.js?access_token=private',lineno:line,colno:3,error:{stack:'Error: '+message+'\n at https://localhost:9999/app.js?access_token=private:12:3'}})};
 }
 (async()=>{
  const f=fixture();f.error('Bearer secret-value api_key=sk-private-secret <img src=x>');
@@ -39,11 +41,21 @@ function fixture({previous=null,storageDenied=false,navigationType='reload'}={})
  const typed=fixture();await typed.ready();const panic={code:'AIDE-SERVER-PANIC',incidentId:'a'.repeat(32)};typed.window.AideCrash.reportServer(panic);typed.events.unhandledrejection({reason:{message:'unhandled typed response',data:panic}});assert.equal(typed.metadata().length,1,'one server incident must not turn into a second promise incident');
  const h=fixture();await h.ready();h.failure=true;await h.runTimer(30000);await h.runTimer(30000);assert.equal(h.metadata().length,0,'one or two failed probes do not claim a crash');await h.runTimer(30000);assert.equal(h.metadata().at(-1).code,'AIDE-SERVICE-UNREACHABLE');await h.runTimer(30000);assert.equal(h.metadata().length,1,'ongoing outage does not add repeated notices');
  h.failure=false;await h.runTimer(30000);h.window.AideCrash.open();assert.match(h.find('aide-crash-dialog').children[2].textContent,/服务连接已恢复/);
- h.health={status:'ok',service:'aide',instanceId:'two'};await h.runTimer(30000);assert.equal(h.metadata().at(-1).code,'AIDE-SERVICE-RESTARTED');await h.runTimer(30000);assert.equal(h.metadata().length,2);
+ h.health={status:'ok',service:'aide',instanceId:'two'};await h.runTimer(30000);assert.equal(h.metadata().length,1,'instance change does not create an error report');await h.runTimer(30000);assert.equal(h.metadata().length,1);
  h.document.hidden=true;h.documentEvents.visibilitychange();const before=h.requests.length;await h.runTimer(30000);assert.equal(h.requests.length,before,'hidden tabs do not probe');
- h.document.hidden=false;h.navigator.onLine=false;h.failure=true;h.documentEvents.visibilitychange();await flush();for(let i=0;i<4;i++)await h.runTimer(30000);assert.equal(h.metadata().length,2,'browser offline is not a server crash');
+ h.document.hidden=false;h.navigator.onLine=false;h.failure=true;h.documentEvents.visibilitychange();await flush();for(let i=0;i<4;i++)await h.runTimer(30000);assert.equal(h.metadata().length,1,'browser offline is not a server crash');
  assert.ok(h.requests.every(r=>r.path==='/healthz'&&r.options.credentials==='omit'&&!r.options.headers),'health probes send no credentials or model request');
  h.events.pagehide();assert.equal(JSON.parse(h.session.get('aide.crash.tab.v1')).active,false);const old=h.requests.length;await h.runTimer(30000);assert.equal(h.requests.length,old);
+ const updated=fixture({legacyReports:[{id:'old-restart',code:'AIDE-SERVICE-RESTARTED',at:'2026-10-17T01:22:59Z'}]});await updated.ready();
+ assert.equal(updated.find('aide-crash-notice').hidden,true,'legacy instance-change metadata no longer appears as an error');
+ updated.health={status:'ok',service:'aide',instanceId:'new'};await updated.runTimer(30000);
+ const update=updated.find('aide-service-update-notice');assert.equal(update.hidden,false);assert.equal(update.attrs.role,'status');assert.equal(update.children[0].textContent,'服务已更新，请刷新页面');assert.equal(updated.reloads(),0,'never refresh automatically');
+ assert.equal(updated.metadata().filter(r=>r.code!=='AIDE-SERVICE-RESTARTED').length,0,'no new incident stored');
+ updated.locked=true;assert.equal(update.hidden,true);updated.locked=false;assert.equal(update.hidden,false);
+ update.children[1].onclick();assert.equal(updated.reloads(),1,'refresh is explicitly user triggered');
+ update.children[2].onclick();assert.equal(update.hidden,true);await updated.runTimer(30000);assert.equal(update.hidden,true,'same instance does not reopen dismissed notice');
+ updated.health={status:'ok',service:'aide',instanceId:'newer'};await updated.runTimer(30000);assert.equal(update.hidden,false);
+ updated.error();assert.equal(update.hidden,true,'real diagnostic notice has priority');updated.find('aide-crash-notice').children[1].onclick();assert.equal(update.hidden,false);
  const unclean=fixture({previous:{active:true,at:'2026-10-16T00:00:00Z'}});assert.equal(unclean.metadata()[0].code,'AIDE-WEB-UNCLEAN');assert.equal(unclean.metadata()[0].message,undefined);
  const empty=fixture();await empty.ready();empty.window.AideCrash.open();assert.equal(empty.find('aide-crash-dialog').open,true);assert.equal(empty.find('aide-crash-dialog').children[4].disabled,true);
  const cloned=fixture({previous:{active:true,at:'2026-10-16T00:00:00Z'},navigationType:'navigate'});assert.equal(cloned.metadata().length,0,'new tab inherited storage must not be reported as an unclean exit');

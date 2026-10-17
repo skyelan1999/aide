@@ -1,0 +1,94 @@
+{
+  "id": "service-update-notice-20261017",
+  "request": "正常更新重启不再当异常报错，改成普通服务已更新请刷新页面提示",
+  "baseline": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+  "initial_status": "",
+  "acceptance": [
+    "Service instance changes show ordinary 服务已更新，请刷新页面 notice, with explicit refresh/dismiss and no automatic reload or incident.",
+    "Old AIDE-SERVICE-RESTARTED metadata does not appear as an error.",
+    "Real script errors, server panic and persistent unreachable service diagnostics remain unchanged."
+  ],
+  "scope": [
+    "internal/server/web/crash-monitor.js",
+    "internal/server/web/crash-monitor.css",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.html",
+    "internal/server/web/locales/en.js",
+    "scripts/crash-monitor.test.cjs",
+    "docs/tasks/service-update-notice-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests ordinary refresh notice for service updates.",
+      "evidence": [
+        "scripts/crash-monitor.test.cjs",
+        ".agent-state/verify-20261017T013337894273Z.log",
+        ".agent-state/service-update-notice-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/service-update-notice/preview.jpg"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Treat instance change as informational only; health probes cannot establish whether replacement was planned. Keep actual outage/panic diagnostics separate. Ignore legacy instance-change records in diagnostic reader without modifying other reports.",
+      "evidence": [
+        "scripts/crash-monitor.test.cjs",
+        ".agent-state/verify-20261017T013337894273Z.log",
+        ".agent-state/service-update-notice-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/service-update-notice/preview.jpg"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Separate polite status notice with neutral border and refresh/dismiss actions; no incident code/ID/stack. Existing diagnostic notice takes priority, lock hides both. Bumped monitor resources in workbench and starmap.",
+      "evidence": [
+        "scripts/crash-monitor.test.cjs",
+        ".agent-state/verify-20261017T013337894273Z.log",
+        ".agent-state/service-update-notice-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/service-update-notice/preview.jpg"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS: crash-monitor regression including legacy records, explicit-only reload, dismiss, lock, subsequent replacement and diagnostic priority. All 104 quick checks passed after rerun with local socket permission. Source build/vet/startup passed. Browser component with real monitor/CSS and simulated health instance verified notice/close. Running localhost9999 serves byte-identical new JS/CSS and health ok.",
+      "evidence": [
+        "scripts/crash-monitor.test.cjs",
+        ".agent-state/verify-20261017T013337894273Z.log",
+        ".agent-state/service-update-notice-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/service-update-notice/preview.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded scope, test evidence and limitations in this task.",
+      "evidence": [
+        "scripts/crash-monitor.test.cjs",
+        ".agent-state/verify-20261017T013337894273Z.log",
+        ".agent-state/service-update-notice-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/service-update-notice/preview.jpg"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff, closed component tab and stopped owned fixture server. User Safari tabs retained.",
+      "evidence": [
+        "scripts/crash-monitor.test.cjs",
+        ".agent-state/verify-20261017T013337894273Z.log",
+        ".agent-state/service-update-notice-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/service-update-notice/preview.jpg"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source candidate updated only; no commit/push/version/tag/Release requested in this turn.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore scoped monitor behavior, styles, locale additions and cache versions; keep unrelated work.",
+  "handoff": "Local9999 healthy with new monitor. Existing open pages retain old script until refreshed once; cannot replace already-loaded diagnostics without page refresh.",
+  "verification_limits": [
+    "Browser proof uses a simulated health response with actual monitor and CSS; no deliberate extra restart of real service for notice timing.",
+    "Service replacement alone does not prove a normal update or a crash; real persistent failure and server panic remain diagnostic events."
+  ]
+}

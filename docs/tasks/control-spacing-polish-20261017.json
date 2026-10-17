@@ -1,0 +1,80 @@
+{
+  "id": "control-spacing-polish-20261017",
+  "request": "就是这个字能不能不要顶着框啊，包括设置里面那些，把这个都整好看了",
+  "baseline": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+  "initial_status": "M docs/architecture.md\n M internal/server/assistant_history.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/crash-monitor.css\n M internal/server/web/crash-monitor.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.html\n M internal/server/web/workbench.css\n M scripts/context-meter.test.cjs\n M scripts/crash-monitor.test.cjs\n M scripts/session-run-controls.test.cjs\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/context-usage-panel-20261017.json\n?? docs/tasks/service-update-notice-20261017.json\n?? docs/tasks/task-action-hub-20261017.json\n?? docs/tasks/xiaomi-model-picker-20261017.json\n?? internal/server/xiaomi_model_selection_test.go\n?? scripts/task-action-hub.test.cjs\n?? scripts/xiaomi-model-picker.test.cjs",
+  "acceptance": [
+    "任务栏、输入区文字与边框有明确内边距且保持紧凑",
+    "设置及模型配置中的文本框、下拉框有一致高度和留白；箭头不覆盖文字",
+    "桌面与窄屏、明暗配色无横向溢出；复选框和滑块保持原生形态",
+    "不保存或改动用户设置，不代用户审批或发送任务"
+  ],
+  "scope": [
+    "internal/server/web/workbench.css",
+    "internal/server/web/index.html",
+    "docs/architecture.md",
+    "docs/tasks/control-spacing-polish-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "复用前端 skill，统一控件几何与原生 select 留白；特殊输入类型排除，保留真实行为。",
+      "evidence": [
+        "Safari voice settings native select visibly shorter than adjacent input",
+        "workbench.css shared form rhythm"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用前端 skill，统一控件几何与原生 select 留白；特殊输入类型排除，保留真实行为。",
+      "evidence": [
+        "Safari voice settings native select visibly shorter than adjacent input",
+        "workbench.css shared form rhythm"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "共享控件留白、下拉箭头区域和紧凑栏内边距完成；排除特殊输入类型。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "104项quick检查、真实组件桌面/390px手机明暗测试通过；部署后Safari语音助理与模型参数实际页面视觉验收通过。",
+      "evidence": [
+        "quick PASS: .agent-state/verify-20261017T032200165796Z.log (104 checks)",
+        "node scripts/task-action-hub.test.cjs PASS",
+        "node scripts/session-run-controls.test.cjs PASS",
+        "Real renderVoiceNameControl/renderXiaomiModelControl with final shared CSS: desktop input/select37.5px; padding8px12px, select right34px",
+        "390px mobile:16px font; custom fields padding8px12px; checkbox padding0; no horizontal overflow",
+        "Final CSS inlined in component replay to avoid test browser resource cache when resizing",
+        "Screenshot directory: /Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/control-spacing",
+        "Safari actual voice select now aligns in height with text input; padding and separate arrow area visible",
+        "Safari actual model-parameter numeric inputs, labels and output-format select visually inspected; no horizontal overflow",
+        "Opened voice settings triggered microphone request; denied it, no settings saved and no approvals submitted",
+        "Screenshots: control-spacing/actual-safari-settings.jpg and actual-safari-model-parameters.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构增加设置控件留白与特殊类型边界。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留此前所有未提交改动，临时页关闭并恢复视口；实际设置未保存。",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "按本轮直接更新重启授权完成本地源码构建、替换和重启；健康/资源比对及实际Safari视觉验收通过。未Git提交、推送或正式发布。",
+      "evidence": [
+        ".agent-state/control-spacing-start.log",
+        ".agent-state/startup/start-20261017T112344-83476.log",
+        "GET /healthz ok; workbench.css?v=9 matches source"
+      ]
+    }
+  },
+  "release_authorization": "沿用本轮 UI 迭代中用户的“直接更新重启吧，我刷新看看效果”授权。",
+  "rollback": "仅回退本任务共享样式差异及资源版本并从源码重建；保留此前未提交工作，不改变配置数据。",
+  "handoff": "统一控件留白已部署，本地服务正常；Safari模型参数页保持打开供用户查看；未更改或保存实际配置，未开启麦克风。"
+}

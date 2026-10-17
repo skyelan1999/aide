@@ -93,3 +93,23 @@
 .run-control-popover>p{margin:8px 0 0;line-height:1.7;font-size:11px;color:var(--muted)}
 #timeline .run-interruption{margin:10px 0;color:var(--muted);font-size:12px;line-height:1.7}
 @media(max-width:600px){.composer-run-controls{align-items:flex-start;gap:6px;padding:8px}.composer-run-actions{gap:4px}.composer-run-actions>.quiet{padding:4px 7px}}
+
+/* Keep the current task and its pending decision next to the composer. */
+.composer-run-controls{flex-wrap:wrap}
+.task-control-heading{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+#run-control-task{padding:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;font-weight:600;color:var(--text)}
+#run-action-content{flex:0 0 100%;min-width:0;max-height:34dvh;overflow:auto;overscroll-behavior:contain}
+#run-action-content[hidden]{display:none!important}
+#run-action-content .clarify-card{margin:0;padding:10px 12px;max-width:100%;box-sizing:border-box}
+#run-action-content .clarify-question{font-size:13px;margin-bottom:8px}
+.task-command-detail{margin:4px 0 10px;min-width:0}
+.task-command-detail summary{cursor:pointer;color:var(--muted);font-size:12px}
+.task-command-detail .approval-command{max-height:16dvh;overflow:auto;white-space:pre;max-width:100%;box-sizing:border-box}
+#run-action-content .clarify-actions{position:sticky;bottom:0;background:var(--surface);padding:5px 0;display:flex;flex-wrap:wrap;gap:8px}
+#run-action-content .approval-help{font-size:11px;margin:6px 0 0}
+.task-action-link{margin:8px 0}
+@media(max-height:650px){#run-action-content{max-height:28dvh}#run-action-content .clarify-card{padding:6px 8px}}
+
+#run-control-activity{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+
+.task-command-preview{font-family:var(--mono,monospace);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin:4px 0}

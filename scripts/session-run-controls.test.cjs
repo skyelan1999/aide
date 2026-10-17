@@ -7,8 +7,8 @@ const run={id:'r',status:'running',canResume:true};const state={session:{id:'s',
 const ctx={state,$,stopRequests:new Set(),recoveryScope:()=> 'workspace',t:s=>s};vm.createContext(ctx);
 vm.runInContext(['currentPauseRun','syncPauseControl','composerControlRun','composerHasDraft','setSendMode'].map(fn).join('\n'),ctx);
 function sync(){ctx.setSendMode(state.busy)}
-sync();assert.equal(state.queueMode,true,'fresh page defaults to queued addition');assert.equal($('queue-toggle').attrs['aria-pressed'],'true');assert.equal($('send').dataset.action,'stop');assert($('stop-active-run').hidden);assert(!$('run-controls').hidden);
-$('prompt').value='Change direction';sync();assert.equal($('send').dataset.action,'send');assert.equal($('send').attrs['aria-label'],'排队发送');state.queueMode=false;sync();assert.equal($('send').attrs['aria-label'],'发送插话');assert(!$('stop-active-run').hidden,'a draft must not remove stop capability');
+sync();assert.equal(state.queueMode,true,'fresh page defaults to queued addition');assert.equal($('queue-toggle').attrs['aria-pressed'],'true');assert.equal($('send').dataset.action,'stop');assert($('send').hidden,'empty draft uses the named stop in the task strip');assert(!$('stop-active-run').hidden,'task controls always expose a named stop action');assert(!$('run-controls').hidden);
+$('prompt').value='Change direction';sync();assert.equal($('send').dataset.action,'send');assert(!$('send').hidden,'draft reveals Send while named stop remains available');assert.equal($('send').attrs['aria-label'],'排队发送');state.queueMode=false;sync();assert.equal($('send').attrs['aria-label'],'发送插话');assert(!$('stop-active-run').hidden,'a draft must not remove stop capability');
 state.queueMode=true;sync();assert.equal($('send').attrs['aria-label'],'排队发送');assert.equal($('queue-toggle').textContent,'排队');
 state.previewOverLimit=true;sync();assert($('send').disabled);assert(!$('stop-active-run').disabled,'over-budget input cannot disable stopping');
 $('prompt').value='';sync();assert(!$('send').disabled,'over-budget input cannot disable the primary stop');

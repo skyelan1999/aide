@@ -1,0 +1,96 @@
+{
+  "id": "xiaomi-model-picker-20261017",
+  "request": "语音助理模型来源改成可选模型",
+  "baseline": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+  "initial_status": "M internal/server/web/crash-monitor.css\n M internal/server/web/crash-monitor.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.html\n M scripts/crash-monitor.test.cjs\n?? docs/tasks/service-update-notice-20261017.json",
+  "acceptance": [
+    "Assistant model selector lists configured models with provider names, follow-workbench and custom options.",
+    "Saving a configured model pins the assistant to that model/provider/saved credential without changing workbench defaults.",
+    "Missing models/providers rejected, existing inherit/custom configuration retained, no secrets returned or copied."
+  ],
+  "scope": [
+    "internal/server/assistant_history.go",
+    "internal/server/server.go",
+    "internal/server/xiaomi_model_selection_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/xiaomi-model-picker.test.cjs",
+    "docs/tasks/xiaomi-model-picker-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests selecting an actual assistant model from the current source-only control.",
+      "evidence": [
+        "internal/server/web/app.js: renderXiaomiModelControl"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Add configured source using saved model ID. Resolve provider endpoint and active encrypted key under lock using existing model-selection helpers. Preserve inherit/custom modes and main defaults. Text and voice consume the same complete snapshot.",
+      "evidence": [
+        "internal/server/session_model_selection.go",
+        "internal/server/assistant_history.go",
+        "internal/server/server.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Configured-model source supports saved catalog IDs, endpoint/provider credential snapshot and invalid selection rejection. UI lists names/providers with follow/custom compatibility, persists selected ID and updates assistant strategy label. Main default unchanged.",
+      "evidence": [
+        "node scripts/xiaomi-model-picker.test.cjs",
+        ".agent-state/xiaomi-model-picker-go.log",
+        ".agent-state/verify-20261017T014521334617Z.log",
+        ".agent-state/xiaomi-model-picker-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/xiaomi-model-picker/actual-safari.jpg"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS: frontend picker VM test; isolated Docker Go race tests TestXiaomi, TestAssistantAgentic and TestSessionModelSelectionAPI (31.917s), plus Go vet. All 104 quick checks passed. Source build/startup passed. Actual Safari dropdown lists follow, deepseek-flash and deepseek-v4-pro with provider, plus custom option. Original follow setting preserved.",
+      "evidence": [
+        "node scripts/xiaomi-model-picker.test.cjs",
+        ".agent-state/xiaomi-model-picker-go.log",
+        ".agent-state/verify-20261017T014521334617Z.log",
+        ".agent-state/xiaomi-model-picker-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/xiaomi-model-picker/actual-safari.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scope, API behavior, regression commands, screenshot and acceptance limits recorded here.",
+      "evidence": [
+        "node scripts/xiaomi-model-picker.test.cjs",
+        ".agent-state/xiaomi-model-picker-go.log",
+        ".agent-state/verify-20261017T014521334617Z.log",
+        ".agent-state/xiaomi-model-picker-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/xiaomi-model-picker/actual-safari.jpg"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff and retained prior service-update notice edits. No user model/credential changes or paid-model calls. User settings page retained; transient microphone request denied because picker verification requires no microphone.",
+      "evidence": [
+        "node scripts/xiaomi-model-picker.test.cjs",
+        ".agent-state/xiaomi-model-picker-go.log",
+        ".agent-state/verify-20261017T014521334617Z.log",
+        ".agent-state/xiaomi-model-picker-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/xiaomi-model-picker/actual-safari.jpg"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source candidate active. No new commit, push, version bump or packaged release requested in this turn.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore scoped assistant picker and configured-source API changes, retaining preceding ordinary service update notice.",
+  "handoff": "Local9999 now offers real assistant model choices. Current user setting remains inherit. Select a model and save to pin it independently; underlying provider endpoint/key follow that saved model configuration. Previous service-update notice changes preserved.",
+  "verification_limits": [
+    "Actual Safari validated options and preserved current choice; save/resolution/credential isolation exercised against isolated fixtures, no external live-provider invocation.",
+    "Configured selection follows future edits to that saved model/provider; removed model produces explicit reselect error rather than silently falling back.",
+    "Safari auto-lock appeared while the native select menu was open at screenshot capture; menu options were verified before lock. No password entered or lock bypassed."
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "id": "ui-settings-main-delivery-20261017",
+  "request": "push一下",
+  "baseline": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+  "initial_status": "M docs/architecture.md\n M internal/server/assistant_history.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/crash-monitor.css\n M internal/server/web/crash-monitor.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.html\n M internal/server/web/workbench.css\n M scripts/context-meter.test.cjs\n M scripts/crash-monitor.test.cjs\n M scripts/session-run-controls.test.cjs\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/context-usage-panel-20261017.json\n?? docs/tasks/control-spacing-polish-20261017.json\n?? docs/tasks/service-update-notice-20261017.json\n?? docs/tasks/task-action-hub-20261017.json\n?? docs/tasks/xiaomi-model-picker-20261017.json\n?? internal/server/xiaomi_model_selection_test.go\n?? scripts/task-action-hub.test.cjs\n?? scripts/xiaomi-model-picker.test.cjs",
+  "acceptance": [
+    "只提交本轮已授权改动、回归测试和交付记录",
+    "本地main通过当前源码的完整验证和release-check",
+    "普通推送main并核对远端提交一致，不强推、不升版或发布tag",
+    "不重启或修改运行中的服务与用户配置"
+  ],
+  "scope": [
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "internal/server/assistant_history.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/conversation.css",
+    "internal/server/web/crash-monitor.css",
+    "internal/server/web/crash-monitor.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/workbench.css",
+    "scripts/context-meter.test.cjs",
+    "scripts/crash-monitor.test.cjs",
+    "scripts/session-run-controls.test.cjs",
+    "scripts/test_context_compaction_ui.cjs",
+    "internal/server/xiaomi_model_selection_test.go",
+    "scripts/task-action-hub.test.cjs",
+    "scripts/xiaomi-model-picker.test.cjs",
+    "docs/tasks/task-action-hub-20261017.json",
+    "docs/tasks/service-update-notice-20261017.json",
+    "docs/tasks/xiaomi-model-picker-20261017.json",
+    "docs/tasks/control-spacing-polish-20261017.json",
+    "docs/tasks/context-usage-panel-20261017.json",
+    "docs/tasks/ui-settings-main-delivery-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "汇总本轮五项已授权工作到main，保持运行服务不变。",
+      "evidence": [
+        "git status --short --branch",
+        "docs/tasks/control-spacing-polish-20261017.json",
+        "docs/tasks/task-action-hub-20261017.json",
+        "docs/agent/router.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "普通提交推送，先拉取远端；完整隔离race/vet验证后执行发布门禁。",
+      "evidence": [
+        "git status --short --branch",
+        "docs/tasks/control-spacing-polish-20261017.json",
+        "docs/tasks/task-action-hub-20261017.json",
+        "docs/agent/router.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "任务操作区、紧凑输入与设置留白、实际消耗/压缩动画、助理模型选择、普通更新提示；将新增两个前端回归加入quick。",
+      "evidence": [
+        "git status --short --branch",
+        "docs/tasks/control-spacing-polish-20261017.json",
+        "docs/tasks/task-action-hub-20261017.json",
+        "docs/agent/router.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "逐项回归此前已通过；推送前执行包含106项quick检查的full及隔离Go race/vet。",
+      "evidence": [
+        "prior quick PASS: .agent-state/verify-20261017T032200165796Z.log",
+        "git fetch origin: HEAD...origin/main = 0 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "各原任务保留分项验证及浏览器证据，本任务记录main交付状态。",
+      "evidence": [
+        "git status --short --branch",
+        "docs/tasks/control-spacing-polish-20261017.json",
+        "docs/tasks/task-action-hub-20261017.json",
+        "docs/agent/router.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "逐项审阅本轮差异；无缓存、截图、凭据或用户配置入库，保留运行服务。",
+      "evidence": [
+        "git status --short --branch",
+        "docs/tasks/control-spacing-polish-20261017.json",
+        "docs/tasks/task-action-hub-20261017.json",
+        "docs/agent/router.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "尚未推送，等待完整验证。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户：push一下（2026-10-17），延续本会话此前推到main的目标。仅授权本轮源码与记录提交推送，不授权重启、正式版本或Release。",
+  "rollback": "如需回退，在main用git revert撤销本次提交并普通推送，不重写远端历史；运行镜像本次不替换。",
+  "handoff": "本地服务已在前序任务部署且健康；本次只提交推送源码，不重启服务。",
+  "related_tasks": [
+    "service-update-notice-20261017",
+    "xiaomi-model-picker-20261017",
+    "context-usage-panel-20261017",
+    "task-action-hub-20261017",
+    "control-spacing-polish-20261017"
+  ]
+}

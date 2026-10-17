@@ -126,3 +126,59 @@ main,.conversation,.composer-wrap,.top-actions{min-width:0}
 
 /* Editable file address stays within the sidebar's flex row. */
 #file-panel #file-path{min-width:0;width:0;flex:1;outline-offset:2px}
+
+/* Usage is cumulative; the narrow bar represents one request, never sibling totals. */
+.context-card{min-width:0;max-height:46dvh;overflow:auto;scrollbar-width:thin}
+.context-head{align-items:baseline;gap:8px}.context-head>span:first-child{min-width:0}.context-head #context-stat{font-size:13px;font-weight:650;white-space:nowrap}
+.context-usage-summary{font-size:10px;line-height:1.5;color:var(--muted);font-variant-numeric:tabular-nums}
+.context-request-summary{margin:8px 0 5px;font-size:9px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.context-request-input{background:var(--brand)}.context-request-output{background:var(--accent)}
+.context-usage-details{font-size:10px;line-height:1.5}.context-usage-details>summary{cursor:pointer;padding:7px 0 3px;color:var(--muted)}
+.context-usage-detail-body{max-height:min(170px,20dvh);overflow:auto;overscroll-behavior:contain;padding:0 5px 3px 0;scrollbar-width:thin}
+.context-card .context-usage-detail-body .context-card-actual{white-space:normal;overflow-wrap:anywhere;font-size:9px;line-height:1.6;margin-top:5px}
+#context-compaction-slot{position:relative}.context-card .context-compaction-status strong{white-space:normal;overflow-wrap:anywhere}
+.context-compaction-meter{grid-column:1/-1;height:5px;overflow:hidden;background:var(--bg-inset);border-radius:4px;margin-top:3px}
+.context-compaction-fill{display:block;height:100%;transform-origin:left;background:var(--brand);border-radius:inherit}
+.context-compaction-status.running .context-compaction-fill{animation:context-compression-fold 1.5s ease-in-out infinite alternate}
+.context-compaction-status.completed .context-compaction-fill{animation:context-compression-result .65s ease-out}
+@keyframes context-compression-fold{to{transform:scaleX(.55);opacity:.55}}
+@keyframes context-compression-result{from{width:100%}}
+@media(prefers-reduced-motion:reduce){.context-compaction-fill{animation:none!important}}
+
+/* Keep routine run controls to one row and give the conversation more room. */
+.composer-wrap{padding-top:6px;padding-bottom:8px}
+.composer-run-controls{padding:6px 12px;margin-bottom:6px;gap:6px 12px;min-height:40px;border-radius:10px}
+.task-control-heading{flex-direction:row;align-items:center;gap:10px;overflow:hidden}
+#run-control-task{flex:0 1 120px;max-width:120px;min-height:28px;padding:4px 6px;border:0;border-radius:0;background:none;box-shadow:none;font-size:12px;line-height:1.5}
+#run-control-status{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+#run-control-activity{white-space:nowrap;flex-shrink:0;font-size:11px}
+.composer-run-actions{gap:4px}
+.composer-run-actions>.quiet{min-height:26px;padding:3px 8px;font-size:11px}
+#run-control-more>summary{padding:3px 5px;font-size:11px}
+.composer textarea{min-height:56px;height:64px;max-height:min(200px,25dvh);font-size:14px;line-height:1.5;padding:12px 100px 10px 14px}
+.composer-toolbar{min-height:40px;padding:6px 10px 8px;gap:6px}
+.composer-toolbar :is(button,select){min-height:28px}
+.composer .input-actions{right:9px;bottom:7px;gap:6px}
+.composer .input-actions>button{width:30px;height:30px;min-height:30px;border-radius:9px}
+.composer-note{margin-top:4px;font-size:9px;line-height:1.3;flex-direction:row;align-items:center}
+@media(max-width:700px){#run-control-task{display:none}.task-control-heading{gap:6px}.composer-run-controls{padding:6px 10px}.composer textarea{font-size:16px}.composer-toolbar{gap:5px}.composer-note span:last-child{display:none}}
+@media(pointer:coarse){.composer .input-actions>button{width:40px;height:40px;min-height:40px}.composer-run-actions>.quiet{min-height:36px}.composer-toolbar :is(button,select){min-height:36px}}
+
+.composer #send[hidden]{display:none!important}
+
+/* Shared form rhythm: text has breathing room in every settings surface. */
+:root{--wb-field-height:36px;--wb-field-pad-y:8px;--wb-field-pad-x:12px;--wb-field-font:13px}
+:is(.settings-sheet,dialog,#settings-form) input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=hidden]):not([type=button]):not([type=submit]){box-sizing:border-box;min-width:0;max-width:100%;min-height:var(--wb-field-height);padding:var(--wb-field-pad-y) var(--wb-field-pad-x);font-size:var(--wb-field-font);line-height:1.5;border-radius:9px}
+:is(.settings-sheet,dialog,#settings-form) textarea{box-sizing:border-box;max-width:100%;padding:10px 12px;font-size:var(--wb-field-font);line-height:1.65;border-radius:9px}
+:is(.settings-sheet,dialog,#settings-form) select:not([multiple]):not([size]){box-sizing:border-box;min-width:0;max-width:100%;min-height:var(--wb-field-height);padding:8px 34px 8px 12px;border:1px solid var(--field-border,var(--line));border-radius:9px;background-color:var(--field);color:var(--text);font:inherit;font-size:var(--wb-field-font);line-height:1.5;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.settings-content :is(button.primary,button.quiet):not(.icon-button):not(.switch):not(.model-icon-action){min-height:34px;padding:8px 14px;line-height:1.5;border-radius:9px}
+.settings-content textarea{width:100%}
+.settings-content .control-label{margin-bottom:10px;line-height:1.6}
+.settings-control small{margin-top:8px;margin-bottom:10px;line-height:1.65}
+.settings-control>small:last-child{margin-bottom:0}
+.settings-control :is(.voice-name-row,.voice-reply-row,.voice-dispatch-row){gap:10px;align-items:center}
+.settings-content :is(input,select,textarea,button):focus-visible,dialog :is(input,select,textarea,button):focus-visible{outline-offset:3px}
+#settings-form .model-capability select{min-width:88px}
+#file-path{padding:7px 10px;min-height:34px;line-height:1.5}
+@media(max-width:600px){:is(.settings-sheet,dialog){--wb-field-font:16px}.settings-content .settings-control{margin-bottom:18px}.settings-content :is(button.primary,button.quiet):not(.icon-button):not(.switch){min-height:36px}}
+@media(forced-colors:active){:is(.settings-sheet,dialog,#settings-form) select:not([multiple]):not([size]){appearance:auto;-webkit-appearance:auto;background-image:none;padding-inline-end:12px}}

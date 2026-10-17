@@ -37,8 +37,8 @@ func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	in.Source = strings.TrimSpace(in.Source)
-	if in.Source != "inherit" && in.Source != "custom" {
-		fail(w, 400, errors.New("模型来源必须是 inherit 或 custom"))
+	if in.Source != "inherit" && in.Source != "custom" && in.Source != "configured" {
+		fail(w, 400, errors.New("模型来源必须是 inherit、configured 或 custom"))
 		return
 	}
 	in.BaseURL = strings.TrimSpace(in.BaseURL)
@@ -56,7 +56,25 @@ func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) 
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if strings.TrimSpace(in.APIKey) != "" {
+	if in.Source == "configured" {
+		found := false
+		for _, model := range a.settings.Models {
+			if model.ID == in.Model {
+				found = true
+				break
+			}
+		}
+		if !found {
+			fail(w, 400, errors.New("所选模型已不可用，请重新选择"))
+			return
+		}
+		if _, err := settingsForSelectedModel(a.settings, in.Model); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	}
+	// Saved-model selection reuses its provider credentials; never copy or clear keys.
+	if in.Source == "custom" && strings.TrimSpace(in.APIKey) != "" {
 		if !a.vaultIsUnlocked() {
 			fail(w, 400, errVaultLocked)
 			return
@@ -69,7 +87,7 @@ func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) 
 			fail(w, 500, err)
 			return
 		}
-	} else if in.ClearKey && a.vault != nil {
+	} else if in.Source == "custom" && in.ClearKey && a.vault != nil {
 		a.vault.Delete(VaultIDXiaomiModelAPIKey)
 		if err := a.vault.Save(); err != nil {
 			fail(w, 500, err)
@@ -89,7 +107,28 @@ func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) 
 func (a *App) xiaomiModelConfigLocked() (Settings, error) {
 	cfg := a.settings
 	if cfg.XiaomiModelSource != "custom" {
-		return cfg, nil
+		if cfg.XiaomiModelSource == "configured" {
+			found := false
+			for _, model := range cfg.Models {
+				if model.ID == cfg.XiaomiModel {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return cfg, errors.New("所选模型已不可用，请重新选择")
+			}
+			var err error
+			cfg, err = settingsForSelectedModel(cfg, cfg.XiaomiModel)
+			if err != nil {
+				return cfg, err
+			}
+			cfg.APIKey, err = a.modelAPIKeyForConfigLocked(cfg)
+			return cfg, err
+		}
+		key, err := a.modelAPIKeyLocked()
+		cfg.APIKey = key
+		return cfg, err
 	}
 	cfg.BaseURL, cfg.Model, cfg.ActiveModel = cfg.XiaomiBaseURL, cfg.XiaomiModel, cfg.XiaomiModel
 	cfg.Models = []ModelRef{{ID: cfg.XiaomiModel, Name: cfg.XiaomiModel, ContextWindow: defaultContextWindow}}
@@ -376,9 +415,6 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
-	if cfg.XiaomiModelSource != "custom" {
-		cfg.APIKey, _ = a.modelAPIKeyLocked()
-	}
 	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "text", in.AvatarFeedback)
 	if err != nil {
 		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。

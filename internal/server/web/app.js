@@ -1760,6 +1760,7 @@ function renderStepThinking(box, run, step, index) {
 function renderRunStatus(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
   renderRunStatusInto(box, runId);
+  if (typeof syncTaskActionHub === 'function') syncTaskActionHub(composerControlRun());
 }
 // 1s 心跳：刷新计时数字 + 看门狗超时检测
 setInterval(() => {
@@ -1973,10 +1974,17 @@ function approvalValidityPicker(button, permanentLabel, timedLabel='记住并允
   label.append(select);
   return {node:label,expiresAt:()=>select.value?new Date(Date.now()+Number(select.value)*1000).toISOString():''};
 }
-function renderClarification(run, box) {
+function renderClarification(run, box, inTaskHub = false) {
   if (!run.pendingQuestion || run.status !== "awaiting_clarification") return;
   const sessionId = state.session?.id;
   if (!sessionId) return;
+  if (!inTaskHub && $('run-action-content') && composerControlRun()?.id === run.id) {
+    const link = el('button', 'quiet task-action-link', t('待你处理 · 前往任务操作区'));
+    link.onclick = () => { $('run-controls').scrollIntoView({block:'nearest'}); $('run-action-content').querySelector('button,summary,input')?.focus(); };
+    box.append(link); return;
+  }
+  const questionScope = typeof recoveryScope === 'function' ? recoveryScope() : '';
+  const pendingSnapshot = JSON.stringify(run.pendingQuestion);
   let q; try { q = typeof run.pendingQuestion === 'string' ? JSON.parse(run.pendingQuestion) : run.pendingQuestion; } catch (e) { return; }
   if (q.approvalKind === 'shell' && run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
     const status = el('div', 'approval-review');
@@ -1988,7 +1996,9 @@ function renderClarification(run, box) {
   if (q.progressTotal) card.append(el('div', 'clarify-progress', t('澄清 {0}/{1}', q.progressCurrent || 1, q.progressTotal)));
   if (q.approvalKind === 'shell') {
     card.append(el('div', 'clarify-question', t('执行命令前确认')));
-    card.append(el('pre', 'approval-command', q.command));
+    const command = el('details', 'task-command-detail');
+    command.append(el('summary', '', t('查看完整命令 · {0} 行', String(q.command || '').split('\n').length)), el('pre', 'approval-command', q.command));
+    card.append(el('div', 'task-command-preview', String(q.command || '').split('\n').find(line => line.trim())?.slice(0,240) || ''), command);
   } else card.append(el('div', 'clarify-question', q.question));
   const key = `${sessionId}/${run.id}/${q.questionId || q.approvalRound || JSON.stringify(q)}`;
   const disable = value => card.querySelectorAll('button,input,select').forEach(x => x.disabled = value);
@@ -1997,6 +2007,10 @@ function renderClarification(run, box) {
   // of making the user wait through recovery reads and a complete rerender.
   const refresh = () => { if (state.session?.id === sessionId) refreshSessionSoon(); schedulePoll(); };
   const answer = async (text, remember = false, expiresAt = '') => {
+    const current = state.session?.runs?.find(item => item.id === run.id);
+    if (state.pendingSessionId || (typeof lockScreen !== 'undefined' && lockScreen.locked) || (typeof recoveryScope === 'function' && recoveryScope() !== questionScope) || state.session?.id !== sessionId || current?.status !== 'awaiting_clarification' || JSON.stringify(current.pendingQuestion) !== pendingSnapshot) {
+      toast(t('问题状态已变化，正在同步会话')); refresh(); return;
+    }
     if (clarificationSubmissions.has(key)) return;
     clarificationSubmissions.add(key); disable(true);
     let accepted = false;
@@ -3775,7 +3789,38 @@ function composerControlRun() {
   return [...(state.session?.runs || [])].reverse().find(run => ['running','awaiting_clarification'].includes(run.status)) || null;
 }
 function composerHasDraft() { return !!$('prompt')?.value.trim() || !!state.attachments?.length; }
+function resizeComposerInput() {
+  const input = $('prompt');
+  if (!input?.style || !input.isConnected) return;
+  const ceiling = Math.max(52, Math.min(200, window.innerHeight * .25));
+  input.style.height = 'auto';
+  input.style.height = Math.max(52, Math.min(ceiling, input.scrollHeight)) + 'px';
+}
+function syncTaskActionHub(run) {
+  const slot = $('run-action-content'), title = $('run-control-task');
+  if (!slot || !title) return;
+  title.textContent = run?.prompt || '';
+  title.title = run?.prompt || t('查看任务记录');
+  title.hidden = !run;
+  const activity = $('run-control-activity');
+  if (activity) {
+    const tool = state.runPhase?.[run?.id]?.tools?.filter(item => item.status === 'running').at(-1);
+    activity.textContent = run?.status === 'running' ? [tool?.tool || tool?.name || '', run?.parallelism > 1 ? t('并行 {0}×', run.parallelism) : ''].filter(Boolean).join(' · ') : '';
+    activity.hidden = !activity.textContent;
+  }
+  title.onclick = () => {
+    const article = [...document.querySelectorAll('#timeline .run')].find(node => node.dataset.run === run?.id);
+    article?.scrollIntoView({block:'start',behavior:'smooth'});
+  };
+  const signature = JSON.stringify([typeof recoveryScope === 'function' ? recoveryScope() : '', typeof window !== 'undefined' ? window.aideI18n?.language() : '', state.session?.id, run?.id, run?.status, run?.pendingQuestion, run?.approvalState, run?.autoReview]);
+  if (slot.dataset.signature === signature) return;
+  slot.dataset.signature = signature;
+  slot.replaceChildren();
+  if (run?.status === 'awaiting_clarification') renderClarification(run, slot, true);
+  slot.hidden = !slot.childElementCount;
+}
 function setSendMode(running) {
+  if (typeof resizeComposerInput === 'function') resizeComposerInput();
   const btn = $('send');
   if (!btn) return;
   syncPauseControl();
@@ -3789,17 +3834,19 @@ function setSendMode(running) {
   btn.textContent = stopMode ? '■' : '↑';
   btn.classList.toggle('stop-mode', stopMode);
   btn.dataset.action = stopMode ? 'stop' : 'send';
+  btn.hidden = stopMode; // The named stop action lives in the task strip; drafts reveal Send.
   const label = stopMode ? (reconciling ? t('正在同步结果…') : stopping ? t('正在停止本轮…') : t('停止本轮')) : run ? t(run.status === 'awaiting_clarification' ? '发送回答' : state.queueMode ? '排队发送' : '发送插话') : t('发送任务');
   btn.title = label; btn.setAttribute('aria-label', label);
   // Context budget and submission only restrict sending; stopping remains available.
   btn.disabled = stopMode ? stopping || reconciling : !!state.previewOverLimit || !!state.submitting || !!state.approvalModeBusy || finishing;
+  if (typeof syncTaskActionHub === 'function') syncTaskActionHub(run);
   const controls = $('run-controls');
   if (controls) {
     const last = state.session?.runs?.at(-1);
     const resumable = !run && !state.pendingSessionId && ['paused','interrupted'].includes(last?.status) && last.canResume;
     controls.hidden = !run && !resumable;
     $('run-control-status').textContent = reconciling ? t('正在同步结果…') : stopping ? t('正在停止本轮…') : pausing ? t('正在暂停任务…') : resumable ? t('已暂停，可从检查点继续') : run?.status === 'awaiting_clarification' ? t('等待你的回答或审批') : t('正在运行 · 可随时插话');
-    const stop = $('stop-active-run'); stop.hidden = !run || !draft; stop.disabled = stopping || reconciling;
+    const stop = $('stop-active-run'); stop.hidden = !run; stop.disabled = stopping || reconciling;
     const resume = $('resume-active-run'); resume.hidden = !resumable;
     $('run-control-more').hidden = !run || finishing || reconciling || run.status === 'awaiting_clarification';
   }
@@ -5409,10 +5456,11 @@ function refreshStrategyUI() {
   const choice = sessionModelPreferences();
   const p = state.profiles && {...state.profiles, strategy:choice.strategy, activeProfile:choice.profile};
   if (!p) return;
-  const xiaomiOwnsModel = document.body.classList.contains('assistant-mode') && state.xiaomiModelSettings?.source === 'custom';
+  const xiaomiOwnsModel = document.body.classList.contains('assistant-mode') && ['custom', 'configured'].includes(state.xiaomiModelSettings?.source);
   const xiaomiModelName = String(state.xiaomiModelSettings?.model || '').trim();
+  const xiaomiSelectedModel = state.config?.models?.find(m => m.id === xiaomiModelName);
   const selectedModel = state.config?.models?.find(m => m.id === choice.model);
-  const modelName = xiaomiOwnsModel ? (xiaomiModelName || t('小秘独立模型')) : [selectedModel?.name || choice.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
+  const modelName = xiaomiOwnsModel ? ([xiaomiSelectedModel?.name || xiaomiModelName, modelProviderName(xiaomiSelectedModel?.providerId)].filter(Boolean).join(' · ') || t('小秘独立模型')) : [selectedModel?.name || choice.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
   const assistantMode = document.body.classList.contains('assistant-mode');
   const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + t(composerAutoReview() ? '辅助审批' : '手动审批'));
   if (!assistantMode && state.config?.configured) $('model-name').textContent = t('{0} · API 已配置', choice.model);
@@ -5435,7 +5483,7 @@ function refreshStrategyUI() {
   right.classList.toggle('locked', xiaomiOwnsModel);
   right.setAttribute('aria-disabled', String(xiaomiOwnsModel));
   right.append(el('div', 'strategy-menu-sep', t("模型")));
-  if (xiaomiOwnsModel) right.append(el('small', 'strategy-menu-locked-note', t('小秘使用独立模型，模型由小秘设置管理')));
+  if (xiaomiOwnsModel) right.append(el('small', 'strategy-menu-locked-note', t('小秘模型由语音助理设置管理')));
   const modelOptions = xiaomiOwnsModel
     ? [{ id: xiaomiModelName, name: xiaomiModelName || t('小秘独立模型') }]
     : (state.config?.models || []);
@@ -6150,11 +6198,35 @@ function contextMeterKey() {
     anchor?.usage?.prompt || 0, anchor?.usage?.completion || 0, anchor?.promptEstimate || 0, anchor?.scope || '',
     JSON.stringify(sessionModelPreferences()), state.mode || 'chat', state.workflowPhase || '', !!window.aideAvatarEnabled?.(), signature].join('~');
 }
+function contextUsageTotal(usage) {
+  return Math.max(0, Number(usage?.total) || (Number(usage?.prompt) || 0) + (Number(usage?.completion) || 0));
+}
+function formatUsageTokens(value) {
+  const count = Math.max(0, Number(value) || 0);
+  return count >= 1000000 ? (count / 1000000).toFixed(2) + 'M' : fmtTokens(count);
+}
+function currentContextUsage() {
+  const runs = state.session?.runs || [];
+  if (contextUsageTotal(state.session?.sessionUsage) > 0) return { usage: state.session.sessionUsage, lifetime: true };
+  // Older servers may omit lifetime usage; never present a paginated run as the session total.
+  const run = [...runs].reverse().find(run => contextUsageTotal(run.usage) > 0);
+  return { usage: run?.usage || null, lifetime: false };
+}
+function latestRequestContext(data) {
+  const run = state.session?.runs?.at(-1);
+  if (!run) return null;
+  const model = state.config?.models?.find(model => model.id === run.model);
+  const anchor = run.contextAnchor;
+  if (anchor) return { label: anchor.scope === 'parallel_merge' ? '最近主汇总请求' : '最近主请求', inputEstimate: anchor.promptEstimate, contextWindow: model?.contextWindow || data?.contextWindow || 65536, usage: anchor.usage };
+  const progress = run.parallel;
+  if (progress?.mainContext) return { label: '最近主汇总请求', ...progress.mainContext };
+  if (progress?.plannerContext) return { label: '最近规划请求', ...progress.plannerContext };
+  return null;
+}
 function renderParallelContextDetail(detail) {
   const run = state.session?.runs?.at(-1);
   if (!(run?.parallelism > 1)) return;
-  const note = el('p', 'context-card-actual context-parallel-detail', t('各路独立上下文，分别携带会话副本；主请求再汇总笔记。累计含标题等辅助调用，不共用一个窗口。'));
-  detail.append(note);
+  detail.append(el('p', 'context-card-actual context-parallel-detail', t('并行各路独立计量，累计消耗不等于单个上下文窗口。')));
   const progress = run.parallel;
   const row = (label, context) => {
     if (!context) return;
@@ -6164,94 +6236,77 @@ function renderParallelContextDetail(detail) {
   };
   row('标题辅助请求', run.topicContext);
   for (const [index, context] of (progress?.plannerHistory || []).entries()) row(t('第 {0} 轮规划请求', index + 1), context);
-  row('规划请求', progress?.plannerContext);
+  if (!progress?.plannerHistory?.length || JSON.stringify(progress.plannerHistory.at(-1)) !== JSON.stringify(progress.plannerContext)) row('规划请求', progress?.plannerContext);
   const contexts = (progress?.parts || []).map(part => part.context).filter(Boolean);
   if (contexts.length) {
     const actual = contexts.every(context => !context.usage?.estimated && context.usage?.prompt > 0);
-    const inputs = contexts.map(context => actual ? context.usage.prompt : context.inputEstimate || 0);
+    const inputs = contexts.map(context => !context.usage?.estimated && context.usage?.prompt > 0 ? context.usage.prompt : context.inputEstimate || 0);
     const windows = [...new Set(contexts.map(context => context.contextWindow || 0))];
-    detail.append(el('p', 'context-card-actual context-parallel-detail', t(actual ? '子分析 {0} 路：每路实际输入 {1}–{2}，各自窗口 {3}' : '子分析 {0} 路：每路输入估算 {1}–{2}，各自窗口 {3}', contexts.length, fmtTokens(Math.min(...inputs)), fmtTokens(Math.max(...inputs)), windows.map(fmtTokens).join(' / '))));
+    detail.append(el('p', 'context-card-actual context-parallel-detail', t(actual ? '子分析 {0} 路：每路实际输入 {1}–{2}，各自窗口 {3}' : '子分析 {0} 路：每路输入 {1}–{2}（含估算），各自窗口 {3}', contexts.length, fmtTokens(Math.min(...inputs)), fmtTokens(Math.max(...inputs)), windows.map(fmtTokens).join(' / '))));
   }
   row('最近主汇总请求', progress?.mainContext);
-  if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual context-parallel-detail', t(['running', 'queued'].includes(run.status) ? '正在准备逐请求上下文…' : '此历史任务未记录逐请求上下文，不能从累计用量反推。')));
+  if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual context-parallel-detail', t(['running', 'queued'].includes(run.status) ? '正在等待逐请求用量回传…' : '此历史任务未记录逐请求上下文，不能从累计用量反推。')));
+}
+function paintContextUsage(data) {
+  ensureContextMeterControls();
+  const { usage, lifetime } = currentContextUsage();
+  const title = usage ? (lifetime ? (usage.estimated ? '会话消耗（含估算）' : '会话实际消耗') : (usage.estimated ? '最近任务消耗（估算）' : '最近任务实际消耗')) : '会话消耗';
+  $('context-card-label').textContent = t(title);
+  $('context-stat').textContent = usage ? formatUsageTokens(contextUsageTotal(usage)) : '—';
+  $('context-stat').title = usage ? t('输入 {0} tokens · 输出 {1} tokens · 合计 {2} tokens', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), contextUsageTotal(usage).toLocaleString()) : t('等待上游用量回传');
+  $('context-usage-summary').textContent = usage ? t('输入 {0} · 输出 {1}', formatUsageTokens(usage.prompt), formatUsageTokens(usage.completion)) : t('等待上游用量回传');
+  const run = state.session?.runs?.at(-1);
+  const request = latestRequestContext(data);
+  const bar = $('context-bar');
+  const requestSummary = $('context-request-summary');
+  bar.replaceChildren(); bar.classList.remove('warn');
+  if (request) {
+    const actual = !request.usage?.estimated && request.usage?.prompt > 0;
+    const input = actual ? request.usage.prompt : request.inputEstimate || 0;
+    const output = actual ? request.usage.completion || 0 : 0;
+    const window = request.contextWindow || 65536;
+    const occupied = input + output;
+    const label = t('{0} · {1}', t(request.label), t(actual ? '上游实际' : '估算'));
+    requestSummary.textContent = label + ' · ' + fmtTokens(occupied) + ' / ' + fmtTokens(window);
+    requestSummary.title = t('单次请求输入 {0}，输出 {1}，配置窗口 {2}；与累计消耗分别计量。', input, output, window);
+    bar.setAttribute('aria-label', requestSummary.textContent);
+    for (const [tokens, kind, name] of [[input, 'input', '请求输入'], [output, 'output', '请求输出']]) {
+      if (!tokens) continue;
+      const segment = el('span', 'context-segment context-request-' + kind);
+      segment.style.width = Math.min(100, Math.max(0, tokens / window * 100)) + '%';
+      segment.setAttribute('role', 'img'); segment.setAttribute('aria-label', t('{0}：{1} tokens · {2}', t(name), tokens, t(actual ? '上游实际' : '估算')));
+      bar.append(segment);
+    }
+    bar.classList.toggle('warn', occupied > window * .9);
+  } else {
+    requestSummary.textContent = t(run?.parallelism > 1 ? '并行各路独立计量 · 等待请求用量' : '尚无单次请求用量');
+    bar.setAttribute('aria-label', requestSummary.textContent);
+  }
+  const detail = $('context-card-detail');
+  const wasOpen = !!detail.querySelector?.('details')?.open;
+  const scrollTop = detail.querySelector?.('.context-usage-detail-body')?.scrollTop || 0;
+  detail.replaceChildren();
+  const disclosure = el('details', 'context-usage-details'); disclosure.open = wasOpen;
+  disclosure.append(el('summary', '', t(run?.parallelism > 1 ? '用量明细 · 并行 {0}×' : '用量明细', run?.parallelism || 1)));
+  const body = el('div', 'context-usage-detail-body');
+  if (usage) body.append(el('p', 'context-card-actual', t('累计输入 {0} · 输出 {1} · {2}', (usage.prompt || 0).toLocaleString(), (usage.completion || 0).toLocaleString(), t(usage.estimated ? '含估算' : '上游实际'))));
+  if (['running', 'queued'].includes(run?.status)) body.append(el('p', 'context-card-actual', t('运行中，仅统计已回传用量；未完成请求稍后更新。')));
+  renderParallelContextDetail(body);
+  if (data) body.append(el('p', 'context-card-actual context-next-estimate', t('下次请求预估（非实际消耗）：输入 {0} · 输出预留 {1}', fmtTokens(data.inputEstimate || 0), fmtTokens(data.outputReserve || 0))));
+  disclosure.append(body); detail.append(disclosure); body.scrollTop = scrollTop;
+  renderContextCompactionState($('context-compaction-slot'));
 }
 function renderContextMeter(data, isDraft) {
   if (!data || !data.breakdown) return;
-  ensureContextMeterControls();
   state.contextMeter = data;
   state.contextMeterDraft = !!isDraft;
   if (isDraft) {
-    state.contextMeterKey = ''; // 草稿不能作为已成功缓存的会话基线。
+    state.contextMeterKey = '';
     ++state.contextMeterSeq.value;
     state.contextMeterController?.abort();
     state.contextMeterPendingKey = '';
   }
-  const limit = data.contextWindow || activeModel()?.contextWindow || 65536;
-  const pressure = data.totalEstimate || data.inputEstimate || 0;
-  const pct = Math.min(100, Math.round((pressure / limit) * 100));
-  $('context-stat').textContent = fmtTokens(data.inputEstimate || 0) + ' / ' + fmtTokens(limit);
-  const bar = $('context-bar');
-  bar.replaceChildren();
-  bar.setAttribute('aria-label', t('下次请求：输入估算 {0}，含输出预留共 {1}，窗口 {2}', data.inputEstimate || 0, pressure, limit));
-  const detail = $('context-card-detail');
-  if (!detail) return;
-  detail.replaceChildren();
-  detail.append(el('p', 'context-card-actual context-parallel-detail', t('输出预留 {0} · 含预留共 {1}', fmtTokens(data.outputReserve || 0), fmtTokens(pressure))));
-  const parts = contextParts(data.breakdown);
-  parts.forEach(([label, part, color]) => {
-    const segment = el('span', 'context-segment');
-    const share = Math.max(0, part.tokens) / limit * 100;
-    segment.style.width = share + '%';
-    segment.style.backgroundColor = color;
-    segment.tabIndex = 0;
-    segment.setAttribute('role', 'img');
-    const pctOfWindow = (part.tokens / limit * 100).toFixed(1);
-    const tooltip = (event) => showCtxTooltip(event, label + (isDraft ? ' · ' + t("当前草稿 · 估算") : ' · ' + t("估算")), part.tokens.toLocaleString(), pctOfWindow, color);
-    segment.setAttribute('aria-label', t("{0}：估算 {1} tokens，占窗口 {2}%", label, part.tokens, pctOfWindow));
-    segment.title = t("{0} · 估算 {1} tokens · 窗口 {2}%", label, part.tokens, pctOfWindow);
-    segment.addEventListener('mouseenter', tooltip);
-    segment.addEventListener('mousemove', moveCtxTooltip);
-    segment.addEventListener('mouseleave', hideCtxTooltip);
-    segment.addEventListener('focus', (event) => {
-      const rect = event.currentTarget.getBoundingClientRect();
-      tooltip({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
-    });
-    segment.addEventListener('blur', hideCtxTooltip);
-    bar.append(segment);
-  });
-  if ((data.outputReserve || 0) > 0) {
-    const reserve = el('span', 'context-segment context-segment-reserve');
-    reserve.style.width = Math.max(0, data.outputReserve) / limit * 100 + '%';
-    reserve.tabIndex = 0;
-    reserve.setAttribute('role', 'img');
-    reserve.setAttribute('aria-label', t("输出预留：估算 {0} tokens", data.outputReserve));
-    reserve.title = t("输出预留 · {0} tokens", data.outputReserve);
-    const showReserve = (event) => showCtxTooltip(event, t("输出预留"), data.outputReserve.toLocaleString(), (data.outputReserve / limit * 100).toFixed(1), '#475569');
-    reserve.addEventListener('mouseenter', showReserve);
-    reserve.addEventListener('mousemove', moveCtxTooltip);
-    reserve.addEventListener('mouseleave', hideCtxTooltip);
-    reserve.addEventListener('focus', (event) => { const rect = event.currentTarget.getBoundingClientRect(); showReserve({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 }); });
-    reserve.addEventListener('blur', hideCtxTooltip);
-    bar.append(reserve);
-  }
-  bar.classList.toggle('warn', pct > 90);
-  const runs = state.session?.runs || [];
-  const lastRun = [...runs].reverse().find(r => r.usage && r.usage.total > 0);
-  const hasSessionUsage = state.session?.sessionUsage?.total > 0;
-  const usage = hasSessionUsage ? state.session.sessionUsage : lastRun?.usage;
-  if (usage) {
-    const source = hasSessionUsage
-      ? (usage.estimated ? t("会话累计消耗（含估算）") : t("会话累计消耗（上游实际）"))
-      : (usage.estimated ? t("最近任务累计（估算）") : t("最近任务累计（上游实际）"));
-    const promptTokens = usage.estimated ? fmtTokens(usage.prompt || 0) : (usage.prompt || 0).toLocaleString();
-    const completionTokens = usage.estimated ? fmtTokens(usage.completion || 0) : (usage.completion || 0).toLocaleString();
-    const actual = el('p', 'context-card-actual', t("{0}：输入 {1} · 输出 {2}", source, promptTokens, completionTokens));
-    actual.title = t("{0}：输入 {1} tokens · 输出 {2} tokens", source, usage.prompt || 0, usage.completion || 0);
-    detail.append(actual);
-  }
-  renderParallelContextDetail(detail);
-  renderContextCompactionState(detail);
-  detail.title = data.estimationNote || '';
+  paintContextUsage(data);
 }
 const contextCompactionTimers = new Map();
 const contextCompactionElapsedTimers = new Map();
@@ -6334,6 +6389,7 @@ function showContextCompaction(event) {
   renderContextCompactionState($('context-card-detail'));
 }
 function renderContextCompactionState(detail) {
+  detail = $('context-compaction-slot') || detail;
   if (!detail) return;
   const sessionID = state.session?.id || '';
   const event = state.contextCompactions.get(sessionID);
@@ -6365,7 +6421,7 @@ function renderContextCompactionState(detail) {
           : (event.text || t('正在整理早期消息并生成摘要'))));
     row.append(el('span', '', stalled
       ? t('进度已停滞 · 最近 {0} 分钟无更新，仍在等待模型返回', Math.floor(stalledForMs / 60_000))
-      : progressText));
+      : t('上下文压缩中 · {0}', progressText)));
     const detailText = event.folded > 0
       ? t('{0} 条早期消息 · 当前约 {1}', event.folded, fmtTokens(event.beforeTokens || 0))
       : (event.beforeTokens > 0 ? t('当前约 {0}', fmtTokens(event.beforeTokens)) : '');
@@ -6384,6 +6440,13 @@ function renderContextCompactionState(detail) {
     row.append(el('span', 'context-compaction-check', ''));
     row.append(el('span', '', event.preflight ? t('压缩未完成，原会话内容已保留') : (event.text || t('压缩未完成，原会话内容已保留'))));
   }
+  if (inProgress || event.phase === 'completed') {
+    const meter = el('div', 'context-compaction-meter');
+    const fill = el('span', 'context-compaction-fill');
+    const ratio = event.phase === 'completed' && event.beforeTokens > 0 ? Math.min(1, Math.max(0, (event.afterTokens || 0) / event.beforeTokens)) : 1;
+    fill.style.width = (ratio * 100) + '%';
+    meter.setAttribute('aria-hidden', 'true'); meter.append(fill); row.append(meter);
+  }
   detail.append(row);
 }
 function contextMeterScope() {
@@ -6393,12 +6456,18 @@ function contextMeterTransitioning() {
   return !!state.pendingSessionId && state.pendingSessionId !== state.session?.id;
 }
 function clearContextMeterDisplay() {
+  $('context-card-label').textContent = t('会话消耗');
   $('context-stat').textContent = '—';
+  $('context-stat').title = '';
   const bar = $('context-bar');
   bar.replaceChildren();
   bar.removeAttribute('aria-label');
   bar.classList.remove('warn');
   $('context-card-detail')?.replaceChildren();
+  $('context-usage-summary').textContent = '';
+  $('context-request-summary').textContent = '';
+  $('context-compaction-slot')?.replaceChildren();
+  $('context-card')?.classList.remove('is-compacting', 'was-compacted', 'is-compaction-stalled');
   if ($('context-card-detail')) $('context-card-detail').title = '';
   hideCtxTooltip();
 }
@@ -6429,7 +6498,7 @@ async function refreshContextMeter() {
   const controller = new AbortController();
   state.contextMeterController = controller;
   state.contextMeterPendingKey = key;
-  clearContextMeterDisplay();
+  paintContextUsage(state.contextMeter);
   const seq = ++state.contextMeterSeq.value;
   const strategy = sessionModelPreferences().strategy;
   const profile = strategy === 'auto' ? '' : sessionModelPreferences().profile;
@@ -6451,6 +6520,7 @@ async function refreshContextMeter() {
 function estimateContext() {
   if (state.contextMeterScope !== contextMeterScope() || !state.config?.configured) resetContextMeter();
   if (!state.config?.configured) return;
+  paintContextUsage(state.contextMeter);
   refreshContextMeter();
 }
 
@@ -10585,9 +10655,14 @@ function renderVoiceNameControl() {
 }
 function renderXiaomiModelControl() {
   const wrap = el('div', 'settings-control');
-  const head = el('div', 'control-label'); head.append(el('span', '', t('助理模型来源')));
-  const source = el('select', 'input');
-  [['inherit', t('复用工作台模型设置')], ['custom', t('使用独立模型来源')]].forEach(([v, label]) => { const o = el('option', '', label); o.value = v; source.append(o); });
+  const head = el('div', 'control-label'); head.append(el('span', '', t('助理模型')));
+  const source = el('select', 'input'); source.setAttribute('aria-label', t('助理模型')); source.disabled = true;
+  const addOption = (value, label) => { const option = el('option', '', label); option.value = value; source.append(option); return option; };
+  addOption('inherit', t('跟随工作台当前模型'));
+  for (const configured of state.config?.models || []) {
+    addOption('model:' + configured.id, [configured.name || configured.id, modelProviderName(configured.providerId)].filter(Boolean).join(' · '));
+  }
+  addOption('custom', t('自定义独立模型'));
   const base = el('input', 'input'); base.placeholder = 'https://api.example.com/v1'; base.autocomplete = 'url';
   const model = el('input', 'input'); model.placeholder = t('模型名称，例如 gpt-4o-mini'); model.autocomplete = 'off';
   const key = el('input', 'input'); key.type = 'password'; key.placeholder = t('API Key（留空表示不更改）'); key.autocomplete = 'new-password';
@@ -10595,15 +10670,32 @@ function renderXiaomiModelControl() {
   const clearKeyLabel = el('label', 'xiaomi-clear-key'); clearKeyLabel.append(clearKey, el('span', '', t('清除已保存的独立 API Key')));
   const status = el('small', 'muted', '');
   const fields = el('div', 'xiaomi-model-fields'); fields.append(base, model, key, clearKeyLabel);
-  const save = el('button', 'primary', t('保存小秘模型设置')); save.type = 'button';
-  const toggleFields = () => fields.classList.toggle('hidden', source.value !== 'custom');
+  const save = el('button', 'primary', t('保存小秘模型设置')); save.type = 'button'; save.disabled = true;
+  let hasCustomKey = false;
+  const toggleFields = () => {
+    fields.classList.toggle('hidden', source.value !== 'custom');
+    status.textContent = source.value === 'custom' ? t(hasCustomKey ? '独立 API Key 已配置' : '独立 API Key 尚未配置')
+      : t(source.value === 'inherit' ? '跟随工作台当前模型及其密钥。' : '使用所选模型的提供商与已保存密钥，不影响工作台当前模型。');
+  };
   source.onchange = toggleFields;
-  wrap.append(head, source, fields, status, save, el('small', 'muted', t('独立 API Key 使用加密保险库存储；复用模式跟随工作台当前模型和密钥。')));
-  api('/xiaomi/model').then(cfg => { state.xiaomiModelSettings = cfg; source.value = cfg.source || 'inherit'; base.value = cfg.baseURL || ''; model.value = cfg.model || ''; status.textContent = cfg.hasKey ? t('独立 API Key 已配置') : t('独立 API Key 尚未配置'); toggleFields(); refreshStrategyUI(); }).catch(e => { status.textContent = e.message; });
+  wrap.append(head, source, fields, status, save, el('small', 'muted', t('可直接选择模型参数中已配置的模型；自定义独立模型可另填接口与密钥。')));
+  api('/xiaomi/model').then(cfg => {
+    state.xiaomiModelSettings = cfg;
+    if (cfg.source === 'configured' && !(state.config?.models || []).some(m => m.id === cfg.model)) {
+      const missing = addOption('model:' + cfg.model, t('已不可用：{0}', cfg.model)); missing.disabled = true;
+    }
+    source.value = cfg.source === 'configured' ? 'model:' + cfg.model : cfg.source || 'inherit';
+    base.value = cfg.baseURL || ''; model.value = cfg.source === 'custom' ? cfg.model || '' : '';
+    hasCustomKey = !!cfg.hasKey; source.disabled = false; save.disabled = false;
+    toggleFields(); refreshStrategyUI();
+  }).catch(e => { status.textContent = e.message; });
   save.onclick = action(async () => {
-    const cfg = await api('/xiaomi/model', { method: 'PUT', body: JSON.stringify({ source: source.value, baseURL: base.value.trim(), model: model.value.trim(), apiKey: key.value.trim(), clearKey: clearKey.checked }) });
+    const configured = source.value.startsWith('model:');
+    const payload = { source: configured ? 'configured' : source.value, model: configured ? source.value.slice(6) : model.value.trim(), baseURL: base.value.trim() };
+    if (source.value === 'custom') Object.assign(payload, { apiKey: key.value.trim(), clearKey: clearKey.checked });
+    const cfg = await api('/xiaomi/model', { method: 'PUT', body: JSON.stringify(payload) });
     state.xiaomiModelSettings = cfg; refreshStrategyUI();
-    key.value = ''; clearKey.checked = false; status.textContent = cfg.hasKey ? t('独立 API Key 已配置') : t('独立 API Key 尚未配置'); toast(t('小秘模型设置已保存'));
+    key.value = ''; clearKey.checked = false; hasCustomKey = !!cfg.hasKey; toggleFields(); toast(t('小秘模型设置已保存'));
   });
   return wrap;
 }
