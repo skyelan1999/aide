@@ -49,5 +49,20 @@
   "realModelOrVectorCalls": 0,
   "remoteMainPushed": false,
   "productionReplaced": false,
-  "nextRequiredAction": "User personally completes browser certificate handoff when available, then current native approval/outcome checks can resume; no repeated prompt issued."
+  "nextRequiredAction": "Current candidate is running with one owned Safari warning tab open. User personally completes certificate handoff; current native approval/outcome checks can then resume.",
+  "resumedHandoff": {
+    "observedUTC": "2026-10-17T10:07:06.334585+00:00",
+    "originalLauncherExit": 0,
+    "candidatePort": 50167,
+    "healthy": true,
+    "ownMountsOnly": true,
+    "image": "sha256:da290c0e50fe3087a736435c20e22f077aa9492f0553f0b852309ccd4397f46b",
+    "productionIdentityAnd22FilesUnchanged": true,
+    "browserTitle": "此连接非私人连接",
+    "applicationPageReached": false,
+    "certificateWarningBypassed": false,
+    "ownedTabOpenForUserHandoff": true,
+    "runtimeRetainedForUserHandoff": true,
+    "liveBackgroundTestProcess": false
+  }
 }

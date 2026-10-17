@@ -60,8 +60,8 @@
       ]
     },
     "cleanup": {
-      "status": "pass",
-      "summary": "Owned tab closed, original4 nonpinned+1pinned and Release form preserved; original stop and2 stopped containers/2 empty networks removed; production22 unchanged.",
+      "status": "in_progress",
+      "summary": "Prior cleanup pass retained as historical evidence. User resumed: original launcher restarted current candidate and one owned Safari tab is open for required certificate handoff; final stop/tab cleanup pending after native acceptance. Production identity and22 protected files reverified unchanged.",
       "evidence": [
         "docs/reviews/2026-10-17/native-candidate-6eb.md",
         "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
@@ -78,5 +78,5 @@
   },
   "release_authorization": "Existing incremental candidate tests/docs/source branch authorization; no remote main push or production deployment.",
   "rollback": "Close own candidate page; original stop and exact stopped owned project containers/networks cleanup, retain data/images.",
-  "handoff": "User previously unavailable for certificate handoff. No repeated request or bypass performed; runtime stopped and data retained. Resume original packaged launcher then user-handled browser certificate step when user returns available."
+  "handoff": "Current50167 candidate and one owned Safari warning tab retained for user-present certificate handoff. Original launcher exited0; no live background test process. User must personally handle warning; native approval/outcome tests remain NOT_RUN."
 }
