@@ -80,5 +80,14 @@
   },
   "release_authorization": "Existing direct user requests: push/merge main, Docker complete images in ordinary repo and Release, same image-package distribution with receiving device import; original recurring goal release gates. No production replacement requested in this task.",
   "rollback": "Preserve old07c manifest and all named images/packages; revert owned default metadata if needed; never delete production/user data or existing public assets.",
-  "handoff": "Resume exact package uploads via authorized GitHub channel; verify both public assets before promoting defaults and new exact full/main release gate. Product492 already on main. Windows native user-owned; real vectors deferred; original12 continue."
+  "handoff": "Resume exact package uploads via authorized GitHub channel; verify both public assets before promoting defaults and new exact full/main release gate. Product492 already on main. Windows native user-owned; real vectors deferred; original12 continue.",
+  "source_delivery": {
+    "status": "pass",
+    "observedRemoteMain": "716859b724c89320e7c65a17be4f2025ddbb373d",
+    "scope": "Documentation only; product492 already main; public new package pending"
+  },
+  "release_check": {
+    "exit": 0,
+    "scope": "Current exact local full and old07c defaults only; candidate ce0c public check separately exit1"
+  }
 }

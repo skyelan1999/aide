@@ -215,7 +215,12 @@
     "commandLineAuthenticationAvailable": false
   },
   "sourceDelivery": {
-    "status": "pending documentation commit only; product492 already on main"
+    "status": "pass",
+    "observedRemoteMain": "716859b724c89320e7c65a17be4f2025ddbb373d",
+    "productCommitAlreadyOnMain": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "scope": "Documentation and local qualification evidence only; new package publication remains failed",
+    "pushExit": 0,
+    "independentLsRemoteExact": true
   },
   "limits": {
     "WindowsNative": "user-owned NOT_RUN",
@@ -229,5 +234,13 @@
     "diffCheck": "pass",
     "buildInputsChanged": false,
     "fullReusedOnlyAfterExactFingerprintCheck": true
+  },
+  "releaseCheck": {
+    "command": "python3 scripts/agent-route.py release-check continuity-runtime-ce0c-20261017",
+    "exit": 0,
+    "localExactFullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+    "publicDefaultSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "newCe0cPublicQualification": false,
+    "scope": "Current main local prerequisites and OLD default public assets only; does not upload or qualify missing ce0c assets"
   }
 }
