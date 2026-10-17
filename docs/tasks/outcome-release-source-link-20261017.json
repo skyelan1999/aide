@@ -1,0 +1,78 @@
+{
+  "id": "outcome-release-source-link-20261017",
+  "request": "Continue outcome traceability: retain a visible safe release source link on saved operator receipt cards",
+  "baseline": "dd20b1b5e48e62616e81a248ed2a0b0283e8cec8",
+  "initial_status": "",
+  "acceptance": [
+    "Saved operator release cards show source URL independently from commit, preserving provenance boundary.",
+    "Only safe HTTPS URLs become links; credentials, query, fragment, unsafe protocols and malformed values remain inert text.",
+    "Existing outcome regression and quick profile pass; actual Safari component renders and opens correct destination; full workbench/runtime acceptance remains pending."
+  ],
+  "scope": [
+    "internal/server/web/task-outcome.js",
+    "internal/server/web/index.html",
+    "scripts/outcome-pagination.test.cjs",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/tasks/outcome-release-source-link-20261017.json",
+    "docs/reviews/2026-10-17/outcome-release-source-link.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Implemented saved source traceability and bounded HTTPS links; native component and owned-page/server cleanup observed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-release-source-link.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Implemented saved source traceability and bounded HTTPS links; native component and owned-page/server cleanup observed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-release-source-link.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented saved source traceability and bounded HTTPS links; native component and owned-page/server cleanup observed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-release-source-link.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused outcome link/security and existing regression pass; actual Safari component link open/inert text and final layout observed; all 107 quick checks pass. Full workbench candidate and full race/vet remain pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-release-source-link.md",
+        ".agent-state/verify-20261017T055717868235Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Implemented saved source traceability and bounded HTTPS links; native component and owned-page/server cleanup observed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-release-source-link.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Implemented saved source traceability and bounded HTTPS links; native component and owned-page/server cleanup observed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-release-source-link.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "No push, main merge, deployment, version or Release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert owned source/doc commit; no user data schema or API changes.",
+  "handoff": "Original twelve streams remain active; Windows user-owned and real vectors deferred.",
+  "quick": {
+    "status": "pass",
+    "fingerprint": "b85fb877e8b829b28d3c1a0ef6cdbc4d4e7fe4a3a3d1ccb598aa09cb9cb7d93c",
+    "head": "dd20b1b5e48e62616e81a248ed2a0b0283e8cec8",
+    "log": ".agent-state/verify-20261017T055717868235Z.log"
+  }
+}
