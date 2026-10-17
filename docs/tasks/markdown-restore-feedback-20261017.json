@@ -40,7 +40,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Two negative-to-positive regressions, targeted VM/syntax and124 quick checks pass. Exact full live in owned4GiB/2CPU network-none container,976 entries/12 shards first1 pass; native/new runtime pending. Follow same live session16520, do not restart on observation timeout.",
+      "summary": "First version exact full127 and current built native persistent8s/retry/full remote bytes pass, but actual screenshot shows error below visible bottom. Independent DOM order negative then before-confirm placement patch; final exact full/native pending. Prior full not reused.",
       "evidence": [
         "docs/reviews/2026-10-17/markdown-restore-feedback.md",
         "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
@@ -73,5 +73,5 @@
   },
   "release_authorization": "Existing incremental source/test/doc/push authorization; no production replacement or public Release before gates.",
   "rollback": "Revert owned source commit; no data migration.",
-  "handoff": "Exact full session16520/container aide-verify-f11e81f3e692 live at checkpoint. After terminal pass and matching fingerprint, run private build.py then prepare-native.py; these are unexecuted preparations, not pass evidence. Next native actual SSH interruption/retry, cleanup, docs and gates. Original12/Windows/vector scope unchanged."
+  "handoff": "Prior full session16520 terminal0; first candidate stopped/cleaned. New before-confirm placement and cache8 require fresh full and source-v2 candidate. Follow actual new process only once launched; do not claim old receipt covers new placement."
 }

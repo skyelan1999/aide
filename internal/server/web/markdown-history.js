@@ -74,7 +74,7 @@
          if(!blocked()&&dialog.open&&pick===selection&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||''))){
           failure=document.createElement('p');failure.className='task-error';failure.setAttribute('role','alert');failure.textContent=t('恢复未完成：')+(e.message||String(e));
           if(e.data?.journal)failure.textContent+=' '+t('恢复未完成，操作记录：')+e.data.journal+' · '+(e.data.files||[]).filter(f=>f.applied).map(f=>f.path).join(', ');
-          changes.append(failure);error(e);
+          confirm.before(failure);error(e);
          }
         }finally{if(restoring&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))editor.readOnly=wasReadOnly;confirm.disabled=false;checkbox.disabled=false;}};
        }catch(e){error(e);}finally{preview.disabled=false;}};

@@ -1,5 +1,5 @@
 {
-  "status": "targeted_quick_pass_exact_full_running_native_pending",
+  "status": "visual_followup_targeted_pass_current_full_native_pending",
   "negative": {
     "status": "expected_failure",
     "command": "node scripts/markdown-history-writable.test.cjs",
@@ -24,22 +24,7 @@
     "command": "node --check internal/server/web/markdown-history.js",
     "exit": 0
   },
-  "full": {
-    "status": "running",
-    "processSession": 16520,
-    "container": "aide-verify-f11e81f3e692",
-    "containerId": "650ecc60c1d9aa4e977087430c35dfa475745a91ea18f44eea2b2cc58bd2424c",
-    "containerStartedAt": "2026-10-17T12:49:32.56654834Z",
-    "memoryLimit": 4294967296,
-    "nanoCPUs": 2000000000,
-    "network": "none",
-    "serverInventory": 976,
-    "shards": 12,
-    "completedShardsAtCheckpoint": 1,
-    "log": ".agent-state/verify-20261017T124847063883Z.log",
-    "noPassClaimBeforeTerminal": true
-  },
-  "native": "NOT_RUN new source candidate",
+  "native": "NOT_RUN final before-confirm placement",
   "productionReplaced": false,
   "realModelOrVectorCalls": 0,
   "quick": {
@@ -49,8 +34,67 @@
     "log": ".agent-state/verify-20261017T124714659841Z.log",
     "commands": 124
   },
-  "sourceCommit": "4469686e3f128bdaff6da0f053d192c88e87d879",
-  "sourceSHA": "2adcbede85b71dca30cfde3052a097ea0011f24f1aa2c54e9405bcff564c61e1",
-  "fullFingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
-  "observedUTC": "2026-10-17T12:51:35.427904+00:00"
+  "observedUTC": "2026-10-17T12:51:35.427904+00:00",
+  "previousFull127": {
+    "status": "pass",
+    "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+    "head": "d47c3a4b2a0c0df7c7aa0756c4fcaa32cf7d7027",
+    "log": ".agent-state/verify-20261017T124847063883Z.log",
+    "time": "20261017T124847063883Z",
+    "commands": 127,
+    "allExitZero": true,
+    "serverInventory": 976,
+    "disjointSerialShards": 12,
+    "logSHA256": "a15c4ecd046a4acde6d4b8122143bc30771ed4725354ef5605bf40fc9ae2298b",
+    "processSession": 16520,
+    "processExit": 0
+  },
+  "previousBuild": {
+    "root": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/markdown-restore-feedback-20261017/source",
+    "commit": "4469686e3f128bdaff6da0f053d192c88e87d879",
+    "sourceSHA": "2adcbede85b71dca30cfde3052a097ea0011f24f1aa2c54e9405bcff564c61e1",
+    "fullFingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+    "status": "built",
+    "tag": "aide:restore-feedback-arm64-4469686e",
+    "image": "sha256:919648b56b611bcdb06fe044e16db9008b593bfc3df96e75cda4c1af4a51b04a"
+  },
+  "previousNative": {
+    "image": "sha256:919648b56b611bcdb06fe044e16db9008b593bfc3df96e75cda4c1af4a51b04a",
+    "persistentFailureText": "\u6062\u590d\u672a\u5b8c\u6210\uff1aSSH \u8fde\u63a5\u5931\u8d25: kex_exchange_identification: Connection closed by remote host",
+    "stillPresentAfterSeconds": 8,
+    "nativeConfirmAvailable": true,
+    "remoteBytesUnchanged": true,
+    "sameFixtureRestartedAndConnected": true,
+    "visualFinding": "Actual screenshot: failure row below visible bottom after confirm; needs before-confirm placement.",
+    "status": "native_visual_followup_required",
+    "manualReconnectRetryRestoredWholeFilesExact": {
+      "scene notes/notes.md": "8fe7805b7d5d471dddec8f6a8fb99e1e6a4cfcb9b800503d40056b04901ac2b9",
+      "scene notes/diagram.svg": "5fe7f71e3c5d61efa676d0f9b17ee10214f58253d4b61fb55c0212ac08981eee"
+    }
+  },
+  "placementNegative": {
+    "assertion": "persistent failure must precede the confirmation control, not fall below its visible bottom",
+    "exit": 1,
+    "actual": false,
+    "expected": true
+  },
+  "full": "NOT_RUN final before-confirm placement",
+  "previousNativeCleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedContainersRemoved": 3,
+    "emptyNetworksRemoved": [
+      "aide-restore-feedback-native-20261017_default",
+      "aide-restore-feedback-native-20261017_cad-private",
+      "aide-restore-feedback-native-20261017-private"
+    ],
+    "dataImageAndEvidenceRetained": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "originalBrowserTabsRestored": true,
+    "observedUTC": "2026-10-17T13:07:49.553839+00:00"
+  },
+  "previousSourceCommit": "4469686e3f128bdaff6da0f053d192c88e87d879",
+  "previousSourceSHA": "2adcbede85b71dca30cfde3052a097ea0011f24f1aa2c54e9405bcff564c61e1",
+  "previousFingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+  "finalPlacementSource": "pending exact source freeze and full"
 }
