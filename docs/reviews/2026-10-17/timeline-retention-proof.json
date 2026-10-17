@@ -1,0 +1,135 @@
+{
+  "status": "pass_scoped_native_and_api",
+  "code": "6e3d3e16ae6ac7172ff5b546e0a742be063938db",
+  "sourceSHA256": "20a9db53f5b45479636e2050679c7570c31bdf2e54deed664791a608cf406ac5",
+  "image": "sha256:7d1183a2c742da8fd471dd8005e1c522208df64854fc7ebc466094569aa53a23",
+  "pair": {
+    "before": "Hb11815c189f7c57f4303521d",
+    "after": "H9c1fac65f9c06528d1e8fe92"
+  },
+  "observations": 3,
+  "oldDroppedRetained": 151,
+  "nativeBeforeAfterDistinct": true,
+  "nativeExpandedOriginalClaimsAndBasis": true,
+  "changedNodes": 6,
+  "conclusionChanges": 3,
+  "evidenceRecords": 8,
+  "protected14SessionsConfigAuthVaultMountsExact": true,
+  "legacyEncryptedBackupByteExact": true,
+  "ownedFixtureRemoved": true,
+  "newBrowserTabs": 0,
+  "modelCalls": 0,
+  "screenshots": [
+    "native-comparison.png",
+    "native-basis.png"
+  ],
+  "fullRegression": "in_progress",
+  "release": "pending",
+  "targetedRaceSeconds": 24.916,
+  "targetedLargeFixture": {
+    "nodes": 20052,
+    "singleSnapshotPlainBytes": 7259135,
+    "twoSnapshotsEncryptedFileBytes": 203693
+  },
+  "runtimeEquivalence": {
+    "status": "pass",
+    "publicApplicationAssetFilesExact": 24,
+    "binarySHA256": "aecc26e7f5a66b16868f8ac1930e58590c96fec63931103fa39af6affcd607f5",
+    "runtimeImage": "sha256:7d1183a2c742da8fd471dd8005e1c522208df64854fc7ebc466094569aa53a23",
+    "canonicalImage": "sha256:37da2cc7fb386860f89b5ed70e49c03a42fb0855c3e2307c3adf4f63447671f6",
+    "explanation": "Worktree source label includes ignored comm-serial/comm-ssh node_modules in build stage. Git archive omits them; delivered binary and all /opt/aide file hashes/modes are exact. Layer timestamps/metadata may differ; images not asserted identical."
+  },
+  "offlinePackages": {
+    "status": "pass",
+    "packages": [
+      {
+        "status": "pass",
+        "platform": "linux/arm64",
+        "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-arm64-37da2cc7fb38-offline.tar.gz",
+        "bytes": 770932615,
+        "sha256": "10a4232e0477b694fa600166dbfe70558ede3381007ef2ebdd8b09826472b576",
+        "innerImageTarSHA256": "24ce2ea72502042b92e9c85cf2583a3a58e3853dd8c66e27b0fb25db081d7a89",
+        "image": "sha256:37da2cc7fb386860f89b5ed70e49c03a42fb0855c3e2307c3adf4f63447671f6",
+        "sourceSHA256": "d5395718d16c9cb7b1e18848bd05cd2480d4b0232a7c2c7e41e33c06bbf214f7",
+        "exactLaunchersAndLicenses": true,
+        "localImport": true,
+        "privateDataAbsent": true,
+        "remoteUpload": "pending",
+        "receivingDevice": "not_run"
+      },
+      {
+        "status": "pass",
+        "platform": "linux/amd64",
+        "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-amd64-ab3103f5dd7d-offline.tar.gz",
+        "bytes": 774157006,
+        "sha256": "984b7a485db236d89aed2dcd4bc2acafa35a97993a6a92644af96a090c17eb79",
+        "innerImageTarSHA256": "eedc07fd96da10010dd9a3459afe03d32b3e7e9f2cba14b361bc0aa7164b06e3",
+        "image": "sha256:ab3103f5dd7d2b66f7491b292d8b8d7d9279717767ad8d11c78fd4900c578a61",
+        "sourceSHA256": "d5395718d16c9cb7b1e18848bd05cd2480d4b0232a7c2c7e41e33c06bbf214f7",
+        "exactLaunchersAndLicenses": true,
+        "localImport": true,
+        "privateDataAbsent": true,
+        "remoteUpload": "pending",
+        "receivingDevice": "not_run"
+      }
+    ],
+    "productionImagePreserved": true
+  },
+  "offlineFresh": {
+    "status": "pass",
+    "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-arm64-37da2cc7fb38-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "actualStartCommand": true,
+    "documentLine": {
+      "line": 3,
+      "matchedRawFileHash": true,
+      "blankLineAndCRLFPreserved": true,
+      "actualCompiledImageAPI": true
+    },
+    "image": "sha256:37da2cc7fb386860f89b5ed70e49c03a42fb0855c3e2307c3adf4f63447671f6",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "segments": 0,
+      "points": 0,
+      "emptyNodes": 0,
+      "parts": 2,
+      "faces": 9,
+      "meshedFaces": 9,
+      "collapsedFaces": 0,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "recoveredFaces": 0,
+      "nurbsFaces": 0,
+      "seconds": 0.03856287500821054
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  },
+  "restoredOriginalMain39AndClosedStarPanels": true,
+  "publicRelease": {
+    "status": "unchanged_public_release",
+    "releaseId": 406597437,
+    "existingAssetsExact": 22,
+    "notesTagAndPrereleasePreserved": true,
+    "newTimelineArchivesPresent": false,
+    "publicURL": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2"
+  }
+}

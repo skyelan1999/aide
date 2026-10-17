@@ -744,10 +744,12 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
+        "latestScopedEvidence": "Large-map one-observation retention defect repaired on6e3d3e16 with bounded gzip/encrypted envelope; actual9999 native two-time comparison now passes with original14sessions and protected configuration exact. Canonical ARM/AMD complete offline packages locally imported; fresh ARM start no build/pull and CAD pass.",
         "evidence": [
-          "docs/reviews/2026-10-17/timeline-native-proof.json"
+          "docs/reviews/2026-10-17/timeline-retention-proof.json",
+          "docs/tasks/timeline-native-20261017.json"
         ],
-        "remaining": "Actual large-map retention budget only permits one current-size observation, so native two-time comparison and conclusion/evidence workflow cannot be completed. Fix bounded retention then revalidate; do not count self-comparison."
+        "remaining": "Frozen full107/race/vet still running; main/public distribution pending known large-upload failure and Safari developer-tools permission. SSH workspace mode, manual-topic full native interactions and long-term boundaries remain; do not count scoped fixture coverage as all12 workstreams complete."
       }
     }
   ],

@@ -49,21 +49,26 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Isolated Docker race TestKnowledge(Timeline|Conclusion|AI) passed24.916s including independent physical and expanded limits; quick104 checks passed before final capacity test additions. Runtime/native/full checks pending.",
+      "summary": "Targeted Docker race24.916s and actual9999 native comparison pass: two distinct20,061-node observations,6 node changes/3 explicit conclusion changes/8 evidence records including honest unknown legacy AI references. Old encrypted backup exact; original14session/config/auth/vault/mounts exact. ARM/AMD packages local import pass; extracted ARM own start.command no build/pull, exact line/raw hash/native CAD pass. Frozen full107 still running; not complete release.",
       "evidence": [
-        "docs/reviews/2026-10-17/timeline-native-proof.json"
+        "docs/reviews/2026-10-17/timeline-native-proof.json",
+        "docs/reviews/2026-10-17/timeline-retention-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "PRD defines physical/expanded/count limits, encrypted migration rollback and historical loss boundary. Native/API/offline proof reports exact code and distinct worktree/canonical image fingerprints; release upload remains pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/timeline-retention-proof.json",
+        "docs/prd/2026-10-16-knowledge-conclusion-evolution.md"
+      ]
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Original star controls/log closed, main39 restored;22protected files including14sessions and image/mounts/networks exact. Diagnostic notice dismissed, report retained; no user file/history edits or new tabs.",
+      "summary": "Two owned Downloads fixture files and their unique directory removed after native before/after extraction. Saved historical text remains readable after removal. Original main39 and closed star log/timeline restored, no new tabs/model calls. Original14sessions/auth/config/sources/vault/mounts exact after runtime replacement. Only owned local evidence/build files remain under ignored state; offline packages intentionally retained.",
       "evidence": [
-        "docs/reviews/2026-10-17/timeline-native-proof.json"
+        "docs/reviews/2026-10-17/timeline-native-proof.json",
+        "docs/reviews/2026-10-17/timeline-retention-proof.json"
       ]
     },
     "release": {
@@ -74,5 +79,5 @@
   },
   "release_authorization": "Existing user authorization for incremental acceptance/docs/main; no paid model calls or new version.",
   "rollback": "Read-only existing observations, restore original star/main tab/view. Do not delete timeline or user records.",
-  "handoff": "Branch fix/timeline-retention-20261017 contains backend retention candidate. Existing approval source/full107 remains separately attested on local main0564007a; origin/main held5fac pending large asset upload. No production migration performed yet. Native distinct-history comparison, full verification and release pending."
+  "handoff": "6e3d3e16 backend retention candidate now running via original start.command. Native distinct history/conclusion/evidence passes; old encrypted history byte-exact backup and14 original sessions/config preserved. Canonical ARM37da and AMDab31 complete bundles imported; fresh ARM start passes. Full107 running on frozen source. No main merge/push or public candidate upload; existing22public assets unchanged. Earlier aside CSS collision and source-sha ignored node_modules discrepancy remain recorded separate concerns."
 }
