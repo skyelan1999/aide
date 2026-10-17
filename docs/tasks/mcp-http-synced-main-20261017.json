@@ -1,0 +1,71 @@
+{
+  "id": "mcp-http-synced-main-20261017",
+  "request": "延续用户已授权 Docker MCP 接入；同步 main 后恢复自身已验证的 HTTP 传输，以保留现有配置，不合并被拒绝历史分支。",
+  "baseline": "690b7624cb9f6c736d66b8c55af48fbd1415847c",
+  "initial_status": "",
+  "acceptance": [
+    "Current stdio and existing streamable-http configurations remain usable without secret loss or reset.",
+    "Authenticated HTTP JSON/SSE discovery and read-only calls respect cancellation, bounded responses, redirects/proxy/token protection and source revocation/CAS.",
+    "Preserve current main UI and scoped new styles; transport form must not submit hidden HTTP credentials into stdio.",
+    "Validate local Docker gateway through AIDE with unchanged production data; no actual tool execution claims from discovery alone; exact combined full and release gates remain required."
+  ],
+  "scope": [
+    "internal/server/mcp_http.go",
+    "internal/server/mcp_http_test.go",
+    "internal/server/mcp_source.go",
+    "internal/server/sources.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/workbench.css",
+    "scripts/mcp-source-form.test.cjs",
+    "docs/agent/router.json",
+    "docs/tasks/mcp-http-synced-main-20261017.json",
+    "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Read-only metadata audit finds1 existing configured HTTP MCP source; current main validator rejects all non-stdio sources. Deployment without compatibility repair would regress this authorized connection.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Selected own feature delta inspected; source/app/form hunks can be reapplied, workbench.css has upstream context drift and must be scoped manually. Current full snapshot running; no runtime source mutation yet.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user Docker MCP test/setup and incremental work/test/push authorization; latest Git direction forbids rejected history branch merge and limits main synchronization. No production replacement before compatibility/full gates.",
+  "rollback": "Preserve production source config, encrypted vault, image and containers; source-only revert is insufficient if deployed older stdio-only code; never reset source registry or credentials.",
+  "handoff": "Await running full63551; then recover reviewed HTTP delta on task branch, use focused bounded serial tests before next combined gate. Native full UI user-deferred, Windows user-owned, real vectors deferred."
+}
