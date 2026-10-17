@@ -1,0 +1,84 @@
+{
+  "status": "scoped_native_pass_followup_required",
+  "observedUTC": "2026-10-17T12:44:43.398703+00:00",
+  "image": "sha256:fe80b2eb483d8566fc4016dd0175c4c78b17e96b80f48108e7dc28a446e2cdb2",
+  "runtimeSourceSHA": "236499a59200641e50a6ddf4838bbf8d753d1b8a2cf262ad4a209c65df187e6b",
+  "latestBackgroundSourceIncluded": false,
+  "mode": "Actual isolated OpenSSH/SFTP workspace, not independent source mode",
+  "originalPackageLauncher": true,
+  "nativeSafari": "https://localhost:58320/",
+  "browserSecurityHandoff": "Same previously user-cleared origin; directly reached app, no warning bypass",
+  "fixture": {
+    "memoryBytes": 402653184,
+    "CPUs": 1,
+    "pids": 128,
+    "hostPorts": 0,
+    "noNewImageBuild": true
+  },
+  "saved": {
+    "status": "pass",
+    "nativeTextareaSetValueAndSave": true,
+    "wholeBodyAPIAndRemoteExact": true,
+    "bytes": 2715,
+    "sha256": "b66515a99448b3c04e5f3521370850473625004615fd270fb64cae9b381494ef",
+    "workspaceId": "ssh|/home/fixture/project|ssh-fixture",
+    "initialTypingTransportIssue": "Native navigation/typeText race split characters at old/new caret; owned content replaced by deterministic full body before qualifying save."
+  },
+  "draft": {
+    "status": "pass",
+    "nativeRefreshConfirmed": true,
+    "fileAutomaticallyReopened": true,
+    "draftPromptObserved": true,
+    "remoteUnchangedBeforeRecovery": true,
+    "explicitRecoveryThenSave": true,
+    "wholeRemoteBodyExact": true,
+    "workspaceMode": "ssh"
+  },
+  "interruption": {
+    "nativeRestoreWhileDisconnected": true,
+    "remoteBodyAndSVGUnchanged": true,
+    "noSuccessUIObserved": true,
+    "persistentErrorUI": "No persistent error visible after completion; transient toast not captured. Needs focused follow-up.",
+    "sameFixtureHostKeysRetained": true
+  },
+  "history": {
+    "status": "pass",
+    "workspaceMode": "ssh",
+    "nativeVersionSelectionAndScopePreview": true,
+    "nativePostReconnectRetry": true,
+    "nativeBodyAndSVGRestoredLabels": "V1",
+    "exactEntireRemoteFiles": {
+      "scene notes/notes.md": "8fe7805b7d5d471dddec8f6a8fb99e1e6a4cfcb9b800503d40056b04901ac2b9",
+      "scene notes/diagram.svg": "5fe7f71e3c5d61efa676d0f9b17ee10214f58253d4b61fb55c0212ac08981eee"
+    },
+    "noOpHistoryReadDedup": true,
+    "historyTotal": 6
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedContainersRemoved": 3,
+    "emptyOwnedNetworksRemoved": [
+      "aide-continuity-plugin-arm-20261017_default",
+      "aide-continuity-plugin-arm-20261017_cad-private",
+      "aide-ssh-workspace-native-20261017-private"
+    ],
+    "candidateDataAndWorkspaceRestoredByteExact": true,
+    "beforeAfterEvidenceRetained": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "originalBrowserTabsRestored": true,
+    "realModelOrVectorCalls": 0,
+    "observedUTC": "2026-10-17T12:43:46.894320+00:00"
+  },
+  "remaining": [
+    "Persistent inline restore failure reason after disconnect; only transient error callback in current source.",
+    "SSH native autosave/restore coupling, workspace/tab identity transitions, exact caret/scroll and interrupted-save UI.",
+    "User-host SSH, combined lock/approval long-open, current public packages and later main source verification.",
+    "Windows user-owned; real vectors deferred."
+  ],
+  "harnessNotes": [
+    "Old CUA pipe re-bound without opening duplicate tabs; native typeText dropped URL punctuation, corrected address through observed address field setValue.",
+    "Native navigation/typeText split initial test characters; deterministic whole textarea input plus independent entire API/remote bytes qualified save.",
+    "Initial SSH fixture command not restart-idempotent; preserved stopped project bytes and host keys, recreated exact owned bounded fixture with guarded startup, connection recovered before UI retry."
+  ]
+}

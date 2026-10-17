@@ -1,0 +1,80 @@
+{
+  "id": "ssh-workspace-native-20261017",
+  "request": "继续连续工作总目标：以已全量验证的236候选进行真实SSH工作区Safari文件保存、草稿恢复、正文与SVG历史恢复和断连保护验收，不替换生产；校正总账本的当前原生状态",
+  "baseline": "1dc3170da5b283a030de9cc613753860c8757b65",
+  "initial_status": "",
+  "acceptance": [
+    "Original package start.command, qualified fe80/source236, own root/port/data only; latest background source excluded.",
+    "Actual OpenSSH/SFTP owned fixture with memory/disk limits and no published port; no real model/vector calls.",
+    "Safari actual SSH workspace edit/save/readback, draft refresh recovery and identity isolation; whole body+SVG history restore.",
+    "Observe interrupted SSH save/restore behavior and exact remote bytes; no silent overwrite.",
+    "Close own tabs, original stop, remove exact owned runtime/fixture/network; restore candidate state, production22 unchanged; document unverified remainder."
+  ],
+  "scope": [
+    "docs/tasks/ssh-workspace-native-20261017.json",
+    "docs/reviews/2026-10-17/ssh-workspace-native.md",
+    "docs/reviews/2026-10-17/ssh-workspace-native-proof.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue original12 gaps; current native approval/outcome core pass, next SSH workspace-mode native gap.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-native.md",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse retained qualified complete ARM package58320; own private SSH fixture network, full candidate data snapshot and no production writes.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-native.md",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Qualified existing package and bounded actual OpenSSH fixture prepared; no product change.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-native.md",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Actual SSH workspace save/full bytes, explicit refresh draft recovery, whole body+SVG restore and disconnected prewrite byte preservation pass. Persistent failure reason missing; native identity transitions/autosave coupling and interrupted-save scope remain.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-native.md",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Actual scoped native results, input-transport and fixture initialization limits, follow-up defect recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-native.md",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned3 containers and pages removed; isolated pretest data/workspace restored; production22 exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-native.md",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Native follow-up defect and remaining acceptance; latest main/runtime/public package qualification separate.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-native.md",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing user incremental test/doc/push/main instructions; no public Release or production replacement in this task.",
+  "rollback": "Stop only exact owned runtime/fixture, preserve proof and restore isolated candidate pre-test data.",
+  "handoff": "No owned runtime remains. Next repair persistent restore error and verify native autosave/identity/connection-loss scope. Evidence archived; original12 remain active."
+}
