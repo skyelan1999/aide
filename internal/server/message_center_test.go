@@ -172,3 +172,23 @@ func TestMessageCenterAccountNameAndAssistantPermission(t *testing.T) {
 	}
 	requireStatus(t, request(a, "PUT", "/api/messages/config", map[string]any{"config": config}), 400)
 }
+
+func TestMessageCenterDockerBridgeIsLauncherOwned(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("AIDE_MESSAGE_LAN_BRIDGE", directory)
+	a := testApp(t)
+	a.settings.UserName = "Test Account"
+	config := messageCenterConfig{Enabled: true, Network: messaging.NetworkConfig{LAN: true, Listen: "127.0.0.1:0"}}
+	requireStatus(t, request(a, "PUT", "/api/messages/config", map[string]any{"config": config}), 400)
+	// Browser input cannot choose a different host mailbox.
+	input := map[string]any{"enabled": true, "network": map[string]any{"lan": true, "listen": ":45840", "BridgeDir": t.TempDir(), "bridgeDir": t.TempDir()}}
+	requireStatus(t, request(a, "PUT", "/api/messages/config", map[string]any{"config": input}), 200)
+	lookup := request(a, "POST", "/api/messages/discover", map[string]any{"code": "ABCDEF"})
+	if lookup.Code != 400 || !strings.Contains(lookup.Body.String(), "Docker 局域网桥未就绪") {
+		t.Fatalf("missing bridge not reported: %d %s", lookup.Code, lookup.Body.String())
+	}
+	data, err := os.ReadFile(messageConfigPath(a.dataPath))
+	if err != nil || bytes.Contains(data, []byte(directory)) {
+		t.Fatal("private bridge path persisted in browser config")
+	}
+}

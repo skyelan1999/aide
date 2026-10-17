@@ -1,0 +1,85 @@
+{
+  "id": "docker-message-lan-20261018",
+  "request": "修复 Docker 下同一局域网两台电脑找不到联系人；不修改或关闭 Clash",
+  "baseline": "97c2554a3ff394ab15b9fc60364e886d3c1aad92",
+  "initial_status": "",
+  "acceptance": [
+    "Docker Desktop clients can discover signed device cards through a native host LAN bridge and connect to the advertised host listener; identity and mutual TLS remain end-to-end",
+    "No changes to Clash, VPN, firewall, workbench public binding, existing keys or contact/group/file consent",
+    "Ship offline native helper binaries for macOS/Windows/Linux and start/stop them with launchers; no host Go/Python dependency",
+    "Bridge mailbox is bounded, rooted, leased and contains only public cards/routing metadata; disabled or stale peers are not advertised",
+    "Focused real-network tests exercise discovery, contact consent and encrypted chat through TCP forwarding; validate failure/stale/tampered paths and packaging"
+  ],
+  "scope": [
+    "internal/messaging bridge/network code and focused tests",
+    "internal/server message runtime setup/status",
+    "cmd/aide-message-lan",
+    "scripts LAN bridge build/start/stop/packaging",
+    "Dockerfiles, Compose and startup entries",
+    "docs related architecture/operation/task evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Both computers are on the same LAN; user requested Docker fix first and explicitly requires Clash remain enabled.",
+      "evidence": [
+        "Read-only local runtime: LAN enabled, no relay or advertised addresses, only 127.0.0.1:9999->8080 mapped"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native host LAN sockets plus rooted short-lived public-metadata mailbox; Docker publishes message TLS only to a random loopback port. No host networking or new control API. Private identity and mutual consent stay in the application.",
+      "evidence": [
+        "internal/messaging/network.go",
+        "compose.yaml",
+        "scripts/aide.sh",
+        "start.ps1"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added six native helper targets, immutable-image extraction with SHA-256 verification, startup/maintenance/offline packaging integration, launcher-owned bridge configuration, explicit unavailable errors, independent announcement heartbeat.",
+      "evidence": [
+        "internal/messaging/lan_bridge.go",
+        "internal/messaging/lan_bridge_host.go",
+        "scripts/message-lan-control.sh",
+        "scripts/message-lan-control.ps1",
+        "Dockerfile.local",
+        "compose.yaml"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Scoped checks pass: 125 quick checks; messaging race; server TestMessageCenter race; relevant Go vet; six helper cross-builds; five macOS native loopback tests; actual Docker Desktop extraction/start/stop/private-mailbox permission check. Real two-computer multicast, Clash/TUN and Windows/Linux native runtime remain NOT_RUN. Candidate image was an isolated binary/asset overlay on the retained local runtime, not a release build.",
+      "evidence": [
+        "docs/reviews/2026-10-18/docker-message-lan.md",
+        ".agent-state/lan-fix/quick-final.log",
+        ".agent-state/lan-fix/native-final.log",
+        ".agent-state/lan-fix/desktop.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated deployment architecture, startup requirements, security boundary and exact verification limitations.",
+      "evidence": [
+        "docs/architecture/decentralized-messages.md",
+        "docs/reviews/2026-10-18/docker-message-lan.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed own dev container, Desktop fixture container/network and candidate image. Kept ignored logs and reproducible test binaries. Unrelated registry and feishu plugin changes preserved, not staged.",
+      "evidence": [
+        "docs/reviews/2026-10-18/docker-message-lan.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No production restart, push, release, version bump or full-release gate in this task.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "No current authorization to push, publish, or replace the running production instance; source fix and isolated verification only.",
+  "rollback": "Stop the bridge using scripts/message-lan-control.sh stop (Windows: corresponding .ps1 -Action stop), then restore the preceding source/image/Compose together. Existing messages, device identity, contacts and /data mounts are unchanged. Do not delete state.",
+  "handoff": "Both computers need updated native-helper-containing image, Compose and launcher, then normal startup. Existing release images do not gain native binaries from script updates alone. No Clash or firewall changes. Live interface changes require rerunning the launcher. Unrelated plugins/registry.json and plugins/feishu/ changes were not authored, staged or reverted by this task."
+}
