@@ -90,11 +90,14 @@
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "Code/docs main push cc430f2e independently verified; both clean-main release gates pass. Original RC2 tag/notes/21 assets retained. Only new README uploaded; both complete archives rejected by GitHub Safari upload including hash-identical /tmp ARM copy. Full offline archives remain locally verified; public image publication and receiver acceptance not complete.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-path-publication-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
     }
   },
   "release_authorization": "Continue existing user-authorized incremental testing/docs/main publication. No new product or runtime release unless a reproduced defect requires it; Windows user-owned, real vectors deferred.",
   "rollback": "Remove owned temporary source by restoring exact pre-test registry; preserve original auth/settings/sessions/mounts and current d025 runtime. No user file edit, data restore or model invocation.",
-  "handoff": "Full107 fingerprint98ebc999 pass; runtimee729 and complete ARM/AMD packages/freshARM verified. Native local and actual independent SFTP paths pass, cleanup exact. Next main clean gate, four prepared RC2 assets/additive notes, public verification and main push. Original12 active."
+  "handoff": "main cc430f2e published and verified. Runtime e729/complete ARM+AMD local/fresh ARM/native local+independent SFTP verified. Resume large Release asset upload, then exact public digest/download probes and additive notes. Keep local archives and rollback packages; no full rerun needed for docs-only receipt. Original12 and SSH-workspace-mode acceptance remain incomplete."
 }

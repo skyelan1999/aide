@@ -67,11 +67,14 @@
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "Code/docs main push cc430f2e independently verified; both clean-main release gates pass. Original RC2 tag/notes/21 assets retained. Only new README uploaded; both complete archives rejected by GitHub Safari upload including hash-identical /tmp ARM copy. Full offline archives remain locally verified; public image publication and receiver acceptance not complete.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-path-publication-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing user authorization for incremental AIDE tests/docs/main publication in this conversation; no version/tag change.",
   "rollback": "Original registry/network/vault state verified restored; own fixtures only. Preserve pre-existing SSH project and published rollback packages.",
-  "handoff": "Scoped native independent SFTP source PASS; docs-only clean-main gate/publication pending alongside current path batch. Does not complete original SSH-workspace-mode task or original12."
+  "handoff": "main cc430f2e published and verified. Runtime e729/complete ARM+AMD local/fresh ARM/native local+independent SFTP verified. Resume large Release asset upload, then exact public digest/download probes and additive notes. Keep local archives and rollback packages; no full rerun needed for docs-only receipt. Original12 and SSH-workspace-mode acceptance remain incomplete."
 }

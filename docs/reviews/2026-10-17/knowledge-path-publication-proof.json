@@ -1,0 +1,28 @@
+{
+  "status": "partial",
+  "original21AssetsExact": true,
+  "originalNotesUnchanged": true,
+  "release": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2",
+  "mainPushed": "cc430f2e",
+  "sourceSHA256": "3e5b6439ba07e2eaff86fa652b3f8ac6ca92b611585f3734d4b45e12e4d45489",
+  "newAssets": [
+    {
+      "name": "AIDE-main-3e5b6439ba07-README.txt",
+      "state": "uploaded",
+      "size": 2483
+    }
+  ],
+  "completeArchivesPublished": false,
+  "uploadObservations": [
+    "ARM64 external drive rejected",
+    "ARM64 refreshed form rejected",
+    "AMD64 rejected",
+    "README small file uploaded",
+    "hash-identical ARM64 local /tmp copy rejected"
+  ],
+  "cause": "not established; size-dependent failure observed in GitHub Safari upload; no CLI HTTPS credential available",
+  "receivingDevice": "not_run",
+  "verifiedMainSHA": "cc430f2ebb7ebb30fadc71eda3c5352ef71b24d7",
+  "tagObject": "3a8d14c0ed09f2ff5e069c8b9e62523ef936949f",
+  "tagCommit": "a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3"
+}

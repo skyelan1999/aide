@@ -43,3 +43,14 @@ Both complete ARM64/AMD64 archives pass outer/inner hashes, exact launcher/licen
 Remote main advanced to9740a4f2 with workbench/file-path UI changes. Merged into ba9e5a3b, retained both behaviors, resolved script cache versions (app168, locale136, file-route3). File-path navigation and viewer guard source tests pass; merged quick104 passes. Rebuilt controlled source3e5b6439ba07; current e729 runtime exact assets/health/protected state pass. Actual Safari again displays six steps and selects service source line4. Both integrated complete ARM/AMD packages pass exact hashes/scripts/licenses/import. Earlier9d2/6f670 packages are superseded local candidates; they were never uploaded. Final integrated fresh start/full/gates/publication remain pending.
 
 Integrated fresh ARM package startup also passes: included start.command, no build/pull, exact raw CRLF document hash/line3 and native120-triangle CAD. Temporary source registry/sample bytes and rendered map cleaned; knowledge/all-sources/empty query/closed path and original workbench tab restored. Final frozen-source full107/main gate and public RC2 supplement remain pending.
+
+
+## 2026-10-17 发布续接
+
+源码及验收文档已推送并独立核对 main `cc430f2ebb7ebb30fadc71eda3c5352ef71b24d7`；两项 clean-main 发布门禁通过。源码冻结的 full107 收据仍适用，未为普通文档变更重跑。
+
+本轮完整 ARM64/AMD64 离线包仅在本地验证完成。Safari 上传两种大包均被 GitHub 拒绝；刷新表单以及把 ARM64 包复制到本机 `/tmp` 并校验相同 SHA-256 后仍失败，小型 README 上传成功。仅能证明此次大小文件表现不同，无法确定网络、浏览器或 GitHub 侧的具体原因。未发现可用的标准 HTTPS 发布凭据。
+
+公开 API 确认原有21附件名称、ID、大小、状态、digest及原发布说明不变；RC2 tag对象和目标提交不变。未点击更新发布说明，未把镜像标成公开可下载。只新增本轮 README。公开下载和另一设备验收继续 pending，证据见 `knowledge-path-publication-proof.json`。
+
+保留最终完整包、全部已发布回滚包及未发布中间包，待最终远端交付成功再按哈希和归属清理。此次本机临时上传副本经哈希核对后删除，不触及项目数据或原目录。
