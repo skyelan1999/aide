@@ -1,0 +1,64 @@
+{
+  "id": "continuity-runtime-candidate-20261017",
+  "request": "继续连续工作总目标的候选运行镜像与跨设备交付准备；全部运行测试使用原始 start.command，生产保持原样，Windows 用户验收，原生证书页面暂缓。",
+  "baseline": "50d250d178a6b8f3f349e38ffe1cb23681e1e478",
+  "initial_status": "",
+  "acceptance": [
+    "Freeze exact full114-passed runtime inputs; archive excludes generated host dependencies and contains complete current source.",
+    "Start isolated ARM candidate with original start.command, no model keys or production data mounts; verify health/auth, session reasoning write/isolation and persistence using owned fixtures.",
+    "Keep actual production identity/protected files unchanged and resource usage bounded; remove only owned superseded stopped containers before creating replacement, retaining images/data.",
+    "Record native whole-workbench UI as user-deferred, not bypassed; ARM success does not prove AMD64/Windows/new-device import/publication."
+  ],
+  "scope": [
+    "docs/tasks/continuity-runtime-candidate-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+    "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Build concrete runtime candidate for original continuity/reasoning priority after exact full114 and actual MCP proof.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Git archive current clean commit; original launcher with explicit owned project/port/data; seed TLS through supported .data import path; no production restart or paid models.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user incremental work/test/image distribution authorization; this task prepares isolated current runtime, not main push/tag/Release or production replacement.",
+  "rollback": "Retain production image/containers/data untouched; retain superseded candidate images and owned data, remove only known stopped candidate containers; stop new owned candidate on failure.",
+  "handoff": "Full native UI user-deferred; no security warning bypass. AMD64/Windows/public default manifest replacement remain separate."
+}
