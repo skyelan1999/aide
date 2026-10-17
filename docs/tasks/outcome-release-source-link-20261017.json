@@ -64,11 +64,11 @@
     },
     "release": {
       "status": "pending",
-      "summary": "No push, main merge, deployment, version or Release.",
+      "summary": "Gate pending: native verification incomplete and current task branch is not main. Existing incremental authorization recorded; no new approval requested or remote publication performed.",
       "evidence": []
     }
   },
-  "release_authorization": "",
+  "release_authorization": "Existing user instruction: incremental work/push/test. Latest main-only sync instruction was honored by undoing the unrelated merge and syncing main. This checkpoint prepares and verifies scoped repairs only; no main push, version, tag, deployment or Release is executed while native acceptance remains deferred.",
   "rollback": "Revert owned source/doc commit; no user data schema or API changes.",
   "handoff": "Original twelve streams remain active; Windows user-owned and real vectors deferred.",
   "quick": {
