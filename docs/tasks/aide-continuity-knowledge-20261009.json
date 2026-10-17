@@ -147,12 +147,13 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Public complete ARM4b784/AMD382c packages and supplements verified; task branch/draft PR4 published. Final full114 passes and6 child gates pass; approval/outcome gates actually BLOCKED verification due user-deferred native acceptance. Remote main remainsceb82481; no new tag/version/production replacement. Original12 incomplete.",
+      "status": "blocked",
+      "summary": "Current source exact full115 passed; Draft PR4 includes scoped repairs and real-directory/SSH/current launcher evidence. Actual clean local main9 scoped release-checks7pass, approval/outcome native verification2blocked; current6eb-source image/package delivery also incomplete (published defaults07c). No remote main or production replacement. Original12 remain in_progress; user-deferred native, Windows user-owned, vectors deferred.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-remote-proof.json",
-        "docs/reviews/2026-10-16/starmap-preview-integration.md"
+        "docs/reviews/2026-10-16/starmap-preview-integration.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
       ]
     }
   },
@@ -8257,6 +8258,7 @@
     "evidence": [
       "docs/reviews/2026-10-17/launcher-readiness.md",
       "docs/reviews/2026-10-17/launcher-readiness-proof.json"
-    ]
+    ],
+    "releaseGate": "Clean local main9 scoped checks:7PASS/2native verification BLOCKED; additional current6eb/default07c package identity BLOCKED; PR4 stays Draft, remote main and production unchanged."
   }
 }

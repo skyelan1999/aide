@@ -160,5 +160,96 @@
     },
     "verifierContainerRemoved": true,
     "productionIdentityAnd22FilesUnchangedAfterFull": true
+  },
+  "review": {
+    "status": "pass",
+    "url": "https://github.com/skyelan1999/aide/pull/4",
+    "head": "e67fff4d0568a19964e68c6c3040ed7883025b4f",
+    "base": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "draft": true,
+    "bodySHA256": "15a90c7f9719ca1c99bd55a1f5a4d107e33b3525f6e7826843a54bb0856bb8fe",
+    "bodyChecks": [
+      "full115",
+      "quick112",
+      "946",
+      "5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04",
+      "6ebd16a44ea2",
+      "尚未构建和替换对应离线包",
+      "保持草稿",
+      "真实向量测试暂缓"
+    ],
+    "sameSourceBranchHead": true,
+    "nativeEditorPreviewAllClausesObserved": true,
+    "pasteWarning": "Tool returned -10005; actual full rendered preview checked before save, then independent public API confirms all required clauses.",
+    "mainUnchanged": true
+  },
+  "releaseGates": {
+    "status": "blocked",
+    "checkedOnCleanLocalMain": "e67fff4d0568a19964e68c6c3040ed7883025b4f",
+    "localMainBefore": "c75764b83d486003e1000b2cdb15a166278d035c",
+    "rows": [
+      {
+        "task": "timeline-retention-synced-main-20261017",
+        "exit": 0,
+        "result": "pass public metadata/local prerequisites only"
+      },
+      {
+        "task": "approval-expiry-synced-main-20261017",
+        "exit": 1,
+        "result": "BLOCKED: Incomplete stage: verification"
+      },
+      {
+        "task": "outcome-release-source-link-20261017",
+        "exit": 1,
+        "result": "BLOCKED: Incomplete stage: verification"
+      },
+      {
+        "task": "docker-resource-guard-synced-main-20261017",
+        "exit": 0,
+        "result": "pass public metadata/local prerequisites only"
+      },
+      {
+        "task": "startup-inputs-notice-synced-main-20261017",
+        "exit": 0,
+        "result": "pass public metadata/local prerequisites only"
+      },
+      {
+        "task": "mcp-http-synced-main-20261017",
+        "exit": 0,
+        "result": "pass public metadata/local prerequisites only"
+      },
+      {
+        "task": "prebuilt-publication-gate-20261017",
+        "exit": 0,
+        "result": "pass public metadata/local prerequisites only"
+      },
+      {
+        "task": "continuity-offline-delivery-20261017",
+        "exit": 0,
+        "result": "pass public metadata/local prerequisites only"
+      },
+      {
+        "task": "launcher-readiness-20261017",
+        "exit": 0,
+        "result": "pass public metadata/local prerequisites only"
+      }
+    ],
+    "manualCurrentSourceDistributionGate": {
+      "status": "blocked",
+      "currentSource": "6ebd16a44ea26bf2e37cf3f55f68e51b7283e094568c394a9892c1af90ec3aca",
+      "publishedDefaultSources": [
+        "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def"
+      ],
+      "reason": "Published metadata validity does not establish current-source image/package delivery"
+    },
+    "remoteMainPushed": false,
+    "rejectedMergeAbsent": true,
+    "privateFullOutputSHA256": "d3ead578482d9a4cf2f7a57f445a3e7ac6e91d70fb15dfa6891b64fe87c015ed"
+  },
+  "browserCleanup": {
+    "ownedPRTabClosed": true,
+    "originalFourNonPinnedAndOnePinnedTabsRetained": true,
+    "originalRightAIDEPageRestored": true,
+    "unsavedReleaseFormRetainedNotSubmitted": true
   }
 }

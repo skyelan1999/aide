@@ -70,7 +70,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "Exact full115 passed. Hold remote main and production until existing approval/outcome native prerequisites and current6eb-source image/package delivery are qualified; old07c public metadata is not current delivery.",
+      "summary": "Source and full115 evidence pushed into Draft PR4 at e67fff4d. Clean local main actual9 gates:7 pass, approval/outcome2 verification-blocked; manual current6eb vs default07c distribution gate blocked. No remote main push or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/launcher-readiness.md",
         "docs/reviews/2026-10-17/launcher-readiness-proof.json"
@@ -79,5 +79,11 @@
   },
   "release_authorization": "Existing incremental work/push/test authorization; scoped source branch only until aggregate native release prerequisites pass.",
   "rollback": "Revert scoped launcher patch, preserve all data/images; only own test containers/networks cleanup.",
-  "handoff": ""
+  "handoff": "",
+  "review": {
+    "url": "https://github.com/skyelan1999/aide/pull/4",
+    "draft": true,
+    "checkedHead": "e67fff4d0568a19964e68c6c3040ed7883025b4f",
+    "bodySHA256": "15a90c7f9719ca1c99bd55a1f5a4d107e33b3525f6e7826843a54bb0856bb8fe"
+  }
 }
