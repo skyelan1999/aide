@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "2026-10-17: 推理强度原生5档与10次写入隔离已验收；原有14会话保留。资源保护源码66b0a89a精确输入 full108 已终态PASS（server race 799.188s），原生能力失败/恢复与清理通过；ARM/AMD单文件镜像包已本地导入校验，公有附件与main分发门禁仍待完成。用户要求只同步main，已撤销其他远端feature误合并，当前HEAD5ab36ca2含远端main5fac564d；MCP开发改动保留。新MCP配置一致性race/vet与Safari HTTP/stdio切换、空令牌保留、实际10工具发现通过；无只读声明，因此不宣称工具可执行。当前全量 session62601已启动，使用其权威句柄确认终态，禁止重复运行；收据不继承旧full108。网关生命周期及最终MCP交付未完成。原12条工作流继续，Windows用户验收，真实向量测试暂缓。",
+  "handoff": "2026-10-17 当前MCP输入full109已通过，session62601终态0，验证容器已清理。原生连接/HTTP-stdio切换/空令牌保留/10工具说明预览与profile恢复已验，无只读声明不能执行。下一步串行规范ARM/AMD镜像及完整离线包、公开分发与干净main门禁。原12项当前分范围证据见current_audit_20261017及continuity-current-checkpoint.md；推理强度五档10次UI写回已验，SSH工作区/跨标签授权/隐藏活动和发布记录卡等剩余直接验收继续；Windows用户验收，真实向量暂缓。",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7846,7 +7846,7 @@
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
     "nextIndependentFocus": "等待唯一MCP全量session62601终态；之后处理网关生命周期和交付。原目标下一项是SSH工作区模式/跨标签授权/隐藏活动及发布卡等直接验收；不重复已经通过的本机和独立SFTP来源场景。",
     "deliveredMain": "5fac564d",
-    "currentCheckpointGate": "资源保护源码66b0a89a精确输入full108已PASS；MCP源码2cbf0d33当前full运行中，尚无PASS，不能借用旧门禁。",
+    "currentCheckpointGate": "MCP精确输入full109终态PASS，指纹3f83d6589f314321251067a536c335c37e5f0fcb90adacbc56486aa999cd3d94，server race768.615s/vet/CAD；验证容器已移除。ARM/AMD规范包待构建。",
     "historicalMainGateBeforeCurrent20261017": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
     "mainGate": "远端main仍5fac564d；本地开发分支包含15个后续基线提交及MCP检查点，未再合其他远端功能分支，main公开包门禁未完成。",
     "developmentCheckpoint": "2cbf0d339dad43a8213470c68c34c43e2cb3cccb"

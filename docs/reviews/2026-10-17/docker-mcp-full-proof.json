@@ -1,0 +1,12 @@
+{
+  "profile": "full",
+  "status": "pass",
+  "fingerprint": "3f83d6589f314321251067a536c335c37e5f0fcb90adacbc56486aa999cd3d94",
+  "head": "ef926d2bb3c090e6d530796feb56a81d1d59d17a",
+  "time": "20261017T045405023212Z",
+  "log": ".agent-state/verify-20261017T045405023212Z.log",
+  "checks": 109,
+  "allCommandsExitZero": true,
+  "serverRaceSeconds": 768.615,
+  "verificationContainerRemoved": true
+}

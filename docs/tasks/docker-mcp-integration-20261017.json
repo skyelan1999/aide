@@ -48,8 +48,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "针对性 race 8.073s + vet、quick 通过。新候选由原始 start.command 显式源码构建；Safari HTTP表单与stdio切换、令牌留空保存、Docker10工具发现通过；18个鉴权/凭据/会话文件哈希未变。无真实模型调用，Docker工具无只读声明，不能作为实际AIDE工具执行通过。全量回归将运行。",
+      "status": "pass",
+      "summary": "当前精确输入full109 PASS：server race768.615s、execsandbox1.230s、tts1.510s，vet及CAD通过；原生HTTP/stdio表单、空令牌保留、10工具发现及虚拟Markdown说明预览通过，18保护文件哈希未变；profile导入复原通过。无真实模型请求，不把无只读声明工具视作可执行。",
       "evidence": [
         ".agent-state/docker-mcp-integration-20261017/focused.log",
         ".agent-state/docker-mcp-integration-20261017/quick-current.log",
@@ -57,7 +57,8 @@
         ".agent-state/startup/start-20261017T125013-79398.log",
         "docs/reviews/2026-10-17/docker-mcp-native-proof.json",
         "docs/reviews/2026-10-17/docker-mcp-tool-preview-proof.json",
-        "docs/reviews/2026-10-17/docker-mcp-profile-recovery-proof.json"
+        "docs/reviews/2026-10-17/docker-mcp-profile-recovery-proof.json",
+        "docs/reviews/2026-10-17/docker-mcp-full-proof.json"
       ]
     },
     "documentation": {
@@ -80,5 +81,5 @@
   },
   "release_authorization": "沿用用户“做一部分，push一部分，测一部分”及维护文档授权。本次仅当前开发分支检查点；按用户最新要求只同步main，不合其他远端功能分支。main与Release仍受完整门禁约束。",
   "rollback": "本地改动保留于当前工作区；同步前恢复点 23de3ae2225407e8997ff95b116963f25dcfda64，撤销误合并前恢复点 39a6854c0ab03170641db0091a72fdd30f72e89b。MCP 认证来源是本次用户授权新增，原有凭据与会话须保留；不得用清库回滚。",
-  "handoff": "2026-10-17 按用户纠正“撤销这次本地合并，只同步 main”：已撤销本地合并 64a09479，当前 HEAD 恢复 5ab36ca2；fetch 后 origin/main=5fac564d，已包含于当前分支，ff-only 同步显示 Already up to date。未合入另一设备 feature 分支。MCP 未提交修改已恢复，保留两次 stash 恢复点。未推送远端、未替换运行镜像。之前 quick PASS 绑定已撤销合并的指纹，不作为当前发布证据。 当前MCP源码检查点2cbf0d33已提交推送；代码工作树干净，后续仅普通账本审计更新。原生候选ef7已通过表单切换、空令牌保存与10工具发现；唯一全量62601仍需确认终态。"
+  "handoff": "2026-10-17 按用户纠正“撤销这次本地合并，只同步 main”：已撤销本地合并 64a09479，当前 HEAD 恢复 5ab36ca2；fetch 后 origin/main=5fac564d，已包含于当前分支，ff-only 同步显示 Already up to date。未合入另一设备 feature 分支。MCP 未提交修改已恢复，保留两次 stash 恢复点。未推送远端、未替换运行镜像。之前 quick PASS 绑定已撤销合并的指纹，不作为当前发布证据。 当前MCP源码检查点2cbf0d33已提交推送；代码工作树干净，后续仅普通账本审计更新。原生候选ef7已通过表单切换、空令牌保存与10工具发现；唯一全量62601仍需确认终态。 当前全量62601已终态退出0，指纹3f83d6589f314321251067a536c335c37e5f0fcb90adacbc56486aa999cd3d94；验证容器已清理。下一步串行规范ARM/AMD镜像及离线包构建，禁止再复用旧等待描述。"
 }
