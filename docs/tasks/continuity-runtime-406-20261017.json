@@ -1,0 +1,83 @@
+{
+  "id": "continuity-runtime-406-20261017",
+  "request": "补齐当前752/source406的ARM64和AMD64完整离线镜像包，复用已验收ARM并串行离线构建AMD，实际导入与原始启动器验收，保留数据及旧回滚包，公开上传单独校验后才提升默认；Windows用户验收、真实向量暂缓",
+  "baseline": "0eba8823e8514ba21a8bc350715c58ad3180d636",
+  "initial_status": "",
+  "acceptance": [
+    "Exact752/source406/full68a ARM5dc reuse and serial offline AMD build, no verifier/build overlap or production mutation.",
+    "Each full package contains platform launchers and image+dependencies, no host data; outer/inner SHA and actual Docker load match exact image/source/platform.",
+    "ARM original package launcher forced missing alias local import, host TLS readiness/auth/CAD/reasoning persistence, no remote image download or source rebuild.",
+    "AMD installed asset/CAD under ARM emulation and original package architecture refusal; native Windows user-owned.",
+    "Cleanup only owned resources, preserve rollback/data/images; detailed docs and scoped main delivery. Public upload/digest gate separately required before default promotion."
+  ],
+  "scope": [
+    "docs/tasks/continuity-runtime-406-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/continuity-handoff.md",
+    "docs/reviews/2026-10-17/continuity-runtime-406.md",
+    "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Reuse exact qualified ARM image, existing export-bundle and serial offline AMD build; public defaults stay unchanged until actual upload qualification.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json",
+        "scripts/aide.sh",
+        "Dockerfile.local"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse exact qualified ARM image, existing export-bundle and serial offline AMD build; public defaults stay unchanged until actual upload qualification.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json",
+        "scripts/aide.sh",
+        "Dockerfile.local"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Current ARM5dc reused and AMD14cb serial offline built; both complete packages exported through existing launcher, actual Docker load and identities exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-406.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "ARM original forced-alias local import/auth/CAD/workshop/reasoning10/CAS/restart; AMD normalUID assets/DOCX/installedCAD/minimal compiled-app TLS/script hashes and original architecture refusal pass. Current public candidate gate1 and two Safari upload errors retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-406.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Exact pair bytes/digests, launcher and runtime scopes, cold-alias versus cold-engine boundary, public failure and current handoff documented.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-406.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned runtime/networks/tar duplicate and verified919MB temporary copy removed; user pages/data/images/packages retained, production22 and identity exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-406.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Current public candidate gate1, Safari external and internal/unique-name uploads fail; no verified current public pair. Old07c defaults/Release body/tag and production preserved. Local artifact qualification and documentation push are not publication.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-406.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "User authorized complete image packages, incremental push/test and main merge. No production replacement.",
+  "rollback": "Retain old07c defaults and ce0c archives; isolated fixtures only; never restore old production data.",
+  "handoff": "Current5dc/14cb complete pair qualified locally, ready for copy/import. Need usable authorized upload channel or service recovery, verify current public pair before promotion; no repeated identical browser retries. Original12 continue; Windows user-owned and real vectors deferred."
+}
