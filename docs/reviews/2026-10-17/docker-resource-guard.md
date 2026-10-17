@@ -24,3 +24,10 @@ Docker Desktop本机已设为4核、6GiB，实际info为6210576384字节/4核。
 实际容器inspect确认2GiB/4GiB限制、日志轮转、重复启动无重建；故障前完整回归进程已消失，旧full.log停在Go快照，不视为通过，也不复用前一轮收据。复测时应用约603MiB、CAD约12MiB；系统盘空闲约114GiB，外接盘约358GiB。数值为采样快照，不能相加Docker内部占用与Docker.raw作为两份独立占用。
 
 私有证据：`.agent-state/docker-resource-guard-20261017/` 的start.log、repeat.log、runtime-proof.json、orphan-cleanup.json与quick-final.log。未公开会话、密钥或原始截图。
+
+
+## 后续终态核对
+
+资源保护这轮完整回归已终态通过，不再处于上文记录时的等待状态：108项，指纹 `d2fe7e746bc9f7e96c9a7cedd1bf37dd03f31acc905f6116f6c8daf5c4da05ed`，server race 799.188秒及全包vet/CAD通过。原始收据 `.agent-state/docker-resource-guard-20261017/full-final-proof.json` 记录HEAD5ab36ca2；产品改动为66b0a89a，随后普通文档未改变输入指纹。
+
+这份收据不覆盖后续MCP源码。MCP另有独立全量进程，不能借用本轮PASS。既有6ad/0c完整包生成于资源保护改动之前，保留为已验收旧包；未重新导出前，不能声称它们已携带新增的资源保护启动脚本。MCP当前正式候选构建/导出已准备精确输入门禁，等待新全量完成后串行执行。
