@@ -1,0 +1,101 @@
+{
+  "status": "native_core_acceptance_pass_cleanup_pass_public_release_pending",
+  "observedUTC": "2026-10-17T12:35:23.540758+00:00",
+  "runtime": {
+    "status": "pass",
+    "originalStartExit": 0,
+    "healthy": true,
+    "image": "sha256:fe80b2eb483d8566fc4016dd0175c4c78b17e96b80f48108e7dc28a446e2cdb2",
+    "ownMountsOnly": true,
+    "port": 58320,
+    "productionIdentityAnd22FilesBeforeExact": true
+  },
+  "browser": {
+    "candidateURL": "https://localhost:58320/",
+    "applicationPageReached": true,
+    "warningBypassed": false,
+    "systemTrustChanged": false,
+    "tokenSubmittedToBrowser": true,
+    "ownedTabRetainedForHandoff": false,
+    "originalUserTabsRetained": true,
+    "humanCompletedCertificateHandoff": true,
+    "ownedCandidateAndDestinationTabsClosed": true,
+    "original9999TabRestored": true
+  },
+  "fixtures": {
+    "status": "prepared_api_verified_native_not_run",
+    "candidatePort": 58320,
+    "sessionNumber": 4,
+    "session": "e5a1e336c11fb8d664586d514cb23cde",
+    "run": "6e3ecc27a24a95fbc658451db74677e4",
+    "rule": "81e81af44bca7988ed8312846e28bcb36f0e529e9ce34cb1e518236db62ecf8b",
+    "literalPrintTools": 1,
+    "taskCompleted": true,
+    "approvalRuleCreatedThroughNormalRememberFlow": true,
+    "savedReleaseReceiptOperatorOnly": true,
+    "syntheticURL": "https://example.invalid/native-release-fixture",
+    "staleReceipt409": true,
+    "deduplicatedReceipt": true,
+    "mockRemovedAfterUse": true,
+    "publicPortsForMock": 0,
+    "realModelOrVectorCalls": 0,
+    "nativeWorkbench": "NOT_RUN certificate handoff",
+    "actualPublicReleaseVerified": false
+  },
+  "fixtureFirstAttempt": {
+    "status": "terminal_failed_before_tools",
+    "error": "local protocol fixture socket not yet ready",
+    "normalRetryAfterReadiness": "pass",
+    "noProviderOrSessionDuplicated": true
+  },
+  "cleanup": {
+    "observedUTC": "2026-10-17T12:34:12.000427+00:00",
+    "originalStopExit": 0,
+    "ownedContainersRemoved": [
+      "aide-continuity-plugin-arm-20261017-aide-1",
+      "aide-continuity-plugin-arm-20261017-cad-1"
+    ],
+    "emptyNetworksRemoved": [
+      "aide-continuity-plugin-arm-20261017_default"
+    ],
+    "productionIdentityAnd22FilesUnchanged": true,
+    "dataAndImagesRetained": true,
+    "fixtureDataRetainedForRemainingChecks": false,
+    "fixtureArchivedOutsideRuntime": true,
+    "ownSessionAndTwoEventFilesArchived": true,
+    "candidateSettingsVaultRestoredByteExact": true,
+    "originalAbsentPolicyRestored": true,
+    "cleanupFirstAttempt": "Stopped after restoring settings when original policy file absent; default revision0/no rules verified before restoring absence."
+  },
+  "fullWorkbenchApprovalExpiry": {
+    "status": "pass",
+    "naturalExpiry": "Same open dialog changed active to expired without reload; 40-second expiry configured through pinned candidate API.",
+    "dirtyFocus": "Changed year 2026 to 2027; natural expiry preserved unsaved year and focused year stepper.",
+    "externalRevision": "External expiry revision updated status, preserved input, showed reread notice and disabled Save/Revoke.",
+    "reread": "Native confirmation before discarding draft; confirming reloaded saved 2026 date.",
+    "limits": "Hidden/locked request disposal and forced stale HTTP409 remain exact-source regression scope, not separately instrumented in Safari."
+  },
+  "fullWorkbenchOutcomeSourceLink": {
+    "status": "pass",
+    "path": "Session4 > Trajectory > Input and output > completed retry details > saved operator record",
+    "provenanceVisible": true,
+    "commitSeparateFromLink": true,
+    "renderedURL": "https://example.invalid/native-release-fixture",
+    "clickedDestinationExact": true,
+    "destinationResult": "Safari error page and address bar identify same reserved example.invalid URL; remote receipt is synthetic, not verified release.",
+    "limits": "UI import and unsafe legacy URL cases not repeated; scoped API/component tests remain separate."
+  },
+  "realModelOrVectorCalls": 0,
+  "productionReplaced": false,
+  "previousCertificateCheckpoint": {
+    "windowTitle": "此连接非私人连接",
+    "interstitialURL": "safari-resource:/CertificateWarningFall2023.html",
+    "applicationPageReached": false,
+    "tokenSubmittedToBrowser": false
+  },
+  "concurrentRemoteMain": {
+    "observedHead": "97c2554a",
+    "containsLaterBackgroundSource": true,
+    "currentCandidateDoesNotCoverLaterSource": true
+  }
+}
