@@ -8103,5 +8103,24 @@
     ],
     "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate.",
     "deliveredMain": "52322b7cccaae9014559f435c1757ca938f1adc3"
+  },
+  "synced_main_reaudit_20261017": {
+    "status": "in_progress",
+    "classification": "progress",
+    "syncedRemoteMain": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "currentProductCommit": "221572038913c72ea2774f31e1a2d4c4894a1ad4",
+    "branch": "fix/approval-expiry-synced-main-20261017",
+    "priorityReasoning": "Current source targeted serialized-save, isolation and CAS checks pass. New full workbench candidate still pending; old-runtime native evidence is not promoted to current-source acceptance.",
+    "authorization": "Directly reproduced missing expiry refresh on synced main. Minimal patch and negative-to-positive regression pass; no feature branch merge. Current 107 quick checks pass.",
+    "outcome": "Saved operator release URL link implemented; native synthetic component and safe URL negative cases pass. Full workbench import/link still pending. Prior production-only receipt dedup/stale/forgery tests and owned fixture cleanup pass.",
+    "nativeCandidate": "Frozen independent data/port; production data not mounted; owned workspace seeds only, not feature acceptance. Full running serially with 2 CPU and 4 GiB limit; no full pass claimed.",
+    "production": "Original 9999 unchanged; 22 protected files byte-exact after superseded candidate cleanup. No main push, deployment, version/tag or Release this batch.",
+    "originalScope": "All original twelve workstreams remain in_progress. Windows user-owned; real vectors deferred.",
+    "evidence": [
+      "docs/tasks/continuity-main-recheck-20261017.json",
+      "docs/tasks/outcome-release-source-link-20261017.json",
+      "docs/tasks/approval-expiry-synced-main-20261017.json",
+      "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
+    ]
   }
 }

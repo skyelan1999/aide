@@ -16,7 +16,8 @@
     "docs/tasks/approval-expiry-synced-main-20261017.json",
     "docs/tasks/outcome-release-source-link-20261017.json",
     "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
-    "docs/reviews/2026-10-17/outcome-release-source-link.md"
+    "docs/reviews/2026-10-17/outcome-release-source-link.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
   ],
   "stages": {
     "requirements": {
