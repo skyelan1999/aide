@@ -1,17 +1,17 @@
 # aide 验证记录
 
-> **历史证据**：以下日期、提交、测试数量、镜像和运行状态只适用于各节记录时点。本轮文档核对不重新认定这些结果，现行操作请读仓库根 HANDOVER.md；原审查报告中的“缺陷已复现”不代表当前代码仍存在该缺陷。
+> **历史证据**：以下日期、提交、测试数量、镜像和运行状态只适用于各节记录时点。本轮文档核对不重新认定这些结果，现行操作请读[连续工作交接](continuity-handoff.md)与[统一工作流](agent/WORKFLOW.md)；原审查报告中的“缺陷已复现”不代表当前代码仍存在该缺陷。
 
 ## 当前桌面启动约定（2026-10-15）
 
 用户指定后续实际桌面验收从仓库根 `start.command` 打开，当前以 `aide/start.command` 为准。保留启动日志并核对实际容器、端口和浏览器；测试夹具与只读 API 不能代替这一步。原生证书提示由用户手动处理。详见[本地镜像与启动恢复](local-dependency-image.md)。
 
-## 现行验证入口（2026-10-01）
+## 现行验证入口（2026-10-17核对）
 
 当前以统一开发工作流脚本为准，不以下文历史测试数量为准：
 
 - 快速门禁：`python3 scripts/agent-route.py verify quick`（git diff --check、`node --check` 前端 JS、`scripts/version.sh check`、`test_agent_route.py`、`check_docs.py`、`bash -n` 脚本、i18n/stream/local-root 回归等，清单见 `docs/agent/router.json` 的 `checks.quick`）。
-- 完整门禁：`python3 scripts/agent-route.py verify full` = quick + `bash scripts/aide.sh test`，后者在 `aide:local` 容器内跑 `go test -race -count=1 ./... && go vet ./...`。
+- 完整门禁：`python3 scripts/agent-route.py verify full` = quick + 当前 `checks.full` 中的运行资源、Go快照及CAD几何验证。Go快照脚本将实际文件送入一次性隔离容器，在容器本地编译server race二进制，再运行12个互斥串行分片，其他Go包race与vet完整执行；不是直接使用旧的共享目录 `aide.sh test`。具体命令见 `scripts/test_go_snapshot.py`、`scripts/run_go_test_shards.py` 和 `docs/agent/router.json`。
 - 发布门禁：`python3 scripts/agent-route.py release-check <id>`（只检查不发布）。
 - 后端测试已从历史记录时点的 9 个函数持续扩展；具体覆盖以当前 `go test` 结果和 `internal/server/*_test.go` 为准。
 
@@ -140,4 +140,4 @@ go vet ./...
 
 ### Docker Desktop 共享目录阻塞
 
-`verify full` 的 Go race/vet 将当前 Git 列出的实际文件（保留工作树删除）通过标准输入复制到一次性容器的 `/tmp`，在 Linux 本地文件系统编译测试，不挂载源码、设置或用户数据卷，网络设为 `none`。源码快照是临时私有文件，执行后清理；整体容器命令包含 20 分钟上限，Go 包测试仍有 15 分钟上限。此方式避开共享目录的不可取消文件调用，不表示产品星图扫描的共享文件系统问题已修复。旧 `bash scripts/aide.sh test` 仍是直接挂载的开发便捷命令。
+`verify full` 的 Go race/vet 将当前 Git 列出的实际文件（保留工作树删除）通过标准输入复制到一次性容器的 `/tmp`，在 Linux 本地文件系统编译测试，不挂载源码、设置或用户数据卷，网络设为 `none`。源码快照是临时私有文件，执行后清理；当前整体容器命令上限45分钟，宿主进程上限2750秒；其他Go包测试上限18分钟，server分片按 `scripts/run_go_test_shards.py` 的独立设置执行。此方式避开共享目录的不可取消文件调用，不表示产品星图扫描的共享文件系统问题已修复。旧 `bash scripts/aide.sh test` 仍是直接挂载的开发便捷命令。

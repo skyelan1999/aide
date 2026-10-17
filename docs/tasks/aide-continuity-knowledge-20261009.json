@@ -162,7 +162,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Current main source492; local/SSH native timeline and current local authorization concurrent revoke/reverse cross-session modes/native refusal/restart passed. Continue original12 outcome receipt/live snapshots, workspace/tab/capacity and scoped remaining gates. Newce0c public upload failed; old07c defaults and production preserved. Windows user-owned, real vectors deferred.",
+  "handoff": "Detailed current handoff: docs/continuity-handoff.md. New native defect: initially terminal outcome overview does not adopt external activity (native30/32 vs backend64/running1); fix regression/event ownership then native retest. Native receipt commit, single-run terminal, stale409, duplicate and restart now proven. Keep original12, workspace boundaries and newce0c public upload open; Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -433,14 +433,16 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Existing authenticated e729 Safari already proves101 native execution IDs across100+1 pages, independent raw evidence hash/disk/API agreement and actual101-record summary download. Current safe-source-link component and final full114 are separate scoped proofs.",
+        "latestScopedEvidence": "Native committed receipt file chooser/preview/confirm/operator card, running detail automatic terminal and restart exact now passed; duplicate and old live snapshot409 API proved separately. Existing101 paging/raw evidence remains valid.",
         "evidence": [
           "docs/reviews/2026-10-17/outcome-native-proof.json",
           "docs/reviews/2026-10-17/outcome-release-source-link.md",
           "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
-          "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
+          "docs/reviews/2026-10-17/native-plugin-candidate-proof.json",
+          "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+          "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
         ],
-        "remaining": "Current full-workbench saved operator source-link and exact destination now passed. UI receipt import, hidden-running/live snapshot interactions remain distinct; public assets not qualified."
+        "remaining": "Reproduced current79a0 native defect: initially terminal overview stays30/32 while external activity yields backend64/running1 outside loaded30. Explicit older history reads60/64 and single-run polling works; automatic new-activity adoption needs fix and native retest. Public new assets remain pending."
       }
     },
     {
@@ -739,7 +741,7 @@
           "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
           "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
         ],
-        "remaining": "Public RC2/main delivery, SSH workspace-mode and associated responsive/theme scope remain separate; no runtime execution claim."
+        "remaining": "Path source repairs already on main; current ce0c public asset upload remains pending. SSH workspace-mode complete native paths and responsive/theme scope still separate; no runtime execution claim."
       }
     },
     {
@@ -8393,5 +8395,15 @@
     ],
     "summary": "Current79a0 local complete Safari and independent CAS/SSE/restart acceptance pass; production22 exact; no source/real model/vector/production change; original12 remain.",
     "observedRemoteMain": "99a4375aff6d0a0739efb21fa7382d5b42ac91fb"
-  }
+  },
+  "outcome_live_receipt_native_20261017": {
+    "status": "partial_pass_product_defect_open",
+    "task": "docs/tasks/outcome-live-receipt-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+      "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+    ],
+    "summary": "Current79a0 native receipt commit and live single-run final/restart pass; terminal overview external activity stale reproduced, not fixed. Production22 exact."
+  },
+  "detailedHandoff": "docs/continuity-handoff.md"
 }

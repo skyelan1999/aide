@@ -1,0 +1,92 @@
+{
+  "status": "partial_pass_product_defect_open",
+  "observedUTC": "2026-10-17T14:35:25.297003+00:00",
+  "productCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+  "image": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+  "native": {
+    "client": "Safari full authenticated workbench",
+    "origin": "https://localhost:58320/",
+    "originalLauncher": true,
+    "receiptFileChooserPreviewConfirmAndSavedCard": true,
+    "savedCardOperatorWarningSourceCommitArtifacts": true,
+    "duplicateVia": "normal authenticated API, not second native import",
+    "runningDetailBefore": "running; no finished reply yet",
+    "automaticTerminalDetail": "completed, LIVE_PARTIAL_OLD and LIVE_FINAL_NEW visible",
+    "fullNativeImportRace": "NOT_RUN",
+    "afterRestartNativeReopen": "NOT_RUN"
+  },
+  "receipt": {
+    "source": "operator_import",
+    "deployment": "not_deployed",
+    "fixtureOnly": true,
+    "sourceURL": "https://example.com/aide-local-qa",
+    "sourceURLVisited": false,
+    "diskProjectionExact": true,
+    "currentSnapshotDuplicate": true,
+    "receiptCount": 1,
+    "actualOldLiveSnapshotImportStatus": 409
+  },
+  "hiddenActivity": {
+    "status": "pass",
+    "runningRuns": 1,
+    "loadedRuns": 30,
+    "totalRuns": 64,
+    "allLoadedCompleted": true,
+    "liveOutsideWindow": true,
+    "liveSnapshot": "24beb53dbe76182c827d9cb3f5229946c16a001e4e1e014ec23362515c5e1b80"
+  },
+  "openDefect": {
+    "status": "reproduced_not_fixed",
+    "trigger": "Initial terminal outcome view; other API client starts held retry and appends31 terminal retries; switch to overview",
+    "backend": {
+      "runsTotal": 64,
+      "runningRuns": 1,
+      "visibleCompleted": 30,
+      "runningOutsideWindow": true
+    },
+    "nativeAfterWaiting": "已展示30／32轮任务; old run picker retained",
+    "explicitLoadOlder": "60／64; round33 running; 正在生成回复…",
+    "inference": "Global sessions-changed refreshes sidebar; terminal initial overview has no polling and is not re-adopted from event. Source analysis, fix not yet verified.",
+    "next": "Failing regression, owned session refresh/event bridge, native external activity/close/switch/terminal test"
+  },
+  "restart": {
+    "status": "pass",
+    "originalStopStart": true,
+    "sameImageSameContainerNewProcess": true,
+    "receiptAndFinalOutcomeExact": true,
+    "sessionDiskBytesExact": true,
+    "servedOutcomeJavaScriptExact": true,
+    "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+    "priorFull127Pass": true
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": 3,
+    "ownedEmptyNetworksRemoved": 2,
+    "onlyOwnedBrowserTabClosed": true,
+    "userPagesPreserved": true,
+    "onlyProductionTwoContainersRemain": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "imagesAndDataRetained": true,
+    "observedUTC": "2026-10-17T14:34:12.246445+00:00"
+  },
+  "limits": {
+    "realModelVectorCalls": 0,
+    "tools": 0,
+    "Windows": "user-owned",
+    "realVectors": "deferred",
+    "productionReplaced": false,
+    "newCe0cPublicAssets": "pending",
+    "original12Complete": false
+  },
+  "delivery": {
+    "status": "pending documentation only; product task remains open"
+  },
+  "documentationChecks": {
+    "checkDocs": "PASS314 Markdown1182 local links",
+    "diffCheck": "pass",
+    "exactUnchangedFull127Receipt": true
+  }
+}
