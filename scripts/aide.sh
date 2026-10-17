@@ -25,11 +25,15 @@ record_archive_sum() {
 }
 record_prebuilt_image() {
   local platform="$1" image="$2" source="$3" archive="$4" tag="$5" checksum temporary
+  local candidate=".agent-state/prebuilt-images.candidate.tsv"
   checksum="$(shasum -a 256 "$archive" | awk '{print $1}')"
-  temporary="$(mktemp docker/prebuilt-images.XXXXXX)"
-  if [[ -f docker/prebuilt-images.tsv ]]; then awk -v p="$platform" '$1!=p' docker/prebuilt-images.tsv > "$temporary"; fi
+  mkdir -p .agent-state
+  temporary="$(mktemp .agent-state/prebuilt-images.XXXXXX)"
+  if [[ -f "$candidate" ]]; then awk -v p="$platform" '$1!=p' "$candidate" > "$temporary";
+  else printf '# Local candidates only; verify public Release assets before updating docker/prebuilt-images.tsv.\n' > "$temporary"; fi
   printf '%s %s %s %s https://github.com/skyelan1999/aide/releases/download/%s/%s bundle\n' "$platform" "$image" "$source" "$checksum" "$tag" "$(basename "$archive")" >> "$temporary"
-  mv "$temporary" docker/prebuilt-images.tsv
+  mv "$temporary" "$candidate"
+  echo "候选镜像清单：${candidate}；公开附件验证通过后再更新默认下载清单。"
 }
 if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
 if [[ "$MODE" == stop || "$MODE" == clean-cache ]]; then

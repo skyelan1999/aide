@@ -24,6 +24,18 @@ class RouteTests(unittest.TestCase):
         self.assertLess(route.check_timeout(['python3', 'scripts/test_go_snapshot.py']), 3000)
         self.assertEqual(route.check_timeout(['node', 'scripts/example.test.cjs']), 600)
 
+    def test_public_runtime_asset_gate_fails_closed(self):
+        for code in (0, 1):
+            with mock.patch.object(route.subprocess, 'run', return_value=mock.Mock(returncode=code)) as run:
+                if code:
+                    with self.assertRaises(ValueError): route.check_public_runtime_assets()
+                else:
+                    route.check_public_runtime_assets()
+                self.assertIn('verify_prebuilt_assets.py', run.call_args.args[0][1])
+                self.assertEqual(run.call_args.kwargs['timeout'], 45)
+        with mock.patch.object(route.subprocess, 'run', side_effect=subprocess.TimeoutExpired('fixture', 45)):
+            with self.assertRaisesRegex(ValueError, "timed out"): route.check_public_runtime_assets()
+
     def test_explicit_interpreter_overrides(self):
         with tempfile.TemporaryDirectory() as tmp:
             executable = Path(tmp) / 'bash.exe'

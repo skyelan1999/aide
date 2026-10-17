@@ -654,6 +654,10 @@
       [
         "node",
         "scripts/mcp-source-form.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_prebuilt_publication.py"
       ]
     ],
     "full": [

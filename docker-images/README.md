@@ -6,12 +6,14 @@ Product code `08dbbaca`, source identity `59ebe881dd86b195ff87066262787ea4ed9098
 
 Normal source checkouts select a complete runtime from `docker/prebuilt-images.tsv`. They reuse a verified local image, import a matching local archive, or download the matching Release archive and verify its SHA-256 before import. They never fall back to source compilation. Development builds require `AIDE_BUILD_FROM_SOURCE=1` or `install --source`.
 
-Both complete bundles contain the application, native CAD runtime, cross-platform launchers and licenses. Image archives remain Release assets rather than large Git blobs. The manifest records platform, image ID, source identity, archive checksum and download URL; packaging updates that record. Delivery and remote availability are tracked separately in [the release report](../docs/reviews/2026-10-16/prebuilt-runtime-delivery.md).
+Both complete bundles contain the application, native CAD runtime, cross-platform launchers and licenses. Image archives remain Release assets rather than large Git blobs. The manifest records platform, image ID, source identity, archive checksum and download URL; packaging records local candidates in `.agent-state/prebuilt-images.candidate.tsv` and never activates public defaults. Before updating the tracked manifest, run `python3 scripts/verify_prebuilt_assets.py .agent-state/prebuilt-images.candidate.tsv` after both matching architectures have been uploaded. `release-check` also checks the tracked public manifest after local prerequisites pass. Delivery and remote availability are tracked separately in [the release report](../docs/reviews/2026-10-16/prebuilt-runtime-delivery.md).
 
 | Docker engine platform | Runtime image | Complete offline bundle |
 | --- | --- | --- |
 | linux/arm64 | ab8df956177b | aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz |
 | linux/amd64 | ec1b03234c08 | aide-0.1.17.0-RC2-linux-amd64-ec1b03234c08-offline.tar.gz |
+
+The table above records earlier published snapshots, not the current default selection. The current tracked manifest has two unavailable public URLs; replacement with verified final assets remains pending. See [the publication gate audit](../docs/reviews/2026-10-17/prebuilt-publication-gate.md).
 
 ## 2026-10-16 Mermaid 黑色渲染修复候选
 

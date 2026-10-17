@@ -60,3 +60,11 @@ macOS 使用系统 Bash 3.2，因此宿主 shell 代理避免 Bash 4 才支持�
 应用保留 2 GiB / 2 核上限，CAD 保留 4 GiB / 2 核上限；两项上限不表示实际同时占用。源码和离线 Compose 均把每个服务的日志轮转限制为 3 × 10 MiB；已有容器需按正常更新流程重建后生效。完整 Go 快照验收使用独立无网络容器，限制为 4 GiB / 2 核 / 512 个进程，并保留分片串行测试和 45 分钟内部超时。macOS、Windows、Ubuntu 启动包及完整包均携带资源检查脚本；Windows 实机启动由用户验收。
 
 这些检查不读取 Docker 虚拟磁盘内部剩余空间；Docker 数据盘位于其他磁盘时，应另行检查该盘及 Desktop 磁盘配额。启动前的检查也不能保证后续整个构建始终有足够空间。
+
+## 默认下载清单的公开门禁
+
+`export-bundle` 只更新本机 `.agent-state/prebuilt-images.candidate.tsv`，不提前修改仓库默认的 `docker/prebuilt-images.tsv`。同一平台再次导出会替换该平台的候选项；两种架构应从同一源码生成，旧候选与新候选混用会被门禁拒绝。
+
+镜像按既有流程验收、上传后，执行 `python3 scripts/verify_prebuilt_assets.py .agent-state/prebuilt-images.candidate.tsv`。该命令只访问公开 GitHub Release 元数据，不使用密钥、不下载镜像、不写清单；要求 ARM64/AMD64 各一项，源码身份和 tag 一致，附件已上传、URL/平台/镜像名称匹配、SHA256 与公开摘要一致。通过后再按普通代码审阅流程更新受控默认清单。`release-check` 在本地前置条件通过后，对受控清单执行同样的在线验证；网络失败也拒绝发布。
+
+附件元数据验证不证明包内镜像身份、CAD 完整性或启动成功，实际导入及运行验收继续保留。当前无效默认地址须由最终已验证并公开的镜像替换，不能用门禁通过声称已经修复下载。
