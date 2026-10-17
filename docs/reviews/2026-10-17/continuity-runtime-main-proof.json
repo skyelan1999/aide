@@ -211,5 +211,14 @@
   "nativeWorkbench": "NOT_RUN certificate handoff pending",
   "productionReplaced": false,
   "Windows": "user-owned",
-  "realVectorTests": "deferred"
+  "realVectorTests": "deferred",
+  "concurrentMainAdvance": {
+    "observedRemoteMain": "0fef64114af70b5474d11d99c813644e2968a072",
+    "featureCommit": "ee34c704",
+    "feature": "plugin workshop and per-agent management permissions",
+    "includedInThesePackages": false,
+    "full125AppliesToFrozen662SourceOnly": true,
+    "currentMainFullAfterAdvance": "NOT_RUN",
+    "sourceMerge": "non-force merge; delivery records only on top of concurrent main"
+  }
 }

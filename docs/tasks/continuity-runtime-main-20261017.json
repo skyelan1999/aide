@@ -66,12 +66,16 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "Current complete packages locally verified, but public checker reports no unique uploaded ARM asset; defaults unchanged. Native workbench pending; no Release/tag or production replacement.",
+      "summary": "Frozen662 packages locally verified; remote main advanced concurrently to plugin workshop0fef6411. These packages do not contain that update. Current-head full/packages, public uploaded qualification and native workbench still pending; defaults/production unchanged.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-runtime-main.md"
       ]
     }
   },
   "release_authorization": "Prior user requests updating Docker images and complete offline packages in normal repo and Release; incremental local candidate work authorized. Do not equate source main push with public Release or production replacement.",
-  "rollback": "Retain prior named image/packages/data; stop/remove exact owned test containers and empty networks only."
+  "rollback": "Retain prior named image/packages/data; stop/remove exact owned test containers and empty networks only.",
+  "concurrent_main_advance": {
+    "remote": "0fef6411",
+    "scope": "New plugin-workshop product code arrived during package preparation. Frozen662 packages remain valid scoped candidates, not current-head distribution. Current-head full and packages remain pending."
+  }
 }
