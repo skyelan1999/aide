@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "source": "docker-mcp",
+  "path": "tools/3.md",
+  "nativePreview": true,
+  "descriptionMatchesAPI": true,
+  "explicitNonCallableHint": true,
+  "contentSHA256": "75e349fde38f59c37b302a8868c9763852d51564414acfc514c4222390118be3",
+  "protectedFilesUnchanged": 18,
+  "browserTabsAdded": 0,
+  "modelCalls": 0,
+  "toolExecutions": 0,
+  "originalSceneRestored": true
+}

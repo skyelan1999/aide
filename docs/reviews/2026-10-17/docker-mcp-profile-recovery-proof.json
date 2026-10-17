@@ -1,0 +1,10 @@
+{
+  "status": "pass",
+  "startupProfileExportImported": true,
+  "pinnedTimeImagePreserved": true,
+  "originalProfileRegistryExact": true,
+  "temporaryProfileRemoved": true,
+  "runningGatewayUntouched": true,
+  "profileSecretValuesAbsent": true,
+  "dockerConfigurationDeleted": false
+}

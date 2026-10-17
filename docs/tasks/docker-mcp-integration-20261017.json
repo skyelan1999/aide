@@ -55,12 +55,14 @@
         ".agent-state/docker-mcp-integration-20261017/quick-current.log",
         ".agent-state/verify-20261017T045129221108Z.log",
         ".agent-state/startup/start-20261017T125013-79398.log",
-        "docs/reviews/2026-10-17/docker-mcp-native-proof.json"
+        "docs/reviews/2026-10-17/docker-mcp-native-proof.json",
+        "docs/reviews/2026-10-17/docker-mcp-tool-preview-proof.json",
+        "docs/reviews/2026-10-17/docker-mcp-profile-recovery-proof.json"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "补充 HTTP 安全边界、Docker 实际发现结果和生命周期待办。",
+      "summary": "已补HTTP安全边界、Docker实际发现、虚拟工具说明预览、启动目录profile导入复原验证与手动恢复方法；自动生命周期与最终离线交付仍未完成。",
       "evidence": [
         "docs/plugins/docker-mcp.md"
       ]
