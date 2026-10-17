@@ -8222,5 +8222,21 @@
     "evidence": [
       "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
     ]
+  },
+  "knowledge_real_repo_20261017": {
+    "task": "docs/tasks/knowledge-real-repo-20261017.json",
+    "status": "backend_acceptance_pass_native_pending",
+    "firstResponseMilliseconds": 25.672457995824516,
+    "firstNodes": 13,
+    "afterQuietNodes": 1289,
+    "quietSeconds": 100.517916,
+    "checkpointChangesBeforeFinalAPI": 5,
+    "coverage": "partial",
+    "productionProtectedFilesUnchanged": 22,
+    "evidence": [
+      "docs/reviews/2026-10-17/knowledge-real-repo.md",
+      "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+    ],
+    "remaining": "Native workbench and aggregate release gates remain pending; no model/vector calls."
   }
 }
