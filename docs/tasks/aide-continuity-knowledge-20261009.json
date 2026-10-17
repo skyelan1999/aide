@@ -789,9 +789,6 @@
           "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
           "docs/reviews/2026-10-16/workbench-runtime-delivery.md"
         ]
-      },
-      "current_audit_20261017": {
-        "status": "in_progress"
       }
     }
   ],
@@ -8323,12 +8320,13 @@
     "summary": "SSH workspace native full save bytes, explicit refresh draft recovery, body+SVG version1 restore, disconnected prewrite bytes and reconnect retry pass. Persistent inline failure reason absent; no overall completion. Production22 exact; tests stopped."
   },
   "markdown_restore_feedback_20261017": {
-    "status": "final_placement_targeted_pass_exact_full_v2_running",
+    "status": "exact_full127_native_cleanup_pass_source_delivery_pending",
     "task": "docs/tasks/markdown-restore-feedback-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/markdown-restore-feedback.md",
       "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
     ],
-    "summary": "First446 full127/current919 native persistent8s/retry bytes pass but screenshot shows below-fold error. Independent placement negative then492 before-confirm/cache8 fix; exact final full-v2 session70217 live, final candidate pending. Own runtime/pages cleaned, production22 unchanged."
+    "summary": "Final492/sourcece0c/795dd892 full127 pass; actual79a0 original launcher and Safari visible-before-confirm8s one-row repeated failure/reconnect/manual body+SVG retry pass. Own resources cleaned, production22 unchanged. Public current dual packages/defaults next, original12 continue.",
+    "next": "Qualify current ARM64/AMD64 complete packages, upload and verify public assets, promote defaults only after publication gate; retain remaining original12 native gaps."
   }
 }

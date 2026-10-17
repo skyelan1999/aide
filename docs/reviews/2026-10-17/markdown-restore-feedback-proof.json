@@ -1,5 +1,5 @@
 {
-  "status": "final_placement_targeted_pass_full_v2_running_native_pending",
+  "status": "exact_full127_native_visible_retry_cleanup_pass_public_pending",
   "negative": {
     "status": "expected_failure",
     "command": "node scripts/markdown-history-writable.test.cjs",
@@ -24,17 +24,32 @@
     "command": "node --check internal/server/web/markdown-history.js",
     "exit": 0
   },
-  "native": "NOT_RUN final before-confirm placement",
+  "native": {
+    "status": "pass",
+    "image": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+    "commit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+    "servedJavaScriptExact": true,
+    "buildCommitExact": true,
+    "nativeSafariFullWorkbench": true,
+    "failureStillPresentAfterSeconds": 8,
+    "actualScreenshotMessageVisibleBeforeConfirmation": true,
+    "repeatFailureRows": 1,
+    "sameFixtureRestartedAndConnected": true,
+    "realModelOrVectorCalls": 0,
+    "prewriteBodyAndSVGHashesUnchanged": true,
+    "nativeManualRetryRestoredWholeBodyAndSVGExact": {
+      "scene notes/notes.md": "8fe7805b7d5d471dddec8f6a8fb99e1e6a4cfcb9b800503d40056b04901ac2b9",
+      "scene notes/diagram.svg": "5fe7f71e3c5d61efa676d0f9b17ee10214f58253d4b61fb55c0212ac08981eee"
+    },
+    "nativeV1LabelsAndSuccessShown": true,
+    "historyDialogClosedAndFailureGone": true,
+    "noOpHistoryReadDedup": true,
+    "historyTotal": 4
+  },
   "productionReplaced": false,
   "realModelOrVectorCalls": 0,
-  "quick": {
-    "status": "pass",
-    "head": "ceca57e2e90e53c23c9b7e93f46f8529062d02b1",
-    "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
-    "log": ".agent-state/verify-20261017T124714659841Z.log",
-    "commands": 124
-  },
-  "observedUTC": "2026-10-17T13:09:55.019973+00:00",
+  "observedUTC": "2026-10-17T13:28:45.035847+00:00",
   "previousFull127": {
     "status": "pass",
     "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
@@ -79,10 +94,18 @@
     "expected": true
   },
   "full": {
-    "status": "running",
+    "status": "pass",
+    "fingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+    "head": "9c62b7b4a9df391a147b55adae14a6122b9e53fc",
+    "log": ".agent-state/verify-20261017T130900041441Z.log",
+    "time": "20261017T130900041441Z",
+    "commands": 127,
+    "allExitZero": true,
+    "serverInventory": 976,
+    "disjointSerialShards": 12,
+    "logSHA256": "f8396be31ab0365ec84d99bded9c56ee2f410017292a13681d94d5e764fbf001",
     "processSession": 70217,
-    "driverLog": ".agent-state/markdown-restore-feedback-20261017/full-v2.log",
-    "scope": "Final before-confirm placement; first full127 remains separately qualified."
+    "processExit": 0
   },
   "previousNativeCleanup": {
     "status": "pass",
@@ -104,5 +127,48 @@
   "finalPlacementSource": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
   "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
   "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
-  "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8"
+  "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+  "previousQuick": {
+    "status": "pass",
+    "head": "ceca57e2e90e53c23c9b7e93f46f8529062d02b1",
+    "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+    "log": ".agent-state/verify-20261017T124714659841Z.log",
+    "commands": 124
+  },
+  "currentQuickWithinFull": {
+    "commands": 124,
+    "allExitZero": true,
+    "fingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8"
+  },
+  "build": {
+    "status": "pass",
+    "image": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+    "tag": "aide:restore-feedback-arm64-492489ea",
+    "commit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+    "network": "none",
+    "pull": false,
+    "buildInternalTests": 0,
+    "independentExactFull127": true,
+    "normalUID1000AssetFiles": 25,
+    "workshopRequired": true,
+    "docxRoundTrip": true,
+    "originalStartCommand": true,
+    "ownMountsOnly": true
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedContainersRemoved": 3,
+    "emptyNetworksRemoved": [
+      "aide-restore-feedback-native-20261017_default",
+      "aide-restore-feedback-native-20261017_cad-private",
+      "aide-restore-feedback-native-20261017-private"
+    ],
+    "dataImageAndEvidenceRetained": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "originalBrowserTabsRestored": true,
+    "observedUTC": "2026-10-17T13:27:45.837550+00:00"
+  },
+  "publicRelease": "NOT_RUN new source complete packages/default promotion; production unchanged"
 }

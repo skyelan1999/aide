@@ -23,12 +23,18 @@
     "requirements": {
       "status": "pass",
       "summary": "Direct currentfe80 Safari disconnect leaves no persistent reason; new old-source assertion failed0vs1.",
-      "evidence": []
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "One local role=alert text row replaces toast-only failure; keep partial journal and applied paths; suppress stale/locked/detached details.",
-      "evidence": []
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
     },
     "implementation": {
       "status": "pass",
@@ -39,8 +45,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "First446 exact full127 and919 actual native persistent8s error/reconnect/full bytes pass, visual placement failed. New492 before-confirm/cache8 DOM regression passes; exact full-v2 session70217 is live. Final source795dd892 requires its own receipt and native candidate.",
+      "status": "pass",
+      "summary": "Final492/cache8 exact full127 fingerprint795dd892 pass; actual79a0 ARM original launcher/served JS/nonroot workshop assets and native visible8s one-row failure/reconnect/manual full body+SVG retry pass. Earlier below-fold candidate retained as failed visual scope.",
       "evidence": [
         "docs/reviews/2026-10-17/markdown-restore-feedback.md",
         "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
@@ -48,15 +54,15 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Observed defect, implementation, actual negatives/positives and pending final scope recorded.",
+      "summary": "Final identities, three independent negatives, exact current full/native and limits recorded.",
       "evidence": [
         "docs/reviews/2026-10-17/markdown-restore-feedback.md",
         "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "No new runtime; previous SSH owned fixtures cleaned. Current verification logs retained.",
+      "status": "pass",
+      "summary": "Own3 containers/empty networks and single candidate tab removed; original9999/tab inventory restored; production identity22files exact; images/data/evidence retained.",
       "evidence": [
         "docs/reviews/2026-10-17/markdown-restore-feedback.md",
         "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
@@ -64,7 +70,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "New source not yet exact full/native qualified; prior236 receipt cannot be reused.",
+      "summary": "Scoped source ready for user-authorized main delivery; current complete ARM/AMD offline/public assets and default promotion not qualified. No production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/markdown-restore-feedback.md",
         "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
@@ -73,5 +79,5 @@
   },
   "release_authorization": "Existing incremental source/test/doc/push authorization; no production replacement or public Release before gates.",
   "rollback": "Revert owned source commit; no data migration.",
-  "handoff": "Follow live full-v2 session70217 (driver full-v2.log); prior16520 terminal0. Current build-owner points frozen source-v2 commit492489ea/sourcece0c9e871e4c/fingerprint795dd892. After matching terminal full pass run private build.py then prepare-native.py, prepare-ssh.py, mark-v2.py; actual Safari same58320 disconnected restore must show message visibly before confirm for8s, then same SSH docker start/socket readiness, hash equality, manual retry, cleanup-native.py and docs/gates. Native-v1 archived separately; no owned candidate containers/pages remain. Do not reuse919/087 receipt for new placement."
+  "handoff": "Full-v2 session70217 terminal0; final79a0 candidate native acceptance/cleanup complete. No owned runtime remains. Deliver scoped source to main, then qualify current dual complete packages/public defaults; original12 continue, Windows user-owned/vectors deferred."
 }
