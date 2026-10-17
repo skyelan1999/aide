@@ -47,11 +47,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Safari 刷新后实见新图标、搜索与轨迹分开、三侧栏标题对齐且可切换；125项快速命令退出均为0，但运行期间安装改变输入指纹，需合并后重跑。",
+      "status": "pass",
+      "summary": "最终125项quick通过；start.command源构建含Go vet/build成功。Safari实际刷新核对正常和放大紧凑视口，搜索不重叠、图标对齐、三面板标题同高且切换正常。紧凑按钮保留AX名称；恢复原缩放。未跑全量发行门禁和其他主题/实体平台验收。",
       "evidence": [
+        ".agent-state/topbar-quick-verified.log",
+        ".agent-state/topbar/final.png",
+        ".agent-state/topbar/narrow.png",
         ".agent-state/topbar/plugins.png",
-        ".agent-state/topbar-quick-final.log"
+        ".agent-state/skill-library/deploy/start-final.log"
       ]
     },
     "documentation": {
@@ -69,12 +72,14 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "用户授权的本机更新已完成，容器healthy；推送随本交付提交执行，不升版或发布GitHub Release。运行源码9f6bbdc9，后续仅文档记录。",
+      "evidence": [
+        ".agent-state/skill-library/deploy/live-check.json"
+      ]
     }
   },
   "release_authorization": "用户已授权安装更新并 push",
   "rollback": "",
-  "handoff": ""
+  "handoff": "消息图标重绘；顶部按钮36px，消息/插件标题匹配文件42px(触摸46px)。搜索输入跟随容器。当前Safari已刷新；注册表保留在本地不入Git。"
 }

@@ -65,14 +65,17 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "No push, version bump, release, production restart or production plugin/reference mutation requested or performed. Local plugin ZIP is the deliverable.",
+      "status": "pass",
+      "summary": "在现有源码部署中更新skill注册元数据至1.1.0，保留启用/设置和其他条目，备份原注册表；start.command源构建并重启。鉴权API和Safari插件列表显示1.1.0启用无错误，skill_library已注册；/healthz 200、容器healthy。推送随交付提交执行；不升版/不创建Release。",
       "evidence": [
-        ".agent-state/skill-library/package.json"
+        ".agent-state/skill-library/deploy/registry-before-install.json",
+        ".agent-state/skill-library/deploy/start-final.log",
+        ".agent-state/skill-library/deploy/live-check.json",
+        ".agent-state/topbar/plugins.png"
       ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户：安装进去push即可",
   "rollback": "Disable the skill plugin first; reject pending skill reference proposals. Restore prior source/image/plugin together if rolling back native support. Do not delete shared skill-cache versions until all references using them are removed; installed references are read-only by default and no dependency/script was executed.",
-  "handoff": "Uploadable ZIP .agent-state/packages/aide-pkg-skill-v1.1.0.zip (6036 bytes, SHA256 ab7e49c3e8a90ec8b11453813ce6c0536f27dd4d4028b0acfd69a2afc509e9f7). Requires an Aide build containing the native skill_library executor; ZIP alone cannot update an older host. Existing skill ID uses the supported upgrade/Plugin Workshop prepare flow. No source pushed and running product unchanged. Preserve unrelated registry modifications."
+  "handoff": "本机skill 1.1.0已启用，native skill_library已注册；只更新现有源码部署的skill登记，不改管理权限、引用锁或其他插件。私有备份 .agent-state/skill-library/deploy/registry-before-install.json；运行注册表不入Git。原插件ZIP保留。自动模型选择和实际用户任务下载未触发付费调用，先前隔离下载测试不等于当前用户任务已执行。"
 }
