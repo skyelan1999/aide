@@ -1,0 +1,78 @@
+{
+  "id": "continuity-runtime-candidate-20261017",
+  "request": "继续连续工作总目标的候选运行镜像与跨设备交付准备；全部运行测试使用原始 start.command，生产保持原样，Windows 用户验收，原生证书页面暂缓。",
+  "baseline": "50d250d178a6b8f3f349e38ffe1cb23681e1e478",
+  "initial_status": "",
+  "acceptance": [
+    "Freeze exact full114-passed runtime inputs; archive excludes generated host dependencies and contains complete current source.",
+    "Start isolated ARM candidate with original start.command, no model keys or production data mounts; verify health/auth, session reasoning write/isolation and persistence using owned fixtures.",
+    "Keep actual production identity/protected files unchanged and resource usage bounded; remove only owned superseded stopped containers before creating replacement, retaining images/data.",
+    "Record native whole-workbench UI as user-deferred, not bypassed; ARM success does not prove AMD64/Windows/new-device import/publication.",
+    "Export current ARM complete offline bundle using existing scripts, validate both archive hashes and actual docker load identity; start/stop extracted package through original launchers without source rebuild or remote image download.",
+    "Prepare same-source AMD64 candidate serially with complete retained local dependencies; label emulated tests separately from native Windows/other-device acceptance."
+  ],
+  "scope": [
+    "docs/tasks/continuity-runtime-candidate-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+    "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Build concrete runtime candidate for original continuity/reasoning priority after exact full114 and actual MCP proof.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Git archive current clean commit; original launcher with explicit owned project/port/data; seed TLS through supported .data import path; no production restart or paid models.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Built current full114 exact-source ARM64 and AMD64 images with retained local dependencies, exported same-source complete offline archives; production untouched.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Scoped PASS: ARM original launcher health/auth,10 concurrent session reasoning writes/stale409/disk and original stop-start persistence, actual Docker MCP10 tools/description and credential restart; both architecture archives hash/load/identity checks. Extracted ARM start-stop/CAD pass. Extracted AMD original launcher correctly rejects ARM engine before containers; native AMD/Windows NOT_RUN user-owned, native full-workbench user-deferred. Production identity/22 files exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded precise source/image/package identities, ARM runtime and both package proof, expected AMD wrong-engine rejection and pending native/public delivery; check_docs287/923 passed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed6 exact-owned stopped superseded/source/offline ARM containers across task; retained data/images. After serial builds/exports/load, reclaimed2.413GB rebuildable builder cache only. Only production app/CAD running; protected identity/22 files rechecked exact. Verified then removed1695769600 duplicate extracted tar bytes; complete outer packages and test data retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user incremental work/test/image distribution authorization; this task prepares isolated current runtime, not main push/tag/Release or production replacement.",
+  "rollback": "Retain production image/containers/data untouched; retain superseded candidate images and owned data, remove only known stopped candidate containers; stop new owned candidate on failure.",
+  "handoff": "Prepare public asset/default manifest and main release gates separately. ARM offline runtime passed; AMD64 build/load passed, native start NOT_RUN with correct wrong-architecture refusal on ARM. Full native workbench user-deferred, Windows user-owned, real vectors deferred."
+}

@@ -1,0 +1,141 @@
+{
+  "id": "mcp-http-synced-main-20261017",
+  "request": "延续用户已授权 Docker MCP 接入；同步 main 后恢复自身已验证的 HTTP 传输，以保留现有配置，不合并被拒绝历史分支。",
+  "baseline": "690b7624cb9f6c736d66b8c55af48fbd1415847c",
+  "initial_status": "",
+  "acceptance": [
+    "Current stdio and existing streamable-http configurations remain usable without secret loss or reset.",
+    "Authenticated HTTP JSON/SSE discovery and read-only calls respect cancellation, bounded responses, redirects/proxy/token protection and source revocation/CAS.",
+    "Preserve current main UI and scoped new styles; transport form must not submit hidden HTTP credentials into stdio.",
+    "Validate local Docker gateway through AIDE with unchanged production data; no actual tool execution claims from discovery alone; exact combined full and release gates remain required."
+  ],
+  "scope": [
+    "internal/server/mcp_http.go",
+    "internal/server/mcp_http_test.go",
+    "internal/server/mcp_source.go",
+    "internal/server/sources.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/workbench.css",
+    "scripts/mcp-source-form.test.cjs",
+    "docs/agent/router.json",
+    "docs/tasks/mcp-http-synced-main-20261017.json",
+    "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "internal/server/mcp_existing_configuration_test.go",
+    "docs/architecture.md",
+    "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
+    "docs/plugins/docker-mcp.md",
+    "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+    "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Read-only metadata audit finds1 existing configured HTTP MCP source; current main validator rejects all non-stdio sources. Deployment without compatibility repair would regress this authorized connection.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Selected own HTTP transport/CAS/form delta reviewed; upstream CSS preserved with scoped additions. No rejected branch merge; copied candidate prepared separately from running full.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Reviewed HTTP driver, source dispatch/CAS/credentials and UI delta applied without branch merge; native-tested app/CSS/form-test bytes match isolated candidate hashes. Current upstream UI preserved; cache versions incremented.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Independent config-loss negative ->10 integrated race pass6.092s; latest combined full114 PASS946 entries/12 shards/race/vet/CAD; native synthetic source form exact bytes proven. Current AIDE Handler to actual Docker gateway auth/discovery/description/App-disk-reopen pass2.716s;10 tools,0 readonly,0 calls. Whole-workbench native UI remains user-deferred and not claimed. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
+        "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
+        ".agent-state/verify-20261017T070223636611Z.log",
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json",
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture now lists both transports; audit distinguishes negative/current integrated/actual gateway/public asset boundaries.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
+        "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
+        "docs/plugins/docker-mcp.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped source diff, owned containers/tars removed; native test tab closed, original39 restored, test service controlled-stop; no production data mounts or config writes.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Actual clean-main release-check exit0 including verified public default pair. Source branch and draft PR4 published; aggregate remote-main delivery remains held by separate approval/outcome native gates, no production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing user Docker MCP test/setup and incremental work/test/push authorization; latest Git direction forbids rejected history branch merge and limits main synchronization. No production replacement before compatibility/full gates.",
+  "rollback": "Preserve production source config, encrypted vault, image and containers; source-only revert is insufficient if deployed older stdio-only code; never reset source registry or credentials.",
+  "handoff": "Await running full63551; then recover reviewed HTTP delta on task branch, use focused bounded serial tests before next combined gate. Native full UI user-deferred, Windows user-owned, real vectors deferred.",
+  "candidateEvidence": {
+    "privateDir": ".agent-state/mcp-http-synced-main-20261017",
+    "files": [
+      "negative-form.log",
+      "positive-form.log",
+      "form-proof.json",
+      "native-form-proof.json"
+    ],
+    "implementationBoundary": "Prepared isolated candidate only; repository runtime sources unchanged."
+  },
+  "distributionAudit": {
+    "currentManifest": "Both default filenames absent from live public Release API; do not deploy new defaults before uploaded assets/digests verified.",
+    "publicARM6a": "uploaded confirmed by API; no release note draft submission",
+    "publicCountAtAudit": 23,
+    "production": "unchanged",
+    "evidence": "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
+  },
+  "integrationBaseline": "c28b6f60",
+  "quickReceipt": {
+    "status": "pass",
+    "fingerprint": "e75edaae950e01f2e0179b4b9a6637b7e636304ebfd28deb7b596d48cab384ec",
+    "head": "c28b6f60236df34406e601af88d36b1072f46521",
+    "log": ".agent-state/verify-20261017T070223636611Z.log"
+  },
+  "combinedFull": {
+    "status": "pass",
+    "ownerSession": 44564,
+    "sourceCommit": "67738355",
+    "privateLog": ".agent-state/mcp-publication-combined-full-20261017.log",
+    "noConcurrentGo": "true",
+    "fingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+    "receiptHead": "41cb3a35980ac7505922e843cfb7e6f3fd1e132c",
+    "commands": 114,
+    "serverEntries": 946,
+    "evidence": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
+  },
+  "actualGateway": {
+    "status": "pass",
+    "report": "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json",
+    "tools": 10,
+    "readonly": 0,
+    "executed": 0,
+    "production": "unchanged"
+  }
+}

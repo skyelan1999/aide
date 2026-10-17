@@ -217,7 +217,10 @@ func TestAIReferenceAccess(t *testing.T) {
 	a := testApp(t)
 	os.MkdirAll(filepath.Join(a.workPath, "refs"), 0755)
 	os.WriteFile(filepath.Join(a.workPath, "refs", "note.md"), []byte("AI reference body"), 0600)
-	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("ref", "AI refs", "local", map[string]any{"path": "refs"}, true)}}), 200)
+	// Writable references now support reviewed proposals. This test exercises
+	// read-only reference access; writable proposal/version checks live in
+	// document_proposals_test.go.
+	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("ref", "AI refs", "local", map[string]any{"path": "refs"}, false)}}), 200)
 	task := &Task{}
 	result := a.executeToolCall(context.Background(), readCall("list_sources", `{}`), task, nil)
 	if !strings.Contains(result, `"id":"ref"`) {
@@ -228,8 +231,11 @@ func TestAIReferenceAccess(t *testing.T) {
 		t.Fatal(result)
 	}
 	result = a.executeToolCall(context.Background(), readCall("write_file", `{"source":"ref","path":"note.md","content":"bad"}`), task, nil)
-	if !strings.Contains(result, "read-only") {
+	if !strings.Contains(result, "不可写") || len(task.Files) != 0 {
 		t.Fatal(result)
+	}
+	if body, err := os.ReadFile(filepath.Join(a.workPath, "refs", "note.md")); err != nil || string(body) != "AI reference body" {
+		t.Fatalf("read-only reference changed: %q, %v", body, err)
 	}
 	result = a.executeToolCall(context.Background(), readCall("read_file", `{"source":"missing","path":"note.md"}`), task, nil)
 	if !strings.Contains(result, "disabled") {

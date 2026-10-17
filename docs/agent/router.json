@@ -643,6 +643,27 @@
         "scripts/file-route-location.test.cjs"
       ],
       [
+        "bash",
+        "-n",
+        "scripts/resource-guard.sh"
+      ],
+      [
+        "python3",
+        "scripts/test_resource_guard.py"
+      ],
+      [
+        "node",
+        "scripts/mcp-source-form.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_prebuilt_publication.py"
+      ],
+      [
+        "python3",
+        "scripts/test_offline_bundle.py"
+      ],
+      [
         "node",
         "--check",
         "internal/server/web/message-center.js"

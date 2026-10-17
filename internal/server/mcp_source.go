@@ -27,19 +27,31 @@ const (
 // particular, a value such as "npx -y package" is not treated as a shell
 // command: the UI and API must send command="npx", args=["-y", "package"].
 func validateMCPConfig(cfg *SourceConfig) error {
+	cfg.Transport = strings.TrimSpace(cfg.Transport)
+	if cfg.Transport == "" {
+		cfg.Transport = "stdio"
+	}
+	if cfg.Transport == "streamable-http" {
+		cfg.URL = strings.TrimSpace(cfg.URL)
+		if cfg.Command != "" || len(cfg.Args) != 0 {
+			return errors.New("MCP HTTP 不使用本地启动程序或参数")
+		}
+		if cfg.DockerGateway {
+			if err := validateDockerMCPGatewayURL(cfg.URL); err != nil {
+				return err
+			}
+		}
+		return validateMCPHTTPURL(cfg.URL)
+	}
+	if cfg.Transport != "stdio" {
+		return errors.New("MCP 传输仅支持 stdio 或 streamable-http")
+	}
 	cfg.Command = strings.TrimSpace(cfg.Command)
 	if cfg.Command == "" {
 		return errors.New("MCP 来源需要启动程序")
 	}
 	if strings.ContainsAny(cfg.Command, "\x00\r\n") {
 		return errors.New("MCP 启动程序不能包含换行或空字符")
-	}
-	cfg.Transport = strings.TrimSpace(cfg.Transport)
-	if cfg.Transport == "" {
-		cfg.Transport = "stdio"
-	}
-	if cfg.Transport != "stdio" {
-		return errors.New("当前仅支持 MCP stdio 传输")
 	}
 	if len(cfg.Args) > 64 {
 		return errors.New("MCP 参数最多 64 个")
@@ -212,11 +224,13 @@ type mcpWireTool struct {
 	} `json:"annotations"`
 }
 
-func (s *mcpStdio) listTools() ([]MCPTool, error) {
+func (s *mcpStdio) listTools() ([]MCPTool, error) { return listMCPTools(s.request) }
+
+func listMCPTools(request func(string, any, any) error) ([]MCPTool, error) {
 	var response struct {
 		Tools []mcpWireTool `json:"tools"`
 	}
-	if err := s.request("tools/list", map[string]any{}, &response); err != nil {
+	if err := request("tools/list", map[string]any{}, &response); err != nil {
 		return nil, err
 	}
 	tools := make([]MCPTool, 0, len(response.Tools))
@@ -238,8 +252,56 @@ func (s *mcpStdio) listTools() ([]MCPTool, error) {
 	return tools, nil
 }
 
+type mcpClient interface {
+	request(string, any, any) error
+	listTools() ([]MCPTool, error)
+	close()
+}
+
+// Ignore discovered metadata when comparing the connection used by a request.
+func sameMCPConnection(left, right Source) bool {
+	left.Config.MCPTools, right.Config.MCPTools = nil, nil
+	if left.Config.Transport == "" {
+		left.Config.Transport = "stdio"
+	}
+	if right.Config.Transport == "" {
+		right.Config.Transport = "stdio"
+	}
+	l, _ := json.Marshal(left.Config)
+	r, _ := json.Marshal(right.Config)
+	return left.ID == right.ID && left.Type == right.Type && left.Enabled == right.Enabled && bytes.Equal(l, r)
+}
+
+func (a *App) openMCPSource(ctx context.Context, src Source) (mcpClient, error) {
+	a.mu.Lock()
+	current, ok := a.findSource(src.ID)
+	token, _ := a.sourceCredentialLocked(src.ID)
+	valid := ok && current.Enabled && current.Type == "mcp" && sameMCPConnection(current, src)
+	a.mu.Unlock()
+	if !valid {
+		return nil, errors.New("MCP 来源配置已变化，请重试")
+	}
+	if err := validateMCPConfig(&src.Config); err != nil {
+		return nil, err
+	}
+	if src.Config.Transport == "streamable-http" {
+		guard := func() error {
+			a.mu.Lock()
+			defer a.mu.Unlock()
+			current, ok := a.findSource(src.ID)
+			currentToken, _ := a.sourceCredentialLocked(src.ID)
+			if !ok || !sameMCPConnection(current, src) || currentToken != token {
+				return errors.New("MCP 来源配置或凭据已变化，请重试")
+			}
+			return nil
+		}
+		return openMCPHTTPGuarded(ctx, src.Config, token, guard)
+	}
+	return openMCPStdio(ctx, src.Config)
+}
+
 func (a *App) probeMCPSource(ctx context.Context, src Source) ([]MCPTool, error) {
-	s, err := openMCPStdio(ctx, src.Config)
+	s, err := a.openMCPSource(ctx, src)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +310,7 @@ func (a *App) probeMCPSource(ctx context.Context, src Source) ([]MCPTool, error)
 }
 
 func (a *App) callMCPReadOnlyTool(ctx context.Context, src Source, name string, arguments map[string]any) (string, error) {
-	s, err := openMCPStdio(ctx, src.Config)
+	s, err := a.openMCPSource(ctx, src)
 	if err != nil {
 		return "", err
 	}
@@ -288,6 +350,7 @@ func (a *App) testMCPSource(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	a.mu.Lock()
 	src, ok := a.findSource(id)
+	token, _ := a.sourceCredentialLocked(id)
 	a.mu.Unlock()
 	if !ok || !src.Enabled || src.Type != "mcp" {
 		fail(w, http.StatusNotFound, errors.New("未找到已启用的 MCP 引用来源"))
@@ -300,6 +363,12 @@ func (a *App) testMCPSource(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	current, exists := a.findSource(id)
+	currentToken, _ := a.sourceCredentialLocked(id)
+	if !exists || !sameMCPConnection(current, src) || currentToken != token {
+		fail(w, http.StatusConflict, errors.New("MCP 来源配置或凭据已变化，请重新测试"))
+		return
+	}
 	for i := range a.sourceRegistry.Sources {
 		if a.sourceRegistry.Sources[i].ID == id {
 			a.sourceRegistry.Sources[i].Config.MCPTools = tools

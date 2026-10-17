@@ -6,10 +6,11 @@ import (
 	"os"
 )
 
-// Preserve encrypted prior-format bytes before a format2/3 write. A stale migration cannot
+// Preserve encrypted prior-format bytes before a payload2/3 or compressed-envelope write.
+// Marker4 names the gzip envelope backup, not a payload version. A stale migration cannot
 // replace a newer file, and an existing backup is never overwritten.
 func backupKnowledgeTimeUpgrade(file, expected string, version int) error {
-	if version != 2 && version != 3 {
+	if version != 2 && version != 3 && version != 4 {
 		return fmt.Errorf("知识历史升级版本无效")
 	}
 	info, err := os.Lstat(file)
@@ -37,6 +38,9 @@ func backupKnowledgeTimeUpgrade(file, expected string, version int) error {
 	label := "ai-v2"
 	if version == 3 {
 		label = "body-v3"
+	}
+	if version == 4 {
+		label = "gzip-v2"
 	}
 	backup := file + ".before-" + label + "-" + expected[:12] + ".json"
 	if existing, err := os.Lstat(backup); err == nil {

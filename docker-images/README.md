@@ -1,17 +1,19 @@
 ## Star map preview follow-up snapshots
 
-Product code `08dbbaca`, source identity `59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d`: ARM64 `696739fa8621`, AMD64 `76ef945215d5`. These snapshots implement current-tab read-only preview, allowlisted map return, structured document text lines and removed-source result invalidation. Exact checksums and complete archive names are in the prebuilt manifest. Verification, native acceptance and publication status are tracked in [the follow-up task](../docs/tasks/starmap-native-preview-20261016.json); local export is not remote availability.
+Product code `08dbbaca`, source identity `59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d`: ARM64 `696739fa8621`, AMD64 `76ef945215d5`. These snapshots implement current-tab read-only preview, allowlisted map return, structured document text lines and removed-source result invalidation. These are historical snapshots; current defaults and their exact identities are listed below. Verification, native acceptance and publication status are tracked in [the follow-up task](../docs/tasks/starmap-native-preview-20261016.json); local export is not remote availability.
 
 ## Default prebuilt startup (ARM64 and AMD64)
 
 Normal source checkouts select a complete runtime from `docker/prebuilt-images.tsv`. They reuse a verified local image, import a matching local archive, or download the matching Release archive and verify its SHA-256 before import. They never fall back to source compilation. Development builds require `AIDE_BUILD_FROM_SOURCE=1` or `install --source`.
 
-Both complete bundles contain the application, native CAD runtime, cross-platform launchers and licenses. Image archives remain Release assets rather than large Git blobs. The manifest records platform, image ID, source identity, archive checksum and download URL; packaging updates that record. Delivery and remote availability are tracked separately in [the release report](../docs/reviews/2026-10-16/prebuilt-runtime-delivery.md).
+Both complete bundles contain the application, native CAD runtime, cross-platform launchers and licenses. Image archives remain Release assets rather than large Git blobs. The manifest records platform, image ID, source identity, archive checksum and download URL; packaging records local candidates in `.agent-state/prebuilt-images.candidate.tsv` and never activates public defaults. Before updating the tracked manifest, run `python3 scripts/verify_prebuilt_assets.py .agent-state/prebuilt-images.candidate.tsv` after both matching architectures have been uploaded. `release-check` also checks the tracked public manifest after local prerequisites pass. Delivery and remote availability are tracked separately in [the release report](../docs/reviews/2026-10-16/prebuilt-runtime-delivery.md).
 
 | Docker engine platform | Runtime image | Complete offline bundle |
 | --- | --- | --- |
-| linux/arm64 | ab8df956177b | aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz |
-| linux/amd64 | ec1b03234c08 | aide-0.1.17.0-RC2-linux-amd64-ec1b03234c08-offline.tar.gz |
+| linux/arm64 | 4b784ce0724f | aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz |
+| linux/amd64 | 382c90e72fca | aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz |
+
+The table lists the current default pair, with common runtime source `07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def` and build commit `db02c58f`. Both immutable public RC2 assets have verified uploaded state, exact byte size and SHA256; actual local Docker import and public range-download smoke checks pass. ARM extracted original-launcher startup/auth/native CAD import and reasoning/MCP restart persistence pass. Native AMD64/Windows runtime remains user-tested; full native workbench acceptance and real vectors are deferred. This does not claim all continuity workflows or deployment complete. See [current delivery evidence](../docs/reviews/2026-10-17/continuity-offline-delivery.md) and [runtime acceptance](../docs/reviews/2026-10-17/continuity-runtime-candidate.md).
 
 ## 2026-10-16 Mermaid 黑色渲染修复候选
 

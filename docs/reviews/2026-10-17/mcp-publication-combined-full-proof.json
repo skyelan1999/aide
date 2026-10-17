@@ -1,0 +1,99 @@
+{
+  "status": "pass",
+  "profile": "full",
+  "runtimeSourceCommit": "67738355",
+  "receiptHead": "41cb3a35980ac7505922e843cfb7e6f3fd1e132c",
+  "fingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+  "commands": 114,
+  "allCommandsExitZero": true,
+  "serverRegisteredEntries": 946,
+  "disjointSerialShards": [
+    {
+      "group": 1,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 71.6
+    },
+    {
+      "group": 2,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 59.9
+    },
+    {
+      "group": 3,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 52.6
+    },
+    {
+      "group": 4,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 71.7
+    },
+    {
+      "group": 5,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 109.3
+    },
+    {
+      "group": 6,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 59.5
+    },
+    {
+      "group": 7,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 72.3
+    },
+    {
+      "group": 8,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 62.8
+    },
+    {
+      "group": 9,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 75.4
+    },
+    {
+      "group": 10,
+      "selected": 79,
+      "exit": 0,
+      "seconds": 50.9
+    },
+    {
+      "group": 11,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 46.1
+    },
+    {
+      "group": 12,
+      "selected": 78,
+      "exit": 0,
+      "seconds": 43.1
+    }
+  ],
+  "raceAndVet": "pass",
+  "CAD": "pass",
+  "runtimeAssets": "pass on existing toolchain/assets image; no rebuilt current-runtime claim",
+  "sourceSnapshot": "container-local/no network/no user-data mounts",
+  "limits": {
+    "memoryBytes": 4294967296,
+    "cpus": 2,
+    "pids": 512
+  },
+  "privateLog": ".agent-state/verify-20261017T070747443678Z.log",
+  "nativeWorkbench": "user-deferred",
+  "Windows": "user-owned",
+  "realVectors": "deferred",
+  "production": "unchanged",
+  "pushMainRelease": "not_done"
+}

@@ -1,0 +1,82 @@
+{
+  "id": "native-candidate-6eb-20261017",
+  "request": "继续原始审批与成果原生验收：以当前6eb完整候选包原始start.command启动隔离实例，检查Safari正常进入；遇浏览器证书告警保留用户交接，不绕过，不改生产。",
+  "baseline": "c0b4a5c18729d05ee6cc1bc639fc9ff2926d8ff6",
+  "initial_status": "",
+  "acceptance": [
+    "Use current da290 ARM image/source6eb and original packaged start.command, owned project/data only, preserve production identity22 files.",
+    "Inventory/reuse browser tabs, open one owned candidate tab; normal access only, browser-generated certificate warning requires user handoff, never bypass.",
+    "If accessible, complete actual current approval expiry/stale/dirty/focus and saved outcome source-link workbench checks with own fixture data, no real model/vector calls; do not promote component/API evidence.",
+    "Close owned tab, preserve original pages/unsaved Release form; original stop and exact owned container/network cleanup, retain proof/data.",
+    "Record achieved vs blocked scopes and actual release prerequisites; do not main push or replace production while incomplete."
+  ],
+  "scope": [
+    "docs/tasks/native-candidate-6eb-20261017.json",
+    "docs/tasks/approval-expiry-synced-main-20261017.json",
+    "docs/tasks/outcome-release-source-link-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/native-candidate-6eb.md",
+    "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Revalidate actual browser availability on newly qualified current-source runtime; former55054 certificate handoff deferred by user.",
+      "evidence": [
+        "docs/tasks/approval-expiry-synced-main-20261017.json",
+        "docs/tasks/outcome-release-source-link-20261017.json",
+        "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Retained own packaged runtime/data, original start/stop and one owned Safari tab; no trust changes or production deployment.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Current6eb image da290 started through retained complete package original launcher with own data/project; no product or trust change.",
+      "evidence": [
+        "docs/reviews/2026-10-17/native-candidate-6eb.md",
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "Safari normal open50167 reaches browser-generated certificate interstitial, not AIDE. Same certificate hash as production does not imply access on this port; approval/outcome full native checks NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-10-17/native-candidate-6eb.md",
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current source/runtime/browser/cleanup evidence records actual certificate blocker and deferred user handoff without promoting old component/API evidence.",
+      "evidence": [
+        "docs/reviews/2026-10-17/native-candidate-6eb.md",
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Prior cleanup pass retained as historical evidence. User resumed: original launcher restarted current candidate and one owned Safari tab is open for required certificate handoff; final stop/tab cleanup pending after native acceptance. Production identity and22 protected files reverified unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-17/native-candidate-6eb.md",
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Current native approval/outcome prerequisites still incomplete; public current-source image qualification also pending. No remote main or production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-17/native-candidate-6eb.md",
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental candidate tests/docs/source branch authorization; no remote main push or production deployment.",
+  "rollback": "Close own candidate page; original stop and exact stopped owned project containers/networks cleanup, retain data/images.",
+  "handoff": "Current50167 candidate and one owned Safari warning tab retained for user-present certificate handoff. Original launcher exited0; no live background test process. User must personally handle warning; native approval/outcome tests remain NOT_RUN."
+}

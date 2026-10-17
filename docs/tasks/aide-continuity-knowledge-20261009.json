@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current source6ac147aa full105 PASS including Go race/vet on exact inputs. Current native reasoning write/isolation, resource-only PNG/JPEG restore, complete disk/raw API bytes, unchanged-history dedup and protected cleanup passed. Runtime551 via start.command; offline local import/fresh startup passed. Original12 remain in_progress; Windows user-owned, real vectors deferred.",
+      "summary": "Current launcher source full115 PASS5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04:946 entries/12 serial groups/race/vet/CAD, quick112 and actual original launcher negative/positive pass. Prior07c ARM reasoning/MCP/restarts and public package evidence retained; new6eb-source distribution not yet qualified. Real external directory background scan and SSH workspace protocol accepted; original12 native full-workbench gaps remain, Windows user-owned and vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -118,12 +118,15 @@
         "2026-10-13 continuation, current HEAD 74ad5e5 in healthy aide-aide-1: 11 approval tests passed under `go test -mod=vendor -race -p=1 ./internal/server -run '^(TestApprovalRememberExpiryFromAnswer|TestApprovalRuleManagement|TestConcurrentApprovalExpiryAndRevocationUseRevisionGuard|TestRememberedApprovalReceiptAndOutcome|TestAssistedApprovalNewFiles|TestGlobalApprovalModeManualStopsReviewAcrossSessions|TestRememberedApprovalDoesNotCrossSSHRoot|TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing|TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue|TestWorkflowApprovalConflictAndPersistence|TestRunShellRequiresExactConfirmationForWrites)$' -count=1 -timeout=180s` (15.314s). Safari localhost:9999 read-only inspection of dedicated session #48 found the long response already completed; it did not expose a running pause control, so no pause UI conclusion is drawn. This evidence does not close the full goal, real user-host SSH, or UI/live-provider acceptance.",
         "2026-10-13 系统 Safari 现场反证：9999 的独立长上下文会话 #46 压缩显示“摘要处理中 · 分段整理 1/1”，早期消息 4 条、估算约 13.3K；只读复查时 elapsed 已到 57 分 38 秒仍未显示“进度已停滞”。同时该会话的合成长回答显示运行约 57 分 42 秒。未点击停止/重试、未发送新消息、未重启服务。当前源码 `node scripts/test_context_compaction_ui.cjs` PASS，覆盖 3 分钟无更新后的 stalled UI；`node --check internal/server/web/app.js` 与 `git diff --check` PASS。源码单测与系统 Safari 现场不一致，说明 9999 加载的前端/进度 API运行时状态仍需查明；未把压缩端到端验收标为通过。",
         "docs/tasks/outcome-overview-polling-20261015.json",
-        "docs/reviews/2026-10-16/continuity-current-audit.md"
+        "docs/reviews/2026-10-16/continuity-current-audit.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。 2026-10-11 审批幽灵审核修复、full38/38及Safari模式同步证据已录入子任务与恢复验收续记；向量检索按用户要求暂缓；Windows由用户实测并从当前验收待办移除。 2026-10-12：补齐 RC2 源码候选的用户指南、工业长对话、Markdown 编辑、插件 schema、星图关系与密钥保险库说明；英文界面键覆盖复核运行时 t()、HTML data-i18n 属性及所有插件 settingsSchema 标签，零缺项。`node scripts/test_i18n.cjs` 与 `python3 scripts/check_docs.py` 通过（187 Markdown / 535 本地链接）。",
+      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。 2026-10-11 审批幽灵审核修复、full38/38及Safari模式同步证据已录入子任务与恢复验收续记；向量检索按用户要求暂缓；Windows由用户实测并从当前验收待办移除。 2026-10-12：补齐 RC2 源码候选的用户指南、工业长对话、Markdown 编辑、插件 schema、星图关系与密钥保险库说明；英文界面键覆盖复核运行时 t()、HTML data-i18n 属性及所有插件 settingsSchema 标签，零缺项。`node scripts/test_i18n.cjs` 与 `python3 scripts/check_docs.py` 通过（187 Markdown / 535 本地链接）。 2026-10-17 当前分支补齐大历史兼容、审批期限、Docker资源保护、MCP HTTP与公开附件门禁说明及精确full114证据；当前ARM原始启动、会话设置/MCP进程重启、离线包导入/解压启动结果已入账。未用这些专项结果宣称原始12项全部完成。 2026-10-17：最终114项full通过（8fe指纹）、88项缺Node的旧失败保留；六项子任务门禁通过、审批/成果来源链接两项原生门禁实际BLOCKED。17日成果分页101条及能力7项/自然过期证据已校正旧摘要，未据此提升全部工作流。",
       "evidence": [
         "docs/architecture/continuity-roadmap.md",
         "docs/reviews/approval-checkpoint-20261009.md",
@@ -138,24 +141,25 @@
     },
     "cleanup": {
       "status": "in_progress",
-      "summary": "组件预览服务停止；18211隔离实例留供后续浏览器验收，生产9999未改；继承改动与证据均保留",
+      "summary": "Across current runtime and ordinary-source acceptance removed8 exact-owned stopped containers and2 empty owned networks, retaining images/data. Reclaimed reported2.413GB rebuildable builder cache and1695769600 duplicate extracted tar bytes; latest full verifier auto-removed. Only production app/CAD remain; identity/22 protected files exact. Original browser4 tabs plus pinned page restored, no new test tabs retained.",
       "evidence": [
         ".agent-state/continuity-preview/"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Preview and background incremental batches published with their scoped gates and verified refs; current full106 is valid. Overall original12 acceptance remains incomplete in design/implementation/verification/documentation/cleanup and is not declared released as a whole.",
+      "status": "blocked",
+      "summary": "Current source exact full115 passed; Draft PR4 includes scoped repairs and real-directory/SSH/current launcher evidence. Actual clean local main9 scoped release-checks7pass, approval/outcome native verification2blocked; current6eb-source image/package delivery also incomplete (published defaults07c). No remote main or production replacement. Original12 remain in_progress; user-deferred native, Windows user-owned, vectors deferred.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-remote-proof.json",
-        "docs/reviews/2026-10-16/starmap-preview-integration.md"
+        "docs/reviews/2026-10-16/starmap-preview-integration.md",
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
       ]
     }
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Complete knowledge-path-native-20261017 and docs-only SSH clean-main gates, current RC2 four supplemental assets/public verification and main push. Full107 current98ebc999 pass. Then original12: SSH workspace-mode, recovered branch lifecycle, approval/outcome/timeline/combined workflows. Windows user-owned; real vectors deferred.",
+  "handoff": "Official full114 passed on8fe/runtime source07c; all source/docs pushed to review branch, draft PR4 carries final full and actual6 PASS/2 native BLOCKED matrix. Remote main and production stay unchanged. Continue remaining original acceptance with owned fixtures where useful; do not repeat already-proven pagination/full/export work. Current full-workbench native UI user-deferred; approval/outcome native gates must remain incomplete until observed. Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -404,6 +408,16 @@
           "docs/reviews/2026-10-17/outcome-native-proof.json"
         ],
         "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Existing authenticated e729 Safari already proves101 native execution IDs across100+1 pages, independent raw evidence hash/disk/API agreement and actual101-record summary download. Current safe-source-link component and final full114 are separate scoped proofs.",
+        "evidence": [
+          "docs/reviews/2026-10-17/outcome-native-proof.json",
+          "docs/reviews/2026-10-17/outcome-release-source-link.md",
+          "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+        ],
+        "remaining": "Committed release receipt cards, hidden-running activity and live snapshot-change interaction remain distinct; current whole-workbench source-link native gate user-deferred. Pagination is no longer wholly untested."
       }
     },
     {
@@ -484,6 +498,15 @@
         "task": "docs/tasks/capability-native-20261017.json",
         "report": "docs/reviews/2026-10-17/capability-native.md",
         "summary": "Native seven read checks, actual plugin disk hash and independent API pass; natural five-minute stale state shown without manual refresh, six API checks stale. Original14sessions/22protected files/image/mounts/networks exact and original session/source view restored. No model, plugin tool, write or SSH test this task."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Existing native e729 proof covers7 checks including4 parser imports and natural expiry; newer current-source/built-ARM actual Docker MCP discovery and credential process-restart proof passes separately.",
+        "evidence": [
+          "docs/reviews/2026-10-17/capability-native-proof.json",
+          "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+        ],
+        "remaining": "Failure-state UI, user-host permissions, write/document processing and other plugin workflows are not established by entry/import/discovery checks. Current full-native page remains deferred."
       }
     },
     {
@@ -8103,5 +8126,157 @@
     ],
     "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate.",
     "deliveredMain": "52322b7cccaae9014559f435c1757ca938f1adc3"
+  },
+  "synced_main_reaudit_20261017": {
+    "status": "in_progress",
+    "classification": "progress",
+    "syncedRemoteMain": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "currentProductCommit": "221572038913c72ea2774f31e1a2d4c4894a1ad4",
+    "branch": "fix/approval-expiry-synced-main-20261017",
+    "priorityReasoning": "Current source targeted serialization/isolation/CAS pass; actual candidate ten fully checked API writes across five efforts/two sessions, exact canonical disk and process restart persistence pass. Current full workbench UI still NOT_RUN, user-deferred.",
+    "authorization": "Directly reproduced missing expiry refresh on synced main. Minimal patch and negative-to-positive regression pass; no feature branch merge. Current 107 quick checks pass.",
+    "outcome": "Saved operator release URL link implemented; native synthetic component and safe URL negative cases pass. Full workbench import/link still pending. Prior production-only receipt dedup/stale/forgery tests and owned fixture cleanup pass.",
+    "nativeCandidate": "Full110 pass and isolated ARM candidate actual startup/restart pass; two-session five-level API/disk write/CAS pass. Safari certificate hand-off user-deferred. Owned candidate stopped and build cache0; retain named image/data for native resumption.",
+    "production": "Original 9999 unchanged; 22 protected files byte-exact after superseded candidate cleanup. No main push, deployment, version/tag or Release this batch.",
+    "originalScope": "All original twelve workstreams remain in_progress. Windows user-owned; real vectors deferred.",
+    "evidence": [
+      "docs/tasks/continuity-main-recheck-20261017.json",
+      "docs/tasks/outcome-release-source-link-20261017.json",
+      "docs/tasks/approval-expiry-synced-main-20261017.json",
+      "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
+      "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
+      "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json"
+    ]
+  },
+  "timeline_retention_synced_main_20261017": {
+    "status": "in_progress",
+    "task": "docs/tasks/timeline-retention-synced-main-20261017.json",
+    "negative": "20052 nodes: two distinct observations retained only one; existing compressed v2 history rejected by synced main reader. Both independently reproduced.",
+    "implementation": "Minimal bounded compressed encrypted codec repair restored without branch merge; added independently encoded existing-v2 read-only test.",
+    "verification": "Focused race passed21.098s; old full6dd fingerprint cannot attest this new backend change. Native user-deferred; next full follows retained-change reconciliation.",
+    "retainedWorkAudit": "Backup main has other authorized startup/cache/resource/layout repairs not in current branch. Reconcile scoped changes while preserving upstream UI and sharded test runner; do not restore rejected history-object-integrity merge.",
+    "scope": "Original twelve streams remain in_progress; Windows user-owned, real vectors deferred."
+  },
+  "docker_resource_guard_synced_main_20261017": {
+    "status": "implemented_targeted_and_quick_pass_full_pending",
+    "task": "docs/tasks/docker-resource-guard-synced-main-20261017.json",
+    "report": "docs/reviews/2026-10-17/docker-resource-guard-synced-main.md",
+    "nativeUI": "user-deferred",
+    "production": "unchanged",
+    "next": "Reconcile generated dependency fingerprint/notice layout and then exact-source full; preserve newer main UI and shards."
+  },
+  "startup_inputs_notice_synced_main_20261017": {
+    "status": "targeted_quick_and_component_pass_full_pending",
+    "task": "docs/tasks/startup-inputs-notice-synced-main-20261017.json",
+    "report": "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md",
+    "wholeWorkbench": "user-deferred",
+    "production": "unchanged",
+    "next": "Exact current-source full with preset4GiB/2CPU limits; audit MCP preservation separately before any production change."
+  },
+  "reconciled_full_20261017": {
+    "status": "pass",
+    "sourceCommit": "0b572c85",
+    "session": 63551,
+    "log": ".agent-state/continuity-reconciled-full-20261017.log",
+    "limits": "Go source snapshot4GiB/2CPU/512PIDs/no network/no user mounts;12 serial shards;45m internal2750s owner",
+    "production": "unchanged",
+    "deploymentPrerequisite": "Existing production MCP HTTP configuration compatibility must be restored and verified separately before production replacement.",
+    "receiptHead": "715d5a3021470c52d1922f0a46eac10c3414bd07",
+    "fingerprint": "becfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780",
+    "commands": 112,
+    "serverEntries": 938,
+    "evidence": "docs/reviews/2026-10-17/reconciled-continuity-full-proof.json"
+  },
+  "mcp_http_synced_main_20261017": {
+    "status": "integrated_focused_race_and_quick_pass",
+    "task": "docs/tasks/mcp-http-synced-main-20261017.json",
+    "report": "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
+    "full": "pass114 exact current fingerprint",
+    "actualDockerGateway": "pass10 tools/0 readonly/0 executed; owned App-disk-reopen verified",
+    "publicDefaultDownloads": "Both current manifest filenames absent from public API; exact final assets require verification before manifest switch.",
+    "production": "unchanged",
+    "gatewayReport": "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
+  },
+  "prebuilt_publication_gate_20261017": {
+    "status": "implemented_targeted_quick_pass_current_defaults_still_invalid",
+    "task": "docs/tasks/prebuilt-publication-gate-20261017.json",
+    "report": "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
+    "currentSourceFingerprint": "51be8d4e281ae23ccae1e880b84c89b40f274662776e05c5737d103704beee34",
+    "next": "Freeze combined source and run full; actual MCP gateway/native proof and dual-architecture delivery remain separate.",
+    "production": "unchanged"
+  },
+  "mcp_publication_combined_full_20261017": {
+    "status": "pass",
+    "sourceCommit": "67738355",
+    "receiptHead": "41cb3a35980ac7505922e843cfb7e6f3fd1e132c",
+    "fingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+    "commands": 114,
+    "serverEntries": 946,
+    "report": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+    "actualGateway": "pass current Handler/actual gateway/owned disk reopen; no model/tools executed",
+    "production": "unchanged"
+  },
+  "current_production_20261017": {
+    "container": "aide-aide-1",
+    "image": "sha256:6a8a2dcb290be897de5a27ce8a10436d92dd601e9fedef9153a4621b4f4c0107",
+    "startedAt": "2026-10-17T05:11:21.208023211Z",
+    "scope": "Current ARM candidate tests verified production identity and22 protected files unchanged; no production replacement. Earlier rollback paragraph describes historical delivery, not current active image.",
+    "evidence": [
+      "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+    ]
+  },
+  "knowledge_real_repo_20261017": {
+    "task": "docs/tasks/knowledge-real-repo-20261017.json",
+    "status": "backend_acceptance_pass_native_pending",
+    "firstResponseMilliseconds": 25.672457995824516,
+    "firstNodes": 13,
+    "afterQuietNodes": 1289,
+    "quietSeconds": 100.517916,
+    "checkpointChangesBeforeFinalAPI": 5,
+    "coverage": "partial",
+    "productionProtectedFilesUnchanged": 22,
+    "evidence": [
+      "docs/reviews/2026-10-17/knowledge-real-repo.md",
+      "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+    ],
+    "remaining": "Native workbench and aggregate release gates remain pending; no model/vector calls."
+  },
+  "ssh_workspace_current_20261017": {
+    "status": "protocol_api_pass_native_pending",
+    "task": "docs/tasks/ssh-workspace-current-20261017.json",
+    "summary": "Current4b784 original launcher actual SSH workspace: saves/stale409, whole-version body+SVG restore,5 history versions/ZIP,5-step code and2-step report path, original stop/start credentials and16 files exact; generated surface changed; production22 unchanged. Native SSH scene/UI still pending.",
+    "openIssue": "Custom all-internal network startup falsely reports ready invalid IP:0; separate follow-up required.",
+    "evidence": [
+      "docs/reviews/2026-10-17/ssh-workspace-current.md",
+      "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+    ]
+  },
+  "launcher_readiness_20261017": {
+    "status": "scoped_verification_pass_delivery_pending",
+    "task": "docs/tasks/launcher-readiness-20261017.json",
+    "summary": "Bash published-port/pinned TLS/same-instance actual paths, quick112 and official full115 PASS5ecbd493;946 entries/12 serial groups/race/vet/CAD; production22 unchanged. Current6eb-source image/packages and native approval/outcome prerequisites pending; no remote main/production change.",
+    "evidence": [
+      "docs/reviews/2026-10-17/launcher-readiness.md",
+      "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+    ],
+    "releaseGate": "Clean local main9 scoped checks:7PASS/2native verification BLOCKED; additional current6eb/default07c package identity BLOCKED; PR4 stays Draft, remote main and production unchanged."
+  },
+  "runtime_6eb_candidate_20261017": {
+    "status": "local_candidates_pass_public_native_pending",
+    "task": "docs/tasks/continuity-runtime-6eb-20261017.json",
+    "summary": "Current6eb ARM/AMD complete packages built/exported/imported. ARM original startup/auth/CAD and10 reasoning writes/stale409/restart pass; AMD guard rejects ARM host, native Windows user-owned. Public candidate gate exit1 missing new assets; defaults unchanged; only production2 containers and22 protected files exact. Native/public gates pending.",
+    "evidence": [
+      "docs/reviews/2026-10-17/continuity-runtime-6eb.md",
+      "docs/reviews/2026-10-17/continuity-runtime-6eb-proof.json"
+    ]
+  },
+  "native_candidate_6eb_20261017": {
+    "status": "blocked_browser_certificate",
+    "task": "docs/tasks/native-candidate-6eb-20261017.json",
+    "summary": "Current6eb da290 original launcher healthy, identical cert to production; actual Safari50167 shows privacy interstitial before app. Own tab/runtime cleaned, production22 exact. Approval/outcome native gates retained, no repeated handoff prompt or bypass.",
+    "evidence": [
+      "docs/reviews/2026-10-17/native-candidate-6eb.md",
+      "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+    ]
   }
 }

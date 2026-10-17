@@ -7,6 +7,21 @@ class Element {
 }
 const descendants=root=>[root,...root.children.flatMap(descendants)];
 const page=(snapshot,offset=0)=>({snapshot,taskId:'test',goal:'Fixture',mode:'chat',status:'running',outputs:[{name:'plan',status:'completed',content:'Internal stage output'},{name:'chat',status:'completed',content:'Visible final answer'}],summary:{files:2,executions:2},files:[{path:'file'+offset,proposedHash:'hash'}],executions:[{id:'E'+offset,tool:'read_file',digest:'digest',preview:'return'}],journal:{sequence:2,url:'/api/sessions/s/runs/r/journal'},verification:[],gaps:[],release:{message:'not recorded'},page:{filesMore:offset===0,executionsMore:offset===0,fileNext:offset+1,executionNext:offset+1}});
+async function releaseSourceScenario(){
+ const content=new Element('div');
+ const urls=['https://github.com/example/aide/releases/tag/v0.1.17.0-RC2','javascript:alert(1)','https://user:secret@example.com/release','https://example.com/release?token=secret','https://example.com/release#secret','//example.com/release','https:\\example.com/release','https://example.com/<img>'];
+ const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},URL,setTimeout(){},setInterval(){return 1;},clearInterval(){},encodeURIComponent,matchMedia:()=>({matches:true})};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
+ const data=page('release');data.status='completed';data.release={message:'operator record, not independently verified',receipts:urls.map(url=>({tag:'v0.1.17.0-RC2',url,observedAt:'2026-10-17T00:00:00Z',deployment:'unknown',commit:'c'.repeat(40),artifacts:[],digest:'d'.repeat(64)}))};
+ await context.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api:async()=>data,t:x=>x,blocked:()=>false});
+ const all=descendants(content),links=all.filter(e=>e.tagName==='a');
+ assert.equal(links.length,2,'only plain HTTPS sources become links; untrusted markup remains text');
+ assert.equal(links[0].textContent,urls[0]);assert.equal(links[0].href,urls[0]);
+ for(const link of links){assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener noreferrer');assert.equal(link.referrerPolicy,'no-referrer');}
+ for(const url of urls.slice(1,7))assert.ok(all.some(e=>e.tagName==='code'&&e.textContent===url),'unsafe sources remain visible inert text');
+ assert.equal(links[1].textContent,urls[7]);assert.equal(all.some(e=>e.tagName==='img'),false);
+ assert.ok(all.some(e=>e.textContent===data.release.message),'operator provenance boundary stays visible');
+}
 async function scenario(kind){
  let calls=[],blob,phase=0;
  const content=new Element('div');
@@ -107,4 +122,4 @@ async function overviewRefreshScenario(){
  await timers[0].fn();assert.equal(calls,1);assert.equal(updated.runs[0].status,'completed');assert.equal(updated.runs[0].steps[0].content,'The final answer');
  mounted.close();assert.ok(cleared.includes(1),'overview polling stops when the view closes');
 }
-(async()=>{overviewScenario();overviewReplyCountScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();await executionJournalScenario();await terminalJournalDrainScenario();await journalRetryScenario();console.log('PASS outcome overview reply counts, live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload, running refresh, lazy execution journal, terminal journal drain and retry');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{await releaseSourceScenario();overviewScenario();overviewReplyCountScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();await executionJournalScenario();await terminalJournalDrainScenario();await journalRetryScenario();console.log('PASS outcome overview reply counts, live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload, running refresh, lazy execution journal, terminal journal drain and retry');})().catch(e=>{console.error(e);process.exitCode=1;});

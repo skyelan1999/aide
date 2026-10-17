@@ -256,6 +256,14 @@ func TestKnowledgeConclusionBodyV2UpgradeAndEncryptedRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer zeroBytes(plain)
+	if envelope.Version != 2 {
+		t.Fatal("old envelope reader would accept compressed history")
+	}
+	plain, err = decompressKnowledgeTime(plain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer zeroBytes(plain)
 	var oldReader struct {
 		Version int `json:"version"`
 	}

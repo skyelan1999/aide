@@ -1,0 +1,147 @@
+{
+  "status": "pass",
+  "scope": "Current ARM image actual SSH workspace protocol/API lifecycle; not native browser editor or user SSH host",
+  "runtimeSourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefdcd1c28def",
+  "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+  "existingFull": {
+    "status": "pass",
+    "commands": 114,
+    "fingerprint": "8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24",
+    "head": "8aedbca382fdd30a8a18affe4270542a1e39268f"
+  },
+  "history": {
+    "status": "pass",
+    "sshWorkspace": "ssh|/home/fixture/project|ssh-fixture",
+    "staleSaveHash409": true,
+    "staleWorkspace409": true,
+    "externalResourceChangeObserved": true,
+    "staleRestore409BytesPreserved": true,
+    "restoredVerifiedFiles": 2,
+    "remoteBodyAndSVGExactV1": true,
+    "historyVersions": 5,
+    "repeatedReadDeduplicates": true,
+    "zipBytes": 3529,
+    "zipSHA256": "e1d016e17fa7a5125b272434371d21d5b718848a3ac207e09242a22299c2bfb7",
+    "zipEntries": 6,
+    "realModelOrVectorCalls": 0,
+    "nativeUI": "NOT_RUN"
+  },
+  "paths": {
+    "report": {
+      "found": true,
+      "nodes": 3,
+      "steps": 2,
+      "allWorkspaceRoot": true,
+      "targetFileHashExact": true,
+      "targetLine": null,
+      "staleRevision409": true,
+      "edgeKinds": [
+        "mention",
+        "mention"
+      ]
+    },
+    "code": {
+      "found": true,
+      "nodes": 6,
+      "steps": 5,
+      "allWorkspaceRoot": true,
+      "targetFileHashExact": true,
+      "targetLine": 4,
+      "staleRevision409": true,
+      "edgeKinds": [
+        "dom_event",
+        "event_callback",
+        "http_request",
+        "http_route",
+        "route_handler"
+      ]
+    },
+    "status": "pass",
+    "nativeUI": "NOT_RUN",
+    "realModelOrVectorCalls": 0
+  },
+  "restart": {
+    "status": "pass",
+    "originalStopStart": true,
+    "newProcessStartTime": true,
+    "remoteFixtureFilesUnchanged": 8,
+    "authConfigSecretsAndWorkspaceFilesUnchanged": 16,
+    "generatedSurfaceChanged": [
+      "workspace/plugins/surface.json"
+    ],
+    "surfaceChangeReason": "Generated plugin surface contains generatedAt and is regenerated on startup; earlier blanket hash assertion failed and is retained",
+    "workspaceIdentityPreserved": true,
+    "credentialUseAfterRestart": true,
+    "bodyReadBackExact": true,
+    "historyVersions": 5,
+    "fixtureStayedRunning": true,
+    "nativeUI": "NOT_RUN",
+    "realModelOrVectorCalls": 0
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": [
+      "aide-ssh-workspace-current-20261017-cad-1",
+      "aide-ssh-workspace-current-20261017-aide-1",
+      "aide-ssh-workspace-current-20261017-ssh"
+    ],
+    "emptyOwnedNetworksRemoved": 3,
+    "fixtureArchiveBytes": 20480,
+    "fixtureArchiveSHA256": "25f2d360af5b645158cb12370566734d380cc3401129f10f8051fcffa8edfeea",
+    "appDataAndImagesRetained": true,
+    "productionIdentityUnchanged": true,
+    "productionProtectedFilesChecked": 22,
+    "productionProtectedFilesChanged": [],
+    "productionHealthy": true,
+    "atUTC": "2026-10-17T08:58:09.195134+00:00"
+  },
+  "fixture": {
+    "actualOpenSSHAndSFTP": true,
+    "imageRebuilds": 0,
+    "baseImageAlreadyLocal": true,
+    "temporaryPackageInstall": "openssh-server installed in owned writable fixture container; no new image built",
+    "hostPortsPublished": false,
+    "privateNetworkOnlyDuringAcceptance": true,
+    "memoryBytes": 402653184,
+    "CPUs": 1,
+    "pidsLimit": 128
+  },
+  "intermediateFailures": [
+    {
+      "kind": "harness_initialization",
+      "result": "Launcher refused cert-only preseeded data without valid storage receipt before any container was created; retained directory and failure log; used supported launcher-data seed then original launcher."
+    },
+    {
+      "kind": "launcher_observed_defect",
+      "result": "Custom all-internal Docker networks suppressed published host port, but launcher printed ready with https://invalid IP:0. Host API refused connection. Restored default publishing network through original stop/start; no product fix in this task.",
+      "status": "open"
+    },
+    {
+      "kind": "observer_field_mismatch",
+      "result": "History returns versions[].id, not revision; resumed saves from actual configured state without repeating setup."
+    },
+    {
+      "kind": "observer_hash_scope",
+      "result": "File graph nodes omit contentHash; enriched path file nodes provide indexedTextHash, symbols contentHash. Corrected assertions use corresponding path responses; retained prior scripts."
+    },
+    {
+      "kind": "observer_restart_scope",
+      "result": "Blanket own workspace hash assertion changed only generated plugins/surface.json. Preserved original failure and proved remaining16 files unchanged; did not claim generated file byte equality."
+    }
+  ],
+  "limits": [
+    "No native UI, caret/scroll/draft interaction or user SSH-host acceptance.",
+    "Five-step code path expresses existing lexical route relations, not semantic execution tracing or full dependency type binding.",
+    "No real model or vector calls. Windows user-owned.",
+    "Main approval/outcome native release prerequisites remain incomplete."
+  ],
+  "privateEvidenceSHA256": {
+    "history-proof.json": "a84f666c4262b0e79977e12e49304b0a309fe005a42f8e46fda45a7ad2dae0e9",
+    "paths-proof.json": "c6d9766b3e14217c75debb92ecfb9019613db15c518b6ffa1b78af773cad20e6",
+    "restart-proof.json": "e3aa4976d94281a17cb62879a9307db0be91a336fc8105c467a3b4e48729f6d7",
+    "cleanup-proof.json": "fa54d43f8a417ffe6e2c55778aa8d76d3c658da6a03fc40b08a3f91c31c95d8b",
+    "report-path.json": "50a69d9eedfc86cd00c3862cae61b9f26f613422c19dafb9af41774da6f1cdfe",
+    "code-path.json": "8f24615945aa6e4be26ac7cf1facb371a8d82651f6e0c1a8f548311ae0e89e91"
+  }
+}

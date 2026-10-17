@@ -1,0 +1,80 @@
+{
+  "id": "ssh-workspace-current-20261017",
+  "request": "继续原始目标：在当前完整运行镜像上补 SSH 工作区模式文件保存、Markdown整版历史恢复、重启与星图定位的隔离协议/API验收；不替代暂缓的原生UI验收。",
+  "baseline": "ce05e765e40b50182f9dbbefc4d23e1589f89ca2",
+  "initial_status": "",
+  "acceptance": [
+    "Use original launcher and current image with owned data/project/network and actual SSH/SFTP service; no production mounts or model/vector calls.",
+    "Switch isolated app to SSH workspace; read/save with optimistic conflict rejection, whole body+SVG history restore, and inspect actual remote bytes.",
+    "Original stop/start preserves workspace configuration and encrypted credentials; API remote reads and saved history remain consistent.",
+    "Verify graph/path original content positioning when available; preserve partial scope, do not claim native editor continuity.",
+    "Cleanup only exact owned stopped containers/networks, retain evidence; production identity and22 protected files unchanged."
+  ],
+  "scope": [
+    "docs/tasks/ssh-workspace-current-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/ssh-workspace-current.md",
+    "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Distinct current SSH workspace protocol acceptance, not SFTP reference or native UI.",
+      "evidence": [
+        "docs/tasks/ssh-trusted-native-20261017.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Current local runtime, actual bounded SSH fixture, own data/network and original launcher.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-current.md",
+        "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Existing product exercised in SSH workspace mode; no product source edits.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-current.md",
+        "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual remote saves/stale409, whole body+SVG restore, ZIP,5-step code/2-step report paths and original restart verified. Observer corrections and open startup URL defect retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-current.md",
+        "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped current report/proof separate API from native and retain all intermediate failures.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-current.md",
+        "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own remote fixture archived;3 owned stopped containers and3 empty networks removed; production identity/22 protected files exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-current.md",
+        "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Prepare docs-only source branch; aggregate main still gated by deferred native acceptance.",
+      "evidence": [
+        "docs/reviews/2026-10-17/ssh-workspace-current.md",
+        "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental test/docs/source branch authorization; no main push, deployment or paid calls.",
+  "rollback": "Stop own project with original stop.command, remove only owned containers and empty networks; retain data/images.",
+  "handoff": "",
+  "openIssue": "Custom all-internal Docker override can yield healthy container without published host port while launcher prints ready/invalid IP:0; implementation follow-up needed."
+}

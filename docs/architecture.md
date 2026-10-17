@@ -38,7 +38,7 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `provider.go` | 模型请求、参数、usage、超时；complete（非流式）+ completeStream（SSE，400 时去 stream_options 重试） |
 | `profiles.go` | 内置/用户 Profile、策略文件、参数校验 |
 | `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
-| `files.go` / `sources.go` / `mcp_source.go` | 路径/内容策略、读写冲突、引用来源与受限 stdio MCP 驱动 |
+| `files.go` / `sources.go` / `mcp_source.go` | 路径/内容策略、读写冲突、引用来源与受限 stdio / Streamable HTTP MCP 驱动 |
 | `knowledge_map.go` / `knowledge_updates.go` / `knowledge_sources.go` | 多来源有界知识索引、来源身份重查、版本差量与文件／代码缓存 |
 | `knowledge_code.go` / `code_analysis/` | Go／JavaScript／Python AST与静态调用候选 |
 | `knowledge_documents.go` / `document_analysis/` | 文档原文提取、本地TF-IDF RAG与原文指纹回填 |

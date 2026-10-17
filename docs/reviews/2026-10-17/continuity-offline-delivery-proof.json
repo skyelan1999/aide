@@ -1,0 +1,378 @@
+{
+  "status": "in_progress",
+  "releaseId": 406597437,
+  "tag": "v0.1.17.0-RC2",
+  "assetCountBefore": 23,
+  "existingBodySHA256": "5eae475abf0edb7015e4859e650338c257bb3cbccdda9f37f5022c7153f94cb5",
+  "candidateSourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+  "candidates": [
+    {
+      "name": "aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+      "sha256": "d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+      "bytes": 771016230,
+      "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+      "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def"
+    },
+    {
+      "name": "aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz",
+      "sha256": "df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c",
+      "bytes": 916933833,
+      "image": "sha256:382c90e72fca8e938cfbc2937577edb1d421f94250b4eb80bae3200e77176517",
+      "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def"
+    }
+  ],
+  "ARM64Upload": {
+    "status": "pass",
+    "asset": {
+      "id": 649882716,
+      "name": "aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+      "state": "uploaded",
+      "size": 771016230,
+      "digest": "sha256:d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz"
+    },
+    "bodyUnchanged": true,
+    "originalAssetsRetained": true,
+    "downloadSmoke": {
+      "status": "pass",
+      "http": 206,
+      "bytesRead": 1024,
+      "gzipMagic": true,
+      "contentRange": "bytes 0-1023/771016230",
+      "scope": "public URL first1024bytes only; not complete network download/import"
+    }
+  },
+  "AMD64Upload": {
+    "status": "pass",
+    "asset": {
+      "id": 649902301,
+      "name": "aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz",
+      "state": "uploaded",
+      "size": 916933833,
+      "digest": "sha256:df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz"
+    },
+    "downloadSmoke": {
+      "status": "pass",
+      "http": 206,
+      "bytesRead": 1024,
+      "gzipMagic": true,
+      "contentRange": "bytes 0-1023/916933833",
+      "scope": "public URL first1024bytes only; not full network download/import"
+    }
+  },
+  "publicDefaultManifest": "updated locally only after exact public pair qualified; new full/main gates pending",
+  "releaseFormSubmitted": false,
+  "mainPush": "not_done",
+  "Windows": "user-owned",
+  "nativeFullWorkbench": "user-deferred",
+  "realVectors": "deferred",
+  "uploadObservationUTC": "2026-10-17T07:53:13.379038+00:00",
+  "memoryObservation": "memory_pressure -Q reported40% system-wide free; only production2 containers running",
+  "candidateGateBeforeUploadComplete": {
+    "exit": 1,
+    "status": "fail",
+    "error": "linux/arm64: no unique uploaded public asset",
+    "mutations": false
+  },
+  "supplementPrepared": [
+    {
+      "name": "AIDE-runtime-07cdef2d4719-README.txt",
+      "bytes": 2520,
+      "sha256": "d9a1868d1c7d3fceae6b3c015b93bd90b72c7756f9c4d957f066bb72ca61c068",
+      "uploaded": false
+    },
+    {
+      "name": "AIDE-runtime-07cdef2d4719-SHA256SUMS.txt",
+      "bytes": 248,
+      "sha256": "884dc420b4a2c319eaceaddff2be3cd015b05e22bfeda4f194bdaf3fe9d3c59f",
+      "uploaded": false
+    }
+  ],
+  "candidateGateAfterARM": {
+    "status": "fail",
+    "exit": 1,
+    "error": "linux/amd64: no unique uploaded public asset",
+    "mutations": false
+  },
+  "publicPairGate": {
+    "status": "pass",
+    "tag": "v0.1.17.0-RC2",
+    "source": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "assets": [
+      {
+        "platform": "linux/arm64",
+        "asset": "aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+        "bytes": 771016230,
+        "sha256": "d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+        "status": "pass"
+      },
+      {
+        "platform": "linux/amd64",
+        "asset": "aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz",
+        "bytes": 916933833,
+        "sha256": "df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c",
+        "status": "pass"
+      }
+    ],
+    "scope": "Public attachment metadata only; actual image import/runtime are separate",
+    "mutations": false
+  },
+  "supplementPublic": {
+    "status": "pass",
+    "assets": [
+      {
+        "id": 649909981,
+        "name": "AIDE-runtime-07cdef2d4719-README.txt",
+        "state": "uploaded",
+        "size": 2520,
+        "digest": "sha256:d9a1868d1c7d3fceae6b3c015b93bd90b72c7756f9c4d957f066bb72ca61c068",
+        "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/AIDE-runtime-07cdef2d4719-README.txt"
+      },
+      {
+        "id": 649910020,
+        "name": "AIDE-runtime-07cdef2d4719-SHA256SUMS.txt",
+        "state": "uploaded",
+        "size": 248,
+        "digest": "sha256:884dc420b4a2c319eaceaddff2be3cd015b05e22bfeda4f194bdaf3fe9d3c59f",
+        "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/AIDE-runtime-07cdef2d4719-SHA256SUMS.txt"
+      }
+    ],
+    "assetCount": 27,
+    "originalAssetsRetained": true,
+    "bodyUnchanged": true,
+    "supplementActualDownloadBytesExact": true
+  },
+  "sourceCheckoutStartup": {
+    "status": "pass",
+    "scope": "fresh ordinary source checkout original start.command, already-local verified default image, then stop.command",
+    "sourceCheckout": "4c22dc5aca4c8f0afdfdc59ebfa9e103379d11a1",
+    "runtimeBuildCommit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+    "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+    "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "noImageOverride": true,
+    "noSourceBuildOptIn": true,
+    "healthy": true,
+    "auth401": true,
+    "nativeCADImport": true,
+    "noCompilationOrImageDownload": true,
+    "ownedContainersStoppedAndRemoved": 2,
+    "ownedEmptyNetworksRemoved": 2,
+    "testDataAndImagesRetained": true,
+    "productionIdentityAnd22FilesExact": true,
+    "nativeUI": "user-deferred",
+    "newDeviceDownloadAndImport": "not_run",
+    "Windows": "user-owned"
+  },
+  "browserCleanup": "Own final PR-update tab closed; original4 nonpinned tabs+1 pinned retained; original right AIDE39 restored with empty input, unsaved Release form preserved",
+  "finalFull": {
+    "status": "pass",
+    "profile": "full",
+    "receiptHead": "8aedbca382fdd30a8a18affe4270542a1e39268f",
+    "fingerprint": "8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24",
+    "commands": 114,
+    "allExitZero": true,
+    "serverRegisteredEntries": 946,
+    "shards": [
+      {
+        "group": 1,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 72.9
+      },
+      {
+        "group": 2,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 62.7
+      },
+      {
+        "group": 3,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 55.5
+      },
+      {
+        "group": 4,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 72.4
+      },
+      {
+        "group": 5,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 108.9
+      },
+      {
+        "group": 6,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 61.0
+      },
+      {
+        "group": 7,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 71.2
+      },
+      {
+        "group": 8,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 63.6
+      },
+      {
+        "group": 9,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 74.9
+      },
+      {
+        "group": 10,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 52.0
+      },
+      {
+        "group": 11,
+        "selected": 78,
+        "exit": 0,
+        "seconds": 47.4
+      },
+      {
+        "group": 12,
+        "selected": 78,
+        "exit": 0,
+        "seconds": 43.5
+      }
+    ],
+    "raceVetOtherPackagesCAD": "pass",
+    "actualRuntimeLimits": {
+      "memoryBytes": 4294967296,
+      "nanoCPUs": 2000000000,
+      "pids": 512,
+      "network": "none",
+      "userDataMounts": false
+    },
+    "runtimeSourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "privateLog": ".agent-state/verify-20261017T081611200593Z.log",
+    "earlierEnvironmentFailureRetained": ".agent-state/verify-20261017T075944366264Z.log",
+    "nativeWorkbench": "user-deferred",
+    "Windows": "user-owned",
+    "realVectors": "deferred",
+    "mainPush": "not_done"
+  },
+  "earlierEnvironmentFailure": {
+    "overallStatus": "fail",
+    "missingNodeCommands": 88,
+    "other26Commands": "exit0 including Go/race/vet/CAD",
+    "log": ".agent-state/verify-20261017T075944366264Z.log",
+    "correctedQuick": "111 commands pass",
+    "correctedOfficialFull": "114 commands pass"
+  },
+  "postFullProduction": {
+    "status": "pass",
+    "productionIdentityAnd22FilesExact": true,
+    "verificationContainerRemoved": true
+  },
+  "sourceBranchPush": {
+    "status": "pass",
+    "refs": {
+      "refs/heads/fix/continuity-offline-delivery-20261017": "8aedbca382fdd30a8a18affe4270542a1e39268f",
+      "refs/heads/main": "ceb824814034860d1881ded6d27394ebd12fef9d"
+    },
+    "mainUnchanged": true,
+    "reviewOnly": true,
+    "checkedUTC": "2026-10-17T08:19:57.974823+00:00"
+  },
+  "draftPR": {
+    "status": "pass",
+    "url": "https://github.com/skyelan1999/aide/pull/4",
+    "number": 4,
+    "state": "open",
+    "draft": true,
+    "head": "8aedbca382fdd30a8a18affe4270542a1e39268f",
+    "headRef": "fix/continuity-offline-delivery-20261017",
+    "base": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "baseRef": "main",
+    "commits": 31,
+    "changedFiles": 78,
+    "bodyStatesNativeDeferred": true,
+    "bodyStatesFullRunning": true,
+    "checkedUTC": "2026-10-17T08:20:20.511552+00:00"
+  },
+  "mainChildGates": {
+    "checkedUTC": "2026-10-17T08:33:13.853427+00:00",
+    "localMainHead": "c75764b8",
+    "fingerprint": "8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24",
+    "commands": "python3 scripts/agent-route.py release-check <task>",
+    "results": [
+      {
+        "task": "timeline-retention-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "approval-expiry-synced-main-20261017",
+        "exit": 1,
+        "status": "blocked",
+        "result": "Incomplete stage: verification"
+      },
+      {
+        "task": "outcome-release-source-link-20261017",
+        "exit": 1,
+        "status": "blocked",
+        "result": "Incomplete stage: verification"
+      },
+      {
+        "task": "docker-resource-guard-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "startup-inputs-notice-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "mcp-http-synced-main-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "prebuilt-publication-gate-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      },
+      {
+        "task": "continuity-offline-delivery-20261017",
+        "exit": 0,
+        "status": "pass",
+        "result": "local prerequisites and public default assets pass"
+      }
+    ],
+    "mainPushHeld": true,
+    "reason": "two explicit native acceptance prerequisites remain user-deferred"
+  },
+  "finalDraftPR": {
+    "status": "pass",
+    "url": "https://github.com/skyelan1999/aide/pull/4",
+    "draft": true,
+    "head": "b39bda3239e78de931cee7e7ab22a79ce0055b27",
+    "base": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "rawBodySHA256": "1651898af0736352e41ad3a0c4949c41bc95195662932aaaa738730fd1225580",
+    "expectedLfSHA256": "ec9ca176a870ec1dca9c2cb1c6bd606b8043e8c35de42d3ca817fe36367cfac2",
+    "rawBodyBytesExact": false,
+    "lfNormalizedBodyExact": true,
+    "normalization": "GitHub native edit form uses CRLF; first raw equality assertion failed and was investigated, content matches exactly after CRLF-to-LF only",
+    "finalFull114Visible": true,
+    "sixPassTwoNativeGatesVisible": true,
+    "checkedUTC": "2026-10-17T08:38:11.880280+00:00"
+  }
+}

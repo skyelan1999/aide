@@ -1,0 +1,87 @@
+{
+  "id": "knowledge-real-repo-20261017",
+  "request": "继续原始知识星图目标，对当前移动硬盘真实aide目录做隔离只读引用验收，核对首次API返回与后台续扫；不替代用户暂缓的原生页面验收。",
+  "baseline": "434e91d6e98b379023dcaf61586a2c7b839ce115",
+  "initial_status": "",
+  "acceptance": [
+    "Use current full114-passed runtime4b784 through original start.command with own project/data/port; mount actual external aide directory read-only and preserve production identity/22 files.",
+    "Register explicit read-only real-project reference with AI visibility off; measure first background graph response and visible partial source nodes without model/vector requests.",
+    "Force finite per-batch budget, leave browser unopened and issue no application API requests during an observation interval; use persisted timestamps/coverage to distinguish autonomous continuation from on-demand polling.",
+    "Confirm representative file hash against actual project and no hidden data/cache directories in graph; record capacity/read limits honestly, not whole-repository success from partial counts.",
+    "Stop/remove only owned test containers/networks and retain data/proof; native whole-workbench remains user-deferred, Windows user-owned, vectors deferred."
+  ],
+  "scope": [
+    "docs/tasks/knowledge-real-repo-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/knowledge-real-repo.md",
+    "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual current external project reference is distinct from prior generated fixtures; validate API/backend behavior without replacing deferred native scope.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse stopped own ordinary-source launcher/data and current complete image; private Compose override makes real /local mount read-only, custom source AI-hidden, bounded discovery and unattended interval.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Isolated original launcher, explicit readonly real project reference and AI visibility off; no product edits.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-real-repo.md",
+        "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "13 to1289 nodes across100.518s quiet interval;5 persisted changes before final API; partial coverage and observer409 correction retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-real-repo.md",
+        "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Controlled report and sanitized proof distinguish backend scope from deferred native UI.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-real-repo.md",
+        "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Original stop exit0;2 owned stopped containers and2 empty networks removed; production identity and22 files unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-real-repo.md",
+        "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Scoped evidence commit d43e8fbc pushed and remote exact. Aggregate main release remains blocked by deferred native prerequisites; no production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-real-repo.md",
+        "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental engineering/test/source branch authorization; this is scoped real-directory acceptance, not main merge, production replacement or paid model/vector calls.",
+  "rollback": "Stop and remove only exact owned project containers/networks, retain current images and owned data. Production sources/settings/mounts untouched; real project mount read-only.",
+  "handoff": "Prepare/inspect readonly Compose config before original launcher; API results remain separate from native UI. Do not rerun full114 for docs-only work.",
+  "sourceCheckpoint": {
+    "commit": "d43e8fbc26f43fed7a4d1f339b8988f829d363e2",
+    "branch": "test/knowledge-real-repo-20261017",
+    "remoteExact": true,
+    "mainPushed": false,
+    "productionReplaced": false
+  }
+}

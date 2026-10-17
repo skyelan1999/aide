@@ -148,7 +148,7 @@ func TestKnowledgeTimelineCanonicalAndCapacity(t *testing.T) {
 	if _, changed, err := appendKnowledgeTime(s, g, time.Unix(2, 0)); err != nil || changed {
 		t.Fatal("duplicate/order created history", changed, err)
 	}
-	g.Nodes[0].Text = strings.Repeat("x", knowledgeTimelineBytes)
+	g.Nodes[0].Text = strings.Repeat("x", knowledgeTimelinePlainBytes)
 	if _, _, err := appendKnowledgeTime(s, g, time.Unix(3, 0)); err == nil {
 		t.Fatal("oversize accepted")
 	}

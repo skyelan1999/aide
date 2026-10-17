@@ -1,0 +1,44 @@
+{
+  "negativeCapacity": {
+    "status": "negative_reproduced",
+    "productCommit": "4e3bb2893adfed1ff6534c5b529051d2481e622e",
+    "nodes": 20052,
+    "distinctObservationsSubmitted": 2,
+    "observationsRetained": 1,
+    "testExit": 1,
+    "network": "none",
+    "userDataMounted": false,
+    "memoryBytes": 4294967296,
+    "cpus": 2
+  },
+  "negativeExistingV2": {
+    "status": "negative_reproduced",
+    "scope": "isolated actual Go race tests; no browser or production data",
+    "pattern": "^TestKnowledgeTimelineExistingV2ReaderCompatibility$",
+    "testExit": 1,
+    "network": "none",
+    "memoryBytes": 4294967296,
+    "cpus": 2
+  },
+  "positive": {
+    "status": "pass",
+    "scope": "isolated actual Go race tests; no browser or production data",
+    "pattern": "^TestKnowledge(Timeline|Conclusion)",
+    "testExit": 0,
+    "network": "none",
+    "memoryBytes": 4294967296,
+    "cpus": 2
+  },
+  "focusedPassCount": 53,
+  "existingProductionV2MetadataObservedReadOnly": true,
+  "userDataMountedInTests": false,
+  "browserStatus": "user-deferred; no current native acceptance",
+  "fullStatus": "not yet run after this change; prior fingerprint invalidated",
+  "quick": {
+    "status": "pass",
+    "fingerprint": "e56dd953295511aab109221603763ea0dbff2bcf5fe2b11b5e315e5a5202f6b5",
+    "head": "4e3bb2893adfed1ff6534c5b529051d2481e622e",
+    "log": ".agent-state/verify-20261017T063814114051Z.log",
+    "commands": 107
+  }
+}

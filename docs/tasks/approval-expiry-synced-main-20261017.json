@@ -1,0 +1,117 @@
+{
+  "id": "approval-expiry-synced-main-20261017",
+  "request": "Repair directly reproduced missing authorization expiry reconciliation on synced main without merging feature branches",
+  "baseline": "db8a09a2758579a4fbfd302991faca834db9b3e7",
+  "initial_status": "",
+  "acceptance": [
+    "Direct old-source negative reproduces missing natural-expiry reconciliation; same targeted test passes after minimal patch.",
+    "Preserve focused/dirty expiry input, reject stale-revision actions, pause locked/hidden reads, dispose timer and late responses.",
+    "Run exact-source quick/full and native candidate before release; no feature branch merge or production replacement."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/test_approval_persistence.cjs",
+    "docs/tasks/approval-expiry-synced-main-20261017.json",
+    "docs/tasks/outcome-release-source-link-20261017.json",
+    "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
+    "docs/reviews/2026-10-17/outcome-release-source-link.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
+    "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Direct negative then positive focused regression; minimum existing repair patch adapted without branch merge.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Direct negative then positive focused regression; minimum existing repair patch adapted without branch merge.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Direct negative then positive focused regression; minimum existing repair patch adapted without branch merge.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Exact-source full110 pass; isolated candidate healthy, two-session five-level API/disk writes and stale409 pass; actual stop/start persists selections without rebuild/pull. Current browser UI user-deferred; verification remains in progress. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded. Required current native candidate/full-workbench acceptance still user-deferred; do not pass this task or bypass its release gate. Current6eb candidate original launcher/API healthy and exact full115 pass; normal Safari50167 observed certificate interstitial, application not reached. Actual current native scope still NOT_RUN, no trust bypass; owned resources cleaned.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
+        ".agent-state/verify-20261017T060408753181Z.log",
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
+        "docs/reviews/2026-10-17/native-candidate-6eb.md",
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Source lineage and interrupted full scope documented.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned candidate containers stopped, own test tabs closed; production container and 22 protected files exact. Original maintenance removed reported3.204GB build cache, now0; named candidate image/data retained for resume.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Actual clean-main release-check exit1: Incomplete stage verification; required current native acceptance user-deferred. Final full114 passes; source branch/PR4 available for review, no remote main or production delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing user instruction: incremental work/push/test. Latest main-only sync instruction was honored by undoing the unrelated merge and syncing main. This checkpoint prepares and verifies scoped repairs only; no main push, version, tag, deployment or Release is executed while native acceptance remains deferred.",
+  "rollback": "Revert owned repair commit; no settings/session/auth schema changes.",
+  "handoff": "Keep original twelve-stream scope; Windows user-owned, real vectors deferred.",
+  "quick": {
+    "status": "pass",
+    "fingerprint": "6dd563bbf28731df9f745755a565cb78ae64d3ac67fdbf73cddccce65541fd14",
+    "head": "db8a09a2758579a4fbfd302991faca834db9b3e7",
+    "log": ".agent-state/verify-20261017T060408753181Z.log"
+  },
+  "native_candidate": {
+    "status": "stopped_for_user_deferred_ui",
+    "sourceCommit": "221572038913c72ea2774f31e1a2d4c4894a1ad4",
+    "privateProof": ".agent-state/outcome-release-source-link-20261017/repaired-native-preparation-proof.json",
+    "productionDataMounted": false,
+    "trackedRuntimeInputsCompared": true,
+    "fullStatus": "pass exact-source full110",
+    "verifierMemoryBytes": 4294967296,
+    "verifierCPUs": 2,
+    "image": "sha256:a8231eb81c07c09096b601b721df0080c61a789c9258d8243beecd6447c614c0"
+  },
+  "fullProof": "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
+  "candidateRuntimeProof": "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json",
+  "uiDeferral": "User: now unavailable for Safari certificate hand-off. Current full workbench UI remains NOT_RUN; old component/runtime evidence not promoted.",
+  "current_native_candidate_6eb": {
+    "status": "blocked_browser_certificate",
+    "image": "sha256:da290c0e50fe3087a736435c20e22f077aa9492f0553f0b852309ccd4397f46b",
+    "port": 50167,
+    "certificateSameAsProduction": true,
+    "applicationPageReached": false,
+    "originalLauncherHealthy": true,
+    "ownedRuntimeStoppedAndRemoved": true,
+    "evidence": [
+      "docs/reviews/2026-10-17/native-candidate-6eb.md",
+      "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+    ]
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "status": "pass",
+  "scope": "Actual external aide directory, read-only backend/API acceptance; not native workbench rendering or whole-repository completeness",
+  "runtimeSourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+  "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+  "fullReceipt": {
+    "status": "pass",
+    "fingerprint": "8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24",
+    "head": "8aedbca382fdd30a8a18affe4270542a1e39268f",
+    "commands": 114
+  },
+  "launcher": "original start.command / stop.command in isolated ordinary-source checkout",
+  "readonlyRealMount": true,
+  "sourceAIVisible": false,
+  "representativeREADMEHash": "d386ea9e426481ea241508643b87e8a1449a17c9663c2145ef6d23d320c1108f",
+  "firstResponse": {
+    "status": 200,
+    "seconds": 0.025672457995824516,
+    "source": {
+      "id": "qa-real-aide-20261017",
+      "name": "LOCAL QA actual external aide (readonly)",
+      "type": "local",
+      "region": "source:qa-real-aide-20261017",
+      "state": "partial",
+      "message": "分批索引中，未扫描区域保持上一周期快照",
+      "nodeCount": 13,
+      "coverage": {
+        "progressive": true,
+        "pending": 5,
+        "cycle": 1,
+        "catalogLimit": 68,
+        "files": 12,
+        "directories": 1,
+        "fileBudget": 12,
+        "directoryBudget": 5,
+        "depthBudget": 7,
+        "textBytesPerFile": 8192,
+        "totalKnown": false,
+        "reasons": null
+      }
+    },
+    "atUTC": "2026-10-17T08:45:16.387323+00:00"
+  },
+  "quietInterval": {
+    "startUTC": "2026-10-17T08:45:16.389784+00:00",
+    "endUTC": "2026-10-17T08:46:56.907700+00:00",
+    "seconds": 100.517916,
+    "changedCheckpointCount": 5,
+    "applicationAPIRequests": 0,
+    "browserRequests": 0,
+    "persistedChangesObservedBeforeFinalGraphRequest": true
+  },
+  "afterQuiet": {
+    "status": "pass",
+    "firstNodeCount": 13,
+    "afterQuietSource": {
+      "id": "qa-real-aide-20261017",
+      "name": "LOCAL QA actual external aide (readonly)",
+      "type": "local",
+      "region": "source:qa-real-aide-20261017",
+      "state": "partial",
+      "message": "分批索引中，未扫描区域保持上一周期快照；508 个条目等待分批复核，未复核区域保留上次观察",
+      "nodeCount": 1289,
+      "coverage": {
+        "progressive": true,
+        "pending": 37,
+        "cycle": 1,
+        "catalogLimit": 2176,
+        "files": 1225,
+        "readPending": 499,
+        "materialPending": 508,
+        "directories": 64,
+        "fileBudget": 12,
+        "directoryBudget": 5,
+        "depthBudget": 7,
+        "textBytesPerFile": 8192,
+        "totalKnown": false,
+        "reasons": [
+          "material_pending"
+        ]
+      }
+    },
+    "afterQuietAPISeconds": null,
+    "afterQuietHTTP": 200,
+    "quietSeconds": 100.517916,
+    "changedCheckpointsBeforeFinalAPI": 5,
+    "timelineObservations": [
+      {
+        "observed": "2026-10-17T08:47:53.910856045Z",
+        "nodeCount": 1917,
+        "coverage": {
+          "progressive": true,
+          "pending": 6,
+          "cycle": 1,
+          "catalogLimit": 2176,
+          "files": 1789,
+          "readPending": 733,
+          "materialPending": 759,
+          "directories": 128,
+          "fileBudget": 12,
+          "directoryBudget": 5,
+          "depthBudget": 7,
+          "textBytesPerFile": 8192,
+          "totalKnown": false,
+          "reasons": [
+            "material_pending"
+          ]
+        }
+      },
+      {
+        "observed": "2026-10-17T08:47:55.118140296Z",
+        "nodeCount": 1929,
+        "coverage": {
+          "progressive": true,
+          "pending": 6,
+          "cycle": 1,
+          "catalogLimit": 2176,
+          "files": 1801,
+          "readPending": 733,
+          "materialPending": 759,
+          "directories": 128,
+          "fileBudget": 12,
+          "directoryBudget": 5,
+          "depthBudget": 7,
+          "textBytesPerFile": 8192,
+          "totalKnown": false,
+          "reasons": [
+            "material_pending"
+          ]
+        }
+      }
+    ],
+    "graphNodesForSource": 1289,
+    "hiddenSensitiveOrDependencyPaths": [],
+    "browserRequests": 0,
+    "realModelOrVectorCalls": 0,
+    "graphKeys": [
+      "workspace",
+      "revision",
+      "reset",
+      "nodes",
+      "removedNodes",
+      "edges",
+      "removedEdges",
+      "warnings",
+      "truncated",
+      "sources"
+    ]
+  },
+  "observerCorrection": "Initial timeline read used policy workspace identity and received HTTP409. Resumed with saved graph workspace identity, without repeating graph request or changing saved quiet boundary. Timeline observations are later than quiet end and are not proof of timestamps inside interval. Final graph latency was not persisted and remains null.",
+  "cleanup": {
+    "status": "pass",
+    "atUTC": "2026-10-17T08:50:53.752660+00:00",
+    "originalStopExit": 0,
+    "removedOwnedContainers": [
+      "aide-knowledge-real-repo-20261017-cad-1",
+      "aide-knowledge-real-repo-20261017-aide-1"
+    ],
+    "removedEmptyOwnedNetworkCount": 2,
+    "imagesAndDataRetained": true,
+    "productionIdentityUnchanged": true,
+    "protectedFilesChecked": 22,
+    "protectedFilesChanged": [],
+    "productionHealthy": true
+  },
+  "limits": [
+    "Partial index: 37 pending directory tasks and 508 material-pending entries at saved graph snapshot; totalKnown=false.",
+    "First response measured after source registration and representative README read, not cold UI opening.",
+    "Final graph read can perform a bounded batch; persisted checkpoint changes before that read independently establish background continuation.",
+    "No native workbench acceptance, model requests or vector calls; Windows user-owned."
+  ],
+  "privateEvidenceHashes": {
+    "seed-proof.json": "bf8c8f6631952e1c974fafa986b25147229ca549d690236524d9cd68925ae076",
+    "quiet-disk-observation.json": "f463873847e683a382ea61eb1e5cf56b1ef43c8bc3031dac84bca5c94f97ad17",
+    "quiet-progress-proof.json": "8e630ca4c6fa73332d80585f3f76c5adf7c42dac02f9b476179e6e4c4e59b0eb",
+    "cleanup-proof.json": "b95bdfbe52022b0af7ae32c5cdd0a1a478b2e2960b539207f5c20588c062b5c1"
+  }
+}

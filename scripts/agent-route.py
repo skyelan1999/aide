@@ -38,6 +38,16 @@ def check_timeout(command):
     return 1200 if command[:3] == ['bash', 'scripts/aide.sh', 'test'] else 600
 
 
+def check_public_runtime_assets():
+    try:
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/verify_prebuilt_assets.py'),
+                                 str(ROOT / 'docker/prebuilt-images.tsv')], cwd=ROOT, timeout=45)
+    except subprocess.TimeoutExpired as exc:
+        raise ValueError('Public prebuilt asset verification timed out; release refused') from exc
+    if result.returncode:
+        raise ValueError('Public prebuilt assets are unavailable or do not match the default manifest')
+
+
 def fingerprint():
     names = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd=ROOT).split(b'\0')
     digest = hashlib.sha256()
@@ -214,7 +224,8 @@ def main():
         if git('branch', '--show-current') != 'main': errors.append('Release requires main')
         if git('status', '--porcelain'): errors.append('Release requires clean Git status')
         if errors: raise ValueError('\n'.join(errors))
-        print('PASS: local release prerequisites. No merge, tag, push or deployment performed.')
+        check_public_runtime_assets()
+        print('PASS: local prerequisites and public default assets. No merge, tag, push or deployment performed.')
     return 0
 
 

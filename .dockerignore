@@ -19,3 +19,6 @@ plugins/surface.json
 
 **/__pycache__
 *.pyc
+
+# Host plugin installs are regenerated, architecture-specific build cache.
+**/node_modules

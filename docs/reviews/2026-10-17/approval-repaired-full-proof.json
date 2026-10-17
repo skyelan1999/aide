@@ -1,0 +1,13 @@
+{
+  "status": "pass",
+  "head": "4e7ec4f2b3ce8d86a0997484a3665b6f56467469",
+  "fingerprint": "6dd563bbf28731df9f745755a565cb78ae64d3ac67fdbf73cddccce65541fd14",
+  "results": 110,
+  "serverEntries": 933,
+  "shards": 12,
+  "shardSeconds": 760.7,
+  "allExitsZero": true,
+  "log": ".agent-state/verify-20261017T060500185410Z.log",
+  "verifierMemoryBytes": 4294967296,
+  "verifierCPUs": 2
+}

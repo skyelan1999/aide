@@ -15,6 +15,7 @@ import (
 
 const knowledgeTimelineBytes = 8 << 20
 const knowledgeTimelineEntries = 32
+const knowledgeTimelinePlainBytes = 32 << 20
 
 type knowledgeTimeSnapshot struct {
 	ID       string                         `json:"id"`
@@ -31,6 +32,7 @@ type knowledgeTimeStore struct {
 	Snapshots        []knowledgeTimeSnapshot `json:"snapshots"`
 	originalEnvelope string
 	upgradeTo        int
+	compressed       bool
 }
 type knowledgeTimeChange struct {
 	Before *knowledgeNode `json:"before,omitempty"`
@@ -73,7 +75,7 @@ func loadKnowledgeTime(file, workspace string, code bool, key []byte) (knowledge
 		return out, fmt.Errorf("知识历史文件超出容量")
 	}
 	var envelope knowledgeVectorEnvelope
-	if json.Unmarshal(b, &envelope) != nil || envelope.Version != 1 {
+	if json.Unmarshal(b, &envelope) != nil || (envelope.Version != 1 && envelope.Version != 2) {
 		return out, fmt.Errorf("知识历史封装损坏")
 	}
 	plain, err := openWithKey(key, envelope.Ciphertext, envelope.Nonce)
@@ -81,7 +83,21 @@ func loadKnowledgeTime(file, workspace string, code bool, key []byte) (knowledge
 		return out, fmt.Errorf("知识历史解密失败；保留原文件")
 	}
 	defer zeroBytes(plain)
-	if len(plain) > knowledgeTimelineBytes || json.Unmarshal(plain, &out) != nil || (out.Version < 1 || out.Version > 3) || out.Workspace != workspace || out.Code != code || out.Dropped < 0 || len(out.Snapshots) > knowledgeTimelineEntries {
+	limit := knowledgeTimelineBytes
+	if envelope.Version == 2 {
+		if len(b) > knowledgeTimelineBytes {
+			return out, fmt.Errorf("知识历史压缩文件超出容量")
+		}
+		decoded, err := decompressKnowledgeTime(plain)
+		if err != nil {
+			return out, err
+		}
+		defer zeroBytes(decoded)
+		plain = decoded
+		limit = knowledgeTimelinePlainBytes
+		out.compressed = true
+	}
+	if len(plain) > limit || json.Unmarshal(plain, &out) != nil || (out.Version < 1 || out.Version > 3) || out.Workspace != workspace || out.Code != code || out.Dropped < 0 || len(out.Snapshots) > knowledgeTimelineEntries {
 		return out, fmt.Errorf("知识历史身份或格式无效；保留原文件")
 	}
 	seen := map[string]bool{}
@@ -161,9 +177,19 @@ func appendKnowledgeTimeAI(store knowledgeTimeStore, g knowledgeGraph, ai *knowl
 		if err != nil {
 			return store, false, err
 		}
-		if len(store.Snapshots) <= knowledgeTimelineEntries && len(raw) <= knowledgeTimelineBytes {
-			return store, true, nil
+		if len(store.Snapshots) <= knowledgeTimelineEntries && len(raw) <= knowledgeTimelinePlainBytes {
+			compressed, err := compressKnowledgeTime(raw)
+			zeroBytes(raw)
+			if err != nil {
+				return store, false, err
+			}
+			fits := knowledgeTimeEnvelopeSize(len(compressed)) <= knowledgeTimelineBytes
+			zeroBytes(compressed)
+			if fits {
+				return store, true, nil
+			}
 		}
+		zeroBytes(raw)
 		if len(store.Snapshots) == 1 {
 			return store, false, fmt.Errorf("单次索引快照超过知识历史容量；现有历史保留")
 		}
@@ -177,10 +203,18 @@ func saveKnowledgeTime(file string, store knowledgeTimeStore, key []byte) error 
 		return err
 	}
 	defer zeroBytes(plain)
-	if len(plain) > knowledgeTimelineBytes {
+	if len(plain) > knowledgeTimelinePlainBytes {
 		return fmt.Errorf("知识历史超出容量")
 	}
-	ct, nonce, err := sealWithKey(key, plain)
+	compressed, err := compressKnowledgeTime(plain)
+	if err != nil {
+		return err
+	}
+	defer zeroBytes(compressed)
+	if knowledgeTimeEnvelopeSize(len(compressed)) > knowledgeTimelineBytes {
+		return fmt.Errorf("知识历史压缩文件超出容量")
+	}
+	ct, nonce, err := sealWithKey(key, compressed)
 	if err != nil {
 		return err
 	}
@@ -194,12 +228,17 @@ func saveKnowledgeTime(file string, store knowledgeTimeStore, key []byte) error 
 	if info, e := os.Lstat(file); e == nil && (!info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0) {
 		return fmt.Errorf("知识历史目标无效")
 	}
+	if store.originalEnvelope != "" && !store.compressed {
+		if err := backupKnowledgeTimeUpgrade(file, store.originalEnvelope, 4); err != nil {
+			return err
+		}
+	}
 	if store.upgradeTo != 0 {
 		if err := backupKnowledgeTimeUpgrade(file, store.originalEnvelope, store.upgradeTo); err != nil {
 			return err
 		}
 	}
-	return atomicJSON(file, knowledgeVectorEnvelope{1, ct, nonce})
+	return atomicJSON(file, knowledgeVectorEnvelope{2, ct, nonce})
 }
 func (a *App) recordKnowledgeTime(g knowledgeGraph, code bool, epoch uint64) error {
 	a.mu.Lock()
@@ -339,5 +378,9 @@ func (a *App) knowledgeTimeline(w http.ResponseWriter, r *http.Request) {
 	for _, s := range store.Snapshots {
 		entries = append(entries, map[string]any{"id": s.ID, "observed": s.Observed, "digest": s.Digest, "nodes": len(s.Graph.Nodes), "edges": len(s.Graph.Edges), "truncated": s.Graph.Truncated, "sources": s.Graph.Sources, "warnings": s.Graph.Warnings})
 	}
-	jsonOut(w, 200, map[string]any{"workspace": workspace, "code": code, "entries": entries, "dropped": store.Dropped, "limit": knowledgeTimelineEntries, "bytesLimit": knowledgeTimelineBytes})
+	encoding := "aes-gcm"
+	if store.compressed {
+		encoding = "gzip-aes-gcm"
+	}
+	jsonOut(w, 200, map[string]any{"workspace": workspace, "code": code, "entries": entries, "dropped": store.Dropped, "limit": knowledgeTimelineEntries, "bytesLimit": knowledgeTimelineBytes, "plainBytesLimit": knowledgeTimelinePlainBytes, "storageEncoding": encoding})
 }

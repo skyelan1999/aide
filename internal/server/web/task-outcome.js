@@ -3,6 +3,17 @@
  'use strict';
  let generation=0,active=null;
  const node=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e;};
+ const releaseSource=value=>{
+  const text=String(value||'');
+  try{
+   if(!/^https:\/\//.test(text)||/[\s\\]/.test(text))throw new Error('Invalid release URL');
+   const url=new URL(text);
+   if(url.protocol!=='https:'||!url.hostname||url.username||url.password||url.search||url.hash)throw new Error('Invalid release URL');
+   const link=node('a','outcome-digest',text);
+   link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+   return link;
+  }catch{return node('code','outcome-digest',text);}
+ };
  const replyNames=['chat','agent','review','propose','plan'];
  const preferredReply={chat:'chat',workflow:'agent',review:'review',propose:'propose',plan:'plan'};
  const finalOutput=(steps,mode)=>{const available=(steps||[]).filter(s=>s?.content&&s.name!=='file_application_receipt');const preferred=preferredReply[mode];return (preferred&&[...available].reverse().find(s=>s.name===preferred))||[...available].reverse().find(s=>replyNames.includes(s.name))||available[available.length-1]||null;};
@@ -206,7 +217,7 @@
     if(data.operatorChecks?.length){const s=section('人工核查记录');s.append(node('p','muted',t('操作者观察不替代执行回执；不会重放调用或恢复依赖。')));for(const check of data.operatorChecks){const labels={effect_observed:'观察到效果',no_effect_observed:'未观察到效果',inconclusive:'仍无法判断'};s.append(node('p','',check.callId+' · '+t(Object.hasOwn(labels,check.conclusion)?labels[check.conclusion]:'未知状态')+' · '+check.recordedAt),node('small','outcome-digest',check.digest));}}
     if(data.recoveryContinuation){const c=data.recoveryContinuation,s=section('后续工作继续决策');s.append(node('p','muted',t('不会自动重放旧调用或补跑旧依赖。后续新操作仍须遵循当前审批、沙箱与任务 Hook。')),node('p','',c.sourceRun+' · '+c.recordedAt),node('small','outcome-digest',c.digest));}
     const gaps=section('缺口与发布');for(const gap of data.gaps)gaps.append(node('p','',gap));gaps.append(node('p','muted',data.release.message));
-    for(const receipt of data.release.receipts||[]){const card=node('details','outcome-execution');card.append(node('summary','',receipt.tag+' · '+t('操作者记录')),node('p','muted',receipt.observedAt+' · '+receipt.deployment),node('code','outcome-digest',receipt.commit),node('pre','',JSON.stringify(receipt.artifacts,null,2)),node('small','outcome-digest',receipt.digest));gaps.append(card);}
+    for(const receipt of data.release.receipts||[]){const card=node('details','outcome-execution'),source=node('p','outcome-release-source');source.append(releaseSource(receipt.url));card.append(node('summary','',receipt.tag+' · '+t('操作者记录')),node('p','muted',receipt.observedAt+' · '+receipt.deployment),source,node('code','outcome-digest',receipt.commit),node('pre','',JSON.stringify(receipt.artifacts,null,2)),node('small','outcome-digest',receipt.digest));gaps.append(card);}
     const receiptFile=node('input');receiptFile.type='file';receiptFile.accept='.json,application/json';receiptFile.hidden=true;
     const importReceipt=node('button','quiet',t('导入发布记录'));importReceipt.type='button';importReceipt.disabled=stale;
     importReceipt.onclick=()=>{if(valid()&&!stale){receiptFile.value='';receiptFile.click();}};

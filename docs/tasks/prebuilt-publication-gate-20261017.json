@@ -1,0 +1,108 @@
+{
+  "id": "prebuilt-publication-gate-20261017",
+  "request": "导出镜像只生成本地候选清单；默认清单公开生效前校验双架构附件存在和摘要，防止其他设备启动下载失败。",
+  "baseline": "a44a2f68d618b540ba0dcf93c915f375abf6a7be",
+  "initial_status": "",
+  "acceptance": [
+    "Export-bundle only changes local candidate manifest, never public defaults before upload.",
+    "Require one ARM64 and one AMD64 bundle from same source/release, with valid identities and matching uploaded public assets/digests; reject missing, duplicate, draft or mismatched artifacts.",
+    "Release-check consults public assets after local prerequisites pass; network/API failure fails closed and makes no mutation.",
+    "Tests use synthetic API fixtures; live read-only current default audit must expose existing missing assets. No old-runtime fallback or production restart."
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/verify_prebuilt_assets.py",
+    "scripts/test_prebuilt_publication.py",
+    "scripts/agent-route.py",
+    "scripts/test_agent_route.py",
+    "docs/agent/router.json",
+    "docs/agent/WORKFLOW.md",
+    "docs/architecture/software-updates.md",
+    "docker-images/README.md",
+    "docs/tasks/prebuilt-publication-gate-20261017.json",
+    "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json",
+    "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requires repo/Release quick import on all devices; live API proves both default URLs missing.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
+        "scripts/aide.sh"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Stage candidates under ignored .agent-state; read-only validator verifies both public artifacts; invoke only after existing local release gates.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
+        "scripts/aide.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Exports stage local candidates; read-only dual-architecture public metadata gate invoked after existing release prerequisites; timeouts fail closed.",
+      "evidence": [
+        "docs/reviews/2026-10-17/prebuilt-publication-gate.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Direct exporter negative reproduced;7 publication tests,6 route tests,21 launcher tests pass; quick111 PASS. Actual online default check correctly FAILS missing uploaded asset with mutations=false. New exact combined full pending; existing default URL defect not closed. Actual public API positive on temporary published294b2be7 d025/301 pair passes; tracked defaults unchanged and still fail. No historical runtime activated. New exact-source full114 PASS with946 registered server entries/12 serial shards/race/vet/CAD; whole-workbench UI remains user-deferred. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded.",
+      "evidence": [
+        "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
+        ".agent-state/verify-20261017T070648401457Z.log",
+        ".agent-state/prebuilt-publication-live-audit.json",
+        "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json",
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated workflow, software-update architecture and image README with candidate/public distinction and existing invalid default boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-17/prebuilt-publication-gate.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Temporary fixture directories removed; no real image download/import or activation, no production restart; tracked default manifest unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-17/prebuilt-publication-gate.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Actual clean-main release-check exit0 including verified public default pair. Source branch and draft PR4 published; aggregate remote-main delivery remains held by separate approval/outcome native gates, no production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing user image/repository/release and incremental work/test/push instructions; no upload, default activation, merge or production replacement by this task.",
+  "rollback": "Revert scoped code/doc commit; public manifest and all user images/data remain untouched.",
+  "handoff": "Current invalid defaults remain visible until verified current dual-architecture assets are published; Windows user-owned, native full-workbench deferred.",
+  "quickReceipt": {
+    "status": "pass",
+    "fingerprint": "51be8d4e281ae23ccae1e880b84c89b40f274662776e05c5737d103704beee34",
+    "head": "a44a2f68d618b540ba0dcf93c915f375abf6a7be",
+    "log": ".agent-state/verify-20261017T070648401457Z.log"
+  },
+  "combinedFull": {
+    "status": "pass",
+    "ownerSession": 44564,
+    "sourceCommit": "67738355",
+    "privateLog": ".agent-state/mcp-publication-combined-full-20261017.log",
+    "fingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+    "receiptHead": "41cb3a35980ac7505922e843cfb7e6f3fd1e132c",
+    "commands": 114,
+    "serverEntries": 946,
+    "evidence": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
+  }
+}

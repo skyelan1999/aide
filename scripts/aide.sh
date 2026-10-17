@@ -7,9 +7,9 @@ MODE="${1:-start}"
 # 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
 source_sha() {
   (
-    find cmd internal plugins vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
+    find cmd internal plugins vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
+    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -25,11 +25,15 @@ record_archive_sum() {
 }
 record_prebuilt_image() {
   local platform="$1" image="$2" source="$3" archive="$4" tag="$5" checksum temporary
+  local candidate=".agent-state/prebuilt-images.candidate.tsv"
   checksum="$(shasum -a 256 "$archive" | awk '{print $1}')"
-  temporary="$(mktemp docker/prebuilt-images.XXXXXX)"
-  if [[ -f docker/prebuilt-images.tsv ]]; then awk -v p="$platform" '$1!=p' docker/prebuilt-images.tsv > "$temporary"; fi
+  mkdir -p .agent-state
+  temporary="$(mktemp .agent-state/prebuilt-images.XXXXXX)"
+  if [[ -f "$candidate" ]]; then awk -v p="$platform" '$1!=p' "$candidate" > "$temporary";
+  else printf '# Local candidates only; verify public Release assets before updating docker/prebuilt-images.tsv.\n' > "$temporary"; fi
   printf '%s %s %s %s https://github.com/skyelan1999/aide/releases/download/%s/%s bundle\n' "$platform" "$image" "$source" "$checksum" "$tag" "$(basename "$archive")" >> "$temporary"
-  mv "$temporary" docker/prebuilt-images.tsv
+  mv "$temporary" "$candidate"
+  echo "候选镜像清单：${candidate}；公开附件验证通过后再更新默认下载清单。"
 }
 if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
 if [[ "$MODE" == stop || "$MODE" == clean-cache ]]; then
@@ -42,6 +46,8 @@ if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
   exit
 fi
 if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
+  source scripts/resource-guard.sh
+  aide_check_disk start
   source scripts/launcher-data.sh
   launcher_env_restore
   if [[ "$MODE" == start && -f .aide-image ]]; then MODE=start-bundle; fi
@@ -54,6 +60,10 @@ if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
   echo "等待 Docker 引擎…"
   for attempt in {1..60}; do if "$DOCKER_BIN" info >/dev/null 2>&1; then break; fi; sleep 1; done
   "$DOCKER_BIN" info >/dev/null
+fi
+
+if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
+  aide_check_engine_resources
 fi
 
 # A/B restarts must address the Compose project that owns the already-running
@@ -273,6 +283,7 @@ case "$MODE" in
       if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" && "${AIDE_FORCE_REBUILD:-0}" != 1 ]]; then
         echo "== 源码哈希未变（${SRCSHA}）→ 快捷路径：跳过构建，直接启动 =="
       else
+        aide_check_disk build
         echo "== 源码哈希变化（image=${cur_label:-<无>} → worktree=${SRCSHA}）→ 重新构建（默认不跑全量 test，仅 vet+build）=="
         export AIDE_SRC_SHA="$SRCSHA"
         if [[ "${AIDE_LOCAL_DEPENDENCIES:-1}" != 0 ]]; then
@@ -306,13 +317,46 @@ case "$MODE" in
       bash scripts/headless-browser-control.sh start || echo "无头浏览器未启动；可先运行 bash scripts/headless-browser-control.sh install。"
     fi
     for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
-    if ! "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null; then
+    if ! CONTAINER_HEALTH="$("$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz)"; then
       echo "AIDE 未就绪，下面是启动错误；浏览器尚未打开。" >&2
       "$DOCKER_BIN" compose logs --tail=30 aide >&2
       exit 1
     fi
-    ADDRESS="$("$DOCKER_BIN" compose port aide 8080)"
-    HOSTPORT="${ADDRESS##*:}"
+    ADDRESS="$("$DOCKER_BIN" compose port aide 8080)" || {
+      echo 'AIDE 容器健康，但无法查询宿主端口；浏览器尚未打开。请检查 Compose 端口与网络配置。' >&2
+      exit 1
+    }
+    HOSTPORT=''
+    while IFS= read -r binding; do
+      if [[ ! "$binding" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|\[[0-9A-Fa-f:.%]+\]):([0-9]{1,5})$ ]]; then
+        echo 'AIDE 容器健康，但没有有效宿主端口；浏览器尚未打开。请检查 Compose ports 和 internal 网络配置。' >&2
+        exit 1
+      fi
+      published_port=$((10#${BASH_REMATCH[2]}))
+      if (( published_port < 1 || published_port > 65535 )) || [[ -n "$HOSTPORT" && "$HOSTPORT" != "$published_port" ]]; then
+        echo 'AIDE 宿主端口无效或映射不一致；浏览器尚未打开。请检查 Compose ports 配置。' >&2
+        exit 1
+      fi
+      HOSTPORT="$published_port"
+    done <<< "$ADDRESS"
+    CONTAINER_INSTANCE="$(printf '%s' "$CONTAINER_HEALTH" | sed -n 's/.*"instanceId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+    HOST_CERT='.aide-data/storage/data/certs/cert.pem'
+    if [[ -z "$CONTAINER_INSTANCE" || ! -r "$HOST_CERT" ]] || ! command -v curl >/dev/null 2>&1; then
+      echo 'AIDE 无法核对宿主连接（缺少实例身份、本地证书或 curl）；浏览器尚未打开。容器和数据已保留。' >&2
+      exit 1
+    fi
+    HOST_READY=0
+    for attempt in {1..3}; do
+      if HOST_HEALTH="$(curl --silent --show-error --fail --proto '=https' --noproxy '*' --connect-timeout 2 --max-time 3 --cacert "$HOST_CERT" "https://localhost:$HOSTPORT/healthz" 2>/dev/null)"; then
+        HOST_INSTANCE="$(printf '%s' "$HOST_HEALTH" | sed -n 's/.*"instanceId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+        if [[ "$HOST_INSTANCE" == "$CONTAINER_INSTANCE" ]]; then HOST_READY=1; break; fi
+      fi
+      if (( attempt < 3 )); then sleep 1; fi
+    done
+    if [[ "$HOST_READY" != 1 ]]; then
+      echo 'AIDE 容器健康，但宿主 HTTPS 连接、证书或实例核对未通过；浏览器尚未打开。请检查端口发布、防火墙和启动目录证书。容器和数据已保留。' >&2
+      exit 1
+    fi
     (nohup bash scripts/watch-port.sh >/dev/null 2>&1 </dev/null &)
     if [[ -f .aide-image && -x scripts/update-agent.sh ]]; then
       (nohup bash scripts/update-agent.sh >/dev/null 2>&1 </dev/null &)
@@ -320,7 +364,7 @@ case "$MODE" in
     # #31 数据分层后令牌位于 /data/auth/access-token；兼容旧路径，读取失败不中断启动
     TOKEN="$("$DOCKER_BIN" compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' || true)"
     if [[ -n "$TOKEN" ]]; then LOGIN_URL="https://localhost:$HOSTPORT/#token=$TOKEN"; else LOGIN_URL="https://localhost:$HOSTPORT/"; fi
-    echo "aide 已就绪：https://$ADDRESS （自签证书，浏览器告警请选 继续/高级→仍要访问）"
+    echo "aide 已就绪：https://localhost:$HOSTPORT/ （自签证书，浏览器告警需由用户确认）"
     if [[ -z "$TOKEN" ]]; then echo "未自动读到令牌，已打开登录页；可运行：$DOCKER_BIN compose exec -T aide cat /data/auth/access-token"; fi
     if [[ "${AIDE_OPEN_BROWSER:-1}" == 0 ]]; then :;
     elif [[ "$(uname -s)" == Darwin ]]; then open "$LOGIN_URL";
@@ -361,7 +405,7 @@ case "$MODE" in
     cp start.command start.sh start.bat start.ps1 stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
     cp scripts/aide-maintenance.sh scripts/aide-maintenance.ps1 "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/watch-port.ps1 scripts/update-agent.sh scripts/update-agent.ps1 "$BUNDLE/scripts/"
-    cp scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 "$BUNDLE/scripts/"
+    cp scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 "$BUNDLE/scripts/"
     cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js \
       scripts/build-native-computer-bridge.sh scripts/native-computer-bridge.swift scripts/headless-browser-control.sh scripts/headless-browser-bridge.js "$BUNDLE/scripts/"
     mkdir -p "$BUNDLE/scripts/browser-runtime"
