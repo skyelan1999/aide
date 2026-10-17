@@ -47,11 +47,13 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Negative reproduced;2 fingerprint tests pass; actual Docker context pass; four native component combinations and sample dialog/dismiss interactions checked; quick109 pass. Exact current-source full next, whole-workbench UI user-deferred. New exact-source full112 PASS including938 server entries/12 serial shards/race/vet/CAD; native whole-workbench remains user-deferred, Windows user-owned.",
+      "summary": "Negative reproduced;2 fingerprint tests pass; actual Docker context pass; four native component combinations and sample dialog/dismiss interactions checked; quick109 pass. Exact current-source full next, whole-workbench UI user-deferred. New exact-source full112 PASS including938 server entries/12 serial shards/race/vet/CAD; native whole-workbench remains user-deferred, Windows user-owned. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded.",
       "evidence": [
         "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md",
         ".agent-state/verify-20261017T064606488540Z.log",
-        "docs/reviews/2026-10-17/reconciled-continuity-full-proof.json"
+        "docs/reviews/2026-10-17/reconciled-continuity-full-proof.json",
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
       ]
     },
     "documentation": {

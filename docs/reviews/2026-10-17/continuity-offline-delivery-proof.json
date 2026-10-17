@@ -165,5 +165,142 @@
     "Windows": "user-owned"
   },
   "browserCleanup": "no new tabs; original right AIDE39 restored, empty input; unsaved GitHub form retained without submission",
-  "finalFull": "pending after tracked delivery-input change; prior full114 runtime evidence retained"
+  "finalFull": {
+    "status": "pass",
+    "profile": "full",
+    "receiptHead": "8aedbca382fdd30a8a18affe4270542a1e39268f",
+    "fingerprint": "8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24",
+    "commands": 114,
+    "allExitZero": true,
+    "serverRegisteredEntries": 946,
+    "shards": [
+      {
+        "group": 1,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 72.9
+      },
+      {
+        "group": 2,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 62.7
+      },
+      {
+        "group": 3,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 55.5
+      },
+      {
+        "group": 4,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 72.4
+      },
+      {
+        "group": 5,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 108.9
+      },
+      {
+        "group": 6,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 61.0
+      },
+      {
+        "group": 7,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 71.2
+      },
+      {
+        "group": 8,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 63.6
+      },
+      {
+        "group": 9,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 74.9
+      },
+      {
+        "group": 10,
+        "selected": 79,
+        "exit": 0,
+        "seconds": 52.0
+      },
+      {
+        "group": 11,
+        "selected": 78,
+        "exit": 0,
+        "seconds": 47.4
+      },
+      {
+        "group": 12,
+        "selected": 78,
+        "exit": 0,
+        "seconds": 43.5
+      }
+    ],
+    "raceVetOtherPackagesCAD": "pass",
+    "actualRuntimeLimits": {
+      "memoryBytes": 4294967296,
+      "nanoCPUs": 2000000000,
+      "pids": 512,
+      "network": "none",
+      "userDataMounts": false
+    },
+    "runtimeSourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "privateLog": ".agent-state/verify-20261017T081611200593Z.log",
+    "earlierEnvironmentFailureRetained": ".agent-state/verify-20261017T075944366264Z.log",
+    "nativeWorkbench": "user-deferred",
+    "Windows": "user-owned",
+    "realVectors": "deferred",
+    "mainPush": "not_done"
+  },
+  "earlierEnvironmentFailure": {
+    "overallStatus": "fail",
+    "missingNodeCommands": 88,
+    "other26Commands": "exit0 including Go/race/vet/CAD",
+    "log": ".agent-state/verify-20261017T075944366264Z.log",
+    "correctedQuick": "111 commands pass",
+    "correctedOfficialFull": "114 commands pass"
+  },
+  "postFullProduction": {
+    "status": "pass",
+    "productionIdentityAnd22FilesExact": true,
+    "verificationContainerRemoved": true
+  },
+  "sourceBranchPush": {
+    "status": "pass",
+    "refs": {
+      "refs/heads/fix/continuity-offline-delivery-20261017": "8aedbca382fdd30a8a18affe4270542a1e39268f",
+      "refs/heads/main": "ceb824814034860d1881ded6d27394ebd12fef9d"
+    },
+    "mainUnchanged": true,
+    "reviewOnly": true,
+    "checkedUTC": "2026-10-17T08:19:57.974823+00:00"
+  },
+  "draftPR": {
+    "status": "pass",
+    "url": "https://github.com/skyelan1999/aide/pull/4",
+    "number": 4,
+    "state": "open",
+    "draft": true,
+    "head": "8aedbca382fdd30a8a18affe4270542a1e39268f",
+    "headRef": "fix/continuity-offline-delivery-20261017",
+    "base": "ceb824814034860d1881ded6d27394ebd12fef9d",
+    "baseRef": "main",
+    "commits": 31,
+    "changedFiles": 78,
+    "bodyStatesNativeDeferred": true,
+    "bodyStatesFullRunning": true,
+    "checkedUTC": "2026-10-17T08:20:20.511552+00:00"
+  },
+  "mainChildGates": "approval expiry and outcome source link verification remain in_progress due explicitly required native acceptance; actual gate checks next"
 }

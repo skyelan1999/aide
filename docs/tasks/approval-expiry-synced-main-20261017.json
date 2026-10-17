@@ -45,10 +45,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Exact-source full110 pass; isolated candidate healthy, two-session five-level API/disk writes and stale409 pass; actual stop/start persists selections without rebuild/pull. Current browser UI user-deferred; verification remains in progress.",
+      "summary": "Exact-source full110 pass; isolated candidate healthy, two-session five-level API/disk writes and stale409 pass; actual stop/start persists selections without rebuild/pull. Current browser UI user-deferred; verification remains in progress. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded. Required current native candidate/full-workbench acceptance still user-deferred; do not pass this task or bypass its release gate.",
       "evidence": [
         "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
-        ".agent-state/verify-20261017T060408753181Z.log"
+        ".agent-state/verify-20261017T060408753181Z.log",
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
       ]
     },
     "documentation": {

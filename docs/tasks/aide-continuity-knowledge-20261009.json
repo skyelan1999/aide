@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Runtime code full114 PASS946 entries/race/vet/CAD; exact-source ARM reasoning10 writes/stale409/restarts and actual MCP10 tool discovery/credential persistence pass. Both complete packages publicly uploaded/digest/size and download smoke verified; tracked defaults updated; fresh ordinary-source default start/stop/auth/CAD passed with22 production files exact. Current final full pending due delivery-input fingerprint change. Original12 remain in_progress; native full-workbench user-deferred, Windows user-owned, real vectors deferred.",
+      "summary": "Final current-input full114 PASS8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 groups/race/vet/CAD. Earlier missing-Node overall failure retained; corrected quick111 and official full succeeded. Current ARM reasoning/MCP/restarts, both public package/import/download and fresh default source startup pass; production22 files exact. Original12 remain in_progress; native full-workbench user-deferred and specific approval/outcome release prerequisites incomplete, Windows user-owned, real vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -147,7 +147,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Earlier scoped batches delivered. Current runtime4b784/382c complete packages and README/SUMS now publicly staged in existing RC2 with exact metadata/download proof, existing23 assets and body retained. Local defaults fixed after qualification; final full/main/release-check pending, no new tag/version/production replacement. Original12 not declared complete.",
+      "summary": "Current same-source complete ARM4b784/AMD382c packages and supplements publicly verified; task branch8aed and draft PR4 published. Final full114 passes. Remote main remainsceb82481 because approval/outcome explicit native prerequisites remain in_progress; no new version/tag/production replacement. Original12 not complete.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-remote-proof.json",
@@ -157,7 +157,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Continue continuity-offline-delivery-20261017: public27 assets qualified and local defaults corrected; fresh ordinary source launcher passed with local exact image, no build or pull. Run final full on clean integrated main, release-check then approved incremental push. Original12 broader native/SSH/workspace/combined boundaries remain; native full-workbench user-deferred, Windows user-owned, real vectors deferred.",
+  "handoff": "Final corrected full114 passed; task branch8aed and draft PR4 are remote, main stillceb82481. Check child gates and retain required native approval/outcome acceptance in_progress; update ordinary-doc proof and PR body, push review branch only until gates met. Original12 broader native/SSH/workspace/combined boundaries remain; no repeated certificate prompt, Windows user-owned, vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -406,6 +406,16 @@
           "docs/reviews/2026-10-17/outcome-native-proof.json"
         ],
         "summary": "Actual historical cancelled run51 native/API/disk raw digest, normal-path local synthetic101 native100+1 pages/allIDs/export and API409 negatives pass. No real provider calls. Original14sessions/21protected files exact, settings only monotonic47to48, original vault exact; temporary session/provider/model/listener removed and view restored. Native hidden activity/release import remain separate."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Existing authenticated e729 Safari already proves101 native execution IDs across100+1 pages, independent raw evidence hash/disk/API agreement and actual101-record summary download. Current safe-source-link component and final full114 are separate scoped proofs.",
+        "evidence": [
+          "docs/reviews/2026-10-17/outcome-native-proof.json",
+          "docs/reviews/2026-10-17/outcome-release-source-link.md",
+          "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+        ],
+        "remaining": "Committed release receipt cards, hidden-running activity and live snapshot-change interaction remain distinct; current whole-workbench source-link native gate user-deferred. Pagination is no longer wholly untested."
       }
     },
     {
@@ -486,6 +496,15 @@
         "task": "docs/tasks/capability-native-20261017.json",
         "report": "docs/reviews/2026-10-17/capability-native.md",
         "summary": "Native seven read checks, actual plugin disk hash and independent API pass; natural five-minute stale state shown without manual refresh, six API checks stale. Original14sessions/22protected files/image/mounts/networks exact and original session/source view restored. No model, plugin tool, write or SSH test this task."
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Existing native e729 proof covers7 checks including4 parser imports and natural expiry; newer current-source/built-ARM actual Docker MCP discovery and credential process-restart proof passes separately.",
+        "evidence": [
+          "docs/reviews/2026-10-17/capability-native-proof.json",
+          "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+        ],
+        "remaining": "Failure-state UI, user-host permissions, write/document processing and other plugin workflows are not established by entry/import/discovery checks. Current full-native page remains deferred."
       }
     },
     {

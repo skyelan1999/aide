@@ -8,7 +8,8 @@
     "Stage only immutable new archive filenames in existing public RC2 pre-release; verify uploaded state, positive size, exact SHA256/URL and common source via actual public API before default activation.",
     "Update public default manifest and package checksums only to verified qualified assets; rerun full after tracked delivery-input changes and follow clean-main release-check before push.",
     "Preserve production identity/data, existing rollback images/packages and user UI; record native workbench user-deferred, AMD64 native/Windows user-owned NOT_RUN, real vectors deferred.",
-    "Start a fresh isolated ordinary source checkout via original start.command without source-build opt-in; verify current default runtime identity/health/auth and no compilation/download when exact image is already local; stop/remove owned test containers and preserve production."
+    "Start a fresh isolated ordinary source checkout via original start.command without source-build opt-in; verify current default runtime identity/health/auth and no compilation/download when exact image is already local; stop/remove owned test containers and preserve production.",
+    "Check all impacted fix task gates before remote main delivery; preserve explicitly pending native-before-release acceptance in approval/outcome tasks and keep PR draft rather than treating the delivery-only gate as sufficient."
   ],
   "scope": [
     "docker/prebuilt-images.tsv",
@@ -17,7 +18,14 @@
     "docs/tasks/continuity-offline-delivery-20261017.json",
     "docs/tasks/aide-continuity-knowledge-20261009.json",
     "docs/reviews/2026-10-17/continuity-offline-delivery.md",
-    "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+    "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
+    "docs/tasks/timeline-retention-synced-main-20261017.json",
+    "docs/tasks/approval-expiry-synced-main-20261017.json",
+    "docs/tasks/outcome-release-source-link-20261017.json",
+    "docs/tasks/docker-resource-guard-synced-main-20261017.json",
+    "docs/tasks/startup-inputs-notice-synced-main-20261017.json",
+    "docs/tasks/mcp-http-synced-main-20261017.json",
+    "docs/tasks/prebuilt-publication-gate-20261017.json"
   ],
   "stages": {
     "requirements": {
@@ -45,8 +53,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Both public asset states/size/SHA/common source and actual tracked default gate pass; public Range smokes and small-file exact downloads pass. ARM fresh ordinary checkout original start/stop health/auth/CAD/local-reuse pass; production22 protected files exact. Focused7 publication/21 launcher tests pass. Final full/main gate pending after delivery fingerprint change.",
+      "status": "pass",
+      "summary": "Final official full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24;946 entries/12 groups/race/vet/CAD. Earlier88 missing-Node failures retained; corrected quick111 then official full pass. Public pair/default/download, fresh source startup and production protection proofs pass. Required approval/outcome native child gates remain independently pending.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -69,12 +77,15 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Both complete packages/supplements publicly verified and task branch8aed pushed; draft PR4 open. Remote main remainsceb82481; approval/outcome current-native child prerequisites still in_progress, actual combined gate audit next.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing user incremental push/main/Release distribution authorization retained by parent goal ledger; current task stages exact complete image assets and qualifies default manifest, not production replacement. User requested repository and release bundles fast import/start; Windows user-owned, native workbench deferred, real vectors deferred.",
   "rollback": "Preserve existing published assets, old tracked manifest/checksum history, production6a8 image/data and current local complete packages. Do not replace production or restore old data; defaults only after verified new assets.",
-  "handoff": "Commit local delivery proof, fetch main and confirm no rejected branch ancestry; integrate locally and run exact full on clean main. Only after full and release-check pass push approved incremental main; no production restart or extra native Windows/vector tests."
+  "handoff": "Official full114 passed; preserve receipt fingerprint8fe and runtime source07c. Check all impacted child gates on clean locally integrated main, keep native-required approval/outcome pending. Update draft PR4 with final full, push ordinary-doc proof to task branch only; remote main/production remain held, no repeated native certificate prompt."
 }

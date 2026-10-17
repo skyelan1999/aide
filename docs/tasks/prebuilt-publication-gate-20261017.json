@@ -51,13 +51,15 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Direct exporter negative reproduced;7 publication tests,6 route tests,21 launcher tests pass; quick111 PASS. Actual online default check correctly FAILS missing uploaded asset with mutations=false. New exact combined full pending; existing default URL defect not closed. Actual public API positive on temporary published294b2be7 d025/301 pair passes; tracked defaults unchanged and still fail. No historical runtime activated. New exact-source full114 PASS with946 registered server entries/12 serial shards/race/vet/CAD; whole-workbench UI remains user-deferred.",
+      "summary": "Direct exporter negative reproduced;7 publication tests,6 route tests,21 launcher tests pass; quick111 PASS. Actual online default check correctly FAILS missing uploaded asset with mutations=false. New exact combined full pending; existing default URL defect not closed. Actual public API positive on temporary published294b2be7 d025/301 pair passes; tracked defaults unchanged and still fail. No historical runtime activated. New exact-source full114 PASS with946 registered server entries/12 serial shards/race/vet/CAD; whole-workbench UI remains user-deferred. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded.",
       "evidence": [
         "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
         ".agent-state/verify-20261017T070648401457Z.log",
         ".agent-state/prebuilt-publication-live-audit.json",
         "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json",
-        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
       ]
     },
     "documentation": {

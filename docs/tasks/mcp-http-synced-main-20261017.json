@@ -54,13 +54,15 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Independent config-loss negative ->10 integrated race pass6.092s; latest combined full114 PASS946 entries/12 shards/race/vet/CAD; native synthetic source form exact bytes proven. Current AIDE Handler to actual Docker gateway auth/discovery/description/App-disk-reopen pass2.716s;10 tools,0 readonly,0 calls. Whole-workbench native UI remains user-deferred and not claimed.",
+      "summary": "Independent config-loss negative ->10 integrated race pass6.092s; latest combined full114 PASS946 entries/12 shards/race/vet/CAD; native synthetic source form exact bytes proven. Current AIDE Handler to actual Docker gateway auth/discovery/description/App-disk-reopen pass2.716s;10 tools,0 readonly,0 calls. Whole-workbench native UI remains user-deferred and not claimed. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded.",
       "evidence": [
         "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
         "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
         ".agent-state/verify-20261017T070223636611Z.log",
         "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
-        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
+        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json",
+        "docs/reviews/2026-10-17/continuity-offline-delivery.md",
+        "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
       ]
     },
     "documentation": {
