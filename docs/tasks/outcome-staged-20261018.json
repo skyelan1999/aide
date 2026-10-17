@@ -63,7 +63,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "最终候选2f43186c/source1b76/image2913：quick通过；原生运行首段→自动两段/详情去重、超时保留、重启持久和调用不增加、30/60/64编号、专业/经典明暗及半屏滚动/ESC已验；当前full运行中。",
+      "summary": "旧基线full127/980项通过；集成f316/source2239/image0717：quick125、UID1000资源32项/5插件/6宿主程序、原始启动、原生首段→终态/详情/真实JSON下载及409、30/60/64和重启保持/22保护摘要通过。集成full981项正在运行；桥40秒对照和父进程结束后退出限制单列，不把它当双机通过。",
       "evidence": [
         "internal/server/outcome_staged_test.go",
         "internal/server/staged_output_test.go",
@@ -86,7 +86,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "仅本任务3停止容器及空网络已清理，自建Safari窗口关闭，原窗口保留，主题恢复；生产身份和22保护摘要一致，镜像及数据保留。",
+      "summary": "两轮均只移除各自3个已停止测试容器及空网络；原始stop执行，集成宿主桥不再就绪；自建窗口关闭、原窗口保留，下载移至证据目录，生产22摘要/容器身份一致。镜像及数据保留。",
       "evidence": [
         "docs/reviews/2026-10-18/outcome-staged-proof.json"
       ]
@@ -99,13 +99,14 @@
   },
   "release_authorization": "用户原目标成果追踪、会话分段式结论、不等全做完覆盖；既有分批push/test和main授权。仅隔离本地协议模型，不替换当前用户服务。",
   "rollback": "Revert scoped projection/rendering commits; no persisted schema migration or user data rewrite. Keep prior runtime/images.",
-  "handoff": "当前full句柄49247、验证容器aide-verify-ea375cf75f2b仍运行，已5/12组；不要重启。主工作目录main已仅ff同步远端19e7c94d，未部署。候选分支需在本轮full终态后集成origin/main并重新验证精确输入，旧baseline收据不可用于集成main发布。原12继续。",
+  "handoff": "集成full句柄50124、容器aide-verify-c7579f2315d8运行；输入稳定，不重启。完成后精确收据/main门禁/push，豆包文档定稿。桥在工具父进程结束后消失，0/5/35/40秒存活对照通过但根因未定，普通Terminal/双机尚待。",
   "integration_followup": {
     "remoteMain": "19e7c94d5a769dae444f31c5a0b54d7b30a133e9",
     "primaryMainSynced": true,
-    "candidateMergedRemoteMain": false,
+    "candidateMergedRemoteMain": true,
     "changes": "LAN discovery host bridge changes Docker/startup/build/verification inputs; no direct overlap with staged outcome files",
-    "required": "finish this baseline full without changing inputs, integrate latest origin/main on task branch, rerun affected validation and qualify exact integrated fingerprint; do not apply baseline receipt to merged code"
+    "required": "finish this baseline full without changing inputs, integrate latest origin/main on task branch, rerun affected validation and qualify exact integrated fingerprint; do not apply baseline receipt to merged code",
+    "mergeCommit": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c"
   },
   "handoff_document": {
     "path": "docs/doubao-handoff-20261018.md",

@@ -445,6 +445,15 @@
           "docs/reviews/2026-10-17/outcome-external-events-proof.json"
         ],
         "remaining": "External-activity stale overview defect fixed in scoped current406 candidate. Absolute picker numbering still relative to loaded window; live partial-body outcome scope not claimed; public current-source dual packages pending. Other original12 gates remain."
+      },
+      "current_audit_20261018": {
+        "status": "in_progress",
+        "evidence": [
+          "docs/reviews/2026-10-18/outcome-staged.md",
+          "docs/reviews/2026-10-18/outcome-staged-proof.json"
+        ],
+        "summary": "候选已补持久chat片段投影及绝对编号，集成镜像核心原生通过；旧基线full和集成quick分别记录。",
+        "remaining": "集成full/main门禁与push，当前双架构完整包及公开Release仍待；其他原12工作流不提升。"
       }
     },
     {
@@ -8442,8 +8451,8 @@
   "outcome_staged_20261018": {
     "status": "in_progress",
     "task": "docs/tasks/outcome-staged-20261018.json",
-    "sourceCommit": "2f43186ccb0b94aeef143ed7f1270434e0336527",
+    "sourceCommit": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c",
     "evidence": "docs/reviews/2026-10-18/outcome-staged-proof.json",
-    "summary": "持久阶段输出/绝对编号候选已核心原生验收，full运行中，尚未合main或发布；生产保持，原12继续。"
+    "summary": "已集成最新LAN main，source2239/image0717候选核心原生/下载/重启及quick125通过，集成full981项运行，main发布门禁尚待。"
   }
 }
