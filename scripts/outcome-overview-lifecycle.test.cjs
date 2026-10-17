@@ -18,6 +18,27 @@ const completed={id:'s',revision:1,runningRuns:0,runs:[{id:'r',status:'completed
  const c={sessionsEv:null,state:{token:'local-test-not-a-secret'},EventSource:function(){this.addEventListener=(name,fn)=>events[name]=fn;},scheduleSessionsRefresh:()=>sidebars++,refreshApprovalPolicy:async()=>{approvals++;},window:{AideManagement:{refresh(){}},AideTaskOutcome:{refreshSession:id=>refreshes.push(id)}}};
  vm.runInNewContext(app.slice(app.indexOf('function setupGlobalEvents()'),app.indexOf('/* ── 小秘系统会话密码门')),c);c.setupGlobalEvents();events['sessions-changed']({data:JSON.stringify({sessionId:'s'})});events['sessions-changed']({data:'broken'});events['open']();assert.equal(sidebars,2);assert.deepEqual(refreshes,['s',undefined]);assert.equal(approvals,1,'reconnect keeps approval refresh');
 }
+{
+ const app=fs.readFileSync(process.argv[3]||'internal/server/web/app.js','utf8');
+ function picker(count,total,selection){
+  const content=new Element('div'),session={id:'s',runs:Array.from({length:count},(_,i)=>({id:'r'+(64-count+i+1),prompt:'Round '+(64-count+i+1)}))};
+  if(total!==undefined)session.runsTotal=total;
+  let mounted;
+  const c={el:(tag,cls,text)=>Object.assign(new Element(tag),{className:cls,textContent:text}),t:x=>x,trajOutcomeRun:selection,window:{AideTaskOutcome:{sessionOverview(){},mount:(host,args)=>mounted=args}},renderMarkdown(){},api(){},toast(){},sessionRevision(){},action:fn=>fn};
+  vm.runInNewContext(app.slice(app.indexOf('function renderTrajectoryOutcome('),app.indexOf('function buildTrajectoryMarkdown(')),c);
+  c.renderTrajectoryOutcome(content,session);const select=content.children[0].children[1];
+  return {select,options:select.children.slice(1),mounted};
+ }
+ for(const count of [30,60,64]){
+  const p=picker(count,64,{sessionId:'s',runId:'r40'});
+  assert.equal(p.options[0].textContent,'#64 · Round 64','latest round uses full session total');
+  assert.equal(p.options.at(-1).textContent,'#'+(65-count)+' · Round '+(65-count));
+  assert.equal(p.options.find(o=>o.value==='r40').textContent,'#40 · Round 40','loading older runs does not renumber the same run');
+  assert.equal(p.options.find(o=>o.selected).value,'r40');assert.equal(p.mounted.runId,'r40');assert.equal(p.mounted.sessionId,'s');
+ }
+ const legacy=picker(3);assert.equal(legacy.options[0].textContent,'#3 · Round 64','legacy full response uses loaded count');
+ const wrong=picker(30,64,{sessionId:'other',runId:'r40'});assert.equal(wrong.select.children[0].selected,true);assert.equal(wrong.mounted,undefined,'a selection from another session cannot mount detail');
+}
 (async()=>{
  for(const session of [completed,{...completed,runs:[]},{...completed,hasOlder:true}])assert.equal((await harness(session)).timers.size,0,'completed/empty sessions do not poll');
  let idle=await harness(completed);idle.setNext({...completed,revision:2,runningRuns:1,hasOlder:true,runsTotal:64});await idle.refresh('s');assert.equal(idle.updates.length,1,'global event discovers external activity from terminal overview');idle.mounted.close();
@@ -35,5 +56,5 @@ const completed={id:'s',revision:1,runningRuns:0,runs:[{id:'r',status:'completed
  h=await harness(running);let release;h.setDeferred(new Promise(r=>release=r));const pending=h.callbacks[0]();h.mounted.close();release({...completed,revision:4});await pending;assert.equal(h.updates.length,0,'close rejects an in-flight response');assert.equal(h.timers.size,0);await h.callbacks[0]();assert.equal(h.calls,1,'closed callbacks do not fetch');
  h=await harness(running);let finishSlow;h.setDeferred(new Promise(r=>finishSlow=r));const slow=h.callbacks[0]();await h.callbacks[0]();h.setDeferred(null);finishSlow({...completed,revision:3});await slow;await Promise.resolve();assert.equal(h.calls,1,'overlapping interval ticks do not queue a redundant read');h.mounted.close();
  h=await harness(running);h.setBlocked(true);await h.callbacks[0]();assert.equal(h.calls,0);assert.equal(h.timers.size,0,'blocked/disconnected overview drops its timer');
- console.log('outcome overview lifecycle PASS: initial authoritative read, external event/reconnect, scoped identity, event coalescing, idle close, wrong-session and blocked boundaries; terminal/empty idle, hidden running metadata, legacy fallback, stale metadata, in-flight close and blocked timer cleanup');
+ console.log('outcome overview lifecycle PASS: absolute picker64/30/60/64, stable run identity, legacy fallback, cross-session isolation; initial authoritative read, external event/reconnect, scoped identity, event coalescing, idle close, wrong-session and blocked boundaries; terminal/empty idle, hidden running metadata, legacy fallback, stale metadata, in-flight close and blocked timer cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1});

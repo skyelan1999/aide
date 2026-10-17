@@ -1,0 +1,85 @@
+{
+  "id": "outcome-absolute-rounds-20261017",
+  "request": "修复已实测的成果分页编号：总数64加载30时选择器显示#30；按实际总轮次显示并保持分页扩展和详情选择正确",
+  "baseline": "8f6640646099a94a0ebbf196ec3235577744d9ec",
+  "initial_status": "",
+  "acceptance": [
+    "64轮只加载最新30时选择器64..35，与总览一致；加载60／64后旧任务编号不变。",
+    "选择仍按runID并限定sessionID；无runsTotal的完整旧响应退回长度。",
+    "旧源码回归失败、新源码聚焦／quick／full通过；实际Safari检查可见编号和详情交互，未验范围如实记录。",
+    "文档、精确full、隔离资源清理与main交付，不提升旧公开清单或替换生产。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "scripts/outcome-overview-lifecycle.test.cjs",
+    "docs/tasks/outcome-absolute-rounds-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/continuity-handoff.md",
+    "docs/continuity-operations.md",
+    "docs/reviews/2026-10-17/outcome-absolute-rounds.md",
+    "docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已知原生缺陷第64轮显示#30与源码runs.length-index一致；改为总轮数减倒序偏移，与总览公式等价，不改变请求、任务ID或分页。",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "internal/server/web/app.js",
+        "internal/server/web/task-outcome.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "已知原生缺陷第64轮显示#30与源码runs.length-index一致；改为总轮数减倒序偏移，与总览公式等价，不改变请求、任务ID或分页。",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "internal/server/web/app.js",
+        "internal/server/web/task-outcome.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "总览选择器按runsTotal减倒序偏移，与总览绝对编号一致；回归覆盖30/60/64窗口、详情runID和跨会话隔离。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "scripts/outcome-overview-lifecycle.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧源码负向／聚焦及最终quick124通过。full9/12服务器分片pass后因用户自行重启与main同步主动停准确验证容器，整体fail未完成；native未运行。",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-absolute-rounds.md",
+        "docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "保留部分验收、前次无效quick与fixture错误、full中止、用户重启和未合入状态。",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-absolute-rounds.md",
+        "docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "验证容器由runner删除，无新UI页或镜像；仅本任务容器stop。生产两容器观察为停止，不能声称状态不变。",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-absolute-rounds.md",
+        "docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "未通过full/native，不合main、不发布。独立分支保留，工作目录切回用户要求的最新main。",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-absolute-rounds.md",
+        "docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "用户持续目标及先前分批push/test、合入main授权；不部署生产。",
+  "rollback": "Revert scoped source commit, keep production/data/images unchanged.",
+  "handoff": "继续前先确认用户重启后实例身份；本分支重跑full和原生编号验收后才合main。当前源修复不能当作用户已使用。"
+}

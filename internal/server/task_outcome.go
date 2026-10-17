@@ -62,6 +62,37 @@ func outcomeDigest(use ToolUse) string {
 	b, _ := json.Marshal([]string{use.Tool, use.Args, use.Result})
 	return hash(b)
 }
+
+// Saved public chat stages are previews, not new execution/verification evidence.
+// Retain the latest bounded window, but bind all saved stages in the digest.
+type outcomeOutputSegment struct {
+	ID        string `json:"id"`
+	Index     int    `json:"index"`
+	Round     int    `json:"round"`
+	Content   string `json:"content"`
+	Digest    string `json:"digest"`
+	Truncated bool   `json:"truncated"`
+}
+
+func outcomeStagePreviews(segments []OutputSegment) ([]outcomeOutputSegment, string) {
+	raw, _ := json.Marshal(segments)
+	rows := []outcomeOutputSegment{}
+	budget := 32000
+	for i := len(segments) - 1; i >= 0 && len(rows) < 100 && budget > 0; i-- {
+		segment := segments[i]
+		if strings.TrimSpace(segment.Content) == "" {
+			continue
+		}
+		text, truncated := outcomeText(segment.Content, min(8000, budget))
+		budget -= len([]rune(text))
+		rows = append(rows, outcomeOutputSegment{ID: segment.ID, Index: i + 1, Round: segment.Round, Content: text, Digest: hash([]byte(segment.Content)), Truncated: truncated})
+	}
+	for i, j := 0, len(rows)-1; i < j; i, j = i+1, j-1 {
+		rows[i], rows[j] = rows[j], rows[i]
+	}
+	return rows, hash(raw)
+}
+
 func outcomeText(s string, n int) (string, bool) {
 	r := []rune(s)
 	if len(r) > n {
@@ -221,6 +252,9 @@ func (a *App) outcomeTaskSnapshotLocked(sessionID, runID string) (*Task, int, st
 		t.Commands = append([]string(nil), run.Commands...)
 		t.ToolUses = append([]ToolUse(nil), run.ToolUses...)
 		t.Steps = append([]Step(nil), run.Steps...)
+		for i := range t.Steps {
+			t.Steps[i].OutputSegments = append([]OutputSegment(nil), run.Steps[i].OutputSegments...)
+		}
 		for _, pair := range []struct{ src, dst any }{
 			{run.ApprovalReviews, &t.ApprovalReviews},
 			{run.ReleaseReceipts, &t.ReleaseReceipts},
@@ -378,11 +412,26 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	}
 	outputs := []map[string]any{}
 	for _, step := range task.Steps {
-		if step.Name == "file_application_receipt" || step.Content == "" {
+		if step.Name == "file_application_receipt" {
+			continue
+		}
+		var segments []outcomeOutputSegment
+		var segmentDigest string
+		if task.Mode == "chat" && step.Name == "chat" && len(step.OutputSegments) > 0 {
+			segments, segmentDigest = outcomeStagePreviews(step.OutputSegments)
+		}
+		if step.Content == "" && len(segments) == 0 {
 			continue
 		}
 		text, truncated := outcomeText(step.Content, 8000)
-		outputs = append(outputs, map[string]any{"name": step.Name, "status": step.Status, "content": text, "truncated": truncated, "digest": hash([]byte(step.Content))})
+		output := map[string]any{"name": step.Name, "status": step.Status, "content": text, "truncated": truncated, "digest": hash([]byte(step.Content))}
+		if segmentDigest != "" {
+			output["segments"] = segments
+			output["segmentsTotal"] = len(step.OutputSegments)
+			output["segmentsOmitted"] = len(step.OutputSegments) - len(segments)
+			output["segmentsDigest"] = segmentDigest
+		}
+		outputs = append(outputs, output)
 	}
 	goal, goalTruncated := outcomeText(task.Prompt, 20000)
 	return map[string]any{

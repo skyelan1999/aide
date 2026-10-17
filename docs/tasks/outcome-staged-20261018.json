@@ -1,0 +1,92 @@
+{
+  "id": "outcome-staged-20261018",
+  "request": "继续原12项成果追踪及用户分段式结论要求：显示已保存OutputSegments，不等待最终步骤完成；原生复现/修复/持久与快照验收，并续验绝对轮次编号",
+  "baseline": "d4a5d817e8d085882f49809d4318cd015cab65f0",
+  "initial_status": "A  docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json\nA  docs/reviews/2026-10-17/outcome-absolute-rounds.md\nA  docs/tasks/outcome-absolute-rounds-20261017.json\nM  internal/server/web/app.js\nM  scripts/outcome-overview-lifecycle.test.cjs",
+  "acceptance": [
+    "任务第二轮仍运行时，成果API和总览/单轮详情可读已持久化chat阶段片段；不借用会话级实时broker。",
+    "保留片段顺序/ID/模型轮次及全文摘要；最终正文与已保存片段全文相同时不重复，重复文字的不同片段仍保留。",
+    "API与页面预览有片段/文字预算、明确截断/遗漏；snapshot绑定所有片段，包括未展示片段，旧分页拒绝409，导出标明范围。",
+    "深拷贝片段避免并发别名；理由/工具/辅助worker不冒充主输出；旧记录行为兼容。",
+    "续验64轮/30和60加载窗口绝对编号，阶段追加/终态/详情切换/刷新与重启；真实隔离本地协议，无收费模型或向量。",
+    "聚焦/quick/full、当前候选原始启动器及原生Safari、数据保护/清理/文档/main门禁；Windows用户验收，原12继续。"
+  ],
+  "scope": [
+    "internal/server/task_outcome.go",
+    "internal/server/outcome_staged_test.go",
+    "internal/server/staged_output_test.go",
+    "internal/server/web/task-outcome.js",
+    "internal/server/web/app.js",
+    "scripts/outcome-pagination.test.cjs",
+    "scripts/outcome-overview-lifecycle.test.cjs",
+    "docs/tasks/outcome-staged-20261018.json",
+    "docs/tasks/outcome-absolute-rounds-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/continuity-handoff.md",
+    "docs/continuity-operations.md",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/reviews/2026-10-18/outcome-staged.md",
+    "docs/reviews/2026-10-18/outcome-staged-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已确认持久OutputSegments与成果projection缺口；投影只读已保存chat片段，新增可选segments字段，legacy content不改。每步最多100条/32000runes、每段8000，绑定全片段摘要；UI依据全文摘要去最终重复。续验旧绝对编号修复，不把同轮token流当持久成果。",
+      "evidence": [
+        "internal/server/staged_output.go",
+        "internal/server/task_outcome.go",
+        "internal/server/web/task-outcome.js",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "已确认持久OutputSegments与成果projection缺口；投影只读已保存chat片段，新增可选segments字段，legacy content不改。每步最多100条/32000runes、每段8000，绑定全片段摘要；UI依据全文摘要去最终重复。续验旧绝对编号修复，不把同轮token流当持久成果。",
+      "evidence": [
+        "internal/server/staged_output.go",
+        "internal/server/task_outcome.go",
+        "internal/server/web/task-outcome.js",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "成果API新增只读chat片段预览/全摘要，深拷贝切片；UI总览/详情按片段顺序显示，全文digest去最终重复，阶段数不冒充回复轮数；Unicode预算和导出文本完整性显式；合并旧绝对编号源修复待共同验收。",
+      "evidence": [
+        "internal/server/task_outcome.go",
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js",
+        "internal/server/outcome_staged_test.go",
+        "scripts/outcome-pagination.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧Go API与JS阶段显示回归均失败复现；修复后Outcome/TaskOutcome/StagedOutput聚焦Go测试退出0，JS分页/阶段/生命周期通过；quick/full及当前原生候选待执行。",
+      "evidence": [
+        "internal/server/outcome_staged_test.go",
+        "internal/server/staged_output_test.go",
+        "scripts/outcome-pagination.test.cjs",
+        "scripts/outcome-overview-lifecycle.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户原目标成果追踪、会话分段式结论、不等全做完覆盖；既有分批push/test和main授权。仅隔离本地协议模型，不替换当前用户服务。",
+  "rollback": "Revert scoped projection/rendering commits; no persisted schema migration or user data rewrite. Keep prior runtime/images.",
+  "handoff": ""
+}
