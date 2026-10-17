@@ -2753,3 +2753,5 @@ Object.assign(window.aideEnglish, {'线段':'Segments','点':'Points'});
 Object.assign(window.aideEnglish, {'退化面 {0}，已保留边界':'Degenerate faces: {0}; original boundaries retained'});
 
 Object.assign(window.aideEnglish, {'返回星图':'Return to constellation','检索来源已变化，请重新探索文档正文。':'Search sources changed. Search the document text again.'});
+
+Object.assign(window.aideEnglish, {'重新读取':'Read again','审批规则已变化，请重新读取':'Approval rules changed. Read them again.','当前有效期尚未保存，重新读取将放弃输入。继续？':'The expiry has not been saved. Reading again will discard this input. Continue?'});

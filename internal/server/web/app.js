@@ -5497,35 +5497,61 @@ async function openApprovalRules() {
   approvalRulesDialog?.close();
   const dialog=el('dialog','outcome-dialog'),head=el('header','outcome-head'),title=el('h2','',t('审批授权'));
   approvalRulesDialog=dialog;title.id='approval-rules-title';dialog.setAttribute('aria-labelledby',title.id);
-  const close=el('button','icon-button','×');close.type='button';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();
-  head.append(title,close);const content=el('div','outcome-content');dialog.append(head,content);document.body.append(dialog);
-  dialog.addEventListener('close',()=>{if(approvalRulesDialog===dialog)approvalRulesDialog=null;dialog.remove();$('strategy-button')?.focus();},{once:true});dialog.showModal();
+  const close=el('button','icon-button','×'),reload=el('button','quiet',t('重新读取'));close.type=reload.type='button';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();
+  const content=el('div','outcome-content'),feedback=el('p','muted');feedback.hidden=true;
+  let timer=null,epoch=0,loading=false,changing=false,signature='',shownRevision=null,rows=new Map();
   const valid=()=>dialog.open&&!lockScreen.locked&&!!state.token;
-  async function load() {
-    content.replaceChildren(el('p','muted',t('正在读取授权…')));
+  const editing=()=>[...rows.values()].some(entry=>entry.expiry.value!==entry.initial||entry.row.contains(document.activeElement));
+  const statusText=rule=>t(rule.active?'有效':'已到期')+' · '+new Date(rule.createdAt).toLocaleString();
+  const notice=text=>{feedback.textContent=text;feedback.hidden=!text;};
+  head.append(title,reload,close);dialog.append(head,content);document.body.append(dialog);
+  dialog.addEventListener('close',()=>{epoch++;if(timer!==null)clearInterval(timer);timer=null;if(approvalRulesDialog===dialog)approvalRulesDialog=null;dialog.remove();$('strategy-button')?.focus();},{once:true});dialog.showModal();
+  async function load(background=false) {
+    if(!valid()||loading||(background&&(changing||document.hidden)))return;
+    loading=true;const current=++epoch;
+    if(!background)content.replaceChildren(el('p','muted',t('正在读取授权…')));
     try {
-      const data=await api('/approval-policy/rules');if(!valid())return;
-      content.replaceChildren(el('p','muted',t('只匹配相同工作区、根目录和完整命令或文件提案；撤销及到期影响后续检查，不取消已经执行的操作。')));
+      const data=await api('/approval-policy/rules');if(!valid()||current!==epoch)return;
+      notice('');
+      const nextSignature=JSON.stringify(data);
+      if(background&&nextSignature===signature)return;
+      if(background&&editing()) {
+        const currentRules=new Map(data.rules.map(rule=>[rule.id,rule]));
+        for(const [id,entry] of rows) {
+          const rule=currentRules.get(id);entry.status.textContent=rule?statusText(rule):t('审批规则已变化，请重新读取');
+          entry.save.disabled=entry.revoke.disabled=!rule||data.revision!==shownRevision;
+        }
+        if(data.revision!==shownRevision)notice(t('审批规则已变化，请重新读取'));
+        return;
+      }
+      signature=nextSignature;shownRevision=data.revision;rows=new Map();
+      content.replaceChildren(el('p','muted',t('只匹配相同工作区、根目录和完整命令或文件提案；撤销及到期影响后续检查，不取消已经执行的操作。')),feedback);
       if(!data.rules.length)content.append(el('p','muted',t('没有已记住的授权')));
       for(const rule of data.rules) {
-        const row=el('section','outcome-section');row.append(el('h3','',t(rule.kind==='shell'?'命令授权':'文件提案授权')),el('p','muted',rule.workspace+' · '+(rule.root?.displayHost||rule.root?.containerAbs||'—')),el('code','outcome-digest',rule.fingerprint),el('p','muted',t(rule.active?'有效':'已到期')+' · '+new Date(rule.createdAt).toLocaleString()));
+        const row=el('section','outcome-section'),status=el('p','muted',statusText(rule));row.append(el('h3','',t(rule.kind==='shell'?'命令授权':'文件提案授权')),el('p','muted',rule.workspace+' · '+(rule.root?.displayHost||rule.root?.containerAbs||'—')),el('code','outcome-digest',rule.fingerprint),status);
         const label=el('label','',t('到期时间（留空表示永久）')),expiry=el('input');expiry.type='datetime-local';expiry.setAttribute('aria-label',t('到期时间（留空表示永久）'));
         if(rule.expiresAt){const date=new Date(rule.expiresAt);if(!isNaN(date.getTime()))expiry.value=new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
         label.append(expiry);row.append(label);
         const actions=el('div','outcome-actions'),save=el('button','quiet',t('保存有效期')),revoke=el('button','quiet',t('撤销授权'));save.type=revoke.type='button';
+        rows.set(rule.id,{row,status,expiry,initial:expiry.value,save,revoke});
         async function change(method) {
-          if(!valid())return;
+          if(!valid()||changing||loading||save.disabled||revoke.disabled)return;
           if(method==='DELETE'&&!confirm(t('撤销此条授权？后续相同操作将重新审批。')))return;
-          save.disabled=revoke.disabled=true;
-          try {await api('/approval-policy/rules/'+encodeURIComponent(rule.id),{method,body:JSON.stringify({revision:data.revision,expiresAt:expiry.value?new Date(expiry.value).toISOString():''})});await refreshApprovalPolicy();if(valid())await load();}
-          catch(e){if(valid()){toast(e.message);await load();}}
+          changing=true;save.disabled=revoke.disabled=reload.disabled=true;
+          try {await api('/approval-policy/rules/'+encodeURIComponent(rule.id),{method,body:JSON.stringify({revision:data.revision,expiresAt:expiry.value?new Date(expiry.value).toISOString():''})});await refreshApprovalPolicy();}
+          catch(e){if(valid())toast(e.message);}
+          finally{changing=false;reload.disabled=false;if(valid())await load();}
         }
         save.onclick=()=>change('PUT');revoke.onclick=()=>change('DELETE');actions.append(save,revoke);row.append(actions);content.append(row);
       }
-    }catch(e){if(valid())content.replaceChildren(el('p','task-error',e.message));}
+    }catch(e){if(valid()&&current===epoch){if(background)notice(e.message);else content.replaceChildren(el('p','task-error',e.message));}}
+    finally{if(current===epoch)loading=false;}
   }
+  reload.onclick=()=>{if(changing||loading||!valid())return;if(editing()&&!confirm(t('当前有效期尚未保存，重新读取将放弃输入。继续？')))return;return load();};
   await load();
+  if(valid())timer=setInterval(()=>load(true),3000);
 }
+
 function strategyMenuOption(kind, value, name, desc, selected, disabled = false) {
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
   b.type = 'button';

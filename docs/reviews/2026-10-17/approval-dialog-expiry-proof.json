@@ -1,0 +1,49 @@
+{
+  "status": "source_fixed_runtime_pending",
+  "nativeReproduction": {
+    "status": "reproduced",
+    "observedUTC": "2026-10-17T01:04:58.640443+00:00",
+    "apiActive": false,
+    "expiresAt": "2026-10-17T01:04:35.317844Z",
+    "nativeStillSaysActive": true,
+    "noManualRefresh": true
+  },
+  "nativeOwnRuleRevoke": "pass: actual click/confirm/list empty",
+  "specializedRegression": {
+    "negativeOldFunction": "fail: zero periodic timers",
+    "fixed": "pass: expiry, dirty/focus, stale-save, lock/visibility and close/reopen ownership"
+  },
+  "quick": {
+    "checks": 104,
+    "status": "pass",
+    "fingerprint": "427711f6c413692beea3f9490ecbdcf48596118f5633ce91f861e737ba5cc52e"
+  },
+  "originalPreparationCleanup": {
+    "status": "pass",
+    "original14SessionFilesByteExact": true,
+    "authSourcesVaultBytesExact": true,
+    "settings": {
+      "status": "pass",
+      "settingsExactExceptSequence": true,
+      "sequence": [
+        48,
+        49
+      ],
+      "encryptedVaultEntriesExact": true,
+      "ownedSessionProviderModelRemoved": true
+    },
+    "policy": {
+      "status": "pass",
+      "originalModeAndRulesExact": true,
+      "revisions": [
+        1,
+        7
+      ]
+    },
+    "imageMountsNetworksExact": true,
+    "pythonRememberGuardRejectedAndNoExecution": true
+  },
+  "full": "pending",
+  "candidateRuntime": "pending",
+  "release": "pending"
+}

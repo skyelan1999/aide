@@ -1,0 +1,78 @@
+{
+  "id": "approval-dialog-expiry-20261017",
+  "request": "继续原目标审批管理：真实Safari验证有效期、撤销、模式同步，复现授权窗口到期状态是否自动更新；只用固定文字输出的自建授权并保全原规则和会话。",
+  "baseline": "5fac564da34ac5c2449e678edb3ba145fb4dc005",
+  "initial_status": "",
+  "acceptance": [
+    "Reproduce native authorization status across natural expiry with real current API receipt",
+    "Native own-rule expiry save/revocation and current policy rendering agree with API; never alter original rules",
+    "If defect confirmed, add lifecycle/dirty-input/concurrent response coverage and verify corrected actual runtime",
+    "Restore original14sessions/settings/provider/vault/rules/mode/mounts; permit only legitimate monotonic counters"
+  ],
+  "scope": [
+    "docs/tasks/approval-dialog-expiry-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17",
+    "ignored owned local fixtures",
+    "internal/server/web/app.js",
+    "scripts/test_approval_persistence.cjs",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.html",
+    "docker/prebuilt-images.tsv",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Inspect current authorization dialog: only load on open/change, suspect natural expiry staleness. Use own exact literal-print command under manual approval and local deterministic provider, preserving original rules/data; no real model requests.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/approval_rules.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Inspect current authorization dialog: only load on open/change, suspect natural expiry staleness. Use own exact literal-print command under manual approval and local deterministic provider, preserving original rules/data; no real model requests.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/approval_rules.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Visible-dialog server reconciliation, dirty/focus preservation, stale-revision save protection, explicit reread and close/lock ownership implemented. Actual old-runtime natural expiry mismatch and negative regression reproduced; fixed specialized and quick104 pass. Runtime/full still pending.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "scripts/test_approval_persistence.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Old actual Safari/API expiry mismatch and native own-rule revoke pass; corrected specialized + quick104 pass. New runtime/native/full pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/approval-dialog-expiry.md",
+        "docs/reviews/2026-10-17/approval-dialog-expiry-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user-authorized incremental testing/fixes/main/runtime/offline package delivery; no new version/tag or real model request.",
+  "rollback": "Remove own fixture rule/session/provider/model/listener and restore original enabled mode/rules/settings/vault; never rewind policy revision or session sequence. Preserve original sessions and published rollback packages.",
+  "handoff": "Original e729 runtime still active; source fix needs controlled current-commit build/native/full, packages and delivery. Preparation fixtures removed, original14sessions preserved. Node must be on process PATH via existing bundled executable. No source release claim."
+}
