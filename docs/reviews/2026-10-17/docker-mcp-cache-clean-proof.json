@@ -1,0 +1,13 @@
+{
+  "status": "pass",
+  "originalCleanupScript": true,
+  "cacheReportedTotal": "12.98GB",
+  "remainingBuildCacheBytes": 0,
+  "allNamedImageIdentitiesPreserved": true,
+  "timeServiceImagePreserved": true,
+  "productionContainerUnchanged": true,
+  "protectedFilesUnchanged": 22,
+  "volumesDeleted": false,
+  "workspaceFilesDeleted": false,
+  "physicalHostDiskReclamationNotMeasured": true
+}

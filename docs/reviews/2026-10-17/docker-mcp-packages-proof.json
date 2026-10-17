@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "packages": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-arm64-6a8a2dcb290b-offline.tar.gz",
+      "bytes": 770960523,
+      "sha256": "252f364df84a4b36bffc823e0320631e83d30715dd36a3295198d9bd2ab443aa",
+      "innerImageTarSHA256": "f8d5bd5aca18280a67ec0077e4aa319a62587415b53f8d6e09e56e551a5a0de9",
+      "image": "sha256:6a8a2dcb290be897de5a27ce8a10436d92dd601e9fedef9153a4621b4f4c0107",
+      "sourceSHA256": "40fda58e51eed211b13ea23e6638181694d06235f901ec33679d49c0f68def24",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-0.1.17.0-RC2-linux-amd64-e4742f02031a-offline.tar.gz",
+      "bytes": 916895313,
+      "sha256": "72ee665d1f4679d89b3b63d75249267dfa0dd4c9963c0b198ff7891a58f6e23e",
+      "innerImageTarSHA256": "1d870ba8100cce57415d2deb1f0e3605c1ca41aae64966468db87d43af2fe232",
+      "image": "sha256:e4742f02031aede574b21f515f4e66a0523899084f554fd3b72ab4a58ba6fc85",
+      "sourceSHA256": "40fda58e51eed211b13ea23e6638181694d06235f901ec33679d49c0f68def24",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    }
+  ],
+  "productionImagePreserved": true
+}

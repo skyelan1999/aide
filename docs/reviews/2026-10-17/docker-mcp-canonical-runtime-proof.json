@@ -1,0 +1,19 @@
+{
+  "status": "pass",
+  "canonicalImage": "sha256:6a8a2dcb290be897de5a27ce8a10436d92dd601e9fedef9153a4621b4f4c0107",
+  "buildCommit": "e58dcb201f3d1ab1b7e6ccf1e067d22a2cb50eb2",
+  "version": "0.1.17.0 RC2",
+  "sourceSHA256": "40fda58e51eed211b13ea23e6638181694d06235f901ec33679d49c0f68def24",
+  "protectedFilesUnchanged": 22,
+  "mountsUnchanged": true,
+  "originalLauncherUsed": true,
+  "buildSkipped": true,
+  "pullsPerformed": 0,
+  "newTabs": 0,
+  "apiAuthenticated": true,
+  "healthy": true,
+  "nativeSafariConnection": true,
+  "discoveredTools": 10,
+  "readOnlyTools": 0,
+  "protectedFilesAfterNative": 22
+}

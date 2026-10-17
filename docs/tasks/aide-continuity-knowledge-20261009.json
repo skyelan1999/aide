@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "2026-10-17 当前MCP输入full109已通过，session62601终态0，验证容器已清理。原生连接/HTTP-stdio切换/空令牌保留/10工具说明预览与profile恢复已验，无只读声明不能执行。下一步串行规范ARM/AMD镜像及完整离线包、公开分发与干净main门禁。原12项当前分范围证据见current_audit_20261017及continuity-current-checkpoint.md；推理强度五档10次UI写回已验，SSH工作区/跨标签授权/隐藏活动和发布记录卡等剩余直接验收继续；Windows用户验收，真实向量暂缓。",
+  "handoff": "MCP代码full109已通过；规范ARM6a8a/AMDe474完整包均已导入校验，全新ARM原始入口无构建无拉取及MCP/文件验收通过，临时实例已清理。本机9999运行规范ARM6a8a，22保护文件/挂载保全。所有本轮构建/验证/清理进程终态0，构建缓存0。详见docker-mcp-delivery.md。下一步公开Release附件、更新默认manifest并完成精确输入/干净main门禁；当前默认manifest仍旧6ad/0c。Windows用户验收、真实向量暂缓，原12条目标完整保留继续。",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -8193,5 +8193,16 @@
     "evidence": [
       "docs/reviews/2026-10-17/capability-failure-native-proof.json"
     ]
+  },
+  "docker_mcp_current_20261017": {
+    "status": "local_verified_publication_pending",
+    "task": "docs/tasks/docker-mcp-integration-20261017.json",
+    "report": "docs/reviews/2026-10-17/docker-mcp-delivery.md",
+    "code": "e58dcb201f3d1ab1b7e6ccf1e067d22a2cb50eb2",
+    "runtimeARM": "6a8a2dcb290b",
+    "runtimeAMD": "e4742f02031a",
+    "full": "109 PASS, server race768.615s/vet/CAD, fingerprint3f83d6589f314321251067a536c335c37e5f0fcb90adacbc56486aa999cd3d94",
+    "runtime": "Canonical ARM/native/API22 protected files pass; both complete package actual imports and fresh ARM start without build/pull passed, fresh project removed. Build cache0 with original named images/container/data preserved.",
+    "next": "Publish actual complete assets, update default manifest with exact hashes, rerun required exact-input gate and clean-main delivery; original12 remaining direct workflows continue."
   }
 }

@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "platform": "linux/arm64",
+  "image": "sha256:6a8a2dcb290be897de5a27ce8a10436d92dd601e9fedef9153a4621b4f4c0107",
+  "buildCommit": "e58dcb201f3d1ab1b7e6ccf1e067d22a2cb50eb2",
+  "freshLauncherStartup": true,
+  "noBuildOrPull": true,
+  "markerExact": true,
+  "modelKeyAbsent": true,
+  "discoveredMCPTools": 10,
+  "readOnlyTools": 0,
+  "virtualDescriptionRead": true,
+  "modelCalls": 0,
+  "toolExecutions": 0
+}
