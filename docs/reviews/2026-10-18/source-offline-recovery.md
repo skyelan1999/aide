@@ -1,6 +1,6 @@
 # 源码启动器的本地完整包依赖恢复
 
-状态：实现、聚焦、quick、真实隔离恢复及精确full127通过，准备main交付；不更新用户服务。收据见[proof](source-offline-recovery-proof.json)。本任务继续解决[用户清Docker后缺CAD](startup-runtime-recovery.md)，不以操作恢复代替脚本修复。
+状态：实现、聚焦、quick、真实隔离恢复及精确full127通过，已交付main d1373533并独立核对远端；不更新用户服务。收据见[proof](source-offline-recovery-proof.json)。本任务继续解决[用户清Docker后缺CAD](startup-runtime-recovery.md)，不以操作恢复代替脚本修复。
 
 ## 触发和版本行为
 
@@ -31,6 +31,8 @@ Bash源码启动器检测到配置的应用镜像不完整，且通用依赖或C
 
 ## 未验与交付
 
-完整full127/127通过，指纹`ac10f3c97be82b3901ac810692f99e51940044439c124100b0356d76adca84ad`，server976注册项分12互斥串行组全部执行，其他Go race/vet和CAD通过。新ab80候选另测UID1000、25资源／5插件、DOCX及原生CAD几何全部通过。补充直接执行原Bash选择条件，证明应用完整／bases完整均不恢复，缺CAD才选seed。full后再次核对生产身份与22项文件一致，仅余用户两个容器。合入门禁随后另记；当前运行仍是此前48e/406用户镜像。本改动不声称已经更新生产、发布94e双架构完整包或公开Release。当前默认公开包仍07c，已有406本地包保留。
+完整full127/127通过，指纹`ac10f3c97be82b3901ac810692f99e51940044439c124100b0356d76adca84ad`，server976注册项分12互斥串行组全部执行，其他Go race/vet和CAD通过。新ab80候选另测UID1000、25资源／5插件、DOCX及原生CAD几何全部通过。补充直接执行原Bash选择条件，证明应用完整／bases完整均不恢复，缺CAD才选seed。full后再次核对生产身份与22项文件一致，仅余用户两个容器。干净main release-check退出0，精确full一致，公开校验范围仍是旧07c默认附件；当前运行仍是此前48e/406用户镜像。本改动不声称已经更新生产、发布94e双架构完整包或公开Release。当前默认公开包仍07c，已有406本地包保留。
 
 本次实现范围为macOS/Linux的Bash源码启动器；PowerShell显式源码重建没有同等恢复改动，Windows原生仍由用户验收。A/B升级、数据格式兼容与本地依赖恢复是不同流程，本次不以恢复通过证明不同版本的数据迁移或A/B回退已验证。原12项继续进行，真实向量暂缓。
+
+交付：源修复与验收报告已推main `d137353368fcd548c6125feb22c2c04ec469f6c1`，独立远端查询一致。文档319份Markdown／1215本地链接、diff检查通过；旧full收据按内容身份更新为本轮ac10，原始日志同步保留。新94e完整包、PowerShell源码恢复及原12项未关闭。

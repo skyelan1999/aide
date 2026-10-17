@@ -90,12 +90,23 @@
     "symlinkRejectedBeforeMissingClassification": true
   },
   "delivery": {
-    "mainMerged": false,
+    "mainMerged": true,
+    "mainSourceDelivery": "d137353368fcd548c6125feb22c2c04ec469f6c1",
+    "pushExit": 0,
+    "independentRemoteExact": true,
+    "releaseCheckExit": 0,
+    "exactFullFingerprint": "ac10f3c97be82b3901ac810692f99e51940044439c124100b0356d76adca84ad",
+    "checkedPublicDefaultSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
     "publicPackage": false,
     "productionReplaced": false
   },
   "productionPostFull": {
     "containerAnd22FilesExact": true,
     "onlyProductionTwoContainersRemain": true
+  },
+  "documentationChecks": {
+    "markdownFiles": 319,
+    "localLinks": 1215,
+    "diffCheck": "pass"
   }
 }

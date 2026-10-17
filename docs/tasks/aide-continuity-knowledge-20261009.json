@@ -8429,13 +8429,14 @@
     "observedDocumentationMain": "af50350b6e87d7b2a9588585fc1e1e40fd7837e2"
   },
   "source_offline_recovery_20261018": {
-    "status": "source_and_scoped_runtime_pass_pending_main_delivery",
+    "status": "source_delivered_main_scoped_runtime_full_pass",
     "task": "docs/tasks/source-offline-recovery-20261018.json",
     "evidence": [
       "docs/reviews/2026-10-18/source-offline-recovery.md",
       "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
     ],
     "summary": "Bash源码缺依赖时本地完整包seed恢复，旧07c只作工具链，实际编译94e并隔离启动；force/default策略、32聚焦/quick124/full127、候选CAD/Office pass。主实例48e/406及22文件不变，未发布94e包，PS显式源码和原12缺口保留。",
-    "next": "先完成本批源码main交付；继续成果段落投影/绝对编号及原12实际验收，真实向量暂缓。"
+    "next": "继续成果段落投影/绝对编号及原12实际验收；PS显式源码恢复和94e双架构完整包/公开发布仍开放，真实向量暂缓。",
+    "mainSourceDelivery": "d137353368fcd548c6125feb22c2c04ec469f6c1"
   }
 }

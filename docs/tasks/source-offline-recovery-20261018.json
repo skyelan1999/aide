@@ -77,8 +77,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "准备精确内容main门禁与推送；仅源码交付，不部署或发布新附件。",
+      "status": "pass",
+      "summary": "源码修复及证据已快进main d1373533并push，独立ls-remote精确一致。干净main release-check0，指纹ac10精确full127与现有07c公开默认元数据通过；不是94e包发布或生产替换。",
       "evidence": [
         "docs/reviews/2026-10-18/source-offline-recovery.md",
         "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
@@ -87,5 +87,5 @@
   },
   "release_authorization": "用户此前要求脚本预设Docker恢复、仓库/release完整导入启动、清理Docker后重新编译；既有分批push/main授权。仅隔离验收，不替换当前用户服务。",
   "rollback": "Revert scoped launcher changes; retain data/images/current48e service. No data migration.",
-  "handoff": "本批Bash修复及隔离full/runtime已通过，完成main交付后继续原12；成果段落投影静态确认遗漏OutputSegments，绝对编号修复仍独立分支；PS显式源码和新双架构包/公开交付未闭环。"
+  "handoff": "本批Bash修复已交付main，继续原12：成果段落投影忽略OutputSegments的静态缺口、绝对编号独立分支、PS显式源码恢复及94e双架构完整包/公开发布仍开放；当前用户48e/406服务未替换。"
 }
