@@ -42,7 +42,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Packaging source omissions and prior-image negative confirmed; old builtin-count/default fixture fixed, focused related race PASS19.173s. New exact full127 v2 running; former failed/stopped runs retained, never promoted. Candidate fresh-start acceptance pending.",
+      "summary": "Exact repaired full127 PASS87f8ea0272dd4cb13babfcd5a3832cd77797631c0d77287d91fb06308fa029b1;976 entries/12 serial shards/race/vet/CAD; focused19.173s pass. ARM candidate building; fresh-runtime installation/assets still pending.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-plugin-main.md",
         "docs/reviews/2026-10-17/continuity-plugin-main-proof.json"

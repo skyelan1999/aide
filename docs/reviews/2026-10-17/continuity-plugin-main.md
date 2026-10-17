@@ -21,3 +21,5 @@
 该次full随后在第3分片失败：`TestBundledControlPluginsUpgradeExistingWorkspace` 仍按四个内置插件加一个用户插件断言总数5，实际新增工坊后为6。空工作区测试也保留旧数量和默认启用表。已同步为五个内置插件，保留重复启动不重复注册、用户设置与代码不覆盖、显式移除不复活等断言，并补充用户插件设置保持的直接检查。上述失败日志保留，核实归属后停止已失效的full及其隔离容器，工具终态143；先跑相关专项race，再启动修正后的全量。旧full进展段是历史状态，不代表仍在运行或已通过。
 
 同步后的内置插件、管理权限及文档提案专项race实际通过：`go test -mod=vendor -race -count=1 -timeout=6m ./internal/server -run "TestBundledControlPlugins|TestManagement|TestAuthoring|TestSourceProposal|TestDocumentProposal"`，19.173秒，隔离快照无网络/用户挂载。提交 `297c8b08` 已包含修正，随后启动full127第二轮；当前状态以机器可读证据的 `repairedFullV2` 为准，未记为通过，亦未启动新镜像构建。
+
+第二轮full127现已全部通过：976个服务端入口、12个互斥串行分片全部退出0，其他Go包race、vet、运行资源和CAD检查通过。内容指纹 `87f8ea0272dd4cb13babfcd5a3832cd77797631c0d77287d91fb06308fa029b1`，日志 `.agent-state/verify-20261017T114138178750Z.log`。本段为当前验证状态，先前运行或失败段保留过程证据。冻结修正源码提交 `297c8b08`，运行源码身份 `236499a59200641e50a6ddf4838bbf8d753d1b8a2cf262ad4a209c65df187e6b`；已开始串行ARM候选构建，实际镜像/启动器/自动注册验收尚待完成。
