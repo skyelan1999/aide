@@ -7,7 +7,9 @@ services:
     user: "${AIDE_RUN_UID:-1000}:${AIDE_RUN_GID:-1000}"
     ports:
       - "127.0.0.1:${AIDE_PORT:-8097}:8080"
+      - "127.0.0.1::45840"
     environment:
+      AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge
       AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}
       AI_MODEL: ${AI_MODEL:-}
       AI_API_KEY: ${AI_API_KEY:-}

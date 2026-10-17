@@ -33,6 +33,7 @@ IDS="$(
 )"
 IDS="$(printf '%s\n' "$IDS" | sort -u)"
 if (( DRY_RUN )); then printf '[dry-run] stop AIDE in %s; containers: %s\n' "$ROOT" "${IDS:-none}"; exit 0; fi
+if [[ -f scripts/message-lan-control.sh ]]; then bash scripts/message-lan-control.sh stop; fi
 if [[ -n "$IDS" ]]; then
   while IFS= read -r id; do [[ -z "$id" ]] || "$DOCKER_BIN" stop --time 30 "$id"; done <<< "$IDS"
 else echo "This AIDE copy is already stopped."; fi

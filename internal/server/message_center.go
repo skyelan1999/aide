@@ -116,7 +116,16 @@ func (a *App) openMessageCenter(config messageCenterConfig) (*messageCenter, err
 		store.Close()
 		return nil, err
 	}
-	network, err := messaging.StartNetwork(a.bgCtx, service, config.Network)
+	// Only the launch environment owns this path; browser input cannot redirect
+	// bridge metadata into arbitrary directories.
+	networkConfig := config.Network
+	networkConfig.BridgeDir = os.Getenv("AIDE_MESSAGE_LAN_BRIDGE")
+	if networkConfig.BridgeDir != "" && networkConfig.LAN && networkConfig.Listen != "" && networkConfig.Listen != ":45840" && networkConfig.Listen != "0.0.0.0:45840" && networkConfig.Listen != "[::]:45840" {
+		service.Close()
+		store.Close()
+		return nil, errors.New("Docker 局域网桥需要消息监听地址为 :45840；宿主端口由启动器自动分配")
+	}
+	network, err := messaging.StartNetwork(a.bgCtx, service, networkConfig)
 	if err != nil {
 		service.Close()
 		store.Close()

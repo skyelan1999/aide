@@ -16,9 +16,10 @@ def check_build_inputs():
         copies = {tuple(line.split()[1:]) for line in runtime.splitlines() if line.startswith('COPY ')}
         for plugin in SHIPPED_PLUGINS:
             assert (f'plugins/{plugin}', f'/opt/aide/builtin-plugins/{plugin}') in copies, (name, plugin)
+        assert ('--from=build', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
 
 PROGRAM = r'''
-import json, os, subprocess, tempfile
+import hashlib, json, os, subprocess, tempfile
 from pathlib import Path
 from docx import Document
 assert os.geteuid() != 0, 'runtime must use its normal non-root user'
@@ -34,6 +35,15 @@ for directory, _, names in os.walk(root, onerror=walk_error):
             source.read(1)
         files.append(path)
 assert files, 'application assets are missing'
+if os.environ.get('AIDE_REQUIRE_LAN_BRIDGE') == '1':
+    bridge = root / 'message-lan'
+    entries = dict(line.split()[::-1] for line in (bridge / 'SHA256SUMS').read_text().splitlines())
+    required = {'aide-message-lan-' + platform + suffix for platform, suffix in (
+        ('darwin-arm64', ''), ('darwin-amd64', ''), ('linux-arm64', ''),
+        ('linux-amd64', ''), ('windows-arm64', '.exe'), ('windows-amd64', '.exe'))}
+    assert set(entries) == required, 'native LAN platform inventory mismatch'
+    for name, digest in entries.items():
+        assert hashlib.sha256((bridge / name).read_bytes()).hexdigest() == digest, name
 for plugin in json.loads(os.environ['AIDE_REQUIRED_BUNDLED_PLUGINS']):
     assert any(p.is_relative_to(root / 'builtin-plugins' / plugin) for p in files), plugin
 with tempfile.TemporaryDirectory() as temporary:
@@ -52,6 +62,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('image', nargs='?', default='aide:local')
     parser.add_argument('--require-plugin', action='append', default=[])
+    parser.add_argument('--require-lan-bridge', action='store_true')
     args = parser.parse_args()
     check_build_inputs()
     # The full profile may use a retained dependency image. New candidate
@@ -62,6 +73,7 @@ if __name__ == '__main__':
     try:
         subprocess.run(['docker', 'run', '--rm', '--name', container, '--network', 'none',
                         '--workdir', '/tmp', '-e', 'AIDE_REQUIRED_BUNDLED_PLUGINS=' + json.dumps(required),
+                        '-e', 'AIDE_REQUIRE_LAN_BRIDGE=' + ('1' if args.require_lan_bridge else '0'),
                         '--entrypoint', 'python3', image, '-c', PROGRAM],
                        check=True, timeout=90)
     finally:

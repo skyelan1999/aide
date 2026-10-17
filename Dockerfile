@@ -44,6 +44,7 @@ COPY cmd ./cmd
 COPY internal ./internal
 COPY plugins ./plugins
 COPY scripts/office ./scripts/office
+COPY scripts/build-message-lan.sh ./scripts/build-message-lan.sh
 # Fail the build before shipping a page whose application script cannot parse.
 RUN node --check internal/server/web/app.js \
     && node --check internal/server/web/message-center.js \
@@ -75,7 +76,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 go build -mod=vendor -trimpath \
     -ldflags "-s -w -X 'aide/internal/server.buildVersion=${AIDE_VERSION}' -X 'aide/internal/server.buildCommit=${AIDE_COMMIT}' -X 'aide/internal/server.buildRuntimeMode=${AIDE_RUNTIME_MODE}'" \
     -o /usr/local/bin/aide ./cmd/aide && \
-    CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags "-s -w" -o /usr/local/bin/aide-message-relay ./cmd/aide-message-relay
+    CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags "-s -w" -o /usr/local/bin/aide-message-relay ./cmd/aide-message-relay && \
+    sh scripts/build-message-lan.sh /opt/aide-message-lan
 
 # ── runtime stage：运行时镜像 ──────────────────────────────────────────────────
 # 层缓存优化（#46）：把「稳定层」（系统用户 + pip 依赖）放在 COPY 业务二进制【之前】，
@@ -171,6 +173,7 @@ ENV AIDE_BUILTIN_PLUGINS=/opt/aide/builtin-plugins
 # 3) 业务二进制（随每次代码/前端改动变化）——最易失效的层放在最后
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
 COPY --from=build /usr/local/bin/aide-message-relay /usr/local/bin/aide-message-relay
+COPY --from=build /opt/aide-message-lan /opt/aide/message-lan
 
 # 4) 元数据：源码哈希 label 供 aide.sh start 快捷路径比对；版本/环境/用户/健康检查
 #    AIDE_SRC_SHA 由 aide.sh start 计算 cmd+internal+go.mod/go.sum/vendor 哈希后注入。

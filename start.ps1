@@ -392,6 +392,8 @@ if ((Invoke-Compose @startArguments).Code -ne 0) {
     Write-Error "compose up 失败，请检查上方输出。"
 }
 
+try { & (Join-Path $PSScriptRoot 'scripts/message-lan-control.ps1') -Action start -DockerBin $dockerExe -ComposeCommand $ComposeCmd } catch { Write-Warning ('Message LAN bridge unavailable: '+$_.Exception.Message) }
+
 Write-Host "等待健康检查…"
 $ready = $false
 for ($i = 0; $i -lt 60; $i++) {

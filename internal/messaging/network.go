@@ -14,12 +14,15 @@ import (
 )
 
 type NetworkConfig struct {
+	// Launcher-owned private mailbox, never accepted from browser configuration.
+	BridgeDir string   `json:"-"`
 	Listen    string   `json:"listen"`
 	Advertise []string `json:"advertise"`
 	LAN       bool     `json:"lan"`
 	Relays    []string `json:"relays"`
 }
 type Network struct {
+	bridgeOwner string
 	service     *Service
 	config      NetworkConfig
 	ctx         context.Context
@@ -49,7 +52,7 @@ func StartNetwork(parent context.Context, s *Service, config NetworkConfig) (*Ne
 		return nil, err
 	}
 	ctx, cancel := context.WithCancel(parent)
-	n := &Network{service: s, config: config, ctx: ctx, cancel: cancel, listener: listener, relayStatus: map[string]string{}}
+	n := &Network{bridgeOwner: randomID(), service: s, config: config, ctx: ctx, cancel: cancel, listener: listener, relayStatus: map[string]string{}}
 	n.tunnel = &channelListener{connections: make(chan net.Conn, 16), done: make(chan struct{})}
 	if err = n.refreshAddresses(); err != nil {
 		listener.Close()
@@ -68,7 +71,7 @@ func StartNetwork(parent context.Context, s *Service, config NetworkConfig) (*Ne
 	s.dial = func(ctx context.Context, peer string, known Card) (net.Conn, error) {
 		var last error = errors.New("no configured relay available")
 		if config.LAN {
-			cards, _ := discoverLAN(ctx, known.Device.Code)
+			cards, _ := n.discover(ctx, known.Device.Code)
 			for _, card := range cards {
 				if card.Device.Fingerprint != peer || card.Validate(time.Now()) != nil {
 					continue
@@ -110,7 +113,7 @@ func StartNetwork(parent context.Context, s *Service, config NetworkConfig) (*Ne
 			_ = server.Serve(tls.NewListener(newBoundedListener(ln, 64), server.TLSConfig))
 		}(server, ln)
 	}
-	if config.LAN {
+	if config.LAN && config.BridgeDir == "" {
 		n.udp, err = net.ListenMulticastUDP("udp4", nil, &net.UDPAddr{IP: net.ParseIP("239.255.76.33"), Port: 45839})
 		if err != nil {
 			n.Close()
@@ -123,11 +126,31 @@ func StartNetwork(parent context.Context, s *Service, config NetworkConfig) (*Ne
 		n.wg.Add(1)
 		go func(relay *RelayClient) { defer n.wg.Done(); n.maintainRelay(relay) }(relay)
 	}
+	if config.LAN && config.BridgeDir != "" {
+		// Approval retries may take many seconds; keep the host lease alive independently.
+		n.wg.Add(1)
+		go func() {
+			defer n.wg.Done()
+			ticker := time.NewTicker(2 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-n.ctx.Done():
+					return
+				case <-ticker.C:
+					_ = n.refreshAddresses()
+				}
+			}
+		}()
+	}
 	n.wg.Add(1)
 	go func() { defer n.wg.Done(); n.refreshPending() }()
 	return n, nil
 }
 func (n *Network) refreshAddresses() error {
+	if n.publishBridge() {
+		return nil
+	}
 	if len(n.config.Advertise) > 0 {
 		return n.service.SetAddresses(n.config.Advertise)
 	}
@@ -174,6 +197,7 @@ func (n *Network) Close() {
 		relay.Close()
 	}
 	n.wg.Wait()
+	n.clearBridge()
 }
 func (n *Network) Status() map[string]string {
 	n.mu.Lock()
@@ -245,7 +269,9 @@ func (n *Network) refreshPending() {
 		case <-n.ctx.Done():
 			return
 		case <-ticker.C:
-			_ = n.refreshAddresses()
+			if !n.config.LAN || n.config.BridgeDir == "" {
+				_ = n.refreshAddresses()
+			}
 			rounds++
 			if rounds%15 == 0 {
 				ctx, cancel := context.WithTimeout(n.ctx, 8*time.Second)
@@ -280,6 +306,9 @@ func (n *Network) Discover(ctx context.Context, code string) ([]Card, error) {
 	if !ValidCode(code) {
 		return nil, errors.New("enter a six-character device code")
 	}
+	if n.config.LAN && n.config.BridgeDir != "" && len(n.relays) == 0 && !LANBridgeReady(n.config.BridgeDir) {
+		return nil, errors.New("Docker 局域网桥未就绪，请用更新后的启动器启动；检查 .aide-data/message-lan/bridge.log")
+	}
 	result := []Card{}
 	seen := map[string]bool{}
 	var mu sync.Mutex
@@ -308,11 +337,18 @@ func (n *Network) Discover(ctx context.Context, code string) ([]Card, error) {
 	}
 	if n.config.LAN {
 		wg.Add(1)
-		go func() { defer wg.Done(); cards, _ := discoverLAN(ctx, code); appendCards(cards) }()
+		go func() { defer wg.Done(); cards, _ := n.discover(ctx, code); appendCards(cards) }()
 	}
 	wg.Wait()
 	sort.Slice(result, func(i, j int) bool { return result[i].Device.Fingerprint < result[j].Device.Fingerprint })
 	return result, nil
+}
+
+func (n *Network) discover(ctx context.Context, code string) ([]Card, error) {
+	if n.config.BridgeDir != "" {
+		return bridgeDiscover(ctx, n.config.BridgeDir, code)
+	}
+	return discoverLAN(ctx, code)
 }
 
 type discoveryPacket struct {

@@ -513,6 +513,10 @@
       ],
       [
         "python3",
+        "scripts/test_message_lan_launcher.py"
+      ],
+      [
+        "python3",
         "scripts/test_local_dependency_image.py"
       ],
       [
