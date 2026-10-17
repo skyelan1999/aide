@@ -1,0 +1,85 @@
+{
+  "id": "startup-inputs-notice-synced-main-20261017",
+  "request": "恢复已授权插件缓存指纹隔离和星图重启提示布局，保留新版 main UI；不使用证书告警页面。",
+  "baseline": "b063c8745ef2c90c19bc505396b348aecb0e9e32",
+  "initial_status": "",
+  "acceptance": [
+    "Generated nested plugin node_modules creation/change/removal leaves source identity unchanged; plugin lockfile/code remain inputs.",
+    "Docker build context excludes generated dependency caches while retaining plugin sources/manifests.",
+    "Restart notice does not inherit star-map detail panel position/height; actual local component rendered; preserve user tabs.",
+    "Preserve resource guards, current main UI and full shard runner; no published URLs changed."
+  ],
+  "scope": [
+    ".dockerignore",
+    "scripts/aide.sh",
+    "scripts/test_source_fingerprint.py",
+    "internal/server/web/crash-monitor.css",
+    "internal/server/web/starmap.css",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.html",
+    "docs/tasks/startup-inputs-notice-synced-main-20261017.json",
+    "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Recover existing authorized own cache/layout changes without merging rejected branch.",
+      "evidence": [
+        "scripts/test_source_fingerprint.py",
+        "internal/server/web/starmap.css"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Exclude generated dependency directories consistently and scope detail selectors to#detail; explicit compact crash notice dimensions.",
+      "evidence": [
+        "scripts/test_source_fingerprint.py",
+        "internal/server/web/starmap.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Recovered scoped own dependency-pruning and detail-selector repairs; preserved new main UI and resource guards.",
+      "evidence": [
+        "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Negative reproduced;2 fingerprint tests pass; actual Docker context pass; four native component combinations and sample dialog/dismiss interactions checked; quick109 pass. Exact current-source full next, whole-workbench UI user-deferred.",
+      "evidence": [
+        "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md",
+        ".agent-state/verify-20261017T064606488540Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded direct negative, positive tests, real Docker context and native component scope/limits.",
+      "evidence": [
+        "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own test tab closed/original39 restored; component service stopped, scratch image/container and temporary context removed; host caches untouched.",
+      "evidence": [
+        "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental fixes/tests/push authorization; no production replacement this batch.",
+  "rollback": "Revert scoped source commit only; no host plugin caches or production data deleted.",
+  "handoff": "Full workbench UI user-deferred, Windows user-owned, real vectors deferred.",
+  "quickReceipt": {
+    "status": "pass",
+    "fingerprint": "becfae543c3e0e8084312ea50ae917d6fcb520b53dfb7951a1c755563d357780",
+    "head": "b063c8745ef2c90c19bc505396b348aecb0e9e32",
+    "log": ".agent-state/verify-20261017T064606488540Z.log"
+  }
+}

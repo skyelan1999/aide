@@ -58,6 +58,17 @@ class SourceFingerprintTests(unittest.TestCase):
                 self.assertRegex(result.stdout, r'^[0-9a-f]{64}\n$')
                 return result.stdout
             first = fingerprint()
+            cached = root/'plugins/custom/node_modules/nested/node_modules/dependency'
+            cached.mkdir(parents=True)
+            (cached/'native.node').write_bytes(b'host-specific generated binary')
+            self.assertEqual(first, fingerprint())
+            (cached/'native.node').write_bytes(b'rebuilt for another host')
+            self.assertEqual(first, fingerprint())
+            shutil.rmtree(root/'plugins/custom/node_modules')
+            self.assertEqual(first, fingerprint())
+            (root/'plugins/custom/package-lock.json').write_text('{"lockfileVersion":3}')
+            self.assertNotEqual(first, fingerprint())
+            first = fingerprint()
             (root/'internal/.DS_Store').write_bytes(b'Finder view state')
             self.assertEqual(first, fingerprint())
             (root/'internal/.DS_Store').write_bytes(b'Finder changed during build')

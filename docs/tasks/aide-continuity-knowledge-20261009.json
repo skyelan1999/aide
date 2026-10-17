@@ -8141,5 +8141,13 @@
     "nativeUI": "user-deferred",
     "production": "unchanged",
     "next": "Reconcile generated dependency fingerprint/notice layout and then exact-source full; preserve newer main UI and shards."
+  },
+  "startup_inputs_notice_synced_main_20261017": {
+    "status": "targeted_quick_and_component_pass_full_pending",
+    "task": "docs/tasks/startup-inputs-notice-synced-main-20261017.json",
+    "report": "docs/reviews/2026-10-17/startup-inputs-notice-synced-main.md",
+    "wholeWorkbench": "user-deferred",
+    "production": "unchanged",
+    "next": "Exact current-source full with preset4GiB/2CPU limits; audit MCP preservation separately before any production change."
   }
 }
