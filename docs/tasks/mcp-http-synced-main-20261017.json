@@ -33,8 +33,8 @@
       ]
     },
     "design": {
-      "status": "in_progress",
-      "summary": "Selected own feature delta inspected; source/app/form hunks can be reapplied, workbench.css has upstream context drift and must be scoped manually. Current full snapshot running; no runtime source mutation yet.",
+      "status": "pass",
+      "summary": "Selected own HTTP transport/CAS/form delta reviewed; upstream CSS preserved with scoped additions. No rejected branch merge; copied candidate prepared separately from running full.",
       "evidence": [
         "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
       ]
@@ -45,9 +45,11 @@
       "evidence": []
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Isolated current-form negative then recovered candidate positive VM pass; Safari HTTP/stdio synthetic submissions and hidden-secret exclusion pass. Candidate not applied; Go race, real AIDE gateway connection, exact combined full and native whole-workbench remain pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md"
+      ]
     },
     "documentation": {
       "status": "pending",
@@ -67,5 +69,15 @@
   },
   "release_authorization": "Existing user Docker MCP test/setup and incremental work/test/push authorization; latest Git direction forbids rejected history branch merge and limits main synchronization. No production replacement before compatibility/full gates.",
   "rollback": "Preserve production source config, encrypted vault, image and containers; source-only revert is insufficient if deployed older stdio-only code; never reset source registry or credentials.",
-  "handoff": "Await running full63551; then recover reviewed HTTP delta on task branch, use focused bounded serial tests before next combined gate. Native full UI user-deferred, Windows user-owned, real vectors deferred."
+  "handoff": "Await running full63551; then recover reviewed HTTP delta on task branch, use focused bounded serial tests before next combined gate. Native full UI user-deferred, Windows user-owned, real vectors deferred.",
+  "candidateEvidence": {
+    "privateDir": ".agent-state/mcp-http-synced-main-20261017",
+    "files": [
+      "negative-form.log",
+      "positive-form.log",
+      "form-proof.json",
+      "native-form-proof.json"
+    ],
+    "implementationBoundary": "Prepared isolated candidate only; repository runtime sources unchanged."
+  }
 }
