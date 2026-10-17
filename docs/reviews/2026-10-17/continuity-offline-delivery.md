@@ -10,8 +10,8 @@
 
 ## 当前状态
 
-- ARM64 附件公开校验通过；AMD64 同一页面串行开始上传，仍待公开完成。
-- 默认清单、仓库校验文件尚未修改；只准备本地候选清单。
+- ARM64 / AMD64 完整包及独立说明 / 校验文件全部公开校验通过。
+- 公开配对门禁通过后，本地已更新默认清单、仓库校验文件及说明；最终源码目录启动和 full/main 门禁待执行。
 - main 未合入或推送；未升版、打标签或提交 Release 编辑表单。
 - 生产实例保持；完整原生工作台验收暂缓，Windows 用户验收，真实向量暂缓。
 
@@ -32,3 +32,13 @@
 实际访问[ARM 完整离线包](https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz)，Range 0–1023 返回 HTTP206，Content-Range 总大小正确，读取 1024 字节且 gzip 头正确。这是公开下载入口冒烟，不是网络全包下载或另一设备导入验收。
 
 本轮候选公开门禁已推进到 `linux/amd64: no unique uploaded public asset`，exit1/mutations=false；ARM 对应项已通过，仍不激活双架构默认清单。随后在同一现有 Safari 页面选择精确 AMD64 `382c90e72fca` 包开始上传，未重复上传 ARM，未提交说明表单。
+
+## 双架构配对及默认清单
+
+AMD64 附件 ID `649902301`、state uploaded、916933833 字节、SHA256 `df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c` 与本地一致。公开 URL Range 冒烟 HTTP206 / 1024 字节 / gzip 头及总大小正确，同样不是另一设备全包导入验收。
+
+两个完整包的公开配对门禁 PASS，mutations=false，同一源码 `07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def`。随后才更新本地 `docker/prebuilt-images.tsv`、`docker-images/SHA256SUMS` 及说明；实际受控默认清单再次通过在线门禁。旧清单可从 Git 及私有备份回溯，未替换生产。
+
+独立 README / SUMS 附件 ID `649909981` / `649910020` 已公开 uploaded；大小、摘要及实际完整下载字节与本地一致。公开 Release 当前 27 个附件，原 23 个保留、正文哈希不变，未提交现有说明编辑表单。
+
+继续验证普通源码目录默认预构建启动路径，以及交付输入变化后的 full/main 门禁；截至本段记录尚未推送 main。

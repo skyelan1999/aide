@@ -7,7 +7,8 @@
     "Use current full114 runtime source and locally verified ARM64/AMD64 complete archives; preserve all prior release assets and unsaved release form content.",
     "Stage only immutable new archive filenames in existing public RC2 pre-release; verify uploaded state, positive size, exact SHA256/URL and common source via actual public API before default activation.",
     "Update public default manifest and package checksums only to verified qualified assets; rerun full after tracked delivery-input changes and follow clean-main release-check before push.",
-    "Preserve production identity/data, existing rollback images/packages and user UI; record native workbench user-deferred, AMD64 native/Windows user-owned NOT_RUN, real vectors deferred."
+    "Preserve production identity/data, existing rollback images/packages and user UI; record native workbench user-deferred, AMD64 native/Windows user-owned NOT_RUN, real vectors deferred.",
+    "Start a fresh isolated ordinary source checkout via original start.command without source-build opt-in; verify current default runtime identity/health/auth and no compilation/download when exact image is already local; stop/remove owned test containers and preserve production."
   ],
   "scope": [
     "docker/prebuilt-images.tsv",
@@ -37,7 +38,7 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "Current ARM immutable archive publicly uploaded as649882716 with exact SHA/size; all23 original assets/body retained. AMD382c selected and upload started serially in same existing Safari tab; default unchanged.",
+      "summary": "Both immutable same-source archives and README/SUMS publicly uploaded/size/digest/download validated. Public pair verifier PASS before local default/checksum/docs activation. Fresh ordinary checkout startup and final full/main pending.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -45,7 +46,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "ARM public uploaded/size/SHA exact; actual unauthenticated public Range first1024 bytes HTTP206/gzip and total size pass. Candidate public gate now rejects only unavailable AMD64 with mutations=false. AMD upload live, paired positive/full/main gates pending.",
+      "summary": "Public pair and actual tracked default both pass read-only metadata gate; both Range HTTP206/gzip/total size pass; small supplements actual download exact. Original23 assets/body retained. Source checkout startup/full/main gates pending.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -72,5 +73,5 @@
   },
   "release_authorization": "Existing user incremental push/main/Release distribution authorization retained by parent goal ledger; current task stages exact complete image assets and qualifies default manifest, not production replacement. User requested repository and release bundles fast import/start; Windows user-owned, native workbench deferred, real vectors deferred.",
   "rollback": "Preserve existing published assets, old tracked manifest/checksum history, production6a8 image/data and current local complete packages. Do not replace production or restore old data; defaults only after verified new assets.",
-  "handoff": "Poll same existing Safari RC2 AMD382c upload/public API; ARM4b784 uploaded/validated, do not restart either upload from absence alone. After AMD completion verify pair, append prepared small README/SUMS, then default/full/main gates. Preserve unsaved Release notes; Windows native user-owned NOT_RUN."
+  "handoff": "Finish isolated ordinary source checkout default start.command identity/health/auth without build opt-in, stop/remove owned test containers, then full on clean main and release-check before push. Public27 assets complete; preserve unsaved Release notes. Native full workbench deferred, Windows user-owned, vectors deferred."
 }
