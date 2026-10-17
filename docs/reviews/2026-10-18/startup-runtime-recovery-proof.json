@@ -76,5 +76,15 @@
     "defaultManifestChanged": false,
     "automaticSourceCheckoutArchiveRecoveryImplemented": false
   },
-  "harnessNote": "Initial post-activation verifier used nonexistent config.buildRuntimeMode and raised KeyError after successful startup; corrected to updates/slots.runtimeMode and revalidated without restarting."
+  "harnessNote": "Initial post-activation verifier used nonexistent config.buildRuntimeMode and raised KeyError after successful startup; corrected to updates/slots.runtimeMode and revalidated without restarting.",
+  "delivery": {
+    "status": "scoped_local_rebuild_and_documentation_pass",
+    "main": "398e72b76ea9fa8d5d781824f0c8f31e44c845ee",
+    "remoteExact": true,
+    "releaseCheckExit": 0,
+    "fullReceiptReusedUnchangedInputs": true,
+    "fullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "gatePublicDefaultSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "newPublicRelease": false
+  }
 }

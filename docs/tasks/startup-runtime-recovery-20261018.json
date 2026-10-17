@@ -66,8 +66,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "本机重编译和用户实例恢复已完成；准备文档门禁及main推送，不发布新tag／附件。",
+      "status": "pass",
+      "summary": "本机48e/8f重编译运行恢复通过；文档398e72b7已推main，独立远端精确一致。干净main文档门禁退出0，范围为相同68a full127及旧07c公开默认元数据，不表示48e公开发布或源码自动恢复已实现。",
       "evidence": [
         "docs/reviews/2026-10-18/startup-runtime-recovery.md",
         "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
