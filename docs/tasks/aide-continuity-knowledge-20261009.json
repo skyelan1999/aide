@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Prior reconciled source full112/becfae passed, including938 entries/12 shards/race/vet/CAD. Current HTTP-integrated source quick110 PASS and10 MCP race PASS6.092s; new exact-source full/real Docker gateway pending. Original12 remain in_progress; native full-workbench user-deferred, Windows user-owned, real vectors deferred.",
+      "summary": "Current combined source full114 PASS on exact fingerprintc5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c;946 server entries in12 serial shards/race/vet/CAD pass. Actual Docker MCP source-handler probe now running, native whole-workbench user-deferred. Original12 remain in_progress, Windows user-owned, real vectors deferred; current public default URLs still need final published candidates.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -8179,6 +8179,17 @@
     "report": "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
     "currentSourceFingerprint": "51be8d4e281ae23ccae1e880b84c89b40f274662776e05c5737d103704beee34",
     "next": "Freeze combined source and run full; actual MCP gateway/native proof and dual-architecture delivery remain separate.",
+    "production": "unchanged"
+  },
+  "mcp_publication_combined_full_20261017": {
+    "status": "pass",
+    "sourceCommit": "67738355",
+    "receiptHead": "41cb3a35980ac7505922e843cfb7e6f3fd1e132c",
+    "fingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+    "commands": 114,
+    "serverEntries": 946,
+    "report": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+    "actualGateway": "running in serial owned fixture after full",
     "production": "unchanged"
   }
 }

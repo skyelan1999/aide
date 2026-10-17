@@ -22,7 +22,8 @@
     "docs/tasks/prebuilt-publication-gate-20261017.json",
     "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
     "docs/tasks/aide-continuity-knowledge-20261009.json",
-    "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json"
+    "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json",
+    "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -49,13 +50,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Direct exporter negative reproduced;7 publication tests,6 route tests,21 launcher tests pass; quick111 PASS. Actual online default check correctly FAILS missing uploaded asset with mutations=false. New exact combined full pending; existing default URL defect not closed. Actual public API positive on temporary published294b2be7 d025/301 pair passes; tracked defaults unchanged and still fail. No historical runtime activated.",
+      "status": "pass",
+      "summary": "Direct exporter negative reproduced;7 publication tests,6 route tests,21 launcher tests pass; quick111 PASS. Actual online default check correctly FAILS missing uploaded asset with mutations=false. New exact combined full pending; existing default URL defect not closed. Actual public API positive on temporary published294b2be7 d025/301 pair passes; tracked defaults unchanged and still fail. No historical runtime activated. New exact-source full114 PASS with946 registered server entries/12 serial shards/race/vet/CAD; whole-workbench UI remains user-deferred.",
       "evidence": [
         "docs/reviews/2026-10-17/prebuilt-publication-gate.md",
         ".agent-state/verify-20261017T070648401457Z.log",
         ".agent-state/prebuilt-publication-live-audit.json",
-        "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json"
+        "docs/reviews/2026-10-17/prebuilt-publication-live-proof.json",
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
       ]
     },
     "documentation": {
@@ -88,9 +90,14 @@
     "log": ".agent-state/verify-20261017T070648401457Z.log"
   },
   "combinedFull": {
-    "status": "running",
+    "status": "pass",
     "ownerSession": 44564,
     "sourceCommit": "67738355",
-    "privateLog": ".agent-state/mcp-publication-combined-full-20261017.log"
+    "privateLog": ".agent-state/mcp-publication-combined-full-20261017.log",
+    "fingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+    "receiptHead": "41cb3a35980ac7505922e843cfb7e6f3fd1e132c",
+    "commands": 114,
+    "serverEntries": 946,
+    "evidence": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
   }
 }

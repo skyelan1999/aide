@@ -26,7 +26,8 @@
     "internal/server/mcp_existing_configuration_test.go",
     "docs/architecture.md",
     "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
-    "docs/plugins/docker-mcp.md"
+    "docs/plugins/docker-mcp.md",
+    "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -52,11 +53,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Independent current-config negative reproduced,10 integrated MCP race tests pass6.092s and quick110 PASS. Applied form/CSS bytes match native synthetic candidate proof. Actual Docker gateway and new exact-source full remain pending.",
+      "summary": "Independent current-config negative reproduced,10 integrated MCP race tests pass6.092s and quick110 PASS. Applied form/CSS bytes match native synthetic candidate proof. Actual Docker gateway and new exact-source full remain pending. New exact-source full114 PASS with946 registered server entries/12 serial shards/race/vet/CAD; whole-workbench UI remains user-deferred.",
       "evidence": [
         "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
         "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
-        ".agent-state/verify-20261017T070223636611Z.log"
+        ".agent-state/verify-20261017T070223636611Z.log",
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
       ]
     },
     "documentation": {
@@ -110,10 +112,15 @@
     "log": ".agent-state/verify-20261017T070223636611Z.log"
   },
   "combinedFull": {
-    "status": "running",
+    "status": "pass",
     "ownerSession": 44564,
     "sourceCommit": "67738355",
     "privateLog": ".agent-state/mcp-publication-combined-full-20261017.log",
-    "noConcurrentGo": "true"
+    "noConcurrentGo": "true",
+    "fingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+    "receiptHead": "41cb3a35980ac7505922e843cfb7e6f3fd1e132c",
+    "commands": 114,
+    "serverEntries": 946,
+    "evidence": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
   }
 }
