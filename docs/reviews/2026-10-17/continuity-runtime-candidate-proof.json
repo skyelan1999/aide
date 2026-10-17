@@ -1,0 +1,130 @@
+{
+  "status": "pass",
+  "scope": "isolated current ARM runtime, original launchers, authenticated APIs, real process restarts; no full native UI claim",
+  "reasoning": {
+    "status": "pass",
+    "scope": "current ARM runtime original launcher + authenticated API/canonical disk/actual process restart; native browser UI deferred",
+    "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+    "buildCommit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+    "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "fullFingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c",
+    "healthy": true,
+    "unauthenticatedConfigStatus": 401,
+    "reasoningWrites": 10,
+    "levels": [
+      {
+        "A": "auto",
+        "B": "high",
+        "apiDiskExact": true,
+        "differentSessionsWrittenConcurrently": true
+      },
+      {
+        "A": "off",
+        "B": "medium",
+        "apiDiskExact": true,
+        "differentSessionsWrittenConcurrently": true
+      },
+      {
+        "A": "low",
+        "B": "low",
+        "apiDiskExact": true,
+        "differentSessionsWrittenConcurrently": true
+      },
+      {
+        "A": "medium",
+        "B": "off",
+        "apiDiskExact": true,
+        "differentSessionsWrittenConcurrently": true
+      },
+      {
+        "A": "high",
+        "B": "auto",
+        "apiDiskExact": true,
+        "differentSessionsWrittenConcurrently": true
+      }
+    ],
+    "staleWriteStatus": 409,
+    "staleDidNotOverwrite": true,
+    "globalModelAndEffortUnchanged": true,
+    "restart": {
+      "originalStopAndStart": true,
+      "sameContainerAndImageNewProcess": true,
+      "selections": [
+        "high",
+        "auto"
+      ],
+      "revisions": [
+        5,
+        5
+      ],
+      "noRebuildOrPull": true
+    },
+    "productionContainerUnchanged": true,
+    "productionProtectedFilesExact": 22,
+    "realProviderCalls": 0,
+    "productionDataMounted": false,
+    "Windows": "user-owned",
+    "AMD64": "not_run"
+  },
+  "mcp": {
+    "status": "pass",
+    "scope": "current built ARM candidate authenticated HTTP API -> actual Docker gateway, plus original stop/start process restart",
+    "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+    "commit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+    "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "tools": 10,
+    "readonly": 0,
+    "toolsExecuted": 0,
+    "virtualDescription": true,
+    "sourceModeAndCredentialPersistedAcrossProcessRestart": true,
+    "reasoningSelectionsAndRevisionsStillExact": true,
+    "sameImageContainerNewProcess": true,
+    "noRebuildOrPull": true,
+    "productionContainerUnchanged": true,
+    "productionProtectedFilesExact": 22,
+    "productionGatewayTokenUnchanged": true,
+    "productionDataMounted": false,
+    "realProviderCalls": 0,
+    "nativeUI": "user-deferred"
+  },
+  "fullRegression": "mcp-publication-combined-full-proof.json",
+  "offlinePackage": {
+    "status": "pass",
+    "platform": "linux/arm64",
+    "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+    "sourceSHA": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "buildCommit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+    "bytes": 771016230,
+    "sha256": "d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+    "innerImageArchiveSHA256": "8deb9bf64f8460b3250cf64f91543aa7de06c3dec9e63a7197bb3846b95e3392",
+    "archivePathsAndNoHostData": true,
+    "dockerLoadExit": 0,
+    "loadedIdentityExact": true,
+    "publicDefaultManifestUnchanged": true,
+    "published": false,
+    "otherDeviceImport": "not_run",
+    "buildInfo": "version=0.1.17.0-RC2\nimage=sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34\nplatform=linux/arm64\nsrcsha=07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def\ncadRuntime=8.0.1.1.0\ndependencyImage=sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5\n"
+  },
+  "production": "identity and 22 protected files unchanged",
+  "publication": "not_done",
+  "nativeWorkbench": "user-deferred",
+  "Windows": "user-owned",
+  "realVectors": "deferred",
+  "offlineStartup": {
+    "status": "pass",
+    "scope": "same-machine extracted offline bundle original start/stop, no source tree",
+    "platform": "linux/arm64",
+    "image": "sha256:4b784ce0724f622c212de1457b65fc18a757da90eee3169b72f8933bb99b0c34",
+    "commit": "db02c58f190dee53b9462996e4fce2f47847b8c7",
+    "healthy": true,
+    "unauthenticatedStatus": 401,
+    "nativeCADImport": true,
+    "noRebuildOrRemoteImageDownload": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "ownedOfflineInstanceStopped": true,
+    "otherDevice": "not_run",
+    "nativeUI": "user-deferred"
+  },
+  "AMD64": "build_in_progress"
+}

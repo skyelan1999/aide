@@ -7,7 +7,9 @@
     "Freeze exact full114-passed runtime inputs; archive excludes generated host dependencies and contains complete current source.",
     "Start isolated ARM candidate with original start.command, no model keys or production data mounts; verify health/auth, session reasoning write/isolation and persistence using owned fixtures.",
     "Keep actual production identity/protected files unchanged and resource usage bounded; remove only owned superseded stopped containers before creating replacement, retaining images/data.",
-    "Record native whole-workbench UI as user-deferred, not bypassed; ARM success does not prove AMD64/Windows/new-device import/publication."
+    "Record native whole-workbench UI as user-deferred, not bypassed; ARM success does not prove AMD64/Windows/new-device import/publication.",
+    "Export current ARM complete offline bundle using existing scripts, validate both archive hashes and actual docker load identity; start/stop extracted package through original launchers without source rebuild or remote image download.",
+    "Prepare same-source AMD64 candidate serially with complete retained local dependencies; label emulated tests separately from native Windows/other-device acceptance."
   ],
   "scope": [
     "docs/tasks/continuity-runtime-candidate-20261017.json",
@@ -33,24 +35,36 @@
       ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Built exact full114 source ARM runtime and launched with original start.command in isolated owned project.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "PASS scoped ARM: 10 concurrent cross-session reasoning writes, stale409, original process restart and disk/API persistence; actual Docker MCP10 tools/description and second restart passed; production22 protected files exact. Native full-workbench user-deferred; offline import in progress. ARM archive hash, actual docker load identity and extracted offline original start/stop health/auth/nativeCAD passed; no rebuild/pull; AMD64 build in progress.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Recorded source/image identities, exact tested scope, protected production checks and pending native/AMD64/public delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Removed only two proven-owned stopped superseded candidate containers; retained their images/data and production. New owned runtime retained for offline validation.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -60,5 +74,5 @@
   },
   "release_authorization": "Existing user incremental work/test/image distribution authorization; this task prepares isolated current runtime, not main push/tag/Release or production replacement.",
   "rollback": "Retain production image/containers/data untouched; retain superseded candidate images and owned data, remove only known stopped candidate containers; stop new owned candidate on failure.",
-  "handoff": "Full native UI user-deferred; no security warning bypass. AMD64/Windows/public default manifest replacement remain separate."
+  "handoff": "ARM export/load/extracted offline startup passed; AMD64 current local build running. Full native UI user-deferred, Windows user-owned, real vectors deferred; public assets/default manifest/main gates separate."
 }

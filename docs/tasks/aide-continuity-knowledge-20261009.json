@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current combined source full114 PASS on exact fingerprintc5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c;946 server entries/12 shards/race/vet/CAD. Current AIDE to actual Docker MCP auth/discovery/description/owned App-disk-reopen passed;10 tools/0 readonly/0 calls. Original12 remain in_progress: native full-workbench user-deferred, Windows user-owned, real vectors deferred, final runtime/public assets/default URLs/main delivery pending.",
+      "summary": "Current combined full114 PASS:946 server entries/12 shards/race/vet/CAD. Newly built exact-source ARM runtime passed10 cross-session reasoning writes/stale409/disk/API/original stop-start persistence, actual Docker MCP10 tools/description and restart credential persistence; production22 files unchanged. Original12 remain in_progress; full native UI user-deferred, Windows user-owned, real vectors deferred; ARM export/load/extracted original start-stop health/auth/nativeCAD passed without rebuild/pull. AMD64 build running; public assets/default manifest/main delivery pending.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -118,7 +118,9 @@
         "2026-10-13 continuation, current HEAD 74ad5e5 in healthy aide-aide-1: 11 approval tests passed under `go test -mod=vendor -race -p=1 ./internal/server -run '^(TestApprovalRememberExpiryFromAnswer|TestApprovalRuleManagement|TestConcurrentApprovalExpiryAndRevocationUseRevisionGuard|TestRememberedApprovalReceiptAndOutcome|TestAssistedApprovalNewFiles|TestGlobalApprovalModeManualStopsReviewAcrossSessions|TestRememberedApprovalDoesNotCrossSSHRoot|TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing|TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue|TestWorkflowApprovalConflictAndPersistence|TestRunShellRequiresExactConfirmationForWrites)$' -count=1 -timeout=180s` (15.314s). Safari localhost:9999 read-only inspection of dedicated session #48 found the long response already completed; it did not expose a running pause control, so no pause UI conclusion is drawn. This evidence does not close the full goal, real user-host SSH, or UI/live-provider acceptance.",
         "2026-10-13 系统 Safari 现场反证：9999 的独立长上下文会话 #46 压缩显示“摘要处理中 · 分段整理 1/1”，早期消息 4 条、估算约 13.3K；只读复查时 elapsed 已到 57 分 38 秒仍未显示“进度已停滞”。同时该会话的合成长回答显示运行约 57 分 42 秒。未点击停止/重试、未发送新消息、未重启服务。当前源码 `node scripts/test_context_compaction_ui.cjs` PASS，覆盖 3 分钟无更新后的 stalled UI；`node --check internal/server/web/app.js` 与 `git diff --check` PASS。源码单测与系统 Safari 现场不一致，说明 9999 加载的前端/进度 API运行时状态仍需查明；未把压缩端到端验收标为通过。",
         "docs/tasks/outcome-overview-polling-20261015.json",
-        "docs/reviews/2026-10-16/continuity-current-audit.md"
+        "docs/reviews/2026-10-16/continuity-current-audit.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
+        "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json"
       ]
     },
     "documentation": {
@@ -155,7 +157,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Complete knowledge-path-native-20261017 and docs-only SSH clean-main gates, current RC2 four supplemental assets/public verification and main push. Full107 current98ebc999 pass. Then original12: SSH workspace-mode, recovered branch lifecycle, approval/outcome/timeline/combined workflows. Windows user-owned; real vectors deferred.",
+  "handoff": "Current ARM reasoning and actual MCP process-restart acceptance passed. ARM offline load and extracted startup passed; finish AMD64 packaging, published default URL integrity and main gates. Original12 broader SSH/workspace/combined UI boundaries remain; native whole-workbench user-deferred; Windows user-owned; real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
