@@ -83,10 +83,11 @@
   "handoff": "Original stale total counter defect repaired and actual current candidate native pass. Keep remaining absolute picker numbering, live partial-body scope and public package delivery distinct. Historical receipt/import and detail-final proofs remain scoped; no overall12 completion.",
   "followupExternalRefresh": {
     "task": "docs/tasks/outcome-external-events-20261017.json",
-    "status": "native_fix_pass_source_delivery_pending",
+    "status": "scoped_native_fix_delivered_main",
     "evidence": [
       "docs/reviews/2026-10-17/outcome-external-events.md",
       "docs/reviews/2026-10-17/outcome-external-events-proof.json"
-    ]
+    ],
+    "observedRemoteMain": "1ae377798a75c3d18611ce854d0d5351d8bbd67a"
   }
 }

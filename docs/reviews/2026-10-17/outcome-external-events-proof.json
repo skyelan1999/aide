@@ -82,9 +82,21 @@
     "livePartialOutcomeBody": "Before completion outcome shows generating placeholder; final body includes both markers. No native incremental partial-body claim."
   },
   "sourceDelivery": {
-    "status": "pending"
+    "status": "pass",
+    "observedRemoteMain": "1ae377798a75c3d18611ce854d0d5351d8bbd67a",
+    "pushExit": 0,
+    "independentRemoteExact": true,
+    "scope": "Source refresh repair and scoped native evidence; no public current image package or production replacement."
   },
   "releaseCheck": {
-    "status": "pending"
+    "exit": 0,
+    "exactFullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "defaultPublicSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "current406PublicAssetsQualified": false,
+    "mutations": false
+  },
+  "documentationChecks": {
+    "checkDocs": "PASS315 Markdown1187 local links",
+    "diffCheck": "pass"
   }
 }

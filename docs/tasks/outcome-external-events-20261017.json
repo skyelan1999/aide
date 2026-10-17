@@ -79,14 +79,17 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Scoped source repair delivered main1ae37779, independent remote exact; clean-main release-check0 current full68a and existing07c default assets. ARM5dc native qualified locally; no current dual-package/public/production claim.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing user incremental work/push/test and main merge. No production replacement.",
   "rollback": "Revert owned source commit, verify isolated runtime; keep production/data/images unchanged.",
-  "handoff": "Scoped refresh fix ready for clean-main gate and source push. Current406 dual packages/public pending; original12 remain, picker absolute numbering follow-up.",
+  "handoff": "Scoped source/native refresh fix delivered main. Next current406 dual-architecture offline package export/qualification/public delivery; picker absolute numbering and remaining original12 scopes stay open. Only production2 remain, images/data preserved.",
   "sourceIdentity": {
     "commit": "75278e2fcb43ac116176e3510949112bfc0350b2",
     "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
