@@ -1,0 +1,80 @@
+{
+  "id": "source-offline-recovery-20261018",
+  "request": "补齐Git源码启动器：Docker镜像被清理时，优先恢复保留的完整离线包作为编译依赖，避免缺CAD立即失败；保持版本升级、旧运行镜像、用户数据及显式重编译语义",
+  "baseline": "442d7f5185fcde87a18193a656b4228de3fdb1c0",
+  "initial_status": "",
+  "acceptance": [
+    "Bash源码启动器缺少本地基础依赖时，仅从受控预编译清单对应的本地完整包恢复seed；不联网、不覆盖配置的应用镜像。",
+    "旧版本seed只提供匹配平台/CAD及已校验工具链；仍编译当前源码，显式重编译语义不变；完整bases已在时不额外导入。",
+    "包不存在返回明确不可用；损坏摘要、重复清单、不可信URL或架构不符拒绝，不能退为联网掩盖失败。",
+    "聚焦正反向、quick/full、隔离原始start实际恢复/构建/健康/数据保护与文档门禁；Windows不作原生通过声明。"
+  ],
+  "scope": [
+    "scripts/prebuilt-image.sh",
+    "scripts/aide.sh",
+    "scripts/test_launcher_data.py",
+    "docs/tasks/source-offline-recovery-20261018.json",
+    "docs/architecture/software-updates.md",
+    "docs/continuity-operations.md",
+    "docs/reviews/2026-10-18/source-offline-recovery.md",
+    "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "复用现有预编译校验与prepare-local/CAD路径，增加local-seed模式；受控默认manifest挑选唯一平台包，私有seed标签，不将旧源码作为当前应用启动。Bash macOS/Linux范围，PS原生用户验收不扩称。",
+      "evidence": [
+        "scripts/aide.sh",
+        "scripts/prebuilt-image.sh",
+        "scripts/prepare-local-base.sh",
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用现有预编译校验与prepare-local/CAD路径，增加local-seed模式；受控默认manifest挑选唯一平台包，私有seed标签，不将旧源码作为当前应用启动。Bash macOS/Linux范围，PS原生用户验收不扩称。",
+      "evidence": [
+        "scripts/aide.sh",
+        "scripts/prebuilt-image.sh",
+        "scripts/prepare-local-base.sh",
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "local-seed仅用默认manifest对应本地包或已导入镜像；私有seed别名，保留应用目标。源码缺基础依赖时恢复seed给prepare-local/CAD，继续当前源码构建；拒绝损坏、符号链接和导入失败，不把错误码混成缺包。",
+      "evidence": [
+        "scripts/prebuilt-image.sh",
+        "scripts/aide.sh",
+        "scripts/test_launcher_data.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Bash语法、32启动存储测试、13离线包测试、7发布清单测试及quick124通过；实际Docker隔离恢复/编译、full待运行。",
+      "evidence": [
+        "scripts/test_launcher_data.py",
+        "scripts/test_offline_bundle.py",
+        "scripts/test_prebuilt_publication.py"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户此前要求脚本预设Docker恢复、仓库/release完整导入启动、清理Docker后重新编译；既有分批push/main授权。仅隔离验收，不替换当前用户服务。",
+  "rollback": "Revert scoped launcher changes; retain data/images/current48e service. No data migration.",
+  "handoff": ""
+}

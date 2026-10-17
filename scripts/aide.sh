@@ -287,10 +287,24 @@ case "$MODE" in
         echo "== 源码哈希变化（image=${cur_label:-<无>} → worktree=${SRCSHA}）→ 重新构建（默认不跑全量 test，仅 vet+build）=="
         export AIDE_SRC_SHA="$SRCSHA"
         if [[ "${AIDE_LOCAL_DEPENDENCIES:-1}" != 0 ]]; then
+          BUILD_SEED="$IMG"
+          # A cleared Docker engine may retain a complete bundle on the host.
+          # Recover only dependency layers, never activate that older application.
+          if ! launcher_local_runtime_ready "$DOCKER_BIN" "$IMG" && {
+            [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" != v1 ]] ||
+            [[ "$("$DOCKER_BIN" image inspect aide:cad-dependencies-v1 --format '{{index .Config.Labels "aide.cad-runtime"}}' 2>/dev/null || true)" != 8.0.1.1.0 ]];
+          }; then
+            seed_status=0
+            RECOVERED_SEED="$(launcher_local_build_seed "$DOCKER_BIN")" || seed_status=$?
+            if (( seed_status == 0 )); then BUILD_SEED="$RECOVERED_SEED";
+            elif (( seed_status != 3 )); then
+              echo "本地完整包依赖恢复失败；停止，不改用联网构建。" >&2; exit "$seed_status"
+            fi
+          fi
           base_status=0
-          LOCAL_BASE="$(bash scripts/prepare-local-base.sh "$IMG")" || base_status=$?
+          LOCAL_BASE="$(bash scripts/prepare-local-base.sh "$BUILD_SEED")" || base_status=$?
           if (( base_status == 0 )); then
-            if CAD_BASE="$(bash scripts/prepare-cad-base.sh "$IMG")"; then
+            if CAD_BASE="$(bash scripts/prepare-cad-base.sh "$BUILD_SEED")"; then
               export AIDE_CAD_IMAGE="$CAD_BASE"
               export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
             else
