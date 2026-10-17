@@ -1,0 +1,24 @@
+{
+  "status": "pass",
+  "head": "426b500642240b1abb605d2d3e727b47842cd5c2",
+  "fingerprint": "24f4fd82a941e5f463e82959cd9f57201f904205f46161f41e3f63c017804a05",
+  "log": ".agent-state/verify-20261017T110103401569Z.log",
+  "commands": 125,
+  "serverEntries": 970,
+  "shards": 12,
+  "allShardExitZero": true,
+  "resourceLimits": {
+    "memoryGiB": 4,
+    "cpus": 2,
+    "pids": 512,
+    "network": "none",
+    "hostMounts": 0
+  },
+  "priorFailuresRetained": [
+    ".agent-state/verify-20261017T104449717958Z.log",
+    ".agent-state/verify-20261017T104554409510Z.log"
+  ],
+  "nativeWorkbench": "pending_certificate_handoff",
+  "publicImageForMergedSource": "not_built",
+  "productionReplaced": false
+}

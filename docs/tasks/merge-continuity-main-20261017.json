@@ -1,0 +1,74 @@
+{
+  "id": "merge-continuity-main-20261017",
+  "request": "和一下，和到main上",
+  "baseline": "9d46bc807791b2bed9c5171f331360436e8748b6",
+  "upstreamMain": "f0f7d775",
+  "acceptance": [
+    "Integrate current continuity changes with latest remote main, retaining both feature sets and excluding rejected64a09479 ancestry.",
+    "Resolve conflicts explicitly and run merged-source quick/full checks; record failures and repairs.",
+    "Push merged source to remote main under direct user authorization; preserve native acceptance and current-image publication gaps without claiming release or deployment."
+  ],
+  "scope": [
+    "docs/tasks/merge-continuity-main-20261017.json",
+    "docs/reviews/2026-10-17/merge-continuity-main.md",
+    "docs/agent/router.json",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/test_offline_bundle.py",
+    "internal/server/sources_test.go",
+    "docs/reviews/2026-10-17/merge-continuity-main-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests main merge now; source merge is authorized independently of deferred native/release checks.",
+      "evidence": [
+        "docs/reviews/2026-10-17/merge-continuity-main.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Integrate origin/main into task integration branch, retain both route check lists/locales/resources, then fast-forward main and push without force.",
+      "evidence": [
+        "docs/reviews/2026-10-17/merge-continuity-main.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Merge5d27ff61; additive conflict resolution and cache versions; fixture helper repair5e21ab87.",
+      "evidence": [
+        "docs/reviews/2026-10-17/merge-continuity-main.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Exact merged full125 PASS;970 server entries/12 disjoint serial shards; race/vet/CAD and122 quick checks pass. Initial two fixture failures retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/merge-continuity-main-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Merged source and explicit native/public-image gaps recorded with exact full receipt.",
+      "evidence": [
+        "docs/reviews/2026-10-17/merge-continuity-main.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned disposable verifier removed; scoped source/docs only; production/candidate services and data untouched.",
+      "evidence": [
+        "docs/reviews/2026-10-17/merge-continuity-main.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Authorized source main push pending full; no version/tag/Release publication or production replacement requested.",
+      "evidence": [
+        "docs/reviews/2026-10-17/merge-continuity-main.md"
+      ]
+    }
+  },
+  "release_authorization": "Direct human instruction: 和一下，和到main上. This authorizes main source merge now; it does not assert prior native/public-image gates passed.",
+  "rollback": "Revert merge on a separate branch if necessary; never force push or remove upstream changes."
+}
