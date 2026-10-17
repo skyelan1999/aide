@@ -8238,5 +8238,15 @@
       "docs/reviews/2026-10-17/knowledge-real-repo-proof.json"
     ],
     "remaining": "Native workbench and aggregate release gates remain pending; no model/vector calls."
+  },
+  "ssh_workspace_current_20261017": {
+    "status": "protocol_api_pass_native_pending",
+    "task": "docs/tasks/ssh-workspace-current-20261017.json",
+    "summary": "Current4b784 original launcher actual SSH workspace: saves/stale409, whole-version body+SVG restore,5 history versions/ZIP,5-step code and2-step report path, original stop/start credentials and16 files exact; generated surface changed; production22 unchanged. Native SSH scene/UI still pending.",
+    "openIssue": "Custom all-internal network startup falsely reports ready invalid IP:0; separate follow-up required.",
+    "evidence": [
+      "docs/reviews/2026-10-17/ssh-workspace-current.md",
+      "docs/reviews/2026-10-17/ssh-workspace-current-proof.json"
+    ]
   }
 }
