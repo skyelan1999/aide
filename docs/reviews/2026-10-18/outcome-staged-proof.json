@@ -1,11 +1,20 @@
 {
-  "status": "in_progress",
+  "status": "verified_pending_main_delivery",
   "quick": {
     "status": "pass",
     "commands": 125,
     "fingerprint": "5347e4302248e809f9f7fdbdd41d9abe821d27f27b5a815474e52377cbe32f85"
   },
-  "full": "baseline127 pass; integrated full running",
+  "full": {
+    "status": "pass",
+    "commands": 128,
+    "serverInventory": 981,
+    "shards": 12,
+    "fingerprint": "5347e4302248e809f9f7fdbdd41d9abe821d27f27b5a815474e52377cbe32f85",
+    "log": ".agent-state/verify-20261017T172938430291Z.log",
+    "otherGoRaceVet": true,
+    "cadGeometry": true
+  },
   "native": {
     "client": "Safari native accessibility and screenshots",
     "origin": "https://localhost:58320/",
@@ -74,7 +83,7 @@
     "mergedWithoutConflicts": true,
     "quick": "pass125",
     "candidateImage": "sha256:07172e63ff04662f4f91757cc15e253d138e4c192a62f1d81136c8f9059bdfd1",
-    "full": "running981 server items/12 serial shards",
+    "full": "pass128;981 server items/12 disjoint shards",
     "nativeCore": "pass",
     "staleSnapshotRejected409": true,
     "nativeExport": {

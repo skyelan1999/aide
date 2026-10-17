@@ -9,7 +9,8 @@
     "API与页面预览有片段/文字预算、明确截断/遗漏；snapshot绑定所有片段，包括未展示片段，旧分页拒绝409，导出标明范围。",
     "深拷贝片段避免并发别名；理由/工具/辅助worker不冒充主输出；旧记录行为兼容。",
     "续验64轮/30和60加载窗口绝对编号，阶段追加/终态/详情切换/刷新与重启；真实隔离本地协议，无收费模型或向量。",
-    "聚焦/quick/full、当前候选原始启动器及原生Safari、数据保护/清理/文档/main门禁；Windows用户验收，原12继续。"
+    "聚焦/quick/full、当前候选原始启动器及原生Safari、数据保护/清理/文档/main门禁；Windows用户验收，原12继续。",
+    "本轮完成后为豆包编写详细交接：完整目标、实际提交/验证/运行与发布边界、未完成项、目录/命令/下一步和接手提示；不包含密钥，不能将专项完成当整体完成。"
   ],
   "scope": [
     "internal/server/task_outcome.go",
@@ -27,7 +28,8 @@
     "docs/architecture/continuity-roadmap.md",
     "docs/reviews/2026-10-18/outcome-staged.md",
     "docs/reviews/2026-10-18/outcome-staged-proof.json",
-    "docs/doubao-handoff-20261018.md"
+    "docs/doubao-handoff-20261018.md",
+    "docs/README.md"
   ],
   "stages": {
     "requirements": {
@@ -62,20 +64,19 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "旧基线full127/980项通过；集成f316/source2239/image0717：quick125、UID1000资源32项/5插件/6宿主程序、原始启动、原生首段→终态/详情/真实JSON下载及409、30/60/64和重启保持/22保护摘要通过。集成full981项正在运行；桥40秒对照和父进程结束后退出限制单列，不把它当双机通过。",
+      "status": "pass",
+      "summary": "集成f316/source2239/image0717：quick125/full128通过，981服务器项/12组、其余Go race/vet及CAD通过；原生持久首段/终态两段/详情去重、实际JSON导出、409、30/60/64及重启保持和22保护摘要通过。普通终端桥持续/真实双机不在通过范围。",
       "evidence": [
-        "internal/server/outcome_staged_test.go",
-        "internal/server/staged_output_test.go",
-        "scripts/outcome-pagination.test.cjs",
-        "scripts/outcome-overview-lifecycle.test.cjs",
         "docs/reviews/2026-10-18/outcome-staged.md",
-        "docs/reviews/2026-10-18/outcome-staged-proof.json"
+        "docs/reviews/2026-10-18/outcome-staged-proof.json",
+        "internal/server/outcome_staged_test.go",
+        "scripts/outcome-pagination.test.cjs",
+        "scripts/outcome-overview-lifecycle.test.cjs"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "专项报告/proof、主账本、交接、操作、架构与旧绝对编号续验记录已补；明确full运行中/未合main及本地协议范围。check_docs通过321 Markdown/1221链接，新增架构链接后再次核对。",
+      "summary": "专项报告/proof、主账本/交接/操作/架构及旧编号续验已补；豆包交接全文已编写并明确未完成与当前交付状态，main推送回执将在门禁后追加。链接检查通过，普通文档不代替精确full。",
       "evidence": [
         "docs/reviews/2026-10-18/outcome-staged.md",
         "docs/reviews/2026-10-18/outcome-staged-proof.json",
@@ -93,13 +94,15 @@
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "集成源码验证通过，待主目录main干净合入、匹配收据与门禁、push及独立远端核对；不含完整新双架构包/公开Release或生产更新。",
+      "evidence": [
+        "docs/reviews/2026-10-18/outcome-staged-proof.json"
+      ]
     }
   },
   "release_authorization": "用户原目标成果追踪、会话分段式结论、不等全做完覆盖；既有分批push/test和main授权。仅隔离本地协议模型，不替换当前用户服务。",
   "rollback": "Revert scoped projection/rendering commits; no persisted schema migration or user data rewrite. Keep prior runtime/images.",
-  "handoff": "集成full句柄50124、容器aide-verify-c7579f2315d8运行；输入稳定，不重启。完成后精确收据/main门禁/push，豆包文档定稿。桥在工具父进程结束后消失，0/5/35/40秒存活对照通过但根因未定，普通Terminal/双机尚待。",
+  "handoff": "集成full50124已终态pass128/981，验证容器自动清理；下一步main门禁/push、交接定稿。原12仍进行，发布包/桥普通Terminal和双机范围保留。",
   "integration_followup": {
     "remoteMain": "19e7c94d5a769dae444f31c5a0b54d7b30a133e9",
     "primaryMainSynced": true,

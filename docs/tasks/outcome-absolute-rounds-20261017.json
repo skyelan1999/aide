@@ -47,11 +47,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "旧源码负向／聚焦及最终quick124通过。full9/12服务器分片pass后因用户自行重启与main同步主动停准确验证容器，整体fail未完成；native未运行。",
+      "status": "pass",
+      "summary": "续验已在阶段输出集成f316/source2239/image0717完成：原生30/60/64绝对编号及#40目标、聚焦和quick125/full128通过，981服务器项/12组。原先中止full保留历史，不覆盖原证据。",
       "evidence": [
-        "docs/reviews/2026-10-17/outcome-absolute-rounds.md",
-        "docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json"
+        "docs/reviews/2026-10-18/outcome-staged.md",
+        "docs/reviews/2026-10-18/outcome-staged-proof.json"
       ]
     },
     "documentation": {
@@ -81,6 +81,6 @@
   },
   "release_authorization": "用户持续目标及先前分批push/test、合入main授权；不部署生产。",
   "rollback": "Revert scoped source commit, keep production/data/images unchanged.",
-  "handoff": "本修复已纳入outcome-staged候选，原生30/60/64绝对编号与#40目标通过；等待共同最终full及main门禁。保留原中止full历史，不覆盖为通过。",
+  "handoff": "共同集成验证已通过，待outcome-staged专项main门禁/push；原中止full仍为历史失败。",
   "continued_in": "docs/tasks/outcome-staged-20261018.json"
 }
