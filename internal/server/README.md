@@ -1,5 +1,11 @@
 # `internal/server` 阅读索引
 
+> 2026-10-17 对照源码 `0fef6411`。[软件模块说明](../../docs/architecture/modules.md)连接实际界面和调用链；[截图证据](../../docs/ui-evidence.md)不替代服务端测试。
+
+![服务端对应的实际工作台](../../docs/images/current-20261017/01-workbench.jpg)
+
+管理权限与提案看 `management.go`；自动系统文档和写入绑定看 `generated_documents.go` / `document_proposals.go`；页面助理跟进看 `assistant_watch.go`；消息看 `message_center.go` 与 `internal/messaging/`；MCP 两类传输看 `mcp_source.go` / `mcp_http.go`；百炼目录看 `tts_catalog.go`。这些入口仍遵循本 package 的 App 边界，不因功能分组而假设已经拆成独立微服务。
+
 这里是 aide 的 Go 服务端 package。HTTP 路由、`App` 状态以及会话和任务能力在同一 package 内协作；新增能力时优先使用职责明确的文件名，不要将单个实现文件移进子目录制造新的 package 边界。
 
 ## 常见阅读路径

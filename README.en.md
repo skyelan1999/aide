@@ -1,5 +1,7 @@
 <div align="center">
 
+> Documentation baseline: source `0fef6411`, 17 October 2026. [Actual screenshots](docs/ui-evidence.md) · [Demo walkthrough](docs/demo-guide.md) · [Feature scope](docs/features.md) · [Module design](docs/architecture/modules.md). All current UI images are unmodified captures of a running isolated instance with demonstration data, not mockups or release acceptance evidence.
+
 > **Startup configuration:** `.env` is the local source of truth. `start.command` → `scripts/aide.sh` → Docker Compose, using `AIDE_PORT` (default 8097) and `COMPOSE_FILE`. Temporary review ports are not user startup entries. See [workspace mount modes](docs/workspace-paths.md).
 
 # aide
@@ -14,7 +16,7 @@ AI and an integrated work environment · Understand information · Analyze probl
 
 </div>
 
-![aide workbench with conversations, project files, and task input](docs/images/workbench-preview.jpg)
+![aide workbench with conversations, project files, and task input](docs/images/current-20261017/01-workbench.jpg)
 
 > **Latest source tag:** `v0.1.16.0-RC1` (see [release record](docs/reviews/release-0.1.16.0-RC1-2026-10-08.md)). The knowledge map, approval menu, and UI updates below describe candidate source changes after RC1; they are not included merely by running the published RC1 image. The preview uses an isolated workspace. Build, browser acceptance, Release assets, and production deployment are recorded separately.
 
@@ -37,7 +39,7 @@ Data is persisted locally. When using a cloud model, task content, context, and 
 | AI chat and workflows | Chat, or follow Plan → Propose → Review | Model review is not a passing test; responses appear by step |
 | Files and Markdown | Browse, edit, preview, open in a new tab, and attach files | Text/size limits apply; saves check file hashes |
 | Workspaces and references | Local, SSH/SFTP, Skill directories, links, FTP/FTPS/SMB | MCP registration is not a working MCP connection |
-| Models and strategies | Multiple model IDs, parameter profiles, automatic/manual routing | Models share the current provider connection |
+| Models and strategies | Multiple model IDs, parameter profiles, automatic/manual routing | Models bind to their own provider and named encrypted key |
 | Approval selection (candidate UI) | A separate Approval column in the input's Strategy menu selects manual or assisted review | Reviews one exact command using the task model and records usage; uncertainty returns to manual confirmation and permissions are unchanged |
 | Knowledge map (candidate) | Open an independent star-map page from Project files; search file, session, and code IDs and insert references into the original draft | Bounded local index; static calls are candidates; checks roughly every 4 seconds merge changes while preserving valid camera and selection state |
 | Original text and RAG (candidate) | Exact text search or local TF-IDF excerpt ranking; click AI for an answer with citations | No OCR, vector database, or persistent index; local retrieval uses no model, while AI sends excerpts and incurs provider usage; [scope and limits](docs/architecture/knowledge-map.md) |
@@ -45,7 +47,7 @@ Data is persisted locally. When using a cloud model, task content, context, and 
 | Usage and cost | Heatmap, daily details, rate snapshots, provider balance | Priced, estimated, and unpriced usage differ; this is not an invoice |
 | Command panel | Run, inspect, and cancel individual shell commands | No PTY or persistent shell session |
 | Plugins | Upload, enable, and call tools with executable handlers; built-in draw.io diagram tool | Plugins are trusted code, not a security sandbox |
-| Permissions, voice & personalization | Three-level sandbox (read-only/workspace-write/full-access), per-tool toggles, lock screen; voice transcription, persistent personas; config backup export/import | The sandbox bounds container privileges, not malicious plugins; speech recognition runs in the browser |
+| Permissions, voice & personalization | Three-level sandbox (read-only/workspace-write/full-access), per-tool toggles, lock screen; page-owned work coordination, continuous voice, Qwen/Bailian TTS and persistent personas; config backup export/import | The sandbox bounds container privileges, not malicious plugins; speech recognition runs in the browser |
 | Appearance and language | Professional/Classic palettes; light/dark/system; Chinese/English | Browser-local preferences; language does not translate your content |
 
 ## Quick start

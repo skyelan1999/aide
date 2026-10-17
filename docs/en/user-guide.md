@@ -1,5 +1,25 @@
 # User guide
 
+> Updated against source `0fef6411` on 17 October 2026. [Actual screenshots and limits](../ui-evidence.md) · [Step-by-step demo](../demo-guide.md).
+
+## Current operation and screenshot reference
+
+![Actual workbench with demonstration files](../images/current-20261017/01-workbench.jpg)
+
+Messages now contains Chats, Contacts, Transfers and Reminders. Communication settings are in the main Settings → Messages page. They reuse the account name and cannot be enabled without it. Contact, group, call and file invitations require separate recipient consent; the six-character lookup code is not a globally unique cryptographic identity.
+
+Settings → AI Management Permissions has four independent management-only flags: assistant/aide × plugins/references. All default off. Normal plugin calls and reference-file access retain existing permissions. Management proposals require human confirmation even when assistant task review is enabled.
+
+Automatic system documents follow the Workspace configuration binding. Formal file proposals can target `source=system-docs` or a named reference; enabled, visible and writable checks still apply. Four-stage generation uses the binding when configured and retains its old cache fallback when unconfigured; this does not make `/context` writable.
+
+After identity verification, the page-owned assistant coordinates assigned tasks, reminders and authorized messages automatically. Switching work sessions retains follow-up; microphone capture starts only by explicit user action, hidden pages stop listening, and locking or closing the page stops coordination. It is not an OS background daemon.
+
+Voice reply, voice and speed settings live in Settings → Voice Assistant. Qwen/Bailian has region, compatible-model, voice-catalog and key settings. Failed Qwen synthesis keeps text unless browser fallback is explicitly enabled; the Auto engine has a separate fallback policy. Catalog fallback is not proof of live model availability. Actual audio and interruption were not tested in this documentation run.
+
+![Actual Qwen configuration; no key or live synthesis](../images/current-20261017/07-qwen-tts.jpg)
+
+Actual cumulative session usage is separate from each request's context window. Parallel lanes do not share a single window. Missing upstream usage remains unknown; estimates are explicitly labeled. See the canonical [feature scope](../features.md) and [module design](../architecture/modules.md) for implementation boundaries.
+
 [简体中文](../user-guide.md) · **English**
 
 This guide follows the current `0.1.17.0 RC2` source workline. Published images may not include every candidate change described here; check [task records](../tasks/) and the [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
@@ -76,7 +96,7 @@ flowchart TD
 
 **Settings**: Settings → Voice assistant → **Speech engine**:
 
-- **TTS engine**: Auto (local offline priority) / Local offline / edge-tts online / Self-hosted clone / Browser speech. Auto uses browser speech when other engines are unavailable.
+- **TTS engine**: Auto (local offline priority) / Local offline / edge-tts online / Qwen/Bailian / Self-hosted clone / Browser speech. Auto uses browser speech when other engines are unavailable.
 - **Voice**: listed grouped by female/male; pick Xiaoxiao (female) / Yunxi (male) / Xiaoyi etc. when edge-tts is chosen. "Default (by gender)" maps female→Xiaoxiao, male→Yunxi, neutral→Xiaoyi.
 - **Speed**: 0.8–1.3×.
 - **Expressiveness**: 0–1, mapped to edge-tts style intensity.
@@ -176,7 +196,7 @@ The selection uses existing conversation-draft and task approval state; you can 
 
 Click the workspace card to configure local directories or SSH/SFTP. The directory browser starts at the current value and walks upward when the path is unavailable. Configure system-document and cache paths separately. Saved secrets stay in the data volume. Remote SSH/SFTP passwords, private keys, and key passphrases are stored in a unified encrypted secret vault (AES-256-GCM; the master key is derived from the account password via Argon2id). A private key can be pasted or picked from a file (within /workspace, /context, /local); file mode can reference the path only (not stored) or import an encrypted copy. The UI never echoes the key and shows the public-key SHA-256 fingerprint after save. Saving SSH credentials is rejected until an account password is set. See [Security: Unified Secret Vault](security/secret-vault.md).
 
-Under **References**, add named sources: local path, Skill directory, URL, SFTP, FTP, FTPS, SMB, or an MCP stdio service. An MCP source has an executable plus one argument per line; test it to discover tools. AI may call only tools the server declares read-only. The built-in system-document source follows the document path; registration does not automatically generate documentation. Read/write flags cannot override a read-only Docker mount or remote permissions.
+Under **References**, add named sources: local path, Skill directory, URL, SFTP, FTP, FTPS, SMB, or an MCP service using stdio or Streamable HTTP. Stdio uses an executable plus one argument per line; HTTP uses a controlled endpoint and authentication. Test the source to discover tools. AI may call only tools the server declares read-only. The built-in system-document source follows the document path; registration does not automatically generate documentation. Read/write flags cannot override a read-only Docker mount or remote permissions.
 
 Source registrations are stored in cache `sources.json`; credentials are stored separately. User-defined source names remain unchanged when changing language.
 
@@ -461,4 +481,4 @@ An AIDE server running in Docker cannot reuse the host Codex desktop app's stdio
 
 ### Reminders
 
-Open Reminders from the main toolbar. Each reminder can include a title, description, due time, priority, global/current-workspace storage area, and notification channel. Search and sorting by priority and due time are supported, along with completion, editing, and deletion. Data is stored in the aide data volume at `reminders/reminders.json`, not in a project directory. Due reminders can appear in a browser popup and as a message in the XiaoMi conversation. The background checker runs every 20 seconds; browser popups are checked while the page is open. Aide AI may create reminders and mark them complete, but cannot list, edit, or delete them. XiaoMi can manage reminders fully. Pausing or closing a task does not remove reminders.
+Open Messages → Reminders from the main toolbar. Each reminder can include a title, description, due time, priority, global/current-workspace storage area, and notification channel. Search and sorting by priority and due time are supported, along with completion, editing, and deletion. Data is stored in the aide data volume at `reminders/reminders.json`, not in a project directory. Due reminders can appear in a browser popup and as a message in the XiaoMi conversation. The background checker runs every 20 seconds; browser popups are checked while the page is open. Aide AI may create reminders and mark them complete, but cannot list, edit, or delete them. XiaoMi can manage reminders fully. Pausing or closing a task does not remove reminders.

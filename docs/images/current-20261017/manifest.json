@@ -1,0 +1,133 @@
+{
+  "sourceCommit": "0fef64114af70b5474d11d99c813644e2968a072",
+  "capturedDate": "2026-10-17",
+  "timezone": "Asia/Shanghai",
+  "environment": "macOS host; ChatGPT in-app browser 1280x720; isolated real Go App with source-mode build identity; loopback proxy; Docker internal network",
+  "data": "Dedicated demonstration workspace and reminder only; no private chats or provider credentials",
+  "capture": "Unmodified browser viewport JPEGs; no generated UI, compositing, retouching or fabricated model replies",
+  "limits": [
+    "Not the production service or a release image acceptance run",
+    "No model calls, TTS synthesis, microphone, cross-device network or three-platform end-to-end validation",
+    "Qwen catalog shown from built-in fallback; live provider availability is not verified",
+    "Knowledge-map tab remained at the lock gate; no usable graph screenshot or indexing acceptance obtained"
+  ],
+  "screenshots": [
+    {
+      "id": "01-workbench",
+      "path": "01-workbench.jpg",
+      "title": "工作台",
+      "steps": "新建探索 → 项目文件",
+      "observed": "主页、模型未配置、三栏布局",
+      "sha256": "f2e87b786f3c13482f859a2daeb93734ed0fa7ea367a6805b0b49c61e87f50f8",
+      "bytes": 72212
+    },
+    {
+      "id": "02-workspace",
+      "path": "02-workspace.jpg",
+      "title": "工作空间配置",
+      "steps": "工作空间卡片 → 自动系统文档",
+      "observed": "实际绑定路径 /workspace/docs",
+      "sha256": "3a4487fe7d076dd99a2fa34ec5deecc63c1a1256cde6cca7f8e5ff5c4a00c1fa",
+      "bytes": 43021
+    },
+    {
+      "id": "03-references",
+      "path": "03-references.jpg",
+      "title": "引用",
+      "steps": "文件 → 引用",
+      "observed": "固定系统文档、普通引用的可见与可写锁",
+      "sha256": "a8aad41100e2dd93929f7b6b46dcfadce0b43ddf6356ece3192994673ae53323",
+      "bytes": 70351
+    },
+    {
+      "id": "04-appearance",
+      "path": "04-appearance.jpg",
+      "title": "外观",
+      "steps": "设置 → 外观",
+      "observed": "配色、背景与动效入口",
+      "sha256": "39759260f2809b1729427efdfd9b5effad45ccb35d32fb11dfac714b8a4faab9",
+      "bytes": 40885
+    },
+    {
+      "id": "05-management",
+      "path": "05-management.jpg",
+      "title": "AI 管理权限",
+      "steps": "设置 → AI 管理权限",
+      "observed": "助理与 aide 的四项独立管理权限，均关闭",
+      "sha256": "39e56f50a130d5667da06f90d3f667f3dc71ded917847ea697834e5331dcdcc6",
+      "bytes": 42740
+    },
+    {
+      "id": "06-assistant-settings",
+      "path": "06-assistant-settings.jpg",
+      "title": "语音助理",
+      "steps": "设置 → 语音助理",
+      "observed": "工作统筹、名称、模型选择入口",
+      "sha256": "5f70678d0395bebfa212e5203fbf7735c9ff3499c7ae00d73eb803a2c5c3a533",
+      "bytes": 48348
+    },
+    {
+      "id": "07-qwen-tts",
+      "path": "07-qwen-tts.jpg",
+      "title": "百炼 TTS",
+      "steps": "语音助理 → TTS 引擎选择百炼，未保存",
+      "observed": "地域、模型、音色、密钥与失败回退字段；当前使用内置目录",
+      "sha256": "c31a307d1f272da87a42132ebcf18b9a3b4f28666d6c8da640bc06168e7caae6",
+      "bytes": 50156
+    },
+    {
+      "id": "08-message-settings",
+      "path": "08-message-settings.jpg",
+      "title": "消息设置",
+      "steps": "设置 → 消息",
+      "observed": "账户名称未设置时禁止启用；助理消息权限关闭",
+      "sha256": "8252b58a93be25621c7f7991b829a882bbb1c1e80a64b534a0d7d49ab65ccb5c",
+      "bytes": 41202
+    },
+    {
+      "id": "09-messages",
+      "path": "09-messages.jpg",
+      "title": "消息中心",
+      "steps": "顶栏 → 消息 → 会话",
+      "observed": "会话、联系人、传输、提醒四个标签；通信未启用，列表为空",
+      "sha256": "ead4a93cd935a5ee2f3b30d95b40bf26389a434b1177c52864cff0dfcfed197e",
+      "bytes": 60529
+    },
+    {
+      "id": "10-reminders",
+      "path": "10-reminders.jpg",
+      "title": "提醒",
+      "steps": "消息 → 提醒",
+      "observed": "专用示例提醒的标题、说明、筛选和操作",
+      "sha256": "6963a3d75cd7a5a77195fcf53c61824d4c59e4761201c183c8ce593eff0ae5eb",
+      "bytes": 69920
+    },
+    {
+      "id": "11-plugin-workshop",
+      "path": "11-plugin-workshop.jpg",
+      "title": "插件工坊",
+      "steps": "插件 → 搜索 plugin-authoring",
+      "observed": "真实已启用的插件工坊及管理工具声明",
+      "sha256": "aa94c448e49248f6ce32276fe3df285e2d94dabdceb8f62757c53053526fb775",
+      "bytes": 79096
+    },
+    {
+      "id": "12-markdown",
+      "path": "12-markdown.jpg",
+      "title": "Markdown 预览",
+      "steps": "引用 → 自动系统文档 → example-notes.md",
+      "observed": "实际文件的标题目录、表格与代码预览",
+      "sha256": "5af86e4c261950ac06ad90cf994d6f28c9ed550b4f54786a704344c42e9593e3",
+      "bytes": 45823
+    },
+    {
+      "id": "13-models",
+      "path": "13-models.jpg",
+      "title": "模型设置",
+      "steps": "模型设置 → 展开提供商",
+      "observed": "独立提供商、命名密钥和模型获取入口，密钥未保存",
+      "sha256": "b5509cfdf2434f8d239cf9151486482f186610cff6877aa1b477191d27218fea",
+      "bytes": 42818
+    }
+  ]
+}

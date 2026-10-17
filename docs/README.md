@@ -1,10 +1,21 @@
 # aide 文档中心
 
+> 当前说明按 2026-10-17 源码 `0fef6411` 核对；实际界面、示例数据、截图原图及验证范围见[实际使用截图](ui-evidence.md)。源码、浏览器观察与发行验收分别记录，截图中的版本文字不代表已发布本提交。
+
+| 当前文档 | 范围 |
+| --- | --- |
+| [功能说明](features.md) | 工作台、文档绑定、管理权限、消息、助理与语音 |
+| [实际截图演示](demo-guide.md) | 按真实操作顺序演示，未执行步骤明确标出 |
+| [当前交互设计](design/current-workbench.md) | 根据实际界面描述布局与交互 |
+| [软件模块说明](architecture/modules.md) | 模块职责、依赖与关键调用链 |
+| [截图证据与原图](ui-evidence.md) | 13 张真实截图、环境、数据和 SHA-256 |
+| [文档覆盖与历史边界](documentation-map.md) | 当前正文、专题、历史记录和非 UI 证据 |
+
 [English](en/README.md) · 简体中文
 
 全部项目文档统一在 `docs/`。根目录仅保留 README、HANDOVER、version、许可证及客户端入口。不再创建 `doc/`。
 
-已发布基线为 `0.1.17.0 RC2`，验收／交付状态见[发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md)。功能实现、隔离运行、浏览器验收、标签与远端附件分别记账；此前 `v0.1.16.0-RC1` 的收据保留为历史，不能代替本轮结果。
+最近在本索引保留收据的历史发行基线为 `0.1.17.0 RC2`，验收／交付状态见[发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md)。功能实现、隔离运行、浏览器验收、标签与远端附件分别记账；此前 `v0.1.16.0-RC1` 的收据保留为历史，不能代替本轮结果。
 
 星图按钮修整与增强漂移为 RC2 之后的本地候选；相关源码已纳入后续开发提交，尚未包含在已发布包中。见[按钮验收](reviews/starmap-controls-20261008.md)、[漂移验收](reviews/starmap-drift-20261008.md)与[文档推送范围](tasks/starmap-docs-push-20261009.json)。
 
@@ -31,7 +42,7 @@
 | 写插件 | [插件协议 v1.1](plugin-protocol.md) |
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入与 skill 路由](agent/ADAPTERS.md) · `python3 scripts/agent-route.py route --request "需求原文"` |
-| 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |
+| 看当前设计与验证边界 | [当前工作台](design/current-workbench.md) · [历史 macOS UI](design/macos-ui.md) |
 | 看当前0.1.17.0 RC2发行与附件收据 | [RC2发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md) |
 | 查看上一发行的记录与验收边界 | [0.1.16.0 RC1 发布记录](reviews/release-0.1.16.0-RC1-2026-10-08.md) · [发布任务验收](tasks/harness-release-20261007.json) |
 | 查看星图分任务实施记录 | [自动差量同步任务](tasks/starmap-live-updates-20261008.json) · [多来源任务](tasks/starmap-sources-20261008.json) · [多来源检查报告](reviews/2026-10-08-starmap-sources.md) |
@@ -77,7 +88,7 @@ docs/
 4. 发布以 version/tag/构建身份/部署记录共同确认，不能只看截图角落的版本。
 5. 文档改动后运行 `python3 scripts/check_docs.py`；有截图更新时，使用示例数据并说明是预览还是发布版本。
 
-当前版本以根目录 [version.md](../version.md) 及对应 Git tag 为准；截图使用此前隔离预览，不把历史证据重新包装为当前测试结果。
+当前版本以根目录 [version.md](../version.md) 及对应 Git tag 为准；当前插图使用 2026-10-17 实际源码隔离实例；历史截图与历史证据仍只证明其原环境。
 
 - [Markdown 编辑布局与 PDF 导出](architecture/markdown-editing-export.md)：左右对比、纯文本及浏览器 PDF 排版。
 - [Markdown 历史版本插件](plugins/markdown-history.md)：原文编辑、保存去重与嵌入资源快照。

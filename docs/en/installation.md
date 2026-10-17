@@ -186,3 +186,11 @@ to `/data/tts/` to keep the image small. On a networked host run `scripts/tts-se
 container to download the default female voice (~67MB, SHA256-verified); for air-gapped setups place the model
 manually per [Local offline TTS](../en/security/tts-local.md). After install + restart, pick "Auto" in Settings →
 TTS engine to prefer local offline synthesis (text never leaves the machine).
+
+## Actual post-start workbench（源码 0fef6411）
+
+Captured from an isolated source instance on 17 October 2026. This is not an installer, release-image or multi-platform acceptance test. Use your configured AIDE_PORT, not the temporary screenshot address.
+
+![Actual post-start workbench](../images/current-20261017/01-workbench.jpg)
+
+[Environment and all original captures](../ui-evidence.md).

@@ -144,3 +144,11 @@ SSH 主工作区复用同一历史窗口，HEAD、完整提交编号、暂存区
 远端缺 Git／无仓库返回明确不可用原因，连接失败、权限、超限、二进制、非法 ref、工作区切换返回错误。请求总截止时间12秒，包含 SSH 建连；只读检查不替代远端服务器权限或完整 OS 沙箱。远端路径检查和打开不是原子的，其他进程同时替换目录/符号链接仍存在竞态，不宣称具有本地 `os.Root` 等价的内核路径隔离。
 
 SSH workspaces use the same comparison dialog with commit, index and disk contents read from the actual remote repository. Drafts stay local. Fixed scripts and individually shell-quoted arguments run over the existing SSH master, scoped to the captured connection generation; results are checked before and after each command. Git configuration/external execution and network fetching are restricted. Comparison never writes the repository or index. Independent SFTP sources remain unsupported. Current live validation covers isolated Linux/OpenSSH fixtures, not a user's SSH host; remote path checks are not atomic against concurrent replacement.
+
+## 实际文档预览（源码 0fef6411）
+
+2026-10-17 使用配置绑定目录里的 example-notes.md 直接打开。此图可核对编辑/预览/导出入口和表格显示，不证明 PDF 导出成功、图片加载上限或全部分页排版已验收。
+
+![实际文档预览](../images/current-20261017/12-markdown.jpg)
+
+[完整原图、环境与边界](../ui-evidence.md)。

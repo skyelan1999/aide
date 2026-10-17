@@ -1,10 +1,16 @@
 # aide 架构与接口索引
 
+> 当前说明按 2026-10-17 源码 `0fef6411` 核对；实际界面、示例数据、截图原图及验证范围见[实际使用截图](ui-evidence.md)。源码、浏览器观察与发行验收分别记录，截图中的版本文字不代表已发布本提交。
+
+[软件模块说明](architecture/modules.md)列出管理提案、文档绑定、页面助理、消息和 TTS 的依赖；[功能说明](features.md)与[演示](demo-guide.md)对应真实入口。
+
+![软件模块对应的实际工作台](images/current-20261017/01-workbench.jpg)
+
 > 第一次浏览仓库可先看[代码目录导航](architecture/code-layout.md)，再按下方模块职责进入具体实现。
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-核对日期：2026-10-12。本页描述 `0.1.17.0 RC2` 源码候选；RC1 发布范围与附件仍以[发布记录](reviews/release-0.1.17.0-RC1-2026-10-08.md)为准，源码新增能力不据此推定已发行。aide 融合 AI 与 IDE；架构由 Go 服务、浏览器 UI 与 Docker 工具环境组成。统一虚拟形象使用共享偏好与按需素材播放器，后端真实任务事件确定状态，模型反馈只选择动作变体；响应式侧栏宽度由 CSS 变量与拖动控制器共同维护。小秘明确转交时通过既有 `startTask` 路径创建并启动/排队 Aide 任务；TTS 自动模式按可用提供商回退，无法播放后端音频时退到浏览器合成。历史验收保留于 [验证记录](verification.md)，功能状态以对应任务验收记录为准，发布身份由 tag、镜像和发布记录共同确认。
+核对日期：2026-10-17，源码 `0fef6411`。本页描述 `0.1.17.0 RC2` 源码候选；RC1 发布范围与附件仍以[发布记录](reviews/release-0.1.17.0-RC1-2026-10-08.md)为准，源码新增能力不据此推定已发行。aide 融合 AI 与 IDE；架构由 Go 服务、浏览器 UI 与 Docker 工具环境组成。统一虚拟形象使用共享偏好与按需素材播放器，后端真实任务事件确定状态，模型反馈只选择动作变体；响应式侧栏宽度由 CSS 变量与拖动控制器共同维护。小秘明确转交时通过既有 `startTask` 路径创建并启动/排队 Aide 任务；TTS 自动模式按可用提供商回退；百炼模式单独控制浏览器回退，默认保留文字并报告失败。历史验收保留于 [验证记录](verification.md)，功能状态以对应任务验收记录为准，发布身份由 tag、镜像和发布记录共同确认。
 
 超长会话、摘要压缩、项目记忆及工业使用边界见[超长对话与工业复杂任务支持说明](industrial-long-conversation-support.md)。
 
@@ -47,6 +53,11 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `persona.go` / `settings_persona_persist` | 性格系统：多人格（activePersona）、AES-256-GCM 密文（personaCiphers）、可演化 personalities、解锁/保存/重置 |
 | `config_backup.go` | 配置备份信封 `aide-config-backup`：导出/导入设置快照、来源与工作区密钥、小秘历史 |
 | `voice_agent.go` | 语音小秘：send/ignore/standby 研判、VoiceHistoryEntry 记录、AES-256-GCM 历史加解密、双向朗读 |
+| `generated_documents.go` / `document_proposals.go` | 配置驱动的自动系统文档、来源绑定提案和发布前重查 |
+| `management.go` / `web/management.js` | 四项管理权限、插件预检与引用变更人工队列 |
+| `assistant_watch.go` / `assistant_agent.go` | 页面统筹的任务跟进、动作与授权代审 |
+| `message_center.go` / `internal/messaging/` | 联系人、群组/通话邀请、消息与文件分块恢复 |
+| `tts_catalog.go` / `tts/` | 百炼目录、合成适配与提供商边界 |
 | `environment_guide.go` | 系统文档自动挂载与环境引导 |
 | `plugins.go` / `plugin_host.js` / `management.go` | 插件登记、加载、schema 和 handler；在线替换见[插件协议](plugin-protocol.md#在线升级与恢复) |
 | `web/settings-init.js` | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
@@ -184,7 +195,7 @@ slave 单独验证只在该页面设置 `localDismiss`，不解锁其他页面�
 
 ## TTS 分层架构
 
-小秘朗读是可插拔管线：后端 `internal/server/tts` 定义 `TTSProvider` 接口（`Name/Synth/Format/Available`），`NewProvider(name, Config)` 按名注册。当前实现 edge-tts——用标准库手写最小 RFC6455 WebSocket 客户端直连微软 Read-Aloud（`wss://speech.platform.bing.com/...`，公开 token + 时间派生的 `Sec-MS-GEC`，无需 key），SSML 映射语速/情感，回流式 MP3。Web Speech 是纯浏览器能力，后端不合成（`ErrBrowserOnly`），由前端兜底；自动模式在 sherpa/edge/Azure 均不可用时直接使用浏览器合成，后端音频解码或播放失败也会回退浏览器。
+小秘朗读是可插拔管线：后端 `internal/server/tts` 定义 `TTSProvider` 接口（`Name/Synth/Format/Available`），`NewProvider(name, Config)` 按名注册。当前实现 edge-tts——用标准库手写最小 RFC6455 WebSocket 客户端直连微软 Read-Aloud（`wss://speech.platform.bing.com/...`，公开 token + 时间派生的 `Sec-MS-GEC`，无需 key），SSML 映射语速/情感，回流式 MP3。Web Speech 是纯浏览器能力，后端不合成（`ErrBrowserOnly`），由前端兜底；自动模式在 sherpa/edge/Azure 均不可用时直接使用浏览器合成，自动模式的后端音频解码或播放失败也可回退浏览器；百炼模式仅在显式允许浏览器回退时切换，否则保留文字并显示失败。百炼模型/音色目录由 `tts_catalog.go` 提供，网络不可达使用内置兼容目录；语速在播放侧调整并保持音调。
 
 **音频流路径**：
 

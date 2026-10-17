@@ -1,5 +1,7 @@
 # aide documentation
 
+> Current source baseline: `0fef6411` (17 October 2026). The [actual UI evidence](../ui-evidence.md), [demo guide](../demo-guide.md), [feature matrix](../features.md), [current design](../design/current-workbench.md) and [module documentation](../architecture/modules.md) use real running-app captures and state their acceptance limits. These canonical references are in Chinese; screenshots do not prove model connectivity, voice playback or cross-device operation.
+
 [简体中文](../README.md) · **English**
 
 **AI+IDE. Turn ideas into your next step.**

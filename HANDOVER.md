@@ -1,6 +1,10 @@
 # aide 开发与运维入口
 
-> **0.1.17.0 RC2 发行与交接入口**：[本轮发布记录](docs/reviews/release-0.1.17.0-RC2-2026-10-08.md) · [任务账本](docs/tasks/release-0171-20261008.json)。用户已授权“整理所有资料和文档并release”，并允许完整验收；当前是否完成标签、镜像与附件交付只查该记录的实际状态。生产运行实例、独立 Pages 与源码发行分别记账，旧候选收据不代替本轮门禁。
+![实际源码文档预览环境](docs/images/current-20261017/01-workbench.jpg)
+
+此图来自专用隔离实例；不证明用户现用容器已更新。文档按真实操作记录，未运行外部模型、音频和双设备通信，详情见[截图范围](docs/ui-evidence.md)。
+
+> 当前源码文档基线：`0fef6411`（2026-10-17）。[文档与截图任务](docs/tasks/documentation-sync-20261017.json) · [实际 UI 证据](docs/ui-evidence.md) · [模块说明](docs/architecture/modules.md)。历史 RC2 发行看[原发布记录](docs/reviews/release-0.1.17.0-RC2-2026-10-08.md)，不将历史授权延续为本次发布许可。
 
 ## 快速接手
 
@@ -39,7 +43,7 @@ python3 scripts/agent-route.py audit
 - Git 源码、未提交改动、工作区、`/data`、模型配置与镜像归档是不同的数据，需要分别备份。
 - 不运行 `git clean -fdx`、`docker compose down -v`，不覆盖唯一数据副本。
 - 合并、推送、版本升级、tag、GitHub Release、镜像发布、生产重建与服务重启分别记录；只执行用户明确授权的步骤。
-- 本轮发布授权为“整理所有资料和文档并release”。静态主页的 Pages 部署、发行附件上传及运行实例切换分别记录；提交主页源码不会自动启用 Pages。
+- 本次仅为现行文档和实际截图更新，不包含生产重建、服务重启、tag、Release 或 Pages 部署；这些步骤需要各自授权与交付收据。
 
 ## 回滚
 

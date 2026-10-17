@@ -1,0 +1,85 @@
+{
+  "id": "documentation-sync-20261017",
+  "request": "更新所有相关 PRD、设计文档、演示文档、功能文档、软件设计架构文档、模块文档等",
+  "baseline": "0fef64114af70b5474d11d99c813644e2968a072",
+  "initial_status": "",
+  "acceptance": [
+    "Current PRD, feature, user/demo, UI design, system architecture and module documentation reflect source 0fef6411",
+    "All newly supplied UI illustrations are unmodified captures of the running application, using non-private demonstration data",
+    "Screenshots have scenario, source/environment and acceptance limits; no simulated rendering is presented as a screenshot",
+    "Preserve historical reviews/releases and dated snapshots; current entry points link to updated material",
+    "Markdown local links and screenshot references pass documentation checks; product code/runtime data unchanged"
+  ],
+  "scope": [
+    "README.md",
+    "README.en.md",
+    "HANDOVER.md",
+    "docs (current documentation and new screenshot evidence only)",
+    "internal/server/README.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested current documentation categories and actual usage screenshots; acceptance and scope recorded.",
+      "evidence": [
+        "User request and screenshot clarification"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Current source and UI checked; current manuals linked to shared unmodified screenshots while historical evidence retained.",
+      "evidence": [
+        "docs/documentation-map.md",
+        "docs/ui-evidence.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Updated current documentation and added feature/demo/design/module manuals; no product code changes.",
+      "evidence": [
+        "docs/features.md",
+        "docs/demo-guide.md",
+        "docs/design/current-workbench.md",
+        "docs/architecture/modules.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Documentation checks passed. Actual isolated UI captured; JPEG dimensions and hashes verified. No model/audio/cross-device/full-suite execution.",
+      "evidence": [
+        "python3 scripts/check_docs.py: PASS 302 Markdown files and 1125 local links, JPEG signatures, FR-01..100",
+        "python3 scripts/agent-route.py check: PASS",
+        "git diff --check: PASS",
+        "13 original JPEGs: 1280x720 and SHA-256 match manifest",
+        "Knowledge map opened but remained at lock gate; not accepted as indexed graph"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current Chinese/English entry points, PRD, guides, architecture, topics and operational notes reference actual screenshots and state limits.",
+      "evidence": [
+        "docs/documentation-map.md",
+        "docs/images/current-20261017/manifest.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed owned browser tabs; stopped owned documentation container, removed owned internal network and proxy. Production service and data untouched.",
+      "evidence": [
+        "aide-documentation-20261017: stopped",
+        "aide-documentation-net-20261017: removed",
+        "Only documentation paths included"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Documentation-only task; no push, tag, Release, distribution build or production restart requested for this task.",
+      "evidence": [
+        "Source baseline 0fef64114af70b5474d11d99c813644e2968a072"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the documentation commit; no product data or schema changes.",
+  "handoff": "Current documents and 13 actual UI captures ready. External model/TTS/microphone/cross-device/three-platform acceptance NOT_RUN; knowledge-map graph remained behind lock gate. Local docs commit only; no push or runtime replacement."
+}

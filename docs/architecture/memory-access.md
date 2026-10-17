@@ -1,5 +1,11 @@
 # 记忆单向可见与流式输出桥接
 
+> 当前说明按 2026-10-17 源码 `0fef6411` 核对；实际界面、示例数据、截图原图及验证范围见[实际使用截图](../ui-evidence.md)。源码、浏览器观察与发行验收分别记录，截图中的版本文字不代表已发布本提交。
+
+![来源可见/可写状态；不证明模型已读到内容](../images/current-20261017/03-references.jpg)
+
+当前模块职责见[软件模块说明](modules.md)；来源可见/可写状态；不证明模型已读到内容。
+
 > 版本：0.1.11.0-RC1 · 分支：feature/permission-panel · 关联：#29 加密 / #30 跨会话工具 / #31 目录分层 / #33 身份核心
 > 代码：`internal/server/memory_access.go`、`internal/server/stream_broker.go`、`voice_agent.go`、`workflow.go`
 

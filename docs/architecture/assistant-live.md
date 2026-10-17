@@ -1,5 +1,11 @@
 # Page-owned work coordinator
 
+> 当前说明按 2026-10-17 源码 `0fef6411` 核对；实际界面、示例数据、截图原图及验证范围见[实际使用截图](../ui-evidence.md)。源码、浏览器观察与发行验收分别记录，截图中的版本文字不代表已发布本提交。
+
+![工作统筹和模型设置入口；没有执行真实语音或模型任务](../images/current-20261017/06-assistant-settings.jpg)
+
+当前模块职责见[软件模块说明](modules.md)；工作统筹和模型设置入口；没有执行真实语音或模型任务。
+
 The assistant is a work coordinator first: understand goals and dependencies, delegate to the existing Aide executor, follow task progress and blockers, then report results and next steps. Friendly conversation belongs in idle time. User personality settings are preserved and affect tone rather than changing this responsibility.
 
 After identity verification, the page automatically starts the heartbeat; there is no companion enable, pause or end switch. Existing assigned work continues through the executor and its approval controls. This is automatic follow-up of assigned work, not an unbounded loop that invents new jobs. The microphone starts only through its own user gesture, and turning it off does not disable coordination. Switching work sessions keeps the page monitor alive. Hiding the page releases microphone capture and stops audio, while monitoring continues subject to browser timer throttling. Locking or closing the page ends monitoring. Closing the browser does not create a background service. Authentication failures stop checks until reauthentication; transient network failures retry with a slower cadence.
@@ -33,7 +39,7 @@ The same media element is activated synchronously on microphone/companion/previe
 
 The historical 200 WAV synthesis test did not validate audible Safari playback. Actual microphone barge-in, acoustic echo rejection and output device routing still require target hardware acceptance.
 
-Text messages submitted from the assistant composer must refresh the session before speech begins: selectSession cancels earlier playback. Companion mode routes these replies into the same interruption-aware queue rather than suppressing them. Paused/off sessions do not enqueue new speech; silent/ignore replies remain silent. The media lifecycle test executes this response-routing block with a cancelling refresh in both modes.
+Text messages submitted from the assistant composer must refresh the session before speech begins: selectSession cancels earlier playback. The active page coordinator routes replies into the same interruption-aware queue. Lock/close cancels monitoring and playback; silent/ignore replies remain silent. References to companion/paused controls in older test names describe the historical implementation, not current UI controls. The media lifecycle test executes this response-routing block with a cancelling refresh in both modes.
 
 ## Delegated execution and approval (2026-10-17)
 
