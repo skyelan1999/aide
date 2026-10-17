@@ -72,11 +72,11 @@
     },
     "release": {
       "status": "pending",
-      "summary": "准备推送当前开发分支检查点；本机新候选原生验证已通过，全量session62601/container aide-verify-54ea16442d3e运行中，未宣称PASS。未合main、未发布镜像或Release。",
+      "summary": "开发检查点2cbf0d339dad43a8213470c68c34c43e2cb3cccb已推送且ls-remote精确一致；不是最终交付。当前全量session62601/container aide-verify-54ea16442d3e运行中，未宣称PASS。未合main、未发布新镜像或Release。",
       "evidence": []
     }
   },
   "release_authorization": "沿用用户“做一部分，push一部分，测一部分”及维护文档授权。本次仅当前开发分支检查点；按用户最新要求只同步main，不合其他远端功能分支。main与Release仍受完整门禁约束。",
   "rollback": "本地改动保留于当前工作区；同步前恢复点 23de3ae2225407e8997ff95b116963f25dcfda64，撤销误合并前恢复点 39a6854c0ab03170641db0091a72fdd30f72e89b。MCP 认证来源是本次用户授权新增，原有凭据与会话须保留；不得用清库回滚。",
-  "handoff": "2026-10-17 按用户纠正“撤销这次本地合并，只同步 main”：已撤销本地合并 64a09479，当前 HEAD 恢复 5ab36ca2；fetch 后 origin/main=5fac564d，已包含于当前分支，ff-only 同步显示 Already up to date。未合入另一设备 feature 分支。MCP 未提交修改已恢复，保留两次 stash 恢复点。未推送远端、未替换运行镜像。之前 quick PASS 绑定已撤销合并的指纹，不作为当前发布证据。"
+  "handoff": "2026-10-17 按用户纠正“撤销这次本地合并，只同步 main”：已撤销本地合并 64a09479，当前 HEAD 恢复 5ab36ca2；fetch 后 origin/main=5fac564d，已包含于当前分支，ff-only 同步显示 Already up to date。未合入另一设备 feature 分支。MCP 未提交修改已恢复，保留两次 stash 恢复点。未推送远端、未替换运行镜像。之前 quick PASS 绑定已撤销合并的指纹，不作为当前发布证据。 当前MCP源码检查点2cbf0d33已提交推送；代码工作树干净，后续仅普通账本审计更新。原生候选ef7已通过表单切换、空令牌保存与10工具发现；唯一全量62601仍需确认终态。"
 }

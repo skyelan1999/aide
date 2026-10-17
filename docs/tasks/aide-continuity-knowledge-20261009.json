@@ -207,13 +207,13 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Native real SFTP source close/reopen caret and visible scroll, explicit dirty draft recovery across refresh and exact adjacent insertions/API/remote bytes now pass.",
+        "latestScopedEvidence": "本机保存文件/草稿精确位置与独立SFTP来源的光标、滚动、草稿刷新恢复已有原生证据。",
+        "remaining": "SSH工作区模式、多工作区/多标签分支、容量及浏览器强制退出边界继续验收。",
         "evidence": [
           "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json"
         ],
-        "remaining": "SSH workspace-mode isolation, multi-tab branch/capacity and restart boundaries remain; source caret is no longer wholly untested."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -265,6 +265,16 @@
           "docs/reviews/2026-10-16/file-recovery-async.md",
           "docs/reviews/2026-10-16/file-recovery-async-proof.json"
         ]
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "本机真实409对比/显式合并与独立SFTP来源整版恢复、自动保存已有证据。",
+        "remaining": "SSH工作区模式、物理断网及长时间交互联测仍缺；不以独立SFTP来源代替SSH工作区。",
+        "evidence": [
+          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json",
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
+        ],
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -315,13 +325,13 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Native trusted9999 real SFTP source shows V2 body+SVG then restores both to initialV1 with exact remote bytes and no-op observation stable.",
+        "latestScopedEvidence": "本机及独立SFTP来源正文+SVG整版恢复、外部变化、无变化去重已有实际页面和磁盘证据。",
+        "remaining": "保留策略不可逆实际清理及完整服务备份仍须按原授权边界验收；ZIP导入预览不能替代清理执行。",
         "evidence": [
-          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/reviews/2026-10-16/workbench-file-continuity-proof.json",
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
         ],
-        "remaining": "SSH workspace-mode and interrupted/connection-loss restore UI remain; independent SFTP whole-version restore now has native proof."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -357,13 +367,14 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Current integratede729 native local and real independent SFTP source editing/caret/draft/history/path proof, source/vault/network and14-session preservation pass.",
+        "latestScopedEvidence": "完整Safari本机文件工作流、独立SFTP来源恢复及会话推理强度五档写入已分项通过。",
+        "remaining": "SSH工作区模式、锁屏/长期打开组合场景仍需补；Windows由用户验收。",
         "evidence": [
-          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/tasks/workbench-file-continuity-20261016.json",
+          "docs/tasks/workbench-live-reasoning-20261016.json",
+          "docs/tasks/ssh-trusted-native-20261017.json"
         ],
-        "remaining": "SSH workspace-mode, native creation and cross-session approval/lock/long-open combined workflows remain; Windows user-owned."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -407,12 +418,12 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Native real cancelled historical run51 and synthetic normal-path101 records across100+1pages/allIDs/export already passed; import preview/cancel and real summary download separately passed.",
+        "latestScopedEvidence": "实际历史任务原始证据与摘要、101条正常路径分页100+1、完整下载JSON和过期快照拒绝已有原生/API证据。",
+        "remaining": "隐藏活动可见呈现及提交后的发布记录卡/导入仍单列待验；操作者记录不等于远端部署证明。",
         "evidence": [
-          "docs/reviews/2026-10-17/outcome-native-proof.json",
-          "docs/reviews/2026-10-16/evidence/outcome-native-controls-proof.json"
+          "docs/reviews/2026-10-17/outcome-native-proof.json"
         ],
-        "remaining": "Current native hidden-active visibility, committed release-receipt cards and combined authorization/workspace lifecycle remain. Synthetic101 pagination evidence is separate from real-provider hidden activity."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -442,6 +453,16 @@
           "docs/tasks/session-run-interaction-20261015.json"
         ],
         "remaining": "当前Safari并发撤销/过期控件、跨会话逆向模式即时同步和用户SSH主机行为仍待直接验收。"
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "真实自然过期对话框失配已修复，原生到期、脏编辑、版本冲突、保存和撤销已有证据。",
+        "remaining": "跨会话/多标签即时同步、用户SSH环境及完整发布仍待；过期修复局部通过不代表全授权系统验收。",
+        "evidence": [
+          "docs/reviews/2026-10-17/approval-dialog-expiry-proof.json",
+          "docs/reviews/2026-10-17/approval-dialog-full-proof.json"
+        ],
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -496,12 +517,14 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Native workspace/source read, plugin entry and four parser dependency imports/natural expiry already passed. Additional same-fingerprint local source root disappearance and recovery now shows failed/pass in Safari and API;22 protected bytes preserved.",
+        "latestScopedEvidence": "原生7项读取检查、自然5分钟陈旧提示、本地来源失败/恢复和插件API生命周期已有证据；新增Docker MCP实际连接发现通过。",
+        "remaining": "Docker工具缺少只读声明不能执行；网关生命周期、用户SSH权限及其余插件完整流程仍待。",
         "evidence": [
           "docs/reviews/2026-10-17/capability-native-proof.json",
-          "docs/reviews/2026-10-17/capability-failure-native-proof.json"
+          "docs/reviews/2026-10-17/capability-failure-native-proof.json",
+          "docs/reviews/2026-10-17/docker-mcp-native-proof.json"
         ],
-        "remaining": "SSH user-host/workspace permissions, remote protocol and other plugin/model failure and complete execution workflows remain; local authenticated failure-state is no longer untested."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -559,12 +582,13 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Published background continuation and2000 valid relations passed; final d025 native removal automatically clears cached original-text hits and preserves honest coverage.",
+        "latestScopedEvidence": "实际AIDE引用分批节点/覆盖提示、后台进度与范围内完成已有分项证据；移除来源的旧搜索结果问题已有后续修复。",
+        "remaining": "完整首屏时延、重点范围控件、任意大型远端目录与协议变体仍未全面验证。",
         "evidence": [
-          "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json",
-          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+          "docs/reviews/2026-10-16/knowledge-current-project-native.md",
+          "docs/tasks/starmap-background-progress-20261016.json"
         ],
-        "remaining": "Priority-range controls, full first-open timing and large remote directory variants remain separate. Removed-source hit invalidation is repaired and directly proven."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -607,11 +631,12 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Final d025 Safari proves same-tab read-only original-text preview, CRLF line3 selection/raw hash, map return, stale-hash refusal, new line5 and source-removal clearing.",
+        "latestScopedEvidence": "实际字面检索到原文，后续已修复同标签预览、结构文本行号/原始hash和移除来源旧结果。",
+        "remaining": "真实向量按用户要求暂缓；其他协议/用户主机边界不能由本机字面检索替代。",
         "evidence": [
-          "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+          "docs/reviews/2026-10-17/knowledge-path-native-proof.json"
         ],
-        "remaining": "Real vectors remain user-deferred. Available SSH/protocol variants and broader document cases remain separate; popup blocking, missing structured text line and removed-source snippets are no longer open defects."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -644,13 +669,13 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Authenticated Safari local and SFTP six-step paths distinguish DOM/name/HTTP candidates from lexical binding/source declaration, plus5 unresolved calls in summary; exact source line4 passes.",
+        "latestScopedEvidence": "实际按钮到服务六段静态链、置信度标识和对应原文行已在本机与独立SFTP来源验收。",
+        "remaining": "完整依赖工程及其他语言类型绑定仍未证明；静态候选链不是运行时追踪。",
         "evidence": [
-          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/reviews/2026-10-17/knowledge-path-native-proof.json",
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
         ],
-        "remaining": "Optional type-service controls and diagnostic interaction, broader indexed dependencies/languages remain separate."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -695,13 +720,13 @@
       ],
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Authenticated local report/source and long-prefix guards plus local and real independent SFTP six-step/source line4 pass on integratede729. Frozen full107/race/vet/CAD and complete packages pass.",
+        "latestScopedEvidence": "本机与独立SFTP来源六段按钮到服务、报告到来源、历史快照绑定和对应行跳转已直接验收。",
+        "remaining": "SSH工作区模式及主题/窄屏等剩余组合场景仍需补，受索引预算限制不能宣称全库覆盖。",
         "evidence": [
-          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/reviews/2026-10-17/knowledge-path-native-proof.json",
+          "docs/reviews/2026-10-17/ssh-trusted-native-proof.json"
         ],
-        "remaining": "Public RC2/main delivery, SSH workspace-mode and associated responsive/theme scope remain separate; no runtime execution claim."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     },
     {
@@ -762,12 +787,12 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Large-map one-observation retention defect repaired on6e3d3e16 with bounded gzip/encrypted envelope; actual9999 native two-time comparison now passes with original14sessions and protected configuration exact. Canonical ARM/AMD complete offline packages locally imported; fresh ARM start no build/pull and CAD pass. Frozen full107/race/vet/CAD terminal PASS with current content fingerprint.",
+        "latestScopedEvidence": "真实约2万节点星图已恢复多观察保留，原生前后结论/依据比较、旧加密备份与原始数据保全通过。",
+        "remaining": "151条已淘汰历史未虚构恢复；用户SSH/长期大库与另一设备导入仍未验证，完整发布待完成。",
         "evidence": [
-          "docs/reviews/2026-10-17/timeline-retention-proof.json",
-          "docs/tasks/timeline-native-20261017.json"
+          "docs/reviews/2026-10-17/timeline-retention-proof.json"
         ],
-        "remaining": "Main/public distribution pending large upload failure and Safari developer-tools permission; SSH workspace-mode/manual-topic full native interactions and long-term boundaries remain separately scoped. All12 workstreams are not declared complete."
+        "method": "复核当前受控任务和脱敏收据；本轮未重跑这些历史场景。"
       }
     }
   ],
@@ -7815,15 +7840,16 @@
   "latest_evidence_audit": {
     "date": "2026-10-17",
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
-    "report": "docs/reviews/2026-10-16/continuity-current-audit.md",
+    "report": "docs/reviews/2026-10-17/continuity-current-checkpoint.md",
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Continue native hidden-running outcome and committed release receipt cards (earlier preview/cancel already passed), approval expiry/revoke synchronization, SSH workspace-mode and timeline gaps. Native outcome overview/pagination/raw digest/export delivered; complete image public upload independently pending.",
-    "deliveredMain": "32d7e365",
-    "currentCheckpointGate": "Frozen integrated product full107 PASS fingerprint98ebc999, server race962.824s/vet/native CAD; clean-main path and SFTP gates PASS, main32d7e365 pushed. Both final complete archives verified locally; GitHub large uploads rejected while README uploaded. Original RC2 notes/tag/21 assets retained.",
+    "nextIndependentFocus": "等待唯一MCP全量session62601终态；之后处理网关生命周期和交付。原目标下一项是SSH工作区模式/跨标签授权/隐藏活动及发布卡等直接验收；不重复已经通过的本机和独立SFTP来源场景。",
+    "deliveredMain": "5fac564d",
+    "currentCheckpointGate": "资源保护源码66b0a89a精确输入full108已PASS；MCP源码2cbf0d33当前full运行中，尚无PASS，不能借用旧门禁。",
     "historicalMainGateBeforeCurrent20261017": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
-    "mainGate": "Latest published main32d7e365 path/SFTP scoped gates pass with exact frozen full107 inputs; capability docs-only gate/push follows separately."
+    "mainGate": "远端main仍5fac564d；本地开发分支包含15个后续基线提交及MCP检查点，未再合其他远端功能分支，main公开包门禁未完成。",
+    "developmentCheckpoint": "2cbf0d339dad43a8213470c68c34c43e2cb3cccb"
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -8138,10 +8164,13 @@
     "summary": "Actual natural expiry mismatch repaired in current8f; native expiry/dirty/version/save/revoke, original launcher/14sessions preservation, both complete local packages/import/freshARM and full107/race941.639s/vet/CAD pass. Public image downloads and origin/main push pending; current main remains5fac564d until distribution gate."
   },
   "timeline_native_20261017": {
-    "status": "in_progress",
+    "status": "scoped_pass_release_pending",
     "task": "docs/tasks/timeline-native-20261017.json",
     "report": "docs/reviews/2026-10-17/timeline-native.md",
-    "summary": "Actual current map20052 nodes/20035edges has only one snapshot and151 evictions; serialized plaintext7.30MB with8MiB total budget cannot retain two current-size observations. Native comparison incomplete; bounded retention fix required. Diagnostic aside overlay issue also observed. Original22protected files/14sessions preserved; no product source change."
+    "summary": "旧单观察容量缺陷已修复：受限gzip+AES-GCM、旧加密备份、原生约2万节点不同历史与结论依据比较通过；151条先前淘汰仍标记丢失。最终full107与本地双架构包/导入有证据，公开分发仍待，不再重复列为待开发。",
+    "evidence": [
+      "docs/reviews/2026-10-17/timeline-retention-proof.json"
+    ]
   },
   "startup_inputs_notice_20261017": {
     "status": "in_progress",
