@@ -10,6 +10,7 @@
 | [软件模块说明](architecture/modules.md) | 模块职责、依赖与关键调用链 |
 | [截图证据与原图](ui-evidence.md) | 13 张真实截图、环境、数据和 SHA-256 |
 | [连续工作总交接](continuity-handoff.md) | 原12项逐项状态、证据、复测步骤、源码／镜像／生产边界和下一步 |
+| [连续工作操作与排障](continuity-operations.md) | 完整包检查、启动停止、常见错误、功能复测、交付与回退清单 |
 | [文档覆盖与历史边界](documentation-map.md) | 当前正文、专题、历史记录和非 UI 证据 |
 
 [English](en/README.md) · 简体中文

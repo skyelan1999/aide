@@ -1,0 +1,87 @@
+{
+  "id": "continuity-ops-docs-20261017",
+  "request": "补全详细交接、运行故障排查与发布交付文档",
+  "baseline": "719c63bc38ff7cc5dd0d09c0252ca70964fdbefe",
+  "initial_status": "",
+  "acceptance": [
+    "提供按实际启动器执行的安装、停止、离线包核验及故障排查步骤，标明有副作用操作。",
+    "补会话推理强度、成果刷新、历史恢复、审批和星图的可重复验收场景及失败收据。",
+    "源码、full、本地包、公开默认和生产严格分开，保留未验证与未发布状态。",
+    "文档本地链接和diff通过；确认构建输入不变，按已有main推送授权交付。"
+  ],
+  "scope": [
+    "docs/continuity-operations.md",
+    "docs/continuity-handoff.md",
+    "docs/README.md",
+    "docs/documentation-map.md",
+    "docs/tasks/continuity-ops-docs-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "以已有专项proof和真实脚本为依据，补独立操作手册，不重写历史收据，不改变产品或生产。",
+      "evidence": [
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json",
+        "scripts/aide-maintenance.sh"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "以已有专项proof和真实脚本为依据，补独立操作手册，不重写历史收据，不改变产品或生产。",
+      "evidence": [
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json",
+        "scripts/aide-maintenance.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增详细操作排障手册，更新3处导航与过时406表述；仅文档。",
+      "evidence": [
+        "docs/continuity-operations.md",
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "check_docs PASS317 Markdown1207 local links；git diff --check通过。人工核对脚本、候选proof、来源链接；当前full指纹68a145c0与既有PASS收据相同，普通文档无需重复重型Docker验证。未新做UI或运行验收。",
+      "evidence": [
+        "docs/continuity-operations.md",
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "覆盖实例识别、平台、内外包校验、启动停止、共享builder缓存范围、13类故障、功能复测、六项交付、回退和交接模板。",
+      "evidence": [
+        "docs/continuity-operations.md",
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只修改任务scope内5份文档；无容器、浏览器、缓存、数据或镜像变更。",
+      "evidence": [
+        "docs/continuity-operations.md",
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "准备按已有授权合并并推送main；不发布tag／附件或部署。",
+      "evidence": [
+        "docs/continuity-operations.md",
+        "docs/continuity-handoff.md",
+        "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "用户：你把文档该补的都补好，做的详细一些；先前授权做一部分push一部分、合到main。仅文档提交，不含新tag、附件或生产替换。",
+  "rollback": "Revert this scoped documentation commit; no runtime/data/config migration.",
+  "handoff": "原12项继续；406本地包已验收但公开上传失败、默认未提升、生产未替换。后续按手册复测不能直接计为PASS。"
+}
