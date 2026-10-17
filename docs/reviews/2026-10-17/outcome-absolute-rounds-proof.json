@@ -1,0 +1,32 @@
+{
+  "status": "partial_source_fix_preserved_not_merged",
+  "observedUTC": "2026-10-17T16:04:40.611420+00:00",
+  "sourceCommit": "fd949895699614e874691136551552b1cba3a8e7",
+  "sourceSHA": "7951105e7d7434474190a513747fbd1917cc944766d7fc9a30be64c0b990f743",
+  "oldSourceRegression": "FAIL expected#64 actual#30; initial missing-toast harness corrected separately",
+  "focused": "PASS30/60/64 windows, stable run40, legacy total fallback, cross-session selection",
+  "quick": {
+    "status": "pass",
+    "commands": 124
+  },
+  "full": {
+    "status": "not_completed_operator_stopped_for_user_restart",
+    "receiptStatus": "fail",
+    "passedServerShards": 9,
+    "totalServerShards": 12,
+    "log": ".agent-state/verify-20261017T155323307323Z.log",
+    "noFullPassClaim": true
+  },
+  "native": "NOT_RUN",
+  "runtimeBuild": "NOT_RUN",
+  "cleanup": {
+    "ownedVerificationContainerStopped": true,
+    "ownedVerificationContainerRemovedByRunner": true,
+    "newBrowserTabs": 0,
+    "productionMutationCommands": 0,
+    "productionObservation": "Both existing production containers became stopped during user restart; do not claim same running state or22 invariant in this task"
+  },
+  "userSteering": "把仓库拉到最新然后重新编译；核对无新main后：没事了，我重新启动下看下",
+  "remoteMain": "8f6640646099a94a0ebbf196ec3235577744d9ec",
+  "followup": "Return active checkout to latest main; preserve fix branch, rerun full and current native acceptance before merge; original12 stays active."
+}

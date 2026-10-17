@@ -67,6 +67,16 @@ func TestStagedOutputPersistsBeforeNextRound(t *testing.T) {
 	if got := saved.Runs[0].Steps[0].OutputSegments; len(got) != 1 || got[0].Content != "第一段已经查明。" {
 		t.Fatalf("disk snapshot: %+v", got)
 	}
+	w := request(a, "GET", "/api/sessions/"+session.ID+"/runs/"+task.ID+"/outcome", nil)
+	requireStatus(t, w, 200)
+	var outcome map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &outcome); err != nil {
+		t.Fatal(err)
+	}
+	outputs := outcome["outputs"].([]any)
+	if len(outputs) != 1 || len(outputs[0].(map[string]any)["segments"].([]any)) != 1 || outcome["status"] != "running" {
+		t.Fatal("saved conclusion missing before held second model round", outcome)
+	}
 	cancel()
 	select {
 	case <-done:

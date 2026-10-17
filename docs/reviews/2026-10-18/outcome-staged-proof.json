@@ -1,0 +1,150 @@
+{
+  "status": "source_delivered_main_scoped_pass",
+  "quick": {
+    "status": "pass",
+    "commands": 125,
+    "fingerprint": "5347e4302248e809f9f7fdbdd41d9abe821d27f27b5a815474e52377cbe32f85"
+  },
+  "full": {
+    "status": "pass",
+    "commands": 128,
+    "serverInventory": 981,
+    "shards": 12,
+    "fingerprint": "5347e4302248e809f9f7fdbdd41d9abe821d27f27b5a815474e52377cbe32f85",
+    "log": ".agent-state/verify-20261017T172938430291Z.log",
+    "otherGoRaceVet": true,
+    "cadGeometry": true
+  },
+  "native": {
+    "client": "Safari native accessibility and screenshots",
+    "origin": "https://localhost:58320/",
+    "runningSavedFirst": true,
+    "automaticTerminalAppend": true,
+    "overviewAndDetail": true,
+    "noDuplicateFinalBody": true,
+    "failedStageRetained": true,
+    "loadWindows": [
+      30,
+      60,
+      64
+    ],
+    "stableRound40": "LOCAL_FILL_39",
+    "themes": [
+      "professional system dark",
+      "professional light",
+      "classic light",
+      "classic dark"
+    ],
+    "themeRestored": "professional system",
+    "windowChecks": "desktop 2650px screenshot and half-screen 1922px screenshot; not mobile-device acceptance",
+    "escapeClosedTrajectory": true,
+    "scope": "Theme/narrow checks on baseline1b76; integrated0717 rechecked stages/overview/detail/export/30-60-64/restart. task-outcome.js and app.js Git blob IDs unchanged."
+  },
+  "persistence": {
+    "status": "pass",
+    "segmentsPreserved": 2,
+    "noAdditionalFixtureCalls": true,
+    "productionContainerUnchanged": true,
+    "protectedHashesUnchanged": 22,
+    "nativeLANHelper": "separate lifecycle observation, not part of staged-output pass"
+  },
+  "cleanup": {
+    "status": "pass",
+    "removedOwnedStoppedContainers": 3,
+    "removedEmptyNetworks": [
+      "aide-outcome-staged-20261018_default"
+    ],
+    "imagesAndDataPreserved": true,
+    "ownedSafariWindowClosed": true,
+    "originalUserWindowPreserved": true,
+    "ownLANHelperNotReadyAfterStop": true
+  },
+  "fixtureLimit": "local synthetic protocol only, no paid model or real vector. Initial held request exceeded the content idle timeout; later fresh session completed two stages normally.",
+  "delivery": {
+    "mergedMain": true,
+    "pushed": true,
+    "productionReplaced": false,
+    "newDualArchitecturePackages": false,
+    "publicRelease": false,
+    "verifiedMain": "936696c2d6752e3026c2d2aeb3ca89681e06d108",
+    "releaseCheck": "pass clean main; exact full and old07c public attachment metadata only"
+  },
+  "baselineFull": {
+    "status": "pass",
+    "commands": 127,
+    "serverInventory": 980,
+    "shards": 12,
+    "fingerprint": "7febe3bb4accf640a8453f0e455afd808345a82d44b03141eb0c6452b8e0ba5d",
+    "log": ".agent-state/verify-20261017T170632824815Z.log",
+    "appliesToIntegratedSource": false
+  },
+  "integration": {
+    "commit": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c",
+    "sourceSHA": "2239861e3902cced4bdb9a772b489ee3a95340b7fb1bd70646c60ce3979d282e",
+    "remoteMain": "19e7c94d5a769dae444f31c5a0b54d7b30a133e9",
+    "mergedWithoutConflicts": true,
+    "quick": "pass125",
+    "candidateImage": "sha256:07172e63ff04662f4f91757cc15e253d138e4c192a62f1d81136c8f9059bdfd1",
+    "full": "pass128;981 server items/12 disjoint shards",
+    "nativeCore": "pass",
+    "staleSnapshotRejected409": true,
+    "nativeExport": {
+      "status": "pass",
+      "sha256": "cdc46c5933b290e8b1b0875104a7a1cafb193d34ceba918e9a8b228b0c97f73f",
+      "savedSegments": 2,
+      "consistentSnapshot": true,
+      "outputTextComplete": true
+    },
+    "runtimeAssets": {
+      "status": "pass",
+      "uid": 1000,
+      "readableFiles": 32,
+      "docxRoundTrip": true,
+      "network": "none"
+    },
+    "requiredLANPrograms": 6,
+    "requiredBundledPlugins": 5,
+    "helperLifecycle": {
+      "liveParent": [
+        {
+          "seconds": 0,
+          "leaseReady": true,
+          "mappedPortConnects": true
+        },
+        {
+          "seconds": 5,
+          "leaseReady": true,
+          "mappedPortConnects": true
+        },
+        {
+          "seconds": 35,
+          "leaseReady": true,
+          "mappedPortConnects": true
+        },
+        {
+          "seconds": 40,
+          "leaseReady": true,
+          "mappedPortConnects": true
+        }
+      ],
+      "afterParent": {
+        "afterParentExit": true,
+        "matchingHelperProcesses": 0,
+        "leaseSecondsUntilExpiry": -2
+      },
+      "interpretation": "observed only after exec parent exit; suspected tool environment cleanup, not established product root cause; normal Terminal and two-device LAN NOT_RUN"
+    }
+  },
+  "baselineSourceCommit": "2f43186ccb0b94aeef143ed7f1270434e0336527",
+  "baselineSourceSHA": "1b76e72c517e6098c78e3bdd17161987ff80cfc3a09f9da9eea255eabc83b077",
+  "baselineCandidateImage": "sha256:2913ea53d348ad5e6f1fd4915abc3f946f322aea3741b55397ebb9be846e315a",
+  "sourceCommit": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c",
+  "sourceSHA": "2239861e3902cced4bdb9a772b489ee3a95340b7fb1bd70646c60ce3979d282e",
+  "candidateImage": "sha256:07172e63ff04662f4f91757cc15e253d138e4c192a62f1d81136c8f9059bdfd1",
+  "handoffDocument": "docs/doubao-handoff-20261018.md",
+  "finalProductionProtection": {
+    "containerUnchanged": true,
+    "hashesUnchanged": 22,
+    "ownTestsAndWindowsCleaned": true
+  }
+}

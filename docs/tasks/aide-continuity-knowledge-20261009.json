@@ -162,7 +162,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Current752/source406 code main delivered; current ARM5dc/AMD14cb complete packages actually Dockerloaded and scoped original-start/runtime/reasoning/CAD qualified. Public gate1 and Safari external+internal unique-name uploads failed, old07c defaults and production22 exact. Need working authorized publication path; continue original12 picker numbering/workspace/capacity scopes. Windows user-owned, vectors deferred. Local package documentation delivered mainaf50350b. Evaluate dedicated CI release publishing instead of another identical Safari upload; current workflows onlyPages.",
+  "handoff": "本轮成果持久阶段/绝对编号已交付main936696c2，集成代码f316/source2239，ARM0717隔离原生与quick125/full128(981项)通过。用户48e/406服务及22保护摘要不变；公开默认仍07c、最近本地完整双架构仍406，当前完整包未交付。详细见docs/doubao-handoff-20261018.md，原12仍进行，Windows用户负责、真实向量暂缓。",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -445,6 +445,15 @@
           "docs/reviews/2026-10-17/outcome-external-events-proof.json"
         ],
         "remaining": "External-activity stale overview defect fixed in scoped current406 candidate. Absolute picker numbering still relative to loaded window; live partial-body outcome scope not claimed; public current-source dual packages pending. Other original12 gates remain."
+      },
+      "current_audit_20261018": {
+        "status": "in_progress",
+        "evidence": [
+          "docs/reviews/2026-10-18/outcome-staged.md",
+          "docs/reviews/2026-10-18/outcome-staged-proof.json"
+        ],
+        "summary": "持久chat片段和绝对编号源码已随936696c2交付main；集成镜像核心原生、下载、重启、快照409及quick125/full128通过。",
+        "remaining": "当前源码双架构完整包、公开Release、完整旧版本升级/回退等交付范围仍待；其他原12工作流不提升。"
       }
     },
     {
@@ -3013,7 +3022,7 @@
       "remaining": "归位视觉构图不确定；同工作区多标签、跨工作区隔离、服务重启镜头相位尚未实测。"
     }
   },
-  "latest_source_revision": "6ac147aa",
+  "latest_source_revision": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c",
   "release_gate": {
     "status": "in_progress",
     "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
@@ -8438,5 +8447,23 @@
     "summary": "Bash源码缺依赖时本地完整包seed恢复，旧07c只作工具链，实际编译94e并隔离启动；force/default策略、32聚焦/quick124/full127、候选CAD/Office pass。主实例48e/406及22文件不变，未发布94e包，PS显式源码和原12缺口保留。",
     "next": "继续成果段落投影/绝对编号及原12实际验收；PS显式源码恢复和94e双架构完整包/公开发布仍开放，真实向量暂缓。",
     "mainSourceDelivery": "d137353368fcd548c6125feb22c2c04ec469f6c1"
+  },
+  "outcome_staged_20261018": {
+    "status": "source_delivered_main_scoped_pass",
+    "task": "docs/tasks/outcome-staged-20261018.json",
+    "sourceCommit": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c",
+    "evidence": "docs/reviews/2026-10-18/outcome-staged-proof.json",
+    "summary": "集成最新LAN main，source2239/image0717核心原生/真实导出/重启、quick125/full128(981项)通过；干净main门禁/push/独立远端核对完成。原12、当前双架构完整包/公开Release仍未关闭。",
+    "deliveredMain": "936696c2d6752e3026c2d2aeb3ca89681e06d108",
+    "fullFingerprint": "5347e4302248e809f9f7fdbdd41d9abe821d27f27b5a815474e52377cbe32f85"
+  },
+  "doubao_handoff_20261018": {
+    "status": "document_ready",
+    "path": "docs/doubao-handoff-20261018.md",
+    "userRequest": "本轮完成之后写一个交接文档，后面由豆包来交接你的目标",
+    "sourceDeliveredMain": "936696c2d6752e3026c2d2aeb3ca89681e06d108",
+    "overallObjective": "in_progress; not complete",
+    "externalMessageSent": false,
+    "goalContinuation": "pause requested after current round by user; pause after final docs push verification, not objective complete"
   }
 }

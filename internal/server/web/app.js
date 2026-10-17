@@ -9285,7 +9285,7 @@ function renderTrajectoryOutcome(host, session) {
   const select = el('select', ''); select.id = 'traj-outcome-run';
   const overview=el('option','',t('当前会话总览'));overview.value='';overview.selected=!selected;select.append(overview);
   runs.forEach((run, index) => {
-    const option = el('option', '', '#' + (runs.length - index) + ' · ' + (run.prompt || t('未命名任务')).slice(0, 70));
+    const option = el('option', '', '#' + ((session.runsTotal ?? runs.length) - index) + ' · ' + (run.prompt || t('未命名任务')).slice(0, 70));
     option.value = run.id; option.selected = run.id === selected?.id; select.append(option);
   });
   select.onchange = () => { trajOutcomeRun = {sessionId:session.id, runId:select.value}; renderTrajectory(); };

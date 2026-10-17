@@ -1,0 +1,121 @@
+{
+  "id": "outcome-staged-20261018",
+  "request": "继续原12项成果追踪及用户分段式结论要求：显示已保存OutputSegments，不等待最终步骤完成；原生复现/修复/持久与快照验收，并续验绝对轮次编号",
+  "baseline": "d4a5d817e8d085882f49809d4318cd015cab65f0",
+  "initial_status": "A  docs/reviews/2026-10-17/outcome-absolute-rounds-proof.json\nA  docs/reviews/2026-10-17/outcome-absolute-rounds.md\nA  docs/tasks/outcome-absolute-rounds-20261017.json\nM  internal/server/web/app.js\nM  scripts/outcome-overview-lifecycle.test.cjs",
+  "acceptance": [
+    "任务第二轮仍运行时，成果API和总览/单轮详情可读已持久化chat阶段片段；不借用会话级实时broker。",
+    "保留片段顺序/ID/模型轮次及全文摘要；最终正文与已保存片段全文相同时不重复，重复文字的不同片段仍保留。",
+    "API与页面预览有片段/文字预算、明确截断/遗漏；snapshot绑定所有片段，包括未展示片段，旧分页拒绝409，导出标明范围。",
+    "深拷贝片段避免并发别名；理由/工具/辅助worker不冒充主输出；旧记录行为兼容。",
+    "续验64轮/30和60加载窗口绝对编号，阶段追加/终态/详情切换/刷新与重启；真实隔离本地协议，无收费模型或向量。",
+    "聚焦/quick/full、当前候选原始启动器及原生Safari、数据保护/清理/文档/main门禁；Windows用户验收，原12继续。",
+    "本轮完成后为豆包编写详细交接：完整目标、实际提交/验证/运行与发布边界、未完成项、目录/命令/下一步和接手提示；不包含密钥，不能将专项完成当整体完成。"
+  ],
+  "scope": [
+    "internal/server/task_outcome.go",
+    "internal/server/outcome_staged_test.go",
+    "internal/server/staged_output_test.go",
+    "internal/server/web/task-outcome.js",
+    "internal/server/web/app.js",
+    "scripts/outcome-pagination.test.cjs",
+    "scripts/outcome-overview-lifecycle.test.cjs",
+    "docs/tasks/outcome-staged-20261018.json",
+    "docs/tasks/outcome-absolute-rounds-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/continuity-handoff.md",
+    "docs/continuity-operations.md",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/reviews/2026-10-18/outcome-staged.md",
+    "docs/reviews/2026-10-18/outcome-staged-proof.json",
+    "docs/doubao-handoff-20261018.md",
+    "docs/README.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已确认持久OutputSegments与成果projection缺口；投影只读已保存chat片段，新增可选segments字段，legacy content不改。每步最多100条/32000runes、每段8000，绑定全片段摘要；UI依据全文摘要去最终重复。续验旧绝对编号修复，不把同轮token流当持久成果。",
+      "evidence": [
+        "internal/server/staged_output.go",
+        "internal/server/task_outcome.go",
+        "internal/server/web/task-outcome.js",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "已确认持久OutputSegments与成果projection缺口；投影只读已保存chat片段，新增可选segments字段，legacy content不改。每步最多100条/32000runes、每段8000，绑定全片段摘要；UI依据全文摘要去最终重复。续验旧绝对编号修复，不把同轮token流当持久成果。",
+      "evidence": [
+        "internal/server/staged_output.go",
+        "internal/server/task_outcome.go",
+        "internal/server/web/task-outcome.js",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "成果API新增只读chat片段预览/全摘要，深拷贝切片；UI总览/详情按片段顺序显示，全文digest去最终重复，阶段数不冒充回复轮数；Unicode预算和导出文本完整性显式；合并旧绝对编号源修复待共同验收。",
+      "evidence": [
+        "internal/server/task_outcome.go",
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js",
+        "internal/server/outcome_staged_test.go",
+        "scripts/outcome-pagination.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "集成f316/source2239/image0717：quick125/full128通过，981服务器项/12组、其余Go race/vet及CAD通过；原生持久首段/终态两段/详情去重、实际JSON导出、409、30/60/64及重启保持和22保护摘要通过。普通终端桥持续/真实双机不在通过范围。",
+      "evidence": [
+        "docs/reviews/2026-10-18/outcome-staged.md",
+        "docs/reviews/2026-10-18/outcome-staged-proof.json",
+        "internal/server/outcome_staged_test.go",
+        "scripts/outcome-pagination.test.cjs",
+        "scripts/outcome-overview-lifecycle.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "专项、原任务账本/交接/操作/架构、旧编号续验及豆包详细交接已更新；明确当前源码交付、实际验收、剩余范围和独立包/生产边界。普通文档另做链接/人工审阅，不冒充源码full。",
+      "evidence": [
+        "docs/reviews/2026-10-18/outcome-staged.md",
+        "docs/reviews/2026-10-18/outcome-staged-proof.json",
+        "docs/continuity-handoff.md",
+        "docs/continuity-operations.md",
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "两轮均只移除各自3个已停止测试容器及空网络；原始stop执行，集成宿主桥不再就绪；自建窗口关闭、原窗口保留，下载移至证据目录，生产22摘要/容器身份一致。镜像及数据保留。",
+      "evidence": [
+        "docs/reviews/2026-10-18/outcome-staged-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "干净main匹配当前full指纹后门禁通过；源码936696c2已push，独立ls-remote一致。门禁公开附件仍07c元数据，不代表当前镜像包；未部署生产/未发布新双架构包。",
+      "evidence": [
+        "docs/reviews/2026-10-18/outcome-staged-proof.json",
+        "docs/reviews/2026-10-18/outcome-staged.md"
+      ]
+    }
+  },
+  "release_authorization": "用户原目标成果追踪、会话分段式结论、不等全做完覆盖；既有分批push/test和main授权。仅隔离本地协议模型，不替换当前用户服务。",
+  "rollback": "Revert scoped projection/rendering commits; no persisted schema migration or user data rewrite. Keep prior runtime/images.",
+  "handoff": "专项源码已交付main936696c2并独立核对，quick125/full128/981项及核心原生通过，用户生产不变。本轮文档定稿提交后再核对远端与干净状态；原12继续，豆包按详细交接接手，Windows用户验收，向量暂缓。",
+  "integration_followup": {
+    "remoteMain": "19e7c94d5a769dae444f31c5a0b54d7b30a133e9",
+    "primaryMainSynced": true,
+    "candidateMergedRemoteMain": true,
+    "changes": "LAN discovery host bridge changes Docker/startup/build/verification inputs; no direct overlap with staged outcome files",
+    "required": "finish this baseline full without changing inputs, integrate latest origin/main on task branch, rerun affected validation and qualify exact integrated fingerprint; do not apply baseline receipt to merged code",
+    "mergeCommit": "f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c"
+  },
+  "handoff_document": {
+    "path": "docs/doubao-handoff-20261018.md",
+    "status": "ready",
+    "user_request": "本轮完成之后写一个交接文档，后面由豆包来交接你的目标",
+    "goalContinuation": "用户明确要求：完成本轮后暂停，交给豆包；最终文档push确认后执行暂停，不标整体完成。"
+  }
+}

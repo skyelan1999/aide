@@ -16,7 +16,33 @@
  };
  const replyNames=['chat','agent','review','propose','plan'];
  const preferredReply={chat:'chat',workflow:'agent',review:'review',propose:'propose',plan:'plan'};
- const finalOutput=(steps,mode)=>{const available=(steps||[]).filter(s=>s?.content&&s.name!=='file_application_receipt');const preferred=preferredReply[mode];return (preferred&&[...available].reverse().find(s=>s.name===preferred))||[...available].reverse().find(s=>replyNames.includes(s.name))||available[available.length-1]||null;};
+ const finalOutput=(steps,mode)=>{const available=(steps||[]).filter(s=>s&&s.name!=='file_application_receipt'&&(s.content||replyPieces(s,mode).segments.length));const preferred=preferredReply[mode];return (preferred&&[...available].reverse().find(s=>s.name===preferred))||[...available].reverse().find(s=>replyNames.includes(s.name))||available[available.length-1]||null;};
+ // Match whole saved text/digests before truncating; equal preview prefixes do
+ // not establish that a final answer repeats a saved stage.
+ function replyPieces(step,mode){
+  const source=mode==='chat'&&step?.name==='chat'?(step.segments||step.outputSegments||[]):[];
+  const segments=[];let budget=32000,represented=false;
+  for(let i=source.length-1;i>=0&&segments.length<100&&budget>0;i--){
+   const saved=source[i],whole=String(saved?.content||'');if(!whole.trim())continue;
+   const points=[];let truncated=!!saved.truncated;
+   for(const point of whole){if(points.length>=Math.min(8000,budget)){truncated=true;break;}points.push(point);}
+   const same=step.digest&&saved.digest?step.digest===saved.digest:!step.truncated&&!saved.truncated&&whole===step.content;
+   represented=represented||same;
+   segments.unshift({...saved,index:saved.index||i+1,content:points.join(''),truncated});budget-=points.length;
+  }
+  return {segments,total:step?.segmentsTotal??source.length,final:represented?'':String(step?.content||'')};
+ }
+ function appendReplyBody(host,step,mode,t,renderMarkdown){
+  const parts=replyPieces(step,mode);
+  const body=(parent,text)=>{const e=node('div','outcome-io-answer md-body');if(renderMarkdown)e.innerHTML=renderMarkdown(text);else e.textContent=text;parent.append(e);};
+  if(parts.segments.length){
+   if(step.status==='running')host.append(node('p','muted',t('任务仍在运行，以下是已保存的阶段正文。')));
+   else if(step.status!=='completed')host.append(node('p','muted',t('以下是已保存的阶段正文；任务尚未正常完成。')));
+   for(const segment of parts.segments){const block=node('div','outcome-io-segment');block.append(node('p','outcome-io-model',t('已保存片段 {0}',segment.index)));body(block,segment.content);if(segment.truncated)block.append(node('p','muted',t('片段预览已截断，完整正文见会话记录')));host.append(block);}
+   if(parts.total>parts.segments.length)host.append(node('p','muted',t('片段预览已展示 {0} / {1}，更早内容见会话记录',parts.segments.length,parts.total)));
+  }
+  if(parts.final){if(parts.segments.length)host.append(node('p','outcome-io-model',t(step.status==='completed'?'最终正文':'其他已记录正文')));body(host,parts.final);if(step.truncated)host.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));}
+ }
  function shellWriteTargets(toolUses){
   const found=[];
   for(const [index,use] of (toolUses||[]).entries()){
@@ -67,7 +93,7 @@
    for(const a of run.attachments||[])input.append(node('p','outcome-io-resource',(a.directory?t('文件夹'):t('附件'))+' · '+a.path+' · '+(a.source||a.root||'workspace')));
    for(const steer of run.steers||[])input.append(node('p','outcome-io-resource',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
    const output=node('section','outcome-io-block outcome-io-assistant');output.append(node('h4','','助手'));
-   if(final){output.append(node('p','outcome-io-model',(run.model||'Aide')+' · '+phaseName(final.name)));text(output,final.content,true);}
+   if(final){output.append(node('p','outcome-io-model',(run.model||'Aide')+' · '+phaseName(final.name)));appendReplyBody(output,final,run.mode,t,renderMarkdown);}
    else if(run.error)output.append(node('p','outcome-io-error','⚠ '+run.error));
    else output.append(node('p','muted',t(run.status==='running'?'正在生成回复…':'没有记录到助手正文')));
    if(final&&run.error)output.append(node('p','outcome-io-error','⚠ '+run.error));
@@ -76,9 +102,9 @@
    if(!(run.files||[]).length&&!targets.length)artifacts.append(node('p','muted',t('本轮没有文件变更记录')));
    for(const f of run.files||[])artifacts.append(node('p','outcome-io-resource',f.path+' · '+t(f.applied?'已记录应用，仍需复核':'变更提案，尚无应用标记')));
    for(const target of targets){const hint=node('p','outcome-io-resource',t('命令写入目标线索')+' · '+target.path+' · '+t('工具调用 {0}',target.call)+' · '+t('未验证文件存在或正文'));artifacts.append(hint);}
-   const processSteps=(run.steps||[]).filter(s=>s!==final&&s.content&&s.name!=='file_application_receipt'),toolUses=run.toolUses||[];
+   const processSteps=(run.steps||[]).filter(s=>s!==final&&s.name!=='file_application_receipt'&&(s.content||replyPieces(s,run.mode).segments.length)),toolUses=run.toolUses||[];
    if(processSteps.length||toolUses.length){const activity=node('details','outcome-io-activity');activity.append(node('summary','',t('查看运行过程 · {0} 阶段 · {1} 次工具调用',processSteps.length,toolUses.length)));
-    for(const step of processSteps){const d=node('details','outcome-io-process-step');d.append(node('summary','',phaseName(step.name)+' · '+t(step.status||'已记录')));text(d,step.content,true);activity.append(d);}
+    for(const step of processSteps){const d=node('details','outcome-io-process-step');d.append(node('summary','',phaseName(step.name)+' · '+t(step.status||'已记录')));appendReplyBody(d,step,run.mode,t,renderMarkdown);activity.append(d);}
     for(const [index,use]of toolUses.entries()){const d=node('details','outcome-io-tool');d.append(node('summary','',t('工具调用 {0}',index+1)+' · '+(use.tool||t('未知工具'))));if(use.childTitle||use.childNumber)d.append(node('p','muted',t('子会话')+' · '+(use.childTitle||('#'+use.childNumber))));if(use.args)d.append(node('h5','','参数'),node('pre','outcome-io-text',use.args));if(use.preview||use.result)d.append(node('h5','','返回'),node('pre','outcome-io-text',use.preview||use.result));activity.append(d);}
     card.append(activity);
    }
@@ -187,8 +213,8 @@
     for(const steer of data.inputs?.steers||[])input.append(node('p','',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
     const output=section('输出了什么'),replies=data.outputs||[];if(!replies.length)output.append(node('p','muted',t('尚无回复记录')));
     const finalReply=finalOutput(replies,data.mode);
-    if(finalReply){const answer=node('article','outcome-io-final');answer.append(node('p','outcome-io-model',t('助手回复')+' · '+t(finalReply.status||'已记录')));const body=node('div','outcome-io-answer md-body');if(renderMarkdown)body.innerHTML=renderMarkdown(finalReply.content);else body.textContent=finalReply.content;answer.append(body);if(finalReply.truncated)answer.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));output.append(answer);}
-    const otherReplies=replies.filter(reply=>reply!==finalReply);if(otherReplies.length){const other=node('details','outcome-io-reply');other.append(node('summary','',t('展开其他阶段输出 · {0}',otherReplies.length)));for(const reply of otherReplies){const phase=node('details','outcome-io-process-step');phase.append(node('summary','',reply.name+' · '+t(reply.status||'已记录')),node('pre','outcome-io-text',reply.content));if(reply.truncated)phase.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));other.append(phase);}output.append(other);}
+    if(finalReply){const answer=node('article','outcome-io-final');answer.append(node('p','outcome-io-model',t('助手回复')+' · '+t(finalReply.status||'已记录')));appendReplyBody(answer,finalReply,data.mode,t,renderMarkdown);output.append(answer);}
+    const otherReplies=replies.filter(reply=>reply!==finalReply);if(otherReplies.length){const other=node('details','outcome-io-reply');other.append(node('summary','',t('展开其他阶段输出 · {0}',otherReplies.length)));for(const reply of otherReplies){const phase=node('details','outcome-io-process-step');phase.append(node('summary','',reply.name+' · '+t(reply.status||'已记录')));appendReplyBody(phase,reply,data.mode,t,renderMarkdown);other.append(phase);}output.append(other);}
     section('形成了什么成果');
     const metrics=node('div','outcome-metrics');for(const [key,label]of [['files','文件提案'],['writeTargets','写入目标线索'],['applicationRecords','应用记录'],['executions','执行返回'],['verificationReports','验证报告'],['unknownOutcomes','未知结果']]){const cell=node('div');cell.append(node('strong','',data.summary[key]??0),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
     content.append(node('p','outcome-boundary',t('任务状态、模型计划与验证报告不是独立验收证明；展开证据查看原始返回。')));
@@ -242,7 +268,7 @@
      }catch(e){if(valid())error?.(e.message);}};
     gaps.append(importReceipt,receiptFile);
 
-    const actions=node('div','outcome-actions');const exportButton=node('button','quiet',t('导出成果 JSON'));exportButton.disabled=stale;exportButton.onclick=()=>{if(!valid()||stale)return;const blob=new Blob([JSON.stringify({...data,files,executions,writeTargets,exportScope:{kind:'summary',snapshot:data.snapshot||null,consistentSnapshot:!!data.snapshot&&!stale,allPagesLoaded:!data.page.filesMore&&!data.page.executionsMore,rawEvidenceIncluded:false,textTruncated:!!data.goalTruncated||executions.some(e=>e.truncated)||data.verification.some(r=>r.truncated)||(data.systemReceipts||[]).some(r=>r.truncated)}},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='aide-outcome-'+runId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};actions.append(exportButton);content.append(actions);
+    const actions=node('div','outcome-actions');const exportButton=node('button','quiet',t('导出成果 JSON'));exportButton.disabled=stale;exportButton.onclick=()=>{if(!valid()||stale)return;const blob=new Blob([JSON.stringify({...data,files,executions,writeTargets,exportScope:{kind:'summary',snapshot:data.snapshot||null,consistentSnapshot:!!data.snapshot&&!stale,allPagesLoaded:!data.page.filesMore&&!data.page.executionsMore,rawEvidenceIncluded:false,outputTextComplete:!(data.outputs||[]).some(r=>r.truncated||r.segmentsOmitted>0||(r.segments||[]).some(s=>s.truncated)),textTruncated:(data.outputs||[]).some(r=>r.truncated||r.segmentsOmitted>0||(r.segments||[]).some(s=>s.truncated))||!!data.goalTruncated||executions.some(e=>e.truncated)||data.verification.some(r=>r.truncated)||(data.systemReceipts||[]).some(r=>r.truncated)}},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='aide-outcome-'+runId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};actions.append(exportButton);content.append(actions);
     [...(content.querySelectorAll?.('details')||[])].forEach((item,index)=>{if(opened.includes(index))item.open=true;});content.scrollTop=scrollTop;
    }
    try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;writeTargets=data.writeTargets||[];render();syncPolling();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}
