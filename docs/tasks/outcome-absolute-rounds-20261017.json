@@ -81,5 +81,6 @@
   },
   "release_authorization": "用户持续目标及先前分批push/test、合入main授权；不部署生产。",
   "rollback": "Revert scoped source commit, keep production/data/images unchanged.",
-  "handoff": "继续前先确认用户重启后实例身份；本分支重跑full和原生编号验收后才合main。当前源修复不能当作用户已使用。"
+  "handoff": "本修复已纳入outcome-staged候选，原生30/60/64绝对编号与#40目标通过；等待共同最终full及main门禁。保留原中止full历史，不覆盖为通过。",
+  "continued_in": "docs/tasks/outcome-staged-20261018.json"
 }

@@ -1,0 +1,60 @@
+{
+  "status": "in_progress",
+  "sourceCommit": "2f43186ccb0b94aeef143ed7f1270434e0336527",
+  "sourceSHA": "1b76e72c517e6098c78e3bdd17161987ff80cfc3a09f9da9eea255eabc83b077",
+  "candidateImage": "sha256:2913ea53d348ad5e6f1fd4915abc3f946f322aea3741b55397ebb9be846e315a",
+  "quick": {
+    "status": "pass",
+    "fingerprint": "7febe3bb4accf640a8453f0e455afd808345a82d44b03141eb0c6452b8e0ba5d"
+  },
+  "full": "running; do not use previous source receipt",
+  "native": {
+    "client": "Safari native accessibility and screenshots",
+    "origin": "https://localhost:58320/",
+    "runningSavedFirst": true,
+    "automaticTerminalAppend": true,
+    "overviewAndDetail": true,
+    "noDuplicateFinalBody": true,
+    "failedStageRetained": true,
+    "loadWindows": [
+      30,
+      60,
+      64
+    ],
+    "stableRound40": "LOCAL_FILL_39",
+    "themes": [
+      "professional system dark",
+      "professional light",
+      "classic light",
+      "classic dark"
+    ],
+    "themeRestored": "professional system",
+    "windowChecks": "desktop 2650px screenshot and half-screen 1922px screenshot; not mobile-device acceptance",
+    "escapeClosedTrajectory": true
+  },
+  "persistence": {
+    "status": "pass",
+    "segmentsPreserved": 2,
+    "noAdditionalFixtureCalls": true,
+    "productionContainerUnchanged": true,
+    "protectedHashesUnchanged": 22
+  },
+  "cleanup": {
+    "status": "pass",
+    "removedOwnedStoppedContainers": 3,
+    "removedEmptyNetworks": [
+      "aide-outcome-staged-20261018_default"
+    ],
+    "imagesAndDataPreserved": true,
+    "ownedSafariWindowClosed": true,
+    "originalUserWindowPreserved": true
+  },
+  "fixtureLimit": "local synthetic protocol only, no paid model or real vector. Initial held request exceeded the content idle timeout; later fresh session completed two stages normally.",
+  "delivery": {
+    "mergedMain": false,
+    "pushed": false,
+    "productionReplaced": false,
+    "newDualArchitecturePackages": false,
+    "publicRelease": false
+  }
+}

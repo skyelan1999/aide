@@ -62,23 +62,33 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Go聚焦和JS阶段/分页/生命周期已通过；首版quick124通过，原生Safari已确认30/64轮和#64/#40绝对编号，以及超时失败后API/详情仍显示持久第一段。第二次请求超过3分钟无有效内容而失败，不能记为正常终态通过。已收紧提示：运行中/未正常完成分别显示，完成任务不重复提示；JS回归通过，新quick运行中，最终候选原生和full待完成。",
+      "summary": "最终候选2f43186c/source1b76/image2913：quick通过；原生运行首段→自动两段/详情去重、超时保留、重启持久和调用不增加、30/60/64编号、专业/经典明暗及半屏滚动/ESC已验；当前full运行中。",
       "evidence": [
         "internal/server/outcome_staged_test.go",
         "internal/server/staged_output_test.go",
         "scripts/outcome-pagination.test.cjs",
-        "scripts/outcome-overview-lifecycle.test.cjs"
+        "scripts/outcome-overview-lifecycle.test.cjs",
+        "docs/reviews/2026-10-18/outcome-staged.md",
+        "docs/reviews/2026-10-18/outcome-staged-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "专项报告/proof、主账本、交接、操作、架构与旧绝对编号续验记录已补；明确full运行中/未合main及本地协议范围。check_docs通过321 Markdown/1221链接，新增架构链接后再次核对。",
+      "evidence": [
+        "docs/reviews/2026-10-18/outcome-staged.md",
+        "docs/reviews/2026-10-18/outcome-staged-proof.json",
+        "docs/continuity-handoff.md",
+        "docs/continuity-operations.md",
+        "docs/architecture/continuity-roadmap.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "仅本任务3停止容器及空网络已清理，自建Safari窗口关闭，原窗口保留，主题恢复；生产身份和22保护摘要一致，镜像及数据保留。",
+      "evidence": [
+        "docs/reviews/2026-10-18/outcome-staged-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -88,5 +98,5 @@
   },
   "release_authorization": "用户原目标成果追踪、会话分段式结论、不等全做完覆盖；既有分批push/test和main授权。仅隔离本地协议模型，不替换当前用户服务。",
   "rollback": "Revert scoped projection/rendering commits; no persisted schema migration or user data rewrite. Keep prior runtime/images.",
-  "handoff": ""
+  "handoff": "full正在独立验证容器运行；不可复用旧source94e/7e43收据。通过后补文档、审阅、main/release-check/push；总体原12及升级包交付仍未完成。"
 }
