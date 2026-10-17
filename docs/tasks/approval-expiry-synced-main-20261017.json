@@ -76,5 +76,15 @@
     "fingerprint": "6dd563bbf28731df9f745755a565cb78ae64d3ac67fdbf73cddccce65541fd14",
     "head": "db8a09a2758579a4fbfd302991faca834db9b3e7",
     "log": ".agent-state/verify-20261017T060408753181Z.log"
+  },
+  "native_candidate": {
+    "status": "prepared_not_started",
+    "sourceCommit": "221572038913c72ea2774f31e1a2d4c4894a1ad4",
+    "privateProof": ".agent-state/outcome-release-source-link-20261017/repaired-native-preparation-proof.json",
+    "productionDataMounted": false,
+    "trackedRuntimeInputsCompared": true,
+    "fullStatus": "running; no final pass claimed",
+    "verifierMemoryBytes": 4294967296,
+    "verifierCPUs": 2
   }
 }
