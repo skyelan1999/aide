@@ -1,4 +1,4 @@
-/* Browser-local decoration. No network, model calls, or per-frame JavaScript. */
+/* Optional decoration. Bundled media is served locally; no external requests or per-frame JavaScript. */
 'use strict';
 (function () {
   const root = document.documentElement;
@@ -53,7 +53,7 @@
   function release() {
     if (media?.tagName === 'VIDEO') { media.pause(); media.removeAttribute('src'); media.load(); }
     media?.remove(); media = null;
-    if (url) URL.revokeObjectURL(url);
+    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
     url = ''; layer.replaceChildren(); record = null;
     root.removeAttribute('data-background-media');
   }
@@ -80,18 +80,20 @@
       }
       return;
     }
-    if (mode !== 'local') return;
+    if (mode !== 'local' && mode !== 'whale') return;
     try {
-      const asset = await stored('get');
+      const asset = mode === 'whale'
+        ? {src:'/backgrounds/whale-girl.mp4', type:'video/mp4'}
+        : await stored('get');
       if (ticket !== generation) return;
-      if (!asset?.blob || !accepted.has(asset.type)) { message = '请先选择本地背景素材'; refreshPanels(); return; }
+      if ((!asset?.blob && !asset?.src) || !accepted.has(asset.type)) { message = '请先选择本地背景素材'; refreshPanels(); return; }
       record = asset;
-      url = URL.createObjectURL(asset.blob);
+      url = asset.src || URL.createObjectURL(asset.blob);
       const video = asset.type.startsWith('video/');
       media = document.createElement(video ? 'video' : 'img');
       if (video) { media.muted = true; media.defaultMuted = true; media.loop = true; media.playsInline = true; media.preload = 'metadata'; }
       else media.alt = '';
-      media.onerror = () => { if (ticket === generation) { release(); message = '背景素材无法播放，请更换文件'; refreshPanels(); } };
+      media.onerror = () => { if (ticket === generation) { release(); message = mode === 'whale' ? '内置背景无法播放，请重新选择或检查安装文件' : '背景素材无法播放，请更换文件'; refreshPanels(); } };
       root.dataset.backgroundMedia = video ? 'video' : (asset.type === 'image/gif' || asset.type === 'image/webp') ? 'animated' : 'image';
       layer.append(media);
       if (video || !blocked() || root.dataset.backgroundMedia === 'image') media.src = url;
@@ -105,7 +107,7 @@
     const node = document.createElement('div'); node.className = 'settings-control background-control';
     const label = document.createElement('div'); label.className = 'control-label'; label.textContent = t('工作台背景');
     const choices = document.createElement('div'); choices.className = 'background-options'; choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', t('工作台背景'));
-    const buttons = [['off', '关闭'], ['aurora', '流光'], ['local', '本地素材']].map(([value, text]) => {
+    const buttons = [['off', '关闭'], ['aurora', '流光'], ['whale', '鲸鱼娘'], ['local', '本地素材']].map(([value, text]) => {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.value = value; button.textContent = t(text);
       button.onclick = () => window.aideUI?.set('background', value); choices.append(button); return button;
     });
@@ -114,7 +116,7 @@
     const input = document.createElement('input'); input.type = 'file'; input.accept = [...accepted].join(','); input.setAttribute('aria-label', t('加载本地背景'));
     const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'quiet'; remove.textContent = t('删除本地素材');
     const status = document.createElement('p'); status.className = 'background-status'; status.setAttribute('role', 'status');
-    const note = document.createElement('p'); note.className = 'muted'; note.textContent = t('支持 MP4、WebM、GIF、PNG、JPEG、WebP，最多 30 MiB；仅保存在当前浏览器，不上传。后台、锁屏及减少动态效果时暂停。');
+    const note = document.createElement('p'); note.className = 'muted'; note.textContent = t('鲸鱼娘随应用内置，无需上传。自选素材支持 MP4、WebM、GIF、PNG、JPEG、WebP，最多 30 MiB，仅保存在当前浏览器。后台、锁屏及减少动态效果时暂停。');
     const intensity = document.createElement('label'); intensity.className = 'background-intensity';
     const intensityText = document.createElement('span'); intensityText.textContent = t('背景强度');
     const range = document.createElement('input'); range.type = 'range'; range.min = '10'; range.max = '50'; range.step = '1'; range.setAttribute('aria-label', t('背景强度'));
@@ -128,7 +130,7 @@
       range.value = String(window.aideUI?.get('backgroundStrength') ?? 22);
       value.textContent = range.value + '%';
       range.setAttribute('aria-valuetext', value.textContent);
-      status.textContent = saving ? t('正在保存背景…') : message ? t(message) : record?.name || t('选择本地素材后自动启用');
+      status.textContent = saving ? t('正在保存背景…') : message ? t(message) : mode === 'whale' ? t('内置鲸鱼娘 · 静音循环播放') : record?.name || t('选择本地素材后自动启用');
     }};
     input.onchange = async () => {
       const file = input.files?.[0]; input.value = ''; if (!file || saving) return;
@@ -143,7 +145,7 @@
     };
     remove.onclick = async () => {
       if (saving) return; saving = true; refreshPanels();
-      try { await stored('delete'); window.aideUI?.set('background', 'off'); channel?.postMessage('changed'); message = '本地背景素材已删除'; }
+      try { await stored('delete'); if (mode === 'local') window.aideUI?.set('background', 'off'); channel?.postMessage('changed'); message = '本地背景素材已删除'; }
       catch (_) { message = '本地背景存储不可用'; }
       finally { saving = false; refreshPanels(); }
     };

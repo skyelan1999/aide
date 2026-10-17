@@ -31,6 +31,17 @@ function setup(initial='off'){
 }
 (async()=>{
  let h=setup();assert.equal(h.root.dataset.background,'off');assert.equal(h.urls.length,0);assert.equal(h.body.children.length,1);
+ // The bundled choice works without browser storage and does not replace the user's uploaded asset.
+ const bundled=setup('whale');let bundledVideo=bundled.layer().children[0];
+ assert.equal(bundledVideo.src,'/backgrounds/whale-girl.mp4');assert.equal(bundledVideo.muted,true);assert.equal(bundledVideo.loop,true);assert.equal(bundledVideo.playsInline,true);assert.equal(bundled.urls.length,0);
+ bundled.asset={blob:{},name:'keep.webm',type:'video/webm'};
+ bundled.document.hidden=true;bundled.listeners.visibilitychange();assert.ok(bundledVideo.pauses>0);
+ bundled.document.hidden=false;bundled.locked=true;bundled.update();assert.ok(bundled.root.hasAttribute('data-background-paused'));
+ bundled.locked=false;bundled.update();assert.ok(bundledVideo.plays>0);
+ bundled.setMode('local');await flush();assert.equal(bundled.asset.name,'keep.webm');
+ bundled.setMode('whale');assert.deepEqual(bundled.revoked,['blob:0']);bundled.setMode('off');assert.deepEqual(bundled.revoked,['blob:0'],'static URLs must not be treated as object URLs');
+ assert.equal(bundled.asset.name,'keep.webm');
+ bundled.setMode('whale');await bundled.render().children[3].onclick();assert.equal(bundled.asset,undefined);assert.equal(bundled.root.dataset.background,'whale','deleting an upload must not disable the built-in background');assert.equal(bundled.layer().children.length,1);
  h.setMode('aurora');assert.equal(h.root.dataset.background,'aurora');assert.equal(h.urls.length,0);
  const glows=h.layer().children.slice();assert.equal(glows.length,2);h.update();assert.deepEqual(h.layer().children,glows,'preference refresh must not accumulate animated layers');
  h.document.hidden=true;h.listeners.visibilitychange();assert.ok(h.root.hasAttribute('data-background-paused'));h.document.hidden=false;h.listeners.visibilitychange();assert.equal(h.root.hasAttribute('data-background-paused'),false);
@@ -63,6 +74,8 @@ function setup(initial='off'){
  const attrs={},store={'aide.ui':JSON.stringify({background:'aurora',theme:'light'})},ws={localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>store[k]=v,removeItem:k=>delete store[k]},navigator:{language:'en'},matchMedia:()=>({matches:false,addEventListener(){}}),dispatchEvent(){},addEventListener:(k,f)=>ws[k]=f};
  vm.runInNewContext(settings,{window:ws,document:{documentElement:{setAttribute:(k,v)=>attrs[k]=v}},Event:class{}});
  assert.equal(ws.aideUI.get('background'),'aurora');ws.aideUI.set('background','nonsense');assert.equal(ws.aideUI.get('background'),'off');
+ ws.aideUI.set('background','whale');assert.equal(ws.aideUI.get('background'),'whale');assert.equal(JSON.parse(store['aide.ui']).background,'whale');
+ ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'whale'})});assert.equal(ws.aideUI.get('background'),'whale');
  assert.equal(ws.aideUI.get('backgroundStrength'),22);ws.aideUI.set('backgroundStrength',90);assert.equal(ws.aideUI.get('backgroundStrength'),50);ws.aideUI.set('backgroundStrength',NaN);assert.equal(ws.aideUI.get('backgroundStrength'),22);ws.aideUI.set('backgroundStrength',-1);assert.equal(ws.aideUI.get('backgroundStrength'),10);
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local',backgroundStrength:36})});assert.equal(ws.aideUI.get('backgroundStrength'),36);
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local'})});assert.equal(ws.aideUI.get('background'),'local');ws.storage({key:'aide.ui',newValue:'{}'});assert.equal(ws.aideUI.get('background'),'off');

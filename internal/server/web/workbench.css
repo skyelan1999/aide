@@ -48,7 +48,7 @@ button,select,input,textarea{touch-action:manipulation}
 .segmented{min-height:36px;border-radius:9px}
 .segmented button{padding:7px 10px;min-width:0;white-space:normal}
 dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
-.background-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.background-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:12px}
 .background-options button{border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--surface)}
 .background-options button[aria-pressed=true]{border-color:var(--brand);background:var(--selected);color:var(--brand-text)}
 .background-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
@@ -56,7 +56,7 @@ dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
 .background-status{font-size:12px;line-height:1.6;overflow-wrap:anywhere;color:var(--text-settings);min-height:1.6em}
 .background-control .muted{font-size:11px;line-height:1.7;color:var(--muted)}
 .workbench-background{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:strict;display:none}
-html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background{display:block}
+html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=whale] .workbench-background{display:block}
 html[data-background]:not([data-background=off]) body{isolation:isolate;background:transparent}
 html[data-background]:not([data-background=off]) :is(.sidebar,.file-panel){background:color-mix(in srgb,var(--panel) 95%,transparent)}
 html[data-background]:not([data-background=off]) .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}

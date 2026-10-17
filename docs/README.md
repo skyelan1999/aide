@@ -21,6 +21,8 @@
 
 当前连续工作、Markdown 历史、引用操作与 AI 可见性的源码检查点见[阶段性推送记录](reviews/continuity-checkpoint-20261009.md)；[整体目标](architecture/continuity-roadmap.md)继续进行中。
 
+- [内置鲸鱼娘背景](builtin-background.md)：直接选择随应用安装的视频，附真实运行截图。
+
 ## 从这里开始
 
 | 目标 | 文档 |

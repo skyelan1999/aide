@@ -122,3 +122,7 @@ This is a trusted, single-user local workbench, not public multi-user hosting. A
 ## License and acknowledgements
 
 [MIT License](LICENSE). Bundled third-party components retain their licenses. Thanks to [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) for design inspiration.
+
+## Built-in whale-girl background
+
+Settings → Appearance → Workbench background → Whale girl uses the bundled silent looping video without a local upload. Background intensity and the existing hidden-page, lock and reduced-motion rules still apply; the default remains Off. See [actual screenshots and implementation limits](docs/builtin-background.md).

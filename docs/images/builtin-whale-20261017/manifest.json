@@ -1,0 +1,45 @@
+{
+  "baseline": "e2b35b95658a4932d0d0442480889ddc52af9ea0",
+  "candidate": "builtin-whale-background-20261017 working changes",
+  "date": "2026-10-17",
+  "timezone": "Asia/Shanghai",
+  "environment": "Real source-built Go App in isolated Docker; in-app browser 1280x720; demonstration workspace; no provider keys or private conversations",
+  "asset": {
+    "path": "internal/server/web/backgrounds/whale-girl.mp4",
+    "bytes": 3307020,
+    "sha256": "5ea68aa4dae2817e0ea3f25a8cf34bce64e9d6f9c1f9a5ba3b4bd8893e12a629",
+    "source": "User-supplied existing DeepSeek whale-girl MP4, copied without alteration"
+  },
+  "observed": [
+    "Appearance > Whale girl enabled without selecting a local file",
+    "Actual video readyState=4, paused=false, videoWidth=1280, videoHeight=720; muted loop",
+    "Selection persisted across reload and a fresh tab",
+    "Reduced motion: actual video paused=true and computed visibility=hidden; restored System setting",
+    "Compiled Go server: GET /backgrounds/whale-girl.mp4 = 200 video/mp4, source hash matches; Range bytes=0-31 = 206, 32 bytes",
+    "Actual light and dark workbench views checked at 22% intensity"
+  ],
+  "limits": [
+    "One reload exposed unrelated hljs is not defined errors in the preview; a fresh page had no console errors and background selection persisted",
+    "Production service not rebuilt or restarted; no three-platform installation acceptance"
+  ],
+  "screenshots": [
+    {
+      "path": "appearance.jpg",
+      "sha256": "281807fb9a14874a2c620f7e893c086b6f16447a4596fd540af405ae272c14fa",
+      "bytes": 49500,
+      "unmodified": true
+    },
+    {
+      "path": "workbench.jpg",
+      "sha256": "8298386a241820c11558b9e366fd7f8b6081d342fc870c2593e2e90cb1aad560",
+      "bytes": 80339,
+      "unmodified": true
+    },
+    {
+      "path": "workbench-dark.jpg",
+      "sha256": "708e49d978fcdcadf1fdb83859bab4002ac0ea604d8222114e09e2e91c9003a8",
+      "bytes": 80021,
+      "unmodified": true
+    }
+  ]
+}

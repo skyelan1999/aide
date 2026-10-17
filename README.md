@@ -196,3 +196,7 @@ python3 scripts/agent-route.py audit
 ## 许可与致谢
 
 项目使用 [MIT License](LICENSE)。本地分发的第三方组件保留各自许可证。感谢 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提供设计参考。
+
+## 内置鲸鱼娘背景
+
+设置 → 外观 → 工作台背景 → 鲸鱼娘，可直接选择随应用内置的静音循环视频，无需上传。默认仍关闭，原有强度调节、本地素材与后台/锁屏/减少动态效果暂停规则保留。[实际截图与实现边界](docs/builtin-background.md)。

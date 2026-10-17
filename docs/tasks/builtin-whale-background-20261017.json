@@ -1,0 +1,88 @@
+{
+  "id": "builtin-whale-background-20261017",
+  "request": "加入 Aide 内置可选背景：使用现有鲸鱼娘视频，在外观设置直接选择，保持本地上传与暂停行为，并真实截图验证",
+  "baseline": "e2b35b95658a4932d0d0442480889ddc52af9ea0",
+  "initial_status": "",
+  "acceptance": [
+    "Appearance offers Whale girl alongside off/aurora/local; default remains off",
+    "Built-in video requires no upload or IndexedDB, uses bundled same-origin asset, muted loop",
+    "Selection persists; strength, hidden-tab/lock/reduced-motion pause and local asset remain intact",
+    "Actual browser screenshot validates selection and visible background; no production restart"
+  ],
+  "scope": [
+    "internal/server/web/workbench-background.js",
+    "internal/server/web/settings-init.js",
+    "internal/server/web/workbench.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "internal/server/web/backgrounds/whale-girl.mp4",
+    "scripts/workbench-background.test.cjs",
+    "docs relevant current docs and actual screenshots"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User selected built-in optional background, rather than documentation screenshots only.",
+      "evidence": [
+        "User answer: 加入 Aide 内置可选背景"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing background lifecycle, persistence and strength; add same-origin bundled video without touching local asset storage.",
+      "evidence": [
+        "internal/server/web/workbench-background.js",
+        "Source media SHA-256 5ea68aa4dae2817e0ea3f25a8cf34bce64e9d6f9c1f9a5ba3b4bd8893e12a629"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added bundled whale-girl MP4, persistent whale preference, appearance choice, shared media lifecycle and English strings. Local-upload deletion does not disable bundled media.",
+      "evidence": [
+        "internal/server/web/backgrounds/whale-girl.mp4",
+        "internal/server/web/workbench-background.js",
+        "scripts/workbench-background.test.cjs: PASS"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused lifecycle tests, actual browser checks, embedded asset/hash/range response, documentation checks and final frozen-code quick profile passed. Full Go race/vet and three-platform installation not run for this frontend/media change.",
+      "evidence": [
+        "node scripts/workbench-background.test.cjs: PASS",
+        "Node syntax checks: PASS",
+        "Actual browser: selected built-in item, light/dark rendered, video readyState=4 and paused=false",
+        "Reload retained video; reduced motion paused and hid it",
+        "Compiled backend GET asset: 200 video/mp4, SHA-256 matches; Range: 206",
+        "First quick: local-port permission failures; elevated retry: all commands passed but code fingerprint changed during run; final frozen run pending",
+        "Final python3 scripts/agent-route.py verify quick: PASS; 124 commands; fingerprint 1f90695a659be45bbfa5653672b313fd999f0f55f6c89fbca4813204ba896c99; .agent-state/verify-20261017T120956779206Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Added current feature, requirements and bilingual usage notes with three unmodified screenshots and original-asset checksum.",
+      "evidence": [
+        "docs/builtin-background.md",
+        "docs/images/builtin-whale-20261017/manifest.json",
+        "python3 scripts/check_docs.py: PASS 303 Markdown files, 1137 local links"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed owned browser pages, stopped owned test container/proxy and removed internal network; production unchanged.",
+      "evidence": [
+        "aide-documentation-20261017 stopped",
+        "aide-documentation-net-20261017 removed"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No push, tag, Release or production rebuild/restart in this task. Local source implementation only.",
+      "evidence": [
+        "User chose adding a built-in option; default background remains off"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert this feature commit; no data migration, existing off/aurora/local preferences remain supported.",
+  "handoff": "Settings > Appearance > Workbench background > Whale girl. Requires rebuilding the running binary/image to expose the bundled option. Production not restarted; no push or release. A preview reload exposed unrelated hljs loading errors; fresh page had no console error and background playback persisted."
+}
