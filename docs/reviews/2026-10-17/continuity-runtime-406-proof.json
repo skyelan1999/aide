@@ -277,7 +277,10 @@
     "original12Complete": false
   },
   "sourceDelivery": {
-    "status": "pending documentation delivery only"
+    "status": "documentation_pass_publication_still_blocked",
+    "observedRemoteMain": "af50350b6e87d7b2a9588585fc1e1e40fd7837e2",
+    "pushExit": 0,
+    "independentRemoteExact": true
   },
   "publicCandidateGateAfterAttempts": {
     "status": "fail",
@@ -287,5 +290,12 @@
   "documentationChecks": {
     "checkDocs": "PASS316 Markdown1189 local links",
     "diffCheck": "pass"
+  },
+  "scopedMainGate": {
+    "exit": 0,
+    "currentFullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "publicDefaultSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "currentCandidatePublicGateExit": 1,
+    "scope": "Local prerequisites and existing07c metadata only; not new406 publication"
   }
 }

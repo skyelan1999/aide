@@ -79,5 +79,12 @@
   },
   "release_authorization": "User authorized complete image packages, incremental push/test and main merge. No production replacement.",
   "rollback": "Retain old07c defaults and ce0c archives; isolated fixtures only; never restore old production data.",
-  "handoff": "Current5dc/14cb complete pair qualified locally, ready for copy/import. Need usable authorized upload channel or service recovery, verify current public pair before promotion; no repeated identical browser retries. Original12 continue; Windows user-owned and real vectors deferred."
+  "handoff": "Current5dc/14cb complete pair qualified locally, ready for copy/import. Need usable authorized upload channel or service recovery, verify current public pair before promotion; no repeated identical browser retries. Original12 continue; Windows user-owned and real vectors deferred. Documentation independently delivered mainaf50350b. Next inspect a dedicated scoped CI publisher as an alternative to failing browser uploads; only existing workflow is Pages, no release workflow yet. Do not mark proposed CI route as verified.",
+  "documentationDelivery": {
+    "status": "pass",
+    "observedRemoteMain": "af50350b6e87d7b2a9588585fc1e1e40fd7837e2",
+    "independentRemoteExact": true,
+    "scopedMainGateExit": 0,
+    "currentCandidateGateExit": 1
+  }
 }
