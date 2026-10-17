@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current combined source full114 PASS on exact fingerprintc5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c;946 server entries in12 serial shards/race/vet/CAD pass. Actual Docker MCP source-handler probe now running, native whole-workbench user-deferred. Original12 remain in_progress, Windows user-owned, real vectors deferred; current public default URLs still need final published candidates.",
+      "summary": "Current combined source full114 PASS on exact fingerprintc5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c;946 server entries/12 shards/race/vet/CAD. Current AIDE to actual Docker MCP auth/discovery/description/owned App-disk-reopen passed;10 tools/0 readonly/0 calls. Original12 remain in_progress: native full-workbench user-deferred, Windows user-owned, real vectors deferred, final runtime/public assets/default URLs/main delivery pending.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -8168,10 +8168,11 @@
     "status": "integrated_focused_race_and_quick_pass",
     "task": "docs/tasks/mcp-http-synced-main-20261017.json",
     "report": "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
-    "full": "new_exact_source_pending",
-    "actualDockerGateway": "pending",
+    "full": "pass114 exact current fingerprint",
+    "actualDockerGateway": "pass10 tools/0 readonly/0 executed; owned App-disk-reopen verified",
     "publicDefaultDownloads": "Both current manifest filenames absent from public API; exact final assets require verification before manifest switch.",
-    "production": "unchanged"
+    "production": "unchanged",
+    "gatewayReport": "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
   },
   "prebuilt_publication_gate_20261017": {
     "status": "implemented_targeted_quick_pass_current_defaults_still_invalid",
@@ -8189,7 +8190,7 @@
     "commands": 114,
     "serverEntries": 946,
     "report": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
-    "actualGateway": "running in serial owned fixture after full",
+    "actualGateway": "pass current Handler/actual gateway/owned disk reopen; no model/tools executed",
     "production": "unchanged"
   }
 }

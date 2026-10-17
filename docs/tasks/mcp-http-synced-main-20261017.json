@@ -27,7 +27,8 @@
     "docs/architecture.md",
     "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
     "docs/plugins/docker-mcp.md",
-    "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
+    "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+    "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -52,13 +53,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Independent current-config negative reproduced,10 integrated MCP race tests pass6.092s and quick110 PASS. Applied form/CSS bytes match native synthetic candidate proof. Actual Docker gateway and new exact-source full remain pending. New exact-source full114 PASS with946 registered server entries/12 serial shards/race/vet/CAD; whole-workbench UI remains user-deferred.",
+      "status": "pass",
+      "summary": "Independent config-loss negative ->10 integrated race pass6.092s; latest combined full114 PASS946 entries/12 shards/race/vet/CAD; native synthetic source form exact bytes proven. Current AIDE Handler to actual Docker gateway auth/discovery/description/App-disk-reopen pass2.716s;10 tools,0 readonly,0 calls. Whole-workbench native UI remains user-deferred and not claimed.",
       "evidence": [
         "docs/reviews/2026-10-17/mcp-http-synced-main-audit.md",
         "docs/reviews/2026-10-17/mcp-http-synced-main-proof.json",
         ".agent-state/verify-20261017T070223636611Z.log",
-        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
+        "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json",
+        "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json"
       ]
     },
     "documentation": {
@@ -122,5 +124,13 @@
     "commands": 114,
     "serverEntries": 946,
     "evidence": "docs/reviews/2026-10-17/mcp-publication-combined-full-proof.json"
+  },
+  "actualGateway": {
+    "status": "pass",
+    "report": "docs/reviews/2026-10-17/mcp-http-actual-gateway-proof.json",
+    "tools": 10,
+    "readonly": 0,
+    "executed": 0,
+    "production": "unchanged"
   }
 }

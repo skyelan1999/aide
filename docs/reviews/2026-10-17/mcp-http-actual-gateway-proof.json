@@ -1,0 +1,21 @@
+{
+  "status": "pass",
+  "testExit": 0,
+  "scope": "current AIDE source handler -> actual existing authenticated Docker MCP gateway; owned temporary AIDE data only",
+  "productionUnchanged": true,
+  "protectedFilesUnchanged": true,
+  "userDataMounts": false,
+  "toolsExecuted": 0,
+  "credentialsTransport": "private unlinked stdin tar; no argv/env/named host copy",
+  "resources": "4GiB/2CPU/512PIDs; serial after full",
+  "privateLog": ".agent-state/mcp-http-synced-main-20261017/live-gateway.log",
+  "tools": 10,
+  "readonly": 0,
+  "fixtureReopen": true,
+  "protectedFilesChecked": 2,
+  "fixtureReopenScope": "App.Close then New from the same owned temporary disk paths, not a host/container restart",
+  "nativeWorkbench": "user-deferred",
+  "modelCalls": 0,
+  "sourceCommit": "67738355 runtime inputs",
+  "fullFingerprint": "c5dcbc2969d82db9c60143c83a0b841bb8b6ce7fe2816d7907ea5f1511ab419c"
+}
