@@ -301,7 +301,14 @@
     },
     "defaultManifestUnchanged": true
   },
-  "sourceMainDelivery": "pending",
+  "sourceMainDelivery": {
+    "status": "pass",
+    "verifiedRemoteMain": "b7239785fe12168eabbc41336d3e862e68e6af0b",
+    "forcePush": false,
+    "productFingerprintUnchangedAfterDocumentation": true,
+    "publicAssetsUploaded": false,
+    "productionReplaced": false
+  },
   "finalProductionProtectedFilesExact": 22,
   "onlyProductionContainersRunning": true
 }

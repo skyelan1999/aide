@@ -66,7 +66,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "Source main delivery authorized separately and pending. Public candidate checker exit1 missing uploaded asset; defaults unchanged. Current native full-workbench gates pending. No public Release/tag or production replacement.",
+      "summary": "User-authorized source main delivery complete at verifiedb7239785; exact full127/current local candidates qualified. Public candidate checker exit1 missing uploaded asset, defaults unchanged; current native full-workbench pending. No public Release/tag or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-plugin-main.md"
       ]
