@@ -1,5 +1,5 @@
 {
-  "status": "runtime_native_packages_pass_full_pending",
+  "status": "runtime_native_packages_full_pass_release_pending",
   "runtime": {
     "serverInstanceId": "2026-10-17T01:13:41.998558589Z",
     "image": "sha256:8f3618fe2be0bf986d8db334029289949ef1638a580e3be8ad0a9f017a6ffce4",
@@ -146,7 +146,18 @@
   },
   "sourceCommit": "060d10f16e6efef2eb4d4f3610a6849f5b702252",
   "frozenInputFingerprint": "c77f98086e668d3eadea04f7a3da14305a349de86926eedb4de433730053224f",
-  "full": "running; previous full107 is not proof for changed code",
+  "full": {
+    "status": "pass",
+    "checks": 107,
+    "fingerprint": "c77f98086e668d3eadea04f7a3da14305a349de86926eedb4de433730053224f",
+    "receiptHead": "5fee71e44ce38201fb98fcf31e807b52d325230d",
+    "log": ".agent-state/verify-20261017T011321944305Z.log",
+    "goPackages": [
+      "ok  \taide/internal/execsandbox\t1.313s",
+      "ok  \taide/internal/server\t941.639s",
+      "ok  \taide/internal/server/tts\t1.525s"
+    ]
+  },
   "mainMerge": "pending",
   "publicReleaseAssets": "pending; do not merge candidate default URLs without public verification"
 }

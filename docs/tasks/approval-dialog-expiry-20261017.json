@@ -49,20 +49,22 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Old real expiry mismatch fixed in8f current original-launcher runtime; native natural expiry, focused date preservation under external revision, stale-save disable, reread cancel/confirm, native expiry save/API exact and revoke passed. Both complete packages/import and freshARM original-launcher/document/CAD pass. Current frozen full running; old full107 not applicable.",
+      "status": "pass",
+      "summary": "Current8f original-launcher runtime/native expiry/dirty revision/reread/save/revoke, both complete packages/import, freshARM document/CAD and current full107 all passed; server race941.639s/vet/CAD, fingerprintc77f9808 exact. Original14sessions preserved.",
       "evidence": [
         "docs/reviews/2026-10-17/approval-dialog-expiry.md",
         "docs/reviews/2026-10-17/approval-dialog-expiry-proof.json",
-        "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json"
+        "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json",
+        "docs/reviews/2026-10-17/approval-dialog-full-proof.json"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Current native/runtime/packages, actual prior failures and pending full/public main delivery documented. Final full/release receipt pending.",
+      "status": "pass",
+      "summary": "Actual defect, safety guard failures, fixed native/runtime/full, package/fresh identity, cleanup and remaining public availability boundary documented. Local private main fast-forward may run gate; origin/main is held until candidate default public downloads verify.",
       "evidence": [
         "docs/reviews/2026-10-17/approval-dialog-expiry.md",
-        "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json"
+        "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json",
+        "docs/reviews/2026-10-17/approval-dialog-full-proof.json"
       ]
     },
     "cleanup": {
@@ -80,5 +82,5 @@
   },
   "release_authorization": "Existing user-authorized incremental testing/fixes/main/runtime/offline package delivery; no new version/tag or real model request.",
   "rollback": "Remove own fixture rule/session/provider/model/listener and restore original enabled mode/rules/settings/vault; never rewind policy revision or session sequence. Preserve original sessions and published rollback packages.",
-  "handoff": "Current branchfc107a2a has source060d10f1, full live session56885/containeraide-verify-fe908e2597e5; poll same handle, no restart on timeout. Current8f runtime/native/fresh/both archives/import verified, fixtures cleaned,14sessions preserved. Candidate manifest8f/37cb remains task-branch-only; new/previous e729 default URLs not publicly available. Full and public downloads must pass before main merge. Node PATH uses bundled runtime."
+  "handoff": "Full session56885 terminalexit0,107pass/currentc77f9808; do not restart. Candidate8f/37cb source24069 native/runtime/fresh/import verified and fixtures cleaned. Local clean-main gate then publicRC2 assets/digest/download verification before origin/main push. Timeline20k retention and crash-notice aside gaps are distinct pending work."
 }

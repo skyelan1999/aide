@@ -1,0 +1,12 @@
+{
+  "status": "pass",
+  "checks": 107,
+  "fingerprint": "c77f98086e668d3eadea04f7a3da14305a349de86926eedb4de433730053224f",
+  "receiptHead": "5fee71e44ce38201fb98fcf31e807b52d325230d",
+  "log": ".agent-state/verify-20261017T011321944305Z.log",
+  "goPackages": [
+    "ok  \taide/internal/execsandbox\t1.313s",
+    "ok  \taide/internal/server\t941.639s",
+    "ok  \taide/internal/server/tts\t1.525s"
+  ]
+}

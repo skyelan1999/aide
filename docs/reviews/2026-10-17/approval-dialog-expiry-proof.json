@@ -1,5 +1,5 @@
 {
-  "status": "runtime_verified_full_pending",
+  "status": "runtime_native_full_pass_release_pending",
   "nativeReproduction": {
     "status": "reproduced",
     "observedUTC": "2026-10-17T01:04:58.640443+00:00",
@@ -43,7 +43,7 @@
     "imageMountsNetworksExact": true,
     "pythonRememberGuardRejectedAndNoExecution": true
   },
-  "full": "running",
+  "full": "pass:107 checks, server race941.639s, vet/CAD, current exact fingerprintc77f9808",
   "candidateRuntime": "pass: actual launcher/runtime assets/native expiry, dirty revision protection/save/revoke",
   "release": "pending",
   "runtimeEvidence": "docs/reviews/2026-10-17/approval-dialog-runtime-proof.json"

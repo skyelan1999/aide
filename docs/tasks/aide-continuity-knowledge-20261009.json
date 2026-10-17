@@ -8115,7 +8115,7 @@
     "status": "in_progress",
     "task": "docs/tasks/approval-dialog-expiry-20261017.json",
     "report": "docs/reviews/2026-10-17/approval-dialog-expiry.md",
-    "summary": "Actual old Safari/API natural expiry mismatch repaired. Current8f native expiry/dirty/version/save/revoke, original launcher/14sessions preservation, both complete local packages/import/freshARM passed. Full still live; default image URLs require public availability before merge. Main remains5fac564d until gates."
+    "summary": "Actual natural expiry mismatch repaired in current8f; native expiry/dirty/version/save/revoke, original launcher/14sessions preservation, both complete local packages/import/freshARM and full107/race941.639s/vet/CAD pass. Public image downloads and origin/main push pending; current main remains5fac564d until distribution gate."
   },
   "timeline_native_20261017": {
     "status": "in_progress",
