@@ -1,0 +1,75 @@
+{
+  "id": "unified-images-20261017",
+  "request": "把Docker需要导入的images合到一个文件中，避免逐个导入，保持离线启动与架构匹配",
+  "baseline": "1d1157a78e2fc1d946f0429e669affddbdb2a7f3",
+  "initial_status": "",
+  "acceptance": [
+    "同一架构所有需要导入的镜像合成一个Docker可直接load的tar.gz，公共层不重复",
+    "ARM/AMD内容寻址校验、manifest标签及实际单次导入通过，不改运行容器",
+    "归档不含用户数据／密钥，平台和当前二进制／启动器边界明确"
+  ],
+  "scope": [
+    "docker-images/*.tar.gz",
+    "docker-images/*.sha256",
+    "docs/tasks/unified-images-20261017.json",
+    "docs/reviews/2026-10-17/unified-images*"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests one archive for required Docker images.",
+      "evidence": [
+        "docs/reviews/2026-10-17/unified-images.md",
+        "docs/reviews/2026-10-17/unified-images-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Docker image save multiple tags into one gzip archive per architecture; reuse immutable verified runtimes and shared layers.",
+      "evidence": [
+        "docs/reviews/2026-10-17/unified-images.md",
+        "docs/reviews/2026-10-17/unified-images-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "ARM6ad+dependency base and AMD0c all-runtime archives generated, no source code change/build/pull.",
+      "evidence": [
+        "docs/reviews/2026-10-17/unified-images.md",
+        "docs/reviews/2026-10-17/unified-images-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Both manifests/blobs/no duplicate members and actual single docker load pass; prior ARM tags and running container preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-17/unified-images.md",
+        "docs/reviews/2026-10-17/unified-images-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Exact commands/bytes/SHA/platform/launcher and pending public-release boundary recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-17/unified-images.md",
+        "docs/reviews/2026-10-17/unified-images-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only intentional deliverables/private evidence kept. ARM tags restored; no test containers or browser pages created. Historical rollback archives preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-17/unified-images.md",
+        "docs/reviews/2026-10-17/unified-images-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental push/main/offline package authorization. Local requested deliverables complete; public/main still separately gated.",
+  "rollback": "Retain prior complete offline packages. Restored ARM canonical tags after AMD export/import; raw packages contain no personal data.",
+  "handoff": "Local raw single-import ARM/AMD images verified; existing runtime6ad/0c, not rebuilt66 binary. Source script guards in repo66. Public release/new full runtime packaging pending. Next user task Docker MCP integration; full runner88882 still same live process."
+}

@@ -1,0 +1,52 @@
+{
+  "status": "local_delivery_pass",
+  "archives": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-images-0.1.17.0-RC2-linux-arm64-6ad1d1179c2c.tar.gz",
+      "sha256": "3f64abf811c857a75895a7b77ae26e1e13afc727a395d8ff2240a0e97ec9cef8",
+      "bytes": 770941775,
+      "tags": [
+        "aide:offline-6ad1d1179c2c",
+        "aide:local",
+        "aide:cad-dependencies-v1",
+        "aide:dependencies-v1"
+      ],
+      "distinctImages": 2,
+      "allContentAddressedBlobsVerified": true,
+      "duplicateTarMembersAbsent": true,
+      "actualSingleLoad": true,
+      "runningContainerUnchanged": true,
+      "image": "sha256:6ad1d1179c2c6aa8b334cf98663626dcb52441cea105f318a8751292244486e7",
+      "newBuildsOrPulls": 0,
+      "privateVolumesOrConfigIncluded": false
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "archive": "/Volumes/MY PASSPORT/aide_ws/aide/docker-images/aide-images-0.1.17.0-RC2-linux-amd64-0c173c73296e.tar.gz",
+      "sha256": "d8d5f382758130b6e36c166ef533bc10720da167e7e6bf0c3e06be5d56ab06a9",
+      "bytes": 774153279,
+      "tags": [
+        "aide:offline-0c173c73296e",
+        "aide:local",
+        "aide:cad-dependencies-v1"
+      ],
+      "distinctImages": 1,
+      "fullRuntimeIncludesGoPythonNodeCAD": true,
+      "allContentAddressedBlobsVerified": true,
+      "duplicateTarMembersAbsent": true,
+      "actualSingleLoad": true,
+      "image": "sha256:0c173c73296efc4867142df1c85063c68109c78c9b6e7a53b6c9af43be01face",
+      "newBuildsOrPulls": 0,
+      "privateVolumesOrConfigIncluded": false,
+      "receivingWindowsNative": "user_owned",
+      "originalArmTagsAndRunningContainerPreserved": true
+    }
+  ],
+  "publicRelease": "pending",
+  "runtimeBuild": "existing current6ad/0c; source scripts guard separately pushed66b0a89a",
+  "platformsNotMixedInOneImportArchive": true,
+  "windowsNative": "user_owned"
+}
