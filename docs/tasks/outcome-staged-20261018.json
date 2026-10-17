@@ -26,7 +26,8 @@
     "docs/continuity-operations.md",
     "docs/architecture/continuity-roadmap.md",
     "docs/reviews/2026-10-18/outcome-staged.md",
-    "docs/reviews/2026-10-18/outcome-staged-proof.json"
+    "docs/reviews/2026-10-18/outcome-staged-proof.json",
+    "docs/doubao-handoff-20261018.md"
   ],
   "stages": {
     "requirements": {
@@ -105,5 +106,10 @@
     "candidateMergedRemoteMain": false,
     "changes": "LAN discovery host bridge changes Docker/startup/build/verification inputs; no direct overlap with staged outcome files",
     "required": "finish this baseline full without changing inputs, integrate latest origin/main on task branch, rerun affected validation and qualify exact integrated fingerprint; do not apply baseline receipt to merged code"
+  },
+  "handoff_document": {
+    "path": "docs/doubao-handoff-20261018.md",
+    "status": "draft_until_round_completion",
+    "user_request": "本轮完成之后写一个交接文档，后面由豆包来交接你的目标"
   }
 }
