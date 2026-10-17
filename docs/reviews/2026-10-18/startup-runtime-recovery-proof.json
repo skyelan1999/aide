@@ -1,0 +1,90 @@
+{
+  "status": "pass",
+  "originalStartCommand": true,
+  "port": 9999,
+  "image": "sha256:48e99a7add36385cbc8d4f429518539a153b14d544b6032c16e1b9c964093d31",
+  "commit": "8f6640646099a94a0ebbf196ec3235577744d9ec",
+  "runtimeMode": "source",
+  "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+  "containerId": "7188e7ad8e3879f76e15b83b55a3e7c9d49fe7309af410010b8caa27e84ecac7",
+  "cadSameImage": true,
+  "healthy": true,
+  "authenticatedConfig": true,
+  "unauthenticated401": true,
+  "protectedFilesExact": 22,
+  "sessionCountRetained": 14,
+  "canonicalDataMounts": true,
+  "browserAutoOpened": false,
+  "oldImageRetained": true,
+  "remoteImageDownloads": 0,
+  "realModelVectorCalls": 0,
+  "observedUTC": "2026-10-17T16:12:56.608551+00:00",
+  "build": {
+    "root": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/main-refresh-20261018/source",
+    "commit": "8f6640646099a94a0ebbf196ec3235577744d9ec",
+    "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+    "tag": "aide:main-rebuilt-20261018-8f664064",
+    "status": "rebuilt",
+    "fullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "frozenTrackedBuildInputsExactFull": true,
+    "userSteering": "没事了，我重新启动下看下",
+    "image": "sha256:48e99a7add36385cbc8d4f429518539a153b14d544b6032c16e1b9c964093d31",
+    "noCache": true,
+    "network": "none",
+    "pull": false,
+    "priorExactFullPass": true,
+    "actualVetAndGoBuild": true,
+    "defaultImageRetagged": false,
+    "productionReplaced": false
+  },
+  "importRecovery": {
+    "status": "pass",
+    "outerSHA": "df0e8395399ca29e678262df1602ebf312eeb20ebbb0f5018bdedb3fd1e3a1f5",
+    "innerSHA": "54e4c7c3b1d3c0750213df5c9054ee904d952e0df06e586f792f09464bca60c3",
+    "image": "sha256:5dc1e42624fc9812362970e7163a0a89d7cf0eac6750a60fceafa581ac73c720",
+    "streamedImport": true,
+    "extraInnerTarBytesOnDisk": 0,
+    "remoteDownloads": 0,
+    "containersCreated": 0
+  },
+  "native": {
+    "browser": "Safari",
+    "existingPort9999TabReused": true,
+    "reloadEnteredWorkbench": true,
+    "certificateWarning": false,
+    "newTabs": 0,
+    "modelCalls": 0,
+    "privateSessionBodyPublished": false
+  },
+  "runtimeAssets": {
+    "normalUID": 1000,
+    "readableFiles": 25,
+    "docxRoundTrip": true,
+    "allFiveBundledPlugins": true
+  },
+  "cad": {
+    "geometryRegression": "pass",
+    "assemblyColourUnitsTrimmedCurves": "pass",
+    "network": "none"
+  },
+  "limits": {
+    "sourceRuntime": true,
+    "ABUpgradeExercised": false,
+    "Windows": "user-owned NOT_RUN",
+    "realVectors": "deferred",
+    "publicAssetsUploaded": false,
+    "defaultManifestChanged": false,
+    "automaticSourceCheckoutArchiveRecoveryImplemented": false
+  },
+  "harnessNote": "Initial post-activation verifier used nonexistent config.buildRuntimeMode and raised KeyError after successful startup; corrected to updates/slots.runtimeMode and revalidated without restarting.",
+  "delivery": {
+    "status": "scoped_local_rebuild_and_documentation_pass",
+    "main": "398e72b76ea9fa8d5d781824f0c8f31e44c845ee",
+    "remoteExact": true,
+    "releaseCheckExit": 0,
+    "fullReceiptReusedUnchangedInputs": true,
+    "fullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "gatePublicDefaultSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "newPublicRelease": false
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "id": "continuity-runtime-ce0c-20261017",
+  "request": "继续总目标的分发与发布门禁：将已通过最终full127和原生验收的ce0c源码制作双架构完整离线包，校验导入和原start.command启动，推进公开附件与默认清单，保留Windows用户验收与真实向量暂缓边界",
+  "baseline": "5e57d3dc5b8fcd943b2553a88fdef2ca0d4f92e2",
+  "initial_status": "",
+  "acceptance": [
+    "Both complete ARM64/AMD64 images and bundles share qualified ce0c source and492 product commit; final795 full127/native proof applies before metadata-only promotion.",
+    "Reuse actual79a0 ARM candidate; serial offline AMD64 build from retained complete base with no image pull, preserve global memory/disk budget.",
+    "Export via existing machinery, verify archive paths/private-data exclusion, outer/inner SHA, exact launchers/licenses and actual Docker import/identity.",
+    "Extract complete ARM package and use original start.command/stop.command with only owned data; auth/build identity/CAD/workshop and preserved sessions/settings verified. AMD runtime assets under emulation separately; Windows native user-owned.",
+    "Upload exact new immutable assets to existing authorized RC2 distribution, verify server uploaded state/size/SHA before changing defaults. Do not replace existing assets/tag or claim all original12 complete.",
+    "After promotion run exact full/current release gate, docs and main delivery; close owned tabs/containers and preserve production identity22files/rollback."
+  ],
+  "scope": [
+    "docs/tasks/continuity-runtime-ce0c-20261017.json",
+    "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+    "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docker/prebuilt-images.tsv",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requires ordinary repository/Release fast local import/start and incremental push/test; newce0c source repair already main, public defaults still07c.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse qualified ARM, serial AMD, exact existing exporter and isolated original launcher; promotion waits for immutable uploaded pair and final full.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Local dual complete offline packages built/exported/imported; public defaults deliberately unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Scoped local ARM cold-import/start/auth/CAD/workshop/10 concurrent effort writes/CAS/restart and AMD emulated assets/CAD/architecture guard pass; candidate public verification exit1 explicitly retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Report and structured proof distinguish package qualification, existing defaults, failed public upload, Windows owner and remaining original12.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned runtime stopped/removed; verified duplicate inner tar removed; package/images/data retained; production identity22files exact; no new workbench tabs.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Safari ARM upload failed twice; candidate public gate exit1 no unique uploaded asset. No default promotion or new runtime release. Documentation source delivery separate.",
+      "evidence": [
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+        "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing direct user requests: push/merge main, Docker complete images in ordinary repo and Release, same image-package distribution with receiving device import; original recurring goal release gates. No production replacement requested in this task.",
+  "rollback": "Preserve old07c manifest and all named images/packages; revert owned default metadata if needed; never delete production/user data or existing public assets.",
+  "handoff": "ce0c local package evidence and failed public uploads remain historical and retained. Source now superseded by752/406; do not promote old pair as current. Current-source dual packages and public gate next; old07c defaults and production unchanged.",
+  "source_delivery": {
+    "status": "pass",
+    "observedRemoteMain": "716859b724c89320e7c65a17be4f2025ddbb373d",
+    "scope": "Documentation only; product492 already main; public new package pending"
+  },
+  "release_check": {
+    "exit": 0,
+    "scope": "Current exact local full and old07c defaults only; candidate ce0c public check separately exit1"
+  },
+  "currentSourceSupersededBy": {
+    "commit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+    "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+    "task": "docs/tasks/outcome-external-events-20261017.json",
+    "scope": "Old ce0c artifacts retained; not current binaries for refresh repair. Build/qualify current dual package pair before promotion."
+  }
+}

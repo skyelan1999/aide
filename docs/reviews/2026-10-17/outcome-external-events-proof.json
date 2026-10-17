@@ -1,0 +1,102 @@
+{
+  "status": "scoped_refresh_fix_native_pass",
+  "observedUTC": "2026-10-17T15:21:01.535428+00:00",
+  "productCommit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+  "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+  "image": "sha256:5dc1e42624fc9812362970e7163a0a89d7cf0eac6750a60fceafa581ac73c720",
+  "full": {
+    "status": "pass",
+    "commands": 127,
+    "fingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "log": ".agent-state/verify-20261017T145730614394Z.log",
+    "serverRegistered": 976,
+    "serverSerialDisjointShards": 12,
+    "firstFullStatus": "fail125of127; two old VM fixture assumptions retained",
+    "independentQuickCommands": 124
+  },
+  "native": {
+    "status": "scoped_native_pass",
+    "observedUTC": "2026-10-17T15:19:00.620563+00:00",
+    "origin": "https://localhost:58320/",
+    "client": "Safari complete authenticated workbench",
+    "initialTerminalOverview": "30/32",
+    "withoutManualRefreshOrHistoryExpansionAfterExternalEvents": "30/64",
+    "backendHiddenActive": {
+      "status": "pass",
+      "runningRuns": 1,
+      "loadedRuns": 30,
+      "totalRuns": 64,
+      "allLoadedCompleted": true,
+      "liveOutsideWindow": true,
+      "liveSnapshot": "7492fe3193e2afae481a1b6d2cb4e3c651aa433ac7408673de9454ac603e8a02"
+    },
+    "selectedCompletedDetailPreservedOnExternalEvent": true,
+    "freshOverviewEntry": "30/65, round65 running",
+    "automaticTerminal": "round65 completed with LIVE_PARTIAL_OLD and LIVE_FINAL_NEW",
+    "newActivityAfterTerminal": "30/66, round66 running",
+    "secondAutomaticTerminal": true,
+    "actualScreenshotCounter66AndCompletedReadable": true,
+    "closedPanelOtherSessionEventDidNotSwitchView": true,
+    "otherSelectedSessionDiskExact": true,
+    "afterOriginalRestartFullRefresh": "30/67, round67 completed",
+    "raceScope": "In-flight/lock/reconnect lifecycle rejection is VM regression; no native packet-delay or native lock/reconnect injection claimed.",
+    "harnessNotes": [
+      "Initial fixture start did not await health; first run failed connection refused. Preserved failed session#2; health-checked provider and created independent session#3 before32 normal successful runs.",
+      "Restart preflight initially read runningRuns from unpaged raw session, which does not expose that field. Corrected harness to use limit30 metadata before stop; no product error or restart was claimed from that failed preflight."
+    ]
+  },
+  "restart": {
+    "status": "pass",
+    "originalStopStart": true,
+    "sameContainerSameImageNewProcess": true,
+    "session67AndFinalOutcomeExact": true,
+    "sessionDiskBytesExact": true,
+    "servedScriptsExact": {
+      "app.js": "0c6eb5fde9a6033c44b1b40571cbe2a9dab87c22fef2530e8a53297ba0829323",
+      "task-outcome.js": "c2733f20a63ad522e7a3c28b4c10778c90804c2dace8737ab7ba1853f9861559"
+    },
+    "buildCommit": "75278e2fcb43ac116176e3510949112bfc0350b2"
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedStoppedContainersRemoved": 3,
+    "ownedEmptyNetworksRemoved": 2,
+    "onlyOwnedBrowserTabClosed": true,
+    "userPagesPreserved": true,
+    "onlyProductionTwoContainersRemain": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "imagesAndDataRetained": true,
+    "observedUTC": "2026-10-17T15:19:27.491214+00:00"
+  },
+  "limits": {
+    "original12Complete": false,
+    "realModelVectorCalls": 0,
+    "nativeWindows": "user-owned",
+    "realVectors": "deferred",
+    "nativeNetworkRaceAndLockInjection": "NOT_RUN; deterministic VM coverage separate",
+    "receivingDevice": "NOT_RUN",
+    "currentDualArchitectureOfflinePackages": "not exported, not public",
+    "productionReplaced": false,
+    "pickerAbsoluteNumbering": "Existing picker uses relative loaded-window number; native latest absolute64 displayed #30; follow-up required.",
+    "livePartialOutcomeBody": "Before completion outcome shows generating placeholder; final body includes both markers. No native incremental partial-body claim."
+  },
+  "sourceDelivery": {
+    "status": "pass",
+    "observedRemoteMain": "1ae377798a75c3d18611ce854d0d5351d8bbd67a",
+    "pushExit": 0,
+    "independentRemoteExact": true,
+    "scope": "Source refresh repair and scoped native evidence; no public current image package or production replacement."
+  },
+  "releaseCheck": {
+    "exit": 0,
+    "exactFullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "defaultPublicSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "current406PublicAssetsQualified": false,
+    "mutations": false
+  },
+  "documentationChecks": {
+    "checkDocs": "PASS315 Markdown1187 local links",
+    "diffCheck": "pass"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "markdown-restore-feedback-20261017",
+  "request": "修复真实SSH工作区断连恢复时失败原因仅短暂提示、对话框中消失的问题；保持脏草稿、锁态、旧工作区与恢复回执边界",
+  "baseline": "ceca57e2e90e53c23c9b7e93f46f8529062d02b1",
+  "initial_status": "",
+  "acceptance": [
+    "Actual old source fails focused assertion: failed confirm without journal has no persistent dialog alert.",
+    "Failed restore confirm retains visible reason and any partial journal/applied paths, using textContent; no false success or automatic retry.",
+    "Retry replaces prior error, preserves editor writability and controls; late responses after lock/close/workspace/version change do not expose details.",
+    "Focused tests, quick/full exact source and actual browser acceptance remain separately recorded; no production change or release before gates."
+  ],
+  "scope": [
+    "internal/server/web/markdown-history.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/markdown-history-writable.test.cjs",
+    "docs/tasks/markdown-restore-feedback-20261017.json",
+    "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+    "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Direct currentfe80 Safari disconnect leaves no persistent reason; new old-source assertion failed0vs1.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "One local role=alert text row replaces toast-only failure; keep partial journal and applied paths; suppress stale/locked/detached details.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Persistent confirm-error alert/partial journal and stale version/workspace/lock/close guards; cache/i18n updated.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final492/cache8 exact full127 fingerprint795dd892 pass; actual79a0 ARM original launcher/served JS/nonroot workshop assets and native visible8s one-row failure/reconnect/manual full body+SVG retry pass. Earlier below-fold candidate retained as failed visual scope.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Final identities, three independent negatives, exact current full/native and limits recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own3 containers/empty networks and single candidate tab removed; original9999/tab inventory restored; production identity22files exact; images/data/evidence retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Actual release-check exit0: local exact final full and existing07c ARM/AMD public default metadata pass. Scoped source delivered mainfc4130d8 and remote verified. Newce0c complete packages/public defaults not yet qualified; no production replacement or formal release.",
+      "evidence": [
+        "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+        "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental source/test/doc/push authorization; no production replacement or public Release before gates.",
+  "rollback": "Revert owned source commit; no data migration.",
+  "handoff": "Current source492/main delivered; final795 full127/native79a0/cleanup pass. No owned runtime or verifier remains. Next qualify newce0c complete ARM/AMD packages and public publication, then promote defaults; existing07c defaults currently pass metadata gate. Original12 continue; Windows user-owned/vectors deferred.",
+  "sourceDelivery": {
+    "status": "pass",
+    "branch": "main",
+    "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "observedRemoteMain": "fc4130d8271ff3e57d927603b4c884d37e536feb"
+  }
+}

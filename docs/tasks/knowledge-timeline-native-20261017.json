@@ -1,0 +1,80 @@
+{
+  "id": "knowledge-timeline-native-20261017",
+  "request": "继续原12工作流知识时光：当前ce0c完整认证Safari时间比较、结论及依据、历史原文定位、进程重启回读；隔离样例保护生产，真实向量暂缓，Windows用户验收",
+  "baseline": "0c50c630c693d7c8f27b68749c2c56c214106d97",
+  "initial_status": "",
+  "acceptance": [
+    "Currentce0c original start.command isolated runtime, auth and exact served source; production22 unchanged.",
+    "Real local Markdown file observations before/after with unchanged conclusion but changed explicit basis, then changed conclusion/add/remove; API and encrypted restart readback independently exact.",
+    "Native Safari full workbench map timeline compare, expand original conclusion and basis with correct observation/line/hash; no historical source replaced by current content.",
+    "Native manual topic across observations persists where applicable; scope/coverage/unknown labels remain honest, no real model/vector calls.",
+    "Stop owned runtime, clean owned tabs and containers; retain proof/data and original12 remaining scope; scoped docs/main delivery with unchanged exact source full."
+  ],
+  "scope": [
+    "docs/tasks/knowledge-timeline-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/tasks/knowledge-timeline-20261009.json",
+    "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+    "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current source qualified; native timeline comparison and persistence gap selected from original12 ledger, isolated owned fixture only.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Current source qualified; native timeline comparison and persistence gap selected from original12 ledger, isolated owned fixture only.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prepared isolated current79a0 original launcher and real local Markdown observations; no product code changes.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Native full Safari basis-only difference, changed conclusion/add/remove, explicit manual theme save, new-process/full-page reload and original-file-absent historical readback pass; API exact compare and topics independently matched.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped report/proof and parent ledger updated; retain SSH/theme/long-term/public upload gaps.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned2 pages closed, original stop then2 containers/2 networks removed, production identity22files exact, images/data preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+        "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Scoped documentation merged/pushed mainc63dc75b, independent remote exact; main release-check0 exact full and existing07c public metadata only. No software version/tag, new package or production deployment.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "User has authorized incremental push/test and merge main throughout active goal; no production replacement.",
+  "rollback": "Owned fixtures only; original start/stop; keep production and previous package evidence unchanged.",
+  "handoff": "Local current complete Safari historical conclusion/basis/manual topic and restart readback pass. Next SSH native timeline, responsive/theme and long-term scope; publicce0c upload tracked independently; Windows user-owned, real vectors deferred."
+}

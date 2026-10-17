@@ -6,6 +6,22 @@
 
 升级服务负责访问令牌鉴权、发行包解析与校验、槽状态持久化和进度报告。它不访问 Docker socket，也不执行上传包中的脚本。宿主启动器仅在用户手动激活槽后导入镜像并重启服务。
 
+## 启动、重编译和版本升级的区别
+
+| 场景 | 实际行为 | 更新方式 |
+| --- | --- | --- |
+| Git源码目录，AIDE_BUILD_FROM_SOURCE=auto | 检测.git后走源码模式；镜像source-sha相同则跳过编译，缺镜像或不同则编译 | 先同步目标分支，保留依赖，重新构建并核对commit及源码身份 |
+| 完整离线启动目录，含.aide-image | 校验平台与包内镜像摘要，按本地归档导入；日常启动复用镜像 | 若应用也是release-image构建模式且有宿主代理，可使用正式升级包；不能仅凭.aide-image推断A/B可用 |
+| 正式Release镜像及升级代理 | 服务器校验并暂存升级包，手动切换，健康失败尝试恢复旧槽 | 同平台的完整升级ZIP／升级ZIP；保留旧镜像与数据备份 |
+
+不要通过清空Docker实现升级：清缓存会降低后续构建命中，清运行镜像还会丢失依赖与回退点。程序镜像包含工具链、运行依赖与编译程序；API密钥、会话、保险库、私有配置及可选下载模型不随新镜像分发。数据格式迁移须另做兼容性与备份检查，镜像回退不等于数据恢复。
+
+`export-bundle`生成的`*-offline.tar.gz`是启动归档，不能直接作为应用内ZIP升级包上传。`package-release-assets.sh`还生成含manifest的统一完整ZIP与升级ZIP；打包脚本本身不保证输入镜像的buildRuntimeMode为release-image，发行验收必须通过运行API独立核对，不能仅因包名是Release就宣称支持A/B。
+
+2026-10-18实机曾复现：Git源码目录清掉镜像后运行start.command，因缺CAD基础镜像中止；当时通过[人工恢复与重编译](../reviews/2026-10-18/startup-runtime-recovery.md)恢复本机。后续Bash启动器增加[本地依赖seed恢复](../reviews/2026-10-18/source-offline-recovery.md)：仅当配置的应用镜像不完整且基础依赖缺失时，按受控默认清单选择本地已有完整包或已导入镜像，校验后放入独立依赖标签，供prepare-local/CAD使用；旧包不直接变成当前程序，仍构建当前源码。完整bases已有时不额外导入。损坏摘要、符号链接、架构／身份错误和导入失败均停止，不转联网掩盖失败。
+
+恢复依赖本身不下载、不选择最新文件或扫描任意tar包；只使用`docker/prebuilt-images.tsv`登记的平台与身份。对应本地包缺失返回明确不可用，既有首次源码构建流程仍可能走原始联网构建；需要完全离线时应预先放入完整包，不能把“本地恢复不联网”扩大为“所有首次源码构建都离线”。`AIDE_LOCAL_DEPENDENCIES=0`保留原构建方式，`AIDE_FORCE_REBUILD=1`仍请求构建；普通相同源码启动仍跳过编译。此恢复改动适用于macOS/Linux的Bash源码启动器；PowerShell显式源码重建未加入同等恢复路径，Windows原生验收仍由用户进行。
+
 ## 安装方式
 
 | 方式 | 输入 | 适用场景 |
@@ -35,7 +51,7 @@
 
 切换由用户在目标槽点击「手动激活」后开始。服务器创建待处理操作；宿主代理拉取受令牌保护的命令、复核 SHA256、导入镜像，并使用原 Compose project 重建唯一 aide 服务。新服务 `/healthz` 检查通过后确认切换；超时或失败时恢复旧 `.aide-image` 并启动原槽。
 
-A/B 两槽使用同一 Compose project 和相同的 `aide-data`、`aide-home` named volumes，因此会话、设置、模型配置与容器 home 共用。`workspace/` 和 `context/` 仍由启动目录挂载。切换按停旧再启新执行，期间服务会短暂不可用，但不会有两个 aide 实例同时写数据。
+当前启动器的A/B两槽使用同一Compose project，并复用启动目录 `.aide-data/storage/data` 与 `.aide-data/storage/home` 的宿主绑定，因此会话、设置、模型配置与容器home共用；较早named-volume安装须先经启动器校验迁移，不能直接另建空卷替换。`workspace/` 和 `context/` 仍由启动目录挂载。切换按停旧再启新执行，期间服务会短暂不可用，但不会有两个 aide 实例同时写数据。
 
 ## 进度与恢复
 

@@ -31,10 +31,11 @@ launcher_should_build_source() {
 }
 
 launcher_prebuilt_image() {
-  local docker_bin="$1" target="$2" manifest="${3:-docker/prebuilt-images.tsv}"
+  local docker_bin="$1" target="$2" manifest="${3:-docker/prebuilt-images.tsv}" purpose="${4:-runtime}"
   local platform row image src digest url kind extra archive actual current rollback
+  [[ "$purpose" == runtime || "$purpose" == local-seed ]] || { echo 'Invalid prebuilt import purpose.' >&2; return 1; }
   [[ "$target" =~ ^[a-zA-Z0-9][a-zA-Z0-9._/:@-]*$ ]] || { echo 'Invalid prebuilt target image.' >&2; return 1; }
-  platform="$("$docker_bin" info --format '{{.OSType}}/{{.Architecture}}' | sed 's|/aarch64$|/arm64|;s|/x86_64$|/amd64|')" || return
+  platform="$("$docker_bin" info --format '{{.OSType}}/{{.Architecture}}' | sed 's|/aarch64$|/arm64|;s|/x86_64$|/amd64|')" || return 1
   [[ -f "$manifest" ]] || { echo 'Prebuilt manifest missing; download a complete Release package. Source build requires AIDE_BUILD_FROM_SOURCE=1.' >&2; return 1; }
   row="$(awk -v p="$platform" '$1==p{print; n++} END{if(n!=1)exit 1}' "$manifest")" || { echo "No unique prebuilt image for $platform; use a matching Release package. Automatic source build is disabled." >&2; return 1; }
   read -r platform image src digest url kind extra <<< "$row"
@@ -43,13 +44,17 @@ launcher_prebuilt_image() {
   current="$("$docker_bin" image inspect "$image" --format '{{.Id}}' 2>/dev/null || true)"
   if [[ "$current" != "$image" ]]; then
     [[ ! -L docker-images ]] || { echo 'Prebuilt cache must not be a symbolic link.' >&2; return 1; }
-    mkdir -p docker-images
     archive="docker-images/${url##*/}"
     [[ ! -L "$archive" && ! -L "$archive.partial" ]] || { echo 'Prebuilt archive must not be a symbolic link.' >&2; return 1; }
+    if [[ "$purpose" == local-seed && ! -f "$archive" ]]; then
+      echo "No verified local dependency bundle: $archive. Retain/download the matching complete package before offline compilation." >&2
+      return 3
+    fi
+    mkdir -p docker-images
     if [[ ! -f "$archive" ]]; then
       command -v curl >/dev/null || { echo 'curl required to download the prebuilt image.' >&2; return 1; }
       echo "Downloading complete prebuilt runtime ($platform), no compilation: $url" >&2
-      curl --fail --location --retry 3 --connect-timeout 30 --continue-at - --output "$archive.partial" "$url" || return
+      curl --fail --location --retry 3 --connect-timeout 30 --continue-at - --output "$archive.partial" "$url" || return 1
     else
       echo "Using local prebuilt archive: $archive" >&2
     fi
@@ -61,15 +66,27 @@ launcher_prebuilt_image() {
     [[ "$actual" == "$digest" ]] || { echo 'Prebuilt archive checksum mismatch; import refused. Retain the file for inspection or replace it with a verified download.' >&2; return 1; }
     [[ "$candidate" == "$archive" ]] || mv "$candidate" "$archive"
     # pipefail protects against failed extraction; no large uncompressed copy.
-    (set -o pipefail; tar -xOzf "$archive" aide-offline/docker-images/aide-local.tar | "$docker_bin" image load) || return
+    (set -o pipefail; tar -xOzf "$archive" aide-offline/docker-images/aide-local.tar | "$docker_bin" image load) || return 1
   fi
   [[ "$("$docker_bin" image inspect "$image" --format '{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}|{{index .Config.Labels "aide.cad-runtime"}}')" == "$image|$platform|$src|8.0.1.1.0" ]] || { echo 'Imported runtime identity/platform/source/CAD mismatch; activation refused.' >&2; return 1; }
   current="$("$docker_bin" image inspect "$target" --format '{{.Id}}' 2>/dev/null || true)"
   if [[ -n "$current" && "$current" != "$image" ]]; then
     rollback="aide:rollback-$(date +%Y%m%d%H%M%S)-${current#sha256:}"
-    "$docker_bin" image tag "$current" "$rollback" || return
+    "$docker_bin" image tag "$current" "$rollback" || return 1
     echo "Previous image retained: $rollback" >&2
   fi
-  "$docker_bin" image tag "$image" "$target" || return
-  echo "Prebuilt runtime ready: $target ($platform). Source compilation disabled." >&2
+  "$docker_bin" image tag "$image" "$target" || return 1
+  if [[ "$purpose" == local-seed ]]; then
+    echo "Local dependency seed ready: $target ($platform). Continue compiling current source; installed application unchanged." >&2
+  else
+    echo "Prebuilt runtime ready: $target ($platform). Source compilation disabled." >&2
+  fi
+}
+
+# Only the manifest-selected local archive/installed image is a dependency seed.
+# Never choose by filename glob/mtime or replace the application's Compose tag.
+launcher_local_build_seed() {
+  local docker_bin="$1" target=aide:source-build-dependencies
+  launcher_prebuilt_image "$docker_bin" "$target" docker/prebuilt-images.tsv local-seed >&2 || return $?
+  printf '%s\n' "$target"
 }

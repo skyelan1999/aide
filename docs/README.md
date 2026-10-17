@@ -9,6 +9,8 @@
 | [当前交互设计](design/current-workbench.md) | 根据实际界面描述布局与交互 |
 | [软件模块说明](architecture/modules.md) | 模块职责、依赖与关键调用链 |
 | [截图证据与原图](ui-evidence.md) | 13 张真实截图、环境、数据和 SHA-256 |
+| [连续工作总交接](continuity-handoff.md) | 原12项逐项状态、证据、复测步骤、源码／镜像／生产边界和下一步 |
+| [连续工作操作与排障](continuity-operations.md) | 完整包检查、启动停止、常见错误、功能复测、交付与回退清单 |
 | [文档覆盖与历史边界](documentation-map.md) | 当前正文、专题、历史记录和非 UI 证据 |
 
 [English](en/README.md) · 简体中文
@@ -19,7 +21,7 @@
 
 星图按钮修整与增强漂移为 RC2 之后的本地候选；相关源码已纳入后续开发提交，尚未包含在已发布包中。见[按钮验收](reviews/starmap-controls-20261008.md)、[漂移验收](reviews/starmap-drift-20261008.md)与[文档推送范围](tasks/starmap-docs-push-20261009.json)。
 
-当前连续工作、Markdown 历史、引用操作与 AI 可见性的源码检查点见[阶段性推送记录](reviews/continuity-checkpoint-20261009.md)；[整体目标](architecture/continuity-roadmap.md)继续进行中。
+当前连续工作、Markdown历史、授权、成果与星图的统一状态见[详细交接](continuity-handoff.md)和[主账本](tasks/aide-continuity-knowledge-20261009.json)；[整体目标](architecture/continuity-roadmap.md)继续进行中。[2026-10-09检查点](reviews/continuity-checkpoint-20261009.md)保留为历史。页首0fef6411只标识截图文档基线，不代表后续源码、镜像或生产已同步。
 
 - [内置鲸鱼娘背景](builtin-background.md)：直接选择随应用安装的视频，附真实运行截图。
 

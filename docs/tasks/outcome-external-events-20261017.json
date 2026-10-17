@@ -1,0 +1,98 @@
+{
+  "id": "outcome-external-events-20261017",
+  "request": "修复实际Safari已复现：终态成果总览不采用其他客户端新活动，30/32滞留但后端64且running1；保留会话/锁态/关闭请求归属、空闲停止轮询和详情快照一致性，复测并更新详细文档及main",
+  "baseline": "81d4d44e7c178b672467171c64ef9e01c79205d4",
+  "initial_status": "",
+  "acceptance": [
+    "Regression fails on old source: initial terminal overview does not adopt externally started hidden activity.",
+    "Open overview reads authoritative session once; matching global events and reconnect refresh idle view, unrelated sessions ignored; no idle interval.",
+    "Requests coalesce with one trailing read; close/lock/switch/wrong-session responses cannot overwrite current view; detail import/snapshot ownership unaffected.",
+    "Current candidate built from exact source; original launcher and real full Safari demonstrate external activity and terminal adoption; production22 unchanged.",
+    "Focused and exact full gates, detailed docs, scoped cleanup and main delivery; original12/public image gates remain."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/task-outcome.js",
+    "scripts/outcome-overview-lifecycle.test.cjs",
+    "docs/tasks/outcome-external-events-20261017.json",
+    "docs/tasks/outcome-live-receipt-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/continuity-handoff.md",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/reviews/2026-10-17/outcome-external-events.md",
+    "docs/reviews/2026-10-17/outcome-external-events-proof.json",
+    "scripts/test_approval_persistence.cjs",
+    "scripts/outcome-pagination.test.cjs",
+    "docs/tasks/continuity-runtime-ce0c-20261017.json",
+    "docs/documentation-map.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Native stale30/32 vs API64/running1 is authoritative prior reproduction. Refresh only owned overview via initial read and scoped global events; keep terminal idle and detail snapshot boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native stale30/32 vs API64/running1 is authoritative prior reproduction. Refresh only owned overview via initial read and scoped global events; keep terminal idle and detail snapshot boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Initial authoritative read, global matching event/reconnect bridge, idle timer separate from view ownership, coalesced trailing read and wrong-session guard; no UI copy/style change.",
+      "evidence": [
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js",
+        "scripts/outcome-overview-lifecycle.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final quick124/full12768a145c0 pass; actual current5dc Safari32to64 external, detail return65, terminal/restart66, close/switch isolation67 and original restart/full refresh pass. Initial full125/127FAIL and harness failures retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Detailed report/proof, current source/runtime/public distinctions, parent ledger and handoff updated; picker relative numbering and live partial body limits explicit.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Original stop0, own1 page/3 stopped containers/2 empty networks removed, images/data retained; production identity and22 exact.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Scoped source repair delivered main1ae37779, independent remote exact; clean-main release-check0 current full68a and existing07c default assets. ARM5dc native qualified locally; no current dual-package/public/production claim.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-external-events.md",
+        "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing user incremental work/push/test and main merge. No production replacement.",
+  "rollback": "Revert owned source commit, verify isolated runtime; keep production/data/images unchanged.",
+  "handoff": "Scoped source/native refresh fix delivered main. Next current406 dual-architecture offline package export/qualification/public delivery; picker absolute numbering and remaining original12 scopes stay open. Only production2 remain, images/data preserved.",
+  "sourceIdentity": {
+    "commit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+    "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+    "fullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff"
+  }
+}

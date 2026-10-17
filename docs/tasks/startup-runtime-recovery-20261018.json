@@ -1,0 +1,80 @@
+{
+  "id": "startup-runtime-recovery-20261018",
+  "request": "用户清理Docker历史希望重新编译；原start.command缺少CAD运行依赖失败。恢复已校验本地依赖，按最新main强制重新编译，用原启动器启动并检查保留数据、运行身份和页面，保持主目录main干净",
+  "baseline": "8f6640646099a94a0ebbf196ec3235577744d9ec",
+  "initial_status": "",
+  "acceptance": [
+    "核对远端main、实际启动路径与缺CAD错误；不混入未验编号修复。",
+    "校验本地完整包及真实Docker导入，复用依赖无网络强制重建，实际执行Go vet/build且构建身份匹配main。",
+    "新镜像普通用户插件／DOCX和CAD验证；原始start.command启动9999、鉴权及API身份正确，14会话和22保护文件保留。",
+    "复用原生Safari页面刷新进入，区分源码／离线启动／正式A/B升级及未实现的自动恢复；文档链接和精确内容门禁后交付。"
+  ],
+  "scope": [
+    "docs/tasks/startup-runtime-recovery-20261018.json",
+    "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+    "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json",
+    "docs/continuity-handoff.md",
+    "docs/architecture/software-updates.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确清Docker历史是为了重新编译；错误是源码模式缺CAD依赖。当前main与origin同8f，编号修复留独立分支。",
+      "evidence": [
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+        "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按既有Dockerfile.local、export-bundle和start.command恢复；镜像及数据分开，保留5dc回退，不清工作区或数据。",
+      "evidence": [
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+        "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已校验并流式导入5dc完整包；main8f无缓存镜像重建48e，Go vet/build实际执行，network=none/pull=false。原始start已切换app及CAD。无源码修改。",
+      "evidence": [
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+        "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "既有精确full68a127PASS与当前main冻结构建输入相同；新镜像UID1000/25assets/5plugins/DOCX/CADpass，原始start9999健康、APIcommit8f、401、source mode、14session/22hash及canonical mounts；Safari原页刷新进入。未重复full、不宣称A/B实测。",
+      "evidence": [
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+        "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补运行恢复报告与proof，更新当前生产身份，纠正named-volume旧描述；说明tar/ZIP和runtime mode边界、自动源码恢复尚未实现。",
+      "evidence": [
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+        "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "没有新增浏览器页，保留用户页和回退镜像；运行中只有用户app/CAD。无全局Docker清理。私有备份和日志在忽略目录。",
+      "evidence": [
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+        "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "本机48e/8f重编译运行恢复通过；文档398e72b7已推main，独立远端精确一致。干净main文档门禁退出0，范围为相同68a full127及旧07c公开默认元数据，不表示48e公开发布或源码自动恢复已实现。",
+      "evidence": [
+        "docs/reviews/2026-10-18/startup-runtime-recovery.md",
+        "docs/reviews/2026-10-18/startup-runtime-recovery-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "用户：把仓库拉到最新然后重新编译；看起来不行啊；我清理了docker的历史，以重新编译。既有分批push和合到main授权。",
+  "rollback": "将保留的sha256:5dc1e42624fc镜像重新tag为aide:local，再执行同目录原始start.command；仅回退程序，不覆盖当前数据。22项私有备份在本机忽略目录，数据恢复另核对。",
+  "handoff": "本机48e/8f source模式已启动。Git源码目录丢失依赖时自动恢复本地完整包、正式release-image双架构发布及A/B实机切换仍待完善；原12项继续。"
+}

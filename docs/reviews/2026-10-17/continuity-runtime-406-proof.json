@@ -1,0 +1,301 @@
+{
+  "status": "local_complete_packages_pass_public_upload_failed_defaults_unchanged",
+  "observedUTC": "2026-10-17T15:38:45.300445+00:00",
+  "sourceCommit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+  "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+  "fullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+  "priorExactFull127Pass": true,
+  "arm64": {
+    "build": {
+      "status": "pass",
+      "arch": "arm64",
+      "tag": "aide:outcome-events-arm64-75278e2f",
+      "image": "sha256:5dc1e42624fc9812362970e7163a0a89d7cf0eac6750a60fceafa581ac73c720",
+      "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+      "commit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+      "reusedExistingExactNativeQualifiedBuild": true,
+      "evidence": "docs/reviews/2026-10-17/outcome-external-events-proof.json",
+      "public": false
+    },
+    "export": {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "image": "sha256:5dc1e42624fc9812362970e7163a0a89d7cf0eac6750a60fceafa581ac73c720",
+      "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+      "buildCommit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-5dc1e42624fc-offline.tar.gz",
+      "bytes": 919243067,
+      "sha256": "df0e8395399ca29e678262df1602ebf312eeb20ebbb0f5018bdedb3fd1e3a1f5",
+      "innerImageArchiveSHA256": "54e4c7c3b1d3c0750213df5c9054ee904d952e0df06e586f792f09464bca60c3",
+      "archiveNoHostData": true,
+      "packagedLauncherExact": true,
+      "newPinnedHostReadinessIncluded": true,
+      "actualDockerLoadExit": 0,
+      "loadedIdentityExact": true,
+      "publicDefaultsAndTrackedSumsUnchanged": true,
+      "published": false,
+      "otherDeviceImport": "NOT_RUN",
+      "buildInfo": "version=0.1.17.0-RC2\nimage=sha256:5dc1e42624fc9812362970e7163a0a89d7cf0eac6750a60fceafa581ac73c720\nplatform=linux/arm64\nsrcsha=406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae\ncadRuntime=8.0.1.1.0\ndependencyImage=sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5\n"
+    },
+    "originalStart": {
+      "status": "pass",
+      "originalStartCommand": true,
+      "completePackageExtracted": true,
+      "coldAliasForcedLocalImport": true,
+      "image": "sha256:5dc1e42624fc9812362970e7163a0a89d7cf0eac6750a60fceafa581ac73c720",
+      "newPinnedHostReadinessPassed": true,
+      "buildCommitExact": true,
+      "versionExact": true,
+      "authenticatedAPI": true,
+      "unauthenticated401": true,
+      "nativeCADImport": true,
+      "ownedMountsOnly": true,
+      "sourceRebuildOrRemoteImageDownload": false,
+      "realModelOrVectorCalls": 0,
+      "freshWorkspaceManagementPermissionsDefaultOff": true,
+      "freshWorkspaceWorkshopAutoInstalled": true,
+      "workshopEnabledAndErrorFree": true,
+      "noManualPluginInstall": true,
+      "nativeBrowserOpened": false,
+      "otherDeviceImport": "NOT_RUN"
+    },
+    "reasoning": {
+      "status": "pass",
+      "scope": "current ARM runtime original launcher + authenticated API/canonical disk/actual process restart; package browser not repeated; same image separately native-qualified",
+      "image": "sha256:5dc1e42624fc9812362970e7163a0a89d7cf0eac6750a60fceafa581ac73c720",
+      "buildCommit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+      "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+      "fullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+      "healthy": true,
+      "unauthenticatedConfigStatus": 401,
+      "reasoningWrites": 10,
+      "levels": [
+        {
+          "A": "auto",
+          "B": "high",
+          "apiDiskExact": true,
+          "differentSessionsWrittenConcurrently": true
+        },
+        {
+          "A": "off",
+          "B": "medium",
+          "apiDiskExact": true,
+          "differentSessionsWrittenConcurrently": true
+        },
+        {
+          "A": "low",
+          "B": "low",
+          "apiDiskExact": true,
+          "differentSessionsWrittenConcurrently": true
+        },
+        {
+          "A": "medium",
+          "B": "off",
+          "apiDiskExact": true,
+          "differentSessionsWrittenConcurrently": true
+        },
+        {
+          "A": "high",
+          "B": "auto",
+          "apiDiskExact": true,
+          "differentSessionsWrittenConcurrently": true
+        }
+      ],
+      "staleWriteStatus": 409,
+      "staleDidNotOverwrite": true,
+      "globalModelAndEffortUnchanged": true,
+      "restart": {
+        "originalStopAndStart": true,
+        "sameContainerAndImageNewProcess": true,
+        "selections": [
+          "high",
+          "auto"
+        ],
+        "revisions": [
+          5,
+          5
+        ],
+        "noRebuildOrPull": true
+      },
+      "productionContainerUnchanged": true,
+      "productionProtectedFilesExact": 22,
+      "realProviderCalls": 0,
+      "productionDataMounted": false,
+      "Windows": "user-owned",
+      "AMD64": "not_run"
+    },
+    "cleanup": {
+      "status": "pass",
+      "originalStopExit": 0,
+      "ownedStoppedContainersRemoved": [
+        "aide-406-arm-20261017-cad-1",
+        "aide-406-arm-20261017-aide-1"
+      ],
+      "emptyOwnedNetworksRemoved": 2,
+      "duplicateVerifiedInnerTarRemovedBytes": 923243008,
+      "outerArchiveDataAndImagesRetained": true,
+      "productionIdentityAnd22FilesUnchanged": true
+    }
+  },
+  "amd64": {
+    "build": {
+      "status": "pass",
+      "scope": "Local offline AMD64 candidate build under ARM emulation, not native Windows acceptance",
+      "arch": "amd64",
+      "tag": "aide:continuity-406-amd64-75278e2f",
+      "image": "sha256:14cb43f2c1ede5d9e182e9e82b9702f3f8b81c5d2e151cc5866a7581203ed562",
+      "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+      "commit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+      "base": "sha256:0c173c73296efc4867142df1c85063c68109c78c9b6e7a53b6c9af43be01face",
+      "network": "none",
+      "pull": false,
+      "buildTests": 0,
+      "exactSourceFull": "previous official full127 pass",
+      "runtimeMode": "source",
+      "DockerfileSHA256": "4a8d1a2ef3542ec1c63c82ebc3d8f67887dfd0ac3cc57112f9ed7cded91e3e67",
+      "logSHA256": "ae636237f84691692b01e40cd8fb95d0fb64cc531b31a08f7e107228540dcb8f",
+      "resourceScope": "Serial build within existing global Docker engine budget; no per-build cgroup limit claimed",
+      "engineMemoryBytes": 6210576384,
+      "engineCPUs": 4,
+      "public": false
+    },
+    "export": {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "image": "sha256:14cb43f2c1ede5d9e182e9e82b9702f3f8b81c5d2e151cc5866a7581203ed562",
+      "sourceSHA": "406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae",
+      "buildCommit": "75278e2fcb43ac116176e3510949112bfc0350b2",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-amd64-14cb43f2c1ed-offline.tar.gz",
+      "bytes": 923326306,
+      "sha256": "1cd3ef4b84471292d0151f941cc7e7dcb05f093acf98fd729dae0960aa29533c",
+      "innerImageArchiveSHA256": "88f2795bfbc1f7fe5cd0be6fc9d251b01494b405cc2607f78815d483c0a0f18f",
+      "archiveNoHostData": true,
+      "packagedLauncherExact": true,
+      "newPinnedHostReadinessIncluded": true,
+      "actualDockerLoadExit": 0,
+      "loadedIdentityExact": true,
+      "publicDefaultsAndTrackedSumsUnchanged": true,
+      "published": false,
+      "otherDeviceImport": "NOT_RUN",
+      "buildInfo": "version=0.1.17.0-RC2\nimage=sha256:14cb43f2c1ede5d9e182e9e82b9702f3f8b81c5d2e151cc5866a7581203ed562\nplatform=linux/amd64\nsrcsha=406b1984556fdfd416b3d1e5755aeac18bf203e2c9dea8e9ae38b85141c403ae\ncadRuntime=8.0.1.1.0\n"
+    },
+    "normalUserAssetsAndDocx": {
+      "status": "pass",
+      "uid": 1000,
+      "readableFiles": 25,
+      "docxRoundTrip": true,
+      "network": "none"
+    },
+    "installedCAD": {
+      "status": "pass",
+      "nestedAssemblyPlacement": true,
+      "partAndFaceColours": true,
+      "allFacesMeshed": true,
+      "nurbsFallbackRetainsTrimmedFace": true,
+      "mixedAndPureWirePointGeometry": true,
+      "collapsedFacesRetainBoundaryAndWarning": true,
+      "zeroWidthTrimOnly": true,
+      "mmMetreInch": true,
+      "finiteNormalsAndBatchBounds": true,
+      "scope": "Installed AMD64 native CAD converter under ARM CPU emulation; not native Windows",
+      "image": "sha256:14cb43f2c1ede5d9e182e9e82b9702f3f8b81c5d2e151cc5866a7581203ed562",
+      "network": "none",
+      "memoryBytes": 1073741824,
+      "cpus": 2,
+      "programSHA256": "0c2462c5e72d467426cafbcb9674bba11865790c641e7341a3a0f78eb7627ffc",
+      "actualInstalledConverter": true
+    },
+    "compiledAppTLSAndAssets": {
+      "status": "pass",
+      "uid": 1000,
+      "TLSHealth": true,
+      "authenticatedConfigBuildCommitExact": true,
+      "unauthenticated401": true,
+      "servedScriptsExact": {
+        "app.js": "0c6eb5fde9a6033c44b1b40571cbe2a9dab87c22fef2530e8a53297ba0829323",
+        "task-outcome.js": "c2733f20a63ad522e7a3c28b4c10778c90804c2dace8737ab7ba1853f9861559"
+      },
+      "network": "none",
+      "realModelVectorCalls": 0,
+      "image": "sha256:14cb43f2c1ede5d9e182e9e82b9702f3f8b81c5d2e151cc5866a7581203ed562",
+      "scope": "AMD compiled application under ARM CPU emulation; builtin plugins disabled for minimal server boot, shipped assets separately checked; not native Windows acceptance"
+    },
+    "originalLauncherGuard": {
+      "status": "pass",
+      "originalStartCommand": true,
+      "exit": 1,
+      "AMDPackageRejectedByARMEngine": true,
+      "noContainerCreated": true,
+      "guardNotBypassed": true,
+      "innerImageTarNotExtractedBecauseOnlyGuardTested": true,
+      "actualImageImport": "pass separately",
+      "nativeAMDOrWindowsRuntime": "NOT_RUN user-owned",
+      "nativeBrowserOpened": false
+    }
+  },
+  "publicUpload": {
+    "status": "upload_not_verified",
+    "observedUTC": "2026-10-17T15:32:11.411452+00:00",
+    "nativeError": "Something went really wrong, and we can’t process that file. Try another file.",
+    "attempted": "ARM5dc via Safari native file chooser",
+    "newCandidateAssets": [],
+    "releaseAssetsCount": 27,
+    "updateReleaseSubmitted": false,
+    "oldAssetsDeleted": false,
+    "defaultsPromoted": false,
+    "internalTemporaryCopyRetried": true,
+    "uniqueFilenameRetried": true,
+    "secondNativeError": "Something went really wrong, and we can’t process that file. Try another file.",
+    "failedPlaceholderPreserved": true,
+    "temporaryCopyRemovedBytes": 919243067,
+    "ownedReleaseTabsClosed": true,
+    "unrelatedUserPagesPreserved": true
+  },
+  "publicCandidateGate": {
+    "status": "fail",
+    "error": "linux/arm64: no unique uploaded public asset",
+    "mutations": false
+  },
+  "cleanup": {
+    "status": "pass",
+    "onlyProductionTwoContainersRemain": true,
+    "productionIdentityAnd22FilesExact": true,
+    "ownedReleaseTabsClosed": true,
+    "userPagesPreserved": true,
+    "verifiedInternalTemporaryCopyRemovedBytes": 919243067,
+    "outerPackagesDataAndImagesRetained": true,
+    "observedUTC": "2026-10-17T15:36:51.118197+00:00"
+  },
+  "limits": {
+    "nativeWindows": "user-owned NOT_RUN",
+    "otherDeviceImport": "NOT_RUN",
+    "ARMImageLayerAbsenceColdEngine": "NOT_RUN; launcher alias absent, image retained by qualified build tag",
+    "ARMRepeatedFullBrowser": "NOT_RUN; exact image separately current-native-qualified",
+    "realModelVectorCalls": 0,
+    "defaultsPromoted": false,
+    "productionReplaced": false,
+    "original12Complete": false
+  },
+  "sourceDelivery": {
+    "status": "documentation_pass_publication_still_blocked",
+    "observedRemoteMain": "af50350b6e87d7b2a9588585fc1e1e40fd7837e2",
+    "pushExit": 0,
+    "independentRemoteExact": true
+  },
+  "publicCandidateGateAfterAttempts": {
+    "status": "fail",
+    "error": "linux/arm64: no unique uploaded public asset",
+    "mutations": false
+  },
+  "documentationChecks": {
+    "checkDocs": "PASS316 Markdown1189 local links",
+    "diffCheck": "pass"
+  },
+  "scopedMainGate": {
+    "exit": 0,
+    "currentFullFingerprint": "68a145c0293a65d338460a6b54bc459ee2dba1d7505511f51a3a55a9227be3ff",
+    "publicDefaultSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "currentCandidatePublicGateExit": 1,
+    "scope": "Local prerequisites and existing07c metadata only; not new406 publication"
+  }
+}

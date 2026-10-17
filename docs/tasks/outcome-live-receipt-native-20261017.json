@@ -1,0 +1,93 @@
+{
+  "id": "outcome-live-receipt-native-20261017",
+  "request": "继续成果追踪：当前完整Safari发布回执导入、去重、旧快照拒绝和运行中隐藏活动／终态刷新，隔离固定协议无真实模型向量，按账本验收文档推送main；用户追加：把文档该补的都补好，详细说明原12项、证据、限制、复测和交接",
+  "baseline": "24532f44e45411943005614275dd7d83a33cd1c5",
+  "initial_status": "",
+  "acceptance": [
+    "Current79a0 original launcher isolated data and bounded local protocol fixture; no real model/vector or production change.",
+    "Actual full Safari file chooser receipt preview/confirm, duplicate and persisted operator provenance; stale snapshot cannot overwrite current task.",
+    "Actual running task outcome follows streamed partial to final and overview notices activity outside current loaded window without duplicate task/replay.",
+    "Original restart retains receipt and final outcome; production22 exact, owned resources cleaned, docs/main gate and delivery scoped."
+  ],
+  "scope": [
+    "docs/tasks/outcome-live-receipt-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+    "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json",
+    "docs/README.md",
+    "docs/documentation-map.md",
+    "docs/verification.md",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/continuity-handoff.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Use current source normal task/receipt APIs and actual native file import. Independently verify persisted snapshot/provenance; no fabricated execution or release proof.",
+      "evidence": [
+        "internal/server/web/task-outcome.js",
+        "internal/server/task_release_receipts.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use current source normal task/receipt APIs and actual native file import. Independently verify persisted snapshot/provenance; no fabricated execution or release proof.",
+      "evidence": [
+        "internal/server/web/task-outcome.js",
+        "internal/server/task_release_receipts.go"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Native/API fixture completed; reproduced external new activity not refreshing terminal overview. No product fix implemented; preserve original scope.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Native receipt confirm and automatic single-run terminal pass; stale409/duplicate/disk/restart pass. Hidden activity from initially idle view fails and needs repair/retest.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Detailed partial-pass report, exact failing reproduction, proof and consolidated handoff.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned page/3 containers/2 networks cleaned; production identity and22 files exact; images/data retained.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Product task not complete; documentation delivery tracked separately, no product success claim.",
+      "evidence": [
+        "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+        "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing user incremental work/push/test and main merge; production replacement not authorized.",
+  "rollback": "Owned runtime stop and exact fixture cleanup only; preserve images and data. No product change planned.",
+  "handoff": "Original stale total counter defect repaired and actual current candidate native pass. Keep remaining absolute picker numbering, live partial-body scope and public package delivery distinct. Historical receipt/import and detail-final proofs remain scoped; no overall12 completion.",
+  "followupExternalRefresh": {
+    "task": "docs/tasks/outcome-external-events-20261017.json",
+    "status": "scoped_native_fix_delivered_main",
+    "evidence": [
+      "docs/reviews/2026-10-17/outcome-external-events.md",
+      "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+    ],
+    "observedRemoteMain": "1ae377798a75c3d18611ce854d0d5351d8bbd67a"
+  }
+}

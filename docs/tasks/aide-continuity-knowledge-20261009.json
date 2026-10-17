@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current launcher source full115 PASS5ecbd493e889786e995c2fe0a839b2ae659b07955d31bd500e983fef78ffce04:946 entries/12 serial groups/race/vet/CAD, quick112 and actual original launcher negative/positive pass. Prior07c ARM reasoning/MCP/restarts and public package evidence retained; new6eb-source distribution not yet qualified. Real external directory background scan and SSH workspace protocol accepted; original12 native full-workbench gaps remain, Windows user-owned and vectors deferred.",
+      "summary": "Current source236 full127 and scoped native approval/outcome+SSH workspace evidence pass; SSH interruption surfaced persistent error feedback gap. Original12 remain in progress, latest background source and public asset qualification separate. Windows user-owned; real vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -121,7 +121,10 @@
         "docs/reviews/2026-10-16/continuity-current-audit.md",
         "docs/reviews/2026-10-17/continuity-runtime-candidate.md",
         "docs/reviews/2026-10-17/continuity-runtime-candidate-proof.json",
-        "docs/reviews/2026-10-17/launcher-readiness-proof.json"
+        "docs/reviews/2026-10-17/launcher-readiness-proof.json",
+        "docs/reviews/2026-10-17/continuity-plugin-main-proof.json",
+        "docs/reviews/2026-10-17/native-plugin-candidate-proof.json",
+        "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
       ]
     },
     "documentation": {
@@ -148,7 +151,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "Current source exact full115 passed; Draft PR4 includes scoped repairs and real-directory/SSH/current launcher evidence. Actual clean local main9 scoped release-checks7pass, approval/outcome native verification2blocked; current6eb-source image/package delivery also incomplete (published defaults07c). No remote main or production replacement. Original12 remain in_progress; user-deferred native, Windows user-owned, vectors deferred.",
+      "summary": "Source repairs/native receipts delivered main1dc3170d; no current236 public assets/default promotion/production replacement. Latest main background source differs from retained candidate, requiring separate exact verification; native follow-up gaps remain.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-remote-proof.json",
@@ -159,7 +162,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Official full114 passed on8fe/runtime source07c; all source/docs pushed to review branch, draft PR4 carries final full and actual6 PASS/2 native BLOCKED matrix. Remote main and production stay unchanged. Continue remaining original acceptance with owned fixtures where useful; do not repeat already-proven pagination/full/export work. Current full-workbench native UI user-deferred; approval/outcome native gates must remain incomplete until observed. Windows user-owned, real vectors deferred.",
+  "handoff": "Current752/source406 code main delivered; current ARM5dc/AMD14cb complete packages actually Dockerloaded and scoped original-start/runtime/reasoning/CAD qualified. Public gate1 and Safari external+internal unique-name uploads failed, old07c defaults and production22 exact. Need working authorized publication path; continue original12 picker numbering/workspace/capacity scopes. Windows user-owned, vectors deferred. Local package documentation delivered mainaf50350b. Evaluate dedicated CI release publishing instead of another identical Safari upload; current workflows onlyPages.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -215,9 +218,11 @@
         "evidence": [
           "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
           "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json",
+          "docs/reviews/2026-10-17/ssh-workspace-native.md",
+          "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
         ],
-        "remaining": "SSH workspace-mode isolation, multi-tab branch/capacity and restart boundaries remain; source caret is no longer wholly untested."
+        "remaining": "SSH workspace native explicit refresh draft recovery now passed; exact caret/scroll, multi-tab/workspace isolation and capacity/restart boundaries remain."
       }
     },
     {
@@ -269,6 +274,17 @@
           "docs/reviews/2026-10-16/file-recovery-async.md",
           "docs/reviews/2026-10-16/file-recovery-async-proof.json"
         ]
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "remaining": "SSH workspace native save/full remote bytes and disconnected prewrite restore protection passed; autosave coupling, interrupted-save/physical-network and other identity boundaries remain.",
+        "evidence": [
+          "docs/reviews/2026-10-17/ssh-workspace-native.md",
+          "docs/reviews/2026-10-17/ssh-workspace-native-proof.json",
+          "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+          "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+        ],
+        "latestScopedEvidence": "Final492 native persistent restore error before confirm8s/repeated one-row/reconnect retry now separately passed."
       }
     },
     {
@@ -319,13 +335,17 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Native trusted9999 real SFTP source shows V2 body+SVG then restores both to initialV1 with exact remote bytes and no-op observation stable.",
+        "latestScopedEvidence": "Native trusted9999 real SFTP source shows V2 body+SVG then restores both to initialV1 with exact remote bytes and no-op observation stable. Final492 native persistent restore error before confirm8s/repeated one-row/reconnect retry now separately passed.",
         "evidence": [
           "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
           "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json",
+          "docs/reviews/2026-10-17/ssh-workspace-native.md",
+          "docs/reviews/2026-10-17/ssh-workspace-native-proof.json",
+          "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+          "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
         ],
-        "remaining": "SSH workspace-mode and interrupted/connection-loss restore UI remain; independent SFTP whole-version restore now has native proof."
+        "remaining": "SSH workspace native body+SVG whole-version restore, external asset observation and reconnect retry now passed; autosave coupling and mid-write loss remain."
       }
     },
     {
@@ -365,9 +385,11 @@
         "evidence": [
           "docs/reviews/2026-10-17/ssh-trusted-native-proof.json",
           "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
-          "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
+          "docs/reviews/2026-10-17/knowledge-path-full-proof.json",
+          "docs/reviews/2026-10-17/ssh-workspace-native.md",
+          "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
         ],
-        "remaining": "SSH workspace-mode, native creation and cross-session approval/lock/long-open combined workflows remain; Windows user-owned."
+        "remaining": "Actual SSH workspace edit/save/refresh draft/whole restore tested on owned OpenSSH fixture; native creation/identity switching and combined approval/lock/long-open/user-host boundaries remain; Windows user-owned."
       }
     },
     {
@@ -411,13 +433,18 @@
       },
       "current_audit_20261017": {
         "status": "in_progress",
-        "latestScopedEvidence": "Existing authenticated e729 Safari already proves101 native execution IDs across100+1 pages, independent raw evidence hash/disk/API agreement and actual101-record summary download. Current safe-source-link component and final full114 are separate scoped proofs.",
+        "latestScopedEvidence": "Native committed receipt file chooser/preview/confirm/operator card, running detail automatic terminal and restart exact now passed; duplicate and old live snapshot409 API proved separately. Existing101 paging/raw evidence remains valid. Current406 native external overview32to64, preserved detail then fresh65, terminal/new66, closed/switch67 and original restart/full refresh now pass.",
         "evidence": [
           "docs/reviews/2026-10-17/outcome-native-proof.json",
           "docs/reviews/2026-10-17/outcome-release-source-link.md",
-          "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
+          "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
+          "docs/reviews/2026-10-17/native-plugin-candidate-proof.json",
+          "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+          "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json",
+          "docs/reviews/2026-10-17/outcome-external-events.md",
+          "docs/reviews/2026-10-17/outcome-external-events-proof.json"
         ],
-        "remaining": "Committed release receipt cards, hidden-running activity and live snapshot-change interaction remain distinct; current whole-workbench source-link native gate user-deferred. Pagination is no longer wholly untested."
+        "remaining": "External-activity stale overview defect fixed in scoped current406 candidate. Absolute picker numbering still relative to loaded window; live partial-body outcome scope not claimed; public current-source dual packages pending. Other original12 gates remain."
       }
     },
     {
@@ -447,6 +474,16 @@
           "docs/tasks/session-run-interaction-20261015.json"
         ],
         "remaining": "当前Safari并发撤销/过期控件、跨会话逆向模式即时同步和用户SSH主机行为仍待直接验收。"
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "remaining": "Current native natural expiry/dirty stale controls plus concurrent revoke, reverse cross-session mode synchronization and native refusal/restart now passed. User-host SSH, combined lock/long-open and plugin graph native approval remain scoped gaps.",
+        "evidence": [
+          "docs/reviews/2026-10-17/native-plugin-candidate-proof.json",
+          "docs/reviews/2026-10-17/approval-cross-session-native.md",
+          "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+        ],
+        "latestScopedEvidence": "Current79a0 full Safari: normal remembered local printf across2 sessions, native revoke, same-revision DELETE200/PUT409 with no resurrection, dirty input reread, B3 native decline/no execution, bidirectional global policy and final rev11 restart. Two independent SSE clients separately agree."
       }
     },
     {
@@ -706,7 +743,7 @@
           "docs/reviews/2026-10-17/knowledge-path-integrated-proof.json",
           "docs/reviews/2026-10-17/knowledge-path-full-proof.json"
         ],
-        "remaining": "Public RC2/main delivery, SSH workspace-mode and associated responsive/theme scope remain separate; no runtime execution claim."
+        "remaining": "Path source repairs already on main; current current-source public asset delivery remains pending. SSH workspace-mode complete native paths and responsive/theme scope still separate; no runtime execution claim."
       }
     },
     {
@@ -764,6 +801,17 @@
           "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
           "docs/reviews/2026-10-16/workbench-runtime-delivery.md"
         ]
+      },
+      "current_audit_20261017": {
+        "status": "in_progress",
+        "latestScopedEvidence": "Current authenticated Safari local basis-only and conclusion/manual theme comparison, original-file-absent restart/full-page reload and exact API readback pass. RealSSH workspace native conclusion/basis/theme, fresh historical compare while endpoint stopped, reconnect/new observation and app restart/full-page readback now pass.",
+        "evidence": [
+          "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+          "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json",
+          "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+          "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+        ],
+        "remaining": "Local and available realSSH full-workbench historical comparison now directly proven; responsive/themes, receiving-device and long-term large-library scope remain separately unverified."
       }
     }
   ],
@@ -8278,5 +8326,117 @@
       "docs/reviews/2026-10-17/native-candidate-6eb.md",
       "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
     ]
+  },
+  "native_plugin_checkpoint_20261017": {
+    "status": "scoped_pass_delivered_main",
+    "main": "1dc3170da5b283a030de9cc613753860c8757b65",
+    "evidence": "docs/reviews/2026-10-17/native-plugin-candidate-proof.json",
+    "summary": "Human certificate handoff resolved; actual current candidate expiry/dirty focus/stale input controls/reread and saved outcome source-link exact destination pass. Source236 only; latest background and public delivery separate."
+  },
+  "ssh_workspace_native_20261017": {
+    "status": "scoped_pass_followup_required",
+    "task": "docs/tasks/ssh-workspace-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/ssh-workspace-native.md",
+      "docs/reviews/2026-10-17/ssh-workspace-native-proof.json"
+    ],
+    "summary": "SSH workspace native full save bytes, explicit refresh draft recovery, body+SVG version1 restore, disconnected prewrite bytes and reconnect retry pass. Persistent inline failure reason absent; no overall completion. Production22 exact; tests stopped."
+  },
+  "markdown_restore_feedback_20261017": {
+    "status": "scoped_source_main_delivered_runtime_public_pending",
+    "task": "docs/tasks/markdown-restore-feedback-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/markdown-restore-feedback.md",
+      "docs/reviews/2026-10-17/markdown-restore-feedback-proof.json"
+    ],
+    "summary": "Final492/sourcece0c/795dd892 full127 pass; actual79a0 original launcher and Safari visible-before-confirm8s one-row repeated failure/reconnect/manual body+SVG retry pass. Own resources cleaned, production22 unchanged. Public current dual packages/defaults next, original12 continue.",
+    "next": "Qualify current ARM64/AMD64 complete packages, upload and verify public assets, promote defaults only after publication gate; retain remaining original12 native gaps.",
+    "sourceMainDelivery": {
+      "status": "pass",
+      "observedMain": "fc4130d8271ff3e57d927603b4c884d37e536feb",
+      "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71"
+    },
+    "releaseCheck": "exit0 existing07c public pair metadata and current795 local full; newce0c complete packages still pending"
+  },
+  "runtime_ce0c_packages_20261017": {
+    "status": "local_pass_public_upload_failed_defaults_unchanged",
+    "task": "docs/tasks/continuity-runtime-ce0c-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/continuity-runtime-ce0c.md",
+      "docs/reviews/2026-10-17/continuity-runtime-ce0c-proof.json"
+    ],
+    "summary": "ce0c/492 dual complete packages actually imported; ARM original launcher cold import/reasoning10/CAS/restart and AMD emulated assets/CAD/guard pass. Safari ARM upload failed twice; public candidate check exit1. Existing07c defaults retained, production22 exact. Source492 already main; original12 remain incomplete.",
+    "next": "Source superseded by752/406. Preserve old qualified ce0c pair; build/qualify current-source ARM/AMD complete packages, upload and verify metadata before promotion; new exact full if build inputs change."
+  },
+  "timeline_native_current_20261017": {
+    "status": "scoped_pass_delivered_main",
+    "task": "docs/tasks/knowledge-timeline-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/knowledge-timeline-native.md",
+      "docs/reviews/2026-10-17/knowledge-timeline-native-proof.json"
+    ],
+    "summary": "Current492/ce0c/79a0 authenticated Safari basis-only, changed conclusion/add/remove, explicit topic and original stop/start plus full page refresh with original files absent pass. Production22 exact; original12 continue.",
+    "observedRemoteMain": "c63dc75b0810a0770571cebff13fc4e9d41279b8"
+  },
+  "timeline_ssh_native_current_20261017": {
+    "status": "scoped_pass_delivered_main",
+    "task": "docs/tasks/knowledge-timeline-ssh-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
+      "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
+    ],
+    "summary": "Current492/ce0c/79a0 native realSSH workspace conclusion/basis/manual theme, stopped-endpoint historical compare, same-hostkey reconnect with new observation and original app restart/full-page readback pass; production22 exact. Original12 remain.",
+    "observedRemoteMain": "2b2b05982db1d8b0f286e10f101e9ab4620573c5"
+  },
+  "approval_cross_session_native_20261017": {
+    "status": "scoped_pass_delivered_main",
+    "task": "docs/tasks/approval-cross-session-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/approval-cross-session-native.md",
+      "docs/reviews/2026-10-17/approval-cross-session-native-proof.json"
+    ],
+    "summary": "Current79a0 local complete Safari and independent CAS/SSE/restart acceptance pass; production22 exact; no source/real model/vector/production change; original12 remain.",
+    "observedRemoteMain": "99a4375aff6d0a0739efb21fa7382d5b42ac91fb"
+  },
+  "outcome_live_receipt_native_20261017": {
+    "status": "partial_pass_product_defect_open",
+    "task": "docs/tasks/outcome-live-receipt-native-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/outcome-live-receipt-native.md",
+      "docs/reviews/2026-10-17/outcome-live-receipt-native-proof.json"
+    ],
+    "summary": "Current79a0 native receipt commit and live single-run final/restart pass; terminal overview external activity stale reproduced, not fixed. Production22 exact."
+  },
+  "detailedHandoff": "docs/continuity-handoff.md",
+  "outcome_external_events_20261017": {
+    "status": "scoped_native_pass_delivered_main",
+    "task": "docs/tasks/outcome-external-events-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/outcome-external-events.md",
+      "docs/reviews/2026-10-17/outcome-external-events-proof.json"
+    ],
+    "summary": "Final752/source406/ARM5dc full12768a and native external adoption/detail entry/restart/close isolation pass; production22 unchanged; current dual-package public delivery pending.",
+    "observedRemoteMain": "1ae377798a75c3d18611ce854d0d5351d8bbd67a"
+  },
+  "runtime_406_packages_20261017": {
+    "status": "local_pass_public_upload_failed_defaults_unchanged",
+    "task": "docs/tasks/continuity-runtime-406-20261017.json",
+    "evidence": [
+      "docs/reviews/2026-10-17/continuity-runtime-406.md",
+      "docs/reviews/2026-10-17/continuity-runtime-406-proof.json"
+    ],
+    "summary": "Current5dc/14cb same752/source406 pair qualified; originals retained, only production2, protected22 exact. No receiving-device or native Windows pass; public upload not delivered.",
+    "observedDocumentationMain": "af50350b6e87d7b2a9588585fc1e1e40fd7837e2"
+  },
+  "source_offline_recovery_20261018": {
+    "status": "source_delivered_main_scoped_runtime_full_pass",
+    "task": "docs/tasks/source-offline-recovery-20261018.json",
+    "evidence": [
+      "docs/reviews/2026-10-18/source-offline-recovery.md",
+      "docs/reviews/2026-10-18/source-offline-recovery-proof.json"
+    ],
+    "summary": "Bash源码缺依赖时本地完整包seed恢复，旧07c只作工具链，实际编译94e并隔离启动；force/default策略、32聚焦/quick124/full127、候选CAD/Office pass。主实例48e/406及22文件不变，未发布94e包，PS显式源码和原12缺口保留。",
+    "next": "继续成果段落投影/绝对编号及原12实际验收；PS显式源码恢复和94e双架构完整包/公开发布仍开放，真实向量暂缓。",
+    "mainSourceDelivery": "d137353368fcd548c6125feb22c2c04ec469f6c1"
   }
 }

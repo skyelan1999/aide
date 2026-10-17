@@ -44,15 +44,16 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Exact-source full110 pass; isolated candidate healthy, two-session five-level API/disk writes and stale409 pass; actual stop/start persists selections without rebuild/pull. Current browser UI user-deferred; verification remains in progress. Final exact main-source full114 PASS on8fe143570be6a886d8d10bce3ba61d1da2d3ff4368edc575b4a78a5584f68f24:946 entries/12 serial groups/race/vet/CAD; earlier missing-Node overall failure retained, corrected quick111 and official full114 succeeded. Required current native candidate/full-workbench acceptance still user-deferred; do not pass this task or bypass its release gate. Current6eb candidate original launcher/API healthy and exact full115 pass; normal Safari50167 observed certificate interstitial, application not reached. Actual current native scope still NOT_RUN, no trust bypass; owned resources cleaned.",
+      "status": "pass",
+      "summary": "Current exact full127 fingerprint87f8ea0272dd plus currentfe80 source236 original-launcher runtime and actual Safari core acceptance PASS. See native-plugin-candidate-proof for exact observations and limits.",
       "evidence": [
         "docs/reviews/2026-10-17/approval-expiry-synced-main.md",
         ".agent-state/verify-20261017T060408753181Z.log",
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json",
         "docs/reviews/2026-10-17/native-candidate-6eb.md",
-        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+        "docs/reviews/2026-10-17/native-candidate-6eb-proof.json",
+        "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
       ]
     },
     "documentation": {
@@ -64,14 +65,14 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Only owned candidate containers stopped, own test tabs closed; production container and 22 protected files exact. Original maintenance removed reported3.204GB build cache, now0; named candidate image/data retained for resume.",
+      "summary": "Own candidate and link tabs closed; original9999 restored. Original stop0, exact own two containers/default network removed. Fixtures privately archived outside runtime; original settings/vault byte-exact and absent policy restored. Production identity/22files exact.",
       "evidence": [
         "docs/reviews/2026-10-17/approval-expiry-synced-main.md"
       ]
     },
     "release": {
       "status": "blocked",
-      "summary": "Actual clean-main release-check exit1: Incomplete stage verification; required current native acceptance user-deferred. Final full114 passes; source branch/PR4 available for review, no remote main or production delivery.",
+      "summary": "Source repairs already on main273e5ea6 and current native core scope passed; current236 complete packages not yet uploaded/qualified for public defaults. No production replacement.",
       "evidence": [
         "docs/reviews/2026-10-17/continuity-offline-delivery.md",
         "docs/reviews/2026-10-17/continuity-offline-delivery-proof.json"
@@ -100,7 +101,7 @@
   },
   "fullProof": "docs/reviews/2026-10-17/approval-repaired-full-proof.json",
   "candidateRuntimeProof": "docs/reviews/2026-10-17/candidate-reasoning-restart-proof.json",
-  "uiDeferral": "User: now unavailable for Safari certificate hand-off. Current full workbench UI remains NOT_RUN; old component/runtime evidence not promoted.",
+  "uiDeferral": "Resolved for current candidate: human cleared certificate; core actual full-workbench scope now passed. Historical deferred candidates remain historical.",
   "current_native_candidate_6eb": {
     "status": "blocked_browser_certificate",
     "image": "sha256:da290c0e50fe3087a736435c20e22f077aa9492f0553f0b852309ccd4397f46b",
@@ -112,6 +113,18 @@
     "evidence": [
       "docs/reviews/2026-10-17/native-candidate-6eb.md",
       "docs/reviews/2026-10-17/native-candidate-6eb-proof.json"
+    ]
+  },
+  "current_native_plugin_candidate": {
+    "task": "docs/tasks/native-plugin-candidate-20261017.json",
+    "image": "fe80b2eb483d",
+    "sourceSHA": "236499a59200641e50a6ddf4838bbf8d753d1b8a2cf262ad4a209c65df187e6b",
+    "port": 58320,
+    "status": "native_core_pass_cleanup_pass",
+    "fullWorkbench": "PASS scoped current Safari acceptance",
+    "evidence": [
+      "docs/reviews/2026-10-17/native-plugin-candidate.md",
+      "docs/reviews/2026-10-17/native-plugin-candidate-proof.json"
     ]
   }
 }

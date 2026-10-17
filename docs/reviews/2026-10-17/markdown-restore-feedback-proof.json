@@ -1,0 +1,211 @@
+{
+  "status": "source_main_delivered_full127_native_cleanup_pass_new_runtime_public_pending",
+  "negative": {
+    "status": "expected_failure",
+    "command": "node scripts/markdown-history-writable.test.cjs",
+    "exit": 1,
+    "assertion": "connection failure must persist inside the restore dialog without a journal",
+    "actual": 0,
+    "expected": 1,
+    "additionalNegative": {
+      "assertion": "late success must not apply another selected version",
+      "actual": false,
+      "expected": "undefined",
+      "exit": 1,
+      "context": "Adding selection-change coverage independently exposed missing post-response selection guard."
+    }
+  },
+  "targeted": {
+    "command": "node scripts/markdown-history-writable.test.cjs",
+    "exit": 0,
+    "scope": "Actual confirm handler in source VM; not full workbench UI"
+  },
+  "syntax": {
+    "command": "node --check internal/server/web/markdown-history.js",
+    "exit": 0
+  },
+  "native": {
+    "status": "pass",
+    "image": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+    "commit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+    "servedJavaScriptExact": true,
+    "buildCommitExact": true,
+    "nativeSafariFullWorkbench": true,
+    "failureStillPresentAfterSeconds": 8,
+    "actualScreenshotMessageVisibleBeforeConfirmation": true,
+    "repeatFailureRows": 1,
+    "sameFixtureRestartedAndConnected": true,
+    "realModelOrVectorCalls": 0,
+    "prewriteBodyAndSVGHashesUnchanged": true,
+    "nativeManualRetryRestoredWholeBodyAndSVGExact": {
+      "scene notes/notes.md": "8fe7805b7d5d471dddec8f6a8fb99e1e6a4cfcb9b800503d40056b04901ac2b9",
+      "scene notes/diagram.svg": "5fe7f71e3c5d61efa676d0f9b17ee10214f58253d4b61fb55c0212ac08981eee"
+    },
+    "nativeV1LabelsAndSuccessShown": true,
+    "historyDialogClosedAndFailureGone": true,
+    "noOpHistoryReadDedup": true,
+    "historyTotal": 4
+  },
+  "productionReplaced": false,
+  "realModelOrVectorCalls": 0,
+  "observedUTC": "2026-10-17T13:28:45.035847+00:00",
+  "previousFull127": {
+    "status": "pass",
+    "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+    "head": "d47c3a4b2a0c0df7c7aa0756c4fcaa32cf7d7027",
+    "log": ".agent-state/verify-20261017T124847063883Z.log",
+    "time": "20261017T124847063883Z",
+    "commands": 127,
+    "allExitZero": true,
+    "serverInventory": 976,
+    "disjointSerialShards": 12,
+    "logSHA256": "a15c4ecd046a4acde6d4b8122143bc30771ed4725354ef5605bf40fc9ae2298b",
+    "processSession": 16520,
+    "processExit": 0
+  },
+  "previousBuild": {
+    "root": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/markdown-restore-feedback-20261017/source",
+    "commit": "4469686e3f128bdaff6da0f053d192c88e87d879",
+    "sourceSHA": "2adcbede85b71dca30cfde3052a097ea0011f24f1aa2c54e9405bcff564c61e1",
+    "fullFingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+    "status": "built",
+    "tag": "aide:restore-feedback-arm64-4469686e",
+    "image": "sha256:919648b56b611bcdb06fe044e16db9008b593bfc3df96e75cda4c1af4a51b04a"
+  },
+  "previousNative": {
+    "image": "sha256:919648b56b611bcdb06fe044e16db9008b593bfc3df96e75cda4c1af4a51b04a",
+    "persistentFailureText": "\u6062\u590d\u672a\u5b8c\u6210\uff1aSSH \u8fde\u63a5\u5931\u8d25: kex_exchange_identification: Connection closed by remote host",
+    "stillPresentAfterSeconds": 8,
+    "nativeConfirmAvailable": true,
+    "remoteBytesUnchanged": true,
+    "sameFixtureRestartedAndConnected": true,
+    "visualFinding": "Actual screenshot: failure row below visible bottom after confirm; needs before-confirm placement.",
+    "status": "native_visual_followup_required",
+    "manualReconnectRetryRestoredWholeFilesExact": {
+      "scene notes/notes.md": "8fe7805b7d5d471dddec8f6a8fb99e1e6a4cfcb9b800503d40056b04901ac2b9",
+      "scene notes/diagram.svg": "5fe7f71e3c5d61efa676d0f9b17ee10214f58253d4b61fb55c0212ac08981eee"
+    }
+  },
+  "placementNegative": {
+    "assertion": "persistent failure must precede the confirmation control, not fall below its visible bottom",
+    "exit": 1,
+    "actual": false,
+    "expected": true
+  },
+  "full": {
+    "status": "pass",
+    "fingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+    "head": "9c62b7b4a9df391a147b55adae14a6122b9e53fc",
+    "log": ".agent-state/verify-20261017T130900041441Z.log",
+    "time": "20261017T130900041441Z",
+    "commands": 127,
+    "allExitZero": true,
+    "serverInventory": 976,
+    "disjointSerialShards": 12,
+    "logSHA256": "f8396be31ab0365ec84d99bded9c56ee2f410017292a13681d94d5e764fbf001",
+    "processSession": 70217,
+    "processExit": 0
+  },
+  "previousNativeCleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedContainersRemoved": 3,
+    "emptyNetworksRemoved": [
+      "aide-restore-feedback-native-20261017_default",
+      "aide-restore-feedback-native-20261017_cad-private",
+      "aide-restore-feedback-native-20261017-private"
+    ],
+    "dataImageAndEvidenceRetained": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "originalBrowserTabsRestored": true,
+    "observedUTC": "2026-10-17T13:07:49.553839+00:00"
+  },
+  "previousSourceCommit": "4469686e3f128bdaff6da0f053d192c88e87d879",
+  "previousSourceSHA": "2adcbede85b71dca30cfde3052a097ea0011f24f1aa2c54e9405bcff564c61e1",
+  "previousFingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+  "finalPlacementSource": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+  "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+  "fullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+  "previousQuick": {
+    "status": "pass",
+    "head": "ceca57e2e90e53c23c9b7e93f46f8529062d02b1",
+    "fingerprint": "0876132460b48484e34ca5e3b8df972e1d6ff9af38d159b53c09de8097550c27",
+    "log": ".agent-state/verify-20261017T124714659841Z.log",
+    "commands": 124
+  },
+  "currentQuickWithinFull": {
+    "commands": 124,
+    "allExitZero": true,
+    "fingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8"
+  },
+  "build": {
+    "status": "pass",
+    "image": "sha256:79a0f157a686379bd5f0d2f610706ed4bb198a6a83aa743986908254326d1ac9",
+    "tag": "aide:restore-feedback-arm64-492489ea",
+    "commit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "sourceSHA": "ce0c9e871e4c0fb729b9c67431df7609390611bb6e9670c9ff0a338c8c0ac8d8",
+    "network": "none",
+    "pull": false,
+    "buildInternalTests": 0,
+    "independentExactFull127": true,
+    "normalUID1000AssetFiles": 25,
+    "workshopRequired": true,
+    "docxRoundTrip": true,
+    "originalStartCommand": true,
+    "ownMountsOnly": true
+  },
+  "cleanup": {
+    "status": "pass",
+    "originalStopExit": 0,
+    "ownedContainersRemoved": 3,
+    "emptyNetworksRemoved": [
+      "aide-restore-feedback-native-20261017_default",
+      "aide-restore-feedback-native-20261017_cad-private",
+      "aide-restore-feedback-native-20261017-private"
+    ],
+    "dataImageAndEvidenceRetained": true,
+    "productionIdentityAnd22FilesUnchanged": true,
+    "originalBrowserTabsRestored": true,
+    "observedUTC": "2026-10-17T13:27:45.837550+00:00"
+  },
+  "publicRelease": "NOT_RUN new source complete packages/default promotion; production unchanged",
+  "sourceDelivery": {
+    "status": "pass",
+    "branch": "main",
+    "observedRemoteMain": "fc4130d8271ff3e57d927603b4c884d37e536feb",
+    "sourceCommit": "492489ea6dd3cdbc854f8528b8eae3e5daad7b71",
+    "remoteHeadIndependentlyVerified": true
+  },
+  "releaseCheck": {
+    "status": "pass",
+    "exit": 0,
+    "localExactFullPrerequisites": true,
+    "defaultAssetMetadata": {
+      "status": "pass",
+      "tag": "v0.1.17.0-RC2",
+      "source": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+      "assets": [
+        {
+          "platform": "linux/arm64",
+          "asset": "aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz",
+          "bytes": 771016230,
+          "sha256": "d1392c59b789f8d8d7b8150d00a604ac557a7a5d2e6b353e8f7959485ef16283",
+          "status": "pass"
+        },
+        {
+          "platform": "linux/amd64",
+          "asset": "aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz",
+          "bytes": 916933833,
+          "sha256": "df892d449ffb70c6edf5265aeb13c9c3870f194bed1b890f73f667e411b2793c",
+          "status": "pass"
+        }
+      ],
+      "scope": "Public attachment metadata only; actual image import/runtime are separate",
+      "mutations": false
+    },
+    "currentCe0cCandidatePublicQualification": false,
+    "mutations": false
+  }
+}

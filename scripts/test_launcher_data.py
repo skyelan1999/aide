@@ -212,7 +212,9 @@ if pathlib.Path(sys.argv[0]).name=='curl':
 image='sha256:'+'1'*64
 if args[0]=='info':print('linux/arm64');sys.exit(0)
 if args[:2]==['image','load']:
- sys.stdin.buffer.read();(root/'loaded').touch();sys.exit(0)
+ sys.stdin.buffer.read()
+ if os.environ.get('FIX_LOAD_EXIT'):sys.exit(int(os.environ['FIX_LOAD_EXIT']))
+ (root/'loaded').touch();sys.exit(0)
 if args[:2]==['image','tag']:sys.exit(0)
 if args[:2]==['image','inspect']:
  if args[2]=='aide:local':print('sha256:'+'3'*64);sys.exit(0)
@@ -243,6 +245,53 @@ sys.exit(91)
             self.write_manifest(platform,url);r=self.run_import();self.assertNotEqual(r.returncode,0);self.assertNotIn('"curl"',self.calls())
     def test_duplicate_manifest_is_refused(self):
         self.manifest.write_text(self.manifest.read_text()*2);r=self.run_import();self.assertNotEqual(r.returncode,0);self.assertNotIn('"load"',self.calls())
+    def run_source_seed(self):
+        return subprocess.run(['bash','-ec','source "$1"; launcher_local_build_seed docker','fixture',str(ROOT/'scripts/prebuilt-image.sh')],cwd=self.root,env=self.env,text=True,capture_output=True)
+    def test_source_seed_uses_local_bundle_without_activating_old_runtime(self):
+        shutil.copyfile(self.archive,self.root/'docker-images/fixture.tar.gz')
+        r=self.run_source_seed();self.assertEqual(r.returncode,0,r.stderr)
+        self.assertEqual(r.stdout.strip(),'aide:source-build-dependencies')
+        calls=[json.loads(line) for line in self.calls().splitlines()]
+        tags=[row for row in calls if row[1:3]==['image','tag']]
+        self.assertTrue(tags);self.assertTrue(all(row[-1]!='aide:local' for row in tags))
+        self.assertNotIn('"curl"',self.calls());self.assertNotIn('"build"',self.calls())
+        self.assertIn('Continue compiling current source',r.stderr)
+        self.assertNotIn('Source compilation disabled',r.stderr)
+    def test_missing_source_seed_archive_never_downloads_or_changes_tags(self):
+        r=self.run_source_seed();self.assertEqual(r.returncode,3,r.stderr)
+        self.assertIn('No verified local dependency bundle',r.stderr)
+        for mutation in ('"curl"','"load"','"tag"','"build"'):self.assertNotIn(mutation,self.calls())
+    def test_invalid_source_seed_fails_without_fallback(self):
+        (self.root/'docker-images/fixture.tar.gz').write_bytes(b'corrupt')
+        r=self.run_source_seed();self.assertEqual(r.returncode,1,r.stderr)
+        self.assertIn('checksum mismatch',r.stderr)
+        for mutation in ('"curl"','"load"','"tag"'):self.assertNotIn(mutation,self.calls())
+    def test_source_seed_rejects_dangling_archive_or_partial_symlink(self):
+        for name in ['fixture.tar.gz','fixture.tar.gz.partial']:
+            link=self.root/'docker-images'/name;link.symlink_to(self.root/'absent')
+            r=self.run_source_seed();self.assertEqual(r.returncode,1,r.stderr)
+            self.assertIn('symbolic link',r.stderr);link.unlink()
+        self.assertNotIn('"load"',self.calls());self.assertNotIn('"curl"',self.calls())
+    def test_source_seed_import_error_is_not_classified_as_missing_archive(self):
+        shutil.copyfile(self.archive,self.root/'docker-images/fixture.tar.gz')
+        self.env['FIX_LOAD_EXIT']='3';r=self.run_source_seed()
+        self.assertEqual(r.returncode,1,r.stderr);self.assertNotIn('"tag"',self.calls());self.assertNotIn('"curl"',self.calls())
+    def test_installed_source_seed_needs_no_archive(self):
+        (self.root/'loaded').touch();r=self.run_source_seed();self.assertEqual(r.returncode,0,r.stderr)
+        self.assertNotIn('"curl"',self.calls());self.assertNotIn('"load"',self.calls())
+        self.assertEqual(r.stdout.strip(),'aide:source-build-dependencies')
+    def test_duplicate_source_seed_manifest_never_imports(self):
+        self.manifest.write_text(self.manifest.read_text()*2)
+        r=self.run_source_seed();self.assertEqual(r.returncode,1,r.stderr)
+        self.assertNotIn('"load"',self.calls());self.assertNotIn('"curl"',self.calls())
+    def test_source_recovery_does_not_replace_build_or_force_semantics(self):
+        shell=(ROOT/'scripts/aide.sh').read_text()
+        self.assertIn('RECOVERED_SEED="$(launcher_local_build_seed "$DOCKER_BIN")"',shell)
+        self.assertIn('scripts/prepare-local-base.sh "$BUILD_SEED"',shell)
+        self.assertIn('scripts/prepare-cad-base.sh "$BUILD_SEED"',shell)
+        self.assertIn('"${AIDE_FORCE_REBUILD:-0}" != 1',shell)
+        self.assertIn('"$DOCKER_BIN" compose build aide',shell)
+        self.assertIn('"$DOCKER_BIN" compose up -d --no-build --pull never',shell)
     def test_source_checkout_and_windows_entry_build_policy(self):
         shell=(ROOT/'scripts/aide.sh').read_text();ps=(ROOT/'start.ps1').read_text(encoding='utf-8-sig')
         self.assertIn('launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}"',shell);self.assertIn('launcher_prebuilt_image "$DOCKER_BIN" "$IMG"',shell)
