@@ -67,10 +67,9 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "Scoped docs/main delivery and gate pending; no new runtime publication claim.",
+      "status": "pass",
+      "summary": "Scoped documentation pushed main2b2b0598 and independently verified; clean main release-check0 current exactfull plus existing07c public metadata only. No new software tag/runtime/production change.",
       "evidence": [
-        "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
         "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
       ]
     }

@@ -8372,12 +8372,13 @@
     "observedRemoteMain": "c63dc75b0810a0770571cebff13fc4e9d41279b8"
   },
   "timeline_ssh_native_current_20261017": {
-    "status": "scoped_pass_delivery_pending",
+    "status": "scoped_pass_delivered_main",
     "task": "docs/tasks/knowledge-timeline-ssh-native-20261017.json",
     "evidence": [
       "docs/reviews/2026-10-17/knowledge-timeline-ssh-native.md",
       "docs/reviews/2026-10-17/knowledge-timeline-ssh-native-proof.json"
     ],
-    "summary": "Current492/ce0c/79a0 native realSSH workspace conclusion/basis/manual theme, stopped-endpoint historical compare, same-hostkey reconnect with new observation and original app restart/full-page readback pass; production22 exact. Original12 remain."
+    "summary": "Current492/ce0c/79a0 native realSSH workspace conclusion/basis/manual theme, stopped-endpoint historical compare, same-hostkey reconnect with new observation and original app restart/full-page readback pass; production22 exact. Original12 remain.",
+    "observedRemoteMain": "2b2b05982db1d8b0f286e10f101e9ab4620573c5"
   }
 }

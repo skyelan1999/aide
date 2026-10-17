@@ -116,6 +116,21 @@
     "observedUTC": "2026-10-17T14:05:38.157031+00:00"
   },
   "sourceDelivery": {
-    "status": "pending"
+    "status": "pass",
+    "observedRemoteMain": "2b2b05982db1d8b0f286e10f101e9ab4620573c5",
+    "pushExit": 0,
+    "independentRemoteExact": true,
+    "scope": "Scoped SSH native acceptance documentation only; no source/image/production change"
+  },
+  "documentationChecks": {
+    "checkDocs": "PASS311 Markdown1151 local links",
+    "diffCheck": "pass"
+  },
+  "releaseCheck": {
+    "exit": 0,
+    "exactFullFingerprint": "795dd892bd789561c35ea52ceee89ae990edef3c16017d57ceb702543e5215b8",
+    "defaultPublicSource": "07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def",
+    "newCe0cAssetsQualified": false,
+    "mutations": false
   }
 }
