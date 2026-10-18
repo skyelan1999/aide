@@ -1,0 +1,64 @@
+{
+  "id": "brdplan-native-editor-20261018",
+  "request": "用户要求正式Aide手画、微调、保存重开；按固定私网编辑服务和可信父层入口实现，不放宽普通插件隔离，不接受任意URL，编辑lease绑定当前工作区并阻止AI并发写回。",
+  "baseline": "b5ccab834e4631a3a3628823eb2df5cf8f964c9a",
+  "initial_status": "M compose.yaml\n M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? docs/architecture/native-editor-session-v1-proposal.md\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/testbench-live-integration-20261018.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/3dmodulebox/\n?? plugins/brdplan/\n?? plugins/pjplan/\n?? plugins/rf-toolbox/\n?? plugins/testbench/",
+  "acceptance": [
+    "Trusted parent click, fixed configured broker/session, no arbitrary URL or plugin-side global API token.",
+    "Current workspace/revision/package/lock binding and editing lease across AI write paths.",
+    "Opaque dedicated viewer; ordinary workbench sandbox/CSP unchanged.",
+    "Real user STM32 hand-edit/save/close/reopen/readback required; no stale or unknown editor auto-unlock."
+  ],
+  "scope": [
+    "Native editor host API, target preparation, lease/revocation/write guards, fixed proxy/viewer and focused tests",
+    "Source only while 3D owns runtime/browser; preserve TestBench baseline and no Docker socket."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "BrdPlan contract now accepts parent fields, opaque viewer and revoke-disconnect/unknown saved state; exact service config awaits package handoff.",
+      "evidence": [
+        "docs/architecture/native-editor-session-v1-proposal.md"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Fixed broker explicitly bound to configured workspace/session; generation/project triplet snapshot, lease and opaque viewer constraints.",
+      "evidence": [
+        "docs/architecture/native-editor-session-v1-proposal.md"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Read-only target resolver/snapshot implemented. API/proxy/viewer/edit-lock wiring remains to implement; no live endpoint advertised.",
+      "evidence": [
+        "internal/server/native_editor_target.go"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Target fixtures authored; gofmt parse passed. Go compile/regressions deferred during 3D capacity window. No browser actions.",
+      "evidence": [
+        "internal/server/native_editor_target_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Continue native editor endpoint/lease/proxy and all AI-write admission guards next, before new RF modules. Must preserve latest TestBench image/network/token mounts and actual export support. No deployment until coordinator hands over window."
+}
