@@ -490,6 +490,7 @@ type App struct {
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
 	pluginWorkbenchTickets    map[string]pluginWorkbenchTicket
+	pluginWorkbenchBridges    map[string]*pluginWorkbenchBridge
 	pluginLifecycle           sync.Mutex
 	pluginUpgradeMu           sync.Mutex
 	pluginUpdateClient        *http.Client
@@ -1469,6 +1470,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/open", a.openPluginWorkbench)
+	mux.HandleFunc("POST /api/plugins/{id}/workbench/{instance}/call", a.callWorkbenchBridge)
+	mux.HandleFunc("DELETE /api/plugins/{id}/workbench/{instance}", a.closeWorkbenchBridge)
 	mux.HandleFunc("GET /plugin-workbench/{ticket}", a.servePluginWorkbench)
 	mux.HandleFunc("PUT /api/plugins/{id}/settings", a.updatePluginSettings)
 	mux.HandleFunc("POST /api/plugins/{id}/upgrade", a.upgradePlugin)

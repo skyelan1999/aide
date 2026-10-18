@@ -322,3 +322,30 @@ entry须为包内普通相对.html路径，禁止隐藏路径、越界、反斜�
 关闭浮层即卸载文档并终止Worker；前端定时检查锁屏、登录状态、恢复作用域和已知启用状态，变化即卸载。首版没有跨标签页插件撤销推送；服务端会拒绝变化后的新入口，但已加载本地计算不能据此视作可远程即时吊销。界面本地数据由插件自行组织，文件导入/下载须用户显式操作；本扩展不提供自动写引用、知识检索或聊天控制通道。
 
 首个使用者为私有RfToolBox 0.1.0：QAM/通用OFDM、参考EVM与离线eCPRI示例。数值/协议格式、宿主回归、真实浏览器分别验收。其知识库和标准NR/O-RAN高级能力未据此实现。
+
+### 可选工作台工具通道（protocol 1 扩展候选，未部署）
+
+`workbench.tools`可声明最多16个本插件可执行工具名称。未声明或空列表保留原有纯离线行为。此声明不授予新文件/网络权限；仍执行sandbox、DisabledTools、工具归属、pluginPlanPolicy及资源调度。内置工具、跨插件工具、browser-control/computer-control以及带顶层source参数的别名调用不开放。
+
+父页面通过已鉴权的open请求取得仅由父页面持有的30分钟实例；iframe没有宿主token、实例ID或任意HTTP代理。iframe内联/打包`internal/server/web/plugin-workbench-client.js`源码后调用：
+
+```js
+const host = AideWorkbenchClient.create('your-plugin-id');
+await host.connect(); // 独立HTML/旧宿主无通道时会失败，不能伪装已连接
+const reply = await host.call('your_declared_tool', {path:'relative/path'});
+if (reply.status === 'proposal_pending') {
+  // 还未写入。父页面显示“查看待审批提案”，批准继续使用宿主既有UI。
+}
+```
+
+插件页面先向`parent`发`{type:'aide.workbench.ready',protocol:1}`。父页面只接受当前iframe的source，转移一个MessagePort，并发送`{type:'aide.workbench.connect',protocol:1,pluginId,tools}`。sandbox使iframe为opaque origin，targetOrigin使用`*`只用于向已确认的contentWindow转移端口；不用origin字符串冒充来源校验。首个连接后不再给第二个文档发放端口；CSP的connect-src仍为none。
+
+端口请求：`{protocol:1,requestId,method:'tool.call',tool,arguments,attachments?}`。requestId为1–64位字母/数字/下划线标识，以字母/下划线开头；每实例最多128次工具请求、同一时刻1次，无自动重试。前端序列化正文最多256KiB，HTTP仍限制单JSON请求1MiB，结果最多2MiB。attachments最多16项，使用既有Attachment格式；修改现有文件时必须在调用前提供附件快照，否则拒绝，不在运行后重新捕获“基准”。
+
+返回`{requestId,status:'result'|'proposal_pending'|'error',result?,proposalId?,sessionId?,error?}`。结构化工具结果可以包含proposal字段，但只有宿主recordToolProposal验证并持久化到审批会话后才返回proposal_pending；普通result不等于原生工程已保存。通道不提供approve、apply、命令执行或任意文件读取方法。
+
+可用观察请求：`{protocol:1,requestId,method:'proposal.status',proposalId}`，只能查询当前实例产生的提案，返回sessionId/proposalId/status/applied。父页面对最近一条提案进行约1.5秒间隔观察，变化时发`{protocol:1,event:'proposal.changed',proposalId,result}`；没有伪造原生selection/dirty事件。原生文件结果仍须插件自己的已验证回执/读回证据。
+
+关闭、锁屏、停用、工作区身份/代次变化时父页面约300ms内关闭通道并中止HTTP，服务端对活动调用约200ms重查策略，资源出队时再次验证；取消是尽力而为，已发生的可信插件外部副作用不能撤回，超时/取消结果不确定时禁止自动重放。工具和Node插件仍为可信代码，通道不是进程或OS沙箱。
+
+父页面“查看待审批提案”会关闭工作台并打开已有会话审批UI；批准后可重新打开插件，读取自己的原生桥回执。新实例不能通过旧proposalId查询旧实例提案。此候选没有桌面流、原生实时选择、任意WebSocket，也不放宽全局CSP。源代码/模型测试不等于已部署或真实浏览器/原生工程验收。

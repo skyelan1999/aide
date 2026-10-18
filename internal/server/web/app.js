@@ -6777,7 +6777,7 @@ function renderPluginList() {
     });
     if(p.workbench?.protocol===1){
       const launch=el('button','quiet',t('打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
-      launch.onclick=()=>window.AidePluginWorkbench.open(p,{api,t,toast,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)});
+      launch.onclick=()=>window.AidePluginWorkbench.open(p,{api,t,toast,reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)});
       foot.append(launch);
     }
     foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("启用") : t("停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);

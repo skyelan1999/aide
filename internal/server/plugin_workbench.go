@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -19,14 +20,27 @@ const workbenchCSP = "default-src 'none'; script-src 'unsafe-inline' blob:; styl
 
 type pluginWorkbenchTicket struct {
 	ID, Base string
+	Bridge   string
 	Digest   [32]byte
 	Gen      int64
 	Expires  time.Time
 }
 
+var workbenchNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,63}$`)
+
 func validatePluginWorkbench(w *PluginWorkbench) error {
 	if w == nil || w.Protocol != 1 || len([]rune(w.Title)) < 1 || len([]rune(w.Title)) > 64 || len(w.Entry) > 160 || path.Clean(w.Entry) != w.Entry || !strings.HasSuffix(w.Entry, ".html") || strings.ContainsAny(w.Entry, "\\:") || strings.HasPrefix(w.Entry, "/") {
 		return errors.New("插件工作台声明无效")
+	}
+	if len(w.Tools) > 16 {
+		return errors.New("too many workbench tools")
+	}
+	seen := map[string]bool{}
+	for _, tool := range w.Tools {
+		if !workbenchNamePattern.MatchString(tool) || seen[tool] {
+			return errors.New("invalid or duplicate workbench tool")
+		}
+		seen[tool] = true
 	}
 	for _, part := range strings.Split(w.Entry, "/") {
 		if part == "" || strings.HasPrefix(part, ".") {
@@ -118,7 +132,34 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	}
 	ticket := hex.EncodeToString(secret)
 	a.pluginWorkbenchTickets[ticket] = pluginWorkbenchTicket{ID: id, Base: a.managementBaseLocked("plugins", id), Digest: sha256.Sum256(page), Gen: lock.Gen, Expires: now.Add(time.Minute)}
-	jsonOut(w, 200, map[string]any{"url": "/plugin-workbench/" + ticket, "protocol": 1})
+	response := map[string]any{"url": "/plugin-workbench/" + ticket, "protocol": 1}
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == id && p.Workbench != nil && len(p.Workbench.Tools) > 0 {
+			if a.pluginWorkbenchBridges == nil {
+				a.pluginWorkbenchBridges = map[string]*pluginWorkbenchBridge{}
+			}
+			for key, b := range a.pluginWorkbenchBridges {
+				if now.After(b.Expires) {
+					if b.Cancel != nil {
+						b.Cancel()
+					}
+					delete(a.pluginWorkbenchBridges, key)
+				}
+			}
+			if len(a.pluginWorkbenchBridges) >= 8 {
+				delete(a.pluginWorkbenchTickets, ticket)
+				fail(w, 429, errors.New("too many workbench instances"))
+				return
+			}
+			a.pluginWorkbenchBridges[ticket] = &pluginWorkbenchBridge{Ticket: a.pluginWorkbenchTickets[ticket], Revision: a.wsRevision, Package: a.pluginPackageDigestLocked(id), Expires: now.Add(30 * time.Minute), Seen: map[string]bool{}, Proposals: map[string]string{}}
+			t := a.pluginWorkbenchTickets[ticket]
+			t.Bridge = ticket
+			a.pluginWorkbenchTickets[ticket] = t
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": p.Workbench.Tools}
+			break
+		}
+	}
+	jsonOut(w, 200, response)
 }
 func (a *App) servePluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
@@ -135,6 +176,9 @@ func (a *App) servePluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	if e != nil || sha256.Sum256(page) != ticket.Digest {
 		http.Error(w, "Workbench changed; reopen it", 409)
 		return
+	}
+	if b := a.pluginWorkbenchBridges[ticket.Bridge]; b != nil {
+		b.Ready = true
 	}
 	w.Header().Set("Content-Security-Policy", workbenchCSP)
 	w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), usb=(), serial=(), clipboard-read=(), clipboard-write=()")

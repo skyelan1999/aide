@@ -480,3 +480,8 @@ Task.topicContext和ParallelProgress.plannerContext/mainContext及各part.contex
 ### 2026-10-18：独立插件工作台候选
 
 可选manifest.workbench通过限长自包含HTML声明界面；Aide插件列表显示入口，在全屏浮层的无同源权限iframe中打开。受鉴权的短时单次入口绑定锁屏代际、插件作用域和文件摘要，页面不接收宿主令牌或文件API。Worker计算与文档生命周期绑定；旧工具API不变。具体协议、权限限制和未实现项见[插件协议候选扩展](plugin-protocol.md#2026-10-18独立插件工作台v13-候选扩展)，验证见任务rf-toolbox-mvp-20261018。该扩展不等于完整UI Slot、多窗口、知识库读取或仪表控制。
+
+
+## Optional workbench tool port (source candidate, 2026-10-18)
+
+A protocol1 workbench may opt into its own registered tools through manifest.workbench.tools. The parent retains authenticated HTTP and the bound instance; an opaque iframe receives only a MessagePort. Tool admission reuses pluginPlanPolicy and resource scheduling; file/command proposals are recorded through recordToolProposal and the existing session approval UI. No approve/apply, arbitrary API, file proxy or desktop stream is exposed. Source, tests and current non-deployment evidence: docs/reviews/2026-10-18-workbench-bridge.md.

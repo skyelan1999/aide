@@ -1,0 +1,70 @@
+{
+  "id": "plugin-workbench-bridge-20261018",
+  "request": "为插件工作台提供受控的本插件工具和提案结果通道，供RfToolBox知识与报告模块等复用；兼容离线protocol1，不暴露令牌、任意文件/API代理或自动批准能力",
+  "baseline": "2c51d06794193b74bb6a7156083840ce9afd7c89",
+  "initial_status": "M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/rf-toolbox/",
+  "acceptance": [
+    "Offline protocol1 remains compatible without tools declaration.",
+    "Only declared own-plugin tools may run; token remains in parent. Scope/lock/disable closes queued calls.",
+    "Existing pluginPlanPolicy/resource scheduling and recordToolProposal persist approval candidates. No approve method.",
+    "Test cross-plugin, replay, stale scope, policy denial, pending writes and explicit host approval. Browser NOT_RUN until origin policy permits."
+  ],
+  "scope": [
+    "Optional manifest tools, parent-only instance, MessagePort, tool/proposal APIs and tests/docs",
+    "No arbitrary API/file/network/desktop proxy, no push/release, preserve other runtime edits"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Scoped to controlled host capability needed by ongoing plugin development.",
+      "evidence": [
+        "docs/tasks/plugin-workbench-bridge-20261018.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Optional own-tool port with parent-only authenticated instance and shared policy/resource admission. Existing protocol1 offline behavior retained.",
+      "evidence": [
+        "docs/reviews/2026-10-18-workbench-bridge.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Manifest tools, bound instance API, MessagePort, manual proposal session/status observation and reference client implemented as source candidate.",
+      "evidence": [
+        "docs/reviews/2026-10-18-workbench-bridge.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused Go race passed; 5 parent and 2 client VM tests passed. Real browser/native end-to-end remains NOT_RUN due saved browser origin restriction. Initial write fixture correctly rejected read-only declaration, corrected and negative case retained.",
+      "evidence": [
+        "docs/reviews/2026-10-18-workbench-bridge.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Protocol messages, adapter source, scope and cancellation/uncertain-result limitations documented.",
+      "evidence": [
+        "docs/reviews/2026-10-18-workbench-bridge.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Isolated test containers used --rm and completed; no app restart, other plugin runtime changes preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-18-workbench-bridge.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No deployment, push, tag, release or actual page acceptance.",
+      "evidence": [
+        "docs/reviews/2026-10-18-workbench-bridge.md"
+      ]
+    }
+  },
+  "release_authorization": "Continuous modular plugin development with necessary host support; no push or public release requested.",
+  "rollback": "Revert only this scoped candidate commit; running host has not been replaced.",
+  "handoff": "Source candidate only. See plugin-protocol.md optional protocol1 port section and reference client. Browser and real native plugin approval loop still unverified."
+}
