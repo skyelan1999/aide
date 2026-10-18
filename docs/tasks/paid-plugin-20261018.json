@@ -41,11 +41,11 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "127 final quick checks passed; focused Go race passed in 48.344s; PjPlan 8 tests and market 2 tests passed; 23 public ZIPs verified; actual website and isolated Aide prelaunch details observed. No real payment or issuer key used.",
+      "summary": "127 final quick checks passed after PjPlan 3.1 metadata sync. Core Go race passed in 48.344s before that metadata-only sync. PjPlan 3.1.0 50 tests and market 2 tests passed; 23 public ZIPs verified. Actual final website screenshot is 3.1.0; earlier isolated Aide prelaunch observation used pre-merge metadata. No real payment or issuer key used.",
       "evidence": [
         ".agent-state/paid/go-final.log",
         ".agent-state/paid/quick-final.log",
-        ".agent-state/verify-20261018T025721349521Z.log",
+        ".agent-state/verify-20261018T030221832473Z.log",
         "docs/reviews/2026-10-18-paid-plugin.md",
         "docs/reviews/2026-10-18/paid-plugin-store.png"
       ]
@@ -59,7 +59,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Temporary IAB tab 29, own aide-paid-preview container and loopback server 8765 removed; existing plugins/registry.json preserved.",
+      "summary": "Own temporary IAB tabs 29 and 30, aide-paid-preview container and loopback static server 8765 removed; preexisting plugins/registry.json preserved. PjPlan merge resolved and committed; no remaining conflicts.",
       "evidence": [
         "docs/reviews/2026-10-18-paid-plugin.md"
       ]
@@ -71,7 +71,7 @@
     }
   },
   "release_authorization": "",
-  "rollback": "Revert only the three scoped local commits if needed; no customer data or production service changed.",
-  "handoff": "PjPlan local commit 46ced9a; marketplace local commit 3d510bb. Publish marketplace before Aide snapshot deployment when authorized. Existing registry change remains unstaged.",
-  "verification_fingerprint": "e083ca539c9ff475916ee3821e53d1b98b5d32217967214a7cf68037d30df9a3"
+  "rollback": "Revert scoped Aide/shop task commits in reverse order if needed. For PjPlan retain remote 1147314 functionality and revert only commercial-delivery changes relative to it. No production data or service changed.",
+  "handoff": "PjPlan merged remote 1147314 and retained commercial changes in local commit 48b75be. Marketplace local head ca91ff5. Publish marketplace before Aide snapshot deployment when authorized. Existing registry change remains unstaged.",
+  "verification_fingerprint": "41e19f3bbd068d5dc49d21c3eb35db58c62f06e01088124e22a79d125035c4f9"
 }

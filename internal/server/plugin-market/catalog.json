@@ -1,5 +1,5 @@
 {
-  "revision": "3d510bb134ce26186a3f42a8d9dc7fc5fcbb1376",
+  "revision": "ca91ff52ec3788357dc6137f300d7883130d59c3",
   "fetched": 0,
   "catalog": {
     "schemaVersion": 1,
@@ -674,8 +674,8 @@
         "id": "pjplan",
         "kind": "plugin",
         "name": "PjPlan 项目文档 · 商业版筹备",
-        "description": "项目文档分类、目标目录版本计算与文档交付。后续商业版采用私有包交付，当前仅展示，不开放销售。",
-        "version": "1.3.2",
+        "description": "按真实产品和模块编号规划项目文档命名、修订与 Office 生成参数。后续商业版私有交付，当前仅展示，不开放销售。",
+        "version": "3.1.0",
         "author": "skyelan1999",
         "category": "planning",
         "icon": "planning",
@@ -693,18 +693,19 @@
           "linux"
         ],
         "dependencies": [
-          "需要支持私有授权安装的 Aide 构建"
+          "需要支持私有授权安装的 Aide 构建",
+          "启用 Office 文档插件，并绑定可写的自动系统文档来源"
         ],
         "features": [
           "private-plugin-v1"
         ],
-        "permissions": "生成文档交付内容；实际写入与审批仍由 Aide 的文件权限控制。",
+        "permissions": "向宿主 Office 文档工具提供生成参数；实际写入与审批仍由 Aide 的来源与文件权限控制。",
         "trustNotice": "后续付费包不上传公开市场、Pages 或公开 Release。当前条目未配置签发公钥与购买入口，不接受安装。",
         "source": "https://github.com/skyelan1999/aide-pkg-PjPlan",
         "license": "商业版条款待发布；不追溯改变已有版本或第三方内容的权利",
         "readme": "后续商业版计划一次购买、永久使用已购版本，大版本升级另行授权。当前公开仓库版本与未来商业版本分开；价格、正式版本和许可条款确定后才开放销售。购买后私下交付 ZIP 和针对设备授权码签发的许可证。授权升级需重新交付对应版本许可证，不代表重复收费。",
         "screenshots": [],
-        "changelog": "商业发行准备条目；版本号仅对应当前技术基线，不表示 1.3.2 已成为收费版本。"
+        "changelog": "商业发行准备条目；版本号仅对应当前技术基线，不表示 3.1.0 已成为收费版本。"
       }
     ]
   }
