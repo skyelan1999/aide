@@ -489,6 +489,7 @@ type App struct {
 	version                   string
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
+	pluginWorkbenchTickets    map[string]pluginWorkbenchTicket
 	pluginLifecycle           sync.Mutex
 	pluginUpgradeMu           sync.Mutex
 	pluginUpdateClient        *http.Client
@@ -1460,13 +1461,15 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/management-proposals/{id}/{action}", a.resolveManagementProposal)
 	mux.HandleFunc("GET /api/management-proposals/{id}/package", a.downloadManagementPackage)
 	mux.HandleFunc("GET /api/plugin-market", a.marketCatalogAPI)
- mux.HandleFunc("POST /api/plugin-license/device", a.pluginLicenseDeviceAPI)
+	mux.HandleFunc("POST /api/plugin-license/device", a.pluginLicenseDeviceAPI)
 	mux.HandleFunc("POST /api/plugin-market/{id}/install", a.marketInstall)
 	mux.HandleFunc("GET /api/plugin-market/{id}/download", a.marketDownload)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
 	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
+	mux.HandleFunc("POST /api/plugins/{id}/workbench/open", a.openPluginWorkbench)
+	mux.HandleFunc("GET /plugin-workbench/{ticket}", a.servePluginWorkbench)
 	mux.HandleFunc("PUT /api/plugins/{id}/settings", a.updatePluginSettings)
 	mux.HandleFunc("POST /api/plugins/{id}/upgrade", a.upgradePlugin)
 	mux.HandleFunc("GET /api/file/history", a.markdownHistoryAPI)

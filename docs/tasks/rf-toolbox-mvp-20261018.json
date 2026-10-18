@@ -1,0 +1,72 @@
+{
+  "id": "rf-toolbox-mvp-20261018",
+  "request": "汇总 RfToolBox 计划并实现首版独立插件工作台、信号源、调制/EVM及配套预览",
+  "baseline": "713688f2ae7e15517e6420415383475b046754c7",
+  "initial_status": "M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/",
+  "acceptance": [
+    "插件可打包并安装，Aide插件面板提供独立工作台入口，旧插件保持兼容。",
+    "首版生成QAM/通用OFDM，加噪声/CFO，展示图形与参考EVM/BER/PAPR。",
+    "离线eCPRI示例和经典PCAP格式有明确范围与坏输入拒绝。",
+    "实验导入/导出、IQ/PCAP下载、取消与关闭需完成浏览器验收；本轮受浏览器权限拒绝而未完成。"
+  ],
+  "scope": [
+    "私有aide-pkg-RfToolBox独立插件仓库，PLAN/README/源码/测试/打包/实际截图。",
+    "Aide可选workbench声明、鉴权单次入口、隔离界面、插件卡片入口、生命周期及对应测试/协议文档。",
+    "安装到本地Aide并构建运行；不推送、发版、发射射频或发送网络测试包。",
+    "保留原插件manifest/registry和升级备份；不导入或公开私有知识库。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "PLAN.md明确总体目标、首版链路、后续标准NR/O-RAN/网络/知识/设备阶段。",
+      "evidence": [
+        "docs/reviews/2026-10-18-rf-toolbox-mvp.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "共享确定性JS内核，浏览器Worker计算；自包含HTML通过无same-origin的iframe打开，不授予宿主令牌/文件API。Node插件仍为可信代码，非沙箱。",
+      "evidence": [
+        "docs/reviews/2026-10-18-rf-toolbox-mvp.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成0.1.0信号源/EVM/图形/实验文件与eCPRI示例，两个聊天工具；宿主扩展兼容旧插件。完整NR/O-RAN/知识检索/双向聊天控制未实现。",
+      "evidence": [
+        "docs/reviews/2026-10-18-rf-toolbox-mvp.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "9项插件数值/格式/打包测试通过，独立host validate通过；新后端race通过，3项前端模型回归通过。Safari真实入口和默认图表通过；独立预览重算20dB与eCPRI构包通过。下载等待超时后浏览器来源访问被拒绝，停止访问，未绕过；文件导出恢复及窄屏等实机项未完成。 追加旧插件兼容回归因资源高占用主动停止，未取得完成结果，不记PASS。",
+      "evidence": [
+        "docs/reviews/2026-10-18-rf-toolbox-mvp.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "协议v1.3候选扩展、架构、PLAN、README与VERIFICATION说明实际状态；实际eCPRI截图保留在私有插件仓库。",
+      "evidence": [
+        "docs/reviews/2026-10-18-rf-toolbox-mvp.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "一次性测试容器自动删除，临时127.0.0.1:8769预览已停止。独立浏览器页因权限拒绝未再控制，依赖其临时页回收；原Safari工作台保留。插件本地安装和运行数据不提交到公开Aide。 追加离线测试容器已停止，未重复构建。",
+      "evidence": [
+        "docs/reviews/2026-10-18-rf-toolbox-mvp.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地初版试用；未推送、升Aide版本、打tag或发布市场。浏览器剩余验收需恢复访问后继续。",
+      "evidence": [
+        "docs/reviews/2026-10-18-rf-toolbox-mvp.md"
+      ]
+    }
+  },
+  "release_authorization": "用户授权先汇总并做初版，含必要宿主能力及本地安装；没有本轮推送或公开市场授权。",
+  "rollback": "关闭插件工作台，停用/删除本轮rf-toolbox安装可回到原插件列表；回退宿主范围内提交并按start.command源码构建恢复。保留原会话、插件和数据卷。",
+  "handoff": "本地Aide已更新且rf-toolbox已安装；插件卡片“打开工作台”。既有registry/两个manifest及升级备份保留。最终ZIP仅README更新，入口和HTML与已安装文件逐字节一致；详见审阅记录。 私有插件本地提交2960154、9cb1a56；宿主扩展可被其他插件通过manifest.workbench复用。"
+}

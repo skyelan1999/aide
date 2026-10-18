@@ -1,6 +1,9 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+"打开工作台":"Open workbench",
+"关闭工作台":"Close workbench",
+"独立插件工作台 · 本地计算":"Independent plugin workbench · local computation",
 "付费筹备中":"Paid edition coming soon",
 "授权安装":"Licensed installation",
 "交付方式":"Delivery",

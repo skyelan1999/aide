@@ -36,22 +36,29 @@ const (
 
 var pluginIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
+type PluginWorkbench struct {
+	Protocol int    `json:"protocol"`
+	Entry    string `json:"entry"`
+	Title    string `json:"title"`
+}
+
 type PluginManifest struct {
-	ID             string         `json:"id"`
-	Name           string         `json:"name"`
-	Description    string         `json:"description,omitempty"`
-	Version        string         `json:"version,omitempty"`
-	Author         string         `json:"author,omitempty"`
-	Main           string         `json:"main"`
-	Enabled        bool           `json:"enabled"`
-	Daemon         bool           `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
-	Settings       map[string]any `json:"settings,omitempty"`
-	SettingsSchema map[string]any `json:"settingsSchema,omitempty"`
-	InstalledAt    string         `json:"installedAt"`
-	UpdateURL      string         `json:"updateURL,omitempty"`
-	PackageSHA256  string         `json:"packageSHA256,omitempty"`
-	UpdatedAt      string         `json:"updatedAt,omitempty"`
-	UpgradeBackup  string         `json:"upgradeBackup,omitempty"`
+	Workbench      *PluginWorkbench `json:"workbench,omitempty"`
+	ID             string           `json:"id"`
+	Name           string           `json:"name"`
+	Description    string           `json:"description,omitempty"`
+	Version        string           `json:"version,omitempty"`
+	Author         string           `json:"author,omitempty"`
+	Main           string           `json:"main"`
+	Enabled        bool             `json:"enabled"`
+	Daemon         bool             `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
+	Settings       map[string]any   `json:"settings,omitempty"`
+	SettingsSchema map[string]any   `json:"settingsSchema,omitempty"`
+	InstalledAt    string           `json:"installedAt"`
+	UpdateURL      string           `json:"updateURL,omitempty"`
+	PackageSHA256  string           `json:"packageSHA256,omitempty"`
+	UpdatedAt      string           `json:"updatedAt,omitempty"`
+	UpgradeBackup  string           `json:"upgradeBackup,omitempty"`
 }
 
 type pluginRegistry struct {
@@ -264,6 +271,7 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 			"error": a.pluginError(p.ID), "settings": pluginSettingsOrEmpty(p.Settings),
 			"updateURL": pluginUpdateSource(p), "updatedAt": p.UpdatedAt, "upgradeBackup": p.UpgradeBackup,
 			"settingsSchema": a.pluginSettingsSchema(p.ID, p.SettingsSchema),
+			"workbench":      p.Workbench,
 		})
 	}
 	jsonOut(w, 200, map[string]any{"plugins": items})
@@ -571,6 +579,15 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 	code := packageFiles[main]
 	if len(code) == 0 || len(code) > maxPluginCode {
 		return PluginManifest{}, nil, errors.New("插件入口缺失或超过 256 KiB")
+	}
+	if manifest.Workbench != nil {
+		if err := validatePluginWorkbench(manifest.Workbench); err != nil {
+			return PluginManifest{}, nil, err
+		}
+		page := packageFiles[manifest.Workbench.Entry]
+		if len(page) == 0 || len(page) > maxWorkbenchHTML {
+			return PluginManifest{}, nil, errors.New("插件工作台 HTML 缺失或超过 2 MiB")
+		}
 	}
 	manifest.Main = main
 	return manifest, packageFiles, nil
