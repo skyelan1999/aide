@@ -570,7 +570,29 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 		URL    string `json:"url"`
 		SHA256 string `json:"sha256"`
 	}
-	if err := decode(w, r, &in); err != nil {
+	if strings.HasPrefix(strings.ToLower(r.Header.Get("Content-Type")), "multipart/form-data") {
+		r.Body = http.MaxBytesReader(w, r.Body, maxPluginBundle)
+		if err := r.ParseMultipartForm(2 << 20); err != nil {
+			fail(w, 400, errors.New("本地升级包上传失败或超过24 MiB"))
+			return
+		}
+		if r.MultipartForm != nil {
+			defer r.MultipartForm.RemoveAll()
+		}
+		f, _, err := r.FormFile("bundle")
+		if err != nil {
+			fail(w, 400, errors.New("请选择插件ZIP升级包"))
+			return
+		}
+		defer f.Close()
+		raw, err := io.ReadAll(io.LimitReader(f, maxPluginBundle+1))
+		if err != nil || len(raw) == 0 || len(raw) > maxPluginBundle {
+			fail(w, 400, errors.New("本地升级包无效或过大"))
+			return
+		}
+		in.SHA256 = r.FormValue("sha256")
+		r = r.WithContext(context.WithValue(r.Context(), managementBundleKey{}, raw))
+	} else if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
 		return
 	}
