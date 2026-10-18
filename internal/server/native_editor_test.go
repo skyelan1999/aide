@@ -69,7 +69,7 @@ func TestNativeEditorOpaqueViewerAndScopeRevocation(t *testing.T) {
 		t.Fatal(w.Code, w.Header(), w.Body.String())
 	}
 	w = workbenchRequest(a, "GET", url+"core/rfb.js", false)
-	if w.Code != 200 || w.Header().Get("Access-Control-Allow-Origin") != "null" {
+	if w.Code != 200 || w.Header().Get("Access-Control-Allow-Origin") != "null" || len(w.Header().Values("Access-Control-Allow-Origin")) != 1 {
 		t.Fatal(w.Code, w.Body.String())
 	}
 	if w = workbenchRequest(a, "GET", url+"arbitrary.html", false); w.Code != 404 {

@@ -359,6 +359,8 @@ func (a *App) serveNativeEditor(w http.ResponseWriter, r *http.Request) {
 	proxy.ErrorHandler = func(w http.ResponseWriter, _ *http.Request, _ error) {
 		http.Error(w, "Editor connection unavailable; save state unknown", 502)
 	}
+	// ReverseProxy copies backend headers with Add. Set CORS exactly once in ModifyResponse.
+	w.Header().Del("Access-Control-Allow-Origin")
 	proxy.ServeHTTP(w, r)
 }
 
