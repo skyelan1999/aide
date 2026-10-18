@@ -134,7 +134,7 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 310*time.Second)
 	b.Cancel = cancel
 	task := &Task{ID: newID(), Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Prompt: "Plugin workbench tool: " + req.Tool, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, Attachments: req.Attachments, AutoReview: false}
-	scope, workspace, epoch := a.pluginsPath, a.workPath, a.wsRevision
+	scope, workspace, epoch := a.pluginsPath, a.pluginWorkspaceLocked(), a.wsRevision
 	a.mu.Unlock()
 	defer func() {
 		cancel()

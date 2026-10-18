@@ -74,7 +74,7 @@ module.exports = () => ({
 | `ctx.slot` | `(def) => void` | 声明 UI 槽位（读取 `def.id` / `def.name`） | 记入 surface |
 | `ctx.settings` | `object` | 读取当前插件保存在工作区注册表中的 JSON 设置；缺省为空对象。可在加载、工具调用和 daemon 启动时读取 | 无 |
 
-工具 handler 的第二个参数 `api` 还提供 `api.runPython(script, input?, options?)`：从当前插件目录内启动 `python3 -I <script>`，将 `input` 序列化为 JSON 写入 stdin，工作目录为 `/workspace`，返回完整 UTF-8 stdout。`script` 必须是插件包内的相对路径；禁止绝对路径、`.`、`..`、符号链接越界。`options.timeoutMs` 缺省 60 秒，范围 1–280 秒；stdout 上限 8 MiB，stderr 保留最多 64 KiB。Python 退出码非零、超时、输出超限均返回工具错误。该接口只允许从插件脚本路径启动 Python，不提供 shell 参数。
+工具 handler 的第二个参数 `api` 还提供 `api.runPython(script, input?, options?)`：从当前插件目录内启动 `python3 -I <script>`，将 `input` 序列化为 JSON 写入 stdin，工作目录为本次调用绑定的当前本地工作区（默认配置仍为 `/workspace`），返回完整 UTF-8 stdout。`script` 必须是插件包内的相对路径；禁止绝对路径、`.`、`..`、符号链接越界。`options.timeoutMs` 缺省 60 秒，范围 1–280 秒；stdout 上限 8 MiB，stderr 保留最多 64 KiB。Python 退出码非零、超时、输出超限均返回工具错误。该接口只允许从插件脚本路径启动 Python，不提供 shell 参数。
 
 Python 与插件运行在同一 aide 容器用户下。插件仍是受信代码，Python 可以读写该用户能访问的文件；`-I` 只隔离 Python 的用户环境和启动选项，不是权限沙箱。需要修改工作区文件时，插件应返回 `api.proposeWrite(...)`，由 aide 工作流进入已有审批流程。aide 不会在导入插件时运行 pip 或联网安装依赖。
 
@@ -200,7 +200,7 @@ ZIP 与上传共用结构、路径、CRC、入口和大小检查，插件 ID 必
 
 | api | 行为 |
 | --- | --- |
-| `api.readFile(rel)` / `api.listFiles(rel)` | **直接执行**（helper 基于容器 /workspace，拒绝绝对路径和 ..；不跟随所有远程根，且不是独立权限沙箱） |
+| `api.readFile(rel)` / `api.listFiles(rel)` | **直接执行**（helper 基于本次调用绑定的当前本地工作区，拒绝绝对路径、..和符号链接越界；SSH不回退本地，且不是独立权限沙箱） |
 | `api.proposeWrite(rel, content)` / `api.proposeCommand(cmd)` | **只生成提案**（返回 `{proposal:{type:"file"|"command",…}}`），由 Go 侧转为待批准提案（P2 原则），模型不得宣称已写入/已执行 |
 | `api.runPython(script, input?, options?)` | 从插件目录启动 Python 3.12，JSON stdin/stdout；默认 60s、最高 280s，stdout ≤8 MiB、stderr ≤64 KiB；无 shell 参数；详见 [Python 工具包](plugins/python-tool-package.md) |
 | `api.log(...)` | 输出宿主日志 |
@@ -349,3 +349,10 @@ if (reply.status === 'proposal_pending') {
 关闭、锁屏、停用、工作区身份/代次变化时父页面约300ms内关闭通道并中止HTTP，服务端对活动调用约200ms重查策略，资源出队时再次验证；取消是尽力而为，已发生的可信插件外部副作用不能撤回，超时/取消结果不确定时禁止自动重放。工具和Node插件仍为可信代码，通道不是进程或OS沙箱。
 
 父页面“查看待审批提案”会关闭工作台并打开已有会话审批UI；批准后可重新打开插件，读取自己的原生桥回执。新实例不能通过旧proposalId查询旧实例提案。此候选没有桌面流、原生实时选择、任意WebSocket，也不放宽全局CSP。源代码/模型测试不等于已部署或真实浏览器/原生工程验收。
+
+
+### 当前项目目录与插件安装目录
+
+handler第二参提供只读值api.workspaceRoot，由宿主捕获当前授权工作区，并随call/daemon请求传递；不是模型arguments可覆盖的参数。readFile/listFiles和runPython使用此根。普通短命Node进程CWD也绑定当前本地项目。常驻进程不全局chdir，避免多调用串区；daemon需要使用本次api.workspaceRoot或helper，不能把启动时process.cwd当作当前项目。插件包脚本仍从安装目录解析，插件设置/缓存不因切换工作目录搬迁。
+
+工作区代次/根/插件scope变化后，排队调用不运行、旧调用结果被拒绝；工作台另有取消和实例失效机制。已发生的可信插件直接文件或外部副作用不能回滚，不能将结果拒绝描述为OS隔离。SSH时本地helper根为空并拒绝访问；不会把SSH项目误当本地/workspace。引用读写沿用原有可见/可写锁，当前项目绑定不赋予额外引用权限。

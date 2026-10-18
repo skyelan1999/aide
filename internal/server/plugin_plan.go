@@ -194,7 +194,7 @@ func (a *App) pluginPlanPolicy(task *Task, tool, owner, scope, workspace string,
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.pluginsPath != scope || a.workPath != workspace || a.wsRevision != epoch || task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
+	if a.pluginsPath != scope || a.pluginWorkspaceLocked() != workspace || a.wsRevision != epoch || task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
 		return errors.New("plugin plan workspace changed")
 	}
 	for _, p := range a.pluginRegistry.Plugins {
@@ -291,7 +291,7 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 			}
 		}
 	}
-	scope, workspace, epoch := a.pluginsPath, a.workPath, a.wsRevision
+	scope, workspace, epoch := a.pluginsPath, a.pluginWorkspaceLocked(), a.wsRevision
 	chain := append([]Message(nil), task.CheckpointMessages...)
 	step := task.CheckpointStep
 	if step == "" {

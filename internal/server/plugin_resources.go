@@ -156,7 +156,7 @@ func pluginResourcePath(root, relative string) (string, bool) {
 // supply its own read-only annotation in arguments to bypass a writer.
 func (a *App) pluginFootprintLocked(pluginID, tool string, args map[string]any) pluginFootprint {
 	exclusive := pluginFootprint{exclusive: true}
-	// The plugin helper still operates on the container-local workspace. Until
+	// The helper is bound to the selected container-local project. Until
 	// a unified remote driver exists, remote declarations must not imply locks
 	// on SSH/SFTP paths that the helper does not actually use.
 	if a.workspaceMode() == "ssh" || pluginID == "browser-control" || pluginID == "computer-control" {
@@ -197,7 +197,7 @@ func (a *App) pluginFootprintLocked(pluginID, tool string, args map[string]any) 
 			}
 			footprint := pluginFootprint{readOnly: true, resources: []pluginResource{{path: state, write: true}}}
 			for _, resource := range definition.Scheduling.Resources {
-				root := a.workPath
+				root := a.pluginWorkspaceLocked()
 				if resource.Root == "plugin" {
 					root = pluginRoot
 				} else if resource.Root != "workspace" {

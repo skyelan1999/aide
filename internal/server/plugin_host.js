@@ -90,7 +90,7 @@ function makeCtx(surface, registry, settings, services = new Map(), required = [
 }
 
 /* 协议 v1.1 工具 api：读操作直接执行；写/命令返回提案对象（由 Go 侧进入用户批准流程，P2 原则）。 */
-function makeToolAPI(pluginDir) {
+function makeToolAPI(pluginDir, workspace = '/workspace') {
   const fs2 = require('fs');
   const path2 = require('path');
   const { spawn } = require('child_process');
@@ -98,9 +98,13 @@ function makeToolAPI(pluginDir) {
   const safeJoin = p => {
     const rel = String(p || '.').replace(/\\/g, '/').replace(/^\.\//, '');
     if (rel.startsWith('/') || rel.split('/').includes('..')) throw new Error('路径越界');
-    return path2.join('/workspace', rel);
+    if (typeof workspace !== 'string' || !workspace || !path2.isAbsolute(workspace)) throw new Error('当前工作区不是可用的本地目录');
+    const base = fs2.realpathSync(workspace), target = fs2.realpathSync(path2.join(base, rel));
+    if (target !== base && !target.startsWith(base + path2.sep)) throw new Error('路径越界');
+    return target;
   };
   return {
+    workspaceRoot: workspace,
     readFile: rel => fs2.readFileSync(safeJoin(rel), 'utf8'),
     listFiles: rel => fs2.readdirSync(safeJoin(rel), { withFileTypes: true }).map(e => (e.isDirectory() ? e.name + '/' : e.name)),
     proposeWrite: (rel, content) => ({ proposal: { type: 'file', path: rel, content: String(content) } }),
@@ -114,7 +118,8 @@ function makeToolAPI(pluginDir) {
       if (!realScript.startsWith(realPluginDir + path2.sep)) return reject(new Error('Python 脚本路径越界'));
       const timeoutMs = Math.max(1000, Math.min(Number(options.timeoutMs) || 60000, 280000));
       const outputLimit = 8 << 20;
-      const proc = spawn('python3', ['-I', realScript], { cwd: '/workspace', env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: '/home/aide', PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'] });
+      if (typeof workspace !== 'string' || !workspace || !path2.isAbsolute(workspace)) return reject(new Error('当前工作区不支持本地 Python 执行'));
+      const proc = spawn('python3', ['-I', realScript], { cwd: workspace, env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: '/home/aide', PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'] });
       let stdout = Buffer.alloc(0), stderr = Buffer.alloc(0), settled = false;
       const finish = (err, value) => { if (settled) return; settled = true; clearTimeout(timer); err ? reject(err) : resolve(value); };
       const timer = setTimeout(() => { proc.kill('SIGKILL'); finish(new Error('Python 工具执行超时')); }, timeoutMs);
@@ -251,7 +256,7 @@ function callCommand(pluginsDir, requestJSON, outFile) {
     }
   }, 300000);
   Promise.resolve()
-    .then(() => entry.handler(req.args || {}, makeToolAPI(path.join(pluginsDir, req.plugin))))
+    .then(() => entry.handler(req.args || {}, makeToolAPI(path.join(pluginsDir, req.plugin), req.workspace)))
     .then(value => {
       if (finished) return;
       finished = true;
@@ -350,7 +355,7 @@ function daemonCommand(pluginPath) {
             return;
           }
           Promise.resolve()
-            .then(() => entry.handler(params.args || {}, makeToolAPI(path.dirname(pluginPath))))
+            .then(() => entry.handler(params.args || {}, makeToolAPI(path.dirname(pluginPath), params.workspace)))
             .then((value) => sendLine({ jsonrpc: '2.0', id: msg.id, result: value === undefined ? null : value }))
             .catch((err) => sendLine({ jsonrpc: '2.0', id: msg.id, error: { code: -32000, message: String(err && err.message).slice(0, 500) } }));
         }

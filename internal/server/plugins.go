@@ -869,7 +869,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	// Neither wait owns a handler process.
 	a.mu.Lock()
 	scope := a.pluginsPath
-	epoch, workspace := a.wsRevision, a.workPath
+	epoch, workspace := a.wsRevision, a.pluginWorkspaceLocked()
 	packageDigest := a.pluginPackageDigestLocked(pluginID)
 	footprint := a.pluginFootprintLocked(pluginID, toolName, args)
 	a.mu.Unlock()
@@ -887,7 +887,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	}
 	defer release()
 	a.mu.Lock()
-	changed := packageDigest != a.pluginPackageDigestLocked(pluginID) || a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace || !reflect.DeepEqual(footprint, a.pluginFootprintLocked(pluginID, toolName, args))
+	changed := packageDigest != a.pluginPackageDigestLocked(pluginID) || a.pluginsPath != scope || a.wsRevision != epoch || a.pluginWorkspaceLocked() != workspace || !reflect.DeepEqual(footprint, a.pluginFootprintLocked(pluginID, toolName, args))
 	enabled := false
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.ID == pluginID {
@@ -912,8 +912,15 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	if err := pluginPlanAdmission(parent); err != nil {
 		return nil, err
 	}
+	parent = context.WithValue(parent, pluginWorkspaceContextKey{}, workspace)
 	if a.daemons != nil && a.isDaemonPlugin(pluginID) {
 		raw, err := a.daemons.CallContext(parent, pluginID, toolName, args)
+		a.mu.Lock()
+		stale := a.wsRevision != epoch || a.pluginWorkspaceLocked() != workspace || a.pluginsPath != scope
+		a.mu.Unlock()
+		if stale {
+			return nil, pluginPlanRejected(parent, errors.New("工作区已变化，旧调用结果不再接受"))
+		}
 		return pluginResourceResult(footprint, workspace, raw, err)
 	}
 	a.mu.Lock()
@@ -928,7 +935,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 		}
 	}
 	a.mu.Unlock()
-	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args, "settings": settings, "enabledPlugins": enabledPlugins, "reservedTools": builtinToolNames()})
+	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args, "settings": settings, "enabledPlugins": enabledPlugins, "reservedTools": builtinToolNames(), "workspace": workspace})
 	if err != nil {
 		return nil, err
 	}
@@ -938,6 +945,9 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", scope, string(req), outFile)
 	configurePluginProcess(cmd, true)
+	if workspace != "" {
+		cmd.Dir = workspace
+	}
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	if bridgeToken := os.Getenv("AIDE_BROWSER_BRIDGE_TOKEN"); pluginID == "browser-control" && len(bridgeToken) >= 32 {
 		cmd.Env = append(cmd.Env, "AIDE_BROWSER_BRIDGE_TOKEN="+bridgeToken)
@@ -963,6 +973,12 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 			detail = strings.TrimSpace(pluginStdout.String())
 		}
 		return nil, fmt.Errorf("插件宿主失败: %s", detail)
+	}
+	a.mu.Lock()
+	staleWorkspace := a.wsRevision != epoch || a.pluginWorkspaceLocked() != workspace || a.pluginsPath != scope
+	a.mu.Unlock()
+	if staleWorkspace {
+		return nil, pluginPlanRejected(parent, errors.New("工作区已变化，旧调用结果不再接受"))
 	}
 	b, err := os.ReadFile(outFile)
 	if err != nil {

@@ -1,0 +1,72 @@
+{
+  "id": "plugin-current-workspace-20261018",
+  "request": "修复当前已授权工作区在插件工具、Python、资源调度和工作台通道中的一致绑定；切换与撤销不得串区。",
+  "baseline": "20f7f6be0f35d7e3ce5e3146fdffc6644911612a",
+  "initial_status": "M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/brdplan/\n?? plugins/pjplan/\n?? plugins/rf-toolbox/\n?? plugins/testbench/",
+  "acceptance": [
+    "Plugin read/list, Node CWD and Python CWD follow selected local project rather than installation root.",
+    "Workspace scheduling footprints and result validation use the same bound project root.",
+    "Queued/stale workbench and plugin calls are rejected after scope/revision change; SSH helpers never fall back locally.",
+    "Plugin installation/settings paths and reference visibility/write locks are preserved; no real hardware operation."
+  ],
+  "scope": [
+    "internal/server plugin host, dispatch, scheduling/plan/workbench root bindings and focused tests",
+    "Protocol/task documentation; no push, no release, no browser-policy bypass; runtime deployment pending combined P0 handoff"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Reproduced by source tracing hard-coded /workspace in Node helper/Python and workPath in resource scheduling while terminal uses selected root.",
+      "evidence": [
+        "internal/server/plugin_workspace.go",
+        "internal/server/plugin_host.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Immutable current local root captured under App lock, carried out-of-band in call/daemon envelope; installation scope remains separate. Rev checks reject stale results. SSH has empty local root.",
+      "evidence": [
+        "internal/server/plugin_workspace.go",
+        "internal/server/plugin_host.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Current-root capture, API/Python/Node binding, daemon envelope, scheduling and stale-result rejection implemented.",
+      "evidence": [
+        "docs/reviews/2026-10-18/plugin-current-workspace.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused race PASS116.756s; final3 current-root/late-result race tests PASS13.313s; Node2 helper/concurrent-daemon tests PASS. No real browser/native integration.",
+      "evidence": [
+        "docs/reviews/2026-10-18/plugin-current-workspace.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated plugin protocol and source review with true local/SSH/daemon boundaries.",
+      "evidence": [
+        "docs/reviews/2026-10-18/plugin-current-workspace.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "All isolated test containers completed with --rm; only scoped source/docs staged, existing installed plugins/settings/backups preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-18/plugin-current-workspace.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No deployment/restart/push. Ready for coordinator-scheduled source update and actual Aide workspace acceptance; do not change runtime during browser queue.",
+      "evidence": [
+        "docs/reviews/2026-10-18/plugin-current-workspace.md"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Current workspace root distinct from plugin install root; real BrdPlan STM32/remote/helper/browser acceptance pending. TestBench final package and node setup separately coordinated; no token/network guesses."
+}
