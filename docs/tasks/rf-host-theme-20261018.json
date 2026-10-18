@@ -1,0 +1,63 @@
+{
+  "id": "rf-host-theme-20261018",
+  "request": "配色和界面联动 aide 主工作台，统一一点，并在 gitignore 中排除收费插件目录",
+  "baseline": "03c918da396dae8bb32c200ad8c81e257b0c1a68",
+  "initial_status": "M compose.yaml\n M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/testbench-live-integration-20261018.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-brdplan-200eac01102b97415863df6b346a30ed/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/.upgrade-backup-rf-toolbox-native-preview-2998c398783e0035140dfe7a8505dd4a/\n?? plugins/3dmodulebox/\n?? plugins/brdplan/\n?? plugins/pjplan/\n?? plugins/rf-toolbox-native-preview/\n?? plugins/rf-toolbox/\n?? plugins/testbench/",
+  "acceptance": [
+    "RF ordinary and native views follow host light/dark and blue/comfort/green without computation or privilege changes",
+    "Private plugin installation directories and their upgrade backups are ignored; no tracked private plugin files",
+    "Focused bridge tests and Safari presentation validation; distinguish from installed runtime acceptance"
+  ],
+  "scope": [
+    ".gitignore",
+    "internal/server/web/plugin-workbench.js",
+    "scripts/plugin-workbench.test.cjs",
+    "docs/plugin-protocol.md",
+    "docs/tasks/rf-host-theme-20261018.json",
+    "../aide-pkg-RfToolBox UI theme adapter, styles, presentation redraw hooks and package builders"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "complete",
+      "summary": "Optional presentation-only theme handshake, 17 allowlisted existing semantic colors; iframe remains opaque, no authenticated API access.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "10 Node bridge/client tests PASS; RF package built separately; Safari component fixture uses actual host controller and RF source. Ordinary light blue/dark comfort and native light green/dark blue visually inspected, plots redraw and results remain. Full installed runtime deployment NOT_RUN; compact viewport NOT_RUN.",
+      "evidence": [
+        "node --test scripts/plugin-workbench.test.cjs scripts/plugin-workbench-client.test.cjs",
+        "git check-ignore exact paid installation paths; git ls-files paths empty",
+        "../aide-pkg-RfToolBox/.agent-state/host-theme/"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "ready",
+      "summary": "Scoped source commit and push authorized; no runtime restart or plugin replacement.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User explicitly requested push on 2026-10-18.",
+  "rollback": "Revert only scoped host/theme edits; private plugin files remain on disk.",
+  "handoff": ""
+}

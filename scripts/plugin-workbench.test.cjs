@@ -3,11 +3,13 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),vm=requir
 function fixture(response={protocol:1,url:'/plugin-workbench/'+'a'.repeat(64)}){
  const nodes=[],events={},focus={count:0,focus(){this.count++;}};
  function node(tag){const n={tag,contentWindow:{messages:[],postMessage(data,target,ports){this.messages.push({data,target,ports});}},children:[],attributes:{},append(...a){this.children.push(...a);},setAttribute(k,v){this.attributes[k]=v;},focus(){},click(){this.clicked=true;},remove(){this.removed=true;}};nodes.push(n);return n;}
- const document={activeElement:focus,createElement:node,body:node('body'),addEventListener:(k,f)=>events[k]=f};let interval,blocked=false,scope='one',enabled=true;const errors=[];
+ let themeChange;const root={dataset:{theme:'light',palette:'blue'}};
+ const document={documentElement:root,activeElement:focus,createElement:node,body:node('body'),addEventListener:(k,f)=>events[k]=f};let interval,blocked=false,scope='one',enabled=true;const errors=[];
  class MessageChannel{constructor(){const make=()=>({received:[],closed:false,start(){},close(){this.closed=true;},postMessage(value){this.other.received.push(value);return this.other.onmessage?.({data:value});}});this.port1=make();this.port2=make();this.port1.other=this.port2;this.port2.other=this.port1;}}
  const urls=new Set();const urlAPI={createObjectURL(){const u='blob:test-'+urls.size;urls.add(u);return u;},revokeObjectURL(u){urls.delete(u);}};
- const window={addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,AbortController,MessageChannel,ArrayBuffer,Blob,URL:urlAPI,setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
- return{controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
+ class MutationObserver{constructor(fn){themeChange=fn;}observe(){}disconnect(){themeChange=null;}}
+ const window={addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,URL:urlAPI,setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
+ return{root,themeChange:()=>themeChange?.(),controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
 }
 const plugin={id:'test',enabled:true,workbench:{protocol:1,title:'Test'}};
 test('workbench uses sandbox without same-origin or credentials and close unloads the frame',async()=>{const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');assert.equal(frame.attributes.sandbox,'allow-scripts allow-downloads');assert.equal(frame.src,'/plugin-workbench/'+'a'.repeat(64));f.controller.close();assert.equal(frame.src,'about:blank');assert.equal(f.focus.count,1);});
@@ -35,4 +37,14 @@ test('workbench export rejects traversal, foreign plugin, oversized data and pen
  for(const name of ['../evil.json','a/b.json','a\\b.json','bad\n.json','.hidden'])send(exportMessage(undefined,name));send({...exportMessage(),pluginId:'other'});send(exportMessage(new ArrayBuffer(16*1024*1024+1)));assert.equal(f.urls.size,0);
  send(exportMessage());send(exportMessage(undefined,'second.json','export_2'));assert.equal(frame.contentWindow.messages.at(-1).data.status,'error');assert.equal(f.urls.size,1);
  const save=f.nodes.find(n=>n.tag==='button'&&n.textContent?.startsWith('保存文件'));f.changeScope();save.onclick();assert.equal(f.nodes.filter(n=>n.tag==='a').length,0);f.tick();assert.equal(f.urls.size,0);
+});
+
+test('theme follows host only after a bound frame requests it and stops on close',async()=>{
+ const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');
+ const ready={type:'aide.workbench.theme.ready',protocol:1};
+ f.events.message({source:{},data:ready});assert.equal(frame.contentWindow.messages.length,0);
+ f.events.message({source:frame.contentWindow,data:ready});let m=frame.contentWindow.messages.at(-1).data;
+ assert.equal(m.theme,'light');assert.equal(m.colors.bg,'#f2f3f5');assert(!JSON.stringify(m).includes('token'));
+ f.root.dataset.theme='dark';f.root.dataset.palette='comfort';f.themeChange();m=frame.contentWindow.messages.at(-1).data;assert.equal(m.theme,'dark');assert.equal(m.palette,'comfort');
+ f.controller.close();const count=frame.contentWindow.messages.length;f.themeChange();assert.equal(frame.contentWindow.messages.length,count);
 });

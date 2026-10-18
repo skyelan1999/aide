@@ -362,3 +362,10 @@ handler第二参提供只读值api.workspaceRoot，由宿主捕获当前授权�
 Safari对opaque sandbox iframe中的blob下载不应仅凭a.click就视为成功。页面可向父窗口postMessage发送`{type:"aide.workbench.export",protocol:1,pluginId,requestId:"export_1",name,bytes:ArrayBuffer}`并transfer该buffer。父页面仅接受当前iframe.contentWindow来源、正确pluginId、当前未撤销工作台的请求；不接受URL/路径/远程资源或文件读取指令。名称长度1–160，拒绝路径、控制符、隐藏名；数据1字节至16MiB。同一实例仅一个尚未请求保存的文件，不能静默覆盖。父页面将数据视为application/octet-stream而非执行HTML/JS。
 
 父页面显示“保存文件”按钮，用户点击才在主页面创建下载链接。子页面只接受其直接父窗口的`aide.workbench.export.status`消息：ready=数据已准备待顶部保存；requested=已交给浏览器、需检查文件；error=交接失败。没有“文件已落盘”的回执，不读取用户Downloads来伪造成功。关闭、锁屏、停用或切区清除buffer URL，旧按钮失效。无工具manifest的离线页面也可用此导出交接，不会因此获得tool.call通道或访问令牌。独立非嵌入页面保留普通下载路径；旧宿主未确认时应报错，不静默退回已知受限的iframe路径。
+
+
+### Optional host theme snapshot (2026-10-18 source candidate)
+
+An opaque workbench iframe may post `{type:"aide.workbench.theme.ready",protocol:1}` to its parent. The active parent checks `event.source` against its own frame, then replies with `aide.workbench.theme`, protocol 1, resolved `theme` (light/dark), `palette` (blue/comfort/green), and `colors`. The snapshot contains only these existing semantic colors: bg, panel, surface, field, text, muted, line, field-border, brand-hi, brand-text, on-brand, chip-bg, selected, focus-ring, danger, warn, success. It grants no tool, file, storage or settings access and does not require workbench.tools.
+
+The parent observes theme/palette changes for the active view and disconnects on close, scope change or lock. Clients must validate the parent source, protocol, complete color allowlist and CSS color values, then map to their own prefixed presentation variables. Unknown hosts retain their standalone appearance. Chart redraws must reuse existing results rather than rerun computations. Safari source-component checks passed for RF ordinary/native views; installation/restart acceptance remains separate.

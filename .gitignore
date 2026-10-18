@@ -36,3 +36,18 @@ plugins/*/node_modules/
 # 运行时配置（含本地密钥/令牌，不入库）
 profiles.json
 .backup-assistant/
+
+# Private / commercial packages are maintained in their own repositories.
+# Keep the open host and public plugin sources visible.
+/plugins/pjplan/
+/plugins/.upgrade-backup-pjplan-*/
+/plugins/rf-toolbox/
+/plugins/.upgrade-backup-rf-toolbox-*/
+/plugins/rf-toolbox-native-preview/
+/plugins/.upgrade-backup-rf-toolbox-native-preview-*/
+/plugins/brdplan/
+/plugins/.upgrade-backup-brdplan-*/
+/plugins/3dmodulebox/
+/plugins/.upgrade-backup-3dmodulebox-*/
+/plugins/testbench/
+/plugins/.upgrade-backup-testbench-*/

@@ -1,7 +1,7 @@
 'use strict';
 (function(){
  let active=null;
- function close(){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.abort.abort();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.bridge){item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE'}).catch(()=>{});}if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
+ function close(){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);item.abort.abort();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.bridge){item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE'}).catch(()=>{});}if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
  async function open(plugin,services){
   close();if(services.blocked()||!plugin.enabled)return;
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
@@ -15,9 +15,13 @@
   const editor=document.createElement('button');editor.type='button';editor.hidden=true;header.append(editor);
   const item={host,frame,abort,focus,timer:null,services,plugin,port:null,bridge:null,listener:null,download:null,toolReady:null};active=item;button.focus();
   const invalid=()=>active!==item||services.blocked()||services.scope()!==scope||!services.enabled(plugin.id);
+  // Presentation only: never expose host credentials, settings, or arbitrary CSS.
+  const themeKeys=['bg','panel','surface','field','text','muted','line','field-border','brand-hi','brand-text','on-brand','chip-bg','selected','focus-ring','danger','warn','success'];
+  const sendTheme=()=>{item.themeFrame=null;if(invalid()||!item.themeReady)return;const root=document.documentElement,style=getComputedStyle(root),colors={};for(const key of themeKeys)colors[key]=style.getPropertyValue('--'+key).trim();frame.contentWindow.postMessage({type:'aide.workbench.theme',protocol:1,theme:root.dataset.theme==='light'?'light':'dark',palette:['blue','comfort','green'].includes(root.dataset.palette)?root.dataset.palette:'blue',colors},'*');};
   item.listener=e=>{
    if(invalid()||e.source!==frame.contentWindow)return;
    const m=e.data;
+   if(m?.type==='aide.workbench.theme.ready'&&m.protocol===1){if(!item.themeReady){item.themeReady=true;item.themeObserver=new MutationObserver(()=>{if(!item.themeFrame)item.themeFrame=requestAnimationFrame(sendTheme);});item.themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-palette','style','class']});}sendTheme();return;}
    if(m?.type==='aide.workbench.editor'){
     if(plugin.id!=='brdplan'||m.pluginId!==plugin.id||m.protocol!==1||!/^editor_[0-9]{1,32}$/.test(m.requestId||'')||!['schematic','pcb'].includes(m.view)||typeof m.sessionPath!=='string'||m.sessionPath.length>500||m.sessionPath.startsWith('/')||m.sessionPath.split('/').some(p=>!p||p==='.'||p==='..')||/[\\\x00-\x1f]/.test(m.sessionPath))return;
     const request={protocol:1,requestId:m.requestId,sessionPath:m.sessionPath,view:m.view};
