@@ -38,4 +38,15 @@ Boundaries: Node plugins are already trusted executable code, not sandboxed by a
 
 ## Remaining / deployment
 
-Source candidate NOT deployed; running aide container remains unchanged. No push, release/tag or restart. Saved browser policy still blocks the approved loopback origin; no alternate surface is used to bypass it. Real opaque iframe handshake, review button/navigation, native plugin prepare→host approve→preview→confirm→readback remain NOT_RUN. The RF continuous goal is still active.
+Local deployment completed once via AIDE_OPEN_BROWSER=0 AIDE_BUILD_FROM_SOURCE=1 bash start.command. No push or release/tag. Saved browser policy still blocks the approved loopback origin; no alternate surface is used to bypass it. Real opaque iframe handshake, review button/navigation, native plugin prepare→host approve→preview→confirm→readback remain NOT_RUN. The RF continuous goal is still active.
+
+
+## Local deployment evidence (2026-10-18)
+
+- Running buildCommit baac9114a26e9638488934e06bee0b21e7115dfb-dirty, image sha256:320fd8c4f2e5ff86c420713da1435a269b015fa12e22e6c665c023971882e523. Dirty state consists of preserved runtime plugin registry/manifests and installed packages.
+- Existing startup resource guards, offline dependency build, JavaScript syntax, go vet and compile completed; no parallel heavy build or full regression.
+- Health status ok; integrity remains degraded because persistent first-volume binary baseline at commit341458d6 differs from deployed binary. Baseline preserved, not overwritten to hide warning. This is not a clean integrity acceptance.
+- BrdPlan0.4.2 installed through authenticated /api/plugins/bundle; RfToolBox0.1.0 retained. Both enabled, error empty. Bundle SHA256 BrdPlan c0697f4616e733f83b9afce421e4f1f5b2c17e774e56779f390bca6e6476fdeb; RF 2c778cb73ffc22953d501dce7cd44528f36ceddd935f90740714cbfa827251cb.
+- All30 BrdPlan and3 RF non-manifest files match package bytes. Installed manifests differ only in omitted empty settings and added installedAt; identity/version/workbench declarations match.
+- Old image retained sha256:2b00868423e6d60c0be1ef927db3a48807bc19fe0e583d6aa1f859a8e23f3b33. Rollback uses this ID with AIDE_IMAGE and scripts/aide.sh start-image without volume deletion. Raw evidence under ignored .agent-state/workbench-deployment/.
+- No browser origin retry, iframe handshake, native write or approval issued. Real UI/native acceptance remains NOT_RUN.

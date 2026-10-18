@@ -51,20 +51,20 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Isolated test containers used --rm and completed; no app restart, other plugin runtime changes preserved.",
+      "summary": "Source build completed once through start.command; persistent volumes, runtime plugin edits and previous image ID preserved.",
       "evidence": [
         "docs/reviews/2026-10-18-workbench-bridge.md"
       ]
     },
     "release": {
       "status": "not_run",
-      "summary": "No deployment, push, tag, release or actual page acceptance.",
+      "summary": "Local source deployment baac9114-dirty completed. BrdPlan v0.4.2 installed through bundle API; both plugins enabled without load errors. Health status ok, integrity degraded: preserved first-volume baseline commit341458d6 differs from deployed binary. No push/tag/public release. Browser/native acceptance NOT_RUN.",
       "evidence": [
         "docs/reviews/2026-10-18-workbench-bridge.md"
       ]
     }
   },
   "release_authorization": "Continuous modular plugin development with necessary host support; no push or public release requested.",
-  "rollback": "Revert only this scoped candidate commit; running host has not been replaced.",
-  "handoff": "Source candidate only. See plugin-protocol.md optional protocol1 port section and reference client. Browser and real native plugin approval loop still unverified."
+  "rollback": "Preserved old image sha256:2b00868423e6d60c0be1ef927db3a48807bc19fe0e583d6aa1f859a8e23f3b33; use AIDE_IMAGE with scripts/aide.sh start-image, retain current volumes. Local deployment evidence under ignored .agent-state/workbench-deployment/.",
+  "handoff": "Local runtime deployed; integrity baseline mismatch explicitly unresolved. Real browser opaque iframe and native approval/confirm/readback NOT_RUN due saved browser restriction. RF goal active."
 }
