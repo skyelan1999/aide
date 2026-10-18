@@ -40,30 +40,36 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Actual Go NativeEditor/Workbench/Workspace focused tests PASS (8.726s), verify quick PASS. Real deployed Safari manual editing remains pending.",
+      "status": "pass",
+      "summary": "Focused native-editor/workspace/local ZIP upgrade tests and verify quick passed. Actual formal Aide Safari installed compiled 1.0.0 and performed schematic/PCB annotations, C8 value change/save/restore, normal close/reopen, concurrent-write lock and revoke/resume; 10 acceptance gates pass. Actual post-manual ERC/DRC/parity all zero.",
       "evidence": [
-        "internal/server/native_editor_test.go",
-        "internal/server/native_editor_target_test.go"
+        "../aide-pkg-BrdPlan/docs/integration/native-editor-acceptance-v1.json",
+        "../aide-pkg-BrdPlan/docs/evidence/commercial-final-handoff.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Final commercial handoff, fixed editor contract, installation prerequisites and actual proof packaged.",
+      "evidence": [
+        "../aide-pkg-BrdPlan/docs/integration/commercial-handoff-20261018.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "All native GUI processes normally closed, no active editing lease; browser/deployment window released to coordinator. Other plugins/networks preserved.",
+      "evidence": [
+        "../aide-pkg-BrdPlan/docs/evidence/commercial-final-handoff.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Authorized local deployed/installed delivery; compiled ARM64 installer passes release gate. No public push/release and no physical hardware acceptance.",
+      "evidence": [
+        "../aide-pkg-BrdPlan/dist/commercial-package-audit.json"
+      ]
     }
   },
-  "release_authorization": "",
-  "rollback": "",
-  "handoff": "BrdPlan owns source now; coordinator granted next deployment/browser window after RF short preview. Official external editor environment install/restart/upgrade/rollback verified. Await real host deployment/manual acceptance."
+  "release_authorization": "User requested formal Aide integration, real browser acceptance and compiled closed-source installation; coordinator explicitly granted minimal shared host/deployment window.",
+  "rollback": "Retained prior aide:testbench-integration-20261018 image and predeploy compose/.env in .agent-state/brdplan-native-editor. Restore only BrdPlan-owned configuration hunks; never overwrite whole plugin registry. Runtime installer --rollback verified; do not replace while GUI active/unknown.",
+  "handoff": "Running host b7ac51a9; compiled BrdPlan 1.0.0 fb26b1a2; all ten actual acceptance gates pass. No active GUI; shared window released. See final receipt for exact digests and declared limitations."
 }
