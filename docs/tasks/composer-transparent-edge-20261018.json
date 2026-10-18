@@ -1,0 +1,82 @@
+{
+  "id": "composer-transparent-edge-20261018",
+  "request": "输入框上方透明过渡，去掉聊天区明显的水平裁切线",
+  "baseline": "cbd85b1cdcbda991065e8d6c1289c6b4f0ceab30",
+  "initial_status": "M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/",
+  "acceptance": [
+    "长会话滚动至输入框上方时卡片透明渐隐，无明显水平硬切。",
+    "滚到底部后末尾消息和工具条完整显示，输入框保持正常可用。"
+  ],
+  "scope": [
+    "workbench.css 增加底部32px透明遮罩及40px尾部/滚动内边距；强制颜色模式关闭遮罩。",
+    "index.html 更新 CSS 缓存版本12→13；本地源码构建与 Safari 验证。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "依据用户截图，问题为聊天滚动区在输入框上方直接裁切卡片。",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html",
+        ".agent-state/composer-transparent-start.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "只对聊天滚动区做透明 mask，露出原背景；不改变卡片正文表面、输入控件或数据。末尾40px留白使最后内容离开渐隐区。",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html",
+        ".agent-state/composer-transparent-start.log"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "标准 mask-image 与 Safari -webkit-mask-image 同时设置，强制颜色模式保留原始可读呈现。",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html",
+        ".agent-state/composer-transparent-start.log"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "通过 start.command 本地源码构建（默认语法/vet/build，未全量测试），服务 Healthy。Safari 现有#3真实会话刷新：滚到底末尾卡片/工具条完整；向上滚动0.55页，白色卡片在输入框上方渐隐，无硬切。运行CSS与源码摘要559340bd351d6234453dfb4745a89fca388c306128393b28e29806de5c07df02一致，HTML含v13。diff --check通过。窄屏、其他浏览器/主题、强制颜色模式实机 NOT_RUN。",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html",
+        ".agent-state/composer-transparent-start.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本任务记录最终行为、Safari实测与未验证范围；架构补充共享样式说明。",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html",
+        ".agent-state/composer-transparent-start.log"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "复用现有Safari标签，无测试页/新测试数据。保留原插件manifest、registry和升级备份，仅提交本轮范围。",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html",
+        ".agent-state/composer-transparent-start.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "已更新本地运行服务；未升版、打tag、推送或制作正式发行。",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html",
+        ".agent-state/composer-transparent-start.log"
+      ]
+    }
+  },
+  "release_authorization": "延续用户要求本地UI直接更新刷新观察的范围；本轮不推送或正式发布。",
+  "rollback": "回退本轮CSS/HTML改动并按start.command源码构建恢复；不删除数据卷、会话和插件升级文件。",
+  "handoff": "本地已生效，Safari保留#3会话供观察；CSS修订v13。生产运行镜像含未提交用户插件更新，保留其工作区状态。"
+}
