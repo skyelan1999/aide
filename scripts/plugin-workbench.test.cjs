@@ -2,11 +2,12 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 function fixture(response={protocol:1,url:'/plugin-workbench/'+'a'.repeat(64)}){
  const nodes=[],events={},focus={count:0,focus(){this.count++;}};
- function node(tag){const n={tag,contentWindow:{messages:[],postMessage(data,target,ports){this.messages.push({data,target,ports});}},children:[],attributes:{},append(...a){this.children.push(...a);},setAttribute(k,v){this.attributes[k]=v;},focus(){},remove(){this.removed=true;}};nodes.push(n);return n;}
+ function node(tag){const n={tag,contentWindow:{messages:[],postMessage(data,target,ports){this.messages.push({data,target,ports});}},children:[],attributes:{},append(...a){this.children.push(...a);},setAttribute(k,v){this.attributes[k]=v;},focus(){},click(){this.clicked=true;},remove(){this.removed=true;}};nodes.push(n);return n;}
  const document={activeElement:focus,createElement:node,body:node('body'),addEventListener:(k,f)=>events[k]=f};let interval,blocked=false,scope='one',enabled=true;const errors=[];
  class MessageChannel{constructor(){const make=()=>({received:[],closed:false,start(){},close(){this.closed=true;},postMessage(value){this.other.received.push(value);return this.other.onmessage?.({data:value});}});this.port1=make();this.port2=make();this.port1.other=this.port2;this.port2.other=this.port1;}}
- const window={addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,AbortController,MessageChannel,setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
- return{controller:window.AidePluginWorkbench,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
+ const urls=new Set();const urlAPI={createObjectURL(){const u='blob:test-'+urls.size;urls.add(u);return u;},revokeObjectURL(u){urls.delete(u);}};
+ const window={addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,AbortController,MessageChannel,ArrayBuffer,Blob,URL:urlAPI,setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
+ return{controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
 }
 const plugin={id:'test',enabled:true,workbench:{protocol:1,title:'Test'}};
 test('workbench uses sandbox without same-origin or credentials and close unloads the frame',async()=>{const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');assert.equal(frame.attributes.sandbox,'allow-scripts allow-downloads');assert.equal(frame.src,'/plugin-workbench/'+'a'.repeat(64));f.controller.close();assert.equal(frame.src,'about:blank');assert.equal(f.focus.count,1);});
@@ -21,4 +22,17 @@ test('MessagePort only connects to the active frame and never carries parent ins
 test('closing a workbench drops late tool replies and proposal approval is absent from the port',async()=>{
  const f=fixture(bridgeResponse);await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const port=frame.contentWindow.messages[0].ports[0];let finish;f.services.api=async(url)=>url.endsWith('/call')?new Promise(resolve=>finish=resolve):{};
  await port.postMessage({protocol:1,requestId:'approve1',method:'approve',proposalId:'x'});assert.equal(port.received.at(-1).status,'error');const pending=port.postMessage({protocol:1,requestId:'late1',method:'tool.call',tool:'own_tool'});f.controller.close();finish({requestId:'late1',status:'result',result:'must drop'});await pending;assert(!port.received.some(x=>x.requestId==='late1'));
+});
+
+const exportMessage=(bytes=new ArrayBuffer(3),name='experiment.json',requestId='export_1')=>({type:'aide.workbench.export',protocol:1,pluginId:'test',requestId,name,bytes});
+test('workbench export requires actual active frame and a separate parent save click; cleanup revokes data',async()=>{
+ const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:{},data:exportMessage()});assert.equal(f.urls.size,0);
+ f.events.message({source:frame.contentWindow,data:exportMessage()});assert.equal(f.urls.size,1);assert.equal(f.nodes.filter(n=>n.tag==='a').length,0);assert.equal(frame.contentWindow.messages.at(-1).data.status,'ready');
+ const save=f.nodes.find(n=>n.tag==='button'&&n.textContent?.startsWith('保存文件'));save.onclick();assert(f.nodes.find(n=>n.tag==='a').clicked);assert.equal(frame.contentWindow.messages.at(-1).data.status,'requested');f.controller.close();assert.equal(f.urls.size,0);
+});
+test('workbench export rejects traversal, foreign plugin, oversized data and pending overwrite; revocation prevents save',async()=>{
+ const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe'),send=data=>f.events.message({source:frame.contentWindow,data});
+ for(const name of ['../evil.json','a/b.json','a\\b.json','bad\n.json','.hidden'])send(exportMessage(undefined,name));send({...exportMessage(),pluginId:'other'});send(exportMessage(new ArrayBuffer(16*1024*1024+1)));assert.equal(f.urls.size,0);
+ send(exportMessage());send(exportMessage(undefined,'second.json','export_2'));assert.equal(frame.contentWindow.messages.at(-1).data.status,'error');assert.equal(f.urls.size,1);
+ const save=f.nodes.find(n=>n.tag==='button'&&n.textContent?.startsWith('保存文件'));f.changeScope();save.onclick();assert.equal(f.nodes.filter(n=>n.tag==='a').length,0);f.tick();assert.equal(f.urls.size,0);
 });

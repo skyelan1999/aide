@@ -1,0 +1,74 @@
+{
+  "id": "plugin-workbench-download-20261018",
+  "request": "真实Safari中RfToolBox导出实验未落盘；修复隔离工作台下载交接，保留sandbox/CSP与当前工作区撤销约束，不把触发click当成落盘验收。",
+  "baseline": "c31fef6c98093d5cd16e99ef80e4af535b9a7a9d",
+  "initial_status": "M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/3dmodulebox/\n?? plugins/brdplan/\n?? plugins/pjplan/\n?? plugins/rf-toolbox/\n?? plugins/testbench/",
+  "acceptance": [
+    "Active iframe source/root checks and bounded binary/name validation before parent save.",
+    "Fresh user click in parent triggers download; no weakening sandbox/CSP and no URL/network proxy.",
+    "Correct ready/requested/error status, no automatic fallback, no claim that anchor click means disk save.",
+    "Real Safari must show saved file and filesystem readback before acceptance."
+  ],
+  "scope": [
+    "Parent workbench JS/CSS, protocol/cache tokens, tests and RF thin export adapter",
+    "No browser operation, deployment or live plugin replacement during queued acceptance."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual Safari export experiment did not save; parent runtime contains allow-downloads already.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "scripts/plugin-workbench.test.cjs"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bounded opaque-frame export handoff with explicit parent save action; no server filesystem or auth token exposure.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "scripts/plugin-workbench.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Parent source/byte/name/pending checks and cleanup implemented; RF adapter sends file bytes and waits for parent status.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "scripts/plugin-workbench.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "9 parent/SDK Node VM checks pass. RF suite70 pass including embedded export client. Real Safari saving and disk readback NOT_RUN.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "scripts/plugin-workbench.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Protocol distinguishes ready/requested from actual file saved; limits and old-host rejection documented.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "scripts/plugin-workbench.test.cjs"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No new browser tabs, runtime restart or installed-package replacement; preserved frozen candidate.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "scripts/plugin-workbench.test.cjs"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source candidate only. Await combined source deployment and coordinated real Safari file acceptance. No push or public release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

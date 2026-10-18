@@ -356,3 +356,9 @@ if (reply.status === 'proposal_pending') {
 handler第二参提供只读值api.workspaceRoot，由宿主捕获当前授权工作区，并随call/daemon请求传递；不是模型arguments可覆盖的参数。readFile/listFiles和runPython使用此根。普通短命Node进程CWD也绑定当前本地项目。常驻进程不全局chdir，避免多调用串区；daemon需要使用本次api.workspaceRoot或helper，不能把启动时process.cwd当作当前项目。插件包脚本仍从安装目录解析，插件设置/缓存不因切换工作目录搬迁。
 
 工作区代次/根/插件scope变化后，排队调用不运行、旧调用结果被拒绝；工作台另有取消和实例失效机制。已发生的可信插件直接文件或外部副作用不能回滚，不能将结果拒绝描述为OS隔离。SSH时本地helper根为空并拒绝访问；不会把SSH项目误当本地/workspace。引用读写沿用原有可见/可写锁，当前项目绑定不赋予额外引用权限。
+
+### 隔离页面导出交接（可选，不授予工具/文件读取能力）
+
+Safari对opaque sandbox iframe中的blob下载不应仅凭a.click就视为成功。页面可向父窗口postMessage发送`{type:"aide.workbench.export",protocol:1,pluginId,requestId:"export_1",name,bytes:ArrayBuffer}`并transfer该buffer。父页面仅接受当前iframe.contentWindow来源、正确pluginId、当前未撤销工作台的请求；不接受URL/路径/远程资源或文件读取指令。名称长度1–160，拒绝路径、控制符、隐藏名；数据1字节至16MiB。同一实例仅一个尚未请求保存的文件，不能静默覆盖。父页面将数据视为application/octet-stream而非执行HTML/JS。
+
+父页面显示“保存文件”按钮，用户点击才在主页面创建下载链接。子页面只接受其直接父窗口的`aide.workbench.export.status`消息：ready=数据已准备待顶部保存；requested=已交给浏览器、需检查文件；error=交接失败。没有“文件已落盘”的回执，不读取用户Downloads来伪造成功。关闭、锁屏、停用或切区清除buffer URL，旧按钮失效。无工具manifest的离线页面也可用此导出交接，不会因此获得tool.call通道或访问令牌。独立非嵌入页面保留普通下载路径；旧宿主未确认时应报错，不静默退回已知受限的iframe路径。

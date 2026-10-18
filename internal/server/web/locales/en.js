@@ -1169,6 +1169,7 @@ window.aideEnglish = {
   "↗ 新标签页": "↗ New tab",
   "＋ 附加到任务": "＋ Attach to task",
   "保存文件": "Save file",
+  "再次保存": "Save again",
   "工作目录内的相对路径": "Relative path within the workspace",
   "打开编辑器": "Open editor",
   "设置": "Settings",

@@ -4,3 +4,6 @@
 .plugin-workbench>header>button{padding:8px 14px;min-height:36px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);cursor:pointer}
 .plugin-workbench>iframe{width:100%;flex:1;min-height:0;border:0;background:var(--panel)}
 @media(max-width:700px){.plugin-workbench{inset:0;border-radius:0}.plugin-workbench>header{padding:8px 12px;gap:8px}.plugin-workbench>header>span{display:none}.plugin-workbench>header>button{margin-left:auto}}
+
+.plugin-workbench>header>.plugin-workbench-export{max-width:min(34vw,340px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.plugin-workbench>header>button[hidden]{display:none}
+@media(max-width:700px){.plugin-workbench>header{flex-wrap:wrap}.plugin-workbench>header>.plugin-workbench-export{max-width:100%;margin-left:0}}
