@@ -37,36 +37,51 @@ var marketSHA = regexp.MustCompile(`^[a-f0-9]{64}$`)
 var marketRevision = regexp.MustCompile(`^[a-f0-9]{40}$`)
 var marketVersion = regexp.MustCompile(`^[0-9]+(?:\.[0-9]+){1,3}(?:[ -][A-Za-z0-9.-]+)?$`)
 
+type marketCommerce struct {
+	Status      string            `json:"status"`
+	Model       string            `json:"model"`
+	PriceLabel  string            `json:"priceLabel"`
+	PurchaseURL string            `json:"purchaseURL,omitempty"`
+	PublicKeys  map[string]string `json:"publicKeys,omitempty"`
+}
 type marketPlugin struct {
-	Dependencies   []string `json:"dependencies"`
-	ID             string   `json:"id"`
-	Kind           string   `json:"kind"`
-	Name           string   `json:"name"`
-	Description    string   `json:"description"`
-	Version        string   `json:"version"`
-	Author         string   `json:"author"`
-	Category       string   `json:"category"`
-	Icon           string   `json:"icon"`
-	Package        string   `json:"package"`
-	SHA256         string   `json:"sha256"`
-	Bytes          int64    `json:"bytes"`
-	MinAideVersion string   `json:"minAideVersion"`
-	Platforms      []string `json:"platforms"`
-	Features       []string `json:"features"`
-	Permissions    string   `json:"permissions"`
-	TrustNotice    string   `json:"trustNotice"`
-	Source         string   `json:"source"`
-	License        string   `json:"license"`
-	Readme         string   `json:"readme"`
-	Screenshots    []string `json:"screenshots"`
-	Changelog      string   `json:"changelog"`
+	Distribution   string          `json:"distribution,omitempty"`
+	Commerce       *marketCommerce `json:"commerce,omitempty"`
+	Dependencies   []string        `json:"dependencies"`
+	ID             string          `json:"id"`
+	Kind           string          `json:"kind"`
+	Name           string          `json:"name"`
+	Description    string          `json:"description"`
+	Version        string          `json:"version"`
+	Author         string          `json:"author"`
+	Category       string          `json:"category"`
+	Icon           string          `json:"icon"`
+	Package        string          `json:"package"`
+	SHA256         string          `json:"sha256"`
+	Bytes          int64           `json:"bytes"`
+	MinAideVersion string          `json:"minAideVersion"`
+	Platforms      []string        `json:"platforms"`
+	Features       []string        `json:"features"`
+	Permissions    string          `json:"permissions"`
+	TrustNotice    string          `json:"trustNotice"`
+	Source         string          `json:"source"`
+	License        string          `json:"license"`
+	Readme         string          `json:"readme"`
+	Screenshots    []string        `json:"screenshots"`
+	Changelog      string          `json:"changelog"`
 }
 type marketCatalog struct {
-	SchemaVersion int            `json:"schemaVersion"`
-	Title         string         `json:"title"`
-	SourceCommit  string         `json:"sourceCommit"`
-	Plugins       []marketPlugin `json:"plugins"`
+	SchemaVersion   int            `json:"schemaVersion"`
+	Title           string         `json:"title"`
+	SourceCommit    string         `json:"sourceCommit"`
+	Plugins         []marketPlugin `json:"plugins"`
+	PrivateListings []marketPlugin `json:"privateListings,omitempty"`
 }
+
+func (c marketCatalog) entries() []marketPlugin {
+	return append(append([]marketPlugin{}, c.Plugins...), c.PrivateListings...)
+}
+
 type marketSnapshot struct {
 	Revision string        `json:"revision"`
 	Fetched  int64         `json:"fetched"`
@@ -74,15 +89,18 @@ type marketSnapshot struct {
 }
 
 func validateMarket(s marketSnapshot) error {
-	if !marketRevision.MatchString(s.Revision) || s.Catalog.SchemaVersion != 1 || len(s.Catalog.Plugins) > 200 || len(s.Catalog.Plugins) == 0 {
+	if !marketRevision.MatchString(s.Revision) || s.Catalog.SchemaVersion != 1 || len(s.Catalog.entries()) > 200 || len(s.Catalog.entries()) == 0 {
 		return errors.New("官方市场目录版本无效")
 	}
 	seen := map[string]bool{}
-	for _, p := range s.Catalog.Plugins {
-		if !pluginIDPattern.MatchString(p.ID) || seen[p.ID] || p.Kind != "plugin" || len(p.Name) == 0 || len(p.Name) > 160 || len(p.Description) > 4096 || !marketVersion.MatchString(p.Version) || !marketVersion.MatchString(p.MinAideVersion) || !marketSHA.MatchString(p.SHA256) || p.Bytes <= 0 || p.Bytes > maxPluginBundle || len(p.Readme) > 32768 || len(p.Permissions) > 4096 || len(p.TrustNotice) > 4096 || len(p.Changelog) > 8192 || len(p.Dependencies) > 16 || len(p.Features) > 16 || len(p.Platforms) > 3 || len(p.Screenshots) > 6 {
+	for _, p := range s.Catalog.entries() {
+		if !pluginIDPattern.MatchString(p.ID) || seen[p.ID] || p.Kind != "plugin" || len(p.Name) == 0 || len(p.Name) > 160 || len(p.Description) > 4096 || !marketVersion.MatchString(p.Version) || !marketVersion.MatchString(p.MinAideVersion) || len(p.Readme) > 32768 || len(p.Permissions) > 4096 || len(p.TrustNotice) > 4096 || len(p.Changelog) > 8192 || len(p.Dependencies) > 16 || len(p.Features) > 16 || len(p.Platforms) > 3 || len(p.Screenshots) > 6 {
 			return errors.New("官方市场插件元数据无效")
 		}
-		if path.Clean(p.Package) != p.Package || !strings.HasPrefix(p.Package, "packages/"+p.ID+"/") || !strings.HasSuffix(p.Package, ".zip") || strings.ContainsAny(p.Package, "\\:?#%") || strings.Contains(p.Package, "..") {
+		if err := validateMarketDistribution(p); err != nil {
+			return err
+		}
+		if p.Distribution != "private" && (path.Clean(p.Package) != p.Package || !strings.HasPrefix(p.Package, "packages/"+p.ID+"/") || !strings.HasSuffix(p.Package, ".zip") || strings.ContainsAny(p.Package, "\\:?#%") || strings.Contains(p.Package, "..")) {
 			return errors.New("官方市场包路径无效")
 		}
 		if len(p.Source) > 2048 || !strings.HasPrefix(p.Source, "https://github.com/skyelan1999/") {
@@ -275,7 +293,7 @@ func marketCompare(a, b string) (int, bool) {
 func marketVersionOlder(a, b string) bool { n, ok := marketCompare(a, b); return ok && n < 0 }
 func marketCompatible(p marketPlugin, version string) (bool, string) {
 	for _, f := range p.Features {
-		if f != "skill-library-v1" && f != "plugin-authoring-v1" {
+		if f != "skill-library-v1" && f != "plugin-authoring-v1" && f != "private-plugin-v1" {
 			return false, "当前 Aide 不支持此插件所需能力"
 		}
 	}
@@ -304,7 +322,7 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 	ws, revision := a.wsID(), a.wsRevision
 	a.mu.Unlock()
 	entries := []map[string]any{}
-	for _, p := range snapshot.Catalog.Plugins {
+	for _, p := range snapshot.Catalog.entries() {
 		compatible, reason := marketCompatible(p, version)
 		b, _ := json.Marshal(p)
 		item := map[string]any{}
@@ -312,7 +330,9 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 		item["official"] = true
 		item["compatible"] = compatible
 		item["incompatibility"] = reason
-		item["downloadURL"] = "/api/plugin-market/" + p.ID + "/download?revision=" + snapshot.Revision
+		if p.Distribution != "private" {
+			item["downloadURL"] = "/api/plugin-market/" + p.ID + "/download?revision=" + snapshot.Revision
+		}
 		if local, ok := installed[p.ID]; ok {
 			item["installedVersion"] = local.Version
 			item["enabled"] = local.Enabled
@@ -325,6 +345,9 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]any{"plugins": entries, "revision": snapshot.Revision, "sourceCommit": snapshot.Catalog.SourceCommit, "stale": stale, "fetched": snapshot.Fetched, "repository": "https://github.com/" + marketRepository, "workspace": ws, "workspaceRevision": revision})
 }
 func (a *App) marketPackage(ctx context.Context, s marketSnapshot, p marketPlugin) ([]byte, error) {
+	if p.Distribution == "private" {
+		return nil, errors.New("付费包不通过公开目录下载，请使用授权安装")
+	}
 	a.marketMu.Lock()
 	defer a.marketMu.Unlock()
 	root, err := a.marketRoot()
@@ -388,7 +411,7 @@ func (a *App) marketSelected(ctx context.Context, id, revision string) (marketSn
 	if s.Revision != revision {
 		return s, marketPlugin{}, errors.New("市场目录已更新，请刷新并重新确认")
 	}
-	for _, p := range s.Catalog.Plugins {
+	for _, p := range s.Catalog.entries() {
 		if p.ID == id {
 			return s, p, nil
 		}
@@ -401,6 +424,10 @@ func (a *App) marketDownload(w http.ResponseWriter, r *http.Request) {
 	s, p, err := a.marketSelected(ctx, r.PathValue("id"), r.URL.Query().Get("revision"))
 	if err != nil {
 		fail(w, 409, err)
+		return
+	}
+	if p.Distribution == "private" {
+		fail(w, 403, errors.New("付费包不提供公开下载，请在详情中授权安装"))
 		return
 	}
 	raw, err := a.marketPackage(ctx, s, p)
@@ -420,13 +447,21 @@ func (a *App) marketInstall(w http.ResponseWriter, r *http.Request) {
 	}
 	defer a.marketInstallMu.Unlock()
 	var in struct {
-		Revision          string `json:"revision"`
-		Version           string `json:"version"`
-		SHA256            string `json:"sha256"`
-		Workspace         string `json:"workspace"`
-		WorkspaceRevision uint64 `json:"workspaceRevision"`
+		Revision          string              `json:"revision"`
+		Version           string              `json:"version"`
+		SHA256            string              `json:"sha256"`
+		Workspace         string              `json:"workspace"`
+		WorkspaceRevision uint64              `json:"workspaceRevision"`
+		License           signedPluginLicense `json:"license"`
 	}
-	if err := decode(w, r, &in); err != nil {
+	var privateBundle []byte
+	var inputErr error
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		privateBundle, inputErr = readPrivateInstall(w, r, &in)
+	} else {
+		inputErr = decode(w, r, &in)
+	}
+	if err := inputErr; err != nil {
 		fail(w, 400, err)
 		return
 	}
@@ -477,11 +512,40 @@ func (a *App) marketInstall(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New(reason))
 		return
 	}
-	raw, err := a.marketPackage(ctx, s, p)
+	var raw []byte
+	if p.Distribution == "private" {
+		if p.Commerce == nil || p.Commerce.Status != "available" {
+			fail(w, 403, errors.New("插件尚未开放授权安装"))
+			return
+		}
+		raw = privateBundle
+		a.marketMu.Lock()
+		device, identityErr := a.pluginLicenseDevice()
+		a.marketMu.Unlock()
+		if identityErr != nil {
+			fail(w, 500, identityErr)
+			return
+		}
+		err = verifyPrivateBundle(p, in.License, device, raw)
+	} else if len(privateBundle) != 0 {
+		err = errors.New("公开插件不接受私有包上传")
+	} else {
+		raw, err = a.marketPackage(ctx, s, p)
+	}
 	if err != nil {
-		fail(w, 502, err)
+		code := 502
+		if p.Distribution == "private" {
+			code = 403
+		}
+		fail(w, code, err)
 		return
 	}
+	if p.Distribution == "private" {
+		sum := sha256.Sum256(raw)
+		p.SHA256 = hex.EncodeToString(sum[:])
+		p.Bytes = int64(len(raw))
+	}
+
 	a.mu.Lock()
 	err = guard()
 	_, installed := func() (PluginManifest, bool) {

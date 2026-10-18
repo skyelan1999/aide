@@ -1,0 +1,77 @@
+{
+  "id": "paid-plugin-20261018",
+  "request": "可以，你处理一下，这个后面要做付费包，帮我同时处理好这几个仓库。付费包不直接上传公开市场。",
+  "baseline": "46ca6684bc2f3b13ce01a3c964803a25e4ff7c1f",
+  "initial_status": "M plugins/registry.json",
+  "acceptance": [
+    "Public marketplace contains paid metadata only; no private ZIP, key or customer license is published",
+    "Legacy plugins catalog remains the 23 free packages; privateListings is independently rendered by new clients",
+    "Signed private install validates issuer, device, version and package and retains existing lifecycle guards",
+    "PjPlan tools support private packaging and offline issuance without activating actual sales or changing historical rights",
+    "Record actual tests and browser observations; preserve preexisting registry and do not restart production"
+  ],
+  "scope": [
+    "aide/internal/server/plugin_market.go, plugin_commerce.go, plugin_upgrade.go and related tests/routes",
+    "aide/internal/server/web/plugin-market.js/css and English translations",
+    "aide/docs and shipped catalog snapshot",
+    "aide-pkg-shop catalog generation, website, private listings and Pages validation",
+    "aide-pkg-PjPlan private packaging, offline issuer and delivery documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User approved private paid-package preparation across three repositories; online merchants/storage not supplied.",
+      "evidence": [
+        "docs/reviews/2026-10-18-paid-plugin.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Metadata-only privateListings extension plus offline signed per-installation, per-version private import; no online billing claims.",
+      "evidence": [
+        "docs/reviews/2026-10-18-paid-plugin.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Host installation verification, UI, marketplace publication guards, PjPlan private packager and offline issuer implemented.",
+      "evidence": [
+        "docs/reviews/2026-10-18-paid-plugin.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "127 final quick checks passed; focused Go race passed in 48.344s; PjPlan 8 tests and market 2 tests passed; 23 public ZIPs verified; actual website and isolated Aide prelaunch details observed. No real payment or issuer key used.",
+      "evidence": [
+        ".agent-state/paid/go-final.log",
+        ".agent-state/paid/quick-final.log",
+        ".agent-state/verify-20261018T025721349521Z.log",
+        "docs/reviews/2026-10-18-paid-plugin.md",
+        "docs/reviews/2026-10-18/paid-plugin-store.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture, commercial-delivery guide, marketplace README and review record describe behavior and deferred services.",
+      "evidence": [
+        "docs/reviews/2026-10-18-paid-plugin.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Temporary IAB tab 29, own aide-paid-preview container and loopback server 8765 removed; existing plugins/registry.json preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-18-paid-plugin.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source preparation only; no push, real issuer keys, price, checkout, release gate/full suite or production restart.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only the three scoped local commits if needed; no customer data or production service changed.",
+  "handoff": "PjPlan local commit 46ced9a; marketplace local commit 3d510bb. Publish marketplace before Aide snapshot deployment when authorized. Existing registry change remains unstaged.",
+  "verification_fingerprint": "e083ca539c9ff475916ee3821e53d1b98b5d32217967214a7cf68037d30df9a3"
+}

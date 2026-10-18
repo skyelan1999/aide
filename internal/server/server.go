@@ -1460,6 +1460,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/management-proposals/{id}/{action}", a.resolveManagementProposal)
 	mux.HandleFunc("GET /api/management-proposals/{id}/package", a.downloadManagementPackage)
 	mux.HandleFunc("GET /api/plugin-market", a.marketCatalogAPI)
+ mux.HandleFunc("POST /api/plugin-license/device", a.pluginLicenseDeviceAPI)
 	mux.HandleFunc("POST /api/plugin-market/{id}/install", a.marketInstall)
 	mux.HandleFunc("GET /api/plugin-market/{id}/download", a.marketDownload)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)

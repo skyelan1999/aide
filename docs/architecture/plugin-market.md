@@ -45,3 +45,15 @@ Aide「插件」侧栏增加「已安装 / 市场」。保留上传、设置、�
 市场网站可回退目录提交；Aide 本机可回退镜像/源码，保留数据卷。不要清空插件注册表或共享缓存。已安装插件根据升级备份恢复；回退市场目录不会自动卸载用户插件。
 
 后续可在版本化目录中加入 Releases/CDN 包源、发布签名与密钥轮换、撤回清单、更多版本选择和独立 Skill 条目；当前不宣称这些能力已经实现。
+
+## 私有付费包（源码候选，2026-10-18）
+
+目录兼容 schemaVersion 1，免费条目继续保留在 plugins；私有条目放入独立 privateListings 扩展数组，旧客户端忽略该字段，仍能刷新免费目录。私有条目增加 `distribution=private` 和 `commerce`。不允许私有条目携带公开包路径、字节数或摘要；`marketPackage` 拒绝任何私有下载，从而不将它们加入公开缓存。PjPlan 是 coming_soon 展示条目，尚未开放销售。
+
+`POST /api/plugin-license/device` 在解锁、非只读状态生成/读取 AIDE_DATA 的 32 字节随机安装标识，返回带域隔离的 SHA-256 设备授权码。标识保存在 auth/plugin-license-device，以 0600 独占创建；并发串行化。该标识独立于工作区、网卡和 IP，重装或克隆数据目录不是硬件防克隆保证。
+
+`POST /api/plugin-market/{id}/install` 继续接受公开包的 JSON 请求；私有包使用 multipart：`review` 是含原 revision/version/sha256/workspace/workspaceRevision 与 `license` 的 JSON，`bundle` 是 ZIP。总请求有界，私有 ZIP 不进入公开下载缓存。许可证封装 `{keyId,payload,signature}` 使用标准 Base64；公钥仅取自审阅的官方目录，上传内容不得自己声明信任根。签名原文是 UTF-8 `aide-plugin-license-v1\n` 与 payload 字节拼接，算法 Ed25519。payload 含 schemaVersion=1、licenseId、pluginId、version、sha256、deviceId、issuedAt 与可选 expiresAt（Unix 秒）。签名、安装身份、时间、版本、包摘要与包 manifest 都通过后才复用既有安装和升级事务，原有锁定代次、工作区与插件状态撤销边界仍生效。
+
+当前为永久版本授权的人工交付工具链，授权只在市场私有安装时核验。不在插件运行时强制到期，不替代订单/退款/席位服务，也不删除现有普通 ZIP/源码导入能力。授权安装不是防破解承诺。大版本付费升级由发行者权益决定；具体小版本包需重签，重签不等于重复收款。公钥轮换通过目录保留多把公钥完成。
+
+在线支付、已验证支付回调、权益后台和私有对象存储/短效下载尚未接入。公开网站没有支付密钥、订单或用户访问令牌；本次不改已有历史源码许可。PjPlan 发行工具与流程见其仓库 docs/commercial-delivery.md。

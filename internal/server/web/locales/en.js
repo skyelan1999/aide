@@ -1,6 +1,21 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+"付费筹备中":"Paid edition coming soon",
+"授权安装":"Licensed installation",
+"交付方式":"Delivery",
+"私有交付 · 安装包不公开":"Private delivery; package is not public",
+"价格待公布":"Price to be announced",
+"一次购买可永久使用已购版本；大版本升级单独授权。":"Keep purchased versions permanently; major upgrades require a separate entitlement.",
+"前往购买":"Visit purchase page",
+"显示设备授权码":"Show installation activation ID",
+"私有安装包 ZIP":"Private package ZIP",
+"签名许可证 JSON":"Signed license JSON",
+"核对授权并安装":"Verify license and install",
+"请选择有效私有安装包与许可证":"Select a valid private package and license",
+"正在核对签名、设备与安装包…":"Verifying signature, installation and package\u2026",
+"安装失败":"Installation failed",
+"尚未开放销售或授权安装，价格与购买入口稍后公布。":"Sales and licensed installation are not open. Price and purchase link will be announced.",
 "AI 管理权限":"AI management permissions",
 "分别控制助理与 aide 对插件和引用的管理动作。":"Control assistant and aide management of plugins and references independently.",
 "仅控制创建、修改、安装、启停和删除等管理动作。已启用插件的日常调用、引用文件的读取与写入仍遵循现有权限；不会解开引用的可见或可写锁。":"Only controls creating, editing, installing, enabling, disabling and deleting. Daily tool use and reference file access retain existing permissions and visibility and write locks.",

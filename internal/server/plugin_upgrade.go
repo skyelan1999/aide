@@ -666,7 +666,7 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 		snapshot, _, err = a.loadMarket(downloadCtx, true)
 		if err == nil {
 			found := false
-			for _, entry := range snapshot.Catalog.Plugins {
+			for _, entry := range snapshot.Catalog.entries() {
 				if entry.ID != id {
 					continue
 				}
