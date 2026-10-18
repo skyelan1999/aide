@@ -1,7 +1,7 @@
 'use strict';
 (function(){
  let active=null;
- function close(){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.abort.abort();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.bridge){item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE'}).catch(()=>{});}if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
+ function close(){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.abort.abort();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.bridge){item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE'}).catch(()=>{});}if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
  async function open(plugin,services){
   close();if(services.blocked()||!plugin.enabled)return;
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
@@ -12,11 +12,30 @@
   header.append(title,notice,button);host.append(header,frame);document.body.append(host);
   const review=document.createElement('button');review.type='button';review.hidden=true;review.textContent=services.t('查看待审批提案');header.append(review);
   const save=document.createElement('button');save.type='button';save.className='plugin-workbench-export';save.hidden=true;header.append(save);
+  const editor=document.createElement('button');editor.type='button';editor.hidden=true;header.append(editor);
   const item={host,frame,abort,focus,timer:null,services,plugin,port:null,bridge:null,listener:null,download:null,toolReady:null};active=item;button.focus();
   const invalid=()=>active!==item||services.blocked()||services.scope()!==scope||!services.enabled(plugin.id);
   item.listener=e=>{
    if(invalid()||e.source!==frame.contentWindow)return;
    const m=e.data;
+   if(m?.type==='aide.workbench.editor'){
+    if(plugin.id!=='brdplan'||m.pluginId!==plugin.id||m.protocol!==1||!/^editor_[0-9]{1,32}$/.test(m.requestId||'')||!['schematic','pcb'].includes(m.view)||typeof m.sessionPath!=='string'||m.sessionPath.length>500||m.sessionPath.startsWith('/')||m.sessionPath.split('/').some(p=>!p||p==='.'||p==='..')||/[\\\x00-\x1f]/.test(m.sessionPath))return;
+    const request={protocol:1,requestId:m.requestId,sessionPath:m.sessionPath,view:m.view};
+    const reply=(status,error)=>frame.contentWindow.postMessage({type:'aide.workbench.editor.status',protocol:1,requestId:request.requestId,status,...(error?{error}:{})},'*');
+    editor.hidden=false;editor.disabled=false;editor.textContent=m.view==='pcb'?'打开 PCB 手画编辑器':'打开原理图手画编辑器';notice.textContent='手画会锁定AI写入；请在原生窗口保存并正常关闭';reply('ready');
+    editor.onclick=async event=>{
+     if(!event.isTrusted||invalid()||editor.disabled)return;
+     editor.disabled=true;
+     const popup=window.open('about:blank','_blank');if(popup)popup.opener=null;
+     try{const response=await services.api('/plugins/brdplan/editor/open',{method:'POST',body:JSON.stringify(request),signal:abort.signal});
+      if(invalid())throw Error('工作区已切换');
+      if(response.protocol!==1||response.status!=='ready'||!/^\/plugin-editor\/[a-f0-9]{64}\/$/.test(response.url)||!(/^[a-f0-9]{64}$/.test(response.editorId)))throw Error('Invalid editor response');
+      item.editorId=response.editorId;
+      if(!popup)throw Error('请允许Aide打开编辑器窗口，再次点击恢复');
+      popup.location=response.url;reply('opened');notice.textContent='原生窗口已打开；保存后关闭原生窗口，再刷新工程';
+     }catch(error){popup?.close();reply('error',error.message);services.toast(error.message);}finally{editor.disabled=false;}
+    };return;
+   }
    if(m?.type!=='aide.workbench.export'){item.toolReady?.(e);return;}
    const respond=(status,error)=>frame.contentWindow.postMessage({type:'aide.workbench.export.status',protocol:1,requestId:m.requestId,status,...(error?{error}:{})},'*');
    if(m.protocol!==1||m.pluginId!==plugin.id||typeof m.requestId!=='string'||!/^export_[0-9]+$/.test(m.requestId))return;

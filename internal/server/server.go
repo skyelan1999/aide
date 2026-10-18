@@ -489,6 +489,9 @@ type App struct {
 	version                   string
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
+	nativeEditorAdmission     sync.RWMutex
+	nativeEditorOpening       bool
+	nativeEditors             map[string]*nativeEditorLease
 	pluginWorkbenchTickets    map[string]pluginWorkbenchTicket
 	pluginWorkbenchBridges    map[string]*pluginWorkbenchBridge
 	pluginLifecycle           sync.Mutex
@@ -1473,6 +1476,10 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/{instance}/call", a.callWorkbenchBridge)
 	mux.HandleFunc("DELETE /api/plugins/{id}/workbench/{instance}", a.closeWorkbenchBridge)
 	mux.HandleFunc("GET /plugin-workbench/{ticket}", a.servePluginWorkbench)
+	mux.HandleFunc("POST /api/plugins/{id}/editor/open", a.openNativeEditor)
+	mux.HandleFunc("DELETE /api/plugins/brdplan/editor/{ticket}", a.closeNativeEditor)
+	mux.HandleFunc("GET /plugin-editor/{ticket}/{asset...}", a.serveNativeEditor)
+	mux.HandleFunc("POST /plugin-editor/{ticket}/{asset...}", a.serveNativeEditor)
 	mux.HandleFunc("PUT /api/plugins/{id}/settings", a.updatePluginSettings)
 	mux.HandleFunc("POST /api/plugins/{id}/upgrade", a.upgradePlugin)
 	mux.HandleFunc("GET /api/file/history", a.markdownHistoryAPI)
@@ -1704,6 +1711,15 @@ func (a *App) buildHandler() {
 			if subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
 				w.Header().Set("X-Aide-Auth-Required", "token")
 				fail(w, 401, errors.New("请输入访问令牌，或用 start.command 打开"))
+				return
+			}
+		}
+		if nativeEditorMutationRoute(r) {
+			ctx, release := a.nativeEditorEnter(r.Context())
+			defer release()
+			r = r.WithContext(ctx)
+			if err := a.nativeEditorWriteError(); err != nil {
+				fail(w, 409, err)
 				return
 			}
 		}

@@ -861,6 +861,13 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 }
 
 func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (any, error) {
+	parent, editorRelease := a.nativeEditorEnter(parent)
+	defer editorRelease()
+	if pluginID != "brdplan" || !nativeEditorReadTool(toolName) {
+		if err := a.nativeEditorWriteError(); err != nil {
+			return nil, err
+		}
+	}
 
 	// Reserve the whole footprint first: a writer waiting for its own plugin
 	// must already block later conflicting readers from other plugins. Every

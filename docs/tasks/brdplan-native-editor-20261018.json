@@ -10,8 +10,8 @@
     "Real user STM32 hand-edit/save/close/reopen/readback required; no stale or unknown editor auto-unlock."
   ],
   "scope": [
-    "Native editor host API, target preparation, lease/revocation/write guards, fixed proxy/viewer and focused tests",
-    "Source only while 3D owns runtime/browser; preserve TestBench baseline and no Docker socket."
+    "Fixed BrdPlan editor provider API, workspace/generation/package/lock binding, opaque viewer and scoped backend proxy",
+    "Trusted parent manual editor action; native editing admission and persistent unknown lock; local deployment preserving TestBench baseline"
   ],
   "stages": {
     "requirements": {
@@ -22,23 +22,28 @@
       ]
     },
     "design": {
-      "status": "in_progress",
-      "summary": "Fixed broker explicitly bound to configured workspace/session; generation/project triplet snapshot, lease and opaque viewer constraints.",
+      "status": "pass",
+      "summary": "Frozen BrdPlan fixed broker, scope-bound opaque viewer and persistent edit lock. A shared admission gate refuses editor open during host work and rejects concurrent writes while native editing.",
       "evidence": [
-        "docs/architecture/native-editor-session-v1-proposal.md"
+        "internal/server/native_editor.go",
+        "../aide-pkg-BrdPlan/docs/integration/native-editor-contract-v1.md"
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Read-only target resolver/snapshot implemented. API/proxy/viewer/edit-lock wiring remains to implement; no live endpoint advertised.",
+      "status": "pass",
+      "summary": "Implemented fixed provider open/revoke/proxy/heartbeat/parent action, admission at file mutation APIs, tools/plugins and shell paths. No arbitrary URL/command or global browser bearer.",
       "evidence": [
-        "internal/server/native_editor_target.go"
+        "internal/server/native_editor.go",
+        "internal/server/web/plugin-workbench.js",
+        "internal/server/workflow.go",
+        "internal/server/plugins.go"
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "Target fixtures authored; gofmt parse passed. Go compile/regressions deferred during 3D capacity window. No browser actions.",
+      "status": "in_progress",
+      "summary": "Actual Go NativeEditor/Workbench/Workspace focused tests PASS (8.726s), verify quick PASS. Real deployed Safari manual editing remains pending.",
       "evidence": [
+        "internal/server/native_editor_test.go",
         "internal/server/native_editor_target_test.go"
       ]
     },
@@ -60,5 +65,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Continue native editor endpoint/lease/proxy and all AI-write admission guards next, before new RF modules. Must preserve latest TestBench image/network/token mounts and actual export support. No deployment until coordinator hands over window."
+  "handoff": "BrdPlan owns source now; coordinator granted next deployment/browser window after RF short preview. Official external editor environment install/restart/upgrade/rollback verified. Await real host deployment/manual acceptance."
 }

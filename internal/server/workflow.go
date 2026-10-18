@@ -3729,6 +3729,11 @@ func legacyReadOnlyAllowed(command string) bool {
 }
 
 func (a *App) execShellCommand(parent context.Context, task *Task, command string) (string, int, error) {
+	parent, editorRelease := a.nativeEditorEnter(parent)
+	defer editorRelease()
+	if err := a.nativeEditorWriteError(); err != nil {
+		return "", -1, err
+	}
 	a.mu.Lock()
 	mode := a.settings.SandboxMode
 	timeoutSec := a.settings.ShellTimeout
@@ -3940,6 +3945,13 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 }
 
 func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, versions map[string]Change) string {
+	ctx, editorRelease := a.nativeEditorEnter(ctx)
+	defer editorRelease()
+	if !nativeEditorReadTool(call.Function.Name) {
+		if err := a.nativeEditorWriteError(); err != nil {
+			return err.Error()
+		}
+	}
 	a.mu.Lock()
 	mode := task.WorkspaceMode
 	if mode == "" {
@@ -4586,6 +4598,9 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 
 // recordToolProposal 把工具写操作转为待批准提案。
 func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[string]any) (string, error) {
+	if err := a.nativeEditorWriteError(); err != nil {
+		return "", err
+	}
 	kind, _ := p["type"].(string)
 	switch kind {
 	case "file":
