@@ -68,8 +68,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source-only main gate and push pending; no new version or production deployment.",
+      "status": "pass",
+      "summary": "Feature 86e7d840 merged to main as 02a8bf391a6e54f3987f9d26a46bc1277e651331; full/current-source and public-default-asset metadata release-check passed. Push succeeded and exact origin/main SHA verified. Source-only, no new Release or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-19/urdf-compact-callouts.md"
       ]
@@ -77,5 +77,5 @@
   },
   "release_authorization": "Standing user instruction to integrate and push completed changes to main; no new public Release or production restart.",
   "rollback": "Revert feature merge and rebuild; no persistence or URDF file changes.",
-  "handoff": ""
+  "handoff": "Source pushed to main. QA candidate aide:qa-urdf-compact-20261019 on 59197 retained; production not replaced. To install current source use AIDE_BUILD_FROM_SOURCE=1 ./start.command then refresh. No new Release attachments. Review records validation boundaries and rollback."
 }
