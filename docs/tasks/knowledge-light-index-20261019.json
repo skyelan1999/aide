@@ -46,7 +46,10 @@
     "requirements": {
       "status": "pass",
       "summary": "按用户最新轻量方案，全文磁盘索引方案停止；固定结构预算，不保证任意正文召回",
-      "evidence": []
+      "evidence": [
+        "User instruction 2026-10-19: implement lightweight heading and key-function index, no full-text cache; compare the same directory.",
+        "docs/reviews/2026-10-19-light-index.md documents acceptance, exact corpus and scope limits."
+      ]
     },
     "design": {
       "status": "pass",
@@ -69,7 +72,8 @@
       "summary": "Final focused Go race14.812s, plugin17 tests and real Safari line101 highlight PASS; live function line465;13 corpus cases x9 rounds",
       "evidence": [
         "docs/reviews/2026-10-19-light-index.md",
-        "docs/reviews/2026-10-19-light-index.json"
+        "docs/reviews/2026-10-19-light-index.json",
+        "Release full profile PASS: 138 checks; 1032 registered server items in 12 disjoint race shards, other packages race, vet, runtime assets and CAD geometry; fingerprint c6cd40c07a7e04c0196bf3f4acf66922e812153e63840cd43fa7d5ac3b770609."
       ]
     },
     "documentation": {
