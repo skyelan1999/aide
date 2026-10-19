@@ -30,21 +30,34 @@
     }
     return [...grouped.values()];
   }
+  function icon(kind='bell') {
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    for(const [name,value] of Object.entries({viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':'1.7','stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false'}))svg.setAttribute(name,value);
+    const paths=kind==='settings'?['M4 6h4m4 0h8M4 18h8m4 0h4M8 3v6m8 6v6']:kind==='add'?['M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8','M2 21v-2a6 6 0 0 1 12 0v2m4-13v8m-4-4h8']:kind==='read'?['m3 12 5 5L19 6','m12 17 9-11']:kind==='close'?['m6 6 12 12M18 6 6 18']:['M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9','M10 21h4',...(kind==='muted'?['M3 3l18 18']:[])];
+    for(const d of paths){const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);svg.append(path);}return svg;
+  }
   function ruleControl({key,config,save,tr}) {
-    const details=make('details',null,'message-notification-rule');
-    const summary=make('summary',tr(mode(config,key)==='default'?'通知设置':mode(config,key)==='mute'?'免打扰':'已屏蔽提示'));
-    summary.setAttribute('aria-label',tr('会话通知设置'));details.append(summary);
-    const form=make('form',null,'message-notification-rule-form');
+    const control=make('div',null,'message-notification-rule');
+    const current=mode(config,key),label=tr(current==='default'?'通知设置':current==='mute'?'免打扰':'已屏蔽提示');
+    const toggle=make('button',null,'quiet message-notification-toggle');toggle.type='button';toggle.title=label;toggle.setAttribute('aria-label',tr('会话通知设置')+' · '+label);toggle.setAttribute('aria-expanded','false');toggle.classList.toggle('is-suppressed',current!=='default');toggle.append(icon(current==='default'?'bell':'muted'));
+    const form=make('form',null,'message-notification-rule-form');form.hidden=true;form.setAttribute('aria-label',tr('会话通知设置'));
+    const close=()=>{form.hidden=true;toggle.setAttribute('aria-expanded','false');};
+    toggle.onclick=()=>{form.hidden=!form.hidden;toggle.setAttribute('aria-expanded',String(!form.hidden));};
+    const heading=make('div',null,'message-notification-rule-heading');const dismiss=make('button',null,'quiet message-notification-dismiss');dismiss.type='button';dismiss.title=tr('关闭');dismiss.setAttribute('aria-label',tr('关闭'));dismiss.append(icon('close'));dismiss.onclick=()=>{close();toggle.focus();};heading.append(make('strong',tr('会话通知设置')),dismiss);
+    const field=(label,input)=>{const item=make('label',null,'message-field');item.append(make('span',tr(label)),input);return item;};
     const choice=make('select');choice.setAttribute('aria-label',tr('提示方式'));
     for(const[value,label]of[['default','跟随全局'],['mute','免打扰'],['hidden','屏蔽全部提示']]){const option=make('option',tr(label));option.value=value;choice.append(option);}
-    choice.value=mode(config,key);
+    choice.value=current;
     const duration=make('select');duration.setAttribute('aria-label',tr('免打扰时长'));
     for(const[value,label]of[['0','永久'],['1','1 小时'],['8','8 小时']]){const option=make('option',tr(label));option.value=value;duration.append(option);}
+    duration.disabled=current==='default';choice.onchange=()=>{duration.disabled=choice.value==='default';};
+    const fields=make('div',null,'message-notification-rule-fields');fields.append(field('提示方式',choice),field('免打扰时长',duration));
     const info=make('small',tr('继续接收消息；免打扰保留灰色未读数，屏蔽隐藏角标。'));
-    if(config.conversations?.[key]?.until && mode(config,key)!=='default')info.append(make('span',' '+new Date(config.conversations[key].until).toLocaleString()));
-    const error=make('p',null,'message-empty');error.setAttribute('role','alert');const apply=make('button',tr('应用'),'quiet');apply.type='submit';form.append(choice,duration,info,error,apply);
-    form.onsubmit=async event=>{event.preventDefault();apply.disabled=true;try{await save({key,mode:choice.value,until:choice.value!=='default'&&Number(duration.value)?new Date(Date.now()+Number(duration.value)*3600000).toISOString():''});details.open=false;}catch(failure){error.textContent=failure.message;}finally{apply.disabled=false;}};
-    details.append(form);return details;
+    if(config.conversations?.[key]?.until && current!=='default')info.append(make('span',' '+new Date(config.conversations[key].until).toLocaleString()));
+    const error=make('p',null,'message-empty');error.setAttribute('role','alert');const apply=make('button',tr('应用'),'primary');apply.type='submit';const actions=make('div',null,'message-notification-rule-actions');actions.append(apply);form.append(heading,fields,info,error,actions);
+    form.onkeydown=event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();toggle.focus();}};
+    form.onsubmit=async event=>{event.preventDefault();apply.disabled=true;error.textContent='';try{await save({key,mode:choice.value,until:choice.value!=='default'&&Number(duration.value)?new Date(Date.now()+Number(duration.value)*3600000).toISOString():''});close();}catch(failure){error.textContent=failure.message;}finally{apply.disabled=false;}};
+    control.append(toggle,form);return control;
   }
   function settingsForm({host,config,save,tr,labelFor}) {
     const form=make('form',null,'message-config-form notification-config-form');
@@ -74,5 +87,5 @@
     for(const key of keys){const row=make('div',null,'message-notification-suppressed');row.append(make('span',labelFor(key)),ruleControl({key,config,tr,save:conversation=>save({conversation})}));rules.append(row);}
     host.append(rules);return form;
   }
-  window.AideMessageNotifications=Object.freeze({keyOf,mode,badge,canRead,channels,batches,ruleControl,settingsForm});
+  window.AideMessageNotifications=Object.freeze({keyOf,mode,badge,canRead,channels,batches,icon,ruleControl,settingsForm});
 })();

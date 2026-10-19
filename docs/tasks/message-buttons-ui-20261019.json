@@ -1,0 +1,75 @@
+{
+  "id": "message-buttons-ui-20261019",
+  "request": "消息里按钮UI优化：布局不协调，渲染有遮挡",
+  "baseline": "e567f195a8aeae39f0a5b421d7f58689d3724a7b",
+  "initial_status": "",
+  "acceptance": [
+    "Message header actions and conversation counters align at desktop and narrow widths.",
+    "Conversation notification settings expand inline, remain reachable in short scroll panels, and never overlay subsequent content.",
+    "Toggle, close, Escape, save and failure behavior preserve accessibility and existing policy semantics.",
+    "Record actual browser observations and focused regressions; distinguish component from complete workbench verification."
+  ],
+  "scope": [
+    "internal/server/web/message-center.css",
+    "internal/server/web/message-center.js",
+    "internal/server/web/message-notifications.js",
+    "scripts/message-notifications.test.cjs",
+    "docs/tasks/message-buttons-ui-20261019.json",
+    "docs/reviews/2026-10-19/message-buttons-ui.md",
+    "docs/prd/2026-10-19-message-notifications.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Replace cramped text actions with accessible 36px SVG controls; align title/subtitle/badge; replace absolute floating notification menu with inline full-width card. Preserve notification data/API semantics.",
+      "evidence": [
+        "docs/tasks/message-buttons-ui-20261019.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Replace cramped text actions with accessible 36px SVG controls; align title/subtitle/badge; replace absolute floating notification menu with inline full-width card. Preserve notification data/API semantics.",
+      "evidence": [
+        "docs/tasks/message-buttons-ui-20261019.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Unified accessible SVG action controls, title/subtitle/badge alignment and inline notification cards; prevent background repaint while editing. No backend/schema change.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-buttons-ui.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final 129 quick checks pass with matching fingerprint; browser component desktop/narrow light/dark interactions and no-overlap measurements pass. Final local build and original-start.command candidate health/exact-assets smoke pass. Complete Safari workbench certificate blocked; NOT_RUN, not replaced by component evidence.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-buttons-ui.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated current notification PRD and detailed review with actual commands, source identity, candidate, limitations and rollback.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-buttons-ui.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed own component page/server and restored viewport. First intermediate image already absent; no broad prune. Retain one existing QA pair/page for pending certificate handoff; production unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-buttons-ui.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Feature branch delivery only; no main merge, version bump, Release or production replacement. Full release gate not run for this frontend branch delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-buttons-ui.md"
+      ]
+    }
+  },
+  "release_authorization": "User requested UI repair; prior timely source branch push preference retained. No new version, production deployment or main merge requested for this repair.",
+  "rollback": "Revert this frontend-only change; no storage schema, API or notification policy change.",
+  "handoff": "Push fix/message-buttons-ui-20261019 after docs validation. Final quick 129 pass; exact source candidate served on https://localhost:59197 via original start.command. Component no-overlap interactions passed; complete Safari still requires human certificate acceptance. One QA pair retained, production untouched. Review documents rollback and limitations."
+}
