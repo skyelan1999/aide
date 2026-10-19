@@ -588,6 +588,15 @@
       [
         "node",
         "--check",
+        "internal/server/web/urdf-preview.js"
+      ],
+      [
+        "node",
+        "scripts/urdf-preview.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
         "internal/server/web/step-metrology.js"
       ],
       [

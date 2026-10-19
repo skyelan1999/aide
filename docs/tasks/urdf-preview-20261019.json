@@ -1,0 +1,92 @@
+{
+  "id": "urdf-preview-20261019",
+  "request": "在项目文件中支持URDF预览",
+  "baseline": "266079cb0659b042953b8aa2f8abac86870c894b",
+  "initial_status": "",
+  "acceptance": [
+    "Preview .urdf in project editor and standalone file tab while preserving editable XML source and read-only permissions.",
+    "Render primitives, STL/DAE/OBJ meshes, colors, link origins/scales and fixed/revolute/continuous/prismatic/mimic joints; show joint limits and unsupported manipulation clearly.",
+    "Read relative/package mesh and texture references only through the same authorized workspace/source; no external URL or traversal requests.",
+    "Provide model framing, orbit controls, collision/wireframe/axes, joint reset and actionable missing-resource messages.",
+    "Bound resource work and cancel pending reads/WebGL resources on close, mode change or lock; verify actual browser and targeted regressions."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/urdf-preview.js",
+    "internal/server/web/urdf-preview.css",
+    "internal/server/web/vendor/urdf-loader",
+    "internal/server/web/vendor/ColladaLoader.js",
+    "internal/server/web/vendor/OBJLoader.js",
+    "internal/server/web/vendor/three-LICENSE.txt",
+    "internal/server/web/locales/en.js",
+    "scripts/urdf-preview.test.cjs",
+    "scripts/file-route-location.test.cjs",
+    "scripts/fixtures/urdf",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/prd/2026-10-19-urdf-preview.md",
+    "docs/reviews/2026-10-19/urdf-preview.md",
+    "docs/tasks/urdf-preview-20261019.json",
+    "docs/PRD.md",
+    "docs/reviews/2026-10-19/urdf-preview-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Reuse existing r128 graphics stack and scoped raw file API; vendored compatible upstream URDF/mesh loaders, retain XML editing, guarded package assets and bounded lifecycle. Acceptance and limitations documented in task.",
+      "evidence": [
+        "docs/tasks/urdf-preview-20261019.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing r128 graphics stack and scoped raw file API; vendored compatible upstream URDF/mesh loaders, retain XML editing, guarded package assets and bounded lifecycle. Acceptance and limitations documented in task.",
+      "evidence": [
+        "docs/tasks/urdf-preview-20261019.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "URDF viewer integrated with editable XML, offline loaders, scoped resource resolution and bounded disposal.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-preview-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "131 quick checks passed; real WebGL component acceptance and original-launcher candidate/API smoke passed. Full workbench/SSH/Windows remain unverified as documented.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-preview-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD, architecture, provenance, review and sanitized proof completed.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-preview-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own component tabs/server closed; two superseded owned QA image tags removed. One candidate pair retained; production untouched.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-preview-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source-only main integration authorized under standing scoped lightweight verification direction; no new Release or production deployment. Full-profile release gate not claimed.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-preview.md"
+      ]
+    }
+  },
+  "release_authorization": "User requests URDF project-file preview; retain standing timely source push/main integration preference. No new version/Release or production replacement requested.",
+  "rollback": "Revert the URDF feature merge; no schema migration or user-file mutation from preview. XML source saves retain existing explicit/autosave semantics.",
+  "handoff": "Feature source ready for main integration. Candidate 59197 runs via original launcher; production not replaced. Safari full-workbench certificate handoff remains. No new Release requested. See review for limits, tests and rollback."
+}

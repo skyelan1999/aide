@@ -1,0 +1,25 @@
+[
+  {
+    "package": "urdf-loader",
+    "version": "0.10.5",
+    "tarball": "https://registry.npmjs.org/urdf-loader/-/urdf-loader-0.10.5.tgz",
+    "integrity": "sha512-FUraBxRdbn1kuZ7vIoLC03V0dwISOQfbSxaLVXWl34tFC7zHnaP4nvqR1trHaqVL/wf0N+zOTYnNo2MEJVYPlg==",
+    "gitHead": "9e5f0fd0d6be753c58a1e5449977384824bb510a",
+    "files": {
+      "urdf-loader/URDFLoader.js": "d6476019328ca809345f44c907627bc5d3f6d92343b3706f1cacdb73b528f97a"
+    },
+    "licenseSource": "https://raw.githubusercontent.com/gkjohnson/urdf-loaders/9e5f0fd0d6be753c58a1e5449977384824bb510a/LICENSE"
+  },
+  {
+    "package": "three",
+    "version": "0.128.0",
+    "tarball": "https://registry.npmjs.org/three/-/three-0.128.0.tgz",
+    "integrity": "sha512-i0ap/E+OaSfzw7bD1TtYnPo3VEplkl70WX5fZqZnfZsE3k3aSFudqrrC9ldFZfYFkn1zwDmBcdGfiIm/hnbyZA==",
+    "gitHead": "d4aa9e00ea29808534a3e082f602c544e5f2419c",
+    "files": {
+      "ColladaLoader.js": "637adbe8f9f9707719d05fa128fda0a5dc5709c2f9e806530f0113e18d2edbb1",
+      "OBJLoader.js": "e3c4cf3a6b061b6956e8e8d5cc360cf95da456dcced32961f859c8be6849a579",
+      "three-LICENSE.txt": "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+    }
+  }
+]

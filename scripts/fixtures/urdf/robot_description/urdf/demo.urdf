@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot name="aide_demo_arm">
+  <material name="base_blue"><color rgba="0.25 0.5 0.8 1"/><texture filename="../meshes/textures/checker.png"/></material>
+  <material name="arm_orange"><color rgba="0.95 0.55 0.18 1"/></material>
+  <link name="base_link"><visual><origin xyz="0 0 0.08"/><geometry><cylinder radius="0.18" length="0.16"/></geometry><material name="base_blue"/></visual><collision><origin xyz="0 0 0.08"/><geometry><cylinder radius="0.18" length="0.16"/></geometry></collision></link>
+  <link name="arm_link"><visual><origin xyz="0.22 0 0"/><geometry><box size="0.44 0.075 0.075"/></geometry><material name="arm_orange"/></visual><collision><origin xyz="0.22 0 0"/><geometry><box size="0.44 0.08 0.08"/></geometry></collision></link>
+  <joint name="shoulder" type="revolute"><parent link="base_link"/><child link="arm_link"/><origin xyz="0 0 0.22"/><axis xyz="0 0 1"/><limit lower="-1.57" upper="1.57" effort="10" velocity="1"/></joint>
+  <link name="wrist_link"><visual><geometry><sphere radius="0.06"/></geometry><material name="base_blue"/></visual></link>
+  <joint name="wrist" type="continuous"><parent link="arm_link"/><child link="wrist_link"/><origin xyz="0.44 0 0"/><axis xyz="0 1 0"/></joint>
+  <link name="tool_link"><visual><origin xyz="0.09 0 0"/><geometry><mesh filename="../meshes/tool.stl" scale="0.1 0.1 0.1"/></geometry><material name="base_blue"/></visual></link>
+  <joint name="slide" type="prismatic"><parent link="wrist_link"/><child link="tool_link"/><origin xyz="0.06 0 0"/><axis xyz="1 0 0"/><limit lower="0" upper="0.15" effort="10" velocity="1"/></joint>
+  <link name="sensor_link"><visual><geometry><mesh filename="package://robot_description/meshes/sensor.dae"/></geometry></visual></link>
+  <joint name="sensor_mount" type="fixed"><parent link="base_link"/><child link="sensor_link"/><origin xyz="-0.12 0 0.22"/></joint>
+  <link name="mimic_link"><visual><origin xyz="0.05 0 0"/><geometry><box size="0.1 0.035 0.035"/></geometry><material name="arm_orange"/></visual></link>
+  <joint name="follower" type="revolute"><parent link="base_link"/><child link="mimic_link"/><origin xyz="0 0 0.11"/><axis xyz="0 0 1"/><limit lower="-3.14" upper="3.14" effort="1" velocity="1"/><mimic joint="shoulder" multiplier="-1" offset="0"/></joint>
+</robot>

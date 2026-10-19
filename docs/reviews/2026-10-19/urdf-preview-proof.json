@@ -1,0 +1,56 @@
+{
+  "task": "urdf-preview-20261019",
+  "baseline": "266079cb0659b042953b8aa2f8abac86870c894b",
+  "quick": {
+    "status": "pass",
+    "commands": 131,
+    "fingerprint": "7427dc7ab0d66cf14321b549981fe1b6708fb73ad5fe2c4dcd16cbeb749fb854",
+    "time": "20261019T073245741759Z"
+  },
+  "runtime": {
+    "status": "pass",
+    "launcher": "start.command",
+    "port": 59197,
+    "image": "aide:qa-urdf-preview-20261019",
+    "image_id": "sha256:089fe8e9e52773fb0aa3dd997b589287467b8f135b228639d2f78e590b853d94",
+    "health": 200,
+    "embedded_assets_exact_sha256": 7,
+    "synthetic_raw_files_exact_sha256": 6,
+    "urdf_text_exact": true,
+    "tls": "exact DER pin before each authenticated request"
+  },
+  "browser": {
+    "real_webgl": "pass in in-app browser and native Safari",
+    "synthetic_model": {
+      "links": 6,
+      "joints": 5,
+      "triangles": 2024
+    },
+    "interaction": "in-app browser joint sliders, collision, axes, package override, OBJ, cancel, source, close, lock passed",
+    "narrow_viewport": [
+      390,
+      844
+    ],
+    "horizontal_overflow": false,
+    "safari_joint_adjustment": "NOT_VERIFIED"
+  },
+  "not_run": [
+    "full Go race/full profile",
+    "release gate requiring full profile",
+    "full workbench file-tree UI and real save persistence",
+    "real SSH resources",
+    "Windows",
+    "large real robot",
+    "precise browser memory delta"
+  ],
+  "cleanup": {
+    "component_tabs_closed": true,
+    "temporary_fixture_server_stopped": true,
+    "removed_superseded_owned_image_tags": [
+      "aide:qa-message-notifications-20261019",
+      "aide:qa-message-buttons-ui-20261019"
+    ],
+    "candidate_pair_retained": true,
+    "production_unchanged": true
+  }
+}
