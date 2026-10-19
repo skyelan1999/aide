@@ -61,14 +61,14 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Prepare lightweight frontend source integration into main per user standing merge and simple-test direction; no version/Release or runtime deployment. Full profile and full-dependent release-check not run.",
+      "status": "pass",
+      "summary": "Source fix fe5298dd merged into main at 2c2d74d6 and pushed to origin/main. Focused preview/location tests, JS syntax, docs and diff checks pass; native Safari tab lifecycle proven with synthetic viewer. Per standing lightweight frontend direction, full profile/full-dependent release-check not run. No Release, image replacement or production restart.",
       "evidence": [
         "docs/reviews/2026-10-19/starmap-file-new-tab.md"
       ]
     }
   },
   "release_authorization": "Retain user instructions 做完了合并到main and 这个简单测试即可，没改核心组件 for this small frontend repair; announced intended main integration in commentary. No paid calls, new Release or production replacement.",
-  "rollback": "Revert this frontend source merge; no storage/schema or user-file mutation. Previous behavior used the map tab for file navigation.",
-  "handoff": "Ready for source merge/push after docs checks. Native Safari tab-opening/reuse proven with synthetic viewer and real product module/wiring; actual full workbench and SSH content not retested. Production unchanged. Temporary UI tabs/server closed."
+  "rollback": "After reviewing later changes, git revert -m 1 2c2d74d6 reverts this frontend merge; no storage/schema or original-file mutation.",
+  "handoff": "Merged and pushed main at 2c2d74d6 (source fe5298dd). Original map remains open; one separate owned read-only preview tab reused. Safari component confirms local then SSH locator switching without extra tabs. Actual full workbench/SSH file content not retested; existing candidate certificate handoff remains. Runtime image must be rebuilt/updated before deployed instance uses the new frontend. All temporary test tabs/server closed."
 }
