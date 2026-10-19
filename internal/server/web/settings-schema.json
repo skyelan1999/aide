@@ -454,6 +454,12 @@
       "controls": []
     },
     {
+      "id": "notifications",
+      "title": "通知与角标",
+      "description": "管理未读气泡、未完成提醒、提示方式及会话免打扰。",
+      "controls": []
+    },
+    {
       "id": "account",
       "title": "账户",
       "description": "设置用户名与锁屏密码；锁屏密码同时作为小秘对话历史的加密密钥。不设密码则不锁屏。",

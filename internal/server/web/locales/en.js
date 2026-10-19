@@ -2892,3 +2892,4 @@ Object.assign(window.aideEnglish, {"全部": "All", "创作与专业": "Creation
 
 Object.assign(window.aideEnglish, {'运行依赖':'Dependencies','使用 Aide 内置运行环境':'Uses the bundled Aide runtime'});
 Object.assign(window.aideEnglish, {'查看待审批提案':'Review pending proposal'});
+Object.assign(window.aideEnglish, {'通知与角标':'Notifications and badges','管理未读气泡、未完成提醒、提示方式及会话免打扰。':'Manage unread badges, unfinished reminders, alerts and conversation muting.'});

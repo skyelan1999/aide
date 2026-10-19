@@ -48,7 +48,12 @@ func (s *Service) afterRevoke(ctx context.Context, inv Invitation) {
 		}
 	}
 }
+
+// MarkRead is the explicit legacy "mark conversation read" operation.
 func (s *Service) MarkRead(peer, group string) error {
+	return s.MarkReadThrough(peer, group, "")
+}
+func (s *Service) MarkReadThrough(peer, group, through string) error {
 	key := peer
 	if group != "" {
 		key = "group:" + group
@@ -56,24 +61,53 @@ func (s *Service) MarkRead(peer, group string) error {
 	if (group == "" && !validFingerprint(peer)) || (group != "" && !validID(group)) {
 		return ErrDenied
 	}
+	return s.MarkReadBatch(map[string]string{key: through})
+}
+
+// MarkReadBatch applies a single atomic snapshot boundary. A delayed request
+// cannot clear messages received after the supplied IDs, even with old timestamps.
+func (s *Service) MarkReadBatch(boundaries map[string]string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.state.Read == nil {
-		s.state.Read = map[string]int64{}
+	oldSeq := s.state.ReadSequence
+	oldRead := s.state.Read
+	nextSeq := make(map[string]uint64, len(oldSeq))
+	nextRead := make(map[string]int64, len(oldRead))
+	for k, v := range oldSeq {
+		nextSeq[k] = v
 	}
-	latest := int64(0)
-	for _, message := range s.state.Messages {
-		if message.Incoming && ((group != "" && message.Group == group) || (group == "" && message.Group == "" && message.Peer == peer)) && message.At.UnixNano() > latest {
-			latest = message.At.UnixNano()
+	for k, v := range oldRead {
+		nextRead[k] = v
+	}
+	if len(boundaries) > 4096 {
+		return ErrDenied
+	}
+	for key, id := range boundaries {
+		if !validConversationKey(key) {
+			return ErrDenied
+		}
+		found := id == ""
+		for _, m := range s.state.Messages {
+			if !m.Incoming || conversationKey(m) != key || (id != "" && m.ID != id) {
+				continue
+			}
+			found = true
+			if m.Sequence > nextSeq[key] {
+				nextSeq[key] = m.Sequence
+			}
+			if m.At.UnixNano() > nextRead[key] {
+				nextRead[key] = m.At.UnixNano()
+			}
+		}
+		if !found {
+			return ErrDenied
 		}
 	}
-	old := s.state.Read[key]
-	if latest <= old {
-		return nil
-	}
-	s.state.Read[key] = latest
+	s.state.ReadSequence = nextSeq
+	s.state.Read = nextRead
 	if err := s.persistLocked(); err != nil {
-		s.state.Read[key] = old
+		s.state.ReadSequence = oldSeq
+		s.state.Read = oldRead
 		return err
 	}
 	return nil

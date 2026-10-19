@@ -1523,16 +1523,17 @@ async function stopRunById(runId) {
   }
   async function refreshBadge() {
     try {
+      if(center.messageUI){await center.messageUI.refresh();return;}
       const result = await api('/reminders?status=pending');
       const count = result.items?.length || 0;
       badge.textContent = count > 99 ? '99+' : String(count); badge.classList.toggle('hidden', count === 0);
     } catch (_) {}
   }
   async function checkDuePopups() {
-    if (popupBusy || $('reminder-alert').open || document.visibilityState === 'hidden') return;
+    if (popupBusy || $('reminder-alert').open || document.visibilityState === 'hidden' || !center.messageUI?.allowReminderPopup()) return;
+    popupBusy = true;
     try {
-      const due = await api('/reminders/due'); if (!due.length) return;
-      popupBusy = true;
+      const due = await api('/reminders/due'); if (!due.length || !center.messageUI?.allowReminderPopup()) {popupBusy=false;return;}
       const host = $('reminder-alert-items'); host.replaceChildren();
       for (const item of due) {
         const row = el('div', 'reminder-alert-item'); row.append(el('strong', '', item.title));
@@ -1570,6 +1571,7 @@ async function stopRunById(runId) {
   refreshBadge(); checkDuePopups();
   setInterval(() => { refreshBadge(); checkDuePopups(); }, 30000);
   window.addEventListener('focus', checkDuePopups);
+  window.addEventListener('aide:notification-policy',checkDuePopups);
   const messageUI = window.AideMessageCenter?.mount({center, api, t, toast,
     openSettings: async section => { settingsPanel.active=section; await openSettingsSheet(); },
     raw: (path, options={}) => fetch('/api'+path,{...options,headers:{Authorization:'Bearer '+state.token,...options.headers}}),
@@ -5309,6 +5311,7 @@ function renderSettingsSheet() {
   const section = sections.find(x => x.id === settingsPanel.active);
   if (!section) return;
   content.append(el('h3', 'settings-page-title', section.title));
+  if(section.id==='notifications'){const host=el('div','message-settings-page');content.append(host);document.getElementById('reminder-center')?.messageUI?.renderNotifications(host);settingsPanel.rendered=true;return;}
   if(section.id==='messages'){const host=el('div','message-settings-page');content.append(host);document.getElementById('reminder-center')?.messageUI?.renderSettings(host);settingsPanel.rendered=true;return;}
   if (section.children?.length) {
     const sub = el('div', 'settings-subnav');

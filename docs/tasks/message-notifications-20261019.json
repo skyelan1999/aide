@@ -1,6 +1,6 @@
 {
   "id": "message-notifications-20261019",
-  "request": "设计消息图标未读气泡，汇总会话、群组和未完成提醒，设置内管理红色气泡，并支持聊天和群组屏蔽提示",
+  "request": "设计消息图标未读气泡，汇总会话、群组和未完成提醒，设置内管理红色气泡，并支持聊天和群组屏蔽提示；用户随后明确要求实现",
   "baseline": "6136df16d44cc41c9157b61136c081ea91dfd603",
   "initial_status": "",
   "acceptance": [
@@ -11,7 +11,21 @@
   ],
   "scope": [
     "docs/prd/2026-10-19-message-notifications.md",
-    "docs/tasks/message-notifications-20261019.json"
+    "docs/tasks/message-notifications-20261019.json",
+    "internal/messaging",
+    "internal/server/message_center.go",
+    "internal/server/message_notifications.go",
+    "internal/server/message_notifications_test.go",
+    "internal/server/web/message-center.js",
+    "internal/server/web/message-notifications.js",
+    "internal/server/web/message-center.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/settings-schema.json",
+    "scripts/message-notifications.test.cjs",
+    "docs/reviews/2026-10-19/message-notifications.md",
+    "docs/agent/router.json"
   ],
   "stages": {
     "requirements": {
@@ -29,42 +43,42 @@
       ]
     },
     "implementation": {
-      "status": "not_run",
-      "summary": "User requested mechanism design; product implementation and new release are outside this design delivery.",
+      "status": "pass",
+      "summary": "Implemented authoritative unread/count summary, arrival-sequence read boundaries, persisted revisioned global and conversation notification controls, UI badges, mute menus and bounded new-event alerts.",
       "evidence": [
-        "docs/prd/2026-10-19-message-notifications.md"
+        "docs/reviews/2026-10-19/message-notifications.md"
       ]
     },
     "verification": {
       "status": "pass",
-      "summary": "Inspected existing updateBadge, message read path and reminder wiring; documentation validator and diff whitespace checks passed. No runtime behavior changed.",
+      "summary": "129 quick checks passed. Messaging package and server Message/Reminder tests passed with race, both package vet passed. Real isolated contact/group traffic confirms 3+2+1 totals, mute/include/hidden/due policies and 409 conflict. Product component interactions at desktop/light and 390px/dark passed. Complete Safari workbench blocked by browser certificate warning requiring user handoff; native Windows, real speaker/desktop permission not run.",
       "evidence": [
-        "docs/prd/2026-10-19-message-notifications.md"
+        "docs/reviews/2026-10-19/message-notifications.md"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Complete design draft records current behavior, defaults, implementation order and acceptance matrix.",
+      "summary": "Design updated for implemented API and persisted configuration; review records actual evidence and boundaries.",
       "evidence": [
-        "docs/prd/2026-10-19-message-notifications.md"
+        "docs/reviews/2026-10-19/message-notifications.md"
       ]
     },
     "cleanup": {
-      "status": "pass",
-      "summary": "Only the scoped design draft and task ledger are changed; production untouched.",
+      "status": "in_progress",
+      "summary": "Only scoped implementation and test documents changed; production untouched. Test fixtures private. Candidate rebuild/restart and final test-page cleanup remain.",
       "evidence": [
-        "docs/prd/2026-10-19-message-notifications.md"
+        "docs/reviews/2026-10-19/message-notifications.md"
       ]
     },
     "release": {
       "status": "not_run",
-      "summary": "User requested mechanism design; product implementation and new release are outside this design delivery.",
+      "summary": "Source branch push only; no new Release, version bump, main merge or production replacement in this task.",
       "evidence": [
-        "docs/prd/2026-10-19-message-notifications.md"
+        "docs/reviews/2026-10-19/message-notifications.md"
       ]
     }
   },
-  "release_authorization": "No product release in this design task.",
+  "release_authorization": "User requested implementation; existing timely push authorization applies. No version bump or production replacement requested in this turn.",
   "rollback": "Documentation-only commit can be reverted; no runtime or persisted product state changed.",
-  "handoff": "Design complete. Implement server summary and read cursor boundary first, then UI badges, settings and per-conversation menus; run stated concurrency/persistence tests and real workbench acceptance before a product release."
+  "handoff": "Implementation done; branch push and isolated restart check being completed. Full Safari interaction requires user to accept https://localhost:59197 certificate warning. No new version or production deployment."
 }
