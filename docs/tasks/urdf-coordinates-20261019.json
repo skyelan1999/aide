@@ -1,0 +1,76 @@
+{
+  "id": "urdf-coordinates-20261019",
+  "request": "URDF加按钮显示坐标和rad",
+  "baseline": "877e5636e277e7ab80aaa83407978e49e91f4974",
+  "initial_status": "",
+  "acceptance": [
+    "Toggle coordinates and current RPY rad for links/joints, root or parent frame; independent of camera.",
+    "Show scalar joint value and update pose after motion/reset including mimic.",
+    "Toggle link name labels in model; click selects coordinates; bounded work, teardown and responsive layout."
+  ],
+  "scope": [
+    "internal/server/web/urdf-preview.js",
+    "internal/server/web/urdf-preview.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/urdf-preview.test.cjs",
+    "docs/prd/2026-10-19-urdf-preview.md",
+    "docs/reviews/2026-10-19/urdf-coordinates.md",
+    "docs/tasks/urdf-coordinates-20261019.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Coordinates and radians plus module names requested; two optional toolbar toggles.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-coordinates.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Node origin relative to robot root or direct parent; fixed-axis RPY; bounded projected link labels.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-coordinates.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented pose selection, scalar joint values, live updates, clickable names, locale/cache changes.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-coordinates.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "131 quick checks passed on final content; real WebGL desktop/narrow browser checked labels, select, frames, motion/reset and teardown. No full/production/SSH acceptance claimed.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-coordinates.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD and review describe exact frames, units, limits and runtime boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-coordinates.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Browser tab and fixture server stopped; viewport reset; teardown cleared labels and canvas; no production changes.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-coordinates.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Authorized source-only main integration; no new Release or production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-coordinates.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing source main integration/push and scoped frontend lightweight verification direction; no production replacement or new Release.",
+  "rollback": "Revert feature merge; no user files or stored configuration changed.",
+  "handoff": "Source only; update runtime using original start.command, then reload. No production container replaced. Names use existing URDF link names; no rename or original file write."
+}
