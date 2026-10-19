@@ -9,7 +9,7 @@
 
 完整门禁138项通过，含1032个服务端测试项的12个互斥race分片、其他包race、vet、运行资源及CAD检查。两个架构均通过独立无网络容器中的健康、鉴权、内嵌版本/提交、深层标题与函数行号及源指纹核验。AMD64在本机仿真运行，不替代原生Windows或另一设备验收。
 
-沿用既有本地依赖发行流程：完整race门禁单独通过后，Dockerfile.local构建层执行语法、vet、build，AIDE_RUN_TESTS=0，没有在构建层重复全量测试。完整安装/升级ZIP和离线包按Docker引擎架构提供，镜像身份及SHA256见Release附件中的RELEASE-ASSETS.txt与SHA256SUMS。
+沿用既有本地依赖发行流程：完整race门禁单独通过后，Dockerfile.local构建层执行语法、vet、build，AIDE_RUN_TESTS=0，没有在构建层重复全量测试。每个Docker引擎架构提供一个完整ZIP，用于离线新装及A/B升级，包含启动器、镜像和升级元数据。镜像身份及SHA256见Release附件中的RELEASE-ASSETS.txt与SHA256SUMS。
 
 配套[StarLink 0.1.3](https://github.com/skyelan1999/aide-pkg-StarLink/releases/tag/v0.1.3)已发布并在[插件市场](https://skyelan1999.github.io/aide-pkg-shop/)登记，市场包和插件Release字节一致。
 
