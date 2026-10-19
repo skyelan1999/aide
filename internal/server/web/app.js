@@ -2983,6 +2983,7 @@ function isMarkdownPath(path) { return /\.(md|markdown)$/i.test(effectiveFileTyp
 function isImagePath(path) { return /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(effectiveFileTypePath(path)); }
 function isStlPath(path) { return /\.stl$/i.test(effectiveFileTypePath(path)); }
 function isStepPath(path) { return /\.(step|stp)$/i.test(effectiveFileTypePath(path)); }
+function isUrdfPath(path) { return /\.urdf$/i.test(effectiveFileTypePath(path)); }
 function isPdfPath(path) { return /\.pdf$/i.test(effectiveFileTypePath(path)); }
 function isZipPath(path) { return /\.zip$/i.test(effectiveFileTypePath(path)); }
 function isSupportedArchivePath(path) { return /\.(zip|tar|tgz|tbz|tbz2|txz|gz|bz2|xz)$/i.test(effectiveFileTypePath(path)) || /\.tar\.(gz|bz2|xz)$/i.test(effectiveFileTypePath(path)); }
@@ -3110,8 +3111,10 @@ function setEditorMode(mode) {
   $('editor-preview').classList.toggle('hidden', !preview && !split);
   $('editor-mode-edit').classList.toggle('active', !preview);
   $('editor-mode-preview').classList.toggle('active', preview);
+  if(isUrdfPath(state.file?.path||''))teardownViewer($('editor-preview'));
   if (preview || split) {
-    if(isDelimitedPath(state.file?.path || ''))setupDelimitedPreview($('editor-preview'),$('editor'),state.file.path);
+    if(isUrdfPath(state.file?.path||''))setupUrdfPreview($('editor-preview'),state.file.path,state.file.root,state.file.source||'',state.file,$('editor').value);
+    else if(isDelimitedPath(state.file?.path || ''))setupDelimitedPreview($('editor-preview'),$('editor'),state.file.path);
     else setupMarkdownPreview($('editor-preview'), $('editor').value, state.file?.path || '', state.file);
     $('editor-preview').scrollTop = 0;
     if (split && splitScrollLock.editor) syncSplitScroll($('editor'), $('editor-preview'), 'editor');
@@ -3129,20 +3132,21 @@ function showEditor() {
   const isImg = isImagePath(state.file.path);
   const isStl = isStlPath(state.file.path);
   const isStep = isStepPath(state.file.path);
+  const isUrdf = isUrdfPath(state.file.path);
   const isPdf = isPdfPath(state.file.path);
   const isDxf = isDxfPath(state.file.path);
   const isDocx = isDocxPath(state.file.path);
   const isXlsx = isXlsxPath(state.file.path);
   const isSqlite = isSqlitePath(state.file.path);
   const isZip = isZipPath(state.file.path);
-  $('editor-preview').classList.toggle('editor-preview-immersive', isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isSqlite || isDrawio);
+  $('editor-preview').classList.toggle('editor-preview-immersive', isUrdf || isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isSqlite || isDrawio);
   $('editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('editor'));
   teardownViewer($('editor-preview')); // 切文件前回收上一个可视化查看器（WebGL/PDF/Observer）
   var _cl = codeLang(state.file.path);
   setupCodeHighlight($('editor'), _cl);
-  const visualPreview = isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isSqlite || isImg || isDrawio;
+  const visualPreview = isUrdf || isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isSqlite || isImg || isDrawio;
   if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
   // 可视化查看器（图片/STL/PDF/DXF）无文本可保存 → 隐藏保存按钮；只读来源的文本文件 → 禁用
@@ -3151,11 +3155,13 @@ function showEditor() {
   $('attach-file').disabled = state.file.fresh;
   $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isStep || isPdf || isDxf || isDocx || isSqlite || isZip));
   $("editor-ro-badge").title = isBackupPath(state.file.path) ? t("备份文件 · 只读") : ((readOnly && state.file.root === "context") ? (sourceIsRW() ? t("引用 · 读写来源") : t("引用 · 只读")) : (isDocx ? t("DOCX 正文预览 · 批注可写入文档") : (isImg || isStl || isStep || isPdf || isDxf || isSqlite || isZip ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"))));
-  $('editor-mode-switch').classList.toggle('hidden', !md && !isDelimitedPath(state.file.path));
+  $('editor-mode-switch').classList.toggle('hidden', !md && !isUrdf && !isDelimitedPath(state.file.path));
   if (isZip) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
     setupZipPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isUrdf) {
+    setEditorMode('preview');
   } else if (isStl) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
@@ -7858,6 +7864,14 @@ async function setupStlPreview(container, filePath, root, source, viewerSpec) {
       resize(); resizeObs = new ResizeObserver(resize); resizeObs.observe(canvasWrap);
     }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
+/* URDF keeps XML editing and uses the same scoped raw API for its assets. */
+async function setupUrdfPreview(container,filePath,root,source,viewerSpec,xmlText) {
+  teardownViewer(container);let canceled=false;const token=state.token,scope=recoveryScope(),epoch=chatRecoveryEpoch;const isCurrent=()=>token===state.token&&scope===recoveryScope()&&epoch===chatRecoveryEpoch&&!lockScreen.locked;bindViewerTeardown(container,()=>{canceled=true;});
+  try {await ensureVendorScript('/urdf-preview.js?v=1',()=>!!window.AideUrdfPreview);}
+  catch(error){if(!canceled&&isCurrent()&&container.isConnected){const notice=el('div','urdf-error');notice.append(el('strong','',t('URDF 预览不可用')),el('p','',String(error.message||error)));container.replaceChildren(notice);}return;}
+  if(canceled||!isCurrent()||!container.isConnected)return;
+  return window.AideUrdfPreview.setup({container,filePath,root,source,viewerSpec,xmlText,isCurrent,lockElement:$('lock-screen'),el,t,fileRawUrl,teardownViewer,bindViewerTeardown,ensureThreeStack,ensureVendorScript,detectWebGLContext});
+}
 /* STEP/STP uses the isolated local CAD service, with a bounded WASM compatibility path. */
 async function setupStepPreview(container, filePath, root, source, viewerSpec) {
   teardownViewer(container);
@@ -8298,7 +8312,7 @@ function codeLang(path) {
     // Vue
     vue:'xml',
     // HTML / XML
-    html:'xml', htm:'xml', xml:'xml', svg:'xml',
+    html:'xml', htm:'xml', xml:'xml', urdf:'xml', svg:'xml',
     // CSS / SCSS / Less
     css:'css', scss:'scss', less:'less',
     // GraphQL
@@ -9030,8 +9044,11 @@ function setFileViewMode(mode) {
   $('file-view-preview').classList.toggle('hidden', !preview && !split);
   $('fv-edit').classList.toggle('active', !preview);
   $('fv-preview').classList.toggle('active', preview);
+  const urdf=isUrdfPath(fileView.spec?.path||'')||fileView.spec?.format==='.urdf';
+  if(urdf)teardownViewer($('file-view-preview'));
   if (preview || split) {
-    if(isDelimitedPath(fileView.spec?.path || '') || ['.csv','.tsv'].includes(fileView.spec?.format))setupDelimitedPreview($('file-view-preview'),$('file-view-editor'),isDelimitedPath(fileView.spec.path)?fileView.spec.path:'resource'+fileView.spec.format);
+    if(urdf)setupUrdfPreview($('file-view-preview'),fileView.spec.path,fileView.spec.root,fileView.spec.source||'',fileView.spec,$('file-view-editor').value);
+    else if(isDelimitedPath(fileView.spec?.path || '') || ['.csv','.tsv'].includes(fileView.spec?.format))setupDelimitedPreview($('file-view-preview'),$('file-view-editor'),isDelimitedPath(fileView.spec.path)?fileView.spec.path:'resource'+fileView.spec.format);
     else setupMarkdownPreview($('file-view-preview'), $('file-view-editor').value, fileView.spec?.path || '', fileView.spec);
     $('file-view-preview').scrollTop = 0;
     if (split && splitScrollLock.fileView) syncSplitScroll($('file-view-editor'), $('file-view-preview'), 'fileView');
@@ -9061,7 +9078,7 @@ async function openFileViewMode() {
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.
   const format = String(spec.format || '').toLowerCase();
-  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.dxf','.zip','.drawio'];
+  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.urdf','.dxf','.zip','.drawio'];
   const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
   const md = isMarkdownPath(typePath);
   $('file-view-export-pdf').classList.toggle('hidden', !md);
@@ -9070,6 +9087,7 @@ async function openFileViewMode() {
   const isImg = isImagePath(typePath);
   const isStl = isStlPath(typePath);
   const isStep = isStepPath(typePath);
+  const isUrdf = isUrdfPath(typePath);
   const isPdf = isPdfPath(typePath);
   const isDxf = isDxfPath(typePath);
   const isDocx = isDocxPath(typePath);
@@ -9077,7 +9095,7 @@ async function openFileViewMode() {
   const isZip = isZipPath(typePath);
   // 只有二进制/画布查看器需要占满剩余空间并自行处理滚动；Markdown
   // 预览必须保留外层滚动容器，避免被沉浸式查看器样式锁死。
-  $('file-view-preview').classList.toggle('file-view-immersive', isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isDrawio);
+  $('file-view-preview').classList.toggle('file-view-immersive', isUrdf || isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isDrawio);
   // 图片 / STL / PDF / DXF 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
   let data;
   if (isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isZip) {
@@ -9089,12 +9107,12 @@ async function openFileViewMode() {
     data = await api('/file?' + query.toString());
   }
   if(!fileViewRouteCurrent(spec,openToken,openScope,openEpoch))return;
-  const visualPreview = isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
+  const visualPreview = isUrdf || isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
   const locationRequested=!visualPreview&&Number.isInteger(spec.line)&&spec.line>0;
   const locationMatches=!locationRequested||await window.AideFileRoute.matchesSourceLocation(spec,data);
   if(!fileViewRouteCurrent(spec,openToken,openScope,openEpoch))return;
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
-  $('file-view-mode-switch').classList.toggle('hidden', !md && !isDelimitedPath(typePath));
+  $('file-view-mode-switch').classList.toggle('hidden', !md && !isUrdf && !isDelimitedPath(typePath));
   const readOnly = spec.readOnly === true || isBackupPath(spec.path) || (spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true));
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
@@ -9113,6 +9131,8 @@ async function openFileViewMode() {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
     setupZipPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
+  } else if (isUrdf) {
+    setFileViewMode('preview');
   } else if (isStl) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');

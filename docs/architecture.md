@@ -489,3 +489,7 @@ A protocol1 workbench may opt into its own registered tools through manifest.wor
 ### 2026-10-19：星图文件预览独立选项卡
 
 星图的普通文件预览点击使用独立的只读选项卡，不再调用当前页 location.assign，原图搜索与视角保留。后续文件仅复用属于当前星图的受控只读预览页；本地／SSH 来源、工作区、行号与内容哈希仍由原文件定位链校验。锁屏、失效来源和用户已改作其他用途的页面沿用原保护。浏览器拦截打开时显示提示，不回退覆盖星图。实现、Safari 标签复用实测与完整工作台未验边界见[星图新选项卡验收](reviews/2026-10-19/starmap-file-new-tab.md)。
+
+### 2026-10-19：URDF 项目文件预览
+
+项目编辑器和独立文件页识别 URDF，默认展示基于现有 Three.js r128 的机器人模型，并保留 XML 草稿编辑／保存与原只读权限。网格、纹理、package.xml 通过原 workspace/source 文件 API 读取，支持标准关节、mimic、包路径映射和有预算的渐进加载。切换模式、关闭与锁屏中止读取并释放图形资源。没有增加后端接口或 ROS 运行依赖；完整能力、预算与未支持项见[URDF 使用说明](prd/2026-10-19-urdf-preview.md)，实际浏览器／候选接口验证与未验范围见[验收记录](reviews/2026-10-19/urdf-preview.md)。

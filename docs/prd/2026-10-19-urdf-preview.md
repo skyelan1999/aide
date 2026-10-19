@@ -1,0 +1,33 @@
+# 项目文件 URDF 机器人预览
+
+任务：[urdf-preview-20261019](../tasks/urdf-preview-20261019.json)。需求：在项目文件中支持 URDF 预览。实现与验收边界见[验收记录](../reviews/2026-10-19/urdf-preview.md)。
+
+## 使用
+
+在项目文件中打开 `.urdf`，默认进入三维预览。独立文件选项卡和引用来源也使用同一个查看器。可以旋转、缩放、重置视角，切换碰撞模型、坐标轴和线框，并拖动关节滑块查看机器人姿态。
+
+原有 XML 编辑能力保留：使用文件窗口现有的编辑／预览按钮切换。预览使用当前文本框里的草稿，不会把文件内容清空或将解析后的 XML 写回原文。文件保存、自动保存、历史和只读权限仍走现有文件编辑器；只读引用不会因进入三维预览而获得写权限。`.urdf.bak` 等备份仍保持只读。
+
+## 模型与资源
+
+- 支持 box、sphere、cylinder 和 mesh；mesh 支持 STL、DAE、OBJ。URDF 的连杆、joint origin、rpy、mesh scale 和材质颜色参与真实模型变换。坐标采用 URDF 的 Z 向上、长度米、角度弧度；不根据几何尺寸猜测 STL／OBJ 的单位。
+- 支持 fixed、revolute、continuous、prismatic 和 mimic；有范围的关节按 limits 夹紧，mimic 使用父关节夹紧后的实际值。floating／planar 暂只展示初始姿态，并在面板说明不支持调节。提供关节归零和连杆层级。
+- 相对资源路径相对于 URDF 或 DAE 所在文件解析。`package://包名/相对路径` 优先识别祖先目录里的 `package.xml`，也尝试同名包目录；特殊布局可以在“ROS 资源包路径”中填写相对当前工作区的包目录，根目录填 `.`。覆盖仅用于本次查看器，不修改项目或 ROS 环境。
+- 纹理支持 PNG、JPEG、WebP、GIF；URDF 和 DAE 相对纹理都通过文件接口读取。显式 URDF 材质也覆盖 OBJ／DAE 的 mesh group；没有显式覆盖时保留 DAE 自带材质。缺少法线时补算法线，STL 按实际三角面计算法线。OBJ 外部 MTL 暂不加载，遇到 mtllib 会显示说明。
+- 缺少 mesh 时保留其他可用部件并标明缺失文件；缺少 DAE 纹理时用中性纹理保留几何，同时显示资源问题。不要把带“部分资源未加载”的模型当作完整结果。
+
+所有依赖请求都沿用同一个 workspace／source／knowledgeOrigin 文件 API 范围，不直接加载 URDF 中的外部 URL、file URI 或越界路径。SSH 引用复用已有服务端文件读取和鉴权；本功能不安装 ROS，也不向浏览器暴露 SSH 凭据。
+
+## 生命周期与预算
+
+仅在打开预览时加载本地 vendor；没有 CDN 或运行期 npm 安装。渲染在视角、关节、纹理和窗口大小变化时触发，不常驻空转动画。切换 XML、换文件、关闭窗口、离开页面和锁屏变化会中止读取、清除模型控件并释放 WebGL、材质、纹理、临时 Blob URL 和监听器。
+
+当前预算：URDF XML 4 MiB；单个 mesh 32 MiB；单张纹理 8 MiB；资源总量 128 MiB；连杆和关节各最多 2,048，几何元素最多 4,096，资源缓存键最多 512，总计 300 万三角面。网格同时加载最多 2 个；包定位最多向上检查 12 层，机器人树深度最多 256，mimic 链最多 64。超限明确报错，不默默简化模型。STL 面数／文件长度和 DAE 三角面／索引数量在分配几何前检查。
+
+预算不是所有文件都能成功预览的保证。Xacro 需要先展开成标准 URDF；不执行宏、ROS 命令、外部 XML 实体或动力学仿真。当前不支持 GLTF／GLB、OBJ MTL、扩展 quat_xyzw origin 或任意自定义几何。
+
+## 依赖与验证
+
+复用现有 Three.js r128、STLLoader、OrbitControls；新增兼容的 URDFLoader 0.10.5 和同版本 ColladaLoader／OBJLoader。vendor 离线保存，官方 npm 包在提取前校验 SHA512，文件 SHA256 与许可证随仓库保存，详见[依赖来源](../../internal/server/web/vendor/urdf-loader/README.md)。没有升级共享三维运行时。
+
+语义和包路径设计参考 [URDF 官方解析器](https://github.com/ros/urdfdom) 与 [URDFLoader 官方说明](https://github.com/gkjohnson/urdf-loaders/blob/master/javascript/README.md)。本页描述实现能力；已实际验证的样例、未验设备与发布状态以验收记录为准。

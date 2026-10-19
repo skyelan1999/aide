@@ -1,0 +1,54 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const THREE=require('../internal/server/web/vendor/three.min.js');
+for(const dependency of JSON.parse(fs.readFileSync('internal/server/web/vendor/urdf-loader/provenance.json','utf8')))for(const [name,digest] of Object.entries(dependency.files))assert.equal(require('node:crypto').createHash('sha256').update(fs.readFileSync('internal/server/web/vendor/'+name)).digest('hex'),digest,name);
+const scope={window:{},DOMException,TextEncoder,TextDecoder};vm.runInNewContext(fs.readFileSync('internal/server/web/urdf-preview.js','utf8'),scope);
+const api=scope.window.AideUrdfPreview,plain=x=>JSON.parse(JSON.stringify(x));
+assert.deepEqual(plain(api.candidates('../meshes/arm.STL','pkg/urdf/robot.urdf')),['pkg/meshes/arm.STL']);
+assert.equal(api.candidates('package://pkg/meshes/arm.stl','robots/pkg/urdf/robot.urdf')[0],'robots/pkg/meshes/arm.stl');
+assert.deepEqual(plain(api.candidates('package://pkg/meshes/arm.stl','urdf/robot.urdf',{pkg:'.'})),['meshes/arm.stl']);
+assert.equal(api.candidates('../meshes/my%20arm.stl','pkg/urdf/robot.urdf')[0],'pkg/meshes/my arm.stl');
+for(const bad of ['https://outside.test/a.stl','//outside.test/a.stl','file:///tmp/a.stl','data:text/xml,a','javascript:alert(1)','../../escape.stl','package://pkg/../outside.stl','a.stl?access_token=x','%2fetc%2fpasswd','x%00.stl'])assert.throws(()=>api.candidates(bad,'urdf/robot.urdf'),undefined,bad);
+class Element {
+ constructor(name,attrs={},children=[]){this.localName=this.nodeName=name;this.attrs=attrs;this.children=children;this.prefix=null;}
+ getAttribute(name){return Object.hasOwn(this.attrs,name)?String(this.attrs[name]):null;}
+ hasAttribute(name){return Object.hasOwn(this.attrs,name);}
+ getElementsByTagName(name){return this.children.flatMap(c=>[...(name==='*'||c.localName===name?[c]:[]),...c.getElementsByTagName(name)]);}
+ querySelector(selector){const m=/^child\[link="(.*)"\]$/.exec(selector);assert.ok(m,'unexpected vendor selector '+selector);return this.getElementsByTagName('child').find(c=>c.getAttribute('link')===m[1])||null;}
+}
+const e=(name,attrs,...children)=>new Element(name,attrs,children),visual=()=>e('visual',{},e('geometry',{},e('box',{size:'1 0.1 0.1'})));
+const link=name=>e('link',{name},visual());
+const joint=(name,type,parent,child,extra=[])=>e('joint',{name,type},e('parent',{link:parent}),e('child',{link:child}),e('origin',{xyz:'0 0 0.1',rpy:'0 0 0'}),e('axis',{xyz:'0 0 1'}),e('limit',{lower:'-1',upper:'1'}),...extra);
+function robot(){return e('robot',{name:'fixture'},link('base'),link('arm'),link('tip'),link('follower'),link('slide'),joint('shoulder','revolute','base','arm'),e('joint',{name:'tip_mount',type:'fixed'},e('parent',{link:'arm'}),e('child',{link:'tip'}),e('origin',{xyz:'1 0 0'})),joint('follower_motor','revolute','base','follower',[e('mimic',{joint:'shoulder',multiplier:'-0.5',offset:'0.1'})]),e('joint',{name:'slider',type:'prismatic'},e('parent',{link:'base'}),e('child',{link:'slide'}),e('origin',{xyz:'0 0 1'}),e('axis',{xyz:'0 1 0'}),e('limit',{lower:'-0.2',upper:'0.2'})));}
+const binary=new Uint8Array(134);new DataView(binary.buffer).setUint32(80,1,true);assert.equal(api.prepareStl(binary).length,134);const forged=new Uint8Array(100);new DataView(forged.buffer).setUint32(80,10000000,true);assert.throws(()=>api.prepareStl(forged));assert.ok(api.prepareStl(new Uint8Array(fs.readFileSync('scripts/fixtures/urdf/robot_description/meshes/tool.stl'))).length>84);
+const primitive=e('triangles',{count:'1'},e('input',{offset:'0'}),e('p',{}));primitive.children[1].textContent='0 1 2';const dae=e('COLLADA',{},primitive);api.validateCollada(dae);primitive.attrs.count='10000000';assert.throws(()=>api.validateCollada(dae));primitive.attrs.count='2';assert.throws(()=>api.validateCollada(dae));
+const root=robot();assert.deepEqual(plain(api.validateRobot(root)),{links:5,joints:4,packages:[]});
+for(const mutate of [r=>r.children.push(link('base')),r=>r.children[0].attrs.name='__proto__',r=>r.getElementsByTagName('axis')[0].attrs.xyz='0 0 0',r=>r.getElementsByTagName('origin')[0].attrs.xyz='NaN 0 0',r=>r.getElementsByTagName('limit')[0].attrs.lower='5',r=>r.getElementsByTagName('mimic')[0].attrs.joint='follower_motor',r=>r.getElementsByTagName('child')[0].attrs.link='base',r=>r.children.push(link('disconnected')),r=>r.getElementsByTagName('box')[0].attrs={},r=>r.getElementsByTagName('mimic')[0].attrs={},r=>r.getElementsByTagName('joint')[0].children.push(e('parent',{link:'slide'})),r=>r.getElementsByTagName('geometry')[0].children=[e('capsule',{radius:'1',length:'1'})]]){const candidate=robot();mutate(candidate);assert.throws(()=>api.validateRobot(candidate));}
+const loaderScope={THREE,Element,Document:class {},console};vm.runInNewContext(fs.readFileSync('internal/server/web/vendor/urdf-loader/URDFLoader.js','utf8'),loaderScope);
+const model=new loaderScope.URDFLoader().parse(root);assert.equal(Object.keys(model.links).length,5);assert.equal(Object.keys(model.joints).length,4);
+api.applyJointValue(model.joints.shoulder,.5);model.updateMatrixWorld(true);const position=model.links.tip.getWorldPosition(new THREE.Vector3());assert.ok(Math.abs(position.x-Math.cos(.5))<1e-8);assert.ok(Math.abs(position.y-Math.sin(.5))<1e-8);assert.ok(Math.abs(position.z-.1)<1e-8);assert.ok(Math.abs(model.joints.follower_motor.jointValue[0]+.15)<1e-8);
+api.applyJointValue(model.joints.shoulder,10);assert.equal(model.joints.shoulder.jointValue[0],1);assert.ok(Math.abs(model.joints.follower_motor.jointValue[0]+.4)<1e-8,'mimic uses clamped effective parent value');api.applyJointValue(model.joints.slider,.5);assert.equal(model.joints.slider.jointValue[0],.2);model.updateMatrixWorld(true);assert.ok(Math.abs(model.links.slide.getWorldPosition(new THREE.Vector3()).y-.2)<1e-8);assert.throws(()=>api.applyJointValue(model.joints.shoulder,NaN));
+const app=fs.readFileSync('internal/server/web/app.js','utf8');
+const types={AideFileTypes:require('../internal/server/web/file-types.js')};vm.runInNewContext(app.slice(app.indexOf('function effectiveFileTypePath('),app.indexOf('function isPdfPath(')),types);
+for(const path of ['robot.urdf','robot.URDF','robot.urdf.bak','robot.urdf.v1.bak'])assert.equal(types.isUrdfPath(path),true);
+for(const path of ['robot.urdf.xacro','robot.xacro','robot.xml'])assert.equal(types.isUrdfPath(path),false);
+const modeElements=new Map(),modes={get:(k)=>modes[k]};
+const ui=id=>{if(!modeElements.has(id)){const flags=new Set();modeElements.set(id,{value:id.includes('editor')?'<robot name="draft"/>':'',dataset:{},classList:{contains:c=>flags.has(c),toggle:(c,on)=>on?flags.add(c):flags.delete(c)},parentNode:{classList:{contains:()=>true,toggle(){}}}});}return modeElements.get(id);};
+let previewCalls=[],disposals=0;
+const modeScope={window:{},state:{file:{path:'robot.urdf',root:'workspace',source:'',content:'original'}},fileView:{spec:{path:'virtual-object',format:'.urdf',root:'context',source:'ssh-ref',readOnly:true}},$:ui,splitScrollLock:{editor:false,fileView:false},isMarkdownPath:()=>false,isDelimitedPath:()=>false,isUrdfPath:types.isUrdfPath,teardownViewer(){disposals++;},setupUrdfPreview(...args){previewCalls.push(args);},editorAutoSave:{restoreView(){}},fileViewAutoSave:{restoreView(){}}};
+vm.createContext(modeScope);vm.runInContext(app.slice(app.indexOf('function setEditorMode('),app.indexOf('function showEditor()')),modeScope);vm.runInContext(app.slice(app.indexOf('function setFileViewMode('),app.indexOf('function fileViewRouteCurrent(')),modeScope);
+modeScope.setEditorMode('preview');assert.equal(previewCalls[0].at(-1),'<robot name="draft"/>');assert.equal(modeScope.state.file.content,'original','preview must not replace the saved XML');modeScope.setEditorMode('edit');assert.equal(ui('editor-preview').classList.contains('hidden'),true);assert.equal(ui('editor').value,'<robot name="draft"/>');assert.equal(disposals,2);
+modeScope.setFileViewMode('preview');assert.equal(previewCalls[1][2],'context');assert.equal(previewCalls[1][3],'ssh-ref');assert.equal(previewCalls[1][4].readOnly,true);modeScope.setFileViewMode('edit');assert.equal(ui('file-view-preview').classList.contains('hidden'),true);
+(async()=>{
+ const wrapper=app.slice(app.indexOf('async function setupUrdfPreview('),app.indexOf('/* STEP/STP uses'));
+ for(const change of ['none','token','workspace','epoch','lock','closed','disposed']){
+  let resolve,called=0,release,scopeID='A';const box={isConnected:true,replaceChildren(){throw Error('stale UI must not mutate');}};
+  const c={state:{token:'T'},chatRecoveryEpoch:1,lockScreen:{locked:false},recoveryScope:()=>scopeID,$:()=>null,window:{AideUrdfPreview:{setup(options){if(release)release();assert.equal(options.isCurrent(),true,'installing the viewer can release its loading placeholder');called++;}}},ensureVendorScript:()=>new Promise(r=>resolve=r),bindViewerTeardown(_host,fn){release=fn;},teardownViewer(){if(release)release();release=null;},el(){},t:x=>x,fileRawUrl(){},ensureThreeStack(){},detectWebGLContext(){}};
+  vm.createContext(c);vm.runInContext(wrapper,c);const task=c.setupUrdfPreview(box,'robot.urdf','workspace','','', '<robot/>');
+  if(change==='token')c.state.token='other';if(change==='workspace')scopeID='B';if(change==='epoch')c.chatRecoveryEpoch++;if(change==='lock')c.lockScreen.locked=true;if(change==='closed')box.isConnected=false;if(change==='disposed')release();resolve();await task;assert.equal(called,change==='none'?1:0,change);
+ }
+ const data=await api.readBounded(new Response(new Uint8Array([1,2,3])),3);assert.deepEqual([...data],[1,2,3]);let canceled=false;
+ const oversized={ok:true,headers:new Headers(),body:new ReadableStream({start(c){c.enqueue(new Uint8Array(4));},cancel(){canceled=true;}})};await assert.rejects(api.readBounded(oversized,3));assert.equal(canceled,true);
+ let advertisedCanceled=false;await assert.rejects(api.readBounded({ok:true,headers:new Headers({'Content-Length':'100'}),body:{cancel:async()=>{advertisedCanceled=true;}}},3));assert.equal(advertisedCanceled,true);
+ console.log('PASS URDF scoped path/package resolution, external/traversal rejection, tree/numeric/mimic validation, real r128 transforms and clamped joint propagation, XML editing/source isolation and stale-loader guards, bounded stream cancellation and vendor integrity');
+})().catch(error=>{console.error(error);process.exitCode=1;});
