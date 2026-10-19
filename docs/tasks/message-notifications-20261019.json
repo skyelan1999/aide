@@ -1,0 +1,70 @@
+{
+  "id": "message-notifications-20261019",
+  "request": "设计消息图标未读气泡，汇总会话、群组和未完成提醒，设置内管理红色气泡，并支持聊天和群组屏蔽提示",
+  "baseline": "6136df16d44cc41c9157b61136c081ea91dfd603",
+  "initial_status": "",
+  "acceptance": [
+    "Design entry, category, conversation and group aggregation without duplicate counts.",
+    "Distinguish read from completion and define exact read cursor race boundaries.",
+    "Define global badge settings, per-chat/group suppression, precedence and persistence.",
+    "Record implementation sequence and unrun runtime/UI acceptance without claiming implementation."
+  ],
+  "scope": [
+    "docs/prd/2026-10-19-message-notifications.md",
+    "docs/tasks/message-notifications-20261019.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Captured badge, unfinished reminders and per-conversation suppression request as design scope.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Defined counts, clear conditions, settings hierarchy, mute expiry, server-owned summary, persistence and race boundaries.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "implementation": {
+      "status": "not_run",
+      "summary": "User requested mechanism design; product implementation and new release are outside this design delivery.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Inspected existing updateBadge, message read path and reminder wiring; documentation validator and diff whitespace checks passed. No runtime behavior changed.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Complete design draft records current behavior, defaults, implementation order and acceptance matrix.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only the scoped design draft and task ledger are changed; production untouched.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User requested mechanism design; product implementation and new release are outside this design delivery.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    }
+  },
+  "release_authorization": "No product release in this design task.",
+  "rollback": "Documentation-only commit can be reverted; no runtime or persisted product state changed.",
+  "handoff": "Design complete. Implement server summary and read cursor boundary first, then UI badges, settings and per-conversation menus; run stated concurrency/persistence tests and real workbench acceptance before a product release."
+}
