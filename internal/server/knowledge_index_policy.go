@@ -129,7 +129,7 @@ func knowledgeIndexRevision(p knowledgeIndexPolicy) string { b, _ := json.Marsha
 func knowledgeLocalDiscoveryRevision(p knowledgeIndexPolicy) string {
 	p.FileBudget = 0
 	p.DirectoryBudget = 0
-	return knowledgeIndexRevision(p)
+	return hash([]byte("outline-v2:" + knowledgeIndexRevision(p)))
 }
 func (a *App) getKnowledgeIndexPolicy(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()

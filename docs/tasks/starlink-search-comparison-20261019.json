@@ -1,0 +1,74 @@
+{
+  "id": "starlink-search-comparison-20261019",
+  "request": "同一目录对比不知道文件名只知道大意时星图检索定位原文与直接全文搜索的耗时及命中率",
+  "baseline": "7774f424af3221275118b2acc9a2f29e133800f1",
+  "initial_status": "M compose.yaml\n M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? docs/tasks/aide-update-20261019.json\n?? docs/tasks/knowledge-snapshot-query-20261019.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/starlink-plugin-20261019.json\n?? docs/tasks/testbench-live-integration-20261018.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/.upgrade-backup-starlink-3504bca63abebb831604c54a08c32af4/\n?? plugins/.upgrade-backup-starlink-442f999225668a7a4d93f9b46dceb5aa/\n?? plugins/.upgrade-backup-starlink-726078f2d902b81b1706c44808072309/\n?? plugins/.upgrade-backup-starlink-833dc73465166e2109f1c8299d559691/\n?? plugins/.upgrade-backup-starlink-8b41fc6988d8d898a3d38db0d5c65502/\n?? plugins/.upgrade-backup-starlink-9f7839a6e93f8056519aff02c656aa59/\n?? plugins/.upgrade-backup-starlink-c26cc31cfb175906ae5aa1f0e5278439/\n?? plugins/.upgrade-backup-starlink-f187b6a8ff09357809cced256ddf3866/\n?? plugins/starlink/",
+  "acceptance": [
+    "固定同一物理docs目录与8条无文件名大意描述，两种方式使用相同关键词扩展",
+    "计时包含候选检索和候选原文件读取、核验原文行号，漏检不计作加速",
+    "分别记录冷加载、热查询、快照覆盖率及未计入的模型推理时间"
+  ],
+  "scope": [
+    "docs/tasks/starlink-search-comparison-20261019.json",
+    "docs/reviews/2026-10-19-starlink-fulltext-comparison.json",
+    "docs/reviews/2026-10-19-starlink-fulltext-comparison.md",
+    "../aide-pkg-StarLink/.agent-state/search-comparison* (private evidence)"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "同一目录，固定8条描述与关键词扩展，独立oracle核查原文件，9轮交替顺序；区分检索工具时间与AI整体耗时",
+      "evidence": [
+        "../aide-pkg-StarLink/.agent-state/search-comparison.cjs"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "同一目录，固定8条描述与关键词扩展，独立oracle核查原文件，9轮交替顺序；区分检索工具时间与AI整体耗时",
+      "evidence": [
+        "../aide-pkg-StarLink/.agent-state/search-comparison.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成本地测量脚本，无产品代码变更",
+      "evidence": [
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.json",
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "8条正例两边8/8，两次全文基线各9轮；2条边界星图漏检、全文找到；语料指纹未变",
+      "evidence": [
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.json",
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "保存样本、关键词、源位置、统计、范围限制",
+      "evidence": [
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.json",
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.md",
+        "python3 scripts/check_docs.py: PASS 350 Markdown files / 1276 local links"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "本轮容器临时worker已清理，初次默认用户删除被拒绝，后以复制文件时的root身份仅删除该指定临时文件；私有证据保留；git diff --check通过",
+      "evidence": [
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.json",
+        "docs/reviews/2026-10-19-starlink-fulltext-comparison.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮为本地对比，不涉及新版本或远程发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "本地受控工具链约1.5–1.9倍；不等于AI整体提速，快照有正文截断与收录缺失。"
+}

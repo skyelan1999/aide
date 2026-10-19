@@ -148,7 +148,10 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 				delete(v.Material.Validated, rel)
 			}
 			if ready {
+				memo = cache.keepMaterial(key, memo)
 				node.Text = memo.text
+				node.Outline = memo.outline
+				node.ContentHash = memo.outline.ContentHash
 				if !wantCode {
 					memo.code = ""
 					memo.codeReady = false

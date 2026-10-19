@@ -1,0 +1,1264 @@
+{
+  "date": "2026-10-19T13:29:01.526Z",
+  "method": "one captured real API snapshot, replay over pinned local HTTPS with actual registered old/new StarLink handlers; before ignores outlines, after searches them. Same snapshot coverage, same 1199 original manifest files, 9 alternating repetitions, same manually fixed keyword expansions. Both read all returned candidate source files and verify original line. No AI calls/reasoning, Go admission or backend scan timing. rg -l+source AND filter on host; plugins inside Aide container. Not a same-runtime pure engine benchmark.",
+  "directory": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/docs",
+  "coverage": {
+    "files": 1199,
+    "bytes": 36981867,
+    "snapshotDocs": 987,
+    "readyDocs": 678,
+    "outlinedDocs": 203,
+    "outlineJSONBytes": 139877,
+    "outlineTextBytes": 52883,
+    "revision": "Kf2276707eef5a9ce194b9001",
+    "stale": true,
+    "truncated": true
+  },
+  "cold": {
+    "before": 1025.666875,
+    "after": 891.645917
+  },
+  "aggregates": {
+    "original": {
+      "cases": 10,
+      "hits": {
+        "before": 8,
+        "after": 8,
+        "direct": 10
+      },
+      "sharedCases": 8,
+      "sharedP50ms": {
+        "before": 29.27612500000032,
+        "after": 30.368625000000065,
+        "direct": 80.71791700000085
+      }
+    },
+    "structure-probe": {
+      "cases": 3,
+      "hits": {
+        "before": 0,
+        "after": 2,
+        "direct": 3
+      },
+      "sharedCases": 0,
+      "sharedP50ms": {
+        "before": null,
+        "after": null,
+        "direct": null
+      }
+    }
+  },
+  "changedSincePrevious": [
+    "docs/tasks/starlink-search-comparison-20261019.json"
+  ],
+  "productHashes": {
+    "internal/server/knowledge_outline.go": "8e857c98af026398fdf0b362afb689bc259085696a3f6e3316ea793b2d0eb5a9",
+    "internal/server/knowledge_map.go": "4cb0726d0e734137302c4b7dfd583a28a8088f98c7bdc0cc3176f6ab39ca5251",
+    "internal/server/knowledge_updates.go": "d3116446cfadacdc86d424249e8a71b7f95148b345ee40bf1cfddba41e46a77b",
+    "internal/server/knowledge_progressive.go": "d7926565f6574c8b75e9ced1ee066f3ec5842a43bc11ce74734358950b05c8a9",
+    "internal/server/knowledge_local_store.go": "8b04e3bed50ec324dcd2f7f3d4b29732f7fb7dcbccbf178f2a15e1810651b0d8",
+    "internal/server/knowledge_local_failure.go": "e4dc917c061dc261dd155198f07c477f69a2483ce54cf05ea18bee982d0bdea2",
+    "internal/server/knowledge_index_policy.go": "364dcf224c63e587f8b02d80ff9b38608f7970c8cb7762c44363e8a4b6874d97",
+    "internal/server/web/starmap.js": "c696d9a3e0485c4777ce9bcc8a813579158003e9afdf2bbb6713e583a7826625",
+    "internal/server/web/starmap.html": "b717d96d5c048af795dacb4071772a8e58b5ecd17bbe75ad73ee9bd5990f9cc1",
+    "StarLink/index.js": "165883c7771d6983fcafdb2638dfb45f7baa91f0ce45a7a5e9ee60b62f6929f2"
+  },
+  "image": "sha256:ad5b7b266ca78b426a96cf2b906d53ff731dd7961595df82748fd0210451d8d5",
+  "rows": [
+    {
+      "id": "persistent",
+      "description": "插件怎样才能跨多次调用保留网络会话而不用反复启动",
+      "terms": [
+        "连接",
+        "状态"
+      ],
+      "expected": "docs/plugins/daemon-protocol.md",
+      "anchor": "保持会话状态",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 78.54854200000045,
+          "success": true,
+          "candidates": 73,
+          "snippetBytes": 25516,
+          "responseBytes": 62510,
+          "evidence": {
+            "path": "docs/plugins/daemon-protocol.md",
+            "line": 22,
+            "quote": "- 长连接（SSH 会话）需要在两次用户操作之间**保持会话状态**。"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 88.58383400000002,
+          "success": true,
+          "candidates": 73,
+          "snippetBytes": 41268,
+          "responseBytes": 83209,
+          "evidence": {
+            "path": "docs/plugins/daemon-protocol.md",
+            "line": 22,
+            "quote": "- 长连接（SSH 会话）需要在两次用户操作之间**保持会话状态**。",
+            "match": {
+              "kind": "heading",
+              "line": 122,
+              "text": "### 6.1 状态机"
+            }
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 84.51649999999972,
+          "success": true,
+          "candidates": 116,
+          "responseBytes": 7137,
+          "evidence": {
+            "path": "docs/plugins/daemon-protocol.md",
+            "line": 22,
+            "quote": "- 长连接（SSH 会话）需要在两次用户操作之间**保持会话状态**。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          150.64379099999996,
+          77.89283300000034,
+          78.20837500000016,
+          63.37554200000022,
+          70.25562500000024,
+          98.48891599999934,
+          184.4310829999995,
+          78.54854200000045,
+          111.4174579999999
+        ],
+        "after": [
+          93.60345899999993,
+          88.58383400000002,
+          157.571958,
+          69.33670900000016,
+          68.52649999999994,
+          83.7172500000006,
+          95.23279199999979,
+          111.59358400000019,
+          75.28279100000054
+        ],
+        "direct": [
+          104.79162499999984,
+          85.93770899999981,
+          80.70754099999976,
+          85.38454100000035,
+          79.27354200000082,
+          80.71791700000085,
+          80.58679200000006,
+          98.23795799999971,
+          84.51649999999972
+        ]
+      }
+    },
+    {
+      "id": "official",
+      "description": "查官网时能不能拿搜索结果简介直接当作官方正文",
+      "terms": [
+        "搜索摘要",
+        "正文"
+      ],
+      "expected": "docs/plugins/web-research-workflow.md",
+      "anchor": "搜索摘要仅作为线索",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 28.531958000000486,
+          "success": true,
+          "candidates": 2,
+          "snippetBytes": 605,
+          "responseBytes": 5208,
+          "evidence": {
+            "path": "docs/plugins/web-research-workflow.md",
+            "line": 13,
+            "quote": "3. 顺着返回的真实链接读取产品、规格、支持页面。搜索摘要仅作为线索，不能代替正文。"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 28.645583000000443,
+          "success": true,
+          "candidates": 2,
+          "snippetBytes": 1710,
+          "responseBytes": 6425,
+          "evidence": {
+            "path": "docs/plugins/web-research-workflow.md",
+            "line": 13,
+            "quote": "3. 顺着返回的真实链接读取产品、规格、支持页面。搜索摘要仅作为线索，不能代替正文。"
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 52.654750000000604,
+          "success": true,
+          "candidates": 2,
+          "responseBytes": 84,
+          "evidence": {
+            "path": "docs/plugins/web-research-workflow.md",
+            "line": 13,
+            "quote": "3. 顺着返回的真实链接读取产品、规格、支持页面。搜索摘要仅作为线索，不能代替正文。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          28.936125000000175,
+          29.898541000000478,
+          29.27612500000032,
+          22.7753330000005,
+          29.783707999999933,
+          19.329999999999927,
+          20.71900000000005,
+          17.21900000000005,
+          28.531958000000486
+        ],
+        "after": [
+          33.11125000000084,
+          25.958708999999544,
+          28.645583000000443,
+          31.189915999999357,
+          30.368625000000065,
+          23.617083999999522,
+          28.240624999999454,
+          20.182875000000422,
+          32.05712500000027
+        ],
+        "direct": [
+          114.51049999999941,
+          77.766208,
+          50.48883300000034,
+          45.311249999999745,
+          47.16399999999976,
+          48.115459000000556,
+          52.654750000000604,
+          61.33037500000046,
+          58.15112500000032
+        ]
+      }
+    },
+    {
+      "id": "serial",
+      "description": "没有实际串口设备能不能模拟一对互通的端口",
+      "terms": [
+        "虚拟",
+        "串口"
+      ],
+      "expected": "docs/plugins/comm-serial.md",
+      "anchor": "虚拟串口对",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 17.465000000000146,
+          "success": true,
+          "candidates": 1,
+          "snippetBytes": 620,
+          "responseBytes": 4809,
+          "evidence": {
+            "path": "docs/plugins/comm-serial.md",
+            "line": 3,
+            "quote": "基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 20.62933299999986,
+          "success": true,
+          "candidates": 1,
+          "snippetBytes": 40,
+          "responseBytes": 4349,
+          "evidence": {
+            "path": "docs/plugins/comm-serial.md",
+            "line": 3,
+            "quote": "基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。",
+            "match": {
+              "kind": "heading",
+              "line": 87,
+              "text": "## 虚拟串口（测试/模拟设备）"
+            }
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 70.95349999999962,
+          "success": true,
+          "candidates": 2,
+          "responseBytes": 1859,
+          "evidence": {
+            "path": "docs/plugins/comm-serial.md",
+            "line": 3,
+            "quote": "基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          65.51537499999995,
+          19.650125000000116,
+          12.45324999999957,
+          21.928916999999274,
+          15.349208000000544,
+          19.76324999999997,
+          16.509291999999732,
+          17.465000000000146,
+          16.935207999999875
+        ],
+        "after": [
+          28.851166999999805,
+          19.572374999999738,
+          17.794875000000502,
+          21.534958000000188,
+          12.067707999999584,
+          20.62933299999986,
+          34.9223750000001,
+          21.784583000000566,
+          18.878208000000086
+        ],
+        "direct": [
+          76.43979200000012,
+          84.82224999999926,
+          64.52654200000052,
+          91.87037499999951,
+          57.13341600000058,
+          73.0906670000004,
+          70.95349999999962,
+          60.82587499999954,
+          57.44187500000044
+        ]
+      }
+    },
+    {
+      "id": "transaction",
+      "description": "数据库多条写入中途失败能不能撤销前面的修改",
+      "terms": [
+        "事务",
+        "回滚"
+      ],
+      "expected": "docs/plugins/sqlite.md",
+      "anchor": "任一失败回滚",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 14.73633400000017,
+          "success": true,
+          "candidates": 2,
+          "snippetBytes": 626,
+          "responseBytes": 5246,
+          "evidence": {
+            "path": "docs/plugins/sqlite.md",
+            "line": 15,
+            "quote": "| `sqlite_transaction` | 单事务顺序执行多条语句，任一失败回滚 | 可写 | `{committed, results[], changes, lastInsertRowid}` |"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 16.989125000000058,
+          "success": true,
+          "candidates": 4,
+          "snippetBytes": 802,
+          "responseBytes": 6736,
+          "evidence": {
+            "path": "docs/plugins/sqlite.md",
+            "line": 15,
+            "quote": "| `sqlite_transaction` | 单事务顺序执行多条语句，任一失败回滚 | 可写 | `{committed, results[], changes, lastInsertRowid}` |"
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 50.366665999999896,
+          "success": true,
+          "candidates": 12,
+          "responseBytes": 927,
+          "evidence": {
+            "path": "docs/plugins/sqlite.md",
+            "line": 15,
+            "quote": "| `sqlite_transaction` | 单事务顺序执行多条语句，任一失败回滚 | 可写 | `{committed, results[], changes, lastInsertRowid}` |"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          20.095624999999927,
+          12.27495799999997,
+          19.037000000000262,
+          14.743540999999823,
+          14.73633400000017,
+          14.076707999999599,
+          14.11529100000007,
+          13.746958999998242,
+          16.21466700000019
+        ],
+        "after": [
+          19.39679200000046,
+          16.989125000000058,
+          18.29058299999997,
+          15.303708999999799,
+          16.337290999999823,
+          14.644792000000052,
+          17.70545899999979,
+          18.16333400000076,
+          13.246417000000292
+        ],
+        "direct": [
+          60.917999999999665,
+          50.366665999999896,
+          50.1140000000014,
+          48.266084000000774,
+          56.637541000000056,
+          61.01958399999967,
+          49.63041599999997,
+          52.697000000000116,
+          48.27325000000019
+        ]
+      }
+    },
+    {
+      "id": "history",
+      "description": "找回文档旧版本时能否连同里面的图片一起恢复",
+      "terms": [
+        "恢复",
+        "资源"
+      ],
+      "expected": "docs/plugins/markdown-history.md",
+      "anchor": "显式确认恢复正文",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 46.22516700000051,
+          "success": true,
+          "candidates": 61,
+          "snippetBytes": 17808,
+          "responseBytes": 47723,
+          "evidence": {
+            "path": "docs/plugins/markdown-history.md",
+            "line": 29,
+            "quote": "文件编辑器／独立文件页中的“历史版本”提供版本选择、历史／当前正文对比、资源指纹与资源快照下载。查看不会替换编辑正文。启用追踪且目标可写时，可先对比恢复范围，再显式确认恢复正文与该版本已归档的直接引用资源；也可取消勾选，只恢复正文。存在未保存草稿或进行中的保存时先处理草稿，恢复请求期间编辑器暂时只读。未归档资源会阻止整版恢复，不能声称附件已备份。恢复保留当前其他资源，不删除共享文件。启用时打开列表会在服务数据中归档观察到的实际变化；停用时不记录。当前文件检查失败仍可查看已有版本，界面明确显示失败。锁定会关闭历史窗口，未确定锁态或已锁定时不能打开；解锁后可重新打开。列表返回最近 200 条及总数，旧版本可按编号通过 API 查询。读取正文／附件快照验证 SHA-256；损坏对象或非法摘要拒绝返回。工作区读取固定当前本地路径或 SSH 会话代际，避免配置切换后读取另一工作区；SSH 系统文档读取也固定路径和代际。"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 56.979332999999315,
+          "success": true,
+          "candidates": 63,
+          "snippetBytes": 32451,
+          "responseBytes": 67713,
+          "evidence": {
+            "path": "docs/plugins/markdown-history.md",
+            "line": 29,
+            "quote": "文件编辑器／独立文件页中的“历史版本”提供版本选择、历史／当前正文对比、资源指纹与资源快照下载。查看不会替换编辑正文。启用追踪且目标可写时，可先对比恢复范围，再显式确认恢复正文与该版本已归档的直接引用资源；也可取消勾选，只恢复正文。存在未保存草稿或进行中的保存时先处理草稿，恢复请求期间编辑器暂时只读。未归档资源会阻止整版恢复，不能声称附件已备份。恢复保留当前其他资源，不删除共享文件。启用时打开列表会在服务数据中归档观察到的实际变化；停用时不记录。当前文件检查失败仍可查看已有版本，界面明确显示失败。锁定会关闭历史窗口，未确定锁态或已锁定时不能打开；解锁后可重新打开。列表返回最近 200 条及总数，旧版本可按编号通过 API 查询。读取正文／附件快照验证 SHA-256；损坏对象或非法摘要拒绝返回。工作区读取固定当前本地路径或 SSH 会话代际，避免配置切换后读取另一工作区；SSH 系统文档读取也固定路径和代际。",
+            "match": {
+              "kind": "heading",
+              "line": 76,
+              "text": "### 2026-10-16 资源恢复后的预览缓存"
+            }
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 107.1255000000001,
+          "success": true,
+          "candidates": 144,
+          "responseBytes": 15394,
+          "evidence": {
+            "path": "docs/plugins/markdown-history.md",
+            "line": 29,
+            "quote": "文件编辑器／独立文件页中的“历史版本”提供版本选择、历史／当前正文对比、资源指纹与资源快照下载。查看不会替换编辑正文。启用追踪且目标可写时，可先对比恢复范围，再显式确认恢复正文与该版本已归档的直接引用资源；也可取消勾选，只恢复正文。存在未保存草稿或进行中的保存时先处理草稿，恢复请求期间编辑器暂时只读。未归档资源会阻止整版恢复，不能声称附件已备份。恢复保留当前其他资源，不删除共享文件。启用时打开列表会在服务数据中归档观察到的实际变化；停用时不记录。当前文件检查失败仍可查看已有版本，界面明确显示失败。锁定会关闭历史窗口，未确定锁态或已锁定时不能打开；解锁后可重新打开。列表返回最近 200 条及总数，旧版本可按编号通过 API 查询。读取正文／附件快照验证 SHA-256；损坏对象或非法摘要拒绝返回。工作区读取固定当前本地路径或 SSH 会话代际，避免配置切换后读取另一工作区；SSH 系统文档读取也固定路径和代际。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          65.94395799999984,
+          36.51483300000109,
+          39.64008399999875,
+          40.765542000001005,
+          47.13170900000114,
+          58.15629199999967,
+          46.863624999999956,
+          46.22516700000051,
+          45.414582999999766
+        ],
+        "after": [
+          61.028957999998966,
+          43.61383399999977,
+          51.47395899999901,
+          56.979332999999315,
+          50.49124999999913,
+          62.80333299999984,
+          84.52483299999949,
+          48.06837499999892,
+          64.72770799999853
+        ],
+        "direct": [
+          115.07691599999998,
+          107.1255000000001,
+          109.5433750000011,
+          112.25324999999975,
+          104.98295800000051,
+          101.98295800000051,
+          99.32237499999974,
+          102.84962500000074,
+          116.92229200000111
+        ]
+      }
+    },
+    {
+      "id": "spreadsheet",
+      "description": "表格编辑期间别人改了同一文件会如何处理",
+      "terms": [
+        "409",
+        "单元格"
+      ],
+      "expected": "docs/plugins/office.md",
+      "anchor": "返回 409",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 15.451999999999316,
+          "success": true,
+          "candidates": 4,
+          "snippetBytes": 624,
+          "responseBytes": 6052,
+          "evidence": {
+            "path": "docs/plugins/office.md",
+            "line": 22,
+            "quote": "只读引用仅查看，读写引用才可保存。保存对比打开时的文件哈希与工作区身份；文件被其他操作改动后返回 409，须重新打开。"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 16.5368750000016,
+          "success": true,
+          "candidates": 4,
+          "snippetBytes": 2610,
+          "responseBytes": 8260,
+          "evidence": {
+            "path": "docs/plugins/office.md",
+            "line": 22,
+            "quote": "只读引用仅查看，读写引用才可保存。保存对比打开时的文件哈希与工作区身份；文件被其他操作改动后返回 409，须重新打开。"
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 91.90170899999976,
+          "success": true,
+          "candidates": 8,
+          "responseBytes": 8590,
+          "evidence": {
+            "path": "docs/plugins/office.md",
+            "line": 22,
+            "quote": "只读引用仅查看，读写引用才可保存。保存对比打开时的文件哈希与工作区身份；文件被其他操作改动后返回 409，须重新打开。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          25.62841599999956,
+          17.78741599999921,
+          19.95720799999981,
+          15.451999999999316,
+          12.746165999998993,
+          12.645000000000437,
+          16.332749999999578,
+          14.282583000000159,
+          14.959125000001222
+        ],
+        "after": [
+          17.81816599999911,
+          18.02874999999949,
+          16.5368750000016,
+          15.21154100000058,
+          11.19195800000125,
+          14.270249999999578,
+          11.618416999999681,
+          16.922709000000395,
+          52.601167000000714
+        ],
+        "direct": [
+          121.10124999999971,
+          101.49920800000109,
+          100.33620800000062,
+          91.30199999999968,
+          91.99458400000003,
+          85.82170800000131,
+          81.2447919999995,
+          87.72049999999945,
+          91.90170899999976
+        ]
+      }
+    },
+    {
+      "id": "httpchain",
+      "description": "界面上的一个按钮怎样沿请求定位后端服务处理函数",
+      "terms": [
+        "按钮",
+        "路由"
+      ],
+      "expected": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+      "anchor": "真实 HTML 按钮",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 32.86354199999914,
+          "success": true,
+          "candidates": 24,
+          "snippetBytes": 12346,
+          "responseBytes": 27497,
+          "evidence": {
+            "path": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+            "line": 5,
+            "quote": "目标链为：真实 HTML 按钮 → 当前页面加载脚本中的事件绑定 → 回调函数 → 字面 HTTP 请求 → 唯一匹配的 Go 路由 → 处理函数及已有函数调用关系。每段保留原文件、内容指纹和位置，标明静态声明、选择器候选或路由候选。路径面板必须清楚展示这些等级，不能称为执行记录。"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 32.45429200000035,
+          "success": true,
+          "candidates": 24,
+          "snippetBytes": 14527,
+          "responseBytes": 31137,
+          "evidence": {
+            "path": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+            "line": 5,
+            "quote": "目标链为：真实 HTML 按钮 → 当前页面加载脚本中的事件绑定 → 回调函数 → 字面 HTTP 请求 → 唯一匹配的 Go 路由 → 处理函数及已有函数调用关系。每段保留原文件、内容指纹和位置，标明静态声明、选择器候选或路由候选。路径面板必须清楚展示这些等级，不能称为执行记录。",
+            "match": {
+              "kind": "heading",
+              "line": 1,
+              "text": "# 按钮到服务的静态证据链"
+            }
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 85.21158300000025,
+          "success": true,
+          "candidates": 46,
+          "responseBytes": 8366,
+          "evidence": {
+            "path": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+            "line": 5,
+            "quote": "目标链为：真实 HTML 按钮 → 当前页面加载脚本中的事件绑定 → 回调函数 → 字面 HTTP 请求 → 唯一匹配的 Go 路由 → 处理函数及已有函数调用关系。每段保留原文件、内容指纹和位置，标明静态声明、选择器候选或路由候选。路径面板必须清楚展示这些等级，不能称为执行记录。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          37.481292000000394,
+          26.054958000000624,
+          21.5797079999993,
+          32.86354199999914,
+          29.523666999999477,
+          36.01487499999894,
+          31.947292000000743,
+          39.11183399999936,
+          33.19187500000044
+        ],
+        "after": [
+          33.962250000000495,
+          24.29716600000029,
+          27.477583000001687,
+          32.45429200000035,
+          31.434040999998615,
+          42.90495800000099,
+          37.285499999999956,
+          42.363915999998426,
+          30.230749999998807
+        ],
+        "direct": [
+          86.07829200000015,
+          81.53850000000057,
+          81.47654199999852,
+          95.71900000000096,
+          85.14704100000017,
+          97.21083400000134,
+          94.32675000000017,
+          85.21158300000025,
+          81.86037499999838
+        ]
+      }
+    },
+    {
+      "id": "conclusion",
+      "description": "文字结论没改变但引用的依据变了是否会单独显示",
+      "terms": [
+        "结论",
+        "依据"
+      ],
+      "expected": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+      "anchor": "结论文字未变但依据内容变了",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 30.528582999999344,
+          "success": true,
+          "candidates": 22,
+          "snippetBytes": 9976,
+          "responseBytes": 23396,
+          "evidence": {
+            "path": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+            "line": 9,
+            "quote": "依据必须关联当次历史快照中的真实引用及目标内容身份，保留静态证据等级。结论文字未变但依据内容变了需要独立显示；无法解析的引用、未覆盖正文和不可用来源明确提示未知，不等于没有依据。历史引用不能冒充当前文件。长文未保存的段落不能回填或伪造；现有8 MiB/32次历史约束保持，不引入全库额外读取阻塞渐进索引。"
+          },
+          "limited": false
+        },
+        "after": {
+          "p50ms": 32.89445800000067,
+          "success": true,
+          "candidates": 26,
+          "snippetBytes": 13142,
+          "responseBytes": 30344,
+          "evidence": {
+            "path": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+            "line": 9,
+            "quote": "依据必须关联当次历史快照中的真实引用及目标内容身份，保留静态证据等级。结论文字未变但依据内容变了需要独立显示；无法解析的引用、未覆盖正文和不可用来源明确提示未知，不等于没有依据。历史引用不能冒充当前文件。长文未保存的段落不能回填或伪造；现有8 MiB/32次历史约束保持，不引入全库额外读取阻塞渐进索引。",
+            "match": {
+              "kind": "heading",
+              "line": 1,
+              "text": "# 知识时光：结论与依据演变"
+            }
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 64.67204200000015,
+          "success": true,
+          "candidates": 47,
+          "responseBytes": 4612,
+          "evidence": {
+            "path": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+            "line": 9,
+            "quote": "依据必须关联当次历史快照中的真实引用及目标内容身份，保留静态证据等级。结论文字未变但依据内容变了需要独立显示；无法解析的引用、未覆盖正文和不可用来源明确提示未知，不等于没有依据。历史引用不能冒充当前文件。长文未保存的段落不能回填或伪造；现有8 MiB/32次历史约束保持，不引入全库额外读取阻塞渐进索引。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          39.46949999999924,
+          34.258583000000726,
+          32.027125000000524,
+          29.414374999998472,
+          26.881250000000364,
+          30.528582999999344,
+          25.0887500000008,
+          31.418499999999767,
+          30.437291999998706
+        ],
+        "after": [
+          27.51837499999965,
+          41.173917000000074,
+          32.89445800000067,
+          30.202957999999853,
+          34.702165999999124,
+          39.32933299999968,
+          31.7271669999991,
+          28.774708000000828,
+          43.8637920000001
+        ],
+        "direct": [
+          57.89191700000083,
+          64.2255409999998,
+          66.82387500000004,
+          64.67204200000015,
+          61.23875000000044,
+          70.27275000000009,
+          63.56962500000009,
+          67.74687499999891,
+          67.55075000000033
+        ]
+      }
+    },
+    {
+      "id": "truncated-tail",
+      "description": "旧版本升级时会不会把我已经删除的内置插件重新装回来",
+      "terms": [
+        "增量注册",
+        "复活"
+      ],
+      "expected": "docs/plugins/computer-browser-control.md",
+      "anchor": "不会自动复活",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 13.357708999999886,
+          "success": false,
+          "candidates": 0,
+          "snippetBytes": 0,
+          "responseBytes": 3764,
+          "evidence": null,
+          "limited": false
+        },
+        "after": {
+          "p50ms": 16.835124999999607,
+          "success": false,
+          "candidates": 0,
+          "snippetBytes": 0,
+          "responseBytes": 3764,
+          "evidence": null,
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 47.68299999999908,
+          "success": true,
+          "candidates": 1,
+          "responseBytes": 41,
+          "evidence": {
+            "path": "docs/plugins/computer-browser-control.md",
+            "line": 90,
+            "quote": "- 启动时增量注册 browser-control/computer-control，默认关闭，保留已有插件、设置和自定义代码；已明确删除的内置插件记录在 removedBuiltins 中，不会自动复活。"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          12.969375000000582,
+          15.60333300000093,
+          12.411874999999782,
+          17.40849999999955,
+          12.92725000000064,
+          17.298499999998967,
+          13.357708999999886,
+          9.806667000000743,
+          14.718833999999333
+        ],
+        "after": [
+          14.209208000000217,
+          14.47058399999878,
+          14.610749999999825,
+          23.334333999999217,
+          11.35595900000044,
+          17.817958999999973,
+          16.9895000000015,
+          16.835124999999607,
+          18.302041000000827
+        ],
+        "direct": [
+          60.18029099999876,
+          42.59608399999888,
+          47.65129100000013,
+          68.90375000000131,
+          54.699249999999665,
+          48.67874999999913,
+          45.89295800000036,
+          44.55283299999974,
+          47.68299999999908
+        ]
+      }
+    },
+    {
+      "id": "unindexed-file",
+      "description": "加密文件传输索引连接为什么会停顿以及改过什么等待参数",
+      "terms": [
+        "FTPS",
+        "50ms"
+      ],
+      "expected": "docs/reviews/2026-10-15/ftps-index-latency.md",
+      "anchor": "列目录 |",
+      "group": "original",
+      "summary": {
+        "before": {
+          "p50ms": 20.39849999999933,
+          "success": false,
+          "candidates": 2,
+          "snippetBytes": 400,
+          "responseBytes": 4968,
+          "evidence": null,
+          "limited": false
+        },
+        "after": {
+          "p50ms": 20.256333000001177,
+          "success": false,
+          "candidates": 2,
+          "snippetBytes": 1240,
+          "responseBytes": 5910,
+          "evidence": null,
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 66.26820899999984,
+          "success": true,
+          "candidates": 6,
+          "responseBytes": 1599,
+          "evidence": {
+            "path": "docs/reviews/2026-10-15/ftps-index-latency.md",
+            "line": 11,
+            "quote": "| 列目录 | 205.02ms | 21.27ms | 52.52ms |"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          23.889750000000276,
+          25.16149999999834,
+          20.39849999999933,
+          25.167875000001004,
+          22.058999999999287,
+          19.769333000000188,
+          14.813000000000102,
+          17.89483400000063,
+          14.826790999999503
+        ],
+        "after": [
+          19.96020800000042,
+          21.513624999999593,
+          22.213917000000947,
+          19.72466599999825,
+          13.36858299999949,
+          17.505291000001307,
+          20.305499999998574,
+          20.256333000001177,
+          21.573999999998705
+        ],
+        "direct": [
+          68.35437499999898,
+          68.16275000000132,
+          60.0089169999992,
+          66.41808400000082,
+          75.0932499999999,
+          66.26820899999984,
+          65.15841700000237,
+          63.42779199999859,
+          58.551666999999725
+        ]
+      }
+    },
+    {
+      "id": "deep-heading",
+      "description": "无头浏览器与本机桥接现在用的什么架构",
+      "terms": [
+        "headless",
+        "architecture"
+      ],
+      "expected": "docs/plugins/computer-browser-control.md",
+      "anchor": "## 2026-10-07: Current headless and native architecture",
+      "group": "structure-probe",
+      "summary": {
+        "before": {
+          "p50ms": 21.61250099999961,
+          "success": false,
+          "candidates": 8,
+          "snippetBytes": 3394,
+          "responseBytes": 10386,
+          "evidence": null,
+          "limited": false
+        },
+        "after": {
+          "p50ms": 21.48491699999977,
+          "success": true,
+          "candidates": 9,
+          "snippetBytes": 3977,
+          "responseBytes": 11911,
+          "evidence": {
+            "path": "docs/plugins/computer-browser-control.md",
+            "line": 101,
+            "quote": "## 2026-10-07: Current headless and native architecture",
+            "match": {
+              "kind": "heading",
+              "line": 101,
+              "text": "## 2026-10-07: Current headless and native architecture"
+            }
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 57.5523749999993,
+          "success": true,
+          "candidates": 10,
+          "responseBytes": 1049,
+          "evidence": {
+            "path": "docs/plugins/computer-browser-control.md",
+            "line": 101,
+            "quote": "## 2026-10-07: Current headless and native architecture"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          18.785665999999765,
+          22.809666999999536,
+          47.3450840000005,
+          23.356040999999095,
+          26.729875000000902,
+          20.28954199999862,
+          21.34979200000089,
+          17.404834000000847,
+          21.61250099999961
+        ],
+        "after": [
+          21.48491699999977,
+          26.76812499999869,
+          27.047624999999243,
+          23.05933300000106,
+          21.3939160000009,
+          24.44091599999956,
+          19.662583000001177,
+          18.06395799999882,
+          19.573041999999987
+        ],
+        "direct": [
+          62.53450000000157,
+          70.41887499999939,
+          65.20524999999907,
+          63.992999999998574,
+          57.5523749999993,
+          55.06220799999937,
+          47.36004200000025,
+          52.4857090000005,
+          52.02129199999763
+        ]
+      }
+    },
+    {
+      "id": "deep-viewer",
+      "description": "当前Markdown查看器的说明在哪里",
+      "terms": [
+        "当前",
+        "查看器"
+      ],
+      "expected": "docs/plugins/markdown-history.md",
+      "anchor": "## 当前 Markdown 查看器",
+      "group": "structure-probe",
+      "summary": {
+        "before": {
+          "p50ms": 31.944707999999082,
+          "success": false,
+          "candidates": 19,
+          "snippetBytes": 4596,
+          "responseBytes": 16383,
+          "evidence": null,
+          "limited": false
+        },
+        "after": {
+          "p50ms": 33.05416700000205,
+          "success": true,
+          "candidates": 21,
+          "snippetBytes": 12397,
+          "responseBytes": 26669,
+          "evidence": {
+            "path": "docs/plugins/markdown-history.md",
+            "line": 80,
+            "quote": "## 当前 Markdown 查看器（源码 0fef6411）",
+            "match": {
+              "kind": "heading",
+              "line": 80,
+              "text": "## 当前 Markdown 查看器（源码 0fef6411）"
+            }
+          },
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 157.01658400000088,
+          "success": true,
+          "candidates": 39,
+          "responseBytes": 22321,
+          "evidence": {
+            "path": "docs/plugins/markdown-history.md",
+            "line": 80,
+            "quote": "## 当前 Markdown 查看器（源码 0fef6411）"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          26.477374999998574,
+          31.932334000000992,
+          31.944707999999082,
+          49.17570799999885,
+          46.91633400000137,
+          59.519124999998894,
+          24.527915999999095,
+          68.72837499999878,
+          26.75879200000054
+        ],
+        "after": [
+          23.93437499999709,
+          34.42545800000153,
+          30.145916000001307,
+          32.19104100000186,
+          58.36066700000083,
+          56.87654100000145,
+          30.608625000000757,
+          44.177874999997584,
+          33.05416700000205
+        ],
+        "direct": [
+          123.53800000000047,
+          145.0321670000012,
+          155.12741700000333,
+          172.78004099999816,
+          191.82616699999926,
+          186.2250419999982,
+          155.2800419999985,
+          157.01658400000088,
+          157.71979100000317
+        ]
+      }
+    },
+    {
+      "id": "deep-function",
+      "description": "导出的代码说明里处理记忆神经图HTTP请求的入口函数",
+      "terms": [
+        "memoryNeural",
+        "http.ResponseWriter"
+      ],
+      "expected": "docs/proposals/memory-neural-20261010/source/internal/server/memory_neural.go.txt",
+      "anchor": "func (a *App) memoryNeural(w http.ResponseWriter",
+      "group": "structure-probe",
+      "summary": {
+        "before": {
+          "p50ms": 35.253374999996595,
+          "success": false,
+          "candidates": 0,
+          "snippetBytes": 0,
+          "responseBytes": 3777,
+          "evidence": null,
+          "limited": false
+        },
+        "after": {
+          "p50ms": 35.198999999996886,
+          "success": false,
+          "candidates": 0,
+          "snippetBytes": 0,
+          "responseBytes": 3777,
+          "evidence": null,
+          "limited": false
+        },
+        "direct": {
+          "p50ms": 50.39816599999904,
+          "success": true,
+          "candidates": 1,
+          "responseBytes": 208,
+          "evidence": {
+            "path": "docs/proposals/memory-neural-20261010/source/internal/server/memory_neural.go.txt",
+            "line": 324,
+            "quote": "func (a *App) memoryNeural(w http.ResponseWriter, r *http.Request) {"
+          },
+          "limited": false
+        }
+      },
+      "samplesMs": {
+        "before": [
+          35.253374999996595,
+          60.09137499999997,
+          27.258958000002167,
+          16.81999999999971,
+          51.53787499999817,
+          26.145666000000347,
+          33.970124999999825,
+          43.83620900000096,
+          41.64666700000089
+        ],
+        "after": [
+          51.8392079999976,
+          21.193250000000262,
+          71.28733400000056,
+          17.375,
+          27.144749999999476,
+          35.198999999996886,
+          57.724458000000595,
+          27.709999999999127,
+          50.29137499999706
+        ],
+        "direct": [
+          49.9733750000014,
+          47.62149999999747,
+          54.99354200000016,
+          44.095792000000074,
+          55.76695800000016,
+          52.89620900000227,
+          50.39816599999904,
+          48.278833000000304,
+          51.5605420000029
+        ]
+      }
+    }
+  ],
+  "liveTools": [
+    {
+      "query": "headless architecture",
+      "code": false,
+      "found": true,
+      "path": "docs/plugins/computer-browser-control.md",
+      "match": {
+        "kind": "heading",
+        "line": 101,
+        "text": "## 2026-10-07: Current headless and native architecture"
+      },
+      "originalLine": "## 2026-10-07: Current headless and native architecture",
+      "hash": "a4923f5b13bc783c892d20ac1c6a2089941f023c181490d630c063ef94ea9fa3",
+      "singleObservationMs": 2534.2002509999998,
+      "partial": true,
+      "stale": true
+    },
+    {
+      "query": "knowledgeAssist",
+      "code": false,
+      "found": true,
+      "path": "internal/server/knowledge_map.go",
+      "match": {
+        "kind": "declaration-candidate",
+        "line": 465,
+        "text": "func (a *App) knowledgeAssist(w http.ResponseWriter, r *http.Request)"
+      },
+      "originalLine": "func (a *App) knowledgeAssist(w http.ResponseWriter, r *http.Request) {",
+      "hash": "4cb0726d0e734137302c4b7dfd583a28a8088f98c7bdc0cc3176f6ab39ca5251",
+      "singleObservationMs": 170.3979589999999,
+      "partial": true,
+      "stale": true
+    }
+  ],
+  "bounds": {
+    "scanBytes": 262144,
+    "overflowProbe": 1,
+    "entriesPerFile": 32,
+    "textBytesPerFile": 4096,
+    "entryBytes": 240,
+    "estimatedEntryBudgetPerView": 8388608,
+    "notes": "Entry text plus64 bytes per entry, NOT total RSS. Existing graph/prefix/hash metadata, AST cache, two modes and coexisting previous observations have separate costs."
+  },
+  "browser": {
+    "client": "Safari / native CUA",
+    "query": "headless",
+    "source": "aide",
+    "path": "docs/plugins/computer-browser-control.md",
+    "line": 101,
+    "passed": "Actual result, whole-file SHA256 validation, read-only editor visibly scrolled/highlighted line101. Test preview closed; original tabs preserved.",
+    "initialFailure": "Unproved line rejected; added bounded streaming full-file digest. Partial prefixes never used as full digests."
+  },
+  "checks": {
+    "plugin": "17 PASS",
+    "finalDigestRace": "14.812s PASS: Outline, LocalRestartAPI, PathIndexed, MaterialTimeSlice",
+    "earlierBroaderRace": "61.219s PASS before digest addition; fallback/isolation23.505s PASS",
+    "frontend": "syntax, outline, file-preview, coverage-state, live-metadata, cache PASS",
+    "build": "start.command, go vet/build, healthy HTTPS9999",
+    "fullReleaseSuite": "NOT_RUN",
+    "cloudModel": "NOT_RUN",
+    "publication": "NOT_RUN; local uncommitted candidate only"
+  },
+  "limits": [
+    "One frozen real API snapshot replayed over verified loopback TLS with actual registered old/new handlers. Excludes model, Go admission and active backend scans. Live functional calls recorded separately, only single observations.",
+    "Fulltext rg on macOS versus handlers inside Linux container reading same physical directory. Fixed1199-file manifest from prior test; one taskJSON changed since prior run. Current corpus verified unchanged at measurement end; later documentation edits are outside measurement.",
+    "Snapshot987 docs /678 ready /203 outlined, stale and partial. Exported-source probe was not ready/discovered. Missing material is not proof of absence.",
+    "Original10 cases are8 authored positives plus2 deliberate boundaries;3 extra structural probes are2 headings and1 pending exported-code file. Not random recall estimates.",
+    "Both searches get same fixed manual keyword expansions; only evaluator receives expected path/anchor. Reads all returned candidates, not AI candidate selection or answer time.",
+    "Benchmark uses limit100 for candidate inspection; maximum result about83KiB. Normal AI usage should use limit5-20. Each result gives snippets and metadata, no complete outlines. No tokenizer or billing measurement.",
+    "Lexical single-line declaration candidates only; no runtime/call edges. Multiline/dynamic declarations, HTML/PDF/Office/remote outlines not added. Bounds may truncate. Files larger than256KiB do not get whole-file proof, so an unproved line can be refused.",
+    "Existing partial coverage and validated-local-material-missing checkpoint warning remain. Controlled encrypted outline persistence/reload passed, not proof whole live corpus persistence fixed.",
+    "First QA copy ownership corrected using isolated container; combined race run hit2GiB limit and passed at4GiB. This is not a production index peak-memory measurement.",
+    "Fulltext baseline uses rg --text on the fixed file manifest, including binary bytes; it is not the default binary-skipping rg profile, nor PDF text extraction timing."
+  ]
+}

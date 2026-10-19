@@ -56,6 +56,7 @@ type knowledgeLocalQueue struct {
 	MetadataOnly, Direct bool
 }
 type knowledgeLocalMaterial struct {
+	Outline    knowledgeOutline
 	Stamp      knowledgeLocalStamp
 	Text, Code string
 	CodeReady  bool
@@ -125,7 +126,7 @@ func localPayload(identity string, v *knowledgeDiscoveryView, materials map[stri
 		if !e.Info.IsDir() {
 			m, ok := materials[location+"\x00"+p]
 			if ok && m.stamp == knowledgeStamp(e.Info) {
-				out.Materials[p] = knowledgeLocalMaterial{localStamp(m.stamp), m.text, m.code, m.codeReady}
+				out.Materials[p] = knowledgeLocalMaterial{Outline: m.outline, Stamp: localStamp(m.stamp), Text: m.text, Code: m.code, CodeReady: m.codeReady}
 			}
 		}
 		out.Published[p] = knowledgeLocalInfo{p, localStamp(knowledgeStamp(e.Info))}
@@ -180,7 +181,7 @@ func validateKnowledgeLocalCursor(d *knowledgeLocalPayload) error {
 	codeBytes, codeFiles := 0, 0
 	for p, m := range d.Materials {
 		info, ok := d.Published[p]
-		if !ok || info.IsDir() || !safe(p) || m.Stamp != info.Stamp || len(m.Text) > 8192 || len(m.Code) > 256*1024 || !m.CodeReady && m.Code != "" {
+		if !ok || info.IsDir() || !safe(p) || m.Stamp != info.Stamp || len(m.Text) > 8192 || !knowledgeOutlineValid(m.Outline) || len(m.Code) > 256*1024 || !m.CodeReady && m.Code != "" {
 			return fmt.Errorf("invalid local material")
 		}
 		if m.CodeReady {
@@ -252,7 +253,7 @@ func (d knowledgeLocalPayload) restore(location string) (*knowledgeDiscoveryView
 	}
 	materials := map[string]knowledgeFileMemo{}
 	for p, m := range d.Materials {
-		materials[location+"\x00"+p] = knowledgeFileMemo{m.Stamp.stamp(), m.Text, m.Code, m.CodeReady}
+		materials[location+"\x00"+p] = knowledgeFileMemo{outline: m.Outline, stamp: m.Stamp.stamp(), text: m.Text, code: m.Code, codeReady: m.CodeReady}
 	}
 	v.Material = knowledgeMaterialProgress{Cycle: d.MaterialState.Cycle, FileAfter: d.MaterialState.FileAfter, DirAfter: d.MaterialState.DirAfter, Validated: map[string]knowledgeFileStamp{}, Unavailable: map[string]knowledgeMaterialGap{}}
 	for p, s := range d.MaterialState.Validated {

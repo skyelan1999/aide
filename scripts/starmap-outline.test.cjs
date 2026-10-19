@@ -1,0 +1,10 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('internal/server/web/starmap.js','utf8'),c=vm.createContext({});
+vm.runInContext(source.slice(source.indexOf('function nodeOutlineMatch('),source.indexOf('function nodeResults(')),c);
+const n={outline:{entries:[{kind:'heading',line:900,text:'## Late recovery'},{kind:'heading',line:100,text:'## Earlier'}]}};
+assert.equal(c.nodeOutlineMatch(n,['late','recovery']).line,900);
+assert.equal(c.nodeOutlineMatch(n,['absent']),null);
+assert.equal(c.nodeOutlineMatch({...n,readState:'pending'},['late']),null);
+assert.equal(c.nodeOutlineMatch({...n,readState:'unavailable'},['late']),null);
+assert.equal(c.nodeOutlineMatch(n,[]),null);
+console.log('PASS: outline matching, locators and pending/unavailable isolation');

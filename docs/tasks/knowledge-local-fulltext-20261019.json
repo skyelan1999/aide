@@ -1,0 +1,48 @@
+{
+  "id": "knowledge-local-fulltext-20261019",
+  "request": "全文索引和检索都在本地做，控制缓存和计算开销，只把命中片段交给AI，再用同一个目录实测对比",
+  "baseline": "7774f424af3221275118b2acc9a2f29e133800f1",
+  "initial_status": "M compose.yaml\n M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? docs/reviews/2026-10-19-starlink-fulltext-comparison.json\n?? docs/reviews/2026-10-19-starlink-fulltext-comparison.md\n?? docs/tasks/aide-update-20261019.json\n?? docs/tasks/knowledge-snapshot-query-20261019.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/starlink-plugin-20261019.json\n?? docs/tasks/starlink-search-comparison-20261019.json\n?? docs/tasks/testbench-live-integration-20261018.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/.upgrade-backup-starlink-3504bca63abebb831604c54a08c32af4/\n?? plugins/.upgrade-backup-starlink-442f999225668a7a4d93f9b46dceb5aa/\n?? plugins/.upgrade-backup-starlink-726078f2d902b81b1706c44808072309/\n?? plugins/.upgrade-backup-starlink-833dc73465166e2109f1c8299d559691/\n?? plugins/.upgrade-backup-starlink-8b41fc6988d8d898a3d38db0d5c65502/\n?? plugins/.upgrade-backup-starlink-9f7839a6e93f8056519aff02c656aa59/\n?? plugins/.upgrade-backup-starlink-c26cc31cfb175906ae5aa1f0e5278439/\n?? plugins/.upgrade-backup-starlink-f187b6a8ff09357809cced256ddf3866/\n?? plugins/starlink/",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "not_run",
+      "summary": "用户以轻量结构索引方案替换本任务；全文磁盘索引未实施",
+      "evidence": []
+    },
+    "design": {
+      "status": "not_run",
+      "summary": "用户以轻量结构索引方案替换本任务；全文磁盘索引未实施",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "not_run",
+      "summary": "用户以轻量结构索引方案替换本任务；全文磁盘索引未实施",
+      "evidence": []
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "用户以轻量结构索引方案替换本任务；全文磁盘索引未实施",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "not_run",
+      "summary": "用户以轻量结构索引方案替换本任务；全文磁盘索引未实施",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "not_run",
+      "summary": "用户以轻量结构索引方案替换本任务；全文磁盘索引未实施",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户以轻量结构索引方案替换本任务；全文磁盘索引未实施",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "用户已明确停止全文索引方案，改为 knowledge-light-index-20261019；本任务没有产品代码实现。"
+}

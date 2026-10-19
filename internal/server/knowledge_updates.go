@@ -97,6 +97,7 @@ func knowledgeStamp(info os.FileInfo) knowledgeFileStamp {
 }
 
 type knowledgeFileMemo struct {
+	outline   knowledgeOutline
 	stamp     knowledgeFileStamp
 	text      string
 	code      string
@@ -120,6 +121,7 @@ type knowledgeCodeMemo struct {
 }
 
 type knowledgeScanCache struct {
+	outlineBytes     int
 	finishCycle      bool            // Do not restart completed sources while finishing others.
 	priorGraph       *knowledgeGraph // One immutable view, scoped to this candidate scan only.
 	localCheckpoints []knowledgeLocalCheckpoint
@@ -244,7 +246,7 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 		if !wantCode {
 			old.code, old.codeReady = "", false
 		}
-		c.files[key] = old
+		old = c.keepMaterial(key, old)
 		return old.text, old.code, nil
 	}
 	memo := knowledgeFileMemo{stamp: stamp}
@@ -252,14 +254,19 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 	// Reuse its verified text while adding the missing code material.
 	if fresh, ok := c.files[key]; ok && fresh.stamp == stamp {
 		memo.text = fresh.text
+		memo.outline = fresh.outline
 	} else if old, ok := c.previous[key]; ok && old.stamp == stamp {
 		memo.text = old.text
+		memo.outline = old.outline
 	} else {
 		reader := c.readText
 		if reader == nil {
 			reader = knowledgeReadText
 		}
 		memo.text, err = reader(root, p)
+		if err == nil {
+			memo.outline = knowledgeReadOutline(root, p)
+		}
 	}
 	codeFailure := false
 	if err == nil && wantCode {
@@ -280,7 +287,7 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 		c.fail(err)
 		return "", "", c.err
 	}
-	c.files[key] = memo
+	memo = c.keepMaterial(key, memo)
 	return memo.text, memo.code, nil
 }
 

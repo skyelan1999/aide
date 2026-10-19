@@ -1,0 +1,2434 @@
+{
+  "scope": "Local controlled tool-chain measurement, not human/AI end-to-end task latency. 8 authored positive cases plus 2 explicitly chosen coverage-boundary cases, not a random recall evaluation. No model calls. No product code changes or publication.",
+  "corpusSha256": "464b75766d7b48e89851889cf6b7f383a079ade5dab3d5f30381e0bb3d25cf21",
+  "corpusManifestPrivate": "aide-pkg-StarLink/.agent-state/search-comparison-report.json",
+  "jsonLineBaseline": {
+    "date": "2026-10-19T12:46:15.888Z",
+    "method": "8 authored paraphrases; literal then same fixed keyword expansion for both; AND across whole-file terms. Actual installed StarLink handler + real HTTPS identity/delta API in persistent Node inside running Aide container; ripgrep --json on macOS same mounted physical directory. Both read ALL returned candidate source files and validate expected original line. Evaluation ground truth never sent to searches. No AI reasoning/time, no Go tool admission/host IPC; OS caches warm; not hardware-identical environments. 9 alternating repeats per stage; graph cold load separately. StarLink docs token+source region then path filter, max100.",
+    "versions": {
+      "aide": "7774f424af3221275118b2acc9a2f29e133800f1",
+      "starlink": "fbaa17020b5c5307ccaf27d7233986f407a59040",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "installedPluginSha256": "abb6303270b6f8f2b34a2544b8fd97275f458bd18052b70779dd7c9357e23645"
+    },
+    "coverage": {
+      "files": 1199,
+      "bytes": 36980671,
+      "snapshotFiles": 517,
+      "revision": "Kd9dca7f4a20e6a251a7fb06c",
+      "stale": true,
+      "truncated": true
+    },
+    "coldFirstSearchMs": 144.347458,
+    "aggregate": {
+      "rawHits": {
+        "star": 0,
+        "direct": 0
+      },
+      "expandedHits": {
+        "star": 8,
+        "direct": 8
+      },
+      "sharedSuccessfulCases": 8,
+      "sharedExpandedP50ms": {
+        "star": 29.371666000000005,
+        "direct": 39.258709000001545
+      },
+      "sharedTwoAttemptP50ms": {
+        "star": 46.089874000000236,
+        "direct": 69.73429100000067
+      },
+      "starOverDirectRatio": 0.660935579025243
+    },
+    "cases": [
+      {
+        "id": "persistent",
+        "description": "插件怎样才能跨多次调用保留网络会话而不用反复启动",
+        "terms": [
+          "连接",
+          "状态"
+        ],
+        "expected": "docs/plugins/daemon-protocol.md",
+        "anchor": "保持会话状态",
+        "indexed": true,
+        "snapshotTextBytes": 8192,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 8.369499999999988,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              8.369499999999988,
+              1224.795209,
+              6.572333999999955,
+              14.043083999999908,
+              9.758874999999989,
+              6.826915999999983,
+              6.542875000000095,
+              7.027499999999918,
+              14.470499999999902
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 22.43754200000012,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              35.79029200000008,
+              21.499583999999913,
+              35.43820800000003,
+              22.67295799999988,
+              22.382959000000028,
+              20.36241700000005,
+              22.113749999999982,
+              22.43754200000012,
+              25.40104199999996
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 27.113417000000027,
+              "success": true,
+              "candidateCount": 63,
+              "evidence": {
+                "path": "docs/plugins/daemon-protocol.md",
+                "line": 22,
+                "quote": "- 长连接（SSH 会话）需要在两次用户操作之间**保持会话状态**。"
+              }
+            },
+            "samplesMs": [
+              35.844249999999874,
+              25.518375000000106,
+              23.594500000000153,
+              26.121624999999995,
+              27.113417000000027,
+              31.367874999999913,
+              3378.461419,
+              29.876666999999543,
+              22.609375
+            ],
+            "candidateCounts": [
+              63,
+              63,
+              63,
+              63,
+              63,
+              63,
+              63,
+              63,
+              63
+            ],
+            "limited": false,
+            "revisions": [
+              "Kd9dca7f4a20e6a251a7fb06c",
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 44.98591600000009,
+              "success": true,
+              "candidateCount": 116,
+              "evidence": {
+                "path": "docs/plugins/daemon-protocol.md",
+                "line": 22,
+                "quote": "- 长连接（SSH 会话）需要在两次用户操作之间**保持会话状态**。"
+              }
+            },
+            "samplesMs": [
+              43.81791700000031,
+              44.55625000000009,
+              48.829792,
+              44.98591600000009,
+              52.51829199999975,
+              55.888958999999886,
+              46.9213749999999,
+              31.957542000000103,
+              35.10608299999967
+            ],
+            "candidateCounts": [
+              116,
+              116,
+              116,
+              116,
+              116,
+              116,
+              116,
+              116,
+              116
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "official",
+        "description": "查官网时能不能拿搜索结果简介直接当作官方正文",
+        "terms": [
+          "搜索摘要",
+          "正文"
+        ],
+        "expected": "docs/plugins/web-research-workflow.md",
+        "anchor": "搜索摘要仅作为线索",
+        "indexed": true,
+        "snapshotTextBytes": 2467,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 8.259915999999976,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              8.546832999999424,
+              7.0674159999998665,
+              6.656666999999288,
+              8.101125000000138,
+              8.259915999999976,
+              7.376374999999825,
+              8.889624999999796,
+              9.937750000000051,
+              9.341625000000022
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 22.202916999999616,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              22.186375000000226,
+              20.459624999999505,
+              21.590250000000196,
+              22.470916999999645,
+              30.926542000000154,
+              22.084332999999788,
+              35.52425000000039,
+              22.737041000000318,
+              22.202916999999616
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 29.371666000000005,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/web-research-workflow.md",
+                "line": 13,
+                "quote": "3. 顺着返回的真实链接读取产品、规格、支持页面。搜索摘要仅作为线索，不能代替正文。"
+              }
+            },
+            "samplesMs": [
+              8.118790999999874,
+              39.02245800000037,
+              105.96466700000019,
+              26.57799999999952,
+              29.371666000000005,
+              23.46679199999926,
+              31.73687500000051,
+              19.159999999999854,
+              34.14270900000065
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 31.81708300000082,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/web-research-workflow.md",
+                "line": 13,
+                "quote": "3. 顺着返回的真实链接读取产品、规格、支持页面。搜索摘要仅作为线索，不能代替正文。"
+              }
+            },
+            "samplesMs": [
+              23.985583000000588,
+              25.70641700000033,
+              28.83362500000021,
+              28.789709000000585,
+              31.81708300000082,
+              32.96995799999968,
+              34.210041000000274,
+              35.02333300000009,
+              40.547959000000446
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "serial",
+        "description": "没有实际串口设备能不能模拟一对互通的端口",
+        "terms": [
+          "虚拟",
+          "串口"
+        ],
+        "expected": "docs/plugins/comm-serial.md",
+        "anchor": "虚拟串口对",
+        "indexed": true,
+        "snapshotTextBytes": 6653,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 31.34783299999981,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              60.10295899999983,
+              25.215416000000005,
+              27.691333000000668,
+              31.34783299999981,
+              56.71345800000017,
+              34.41570799999954,
+              40.63470799999959,
+              16.18225000000075,
+              12.567583000000013
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 35.92012500000055,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              33.52129200000036,
+              35.2553340000004,
+              43.23333300000013,
+              35.92012500000055,
+              36.132707999999184,
+              34.28929200000039,
+              32.76204200000029,
+              49.69966699999986,
+              55.35920799999985
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 13.084833000000799,
+              "success": true,
+              "candidateCount": 1,
+              "evidence": {
+                "path": "docs/plugins/comm-serial.md",
+                "line": 3,
+                "quote": "基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。"
+              }
+            },
+            "samplesMs": [
+              17.298165999999583,
+              13.013249999999971,
+              13.456333999999515,
+              12.032916000000114,
+              10.368124999999964,
+              15.810707999999977,
+              11.609916999999768,
+              13.084833000000799,
+              15.176833999999872
+            ],
+            "candidateCounts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 35.43525000000045,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/comm-serial.md",
+                "line": 3,
+                "quote": "基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。"
+              }
+            },
+            "samplesMs": [
+              36.46666600000026,
+              35.43525000000045,
+              32.886625000000095,
+              33.47166600000037,
+              31.8725000000004,
+              59.351708000000144,
+              36.4476250000007,
+              33.37341699999979,
+              42.08924999999999
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "transaction",
+        "description": "数据库多条写入中途失败能不能撤销前面的修改",
+        "terms": [
+          "事务",
+          "回滚"
+        ],
+        "expected": "docs/plugins/sqlite.md",
+        "anchor": "任一失败回滚",
+        "indexed": true,
+        "snapshotTextBytes": 6959,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 11.09204200000022,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              13.7631250000004,
+              13.85504199999923,
+              11.42712500000016,
+              11.328958000000057,
+              9.891000000000531,
+              11.09204200000022,
+              10.529499999999643,
+              9.45166700000027,
+              9.708999999999833
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 32.167625000000044,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              36.772249999999985,
+              32.25337499999932,
+              34.48224999999911,
+              31.761708,
+              32.36199999999917,
+              31.46387500000128,
+              32.167625000000044,
+              30.544541999999637,
+              30.946500000000015
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 37.63787500000035,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/sqlite.md",
+                "line": 15,
+                "quote": "| `sqlite_transaction` | 单事务顺序执行多条语句，任一失败回滚 | 可写 | `{committed, results[], changes, lastInsertRowid}` |"
+              }
+            },
+            "samplesMs": [
+              9.881124999999884,
+              1914.3218749999996,
+              34.74241699999948,
+              26.76958300000115,
+              23.332249999999476,
+              67.32591599999978,
+              60.897249999999985,
+              37.63787500000035,
+              39.87645799999882
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 42.918083999999,
+              "success": true,
+              "candidateCount": 12,
+              "evidence": {
+                "path": "docs/plugins/sqlite.md",
+                "line": 15,
+                "quote": "| `sqlite_transaction` | 单事务顺序执行多条语句，任一失败回滚 | 可写 | `{committed, results[], changes, lastInsertRowid}` |"
+              }
+            },
+            "samplesMs": [
+              34.44187499999862,
+              34.179541999999856,
+              44.459375000000364,
+              33.69258300000001,
+              135.5237079999988,
+              64.38862499999959,
+              39.258709000001545,
+              44.09587499999907,
+              42.918083999999
+            ],
+            "candidateCounts": [
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "history",
+        "description": "找回文档旧版本时能否连同里面的图片一起恢复",
+        "terms": [
+          "恢复",
+          "资源"
+        ],
+        "expected": "docs/plugins/markdown-history.md",
+        "anchor": "显式确认恢复正文",
+        "indexed": true,
+        "snapshotTextBytes": 8192,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 27.27129099999911,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              36.64300000000003,
+              48.317832999999155,
+              56.34133400000064,
+              18.33716699999968,
+              18.01312499999949,
+              27.27129099999911,
+              22.65008400000079,
+              30,
+              21.355750000000626
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 44.78270899999916,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              42.058625000001484,
+              44.78270899999916,
+              36.5721250000006,
+              36.10762500000055,
+              59.179416000000856,
+              53.54833300000064,
+              46.45679200000086,
+              50.47308400000111,
+              38.68729100000019
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 37.58970899999986,
+              "success": true,
+              "candidateCount": 50,
+              "evidence": {
+                "path": "docs/plugins/markdown-history.md",
+                "line": 29,
+                "quote": "文件编辑器／独立文件页中的“历史版本”提供版本选择、历史／当前正文对比、资源指纹与资源快照下载。查看不会替换编辑正文。启用追踪且目标可写时，可先对比恢复范围，再显式确认恢复正文与该版本已归档的直接引用资源；也可取消勾选，只恢复正文。存在未保存草稿或进行中的保存时先处理草稿，恢复请求期间编辑器暂时只读。未归档资源会阻止整版恢复，不能声称附件已备份。恢复保留当前其他资源，不删除共享文件。启用时打开列表会在服务数据中归档观察到的实际变化；停用时不记录。当前文件检查失败仍可查看已有版本，界面明确显示失败。锁定会关闭历史窗口，未确定锁态或已锁定时不能打开；解锁后可重新打开。列表返回最近 200 条及总数，旧版本可按编号通过 API 查询。读取正文／附件快照验证 SHA-256；损坏对象或非法摘要拒绝返回。工作区读取固定当前本地路径或 SSH 会话代际，避免配置切换后读取另一工作区；SSH 系统文档读取也固定路径和代际。"
+              }
+            },
+            "samplesMs": [
+              55.59941699999945,
+              39.34116600000016,
+              37.58970899999986,
+              29.541958999998315,
+              26.49541700000009,
+              65.54099999999926,
+              40.575833000000785,
+              28.573167000000467,
+              25.20391699999891
+            ],
+            "candidateCounts": [
+              50,
+              50,
+              50,
+              50,
+              50,
+              50,
+              50,
+              50,
+              50
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 52.21220799999901,
+              "success": true,
+              "candidateCount": 144,
+              "evidence": {
+                "path": "docs/plugins/markdown-history.md",
+                "line": 29,
+                "quote": "文件编辑器／独立文件页中的“历史版本”提供版本选择、历史／当前正文对比、资源指纹与资源快照下载。查看不会替换编辑正文。启用追踪且目标可写时，可先对比恢复范围，再显式确认恢复正文与该版本已归档的直接引用资源；也可取消勾选，只恢复正文。存在未保存草稿或进行中的保存时先处理草稿，恢复请求期间编辑器暂时只读。未归档资源会阻止整版恢复，不能声称附件已备份。恢复保留当前其他资源，不删除共享文件。启用时打开列表会在服务数据中归档观察到的实际变化；停用时不记录。当前文件检查失败仍可查看已有版本，界面明确显示失败。锁定会关闭历史窗口，未确定锁态或已锁定时不能打开；解锁后可重新打开。列表返回最近 200 条及总数，旧版本可按编号通过 API 查询。读取正文／附件快照验证 SHA-256；损坏对象或非法摘要拒绝返回。工作区读取固定当前本地路径或 SSH 会话代际，避免配置切换后读取另一工作区；SSH 系统文档读取也固定路径和代际。"
+              }
+            },
+            "samplesMs": [
+              60.85683400000016,
+              60.94958299999962,
+              57.85899999999856,
+              55.17208399999981,
+              51.03654199999983,
+              52.21220799999901,
+              50.90079100000003,
+              51.1606670000001,
+              46.23479100000077
+            ],
+            "candidateCounts": [
+              144,
+              144,
+              144,
+              144,
+              144,
+              144,
+              144,
+              144,
+              144
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "spreadsheet",
+        "description": "表格编辑期间别人改了同一文件会如何处理",
+        "terms": [
+          "409",
+          "单元格"
+        ],
+        "expected": "docs/plugins/office.md",
+        "anchor": "返回 409",
+        "indexed": true,
+        "snapshotTextBytes": 5035,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 8.571333999998387,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              20.50366700000086,
+              18.23675000000003,
+              14.420000000000073,
+              8.331458000000566,
+              8.182416999999987,
+              10.032416000000012,
+              8.408333000001221,
+              8.14337500000147,
+              8.571333999998387
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 27.022750000000087,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              28.154167000000598,
+              27.022750000000087,
+              27.102458999999726,
+              25.837499999999636,
+              28.0368750000016,
+              26.761333000000377,
+              27.814041999999972,
+              26.36858299999949,
+              26.453459000000294
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 9.874125000000276,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/office.md",
+                "line": 22,
+                "quote": "只读引用仅查看，读写引用才可保存。保存对比打开时的文件哈希与工作区身份；文件被其他操作改动后返回 409，须重新打开。"
+              }
+            },
+            "samplesMs": [
+              10.559332999999242,
+              8.962500000001455,
+              8.389083000000028,
+              9.980207999999038,
+              10.029874999998356,
+              9.874125000000276,
+              7.882625000000189,
+              39.4325000000008,
+              8.45441700000083
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 28.95012499999939,
+              "success": true,
+              "candidateCount": 8,
+              "evidence": {
+                "path": "docs/plugins/office.md",
+                "line": 22,
+                "quote": "只读引用仅查看，读写引用才可保存。保存对比打开时的文件哈希与工作区身份；文件被其他操作改动后返回 409，须重新打开。"
+              }
+            },
+            "samplesMs": [
+              28.675875000000815,
+              28.95012499999939,
+              28.041291000001365,
+              28.915792000001602,
+              29.35437499999898,
+              28.9827920000007,
+              28.314916000001176,
+              30.07049999999981,
+              29.984708000001774
+            ],
+            "candidateCounts": [
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "httpchain",
+        "description": "界面上的一个按钮怎样沿请求定位后端服务处理函数",
+        "terms": [
+          "按钮",
+          "路由"
+        ],
+        "expected": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+        "anchor": "真实 HTML 按钮",
+        "indexed": true,
+        "snapshotTextBytes": 2671,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 8.90374999999949,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              9.933666000000812,
+              9.395000000000437,
+              9.052333999999973,
+              8.90374999999949,
+              8.36974999999984,
+              9.358416999999463,
+              8.14312500000051,
+              8.872124999999869,
+              8.356667000000016
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 25.49762499999997,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              27.745375000000422,
+              26.360415999999532,
+              24.72162500000013,
+              25.15795799999978,
+              25.37512499999866,
+              25.743000000000393,
+              25.49762499999997,
+              25.8297079999993,
+              24.874124999998457
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 46.97387499999968,
+              "success": true,
+              "candidateCount": 22,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+                "line": 5,
+                "quote": "目标链为：真实 HTML 按钮 → 当前页面加载脚本中的事件绑定 → 回调函数 → 字面 HTTP 请求 → 唯一匹配的 Go 路由 → 处理函数及已有函数调用关系。每段保留原文件、内容指纹和位置，标明静态声明、选择器候选或路由候选。路径面板必须清楚展示这些等级，不能称为执行记录。"
+              }
+            },
+            "samplesMs": [
+              14.016207999999097,
+              224.32750000000124,
+              31.650958000000173,
+              37.96354199999951,
+              38.14495899999929,
+              50.03583299999991,
+              48.41966599999978,
+              54.9614160000001,
+              46.97387499999968
+            ],
+            "candidateCounts": [
+              22,
+              22,
+              22,
+              22,
+              22,
+              22,
+              22,
+              22,
+              22
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 40.8154169999998,
+              "success": true,
+              "candidateCount": 46,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+                "line": 5,
+                "quote": "目标链为：真实 HTML 按钮 → 当前页面加载脚本中的事件绑定 → 回调函数 → 字面 HTTP 请求 → 唯一匹配的 Go 路由 → 处理函数及已有函数调用关系。每段保留原文件、内容指纹和位置，标明静态声明、选择器候选或路由候选。路径面板必须清楚展示这些等级，不能称为执行记录。"
+              }
+            },
+            "samplesMs": [
+              33.77166700000089,
+              33.149875000000975,
+              42.83924999999908,
+              39.151458000000275,
+              40.10387499999888,
+              40.8154169999998,
+              44.5200420000001,
+              47.001000000000204,
+              48.03370899999936
+            ],
+            "candidateCounts": [
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "conclusion",
+        "description": "文字结论没改变但引用的依据变了是否会单独显示",
+        "terms": [
+          "结论",
+          "依据"
+        ],
+        "expected": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+        "anchor": "结论文字未变但依据内容变了",
+        "indexed": true,
+        "snapshotTextBytes": 8192,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 11.454124999998385,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              30.629541000000245,
+              12.192832999999155,
+              10.792959000000337,
+              11.34349999999904,
+              10.298957999999402,
+              10.93433399999958,
+              11.454124999998385,
+              11.918874999999389,
+              11.671000000000276
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 32.98775000000023,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              33.33083400000032,
+              31.60870799999975,
+              32.98775000000023,
+              32.22333299999991,
+              31.622292000000016,
+              34.454791000000114,
+              33.83570800000052,
+              33.980375000001004,
+              32.490084000000934
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 40.9950000000008,
+              "success": true,
+              "candidateCount": 18,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+                "line": 9,
+                "quote": "依据必须关联当次历史快照中的真实引用及目标内容身份，保留静态证据等级。结论文字未变但依据内容变了需要独立显示；无法解析的引用、未覆盖正文和不可用来源明确提示未知，不等于没有依据。历史引用不能冒充当前文件。长文未保存的段落不能回填或伪造；现有8 MiB/32次历史约束保持，不引入全库额外读取阻塞渐进索引。"
+              }
+            },
+            "samplesMs": [
+              40.9950000000008,
+              1692.9225830000014,
+              17.6440419999999,
+              12.371917000000394,
+              10.555249999997613,
+              103.31495899999936,
+              35.34424999999828,
+              55.43812500000058,
+              51.47699999999895
+            ],
+            "candidateCounts": [
+              18,
+              18,
+              18,
+              18,
+              18,
+              18,
+              18,
+              18,
+              18
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 41.39433300000019,
+              "success": true,
+              "candidateCount": 47,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+                "line": 9,
+                "quote": "依据必须关联当次历史快照中的真实引用及目标内容身份，保留静态证据等级。结论文字未变但依据内容变了需要独立显示；无法解析的引用、未覆盖正文和不可用来源明确提示未知，不等于没有依据。历史引用不能冒充当前文件。长文未保存的段落不能回填或伪造；现有8 MiB/32次历史约束保持，不引入全库额外读取阻塞渐进索引。"
+              }
+            },
+            "samplesMs": [
+              43.37566700000025,
+              44.06825000000026,
+              47.73633400000108,
+              28.387084000001778,
+              29.67370899999878,
+              29.873208999997587,
+              41.39433300000019,
+              36.90216700000019,
+              43.088832999997976
+            ],
+            "candidateCounts": [
+              47,
+              47,
+              47,
+              47,
+              47,
+              47,
+              47,
+              47,
+              47
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      }
+    ]
+  },
+  "filenameOnlyBaseline": {
+    "date": "2026-10-19T12:47:45.224Z",
+    "method": "8 authored paraphrases; literal then same fixed keyword expansion for both; AND across whole-file terms. Actual installed StarLink handler + real HTTPS identity/delta API in persistent Node inside running Aide container; ripgrep -l (first keyword) + read and AND-filter candidate originals on macOS same mounted physical directory. Both read candidate source files (ripgrep first-term superset to AND-filter, StarLink all returned candidates) and validate expected original line. Evaluation ground truth never sent to searches. No AI reasoning/time, no Go tool admission/host IPC; OS caches warm; not hardware-identical environments. 9 alternating repeats per stage; graph cold load separately. StarLink docs token+source region then path filter, max100.",
+    "versions": {
+      "aide": "7774f424af3221275118b2acc9a2f29e133800f1",
+      "starlink": "fbaa17020b5c5307ccaf27d7233986f407a59040",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "installedPluginSha256": "abb6303270b6f8f2b34a2544b8fd97275f458bd18052b70779dd7c9357e23645"
+    },
+    "coverage": {
+      "files": 1199,
+      "bytes": 36980671,
+      "snapshotFiles": 517,
+      "revision": "Kd9dca7f4a20e6a251a7fb06c",
+      "stale": true,
+      "truncated": true
+    },
+    "coldFirstSearchMs": 211.088209,
+    "aggregate": {
+      "rawHits": {
+        "star": 0,
+        "direct": 0
+      },
+      "expandedHits": {
+        "star": 8,
+        "direct": 8
+      },
+      "sharedSuccessfulCases": 8,
+      "sharedExpandedP50ms": {
+        "star": 21.98424999999952,
+        "direct": 48.15545899999961
+      },
+      "sharedTwoAttemptP50ms": {
+        "star": 43.37725099999989,
+        "direct": 83.31275000000096
+      },
+      "starOverDirectRatio": 0.520655613936635
+    },
+    "cases": [
+      {
+        "id": "persistent",
+        "description": "插件怎样才能跨多次调用保留网络会话而不用反复启动",
+        "terms": [
+          "连接",
+          "状态"
+        ],
+        "expected": "docs/plugins/daemon-protocol.md",
+        "anchor": "保持会话状态",
+        "indexed": true,
+        "snapshotTextBytes": 8192,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 11.938583999999992,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              11.162250000000029,
+              10.825417000000016,
+              9.769999999999982,
+              11.938583999999992,
+              8.978499999999997,
+              42.978792,
+              30.33354099999997,
+              14.381375000000048,
+              11.970125000000053
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 32.20137499999987,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              48.23116599999992,
+              29.927374999999984,
+              28.069582999999966,
+              26.197666000000027,
+              26.340542000000028,
+              39.34929199999999,
+              40.25562500000012,
+              32.20137499999987,
+              44.63475000000017
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 31.04895799999997,
+              "success": true,
+              "candidateCount": 63,
+              "evidence": {
+                "path": "docs/plugins/daemon-protocol.md",
+                "line": 22,
+                "quote": "- 长连接（SSH 会话）需要在两次用户操作之间**保持会话状态**。"
+              }
+            },
+            "samplesMs": [
+              31.04895799999997,
+              26.455874999999992,
+              22.620374999999967,
+              24.22858300000007,
+              23.100125000000162,
+              1754.3502919999999,
+              64.76529200000004,
+              105.68083399999978,
+              178.93179199999986
+            ],
+            "candidateCounts": [
+              63,
+              63,
+              63,
+              63,
+              63,
+              63,
+              63,
+              63,
+              63
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 51.39479200000005,
+              "success": true,
+              "candidateCount": 116,
+              "evidence": {
+                "path": "docs/plugins/daemon-protocol.md",
+                "line": 22,
+                "quote": "- 长连接（SSH 会话）需要在两次用户操作之间**保持会话状态**。"
+              }
+            },
+            "samplesMs": [
+              55.7958329999999,
+              48.83633299999997,
+              46.48658399999999,
+              46.553957999999966,
+              48.63504200000011,
+              51.39479200000005,
+              66.36837500000001,
+              57.1037080000001,
+              81.66633300000012
+            ],
+            "candidateCounts": [
+              116,
+              116,
+              116,
+              116,
+              116,
+              116,
+              116,
+              116,
+              116
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "official",
+        "description": "查官网时能不能拿搜索结果简介直接当作官方正文",
+        "terms": [
+          "搜索摘要",
+          "正文"
+        ],
+        "expected": "docs/plugins/web-research-workflow.md",
+        "anchor": "搜索摘要仅作为线索",
+        "indexed": true,
+        "snapshotTextBytes": 2467,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 34.27062500000011,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              61.09804200000008,
+              34.27062500000011,
+              33.958916000000045,
+              39.64762499999961,
+              23.183958000000075,
+              68.70000000000027,
+              74.2865840000004,
+              28.941208000000188,
+              27.813375000000633
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 45.49399999999969,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              48.048917000000074,
+              35.55600000000004,
+              61.264374999999745,
+              45.5333329999994,
+              38.51566699999967,
+              45.49399999999969,
+              48.14387500000066,
+              44.393583999999464,
+              38.11354200000005
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 18.734332999999424,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/web-research-workflow.md",
+                "line": 13,
+                "quote": "3. 顺着返回的真实链接读取产品、规格、支持页面。搜索摘要仅作为线索，不能代替正文。"
+              }
+            },
+            "samplesMs": [
+              19.60241699999915,
+              17.82891699999982,
+              16.89679200000046,
+              17.316749999999956,
+              18.734332999999424,
+              17.29608299999927,
+              20.15008399999988,
+              124.48850000000039,
+              72.6777090000005
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 48.15545899999961,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/web-research-workflow.md",
+                "line": 13,
+                "quote": "3. 顺着返回的真实链接读取产品、规格、支持页面。搜索摘要仅作为线索，不能代替正文。"
+              }
+            },
+            "samplesMs": [
+              37.22795799999949,
+              48.15545899999961,
+              52.345790999999736,
+              53.200834000000214,
+              43.27245799999946,
+              36.078167000000576,
+              35.1688750000003,
+              48.364959000000454,
+              97.1895829999994
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "serial",
+        "description": "没有实际串口设备能不能模拟一对互通的端口",
+        "terms": [
+          "虚拟",
+          "串口"
+        ],
+        "expected": "docs/plugins/comm-serial.md",
+        "anchor": "虚拟串口对",
+        "indexed": true,
+        "snapshotTextBytes": 6653,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 15.847624999999425,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              16.203749999999673,
+              14.933999999999287,
+              16.565166999999747,
+              15.465582999999242,
+              16.98058300000048,
+              15.995584000000235,
+              15.847624999999425,
+              13.667915999999423,
+              11.516582999999628
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 33.47820800000045,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              52.33079100000032,
+              37.86833300000035,
+              33.47820800000045,
+              32.011874999999236,
+              48.48070900000039,
+              37.714750000000095,
+              31.77220799999941,
+              31.863124999999854,
+              31.259291000000303
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 12.215124999999716,
+              "success": true,
+              "candidateCount": 1,
+              "evidence": {
+                "path": "docs/plugins/comm-serial.md",
+                "line": 3,
+                "quote": "基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。"
+              }
+            },
+            "samplesMs": [
+              12.215124999999716,
+              10.43395799999962,
+              9.719084000000294,
+              10.982874999999694,
+              10.804709000000003,
+              15.89470799999981,
+              14.117290999999568,
+              15.625500000000102,
+              13.361250000000837
+            ],
+            "candidateCounts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 39.55266699999993,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/comm-serial.md",
+                "line": 3,
+                "quote": "基于 [serialport](https://serialport.io/)（`@serialport/bindings-cpp`）的**常驻守护（daemon）插件**，在 aide 容器内长期持有串口句柄：列出串口、打开配置、收发数据，并提供**虚拟串口对（pty）**用于在无硬件时测试与模拟设备。"
+              }
+            },
+            "samplesMs": [
+              38.302584000000024,
+              51.36216699999932,
+              37.57933400000002,
+              37.403833000000304,
+              35.785249999999905,
+              39.55266699999993,
+              41.28562499999953,
+              45.958708000000115,
+              42.62541599999986
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "transaction",
+        "description": "数据库多条写入中途失败能不能撤销前面的修改",
+        "terms": [
+          "事务",
+          "回滚"
+        ],
+        "expected": "docs/plugins/sqlite.md",
+        "anchor": "任一失败回滚",
+        "indexed": true,
+        "snapshotTextBytes": 6959,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 13.227834000000257,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              13.227834000000257,
+              10.67608300000029,
+              10.545916000000034,
+              11.121124999999665,
+              11.029332999999497,
+              228.41220900000008,
+              39.650916999999936,
+              27.152333,
+              30.835915999999997
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 32.87754099999984,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              48.80945899999915,
+              28.400916999999936,
+              32.11541599999964,
+              29.462499999999636,
+              32.87754099999984,
+              31.076332999999977,
+              53.709874999999556,
+              33.77754199999981,
+              34.01375000000007
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 25.143833000000086,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/sqlite.md",
+                "line": 15,
+                "quote": "| `sqlite_transaction` | 单事务顺序执行多条语句，任一失败回滚 | 可写 | `{committed, results[], changes, lastInsertRowid}` |"
+              }
+            },
+            "samplesMs": [
+              44.844458999999915,
+              38.050208999999995,
+              23.895125000000007,
+              24.031750000000102,
+              25.143833000000086,
+              45.90162499999951,
+              69.79058299999997,
+              21.394542,
+              15.96520800000053
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 44.475374999999985,
+              "success": true,
+              "candidateCount": 12,
+              "evidence": {
+                "path": "docs/plugins/sqlite.md",
+                "line": 15,
+                "quote": "| `sqlite_transaction` | 单事务顺序执行多条语句，任一失败回滚 | 可写 | `{committed, results[], changes, lastInsertRowid}` |"
+              }
+            },
+            "samplesMs": [
+              45.57245799999964,
+              50.87950000000001,
+              42.265833000000384,
+              44.475374999999985,
+              44.592250000000604,
+              46.19608299999982,
+              42.09962499999983,
+              42.092665999999554,
+              38.60412499999984
+            ],
+            "candidateCounts": [
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "history",
+        "description": "找回文档旧版本时能否连同里面的图片一起恢复",
+        "terms": [
+          "恢复",
+          "资源"
+        ],
+        "expected": "docs/plugins/markdown-history.md",
+        "anchor": "显式确认恢复正文",
+        "indexed": true,
+        "snapshotTextBytes": 8192,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 13.716582999999446,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              13.421457999999802,
+              13.2665420000003,
+              13.716582999999446,
+              13.875500000000102,
+              12.701917000000321,
+              12.591625000000022,
+              15.079875000000357,
+              14.466583000000355,
+              20.74225000000024
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 33.068750000000364,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              30.886916999999812,
+              31.549582999999984,
+              33.068750000000364,
+              32.214500000000044,
+              42.57587500000045,
+              43.43845899999906,
+              35.12233399999968,
+              29.527374999999665,
+              36.19712499999878
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 13.721292000000176,
+              "success": true,
+              "candidateCount": 50,
+              "evidence": {
+                "path": "docs/plugins/markdown-history.md",
+                "line": 29,
+                "quote": "文件编辑器／独立文件页中的“历史版本”提供版本选择、历史／当前正文对比、资源指纹与资源快照下载。查看不会替换编辑正文。启用追踪且目标可写时，可先对比恢复范围，再显式确认恢复正文与该版本已归档的直接引用资源；也可取消勾选，只恢复正文。存在未保存草稿或进行中的保存时先处理草稿，恢复请求期间编辑器暂时只读。未归档资源会阻止整版恢复，不能声称附件已备份。恢复保留当前其他资源，不删除共享文件。启用时打开列表会在服务数据中归档观察到的实际变化；停用时不记录。当前文件检查失败仍可查看已有版本，界面明确显示失败。锁定会关闭历史窗口，未确定锁态或已锁定时不能打开；解锁后可重新打开。列表返回最近 200 条及总数，旧版本可按编号通过 API 查询。读取正文／附件快照验证 SHA-256；损坏对象或非法摘要拒绝返回。工作区读取固定当前本地路径或 SSH 会话代际，避免配置切换后读取另一工作区；SSH 系统文档读取也固定路径和代际。"
+              }
+            },
+            "samplesMs": [
+              31.91466700000001,
+              859.7314170000009,
+              13.161416999999346,
+              13.36566700000003,
+              13.055374999999913,
+              14.244916999999987,
+              13.073374999999942,
+              14.625041999999667,
+              13.721292000000176
+            ],
+            "candidateCounts": [
+              50,
+              50,
+              50,
+              50,
+              50,
+              50,
+              50,
+              50,
+              50
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 46.507166999999754,
+              "success": true,
+              "candidateCount": 144,
+              "evidence": {
+                "path": "docs/plugins/markdown-history.md",
+                "line": 29,
+                "quote": "文件编辑器／独立文件页中的“历史版本”提供版本选择、历史／当前正文对比、资源指纹与资源快照下载。查看不会替换编辑正文。启用追踪且目标可写时，可先对比恢复范围，再显式确认恢复正文与该版本已归档的直接引用资源；也可取消勾选，只恢复正文。存在未保存草稿或进行中的保存时先处理草稿，恢复请求期间编辑器暂时只读。未归档资源会阻止整版恢复，不能声称附件已备份。恢复保留当前其他资源，不删除共享文件。启用时打开列表会在服务数据中归档观察到的实际变化；停用时不记录。当前文件检查失败仍可查看已有版本，界面明确显示失败。锁定会关闭历史窗口，未确定锁态或已锁定时不能打开；解锁后可重新打开。列表返回最近 200 条及总数，旧版本可按编号通过 API 查询。读取正文／附件快照验证 SHA-256；损坏对象或非法摘要拒绝返回。工作区读取固定当前本地路径或 SSH 会话代际，避免配置切换后读取另一工作区；SSH 系统文档读取也固定路径和代际。"
+              }
+            },
+            "samplesMs": [
+              70.56616700000086,
+              66.05674999999974,
+              56.71291700000074,
+              45.67183400000067,
+              45.90949999999975,
+              46.507166999999754,
+              47.56825000000026,
+              45.53087500000038,
+              45.533957999999984
+            ],
+            "candidateCounts": [
+              144,
+              144,
+              144,
+              144,
+              144,
+              144,
+              144,
+              144,
+              144
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "spreadsheet",
+        "description": "表格编辑期间别人改了同一文件会如何处理",
+        "terms": [
+          "409",
+          "单元格"
+        ],
+        "expected": "docs/plugins/office.md",
+        "anchor": "返回 409",
+        "indexed": true,
+        "snapshotTextBytes": 5035,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 7.858541999999943,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              7.878957999999329,
+              6.802875000001222,
+              6.857165999999779,
+              2419.2812510000003,
+              7.858541999999943,
+              8.792208999999275,
+              6.827500000001237,
+              7.2557919999999285,
+              8.870833000000857
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 22.037250000001222,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              22.709917000000132,
+              21.87029199999961,
+              23.407499999999345,
+              21.883749999999054,
+              44.30387499999961,
+              22.037250000001222,
+              21.61937500000022,
+              20.912749999999505,
+              22.550584000000526
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 10.146542000000409,
+              "success": true,
+              "candidateCount": 2,
+              "evidence": {
+                "path": "docs/plugins/office.md",
+                "line": 22,
+                "quote": "只读引用仅查看，读写引用才可保存。保存对比打开时的文件哈希与工作区身份；文件被其他操作改动后返回 409，须重新打开。"
+              }
+            },
+            "samplesMs": [
+              7.827499999999418,
+              10.389791999999943,
+              10.513667000001078,
+              10.160375000001295,
+              10.146542000000409,
+              16.143792000000758,
+              6.750332999999955,
+              6.885707999999795,
+              7.108667000000423
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": [
+              "K31e226e2a17f32a7d2dff663"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 47.64125000000058,
+              "success": true,
+              "candidateCount": 8,
+              "evidence": {
+                "path": "docs/plugins/office.md",
+                "line": 22,
+                "quote": "只读引用仅查看，读写引用才可保存。保存对比打开时的文件哈希与工作区身份；文件被其他操作改动后返回 409，须重新打开。"
+              }
+            },
+            "samplesMs": [
+              45.5363750000015,
+              45.71587500000169,
+              47.64125000000058,
+              55.45745899999929,
+              58.787374999999884,
+              53.07945899999868,
+              46.746290999999474,
+              47.05620900000031,
+              50.05262500000026
+            ],
+            "candidateCounts": [
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "httpchain",
+        "description": "界面上的一个按钮怎样沿请求定位后端服务处理函数",
+        "terms": [
+          "按钮",
+          "路由"
+        ],
+        "expected": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+        "anchor": "真实 HTML 按钮",
+        "indexed": true,
+        "snapshotTextBytes": 2671,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 22.0385839999999,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              7.925209000000905,
+              8.40245799999866,
+              7.312291000000187,
+              139.62729199999922,
+              30.017291999998633,
+              21.15058300000055,
+              44.1556670000009,
+              36.2436660000003,
+              22.0385839999999
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 26.321791000000303,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              26.20208300000013,
+              23.315292000001136,
+              23.49737499999901,
+              23.550875000000815,
+              26.477249999999913,
+              26.321791000000303,
+              28.29558300000099,
+              28.885958999999275,
+              32.857208000001265
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 27.53466600000138,
+              "success": true,
+              "candidateCount": 22,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+                "line": 5,
+                "quote": "目标链为：真实 HTML 按钮 → 当前页面加载脚本中的事件绑定 → 回调函数 → 字面 HTTP 请求 → 唯一匹配的 Go 路由 → 处理函数及已有函数调用关系。每段保留原文件、内容指纹和位置，标明静态声明、选择器候选或路由候选。路径面板必须清楚展示这些等级，不能称为执行记录。"
+              }
+            },
+            "samplesMs": [
+              59.44225000000006,
+              65.90154199999961,
+              89.77691699999923,
+              38.467624999999316,
+              27.53466600000138,
+              21.98424999999952,
+              18.27124999999978,
+              27.048249999999825,
+              21.338666999999987
+            ],
+            "candidateCounts": [
+              22,
+              22,
+              22,
+              22,
+              22,
+              22,
+              22,
+              22,
+              22
+            ],
+            "limited": false,
+            "revisions": [
+              "K31e226e2a17f32a7d2dff663"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 66.57529199999954,
+              "success": true,
+              "candidateCount": 46,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-http-evidence.md",
+                "line": 5,
+                "quote": "目标链为：真实 HTML 按钮 → 当前页面加载脚本中的事件绑定 → 回调函数 → 字面 HTTP 请求 → 唯一匹配的 Go 路由 → 处理函数及已有函数调用关系。每段保留原文件、内容指纹和位置，标明静态声明、选择器候选或路由候选。路径面板必须清楚展示这些等级，不能称为执行记录。"
+              }
+            },
+            "samplesMs": [
+              75.99712500000169,
+              80.47425000000112,
+              66.07683399999951,
+              72.20441700000083,
+              73.9127499999995,
+              66.57529199999954,
+              60.83808300000055,
+              61.25120900000002,
+              58.24200000000019
+            ],
+            "candidateCounts": [
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "conclusion",
+        "description": "文字结论没改变但引用的依据变了是否会单独显示",
+        "terms": [
+          "结论",
+          "依据"
+        ],
+        "expected": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+        "anchor": "结论文字未变但依据内容变了",
+        "indexed": true,
+        "snapshotTextBytes": 8192,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 11.315375000000131,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              12.493999999998778,
+              16.007541999999376,
+              9.96929099999943,
+              10.551583000000392,
+              11.46166699999958,
+              11.315375000000131,
+              10.303915999998935,
+              11.722208000001046,
+              10.65008299999863
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 31.19945800000096,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              35.2270410000001,
+              33.49141700000109,
+              30.359375,
+              29.03425000000061,
+              29.86958400000003,
+              32.27929199999926,
+              28.485584000000017,
+              31.402458999999,
+              31.19945800000096
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 39.33654200000092,
+              "success": true,
+              "candidateCount": 18,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+                "line": 9,
+                "quote": "依据必须关联当次历史快照中的真实引用及目标内容身份，保留静态证据等级。结论文字未变但依据内容变了需要独立显示；无法解析的引用、未覆盖正文和不可用来源明确提示未知，不等于没有依据。历史引用不能冒充当前文件。长文未保存的段落不能回填或伪造；现有8 MiB/32次历史约束保持，不引入全库额外读取阻塞渐进索引。"
+              }
+            },
+            "samplesMs": [
+              39.19783400000051,
+              1592.5241669999996,
+              31.99866600000314,
+              34.71454200000153,
+              39.33654200000092,
+              51.793791000000056,
+              47.85541700000249,
+              118.8770829999994,
+              31.813750000001164
+            ],
+            "candidateCounts": [
+              18,
+              18,
+              18,
+              18,
+              18,
+              18,
+              18,
+              18,
+              18
+            ],
+            "limited": false,
+            "revisions": [
+              "K31e226e2a17f32a7d2dff663"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 49.49379200000112,
+              "success": true,
+              "candidateCount": 47,
+              "evidence": {
+                "path": "docs/prd/2026-10-16-knowledge-conclusion-evolution.md",
+                "line": 9,
+                "quote": "依据必须关联当次历史快照中的真实引用及目标内容身份，保留静态证据等级。结论文字未变但依据内容变了需要独立显示；无法解析的引用、未覆盖正文和不可用来源明确提示未知，不等于没有依据。历史引用不能冒充当前文件。长文未保存的段落不能回填或伪造；现有8 MiB/32次历史约束保持，不引入全库额外读取阻塞渐进索引。"
+              }
+            },
+            "samplesMs": [
+              44.39762499999961,
+              50.29516599999988,
+              63.9184580000001,
+              41.96274999999878,
+              48.93904199999815,
+              43.95362499999828,
+              49.49379200000112,
+              54.7678330000017,
+              57.774334000001545
+            ],
+            "candidateCounts": [
+              47,
+              47,
+              47,
+              47,
+              47,
+              47,
+              47,
+              47,
+              47
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      }
+    ]
+  },
+  "boundaryProbes": {
+    "date": "2026-10-19T12:47:00.106Z",
+    "method": "2 explicit coverage/truncation boundary probes (not random samples); literal then same fixed keyword expansion for both; AND across whole-file terms. Actual installed StarLink handler + real HTTPS identity/delta API in persistent Node inside running Aide container; ripgrep --json on macOS same mounted physical directory. Both read ALL returned candidate source files and validate expected original line. Evaluation ground truth never sent to searches. No AI reasoning/time, no Go tool admission/host IPC; OS caches warm; not hardware-identical environments. 9 alternating repeats per stage; graph cold load separately. StarLink docs token+source region then path filter, max100.",
+    "versions": {
+      "aide": "7774f424af3221275118b2acc9a2f29e133800f1",
+      "starlink": "fbaa17020b5c5307ccaf27d7233986f407a59040",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "installedPluginSha256": "abb6303270b6f8f2b34a2544b8fd97275f458bd18052b70779dd7c9357e23645"
+    },
+    "coverage": {
+      "files": 1199,
+      "bytes": 36980671,
+      "snapshotFiles": 517,
+      "revision": "Kd9dca7f4a20e6a251a7fb06c",
+      "stale": true,
+      "truncated": true
+    },
+    "coldFirstSearchMs": 884.872709,
+    "aggregate": {
+      "rawHits": {
+        "star": 0,
+        "direct": 0
+      },
+      "expandedHits": {
+        "star": 0,
+        "direct": 2
+      },
+      "sharedSuccessfulCases": 0,
+      "sharedExpandedP50ms": {
+        "star": null,
+        "direct": null
+      },
+      "sharedTwoAttemptP50ms": {
+        "star": null,
+        "direct": null
+      },
+      "starOverDirectRatio": null
+    },
+    "cases": [
+      {
+        "id": "truncated-tail",
+        "description": "旧版本升级时会不会把我已经删除的内置插件重新装回来",
+        "terms": [
+          "增量注册",
+          "复活"
+        ],
+        "expected": "docs/plugins/computer-browser-control.md",
+        "anchor": "不会自动复活",
+        "indexed": true,
+        "snapshotTextBytes": 8191,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 52.76362499999982,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              38.762876000000006,
+              64.88249999999994,
+              57.36958299999992,
+              44.891624999999976,
+              52.94829200000004,
+              52.76362499999982,
+              36.56033300000013,
+              52.84870899999987,
+              50.95533300000011
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 42.558500000000095,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              30.137875000000122,
+              36.00391599999989,
+              47.73579199999995,
+              48.300666999999976,
+              43.56466699999987,
+              42.558500000000095,
+              40.668542000000116,
+              41.30520799999999,
+              49.038125000000036
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 19.35124999999971,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              342.1930829999999,
+              20.14712499999996,
+              20.588000000000193,
+              19.35124999999971,
+              16.618625000000065,
+              15.18795799999998,
+              13.8315419999999,
+              19.785709000000224,
+              11.879583000000366
+            ],
+            "candidateCounts": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 33.11766699999998,
+              "success": true,
+              "candidateCount": 1,
+              "evidence": {
+                "path": "docs/plugins/computer-browser-control.md",
+                "line": 90,
+                "quote": "- 启动时增量注册 browser-control/computer-control，默认关闭，保留已有插件、设置和自定义代码；已明确删除的内置插件记录在 removedBuiltins 中，不会自动复活。"
+              }
+            },
+            "samplesMs": [
+              56.05708400000003,
+              36.427250000000186,
+              34.343459000000166,
+              32.91229199999998,
+              33.11766699999998,
+              38.11275000000023,
+              32.53358399999979,
+              29.439957999999933,
+              31.001874999999927
+            ],
+            "candidateCounts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      },
+      {
+        "id": "unindexed-file",
+        "description": "加密文件传输索引连接为什么会停顿以及改过什么等待参数",
+        "terms": [
+          "FTPS",
+          "50ms"
+        ],
+        "expected": "docs/reviews/2026-10-15/ftps-index-latency.md",
+        "anchor": "列目录 |",
+        "indexed": false,
+        "snapshotTextBytes": 0,
+        "raw": {
+          "star": {
+            "summary": {
+              "p50ms": 13.425708999999642,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              15.244709000000057,
+              14.601458000000093,
+              14.215208999999959,
+              12.960415999999896,
+              14.013708999999835,
+              13.425708999999642,
+              12.443250000000262,
+              11.191083000000162,
+              12.422042000000147
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 31.356250000000273,
+              "success": false,
+              "candidateCount": 0,
+              "evidence": null
+            },
+            "samplesMs": [
+              30.37920899999972,
+              32.595374999999876,
+              31.35912499999995,
+              31.356250000000273,
+              38.93962499999998,
+              31.074750000000222,
+              29.09420799999998,
+              27.446290999999746,
+              32.24262499999986
+            ]
+          }
+        },
+        "expanded": {
+          "star": {
+            "summary": {
+              "p50ms": 10.383624999999938,
+              "success": false,
+              "candidateCount": 2,
+              "evidence": null
+            },
+            "samplesMs": [
+              20.171291999999994,
+              12.344583000000057,
+              10.383624999999938,
+              11.153374999999869,
+              10.74029100000007,
+              10.332584000000224,
+              9.485749999999825,
+              9.810334000000239,
+              9.316291000000092
+            ],
+            "candidateCounts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "limited": false,
+            "revisions": [
+              "Kfa0c21d01abb98ffa0bf4b8b"
+            ]
+          },
+          "direct": {
+            "summary": {
+              "p50ms": 30.585458000000017,
+              "success": true,
+              "candidateCount": 6,
+              "evidence": {
+                "path": "docs/reviews/2026-10-15/ftps-index-latency.md",
+                "line": 11,
+                "quote": "| 列目录 | 205.02ms | 21.27ms | 52.52ms |"
+              }
+            },
+            "samplesMs": [
+              37.16612499999974,
+              37.17470800000001,
+              31.236875000000055,
+              30.585458000000017,
+              31.862416999999823,
+              29.63733400000001,
+              28.691874999999982,
+              30.558042000000114,
+              29.471665999999914
+            ],
+            "candidateCounts": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "limited": false,
+            "revisions": []
+          }
+        }
+      }
+    ]
+  },
+  "limits": [
+    "StarLink in running Linux container versus ripgrep on host macOS, reading the same mounted physical directory; deployed-route comparison, not identical-runtime engine benchmark.",
+    "StarLink calls actual installed registered handler and live HTTPS APIs, excludes Go tool admission and host IPC; fulltext includes rg process spawn/output parse.",
+    "Both verify original line by reading candidate source files; evaluator knows expected file/anchor but searches never receive either. Not an AI choosing the right candidate or interpreting the source.",
+    "No matching coverage: fulltext scans all 1199 files, while snapshot contains 517 file nodes and usually only first 8KiB; fewer candidates is partly reduced coverage, not proven ranking quality.",
+    "Whole-file AND terms, query expansion fixed manually before timing; planning/reformulation time not measured. Raw description is one literal phrase, not semantic search.",
+    "Warm OS caches; 9 alternating-order repeats per query stage. Cold load observed only once per each of 3 sessions.",
+    "First run encountered rg base64 JSON lines and produced no report; parser fixed and entire run restarted."
+  ]
+}

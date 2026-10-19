@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"os"
+	"reflect"
 	"syscall"
 )
 
@@ -98,7 +99,7 @@ func (c *knowledgeScanCache) localSourceFailure(g *knowledgeGraph, ar knowledgeA
 		// A fresh text/version must not inherit a relation proved by its old contents.
 		compatible := map[string]bool{}
 		for _, old := range c.priorGraph.Nodes {
-			if now, ok := seen[old.ID]; ok && old == now && old.Region == ar.region() && old.Origin == ar.origin {
+			if now, ok := seen[old.ID]; ok && reflect.DeepEqual(old, now) && old.Region == ar.region() && old.Origin == ar.origin {
 				compatible[old.ID] = true
 			}
 		}

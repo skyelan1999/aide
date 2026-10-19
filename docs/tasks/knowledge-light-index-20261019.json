@@ -1,0 +1,89 @@
+{
+  "id": "knowledge-light-index-20261019",
+  "request": "按轻量方案补充标题和关键函数索引，不缓存全文，改完用刚才同一个目录实测对比",
+  "baseline": "7774f424af3221275118b2acc9a2f29e133800f1",
+  "initial_status": "M compose.yaml\n M plugins/archive-tools/manifest.json\n M plugins/plugin-authoring/manifest.json\n M plugins/registry.json\n?? docs/reviews/2026-10-19-starlink-fulltext-comparison.json\n?? docs/reviews/2026-10-19-starlink-fulltext-comparison.md\n?? docs/tasks/aide-update-20261019.json\n?? docs/tasks/knowledge-local-fulltext-20261019.json\n?? docs/tasks/knowledge-snapshot-query-20261019.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/starlink-plugin-20261019.json\n?? docs/tasks/starlink-search-comparison-20261019.json\n?? docs/tasks/testbench-live-integration-20261018.json\n?? plugins/.upgrade-backup-archive-tools-19825b12c93a6bba24539b9002e2cdb4/\n?? plugins/.upgrade-backup-plugin-authoring-fdde615a81366ded8bf168eef1b8ae82/\n?? plugins/.upgrade-backup-starlink-3504bca63abebb831604c54a08c32af4/\n?? plugins/.upgrade-backup-starlink-442f999225668a7a4d93f9b46dceb5aa/\n?? plugins/.upgrade-backup-starlink-726078f2d902b81b1706c44808072309/\n?? plugins/.upgrade-backup-starlink-833dc73465166e2109f1c8299d559691/\n?? plugins/.upgrade-backup-starlink-8b41fc6988d8d898a3d38db0d5c65502/\n?? plugins/.upgrade-backup-starlink-9f7839a6e93f8056519aff02c656aa59/\n?? plugins/.upgrade-backup-starlink-c26cc31cfb175906ae5aa1f0e5278439/\n?? plugins/.upgrade-backup-starlink-f187b6a8ff09357809cced256ddf3866/\n?? plugins/starlink/",
+  "acceptance": [
+    "核心星图节点新增有界标题/函数声明索引与准确行号，不扩大正文摘要，不缓存全文",
+    "本地增量复用、磁盘重载、文件修改删除、锁定/来源边界保持，结构候选不新增关系边",
+    "StarLink可搜索新增结构，只返回命中片段及位置",
+    "同一aide/docs原案例重复实测，记录覆盖、漏检、冷/热耗时和文本体积，另补真实深层标题及函数探针"
+  ],
+  "scope": [
+    "internal/server/knowledge_outline*",
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_updates.go",
+    "internal/server/knowledge_progressive.go",
+    "internal/server/knowledge_local_store.go",
+    "internal/server/knowledge_index_policy.go",
+    "../aide-pkg-StarLink/index.js",
+    "../aide-pkg-StarLink/tests/starlink.test.cjs",
+    "plugins/starlink/index.js",
+    "docs/tasks/knowledge-light-index-20261019.json",
+    "docs/reviews/2026-10-19-light-index*",
+    "internal/server/web/starmap.js",
+    "scripts/starmap-outline.test.cjs",
+    "internal/server/knowledge_local_failure.go",
+    "internal/server/web/starmap.html",
+    "docs/architecture/knowledge-map.md",
+    "../aide-pkg-StarLink/README.md",
+    "docs/tasks/knowledge-local-fulltext-20261019.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户最新轻量方案，全文磁盘索引方案停止；固定结构预算，不保证任意正文召回",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bounded streaming outline, per-view8MiB estimated entries, whole-file proof only on complete bounded reads",
+      "evidence": [
+        "docs/reviews/2026-10-19-light-index.md",
+        "docs/reviews/2026-10-19-light-index.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Aide core, StarLink and map UI implemented and loaded locally",
+      "evidence": [
+        "docs/reviews/2026-10-19-light-index.md",
+        "docs/reviews/2026-10-19-light-index.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final focused Go race14.812s, plugin17 tests and real Safari line101 highlight PASS; live function line465;13 corpus cases x9 rounds",
+      "evidence": [
+        "docs/reviews/2026-10-19-light-index.md",
+        "docs/reviews/2026-10-19-light-index.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current architecture, plugin README and sanitized receipts updated; check_docs351 files/1278 links PASS",
+      "evidence": [
+        "docs/reviews/2026-10-19-light-index.md",
+        "docs/reviews/2026-10-19-light-index.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own QA container and four temporary worker/fixture files removed; raw evidence retained privately; inherited edits preserved",
+      "evidence": [
+        "docs/reviews/2026-10-19-light-index.md",
+        "docs/reviews/2026-10-19-light-index.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Authorized release preparation in isolated clean main checkout; preserve unrelated local modifications.",
+      "evidence": [
+        "User release request 2026-10-19"
+      ]
+    }
+  },
+  "release_authorization": "把这次 Aide 和 StarLink 的修改 push、release，并更新插件市场里的 StarLink 版本。",
+  "rollback": "Changes remain uncommitted. Restore only this task product patch then use start.command. Preserve inherited compose/registry/manifests. Old StarLink entry saved in .agent-state/starlink-before-light-index.js.",
+  "handoff": "Local candidate running. Original10 recall8/10 unchanged; extra3 structure probes0/3 to2/3; ordinary text and pending files still need fulltext fallback. Existing whole-corpus checkpoint warning remains."
+}

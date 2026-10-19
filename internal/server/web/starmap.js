@@ -150,7 +150,8 @@ function sourceCoverageLabel(source){
 function nodeSource(n){const s=sourceByRegion.get(n.region);return {id:s?.id||n.source||n.region,name:s?.name||n.sourceName||fallbackSourceName(n.region),type:s?.type||n.sourceType||(n.region==='sessions'?'session':''),state:s?.state||'',message:s?.message||''};}
 function nodeSourceLabel(n){const s=nodeSource(n);return [s.name,s.type?sourceTypeLabel(s.type):'',n.format].filter(Boolean).join(' · ');}
 function syncNodeSourceChrome(){
- const preview=selected&&pathSourceLink(selected);$('node-open').hidden=!preview||!selected?.origin;$('node-open').href=preview||'#';
+ const outlineMatch=selected?.outline?.entries?.length&&!selected.documentCitation?nodeOutlineMatch(selected,searchQuery.split(/\s+/).filter(Boolean)):null;
+ const preview=selected&&pathSourceLink(selected,outlineMatch?.line);$('node-open').hidden=!preview||!selected?.origin;$('node-open').href=preview||'#';
  if(selected){const s=nodeSource(selected);$('detail-source').textContent=nodeSourceLabel(selected)+(s.id?' · 来源 #'+s.id:'')+(s.type==='mcp'?' · 仅工具名称与说明，不含工具执行结果或远端文档正文；不会调用工具。':s.state&&s.state!=='ready'?' · '+sourceStateLabel(s.state):'');}
  for(const box of [$('results'),$('ai-found')])for(const b of box.querySelectorAll('[data-source-node]')){const current=nodeByID.get(b.dataset.sourceNode),original=b.sourceNode;const n=current?{...current,format:current.origin===original?.origin?original?.format||current.format:current.format}:original;if(n){b.textContent=nodeSourceLabel(n);b.title=b.textContent;}}
 }
@@ -866,16 +867,20 @@ function draw(now=performance.now()){
  if(infrared.transitioning||animate||cameraTween||wheelZoom||graphFade||now<liveAnimationUntil)redraw(false);
 }
 function redraw(dirty=true){if(dirty)paintRequested=true;if(!frame&&!document.hidden)frame=requestAnimationFrame(draw);}
+function nodeOutlineMatch(n,terms){
+ if(n.readState==='pending'||n.readState==='unavailable'||!terms.length)return null;
+ return (n.outline?.entries||[]).slice(0,32).filter(e=>Number.isInteger(e.line)&&e.line>0&&typeof e.text==='string').map(e=>({entry:e,hits:terms.filter(t=>e.text.toLowerCase().includes(t)).length})).filter(e=>e.hits).sort((a,b)=>b.hits-a.hits||a.entry.line-b.entry.line)[0]?.entry||null;
+}
 function nodeResults(announce=true){
  const q=$('search').value.trim().toLowerCase(),terms=q.split(/\s+/).filter(Boolean);searchQuery=q;
- results=graph.nodes.filter(n=>n.kind!=='directory'&&(!region||region===n.region)).map(n=>({n,score:terms.reduce((score,k)=>score+(n.id.toLowerCase()===k?100:n.name.toLowerCase().includes(k)?15:n.signature?.toLowerCase().includes(k)?12:n.path?.toLowerCase().includes(k)?10:n.text?.toLowerCase().includes(k)?2:0),0)})).filter(v=>!q||v.score>0).sort((a,b)=>b.score-a.score||a.n.id.localeCompare(b.n.id)).map(v=>v.n);
+ results=graph.nodes.filter(n=>n.kind!=='directory'&&(!region||region===n.region)).map(n=>({n,score:terms.reduce((score,k)=>score+(n.id.toLowerCase()===k?100:n.name.toLowerCase().includes(k)?15:n.signature?.toLowerCase().includes(k)?12:n.path?.toLowerCase().includes(k)?10:n.text?.toLowerCase().includes(k)?2:nodeOutlineMatch(n,[k])?4:0),0)})).filter(v=>!q||v.score>0).sort((a,b)=>b.score-a.score||a.n.id.localeCompare(b.n.id)).map(v=>v.n);
  resultIDs=new Set(results.map(n=>n.id));invalidateView();
  const box=$('results'),previous=new Map([...box.children].map(el=>[el.dataset.nodeID,el])),keep=new Set();
  for(const [i,n]of results.slice(0,40).entries()){
   let button=previous.get(n.id);if(!button){button=document.createElement('button');button.className='result';button.type='button';button.dataset.nodeID=n.id;button.append(document.createElement('code'),document.createElement('span'));const path=document.createElement('small');path.className='result-path';button.lastChild.append(path);appendSourceLabel(button.lastChild,n);button.onclick=()=>{const node=nodeByID.get(button.dataset.nodeID);if(node)select(node);};}
   const mark=button.firstChild,label=button.lastChild,path=label.querySelector('.result-path'),meta=label.querySelector('.source-meta');if(mark.textContent!==n.id)mark.textContent=n.id;
   if(!label.firstChild||label.firstChild===path)label.insertBefore(document.createTextNode(n.name),path);else if(label.firstChild.textContent!==n.name)label.firstChild.textContent=n.name;
-  const locator=n.path||'会话 #'+n.number;if(path.textContent!==locator)path.textContent=locator;
+  const outlineMatch=nodeOutlineMatch(n,terms),locator=(n.path||'会话 #'+n.number)+(outlineMatch?' · L'+outlineMatch.line+' · '+outlineMatch.text:'');if(path.textContent!==locator)path.textContent=locator;
   meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;
   keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
  }
@@ -1069,7 +1074,7 @@ canvas.addEventListener('wheel',e=>{
 },{passive:false});
 $('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?'请依据原文关键词 '+$('search').value+' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。':codeView?'请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。':'请解释这个节点的内容、相关文件与证据缺口。';$('question').focus();askAI(false)};
 const filePreview=window.AideStarmapPreview.create({origin:location.origin,workspace:()=>graph.workspace,locked:()=>locked,openWindow:href=>window.open(href,'_blank'),note:message=>say(message),key:crypto.randomUUID()});
-function openNodePreview(n){const href=pathSourceLink(selected?.id===n?.id&&selected.documentCitation?selected:n);if(href)filePreview.open(href);}
+function openNodePreview(n){const match=nodeOutlineMatch(n,searchQuery.split(/\s+/).filter(Boolean));const href=pathSourceLink(selected?.id===n?.id&&selected.documentCitation?selected:n,match?.line);if(href)filePreview.open(href);}
 document.addEventListener('click',event=>{
  const link=event.target.closest?.('a[data-file-preview]');
  if(!link||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
