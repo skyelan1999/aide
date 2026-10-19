@@ -133,6 +133,17 @@ func TestMessageNotificationAggregationDedupScopeAndMuteExpiry(t *testing.T) {
 	if summary.Total != 5 || summary.Files != 1 || summary.Reminders != 2 || summary.Groups != 2 || summary.Chats != 0 {
 		t.Fatalf("bad dedup/mute/scope: %+v", summary)
 	}
+	inv.Expires = time.Now().Add(-time.Second)
+	consent.Invitations["file"] = inv
+	_, expiredSummary, e := a.messageNotificationSummary(data)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if expiredSummary.Files != 1 {
+		t.Fatal("expired invitation hid a pending cleanup error")
+	}
+	inv.Expires = time.Now().Add(time.Hour)
+	consent.Invitations["file"] = inv
 	c.Settings.IncludeMuted = true
 	c.Settings.ReminderScope = "due"
 	if err = atomicJSON(notificationConfigPath(a.dataPath), c); err != nil {
@@ -167,5 +178,36 @@ func TestMessageNotificationAggregationDedupScopeAndMuteExpiry(t *testing.T) {
 	}
 	if summary.Total != 0 || summary.Conversations[peer].Unread != 3 {
 		t.Fatal("category switches changed underlying unread")
+	}
+}
+
+func TestMessageNotificationGroupVoiceInheritsGroupPolicy(t *testing.T) {
+	a := testApp(t)
+	group := strings.Repeat("b", 32)
+	peer := strings.Repeat("c", 64)
+	call := strings.Repeat("d", 32)
+	c := defaultNotificationConfig()
+	c.Conversations["group:"+group] = conversationNotification{Mode: "mute"}
+	if err := atomicJSON(notificationConfigPath(a.dataPath), c); err != nil {
+		t.Fatal(err)
+	}
+	data := map[string]any{"consent": messaging.State{Invitations: map[string]messaging.Invitation{"voice": {ID: "voice", Kind: messaging.Voice, Peer: peer, Resource: call, Status: "pending", Direction: "incoming", Expires: time.Now().Add(time.Hour)}}}, "calls": map[string]messaging.CallState{call: {Group: group}}}
+	_, summary, err := a.messageNotificationSummary(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.Total != 0 {
+		t.Fatal("muted group call counted as a direct invitation")
+	}
+	c.Settings.IncludeMuted = true
+	if err = atomicJSON(notificationConfigPath(a.dataPath), c); err != nil {
+		t.Fatal(err)
+	}
+	_, summary, err = a.messageNotificationSummary(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.Contacts != 1 {
+		t.Fatal("include-muted preference ignored for group call")
 	}
 }

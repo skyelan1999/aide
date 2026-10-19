@@ -92,7 +92,7 @@
     function notifyNewEvents(){
       const config=notificationConfig();if(!config)return;
       const events=(data()?.messages||[]).filter(m=>m.incoming).map(m=>({id:'message:'+m.id,key:notifications.keyOf(m),kind:m.group?'groups':'chats'}));
-      for(const inv of pending())events.push({id:'invitation:'+inv.id,key:inv.kind==='group'?'group:'+inv.resource:inv.peer,kind:inv.kind==='file'?'files':'contacts'});
+      for(const inv of pending())events.push({id:'invitation:'+inv.id,key:inv.kind==='group'?'group:'+inv.resource:inv.kind==='voice'&&data()?.calls?.[inv.resource]?.group?'group:'+data().calls[inv.resource].group:inv.peer,kind:inv.kind==='file'?'files':'contacts'});
       const fresh=events.filter(e=>!seenEvents.has(e.id));for(const event of events)seenEvents.add(event.id);
       if(seenEvents.size>16000){seenEvents.clear();for(const event of events)seenEvents.add(event.id);}
       if(!receivedBaseline){receivedBaseline=true;return;}

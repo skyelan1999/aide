@@ -228,6 +228,7 @@ func (a *App) messageNotificationSummary(data map[string]any) (notificationConfi
 	}
 	consent, _ := data["consent"].(messaging.State)
 	transfers, _ := data["transfers"].(map[string]messaging.Transfer)
+	calls, _ := data["calls"].(map[string]messaging.CallState)
 	for _, inv := range consent.Invitations {
 		if inv.Direction != "incoming" || inv.Status != "pending" || !inv.Expires.After(now) || consent.Relationships[inv.Peer].Blocked {
 			continue
@@ -235,6 +236,8 @@ func (a *App) messageNotificationSummary(data map[string]any) (notificationConfi
 		key := inv.Peer
 		if inv.Kind == messaging.Group {
 			key = "group:" + inv.Resource
+		} else if inv.Kind == messaging.Voice && calls[inv.Resource].Group != "" {
+			key = "group:" + calls[inv.Resource].Group
 		}
 		if !notificationCounted(c, key, now) {
 			continue
@@ -249,7 +252,7 @@ func (a *App) messageNotificationSummary(data map[string]any) (notificationConfi
 	}
 	for id, transfer := range transfers {
 		inv := consent.Invitations[id]
-		if transfer.CleanupError != "" && inv.Status != "pending" && !consent.Relationships[transfer.Peer].Blocked && c.Settings.Categories.Files && notificationCounted(c, transfer.Peer, now) {
+		if transfer.CleanupError != "" && !(inv.Direction == "incoming" && inv.Status == "pending" && inv.Expires.After(now)) && !consent.Relationships[transfer.Peer].Blocked && c.Settings.Categories.Files && notificationCounted(c, transfer.Peer, now) {
 			out.Files++
 		}
 	}
