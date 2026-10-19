@@ -14,7 +14,7 @@
 
 - `node scripts/message-notifications.test.cjs`：免打扰到期、屏蔽与渠道优先级、真实可读条件、数字／红点／关闭、真实数量的读屏标签、表单保存、桌面权限拒绝、错误展示和 500 条消息合并通过。
 - `node scripts/message-center.test.cjs`：现有文件清单、哈希、大小边界、取消和 DOM 安全检查通过。
-- 隔离无网络、容器内部源码快照执行 `go test -mod=vendor -race -count=1 ./internal/messaging`、`go test -mod=vendor -race -count=1 -run 'Test(Message|Reminder)' ./internal/server` 通过；随后运行两个包的 vet。最终结果以任务账本补充的实际命令退出状态为准。
+- 隔离无网络、容器内部源码快照执行 `go test -mod=vendor -race -count=1 ./internal/messaging`、`go test -mod=vendor -race -count=1 -run 'Test(Message|Reminder)' ./internal/server` 通过；两个包的 vet 也通过，最终组合命令退出 0。
 - 新 Go 回归覆盖延迟已读与时钟倒退、重启恢复、650 条未读与 500 条快照差异、批量失败不部分生效、旧状态迁移、写入失败回退、设置版本冲突与权限、锁定再解锁后的延迟提交拒绝、分类／工作区范围、邀请去重和免打扰到期。
 - 仓库 quick 包含新增通知脚本语法与行为检查，共 129 项通过。未将定向包检查称为整个仓库 full/race 全量通过，本轮也不发布新版本。
 
@@ -32,4 +32,13 @@
 
 Safari 完整候选由原始启动器实际打开，但停在自签证书告警。电脑控制工具明确要求该告警由用户操作，已经请求用户确认；本轮不得绕过，也不声称 Safari 完整工作台交互已通过。原生 Windows、实际系统桌面通知权限与扬声器播放未验；浏览器关闭后的系统推送不在实现范围。
 
-证据日志与合成素材保留在 `.agent-state/message-notifications-20261019/`，不提交令牌、真实会话或密钥。生产 `aide-aide-1`、`aide-cad-1` 与 `aide:local` 保持不变。构建、重启持久化及最终清理状态以账本最终记录为准。
+证据日志与合成素材保留在 `.agent-state/message-notifications-20261019/`，不提交令牌、真实会话或密钥。生产 `aide-aide-1`、`aide-cad-1` 与 `aide:local` 保持不变。最终候选重建及原始 stop/start 重启均退出 0，通知设置 revision 8、设备身份和 6 项摘要完整保留；实际服务提供的通知脚本 SHA256 与当前源码一致。
+
+
+最终结构化证据：[message-notifications-proof.json](message-notifications-proof.json)。129 项 quick 的内容指纹为 `34d0bf9e810bc50a12cad7eaeda4ed5814ddad1999cbcad656ff58e327995ad5`。期间有一次检查因为源码继续修改而拒绝生成通过收据；最终固定代码后重跑成功，没有沿用失效指纹。
+
+群语音邀请的计数与弹出提示同样继承所属群组规则；已到期邀请的传输清理错误仍保留待处理计数，不因过期漏掉，也不与有效的文件申请重复。对应新增回归已随最终 race 测试通过。
+
+本轮组件标签及 59198 组件服务已关闭，临时浏览器视口已恢复；自建联系人只在候选容器内部临时运行，重启后结束；初始中间 QA 镜像 `8c9f23b0e5c9` 已精确移除，没有全局 prune。只保留 `aide-message-notifications-qa-20261019` 的应用／CAD 两个候选容器，应用上限 2 GiB、CAD 上限 4 GiB；唯一 Safari 候选页为 `https://localhost:59197/`，待用户完成证书确认。原始启动目录 `/tmp/aide-message-notifications-qa-20261019`，可执行其中 `stop.command` 停止这份候选，不影响生产项目。
+
+源码已按阶段推送功能分支；本轮不合并 main、不更新既有 Release、不替换生产 `aide:local`。后续完整 Safari 验收通过后，才按仓库发布流程评估合并和升级；不要把当前分支实现等同于生产已上线。

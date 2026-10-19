@@ -25,7 +25,8 @@
     "internal/server/web/settings-schema.json",
     "scripts/message-notifications.test.cjs",
     "docs/reviews/2026-10-19/message-notifications.md",
-    "docs/agent/router.json"
+    "docs/agent/router.json",
+    "docs/reviews/2026-10-19/message-notifications-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -64,10 +65,11 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Only scoped implementation and test documents changed; production untouched. Test fixtures private. Candidate rebuild/restart and final test-page cleanup remain.",
+      "status": "pass",
+      "summary": "Closed own component tab/server, reset viewport, removed exact owned intermediate QA image. Synthetic peer exited; production unchanged. Intentionally retain one capped QA app/CAD pair and one Safari candidate tab for pending human certificate acceptance.",
       "evidence": [
-        "docs/reviews/2026-10-19/message-notifications.md"
+        "docs/reviews/2026-10-19/message-notifications.md",
+        "docs/reviews/2026-10-19/message-notifications-proof.json"
       ]
     },
     "release": {
@@ -80,5 +82,5 @@
   },
   "release_authorization": "User requested implementation; existing timely push authorization applies. No version bump or production replacement requested in this turn.",
   "rollback": "Documentation-only commit can be reverted; no runtime or persisted product state changed.",
-  "handoff": "Implementation done; branch push and isolated restart check being completed. Full Safari interaction requires user to accept https://localhost:59197 certificate warning. No new version or production deployment."
+  "handoff": "Implemented and pushed feat/message-notifications-20261019. 129 final quick checks, targeted Go race/vet, real peer/group/API and original-launcher restart checks pass; see structured proof. QA on https://localhost:59197 uses /tmp/aide-message-notifications-qa-20261019; its stop.command stops only this candidate. Human certificate acceptance is required for complete Safari interaction. Component page/server closed, viewport reset, production untouched. No main merge, version bump or new Release."
 }
