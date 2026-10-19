@@ -1,35 +1,35 @@
-# AIDE 完整离线总包
+# 启动与 Release 镜像回退
 
-当前唯一总包：`docker-images/aide-runtime-all-platforms.zip`，使用 Git LFS 存储；每次交付覆盖这个固定路径，不另外累计版本文件。总包同时包含 Linux ARM64 与 AMD64 两个完整离线包，含应用、原生 CAD、平台启动脚本和许可证。不是把全部历史镜像打包，也不包含用户会话、密码、工作区数据或 Docker 虚拟磁盘。
+仓库不再携带 Docker 镜像或 Git LFS 总包。普通 Git clone/pull 只同步源码和受控清单，不需要 Git LFS。
 
-## 拉取与启动
+## 默认启动顺序
 
-先安装 Git 和 [Git LFS](https://git-lfs.com/)，在项目根目录执行：
+1. 校验本地配置镜像的 Docker 平台、image ID、源码身份和 CAD 完整性；有效则直接复用，再执行启动健康检查。不根据文件时间或任意 tar 名称选镜像。
+2. 本地无完整镜像时，优先本地编译。若保留了依赖镜像或已校验本地依赖包，沿用本地恢复机制。
+3. 编译或依赖准备失败时，按 `docker/prebuilt-images.tsv` 选择官方 Release 的唯一匹配架构；先复用已校验的缓存包，缺包才下载。校验完整 SHA-256、导入后 image ID、平台、源码和 CAD，再激活。
+4. 回退也失败则停止，不迁移数据或把不完整包当成成功。回退成功会明确提示，实际版本以 Release 镜像中的版本为准，可能比工作区源码旧。
+
+macOS 双击 `start.command`；Windows 双击 `start.bat`；Linux 执行 `bash start.sh`。原始完整离线 Release 包继续按包内 `.aide-image` 导入启动，无现场编译。
+
+普通启动优先复用可用本地镜像，Git pull 不自动强制替换正在使用的镜像。源码更新后需要构建时：
 
 ```sh
-git lfs install
-git pull --ff-only
-git lfs pull --include="docker-images/aide-runtime-all-platforms.zip"
+AIDE_FORCE_REBUILD=1 bash start.command
 ```
 
-普通 Git 拉取只有约百字节的 LFS 指针时，必须完成 `git lfs pull`，再解压 ZIP。GitHub 网页的源码 ZIP 不保证包含 LFS 实体，请用以上命令。
+Windows PowerShell：
 
-1. 校验 ZIP：macOS 用 `shasum -a 256 -c docker-images/aide-runtime-all-platforms.zip.sha256`；Windows 用 `Get-FileHash docker-images/aide-runtime-all-platforms.zip -Algorithm SHA256` 与旁边摘要比较。
-2. 解压总包，启动 Docker Desktop。执行 `docker info --format '{{.OSType}}/{{.Architecture}}'`：`linux/aarch64` 或 `linux/arm64` 选 ARM64；`linux/x86_64` 或 `linux/amd64` 选 AMD64。以 Docker 引擎为准，不只看宿主机型号。
-3. 按总包内 `SHA256SUMS` 校验所选 `*-offline.tar.gz`，解压该架构包，得到 `aide-offline/`。
-4. macOS 双击其中的 `start.command`；Windows 双击 `start.bat`；Linux 执行 `bash start.sh`。沿用包内原始启动器导入本地镜像并启动，不需要现场编译，也无需分别拉取 CAD 镜像。Docker 本身仍需先安装。
+```powershell
+$env:AIDE_FORCE_REBUILD = '1'
+.\start.ps1
+```
 
-后续更新总包时，在相同安装位置更新程序文件，保留 `.aide-data`、`.cache`、`.env`、workspace、context 等用户配置与数据；不要删除安装目录重建来代替升级。首次接收设备和 Windows 原生运行仍需设备方验收。
+`AIDE_BUILD_FROM_SOURCE=1` 也绕过新增的普通启动本地复用路径。构建失败后默认允许 Release 回退；要求严格源码构建时设置 `AIDE_RELEASE_FALLBACK=0`，失败直接停止。`AIDE_BUILD_FROM_SOURCE=0` 显式选择原有镜像模式。
 
-## 当前镜像身份
+镜像、下载包与用户数据分开；本次不修改用户会话、工作区、凭据或生产镜像。Release 附件校验与镜像实际运行验收是独立步骤。Windows 原生启动及其他设备接收验收不能由静态检查代替。
 
-- 包版本：0.1.17.0-RC2。
-- 镜像源码快照：`f316cf8d6f4ba4243a05007f6e8ebf6f586cbd4c`，共同源码 SHA-256 `2239861e3902cced4bdb9a772b489ee3a95340b7fb1bd70646c60ce3979d282e`。
-- ARM64 镜像：`sha256:07172e63ff04662f4f91757cc15e253d138e4c192a62f1d81136c8f9059bdfd1`。
-- AMD64 镜像：`sha256:9bf8eb9f240ef69356b529fed4da4b1dac5f4b0a54a3b8661253a78c8e3fe3aa`。
+## 从曾启用 Git LFS 的旧检出升级
 
-这是当前已有预编译包中的同源最新组合，不包含随后 main `e182e063` 的插件外观更新或其他后续源码变动；总包上传不等于重新编译最新 main。详细文件名、归档摘要见 `docker/runtime-bundle.json` 和总包内同名文件。Release 默认下载清单仍按既有公开附件门禁管理，本总包不伪造 GitHub Release 的上传状态。
+main 已删除总包、LFS 属性与制作入口。新的普通克隆不会请求旧总包。旧设备可以在安装了 Git LFS 时执行 `git lfs uninstall --local` 撤下旧本地过滤器与钩子；不要把仍在使用的自定义 Git 钩子一起删除。历史提交中的 LFS 指针和服务端历史对象不通过强制改写历史清除，本次不执行远端历史重写。
 
-## 重新制作
-
-将同源、经验证的两种架构完整包放入 `docker-images/`，更新 `docker/runtime-bundle.json`，运行 `python3 scripts/build-runtime-bundle.py`。该脚本校验两份归档摘要、平台与共同源码，流式计算哈希，将已压缩完整包按原字节存入一个 ZIP，并生成外部摘要。随后提交固定总包、摘要与清单；`git push` 会通过 Git LFS 上传实体。Git LFS 保存历史对象，覆盖工作区文件不会改写已有 Git 历史；本次不强制重写远端历史或调整计费配置。
+本地缓存中的上一份总包可删除；可运行镜像和单架构 Release 包仍可留作本地启动缓存，无需为了升级而清空 Docker。

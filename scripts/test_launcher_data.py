@@ -292,10 +292,38 @@ sys.exit(91)
         self.assertIn('"${AIDE_FORCE_REBUILD:-0}" != 1',shell)
         self.assertIn('"$DOCKER_BIN" compose build aide',shell)
         self.assertIn('"$DOCKER_BIN" compose up -d --no-build --pull never',shell)
+    def run_build_recovery(self, status, strict=False):
+        env=dict(self.env,FIX_BUILD_EXIT=str(status),AIDE_RELEASE_FALLBACK='0' if strict else '1')
+        return subprocess.run(['bash','-ec','source "$1"; build_source() { echo BUILD_ATTEMPT; return "$FIX_BUILD_EXIT"; }; launcher_build_or_release docker aide:local build_source','fixture',str(ROOT/'scripts/prebuilt-image.sh')],cwd=self.root,env=env,text=True,capture_output=True)
+    def test_successful_build_does_not_contact_release(self):
+        r=self.run_build_recovery(0);self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(self.calls(),'')
+    def test_failed_build_recovers_verified_local_release_archive(self):
+        shutil.copyfile(self.archive,self.root/'docker-images/fixture.tar.gz')
+        r=self.run_build_recovery(7);self.assertEqual(r.returncode,0,r.stderr)
+        self.assertIn('BUILD_ATTEMPT',r.stdout);self.assertIn('"load"',self.calls());self.assertIn('"tag"',self.calls());self.assertNotIn('"curl"',self.calls())
+    def test_failed_build_fetches_release_only_when_no_cache(self):
+        r=self.run_build_recovery(7);self.assertEqual(r.returncode,0,r.stderr)
+        self.assertIn('"curl"',self.calls());self.assertIn('"load"',self.calls())
+    def test_strict_build_preserves_failure_and_never_downloads(self):
+        r=self.run_build_recovery(7,strict=True);self.assertEqual(r.returncode,7,r.stderr);self.assertEqual(self.calls(),'')
+    def test_corrupt_release_cache_remains_fatal_after_build_failure(self):
+        (self.root/'docker-images/fixture.tar.gz').write_bytes(b'corrupt')
+        r=self.run_build_recovery(7);self.assertEqual(r.returncode,1,r.stderr)
+        self.assertNotIn('"load"',self.calls());self.assertNotIn('"tag"',self.calls())
+    def test_native_runtime_reuse_is_bypassed_by_force_and_source_modes(self):
+        source=(ROOT/'scripts/aide.sh').read_text()
+        start=source.index('    # Normal startup prefers')
+        end=source.index('    if [[ "$MODE" == start ]] && ! launcher_should_build_source',start)
+        script='set -euo pipefail\nfixture_docker() { echo aide:local; }; launcher_local_runtime_ready() { return "$FIX_LOCAL"; };\n'+source[start:end]+'echo RESULT:$MODE\n'
+        for force,mode,local,expected in [('0','auto','0','start-image'),('1','auto','0','start'),('0','1','0','start'),('0','auto','1','start')]:
+            with self.subTest(force=force,mode=mode,local=local):
+                env=dict(os.environ,MODE='start',DOCKER_BIN='fixture_docker',AIDE_FORCE_REBUILD=force,AIDE_BUILD_FROM_SOURCE=mode,FIX_LOCAL=local)
+                r=subprocess.run(['bash','-c',script],env=env,text=True,capture_output=True)
+                self.assertEqual(r.returncode,0,r.stderr);self.assertIn('RESULT:'+expected,r.stdout)
     def test_source_checkout_and_windows_entry_build_policy(self):
         shell=(ROOT/'scripts/aide.sh').read_text();ps=(ROOT/'start.ps1').read_text(encoding='utf-8-sig')
         self.assertIn('launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}"',shell);self.assertIn('launcher_prebuilt_image "$DOCKER_BIN" "$IMG"',shell)
-        self.assertIn("$env:AIDE_BUILD_FROM_SOURCE -eq '1'",ps);self.assertIn('if ($sourceBuild -and (Invoke-Compose build aide)',ps)
+        self.assertIn("$env:AIDE_BUILD_FROM_SOURCE -ne '0'",ps);self.assertIn('if ((Invoke-Compose build aide).Code -ne 0)',ps);self.assertIn("$env:AIDE_RELEASE_FALLBACK -eq '0'",ps)
         self.assertIn('AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start',(ROOT/'scripts/install.sh').read_text())
 
 class RunningRuntimeReuseTests(unittest.TestCase):

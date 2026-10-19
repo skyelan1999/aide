@@ -1,0 +1,83 @@
+{
+  "id": "local-first-release-fallback-20261019",
+  "request": "撤下LFS巨包，本地完整镜像优先、缺少镜像先编译、失败从官方Release校验回退，发布新版本",
+  "baseline": "878339513088b79d3d4913bd97f6779bbebcaf24",
+  "initial_status": "",
+  "acceptance": [
+    "Current tree contains no runtime LFS bundle or LFS attributes; ordinary clone has no required LFS fetch.",
+    "POSIX and Windows ordinary startup reuse validated native complete local runtime; source/force bypass normal reuse. Missing runtime builds locally, then falls back to verified official Release after failure; strict flag returns failure.",
+    "Corrupt cache, wrong architecture, failed import or missing official manifest stay fatal; user data and production service remain intact.",
+    "Focused startup tests, current quick/full checks and isolated release runtime smoke have real evidence. Native Windows not claimed.",
+    "Bump existing daily version on clean main and publish a new GitHub Release with exact-source runtime assets, checksums and limitations."
+  ],
+  "scope": [
+    ".gitattributes",
+    ".gitignore",
+    "docker-images",
+    "docker/runtime-bundle.json",
+    "scripts/build-runtime-bundle.py",
+    "scripts/aide.sh",
+    "scripts/prebuilt-image.sh",
+    "scripts/prebuilt-image.ps1",
+    "scripts/test_launcher_data.py",
+    "start.ps1",
+    "docs/runtime-bundle.md",
+    "docs/architecture/software-updates.md",
+    "docs/agent/WORKFLOW.md",
+    "docs/tasks/local-first-release-fallback-20261019.json",
+    "docs/reviews/2026-10-19/local-first-release-fallback.md",
+    "version.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Local installed runtime first, source compile when absent, verified Release fallback on failure. Remove current LFS distribution and publish daily version.",
+      "evidence": [
+        "docs/reviews/2026-10-19/local-first-release-fallback.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing identity/SHA256 importer and local dependency recovery; add explicit fallback disable flag, preserve force and separate offline launchers.",
+      "evidence": [
+        "docs/reviews/2026-10-19/local-first-release-fallback.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "POSIX and PowerShell paths updated; current LFS bundle, attributes and builder withdrawn. Source archive checkout supported without Git metadata.",
+      "evidence": [
+        "docs/reviews/2026-10-19/local-first-release-fallback.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "38 focused launcher tests passed; current full profile running 1022 server items in 12 serial disjoint shards. Original isolated launcher reused local image and reached Docker healthy; host TLS API probe not claimed. Windows native not run.",
+      "evidence": [
+        "docs/reviews/2026-10-19/local-first-release-fallback.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current startup priority, force/strict switches, LFS withdrawal, source vs fallback version and release notes are documented with actual limits.",
+      "evidence": [
+        "docs/reviews/2026-10-19/local-first-release-fallback.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed current tracked LFS bundle and 1725320689-byte local LFS cache; retired own LFS filters/hooks. Isolated QA stopped through original stop command; exact containers, network and test image alias removed. Production untouched.",
+      "evidence": [
+        "docs/reviews/2026-10-19/local-first-release-fallback.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User directly requested removing the huge LFS image, local-first compile with official Release fallback, and Release a new version. Existing main push authorization applies; no production replacement authorized.",
+  "rollback": "Revert scoped startup changes; retain current production images and user data. Do not restore huge LFS artifact or force-rewrite remote history.",
+  "handoff": ""
+}

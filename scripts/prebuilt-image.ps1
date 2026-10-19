@@ -43,3 +43,13 @@ function Import-AidePrebuiltImage([string]$Root, [string]$Docker, [string]$Targe
     if ((Invoke-Native $Docker @('image','tag',$image,$Target)).Code -ne 0) { throw 'Cannot activate prebuilt image tag.' }
     Write-Host "Prebuilt runtime ready: $Target ($platform). Source compilation disabled."
 }
+
+function Test-AideLocalRuntime([string]$Docker, [string]$Target) {
+    $platform = Invoke-Native $Docker @('info','--format','{{.OSType}}/{{.Architecture}}') -Capture
+    if ($platform.Code -ne 0) { return $false }
+    $native = $platform.Text -replace '/aarch64$', '/arm64' -replace '/x86_64$', '/amd64'
+    $metadata = Invoke-Native $Docker @('image','inspect',$Target,'--format','{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}|{{index .Config.Labels "aide.cad-runtime"}}') -Capture
+    if ($metadata.Code -ne 0) { return $false }
+    $parts = $metadata.Text -split '\|'
+    return ($parts.Count -eq 4 -and $parts[0] -cmatch '^sha256:[a-f0-9]{64}$' -and $parts[1] -ceq $native -and $parts[2] -cmatch '^[a-f0-9]{64}$' -and $parts[3] -ceq '8.0.1.1.0')
+}

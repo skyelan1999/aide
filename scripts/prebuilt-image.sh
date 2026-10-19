@@ -25,7 +25,7 @@ launcher_local_runtime_ready() {
 launcher_should_build_source() {
   case "${1:-auto}" in
     1) return 0 ;;
-    auto) [[ -d "$2/.git" || -f "$2/.git" ]] ;;
+    auto) [[ -d "$2/.git" || -f "$2/.git" || ( -f "$2/go.mod" && -d "$2/cmd" ) ]] ;;
     *) return 1 ;;
   esac
 }
@@ -89,4 +89,17 @@ launcher_local_build_seed() {
   local docker_bin="$1" target=aide:source-build-dependencies
   launcher_prebuilt_image "$docker_bin" "$target" docker/prebuilt-images.tsv local-seed >&2 || return $?
   printf '%s\n' "$target"
+}
+
+# Build first, then recover a verified published runtime. A corrupt local
+# archive or incompatible Release remains fatal inside the existing importer.
+launcher_build_or_release() {
+  local docker_bin="$1" target="$2" build_status
+  shift 2
+  if "$@"; then return 0; else build_status=$?; fi
+  if [[ "${AIDE_RELEASE_FALLBACK:-1}" != 1 ]]; then return "$build_status"; fi
+  echo "本地编译失败（退出码 ${build_status}）；尝试已校验的官方 Release 镜像。" >&2
+  launcher_prebuilt_image "$docker_bin" "$target" || return $?
+  export AIDE_CAD_IMAGE="$target"
+  echo "已回退到 Release 镜像；运行版本以镜像实际版本为准。" >&2
 }

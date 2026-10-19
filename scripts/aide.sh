@@ -245,6 +245,16 @@ case "$MODE" in
     export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
     REUSE_RUNNING=0
     source scripts/prebuilt-image.sh
+    # Normal startup prefers a complete installed native runtime. Force/source
+    # requests bypass this reuse so updating code does not require deleting it.
+    if [[ "$MODE" == start && "${AIDE_FORCE_REBUILD:-0}" != 1 && "${AIDE_BUILD_FROM_SOURCE:-auto}" != 1 ]]; then
+      IMG="$("$DOCKER_BIN" compose config --images aide)"
+      if launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
+        echo "== 本地完整镜像可用，直接复用；更新源码请强制重编译 =="
+        export AIDE_IMAGE="$IMG"
+        MODE=start-image
+      fi
+    fi
     if [[ "$MODE" == start ]] && ! launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
       if launcher_running_ready "$DOCKER_BIN"; then
         echo "== Aide 已在运行且健康，直接打开现有界面；不下载或替换镜像 =="
@@ -266,8 +276,8 @@ case "$MODE" in
     else
       export AIDE_VERSION="${AIDE_VERSION:-$(bash scripts/version.sh show)}"
       if [[ -z "${AIDE_COMMIT:-}" ]]; then
-        AIDE_COMMIT="$(git rev-parse HEAD)"
-        if [[ -n "$(git status --porcelain)" ]]; then AIDE_COMMIT="${AIDE_COMMIT}-dirty"; fi
+        AIDE_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf source-archive)"
+        if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then AIDE_COMMIT="${AIDE_COMMIT}-dirty"; fi
         export AIDE_COMMIT
       fi
       # #43 快捷路径：比对镜像 aide.srcsha label 与当前源码哈希。
@@ -280,10 +290,11 @@ case "$MODE" in
       if "$DOCKER_BIN" image inspect "$IMG" >/dev/null 2>&1; then
         cur_label="$("$DOCKER_BIN" image inspect "$IMG" --format '{{ index .Config.Labels "aide.srcsha" }}' 2>/dev/null || true)"
       fi
-      if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" && "${AIDE_FORCE_REBUILD:-0}" != 1 ]]; then
+      if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" && "${AIDE_FORCE_REBUILD:-0}" != 1 ]] && launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
         echo "== 源码哈希未变（${SRCSHA}）→ 快捷路径：跳过构建，直接启动 =="
       else
-        aide_check_disk build
+        launcher_build_source() {
+        aide_check_disk build || return $?
         echo "== 源码哈希变化（image=${cur_label:-<无>} → worktree=${SRCSHA}）→ 重新构建（默认不跑全量 test，仅 vet+build）=="
         export AIDE_SRC_SHA="$SRCSHA"
         if [[ "${AIDE_LOCAL_DEPENDENCIES:-1}" != 0 ]]; then
@@ -298,7 +309,7 @@ case "$MODE" in
             RECOVERED_SEED="$(launcher_local_build_seed "$DOCKER_BIN")" || seed_status=$?
             if (( seed_status == 0 )); then BUILD_SEED="$RECOVERED_SEED";
             elif (( seed_status != 3 )); then
-              echo "本地完整包依赖恢复失败；停止，不改用联网构建。" >&2; exit "$seed_status"
+              echo "本地完整包依赖恢复失败；停止，不改用联网构建。" >&2; return "$seed_status"
             fi
           fi
           base_status=0
@@ -308,16 +319,18 @@ case "$MODE" in
               export AIDE_CAD_IMAGE="$CAD_BASE"
               export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
             else
-              echo "CAD 依赖尚未准备，停止本地构建；按上方命令安装一次后可完全离线。" >&2; exit 1
+              echo "CAD 依赖尚未准备，停止本地构建；按上方命令安装一次后可完全离线。" >&2; return 1
             fi
             echo "== 使用完整本地依赖镜像，应用构建禁止联网 =="
           elif (( base_status != 3 )); then
-            echo "本地依赖镜像准备失败；停止，不转为联网构建。" >&2; exit "$base_status"
+            echo "本地依赖镜像准备失败；停止，不转为联网构建。" >&2; return "$base_status"
           else
             echo "== 首次缺少完整本地镜像；执行原始构建，完成后可固化本地依赖 =="
           fi
         fi
         "$DOCKER_BIN" compose build aide
+        }
+        launcher_build_or_release "$DOCKER_BIN" "$IMG" launcher_build_source
       fi
     fi
     launcher_data_prepare "$DOCKER_BIN" "$IMG"

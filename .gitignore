@@ -52,5 +52,5 @@ profiles.json
 /plugins/testbench/
 /plugins/.upgrade-backup-testbench-*/
 
-# Current unified LFS runtime checksum is reviewed with the bundle.
-!docker-images/aide-runtime-all-platforms.zip.sha256
+# Docker distribution archives are published as Release assets, not Git blobs.
+docker-images/*.zip
