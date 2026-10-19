@@ -22,13 +22,17 @@ const locator=vm.createContext({graph:{workspace:'work-1'}});vm.runInContext(sou
 const built=vm.runInContext(`pathSourceLink(${JSON.stringify({id:'C1',kind:'symbol',...spec,contentHash:spec.codeHash})},43)`,locator),actual=JSON.parse(decodeURIComponent(built.split('=')[1]));assert.equal(actual.source,spec.source);assert.equal(actual.origin,spec.origin);assert.equal(actual.line,43);assert.equal(actual.endLine,43);assert.equal(actual.codeHash,spec.codeHash);assert.equal(actual.readOnly,true);
 assert.equal(vm.runInContext('pathSourceLink({kind:"directory",path:"docs"})',locator),null);
 
-// A direct user preview navigates the existing tab, preserves the return map,
-// and never requests a popup (the native Safari failure mode).
-const navigated=[];const direct=c.window.AideStarmapPreview.create({origin:'https://aide.test',workspace:()=> 'work-1',locked:()=>false,key:'direct-owner',note(){},navigate:url=>navigated.push(url),returnTo:()=>'/starmap.html?channel=existing',openWindow(){throw Error('popup must never be requested');}});
-assert.equal(direct.open(href(spec)),true);let directURL=new URL(navigated[0]);assert.equal(directURL.searchParams.get('starmapReturn'),'/starmap.html?channel=existing');assert.deepEqual(JSON.parse(decodeURIComponent(directURL.hash.slice(6))),spec);
-assert.equal(direct.open(href({...spec,path:'next.md'})),true);assert.equal(new URL(navigated[1]).searchParams.get('previewRequest'),'2');
-const hostile=c.window.AideStarmapPreview.create({origin:'https://aide.test',workspace:()=> 'work-1',locked:()=>false,key:'safe-return',note(){},navigate:url=>navigated.push(url),returnTo:()=> 'https://elsewhere.test/starmap.html'});hostile.open(href(spec));assert.equal(new URL(navigated[2]).searchParams.get('starmapReturn'),'/starmap.html');
-assert.equal(direct.open(href({...spec,knowledgeWorkspace:'other'})),false);assert.equal(navigated.length,3);
+// Exercise the actual map wiring: ordinary preview clicks must never navigate
+// the map, and later files reuse the one owned preview tab.
+const mapOpened=[],mapNotes=[];
+const wiring=vm.createContext({window:{AideStarmapPreview:c.window.AideStarmapPreview,open(url,target){assert.equal(target,'_blank');const win=makeWindow(url);mapOpened.push({url,win});return win;}},location:{origin:'https://aide.test',assign(){throw Error('map must not navigate');}},graph:{workspace:'work-1'},locked:false,crypto:{randomUUID:()=> 'map-owned'},say:message=>mapNotes.push(message)});
+vm.runInContext(source.slice(source.indexOf('const filePreview='),source.indexOf('function openNodePreview(')),wiring);
+assert.equal(vm.runInContext('filePreview.open('+JSON.stringify(href(spec))+')',wiring),true);
+assert.equal(mapOpened.length,1);assert.deepEqual(JSON.parse(new URLSearchParams(new URL(mapOpened[0].url).hash.slice(1)).get('file')),spec);
+assert.equal(new URL(mapOpened[0].url).searchParams.has('starmapReturn'),false,'new tab does not replace itself with another copy of the map on return');
+assert.equal(vm.runInContext('filePreview.open('+JSON.stringify(href({...spec,path:'next.md'}))+')',wiring),true);assert.equal(mapOpened.length,1);assert.equal(mapOpened[0].win.navigations,1);assert.match(mapNotes.at(-1),/新选项卡/);
+const localSpec={...spec,root:'workspace',source:'',path:'src/main.go',origin:'workspace-origin'};assert.equal(vm.runInContext('filePreview.open('+JSON.stringify(href(localSpec))+')',wiring),true);assert.equal(mapOpened.length,1);assert.deepEqual(JSON.parse(new URLSearchParams(new URL(mapOpened[0].win.location.href).hash.slice(1)).get('file')),localSpec);
+
 
 // Return navigation never accepts a different origin/path or forwards secrets.
 const fileRouteSource=fs.readFileSync('internal/server/web/file-route.js','utf8');
@@ -46,4 +50,4 @@ assert.equal(locator.selected.stellarBand,'金色星','selecting original-text h
 const documentSpec=JSON.parse(decodeURIComponent(elements.get('document-open').href.split('=')[1]));assert.equal(documentSpec.line,51);assert.equal(documentSpec.endLine,51);assert.equal(documentSpec.codeHash,'a'.repeat(64));assert.equal(documentSpec.source,'ssh-reference');assert.equal(documentSpec.readOnly,true);
 vm.runInContext('selectDocument('+JSON.stringify({file:{...plainFile,format:'.docx'},locator:'paragraph 51',offset:0,hash:'b'.repeat(64),text:'office paragraph'})+')',locator);
 const officeSpec=JSON.parse(decodeURIComponent(elements.get('document-open').href.split('=')[1]));assert.equal(officeSpec.line,undefined);assert.equal(officeSpec.codeHash,undefined);
-console.log('PASS: same-tab read-only preview, safe map return, structured line/hash, legacy window ownership, lock/workspace and stale-route guards');
+console.log('PASS: actual map wiring opens/reuses a separate read-only tab; popup failure, structured local/SSH line/hash, ownership, lock/workspace and stale-route guards');

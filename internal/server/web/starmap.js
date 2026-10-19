@@ -1068,7 +1068,7 @@ canvas.addEventListener('wheel',e=>{
  redraw();
 },{passive:false});
 $('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?'请依据原文关键词 '+$('search').value+' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。':codeView?'请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。':'请解释这个节点的内容、相关文件与证据缺口。';$('question').focus();askAI(false)};
-const filePreview=window.AideStarmapPreview.create({origin:location.origin,workspace:()=>graph.workspace,locked:()=>locked,navigate:href=>{persistSkyView();location.assign(href);},returnTo:()=>location.pathname+location.search,openWindow:href=>window.open(href,'_blank'),note:message=>say(message),key:crypto.randomUUID()});
+const filePreview=window.AideStarmapPreview.create({origin:location.origin,workspace:()=>graph.workspace,locked:()=>locked,openWindow:href=>window.open(href,'_blank'),note:message=>say(message),key:crypto.randomUUID()});
 function openNodePreview(n){const href=pathSourceLink(selected?.id===n?.id&&selected.documentCitation?selected:n);if(href)filePreview.open(href);}
 document.addEventListener('click',event=>{
  const link=event.target.closest?.('a[data-file-preview]');

@@ -1,0 +1,74 @@
+{
+  "id": "starmap-file-new-tab-20261019",
+  "request": "星图中打开文件应该是新选项卡而不是在星图那一页打开",
+  "baseline": "e4dfec19a3f1f188c0acf69ef15633857fd9898c",
+  "initial_status": "",
+  "acceptance": [
+    "Ordinary file preview clicks open a separate tab and never navigate the map.",
+    "Keep a single owned reusable preview tab to bound browser resource use; never navigate or close user-repurposed tabs.",
+    "Preserve local/SSH source, workspace, read-only, hash and line locators; preserve lock and stale-source rejection.",
+    "Record browser tab opening/reuse and preserved map state separately from full file-content and SSH-service acceptance."
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap-preview.js",
+    "scripts/starmap-file-preview.test.cjs",
+    "docs/architecture.md",
+    "docs/tasks/starmap-file-new-tab-20261019.json",
+    "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Capture separate file preview tab with unchanged map page and bounded tab count.",
+      "evidence": [
+        "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Remove same-tab navigate mode from preview owner and actual map wiring; keep one owned read-only viewer and all validation.",
+      "evidence": [
+        "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Map preview uses synchronous user-click window.open in a separate tab; later files replace only an owned read-only preview. No backend or file API change.",
+      "evidence": [
+        "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused map wiring/ownership/blocked popup/lock/stale source tests and file-route location guards pass; both JS syntax checks pass. Native Safari component opened a separate tab, preserved original search, reused it for SSH locator at line 42 with hash. Full workbench file rendering and actual SSH not rerun.",
+      "evidence": [
+        "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and review explain current tab behavior, exact checks and unchanged production boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed both own Safari test tabs, in-app component tab and temporary 59198 HTTP server. Original user tabs and certificate handoff candidate retained. No Docker rebuild or production restart.",
+      "evidence": [
+        "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Prepare lightweight frontend source integration into main per user standing merge and simple-test direction; no version/Release or runtime deployment. Full profile and full-dependent release-check not run.",
+      "evidence": [
+        "docs/reviews/2026-10-19/starmap-file-new-tab.md"
+      ]
+    }
+  },
+  "release_authorization": "Retain user instructions 做完了合并到main and 这个简单测试即可，没改核心组件 for this small frontend repair; announced intended main integration in commentary. No paid calls, new Release or production replacement.",
+  "rollback": "Revert this frontend source merge; no storage/schema or user-file mutation. Previous behavior used the map tab for file navigation.",
+  "handoff": "Ready for source merge/push after docs checks. Native Safari tab-opening/reuse proven with synthetic viewer and real product module/wiring; actual full workbench and SSH content not retested. Production unchanged. Temporary UI tabs/server closed."
+}
