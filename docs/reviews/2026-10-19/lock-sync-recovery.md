@@ -45,3 +45,10 @@
 两个临时源码副本、已停止测试服务及上一轮无引用的 QA 镜像标签已清理；保留依赖和当前 QA 容器对。生产 aide-aide-1 仍使用原 sha256:48e99a7add36385cbc8d4f429518539a153b14d544b6032c16e1b9c964093d31，未重启或改密码。
 
 普通启动会优先复用有效本地镜像，源码合并不等于用户运行实例更新。要从此源码安装修复，在项目目录运行 AIDE_BUILD_FROM_SOURCE=1 ./start.command，完成后刷新旧页面。本轮没有创建新 Release，也没有替换生产。保留现有主控全局解锁／其他页仅本页放行策略。
+
+
+## main 交付
+
+功能提交 `1d6f356f`，main 合并提交 `caa3dd406259a8bc513ab20afd0018380f5b423e`。`python3 scripts/agent-route.py release-check lock-sync-recovery-20261019` 通过：当前内容 full、干净 main、各前置阶段，以及既有默认 ARM64/AMD64 公开附件元数据／摘要门禁均通过。附件是既有版本，不代表本轮源码已发布为新预编译镜像。
+
+`git push origin main` 成功，`git ls-remote origin refs/heads/main` 与合并 SHA 完全一致。随后仅补本交付文档和任务阶段记录，不改变已验证产品指纹。回滚使用 `git revert -m 1 caa3dd406259a8bc513ab20afd0018380f5b423e` 后重新构建；无持久化迁移。未创建版本、tag、公开 Release 或替换生产。

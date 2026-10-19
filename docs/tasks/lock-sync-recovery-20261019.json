@@ -75,14 +75,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source-only main integration gate pending; no version, public Release or production replacement.",
+      "status": "pass",
+      "summary": "Feature 1d6f356f merged as caa3dd406259a8bc513ab20afd0018380f5b423e; release-check passed local/full and public manifest metadata prerequisites; origin/main push verified exact merge SHA. Source delivery only, production unchanged.",
       "evidence": [
-        "docs/reviews/2026-10-19/lock-sync-recovery.md"
+        "docs/reviews/2026-10-19/lock-sync-recovery.md",
+        "docs/reviews/2026-10-19/lock-sync-recovery-proof.json"
       ]
     }
   },
   "release_authorization": "Standing main integration/source push preference; no new Release, production password changes or production restart requested.",
   "rollback": "Revert feature merge; no persistence schema or password changes.",
-  "handoff": ""
+  "handoff": "Source integrated and pushed to main; isolated QA candidate retained on 59197. Production not replaced. Build current source with AIDE_BUILD_FROM_SOURCE=1 ./start.command and refresh pages. Existing master-global/slave-local policy preserved; Touch ID, Windows and paid-model acceptance not run."
 }
