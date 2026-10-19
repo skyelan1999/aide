@@ -485,3 +485,7 @@ Task.topicContext和ParallelProgress.plannerContext/mainContext及各part.contex
 ## Optional workbench tool port (source candidate, 2026-10-18)
 
 A protocol1 workbench may opt into its own registered tools through manifest.workbench.tools. The parent retains authenticated HTTP and the bound instance; an opaque iframe receives only a MessagePort. Tool admission reuses pluginPlanPolicy and resource scheduling; file/command proposals are recorded through recordToolProposal and the existing session approval UI. No approve/apply, arbitrary API, file proxy or desktop stream is exposed. Source, tests and current non-deployment evidence: docs/reviews/2026-10-18-workbench-bridge.md.
+
+### 2026-10-19：星图文件预览独立选项卡
+
+星图的普通文件预览点击使用独立的只读选项卡，不再调用当前页 location.assign，原图搜索与视角保留。后续文件仅复用属于当前星图的受控只读预览页；本地／SSH 来源、工作区、行号与内容哈希仍由原文件定位链校验。锁屏、失效来源和用户已改作其他用途的页面沿用原保护。浏览器拦截打开时显示提示，不回退覆盖星图。实现、Safari 标签复用实测与完整工作台未验边界见[星图新选项卡验收](reviews/2026-10-19/starmap-file-new-tab.md)。
