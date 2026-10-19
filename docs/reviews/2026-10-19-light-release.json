@@ -1,0 +1,164 @@
+{
+  "date": "2026-10-19",
+  "status": "published",
+  "tag": "v0.1.17.2-RC1",
+  "commit": "bda69933c9f68562c07b99948bd17b148b8e6850",
+  "source": "1985820a28548956f902f69fb1c4acd401ec9ae7cb8fea4d7cd45ec1c3c5f882",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.2-RC1",
+  "prerelease": true,
+  "full": {
+    "status": "pass",
+    "checks": 138,
+    "fingerprint": "c6cd40c07a7e04c0196bf3f4acf66922e812153e63840cd43fa7d5ac3b770609",
+    "head": "60feb1f158240a0e4b01ae1a03cd2c1950aa8747",
+    "serverItems": 1032,
+    "serverShards": 12
+  },
+  "runtime": [
+    {
+      "status": "pass",
+      "health": 200,
+      "unauthenticatedSessions": 401,
+      "authenticatedConfig": 200,
+      "version": "0.1.17.2 RC1",
+      "commit": "bda69933c9f68562c07b99948bd17b148b8e6850",
+      "configKeys": [
+        "buildCommit",
+        "buildVersion",
+        "version"
+      ],
+      "headingLine": 1302,
+      "declarationLine": 2,
+      "sourceHashVerified": true,
+      "image": "aide:0.1.17.2-RC1-linux-arm64",
+      "platform": "linux/arm64"
+    },
+    {
+      "status": "pass",
+      "health": 200,
+      "unauthenticatedSessions": 401,
+      "authenticatedConfig": 200,
+      "version": "0.1.17.2 RC1",
+      "commit": "bda69933c9f68562c07b99948bd17b148b8e6850",
+      "configKeys": [
+        "buildCommit",
+        "buildVersion",
+        "version"
+      ],
+      "headingLine": 1302,
+      "declarationLine": 2,
+      "sourceHashVerified": true,
+      "image": "aide:0.1.17.2-RC1-linux-amd64",
+      "platform": "linux/amd64"
+    }
+  ],
+  "images": [
+    {
+      "platform": "linux/arm64",
+      "id": "sha256:5286d66b803039336a6a9613ee9c08987ed866af033d3833bbb4453b35565a35",
+      "source": "1985820a28548956f902f69fb1c4acd401ec9ae7cb8fea4d7cd45ec1c3c5f882",
+      "importStatus": "pass",
+      "fullZipPayloadSHA256": "57cf9556609f969fc512988c59d8630d6e84027bddf7ec6d71e190d9e14e6383"
+    },
+    {
+      "platform": "linux/amd64",
+      "id": "sha256:6a57077710b99f57cd7307a49d34a0908713e6b80f684383f4b608418874bc3d",
+      "source": "1985820a28548956f902f69fb1c4acd401ec9ae7cb8fea4d7cd45ec1c3c5f882",
+      "importStatus": "pass",
+      "fullZipPayloadSHA256": "a3f7f8a34352382ff2c867ad01117e24c4de08a7e689c5b085b551f96b15d820"
+    }
+  ],
+  "offlineArchiveChecks": [
+    {
+      "status": "pass",
+      "archive": "aide-0.1.17.2-RC1-linux-arm64-5286d66b8030-offline.tar.gz",
+      "image": "sha256:5286d66b803039336a6a9613ee9c08987ed866af033d3833bbb4453b35565a35",
+      "platform": "linux/arm64",
+      "source": "1985820a28548956f902f69fb1c4acd401ec9ae7cb8fea4d7cd45ec1c3c5f882",
+      "innerSHA256": "8b982705c1b41f9d9ace496a16ad5fa12f52e94501794a7378cb6f31a2b8d158",
+      "identityAndInnerHash": true,
+      "actualImport": true,
+      "receivingDevice": "not_run; same local Docker engine"
+    },
+    {
+      "status": "pass",
+      "archive": "aide-0.1.17.2-RC1-linux-amd64-6a57077710b9-offline.tar.gz",
+      "image": "sha256:6a57077710b99f57cd7307a49d34a0908713e6b80f684383f4b608418874bc3d",
+      "platform": "linux/amd64",
+      "source": "1985820a28548956f902f69fb1c4acd401ec9ae7cb8fea4d7cd45ec1c3c5f882",
+      "innerSHA256": "c8d88c15ba6a736c64079c2be14057ac7144ac890a86af2d2432242b664360e6",
+      "identityAndInnerHash": true,
+      "actualImport": true,
+      "receivingDevice": "not_run; same local Docker engine"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "aide-v0.1.17.2-RC1-source.zip",
+      "bytes": 172323115,
+      "digest": "sha256:1daae6ddb1ab5635a34563a526bd07b6c245d5b9f6b0b128a4a90ed6bf56e487",
+      "state": "uploaded",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.2-RC1/aide-v0.1.17.2-RC1-source.zip"
+    },
+    {
+      "name": "aide-v0.1.17.2-RC1-full-linux-arm64.zip",
+      "bytes": 932079257,
+      "digest": "sha256:672e83a1aeb3bdcc801517b83640e287570970be4bba15606c912b9916d3f6a1",
+      "state": "uploaded",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.2-RC1/aide-v0.1.17.2-RC1-full-linux-arm64.zip"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "bytes": 2765,
+      "digest": "sha256:27456240960208335aebe5a8bb9e9a4d7c98dbdd49f0d70cc246173f7352b3c6",
+      "state": "uploaded",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.2-RC1/RELEASE-ASSETS.txt"
+    },
+    {
+      "name": "aide-v0.1.17.2-RC1-full-linux-amd64.zip",
+      "bytes": 1098020837,
+      "digest": "sha256:a9d7f19a90caa0bb5551e72f519af748dd03fdc55e655fba6896fbe521c21447",
+      "state": "uploaded",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.2-RC1/aide-v0.1.17.2-RC1-full-linux-amd64.zip"
+    },
+    {
+      "name": "SHA256SUMS",
+      "bytes": 393,
+      "digest": "sha256:9afe1e1c731f0b996f91b76b3a6c3a6f64ca1c89ca701dc151daa6c42abef96b",
+      "state": "uploaded",
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.2-RC1/SHA256SUMS"
+    }
+  ],
+  "remoteVerification": "All five uploaded asset sizes and GitHub SHA256 metadata matched local bytes; public unauthenticated API and actual SHA256SUMS/RELEASE-ASSETS.txt downloads verified.",
+  "distribution": "One complete ZIP per Docker architecture: offline install, all host launchers, image and A/B upgrade metadata; source ZIP included.",
+  "deployment": {
+    "userRuntime": "unchanged; sha256:ad5b7b266ca78b426a96cf2b906d53ff731dd7961595df82748fd0210451d8d5 healthy",
+    "nativeWindows": "not_run; AMD64 used local emulation",
+    "receivingDevice": "not_run",
+    "defaultFallback": "retains prior validated v0.1.17.1-RC1; new full ZIPs available from this Release"
+  },
+  "starlink": {
+    "version": "0.1.3",
+    "commit": "dafc138fca47073d0c97a159dbda309dd84f8530",
+    "release": "https://github.com/skyelan1999/aide-pkg-StarLink/releases/tag/v0.1.3",
+    "bytes": 37317,
+    "sha256": "d75e75ab512f17158220227b845373c4b63c70d8669c8bc8baebbd169d632cdc",
+    "marketCommit": "de67a058cab7976e7e056fb72c63bf4333cccfdf",
+    "marketDeployment": "39263019865 success",
+    "installed": "0.1.3 enabled; 11 sessions preserved",
+    "tests": "17/17; Aide standalone-entry validator ok",
+    "liveQueries": [
+      {
+        "query": "headless architecture",
+        "kind": "heading",
+        "line": 101
+      },
+      {
+        "query": "knowledgeAssist",
+        "kind": "declaration-candidate",
+        "line": 465
+      }
+    ]
+  },
+  "uploadRecovery": "Slow draft uploads were abandoned without publication. Final qualified full ZIP set uploaded with unchanged application bytes, using a per-process TLS tunnel; no global proxy/routing configuration changed."
+}

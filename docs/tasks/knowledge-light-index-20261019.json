@@ -93,12 +93,14 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Authorized release preparation in isolated clean main checkout; preserve unrelated local modifications.",
+      "status": "pass",
+      "summary": "Aide v0.1.17.2-RC1 and StarLink v0.1.3 pushed and published; market0.1.3 deployed and read back; primary source synchronized; existing user runtime preserved.",
       "evidence": [
-        "User release request 2026-10-19",
-        "StarLink main dafc138 and v0.1.3 pushed; published ZIP 37317 bytes, SHA256 d75e75ab512f17158220227b845373c4b63c70d8669c8bc8baebbd169d632cdc",
-        "Marketplace main de67a05; Pages run 39263019865 success; actual Pages catalog/ZIP and Aide market API readback/hash verified; installed 0.1.3 enabled."
+        "docs/reviews/2026-10-19-light-release.json",
+        "docs/reviews/2026-10-19-light-release.md",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.2-RC1",
+        "https://github.com/skyelan1999/aide-pkg-StarLink/releases/tag/v0.1.3",
+        "Full138 checks pass; all5 public Aide asset sizes/digests match local files; public metadata downloads pass; StarLink Release/market ZIP identical."
       ]
     }
   },
