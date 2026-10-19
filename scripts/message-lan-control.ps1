@@ -11,7 +11,7 @@ $binary=Join-Path $nativeDir $name
 if ($Action -eq 'stop') { if (Test-Path -LiteralPath $binary) { & $binary -stop -dir $lanDir; if ($LASTEXITCODE -ne 0) { throw 'LAN bridge stop failed.' } }; return }
 function Get-LanCompose([string[]]$Items) {
     $program=$ComposeCommand[0]
-    $prefix=if ($ComposeCommand.Count -gt 1) {@($ComposeCommand[1..($ComposeCommand.Count-1)])} else {@()}
+    [string[]]$prefix=@(if ($ComposeCommand.Count -gt 1) { $ComposeCommand[1..($ComposeCommand.Count-1)] })
     $text=((& $program @prefix @Items) | Out-String).Trim()
     if ($LASTEXITCODE -ne 0) { throw 'LAN bridge Compose query failed.' }
     return $text
