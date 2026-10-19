@@ -13,3 +13,5 @@
 本轮沿用用户对这类界面变化简单测试、合并并及时推送主线的指示。未新建 Release、未替换正在运行的 Docker 实例，未声称 full/Go race 验证；运行实例更新后再刷新页面生效。
 
 Final quick: 131 checks PASS; fingerprint `b85a30d15b61e66556bfac8dd67662eaa79318ab9e0ae02c9a203e4bd37ded73`. Docs check: 343 Markdown files, 1268 local links PASS. Real r128 tests cover all RPY components, transformed robot root invariance and direct-parent pose. Reset returned tool origin to (0.5, 0, 0.22) and yaw 0; source mode removed all canvas and label elements. Owned component tab/server closed and temporary viewport reset. Earlier interrupted quick is not the final receipt.
+
+Source delivery: feature `bd8bdd1f`, main merge `4f1dfdad`, pushed to origin/main. Roll back with `git revert -m 1 4f1dfdad`; no data migration. Runtime image is unchanged.

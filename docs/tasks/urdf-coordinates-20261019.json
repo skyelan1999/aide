@@ -63,8 +63,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Authorized source-only main integration; no new Release or production replacement.",
+      "status": "pass",
+      "summary": "Source feature bd8bdd1f merged as 4f1dfdad and pushed to origin/main. Scoped lightweight checks used per standing user direction; no new Release or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-19/urdf-coordinates.md"
       ]
