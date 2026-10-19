@@ -14,7 +14,7 @@
 
 - `node scripts/message-notifications.test.cjs`：展开／收起、aria-expanded、Esc 焦点恢复、默认策略下的时长禁用、成功保存收起、失败保留表单，以及既有计数和策略检查通过。
 - `node scripts/message-center.test.cjs` 及 JS 语法检查通过。
-- 最终 `python3 scripts/agent-route.py verify quick` 共 129 项通过；指纹 `e10a8206336472df681b01a999bc10a8aae83a08c5e3d22700ee642ce0424ac8` 与最终产品源码一致。本轮没有重跑全库 Go race/full，不沿用上轮 full 收据作为本轮发布依据。
+- 最终 `python3 scripts/agent-route.py verify quick` 共 129 项通过；指纹 `e10a8206336472df681b01a999bc10a8aae83a08c5e3d22700ee642ce0424ac8` 与最终产品源码一致。功能分支阶段没有重跑全库 Go race/full；后续主线集成启动的 full 按用户“这个简单测试即可，没改核心组件”明确要求中止，不将中断视为通过，也不沿用上轮 full 收据。
 - 真实浏览器组件页面使用产品 JS/CSS 和前一轮真实接口生成的合成状态，保存为内存模拟。实际点击通知展开、关闭、应用免打扰、切换主题和进入聊天；不以模拟保存宣称持久化验证。查看 1200×900 桌面与 390×844 窄屏、明暗布局。窄屏页面 scrollWidth = 390，展开卡片宽 330px；底部应用按钮可以在面板内滚动到达。
 - 最终聊天布局测量：操作按钮底部 y=285，通知卡片顶部 y=292；桌面列表卡片底部 y=535.28，后续群组顶部 y=547.28，均无重叠。复测发现过一次工具栏按钮排在卡片之后，修正后重新截图与测量，最终截图为 `narrow-chat.png`、`desktop-list.png`。
 - 使用本地依赖镜像构建最终隔离候选 `aide:qa-message-buttons-ui-20261019`，镜像 ID `sha256:c3ae86a2c41ecb7f969dd35bc8d5c018f511e70e7bd06a371ba05a0d490b68fd`。原始 `start.command` 在 `/tmp/aide-message-notifications-qa-20261019` 启动成功，仍使用单个 QA 应用／CAD 项目，地址 `https://localhost:59197/`。健康检查 200，实际服务返回的三个修改资源 SHA256 与当前源码一致，原有通知总数 6 保留正常。每次接口请求前校验候选完整 DER 证书，未修改产品 TLS。
@@ -27,4 +27,8 @@ Safari 实际工作台仍停在浏览器证书提示，需要用户自行确认�
 
 自建组件页和 59198 组件服务已关闭，浏览器临时视口已恢复。构建使用一个候选标签；首次候选的 manifest/config 已不在 Docker 镜像列表中，不执行全局 prune 或清理其他镜像。保留现有一个 QA 应用／CAD 项目及其原有 Safari 候选页供继续验收；原始目录中的 `stop.command` 可停止这份 QA 项目。生产镜像仍为 `sha256:48e99a7add36385cbc8d4f429518539a153b14d544b6032c16e1b9c964093d31`，未重启或替换。
 
-源码修复 `0a778c6c` 已推送至 `origin/fix/message-buttons-ui-20261019`，工作区收尾保持干净。本轮交付为功能修复分支源码与文档，不合入 main、不新建 Release。回滚可撤销本轮前端提交，不应删除通知配置或消息存储。
+源码修复 `0a778c6c` 已推送至 `origin/fix/message-buttons-ui-20261019`，工作区收尾保持干净。用户随后明确要求“做完了合并到main”，已无冲突合入本地 main `9f3f5673`，主线推送待执行；不新建 Release。回滚可撤销本轮前端提交，不应删除通知配置或消息存储。
+
+## 主线合并验证范围
+
+用户明确将本轮验证限定为简单测试，理由是未修改核心组件。该直接指令优先于仓库常规 main 合并 full 门禁；仅本任务按此范围执行，不更改工作流规则、不伪造 full 收据。合并后的内容指纹仍与上述 129 项 quick 通过收据相同，并补跑通知行为、消息清单、文档链接及 diff 检查。额外 full 已中断，属于本轮的验证容器 `aide-verify-626cb11b85ae` 已精确停止并移除，423 文件的自建夹具副本已移除；不清理其他容器或数据。依赖 full 收据的 release-check 未运行，本轮没有发布版本或部署生产。

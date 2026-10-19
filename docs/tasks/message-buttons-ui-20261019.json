@@ -62,14 +62,14 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "Feature branch delivery only; no main merge, version bump, Release or production replacement. Full release gate not run for this frontend branch delivery.",
+      "status": "in_progress",
+      "summary": "Merged into local main at 9f3f5673. Per direct user instruction, stopped full verification; focused checks, matching quick receipt and docs/diff checks are the source-merge validation. Full-dependent release-check not run; no fabricated full receipt. Main push pending.",
       "evidence": [
         "docs/reviews/2026-10-19/message-buttons-ui.md"
       ]
     }
   },
-  "release_authorization": "User requested UI repair; prior timely source branch push preference retained. No new version, production deployment or main merge requested for this repair.",
+  "release_authorization": "User explicitly requested 做完了合并到main, then clarified 这个简单测试即可，没改核心组件. Use focused/frontend checks and existing current-fingerprint 129-check quick receipt for this source merge. User instruction overrides repository full-profile merge convention for this task only. No new Release/version or production replacement authorized.",
   "rollback": "Revert this frontend-only change; no storage schema, API or notification policy change.",
-  "handoff": "Source fix 0a778c6c pushed to origin/fix/message-buttons-ui-20261019; docs validation passed. Final quick 129 pass; exact source candidate served on https://localhost:59197 via original start.command. Component no-overlap interactions passed; complete Safari still requires human certificate acceptance. One QA pair retained, production untouched. Review documents rollback and limitations."
+  "handoff": "Local main includes button repair at merge 9f3f5673; source push pending. Per user request, lightweight checks only; full stopped and own verification container/fixtures removed. Quick 129 receipt matches integrated product inputs. Candidate/browser evidence unchanged, full Safari certificate acceptance still NOT_RUN. Production untouched."
 }
