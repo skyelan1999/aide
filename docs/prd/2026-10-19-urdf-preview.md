@@ -31,3 +31,5 @@
 复用现有 Three.js r128、STLLoader、OrbitControls；新增兼容的 URDFLoader 0.10.5 和同版本 ColladaLoader／OBJLoader。vendor 离线保存，官方 npm 包在提取前校验 SHA512，文件 SHA256 与许可证随仓库保存，详见[依赖来源](../../internal/server/web/vendor/urdf-loader/README.md)。没有升级共享三维运行时。
 
 语义和包路径设计参考 [URDF 官方解析器](https://github.com/ros/urdfdom) 与 [URDFLoader 官方说明](https://github.com/gkjohnson/urdf-loaders/blob/master/javascript/README.md)。本页描述实现能力；已实际验证的样例、未验设备与发布状态以验收记录为准。
+
+固定（fixed）及浮动（floating）关节的零轴不会阻止初始姿态预览；旋转、连续、移动及平面关节显式给定的运动轴仍须非零，错误包含关节名称。全固定模型显示“没有可调节关节”，不产生可动滑块。

@@ -42,7 +42,7 @@
       if(!byLink.has(parent)||!byLink.has(child)||parent===child||parents.has(child))throw Error('关节的父子连杆无效或重复');
       parents.add(child);if(!children.has(parent))children.set(parent,[]);children.get(parent).push(child);
       if(type==='revolute'||type==='prismatic'){const limit=direct(joint,'limit')[0],low=Number(limit?.getAttribute('lower')),high=Number(limit?.getAttribute('upper'));if(!limit||!limit.hasAttribute('lower')||!limit.hasAttribute('upper')||!Number.isFinite(low)||!Number.isFinite(high)||low>high)throw Error('旋转／移动关节需要有效上下限');}
-      const axis=direct(joint,'axis')[0];if(axis&&!axis.getAttribute('xyz')?.trim())throw Error('关节轴缺少 xyz');if(axis&&axis.getAttribute('xyz')?.trim().split(/\s+/).map(Number).every(v=>v===0))throw Error('关节轴不能为零');
+      const axis=direct(joint,'axis')[0];if(axis&&!axis.getAttribute('xyz')?.trim())throw Error('关节轴缺少 xyz');if(axis&&['revolute','continuous','prismatic','planar'].includes(type)&&axis.getAttribute('xyz')?.trim().split(/\s+/).map(Number).every(v=>v===0))throw Error('关节轴不能为零：'+joint.getAttribute('name')+'（'+type+'）');
     }
     const roots=links.filter(link=>!parents.has(link.getAttribute('name')));if(roots.length!==1)throw Error('URDF 必须是一棵连通的机器人树');
     const visited=new Set(),queue=[[roots[0].getAttribute('name'),0]];for(let i=0;i<queue.length;i++){const [name,depth]=queue[i];if(depth>256)throw Error('连杆树深度超出预览预算');if(visited.has(name))throw Error('机器人存在循环关节');visited.add(name);queue.push(...(children.get(name)||[]).map(child=>[child,depth+1]));}if(visited.size!==links.length)throw Error('机器人存在循环或断开的连杆');
