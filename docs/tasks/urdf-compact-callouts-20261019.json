@@ -1,0 +1,81 @@
+{
+  "id": "urdf-compact-callouts-20261019",
+  "request": "删除名称标注按钮，缩小 URDF 标注并限制多节点显示负担",
+  "baseline": "6e91ec6865487802e33497e12fb539ab84c15882",
+  "initial_status": "",
+  "acceptance": [
+    "No separate name-label toolbar toggle; coordinates toggle controls annotation visibility.",
+    "Regular cards 176x26px, selected card 78px; at most 6 desktop / 3 narrow-screen cards, accessible paging preserves all nodes.",
+    "Selecting a node retains module highlighting, reference frames and XYZ/RPY and jumps to its visible page.",
+    "Actual browser checks of dense models, narrow layout and focused regression pass."
+  ],
+  "scope": [
+    "internal/server/web/urdf-preview.js",
+    "internal/server/web/urdf-preview.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/urdf-preview.test.cjs",
+    "docs/prd/2026-10-19-urdf-preview.md",
+    "docs/tasks/urdf-compact-callouts-20261019.json",
+    "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested removing redundant name toggle and reducing annotation size and dense-node overload.",
+      "evidence": [
+        "docs/prd/2026-10-19-urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Single coordinate toggle, compact names, one expanded selection, bounded responsive paging; existing picking and reference frames retained.",
+      "evidence": [
+        "docs/prd/2026-10-19-urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed toggle, lighter borders/leaders, 26px name rows, 78px selected detail and maximum six cards. Filtered visible-node selection locates correct page.",
+      "evidence": [
+        "docs/prd/2026-10-19-urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "137-command official full passed with identical source fingerprint; focused 2048-node layout regression, actual 8/120-node desktop/narrow component UI, keyboard paging, reference frame and exact-hash original-launcher candidate smoke passed. Scope limits recorded.",
+      "evidence": [
+        "scripts/urdf-preview.test.cjs",
+        "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated URDF product behavior and focused acceptance record.",
+      "evidence": [
+        "docs/prd/2026-10-19-urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed owned temporary source clone and superseded unreferenced QA image tag; closed browser/HTTP fixture and reset viewport. Current QA pair and production retained. Scope diff reviewed.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source-only main gate and push pending; no new version or production deployment.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-compact-callouts.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing user instruction to integrate and push completed changes to main; no new public Release or production restart.",
+  "rollback": "Revert feature merge and rebuild; no persistence or URDF file changes.",
+  "handoff": ""
+}
