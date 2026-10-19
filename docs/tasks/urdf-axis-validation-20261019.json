@@ -1,0 +1,74 @@
+{
+  "id": "urdf-axis-validation-20261019",
+  "request": "URDF报预览不可用，关节轴不能为0",
+  "baseline": "cb44664e2b687bf70fca53d2b8ec92c38c06f4d8",
+  "initial_status": "",
+  "acceptance": [
+    "Fixed/floating joints with exported zero axes render without rejection; nonzero motion axes remain required.",
+    "Keep source XML unchanged and identify invalid movable joint by name.",
+    "Targeted regression and actual browser component rendering; source main delivery without production replacement."
+  ],
+  "scope": [
+    "internal/server/web/urdf-preview.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/urdf-preview.test.cjs",
+    "docs/tasks/urdf-axis-validation-20261019.json",
+    "docs/reviews/2026-10-19/urdf-axis-validation.md",
+    "docs/prd/2026-10-19-urdf-preview.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Fixed zero axes from exporter must not block preview.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-axis-validation.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Axis nonzero constraint applies only to joint types that use a direction; source bytes unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-axis-validation.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Type-aware validation, named errors and cache refresh implemented.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-axis-validation.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "131 quick checks passed; user-pasted model equivalent XML rendered 8 links/7 joints/204 triangles in actual browser module.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-axis-validation.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Review, PRD and task updated with actual evidence and runtime boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-axis-validation.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own browser component tab and fixture server closed; no production or user-file mutations.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-axis-validation.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source main integration; no new Release or production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-axis-validation.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing user instruction to test scoped frontend changes and merge/push main; no production replacement or new Release.",
+  "rollback": "Revert feature merge; no stored data or source XML migration.",
+  "handoff": "Run original start.command to update runtime after source integration; user XML need not change. Full workbench/original disk file not verified."
+}
