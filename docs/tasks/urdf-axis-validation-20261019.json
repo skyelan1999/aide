@@ -61,8 +61,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source main integration; no new Release or production replacement.",
+      "status": "pass",
+      "summary": "Feature 2e2d8601 merged as 030b34b6 and pushed to origin/main with scoped lightweight checks; no new Release or production replacement.",
       "evidence": [
         "docs/reviews/2026-10-19/urdf-axis-validation.md"
       ]
