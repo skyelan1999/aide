@@ -2899,3 +2899,5 @@ Object.assign(window.aideEnglish, {"正在读取 URDF…": "Reading URDF…", "�
 Object.assign(window.aideEnglish, {'坐标与角度':'Coordinates and angles','坐标节点':'Coordinate node','参考坐标系':'Reference frame','机器人根坐标系':'Robot root frame','父节点坐标系':'Parent frame','节点原点 · 当前姿态 RPY（固定轴 XYZ），与视角无关':'Node origin · current fixed-axis XYZ RPY, independent of camera view','当前关节值':'Current joint value'});
 
 Object.assign(window.aideEnglish, {'名称标注':'Name labels','查看模块坐标':'View module coordinates','仅标注前 80 个连杆，可在坐标面板查看全部节点':'Only the first 80 links are labeled. All nodes are available in the coordinate panel.'});
+
+Object.assign(window.aideEnglish, {'上一组标注':'Previous labels','下一组标注':'Next labels','预览区域太小，请放大查看标注':'Preview area too small. Enlarge it to see labels.','根连杆':'Root link','父节点':'Parent','根坐标系':'Robot root'});
