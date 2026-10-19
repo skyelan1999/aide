@@ -51,8 +51,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "38 focused launcher tests passed; current full profile running 1022 server items in 12 serial disjoint shards. Original isolated launcher reused local image and reached Docker healthy; host TLS API probe not claimed. Windows native not run.",
+      "status": "pass",
+      "summary": "130 full-profile checks passed, including 1022 registered server items in 12 serial shards. Original full command exited 1 only for Docker external-bind CAD transport; unchanged CAD assertions passed with SHA256-identical internal fixture mounts. Receipt preserves original failure and retry lineage. 38 launcher tests and real pinned Release recovery passed. Native Windows and host TLS API probe not claimed.",
       "evidence": [
         "docs/reviews/2026-10-19/local-first-release-fallback.md"
       ]
