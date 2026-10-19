@@ -56,7 +56,7 @@ aide = AI + IDE，产品主旨是让人更专注于专业工作。本路由用�
 | docs/PRD.md、docs/prd、docs/architecture | 需求基线与历史设计；统一放 docs，不再创建 doc |
 | docs | 架构、操作、验收、设计；docs/tasks 是共享任务交接账本 |
 | docs/agent | 唯一流程路由与客户端接入说明 |
-| docker-images | 保留用户要求的本地镜像包；README 受控，镜像不进 Git |
+| docker-images | 只保留当前总包；README/摘要受控，指定总包通过 Git LFS 入库，其余历史镜像不进普通 Git |
 | .agent-state | 可再生本地日志/收据；不用来替代受控任务结论 |
 
 禁止往根目录堆临时 patch、截图、备份和日志。不要扩大 gitignore 隐藏未知源码。

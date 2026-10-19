@@ -11,3 +11,6 @@ docker/cad/requirements.txt text eol=lf
 
 # The prebuilt runtime index is shared by POSIX and Windows launchers.
 docker/prebuilt-images.tsv text eol=lf
+
+# Only the current complete multi-platform runtime is stored through Git LFS.
+docker-images/aide-runtime-all-platforms.zip filter=lfs diff=lfs merge=lfs -text

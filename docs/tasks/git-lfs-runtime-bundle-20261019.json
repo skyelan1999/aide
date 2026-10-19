@@ -1,0 +1,84 @@
+{
+  "id": "git-lfs-runtime-bundle-20261019",
+  "request": "用户要求docker预编译镜像放Git，所有需要的架构环境放到一个包并push",
+  "baseline": "e182e06371b1d41c4d945cab32ec8c54996333e7",
+  "initial_status": "",
+  "acceptance": [
+    "One fixed complete ARM64/AMD64 bundle with matching inner and outer hashes; no user data.",
+    "Upload Git LFS object and verify a fresh remote download, not only the Git pointer.",
+    "Retain the current pair only; remove historical local AIDE bundles without touching services, user data or dependency seeds.",
+    "Document exact source snapshot, newer main differences, Git LFS and original launcher startup."
+  ],
+  "scope": [
+    ".gitattributes",
+    ".gitignore",
+    "docker-images/aide-runtime-all-platforms.zip",
+    "docker-images/aide-runtime-all-platforms.zip.sha256",
+    "docker-images/README.md",
+    "docker/runtime-bundle.json",
+    "scripts/build-runtime-bundle.py",
+    "docs/agent/WORKFLOW.md",
+    "docs/runtime-bundle.md",
+    "docs/tasks/git-lfs-runtime-bundle-20261019.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Distribute the latest existing same-source complete pair, identifying differences from newer main.",
+      "evidence": [
+        "docs/runtime-bundle.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "A single fixed ZIP through Git LFS, below 2 GB; store compressed complete archives byte-exactly; no production changes.",
+      "evidence": [
+        "docs/runtime-bundle.md",
+        "docker/runtime-bundle.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Created deterministic selected-archive builder, LFS attributes, unified bundle and checksums. Existing runtime pair remains an explicitly identified source snapshot.",
+      "evidence": [
+        "docs/runtime-bundle.md",
+        "docker/runtime-bundle.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "ZIP CRC, streamed inner SHA256, exact platform/image markers and unsafe path/private data exclusions passed for both 59-member archives. User requested simple scoped checks and timely push; full regression is not run for this distribution-only change.",
+      "evidence": [
+        "docs/runtime-bundle.md",
+        "docker/runtime-bundle.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Added Git LFS retrieval, checksums, architecture selection, original launcher startup, update data preservation and exact source limitations.",
+      "evidence": [
+        "docs/runtime-bundle.md",
+        "docker/runtime-bundle.json"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "136 obsolete local archive/sidecar files identified; current pair, dependency seeds and production preserved. Remove after remote object validation.",
+      "evidence": [
+        "docs/runtime-bundle.md",
+        "docker/runtime-bundle.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Pending Git LFS upload and remote re-download verification, then main push.",
+      "evidence": [
+        "docs/runtime-bundle.md",
+        "docker/runtime-bundle.json"
+      ]
+    }
+  },
+  "release_authorization": "User directly requested one combined precompiled Docker bundle in Git and push, then only the latest version. Use Git LFS, overriding previous no-image-in-Git guidance.",
+  "rollback": "Revert the scoped distribution files if needed. No history rewrite or production data changes.",
+  "handoff": "User explicitly requested simple checks and timely push instead of full regression. No new GitHub Release publishing or runtime deployment."
+}

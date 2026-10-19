@@ -51,3 +51,6 @@ profiles.json
 /plugins/.upgrade-backup-3dmodulebox-*/
 /plugins/testbench/
 /plugins/.upgrade-backup-testbench-*/
+
+# Current unified LFS runtime checksum is reviewed with the bundle.
+!docker-images/aide-runtime-all-platforms.zip.sha256

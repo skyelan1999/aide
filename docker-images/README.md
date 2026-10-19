@@ -1,3 +1,7 @@
+# 当前唯一 Git 离线总包
+
+仓库通过 Git LFS 分发 `aide-runtime-all-platforms.zip`，包含 ARM64/AMD64 完整运行环境。先 `git lfs pull`，再按[拉取、校验与启动说明](../docs/runtime-bundle.md)操作。该文档标明实际源码快照与最新 main 的差别；下文为历史 Release 交付记录，不代表仍保留所有本地旧包。
+
 ## Star map preview follow-up snapshots
 
 Product code `08dbbaca`, source identity `59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d`: ARM64 `696739fa8621`, AMD64 `76ef945215d5`. These snapshots implement current-tab read-only preview, allowlisted map return, structured document text lines and removed-source result invalidation. These are historical snapshots; current defaults and their exact identities are listed below. Verification, native acceptance and publication status are tracked in [the follow-up task](../docs/tasks/starmap-native-preview-20261016.json); local export is not remote availability.
@@ -6,7 +10,7 @@ Product code `08dbbaca`, source identity `59ebe881dd86b195ff87066262787ea4ed9098
 
 Normal source checkouts select a complete runtime from `docker/prebuilt-images.tsv`. They reuse a verified local image, import a matching local archive, or download the matching Release archive and verify its SHA-256 before import. They never fall back to source compilation. Development builds require `AIDE_BUILD_FROM_SOURCE=1` or `install --source`.
 
-Both complete bundles contain the application, native CAD runtime, cross-platform launchers and licenses. Image archives remain Release assets rather than large Git blobs. The manifest records platform, image ID, source identity, archive checksum and download URL; packaging records local candidates in `.agent-state/prebuilt-images.candidate.tsv` and never activates public defaults. Before updating the tracked manifest, run `python3 scripts/verify_prebuilt_assets.py .agent-state/prebuilt-images.candidate.tsv` after both matching architectures have been uploaded. `release-check` also checks the tracked public manifest after local prerequisites pass. Delivery and remote availability are tracked separately in [the release report](../docs/reviews/2026-10-16/prebuilt-runtime-delivery.md).
+Both complete bundles contain the application, native CAD runtime, cross-platform launchers and licenses. Historical individual image archives remain Release assets; the current combined bundle is additionally tracked through Git LFS, never as a large ordinary Git blob. The manifest records platform, image ID, source identity, archive checksum and download URL; packaging records local candidates in `.agent-state/prebuilt-images.candidate.tsv` and never activates public defaults. Before updating the tracked manifest, run `python3 scripts/verify_prebuilt_assets.py .agent-state/prebuilt-images.candidate.tsv` after both matching architectures have been uploaded. `release-check` also checks the tracked public manifest after local prerequisites pass. Delivery and remote availability are tracked separately in [the release report](../docs/reviews/2026-10-16/prebuilt-runtime-delivery.md).
 
 | Docker engine platform | Runtime image | Complete offline bundle |
 | --- | --- | --- |
