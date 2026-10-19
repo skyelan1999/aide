@@ -71,5 +71,5 @@
   },
   "release_authorization": "User requested UI repair; prior timely source branch push preference retained. No new version, production deployment or main merge requested for this repair.",
   "rollback": "Revert this frontend-only change; no storage schema, API or notification policy change.",
-  "handoff": "Push fix/message-buttons-ui-20261019 after docs validation. Final quick 129 pass; exact source candidate served on https://localhost:59197 via original start.command. Component no-overlap interactions passed; complete Safari still requires human certificate acceptance. One QA pair retained, production untouched. Review documents rollback and limitations."
+  "handoff": "Source fix 0a778c6c pushed to origin/fix/message-buttons-ui-20261019; docs validation passed. Final quick 129 pass; exact source candidate served on https://localhost:59197 via original start.command. Component no-overlap interactions passed; complete Safari still requires human certificate acceptance. One QA pair retained, production untouched. Review documents rollback and limitations."
 }
