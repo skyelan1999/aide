@@ -69,8 +69,32 @@
   "notRun": [
     "Complete Safari workbench: certificate warning requires human action",
     "Native Windows",
-    "Real desktop notification permission and speaker output",
-    "Repository full profile; targeted race and quick were used"
+    "Real desktop notification permission and speaker output"
   ],
-  "productionUntouched": true
+  "productionUntouched": true,
+  "mainIntegration": {
+    "head": "64e30f9fe18939b28b2e4ca54df21e80ddbf40b1",
+    "upstream": "b2df9a12",
+    "fingerprint": "c534e24f01471ee7f4c31710d3846a157af50c8133e9fc85b66edd3ebb761d1a",
+    "profile": "full",
+    "status": "pass",
+    "checks": 132,
+    "serverTests": 1026,
+    "serverShards": 12,
+    "originalLog": ".agent-state/verify-20261019T045000607620Z.log",
+    "retries": [
+      {
+        "command": [
+          "python3",
+          "scripts/test_cad_geometry.py"
+        ],
+        "originalExit": 1,
+        "retryExit": 0,
+        "reason": "Docker Desktop external bind transport failure; SHA256-identical private internal mirror, exact two mount path remaps, unchanged assertions",
+        "retryLog": ".agent-state/message-notifications-20261019/cad-main-retry.log",
+        "originalReceipt": ".agent-state/message-notifications-20261019/full-main-original-failed.json",
+        "time": "2026-10-19T05:06:51.393377+00:00"
+      }
+    ]
+  }
 }

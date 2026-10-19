@@ -52,7 +52,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "129 quick checks passed. Messaging package and server Message/Reminder tests passed with race, both package vet passed. Real isolated contact/group traffic confirms 3+2+1 totals, mute/include/hidden/due policies and 409 conflict. Product component interactions at desktop/light and 390px/dark passed. Complete Safari workbench blocked by browser certificate warning requiring user handoff; native Windows, real speaker/desktop permission not run.",
+      "summary": "129 quick checks passed. Messaging package and server Message/Reminder tests passed with race, both package vet passed. Real isolated contact/group traffic confirms 3+2+1 totals, mute/include/hidden/due policies and 409 conflict. Product component interactions at desktop/light and 390px/dark passed. Complete Safari workbench blocked by browser certificate warning requiring user handoff; native Windows, real speaker/desktop permission not run. Integrated main full: 132 checks pass, including all 1026 server items in 12 race shards, other Go packages and vet. CAD original external-mount failure retried successfully with SHA256-identical internal fixtures and unchanged assertions; original and retry records retained.",
       "evidence": [
         "docs/reviews/2026-10-19/message-notifications.md"
       ]
@@ -73,14 +73,14 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "Source branch push only; no new Release, version bump, main merge or production replacement in this task.",
+      "status": "in_progress",
+      "summary": "Local main integration 64e30f9f includes upstream b2df9a12; full current-input verification passed 132 checks with documented CAD mount retry. Final release-check and main push pending; no version bump or deployment.",
       "evidence": [
         "docs/reviews/2026-10-19/message-notifications.md"
       ]
     }
   },
-  "release_authorization": "User requested implementation; existing timely push authorization applies. No version bump or production replacement requested in this turn.",
-  "rollback": "Documentation-only commit can be reverted; no runtime or persisted product state changed.",
-  "handoff": "Implemented and pushed feat/message-notifications-20261019. 129 final quick checks, targeted Go race/vet, real peer/group/API and original-launcher restart checks pass; see structured proof. QA on https://localhost:59197 uses /tmp/aide-message-notifications-qa-20261019; its stop.command stops only this candidate. Human certificate acceptance is required for complete Safari interaction. Component page/server closed, viewport reset, production untouched. No main merge, version bump or new Release. Final fetch found upstream main b2df9a12 adds a non-overlapping Windows LAN launcher fix; it is not merged into this feature branch. Current validation baseline remains 6136df16."
+  "release_authorization": "User explicitly requested merging into main: 和到主线上. Source merge and push authorized; no version bump, new Release or production replacement requested.",
+  "rollback": "Revert the main feature merge with git revert -m 1 64e30f9f after checking later changes. Do not delete notifications.json or message state; retained read sequences and configuration require compatible rollback handling.",
+  "handoff": "Integrated local main at 64e30f9f, preserving upstream Windows LAN fix. Full 132 checks pass with documented CAD fixture-mount retry; final release-check and push pending. Complete Safari, native Windows and system notification playback still NOT_RUN. Separate QA candidate retained; production untouched."
 }

@@ -41,6 +41,12 @@ Safari 完整候选由原始启动器实际打开，但停在自签证书告警�
 
 本轮组件标签及 59198 组件服务已关闭，临时浏览器视口已恢复；自建联系人只在候选容器内部临时运行，重启后结束；初始中间 QA 镜像 `8c9f23b0e5c9` 已精确移除，没有全局 prune。只保留 `aide-message-notifications-qa-20261019` 的应用／CAD 两个候选容器，应用上限 2 GiB、CAD 上限 4 GiB；唯一 Safari 候选页为 `https://localhost:59197/`，待用户完成证书确认。原始启动目录 `/tmp/aide-message-notifications-qa-20261019`，可执行其中 `stop.command` 停止这份候选，不影响生产项目。
 
-源码已按阶段推送功能分支；本轮不合并 main、不更新既有 Release、不替换生产 `aide:local`。后续完整 Safari 验收通过后，才按仓库发布流程评估合并和升级；不要把当前分支实现等同于生产已上线。
+源码已按阶段推送功能分支。随后用户明确要求“和到主线上”，本次继续主线集成；不更新既有 Release、不替换生产 `aide:local`。源码合并不代表生产已上线，完整 Safari 工作台验收仍待用户确认浏览器证书。
 
-收尾只读 fetch 发现远端 main 已由其他工作推进到 `b2df9a12`（Windows LAN bridge Compose 参数修复），涉及 `scripts/message-lan-control.ps1`、其 PowerShell 测试和独立账本，与本轮修改文件无重叠。本分支保留已验证的 `6136df16` 基线；未擅自合入其他工作的提交，后续合并 main 时应包含该上游修复。本轮测试不宣称覆盖尚未合入的上游 Windows 改动。
+收尾只读 fetch 发现远端 main 已由其他工作推进到 `b2df9a12`（Windows LAN bridge Compose 参数修复），涉及 `scripts/message-lan-control.ps1`、其 PowerShell 测试和独立账本，与本轮修改文件无重叠。用户要求主线合并后，已无冲突合入该上游修复，并以 `64e30f9f` 集成到本地 main。主线推送前执行合并内容的完整检查；原生 Windows 运行仍由用户测试，不以脚本回归冒充 Windows 系统验收。
+
+## 主线集成检查
+
+按用户“和到主线上”的授权，集成提交为 `64e30f9f`，包含上游 `b2df9a12`。当前内容指纹 `c534e24f01471ee7f4c31710d3846a157af50c8133e9fc85b66edd3ebb761d1a`，完整 profile 共 132 项通过：服务端 1,026 个注册测试项分 12 个互斥分片全部 race 通过，其他 Go 包 race 与全库 vet 通过。
+
+原始 full 的唯一失败是 Docker Desktop 拒绝移动硬盘 CAD 目录挂载，尚未进入断言。保持测试源码与断言不变，用内置磁盘临时副本重跑，423 个文件逐文件 SHA256 一致，只替换两个挂载源路径，真实几何断言通过。保留 `full-main-original-failed.json`、`cad-main-retry.log` 和含 retries 来源的 `full-main-completed.json`，不把首轮失败隐藏为一次全绿。临时副本在重跑后自动移除。最终主线门禁与推送待执行；完整浏览器与原生 Windows 的限制仍如上。
