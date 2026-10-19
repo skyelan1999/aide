@@ -1,0 +1,18 @@
+{
+  "id": "windows-message-lan-start-20261019",
+  "request": "修复查找设备时 Docker 局域网桥未就绪的故障",
+  "baseline": "e182e06371b1d41c4d945cab32ec8c54996333e7",
+  "scope": ["scripts/message-lan-control.ps1", "scripts/test_message_lan_launcher.ps1", "本机宿主 LAN 桥启动"],
+  "acceptance": ["Compose 前缀保持完整参数", "宿主桥持续运行，容器可读取有效心跳并发布公告", "不重启工作台，不修改代理或防火墙"],
+  "root_cause": "PowerShell collapses the single-item conditional output to a string. Splatting the untyped prefix expands compose into characters, so the container query fails before extracting or launching the helper. Keep prefix explicitly typed as string[].",
+  "verification": [
+    "Reproduced original launcher failure: unknown shorthand flag q; LAN bridge Compose query failed.",
+    "scripts/test_message_lan_launcher.ps1 PASS on PowerShell 7 and Windows PowerShell 5.1: plugin, standalone and multiple prefix arguments.",
+    "git diff --check on changed launcher/test PASS.",
+    "Fixed launcher extracted and SHA256-checked helper from running image, reported bridge ready.",
+    "Subsequent check: native process remains running; container sees host.json and announce.json; helper -status exits 0."
+  ],
+  "not_run": ["真实浏览器再次查找对方设备", "两台物理电脑互通", "仓库全量验证"],
+  "handoff": "Local bridge remains running. Workbench container was not restarted. Existing unrelated changes preserved. User authorized a separate source commit and push; no image release or deployment requested. Other Windows installations need this launcher fix too.",
+  "rollback": "Stop only this helper via scripts/message-lan-control.ps1 -Action stop; revert the one-line launcher fix and its focused test if required. Preserve .aide-data and all device identity/contact data."
+}
