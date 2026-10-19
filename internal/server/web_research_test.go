@@ -77,3 +77,57 @@ func TestWebResearchNoReadAnswerGetsOneCorrection(t *testing.T) {
 		t.Fatalf("unexpected no-read fallback: calls=%d out=%s err=%v", calls.Load(), out, err)
 	}
 }
+
+// A local document request must stay local even when browser tools are present.
+func TestWebResearchLocalDocumentRouting(t *testing.T) {
+	local := []string{
+		"读取 before/spec.pdf 和 after/spec.pdf，调用 Compare 比较并生成报告",
+		"执行 Compare 0.2.0 的真实 AI 端到端验收。只读取工作区样例；分别比较 spec.docx、budget.xlsx、brief.pptx、spec.pdf；使用 list_sources 确认来源，汇总结果并生成报告。",
+		"打开本地 PDF 并总结这份文档",
+		"请核实附件 PDF 的端口参数",
+		"读取 system-docs 下的报告.pdf",
+		"比较 /Users/test/Downloads/a.pdf 与 /Users/test/Downloads/b.pdf",
+		"read and summarize the attached PDF",
+		"open local report.PDF and check its contents",
+		"compare report.pdf and report-v2.pdf, then summarize the differences",
+		"Read the docx, xlsx and pptx files and generate a PDF report",
+	}
+	for _, prompt := range local {
+		t.Run(prompt, func(t *testing.T) {
+			if requestsWebResearch(prompt) || needsWebReadAttempt(prompt, "chat", webReadTestTools(), nil) {
+				t.Fatal("local document request incorrectly requires a web read")
+			}
+			if strings.Contains(runtimeCapabilityInstruction(webReadTestTools(), prompt, "chat"), "【网页研究流程】") {
+				t.Fatal("local document request receives webpage research workflow")
+			}
+		})
+	}
+	for _, prompt := range []string{
+		"读取 https://example.com/manual.pdf 并总结",
+		"read https://example.com/manual.PDF and summarize its contents",
+		"查官网最新 PDF 资料并总结",
+		"比较本地 PDF，再访问官网核对最新参数",
+	} {
+		if !requestsWebResearch(prompt) || !needsWebReadAttempt(prompt, "chat", webReadTestTools(), nil) {
+			t.Errorf("explicit web research lost its read gate: %s", prompt)
+		}
+	}
+}
+
+func TestWebResearchLocalComparisonAnswerIsPreserved(t *testing.T) {
+	var calls atomic.Int32
+	const answer = "本地 PDF 比较完成，已定位文字差异。"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		delta, _ := json.Marshal(map[string]any{"choices": []any{map[string]any{"delta": map[string]string{"content": answer}, "finish_reason": "stop"}}})
+		sseRaw(w, w.(http.Flusher), string(delta))
+	}))
+	defer srv.Close()
+	a := testApp(t)
+	task := &Task{ID: newID(), Mode: "chat", Prompt: "读取工作区 before/spec.pdf 和 after/spec.pdf，用 Compare 比较并生成报告", Steer: make(chan string, 4), Steps: []Step{{Name: "chat"}}}
+	registerHarnessFixtureTask(t, a, task)
+	out, _, err := a.toolLoop(context.Background(), Settings{BaseURL: srv.URL, Model: "test"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{}, webReadTestTools(), task, nil, 0)
+	if err != nil || calls.Load() != 1 || out != answer {
+		t.Fatalf("local answer replaced or retried: calls=%d out=%s err=%v", calls.Load(), out, err)
+	}
+}
