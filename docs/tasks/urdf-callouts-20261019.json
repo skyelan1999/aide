@@ -1,0 +1,77 @@
+{
+  "id": "urdf-callouts-20261019",
+  "request": "坐标角度直接图上引线标注，不重叠，点击高亮模块",
+  "baseline": "6d37659a98b0b5b4d99c629e92ddfca64e0be1d8",
+  "initial_status": "",
+  "acceptance": [
+    "Draw XYZ m and fixed-axis RPY rad in model callouts with leader lines to node origins.",
+    "Keep annotation cards collision-free and within the canvas at desktop/narrow sizes; page bounded cards when capacity is exceeded.",
+    "Click card or model geometry to highlight only its module, restore previous materials and synchronize node selector.",
+    "Keep motion, frame changes, camera changes and teardown correct; preserve URDF text and resource safeguards."
+  ],
+  "scope": [
+    "internal/server/web/urdf-preview.js",
+    "internal/server/web/urdf-preview.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/urdf-preview.test.cjs",
+    "docs/prd/2026-10-19-urdf-preview.md",
+    "docs/reviews/2026-10-19/urdf-callouts.md",
+    "docs/tasks/urdf-callouts-20261019.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests coordinates/radians in model, leader lines, no annotation overlap and click highlight.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-callouts.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Edge card packing with paging; SVG leader lines; per-module temporary material clones and bounding outline; geometry ray picking.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-callouts.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented bounded callouts and module selection; updated cache keys and locales.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-callouts.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "131 quick checks passed on final fingerprint; real WebGL desktop/narrow interaction, geometry click, camera drag, pagination, parent frame and teardown checked.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-callouts.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD, task and detailed review updated with exact semantics, limits and observed proof.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-callouts.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only own component tab and fixture server stopped; viewport restored; no user-file or production changes.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-callouts.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Authorized source-only main integration; no new Release or production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-19/urdf-callouts.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing source main integration/push and scoped frontend lightweight verification direction; no production replacement or new Release.",
+  "rollback": "Revert feature merge; no user-file mutation or stored data migration.",
+  "handoff": "Update runtime with original start.command and refresh. Source-only delivery; actual production/SSH/Windows paths not verified this round. Cards are paged to prevent overlap, leader lines may cross and do not perform occlusion tests."
+}
