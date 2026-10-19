@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "method": "Authenticated Git LFS download batch plus three exact 1 MiB range comparisons; not a full remote download",
+  "oid": "ecefbfc3d3d7c71d2d9e3390c30fcb51c4bf1fcbfbc960a5831d390a970448fb",
+  "bytes": 1725320689,
+  "samples": [
+    {
+      "start": 0,
+      "end": 1048575,
+      "sha256": "abb1cbfa98f2cf3e254ab507918fde33d6d68690730a32b3cc0d06cb56d21b33",
+      "status": "pass"
+    },
+    {
+      "start": 862660344,
+      "end": 863708919,
+      "sha256": "6b62cd310421c465016cf29041f6e771ba75aec30deac2ad9a7d966b2d2a8433",
+      "status": "pass"
+    },
+    {
+      "start": 1724272113,
+      "end": 1725320688,
+      "sha256": "fdbde1cdac24c4216235cf1dbd55725a3b2ec108d6bd982fad9c89447cbef4a8",
+      "status": "pass"
+    }
+  ]
+}

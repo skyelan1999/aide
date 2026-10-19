@@ -5,7 +5,7 @@
   "initial_status": "",
   "acceptance": [
     "One fixed complete ARM64/AMD64 bundle with matching inner and outer hashes; no user data.",
-    "Upload Git LFS object and verify a fresh remote download, not only the Git pointer.",
+    "Upload Git LFS object, validate remote OID/size and compare first/middle/last remote ranges byte-exactly; not merely a Git pointer.",
     "Retain the current pair only; remove historical local AIDE bundles without touching services, user data or dependency seeds.",
     "Document exact source snapshot, newer main differences, Git LFS and original launcher startup."
   ],
@@ -19,7 +19,10 @@
     "scripts/build-runtime-bundle.py",
     "docs/agent/WORKFLOW.md",
     "docs/runtime-bundle.md",
-    "docs/tasks/git-lfs-runtime-bundle-20261019.json"
+    "docs/tasks/git-lfs-runtime-bundle-20261019.json",
+    "docker-images/SHA256SUMS",
+    "docs/reviews/2026-10-19/git-lfs-runtime-bundle.md",
+    "docs/reviews/2026-10-19/git-lfs-runtime-remote-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -47,10 +50,11 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "ZIP CRC, streamed inner SHA256, exact platform/image markers and unsafe path/private data exclusions passed for both 59-member archives. User requested simple scoped checks and timely push; full regression is not run for this distribution-only change.",
+      "summary": "ZIP CRC, streamed inner SHA256, exact platform/image markers and unsafe path/private data exclusions passed for both 59-member archives. User requested simple scoped checks and timely push; full regression is not run for this distribution-only change. LFS entity upload succeeded; exact remote OID/size and three 1 MiB remote range comparisons passed.",
       "evidence": [
         "docs/runtime-bundle.md",
-        "docker/runtime-bundle.json"
+        "docker/runtime-bundle.json",
+        "docs/reviews/2026-10-19/git-lfs-runtime-remote-proof.json"
       ]
     },
     "documentation": {
@@ -62,19 +66,17 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "136 obsolete local archive/sidecar files identified; current pair, dependency seeds and production preserved. Remove after remote object validation.",
+      "status": "pass",
+      "summary": "138 obsolete local archives/sidecars removed (91263986080 bytes); only current pair/aggregate and stable dependency seed retained; no production changes.",
       "evidence": [
-        "docs/runtime-bundle.md",
-        "docker/runtime-bundle.json"
+        "docs/reviews/2026-10-19/git-lfs-runtime-bundle.md"
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "Pending Git LFS upload and remote re-download verification, then main push.",
+      "summary": "Git LFS object is uploaded and sampled remote checks pass; main fast-forward push is next.",
       "evidence": [
-        "docs/runtime-bundle.md",
-        "docker/runtime-bundle.json"
+        "docs/reviews/2026-10-19/git-lfs-runtime-bundle.md"
       ]
     }
   },
