@@ -30,3 +30,10 @@
 已删除本轮内部临时源码副本、关闭验收页并恢复视口、停止并移除 fixture 容器及其合成数据。已移除无容器引用的旧 QA 镜像标签，保留当前 QA 项目与本地依赖。没有清理用户数据、镜像总库或构建缓存，也没有重建正式容器。
 
 实际卡顿操作／设备／端口仍待用户回答。已完成的源代码改进不代表正式 9999 已替换，也不代表所有卡顿根因都已找到。触控、Safari 原生、Windows、真实模型流和用户长会话性能本轮未验收；没有编造延迟提升百分比。
+
+
+## 源码 main 交付
+
+功能提交 `d1bc85ad`，main 合并提交 `bb55a086cea5bce0fd2edbcf6e5d1110c7b0d70f`。`python3 scripts/agent-route.py release-check workbench-response-latency-20261019` 通过当前 full、干净 main、各前置阶段及既有默认公开镜像附件元数据门禁。`git push origin main` 成功，`git ls-remote` 与合并 SHA 一致。随后只追加任务／本文交付记录，不修改产品指纹。此门禁不是本轮新镜像发布；未创建 Release／版本／tag，也未替换正式服务。
+
+当前验收候选保留在 59197。正式部署若需要从当前源码构建，应在正确设备／项目目录运行 `AIDE_BUILD_FROM_SOURCE=1 ./start.command` 后刷新；普通启动仍可能复用旧的有效本地镜像。旧正式实例的挂载问题及实际卡顿需要对准用户正在使用的页面继续处理，不把这一步标为已完成。源码回滚：`git revert -m 1 bb55a086cea5bce0fd2edbcf6e5d1110c7b0d70f` 后重建，无数据格式迁移。

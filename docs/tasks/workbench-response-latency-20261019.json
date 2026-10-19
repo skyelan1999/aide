@@ -67,8 +67,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source-only main gate and push pending; no production replacement or new Release.",
+      "status": "pass",
+      "summary": "Source-only feature d1bc85ad merged as bb55a086cea5bce0fd2edbcf6e5d1110c7b0d70f; release-check passed, push and exact remote SHA verified. Actual user latency/instance and production mount recovery remain pending user target clarification; not claimed deployed or universally fixed.",
       "evidence": [
         "docs/reviews/2026-10-19/workbench-response-latency.md"
       ]
