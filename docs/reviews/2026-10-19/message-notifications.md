@@ -42,3 +42,5 @@ Safari 完整候选由原始启动器实际打开，但停在自签证书告警�
 本轮组件标签及 59198 组件服务已关闭，临时浏览器视口已恢复；自建联系人只在候选容器内部临时运行，重启后结束；初始中间 QA 镜像 `8c9f23b0e5c9` 已精确移除，没有全局 prune。只保留 `aide-message-notifications-qa-20261019` 的应用／CAD 两个候选容器，应用上限 2 GiB、CAD 上限 4 GiB；唯一 Safari 候选页为 `https://localhost:59197/`，待用户完成证书确认。原始启动目录 `/tmp/aide-message-notifications-qa-20261019`，可执行其中 `stop.command` 停止这份候选，不影响生产项目。
 
 源码已按阶段推送功能分支；本轮不合并 main、不更新既有 Release、不替换生产 `aide:local`。后续完整 Safari 验收通过后，才按仓库发布流程评估合并和升级；不要把当前分支实现等同于生产已上线。
+
+收尾只读 fetch 发现远端 main 已由其他工作推进到 `b2df9a12`（Windows LAN bridge Compose 参数修复），涉及 `scripts/message-lan-control.ps1`、其 PowerShell 测试和独立账本，与本轮修改文件无重叠。本分支保留已验证的 `6136df16` 基线；未擅自合入其他工作的提交，后续合并 main 时应包含该上游修复。本轮测试不宣称覆盖尚未合入的上游 Windows 改动。
