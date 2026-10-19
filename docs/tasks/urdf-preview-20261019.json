@@ -79,14 +79,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source-only main integration authorized under standing scoped lightweight verification direction; no new Release or production deployment. Full-profile release gate not claimed.",
+      "status": "pass",
+      "summary": "Source feature commit 992d237d merged to main as cbd49850 and pushed to origin/main. Standing scoped lightweight verification direction applied; no new Release or production deployment, and no full-profile receipt claimed.",
       "evidence": [
-        "docs/reviews/2026-10-19/urdf-preview.md"
+        "docs/reviews/2026-10-19/urdf-preview.md",
+        "docs/reviews/2026-10-19/urdf-preview-proof.json"
       ]
     }
   },
   "release_authorization": "User requests URDF project-file preview; retain standing timely source push/main integration preference. No new version/Release or production replacement requested.",
   "rollback": "Revert the URDF feature merge; no schema migration or user-file mutation from preview. XML source saves retain existing explicit/autosave semantics.",
-  "handoff": "Feature source ready for main integration. Candidate 59197 runs via original launcher; production not replaced. Safari full-workbench certificate handoff remains. No new Release requested. See review for limits, tests and rollback."
+  "handoff": "Source merged and pushed to main (feature 992d237d, merge cbd49850). Candidate 59197 runs via original launcher; production not replaced. Safari full-workbench certificate handoff, real save/SSH/Windows and large robot remain unverified. No new Release requested. See review for limits, tests and rollback."
 }
