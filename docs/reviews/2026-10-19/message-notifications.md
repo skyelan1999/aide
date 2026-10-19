@@ -49,4 +49,4 @@ Safari 完整候选由原始启动器实际打开，但停在自签证书告警�
 
 按用户“和到主线上”的授权，集成提交为 `64e30f9f`，包含上游 `b2df9a12`。当前内容指纹 `c534e24f01471ee7f4c31710d3846a157af50c8133e9fc85b66edd3ebb761d1a`，完整 profile 共 132 项通过：服务端 1,026 个注册测试项分 12 个互斥分片全部 race 通过，其他 Go 包 race 与全库 vet 通过。
 
-原始 full 的唯一失败是 Docker Desktop 拒绝移动硬盘 CAD 目录挂载，尚未进入断言。保持测试源码与断言不变，用内置磁盘临时副本重跑，423 个文件逐文件 SHA256 一致，只替换两个挂载源路径，真实几何断言通过。保留 `full-main-original-failed.json`、`cad-main-retry.log` 和含 retries 来源的 `full-main-completed.json`，不把首轮失败隐藏为一次全绿。临时副本在重跑后自动移除。最终主线门禁与推送待执行；完整浏览器与原生 Windows 的限制仍如上。
+原始 full 的唯一失败是 Docker Desktop 拒绝移动硬盘 CAD 目录挂载，尚未进入断言。保持测试源码与断言不变，用内置磁盘临时副本重跑，423 个文件逐文件 SHA256 一致，只替换两个挂载源路径，真实几何断言通过。保留 `full-main-original-failed.json`、`cad-main-retry.log` 和含 retries 来源的 `full-main-completed.json`，不把首轮失败隐藏为一次全绿。临时副本在重跑后自动移除。最终 `release-check message-notifications-20261019` 通过，现有 RC1 的 ARM64/AMD64 公开默认附件元数据、共同源码身份与 SHA256 均只读核验通过。随后重新 fetch 确认上游未前进，已将 main 推送至 `62a63a76`（含功能合并 `64e30f9f`）；本段收尾记录作为后续纯文档提交继续推送。完整浏览器与原生 Windows 的限制仍如上。本次交付是源码主线合并，不创建版本/tag/Release，不替换运行中生产服务。

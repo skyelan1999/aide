@@ -73,14 +73,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Local main integration 64e30f9f includes upstream b2df9a12; full current-input verification passed 132 checks with documented CAD mount retry. Final release-check and main push pending; no version bump or deployment.",
+      "status": "pass",
+      "summary": "Requested source integration delivered: main merge 64e30f9f and evidence commit 62a63a76 pushed to origin/main. Current-input full 132 checks and release-check pass; public default Release metadata validated read-only. No version bump, new Release or production deployment requested or performed.",
       "evidence": [
-        "docs/reviews/2026-10-19/message-notifications.md"
+        "docs/reviews/2026-10-19/message-notifications.md",
+        "docs/reviews/2026-10-19/message-notifications-proof.json"
       ]
     }
   },
   "release_authorization": "User explicitly requested merging into main: 和到主线上. Source merge and push authorized; no version bump, new Release or production replacement requested.",
   "rollback": "Revert the main feature merge with git revert -m 1 64e30f9f after checking later changes. Do not delete notifications.json or message state; retained read sequences and configuration require compatible rollback handling.",
-  "handoff": "Integrated local main at 64e30f9f, preserving upstream Windows LAN fix. Full 132 checks pass with documented CAD fixture-mount retry; final release-check and push pending. Complete Safari, native Windows and system notification playback still NOT_RUN. Separate QA candidate retained; production untouched."
+  "handoff": "Notification feature merged and pushed to main (merge 64e30f9f, initial delivery 62a63a76), including upstream b2df9a12 Windows LAN fix. Full 132 checks, all 1026 server race items, other package race/vet and final release-check pass; CAD bind failure and identical-fixture retry retained. Complete Safari workbench, native Windows and real system notification playback remain NOT_RUN. One isolated QA pair at https://localhost:59197 retained for browser acceptance. Production and existing Release unchanged. Revert feature merge with git revert -m 1 64e30f9f after reviewing later changes, preserve notification/message state."
 }

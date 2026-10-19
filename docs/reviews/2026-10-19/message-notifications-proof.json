@@ -95,6 +95,11 @@
         "originalReceipt": ".agent-state/message-notifications-20261019/full-main-original-failed.json",
         "time": "2026-10-19T05:06:51.393377+00:00"
       }
-    ]
+    ],
+    "releaseCheck": "pass",
+    "publicDefaultAssets": "pass; metadata only",
+    "pushedMain": "62a63a76",
+    "newRelease": false,
+    "productionDeployed": false
   }
 }
