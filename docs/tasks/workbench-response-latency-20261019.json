@@ -1,0 +1,80 @@
+{
+  "id": "workbench-response-latency-20261019",
+  "request": "感觉Aide使用起来反应有点延迟，能不能修一下",
+  "baseline": "d4c324189e82e5cee6db1649768ccf8c3b703d51",
+  "initial_status": "",
+  "acceptance": [
+    "Settings paints a loading shell before schema resolves; close/reopen and retry ownership is guarded.",
+    "Subgroup collapse/show-more paints locally with zero list network calls; all server event refresh paths remain.",
+    "Identical session list snapshots retain DOM; latest request/workspace/token owns updates.",
+    "Baseline failures reproduced, focused tests and real workbench browser acceptance recorded; actual runtime limits remain explicit."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/ui-response-latency.test.cjs",
+    "docs/agent/router.json",
+    "docs/prd/2026-10-19-workbench-response-latency.md",
+    "docs/reviews/2026-10-19/workbench-response-latency.md",
+    "docs/tasks/workbench-response-latency-20261019.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Improve confirmed UI delays; operating device/port and most affected action remain optional pending clarification; no blanket performance claim.",
+      "evidence": [
+        "docs/prd/2026-10-19-workbench-response-latency.md",
+        "docs/reviews/2026-10-19/workbench-response-latency.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Immediate settings feedback, shared schema fetch, local list disclosure, unchanged DOM reuse and scoped response ordering.",
+      "evidence": [
+        "docs/prd/2026-10-19-workbench-response-latency.md",
+        "docs/reviews/2026-10-19/workbench-response-latency.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Confirmed baseline failures and implemented UI fixes without changing model/backend persistence APIs.",
+      "evidence": [
+        "docs/prd/2026-10-19-workbench-response-latency.md",
+        "docs/reviews/2026-10-19/workbench-response-latency.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "138-command official full passed with matching content fingerprint; reproduced baseline failures, targeted latency/selection/lock regressions, real 100-session desktop/narrow UI, original launcher candidate health/auth/file and exact asset hashes passed. Actual user instance and broader latency root cause remain unconfirmed.",
+      "evidence": [
+        "docs/reviews/2026-10-19/workbench-response-latency.md",
+        "scripts/ui-response-latency.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD/review distinguish measured interfaces, functional waiting proofs, real UI checks and unresolved production mount/instance findings.",
+      "evidence": [
+        "docs/prd/2026-10-19-workbench-response-latency.md",
+        "docs/reviews/2026-10-19/workbench-response-latency.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed; closed owned browser and removed fixture/source clone/superseded unreferenced QA tag. Current QA and production retained; no user data/cache wipe.",
+      "evidence": [
+        "docs/reviews/2026-10-19/workbench-response-latency.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source-only main gate and push pending; no production replacement or new Release.",
+      "evidence": [
+        "docs/reviews/2026-10-19/workbench-response-latency.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing user instruction to integrate and push scoped completed changes to main; no new Release or production restart requested.",
+  "rollback": "Revert source merge and rebuild; no persistence schema changes.",
+  "handoff": "Need user page address/port/device and most affected action to reproduce remaining perceived latency. Local 9999 was old 8f664064 with partial mount check errors; file API still 200, causality unproven. Do not equate source UI fixes with production update."
+}
