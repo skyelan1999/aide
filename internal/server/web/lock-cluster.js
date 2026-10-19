@@ -61,7 +61,7 @@
   // Peer heartbeats may describe a lock/unlock that is still being persisted.
   let authorityPending = true;
   let writeQueue = Promise.resolve(), pendingWrites = 0, syncTimer = null;
-  let dismissGen = -1;
+  let dismissGen = -1, optimisticGen = null, lockIntent = 0, lastEffective = null;
   let joinTimer = null, watchdogTimer = null, heartbeatTimer = null, electionTimer = null, hardJoinTimer = null;
   let lastPingAt = 0;
   let onRemoteActivity = null;     // master 收到 slave ping 时回调（app.js 注入重置空闲表）
@@ -70,6 +70,7 @@
   const readyPromise = new Promise(res => { readyResolve = res; });
 
   function emit(ev, data) {
+    if(ev==='effective'){if(authorityPending||phase==='joining'&&!readySettled)return;if(data===lastEffective)return;lastEffective=data;}
     const list = handlers[ev];
     if (!list) return;
     for (const fn of list) { try { fn(data); } catch (_) {} }
@@ -96,6 +97,7 @@
   function acceptBackendState(data, confirmed = false) {
     if (!data || typeof data.locked !== 'boolean' || !Number.isSafeInteger(data.gen) || data.gen < 0) throw new Error('锁屏状态响应无效');
     if (backendState && data.gen < backendState.gen) return backendState;
+    if(optimisticGen!==null&&data.gen>optimisticGen)optimisticGen=null;
     const changed = !backendState || data.gen !== backendState.gen || data.locked !== backendState.locked;
     backendState = {locked:data.locked, gen:data.gen};
     const reconcile = phase !== 'joining' && !pendingWrites && (changed || (confirmed && authorityPending));
@@ -138,9 +140,9 @@
   function backgroundReconfirm() { setTimeout(()=>fetchBackendState(),800); }
 
   function effectiveLocked() {
-    if (phase === 'master') return masterLocked && !localDismiss;
-    if (phase === 'slave') return !!lastSeenMasterLocked && !localDismiss;
-    return false; // joining 期间由 app 显示中性面纱
+    if(phase==='joining'&&!readySettled)return false;
+    const durable=backendState?backendState.locked:(phase==='master'?masterLocked:!!lastSeenMasterLocked);
+    return (durable||optimisticGen!==null)&&!localDismiss;
   }
   function settleReady() {
     if (readySettled) return;
@@ -273,9 +275,10 @@
         if (phase === 'slave' && m.from === masterFrom && m.gen >= masterGen) {
           masterGen = Number(m.gen) || 0;
           lastSeenMasterLocked = true;
+          optimisticGen=backendState?.gen??0;lockIntent++;
           localDismiss = false; // master 重新升锁 → slave 本地解锁标记失效
           scheduleWatchdog();
-          emit('effective', true);
+          emit('effective', effectiveLocked());
         }
         break;
 
@@ -285,7 +288,7 @@
           masterGen = Number(m.gen) || 0;
           lastSeenMasterLocked = false;
           scheduleWatchdog();
-          emit('effective', false);
+          emit('effective', effectiveLocked());
         }
         break;
 
@@ -317,6 +320,7 @@
   /* ── 对外 API ── */
   function requestLock(reason) {
     // Any tab may lock the server; acknowledgement precedes durable peer notification.
+    optimisticGen=backendState?.gen??0;lockIntent++;
     localDismiss=false; masterLocked=true; lastSeenMasterLocked=true; masterGen++;
     emit('effective',true);
     if(phase==='master')send('lock',{masterLocked:true,reason:reason||'manual'});
@@ -326,10 +330,11 @@
     await writeQueue.catch(()=>{});
     const current=await fetchBackendState();
     if(!current)throw new Error('无法确认锁屏状态，请重试');
-    return {global:phase==='master'||!bc,gen:current.gen};
+    return {global:phase==='master'||!bc,gen:current.gen,intent:lockIntent};
   }
   async function handleUnlockSuccess(scope, verifiedState) {
     await writeQueue.catch(()=>{});
+    if(scope?.intent!==undefined&&scope.intent!==lockIntent)throw new Error('锁屏状态已变化，请重新解锁');
     let current;
     if(verifiedState) {
       const expectedGen=scope?.gen+(scope?.global?1:0);
@@ -342,7 +347,7 @@
     if(!current)throw new Error('无法确认锁屏状态，请重试');
     if(scope?.global) {
       if(current.locked)throw new Error('锁屏状态已变化，请重新解锁');
-      masterLocked=false;lastSeenMasterLocked=false;localDismiss=false;
+      optimisticGen=null;masterLocked=false;lastSeenMasterLocked=false;localDismiss=false;
       masterGen=Math.max(masterGen+1,current.gen);
       send('unlock',{masterLocked:false});send('state');
       emit('effective',false);
@@ -352,7 +357,7 @@
       if(current.gen!==scope?.gen)throw new Error('锁屏状态已变化，请重新解锁');
       // A peer may still advertise a lock whose persistence failed. The
       // verified server receipt also dismisses that veil at this generation.
-      localDismiss=true;dismissGen=current.gen;
+      optimisticGen=null;localDismiss=true;dismissGen=current.gen;
       emit('effective',effectiveLocked());
     }
   }
@@ -408,7 +413,10 @@
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchBackendState();});
   window.addEventListener('pageshow',()=>{
     clearT(syncTimer);syncTimer=setInterval(()=>{if(!document.hidden)fetchBackendState();},5000);
-    if(phase==='master')scheduleHeartbeat();else if(phase==='slave')scheduleWatchdog();
+    if(phase==='master')scheduleHeartbeat();else if(phase==='slave')scheduleWatchdog();else if(bc){
+      clearT(joinTimer);joinTimer=null;clearT(electionTimer);electionTimer=null;
+      startElection();if(!readySettled){clearT(hardJoinTimer);hardJoinTimer=setTimeout(onJoinHardTimeout,JOIN_HARD_TIMEOUT_MS);}
+    }
     fetchBackendState();
   });
   window.addEventListener('pagehide',()=>{clearT(syncTimer);clearT(heartbeatTimer);clearT(watchdogTimer);clearT(electionTimer);clearT(joinTimer);clearT(hardJoinTimer);});

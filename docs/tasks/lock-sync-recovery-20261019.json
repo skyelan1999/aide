@@ -1,0 +1,88 @@
+{
+  "id": "lock-sync-recovery-20261019",
+  "request": "锁屏状态机异常：多页面状态不同步，解锁后会话请求恢复异常",
+  "baseline": "e5c5c8fc8c29bbf59764b1df934b8ec4c85d72b6",
+  "initial_status": "",
+  "acceptance": [
+    "Persisted server generation plus explicit optimistic lock intent determines effective lock; peer role/visual booleans cannot override authority.",
+    "Lifecycle restoration during joining resolves again; initialization uses current lock state instead of historical readiness.",
+    "Unchanged heartbeats do not re-emit lock/unlock transitions; verified dismissal and newer relock remain protected.",
+    "On actual unlock edge reconcile the current session once, resume polling/URDF preview without overwriting draft or sending tasks; reject stale results across relock/workspace/session/token changes.",
+    "Exercise multi-tab synchronization and recovery regressions, browser flow, docs and full validation before main integration."
+  ],
+  "scope": [
+    "internal/server/web/lock-cluster.js",
+    "internal/server/web/app.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.html",
+    "scripts/lock-cluster-state.test.js",
+    "scripts/lock-recovery.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/prd/2026-10-19-lock-sync-recovery.md",
+    "docs/reviews/2026-10-19/lock-sync-recovery.md",
+    "docs/tasks/lock-sync-recovery-20261019.json",
+    "docs/reviews/2026-10-19/lock-sync-recovery-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirms cross-page lock sync and post-unlock session/request recovery issues. Existing global/local unlock policy preserved pending explicit preference.",
+      "evidence": [
+        "scripts/lock-cluster-state.test.js",
+        "scripts/lock-recovery.test.cjs"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Backend generation authority, bounded optimistic lock overlay, transition-only notifications, lifecycle restart and scoped one-shot recovery.",
+      "evidence": [
+        "scripts/lock-cluster-state.test.js",
+        "scripts/lock-recovery.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Reproduced stuck joining state before fix; implemented lifecycle, authority and recovery guards with targeted regressions.",
+      "evidence": [
+        "scripts/lock-cluster-state.test.js",
+        "scripts/lock-recovery.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "137-command official full passed from identical-source private clone; real two-tab lock/URDF acceptance and original-launcher isolated candidate/API/asset hashes passed. Limits recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-19/lock-sync-recovery.md",
+        "docs/reviews/2026-10-19/lock-sync-recovery-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture, PRD, task and detailed review describe current behavior, validation failures, scope and remaining runtime work.",
+      "evidence": [
+        "docs/prd/2026-10-19-lock-sync-recovery.md",
+        "docs/reviews/2026-10-19/lock-sync-recovery.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed owned browser pages, removed temporary fixture and source copies and superseded owned QA image tag; retained current QA pair and production. Corrected temporary core.worktree override left by interrupted verification attempt.",
+      "evidence": [
+        "docs/reviews/2026-10-19/lock-sync-recovery-proof.json",
+        "docs/reviews/2026-10-19/lock-sync-recovery.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source-only main integration gate pending; no version, public Release or production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-19/lock-sync-recovery.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing main integration/source push preference; no new Release, production password changes or production restart requested.",
+  "rollback": "Revert feature merge; no persistence schema or password changes.",
+  "handoff": ""
+}
