@@ -296,6 +296,10 @@
       ],
       [
         "node",
+        "scripts/ui-response-latency.test.cjs"
+      ],
+      [
+        "node",
         "scripts/markdown-image-path.test.js"
       ],
       [

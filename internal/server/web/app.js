@@ -623,19 +623,29 @@ function renderAssistantEntry(s) {
   entry.querySelector('.assistant-entry-dot').classList.toggle('live', running);
   entry.onclick = action(() => openAssistantGate(s.id, s.title));
 }
+let sessionListRequest=0,sessionListPaintKey='';
 async function loadSessions() {
-  const scope=recoveryScope();
+  const scope=recoveryScope(),token=state.token,sequence=++sessionListRequest;
   const [sessions, archived] = await Promise.all([api('/sessions'), api('/sessions?archived=1')]);
-  if(scope!==recoveryScope())return;
-  $('sessions').replaceChildren();
+  if(scope!==recoveryScope()||token!==state.token||sequence!==sessionListRequest)return;
+  renderSessionList({scope,token,sessions,archived});
+  return sessions;
+}
+function renderSessionList(snapshot) {
+  if(!snapshot||snapshot.scope!==recoveryScope()||snapshot.token!==state.token)return;
+  const {sessions,archived}=snapshot;
+  for(const session of sessions)if(session.kind==='assistant')renderAssistantEntry(session);
+  const paintKey=()=>JSON.stringify([snapshot.scope,snapshot.token,document.documentElement.lang,state.pendingSessionId||state.session?.id,sessions,archived,subGroupState]);
+  if(paintKey()===sessionListPaintKey)return;
+  const list=document.createDocumentFragment();
   // 层级：无 parentId 为主会话；有 parentId 为子会话。active 列表里的子会话=运行中（未归档），archived 列表里的=完成后自动归档。
   const childrenOf = {}, doneChildrenOf = {}, mains = [];
   sessions.forEach(s => {
-    if (s.kind === 'assistant') { renderAssistantEntry(s); return; } // 小秘走独立槽位，不进普通列表
+    if (s.kind === 'assistant') return; // 小秘走独立槽位，不进普通列表
     if (s.parentId) (childrenOf[s.parentId] = childrenOf[s.parentId] || []).push(s); else mains.push(s);
   });
   archived.forEach(s => { if (s.parentId) (doneChildrenOf[s.parentId] = doneChildrenOf[s.parentId] || []).push(s); });
-  if (!sessions.length) $('sessions').append(el('p', 'sessions-empty', t("还没有会话。\n从一个想法开始吧。")));
+  if (!sessions.length) list.append(el('p', 'sessions-empty', t("还没有会话。\n从一个想法开始吧。")));
 
   // 单个会话条目（主/子共用）：主会话原样；子会话加 sub-session 缩进类与 ↳ 前缀
   const buildItem = (s, isSub) => {
@@ -702,35 +712,36 @@ async function loadSessions() {
 
   const renderedMains = new Set(mains.map(m => m.id));
   mains.forEach(m => {
-    $('sessions').append(buildItem(m, false));
+    list.append(buildItem(m, false));
     // 运行中子会话（未归档）：直接缩进列出，运行灯复用 dot-running
-    (childrenOf[m.id] || []).forEach(c => $('sessions').append(buildItem(c, true)));
+    (childrenOf[m.id] || []).forEach(c => list.append(buildItem(c, true)));
     // 完成后自动归档的子会话：折叠组，默认展开最近 3 个
     const done = doneChildrenOf[m.id] || [];
     if (done.length) {
       const st = subGroupState[m.id] = subGroupState[m.id] || { collapsed: false, expandAll: false };
       const toggle = el('div', 'sub-group-toggle');
-      toggle.onclick = () => { st.collapsed = !st.collapsed; loadSessions(); };
+      toggle.onclick = () => { st.collapsed = !st.collapsed; renderSessionList(snapshot); };
       toggle.append(el('span', 'sub-group-caret', st.collapsed ? '▸' : '▾'));
       toggle.append(el('span', 'sub-group-title', t("子会话 ({0})", done.length)));
-      $('sessions').append(toggle);
+      list.append(toggle);
       if (!st.collapsed) {
         const shown = st.expandAll ? done : done.slice(0, 3);
-        shown.forEach(c => $('sessions').append(buildItem(c, true)));
+        shown.forEach(c => list.append(buildItem(c, true)));
         if (done.length > 3) {
           const more = el('div', 'sub-group-toggle sub-group-more');
-          more.onclick = e => { e.stopPropagation(); st.expandAll = !st.expandAll; loadSessions(); };
+          more.onclick = e => { e.stopPropagation(); st.expandAll = !st.expandAll; renderSessionList(snapshot); };
           more.append(el('span', '', st.expandAll ? t("收起") : t("展开全部 (+{0})", done.length - 3)));
-          $('sessions').append(more);
+          list.append(more);
         }
       }
     }
   });
   // 父会话已归档而子会话仍在活动列表中的孤儿子会话：顶层兜底渲染，避免丢失
   Object.keys(childrenOf).forEach(pid => {
-    if (!renderedMains.has(pid)) childrenOf[pid].forEach(c => $('sessions').append(buildItem(c, true)));
+    if (!renderedMains.has(pid)) childrenOf[pid].forEach(c => list.append(buildItem(c, true)));
   });
-  return sessions;
+  $('sessions').replaceChildren(list);
+  sessionListPaintKey=paintKey();
 }
 // 全局 SSE（#60）：后端在会话创建/归档/置顶/状态变更时广播 sessions-changed，前端自动刷新侧栏。
 // - 300ms 节流合并；subGroupState 跨重渲染保留（折叠/展开不丢）；
@@ -4374,12 +4385,13 @@ document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 
    未登录时 initialize() 会抛错返回，设置面板仍需可用。 ── */
 const settingsPanel = { schema: null, rendered: false, trigger: null, refreshers: [], active: '', activeChild: '' };
 async function loadSettingsSchema() {
-  if (!settingsPanel.schema) {
-    const response = await fetch('/settings-schema.json', { cache: 'no-store' });
-    if (!response.ok) throw new Error(t("设置面板定义加载失败"));
-    settingsPanel.schema = await response.json();
-  }
-  return settingsPanel.schema;
+  if(settingsPanel.schema)return settingsPanel.schema;
+  if(!settingsPanel.schemaRequest)settingsPanel.schemaRequest=(async()=>{
+    const response=await fetch('/settings-schema.json',{cache:'no-store'});
+    if(!response.ok)throw new Error(t('设置面板定义加载失败'));
+    settingsPanel.schema=await response.json();return settingsPanel.schema;
+  })().finally(()=>{settingsPanel.schemaRequest=null;});
+  return settingsPanel.schemaRequest;
 }
 function renderSegmentedControl(control) {
   const wrap = el('div', 'settings-control');
@@ -5354,14 +5366,28 @@ function setSettingsOpen(open) {
   if (open) $('settings-sheet-close').focus();
 }
 async function openSettingsSheet() {
+  const sequence=settingsPanel.openSequence=(settingsPanel.openSequence||0)+1;
+  const current=()=>sequence===settingsPanel.openSequence&&$('settings-sheet').classList.contains('open');
   closeTrajectory();
-  await loadSettingsSchema();
-  renderSettingsSheet(); // 每次打开强制重渲染，保证数据新鲜
   setSettingsOpen(true);
-  // 面板可见后重测 thumb 几何（关闭状态下 offsetWidth 为 0）
-  requestAnimationFrame(() => settingsPanel.refreshers.forEach(r => r.apply()));
+  const content=$('settings-content');
+  if(!settingsPanel.schema){
+    $('settings-nav').replaceChildren();
+    const loading=el('p','settings-loading',t('正在加载…'));loading.setAttribute('role','status');
+    content.replaceChildren(loading);content.setAttribute('aria-busy','true');
+  }
+  try{
+    if(!settingsPanel.schema)await loadSettingsSchema();
+    if(!current())return;
+    renderSettingsSheet();content.removeAttribute('aria-busy');
+    requestAnimationFrame(()=>{if(current())settingsPanel.refreshers.forEach(r=>r.apply());});
+  }catch(error){
+    if(current()){content.removeAttribute('aria-busy');content.replaceChildren(el('p','settings-loading',t('设置面板定义加载失败')));throw error;}
+  }
 }
 function closeSettingsSheet() {
+  settingsPanel.openSequence=(settingsPanel.openSequence||0)+1;
+  $('settings-content').removeAttribute('aria-busy');
   setSettingsOpen(false);
   // 鼠标点击打开设置后，关闭时不要再 focus() 触发按钮，否则品牌按钮会残留
   // 3px 蓝色焦点环；blur 让焦点回到 body，键盘 Tab 的 :focus-visible 不受影响。
