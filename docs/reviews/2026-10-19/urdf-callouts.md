@@ -25,3 +25,5 @@ SVG 折线与原点圆点连接卡片和三维节点。每次绘制投影节点�
 切回 XML，canvas、卡片及 SVG 引线计数都为 0。完成后关闭唯一自建组件标签和 59198 夹具服务，恢复临时视口；没有操作生产服务。截图与窄屏测量记录位于私有 `.agent-state/urdf-callouts-20261019/`。一次检查 SVG 时选择器匹配多条线，改为明确第一条再比较；该工具选择器错误不是产品异常。
 
 Final quick: 131 checks PASS; fingerprint `b3feb955c0592def8a2ba8deacca50e94bfbd4e0ef925c33f2594ef6517e35df`. Documentation links and diff whitespace checks PASS. Full/race and production runtime acceptance were not run.
+
+Source delivery: feature `c0356bcc`, main merge `0596ad50`, pushed to origin/main. Revert with `git revert -m 1 0596ad50`; no data migration. Runtime image remains unchanged.
