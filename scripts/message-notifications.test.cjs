@@ -5,8 +5,9 @@ class Element {
   append(...children){for(const c of children){this.children.push(c);if(c&&typeof c==='object')c.parentNode=this;}}
   replaceChildren(...children){this.children=[];this.append(...children);}
   setAttribute(k,v){this.attrs[k]=v;}
+  focus(){this.focused=true;}
 }
-const scope={window:{},document:{createElement:tag=>new Element(tag)},Date,Error};
+const scope={window:{},document:{createElement:tag=>new Element(tag),createElementNS:(_,tag)=>new Element(tag)},Date,Error};
 vm.runInNewContext(fs.readFileSync('internal/server/web/message-notifications.js','utf8'),scope);
 const n=scope.window.AideMessageNotifications;
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -33,9 +34,13 @@ const event={preventDefault(){}};
   const selects=all(form).filter(e=>e.tagName==='select');selects[0].value='off';selects[1].value='due';
   await form.onsubmit(event);assert.equal(saved.settings.badge,'off');assert.equal(saved.settings.reminderScope,'due');assert.equal(saved.settings.categories.groups,true);assert.equal(saved.settings.sound,false);
   const details=n.ruleControl({key,config:clone(config),tr:x=>x,save:async value=>{saved=clone(value);}});
-  const ruleForm=all(details).find(e=>e.tagName==='form');const controls=all(ruleForm).filter(e=>e.tagName==='select');controls[0].value='mute';controls[1].value='1';
-  await ruleForm.onsubmit(event);assert.equal(saved.key,key);assert.equal(saved.mode,'mute');assert.ok(Date.parse(saved.until)>now+3500000&&Date.parse(saved.until)<Date.now()+3610000);
-  const failed=n.ruleControl({key,config:clone(config),tr:x=>x,save:async()=>{throw new Error('conflict');}});await all(failed).find(e=>e.tagName==='form').onsubmit(event);assert.ok(all(failed).some(e=>e.attrs.role==='alert'&&e.textContent==='conflict'));
+  const ruleForm=all(details).find(e=>e.tagName==='form');const controls=all(ruleForm).filter(e=>e.tagName==='select');
+  const toggle=all(details).find(e=>e.className==='quiet message-notification-toggle');assert.equal(ruleForm.hidden,true);assert.equal(toggle.attrs['aria-expanded'],'false');toggle.onclick();assert.equal(ruleForm.hidden,false);assert.equal(toggle.attrs['aria-expanded'],'true');
+  assert.equal(controls[1].disabled,true);controls[0].value='mute';controls[0].onchange();assert.equal(controls[1].disabled,false);
+  let stopped=false;ruleForm.onkeydown({key:'Escape',preventDefault(){},stopPropagation(){stopped=true;}});assert.equal(ruleForm.hidden,true);assert.equal(toggle.focused,true);assert.equal(stopped,true);toggle.onclick();
+  controls[0].value='mute';controls[1].value='1';
+  await ruleForm.onsubmit(event);assert.equal(ruleForm.hidden,true);assert.equal(toggle.attrs['aria-expanded'],'false');assert.equal(saved.key,key);assert.equal(saved.mode,'mute');assert.ok(Date.parse(saved.until)>now+3500000&&Date.parse(saved.until)<Date.now()+3610000);
+  const failed=n.ruleControl({key,config:clone(config),tr:x=>x,save:async()=>{throw new Error('conflict');}});all(failed).find(e=>e.className==='quiet message-notification-toggle').onclick();await all(failed).find(e=>e.tagName==='form').onsubmit(event);assert.equal(all(failed).find(e=>e.tagName==='form').hidden,false);assert.ok(all(failed).some(e=>e.attrs.role==='alert'&&e.textContent==='conflict'));
   let permissionCalls=0,persistCalls=0;scope.window.Notification={requestPermission:async()=>{permissionCalls++;return'denied';}};
   const denied=n.settingsForm({host,config:clone(config),tr:x=>x,labelFor:k=>k,save:async()=>{persistCalls++;}});
   const inputs=all(denied).filter(e=>e.tagName==='input');inputs[inputs.length-1].checked=true;

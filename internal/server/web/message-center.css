@@ -121,21 +121,42 @@
 .message-unread-count.is-muted{background:var(--line);color:var(--text)}
 .message-unread-count.is-dot{width:8px;min-width:8px;height:8px;min-height:8px;padding:0}
 .message-tabs button{display:flex;align-items:center;justify-content:center;gap:5px}
-.message-thread-row{display:flex;align-items:flex-start;gap:6px;min-width:0;position:relative}
-.message-thread-row>.message-thread{flex:1;min-width:0;flex-wrap:wrap}
-.message-notification-rule{position:relative;flex:none;font-size:11px;max-width:100%}
-.message-notification-rule>summary{cursor:pointer;list-style:none;padding:10px 7px;border:1px solid var(--line);border-radius:9px;color:var(--muted);line-height:18px}
-.message-notification-rule-form{position:absolute;right:0;top:calc(100% + 5px);z-index:20;display:flex;flex-direction:column;gap:10px;width:min(245px,calc(100vw - 55px));padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 5px 20px var(--shadow-1);box-sizing:border-box}
-.message-notification-rule-form small{font-size:11px;line-height:1.6;color:var(--muted)}
-.message-notification-rule select,.notification-config-form select{width:100%;min-width:0;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;box-sizing:border-box}
+.message-thread-row{display:grid;grid-template-columns:minmax(0,1fr) 36px;align-items:center;gap:8px;min-width:0}
+.message-thread-row>.message-thread{min-width:0;gap:10px;text-align:left}
+.message-thread-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.message-thread-copy strong{font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.message-thread-copy small{font-family:inherit;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.message-notification-rule{display:contents}
+.message-center .message-notification-toggle,.message-settings-page .message-notification-toggle,.message-notification-dismiss{display:inline-grid;place-items:center;flex:0 0 36px;align-self:center;width:36px;height:36px;min-height:36px;padding:8px;border:1px solid transparent;border-radius:9px;color:var(--muted);background:transparent}
+.message-notification-toggle:hover,.message-notification-dismiss:hover{background:var(--hover);border-color:var(--line)}
+.message-notification-toggle[aria-expanded=true],.message-notification-toggle.is-suppressed{color:var(--brand-text);background:var(--selected)}
+.message-notification-rule svg,.message-notification-settings-button svg{display:block;width:18px;height:18px;flex:none}
+.message-notification-rule-form{grid-column:1/-1;flex:1 0 100%;min-width:0;width:100%;display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--bg-inset);box-sizing:border-box}
+.message-notification-rule-form[hidden]{display:none!important}
+.message-notification-rule-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.message-notification-rule-heading strong{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.message-notification-rule-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.message-notification-rule-form small{font-size:11px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
+.message-notification-rule-form [role=alert]:empty{display:none}
+.message-notification-rule-actions{display:flex;justify-content:flex-end}
+.message-center .message-notification-rule-actions button,.message-settings-page .message-notification-rule-actions button{min-height:34px;padding:7px 16px;font-size:12px;line-height:1.4}
+.message-notification-rule select,.notification-config-form select{width:100%;min-width:0;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--text);font:inherit;box-sizing:border-box}
 .message-chat-groups{display:flex;flex-direction:column;gap:8px;min-width:0}
 .message-chat-groups>summary{cursor:pointer;font-size:12px;font-weight:650;padding:8px 0}
 .message-chat-groups>summary>.message-unread-count{margin-left:8px}
 .message-chat-groups>.message-thread-row{margin:8px 0}
-.message-center .reminder-center-head>.message-notification-settings-button{margin-left:auto;padding:6px 8px;min-height:30px;font-size:11px}
+.message-center .reminder-panel-actions{margin-left:auto;flex:none}
+.message-center .message-row .message-notification-rule-form{order:1;flex-basis:100%}
 .notification-config-form h4,.notification-suppressed-list h4{margin:12px 0 0;font-size:13px}
 .notification-suppressed-list{border-top:1px solid var(--line);margin-top:24px;padding-top:10px;display:flex;flex-direction:column;gap:12px}
-.message-notification-suppressed{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;font-size:12px}
+.message-notification-suppressed{display:grid;grid-template-columns:minmax(0,1fr) 36px;align-items:center;gap:10px;min-width:0;font-size:12px}
 .message-notification-suppressed>span{overflow-wrap:anywhere;min-width:0}
-@media(max-width:600px){.message-center .reminder-center-head>.message-notification-settings-button{font-size:10px;padding-inline:5px}.message-thread-row>.message-thread{gap:6px}.message-notification-rule>summary{max-width:80px;overflow-wrap:anywhere}}
+@media(max-width:600px){.message-notification-rule-fields{grid-template-columns:minmax(0,1fr)}.message-thread-row>.message-thread{gap:8px}.message-center .message-row>button{min-height:34px;padding:7px 10px;font-size:11px}}
 @media(forced-colors:active){.message-unread-count{border:1px solid Highlight}.message-unread-count.is-dot{background:Highlight;forced-color-adjust:none}}
+
+/* Keep secondary message actions compact without shrinking their hit targets. */
+.message-center .message-section-heading{justify-content:flex-start;gap:6px;flex-wrap:nowrap}
+.message-center .message-section-heading>h3{flex:1;min-width:0}
+.message-center .message-icon-button{display:inline-grid;place-items:center;flex:0 0 36px;width:36px;height:36px;min-height:36px;padding:8px;border:1px solid transparent;background:transparent;color:var(--muted)}
+.message-center .message-icon-button:hover{background:var(--hover);border-color:var(--line)}
+.message-icon-button svg{width:18px;height:18px;display:block}
