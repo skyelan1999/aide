@@ -7,7 +7,8 @@
     "核心星图节点新增有界标题/函数声明索引与准确行号，不扩大正文摘要，不缓存全文",
     "本地增量复用、磁盘重载、文件修改删除、锁定/来源边界保持，结构候选不新增关系边",
     "StarLink可搜索新增结构，只返回命中片段及位置",
-    "同一aide/docs原案例重复实测，记录覆盖、漏检、冷/热耗时和文本体积，另补真实深层标题及函数探针"
+    "同一aide/docs原案例重复实测，记录覆盖、漏检、冷/热耗时和文本体积，另补真实深层标题及函数探针",
+    "Push scoped Aide and StarLink changes, publish traceable Releases, verify marketplace 0.1.3 package bytes and SHA256."
   ],
   "scope": [
     "internal/server/knowledge_outline*",
@@ -27,7 +28,19 @@
     "internal/server/web/starmap.html",
     "docs/architecture/knowledge-map.md",
     "../aide-pkg-StarLink/README.md",
-    "docs/tasks/knowledge-local-fulltext-20261019.json"
+    "docs/tasks/knowledge-local-fulltext-20261019.json",
+    "version.md",
+    "docs/reviews/release-0.1.17.2-RC1-2026-10-19.md",
+    "docs/reviews/2026-10-19-light-release*",
+    "docker/prebuilt-images.tsv",
+    "docker-images/SHA256SUMS",
+    "../aide-pkg-StarLink/manifest.json",
+    "../aide-pkg-StarLink/package.json",
+    "../aide-pkg-StarLink/CHANGELOG.md",
+    "../aide-pkg-StarLink/scripts/package.py",
+    "../aide-pkg-shop/listings/starlink.json",
+    "../aide-pkg-shop/catalog.json",
+    "../aide-pkg-shop/packages/starlink/0.1.3-*"
   ],
   "stages": {
     "requirements": {
@@ -79,11 +92,13 @@
       "status": "in_progress",
       "summary": "Authorized release preparation in isolated clean main checkout; preserve unrelated local modifications.",
       "evidence": [
-        "User release request 2026-10-19"
+        "User release request 2026-10-19",
+        "StarLink main dafc138 and v0.1.3 pushed; published ZIP 37317 bytes, SHA256 d75e75ab512f17158220227b845373c4b63c70d8669c8bc8baebbd169d632cdc",
+        "Marketplace main de67a05; Pages run 39263019865 success; actual Pages catalog/ZIP and Aide market API readback/hash verified; installed 0.1.3 enabled."
       ]
     }
   },
   "release_authorization": "把这次 Aide 和 StarLink 的修改 push、release，并更新插件市场里的 StarLink 版本。",
-  "rollback": "Changes remain uncommitted. Restore only this task product patch then use start.command. Preserve inherited compose/registry/manifests. Old StarLink entry saved in .agent-state/starlink-before-light-index.js.",
+  "rollback": "Release and candidate qualification use an isolated main checkout and disposable containers without user volumes. Retain existing Aide runtime image and data. Roll back a Release installation via the prior update slot or v0.1.17.1-RC1 image; restore StarLink 0.1.2 from its retained market ZIP/upgrade backup. Revert only the market listing commit to stop recommending 0.1.3. Preserve inherited compose, registry, manifests, session/configuration/workspace mounts; do not delete data.",
   "handoff": "Local candidate running. Original10 recall8/10 unchanged; extra3 structure probes0/3 to2/3; ordinary text and pending files still need fulltext fallback. Existing whole-corpus checkpoint warning remains."
 }
