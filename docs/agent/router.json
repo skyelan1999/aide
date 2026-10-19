@@ -678,6 +678,15 @@
       ],
       [
         "node",
+        "--check",
+        "internal/server/web/message-notifications.js"
+      ],
+      [
+        "node",
+        "scripts/message-notifications.test.cjs"
+      ],
+      [
+        "node",
         "scripts/identity-login-routing.test.cjs"
       ],
       [

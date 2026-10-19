@@ -1,0 +1,76 @@
+{
+  "status": "pass",
+  "branch": "feat/message-notifications-20261019",
+  "source": "534ee1cd1fd114f75f6a2ac61d9255674203cf1f711aaadebe586bba6d2aaafc",
+  "candidateImage": "sha256:537822710368b05ac12a455d5e85295bc895ac36e173888c82d9755bad56cc86",
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "34d0bf9e810bc50a12cad7eaeda4ed5814ddad1999cbcad656ff58e327995ad5",
+    "head": "e6bca2dd32fba12ef480f1bb65fee02d6003106d",
+    "time": "20261019T044137804342Z",
+    "log": ".agent-state/verify-20261019T044137804342Z.log",
+    "checks": 129,
+    "failedChecks": []
+  },
+  "focusedGo": {
+    "status": "pass",
+    "commands": [
+      "go test -mod=vendor -race -count=1 ./internal/messaging",
+      "go test -mod=vendor -race -count=1 -run Test(Message|Reminder) ./internal/server",
+      "go vet -mod=vendor ./internal/messaging ./internal/server"
+    ],
+    "log": ".agent-state/message-notifications-20261019/go-focused-final.log"
+  },
+  "liveAPI": {
+    "status": "pass",
+    "initialTotal": 6,
+    "directUnread": 3,
+    "groupUnread": 2,
+    "unfinishedReminder": 1,
+    "muteExcludes": true,
+    "includeMuted": true,
+    "hiddenOverridesIncludeMuted": true,
+    "styleDoesNotClearUnread": true,
+    "dueScope": true,
+    "staleRevision": 409,
+    "deviceIdentityUnchanged": true,
+    "savedRevision": 8
+  },
+  "restart": {
+    "status": "pass",
+    "restartSettingsRevision": 8,
+    "total": 6,
+    "devicePreserved": true,
+    "exactCurrentFrontendAsset": true,
+    "certificate": "exact DER pin before requests"
+  },
+  "component": {
+    "status": "pass",
+    "kind": "Product modules with synthetic real-API state and in-memory save mock",
+    "desktop": [
+      1200,
+      900
+    ],
+    "narrow": [
+      390,
+      844
+    ],
+    "measuredNarrowPageWidth": 390,
+    "measuredNarrowPanelWidth": 360,
+    "checked": [
+      "number/dot/off save",
+      "folded group count",
+      "mute gray count and total exclusion",
+      "mark all read retains reminder",
+      "dark layout"
+    ]
+  },
+  "notRun": [
+    "Complete Safari workbench: certificate warning requires human action",
+    "Native Windows",
+    "Real desktop notification permission and speaker output",
+    "Repository full profile; targeted race and quick were used"
+  ],
+  "productionUntouched": true
+}

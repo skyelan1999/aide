@@ -1,0 +1,86 @@
+{
+  "id": "message-notifications-20261019",
+  "request": "设计消息图标未读气泡，汇总会话、群组和未完成提醒，设置内管理红色气泡，并支持聊天和群组屏蔽提示；用户随后明确要求实现",
+  "baseline": "6136df16d44cc41c9157b61136c081ea91dfd603",
+  "initial_status": "",
+  "acceptance": [
+    "Design entry, category, conversation and group aggregation without duplicate counts.",
+    "Distinguish read from completion and define exact read cursor race boundaries.",
+    "Define global badge settings, per-chat/group suppression, precedence and persistence.",
+    "Record implementation sequence and unrun runtime/UI acceptance without claiming implementation."
+  ],
+  "scope": [
+    "docs/prd/2026-10-19-message-notifications.md",
+    "docs/tasks/message-notifications-20261019.json",
+    "internal/messaging",
+    "internal/server/message_center.go",
+    "internal/server/message_notifications.go",
+    "internal/server/message_notifications_test.go",
+    "internal/server/web/message-center.js",
+    "internal/server/web/message-notifications.js",
+    "internal/server/web/message-center.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/settings-schema.json",
+    "scripts/message-notifications.test.cjs",
+    "docs/reviews/2026-10-19/message-notifications.md",
+    "docs/agent/router.json",
+    "docs/reviews/2026-10-19/message-notifications-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Captured badge, unfinished reminders and per-conversation suppression request as design scope.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Defined counts, clear conditions, settings hierarchy, mute expiry, server-owned summary, persistence and race boundaries.",
+      "evidence": [
+        "docs/prd/2026-10-19-message-notifications.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented authoritative unread/count summary, arrival-sequence read boundaries, persisted revisioned global and conversation notification controls, UI badges, mute menus and bounded new-event alerts.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-notifications.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "129 quick checks passed. Messaging package and server Message/Reminder tests passed with race, both package vet passed. Real isolated contact/group traffic confirms 3+2+1 totals, mute/include/hidden/due policies and 409 conflict. Product component interactions at desktop/light and 390px/dark passed. Complete Safari workbench blocked by browser certificate warning requiring user handoff; native Windows, real speaker/desktop permission not run.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-notifications.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Design updated for implemented API and persisted configuration; review records actual evidence and boundaries.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-notifications.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Closed own component tab/server, reset viewport, removed exact owned intermediate QA image. Synthetic peer exited; production unchanged. Intentionally retain one capped QA app/CAD pair and one Safari candidate tab for pending human certificate acceptance.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-notifications.md",
+        "docs/reviews/2026-10-19/message-notifications-proof.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source branch push only; no new Release, version bump, main merge or production replacement in this task.",
+      "evidence": [
+        "docs/reviews/2026-10-19/message-notifications.md"
+      ]
+    }
+  },
+  "release_authorization": "User requested implementation; existing timely push authorization applies. No version bump or production replacement requested in this turn.",
+  "rollback": "Documentation-only commit can be reverted; no runtime or persisted product state changed.",
+  "handoff": "Implemented and pushed feat/message-notifications-20261019. 129 final quick checks, targeted Go race/vet, real peer/group/API and original-launcher restart checks pass; see structured proof. QA on https://localhost:59197 uses /tmp/aide-message-notifications-qa-20261019; its stop.command stops only this candidate. Human certificate acceptance is required for complete Safari interaction. Component page/server closed, viewport reset, production untouched. No main merge, version bump or new Release. Final fetch found upstream main b2df9a12 adds a non-overlapping Windows LAN launcher fix; it is not merged into this feature branch. Current validation baseline remains 6136df16."
+}

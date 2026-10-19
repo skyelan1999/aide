@@ -273,6 +273,10 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 		fail(w, 423, errors.New("请先解锁工作台"))
 		return
 	}
+	if path == "notifications" {
+		a.messageNotificationsAPI(w, r, lock.Gen)
+		return
+	}
 	if path == "config" && r.Method == http.MethodPut {
 		a.configureMessages(w, r)
 		return
@@ -308,6 +312,13 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 			out["data"] = m.service.Snapshot()
 			out["relays"] = m.network.Status()
 		}
+		data, _ := out["data"].(map[string]any)
+		notificationConfig, summary, e := a.messageNotificationSummary(data)
+		if e != nil {
+			fail(w, 500, e)
+			return
+		}
+		out["notifications"] = map[string]any{"config": notificationConfig, "summary": summary}
 		jsonOut(w, 200, out)
 		return
 	}
@@ -372,13 +383,45 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 		if err = decode(w, r, &input); err == nil {
 			err = s.Block(input.Peer, input.Blocked)
 		}
-	case path == "read" && r.Method == http.MethodPost:
+	case (path == "read" || path == "read-all") && r.Method == http.MethodPost:
 		var input struct {
-			Peer  string `json:"peer"`
-			Group string `json:"group"`
+			Peer       string            `json:"peer"`
+			Group      string            `json:"group"`
+			Through    *string           `json:"through"`
+			Boundaries map[string]string `json:"boundaries"`
 		}
 		if err = decode(w, r, &input); err == nil {
-			err = s.MarkRead(input.Peer, input.Group)
+			a.mu.Lock()
+			current := a.loadLockStateLocked()
+			if current.Locked || current.Gen != lock.Gen {
+				a.mu.Unlock()
+				fail(w, 423, errors.New("请先解锁工作台"))
+				return
+			}
+			if path == "read-all" {
+				if input.Boundaries == nil {
+					err = errors.New("read boundaries required")
+				} else {
+					for _, id := range input.Boundaries {
+						if id == "" {
+							err = errors.New("message boundary required")
+							break
+						}
+					}
+					if err == nil {
+						err = s.MarkReadBatch(input.Boundaries)
+					}
+				}
+			} else if input.Through != nil {
+				if *input.Through == "" {
+					err = errors.New("message boundary required")
+				} else {
+					err = s.MarkReadThrough(input.Peer, input.Group, *input.Through)
+				}
+			} else {
+				err = s.MarkRead(input.Peer, input.Group)
+			}
+			a.mu.Unlock()
 		}
 	case path == "text" && r.Method == http.MethodPost:
 		var input struct {

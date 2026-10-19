@@ -115,3 +115,27 @@
 
 .tts-qwen-settings{display:grid;gap:8px;margin:12px 0;padding:14px;border:1px solid var(--field-border);border-radius:12px}.tts-qwen-settings.hidden{display:none}.tts-qwen-settings .voice-reply-row{flex-wrap:wrap;margin:0}.tts-qwen-settings .voice-reply-row>span{min-width:100px}.tts-qwen-settings input:not([type=checkbox]),.tts-qwen-settings select{flex:1;min-width:140px;width:100%;padding:10px 12px}.tts-qwen-settings small{line-height:1.65}
 .tts-engine-select>span{flex-shrink:0;white-space:nowrap}.tts-engine-select>select{min-width:0;flex:1}
+
+/* Counters are independent of row geometry; muted counters retain readable text. */
+.message-unread-count{background:#c53030;color:#fff;font-variant-numeric:tabular-nums;min-width:18px;min-height:18px;box-sizing:border-box;padding:2px 5px;border-radius:999px;font-size:10px;line-height:14px;flex:none;vertical-align:middle}
+.message-unread-count.is-muted{background:var(--line);color:var(--text)}
+.message-unread-count.is-dot{width:8px;min-width:8px;height:8px;min-height:8px;padding:0}
+.message-tabs button{display:flex;align-items:center;justify-content:center;gap:5px}
+.message-thread-row{display:flex;align-items:flex-start;gap:6px;min-width:0;position:relative}
+.message-thread-row>.message-thread{flex:1;min-width:0;flex-wrap:wrap}
+.message-notification-rule{position:relative;flex:none;font-size:11px;max-width:100%}
+.message-notification-rule>summary{cursor:pointer;list-style:none;padding:10px 7px;border:1px solid var(--line);border-radius:9px;color:var(--muted);line-height:18px}
+.message-notification-rule-form{position:absolute;right:0;top:calc(100% + 5px);z-index:20;display:flex;flex-direction:column;gap:10px;width:min(245px,calc(100vw - 55px));padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 5px 20px var(--shadow-1);box-sizing:border-box}
+.message-notification-rule-form small{font-size:11px;line-height:1.6;color:var(--muted)}
+.message-notification-rule select,.notification-config-form select{width:100%;min-width:0;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;box-sizing:border-box}
+.message-chat-groups{display:flex;flex-direction:column;gap:8px;min-width:0}
+.message-chat-groups>summary{cursor:pointer;font-size:12px;font-weight:650;padding:8px 0}
+.message-chat-groups>summary>.message-unread-count{margin-left:8px}
+.message-chat-groups>.message-thread-row{margin:8px 0}
+.message-center .reminder-center-head>.message-notification-settings-button{margin-left:auto;padding:6px 8px;min-height:30px;font-size:11px}
+.notification-config-form h4,.notification-suppressed-list h4{margin:12px 0 0;font-size:13px}
+.notification-suppressed-list{border-top:1px solid var(--line);margin-top:24px;padding-top:10px;display:flex;flex-direction:column;gap:12px}
+.message-notification-suppressed{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;font-size:12px}
+.message-notification-suppressed>span{overflow-wrap:anywhere;min-width:0}
+@media(max-width:600px){.message-center .reminder-center-head>.message-notification-settings-button{font-size:10px;padding-inline:5px}.message-thread-row>.message-thread{gap:6px}.message-notification-rule>summary{max-width:80px;overflow-wrap:anywhere}}
+@media(forced-colors:active){.message-unread-count{border:1px solid Highlight}.message-unread-count.is-dot{background:Highlight;forced-color-adjust:none}}

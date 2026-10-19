@@ -26,6 +26,7 @@ const maxReserved int64 = 4 << 30
 
 type Message struct {
 	ID       string    `json:"id"`
+	Sequence uint64    `json:"sequence,string,omitempty"`
 	Peer     string    `json:"peer"`
 	Group    string    `json:"group,omitempty"`
 	Text     string    `json:"text"`
@@ -74,13 +75,15 @@ type WireReply struct {
 	Membership *Membership `json:"membership,omitempty"`
 }
 type serviceState struct {
-	Version   int                   `json:"version"`
-	Peers     map[string]Card       `json:"peers"`
-	Messages  []Message             `json:"messages"`
-	Transfers map[string]Transfer   `json:"transfers"`
-	Groups    map[string]GroupState `json:"groups"`
-	Calls     map[string]CallState  `json:"calls"`
-	Read      map[string]int64      `json:"read"`
+	Version      int                   `json:"version"`
+	Peers        map[string]Card       `json:"peers"`
+	Messages     []Message             `json:"messages"`
+	Transfers    map[string]Transfer   `json:"transfers"`
+	Groups       map[string]GroupState `json:"groups"`
+	Calls        map[string]CallState  `json:"calls"`
+	Read         map[string]int64      `json:"read"`
+	ReadSequence map[string]uint64     `json:"readSequence,omitempty"`
+	NextSequence uint64                `json:"nextSequence,omitempty"`
 }
 type Service struct {
 	mu           sync.Mutex
@@ -121,6 +124,7 @@ func NewService(identity *Identity, store *Store, name string, addresses []strin
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
+	s.migrateReadSequences()
 	var state State
 	raw, err = store.Get("consent", 4<<20)
 	if err == nil {
@@ -517,6 +521,9 @@ func (s *Service) appendMessage(m Message) error {
 		}
 	}
 	old := s.state.Messages
+	previousSequence := s.state.NextSequence
+	s.state.NextSequence++
+	m.Sequence = s.state.NextSequence
 	s.state.Messages = append(append([]Message(nil), old...), m)
 	if len(s.state.Messages) > 10000 {
 		s.state.Messages = s.state.Messages[len(s.state.Messages)-10000:]
@@ -531,6 +538,7 @@ func (s *Service) appendMessage(m Message) error {
 	}
 	if err := s.persistLocked(); err != nil {
 		s.state.Messages = old
+		s.state.NextSequence = previousSequence
 		return err
 	}
 	return nil
@@ -568,10 +576,11 @@ func (s *Service) Snapshot() map[string]any {
 	for id, card := range state.Peers {
 		peers[id] = map[string]any{"device": card.Device, "name": card.Name}
 	}
+	unread, through := s.unreadLocked(consent)
 	if len(state.Messages) > 500 {
 		state.Messages = state.Messages[len(state.Messages)-500:]
 	}
-	return map[string]any{"device": s.identity.Device(), "name": s.name, "consent": consent, "peers": peers, "messages": state.Messages, "transfers": state.Transfers, "groups": state.Groups, "calls": state.Calls, "read": state.Read, "signals": append([]Signal(nil), s.signals...)}
+	return map[string]any{"device": s.identity.Device(), "name": s.name, "consent": consent, "peers": peers, "messages": state.Messages, "transfers": state.Transfers, "groups": state.Groups, "calls": state.Calls, "read": state.Read, "unread": unread, "readThrough": through, "signals": append([]Signal(nil), s.signals...)}
 }
 func (s *Service) receive(w http.ResponseWriter, r *http.Request) {
 	peer, err := AuthenticatedPeer(r)
