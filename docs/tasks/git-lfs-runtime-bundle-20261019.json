@@ -73,14 +73,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Git LFS object is uploaded and sampled remote checks pass; main fast-forward push is next.",
+      "status": "pass",
+      "summary": "Unified Git LFS entity uploaded and sampled remote checks passed; main pushed to 997c34a8383fd974c532773e55be94ec1ab6c9a5 and independent ls-remote matched. This receipt update follows without changing the LFS object. No runtime deployment or GitHub Release publication.",
       "evidence": [
-        "docs/reviews/2026-10-19/git-lfs-runtime-bundle.md"
+        "docs/reviews/2026-10-19/git-lfs-runtime-bundle.md",
+        "docs/reviews/2026-10-19/git-lfs-runtime-remote-proof.json"
       ]
     }
   },
   "release_authorization": "User directly requested one combined precompiled Docker bundle in Git and push, then only the latest version. Use Git LFS, overriding previous no-image-in-Git guidance.",
   "rollback": "Revert the scoped distribution files if needed. No history rewrite or production data changes.",
-  "handoff": "User explicitly requested simple checks and timely push instead of full regression. No new GitHub Release publishing or runtime deployment."
+  "handoff": "Complete scoped Git LFS distribution. Only current bundle path in Git, current pair retained locally; older local app archives removed. Use git lfs pull, select architecture, extract and run original offline launcher. Runtime snapshot is 223986/f316, not rebuilt newer main; native AMD64/Windows and receiving-device startup remain unverified. Previous CLI authentication and continuity work remain separate."
 }
