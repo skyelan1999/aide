@@ -368,6 +368,19 @@
       ],
       [
         "node",
+        "--check",
+        "internal/server/web/lock-cluster.js"
+      ],
+      [
+        "node",
+        "scripts/lock-cluster-state.test.js"
+      ],
+      [
+        "node",
+        "scripts/lock-recovery.test.cjs"
+      ],
+      [
+        "node",
         "scripts/file-recovery-scroll.test.cjs"
       ],
       [

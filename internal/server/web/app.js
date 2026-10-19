@@ -994,9 +994,11 @@ function openStream(run) {
   const ownerId = state.session.id;
   const ownerSequence = typeof sessionSeq === 'object' ? sessionSeq.value : null;
   const ownerScope = typeof recoveryScope === 'function' ? recoveryScope() : null;
+  const ownerEpoch = typeof chatRecoveryEpoch === 'undefined' ? null : chatRecoveryEpoch;
   const ownsSnapshot = () => state.session?.id === ownerId &&
     (ownerSequence === null || sessionSeq.value === ownerSequence) &&
-    (ownerScope === null || recoveryScope() === ownerScope);
+    (ownerScope === null || recoveryScope() === ownerScope) &&
+    (ownerEpoch === null || chatRecoveryEpoch === ownerEpoch) && !(typeof lockScreen!=='undefined'&&lockScreen.locked);
   const es = new EventSource('/api/sessions/' + state.session.id + '/runs/' + run.id + '/events?access_token=' + encodeURIComponent(state.token));
   es._runId = run.id;
   state.stream = es;
@@ -1135,7 +1137,7 @@ function openStream(run) {
     if (typeof setSendMode === 'function') setSendMode(state.busy);
     schedulePoll(); // Reconcile even when the immediate GET fails.
     action(async () => {
-      const id = state.session?.id; if (!id) return;
+      const id = state.session?.id; if (!id||(typeof lockScreen!=='undefined'&&lockScreen.locked)) return;
       const s = await getSessionWindow(id); if (!ownsSnapshot()) return;
       const terminalRun = s.runs?.find(item => item.id === run.id);
       if (terminalRun?.status === 'awaiting_clarification' && state.runPhase[run.id]) state.runPhase[run.id].done = false;
@@ -1809,13 +1811,15 @@ setInterval(() => {
 }, 1000);
 let titleSyncTimers = [];
 function scheduleTitleSync(id) {
+  const epoch=typeof chatRecoveryEpoch==='undefined'?null:chatRecoveryEpoch;
+  const current=()=>!(typeof lockScreen!=='undefined'&&lockScreen.locked)&&(epoch===null||epoch===chatRecoveryEpoch);
   titleSyncTimers.forEach(clearTimeout); titleSyncTimers = [];
   // 主题总结是后台异步调用，可能在任务完成之后才落库：分两轮补同步（无变化时不会重渲染）
   for (const delay of [2000, 5000, 9000]) {
     titleSyncTimers.push(setTimeout(action(async () => {
-      if (state.session?.id !== id) return;
+      if (state.session?.id !== id||!current()) return;
       const s2 = await getSessionWindow(id);
-      if (state.session?.id !== id) return;
+      if (state.session?.id !== id||!current()) return;
       if (adoptSessionIfChanged(s2)) renderSession();
       await loadSessions();
     }), delay));
@@ -1824,14 +1828,20 @@ function scheduleTitleSync(id) {
 let refreshSoonTimer = 0;
 function refreshSessionSoon() {
   clearTimeout(refreshSoonTimer);
+  if(typeof lockScreen!=='undefined'&&lockScreen.locked)return;
+  const epoch=typeof chatRecoveryEpoch==='undefined'?null:chatRecoveryEpoch;
+  const current=()=>!(typeof lockScreen!=='undefined'&&lockScreen.locked)&&(epoch===null||epoch===chatRecoveryEpoch);
   refreshSoonTimer = setTimeout(action(async () => {
-    const id = state.session?.id; if (!id) return;
-    const s = await getSessionWindow(id); if (state.session?.id !== id) return;
+    const id = state.session?.id; if (!id||!current()) return;
+    const s = await getSessionWindow(id); if (state.session?.id !== id||!current()) return;
     if (adoptSessionIfChanged(s)) renderSession();
   }), 250);
 }
 function schedulePoll() {
   clearTimeout(state.poll);
+  if(typeof lockScreen!=='undefined'&&lockScreen.locked)return;
+  const epoch=typeof chatRecoveryEpoch==='undefined'?null:chatRecoveryEpoch;
+  const current=()=>!(typeof lockScreen!=='undefined'&&lockScreen.locked)&&(epoch===null||epoch===chatRecoveryEpoch);
   // File review continues after model generation. Keep reconciling until the
   // reviewer applies the proposal or hands it back for manual confirmation.
   // Keep a stream attached while a run waits for user clarification/command
@@ -1844,10 +1854,10 @@ function schedulePoll() {
     if (['running','awaiting_clarification'].includes(running.status) && !state.runPhase[running.id]?.done && (!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
     state.poll = setTimeout(async () => {
       const id = state.session?.id;
-      if (!id) return;
+      if (!id||!current()) return;
       try {
         const s = await getSessionWindow(id);
-        if (state.session?.id !== id) return;
+        if (state.session?.id !== id||!current()) return;
         const hadRunning = !!state.session?.runs?.find(pending);
         if (adoptSessionIfChanged(s)) renderSession();
         if (hadRunning && !s.runs.some(pending)) {
@@ -1865,7 +1875,7 @@ function schedulePoll() {
         // 轮询兜底：后端暂不可达时静默退避，避免每 1.5s 弹错误 toast 刷屏
       } finally {
         // 重排必须在 finally 中，避免一次请求短暂失败后永远不再同步运行状态
-        if (state.session?.id === id) schedulePoll();
+        if (state.session?.id === id&&current()) schedulePoll();
       }
     }, 1500);
   } else {
@@ -9680,8 +9690,8 @@ async function initialize() {
   await refreshConfig();
   if (state.config?.hasPassword && window.LockCluster) {
     showJoiningVeil();
-    const locked=await LockCluster.onReady();
-    if(locked)applyLockVisual();else releaseLockVisual();
+    await LockCluster.onReady();
+    if(LockCluster.effectiveLocked())applyLockVisual();else releaseLockVisual();
   }
   if (window.syncVirtualAvatarSettings) await window.syncVirtualAvatarSettings();
   if (window.AideFileRoute?.read()) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); if(!fileView.spec)await openFileViewMode(); return; }
@@ -11592,7 +11602,7 @@ controlRenderers['personality'] = renderPersonalityControl;
 
 
 /* ── 账户锁屏：空闲糊化遮罩（纯视觉层，不停止后端任务；小秘暂停听写/朗读） ── */
-const lockScreen = { timer: null, locked: false, wasVoiceListening: false, lastActivity: Date.now(), unlocking: false };
+const lockScreen = { resume: null, resumeTimer: null, timer: null, locked: false, wasVoiceListening: false, lastActivity: Date.now(), unlocking: false };
 function lockTimeoutActive() {
   return !!(state.config && state.config.hasPassword && (state.config.lockTimeoutSec || 0) > 0);
 }
@@ -11626,6 +11636,42 @@ function refreshLockAvatar(status, running) {
   companion.dataset.motion=running?'working':'idle';
   companion.dataset.status=status;
 }
+// Locking suspends reconciliation reads, not the backend task or its delta buffer.
+function suspendLockedReads() {
+  lockScreen.resume={scope:recoveryScope(),token:state.token,file:state.file,fileSpec:fileView.spec};
+  if(state.pendingSessionId){++sessionSeq.value;state.pendingSessionId='';}
+  clearTimeout(state.poll);state.poll=null;clearTimeout(refreshSoonTimer);
+  titleSyncTimers.forEach(clearTimeout);titleSyncTimers=[];
+  clearTimeout(lockScreen.resumeTimer);lockScreen.resumeTimer=null;
+}
+function resumeUnlockedViews(snapshot) {
+  if(!snapshot||snapshot.scope!==recoveryScope()||snapshot.token!==state.token||lockScreen.locked)return;
+  // Reinstall the URDF viewer with a fresh lock generation, retaining textarea drafts.
+  if(snapshot.file===state.file&&state.file&&isUrdfPath(state.file.path)&&$('editor-dialog').open&&!$('editor-preview').classList.contains('hidden'))setupUrdfPreview($('editor-preview'),state.file.path,state.file.root,state.file.source||'',state.file,$('editor').value);
+  if(snapshot.fileSpec===fileView.spec&&fileView.spec&&(isUrdfPath(fileView.spec.path)||fileView.spec.format==='.urdf')&&!$('file-view').classList.contains('hidden')&&!$('file-view-preview').classList.contains('hidden'))setupUrdfPreview($('file-view-preview'),fileView.spec.path,fileView.spec.root,fileView.spec.source||'',fileView.spec,$('file-view-editor').value);
+}
+async function reconcileAfterUnlock(snapshot,attempt=0) {
+  if(!snapshot||snapshot.scope!==recoveryScope()||snapshot.token!==state.token||lockScreen.locked)return;
+  const id=state.session?.id,sequence=sessionSeq.value,epoch=chatRecoveryEpoch;
+  const current=()=>!lockScreen.locked&&snapshot.scope===recoveryScope()&&snapshot.token===state.token&&epoch===chatRecoveryEpoch&&sequence===sessionSeq.value&&id===state.session?.id&&!state.pendingSessionId;
+  if(!id)return;
+  try {
+    const session=await getSessionWindow(id);if(!current())return;
+    for(const run of session.runs||[])if(!['running','awaiting_clarification'].includes(run.status))for(const key of ['live','liveStable','liveRound','liveTool','liveReasoning','runPhase'])delete state[key]?.[run.id];
+    for(const run of session.runs||[])if(['running','awaiting_clarification'].includes(run.status)&&state.runPhase[run.id]){state.runPhase[run.id].done=false;state.runPhase[run.id].status=run.status;}
+    adoptSessionIfChanged(session);renderSession();
+    state.streamRetryAt=0;schedulePoll();paintSessionSelection(id,false);scheduleContextPreview();
+  } catch(error) {
+    if(!current())return;schedulePoll();
+    if(attempt<2)lockScreen.resumeTimer=setTimeout(()=>{lockScreen.resumeTimer=null;if(current())reconcileAfterUnlock(snapshot,attempt+1);},1500*(attempt+1));
+  }
+}
+function resumeUnlockedState() {
+  const snapshot=lockScreen.resume;lockScreen.resume=null;
+  if(!snapshot||snapshot.scope!==recoveryScope()||snapshot.token!==state.token)return;
+  resumeUnlockedViews(snapshot);editorAutoSave.resume();fileViewAutoSave.resume();
+  void reconcileAfterUnlock(snapshot);
+}
 /* 视觉层：把 effectiveLocked=true 落到本地遮罩 + 小秘退下（幂等，可重复调用）。 */
 function applyLockVisual() {
   window.AidePluginMarket?.close?.();
@@ -11634,6 +11680,7 @@ function applyLockVisual() {
   if (lockScreen.locked) { refreshLockStatus(); return; }
   cancelPendingRecoveryWrites();
   lockScreen.locked = true;
+  suspendLockedReads();
   clearAssistantGate();
   syncVoiceAssistantDisplayName();
   clearTimeout(lockScreen.timer); lockScreen.timer = null;
@@ -11652,12 +11699,14 @@ function applyLockVisual() {
 }
 /* 视觉层：把 effectiveLocked=false 落到本地（仅藏遮罩；欢迎语/麦克风恢复只在输密码的 tab）。 */
 function releaseLockVisual() {
+  const wasLocked=lockScreen.locked;
   if(lockScreen.locked)lockScreen.lastActivity=Date.now();
   lockScreen.locked = false;
   const veil = $('lock-screen');
   veil.hidden = true;
   veil.classList.remove('joining');
   if(!lockScreen.unlocking)lockScreen.wasVoiceListening=false;
+  if(wasLocked)resumeUnlockedState();
 }
 /* 加入窗口期中性面纱：不露内容、不抢密码框。 */
 function showJoiningVeil() {
@@ -11684,9 +11733,7 @@ async function dismissAfterUnlock(scope, verifiedState) {
   lockScreen.lastActivity=Date.now();
   window.aideAvatarFeedback?.('notification');
   // 本 tab 本地恢复（欢迎语、麦克风只在解锁的那个 tab，避免多 tab 合唱）
-  lockScreen.locked = false;
-  $('lock-screen').hidden = true;
-  $('lock-screen').classList.remove('joining');
+  releaseLockVisual();
   const name = (state.config && state.config.userName) || '';
   const xm = voiceAssistantDisplayName();
   const welcome = name ? t('欢迎回来，{0}，我是{1}。', name, xm) : t('欢迎回来，我是{0}。', xm);
@@ -11810,7 +11857,7 @@ const touchidBtn = $('touchid-unlock-btn');
 if (touchidBtn) touchidBtn.onclick = action(unlockByTouchId);
 // 集群把 effectiveLocked 映射到本地视觉（master 自身、slave 收到 lock/unlock 均走这里）
 if (typeof LockCluster !== 'undefined') {
-  LockCluster.on('effective', locked => { if (locked) applyLockVisual(); else { releaseLockVisual(); resetIdleTimer(); editorAutoSave.resume(); fileViewAutoSave.resume(); } });
+  LockCluster.on('effective', locked => { if (locked) applyLockVisual(); else { releaseLockVisual(); resetIdleTimer(); } });
   LockCluster.on('role', () => resetIdleTimer());
   LockCluster.on('error', message=>{if(lockScreen.locked)$('lock-error').textContent=message;});
   LockCluster.setRemoteActivityHook(() => resetIdleTimer(true)); // master 续表

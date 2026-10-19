@@ -1,0 +1,34 @@
+{
+  "status": "pass",
+  "sourceFingerprint": "01c6b5f118eed6db67527d270b8da24ab6b61a6100e1b918c3ab882318c3f21b",
+  "fullCommands": 137,
+  "receiptSha256": "ad6f2915070c9089402ab18c19f39e627d25bde38ce5873feca652dabc376f66",
+  "fullLog": ".agent-state/verify-20261019T091854099350Z.log",
+  "browser": "Real isolated two-tab password lock/unlock and URDF draft restoration passed; no paid model or Touch ID acceptance.",
+  "launcher": "Original start.command with AIDE_BUILD_FROM_SOURCE=1, isolated QA project, exit 0.",
+  "runtime": {
+    "status": "pass",
+    "health": 200,
+    "authenticatedTextExact": true,
+    "lockStateReadable": true,
+    "embeddedAssets": 7,
+    "fixtureFilesExact": 6,
+    "commit": "e5c5c8fc-lock-qa",
+    "certificate": "exact DER pin before each request"
+  },
+  "candidateImage": "aide:qa-lock-sync-20261019",
+  "production": "Unchanged; source integration only.",
+  "limitations": [
+    "Windows and hardware Touch ID not run",
+    "Real paid-model run recovery not run; delayed session recovery covered by actual-function VM tests"
+  ],
+  "cleanup": {
+    "removedTemporarySourceCopies": [
+      "aide-lock-verification-9gltwq_d",
+      "aide-lock-verified-source-3glu8ez6"
+    ],
+    "supersededOwnedImageTagRemoved": true,
+    "retainedCandidate": "aide:qa-lock-sync-20261019",
+    "productionImageUnchanged": "sha256:48e99a7add36385cbc8d4f429518539a153b14d544b6032c16e1b9c964093d31"
+  }
+}

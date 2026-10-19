@@ -36,7 +36,7 @@ function environment(){
    }
   };
   vm.createContext(context);vm.runInContext(source,context);
-  return {lc:w.LockCluster,stats,events,close(){for(const fn of events.beforeunload||[])fn();for(const fn of events.pagehide||[])fn();for(const [key,t]of timers)if(t.owner===id)timers.delete(key);channels=channels.filter(c=>c.owner!==id);}};
+  return {lc:w.LockCluster,stats,events,receive(message){const c=channels.find(c=>c.owner===id);c.onmessage({data:structuredClone(message)});},close(){for(const fn of events.beforeunload||[])fn();for(const fn of events.pagehide||[])fn();for(const [key,t]of timers)if(t.owner===id)timers.delete(key);channels=channels.filter(c=>c.owner!==id);}};
  }
  return {server,tab,advance,flush};
 }
@@ -103,6 +103,15 @@ function environment(){
  failedMaster.close();await f.advance(1800);assert(failedSlave.lc.isMaster());
  const revivedMaster=f.tab('/');await f.advance(1800);assert(failedSlave.lc.isSlave());assert.equal(failedSlave.lc.effectiveLocked(),false,'election dropped a verified dismissal at an unlocked authority generation');
  f.server.failPut=false;await revivedMaster.lc.requestLock();await f.advance(30);assert.equal(failedSlave.lc.effectiveLocked(),true,'new persisted lock must revoke verified dismissal');
+ // Lifecycle restoration must restart an election canceled before initial readiness.
+ const lifecycle=environment(),returning=lifecycle.tab('/');let restored=false;returning.lc.onReady().then(()=>restored=true);for(const fn of returning.events.pagehide||[])fn();await lifecycle.advance(4000);for(const fn of returning.events.pageshow||[])fn();await lifecycle.advance(2600);assert.equal(restored,true,'pagehide during joining left a permanently unresolved veil');
+ // Unchanged heartbeats are not lock/unlock transitions (nor resume commands).
+ const transitions=environment(),tm=transitions.tab('/');await transitions.advance(1800);const ts=transitions.tab('/starmap.html');await transitions.advance(1800);const seen=[];ts.lc.on('effective',value=>seen.push(value));await transitions.advance(6000);assert.deepEqual(seen,[],'unchanged master heartbeat re-emitted unlock transitions');
+ // The peer's election/visual boolean cannot contradict its server authority receipt.
+ ts.receive({type:'assert',from:tm.lc.tabId,pri:[0,0,tm.lc.tabId],gen:999,masterLocked:true,server:{locked:false,gen:transitions.server.gen}});assert.equal(ts.lc.effectiveLocked(),false,'stale peer visual state resurrected an unlocked authority');
+ await tm.lc.requestLock();await transitions.advance(30);ts.receive({type:'assert',from:tm.lc.tabId,pri:[0,0,tm.lc.tabId],gen:1000,masterLocked:false,server:{locked:true,gen:transitions.server.gen}});assert.equal(ts.lc.effectiveLocked(),true,'peer visual state bypassed a persisted server lock');
+ // A failed newer lock write still revokes an earlier identity continuation locally.
+ const intentEnv=environment(),intentTab=intentEnv.tab('/');await intentEnv.advance(1800);await intentTab.lc.requestLock();const priorIntent=await intentTab.lc.prepareUnlock();intentEnv.server.locked=false;intentEnv.server.gen++;const committed={locked:false,gen:intentEnv.server.gen};intentEnv.server.failPut=true;await assert.rejects(intentTab.lc.requestLock());await assert.rejects(intentTab.lc.handleUnlockSuccess(priorIntent,committed));assert.equal(intentTab.lc.effectiveLocked(),true,'old identity continuation cleared a newer failed lock intent');
  // The app continuation must not hide a new lock arriving across its await.
  const app=fs.readFileSync('internal/server/web/app.js','utf8');
  const dismiss=app.match(/async function dismissAfterUnlock\([^]*?\n}/)[0],veil={hidden:false,classList:{remove(){}}};
