@@ -1,0 +1,219 @@
+{
+  "version": "0.1.17.1 RC1",
+  "tag": "v0.1.17.1-RC1",
+  "commit": "3cdbe1a6d6264284346cfb6ef4c8dc6146a4a4f7",
+  "source": "21c7f4e47f9c468dd71e42a3ee2596276c1dc3f1b7a6543c0d55b062e5df3955",
+  "publication": "published-prerelease",
+  "fullProfile": {
+    "status": "pass",
+    "checks": 130,
+    "fingerprint": "35ffee08edb3b63c40204b71b4ce2e7c660c6df60d60386523c41ad469516377",
+    "verifiedHead": "a53d2986bd7568419fbb33382159ce5917b1fe5a",
+    "originalCommandExit": 1,
+    "retries": [
+      {
+        "command": [
+          "python3",
+          "scripts/test_cad_geometry.py"
+        ],
+        "originalExit": 1,
+        "retryExit": 0,
+        "reason": "Docker Desktop external bind transport failure; byte-identical private internal fixture mirror and exact two mount-path remaps; assertions unchanged",
+        "retryLog": ".agent-state/local-first-release-fallback-20261019/cad-retry.log",
+        "originalReceipt": ".agent-state/local-first-release-fallback-20261019/full-original-failed.json"
+      }
+    ],
+    "serverRegisteredItems": 1022,
+    "serverDisjointSerialShards": 12,
+    "buildLayerRepeatedFullTests": false
+  },
+  "runtime": {
+    "arm64": [
+      {
+        "status": "pass",
+        "uid": 1000,
+        "readableFiles": 32,
+        "docxRoundTrip": true,
+        "network": "none"
+      },
+      {
+        "status": "pass",
+        "certificate": "exact DER peer pin before each request",
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.1 RC1",
+        "commit": "3cdbe1a6d6264284346cfb6ef4c8dc6146a4a4f7",
+        "cadTriangles": 12,
+        "network": "none"
+      }
+    ],
+    "amd64": [
+      {
+        "status": "pass",
+        "uid": 1000,
+        "readableFiles": 32,
+        "docxRoundTrip": true,
+        "network": "none"
+      },
+      {
+        "status": "pass",
+        "certificate": "exact DER peer pin before each request",
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.1 RC1",
+        "commit": "3cdbe1a6d6264284346cfb6ef4c8dc6146a4a4f7",
+        "cadTriangles": 12,
+        "network": "none"
+      }
+    ]
+  },
+  "archiveImport": "Both architecture image archives imported successfully; existing daemon, not a clean receiving engine. Production tags unchanged.",
+  "limitations": [
+    "AMD64 was emulated on ARM64, not native hardware",
+    "Native Windows not run",
+    "No new Safari interaction acceptance; no UI changes",
+    "Host urllib CA probe failed before authentication; isolated runtime API smoke used exact peer DER pin before every request",
+    "Docker external deep QA bind mount failed; original launcher passed from an owned internal temporary copy",
+    "No production deployment",
+    "Current Git tree removes LFS payload; remote historical LFS objects not purged"
+  ],
+  "packages": [
+    {
+      "platform": "linux/arm64",
+      "image": "sha256:c7188a065f4b8dea26ff2d2e968cca4ee279908cda9fff872347a3abd6ea890a",
+      "source": "21c7f4e47f9c468dd71e42a3ee2596276c1dc3f1b7a6543c0d55b062e5df3955",
+      "fullZipPayloadSHA256": "2ca8b3b909a237513091a219a7c31fccb6a87e3e07d06435dcccdcd8d0f65a49",
+      "bundle": "aide-0.1.17.1-RC1-linux-arm64-c7188a065f4b-offline.tar.gz"
+    },
+    {
+      "platform": "linux/amd64",
+      "image": "sha256:c9ed3977bcc7fe8f85f756a9e1cecaf1232375946705933fbee044e5c092afbb",
+      "source": "21c7f4e47f9c468dd71e42a3ee2596276c1dc3f1b7a6543c0d55b062e5df3955",
+      "fullZipPayloadSHA256": "fc21da3d1c1bb6be62fe664830fbaa5fffe5283f731cf60ba086851834000936",
+      "bundle": "aide-0.1.17.1-RC1-linux-amd64-c9ed3977bcc7-offline.tar.gz"
+    }
+  ],
+  "releaseURL": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.1-RC1",
+  "publishedAt": "2026-10-19T03:09:21Z",
+  "publicAssets": [
+    {
+      "name": "aide-0.1.17.1-RC1-linux-amd64-c9ed3977bcc7-offline.tar.gz",
+      "state": "uploaded",
+      "size": 935957137,
+      "digest": "sha256:b858744d0b94169dd1dcd56fe0e3eb8ba863a46d20ccbe8945e8099ac550ef61",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.1-RC1/aide-0.1.17.1-RC1-linux-amd64-c9ed3977bcc7-offline.tar.gz"
+    },
+    {
+      "name": "aide-0.1.17.1-RC1-linux-arm64-c7188a065f4b-offline.tar.gz",
+      "state": "uploaded",
+      "size": 789724479,
+      "digest": "sha256:76f4031ceaff660aca76271f6f08186ef9e92a6dee6fa43edbb049f2cdba045f",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.1-RC1/aide-0.1.17.1-RC1-linux-arm64-c7188a065f4b-offline.tar.gz"
+    },
+    {
+      "name": "aide-v0.1.17.1-RC1-full-linux-amd64.zip",
+      "state": "uploaded",
+      "size": 936153646,
+      "digest": "sha256:e4c442f6009f8d0a574179de7cc876da9100c725651abd211d6974710ed8ba0d",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.1-RC1/aide-v0.1.17.1-RC1-full-linux-amd64.zip"
+    },
+    {
+      "name": "aide-v0.1.17.1-RC1-full-linux-arm64.zip",
+      "state": "uploaded",
+      "size": 789914870,
+      "digest": "sha256:6eb8ad948eaad9a7c5b2867da3314494e53814988a7b9026a4cf7aef568b5eee",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.1-RC1/aide-v0.1.17.1-RC1-full-linux-arm64.zip"
+    },
+    {
+      "name": "aide-v0.1.17.1-RC1-source.zip",
+      "state": "uploaded",
+      "size": 172196125,
+      "digest": "sha256:4f3587d7324a7fd1fa03d8d32b6065ef5a9bfc54083bd9d81cdd33541edda9e9",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.1-RC1/aide-v0.1.17.1-RC1-source.zip"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "state": "uploaded",
+      "size": 1255,
+      "digest": "sha256:213fdaff714964b0455f8fd93a9f5ea73379673e3430d0f8bbbc62a125e85fb7",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.1-RC1/RELEASE-ASSETS.txt"
+    },
+    {
+      "name": "SHA256SUMS",
+      "state": "uploaded",
+      "size": 641,
+      "digest": "sha256:aecc9c0e549b890c8a629ff63cf65af8dad6c90c3de4ab0b3d51d4c2da5a65d4",
+      "browser_download_url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.1-RC1/SHA256SUMS"
+    }
+  ],
+  "publicAssetVerification": "All 7 public uploaded assets match exact local sizes and SHA256; anonymous paired-architecture publication gate passed.",
+  "publicRangeDownloads": {
+    "status": "pass",
+    "results": [
+      {
+        "name": "aide-0.1.17.1-RC1-linux-amd64-c9ed3977bcc7-offline.tar.gz",
+        "status": 206,
+        "bytes": 64
+      },
+      {
+        "name": "aide-0.1.17.1-RC1-linux-arm64-c7188a065f4b-offline.tar.gz",
+        "status": 206,
+        "bytes": 64
+      },
+      {
+        "name": "aide-v0.1.17.1-RC1-full-linux-amd64.zip",
+        "status": 206,
+        "bytes": 64
+      },
+      {
+        "name": "aide-v0.1.17.1-RC1-full-linux-arm64.zip",
+        "status": 206,
+        "bytes": 64
+      },
+      {
+        "name": "aide-v0.1.17.1-RC1-source.zip",
+        "status": 206,
+        "bytes": 64
+      }
+    ]
+  },
+  "defaultManifestPromotion": {
+    "status": "pass",
+    "verification": {
+      "status": "pass",
+      "tag": "v0.1.17.1-RC1",
+      "source": "21c7f4e47f9c468dd71e42a3ee2596276c1dc3f1b7a6543c0d55b062e5df3955",
+      "assets": [
+        {
+          "platform": "linux/arm64",
+          "asset": "aide-0.1.17.1-RC1-linux-arm64-c7188a065f4b-offline.tar.gz",
+          "bytes": 789724479,
+          "sha256": "76f4031ceaff660aca76271f6f08186ef9e92a6dee6fa43edbb049f2cdba045f",
+          "status": "pass"
+        },
+        {
+          "platform": "linux/amd64",
+          "asset": "aide-0.1.17.1-RC1-linux-amd64-c9ed3977bcc7-offline.tar.gz",
+          "bytes": 935957137,
+          "sha256": "b858744d0b94169dd1dcd56fe0e3eb8ba863a46d20ccbe8945e8099ac550ef61",
+          "status": "pass"
+        }
+      ],
+      "scope": "Public attachment metadata only; actual image import/runtime are separate",
+      "mutations": false
+    },
+    "scope": "Post-release metadata only. Seven focused publication tests and live public gate passed; original full fingerprint qualifies tagged product source, not the changed final metadata. No stale full receipt claimed for final metadata."
+  },
+  "cleanup": {
+    "latestOfflinePairRetained": true,
+    "oldLocalAppArchivesRemoved": [
+      "aide-0.1.17.0-RC2-linux-amd64-9bf8eb9f240e-offline.tar.gz",
+      "aide-0.1.17.0-RC2-linux-arm64-07172e63ff04-offline.tar.gz"
+    ],
+    "ownDuplicatePackagingDirectoryRemoved": true,
+    "productionUntouched": true,
+    "historicalGitHubReleasesNotDeleted": true
+  }
+}

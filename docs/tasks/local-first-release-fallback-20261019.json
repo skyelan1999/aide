@@ -26,7 +26,9 @@
     "docs/agent/WORKFLOW.md",
     "docs/tasks/local-first-release-fallback-20261019.json",
     "docs/reviews/2026-10-19/local-first-release-fallback.md",
-    "version.md"
+    "version.md",
+    "docker/prebuilt-images.tsv",
+    "docs/reviews/2026-10-19/local-first-release-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -66,18 +68,22 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Removed current tracked LFS bundle and 1725320689-byte local LFS cache; retired own LFS filters/hooks. Isolated QA stopped through original stop command; exact containers, network and test image alias removed. Production untouched.",
+      "summary": "Removed current tracked LFS bundle and 1725320689-byte local LFS cache; retired own LFS filters/hooks. Isolated QA stopped through original stop command; exact containers, network and test image alias removed. Production untouched. Latest two app archives retained; two superseded local app archives and own duplicate packaging directory removed only after all public SHA256 and download checks passed. Dependency seed and production images retained.",
       "evidence": [
         "docs/reviews/2026-10-19/local-first-release-fallback.md"
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Daily version created on clean main after full and public-default gate; main and tag pushed. v0.1.17.1-RC1 published with 7 exact size/SHA256 verified public assets, 5 anonymous range-download checks, both runtime architectures tested and image archives imported. New defaults promoted only after upload verification; metadata-only follow-up covered by 7 publication tests and live paired-asset gate. Production untouched.",
+      "evidence": [
+        "docs/reviews/2026-10-19/local-first-release-fallback.md",
+        "docs/reviews/2026-10-19/local-first-release-proof.json",
+        "docs/reviews/release-0.1.17.1-RC1-2026-10-19.md"
+      ]
     }
   },
   "release_authorization": "User directly requested removing the huge LFS image, local-first compile with official Release fallback, and Release a new version. Existing main push authorization applies; no production replacement authorized.",
   "rollback": "Revert scoped startup changes; retain current production images and user data. Do not restore huge LFS artifact or force-rewrite remote history.",
-  "handoff": ""
+  "handoff": "Published v0.1.17.1-RC1, tag commit 3cdbe1a6d6264284346cfb6ef4c8dc6146a4a4f7. Production still 48e99a7add36. Final current-main metadata promotes the verified new defaults. Tagged source ZIP is immutable and retains prior verified fallback. Native Windows, receiving-machine import and new Safari interactions not claimed. Existing continuity goal remains paused; no production deployment."
 }

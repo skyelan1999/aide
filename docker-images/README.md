@@ -14,10 +14,10 @@ Both complete bundles contain the application, native CAD runtime, cross-platfor
 
 | Docker engine platform | Runtime image | Complete offline bundle |
 | --- | --- | --- |
-| linux/arm64 | 4b784ce0724f | aide-0.1.17.0-RC2-linux-arm64-4b784ce0724f-offline.tar.gz |
-| linux/amd64 | 382c90e72fca | aide-0.1.17.0-RC2-linux-amd64-382c90e72fca-offline.tar.gz |
+| linux/arm64 | c7188a065f4b | aide-0.1.17.1-RC1-linux-arm64-c7188a065f4b-offline.tar.gz |
+| linux/amd64 | c9ed3977bcc7 | aide-0.1.17.1-RC1-linux-amd64-c9ed3977bcc7-offline.tar.gz |
 
-The table lists the current default pair, with common runtime source `07cdef2d47190f9cbaf13786511186d4e309ccb3a50b6c4cefd45fdcd1c28def` and build commit `db02c58f`. Both immutable public RC2 assets have verified uploaded state, exact byte size and SHA256; actual local Docker import and public range-download smoke checks pass. ARM extracted original-launcher startup/auth/native CAD import and reasoning/MCP restart persistence pass. Native AMD64/Windows runtime remains user-tested; full native workbench acceptance and real vectors are deferred. This does not claim all continuity workflows or deployment complete. See [current delivery evidence](../docs/reviews/2026-10-17/continuity-offline-delivery.md) and [runtime acceptance](../docs/reviews/2026-10-17/continuity-runtime-candidate.md).
+The current default pair is published in [v0.1.17.1-RC1](https://github.com/skyelan1999/aide/releases/tag/v0.1.17.1-RC1), with common runtime source `21c7f4e47f9c468dd71e42a3ee2596276c1dc3f1b7a6543c0d55b062e5df3955` and build commit `3cdbe1a6d6264284346cfb6ef4c8dc6146a4a4f7`. All 7 public assets match local size and SHA256. Both image archives imported locally; ARM64 native and AMD64 emulated health, authentication, version, CAD and runtime assets passed. Native Windows and another device receiving/importing remain unverified. Full ZIP assets support first-run and in-app upgrades; offline tar archives support unpack-and-start. The source ZIP is the immutable tagged source and retains the preceding verified fallback manifest; current main promotes the new public pair only after upload verification. See [delivery evidence](../docs/reviews/2026-10-19/local-first-release-fallback.md) and [structured proof](../docs/reviews/2026-10-19/local-first-release-proof.json).
 
 ## 2026-10-16 Mermaid 黑色渲染修复候选
 
