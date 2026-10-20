@@ -75,7 +75,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "仅源码待推送；无当前passing full收据，发布镜像与部署不执行",
+      "summary": "源码4a63ee0333c3f76b0b9e0e594f62707001137312已推送origin/main；无passing full且保留10个原有未跟踪账本，Release/镜像/部署阻塞。",
       "evidence": [
         "docs/reviews/2026-10-20-reminder-schedules/release-check.txt"
       ]
@@ -83,5 +83,11 @@
   },
   "release_authorization": "历史用户：那你直接推吧，我去别的环境测试；直接合并到main。仅源码推送，发布受现有门禁约束。",
   "rollback": "git revert 本任务源码提交；新建执行提醒回滚前取消，旧版本忽略execution但保留普通提醒。",
-  "handoff": "功能已完成，准备源码推main。一次执行，20秒扫描，服务在线且原工作区可用；忙碌等待，审批与小秘解锁保留。发布门禁未通过，不更新运行镜像。"
+  "handoff": "已完成并推送main：消息→提醒→到点操作→执行任务，选小秘或填写会话编号；单次执行、20秒扫描、原工作区在线、忙碌等待，保留审批和解锁。源码SHA 4a63ee0333c3f76b0b9e0e594f62707001137312。范围内race及实际工作台浏览器PASS，quick135/137；未发布运行镜像或部署，测试服务/浏览器已关闭，10个既有未跟踪账本未动。",
+  "source_commit": "4a63ee0333c3f76b0b9e0e594f62707001137312",
+  "source_push": {
+    "status": "pass",
+    "remote": "origin/main",
+    "summary": "git push origin main: 7b8dd80a..4a63ee03 main -> main"
+  }
 }
