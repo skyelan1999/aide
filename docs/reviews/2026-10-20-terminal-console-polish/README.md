@@ -12,7 +12,7 @@
 - `npm run build`：离线HTML 352485字节，宿主与独立插件对应文件字节一致。
 - `go build -o /workspace/.aide-cloud/bin/aide-terminal-console ./cmd/aide`：原生构建通过，包含新的宿主资源。
 - `node --check`：修改的JS与浏览器脚本通过。`git diff --check`通过。
-- 宿主bridge/client测试14/14通过，见 `bridge-tests.log`。
+- 宿主bridge/client测试14/14通过，见 `bridge-tests.txt`。
 - `test/browser-workbench.cjs`：Chromium 215次真实调用、1次续期，本地PTY、SSH确认与密码、会话隔离、后台驻留、重载恢复、搜索筛选、日志导出、结束/删除全部通过。
 - `test/browser-layout.cjs`：独立标签页从(0,0)铺满1440px窗口、桌面详情数据、专业/经典明暗四主题、选中对比度、1024/768/390px、手机搜索切换与Escape通过。
 - `scripts/plugin-workbench-tab.browser.cjs`：两个入口、独立页鉴权存储、原页关闭后输入、刷新恢复、手机布局和日志下载通过。

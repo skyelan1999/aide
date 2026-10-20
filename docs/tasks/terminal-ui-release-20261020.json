@@ -32,7 +32,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "完成v1.1.1版本、说明、离线运行包与对应宿主代码；不覆盖已发布归档。",
+      "summary": "已提交并推送宿主4904bae0与独立插件005b416，Terminal v1.1.1源码、运行包与tag远端可追溯。",
       "evidence": [
         "plugins/terminal/manifest.json",
         "docs/reviews/2026-10-20-terminal-ui-release/plugin-verification.json"
@@ -63,14 +63,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "正在推送源码与发布插件预发布；宿主正式门禁不通过。",
+      "status": "blocked",
+      "summary": "Terminal v1.1.1预发布已公开，源码/main/tag与匿名下载ZIP核验一致。宿主PR #7已推送并更新说明，正式宿主Release受full的5项失败阻塞，未合并main或发布镜像；稳定市场仍1.0.0。",
       "evidence": [
-        "docs/reviews/2026-10-20-terminal-ui-release/full-gate.json"
+        "docs/reviews/2026-10-20-terminal-ui-release/published.json",
+        "docs/reviews/2026-10-20-terminal-ui-release/full-gate.json",
+        "docs/reviews/2026-10-20-terminal-ui-release/release-gate.txt"
       ]
     }
   },
   "release_authorization": "用户：push release（本轮）",
   "rollback": "保留v1.0.0/v1.1.0归档与tag；新版退回旧插件前备份工作区.aide/terminal-workbench。宿主PR不合并不替换生产。",
-  "handoff": ""
+  "handoff": "插件预发布已完成：https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.1；源码005b416c0ff26f28712185acf00ac41f5e9a2123，ZIP104320字节，sha256=f70d53d819444dd5b16f5a87f99f70e500241e464dfdd1d05976a1feecd319cf；宿主PR#7推送完毕，正式发行被5项full失败阻塞。无生产替换。"
 }

@@ -1,0 +1,22 @@
+✔ client accepts only parent handshake for its plugin, calls declared tools, and preserves pending status (5.169986ms)
+✔ scope revocation rejects outstanding call without issuing a retry (2.255552ms)
+✔ workbench uses sandbox without same-origin or credentials and close unloads the frame (2.737406ms)
+✔ lock, scope changes, disabled plugins and Escape close the active workbench (6.155964ms)
+✔ workbench refuses arbitrary routes returned by a broken API (6.944077ms)
+✔ MessagePort only connects to the active frame and never carries parent instance/auth (6.895077ms)
+✔ closing a workbench drops late tool replies and proposal approval is absent from the port (2.235862ms)
+✔ workbench export requires actual active frame and a separate parent save click; cleanup revokes data (1.630951ms)
+✔ workbench export rejects traversal, foreign plugin, oversized data and pending overwrite; revocation prevents save (2.677748ms)
+✔ theme follows host only after a bound frame requests it and stops on close (2.647918ms)
+✔ idle renewal supports more than 128 calls without exposing rotated keys or retrying tools (8.003023ms)
+✔ daemon detach closes the view immediately and drains one dispatched call; revocation still aborts (2.498886ms)
+✔ new-tab deep links contain only a validated plugin id and isolate the opener (2.270999ms)
+✔ header new-tab action preserves the current frame and obeys scope revocation (1.08292ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75.553711
