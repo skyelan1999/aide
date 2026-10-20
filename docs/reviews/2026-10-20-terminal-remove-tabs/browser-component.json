@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "scope": "Actual host controller and CSS in Chromium with fixture page and mocked entry API. Does not validate a running Aide host.",
+  "checks": [
+    {
+      "width": 1440,
+      "theme": "dark",
+      "embeddedOpenClose": true,
+      "noNewTabButton": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "embeddedOpenClose": true,
+      "noNewTabButton": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "embeddedOpenClose": true,
+      "noNewTabButton": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "embeddedOpenClose": true,
+      "noNewTabButton": true
+    }
+  ],
+  "integrationUI": "NOT_RUN: start.command activation blocked by recorded certificate and disk prerequisites"
+}

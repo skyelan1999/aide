@@ -1,0 +1,14 @@
+{
+  "status": "PASS focused checks; integration UI NOT_RUN",
+  "version": "1.1.2",
+  "zipSHA256": "b693388208ead34aab7d3192b6c210424f5fd5f55f2e79f0df67b073638da1de",
+  "zipBytes": 104365,
+  "pluginTests": "6 PASS real PTY/OpenSSH",
+  "hostControllerTests": "13 PASS plus lock and bootstrap recovery",
+  "browserComponent": "PASS Chromium actual controller/CSS fixture: 1440/390px dark/light, embedded open/close, no new-tab button",
+  "integrationUI": "NOT_RUN: start.command activation remains blocked by container certificate trust and disk prerequisites",
+  "hostBranch": "main",
+  "compatibility": "requires terminal-workbench-v1, bridge.renew and daemon.detach; update host main to remove host-owned buttons; plugin ZIP alone cannot change host UI",
+  "runtimeChanges": "version and README only; session runtime unchanged",
+  "rollback": "Reinstall prior immutable ZIP; host removal can be reverted separately. Plugin upgrade stops live connections, retains workspace logs and records."
+}

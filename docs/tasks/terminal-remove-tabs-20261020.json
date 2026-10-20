@@ -1,0 +1,69 @@
+{
+  "id": "terminal-remove-tabs-20261020",
+  "request": "插件的新标签页我觉得不需要了，删了重新push release 登记即可",
+  "baseline": "d2c3b5bd17ea6ed96c70e03ce1b3266d93047d48",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Remove both plugin new-tab buttons and URL auto-open logic; retain embedded workbench and background lifecycle",
+    "Push host main, publish Terminal 1.1.2 prerelease and verify live market package"
+  ],
+  "scope": [
+    "internal/server/web plugin workbench UI",
+    "related regression tests and protocol docs",
+    "plugins/terminal mirror and independent release",
+    "terminal market listing"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests removal, push, release and listing",
+      "evidence": [
+        "request"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Remove host-only new-tab navigation; keep bridge/pagehide/daemon lifecycle",
+      "evidence": [
+        "internal/server/web/plugin-workbench.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed plugin card/header new-tab actions, aliases, auto-open branches and standalone styles; retained pagehide and daemon detach.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-tabs/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "Focused checks and real Chromium component PASS; full running-host UI NOT_RUN due existing start.command activation prerequisites. No formal Aide image release claimed.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-tabs/browser-component.json",
+        "docs/reviews/2026-10-20-terminal-remove-tabs/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated protocol, Terminal README and 1.1.2 changelog; documented host update requirement.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-tabs/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff; preserved ten preexisting unrelated task files.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-tabs/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User-authorized host source push and Terminal prerelease/market update; Aide formal image release remains blocked.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "插件的新标签页我觉得不需要了，删了重新push release 登记即可",
+  "rollback": "Reinstall prior immutable ZIP; host removal can be reverted separately. Plugin upgrade stops live connections, retains workspace logs and records.",
+  "handoff": "Terminal package and host UI are separate artifacts; install corresponding host main build. No existing services replaced."
+}

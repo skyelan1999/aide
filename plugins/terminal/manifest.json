@@ -2,7 +2,7 @@
   "id": "terminal",
   "name": "设备终端",
   "description": "常驻本地/SSH 设备调试工作台、独立会话与轮转日志",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "aide",
   "main": "index.js",
   "enabled": true,

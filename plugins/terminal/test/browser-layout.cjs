@@ -11,8 +11,8 @@ async function until(fn,label){for(let i=0;i<250;i++){if(await fn())return;await
  try{
   const ctx=await browser.newContext({ignoreHTTPSErrors:true,locale:'zh-CN',viewport:{width:1440,height:960}});page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base,{waitUntil:'domcontentloaded'});await page.evaluate(token=>{localStorage.setItem('aide-token',token);localStorage.setItem('aide.ui',JSON.stringify({version:1,theme:'dark',palette:'blue',language:'zh-CN',startupAnimation:'off',motion:'reduced'}));},fs.readFileSync(path.join(data,'auth/access-token'),'utf8').trim());
-  await page.goto(base+'/?plugin-workbench=terminal',{waitUntil:'domcontentloaded'});frame=page.frameLocator('iframe[title="设备终端工作台"]');await until(()=>frame.locator('#new-top').isEnabled(),'ready');
-  const bounds=await page.locator('.plugin-workbench-standalone').boundingBox();assert(bounds&&bounds.x===0&&bounds.y===0&&bounds.width===1440,'standalone fills viewport');
+  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#plugins-toggle').click();await page.getByRole('button',{name:'打开工作台',exact:true}).last().click();frame=page.frameLocator('iframe[title="设备终端工作台"]');await until(()=>frame.locator('#new-top').isEnabled(),'ready');
+  assert.equal(await page.getByRole('button',{name:'在新标签页打开',exact:true}).count(),0,'plugin new-tab buttons removed');
   await frame.locator('#new-top').click();await frame.locator('input[name=name]').fill('本地开发环境');await frame.locator('#create-submit').click();await until(()=>frame.locator('#create-dialog').evaluate(d=>!d.open),'create');id=await frame.locator('.session.active').getAttribute('data-session-id');
   await frame.locator('.terminal-pane:not([hidden]) .xterm-helper-textarea').focus();await page.keyboard.type("printf '\\n'; uname -srm; printf '\\n'; python3 --version; printf '\\n'; ls -lh plugins/terminal/");await page.keyboard.press('Enter');
   await until(async()=>/manifest.json/.test(await frame.locator('.terminal-pane:not([hidden]) .xterm-accessibility-tree').innerText()),'real shell output');

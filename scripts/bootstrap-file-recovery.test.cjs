@@ -47,9 +47,9 @@ const response=(status,data)=>({ok:status===200,status,headers:{get:()=>null},js
     assert.equal(f.state.fileEntries[0].path,'stale.md');assert.equal(f.state.fileListError,undefined);assert.equal(f.nodes['login-dialog'].open,false);
   }
   const init=app.slice(app.indexOf('async function initialize()'),app.indexOf('\ninitialize()'));
-  const f=fixture(async()=>response(400,{error:'source unavailable'}));let events=0,choices=0,workbench=0;
-  Object.assign(f.context,{openRequestedWorkbench:async()=>{assert.equal(events,1);assert.equal(f.context.recoveryReady,true);workbench++;},syncPanelButtons(){},refreshConfig:async()=>{},window:{},loadSessions:async()=>{},loadProfiles:async()=>{},loadWorkspaceConfig:async()=>{},loadSourcesList:async()=>{},recoveryReady:false,refreshChatDraftChoices(){choices++;},setupGlobalEvents(){events++;}});
+  const f=fixture(async()=>response(400,{error:'source unavailable'}));let events=0,choices=0;
+  Object.assign(f.context,{syncPanelButtons(){},refreshConfig:async()=>{},window:{},loadSessions:async()=>{},loadProfiles:async()=>{},loadWorkspaceConfig:async()=>{},loadSourcesList:async()=>{},recoveryReady:false,refreshChatDraftChoices(){choices++;},setupGlobalEvents(){events++;}});
   vm.runInContext(init,f.context);await f.context.initialize();
-  assert.equal(workbench,1,'deep link opens after initialization');assert.equal(events,1,'source error must not stop global event installation');assert.equal(choices,1);assert.equal(f.context.recoveryReady,true);
+  assert.equal(events,1,'source error must not stop global event installation');assert.equal(choices,1);assert.equal(f.context.recoveryReady,true);
   console.log('bootstrap file recovery: PASS (source failure, auth, retry, stale context, initialization)');
 })().catch(error=>{console.error(error);process.exitCode=1;});

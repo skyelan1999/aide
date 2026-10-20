@@ -71,27 +71,6 @@ test('daemon detach closes the view immediately and drains one dispatched call; 
 });
 
 
-test('new-tab deep links contain only a validated plugin id and isolate the opener',async()=>{
- const f=fixture();f.controller.openInTab(plugin,f.services);
- assert.deepEqual(f.opened,[['/?plugin-workbench=test','_blank','noopener,noreferrer']]);
- assert.equal(f.controller.requestedPlugin('?plugin-workbench=terminal'),'terminal');assert.equal(f.controller.requestedPlugin('?pluginWorkbench=terminal'),'terminal');
- for(const query of ['?plugin-workbench=../escape','?plugin-workbench=https://evil.example','?plugin-workbench=a&plugin-workbench=b','?plugin-workbench=a&pluginWorkbench=b','?pluginWorkbench=a&pluginWorkbench=b','?token=secret','?plugin-workbench='+ 'a'.repeat(65)])assert.equal(f.controller.requestedPlugin(query),'');
- for(const invalid of [{...plugin,id:'../bad'},{...plugin,enabled:false},{...plugin,error:'failed'},{...plugin,workbench:{protocol:2}}])f.controller.openInTab(invalid,f.services);
- assert.equal(f.opened.length,1);f.block();f.controller.openInTab(plugin,f.services);assert.equal(f.opened.length,1);
-});
-test('header new-tab action preserves the current frame and obeys scope revocation',async()=>{
- const f=fixture();await f.controller.open(plugin,f.services);const tab=f.nodes.find(n=>n.tag==='button'&&n.textContent==='在新标签页打开'),frame=f.nodes.find(n=>n.tag==='iframe');
- tab.onclick();assert.equal(f.nodes.filter(n=>n.tag==='a').length,1);assert.equal(frame.src,'/plugin-workbench/'+'a'.repeat(64));
- f.changeScope();tab.onclick();assert.equal(f.nodes.filter(n=>n.tag==='a').length,1);f.controller.close();
-});
 
-test('new tab route contains only a validated plugin id and isolates its opener',()=>{
- const f=fixture();f.controller.openTab({...plugin,id:'compare'},f.services);
- const a=f.nodes.find(n=>n.tag==='a');assert.equal(a.href,'/?pluginWorkbench=compare');assert.equal(a.target,'_blank');assert.equal(a.rel,'noopener noreferrer');assert(a.clicked);assert(a.removed);
- assert.equal(f.controller.route('?pluginWorkbench=compare'),'compare');
- for(const query of ['?pluginWorkbench=https://evil.invalid','?pluginWorkbench=../compare','?pluginWorkbench=','?pluginWorkbench='+ 'a'.repeat(65),''])assert.equal(f.controller.route(query),null);
- for(const stop of ['block','disable']){const g=fixture();if(stop==='block')g.block();g.controller.openTab({...plugin,enabled:stop!=='disable'},g.services);assert.equal(g.nodes.filter(n=>n.tag==='a').length,0);}
- const g=fixture();g.controller.openTab({...plugin,id:'../other'},g.services);assert.equal(g.nodes.filter(n=>n.tag==='a').length,0);
-});
 
 test('page exit revokes its own bridge and unloads the sandbox',async()=>{const f=fixture(bridgeResponse);const calls=[];const api=f.services.api;f.services.api=async(url,options)=>{calls.push({url,options});return api(url,options);};await f.controller.open(bridgePlugin,f.services);f.events.pagehide();assert.equal(f.nodes.find(n=>n.tag==='iframe').src,'about:blank');const deleted=calls.find(c=>c.url.endsWith('/'+ 'a'.repeat(64)));assert.equal(deleted.options.method,'DELETE');assert.equal(deleted.options.keepalive,true);});
