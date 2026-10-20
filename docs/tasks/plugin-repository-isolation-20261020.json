@@ -65,16 +65,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Office release and live market change verified; source isolation ready for main push. No formal Aide version/image release.",
+      "status": "pass",
+      "summary": "Source isolation c14f1af0 integrated concurrent main 43db3ba0 via merge 8292d189 and pushed main after native/source/workbench regression; Office v1.1.0 Release and live market Office/Propeller update verified. No formal Aide version/image release.",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.1.0",
-        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39367559652"
+        "docs/reviews/2026-10-20-plugin-repository-isolation/audit.json",
+        "https://github.com/skyelan1999/aide/commit/8292d1893a4c935f4c9fbc0103254c42c651dea4",
+        "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.1.0"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "Revert source isolation commit after backing up runtime plugins; never overwrite user runtime registry or upgraded files. Revert market commit 4fca035 for catalog rollback. No data migration or service restart performed.",
-  "handoff": "Office repo/release populated; Propeller absent from default bundle and market, installed files retained. plugins ignored except testdata, bundled-plugins used for reproducible builds/tests, source checkout seeds missing registry once. Existing clones need one-time documented backup/stash/pull/restore. Native and Git integration checks pass; Docker activation remains unverified. Pending main source push.",
+  "handoff": "Office repo/release populated; Propeller absent from default bundle and market, installed files retained. plugins ignored except testdata, bundled-plugins used for reproducible builds/tests, source checkout seeds missing registry once. Existing clones need one-time documented backup/stash/pull/restore. Native and Git integration checks pass; Docker activation remains unverified. Main source push complete, preserving concurrent plugin source comparison feature; merged regressions passed.",
   "clarification": "User: Office好了 Propeller Aero不要了. Office repo exists empty; populate/release it; retire Propeller default/catalog distribution; isolate runtime plugins preserving installed data."
 }

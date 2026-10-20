@@ -179,6 +179,10 @@
     "sourceFingerprintCorrection": "Initial fixture omitted bundled-plugins; corrected fixture and 2 tests passed",
     "cleanSnapshotCorrection": "First clean snapshot found 3 tests using old runtime fixture path; corrected to bundled-plugins; full targeted clean snapshot rerun passed",
     "finalState": "18 independent local plugin repositories plus 4 legacy communication plugins consolidated into Terminal; Propeller removed from shipped defaults and public catalog; runtime plugins ignored/untracked except daemon testdata",
-    "migration": "One-time existing clone backup/stash/pull/restore required; tested with two real Git repositories and documented in docs/plugin-checkout-migration.md"
+    "migration": "One-time existing clone backup/stash/pull/restore required; tested with two real Git repositories and documented in docs/plugin-checkout-migration.md",
+    "sourceCommit": "c14f1af03090fd987a3d04529dd0b48549d867a5",
+    "remoteIntegration": "PASS: concurrent remote 43db3ba0 merged without conflicts as 8292d1893a4c935f4c9fbc0103254c42c651dea4; merged source pushed main",
+    "mergedVerification": "PASS: checkout seed + official update defaults + four plugin source comparison native race tests; 13 plugin-workbench JS tests; real Git migration/pull regression",
+    "publication": "PASS source main push, Office v1.1.0 Release and live market deployment; no Aide version bump or image publication"
   }
 }
