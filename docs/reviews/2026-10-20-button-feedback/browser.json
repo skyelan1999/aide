@@ -1,0 +1,132 @@
+{
+  "status": "PASS",
+  "timing": "feedbackMs measures click to first animation frame with pending indicator, not network completion or a hardware-independent latency bound",
+  "scope": "Actual embedded Aide UI in disposable Go testApp; API requests held for 150ms and then continued against real test backend or failed deliberately. No paid models or user data.",
+  "checks": [
+    {
+      "selector": "#refresh-sessions",
+      "endpoint": "sessions",
+      "method": "GET",
+      "result": "success recovered",
+      "feedbackMs": 3.9000000059604645,
+      "requests": 2
+    },
+    {
+      "selector": "#assistant-entry",
+      "endpoint": "sessions/22c75e15f7b3882d6307aa11a83f72e9/unlock-assistant",
+      "method": "POST",
+      "result": "success recovered",
+      "feedbackMs": 7.9000000059604645,
+      "requests": 1
+    },
+    {
+      "selector": "#workspace-config-button",
+      "endpoint": "workspace-config",
+      "method": "GET",
+      "result": "success recovered",
+      "feedbackMs": 4.0999999940395355,
+      "requests": 1
+    },
+    {
+      "selector": "#workspace-config-button",
+      "endpoint": "workspace-config",
+      "method": "GET",
+      "result": "failure recovered",
+      "feedbackMs": 3.4000000059604645,
+      "requests": 1
+    },
+    {
+      "selector": "#refresh-files",
+      "endpoint": "files",
+      "method": "GET",
+      "result": "success recovered",
+      "feedbackMs": 5.299999997019768,
+      "requests": 1
+    },
+    {
+      "selector": ".plugin-card .plugin-toggle",
+      "endpoint": "plugins/feedback-fixture",
+      "method": "PUT",
+      "result": "success recovered",
+      "feedbackMs": 4.800000011920929,
+      "requests": 1
+    },
+    {
+      "selector": "#plugin-settings-form .primary",
+      "endpoint": "plugins/feedback-fixture/settings",
+      "method": "PUT",
+      "result": "success recovered",
+      "feedbackMs": 55,
+      "requests": 1
+    },
+    {
+      "selector": "#reminder-save",
+      "endpoint": "reminders",
+      "method": "POST",
+      "result": "success recovered",
+      "feedbackMs": 9.399999991059303,
+      "requests": 1
+    },
+    {
+      "selector": "#refresh-files",
+      "endpoint": "files",
+      "method": "GET",
+      "result": "failure recovered",
+      "feedbackMs": 8.099999994039536,
+      "requests": 1
+    },
+    {
+      "selector": "#brand-button",
+      "result": "narrow sidebar settings opens, closes and reopens while schema is pending; one shared request"
+    },
+    {
+      "selector": "#refresh-sessions",
+      "endpoint": "sessions",
+      "method": "GET",
+      "result": "success recovered",
+      "feedbackMs": 2.7000000029802322,
+      "requests": 2,
+      "appearance": {
+        "palette": "blue",
+        "theme": "dark"
+      }
+    },
+    {
+      "selector": "#refresh-sessions",
+      "endpoint": "sessions",
+      "method": "GET",
+      "result": "success recovered",
+      "feedbackMs": 10,
+      "requests": 2,
+      "appearance": {
+        "palette": "blue",
+        "theme": "light"
+      }
+    },
+    {
+      "selector": "#refresh-sessions",
+      "endpoint": "sessions",
+      "method": "GET",
+      "result": "success recovered",
+      "feedbackMs": 10.799999997019768,
+      "requests": 2,
+      "appearance": {
+        "palette": "comfort",
+        "theme": "dark"
+      }
+    },
+    {
+      "selector": "#refresh-sessions",
+      "endpoint": "sessions",
+      "method": "GET",
+      "result": "success recovered",
+      "feedbackMs": 7,
+      "requests": 2,
+      "appearance": {
+        "palette": "comfort",
+        "theme": "light"
+      }
+    }
+  ],
+  "errors": []
+}

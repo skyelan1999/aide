@@ -1,6 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const app=fs.readFileSync('internal/server/web/app.js','utf8');
-const source=app.slice(app.indexOf('async function api(path,'),app.indexOf('\nfunction action(fn)',app.indexOf('async function api(path,')));
+const start=app.indexOf('async function api(path,'),end=app.indexOf('\nfunction action(',start);
+assert.ok(start>=0&&end>start,'extract only the API helper, independently of action options');
+const source=app.slice(start,end);
 (async()=>{
  for(const path of ['/auth/verify','/account/verify-password','/webauthn/assertion/start','/sessions/assistant-id/unlock-assistant','/sessions']){
   for(const invalidToken of [false,true]){

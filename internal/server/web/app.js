@@ -293,9 +293,9 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
         done(pw);
       } catch (e) { err.textContent = t('密码错误'); input.value = ''; input.focus(); }
     };
-    ok.onclick = () => action(doPassword)();
+    ok.onclick = action(doPassword);
     input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); action(doPassword)(); }
+      if (e.key === 'Enter') { e.preventDefault(); ok.click(); }
       else if (e.key === 'Escape') { e.preventDefault(); done(null); }
     });
     const hasCred = !!(state.config && state.config.hasPlatformCredential);
@@ -349,7 +349,7 @@ async function api(path, options = {}) {
   }
   return data;
 }
-function action(fn) { return async (...args) => { try { await fn(...args); } catch (e) { toast(e.message); } }; }
+function action(fn, options) { return window.AideAsyncAction.wrap(fn, e => toast(e.message), options); }
 function setMode(mode) {
   state.mode = mode;
   document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
@@ -775,18 +775,18 @@ function setupGlobalEvents() {
 
 /* ── 小秘系统会话密码门（#30）：点击小秘会话先验证账户密码，通过后才进入；锁屏后需重新验证 ── */
 function openAssistantGate(id, title) {
-  action(async () => {
+  return action(async () => {
     // 后端的内存锁才是授权依据。localStorage 只作体验缓存：服务重启/锁屏后
     // 它可能过期，不能因此跳过身份验证框。
     try {
       const r = await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: '' }) });
-      if (r && (r.noPassword || r.unlocked)) { localStorage.setItem('assistantUnlocked_' + id, '1'); selectSession(id); return; }
+      if (r && (r.noPassword || r.unlocked)) { localStorage.setItem('assistantUnlocked_' + id, '1'); return selectSession(id); }
     } catch (_) {}
     // 需要密码：弹身份验证框
     const res = await requestMasterAuth({ reason: t('进入小秘会话需要验证身份'), assistantSessionId: id });
     if (res === null) return; // 取消
     localStorage.setItem('assistantUnlocked_' + id, '1');
-    selectSession(id);
+    return selectSession(id);
   })();
 }
 // 锁屏时清空小秘会话内存解锁态
@@ -1517,10 +1517,10 @@ async function stopRunById(runId) {
         const head = el('div', 'reminder-row-head'); head.append(el('strong', 'reminder-title', item.title));
         const ops = el('div', 'reminder-row-actions');
         if (item.status === 'pending') {
-          const complete = el('button', 'quiet', t('完成')); complete.type = 'button'; complete.onclick = async () => { await api('/reminders/' + encodeURIComponent(item.id) + '/complete', {method:'POST', body:'{}'}); await loadList(); refreshBadge(); }; ops.append(complete);
+          const complete = el('button', 'quiet', t('完成')); complete.type = 'button'; complete.onclick = action(async () => { await api('/reminders/' + encodeURIComponent(item.id) + '/complete', {method:'POST', body:'{}'}); await loadList(); refreshBadge(); }); ops.append(complete);
           const edit = el('button', 'quiet', t('编辑')); edit.type = 'button'; edit.onclick = () => { const due = item.dueAt ? new Date(item.dueAt) : null; editingID=item.id; $('reminder-title').value=item.title; $('reminder-description').value=item.description||''; $('reminder-due').value=due&&!Number.isNaN(due.valueOf())?new Date(due.valueOf()-due.getTimezoneOffset()*60000).toISOString().slice(0,16):''; $('reminder-priority').value=item.priority; $('reminder-area').value=item.area; $('reminder-notify').value=item.notify; $('reminder-form-title').textContent=t('编辑提醒'); $('reminder-save').textContent=t('保存修改'); $('reminder-edit-cancel').classList.remove('hidden'); showCreateForm(true); }; ops.append(edit);
         }
-        const remove = el('button', 'quiet', t('删除')); remove.type = 'button'; remove.onclick = async () => { if (!window.confirm(t('确定删除此提醒吗？'))) return; await api('/reminders/' + encodeURIComponent(item.id), {method:'DELETE'}); await loadList(); refreshBadge(); }; ops.append(remove);
+        const remove = el('button', 'quiet', t('删除')); remove.type = 'button'; remove.onclick = action(async () => { if (!window.confirm(t('确定删除此提醒吗？'))) return; await api('/reminders/' + encodeURIComponent(item.id), {method:'DELETE'}); await loadList(); refreshBadge(); }); ops.append(remove);
         head.append(ops); card.append(head);
         if (item.description) card.append(el('p', 'reminder-description', item.description));
         const tags = el('div', 'reminder-tags');
@@ -1560,7 +1560,7 @@ async function stopRunById(runId) {
   }
   button.onclick = () => openCenter(false); $('reminder-center-close').onclick = () => { closeSidePanels(); button.focus(); };
   $('reminder-create-toggle').onclick = () => { if (form.classList.contains('open')) { resetForm(); hideCreateForm(); } else { resetForm(); showCreateForm(true); } };
-  $('reminder-refresh').onclick = () => { loadList(); refreshBadge(); };
+  $('reminder-refresh').onclick = action(async () => { await loadList(); refreshBadge(); });
   $('reminder-search').oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadList, 180); };
   const syncReminderFilters = () => center.querySelectorAll('.reminder-filter').forEach(b => {
     const selected=filterStatus==='completed'?b.dataset.reminderStatus==='completed':b.dataset.reminderArea===filterArea;
@@ -1570,13 +1570,13 @@ async function stopRunById(runId) {
   center.querySelector('[data-reminder-status="completed"]').onclick = () => { filterStatus=filterStatus==='completed'?'pending':'completed'; filterArea='all'; syncReminderFilters(); loadList(); };
   syncReminderFilters();
   $('reminder-edit-cancel').onclick = () => { resetForm(); hideCreateForm(); };
-  form.onsubmit = async event => {
+  form.onsubmit = action(async event => {
     event.preventDefault();
     const due = $('reminder-due').value;
     const body = {title:$('reminder-title').value, description:$('reminder-description').value, dueAt:due?new Date(due).toISOString():'', priority:$('reminder-priority').value, area:$('reminder-area').value, notify:$('reminder-notify').value};
     try { await api(editingID?'/reminders/'+encodeURIComponent(editingID):'/reminders', {method:editingID?'PUT':'POST', body:JSON.stringify(body)}); toast(t(editingID?'提醒已更新':'提醒已创建')); resetForm(); hideCreateForm(); await loadList(); refreshBadge(); }
     catch (e) { toast(e.message); }
-  };
+  });
   const closeAlert = () => { $('reminder-alert').close(); popupBusy=false; };
   $('reminder-alert-close').onclick = closeAlert; $('reminder-alert-done').onclick = closeAlert;
   $('reminder-alert-open').onclick = () => { closeAlert(); messageUI?.selectTab('reminders'); openCenter(true); };
@@ -3282,7 +3282,7 @@ function applyReferenceTerminology() {
 applyReferenceTerminology();
 // 点击 dialog 遮罩关闭弹窗（事件委托，覆盖所有静态及动态 dialog）
 document.addEventListener('click', e => { if (e.target.tagName === 'DIALOG' && e.target.open) e.target.close(); });
-document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { rememberFileLocation(); state.root = b.dataset.root; if (state.root === 'context' && !state.source) state.source = defaultContextSourceID(); restoreFileLocation(); document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
+document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { rememberFileLocation(); state.root = b.dataset.root; if (state.root === 'context' && !state.source) state.source = defaultContextSourceID(); restoreFileLocation(); document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }, {feedback:false}));
 function syncPanelButtons() {
   const plugins = document.body.classList.contains('plugins-mode');
   const reminders = document.body.classList.contains('reminders-mode');
@@ -5234,7 +5234,7 @@ function renderSystemLogsControl() {
     } catch (error) { status.textContent = t('日志加载失败：{0}', error.message); }
     finally { loading = false; refresh.disabled = false; }
   };
-  refresh.onclick = () => action(load)();
+  refresh.onclick = action(load);
   filter.onchange = () => action(load)();
   startInput.onchange = () => action(load)();
   endInput.onchange = () => action(load)();
@@ -5415,7 +5415,8 @@ function closeSettingsSheet() {
 }
 function bindSettingsTrigger(button) {
   if (!button) return;
-  button.onclick = action(async () => { settingsPanel.trigger = button; await openSettingsSheet(); });
+  // Navigation already paints loading and owns request generations; allow close/reopen.
+  button.onclick = action(async () => { settingsPanel.trigger = button; await openSettingsSheet(); }, {feedback:false});
 }
 bindSettingsTrigger($('brand-button'));
 bindSettingsTrigger($('brand-mini'));
@@ -5766,14 +5767,14 @@ function closeStrategyMenu() {
   leaveUISurface($('strategy-menu'), () => $('strategy-menu').classList.add('hidden'));
   $('strategy-button').setAttribute('aria-expanded', 'false');
 }
-$('strategy-button').onclick = async () => {
+$('strategy-button').onclick = action(async () => {
   if (!$('strategy-menu').classList.contains('hidden')) { closeStrategyMenu(); return; }
   try {
     if (!state.profiles) await loadProfiles();
     if (document.body.classList.contains('assistant-mode')) state.xiaomiModelSettings = await api('/xiaomi/model');
     refreshStrategyUI(); openStrategyMenu();
   } catch (error) { toast(error.message); }
-};
+});
 document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
 /* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
@@ -6827,7 +6828,7 @@ function renderPluginList() {
     head.append(settings);
     const del = el('button', 'plugin-delete', '－');
     del.type = 'button'; del.title = t("删除插件");
-    del.onclick = () => { if (confirm(t("删除插件「{0}」？", trPlugin(p.name)))) action(async () => { await api('/plugins/' + encodeURIComponent(p.id), { method: 'DELETE' }); await loadPluginsPanel(); toast(t("插件已删除")); })(); };
+    del.onclick = action(async () => { if (confirm(t("删除插件「{0}」？", trPlugin(p.name)))) { await api('/plugins/' + encodeURIComponent(p.id), { method: 'DELETE' }); await loadPluginsPanel(); toast(t("插件已删除")); } });
     head.append(del);
     card.append(head);
     if (p.description) card.append(el('p', 'plugin-desc', trPlugin(p.description)));
@@ -6842,7 +6843,7 @@ function renderPluginList() {
     });
     if(p.workbench?.protocol===1){
       const launch=el('button','quiet',t('打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
-      launch.onclick=()=>window.AidePluginWorkbench.open(p,pluginWorkbenchServices());
+      launch.onclick=action(()=>window.AidePluginWorkbench.open(p,pluginWorkbenchServices()));
       foot.append(launch);
     }
     foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("启用") : t("停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
@@ -7154,7 +7155,7 @@ function closeWorkspaceSheet() {
   $('workspace-sheet').classList.remove('open');
   $('settings-backdrop').classList.remove('open');
 }
-$('workspace-config-button').onclick = () => { action(async () => { await loadWorkspaceConfig(); openWorkspaceSheet(); })(); };
+$('workspace-config-button').onclick = action(async () => { await loadWorkspaceConfig(); openWorkspaceSheet(); });
 $('workspace-sheet-close').onclick = closeWorkspaceSheet;
 $('ws-save').onclick = action(async () => { await saveWorkspaceConfig(); closeWorkspaceSheet(); toast(t("工作空间配置已保存")); });
 $('ws-test').onclick = action(async () => {
@@ -7296,7 +7297,7 @@ async function loadBrowseDir() {
   dirs.forEach(d => {
     const row = el('div', 'ws-browse-dir-row');
     const open = el('button', 'ws-browse-item', '▱ ' + d.name);
-    open.type = 'button'; open.onclick = () => { b.dir = d.path; action(loadBrowseDir)(); };
+    open.type = 'button'; open.onclick = action(async () => { b.dir = d.path; await loadBrowseDir(); });
     const rename = el('button', 'quiet ws-browse-rename', t('重命名'));
     rename.type = 'button'; rename.title = t('重命名文件夹');
     rename.onclick = () => renameBrowseDirectory(d);
@@ -7356,11 +7357,11 @@ function setupBrowseDirectoryActions() {
   if ($('ws-browse-new')) return;
   const create = el('button', 'quiet', t('新建文件夹'));
   create.id = 'ws-browse-new'; create.type = 'button';
-  create.onclick = () => action(createBrowseDirectory)();
+  create.onclick = action(createBrowseDirectory);
   actions.prepend(create);
 }
 setupBrowseDirectoryActions();
-$('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = browseParent(b.dir, b.remote); action(loadBrowseDir)(); };
+$('ws-browse-parent').onclick = action(async () => { const b = wsState.browse; b.dir = browseParent(b.dir, b.remote); await loadBrowseDir(); });
 $('ws-browse-select').onclick = () => { const b = wsState.browse; if(b.indexMode){b.indexTarget.value=b.dir==='.'?'':b.dir;$('ws-browse-dialog').close();return;} $(b.field).value = b.remote ? (b.dir === '.' ? '' : b.dir) : b.workspace ? (b.dir === '.' ? '' : b.dir) : b.field === 'ws-key-refpath' ? ('/local/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir); $('ws-browse-dialog').close(); };
 
 /* ── 引用多来源（FR-82~84） ── */
@@ -7413,7 +7414,7 @@ function renderSourceChips() {
     main.type = 'button';
     main.title = t(src.rw ? '{0} · 读写' : '{0} · 只读', (src.type ? src.type + ' · ' : '') + (loc || displayName));
     main.setAttribute('aria-pressed', state.source === src.id ? 'true' : 'false');
-    main.onclick = () => { rememberFileLocation(); state.source = src.id; restoreFileLocation(); renderSourceChips(); action(loadFiles)(); };
+    main.onclick = action(async () => { rememberFileLocation(); state.source = src.id; restoreFileLocation(); renderSourceChips(); await loadFiles(); });
     if (!src.builtin) {
       const edit = el('button', 'src-edit');
       edit.type = 'button'; edit.title = t('编辑引用配置'); edit.setAttribute('aria-label', t('编辑引用配置：{0}', displayName));
@@ -7478,7 +7479,7 @@ function renderSourceChips() {
       del.title = t("删除来源 {0}", displayName);
       del.setAttribute('aria-label', t("删除来源 {0}", displayName));
       del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
-      del.onclick = ev => { ev.stopPropagation(); if (confirm(t('删除来源「{0}」？', displayName))) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => !x.builtin && x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = defaultContextSourceID(); state.dir = '.'; await loadFiles(); } })(); };
+      del.onclick = action(async ev => { ev.stopPropagation(); if (confirm(t('删除来源「{0}」？', displayName))) { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => !x.builtin && x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = defaultContextSourceID(); state.dir = '.'; await loadFiles(); } } });
       wrap.append(del);
     }
     track.append(wrap);

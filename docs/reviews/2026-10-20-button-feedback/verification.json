@@ -1,0 +1,148 @@
+{
+  "scopeStatus": "PASS",
+  "baseline": "c84e3011c9a9f454de2a56058841aa6f2c341f87",
+  "fingerprint": "bc2d60a5fa7b7377cd4653bee03eb97049c8dfb2b414dd02d5738408fe214677",
+  "fileSHA256": {
+    "internal/server/web/async-action.js": "e5f3fb4072d640ae1fc779eaba846a0c83b1fd8721b08d71e7493da5f10ac457",
+    "internal/server/web/app.js": "dc204c317a94ec21ac7e7e68d76c446e4ad28b1b5d8a2473423bcf2ccdc2c55a",
+    "internal/server/web/index.html": "d16f53f1e4eb612cb260bb2c3cf183bc081d2b5d1b2a4d422f51aed46e72a56e",
+    "internal/server/web/message-center.js": "e1091351a21a5eec243102e1975af06fdac2db52675f225689cdcb9493abe26a",
+    "internal/server/web/management.js": "f94cfe7e2662a880a9effebc1134660892f83d8e18c2ee3e196ba733f13479b1",
+    "internal/server/web/workbench.css": "27fae570af0e7d837d298d390914fee962817fa6c0cbd04c85b6df1a8f1fb0a2",
+    "scripts/async-action.test.cjs": "e41504617ccac56157e8209ea17c092e3d79958b1a65f24f293debda46aafc55",
+    "scripts/browser-button-feedback.cjs": "75c7171dcdf1965003f1af1cdf195f5130123f93107af9c482f8e414ce10822c",
+    "scripts/management-permissions.test.cjs": "19e0e1e9af0ad8e58158d589491fbed33e8fdb1367b139a59b57c0ffe38af72a",
+    "internal/server/button_feedback_browser_test.go": "4c95ed0d974f22c3396e6658c9be048da4e8ffde962a3ddf9dcbcf3dd80a4e85",
+    "scripts/identity-login-routing.test.cjs": "77f886eace658ff95869fe652c607a0d5de0ce63c3c26b330d81feb36c51b25a"
+  },
+  "focusedChecks": [
+    {
+      "command": "node scripts/async-action.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/test_ui_click_latency.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/ui-response-latency.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/message-center.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/management-permissions.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/plugin-upgrade.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/plugin-market.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node --check internal/server/web/app.js",
+      "exit": 0
+    },
+    {
+      "command": "node --check internal/server/web/async-action.js",
+      "exit": 0
+    },
+    {
+      "command": "node --check internal/server/web/message-center.js",
+      "exit": 0
+    },
+    {
+      "command": "node --check internal/server/web/management.js",
+      "exit": 0
+    },
+    {
+      "command": "node --check scripts/browser-button-feedback.cjs",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/identity-login-routing.test.cjs",
+      "exit": 0
+    }
+  ],
+  "browser": {
+    "command": "source /workspace/.aide-cloud/env.sh; AIDE_BUTTON_FEEDBACK_BROWSER=1 AIDE_EVIDENCE_DIR=/workspace/.aide-cloud/button-feedback go test ./internal/server -run ^TestButtonFeedbackBrowser$ -count=1 -v -timeout=5m",
+    "status": "PASS",
+    "goDurationSeconds": 13.197,
+    "scenarios": 14,
+    "runtimeErrors": [],
+    "detail": "browser.json",
+    "visualInspection": [
+      "workspace pending at1440",
+      "file refresh pending at390",
+      "classic comfort light pending screenshot"
+    ]
+  },
+  "quick": {
+    "status": "fail",
+    "fingerprint": "bc2d60a5fa7b7377cd4653bee03eb97049c8dfb2b414dd02d5738408fe214677",
+    "checks": 135,
+    "passed": 133,
+    "failed": [
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_data.py"
+        ],
+        "exit": 1
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_offline_bundle.py"
+        ],
+        "exit": 1
+      }
+    ],
+    "reason": "两项检查在 c84e3011 未修改基线也失败：Windows 目录所有权断言，以及离线启动的两项浏览器打开断言。",
+    "identityRouting": "PASS after updating API helper extraction for optional action parameters"
+  },
+  "baselineReproduction": [
+    {
+      "baseline": "c84e3011",
+      "command": [
+        "python3",
+        "scripts/test_launcher_data.py",
+        "LauncherDataTests.test_windows_import_sets_container_user_ownership"
+      ],
+      "exit": 1
+    },
+    {
+      "baseline": "c84e3011",
+      "command": [
+        "python3",
+        "scripts/test_offline_bundle.py",
+        "OfflineBundleTests.test_ipv4_and_ipv6_bindings_share_one_verified_port",
+        "OfflineBundleTests.test_release_image_download_resumes_after_interruption"
+      ],
+      "exit": 1
+    }
+  ],
+  "notRun": [
+    "full Docker race/vet release suite",
+    "password/WebAuthn confirmation and real remote devices/models",
+    "user plugin iframe controls",
+    "Aide image/version Release and production deployment"
+  ],
+  "screenshots": {
+    "workspace-pending-1440.png": "0b1c1f66b1b438d72c1300da1b75fe401ed282e917045feb1950cc772cc94cc3",
+    "files-pending-390.png": "f6d00ce83314f6f11ecc74974f38b1b620c4c903e790cfc4bd35d02fe403693f",
+    "pending-comfort-dark.png": "dabaf39e05572352cf58fa6adcc8dd1b0ae850fd5a261a322064d811fc8ab838",
+    "pending-comfort-light.png": "63a171f2426f5abf4100e0349217c5e7ddf6cc5c38b43f91928f571a7c98202f",
+    "pending-blue-light.png": "de2b2fb405ca17688d3119cc5e5aecfdcb01b6b8a9d67ef6159a0a96886f56f9",
+    "pending-blue-dark.png": "6ce9245f6bdeb772f975336ccf3b3cb21853c103a5ae79c7493f2faf63ae2c8a"
+  }
+}

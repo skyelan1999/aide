@@ -22,7 +22,7 @@
     center.dataset.messagesMounted = 'true'; center.classList.add('message-center');
     const tr = text => document.documentElement.lang.startsWith('en') ? (english[text] || text) : t(text);
     const post = (path, body, options = {}) => api('/messages/' + path, {method:'POST', body:JSON.stringify(body), ...options});
-    const safe = fn => async (...args) => { try { await fn(...args); } catch (error) { if (error.name !== 'AbortError') toast(tr(error.message || '请求失败')); } };
+    const safe = fn => window.AideAsyncAction.wrap(fn, error => { if (error.name !== 'AbortError') toast(tr(error.message || '请求失败')); });
     const button = (label, fn, cls = 'quiet') => { const b = node('button', cls, tr(label)); b.type = 'button'; if (fn) b.onclick = safe(fn); return b; };
     const iconButton = (label,kind,fn) => {const b=button(label,fn,'quiet message-icon-button');b.title=tr(label);b.setAttribute('aria-label',tr(label));b.replaceChildren(notifications.icon(kind));return b;};
     const input = (placeholder, type = 'text') => { const e = node('input'); e.type = type; e.placeholder = tr(placeholder); e.setAttribute('aria-label', tr(placeholder)); return e; };

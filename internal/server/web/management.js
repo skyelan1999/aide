@@ -8,7 +8,7 @@
   const available=()=>!!state.config&&!!state.token&&!lockScreen.locked;
   function host(){let n=document.getElementById('management-proposals');if(!n){n=text('section','management-proposals','');n.id='management-proposals';n.setAttribute('aria-label',tr('管理提案','Management proposals'));document.querySelector('.composer-wrap')?.prepend(n);}return n;}
   function operation(p){return ({prepare:tr('安装 / 升级插件','Install / upgrade plugin'),enable:tr('启用插件','Enable plugin'),disable:tr('停用插件','Disable plugin'),remove:p.kind==='plugins'?tr('删除插件','Remove plugin'):tr('删除引用','Remove reference'),upsert:tr('配置引用','Configure reference')})[p.action]||p.action;}
-  function button(label,fn){const b=text('button','quiet',label);b.type='button';b.onclick=fn;return b;}
+  function button(label,fn){const b=text('button','quiet',label);b.type='button';b.onclick=action(fn);return b;}
   async function decide(p,action,button){
     if(!available())return;button.disabled=true;
     const scope=state.config.workspaceId;

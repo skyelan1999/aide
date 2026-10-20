@@ -1,0 +1,67 @@
+{
+  "id": "button-feedback-audit-20261020",
+  "request": "把aide那个按钮反馈速度都查一下，感觉有的按钮点了好几次都不灵敏",
+  "baseline": "c84e3011c9a9f454de2a56058841aa6f2c341f87",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "盘点主要导航、会话、文件、设置、插件与独立面板的异步按钮反馈，记录范围和限制",
+    "异步按钮在等待时立即显示局部忙碌反馈，同一操作防重复提交，其他按钮保持可用",
+    "成功与失败后恢复按钮，保留原有禁用及专用状态逻辑",
+    "通过已有相关回归和实际页面桌面/窄屏延迟请求验收"
+  ],
+  "scope": [
+    "internal/server/web 前端交互及样式",
+    "相关 scripts / internal/server 浏览器与交互回归",
+    "docs/tasks 与 docs/reviews 验收记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户报告检查按钮反馈和重复点击；保持接口与用户数据不变",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "公共 action 和消息/管理按钮使用显式异步包装器；按按钮/表单记录 pending，立即保留原标签显示局部等待标识；不改全局 fetch、不全局禁用、不引入延时。补接绕过包装器的工作区/插件删除/目录/提醒入口。",
+      "evidence": [
+        "internal/server/web/async-action.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增共享异步动作反馈与按钮/表单去重，接入主 UI、消息、管理提案及绕过入口；标签和业务禁用状态保留，键盘认证统一走按钮。",
+      "evidence": [
+        "internal/server/web/async-action.js",
+        "scripts/async-action.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "范围内八组 Node 交互/模块回归及语法检查通过；真实 Aide 浏览器14场景通过（鼠标/重复提交/失败恢复/窄屏/四外观/慢设置重开）；quick133/135，两个启动器既有失败在基线复现，未通过镜像发布门禁。",
+      "evidence": [
+        "docs/reviews/2026-10-20-button-feedback/verification.json",
+        "docs/reviews/2026-10-20-button-feedback/browser.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "逐区域记录巡检、实际验证和未执行边界；保留测量与截图，不承诺固定毫秒延迟。",
+      "evidence": [
+        "docs/reviews/2026-10-20-button-feedback/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅范围 diff；浏览器和随机端口 testApp 已关闭；原有十个未跟踪插件任务文件保留，未操作用户运行数据。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮准备源码提交至 main；未升版、发布镜像或生产部署。full/release-check 未执行，quick 有基线失败。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户先前“那你直接推吧，我去别的环境测试”“直接合并到main”授权；本次仅提交和推送源码修复。",
+  "rollback": "git revert <本次产品提交>；无数据迁移或用户配置变更。",
+  "handoff": "主 UI 与内建面板按钮巡检与修复完成；独立插件 iframe、真实设备、付费模型和生产镜像未验收。"
+}

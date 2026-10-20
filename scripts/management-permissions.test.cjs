@@ -13,6 +13,7 @@ const walk=n=>[n,...n.childNodes.flatMap(walk)];
  // Exercise the real proposal UI: code is text only; confirmation requires opening the preview.
  const proposal={id:'test',actor:'assistant',kind:'plugins',action:'prepare',target:'fixture',reason:'fixture',status:'pending'};
  const ui=vm.createContext({state,lockScreen:{locked:false},t:x=>x,window:{},document:{hidden:false,createElement:tag=>new Element(tag),getElementById:id=>id==='management-proposals'?wrap:null,querySelector:()=>new Element('div'),addEventListener(){}},setInterval(){},setTimeout(){},URL,toast(){},api:async path=>path.endsWith('/test')?{manifest:{name:'<script>not executable</script>'},files:{'index.js':'globalThis.MUST_NOT_RUN=true'}}:{proposals:[proposal]}});
+ vm.runInContext(fs.readFileSync('internal/server/web/async-action.js','utf8'),ui);ui.action=ui.window.AideAsyncAction.wrap;
  vm.runInContext(fs.readFileSync('internal/server/web/management.js','utf8'),ui);await new Promise(r=>setImmediate(r));
  let confirm=walk(wrap).find(n=>n.tag==='button'&&n.textContent==='确认执行');assert.ok(confirm.disabled);
  const details=walk(wrap).find(n=>n.tag==='details');details.open=true;await details.ontoggle();assert.equal(confirm.disabled,false);assert.equal(ui.MUST_NOT_RUN,undefined);

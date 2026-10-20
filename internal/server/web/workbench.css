@@ -214,3 +214,10 @@ main,.conversation,.composer-wrap,.top-actions{min-width:0}
   mask-image:linear-gradient(to bottom,#000 calc(100% - 32px),transparent);
 }
 @media(forced-colors:active){.conversation{-webkit-mask-image:none;mask-image:none}}
+/* Keep labels, dimensions and keyboard focus while async actions are pending. */
+button[data-action-pending],input[data-action-pending]{cursor:progress;outline:1px solid var(--brand-text,currentColor);outline-offset:2px}
+button[data-action-pending]{position:relative}
+button[data-action-pending]::after{content:"";position:absolute;right:3px;top:3px;width:9px;height:9px;box-sizing:border-box;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;pointer-events:none;animation:aide-action-spin .7s linear infinite}
+@keyframes aide-action-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){button[data-action-pending]::after{animation:none}}
+html[data-motion="reduced"] button[data-action-pending]::after{animation:none}
