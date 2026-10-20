@@ -58,9 +58,13 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User-authorized host source push and Terminal prerelease/market update; Aide formal image release remains blocked.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Host main pushed 59c5a464; Terminal 1.1.2 prerelease 42c1b55 published; market 70a83e9 deployed and anonymous live ZIP checksum verified. Formal Aide image not released.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.2",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39355051903",
+        "https://skyelan1999.github.io/aide-pkg-shop/catalog.json"
+      ]
     }
   },
   "release_authorization": "插件的新标签页我觉得不需要了，删了重新push release 登记即可",
