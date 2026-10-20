@@ -627,6 +627,15 @@
       ],
       [
         "node",
+        "--check",
+        "internal/server/web/step-assembly.js"
+      ],
+      [
+        "node",
+        "scripts/step-assembly.test.cjs"
+      ],
+      [
+        "node",
         "scripts/step-worker.test.cjs"
       ],
       [

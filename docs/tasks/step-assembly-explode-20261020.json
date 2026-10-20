@@ -1,0 +1,79 @@
+{
+  "id": "step-assembly-explode-20261020",
+  "request": "stp支持爆炸视图，支持组装零件拆除安装",
+  "baseline": "a2c6d5c9c0611848e8036c7ba682c2e00074aaa2",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "STEP零件身份在原生/浏览器批次中保留，不能把分块当零件",
+    "爆炸间距可调，支持XYZ/径向方向、选择、拆除/装回及全部复原，重复操作不累积坐标误差",
+    "装配展示与测量模式隔离，拆装不写原STEP；隐去零件不可拾取",
+    "相关原生转换/worker/几何状态测试和真实浏览器桌面窄屏验收"
+  ],
+  "scope": [
+    "scripts/cad/convert.py零件范围元数据",
+    "internal/server/web STEP worker/viewer/assembly/metrology样式与词条缓存",
+    "相关tests/scripts和docs",
+    "docs/agent/router.json 新装配语法/状态测试纳入quick"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "作为当前查看器的装配展示操作；不实现B-rep约束求解或改写STEP。保留网格预算和背压。",
+      "evidence": [
+        "docs/architecture/cad-preview.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留叶实例范围元数据，默认合并渲染；按需建立共享几何实例组。拆装属于显示状态，与测量隔离。",
+      "evidence": [
+        "docs/architecture/cad-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "径向/XYZ爆炸、0–200%间距、选中拆除装回、全部复原、单零件/旧服务边界、资源销毁；原文件不变。",
+      "evidence": [
+        "internal/server/web/step-assembly.js",
+        "internal/server/web/step-import-worker.js",
+        "scripts/cad/convert.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "相关JS/服务测试、真实OCP几何和24分块身份、真实浏览器原生/WASM/单零件/旧服务及明暗窄屏通过。quick135/137，其余两个既有发行失败。",
+      "evidence": [
+        "docs/reviews/2026-10-20-step-assembly/verification.json",
+        "docs/reviews/2026-10-20-step-assembly/result.json",
+        "docs/reviews/2026-10-20-step-assembly/native-result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新功能/协议/测量边界、使用和回滚，说明需要更新CAD服务。",
+      "evidence": [
+        "docs/architecture/cad-preview.md",
+        "docs/reviews/2026-10-20-step-assembly/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只纳入本任务源码、测试和脱敏证据，保留此前10份未跟踪任务；测试服务退出，无线上替换。",
+      "evidence": [
+        "docs/reviews/2026-10-20-step-assembly/README.md"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "仅准备提交推main；缺少full通过记录，不升版/发Release/换镜像。",
+      "evidence": [
+        "docs/reviews/2026-10-20-step-assembly/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "沿用用户此前“那你直接推吧，我去别的环境测试”“直接合并到main”的源码推送授权。",
+  "rollback": "git revert本任务功能提交后重新构建；无数据迁移或原STEP改写，不删除工作区和用户数据。协议新增字段旧前端可忽略。",
+  "handoff": "功能在当前查看器内展示，不是B-rep约束编辑。原生模式需工作台与CAD服务同时更新。源码提交推送后另记；运行镜像/生产未改。",
+  "fingerprint": "81817e747ccbaa107141e7d317719c621e9bde5e723fd570425608dd5ce52d9d",
+  "routing_note": "零件安装并非环境安装，路由关键词匹配不适用；采用frontend和必要的backend原生协议审阅。无子Agent。"
+}

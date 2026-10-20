@@ -1,0 +1,58 @@
+{
+  "baseline": "a2c6d5c9c0611848e8036c7ba682c2e00074aaa2",
+  "fingerprint": "81817e747ccbaa107141e7d317719c621e9bde5e723fd570425608dd5ce52d9d",
+  "checks": [
+    {
+      "command": "PYTHONPATH=/tmp/aide-cad-assembly-runtime python3 -u scripts/test-step-assembly-native.py",
+      "status": "PASS",
+      "evidence": "native-result.json",
+      "environment": "Linux host with SHA256-pinned OCP8.0.1.1 temporary runtime; not Docker"
+    },
+    {
+      "command": "AIDE_EVIDENCE_DIR=… node scripts/browser-step-assembly.cjs",
+      "status": "PASS",
+      "evidence": "result.json",
+      "scope": "Actual viewer+worker+WebGL with real native converter and WASM fallback, HTTP fixture backend; no production/auth/SSH claims"
+    },
+    {
+      "command": "node scripts/step-assembly.test.cjs; node scripts/step-worker.test.cjs; node scripts/step-metrology.test.cjs; node scripts/test_step_import.cjs",
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_cad_service.py",
+      "status": "PASS",
+      "cases": 3
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "status": "FAIL",
+      "passed": 135,
+      "total": 137,
+      "failed": [
+        {
+          "command": [
+            "python3",
+            "scripts/test_launcher_data.py"
+          ],
+          "exit": 1
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_offline_bundle.py"
+          ],
+          "exit": 1
+        }
+      ],
+      "fingerprint_matches": true,
+      "log": ".agent-state/verify-20261020T141540039873Z.log",
+      "note": "Same two previous launcher/offline baseline failures. New assembly syntax and state tests included."
+    },
+    {
+      "command": "full Docker release validation / production launcher / native Windows/macOS / SSH STEP assets",
+      "status": "NOT_RUN",
+      "reason": "No full passing release receipt. Prior launcher disk guard remains unmet; no image/tag/release/deployment."
+    }
+  ],
+  "cleanup": "Owned component/browser/Worker/HTTP exited. No user services stopped. Pinned test runtime remains only under /tmp/aide-cad-assembly-runtime for repeatable validation."
+}

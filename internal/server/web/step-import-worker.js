@@ -38,6 +38,12 @@ async function downloadStep(url, limit=STEP_LIMIT) {
 }
 // Native conversion streams only generated mesh batches to the browser. The
 // original 200+ MiB STEP never enters the browser or WASM heap.
+function validatedParts(parts, count, stride, registry) {
+  if(parts===undefined)return undefined; // Older CAD services remain previewable.
+  if(!Array.isArray(parts)||!parts.length||parts.length>16000)throw Error('CAD 零件范围无效。');
+  let next=0;for(const p of parts){if(typeof p.id!=='string'||!p.id||p.id.length>128||typeof p.name!=='string'||p.name.length>512||p.start!==next||!Number.isSafeInteger(p.count)||p.count<=0||p.count%stride)throw Error('CAD 零件范围无效。');next+=p.count;if(registry){if(registry.has(p.id)&&registry.get(p.id)!==p.name)throw Error('CAD 零件名称不一致。');registry.set(p.id,p.name);if(registry.size>50000)throw Error('模型超过五万个零件实例预算。');}}
+  if(next!==count)throw Error('CAD 零件范围不完整。');return parts;
+}
 async function importNative(rawUrl) {
   const target=new URL(rawUrl,self.location.origin);
   if(target.origin!==self.location.origin)throw new Error('STEP 文件必须来自当前工作台。');
@@ -47,7 +53,7 @@ async function importNative(rawUrl) {
   if(response.status===501){await response.body?.cancel();return false;}
   if(!response.ok){let message;try{message=(await response.json()).error;}catch(_){}throw new Error(message||('HTTP '+response.status));}
   if(!response.body?.getReader)throw new Error('当前浏览器不支持 CAD 流式预览。');
-  const reader=response.body.getReader(),decoder=new TextDecoder();let pending='',id=0,triangles=0,segments=0,points=0,complete=false;
+  const reader=response.body.getReader(),decoder=new TextDecoder();let pending='',id=0,triangles=0,segments=0,points=0,complete=false;const partNames=new Map();
   const decode=text=>{const raw=atob(text);if(raw.length%4)throw new Error('CAD 网格块格式无效。');const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));return new Float32Array(bytes.buffer);};
   try {
     while(true){
@@ -63,7 +69,7 @@ async function importNative(rawUrl) {
           triangles+=p.length/9;if(triangles>3000000)throw new Error('模型超过预览几何预算。');
           const indices=Uint32Array.from({length:p.length/3},(_,i)=>i),current=id++;
           const acknowledged=new Promise(resolve=>{waiting={id:current,resolve};});
-          self.postMessage({kind:'meshes',id:current,meshes:[{attributes:{position:{array:p},normal:{array:n},color:{array:c}},index:{array:indices},origin:item.origin,sourceCount:item.sourceCount}],total:0},[p.buffer,n.buffer,c.buffer,indices.buffer]);
+          self.postMessage({kind:'meshes',id:current,meshes:[{attributes:{position:{array:p},normal:{array:n},color:{array:c}},index:{array:indices},origin:item.origin,sourceCount:item.sourceCount,parts:validatedParts(item.parts,indices.length,3,partNames)}],total:0},[p.buffer,n.buffer,c.buffer,indices.buffer]);
           await acknowledged;
         } else if(item.kind==='native-lines'||item.kind==='native-points'){
           const p=decode(item.positions),c=decode(item.colors),isLine=item.kind==='native-lines',stride=isLine?6:3;
@@ -71,7 +77,7 @@ async function importNative(rawUrl) {
           if(isLine)segments+=p.length/6;else points+=p.length/3;
           if(segments>500000||points>200000)throw new Error('模型超过预览几何预算。');
           const current=id++,acknowledged=new Promise(resolve=>{waiting={id:current,resolve};});
-          self.postMessage({kind:'meshes',id:current,meshes:[{primitive:isLine?'lines':'points',attributes:{position:{array:p},color:{array:c}},origin:item.origin,sourceCount:item.sourceCount}],total:0},[p.buffer,c.buffer]);
+          self.postMessage({kind:'meshes',id:current,meshes:[{primitive:isLine?'lines':'points',attributes:{position:{array:p},color:{array:c}},origin:item.origin,sourceCount:item.sourceCount,parts:validatedParts(item.parts,p.length/3,isLine?2:1,partNames)}],total:0},[p.buffer,c.buffer]);
           await acknowledged;
         } else if(item.kind==='complete'){
           if(complete||!(triangles||segments||points)||item.triangles!==triangles||(item.segments||0)!==segments||(item.points||0)!==points||item.unit!=='mm')throw new Error('CAD 曲面转换未完整结束。');
@@ -89,7 +95,7 @@ async function importNative(rawUrl) {
 // Flatten only one acknowledged batch at a time; vertex colours preserve faces.
 function mergeBatch(meshes) {
   const count=meshes.reduce((n,m)=>n+m.index.array.length,0),positions=new Float32Array(count*3),normals=new Float32Array(count*3),colors=new Float32Array(count*3),indices=new Uint32Array(count);
-  let offset=0,hasNormals=true;
+  let offset=0,hasNormals=true;const parts=[];
   for(const mesh of meshes) {
     const p=mesh.attributes.position.array,n=mesh.attributes.normal?.array,ix=mesh.index.array,faces=mesh.brep_faces||[];let face=0;
     if(!n)hasNormals=false;
@@ -100,11 +106,12 @@ function mergeBatch(meshes) {
       for(let axis=0;axis<3;axis++){positions[target+axis]=p[index+axis];if(n)normals[target+axis]=n[index+axis];colors[target+axis]=color[axis];}
       indices[offset+j]=offset+j;
     }
+    for(const part of mesh.parts||[])parts.push({...part,start:part.start+offset});
     offset+=ix.length;
   }
   const attributes={position:{array:positions},color:{array:colors}};
   if(hasNormals)attributes.normal={array:normals};
-  return {attributes,index:{array:indices},sourceCount:meshes.length};
+  return {attributes,index:{array:indices},sourceCount:meshes.length,parts};
 }
 self.onmessage = async ({data}) => {
   if(data?.kind==='ack') {if(waiting && data.id===waiting.id){const resolve=waiting.resolve;waiting=null;resolve();}return;}
@@ -141,6 +148,7 @@ self.onmessage = async ({data}) => {
       const mesh=result.meshes[i]; result.meshes[i]=null;
       const position=mesh.attributes?.position?.array,indices=mesh.index?.array;
       if(!position?.length || !indices?.length)continue;
+      mesh.parts=[{id:'mesh-'+i,name:String(mesh.name||('Part '+(i+1))).slice(0,160),start:0,count:indices.length}];
       mesh.attributes.position.array=Float32Array.from(position);
       mesh.index.array=Uint32Array.from(indices);
       transfers.push(mesh.attributes.position.array.buffer,mesh.index.array.buffer);

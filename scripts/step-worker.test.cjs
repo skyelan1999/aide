@@ -22,6 +22,7 @@ function harness(result,fetch) {
  const large=harness({success:true,meshes:Array.from({length:129},mesh)});await large.self.onmessage({data:{buffer:new ArrayBuffer(64*1024*1024+1)}});
  assert.equal(large.batches,2);assert.equal(large.options.linearDeflection,.5);
  const batches=large.messages.filter(m=>m.kind==='meshes');assert.equal(batches[0].meshes[0].sourceCount,128);assert.equal(batches[0].meshes[0].attributes.position.array.length,128*9);
+ assert.equal(batches[0].meshes[0].parts.length,128);assert.equal(batches[0].meshes[0].parts[127].start,127*3);assert.equal(new Set(batches[0].meshes[0].parts.map(p=>p.id)).size,128);
  assert.ok(Math.abs(batches[0].meshes[0].attributes.color.array[0]-.1)<1e-6,'face colour retained when merged');
  let cancelled=false;
  const over=harness(null,async()=>({ok:true,headers:{get:()=>String(385*1024*1024)},body:{cancel:async()=>{cancelled=true;}}}));
@@ -32,17 +33,18 @@ function harness(result,fetch) {
  const empty=harness({success:true,meshes:[{attributes:{position:{array:[]}},index:{array:[]}}]});await empty.self.onmessage({data:{buffer:new ArrayBuffer(1)}});assert.match(empty.messages.at(-1).error,/没有可显示/);
  const memory=harness({get success(){throw new Error('out of memory');}});await memory.self.onmessage({data:{buffer:new ArrayBuffer(1)}});assert.match(memory.messages.at(-1).error,/内存不足/);
  const encode=a=>Buffer.from(new Float32Array(a).buffer).toString('base64');
- const wire=[{kind:'native-mesh',positions:encode([0,0,0,1,0,0,0,1,0]),normals:encode([0,0,1,0,0,1,0,0,1]),colors:encode([1,0,0,1,0,0,1,0,0]),origin:[100,200,300],sourceCount:1},{kind:'complete',unit:'mm',triangles:1}].map(x=>JSON.stringify(x)+'\n').join('');
+ const wire=[{kind:'native-mesh',positions:encode([0,0,0,1,0,0,0,1,0]),normals:encode([0,0,1,0,0,1,0,0,1]),colors:encode([1,0,0,1,0,0,1,0,0]),origin:[100,200,300],sourceCount:1,parts:[{id:'instance-a',name:'Body',start:0,count:3}]},{kind:'complete',unit:'mm',triangles:1}].map(x=>JSON.stringify(x)+'\n').join('');
  let sent=false;
  const native=harness(null,async(url,options)=>{assert.equal(new URL(url).pathname,'/api/file/step-preview');assert.equal(new URL(url).searchParams.has('access_token'),false);assert.equal(options.headers.Authorization,'Bearer fixture-token');return {ok:true,status:200,body:{getReader:()=>({read:async()=>sent?{done:true}:(sent=true,{value:Buffer.from(wire),done:false}),cancel:async()=>{},releaseLock(){}})}};});
  await native.self.onmessage({data:{url:'/api/file/raw?path=large.step&access_token=fixture-token',native:true}});
- assert.equal(native.messages.at(-1).kind,'complete');assert.deepEqual(Array.from(native.messages.find(x=>x.kind==='meshes').meshes[0].origin),[100,200,300]);assert.equal(native.batches,1);
+ assert.equal(native.messages.at(-1).kind,'complete');assert.deepEqual(Array.from(native.messages.find(x=>x.kind==='meshes').meshes[0].origin),[100,200,300]);assert.equal(native.batches,1);assert.equal(native.messages.find(x=>x.kind==='meshes').meshes[0].parts[0].id,'instance-a');
  const primitives=[{kind:'native-lines',positions:encode([0,0,0,10,0,0]),colors:encode([1,0,0,1,0,0]),origin:[100,200,300]},{kind:'native-points',positions:encode([0,0,40]),colors:encode([0,1,0]),origin:[100,200,300]},{kind:'complete',unit:'mm',triangles:0,segments:1,points:1}];
  async function nativeSequence(items){let done=false;const text=items.map(x=>JSON.stringify(x)+'\n').join('');const h=harness(null,async()=>({ok:true,status:200,body:{getReader:()=>({read:async()=>done?{done:true}:(done=true,{value:Buffer.from(text),done:false}),cancel:async()=>{},releaseLock(){}})}}));await h.self.onmessage({data:{url:'/api/file/raw?path=curves.step',native:true}});return h;}
  const curves=await nativeSequence(primitives);assert.equal(curves.messages.at(-1).kind,'complete');assert.equal(curves.batches,2);assert.deepEqual(curves.messages.filter(x=>x.kind==='meshes').map(x=>x.meshes[0].primitive),['lines','points']);
  const missingCurve=await nativeSequence([...primitives.slice(0,2),{...primitives[2],segments:2}]);assert.match(missingCurve.messages.at(-1).error,/未完整结束/);
  const malformedCurve=await nativeSequence([{...primitives[0],positions:encode([0,0,0])},primitives[2]]);assert.match(malformedCurve.messages.at(-1).error,/无效几何/);
  let compatibilityCalls=0,compatibilityCancelled=false;
+ const invalidPart=await nativeSequence([{kind:'native-mesh',positions:encode([0,0,0,1,0,0,0,1,0]),normals:encode([0,0,1,0,0,1,0,0,1]),colors:encode([1,0,0,1,0,0,1,0,0]),origin:[0,0,0],parts:[{id:'bad',name:'bad',start:1,count:3}]}]);assert.match(invalidPart.messages.at(-1).error,/零件范围/);
  const compatibility=harness(null,async()=>++compatibilityCalls===1?{status:501,body:{cancel:async()=>{}}}:{ok:true,headers:{get:()=>String(65*1024*1024)},body:{cancel:async()=>{compatibilityCancelled=true;}}});
  await compatibility.self.onmessage({data:{url:'/api/file/raw?path=large.step&access_token=fixture',native:true}});
  assert.equal(compatibilityCalls,2);assert.equal(compatibilityCancelled,true);assert.match(compatibility.messages.at(-1).error,/64 MiB/);

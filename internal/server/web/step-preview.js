@@ -13,7 +13,7 @@
   async function setup(options) {
     const {container,filePath,root:storageRoot,source,viewerSpec,el,t,fileRawUrl,teardownViewer,bindViewerTeardown,detectWebGLContext,ensureThreeStack,ensureVendorScript}=options;
     teardownViewer(container);container.replaceChildren();
-    let disposed=false,worker=null,renderer=null,controls=null,resizeObs=null,frame=0,timer=0,metrology=null,phase='download',grid=null,budget=300000,releaseImport=()=>{};
+    let disposed=false,worker=null,renderer=null,controls=null,resizeObs=null,frame=0,timer=0,metrology=null,assembly=null,phase='download',grid=null,budget=300000,releaseImport=()=>{};
     let group=null;const materials=[];
     const viewer=el('div','step-viewer'),toolbar=el('div','stl-toolbar');
     const title=el('span','stl-info',filePath.split('/').pop()),meta=el('span','stl-meta',t('准备加载 STEP 模型…'));
@@ -22,16 +22,16 @@
     close.setAttribute('aria-label',t('关闭预览'));reset.disabled=true;
     const canvas=el('div','stl-canvas');toolbar.append(title,meta,reset,cancel,close);viewer.append(toolbar,canvas);container.append(viewer);
     const rawUrl=fileRawUrl(filePath,storageRoot,source,viewerSpec),started=Date.now();
-    const draw=()=>{frame=0;if(disposed||!renderer||document.hidden||!container.isConnected)return;renderer.render(scene,camera);};
+    const draw=()=>{frame=0;if(disposed||!renderer||document.hidden||!container.isConnected)return;assembly?.updateOutline();renderer.render(scene,camera);};
     const redraw=()=>{if(!frame&&!disposed)frame=requestAnimationFrame(draw);};
     const resume=()=>{if(document.hidden&&frame){cancelAnimationFrame(frame);frame=0;}else redraw();};
     function teardown() {
       if(disposed)return;disposed=true;clearInterval(timer);worker?.terminate();worker=null;releaseImport();
-      if(frame)cancelAnimationFrame(frame);resizeObs?.disconnect();metrology?.dispose();
+      if(frame)cancelAnimationFrame(frame);resizeObs?.disconnect();assembly?.dispose();metrology?.dispose();
       document.removeEventListener('visibilitychange',resume);controls?.removeEventListener('change',redraw);controls?.dispose();
       group?.traverse(obj=>obj.geometry?.dispose());group?.clear();group=null;for(const material of materials)material.dispose();materials.length=0;
       if(grid){grid.geometry.dispose();for(const m of (Array.isArray(grid.material)?grid.material:[grid.material]))m.dispose();}
-      renderer?.dispose();renderer?.forceContextLoss();renderer=null;controls=null;grid=null;metrology=null;
+      renderer?.dispose();renderer?.forceContextLoss();renderer=null;controls=null;grid=null;metrology=null;assembly=null;
     }
     bindViewerTeardown(container,teardown);
     const fail=message=>{
@@ -42,7 +42,7 @@
     };
     cancel.onclick=()=>fail('已取消加载，解析与传输资源已释放。');
     close.onclick=()=>{teardown();const dialog=container.closest('dialog');if(dialog)dialog.close();else if(document.body.classList.contains('file-view-mode'))history.back();};
-    try {await ensureThreeStack();await ensureVendorScript('/step-metrology.js?v=2',()=>!!root.AideStepMetrology);}catch(error){if(!disposed)fail(error.message);return;}
+    try {await ensureThreeStack();await ensureVendorScript('/step-metrology.js?v=3',()=>!!root.AideStepMetrology);await ensureVendorScript('/step-assembly.js?v=1',()=>!!root.AideStepAssembly);}catch(error){if(!disposed)fail(error.message);return;}
     if(disposed||!container.isConnected)return;
     if(!detectWebGLContext()){fail('当前浏览器未提供可用的 WebGL 图形上下文。');return;}
     const THREE=root.THREE,scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(45,1,.01,1e9);
@@ -57,7 +57,7 @@
       group=new THREE.Group();scene.add(group);const box=new THREE.Box3();
       const resize=()=>{if(disposed)return;const w=canvas.clientWidth,h=canvas.clientHeight;if(w>0&&h>0){camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);redraw();}};
       resizeObs=new ResizeObserver(resize);resizeObs.observe(canvas);resize();
-      const fit=()=>{if(box.isEmpty())return;const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());const fitted=fitPerspective(size.toArray(),camera.aspect,camera.fov),dist=fitted.distance;camera.position.copy(center).add(new THREE.Vector3(...fitted.direction).multiplyScalar(dist));camera.near=Math.max(dist/10000,.00001);camera.far=dist*100;camera.updateProjectionMatrix();controls.target.copy(center);controls.update();redraw();};
+      const fit=()=>{if(box.isEmpty())return;const bounds=new THREE.Box3();group.updateMatrixWorld(true);group.traverseVisible(object=>{if(object.geometry?.boundingBox)bounds.union(object.geometry.boundingBox.clone().applyMatrix4(object.matrixWorld));});if(bounds.isEmpty())return;const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());const fitted=fitPerspective(size.toArray(),camera.aspect,camera.fov),dist=fitted.distance;camera.position.copy(center).add(new THREE.Vector3(...fitted.direction).multiplyScalar(dist));camera.near=Math.max(dist/10000,.00001);camera.far=dist*100;camera.updateProjectionMatrix();controls.target.copy(center);controls.update();redraw();};
       reset.onclick=fit;
       let triangles=0,segments=0,points=0,meshes=0;
       function addMesh(item) {
@@ -69,7 +69,7 @@
           const isLine=item.primitive==='lines',material=isLine?new THREE.LineBasicMaterial({color:0xffffff,vertexColors:!!color}):new THREE.PointsMaterial({color:0xffffff,vertexColors:!!color,size:4,sizeAttenuation:false});
           materials.push(material);
           const object=isLine?new THREE.LineSegments(geo,material):new THREE.Points(geo,material);
-          if(item.origin)object.position.set(...item.origin);group.add(object);geo.computeBoundingBox();geo.computeBoundingSphere();box.union(geo.boundingBox.clone().translate(object.position));
+          if(item.origin)object.position.set(...item.origin);object.userData.assemblyParts=item.parts;group.add(object);geo.computeBoundingBox();geo.computeBoundingSphere();box.union(geo.boundingBox.clone().translate(object.position));
           if(isLine)segments+=positions.length/6;else points+=positions.length/3;
           meshes+=item.sourceCount||1;return;
         }
@@ -91,7 +91,7 @@
         }
         if(cursor<indices.length/3)geo.addGroup(cursor*3,indices.length-cursor*3,0);
         if(faceMaterials.length===1)geo.clearGroups();materials.push(...faceMaterials);
-        const mesh=new THREE.Mesh(geo,faceMaterials.length>1?faceMaterials:base);mesh.name=item.name||'';if(item.origin)mesh.position.set(...item.origin);group.add(mesh);geo.computeBoundingBox();geo.computeBoundingSphere();box.union(geo.boundingBox.clone().translate(mesh.position));triangles+=indices.length/3;meshes+=item.sourceCount||1;
+        const mesh=new THREE.Mesh(geo,faceMaterials.length>1?faceMaterials:base);mesh.name=item.name||'';if(item.origin)mesh.position.set(...item.origin);mesh.userData.assemblyParts=item.parts;group.add(mesh);geo.computeBoundingBox();geo.computeBoundingSphere();box.union(geo.boundingBox.clone().translate(mesh.position));triangles+=indices.length/3;meshes+=item.sourceCount||1;
       }
       if(navigator.locks?.request) {
         let ready;
@@ -104,7 +104,7 @@
         if(disposed){releaseImport();return;}
       }
       timer=setInterval(()=>{if(disposed)return;if(Date.now()-started>budget){fail('STEP 加载超时，请拆分模型后重试。');return;}if(phase==='parse')meta.textContent=t('正在解析 STEP 几何…')+' '+Math.floor((Date.now()-started)/1000)+'s';},1000);
-      worker=new Worker('/step-import-worker.js?v=4');
+      worker=new Worker('/step-import-worker.js?v=5');
       worker.onmessage=async({data})=>{
         if(disposed)return;
         try {
@@ -131,6 +131,7 @@
             group.position.sub(center);grid.position.z=box.min.z-center.z;grid.scale.setScalar(Math.max(.001,scale/10));fit();
             meta.textContent=triangles.toLocaleString()+' '+t('三角面')+(segments?' · '+segments.toLocaleString()+' '+t('线段'):'')+(points?' · '+points.toLocaleString()+' '+t('点'):'')+' · '+size.toArray().map(n=>n.toFixed(2)).join('×')+' mm'+(data.coarse?' · '+t('大模型快速精度'):'')+(data.collapsedFaces?' · '+t('退化面 {0}，已保留边界',data.collapsedFaces):'');
             metrology=root.AideStepMetrology.create({THREE,scene,camera,canvas:renderer.domElement,group,center,scale,host:viewer,el,t,redraw,filePath});
+            assembly=root.AideStepAssembly.create({THREE,scene,group,camera,canvas:renderer.domElement,host:viewer,toolbar,el,t,redraw,fit,onModeChange:active=>metrology.setEnabled(!active)});
           }
         }catch(error){if(!disposed)fail(error.message);}
       };

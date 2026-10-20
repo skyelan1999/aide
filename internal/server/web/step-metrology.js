@@ -30,7 +30,7 @@
     const hint=el('p','cad-hint',t('预览网格测量，单位 mm；曲面和曲边结果为近似值。'));
     const list=el('ol','cad-records');panel.append(status,hint,list);host.append(tools,panel);
     const overlay=new THREE.Group();scene.add(overlay);
-    let mode='point',frame=null,pending=[],records=[],serial=0,down=null,disposed=false;
+    let mode='point',frame=null,pending=[],records=[],serial=0,down=null,disposed=false,enabled=true;
     const buttons=[];
     const labels={point:'坐标点',distance:'两点距离',angle:'三点夹角',frame:'三点标定'};
     const hints={point:'点击模型表面或顶点读取坐标。',distance:'依次选择两个点，测量距离与轴向差值。',angle:'依次选择三个点，第二个点为角顶点。',frame:'依次选择原点、X 正方向点、XY 平面点。'};
@@ -84,15 +84,15 @@
         else {if(mode==='angle')angle(...pending);records.push({kind:mode,label:'P'+(++serial),points:pending});inform(mode==='point'?xyz(pending[0]):'测量已记录。');}
       } catch(error){inform(error.message);}finally {pending=[];refresh();}
     }
-    function pointerDown(event){if(event.button===0)down={x:event.clientX,y:event.clientY,id:event.pointerId};}
+    function pointerDown(event){if(enabled&&event.button===0)down={x:event.clientX,y:event.clientY,id:event.pointerId};}
     function pointerUp(event) {
       const start=down;down=null;
-      if(!start||start.id!==event.pointerId||event.button!==0||Math.hypot(event.clientX-start.x,event.clientY-start.y)>5)return;
+      if(!enabled||!start||start.id!==event.pointerId||event.button!==0||Math.hypot(event.clientX-start.x,event.clientY-start.y)>5)return;
       const bounds=canvas.getBoundingClientRect();if(!bounds.width||!bounds.height)return;
       scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
       const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1,-(event.clientY-bounds.top)/bounds.height*2+1),camera);
       ray.params.Line.threshold=ray.params.Points.threshold=Math.max(scale/500,.001);
-      const hit=ray.intersectObjects(group.children,true)[0];if(!hit){inform('未选中模型，请点击可见几何。');return;}
+      const hit=ray.intersectObjects(group.children,true).find(hit=>{for(let n=hit.object;n;n=n.parent)if(!n.visible)return false;return true;});if(!hit){inform('未选中模型，请点击可见几何。');return;}
       let world=hit.point;
       if(snap.value==='vertex'&&hit.face) {
         const position=hit.object.geometry.attributes.position;
@@ -106,7 +106,7 @@
     }
     const cancel=()=>{down=null;};canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',cancel);
     setMode('point');
-    return {dispose(){disposed=true;canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',cancel);clearOverlay();scene.remove(overlay);tools.remove();panel.remove();}};
+    return {setEnabled(value){if(enabled===value)return;enabled=value;down=null;pending=[];tools.hidden=panel.hidden=!value;overlay.visible=value;for(const control of tools.querySelectorAll('button,select'))control.disabled=!value;refresh();},dispose(){disposed=true;canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',cancel);clearOverlay();scene.remove(overlay);tools.remove();panel.remove();}};
   }
   const api={frameFromPoints,coordinates,distance,angle,create};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.AideStepMetrology=api;

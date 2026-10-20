@@ -161,24 +161,34 @@ def convert(path):
     positions, normals, colors = array.array('f'), array.array('f'), array.array('f')
     origin = None
     batch_parts = 0
+    part_ranges = []
+    instance_id = 0
+    current_part = current_name = None
 
     def flush():
-        nonlocal positions, normals, colors, origin, batch_parts
+        nonlocal positions, normals, colors, origin, batch_parts, part_ranges
         if not positions:
             return
-        emit(dict(kind='native-mesh', positions=binary(positions), normals=binary(normals), colors=binary(colors), origin=origin, sourceCount=batch_parts))
+        emit(dict(kind='native-mesh', positions=binary(positions), normals=binary(normals), colors=binary(colors), origin=origin, sourceCount=batch_parts, parts=part_ranges))
         positions, normals, colors = array.array('f'), array.array('f'), array.array('f')
         origin = None
         batch_parts = 0
+        part_ranges = []
+
+    def track_part(ranges, start, count):
+        if ranges and ranges[-1]["id"] == current_part:
+            ranges[-1]["count"] += count
+        else:
+            ranges.append(dict(id=current_part, name=current_name, start=start, count=count))
 
     primitive_counts = {'native-lines': 0, 'native-points': 0}
-    primitive_buffers = {kind: [array.array('f'), array.array('f'), None] for kind in primitive_counts}
+    primitive_buffers = {kind: [array.array('f'), array.array('f'), None, []] for kind in primitive_counts}
 
     def flush_primitive(kind):
         buffer = primitive_buffers[kind]
         if buffer[0]:
-            emit(dict(kind=kind, positions=binary(buffer[0]), colors=binary(buffer[1]), origin=buffer[2], sourceCount=1))
-            primitive_buffers[kind] = [array.array('f'), array.array('f'), None]
+            emit(dict(kind=kind, positions=binary(buffer[0]), colors=binary(buffer[1]), origin=buffer[2], sourceCount=1, parts=buffer[3]))
+            primitive_buffers[kind] = [array.array('f'), array.array('f'), None, []]
 
     def primitive(kind, vertices, color):
         primitive_counts[kind] += 1
@@ -187,6 +197,7 @@ def convert(path):
         buffer = primitive_buffers[kind]
         if buffer[2] is None:
             buffer[2] = vertices[0]
+        track_part(buffer[3], len(buffer[0])//3, len(vertices))
         for xyz in vertices:
             if not all(math.isfinite(v) for v in xyz):
                 raise ValueError('CAD 几何包含无效坐标。')
@@ -204,6 +215,23 @@ def convert(path):
         if node.IsAssembly:
             explorer.Next()
             continue
+        if instance_id >= 50000:
+            raise ValueError('模型超过五万个零件实例预算。')
+        current_part = 'native-' + str(instance_id)
+        instance_id += 1
+        current_name = current_part
+        from OCP.TDataStd import TDataStd_Name
+        for label in (node.Label, node.RefLabel):
+            if label.IsNull():
+                continue
+            if not label.IsAttribute(TDataStd_Name.GetID_s()):
+                continue
+            attribute = TDataStd_Name()
+            if label.FindAttribute(TDataStd_Name.GetID_s(), attribute):
+                candidate = attribute.Get().ToExtString()[:160]
+                if candidate and not candidate.startswith('=>['):
+                    current_name = candidate
+                    break
         shape = tool.GetShape_s(node.RefLabel)
         if shape.IsNull():
             raise ValueError('装配包含无法读取的零件，未输出不完整模型。')
@@ -258,6 +286,7 @@ def convert(path):
                 indices = list(mesh.Triangle(i).Get())
                 if reverse_winding:
                     indices[1], indices[2] = indices[2], indices[1]
+                track_part(part_ranges, len(positions)//3, 3)
                 for index in indices:
                     p = mesh.Node(index).Transformed(trsf)
                     xyz = (p.X(), p.Y(), p.Z())
@@ -329,6 +358,9 @@ def convert(path):
             continue
         parts += 1
         batch_parts += 1
+        for kind, buffer in primitive_buffers.items():
+            if len(buffer[3]) >= 128:
+                flush_primitive(kind)
         if parts % 128 == 0:
             flush()
             emit(dict(kind='progress', phase='tessellate', parts=parts, faces=faces, triangles=total))

@@ -21,6 +21,9 @@ def run(path):
    colour=array.array('f');colour.frombytes(base64.b64decode(item['colors']))
    assert len(positions)==len(normals)==len(colour) and len(positions)%9==0
    assert len(positions)//9<=16000
+   ranges=item['parts'];assert sum(p['count'] for p in ranges)==len(positions)//3
+   end=0
+   for part in ranges:assert part['start']==end;end+=part['count']
    triangles+=len(positions)//9
    for i,v in enumerate(positions):
     axis=i%3;world=v+item['origin'][axis];lower[axis]=min(lower[axis],world);upper[axis]=max(upper[axis],world)
@@ -81,6 +84,8 @@ for reader,expected_triangles,expected_top in [(MixedGeometryReader,12,[120,220,
   output=io.StringIO()
   with contextlib.redirect_stdout(output):module.convert('synthetic-mixed-geometry')
   messages=[json.loads(line) for line in output.getvalue().splitlines()];complete=messages[-1]
+  identifiers={p['id'] for m in messages if m['kind'].startswith('native-') for p in m['parts']}
+  assert len(identifiers)==1,'one mixed part must retain identity across triangle, line and point batches'
   assert complete['triangles']==expected_triangles and complete['segments']==1 and complete['points']==1,complete
   assert complete['bounds']==[[100,200,300],expected_top],complete
   lines=next(item for item in messages if item.get('kind')=='native-lines');points=next(item for item in messages if item.get('kind')=='native-points')

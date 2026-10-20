@@ -1,0 +1,24 @@
+[
+  {
+    "status": "pass",
+    "nestedAssemblyPlacement": true,
+    "partAndFaceColours": true,
+    "allFacesMeshed": true,
+    "nurbsFallbackRetainsTrimmedFace": true,
+    "mixedAndPureWirePointGeometry": true,
+    "collapsedFacesRetainBoundaryAndWarning": true,
+    "zeroWidthTrimOnly": true,
+    "mmMetreInch": true,
+    "finiteNormalsAndBatchBounds": true
+  },
+  {
+    "status": "PASS",
+    "parts": {
+      "native-0": "SOLID",
+      "native-1": "SOLID"
+    },
+    "forcedChunkBatches": 24,
+    "metadataComplete": true,
+    "stableIdentityAcrossChunks": true
+  }
+]

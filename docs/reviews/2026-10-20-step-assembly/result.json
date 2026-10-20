@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "scope": "Actual STEP viewer/worker/WebGL component with real OCP fidelity.step conversion and real offline WASM fallback. Fixture HTTP replaces backend only; no production launcher/auth or user files.",
+  "checks": [
+    "native merged batch splits by two instance identities",
+    "selected removal/reinstallation",
+    "X explosion slider and exact restore/no drift",
+    "source geometry unchanged",
+    "measurement paused while assembly open or dirty; completed record preserved, pending picks cleared",
+    "real canvas part picking",
+    "desktop/narrow blue/comfort light/dark",
+    "24 real native chunks group into two instances",
+    "actual WASM fallback",
+    "single-part model removes/reinstalls without fake explosion",
+    "legacy service clearly disables unsupported assembly",
+    "teardown"
+  ],
+  "errors": []
+}
