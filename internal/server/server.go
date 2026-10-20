@@ -467,6 +467,8 @@ type App struct {
 	mu                        sync.Mutex
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
+	transferMu                sync.Mutex
+	transferManager           *transferManager
 	skillLibraryMu            sync.Mutex
 	skillLibraryGate          chan struct{}
 	workspace, reference      *os.Root
@@ -1143,6 +1145,13 @@ func (a *App) Close() {
 		}
 		a.bgMu.Unlock()
 
+		a.transferMu.Lock()
+		transfers := a.transferManager
+		a.transferMu.Unlock()
+		if transfers != nil {
+			transfers.close()
+		}
+
 		// Stop active executions before waiting so App.Close also forms a reliable
 		// lifecycle boundary for tests and service shutdown.
 		a.mu.Lock()
@@ -1546,6 +1555,14 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/file/upload", a.uploadFile)
 	mux.HandleFunc("POST /api/file/upload-batch", a.uploadBatchFile)
 	mux.HandleFunc("POST /api/file/transfer", a.transferFiles)
+	mux.HandleFunc("GET /api/file/transfers", a.transferJobsAPI)
+	mux.HandleFunc("POST /api/file/transfers", a.transferJobsAPI)
+	mux.HandleFunc("GET /api/file/transfers/{id}", a.transferJobsAPI)
+	mux.HandleFunc("DELETE /api/file/transfers/{id}", a.transferJobsAPI)
+	mux.HandleFunc("POST /api/file/transfers/{id}/{action}", a.transferJobsAPI)
+	mux.HandleFunc("PUT /api/file/transfers/{id}/chunks/{chunk}", a.transferJobsAPI)
+	mux.HandleFunc("GET /api/file/stream", a.streamFileDownload)
+	mux.HandleFunc("HEAD /api/file/stream", a.streamFileDownload)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("POST /api/file/rename", a.renameFile)
@@ -1706,7 +1723,7 @@ func (a *App) buildHandler() {
 			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 			// EventSource / img 标签无法设置 Authorization 头，events 和 file/raw 路由允许 ?access_token=；
 			// 其余 API 不收 URL 中的凭据，避免令牌进入日志/代理记录。
-			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw") || strings.HasSuffix(r.URL.Path, "/api/file/download")) {
+			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw") || strings.HasSuffix(r.URL.Path, "/api/file/download") || strings.HasSuffix(r.URL.Path, "/api/file/stream")) {
 				token = r.URL.Query().Get("access_token")
 			}
 			if subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {

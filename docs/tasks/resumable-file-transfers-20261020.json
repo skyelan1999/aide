@@ -1,0 +1,82 @@
+{
+  "id": "resumable-file-transfers-20261020",
+  "request": "复制到，移动到，下载，上传貌似限制在64m，我需要你做成支持断点续传，支持多线程并发的不限文件大小的",
+  "baseline": "bb25bdf3fbe34ac4482e45b769d3c05c7ff1a7d6",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "本地及SSH/SFTP四种文件操作取消64MiB总字节上限，使用有界分块内存与流式文件读写；预览及非文件引用兼容限制独立保留",
+    "本地及SSH/SFTP支持可持久恢复的上传、复制和移动任务，重启/中断后已确认分块可继续；移动仅在目标完整后删除源",
+    "下载支持HTTP Range/If-Range；浏览器支持并发分块落盘、恢复，兼容路径明确",
+    "进度、暂停、继续、取消、并发可配置；路径隔离、工作区身份、只读权限、文件冲突和校验失败有回归",
+    "真实浏览器验收与超过64MiB的数据、断点、并发、远端协议测试保留证据"
+  ],
+  "scope": [
+    "internal/server 文件传输实现、路由与任务生命周期",
+    "internal/server/web 文件管理传输界面、样式与翻译",
+    "go.mod/go.sum SFTP协议依赖",
+    "相关tests/scripts及docs",
+    "vendor: SFTP及其现有版本传递依赖（含LICENSE）"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "工作区及随机文件引用取消总字节硬上限；浏览器能力、磁盘空间及旧请求兼容边界明确。",
+      "evidence": [
+        "docs/architecture/resumable-file-transfers.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "4MiB分块与SHA256确认日志，本地os.Root和复用SSH认证的SFTP随机读写，目标暂存无覆盖发布、移动删除单独恢复。",
+      "evidence": [
+        "docs/architecture/resumable-file-transfers.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "四入口接入传输中心、1至8并发、暂停继续取消、磁盘空间检查与目录ZIP64流式准备；旧批量请求保护保留。",
+      "evidence": [
+        "internal/server/transfer_jobs.go",
+        "internal/server/transfer_worker.go",
+        "internal/server/web/file-transfers.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "相关竞争检测、真实浏览器、真实OpenSSH及Go vet通过。5GiB验证稀疏偏移，非5GiB有效载荷传输；quick 133/135，两项原有失败，完整发行验证未通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-large-transfers/verification.json",
+        "docs/reviews/2026-10-20-large-transfers/result.json",
+        "docs/reviews/2026-10-20-large-transfers/server-race.log",
+        "docs/reviews/2026-10-20-large-transfers/ssh-live.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "使用、接口、浏览器兼容、非文件引用边界、SSH信任边界、磁盘与归档恢复限制均记录。",
+      "evidence": [
+        "docs/architecture/resumable-file-transfers.md",
+        "docs/reviews/2026-10-20-large-transfers/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只纳入本任务源码、依赖、测试与脱敏证据；保留原有10份未跟踪任务。一次性浏览器/SSH服务退出，不停止用户服务。",
+      "evidence": [
+        "docs/reviews/2026-10-20-large-transfers/README.md"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "release-check已实际拒绝：缺少当前内容指纹的full通过记录、工作区包含原有未跟踪任务；仅提交并推送源码，不打tag/发Release/换镜像。",
+      "evidence": [
+        "docs/reviews/2026-10-20-large-transfers/verification.json",
+        "docs/reviews/2026-10-20-large-transfers/release-check.txt"
+      ]
+    }
+  },
+  "release_authorization": "沿用用户此前“那你直接推吧，我去别的环境测试”“直接合并到main”授权；本次仅推源码。",
+  "rollback": "先暂停任务并备份data/file-transfers和目标暂存；git revert本任务源码提交，旧版不识别新任务；不删工作区或用户数据，不替换已有镜像。",
+  "handoff": "入口为文件面板⇅传输中心。上传刷新后重选原文件；浏览器原生保存API不可用时由浏览器下载列表继续。SSH只新增SFTP随机读写，复用认证。源码推送与镜像发行分别记录。",
+  "fingerprint": "c793a02761cd15ce535171f9b72088d166de16e22a47c34c16a68d786d2e3962"
+}

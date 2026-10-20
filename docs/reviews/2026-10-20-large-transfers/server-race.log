@@ -1,0 +1,56 @@
+=== RUN   TestWorkspaceDownloadAndArchive
+--- PASS: TestWorkspaceDownloadAndArchive (3.92s)
+=== RUN   TestReferenceDownloadAndSafeExtraction
+--- PASS: TestReferenceDownloadAndSafeExtraction (4.23s)
+=== RUN   TestFileTransferMultipleAndDirectories
+--- PASS: TestFileTransferMultipleAndDirectories (2.76s)
+=== RUN   TestFileTransferReferencesAndBoundaries
+--- PASS: TestFileTransferReferencesAndBoundaries (2.17s)
+=== RUN   TestFileTransferWritableReference
+--- PASS: TestFileTransferWritableReference (1.98s)
+=== RUN   TestBatchUploadNestedLayout
+--- PASS: TestBatchUploadNestedLayout (1.94s)
+=== RUN   TestBatchUploadTraversalRejectedPerFile
+--- PASS: TestBatchUploadTraversalRejectedPerFile (2.64s)
+=== RUN   TestBatchUploadConflictDoesNotAbort
+--- PASS: TestBatchUploadConflictDoesNotAbort (2.19s)
+=== RUN   TestBatchUploadCountCap
+--- PASS: TestBatchUploadCountCap (1.91s)
+=== RUN   TestBatchUploadTotalSizeCap
+--- PASS: TestBatchUploadTotalSizeCap (2.12s)
+=== RUN   TestBatchUploadSourceRules
+--- PASS: TestBatchUploadSourceRules (2.04s)
+=== RUN   TestBatchUploadEmpty
+--- PASS: TestBatchUploadEmpty (2.10s)
+=== RUN   TestFileUploadAndSafeHiddenListing
+--- PASS: TestFileUploadAndSafeHiddenListing (2.39s)
+=== RUN   TestLargeTransferBrowser
+    large_transfer_browser_test.go:14: opt-in browser regression
+--- SKIP: TestLargeTransferBrowser (0.00s)
+=== RUN   TestLargeTransferUploadConcurrentJournalRestart
+--- PASS: TestLargeTransferUploadConcurrentJournalRestart (6.02s)
+=== RUN   TestLargeTransferUploadCorruptionRepairAndCancel
+--- PASS: TestLargeTransferUploadCorruptionRepairAndCancel (2.52s)
+=== RUN   TestLargeTransferCopyResumeMoveAndConflict
+--- PASS: TestLargeTransferCopyResumeMoveAndConflict (4.15s)
+=== RUN   TestLargeTransferDownloadRangesAndBoundaries
+--- PASS: TestLargeTransferDownloadRangesAndBoundaries (2.47s)
+=== RUN   TestLargeTransferNonFileReferencesRemainIsolated
+--- PASS: TestLargeTransferNonFileReferencesRemainIsolated (2.23s)
+=== RUN   TestLargeTransferSparse64BitRange
+--- PASS: TestLargeTransferSparse64BitRange (2.51s)
+=== RUN   TestLargeTransferShutdownRejectsLateChunks
+--- PASS: TestLargeTransferShutdownRejectsLateChunks (2.19s)
+=== RUN   TestLargeTransferArchiveStreamsAndRanges
+--- PASS: TestLargeTransferArchiveStreamsAndRanges (2.24s)
+=== RUN   TestLargeTransferPauseQueueAndContextBoundary
+--- PASS: TestLargeTransferPauseQueueAndContextBoundary (2.36s)
+=== RUN   TestLargeTransferSourceChangesPreserveOriginal
+--- PASS: TestLargeTransferSourceChangesPreserveOriginal (2.63s)
+=== RUN   TestLargeTransferSFTPRandomAccessAndResume
+--- PASS: TestLargeTransferSFTPRandomAccessAndResume (2.98s)
+=== RUN   TestLargeTransferSSHLive
+    transfer_ssh_live_test.go:18: run scripts/test-large-transfer-ssh.py
+--- SKIP: TestLargeTransferSSHLive (0.00s)
+PASS
+ok  	aide/internal/server	65.902s

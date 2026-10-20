@@ -2833,15 +2833,17 @@ function fileRawUrl(filePath, root, source, viewerSpec) {
   if (token) qp.set('access_token', token);
   return '/api/file/raw?' + qp.toString();
 }
+function streamingFileSource(id) {return !id||id==='workspace'||['local','skill','sftp','workspace-sftp'].includes(state.sources.find(s=>s.id===id)?.type);}
 function downloadFileEntry(file, archive, target = {root:state.root,source:currentFileTarget().source}) {
-  const token = state.token || (state.config && state.config.accessToken) || '';
-  const qp = new URLSearchParams(); qp.set('path', file.path);
-  if (target.source) qp.set('source', target.source); else qp.set('root', target.root || 'workspace');
-  if (archive) qp.set('archive', '1'); if (token) qp.set('access_token', token);
-  const link = document.createElement('a'); link.href = '/api/file/download?' + qp.toString(); link.download = archive ? file.name + '.zip' : file.name;
-  link.style.display = 'none'; document.body.append(link); link.click(); setTimeout(() => link.remove(), 0);
+  if(!streamingFileSource(target.source)) {
+    const qp=new URLSearchParams({path:file.path,source:target.source,access_token:state.token});if(archive)qp.set('archive','1');
+    const link=document.createElement('a');link.href='/api/file/download?'+qp;link.download=file.name+(archive?'.zip':'');link.click();return;
+  }
+  return window.AideTransfers.download(file, archive, target);
 }
+
 function openFileTransferPicker(operation, selectedPaths, target = {root:state.root,source:currentFileTarget().source}) {
+ const transferWorkspaceId=state.config?.workspaceId||'';
   const candidates = [{ id: 'workspace', name: t('工作目录') }, ...state.sources.filter(s => s.enabled && s.rw && ['local', 'skill', 'sftp', 'workspace-sftp'].includes(s.type)).map(s => ({ id: s.id, name: s.name }))];
   const dlg = el('dialog', 'file-transfer-dialog');
   const heading = el('h2', '', operation === 'copy' ? t('复制到') : t('移动到'));
@@ -2882,10 +2884,14 @@ function openFileTransferPicker(operation, selectedPaths, target = {root:state.r
     submit.disabled = true; err.textContent = '';
     try {
       const source = target.source || 'workspace';
-      const result = await api('/file/transfer', { method: 'POST', body: JSON.stringify({ operation, source, paths: selectedPaths, destination: location.value, destinationPath: dir }) });
+      if(transferWorkspaceId!==(state.config?.workspaceId||''))throw Error(t('工作区已切换'));
+      const payload={workspaceId:transferWorkspaceId,operation,source,paths:selectedPaths,destination:location.value,destinationPath:dir};
+      if(streamingFileSource(source))await window.AideTransfers.create(payload);
+      else await api('/file/transfer',{method:'POST',body:JSON.stringify(payload)});
       dlg.close(); state.fileSelection.clear(); state.fileSelectionAnchor = -1;
       await loadFiles();
-      toast((operation === 'copy' ? t('已复制') : t('已移动')) + ' ' + result.count + ' ' + t('项'));
+      if(streamingFileSource(source)){window.AideTransfers.open();toast(t('传输任务已创建'));}
+      else toast(t(operation==='copy'?'已复制':'已移动'));
     } catch (e) { err.textContent = e.message || String(e); submit.disabled = false; }
   });
   footer.append(cancel, submit); dlg.append(heading, summary, location, breadcrumb, dirs, err, footer);
@@ -3480,78 +3486,11 @@ function splitUploadChunks(items) {
   return chunks;
 }
 
-// uploadCollected 上传已收集的 {file, relativePath} 列表。单文件走原有 raw
-// /api/file/upload；多文件走 multipart 批量端点并按后端限额分块。每个失败（冲突/校验/
-// 限额/网络）都计入 failed 并展示，网络错误整块计为失败。
+// uploadCollected uses durable, independently verified chunks for every file.
+window.AideTransfers.mount({api,t,notice:toast,token:()=>state.token,scope:()=>state.config?.workspaceId||'',target:()=>currentFileTarget(),base:()=>state.dir||'.',blocked:()=>lockScreen.locked||!state.token,refresh:()=>loadFiles()});
 async function uploadCollected(items, target) {
-  if (!items.length) return { succeeded: 0, failed: [] };
-  const overlay = showUploadProgress(items.length);
-  const destBase = state.dir === '.' ? '' : state.dir;
-  const qsBase = destBase ? encodeURIComponent(destBase) : encodeURIComponent('.');
-  const srcQS = target.source ? '&source=' + encodeURIComponent(target.source) : '';
-  let processed = 0;
-  const failed = [];
-  try {
-    if (items.length === 1) {
-      const it = items[0];
-      overlay.update(0, it.relativePath, 0, it.file.size || 0, 0, '准备上传');
-      const dest = destBase ? destBase + '/' + it.relativePath : it.relativePath;
-      try {
-        const resp = await uploadWithProgress('/api/file/upload?path=' + encodeURIComponent(dest) + srcQS, it.file,
-          (loaded, requestTotal, speed, status) => overlay.update(processed, it.relativePath, loaded, requestTotal || it.file.size || 0, speed, status),
-          it.file.type || 'application/octet-stream');
-        if (!resp.ok) throw new Error(resp.data.error || ('HTTP ' + resp.status));
-      } catch (e) { failed.push({ path: it.relativePath, error: e.message }); }
-      processed++;
-      overlay.update(processed, it.relativePath, it.file.size || 0, it.file.size || 0, 0, failed.length ? '服务器返回失败' : '服务器已确认');
-    } else {
-      let chunk = [];
-      let chunkIndex = 0;
-      const chunks = splitUploadChunks(items);
-      const flush = async () => {
-        if (!chunk.length) return;
-        chunkIndex++;
-        const activeChunk = chunk;
-        const form = new FormData();
-        for (const it of activeChunk) form.append('files', it.file, it.relativePath);
-        const url = '/api/file/upload-batch?path=' + qsBase + srcQS;
-        let resp;
-        try {
-          resp = await uploadWithProgress(url, form, (loaded, requestTotal, speed, status) => {
-            overlay.update(processed, activeChunk.length === 1 ? activeChunk[0].relativePath : '', loaded, requestTotal, speed, status, { index: chunkIndex, count: chunks.length });
-          });
-        } catch (e) {
-          for (const it of activeChunk) failed.push({ path: it.relativePath, error: String(e) });
-          processed += activeChunk.length;
-          overlay.update(processed, '', 0, 0, 0, '本批上传失败', { index: chunkIndex, count: chunks.length });
-          chunk = [];
-          return;
-        }
-        const data = resp.data;
-        const results = data.results || [];
-        for (const r of results) {
-          processed++;
-          if (!r.ok) failed.push({ path: r.path || '?', error: r.error || ('HTTP ' + resp.status) });
-        }
-        if (!results.length) {
-          const errMsg = (data && data.error) || ('HTTP ' + resp.status);
-          for (const it of activeChunk) failed.push({ path: it.relativePath, error: errMsg });
-          processed += activeChunk.length;
-        }
-        overlay.update(processed, '', 0, 0, 0, resp.ok ? '服务器已确认本批结果' : '服务器返回失败', { index: chunkIndex, count: chunks.length });
-        chunk = [];
-      };
-      // 用已分好的批次序列上传，进度条代表 XHR 报告的真实 multipart 请求体进度。
-      for (const part of chunks) {
-        chunk = part.items;
-        await flush();
-      }
-    }
-  } finally {
-    await loadFiles();
-    overlay.finish(processed, failed);
-  }
-  return { succeeded: processed - failed.length, failed };
+  if (!items.length) return {succeeded:0,failed:[]};
+  return window.AideTransfers.upload(items,target,state.dir||'.');
 }
 
 // uploadDroppedFiles 兼容旧的扁平 FileList 调用（单文件拖拽入口）。

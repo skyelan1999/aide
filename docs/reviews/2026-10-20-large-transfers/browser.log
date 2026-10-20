@@ -1,0 +1,6 @@
+=== RUN   TestLargeTransferBrowser
+    large_transfer_browser_test.go:55: {"status":"PASS","scope":"Actual embedded Aide page, native file upload chooser, real chunk/Range HTTP, backend copy/move, OPFS disk writes and IndexedDB across reload. Only the native save picker is substituted; no user files or SSH target.","size":70254631,"maxUpload":4,"maxDownload":4,"uploadChunkZeroRequests":1,"downloadChunkZeroRequests":1,"checks":["67MiB+39 upload exceeds old64MiB cap","concurrent request overlap","pause and reload upload; reselect original and skip confirmed chunk","copy-to and move-to through actual file menu","pause and reload download; persisted file handle and disk receipt","skip confirmed download chunk","download every chunk matches original SHA256","desktop/narrow transfer center across blue/comfort light/dark","header and close stay visible; Escape closes dialog"],"errors":[]}
+
+--- PASS: TestLargeTransferBrowser (26.45s)
+PASS
+ok  	aide/internal/server	26.464s

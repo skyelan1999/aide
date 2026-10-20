@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,8 +10,7 @@ import (
 	"strings"
 )
 
-// A transfer is deliberately bounded by collectArchive (1000 entries / 64 MiB).
-// Each top-level item is staged beside its destination and published by rename.
+// Compatibility transfer helpers; persistent chunk jobs are implemented in transfer_jobs.go.
 type fileTransferRequest struct {
 	Operation       string   `json:"operation"`
 	Source          string   `json:"source"`
@@ -236,12 +234,10 @@ func (a *App) transferRemoveTree(loc transferLocation, p string, dir bool, depth
 	}
 	return root.Remove(p)
 }
-func (a *App) transferFiles(w http.ResponseWriter, r *http.Request) {
-	var req fileTransferRequest
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 128<<10)).Decode(&req); err != nil {
-		fail(w, 400, err)
-		return
-	}
+func (a *App) transferFiles(w http.ResponseWriter, r *http.Request) { a.legacyLargeCopy(w, r) }
+
+// Non-file reference drivers retain their existing bounded compatibility path.
+func (a *App) legacyReferenceTransfer(w http.ResponseWriter, r *http.Request, req fileTransferRequest) {
 	if req.Operation != "copy" && req.Operation != "move" {
 		fail(w, 400, errors.New("操作只能是复制或移动"))
 		return

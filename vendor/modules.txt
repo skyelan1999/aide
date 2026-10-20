@@ -31,9 +31,17 @@ github.com/google/go-tpm/tpmutil/tbs
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
+# github.com/kr/fs v0.1.0
+## explicit
+github.com/kr/fs
 # github.com/philhofer/fwd v1.2.0
 ## explicit; go 1.20
 github.com/philhofer/fwd
+# github.com/pkg/sftp v1.13.10
+## explicit; go 1.23.0
+github.com/pkg/sftp
+github.com/pkg/sftp/internal/encoding/ssh/filexfer
+github.com/pkg/sftp/internal/encoding/ssh/filexfer/openssh
 # github.com/tinylib/msgp v1.6.4
 ## explicit; go 1.24
 github.com/tinylib/msgp/msgp
@@ -50,8 +58,18 @@ github.com/yuin/goldmark/v2/util
 ## explicit; go 1.26.0
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/cryptobyte
+golang.org/x/crypto/cryptobyte/asn1
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/internal/alias
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/ocsp
+golang.org/x/crypto/ssh
+golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/sys v0.48.0
 ## explicit; go 1.26.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
+golang.org/x/sys/windows

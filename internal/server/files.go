@@ -494,6 +494,23 @@ func (a *App) collectArchive(p string, src Source, hasSource, dir bool) ([]archi
 }
 
 func (a *App) downloadFile(w http.ResponseWriter, r *http.Request) {
+	if !a.transferSourceStreaming(r.URL.Query().Get("source")) {
+		a.legacyReferenceDownload(w, r)
+		return
+	}
+	p, _, _, dir, err := a.downloadTarget(r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if dir || r.URL.Query().Get("archive") == "1" {
+		a.legacyLargeArchive(w, r, p)
+		return
+	}
+	a.streamFileDownload(w, r)
+}
+
+func (a *App) legacyReferenceDownload(w http.ResponseWriter, r *http.Request) {
 	p, src, hasSource, dir, err := a.downloadTarget(r)
 	if err != nil {
 		fail(w, 400, err)
@@ -1732,71 +1749,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 // or reference source. It intentionally rejects replacement: a dropped file must not
 // silently overwrite a project artifact. Local, SSH workspace, and writable source
 // destinations all reuse their existing atomic write channels.
-func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Query().Get("source") == "" {
-		a.mu.Lock()
-		workspaceID := a.wsID()
-		a.mu.Unlock()
-		if id := r.URL.Query().Get("workspaceId"); id != "" && id != workspaceID {
-			fail(w, 409, errors.New("工作区已切换：请重新打开文档后插入附件"))
-			return
-		}
-	}
-	p := r.URL.Query().Get("path")
-	if err := safePath(p); err != nil {
-		fail(w, 400, err)
-		return
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxRawFile+1)
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		fail(w, 400, err)
-		return
-	}
-	if len(b) > maxRawFile {
-		fail(w, 400, fmt.Errorf("文件超过 %d MiB 限制", maxRawFile>>20))
-		return
-	}
-	if sourceID := strings.TrimSpace(r.URL.Query().Get("source")); sourceID != "" {
-		a.mu.Lock()
-		src, ok := a.findSource(sourceID)
-		a.mu.Unlock()
-		if !ok || !src.Enabled {
-			fail(w, 400, errors.New("来源不存在或已停用"))
-			return
-		}
-		if !src.RW {
-			fail(w, 403, errors.New("该来源为只读"))
-			return
-		}
-		if _, err := a.sourceEntry(src, p); err == nil {
-			fail(w, 409, errors.New("同名文件已存在"))
-			return
-		} else if !errors.Is(err, os.ErrNotExist) {
-			fail(w, 400, err)
-			return
-		}
-		if err := a.writeSourceText(src, p, b); err != nil {
-			fail(w, 400, err)
-			return
-		}
-	} else {
-		a.filesMu.Lock()
-		defer a.filesMu.Unlock()
-		if _, err := a.workspaceFileProperties(p); err == nil {
-			fail(w, 409, errors.New("同名文件已存在"))
-			return
-		} else if !errors.Is(err, os.ErrNotExist) {
-			fail(w, 400, err)
-			return
-		}
-		if err := a.writeWorkspaceText(p, b); err != nil {
-			fail(w, 400, err)
-			return
-		}
-	}
-	jsonOut(w, 201, map[string]any{"path": p, "size": len(b)})
-}
+func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) { a.legacyLargeUpload(w, r) }
 
 // isSFTPNotExistErr 判断 sftp 读取失败是否因“远端文件不存在”。
 // sftpBatch 把 stdout+stderr 合并进错误文本；OpenSSH sftp 对缺失文件报

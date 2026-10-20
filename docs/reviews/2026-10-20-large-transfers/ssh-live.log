@@ -1,0 +1,4 @@
+=== RUN   TestLargeTransferSSHLive
+--- PASS: TestLargeTransferSSHLive (7.17s)
+PASS
+ok  	aide/internal/server	7.190s

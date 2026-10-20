@@ -1,0 +1,78 @@
+{
+  "baseline": "bb25bdf3fbe34ac4482e45b769d3c05c7ff1a7d6",
+  "fingerprint": "c793a02761cd15ce535171f9b72088d166de16e22a47c34c16a68d786d2e3962",
+  "environment": "Go1.26.0 Linux amd64, system Chromium; isolated local fixtures",
+  "checks": [
+    {
+      "command": "go test -race ./internal/server -run '^(TestLargeTransfer.*|TestFileTransfer.*|TestFileUploadAndSafeHiddenListing|TestWorkspaceDownloadAndArchive|TestReferenceDownloadAndSafeExtraction|TestBatchUpload.*)$' -count=1 -v -timeout=8m",
+      "status": "PASS",
+      "elapsed_seconds": 65.902,
+      "passed": 24,
+      "skipped": [
+        "opt-in browser",
+        "opt-in live SSH"
+      ],
+      "evidence": "server-race.log"
+    },
+    {
+      "command": "go vet ./internal/server",
+      "status": "PASS"
+    },
+    {
+      "command": "node --check internal/server/web/file-transfers.js; node --check internal/server/web/app.js; node --check scripts/browser-large-transfers.cjs",
+      "status": "PASS"
+    },
+    {
+      "command": "AIDE_LARGE_TRANSFER_BROWSER=1 AIDE_EVIDENCE_DIR=… go test ./internal/server -run '^TestLargeTransferBrowser$' -count=1 -v -timeout=5m",
+      "status": "PASS",
+      "elapsed_seconds": 26.464,
+      "evidence": "browser.log",
+      "note": "Actual page/HTTP/disk/IndexedDB; OPFS replaces native save picker"
+    },
+    {
+      "command": "python3 scripts/test-large-transfer-ssh.py",
+      "status": "PASS",
+      "elapsed_seconds": 7.19,
+      "evidence": "ssh-live.log",
+      "note": "Owned loopback sshd; no production target; public key auth only"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "status": "FAIL",
+      "passed": 133,
+      "total": 135,
+      "fingerprint_matches": true,
+      "failed": [
+        {
+          "command": [
+            "python3",
+            "scripts/test_launcher_data.py"
+          ],
+          "exit": 1
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_offline_bundle.py"
+          ],
+          "exit": 1
+        }
+      ],
+      "note": "Same two baseline failures documented in preceding tasks; no full PASS receipt",
+      "environment": "source /workspace/.aide-cloud/env.sh",
+      "receipt": ".agent-state/verify-20261020T130358413987Z.log"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify full",
+      "status": "NOT_RUN",
+      "note": "No complete Docker release validation for this source-only task; existing quick failures block release"
+    },
+    {
+      "command": "start.command production startup/native Windows/macOS and browser-native chooser",
+      "status": "NOT_RUN",
+      "note": "Launcher disk guard still unmet; actual UI uses isolated testApp/httptest. Native platforms/chooser not claimed."
+    }
+  ],
+  "note": "最后仅规范上游vendor SECURITY.md一处行尾空格；产品Go/JS与功能验收时一致。脱敏测试日志去除行尾空白。",
+  "environment_reconnect": "默认环境重连后一次quick 132/135（CAD空pidfile时序错误），激活环境单独复跑CAD通过，最终激活环境quick 133/135；不修改无关测试。"
+}
