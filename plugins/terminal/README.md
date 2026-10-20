@@ -1,10 +1,10 @@
 # Terminal · Aide 设备终端工作台
 
-**1.3.0 预发布，市场已收录，需配套宿主能力。** 统一 Shell、SSH、TCP、UDP 与串口调试工作台，提供常驻会话和日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
+**1.3.1 预发布，市场已收录，需配套宿主能力。** 统一 Shell、SSH、TCP、UDP 与串口调试工作台，提供常驻会话和日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
 
 ## 安装预发布版
 
-从 [v1.3.0 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.3.0) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.3.0/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
+从 [v1.3.1 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.3.1) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.3.1/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
 
 插件新标签页入口已移除；后台会话、日志及 Aide 管理能力继续保留。宿主界面变更需要更新 Aide main 源码构建，单独升级插件不会替换宿主界面。
 
@@ -58,7 +58,7 @@ SSH 工作区 Shell 沿用工作区设置中的密码、私钥或引用私钥认
 
 Node.js 24、Linux Python 3 标准库 PTY（引用私钥使用 memfd）、`/bin/bash` 和 OpenSSH 客户端。安装包内置固定版本 ssh2 1.17.0、serialport 12.0.0 及其运行依赖与许可证，目标环境无需执行 npm install；终端 JS/CSS 内嵌、无需 CDN。当前在 **Linux 原生运行环境**实际验证；Windows 用户可通过 Aide Linux 容器使用，终端执行的是容器 Shell。Windows 原生 PTY 未实现，macOS 未实测；这不代表 Windows PowerShell、宿主机终端或设备串口支持。
 
-市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.3.0 需要 Aide 同时支持 `terminal-communications-v1`、`terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
+市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.3.1 需要 Aide 同时支持 `terminal-communications-v1`、`terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
 
 插件是可信 Node 代码，不是权限沙箱；交互 Shell 和 SSH 具有 Aide 运行用户的系统权限。工作区边界用于起始目录、私钥路径和会话归属，不限制 Shell 后续能访问的路径。`read-only` 宿主策略会拒绝调用这些插件工具。锁屏、工作区切换、插件停用仍按宿主策略撤销当前面板权限；取消正在执行的工具时宿主可能结束对应后台实例，以防未确认的后续副作用。
 
@@ -95,4 +95,4 @@ node test/browser-layout.cjs
 
 ## 已发布旧版
 
-[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 现已收录 1.3.0 预发布，要求 `terminal-workbench-v1` 能力；旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。
+[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 现已收录 1.3.1 预发布，要求 `terminal-workbench-v1` 能力；旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。

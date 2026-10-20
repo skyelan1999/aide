@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1（预发布）
+
+- 修正串口 RTS/CTS 流控选项到原生驱动 rtscts 字段的映射，并通过原生虚拟串口配置及收发验证。
+- 保留1.3.0合并的35项通信功能及不可变归档。
+
 ## 1.3.0（预发布）
 
 - 合并 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个可执行工具，使用 terminal_ 前缀避免冲突。

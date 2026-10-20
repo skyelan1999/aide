@@ -63,11 +63,16 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "User-authorized source main push, Terminal1.3.0 prerelease and market update; no Aide image release.",
+      "summary": "User-authorized source main push, Terminal1.3.1 prerelease and market update; no Aide image release.",
       "evidence": []
     }
   },
   "release_authorization": "Current merge request continues active Terminal push/release/market workflow; direct main push authorized earlier.",
   "rollback": "Restore prior immutable plugin ZIP and matching host code. Upgrade ends running sessions/connections; workbench logs/records remain. No running service or user data replaced.",
-  "handoff": "Requires matching Aide main. Existing comm-* packages retained. Physical serial device mapping/permissions must be configured in the Aide runtime; virtual devices only validated here."
+  "handoff": "Requires matching Aide main. Existing comm-* packages retained. Physical serial device mapping/permissions must be configured in the Aide runtime; virtual devices only validated here.",
+  "intermediate_tag": {
+    "tag": "v1.3.0",
+    "source": "4d87ca5",
+    "status": "Retained source tag/archive, superseded by 1.3.1 before GitHub Release/market publication to fix RTS/CTS mapping."
+  }
 }

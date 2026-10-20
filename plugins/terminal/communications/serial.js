@@ -272,7 +272,7 @@ module.exports = {
           flowControl: !!args.flowControl,
           autoOpen: true,
         };
-        const port = new SerialPort({ path, ...config });
+        const port = new SerialPort({ path, ...config, rtscts: config.flowControl });
         attachPort(path, port, config);
         await new Promise((resolve, reject) => {
           port.once('open', resolve);

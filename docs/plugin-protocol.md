@@ -390,7 +390,7 @@ The parent observes theme/palette changes for the active view and disconnects on
 
 `terminal_session_files(identitySource,path)` 仅返回允许来源的文件元数据。`terminal_session_create` 新增 `auth: default|password|key`、`identitySource` 与来源相对 `identityFile`。宿主验证来源、相对路径、符号链接及64KiB上限后，将私钥经 daemon 私有上下文交给 Linux memfd；私钥不进入网页、模型参数、会话记录或磁盘临时副本。密码和私钥口令只在 OpenSSH 终端提示后输入。已停用或当前工作区 AI 不可见的来源不参与选择或读取。需要 `terminal-ssh-workspace-v1` 市场能力标记；此标记不跳过最低宿主版本和未知能力检查。
 
-### Terminal 合并通信（1.3.0 预发布）
+### Terminal 合并通信（1.3.1 预发布）
 
 Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注册为 `terminal_` 前缀，保留旧插件避免同名覆盖。工作台仍使用原受控桥接，通过已声明的 `terminal_session_comm(action,arguments)` 访问固定白名单；工具总数增加不扩大 iframe 的 HTTP、凭据或任意代码权限。普通 TCP/UDP/串口资源创建同时创建工作台会话，通信发送采用显式 UTF-8/HEX 报文和 TX/RX 日志。
 
