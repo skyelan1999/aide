@@ -1,0 +1,130 @@
+{
+  "version": "1.4.1",
+  "bytes": 1061300,
+  "sha256": "133c511e7770fb7c79208b3d26e16522d91bd423c4560b0c9f28d9e9749e7ae9",
+  "fullNodeSuite": "PASS27,0skip",
+  "extractedRuntime": "PASS21,0skip",
+  "latencyBefore": {
+    "status": "PASS",
+    "baseline": true,
+    "scope": "Actual Chromium xterm render, OpenSSH host-key and password authentication, generated Python TLS1.3 relay; host bridge substituted with serial12ms calls, remote echo delayed15ms; loopback only, not user network",
+    "results": [
+      {
+        "kind": "ssh-direct",
+        "samplesMs": [
+          507,
+          567,
+          235,
+          504,
+          519,
+          466,
+          467,
+          356,
+          304,
+          500
+        ],
+        "medianMs": 500,
+        "p90Ms": 519,
+        "maxMs": 567,
+        "bridgeCalls": 27,
+        "maxInFlight": 1,
+        "automaticProbes": 0
+      },
+      {
+        "kind": "ssh-relay-tls",
+        "samplesMs": [
+          473,
+          430,
+          392,
+          537,
+          520,
+          430,
+          443,
+          410,
+          522,
+          469
+        ],
+        "medianMs": 469,
+        "p90Ms": 522,
+        "maxMs": 537,
+        "bridgeCalls": 25,
+        "maxInFlight": 1,
+        "automaticProbes": 0
+      }
+    ],
+    "errors": []
+  },
+  "latencyAfter": {
+    "status": "PASS",
+    "baseline": false,
+    "scope": "Actual Chromium xterm render, OpenSSH host-key and password authentication, generated Python TLS1.3 relay; host bridge substituted with serial12ms calls, remote echo delayed15ms; loopback only, not user network",
+    "results": [
+      {
+        "kind": "ssh-direct",
+        "samplesMs": [
+          63,
+          112,
+          143,
+          107,
+          120,
+          134,
+          64,
+          74,
+          108,
+          104
+        ],
+        "medianMs": 108,
+        "p90Ms": 134,
+        "maxMs": 143,
+        "bridgeCalls": 86,
+        "maxInFlight": 1,
+        "automaticProbes": 0
+      },
+      {
+        "kind": "ssh-relay-tls",
+        "samplesMs": [
+          113,
+          116,
+          109,
+          109,
+          120,
+          68,
+          114,
+          109,
+          110,
+          115
+        ],
+        "medianMs": 113,
+        "p90Ms": 116,
+        "maxMs": 120,
+        "bridgeCalls": 80,
+        "maxInFlight": 1,
+        "automaticProbes": 0
+      }
+    ],
+    "errors": []
+  },
+  "inputGuarantees": [
+    "PASS real xterm 8000-byte paste followed by key matches remote bytes in order",
+    "PASS accepted input with dropped reply appears once; user sees outcome-uncertain warning and no retry",
+    "PASS only one bridge call in flight",
+    "PASS active sessions do not run automatic relay probe",
+    "PASS median below300ms gate; health15s timer accelerated to500ms in test, active sessions still dispatch zero probes"
+  ],
+  "browserRelay": "PASS actual configured script download/manual deployment/TLS echo/visibility/online-offline and desktop/mobile; authenticated parent bridge substituted",
+  "limits": [
+    "Loopback performance fixture, not user device/network",
+    "Full start.command host UI and hardware/Windows/macOS not run",
+    "No host API/code/image changes required beyond existing1.4.0 compatible host"
+  ],
+  "compatibility": "Existing1.4.0 Python agents remain compatible. Download/redeploy1.4.1 script to apply Python-side TCP_NODELAY; browser/client improvements apply on plugin upgrade.",
+  "publication": {
+    "pluginCommit": "a0f267e3dec0c0f50eb2f5737b3ec8a4280e42cb",
+    "releaseID": 418048650,
+    "releaseURL": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.1",
+    "market": "851bc28ed60499511505c641d4fd1f5ad17fca98",
+    "hostChanges": "None; task/evidence docs only. Independent plugin sources remain outside Aide.",
+    "pages": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39376607141",
+    "live": "PASS actual Pages catalog equals local; anonymous market and fixed-source ZIP size1061300 and SHA256 verified; old communications remain absent"
+  }
+}

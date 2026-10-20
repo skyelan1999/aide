@@ -1,0 +1,73 @@
+{
+  "id": "terminal-ssh-latency-20261020",
+  "request": "网络恢复后SSH可用；修复SSH输入到显示反应慢",
+  "baseline": "873af97d521da3f2dd52b727ca924fbf59d026a2",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/terminal-relay-ssh-diagnostics-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Reduce actual key-to-xterm rendering latency for direct and relay SSH",
+    "Preserve serial bridge admission, paste order and no-replay after uncertain write",
+    "Avoid automated relay probes blocking active sessions; retain manual probe",
+    "Publish only independent plugin1.4.1 and market, no bundled host copies"
+  ],
+  "scope": [
+    "Independent Terminal polling/input dispatch and TCP_NODELAY",
+    "Real browser/OpenSSH/TLS benchmark and release verification",
+    "Market listing/package and task handoff only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed prior SSH closure was a disconnected network, requested slow SSH input/render fix instead.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-latency/verification.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reduce70ms input coalescing and650ms fixed poll wait; retain single-flight bridge, ordered writes/no retry; avoid active background probes; TCP_NODELAY on relay.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-latency/verification.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Independent Terminal1.4.1 only:8ms input batching, immediate post-ack polling,40ms interactive/180ms active-idle/1s hidden-page reads, drain paginated output, no active auto-probes, noDelay.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-latency/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Real Chromium+xterm/OpenSSH loopback medians500→108ms direct and469→113ms relay. 27 full tests/21 isolated package tests;8KB paste+following key order, accepted-input/dropped-ack no replay, median<300ms and accelerated-probe exclusion passed. Existing relay UI passed. User network/device not measured.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-latency/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Independent README/changelog and fixed-commit prerelease instructions include compatibility, re-open/reconnect and optional agent redeployment.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-latency/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only independent plugin/market artifacts and current task evidence; installed user plugins/sessions untouched; test SSH/Python/Chromium resources closed.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-latency/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent Terminal1.4.1 main/tag/prerelease published; market main851bc28ed60499511505c641d4fd1f5ad17fca98 Pages successful and live catalog/anonymous packages match expected SHA256. Only task/evidence docs changed in Aide; no host runtime/image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.1",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39376607141",
+        "docs/reviews/2026-10-20-terminal-ssh-latency/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "Earlier user direct main push/release/market instructions continue to apply to requested plugin fix",
+  "rollback": "Stop active Terminal sessions intentionally before installing previous1.4.0 archive. State layout and relay protocol unchanged by1.4.1; old/new Python agents compatible. Preserve terminal-private state and logs.",
+  "handoff": "Upgrade Terminal1.4.1 from market, reopen workbench and reconnect (plugin upgrade disconnects active sessions). Existing1.4.0 compatible host needs no new API/build. Optional re-download/redeployPython1.4.1 agent enables device-side noDelay. Local benchmark only, real device/network/hardware and fullstart.commandUI NOT_RUN."
+}

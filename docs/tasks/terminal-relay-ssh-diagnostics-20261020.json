@@ -1,0 +1,66 @@
+{
+  "id": "terminal-relay-ssh-diagnostics-20261020",
+  "request": "用户截图：中继在线但 SSH kex_exchange_identification Connection closed by remote host；排查转发与错误隐藏",
+  "baseline": "873af97d521da3f2dd52b727ca924fbf59d026a2",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "User clarified SSH closed because their network was disconnected"
+  ],
+  "scope": [
+    "Investigation only; no separate handshake fix"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "not_run",
+      "summary": "Superseded: user confirmed network interruption caused the screenshot, then requested SSH latency optimization. See terminal-ssh-latency-20261020.",
+      "evidence": [
+        "User clarification"
+      ]
+    },
+    "design": {
+      "status": "not_run",
+      "summary": "Superseded: user confirmed network interruption caused the screenshot, then requested SSH latency optimization. See terminal-ssh-latency-20261020.",
+      "evidence": [
+        "User clarification"
+      ]
+    },
+    "implementation": {
+      "status": "not_run",
+      "summary": "Superseded: user confirmed network interruption caused the screenshot, then requested SSH latency optimization. See terminal-ssh-latency-20261020.",
+      "evidence": [
+        "User clarification"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Superseded: user confirmed network interruption caused the screenshot, then requested SSH latency optimization. See terminal-ssh-latency-20261020.",
+      "evidence": [
+        "User clarification"
+      ]
+    },
+    "documentation": {
+      "status": "not_run",
+      "summary": "Superseded: user confirmed network interruption caused the screenshot, then requested SSH latency optimization. See terminal-ssh-latency-20261020.",
+      "evidence": [
+        "User clarification"
+      ]
+    },
+    "cleanup": {
+      "status": "not_run",
+      "summary": "Superseded: user confirmed network interruption caused the screenshot, then requested SSH latency optimization. See terminal-ssh-latency-20261020.",
+      "evidence": [
+        "User clarification"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Superseded: user confirmed network interruption caused the screenshot, then requested SSH latency optimization. See terminal-ssh-latency-20261020.",
+      "evidence": [
+        "User clarification"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "No unsupported handshake fix claimed; continue actual SSH input/render latency request."
+}
