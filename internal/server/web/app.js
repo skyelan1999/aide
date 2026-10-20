@@ -1452,7 +1452,14 @@ async function stopRunById(runId) {
         <form class="reminder-create" id="reminder-form"><h3 id="reminder-form-title" data-i18n="新建提醒">新建提醒</h3>
           <label><span data-i18n="标题">标题</span><input id="reminder-title" maxlength="200" required></label>
           <label><span data-i18n="说明">说明</span><textarea id="reminder-description" maxlength="4000"></textarea></label>
-          <label><span data-i18n="提醒时间（可选）">提醒时间（可选）</span><input id="reminder-due" type="datetime-local"></label>
+          <label><span data-i18n="到点操作">到点操作</span><select id="reminder-action"><option value="notify" data-i18n="仅提醒">仅提醒</option><option value="execute" data-i18n="执行任务">执行任务</option></select></label>
+          <label><span id="reminder-due-label" data-i18n="提醒时间（可选）">提醒时间（可选）</span><input id="reminder-due" type="datetime-local"></label>
+          <fieldset id="reminder-execution" hidden><legend data-i18n="定时执行">定时执行</legend>
+            <label><span data-i18n="执行目标">执行目标</span><select id="reminder-target"><option value="xiaomi" data-i18n="小秘">小秘</option><option value="session" data-i18n="指定会话编号">指定会话编号</option></select></label>
+            <label id="reminder-session-field" hidden><span data-i18n="会话编号">会话编号</span><input id="reminder-session-number" type="number" min="1" step="1" inputmode="numeric" placeholder="12"></label>
+            <label><span data-i18n="执行指令">执行指令</span><textarea id="reminder-prompt" maxlength="5000" rows="3"></textarea></label>
+            <p class="reminder-schedule-help" data-i18n="单次执行，使用浏览器本地时间；工作台服务需在线，并停留在创建时的工作区。目标忙碌时等待，审批与解锁仍需手动处理。">单次执行，使用浏览器本地时间；工作台服务需在线，并停留在创建时的工作区。目标忙碌时等待，审批与解锁仍需手动处理。</p>
+          </fieldset>
           <label><span data-i18n="优先级">优先级</span><select id="reminder-priority"><option value="urgent" data-i18n="紧急">紧急</option><option value="high" data-i18n="高">高</option><option value="normal" selected data-i18n="普通">普通</option><option value="low" data-i18n="低">低</option></select></label>
           <label><span data-i18n="存储区域">存储区域</span><select id="reminder-area"><option value="workspace" data-i18n="当前工作区">当前工作区</option><option value="global" data-i18n="全局">全局</option></select></label>
           <label><span data-i18n="提醒方式">提醒方式</span><select id="reminder-notify"><option value="both" data-i18n="弹窗 + 小秘">弹窗 + 小秘</option><option value="popup" data-i18n="仅弹窗">仅弹窗</option><option value="xiaomi" data-i18n="仅小秘">仅小秘</option><option value="none" data-i18n="不主动通知">不主动通知</option></select></label>
@@ -1481,7 +1488,23 @@ async function stopRunById(runId) {
     await loadList();
     messageUI?.open();
   };
-  const resetForm = () => { editingID = ''; form.reset(); $('reminder-priority').value = 'normal'; $('reminder-area').value = 'workspace'; $('reminder-notify').value = 'both'; $('reminder-form-title').textContent = t('新建提醒'); $('reminder-save').textContent = t('保存提醒'); $('reminder-edit-cancel').classList.add('hidden'); };
+  function syncExecutionForm() {
+    const enabled = $('reminder-action').value === 'execute', session = $('reminder-target').value === 'session';
+    form.classList.toggle('reminder-scheduled', enabled);
+    $('reminder-due-label').dataset.i18n = enabled ? '执行时间' : '提醒时间（可选）';
+    $('reminder-due-label').textContent = t(enabled ? '执行时间' : '提醒时间（可选）');
+    $('reminder-execution').hidden = !enabled;
+    $('reminder-execution').disabled = !enabled;
+    $('reminder-session-field').hidden = !session;
+    $('reminder-session-number').required = enabled && session;
+    $('reminder-session-number').disabled = !enabled || !session;
+    $('reminder-prompt').required = enabled;
+    $('reminder-due').required = enabled;
+  }
+  $('reminder-action').onchange = syncExecutionForm;
+  $('reminder-target').onchange = syncExecutionForm;
+  syncExecutionForm();
+  const resetForm = () => { editingID = ''; form.reset(); syncExecutionForm(); $('reminder-priority').value = 'normal'; $('reminder-area').value = 'workspace'; $('reminder-notify').value = 'both'; $('reminder-form-title').textContent = t('新建提醒'); $('reminder-save').textContent = t('保存提醒'); $('reminder-edit-cancel').classList.add('hidden'); };
   const setReminderCreateIcon = open => {
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     for(const [key,value] of Object.entries({class:'ui-icon',viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':'1.7','stroke-linecap':'round','aria-hidden':'true'}))svg.setAttribute(key,value);
@@ -1517,11 +1540,12 @@ async function stopRunById(runId) {
         const card = el('article', 'reminder-item' + (item.status === 'completed' ? ' reminder-completed' : ''));
         const head = el('div', 'reminder-row-head'); head.append(el('strong', 'reminder-title', item.title));
         const ops = el('div', 'reminder-row-actions');
-        if (item.status === 'pending') {
-          const complete = el('button', 'quiet', t('完成')); complete.type = 'button'; complete.onclick = action(async () => { await api('/reminders/' + encodeURIComponent(item.id) + '/complete', {method:'POST', body:'{}'}); await loadList(); refreshBadge(); }); ops.append(complete);
-          const edit = el('button', 'quiet', t('编辑')); edit.type = 'button'; edit.onclick = () => { const due = item.dueAt ? new Date(item.dueAt) : null; editingID=item.id; $('reminder-title').value=item.title; $('reminder-description').value=item.description||''; $('reminder-due').value=due&&!Number.isNaN(due.valueOf())?new Date(due.valueOf()-due.getTimezoneOffset()*60000).toISOString().slice(0,16):''; $('reminder-priority').value=item.priority; $('reminder-area').value=item.area; $('reminder-notify').value=item.notify; $('reminder-form-title').textContent=t('编辑提醒'); $('reminder-save').textContent=t('保存修改'); $('reminder-edit-cancel').classList.remove('hidden'); showCreateForm(true); }; ops.append(edit);
+        const inFlight = ['dispatching','submitted'].includes(item.execution?.state);
+        if (item.status === 'pending' && !inFlight) {
+          const complete = el('button', 'quiet', t(item.execution?.state === 'pending' ? '取消定时任务' : '完成')); complete.type = 'button'; complete.onclick = action(async () => { await api('/reminders/' + encodeURIComponent(item.id) + '/complete', {method:'POST', body:'{}'}); await loadList(); refreshBadge(); }); ops.append(complete);
+          const edit = el('button', 'quiet', t('编辑')); edit.type = 'button'; edit.onclick = () => { const due = item.dueAt ? new Date(item.dueAt) : null; editingID=item.id; $('reminder-title').value=item.title; $('reminder-description').value=item.description||''; $('reminder-due').value=due&&!Number.isNaN(due.valueOf())?new Date(due.valueOf()-due.getTimezoneOffset()*60000).toISOString().slice(0,16):''; $('reminder-priority').value=item.priority; $('reminder-area').value=item.area; $('reminder-notify').value=item.notify; $('reminder-action').value=item.execution?'execute':'notify'; $('reminder-target').value=item.execution?.target||'xiaomi'; $('reminder-session-number').value=item.execution?.target==='session'?item.execution.sessionNumber:''; $('reminder-prompt').value=item.execution?.prompt||''; syncExecutionForm(); $('reminder-form-title').textContent=t('编辑提醒'); $('reminder-save').textContent=t('保存修改'); $('reminder-edit-cancel').classList.remove('hidden'); showCreateForm(true); }; ops.append(edit);
         }
-        const remove = el('button', 'quiet', t('删除')); remove.type = 'button'; remove.onclick = action(async () => { if (!window.confirm(t('确定删除此提醒吗？'))) return; await api('/reminders/' + encodeURIComponent(item.id), {method:'DELETE'}); await loadList(); refreshBadge(); }); ops.append(remove);
+        const remove = el('button', 'quiet', t('删除')); remove.type = 'button'; remove.onclick = action(async () => { if (!window.confirm(t('确定删除此提醒吗？'))) return; await api('/reminders/' + encodeURIComponent(item.id), {method:'DELETE'}); await loadList(); refreshBadge(); }); remove.disabled=inFlight; ops.append(remove);
         head.append(ops); card.append(head);
         if (item.description) card.append(el('p', 'reminder-description', item.description));
         const tags = el('div', 'reminder-tags');
@@ -1531,6 +1555,14 @@ async function stopRunById(runId) {
         if (item.dueAt) tags.append(tag(t('到期：{0}', fmt(item.dueAt))));
         tags.append(tag(t(item.source === 'aide' ? '来源：aide' : item.source === 'xiaomi' ? '来源：小秘' : '来源：手动')));
         if (item.status === 'completed') tags.append(tag(t('已完成')));
+        if (item.execution) {
+          const e = item.execution, labels = {pending:'等待执行',dispatching:'正在提交',submitted:'执行中',succeeded:'执行成功',failed:'执行失败',interrupted:'执行中断',cancelled:'已取消'};
+          tags.append(tag(t('定时执行')), tag(e.target === 'xiaomi' ? t('小秘') : t('会话 #{0}', e.sessionNumber)), tag(t(labels[e.state] || '执行中断')));
+          card.append(el('p','reminder-description',e.prompt));
+          if (e.error) card.append(el('p','reminder-schedule-error',e.error));
+          if (e.startedAt) tags.append(tag(t('开始：{0}',fmt(e.startedAt))));
+          if (e.runId) tags.append(tag(t('任务：{0}',e.runId)));
+        }
         card.append(tags); list.append(card);
       }
     } catch (e) { list.replaceChildren(el('div', 'reminder-empty', t('加载失败：{0}', e.message || ''))); }
@@ -1575,6 +1607,7 @@ async function stopRunById(runId) {
     event.preventDefault();
     const due = $('reminder-due').value;
     const body = {title:$('reminder-title').value, description:$('reminder-description').value, dueAt:due?new Date(due).toISOString():'', priority:$('reminder-priority').value, area:$('reminder-area').value, notify:$('reminder-notify').value};
+    body.execution = $('reminder-action').value === 'execute' ? {target:$('reminder-target').value, sessionNumber:$('reminder-target').value === 'session'?Number($('reminder-session-number').value):0, prompt:$('reminder-prompt').value} : null;
     try { await api(editingID?'/reminders/'+encodeURIComponent(editingID):'/reminders', {method:editingID?'PUT':'POST', body:JSON.stringify(body)}); toast(t(editingID?'提醒已更新':'提醒已创建')); resetForm(); hideCreateForm(); await loadList(); refreshBadge(); }
     catch (e) { toast(e.message); }
   });
@@ -1583,7 +1616,7 @@ async function stopRunById(runId) {
   $('reminder-alert-open').onclick = () => { closeAlert(); messageUI?.selectTab('reminders'); openCenter(true); };
   $('reminder-alert').addEventListener('close', () => { popupBusy=false; });
   refreshBadge(); checkDuePopups();
-  setInterval(() => { refreshBadge(); checkDuePopups(); }, 30000);
+  setInterval(() => { refreshBadge(); checkDuePopups(); if (document.body.classList.contains('reminders-mode') && !$('lock-screen')?.matches(':not([hidden])') && window.LockCluster?.snapshot()?.locked !== true && !form.classList.contains('open')) void loadList(); }, 30000);
   window.addEventListener('focus', checkDuePopups);
   window.addEventListener('aide:notification-policy',checkDuePopups);
   const messageUI = window.AideMessageCenter?.mount({center, api, t, toast,

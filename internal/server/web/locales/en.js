@@ -1,6 +1,27 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+ "执行时间":"Run at",
+ "取消定时任务":"Cancel scheduled task",
+ "到点操作":"At the scheduled time",
+ "仅提醒":"Notify only",
+ "执行任务":"Run a task",
+ "定时执行":"Scheduled task",
+ "执行目标":"Run in",
+ "指定会话编号":"Session number",
+ "会话编号":"Session number",
+ "执行指令":"Task instructions",
+ "单次执行，使用浏览器本地时间；工作台服务需在线，并停留在创建时的工作区。目标忙碌时等待，审批与解锁仍需手动处理。":"Runs once using your browser’s local time. The workbench server must be online in the original workspace. Busy sessions wait; approvals and unlocking remain manual.",
+ "等待执行":"Waiting to run",
+ "正在提交":"Submitting",
+ "执行中":"Running",
+ "执行成功":"Succeeded",
+ "执行失败":"Failed",
+ "执行中断":"Interrupted",
+ "会话 #{0}":"Session #{0}",
+ "开始：{0}":"Started: {0}",
+ "任务：{0}":"Run: {0}",
+
  "X 轴":"X axis",
  "Y 轴":"Y axis",
  "Z 轴":"Z axis",

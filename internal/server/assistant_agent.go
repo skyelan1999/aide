@@ -112,7 +112,11 @@ func (a *App) assistantAgentTools(allowSilent bool) []any {
 func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx, inputSource string, avatarFeedback ...bool) (assistantDecision, error) {
 	a.mu.Lock()
 	managementWorkspace := a.wsID()
+	scopeErr := a.validateScheduledWorkspaceLocked(ctx)
 	a.mu.Unlock()
+	if scopeErr != nil {
+		return assistantDecision{}, scopeErr
+	}
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
 	// 注意：va 可能为 nil（未初始化/降级路径），必须先判空再解引用 va.memory。
@@ -187,6 +191,12 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		}
 		messages = append(messages, Message{Role: "assistant", Content: out, ToolCalls: calls})
 		for _, call := range calls {
+			a.mu.Lock()
+			scopeErr := a.validateScheduledWorkspaceLocked(ctx)
+			a.mu.Unlock()
+			if scopeErr != nil {
+				return assistantDecision{}, scopeErr
+			}
 			name := call.Function.Name
 			toolsUsed = append(toolsUsed, name)
 			var result string
@@ -195,7 +205,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 			} else if name == "skill_library" {
 				result = a.executeSkillLibrary(ctx, call, &Task{WorkspaceID: managementWorkspace, AssistantManaged: true}, "assistant")
 			} else {
-				result = a.execAssistantTool(call, &dec, heard)
+				result = a.execAssistantToolWithContext(ctx, call, &dec, heard)
 			}
 			messages = append(messages, Message{Role: "tool", ToolCallID: call.ID, Content: result})
 		}
@@ -222,6 +232,10 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 // 与 executeToolCall 不同：不绑定 Task、不流转发流、不做文件/shell——只做调度与记忆。
 // 调用方不持 a.mu；内部按需加锁。结果作为 tool 消息回灌给模型。
 func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision, authorization ...string) string {
+	return a.execAssistantToolWithContext(context.Background(), call, dec, authorization...)
+}
+
+func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, dec *assistantDecision, authorization ...string) string {
 	if a.toolDenied(call.Function.Name) {
 		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
 	}
@@ -318,6 +332,10 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision, authoriza
 		}
 		ref := str("ref")
 		a.mu.Lock()
+		if err := a.validateScheduledWorkspaceLocked(ctx); err != nil {
+			a.mu.Unlock()
+			return err.Error()
+		}
 		var target *Session
 		var created bool
 		if ref == "" || ref == "new" {
@@ -348,7 +366,7 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision, authoriza
 		number, title, id := target.Number, target.Title, target.ID
 		a.mu.Unlock()
 		dispatch := map[string]any{"sessionId": id}
-		a.startDispatchedAssistantTask(dispatch, msg, false, authorization...)
+		a.startDispatchedAssistantTaskWithContext(ctx, dispatch, msg, false, authorization...)
 		if dispatch["started"] != true {
 			return fmt.Sprintf("会话 #%d 的任务未启动：%v。", number, dispatch["startError"])
 		}

@@ -255,6 +255,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
+	if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
+		fail(w, 409, err)
+		return
+	}
 	// 澄清门禁：run 正在等待用户回答时，本次输入直接作为应答，不开新 run
 	assistantAuthorization, assistantManaged := r.Context().Value(assistantDispatchKey{}).(string)
 	for _, existing := range s.Runs {
@@ -406,6 +410,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s = a.sessions[sessionID]
 		if s == nil {
 			fail(w, 404, errors.New("会话在压缩期间已被删除"))
+			return
+		}
+		if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
+			fail(w, 409, err)
 			return
 		}
 		if a.sessionModelSelectionLocked(s) != selectionBeforeCompact {

@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "scope": "Actual isolated Go testApp workbench, actual reminder APIs and scheduler, no real provider or user data",
+  "checks": [
+    "notify default, execution conditional required fields",
+    "existing session number and XiaoMi target round-trip",
+    "Shanghai local time round-trip to UTC",
+    "1440/390, blue/comfort light/dark, no horizontal overflow",
+    "scheduled run errors visible via actual scheduler",
+    "pending schedule cancellation recorded, failed result completion and old notify-only creation"
+  ],
+  "errors": []
+}

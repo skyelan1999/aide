@@ -1,0 +1,87 @@
+{
+  "id": "message-scheduled-targets-20261020",
+  "request": "消息 提醒 可以创建定时任务，可以指定小蜜或者会话编号执行",
+  "baseline": "7b8dd80a554b73ddbf6b5d5a976912581e76a22e",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "消息→提醒支持创建一次性定时执行，目标小秘或已存在的普通会话编号；保留纯通知提醒",
+    "服务端绑定目标ID与创建工作区，持久化执行状态，到期复用现有执行与审批路径；忙碌等待，重复扫描不重复执行",
+    "禁止普通aide/小秘工具创建或篡改执行授权；执行失败、重启中断、取消与持久化失败有明确行为",
+    "隔离API/race及真实工作台浏览器验收，覆盖桌面/窄屏、明暗主题、编辑/取消/状态/时区"
+  ],
+  "scope": [
+    "internal/server/reminders*.go",
+    "internal/server/workflow.go",
+    "internal/server/assistant_history.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "scripts/browser-reminder-schedules.cjs",
+    "docs/architecture",
+    "docs/tasks/message-scheduled-targets-20261020.json",
+    "docs/reviews/2026-10-20-reminder-schedules",
+    "internal/server/assistant_agent.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "单次定时执行；不新增cron服务或付费实测；用户选目标不构成审批代答授权",
+      "evidence": [
+        "internal/server/reminders.go",
+        "internal/server/workflow.go",
+        "internal/server/assistant_history.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "扩展提醒execution字段；手动创建授权，目标ID及工作区快照；20秒后端轮询，先持久领取再调用现有handler，运行结果持久同步；重启未知投递标记中断不重发",
+      "evidence": [
+        "internal/server/reminders.go",
+        "internal/server/workflow.go",
+        "internal/server/assistant_history.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "单次定时执行字段、持久领取/结果同步、原工作区/目标绑定、现有执行链路、待执行取消、UI及英文本地化",
+      "evidence": [
+        "internal/server/reminder_schedule.go",
+        "internal/server/reminders.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "范围内race与隔离真实工作台浏览器通过；quick 135/137，两项既有启动器失败；全量与发布未通过，不宣称上线",
+      "evidence": [
+        "docs/reviews/2026-10-20-reminder-schedules/verification.json",
+        "docs/reviews/2026-10-20-reminder-schedules/result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已记录接口、至多一次投递、离线/忙碌/故障/取消、部署与回滚边界",
+      "evidence": [
+        "docs/architecture/reminder-schedules.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅本任务源码/文档/隔离证据；保留10个既有未跟踪任务；测试关闭自有浏览器与服务，不处理其他服务或数据",
+      "evidence": [
+        "docs/reviews/2026-10-20-reminder-schedules/verification.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "仅源码待推送；无当前passing full收据，发布镜像与部署不执行",
+      "evidence": [
+        "docs/reviews/2026-10-20-reminder-schedules/release-check.txt"
+      ]
+    }
+  },
+  "release_authorization": "历史用户：那你直接推吧，我去别的环境测试；直接合并到main。仅源码推送，发布受现有门禁约束。",
+  "rollback": "git revert 本任务源码提交；新建执行提醒回滚前取消，旧版本忽略execution但保留普通提醒。",
+  "handoff": "功能已完成，准备源码推main。一次执行，20秒扫描，服务在线且原工作区可用；忙碌等待，审批与小秘解锁保留。发布门禁未通过，不更新运行镜像。"
+}

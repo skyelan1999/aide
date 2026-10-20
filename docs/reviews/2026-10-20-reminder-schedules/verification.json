@@ -1,0 +1,40 @@
+{
+  "baseline": "7b8dd80a554b73ddbf6b5d5a976912581e76a22e",
+  "fingerprint": "762501f830064f97163bc679e9b172217931d0867094a83c3a1aab08f3e062e5",
+  "race": {
+    "status": "PASS",
+    "command": "source /workspace/.aide-cloud/env.sh && go test -race ./internal/server -run 'TestReminder|TestXiaomiReminder|TestStartDispatchedAssistantTaskStartsRun|TestAssistantAgentic' -count=1",
+    "result": "ok  \taide/internal/server\t44.221s"
+  },
+  "browser": {
+    "status": "PASS",
+    "command": "source /workspace/.aide-cloud/env.sh && AIDE_REMINDER_SCHEDULE_BROWSER=1 AIDE_EVIDENCE_DIR=/workspace/aide/docs/reviews/2026-10-20-reminder-schedules go test ./internal/server -run '^TestReminderScheduleBrowser$' -count=1 -v",
+    "result": "=== RUN   TestReminderScheduleBrowser\n    reminder_schedule_browser_test.go:47: PASS actual workbench scheduled reminders\n        \n--- PASS: TestReminderScheduleBrowser (12.18s)\nPASS\nok  \taide/internal/server\t12.238s"
+  },
+  "quick": {
+    "status": "fail",
+    "checks": 137,
+    "passed": 135,
+    "failures": [
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_data.py"
+        ],
+        "exit": 1
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_offline_bundle.py"
+        ],
+        "exit": 1
+      }
+    ]
+  },
+  "full": {
+    "status": "NOT_RUN",
+    "reason": "quick has existing launcher/offline-bundle failures; no passing full receipt; no release or production deployment"
+  },
+  "privacy": "Disposable testApp data and local fixture model only; owned browser/context/server closed; no real model calls or user messages."
+}

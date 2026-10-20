@@ -499,3 +499,7 @@ A protocol1 workbench may opt into its own registered tools through manifest.wor
 ### 2026-10-19：URDF 项目文件预览
 
 项目编辑器和独立文件页识别 URDF，默认展示基于现有 Three.js r128 的机器人模型，并保留 XML 草稿编辑／保存与原只读权限。网格、纹理、package.xml 通过原 workspace/source 文件 API 读取，支持标准关节、mimic、包路径映射和有预算的渐进加载。切换模式、关闭与锁屏中止读取并释放图形资源。没有增加后端接口或 ROS 运行依赖；完整能力、预算与未支持项见[URDF 使用说明](prd/2026-10-19-urdf-preview.md)，实际浏览器／候选接口验证与未验范围见[验收记录](reviews/2026-10-19/urdf-preview.md)。
+
+## 2026-10-20：提醒定时执行
+
+消息 → 提醒保留通知模式，并增加单次定时执行：用户选择小秘或指定普通会话编号，填写未来时间与指令。后台持久化领取、等待忙碌目标并复用原有运行/小秘与审批路径；绑定创建工作区，重启未知投递不自动重复执行。执行状态、错误、待执行取消和手动刷新均在提醒卡片中，详见[提醒定时执行](architecture/reminder-schedules.md)。

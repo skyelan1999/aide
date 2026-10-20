@@ -374,6 +374,13 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// 在锁内取 *Session 指针副本，避免与 dispatchToAideLocked 并发写 a.sessions 触发 map 竞争。
 	a.mu.Lock()
 	s := a.sessions[r.PathValue("id")]
+	if s != nil {
+		if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
+			a.mu.Unlock()
+			fail(w, 409, err)
+			return
+		}
+	}
 	cfg, cfgErr := a.xiaomiModelConfigLocked()
 	va := a.voiceAgent
 	requiresUnlock := a.settings.UserPasswordHash != ""
@@ -401,6 +408,11 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		a.mu.Lock()
+		if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
+			a.mu.Unlock()
+			fail(w, 409, err)
+			return
+		}
 		var entry VoiceHistoryEntry
 		if va != nil {
 			entry = va.recordFallback(text, reason)
@@ -411,7 +423,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		disp := a.dispatchToAideLocked(entry.Text)
 		a.mu.Unlock()
 		if disp != nil {
-			a.startDispatchedAssistantTask(disp, entry.Text, in.AvatarFeedback, text)
+			a.startDispatchedAssistantTaskWithContext(r.Context(), disp, entry.Text, in.AvatarFeedback, text)
 		}
 		jsonOut(w, 200, map[string]any{
 			"action": entry.Action, "text": entry.Text, "reply": describeVoiceEntry(entry),
@@ -441,6 +453,11 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	var disp map[string]any
 	a.mu.Lock()
+	if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
+		a.mu.Unlock()
+		fail(w, 409, err)
+		return
+	}
 	a.recordAgenticExchangeLocked(text, dec, source)
 	if dec.Action == "dispatch" {
 		disp = a.dispatchToAideLocked(dec.DispatchText)
@@ -457,7 +474,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		a.mu.Unlock()
 	}
 	if dec.Action == "dispatch" && disp != nil {
-		a.startDispatchedAssistantTask(disp, dec.DispatchText, in.AvatarFeedback, text)
+		a.startDispatchedAssistantTaskWithContext(r.Context(), disp, dec.DispatchText, in.AvatarFeedback, text)
 	}
 	replyOut := dec.Reply
 	if dec.Action == "dispatch" {
@@ -508,6 +525,13 @@ func (a *App) dispatchToAideLocked(intent string) map[string]any {
 // It calls the same validated startTask path as the composer, preserving queue,
 // context-budget, model, permission, and run-limit checks.
 func (a *App) startDispatchedAssistantTask(dispatch map[string]any, prompt string, avatarFeedback bool, authorization ...string) {
+	a.startDispatchedAssistantTaskWithContext(context.Background(), dispatch, prompt, avatarFeedback, authorization...)
+}
+
+func (a *App) startDispatchedAssistantTaskWithContext(ctx context.Context, dispatch map[string]any, prompt string, avatarFeedback bool, authorization ...string) {
+	if scope, _ := ctx.Value(scheduledWorkspaceKey{}).(string); scope == "" {
+		ctx = context.Background()
+	} // retain ordinary delegation lifetime
 	sessionID, _ := dispatch["sessionId"].(string)
 	if sessionID == "" || strings.TrimSpace(prompt) == "" {
 		dispatch["started"] = false
@@ -525,7 +549,8 @@ func (a *App) startDispatchedAssistantTask(dispatch map[string]any, prompt strin
 	if len(authorization) > 0 {
 		request = authorization[0]
 	}
-	req = req.WithContext(context.WithValue(req.Context(), assistantDispatchKey{}, request))
+	ctx = context.WithValue(ctx, scheduledReminderKey{}, "") // delegated session differs from the original reminder target
+	req = req.WithContext(context.WithValue(ctx, assistantDispatchKey{}, request))
 	recorder := httptest.NewRecorder()
 	a.startTask(recorder, req)
 	if recorder.Code != http.StatusAccepted {

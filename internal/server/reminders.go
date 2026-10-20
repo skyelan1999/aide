@@ -14,22 +14,23 @@ import (
 )
 
 type Reminder struct {
-	ID                  string `json:"id"`
-	Title               string `json:"title"`
-	Description         string `json:"description,omitempty"`
-	DueAt               string `json:"dueAt,omitempty"`
-	Priority            string `json:"priority"`
-	Status              string `json:"status"`
-	Area                string `json:"area"` // global | workspace
-	WorkspaceID         string `json:"workspaceId,omitempty"`
-	WorkspaceName       string `json:"workspaceName,omitempty"`
-	Source              string `json:"source"` // manual | aide | xiaomi
-	Notify              string `json:"notify"` // both | popup | xiaomi | none
-	CreatedAt           string `json:"createdAt"`
-	UpdatedAt           string `json:"updatedAt"`
-	CompletedAt         string `json:"completedAt,omitempty"`
-	PopupNotifiedAt     string `json:"popupNotifiedAt,omitempty"`
-	AssistantNotifiedAt string `json:"assistantNotifiedAt,omitempty"`
+	Execution           *ReminderExecution `json:"execution,omitempty"`
+	ID                  string             `json:"id"`
+	Title               string             `json:"title"`
+	Description         string             `json:"description,omitempty"`
+	DueAt               string             `json:"dueAt,omitempty"`
+	Priority            string             `json:"priority"`
+	Status              string             `json:"status"`
+	Area                string             `json:"area"` // global | workspace
+	WorkspaceID         string             `json:"workspaceId,omitempty"`
+	WorkspaceName       string             `json:"workspaceName,omitempty"`
+	Source              string             `json:"source"` // manual | aide | xiaomi
+	Notify              string             `json:"notify"` // both | popup | xiaomi | none
+	CreatedAt           string             `json:"createdAt"`
+	UpdatedAt           string             `json:"updatedAt"`
+	CompletedAt         string             `json:"completedAt,omitempty"`
+	PopupNotifiedAt     string             `json:"popupNotifiedAt,omitempty"`
+	AssistantNotifiedAt string             `json:"assistantNotifiedAt,omitempty"`
 }
 
 type reminderStore struct {
@@ -38,21 +39,23 @@ type reminderStore struct {
 }
 
 type reminderInput struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	DueAt       string `json:"dueAt"`
-	Priority    string `json:"priority"`
-	Area        string `json:"area"`
-	Notify      string `json:"notify"`
+	Execution   *reminderExecutionInput `json:"execution,omitempty"`
+	Title       string                  `json:"title"`
+	Description string                  `json:"description"`
+	DueAt       string                  `json:"dueAt"`
+	Priority    string                  `json:"priority"`
+	Area        string                  `json:"area"`
+	Notify      string                  `json:"notify"`
 }
 
 type reminderPatch struct {
-	Title       *string `json:"title"`
-	Description *string `json:"description"`
-	DueAt       *string `json:"dueAt"`
-	Priority    *string `json:"priority"`
-	Area        *string `json:"area"`
-	Notify      *string `json:"notify"`
+	Execution   json.RawMessage `json:"execution,omitempty"`
+	Title       *string         `json:"title"`
+	Description *string         `json:"description"`
+	DueAt       *string         `json:"dueAt"`
+	Priority    *string         `json:"priority"`
+	Area        *string         `json:"area"`
+	Notify      *string         `json:"notify"`
 }
 
 func (a *App) loadReminders() error {
@@ -75,6 +78,12 @@ func (a *App) loadReminders() error {
 		return fmt.Errorf("不支持的提醒数据版本: %d", store.Version)
 	}
 	a.reminders = store.Items
+	for i := range a.reminders {
+		if e := a.reminders[i].Execution; e != nil && (e.State == "dispatching" || e.State == "submitted") {
+			e.State = "interrupted"
+			e.Error = "服务重启，投递或执行结果待核实；不会自动重复执行"
+		}
+	}
 	if a.reminders == nil {
 		a.reminders = []Reminder{}
 	}
@@ -137,7 +146,7 @@ func normalizeReminderInput(in reminderInput, workspaceID, workspaceName, actor 
 		r.WorkspaceID = workspaceID
 		r.WorkspaceName = workspaceName
 	}
-	return r, nil
+	return cloneReminder(r), nil
 }
 
 func (a *App) createReminder(actor string, in reminderInput) (Reminder, error) {
@@ -151,12 +160,16 @@ func (a *App) createReminder(actor string, in reminderInput) (Reminder, error) {
 	if err != nil {
 		return Reminder{}, err
 	}
+	r.Execution, err = a.newReminderExecutionLocked(actor, in.Execution, r.DueAt)
+	if err != nil {
+		return Reminder{}, err
+	}
 	a.reminders = append(a.reminders, r)
 	if err := a.persistRemindersLocked(); err != nil {
 		a.reminders = a.reminders[:len(a.reminders)-1]
 		return Reminder{}, err
 	}
-	return r, nil
+	return cloneReminder(r), nil
 }
 
 func reminderPriorityValue(p string) int {
@@ -196,7 +209,7 @@ func (a *App) listReminderItems(actor, query, area, status, workspaceID string) 
 		if lower != "" && !strings.Contains(strings.ToLower(r.Title+"\n"+r.Description+"\n"+r.WorkspaceName), lower) {
 			continue
 		}
-		out = append(out, r)
+		out = append(out, cloneReminder(r))
 	}
 	sort.SliceStable(out, func(i, j int) bool {
 		if reminderPriorityValue(out[i].Priority) != reminderPriorityValue(out[j].Priority) {
@@ -223,6 +236,12 @@ func (a *App) updateReminder(actor, id string, patch reminderPatch) (Reminder, e
 		r := &a.reminders[i]
 		if r.ID != id {
 			continue
+		}
+		if executionInFlight(r.Execution) {
+			return Reminder{}, errors.New("执行中的定时任务不能编辑")
+		}
+		if r.Execution != nil && actor != "manual" {
+			return Reminder{}, errors.New("定时执行只能由用户编辑")
 		}
 		if r.Status == "completed" {
 			return Reminder{}, errors.New("已完成提醒不能编辑")
@@ -251,6 +270,20 @@ func (a *App) updateReminder(actor, id string, patch reminderPatch) (Reminder, e
 		if err != nil {
 			return Reminder{}, err
 		}
+		if r.Execution != nil || len(patch.Execution) > 0 {
+			var input *reminderExecutionInput
+			if len(patch.Execution) > 0 {
+				if err := json.Unmarshal(patch.Execution, &input); err != nil {
+					return Reminder{}, err
+				}
+			} else if r.Execution != nil {
+				input = &reminderExecutionInput{Target: r.Execution.Target, SessionNumber: r.Execution.SessionNumber, Prompt: r.Execution.Prompt}
+			}
+			updated.Execution, err = a.newReminderExecutionLocked(actor, input, updated.DueAt)
+			if err != nil {
+				return Reminder{}, err
+			}
+		}
 		updated.ID, updated.CreatedAt, updated.Status = r.ID, r.CreatedAt, r.Status
 		updated.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 		if updated.Area == r.Area && updated.WorkspaceID == r.WorkspaceID {
@@ -258,13 +291,17 @@ func (a *App) updateReminder(actor, id string, patch reminderPatch) (Reminder, e
 		}
 		updated.PopupNotifiedAt = r.PopupNotifiedAt
 		updated.AssistantNotifiedAt = r.AssistantNotifiedAt
+		if updated.DueAt != r.DueAt {
+			updated.PopupNotifiedAt = ""
+			updated.AssistantNotifiedAt = ""
+		}
 		old := *r
 		*r = updated
 		if err := a.persistRemindersLocked(); err != nil {
 			*r = old
 			return Reminder{}, err
 		}
-		return *r, nil
+		return cloneReminder(*r), nil
 	}
 	return Reminder{}, errors.New("提醒不存在")
 }
@@ -279,16 +316,23 @@ func (a *App) completeReminder(actor, id string) (Reminder, error) {
 		if a.reminders[i].ID != id {
 			continue
 		}
+		if executionInFlight(a.reminders[i].Execution) {
+			return Reminder{}, errors.New("执行已提交，请在目标会话停止任务")
+		}
 		if a.reminders[i].Status != "completed" {
 			r := &a.reminders[i]
-			old := *r
+			old := cloneReminder(*r)
+			if r.Execution != nil && r.Execution.State == "pending" {
+				r.Execution.State = "cancelled"
+				r.Execution.FinishedAt = time.Now().UTC().Format(time.RFC3339Nano)
+			}
 			r.Status, r.CompletedAt, r.UpdatedAt = "completed", time.Now().UTC().Format(time.RFC3339Nano), time.Now().UTC().Format(time.RFC3339Nano)
 			if err := a.persistRemindersLocked(); err != nil {
 				*r = old
 				return Reminder{}, err
 			}
 		}
-		return a.reminders[i], nil
+		return cloneReminder(a.reminders[i]), nil
 	}
 	return Reminder{}, errors.New("提醒不存在")
 }
@@ -305,6 +349,9 @@ func (a *App) deleteReminder(actor, id string) error {
 	for i := range a.reminders {
 		if a.reminders[i].ID != id {
 			continue
+		}
+		if executionInFlight(a.reminders[i].Execution) {
+			return errors.New("执行已提交，请在目标会话停止任务")
 		}
 		oldItems := append([]Reminder(nil), a.reminders...)
 		a.reminders = append(a.reminders[:i], a.reminders[i+1:]...)
@@ -351,7 +398,7 @@ func (a *App) duePopupReminders(workspaceID string, now time.Time) []Reminder {
 		if r.Area == "workspace" && r.WorkspaceID != workspaceID {
 			continue
 		}
-		out = append(out, r)
+		out = append(out, cloneReminder(r))
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if reminderPriorityValue(out[i].Priority) != reminderPriorityValue(out[j].Priority) {
@@ -423,6 +470,7 @@ func (a *App) reminderLoop(ctx context.Context) {
 			return
 		case now := <-ticker.C:
 			a.dispatchAssistantReminders(now)
+			a.dispatchScheduledReminders(now)
 		}
 	}
 }
