@@ -59,14 +59,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Prepare Terminal1.5.1 removal release and market registration; companion source-only rollback.",
+      "status": "pass",
+      "summary": "Terminal1.5.1main/tag/prerelease418226034published;1.5.0markedwithdrawn. Host desktop rollback mainf4d7ff63pushed. Market63fbc6bPages39401351323success; anonymous live catalog/ZIPhash and absence of desktop runtime/tools/UI/settings verified. No Aide image deployment.",
       "evidence": [
-        "docs/reviews/2026-10-20-terminal-remove-desktop/verification.json"
+        "docs/reviews/2026-10-20-terminal-remove-desktop/verification.json",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.1",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39401351323"
       ]
     }
   },
   "release_authorization": "User explicitly requests complete desktop removal; prior direct-main/push/release/market authorization persists.",
   "rollback": "Prior1.4.2 retained;1.5.0 declared withdrawn. Do not auto-remove private desktop history/media. Upgrade intentionally disconnects sessions.",
-  "handoff": ""
+  "handoff": "RDP/VNC removed completely from current plugin and host source. Use marketTerminal1.5.1; originalShell/SSH/TCP/UDP/serial/relay/log/visibility/reconnectpreserved. Old desktop private data left untouched and not loaded. Own Docker/container/native desktop experiments removed; original normal services and10unrelated untracked tasks preserved. New self-implementation not published. No full Aide image/start.command deployment claim."
 }

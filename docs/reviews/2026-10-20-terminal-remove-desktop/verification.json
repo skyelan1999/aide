@@ -71,5 +71,21 @@
   "notRun": [
     "No Aide image build/deployment or paid model calls",
     "No claim that discontinued RDP/VNC real host behavior passed"
-  ]
+  ],
+  "market": {
+    "status": "PASS",
+    "version": "1.5.1",
+    "marketCommit": "63fbc6b5617886933d3e9a3720989d71110e99a3",
+    "bytes": 1063002,
+    "sha256": "16955e057fc0e5176bae9bade29981cb56d5565fa9b1bef0e2a84e1b4c6338ed",
+    "desktopRemovedFromLivePackage": true,
+    "otherListingsUnchanged": true,
+    "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39401351323",
+    "pagesConclusion": "success"
+  },
+  "pluginCommit": "d140f369220c9cff6cc4a741554516bff2896465",
+  "hostRemovalCommit": "f4d7ff63",
+  "releaseURL": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.1",
+  "releaseID": 418226034,
+  "previous150": "Release explicitly marked withdrawn,1.5.1recommended; old tag/archive retained as immutable history"
 }
