@@ -1,0 +1,85 @@
+{
+  "version": "1.0.0",
+  "zipBytes": 1990,
+  "zipSHA256": "064b9a593932ebd657a5db4e668e451a9cbe22524c2b1d7f5d6b6cbefd737edd",
+  "zipEqualsExistingMarket": true,
+  "runtimeSourceUnchanged": true,
+  "aideCommit": "ea68713ee2c9d406b7550b8390d6c6cd0a1e812c",
+  "hostEntry": {
+    "ok": true,
+    "name": "Markdown 历史版本"
+  },
+  "hostTools": [
+    {
+      "name": "markdown_history",
+      "executable": true
+    }
+  ],
+  "standaloneHandler": "PASS expected error requiring Aide native executor; registered handler does not provide standalone history implementation",
+  "nativeRegression": {
+    "command": "go test -race ./internal/server -run '^(TestMarkdown(History|Restore).*|TestHistoryObject.*)$' -count=1 -json",
+    "status": "PASS",
+    "tests": [
+      {
+        "test": "TestMarkdownHistoryObservedAssetsAndDedup",
+        "result": "pass"
+      },
+      {
+        "test": "TestMarkdownHistoryRejectsCorruptObjects",
+        "result": "pass"
+      },
+      {
+        "test": "TestMarkdownHistoryReadPinsWorkspace",
+        "result": "pass"
+      },
+      {
+        "test": "TestMarkdownRestoreBundleAndConflict",
+        "result": "pass"
+      },
+      {
+        "test": "TestMarkdownRestoreUnavailableAssetAndReadOnlySource",
+        "result": "pass"
+      },
+      {
+        "test": "TestMarkdownHistoryPartialWriteContract",
+        "result": "pass"
+      },
+      {
+        "test": "TestHistoryObjectReuseVerifiesBytesAndKind",
+        "result": "pass"
+      },
+      {
+        "test": "TestHistoryObjectValidReuseIsImmutable",
+        "result": "pass"
+      },
+      {
+        "test": "TestMarkdownHistoryInvalidBackupBlocksWrite",
+        "result": "pass"
+      }
+    ]
+  },
+  "frontendLogic": {
+    "command": "node scripts/markdown-history-writable.test.cjs",
+    "status": "PASS (source VM)",
+    "coverage": "Restored writable callback, failures/retry and stale context/selection/lock isolation; backup controls"
+  },
+  "platforms": {
+    "linux": "PASS native and plugin checks",
+    "windows": "NOT_RUN",
+    "macos": "NOT_RUN"
+  },
+  "realSSH": "NOT_RUN",
+  "ui": "No product UI changes; actual browser not applicable, VM test is logic regression only",
+  "storage": "Aide service data directory; no history data included in plugin archive",
+  "rollback": "Revert market metadata; immutable runtime ZIP unchanged; no user data or service changes",
+  "repository": "https://github.com/skyelan1999/aide-pkg-MarkdownHistory",
+  "sourceCommit": "251a214346c08ee7e80e64f37bc93d08b40786fd",
+  "release": "https://github.com/skyelan1999/aide-pkg-MarkdownHistory/releases/tag/v1.0.0",
+  "releaseID": 417963648,
+  "releaseDownloads": "PASS: anonymous fixed-commit repository ZIP/SHA256SUMS; no uploaded Release binary attachments",
+  "marketCommit": "6303fa6425b61592129aeab7cb0eb580eef36993",
+  "marketValidation": "PASS: public/private tests (2 each), verify_catalog (25 listings / 24 public / 1 private), market.js syntax and diff; unrelated entries and order unchanged",
+  "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39363449807",
+  "pagesStatus": "PASS: successful deployment of 6303fa6425b61592129aeab7cb0eb580eef36993",
+  "onlineVerification": "PASS: live catalog equals local committed catalog including pinned independent source, README and native executor requirement; anonymous ZIP size and SHA256 match"
+}

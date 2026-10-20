@@ -1,0 +1,75 @@
+{
+  "id": "markdown-history-release-20261020",
+  "request": "Markdown History",
+  "baseline": "ea68713ee2c9d406b7550b8390d6c6cd0a1e812c",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Publish prepared public MarkdownHistory repository and stable v1.0.0 Release",
+    "Preserve runtime source and original immutable market ZIP",
+    "Verify native version deduplication, asset snapshots, restore conflict/read-only boundaries, workspace pinning and corrupt-object handling",
+    "Document native executor/storage requirements and verify deployed market registration and anonymous downloads"
+  ],
+  "scope": [
+    "Independent aide-pkg-MarkdownHistory distribution",
+    "Market markdown-history listing and generator registration",
+    "Aide task and verification handoff only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Distribute existing 1.0.0 unchanged; native markdown_history executor and service-side history storage remain host dependencies. No host runtime/image/UI changes.",
+      "evidence": [
+        "plugins/markdown-history/index.js",
+        "internal/server/markdown_history_test.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Distribute existing 1.0.0 unchanged; native markdown_history executor and service-side history storage remain host dependencies. No host runtime/image/UI changes.",
+      "evidence": [
+        "plugins/markdown-history/index.js",
+        "internal/server/markdown_history_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prepared unchanged source, immutable ZIP/checksum and independent distribution docs. No host runtime changes.",
+      "evidence": [
+        "docs/reviews/2026-10-20-markdown-history-release/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "9 native race tests, source-VM restore/backup UI logic, native host registration and expected standalone error passed. Windows/macOS and real SSH NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-10-20-markdown-history-release/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/changelog document native execution, service-side history, original-file saves and resource/restore limits.",
+      "evidence": [
+        "docs/reviews/2026-10-20-markdown-history-release/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned distribution/task/evidence files; pre-existing untracked tasks retained. No running services or data changed.",
+      "evidence": [
+        "docs/reviews/2026-10-20-markdown-history-release/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent main and annotated v1.0.0 tag pushed; stable Release published; fixed-commit anonymous ZIP/checksum verified; successful Pages deployment and live catalog/ZIP verified. No Aide host version/image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-MarkdownHistory/releases/tag/v1.0.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39363449807",
+        "docs/reviews/2026-10-20-markdown-history-release/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "User prior direct main/push release/market registration instructions; Markdown History continues independent plugin releases",
+  "rollback": "Revert market commit 6303fa6 to restore previous metadata; immutable ZIP unchanged, no history data migration or host/image replacement.",
+  "handoff": "Markdown History 1.0.0 independent distribution and live market registration complete. Runtime ZIP unchanged. Requires Aide native executor and service-side history storage; 9 native race tests and restore/backup source-VM logic passed. Windows/macOS and real SSH NOT_RUN; no product UI changes. No user history data or running services changed."
+}
