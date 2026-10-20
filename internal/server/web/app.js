@@ -6790,6 +6790,7 @@ const pluginUpgradeSourceButton=el('button','quiet',t('升级来源'));
 pluginUpgradeSourceButton.type='button';pluginUpgradeSourceButton.dataset.i18n='升级来源';
 pluginUpgradeSourceButton.onclick=()=>{const plugin=pluginSettingsState.plugin;if(!plugin)return;$('plugin-settings-dialog').close();window.AidePluginUpgrade.openSource(plugin,pluginUpgradeServices());};
 $('plugin-settings-form').querySelector('.dialog-actions').prepend(pluginUpgradeSourceButton);
+function pluginWorkbenchServices(){return {api,t,toast,standalone:!!window.AidePluginWorkbench.route(location.search),reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
 function renderPluginList() {
   const query = $('plugin-search').value.trim().toLowerCase();
   const host = $('plugin-list');
@@ -6822,8 +6823,10 @@ function renderPluginList() {
     });
     if(p.workbench?.protocol===1){
       const launch=el('button','quiet',t('打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
-      launch.onclick=()=>window.AidePluginWorkbench.open(p,{api,t,toast,reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)});
-      foot.append(launch);
+      launch.onclick=()=>window.AidePluginWorkbench.open(p,pluginWorkbenchServices());
+      const tab=el('button','quiet',t('在新标签页打开'));tab.type='button';tab.disabled=launch.disabled;
+      tab.onclick=()=>window.AidePluginWorkbench.openTab(p,pluginWorkbenchServices());
+      foot.append(launch,tab);
     }
     foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("启用") : t("停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
     card.append(foot);
@@ -9741,6 +9744,13 @@ async function initialize() {
   }
   refreshChatDraftChoices();
   setupGlobalEvents(); // #60
+  const workbenchId=window.AidePluginWorkbench?.route(location.search);
+  if(workbenchId){
+    await loadPluginsPanel();
+    const plugin=state.plugins.find(p=>p.id===workbenchId&&p.enabled&&!p.error&&p.workbench?.protocol===1);
+    if(plugin){document.body.classList.add('plugin-workbench-page');document.title=plugin.workbench.title+' · Aide';await window.AidePluginWorkbench.open(plugin,pluginWorkbenchServices());}
+    else toast(t('插件工作台不可用，请检查插件是否启用。'));
+  }
 }
 initialize()
   .then(() => { resetIdleTimer(); })

@@ -7,3 +7,7 @@
 
 .plugin-workbench>header>.plugin-workbench-export{max-width:min(34vw,340px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.plugin-workbench>header>button[hidden]{display:none}
 @media(max-width:700px){.plugin-workbench>header{flex-wrap:wrap}.plugin-workbench>header>.plugin-workbench-export{max-width:100%;margin-left:0}}
+
+.plugin-workbench-page .plugin-workbench{inset:0;border:0;border-radius:0;box-shadow:none}
+.plugin-workbench-page .plugin-workbench>header{min-height:40px;padding:5px 16px;gap:12px}
+.plugin-workbench-page .plugin-workbench>header>button{min-height:28px;padding:4px 10px;border-radius:6px}

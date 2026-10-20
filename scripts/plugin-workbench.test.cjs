@@ -8,7 +8,7 @@ function fixture(response={protocol:1,url:'/plugin-workbench/'+'a'.repeat(64)}){
  class MessageChannel{constructor(){const make=()=>({received:[],closed:false,start(){},close(){this.closed=true;},postMessage(value){this.other.received.push(value);return this.other.onmessage?.({data:value});}});this.port1=make();this.port2=make();this.port1.other=this.port2;this.port2.other=this.port1;}}
  const urls=new Set();const urlAPI={createObjectURL(){const u='blob:test-'+urls.size;urls.add(u);return u;},revokeObjectURL(u){urls.delete(u);}};
  class MutationObserver{constructor(fn){themeChange=fn;}observe(){}disconnect(){themeChange=null;}}
- const window={addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,URL:urlAPI,setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
+ const window={addEventListener:(k,f)=>events[k]=f,removeEventListener:k=>delete events[k]},ctx={window,document,URLSearchParams,encodeURIComponent,MutationObserver,getComputedStyle:()=>({getPropertyValue:()=>root.dataset.theme==='light'?'#f2f3f5':'#202328'}),requestAnimationFrame:fn=>(fn(),1),cancelAnimationFrame:()=>{},AbortController,MessageChannel,ArrayBuffer,Blob,URL:urlAPI,setInterval:f=>(interval=f,1),clearInterval:()=>{}};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../internal/server/web/plugin-workbench.js'),'utf8'),ctx);
  return{root,themeChange:()=>themeChange?.(),controller:window.AidePluginWorkbench,urls,nodes,events,focus,errors,services:{api:async()=>response,t:x=>x,toast:x=>errors.push(x),blocked:()=>blocked,scope:()=>scope,enabled:()=>enabled},tick:()=>interval(),block:()=>blocked=true,changeScope:()=>scope='two',disable:()=>enabled=false};
 }
 const plugin={id:'test',enabled:true,workbench:{protocol:1,title:'Test'}};
@@ -48,3 +48,15 @@ test('theme follows host only after a bound frame requests it and stops on close
  f.root.dataset.theme='dark';f.root.dataset.palette='comfort';f.themeChange();m=frame.contentWindow.messages.at(-1).data;assert.equal(m.theme,'dark');assert.equal(m.palette,'comfort');
  f.controller.close();const count=frame.contentWindow.messages.length;f.themeChange();assert.equal(frame.contentWindow.messages.length,count);
 });
+
+
+test('new tab route contains only a validated plugin id and isolates its opener',()=>{
+ const f=fixture();f.controller.openTab({...plugin,id:'compare'},f.services);
+ const a=f.nodes.find(n=>n.tag==='a');assert.equal(a.href,'/?pluginWorkbench=compare');assert.equal(a.target,'_blank');assert.equal(a.rel,'noopener noreferrer');assert(a.clicked);assert(a.removed);
+ assert.equal(f.controller.route('?pluginWorkbench=compare'),'compare');
+ for(const query of ['?pluginWorkbench=https://evil.invalid','?pluginWorkbench=../compare','?pluginWorkbench=','?pluginWorkbench='+ 'a'.repeat(65),''])assert.equal(f.controller.route(query),null);
+ for(const stop of ['block','disable']){const g=fixture();if(stop==='block')g.block();g.controller.openTab({...plugin,enabled:stop!=='disable'},g.services);assert.equal(g.nodes.filter(n=>n.tag==='a').length,0);}
+ const g=fixture();g.controller.openTab({...plugin,id:'../other'},g.services);assert.equal(g.nodes.filter(n=>n.tag==='a').length,0);
+});
+
+test('page exit revokes its own bridge and unloads the sandbox',async()=>{const f=fixture(bridgeResponse);const calls=[];const api=f.services.api;f.services.api=async(url,options)=>{calls.push({url,options});return api(url,options);};await f.controller.open(bridgePlugin,f.services);f.events.pagehide();assert.equal(f.nodes.find(n=>n.tag==='iframe').src,'about:blank');const deleted=calls.find(c=>c.url.endsWith('/'+ 'a'.repeat(64)));assert.equal(deleted.options.method,'DELETE');assert.equal(deleted.options.keepalive,true);});

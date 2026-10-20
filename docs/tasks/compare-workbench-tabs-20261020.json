@@ -1,0 +1,82 @@
+{
+  "id": "compare-workbench-tabs-20261020",
+  "request": "Compare 新增在新标签页打开工作台入口，重排专业简约 UI，并在 Safari 实际验收",
+  "baseline": "892e0b99c03a77657e9dbf5cf33df1532b151563",
+  "initial_status": "Isolated clean main checkout from 892e0b99; only scoped frontend changes copied. Local runtime manifests and backup directories excluded.",
+  "acceptance": [
+    "Compare card and embedded workbench open a separate Aide tab without credentials in its URL",
+    "Reloaded standalone tab obtains a fresh bridge; comparisons and export/save remain usable",
+    "Compact professional Compare layout: grouped input/actions, large result area, useful empty state, responsive layout",
+    "Existing tools and engine remain compatible; Safari file/image/report smoke checks"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/plugin-workbench.js",
+    "internal/server/web/plugin-workbench.css",
+    "internal/server/web/index.html",
+    "scripts/plugin-workbench.test.cjs",
+    "docs/tasks/compare-workbench-tabs-20261020.json",
+    "../aide-pkg-Compare/workbench.html and package documentation",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Use an authenticated full Aide tab with a plugin-id-only route; reuse sandbox, scope binding and export protocol. Restyle Compare without native engine changes.",
+      "evidence": [
+        "User request and source review"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use an authenticated full Aide tab with a plugin-id-only route; reuse sandbox, scope binding and export protocol. Restyle Compare without native engine changes.",
+      "evidence": [
+        "User request and source review"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Separate-tab card/header entry, fresh scoped bridge on reload, pagehide cleanup and professional Compare result layout implemented.",
+      "evidence": [
+        "internal/server/web/plugin-workbench.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual Safari file/image/DOCX/report download and reload/revocation checks pass; 12 Node regressions and targeted Go workbench tests pass; plugin package checks pass. Desktop verified; mobile devices and full theme matrix not run.",
+      "evidence": [
+        "docs/reviews/2026-10-20-compare-workbench-tabs.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Compare README, changelog, verification and review distinguish local UI candidate from published 0.3.0.",
+      "evidence": [
+        "docs/reviews/2026-10-20-compare-workbench-tabs.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diffs checked; unrelated changes and rollback files retained. Both owned build containers and the temporary builder image were removed.",
+      "evidence": [
+        "Isolated checkout excludes runtime data and commercial plugin packages"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Authorized: run full gate, bump daily version, build both platform release assets and verify uploads.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "可以，把 Compare 0.3.1 和 Aide 这次的修改都 push、release，上传新版插件包。",
+  "rollback": "Prior runtime binary .agent-state/compare-ui/aide.before (also /usr/local/bin/aide.before-compare-ui-20261020 in container). Restore binary with a temporary path and rename, restore /data/.integrity/baseline.before-compare-ui-20261020.json as baseline.json, then restart local container. Compare 0.3.0 published ZIP and upgrade backups retained.",
+  "handoff": "Local Aide healthy/integrity ok, Compare 0.3.1 candidate enabled. Separate Safari tab remains available. No paid model call. Desktop acceptance only; mobile and complete themes not accepted.",
+  "content_fingerprints": {
+    "internal/server/web/app.js": "6f8e31b3147ba6da81ed902e813ffcd8b47fa121245fa94cc10c09b1049b5b9a",
+    "internal/server/web/plugin-workbench.js": "60d820d05da31ce699fa768b8b5bdffd65c57871634df14c9828cd7e7a40bf15",
+    "internal/server/web/plugin-workbench.css": "c3df45734ce4ec01f98713487f978d223e8eaceb027ac143070dfce8733243b3",
+    "internal/server/web/index.html": "0bfd3e042586954683cace162320cab8f3601140bcd8b086c7acc7b867104e9d",
+    "internal/server/web/locales/en.js": "e2a49c72c09d05774f9fd9dcb0e2c63c76b83b6ddfcde76c74fb0928ebe005eb"
+  },
+  "runtime_binary_sha256": "05bf34c6818bf20f561592bef97704d70fa1c66e09cd9122303da305cdee8c05"
+}
