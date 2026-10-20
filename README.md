@@ -200,3 +200,5 @@ python3 scripts/agent-route.py audit
 ## 内置鲸鱼娘背景
 
 设置 → 外观 → 工作台背景 → 鲸鱼娘，可直接选择随应用内置的静音循环视频，无需上传。默认仍关闭，原有强度调节、本地素材与后台/锁屏/减少动态效果暂停规则保留。[实际截图与实现边界](docs/builtin-background.md)。
+
+插件安装状态位于已忽略的 `plugins/`，构建/测试初始副本位于 `bundled-plugins/`。已有克隆首次拉取该变更前，请先按[一次性迁移说明](docs/plugin-checkout-migration.md)备份并保留本地插件升级。

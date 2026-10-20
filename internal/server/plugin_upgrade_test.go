@@ -333,7 +333,7 @@ func TestPluginUpgradeOfficialPinsFilesAndChecksGitBlob(t *testing.T) {
 			entries := []map[string]any{}
 			for name, data := range files {
 				hash := sha1.Sum([]byte(fmt.Sprintf("blob %d\x00%s", len(data), data)))
-				entries = append(entries, map[string]any{"name": name, "path": "plugins/office/" + name, "type": "file", "size": len(data), "sha": hex.EncodeToString(hash[:])})
+				entries = append(entries, map[string]any{"name": name, "path": "bundled-plugins/office/" + name, "type": "file", "size": len(data), "sha": hex.EncodeToString(hash[:])})
 			}
 			raw, _ := json.Marshal(entries)
 			return upgradeResponse(raw), nil
@@ -414,5 +414,19 @@ func TestPluginUpgradeGitHubFakeIPProxy(t *testing.T) {
 	}
 	if _, err := pluginUpdateURL("https://198.18.2.1/secret"); err == nil {
 		t.Fatal("literal Fake-IP accepted")
+	}
+}
+
+func TestOfficialPluginDefaultsFollowIndependentMarket(t *testing.T) {
+	for _, old := range []PluginManifest{{ID: "office"}, {ID: "terminal"}, {ID: "office", UpdateURL: officialPluginPrefix + "office"}} {
+		if got := pluginUpdateSource(old); got != marketUpdatePrefix+old.ID {
+			t.Fatalf("source = %q", got)
+		}
+	}
+	if got := pluginUpdateSource(PluginManifest{ID: "office", UpdateURL: "https://example.com/custom.zip"}); got != "https://example.com/custom.zip" {
+		t.Fatal(got)
+	}
+	if got := pluginUpdateSource(PluginManifest{ID: "propeller-aero"}); got != "" {
+		t.Fatal(got)
 	}
 }

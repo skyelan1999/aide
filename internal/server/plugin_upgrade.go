@@ -27,15 +27,15 @@ import (
 
 const officialPluginPrefix = "https://github.com/skyelan1999/aide/tree/main/plugins/"
 
-var officialPluginIDs = strings.Fields("archive-tools browser-control computer-control comm-serial comm-ssh comm-tcp comm-udp current-time environment-guide feedback goal lunar-calendar markdown-history office plan plugin-authoring propeller-aero skill sqlite subagent terminal todo workflow")
+var officialPluginIDs = strings.Fields("archive-tools browser-control computer-control comm-serial comm-ssh comm-tcp comm-udp current-time environment-guide feedback goal lunar-calendar markdown-history office plan plugin-authoring skill sqlite subagent terminal todo workflow")
 
 func pluginUpdateSource(p PluginManifest) string {
-	if p.UpdateURL != "" {
+	if p.UpdateURL != "" && p.UpdateURL != officialPluginPrefix+p.ID {
 		return p.UpdateURL
 	}
 	for _, id := range officialPluginIDs {
 		if id == p.ID {
-			return officialPluginPrefix + id
+			return marketUpdatePrefix + id
 		}
 	}
 	return ""
@@ -186,7 +186,7 @@ func officialPluginBundle(ctx context.Context, client *http.Client, id string) (
 		if len(files) >= maxPluginFiles {
 			return errors.New("官方插件文件数超过限制")
 		}
-		raw, err := pluginFetch(ctx, client, "https://api.github.com/repos/skyelan1999/aide/contents/plugins/"+id+dir+"?ref="+ref.Object.SHA, 1<<20)
+		raw, err := pluginFetch(ctx, client, "https://api.github.com/repos/skyelan1999/aide/contents/bundled-plugins/"+id+dir+"?ref="+ref.Object.SHA, 1<<20)
 		if err != nil {
 			return err
 		}
@@ -195,7 +195,7 @@ func officialPluginBundle(ctx context.Context, client *http.Client, id string) (
 			return errors.New("官方插件目录信息无效")
 		}
 		for _, e := range entries {
-			expected := "plugins/" + id + dir + "/" + e.Name
+			expected := "bundled-plugins/" + id + dir + "/" + e.Name
 			if e.Path != expected || e.Name == "" || e.Name == "." || e.Name == ".." || strings.ContainsAny(e.Name, "/\\") || strings.HasPrefix(e.Name, ".") {
 				return errors.New("官方插件路径无效")
 			}

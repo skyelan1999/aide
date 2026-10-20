@@ -1,0 +1,184 @@
+{
+  "initialAudit": {
+    "aideCommit": "3e5400081854e593cd3e7f2a7518ddf9b26768f8",
+    "localPluginCount": 23,
+    "verifiedIndependentRepositories": [
+      {
+        "plugin": "sqlite",
+        "repository": "aide-pkg-sqlite",
+        "sourceCommit": "45db2e291b5ca27fcd891460c3e5b3f0f84e5ece",
+        "status": "PASS"
+      },
+      {
+        "plugin": "skill",
+        "repository": "aide-pkg-skill",
+        "sourceCommit": "9fbe996c3ede074a3d02ff8de13f321d9f5a22a5",
+        "status": "PASS"
+      },
+      {
+        "plugin": "plugin-authoring",
+        "repository": "aide-pkg-PluginAuthoring",
+        "sourceCommit": "e44b69f0f8a11c9cd9c0eab43e6b1ed0afc6afb6",
+        "status": "PASS"
+      },
+      {
+        "plugin": "archive-tools",
+        "repository": "aide-pkg-ArchiveTools",
+        "sourceCommit": "c4d2286083c650dd4de94ce5b12936858993f8c3",
+        "status": "PASS"
+      },
+      {
+        "plugin": "markdown-history",
+        "repository": "aide-pkg-MarkdownHistory",
+        "sourceCommit": "251a214346c08ee7e80e64f37bc93d08b40786fd",
+        "status": "PASS"
+      },
+      {
+        "plugin": "environment-guide",
+        "repository": "aide-pkg-EnvGuide",
+        "sourceCommit": "4103e0e742b0b4da71a5a981ee1aa1250bc0e3d6",
+        "status": "PASS"
+      },
+      {
+        "plugin": "terminal",
+        "repository": "aide-pkg-terminal",
+        "sourceCommit": "badf9acdf68b6c47a9b230844361de9e175a6237",
+        "status": "PASS"
+      },
+      {
+        "plugin": "browser-control",
+        "repository": "aide-pkg-BrowserControl",
+        "sourceCommit": "e0f62b3bb67795dbeeb06818e529af1cb08ec125",
+        "status": "PASS"
+      },
+      {
+        "plugin": "computer-control",
+        "repository": "aide-pkg-ComputerControl",
+        "sourceCommit": "ad693e9959df6f0ac8bce0d6a997f3fc450a1d05",
+        "status": "PASS"
+      },
+      {
+        "plugin": "goal",
+        "repository": "aide-pkg-goal",
+        "sourceCommit": "72fbb16cd37f115a3843988bc6f31c2a35f05a25",
+        "status": "PASS"
+      },
+      {
+        "plugin": "plan",
+        "repository": "aide-pkg-plan",
+        "sourceCommit": "c89648ba468ca0410d30c44b7e592bb37127234a",
+        "status": "PASS"
+      },
+      {
+        "plugin": "todo",
+        "repository": "aide-pkg-todo",
+        "sourceCommit": "cfe72f5d187737893ea3aca44e7f788f92e18d03",
+        "status": "PASS"
+      },
+      {
+        "plugin": "feedback",
+        "repository": "aide-pkg-feedback",
+        "sourceCommit": "8302f3577ea572186e2f940ca10e40e5604cf13b",
+        "status": "PASS"
+      },
+      {
+        "plugin": "subagent",
+        "repository": "aide-pkg-subagent",
+        "sourceCommit": "f9584cbfc128007e4ecdfed587cc93f231c776e0",
+        "status": "PASS"
+      },
+      {
+        "plugin": "workflow",
+        "repository": "aide-pkg-workflow",
+        "sourceCommit": "e7b732e79b5e8489d6418bb97456860216000e7b",
+        "status": "PASS"
+      },
+      {
+        "plugin": "current-time",
+        "repository": "aide-pkg-CurrentTime",
+        "sourceCommit": "f3c376cf03fa1573949a68df1296a72b32b9c2a8",
+        "status": "PASS"
+      },
+      {
+        "plugin": "lunar-calendar",
+        "repository": "aide-pkg-LunarCalendar",
+        "sourceCommit": "286d139e778d657211f5e6508b6abf86913d5aec",
+        "status": "PASS"
+      }
+    ],
+    "notStandalone": [
+      {
+        "id": "office",
+        "source": "https://github.com/skyelan1999/aide/tree/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/office"
+      },
+      {
+        "id": "propeller-aero",
+        "source": "https://github.com/skyelan1999/aide/tree/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/propeller-aero"
+      },
+      {
+        "id": "comm-serial",
+        "source": "https://github.com/skyelan1999/aide/tree/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/comm-serial"
+      },
+      {
+        "id": "comm-ssh",
+        "source": "https://github.com/skyelan1999/aide/tree/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/comm-ssh"
+      },
+      {
+        "id": "comm-tcp",
+        "source": "https://github.com/skyelan1999/aide/tree/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/comm-tcp"
+      },
+      {
+        "id": "comm-udp",
+        "source": "https://github.com/skyelan1999/aide/tree/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/comm-udp"
+      }
+    ],
+    "missingStandalone": [
+      "office",
+      "propeller-aero"
+    ],
+    "legacyCommunicationsConsolidatedIntoTerminal": [
+      "comm-ssh",
+      "comm-tcp",
+      "comm-udp",
+      "comm-serial"
+    ],
+    "conditionalIgnoreChange": "NOT_RUN: user conditions ignoring default plugins on complete standalone migration; office and propeller-aero have no matching repository in account repository list",
+    "gitignoreUnchanged": true,
+    "trackingUnchanged": true,
+    "followupDependencies": [
+      "plugins/registry.json is tracked and mutable during install/upgrade",
+      "Dockerfile copies default plugins both for build and into /opt/aide/builtin-plugins",
+      "Go tests and host scripts read plugin sources from plugins/",
+      "gitignore does not affect tracked files; future migration needs untracking plus reproducible pristine build fixtures and preservation of installed plugin content",
+      "First upstream commit removing tracked plugin paths requires explicit client migration so existing installations are not lost during pull"
+    ],
+    "verification": "Read-only account repository listing plus commits API for each of 17 catalog source commits; local manifest inventory/catalog comparison; tracked files and Docker/startup references inspected",
+    "runtimeTests": "Not applicable: no runtime or build changes"
+  },
+  "result": {
+    "userClarification": "Office好了 Propeller Aero不要了",
+    "officeRepository": "https://github.com/skyelan1999/aide-pkg-office",
+    "officeCommit": "1d56ad23c7d028afe65882a534b44a9270ff406f",
+    "officeRelease": "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.1.0",
+    "officeReleaseID": 417986311,
+    "officeNativeTests": "PASS 4 race tests: create/xlsx edit, native comments round trip, readonly comments reference, xlsx reference permissions",
+    "officeArchive": "4287 bytes; SHA256 34b4d01a5714cad3530471b3de86c4d81eee6ca0452b85ba149b31b8ad94553f; existing market ZIP unchanged",
+    "officeAndPropellerMarket": "PASS Pages run 39367559652; live catalog matches source 4fca0356338aab4a20b2fe1ac819eee97c90abf0; Office pinned source/anonymous ZIP and checksums verified; Propeller absent",
+    "runtimeIsolation": "plugins/* ignored except testdata; installed files preserved; pristine Git inputs moved to bundled-plugins",
+    "defaultInitialization": "22 plugin seed entries, no missing files, no Propeller; no existing registry/code overwrite",
+    "officialUpdates": "Default and legacy official sources resolve through market; custom upgrade URL preserved",
+    "sourceBuild": "PASS go build -o /tmp/aide-plugin-isolation ./cmd/aide",
+    "gitWorkflow": "PASS scripts/test_plugin_isolation.py: real Git first migration backup/stash/pull/restore and later plugin upgrade + ff pull",
+    "sourceFingerprint": "PASS 2 tests, runtime registry/plugin edits excluded, bundled source changes included",
+    "dockerBuildInputs": "PASS Dockerfile and Dockerfile.local static copy-source check",
+    "nativeBootstrap": "PASS focused checkout/bundled/management/authoring race tests; clean index export with no installed plugins passed checkout/bundled/CurrentTime/LunarCalendar/Skill/Terminal integration tests",
+    "ui": "Not applicable: no product UI change",
+    "dockerRuntime": "NOT_RUN full image build/start.command activation; previous environment CA/disk blockers remain. No formal host image/version release.",
+    "upgradeRegression": "PASS go test -race ./internal/server -run ^(TestOfficial.*|TestPluginUpgrade.*)$ -count=1 (94.698s); includes market default/old URL migration/custom URL preservation, Git blob integrity, upgrade and rollback paths",
+    "localFiles": "PASS all 103 previously tracked runtime files remain byte-for-byte identical to pre-task HEAD",
+    "sourceFingerprintCorrection": "Initial fixture omitted bundled-plugins; corrected fixture and 2 tests passed",
+    "cleanSnapshotCorrection": "First clean snapshot found 3 tests using old runtime fixture path; corrected to bundled-plugins; full targeted clean snapshot rerun passed",
+    "finalState": "18 independent local plugin repositories plus 4 legacy communication plugins consolidated into Terminal; Propeller removed from shipped defaults and public catalog; runtime plugins ignored/untracked except daemon testdata",
+    "migration": "One-time existing clone backup/stash/pull/restore required; tested with two real Git repositories and documented in docs/plugin-checkout-migration.md"
+  }
+}

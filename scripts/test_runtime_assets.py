@@ -15,7 +15,7 @@ def check_build_inputs():
         runtime = (root / name).read_text().split(' AS runtime', 1)[1]
         copies = {tuple(line.split()[1:]) for line in runtime.splitlines() if line.startswith('COPY ')}
         for plugin in SHIPPED_PLUGINS:
-            assert (f'plugins/{plugin}', f'/opt/aide/builtin-plugins/{plugin}') in copies, (name, plugin)
+            assert (f'bundled-plugins/{plugin}', f'/opt/aide/builtin-plugins/{plugin}') in copies, (name, plugin)
         assert ('--from=build', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
 
 PROGRAM = r'''

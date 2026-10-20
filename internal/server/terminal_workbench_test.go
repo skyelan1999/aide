@@ -22,7 +22,7 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	if _, err := exec.LookPath("python3"); err != nil {
 		t.Skip("Python PTY runtime missing")
 	}
-	source := filepath.Join("..", "..", "plugins", "terminal")
+	source := filepath.Join("..", "..", "bundled-plugins", "terminal")
 	files := map[string]string{}
 	if bundle := os.Getenv("AIDE_TERMINAL_BUNDLE_PATH"); bundle != "" {
 		reader, err := zip.OpenReader(bundle)

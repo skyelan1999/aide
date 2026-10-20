@@ -11,7 +11,7 @@ import (
 
 func TestCurrentTimePluginAvailableToAideAndXiaomi(t *testing.T) {
 	a := testApp(t)
-	code, err := os.ReadFile(filepath.Join("..", "..", "plugins", "current-time", "index.js"))
+	code, err := os.ReadFile(filepath.Join("..", "..", "bundled-plugins", "current-time", "index.js"))
 	if err != nil {
 		t.Fatal(err)
 	}

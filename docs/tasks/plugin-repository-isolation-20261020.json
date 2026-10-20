@@ -1,0 +1,80 @@
+{
+  "id": "plugin-repository-isolation-20261020",
+  "request": "核对是否还有未单独建库的插件，全部完成后把aide默认插件放进gitignore，避免插件升级影响gitpull",
+  "baseline": "3e5400081854e593cd3e7f2a7518ddf9b26768f8",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Audit every local plugin against actual independent repository commits and market source",
+    "Identify unseparated plugins and communication plugins already consolidated into Terminal",
+    "Change ignore/tracking only if all required standalone distribution is complete",
+    "Preserve local plugin contents and account for Docker/startup/test source dependencies before any untracking",
+    "Office published in prepared independent repository; Propeller removed from default and market distribution",
+    "Fresh checkout initializes ignored runtime state without overwriting installed plugins",
+    "Docker/tests/fingerprints use pristine bundles, runtime updates do not block pulls"
+  ],
+  "scope": [
+    "Read-only local plugin, GitHub repository and market audit",
+    "Task/review evidence",
+    "Conditional .gitignore/index/runtime source changes only after completeness established",
+    "Publish existing Office plugin in prepared aide-pkg-office repository",
+    "Remove Propeller Aero from default/catalog distribution",
+    "Move pristine build/test inputs to bundled-plugins and ignore/untrack runtime plugins; update Docker/tests/bootstrap and migration docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly conditions ignore changes on all plugins having standalone distribution; audit first, preserve files.",
+      "evidence": [
+        "User current request"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Pristine build/test bundle separated from ignored runtime plugins; first-pull migration backed up/stashed and restored, tested with real Git. Existing installations retained.",
+      "evidence": [
+        "docs/plugin-checkout-migration.md",
+        "scripts/test_plugin_isolation.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Published Office 1.1.0; retired Propeller defaults/catalog; moved pristine sources to bundled-plugins, ignored/untracked runtime plugins preserving all local bytes, added one-time source-checkout initialization, migrated official upgrade defaults to market.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-repository-isolation/audit.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Office 4 race tests; focused seed/control/management/authoring tests; clean-index checkout/current/lunar/skill/terminal integration; full upgrade/official race suite; build; real Git migration/subsequent pull; fingerprint and Docker static inputs passed. Full Docker/start.command NOT_RUN due existing CA/disk blockers; no host image claim.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-repository-isolation/audit.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README and migration guide explain tracked pristine bundle vs runtime state, one-time old checkout migration, independent Office and Propeller retirement, market updates and preserved custom URLs.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-repository-isolation/audit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "All 103 prior plugin runtime files verified unchanged; only testdata remains tracked under plugins. User task files preserved; no service restart or production replacement.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-repository-isolation/audit.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Office release and live market change verified; source isolation ready for main push. No formal Aide version/image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-office/releases/tag/v1.1.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39367559652"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert source isolation commit after backing up runtime plugins; never overwrite user runtime registry or upgraded files. Revert market commit 4fca035 for catalog rollback. No data migration or service restart performed.",
+  "handoff": "Office repo/release populated; Propeller absent from default bundle and market, installed files retained. plugins ignored except testdata, bundled-plugins used for reproducible builds/tests, source checkout seeds missing registry once. Existing clones need one-time documented backup/stash/pull/restore. Native and Git integration checks pass; Docker activation remains unverified. Pending main source push.",
+  "clarification": "User: Office好了 Propeller Aero不要了. Office repo exists empty; populate/release it; retire Propeller default/catalog distribution; isolate runtime plugins preserving installed data."
+}

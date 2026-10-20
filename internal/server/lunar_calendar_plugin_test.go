@@ -9,7 +9,7 @@ import (
 
 func TestLunarCalendarPluginAvailableToAideAndXiaomi(t *testing.T) {
 	a := testApp(t)
-	code, err := os.ReadFile(filepath.Join("..", "..", "plugins", "lunar-calendar", "index.js"))
+	code, err := os.ReadFile(filepath.Join("..", "..", "bundled-plugins", "lunar-calendar", "index.js"))
 	if err != nil {
 		t.Fatal(err)
 	}

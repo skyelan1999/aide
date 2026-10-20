@@ -57,3 +57,7 @@ docker-images/*.zip
 
 # Terminal workbench session data and private device logs.
 /.aide/terminal-workbench/
+
+# Mutable installed plugins; pristine build/test inputs live in bundled-plugins.
+/plugins/*
+!/plugins/testdata/

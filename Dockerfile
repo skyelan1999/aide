@@ -42,7 +42,8 @@ COPY go.sum ./
 COPY vendor ./vendor
 COPY cmd ./cmd
 COPY internal ./internal
-COPY plugins ./plugins
+COPY bundled-plugins ./bundled-plugins
+COPY plugins/testdata ./plugins/testdata
 COPY scripts/office ./scripts/office
 COPY scripts/build-message-lan.sh ./scripts/build-message-lan.sh
 # Fail the build before shipping a page whose application script cannot parse.
@@ -160,11 +161,11 @@ COPY scripts/cad /opt/aide/cad
 COPY vendor/github.com/yuin/goldmark/v2/LICENSE /opt/aide/licenses/goldmark.txt
 
 # Ship control plugins independently of the mounted user's workspace.
-COPY plugins/browser-control /opt/aide/builtin-plugins/browser-control
-COPY plugins/computer-control /opt/aide/builtin-plugins/computer-control
-COPY plugins/markdown-history /opt/aide/builtin-plugins/markdown-history
-COPY plugins/archive-tools /opt/aide/builtin-plugins/archive-tools
-COPY plugins/plugin-authoring /opt/aide/builtin-plugins/plugin-authoring
+COPY bundled-plugins/browser-control /opt/aide/builtin-plugins/browser-control
+COPY bundled-plugins/computer-control /opt/aide/builtin-plugins/computer-control
+COPY bundled-plugins/markdown-history /opt/aide/builtin-plugins/markdown-history
+COPY bundled-plugins/archive-tools /opt/aide/builtin-plugins/archive-tools
+COPY bundled-plugins/plugin-authoring /opt/aide/builtin-plugins/plugin-authoring
 # Host checkouts may have private modes (for example after iCloud download).
 # Only shipped public application assets need to be readable by USER aide.
 RUN chmod -R a+rX /opt/aide

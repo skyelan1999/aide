@@ -73,6 +73,9 @@ type pluginRegistry struct {
 // Existing plugin code, enablement and settings belong to the workspace.
 func (a *App) loadPlugins() error {
 	a.pluginsPath = filepath.Join(a.workPath, pluginsDirName)
+	if err := a.seedCheckoutPlugins(); err != nil {
+		return err
+	}
 	a.pluginRegistry = pluginRegistry{Version: 1, Plugins: []PluginManifest{}}
 	b, err := os.ReadFile(filepath.Join(a.pluginsPath, "registry.json"))
 	if errors.Is(err, os.ErrNotExist) {

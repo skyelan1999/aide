@@ -9,7 +9,7 @@ import (
 )
 
 func TestBundledControlPluginsUpgradeExistingWorkspace(t *testing.T) {
-	bundle, err := filepath.Abs("../../plugins")
+	bundle, err := filepath.Abs("../../bundled-plugins")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestBundledControlPluginsUpgradeExistingWorkspace(t *testing.T) {
 }
 
 func TestBundledControlPluginsRegisterInEmptyWorkspace(t *testing.T) {
-	bundle, _ := filepath.Abs("../../plugins")
+	bundle, _ := filepath.Abs("../../bundled-plugins")
 	t.Setenv("AIDE_BUILTIN_PLUGINS", bundle)
 	a := &App{workPath: t.TempDir()}
 	if err := a.loadPlugins(); err != nil {
@@ -112,7 +112,7 @@ func TestBundledControlPluginsRegisterInEmptyWorkspace(t *testing.T) {
 }
 
 func TestBundledControlPluginsRegisterExistingFilesWithoutReplacement(t *testing.T) {
-	bundle, _ := filepath.Abs("../../plugins")
+	bundle, _ := filepath.Abs("../../bundled-plugins")
 	t.Setenv("AIDE_BUILTIN_PLUGINS", bundle)
 	work := t.TempDir()
 	dir := filepath.Join(work, "plugins", "browser-control")

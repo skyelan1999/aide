@@ -6,7 +6,7 @@ const path = require('node:path');
 const os = require('node:os');
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.join(os.homedir(), 'Library/Caches/aide-browser-binaries');
 const { chromium } = require('./browser-runtime/node_modules/playwright');
-const { validateURL: safeURL } = require('../plugins/browser-control/index')._test;
+const { validateURL: safeURL } = require('../bundled-plugins/browser-control/index')._test;
 const token = process.env.AIDE_BROWSER_BRIDGE_TOKEN || '';
 const port = Number(process.env.AIDE_HEADLESS_BRIDGE_PORT || 17779);
 let browser, context, page;

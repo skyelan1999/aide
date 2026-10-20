@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const bridge = require('./computer-bridge.js');
-const plugin = require('../plugins/computer-control/index.js');
+const plugin = require('../bundled-plugins/computer-control/index.js');
 
 assert.equal(bridge.appAllowed('Safari', ['Safari']), true);
 assert.equal(bridge.appAllowed('Safari', ['Finder']), false);

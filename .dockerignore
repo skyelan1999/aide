@@ -22,3 +22,8 @@ plugins/surface.json
 
 # Host plugin installs are regenerated, architecture-specific build cache.
 **/node_modules
+
+# Installed plugin state is not an application image input.
+plugins/*
+!plugins/testdata
+!plugins/testdata/**
