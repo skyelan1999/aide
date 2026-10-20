@@ -57,11 +57,21 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "本轮准备源码提交至 main；未升版、发布镜像或生产部署。full/release-check 未执行，quick 有基线失败。",
-      "evidence": []
+      "summary": "源码修复 fe61753a 已按授权推送 origin/main；未升版、发布镜像或生产部署。full/release-check 未执行，quick 有两项基线失败，不能宣称镜像 Release 完成。",
+      "evidence": [
+        "source_delivery",
+        "docs/reviews/2026-10-20-button-feedback/verification.json"
+      ]
     }
   },
   "release_authorization": "沿用用户先前“那你直接推吧，我去别的环境测试”“直接合并到main”授权；本次仅提交和推送源码修复。",
-  "rollback": "git revert <本次产品提交>；无数据迁移或用户配置变更。",
-  "handoff": "主 UI 与内建面板按钮巡检与修复完成；独立插件 iframe、真实设备、付费模型和生产镜像未验收。"
+  "rollback": "git revert fe61753aadf30b1b943012a8baf1133bf505ebf9；无数据迁移或用户配置变更。",
+  "handoff": "修复源码已推 origin/main（fe61753a），14组实际浏览器验收和相关回归通过。quick 133/135，两个启动器既有失败已在基线复现；镜像/生产部署未执行。原有十份未跟踪插件任务文件保留。",
+  "source_delivery": {
+    "status": "pass",
+    "branch": "main",
+    "commit": "fe61753aadf30b1b943012a8baf1133bf505ebf9",
+    "remote": "origin/main",
+    "push": "git push origin main: c84e3011..fe61753a main -> main"
+  }
 }
