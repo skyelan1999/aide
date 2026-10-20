@@ -342,7 +342,7 @@ func TestPluginMarketInstalledUpgradeHonorsRevocation(t *testing.T) {
 
 func TestPluginMarketTerminalWorkbenchCapability(t *testing.T) {
 	a, snapshot, _ := marketFixture(t, "2.0.0")
-	snapshot.Catalog.Plugins[0].Features = []string{"terminal-workbench-v1", "terminal-ssh-workspace-v1", "terminal-communications-v1"}
+	snapshot.Catalog.Plugins[0].Features = []string{"terminal-workbench-v1", "terminal-ssh-workspace-v1", "terminal-communications-v1", "terminal-relay-v1", "terminal-desktop-v1"}
 	cacheMarket(t, a, snapshot)
 	requireStatus(t, request(a, "POST", "/api/plugin-market/market-fixture/install", marketInput(a, snapshot)), 201)
 	// Capability support does not waive the minimum version or unknown-feature checks.

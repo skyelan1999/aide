@@ -44,7 +44,7 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 		}
 	} else {
 		source := externalPluginSource(t, "terminal")
-		names := []string{"manifest.json", "index.js", "sessions.js", "pty-worker.py", "workbench.html", "LICENSE"}
+		names := []string{"manifest.json", "index.js", "sessions.js", "pty-worker.py", "workbench.html", "LICENSE", "relay/client.js", "relay/agent.py", "desktop/runtime.js"}
 		modules, err := filepath.Glob(filepath.Join(source, "communications", "*.js"))
 		if err != nil {
 			t.Fatal(err)
@@ -67,6 +67,26 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	requireStatus(t, listed, 200)
 	if !strings.Contains(listed.Body.String(), `"daemon":true`) {
 		t.Fatal("parent cannot apply detach behavior", listed.Body.String())
+	}
+	// New desktop tools must reach the independently installed daemon with the
+	// host capability context, while hidden records remain inaccessible to Aide.
+	if _, err := a.callPluginTool("terminal", "terminal_session_desktop", map[string]any{"action": "status"}); err != nil {
+		t.Fatal("desktop capability did not reach installed daemon", err)
+	}
+	trustedDesktop := context.WithValue(context.Background(), terminalWorkbenchContextKey{}, true)
+	draft, err := a.callPluginToolContext(trustedDesktop, "terminal", "terminal_session_create", map[string]any{"kind": "vnc", "host": "127.0.0.1", "visibleToAide": false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	desktopID := draft.(map[string]any)["session"].(map[string]any)["id"].(string)
+	if _, err := a.callPluginTool("terminal", "terminal_desktop_capture", map[string]any{"id": desktopID}); err == nil {
+		t.Fatal("hidden desktop screenshot exposed to model")
+	}
+	if _, err := a.callPluginToolContext(trustedDesktop, "terminal", "terminal_session_desktop", map[string]any{"id": desktopID, "action": "media_list"}); err != nil {
+		t.Fatal("trusted desktop media access rejected", err)
+	}
+	if _, err := a.callPluginToolContext(trustedDesktop, "terminal", "terminal_session_delete", map[string]any{"id": desktopID}); err != nil {
+		t.Fatal(err)
 	}
 	// This uses the daemon started by installation, without a manual start or restart.
 	raw, err := a.callPluginTool("terminal", "terminal_session_create", map[string]any{"name": "bundle device"})

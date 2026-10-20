@@ -1,0 +1,127 @@
+{
+  "version": "1.5.0",
+  "bytes": 1079930,
+  "sha256": "73b2e0251d8bf55779d4cf4b2e992eee4e2cdcdc5e1c8791fc5bca5059600113",
+  "fullNodeSuite": "PASS38,0skip, includes real direct/relay RDP/VNC and cancellation during authentication",
+  "extractedRuntime": "PASS32,0skip, exact runtime ZIP only, native protocol/media/input/auth and legacy communications",
+  "nativeClients": {
+    "rdp": "FreeRDP3.15.0 and FreeRDP2.11.7 actual NLA password authentication, exact SHA256 pins, remote XTest mouse/key, JPEG",
+    "vnc": "TigerVNC1.15 with VncAuth, actual remote XTest events"
+  },
+  "security": [
+    "Wrong RDP pin/password and wrong VNC password rejected; clean same-ID retry",
+    "Hidden sessions reject model connect/control/capture/record/media; disabled aliases cannot bypass through dispatcher",
+    "Authenticated per-session Xvfb with private authority, no host display or X11 TCP; own processes only",
+    "Transient password/stdin/private VNC auth removed after readiness; no password in session JSON/list",
+    "Screenshot and MP4 private receipts, bounded export, workspace quota, media retained after close",
+    "Daemon stop during pending authentication closes native processes and removes runtime folder"
+  ],
+  "actualBrowser": {
+    "status": "PASS",
+    "scope": "Actual Chromium UI, native FreeRDP/TigerVNC/Xvfb/FFmpeg, real remote XTest events; authenticated parent bridge/export-save host substituted",
+    "checks": [
+      {
+        "kind": "vnc",
+        "relay": true,
+        "realPixels": true,
+        "realMouseKeyboard": true,
+        "screenshot": true,
+        "recording": true,
+        "download": true,
+        "hiddenDenied": true,
+        "desktopMobileNoOverflow": true
+      },
+      {
+        "kind": "rdp",
+        "relay": false,
+        "realPixels": true,
+        "realMouseKeyboard": true,
+        "screenshot": true,
+        "recording": true,
+        "download": true,
+        "hiddenDenied": true,
+        "desktopMobileNoOverflow": true
+      }
+    ],
+    "errors": []
+  },
+  "legacySSHBrowser": {
+    "status": "PASS",
+    "baseline": false,
+    "scope": "Actual Chromium xterm render, OpenSSH host-key and password authentication, generated Python TLS1.3 relay; host bridge substituted with serial12ms calls, remote echo delayed15ms; loopback only, not user network",
+    "results": [
+      {
+        "kind": "ssh-direct",
+        "samplesMs": [
+          93,
+          110,
+          91,
+          71,
+          136,
+          84,
+          111,
+          105,
+          119,
+          82
+        ],
+        "medianMs": 105,
+        "p90Ms": 119,
+        "maxMs": 136,
+        "bridgeCalls": 86,
+        "maxInFlight": 1,
+        "automaticProbes": 0,
+        "probesWhileActive": 0,
+        "reconnectVerified": false
+      },
+      {
+        "kind": "ssh-relay-tls",
+        "samplesMs": [
+          126,
+          110,
+          75,
+          112,
+          79,
+          82,
+          113,
+          106,
+          116,
+          121
+        ],
+        "medianMs": 112,
+        "p90Ms": 121,
+        "maxMs": 126,
+        "bridgeCalls": 80,
+        "maxInFlight": 1,
+        "automaticProbes": 0,
+        "probesWhileActive": 0,
+        "reconnectVerified": false
+      }
+    ],
+    "errors": []
+  },
+  "nativeHost": "PASS race: actual1.5.0 ZIP install, daemon, capabilities, scoped legacy tools and trusted user/hidden-model access; screenshot evidence JPEG decode/bounds/vision gate/max4/prior-frame pruning; vet PASS",
+  "hostQuick": "BLOCKED: test_launcher_data.py test_windows_import_sets_container_user_ownership expects auth/cad-auth chown calls; test_offline_bundle.py stops on unchanged 10GiB disk guard with5GiB free. Those test/launcher/resource files are unmodified relative to task baseline; other quick checks pass. Restricted-network run also blocked local networking; final permitted-network run has only these2 failures. No production start/image guard bypass.",
+  "imageForwarding": "JPEG visual evidence appended after tool replies only for vision-capable model; text models informed of limitation. No paid/live provider call.",
+  "screenshots": [
+    "screenshots/desktop-rdp-1440.png",
+    "screenshots/desktop-vnc-390.png"
+  ],
+  "notRun": [
+    "User actual Windows RDP/VNC target and physical equipment",
+    "Chinese IME behavior and non-Linux client",
+    "Full start.command authenticated host UI (independent Chromium bridge substituted)",
+    "Derived desktop runtime Docker image build and deployed host image",
+    "Paid vision provider/model request",
+    "Aide image/full release gates: no image publication attempted; companion main source push only"
+  ],
+  "distribution": "Independent plugin package, no Aide bundled/installed-plugin copies. New native host terminal-desktop-v1 and separately installed Linux native runtime required.",
+  "pluginCommit": "4eda7bd13c500d83892aeb8ee704b5cb50081a3d",
+  "releaseURL": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.0",
+  "releaseID": 418156230,
+  "hostSource": "Companion source update only; terminal-desktop-v1/desktopVersion1, screenshot visual evidence and native tests. No Aide version bump/tag/image/production deployment.",
+  "nativeHostRace": "PASS actual final ZIP install+daemon+desktop capability, hidden desktop capture denial, trusted media list, legacy session/private context; 15.112s",
+  "hostVet": "PASS go vet ./internal/server",
+  "market": "Pending market push/Pages/live verification",
+  "runtimeSetup": "Existing isolated extracted native runtime and sourced start.command environment reused; optional installer/Docker recipe not run as admin. Full image build not attempted: previous dependency CA blocker and disk/resource guard remain; no host image claim.",
+  "releaseArchiveAnonymous": "PASS1079930bytes/SHA25673b2e0251d8bf55779d4cf4b2e992eee4e2cdcdc5e1c8791fc5bca5059600113"
+}

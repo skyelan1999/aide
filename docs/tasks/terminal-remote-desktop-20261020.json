@@ -1,0 +1,77 @@
+{
+  "id": "terminal-remote-desktop-20261020",
+  "request": "Terminal还支持rdp和vnc，同样也支持中继模式，截图和录屏，这些接口都可以暴露给aide；Rdp和vnc支持虚拟鼠标和虚拟键盘给aide",
+  "baseline": "6a13401418d3feeb3eb3af8e950f13ea3f639dc0",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "RDP/VNC sessions retain original type and reconnect/config/history/visibility semantics",
+    "Direct and generated Python TCP/TLS relay modes provide real desktop pixels",
+    "Session-scoped virtual mouse move/click/drag/scroll and key down/up/combo/text are exposed to Aide with privacy and disabled-tool guards",
+    "Capture JPEG, start/stop bounded MP4 recording, list/download/delete private media through guarded session APIs",
+    "Actual native protocol and desktop UI tests; Aide image evidence supports vision-capable models without pretending text models can see",
+    "Independent plugin release and market; no plugin copies in Aide"
+  ],
+  "scope": [
+    "Independent Terminal desktop runtime/client view/session and tools, optional native dependency installation recipe",
+    "Aide Terminal desktop capability and bounded screenshot-to-vision evidence forwarding",
+    "Tests/docs/independent package/market registration"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests RDP/VNC, relay, capture/recording and session-scoped virtual input for Aide.",
+      "evidence": [
+        "desktop/runtime.js",
+        "src/desktop.js",
+        "internal/server/plugin_terminal_images.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "FreeRDP2/3 and TigerVNC in per-session authenticated Xvfb, no host display; XTest virtual input, FFmpeg bounded JPEG/MP4, private guarded media; reuse TLS relay, exact RDP cert pins with empty CA and no auto trust; transient credentials. Existing16-tool workbench limit preserved via desktop dispatcher.",
+      "evidence": [
+        "desktop/runtime.js",
+        "src/desktop.js",
+        "internal/server/plugin_terminal_images.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Independent native RDP/VNC sessions and virtual input/UI/media complete; host desktopVersion/capability and bounded screenshot vision evidence implemented.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remote-desktop/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS38 full Node,32 exact extracted ZIP, FreeRDP2/3 NLA and RDP/VNC real Python TLS relay, actual Chromium1440/390, legacySSH browser; native host ZIP race15.112s and vet pass. General quick BLOCKED by2 unchanged launcher/offline tests (ownership expectation,10GiB disk guard vs5GiB available); all remaining quick checks pass. Full host image/start.command and paid model not run.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remote-desktop/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/changelog describe runtime prerequisites, user trust, virtual input, Aide tools, media limits and verified scope.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remote-desktop/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed owned files, independent plugin only, private data untouched, old unrelated untracked task files preserved; test-owned sessions/native services/browser closed.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remote-desktop/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Prepared exact1.5.0 package and passing checks; independent publication and market deployment next. Host changes source-only; no Aide image release.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remote-desktop/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "Prior user: 直接合并到main / push release / 删了重新push release 登记即可; persistent authorization for independent Terminal feature publication and companion source push. No production restart requested.",
+  "rollback": "Terminal1.4.2 archive retained. Back up terminal-private state/media before downgrade; upgrade intentionally disconnects sessions. Host capability can be reverted with source commit; no deployed image changed.",
+  "handoff": "Requires companion Aide main and native Linux Xvfb/FreeRDP2 or3/TigerVNC/xdotool/FFmpeg. Optional install recipe included; plugin code stays independent. Workspaces over SSH use Aide-side desktop runtime and target/relay network."
+}
