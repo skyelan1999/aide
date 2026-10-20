@@ -22,11 +22,11 @@ async function until(fn,label){for(let i=0;i<250;i++){if(await fn())return;await
   await tab.waitForLoadState('domcontentloaded');assert.equal(new URL(tab.url()).search,'?plugin-workbench=terminal');assert(!tab.url().includes(token));
   assert(await tab.evaluate(()=>window.opener===null));assert.equal(await tab.evaluate(()=>document.referrer),'');
   let frame=tab.frameLocator('iframe[title="设备终端工作台"]');await until(()=>frame.locator('#new-top').isEnabled(),'card new tab auto opens');
-  await tab.screenshot({path:path.join(evidence,'card-new-tab.png')});await tab.close();tab=null;
+  await tab.screenshot({path:path.join(evidence,'card-new-tab.png')});await tab.getByRole('button',{name:'关闭工作台',exact:true}).click();await tab.close();tab=null;
   // The original page keeps its normal overlay behavior and offers the second entry.
   await origin.locator('#plugin-list').getByRole('button',{name:'打开工作台',exact:true}).click();
   const originalFrame=origin.frameLocator('iframe[title="设备终端工作台"]');await until(()=>originalFrame.locator('#new-top').isEnabled(),'normal overlay');
-  await originalFrame.locator('#new-top').click();await originalFrame.locator('input[name=name]').fill('新标签页 · 持续调试');await originalFrame.locator('#create-submit').click();await until(()=>originalFrame.locator('.session.active').count().then(n=>n===1),'local session');
+  await originalFrame.locator('#new-top').click();await originalFrame.locator('input[name=name]').fill('新标签页 · 持续调试');await originalFrame.locator('#create-submit').click();await until(()=>originalFrame.locator('#create-dialog').evaluate(d=>!d.open),'local session');
   const id=await originalFrame.locator('.session.active').getAttribute('data-session-id');
   async function send(page,frame,command){await frame.locator('.terminal-pane:not([hidden]) .xterm-helper-textarea').focus();await page.keyboard.type(command);await page.keyboard.press('Enter');}
   const terminalText=frame=>frame.locator('.terminal-pane:not([hidden]) .xterm-accessibility-tree').innerText();
@@ -34,11 +34,12 @@ async function until(fn,label){for(let i=0;i<250;i++){if(await fn())return;await
   const popup=context.waitForEvent('page');await origin.locator('.plugin-workbench>header').getByRole('button',{name:'新标签页打开',exact:true}).click();tab=await popup;
   await tab.waitForLoadState('domcontentloaded');frame=tab.frameLocator('iframe[title="设备终端工作台"]');
   await until(()=>frame.locator('.session[data-session-id="'+id+'"]').count().then(n=>n===1),'shared backend session');
+  await frame.locator('.session[data-session-id="'+id+'"]').click();
   assert(await tab.evaluate(()=>window.opener===null));assert.equal(await context.pages().length,2);
   assert(await origin.locator('.plugin-workbench').isVisible(),'original overlay remains open');
-  await origin.close();origin=null;
+  await origin.getByRole('button',{name:'关闭工作台',exact:true}).click();await origin.close();origin=null;
   await send(tab,frame,"printf '\\nTAB_SURVIVED_ORIGIN_CLOSE\\n'");await until(async()=>/(^|\n)TAB_SURVIVED_ORIGIN_CLOSE(\n|$)/m.test(await terminalText(frame)),'input after original tab closes');
-  await tab.reload({waitUntil:'domcontentloaded'});frame=tab.frameLocator('iframe[title="设备终端工作台"]');await until(async()=>/TAB_SURVIVED_ORIGIN_CLOSE/.test(await terminalText(frame)),'deep link reload recovery');
+  await tab.reload({waitUntil:'domcontentloaded'});frame=tab.frameLocator('iframe[title="设备终端工作台"]');await frame.locator('.session[data-session-id="'+id+'"]').click();await until(async()=>/TAB_SURVIVED_ORIGIN_CLOSE/.test(await terminalText(frame)),'deep link reload recovery');
   await tab.screenshot({path:path.join(evidence,'independent-tab.png')});
   await tab.setViewportSize({width:390,height:844});await until(()=>frame.locator('#sidebar-toggle').isVisible(),'narrow screen');
   assert(await tab.locator('.plugin-workbench>header').getByRole('button',{name:'新标签页打开',exact:true}).isVisible());
@@ -49,5 +50,5 @@ async function until(fn,label){for(let i=0;i<250;i++){if(await fn())return;await
   fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({status:'PASS',browser:await browser.version(),checks:['card and header buttons','only plugin id in URL','noopener and no referrer','original overlay remains','same-origin login storage','existing session restored','input after original tab closed','new-tab reload','390px layout','log download','explicit session close'],errors},null,2)+'\n');
   console.log('PASS: new-tab workbench, original-tab independence, reload, mobile and log download');
  }catch(error){if(tab&&!tab.isClosed())await tab.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});else if(origin&&!origin.isClosed())await origin.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});throw error;}
- finally{if(tab&&!tab.isClosed())await tab.close();if(origin&&!origin.isClosed())await origin.close();await browser.close();}
+ finally{for(const page of [tab,origin])if(page&&!page.isClosed()){const close=page.getByRole('button',{name:'关闭工作台',exact:true});if(await close.isVisible().catch(()=>false))await close.click().catch(()=>{});await page.close();}await browser.close();}
 })().catch(error=>{console.error(error.message);process.exitCode=1;});

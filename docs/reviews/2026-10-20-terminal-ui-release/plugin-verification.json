@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "version": "1.1.1",
+  "zipSHA256": "f70d53d819444dd5b16f5a87f99f70e500241e464dfdd1d05976a1feecd319cf",
+  "zipBytes": 104320,
+  "hostEntry": "PASS: actual upgrade API 200",
+  "surfaceTools": 11,
+  "runtimeEqualsHost": true,
+  "pluginTests": "6 PASS",
+  "ui": "Chromium: 4 themes, selected-label contrast, standalone fills viewport, desktop inspector, 1024/768/390px, mobile navigation and Escape",
+  "hostBranch": "codex/terminal-workbench",
+  "hostPR": "https://github.com/skyelan1999/aide/pull/7",
+  "compatibility": "requires bridge.renew and daemon.detach; host standalone layout requires updated PR #7; stable market stays 1.0.0"
+}

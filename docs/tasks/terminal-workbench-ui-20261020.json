@@ -1,0 +1,85 @@
+{
+  "id": "terminal-workbench-ui-20261020",
+  "request": "重新排一下这个UI，更专业一些",
+  "baseline": "9587aa460021ed269c1a8af0715e03eb21b98c40",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "专业化重排会话导航、连接信息、操作栏和终端，使用真实状态",
+    "会话搜索和全部/运行中/SSH筛选可用，保留本地/SSH/后台驻留/日志功能",
+    "Chromium验证桌面明暗主题及390px窄屏，无横向溢出，提供真实截图"
+  ],
+  "scope": [
+    "plugins/terminal/src/workbench.html",
+    "plugins/terminal/src/workbench.js",
+    "plugins/terminal/workbench.html",
+    "plugins/terminal/test/browser-workbench.cjs",
+    "docs/tasks/terminal-workbench-ui-20261020.json",
+    "docs/reviews/2026-10-20-terminal-workbench-ui",
+    "/workspace/aide-pkg-terminal对应源码及构建产物",
+    "plugins/terminal/test/browser-layout.cjs",
+    "scripts/plugin-workbench-tab.browser.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求现有终端工作台更专业，保留全部功能与接口。",
+      "evidence": [
+        "用户原话",
+        "现有源码与浏览器验收脚本"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "双栏工作台：可搜索筛选会话导航、当前连接标题、分组操作、终端与紧凑状态栏；窄屏抽屉。",
+      "evidence": [
+        "src/workbench.html",
+        "src/workbench.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "双栏布局、会话搜索与筛选、真实运行计数、清晰选中态、分组操作栏和响应式抽屉。浅色选中背景从语义颜色混合生成，终端保持深色。宿主与独立插件源码一致。",
+      "evidence": [
+        "plugins/terminal/src/workbench.html",
+        "plugins/terminal/src/workbench.js",
+        "plugins/terminal/workbench.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "源码构建、语法与diff检查通过；宿主14项通过。真实浏览器完整功能217次调用/1次续期通过；最终四主题、对比度、1024/768/390px、键盘与手机导航通过，无页面异常。 新标签页两个入口、原页关闭后输入、刷新、手机与日志下载复验通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-workbench-ui/README.md",
+        "docs/reviews/2026-10-20-terminal-workbench-ui/functional-result.json",
+        "docs/reviews/2026-10-20-terminal-workbench-ui/layout-result.json",
+        "docs/reviews/2026-10-20-terminal-workbench-ui/fingerprints.json",
+        "docs/reviews/2026-10-20-terminal-workbench-ui/new-tab-result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录布局行为、实际验收命令/结果、最终源码指纹及截图。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-workbench-ui/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅UI、对应浏览器脚本与本任务证据；测试浏览器已关闭、布局会话已清理，预存任务记录保留。没有修改后台协议或已发布ZIP。",
+      "evidence": [
+        "git diff --check",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮更新源码和隔离候选；未替换已发布v1.1.0归档或生产环境。宿主正式发布仍受此前full门禁阻塞约束。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-release/README.md"
+      ]
+    }
+  },
+  "release_authorization": "此前用户授权“可以，推上去吧，做好release”；本轮为后续UI迭代。",
+  "rollback": "恢复本任务之前的三个UI文件；无数据迁移或后台协议变化。",
+  "handoff": "本地隔离候选已更新，真实截图见review目录；发布另受宿主现有门禁约束。"
+}

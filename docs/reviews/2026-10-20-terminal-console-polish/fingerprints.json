@@ -1,0 +1,10 @@
+{
+  "internal/server/web/plugin-workbench.js": "367b500256b30fcea0da18a5668b0b944bae36577e97e5eab6f43f941031cfed",
+  "internal/server/web/plugin-workbench.css": "20791a261ca974d61fc0dbb105b08b031a6422cba793c9593b961a41df0e2b83",
+  "plugins/terminal/src/workbench.html": "36233948a31a1b53f49454a104fda0329c3e1f14a6b392f6cffeb444475168cb",
+  "plugins/terminal/src/workbench.js": "ee50587e6e0bc4ada8d0d8f0830c94ad992e2ceabbdf90de3f98f5f3e25aa92e",
+  "plugins/terminal/workbench.html": "7309360a9946b37c6782aa8dc89f00045b35e5b18fbceae943cb3be41363cc4c",
+  "plugins/terminal/test/browser-workbench.cjs": "41a0d250455aa521407d343fc5b71cb6e45a6bf4e7f002a737e0c387f707a7d3",
+  "plugins/terminal/test/browser-layout.cjs": "9cecb224b49d5351af8f594c296b0d3b755a440b8c793a6b72135e64f624c2db",
+  "scripts/plugin-workbench-tab.browser.cjs": "e1ad49713b37a24ae52606dfb0ef1c698a027ae860f5b4c33df936cffb0f37a5"
+}

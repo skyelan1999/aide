@@ -1,10 +1,10 @@
 # Terminal · Aide 设备终端工作台
 
-**1.1.0 预发布，稳定市场仍为 1.0.0。** 基于原有命令提案插件增加独立工作台、常驻本地/SSH 会话与输出日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
+**1.1.1 预发布，稳定市场仍为 1.0.0。** 基于原有命令提案插件增加独立工作台、常驻本地/SSH 会话与输出日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
 
 ## 安装预发布版
 
-从 [v1.1.0 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.0) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.1.0/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
+从 [v1.1.1 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.1) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.1.1/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
 
 ![设备调试工作台](docs/screenshots/workbench.png)
 
@@ -14,7 +14,7 @@
 
 SSH 首次连接在终端显示主机指纹，请通过可信途径核对后输入 `yes`。指纹变化由 OpenSSH 拒绝连接；本插件不会自动忽略校验。用户名、地址、端口和可选的工作区相对私钥路径保存在会话记录中；密码和私钥口令只在 SSH 提示后交互输入，没有密码输入框或凭据保存功能。可使用 Aide 运行用户的默认 SSH 私钥，或选择工作区内私钥文件。没有启用 agent 转发、端口转发，也不会读取用户 SSH config 的 ProxyCommand。
 
-工作台提供会话列表与标签、xterm 终端、窗口尺寸适配、Ctrl+C、输出查找、日志开关与下载。命令和按键直接发送到目标会话，请确认当前标签对应的设备。关闭面板不会自动发送尚未送达的输入，也不会重试结果不确定的写操作。
+工作台按本地、SSH、历史会话分组，支持名称/主机搜索与运行状态筛选；标签栏只显示活动会话和当前选中的历史会话。桌面右侧显示真实连接状态、目标、起始目录、创建时间和日志详情。独立标签页在配套宿主中铺满窗口，窄屏使用会话抽屉。提供 xterm 终端、窗口尺寸适配、Ctrl+C、输出查找、日志开关与下载。命令和按键直接发送到目标会话，请确认当前标签对应的设备。关闭面板不会自动发送尚未送达的输入，也不会重试结果不确定的写操作。
 
 ## 后台生命周期与数据
 
@@ -31,9 +31,13 @@ SSH 首次连接在终端显示主机指纹，请通过可信途径核对后输�
 
 Node.js 24、Python 3 标准库 PTY、`/bin/bash` 和 OpenSSH 客户端。安装包没有 npm 运行依赖，终端 JS/CSS 内嵌、无需 CDN。当前在 **Linux 原生运行环境**实际验证；Windows 用户可通过 Aide Linux 容器使用，终端执行的是容器 Shell。Windows 原生 PTY 未实现，macOS 未实测；这不代表 Windows PowerShell、宿主机终端或设备串口支持。
 
-1.1.0 需要 Aide 同时支持工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/codex/terminal-workbench)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
+1.1.1 需要 Aide 同时支持工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/codex/terminal-workbench)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
 
 插件是可信 Node 代码，不是权限沙箱；交互 Shell 和 SSH 具有 Aide 运行用户的系统权限。工作区边界用于起始目录、私钥路径和会话归属，不限制 Shell 后续能访问的路径。`read-only` 宿主策略会拒绝调用这些插件工具。锁屏、工作区切换、插件停用仍按宿主策略撤销当前面板权限；取消正在执行的工具时宿主可能结束对应后台实例，以防未确认的后续副作用。
+
+## Aide 管理会话
+
+Aide 可以通过下列会话工具列出、创建和操作同一工作区的终端会话。例如：“在开发板 A 会话执行 uname -a，把输出给我”。创建和输入需要明确的用户指令；关闭网页后后台继续运行，停止 Aide 后不会自动重连。
 
 ## 工具兼容
 
@@ -56,10 +60,12 @@ AIDE_TEST_URL=https://127.0.0.1:8098 \
 AIDE_TEST_DATA=/path/to/isolated/data \
 AIDE_EVIDENCE_DIR=/path/to/evidence \
 node test/browser-workbench.cjs
+# 使用相同隔离环境变量检查四主题、详情与响应式布局：
+node test/browser-layout.cjs
 ```
 
 测试仅启动回环 SSH 模拟设备，不连接实际设备，不调用模型；会创建并结束自己的测试会话、保留日志，不应指向生产实例。浏览器验收覆盖本地/SSH、后台保留、刷新恢复、超过128次真实调用的续期、日志下载、明暗主题、窄屏与明确结束。测试环境的精确结果及未验证范围见 Aide `docs/tasks/terminal-workbench-20261020.json`。
 
 ## 已发布旧版
 
-[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 当前仍分发旧版，1.1.0 以 GitHub 预发布单独提供，尚未替换稳定市场。
+[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 当前仍分发旧版，1.1.1 以 GitHub 预发布单独提供，尚未替换稳定市场。

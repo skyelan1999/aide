@@ -1,0 +1,76 @@
+{
+  "id": "terminal-ui-release-20261020",
+  "request": "push release",
+  "baseline": "9587aa460021ed269c1a8af0715e03eb21b98c40",
+  "initial_status": "M internal/server/web/plugin-workbench.css\n M internal/server/web/plugin-workbench.js\n M plugins/terminal/src/workbench.html\n M plugins/terminal/src/workbench.js\n M plugins/terminal/test/browser-workbench.cjs\n M plugins/terminal/workbench.html\n M scripts/plugin-workbench-tab.browser.cjs\n?? docs/reviews/2026-10-20-terminal-console-polish/\n?? docs/reviews/2026-10-20-terminal-workbench-ui/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-console-polish-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/terminal-workbench-ui-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json\n?? plugins/terminal/test/browser-layout.cjs",
+  "acceptance": [
+    "宿主本轮专业UI与独立Terminal对应源码推送并核实远端提交",
+    "发布新的可下载Terminal版本，不覆盖v1.1.0；包与源码、版本、摘要一致",
+    "宿主正式发行遵守full门禁，兼容限制和预发布状态公开说明，不误升级稳定市场"
+  ],
+  "scope": [
+    "已完成UI任务范围文件与证据",
+    "独立Terminal版本、说明、运行包与Release",
+    "宿主现有PR#7、验证和本任务发布记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求推送及发布本轮改版，复用已验收UI。",
+      "evidence": [
+        "用户原话",
+        "docs/reviews/2026-10-20-terminal-console-polish/README.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "独立插件补丁版本；宿主走既有PR，正式门禁未通过时仅公开标注配套宿主依赖的插件预发布。",
+      "evidence": [
+        "用户原话",
+        "docs/reviews/2026-10-20-terminal-console-polish/README.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成v1.1.1版本、说明、离线运行包与对应宿主代码；不覆盖已发布归档。",
+      "evidence": [
+        "plugins/terminal/manifest.json",
+        "docs/reviews/2026-10-20-terminal-ui-release/plugin-verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "插件6项与最终ZIP实际安装/工具surface/四主题三尺寸浏览器通过；宿主full实际138项中5项失败，正式发行不通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ui-release/plugin-verification.json",
+        "docs/reviews/2026-10-20-terminal-ui-release/layout-result.json",
+        "docs/reviews/2026-10-20-terminal-ui-release/full-gate.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录预发布兼容要求、下载方式、完整测试阻塞与回滚。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ui-release/README.md",
+        "plugins/terminal/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅本轮UI、发行和证据文件，保留既有10项任务记录与旧归档；无生产替换。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "正在推送源码与发布插件预发布；宿主正式门禁不通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ui-release/full-gate.json"
+      ]
+    }
+  },
+  "release_authorization": "用户：push release（本轮）",
+  "rollback": "保留v1.0.0/v1.1.0归档与tag；新版退回旧插件前备份工作区.aide/terminal-workbench。宿主PR不合并不替换生产。",
+  "handoff": ""
+}

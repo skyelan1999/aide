@@ -37,6 +37,11 @@ async function until(fn,label,timeout=10000){const end=Date.now()+timeout;while(
   await page.goto(base,{waitUntil:'domcontentloaded'});await open();
   const a=await create('开发板 A · 本地');await send("export DEVICE=A; printf '\\nDEVICE_%s\\n' \"$DEVICE\"");await until(async()=>/(^|\n)DEVICE_A(\n|$)/m.test(await text()),'local output A');
   const b=await create('构建环境 B');await send("printf '\\nISOLATED_%s\\n' \"${DEVICE:-empty}\"");await until(async()=>/(^|\n)ISOLATED_empty(\n|$)/m.test(await text()),'session isolation');
+  // Search and filters affect navigation only; the active terminal stays selected.
+  await frame().locator('#session-search').fill('构建环境 B');assert.equal(await frame().locator('.session').count(),1);assert.equal(await frame().locator('.session').getAttribute('data-session-id'),b);
+  await frame().locator('#session-search').fill('no-matching-device');assert.equal(await frame().locator('.session').count(),0);await frame().getByText('没有匹配的会话',{exact:true}).waitFor();
+  await frame().locator('#session-search').fill('');await frame().locator('[data-filter=ssh]').click();assert.equal(await frame().locator('.session').count(),0);
+  await frame().locator('[data-filter=running]').click();assert((await frame().locator('.session').count())>=2);await frame().locator('[data-filter=all]').click();
   await frame().locator('.session[data-session-id="'+a+'"]').click();await send("printf '\\nBACKGROUND_START\\n'; sleep 1; printf '\\nBACKGROUND_COMPLETE\\n'");await until(async()=>/(^|\n)BACKGROUND_START(\n|$)/m.test(await text()),'background command dispatched');
   await page.getByRole('button',{name:'关闭工作台',exact:true}).click();assert.equal(await page.locator('iframe[title="设备终端工作台"]').count(),0);await delay(1400);
   // The plugin pane remains open after closing the overlay.
@@ -61,7 +66,7 @@ async function until(fn,label,timeout=10000){const end=Date.now()+timeout;while(
   await frame().locator('.session[data-session-id="'+b+'"]').click();await frame().locator('#delete-session').click();await frame().locator('#confirm-cancel').click();assert.equal(await frame().locator('.session[data-session-id="'+b+'"]').count(),1);
   await frame().locator('#delete-session').click();await frame().locator('#confirm-accept').click();await until(async()=>await frame().locator('.session[data-session-id="'+b+'"]').count()===0,'confirmed deletion');
   await page.getByRole('button',{name:'关闭工作台',exact:true}).click();
-  fs.writeFileSync(path.join(output,'browser-result.json'),JSON.stringify({status:'PASS',browser:await browser.version(),calls,renewals,checks:['local PTY input','session isolation','background after close','140 calls with renewal','output search','parent-mediated log download','professional dark','classic light','SSH host confirmation and password','390px mobile switch','reload recovery','explicit session close','cancel and confirm log deletion'],errors},null,2)+'\n');
+  fs.writeFileSync(path.join(output,'browser-result.json'),JSON.stringify({status:'PASS',browser:await browser.version(),calls,renewals,checks:['session search, empty result and running/SSH filters','local PTY input','session isolation','background after close','140 calls with renewal','output search','parent-mediated log download','professional dark','classic light','SSH host confirmation and password','390px mobile switch','reload recovery','explicit session close','cancel and confirm log deletion'],errors},null,2)+'\n');
   console.log('PASS: Chromium workbench acceptance;',calls,'real calls,',renewals,'renewals');
  }catch(error){if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
  finally{await browser.close();for(const client of peers)client.end();await new Promise(resolve=>ssh.close(resolve));}

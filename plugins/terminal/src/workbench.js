@@ -2,6 +2,7 @@
 (() => {
   const $ = id => document.getElementById(id), bridge = AideWorkbenchClient.create('terminal');
   const panes = new Map(), pendingInput = new Map();
+  let sessionFilter = 'all';
   let sessions = [], selected = null, queue = Promise.resolve(), polling = false, paused = true, connected = false, stopped = false, exportId = 0;
   const labels = {starting:'启动中',running:'运行中',exited:'已结束',interrupted:'后台已重启',error:'连接异常'};
   const current = () => sessions.find(s => s.id === selected);
@@ -53,33 +54,57 @@
   function render() {
     $('session-count').textContent=sessions.length+' / 32';
     $('sessions').replaceChildren();$('tabs').replaceChildren();
+    const query=$('session-search').value.trim().toLocaleLowerCase();
+    let visible=0;
+    const groups=new Map();
     for(const rec of sessions) {
-      const button=document.createElement('button');button.type='button';button.className='session'+(rec.id===selected?' active':'');button.dataset.sessionId=rec.id;
+      const matches=(!query||[rec.name,rec.host,rec.username,rec.cwd].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)) && (sessionFilter==='all'||(sessionFilter==='running'?rec.status==='running':rec.kind==='ssh'));
+      const button=document.createElement('button');button.type='button';button.className='session'+(rec.id===selected?' active':'');button.dataset.sessionId=rec.id;button.dataset.state=rec.status;
       const icon=document.createElement('span');icon.className='icon';icon.textContent=rec.kind==='ssh'?'↗':'›_';
-      const body=document.createElement('span'),name=document.createElement('strong'),detail=document.createElement('small');
-      name.textContent=rec.name;detail.textContent=(rec.kind==='ssh'?rec.username+'@'+rec.host:'LOCAL · '+rec.cwd)+' · '+(labels[rec.status]||rec.status);body.append(name,detail);button.append(icon,body);button.onclick=()=>select(rec.id);$('sessions').append(button);
-      const tab=document.createElement('button');tab.textContent=(rec.status==='running'?'● ':'○ ')+rec.name;tab.className=rec.id===selected?'active':'';tab.setAttribute('aria-current',String(rec.id===selected));tab.onclick=()=>select(rec.id);$('tabs').append(tab);
+      button.setAttribute('aria-pressed',String(rec.id===selected));button.title=rec.name+' · '+(labels[rec.status]||rec.status);
+      const body=document.createElement('span');body.className='session-body';
+      const name=document.createElement('strong'),detail=document.createElement('small');
+      name.textContent=rec.name;detail.textContent=rec.kind==='ssh'?rec.username+'@'+rec.host:'本地 · '+rec.cwd;body.append(name,detail);const dot=document.createElement('i');dot.className='dot'+(rec.status==='running'?' live':'');dot.setAttribute('aria-label',labels[rec.status]||rec.status);const stateLabel=document.createElement('span');stateLabel.className='session-state';stateLabel.textContent=labels[rec.status]||rec.status;button.append(icon,body,stateLabel);button.onclick=()=>select(rec.id);if(matches){const group=['running','starting'].includes(rec.status)?(rec.kind==='ssh'?'SSH 设备':'本地环境'):'历史会话';if(!groups.has(group))groups.set(group,[]);groups.get(group).push(button);visible++;}
+      const tab=document.createElement('button'),tabDot=dot.cloneNode(),tabName=document.createElement('span');tabName.className='tab-name';tabName.textContent=rec.name;tab.append(tabDot,tabName);tab.title=button.title;tab.className=rec.id===selected?'active':'';tab.setAttribute('aria-current',String(rec.id===selected));tab.onclick=()=>select(rec.id);if(['running','starting'].includes(rec.status)||rec.id===selected)$('tabs').append(tab);
     }
+    for(const title of ['本地环境','SSH 设备','历史会话']){const rows=groups.get(title);if(!rows)continue;const heading=document.createElement('p');heading.className='session-group';const label=document.createElement('span'),count=document.createElement('span');label.textContent=title;count.textContent=String(rows.length);heading.append(label,count);$('sessions').append(heading,...rows);}
+    if(!visible){const empty=document.createElement('p');empty.className='list-empty';empty.textContent=sessions.length?'没有匹配的会话':'暂无会话，添加一个连接开始调试';$('sessions').append(empty);}
+    for(const button of document.querySelectorAll('[data-filter]'))button.setAttribute('aria-pressed',String(button.dataset.filter===sessionFilter));
     const rec=current(), running=rec?.status==='running';
+    $('running-count').textContent=!connected?'后台未连接':paused?'后台通信已暂停':sessions.filter(s=>s.status==='running').length+' 个运行中';
+    $('backend-dot').classList.toggle('live',connected&&!paused);
+    $('connection-name').textContent=rec?.name||'开始新的连接';
+    $('connection-kind').textContent=rec?(rec.kind==='ssh'?'SSH':'LOCAL'):'TERMINAL';
+    $('detail-state').textContent=rec?(labels[rec.status]||rec.status):'尚未连接';
+    $('detail-state').style.color=running?'var(--positive)':'var(--muted)';
+    $('detail-kind').textContent=rec?(rec.kind==='ssh'?'SSH / OpenSSH':'本地 Shell / PTY'):'—';
+    $('detail-endpoint').textContent=rec?(rec.kind==='ssh'?rec.username+'@'+rec.host+':'+rec.port:'Aide 运行环境'):'—';
+    $('detail-cwd').textContent=rec?.cwd||'—';
+    const created=rec?.createdAt?new Date(rec.createdAt):null;
+    $('detail-created').textContent=created&&!Number.isNaN(created.getTime())?created.toLocaleString('zh-CN',{hour12:false}):'—';
+    $('detail-logging').textContent=rec?(rec.logging?'● 记录中':'已暂停'):'未开启';
+    $('detail-logging').style.color=rec?.logging?'var(--positive)':'var(--muted)';
+    $('output-mode').textContent=rec?(running?'实时输出':'保留的会话输出'):'等待连接';
     $('empty').hidden=!!rec;
     for(const id of ['new-top','new-empty','new-session'])$(id).disabled=!connected;
     for(const id of ['find','logs','logging'])$(id).disabled=!rec;
     $('interrupt').disabled=!running;$('close-session').disabled=!running;$('delete-session').disabled=!rec||running||rec.status==='starting';
-    $('connection').textContent=rec?(rec.kind==='ssh'?rec.username+'@'+rec.host+':'+rec.port:'LOCAL · '+rec.cwd):'尚未选择会话';
-    $('logging').textContent='日志：'+(rec?.logging?'开':'关');
+    $('connection').textContent=rec?(rec.kind==='ssh'?rec.username+'@'+rec.host+':'+rec.port:'LOCAL · '+rec.cwd):'本地 Shell 或远程 SSH';
+    $('logging').textContent='日志：'+(rec?.logging?'开':'关');$('logging').dataset.enabled=String(!!rec?.logging);$('logging').setAttribute('aria-pressed',String(!!rec?.logging));
     $('status').textContent=rec?(labels[rec.status]||rec.status)+' · '+rec.name:'就绪 · 创建本地或 SSH 会话';
-    $('log-status').textContent=rec?.logError || (rec?.logging?'● 输出日志已开启':'输出日志已暂停');
+    $('log-status').textContent=rec?.logError || (!rec?'日志保存在当前工作区':rec.logging?'● 正在记录输出':'输出日志已暂停');
     $('log-status').style.color=rec?.logError?'var(--danger)':'';
     for(const [id,pane] of panes) { pane.element.hidden=id!==selected;pane.term.options.disableStdin=paused||sessions.find(s=>s.id===id)?.status!=='running'; }
   }
   function select(id) {
-    selected=id;terminal(id);render();document.body.classList.remove('sidebar-open');
+    selected=id;terminal(id);render();document.body.classList.remove('sidebar-open');$('sidebar-toggle').setAttribute('aria-expanded','false');
     requestAnimationFrame(()=>{fitSelected();panes.get(id)?.term.focus();});
     if(!paused)poll();
   }
   let resizeTimer;
   function fitSelected() {
     const rec=current(),pane=panes.get(selected);if(!pane||!rec)return;
+    $('tabs').querySelector('.active')?.scrollIntoView({block:'nearest',inline:'nearest'});
     pane.fit.fit();$('dimensions').textContent=pane.term.cols+' × '+pane.term.rows;
     const cols=Math.max(20,Math.min(400,pane.term.cols)),rows=Math.max(5,Math.min(200,pane.term.rows));
     if(cols===pane.cols&&rows===pane.rows)return;
@@ -163,7 +188,11 @@
     }catch(error){$('log-files').textContent=error.message;}
   };
   $('close-logs').onclick=()=>$('logs-dialog').close();
-  $('sidebar-toggle').onclick=()=>document.body.classList.toggle('sidebar-open');
+  $('session-search').oninput=render;
+  for(const button of document.querySelectorAll('[data-filter]'))button.onclick=()=>{sessionFilter=button.dataset.filter;render();};
+  $('sidebar-toggle').setAttribute('aria-expanded','false');
+  $('sidebar-toggle').onclick=()=>{const open=document.body.classList.toggle('sidebar-open');$('sidebar-toggle').setAttribute('aria-expanded',String(open));if(open)$('session-search').focus();};
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!document.querySelector('dialog[open]')){document.body.classList.remove('sidebar-open');$('sidebar-toggle').setAttribute('aria-expanded','false');if(!$('search-bar').hidden)$('search-close').click();}});
   new ResizeObserver(fitSelected).observe($('terminal-area'));
   window.addEventListener('message',event=>{
     if(event.source!==window.parent)return;
@@ -172,7 +201,7 @@
     if(m?.type==='aide.workbench.theme'&&m.protocol===1){
       // Terminal stays dark for device color fidelity; surrounding chrome follows host theme.
       const colors=m.colors||{};
-      for(const key of ['bg','panel','surface','text','muted','line'])if(typeof colors[key]==='string'&&CSS.supports('color',colors[key]))document.documentElement.style.setProperty('--'+key,colors[key]);
+      for(const key of ['bg','panel','text','muted','line'])if(typeof colors[key]==='string'&&CSS.supports('color',colors[key]))document.documentElement.style.setProperty('--'+key,colors[key]);
       document.documentElement.style.colorScheme=m.theme==='light'?'light':'dark';document.documentElement.dataset.theme=m.theme;
     }
   });

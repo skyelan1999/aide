@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "browser": "154.0.8037.57",
+  "checks": [
+    {
+      "theme": "professional-dark",
+      "selectedLabelContrast": 9.72
+    },
+    {
+      "theme": "professional-light",
+      "selectedLabelContrast": 11.36
+    },
+    {
+      "theme": "classic-dark",
+      "selectedLabelContrast": 9.72
+    },
+    {
+      "theme": "classic-light",
+      "selectedLabelContrast": 14.53
+    },
+    {
+      "width": 1024,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "noOverflow": true
+    }
+  ],
+  "errors": []
+}

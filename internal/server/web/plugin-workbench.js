@@ -7,7 +7,7 @@
  async function open(plugin,services){
   close();if(services.blocked()||!plugin.enabled)return;
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
-  const host=document.createElement('section');host.className='plugin-workbench';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
+  const host=document.createElement('section');host.className='plugin-workbench'+(requestedPlugin(window.location?.search||'')===plugin.id?' plugin-workbench-standalone':'');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
   title.textContent=plugin.workbench.title;notice.textContent=services.t('独立插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>close();
   frame.title=plugin.workbench.title;frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';

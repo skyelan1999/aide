@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "browser": "154.0.8037.57",
+  "checks": [
+    "card and header buttons",
+    "only plugin id in URL",
+    "noopener and no referrer",
+    "original overlay remains",
+    "same-origin login storage",
+    "existing session restored",
+    "input after original tab closed",
+    "new-tab reload",
+    "390px layout",
+    "log download",
+    "explicit session close"
+  ],
+  "errors": []
+}

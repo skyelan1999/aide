@@ -1,0 +1,3 @@
+BLOCKED: A passing full verification of current inputs is required
+Release requires main
+Release requires clean Git status
