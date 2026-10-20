@@ -35,32 +35,49 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "发布检查发现两个既有VM夹具未提供新深链接依赖；补齐夹具并增加初始化后打开/解锁后打开的顺序断言。未修改产品锁屏行为。",
-      "evidence": []
+      "status": "pass",
+      "summary": "宿主功能已提交并保留上游892e0b99，通过codex/terminal-workbench推送及PR#7交付；独立插件main已推送f08f8f1，v1.1.0预发布包含固定提交ZIP/摘要与兼容说明。修正两个VM夹具的新依赖声明，未改变锁屏产品逻辑。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/7",
+        "https://github.com/skyelan1999/aide-pkg-terminal/tree/f08f8f199e25b5a58a2127e96316335cd68a4b34"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "6项插件测试、14项桥接测试、两项VM跟进验证、合并上游后的定向Go race（99.711s）通过。新发布ZIP实际宿主入口和11工具surface验证通过，运行文件与宿主相同；匿名下载新ZIP摘要一致。full原始结果fail，未冒充主仓库完整发行通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-release/published.json",
+        "docs/reviews/2026-10-20-terminal-release/followup-verification.json",
+        "docs/reviews/2026-10-20-terminal-release/full-gate.json"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Release和README明确预发布、配套未合并宿主要求、平台验证范围、仓库直链下载、日志/会话生命周期及稳定市场保持1.0.0。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-release/README.md",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.0"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "只提交任务范围文件；独立插件仓库干净，主仓库既有10项未跟踪任务文件保留。旧1.0.0归档和稳定市场无改动，原验证候选按摘要另存；无生产重启。",
+      "evidence": [
+        "git status --short",
+        "docs/reviews/2026-10-20-terminal-release/README.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "blocked",
+      "summary": "Terminal v1.1.0预发布已公开发布并验明下载；宿主PR#7为草稿，正式宿主Release未完成：full缺成功收据、缺测试镜像及现有环境测试失败。因此未合并main/升宿主版号或tag/发布镜像/更新稳定市场。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-release/published.json",
+        "docs/reviews/2026-10-20-terminal-release/full-gate.json",
+        "https://github.com/skyelan1999/aide/pull/7"
+      ]
     }
   },
   "release_authorization": "用户：可以，推上去吧，做好release（2026-10-20）",
   "rollback": "保留旧1.0.0 Release及市场。若预发布回退，停用新版并恢复1.0.0；备份工作区 .aide/terminal-workbench。宿主PR不合并则不影响主分支，必要时revert范围内提交。",
-  "handoff": ""
+  "handoff": "已发布插件预发布：https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.0；源码/tag=f08f8f199e25b5a58a2127e96316335cd68a4b34，ZIP100397字节，sha256=e417db91e86caf0a6a926de976d9dd2901c81725acbb5d10229c2b570a97b87b。宿主PR#7未合并，正式宿主发行门禁仍阻塞；稳定市场仍1.0.0，生产未替换。"
 }

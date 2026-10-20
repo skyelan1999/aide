@@ -70,14 +70,15 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "本地功能候选更新；未提交、推送、发布或替换生产。既有宿主发布门禁阻塞沿用前任务，不在本次按钮变更中处理。",
+      "status": "blocked",
+      "summary": "源码已推送，独立Terminal v1.1.0预发布已公开；配套宿主草稿PR#7待full门禁，未正式发布宿主或更新稳定市场。",
       "evidence": [
-        "docs/tasks/terminal-workbench-20261020.json"
+        "docs/tasks/terminal-workbench-release-20261020.json",
+        "docs/reviews/2026-10-20-terminal-release/published.json"
       ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户：可以，推上去吧，做好release（2026-10-20）；执行记录见 terminal-workbench-release-20261020。",
   "rollback": "未发布生产；仅撤销本任务新增标签页入口/深链接与对应文档和测试，不回退先前常驻会话功能或其他已有改动。",
-  "handoff": "最终新标签页候选回环8100，/workspace/.aide-cloud/bin/aide-terminal-tab；测试目录 /workspace/.aide-cloud/terminal-tab。原8097与前候选8099未替换。插件ZIP无需改变，本次入口能力随宿主提供。"
+  "handoff": "最新交付状态及公开下载见 docs/tasks/terminal-workbench-release-20261020.json。历史本地候选保留dist/aide-pkg-terminal-v1.1.0-candidate-1f8e0354.zip；宿主PR#7未合并，稳定市场未更新。"
 }

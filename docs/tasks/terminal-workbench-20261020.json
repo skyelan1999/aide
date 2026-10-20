@@ -74,14 +74,14 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "本次交付未发布候选。全仓 quick 仍失败：UID1000所有权和无桌面环境浏览器启动假设；未执行 full/release-check，未提交、推送、打tag或更新线上市场。新插件需要同步升级宿主。",
+      "summary": "源码已推送，独立Terminal v1.1.0预发布已公开；配套宿主草稿PR#7待full门禁，未正式发布宿主或更新稳定市场。",
       "evidence": [
-        "docs/reviews/2026-10-20-terminal-workbench/README.md",
-        "/workspace/.aide-cloud/terminal-quick-retries/results.json"
+        "docs/tasks/terminal-workbench-release-20261020.json",
+        "docs/reviews/2026-10-20-terminal-release/published.json"
       ]
     }
   },
-  "release_authorization": "本次未执行发行；历史已发布1.0.0产物保持不变，先交付可审阅候选及宿主变更。",
+  "release_authorization": "用户：可以，推上去吧，做好release（2026-10-20）；执行记录见 terminal-workbench-release-20261020。",
   "rollback": "未部署生产。结束本地会话并备份工作区 .aide/terminal-workbench 后，可还原本次范围文件并恢复原1.0.0插件；不清理已有任务或用户日志。",
-  "handoff": "候选 ZIP=/workspace/aide-pkg-terminal/dist/aide-pkg-terminal-v1.1.0-candidate.zip；sha256=1f8e035440fbcf65253ef83855b968bc149435cc84275cbd4ebb6c2cd81f245a。最终候选回环8099，目录 /workspace/.aide-cloud/terminal-candidate；原8097未替换。Windows原生、macOS和真实设备型号未验收；SSH模拟设备为真实OpenSSH协议测试。源码未提交/推送，线上市场仍1.0.0。"
+  "handoff": "最新交付状态及公开下载见 docs/tasks/terminal-workbench-release-20261020.json。历史本地候选保留dist/aide-pkg-terminal-v1.1.0-candidate-1f8e0354.zip；宿主PR#7未合并，稳定市场未更新。"
 }
