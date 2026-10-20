@@ -1,0 +1,81 @@
+{
+  "id": "almanac-plugin-20261020",
+  "request": "https://github.com/skyelan1999/aide-pkg-almanac 创建一个带有工作台的黄历插件，主要显示公历、阴历和黄历，aide可以调用对应查询结果",
+  "baseline": "2985453d014f85ee08420112947405f8c360aac8",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "独立MIT插件，公历/农历/黄历按日期查询，Aide可调用实际handler；离线固定版本历法数据",
+    "自包含工作台：月历、日期选择/今天/前后月、每日黄历、四时主题/窄屏及键盘可用",
+    "严格日期1901–2099、上海今日、闰月与节气/宜忌数据验证；真实Aide宿主及工作台桥接验收",
+    "交付独立仓库、可校验安装包及文档；按已有授权推送、发布插件Release与市场登记（独立插件门禁）"
+  ],
+  "scope": [
+    "/workspace/aide-pkg-almanac",
+    "/workspace/aide-pkg-shop/listings/almanac.json",
+    "/workspace/aide-pkg-shop/catalog.json",
+    "/workspace/aide-pkg-shop/packages/almanac",
+    "/workspace/aide/docs/tasks/almanac-plugin-20261020.json",
+    "仅隔离验收临时复制Go测试到aide/internal/server后移除"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要独立黄历工作台与Aide查询；阴历按中国农历解释，采用MIT lunar-javascript1.7.7离线算法与传统民俗黄历",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-almanac"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "日/月只读工具、上海日期、1901–2099范围；界面仅经自身工具桥读取，离线自包含工作台，无core捆绑",
+      "evidence": [
+        "/workspace/aide/docs/plugin-protocol.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "独立almanac包，离线日/月工具与自包含工作台，MIT固定历法库，未改Aide产品源码。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-almanac/tree/4356a97dc107f6d25fafafcc7fa832ee1c399c86"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "7组单测、真实ZIP导入/宿主工具/沙箱工作台+Go race/Chromium，1440/390蓝色舒适明暗，公历农历黄历同源；CI通过；市场全部校验及线上目录/包摘要验证通过。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-almanac/blob/4356a97dc107f6d25fafafcc7fa832ee1c399c86/docs/verification.md",
+        "https://github.com/skyelan1999/aide-pkg-almanac/blob/4356a97dc107f6d25fafafcc7fa832ee1c399c86/docs/evidence/browser-result.json",
+        "https://github.com/skyelan1999/aide-pkg-almanac/actions/runs/39444167218"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README工具字段、年界口径、默认中国时区、传统民俗/调休边界、安装兼容性、MIT来源与校验、回滚均已记录。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-almanac/blob/4356a97dc107f6d25fafafcc7fa832ee1c399c86/README.md",
+        "https://github.com/skyelan1999/aide-pkg-almanac/blob/4356a97dc107f6d25fafafcc7fa832ee1c399c86/THIRD_PARTY_NOTICES.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "隔离宿主夹具在验收后移除，自有浏览器/服务关闭；无用户数据；保留10个既有未跟踪任务账本；仅提交本任务文件。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-almanac/blob/4356a97dc107f6d25fafafcc7fa832ee1c399c86/scripts/verify-host.sh"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "独立插件源码已推main、v1.0.0 Release公开；GitHub独立附件上传401，发布页改固定提交ZIP/SHA下载，公网校验成功；市场2c0dbdc已推并Pages39444358553成功，线上almanac1.0.0及包摘要确认。未发布或替换Aide宿主镜像。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-almanac/releases/tag/v1.0.0",
+        "https://skyelan1999.github.io/aide-pkg-shop/",
+        "https://github.com/skyelan1999/aide-pkg-shop/commit/2c0dbdc2780bc087a2f2e17a83867ae0547efbc8"
+      ]
+    }
+  },
+  "release_authorization": "用户此前授权独立插件push、release、市场登记；本次沿用已有插件交付方式。插件发布独立验收，不构建/发布Aide宿主镜像。",
+  "rollback": "在Aide停用或卸载almanac即可；插件无用户文件写入。市场可撤回almanac listing，保留固定版本包以供已有用户校验。",
+  "handoff": "独立黄历插件完成，Release和线上市场均可下载。工作台展示公历、农历和传统黄历，Aide可调用almanac_query、almanac_month；默认中国今天，1901–2099。需protocol1工作台桥，Linux验收通过，Windows/macOS未实测；没有真实付费模型或生产宿主部署。仅独立插件发布，不声称Aide主仓库full或镜像发布通过。",
+  "source_commit": "4356a97dc107f6d25fafafcc7fa832ee1c399c86",
+  "package_sha256": "59fb35797d032fbb91e4e09e793a2fe54911eca8e2b4de999308cf5ca14512a6"
+}
