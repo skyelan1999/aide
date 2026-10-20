@@ -1,0 +1,80 @@
+{
+  "version": "1.0.0",
+  "zipBytes": 1932,
+  "zipSHA256": "78bf74c2291120fc0102419b3512ac7a61264dc5ed6f418f6f232462252b8eee",
+  "zipEqualsExistingMarket": true,
+  "runtimeSourceUnchanged": true,
+  "aideCommit": "113045ce4e9c67c204662f035b16ff75123ba412",
+  "hostEntry": {
+    "ok": true,
+    "name": "压缩文件"
+  },
+  "hostTools": [
+    {
+      "name": "archive_compress",
+      "executable": true
+    },
+    {
+      "name": "archive_extract",
+      "executable": true
+    }
+  ],
+  "standaloneHandlers": "PASS: both handlers return expected native executor requirement error",
+  "nativeRegression": {
+    "command": "go test -race ./internal/server -run '^(TestWorkspaceDownloadAndArchive|TestReferenceDownloadAndSafeExtraction|TestReadArchiveFilesRejectsPortablePathTraversal|TestReadArchiveFilesDeduplicatesNormalizedPaths|TestWorkspaceArchiveFormatsRoundTrip|TestTarExtractionRejectsTraversalAndLinks)$' -count=1 -json",
+    "status": "PASS",
+    "tests": [
+      {
+        "test": "TestWorkspaceDownloadAndArchive",
+        "result": "pass"
+      },
+      {
+        "test": "TestReferenceDownloadAndSafeExtraction",
+        "result": "pass"
+      },
+      {
+        "test": "TestReadArchiveFilesRejectsPortablePathTraversal",
+        "result": "pass"
+      },
+      {
+        "test": "TestReadArchiveFilesDeduplicatesNormalizedPaths",
+        "result": "pass"
+      },
+      {
+        "test": "TestWorkspaceArchiveFormatsRoundTrip",
+        "result": "pass"
+      },
+      {
+        "test": "TestTarExtractionRejectsTraversalAndLinks",
+        "result": "pass"
+      }
+    ],
+    "formats": [
+      "zip",
+      "tar",
+      "tar.gz",
+      "tar.bz2",
+      "tar.xz"
+    ]
+  },
+  "platforms": {
+    "linux": "PASS",
+    "windows": "NOT_RUN",
+    "macos": "NOT_RUN"
+  },
+  "realSSH": "NOT_RUN",
+  "ui": "Not applicable: distribution/docs only, no product UI change",
+  "runtimeDependencies": "Aide native archive executor; python3 stdlib bz2/lzma for BZ2 creation and XZ codec",
+  "rollback": "Revert market metadata; original immutable runtime ZIP unchanged, no user data/services replaced",
+  "repository": "https://github.com/skyelan1999/aide-pkg-ArchiveTools",
+  "sourceCommit": "c4d2286083c650dd4de94ce5b12936858993f8c3",
+  "release": "https://github.com/skyelan1999/aide-pkg-ArchiveTools/releases/tag/v1.0.0",
+  "releaseID": 417966102,
+  "releaseDownloads": "PASS: anonymous fixed-commit repository ZIP/SHA256SUMS; no uploaded binary attachments",
+  "tagPush": "Initial HTTP503, remote missing tag confirmed, retry succeeded and annotated tag/peeled commit verified",
+  "marketCommit": "bb95328ea8ae0cf7f33a577ab944c162ad8b3146",
+  "marketValidation": "PASS: public/private tests (2 each), verify_catalog (25 listings / 24 public / 1 private), market.js syntax and diff; unrelated entries and original order unchanged",
+  "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39363858628",
+  "pagesStatus": "PASS: successful deployment of bb95328ea8ae0cf7f33a577ab944c162ad8b3146",
+  "onlineVerification": "PASS: live catalog equals committed local catalog, including independent pinned source, README and native/Python dependencies; anonymous market ZIP size and SHA256 match"
+}

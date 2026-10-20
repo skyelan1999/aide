@@ -1,0 +1,77 @@
+{
+  "id": "archive-tools-release-20261020",
+  "request": "Archive Tools",
+  "baseline": "113045ce4e9c67c204662f035b16ff75123ba412",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Publish prepared public ArchiveTools repository and stable v1.0.0 Release",
+    "Preserve existing runtime source and immutable market archive",
+    "Verify five-format round trips, extraction collision handling and unsafe path/link rejection",
+    "Document native executor/Python dependencies and verify deployed market plus anonymous ZIP"
+  ],
+  "scope": [
+    "Independent aide-pkg-ArchiveTools distribution",
+    "Market archive-tools explicit listing and generator registration",
+    "Aide task and review evidence only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Independent distribution of unchanged 1.0.0; archive_compress/archive_extract require native Aide executor. No host runtime/image/UI changes.",
+      "evidence": [
+        "plugins/archive-tools/index.js",
+        "internal/server/archive_test.go",
+        "internal/server/archive_formats.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Independent distribution of unchanged 1.0.0; archive_compress/archive_extract require native Aide executor. No host runtime/image/UI changes.",
+      "evidence": [
+        "plugins/archive-tools/index.js",
+        "internal/server/archive_test.go",
+        "internal/server/archive_formats.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prepared unchanged 1.0.0 source and immutable ZIP/checksum with independent distribution docs.",
+      "evidence": [
+        "docs/reviews/2026-10-20-archive-tools-release/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "6 native race tests including five format round trips and unsafe path/link rejection passed; tool registration and expected standalone errors passed. Windows/macOS and real SSH NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-10-20-archive-tools-release/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/changelog document native execution, formats, collision behavior, Python dependencies and workspace/SSH limitations.",
+      "evidence": [
+        "docs/reviews/2026-10-20-archive-tools-release/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned distribution/task/evidence files; pre-existing task files retained. No user data or running services changed.",
+      "evidence": [
+        "docs/reviews/2026-10-20-archive-tools-release/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent main and annotated v1.0.0 tag pushed; stable Release published; anonymous pinned ZIP/checksum verified; Pages deployment and live catalog/ZIP verified. No Aide version/image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-ArchiveTools/releases/tag/v1.0.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39363858628",
+        "docs/reviews/2026-10-20-archive-tools-release/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "User prior direct main/push release/market registration instructions; Archive Tools continues independent plugin releases",
+  "rollback": "Revert market commit bb95328 to restore prior metadata; immutable runtime archive unchanged, no user data migration or host image/service replacement.",
+  "handoff": "Archive Tools 1.0.0 independent distribution and market registration complete; runtime ZIP unchanged. Native Aide executor required; BZ2 creation and XZ codec require python3 standard library. 6 native race tests passed including five-format round trips and unsafe archive boundaries. Windows/macOS and actual SSH NOT_RUN. No user files or services changed."
+}
