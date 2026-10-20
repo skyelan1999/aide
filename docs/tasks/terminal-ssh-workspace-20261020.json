@@ -1,0 +1,69 @@
+{
+  "id": "terminal-ssh-workspace-20261020",
+  "request": "另外工作区可能会运行在ssh环境中，这时同样可用应该，同时支持用户密码，私钥文件等多种方式，私钥支持引用区域选择",
+  "baseline": "59c5a464e88b28a6828ce9e4bc385c1fea29a100",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json\n?? plugins/terminal/CHANGELOG.md",
+  "acceptance": [
+    "SSH workspace shell uses existing authenticated host connection, never installation-directory fallback",
+    "Device SSH supports password, private key with passphrase and default authentication; key selection from enabled workspace/reference trees",
+    "Secrets stay out of browser storage, logs, session metadata and tool arguments; real SSH regression covers authentication and cwd"
+  ],
+  "scope": [
+    "Terminal-only daemon context and source selector",
+    "Terminal runtime, PTY helper and workbench",
+    "focused security/workspace tests and documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User asks SSH workspace parity and password/key/reference selection",
+      "evidence": [
+        "request"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Terminal-only scoped context, existing SSH master pinned by inode, bounded reference-key transfer via private IPC to Linux memfd.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-workspace/verification.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Remote workspace shell and isolated local records; default/password/key auth; reference picker; compatibility flag.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-workspace/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "Focused runtime, race and browser component checks PASS; full running-host UI NOT_RUN due existing start.command activation blockers. Formal Aide image release not attempted.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-workspace/browser-component.json",
+        "docs/reviews/2026-10-20-terminal-ssh-workspace/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README, protocol and changelog describe storage, authentication, compatibility and no secret copies.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-workspace/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed diffs, immutable prior releases retained, only own failed test processes stopped, unrelated tasks preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-ssh-workspace/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Terminal 1.2.0 prerelease and main source push; no formal Aide image release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested 删除新标签页重新push release登记 and then added SSH workspace/password/key/reference requirements during the same active work.",
+  "rollback": "Restore prior immutable plugin ZIP and corresponding host commit. Upgrade ends live connections; workspace logs and records stay on disk. No existing services replaced.",
+  "handoff": "Use matching Aide main source build. Linux only; SSH device sessions originate from Aide runtime, workspace Shell uses remote workspace host. No production services restarted."
+}

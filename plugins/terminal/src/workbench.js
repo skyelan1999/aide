@@ -2,7 +2,7 @@
 (() => {
   const $ = id => document.getElementById(id), bridge = AideWorkbenchClient.create('terminal');
   const panes = new Map(), pendingInput = new Map();
-  let sessionFilter = 'all';
+  let sessionFilter = 'all', workspaceMode = 'local';
   let sessions = [], selected = null, queue = Promise.resolve(), polling = false, paused = true, connected = false, stopped = false, exportId = 0;
   const labels = {starting:'启动中',running:'运行中',exited:'已结束',interrupted:'后台已重启',error:'连接异常'};
   const current = () => sessions.find(s => s.id === selected);
@@ -58,13 +58,13 @@
     let visible=0;
     const groups=new Map();
     for(const rec of sessions) {
-      const matches=(!query||[rec.name,rec.host,rec.username,rec.cwd].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)) && (sessionFilter==='all'||(sessionFilter==='running'?rec.status==='running':rec.kind==='ssh'));
+      const matches=(!query||[rec.name,rec.host,rec.username,rec.cwd].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)) && (sessionFilter==='all'||(sessionFilter==='running'?rec.status==='running':rec.kind!=='local'));
       const button=document.createElement('button');button.type='button';button.className='session'+(rec.id===selected?' active':'');button.dataset.sessionId=rec.id;button.dataset.state=rec.status;
-      const icon=document.createElement('span');icon.className='icon';icon.textContent=rec.kind==='ssh'?'↗':'›_';
+      const icon=document.createElement('span');icon.className='icon';icon.textContent=rec.kind!=='local'?'↗':'›_';
       button.setAttribute('aria-pressed',String(rec.id===selected));button.title=rec.name+' · '+(labels[rec.status]||rec.status);
       const body=document.createElement('span');body.className='session-body';
       const name=document.createElement('strong'),detail=document.createElement('small');
-      name.textContent=rec.name;detail.textContent=rec.kind==='ssh'?rec.username+'@'+rec.host:'本地 · '+rec.cwd;body.append(name,detail);const dot=document.createElement('i');dot.className='dot'+(rec.status==='running'?' live':'');dot.setAttribute('aria-label',labels[rec.status]||rec.status);const stateLabel=document.createElement('span');stateLabel.className='session-state';stateLabel.textContent=labels[rec.status]||rec.status;button.append(icon,body,stateLabel);button.onclick=()=>select(rec.id);if(matches){const group=['running','starting'].includes(rec.status)?(rec.kind==='ssh'?'SSH 设备':'本地环境'):'历史会话';if(!groups.has(group))groups.set(group,[]);groups.get(group).push(button);visible++;}
+      name.textContent=rec.name;detail.textContent=rec.kind!=='local'?rec.username+'@'+rec.host:'本地 · '+rec.cwd;body.append(name,detail);const dot=document.createElement('i');dot.className='dot'+(rec.status==='running'?' live':'');dot.setAttribute('aria-label',labels[rec.status]||rec.status);const stateLabel=document.createElement('span');stateLabel.className='session-state';stateLabel.textContent=labels[rec.status]||rec.status;button.append(icon,body,stateLabel);button.onclick=()=>select(rec.id);if(matches){const group=['running','starting'].includes(rec.status)?(rec.kind==='workspace'?'SSH 工作区':rec.kind==='ssh'?'SSH 设备':'本地环境'):'历史会话';if(!groups.has(group))groups.set(group,[]);groups.get(group).push(button);visible++;}
       const tab=document.createElement('button'),tabDot=dot.cloneNode(),tabName=document.createElement('span');tabName.className='tab-name';tabName.textContent=rec.name;tab.append(tabDot,tabName);tab.title=button.title;tab.className=rec.id===selected?'active':'';tab.setAttribute('aria-current',String(rec.id===selected));tab.onclick=()=>select(rec.id);if(['running','starting'].includes(rec.status)||rec.id===selected)$('tabs').append(tab);
     }
     for(const title of ['本地环境','SSH 设备','历史会话']){const rows=groups.get(title);if(!rows)continue;const heading=document.createElement('p');heading.className='session-group';const label=document.createElement('span'),count=document.createElement('span');label.textContent=title;count.textContent=String(rows.length);heading.append(label,count);$('sessions').append(heading,...rows);}
@@ -74,11 +74,11 @@
     $('running-count').textContent=!connected?'后台未连接':paused?'后台通信已暂停':sessions.filter(s=>s.status==='running').length+' 个运行中';
     $('backend-dot').classList.toggle('live',connected&&!paused);
     $('connection-name').textContent=rec?.name||'开始新的连接';
-    $('connection-kind').textContent=rec?(rec.kind==='ssh'?'SSH':'LOCAL'):'TERMINAL';
+    $('connection-kind').textContent=rec?(rec.kind!=='local'?'SSH':'LOCAL'):'TERMINAL';
     $('detail-state').textContent=rec?(labels[rec.status]||rec.status):'尚未连接';
     $('detail-state').style.color=running?'var(--positive)':'var(--muted)';
-    $('detail-kind').textContent=rec?(rec.kind==='ssh'?'SSH / OpenSSH':'本地 Shell / PTY'):'—';
-    $('detail-endpoint').textContent=rec?(rec.kind==='ssh'?rec.username+'@'+rec.host+':'+rec.port:'Aide 运行环境'):'—';
+    $('detail-kind').textContent=rec?(rec.kind==='workspace'?'SSH 工作区 / Shell':rec.kind==='ssh'?'SSH / OpenSSH':'本地 Shell / PTY'):'—';
+    $('detail-endpoint').textContent=rec?(rec.kind!=='local'?rec.username+'@'+rec.host+':'+rec.port:'Aide 运行环境'):'—';
     $('detail-cwd').textContent=rec?.cwd||'—';
     const created=rec?.createdAt?new Date(rec.createdAt):null;
     $('detail-created').textContent=created&&!Number.isNaN(created.getTime())?created.toLocaleString('zh-CN',{hour12:false}):'—';
@@ -89,7 +89,7 @@
     for(const id of ['new-top','new-empty','new-session'])$(id).disabled=!connected;
     for(const id of ['find','logs','logging'])$(id).disabled=!rec;
     $('interrupt').disabled=!running;$('close-session').disabled=!running;$('delete-session').disabled=!rec||running||rec.status==='starting';
-    $('connection').textContent=rec?(rec.kind==='ssh'?rec.username+'@'+rec.host+':'+rec.port:'LOCAL · '+rec.cwd):'本地 Shell 或远程 SSH';
+    $('connection').textContent=rec?(rec.kind!=='local'?rec.username+'@'+rec.host+':'+rec.port:'LOCAL · '+rec.cwd):'本地 Shell 或远程 SSH';
     $('logging').textContent='日志：'+(rec?.logging?'开':'关');$('logging').dataset.enabled=String(!!rec?.logging);$('logging').setAttribute('aria-pressed',String(!!rec?.logging));
     $('status').textContent=rec?(labels[rec.status]||rec.status)+' · '+rec.name:'就绪 · 创建本地或 SSH 会话';
     $('log-status').textContent=rec?.logError || (!rec?'日志保存在当前工作区':rec.logging?'● 正在记录输出':'输出日志已暂停');
@@ -117,7 +117,7 @@
     const id=selected,pane=panes.get(id);
     try {
       const result=await enqueue('poll',id?{id,offset:pane?.offset||0}:{});
-      const signature=JSON.stringify(sessions);sessions=result.sessions;
+      const signature=JSON.stringify(sessions);sessions=result.sessions;workspaceMode=result.workspace?.mode||'local';$('storage-path').textContent=result.storage||'.aide/terminal-workbench';$('kind').options[0].textContent=workspaceMode==='ssh'?'工作区 Shell · 已连接 SSH 主机':'工作区 Shell · Aide 本地环境';
       if(result.output&&pane) {
         if(result.output.reset){pane.term.reset();pane.term.writeln('\x1b[33m[恢复保留的输出尾部；完整记录请查看磁盘日志]\x1b[0m');}
         pane.term.write(bytes(result.output.data));pane.offset=result.output.offset;
@@ -132,10 +132,26 @@
   function openCreate(){$('create-error').textContent='';$('create-dialog').showModal();$('create-form').elements.name.focus();}
   for(const id of ['new-session','new-top','new-empty'])$(id).onclick=openCreate;
   $('cancel-create').onclick=()=>$('create-dialog').close();
+  $('auth').onchange=()=>{$('identity-fields').hidden=$('auth').value!=='key';};
+  let keySource='', keyDirectory='.';
+  async function loadKeys(source='',directory='.') {
+    $('key-error').textContent='';$('key-files').replaceChildren();$('key-up').disabled=true;
+    try {const result=await enqueue('files',{identitySource:source,path:directory});keySource=result.source;keyDirectory=result.path;
+      for(const id of ['key-source','identity-source']){const select=$(id), previous=select.value;select.replaceChildren();for(const source of result.sources){const option=document.createElement('option');option.value=source.id;option.textContent=source.name;select.append(option);}select.value=id==='key-source'?keySource:previous;}
+      $('key-path').textContent=keyDirectory;$('key-up').disabled=keyDirectory==='.';
+      for(const file of result.entries){const button=document.createElement('button');button.type='button';button.textContent=(file.dir?'▸ ':'')+file.name;button.onclick=()=>{if(file.dir){loadKeys(keySource,file.path);return;}$('create-form').elements.identityFile.value=file.path;$('identity-source').value=keySource;$('identity-dialog').close();};$('key-files').append(button);}
+      if(!result.entries.length)$('key-files').textContent='此目录为空';
+    }catch(error){$('key-error').textContent=error.message;}
+  }
+  $('browse-identity').onclick=()=>{$('identity-dialog').showModal();loadKeys($('identity-source').value,'.');};
+  $('key-source').onchange=()=>loadKeys($('key-source').value,'.');
+  $('key-up').onclick=()=>loadKeys(keySource,keyDirectory.includes('/')?keyDirectory.slice(0,keyDirectory.lastIndexOf('/')):'.');
+  $('key-cancel').onclick=()=>$('identity-dialog').close();
   $('kind').onchange=()=>{const ssh=$('kind').value==='ssh';$('ssh-fields').hidden=!ssh;for(const name of ['host','username'])$('create-form').elements[name].required=ssh;};
   $('create-submit').onclick=async event=>{
     event.preventDefault();const form=$('create-form');if(!form.reportValidity())return;const values=new FormData(form),args={kind:values.get('kind'),name:values.get('name'),cwd:values.get('cwd')||'.',logging:form.elements.logging.checked};
-    if(args.kind==='ssh')Object.assign(args,{host:values.get('host'),port:Number(values.get('port')),username:values.get('username'),identityFile:values.get('identityFile')||undefined});
+    if(args.kind==='ssh')Object.assign(args,{host:values.get('host'),port:Number(values.get('port')),username:values.get('username'),auth:values.get('auth'),identityFile:values.get('auth')==='key'?values.get('identityFile')||undefined:undefined,identitySource:values.get('auth')==='key'?values.get('identitySource')||'':undefined});
+    if(args.kind==='ssh'&&args.auth==='key'&&!args.identityFile){$('create-error').textContent='请选择私钥文件';return;}
     $('create-submit').disabled=true;$('create-error').textContent='';
     try {const result=await enqueue('create',args);sessions.push(result.session);$('create-dialog').close();paused=false;select(result.session.id);}
     catch(error){$('create-error').textContent=error.message;}

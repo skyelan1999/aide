@@ -74,6 +74,13 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	if err = os.WriteFile(filepath.Join(a.workPath, "directory-fixture.txt"), []byte("fixture"), 0600); err != nil {
 		t.Fatal(err)
 	}
+	listing, err := a.callPluginTool("terminal", "terminal_session_files", map[string]any{"path": "."})
+	if err != nil {
+		t.Fatal("Terminal daemon did not receive scoped file listing", err)
+	}
+	if !strings.Contains(gotText(listing), "directory-fixture.txt") {
+		t.Fatal("missing scoped file metadata", listing)
+	}
 	history, err := a.callPluginTool("terminal", "terminal-history", map[string]any{"path": "."})
 	if err != nil || !strings.Contains(gotText(history), "directory-fixture.txt") {
 		t.Fatal(history, err)

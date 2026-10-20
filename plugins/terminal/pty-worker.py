@@ -18,7 +18,20 @@ def emit(**fields):
 
 
 def main():
-    config = json.loads(sys.stdin.buffer.readline(65537))
+    config = json.loads(sys.stdin.buffer.readline(131073))
+    key_fd = None
+    if config.get('identityMaterial'):
+        # Keep key bytes in a private Linux memfd owned by this PTY supervisor.
+        # OpenSSH closes inherited fds, so address the supervisor's live fd.
+        material = base64.b64decode(config.pop('identityMaterial'), validate=True)
+        if not material or len(material) > 65536 or not hasattr(os, 'memfd_create'):
+            raise ValueError('Memory-backed SSH keys require Linux')
+        key_fd = os.memfd_create('aide-terminal-identity', os.MFD_CLOEXEC)
+        os.fchmod(key_fd, 0o600)
+        os.write(key_fd, material)
+        os.lseek(key_fd, 0, os.SEEK_SET)
+        config['argv'] = [f'/proc/{os.getpid()}/fd/{key_fd}' if arg == '@AIDE_MEMORY_KEY@' else arg for arg in config['argv']]
+        del material
     pid, master = pty.fork()
     if pid == 0:
         os.chdir(config['cwd'])
@@ -100,6 +113,8 @@ def main():
         except OSError:
             pass
         os.close(master)
+        if key_fd is not None:
+            os.close(key_fd)
         for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGKILL):
             try:
                 os.killpg(pid, sig)

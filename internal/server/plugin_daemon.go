@@ -648,7 +648,7 @@ func (p *daemonProc) callContext(ctx context.Context, tool string, args map[stri
 	p.pending[id] = ch
 	doneCh := p.doneCh
 	p.mu.Unlock()
-	p.send(map[string]any{"jsonrpc": "2.0", "id": id, "method": "tool.call", "params": map[string]any{"tool": tool, "args": args, "workspace": pluginWorkspaceFromContext(ctx)}})
+	p.send(map[string]any{"jsonrpc": "2.0", "id": id, "method": "tool.call", "params": map[string]any{"tool": tool, "args": args, "workspace": pluginWorkspaceFromContext(ctx), "terminalContext": ctx.Value(terminalContextKey{})}})
 	p.lifecycleMu.Unlock()
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()

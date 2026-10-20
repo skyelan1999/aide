@@ -927,6 +927,13 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	}
 	parent = context.WithValue(parent, pluginWorkspaceContextKey{}, workspace)
 	if a.daemons != nil && a.isDaemonPlugin(pluginID) {
+		if pluginID == "terminal" && strings.HasPrefix(toolName, "terminal_session_") {
+			terminal, err := a.terminalToolContext(parent, toolName, args)
+			if err != nil {
+				return nil, err
+			}
+			parent = context.WithValue(parent, terminalContextKey{}, terminal)
+		}
 		raw, err := a.daemons.CallContext(parent, pluginID, toolName, args)
 		a.mu.Lock()
 		stale := a.wsRevision != epoch || a.pluginWorkspaceLocked() != workspace || a.pluginsPath != scope

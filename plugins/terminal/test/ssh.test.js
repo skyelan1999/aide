@@ -25,7 +25,7 @@ test('real OpenSSH verifies host key, authenticates interactively and keeps cred
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   t.after(async()=>{await manager.stop();for(const client of peers)client.end();await new Promise(resolve=>server.close(resolve));fs.rmSync(root,{recursive:true,force:true});});
-  const rec=(await manager.create(root,{kind:'ssh',name:'SSH device',host:'127.0.0.1',port:server.address().port,username:'device'})).session;
+  const rec=(await manager.create(root,{kind:'ssh',auth:'password',name:'SSH device',host:'127.0.0.1',port:server.address().port,username:'device'})).session;
   await readUntil(manager,root,rec.id,/fingerprint|authenticity/);
   assert.equal(auth,0,'untrusted host cannot authenticate before confirmation');
   manager.send(root,{id:rec.id,data:'yes\r'});await readUntil(manager,root,rec.id,/password:/);
@@ -33,7 +33,7 @@ test('real OpenSSH verifies host key, authenticates interactively and keeps cred
   manager.resize(root,{id:rec.id,cols:95,rows:32});manager.send(root,{id:rec.id,data:'device status\r'});
   const output=await readUntil(manager,root,rec.id,/DEVICE_RESULT:device status/);assert(!output.includes(password));
   const log=manager.logs(root,{id:rec.id,index:0});assert(!Buffer.from(log.data,'base64').includes(Buffer.from(password)));
-  const meta=fs.readFileSync(path.join(root,'.aide/terminal-workbench',rec.id+'.json'),'utf8');assert(!meta.includes(password));assert(!meta.includes('password'));
+  const meta=fs.readFileSync(path.join(root,'.aide/terminal-workbench',rec.id+'.json'),'utf8');assert(!meta.includes(password));assert(!Object.hasOwn(JSON.parse(meta),'password'));assert.equal(JSON.parse(meta).auth,'password');
   assert(fs.readFileSync(path.join(root,'.aide/terminal-workbench/known_hosts'),'utf8').includes('ssh-rsa'));assert(windows>=1);
   manager.send(root,{id:rec.id,data:'exit\r'});for(let i=0;i<60&&manager.list(root).sessions[0].status==='running';i++)await delay(30);
   assert.equal(manager.list(root).sessions[0].status,'exited');

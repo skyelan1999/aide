@@ -42,12 +42,14 @@ function inside(root, relative, directory = true) {
 class Sessions {
   constructor() { this.spaces = new Map(); this.stopping = false; }
   space(workspace) {
-    if (!workspace || !path.isAbsolute(workspace)) throw Error('此工作区不是本地目录；请在本地工作区创建 SSH 会话');
+    const context = typeof workspace === 'object' && workspace ? workspace : null;
+    workspace = context ? context.storageRoot : workspace;
+    if (!workspace || !path.isAbsolute(workspace)) throw Error('此工作区需要更新配套 Aide 的 SSH 工作区支持');
     const root = fs.realpathSync(workspace);
-    if (this.spaces.has(root)) return this.spaces.get(root);
+    if (this.spaces.has(root)) { const space=this.spaces.get(root); space.remote=context?.remote; return space; }
     const base = path.join(root, '.aide'); privateDir(base, false);
     const dir = path.join(base, 'terminal-workbench'); privateDir(dir);
-    const space = {root, dir, records:new Map()};
+    const space = {root, dir, remote:context?.remote, records:new Map()};
     for (const file of fs.readdirSync(dir).filter(x => /^[a-f0-9]{24}\.json$/.test(x)).slice(0, MAX_SESSIONS)) {
       const rec = JSON.parse(readPrivate(path.join(dir, file)));
       if (!ID.test(rec.id) || file !== rec.id + '.json') throw Error('会话记录损坏');
@@ -65,8 +67,8 @@ class Sessions {
     return space;
   }
   public(rec) {
-    const {id,name,kind,host,port,username,cwd,identityFile,cols,rows,status,createdAt,endedAt,exitCode,logging,logError} = rec;
-    return {id,name,kind,host,port,username,cwd,identityFile,cols,rows,status,createdAt,endedAt,exitCode,logging,logError};
+    const {id,name,kind,host,port,username,cwd,identityFile,identitySource,auth,cols,rows,status,createdAt,endedAt,exitCode,logging,logError} = rec;
+    return {id,name,kind,host,port,username,cwd,identityFile,identitySource,auth,cols,rows,status,createdAt,endedAt,exitCode,logging,logError};
   }
   persist(space, rec) {
     const temporary = path.join(space.dir, rec.id + '.json.tmp');
@@ -104,7 +106,7 @@ class Sessions {
   }
   list(workspace) {
     const space = this.space(workspace);
-    return {sessions:[...space.records.values()].map(rec => this.public(rec)), storage:'.aide/terminal-workbench', limits:{sessions:MAX_SESSIONS,active:MAX_ACTIVE,logBytes:LOG_BYTES,logFiles:LOG_FILES}};
+    return {workspace:{mode:space.remote?'ssh':'local',host:space.remote?.host,path:space.remote?.path},sessions:[...space.records.values()].map(rec => this.public(rec)), storage:space.remote?'Aide 数据目录 / terminal-workspaces/<工作区标识>/.aide/terminal-workbench':'.aide/terminal-workbench', limits:{sessions:MAX_SESSIONS,active:MAX_ACTIVE,logBytes:LOG_BYTES,logFiles:LOG_FILES}};
   }
   async create(workspace, args) {
     if (this.stopping) throw Error('后台正在停止');
@@ -113,13 +115,26 @@ class Sessions {
     if (space.records.size >= MAX_SESSIONS) throw Error('最多保留32个会话，请先删除已结束的记录');
     const active = [...this.spaces.values()].flatMap(s => [...s.records.values()]).filter(r => r.worker).length;
     if (active >= MAX_ACTIVE) throw Error('最多同时运行16个会话');
-    const kind = args.kind || 'local';
-    if (!['local','ssh'].includes(kind)) throw Error('会话类型须为 local 或 ssh');
-    const cwd = text(args.cwd, '.', 512), working = inside(space.root, cwd);
+    let kind = args.kind || 'local';
+    if (kind === 'local' && space.remote) kind = 'workspace';
+    if (!['local','ssh','workspace'].includes(kind)) throw Error('会话类型须为 local 或 ssh');
+    const cwd = text(args.cwd, '.', 512);
+    if (path.isAbsolute(cwd) || cwd.split(/[\\/]/).includes('..')) throw Error('目录路径必须位于当前工作区内');
+    const working = space.remote ? space.root : inside(space.root, cwd);
     const cols = integer(args.cols, 100, 20, 400), rows = integer(args.rows, 30, 5, 200);
     const rec = {id:crypto.randomBytes(12).toString('hex'), kind, name:text(args.name, kind === 'ssh' ? 'SSH 设备' : '本地终端', 80), cwd, cols, rows,
       createdAt:new Date().toISOString(),status:'starting',logging:args.logging !== false,offset:0,base:0,history:Buffer.alloc(0),worker:null};
     let argv = ['/bin/bash', '--noprofile', '--norc', '-i'];
+    if (kind === 'workspace') {
+      if (!space.remote) throw Error('当前不是 SSH 工作区');
+      const remote=space.remote, quote=value=>"'"+String(value).replace(/'/g,"'\"'\"'")+"'";
+      rec.host=remote.host;rec.username=remote.username;rec.port=remote.port;
+      const base=remote.path||'.', directory=cwd==='.'?base:base.replace(/\/$/,'')+'/'+cwd;
+      // Borrow only the authenticated workspace master. If it disappears,
+      // ProxyCommand fails closed instead of connecting with different credentials.
+      argv=['ssh','-F','/dev/null','-tt','-S',remote.socket,'-o','ControlMaster=no','-o','BatchMode=yes','-o','ProxyCommand=/bin/false','-o','EscapeChar=none','-p',String(remote.port||22),'-l',remote.username,remote.host,"cd -- "+quote(directory)+" && exec /bin/bash --noprofile --norc -i"];
+    }
+    let identityMaterial;
     if (kind === 'ssh') {
       rec.host = text(args.host, '', 253);
       if (!/^[a-zA-Z0-9][a-zA-Z0-9.:%_-]*$/.test(rec.host) && !/^[a-fA-F0-9:]+$/.test(rec.host)) throw Error('SSH 主机名无效');
@@ -133,10 +148,20 @@ class Sessions {
         '-o','StrictHostKeyChecking=ask','-o','UserKnownHostsFile='+known,'-o','GlobalKnownHostsFile=/dev/null',
         '-o','ServerAliveInterval=30','-o','ServerAliveCountMax=3','-o','ConnectTimeout=15','-o','IdentitiesOnly=yes',
         '-o','EscapeChar=none','-o','ForwardAgent=no','-o','ClearAllForwardings=yes'];
-      if (args.identityFile) {
+      rec.auth = args.auth || 'default';
+      if (!['default','password','key'].includes(rec.auth)) throw Error('认证方式无效');
+      if (rec.auth === 'password') argv.push('-o','PubkeyAuthentication=no','-o','PreferredAuthentications=password,keyboard-interactive');
+      if (rec.auth === 'key') argv.push('-o','PreferredAuthentications=publickey','-o','PasswordAuthentication=no','-o','KbdInteractiveAuthentication=no');
+      if (args.identityFile && rec.auth !== 'password') {
         rec.identityFile = text(args.identityFile, '', 512);
-        argv.push('-i', inside(space.root, rec.identityFile, false));
-      }
+        rec.identitySource = args.identitySource || '';
+        identityMaterial = typeof workspace === 'object' ? workspace.identityMaterial : undefined;
+        if (identityMaterial) argv.push('-i','@AIDE_MEMORY_KEY@');
+        else {
+          if (rec.identitySource || space.remote) throw Error('所选私钥需要配套宿主读取');
+          argv.push('-i', inside(space.root, rec.identityFile, false));
+        }
+      } else if (rec.auth === 'key') throw Error('请选择私钥文件');
       argv.push(rec.host);
     }
     space.records.set(rec.id, rec);
@@ -168,7 +193,7 @@ class Sessions {
       finish.reject(Error('PTY 已退出；请检查 Python、Shell 或 SSH 是否可用'));
     };
     worker.once('error', end); worker.once('close', end);
-    worker.stdin.write(JSON.stringify({cwd:working, argv, cols, rows})+'\n');
+    worker.stdin.write(JSON.stringify({cwd:working, argv, cols, rows, identityMaterial})+'\n');
     await ready;
     return {session:this.public(rec)};
   }

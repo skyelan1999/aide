@@ -90,7 +90,7 @@ function makeCtx(surface, registry, settings, services = new Map(), required = [
 }
 
 /* 协议 v1.1 工具 api：读操作直接执行；写/命令返回提案对象（由 Go 侧进入用户批准流程，P2 原则）。 */
-function makeToolAPI(pluginDir, workspace = '/workspace') {
+function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext) {
   const fs2 = require('fs');
   const path2 = require('path');
   const { spawn } = require('child_process');
@@ -105,6 +105,7 @@ function makeToolAPI(pluginDir, workspace = '/workspace') {
   };
   return {
     workspaceRoot: workspace,
+    terminalContext,
     readFile: rel => fs2.readFileSync(safeJoin(rel), 'utf8'),
     listFiles: rel => fs2.readdirSync(safeJoin(rel), { withFileTypes: true }).map(e => (e.isDirectory() ? e.name + '/' : e.name)),
     proposeWrite: (rel, content) => ({ proposal: { type: 'file', path: rel, content: String(content) } }),
@@ -355,7 +356,7 @@ function daemonCommand(pluginPath) {
             return;
           }
           Promise.resolve()
-            .then(() => entry.handler(params.args || {}, makeToolAPI(path.dirname(pluginPath), params.workspace)))
+            .then(() => entry.handler(params.args || {}, makeToolAPI(path.dirname(pluginPath), params.workspace, pluginId === 'terminal' ? params.terminalContext : undefined)))
             .then((value) => sendLine({ jsonrpc: '2.0', id: msg.id, result: value === undefined ? null : value }))
             .catch((err) => sendLine({ jsonrpc: '2.0', id: msg.id, error: { code: -32000, message: String(err && err.message).slice(0, 500) } }));
         }

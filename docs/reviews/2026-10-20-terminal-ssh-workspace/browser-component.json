@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "scope": "Actual generated Terminal HTML/JS in Chromium with mocked bridge responses; verifies UI, not running-host integration.",
+  "checks": [
+    {
+      "width": 1440,
+      "theme": "dark",
+      "passwordChoice": true,
+      "referenceNavigation": true,
+      "locatorOnly": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "passwordChoice": true,
+      "referenceNavigation": true,
+      "locatorOnly": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passwordChoice": true,
+      "referenceNavigation": true,
+      "locatorOnly": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "passwordChoice": true,
+      "referenceNavigation": true,
+      "locatorOnly": true
+    }
+  ],
+  "errors": [],
+  "integrationUI": "NOT_RUN: existing start.command activation blockers"
+}

@@ -10,12 +10,14 @@ module.exports = {
     const run = method => (args,api) => {
       if (process.env.AIDE_DAEMON !== '1') throw Error('终端工作台需要启用 daemon 常驻插件支持');
       sessions ||= new (require('./sessions').Sessions)();
-      return sessions[method](api.workspaceRoot,args);
+      if (method === 'files') { if (!api.terminalContext?.fileListing) throw Error('引用私钥选择需要更新配套 Aide 宿主'); return api.terminalContext.fileListing; }
+      return sessions[method](api.terminalContext || api.workspaceRoot,args);
     };
     const id={id:{type:'string'}};
     add('terminal_session_list','列出当前工作区的后台终端会话',run('list'));
     add('terminal_session_create','直接启动交互式本地或 SSH 会话；仅在用户明确要求连接或运行时调用',run('create'),{
-      kind:{type:'string',enum:['local','ssh']},name:{type:'string'},cwd:{type:'string'},host:{type:'string'},port:{type:'integer'},username:{type:'string'},identityFile:{type:'string'},logging:{type:'boolean'},cols:{type:'integer'},rows:{type:'integer'}});
+      kind:{type:'string',enum:['local','ssh']},name:{type:'string'},cwd:{type:'string'},host:{type:'string'},port:{type:'integer'},username:{type:'string'},identityFile:{type:'string'},identitySource:{type:'string'},auth:{type:'string',enum:['default','password','key']},logging:{type:'boolean'},cols:{type:'integer'},rows:{type:'integer'}});
+    add('terminal_session_files','列出当前工作区或已启用引用来源的目录，仅返回私钥选择所需文件元数据',run('files'),{identitySource:{type:'string'},path:{type:'string'}});
     add('terminal_session_input','直接向指定会话发送输入；可能执行设备命令，请确保已获得用户授权',run('send'),{...id,data:{type:'string'}},['id','data']);
     add('terminal_session_poll','获取当前工作区会话状态和增量输出（base64）',run('poll'),{...id,offset:{type:'integer'}});
     add('terminal_session_resize','调整终端 PTY 大小',run('resize'),{...id,cols:{type:'integer'},rows:{type:'integer'}},['id','cols','rows']);

@@ -1,0 +1,19 @@
+{
+  "version": "1.2.0",
+  "status": "focused checks PASS; running-host integration UI NOT_RUN",
+  "zipBytes": 107273,
+  "zipSHA256": "38a4cf3a964b6e5b8a44a04c3ebfee3045f6c46742c9c40c54ba6137693315f1",
+  "runtimeEqualsHost": true,
+  "pluginTests": "9 PASS: PTY, logs, password, plain and encrypted memory-backed key, workspace SSH multiplexing and disconnect fail-closed",
+  "hostTests": "Go race PASS: terminal context/key boundaries, socket pinning, real bundle installation and daemon metadata, workspace and market capability; 15 Node regressions PASS",
+  "browserComponent": "Chromium PASS: actual generated HTML/JS, mock bridge, 1440/390px light/dark, password/key selection, reference directory navigation and locator-only create arguments",
+  "integrationUI": "NOT_RUN: start.command activation still blocked by recorded container CA trust and disk prerequisites; no replacement service launched",
+  "hostBranch": "main",
+  "requiredHostFeatures": [
+    "terminal-workbench-v1",
+    "terminal-ssh-workspace-v1",
+    "bridge.renew",
+    "daemon.detach"
+  ],
+  "rollback": "Restore prior immutable plugin ZIP and corresponding host commit. Upgrade ends live connections; workspace logs and records stay on disk. No existing services replaced."
+}

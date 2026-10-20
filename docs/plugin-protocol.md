@@ -383,3 +383,9 @@ The parent observes theme/palette changes for the active view and disconnects on
 ### 工作台入口
 
 插件卡片仅提供“打开工作台”，在当前 Aide 页面内创建沙箱 iframe 与受控桥接。插件新标签页按钮和 URL 自动打开逻辑已移除；旧链接参数不再启动工作台。关闭面板仍按 `closeBehavior` 释放桥接，后台会话按插件生命周期继续运行，日志下载通过工作台顶部“保存文件”。
+
+### Terminal SSH 工作区上下文（1.2.0 预发布）
+
+宿主只在 Terminal 的 `terminal_session_*` 调用通过既有工作区、策略和资源调度准入后，为 daemon 传递一次性 `api.terminalContext`；其他插件不获得此上下文。`workspaceRoot` 对 SSH 工作区仍为空，普通文件插件不会回退到安装目录。Terminal 上下文包含按 SSH 主机/端口/用户/目录隔离的本地状态目录，以及当前远程路径。工作区 Shell 复用宿主已认证的 SSH 主连接，并用私有硬链接固定 Unix socket inode，避免固定公共 socket 在工作区切换后指向新主机；断开时失败，不另行认证或重试输入。
+
+`terminal_session_files(identitySource,path)` 仅返回允许来源的文件元数据。`terminal_session_create` 新增 `auth: default|password|key`、`identitySource` 与来源相对 `identityFile`。宿主验证来源、相对路径、符号链接及64KiB上限后，将私钥经 daemon 私有上下文交给 Linux memfd；私钥不进入网页、模型参数、会话记录或磁盘临时副本。密码和私钥口令只在 OpenSSH 终端提示后输入。已停用或当前工作区 AI 不可见的来源不参与选择或读取。需要 `terminal-ssh-workspace-v1` 市场能力标记；此标记不跳过最低宿主版本和未知能力检查。
