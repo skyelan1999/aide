@@ -1,0 +1,73 @@
+{
+  "id": "terminal-session-reconnect-20261020",
+  "request": "为已结束的会话增加重新连接按钮，复用原配置无需新建",
+  "baseline": "3b09f4ffaf40a45252c34728c7c54c07ee5c0a67",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Ended/interrupted SSH/local/relay sessions reconnect from a visible toolbar button without creating a record",
+    "Preserve identity/name/target/auth/key reference/relay/log settings/Aide visibility and history",
+    "Do not save passwords, replay commands or concurrently spawn duplicate sessions",
+    "Verify real browser direct/relaySSH and actual native host ZIP flow; independently publish and market register"
+  ],
+  "scope": [
+    "Independent Terminal sessions/UI/tests/docs/release package",
+    "Market Terminal listing/package only",
+    "Aide native integration test and task evidence, no host API/runtime changes"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests reconnect button for ended sessions instead of recreating them.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-session-reconnect/verification.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse saved session and existing host canonical identity admission; manual reconnect only, same ID/history, original configured auth, no input replay or duplicate active connection.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-session-reconnect/verification.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added toolbar button for ended sessions, reconnect manager with saved config/private checks/preserved logs, inode-pinned SSH workspace master, client/listener/UDP/serial support and passive TCP guard.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-session-reconnect/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "30 full Node tests,24 extracted actualZIP tests,6.630s native host race install+hidden-denial/trusted reconnect; actualChromium/OpenSSH/TLS end→same-ID reconnect→password login desktop/mobile, no overflow; key/passphrase, private visibility/restart, failure retry, ordered paste and no replay pass.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-session-reconnect/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/changelog describe manual reconnect, retained history, new shell state, re-entered password/passphrase and passive/legacyTCP limitations.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-session-reconnect/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only independent plugin/market changes plus native test/evidence; user-installed plugins/sessions untouched; own test SSH/agents/browser closed.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-session-reconnect/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent Terminal1.4.2 source/tag/prerelease published; market maine182612c77919264513d0f65e9b109342b5353d6 deployed successfully; live catalog and anonymous ZIP sizes/digests verified. Host runtime/API unchanged; no image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.2",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39378113284",
+        "docs/reviews/2026-10-20-terminal-session-reconnect/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "Prior user direct-main/push/release/market authorization persists for this requested plugin feature",
+  "rollback": "Previous1.4.1 package retained. Upgrade/downgrade intentionally disconnects running sessions; preserve terminal-private state/logs. New metadata fields additive and existing relay scripts compatible.",
+  "handoff": "Upgrade Terminal1.4.2 from market, reopen workbench, select ended/interrupted/failed original record and click 重新连接. Password/passphrase prompted again; logs and visibility preserved. Compatible existing1.4.0 host interface reused; no new runtime API/image required. Windows/macOS/physical hardware and fullstart.commandUI NOT_RUN. Passive TCP must await remote reconnect, legacy direction-less TCP history needs new client configuration."
+}

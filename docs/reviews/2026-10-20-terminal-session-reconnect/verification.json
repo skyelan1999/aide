@@ -1,0 +1,93 @@
+{
+  "version": "1.4.2",
+  "bytes": 1062806,
+  "sha256": "9ac828129ae9c2e3cc299398688a3629f172e6bdc7298aac0edd7c3f32a80cbb",
+  "fullNodeSuite": "PASS30,0skip",
+  "extractedPackage": "PASS24,0skip; exact ZIP runtime and production dependencies",
+  "backendReconnect": [
+    "Same sessionID/name/createdAt/target/auth/logging/visibility, logs preserved",
+    "Real password SSH relay reconnect; reference key and encrypted key passphrase reconnect",
+    "Authenticated SSH workspace control master pinned by inode during manual reconnect; unavailable master fails closed, no fallback auth",
+    "Local Shell restart, direct TCP/UDP reconnect, listener restart, relay serial reconnect",
+    "Hidden sessions deny model reconnect and spoofed caller roles",
+    "Concurrent attempts rejected; failed reconnect preserves record and can be retried; old child exit cannot overwrite new worker",
+    "Accepted TCP peers never dialled back; legacy unmarked TCP history requires explicit new client configuration"
+  ],
+  "actualBrowser": {
+    "status": "PASS",
+    "baseline": false,
+    "scope": "Actual Chromium xterm render, OpenSSH host-key and password authentication, generated Python TLS1.3 relay; host bridge substituted with serial12ms calls, remote echo delayed15ms; loopback only, not user network",
+    "results": [
+      {
+        "kind": "ssh-direct",
+        "samplesMs": [
+          89,
+          128,
+          92,
+          248,
+          119,
+          67,
+          132,
+          74,
+          72,
+          521
+        ],
+        "medianMs": 119,
+        "p90Ms": 248,
+        "maxMs": 521,
+        "bridgeCalls": 110,
+        "maxInFlight": 1,
+        "automaticProbes": 0,
+        "probesWhileActive": 0,
+        "reconnectVerified": true
+      },
+      {
+        "kind": "ssh-relay-tls",
+        "samplesMs": [
+          232,
+          354,
+          122,
+          133,
+          132,
+          131,
+          113,
+          111,
+          73,
+          137
+        ],
+        "medianMs": 132,
+        "p90Ms": 232,
+        "maxMs": 354,
+        "bridgeCalls": 106,
+        "maxInFlight": 1,
+        "automaticProbes": 0,
+        "probesWhileActive": 0,
+        "reconnectVerified": true
+      }
+    ],
+    "errors": []
+  },
+  "browserReconnectChecks": [
+    "PASS direct and relay: end with confirmation, enable reconnect button, reopen original record and authenticate again",
+    "PASS original ID retained and session count stays1; button disabled while running",
+    "PASS1440/390px screenshots inspected, no document overflow",
+    "PASS8KB paste order and lost reply no automatic resend; serial single-flight bridge maintained",
+    "PASS new relay download/deploy/connect/visibility flow with same entry point"
+  ],
+  "nativeHost": "PASS go test -race actual1.4.2 ZIP install/daemon/tools/private hidden model denial/trusted same-ID reconnect;6.630s",
+  "compatibility": "No host runtime/API changes or new workbench tools. Existing canonical saved-session identity admission used; independent plugin distribution only. Password/passphrase not persisted; existing agent scripts remain compatible.",
+  "notRun": [
+    "User physical device/real network",
+    "Hardware UART and Windows/macOS",
+    "Full start.command authenticated host UI; Chromium bridge substituted, native ZIP integration verified separately"
+  ],
+  "publication": {
+    "pluginCommit": "c2bd6e2e28c8ac857f3fff63e6d2ffbc789410d5",
+    "releaseID": 418059415,
+    "releaseURL": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.2",
+    "market": "e182612c77919264513d0f65e9b109342b5353d6",
+    "hostRuntime": "Unchanged; regression test and task records only. No plugin source copied into Aide.",
+    "pages": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39378113284",
+    "live": "PASS actual live catalog equals local1.4.2; market and fixedcommit anonymous ZIP downloads match1062806bytes/SHA256; retired plugins absent"
+  }
+}

@@ -191,5 +191,22 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	if _, err := a.callPluginToolContext(trusted, "terminal", "terminal_session_close", map[string]any{"id": hiddenID}); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := a.callPluginToolContext(trusted, "terminal", "terminal_session_visibility", map[string]any{"id": hiddenID, "visible": false}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.callPluginTool("terminal", "terminal_session_relay_connect", map[string]any{"id": hiddenID, "workbench": true}); err == nil {
+		t.Fatal("model reconnected a hidden session")
+	}
+	reconnected, err := a.callPluginToolContext(trusted, "terminal", "terminal_session_relay_connect", map[string]any{"id": hiddenID})
+	if err != nil {
+		t.Fatal("existing host admission failed saved-session reconnect", err)
+	}
+	reopened := reconnected.(map[string]any)["session"].(map[string]any)
+	if reopened["id"] != hiddenID || reopened["visibleToAide"] != false || reopened["status"] != "running" {
+		t.Fatal("reconnect replaced session identity or privacy", reopened)
+	}
+	if _, err := a.callPluginToolContext(trusted, "terminal", "terminal_session_close", map[string]any{"id": hiddenID}); err != nil {
+		t.Fatal(err)
+	}
 
 }
