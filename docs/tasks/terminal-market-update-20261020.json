@@ -68,12 +68,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "准备推送市场与宿主兼容标记，随后验证Pages部署和公开下载。",
-      "evidence": []
+      "status": "pass",
+      "summary": "市场582ce59已推送并成功部署Pages运行39351324782，线上目录/浏览器下载与摘要通过；宿主兼容标记fd1b136e已推送PR#7，README/Release说明同步。宿主正式发行阻塞另列，不冒充通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-market-update/published.json",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39351324782"
+      ]
     }
   },
   "release_authorization": "用户：更新一下，然后列一下阻塞原因",
   "rollback": "市场条目恢复旧1.0.0元数据并重新生成目录；新旧ZIP均保留，不改已发布插件tag。",
-  "handoff": ""
+  "handoff": "市场已上线Terminal1.1.1预发布，能力标记阻止旧宿主安装；旧包保留，配套PR尚未合并。5项full阻塞和最新版上游缺少的桥接能力见review README。"
 }

@@ -21,3 +21,9 @@
 5. test_cad_geometry.py：无本地测试镜像，CAD容器几何验证未执行。需准备该脚本所用aide:local及对应CAD运行依赖/镜像。
 
 另：远端main已到49566480（0.1.17.3 RC1），包含另一套独立页支持，但仍缺bridge.renew/daemon.detach。PR #7尚未合并，配套正式镜像尚未发布；需要整合上游、通过当前源码full，再走干净main的发行门禁。本轮针对市场兼容的Go修改尚未重跑full，不能沿用旧收据宣称正式发行通过。
+
+## 公开发布结果
+
+[市场站点](https://skyelan1999.github.io/aide-pkg-shop/) 已部署成功，市场提交582ce59a7fe4310b45557ee9f2d231c6927ea4ed，Pages运行39351324782成功。线上Chromium搜索、预发布/依赖说明、390px和实际ZIP下载SHA256全部通过。匿名读取线上catalog及ZIP再次验证1.1.1、terminal-workbench-v1、104320字节与固定摘要；见published.json。
+
+宿主能力标记fd1b136e已推送PR #7。插件README与既有v1.1.1 Release说明同步市场已收录状态，Release仍为prerelease，原tag/ZIP不变。未合并宿主main、未发布宿主正式镜像。旧客户端的目录缓存可能暂时显示上一版，按正常刷新周期更新；该情况不改变Pages公开目录验证结果。
