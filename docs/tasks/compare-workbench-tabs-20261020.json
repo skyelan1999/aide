@@ -1,0 +1,92 @@
+{
+  "id": "compare-workbench-tabs-20261020",
+  "request": "Compare 新增在新标签页打开工作台入口，重排专业简约 UI，并在 Safari 实际验收",
+  "baseline": "892e0b99c03a77657e9dbf5cf33df1532b151563",
+  "initial_status": "Isolated clean main checkout from 892e0b99; only scoped frontend changes copied. Local runtime manifests and backup directories excluded.",
+  "acceptance": [
+    "Compare card and embedded workbench open a separate Aide tab without credentials in its URL",
+    "Reloaded standalone tab obtains a fresh bridge; comparisons and export/save remain usable",
+    "Compact professional Compare layout: grouped input/actions, large result area, useful empty state, responsive layout",
+    "Existing tools and engine remain compatible; Safari file/image/report smoke checks"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/plugin-workbench.js",
+    "internal/server/web/plugin-workbench.css",
+    "internal/server/web/index.html",
+    "scripts/plugin-workbench.test.cjs",
+    "docs/tasks/compare-workbench-tabs-20261020.json",
+    "../aide-pkg-Compare/workbench.html and package documentation",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Use an authenticated full Aide tab with a plugin-id-only route; reuse sandbox, scope binding and export protocol. Restyle Compare without native engine changes.",
+      "evidence": [
+        "User request and source review"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use an authenticated full Aide tab with a plugin-id-only route; reuse sandbox, scope binding and export protocol. Restyle Compare without native engine changes.",
+      "evidence": [
+        "User request and source review"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Separate-tab card/header entry, fresh scoped bridge on reload, pagehide cleanup and professional Compare result layout implemented.",
+      "evidence": [
+        "internal/server/web/plugin-workbench.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Full gate: 138 checks pass, including 1034 server items in 12 race shards, other packages race, vet and runtime/CAD checks. Both platform images pass health/auth, source hash and embedded frontend fingerprint smoke; AMD64 uses emulation. Source/public-plugin scope and every referenced image layer audited. Desktop Safari acceptance recorded; mobile and full theme matrix not run.",
+      "evidence": [
+        "docs/reviews/2026-10-20-compare-workbench-tabs.md",
+        "docs/reviews/2026-10-20/public-plugin-only-release-audit.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Compare README, changelog, verification and review distinguish local UI candidate from published 0.3.0.",
+      "evidence": [
+        "docs/reviews/2026-10-20-compare-workbench-tabs.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diffs checked; unrelated changes and rollback files retained. Both owned build containers and the temporary builder image were removed.",
+      "evidence": [
+        "Isolated checkout excludes runtime data and commercial plugin packages"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Aide 0.1.17.3 RC1 main/tag pushed and prerelease published with two full architecture ZIPs, source ZIP and two metadata files. All five remote hashes and downloaded bytes match. Compare 0.3.1 privately published separately. Public source/current filesystem/all referenced image layers exclude non-public plugins; no user runtime image activation.",
+      "evidence": [
+        "docs/reviews/2026-10-20/compare-workbench-release.json",
+        "docs/reviews/2026-10-20/public-plugin-only-release-audit.json",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.3-RC1",
+        "https://github.com/skyelan1999/aide-pkg-Compare/releases/tag/v0.3.1"
+      ]
+    }
+  },
+  "release_authorization": "可以，把 Compare 0.3.1 和 Aide 这次的修改都 push、release，上传新版插件包。",
+  "rollback": "Prior runtime binary .agent-state/compare-ui/aide.before (also /usr/local/bin/aide.before-compare-ui-20261020 in container). Restore binary with a temporary path and rename, restore /data/.integrity/baseline.before-compare-ui-20261020.json as baseline.json, then restart local container. Compare 0.3.0 published ZIP and upgrade backups retained.",
+  "handoff": "Both releases and requested attachments published and verified. Compare private ZIP installed and reconnected in Safari. Public Aide package excludes non-public plugins. Existing local Aide UI candidate retained; published images not activated. Primary source checkout synced with unrelated changes preserved.",
+  "content_fingerprints": {
+    "internal/server/web/app.js": "6f8e31b3147ba6da81ed902e813ffcd8b47fa121245fa94cc10c09b1049b5b9a",
+    "internal/server/web/plugin-workbench.js": "60d820d05da31ce699fa768b8b5bdffd65c57871634df14c9828cd7e7a40bf15",
+    "internal/server/web/plugin-workbench.css": "c3df45734ce4ec01f98713487f978d223e8eaceb027ac143070dfce8733243b3",
+    "internal/server/web/index.html": "0bfd3e042586954683cace162320cab8f3601140bcd8b086c7acc7b867104e9d",
+    "internal/server/web/locales/en.js": "e2a49c72c09d05774f9fd9dcb0e2c63c76b83b6ddfcde76c74fb0928ebe005eb"
+  },
+  "runtime_binary_sha256": "05bf34c6818bf20f561592bef97704d70fa1c66e09cd9122303da305cdee8c05",
+  "release_constraints": [
+    "Non-public plugins must not be bundled in public Aide assets. Compare remains separately distributed in its private repository.",
+    "Public source ZIP is generated from the public release tag; the published full ZIPs contain only verified public built-in Aide plugins."
+  ]
+}

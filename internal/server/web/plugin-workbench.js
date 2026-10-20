@@ -1,9 +1,11 @@
 'use strict';
 (function(){
  let active=null;
- function requestedPlugin(search){const p=new URLSearchParams(search);if(p.getAll('plugin-workbench').length!==1)return '';const id=p.get('plugin-workbench');return /^[A-Za-z0-9_-]{1,64}$/.test(id||'')?id:'';}
+ function requestedPlugin(search){const p=new URLSearchParams(search),ids=[...p.getAll('plugin-workbench'),...p.getAll('pluginWorkbench')];if(ids.length!==1)return '';const id=ids[0];return /^[A-Za-z0-9_-]{1,64}$/.test(id||'')?id:'';}
  function openInTab(plugin,services){if(services.blocked()||!plugin.enabled||plugin.error||plugin.workbench?.protocol!==1||!/^[A-Za-z0-9_-]{1,64}$/.test(plugin.id||''))return;window.open('/?plugin-workbench='+encodeURIComponent(plugin.id),'_blank','noopener,noreferrer');}
- function close(force=false){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE'}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
+ function route(search){return requestedPlugin(search)||null;}
+ function openTab(plugin,services){if(services.blocked()||!plugin.enabled||plugin.error||plugin.workbench?.protocol!==1||!/^[A-Za-z0-9_-]{1,64}$/.test(plugin.id||''))return;const link=document.createElement('a');link.href='/?pluginWorkbench='+encodeURIComponent(plugin.id);link.target='_blank';link.rel='noopener noreferrer';document.body.append(link);link.click();link.remove();}
+ function close(force=false){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE',keepalive:true}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
  async function open(plugin,services){
   close();if(services.blocked()||!plugin.enabled)return;
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
@@ -11,7 +13,7 @@
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
   title.textContent=plugin.workbench.title;notice.textContent=services.t('独立插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>close();
   frame.title=plugin.workbench.title;frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
-  const tab=document.createElement('button');tab.type='button';tab.textContent=services.t('新标签页打开');tab.onclick=()=>{if(!invalid())openInTab(plugin,services);};
+  const tab=document.createElement('button');tab.type='button';tab.textContent=services.t('在新标签页打开');tab.hidden=!!services.standalone;tab.onclick=()=>{if(!invalid())openTab(plugin,services);};
   header.append(title,notice,tab,button);host.append(header,frame);document.body.append(host);
   const review=document.createElement('button');review.type='button';review.hidden=true;review.textContent=services.t('查看待审批提案');header.append(review);
   const save=document.createElement('button');save.type='button';save.className='plugin-workbench-export';save.hidden=true;header.append(save);
@@ -87,5 +89,6 @@
   }catch(error){if(active===item){close();if(error.name!=='AbortError')services.toast(error.message);}}
  }
  document.addEventListener('keydown',e=>{if(active&&e.key==='Escape'){e.preventDefault();close();}});
- window.AidePluginWorkbench={open,close,openInTab,requestedPlugin};
+ window.addEventListener('pagehide',()=>close());
+ window.AidePluginWorkbench={open,close,openTab,route,openInTab,requestedPlugin};
 })();

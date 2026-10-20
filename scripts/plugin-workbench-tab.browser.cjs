@@ -18,8 +18,8 @@ async function until(fn,label){for(let i=0;i<250;i++){if(await fn())return;await
   // Set authentication once in the original page: new tabs must use same-origin storage.
   await origin.evaluate(token=>{localStorage.setItem('aide-token',token);localStorage.setItem('aide.ui',JSON.stringify({version:1,theme:'dark',language:'zh-CN',motion:'reduced',startupAnimation:'off'}));},token);
   await origin.reload({waitUntil:'domcontentloaded'});await origin.locator('#plugins-toggle').click();
-  const spawned=context.waitForEvent('page');await origin.locator('#plugin-list').getByRole('button',{name:'新标签页打开',exact:true}).click();tab=await spawned;
-  await tab.waitForLoadState('domcontentloaded');assert.equal(new URL(tab.url()).search,'?plugin-workbench=terminal');assert(!tab.url().includes(token));
+  const spawned=context.waitForEvent('page');await origin.locator('#plugin-list').getByRole('button',{name:'在新标签页打开',exact:true}).click();tab=await spawned;
+  await tab.waitForLoadState('domcontentloaded');assert.equal(new URL(tab.url()).search,'?pluginWorkbench=terminal');assert(!tab.url().includes(token));
   assert(await tab.evaluate(()=>window.opener===null));assert.equal(await tab.evaluate(()=>document.referrer),'');
   let frame=tab.frameLocator('iframe[title="设备终端工作台"]');await until(()=>frame.locator('#new-top').isEnabled(),'card new tab auto opens');
   await tab.screenshot({path:path.join(evidence,'card-new-tab.png')});await tab.getByRole('button',{name:'关闭工作台',exact:true}).click();await tab.close();tab=null;
@@ -31,7 +31,7 @@ async function until(fn,label){for(let i=0;i<250;i++){if(await fn())return;await
   async function send(page,frame,command){await frame.locator('.terminal-pane:not([hidden]) .xterm-helper-textarea').focus();await page.keyboard.type(command);await page.keyboard.press('Enter');}
   const terminalText=frame=>frame.locator('.terminal-pane:not([hidden]) .xterm-accessibility-tree').innerText();
   await send(origin,originalFrame,"printf '\\nTAB_ORIGINAL_READY\\n'");await until(async()=>/(^|\n)TAB_ORIGINAL_READY(\n|$)/m.test(await terminalText(originalFrame)),'original output');
-  const popup=context.waitForEvent('page');await origin.locator('.plugin-workbench>header').getByRole('button',{name:'新标签页打开',exact:true}).click();tab=await popup;
+  const popup=context.waitForEvent('page');await origin.locator('.plugin-workbench>header').getByRole('button',{name:'在新标签页打开',exact:true}).click();tab=await popup;
   await tab.waitForLoadState('domcontentloaded');frame=tab.frameLocator('iframe[title="设备终端工作台"]');
   await until(()=>frame.locator('.session[data-session-id="'+id+'"]').count().then(n=>n===1),'shared backend session');
   await frame.locator('.session[data-session-id="'+id+'"]').click();
@@ -42,7 +42,7 @@ async function until(fn,label){for(let i=0;i<250;i++){if(await fn())return;await
   await tab.reload({waitUntil:'domcontentloaded'});frame=tab.frameLocator('iframe[title="设备终端工作台"]');await frame.locator('.session[data-session-id="'+id+'"]').click();await until(async()=>/TAB_SURVIVED_ORIGIN_CLOSE/.test(await terminalText(frame)),'deep link reload recovery');
   await tab.screenshot({path:path.join(evidence,'independent-tab.png')});
   await tab.setViewportSize({width:390,height:844});await until(()=>frame.locator('#sidebar-toggle').isVisible(),'narrow screen');
-  assert(await tab.locator('.plugin-workbench>header').getByRole('button',{name:'新标签页打开',exact:true}).isVisible());
+  assert(await tab.locator('.plugin-workbench>header').getByRole('button',{name:'关闭工作台',exact:true}).isVisible());
   await tab.screenshot({path:path.join(evidence,'mobile.png')});assert(await tab.locator('html').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
   await frame.locator('#logs').click();await frame.locator('#log-files button').first().click();const save=tab.getByRole('button',{name:/^保存文件/});await save.waitFor();const pending=tab.waitForEvent('download');await save.click();const download=await pending;assert(fs.readFileSync(await download.path()).includes(Buffer.from('TAB_SURVIVED_ORIGIN_CLOSE')));await frame.locator('#close-logs').click();
   await frame.locator('#close-session').click();await frame.locator('#confirm-accept').click();await until(()=>frame.locator('#close-session').isDisabled(),'explicit close');

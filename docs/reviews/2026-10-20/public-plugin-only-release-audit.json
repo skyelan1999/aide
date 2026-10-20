@@ -1,0 +1,53 @@
+{
+  "releaseTag": "v0.1.17.3-RC1",
+  "sourceCommit": "49566480b9181385c7a67f00074926e4e6a7bb7c",
+  "publicSourceRepositoryVerified": true,
+  "sourceZIPPluginFilesExactlyMatchPublicTag": true,
+  "scope": "This release source ZIP and the exact image archives embedded in the two full ZIPs; private plugin distribution stays separate. No list of local private plugins is published.",
+  "images": [
+    {
+      "platform": "linux/arm64",
+      "imageId": "sha256:7c5d5103b4d1e6504e7a8847c051235ba25fc112e1489810af1cfb93a236e41a",
+      "embeddedArchiveSHA256": "4323d851d02e593ae3dfed864bbc497f75d93f02dda61f9ad6fb6152e8e748b1",
+      "filesystemPluginIds": [
+        "archive-tools",
+        "browser-control",
+        "computer-control",
+        "markdown-history",
+        "plugin-authoring"
+      ],
+      "uniqueReferencedLayersAudited": 46,
+      "allReferencedLayersScanned": true,
+      "allLayerPluginIds": [
+        "archive-tools",
+        "browser-control",
+        "computer-control",
+        "markdown-history",
+        "plugin-authoring"
+      ],
+      "privatePluginPathsAbsent": true
+    },
+    {
+      "platform": "linux/amd64",
+      "imageId": "sha256:27a81cd0846638dc67904263a266993e5edce7dd620c7a3bf8b5bb5bc593313f",
+      "embeddedArchiveSHA256": "3fe933057651bea2fbf80624d133ead33871006891008dcbc09a20bf954637e6",
+      "filesystemPluginIds": [
+        "archive-tools",
+        "browser-control",
+        "computer-control",
+        "markdown-history",
+        "plugin-authoring"
+      ],
+      "uniqueReferencedLayersAudited": 53,
+      "allReferencedLayersScanned": true,
+      "allLayerPluginIds": [
+        "archive-tools",
+        "browser-control",
+        "computer-control",
+        "markdown-history",
+        "plugin-authoring"
+      ],
+      "privatePluginPathsAbsent": true
+    }
+  ]
+}

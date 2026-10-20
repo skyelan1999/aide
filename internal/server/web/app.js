@@ -6638,7 +6638,7 @@ function estimateContext() {
 }
 
 /* ── 插件系统（FR-72~75，协议 docs/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
-function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
+function pluginWorkbenchServices(){return {api,t,toast,standalone:!!window.AidePluginWorkbench?.requestedPlugin(location.search),reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
 let requestedWorkbenchOpened=false,requestedWorkbenchOpening=false;
 async function openRequestedWorkbench(){
   const id=window.AidePluginWorkbench?.requestedPlugin(location.search);
@@ -6650,6 +6650,7 @@ async function openRequestedWorkbench(){
     const plugin=state.plugins.find(p=>p.id===id&&p.enabled&&!p.error&&p.workbench?.protocol===1);
     if(!plugin){toast(t('工作台插件不可用或未启用'));return;}
     requestedWorkbenchOpened=true;
+    document.body.classList.add('plugin-workbench-page');document.title=plugin.workbench.title+' · Aide';
     await window.AidePluginWorkbench.open(plugin,pluginWorkbenchServices());
   }catch(error){toast(error.message);}finally{requestedWorkbenchOpening=false;}
 }
@@ -6838,8 +6839,8 @@ function renderPluginList() {
     if(p.workbench?.protocol===1){
       const launch=el('button','quiet',t('打开工作台'));launch.type='button';launch.disabled=!p.enabled||!!p.error;
       launch.onclick=()=>window.AidePluginWorkbench.open(p,pluginWorkbenchServices());
-      const tab=el('button','quiet',t('新标签页打开'));tab.type='button';tab.disabled=launch.disabled;
-      tab.onclick=()=>window.AidePluginWorkbench.openInTab(p,pluginWorkbenchServices());
+      const tab=el('button','quiet',t('在新标签页打开'));tab.type='button';tab.disabled=launch.disabled;
+      tab.onclick=()=>window.AidePluginWorkbench.openTab(p,pluginWorkbenchServices());
       foot.append(launch,tab);
     }
     foot.append(el('small', '', (p.version?'v'+p.version+' · ':'')+(p.enabled ? t("启用") : t("停用"))), window.AidePluginUpgrade.button(p,pluginUpgradeServices()), toggle);
