@@ -1,0 +1,91 @@
+{
+  "id": "compare-push-20261020",
+  "request": "Push然后office sheet之间可以比较吗",
+  "baseline": "3e5400081854e593cd3e7f2a7518ddf9b26768f8",
+  "initial_status": "M  docs/plugin-protocol.md\nA  docs/reviews/2026-10-20/compare-sources-acceptance.json\nA  docs/reviews/2026-10-20/compare-unified-entry-acceptance.json\nM  internal/server/plugin_host.js\nA  internal/server/plugin_sources.go\nA  internal/server/plugin_sources_test.go\nMM internal/server/plugins.go\nM  internal/server/web/app.js\nM  internal/server/web/index.html\nM  internal/server/web/locales/en.js\nM  internal/server/web/plugin-workbench.js\nM  scripts/plugin-workbench.test.cjs",
+  "acceptance": [
+    "Push Compare 到其私有仓库；Aide 仅提交通用宿主和右键入口，不夹带私有插件",
+    "保留远端 main 的 Terminal 生命周期和全局取消新标签页",
+    "查明 XLSX 工作表比较现状和限制"
+  ],
+  "scope": [
+    "docs/plugin-protocol.md",
+    "internal/server/plugin_host.js",
+    "internal/server/plugins.go",
+    "internal/server/plugin_sources.go",
+    "internal/server/plugin_sources_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/plugin-workbench.js",
+    "scripts/plugin-workbench.test.cjs",
+    "docs/reviews/2026-10-20/compare-sources-acceptance.json",
+    "docs/reviews/2026-10-20/compare-unified-entry-acceptance.json",
+    "docs/tasks/compare-push-20261020.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "授权仅为源码 Push，另询问 Office sheet 比较能力。",
+      "evidence": [
+        "docs/reviews/2026-10-20/compare-sources-acceptance.json",
+        "docs/reviews/2026-10-20/compare-unified-entry-acceptance.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "从远端 3e540008 独立检出整合，保留原本地脏工作区。保留 Terminal 第三参数上下文，来源 socket 使用第四参数。",
+      "evidence": [
+        "docs/reviews/2026-10-20/compare-sources-acceptance.json",
+        "docs/reviews/2026-10-20/compare-unified-entry-acceptance.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Compare 私有仓库提交 f7902a779da1f03df2a8af0fc1fa97c86477bebc 已 push；Aide 仅整合通用来源 API 和 Compare 选择提示，不添加 plugins/ 资源。",
+      "evidence": [
+        "docs/reviews/2026-10-20/compare-sources-acceptance.json",
+        "docs/reviews/2026-10-20/compare-unified-entry-acceptance.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "13 项工作台测试、来源快照/可见性/宿主 API race 回归、TerminalContext race 回归及 XLSX 单元格/公式 race 测试通过。首轮 quick 的135个命令均退出0，但期间 gofmt/翻译改动使指纹失效，稳定源码重跑135项全部通过。实际 UI/SSH 验收见前序记录；合并后未重新部署或做浏览器验收。",
+      "evidence": [
+        "docs/reviews/2026-10-20/compare-sources-acceptance.json",
+        "docs/reviews/2026-10-20/compare-unified-entry-acceptance.json",
+        "node --test scripts/plugin-workbench.test.cjs",
+        "go test -race ./internal/server -run TestPluginSourceSnapshotsAndRejection|TestPluginSourceSocketCleanupAndVisibility|TestPluginSourceHostAPI",
+        "go test -race ./internal/server -run TestTerminalContext",
+        "go test -race ./core -run TestSpreadsheetCellsAndFormula",
+        "quick fingerprint: 2710ca1ab85591ca2cf9ef6fcb95ac6cb35426a427488a8d8789b450b3e4bff2"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Office XLSX 按 sheet 顺序和名称、存储值和公式定义比较；不计算公式，不比较样式/图表，无独立左右 sheet 参数。历史验收证据保留原候选身份。",
+      "evidence": [
+        "docs/reviews/2026-10-20/compare-sources-acceptance.json",
+        "docs/reviews/2026-10-20/compare-unified-entry-acceptance.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "逐项暂存范围文件，compose、插件注册表、其他插件清单和安装目录未加入提交；临时测试容器已退出。原本地候选服务保持运行。",
+      "evidence": [
+        "docs/reviews/2026-10-20/compare-sources-acceptance.json",
+        "docs/reviews/2026-10-20/compare-unified-entry-acceptance.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅源码 push；没有创建 GitHub Release、上传包、升版或部署。未运行发行 full/release-check。",
+      "evidence": [
+        "用户：Push然后office sheet之间可以比较吗"
+      ]
+    }
+  },
+  "release_authorization": "用户授权源码 Push，未授权本轮 GitHub Release。",
+  "rollback": "源码可 revert 本次提交；本轮未部署、未替换线上服务。",
+  "handoff": "推送前基线 origin/main=3e540008。主检出保留旧基线及未提交改动，整合代码从独立检出推送，避免覆盖其他工作。"
+}

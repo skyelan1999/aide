@@ -90,7 +90,7 @@ function makeCtx(surface, registry, settings, services = new Map(), required = [
 }
 
 /* 协议 v1.1 工具 api：读操作直接执行；写/命令返回提案对象（由 Go 侧进入用户批准流程，P2 原则）。 */
-function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext) {
+function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext, sourceSocket = '') {
   const fs2 = require('fs');
   const path2 = require('path');
   const { spawn } = require('child_process');
@@ -106,6 +106,13 @@ function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext) {
   return {
     workspaceRoot: workspace,
     terminalContext,
+    sources: sourceSocket ? input => new Promise((resolve,reject) => {
+      const data=JSON.stringify(input); if(data.length>16384)return reject(Error('Source request exceeds budget'));
+      const req=require('http').request({socketPath:sourceSocket,path:'/',method:'POST',headers:{'Content-Type':'application/json'}},res=>{
+        let output='';res.setEncoding('utf8');res.on('data',chunk=>{output+=chunk;if(output.length>2<<20){res.destroy();reject(Error('Source response exceeds budget'))}});
+        res.on('error',reject);res.on('end',()=>{try{const value=JSON.parse(output);if(res.statusCode!==200)reject(Error(value.error||'Source request failed'));else resolve(value)}catch(e){reject(e)}});
+      });req.setTimeout(95000,()=>req.destroy(Error('Source request timed out')));req.on('error',reject);req.end(data);
+    }) : undefined,
     readFile: rel => fs2.readFileSync(safeJoin(rel), 'utf8'),
     listFiles: rel => fs2.readdirSync(safeJoin(rel), { withFileTypes: true }).map(e => (e.isDirectory() ? e.name + '/' : e.name)),
     proposeWrite: (rel, content) => ({ proposal: { type: 'file', path: rel, content: String(content) } }),
@@ -119,8 +126,9 @@ function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext) {
       if (!realScript.startsWith(realPluginDir + path2.sep)) return reject(new Error('Python 脚本路径越界'));
       const timeoutMs = Math.max(1000, Math.min(Number(options.timeoutMs) || 60000, 280000));
       const outputLimit = 8 << 20;
-      if (typeof workspace !== 'string' || !workspace || !path2.isAbsolute(workspace)) return reject(new Error('当前工作区不支持本地 Python 执行'));
-      const proc = spawn('python3', ['-I', realScript], { cwd: workspace, env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: '/home/aide', PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'] });
+      if ((!workspace || !path2.isAbsolute(workspace)) && !(sourceSocket && options.sourceSnapshot === true)) return reject(Error('当前工作区不支持本地 Python 执行'));
+      const pythonCwd = typeof workspace === 'string' && path2.isAbsolute(workspace) ? workspace : realPluginDir;
+      const proc = spawn('python3', ['-I', realScript], { cwd: pythonCwd, env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: '/home/aide', PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'] });
       let stdout = Buffer.alloc(0), stderr = Buffer.alloc(0), settled = false;
       const finish = (err, value) => { if (settled) return; settled = true; clearTimeout(timer); err ? reject(err) : resolve(value); };
       const timer = setTimeout(() => { proc.kill('SIGKILL'); finish(new Error('Python 工具执行超时')); }, timeoutMs);
@@ -257,7 +265,7 @@ function callCommand(pluginsDir, requestJSON, outFile) {
     }
   }, 300000);
   Promise.resolve()
-    .then(() => entry.handler(req.args || {}, makeToolAPI(path.join(pluginsDir, req.plugin), req.workspace)))
+    .then(() => entry.handler(req.args || {}, makeToolAPI(path.join(pluginsDir, req.plugin), req.workspace, undefined, req.sourceSocket)))
     .then(value => {
       if (finished) return;
       finished = true;

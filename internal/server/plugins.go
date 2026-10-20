@@ -42,6 +42,7 @@ type PluginWorkbench struct {
 	Protocol      int      `json:"protocol"`
 	Entry         string   `json:"entry"`
 	Title         string   `json:"title"`
+	Standalone    *bool    `json:"standalone,omitempty"`
 }
 
 type PluginManifest struct {
@@ -958,7 +959,12 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 		}
 	}
 	a.mu.Unlock()
-	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args, "settings": settings, "enabledPlugins": enabledPlugins, "reservedTools": builtinToolNames(), "workspace": workspace})
+	sourceSocket, closeSources, sourcesCurrent, sourceErr := a.startPluginSources(parent)
+	if sourceErr != nil {
+		return nil, sourceErr
+	}
+	defer closeSources()
+	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args, "settings": settings, "enabledPlugins": enabledPlugins, "reservedTools": builtinToolNames(), "workspace": workspace, "sourceSocket": sourceSocket})
 	if err != nil {
 		return nil, err
 	}
@@ -985,6 +991,9 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	cmd.Stderr = pluginStderr
 	runErr := cmd.Run()
 	_ = killPluginProcess(cmd)
+	if !sourcesCurrent() {
+		return nil, pluginPlanRejected(parent, errors.New("文件来源已变化，旧调用结果不再接受"))
+	}
 	if ctx.Err() != nil && runErr != nil {
 		if parent.Err() != nil {
 			return nil, parent.Err()

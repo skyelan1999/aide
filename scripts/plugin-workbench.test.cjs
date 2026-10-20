@@ -74,3 +74,13 @@ test('daemon detach closes the view immediately and drains one dispatched call; 
 
 
 test('page exit revokes its own bridge and unloads the sandbox',async()=>{const f=fixture(bridgeResponse);const calls=[];const api=f.services.api;f.services.api=async(url,options)=>{calls.push({url,options});return api(url,options);};await f.controller.open(bridgePlugin,f.services);f.events.pagehide();assert.equal(f.nodes.find(n=>n.tag==='iframe').src,'about:blank');const deleted=calls.find(c=>c.url.endsWith('/'+ 'a'.repeat(64)));assert.equal(deleted.options.method,'DELETE');assert.equal(deleted.options.keepalive,true);});
+
+test('workbench stays embedded without new-tab controller',async()=>{const f=fixture();assert.equal(f.controller.openTab,undefined);await f.controller.open(plugin,f.services);assert(f.nodes.some(n=>n.tag==='iframe'));f.controller.close();});
+
+test('file selection hints contain only validated source paths and no credentials',async()=>{
+ const f=fixture(bridgeResponse);f.services.selection={left:{source:'workspace',path:'docs/a.txt',directory:false,token:'secret'},right:{source:'source:ref',path:'b.txt',directory:false},settings:{password:'secret'}};
+ await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});
+ const m=frame.contentWindow.messages[0].data;assert.equal(m.selection.right.source,'source:ref');assert(!JSON.stringify(m).includes('secret'));assert(!JSON.stringify(m).includes('settings'));
+ for(const bad of ['../x','/etc/passwd','a\\b','x\n'])assert.equal(f.controller.selection({left:{source:'workspace',path:bad}}),undefined);
+ assert.equal(f.controller.selection({left:{source:'https://example.com',path:'a'}}),undefined);f.controller.close();
+});

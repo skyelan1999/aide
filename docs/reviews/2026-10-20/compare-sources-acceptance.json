@@ -1,0 +1,67 @@
+{
+  "task": "compare-sources-20261020",
+  "status": "pass",
+  "baseline": "0e94e2b35a213210247acb749732af76f9f49dcc",
+  "candidate": {
+    "aideBuild": "0e94e2b3-compare-sources-local",
+    "binarySHA256": "8322d97badbdb6627405e446e03dcd228ff1a0b22d935f3686a6509114abbe38",
+    "compareVersion": "0.3.2",
+    "packageSHA256": "a55b0adb82047e55e1ae3e38727c1dfe04d94c2e03e2baabec350070b3c9696e",
+    "published": false
+  },
+  "checks": {
+    "quick": {
+      "status": "pass",
+      "checks": 135,
+      "fingerprint": "7d8ff16dff013b80c00bb4c5d5278244196dcd5317ec70185ce66115285ac589"
+    },
+    "sourceRace": {
+      "status": "pass",
+      "isolatedProcesses": 8
+    },
+    "workbenchNode": {
+      "status": "pass",
+      "tests": 12
+    },
+    "nativeCoreRace": "pass",
+    "packageAndOfflineLicense": "pass",
+    "installedMembers": {
+      "status": "pass",
+      "members": 23,
+      "version": "0.3.2",
+      "standalone": false
+    },
+    "realSSH": {
+      "workspaceToLocalReference": "pass",
+      "workspaceToIndependentSFTP": "pass",
+      "directory": "pass",
+      "hiddenAndDoubleSpaceName": "pass",
+      "pngChangedPixels": 1,
+      "docxChangedRows": 1,
+      "mediaEvidenceExport": "pass"
+    },
+    "safari": {
+      "legacyStandaloneURLReturnsToEmbedded": "pass",
+      "workspaceToReferenceREADME": "pass",
+      "contextMenuCrossSourceAutoCompare": "pass",
+      "observedChangedRows": 2,
+      "newTabButtonAbsent": "pass"
+    },
+    "liveReport": {
+      "reviewBytes": 11964,
+      "archiveSHA256": "b6a2645622b40c5b1f664eca8dc5f8f2b091d3c946e7ca83584510c4d1581bdf",
+      "independentVerifierReplay": "pass"
+    }
+  },
+  "limits": [
+    "SSH/SFTP Git history is not implemented; local Git remains supported",
+    "Cross-source/SSH metadata-only directory comparison rejected",
+    "Snapshots have bounded bytes/entries/depth/time; no original timestamps or atomic cross-file point-in-time claim",
+    "Only local/skill/SSH/SFTP/workspace-sftp configured AI-visible file sources currently supported",
+    "No fresh paid model round, production SSH configuration change, full release gate, remote push or release in this task",
+    "Only current desktop Safari visually checked; full narrow/theme matrix not repeated"
+  ],
+  "privacy": "No private plugin included in any public Aide bundle or image; this task published nothing",
+  "rawEvidence": ".agent-state/compare-sources/ (local only)",
+  "rollback": "Restore .agent-state/compare-sources/aide.before to /usr/local/bin/aide, baseline.before.json to /data/.integrity/baseline.json, restart only when idle, and use Compare upgrade backup .upgrade-backup-compare-1a96ada813a87c0a64ddcdae1855da50 for the original 0.3.1 package. Both baseline and binary must match."
+}
