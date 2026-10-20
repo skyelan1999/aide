@@ -64,14 +64,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Prepared exact1.5.0 package and passing checks; independent publication and market deployment next. Host changes source-only; no Aide image release.",
+      "status": "pass",
+      "summary": "Independent Terminal1.5.0 tag/prerelease418156230 and immutable ZIP published; market main68a2f2a Pages39393149508 succeeded; anonymous live catalog and ZIP1079930bytes/SHA256 verified. Companion host source c4645dcc pushed main only; no Aide image release/deployment, full host gates not claimed.",
       "evidence": [
-        "docs/reviews/2026-10-20-terminal-remote-desktop/verification.json"
+        "docs/reviews/2026-10-20-terminal-remote-desktop/verification.json",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39393149508"
       ]
     }
   },
   "release_authorization": "Prior user: 直接合并到main / push release / 删了重新push release 登记即可; persistent authorization for independent Terminal feature publication and companion source push. No production restart requested.",
   "rollback": "Terminal1.4.2 archive retained. Back up terminal-private state/media before downgrade; upgrade intentionally disconnects sessions. Host capability can be reverted with source commit; no deployed image changed.",
-  "handoff": "Requires companion Aide main and native Linux Xvfb/FreeRDP2 or3/TigerVNC/xdotool/FFmpeg. Optional install recipe included; plugin code stays independent. Workspaces over SSH use Aide-side desktop runtime and target/relay network."
+  "handoff": "Requires companion Aide main and native Linux Xvfb/FreeRDP2 or3/TigerVNC/xdotool/FFmpeg. Optional install recipe included; plugin code stays independent. Workspaces over SSH use Aide-side desktop runtime and target/relay network. Published1.5.0 in live market. Update companion Aide main and provision native dependencies inside its Linux runtime, then RDP probe/trust/password or VNC password; same Python relay deployment flow. Hidden sessions block all Aide desktop/media tools. Remaining host-wide blockers: unchanged launcher ownership assertion and offline10GiB disk guard with5GiB free; no Aide image built/deployed. Test-owned targets/native clients/Python agents/browser closed; other services and10unrelated untracked task files retained."
 }

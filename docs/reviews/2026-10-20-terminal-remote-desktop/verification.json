@@ -121,7 +121,21 @@
   "hostSource": "Companion source update only; terminal-desktop-v1/desktopVersion1, screenshot visual evidence and native tests. No Aide version bump/tag/image/production deployment.",
   "nativeHostRace": "PASS actual final ZIP install+daemon+desktop capability, hidden desktop capture denial, trusted media list, legacy session/private context; 15.112s",
   "hostVet": "PASS go vet ./internal/server",
-  "market": "Pending market push/Pages/live verification",
+  "market": {
+    "status": "PASS",
+    "marketCommit": "68a2f2af49d9b85f3d7d36d79fac77440e331d5d",
+    "catalogMatchesLocal": true,
+    "terminalVersion": "1.5.0",
+    "anonymousZIPBytes": 1079930,
+    "anonymousZIPSHA256": "73b2e0251d8bf55779d4cf4b2e992eee4e2cdcdc5e1c8791fc5bca5059600113",
+    "otherEntriesOrderAndPrivateListingsUnchanged": true,
+    "delistedPluginsStillAbsent": true,
+    "url": "https://skyelan1999.github.io/aide-pkg-shop/",
+    "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39393149508",
+    "pagesConclusion": "success"
+  },
   "runtimeSetup": "Existing isolated extracted native runtime and sourced start.command environment reused; optional installer/Docker recipe not run as admin. Full image build not attempted: previous dependency CA blocker and disk/resource guard remain; no host image claim.",
-  "releaseArchiveAnonymous": "PASS1079930bytes/SHA25673b2e0251d8bf55779d4cf4b2e992eee4e2cdcdc5e1c8791fc5bca5059600113"
+  "releaseArchiveAnonymous": "PASS1079930bytes/SHA25673b2e0251d8bf55779d4cf4b2e992eee4e2cdcdc5e1c8791fc5bca5059600113",
+  "hostCommit": "c4645dcc12ffa4683068c854b569ad85fa836e5f",
+  "pluginDocumentationCommit": "3dc7803 (final host-wide blockers corrected; published runtime ZIP unchanged)"
 }
