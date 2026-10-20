@@ -133,7 +133,7 @@
   setInterval(poll,650);
   $('reconnect').onclick=async()=>{paused=false;$('notice').hidden=true;await poll();render();};
   bridge.onEvent(event=>{if(event.event==='scope.revoked'){paused=true;render();message('工作台授权已失效，请重新打开。');}});
-  function openCreate(){$('create-error').textContent='';$('create-dialog').showModal();$('create-form').elements.name.focus();}
+  function openCreate(){if($('kind').value==='serial')refreshSerial();$('create-error').textContent='';$('create-dialog').showModal();$('create-form').elements.name.focus();}
   for(const id of ['new-session','new-top','new-empty'])$(id).onclick=openCreate;
   $('cancel-create').onclick=()=>$('create-dialog').close();
   $('auth').onchange=()=>{$('identity-fields').hidden=$('auth').value!=='key';};
@@ -151,16 +151,24 @@
   $('key-source').onchange=()=>loadKeys($('key-source').value,'.');
   $('key-up').onclick=()=>loadKeys(keySource,keyDirectory.includes('/')?keyDirectory.slice(0,keyDirectory.lastIndexOf('/')):'.');
   $('key-cancel').onclick=()=>$('identity-dialog').close();
-  $('kind').onchange=()=>{const kind=$('kind').value,ssh=kind==='ssh';$('ssh-fields').hidden=!ssh;$('network-fields').hidden=!['tcp','tcp-server','udp'].includes(kind);$('serial-fields').hidden=kind!=='serial';$('udp-bind-field').hidden=kind!=='udp';for(const name of ['host','username'])$('create-form').elements[name].required=ssh;$('create-form').elements.devicePath.required=kind==='serial';$('create-form').elements.networkHost.disabled=kind==='tcp-server';};
-  $('refresh-serial').onclick=async()=>{try{const result=await enqueue('comm',{action:'serial_list'});$('serial-devices').replaceChildren();for(const port of result.ports){const option=document.createElement('option');option.value=port.path;option.textContent=port.manufacturer||port.path;$('serial-devices').append(option);}if(result.error)$('create-error').textContent=result.error;else if(!result.ports.length)$('create-error').textContent='未发现可用串口；请检查设备映射或手动输入路径';}catch(error){$('create-error').textContent=error.message;}};
+  let serialRefresh=0;
+  function syncSerialSelection(){const serial=$('kind').value==='serial',manual=$('serial-port-select').value==='__manual__';$('serial-port-select').required=serial;$('serial-manual-field').hidden=!manual;$('create-form').elements.devicePath.disabled=!serial||!manual;$('create-form').elements.devicePath.required=serial&&manual;}
+  $('serial-port-select').onchange=syncSerialSelection;
+  async function refreshSerial(){const request=++serialRefresh,select=$('serial-port-select'),previous=select.value;select.disabled=true;$('refresh-serial').disabled=true;$('serial-status').textContent='正在读取可用串口…';
+    try{const result=await enqueue('comm',{action:'serial_list'});if(request!==serialRefresh)return;select.replaceChildren();for(const [value,label] of [['','请选择串口'],...result.ports.map(port=>[port.path,[port.path,port.manufacturer,port.serialNumber].filter(Boolean).join(' · ')]),['__manual__','手动输入设备路径…']]){const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option);}select.value=[...select.options].some(option=>option.value===previous)?previous:'';$('serial-status').textContent=result.error||result.warning||(result.ports.length?'发现 '+result.ports.length+' 个串口，请选择设备':'未发现可用串口；请检查设备映射，也可手动输入路径');}
+    catch(error){$('serial-status').textContent='无法读取串口列表：'+error.message;}
+    finally{if(request===serialRefresh){select.disabled=false;$('refresh-serial').disabled=false;syncSerialSelection();}}
+  }
+  $('kind').onchange=()=>{const kind=$('kind').value,ssh=kind==='ssh';$('ssh-fields').hidden=!ssh;$('network-fields').hidden=!['tcp','tcp-server','udp'].includes(kind);$('serial-fields').hidden=kind!=='serial';$('udp-bind-field').hidden=kind!=='udp';for(const name of ['host','username'])$('create-form').elements[name].required=ssh;$('create-form').elements.networkHost.disabled=kind==='tcp-server';syncSerialSelection();if(kind==='serial')refreshSerial();};
+  $('refresh-serial').onclick=refreshSerial;
   $('send-format').onchange=()=>{$('send-ending').disabled=$('send-format').value==='hex';};
   $('communication-send').onsubmit=async event=>{event.preventDefault();const rec=current();if(!rec||!communication(rec))return;let data=$('send-data').value;const format=$('send-format').value;if(format==='utf8')data+=({lf:'\n',crlf:'\r\n',cr:'\r'}[$('send-ending').value]||'');$('send-packet').disabled=true;try{await enqueue('input',{id:rec.id,data,format});}catch(error){message('发送结果待核实，不会自动重发。'+error.message);}finally{render();}};
   $('create-submit').onclick=async event=>{
-    event.preventDefault();const form=$('create-form');if(!form.reportValidity())return;const values=new FormData(form),args={kind:values.get('kind'),name:values.get('name'),cwd:values.get('cwd')||'.',logging:form.elements.logging.checked};
+    event.preventDefault();const form=$('create-form');if($('kind').value==='serial'&&$('serial-port-select').disabled){$('create-error').textContent='请等待串口列表读取完成';return;}if(!form.reportValidity())return;const values=new FormData(form),args={kind:values.get('kind'),name:values.get('name'),cwd:values.get('cwd')||'.',logging:form.elements.logging.checked};
     if(args.kind==='ssh')Object.assign(args,{host:values.get('host'),port:Number(values.get('port')),username:values.get('username'),auth:values.get('auth'),identityFile:values.get('auth')==='key'?values.get('identityFile')||undefined:undefined,identitySource:values.get('auth')==='key'?values.get('identitySource')||'':undefined});
     if(args.kind==='ssh'&&args.auth==='key'&&!args.identityFile){$('create-error').textContent='请选择私钥文件';return;}
     if(['tcp','tcp-server','udp'].includes(args.kind))Object.assign(args,{host:args.kind==='tcp-server'?'127.0.0.1':values.get('networkHost'),port:Number(values.get('networkPort')),bindPort:Number(values.get('bindPort'))});
-    if(args.kind==='serial')Object.assign(args,{devicePath:values.get('devicePath'),baudRate:Number(values.get('baudRate')),dataBits:Number(values.get('dataBits')),stopBits:Number(values.get('stopBits')),parity:values.get('parity'),flowControl:form.elements.flowControl.checked});
+    if(args.kind==='serial')Object.assign(args,{devicePath:$('serial-port-select').value==='__manual__'?values.get('devicePath'):$('serial-port-select').value,baudRate:Number(values.get('baudRate')),dataBits:Number(values.get('dataBits')),stopBits:Number(values.get('stopBits')),parity:values.get('parity'),flowControl:form.elements.flowControl.checked});
     $('create-submit').disabled=true;$('create-error').textContent='';
     try {const result=await enqueue('create',args);sessions.push(result.session);$('create-dialog').close();paused=false;select(result.session.id);}
     catch(error){$('create-error').textContent=error.message;}

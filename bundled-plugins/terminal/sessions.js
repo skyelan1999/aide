@@ -112,7 +112,6 @@ class Sessions {
   }
   async create(workspace, args) {
     if (this.stopping) throw Error('后台正在停止');
-    if (process.platform === 'win32') throw Error('交互式 PTY 需要 Linux/macOS；Windows 请使用 Aide Linux 容器');
     const space = this.space(workspace);
     if (space.records.size >= MAX_SESSIONS) throw Error('最多保留32个会话，请先删除已结束的记录');
     const active = [...this.spaces.values()].flatMap(s => [...s.records.values()]).filter(r => r.worker).length;
@@ -127,6 +126,7 @@ class Sessions {
     const rec = {id:crypto.randomBytes(12).toString('hex'), kind, name:text(args.name, kind === 'ssh' ? 'SSH 设备' : '本地终端', 80), cwd, cols, rows,
       createdAt:new Date().toISOString(),status:'starting',logging:args.logging !== false,offset:0,base:0,history:Buffer.alloc(0),worker:null};
     if(COMM_KINDS.includes(kind))return this.startCommunication(space,rec,args);
+    if(process.platform==='win32')throw Error('交互式 PTY 需要 Linux/macOS；Windows 请使用 Aide Linux 容器');
     let argv = ['/bin/bash', '--noprofile', '--norc', '-i'];
     if (kind === 'workspace') {
       if (!space.remote) throw Error('当前不是 SSH 工作区');

@@ -1,5 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),Module=require('node:module'),crypto=require('node:crypto');
+const {validateSerialPath}=require('./serial-devices');
 const protocols=['ssh','tcp','udp','serial'];
 const refs=new Set(['connectionId','recordingId','proxyId','socketId','serverId','tunnelId','pairId']);
 function instance(protocol){const filename=path.join(__dirname,protocol+'.js'),mod=new Module(filename,module);mod.filename=filename;mod.paths=Module._nodeModulePaths(__dirname);mod._compile(fs.readFileSync(filename,'utf8'),filename);return mod.exports;}
@@ -21,7 +22,7 @@ class Communications {
   if(name==='ssh_connect'&&!/^SHA256:[A-Za-z0-9+/]{43}$/.test(args.hostFingerprint||''))throw Error('SSH API连接需要用户核验的 hostFingerprint（SHA256）');
   if(name==='ssh_sftp_get'||name==='ssh_sftp_put')args.localPath=this.local(args.localPath,name==='ssh_sftp_get');
   if(name==='ssh_simulate_start'){if(args.sftpRoot)throw Error('模拟SFTP使用独立临时目录，不接受外部根目录');}
-  if(name==='serial_open'){if(args.baudRate!==undefined&&(!Number.isInteger(Number(args.baudRate))||Number(args.baudRate)<1||Number(args.baudRate)>4000000))throw Error('波特率无效');const real=fs.realpathSync(String(args.path||''));if(!real.startsWith('/dev/')||!fs.statSync(real).isCharacterDevice())throw Error('请选择实际串口字符设备');}
+  if(name==='serial_open'){if(args.baudRate!==undefined&&(!Number.isInteger(Number(args.baudRate))||Number(args.baudRate)<1||Number(args.baudRate)>4000000))throw Error('波特率无效');args.path=validateSerialPath(args.path);}
   const result=await this.tools.get(name).handler(args);return this.refs(result,true);
  }
  async fingerprint(args){const {Client}=require('ssh2');const client=new Client();return new Promise((resolve,reject)=>{let got=false;client.on('error',()=>{if(!got)reject(Error('无法读取SSH主机指纹'));});client.connect({host:String(args.host||''),port:Number(args.port)||22,username:String(args.username||'probe'),readyTimeout:10000,hostVerifier:key=>{got=true;const hostFingerprint='SHA256:'+crypto.createHash('sha256').update(key).digest('base64').replace(/=+$/,'');resolve({hostFingerprint,verified:false});queueMicrotask(()=>client.destroy());return false;}});});}

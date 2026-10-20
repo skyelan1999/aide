@@ -20,6 +20,7 @@
  */
 const { spawn } = require('child_process');
 const fs = require('fs');
+const {discoverLinuxPorts}=require('./serial-devices');
 
 /* ---------- 状态（daemon 常驻内存） ---------- */
 const ports = new Map();        // path -> { port, config, incoming:[Buffer], incomingBytes }
@@ -236,23 +237,18 @@ module.exports = {
 
     c.tool({
       name: 'serial_list',
-      description: '列出系统可用串口（path/manufacturer/serialNumber/vendorId/productId）；无设备或无权限时返回空数组',
+      description: '列出系统可用串口（path/manufacturer/serialNumber/vendorId/productId）；Linux 无 udev 时扫描设备目录，列出可见串口',
       handler: async () => {
-        try {
-          const SerialPort = loadSerialport();
-          const list = await SerialPort.list();
-          return {
-            ports: list.map((p) => ({
-              path: p.path,
-              manufacturer: p.manufacturer || null,
-              serialNumber: p.serialNumber || null,
-              vendorId: p.vendorId || null,
-              productId: p.productId || null,
-            })),
-          };
-        } catch (e) {
-          return { ports: [], error: String(e && e.message) };
+        let native=[], error;
+        try { native=await loadSerialport().list(); } catch(e) { error=String(e&&e.message); }
+        const list=native.map(p=>({path:p.path,manufacturer:p.manufacturer||null,serialNumber:p.serialNumber||null,vendorId:p.vendorId||null,productId:p.productId||null}));
+        if(process.platform==='linux')for(const p of discoverLinuxPorts())if(!list.some(item=>item.path===p.path))list.push(p);
+        const result={ports:list};
+        if(error) {
+          if(process.platform==='linux'&&/udevadm/.test(error))result.warning='未使用 udev 数据库；已扫描当前运行环境中的串口设备。容器需要映射设备并授予访问权限。';
+          else result.error=error;
         }
+        return result;
       },
     });
 
@@ -274,10 +270,19 @@ module.exports = {
         };
         const port = new SerialPort({ path, ...config, rtscts: config.flowControl });
         attachPort(path, port, config);
-        await new Promise((resolve, reject) => {
-          port.once('open', resolve);
-          port.once('error', reject);
-        });
+        try {
+          await new Promise((resolve, reject) => {
+            const opened=()=>{port.removeListener('error',failed);resolve();};
+            const failed=error=>{port.removeListener('open',opened);reject(error);};
+            port.once('open',opened);port.once('error',failed);
+          });
+        } catch(error) {
+          if(ports.get(path)?.port===port)ports.delete(path);
+          const detail=String(error&&error.message);
+          if(/EACCES|permission denied/i.test(detail))throw new Error('串口访问被拒绝：请检查设备权限、运行用户组和容器设备映射。'+detail);
+          if(/EBUSY|cannot lock|resource busy/i.test(detail))throw new Error('串口被占用：请先关闭其他程序或会话。'+detail);
+          throw error;
+        }
         emitEvent('open', path + ' baudRate=' + config.baudRate);
         return { ok: true, path, config };
       },

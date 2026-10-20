@@ -1,0 +1,268 @@
+{
+  "version": "1.3.2",
+  "zipSHA256": "c7f28b05999d46a907976144c68b264606798b4adc9c8743ffbecebc43456e71",
+  "zipBytes": 1050519,
+  "bugs": [
+    "udevadm missing or container device not in udev database leaves serial list unusable",
+    "failed native open leaves stale ports map preventing retry",
+    "COM path rejected by POSIX-only path guard; communication sessions incorrectly blocked by Windows PTY restriction"
+  ],
+  "changes": [
+    "explicit port dropdown showing path/manufacturer/serial, automatic refresh and manual path option",
+    "Linux character-device/by-id fallback scan",
+    "failed open state released and permission/busy guidance",
+    "COM validation and PTY guard scoped to shell sessions"
+  ],
+  "tests": {
+    "fullNodeSuite": "PASS 19 tests",
+    "extractedZIP": "PASS 13 tests using only packaged runtime/dependencies",
+    "browser": {
+      "status": "PASS",
+      "scope": "Actual generated Terminal UI with real TCP/UDP and native serial PTY echo; authenticated Aide bridge substituted. Full start.command host UI NOT_RUN.",
+      "checks": [
+        {
+          "width": 1440,
+          "theme": "dark",
+          "palette": "blue",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "palette": "blue",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "palette": "blue",
+          "kind": "serial",
+          "serialSelection": "dropdown",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "palette": "green",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "palette": "green",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "dark",
+          "palette": "green",
+          "kind": "serial",
+          "serialSelection": "manual",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "light",
+          "palette": "blue",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "light",
+          "palette": "blue",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "light",
+          "palette": "blue",
+          "kind": "serial",
+          "serialSelection": "dropdown",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "light",
+          "palette": "green",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "light",
+          "palette": "green",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 1440,
+          "theme": "light",
+          "palette": "green",
+          "kind": "serial",
+          "serialSelection": "manual",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "dark",
+          "palette": "blue",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "dark",
+          "palette": "blue",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "dark",
+          "palette": "blue",
+          "kind": "serial",
+          "serialSelection": "dropdown",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "dark",
+          "palette": "green",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "dark",
+          "palette": "green",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "dark",
+          "palette": "green",
+          "kind": "serial",
+          "serialSelection": "manual",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "light",
+          "palette": "blue",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "light",
+          "palette": "blue",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "light",
+          "palette": "blue",
+          "kind": "serial",
+          "serialSelection": "dropdown",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "light",
+          "palette": "green",
+          "kind": "tcp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "light",
+          "palette": "green",
+          "kind": "udp",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        },
+        {
+          "width": 390,
+          "theme": "light",
+          "palette": "green",
+          "kind": "serial",
+          "serialSelection": "manual",
+          "realBinaryEcho": true,
+          "explicitSend": true,
+          "closeAndDelete": true
+        }
+      ],
+      "errors": []
+    },
+    "serialDiscovery": "PASS 4 focused tests including missing udev subprocess, device-file vs ordinary-file filter, COM path validation and real native open failure/retry"
+  },
+  "limitations": [
+    "Physical USB/UART hardware NOT_RUN",
+    "Windows/macOS real serial NOT_RUN; COM path validation tested on Linux",
+    "Docker needs device mapping and permissions; plugin cannot expose unmapped host devices",
+    "Actual start.command host UI NOT_RUN; browser fixture substitutes authenticated Aide bridge but transfers via real native PTYs"
+  ],
+  "priorArchives": "Existing v1.3.1 and earlier archives untouched",
+  "aideNativeInstall": "PASS AIDE_TERMINAL_BUNDLE_PATH=<actual v1.3.2 ZIP> go test -race ./internal/server -run ^TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools$ -count=1 (8.363s)",
+  "sourceCommit": "e1016c22f99960e99bb8d7494a5f70a893c474d0",
+  "release": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.3.2",
+  "releaseID": 418001142,
+  "releaseDownloads": "PASS anonymous pinned ZIP and SHA256SUMS downloads",
+  "marketCommit": "a2c291a635dacdfbee8243a59a4c970a8064cd14",
+  "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39370306985",
+  "onlineMarket": "PASS successful Pages deployment; live catalog matches source, v1.3.2 package bytes/hash verified; all unrelated entries preserved",
+  "userEnvironment": "Requested OS/error/Docker/SSH details asynchronously; not supplied. Fixes address reproduced defects, physical user-device acceptance remains unverified."
+}

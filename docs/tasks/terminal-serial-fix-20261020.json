@@ -1,0 +1,78 @@
+{
+  "id": "terminal-serial-fix-20261020",
+  "request": "串口你还得修一下，好像并不能用",
+  "baseline": "5428a80b9ede6ca0dc56043cbe89f2b21c9dfee7",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Provide explicit serial port dropdown with refresh and manual path fallback",
+    "Recover enumeration on Linux without udevadm and include visible mapped serial character devices",
+    "Release failed-open bookkeeping so retry works; improve permission/busy errors",
+    "Support COM validation and avoid PTY-only Windows guard for communication sessions",
+    "Verify native serial roundtrip, real browser dropdown/manual selection and extracted runtime package"
+  ],
+  "scope": [
+    "aide-pkg-terminal serial discovery/open lifecycle, workbench source/build, tests/docs/release",
+    "Aide bundled Terminal initial copy and owned task/review evidence",
+    "Market Terminal version/package registration"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Reproduced missing udevadm list error, stale open bookkeeping and COM rejection; add explicit selectable UI. User platform/error detail requested asynchronously; physical environment not yet supplied.",
+      "evidence": [
+        "communications/serial.js",
+        "communications/serial-devices.js",
+        "test/serial-devices.test.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reproduced missing udevadm list error, stale open bookkeeping and COM rejection; add explicit selectable UI. User platform/error detail requested asynchronously; physical environment not yet supplied.",
+      "evidence": [
+        "communications/serial.js",
+        "communications/serial-devices.js",
+        "test/serial-devices.test.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Explicit port selector and auto/explicit refresh/manual path; Linux no-udev discovery, failed-open cleanup and COM/path/platform guards fixed. Bundled initial Terminal updated, installed runtime unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-serial-fix/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "19 full tests, 13 extracted-runtime tests, 24 actual Chromium communication UI scenarios, 4 serial regressions, native Aide ZIP install test passed. Windows/macOS/physical serial and full start.command host UI NOT_RUN. Initial browser hidden-field CSS failure fixed and 24 scenarios rerun passed.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-serial-fix/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/changelog describe fixes, port scope, Docker device mapping and unverified real hardware/platforms.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-serial-fix/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned source/test/bundle/evidence changes; temporary test resources closed. Existing runtime installs and user tasks retained.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-serial-fix/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Terminal v1.3.2 annotated tag/main pushed, prerelease published; anonymous pinned downloads and actual live market deployment verified. Aide pristine initial copy synchronized; no host image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.3.2",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39370306985",
+        "docs/reviews/2026-10-20-terminal-serial-fix/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "Prior session user instructions push release / market registration; current serial fix and selectable-port request continues Terminal maintenance",
+  "rollback": "Install preserved v1.3.1 archive and revert market Terminal listing; no user session data format migration. Revert Aide bundled initial copy commit if needed; installed plugins unchanged by host commit.",
+  "handoff": "Selectable serial devices implemented; Linux no-udev listing, failed-open retry, COM validation/Windows PTY guard fixed. 19 full +13 extracted ZIP tests, 24 actual browser scenarios, native Aide actual ZIP installation passed. Terminal1.3.2 prerelease and live market verified. Physical hardware/Windows/macOS and user-specific environment NOT_RUN; Docker requires mapped device and permissions. Existing installed plugin state retained; upgrade through market. No user services restarted."
+}
