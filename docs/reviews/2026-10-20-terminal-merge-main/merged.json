@@ -1,0 +1,12 @@
+{
+  "PR": "https://github.com/skyelan1999/aide/pull/7",
+  "merged": true,
+  "mergeCommit": "33c9cdbdbe0d5e61738d6b6f06ae9ab63d93b564",
+  "sourceHead": "b24d50d3b613ac17997820b9ffcd3327daef51db",
+  "baseBeforeMerge": "0e94e2b35a213210247acb749732af76f9f49dcc",
+  "target": "main",
+  "newHostTag": false,
+  "newHostImage": false,
+  "productionReplaced": false,
+  "fullAndBrowserRetest": "not run in this environment; focused JS/Go race/build passed"
+}

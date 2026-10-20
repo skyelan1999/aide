@@ -63,14 +63,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "按用户明确授权进行源码main合并；本轮不进行正式镜像发行。",
+      "status": "pass",
+      "summary": "按用户源码合并授权，PR#7已合并main，远端提交33c9cdbd已核对；本地切换并同步main。未发行新宿主镜像/tag或替换生产，完整环境测试由用户其他环境继续。",
       "evidence": [
-        "用户原话：直接合并到main"
+        "docs/reviews/2026-10-20-terminal-merge-main/merged.json",
+        "https://github.com/skyelan1999/aide/pull/7"
       ]
     }
   },
   "release_authorization": "用户明确：直接合并到main。此授权针对源码合并，正式镜像/tag不在本轮范围。",
   "rollback": "通过revert合并提交回退，不重置远端或删除用户数据；本轮不替换运行实例。",
-  "handoff": ""
+  "handoff": "main已包含PR#7，合并提交33c9cdbd；冲突相关16项JS与关键Go race/构建通过。其他环境请拉取main从源码启动，现有正式镜像未重发，Docker/full/browser限制仍如实保留。"
 }
