@@ -58,9 +58,13 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Terminal 1.2.0 prerelease and main source push; no formal Aide image release.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Host main 2ad6d1d2 pushed; Terminal 1.2.0 source/tag 7701b63 and prerelease published; market 3f054cd deployed successfully. Anonymous release ZIP/SHA256SUMS and live market ZIP/capability checks verified. No formal Aide image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.2.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39356397567",
+        "https://skyelan1999.github.io/aide-pkg-shop/catalog.json"
+      ]
     }
   },
   "release_authorization": "User requested 删除新标签页重新push release登记 and then added SSH workspace/password/key/reference requirements during the same active work.",
