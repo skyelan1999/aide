@@ -1,6 +1,12 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "完全访问会放开 AI 和命令面板的执行权限，确认切换？": "Full access expands execution permissions for both AI and the command panel. Switch modes?",
+  "SSH 工作区当前受沙箱限制，尚不能执行远程命令。请在权限设置中检查沙箱模式；完全访问会同时放开 AI 的执行范围。": "The SSH workspace is restricted by the sandbox and cannot run remote commands. Review the sandbox mode in Permissions; full access also expands AI execution permissions.",
+  "远程目录：{0}": "Remote directory: {0}",
+  "本地目录：{0}": "Local directory: {0}",
+  "命令在当前工作区执行；SSH 可启用交互终端。": "Commands run in the current workspace; SSH supports an interactive terminal.",
+  "\n[命令错误] {0}\n": "\n[Command error] {0}\n",
   "插件工作台不可用，请检查插件是否启用。": "Plugin workbench unavailable. Check that the plugin is enabled.",
  "用 Compare 比较…":"Compare…",
  "设为 Compare 左侧":"Set as Compare left side",

@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "scope": "Actual Aide UI and HTTP/NDJSON stream with production commandInput forwarding into an owned pipe; SSH metadata is synthetic, no remote SSH process/device was used.",
+  "checks": [
+    "restricted SSH explains policy before submit",
+    "restricted Enter preserves draft and sends no command or settings write",
+    "1440/390 readable permissions action",
+    "server mode overrides stale localStorage; cancel performs no write",
+    "explicit settings choice saves to server and survives reload",
+    "pending stream accepts Enter and Send button",
+    "Tab/Ctrl+C exact byte forwarding",
+    "one command start across interactive input",
+    "stop restores controls",
+    "403 retains draft and terminal error"
+  ],
+  "commands": 2,
+  "inputs": [
+    "second command\r",
+    "third command\r",
+    "ech\t",
+    "\u0003"
+  ],
+  "settings": 1,
+  "errors": []
+}

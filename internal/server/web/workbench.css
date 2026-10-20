@@ -221,3 +221,5 @@ button[data-action-pending]::after{content:"";position:absolute;right:3px;top:3p
 @keyframes aide-action-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){button[data-action-pending]::after{animation:none}}
 html[data-motion="reduced"] button[data-action-pending]::after{animation:none}
+
+.command-policy:not([hidden]){display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.5}.command-policy span{flex:1;min-width:0}.command-policy button{flex-shrink:0}.terminal-heading #command-location{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36vw}

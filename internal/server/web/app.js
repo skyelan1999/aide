@@ -554,6 +554,7 @@ async function refreshConfig() {
   const workspaceChanged=!!previousScope&&previousScope!==nextConfig.workspaceId;
   if(workspaceChanged){await persistChatDraft();recoveryReady=false;clearTimeout(recoveryTimer);++sessionSeq.value;}
   state.config = nextConfig;
+  renderCommandWorkspaceStatus();
   window.AideManagement?.refresh();
   await refreshApprovalPolicy();
   $('connection').textContent = t("● 本地服务已连接"); $('connection').classList.add('ready');
@@ -4328,6 +4329,31 @@ $('terminal-toggle').onclick = () => {
   else { window.aideExperience?.reopen(terminal); terminal.classList.remove('hidden'); }
   $('terminal-state').textContent = closing ? t("展开 ＋") : t("收起 −");
 };
+function commandIsSSH() {
+  const mode = wsState.config?.workspace?.mode;
+  return mode ? mode === 'ssh' : !!state.config?.sandbox?.remote;
+}
+function commandWorkspaceRestriction() {
+  const mode = state.config?.sandbox?.mode || state.config?.sandboxMode || 'workspace-write';
+  return commandIsSSH() && mode !== 'danger-full-access'
+    ? t('SSH 工作区当前受沙箱限制，尚不能执行远程命令。请在权限设置中检查沙箱模式；完全访问会同时放开 AI 的执行范围。') : '';
+}
+function renderCommandWorkspaceStatus() {
+  const reason = commandWorkspaceRestriction(), active = !!state.commandSessionID;
+  $('command-policy').hidden = !reason;
+  $('command-policy-text').textContent = reason;
+  $('command-location').textContent = commandIsSSH()
+    ? t('远程目录：{0}', wsState.config?.workspace?.path || '.')
+    : t('本地目录：{0}', state.config?.workspaceDisplay || '/workspace');
+  $('command-interactive').disabled = !commandIsSSH() || !!reason;
+  $('command-run').disabled = !!reason || (!!state.commandAbort && !active);
+  const label = $('command-run').querySelector('i18n-text');
+  label.dataset.i18n = active ? '发送' : '运行'; label.textContent = t(label.dataset.i18n);
+}
+$('command-permissions').onclick = action(async () => {
+  settingsPanel.active = 'permissions'; settingsPanel.activeChild = '';
+  await openSettingsSheet();
+}, {feedback:false});
 async function sendInteractiveTerminalBytes(input) {
   const sessionID = state.commandSessionID;
   if (!sessionID) return;
@@ -4367,34 +4393,42 @@ $('command-form').onsubmit = action(async event => {
   if (state.commandAbort && state.commandSessionID) {
     const input = $('command').value;
     $('command').value = '';
-    await sendInteractiveTerminalBytes(input + '\r');
+    try { await sendInteractiveTerminalBytes(input + '\r'); }
+    catch (error) { if (!$('command').value) $('command').value = input; throw error; }
     return;
   }
   if (state.commandAbort) return; const command = $('command').value.trim(); if (!command) return;
+  const restriction = commandWorkspaceRestriction();
+  if (restriction) { renderCommandWorkspaceStatus(); toast(restriction); return; }
   if (state.commandHistory.at(-1) !== command) state.commandHistory.push(command);
   if (state.commandHistory.length > 100) state.commandHistory.shift();
   state.commandHistoryIndex = state.commandHistory.length;
   state.commandHistoryDraft = '';
   $('command').value = '';
-  const interactive = $('command-interactive').checked && $('command-mode').textContent.trim().startsWith('SSH');
+  const interactive = $('command-interactive').checked && commandIsSSH();
   const abort = new AbortController(); state.commandAbort = abort; state.commandSessionID = ''; $('command-run').disabled = true; $('command-stop').classList.remove('hidden'); $('terminal-output').textContent += '\n\n❯ ' + command + '\n';
+  let accepted = false;
   try {
     const response = await fetch('/api/command', { method: 'POST', signal: abort.signal, headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ command, cwd: '.', interactive }) });
     if (!response.ok) throw new Error((await response.json()).error);
+    accepted = true;
     const reader = response.body.getReader(); const decoder = new TextDecoder(); let pending = '';
     while (true) {
       const { value, done } = await reader.read(); if (done) break; pending += decoder.decode(value, { stream: true });
       let index; while ((index = pending.indexOf('\n')) >= 0) {
         const line = pending.slice(0, index); pending = pending.slice(index + 1); if (!line) continue; const item = JSON.parse(line);
-        if (item.type === 'session') state.commandSessionID = item.id;
+        if (item.type === 'session') { state.commandSessionID = item.id; renderCommandWorkspaceStatus(); }
         $('terminal-output').textContent += item.type === 'output' ? item.text : item.type === 'session' ? t("\n[交互终端已就绪；Enter 发送，Tab 补全，Ctrl+C 中断]\n") : t("\n[退出码 {0} · {1} ms] {2}\n", item.code, item.elapsedMS, item.error || '');
         if ($('terminal-output').textContent.length > 180000) $('terminal-output').textContent = $('terminal-output').textContent.slice(-160000);
         $('terminal-output').scrollTop = $('terminal-output').scrollHeight;
       }
     }
-  } catch (error) { if (error.name === 'AbortError') $('terminal-output').textContent += t("\n[已停止命令]\n"); else throw error; }
-  finally { state.commandAbort = null; state.commandSessionID = ''; $('command-run').disabled = false; $('command-stop').classList.add('hidden'); }
-});
+  } catch (error) {
+    if (error.name === 'AbortError') $('terminal-output').textContent += t("\n[已停止命令]\n");
+    else { if (!accepted && !$('command').value) $('command').value = command; $('terminal-output').textContent += t('\n[命令错误] {0}\n', error.message); throw error; }
+  }
+  finally { state.commandAbort = null; state.commandSessionID = ''; renderCommandWorkspaceStatus(); $('command-stop').classList.add('hidden'); }
+}, {feedback:false}); // The command stream owns its lifecycle; later submits are PTY input.
 $('command-stop').onclick = () => state.commandAbort?.abort();
 $('login-dialog').addEventListener('cancel', event => event.preventDefault());
 $('login-form').onsubmit = async event => { event.preventDefault(); state.token = $('access-token').value.trim(); try { await initialize(); localStorage.setItem('aide-token', state.token); $('access-token').value = ''; $('login-dialog').close(); } catch (error) { $('login-error').textContent = error.message; } };
@@ -4412,7 +4446,28 @@ async function loadSettingsSchema() {
   })().finally(()=>{settingsPanel.schemaRequest=null;});
   return settingsPanel.schemaRequest;
 }
+function renderSandboxModeControl(control) {
+  const wrap = el('div', 'settings-control'), track = el('div', 'segmented');
+  wrap.append(el('div', 'control-label', control.label));
+  track.dataset.control = control.id; track.setAttribute('role', 'group'); track.setAttribute('aria-label', control.label);
+  let busy = false;
+  const mode = () => state.config?.sandbox?.mode || state.config?.sandboxMode || 'workspace-write';
+  const buttons = (control.options || []).map(option => {
+    const button = el('button', '', option.label); button.type = 'button'; button.dataset.value = option.value;
+    button.onclick = action(async () => {
+      if (busy || option.value === mode()) return;
+      if (option.value === 'danger-full-access' && !confirm(t('完全访问会放开 AI 和命令面板的执行权限，确认切换？'))) return;
+      busy = true; apply();
+      try { await api('/settings', {method:'PUT', body:JSON.stringify({sandboxMode:option.value,activeModel:state.config?.activeModel || ''})}); await refreshConfig(); }
+      finally { busy = false; apply(); }
+    });
+    return button;
+  });
+  const apply = () => buttons.forEach(button => { button.disabled = busy; button.setAttribute('aria-pressed', String(button.dataset.value === mode())); });
+  track.append(...buttons); wrap.append(track); settingsPanel.refreshers.push({apply}); apply(); return wrap;
+}
 function renderSegmentedControl(control) {
+  if (control.id === 'sandboxMode') return renderSandboxModeControl(control);
   const wrap = el('div', 'settings-control');
   const head = el('div', 'control-label');
   const value = el('span', 'control-value');
@@ -6943,6 +6998,7 @@ function renderWorkspaceSummary() {
   interactive.disabled = !sshMode;
   if (wsState.commandMode !== (sshMode ? 'ssh' : 'local')) interactive.checked = sshMode;
   wsState.commandMode = sshMode ? 'ssh' : 'local';
+  renderCommandWorkspaceStatus();
 }
 function setWsMode(mode) {
   document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });

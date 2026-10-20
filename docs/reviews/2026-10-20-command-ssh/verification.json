@@ -1,0 +1,110 @@
+{
+  "scopeStatus": "PASS",
+  "baseline": "bd61c068581c6212986601b8808ce1497df30b40",
+  "fingerprint": "09f5a4e17209c713e013f3435675ad4427745d388ee7b38ffd1ded9b8efae23e",
+  "fileSHA256": {
+    "internal/server/web/app.js": "eb036396cbcf1bf9cf001288d82b5439430326d8dadf95558a03f40c0cecd15d",
+    "internal/server/web/index.html": "a7eee4b2f920812ea9817a872b174e56bca750cccfbf606142efd3ccbdbc6bb0",
+    "internal/server/web/locales/en.js": "57b16287ee9163fd720e58c6383d59f16ea0df9783fc68a3be3c2f960c31753f",
+    "internal/server/web/workbench.css": "876592b8b3d096536ce14944f165ad231c38c3db4557cc347278f7e806c20b80",
+    "internal/server/command_panel_browser_test.go": "0fb9aa0e7ee4b44aa1ff400ac2d6871449e3e624249f02679e31b9f66c8fbc25",
+    "scripts/browser-command-panel.cjs": "2ba3b1ca3d3247ee16dc0b3f6e38493295f91ddefe76607fb06cb3f965527883"
+  },
+  "browser": {
+    "status": "PASS",
+    "durationSeconds": 8.92,
+    "checks": 10,
+    "detail": "browser.json",
+    "scope": "Actual Aide UI, synthetic SSH metadata, owned HTTP stream pipe, production input forwarding. No real remote SSH execution.",
+    "command": "source /workspace/.aide-cloud/env.sh\nAIDE_COMMAND_PANEL_BROWSER=1 AIDE_EVIDENCE_DIR=/workspace/.aide-cloud/command-panel go test ./internal/server -run '^(TestCommandPanelBrowser|TestCommandPanelRestrictedSSHRejectsBeforeConnection|TestSandboxModesAndRemoteBoundary|TestCommandInput.*|TestSSHInteractive.*)$' -count=1 -v -timeout=5m"
+  },
+  "go": {
+    "status": "PASS",
+    "topLevelTests": 7,
+    "durationSeconds": 12.02,
+    "cases": [
+      "TestCommandInputForwardsExactBytesToActivePTY",
+      "TestCommandInputForwardsTabWithoutSubmittingLine",
+      "TestCommandInputRejectsClosedSession",
+      "TestSSHInteractiveSessionStartsLoginShellAndFeedsFirstCommand",
+      "TestCommandPanelBrowser",
+      "TestCommandPanelRestrictedSSHRejectsBeforeConnection",
+      "TestSandboxModesAndRemoteBoundary"
+    ]
+  },
+  "focusedNode": [
+    {
+      "command": "node scripts/test_i18n.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/async-action.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/test_ui_click_latency.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/ui-response-latency.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/identity-login-routing.test.cjs",
+      "exit": 0
+    },
+    {
+      "command": "node --check internal/server/web/app.js",
+      "exit": 0
+    },
+    {
+      "command": "node --check internal/server/web/locales/en.js",
+      "exit": 0
+    },
+    {
+      "command": "node --check scripts/browser-command-panel.cjs",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "quick": {
+    "status": "fail",
+    "total": 135,
+    "passed": 133,
+    "failed": [
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_data.py"
+        ],
+        "exit": 1
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_offline_bundle.py"
+        ],
+        "exit": 1
+      }
+    ],
+    "baselineReproduction": "../2026-10-20-button-feedback/verification.json"
+  },
+  "additionalFailure": {
+    "command": "go test ./internal/server -run ^TestSandboxCommandPanelEnforcement$ -count=1 -v",
+    "result": "FAIL workspace-write positive execution: Linux Landlock ABI=0 / function not implemented; read-only refusal and full-access execution PASS",
+    "interpretation": "Kernel capability unavailable; code fails closed. No policy bypass or test expectation weakened."
+  },
+  "notRun": [
+    "real SSH target/credentials/PTY",
+    "full Docker release gates",
+    "image/version Release and production deployment"
+  ],
+  "screenshots": {
+    "ssh-restricted-390.png": "7526492005c712bd5f948a9bcac13aebf114b70ca80211fe259d092649dbad4f",
+    "ssh-interactive.png": "f9cf84dcd86053b858ee92141578ea46ddc5e358ad5209b62453d2e59a2169ed",
+    "ssh-restricted-1440.png": "9ab3d20d7f4373ecb89926ed1c27d162efe0f957a8046f129253a9261e04bbf0"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "id": "command-ssh-workspace-20261020",
+  "request": "主界面的命令那个底栏可能不支持ssh还是啥显示工作区受限",
+  "baseline": "bd61c068581c6212986601b8808ce1497df30b40",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "明确 SSH 底栏受限原因，保留服务端沙箱边界且不自动修改权限",
+    "受限 SSH 命令在发送前可见原因和权限设置入口，输入不丢失",
+    "已授权的交互会话在原流未结束时可继续发送 Enter/Tab/控制键；成功和失败后按钮状态恢复",
+    "通过相关前端与沙箱回归，并在真实 Aide 页面验收限制提示和交互输入流"
+  ],
+  "scope": [
+    "internal/server/web 命令底栏及相关翻译样式",
+    "相关 scripts 与 internal/server 测试夹具",
+    "docs/tasks 与 docs/reviews"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "SSH 本身已有支持，受限沙箱明确拒绝远程 shell；本轮修复可理解性与交互输入，不扩大全局权限。",
+      "evidence": [
+        "internal/server/sandbox_policy.go",
+        "internal/server/command.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "在底栏预先显示服务端配置对应限制和设置入口；命令流已有自有状态防重复，移除通用表单锁以允许后续交互输入。",
+      "evidence": [
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "沙箱专用控件以服务端模式为准并保存；完全访问需确认；底栏提前说明 SSH 限制并跳转权限，保留输入和错误；移除流式表单长锁，交互建立后可发送后续输入。服务端策略未改。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "internal/server/web/workbench.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "7项针对性 Go 测试通过（包含10项真实页面检查），相关Node通过；quick133/135，两个既有失败；本机Landlock缺失导致额外本地受限正向测试失败，已记录；没有真实远端验收。",
+      "evidence": [
+        "docs/reviews/2026-10-20-command-ssh/verification.json",
+        "docs/reviews/2026-10-20-command-ssh/browser.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录底栏 SSH 能力、全局沙箱权限含义、旧浏览器偏好修复及验证边界。",
+      "evidence": [
+        "docs/architecture/ssh-storage.md",
+        "docs/reviews/2026-10-20-command-ssh/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "测试页面/随机端口服务关闭；仅范围内文件暂存，十份原有未跟踪任务保留；未更改用户配置或连接真实SSH设备。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "准备推送源码 main；未升版/发布镜像/生产部署；full与镜像门禁未执行。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户此前“那你直接推吧，我去别的环境测试”“直接合并到main”源码推送授权。",
+  "rollback": "git revert 本次产品提交；不需要用户数据迁移。",
+  "handoff": "修复完成并验证隔离流式交互；需要用户显式在权限管理中选择服务端沙箱模式，完全访问同时影响AI与命令面板；真实SSH远端与镜像发布未验收。"
+}

@@ -66,3 +66,11 @@ SSH 首次连接采用 OpenSSH `accept-new`；已记录主机密钥发生变化�
 执行 `bash scripts/test-ssh-workspace.sh`，默认重复两次。依赖已缓存的 `aide-source-fixtures:test` 与 `aide:local` 镜像；缺镜像时脚本会停止，不隐式下载或构建。可使用现有 `scripts/test-source-protocols.sh` 准备来源测试镜像，准备步骤可能需要联网。
 
 脚本创建两个隔离服务器和一个客户端容器，不发布端口、不挂载用户凭据/数据、不挂载 Docker socket。网络为 internal；客户端源码只读，`/tmp`、`/home/aide` 独立。退出后删除测试容器和网络，保留专用 Go 编译缓存及 `.agent-state/ssh-storage-audit/live` 收据。收据记录镜像 ID、输出摘要、源码前后 SHA；源码变化时不算有效验收。
+
+## 主界面命令底栏与沙箱模式
+
+命令底栏支持 SSH 单次命令和持久交互输入。SSH 端尚未接入内核受限沙箱，服务端在 `read-only` / `workspace-write` 下拒绝远程 shell（包括 `pwd`），不会因为手动点击或审批而放行。只有用户显式选择 `danger-full-access` 后才能执行；此设置同时作用于 AI 和命令面板，并非仅为某条手动命令授权。
+
+2026-10-20 源码修复让权限页的沙箱控件读取并保存服务端设置，忽略旧浏览器本地模式；切换完全访问需明确确认，取消不写入。底栏在受限 SSH 下预先显示原因和权限设置入口、保留输入，并显示当前远端目录。交互会话建立后，“运行”变为“发送”，原 HTTP 输出流保持期间仍可使用 Enter、Tab 和 Ctrl+C；停止后恢复运行状态。
+
+本轮真实页面与 HTTP 流/输入转发验收使用隔离夹具，没有连接用户 SSH 设备，不能据此声称用户远端环境已验证。范围与限制见[命令底栏验收](../reviews/2026-10-20-command-ssh/README.md)。
