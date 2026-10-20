@@ -1,0 +1,109 @@
+{
+  "releaseTag": "v0.1.17.3-RC1",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.3-RC1",
+  "published": true,
+  "prerelease": true,
+  "commit": "49566480b9181385c7a67f00074926e4e6a7bb7c",
+  "sourceSHA256": "f2213cdd678f338b9bc1c1af67e227daf1b484ab56b9e5690cfd0a0cbd27af9a",
+  "fullGate": {
+    "status": "pass",
+    "checks": 138,
+    "fingerprint": "b124f5bc12bbfa258b7416baaa06eea4bf58ac317020c9d3d8b92809322e2072"
+  },
+  "platforms": [
+    {
+      "platform": "linux/arm64",
+      "image": "aide:0.1.17.3-RC1-linux-arm64",
+      "imageId": "sha256:7c5d5103b4d1e6504e7a8847c051235ba25fc112e1489810af1cfb93a236e41a",
+      "sourceSHA256": "f2213cdd678f338b9bc1c1af67e227daf1b484ab56b9e5690cfd0a0cbd27af9a",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.3 RC1",
+        "commit": "49566480b9181385c7a67f00074926e4e6a7bb7c",
+        "configKeys": [
+          "buildCommit",
+          "buildVersion",
+          "version"
+        ],
+        "headingLine": 1302,
+        "declarationLine": 2,
+        "sourceHashVerified": true,
+        "image": "aide:0.1.17.3-RC1-linux-arm64",
+        "platform": "linux/arm64"
+      }
+    },
+    {
+      "platform": "linux/amd64",
+      "image": "aide:0.1.17.3-RC1-linux-amd64",
+      "imageId": "sha256:27a81cd0846638dc67904263a266993e5edce7dd620c7a3bf8b5bb5bc593313f",
+      "sourceSHA256": "f2213cdd678f338b9bc1c1af67e227daf1b484ab56b9e5690cfd0a0cbd27af9a",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.3 RC1",
+        "commit": "49566480b9181385c7a67f00074926e4e6a7bb7c",
+        "configKeys": [
+          "buildCommit",
+          "buildVersion",
+          "version"
+        ],
+        "headingLine": 1302,
+        "declarationLine": 2,
+        "sourceHashVerified": true,
+        "image": "aide:0.1.17.3-RC1-linux-amd64",
+        "platform": "linux/amd64"
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "name": "aide-v0.1.17.3-RC1-full-linux-amd64.zip",
+      "bytes": 1098024316,
+      "sha256": "24ef7ab6192c59865a0c4a086fd4798912c2b73fdbfb3a092a050a8207148f33",
+      "remoteDigestMatches": true,
+      "downloadedBytesMatch": true
+    },
+    {
+      "name": "aide-v0.1.17.3-RC1-full-linux-arm64.zip",
+      "bytes": 932075705,
+      "sha256": "b2d2002e0567fb8ee0d0c2d8d46b7e7929a0ce3544bcaa594f99c34a0a7b78ec",
+      "remoteDigestMatches": true,
+      "downloadedBytesMatch": true
+    },
+    {
+      "name": "aide-v0.1.17.3-RC1-source.zip",
+      "bytes": 172336293,
+      "sha256": "29a187778dc65d3ed4898d355c53628de2129608155475e000b9edfd2d5c3776",
+      "remoteDigestMatches": true,
+      "downloadedBytesMatch": true
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "bytes": 2245,
+      "sha256": "70ff460706d4a1f0db4975b6a78eaa4a8a5cea10f37a7398e018ffe78fa2f79e",
+      "remoteDigestMatches": true,
+      "downloadedBytesMatch": true
+    },
+    {
+      "name": "SHA256SUMS",
+      "bytes": 393,
+      "sha256": "e3e12637030edd53de37bc695583b55c4edea1b70076d7b7f58eb4780e99f5f8",
+      "remoteDigestMatches": true,
+      "downloadedBytesMatch": true
+    }
+  ],
+  "publicPluginAudit": "public-plugin-only-release-audit.json",
+  "allReferencedImageLayersAudited": true,
+  "deployment": "Published images were not activated in the current user container. Existing locally tested UI candidate and data retained.",
+  "acceptanceLimits": [
+    "AMD64 runtime uses local emulation; not native hardware acceptance",
+    "Desktop Safari validated; mobile devices and full theme matrix not accepted"
+  ]
+}
