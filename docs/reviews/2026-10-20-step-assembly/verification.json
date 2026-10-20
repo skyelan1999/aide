@@ -54,5 +54,8 @@
       "reason": "No full passing release receipt. Prior launcher disk guard remains unmet; no image/tag/release/deployment."
     }
   ],
-  "cleanup": "Owned component/browser/Worker/HTTP exited. No user services stopped. Pinned test runtime remains only under /tmp/aide-cad-assembly-runtime for repeatable validation."
+  "cleanup": "Owned component/browser/Worker/HTTP exited. No user services stopped. Pinned test runtime remains only under /tmp/aide-cad-assembly-runtime for repeatable validation.",
+  "source_commit": "5a93498c0a8845e5ff047fe00aae66cb423debeb",
+  "source_push": "PASS: origin/main",
+  "release": "BLOCKED: full receipt missing; pre-existing untracked tasks preserved. No tag/release/image/deployment."
 }

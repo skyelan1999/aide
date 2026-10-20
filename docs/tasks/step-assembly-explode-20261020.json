@@ -65,7 +65,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "仅准备提交推main；缺少full通过记录，不升版/发Release/换镜像。",
+      "summary": "源码5a93498c已推origin/main；full发行门禁未通过且保留此前未跟踪任务，不升版/发Release/换运行镜像。",
       "evidence": [
         "docs/reviews/2026-10-20-step-assembly/verification.json"
       ]
@@ -73,7 +73,9 @@
   },
   "release_authorization": "沿用用户此前“那你直接推吧，我去别的环境测试”“直接合并到main”的源码推送授权。",
   "rollback": "git revert本任务功能提交后重新构建；无数据迁移或原STEP改写，不删除工作区和用户数据。协议新增字段旧前端可忽略。",
-  "handoff": "功能在当前查看器内展示，不是B-rep约束编辑。原生模式需工作台与CAD服务同时更新。源码提交推送后另记；运行镜像/生产未改。",
+  "handoff": "5a93498c源码已推main。STEP装配入口支持径向/XYZ爆炸、拆除装回、全部复原；展示期间暂停测量且原STEP不变。原生模式需工作台与CAD服务同时更新。真实原生/WASM/24块/单零件/明暗窄屏验收通过，quick135/137保留两项既有失败。测试页面、HTTP、Worker退出；运行镜像/用户服务未改，保留此前10份未跟踪任务。",
   "fingerprint": "81817e747ccbaa107141e7d317719c621e9bde5e723fd570425608dd5ce52d9d",
-  "routing_note": "零件安装并非环境安装，路由关键词匹配不适用；采用frontend和必要的backend原生协议审阅。无子Agent。"
+  "routing_note": "零件安装并非环境安装，路由关键词匹配不适用；采用frontend和必要的backend原生协议审阅。无子Agent。",
+  "source_commit": "5a93498c0a8845e5ff047fe00aae66cb423debeb",
+  "source_push": "PASS: origin/main"
 }
