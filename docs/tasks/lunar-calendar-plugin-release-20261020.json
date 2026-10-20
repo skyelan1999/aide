@@ -1,0 +1,75 @@
+{
+  "id": "lunar-calendar-plugin-release-20261020",
+  "request": "LunarCalendar",
+  "baseline": "d90b669f5b4ec793165f243826a529962bca8a14",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Publish existing lunar-calendar 1.0.0 in prepared public aide-pkg-LunarCalendar repository",
+    "Preserve runtime and original market ZIP; verify lunar dates, leap month, ganzhi/zodiac, current Shanghai date and invalid inputs",
+    "Publish checksum-verified public Release and update live market source/docs, preserving unrelated entries"
+  ],
+  "scope": [
+    "aide-pkg-LunarCalendar standalone source/docs/release",
+    "lunar-calendar market listing and builder category",
+    "Aide handoff documentation only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Prepared empty public aide-pkg-LunarCalendar repository found; independent distribution follows user request and session workflow.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-LunarCalendar",
+        "plugins/lunar-calendar/index.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep original 1.0.0 runtime, tests, MIT license and ZIP bytes; add standalone docs/verification and explicit market listing.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-LunarCalendar",
+        "plugins/lunar-calendar/index.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prepared standalone repository, original runtime/tests/MIT license and unchanged 1.0.0 ZIP, standalone original-test wrapper.",
+      "evidence": [
+        "docs/reviews/2026-10-20-lunar-calendar-release/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS original tests, ZIP/hash and source identity, native host entry and executable tool surface, eight actual calls including local/empty SSH roots and invalid inputs, Go race Aide/XiaoMi regression. No UI is present.",
+      "evidence": [
+        "docs/reviews/2026-10-20-lunar-calendar-release/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README and changelog describe Chinese-calendar conversion, Shanghai date default, runtime clock origin, ICU requirement, fixed downloads and untested platforms.",
+      "evidence": [
+        "docs/reviews/2026-10-20-lunar-calendar-release/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped files reviewed, immutable original archive preserved, unrelated task files and running services unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-20-lunar-calendar-release/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent public repository main/tag 286d139 pushed, stable 1.0.0 Release published; anonymous fixed-commit ZIP/SHA256SUMS verified. Market eda9db3 deployed successfully; live source/readme and unchanged ZIP hash verified. No host image release or service changes.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-LunarCalendar",
+        "https://github.com/skyelan1999/aide-pkg-LunarCalendar/releases/tag/v1.0.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39357327235",
+        "https://skyelan1999.github.io/aide-pkg-shop/catalog.json"
+      ]
+    }
+  },
+  "release_authorization": "LunarCalendar, continuing the established independent repository/Release/market registration workflow",
+  "rollback": "Revert market source metadata if needed; runtime ZIP unchanged from original 1.0.0. No user data or running services changed.",
+  "handoff": "No host runtime or environment configuration changes. Existing same-ID/version users need no upgrade."
+}

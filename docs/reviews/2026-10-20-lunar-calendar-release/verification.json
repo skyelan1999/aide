@@ -1,0 +1,83 @@
+{
+  "version": "1.0.0",
+  "status": "PASS",
+  "zipBytes": 3652,
+  "zipSHA256": "38e7fd998add27495c7c9d0bbd5d48ca53ed212af6032edad5e3f33b2a18c5a4",
+  "zipEqualsExistingMarket": true,
+  "sourceRuntimeUnchanged": true,
+  "originalTest": "PASS: Chinese New Year, leap second month, ganzhi/zodiac, current date and invalid dates",
+  "hostEntry": {
+    "ok": true,
+    "name": "lunar-calendar"
+  },
+  "hostSurface": [
+    {
+      "name": "get_lunar_date",
+      "executable": true
+    }
+  ],
+  "hostCalls": [
+    {
+      "args": {
+        "date": "2024-02-10"
+      },
+      "workspace": "isolated local root",
+      "ok": true
+    },
+    {
+      "args": {
+        "date": "2023-03-22"
+      },
+      "workspace": "isolated local root",
+      "ok": true
+    },
+    {
+      "args": {},
+      "workspace": "isolated local root",
+      "ok": true
+    },
+    {
+      "args": {
+        "date": "2024-02-10"
+      },
+      "workspace": "empty SSH root",
+      "ok": true
+    },
+    {
+      "args": {
+        "date": "2023-03-22"
+      },
+      "workspace": "empty SSH root",
+      "ok": true
+    },
+    {
+      "args": {},
+      "workspace": "empty SSH root",
+      "ok": true
+    },
+    {
+      "args": {
+        "date": "2024-02-30"
+      },
+      "workspace": "isolated local root",
+      "ok": false
+    },
+    {
+      "args": {
+        "date": "20240210"
+      },
+      "workspace": "empty SSH root",
+      "ok": false
+    }
+  ],
+  "nodeVersion": "v24.19.0",
+  "aideCommit": "d90b669f5b4ec793165f243826a529962bca8a14",
+  "platforms": {
+    "linux": "PASS",
+    "windows": "NOT_RUN",
+    "macos": "NOT_RUN"
+  },
+  "aideAndXiaomiRegression": "PASS: go test -race ./internal/server -run ^TestLunarCalendarPluginAvailableToAideAndXiaomi$ -count=1 (tool exposure, unrelated-plugin exclusion and actual assistant invocation)",
+  "ui": "Not applicable: no UI/workbench or host runtime changes",
+  "rollback": "Revert market source metadata if needed; runtime ZIP unchanged from original 1.0.0. No user data or running services changed."
+}
