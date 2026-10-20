@@ -63,11 +63,21 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "准备推送源码 main；未升版/发布镜像/生产部署；full与镜像门禁未执行。",
-      "evidence": []
+      "summary": "源码46a9633d已推main；未升版/发布镜像/生产部署；full与镜像门禁未执行，quick有两个既有失败，额外本地受限正向测试受Landlock缺失阻塞。",
+      "evidence": [
+        "source_delivery",
+        "docs/reviews/2026-10-20-command-ssh/verification.json"
+      ]
     }
   },
   "release_authorization": "沿用用户此前“那你直接推吧，我去别的环境测试”“直接合并到main”源码推送授权。",
-  "rollback": "git revert 本次产品提交；不需要用户数据迁移。",
-  "handoff": "修复完成并验证隔离流式交互；需要用户显式在权限管理中选择服务端沙箱模式，完全访问同时影响AI与命令面板；真实SSH远端与镜像发布未验收。"
+  "rollback": "git revert 46a9633d55d0cd2a81c1ee6cb3da0d0d6a778a5d；无用户数据迁移。",
+  "handoff": "源码46a9633d已推main。10项隔离浏览器交互与7项Go回归通过，quick133/135。用户需显式在权限管理选择服务端沙箱模式；完全访问同时影响AI与命令面板。本轮未更改用户权限、未连接真实SSH设备、未发布镜像；十份既有未跟踪文件保留。",
+  "source_delivery": {
+    "status": "pass",
+    "branch": "main",
+    "commit": "46a9633d55d0cd2a81c1ee6cb3da0d0d6a778a5d",
+    "remote": "origin/main",
+    "push": "bd61c068..46a9633d main -> main"
+  }
 }
