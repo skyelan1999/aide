@@ -1,0 +1,74 @@
+{
+  "id": "plugin-authoring-release-20261020",
+  "request": "PluginAuthoring",
+  "baseline": "6cc7150c2bdc7cd8a2537c11b64c6a9848addda9",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Publish prepared public PluginAuthoring repository and stable v1.0.0 Release",
+    "Preserve existing market ZIP bytes and plugin-authoring-v1 compatibility requirement",
+    "Verify native permission, approval, upgrade and reference-lock behavior",
+    "Update market source and verify deployed catalog and anonymous downloads"
+  ],
+  "scope": [
+    "Independent aide-pkg-PluginAuthoring distribution repository",
+    "aide-pkg-shop plugin-authoring listing and build registration",
+    "Aide task and verification handoff only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Independent distribution of existing immutable 1.0.0; native executors and existing approval/role guards retained. No host release or runtime change.",
+      "evidence": [
+        "plugins/plugin-authoring/manifest.json",
+        "internal/server/management_test.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Independent distribution of existing immutable 1.0.0; native executors and existing approval/role guards retained. No host release or runtime change.",
+      "evidence": [
+        "plugins/plugin-authoring/manifest.json",
+        "internal/server/management_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Published independent source, unchanged immutable ZIP and checksum; market listing moved from built-in generator to explicit listing.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-authoring-release/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Native management race regressions, host registration/expected standalone errors, UI logic regressions and catalog validations passed. Windows/macOS NOT_RUN; UI unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-authoring-release/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README and changelog describe native executors, role permissions, proposals, reference locks and fixed-commit downloads.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-authoring-release/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed explicit changed paths; preserved all pre-existing untracked task files. No service or user data changes.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-authoring-release/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent main and annotated v1.0.0 tag pushed; stable Release published; fixed-commit downloads verified; successful Pages deployment and live catalog/ZIP verified. No host image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-PluginAuthoring/releases/tag/v1.0.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39361202697"
+      ]
+    }
+  },
+  "release_authorization": "User prior instructions: 直接合并到main; push release; 登记即可. Current PluginAuthoring request continues prepared independent plugin releases.",
+  "rollback": "Revert market metadata commit 23806f5 to restore prior listing. Existing runtime archive unchanged; no user data migration, host image update or running service changes.",
+  "handoff": "PluginAuthoring 1.0.0 independent distribution and market update complete. Requires Aide native management executors and plugin-authoring-v1. Linux native regressions passed; Windows/macOS NOT_RUN. No UI/runtime code changes or production services replaced."
+}

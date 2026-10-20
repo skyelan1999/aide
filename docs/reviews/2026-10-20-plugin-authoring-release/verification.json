@@ -1,0 +1,166 @@
+{
+  "version": "1.0.0",
+  "zipBytes": 2117,
+  "zipSHA256": "7e323cb5235e1231df12eacc9ed69aa0632ef2da3ac9ae40fb9509aba1262cba",
+  "zipEqualsExistingMarket": true,
+  "runtimeSourceUnchanged": true,
+  "hostEntry": {
+    "ok": true,
+    "name": "插件工坊"
+  },
+  "hostSurface": {
+    "generatedAt": "2026-10-20T02:50:21.081Z",
+    "plugins": [
+      {
+        "id": "plugin-authoring",
+        "name": "plugin-authoring",
+        "error": "",
+        "tools": [
+          {
+            "name": "manage_plugins",
+            "description": "制作和扩展 aide 自身的插件。先 guide 获取真实协议，inspect 读取已有插件源码；prepare 用 manifest 与完整文本 files 生成语法检查过的 ZIP 和待确认安装/升级提案。enable/disable/remove 也只生成提案。不得声称已安装，不得绕过设置权限或用 shell 改注册表。",
+            "executable": true,
+            "parameters": {
+              "type": "object",
+              "required": [
+                "action"
+              ],
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "guide",
+                    "list",
+                    "inspect",
+                    "prepare",
+                    "enable",
+                    "disable",
+                    "remove"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "manifest": {
+                  "type": "object"
+                },
+                "files": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "name": "manage_references",
+            "description": "根据用户提供的路径或资料地址登记、更新或移除引用，先生成待确认提案。list 查询元数据；upsert 提供 id、name、type 和 config；remove 指定 id。不会自动解开可见或可写锁；已有引用文档内容使用 read_file/write_file(source=引用ID)，仍遵循原有锁和审批。不得接收密码或密钥。",
+            "executable": true,
+            "parameters": {
+              "type": "object",
+              "required": [
+                "action"
+              ],
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "list",
+                    "upsert",
+                    "remove"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "local",
+                    "skill",
+                    "link",
+                    "sftp"
+                  ]
+                },
+                "config": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "host": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "integer"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "auth": {
+                      "type": "string",
+                      "enum": [
+                        "none"
+                      ]
+                    }
+                  }
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "slots": [],
+        "provided": [],
+        "requires": [],
+        "__pluginId": "plugin-authoring"
+      }
+    ]
+  },
+  "standaloneHandlers": "Expected errors requiring Aide native executors for both tools",
+  "platforms": {
+    "linux": "PASS",
+    "windows": "NOT_RUN",
+    "macos": "NOT_RUN"
+  },
+  "ui": "Not applicable: distribution/docs only; no UI changes",
+  "aideCommit": "6cc7150c2bdc7cd8a2537c11b64c6a9848addda9",
+  "nativeRegression": {
+    "command": "go test -race ./internal/server -run '^(TestManagement.*|TestAuthoring.*)$' -count=1",
+    "status": "PASS",
+    "tests": 6,
+    "coverage": [
+      "management permissions and roles",
+      "prepare does not execute; approval installs",
+      "upgrade preserves settings and disabled state",
+      "revocation and stale proposals",
+      "reference locks and ordinary access",
+      "invalid code and paths"
+    ]
+  },
+  "repository": "https://github.com/skyelan1999/aide-pkg-PluginAuthoring",
+  "sourceCommit": "e44b69f0f8a11c9cd9c0eab43e6b1ed0afc6afb6",
+  "release": "https://github.com/skyelan1999/aide-pkg-PluginAuthoring/releases/tag/v1.0.0",
+  "releaseID": 417951047,
+  "releaseAssets": "Fixed-commit repository ZIP and SHA256SUMS links; no uploaded binary attachments",
+  "anonymousReleaseDownloads": "PASS",
+  "marketCommit": "23806f50406ae06d8787a3d55ac51be5e91c58cd",
+  "marketValidation": "PASS: public/private tests (2 each), verify_catalog (25 listings / 24 public / 1 private), node syntax and diff checks; all unrelated entries and order preserved",
+  "frontendRegression": "PASS: management-permissions.test.cjs and plugin-market.test.cjs",
+  "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39361202697",
+  "pagesStatus": "PASS: successful deploy for 23806f50406ae06d8787a3d55ac51be5e91c58cd",
+  "onlineVerification": "PASS: live catalog equals local published catalog; independent pinned source, README and native feature guard match; anonymous market ZIP bytes/SHA256 match",
+  "market": "https://skyelan1999.github.io/aide-pkg-shop/"
+}
