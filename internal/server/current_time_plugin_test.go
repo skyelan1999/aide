@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
 func TestCurrentTimePluginAvailableToAideAndXiaomi(t *testing.T) {
 	a := testApp(t)
-	code, err := os.ReadFile(filepath.Join("..", "..", "bundled-plugins", "current-time", "index.js"))
+	code, err := os.ReadFile(externalPluginSource(t, "current-time", "index.js"))
 	if err != nil {
 		t.Fatal(err)
 	}

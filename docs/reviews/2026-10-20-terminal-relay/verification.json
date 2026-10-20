@@ -262,5 +262,18 @@
     "Agent needs Python3.10+ cryptography; serial additionally pyserial3.5",
     "Requires updated Aide terminal-relay-v1 private caller context; no Aide image release",
     "Downgrade needs backup/manual state restoration; no automatic reverse migration"
-  ]
+  ],
+  "publication": {
+    "pluginCommit": "31f67f4f245629206da480efa7f498223dd32548",
+    "releaseID": 418023195,
+    "releaseURL": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.0",
+    "prerelease": true,
+    "hostAPIMain": "e0dab9fc3ecf800044f9c65dc88b94c953420c80",
+    "marketCommit": "5ac264ed3cc1f6f5a5bd81bde354bbc68804d0de",
+    "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39373828328",
+    "liveCheck": "PASS actual Pages catalog exactly equals local; anonymous ZIP size1060734 and SHA256 match; old four communications and Propeller absent",
+    "sourcePackageAnonymousCheck": "PASS fixedcommit raw ZIP size and SHA256 match",
+    "hostImage": "NOT_RUN / not released"
+  },
+  "distributionCorrection": "Follow-up user feedback: remove bundled-plugins sources/checkout bootstrap/Docker auto-install from Aide; plugin remains exclusively in independent repository and verified market. External source checkouts explicitly supplied to host integration tests."
 }

@@ -24,7 +24,7 @@ class SourceFingerprintTests(unittest.TestCase):
             self.skipTest('Host has no UTF-8 locale with different path collation')
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name in ['cmd', 'internal', 'bundled-plugins', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
+            for name in ['cmd', 'internal', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ('launcher-data.sh','launcher-data.ps1','launcher-data.py'):
@@ -40,10 +40,10 @@ class SourceFingerprintTests(unittest.TestCase):
             (root/'internal/a.go').write_text('changed source')
             self.assertNotEqual(first, fingerprint('C'))
 
-    def test_generated_surface_is_excluded_but_bundled_code_is_included(self):
+    def test_installed_plugin_state_is_excluded(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name in ['cmd', 'internal', 'bundled-plugins/custom', 'plugins', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
+            for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ('launcher-data.sh','launcher-data.ps1','launcher-data.py'):
@@ -51,23 +51,11 @@ class SourceFingerprintTests(unittest.TestCase):
             for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md']:
                 (root/name).write_text(name)
             (root/'internal/file.go').write_text('package fixture\n')
-            (root/'bundled-plugins/custom/index.js').write_text('fixture')
             def fingerprint():
                 result = subprocess.run(['bash', 'scripts/aide.sh', 'source-sha'], cwd=root, capture_output=True, text=True, timeout=10)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertRegex(result.stdout, r'^[0-9a-f]{64}\n$')
                 return result.stdout
-            first = fingerprint()
-            cached = root/'bundled-plugins/custom/node_modules/nested/node_modules/dependency'
-            cached.mkdir(parents=True)
-            (cached/'native.node').write_bytes(b'host-specific generated binary')
-            self.assertEqual(first, fingerprint())
-            (cached/'native.node').write_bytes(b'rebuilt for another host')
-            self.assertEqual(first, fingerprint())
-            shutil.rmtree(root/'bundled-plugins/custom/node_modules')
-            self.assertEqual(first, fingerprint())
-            (root/'bundled-plugins/custom/package-lock.json').write_text('{"lockfileVersion":3}')
-            self.assertNotEqual(first, fingerprint())
             first = fingerprint()
             (root/'internal/.DS_Store').write_bytes(b'Finder view state')
             self.assertEqual(first, fingerprint())
@@ -80,7 +68,7 @@ class SourceFingerprintTests(unittest.TestCase):
             self.assertEqual(first, fingerprint())
             (root/'plugins/surface.json').write_text('{"generatedAt":"after", "plugins":[]}')
             self.assertEqual(first, fingerprint())
-            (root/'bundled-plugins/custom/index.js').write_text('new implementation')
+            (root/'internal/file.go').write_text('new host implementation')
             self.assertNotEqual(first, fingerprint())
             self.assertIn('plugins/surface.json', (ROOT/'.dockerignore').read_text().splitlines())
 

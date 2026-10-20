@@ -34,7 +34,6 @@ class PluginIsolationTests(unittest.TestCase):
             backup = root/'backup'
             shutil.copytree(clone/'plugins',backup)
             git(clone,'stash','push','-m','plugin-state-before-isolation','--','plugins')
-            shutil.copytree(origin/'plugins',origin/'bundled-plugins')
             (origin/'.gitignore').write_text((ROOT/'.gitignore').read_text())
             git(origin,'rm','-r','--cached','plugins')
             commit('isolate runtime plugins')
@@ -45,7 +44,7 @@ class PluginIsolationTests(unittest.TestCase):
             self.assertEqual(git(clone,'status','--porcelain'),'')
             # A later marketplace upgrade must neither dirty nor block a pull.
             (clone/'plugins/tool/index.js').write_text('second market upgrade')
-            (origin/'bundled-plugins/tool/index.js').write_text('new factory source')
+            (origin/'host.txt').write_text('new host source')
             commit('host update')
             git(clone,'pull','--ff-only')
             self.assertEqual((clone/'plugins/tool/index.js').read_text(),'second market upgrade')

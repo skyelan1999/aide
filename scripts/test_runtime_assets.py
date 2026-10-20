@@ -6,7 +6,6 @@ import uuid
 import argparse
 from pathlib import Path
 
-SHIPPED_PLUGINS = ('browser-control', 'computer-control', 'markdown-history', 'archive-tools', 'plugin-authoring')
 
 
 def check_build_inputs():
@@ -14,8 +13,8 @@ def check_build_inputs():
     for name in ('Dockerfile', 'Dockerfile.local'):
         runtime = (root / name).read_text().split(' AS runtime', 1)[1]
         copies = {tuple(line.split()[1:]) for line in runtime.splitlines() if line.startswith('COPY ')}
-        for plugin in SHIPPED_PLUGINS:
-            assert (f'bundled-plugins/{plugin}', f'/opt/aide/builtin-plugins/{plugin}') in copies, (name, plugin)
+        assert 'builtin-plugins' not in runtime, name
+        assert 'bundled-plugins' not in (root/name).read_text(), name
         assert ('--from=build', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
 
 PROGRAM = r'''
@@ -44,8 +43,6 @@ if os.environ.get('AIDE_REQUIRE_LAN_BRIDGE') == '1':
     assert set(entries) == required, 'native LAN platform inventory mismatch'
     for name, digest in entries.items():
         assert hashlib.sha256((bridge / name).read_bytes()).hexdigest() == digest, name
-for plugin in json.loads(os.environ['AIDE_REQUIRED_BUNDLED_PLUGINS']):
-    assert any(p.is_relative_to(root / 'builtin-plugins' / plugin) for p in files), plugin
 with tempfile.TemporaryDirectory() as temporary:
     spec = Path(temporary) / 'input.json'
     output = Path(temporary) / 'output.docx'
@@ -61,18 +58,14 @@ print(json.dumps({'status': 'pass', 'uid': os.geteuid(), 'readableFiles': len(fi
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('image', nargs='?', default='aide:local')
-    parser.add_argument('--require-plugin', action='append', default=[])
     parser.add_argument('--require-lan-bridge', action='store_true')
     args = parser.parse_args()
     check_build_inputs()
-    # The full profile may use a retained dependency image. New candidate
-    # qualification explicitly requires newly shipped plugins in that image.
-    required = list(SHIPPED_PLUGINS[:-1]) + args.require_plugin
     image = args.image
     container = 'aide-assets-' + uuid.uuid4().hex[:12]
     try:
         subprocess.run(['docker', 'run', '--rm', '--name', container, '--network', 'none',
-                        '--workdir', '/tmp', '-e', 'AIDE_REQUIRED_BUNDLED_PLUGINS=' + json.dumps(required),
+                        '--workdir', '/tmp',
                         '-e', 'AIDE_REQUIRE_LAN_BRIDGE=' + ('1' if args.require_lan_bridge else '0'),
                         '--entrypoint', 'python3', image, '-c', PROGRAM],
                        check=True, timeout=90)

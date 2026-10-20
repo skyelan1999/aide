@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -102,7 +101,7 @@ func TestAssistantAgenticChatNoDispatch(t *testing.T) {
 }
 
 func TestAssistantAgenticPluginResultReturnedToModel(t *testing.T) {
-	pluginCode, err := os.ReadFile(filepath.Join("..", "..", "bundled-plugins", "current-time", "index.js"))
+	pluginCode, err := os.ReadFile(externalPluginSource(t, "current-time", "index.js"))
 	if err != nil {
 		t.Fatal(err)
 	}

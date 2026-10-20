@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
-const { isAllowedHost, validateURL } = require('../bundled-plugins/browser-control/index.js')._test;
+const { isAllowedHost, validateURL } = require('./plugin-test-source.cjs')('browser-control')._test;
 
 async function freePort() {
   const server = http.createServer();

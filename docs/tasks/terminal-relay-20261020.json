@@ -14,7 +14,7 @@
   "scope": [
     "Terminal relay agent/client, sessions, workbench, runtime archive and tests/docs",
     "Aide trusted workbench context/private session root and new feature compatibility flag",
-    "Bundled initial Terminal and market release"
+    "Independent Terminal repository and market release; no host-bundled plugin source"
   ],
   "stages": {
     "requirements": {
@@ -56,18 +56,22 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Only owned plugin/native/bundle/evidence files; synthetic relay agents and devices cleaned. No real service deployments or user session termination. Pristine bundle updated, ignored installed plugins retained.",
+      "summary": "Independent plugin release only; latest user feedback removes pristine plugin copies and automatic installation from Aide. Ignored installed plugins and session state retained. Test agents and synthetic resources closed.",
       "evidence": [
         "docs/reviews/2026-10-20-terminal-relay/verification.json"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Verified1.4.0 archive prepared for prerelease/market and native host main push. No host image/version release.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Independent Terminal1.4.0 prerelease and fixed-commit ZIP published; Aide native host APIs pushed to main; market Pages deployed and live anonymous package hash verified. No host image/version release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/commit/5ac264ed3cc1f6f5a5bd81bde354bbc68804d0de",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39373828328"
+      ]
     }
   },
   "release_authorization": "Prior user push release/main/market instructions persist; current request authorizes Terminal relay and visibility feature implementation",
   "rollback": "Back up terminal-private state before downgrade; old plugin does not read new private layout. Restore old1.3.2 plugin/market and manually restore backed-up old state only after stopping relevant daemon. No automatic reverse migration; preserve logs and credentials.",
-  "handoff": ""
+  "handoff": "Terminal1.4.0 independently published and market registered. Update Aide main then explicitly install/upgrade Terminal from market; host no longer bundles plugin implementations. Create relay draft, download Python through parent title-bar save, manually install cryptography (serial also pyserial3.5) on device and run script, probe then connect. Requires reachable fixed TCP endpoint and256-bit key. Original session kind retained, relay status separate, Aide visibility enforced by trusted caller/private state. Physical UART and Windows/macOS agent/full start.command host UI NOT_RUN; no host image release. Back up state before downgrade."
 }

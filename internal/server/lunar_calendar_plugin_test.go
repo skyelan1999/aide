@@ -3,13 +3,12 @@ package server
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestLunarCalendarPluginAvailableToAideAndXiaomi(t *testing.T) {
 	a := testApp(t)
-	code, err := os.ReadFile(filepath.Join("..", "..", "bundled-plugins", "lunar-calendar", "index.js"))
+	code, err := os.ReadFile(externalPluginSource(t, "lunar-calendar", "index.js"))
 	if err != nil {
 		t.Fatal(err)
 	}

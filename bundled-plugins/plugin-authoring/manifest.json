@@ -1,5 +1,0 @@
-{
-  "id": "plugin-authoring", "name": "插件工坊", "description": "按 aide 插件协议制作、检查和打包插件；管理插件与引用的变更先形成待确认提案。",
-  "version": "1.0.0", "author": "aide", "main": "index.js", "enabled": true,
-  "tools": [{"name":"manage_plugins","kind":"write"},{"name":"manage_references","kind":"write"}]
-}

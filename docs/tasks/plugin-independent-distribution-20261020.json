@@ -1,0 +1,70 @@
+{
+  "id": "plugin-independent-distribution-20261020",
+  "request": "插件不应该是单独的吗为啥又做了一套捆绑插件的概念呢",
+  "baseline": "e0dab9fc3ecf800044f9c65dc88b94c953420c80",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "No plugin implementation tracked or copied into Aide images; fresh workspace starts with no installed plugins",
+    "Existing installed registry/code/settings and sessions survive host upgrade without replacement",
+    "Legacy official upgrade URLs resolve through verified market packages",
+    "Integration tests explicitly consume independent plugin sources; native browser bridge has no plugin source dependency"
+  ],
+  "scope": [
+    "Remove bundled plugin sources/bootstrap/image installation",
+    "Adjust host upgrade compatibility, integration test inputs and deployment docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User correctly identified duplicate distribution contrary to independent plugin repositories.",
+      "evidence": [
+        "Current user message"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Only installed plugins are loaded; market/ZIP handles explicit installation; external source tests are opt-in, bridge retains its own URL admission policy.",
+      "evidence": [
+        "internal/server/plugins.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed production plugin copies and both seeding paths; external test sources and host-only URL policy; legacy official upgrade URLs use market.",
+      "evidence": [
+        "docs/reviews/2026-10-20-independent-plugin-distribution/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused native race suites120.467s/12.799s, legacy locked/read-only upgrade5.633s, Go vet, real Chromium fixture, real Git migration/pull and source identity checks pass.",
+      "evidence": [
+        "docs/reviews/2026-10-20-independent-plugin-distribution/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented independent installation, preserved installed state and explicit integration source inputs; historical preinstall documentation marked superseded.",
+      "evidence": [
+        "docs/reviews/2026-10-20-independent-plugin-distribution/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned source removals/host adjustments and evidence staged; installed runtime untouched; old source snapshot preserved outside checkout. No bridge/agent test resources retained.",
+      "evidence": [
+        "docs/reviews/2026-10-20-independent-plugin-distribution/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source correction ready for authorized main push. No new host Docker image release. Independent Terminal prerelease and market publication already verified.",
+      "evidence": [
+        "docs/reviews/2026-10-20-independent-plugin-distribution/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing direct main push authorization; correction follows current independent plugin concern",
+  "rollback": "Revert source commit to restore old bootstrap only if desired; retain installed plugin state. Reverting host code alone does not migrate Terminal private state back; back up and manually restore state before plugin downgrade.",
+  "handoff": "Independent distribution restored. Fresh host installs no plugins; install via market or verified ZIP. Existing installations preserved. Real-plugin integration checks opt in with external repositories. Native/source/browser-fixture checks passed; host image build and full start.command UI NOT_RUN."
+}

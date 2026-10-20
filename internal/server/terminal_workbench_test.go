@@ -23,7 +23,6 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	if _, err := exec.LookPath("python3"); err != nil {
 		t.Skip("Python PTY runtime missing")
 	}
-	source := filepath.Join("..", "..", "bundled-plugins", "terminal")
 	files := map[string]string{}
 	if bundle := os.Getenv("AIDE_TERMINAL_BUNDLE_PATH"); bundle != "" {
 		reader, err := zip.OpenReader(bundle)
@@ -44,6 +43,7 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 			files[entry.Name] = string(raw)
 		}
 	} else {
+		source := externalPluginSource(t, "terminal")
 		names := []string{"manifest.json", "index.js", "sessions.js", "pty-worker.py", "workbench.html", "LICENSE"}
 		modules, err := filepath.Glob(filepath.Join(source, "communications", "*.js"))
 		if err != nil {

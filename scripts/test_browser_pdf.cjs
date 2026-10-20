@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
-const { pdfText } = require('../bundled-plugins/browser-control/index')._test;
+const { pdfText } = require('./plugin-test-source.cjs')('browser-control')._test;
 async function main() {
   const script = 'import base64,io\nfrom pypdf import PdfWriter\nw=PdfWriter()\nw.add_blank_page(width=100,height=100)\nw.add_blank_page(width=100,height=100)\nw.encrypt("", algorithm="AES-256")\nb=io.BytesIO()\nw.write(b)\nprint(base64.b64encode(b.getvalue()).decode())';
   const fixture = spawnSync('python3', ['-I', '-c', script], { encoding: 'utf8', timeout: 10000 });

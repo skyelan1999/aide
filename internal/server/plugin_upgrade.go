@@ -1,10 +1,7 @@
 package server
 
 import (
-	"archive/zip"
-	"bytes"
 	"context"
-	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -18,7 +15,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -154,109 +150,7 @@ func pluginFetch(ctx context.Context, client *http.Client, raw string, limit int
 	return rawBytes, nil
 }
 
-// Official updates pin all files to one immutable commit, not independently
-// moving main URLs. Only the selected plugin directory is downloaded.
-func officialPluginBundle(ctx context.Context, client *http.Client, id string) ([]byte, error) {
-	raw, err := pluginFetch(ctx, client, "https://api.github.com/repos/skyelan1999/aide/git/ref/heads/main", 1<<20)
-	if err != nil {
-		return nil, err
-	}
-	var ref struct {
-		Object struct {
-			SHA string `json:"sha"`
-		} `json:"object"`
-	}
-	if json.Unmarshal(raw, &ref) != nil || len(ref.Object.SHA) != 40 {
-		return nil, errors.New("官方插件版本信息无效")
-	}
-	if _, err = hex.DecodeString(ref.Object.SHA); err != nil {
-		return nil, errors.New("官方插件版本信息无效")
-	}
-	type entry struct {
-		Name string `json:"name"`
-		Path string `json:"path"`
-		Type string `json:"type"`
-		SHA  string `json:"sha"`
-		Size int64  `json:"size"`
-	}
-	files := map[string][]byte{}
-	var expanded int64
-	var visit func(string) error
-	visit = func(dir string) error {
-		if len(files) >= maxPluginFiles {
-			return errors.New("官方插件文件数超过限制")
-		}
-		raw, err := pluginFetch(ctx, client, "https://api.github.com/repos/skyelan1999/aide/contents/bundled-plugins/"+id+dir+"?ref="+ref.Object.SHA, 1<<20)
-		if err != nil {
-			return err
-		}
-		var entries []entry
-		if json.Unmarshal(raw, &entries) != nil {
-			return errors.New("官方插件目录信息无效")
-		}
-		for _, e := range entries {
-			expected := "bundled-plugins/" + id + dir + "/" + e.Name
-			if e.Path != expected || e.Name == "" || e.Name == "." || e.Name == ".." || strings.ContainsAny(e.Name, "/\\") || strings.HasPrefix(e.Name, ".") {
-				return errors.New("官方插件路径无效")
-			}
-			if e.Type == "dir" {
-				if strings.Count(dir, "/") >= 8 {
-					return errors.New("官方插件目录过深")
-				}
-				if err := visit(dir + "/" + e.Name); err != nil {
-					return err
-				}
-				continue
-			}
-			if e.Type != "file" || e.Size < 0 || e.Size > 16<<20 || expanded+e.Size > maxPluginExpanded || len(files) >= maxPluginFiles {
-				return errors.New("官方插件文件类型或大小不符合限制")
-			}
-			contents, err := pluginFetch(ctx, client, "https://raw.githubusercontent.com/skyelan1999/aide/"+ref.Object.SHA+"/"+expected, 16<<20)
-			if err != nil {
-				return err
-			}
-			if int64(len(contents)) != e.Size {
-				return errors.New("官方插件文件长度不匹配")
-			}
-			digest := sha1.Sum(append([]byte(fmt.Sprintf("blob %d\x00", len(contents))), contents...))
-			if hex.EncodeToString(digest[:]) != e.SHA {
-				return errors.New("官方插件文件摘要不匹配")
-			}
-			files[strings.TrimPrefix(dir+"/"+e.Name, "/")] = contents
-			expanded += int64(len(contents))
-		}
-		return nil
-	}
-	if err = visit(""); err != nil {
-		return nil, err
-	}
-	var buffer bytes.Buffer
-	writer := zip.NewWriter(&buffer)
-	names := make([]string, 0, len(files))
-	for name := range files {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	for _, name := range names {
-		f, err := writer.Create(name)
-		if err != nil {
-			return nil, err
-		}
-		if _, err = f.Write(files[name]); err != nil {
-			return nil, err
-		}
-	}
-	if err = writer.Close(); err != nil {
-		return nil, err
-	}
-	if buffer.Len() > maxPluginBundle {
-		return nil, errors.New("插件 ZIP 包超过 24 MiB")
-	}
-	return buffer.Bytes(), nil
-}
-
-// Copy existing local data and dependencies into the candidate. Never follow
-// links outside the plugin, special files, or an unbounded local tree.
+// Copy existing local data and dependencies without following external links.
 func copyPluginForUpgrade(source, dest string) error {
 	var count int
 	var size int64
@@ -622,6 +516,9 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	if source == "" {
 		source = pluginUpdateSource(old)
 	}
+	if source == officialPluginPrefix+id {
+		source = marketUpdatePrefix + id
+	}
 	if source == "" && !hasLocalBundle {
 		fail(w, 400, errors.New("请先填写插件的 HTTPS ZIP 升级地址"))
 		return
@@ -704,8 +601,6 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 				err = errors.New("官方市场未收录此插件")
 			}
 		}
-	} else if source == officialPluginPrefix+id {
-		raw, err = officialPluginBundle(downloadCtx, client, id)
 	} else {
 		raw, err = pluginFetch(downloadCtx, client, source, maxPluginBundle)
 	}

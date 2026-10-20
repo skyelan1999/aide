@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -317,42 +316,7 @@ func TestPluginUpgradeNetworkPolicy(t *testing.T) {
 		t.Fatal("unbounded download")
 	}
 }
-func TestPluginUpgradeOfficialPinsFilesAndChecksGitBlob(t *testing.T) {
-	const commit = "1234567890123456789012345678901234567890"
-	manifest := `{"id":"office","name":"Office","main":"index.js"}`
-	files := map[string]string{"manifest.json": manifest, "index.js": "module.exports={apply(){}}"}
-	seen := 0
-	client := &http.Client{Transport: pluginUpgradeTransport(func(r *http.Request) (*http.Response, error) {
-		if strings.HasSuffix(r.URL.Path, "/git/ref/heads/main") {
-			return upgradeResponse([]byte(`{"object":{"sha":"` + commit + `"}}`)), nil
-		}
-		if strings.Contains(r.URL.Path, "/contents/") {
-			if r.URL.Query().Get("ref") != commit {
-				t.Error("moving directory ref")
-			}
-			entries := []map[string]any{}
-			for name, data := range files {
-				hash := sha1.Sum([]byte(fmt.Sprintf("blob %d\x00%s", len(data), data)))
-				entries = append(entries, map[string]any{"name": name, "path": "bundled-plugins/office/" + name, "type": "file", "size": len(data), "sha": hex.EncodeToString(hash[:])})
-			}
-			raw, _ := json.Marshal(entries)
-			return upgradeResponse(raw), nil
-		}
-		if !strings.Contains(r.URL.Path, "/"+commit+"/") {
-			t.Error("moving raw file ref")
-		}
-		seen++
-		return upgradeResponse([]byte(files[filepath.Base(r.URL.Path)])), nil
-	})}
-	raw, err := officialPluginBundle(context.Background(), client, "office")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p, _, err := parsePluginBundle(raw)
-	if err != nil || p.ID != "office" || seen != 2 {
-		t.Fatal("invalid official bundle", err, seen)
-	}
-}
+
 func TestPluginUpgradeRejectsExternalLocalSymlink(t *testing.T) {
 	a, id := upgradeFixture(t)
 	if err := os.Symlink(t.TempDir(), filepath.Join(a.pluginsPath, id, "external")); err != nil {

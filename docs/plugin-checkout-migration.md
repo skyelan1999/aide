@@ -1,10 +1,16 @@
 # 插件运行文件与源码分离
 
-`plugins/` 是用户安装、设置及升级后的运行状态，不再由 Git 跟踪；仅 `plugins/testdata/` 保留测试夹具。`bundled-plugins/` 是受控的初始分发和测试输入，不能将市场升级写入此目录。源码指纹和 Docker 镜像只使用初始副本，插件升级不会改变主程序构建身份。
+插件源码、安装包与 Release 仅在各自 `aide-pkg-*` 仓库维护，市场登记分发。Aide 主仓库不再携带插件副本，Docker 镜像不预装插件，首次启动也不自动安装。请从插件市场或经过摘要校验的 ZIP 明确安装所需插件。
 
-源码工作区首次缺少 `plugins/registry.json` 时，Aide 从同目录下的 `bundled-plugins/registry.json` 初始化插件。已有注册表、插件代码、设置和删除记录保留，不在后续启动时重置。镜像仍独立携带已有五种控制插件；外部工作区沿用原有安装行为。
+`plugins/` 是用户安装、设置和升级后的运行状态，不由 Git 跟踪；仅 `plugins/testdata/` 保留宿主协议测试夹具。主程序源码指纹和镜像不包含安装状态。已有插件、注册表、设置、日志和会话均保留，不随主程序更新同步或覆盖；旧镜像遗留的 `AIDE_BUILTIN_PLUGINS` 环境变量不再触发安装。
 
-Office 已独立分发于 https://github.com/skyelan1999/aide-pkg-office 。旧通信能力归入 Terminal。Propeller Aero 不再随初始副本分发，也从市场下架；已有用户文件不自动删除。
+Office 已独立分发于 https://github.com/skyelan1999/aide-pkg-office 。串口、SSH、TCP 和 UDP 能力归入 Terminal，旧独立通信插件与 Propeller Aero 已从市场下架；已有用户文件不自动删除。
+
+## 独立插件集成测试
+
+宿主协议单元测试使用 `plugins/testdata/` 中的合成夹具。验证真实插件时，请在主仓库外准备各独立仓库的指定提交，以插件 ID 命名目录，并显式设置 `AIDE_PLUGIN_TEST_ROOT=/path/to/plugin-checkouts`。例如根目录下的 `terminal/` 对应独立 Terminal checkout。这些来源只供测试读取，不参与镜像构建、启动安装或插件升级。未配置时，相应 Go 集成测试明确跳过；已配置但缺失文件会失败，不自动联网下载。
+
+Terminal 完整安装包集成测试还可以显式提供 `AIDE_TERMINAL_BUNDLE_PATH=/path/to/verified-terminal.zip`。JS 插件检查脚本同样要求 `AIDE_PLUGIN_TEST_ROOT`。浏览器桥接服务使用宿主自己的 URL 准入策略，不再导入插件源码。
 
 ## 已有克隆的一次性迁移
 

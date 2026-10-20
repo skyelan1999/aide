@@ -12,7 +12,7 @@ import (
 func managementFixture(t *testing.T) *App {
 	t.Helper()
 	a := testApp(t)
-	code, err := os.ReadFile("../../bundled-plugins/plugin-authoring/index.js")
+	code, err := os.ReadFile(externalPluginSource(t, "plugin-authoring", "index.js"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestAuthoringPrepareDoesNotExecuteAndApprovalInstalls(t *testing.T) {
 }
 func TestManagementUpgradePreservesSettingsAndDisabledState(t *testing.T) {
 	a, id := upgradeFixture(t)
-	code, _ := os.ReadFile("../../bundled-plugins/plugin-authoring/index.js")
+	code, _ := os.ReadFile(externalPluginSource(t, "plugin-authoring", "index.js"))
 	requireStatus(t, request(a, "POST", "/api/plugins", map[string]any{"id": "plugin-authoring", "name": "Workshop", "code": string(code)}), 201)
 	a.settings.AgentManagement.AidePlugins = true
 	requireStatus(t, request(a, "PUT", "/api/plugins/"+id, map[string]any{"enabled": false}), 200)

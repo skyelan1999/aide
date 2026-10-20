@@ -35,7 +35,7 @@ copy_control_runtime() {
   cp "$ROOT/scripts/safari-bridge-control.sh" "$ROOT/scripts/safari-bridge.js" \
      "$ROOT/scripts/computer-bridge-control.sh" "$ROOT/scripts/computer-bridge.js" \
      "$ROOT/scripts/build-native-computer-bridge.sh" "$ROOT/scripts/native-computer-bridge.swift" \
-     "$ROOT/scripts/headless-browser-control.sh" "$ROOT/scripts/headless-browser-bridge.js" "$destination/"
+     "$ROOT/scripts/headless-browser-control.sh" "$ROOT/scripts/headless-browser-bridge.js" "$ROOT/scripts/browser-url-policy.cjs" "$destination/"
   mkdir -p "$destination/browser-runtime"
   cp "$ROOT/scripts/browser-runtime/package.json" "$ROOT/scripts/browser-runtime/package-lock.json" "$destination/browser-runtime/"
 }

@@ -1,0 +1,146 @@
+{
+  "baseline": "e0dab9fc3ecf800044f9c65dc88b94c953420c80",
+  "changes": [
+    "Removed all tracked bundled-plugins implementations and registry from Aide",
+    "Removed source-checkout seeding, Docker plugin copies and automatic image installs",
+    "Load only installed registry; preserve existing code/settings and old removal metadata",
+    "Legacy official source upgrade URLs normalize to verified market with lock/read-only revocation guards",
+    "Go/JS integration inputs explicitly refer to external plugin sources; native Chromium bridge owns only its URL policy"
+  ],
+  "tests": [
+    {
+      "command": "go test -race ./internal/server focused independent/upgrade/market/Terminal/time/calendar/skill/management suite",
+      "result": "PASS 120.467s",
+      "inputs": "Preserved external baseline source snapshot and fixed Terminal1.4.0 ZIP"
+    },
+    {
+      "command": "go test -race ./internal/server focused independent/default-source/time/calendar/skill/Terminal installation suite",
+      "result": "PASS 12.799s",
+      "inputs": "18 independent repository checkouts, plus fixedcommit Terminal1.4.0 ZIP"
+    },
+    {
+      "command": "go test -race ./internal/server -run ^TestPluginMarketInstalledUpgradeHonorsRevocation$ -count=1",
+      "result": "PASS 5.633s; default and explicit legacy URL each reject locked/read-only update"
+    },
+    {
+      "command": "go vet ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_plugin_isolation.py",
+      "result": "PASS 1 actual Git migration/upgrade/pull test"
+    },
+    {
+      "command": "python3 scripts/test_source_fingerprint.py",
+      "result": "PASS 2 tests; installed plugin state excluded"
+    },
+    {
+      "command": "scripts/test_runtime_assets.py check_build_inputs",
+      "result": "PASS both Dockerfiles contain no plugin source/builtin copies; no Docker image runtime claim"
+    },
+    {
+      "command": "node scripts/test_headless_browser.cjs",
+      "result": "PASS real Chromium read/control/PDF admission flow using system /usr/bin/chromium via /tmp test-only launch adapter",
+      "initialFailureResolved": "Default Playwright cached binary unavailable; existing system Chromium used, no product launch config changed"
+    },
+    {
+      "command": "native URL policy positive and scheme/credential/domain rejection assertions",
+      "result": "PASS"
+    },
+    {
+      "command": "bash -n scripts/aide.sh scripts/package-release-assets.sh; node --check changed bridge/helper modules; git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/check_docs.py",
+      "result": "PASS 364 Markdown files,1300 local links"
+    }
+  ],
+  "independentSources": {
+    "terminal": {
+      "repository": "aide-pkg-terminal",
+      "commit": "31f67f4f245629206da480efa7f498223dd32548"
+    },
+    "environment-guide": {
+      "repository": "aide-pkg-EnvGuide",
+      "commit": "4103e0e742b0b4da71a5a981ee1aa1250bc0e3d6"
+    },
+    "feedback": {
+      "repository": "aide-pkg-feedback",
+      "commit": "8302f3577ea572186e2f940ca10e40e5604cf13b"
+    },
+    "archive-tools": {
+      "repository": "aide-pkg-ArchiveTools",
+      "commit": "c4d2286083c650dd4de94ce5b12936858993f8c3"
+    },
+    "goal": {
+      "repository": "aide-pkg-goal",
+      "commit": "72fbb16cd37f115a3843988bc6f31c2a35f05a25"
+    },
+    "skill": {
+      "repository": "aide-pkg-skill",
+      "commit": "9fbe996c3ede074a3d02ff8de13f321d9f5a22a5"
+    },
+    "plan": {
+      "repository": "aide-pkg-plan",
+      "commit": "c89648ba468ca0410d30c44b7e592bb37127234a"
+    },
+    "office": {
+      "repository": "aide-pkg-office",
+      "commit": "1d56ad23c7d028afe65882a534b44a9270ff406f"
+    },
+    "plugin-authoring": {
+      "repository": "aide-pkg-PluginAuthoring",
+      "commit": "e44b69f0f8a11c9cd9c0eab43e6b1ed0afc6afb6"
+    },
+    "markdown-history": {
+      "repository": "aide-pkg-MarkdownHistory",
+      "commit": "251a214346c08ee7e80e64f37bc93d08b40786fd"
+    },
+    "current-time": {
+      "repository": "aide-pkg-CurrentTime",
+      "commit": "f3c376cf03fa1573949a68df1296a72b32b9c2a8"
+    },
+    "sqlite": {
+      "repository": "aide-pkg-sqlite",
+      "commit": "45db2e291b5ca27fcd891460c3e5b3f0f84e5ece"
+    },
+    "browser-control": {
+      "repository": "aide-pkg-BrowserControl",
+      "commit": "e0f62b3bb67795dbeeb06818e529af1cb08ec125"
+    },
+    "subagent": {
+      "repository": "aide-pkg-subagent",
+      "commit": "f9584cbfc128007e4ecdfed587cc93f231c776e0"
+    },
+    "lunar-calendar": {
+      "repository": "aide-pkg-LunarCalendar",
+      "commit": "286d139e778d657211f5e6508b6abf86913d5aec"
+    },
+    "workflow": {
+      "repository": "aide-pkg-workflow",
+      "commit": "e7b732e79b5e8489d6418bb97456860216000e7b"
+    },
+    "todo": {
+      "repository": "aide-pkg-todo",
+      "commit": "cfe72f5d187737893ea3aca44e7f788f92e18d03"
+    },
+    "computer-control": {
+      "repository": "aide-pkg-ComputerControl",
+      "commit": "ad693e9959df6f0ac8bce0d6a997f3fc450a1d05"
+    }
+  },
+  "notRun": [
+    "Docker image rebuild/full Docker release gate and new host image release",
+    "Full start.command host UI (unchanged interface); source/API/real Chromium fixture validation only"
+  ],
+  "preservation": "Ignored installed plugins, registry, sessions and logs untouched; removed Git source copies preserved in external local test snapshot; ten unrelated preexisting untracked task records not staged",
+  "publication": {
+    "main": "pending source push",
+    "terminal": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.0",
+    "market": "5ac264ed3cc1f6f5a5bd81bde354bbc68804d0de",
+    "pages": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39373828328",
+    "liveCatalogAndZIP": "PASS content and SHA256; only Terminal listing changed, retired communication plugins remain absent"
+  },
+  "rollback": "Revert source commit to restore old bootstrap only if desired; retain installed plugin state. Reverting host code alone does not migrate Terminal private state back; back up and manually restore state before plugin downgrade."
+}

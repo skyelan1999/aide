@@ -335,6 +335,7 @@ func TestPluginMarketInstalledUpgradeHonorsRevocation(t *testing.T) {
 				a.settings.SandboxMode = "read-only"
 			}
 			requireStatus(t, request(a, "POST", "/api/plugins/"+id+"/upgrade", map[string]any{}), 409)
+			requireStatus(t, request(a, "POST", "/api/plugins/"+id+"/upgrade", map[string]any{"url": officialPluginPrefix + id}), 409)
 		})
 	}
 }

@@ -30,7 +30,7 @@ type skillRemoteFixture struct {
 func skillFixture(t *testing.T) (*App, *skillRemoteFixture) {
 	t.Helper()
 	a := testApp(t)
-	code, e := os.ReadFile("../../bundled-plugins/skill/index.js")
+	code, e := os.ReadFile(externalPluginSource(t, "skill", "index.js"))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -378,7 +378,7 @@ func TestSkillLibraryBundleImportAndNativeOwner(t *testing.T) {
 	a := testApp(t)
 	entries := map[string]string{}
 	for _, name := range []string{"manifest.json", "index.js", "README.md"} {
-		b, e := os.ReadFile("../../bundled-plugins/skill/" + name)
+		b, e := os.ReadFile(externalPluginSource(t, "skill", name))
 		if e != nil {
 			t.Fatal(e)
 		}

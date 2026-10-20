@@ -70,17 +70,14 @@ type pluginRegistry struct {
 	RemovedBuiltins []string         `json:"removedBuiltins,omitempty"`
 }
 
-// loadPlugins reads workspace state, then adds newly shipped control plugins.
-// Existing plugin code, enablement and settings belong to the workspace.
+// loadPlugins reads only explicitly installed workspace plugins. The host does
+// not seed source checkouts or install plugins from its image/environment.
 func (a *App) loadPlugins() error {
 	a.pluginsPath = filepath.Join(a.workPath, pluginsDirName)
-	if err := a.seedCheckoutPlugins(); err != nil {
-		return err
-	}
 	a.pluginRegistry = pluginRegistry{Version: 1, Plugins: []PluginManifest{}}
 	b, err := os.ReadFile(filepath.Join(a.pluginsPath, "registry.json"))
 	if errors.Is(err, os.ErrNotExist) {
-		return a.installBundledControlPlugins(os.Getenv("AIDE_BUILTIN_PLUGINS"))
+		return nil
 	}
 	if err != nil {
 		return err
@@ -88,104 +85,7 @@ func (a *App) loadPlugins() error {
 	if err := json.Unmarshal(b, &a.pluginRegistry); err != nil {
 		return fmt.Errorf("解析 plugins/registry.json: %w", err)
 	}
-	if err := a.recoverPluginUpgrades(); err != nil {
-		return err
-	}
-	return a.installBundledControlPlugins(os.Getenv("AIDE_BUILTIN_PLUGINS"))
-}
-
-func (a *App) installBundledControlPlugins(bundlePath string) error {
-	if bundlePath == "" {
-		return nil
-	}
-	for _, id := range []string{"browser-control", "computer-control", "markdown-history", "archive-tools", "plugin-authoring"} {
-		found := false
-		for _, removed := range a.pluginRegistry.RemovedBuiltins {
-			if removed == id {
-				found = true
-			}
-		}
-		for _, existing := range a.pluginRegistry.Plugins {
-			if existing.ID == id {
-				found = true
-				break
-			}
-		}
-		if found {
-			continue
-		}
-		source := filepath.Join(bundlePath, id)
-		if id == "markdown-history" || id == "plugin-authoring" {
-			if _, err := os.Stat(filepath.Join(source, "manifest.json")); errors.Is(err, os.ErrNotExist) {
-				continue
-			}
-		}
-		raw, err := os.ReadFile(filepath.Join(source, "manifest.json"))
-		if err != nil {
-			return fmt.Errorf("read bundled plugin %s: %w", id, err)
-		}
-		var manifest PluginManifest
-		if err := json.Unmarshal(raw, &manifest); err != nil || manifest.ID != id || manifest.Main != "index.js" {
-			return fmt.Errorf("invalid bundled control plugin manifest: %s", id)
-		}
-		code, err := os.ReadFile(filepath.Join(source, "index.js"))
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(a.pluginsPath, 0755); err != nil {
-			return err
-		}
-		destination := filepath.Join(a.pluginsPath, id)
-		// Source upgrades may already contain the files but retain an older
-		// registry. Register a valid local copy without replacing its contents.
-		if info, err := os.Lstat(destination); err == nil {
-			if !info.IsDir() {
-				return fmt.Errorf("bundled plugin path is not a directory: %s", id)
-			}
-			local, readErr := os.ReadFile(filepath.Join(destination, "manifest.json"))
-			if readErr != nil || json.Unmarshal(local, &manifest) != nil || manifest.ID != id || manifest.Main != "index.js" {
-				return fmt.Errorf("cannot register existing control plugin directory: %s", id)
-			}
-			entry, statErr := os.Lstat(filepath.Join(destination, "index.js"))
-			if statErr != nil || !entry.Mode().IsRegular() {
-				return fmt.Errorf("control plugin entry is not a regular file: %s", id)
-			}
-			manifest.Enabled = id == "markdown-history" || id == "archive-tools" || id == "plugin-authoring"
-			a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
-			if err := a.savePluginRegistry(); err != nil {
-				a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
-				return err
-			}
-			continue
-		} else if !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-		stage, err := os.MkdirTemp(a.pluginsPath, ".builtin-")
-		if err != nil {
-			return err
-		}
-		manifest.Enabled = id == "markdown-history" || id == "archive-tools" || id == "plugin-authoring"
-		manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
-		err = os.WriteFile(filepath.Join(stage, "index.js"), code, 0644)
-		if err == nil {
-			err = atomicJSON(filepath.Join(stage, "manifest.json"), manifest)
-		}
-		if err == nil {
-			err = os.Rename(stage, destination)
-		}
-		_ = os.RemoveAll(stage)
-		if err != nil {
-			return err
-		}
-		a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
-		// Persist each successful install so a later failure can be retried.
-		if err := a.savePluginRegistry(); err != nil {
-			a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
-			_ = os.RemoveAll(destination)
-			return err
-		}
-	}
-	return nil
+	return a.recoverPluginUpgrades()
 }
 
 func (a *App) savePluginRegistry() error {
@@ -290,9 +190,6 @@ func (a *App) pluginSettingsSchema(id string, fallback map[string]any) map[strin
 		return map[string]any{"type": "object", "properties": map[string]any{}, "additionalProperties": true}
 	}
 	paths := []string{filepath.Join(a.pluginsPath, id, "manifest.json")}
-	if bundle := os.Getenv("AIDE_BUILTIN_PLUGINS"); bundle != "" {
-		paths = append(paths, filepath.Join(bundle, id, "manifest.json"))
-	}
 	for _, path := range paths {
 		pluginDir, dirErr := os.Lstat(filepath.Dir(path))
 		manifestInfo, manifestErr := os.Lstat(path)
