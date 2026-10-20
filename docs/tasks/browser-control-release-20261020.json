@@ -1,0 +1,75 @@
+{
+  "id": "browser-control-release-20261020",
+  "request": "Browser Control",
+  "baseline": "1c599553cf4e41cb4ab85d6eee5c572e09ed9b5e",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Publish prepared public BrowserControl repository with stable v1.1.0 Release",
+    "Preserve existing market archive bytes and runtime source",
+    "Validate actual Chromium controls and authorization boundaries",
+    "Register independent market source and verify live Pages downloads"
+  ],
+  "scope": [
+    "Independent aide-pkg-BrowserControl distribution",
+    "Market browser-control listing and generator registration",
+    "Aide task and review handoff only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Independent distribution retaining immutable 1.1.0 package; browser runtime and authenticated bridges remain host dependencies. No host runtime/image change.",
+      "evidence": [
+        "plugins/browser-control/index.js",
+        "scripts/test_headless_browser.cjs"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Independent distribution retaining immutable 1.1.0 package; browser runtime and authenticated bridges remain host dependencies. No host runtime/image change.",
+      "evidence": [
+        "plugins/browser-control/index.js",
+        "scripts/test_headless_browser.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prepared immutable existing 1.1.0 distribution and explicit market listing; no runtime changes.",
+      "evidence": [
+        "docs/reviews/2026-10-20-browser-control-release/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Real system Chromium integration, plugin registration and confirmation gates, 3 Go race tests, catalog validations passed. Safari fake-driver test and PDF text extraction failed due documented native host dependencies. No claim of full runtime/platform verification.",
+      "evidence": [
+        "docs/reviews/2026-10-20-browser-control-release/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README, changelog and verification evidence document bridge dependencies, permissions, PDF Python PATH issue and unverified platforms.",
+      "evidence": [
+        "docs/reviews/2026-10-20-browser-control-release/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only explicit owned files staged; original untracked tasks preserved. Disposable bridge stopped; no user service or data replaced.",
+      "evidence": [
+        "docs/reviews/2026-10-20-browser-control-release/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent main and annotated v1.1.0 tag pushed; stable Release published with pinned repository downloads. Pages deployed successfully, live catalog and anonymous ZIP verified. No Aide host version/image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-BrowserControl/releases/tag/v1.1.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39362630805",
+        "docs/reviews/2026-10-20-browser-control-release/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "User existing direct main/push release/market registration instructions; Browser Control continues independent plugin releases",
+  "rollback": "Revert market metadata commit f68e3ce to restore previous listing; immutable ZIP unchanged. No data migration or host/service update.",
+  "handoff": "Independent Browser Control 1.1.0 distribution and live market registration complete; runtime ZIP unchanged. Real system Chromium and confirmation checks passed. Safari fake-driver test fails on Linux due unavailable safaridriver, PDF text extraction fails due system Python missing pypdf. Windows/macOS/Safari real hardware NOT_RUN. No running user service replaced. Environment install/start draft saved, not published."
+}

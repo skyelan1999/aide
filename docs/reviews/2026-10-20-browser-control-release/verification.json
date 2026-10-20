@@ -1,0 +1,74 @@
+{
+  "version": "1.1.0",
+  "zipBytes": 5465,
+  "zipSHA256": "9e67c3194f59eb2ce27ea2c7d4384d04d652198605be6494f68e9a6e9641c7e2",
+  "zipEqualsExistingMarket": true,
+  "runtimeSourceUnchanged": true,
+  "aideCommit": "1c599553cf4e41cb4ab85d6eee5c572e09ed9b5e",
+  "hostEntry": {
+    "ok": true,
+    "name": "browser-control"
+  },
+  "hostTools": [
+    {
+      "name": "browser_status",
+      "executable": true
+    },
+    {
+      "name": "browser_read",
+      "executable": true
+    },
+    {
+      "name": "browser_snapshot",
+      "executable": true
+    },
+    {
+      "name": "browser_navigate",
+      "executable": true
+    },
+    {
+      "name": "browser_click",
+      "executable": true
+    },
+    {
+      "name": "browser_fill",
+      "executable": true
+    },
+    {
+      "name": "browser_scroll",
+      "executable": true
+    }
+  ],
+  "realChromium": {
+    "status": "PASS",
+    "command": "NODE_OPTIONS=--require=/tmp/browser-control-system-chromium.cjs node scripts/test_headless_browser.cjs",
+    "runtime": "Existing /usr/bin/chromium; test-only preload sets Playwright launch executablePath; production source and original assertions unchanged",
+    "coverage": "HTML text/links; isolated read closes page; navigation/fill/click/snapshot/scroll; domain and redirect denial; late PDF links and page transitions; PDF byte fetch and redirect/size/magic rejection"
+  },
+  "nativeConfirmationRegression": {
+    "status": "PASS",
+    "command": "go test -race ./internal/server -run '^TestBrowser(ToolConfirmationBoundary|ActionConfirmationContainsTarget|FillConfirmationDoesNotStoreTypedContent)$' -count=1",
+    "tests": 3
+  },
+  "extractedPluginGates": "PASS: seven tools, unapproved navigation/click/fill return confirmation; denied host and oversized input rejected",
+  "limitations": {
+    "officialChromiumDownload": "BLOCKED: cdn.playwright.dev returns 403 Domain forbidden; system Chromium used for integration",
+    "safariBridgeCheck": "FAILED on Linux: scripts/browser-control-check.cjs; bridge unconditionally spawns unavailable /usr/bin/safaridriver. This is not a passing fake-WebDriver or Safari test.",
+    "pdfTextExtraction": "FAILED: scripts/test_browser_pdf.cjs. Venv can generate fixture, but plugin subprocess resets PATH and system Python lacks pypdf; actual PDF text extraction NOT_VERIFIED.",
+    "platforms": "Linux Chromium integration PASS; Windows/macOS and Safari hardware NOT_RUN",
+    "applicationStartup": "No new start.command activation or host image release; disposable browser bridge tests only"
+  },
+  "ui": "No product UI changes",
+  "rollback": "Revert market metadata if needed; original runtime archive unchanged; no user data or services replaced",
+  "sourceCommit": "e0f62b3bb67795dbeeb06818e529af1cb08ec125",
+  "repository": "https://github.com/skyelan1999/aide-pkg-BrowserControl",
+  "release": "https://github.com/skyelan1999/aide-pkg-BrowserControl/releases/tag/v1.1.0",
+  "releaseID": 417959260,
+  "releaseDownloadVerification": "PASS: anonymous fixed-commit ZIP and SHA256SUMS; no uploaded binary attachments",
+  "marketCommit": "f68e3ce565d0daebbbea555367ea1df344e2cab4",
+  "marketValidation": "PASS: public/private catalog tests (2 each), verify_catalog (25 listings / 24 public / 1 private), syntax/diff; unrelated entries and order unchanged",
+  "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39362630805",
+  "environmentDraft": "Saved additive npm ci installation and Browser Control test/limitation startup notes; prior start.command requirement preserved; not published",
+  "pagesStatus": "PASS: successful Pages deployment for f68e3ce565d0daebbbea555367ea1df344e2cab4",
+  "onlineVerification": "PASS: live catalog equals committed local catalog including independent source and README; anonymous market package bytes and SHA256 match"
+}
