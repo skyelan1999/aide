@@ -1,0 +1,78 @@
+{
+  "version": "1.1.0",
+  "zipBytes": 3195,
+  "zipSHA256": "c180fa73a929db8d59d2c96194396d0d6940eb1b04c07243a50edf46a4b23dbe",
+  "zipEqualsExistingMarket": true,
+  "runtimeSourceUnchanged": true,
+  "aideCommit": "1ca8d1027c0a63849ce977a1fa8f13da48e04adf",
+  "hostEntry": {
+    "ok": true,
+    "name": "computer-control"
+  },
+  "hostTools": [
+    {
+      "name": "computer_status",
+      "executable": true
+    },
+    {
+      "name": "computer_inspect",
+      "executable": true
+    },
+    {
+      "name": "computer_snapshot",
+      "executable": true
+    },
+    {
+      "name": "computer_click",
+      "executable": true
+    },
+    {
+      "name": "computer_type",
+      "executable": true
+    },
+    {
+      "name": "computer_key",
+      "executable": true
+    }
+  ],
+  "pluginAndBridgeLogic": {
+    "status": "PASS",
+    "command": "node scripts/computer-control-check.cjs",
+    "coverage": "App allowlist, coordinate/key boundaries, six-tool registration, empty app list denied, unapproved click denied, missing token denied, text/key bounds"
+  },
+  "bridgeHTTP": {
+    "status": "PASS",
+    "command": "node /tmp/computer-control-http-check.cjs",
+    "coverage": "Disposable legacy Node bridge; authenticated health; missing/wrong token denied; unknown route rejected; empty allowedApps rejected before invoking OS commands",
+    "desktopOperationsExecuted": false
+  },
+  "nativeConfirmationRegression": {
+    "status": "PASS",
+    "command": "go test -race ./internal/server -run '^TestComputer(ToolConfirmationBoundary|ConfirmationDoesNotStoreTypedContent)$' -count=1",
+    "tests": 2,
+    "coverage": "Click/type/key require confirmation; typed content excluded from persisted confirmation text"
+  },
+  "platforms": {
+    "linux": "Plugin logic/protocol tests only; no Linux desktop bridge supplied",
+    "macos": "Supported bridge platform; native build, OS permissions, screenshot/inspect/click/type/key NOT_RUN",
+    "windows": "No Windows desktop bridge supplied; NOT_RUN"
+  },
+  "distributionPlatformCorrection": "Market platforms narrowed from windows/macos/linux to macos; native bridge targets macOS14+",
+  "limitations": [
+    "ZIP contains only Node plugin entry/manifest/license; native app and token must be configured by Aide host",
+    "Native screenshot targets allowed app window; legacy Node fallback captures full screen and lacks inspect",
+    "No full start.command activation or host image release in this task"
+  ],
+  "ui": "Not applicable: no product UI changes",
+  "rollback": "Revert market metadata; runtime ZIP unchanged; no data/service changes",
+  "repository": "https://github.com/skyelan1999/aide-pkg-ComputerControl",
+  "sourceCommit": "ad693e9959df6f0ac8bce0d6a997f3fc450a1d05",
+  "release": "https://github.com/skyelan1999/aide-pkg-ComputerControl/releases/tag/v1.1.0",
+  "releaseID": 417961537,
+  "releaseDownloadVerification": "PASS: anonymous fixed-commit repository ZIP/SHA256SUMS; no uploaded Release binary attachments",
+  "marketCommit": "0e6a3cab7aa416b17b7a9fe4c9bed6c14973c865",
+  "marketValidation": "PASS public/private tests (2 each), verify_catalog (25 listings / 24 public / 1 private), market.js syntax and diff; all unrelated entries and order unchanged",
+  "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39363055618",
+  "pagesStatus": "PASS: successful deployment of 0e6a3cab7aa416b17b7a9fe4c9bed6c14973c865",
+  "onlineVerification": "PASS: live catalog equals local published catalog; independent pinned source, README and macos platform match; anonymous market ZIP size and SHA256 match"
+}

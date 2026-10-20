@@ -1,0 +1,77 @@
+{
+  "id": "computer-control-release-20261020",
+  "request": "Computer Control",
+  "baseline": "1ca8d1027c0a63849ce977a1fa8f13da48e04adf",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Publish prepared public ComputerControl repository and stable v1.1.0 Release",
+    "Preserve existing runtime source and market ZIP bytes",
+    "Verify six tools, application allowlist, approval gates, bounded input and native confirmation regressions",
+    "Correct platform/bridge requirements and verify deployed market metadata and package"
+  ],
+  "scope": [
+    "Independent aide-pkg-ComputerControl distribution",
+    "Market computer-control explicit listing and generator registration",
+    "Aide task and review evidence only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Distribute unchanged 1.1.0 ZIP; document macOS native bridge and OS permission requirements. Market platform list narrowed to macos, Linux test execution does not establish desktop support. No host code/image change.",
+      "evidence": [
+        "plugins/computer-control/index.js",
+        "scripts/native-computer-bridge.swift",
+        "scripts/build-native-computer-bridge.sh"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Distribute unchanged 1.1.0 ZIP; document macOS native bridge and OS permission requirements. Market platform list narrowed to macos, Linux test execution does not establish desktop support. No host code/image change.",
+      "evidence": [
+        "plugins/computer-control/index.js",
+        "scripts/native-computer-bridge.swift",
+        "scripts/build-native-computer-bridge.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prepared original 1.1.0 source and immutable ZIP/checksum for independent distribution. No host runtime changes.",
+      "evidence": [
+        "docs/reviews/2026-10-20-computer-control-release/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Six tool registrations, existing app/approval/input checks, isolated bridge HTTP auth checks and 2 Go race confirmation tests passed. macOS native build and desktop operations NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-10-20-computer-control-release/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README and changelog document macOS14+ native bridge, OS permissions, localhost bridge/token configuration and legacy full-screen fallback.",
+      "evidence": [
+        "docs/reviews/2026-10-20-computer-control-release/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed explicit owned paths; preserved pre-existing untracked tasks and user services/data. Disposable bridge exited.",
+      "evidence": [
+        "docs/reviews/2026-10-20-computer-control-release/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Independent main and annotated v1.1.0 tag pushed; stable Release published; anonymous fixed-commit downloads verified; Pages deployment successful and live catalog/macOS declaration/ZIP verified. No Aide version/image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-ComputerControl/releases/tag/v1.1.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39363055618",
+        "docs/reviews/2026-10-20-computer-control-release/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "User prior direct main/push release/market registration instructions; Computer Control continues independent plugin releases",
+  "rollback": "Revert market commit 0e6a3ca to restore prior metadata; runtime archive unchanged. No data migration or host image replacement.",
+  "handoff": "Computer Control independent 1.1.0 distribution and live market registration complete. Runtime ZIP unchanged. Linux logic/HTTP protocol tests and 2 Go race confirmation regressions passed; macOS bridge build, OS permissions and real desktop operations NOT_RUN. Desktop bridge is macOS only, native target macOS14+. No user data or service replaced."
+}
