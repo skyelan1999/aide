@@ -1,0 +1,75 @@
+{
+  "id": "current-time-plugin-release-20261020",
+  "request": "Current Time也搞一下",
+  "baseline": "58c32d6107ffe66b58f6acf894677e3b9650a5b5",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Publish existing current-time 1.0.0 in prepared public aide-pkg-CurrentTime repository",
+    "Preserve market ZIP bytes and runtime behavior; verify both executable tools, timezones, week boundaries and invalid inputs",
+    "Publish release with public checksum-verified download and update live market source/docs without changing unrelated entries"
+  ],
+  "scope": [
+    "aide-pkg-CurrentTime standalone repository and release",
+    "current-time market listing and catalog builder category",
+    "Aide release handoff documentation only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current Time independent distribution inferred from established workflow; prepared empty public repository found.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-CurrentTime",
+        "plugins/current-time/index.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep existing 1.0.0 ZIP and MIT source byte-identical, add repository documentation and verification wrapper, move catalog entry from built-in generation to explicit listing.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-CurrentTime",
+        "plugins/current-time/index.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prepared existing public aide-pkg-CurrentTime repository, preserved original runtime and immutable 1.0.0 package, added verification wrapper.",
+      "evidence": [
+        "docs/reviews/2026-10-20-current-time-release/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS original behavior tests, immutable ZIP/hash checks, two executable tools, six actual host calls with local/empty SSH roots and invalid inputs, Go race Aide/XiaoMi permission regression. UI not applicable.",
+      "evidence": [
+        "docs/reviews/2026-10-20-current-time-release/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README and changelog explain tools, IANA timezones, ISO weeks, runtime clock origin, SSH and platform validation boundaries, fixed-commit downloads.",
+      "evidence": [
+        "docs/reviews/2026-10-20-current-time-release/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped files reviewed; existing market package unchanged, no services/data replaced, unrelated tasks preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-20-current-time-release/verification.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Public independent repository main/tag f3c376c pushed; stable 1.0.0 release published and anonymous fixed-commit ZIP/SHA256SUMS verified. Market 0670154 deployed, online source/readme and unchanged ZIP hash verified. No host image release or services changed.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-CurrentTime",
+        "https://github.com/skyelan1999/aide-pkg-CurrentTime/releases/tag/v1.0.0",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39356880448",
+        "https://skyelan1999.github.io/aide-pkg-shop/catalog.json"
+      ]
+    }
+  },
+  "release_authorization": "Current Time也搞一下, following prior independent repository, release and market registration requests",
+  "rollback": "Market source metadata can be reverted; runtime ZIP is unchanged from existing 1.0.0. No running services or user data changed.",
+  "handoff": "No host runtime modifications or environment setup changes. Existing same-ID 1.0.0 installs need no upgrade."
+}

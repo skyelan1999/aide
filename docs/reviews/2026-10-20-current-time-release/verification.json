@@ -1,0 +1,86 @@
+{
+  "version": "1.0.0",
+  "status": "PASS",
+  "zipBytes": 3763,
+  "zipSHA256": "8ccc60d7464971c4ab1ca5c22c1e8ac912e4bfe2f3fb765241aadc5820d4f1ad",
+  "zipEqualsExistingMarket": true,
+  "sourceRuntimeUnchanged": true,
+  "originalTest": "PASS: actual clock, timezone, ISO week year boundaries and invalid inputs",
+  "hostEntry": {
+    "ok": true,
+    "name": "current-time"
+  },
+  "hostSurface": [
+    {
+      "name": "get_current_datetime",
+      "executable": true
+    },
+    {
+      "name": "get_week_number",
+      "executable": true
+    }
+  ],
+  "hostCalls": [
+    {
+      "tool": "get_current_datetime",
+      "args": {
+        "timeZone": "Asia/Shanghai"
+      },
+      "workspace": "isolated local root",
+      "ok": true
+    },
+    {
+      "tool": "get_week_number",
+      "args": {
+        "date": "2021-01-01",
+        "timeZone": "UTC"
+      },
+      "workspace": "isolated local root",
+      "ok": true
+    },
+    {
+      "tool": "get_current_datetime",
+      "args": {
+        "timeZone": "Asia/Shanghai"
+      },
+      "workspace": "empty SSH root",
+      "ok": true
+    },
+    {
+      "tool": "get_week_number",
+      "args": {
+        "date": "2021-01-01",
+        "timeZone": "UTC"
+      },
+      "workspace": "empty SSH root",
+      "ok": true
+    },
+    {
+      "tool": "get_current_datetime",
+      "args": {
+        "timeZone": "No/Such_Zone"
+      },
+      "workspace": "isolated local root",
+      "ok": false
+    },
+    {
+      "tool": "get_week_number",
+      "args": {
+        "date": "2021-02-29"
+      },
+      "workspace": "empty SSH root",
+      "ok": false
+    }
+  ],
+  "hostCompatibility": "No workspace filesystem access needed; direct calls with local and empty SSH workspace root pass. Clock always comes from Aide Node runtime.",
+  "platforms": {
+    "linux": "PASS",
+    "windows": "NOT_RUN",
+    "macos": "NOT_RUN"
+  },
+  "aideAndXiaomiRegression": "PASS: go test -race ./internal/server -run ^TestCurrentTimePluginAvailableToAideAndXiaomi$ -count=1 (includes disabled-tool schema and execution enforcement)",
+  "ui": "Not applicable: no UI/workbench; no Aide launcher changes or image release",
+  "rollback": "Market source metadata can be reverted; runtime ZIP is unchanged from existing 1.0.0. No running services or user data changed.",
+  "nodeVersion": "v24.19.0",
+  "aideCommit": "58c32d6107ffe66b58f6acf894677e3b9650a5b5"
+}
