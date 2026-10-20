@@ -1,0 +1,84 @@
+{
+  "id": "terminal-workbench-tab-20261020",
+  "request": "能再加一个按钮在新标签页里打开吗",
+  "baseline": "f795a240cdb37e9b92a37d91664bd1bb3053b809",
+  "initial_status": "M .gitignore\n M docs/plugin-protocol.md\n M internal/server/plugin_workbench.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/plugin_workbench_bridge_test.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/plugin-workbench-client.js\n M internal/server/web/plugin-workbench.js\n M plugins/registry.json\n M plugins/terminal/index.js\n M plugins/terminal/manifest.json\n M scripts/plugin-workbench.test.cjs\n?? docs/reviews/2026-10-20-terminal-workbench/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/terminal-workbench-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json\n?? internal/server/terminal_workbench_test.go\n?? plugins/terminal/LICENSE\n?? plugins/terminal/README.md\n?? plugins/terminal/package-lock.json\n?? plugins/terminal/package.json\n?? plugins/terminal/pty-worker.py\n?? plugins/terminal/scripts/\n?? plugins/terminal/sessions.js\n?? plugins/terminal/src/\n?? plugins/terminal/test/\n?? plugins/terminal/vendor/\n?? plugins/terminal/workbench.html",
+  "acceptance": [
+    "插件卡片及工作台标题栏提供新标签页打开按钮",
+    "新标签页自动打开对应工作台，不在URL传递令牌，不依赖原页opener",
+    "本地会话在两页面中可恢复，关闭原页面后仍可交互及下载日志",
+    "真实Chromium检查新标签页、刷新、窄屏及正常原页打开行为"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/plugin-workbench.js",
+    "internal/server/web/locales/en.js",
+    "scripts/plugin-workbench.test.cjs",
+    "docs/plugin-protocol.md",
+    "docs/tasks及对应验收截图",
+    "scripts/plugin-workbench-tab.browser.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "在既有常驻终端工作台上增加新标签页入口，保留原页打开方式。",
+      "evidence": [
+        "用户需求",
+        "docs/tasks/terminal-workbench-20261020.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新标签页打开同源Aide深链接，只传插件ID；新页初始化后创建自己的沙箱iframe和权限桥接，共享既有后台会话，opener隔离。",
+      "evidence": [
+        "internal/server/web/plugin-workbench.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "卡片和标题栏增加新标签页按钮；新页按同源插件ID深链接独立初始化工作台，opener隔离，保留原页。刷新恢复；锁屏时等待解锁后再打开。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/plugin-workbench.js",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "14项桥接/客户端单测及变更文件语法检查通过；真实Chromium通过卡片和标题栏入口、URL无令牌/opener为空/无referrer、原页关闭后的终端输入、刷新恢复、390px布局、日志下载及明确结束。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-workbench-tab/result.json",
+        "docs/reviews/2026-10-20-terminal-workbench-tab/content-sha256.json",
+        "scripts/plugin-workbench-tab.browser.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录新标签页入口、鉴权与作用域边界及实际验收。",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "docs/reviews/2026-10-20-terminal-workbench-tab/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留既有功能变更；测试仅两个自建页，结束后均关闭，测试会话已明确结束，截图与结果归档。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-workbench-tab/result.json",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "源码已推送，独立Terminal v1.1.0预发布已公开；配套宿主草稿PR#7待full门禁，未正式发布宿主或更新稳定市场。",
+      "evidence": [
+        "docs/tasks/terminal-workbench-release-20261020.json",
+        "docs/reviews/2026-10-20-terminal-release/published.json"
+      ]
+    }
+  },
+  "release_authorization": "用户：可以，推上去吧，做好release（2026-10-20）；执行记录见 terminal-workbench-release-20261020。",
+  "rollback": "未发布生产；仅撤销本任务新增标签页入口/深链接与对应文档和测试，不回退先前常驻会话功能或其他已有改动。",
+  "handoff": "最新交付状态及公开下载见 docs/tasks/terminal-workbench-release-20261020.json。历史本地候选保留dist/aide-pkg-terminal-v1.1.0-candidate-1f8e0354.zip；宿主PR#7未合并，稳定市场未更新。"
+}

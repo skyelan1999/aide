@@ -4,6 +4,8 @@ window.aideEnglish = {
   "在新标签页打开": "Open in new tab",
   "插件工作台不可用，请检查插件是否启用。": "Plugin workbench unavailable. Check that the plugin is enabled.",
 "打开工作台":"Open workbench",
+"新标签页打开":"Open in new tab",
+"工作台插件不可用或未启用":"Workbench plugin is unavailable or disabled",
 "关闭工作台":"Close workbench",
 "独立插件工作台 · 本地计算":"Independent plugin workbench · local computation",
 "付费筹备中":"Paid edition coming soon",

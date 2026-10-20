@@ -1,0 +1,15 @@
+{
+  "marketURL": "https://skyelan1999.github.io/aide-pkg-shop/",
+  "marketCommit": "582ce59a7fe4310b45557ee9f2d231c6927ea4ed",
+  "pagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39351324782",
+  "pagesConclusion": "success",
+  "version": "1.1.1",
+  "features": [
+    "terminal-workbench-v1"
+  ],
+  "bytes": 104320,
+  "sha256": "f70d53d819444dd5b16f5a87f99f70e500241e464dfdd1d05976a1feecd319cf",
+  "downloadURL": "https://skyelan1999.github.io/aide-pkg-shop/packages/terminal/1.1.1-f70d53d81944.zip",
+  "releaseBytesMatch": true,
+  "oldPackageRetained": true
+}

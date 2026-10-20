@@ -37,10 +37,11 @@ const (
 var pluginIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
 type PluginWorkbench struct {
-	Tools    []string `json:"tools,omitempty"`
-	Protocol int      `json:"protocol"`
-	Entry    string   `json:"entry"`
-	Title    string   `json:"title"`
+	CloseBehavior string   `json:"closeBehavior,omitempty"`
+	Tools         []string `json:"tools,omitempty"`
+	Protocol      int      `json:"protocol"`
+	Entry         string   `json:"entry"`
+	Title         string   `json:"title"`
 }
 
 type PluginManifest struct {
@@ -268,7 +269,7 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 	for _, p := range a.pluginRegistry.Plugins {
 		items = append(items, map[string]any{
 			"id": p.ID, "name": p.Name, "description": p.Description, "version": p.Version,
-			"author": p.Author, "enabled": p.Enabled, "installedAt": p.InstalledAt,
+			"author": p.Author, "enabled": p.Enabled, "installedAt": p.InstalledAt, "daemon": p.Daemon,
 			"error": a.pluginError(p.ID), "settings": pluginSettingsOrEmpty(p.Settings),
 			"updateURL": pluginUpdateSource(p), "updatedAt": p.UpdatedAt, "upgradeBackup": p.UpgradeBackup,
 			"settingsSchema": a.pluginSettingsSchema(p.ID, p.SettingsSchema),
@@ -740,6 +741,11 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Unlock()
 	a.runPluginHost(context.Background())
+	// Importing already enables the plugin. Start its daemon just as an explicit
+	// enable does, so a new workbench does not require an off/on toggle.
+	if manifest.Daemon && a.daemons != nil {
+		_ = a.daemons.StartWithPath(manifest.ID, filepath.Join(destination, manifest.Main))
+	}
 	jsonOut(w, 201, map[string]any{"id": manifest.ID, "name": manifest.Name, "enabled": true})
 }
 

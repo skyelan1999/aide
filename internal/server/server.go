@@ -1474,6 +1474,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/open", a.openPluginWorkbench)
 	mux.HandleFunc("POST /api/plugins/{id}/workbench/{instance}/call", a.callWorkbenchBridge)
+	mux.HandleFunc("POST /api/plugins/{id}/workbench/{instance}/renew", a.renewWorkbenchBridge)
 	mux.HandleFunc("DELETE /api/plugins/{id}/workbench/{instance}", a.closeWorkbenchBridge)
 	mux.HandleFunc("GET /plugin-workbench/{ticket}", a.servePluginWorkbench)
 	mux.HandleFunc("POST /api/plugins/{id}/editor/open", a.openNativeEditor)

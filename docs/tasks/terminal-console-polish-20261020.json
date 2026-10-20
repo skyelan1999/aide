@@ -1,0 +1,86 @@
+{
+  "id": "terminal-console-polish-20261020",
+  "request": "在专业一些",
+  "baseline": "9587aa460021ed269c1a8af0715e03eb21b98c40",
+  "initial_status": "M plugins/terminal/src/workbench.html\n M plugins/terminal/src/workbench.js\n M plugins/terminal/test/browser-workbench.cjs\n M plugins/terminal/workbench.html\n M scripts/plugin-workbench-tab.browser.cjs\n?? docs/reviews/2026-10-20-terminal-workbench-ui/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/terminal-workbench-ui-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json\n?? plugins/terminal/test/browser-layout.cjs",
+  "acceptance": [
+    "独立标签页铺满窗口，精简重复标题；普通工作台保持原有打开方式",
+    "会话按本地/SSH/历史分组，标签只展示活动连接或当前历史会话",
+    "桌面显示真实连接与日志详情，手机可用；本地/SSH/后台/导出功能通过浏览器验收"
+  ],
+  "scope": [
+    "plugins/terminal/src/workbench.html",
+    "plugins/terminal/src/workbench.js",
+    "plugins/terminal/workbench.html",
+    "plugins/terminal/test",
+    "internal/server/web/plugin-workbench.js",
+    "internal/server/web/plugin-workbench.css",
+    "scripts/plugin-workbench-tab.browser.cjs",
+    "docs/tasks/terminal-console-polish-20261020.json",
+    "docs/reviews/2026-10-20-terminal-console-polish",
+    "/workspace/aide-pkg-terminal对应文件"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户希望更专业，连续截图暴露重复标题、历史标签拥挤和信息层次不足。",
+      "evidence": [
+        "用户原话",
+        "现有源码及截图"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "紧凑顶部、分组连接导航、主终端、桌面连接详情；独立标签页无浮层外边距，现有安全桥接不变。",
+      "evidence": [
+        "用户原话",
+        "现有源码及截图"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成分组导航、活动标签、连接/日志详情、紧凑操作栏及独立标签页铺满布局。",
+      "evidence": [
+        "internal/server/web/plugin-workbench.js",
+        "internal/server/web/plugin-workbench.css",
+        "plugins/terminal/src/workbench.html",
+        "plugins/terminal/src/workbench.js",
+        "plugins/terminal/workbench.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "原生构建、语法、diff、14项桥接测试通过；真实浏览器215调用/1续期、四主题三尺寸、详情状态与新标签页流程全部通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-console-polish/functional-result.json",
+        "docs/reviews/2026-10-20-terminal-console-polish/layout-result.json",
+        "docs/reviews/2026-10-20-terminal-console-polish/new-tab-result.json",
+        "docs/reviews/2026-10-20-terminal-console-polish/fingerprints.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "保存最终行为、验收与截图及回滚说明。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-console-polish/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅本任务UI、测试与证据；保留先前任务和未提交文件。测试页已关闭，自建连接已结束；无后台协议和生产变更。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地隔离候选已更新；当前请求为UI迭代，未替换既有Release。宿主正式发布仍受既有full门禁约束。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-console-polish/README.md"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复该任务前的UI文件并重新构建HTML与宿主；无数据迁移。",
+  "handoff": "8101运行新版隔离候选，最终截图和验收收据见review目录。"
+}

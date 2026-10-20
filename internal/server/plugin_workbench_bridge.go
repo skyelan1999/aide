@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -131,7 +133,15 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	}
 	b.Seen[req.RequestID] = true
 	b.Busy = true
-	ctx, cancel := context.WithTimeout(r.Context(), 310*time.Second)
+	baseContext := r.Context()
+	// Detaching a daemon UI may finish one dispatched call. Lock, workspace,
+	// explicit revocation and the deadline still cancel it through admission.
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == id && p.Daemon && p.Workbench != nil && p.Workbench.CloseBehavior == "detach" {
+			baseContext = context.WithoutCancel(baseContext)
+		}
+	}
+	ctx, cancel := context.WithTimeout(baseContext, 310*time.Second)
 	b.Cancel = cancel
 	task := &Task{ID: newID(), Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Prompt: "Plugin workbench tool: " + req.Tool, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, Attachments: req.Attachments, AutoReview: false}
 	scope, workspace, epoch := a.pluginsPath, a.pluginWorkspaceLocked(), a.wsRevision
@@ -245,4 +255,32 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 		a.broadcastSessionsChanged(s.ID)
 	}
 	jsonOut(w, 200, response)
+}
+
+// Renew only an idle, still-valid capability. Rotation invalidates the old key
+// atomically, so resetting its bounded replay set never permits old requests.
+func (a *App) renewWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	id, old := r.PathValue("id"), r.PathValue("instance")
+	b, err := a.workbenchBridgeLocked(id, old, true)
+	if err != nil {
+		fail(w, 403, err)
+		return
+	}
+	if b.Busy {
+		fail(w, 409, errors.New("workbench is busy"))
+		return
+	}
+	secret := make([]byte, 32)
+	if _, err = rand.Read(secret); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	key := hex.EncodeToString(secret)
+	delete(a.pluginWorkbenchBridges, old)
+	b.Seen = map[string]bool{}
+	b.Expires = time.Now().Add(30 * time.Minute)
+	a.pluginWorkbenchBridges[key] = b
+	jsonOut(w, 200, map[string]any{"protocol": 1, "instanceId": key})
 }

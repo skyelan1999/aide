@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "checks": [
+    "trusted TLS health",
+    "actual candidate ZIP imported via multipart API",
+    "daemon starts immediately after import"
+  ],
+  "zip": "aide-pkg-terminal-v1.1.0-candidate.zip",
+  "bytes": 100117,
+  "sha256": "1f8e035440fbcf65253ef83855b968bc149435cc84275cbd4ebb6c2cd81f245a"
+}

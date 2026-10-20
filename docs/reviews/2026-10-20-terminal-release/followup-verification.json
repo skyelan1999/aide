@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "codeCommit": "ad3b86616f0ae907da135a0f38b9a923521653ee",
+  "goRace": {
+    "command": "go test -race ./internal/server -run 'TestPluginWorkbench|TestPluginBundle|TestTerminalWorkbench|TestLocal.*PDF|TestWebResearch' -count=1",
+    "result": "PASS",
+    "seconds": 99.711,
+    "environment": "native Linux; loopback networking permitted for httptest"
+  },
+  "nodeBridgeClient": "14 PASS",
+  "pluginTests": "6 PASS",
+  "correctedVMFixtures": [
+    "scripts/lock-recovery.test.cjs",
+    "scripts/bootstrap-file-recovery.test.cjs"
+  ],
+  "fullHostReleaseGate": "BLOCKED: no passing current full receipt; missing Docker test images and existing environment failures"
+}

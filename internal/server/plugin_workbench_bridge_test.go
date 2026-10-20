@@ -1,11 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -191,5 +194,157 @@ func TestPluginWorkbenchBridgeRejectsProposalFromReadOnlyContract(t *testing.T) 
 	requireStatus(t, w, 400)
 	if _, err := os.Stat(filepath.Join(a.workPath, "must-not-write.txt")); !os.IsNotExist(err) {
 		t.Fatal("write escaped scheduling contract")
+	}
+}
+
+func TestPluginWorkbenchBridgeRenewRotatesAndPreservesScope(t *testing.T) {
+	a, key := bridgeFixture(t)
+	requireStatus(t, bridgeCall(a, key, "initial", "bridge_echo", nil), 200)
+	old := a.pluginWorkbenchBridges[key]
+	old.Proposals["saved_proposal"] = "saved_session"
+	old.Seen = map[string]bool{}
+	for i := 0; i < 128; i++ {
+		old.Seen[fmt.Sprintf("request_%d", i)] = true
+	}
+	requireStatus(t, bridgeCall(a, key, "exhausted", "bridge_echo", nil), 409)
+	route := "/api/plugins/workbench-fixture/workbench/" + key + "/renew"
+	requireStatus(t, workbenchRequest(a, "POST", route, false), 401)
+	w := workbenchRequest(a, "POST", route, true)
+	requireStatus(t, w, 200)
+	var renewed struct {
+		Protocol int    `json:"protocol"`
+		Key      string `json:"instanceId"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &renewed); err != nil {
+		t.Fatal(err)
+	}
+	if renewed.Protocol != 1 || len(renewed.Key) != 64 || renewed.Key == key {
+		t.Fatal(renewed)
+	}
+	requireStatus(t, bridgeCall(a, key, "stale", "bridge_echo", nil), 403)
+	requireStatus(t, bridgeCall(a, renewed.Key, "initial", "bridge_echo", map[string]any{"value": "after renewal"}), 200)
+	requireStatus(t, bridgeCall(a, renewed.Key, "initial", "bridge_echo", nil), 409)
+	if a.pluginWorkbenchBridges[renewed.Key].Proposals["saved_proposal"] != "saved_session" {
+		t.Fatal("lost proposal ownership")
+	}
+	// Busy capabilities and invalid scopes cannot be renewed, nor can expired ones revive.
+	for _, kind := range []string{"busy", "expiry", "workspace", "lock", "package", "disable"} {
+		t.Run(kind, func(t *testing.T) {
+			a, key := bridgeFixture(t)
+			b := a.pluginWorkbenchBridges[key]
+			switch kind {
+			case "busy":
+				b.Busy = true
+			case "expiry":
+				b.Expires = time.Now().Add(-time.Second)
+			case "workspace":
+				b.Revision++
+			case "lock":
+				os.MkdirAll(filepath.Dir(lockStatePath(a.dataPath)), 0700)
+				os.WriteFile(lockStatePath(a.dataPath), []byte(`{"locked":true,"gen":4}`), 0600)
+			case "package":
+				b.Package = "changed"
+			case "disable":
+				a.pluginRegistry.Plugins[len(a.pluginRegistry.Plugins)-1].Enabled = false
+			}
+			w := workbenchRequest(a, "POST", "/api/plugins/workbench-fixture/workbench/"+key+"/renew", true)
+			expected := 403
+			if kind == "busy" {
+				expected = 409
+			}
+			requireStatus(t, w, expected)
+			if a.pluginWorkbenchBridges[key] != b {
+				t.Fatal("invalid renewal changed capability")
+			}
+		})
+	}
+}
+
+func TestPluginWorkbenchDetachFinishesOneCallButCannotEscapeRevocation(t *testing.T) {
+	for _, change := range []string{"disconnect", "scope", "close"} {
+		t.Run(change, func(t *testing.T) {
+			a, key := bridgeFixture(t)
+			file := filepath.Join(a.pluginsPath, "workbench-fixture/index.js")
+			code, err := os.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			code = []byte(strings.ReplaceAll(string(code), "setTimeout(resolve,10000)", "setTimeout(resolve,700)"))
+			if err = os.WriteFile(file, code, 0644); err != nil {
+				t.Fatal(err)
+			}
+			a.mu.Lock()
+			for i := range a.pluginRegistry.Plugins {
+				p := &a.pluginRegistry.Plugins[i]
+				if p.ID == "workbench-fixture" {
+					p.Daemon = true
+					p.Workbench.CloseBehavior = "detach"
+				}
+			}
+			a.mu.Unlock()
+			if err = a.daemons.Start("workbench-fixture"); err != nil {
+				t.Fatal(err)
+			}
+			requireStatus(t, request(a, "DELETE", "/api/plugins/workbench-fixture/workbench/"+key, nil), 200)
+			opened := workbenchRequest(a, "POST", "/api/plugins/workbench-fixture/workbench/open", true)
+			requireStatus(t, opened, 200)
+			var instance struct {
+				URL    string `json:"url"`
+				Bridge struct {
+					Key string `json:"instanceId"`
+				} `json:"bridge"`
+			}
+			if err = json.Unmarshal(opened.Body.Bytes(), &instance); err != nil {
+				t.Fatal(err)
+			}
+			key = instance.Bridge.Key
+			requireStatus(t, workbenchRequest(a, "GET", instance.URL, false), 200)
+			marker := filepath.Join(a.workPath, "detached-started")
+			body, _ := json.Marshal(map[string]any{"protocol": 1, "method": "tool.call", "requestId": "detached", "tool": "bridge_wait", "arguments": map[string]any{"marker": marker}})
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			r := httptest.NewRequest("POST", "/api/plugins/workbench-fixture/workbench/"+key+"/call", bytes.NewReader(body)).WithContext(ctx)
+			r.Header.Set("Authorization", "Bearer "+a.token)
+			w := httptest.NewRecorder()
+			done := make(chan struct{})
+			go func() { a.Handler().ServeHTTP(w, r); close(done) }()
+			deadline := time.Now().Add(5 * time.Second)
+			for {
+				if _, err = os.Stat(marker); err == nil {
+					break
+				}
+				select {
+				case <-done:
+					t.Fatalf("not dispatched: %d %s", w.Code, w.Body.String())
+				default:
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("not dispatched before deadline")
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+			cancel() // closing/reloading the browser must not destroy a resident daemon
+			switch change {
+			case "scope":
+				a.mu.Lock()
+				a.wsRevision++
+				a.mu.Unlock()
+			case "close":
+				requireStatus(t, request(a, "DELETE", "/api/plugins/workbench-fixture/workbench/"+key, nil), 200)
+			}
+			select {
+			case <-done:
+			case <-time.After(4 * time.Second):
+				t.Fatal("call did not finish")
+			}
+			if change == "disconnect" {
+				requireStatus(t, w, 200)
+				if _, err = a.callPluginTool("workbench-fixture", "bridge_echo", map[string]any{"value": "still running"}); err != nil {
+					t.Fatal("detached call stopped daemon", err)
+				}
+			} else if w.Code == 200 {
+				t.Fatal("revoked call accepted", w.Body.String())
+			}
+		})
 	}
 }

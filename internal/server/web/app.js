@@ -6638,6 +6638,22 @@ function estimateContext() {
 }
 
 /* ── 插件系统（FR-72~75，协议 docs/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
+function pluginWorkbenchServices(){return {api,t,toast,standalone:!!window.AidePluginWorkbench?.requestedPlugin(location.search),reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
+let requestedWorkbenchOpened=false,requestedWorkbenchOpening=false;
+async function openRequestedWorkbench(){
+  const id=window.AidePluginWorkbench?.requestedPlugin(location.search);
+  if(!id||requestedWorkbenchOpened||requestedWorkbenchOpening||lockScreen.locked||!state.token)return;
+  requestedWorkbenchOpening=true;
+  try{
+    await loadPluginsPanel();
+    if(lockScreen.locked||!state.token)return;
+    const plugin=state.plugins.find(p=>p.id===id&&p.enabled&&!p.error&&p.workbench?.protocol===1);
+    if(!plugin){toast(t('工作台插件不可用或未启用'));return;}
+    requestedWorkbenchOpened=true;
+    document.body.classList.add('plugin-workbench-page');document.title=plugin.workbench.title+' · Aide';
+    await window.AidePluginWorkbench.open(plugin,pluginWorkbenchServices());
+  }catch(error){toast(error.message);}finally{requestedWorkbenchOpening=false;}
+}
 async function loadPluginsPanel() {
   const data = await api('/plugins');
   state.plugins = data.plugins || [];
@@ -6790,7 +6806,6 @@ const pluginUpgradeSourceButton=el('button','quiet',t('升级来源'));
 pluginUpgradeSourceButton.type='button';pluginUpgradeSourceButton.dataset.i18n='升级来源';
 pluginUpgradeSourceButton.onclick=()=>{const plugin=pluginSettingsState.plugin;if(!plugin)return;$('plugin-settings-dialog').close();window.AidePluginUpgrade.openSource(plugin,pluginUpgradeServices());};
 $('plugin-settings-form').querySelector('.dialog-actions').prepend(pluginUpgradeSourceButton);
-function pluginWorkbenchServices(){return {api,t,toast,standalone:!!window.AidePluginWorkbench.route(location.search),reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
 function renderPluginList() {
   const query = $('plugin-search').value.trim().toLowerCase();
   const host = $('plugin-list');
@@ -9744,13 +9759,7 @@ async function initialize() {
   }
   refreshChatDraftChoices();
   setupGlobalEvents(); // #60
-  const workbenchId=window.AidePluginWorkbench?.route(location.search);
-  if(workbenchId){
-    await loadPluginsPanel();
-    const plugin=state.plugins.find(p=>p.id===workbenchId&&p.enabled&&!p.error&&p.workbench?.protocol===1);
-    if(plugin){document.body.classList.add('plugin-workbench-page');document.title=plugin.workbench.title+' · Aide';await window.AidePluginWorkbench.open(plugin,pluginWorkbenchServices());}
-    else toast(t('插件工作台不可用，请检查插件是否启用。'));
-  }
+  await openRequestedWorkbench();
 }
 initialize()
   .then(() => { resetIdleTimer(); })
@@ -11735,6 +11744,7 @@ function applyLockVisual() {
 }
 /* 视觉层：把 effectiveLocked=false 落到本地（仅藏遮罩；欢迎语/麦克风恢复只在输密码的 tab）。 */
 function releaseLockVisual() {
+  if(recoveryReady)queueMicrotask(()=>openRequestedWorkbench());
   const wasLocked=lockScreen.locked;
   if(lockScreen.locked)lockScreen.lastActivity=Date.now();
   lockScreen.locked = false;

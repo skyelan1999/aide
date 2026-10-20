@@ -1,0 +1,83 @@
+{
+  "id": "terminal-workbench-release-20261020",
+  "request": "可以，推上去吧，做好release",
+  "baseline": "f795a240cdb37e9b92a37d91664bd1bb3053b809",
+  "initial_status": "M .gitignore\n M docs/plugin-protocol.md\n M internal/server/plugin_workbench.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/plugin_workbench_bridge_test.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/plugin-workbench-client.js\n M internal/server/web/plugin-workbench.js\n M plugins/registry.json\n M plugins/terminal/index.js\n M plugins/terminal/manifest.json\n M scripts/plugin-workbench.test.cjs\n?? docs/reviews/2026-10-20-terminal-workbench-tab/\n?? docs/reviews/2026-10-20-terminal-workbench/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/terminal-workbench-20261020.json\n?? docs/tasks/terminal-workbench-tab-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json\n?? internal/server/terminal_workbench_test.go\n?? plugins/terminal/LICENSE\n?? plugins/terminal/README.md\n?? plugins/terminal/package-lock.json\n?? plugins/terminal/package.json\n?? plugins/terminal/pty-worker.py\n?? plugins/terminal/scripts/\n?? plugins/terminal/sessions.js\n?? plugins/terminal/src/\n?? plugins/terminal/test/\n?? plugins/terminal/vendor/\n?? plugins/terminal/workbench.html\n?? scripts/plugin-workbench-tab.browser.cjs",
+  "acceptance": [
+    "主仓库和独立Terminal源码推送到GitHub，保留上游更新与已有无关任务记录",
+    "完成源码/实际安装包验证，创建清晰标注宿主依赖的可下载Release",
+    "未满足宿主正式发行门禁时不创建虚假的成功记录或更新稳定市场",
+    "交付远端链接、版本、摘要及阻塞项"
+  ],
+  "scope": [
+    "Terminal工作台与新标签页既有变更",
+    "独立aide-pkg-terminal版本、归档、Release及说明",
+    "主仓库功能分支、PR、发布验证与任务记录",
+    "scripts/lock-recovery.test.cjs",
+    "scripts/bootstrap-file-recovery.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确授权推送与Release；新插件需要同期宿主能力，门禁失败时仅做预发布并提交宿主PR。",
+      "evidence": [
+        "用户授权",
+        "docs/tasks/terminal-workbench-20261020.json",
+        "docs/tasks/terminal-workbench-tab-20261020.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留远端main最新提交；宿主走功能分支/PR，独立插件用GitHub prerelease说明未发布宿主依赖，不升级稳定市场。按原归档分发方式保存可校验包。",
+      "evidence": [
+        "origin/main:892e0b99",
+        "/workspace/aide-pkg-terminal/packages/v1.0.0"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "宿主功能已提交并保留上游892e0b99，通过codex/terminal-workbench推送及PR#7交付；独立插件main已推送f08f8f1，v1.1.0预发布包含固定提交ZIP/摘要与兼容说明。修正两个VM夹具的新依赖声明，未改变锁屏产品逻辑。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/7",
+        "https://github.com/skyelan1999/aide-pkg-terminal/tree/f08f8f199e25b5a58a2127e96316335cd68a4b34"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "6项插件测试、14项桥接测试、两项VM跟进验证、合并上游后的定向Go race（99.711s）通过。新发布ZIP实际宿主入口和11工具surface验证通过，运行文件与宿主相同；匿名下载新ZIP摘要一致。full原始结果fail，未冒充主仓库完整发行通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-release/published.json",
+        "docs/reviews/2026-10-20-terminal-release/followup-verification.json",
+        "docs/reviews/2026-10-20-terminal-release/full-gate.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Release和README明确预发布、配套未合并宿主要求、平台验证范围、仓库直链下载、日志/会话生命周期及稳定市场保持1.0.0。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-release/README.md",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.0"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只提交任务范围文件；独立插件仓库干净，主仓库既有10项未跟踪任务文件保留。旧1.0.0归档和稳定市场无改动，原验证候选按摘要另存；无生产重启。",
+      "evidence": [
+        "git status --short",
+        "docs/reviews/2026-10-20-terminal-release/README.md"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Terminal v1.1.0预发布已公开发布并验明下载；宿主PR#7为草稿，正式宿主Release未完成：full缺成功收据、缺测试镜像及现有环境测试失败。因此未合并main/升宿主版号或tag/发布镜像/更新稳定市场。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-release/published.json",
+        "docs/reviews/2026-10-20-terminal-release/full-gate.json",
+        "https://github.com/skyelan1999/aide/pull/7"
+      ]
+    }
+  },
+  "release_authorization": "用户：可以，推上去吧，做好release（2026-10-20）",
+  "rollback": "保留旧1.0.0 Release及市场。若预发布回退，停用新版并恢复1.0.0；备份工作区 .aide/terminal-workbench。宿主PR不合并则不影响主分支，必要时revert范围内提交。",
+  "handoff": "已发布插件预发布：https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.0；源码/tag=f08f8f199e25b5a58a2127e96316335cd68a4b34，ZIP100397字节，sha256=e417db91e86caf0a6a926de976d9dd2901c81725acbb5d10229c2b570a97b87b。宿主PR#7未合并，正式宿主发行门禁仍阻塞；稳定市场仍1.0.0，生产未替换。"
+}

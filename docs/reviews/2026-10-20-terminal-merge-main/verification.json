@@ -1,0 +1,16 @@
+{
+  "jsBridgeTests": 16,
+  "lockRecovery": "PASS",
+  "bootstrapFileRecovery": "PASS",
+  "goRace": "PASS: TestPluginWorkbench|TestPluginMarket|TestTerminalWorkbench, 111.462s",
+  "nativeBuild": "PASS",
+  "currentBrowser": "NOT_RUN: start.command activation blocked by CA/disk; user testing elsewhere",
+  "currentDockerFull": "NOT_RUN: no test image; prior failures retained",
+  "files": {
+    "internal/server/web/app.js": "bd8adea4563d206680c85c653bfc29b97eddf5d0d27bdb5dfd919a8ad7f6a246",
+    "internal/server/web/plugin-workbench.js": "6d971c99ee6b7b76a17e9e97cb544dc6d4d83af59b00903935ceb2b26293b26f",
+    "internal/server/web/plugin-workbench.css": "0c26c9628f45058b0fdd2c5a9da5e8ad39831390bb4e55ebc1bef40343b9aca4",
+    "scripts/plugin-workbench.test.cjs": "d60fb41f2e006969aa9d30c8a884c64954a63e9b73d355240afea323dfb5d608",
+    "scripts/plugin-workbench-tab.browser.cjs": "451324940f1f1730cd9dc2424be4bf0e9a4e9c36faf7f805652cee7b55079591"
+  }
+}

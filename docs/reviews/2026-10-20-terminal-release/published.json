@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "release": {
+    "assets": [],
+    "isDraft": false,
+    "isPrerelease": true,
+    "tagName": "v1.1.0",
+    "url": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.0"
+  },
+  "publicDownload": {
+    "url": "https://raw.githubusercontent.com/skyelan1999/aide-pkg-terminal/f08f8f199e25b5a58a2127e96316335cd68a4b34/packages/v1.1.0/aide-pkg-terminal-v1.1.0.zip",
+    "sha256": "e417db91e86caf0a6a926de976d9dd2901c81725acbb5d10229c2b570a97b87b",
+    "bytes": 100397
+  },
+  "stableLatest": "v1.0.0",
+  "hostPR": {
+    "baseRefName": "main",
+    "headRefName": "codex/terminal-workbench",
+    "isDraft": true,
+    "state": "OPEN",
+    "url": "https://github.com/skyelan1999/aide/pull/7"
+  },
+  "pluginCommit": "f08f8f199e25b5a58a2127e96316335cd68a4b34"
+}

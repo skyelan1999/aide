@@ -1,0 +1,87 @@
+{
+  "id": "terminal-workbench-20261020",
+  "request": "能加一个工作台吗，后台可驻留状态的，支持创建本地或远程ssh会话，不同的会话用来调试设备，同时还支持log存储，你可以看下wondterm",
+  "baseline": "f795a240cdb37e9b92a37d91664bd1bb3053b809",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "本地 PTY 与 SSH 会话可创建、交互、调整窗口和显式关闭；关闭工作台后会话保留",
+    "多会话隔离，工作区切换不泄露会话；后台重启只恢复记录，不自动重放连接或命令",
+    "输出日志按会话落盘、轮转、分页导出和显式删除；不单独存储输入或密码",
+    "工作台可持续交互超过128次调用，续期不能恢复失效范围或重放请求",
+    "真实 Chromium 完成桌面/窄屏、会话切换、后台恢复及日志导出验收"
+  ],
+  "scope": [
+    "aide-pkg-terminal 插件源码、离线工作台、PTY helper、测试、文档",
+    "Aide 通用工作台桥接安全续期接口与相应前后端回归",
+    "Aide 内置 terminal 同步与任务验收记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "参考 WindTerm 会话树/标签、后台保留与日志；本地指 Aide 运行环境，SSH 连接设备；不承诺后端重启保留进程。",
+      "evidence": [
+        "https://github.com/kingToolbox/WindTerm",
+        "docs/plugin-protocol.md §独立工作台/daemon"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Python 标准库 PTY + OpenSSH；Node daemon 管理独立会话，工作区内私有目录保存元数据及轮转日志；自包含 xterm.js 工作台走既有受控桥接；父页面空闲时原子轮换 capability，旧 capability 立即失效且不重试工具。",
+      "evidence": [
+        "internal/server/plugin_daemon.go",
+        "internal/server/plugin_workbench_bridge.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "独立插件与内置 Terminal 源码同步：Linux PTY/OpenSSH、多会话驻留、离线 xterm 工作台、轮转日志、显式结束/删除；宿主增加安全续期、单调序号防重放、daemon detach 与导入后启动。旧工具保持提案/只读语义。",
+      "evidence": [
+        "plugins/terminal/manifest.json",
+        "plugins/terminal/sessions.js",
+        "plugins/terminal/pty-worker.py",
+        "plugins/terminal/src/workbench.js",
+        "internal/server/plugin_workbench_bridge.go",
+        "internal/server/terminal_workbench_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "需求相关验证通过：6项插件测试、12项桥接 JS 测试、相关 Go race、最终 ZIP 实际安装并立即启动 daemon、Chromium218次真实调用/1次续期，含关闭/刷新恢复、SSH、日志下载、删除、主题与窄屏。全仓 quick 补测后仍2条既有环境失败，未据此声称全仓通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-workbench/README.md",
+        "docs/reviews/2026-10-20-terminal-workbench/browser-result.json",
+        "docs/reviews/2026-10-20-terminal-workbench/import-result.json",
+        "docs/reviews/2026-10-20-terminal-workbench/content-sha256.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补充生命周期、日志/凭据边界、Linux/Windows容器路径、旧宿主能力检查、开发构建、候选包与未发布状态。",
+      "evidence": [
+        "plugins/terminal/README.md",
+        "docs/plugin-protocol.md",
+        "docs/reviews/2026-10-20-terminal-workbench/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅两仓 diff；运行数据与依赖位于忽略目录/隔离工作区。保留已有十项任务记录；不删除未跟踪用户文件。停止8098旧验收实例，保留8099最终候选供审阅，测试会话全部结束。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-workbench/content-sha256.json",
+        "docs/reviews/2026-10-20-terminal-workbench/README.md",
+        "git diff --check (both repositories)"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "源码已推送，独立Terminal v1.1.0预发布已公开；配套宿主草稿PR#7待full门禁，未正式发布宿主或更新稳定市场。",
+      "evidence": [
+        "docs/tasks/terminal-workbench-release-20261020.json",
+        "docs/reviews/2026-10-20-terminal-release/published.json"
+      ]
+    }
+  },
+  "release_authorization": "用户：可以，推上去吧，做好release（2026-10-20）；执行记录见 terminal-workbench-release-20261020。",
+  "rollback": "未部署生产。结束本地会话并备份工作区 .aide/terminal-workbench 后，可还原本次范围文件并恢复原1.0.0插件；不清理已有任务或用户日志。",
+  "handoff": "最新交付状态及公开下载见 docs/tasks/terminal-workbench-release-20261020.json。历史本地候选保留dist/aide-pkg-terminal-v1.1.0-candidate-1f8e0354.zip；宿主PR#7未合并，稳定市场未更新。"
+}

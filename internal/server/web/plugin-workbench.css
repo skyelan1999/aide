@@ -8,6 +8,12 @@
 .plugin-workbench>header>.plugin-workbench-export{max-width:min(34vw,340px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.plugin-workbench>header>button[hidden]{display:none}
 @media(max-width:700px){.plugin-workbench>header{flex-wrap:wrap}.plugin-workbench>header>.plugin-workbench-export{max-width:100%;margin-left:0}}
 
+.plugin-workbench-standalone{inset:0;border:0;border-radius:0;box-shadow:none}
+.plugin-workbench-standalone>header{min-height:36px;padding:5px 16px;gap:12px;background:var(--panel);font-size:11px}
+.plugin-workbench-standalone>header>strong{font-size:11px;font-weight:500;color:var(--muted)}
+.plugin-workbench-standalone>header>span{font-size:10px}
+.plugin-workbench-standalone>header>button{min-height:25px;padding:3px 9px;border-radius:5px;font-size:10px;background:transparent}
+@media(max-width:700px){.plugin-workbench-standalone>header>strong{margin-right:auto}.plugin-workbench-standalone>header>button{margin-left:0}}
 .plugin-workbench-page .plugin-workbench{inset:0;border:0;border-radius:0;box-shadow:none}
 .plugin-workbench-page .plugin-workbench>header{min-height:40px;padding:5px 16px;gap:12px}
 .plugin-workbench-page .plugin-workbench>header>button{min-height:28px;padding:4px 10px;border-radius:6px}

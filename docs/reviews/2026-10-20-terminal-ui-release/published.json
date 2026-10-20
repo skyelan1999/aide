@@ -1,0 +1,18 @@
+{
+  "pluginRelease": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.1.1",
+  "pluginCommit": "005b416c0ff26f28712185acf00ac41f5e9a2123",
+  "tag": "v1.1.1",
+  "prerelease": true,
+  "draft": false,
+  "assetLocation": "fixed-commit repository archive; not release attachment",
+  "downloadURL": "https://raw.githubusercontent.com/skyelan1999/aide-pkg-terminal/005b416c0ff26f28712185acf00ac41f5e9a2123/packages/v1.1.1/aide-pkg-terminal-v1.1.1.zip",
+  "checksumURL": "https://raw.githubusercontent.com/skyelan1999/aide-pkg-terminal/005b416c0ff26f28712185acf00ac41f5e9a2123/packages/v1.1.1/SHA256SUMS",
+  "anonymousDownloadStatus": 200,
+  "zipBytes": 104320,
+  "zipSHA256": "f70d53d819444dd5b16f5a87f99f70e500241e464dfdd1d05976a1feecd319cf",
+  "hostPR": "https://github.com/skyelan1999/aide/pull/7",
+  "hostImplementationCommit": "4904bae0",
+  "hostFormalRelease": "blocked: current full 5 failures out of 138 checks",
+  "stableMarketVersion": "1.0.0",
+  "productionReplaced": false
+}

@@ -1,0 +1,76 @@
+{
+  "id": "terminal-merge-main-20261020",
+  "request": "直接合并到main",
+  "baseline": "01459be9cfe923f7035a8bbaf46edb3d79521365",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "按用户明确授权将Terminal PR#7合并到远端main，不创建新宿主tag或正式镜像",
+    "整合最新main的Compare工作台/两种新标签页URL/退出释放能力，保留Terminal桥接续期和daemon detach",
+    "运行冲突相关回归与构建；完整Docker/启动阻塞如实交接"
+  ],
+  "scope": [
+    "PR#7既有文件",
+    "与origin/main冲突的工作台/app/样式/测试",
+    "docs/tasks/terminal-merge-main-20261020.json",
+    "docs/reviews/2026-10-20-terminal-merge-main"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求现在合并源码并在其他环境测试；已知full和start.command环境阻塞保留，不声明正式发行通过。",
+      "evidence": [
+        "用户原话",
+        "origin/main:0e94e2b3"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先在现有分支整合origin/main，再按PR合并到main。统一两种新标签页路由/API，保留上游Compare与页面退出释放。",
+      "evidence": [
+        "用户原话",
+        "origin/main:0e94e2b3"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已整合origin/main 0e94e2b3并解决4处文件冲突，保留上游Compare与两种新标签页入口、退出释放和Terminal续期/后台分离。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/plugin-workbench.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "16项JS桥接、锁屏/初始化恢复、关键Go race 111.462秒与整合后构建通过。本轮浏览器和Docker full未重跑，用户在其他环境继续测试。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-merge-main/verification.json",
+        "docs/reviews/2026-10-20-terminal-merge-main/go-race.txt",
+        "docs/reviews/2026-10-20-terminal-merge-main/bridge-tests.txt"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录用户源码合并授权、冲突取舍、真实验证范围及环境限制。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-merge-main/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅合并目标变更；既有10项任务文件保留；未替换运行实例或创建镜像/tag。",
+      "evidence": [
+        "git diff --cached --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "按用户明确授权进行源码main合并；本轮不进行正式镜像发行。",
+      "evidence": [
+        "用户原话：直接合并到main"
+      ]
+    }
+  },
+  "release_authorization": "用户明确：直接合并到main。此授权针对源码合并，正式镜像/tag不在本轮范围。",
+  "rollback": "通过revert合并提交回退，不重置远端或删除用户数据；本轮不替换运行实例。",
+  "handoff": ""
+}
