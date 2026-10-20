@@ -1,0 +1,83 @@
+{
+  "id": "local-document-web-routing-20261020",
+  "request": "修复本地 PDF 比较误判网页研究，回归测试；将本次 Aide 修复及 Compare 实测记录提交并 push",
+  "baseline": "9fd930a24e7f8a4d444cc36c976460df58b8a20d",
+  "initial_status": "",
+  "acceptance": [
+    "Local PDF/image/Office comparison requests do not activate web research instructions or forced browser retries.",
+    "Explicit official-site research and HTTPS PDF reads still require a real browser attempt.",
+    "Mock-provider toolLoop completes a local comparison response in one request without replacing it with webReadNotCompleted.",
+    "Commit and push only scoped Aide changes and sanitized Compare verification records; preserve existing local runtime changes."
+  ],
+  "scope": [
+    "internal/server/web_research.go",
+    "internal/server/web_research_test.go",
+    "docs/tasks/local-document-web-routing-20261020.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Fix confirmed local-PDF routing false positive; push authorized, release and production replacement not requested.",
+      "evidence": [
+        "User: 修一下，然后都push了"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "A format name alone cannot establish a web source. Remove standalone pdf from page-source hints; retain URL and official website routing and the existing real-read guard.",
+      "evidence": [
+        "internal/server/web_research.go: requestsWebResearch, runtimeCapabilityInstruction, needsWebReadAttempt"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed only standalone pdf from page-source hints. Browser capability advertisement and official-site/URL read guard are unchanged. Added routing and provider-loop regressions.",
+      "evidence": [
+        "internal/server/web_research.go",
+        "internal/server/web_research_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Old code failed the new local-document routing and one-request answer-preservation regressions; fixed code passes related tests under race detection and server vet.",
+      "evidence": [
+        "Before: go test -mod=vendor -race -count=1 -run TestWebResearchLocal ./internal/server failed as expected; the local comparison loop made two calls and returned webReadNotCompleted.",
+        "After: go test -mod=vendor -race -count=1 -run Test(WebResearch|Research|EngineeringResearch) ./internal/server PASS (3.782s).",
+        "go vet -mod=vendor ./internal/server PASS.",
+        "Isolated Docker aide:0.1.17.2-RC1-linux-arm64, network none, GOTOOLCHAIN=local; source mounted read-only, writable Go cache only.",
+        "python3 scripts/check_docs.py PASS: 353 Markdown files and 1281 local links.",
+        "git diff --check PASS."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "This task records scope, actual failing/passing evidence and runtime boundary. Compare media and downloaded-puzzle results are documented in the private Compare repository.",
+      "evidence": [
+        "docs/tasks/local-document-web-routing-20261020.json",
+        "Compare docs/reviews/2026-10-20-real-ai-acceptance.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only two Go files and this task belong to the Aide change. Existing primary checkout plugin/config/runtime changes preserved. Ignored test logs and cache retained; no private conversations or credentials staged.",
+      "evidence": [
+        "Baseline primary tracked changes: compose.yaml and three plugin metadata files, plus installed plugins/backups and unrelated task records.",
+        "Work performed in the existing clean isolated checkout at baseline 9fd930a24e7f8a4d444cc36c976460df58b8a20d."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User requested source fixes and pushes, not a new version/tag/Release, image rebuild or production restart. Running Aide remains unchanged; no live configured-model run of this new host code is claimed.",
+      "evidence": [
+        "User: 修一下，然后都push了"
+      ]
+    }
+  },
+  "release_authorization": "Source commit/push authorized by user: 修一下，然后都push了. No new release/deployment requested.",
+  "rollback": "Revert the scoped source commit if needed. No data migration or runtime replacement performed.",
+  "handoff": "Source regression fix ready for commit/push. Production runtime has not been replaced; the tested image only supplied an isolated Go toolchain. Compare code/package remains v0.2.0; only sanitized verification documentation is added.",
+  "content_sha256": {
+    "internal/server/web_research.go": "f0c724c090f1a33e1db5ed2abcef2470b110b5d5a2ae8d0e498f26d32b217023",
+    "internal/server/web_research_test.go": "026459497390717acafd4fdabfee0e1f249c57b64b9e0dd18bfd80b328d32c63"
+  }
+}

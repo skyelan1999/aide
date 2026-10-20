@@ -23,6 +23,8 @@ func requestToolNames(tools []any) map[string]bool {
 
 // This deliberately narrow routing rule targets explicit page research, not
 // software implementation, quoted material, or every mention of a browser.
+// A document format (PDF, Office, etc.) is not evidence of a web source.
+// Online PDFs still route through an explicit URL or official-page reference.
 func requestsWebResearch(prompt string) bool {
 	p := strings.ToLower(prompt)
 	for _, excluded := range []string{"不要联网", "不要访问", "不访问网页", "不要浏览", "do not browse", "don't browse", "offline", "修复", "实现", "搭建", "编写代码", "写代码", "插件", "implement", "debug"} {
@@ -31,7 +33,7 @@ func requestsWebResearch(prompt string) bool {
 		}
 	}
 	page := false
-	for _, word := range []string{"官网", "网页", "网站", "http://", "https://", "browser_read", "pdf", "website", "webpage", "official site", "official website"} {
+	for _, word := range []string{"官网", "网页", "网站", "http://", "https://", "browser_read", "website", "webpage", "official site", "official website"} {
 		page = page || strings.Contains(p, word)
 	}
 	for _, action := range []string{"查", "访问", "打开", "读取", "总结", "资料", "核实", "浏览", "read", "visit", "open", "summar", "research", "look up", "check"} {
