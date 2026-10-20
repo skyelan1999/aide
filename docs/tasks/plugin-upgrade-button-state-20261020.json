@@ -1,0 +1,75 @@
+{
+  "id": "plugin-upgrade-button-state-20261020",
+  "request": "插件升级那有一点bug，一点升级其他插件都跟着反映了",
+  "baseline": "fe61a4cbf3ac7ca54b386290f56ed82990c2ce33",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Clicking upgrade changes only that plugin ID buttons; other plugin controls/text remain unchanged",
+    "Same plugin duplicate calls suppressed; different plugin requests and completion/failure independently scoped",
+    "Rebuilt plugin list preserves the correct pending states; all existing source/upload/error behavior retained",
+    "Real Chromium rendering verifies click/request/pending/rerender/success/failure at wide and narrow widths"
+  ],
+  "scope": [
+    "internal/server/web/plugin-upgrade.js",
+    "scripts/plugin-upgrade.test.cjs and focused browser regression",
+    "Task/evidence docs; authorized main source push only",
+    "internal/server/plugin_upgrade_buttons_browser_test.go (opt-in isolated browser fixture)"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports all plugin upgrade buttons react to one upgrade.",
+      "evidence": [
+        "internal/server/web/plugin-upgrade.js",
+        "scripts/plugin-upgrade.test.cjs"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Replace global boolean with Set keyed by exact plugin ID; each render derives its own state. Existing backend lifecycle lock continues serializing writes.",
+      "evidence": [
+        "internal/server/web/plugin-upgrade.js",
+        "scripts/plugin-upgrade.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Per-plugin pending Set and exact-ID DOM updates; same-ID guard and dialog guard scoped; regression covers distinct IDs and partial settlement.",
+      "evidence": [
+        "internal/server/web/plugin-upgrade.js",
+        "scripts/plugin-upgrade.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Node regression and actual Chromium manager1440/390 pass; search/full list refresh, exact two requests and independent success/failure states validated. 16 focused native backend race cases pass.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-upgrade-button-state/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded per-ID behavior, backend single-upgrade guard, browser fixtures and source-only delivery limits.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-upgrade-button-state/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only targeted UI/tests/evidence changed. Test app/server/browser closed; user plugins and unrelated10task files untouched.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-upgrade-button-state/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Validated source change ready for authorized main push. No Aide image build/deployment.",
+      "evidence": [
+        "docs/reviews/2026-10-20-plugin-upgrade-button-state/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "Prior user explicit direct-main/push authorization persists; source fix only, no Aide image/version release or production restart.",
+  "rollback": "Revert this targeted source commit if required; no persisted state or backend API changed.",
+  "handoff": "Update Aide source/build to apply embedded UI fix. Only the selected plugin ID shows upgrading; other buttons remain normal. Backend continues rejecting overlapping actual replacements. Browser used isolated real manager with delayed synthetic upgrade responses; no user plugin was upgraded."
+}

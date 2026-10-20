@@ -1,0 +1,60 @@
+{
+  "request": "升级一个插件时其他插件按钮跟着反应",
+  "rootCause": "A global busy boolean changed every [data-plugin-upgrade] button and affected buttons created during list refresh.",
+  "change": "Track pending IDs in a Set; mutate only matching data-plugin-upgrade buttons; duplicate and source-dialog guards scoped to the same ID. Backend global single replacement guard remains unchanged.",
+  "frontendRegression": "PASS node scripts/plugin-upgrade.test.cjs; same-ID dedupe, unrelated IDs unchanged, rerender and independent settlement, refresh errors and failure cleanup",
+  "actualBrowser": {
+    "status": "PASS",
+    "scope": "Actual Aide plugin manager/JavaScript/DOM and browser fetch; synthetic installed plugins; upgrade responses deliberately delayed/replaced, no plugin download or replacement",
+    "checks": [
+      "only clicked plugin changes text/disabled",
+      "other plugin unaffected at1440/390",
+      "search/list rerender preserves per-ID state",
+      "two distinct IDs independently pending",
+      "A success+refresh leaves B pending",
+      "B failure restores only B",
+      "exactly2 upgrade requests, no implicit updates"
+    ],
+    "errors": []
+  },
+  "browserCommand": "AIDE_PLUGIN_BUTTON_BROWSER=1 AIDE_EVIDENCE_DIR=<private-evidence-dir> go test ./internal/server -run ^TestPluginUpgradeButtonsBrowser$ -count=1 -v",
+  "browserElapsedSeconds": 5.835,
+  "backendRace": {
+    "status": "PASS",
+    "testCount": 16,
+    "elapsedSeconds": 38.322,
+    "tests": [
+      "TestPluginLocalBinaryUpgradePreservesSettingsAndRecoverableBytes",
+      "TestPluginLocalBinaryUpgradeFailuresKeepCurrentVersion/digest",
+      "TestPluginLocalBinaryUpgradeFailuresKeepCurrentVersion/id",
+      "TestPluginLocalBinaryUpgradeFailuresKeepCurrentVersion/probe",
+      "TestPluginLocalBinaryUpgradeFailuresKeepCurrentVersion",
+      "TestPluginUpgradePreservesStateAndRunsNewResources",
+      "TestPluginUpgradePreservesDisabledState",
+      "TestPluginUpgradeRejectsWithoutChangingOriginal/wrong-id",
+      "TestPluginUpgradeRejectsWithoutChangingOriginal/hash",
+      "TestPluginUpgradeRejectsWithoutChangingOriginal/traversal",
+      "TestPluginUpgradeRejectsWithoutChangingOriginal/apply",
+      "TestPluginUpgradeRejectsWithoutChangingOriginal/missing-module",
+      "TestPluginUpgradeRejectsWithoutChangingOriginal",
+      "TestPluginUpgradeDuplicateAndChangedWorkspace",
+      "TestPluginUpgradeCancelledWaitKeepsOriginal",
+      "TestPluginUpgradeRejectsExternalLocalSymlink"
+    ],
+    "command": "go test -race ./internal/server -run ^(TestPluginUpgradePreserves.*|TestPluginUpgradeRejects.*|TestPluginUpgradeDuplicateAndChangedWorkspace|TestPluginUpgradeCancelledWaitKeepsOriginal|TestPluginLocalBinaryUpgrade.*)$ -count=1 -json"
+  },
+  "screenshots": [
+    "pending-a-1440.png",
+    "pending-a-390.png"
+  ],
+  "notRun": [
+    "Production start.command deployment or Aide image release",
+    "Browser upgrade responses are delayed/replaced fixtures; actual package replacement covered separately by backend tests"
+  ],
+  "sourceSHA256": {
+    "internal/server/web/plugin-upgrade.js": "8d16709af93253acef97a7e8fbbc391920bbfcd78e4f1c8272f3dfb1bf026904",
+    "scripts/plugin-upgrade.test.cjs": "e426fb5eac9639bccbae79cd0d0e39d0819882fb7cea5d8255fdd05e1356298e",
+    "scripts/browser-plugin-upgrade-state.cjs": "5d5cd24a4147a23cdd877e756ee687600e47b5a2e9081ba1c503aae21a5ff347",
+    "internal/server/plugin_upgrade_buttons_browser_test.go": "da0515c3cd1ff36a1c93d3b419640d9c60b67d78bf2db3ac4c2038f0ae8214dc"
+  }
+}
