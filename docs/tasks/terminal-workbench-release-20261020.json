@@ -1,0 +1,66 @@
+{
+  "id": "terminal-workbench-release-20261020",
+  "request": "可以，推上去吧，做好release",
+  "baseline": "f795a240cdb37e9b92a37d91664bd1bb3053b809",
+  "initial_status": "M .gitignore\n M docs/plugin-protocol.md\n M internal/server/plugin_workbench.go\n M internal/server/plugin_workbench_bridge.go\n M internal/server/plugin_workbench_bridge_test.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/plugin-workbench-client.js\n M internal/server/web/plugin-workbench.js\n M plugins/registry.json\n M plugins/terminal/index.js\n M plugins/terminal/manifest.json\n M scripts/plugin-workbench.test.cjs\n?? docs/reviews/2026-10-20-terminal-workbench-tab/\n?? docs/reviews/2026-10-20-terminal-workbench/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/terminal-workbench-20261020.json\n?? docs/tasks/terminal-workbench-tab-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json\n?? internal/server/terminal_workbench_test.go\n?? plugins/terminal/LICENSE\n?? plugins/terminal/README.md\n?? plugins/terminal/package-lock.json\n?? plugins/terminal/package.json\n?? plugins/terminal/pty-worker.py\n?? plugins/terminal/scripts/\n?? plugins/terminal/sessions.js\n?? plugins/terminal/src/\n?? plugins/terminal/test/\n?? plugins/terminal/vendor/\n?? plugins/terminal/workbench.html\n?? scripts/plugin-workbench-tab.browser.cjs",
+  "acceptance": [
+    "主仓库和独立Terminal源码推送到GitHub，保留上游更新与已有无关任务记录",
+    "完成源码/实际安装包验证，创建清晰标注宿主依赖的可下载Release",
+    "未满足宿主正式发行门禁时不创建虚假的成功记录或更新稳定市场",
+    "交付远端链接、版本、摘要及阻塞项"
+  ],
+  "scope": [
+    "Terminal工作台与新标签页既有变更",
+    "独立aide-pkg-terminal版本、归档、Release及说明",
+    "主仓库功能分支、PR、发布验证与任务记录",
+    "scripts/lock-recovery.test.cjs",
+    "scripts/bootstrap-file-recovery.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确授权推送与Release；新插件需要同期宿主能力，门禁失败时仅做预发布并提交宿主PR。",
+      "evidence": [
+        "用户授权",
+        "docs/tasks/terminal-workbench-20261020.json",
+        "docs/tasks/terminal-workbench-tab-20261020.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留远端main最新提交；宿主走功能分支/PR，独立插件用GitHub prerelease说明未发布宿主依赖，不升级稳定市场。按原归档分发方式保存可校验包。",
+      "evidence": [
+        "origin/main:892e0b99",
+        "/workspace/aide-pkg-terminal/packages/v1.0.0"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "发布检查发现两个既有VM夹具未提供新深链接依赖；补齐夹具并增加初始化后打开/解锁后打开的顺序断言。未修改产品锁屏行为。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户：可以，推上去吧，做好release（2026-10-20）",
+  "rollback": "保留旧1.0.0 Release及市场。若预发布回退，停用新版并恢复1.0.0；备份工作区 .aide/terminal-workbench。宿主PR不合并则不影响主分支，必要时revert范围内提交。",
+  "handoff": ""
+}

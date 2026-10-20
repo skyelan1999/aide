@@ -32,6 +32,9 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 	if w == nil || w.Protocol != 1 || len([]rune(w.Title)) < 1 || len([]rune(w.Title)) > 64 || len(w.Entry) > 160 || path.Clean(w.Entry) != w.Entry || !strings.HasSuffix(w.Entry, ".html") || strings.ContainsAny(w.Entry, "\\:") || strings.HasPrefix(w.Entry, "/") {
 		return errors.New("插件工作台声明无效")
 	}
+	if w.CloseBehavior != "" && w.CloseBehavior != "detach" {
+		return errors.New("invalid workbench close behavior")
+	}
 	if len(w.Tools) > 16 {
 		return errors.New("too many workbench tools")
 	}

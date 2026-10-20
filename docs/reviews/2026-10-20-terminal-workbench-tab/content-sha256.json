@@ -1,0 +1,11 @@
+{
+  "baseline": "f795a240cdb37e9b92a37d91664bd1bb3053b809",
+  "files": {
+    "internal/server/web/app.js": "1ece9a172ad65ed92d12fa4f04b33d8ff446d4a36be4487590204af76a5b8af9",
+    "internal/server/web/plugin-workbench.js": "9508f9fe89aa69160bd2a81f82c2ce0390060eea90ecf2fde2f802ffc92ca401",
+    "internal/server/web/locales/en.js": "19936e2f2853df6bb45c8c1b1a6d3a2d1acf409a6830b0bbf7400afa4902809c",
+    "scripts/plugin-workbench.test.cjs": "7b6b1c24e1abc656217b6cf89c228a73056d25960fb8fff780c2369ccbc13bd8",
+    "scripts/plugin-workbench-tab.browser.cjs": "fb21b3115e9a387ef0410ee9b8b8ee3a7f13303fc07764f11abf5a7966ea280d"
+  },
+  "binarySHA256": "fead38ab15e41fee772befe7338ff4ee13468eec4721e49533f73bdf6ff1ed5f"
+}

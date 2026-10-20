@@ -369,3 +369,19 @@ Safari对opaque sandbox iframe中的blob下载不应仅凭a.click就视为成功
 An opaque workbench iframe may post `{type:"aide.workbench.theme.ready",protocol:1}` to its parent. The active parent checks `event.source` against its own frame, then replies with `aide.workbench.theme`, protocol 1, resolved `theme` (light/dark), `palette` (blue/comfort/green), and `colors`. The snapshot contains only these existing semantic colors: bg, panel, surface, field, text, muted, line, field-border, brand-hi, brand-text, on-brand, chip-bg, selected, focus-ring, danger, warn, success. It grants no tool, file, storage or settings access and does not require workbench.tools.
 
 The parent observes theme/palette changes for the active view and disconnects on close, scope change or lock. Clients must validate the parent source, protocol, complete color allowlist and CSS color values, then map to their own prefixed presentation variables. Unknown hosts retain their standalone appearance. Chart redraws must reuse existing results rather than rerun computations. Safari source-component checks passed for RF ordinary/native views; installation/restart acceptance remains separate.
+
+### 长时间交互与面板分离（宿主新增能力）
+
+工作台客户端可在 `aide.workbench.ready` 中声明 `requestIds:"monotonic"`，之后每次请求 ID 必须为严格递增的 `r_<正整数>`。父页面仅维护最高序号，重放或倒退序号即拒绝；更新后的握手回传 `capabilities:["bridge.renew","daemon.detach"]`。旧客户端仍使用原128次预算，不自动转换请求 ID。
+
+在空闲且作用域仍有效时，父页面通过带宿主鉴权的 `POST /api/plugins/{id}/workbench/{instance}/renew` 原子轮换能力标识，并延长30分钟。旧标识立即失效，工作区、锁代次、启用状态、HTML 摘要及包身份不能改变，待审批提案归属保留；忙碌、过期或已撤销实例无法续期。新客户端父页面在100次调用或20分钟后，于下一次调用之前续期；不重试失败工具，新的能力标识不会传入 iframe。序号在当前页面整个生命周期保持递增，轮换不能重放旧序号。
+
+声明 `daemon:true` 的插件可选择 `workbench.closeBehavior:"detach"`。普通关闭面板立即卸载 iframe、关闭 MessagePort，允许**已派发的一次调用**完成后释放桥接；浏览器断开请求本身不终止该次调用。此选项不会启动额外调用、延长310秒调用期限或改变审批。锁屏、工作区/权限变化及显式桥接撤销仍取消调用，超时/取消仍保留 daemon 原有的终止实例策略。未选择此行为的工作台保持关闭时中止调用的原行为。
+
+`GET /api/plugins` 增加 `daemon` 布尔字段，供父页面应用上述生命周期；插件的实际常驻会话由自身后台管理，桥接续期不等于进程持久化。依赖这些能力的插件必须检查握手能力；旧宿主忽略未知字段时不能据此认定支持。
+
+### 新标签页入口
+
+插件卡片和已打开工作台的标题栏提供“新标签页打开”。入口打开同源 `/?plugin-workbench=<插件ID>`，仅接受单个、1–64位字母/数字/下划线/连字符 ID。链接不包含访问令牌、一次性票据或桥接标识，并通过 `noopener,noreferrer` 隔离原页面。
+
+新页沿用同源登录存储和锁屏流程，在初始化或解锁完成后，仅为已启用且无加载错误的插件创建自己的沙箱 iframe 与受控桥接。刷新会重新打开该工作台；关闭原标签页不影响新页面的桥接或插件后台会话。原页的“打开工作台”与内嵌面板行为保留，日志下载仍通过新页面顶部的“保存文件”。

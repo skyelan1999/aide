@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "browser": "154.0.8037.57",
+  "calls": 218,
+  "renewals": 1,
+  "checks": [
+    "local PTY input",
+    "session isolation",
+    "background after close",
+    "140 calls with renewal",
+    "output search",
+    "parent-mediated log download",
+    "professional dark",
+    "classic light",
+    "SSH host confirmation and password",
+    "390px mobile switch",
+    "reload recovery",
+    "explicit session close",
+    "cancel and confirm log deletion"
+  ],
+  "errors": []
+}

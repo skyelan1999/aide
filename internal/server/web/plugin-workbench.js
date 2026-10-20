@@ -1,15 +1,18 @@
 'use strict';
 (function(){
  let active=null;
- function close(){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);item.abort.abort();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.bridge){item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE'}).catch(()=>{});}if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
+ function requestedPlugin(search){const p=new URLSearchParams(search);if(p.getAll('plugin-workbench').length!==1)return '';const id=p.get('plugin-workbench');return /^[A-Za-z0-9_-]{1,64}$/.test(id||'')?id:'';}
+ function openInTab(plugin,services){if(services.blocked()||!plugin.enabled||plugin.error||plugin.workbench?.protocol!==1||!/^[A-Za-z0-9_-]{1,64}$/.test(plugin.id||''))return;window.open('/?plugin-workbench='+encodeURIComponent(plugin.id),'_blank','noopener,noreferrer');}
+ function close(force=false){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE'}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
  async function open(plugin,services){
   close();if(services.blocked()||!plugin.enabled)return;
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
   const host=document.createElement('section');host.className='plugin-workbench';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
-  title.textContent=plugin.workbench.title;notice.textContent=services.t('独立插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=close;
+  title.textContent=plugin.workbench.title;notice.textContent=services.t('独立插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>close();
   frame.title=plugin.workbench.title;frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
-  header.append(title,notice,button);host.append(header,frame);document.body.append(host);
+  const tab=document.createElement('button');tab.type='button';tab.textContent=services.t('新标签页打开');tab.onclick=()=>{if(!invalid())openInTab(plugin,services);};
+  header.append(title,notice,tab,button);host.append(header,frame);document.body.append(host);
   const review=document.createElement('button');review.type='button';review.hidden=true;review.textContent=services.t('查看待审批提案');header.append(review);
   const save=document.createElement('button');save.type='button';save.className='plugin-workbench-export';save.hidden=true;header.append(save);
   const editor=document.createElement('button');editor.type='button';editor.hidden=true;header.append(editor);
@@ -50,28 +53,39 @@
    save.onclick=()=>{if(invalid()||item.download?.url!==url)return;const a=document.createElement('a');a.href=url;a.download=m.name;document.body.append(a);a.click();a.remove();item.download.requested=true;save.textContent=services.t('再次保存')+' · '+m.name;respond('requested');};
    respond('ready');
   };window.addEventListener('message',item.listener);
-  item.timer=setInterval(async()=>{if(invalid()){if(active===item)close();return;}if(!item.proposal||item.polling||Date.now()-(item.lastPoll||0)<1500)return;item.polling=true;item.lastPoll=Date.now();try{const response=await services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+item.bridge.instanceId+'/call',{method:'POST',body:JSON.stringify({protocol:1,requestId:'proposal_poll',method:'proposal.status',proposalId:item.proposal}),signal:abort.signal});const signature=JSON.stringify(response.result);if(!invalid()&&signature!==item.proposalSignature){item.proposalSignature=signature;item.port?.postMessage({protocol:1,event:'proposal.changed',proposalId:item.proposal,result:response.result});}}catch(_){/* No automatic tool retry or approval on failed observation. */}finally{item.polling=false;}},300);
+  item.timer=setInterval(async()=>{if(invalid()){if(active===item)close(true);return;}if(!item.proposal||item.polling||Date.now()-(item.lastPoll||0)<1500)return;item.polling=true;item.lastPoll=Date.now();try{const response=await services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+item.bridge.instanceId+'/call',{method:'POST',body:JSON.stringify({protocol:1,requestId:'proposal_poll',method:'proposal.status',proposalId:item.proposal}),signal:abort.signal});const signature=JSON.stringify(response.result);if(!invalid()&&signature!==item.proposalSignature){item.proposalSignature=signature;item.port?.postMessage({protocol:1,event:'proposal.changed',proposalId:item.proposal,result:response.result});}}catch(_){/* No automatic tool retry or approval on failed observation. */}finally{item.polling=false;}},300);
   try{const result=await services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/open',{method:'POST',body:'{}',signal:abort.signal});
-   if(invalid()){if(active===item)close();return;}
+   if(invalid()){if(active===item)close(true);return;}
    if(result.protocol!==1||!/^\/plugin-workbench\/[a-f0-9]{64}$/.test(result.url))throw Error('Invalid workbench route');
    if(result.bridge){
     const b=result.bridge;if(b.protocol!==1||!(/^[a-f0-9]{64}$/.test(b.instanceId))||!Array.isArray(b.tools)||b.tools.length>16||b.tools.some(x=>typeof x!=='string'||!plugin.workbench.tools?.includes(x)))throw Error('Invalid workbench bridge');item.bridge=b;
     item.toolReady=e=>{if(invalid()||item.port||e.source!==frame.contentWindow||e.data?.type!=='aide.workbench.ready'||e.data?.protocol!==1)return;
-     const channel=new MessageChannel();item.port=channel.port1;const seen=new Set();let busy=false;
-     item.port.onmessage=async event=>{const m=event.data;if(invalid()){close();return;}if(!m||m.protocol!==1||typeof m.requestId!=='string'||!(/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(m.requestId||'')))return;
+     const channel=new MessageChannel();item.port=channel.port1;const seen=new Set(),sequenced=e.data.requestIds==='monotonic';let highest=0,busy=false,requests=0,renewed=Date.now();
+     item.port.onmessage=async event=>{const m=event.data;if(invalid()){close(true);return;}if(!m||m.protocol!==1||typeof m.requestId!=='string'||!(/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(m.requestId||'')))return;
       const send=value=>{if(!invalid())item.port?.postMessage(value);};
-      if(seen.has(m.requestId)||seen.size>=128||busy){send({requestId:m.requestId,status:'error',error:'Busy or duplicate request'});return;}seen.add(m.requestId);
+      if(busy){send({requestId:m.requestId,status:'error',error:'A call is already pending'});return;}
+      if(sequenced){const match=/^r_([1-9][0-9]{0,14})$/.exec(m.requestId),number=match?Number(match[1]):0;if(!Number.isSafeInteger(number)||number<=highest){send({requestId:m.requestId,status:'error',error:'Invalid or replayed sequence'});return;}highest=number;}
+      else{if(seen.has(m.requestId)||seen.size>=128){send({requestId:m.requestId,status:'error',error:'Duplicate or exhausted request'});return;}seen.add(m.requestId);}
       if(!['tool.call','proposal.status'].includes(m.method)||(m.method==='tool.call'&&!b.tools.includes(m.tool))){send({requestId:m.requestId,status:'error',error:'Method/tool not permitted'});return;}
       busy=true;try{const body=JSON.stringify({protocol:1,requestId:m.requestId,method:m.method,tool:m.tool,arguments:m.arguments||{},attachments:m.attachments||[],proposalId:m.proposalId});if(body.length>262144)throw Error('Bridge request too large');
-       const value=await services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/call',{method:'POST',body,signal:abort.signal});if(invalid())return;
+       if(sequenced&&(requests>=100||Date.now()-renewed>20*60*1000)){
+        item.inflight=services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/renew',{method:'POST',body:'{}',signal:abort.signal});
+        const next=await item.inflight;
+        if(next.protocol!==1||!(/^[a-f0-9]{64}$/.test(next.instanceId)))throw Error('Invalid renewed bridge');
+        b.instanceId=next.instanceId;requests=0;renewed=Date.now();
+        if(invalid()){services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId,{method:'DELETE'}).catch(()=>{});return;}
+       }
+       requests++;
+       item.inflight=services.api('/plugins/'+encodeURIComponent(plugin.id)+'/workbench/'+b.instanceId+'/call',{method:'POST',body,signal:abort.signal});
+       const value=await item.inflight;if(invalid())return;
        send(value);if(value.status==='proposal_pending'){item.proposal=value.proposalId;item.proposalSignature='';review.hidden=false;review.onclick=()=>{close();services.reviewProposal?.(value.sessionId);};}
-      }catch(error){send({requestId:m.requestId,status:'error',error:error.message});}finally{busy=false;}
-     };item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools},'*',[channel.port2]);
+      }catch(error){send({requestId:m.requestId,status:'error',error:error.message});}finally{item.inflight=null;busy=false;}
+     };item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:['bridge.renew','daemon.detach']},'*',[channel.port2]);
     };
    }
    frame.src=result.url;
   }catch(error){if(active===item){close();if(error.name!=='AbortError')services.toast(error.message);}}
  }
  document.addEventListener('keydown',e=>{if(active&&e.key==='Escape'){e.preventDefault();close();}});
- window.AidePluginWorkbench={open,close};
+ window.AidePluginWorkbench={open,close,openInTab,requestedPlugin};
 })();

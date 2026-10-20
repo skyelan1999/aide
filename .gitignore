@@ -54,3 +54,6 @@ profiles.json
 
 # Docker distribution archives are published as Release assets, not Git blobs.
 docker-images/*.zip
+
+# Terminal workbench session data and private device logs.
+/.aide/terminal-workbench/

@@ -1,17 +1,34 @@
 {
   "id": "terminal",
-  "name": "终端",
-  "description": "DSH terminal 能力预设：终端会话与命令执行",
-  "version": "1.0.0",
+  "name": "设备终端",
+  "description": "常驻本地/SSH 设备调试工作台、独立会话与轮转日志",
+  "version": "1.1.0",
   "author": "aide",
   "main": "index.js",
   "enabled": true,
-  "installedAt": "2026-09-21T18:00:34Z",
-  "settingsSchema":   {
+  "settingsSchema": {
     "type": "object",
     "title": "插件参数",
     "description": "此插件暂未声明专属选项。可在扩展参数中添加插件会读取的设置，也可切换到文本模式直接编辑 JSON。",
     "properties": {},
     "additionalProperties": true
+  },
+  "daemon": true,
+  "workbench": {
+    "protocol": 1,
+    "entry": "workbench.html",
+    "title": "设备终端工作台",
+    "tools": [
+      "terminal_session_list",
+      "terminal_session_create",
+      "terminal_session_input",
+      "terminal_session_poll",
+      "terminal_session_resize",
+      "terminal_session_close",
+      "terminal_session_logging",
+      "terminal_session_logs",
+      "terminal_session_delete"
+    ],
+    "closeBehavior": "detach"
   }
 }
