@@ -57,14 +57,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source correction ready for authorized main push. No new host Docker image release. Independent Terminal prerelease and market publication already verified.",
+      "status": "pass",
+      "summary": "Source correction pushed directly to main at c6dc2182a4387b42c929bb802bd3d5f75631c0d9. Independent Terminal1.4.0 release and deployed market verified. Source handoff only: no new host image/version release.",
       "evidence": [
+        "https://github.com/skyelan1999/aide/commit/c6dc2182a4387b42c929bb802bd3d5f75631c0d9",
         "docs/reviews/2026-10-20-independent-plugin-distribution/verification.json"
       ]
     }
   },
   "release_authorization": "Existing direct main push authorization; correction follows current independent plugin concern",
   "rollback": "Revert source commit to restore old bootstrap only if desired; retain installed plugin state. Reverting host code alone does not migrate Terminal private state back; back up and manually restore state before plugin downgrade.",
-  "handoff": "Independent distribution restored. Fresh host installs no plugins; install via market or verified ZIP. Existing installations preserved. Real-plugin integration checks opt in with external repositories. Native/source/browser-fixture checks passed; host image build and full start.command UI NOT_RUN."
+  "handoff": "Independent distribution restored. Fresh host installs no plugins; install via market or verified ZIP. Existing installations preserved. Real-plugin integration checks opt in with external repositories. Native/source/browser-fixture checks passed; host image build and full start.command UI NOT_RUN. Main correction pushed at c6dc2182a4387b42c929bb802bd3d5f75631c0d9."
 }

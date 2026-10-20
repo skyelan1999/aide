@@ -136,11 +136,12 @@
   ],
   "preservation": "Ignored installed plugins, registry, sessions and logs untouched; removed Git source copies preserved in external local test snapshot; ten unrelated preexisting untracked task records not staged",
   "publication": {
-    "main": "pending source push",
+    "main": "c6dc2182a4387b42c929bb802bd3d5f75631c0d9",
     "terminal": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.0",
     "market": "5ac264ed3cc1f6f5a5bd81bde354bbc68804d0de",
     "pages": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39373828328",
-    "liveCatalogAndZIP": "PASS content and SHA256; only Terminal listing changed, retired communication plugins remain absent"
+    "liveCatalogAndZIP": "PASS content and SHA256; only Terminal listing changed, retired communication plugins remain absent",
+    "mainStatus": "PUSHED origin/main; tracked bundled-plugins inventory empty, only synthetic plugins/testdata remains tracked"
   },
   "rollback": "Revert source commit to restore old bootstrap only if desired; retain installed plugin state. Reverting host code alone does not migrate Terminal private state back; back up and manually restore state before plugin downgrade."
 }
