@@ -62,9 +62,13 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User-authorized source main push, Terminal1.3.1 prerelease and market update; no Aide image release.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Host main a568a538 and Terminal1.3.1 badf9ac/tag pushed; public prerelease published. Market c5c421a deployed successfully; anonymous release ZIP/SHA256SUMS and actual live market ZIP, source and capability flag verified. Source1.3.0/archive preserved; no formal Aide image release.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.3.1",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39360496782",
+        "https://skyelan1999.github.io/aide-pkg-shop/catalog.json"
+      ]
     }
   },
   "release_authorization": "Current merge request continues active Terminal push/release/market workflow; direct main push authorized earlier.",
@@ -74,5 +78,16 @@
     "tag": "v1.3.0",
     "source": "4d87ca5",
     "status": "Retained source tag/archive, superseded by 1.3.1 before GitHub Release/market publication to fix RTS/CTS mapping."
+  },
+  "delivery": {
+    "hostSource": "a568a538",
+    "pluginSource": "badf9ac",
+    "pluginVersion": "1.3.1",
+    "marketSource": "c5c421a",
+    "marketDeployment": "39360496782 PASS",
+    "hostImage": "NOT_RUN",
+    "physicalUSB/UART": "NOT_RUN",
+    "fullStartCommandUI": "NOT_RUN; existing activation blocker recorded, no bypass launcher used",
+    "productionServicesChanged": false
   }
 }
