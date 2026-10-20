@@ -2891,6 +2891,15 @@ function openFileTransferPicker(operation, selectedPaths, target = {root:state.r
   document.body.append(dlg); dlg.onclose = () => dlg.remove();
   dlg.showModal(); render();
 }
+let compareLeftSelection=null;
+async function openCompareSelection(selection,scope){
+ if(lockScreen.locked||scope!==recoveryScope())return;
+ const data=await api('/plugins');if(lockScreen.locked||scope!==recoveryScope())return;
+ state.plugins=data.plugins||[];const plugin=state.plugins.find(p=>p.id==='compare'&&p.enabled&&!p.error&&p.workbench?.protocol===1);
+ if(!plugin){toast(t('请先安装并启用 Compare 插件。'));return}
+ if(selection.right&&selection.left.directory!==selection.right.directory){toast(t('请选择两个文件，或两个文件夹。'));return}
+ await window.AidePluginWorkbench.open(plugin,{...pluginWorkbenchServices(),selection});
+}
 function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   closeFileContextMenu();
   const selectedPaths = state.fileEntries.filter(f => state.fileSelection.has(f.path)).map(f => f.path);
@@ -2966,7 +2975,17 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn, file.path, state.fileEntries.indexOf(file)); beginInlineRename(rowBtn, nameSpan, file, target); };
   props.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await showFileProperties(file, target); });
   del.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await deleteFileEntry(file, target); });
-  m.append(attach, copyTo, moveTo, download, zipButton, compressMore, extract, ren, props, del);
+  m.append(attach);
+  if(['workspace','context'].includes(target.root)){
+   const scope=recoveryScope(),source=target.source?'source:'+target.source:target.root;
+   const side=f=>({source,path:f.path,directory:!!f.dir});
+   const compare=el('button','file-ctx-item',t('用 Compare 比较…'));
+   compare.onclick=action(async e=>{e.stopPropagation();closeFileContextMenu();const picked=state.fileEntries.filter(f=>selectedPaths.includes(f.path));await openCompareSelection({left:side(file),...(picked.length===2?{left:side(picked[0]),right:side(picked[1])}:{})},scope)});
+   const setLeft=el('button','file-ctx-item',t('设为 Compare 左侧'));setLeft.onclick=e=>{e.stopPropagation();closeFileContextMenu();compareLeftSelection={scope,value:side(file)};toast(t('已设为 Compare 左侧：')+file.path)};
+   m.append(compare,setLeft);
+   if(compareLeftSelection?.scope===scope){const useRight=el('button','file-ctx-item',t('与 Compare 左侧比较'));const left=compareLeftSelection.value;useRight.onclick=action(async e=>{e.stopPropagation();closeFileContextMenu();await openCompareSelection({left,right:side(file)},scope)});m.append(useRight)}
+  }
+  m.append(copyTo, moveTo, download, zipButton, compressMore, extract, ren, props, del);
   document.body.append(m);
   fileCtxMenuEl = m;
   m.style.left = Math.max(8, Math.min(ev.clientX, innerWidth - 198)) + 'px';

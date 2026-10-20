@@ -1,0 +1,50 @@
+{
+  "status": "pass",
+  "version": "0.3.2-local-candidate",
+  "release": "not published",
+  "package": {
+    "sha256": "c8574a082014a957f4eb3bf6aecabaf8f129b0e4981d272a6d6b9046403eb1d3",
+    "bytes": 5903722
+  },
+  "ui": {
+    "tabs": [
+      "文件 / 文件夹",
+      "Git"
+    ],
+    "textChangedRows": 2,
+    "imageChangedPixels": 256,
+    "imageChangedPercent": 1.333,
+    "docxChangedRows": 2,
+    "directoryEntries": 8,
+    "mixedTypesRejected": true,
+    "pickerFile": true,
+    "pickerCurrentFolder": true
+  },
+  "tests": {
+    "selection": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packageCheck": "pass",
+    "docsCheck": "pass",
+    "diffCheck": "pass"
+  },
+  "liveApi": {
+    "status": "pass",
+    "browseEntries": 13,
+    "readKind": "read",
+    "gitKind": "git",
+    "reportBytes": 8448,
+    "docComparisonId": "3ef6159949be4d1b679e3dfed7b3623f4d1a0dde72ab72923deb7ace38b5e442"
+  },
+  "evidence": [
+    ".agent-state/compare-unified-entry/unified-compare.png",
+    ".agent-state/compare-unified-entry/ui-checks.json",
+    ".agent-state/compare-unified-entry/install.json"
+  ],
+  "limitations": [
+    "SSH transport unchanged; no new SSH connection test this turn",
+    "No new paid AI model call",
+    "No push or release"
+  ]
+}

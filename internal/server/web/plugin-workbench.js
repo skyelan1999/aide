@@ -1,13 +1,20 @@
 'use strict';
 (function(){
  let active=null;
+ function selection(value){
+  if(!value||typeof value!=='object')return undefined;const out={};
+  for(const side of ['left','right']){const v=value[side];if(!v)continue;
+   if(typeof v.path!=='string'||!v.path||v.path.length>2048||v.path.startsWith('/')||v.path.split('/').includes('..')||/[\\\x00-\x1f]/.test(v.path)||! /^(workspace|context|source:[A-Za-z0-9_-]{1,64})$/.test(v.source||''))return undefined;
+   out[side]={path:v.path,source:v.source,directory:v.directory===true};
+  }return out.left?out:undefined;
+ }
  function close(force=false){if(!active)return;const item=active;active=null;clearInterval(item.timer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE',keepalive:true}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.focus?.focus();}
  async function open(plugin,services){
   close();if(services.blocked()||!plugin.enabled)return;
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
   const host=document.createElement('section');host.className='plugin-workbench';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
-  title.textContent=plugin.workbench.title;notice.textContent=services.t('独立插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>close();
+  title.textContent=plugin.workbench.title;notice.textContent=services.t('插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>close();
   frame.title=plugin.workbench.title;frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
   header.append(title,notice,button);host.append(header,frame);document.body.append(host);
   const review=document.createElement('button');review.type='button';review.hidden=true;review.textContent=services.t('查看待审批提案');header.append(review);
@@ -77,7 +84,7 @@
        const value=await item.inflight;if(invalid())return;
        send(value);if(value.status==='proposal_pending'){item.proposal=value.proposalId;item.proposalSignature='';review.hidden=false;review.onclick=()=>{close();services.reviewProposal?.(value.sessionId);};}
       }catch(error){send({requestId:m.requestId,status:'error',error:error.message});}finally{item.inflight=null;busy=false;}
-     };item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:['bridge.renew','daemon.detach']},'*',[channel.port2]);
+     };item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:['bridge.renew','daemon.detach'],selection:selection(services.selection)},'*',[channel.port2]);
     };
    }
    frame.src=result.url;
@@ -85,5 +92,5 @@
  }
  document.addEventListener('keydown',e=>{if(active&&e.key==='Escape'){e.preventDefault();close();}});
  window.addEventListener('pagehide',()=>close());
- window.AidePluginWorkbench={open,close};
+ window.AidePluginWorkbench={open,close,selection};
 })();

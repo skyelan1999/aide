@@ -2,9 +2,16 @@
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
   "插件工作台不可用，请检查插件是否启用。": "Plugin workbench unavailable. Check that the plugin is enabled.",
+ "用 Compare 比较…":"Compare…",
+ "设为 Compare 左侧":"Set as Compare left side",
+ "与 Compare 左侧比较":"Compare with left side",
+ "已设为 Compare 左侧：":"Compare left side set: ",
+ "请先安装并启用 Compare 插件。":"Install and enable Compare first.",
+ "请选择两个文件，或两个文件夹。":"Select two files or two folders.",
 "打开工作台":"Open workbench",
 "关闭工作台":"Close workbench",
 "独立插件工作台 · 本地计算":"Independent plugin workbench · local computation",
+"插件工作台 · 本地计算":"Plugin workbench · local computation",
 "付费筹备中":"Paid edition coming soon",
 "授权安装":"Licensed installation",
 "交付方式":"Delivery",

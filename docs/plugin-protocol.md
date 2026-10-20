@@ -397,3 +397,22 @@ Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注�
 宿主对所有 `terminal_` daemon 工具传递工作区上下文，新增 `communicationsVersion:1` 和每次调用的 `disabledTools`。通用分发先执行规范工具名禁用检查，运行适配器也对会话发送执行同一检查，避免绕过直接工具禁用。新插件拒绝缺少策略上下文的宿主；市场使用 `terminal-communications-v1` 能力标记阻止不兼容安装。该标记不跳过最低宿主版本或未知能力检查。
 
 高级 SSH API 的引用私钥支持直调用 `terminal_ssh_connect` 及受控分发的嵌套参数，由宿主读取后只通过 daemon 上下文注入。API 连接要求用户核验的 SHA256 主机指纹；工作台交互式 SSH 保持 OpenSSH known_hosts。每个工作区独立持有通信模块实例及带作用域身份的资源句柄。SFTP 本地路径仅允许当前本地工作区；模拟SFTP使用独立临时根。安装包内置固定版本 ssh2、serialport、运行依赖和上游许可，控制在既有256文件/64MiB展开上限内，不调用安装脚本。
+
+### 只读文件来源与临时快照
+
+短命 `call` handler 可使用 `await api.sources(request)`。宿主为每次已准入调用建立私有 Unix socket；不向插件传递 SSH/SFTP 密码或私钥，不开放公共 HTTP 路由。当前支持本地/SSH 工作区及已启用且允许 AI 访问的 local/skill/SFTP/workspace-sftp 引用。daemon 暂不提供此接口，其他协议来源需单独适配。
+
+- `{operation:'sources'}` 返回 `sources:[{id,name,type,origin}]`；ID 为 `workspace`、`context` 或 `source:<id>`，不含端点及凭据。
+- `{operation:'browse',source,path}` 返回有界目录条目；路径是所选来源内的规范相对路径，列表包含点文件，不跟随链接。
+- `{operation:'stage',source,path,slot,recursive,maxBytes,maxFiles,maxDepth,exclude}` 返回 `{workspace,path,source}`：`workspace` 是本次调用独有的临时本地根，`path` 是其内快照相对路径；`source` 记录原始来源/路径、配置身份、文件/字节数、宿主保护路径排除项与原始时间戳未保留标志。`slot` 为唯一的 `left`、`right` 或 `path`，同次调用不能重复。
+- `{operation:'localRoot',source}` 仅为本地来源返回其本地根及来源身份，供已有本地 Git 等可信插件读取；远程来源返回明确错误。
+
+快照上限为单文件 8 MiB、同次调用合计 64 MiB、每侧/每次目录列表 5,000 条目、目录深度 32、每次来源请求 90 秒；更低的请求预算生效。达到预算、读取失败或遇到链接/特殊文件时拒绝整个快照，不返回可被误读为完整的部分目录。宿主保护路径 `.git`、`.data`、`.aide-data`、`.env`、`docker-images` 不进入快照，排除范围写入来源记录。SSH/SFTP 目录必须能无损解析，无法解析的条目使请求失败。快照只证明实际读取的字节；不保留原修改时间，不保证变化目录的跨文件原子快照，不证明远端历史、作者或可信时间。
+
+读取前后和 handler 结束时重查工作区、来源配置、连接代次及 AI 可见性。来源变化拒绝旧结果。正常返回、取消或错误后关闭 socket 并清理临时副本。引用访问需要跨来源调度时，插件应省略旧的本地 `scheduling` 契约，使用保守的执行域独占；此 API 不是对可信 Node 插件的 OS 沙箱。
+
+`api.runPython` 新增 `options.sourceSnapshot:true`：远程工作区下仅显式启用该选项且宿主提供来源 API 时，允许在本地插件安装目录启动 Python，并由插件将宿主提供的临时根传给受限比较器。`api.workspaceRoot` 仍为空，`readFile/listFiles` 仍拒绝把 SSH 回退成本地工作区；其他插件调用行为兼容。
+
+`workbench.standalone:false` 为旧版宿主兼容元数据；当前宿主已全局取消插件新标签页入口，统一内嵌打开。
+
+工作台连接消息可包含经过宿主白名单过滤的 `selection:{left,right?}` 提示，每侧只有 `{source,path,directory}`。它不包含鉴权、端点、用户设置或文件内容，也不改变工具权限。Compare 的工作区/引用右键菜单可设置左侧，再选择另一来源作为右侧，或直接比较两个同类条目。来源切换、禁用或不允许 AI 访问时，插件必须重新验证并拒绝无效提示。
