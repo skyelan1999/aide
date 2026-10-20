@@ -54,5 +54,7 @@
       "status": "NOT_RUN",
       "reason": "UI-only component task; prior launcher disk guard and existing release failures remain. No new image/tag/deployment."
     }
-  ]
+  ],
+  "source_commit": "1d7628b15a70b29ccd4d1707ee2e8d4a5ad005ae",
+  "source_push": "PASS: origin/main"
 }

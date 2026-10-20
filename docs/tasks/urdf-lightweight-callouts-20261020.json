@@ -64,7 +64,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "仅准备按已授权直接推main；未通过full发行门禁，不打tag/发Release/换镜像。",
+      "summary": "源码1d7628b1已推origin/main；full发行门禁未通过，不打tag/发Release/换运行镜像。",
       "evidence": [
         "docs/reviews/2026-10-20-urdf-lightweight/verification.json"
       ]
@@ -72,6 +72,8 @@
   },
   "release_authorization": "沿用用户此前“那你直接推吧，我去别的环境测试”“直接合并到main”的源码推送授权。",
   "rollback": "git revert本任务功能提交后按原流程构建；无数据迁移，不删除用户模型/草稿/数据，不更换运行中镜像。",
-  "handoff": "图内标注统一单行，点击打开检查器；原姿态和资源边界保留。组件已验，生产工作台镜像、真实SSH、硬件未验；源码推送后另记提交。",
-  "fingerprint": "ab77dafdecc740e9ea17a42ef75c3b3223cd7a7c5caab51dd9bed8be16531860"
+  "handoff": "源码1d7628b1已推main。图内单行标注、按需检查器和显示菜单已完成；真实组件浏览器验收覆盖桌面/窄屏、blue/comfort明暗、真实RPY和全固定模型。无生产部署或镜像替换。临时页与HTTP退出；原有10份未跟踪任务保留。",
+  "fingerprint": "ab77dafdecc740e9ea17a42ef75c3b3223cd7a7c5caab51dd9bed8be16531860",
+  "source_commit": "1d7628b15a70b29ccd4d1707ee2e8d4a5ad005ae",
+  "source_push": "PASS: origin/main"
 }
