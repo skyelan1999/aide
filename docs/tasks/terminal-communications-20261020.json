@@ -1,0 +1,73 @@
+{
+  "id": "terminal-communications-20261020",
+  "request": "把ssh tcp udp的插件功能合并到terminal里面，还有串口通信",
+  "baseline": "3f6ee4223a0dace02454d302217b04eeb523ce2d",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Terminal includes all 35 existing SSH/TCP/UDP/serial tools under collision-free terminal_ names",
+    "TCP client/server, UDP and serial sessions share workbench navigation, bounded TX/RX logs and explicit text/hex sending",
+    "Preserve SSH workspace, password/reference-key behavior; isolate communication resources by workspace, stop on daemon shutdown",
+    "Exercise real loopback TCP/UDP, virtual serial, SSH/SFTP/tunnel and browser UI; publish documented package with verified runtime dependencies"
+  ],
+  "scope": [
+    "aide-pkg-terminal runtime/UI/dependency packaging/tests",
+    "Aide Terminal mirror, scoped daemon context and integration tests",
+    "Terminal market release and handoff docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Merge full implemented tool set, not just connection declarations; retain old packages for compatibility.",
+      "evidence": [
+        "plugins/comm-ssh/index.js",
+        "plugins/comm-tcp/index.js",
+        "plugins/comm-udp/index.js",
+        "plugins/comm-serial/index.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-workspace communication instances, prefixed legacy operations, shared basic sessions, pinned dependencies, canonical tool policy checks.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-communications/verification.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Merged all35 SSH/TCP/UDP/serial operations;49 tools total. TCP client/listener, UDP and serial workbench, explicit UTF8/HEX send and bounded TX/RX logs. Compatibility markers and no fallback on old host.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-communications/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "All focused checks pass; full running-host UI remains NOT_RUN because start.command activation prerequisites are unresolved. No formal host image release.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-communications/verification.json",
+        "docs/reviews/2026-10-20-terminal-communications/browser-result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README, changelog, module attribution and host protocol cover tools, dependencies, transfer roots, permissions, execution location and hardware limitations.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-communications/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diffs reviewed; original plugins/archives retained, npm development assets excluded from ZIP, preexisting task files and live services preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-communications/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "User-authorized source main push, Terminal1.3.0 prerelease and market update; no Aide image release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Current merge request continues active Terminal push/release/market workflow; direct main push authorized earlier.",
+  "rollback": "Restore prior immutable plugin ZIP and matching host code. Upgrade ends running sessions/connections; workbench logs/records remain. No running service or user data replaced.",
+  "handoff": "Requires matching Aide main. Existing comm-* packages retained. Physical serial device mapping/permissions must be configured in the Aide runtime; virtual devices only validated here."
+}

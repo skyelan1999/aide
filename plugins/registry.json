@@ -64,8 +64,8 @@
     {
       "id": "terminal",
       "name": "设备终端",
-      "description": "常驻本地/SSH 设备调试工作台、独立会话与轮转日志",
-      "version": "1.2.0",
+      "description": "统一 Shell、SSH、TCP、UDP、串口调试工作台与日志",
+      "version": "1.3.0",
       "author": "aide",
       "main": "index.js",
       "enabled": true,
@@ -91,7 +91,8 @@
           "terminal_session_logging",
           "terminal_session_logs",
           "terminal_session_delete",
-          "terminal_session_files"
+          "terminal_session_files",
+          "terminal_session_comm"
         ],
         "closeBehavior": "detach"
       },

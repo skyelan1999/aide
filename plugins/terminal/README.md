@@ -1,10 +1,10 @@
 # Terminal · Aide 设备终端工作台
 
-**1.2.0 预发布，市场已收录，需配套宿主能力。** 基于原有命令提案插件增加独立工作台、常驻本地/SSH 会话与输出日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
+**1.3.0 预发布，市场已收录，需配套宿主能力。** 统一 Shell、SSH、TCP、UDP 与串口调试工作台，提供常驻会话和日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
 
 ## 安装预发布版
 
-从 [v1.2.0 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.2.0) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.2.0/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
+从 [v1.3.0 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.3.0) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.3.0/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
 
 插件新标签页入口已移除；后台会话、日志及 Aide 管理能力继续保留。宿主界面变更需要更新 Aide main 源码构建，单独升级插件不会替换宿主界面。
 
@@ -17,6 +17,31 @@ SSH 首次连接在终端显示主机指纹，请通过可信途径核对后输�
 工作台按本地、SSH、历史会话分组，支持名称/主机搜索与运行状态筛选；标签栏只显示活动会话和当前选中的历史会话。桌面右侧显示真实连接状态、目标、起始目录、创建时间和日志详情。工作台在当前 Aide 页面内打开，窄屏使用会话抽屉。提供 xterm 终端、窗口尺寸适配、Ctrl+C、输出查找、日志开关与下载。命令和按键直接发送到目标会话，请确认当前标签对应的设备。关闭面板不会自动发送尚未送达的输入，也不会重试结果不确定的写操作。
 
 SSH 工作区 Shell 沿用工作区设置中的密码、私钥或引用私钥认证，不在终端面板再次保存一份凭据。连接固定到已认证主连接；切换工作区、主连接断开后不会自动改接其他主机。远程主机需具备 `/bin/bash`，所填起始目录用于工作区 Shell；设备 SSH 登录后的目录由远端账户决定。
+
+## TCP、UDP 和串口工作台
+
+“新建会话”可选择 TCP 客户端、TCP 本地监听、UDP 数据报或串口。TCP 监听仅绑定 Aide 运行环境的 `127.0.0.1`，端口0自动分配；新客户端接入后显示独立会话，选择客户端会话进行发送。UDP 可指定目标主机/端口和本地接收端口，发送复用同一个已绑定 socket，设备可向该端口回复。串口提供设备路径、波特率、数据位、停止位、校验与 RTS/CTS 流控，并可刷新可用设备列表。
+
+通信会话使用独立报文发送栏：选择 UTF-8 或 HEX，文本可附加 LF/CRLF/CR。仅点击“发送”才写出报文，不按键逐字发包，不自动重发结果不确定的写入。HEX 必须为完整字节。接收视图和轮转日志保留时间、TX/RX、端点、长度、完整十六进制与可读文本，因此二进制数据和 UDP 报文边界可追溯。日志关闭后不再落盘，仍保留有界内存回放。
+
+所有设备通信均从 **Aide 运行环境**发起；SSH 工作区只改变工作区 Shell 与会话归属，不把 TCP/UDP/串口执行位置自动迁移到远程主机。容器访问物理串口需要预先映射对应设备并具备权限。Linux 原生串口绑定与虚拟 PTY 回环已验证；真实 USB/UART 硬件、Windows/macOS 未实测。
+
+## 合并的高级通信工具
+
+原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具合并到 Terminal，统一加 `terminal_` 前缀；原插件保持可用，工具名不会相互覆盖。Aide 可直接调用这些工具，工作台内部通过受限 `terminal_session_comm` 分发。工具连接、发送、文件传输、代理、回放和模拟均需用户明确意图。
+
+| 前缀 | 功能 |
+| --- | --- |
+| `terminal_ssh_*` | 密码/公钥连接、exec、SFTP 列目录/下载/上传、本地隧道、模拟 SSH/SFTP 服务端及规则 |
+| `terminal_tcp_*` | 连接/监听/发送/关闭、代理、模拟应答、录制回放与有界边界报文探测 |
+| `terminal_udp_*` | 绑定/发送/关闭、模拟应答、回环组播加入/离开 |
+| `terminal_serial_*` | 列出/打开/配置/写入/关闭串口、虚拟串口对、按帧回放 |
+
+`terminal_ssh_fingerprint` 额外提供只读指纹探测，返回 `verified:false`。高级 SSH API 连接必须提供经用户可信途径核验的 `hostFingerprint`（`SHA256:...`）；获取指纹本身不等于信任。工作台 SSH 保留 OpenSSH 的指纹确认与严格 known_hosts 行为。高级 API 的 password/privateKey/passphrase 沿用原插件的临时调用参数，插件不持久化；文件引用模式由宿主通过私有上下文传递私钥，工作台密码与口令仍在终端交互输入。
+
+通信资源按工作区独立管理，API 连接/隧道/模拟服务等句柄包含作用域身份，不能跨工作区使用；后台重启后旧句柄失效。基础 TCP/UDP/串口工具创建的连接也会显示在工作台。高级 SSH API 连接用于 exec/SFTP/隧道，与工作台交互式 SSH PTY 是各自的连接。SFTP 本地文件必须位于当前**本地工作区**，拒绝越界与符号链接逃逸；SSH 工作区不以本地安装目录作为文件传输回退路径。
+
+每个工作区最多32个通信资源，模拟规则/显式回放最多64条、总输入256KiB；TCP 保留最多32份录制，每份最多2MiB/2048帧。原有会话32条记录/16条活动限制继续生效。TCP监听、代理、SSH隧道和模拟服务只在回环监听；UDP组播沿用原实现的显式组播模式，绑定全地址但组成员接口限定回环。管理员禁用的通信工具不能经通用入口或会话发送绕过。
 
 ## 后台生命周期与数据
 
@@ -31,9 +56,9 @@ SSH 工作区 Shell 沿用工作区设置中的密码、私钥或引用私钥认
 
 ## 运行要求与兼容性
 
-Node.js 24、Linux Python 3 标准库 PTY（引用私钥使用 memfd）、`/bin/bash` 和 OpenSSH 客户端。安装包没有 npm 运行依赖，终端 JS/CSS 内嵌、无需 CDN。当前在 **Linux 原生运行环境**实际验证；Windows 用户可通过 Aide Linux 容器使用，终端执行的是容器 Shell。Windows 原生 PTY 未实现，macOS 未实测；这不代表 Windows PowerShell、宿主机终端或设备串口支持。
+Node.js 24、Linux Python 3 标准库 PTY（引用私钥使用 memfd）、`/bin/bash` 和 OpenSSH 客户端。安装包内置固定版本 ssh2 1.17.0、serialport 12.0.0 及其运行依赖与许可证，目标环境无需执行 npm install；终端 JS/CSS 内嵌、无需 CDN。当前在 **Linux 原生运行环境**实际验证；Windows 用户可通过 Aide Linux 容器使用，终端执行的是容器 Shell。Windows 原生 PTY 未实现，macOS 未实测；这不代表 Windows PowerShell、宿主机终端或设备串口支持。
 
-市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.2.0 需要 Aide 同时支持 `terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
+市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.3.0 需要 Aide 同时支持 `terminal-communications-v1`、`terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
 
 插件是可信 Node 代码，不是权限沙箱；交互 Shell 和 SSH 具有 Aide 运行用户的系统权限。工作区边界用于起始目录、私钥路径和会话归属，不限制 Shell 后续能访问的路径。`read-only` 宿主策略会拒绝调用这些插件工具。锁屏、工作区切换、插件停用仍按宿主策略撤销当前面板权限；取消正在执行的工具时宿主可能结束对应后台实例，以防未确认的后续副作用。
 
@@ -70,4 +95,4 @@ node test/browser-layout.cjs
 
 ## 已发布旧版
 
-[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 现已收录 1.2.0 预发布，要求 `terminal-workbench-v1` 能力；旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。
+[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 现已收录 1.3.0 预发布，要求 `terminal-workbench-v1` 能力；旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。

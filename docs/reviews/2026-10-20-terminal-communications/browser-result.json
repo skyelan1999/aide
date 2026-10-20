@@ -1,0 +1,223 @@
+{
+  "status": "PASS",
+  "scope": "Actual generated Terminal UI with real TCP/UDP and native serial PTY echo; authenticated Aide bridge substituted. Full start.command host UI NOT_RUN.",
+  "checks": [
+    {
+      "width": 1440,
+      "theme": "dark",
+      "palette": "blue",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "palette": "blue",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "palette": "blue",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "palette": "green",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "palette": "green",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "dark",
+      "palette": "green",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "palette": "blue",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "palette": "blue",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "palette": "blue",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "palette": "green",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "palette": "green",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 1440,
+      "theme": "light",
+      "palette": "green",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "palette": "blue",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "palette": "blue",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "palette": "blue",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "palette": "green",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "palette": "green",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "palette": "green",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "palette": "blue",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "palette": "blue",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "palette": "blue",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "palette": "green",
+      "kind": "tcp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "palette": "green",
+      "kind": "udp",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "palette": "green",
+      "kind": "serial",
+      "realBinaryEcho": true,
+      "explicitSend": true,
+      "closeAndDelete": true
+    }
+  ],
+  "errors": []
+}

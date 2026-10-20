@@ -1,0 +1,45 @@
+{
+  "version": "1.3.0",
+  "status": "focused runtime/host/browser checks PASS; full start.command UI NOT_RUN",
+  "zipBytes": 1048253,
+  "zipSHA256": "9a1f5c5f34eb33b7c2fd8c56cf49e9b60d28764749777c1199534104fc10e6d4",
+  "runtimeFiles": 162,
+  "surfaceTools": 49,
+  "mergedLegacyTools": 35,
+  "legacyTests": {
+    "ssh": {
+      "pass": 22,
+      "total": 22
+    },
+    "tcp": {
+      "pass": 19,
+      "total": 19
+    },
+    "udp": {
+      "pass": 10,
+      "total": 10
+    },
+    "serial": {
+      "pass": 14,
+      "total": 14
+    }
+  },
+  "pluginTests": "15 PASS: existing PTY/SSH plus TCP, UDP, native virtual serial, SFTP, fingerprint, scopes, disabled-tool enforcement",
+  "extractedRuntimeTests": "9 PASS from extracted ZIP alone, using bundled production dependencies; includes native serial and SSH authentication",
+  "hostTests": "Go race PASS: scoped context/key policies, socket pinning, real ZIP installation, daemon TCP echo and disabled shared-send rejection, market capabilities; 15 Node host/client/workspace regressions PASS",
+  "browser": "24 PASS actual Terminal UI with real TCP/UDP/native PTY serial backend, 1440/390px light/dark blue/green variants; authenticated Aide bridge substituted. Reference-key chooser regression also PASS.",
+  "integrationUI": "NOT_RUN: start.command remains blocked by recorded container CA trust and disk prerequisites; no replacement Aide service launched",
+  "hardware": "Physical USB/UART NOT_RUN; virtual PTY through real serialport native binding PASS; Windows/macOS NOT_RUN",
+  "runtimeDependencies": {
+    "ssh2": "1.17.0",
+    "serialport": "12.0.0",
+    "bundled": true
+  },
+  "hostFeatures": [
+    "terminal-workbench-v1",
+    "terminal-ssh-workspace-v1",
+    "terminal-communications-v1"
+  ],
+  "runtimeEqualsHost": true,
+  "rollback": "Restore prior immutable plugin ZIP and matching host code. Upgrade ends running sessions/connections; workbench logs/records remain. No running service or user data replaced."
+}

@@ -1,0 +1,3 @@
+# Communication modules
+
+Derived from Aide plugins/comm-{ssh,tcp,udp,serial} at 3f6ee422 under the root MIT license. Original tool behavior and 35 operations are retained with Terminal namespacing and per-workspace instances. Terminal adapters add bounded records, full-byte data hooks, strict host fingerprints, local SFTP containment and lifecycle hooks. The four legacy integration suites are preserved in test/legacy-*.cjs; the SSH suite pins its own generated fixture host key. Production dependencies and their upstream licenses are selected from the locked installation by scripts/runtime-files.cjs. No development test files or npm install scripts are shipped in the runtime ZIP.

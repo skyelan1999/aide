@@ -153,3 +153,34 @@ func TestTerminalContextPinnedMasterNeverRetargets(t *testing.T) {
 		t.Fatal("dead original master reached a replacement")
 	}
 }
+
+func TestTerminalContextCommunicationPolicyAndReferenceKey(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.settings.DisabledTools = []string{"terminal_tcp_fuzz"}
+	a.mu.Unlock()
+	if _, err := a.terminalToolContext(context.Background(), "terminal_session_comm", map[string]any{"action": "tcp_fuzz"}); err == nil {
+		t.Fatal("generic communication tool bypassed disabled tool")
+	}
+	key := []byte("-----BEGIN OPENSSH PRIVATE KEY-----\nfixture\n-----END OPENSSH PRIVATE KEY-----\n")
+	if err := os.WriteFile(filepath.Join(a.workPath, "comm.key"), key, 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, tool := range []string{"terminal_ssh_connect", "terminal_session_comm"} {
+		args := map[string]any{"identityFile": "comm.key"}
+		if tool == "terminal_session_comm" {
+			args = map[string]any{"action": "ssh_connect", "arguments": args}
+		}
+		ctx, err := a.terminalToolContext(context.Background(), tool, args)
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw, _ := base64.StdEncoding.DecodeString(ctx["identityMaterial"].(string))
+		if string(raw) != string(key) {
+			t.Fatal("reference key context missing")
+		}
+		if len(ctx["disabledTools"].([]string)) != 1 {
+			t.Fatal("policy missing from per-call context")
+		}
+	}
+}

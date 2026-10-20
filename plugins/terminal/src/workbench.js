@@ -5,6 +5,9 @@
   let sessionFilter = 'all', workspaceMode = 'local';
   let sessions = [], selected = null, queue = Promise.resolve(), polling = false, paused = true, connected = false, stopped = false, exportId = 0;
   const labels = {starting:'启动中',running:'运行中',exited:'已结束',interrupted:'后台已重启',error:'连接异常'};
+  const communication=rec=>['tcp','tcp-server','udp','serial'].includes(rec?.kind);
+  const endpoint=rec=>rec?.kind==='serial'?rec.devicePath:['tcp','tcp-server','udp'].includes(rec?.kind)?(rec.host||'127.0.0.1')+':'+rec.port+(rec.kind==='udp'?' · RX :'+rec.bindPort:''):rec?.kind!=='local'?rec.username+'@'+rec.host+':'+rec.port:'本地 · '+rec.cwd;
+  const kinds={local:'本地 Shell / PTY',workspace:'SSH 工作区 / Shell',ssh:'SSH / OpenSSH',tcp:'TCP 客户端','tcp-server':'TCP 本地监听',udp:'UDP 数据报',serial:'串口 / UART'};
   const current = () => sessions.find(s => s.id === selected);
   const message = text => { $('notice').hidden = false; $('notice').querySelector('span').textContent = text; };
   function enqueue(tool, args={}) {
@@ -29,7 +32,7 @@
     const fit = new FitAddon.FitAddon(), search = new SearchAddon.SearchAddon();term.loadAddon(fit);term.loadAddon(search);term.open(element);
     // Escape sequence responses are sent only while this session is selected and running.
     term.onData(data => {
-      if (paused || selected !== id || sessions.find(s=>s.id===id)?.status !== 'running') return;
+      if (paused || selected !== id || sessions.find(s=>s.id===id)?.status !== 'running'||communication(sessions.find(s=>s.id===id))) return;
       let pending = pendingInput.get(id);
       if (!pending) { pending={text:'',timer:null};pendingInput.set(id,pending); }
       pending.text += data;
@@ -58,13 +61,13 @@
     let visible=0;
     const groups=new Map();
     for(const rec of sessions) {
-      const matches=(!query||[rec.name,rec.host,rec.username,rec.cwd].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)) && (sessionFilter==='all'||(sessionFilter==='running'?rec.status==='running':rec.kind!=='local'));
+      const matches=(!query||[rec.name,rec.host,rec.username,rec.cwd].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)) && (sessionFilter==='all'||(sessionFilter==='running'?rec.status==='running':sessionFilter==='communication'?communication(rec):['ssh','workspace'].includes(rec.kind)));
       const button=document.createElement('button');button.type='button';button.className='session'+(rec.id===selected?' active':'');button.dataset.sessionId=rec.id;button.dataset.state=rec.status;
       const icon=document.createElement('span');icon.className='icon';icon.textContent=rec.kind!=='local'?'↗':'›_';
       button.setAttribute('aria-pressed',String(rec.id===selected));button.title=rec.name+' · '+(labels[rec.status]||rec.status);
       const body=document.createElement('span');body.className='session-body';
       const name=document.createElement('strong'),detail=document.createElement('small');
-      name.textContent=rec.name;detail.textContent=rec.kind!=='local'?rec.username+'@'+rec.host:'本地 · '+rec.cwd;body.append(name,detail);const dot=document.createElement('i');dot.className='dot'+(rec.status==='running'?' live':'');dot.setAttribute('aria-label',labels[rec.status]||rec.status);const stateLabel=document.createElement('span');stateLabel.className='session-state';stateLabel.textContent=labels[rec.status]||rec.status;button.append(icon,body,stateLabel);button.onclick=()=>select(rec.id);if(matches){const group=['running','starting'].includes(rec.status)?(rec.kind==='workspace'?'SSH 工作区':rec.kind==='ssh'?'SSH 设备':'本地环境'):'历史会话';if(!groups.has(group))groups.set(group,[]);groups.get(group).push(button);visible++;}
+      name.textContent=rec.name;detail.textContent=endpoint(rec);body.append(name,detail);const dot=document.createElement('i');dot.className='dot'+(rec.status==='running'?' live':'');dot.setAttribute('aria-label',labels[rec.status]||rec.status);const stateLabel=document.createElement('span');stateLabel.className='session-state';stateLabel.textContent=labels[rec.status]||rec.status;button.append(icon,body,stateLabel);button.onclick=()=>select(rec.id);if(matches){const group=['running','starting'].includes(rec.status)?(rec.kind==='workspace'?'SSH 工作区':rec.kind==='ssh'?'SSH 设备':communication(rec)?'通信设备':'本地环境'):'历史会话';if(!groups.has(group))groups.set(group,[]);groups.get(group).push(button);visible++;}
       const tab=document.createElement('button'),tabDot=dot.cloneNode(),tabName=document.createElement('span');tabName.className='tab-name';tabName.textContent=rec.name;tab.append(tabDot,tabName);tab.title=button.title;tab.className=rec.id===selected?'active':'';tab.setAttribute('aria-current',String(rec.id===selected));tab.onclick=()=>select(rec.id);if(['running','starting'].includes(rec.status)||rec.id===selected)$('tabs').append(tab);
     }
     for(const title of ['本地环境','SSH 设备','历史会话']){const rows=groups.get(title);if(!rows)continue;const heading=document.createElement('p');heading.className='session-group';const label=document.createElement('span'),count=document.createElement('span');label.textContent=title;count.textContent=String(rows.length);heading.append(label,count);$('sessions').append(heading,...rows);}
@@ -74,11 +77,11 @@
     $('running-count').textContent=!connected?'后台未连接':paused?'后台通信已暂停':sessions.filter(s=>s.status==='running').length+' 个运行中';
     $('backend-dot').classList.toggle('live',connected&&!paused);
     $('connection-name').textContent=rec?.name||'开始新的连接';
-    $('connection-kind').textContent=rec?(rec.kind!=='local'?'SSH':'LOCAL'):'TERMINAL';
+    $('connection-kind').textContent=rec?rec.kind.toUpperCase():'TERMINAL';
     $('detail-state').textContent=rec?(labels[rec.status]||rec.status):'尚未连接';
     $('detail-state').style.color=running?'var(--positive)':'var(--muted)';
-    $('detail-kind').textContent=rec?(rec.kind==='workspace'?'SSH 工作区 / Shell':rec.kind==='ssh'?'SSH / OpenSSH':'本地 Shell / PTY'):'—';
-    $('detail-endpoint').textContent=rec?(rec.kind!=='local'?rec.username+'@'+rec.host+':'+rec.port:'Aide 运行环境'):'—';
+    $('detail-kind').textContent=rec?(kinds[rec.kind]||rec.kind):'—';
+    $('detail-endpoint').textContent=rec?endpoint(rec):'—';
     $('detail-cwd').textContent=rec?.cwd||'—';
     const created=rec?.createdAt?new Date(rec.createdAt):null;
     $('detail-created').textContent=created&&!Number.isNaN(created.getTime())?created.toLocaleString('zh-CN',{hour12:false}):'—';
@@ -89,7 +92,8 @@
     for(const id of ['new-top','new-empty','new-session'])$(id).disabled=!connected;
     for(const id of ['find','logs','logging'])$(id).disabled=!rec;
     $('interrupt').disabled=!running;$('close-session').disabled=!running;$('delete-session').disabled=!rec||running||rec.status==='starting';
-    $('connection').textContent=rec?(rec.kind!=='local'?rec.username+'@'+rec.host+':'+rec.port:'LOCAL · '+rec.cwd):'本地 Shell 或远程 SSH';
+    $('connection').textContent=rec?endpoint(rec):'Shell / SSH / TCP / UDP / 串口';
+    $('communication-send').hidden=!communication(rec);$('send-packet').disabled=!running||paused||rec?.kind==='tcp-server';$('interrupt').disabled=!running||communication(rec);
     $('logging').textContent='日志：'+(rec?.logging?'开':'关');$('logging').dataset.enabled=String(!!rec?.logging);$('logging').setAttribute('aria-pressed',String(!!rec?.logging));
     $('status').textContent=rec?(labels[rec.status]||rec.status)+' · '+rec.name:'就绪 · 创建本地或 SSH 会话';
     $('log-status').textContent=rec?.logError || (!rec?'日志保存在当前工作区':rec.logging?'● 正在记录输出':'输出日志已暂停');
@@ -147,11 +151,16 @@
   $('key-source').onchange=()=>loadKeys($('key-source').value,'.');
   $('key-up').onclick=()=>loadKeys(keySource,keyDirectory.includes('/')?keyDirectory.slice(0,keyDirectory.lastIndexOf('/')):'.');
   $('key-cancel').onclick=()=>$('identity-dialog').close();
-  $('kind').onchange=()=>{const ssh=$('kind').value==='ssh';$('ssh-fields').hidden=!ssh;for(const name of ['host','username'])$('create-form').elements[name].required=ssh;};
+  $('kind').onchange=()=>{const kind=$('kind').value,ssh=kind==='ssh';$('ssh-fields').hidden=!ssh;$('network-fields').hidden=!['tcp','tcp-server','udp'].includes(kind);$('serial-fields').hidden=kind!=='serial';$('udp-bind-field').hidden=kind!=='udp';for(const name of ['host','username'])$('create-form').elements[name].required=ssh;$('create-form').elements.devicePath.required=kind==='serial';$('create-form').elements.networkHost.disabled=kind==='tcp-server';};
+  $('refresh-serial').onclick=async()=>{try{const result=await enqueue('comm',{action:'serial_list'});$('serial-devices').replaceChildren();for(const port of result.ports){const option=document.createElement('option');option.value=port.path;option.textContent=port.manufacturer||port.path;$('serial-devices').append(option);}if(result.error)$('create-error').textContent=result.error;else if(!result.ports.length)$('create-error').textContent='未发现可用串口；请检查设备映射或手动输入路径';}catch(error){$('create-error').textContent=error.message;}};
+  $('send-format').onchange=()=>{$('send-ending').disabled=$('send-format').value==='hex';};
+  $('communication-send').onsubmit=async event=>{event.preventDefault();const rec=current();if(!rec||!communication(rec))return;let data=$('send-data').value;const format=$('send-format').value;if(format==='utf8')data+=({lf:'\n',crlf:'\r\n',cr:'\r'}[$('send-ending').value]||'');$('send-packet').disabled=true;try{await enqueue('input',{id:rec.id,data,format});}catch(error){message('发送结果待核实，不会自动重发。'+error.message);}finally{render();}};
   $('create-submit').onclick=async event=>{
     event.preventDefault();const form=$('create-form');if(!form.reportValidity())return;const values=new FormData(form),args={kind:values.get('kind'),name:values.get('name'),cwd:values.get('cwd')||'.',logging:form.elements.logging.checked};
     if(args.kind==='ssh')Object.assign(args,{host:values.get('host'),port:Number(values.get('port')),username:values.get('username'),auth:values.get('auth'),identityFile:values.get('auth')==='key'?values.get('identityFile')||undefined:undefined,identitySource:values.get('auth')==='key'?values.get('identitySource')||'':undefined});
     if(args.kind==='ssh'&&args.auth==='key'&&!args.identityFile){$('create-error').textContent='请选择私钥文件';return;}
+    if(['tcp','tcp-server','udp'].includes(args.kind))Object.assign(args,{host:args.kind==='tcp-server'?'127.0.0.1':values.get('networkHost'),port:Number(values.get('networkPort')),bindPort:Number(values.get('bindPort'))});
+    if(args.kind==='serial')Object.assign(args,{devicePath:values.get('devicePath'),baudRate:Number(values.get('baudRate')),dataBits:Number(values.get('dataBits')),stopBits:Number(values.get('stopBits')),parity:values.get('parity'),flowControl:form.elements.flowControl.checked});
     $('create-submit').disabled=true;$('create-error').textContent='';
     try {const result=await enqueue('create',args);sessions.push(result.session);$('create-dialog').close();paused=false;select(result.session.id);}
     catch(error){$('create-error').textContent=error.message;}

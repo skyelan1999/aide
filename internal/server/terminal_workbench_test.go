@@ -1,7 +1,11 @@
 package server
 
 import (
+	"archive/zip"
 	"encoding/base64"
+	"fmt"
+	"io"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,12 +24,41 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	}
 	source := filepath.Join("..", "..", "plugins", "terminal")
 	files := map[string]string{}
-	for _, name := range []string{"manifest.json", "index.js", "sessions.js", "pty-worker.py", "workbench.html", "LICENSE"} {
-		raw, err := os.ReadFile(filepath.Join(source, name))
+	if bundle := os.Getenv("AIDE_TERMINAL_BUNDLE_PATH"); bundle != "" {
+		reader, err := zip.OpenReader(bundle)
 		if err != nil {
 			t.Fatal(err)
 		}
-		files[name] = string(raw)
+		defer reader.Close()
+		for _, entry := range reader.File {
+			f, err := entry.Open()
+			if err != nil {
+				t.Fatal(err)
+			}
+			raw, err := io.ReadAll(f)
+			f.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+			files[entry.Name] = string(raw)
+		}
+	} else {
+		names := []string{"manifest.json", "index.js", "sessions.js", "pty-worker.py", "workbench.html", "LICENSE"}
+		modules, err := filepath.Glob(filepath.Join(source, "communications", "*.js"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, filename := range modules {
+			relative, _ := filepath.Rel(source, filename)
+			names = append(names, relative)
+		}
+		for _, name := range names {
+			raw, err := os.ReadFile(filepath.Join(source, name))
+			if err != nil {
+				t.Fatal(err)
+			}
+			files[filepath.ToSlash(name)] = string(raw)
+		}
 	}
 	a := testApp(t)
 	requireStatus(t, pluginBundleRequest(t, a, files), 201)
@@ -85,4 +118,52 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	if err != nil || !strings.Contains(gotText(history), "directory-fixture.txt") {
 		t.Fatal(history, err)
 	}
+	// Exercise a namespaced protocol tool and shared session input through the
+	// actual installed daemon, including the per-call disabled-tool snapshot.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	go func() {
+		connection, err := listener.Accept()
+		if err == nil {
+			defer connection.Close()
+			io.Copy(connection, connection)
+		}
+	}()
+	port := listener.Addr().(*net.TCPAddr).Port
+	connected, err := a.callPluginTool("terminal", "terminal_tcp_connect", map[string]any{"host": "127.0.0.1", "port": port})
+	if err != nil {
+		t.Fatal(err)
+	}
+	connection := connected.(map[string]any)
+	sessionID := connection["sessionId"].(string)
+	defer a.callPluginTool("terminal", "terminal_session_close", map[string]any{"id": sessionID})
+	if _, err = a.callPluginTool("terminal", "terminal_tcp_send", map[string]any{"connectionId": connection["connectionId"], "data": "BUNDLE_TCP_OK"}); err != nil {
+		t.Fatal(err)
+	}
+	deadline = time.Now().Add(5 * time.Second)
+	for {
+		response, err := a.callPluginTool("terminal", "terminal_session_poll", map[string]any{"id": sessionID})
+		if err != nil {
+			t.Fatal(err)
+		}
+		output := response.(map[string]any)["output"].(map[string]any)
+		body, _ := base64.StdEncoding.DecodeString(output["data"].(string))
+		if strings.Contains(string(body), "RX") && strings.Count(string(body), "BUNDLE_TCP_OK") >= 2 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no actual TCP echo", fmt.Sprint(output))
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	a.mu.Lock()
+	a.settings.DisabledTools = append(a.settings.DisabledTools, "terminal_tcp_send")
+	a.mu.Unlock()
+	if _, err = a.callPluginTool("terminal", "terminal_session_input", map[string]any{"id": sessionID, "data": "must not send"}); err == nil {
+		t.Fatal("shared session input bypassed a disabled protocol tool")
+	}
+
 }

@@ -389,3 +389,11 @@ The parent observes theme/palette changes for the active view and disconnects on
 宿主只在 Terminal 的 `terminal_session_*` 调用通过既有工作区、策略和资源调度准入后，为 daemon 传递一次性 `api.terminalContext`；其他插件不获得此上下文。`workspaceRoot` 对 SSH 工作区仍为空，普通文件插件不会回退到安装目录。Terminal 上下文包含按 SSH 主机/端口/用户/目录隔离的本地状态目录，以及当前远程路径。工作区 Shell 复用宿主已认证的 SSH 主连接，并用私有硬链接固定 Unix socket inode，避免固定公共 socket 在工作区切换后指向新主机；断开时失败，不另行认证或重试输入。
 
 `terminal_session_files(identitySource,path)` 仅返回允许来源的文件元数据。`terminal_session_create` 新增 `auth: default|password|key`、`identitySource` 与来源相对 `identityFile`。宿主验证来源、相对路径、符号链接及64KiB上限后，将私钥经 daemon 私有上下文交给 Linux memfd；私钥不进入网页、模型参数、会话记录或磁盘临时副本。密码和私钥口令只在 OpenSSH 终端提示后输入。已停用或当前工作区 AI 不可见的来源不参与选择或读取。需要 `terminal-ssh-workspace-v1` 市场能力标记；此标记不跳过最低宿主版本和未知能力检查。
+
+### Terminal 合并通信（1.3.0 预发布）
+
+Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注册为 `terminal_` 前缀，保留旧插件避免同名覆盖。工作台仍使用原受控桥接，通过已声明的 `terminal_session_comm(action,arguments)` 访问固定白名单；工具总数增加不扩大 iframe 的 HTTP、凭据或任意代码权限。普通 TCP/UDP/串口资源创建同时创建工作台会话，通信发送采用显式 UTF-8/HEX 报文和 TX/RX 日志。
+
+宿主对所有 `terminal_` daemon 工具传递工作区上下文，新增 `communicationsVersion:1` 和每次调用的 `disabledTools`。通用分发先执行规范工具名禁用检查，运行适配器也对会话发送执行同一检查，避免绕过直接工具禁用。新插件拒绝缺少策略上下文的宿主；市场使用 `terminal-communications-v1` 能力标记阻止不兼容安装。该标记不跳过最低宿主版本或未知能力检查。
+
+高级 SSH API 的引用私钥支持直调用 `terminal_ssh_connect` 及受控分发的嵌套参数，由宿主读取后只通过 daemon 上下文注入。API 连接要求用户核验的 SHA256 主机指纹；工作台交互式 SSH 保持 OpenSSH known_hosts。每个工作区独立持有通信模块实例及带作用域身份的资源句柄。SFTP 本地路径仅允许当前本地工作区；模拟SFTP使用独立临时根。安装包内置固定版本 ssh2、serialport、运行依赖和上游许可，控制在既有256文件/64MiB展开上限内，不调用安装脚本。

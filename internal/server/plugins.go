@@ -927,7 +927,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	}
 	parent = context.WithValue(parent, pluginWorkspaceContextKey{}, workspace)
 	if a.daemons != nil && a.isDaemonPlugin(pluginID) {
-		if pluginID == "terminal" && strings.HasPrefix(toolName, "terminal_session_") {
+		if pluginID == "terminal" && strings.HasPrefix(toolName, "terminal_") {
 			terminal, err := a.terminalToolContext(parent, toolName, args)
 			if err != nil {
 				return nil, err

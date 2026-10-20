@@ -6,6 +6,8 @@ const {spawn} = require('node:child_process');
 const readline = require('node:readline');
 const HISTORY = 512 * 1024, PAGE = 64 * 1024, MAX_SESSIONS = 32, MAX_ACTIVE = 16;
 const LOG_BYTES = 2 * 1024 * 1024, LOG_FILES = 4;
+const {Communications,data:communicationData}=require('./communications');
+const COMM_KINDS=['tcp','tcp-server','udp','serial'];
 const ID = /^[a-f0-9]{24}$/;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 function integer(value, fallback, min, max) {
@@ -46,10 +48,10 @@ class Sessions {
     workspace = context ? context.storageRoot : workspace;
     if (!workspace || !path.isAbsolute(workspace)) throw Error('此工作区需要更新配套 Aide 的 SSH 工作区支持');
     const root = fs.realpathSync(workspace);
-    if (this.spaces.has(root)) { const space=this.spaces.get(root); space.remote=context?.remote; return space; }
+    if (this.spaces.has(root)) { const space=this.spaces.get(root); space.remote=context?.remote;space.disabledTools=context?.disabledTools||[]; return space; }
     const base = path.join(root, '.aide'); privateDir(base, false);
     const dir = path.join(base, 'terminal-workbench'); privateDir(dir);
-    const space = {root, dir, remote:context?.remote, records:new Map()};
+    const space = {root, dir, remote:context?.remote, disabledTools:context?.disabledTools||[], records:new Map()};
     for (const file of fs.readdirSync(dir).filter(x => /^[a-f0-9]{24}\.json$/.test(x)).slice(0, MAX_SESSIONS)) {
       const rec = JSON.parse(readPrivate(path.join(dir, file)));
       if (!ID.test(rec.id) || file !== rec.id + '.json') throw Error('会话记录损坏');
@@ -67,8 +69,8 @@ class Sessions {
     return space;
   }
   public(rec) {
-    const {id,name,kind,host,port,username,cwd,identityFile,identitySource,auth,cols,rows,status,createdAt,endedAt,exitCode,logging,logError} = rec;
-    return {id,name,kind,host,port,username,cwd,identityFile,identitySource,auth,cols,rows,status,createdAt,endedAt,exitCode,logging,logError};
+    const {id,name,kind,host,port,username,cwd,identityFile,identitySource,auth,devicePath,baudRate,dataBits,stopBits,parity,flowControl,bindPort,resource,cols,rows,status,createdAt,endedAt,exitCode,logging,logError} = rec;
+    return {id,name,kind,host,port,username,cwd,identityFile,identitySource,auth,devicePath,baudRate,dataBits,stopBits,parity,flowControl,bindPort,resource,cols,rows,status,createdAt,endedAt,exitCode,logging,logError};
   }
   persist(space, rec) {
     const temporary = path.join(space.dir, rec.id + '.json.tmp');
@@ -117,13 +119,14 @@ class Sessions {
     if (active >= MAX_ACTIVE) throw Error('最多同时运行16个会话');
     let kind = args.kind || 'local';
     if (kind === 'local' && space.remote) kind = 'workspace';
-    if (!['local','ssh','workspace'].includes(kind)) throw Error('会话类型须为 local 或 ssh');
+    if (!['local','ssh','workspace',...COMM_KINDS].includes(kind)) throw Error('未知会话类型');
     const cwd = text(args.cwd, '.', 512);
     if (path.isAbsolute(cwd) || cwd.split(/[\\/]/).includes('..')) throw Error('目录路径必须位于当前工作区内');
     const working = space.remote ? space.root : inside(space.root, cwd);
     const cols = integer(args.cols, 100, 20, 400), rows = integer(args.rows, 30, 5, 200);
     const rec = {id:crypto.randomBytes(12).toString('hex'), kind, name:text(args.name, kind === 'ssh' ? 'SSH 设备' : '本地终端', 80), cwd, cols, rows,
       createdAt:new Date().toISOString(),status:'starting',logging:args.logging !== false,offset:0,base:0,history:Buffer.alloc(0),worker:null};
+    if(COMM_KINDS.includes(kind))return this.startCommunication(space,rec,args);
     let argv = ['/bin/bash', '--noprofile', '--norc', '-i'];
     if (kind === 'workspace') {
       if (!space.remote) throw Error('当前不是 SSH 工作区');
@@ -197,9 +200,79 @@ class Sessions {
     await ready;
     return {session:this.public(rec)};
   }
+  communication(space) {
+    if(space.communications)return space.communications;
+    space.resources=new Map();
+    space.communications=new Communications(space,(buffer,meta)=>{
+      const rec=space.resources.get(meta.connectionId||meta.socketId||meta.path);
+      if(!rec||!rec.worker)return;
+      const printable=buffer.toString('utf8').replace(/\uFFFD/g,'.').replace(/[\x00-\x1f\x7f]/g,c=>c==='\n'?'\\n':c==='\r'?'\\r':'.');
+      const line=`[${new Date().toISOString()} ${meta.direction==='in'?'RX':'TX'}${meta.remote?' '+meta.remote:''} ${buffer.length} B] ${buffer.toString('hex').replace(/../g,'$& ').trim()} | ${printable}\r\n`;
+      this.output(space,rec,Buffer.from(line));
+    },event=>{
+      if(event.subtype==='connected'&&event.role==='server'){
+        const listener=[...space.records.values()].find(r=>r.kind==='tcp-server'&&r.port===event.listenerPort&&r.worker);
+        if(this.stopping||!listener||space.records.size>=MAX_SESSIONS||[...this.spaces.values()].flatMap(s=>[...s.records.values()]).filter(r=>r.worker).length>=MAX_ACTIVE){space.communications.call('tcp_close',{connectionId:event.connectionId}).catch(()=>{});return;}
+        const rec={id:crypto.randomBytes(12).toString('hex'),kind:'tcp',name:listener.name+' · '+event.remote,host:event.remote.slice(0,event.remote.lastIndexOf(':')),port:Number(event.remote.slice(event.remote.lastIndexOf(':')+1)),cwd:'.',cols:100,rows:30,createdAt:new Date().toISOString(),status:'running',logging:listener.logging,offset:0,base:0,history:Buffer.alloc(0),worker:{},resource:event.connectionId};
+        rec.transport={close:()=>space.communications.call('tcp_close',{connectionId:event.connectionId})};space.resources.set(event.connectionId,rec);space.records.set(rec.id,rec);try{this.persist(space,rec);}catch(_){rec.status='error';rec.worker=null;space.communications.call('tcp_close',{connectionId:event.connectionId}).catch(()=>{});}
+      }
+      if(event.subtype==='closed'){
+        const rec=space.resources.get(event.connectionId||event.socketId||event.path);if(rec&&rec.worker){rec.status='exited';rec.worker=null;rec.endedAt=new Date().toISOString();try{this.persist(space,rec);}catch(_){rec.logError='会话状态保存失败';}}
+      }
+    });
+    return space.communications;
+  }
+  async startCommunication(space,rec,args) {
+    const comm=this.communication(space);let result;
+    if(['tcp','tcp-server','udp'].includes(rec.kind)){
+      rec.host=text(args.host,'127.0.0.1',253);if(!/^[a-zA-Z0-9][a-zA-Z0-9.:%_-]*$/.test(rec.host)&&!/^[a-fA-F0-9:]+$/.test(rec.host))throw Error('通信主机名无效');
+      rec.port=integer(args.port,rec.kind==='tcp'?undefined:0,rec.kind==='tcp'?1:0,65535);
+    }
+    if(rec.kind==='tcp')result=await comm.call('tcp_connect',{host:rec.host,port:rec.port});
+    if(rec.kind==='tcp-server'){result=await comm.call('tcp_listen',{port:rec.port});rec.port=result.port;rec.host=result.host;}
+    if(rec.kind==='udp'){rec.bindPort=integer(args.bindPort,0,0,65535);result=await comm.call('udp_bind',{port:rec.bindPort,multicast:!!args.multicast});rec.bindPort=result.port;}
+    if(rec.kind==='serial'){
+      rec.devicePath=text(args.devicePath,'',512);rec.baudRate=integer(args.baudRate,115200,1,4000000);rec.dataBits=integer(args.dataBits,8,5,8);rec.stopBits=Number(args.stopBits??1);rec.parity=args.parity||'none';rec.flowControl=!!args.flowControl;
+      if(![1,1.5,2].includes(rec.stopBits)||!['none','even','odd','mark','space'].includes(rec.parity))throw Error('串口参数无效');
+      result=await comm.call('serial_open',{path:rec.devicePath,baudRate:rec.baudRate,dataBits:rec.dataBits,stopBits:rec.stopBits,parity:rec.parity,flowControl:rec.flowControl});
+    }
+    rec.resource=result.connectionId||result.socketId||rec.devicePath||String(result.port);
+    rec.status='running';rec.worker={};
+    rec.transport={close:async()=>{
+      if(rec.kind==='tcp')await comm.call('tcp_close',{connectionId:rec.resource});
+      if(rec.kind==='tcp-server'){
+        const mod=comm.modules.tcp,entry=mod.__state.listeners.get(rec.port);if(entry){for(const id of [...entry.conns])await comm.call('tcp_close',{connectionId:comm.token+':'+id});await new Promise(resolve=>entry.server.close(resolve));mod.__state.listeners.delete(rec.port);}
+      }
+      if(rec.kind==='udp')await comm.call('udp_close',{socketId:rec.resource});
+      if(rec.kind==='serial')await comm.call('serial_close',{path:rec.devicePath});
+    }};
+    space.resources.set(rec.resource,rec);space.records.set(rec.id,rec);
+    try{this.persist(space,rec);}catch(error){await rec.transport.close();space.records.delete(rec.id);throw error;}
+    return {session:this.public(rec),communication:result};
+  }
+  async sendCommunication(space,rec,args){
+    const comm=this.communication(space),buffer=communicationData(args.data,args.format||'utf8');
+    if(rec.kind==='tcp-server')throw Error('请先选择已接入的TCP客户端会话');
+    const values={data:buffer.toString('hex'),format:'hex'};
+    if(rec.kind==='tcp')return comm.call('tcp_send',{...values,connectionId:rec.resource});
+    if(rec.kind==='serial')return comm.call('serial_write',{...values,path:rec.devicePath});
+    if(!rec.port)throw Error('UDP发送需要指定目标端口');
+    return comm.call('udp_send',{...values,socketId:rec.resource,host:rec.host,port:rec.port});
+  }
+  async commCall(workspace,args){const space=this.space(workspace),comm=this.communication(space);const name=String(args.action||'').replace(/^terminal_/,'');
+    const input=args.arguments||{};
+    const converted={tcp_connect:{kind:'tcp',host:input.host,port:input.port},tcp_listen:{kind:'tcp-server',port:input.port},udp_bind:{kind:'udp',port:0,bindPort:input.port,multicast:input.multicast},serial_open:{...input,kind:'serial',devicePath:input.path}}[name];
+    if(converted){const {session,communication:result}=await this.create(workspace,{...converted,name:input.name||name});return {...result,sessionId:session.id};}
+    if(space.disabledTools?.includes('terminal_'+name))throw Error('通信工具已被管理员禁用');
+    if(name==='ssh_fingerprint')return comm.fingerprint(args.arguments||{});
+    const values={...(args.arguments||{})};
+    if(name==='ssh_connect'&&typeof workspace==='object'&&workspace.identityMaterial){values.privateKey=Buffer.from(workspace.identityMaterial,'base64').toString();values.authType='publickey';}
+    return comm.call(name,values);
+  }
   send(workspace, args) {
     const rec = this.get(this.space(workspace), args.id);
     if (!rec.worker || rec.status !== 'running') throw Error('会话已结束，创建新会话后重试');
+    if(rec.transport)return this.sendCommunication(this.space(workspace),rec,args);
     if (typeof args.data !== 'string' || Buffer.byteLength(args.data) > 16384) throw Error('单次输入不能超过16KiB');
     if (rec.worker.stdin.writableLength > 65536) throw Error('终端输入繁忙，请稍后重试');
     rec.worker.stdin.write(JSON.stringify({type:'input',data:Buffer.from(args.data).toString('base64')})+'\n');
@@ -208,7 +281,7 @@ class Sessions {
   resize(workspace, args) {
     const space = this.space(workspace), rec = this.get(space, args.id);
     rec.cols = integer(args.cols, 100, 20, 400); rec.rows = integer(args.rows, 30, 5, 200);
-    if (rec.worker) rec.worker.stdin.write(JSON.stringify({type:'resize',cols:rec.cols,rows:rec.rows})+'\n');
+    if (rec.worker && !rec.transport) rec.worker.stdin.write(JSON.stringify({type:'resize',cols:rec.cols,rows:rec.rows})+'\n');
     this.persist(space, rec);
     return {session:this.public(rec)};
   }
@@ -224,6 +297,7 @@ class Sessions {
     return this.closeRecord(space,rec);
   }
   async closeRecord(space,rec) {
+    if(rec.transport){await rec.transport.close();rec.worker=null;rec.status='exited';rec.endedAt=new Date().toISOString();this.persist(space,rec);return {session:this.public(rec)};}
     const worker = rec.worker;
     if (worker) {
       worker.stdin.write('{"type":"close"}\n');
@@ -261,12 +335,13 @@ class Sessions {
     const space=this.space(workspace), rec=this.get(space,args.id);
     if (rec.worker) throw Error('请先关闭会话，再删除记录与日志');
     for (let i=0;i<LOG_FILES;i++) fs.rmSync(this.logPath(space,rec.id,i),{force:true});
-    fs.rmSync(path.join(space.dir,rec.id+'.json')); space.records.delete(rec.id);
+    fs.rmSync(path.join(space.dir,rec.id+'.json')); space.records.delete(rec.id);space.resources?.delete(rec.resource);
     return {deleted:true};
   }
   async stop() {
     this.stopping=true;
-    await Promise.all([...this.spaces.values()].flatMap(space=>[...space.records.values()].filter(rec=>rec.worker).map(rec=>this.closeRecord(space,rec))));
+    await Promise.allSettled([...this.spaces.values()].flatMap(space=>[...space.records.values()].filter(rec=>rec.worker).map(rec=>this.closeRecord(space,rec))));
+    for(const space of this.spaces.values()){await space.communications?.close();for(const rec of space.records.values())if(rec.transport&&rec.worker){rec.worker=null;rec.status='exited';rec.endedAt=new Date().toISOString();try{this.persist(space,rec);}catch(_){}}}
   }
 }
 module.exports={Sessions, HISTORY, PAGE, LOG_BYTES, LOG_FILES};

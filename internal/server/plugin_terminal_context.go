@@ -31,8 +31,9 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 	sources := append([]Source(nil), a.sourceRegistry.Sources...)
 	scope := a.wsID()
 	dataPath := a.dataPath
+	disabledTools := append([]string(nil), a.settings.DisabledTools...)
 	a.mu.Unlock()
-	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode}
+	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1}
 	if config.Mode == "ssh" {
 		// Include port/user as well as workspace identity: different remote users
 		// must never share terminal records, even when wsID's legacy label matches.
@@ -70,10 +71,23 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 			result["remote"].(map[string]any)["socket"] = pinned
 		}
 	}
-	sourceID, _ := args["identitySource"].(string)
-	keyPath, _ := args["identityFile"].(string)
-	auth, _ := args["auth"].(string)
-	if tool == "terminal_session_create" && auth != "password" && keyPath != "" {
+	effective := args
+	if tool == "terminal_session_comm" {
+		if action, ok := args["action"].(string); ok && toolDeniedIn(disabledTools, "terminal_"+action) {
+			return nil, errors.New("通信工具已被管理员禁用")
+		}
+	}
+	keyTool := tool == "terminal_session_create" || tool == "terminal_ssh_connect"
+	if tool == "terminal_session_comm" && args["action"] == "ssh_connect" {
+		if nested, ok := args["arguments"].(map[string]any); ok {
+			effective = nested
+			keyTool = true
+		}
+	}
+	sourceID, _ := effective["identitySource"].(string)
+	keyPath, _ := effective["identityFile"].(string)
+	auth, _ := effective["auth"].(string)
+	if keyTool && auth != "password" && keyPath != "" {
 		if sourceID != "" {
 			allowed := false
 			for _, source := range sources {
