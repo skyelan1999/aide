@@ -2155,7 +2155,6 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			a.publishStream(task.ID, streamEvent{Event: "note", Text: msg, Round: round})
 			return msg, input, nil
 		}
-		var desktopImages []MessageImage
 		for callIndex, call := range calls {
 			toolCallsUsed += pluginPlanDispatchCost(call)
 			if call.Function.Name != "run_plugin_plan" {
@@ -2188,7 +2187,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 					}
 				}
 			}(call.ID, call.Function.Name)
-			result := a.executeToolCall(context.WithValue(ctx, terminalDesktopImagesKey{}, &desktopImages), call, task, versions)
+			result := a.executeToolCall(ctx, call, task, versions)
 			close(hbStop)
 			signature := call.Function.Name + "\x00" + call.Function.Arguments + "\x00" + result
 			repeatedCallResults[signature]++
@@ -2262,10 +2261,6 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				a.publishStream(task.ID, streamEvent{Event: "note", Text: msg, Round: round})
 				return msg, input, nil
 			}
-		}
-		if len(desktopImages) > 0 {
-			input = appendTerminalDesktopImages(input, cfg, desktopImages)
-			saveCheckpoint()
 		}
 		a.mu.Lock()
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
@@ -4452,7 +4447,6 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		if err != nil {
 			return "错误：插件工具失败: " + err.Error()
 		}
-		collectTerminalDesktopImage(ctx, pluginID, call.Function.Name, args, raw)
 		text, proposals := normalizePluginResult(raw)
 		for _, prop := range proposals {
 			if _, err := a.recordToolProposal(task, versions, prop); err != nil {

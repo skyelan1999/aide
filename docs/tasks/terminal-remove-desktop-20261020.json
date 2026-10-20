@@ -1,0 +1,72 @@
+{
+  "id": "terminal-remove-desktop-20261020",
+  "request": "清理rdp和vnc保持原貌：移除桌面功能，恢复原终端，更新release和市场",
+  "baseline": "28a6221953e22045ac7f3fdce538735867e6759a",
+  "initial_status": "M docs/reviews/2026-10-20-terminal-remote-desktop/verification.json\n M internal/server/plugin_market.go\n M internal/server/plugin_market_test.go\n M internal/server/plugin_terminal_context.go\n D internal/server/plugin_terminal_images.go\n D internal/server/plugin_terminal_images_test.go\n M internal/server/terminal_workbench_test.go\n M internal/server/workflow.go\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-desktop-connectivity-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Current Terminal package has no RDP/VNC desktop/session/media/control tools or dependencies",
+    "Original Shell/SSH/TCP/UDP/serial/relay/visibility/logs/reconnect behavior preserved and tested",
+    "Legacy desktop state is not loaded or deleted; supported histories remain visible",
+    "Remove companion Aide desktop image forwarding/capability and all uncommitted experiments",
+    "Clean only owned desktop test containers/assets; publish1.5.1 and update only Terminal market entry"
+  ],
+  "scope": [
+    "Independent Terminal removal, compatibility/tests/docs/package",
+    "Companion Aide desktop-only rollback, task/evidence",
+    "Terminal market entry and package only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User cancelled RDP/VNC and requested original terminal behavior.",
+      "evidence": [
+        "docs/tasks/terminal-desktop-connectivity-20261020.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Restore1.4.2 runtime/UI, retain newer version and withdrawal history; ignore unsupported old records without deleting data.",
+      "evidence": [
+        "docs/tasks/terminal-desktop-connectivity-20261020.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Desktop code/tests/settings/tools and Aide image forwarding/capability removed. Experiments archived privately then removed; default Dockerfile restored.",
+      "evidence": [
+        "docs/tasks/terminal-desktop-connectivity-20261020.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS31 Node,25 exact ZIP, native host race and actual Chromium direct/relay SSH reconnect; exact archive comparison proves original runtime restored except version/docs/unsupported-history guard.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-desktop/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/changelog1.5.1 explain withdrawn desktop feature, retained original terminal behavior and private history compatibility.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-desktop/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed owned Docker desktop/container and uncommitted experiments. Original unrelated task files, normal services, source and private user data preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-desktop/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Prepare Terminal1.5.1 removal release and market registration; companion source-only rollback.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-remove-desktop/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requests complete desktop removal; prior direct-main/push/release/market authorization persists.",
+  "rollback": "Prior1.4.2 retained;1.5.0 declared withdrawn. Do not auto-remove private desktop history/media. Upgrade intentionally disconnects sessions.",
+  "handoff": ""
+}

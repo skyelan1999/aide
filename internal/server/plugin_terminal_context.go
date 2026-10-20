@@ -34,7 +34,7 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 	dataPath := a.dataPath
 	disabledTools := append([]string(nil), a.settings.DisabledTools...)
 	a.mu.Unlock()
-	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1, "relayVersion": 1, "desktopVersion": 1, "workbench": ctx.Value(terminalWorkbenchContextKey{}) == true}
+	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1, "relayVersion": 1, "workbench": ctx.Value(terminalWorkbenchContextKey{}) == true}
 	// State and relay secrets must not be reachable through workspace file tools.
 	stateIdentity, _ := json.Marshal([]any{scope, config.Mode, config.Port, config.Username, local})
 	stateHash := sha256.Sum256(stateIdentity)

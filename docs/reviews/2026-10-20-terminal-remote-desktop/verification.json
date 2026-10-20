@@ -137,5 +137,6 @@
   "runtimeSetup": "Existing isolated extracted native runtime and sourced start.command environment reused; optional installer/Docker recipe not run as admin. Full image build not attempted: previous dependency CA blocker and disk/resource guard remain; no host image claim.",
   "releaseArchiveAnonymous": "PASS1079930bytes/SHA25673b2e0251d8bf55779d4cf4b2e992eee4e2cdcdc5e1c8791fc5bca5059600113",
   "hostCommit": "c4645dcc12ffa4683068c854b569ad85fa836e5f",
-  "pluginDocumentationCommit": "3dc7803 (final host-wide blockers corrected; published runtime ZIP unchanged)"
+  "pluginDocumentationCommit": "3dc7803 (final host-wide blockers corrected; published runtime ZIP unchanged)",
+  "withdrawn": "2026-10-20 user requested complete RDP/VNC removal; historical1.5.0 claims do not validate full real-host connectivity. Superseded by1.5.1 removal release."
 }

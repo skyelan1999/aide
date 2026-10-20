@@ -1,0 +1,73 @@
+{
+  "id": "terminal-desktop-connectivity-20261020",
+  "request": "用户反馈RDP/VNC连不上，要求Ubuntu完整桌面Docker真实验收并修复连接和工作台体验；用户后续取消并要求清理RDP/VNC、恢复原貌",
+  "baseline": "28a6221953e22045ac7f3fdce538735867e6759a",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Ubuntu24.04 Docker runs XFCE with independent real xrdp and TigerVNC services; plugin connects with real authentication",
+    "RDP and VNC direct/relay connect, remote editor interaction/save, reconnect same session, screenshot/recording work",
+    "Connection failures identify missing runtime/network/auth/cert causes without exposing secrets; no silent black running session",
+    "Native dependencies included in standard Aide runtime or deployment prerequisites are detected before misleading connect UI",
+    "Actual desktop browser wide/narrow usability, hidden-session privacy, legacy regressions and exact package checks",
+    "Independent corrected plugin release and market, no plugin bundling; record host image/full startup limitations honestly"
+  ],
+  "scope": [
+    "Independent Terminal desktop runtime/session/UI and realistic Docker fixture/tests/docs/package",
+    "Aide standard Docker runtime native dependency provisioning if missing",
+    "Market Terminal entry/package only; task/evidence and reusable environment instructions"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User clarifies the immediate problem is cannot connect. Previous synthetic tests are insufficient.",
+      "evidence": [
+        "User: 连不上"
+      ]
+    },
+    "design": {
+      "status": "not_run",
+      "summary": "User cancelled desktop feature and requested removal; partial standalone Ubuntu checks are not full-host acceptance. See removal task.",
+      "evidence": [
+        "User: 清理rdp和vnc保持原貌"
+      ]
+    },
+    "implementation": {
+      "status": "not_run",
+      "summary": "User cancelled desktop feature and requested removal; partial standalone Ubuntu checks are not full-host acceptance. See removal task.",
+      "evidence": [
+        "User: 清理rdp和vnc保持原貌"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "User cancelled desktop feature and requested removal; partial standalone Ubuntu checks are not full-host acceptance. See removal task.",
+      "evidence": [
+        "User: 清理rdp和vnc保持原貌"
+      ]
+    },
+    "documentation": {
+      "status": "not_run",
+      "summary": "User cancelled desktop feature and requested removal; partial standalone Ubuntu checks are not full-host acceptance. See removal task.",
+      "evidence": [
+        "User: 清理rdp和vnc保持原貌"
+      ]
+    },
+    "cleanup": {
+      "status": "not_run",
+      "summary": "User cancelled desktop feature and requested removal; partial standalone Ubuntu checks are not full-host acceptance. See removal task.",
+      "evidence": [
+        "User: 清理rdp和vnc保持原貌"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User cancelled desktop feature and requested removal; partial standalone Ubuntu checks are not full-host acceptance. See removal task.",
+      "evidence": [
+        "User: 清理rdp和vnc保持原貌"
+      ]
+    }
+  },
+  "release_authorization": "Persistent prior direct-main/push/release/market authorization for requested Terminal fixes; user explicitly authorizes Ubuntu desktop Docker testing.",
+  "rollback": "",
+  "handoff": "Discontinued by explicit user request. No repaired/self-implemented desktop version published. Continuing under terminal-remove-desktop-20261020."
+}
