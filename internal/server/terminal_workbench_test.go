@@ -2,6 +2,7 @@ package server
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -164,6 +165,31 @@ func TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools(t *testing.T
 	a.mu.Unlock()
 	if _, err = a.callPluginTool("terminal", "terminal_session_input", map[string]any{"id": sessionID, "data": "must not send"}); err == nil {
 		t.Fatal("shared session input bypassed a disabled protocol tool")
+	}
+
+	trusted := context.WithValue(context.Background(), terminalWorkbenchContextKey{}, true)
+	hidden, err := a.callPluginToolContext(trusted, "terminal", "terminal_session_create", map[string]any{"kind": "local", "visibleToAide": false, "name": "private fixture"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hiddenID := hidden.(map[string]any)["session"].(map[string]any)["id"].(string)
+	for _, tool := range []string{"terminal_session_poll", "terminal_session_logs", "terminal_session_close", "terminal_session_visibility", "terminal_session_relay_script"} {
+		if _, err := a.callPluginTool("terminal", tool, map[string]any{"id": hiddenID, "visible": true, "workbench": true}); err == nil {
+			t.Fatal("model bypassed hidden/UI gate", tool)
+		}
+	}
+	privateList, err := a.callPluginTool("terminal", "terminal_session_list", nil)
+	if err != nil || strings.Contains(gotText(privateList), hiddenID) {
+		t.Fatal("hidden session exposed", err)
+	}
+	if _, err := a.callPluginToolContext(trusted, "terminal", "terminal_session_visibility", map[string]any{"id": hiddenID, "visible": true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.callPluginTool("terminal", "terminal_session_poll", map[string]any{"id": hiddenID}); err != nil {
+		t.Fatal("visible session inaccessible", err)
+	}
+	if _, err := a.callPluginToolContext(trusted, "terminal", "terminal_session_close", map[string]any{"id": hiddenID}); err != nil {
+		t.Fatal(err)
 	}
 
 }

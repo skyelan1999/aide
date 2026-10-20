@@ -170,6 +170,9 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	}
 	// Resource admission reruns exactly the existing plugin plan policy after queue waits.
 	ctx = context.WithValue(ctx, pluginPlanAdmissionKey{}, admission)
+	if id == "terminal" {
+		ctx = context.WithValue(ctx, terminalWorkbenchContextKey{}, true)
+	}
 	done := make(chan struct{})
 	defer close(done)
 	go func() {

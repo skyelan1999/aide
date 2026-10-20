@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -183,4 +184,43 @@ func TestTerminalContextCommunicationPolicyAndReferenceKey(t *testing.T) {
 			t.Fatal("policy missing from per-call context")
 		}
 	}
+}
+
+func TestTerminalRelayContextPrivateStateAndTrustedWorkbench(t *testing.T) {
+	a := testApp(t)
+	model, err := a.terminalToolContext(context.Background(), "terminal_session_list", map[string]any{"workbench": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if model["workbench"] != false || model["relayVersion"] != 1 {
+		t.Fatal("untrusted caller flag", model)
+	}
+	state := model["stateRoot"].(string)
+	if !strings.HasPrefix(state, a.dataPath+string(os.PathSeparator)) || strings.HasPrefix(state, a.workPath+string(os.PathSeparator)) {
+		t.Fatal("state must be outside model workspace", state)
+	}
+	info, err := os.Stat(state)
+	if err != nil || info.Mode().Perm() != 0700 {
+		t.Fatal("private state permissions", err)
+	}
+	trusted, err := a.terminalToolContext(context.WithValue(context.Background(), terminalWorkbenchContextKey{}, true), "terminal_session_list", nil)
+	if err != nil || trusted["workbench"] != true || trusted["stateRoot"] != state {
+		t.Fatal("trusted context", err)
+	}
+	id := strings.Repeat("a", 24)
+	directory := filepath.Join(state, ".aide", "terminal-workbench")
+	if err := os.MkdirAll(directory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, id+".json"), []byte(`{"auth":"default","visibleToAide":false}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	forged := map[string]any{"id": id, "workbench": true, "identityFile": "../outside.key"}
+	if _, err := a.terminalToolContext(context.Background(), "terminal_session_relay_connect", forged); err == nil {
+		t.Fatal("model saw hidden relay metadata")
+	}
+	if _, err := a.terminalToolContext(context.WithValue(context.Background(), terminalWorkbenchContextKey{}, true), "terminal_session_relay_connect", forged); err != nil {
+		t.Fatal("configured identity must override untrusted key arguments", err)
+	}
+
 }

@@ -1,10 +1,10 @@
 # Terminal · Aide 设备终端工作台
 
-**1.3.2 预发布，市场已收录，需配套宿主能力。** 统一 Shell、SSH、TCP、UDP 与串口调试工作台，提供常驻会话和日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
+**1.4.0 预发布，市场已收录，需配套宿主能力。** 统一 Shell、SSH、TCP、UDP 与串口调试工作台，提供常驻会话和日志，交互参考 [WindTerm](https://github.com/kingToolbox/WindTerm) 的会话列表、标签和日志组织；没有复用 WindTerm 源码。
 
 ## 安装预发布版
 
-从 [v1.3.2 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.3.2) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.3.2/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
+从 [v1.4.0 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.4.0) 说明中的固定提交链接下载 ZIP 和 SHA256SUMS，经 `sha256sum -c SHA256SUMS` 校验后导入。安装包托管在仓库 `packages/v1.4.0/`，Release 提供下载链接，没有另行上传二进制附件。请先采用配套宿主源码构建；当前公开旧宿主不能完整使用此工作台。
 
 插件新标签页入口已移除；后台会话、日志及 Aide 管理能力继续保留。宿主界面变更需要更新 Aide main 源码构建，单独升级插件不会替换宿主界面。
 
@@ -58,7 +58,7 @@ SSH 工作区 Shell 沿用工作区设置中的密码、私钥或引用私钥认
 
 Node.js 24、Linux Python 3 标准库 PTY（引用私钥使用 memfd）、`/bin/bash` 和 OpenSSH 客户端。安装包内置固定版本 ssh2 1.17.0、serialport 12.0.0 及其运行依赖与许可证，目标环境无需执行 npm install；终端 JS/CSS 内嵌、无需 CDN。当前在 **Linux 原生运行环境**实际验证；Windows 用户可通过 Aide Linux 容器使用，终端执行的是容器 Shell。Windows 原生 PTY 未实现，macOS 未实测；这不代表 Windows PowerShell、宿主机终端或设备串口支持。
 
-市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.3.2 需要 Aide 同时支持 `terminal-communications-v1`、`terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
+市场安装另外要求配套宿主识别 `terminal-workbench-v1`。1.4.0 需要 Aide 同时支持 `terminal-communications-v1`、`terminal-ssh-workspace-v1`、工作台 `bridge.renew` 和 `daemon.detach` 能力（配套 [Aide 宿主变更](https://github.com/skyelan1999/aide/tree/main)）。旧宿主可以识别工作台声明，但此版本会禁用会话创建并提示升级，避免旧桥接128次调用上限或取消请求导致后台停止。**不能只把新插件装入旧版 Aide 后宣称完整支持。**
 
 插件是可信 Node 代码，不是权限沙箱；交互 Shell 和 SSH 具有 Aide 运行用户的系统权限。工作区边界用于起始目录、私钥路径和会话归属，不限制 Shell 后续能访问的路径。`read-only` 宿主策略会拒绝调用这些插件工具。锁屏、工作区切换、插件停用仍按宿主策略撤销当前面板权限；取消正在执行的工具时宿主可能结束对应后台实例，以防未确认的后续副作用。
 
@@ -95,12 +95,41 @@ node test/browser-layout.cjs
 
 ## 已发布旧版
 
-[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 现已收录 1.3.2 预发布，要求 `terminal-workbench-v1` 能力；旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。
+[1.0.0 Release](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.0.0) 和 `packages/v1.0.0/` 中的归档保持不变。1.0.0 仅提供命令提案与目录工具，没有本工作台能力。[插件市场](https://skyelan1999.github.io/aide-pkg-shop/) 现已收录 1.4.0 预发布，要求 `terminal-workbench-v1` 能力；旧宿主会显示不兼容。历史 1.0.0 安装包仍保留。
 
-## 1.3.2 串口连接与选择修复
+## 1.4.0 串口连接与选择修复
 
 串口会话提供明确的设备下拉选择，展示路径、厂商和序列号，支持刷新与手动输入。进入串口类型时自动枚举；不会自动连接任何设备。Linux 缺少 udevadm 或 udev 未登记容器设备时，补充扫描可见的串口字符设备和 by-id 别名。打开失败后释放连接状态，可直接修正参数或权限后重试；权限拒绝和占用错误提供具体提示。
 
 Windows 通信会话不再被仅适用于 Shell 的 PTY 限制阻止，串口路径接受 COM3 等名称；Windows 真实串口仍未实测。Docker 内不能凭插件自动访问宿主 COM 口：必须由运行环境映射或转发设备，并配置访问权限。SSH 工作区不会自动将本机串口改为远程 SSH 设备的串口。
 
 验证包含 Linux 原生虚拟串口二进制回环、失败重试、无 udev 枚举与设备选择 UI；物理 USB/UART、Windows/macOS 和用户具体设备环境仍待实测。
+
+## 加密中继部署与 Aide 可见性（1.4.0）
+
+新建 SSH、TCP、UDP 或串口会话时，勾选“通过中继部署”，填写设备侧目标信息、中继地址及固定 TCP 端口（默认 17780）。加密密钥可留空自动生成，或填写 32 字节随机密钥的 Base64 文本。会话先保存为“等待中继部署”，不会立即连接目标。
+
+1. 选中会话，点击“下载部署脚本 .py”，再在工作台标题栏点击出现的“保存”按钮完成下载。脚本已包含目标主机/端口或串口参数、监听端口和密钥，无需手工编辑。
+2. 将脚本放到可访问目标设备的电脑上。准备 Python 3.10+ 并运行：
+
+```sh
+python3 -m pip install cryptography
+# 串口目标另外需要：
+python3 -m pip install pyserial==3.5
+python3 aide-relay-<会话ID>.py
+```
+
+3. 确保 Aide 可以访问中继 TCP 端口，点击“检测在线”。在线只代表中继认证成功，不代表目标设备已连接；检测不会打开串口或目标连接。
+4. 点击“连接中继”。SSH 保留主机指纹核验与密码/引用私钥流程；串口使用中继电脑上的设备路径，例如 Windows COM3。UDP 保留报文边界，经 TCP/TLS 帧传输。会话仍显示 SSH、TCP、UDP 或串口，额外标记“中继模式”。
+
+数据链路采用 TLS 1.3；本端在发送应用数据前核对由密钥派生的中继公钥，并使用随机挑战/HMAC 认证客户端。没有自制流加密算法。脚本包含密钥，需像设备凭据一样妥善保管；中继只连接脚本中固定的目标，不接受客户端任意指定地址。每个脚本固定一个目标，最多8个认证连接；串口同时只允许一个连接。脚本不自动注册系统服务，按用户命令前台运行。
+
+Shell/SSH 命令、设备收发与日志仍沿用原会话机制；中继在线状态每15秒检测一次，也可手动检测。中继断开后不会自动重连或重发。该版本不支持通过中继创建本地 Shell 或 TCP 监听会话，使用 SSH 会话连接远程 Shell。
+
+创建时及连接工具栏均可设置“对 Aide 可见”（默认开启）。关闭后，Aide 会话工具无法列出、读取输出/日志、发送或关闭该会话；工作台用户仍可管理。只有宿主认证的工作台调用能修改可见性或导出部署脚本，模型参数不能伪造此身份。存在隐藏会话时，底层批量通信接口对 Aide 收紧，可见会话仍可通过其专用工具操作。此开关控制插件接口，不替代宿主系统权限或可信插件的信任边界。
+
+配套宿主将终端状态、日志和中继密钥放在 Aide 私有服务数据目录，按工作区隔离。升级时旧状态会迁入，原文件逐字节确认迁移后移除；不要在迁移期间运行两个实例操作同一工作区。密钥文件使用当前运行用户的私有文件权限，不作为普通会话字段返回，不写入流量日志；这不等同于额外的静态加密。新版本需要宿主支持 `terminal-relay-v1` 和新的私有调用上下文，不能仅升级插件替代宿主更新。
+
+实际测试包含生成脚本的 TCP/UDP/TLS 收发、错误密钥/认证拒绝、Python pyserial 虚拟串口透传、OpenSSH 经中继认证、隐藏状态持久化和真实浏览器下载/部署/连接。物理 USB/UART、Windows/macOS 设备侧部署及完整 start.command 宿主 UI 尚未实测。
+
+降级前应备份 Aide 私有会话状态；旧版本不读取新私有目录，不会自动反向迁移。已有设备会话在插件升级时断开，不自动重新连接。

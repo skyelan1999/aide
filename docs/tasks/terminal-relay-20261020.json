@@ -1,0 +1,73 @@
+{
+  "id": "terminal-relay-20261020",
+  "request": "Python手动部署TCP加密中继、脚本下载、中继在线状态、保持会话类型并标识中继模式、会话是否对Aide可见",
+  "baseline": "0f2f10706e651253c4f934c5512d08028cc5e660",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Create SSH/TCP/UDP/serial sessions in optional relay mode; keep original kind and show relay status",
+    "Download target-configured Python TCP/TLS relay; fixed endpoint and strong key authenticate encrypted streams",
+    "Create offline relay drafts, probe online status without touching target, explicitly connect after deployment",
+    "Per-session Aide visibility enforced by trusted host caller context, not browser/model arguments; hide outputs/logs/control and keys from Aide session tools",
+    "Private relay secrets/state outside model workspace file roots; preserve existing sessions",
+    "Test actual TLS relay with TCP/UDP/serial/SSH, wrong key and visibility bypass denial, real UI download/deploy/connect"
+  ],
+  "scope": [
+    "Terminal relay agent/client, sessions, workbench, runtime archive and tests/docs",
+    "Aide trusted workbench context/private session root and new feature compatibility flag",
+    "Bundled initial Terminal and market release"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Agent listens on configured TCP endpoint on device side. Aide creates draft, exports configured script, then probes/connects. TLS1.3 with pinned certificate derived from random256-bit relay key and challenge authentication; no custom stream cipher.",
+      "evidence": [
+        "Current user relay/visibility request"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "TLS1.3 with exact derived key pin and challenge/HMAC authentication; fixed target, manual Python listener; trusted native workbench identity, private stateRoot, filtered per-call access. SSH reuses existing host key/auth, UDP frames preserve packets.",
+      "evidence": [
+        "relay/agent.py",
+        "relay/client.js",
+        "internal/server/plugin_terminal_context.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented relay drafts/script export/probe/connect across SSH/TCP/UDP/serial; model visibility and native caller/context guards; private-state migration.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-relay/verification.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "27 full Node tests, 21 extracted ZIP tests, 8 relay/security tests, actual browser deploy/TLS echo/visibility/offline and24 legacy UI scenarios; native Aide install/hidden gates/private context/key-source and13 parent bridge tests passed. Physical hardware/Windows/macOS/full start.command UI NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-relay/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README/changelog cover deployment/dependencies, host save step, encryption/trust boundary, visibility/private storage, old-host compatibility and downgrade backup.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-relay/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned plugin/native/bundle/evidence files; synthetic relay agents and devices cleaned. No real service deployments or user session termination. Pristine bundle updated, ignored installed plugins retained.",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-relay/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Verified1.4.0 archive prepared for prerelease/market and native host main push. No host image/version release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user push release/main/market instructions persist; current request authorizes Terminal relay and visibility feature implementation",
+  "rollback": "Back up terminal-private state before downgrade; old plugin does not read new private layout. Restore old1.3.2 plugin/market and manually restore backed-up old state only after stopping relevant daemon. No automatic reverse migration; preserve logs and credentials.",
+  "handoff": ""
+}

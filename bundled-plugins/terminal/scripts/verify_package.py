@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory(prefix='aide-terminal-runtime-') as temporary:
             destination.write_bytes(archive.read(item))
     tests = target / 'test'
     tests.mkdir()
-    for name in ['communications.test.js', 'communications-security.test.js', 'ssh-auth.test.js', 'serial-devices.test.js']:
+    for name in ['communications.test.js', 'communications-security.test.js', 'ssh-auth.test.js', 'serial-devices.test.js', 'relay.test.js']:
         shutil.copyfile(root / 'test' / name, tests / name)
     subprocess.run(['node', '--test', *[str(file) for file in sorted(tests.glob('*.test.js'))]], cwd=target, check=True)
     print('PASS: tests loaded only the extracted runtime and its bundled production dependencies')

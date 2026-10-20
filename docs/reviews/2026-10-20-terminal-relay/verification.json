@@ -1,0 +1,266 @@
+{
+  "version": "1.4.0",
+  "bytes": 1060734,
+  "sha256": "6c63c12981abce43171b111ad0adb1377d80766d3874f4b9cab42531fd43f86f",
+  "fullNodeSuite": "PASS 27 tests",
+  "extractedRuntime": "PASS 21 tests using only packaged runtime and production dependencies",
+  "relaySecurity": "PASS 8 tests: authenticated TLS1.3 TCP/UDP/serial/SSH, wrong key/auth denial before target open, hidden access and spoof denial, restart persistence, private state migration and literal script configuration",
+  "nativeHost": "PASS private context + actual candidate ZIP installation, model cannot poll/log/close/export/change hidden sessions or spoof workbench; trusted user can restore visibility. Canonical reference identity is read from private session record.",
+  "parentExport": "PASS 13 existing workbench frame/export/admission tests; .py uses existing explicit parent save flow",
+  "browserRelay": {
+    "status": "PASS",
+    "checks": [
+      "create offline relay draft",
+      "download target-configured script through actual export message",
+      "manually launch downloaded Python agent",
+      "authenticated online probe",
+      "connect TCP and binary echo through TLS",
+      "original type plus relay badge",
+      "toggle Aide visibility enforced by backend",
+      "desktop/mobile no overflow",
+      "offline detection after agent stop"
+    ],
+    "scope": "Actual generated workbench; authenticated Aide bridge/export save host substituted; real generated Python TLS agent and TCP endpoint",
+    "errors": []
+  },
+  "browserLegacy": {
+    "status": "PASS",
+    "scope": "Actual generated Terminal UI with real TCP/UDP and native serial PTY echo; authenticated Aide bridge substituted. Full start.command host UI NOT_RUN.",
+    "checks": [
+      {
+        "width": 1440,
+        "theme": "dark",
+        "palette": "blue",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "palette": "blue",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "palette": "blue",
+        "kind": "serial",
+        "serialSelection": "dropdown",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "palette": "green",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "palette": "green",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "palette": "green",
+        "kind": "serial",
+        "serialSelection": "manual",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "palette": "blue",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "palette": "blue",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "palette": "blue",
+        "kind": "serial",
+        "serialSelection": "dropdown",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "palette": "green",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "palette": "green",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "palette": "green",
+        "kind": "serial",
+        "serialSelection": "manual",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "palette": "blue",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "palette": "blue",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "palette": "blue",
+        "kind": "serial",
+        "serialSelection": "dropdown",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "palette": "green",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "palette": "green",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "palette": "green",
+        "kind": "serial",
+        "serialSelection": "manual",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "palette": "blue",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "palette": "blue",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "palette": "blue",
+        "kind": "serial",
+        "serialSelection": "dropdown",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "palette": "green",
+        "kind": "tcp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "palette": "green",
+        "kind": "udp",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "palette": "green",
+        "kind": "serial",
+        "serialSelection": "manual",
+        "realBinaryEcho": true,
+        "explicitSend": true,
+        "closeAndDelete": true
+      }
+    ],
+    "errors": []
+  },
+  "crypto": "TLS1.3; exact derived Ed25519 public-key pin before app data; random challenge/HMAC client authentication; random256-bit Base64 key. No custom stream cipher.",
+  "state": "Private Aide stateRoot, workspace-specific; relay key600 file, excluded from public records; legacy state verified and moved once. Visibility is a plugin API policy, not an OS sandbox.",
+  "limitations": [
+    "Physical USB/UART and Windows/macOS agent hardware NOT_RUN",
+    "Full start.command hosted UI NOT_RUN; actual browser substitutes authenticated host bridge/export save, agent and traffic real",
+    "Agent needs Python3.10+ cryptography; serial additionally pyserial3.5",
+    "Requires updated Aide terminal-relay-v1 private caller context; no Aide image release",
+    "Downgrade needs backup/manual state restoration; no automatic reverse migration"
+  ]
+}

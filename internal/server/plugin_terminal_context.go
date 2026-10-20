@@ -14,6 +14,7 @@ import (
 )
 
 type terminalContextKey struct{}
+type terminalWorkbenchContextKey struct{}
 
 // Only the Terminal daemon receives this per-call context, after normal tool
 // admission. Neither workspace credentials nor key bytes enter browser replies.
@@ -33,7 +34,25 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 	dataPath := a.dataPath
 	disabledTools := append([]string(nil), a.settings.DisabledTools...)
 	a.mu.Unlock()
-	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1}
+	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1, "relayVersion": 1, "workbench": ctx.Value(terminalWorkbenchContextKey{}) == true}
+	// State and relay secrets must not be reachable through workspace file tools.
+	stateIdentity, _ := json.Marshal([]any{scope, config.Mode, config.Port, config.Username, local})
+	stateHash := sha256.Sum256(stateIdentity)
+	stateBase := filepath.Join(dataPath, "terminal-private")
+	stateRoot := filepath.Join(stateBase, hex.EncodeToString(stateHash[:]))
+	for _, directory := range []string{stateBase, stateRoot} {
+		if err := os.Mkdir(directory, 0700); err != nil && !os.IsExist(err) {
+			return nil, err
+		}
+		info, err := os.Lstat(directory)
+		if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return nil, errors.New("终端私有状态目录无效")
+		}
+		if err := os.Chmod(directory, 0700); err != nil {
+			return nil, err
+		}
+	}
+	result["stateRoot"] = stateRoot
 	if config.Mode == "ssh" {
 		// Include port/user as well as workspace identity: different remote users
 		// must never share terminal records, even when wsID's legacy label matches.
@@ -72,12 +91,47 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 		}
 	}
 	effective := args
+	if tool == "terminal_session_relay_connect" {
+		id, _ := args["id"].(string)
+		decoded, err := hex.DecodeString(id)
+		if err != nil || len(decoded) != 12 {
+			return nil, errors.New("此工作区中不存在该会话")
+		}
+		private, err := os.OpenRoot(stateRoot)
+		if err != nil {
+			return nil, err
+		}
+		file, err := private.Open(filepath.Join(".aide", "terminal-workbench", id+".json"))
+		private.Close()
+		if err != nil {
+			return nil, errors.New("此工作区中不存在该会话")
+		}
+		var record struct {
+			Auth           string `json:"auth"`
+			IdentityFile   string `json:"identityFile"`
+			IdentitySource string `json:"identitySource"`
+			Visible        *bool  `json:"visibleToAide"`
+		}
+		info, statErr := file.Stat()
+		if statErr != nil || !info.Mode().IsRegular() || info.Size() > 32768 {
+			file.Close()
+			return nil, errors.New("会话记录无效")
+		}
+		err = json.NewDecoder(file).Decode(&record)
+		file.Close()
+		if err != nil || (record.Visible != nil && !*record.Visible && result["workbench"] != true) {
+			return nil, errors.New("此工作区中不存在该会话")
+		}
+		// The configured identity, not model/browser-supplied overrides, controls
+		// reference key reads for an existing relay session.
+		effective = map[string]any{"auth": record.Auth, "identityFile": record.IdentityFile, "identitySource": record.IdentitySource}
+	}
 	if tool == "terminal_session_comm" {
 		if action, ok := args["action"].(string); ok && toolDeniedIn(disabledTools, "terminal_"+action) {
 			return nil, errors.New("通信工具已被管理员禁用")
 		}
 	}
-	keyTool := tool == "terminal_session_create" || tool == "terminal_ssh_connect"
+	keyTool := tool == "terminal_session_create" || tool == "terminal_ssh_connect" || tool == "terminal_session_relay_connect"
 	if tool == "terminal_session_comm" && args["action"] == "ssh_connect" {
 		if nested, ok := args["arguments"].(map[string]any); ok {
 			effective = nested
