@@ -1,0 +1,79 @@
+{
+  "id": "terminal-market-update-20261020",
+  "request": "更新一下，然后列一下阻塞原因",
+  "baseline": "9b309010a54d9fc8a3e92a2314f4fd126d3c43e2",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "市场Terminal条目更新到1.1.1预发布，包与公开Release字节和SHA256一致",
+    "使用宿主能力标记拦住缺失续期/后台分离支持的旧宿主，配套PR支持该标记",
+    "实际市场目录、浏览器下载及Pages部署完成；逐项列出5项full失败与宿主依赖状态"
+  ],
+  "scope": [
+    "/workspace/aide-pkg-shop/listings/terminal.json",
+    "/workspace/aide-pkg-shop/catalog.json",
+    "/workspace/aide-pkg-shop/packages/terminal/1.1.1-f70d53d81944.zip",
+    "/workspace/aide-pkg-shop/README.md",
+    "internal/server/plugin_market.go",
+    "internal/server/plugin_market_test.go",
+    "docs/tasks/terminal-market-update-20261020.json",
+    "docs/reviews/2026-10-20-terminal-market-update"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求更新市场并列出阻塞原因，最新上游0.1.17.3RC1仍未包含Terminal桥接能力。",
+      "evidence": [
+        "用户原话",
+        "listings/terminal.json",
+        "internal/server/plugin_market.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用public listing与既有features兼容门禁，新增terminal-workbench-v1标记，只有实现相关能力的PR构建识别；网页说明预发布依赖。",
+      "evidence": [
+        "用户原话",
+        "listings/terminal.json",
+        "internal/server/plugin_market.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "市场1.1.1及同字节ZIP、预发布说明完成；宿主支持terminal-workbench-v1兼容标记。",
+      "evidence": [
+        "internal/server/plugin_market.go",
+        "/workspace/aide-pkg-shop/listings/terminal.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "市场4项元数据回归、25条目校验、真实浏览器搜索与下载SHA256、市场Go race全通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-market-update/market-go-race.txt",
+        "docs/reviews/2026-10-20-terminal-market-update/market-desktop.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录市场分发策略与完整阻塞原因；旧full收据不充当本轮正式发行通过。",
+      "evidence": [
+        "docs/reviews/2026-10-20-terminal-market-update/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只改Terminal条目、对应包及能力识别；旧包、其他条目与预存任务记录保留。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "准备推送市场与宿主兼容标记，随后验证Pages部署和公开下载。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户：更新一下，然后列一下阻塞原因",
+  "rollback": "市场条目恢复旧1.0.0元数据并重新生成目录；新旧ZIP均保留，不改已发布插件tag。",
+  "handoff": ""
+}

@@ -338,3 +338,19 @@ func TestPluginMarketInstalledUpgradeHonorsRevocation(t *testing.T) {
 		})
 	}
 }
+
+func TestPluginMarketTerminalWorkbenchCapability(t *testing.T) {
+	a, snapshot, _ := marketFixture(t, "2.0.0")
+	snapshot.Catalog.Plugins[0].Features = []string{"terminal-workbench-v1"}
+	cacheMarket(t, a, snapshot)
+	requireStatus(t, request(a, "POST", "/api/plugin-market/market-fixture/install", marketInput(a, snapshot)), 201)
+	// Capability support does not waive the minimum version or unknown-feature checks.
+	p := snapshot.Catalog.Plugins[0]
+	if ok, _ := marketCompatible(p, "0.1.16.0"); ok {
+		t.Fatal("minimum version was bypassed")
+	}
+	p.Features = append(p.Features, "future-terminal-v2")
+	if ok, _ := marketCompatible(p, "dev"); ok {
+		t.Fatal("unknown capability was accepted")
+	}
+}
