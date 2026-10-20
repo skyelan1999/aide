@@ -62,10 +62,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Validated source change ready for authorized main push. No Aide image build/deployment.",
+      "status": "pass",
+      "summary": "Source fix aa551ccd pushed main. Actual browser and16backendrace cases pass; no Aide image/version release or production deployment attempted.",
       "evidence": [
-        "docs/reviews/2026-10-20-plugin-upgrade-button-state/verification.json"
+        "docs/reviews/2026-10-20-plugin-upgrade-button-state/verification.json",
+        "https://github.com/skyelan1999/aide/commit/aa551ccd"
       ]
     }
   },
