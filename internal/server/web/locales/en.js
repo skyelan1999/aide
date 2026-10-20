@@ -1,6 +1,9 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+ "检查器":"Inspector",
+ "收起检查器":"Collapse inspector",
+ "标注":"Labels",
  "服务器上传确认校验不匹配":"Upload acknowledgement checksum mismatch",
  "校验已传分块":"Checking saved chunks",
  "校验并发布":"Verifying and finishing",

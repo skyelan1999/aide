@@ -1,0 +1,77 @@
+{
+  "id": "urdf-lightweight-callouts-20261020",
+  "request": "urdf的标注目前做的还不是特别好，UI需要努力提升一下，轻量化",
+  "baseline": "b97dc2aa76685ed70f2971caba45bbc1a6f472f7",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "图内标注统一单行，不再在模型上铺坐标详情；选中态清晰且所有节点仍可达",
+    "检查器按需展开，坐标/关节信息可读；切换标注和选择不会重置用户视角",
+    "工具栏收敛，显示辅助功能可通过键盘使用；桌面/窄屏和明暗实测",
+    "保留姿态计算、资源范围、草稿及销毁语义；相关回归通过"
+  ],
+  "scope": [
+    "internal/server/web/urdf-preview.js",
+    "internal/server/web/urdf-preview.css",
+    "internal/server/web/app.js/index.html/locales/en.js缓存及词条",
+    "scripts URDF回归和浏览器验收",
+    "docs任务及URDF使用/验收"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "轻量化图内名称、按需检查器、折叠辅助显示；保留原功能与数据。",
+      "evidence": [
+        "docs/prd/2026-10-19-urdf-preview.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "单行名称与按需检查器；辅助显示折叠；保留相机和真实URDF姿态计算。",
+      "evidence": [
+        "docs/prd/2026-10-19-urdf-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "148×24px标签，默认收起检查器，坐标详情与运动状态集中；固定关节调节列表精简、弱化辅助线、尺寸变化保持选中页。",
+      "evidence": [
+        "internal/server/web/urdf-preview.js",
+        "internal/server/web/urdf-preview.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "URDF相关回归和单页真实WebGL组件验收通过；2048节点布局、9/121连杆、全固定、桌面窄屏四种外观。quick132/135：证据复制时序导致的check_docs已单独复跑通过，剩余两个原有发行失败。",
+      "evidence": [
+        "docs/reviews/2026-10-20-urdf-lightweight/verification.json",
+        "docs/reviews/2026-10-20-urdf-lightweight/result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新原URDF使用说明，并记录截图、验证边界与回滚。",
+      "evidence": [
+        "docs/prd/2026-10-19-urdf-preview.md",
+        "docs/reviews/2026-10-20-urdf-lightweight/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只收本任务UI/测试/脱敏证据；保留原有10份未跟踪任务。测试HTTP和浏览器退出，用户服务未改。",
+      "evidence": [
+        "docs/reviews/2026-10-20-urdf-lightweight/README.md"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "仅准备按已授权直接推main；未通过full发行门禁，不打tag/发Release/换镜像。",
+      "evidence": [
+        "docs/reviews/2026-10-20-urdf-lightweight/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "沿用用户此前“那你直接推吧，我去别的环境测试”“直接合并到main”的源码推送授权。",
+  "rollback": "git revert本任务功能提交后按原流程构建；无数据迁移，不删除用户模型/草稿/数据，不更换运行中镜像。",
+  "handoff": "图内标注统一单行，点击打开检查器；原姿态和资源边界保留。组件已验，生产工作台镜像、真实SSH、硬件未验；源码推送后另记提交。",
+  "fingerprint": "ab77dafdecc740e9ea17a42ef75c3b3223cd7a7c5caab51dd9bed8be16531860"
+}

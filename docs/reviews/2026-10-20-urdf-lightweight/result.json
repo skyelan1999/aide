@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "scope": "Owned component page with actual product JS/CSS, offline Three.js, real WebGL and synthetic 9/121-link robot; no workbench deployment or user data.",
+  "checks": [
+    "inspector collapsed by default",
+    "one-line24px labels; max6/3; no overlap",
+    "camera preserved on labels, selection and panel resize",
+    "root/parent XYZ and moving joint RPY in inspector",
+    "display tools and Escape",
+    "121-link selection pagination retained across resize; fixed joints omitted from adjustment controls",
+    "1280 desktop and390 narrow, blue/comfort light/dark",
+    "all-fixed model retains pose inspector without controls",
+    "teardown releases canvas"
+  ],
+  "errors": []
+}

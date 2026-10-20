@@ -1,0 +1,58 @@
+{
+  "baseline": "b97dc2aa76685ed70f2971caba45bbc1a6f472f7",
+  "fingerprint": "ab77dafdecc740e9ea17a42ef75c3b3223cd7a7c5caab51dd9bed8be16531860",
+  "checks": [
+    {
+      "command": "node scripts/urdf-preview.test.cjs",
+      "status": "PASS",
+      "scope": "2048-node label layout, real r128 math and existing security/lifecycle/selection guards"
+    },
+    {
+      "command": "AIDE_EVIDENCE_DIR=… node scripts/browser-urdf-lightweight.cjs",
+      "status": "PASS",
+      "scope": "Actual product component, WebGL, generated robots; no production launcher/SSH/user data",
+      "evidence": "result.json"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "status": "FAIL",
+      "passed": 132,
+      "total": 135,
+      "failed": [
+        {
+          "command": [
+            "python3",
+            "scripts/check_docs.py"
+          ],
+          "exit": 1
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_launcher_data.py"
+          ],
+          "exit": 1
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_offline_bundle.py"
+          ],
+          "exit": 1
+        }
+      ],
+      "log": ".agent-state/verify-20261020T134442453462Z.log",
+      "note": "check_docs first ran before screenshot/result evidence copy. Evidence now present; focused check_docs retry PASS. Two other failures are previous baseline."
+    },
+    {
+      "command": "python3 scripts/check_docs.py",
+      "status": "PASS",
+      "scope": "369 Markdown files, 1315 local links, JPEG signatures, FR-01..100; rerun after evidence copy"
+    },
+    {
+      "command": "full Docker release validation / production launcher / native OS / SSH robot assets",
+      "status": "NOT_RUN",
+      "reason": "UI-only component task; prior launcher disk guard and existing release failures remain. No new image/tag/deployment."
+    }
+  ]
+}
