@@ -74,5 +74,8 @@
     }
   ],
   "note": "最后仅规范上游vendor SECURITY.md一处行尾空格；产品Go/JS与功能验收时一致。脱敏测试日志去除行尾空白。",
-  "environment_reconnect": "默认环境重连后一次quick 132/135（CAD空pidfile时序错误），激活环境单独复跑CAD通过，最终激活环境quick 133/135；不修改无关测试。"
+  "environment_reconnect": "默认环境重连后一次quick 132/135（CAD空pidfile时序错误），激活环境单独复跑CAD通过，最终激活环境quick 133/135；不修改无关测试。",
+  "source_commit": "dfc772336984ada3b905cd0ad19a2598abc34fc9",
+  "source_push": "PASS: origin/main",
+  "release": "BLOCKED: full validation missing; pre-existing untracked tasks preserved. No tag/image/release/deployment."
 }
