@@ -342,3 +342,36 @@ func TestSSHLivePluginSourceSnapshots(t *testing.T) {
 		}
 	}
 }
+
+func TestPluginWorkspaceCacheKeyIsDurableAndScoped(t *testing.T) {
+	ar := knowledgeArea{root: "workspace", scope: "ssh|project|host", kind: "ssh", origin: "process-one"}
+	ar.ws.Workspace.Mode = "ssh"
+	ar.ws.Workspace.Host = "host"
+	ar.ws.Workspace.Port = 22
+	ar.ws.Workspace.Username = "first"
+	ar.ws.Workspace.Path = "project"
+	key := pluginSourceLabel(ar)["workspaceKey"]
+	if key == nil {
+		t.Fatal("missing durable key")
+	}
+	ar.origin = "process-two"
+	ar.epoch++
+	ar.generation++
+	if pluginSourceLabel(ar)["workspaceKey"] != key {
+		t.Fatal("runtime restart invalidated cache identity")
+	}
+	ar.ws.Workspace.Username = "second"
+	if pluginSourceLabel(ar)["workspaceKey"] == key {
+		t.Fatal("SSH users share cache identity")
+	}
+	ar.ws.Workspace.Username = "first"
+	ar.ws.Workspace.Port = 2222
+	if pluginSourceLabel(ar)["workspaceKey"] == key {
+		t.Fatal("SSH ports share cache identity")
+	}
+	ar.root = "source"
+	ar.source = "ref"
+	if _, ok := pluginSourceLabel(ar)["workspaceKey"]; ok {
+		t.Fatal("non-workspace source exposes workspace key")
+	}
+}

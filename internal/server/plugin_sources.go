@@ -115,7 +115,14 @@ func pluginSourceID(ar knowledgeArea) string {
 	return ar.root
 }
 func pluginSourceLabel(ar knowledgeArea) map[string]any {
-	return map[string]any{"id": pluginSourceID(ar), "name": ar.name, "type": ar.kind, "origin": ar.origin}
+	label := map[string]any{"id": pluginSourceID(ar), "name": ar.name, "type": ar.kind, "origin": ar.origin}
+	if ar.root == "workspace" && ar.source == "" {
+		// Durable cache identity excludes per-process origin, lease epoch and secrets.
+		w := ar.ws.Workspace
+		identity, _ := json.Marshal([]any{ar.scope, ar.kind, ar.location, w.Mode, w.Path, w.Host, w.Port, w.Username})
+		label["workspaceKey"] = "W" + hash(identity)[:32]
+	}
+	return label
 }
 
 func (a *App) startPluginSources(ctx context.Context) (string, func(), func() bool, error) {

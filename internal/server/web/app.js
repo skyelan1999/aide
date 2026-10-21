@@ -6697,7 +6697,18 @@ function estimateContext() {
 }
 
 /* ── 插件系统（FR-72~75，协议 docs/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
-function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:id=>selectSession(id),blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
+function reviewPluginWorkbenchProposal(id){
+ if(document.body.classList.contains('file-view-mode')){
+  // Keep the file draft in continuity storage while exposing the host review UI.
+  document.body.classList.remove('file-view-mode');
+  $('file-view').classList.add('hidden');
+  const saved={...history.state};delete saved.aideFileRoute;
+  history.replaceState(saved,'',location.pathname+location.search);
+  document.title=t('aide · AI 开发工作台');
+ }
+ return selectSession(id);
+}
+function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
 async function loadPluginsPanel() {
   const data = await api('/plugins');
   state.plugins = data.plugins || [];
