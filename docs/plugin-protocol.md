@@ -402,7 +402,7 @@ Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注�
 
 短命 `call` handler 可使用 `await api.sources(request)`。宿主为每次已准入调用建立私有 Unix socket；不向插件传递 SSH/SFTP 密码或私钥，不开放公共 HTTP 路由。当前支持本地/SSH 工作区及已启用且允许 AI 访问的 local/skill/SFTP/workspace-sftp 引用。daemon 暂不提供此接口，其他协议来源需单独适配。
 
-- `{operation:'sources'}` 返回 `sources:[{id,name,type,origin}]`；ID 为 `workspace`、`context` 或 `source:<id>`，不含端点及凭据。
+- `{operation:'sources'}` 返回 `sources:[{id,name,type,origin}]`；ID 为 `workspace`、`context` 或 `source:<id>`，不含端点及凭据。 工作区来源额外返回不透明的 `workspaceKey`，供插件隔离本地恢复缓存；相同工作区在服务重启后保持，SSH 用户或端口不同则改变。此键由工作区身份摘要生成，不含凭据，不授予访问权限；`origin` 仍表示当前进程来源，不能用作长期缓存键。
 - `{operation:'browse',source,path}` 返回有界目录条目；路径是所选来源内的规范相对路径，列表包含点文件，不跟随链接。
 - `{operation:'stage',source,path,slot,recursive,maxBytes,maxFiles,maxDepth,exclude}` 返回 `{workspace,path,source}`：`workspace` 是本次调用独有的临时本地根，`path` 是其内快照相对路径；`source` 记录原始来源/路径、配置身份、文件/字节数、宿主保护路径排除项与原始时间戳未保留标志。`slot` 为唯一的 `left`、`right` 或 `path`，同次调用不能重复。
 - `{operation:'localRoot',source}` 仅为本地来源返回其本地根及来源身份，供已有本地 Git 等可信插件读取；远程来源返回明确错误。
