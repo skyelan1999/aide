@@ -86,7 +86,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "源码已整合远端33ddfe01的设置及.pp入口，等待复验后推main；无passing full且保留原有账本，不做Release/tag/镜像/部署。",
+      "summary": "源码及验收记录已推main至150e317f；quick140/142仍为启动器与离线包失败，无passing full；Release/tag/镜像/部署未执行。",
       "evidence": [
         "docs/reviews/2026-10-21-plugin-file-preview/release-check.txt",
         "docs/reviews/2026-10-21-plugin-file-preview/verification.json"
@@ -95,6 +95,13 @@
   },
   "release_authorization": "历史用户授权直接推main；宿主Release/镜像仍遵守full门禁。",
   "rollback": "回退本任务源码提交；旧宿主忽略fileHandler字段，插件仍可手动工作台打开；磁盘最终文件保留，未提交暂存不替换原文件。",
-  "handoff": "接口实现与隔离验收完成，待源码推main。需更新宿主使用；插件声明fileHandler后工作区/本地/SFTP引用优先预览/编辑；停用或报告故障回原生，保留RW与原版本保护。附OBJ手动安装示例，不是完整CAD，不默认捆绑。非流式来源/知识快照原生；草稿不承诺跨强制撤权恢复。",
-  "integration_base": "33ddfe01"
+  "handoff": "接口实现与隔离验收完成，源码已推main（实现c4193fed，验收150e317f）。需更新宿主使用；插件声明fileHandler后工作区/本地/SFTP引用优先预览/编辑；停用或报告故障回原生，保留RW与原版本保护。附OBJ手动安装示例，不是完整CAD，不默认捆绑。非流式来源/知识快照原生；草稿不承诺跨强制撤权恢复。",
+  "integration_base": "33ddfe01",
+  "source_delivery": {
+    "status": "pass",
+    "branch": "main",
+    "source_commit": "c4193feda70f99cffd8e69472982fcfbbc231037",
+    "verified_push": "150e317f",
+    "remote": "origin/main"
+  }
 }
