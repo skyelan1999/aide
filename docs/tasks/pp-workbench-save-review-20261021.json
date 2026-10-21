@@ -75,12 +75,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Authorized release preparation; isolate build from unrelated local Compose changes and private installed plugins.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Aide v0.1.17.4-RC2 pushed and published with five remotely digest-verified assets; private plugin 0.2.1 independently released. ARM64 native tests passed; AMD64 emulated runtime acceptance only; no production container switch.",
+      "evidence": [
+        "docs/reviews/2026-10-21-project-save-release/release.json",
+        "docs/reviews/release-0.1.17.4-RC2-2026-10-21.md"
+      ]
     }
   },
   "release_authorization": "用户：可以，把 ProfessionalProject 0.2.1 和 Aide 这次的修复都 push、release，上传新版插件包，注意不要把私有插件带进 Aide 公共包。",
   "rollback": ".agent-state/pp-save-runtime/aide.before and baseline.before.json preserve original runtime",
-  "handoff": "ProfessionalProject local 0.2.1 candidate; official 0.2.0 unchanged; Aide minimal repairs deployed from original runtime snapshot."
+  "handoff": "Aide source tag f3eaea98aa8d5db6866cc7b1b3053a9f646bf627; private ProfessionalProject release remains separate. Current live service preserved; no private package or cache in public artifacts."
 }

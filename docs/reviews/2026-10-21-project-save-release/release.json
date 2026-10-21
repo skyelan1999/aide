@@ -1,0 +1,148 @@
+{
+  "releaseTag": "v0.1.17.4-RC2",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.4-RC2",
+  "draft": false,
+  "prerelease": true,
+  "commit": "f3eaea98aa8d5db6866cc7b1b3053a9f646bf627",
+  "sourceSHA256": "caf71e58ea188df18a103d3fd7f9cee5326aec176e537d1754947f712b24f955",
+  "attachments": [
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "bytes": 4366,
+      "sha256": "10357fee6817d9dc8aac053f627faf46ed67c9c263616e1b2e6a0d75a9db6676",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "SHA256SUMS",
+      "bytes": 393,
+      "sha256": "ce191b0f69917c4090984ec1583bafe1f6c85187319c01d4f2e433869e979d86",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "aide-v0.1.17.4-RC2-full-linux-amd64.zip",
+      "bytes": 1303410216,
+      "sha256": "de66f60c2f559ec556e58203f26277db1279278a38e9b93ebcfc4ee0709e9ff0",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "aide-v0.1.17.4-RC2-full-linux-arm64.zip",
+      "bytes": 1093283506,
+      "sha256": "75f7fc77f493f72d0c832aeba91c68480d5ae70e72ca226f9248b1d37affce9a",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "aide-v0.1.17.4-RC2-source.zip",
+      "bytes": 181059229,
+      "sha256": "cf4a4f0d83767be3cfe986fa3d68ae854bac8bc7871b9a40b66b88dc2f2c0130",
+      "remoteDigestMatches": true
+    }
+  ],
+  "privacy": {
+    "source": {
+      "status": "pass",
+      "sourceZIPPluginScope": "root plugins directory contains only two public testdata files",
+      "privatePluginSourceAbsent": true,
+      "credentialsAndWorkspaceAbsent": true,
+      "everyFileBelongsToReleaseTag": true
+    },
+    "imageLayers": {
+      "arm64": {
+        "status": "pass",
+        "layerTarArchivesScanned": 54,
+        "layerEntriesScanned": 46982,
+        "allReferencedLayersScanned": true,
+        "noPrivatePluginDirectoriesOrUpgradeBackups": true
+      },
+      "amd64": {
+        "status": "pass",
+        "layerTarArchivesScanned": 63,
+        "layerEntriesScanned": 47714,
+        "allReferencedLayersScanned": true,
+        "noPrivatePluginDirectoriesOrUpgradeBackups": true
+      }
+    }
+  },
+  "validationBoundary": {
+    "nativeFullGate": {
+      "checks": 145,
+      "raceVet": "pass"
+    },
+    "arm64BuildInAllTests": "pass",
+    "amd64EmulationFullSuite": "environment-limited: Landlock ABI unavailable; whole-package 10m timeout",
+    "amd64BuildUsesNativeFullCI": true,
+    "amd64EmulatedRuntimeSmoke": "pass",
+    "amd64NativeHardwareFullTests": "not_run",
+    "sandboxFailClosedUnchanged": true,
+    "productionContainerReplaced": false
+  },
+  "fullGate": {
+    "status": "pass",
+    "checks": 145,
+    "fingerprint": "062812fd38ece61e95460e18911c2c8471d0f9a6decf7b638267688d557e728c"
+  },
+  "platforms": [
+    {
+      "platform": "linux/arm64",
+      "image": "aide:0.1.17.4-RC2-linux-arm64",
+      "imageId": "sha256:244d101c20e41ee4dd01eb8b6dffeb7f89ee7abd4b5536023eba25362b7743cb",
+      "sourceSHA256": "caf71e58ea188df18a103d3fd7f9cee5326aec176e537d1754947f712b24f955",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "privatePluginIsolatedRuntimeCall": true,
+        "existingFileReviewSaveVerified": true,
+        "durableWorkspaceKeyVerified": true,
+        "ppTasks": 5,
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.4 RC2",
+        "commit": "f3eaea98aa8d5db6866cc7b1b3053a9f646bf627",
+        "runtimeMode": "release-image",
+        "integrity": "ok",
+        "configKeys": [
+          "buildCommit",
+          "buildVersion",
+          "version"
+        ],
+        "headingLine": 1302,
+        "declarationLine": 2,
+        "sourceHashVerified": true,
+        "image": "aide:0.1.17.4-RC2-linux-arm64",
+        "platform": "linux/arm64"
+      }
+    },
+    {
+      "platform": "linux/amd64",
+      "image": "aide:0.1.17.4-RC2-linux-amd64",
+      "imageId": "sha256:22d289b8abe3f2ed58345117d1a71d8bb2578818b327127110e74ef063d5dbc7",
+      "sourceSHA256": "caf71e58ea188df18a103d3fd7f9cee5326aec176e537d1754947f712b24f955",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "privatePluginIsolatedRuntimeCall": true,
+        "existingFileReviewSaveVerified": true,
+        "durableWorkspaceKeyVerified": true,
+        "ppTasks": 5,
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.4 RC2",
+        "commit": "f3eaea98aa8d5db6866cc7b1b3053a9f646bf627",
+        "runtimeMode": "release-image",
+        "integrity": "ok",
+        "configKeys": [
+          "buildCommit",
+          "buildVersion",
+          "version"
+        ],
+        "headingLine": 1302,
+        "declarationLine": 2,
+        "sourceHashVerified": true,
+        "image": "aide:0.1.17.4-RC2-linux-amd64",
+        "platform": "linux/amd64"
+      }
+    }
+  ],
+  "date": "2026-10-21"
+}
