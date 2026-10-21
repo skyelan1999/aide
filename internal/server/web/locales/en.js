@@ -1,6 +1,15 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+ "保存到原文件":"Save to original file",
+ "文件打开方式":"Open file with",
+ "工作台原生预览":"Native workbench preview",
+ "插件文件预览":"Plugin file preview",
+ "插件已准备修改，请点击保存到原文件":"Plugin changes are ready. Click Save to original file.",
+ "插件中有未保存修改，仍要离开吗？":"The plugin has unsaved changes. Leave anyway?",
+ "插件已停止，未保存的修改不会写入原文件":"The plugin stopped. Unsaved changes were not written to the original file.",
+ "插件预览不可用，已切换原生预览":"Plugin preview unavailable. Switched to native preview.",
+
  "执行时间":"Run at",
  "取消定时任务":"Cancel scheduled task",
  "到点操作":"At the scheduled time",

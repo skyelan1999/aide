@@ -420,3 +420,6 @@ Terminal 将原 comm-ssh、comm-tcp、comm-udp、comm-serial 的35个工具注�
 ### 原生项目文件工作台入口
 
 workbench.fileExtensions 可声明最多 8 个不重复的小写扩展名，例如 [".pp"]；扩展名以点开头，后接字母和最多 11 个字母/数字。当前宿主在文件面板打开 .pp 时，查询启用且唯一声明该扩展名的工作台，使用原有 selection.left 传递来源与相对路径。缺少处理器时保留文本打开；多个处理器时提示用户从插件面板选择。此声明不授予文件访问、写入或工具权限；工作台仍需显式调用已声明工具并经过宿主来源检查。
+## 2026-10-21：按扩展名注册文件处理器
+
+可选 `workbench.fileHandler = {extensions:[".obj",".stl"],priority:10,editable:true}` 注册插件优先预览/编辑。仅宿主绑定所选文件的工作台入口提供document方法，普通工作台不自动获得文件访问权；修改先暂存，经宿主用户点击才保存。停用/未声明/不支持来源/回退继续原生。完整协议、边界、流式API与示例见[插件文件处理器](architecture/plugin-file-handlers.md)。

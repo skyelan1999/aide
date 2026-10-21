@@ -3042,11 +3042,13 @@ async function openProjectFileWorkbench(path,root,source,current) {
   const selectedSource=source?'source:'+source:root;
   await window.AidePluginWorkbench.open(matches[0],{...pluginWorkbenchServices(),selection:{left:{source:selectedSource,path,directory:false}}});return true;
 }
-async function openFile(path) {
+async function openFile(path, options={}) {
+  if(!options.native&&globalThis.AidePluginWorkbench?.prepareFileOpen?.()===false)return;
   const request=++fileOpenRequest,root=state.root,source=root==='context'?state.source:'',scope=recoveryScope(),epoch=chatRecoveryEpoch,token=state.token,previous=state.file,loginOpen=$('login-dialog').open;
   const current=()=>request===fileOpenRequest&&scope===recoveryScope()&&epoch===chatRecoveryEpoch&&token===state.token&&!lockScreen.locked&&loginOpen===$('login-dialog').open&&root===state.root&&source===(state.root==='context'?state.source:'')&&state.file===previous;
   if(!current())return;
-  if(/\.pp$/i.test(path)){if(await openProjectFileWorkbench(path,root,source,current))return;if(!current())return;}
+  if(!options.native&&globalThis.AidePluginFilePreview){const handled=await globalThis.AidePluginFilePreview.open({path,root,source}, {...pluginWorkbenchServices(),current,native:()=>openFile(path,{native:true})});if(handled){if(current())await persistWorkspaceScene({openFile:{root,source,path}});return;}if(!current())return;}
+  if(!options.native&&/\.pp$/i.test(path)){if(await openProjectFileWorkbench(path,root,source,current))return;if(!current())return;}
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
   if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
     state.file = { path, root, source, content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
@@ -9155,7 +9157,7 @@ function setFileViewMode(mode) {
 function fileViewRouteCurrent(spec, token, scope, epoch) {
   return fileView.spec===spec&&state.token===token&&recoveryScope()===scope&&chatRecoveryEpoch===epoch&&!lockScreen.locked;
 }
-async function openFileViewMode() {
+async function openFileViewMode(forceNative=false) {
   let spec = null;
   spec = window.AideFileRoute?.read();
   if (!spec) return;
@@ -9169,6 +9171,8 @@ async function openFileViewMode() {
   $('file-view').classList.remove('hidden');
   fileView.spec = spec; fileView.wsId = '';
   const openToken=state.token,openScope=recoveryScope(),openEpoch=chatRecoveryEpoch;
+  if(!forceNative&&globalThis.AidePluginFilePreview){const current=()=>fileViewRouteCurrent(spec,openToken,openScope,openEpoch);if(await globalThis.AidePluginFilePreview.open(spec,{...pluginWorkbenchServices(),current,native:()=>openFileViewMode(true)}))return;if(!current())return;}
+
   const fileName = String(spec.path).split(/[\\/]/).filter(Boolean).pop() || String(spec.path);
   document.title = fileName + ' · aide';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;

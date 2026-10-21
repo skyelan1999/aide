@@ -1,0 +1,4 @@
+{
+ "id":"mesh-file-preview","name":"OBJ 线框预览示例","version":"1.0.0","main":"index.js","enabled":true,
+ "workbench":{"protocol":1,"entry":"viewer.html","title":"插件 · OBJ 线框与编辑","fileHandler":{"extensions":[".obj"],"priority":10,"editable":true}}
+}

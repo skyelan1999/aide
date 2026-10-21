@@ -1,0 +1,41 @@
+{
+  "baseline": "ef45559081726cf5229691ce67ec7c00a0622bb6",
+  "fingerprint": "e302f82b9e8ca5228c620022fb3453b58e8992428e55505b9b64bc1c8a7b5a92",
+  "goRaceAndActualBrowser": {
+    "status": "PASS",
+    "command": "source /workspace/.aide-cloud/env.sh && AIDE_PLUGIN_FILE_BROWSER=1 AIDE_EVIDENCE_DIR=/workspace/aide/docs/reviews/2026-10-21-plugin-file-preview go test -race ./internal/server -run 'TestPlugin(FileHandler|Document|FilePreviewBrowser)' -count=1 -v",
+    "passedTests": 13,
+    "log": "go-race.txt"
+  },
+  "js": {
+    "status": "PASS",
+    "tests": 23,
+    "command": "node --test scripts/plugin-workbench.test.cjs scripts/plugin-workbench-client.test.cjs scripts/plugin-file-preview.test.cjs"
+  },
+  "quick": {
+    "status": "fail",
+    "checks": 142,
+    "passed": 140,
+    "failed": [
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_data.py"
+        ],
+        "exit": 1
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_offline_bundle.py"
+        ],
+        "exit": 1
+      }
+    ]
+  },
+  "full": {
+    "status": "NOT_RUN",
+    "reason": "Known launcher and offline-bundle quick failures; no passing full receipt."
+  },
+  "production": "No deployment, version bump, tag or image publication. Isolated testApp/httptest and pipe SFTP only; no paid model/user data/devices."
+}

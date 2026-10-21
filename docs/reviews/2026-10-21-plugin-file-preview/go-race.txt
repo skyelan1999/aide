@@ -1,0 +1,30 @@
+=== RUN   TestPluginFilePreviewBrowser
+    plugin_file_browser_test.go:68: PASS plugin-first file preview and edits; native fallback
+
+--- PASS: TestPluginFilePreviewBrowser (15.84s)
+=== RUN   TestPluginFileHandlerManifestResolution
+--- PASS: TestPluginFileHandlerManifestResolution (2.43s)
+=== RUN   TestPluginDocumentRangeAssetsAndScope
+--- PASS: TestPluginDocumentRangeAssetsAndScope (2.22s)
+=== RUN   TestPluginDocumentPackageAssetsStayInOwnPackage
+--- PASS: TestPluginDocumentPackageAssetsStayInOwnPackage (2.15s)
+=== RUN   TestPluginDocumentBinarySaveVersionAndCleanup
+--- PASS: TestPluginDocumentBinarySaveVersionAndCleanup (2.35s)
+=== RUN   TestPluginDocumentConflictingSavePreservesFile
+--- PASS: TestPluginDocumentConflictingSavePreservesFile (2.10s)
+=== RUN   TestPluginDocumentReadOnlyReferenceAndKnowledge
+--- PASS: TestPluginDocumentReadOnlyReferenceAndKnowledge (2.14s)
+=== RUN   TestPluginDocumentCloseAndWorkspaceRevocation
+--- PASS: TestPluginDocumentCloseAndWorkspaceRevocation (2.05s)
+=== RUN   TestPluginDocumentRenewPreservesDraftAndRevokesOldKey
+--- PASS: TestPluginDocumentRenewPreservesDraftAndRevokesOldKey (2.16s)
+=== RUN   TestPluginDocumentReferenceRevocationPreservesOriginal
+--- PASS: TestPluginDocumentReferenceRevocationPreservesOriginal (2.04s)
+=== RUN   TestPluginDocumentLargeOffsetRange
+--- PASS: TestPluginDocumentLargeOffsetRange (2.03s)
+=== RUN   TestPluginDocumentSFTPAtomicSave
+--- PASS: TestPluginDocumentSFTPAtomicSave (2.25s)
+=== RUN   TestPluginDocumentAppCloseCancelsInFlightRead
+--- PASS: TestPluginDocumentAppCloseCancelsInFlightRead (2.34s)
+PASS
+ok  	aide/internal/server	43.226s
