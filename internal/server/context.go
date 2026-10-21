@@ -461,7 +461,7 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 	if task == nil {
 		task = &Task{HarnessConfig: &harness}
 	}
-	tools := filterTaskTools(task, withAvatarCueTool(a.contextToolsFor(s), avatarEnabled))
+	tools := a.routedPluginSchemasLocked(task, filterTaskTools(task, withAvatarCueTool(a.contextToolsFor(s), avatarEnabled)), prompt)
 	instruction += "\n" + runtimeCapabilityInstruction(tools, prompt, mode, policy)
 	var first []Message
 	if mode == "chat" {

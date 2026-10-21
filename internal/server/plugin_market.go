@@ -45,30 +45,31 @@ type marketCommerce struct {
 	PublicKeys  map[string]string `json:"publicKeys,omitempty"`
 }
 type marketPlugin struct {
-	Distribution   string          `json:"distribution,omitempty"`
-	Commerce       *marketCommerce `json:"commerce,omitempty"`
-	Dependencies   []string        `json:"dependencies"`
-	ID             string          `json:"id"`
-	Kind           string          `json:"kind"`
-	Name           string          `json:"name"`
-	Description    string          `json:"description"`
-	Version        string          `json:"version"`
-	Author         string          `json:"author"`
-	Category       string          `json:"category"`
-	Icon           string          `json:"icon"`
-	Package        string          `json:"package"`
-	SHA256         string          `json:"sha256"`
-	Bytes          int64           `json:"bytes"`
-	MinAideVersion string          `json:"minAideVersion"`
-	Platforms      []string        `json:"platforms"`
-	Features       []string        `json:"features"`
-	Permissions    string          `json:"permissions"`
-	TrustNotice    string          `json:"trustNotice"`
-	Source         string          `json:"source"`
-	License        string          `json:"license"`
-	Readme         string          `json:"readme"`
-	Screenshots    []string        `json:"screenshots"`
-	Changelog      string          `json:"changelog"`
+	Routing        *pluginRouteMetadata `json:"routing,omitempty"`
+	Distribution   string               `json:"distribution,omitempty"`
+	Commerce       *marketCommerce      `json:"commerce,omitempty"`
+	Dependencies   []string             `json:"dependencies"`
+	ID             string               `json:"id"`
+	Kind           string               `json:"kind"`
+	Name           string               `json:"name"`
+	Description    string               `json:"description"`
+	Version        string               `json:"version"`
+	Author         string               `json:"author"`
+	Category       string               `json:"category"`
+	Icon           string               `json:"icon"`
+	Package        string               `json:"package"`
+	SHA256         string               `json:"sha256"`
+	Bytes          int64                `json:"bytes"`
+	MinAideVersion string               `json:"minAideVersion"`
+	Platforms      []string             `json:"platforms"`
+	Features       []string             `json:"features"`
+	Permissions    string               `json:"permissions"`
+	TrustNotice    string               `json:"trustNotice"`
+	Source         string               `json:"source"`
+	License        string               `json:"license"`
+	Readme         string               `json:"readme"`
+	Screenshots    []string             `json:"screenshots"`
+	Changelog      string               `json:"changelog"`
 }
 type marketCatalog struct {
 	SchemaVersion   int            `json:"schemaVersion"`
@@ -94,6 +95,9 @@ func validateMarket(s marketSnapshot) error {
 	}
 	seen := map[string]bool{}
 	for _, p := range s.Catalog.entries() {
+		if err := validatePluginRouting(p.Routing); err != nil {
+			return err
+		}
 		if !pluginIDPattern.MatchString(p.ID) || seen[p.ID] || p.Kind != "plugin" || len(p.Name) == 0 || len(p.Name) > 160 || len(p.Description) > 4096 || !marketVersion.MatchString(p.Version) || !marketVersion.MatchString(p.MinAideVersion) || len(p.Readme) > 32768 || len(p.Permissions) > 4096 || len(p.TrustNotice) > 4096 || len(p.Changelog) > 8192 || len(p.Dependencies) > 16 || len(p.Features) > 16 || len(p.Platforms) > 3 || len(p.Screenshots) > 6 {
 			return errors.New("官方市场插件元数据无效")
 		}
@@ -473,6 +477,9 @@ func (a *App) marketInstall(w http.ResponseWriter, r *http.Request) {
 	lockGeneration := a.loadLockStateLocked().Gen
 	a.mu.Unlock()
 	guard := func() error {
+		if err := managementGuardLocked(a, r); err != nil {
+			return err
+		}
 		if err := ctx.Err(); err != nil {
 			return err
 		}

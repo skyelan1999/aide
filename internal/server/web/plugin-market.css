@@ -10,3 +10,5 @@ dialog.market-dialog{width:min(640px,calc(100vw - 28px));max-height:86dvh;overfl
 @media(max-width:600px){dialog.market-dialog{padding:18px}.market-facts{grid-template-columns:80px minmax(0,1fr);padding:12px;gap:12px}.market-detail-head h2{font-size:18px}.market-dialog .dialog-actions{bottom:-18px}}
 
 .market-device{display:block;overflow-wrap:anywhere;margin:12px 0;user-select:all}.market-dialog label{display:block;margin:12px 0}.market-dialog input[type=file]{display:block;max-width:100%;margin-top:8px}
+
+.market-routing{display:grid;gap:8px;padding:14px;margin-bottom:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}.market-routing p{margin:0}.market-routing-toggle{display:flex;align-items:center;gap:8px}.market-routing input[type=checkbox]{width:18px;height:18px;flex:none}.market-controls{flex-wrap:wrap}.market-controls input{min-width:0}.market-routing .market-status{overflow-wrap:anywhere}

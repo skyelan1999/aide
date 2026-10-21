@@ -1,0 +1,127 @@
+=== RUN   TestPluginCommercePrivateInstallAndUpdate
+--- PASS: TestPluginCommercePrivateInstallAndUpdate (1.21s)
+=== RUN   TestPluginCommerceRejectInvalidLicense
+=== RUN   TestPluginCommerceRejectInvalidLicense/signature
+=== RUN   TestPluginCommerceRejectInvalidLicense/key
+=== RUN   TestPluginCommerceRejectInvalidLicense/device
+=== RUN   TestPluginCommerceRejectInvalidLicense/bundle
+=== RUN   TestPluginCommerceRejectInvalidLicense/prelaunch
+=== RUN   TestPluginCommerceRejectInvalidLicense/locked
+=== RUN   TestPluginCommerceRejectInvalidLicense/readonly
+=== RUN   TestPluginCommerceRejectInvalidLicense/workspace
+=== RUN   TestPluginCommerceRejectInvalidLicense/version
+--- PASS: TestPluginCommerceRejectInvalidLicense (8.51s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/signature (1.01s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/key (0.96s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/device (0.90s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/bundle (0.93s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/prelaunch (0.94s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/locked (0.94s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/readonly (0.92s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/workspace (0.93s)
+    --- PASS: TestPluginCommerceRejectInvalidLicense/version (0.98s)
+=== RUN   TestPluginCommerceCatalogAndPublicIsolation
+--- PASS: TestPluginCommerceCatalogAndPublicIsolation (0.97s)
+=== RUN   TestPluginCommerceExtendedCatalogKeepsLegacyPublicEntries
+--- PASS: TestPluginCommerceExtendedCatalogKeepsLegacyPublicEntries (0.92s)
+=== RUN   TestPluginCommerceIdentitySurvivesRestart
+--- PASS: TestPluginCommerceIdentitySurvivesRestart (1.37s)
+=== RUN   TestPluginMarketInstallUpdateAndDownload
+--- PASS: TestPluginMarketInstallUpdateAndDownload (1.05s)
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/hash
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/version
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/catalog
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/workspace
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/read-only
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/locked
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/changed-during-download
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/cancelled
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/manifest-mismatch
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/digest
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/load-failure
+=== RUN   TestPluginMarketRejectsUnreviewedOrRevokedInstall/busy
+--- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall (11.30s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/hash (1.05s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/version (0.99s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/catalog (0.90s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/workspace (0.94s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/read-only (0.93s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/locked (0.92s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/changed-during-download (0.92s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/cancelled (0.90s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/manifest-mismatch (0.92s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/digest (0.92s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/load-failure (0.98s)
+    --- PASS: TestPluginMarketRejectsUnreviewedOrRevokedInstall/busy (0.93s)
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback/path
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback/duplicate
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback/source
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback/hash
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback/size
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback/feature
+=== RUN   TestPluginMarketCatalogIntegrityAndOfflineFallback/min-version
+--- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback (0.96s)
+    --- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback/path (0.00s)
+    --- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback/duplicate (0.00s)
+    --- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback/source (0.00s)
+    --- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback/hash (0.00s)
+    --- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback/size (0.00s)
+    --- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback/feature (0.00s)
+    --- PASS: TestPluginMarketCatalogIntegrityAndOfflineFallback/min-version (0.00s)
+=== RUN   TestPluginMarketNumericVersionCompatibility
+--- PASS: TestPluginMarketNumericVersionCompatibility (0.00s)
+=== RUN   TestPluginMarketRefreshPinsCatalogAndBoundsCache
+--- PASS: TestPluginMarketRefreshPinsCatalogAndBoundsCache (1.00s)
+=== RUN   TestPluginMarketPublishedPackages
+    plugin_market_test.go:287: set AIDE_TEST_MARKET_PACKAGES to a verified official package tree
+--- SKIP: TestPluginMarketPublishedPackages (0.00s)
+=== RUN   TestPluginMarketInstalledUpgradeHonorsRevocation
+=== RUN   TestPluginMarketInstalledUpgradeHonorsRevocation/locked
+=== RUN   TestPluginMarketInstalledUpgradeHonorsRevocation/read-only
+--- PASS: TestPluginMarketInstalledUpgradeHonorsRevocation (2.02s)
+    --- PASS: TestPluginMarketInstalledUpgradeHonorsRevocation/locked (1.01s)
+    --- PASS: TestPluginMarketInstalledUpgradeHonorsRevocation/read-only (1.01s)
+=== RUN   TestPluginMarketTerminalWorkbenchCapability
+--- PASS: TestPluginMarketTerminalWorkbenchCapability (1.03s)
+=== RUN   TestPluginRoutingMetadataAndBoundaries
+--- PASS: TestPluginRoutingMetadataAndBoundaries (0.93s)
+=== RUN   TestPluginRoutingPolicyAndDefaultOff
+--- PASS: TestPluginRoutingPolicyAndDefaultOff (1.01s)
+=== RUN   TestPluginRoutingInstallAuthorizationAndDynamicTools
+--- PASS: TestPluginRoutingInstallAuthorizationAndDynamicTools (1.10s)
+=== RUN   TestPluginRoutingToolReductionAndDeny
+--- PASS: TestPluginRoutingToolReductionAndDeny (0.91s)
+=== RUN   TestPluginRoutingInstallRevocationAndScopes
+=== RUN   TestPluginRoutingInstallRevocationAndScopes/revoke
+=== RUN   TestPluginRoutingInstallRevocationAndScopes/workspace
+=== RUN   TestPluginRoutingInstallRevocationAndScopes/readonly
+=== RUN   TestPluginRoutingInstallRevocationAndScopes/cancel
+=== RUN   TestPluginRoutingInstallRevocationAndScopes/locked-generation
+=== RUN   TestPluginRoutingInstallRevocationAndScopes/bad-package
+=== RUN   TestPluginRoutingInstallRevocationAndScopes/restricted-agent
+--- PASS: TestPluginRoutingInstallRevocationAndScopes (6.56s)
+    --- PASS: TestPluginRoutingInstallRevocationAndScopes/revoke (0.95s)
+    --- PASS: TestPluginRoutingInstallRevocationAndScopes/workspace (1.03s)
+    --- PASS: TestPluginRoutingInstallRevocationAndScopes/readonly (0.92s)
+    --- PASS: TestPluginRoutingInstallRevocationAndScopes/cancel (0.91s)
+    --- PASS: TestPluginRoutingInstallRevocationAndScopes/locked-generation (0.91s)
+    --- PASS: TestPluginRoutingInstallRevocationAndScopes/bad-package (0.94s)
+    --- PASS: TestPluginRoutingInstallRevocationAndScopes/restricted-agent (0.91s)
+=== RUN   TestPluginRoutingPrivateAndNonmatchNeverInstall
+--- PASS: TestPluginRoutingPrivateAndNonmatchNeverInstall (0.91s)
+=== RUN   TestPluginRoutingDefaultIndexDownload
+--- PASS: TestPluginRoutingDefaultIndexDownload (0.92s)
+=== RUN   TestPluginRoutingModelRoundLoadsDiscoveredTools
+--- PASS: TestPluginRoutingModelRoundLoadsDiscoveredTools (1.48s)
+=== RUN   TestPluginRoutingCachedSearchDuringNetworkRefresh
+--- PASS: TestPluginRoutingCachedSearchDuringNetworkRefresh (0.94s)
+=== RUN   TestPluginRoutingBrowser
+    plugin_routing_test.go:331: PASS actual marketplace routing and authorization UI
+
+--- PASS: TestPluginRoutingBrowser (5.42s)
+=== RUN   TestPluginToolExecution
+--- PASS: TestPluginToolExecution (1.44s)
+PASS
+ok  	aide/internal/server	53.132s

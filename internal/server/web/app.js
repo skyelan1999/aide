@@ -554,6 +554,7 @@ async function refreshConfig() {
   const workspaceChanged=!!previousScope&&previousScope!==nextConfig.workspaceId;
   if(workspaceChanged){await persistChatDraft();recoveryReady=false;clearTimeout(recoveryTimer);++sessionSeq.value;}
   state.config = nextConfig;
+  void window.AidePluginMarket?.initRouting?.();
   renderCommandWorkspaceStatus();
   window.AideManagement?.refresh();
   await refreshApprovalPolicy();

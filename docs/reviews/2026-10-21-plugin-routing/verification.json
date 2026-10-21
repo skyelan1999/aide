@@ -1,0 +1,73 @@
+{
+  "baseline": "80542984d28e1d260126ae14ce867c403e9bb861",
+  "shopBaseline": "2c0dbdc2780bc087a2f2e17a83867ae0547efbc8",
+  "fingerprint": "624cba1fde2ff883a01e6c9e899ec8ba3078d33aee8262a329b1fe22a6444eba",
+  "goRace": {
+    "status": "PASS",
+    "topLevelTests": 23,
+    "command": "source /workspace/.aide-cloud/env.sh && AIDE_PLUGIN_ROUTING_BROWSER=1 AIDE_EVIDENCE_DIR=/workspace/aide/docs/reviews/2026-10-21-plugin-routing go test -race ./internal/server -run 'TestPluginRouting|TestPluginMarket|TestPluginCommerce|^TestPluginToolExecution$' -count=1 -v"
+  },
+  "existingPluginTool": {
+    "status": "PASS",
+    "command": "go test -race ./internal/server -run '^TestPluginToolExecution$' -count=1 -v"
+  },
+  "js": {
+    "status": "PASS",
+    "commands": [
+      "node scripts/plugin-market.test.cjs",
+      "node --check internal/server/web/plugin-market.js",
+      "node --check internal/server/web/app.js",
+      "node --check internal/server/web/locales/en.js",
+      "node --check scripts/browser-plugin-routing.cjs"
+    ]
+  },
+  "shop": {
+    "status": "PASS",
+    "pythonUnitTests": 8,
+    "publicPackages": 20,
+    "listings": 21,
+    "commands": [
+      "python3 scripts/test_routing.py",
+      "python3 scripts/test_private_catalog.py",
+      "python3 scripts/test_public_catalog.py",
+      "node scripts/test-routing-search.cjs",
+      "python3 scripts/verify_catalog.py"
+    ]
+  },
+  "quick": {
+    "status": "fail",
+    "checks": 142,
+    "passed": 140,
+    "failed": [
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_data.py"
+        ],
+        "exit": 1
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_offline_bundle.py"
+        ],
+        "exit": 1
+      }
+    ]
+  },
+  "full": "NOT_RUN: quick has two existing launcher failures; no passing current full receipt.",
+  "startup": "FAIL: start.command source image CAD dependency pip TLS certificate verification failed; fallback to old prebuilt was stopped after verifying PID/cwd/owned log, own partial cache removed. No current host image deployed.",
+  "otherLimitation": "Existing TestHarnessSkillsToolsAndHookExecution cannot execute pwd Hook because this environment reports Landlock ABI=0; no bypass.",
+  "production": "No version bump/tag/GitHub Release/image publication; no paid model or user device calls. Browser is isolated actual testApp/httptest, not proof of production deployment.",
+  "shopPublication": {
+    "status": "PASS",
+    "commit": "327efd299f834b4864abda2b86be003b4949c743",
+    "ci": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39532234869",
+    "live": "https://skyelan1999.github.io/aide-pkg-shop/routing.json",
+    "verifiedHashes": {
+      "routing.json": "f8640e1164186bf6c06e35aa63c2b11a7a97051b8dd18c034ce24ef21f0cce55",
+      "catalog.json": "85568682c7b37595fefa6b5778452b78a8dbfe9e70abb568368a2cb06176dbeb",
+      "market.js": "e67e9d89fcc87e243f48f1255538e34864c28712f23b62d27966b7f17828f5e8"
+    }
+  }
+}
