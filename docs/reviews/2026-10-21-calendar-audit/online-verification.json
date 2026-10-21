@@ -1,0 +1,43 @@
+{
+  "market": "59704c658ed21529c87a54783a9745a8bf8a5b11",
+  "base": "https://skyelan1999.github.io/aide-pkg-shop/",
+  "items": [
+    {
+      "id": "almanac",
+      "version": "1.1.0",
+      "package": "packages/almanac/1.1.0-5f82efc98e80.zip",
+      "sha256": "5f82efc98e80feeab726038ca4e1fb4e09d8f79ff28af2981a0898fade26fd56",
+      "bytes": 171917,
+      "source": "https://github.com/skyelan1999/aide-pkg-almanac/tree/c42b56e8a384e113d5f3533e182cc04e0bb09996",
+      "screenshots": [
+        "https://raw.githubusercontent.com/skyelan1999/aide-pkg-almanac/c42b56e8a384e113d5f3533e182cc04e0bb09996/docs/evidence/comfort-light-1440.png",
+        "https://raw.githubusercontent.com/skyelan1999/aide-pkg-almanac/c42b56e8a384e113d5f3533e182cc04e0bb09996/docs/evidence/comfort-dark-390.png"
+      ]
+    },
+    {
+      "id": "current-time",
+      "version": "1.1.0",
+      "package": "packages/current-time/1.1.0-3959e61044b8.zip",
+      "sha256": "3959e61044b8e3a4a123b466ace916cf061c0f19d63680df8989c3d8341b793d",
+      "bytes": 12517,
+      "source": "https://github.com/skyelan1999/aide-pkg-CurrentTime/tree/1f8098ff1ba6384e917df5b5b417978f01780c22",
+      "screenshots": [
+        "https://raw.githubusercontent.com/skyelan1999/aide-pkg-CurrentTime/1f8098ff1ba6384e917df5b5b417978f01780c22/docs/evidence/comfort-light-1440.png",
+        "https://raw.githubusercontent.com/skyelan1999/aide-pkg-CurrentTime/1f8098ff1ba6384e917df5b5b417978f01780c22/docs/evidence/comfort-dark-390.png"
+      ]
+    },
+    {
+      "id": "lunar-calendar",
+      "version": "1.1.0",
+      "package": "packages/lunar-calendar/1.1.0-70f14e9538bf.zip",
+      "sha256": "70f14e9538bf5a645c63d9f16ce231852944d83dd9fd27428c29065509a9e964",
+      "bytes": 53159,
+      "source": "https://github.com/skyelan1999/aide-pkg-LunarCalendar/tree/983384b311ee26c51a7ac352ef0169c61e49d589",
+      "screenshots": [
+        "https://raw.githubusercontent.com/skyelan1999/aide-pkg-LunarCalendar/983384b311ee26c51a7ac352ef0169c61e49d589/docs/evidence/comfort-light-1440.png",
+        "https://raw.githubusercontent.com/skyelan1999/aide-pkg-LunarCalendar/983384b311ee26c51a7ac352ef0169c61e49d589/docs/evidence/comfort-dark-390.png"
+      ]
+    }
+  ],
+  "routingMatches": true
+}

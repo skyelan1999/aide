@@ -1,0 +1,84 @@
+{
+  "id": "calendar-audit-20261021",
+  "request": "推算算法是否有漏洞，增强黄历插件，同时审查农历插件；追加农历和当前时间插件工作台",
+  "baseline": "ce15b170cc2290e2c3f8dc33afe2b9275f8ceeec",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "对1901–2099年72684天的两种计算引擎与HKO日历交叉验证，公开差异及官方不确定性，保留来源与校验指纹",
+    "两款历法插件使用明确一致的离线日期口径；严格日期类型/范围，节气日期与估算时刻分开，黄历口径有说明",
+    "农历工作台支持月历、日期查询、闰月与来源，当前时间工作台支持主机时钟/多时区/ISO周，工作台与Aide工具同源",
+    "单元与全范围回归、跨时区、真实宿主ZIP导入和浏览器验收；独立版本/包/市场更新，保留用户文件"
+  ],
+  "scope": [
+    "/workspace/aide-pkg-almanac",
+    "/workspace/aide-pkg-LunarCalendar",
+    "/workspace/aide-pkg-CurrentTime",
+    "/workspace/aide-pkg-shop/listings",
+    "/workspace/aide-pkg-shop/catalog.json",
+    "/workspace/aide-pkg-shop/routing.json",
+    "docs/tasks/calendar-audit-20261021.json",
+    "docs/reviews/2026-10-21-calendar-audit"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "保留算法审计并追加两个独立工作台，不把民俗解释为科学，不盲目补偿秒差。",
+      "evidence": [
+        "docs/tasks/calendar-audit-20261021.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "两款历法插件共享一致HKO离线月份锚点/节气日期；黄历保留原引擎估算与民俗表；农历/时间工作台复用既有受控桥。",
+      "evidence": [
+        "/workspace/aide-pkg-almanac/docs/calendar-audit.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "独立三个1.1.0包完成，农历与时间新增工作台、严格输入校验、时区/ISO周边界修复，宿主产品代码无变化。",
+      "evidence": [
+        "almanac c42b56e",
+        "LunarCalendar 983384b",
+        "CurrentTime 1f8098f"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "两款历法各3组72684日回归，黄历8组，农历/时间handler回归；最终ZIP可复现/逐项源码核对；最新main临时真实宿主Go race+Chromium15.391秒通过。三个工作台1440/390四主题，无溢出/外部请求/页面错误。",
+      "evidence": [
+        "/workspace/aide-pkg-almanac/docs/release-verification-1.1.0.json",
+        "/workspace/aide-pkg-LunarCalendar/docs/evidence",
+        "/workspace/aide-pkg-CurrentTime/docs/evidence"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README、Changelog、第三方署名、独立审计数据/脚本和真实验收边界已补齐。",
+      "evidence": [
+        "各插件docs/verification.md及THIRD_PARTY_NOTICES.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅diff及新增文件，精确删除自有宿主测试夹具，关闭自有浏览器/临时服务，保留10个原始任务文件。",
+      "evidence": [
+        "git diff --check",
+        "scripts/verify-host.sh EXIT trap"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "三个独立插件main及公开v1.1.0 Release已发布，Release含固定提交ZIP/校验链接；商店59704c6 Pages成功，线上目录/路由/包摘要/截图逐项验证。无宿主产品发布。",
+      "evidence": [
+        "docs/reviews/2026-10-21-calendar-audit/delivery.md",
+        "docs/reviews/2026-10-21-calendar-audit/online-verification.json",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39549203923"
+      ]
+    }
+  },
+  "release_authorization": "用户持续授权独立插件推送、Release和市场登记，本轮要求增强与工作台；不替换生产服务。",
+  "rollback": "插件管理恢复前版本；旧版本ZIP和市场包保留，不改用户数据。",
+  "handoff": "已完成审计、增强和两工作台、推送与Release/市场上线；无运行服务或剩余阻塞。未实测Windows/macOS及生产/付费模型。回滚导入1.0.0包。",
+  "host_verification_commit": "a0ffa35a"
+}
