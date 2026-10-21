@@ -3034,10 +3034,19 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
 }
 
 let fileOpenRequest=0;
+async function openProjectFileWorkbench(path,root,source,current) {
+  const data=await api('/plugins');if(!current())return true;
+  state.plugins=data.plugins||[];
+  const matches=state.plugins.filter(p=>p.enabled&&!p.error&&p.workbench?.protocol===1&&p.workbench.fileExtensions?.includes('.pp'));
+  if(matches.length!==1){if(matches.length>1)toast(t('多个插件关联了此文件类型，请从插件面板选择工作台。'));return false;}
+  const selectedSource=source?'source:'+source:root;
+  await window.AidePluginWorkbench.open(matches[0],{...pluginWorkbenchServices(),selection:{left:{source:selectedSource,path,directory:false}}});return true;
+}
 async function openFile(path) {
   const request=++fileOpenRequest,root=state.root,source=root==='context'?state.source:'',scope=recoveryScope(),epoch=chatRecoveryEpoch,token=state.token,previous=state.file,loginOpen=$('login-dialog').open;
   const current=()=>request===fileOpenRequest&&scope===recoveryScope()&&epoch===chatRecoveryEpoch&&token===state.token&&!lockScreen.locked&&loginOpen===$('login-dialog').open&&root===state.root&&source===(state.root==='context'?state.source:'')&&state.file===previous;
   if(!current())return;
+  if(/\.pp$/i.test(path)){if(await openProjectFileWorkbench(path,root,source,current))return;if(!current())return;}
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
   if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
     state.file = { path, root, source, content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
@@ -5197,7 +5206,12 @@ function renderMarkdownHistoryControl() {
  api('/plugins').then(data=>{const plugin=(data.plugins||[]).find(p=>p.id==='markdown-history');if(!plugin){copy.append(el('small','',t('需要安装 Markdown 历史版本插件。')));return;}check.checked=plugin.enabled;check.disabled=false;check.onchange=async()=>{check.disabled=true;try{await api('/plugins/markdown-history',{method:'PUT',body:JSON.stringify({enabled:check.checked})});}catch(e){check.checked=!check.checked;toast(e.message);}finally{check.disabled=false;}};}).catch(e=>copy.append(el('small','',e.message)));
  return row;
 }
-const controlRenderers = { 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
+function renderModelConnectionsControl(control) {
+  const wrap=el('div','settings-control');
+  const button=el('button','quiet',control.label);button.type='button';button.onclick=openSettings;
+  wrap.append(el('p','section-desc',t('管理提供商、API 密钥和可用模型。')),button);return wrap;
+}
+const controlRenderers = { 'model-connections': renderModelConnectionsControl, 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
   "knowledge-index-policy": renderKnowledgeIndexPolicy,
   "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
   "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='accessibility'&&settingsPanel.activeChild==='interface-tests'&&$('settings-sheet').classList.contains('open')}),
@@ -5347,6 +5361,12 @@ function renderSessionsManage() {
 function renderControlsInto(host, controls, description) {
   if (description) host.append(el('p', 'section-desc', description));
   for (const control of controls || []) {
+    if (control.advanced) {
+      const details=el('details','settings-advanced'), summary=el('summary','',control.label), body=el('div','settings-advanced-body');
+      details.append(summary,body); let initialized=false;
+      details.addEventListener('toggle',()=>{if(details.open&&!initialized){initialized=true;renderControlsInto(body,[{...control,advanced:false}]);requestAnimationFrame(()=>settingsPanel.refreshers.forEach(r=>r.apply()));}});
+      host.append(details); continue;
+    }
     let node;
     try {
       const renderer = controlRenderers[control && control.type];
@@ -5373,36 +5393,28 @@ function renderSettingsSheet() {
   settingsPanel.refreshers = [];
   nav.replaceChildren();
   content.replaceChildren();
-  const sections = window.aideI18n ? window.aideI18n.schema(settingsPanel.schema?.sections || []) : (settingsPanel.schema?.sections || []);
-  if (!sections.length) return;
-  if (!sections.some(x => x.id === settingsPanel.active)) settingsPanel.active = sections[0].id;
-  for (const section of sections) {
-    const b = el('button', 'settings-nav-item' + (section.id === settingsPanel.active ? ' active' : ''), section.title);
-    b.type = 'button';
-    b.onclick = () => { settingsPanel.active = section.id; settingsPanel.activeChild = ''; renderSettingsSheet(); };
-    nav.append(b);
+  const schema = window.aideI18n ? window.aideI18n.schema(settingsPanel.schema || {}) : (settingsPanel.schema || {});
+  const model=window.AideSettingsNavigation.build(schema);
+  const page=window.AideSettingsNavigation.resolve(model,settingsPanel.active,settingsPanel.activeChild);
+  if(!page)return;
+  settingsPanel.active=page.sectionId;settingsPanel.activeChild=page.childId;
+  const group=model.groups.find(group=>group.pages.some(item=>item.id===page.id));
+  const select = target => {settingsPanel.active=target.sectionId;settingsPanel.activeChild=target.childId;renderSettingsSheet();$('settings-content').scrollTop=0;};
+  for(const item of model.groups){
+    const button=el('button','settings-nav-item'+(item.id===group.id?' active':''),item.title);button.type='button';button.setAttribute('aria-current',item.id===group.id?'page':'false');
+    button.onclick=()=>{const remembered=settingsPanel.groupPages?.[item.id];select(item.pages.find(page=>page.id===remembered)||item.pages[0]);};nav.append(button);
   }
-  const section = sections.find(x => x.id === settingsPanel.active);
-  if (!section) return;
-  content.append(el('h3', 'settings-page-title', section.title));
-  if(section.id==='notifications'){const host=el('div','message-settings-page');content.append(host);document.getElementById('reminder-center')?.messageUI?.renderNotifications(host);settingsPanel.rendered=true;return;}
-  if(section.id==='messages'){const host=el('div','message-settings-page');content.append(host);document.getElementById('reminder-center')?.messageUI?.renderSettings(host);settingsPanel.rendered=true;return;}
-  if (section.children?.length) {
-    const sub = el('div', 'settings-subnav');
-    const children = section.children;
-    if (!children.some(c => c.id === settingsPanel.activeChild)) settingsPanel.activeChild = children[0].id;
-    for (const child of children) {
-      const cb = el('button', 'settings-subnav-item' + (child.id === settingsPanel.activeChild ? ' active' : ''), child.title);
-      cb.type = 'button';
-      cb.onclick = () => { settingsPanel.activeChild = child.id; renderSettingsSheet(); };
-      sub.append(cb);
-    }
-    content.append(sub);
-    const child = children.find(c => c.id === settingsPanel.activeChild);
-    renderControlsInto(content, child?.controls || [], child?.description || '');
-  } else {
-    renderControlsInto(content, section.controls || [], section.description);
+  (settingsPanel.groupPages ||= {})[group.id]=page.id;
+  const heading=el('div','settings-page-heading');heading.append(el('h3','settings-page-title',group.title),el('p','section-desc',group.description||''));content.append(heading);
+  const sub=el('nav','settings-subnav');sub.setAttribute('aria-label',group.title);
+  for(const item of group.pages){
+    const button=el('button','settings-subnav-item'+(item.id===page.id?' active':'')+(item.id==='danger'?' danger-text':''),item.title);button.type='button';button.setAttribute('aria-current',item.id===page.id?'page':'false');button.onclick=()=>select(item);sub.append(button);
   }
+  content.append(sub);
+  const body=el('section','settings-page-body');body.setAttribute('aria-label',page.title);content.append(body);
+  if(page.id==='notifications')document.getElementById('reminder-center')?.messageUI?.renderNotifications(body);
+  else if(page.id==='messages')document.getElementById('reminder-center')?.messageUI?.renderSettings(body);
+  else renderControlsInto(body,page.controls||[],page.description);
   settingsPanel.rendered = true;
 }
 function setSettingsOpen(open) {
@@ -9160,6 +9172,7 @@ async function openFileViewMode() {
   const fileName = String(spec.path).split(/[\\/]/).filter(Boolean).pop() || String(spec.path);
   document.title = fileName + ' · aide';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
+  if(/\.pp$/i.test(spec.path))await openProjectFileWorkbench(spec.path,spec.root,spec.source||'',()=>fileViewRouteCurrent(spec,openToken,openScope,openEpoch));
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.
   const format = String(spec.format || '').toLowerCase();
@@ -11538,16 +11551,16 @@ function renderVoiceInputSourceControl() {
   const head = el('div', 'control-label'); head.append(el('span', '', t('麦克风输入源')));
   const row = el('div', 'voice-input-row');
   const sel = el('select', 'voice-input-select');
-  const refresh = el('button', 'quiet', t('刷新')); refresh.type = 'button';
+  const refresh = el('button', 'quiet', t('授权并刷新设备')); refresh.type = 'button';
   row.append(sel, refresh);
   const note = el('small', '', t('默认用系统麦克风。浏览器支持 SpeechRecognition.start(audioTrack) 时使用所选设备；不支持时回退系统默认。'));
   wrap.append(head, row, note);
-  async function populate() {
+  async function populate(requestPermission = false) {
     sel.replaceChildren();
     const def = el('option'); def.value = ''; def.textContent = t('系统默认'); sel.append(def);
     try {
       let mics = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
-      if (mics.length && !mics.some(d => d.label)) {
+      if (requestPermission && !mics.some(d => d.label)) {
         try { const st = await navigator.mediaDevices.getUserMedia({ audio: true }); st.getTracks().forEach(tk => tk.stop());
           mics = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput'); } catch (_) {}
       }
@@ -11560,7 +11573,7 @@ function renderVoiceInputSourceControl() {
     await refreshConfig();
     toast(sel.value ? t('已选择麦克风，下次语音生效') : t('已切回系统默认麦克风'));
   });
-  refresh.onclick = action(populate);
+  refresh.onclick = action(() => populate(true));
   populate();
   return wrap;
 }

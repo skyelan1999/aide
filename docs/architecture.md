@@ -167,7 +167,7 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 {"version":1,"theme":"system","palette":"blue"}
 ```
 
-`theme` 为 light/dark/system，`palette` 为 blue/comfort/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 侧边分区为：消耗统计(stats)/外观(appearance)/语言(language)/模型(model)/会话数据(sessions-data)/权限(permissions)/账户(account)/性格(persona)/语音(voice)/无障碍(accessibility)/备份(backup)/关于(about)。
+`theme` 为 light/dark/system，`palette` 为 blue/comfort/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。配色与明暗各一排三项，使用原有 `aideUI` 存储接口保存。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 的 navigation 将设置归为通用、文件与知识、AI 与权限、助理与语音、消息与通知、数据与账户、系统七类，每类用次级导航显示原页面。`settings-navigation.js` 保留原 section/child ID 的快捷入口兼容；接口测试归入系统，无障碍保留在通用。外观的配色与明暗独立选择，沿用原有 palette/theme 值；高级控件通过 details 按需初始化，不改变保存与授权规则。
 
 消息、插件与文件侧栏标题统一为 42px；触摸设备为 46px。顶部切换按钮统一 36px，消息使用共享18px圆角对话图标。搜索输入宽度跟随容器，独立显示快捷键，避免挤入轨迹按钮；紧凑视口保留图标与可访问名称。文件根目录切换按钮最小 28px，路径与搜索行收紧内边距；触摸设备主要按钮 34px。规则统一在 `style.css` 的 `#file-panel` 范围内，适用于经典与专业外观，不改变文件列表行样式。
 

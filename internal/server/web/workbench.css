@@ -190,6 +190,18 @@ main,.conversation,.composer-wrap,.top-actions{min-width:0}
 .settings-content :is(button.primary,button.quiet):not(.icon-button):not(.switch):not(.model-icon-action){min-height:34px;padding:8px 14px;line-height:1.5;border-radius:9px}
 .settings-content textarea{width:100%}
 .settings-content .control-label{margin-bottom:10px;line-height:1.6}
+.settings-page-heading{margin-bottom:16px}
+.settings-page-heading .settings-page-title{margin:0 0 5px;font-size:18px;line-height:1.4}
+.settings-page-heading .section-desc{margin:0}
+.settings-subnav{flex-wrap:wrap;gap:6px;padding-bottom:14px;margin-bottom:18px}
+.settings-subnav-item{border:1px solid transparent;line-height:1.5;white-space:normal}
+.settings-subnav-item.active{border-color:var(--line-mid)}
+.settings-page-body{min-width:0}
+.settings-advanced{border:1px solid var(--line-soft);border-radius:10px;margin:12px 0;background:var(--bg-inset)}
+.settings-advanced>summary{padding:12px 14px;cursor:pointer;color:var(--text);font-size:12px;line-height:1.5}
+.settings-advanced>summary:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+.settings-advanced-body{padding:0 14px 14px}
+.settings-advanced-body>.settings-control:last-child{margin-bottom:0}
 .settings-control small{margin-top:8px;margin-bottom:10px;line-height:1.65}
 .settings-control>small:last-child{margin-bottom:0}
 .settings-control :is(.voice-name-row,.voice-reply-row,.voice-dispatch-row){gap:10px;align-items:center}

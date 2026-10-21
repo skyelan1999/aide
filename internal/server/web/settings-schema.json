@@ -4,53 +4,31 @@
     {
       "id": "appearance",
       "title": "外观",
-      "description": "专业、舒适、经典三种配色，支持浅色、深色和跟随系统。",
+      "description": "分别选择配色和明暗，修改后立即生效。",
       "controls": [
         {
-          "id": "theme",
+          "id": "palette",
           "type": "segmented",
-          "label": "专业",
-          "palette": "blue",
+          "label": "配色",
           "options": [
             {
-              "value": "light",
-              "label": "浅色"
+              "value": "blue",
+              "label": "专业"
             },
             {
-              "value": "dark",
-              "label": "深色"
+              "value": "comfort",
+              "label": "舒适"
             },
             {
-              "value": "system",
-              "label": "跟随系统"
+              "value": "green",
+              "label": "经典"
             }
           ]
         },
         {
           "id": "theme",
           "type": "segmented",
-          "label": "舒适",
-          "palette": "comfort",
-          "options": [
-            {
-              "value": "light",
-              "label": "浅色"
-            },
-            {
-              "value": "dark",
-              "label": "深色"
-            },
-            {
-              "value": "system",
-              "label": "跟随系统"
-            }
-          ]
-        },
-        {
-          "id": "theme",
-          "type": "segmented",
-          "label": "经典",
-          "palette": "green",
+          "label": "明暗",
           "options": [
             {
               "value": "light",
@@ -108,7 +86,8 @@
         {
           "id": "experience-preview",
           "type": "experience-preview",
-          "label": "重播启动动画"
+          "label": "重播启动动画",
+          "advanced": true
         }
       ]
     },
@@ -125,7 +104,7 @@
     {
       "id": "file-rendering",
       "title": "文件查看与渲染",
-      "description": "勾选后立即生效，自动保存到当前浏览器；同源标签页同步。默认预览选项在下次打开文件时应用。文件内容仍需点击保存。",
+      "description": "预览与编辑偏好自动保存；文件内容仍需单独保存。",
       "controls": [
         {
           "id": "fileLineNumbers",
@@ -192,7 +171,8 @@
         {
           "id": "recovery-storage",
           "type": "recovery-storage",
-          "label": "本地恢复存储"
+          "label": "本地恢复存储",
+          "advanced": true
         }
       ]
     },
@@ -220,7 +200,8 @@
         {
           "id": "knowledge-embedding-policy",
           "type": "knowledge-embedding-policy",
-          "label": "向量混合检索"
+          "label": "向量混合检索",
+          "advanced": true
         }
       ]
     },
@@ -231,8 +212,13 @@
       "children": [
         {
           "id": "model-profiles",
-          "title": "参数配置",
+          "title": "模型与参数",
           "controls": [
+            {
+              "id": "model-connections",
+              "type": "model-connections",
+              "label": "模型连接与密钥"
+            },
             {
               "id": "model-profiles",
               "type": "profiles-manager",
@@ -245,7 +231,7 @@
     {
       "id": "execution-policy",
       "title": "执行策略",
-      "description": "配置执行循环、时间预算和提示词，无需重新编译",
+      "description": "常用执行预算与工作区设置；扩展配置按需展开。",
       "controls": [
         {
           "id": "execution-policy",
@@ -255,17 +241,20 @@
         {
           "id": "workspace-policy",
           "type": "workspace-policy",
-          "label": "当前工作区执行策略覆盖"
+          "label": "当前工作区执行策略覆盖",
+          "advanced": true
         },
         {
           "id": "harness-config",
           "type": "harness-config",
-          "label": "扩展机制配置"
+          "label": "扩展机制配置",
+          "advanced": true
         },
         {
           "id": "managed-worktrees",
           "type": "managed-worktrees",
-          "label": "任务工作树"
+          "label": "任务工作树",
+          "advanced": true
         }
       ]
     },
@@ -316,7 +305,7 @@
     {
       "id": "voice",
       "title": "语音助理",
-      "description": "工作统筹通过身份验证后自动运行，持续跟进交办任务、提醒和已授权消息；麦克风只控制收听。切换工作会话继续跟进，隐藏页面停止收听，锁屏或关闭页面停止统筹。工作优先，空闲时自然交流。",
+      "description": "设置助理名称、模型和语音。身份验证后跟进任务；隐藏页面停止收听，锁屏或关闭页面停止统筹。",
       "controls": [
         {
           "id": "voiceAssistantName",
@@ -337,7 +326,8 @@
           "id": "personalityXiaomi",
           "type": "personality",
           "persona": "xiaomi",
-          "label": "助理性格系统"
+          "label": "助理性格系统",
+          "advanced": true
         },
         {
           "id": "voiceInputSource",
@@ -362,7 +352,8 @@
         {
           "id": "voiceClone",
           "type": "voice-clone",
-          "label": "个性化音色（声音克隆）"
+          "label": "个性化音色（声音克隆）",
+          "advanced": true
         }
       ]
     },
@@ -514,6 +505,80 @@
           "type": "factory-reset",
           "label": "恢复出厂设置"
         }
+      ]
+    }
+  ],
+  "navigation": [
+    {
+      "id": "general",
+      "title": "通用",
+      "description": "外观、语言与无障碍",
+      "pages": [
+        "appearance",
+        "language",
+        "accessibility-options"
+      ]
+    },
+    {
+      "id": "files",
+      "title": "文件与知识",
+      "description": "文件预览、编辑与知识检索",
+      "pages": [
+        "file-rendering",
+        "knowledge-index"
+      ]
+    },
+    {
+      "id": "ai",
+      "title": "AI 与权限",
+      "description": "模型参数、执行方式与管理授权",
+      "pages": [
+        "model-profiles",
+        "execution-policy",
+        "permissions",
+        "agent-management"
+      ]
+    },
+    {
+      "id": "assistant",
+      "title": "助理与语音",
+      "description": "性格、语音与虚拟形象",
+      "pages": [
+        "persona",
+        "voice",
+        "virtual-avatars"
+      ]
+    },
+    {
+      "id": "communication",
+      "title": "消息与通知",
+      "description": "消息连接、提醒与角标",
+      "pages": [
+        "messages",
+        "notifications"
+      ]
+    },
+    {
+      "id": "data",
+      "title": "数据与账户",
+      "description": "会话归档、配置备份与账户安全",
+      "pages": [
+        "sessions-data",
+        "backup",
+        "account",
+        "danger"
+      ]
+    },
+    {
+      "id": "system",
+      "title": "系统",
+      "description": "用量、日志、升级与诊断",
+      "pages": [
+        "stats",
+        "system-logs",
+        "software-updates",
+        "interface-tests",
+        "about"
       ]
     }
   ]

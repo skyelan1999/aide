@@ -137,3 +137,25 @@ func TestPluginWorkbenchPackageAndPathValidation(t *testing.T) {
 		t.Fatal("symlink accepted")
 	}
 }
+
+func TestPluginWorkbenchFileExtensions(t *testing.T) {
+	base := PluginWorkbench{Protocol: 1, Entry: "workbench.html", Title: "Project", FileExtensions: []string{".pp"}}
+	if err := validatePluginWorkbench(&base); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var round PluginWorkbench
+	if err = json.Unmarshal(raw, &round); err != nil || len(round.FileExtensions) != 1 || round.FileExtensions[0] != ".pp" {
+		t.Fatal("extension lost", err)
+	}
+	for _, bad := range [][]string{{"pp"}, {".PP"}, {"../pp"}, {".pp", ".pp"}, {".a", ".b", ".c", ".d", ".e", ".f", ".g", ".h", ".i"}} {
+		value := base
+		value.FileExtensions = bad
+		if validatePluginWorkbench(&value) == nil {
+			t.Fatal("accepted unsafe extensions", bad)
+		}
+	}
+}

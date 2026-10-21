@@ -26,6 +26,8 @@ type pluginWorkbenchTicket struct {
 	Expires  time.Time
 }
 
+var workbenchExtensionPattern = regexp.MustCompile(`^\.[a-z][a-z0-9]{0,11}$`)
+
 var workbenchNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,63}$`)
 
 func validatePluginWorkbench(w *PluginWorkbench) error {
@@ -37,6 +39,16 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 	}
 	if len(w.Tools) > 16 {
 		return errors.New("too many workbench tools")
+	}
+	if len(w.FileExtensions) > 8 {
+		return errors.New("too many workbench file extensions")
+	}
+	extensions := map[string]bool{}
+	for _, extension := range w.FileExtensions {
+		if !workbenchExtensionPattern.MatchString(extension) || extensions[extension] {
+			return errors.New("invalid or duplicate workbench file extension")
+		}
+		extensions[extension] = true
 	}
 	seen := map[string]bool{}
 	for _, tool := range w.Tools {
