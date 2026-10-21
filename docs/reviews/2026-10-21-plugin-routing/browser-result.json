@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "checks": [
+    "actual installed host marketplace",
+    "default auto-install off; enable and revoke persisted via API",
+    "task keyword/extension matching and reasons",
+    "1440/390 comfort/blue light/dark layout"
+  ],
+  "errors": []
+}

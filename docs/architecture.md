@@ -503,3 +503,7 @@ A protocol1 workbench may opt into its own registered tools through manifest.wor
 ## 2026-10-20：提醒定时执行
 
 消息 → 提醒保留通知模式，并增加单次定时执行：用户选择小秘或指定普通会话编号，填写未来时间与指令。后台持久化领取、等待忙碌目标并复用原有运行/小秘与审批路径；绑定创建工作区，重启未知投递不自动重复执行。执行状态、错误、待执行取消和手动刷新均在提醒卡片中，详见[提醒定时执行](architecture/reminder-schedules.md)。
+
+## 2026-10-21：插件文件预览与编辑
+
+启用插件可用 `workbench.fileHandler` 声明扩展名、优先级及可编辑性。工作区和流式引用优先匹配插件，停用或插件报告故障回落原生，标题栏可手动切换。iframe仅获当前文件/同目录资源的分块桥，不接收令牌；修改先暂存，用户在宿主保存，经来源RW和原版本检查后原子替换。详见[文件处理插件接口](architecture/plugin-file-handlers.md)。

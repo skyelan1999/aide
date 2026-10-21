@@ -1,0 +1,110 @@
+{
+  "id": "plugin-router-20261021",
+  "request": "商店上架自动加入路由；索引默认下载更新；按需求加载本地插件；自动安装开关开启后Aide可主动安装缺少的可信插件。",
+  "baseline": "80542984d28e1d260126ae14ce867c403e9bb861",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "商店发布构建生成有界能力路由元数据，存量插件迁移，无需逐次更新宿主目录",
+    "宿主本地匹配，只注入匹配插件的工具；模型可查询路由，当前任务按需扩大工具集合",
+    "自动安装默认关闭，只有宿主用户开关授权后可安装官方公开兼容且未安装插件；不覆盖停用/现存插件、不购买、不绕过工具及任务权限",
+    "默认后台更新索引，离线使用缓存；提供匹配依据及安装结果",
+    "接口、模型工具集合、授权撤销/范围变化/失败及实际商店UI验收，保留初始未跟踪文件"
+  ],
+  "scope": [
+    "internal/server/plugin_routing.go",
+    "internal/server/plugin_routing_test.go",
+    "internal/server/plugin_market.go",
+    "internal/server/server.go",
+    "internal/server/context.go",
+    "internal/server/workflow.go",
+    "internal/server/web/plugin-market.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/plugin-market.css",
+    "scripts/browser-plugin-routing.cjs",
+    "docs/tasks/plugin-router-20261021.json",
+    "docs/architecture/plugin-routing.md",
+    "docs/plugin-protocol.md",
+    "docs/reviews/2026-10-21-plugin-routing",
+    "/workspace/aide-pkg-shop/scripts",
+    "/workspace/aide-pkg-shop/listings",
+    "/workspace/aide-pkg-shop/catalog.json",
+    "/workspace/aide-pkg-shop/routing.json",
+    "/workspace/aide-pkg-shop/README.md",
+    "/workspace/aide-pkg-shop/.github/workflows",
+    "scripts/plugin-market.test.cjs",
+    "/workspace/aide-pkg-shop/market.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "需求以本轮澄清为准，商店原生索引与宿主按需工具，不新增独立路由插件。",
+      "evidence": [
+        "docs/architecture/plugin-routing.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "目录内路由元数据与独立索引、非阻塞本地匹配、六插件工具窗口、代数授权自动安装和原有安装守卫复用。",
+      "evidence": [
+        "docs/architecture/plugin-routing.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "宿主路由/按需schema/模型续接/授权安装，商店自动索引与搜索界面已实现，等待最终验收。",
+      "evidence": [
+        "internal/server/plugin_routing.go",
+        "internal/server/web/plugin-market.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "23项Go race及既有插件工具回归、真实宿主/静态商店浏览器通过；商店8项Python+Node搜索+21条目/20ZIP校验通过；quick140/142，两项既有启动器失败；Landlock与启动TLS限制如实记录。",
+      "evidence": [
+        "docs/reviews/2026-10-21-plugin-routing/verification.json",
+        "docs/reviews/2026-10-21-plugin-routing/go-race.txt"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "路由声明、默认下载/离线、按需schema、六插件窗口、实例授权、自动安装边界、兼容与验收限制已记录。",
+      "evidence": [
+        "docs/architecture/plugin-routing.md",
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "确认自有启动PID/cwd/日志后停止旧镜像回退下载并清理本轮.partial；测试临时服务与浏览器退出；10个初始未跟踪任务保留。",
+      "evidence": [
+        "docs/reviews/2026-10-21-plugin-routing/verification.md"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "宿主实现da034e8a已推main；商店327efd2已推main，Pages成功且线上索引/目录/代码SHA核验一致；宿主版本/镜像未发布：quick140/142无passing full，start.command源码依赖TLS校验失败。",
+      "evidence": [
+        "docs/reviews/2026-10-21-plugin-routing/verification.json",
+        "docs/reviews/2026-10-21-plugin-routing/release-check.txt"
+      ]
+    }
+  },
+  "release_authorization": "用户本轮做下吧及历史直接推main授权；宿主镜像发布仍受full门禁。",
+  "rollback": "回退本任务提交；关闭自动安装开关；已成功安装插件由用户在插件管理中移除，不自动删除用户数据。",
+  "handoff": "宿主源码da034e8a和商店327efd2已交付；23项Go race、商店8项Python及实际UI验收通过，商店线上21路由已验证。需更新宿主后使用；插件→市场自动安装默认关闭，授权开关对当前Aide实例生效。只更新商店不会给旧宿主添加接口。无宿主Release/tag/镜像部署；原有10个未跟踪账本保留。",
+  "shop_delivery": {
+    "status": "pass",
+    "commit": "327efd299f834b4864abda2b86be003b4949c743",
+    "ci": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39532234869",
+    "liveIndex": "https://skyelan1999.github.io/aide-pkg-shop/routing.json",
+    "onlineSha256": "f8640e1164186bf6c06e35aa63c2b11a7a97051b8dd18c034ce24ef21f0cce55"
+  },
+  "source_delivery": {
+    "status": "pass",
+    "branch": "main",
+    "commit": "da034e8a",
+    "remote": "origin/main"
+  }
+}

@@ -499,6 +499,9 @@ type App struct {
 	pluginLifecycle           sync.Mutex
 	pluginUpgradeMu           sync.Mutex
 	pluginUpdateClient        *http.Client
+	pluginRoutingCatalog      marketSnapshot
+	pluginRoutingRefresh      time.Time
+	pluginRoutingRunning      bool
 	marketMu                  sync.Mutex
 	marketInstallMu           sync.Mutex
 	pluginCalls               pluginCallQueues
@@ -1158,6 +1161,12 @@ func (a *App) Close() {
 		for _, cancel := range a.cancels {
 			cancel()
 		}
+		for _, b := range a.pluginWorkbenchBridges {
+			if b.Cancel != nil {
+				b.Cancel()
+			}
+		}
+
 		a.mu.Unlock()
 		a.messageMu.Lock()
 		if a.messages != nil {
@@ -1166,6 +1175,12 @@ func (a *App) Close() {
 		}
 		a.messageMu.Unlock()
 		a.bgWg.Wait()
+		a.mu.Lock()
+		for key, b := range a.pluginWorkbenchBridges {
+			disposePluginDocument(b.Document)
+			delete(a.pluginWorkbenchBridges, key)
+		}
+		a.mu.Unlock()
 
 		if a.webAuthn != nil {
 			a.webAuthn.Close()
@@ -1473,10 +1488,14 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/management-proposals/{id}", a.getManagementProposal)
 	mux.HandleFunc("POST /api/management-proposals/{id}/{action}", a.resolveManagementProposal)
 	mux.HandleFunc("GET /api/management-proposals/{id}/package", a.downloadManagementPackage)
+	mux.HandleFunc("GET /api/plugin-routing", a.pluginRoutingAPI)
+	mux.HandleFunc("PUT /api/plugin-routing", a.pluginRoutingAPI)
+	mux.HandleFunc("GET /api/plugin-routing/search", a.pluginRoutingSearch)
 	mux.HandleFunc("GET /api/plugin-market", a.marketCatalogAPI)
 	mux.HandleFunc("POST /api/plugin-license/device", a.pluginLicenseDeviceAPI)
 	mux.HandleFunc("POST /api/plugin-market/{id}/install", a.marketInstall)
 	mux.HandleFunc("GET /api/plugin-market/{id}/download", a.marketDownload)
+	mux.HandleFunc("GET /api/plugins/file-handlers", a.listPluginFileHandlers)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
 	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)

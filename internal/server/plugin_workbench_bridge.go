@@ -8,11 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 )
 
 // All mutable fields are guarded by App.mu. Instances are parent-only, never sent to the frame.
 type pluginWorkbenchBridge struct {
+	Document    *pluginDocumentBinding
 	Ticket      pluginWorkbenchTicket
 	Revision    uint64
 	Package     string
@@ -58,6 +60,7 @@ func (a *App) closeWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 		if b.Cancel != nil {
 			b.Cancel()
 		}
+		disposePluginDocument(b.Document)
 		delete(a.pluginWorkbenchBridges, key)
 	}
 	jsonOut(w, 200, map[string]bool{"ok": true})
@@ -89,6 +92,11 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.mu.Unlock()
 		fail(w, 403, err)
+		return
+	}
+	if strings.HasPrefix(req.Method, "document.") {
+		a.mu.Unlock()
+		a.callPluginDocument(w, r, req)
 		return
 	}
 	if req.Method == "proposal.status" {

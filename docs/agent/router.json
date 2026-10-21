@@ -770,6 +770,33 @@
       [
         "node",
         "scripts/plugin-market.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/plugin-file-preview.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/plugin-workbench.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/plugin-workbench-client.js"
+      ],
+      [
+        "node",
+        "--test",
+        "scripts/plugin-workbench.test.cjs",
+        "scripts/plugin-workbench-client.test.cjs",
+        "scripts/plugin-file-preview.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-plugin-file-preview.cjs"
       ]
     ],
     "full": [

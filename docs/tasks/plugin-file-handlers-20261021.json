@@ -1,0 +1,107 @@
+{
+  "id": "plugin-file-handlers-20261021",
+  "request": "插件启用后优先使用插件能力预览和修改关联扩展名文件，插件关闭后采用工作台原生能力渲染",
+  "baseline": "ef45559081726cf5229691ce67ec7c00a0622bb6",
+  "initial_status": "?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "启用插件可通过manifest按扩展名注册预览/编辑，当前工作区与引用优先选择；停用/移除/故障及手动切换可回落原生",
+    "工作台iframe不获令牌，仅受控访问当前文件及同目录相对资源，读取分块；知识库快照/非流式驱动仍原生",
+    "编辑可处理文本或二进制，分块暂存，用户在宿主点击保存，源RW和版本CAS检查，禁止写其他路径",
+    "完整API安全/并发/文件变更回归及真实工作台浏览器测试，示例插件和协议文档；保留已有未跟踪文件"
+  ],
+  "scope": [
+    "internal/server/plugin_file_*.go",
+    "internal/server/plugin_workbench*.go",
+    "internal/server/plugins.go",
+    "internal/server/server.go",
+    "internal/server/web/plugin-file-preview.js",
+    "internal/server/web/plugin-workbench*.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/plugin-workbench.css",
+    "scripts/browser-plugin-file-preview.cjs",
+    "scripts/plugin-file-preview.test.cjs",
+    "examples/file-preview-plugin",
+    "docs/plugin-protocol.md",
+    "docs/architecture.md",
+    "docs/architecture/plugin-file-handlers.md",
+    "docs/tasks/plugin-file-handlers-20261021.json",
+    "docs/reviews/2026-10-21-plugin-file-preview",
+    "scripts/plugin-workbench.test.cjs",
+    "scripts/plugin-workbench-client.test.cjs",
+    "docs/agent/router.json",
+    "scripts/project-file-workbench.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "一次通用宿主接口，后续插件自声明，不捆绑插件；原生保留，优先级冲突可选，知识快照不扩大权限。",
+      "evidence": [
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "workbench.fileHandler按扩展名/优先级/可编辑性注册；原工作台桥绑定文件、本插件assets，512KiB分块，WASM允许；暂存后宿主人工保存，复用本地/SFTP根、来源RW和原版本校验。",
+      "evidence": [
+        "internal/server/plugin_workbench.go",
+        "internal/server/transfer_stream_fs.go",
+        "internal/server/files.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "通用文件优先解析/原生回退、引用/文件页入口、分块文件及包资源桥、版本保存、关闭撤权、示例与文档完成，无捆绑插件。",
+      "evidence": [
+        "internal/server/plugin_file_handlers.go",
+        "internal/server/plugin_file_document.go",
+        "internal/server/web/plugin-file-preview.js",
+        "examples/file-preview-plugin"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "合入33ddfe01后14项Go race（含真实浏览器和.pp）与23项JS通过，另验.pp/设置/文件打开归属；quick 140/142，无passing full，不发布。",
+      "evidence": [
+        "docs/reviews/2026-10-21-plugin-file-preview/verification.json",
+        "docs/reviews/2026-10-21-plugin-file-preview/browser-result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "协议、注册/优先级、读写边界、WASM/包内资源、原生回退、草稿与故障局限、示例操作均已记录。",
+      "evidence": [
+        "docs/architecture/plugin-file-handlers.md",
+        "docs/plugin-protocol.md",
+        "examples/file-preview-plugin/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "测试仅临时文件/自有HTTP与浏览器/SFTP子进程，均退出清理；未触碰10个原有未跟踪账本；例包及截图明确归属，不含用户数据。",
+      "evidence": [
+        "docs/reviews/2026-10-21-plugin-file-preview/go-race.txt"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "源码及验收记录已推main至150e317f；quick140/142仍为启动器与离线包失败，无passing full；Release/tag/镜像/部署未执行。",
+      "evidence": [
+        "docs/reviews/2026-10-21-plugin-file-preview/release-check.txt",
+        "docs/reviews/2026-10-21-plugin-file-preview/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "历史用户授权直接推main；宿主Release/镜像仍遵守full门禁。",
+  "rollback": "回退本任务源码提交；旧宿主忽略fileHandler字段，插件仍可手动工作台打开；磁盘最终文件保留，未提交暂存不替换原文件。",
+  "handoff": "接口实现与隔离验收完成，源码已推main（实现c4193fed，验收150e317f）。需更新宿主使用；插件声明fileHandler后工作区/本地/SFTP引用优先预览/编辑；停用或报告故障回原生，保留RW与原版本保护。附OBJ手动安装示例，不是完整CAD，不默认捆绑。非流式来源/知识快照原生；草稿不承诺跨强制撤权恢复。",
+  "integration_base": "33ddfe01",
+  "source_delivery": {
+    "status": "pass",
+    "branch": "main",
+    "source_commit": "c4193feda70f99cffd8e69472982fcfbbc231037",
+    "verified_push": "150e317f",
+    "remote": "origin/main"
+  }
+}

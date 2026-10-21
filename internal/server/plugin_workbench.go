@@ -34,6 +34,9 @@ func validatePluginWorkbench(w *PluginWorkbench) error {
 	if w == nil || w.Protocol != 1 || len([]rune(w.Title)) < 1 || len([]rune(w.Title)) > 64 || len(w.Entry) > 160 || path.Clean(w.Entry) != w.Entry || !strings.HasSuffix(w.Entry, ".html") || strings.ContainsAny(w.Entry, "\\:") || strings.HasPrefix(w.Entry, "/") {
 		return errors.New("插件工作台声明无效")
 	}
+	if err := validatePluginFileHandler(w.FileHandler); err != nil {
+		return err
+	}
 	if w.CloseBehavior != "" && w.CloseBehavior != "detach" {
 		return errors.New("invalid workbench close behavior")
 	}
@@ -114,6 +117,23 @@ func (a *App) workbenchPageLocked(id string) ([]byte, error) {
 	return b, nil
 }
 func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Document *pluginDocumentSelection `json:"document,omitempty"`
+	}
+	if r.ContentLength != 0 {
+		if err := decode(w, r, &in); err != nil {
+			return
+		}
+	}
+	var document *pluginDocumentBinding
+	if in.Document != nil {
+		var e error
+		document, e = a.bindPluginDocument(r.Context(), r.PathValue("id"), *in.Document)
+		if e != nil {
+			fail(w, 403, e)
+			return
+		}
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	lock := a.loadLockStateLocked()
@@ -149,7 +169,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	a.pluginWorkbenchTickets[ticket] = pluginWorkbenchTicket{ID: id, Base: a.managementBaseLocked("plugins", id), Digest: sha256.Sum256(page), Gen: lock.Gen, Expires: now.Add(time.Minute)}
 	response := map[string]any{"url": "/plugin-workbench/" + ticket, "protocol": 1}
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.ID == id && p.Workbench != nil && len(p.Workbench.Tools) > 0 {
+		if p.ID == id && p.Workbench != nil && (len(p.Workbench.Tools) > 0 || document != nil) {
 			if a.pluginWorkbenchBridges == nil {
 				a.pluginWorkbenchBridges = map[string]*pluginWorkbenchBridge{}
 			}
@@ -158,6 +178,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 					if b.Cancel != nil {
 						b.Cancel()
 					}
+					disposePluginDocument(b.Document)
 					delete(a.pluginWorkbenchBridges, key)
 				}
 			}
@@ -166,11 +187,12 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 				fail(w, 429, errors.New("too many workbench instances"))
 				return
 			}
-			a.pluginWorkbenchBridges[ticket] = &pluginWorkbenchBridge{Ticket: a.pluginWorkbenchTickets[ticket], Revision: a.wsRevision, Package: a.pluginPackageDigestLocked(id), Expires: now.Add(30 * time.Minute), Seen: map[string]bool{}, Proposals: map[string]string{}}
+			a.pluginWorkbenchBridges[ticket] = &pluginWorkbenchBridge{Document: document, Ticket: a.pluginWorkbenchTickets[ticket], Revision: a.wsRevision, Package: a.pluginPackageDigestLocked(id), Expires: now.Add(30 * time.Minute), Seen: map[string]bool{}, Proposals: map[string]string{}}
 			t := a.pluginWorkbenchTickets[ticket]
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": p.Workbench.Tools}
+			tools := append([]string{}, p.Workbench.Tools...)
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil}
 			break
 		}
 	}
@@ -192,10 +214,14 @@ func (a *App) servePluginWorkbench(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Workbench changed; reopen it", 409)
 		return
 	}
+	csp := workbenchCSP
 	if b := a.pluginWorkbenchBridges[ticket.Bridge]; b != nil {
 		b.Ready = true
+		if b.Document != nil {
+			csp = strings.Replace(csp, "script-src 'unsafe-inline'", "script-src 'unsafe-inline' 'wasm-unsafe-eval'", 1)
+		}
 	}
-	w.Header().Set("Content-Security-Policy", workbenchCSP)
+	w.Header().Set("Content-Security-Policy", csp)
 	w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), usb=(), serial=(), clipboard-read=(), clipboard-write=()")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")

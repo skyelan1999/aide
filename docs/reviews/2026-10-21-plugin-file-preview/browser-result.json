@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "scope": "Isolated actual Go testApp, installed example plugin, authenticated MessagePort file bridge, actual file/editor/native STL viewer; temporary files only, no models/devices",
+  "checks": [
+    "extension automatically opens plugin for work area and reference file view",
+    "actual OBJ wireframe and own-package WebAssembly resource compilation",
+    "staging preserves original until trusted host Save click",
+    "binary bridge supports text plugin edits and saved notification",
+    "manual native selection",
+    "disabled active plugin automatically restores native editor; enabling allows plugin reopen",
+    "read-only reference denies UI and attempted bridge save",
+    "writable reference versioned save",
+    "1440/390 comfort/blue light/dark no overflow",
+    "plugin format error restores actual native STL/WebGL viewer"
+  ],
+  "errors": []
+}

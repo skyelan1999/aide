@@ -1,6 +1,15 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+ "保存到原文件":"Save to original file",
+ "文件打开方式":"Open file with",
+ "工作台原生预览":"Native workbench preview",
+ "插件文件预览":"Plugin file preview",
+ "插件已准备修改，请点击保存到原文件":"Plugin changes are ready. Click Save to original file.",
+ "插件中有未保存修改，仍要离开吗？":"The plugin has unsaved changes. Leave anyway?",
+ "插件已停止，未保存的修改不会写入原文件":"The plugin stopped. Unsaved changes were not written to the original file.",
+ "插件预览不可用，已切换原生预览":"Plugin preview unavailable. Switched to native preview.",
+
  "执行时间":"Run at",
  "取消定时任务":"Cancel scheduled task",
  "到点操作":"At the scheduled time",
@@ -3017,3 +3026,5 @@ Object.assign(window.aideEnglish, {'坐标与角度':'Coordinates and angles','�
 Object.assign(window.aideEnglish, {'名称标注':'Name labels','查看模块坐标':'View module coordinates','仅标注前 80 个连杆，可在坐标面板查看全部节点':'Only the first 80 links are labeled. All nodes are available in the coordinate panel.'});
 
 Object.assign(window.aideEnglish, {'上一组标注':'Previous labels','下一组标注':'Next labels','预览区域太小，请放大查看标注':'Preview area too small. Enlarge it to see labels.','根连杆':'Root link','父节点':'Parent','根坐标系':'Robot root'});
+
+Object.assign(window.aideEnglish, {"插件路由": "Plugin routing", "按需求匹配": "Match task", "允许 Aide 自动安装所需插件": "Allow Aide to install needed plugins automatically", "路由索引默认更新；仅加载匹配工具。此开关对当前 Aide 实例生效。仅自动安装官方公开兼容插件，不覆盖已安装或停用插件，执行权限保持原有规则。": "Routing metadata updates automatically; only matching tools are loaded. This switch applies to the current Aide instance. Automatic installation is limited to compatible public plugins in the official store. Existing or disabled plugins are preserved; execution permissions still apply.", "索引按需本地匹配，不向模型发送完整目录": "Matching runs locally; the full catalog is never sent to the model", "已允许 Aide 自动安装匹配的公开插件": "Aide may now install matching public plugins automatically", "已关闭自动安装": "Automatic installation is off", "可由 Aide 自动安装": "Aide may install automatically", "尚未安装": "Not installed"});
