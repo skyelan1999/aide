@@ -70,12 +70,18 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "Applied local candidate only. No commit/push/tag/GitHub Release or private plugin upload requested or performed.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Aide main/tag pushed and public 0.1.17.4 RC1 Release published with both architecture full ZIPs, source ZIP and checksums. ProfessionalProject 0.1.0 pushed/published independently in PRIVATE repository. Remote digests verified. Source and all 54 ARM64/63 AMD64 image layers audited; private plugins absent. Current user runtime not activated.",
+      "evidence": [
+        "docs/reviews/2026-10-21/professional-project-release.json"
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户 2026-10-21：可以，把 ProfessionalProject 和 Aide 这次的修改都 push、release，上传新版插件包，注意不要把私有插件带进 Aide 公共包。",
   "rollback": "Original binary and baseline preserved in .agent-state/settings-consolidation/aide.before and baseline.before.json. If reverting, restore both together and restart only when idle.",
-  "handoff": "Local Aide running b97dc2aa-settings-local; binary SHA256 6463955a3e33026939e4fb48c67f1bef49531b1eba75d8458564ac76acadb183. Seven-group settings visible in current Safari tab; unchanged configured services and installed plugins. Microphone permission request during initial inspection was declined; new code requires explicit refresh click."
+  "handoff": "Released Aide 0.1.17.4 RC1 at c8748b2442130c7f60551b4915d03b4e6c84fb36; ProfessionalProject 0.1.0 private Release package uploaded and downloaded bytes verified. User container and data unchanged; primary source checkout synchronized with unrelated local configuration preserved.",
+  "publishedRelease": {
+    "aide": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.4-RC1",
+    "professionalProject": "https://github.com/skyelan1999/aide-pkg-ProfessionalProject/releases/tag/v0.1.0"
+  }
 }

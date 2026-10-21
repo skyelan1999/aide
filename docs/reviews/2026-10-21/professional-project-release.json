@@ -1,0 +1,158 @@
+{
+  "releaseTag": "v0.1.17.4-RC1",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.4-RC1",
+  "draft": false,
+  "prerelease": true,
+  "commit": "c8748b2442130c7f60551b4915d03b4e6c84fb36",
+  "sourceSHA256": "9e8cf0ae35ccbf910192da23a2ddd5550a80fc0630c0d682d7778b02d0520b65",
+  "attachments": [
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "bytes": 4461,
+      "sha256": "52349afe239e5a85fae369e45a3b7963e68bae270c1e5f0dea98f1dde9358f99",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "SHA256SUMS",
+      "bytes": 393,
+      "sha256": "00a19ecabc083fa95dee9b84e60ef7fcb07bfa622bd608bcb837612ace704a2b",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "aide-v0.1.17.4-RC1-full-linux-amd64.zip",
+      "bytes": 1303357434,
+      "sha256": "82c237d09b4e838c0a7b49e95dd8ca0b5c1ac65515698729ade1a81d093eb332",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "aide-v0.1.17.4-RC1-full-linux-arm64.zip",
+      "bytes": 1093231829,
+      "sha256": "569df13f3a5de656d96587a98db52e5e2c7e0ef90ab43fac9766a5cb6e699dad",
+      "remoteDigestMatches": true
+    },
+    {
+      "name": "aide-v0.1.17.4-RC1-source.zip",
+      "bytes": 179433076,
+      "sha256": "2e8b9f6c7ff4131caedd3f9d5b4c32dfdcca5ef345e5b1dcea72aab172c64ba7",
+      "remoteDigestMatches": true
+    }
+  ],
+  "privacy": {
+    "sourceZIP": {
+      "status": "pass",
+      "sourceZIPPluginScope": "root plugins/testdata only",
+      "rootPluginFiles": [
+        "plugins/testdata/mock-daemon/index.js",
+        "plugins/testdata/mock-daemon/manifest.json"
+      ],
+      "privatePluginSourceAbsent": true,
+      "credentialsAndWorkspaceAbsent": true
+    },
+    "images": [
+      {
+        "platform": "linux/arm64",
+        "allReferencedLayersScanned": true,
+        "layers": 54,
+        "noPrivatePluginDirectoriesOrUpgradeBackups": true,
+        "currentFilesystemPluginFiles": 0,
+        "fullZIPValidated": true
+      },
+      {
+        "platform": "linux/amd64",
+        "allReferencedLayersScanned": true,
+        "layers": 63,
+        "noPrivatePluginDirectoriesOrUpgradeBackups": true,
+        "currentFilesystemPluginFiles": 0,
+        "fullZIPValidated": true
+      }
+    ]
+  },
+  "published": true,
+  "date": "2026-10-21",
+  "fullGate": {
+    "status": "pass",
+    "checks": 140,
+    "fingerprint": "5c3583df92c952d93b0b9a80aae1f58371686f0ea6959db0ef4d909047e13cf7",
+    "documentationRetry": {
+      "sourceFingerprintUnchanged": true,
+      "originalReceipt": ".agent-state/full-before-doc-retry.json",
+      "rerun": [
+        "python3",
+        "scripts/check_docs.py"
+      ],
+      "documentationOnlyCommit": "93f42024ebbfacab23089170ecc6a00827475d84",
+      "time": "2026-10-21T00:50:03.935376+00:00",
+      "reason": "Only failure was documentation links after plugin migration; all race/vet/runtime/CAD checks already passed on this exact source fingerprint. Actual documentation check rerun passed."
+    }
+  },
+  "platforms": [
+    {
+      "platform": "linux/arm64",
+      "image": "aide:0.1.17.4-RC1-linux-arm64",
+      "imageId": "sha256:17b046a39dc9ce015d7d4e67d738bf812599452cef0bba355129bc687bae6812",
+      "sourceSHA256": "9e8cf0ae35ccbf910192da23a2ddd5550a80fc0630c0d682d7778b02d0520b65",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "privatePluginIsolatedRuntimeCall": true,
+        "ppTasks": 5,
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.4 RC1",
+        "commit": "c8748b2442130c7f60551b4915d03b4e6c84fb36",
+        "runtimeMode": "release-image",
+        "integrity": "ok",
+        "configKeys": [
+          "buildCommit",
+          "buildVersion",
+          "version"
+        ],
+        "headingLine": 1302,
+        "declarationLine": 2,
+        "sourceHashVerified": true,
+        "image": "aide:0.1.17.4-RC1-linux-arm64",
+        "platform": "linux/arm64"
+      }
+    },
+    {
+      "platform": "linux/amd64",
+      "image": "aide:0.1.17.4-RC1-linux-amd64",
+      "imageId": "sha256:42f71e32bf2aec9abfa4e7cbb6a1554ef733eb6835e77519886425c46be7de20",
+      "sourceSHA256": "9e8cf0ae35ccbf910192da23a2ddd5550a80fc0630c0d682d7778b02d0520b65",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "privatePluginIsolatedRuntimeCall": true,
+        "ppTasks": 5,
+        "health": 200,
+        "unauthenticatedSessions": 401,
+        "authenticatedConfig": 200,
+        "version": "0.1.17.4 RC1",
+        "commit": "c8748b2442130c7f60551b4915d03b4e6c84fb36",
+        "runtimeMode": "release-image",
+        "integrity": "ok",
+        "configKeys": [
+          "buildCommit",
+          "buildVersion",
+          "version"
+        ],
+        "headingLine": 1302,
+        "declarationLine": 2,
+        "sourceHashVerified": true,
+        "image": "aide:0.1.17.4-RC1-linux-amd64",
+        "platform": "linux/amd64"
+      }
+    }
+  ],
+  "privatePluginRelease": {
+    "version": "0.1.0",
+    "url": "https://github.com/skyelan1999/aide-pkg-ProfessionalProject/releases/tag/v0.1.0",
+    "visibility": "PRIVATE",
+    "artifactSHA256": "76e6b0505c7b84617581ad08b379049ebd684120916ce88f4af9706e79821167",
+    "downloadedBytesAndTagContentsVerified": true
+  },
+  "deployment": "Existing user container not switched or restarted",
+  "checkout": "Primary checkout synchronized; unrelated compose and untracked records retained; original source snapshot kept in stash",
+  "verificationScope": "All Go race/vet/runtime/CAD checks passed. Documentation migration links failed initially and were repaired/rechecked without changes to the verified source fingerprint. AMD64 runtime tested via emulation; no paid-model chat, speech playback or Microsoft Project desktop validation."
+}

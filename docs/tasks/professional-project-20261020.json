@@ -66,16 +66,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User authorized push, releases and private plugin asset upload; isolated clean main checkout excludes installed plugins and local compose edits",
+      "status": "pass",
+      "summary": "Aide main/tag pushed and public 0.1.17.4 RC1 Release published with both architecture full ZIPs, source ZIP and checksums. ProfessionalProject 0.1.0 pushed/published independently in PRIVATE repository. Remote digests verified. Source and all 54 ARM64/63 AMD64 image layers audited; private plugins absent. Current user runtime not activated.",
       "evidence": [
-        "docs/reviews/2026-10-21-professional-project-release.md"
+        "docs/reviews/2026-10-21/professional-project-release.json"
       ]
     }
   },
   "release_authorization": "用户 2026-10-21：可以，把 ProfessionalProject 和 Aide 这次的修改都 push、release，上传新版插件包，注意不要把私有插件带进 Aide 公共包。",
   "rollback": ".agent-state/professional-project binary and integrity baseline backups",
-  "handoff": "ProfessionalProject 0.1.0 installed and enabled locally; Aide b97dc2aa-pp-local integrity ok. .pp file entry requires host changes. .pp saves propose approval, exports download on user click. Private repo uncommitted, not pushed.",
+  "handoff": "Released Aide 0.1.17.4 RC1 at c8748b2442130c7f60551b4915d03b4e6c84fb36; ProfessionalProject 0.1.0 private Release package uploaded and downloaded bytes verified. User container and data unchanged; primary source checkout synchronized with unrelated local configuration preserved.",
   "fingerprints": {
     "binarySha256": "5e5c5661754c65c23358386e7f6cd8ceaf78bddf43fcd4afb482d7c14463df32",
     "package": {
@@ -84,5 +84,9 @@
       "bytes": 37945,
       "members": 12
     }
+  },
+  "publishedRelease": {
+    "aide": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.4-RC1",
+    "professionalProject": "https://github.com/skyelan1999/aide-pkg-ProfessionalProject/releases/tag/v0.1.0"
   }
 }
