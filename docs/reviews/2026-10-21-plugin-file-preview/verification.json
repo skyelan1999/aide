@@ -1,16 +1,16 @@
 {
   "baseline": "ef45559081726cf5229691ce67ec7c00a0622bb6",
-  "fingerprint": "e302f82b9e8ca5228c620022fb3453b58e8992428e55505b9b64bc1c8a7b5a92",
+  "fingerprint": "5b28030d5d08e0157ad7ea2581e928366eb27d79078b189d5d7d8d48a4166da7",
   "goRaceAndActualBrowser": {
     "status": "PASS",
-    "command": "source /workspace/.aide-cloud/env.sh && AIDE_PLUGIN_FILE_BROWSER=1 AIDE_EVIDENCE_DIR=/workspace/aide/docs/reviews/2026-10-21-plugin-file-preview go test -race ./internal/server -run 'TestPlugin(FileHandler|Document|FilePreviewBrowser)' -count=1 -v",
-    "passedTests": 13,
+    "command": "source /workspace/.aide-cloud/env.sh && AIDE_PLUGIN_FILE_BROWSER=1 AIDE_EVIDENCE_DIR=/workspace/aide/docs/reviews/2026-10-21-plugin-file-preview go test -race ./internal/server -run 'TestPlugin(FileHandler|Document|FilePreviewBrowser)|TestPluginWorkbenchFileExtensions' -count=1 -v",
+    "passedTests": 14,
     "log": "go-race.txt"
   },
   "js": {
     "status": "PASS",
     "tests": 23,
-    "command": "node --test scripts/plugin-workbench.test.cjs scripts/plugin-workbench-client.test.cjs scripts/plugin-file-preview.test.cjs"
+    "command": "node scripts/plugin-workbench.test.cjs; node scripts/plugin-workbench-client.test.cjs; node scripts/plugin-file-preview.test.cjs"
   },
   "quick": {
     "status": "fail",
@@ -37,5 +37,8 @@
     "status": "NOT_RUN",
     "reason": "Known launcher and offline-bundle quick failures; no passing full receipt."
   },
-  "production": "No deployment, version bump, tag or image publication. Isolated testApp/httptest and pipe SFTP only; no paid model/user data/devices."
+  "production": "No deployment, version bump, tag or image publication. Isolated testApp/httptest and pipe SFTP only; no paid model/user data/devices.",
+  "integrationBase": "33ddfe01",
+  "sourceCommit": "c4193feda70f99cffd8e69472982fcfbbc231037",
+  "integrationRegression": "PASS: existing .pp selection/disabled/stale/ambiguity, settings navigation and file-open ownership"
 }

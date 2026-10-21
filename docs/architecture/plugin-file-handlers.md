@@ -62,3 +62,5 @@ SFTP缺少posix-rename扩展时拒绝覆盖、保留原文件。fsync扩展可�
 ## 示例与验收
 
 [OBJ示例](../../examples/file-preview-plugin/README.md) 演示线框旋转、读取、编辑、分块暂存。它是协议示例，不是完整CAD，也不默认安装。证据见[验收记录](../reviews/2026-10-21-plugin-file-preview/verification.md)。本次源码支持不代表运行镜像已经包含接口。
+
+兼容原有 `workbench.fileExtensions` 的 `.pp` 项目入口：通用 `fileHandler` 优先匹配，无匹配时继续既有项目工作台流程；用户明确选择原生时跳过两种插件入口。两种声明各自保留原有权限边界。

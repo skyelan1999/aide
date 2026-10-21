@@ -30,7 +30,8 @@
     "docs/reviews/2026-10-21-plugin-file-preview",
     "scripts/plugin-workbench.test.cjs",
     "scripts/plugin-workbench-client.test.cjs",
-    "docs/agent/router.json"
+    "docs/agent/router.json",
+    "scripts/project-file-workbench.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -61,7 +62,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "13项最终Go race（12接口+真实工作台浏览器）通过，SFTP协议与5GiB稀疏偏移验证；23项JS通过；quick140/142，2项既有启动器失败，未宣称full或部署通过。",
+      "summary": "合入33ddfe01后14项Go race（含真实浏览器和.pp）与23项JS通过，另验.pp/设置/文件打开归属；quick 140/142，无passing full，不发布。",
       "evidence": [
         "docs/reviews/2026-10-21-plugin-file-preview/verification.json",
         "docs/reviews/2026-10-21-plugin-file-preview/browser-result.json"
@@ -85,7 +86,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "准备仅源码推main；quick已知启动器失败，无passing full且保留原有未跟踪账本，不进行宿主Release/tag/镜像/部署。",
+      "summary": "源码已整合远端33ddfe01的设置及.pp入口，等待复验后推main；无passing full且保留原有账本，不做Release/tag/镜像/部署。",
       "evidence": [
         "docs/reviews/2026-10-21-plugin-file-preview/release-check.txt",
         "docs/reviews/2026-10-21-plugin-file-preview/verification.json"
@@ -94,5 +95,6 @@
   },
   "release_authorization": "历史用户授权直接推main；宿主Release/镜像仍遵守full门禁。",
   "rollback": "回退本任务源码提交；旧宿主忽略fileHandler字段，插件仍可手动工作台打开；磁盘最终文件保留，未提交暂存不替换原文件。",
-  "handoff": "接口实现与隔离验收完成，待源码推main。需更新宿主使用；插件声明fileHandler后工作区/本地/SFTP引用优先预览/编辑；停用或报告故障回原生，保留RW与原版本保护。附OBJ手动安装示例，不是完整CAD，不默认捆绑。非流式来源/知识快照原生；草稿不承诺跨强制撤权恢复。"
+  "handoff": "接口实现与隔离验收完成，待源码推main。需更新宿主使用；插件声明fileHandler后工作区/本地/SFTP引用优先预览/编辑；停用或报告故障回原生，保留RW与原版本保护。附OBJ手动安装示例，不是完整CAD，不默认捆绑。非流式来源/知识快照原生；草稿不承诺跨强制撤权恢复。",
+  "integration_base": "33ddfe01"
 }

@@ -1,30 +1,32 @@
 === RUN   TestPluginFilePreviewBrowser
     plugin_file_browser_test.go:68: PASS plugin-first file preview and edits; native fallback
 
---- PASS: TestPluginFilePreviewBrowser (15.84s)
+--- PASS: TestPluginFilePreviewBrowser (15.63s)
 === RUN   TestPluginFileHandlerManifestResolution
---- PASS: TestPluginFileHandlerManifestResolution (2.43s)
+--- PASS: TestPluginFileHandlerManifestResolution (4.03s)
 === RUN   TestPluginDocumentRangeAssetsAndScope
---- PASS: TestPluginDocumentRangeAssetsAndScope (2.22s)
+--- PASS: TestPluginDocumentRangeAssetsAndScope (4.01s)
 === RUN   TestPluginDocumentPackageAssetsStayInOwnPackage
---- PASS: TestPluginDocumentPackageAssetsStayInOwnPackage (2.15s)
+--- PASS: TestPluginDocumentPackageAssetsStayInOwnPackage (2.46s)
 === RUN   TestPluginDocumentBinarySaveVersionAndCleanup
---- PASS: TestPluginDocumentBinarySaveVersionAndCleanup (2.35s)
+--- PASS: TestPluginDocumentBinarySaveVersionAndCleanup (2.79s)
 === RUN   TestPluginDocumentConflictingSavePreservesFile
---- PASS: TestPluginDocumentConflictingSavePreservesFile (2.10s)
+--- PASS: TestPluginDocumentConflictingSavePreservesFile (2.45s)
 === RUN   TestPluginDocumentReadOnlyReferenceAndKnowledge
---- PASS: TestPluginDocumentReadOnlyReferenceAndKnowledge (2.14s)
+--- PASS: TestPluginDocumentReadOnlyReferenceAndKnowledge (2.11s)
 === RUN   TestPluginDocumentCloseAndWorkspaceRevocation
---- PASS: TestPluginDocumentCloseAndWorkspaceRevocation (2.05s)
+--- PASS: TestPluginDocumentCloseAndWorkspaceRevocation (2.46s)
 === RUN   TestPluginDocumentRenewPreservesDraftAndRevokesOldKey
---- PASS: TestPluginDocumentRenewPreservesDraftAndRevokesOldKey (2.16s)
+--- PASS: TestPluginDocumentRenewPreservesDraftAndRevokesOldKey (2.62s)
 === RUN   TestPluginDocumentReferenceRevocationPreservesOriginal
---- PASS: TestPluginDocumentReferenceRevocationPreservesOriginal (2.04s)
+--- PASS: TestPluginDocumentReferenceRevocationPreservesOriginal (2.29s)
 === RUN   TestPluginDocumentLargeOffsetRange
---- PASS: TestPluginDocumentLargeOffsetRange (2.03s)
+--- PASS: TestPluginDocumentLargeOffsetRange (2.62s)
 === RUN   TestPluginDocumentSFTPAtomicSave
---- PASS: TestPluginDocumentSFTPAtomicSave (2.25s)
+--- PASS: TestPluginDocumentSFTPAtomicSave (2.96s)
 === RUN   TestPluginDocumentAppCloseCancelsInFlightRead
---- PASS: TestPluginDocumentAppCloseCancelsInFlightRead (2.34s)
+--- PASS: TestPluginDocumentAppCloseCancelsInFlightRead (2.14s)
+=== RUN   TestPluginWorkbenchFileExtensions
+--- PASS: TestPluginWorkbenchFileExtensions (0.00s)
 PASS
-ok  	aide/internal/server	43.226s
+ok  	aide/internal/server	49.818s
