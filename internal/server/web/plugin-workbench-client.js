@@ -12,6 +12,7 @@
   function connect(){if(closed)return Promise.reject(Error('Client closed'));if(port)return Promise.resolve({protocol:1,tools:tools.slice(),capabilities:capabilities.slice()});if(!connecting){connecting=new Promise((resolve,reject)=>{settle={resolve,reject,timer:setTimeout(()=>revoke('Host bridge unavailable'),10000)};});window.parent.postMessage({type:'aide.workbench.ready',protocol:1,requestIds:'monotonic'},'*');}return connecting;}
   async function request(method,body){await connect();if(closed||!port)throw Error('Bridge closed');if(pending.size)throw Error('A call is already pending');const requestId='r_'+(++next);return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('Reply timeout; outcome uncertain, do not automatically retry'));},320000);pending.set(requestId,{resolve,reject,timer});try{port.postMessage({protocol:1,requestId,method,...body});}catch(e){pending.delete(requestId);clearTimeout(timer);reject(e);}});}
   return {connect,
+   capture:args=>request('capture.control',{arguments:args}),
    documentInfo:(asset='',options={})=>request('document.info',{arguments:{asset,metadataOnly:options.metadataOnly===true}}),
    readDocument:(args={})=>request('document.read',{arguments:args}),
    pluginAssetInfo:(asset,options={})=>request('document.package.info',{arguments:{asset,metadataOnly:options.metadataOnly===true}}),

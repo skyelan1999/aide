@@ -1,0 +1,1 @@
+Local decoder bundle from @zxing/browser 0.2.1 (UMD), bundling @zxing/library 0.23.0. MIT browser wrapper and Apache-2.0 library licenses included. Source: https://github.com/zxing-js/browser and https://github.com/zxing-js/library . No remote runtime downloads. See provenance.json for package integrity and bundled asset SHA-256.

@@ -1431,6 +1431,7 @@ func (a *App) Handler() http.Handler {
 // 避免测试或并发请求时多次重建 mux 并并发写 a.routes 触发 data race。
 func (a *App) buildHandler() {
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /mobile-capture/api", a.mobileCapturePhone)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "integrity": a.integrityStatus()})
 	})
@@ -1710,6 +1711,9 @@ func (a *App) buildHandler() {
 		// 未来若引入 Cookie，必须同时设置 Secure、HttpOnly、SameSite=Lax，且仅在 HTTPS 连接下发。
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
+		if r.URL.Path == "/mobile-capture.html" {
+			w.Header().Set("Permissions-Policy", "camera=(self), microphone=(), geolocation=()")
+		}
 		if r.URL.Path == "/step-import-worker.js" {
 			// The upstream OCCT STEP importer builds Embind wrappers at runtime with
 			// Function constructors. Keep that requirement confined to its isolated

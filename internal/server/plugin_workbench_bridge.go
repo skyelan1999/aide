@@ -14,6 +14,7 @@ import (
 
 // All mutable fields are guarded by App.mu. Instances are parent-only, never sent to the frame.
 type pluginWorkbenchBridge struct {
+	Captures    map[string]*mobileCapture
 	Document    *pluginDocumentBinding
 	Ticket      pluginWorkbenchTicket
 	Revision    uint64
@@ -92,6 +93,27 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.mu.Unlock()
 		fail(w, 403, err)
+		return
+	}
+	if req.Method == "capture.control" {
+		if !a.captureEnabledLocked(id) {
+			a.mu.Unlock()
+			fail(w, 403, errors.New("capture capability not enabled"))
+			return
+		}
+		if b.Busy || b.Seen[req.RequestID] || len(b.Seen) >= 128 {
+			a.mu.Unlock()
+			fail(w, 409, errors.New("busy, replayed or exhausted workbench request"))
+			return
+		}
+		b.Seen[req.RequestID] = true
+		result, err := a.captureControlLocked(b, req.Arguments)
+		a.mu.Unlock()
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, map[string]any{"requestId": req.RequestID, "status": "result", "result": result})
 		return
 	}
 	if strings.HasPrefix(req.Method, "document.") {

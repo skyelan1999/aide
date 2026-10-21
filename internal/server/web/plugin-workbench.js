@@ -74,7 +74,7 @@
       if(sequenced){const match=/^r_([1-9][0-9]{0,14})$/.exec(m.requestId),number=match?Number(match[1]):0;if(!Number.isSafeInteger(number)||number<=highest){send({requestId:m.requestId,status:'error',error:'Invalid or replayed sequence'});return;}highest=number;}
       else{if(seen.has(m.requestId)||seen.size>=128){send({requestId:m.requestId,status:'error',error:'Duplicate or exhausted request'});return;}seen.add(m.requestId);}
       const documentMethods=['document.package.info','document.package.read','document.info','document.read','document.save.begin','document.save.chunk','document.save.request','document.save.abort','document.dirty','document.error'];
-      if((!['tool.call','proposal.status'].includes(m.method)&&!(services.document&&b.document&&documentMethods.includes(m.method)))||(m.method==='tool.call'&&!b.tools.includes(m.tool))){send({requestId:m.requestId,status:'error',error:'Method/tool not permitted'});return;}
+      if((!['tool.call','proposal.status',...(b.mobileCapture?['capture.control']:[])].includes(m.method)&&!(services.document&&b.document&&documentMethods.includes(m.method)))||(m.method==='tool.call'&&!b.tools.includes(m.tool))){send({requestId:m.requestId,status:'error',error:'Method/tool not permitted'});return;}
       busy=true;try{const body=JSON.stringify({protocol:1,requestId:m.requestId,method:m.method,tool:m.tool,arguments:m.arguments||{},attachments:m.attachments||[],proposalId:m.proposalId});if(body.length>(m.method==='document.save.chunk'?800000:262144))throw Error('Bridge request too large');
        if(m.method==='document.dirty'){item.documentDirty=m.arguments?.dirty===true;send({requestId:m.requestId,status:'result',result:{dirty:item.documentDirty}});return;}
        if(m.method==='document.error'){send({requestId:m.requestId,status:'result',result:{fallback:true}});setTimeout(()=>{if(active===item)close(true,'error');},0);return;}
@@ -102,7 +102,7 @@
       if(saved.result.warning)services.toast(saved.result.warning);
      }catch(error){if(!invalid())services.toast(error.message);}finally{documentSave.disabled=false;}};
      const sendDocumentEvent=result=>{if(!invalid())item.port?.postMessage({protocol:1,event:'document.saved',result});};
-     item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:['bridge.renew','daemon.detach',...(b.document?['document.read','document.save']:[])],selection:selection(services.selection)},'*',[channel.port2]);
+     item.port.start();frame.contentWindow.postMessage({type:'aide.workbench.connect',protocol:1,pluginId:plugin.id,tools:b.tools,capabilities:['bridge.renew','daemon.detach',...(b.mobileCapture?['capture']:[]),...(b.document?['document.read','document.save']:[])],selection:selection(services.selection)},'*',[channel.port2]);
     };
    }
    frame.src=result.url;return true;

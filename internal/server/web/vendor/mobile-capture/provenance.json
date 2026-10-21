@@ -1,0 +1,14 @@
+{
+  "decoder": {
+    "package": "@zxing/browser",
+    "version": "0.2.1",
+    "integrity": "sha512-92pVfVDUXbc15xu9vIEmhNyqIEASMEkDF92CwT6T+7sg2EHXJRktH9CQKoQSXe51UtbNsj+Fm09H/JBWHMs/Sw==",
+    "sha256": "066bc34edfcdd4a33f0964aeec967752a0dea1ccaf36e58e319ac9fcb5070f6a",
+    "source": "https://github.com/zxing-js/browser"
+  },
+  "library": {
+    "name": "@zxing/library",
+    "version": "0.23.0",
+    "integrity": "sha512-6fkkoFwP8CHxl6ugnPsj74PLJgX2iRv5zczGAyt5OBzQgxFhuhF0NCEc4t4OvSr8xAv2MRLlI0Iu9ZGDZQ2urA=="
+  }
+}

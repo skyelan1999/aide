@@ -98,3 +98,10 @@ test('file bridge rejects iframe commit; only trusted parent Save publishes and 
 test('leaving a dirty file viewer can be cancelled before removing the frame',async()=>{
  const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,document:true}});f.services.document={path:'model.obj',root:'workspace'};f.services.handlers=[bridgePlugin];await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const port=frame.contentWindow.messages[0].ports[0];await port.postMessage({protocol:1,requestId:'dirty',method:'document.dirty',arguments:{dirty:true}});f.confirm(false);assert.equal(f.controller.prepareFileOpen(),false);assert.notEqual(frame.src,'about:blank');f.confirm(true);assert.equal(f.controller.prepareFileOpen(),true);assert.equal(frame.src,'about:blank');
 });
+
+test('mobile collection is opt-in and cannot invoke undeclared methods or disclose parent credentials',async()=>{
+ for(const enabled of [false,true]){
+  const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,mobileCapture:enabled}});await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const handshake=frame.contentWindow.messages[0],port=handshake.ports[0],calls=[];assert.equal(handshake.data.capabilities.includes('capture'),enabled);assert(!JSON.stringify(handshake.data).includes('instanceId'));
+  f.services.api=async(url,options)=>{calls.push(JSON.parse(options.body));return {requestId:'capture_1',status:'result',result:{id:'synthetic'}};};await port.postMessage({protocol:1,requestId:'capture_1',method:'capture.control',arguments:{action:'status',id:'synthetic'}});assert.equal(calls.length,enabled?1:0);await port.postMessage({protocol:1,requestId:'capture_2',method:'capture.admin'});assert.equal(calls.length,enabled?1:0);f.controller.close();
+ }
+});

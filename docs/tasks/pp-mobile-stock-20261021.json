@@ -1,0 +1,91 @@
+{
+  "id": "pp-mobile-stock-20261021",
+  "request": "ProfessionalProject 手机网页原生摄像头扫码条码/二维码入库和盘点；HTTPS，扫码配对电脑手机双方确认；多设备独立权限撤销和并发复核，不携带私有插件到公共包",
+  "baseline": "a0ffa35a8d0121374049df17b5e5d375009bd8f6",
+  "initial_status": "M compose.yaml\n?? \"compose 2.yaml\"\n?? docs/tasks/aide-compare-pull-20261020.json\n?? docs/tasks/aide-update-20261019.json\n?? docs/tasks/compare-sources-20261020.json\n?? docs/tasks/compare-unified-entry-20261020.json\n?? docs/tasks/knowledge-snapshot-query-20261019.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/starlink-plugin-20261019.json\n?? docs/tasks/testbench-live-integration-20261018.json",
+  "acceptance": [
+    "Phone camera scans QR and common barcodes locally over trusted HTTPS",
+    "One-use pairing invitation, matching code and independent desktop/phone approvals; no Aide admin token on phone",
+    "Multiple independent devices, zone assignment, revoke/expiry and fail-closed scope changes",
+    "Idempotent retries and sealed collection; inventory updates require desktop review with baseline checks",
+    "Public Aide source and every image/archive layer exclude private plugin code, installed state, credentials and caches. Private plugin ZIP ships only in private repo release."
+  ],
+  "scope": [
+    "internal/server/mobile_capture*.go",
+    "internal/server/server.go: bounded phone capture routes and state",
+    "internal/server/plugin_workbench*.go: opt-in capture bridge",
+    "internal/server/plugins.go: capture capability metadata",
+    "internal/server/web/mobile-capture.*",
+    "internal/server/web/plugin-workbench*.js",
+    "internal/server/web/vendor: pinned barcode decoder and license",
+    "docs/architecture/mobile-capture.md",
+    "docs/tasks/pp-mobile-stock-20261021.json",
+    "scripts/mobile-capture*.test.cjs",
+    "private ProfessionalProject scan UI, barcode fields, atomic batch inventory operation and tests",
+    "version.md via scripts/version.sh",
+    "docs/reviews/release-0.1.17.5-RC1-2026-10-21.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User selected QR pairing with desktop and phone confirmations and added multi-device support. Receipt/count drafts reviewed on desktop; no direct mobile write.",
+      "evidence": [
+        "user messages 2026-10-21"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Opt-in generic host bridge, independent scoped device tokens and mutual pairing, bounded in-memory queues; reviewed atomic effects remain in private plugin. HTTPS direct connection only.",
+      "evidence": [
+        "docs/architecture/mobile-capture.md",
+        "../aide-pkg-ProfessionalProject/docs/MOBILE-STOCK.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Host and private 0.3.0 local candidate built; 16-device limit, regional counts, idempotence, baseline guard, QR decoding and desktop review UI implemented.",
+      "evidence": [
+        "internal/server/mobile_capture.go",
+        "internal/server/web/mobile-capture.js",
+        "../aide-pkg-ProfessionalProject/src/mobile-stock.js",
+        "../aide-pkg-ProfessionalProject/mobile.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused Go race suite, host Node22, private Python34/Node10, actual HTTPS two-client engine integration and Safari desktop workflow/photo QR passed. Physical mobile camera, LAN/certificate deployment and narrow physical viewport NOT_RUN. No full release gate asserted. Release preparation now requires a current full gate; physical-device limitations remain explicit.",
+      "evidence": [
+        ".agent-state/mobile-capture-go.log",
+        ".agent-state/mobile-bridge-node.log",
+        ".agent-state/mobile-stock-runtime/verification.json",
+        ".agent-state/mobile-stock-runtime/acceptance-result.json",
+        ".agent-state/mobile-stock-runtime/browser-result.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Protocol, threat boundary, limits, direct TLS deployment, no offline persistence, plaintext project format and acceptance limits documented.",
+      "evidence": [
+        "docs/architecture/mobile-capture.md",
+        "../aide-pkg-ProfessionalProject/docs/MOBILE-STOCK.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own Safari test tabs closed; isolated test container stopped and removed; regenerated data/certificate/token/private-plugin copies and earlier binary removed. Final candidate binary/package, synthetic source and receipts retained. No main service actions; unrelated compose/task changes retained.",
+      "evidence": [
+        ".agent-state/mobile-stock-runtime/verification.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Authorized ProfessionalProject 0.3.0 and Aide release; isolated clean checkout for full gate and public-only artifacts.",
+      "evidence": [
+        "user request 2026-10-21"
+      ]
+    }
+  },
+  "release_authorization": "2026-10-21 user explicitly authorized push/release/upload of ProfessionalProject 0.3.0 and corresponding Aide changes; no private plugin in public Aide.",
+  "rollback": "Feature stays opt-in; remove capture capability to disable new session creation. Existing project journals unchanged before desktop review.",
+  "handoff": "Local 0.3.0 candidate package built, not installed in daily Aide. Physical phone tests require reachable trusted HTTPS and real iOS/Android devices. Main service and user source/draft unchanged. Existing unrelated compose/task changes preserved."
+}
