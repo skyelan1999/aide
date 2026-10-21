@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -27,17 +28,32 @@ type captureItem struct {
 	Unit  string   `json:"unit"`
 	Codes []string `json:"codes"`
 }
+type captureLocation struct {
+	ID       string `json:"id"`
+	Zone     string `json:"zone"`
+	Name     string `json:"name"`
+	ZoneName string `json:"zoneName"`
+}
+type captureActor struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
 type captureRecord struct {
-	ID       string  `json:"id"`
-	Item     string  `json:"item"`
-	Zone     string  `json:"zone"`
-	Device   string  `json:"device"`
-	Quantity float64 `json:"quantity"`
-	Version  int     `json:"version"`
-	At       string  `json:"at"`
+	Actor    *captureActor `json:"actor,omitempty"`
+	Code     string        `json:"code,omitempty"`
+	Location string        `json:"location,omitempty"`
+	ID       string        `json:"id"`
+	Item     string        `json:"item"`
+	Zone     string        `json:"zone"`
+	Device   string        `json:"device"`
+	Quantity float64       `json:"quantity"`
+	Version  int           `json:"version"`
+	At       string        `json:"at"`
 }
 type captureDevice struct {
 	ID, Name, Zone, Code    string
+	Person                  *captureActor
+	Zones                   []string
 	Secret                  [32]byte
 	Desktop, Phone, Revoked bool
 	Seen                    time.Time
@@ -51,6 +67,10 @@ type mobileCapture struct {
 	ID, Title, Mode, Baseline, Origin string
 	Expires                           time.Time
 	Sealed, Stopped                   bool
+	RequirePerson                     bool
+	People                            []captureActor
+	AllowUnknown                      bool
+	Locations                         []captureLocation
 	Items                             []captureItem
 	Zones                             []string
 	Devices                           map[string]*captureDevice
@@ -94,28 +114,70 @@ func (a *App) captureEnabledLocked(id string) bool {
 	}
 	return false
 }
+func captureAssigned(d *captureDevice) []string {
+	if len(d.Zones) > 0 {
+		return d.Zones
+	}
+	if d.Zone != "" {
+		return []string{d.Zone}
+	}
+	return nil
+}
+func captureHasZone(d *captureDevice, z string) bool {
+	for _, v := range captureAssigned(d) {
+		if v == z {
+			return true
+		}
+	}
+	return false
+}
 func captureSnapshot(c *mobileCapture, phone *captureDevice) map[string]any {
 	devices := []map[string]any{}
 	for _, d := range c.Devices {
 		if phone == nil {
-			devices = append(devices, map[string]any{"id": d.ID, "name": d.Name, "zone": d.Zone, "code": d.Code, "desktop": d.Desktop, "phone": d.Phone, "revoked": d.Revoked, "lastSeen": d.Seen})
+			devices = append(devices, map[string]any{"id": d.ID, "name": d.Name, "zone": d.Zone, "code": d.Code, "desktop": d.Desktop, "phone": d.Phone, "revoked": d.Revoked, "lastSeen": d.Seen, "zones": captureAssigned(d), "person": d.Person})
 		}
 	}
 	rows := []captureRecord{}
 	for _, r := range c.Records {
-		if phone == nil || r.Zone == phone.Zone {
+		if phone == nil || captureHasZone(phone, r.Zone) {
 			rows = append(rows, r)
 		}
 	}
-	out := map[string]any{"id": c.ID, "title": c.Title, "mode": c.Mode, "expires": c.Expires, "sealed": c.Sealed, "baseline": c.Baseline, "devices": devices, "records": rows, "zones": c.Zones}
+	out := map[string]any{"id": c.ID, "title": c.Title, "mode": c.Mode, "expires": c.Expires, "sealed": c.Sealed, "baseline": c.Baseline, "devices": devices, "records": rows, "zones": c.Zones, "protocol": 2, "allowUnknown": c.AllowUnknown, "requirePerson": c.RequirePerson}
+	if phone == nil {
+		out["people"] = c.People
+	}
 	if phone == nil || (phone.Desktop && phone.Phone) {
 		out["items"] = c.Items
+		locations := []captureLocation{}
+		options := []map[string]string{}
+		for _, loc := range c.Locations {
+			if phone == nil || captureHasZone(phone, loc.Zone) {
+				locations = append(locations, loc)
+			}
+		}
+		for _, zone := range c.Zones {
+			if phone != nil && !captureHasZone(phone, zone) {
+				continue
+			}
+			label := zone
+			for _, loc := range locations {
+				if loc.Zone == zone {
+					label = loc.ZoneName
+					break
+				}
+			}
+			options = append(options, map[string]string{"id": zone, "name": label})
+		}
+		out["locations"] = locations
+		out["zoneOptions"] = options
 	}
 	if phone != nil {
 		delete(out, "baseline")
 		delete(out, "zones")
 		delete(out, "devices")
-		out["device"] = map[string]any{"id": phone.ID, "name": phone.Name, "zone": phone.Zone, "code": phone.Code, "desktop": phone.Desktop, "phone": phone.Phone}
+		out["device"] = map[string]any{"id": phone.ID, "name": phone.Name, "zone": phone.Zone, "code": phone.Code, "desktop": phone.Desktop, "phone": phone.Phone, "zones": captureAssigned(phone), "person": phone.Person}
 		if !phone.Desktop || !phone.Phone {
 			delete(out, "records")
 			delete(out, "baseline")
@@ -169,18 +231,32 @@ func (a *App) captureControlLocked(b *pluginWorkbenchBridge, args map[string]any
 			return nil, errors.New("采集目录过大，请分批")
 		}
 		var in struct {
-			Title    string        `json:"title"`
-			Mode     string        `json:"mode"`
-			Baseline string        `json:"baseline"`
-			BaseURL  string        `json:"baseURL"`
-			Items    []captureItem `json:"items"`
-			Zones    []string      `json:"zones"`
+			Title         string            `json:"title"`
+			Mode          string            `json:"mode"`
+			Baseline      string            `json:"baseline"`
+			BaseURL       string            `json:"baseURL"`
+			RequirePerson bool              `json:"requirePerson"`
+			People        []captureActor    `json:"people"`
+			AllowUnknown  bool              `json:"allowUnknown"`
+			Locations     []captureLocation `json:"locations"`
+			Items         []captureItem     `json:"items"`
+			Zones         []string          `json:"zones"`
 		}
 		if json.Unmarshal(data, &in) != nil {
 			return nil, errors.New("采集配置无效")
 		}
-		if !captureClean(in.Title, 160) || !captureClean(in.Baseline, 128) || (in.Mode != "receipt" && in.Mode != "count") || len(in.Items) < 1 || len(in.Items) > 500 || len(in.Zones) < 1 || len(in.Zones) > 16 || len(in.Items)*len(in.Zones) > 500 {
-			return nil, errors.New("采集单支持1至500种物料、1至16个区域，物料与区域组合最多500项")
+		if !captureClean(in.Title, 160) || !captureClean(in.Baseline, 128) || (in.Mode != "receipt" && in.Mode != "count" && in.Mode != "issue") || (len(in.Items) < 1 && !in.AllowUnknown) || (in.AllowUnknown && in.Mode != "receipt") || len(in.Items) > 500 || len(in.Zones) < 1 || len(in.Zones) > 16 || len(in.Items)*len(in.Zones) > 500 {
+			return nil, errors.New("入库可先扫码后归档；盘点需已知物料。支持至多500物料、16区域和500个物料/位置组合")
+		}
+		people := map[string]bool{}
+		if len(in.People) > 200 || in.RequirePerson && len(in.People) == 0 {
+			return nil, errors.New("请选择项目组织架构中的员工")
+		}
+		for _, person := range in.People {
+			if !captureClean(person.ID, 64) || !captureClean(person.Name, 80) || people[person.ID] {
+				return nil, errors.New("员工目录无效或重复")
+			}
+			people[person.ID] = true
 		}
 		origin, e := captureOrigin(in.BaseURL)
 		if e != nil {
@@ -198,6 +274,25 @@ func (a *App) captureControlLocked(b *pluginWorkbenchBridge, args map[string]any
 			}
 			zones[z] = true
 		}
+		locationIDs := map[string]bool{}
+		if len(in.Locations) > 500 || (len(in.Locations) > 0 && len(in.Items)*len(in.Locations) > 500) {
+			return nil, errors.New("物料与货架组合最多500项")
+		}
+		locationZones := map[string]bool{}
+		for _, loc := range in.Locations {
+			if !captureClean(loc.ID, 64) || !zones[loc.Zone] || !captureClean(loc.Name, 160) || !captureClean(loc.ZoneName, 160) || locationIDs[loc.ID] {
+				return nil, errors.New("货架位置无效或重复")
+			}
+			locationIDs[loc.ID] = true
+			locationZones[loc.Zone] = true
+		}
+		if len(in.Locations) > 0 {
+			for zone := range zones {
+				if !locationZones[zone] {
+					return nil, errors.New("每个区域至少需要一个货架位置")
+				}
+			}
+		}
 		for _, it := range in.Items {
 			if !captureClean(it.ID, 64) || !captureClean(it.Name, 160) || len(it.Unit) > 32 || ids[it.ID] || len(it.Codes) < 1 || len(it.Codes) > 8 {
 				return nil, errors.New("物料目录无效")
@@ -210,7 +305,7 @@ func (a *App) captureControlLocked(b *pluginWorkbenchBridge, args map[string]any
 				codes[code] = true
 			}
 		}
-		c := &mobileCapture{ID: captureSecret()[:32], Title: in.Title, Mode: in.Mode, Baseline: in.Baseline, Origin: origin, Expires: now.Add(2 * time.Hour), Items: in.Items, Zones: in.Zones, Devices: map[string]*captureDevice{}, Invites: map[string]*captureInvite{}, Seen: map[string][32]byte{}}
+		c := &mobileCapture{ID: captureSecret()[:32], Title: in.Title, Mode: in.Mode, Baseline: in.Baseline, Origin: origin, Expires: now.Add(2 * time.Hour), RequirePerson: in.RequirePerson, People: in.People, AllowUnknown: in.AllowUnknown, Locations: in.Locations, Items: in.Items, Zones: in.Zones, Devices: map[string]*captureDevice{}, Invites: map[string]*captureInvite{}, Seen: map[string][32]byte{}}
 		b.Captures[c.ID] = c
 		return captureSnapshot(c, nil), nil
 	}
@@ -242,23 +337,67 @@ func (a *App) captureControlLocked(b *pluginWorkbenchBridge, args map[string]any
 		if d == nil || d.Revoked || c.Sealed {
 			return nil, errors.New("设备或采集单不可授权")
 		}
-		ok := false
-		for _, z := range c.Zones {
-			ok = ok || z == zone
-		}
-		if d.Desktop && d.Zone != zone {
-			return nil, errors.New("已授权设备不能更换区域，请撤销后重新配对")
-		}
-		if !ok {
-			return nil, errors.New("区域无效")
-		}
-		for _, other := range c.Devices {
-			if other != d && !other.Revoked && other.Desktop && other.Zone == zone {
-				return nil, errors.New("该区域已分配给其他设备，请先撤销")
+		grants := []string{zone}
+		if raw, exists := args["zones"]; exists {
+			data, _ := json.Marshal(raw)
+			if json.Unmarshal(data, &grants) != nil {
+				return nil, errors.New("区域授权无效")
 			}
 		}
-		d.Zone = zone
+		if len(grants) < 1 || len(grants) > 16 {
+			return nil, errors.New("选择1至16个授权区域")
+		}
+		valid := map[string]bool{}
+		for _, z := range c.Zones {
+			valid[z] = true
+		}
+		seen := map[string]bool{}
+		for _, z := range grants {
+			if !valid[z] || seen[z] {
+				return nil, errors.New("区域无效或重复")
+			}
+			seen[z] = true
+		}
+		sort.Strings(grants)
+		if d.Desktop {
+			old := append([]string{}, captureAssigned(d)...)
+			sort.Strings(old)
+			if strings.Join(old, "\x00") != strings.Join(grants, "\x00") {
+				return nil, errors.New("已授权设备不能更换区域，请撤销后重新配对")
+			}
+		}
+		if c.Mode == "count" {
+			for _, other := range c.Devices {
+				if other == d || other.Revoked || !other.Desktop {
+					continue
+				}
+				for _, z := range grants {
+					if captureHasZone(other, z) {
+						return nil, errors.New("盘点区域已分配给其他设备，请先撤销")
+					}
+				}
+			}
+		}
+		var person *captureActor
+		if c.RequirePerson {
+			for _, candidate := range c.People {
+				if candidate.ID == captureString(args, "personId") {
+					chosen := candidate
+					person = &chosen
+				}
+			}
+			if person == nil {
+				return nil, errors.New("审核时必须选择员工")
+			}
+			if d.Desktop && (d.Person == nil || d.Person.ID != person.ID) {
+				return nil, errors.New("已绑定员工不能修改，请撤销设备后重新配对")
+			}
+		}
+		d.Person = person
+		d.Zones = grants
+		d.Zone = grants[0]
 		d.Desktop = true
+
 	case "revoke":
 		d := c.Devices[captureString(args, "device")]
 		if d == nil {
@@ -293,6 +432,8 @@ func (a *App) mobileCapturePhone(w http.ResponseWriter, r *http.Request) {
 		Name     string   `json:"name"`
 		Event    string   `json:"event"`
 		Code     string   `json:"code"`
+		Zone     string   `json:"zone"`
+		Location string   `json:"location"`
 		Quantity *float64 `json:"quantity"`
 		Version  int      `json:"version"`
 	}
@@ -373,11 +514,20 @@ func (a *App) mobileCapturePhone(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		quantity := *in.Quantity
+		var actor *captureActor
+		if c.RequirePerson {
+			if d.Person == nil {
+				fail(w, 403, errors.New("电脑尚未绑定员工"))
+				return
+			}
+			who := *d.Person
+			actor = &who
+		}
 		if c.Sealed || !d.Phone || !d.Desktop {
 			fail(w, 403, errors.New("需要双方确认，且采集单未封存"))
 			return
 		}
-		if !captureClean(in.Event, 80) || !captureClean(in.Code, 128) || math.IsNaN(quantity) || math.IsInf(quantity, 0) || quantity < 0 || quantity > 1e9 || math.Abs(quantity*1e6-math.Round(quantity*1e6)) > 0.0001 || (c.Mode == "receipt" && quantity == 0) {
+		if !captureClean(in.Event, 80) || !captureClean(in.Code, 128) || math.IsNaN(quantity) || math.IsInf(quantity, 0) || quantity < 0 || quantity > 1e9 || math.Abs(quantity*1e6-math.Round(quantity*1e6)) > 0.0001 || (c.Mode != "count" && quantity == 0) {
 			fail(w, 400, errors.New("条码、事件或数量无效"))
 			return
 		}
@@ -389,11 +539,35 @@ func (a *App) mobileCapturePhone(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		if item == "" {
+		if item == "" && !c.AllowUnknown {
 			fail(w, 404, errors.New("未知条码，请在电脑维护物料映射"))
 			return
 		}
-		raw, _ := json.Marshal([]any{d.ID, d.Zone, item, quantity, in.Version})
+		zone := in.Zone
+		if zone == "" {
+			zone = d.Zone
+		}
+		if !captureHasZone(d, zone) {
+			fail(w, 403, errors.New("该区域未授权"))
+			return
+		}
+		if len(c.Locations) > 0 {
+			ok := false
+			for _, loc := range c.Locations {
+				if loc.ID == in.Location && loc.Zone == zone {
+					ok = true
+					break
+				}
+			}
+			if !ok {
+				fail(w, 403, errors.New("货架不属于所选授权区域"))
+				return
+			}
+		} else if in.Location != "" {
+			fail(w, 400, errors.New("该采集单没有配置货架"))
+			return
+		}
+		raw, _ := json.Marshal([]any{d.ID, zone, in.Location, in.Code, item, quantity, in.Version})
 		digest := sha256.Sum256(raw)
 		event := d.ID + ":" + in.Event
 		if old, ok := c.Seen[event]; ok {
@@ -408,11 +582,14 @@ func (a *App) mobileCapturePhone(w http.ResponseWriter, r *http.Request) {
 			fail(w, 409, errors.New("采集单已达2000次提交，请封存并分批"))
 			return
 		}
-		record := captureRecord{ID: event, Item: item, Zone: d.Zone, Device: d.ID, Quantity: quantity, At: now.UTC().Format(time.RFC3339Nano)}
+		record := captureRecord{Actor: actor, ID: event, Item: item, Zone: zone, Location: in.Location, Device: d.ID, Quantity: quantity, At: now.UTC().Format(time.RFC3339Nano)}
+		if c.AllowUnknown || len(c.Locations) > 0 {
+			record.Code = in.Code
+		}
 		if c.Mode == "count" {
 			at := -1
 			for i, old := range c.Records {
-				if old.Item == item && old.Zone == d.Zone {
+				if old.Item == item && old.Zone == zone && old.Location == in.Location {
 					at = i
 					record.Version = old.Version
 					break

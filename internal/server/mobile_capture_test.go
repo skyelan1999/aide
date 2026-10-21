@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -107,7 +108,7 @@ func TestMobileCaptureMutualApprovalRetriesAndRevoke(t *testing.T) {
 	requireStatus(t, capturePhone(a, c, token, map[string]any{"action": "confirm"}), 200)
 	accepted := capturePhone(a, c, token, event)
 	requireStatus(t, accepted, 200)
-	if bytes.Contains(accepted.Body.Bytes(), []byte("baseline")) || bytes.Contains(accepted.Body.Bytes(), []byte("zones")) {
+	if bytes.Contains(accepted.Body.Bytes(), []byte("baseline")) || bytes.Contains(accepted.Body.Bytes(), []byte(`"zones":["A","B"]`)) {
 		t.Fatal("phone received desktop-only scope")
 	}
 	requireStatus(t, capturePhone(a, c, token, event), 200)
@@ -272,4 +273,69 @@ func TestMobileCaptureExplicitZeroCrossScopeAndLock(t *testing.T) {
 		t.Fatal(e)
 	}
 	requireStatus(t, capturePhone(a, c, token, map[string]any{"action": "status"}), 403)
+}
+
+func TestMobileCaptureUnknownAndLocations(t *testing.T) {
+	a, b, _ := captureFixture(t, "receipt")
+	v, e := a.captureControlLocked(b, map[string]any{"action": "create", "title": "Receiving", "mode": "receipt", "baseline": "empty", "baseURL": "https://localhost", "allowUnknown": true, "items": []captureItem{}, "zones": []string{"A", "B"}, "locations": []captureLocation{{ID: "A1", Zone: "A", Name: "Shelf A", ZoneName: "Area A"}, {ID: "B1", Zone: "B", Name: "Shelf B", ZoneName: "Area B"}}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	c := b.Captures[v.(map[string]any)["id"].(string)]
+	token, id := captureJoin(t, a, b, c, "one")
+	captureApprove(t, a, b, c, token, id, "A")
+	event := map[string]any{"action": "record", "event": "unknown", "code": "NEW-001", "quantity": 3, "zone": "B", "location": "B1"}
+	requireStatus(t, capturePhone(a, c, token, event), 403)
+	event["zone"] = "A"
+	requireStatus(t, capturePhone(a, c, token, event), 403)
+	event["location"] = "A1"
+	requireStatus(t, capturePhone(a, c, token, event), 200)
+	requireStatus(t, capturePhone(a, c, token, event), 200)
+	if len(c.Records) != 1 || c.Records[0].Code != "NEW-001" || c.Records[0].Item != "" || c.Records[0].Location != "A1" {
+		t.Fatal("unknown receipt not retained")
+	}
+	snapshot := captureSnapshot(c, c.Devices[id])
+	raw, _ := json.Marshal(snapshot)
+	if strings.Contains(string(raw), "B1") || strings.Contains(string(raw), "Area B") {
+		t.Fatal("unauthorized location disclosed")
+	}
+	other, oid := captureJoin(t, a, b, c, "two")
+	captureApprove(t, a, b, c, other, oid, "A")
+	if _, e = a.captureControlLocked(b, map[string]any{"action": "create", "title": "Invalid", "mode": "count", "baseline": "empty", "baseURL": "https://localhost", "allowUnknown": true, "items": []captureItem{}, "zones": []string{"A"}}); e == nil {
+		t.Fatal("unknown count accepted")
+	}
+}
+
+func TestMobileCaptureOrganizationPersonBinding(t *testing.T) {
+	a, b, c := captureFixture(t, "receipt")
+	c.RequirePerson = true
+	c.People = []captureActor{{ID: "1", Name: "Operator one"}, {ID: "2", Name: "Operator two"}}
+	token, id := captureJoin(t, a, b, c, "Phone")
+	if _, e := a.captureControlLocked(b, map[string]any{"action": "approve", "id": c.ID, "device": id, "zone": "A"}); e == nil {
+		t.Fatal("missing employee accepted")
+	}
+	if _, e := a.captureControlLocked(b, map[string]any{"action": "approve", "id": c.ID, "device": id, "zone": "A", "personId": "unknown"}); e == nil {
+		t.Fatal("unknown employee accepted")
+	}
+	if _, e := a.captureControlLocked(b, map[string]any{"action": "approve", "id": c.ID, "device": id, "zone": "A", "personId": "1"}); e != nil {
+		t.Fatal(e)
+	}
+	requireStatus(t, capturePhone(a, c, token, map[string]any{"action": "record", "event": "before-confirm", "code": "SKU-1", "quantity": 1}), 403)
+	requireStatus(t, capturePhone(a, c, token, map[string]any{"action": "confirm"}), 200)
+	requireStatus(t, capturePhone(a, c, token, map[string]any{"action": "record", "event": "bound", "code": "SKU-1", "quantity": 2}), 200)
+	if c.Records[0].Actor == nil || c.Records[0].Actor.ID != "1" {
+		t.Fatal("server did not stamp approved person")
+	}
+	requireStatus(t, capturePhone(a, c, token, map[string]any{"action": "record", "event": "spoof", "code": "SKU-1", "quantity": 2, "personId": "2"}), 400)
+	if _, e := a.captureControlLocked(b, map[string]any{"action": "approve", "id": c.ID, "device": id, "zone": "A", "personId": "2"}); e == nil {
+		t.Fatal("approved employee changed without revocation")
+	}
+	snapshot, _ := json.Marshal(captureSnapshot(c, c.Devices[id]))
+	if bytes.Contains(snapshot, []byte("Operator two")) {
+		t.Fatal("phone received other employees")
+	}
+	if _, e := a.captureControlLocked(b, map[string]any{"action": "revoke", "id": c.ID, "device": id}); e != nil {
+		t.Fatal(e)
+	}
+	requireStatus(t, capturePhone(a, c, token, map[string]any{"action": "record", "event": "revoked", "code": "SKU-1", "quantity": 2}), 403)
 }

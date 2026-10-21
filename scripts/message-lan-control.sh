@@ -19,6 +19,9 @@ CID="$("$DOCKER_BIN" compose ps -q aide)"
 BINDING="$("$DOCKER_BIN" compose port aide 45840)"
 [[ "$BINDING" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]] || { echo 'LAN bridge requires a loopback-only message port mapping. Restart using the updated Compose file.' >&2; exit 1; }
 TARGET="127.0.0.1:${BASH_REMATCH[1]}"
+CAPTURE_BINDING="$("$DOCKER_BIN" compose port aide 45841)"
+[[ "$CAPTURE_BINDING" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]] || { echo "Missing loopback collector mapping; restart Aide." >&2; exit 1; }
+CAPTURE_TARGET="127.0.0.1:${BASH_REMATCH[1]}"
 IMAGE="$("$DOCKER_BIN" inspect "$CID" --format '{{.Image}}')"
 [[ "$IMAGE" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo 'Invalid running image identity.' >&2; exit 1; }
 mkdir -p "$NATIVE" "$DIR"
@@ -37,7 +40,13 @@ ACTUAL="$(shasum -a 256 "$TMP/$NAME" | awk '{print $1}')"
 [[ ! -x "$BIN" ]] || "$BIN" -stop -dir "$DIR"
 chmod 700 "$TMP/$NAME"
 mv "$TMP/$NAME" "$BIN"
-nohup "$BIN" -dir "$DIR" -target "$TARGET" >> "$NATIVE/bridge.log" 2>&1 < /dev/null &
+# A separate session survives the launching Terminal/tool process group.
+python3 - "$BIN" "$DIR" "$TARGET" "$CAPTURE_TARGET" "$NATIVE/bridge.log" <<'PYTHON'
+import subprocess,sys
+binary,directory,target,capture,log=sys.argv[1:]
+with open(log,'ab') as out:
+    subprocess.Popen([binary,'-dir',directory,'-target',target,'-capture-target',capture],stdin=subprocess.DEVNULL,stdout=out,stderr=out,start_new_session=True,close_fds=True)
+PYTHON
 for attempt in {1..30}; do
   if "$BIN" -status -dir "$DIR" >/dev/null 2>&1; then echo '消息局域网桥已启动（不修改代理或防火墙）。'; exit 0; fi
   sleep .1

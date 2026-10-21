@@ -17,17 +17,20 @@ import (
 // No private keys, credentials or application plaintext are held by this helper.
 // Its TCP listeners forward opaque streams into the loopback-only Docker port.
 type hostBridge struct {
-	root   *os.Root
-	lease  bridgeLease
-	ctx    context.Context
-	cancel context.CancelFunc
-	target string
-	tcp    []net.Listener
-	udp    []*net.UDPConn
-	wg     sync.WaitGroup
-	slots  chan struct{}
-	jobs   chan struct{}
-	lookup func(context.Context, string) ([]Card, error)
+	root          *os.Root
+	lease         bridgeLease
+	ctx           context.Context
+	cancel        context.CancelFunc
+	target        string
+	captureTarget string
+	capture       *hostBridge
+	captureOwner  string
+	tcp           []net.Listener
+	udp           []*net.UDPConn
+	wg            sync.WaitGroup
+	slots         chan struct{}
+	jobs          chan struct{}
+	lookup        func(context.Context, string) ([]Card, error)
 }
 
 func physicalLANInterfaces() []net.Interface {
@@ -62,6 +65,17 @@ func interfaceIPv4(iface net.Interface) []net.IP {
 	return out
 }
 func RunLANBridge(parent context.Context, dir, target string) error {
+	return RunLANBridgeWithCapture(parent, dir, target, "")
+}
+func RunLANBridgeWithCapture(parent context.Context, dir, target, captureTarget string) error {
+	if captureTarget != "" {
+		host, port, e := net.SplitHostPort(captureTarget)
+		ip := net.ParseIP(host)
+		p, _ := strconv.Atoi(port)
+		if e != nil || ip == nil || !ip.IsLoopback() || p < 1 || p > 65535 {
+			return errors.New("capture target must be numeric loopback")
+		}
+	}
 	// This is deliberately not a general-purpose forward proxy.
 	host, port, e := net.SplitHostPort(target)
 	ip := net.ParseIP(host)
@@ -79,6 +93,7 @@ func RunLANBridge(parent context.Context, dir, target string) error {
 	}
 	ctx, cancel := context.WithCancel(parent)
 	h := &hostBridge{root: root, ctx: ctx, cancel: cancel, target: target, lease: bridgeLease{Instance: randomID()}, slots: make(chan struct{}, 64), jobs: make(chan struct{}, 4)}
+	h.captureTarget = captureTarget
 	defer h.close()
 	interfaces := physicalLANInterfaces()
 	for _, iface := range interfaces {
@@ -149,6 +164,7 @@ func (h *hostBridge) run() error {
 				}
 			}
 			h.scanJobs()
+			h.scanCapture()
 		}
 	}
 }
@@ -304,6 +320,9 @@ func (h *hostBridge) scanJobs() {
 }
 func (h *hostBridge) close() {
 	h.cancel()
+	if h.capture != nil {
+		h.capture.close()
+	}
 	for _, l := range h.tcp {
 		l.Close()
 	}
@@ -311,6 +330,9 @@ func (h *hostBridge) close() {
 		c.Close()
 	}
 	h.wg.Wait()
+	if h.root == nil {
+		return
+	}
 	var lease bridgeLease
 	if bridgeRead(h.root, "host.json", &lease) == nil && lease.Instance == h.lease.Instance {
 		_ = h.root.Remove("host.json")

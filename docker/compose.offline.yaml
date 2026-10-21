@@ -8,6 +8,7 @@ services:
     ports:
       - "127.0.0.1:${AIDE_PORT:-8097}:8080"
       - "127.0.0.1::45840"
+      - "127.0.0.1::45841"
     environment:
       AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge
       AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}

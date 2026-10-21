@@ -19,7 +19,7 @@ class MessageLANLauncherTests(unittest.TestCase):
         self.helper=b'''#!/bin/sh
 mode=run
 while [ "$#" -gt 0 ]; do
- case "$1" in -dir) dir="$2"; shift 2;; -target) shift 2;; -status) mode=status; shift;; -stop) mode=stop; shift;; *) exit 99;; esac
+ case "$1" in -dir) dir="$2"; shift 2;; -target|-capture-target) shift 2;; -status) mode=status; shift;; -stop) mode=stop; shift;; *) exit 99;; esac
 done
 case "$mode" in status) test -f "$dir/host.json";; stop) rm -f "$dir/host.json";; run) mkdir -p "$dir"; echo ready > "$dir/host.json";; esac
 '''
@@ -32,6 +32,7 @@ r=Path(os.environ['LAN_FIXTURE']);a=sys.argv[1:]
 with (r/'calls').open('a') as f:f.write(json.dumps(a)+'\\n')
 if a==['compose','ps','-q','aide']:print('current')
 elif a==['compose','port','aide','45840']:print(os.environ.get('LAN_BINDING','127.0.0.1:55555'))
+elif a==['compose','port','aide','45841']:print(os.environ.get('LAN_CAPTURE_BINDING','127.0.0.1:55556'))
 elif a==['inspect','current','--format','{{.Image}}']:print('sha256:'+'a'*64)
 elif a==['create','--network','none','--entrypoint','/bin/true','sha256:'+'a'*64]:print('pristine')
 elif a[0]=='cp':
@@ -60,6 +61,9 @@ else:raise SystemExit(87)
         self.assertFalse((self.root/'.aide-data/storage/data/messages/lan-bridge/host.json').exists())
     def test_non_loopback_mapping_rejected(self):
         result=self.run_control(LAN_BINDING='0.0.0.0:55555');self.assertNotEqual(result.returncode,0)
+        self.assertNotIn('create',(self.root/'calls').read_text())
+    def test_capture_target_cannot_expand_to_non_loopback(self):
+        result=self.run_control(LAN_CAPTURE_BINDING='0.0.0.0:55556');self.assertNotEqual(result.returncode,0)
         self.assertNotIn('create',(self.root/'calls').read_text())
     def test_both_images_and_all_launch_modes_ship_bridge(self):
         for name in ('Dockerfile','Dockerfile.local'):

@@ -192,7 +192,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
 			tools := append([]string{}, p.Workbench.Tools...)
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "mobileCapture": p.Workbench.MobileCapture}
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
 			break
 		}
 	}

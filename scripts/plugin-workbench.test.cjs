@@ -32,10 +32,10 @@ test('workbench export requires actual active frame and a separate parent save c
  f.events.message({source:frame.contentWindow,data:exportMessage()});assert.equal(f.urls.size,1);assert.equal(f.nodes.filter(n=>n.tag==='a').length,0);assert.equal(frame.contentWindow.messages.at(-1).data.status,'ready');
  const save=f.nodes.find(n=>n.tag==='button'&&n.textContent?.startsWith('保存文件'));save.onclick();assert(f.nodes.find(n=>n.tag==='a').clicked);assert.equal(frame.contentWindow.messages.at(-1).data.status,'requested');f.controller.close();assert.equal(f.urls.size,0);
 });
-test('workbench export rejects traversal, foreign plugin, oversized data and pending overwrite; revocation prevents save',async()=>{
+test('workbench export rejects traversal, foreign plugin, oversized data and replaces pending export; revocation prevents save',async()=>{
  const f=fixture();await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe'),send=data=>f.events.message({source:frame.contentWindow,data});
  for(const name of ['../evil.json','a/b.json','a\\b.json','bad\n.json','.hidden'])send(exportMessage(undefined,name));send({...exportMessage(),pluginId:'other'});send(exportMessage(new ArrayBuffer(16*1024*1024+1)));assert.equal(f.urls.size,0);
- send(exportMessage());send(exportMessage(undefined,'second.json','export_2'));assert.equal(frame.contentWindow.messages.at(-1).data.status,'error');assert.equal(f.urls.size,1);
+ send(exportMessage());send(exportMessage(undefined,'second.json','export_2'));assert.equal(frame.contentWindow.messages.at(-1).data.status,'ready');assert.equal(f.urls.size,1);assert.equal(frame.contentWindow.messages.at(-1).data.requestId,'export_2');
  const save=f.nodes.find(n=>n.tag==='button'&&n.textContent?.startsWith('保存文件'));f.changeScope();save.onclick();assert.equal(f.nodes.filter(n=>n.tag==='a').length,0);f.tick();assert.equal(f.urls.size,0);
 });
 
@@ -104,4 +104,22 @@ test('mobile collection is opt-in and cannot invoke undeclared methods or disclo
   const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,mobileCapture:enabled}});await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const handshake=frame.contentWindow.messages[0],port=handshake.ports[0],calls=[];assert.equal(handshake.data.capabilities.includes('capture'),enabled);assert(!JSON.stringify(handshake.data).includes('instanceId'));
   f.services.api=async(url,options)=>{calls.push(JSON.parse(options.body));return {requestId:'capture_1',status:'result',result:{id:'synthetic'}};};await port.postMessage({protocol:1,requestId:'capture_1',method:'capture.control',arguments:{action:'status',id:'synthetic'}});assert.equal(calls.length,enabled?1:0);await port.postMessage({protocol:1,requestId:'capture_2',method:'capture.admin'});assert.equal(calls.length,enabled?1:0);f.controller.close();
  }
+});
+
+test('employee and location capabilities require an explicit compatible capture protocol',async()=>{
+ for(const version of [undefined,2,3]){const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge,mobileCapture:true,mobileCaptureVersion:version}});await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const caps=frame.contentWindow.messages[0].data.capabilities;assert.equal(caps.includes('capture.locations'),version>=2);assert.equal(caps.includes('capture.person-binding'),version>=3);f.controller.close();}
+});
+
+test('review preserves iframe draft and bridge, returns on approved save, and still revokes on scope loss',async()=>{
+ const f=fixture(bridgeResponse);let reviewed='';f.services.reviewProposal=async id=>{reviewed=id;};await f.controller.open(bridgePlugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe'),host=f.nodes.find(n=>n.tag==='section');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const port=frame.contentWindow.messages[0].ports[0];f.services.api=async()=>({status:'proposal_pending',proposalId:'save-one',sessionId:'session-one'});await port.postMessage({protocol:1,requestId:'save1',method:'tool.call',tool:'own_tool'});const review=f.nodes.find(n=>n.textContent==='查看待审批提案'),back=f.nodes.find(n=>n.textContent==='返回插件工作台');await review.onclick();assert.equal(reviewed,'session-one');assert.equal(host.hidden,true);assert.equal(back.hidden,false);assert(!port.closed);assert.notEqual(frame.src,'about:blank');f.services.api=async()=>({result:{status:'done',applied:true}});await f.tick();assert.equal(host.hidden,false);assert.equal(back.hidden,true);assert(port.received.some(x=>x.event==='proposal.changed'&&x.result.applied));f.changeScope();await f.tick();assert.equal(frame.src,'about:blank');assert.equal(back.removed,true);
+});
+
+test('manual project save writes directly and never permits iframe commit',async()=>{
+ const f=fixture({...bridgeResponse,bridge:{...bridgeResponse.bridge}});await f.controller.open(bridgePlugin,f.services);
+ const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});const port=frame.contentWindow.messages[0].ports[0],calls=[];
+ f.services.api=async(url,options)=>{calls.push(JSON.parse(options.body));return {hash:'saved-hash'};};
+ await port.postMessage({protocol:1,requestId:'direct_commit',method:'file.save.commit',arguments:{path:'x.pp',content:'bad',hash:''}});assert.equal(calls.length,0);
+ await port.postMessage({protocol:1,requestId:'manual_save',method:'file.save',arguments:{path:'x.pp',content:'good',hash:'original'}});
+ assert.equal(f.nodes.some(n=>n.className==='plugin-native-save-card'),false);assert.equal(calls.length,1);assert.equal(calls[0].method,'file.save.commit');assert.equal(calls[0].arguments.hash,'original');assert.equal(port.received.at(-1).result.saved,true);assert.equal(port.received.at(-1).result.hash,'saved-hash');
+ await port.postMessage({protocol:1,requestId:'manual_save',method:'file.save',arguments:{path:'x.pp',content:'replay',hash:'original'}});assert.equal(calls.length,1);
 });

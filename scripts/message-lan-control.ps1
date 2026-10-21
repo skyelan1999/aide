@@ -21,6 +21,9 @@ if (-not $cid -or $cid -match '\s') { throw 'Cannot identify the Aide container.
 $binding=Get-LanCompose -Items @('port','aide','45840')
 if ($binding -notmatch '^127\.0\.0\.1:([0-9]{1,5})$') { throw 'LAN bridge requires a loopback-only message mapping; restart using the updated Compose file.' }
 $target="127.0.0.1:$($Matches[1])"
+$captureBinding=Get-LanCompose -Items @('port','aide','45841')
+if ($captureBinding -notmatch '^127\.0\.0\.1:([0-9]{1,5})$') { throw 'Missing loopback collector mapping; restart Aide.' }
+$captureTarget='127.0.0.1:'+$Matches[1]
 $image=((& $DockerBin inspect $cid --format '{{.Image}}') | Out-String).Trim()
 if ($LASTEXITCODE -ne 0 -or $image -notmatch '^sha256:[a-f0-9]{64}$') { throw 'Invalid running image identity.' }
 New-Item -ItemType Directory -Path $nativeDir,$lanDir -Force | Out-Null
@@ -40,7 +43,7 @@ try {
     if (Test-Path -LiteralPath $binary) { & $binary -stop -dir $lanDir; if ($LASTEXITCODE -ne 0) { throw 'Previous LAN bridge did not stop.' } }
     Move-Item -LiteralPath (Join-Path $temp $name) -Destination $binary -Force
     # Quoted arguments preserve directories with spaces; no command-string evaluation.
-    Start-Process -FilePath $binary -ArgumentList @('-dir',('"'+$lanDir+'"'),'-target',$target) -WindowStyle Hidden -RedirectStandardOutput (Join-Path $nativeDir 'bridge.stdout.log') -RedirectStandardError (Join-Path $nativeDir 'bridge.log') | Out-Null
+    Start-Process -FilePath $binary -ArgumentList @('-dir',('"'+$lanDir+'"'),'-target',$target,'-capture-target',$captureTarget) -WindowStyle Hidden -RedirectStandardOutput (Join-Path $nativeDir 'bridge.stdout.log') -RedirectStandardError (Join-Path $nativeDir 'bridge.log') | Out-Null
     for ($attempt=0;$attempt -lt 30;$attempt++) { & $binary -status -dir $lanDir *> $null; if ($LASTEXITCODE -eq 0) { Write-Host 'Message LAN bridge ready; proxy and firewall unchanged.'; return }; Start-Sleep -Milliseconds 100 }
     throw "LAN bridge not ready; see $nativeDir/bridge.log"
 } finally {

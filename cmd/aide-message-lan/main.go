@@ -14,6 +14,7 @@ import (
 func main() {
 	dir := flag.String("dir", "", "private bridge directory")
 	target := flag.String("target", "", "loopback Docker port mapping")
+	captureTarget := flag.String("capture-target", "", "optional fixed loopback phone collector mapping")
 	status := flag.Bool("status", false, "check the live helper lease")
 	stop := flag.Bool("stop", false, "stop the helper owning this directory")
 	flag.Parse()
@@ -34,7 +35,7 @@ func main() {
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	if err := messaging.RunLANBridge(ctx, *dir, *target); err != nil {
+	if err := messaging.RunLANBridgeWithCapture(ctx, *dir, *target, *captureTarget); err != nil {
 		log.Fatal(err)
 	}
 }

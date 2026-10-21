@@ -1,0 +1,70 @@
+{
+  "id": "pp-workbench-mobile-push-20261021",
+  "request": "push吧，目前看还好",
+  "acceptance": [
+    "Push the verified private ProfessionalProject 0.4.8 sources",
+    "Push only related public host capture/manual-save/export changes",
+    "Preserve unrelated working changes and all local runtime/user state",
+    "No GitHub Release, tag, marketplace upload or image publication"
+  ],
+  "scope": [
+    "Private plugin source, bundled browser scanner with retained licenses, regression tests and documentation",
+    "Public mobile capture protocol/person/photo handling, opt-in LAN bridge, native manual save, export handoff, regression tests and capture architecture docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current user explicitly authorizes source push; no release artifacts requested.",
+      "evidence": [
+        ".agent-state/pp-push-20261021"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Separate private plugin and generic public host; stage only the phone port hunk from mixed compose changes.",
+      "evidence": [
+        ".agent-state/pp-push-20261021"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Plugin 0.4.8 and generic host changes implemented; existing unrelated code excluded.",
+      "evidence": [
+        ".agent-state/pp-push-20261021"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS: private 89 Python / 22 Node tests; public quick 142 commands; isolated non-race Go test ./internal/messaging ./internal/server -run Capture|Mobile|WorkbenchNative|WorkbenchBridge|Workbench. Full race and public release asset checks NOT_RUN (source-only push).",
+      "evidence": [
+        ".agent-state/quick.json",
+        ".agent-state/pp-push-20261021/go-focused.log",
+        "../aide-pkg-ProfessionalProject/docs/VERIFICATION.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Capture architecture, private formats/mobile operation and verified local acceptance documented.",
+      "evidence": [
+        "docs/architecture/mobile-capture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No local sessions, photos, credentials, binaries, build cache or private plugin files included in public commit.",
+      "evidence": [
+        ".agent-state/pp-push-20261021"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source push only, explicitly scoped; no version bump/tag/Release/image or marketplace action.",
+      "evidence": [
+        "user push authorization"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested push after local browser acceptance on 2026-10-21. Earlier source-only Aide delivery scope retained.",
+  "rollback": "Commits can be reverted; retained daily previous image and private plugin backups. No deployment action in this push.",
+  "handoff": "Local 0.4.8 already installed and accepted separately. Push operation does not restart services. Full race/release-asset gate is not run for this source-only push."
+}

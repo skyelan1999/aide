@@ -11,3 +11,7 @@
 .plugin-workbench>header>select{max-width:220px;min-width:100px;min-height:36px;border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--surface);color:var(--text)}
 
 .plugin-workbench>header>.plugin-document-title{min-width:0;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 140px}
+
+.plugin-workbench[hidden],.plugin-workbench-return[hidden]{display:none!important}.plugin-workbench-return{position:fixed;right:22px;bottom:26px;z-index:81;padding:10px 16px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--text);box-shadow:0 4px 20px #0002;cursor:pointer}
+
+.plugin-native-save-overlay{position:absolute;inset:0;z-index:10;display:grid;place-items:center;background:#0006;backdrop-filter:blur(3px)}.plugin-native-save-card{max-width:480px;width:calc(100% - 64px);padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:0 16px 60px #0004}.plugin-native-save-card p{overflow-wrap:anywhere}.plugin-native-save-card button{margin:8px 8px 0 0}

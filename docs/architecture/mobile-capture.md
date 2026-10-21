@@ -33,3 +33,17 @@ Desktop seals a collection to stop new records and reviews a snapshot. Business 
 - NOT_RUN: physical iOS/Android camera, real one-dimensional labels, LAN routing/certificate deployment, narrow physical phone display/performance and release/container distribution. An in-app browser certificate warning was not bypassed; Safari reused the localhost trust exception previously handled by the user. Daily Aide 9999 and user projects were not changed.
 
 Raw local receipts: `.agent-state/mobile-capture-go.log`, `.agent-state/mobile-bridge-node.log`, `.agent-state/mobile-stock-runtime/acceptance-result.json`. These are test artifacts, not public assets; private plugin/user state is not added to public packaging inputs.
+
+## Capture protocol 2/3 (local development)
+
+The bridge response advertises `mobileCaptureVersion: 3`. Version 2 adds `capture.locations` and `capture.unclassified`; version 3 adds `capture.person-binding`. Older opt-in clients retain legacy known-catalog capture behavior. New create arguments include `locations: [{id, zone, name, zoneName}]`, `allowUnknown` (receipt only) and `requirePerson` with organization `people`. Empty catalogs are accepted only for unclassified receipts. Devices can receive a fixed set of areas (`approve.zones`); count grants cannot overlap, receipt/issue grants may. Every record carries an authorized area and, if configured, its matching location. Count versions are scoped by item/area/location. `issue` is collection only; downstream tools retain stock validation and reviewed file writes.
+
+## 当前组织人员绑定协议
+
+`capture.person-binding`：私有工作台创建采集单时提供最多200条组织员工快照及 `requirePerson:true`。电脑审核设备必须选择该名册中的 `personId` 和区域；手机确认后允许采集，服务端自动写入 actor。手机不能提交人员字段，更换绑定须撤销设备重新邀请。手机快照只返回本设备绑定，不暴露完整员工目录。没有独立员工密码、保险库员工账号或登录会话。协议继续使用 HTTPS、过期邀请、双方确认、位置范围检查、封存和撤销。
+
+## 插件独立服务的自动局域网入口
+
+通用工作台桥新增 `capture.network(start/status/stop)`。仅声明 mobileCapture 的启用插件工作台可调用；实例、锁屏、工作区及包内容仍须有效。原生消息局域网 helper 接收45秒租约，动态打开物理网络监听，目的地固定为启动器解析出的回环 Docker 45841 映射，不接受调用者目标。结束、关闭工作台或租约到期关闭监听及已有连接。管理8080端口仍只绑定回环。私有插件服务、私钥和照片不进入公共镜像。首次手机证书信任仍由设备持有人操作。
+
+`file.target` 检查声明扩展名的工作区文件版本；iframe 的 `file.save` 经宿主父页面校验后直接调用 `file.save.commit`，手动保存及自动保存均不再增加确认弹窗。iframe 无权直接提交该方法。复用原生本地/SSH文件写入、工作区身份、版本冲突和历史处理；不会全局关闭审批，普通 tool.call 的写入仍形成待审批提案。

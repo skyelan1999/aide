@@ -30,6 +30,8 @@ services:
       - "127.0.0.1:${AIDE_PORT:-8097}:8080"
       # Host helper forwards peer TLS here; never expose the workbench API to LAN.
       - "127.0.0.1::45840"
+      # Dedicated plugin phone TLS service; host relay opens LAN only during use.
+      - "127.0.0.1::45841"
     environment:
       AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge
       AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}
