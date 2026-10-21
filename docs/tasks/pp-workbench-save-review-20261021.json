@@ -14,7 +14,10 @@
     "docs/tasks/pp-workbench-save-review-20261021.json",
     "internal/server/plugin_sources.go: durable opaque workspace cache identity",
     "internal/server/plugin_sources_test.go",
-    "internal/server/web_research_test.go: align legacy fixture with installed enabled plugin routing"
+    "internal/server/web_research_test.go: align legacy fixture with installed enabled plugin routing",
+    "docs/plugin-protocol.md: workspaceKey semantics",
+    "docs/reviews/release-0.1.17.4-RC2-2026-10-21.md",
+    "version.md: version script output"
   ],
   "stages": {
     "requirements": {
@@ -46,7 +49,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "16 frontend tests, focused Go workspace identity test, actual Safari fixture save/apply and server restart history recovery passed. Integrated remote routing exposed an old schema-only fixture; supplied installed/enabled matching manifest without changing assertions. Focused regression passes; full suite rerunning.",
+      "summary": "145-check full native race/vet gate passed; ARM64 build-in all tests and authenticated save smoke passed. AMD64 emulated full suite cannot provide Landlock and hit package timeout; retain fail-closed behavior, use existing cross-architecture build with separate runtime smoke; no native AMD64 full acceptance claimed.",
       "evidence": [
         "scripts/plugin-file-review.test.cjs",
         "internal/server/plugin_sources_test.go",
