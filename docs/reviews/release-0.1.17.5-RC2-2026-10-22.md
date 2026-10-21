@@ -11,3 +11,9 @@ Compare、ProfessionalProject 等私有插件独立交付，不随公开源码�
 RC1 候选在 AMD64 原生测试中发现升级链接测试样例硬编码 ARM64；RC2 仅修正样例适配当前原生架构，保留已推送的 RC1 标签。应用筛选逻辑未因此放宽。
 
 发布源码：`133fccb84f1fdf013fd89a6a1e9169051f16ae45`。运行源码 SHA-256：`b1e317530cd2d3254b30e9c36169e0757b3700de7111b062adf955d0d913119f`。
+
+验收结果：本地 145 项完整发布检查通过；1,109 个后端顶层用例分 12 组执行 race 检查，另含其他 Go 包与 vet。ARM64 和 AMD64 均在原生 GitHub 节点完成 Go 测试、运行资源、认证烟测、嵌入资源摘要、全部镜像层审计、ZIP CRC/SHA 与镜像导入。
+
+[发行页](https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC2) · [原生构建与发布记录](https://github.com/skyelan1999/aide/actions/runs/39647305577)。公开附件为两个完整包、标签源码、RELEASE-ASSETS.txt 和 SHA256SUMS。远端五个附件摘要与发布记录一致，下载回读的两个元数据附件再次校验通过。
+
+界面验收使用本地编译 ARM64 RC1 候选；RC2 仅修改测试样例和版本号，云端运行检查核对相同前端嵌入资源摘要。Windows/macOS 原生启动器本轮未实机运行。证据见同目录 evidence/release-0.1.17.5-RC2/；公开页面截图为 published-release.png。

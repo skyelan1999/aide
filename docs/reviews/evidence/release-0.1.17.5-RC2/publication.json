@@ -1,0 +1,46 @@
+{
+  "status": "pass",
+  "tag": "v0.1.17.5-RC2",
+  "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC2",
+  "publishedAt": "2026-10-21T18:13:48Z",
+  "isDraft": false,
+  "isPrerelease": true,
+  "remoteSHA256Matches": true,
+  "downloadedMetadataSHA256Verified": true,
+  "assets": [
+    {
+      "name": "aide-v0.1.17.5-RC2-full-linux-amd64.zip",
+      "size": 1576786144,
+      "digest": "sha256:592e6b4cfc1c756019828369b9cd18121ee96a3a1be147756b281e6086dac606",
+      "state": "uploaded"
+    },
+    {
+      "name": "aide-v0.1.17.5-RC2-full-linux-arm64.zip",
+      "size": 1343587637,
+      "digest": "sha256:2bb64ec692526b737f1df88bad9114719f87eb013f8c615b4993317bf2f50c79",
+      "state": "uploaded"
+    },
+    {
+      "name": "aide-v0.1.17.5-RC2-source.zip",
+      "size": 181222841,
+      "digest": "sha256:2d900362965160c4e855af7d213b6923a2849e00d77b1621612c9efb2cd62939",
+      "state": "uploaded"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "size": 9966,
+      "digest": "sha256:88d563c3d228f1d11e70b0f6e7464313d522176388befca44e671c16c166e89c",
+      "state": "uploaded"
+    },
+    {
+      "name": "SHA256SUMS",
+      "size": 393,
+      "digest": "sha256:271b4bf8abcad139e27f84875bea89816b0ea8f6a3cf314f0a9451464c906c1f",
+      "state": "uploaded"
+    }
+  ],
+  "runURL": "https://github.com/skyelan1999/aide/actions/runs/39647305577",
+  "privatePluginPackagesPublished": false,
+  "currentUserRuntimeReplaced": false
+}

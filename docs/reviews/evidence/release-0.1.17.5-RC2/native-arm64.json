@@ -1,0 +1,91 @@
+{
+  "status": "pass",
+  "platform": "linux/arm64",
+  "runner": "GitHub Actions 1000000040",
+  "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+  "sourceSHA256": "b1e317530cd2d3254b30e9c36169e0757b3700de7111b062adf955d0d913119f",
+  "imageId": "sha256:3453992399ab483ba1254f703135e817e436ee58b458321d89bfed336f10fe3b",
+  "baseImageId": "sha256:3f469488554b89de9a076174438e2fa10c206327f0662afea5587f7ad08bc12c",
+  "fullGoTests": "native build pass",
+  "smoke": {
+    "status": "pass",
+    "embeddedWorkbenchAssetsVerified": true,
+    "health": 200,
+    "integrity": "ok",
+    "unauthenticated": 401,
+    "version": "0.1.17.5 RC2",
+    "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+    "runtimeMode": "release-image",
+    "routingPolicySave": true,
+    "privatePluginInstalled": false
+  },
+  "privacy": {
+    "status": "pass",
+    "platform": "linux/arm64",
+    "layerTarArchivesScanned": 61,
+    "allReferencedLayersScanned": true,
+    "layerEntriesScanned": 47037,
+    "allLayersPluginManifests": [
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/plugin-authoring/manifest.json",
+        "id": "plugin-authoring"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      }
+    ],
+    "noPrivatePluginDirectoriesOrUpgradeBackups": true
+  },
+  "archiveImported": true,
+  "asset": {
+    "name": "aide-v0.1.17.5-RC2-full-linux-arm64.zip",
+    "bytes": 1343587637,
+    "sha256": "2bb64ec692526b737f1df88bad9114719f87eb013f8c615b4993317bf2f50c79"
+  },
+  "runURL": "https://github.com/skyelan1999/aide/actions/runs/39647305577"
+}

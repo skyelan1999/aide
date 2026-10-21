@@ -66,14 +66,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "RC2 tag pushed; full 145-check gate passed; native ARM64 passed; native AMD64 and final public publication pending",
+      "status": "pass",
+      "summary": "Published v0.1.17.5-RC2 prerelease with five remote-digest-verified assets; ARM64 and AMD64 native Go/runtime/package gates and 145-check full local gate passed; downloaded public metadata verified; private plugins excluded; user runtime unchanged",
       "evidence": [
-        "docs/reviews/release-0.1.17.5-RC2-2026-10-22.md"
+        "docs/reviews/release-0.1.17.5-RC2-2026-10-22.md",
+        "docs/reviews/evidence/release-0.1.17.5-RC2/publication.json"
       ]
     }
   },
   "release_authorization": "用户：aide release一下（2026-10-22）",
   "rollback": "保留 v0.1.17.4-RC2 公开镜像与原数据卷；本次发布不替换日常实例。",
-  "handoff": "Settings > AI and permissions > AI management; daily runtime unchanged. QA uses source assets over isolated existing Aide backend."
+  "handoff": "Published https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC2 ; daily runtime and data unchanged. Settings > AI permissions > AI management > Plugin routing."
 }

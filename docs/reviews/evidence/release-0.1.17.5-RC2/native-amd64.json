@@ -1,0 +1,127 @@
+{
+  "status": "pass",
+  "platform": "linux/amd64",
+  "runner": "GitHub Actions 1000000041",
+  "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+  "sourceSHA256": "b1e317530cd2d3254b30e9c36169e0757b3700de7111b062adf955d0d913119f",
+  "imageId": "sha256:a6c4f7031025a1f0f111b0fa265dd6a889ac25643e34f8972f390c9b1dabc07b",
+  "baseImageId": "sha256:9ec23ad932d3405f43ad7c0565fdd020ca36a93ec0a6b7987d477a3320a70dc6",
+  "fullGoTests": "native build pass",
+  "smoke": {
+    "status": "pass",
+    "embeddedWorkbenchAssetsVerified": true,
+    "health": 200,
+    "integrity": "ok",
+    "unauthenticated": 401,
+    "version": "0.1.17.5 RC2",
+    "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+    "runtimeMode": "release-image",
+    "routingPolicySave": true,
+    "privatePluginInstalled": false
+  },
+  "privacy": {
+    "status": "pass",
+    "platform": "linux/amd64",
+    "layerTarArchivesScanned": 70,
+    "allReferencedLayersScanned": true,
+    "layerEntriesScanned": 47769,
+    "allLayersPluginManifests": [
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/plugin-authoring/manifest.json",
+        "id": "plugin-authoring"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/plugin-authoring/manifest.json",
+        "id": "plugin-authoring"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+        "id": "archive-tools"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+        "id": "browser-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+        "id": "computer-control"
+      },
+      {
+        "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+        "id": "markdown-history"
+      }
+    ],
+    "noPrivatePluginDirectoriesOrUpgradeBackups": true
+  },
+  "archiveImported": true,
+  "asset": {
+    "name": "aide-v0.1.17.5-RC2-full-linux-amd64.zip",
+    "bytes": 1576786144,
+    "sha256": "592e6b4cfc1c756019828369b9cd18121ee96a3a1be147756b281e6086dac606"
+  },
+  "runURL": "https://github.com/skyelan1999/aide/actions/runs/39647305577"
+}

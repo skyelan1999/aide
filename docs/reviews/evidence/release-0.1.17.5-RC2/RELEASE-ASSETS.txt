@@ -1,0 +1,261 @@
+{
+  "releaseTag": "v0.1.17.5-RC2",
+  "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+  "sourceSHA256": "b1e317530cd2d3254b30e9c36169e0757b3700de7111b062adf955d0d913119f",
+  "fullGate": {
+    "checks": 145,
+    "fingerprint": "f99f796841d8c0affd3ca0ade1f813528e4f09c1661387390e0d792a76780fc2",
+    "status": "pass"
+  },
+  "platforms": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "runner": "GitHub Actions 1000000040",
+      "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+      "sourceSHA256": "b1e317530cd2d3254b30e9c36169e0757b3700de7111b062adf955d0d913119f",
+      "imageId": "sha256:3453992399ab483ba1254f703135e817e436ee58b458321d89bfed336f10fe3b",
+      "baseImageId": "sha256:3f469488554b89de9a076174438e2fa10c206327f0662afea5587f7ad08bc12c",
+      "fullGoTests": "native build pass",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "health": 200,
+        "integrity": "ok",
+        "unauthenticated": 401,
+        "version": "0.1.17.5 RC2",
+        "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+        "runtimeMode": "release-image",
+        "routingPolicySave": true,
+        "privatePluginInstalled": false
+      },
+      "privacy": {
+        "status": "pass",
+        "platform": "linux/arm64",
+        "layerTarArchivesScanned": 61,
+        "allReferencedLayersScanned": true,
+        "layerEntriesScanned": 47037,
+        "allLayersPluginManifests": [
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/plugin-authoring/manifest.json",
+            "id": "plugin-authoring"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          }
+        ],
+        "noPrivatePluginDirectoriesOrUpgradeBackups": true
+      },
+      "archiveImported": true,
+      "asset": {
+        "name": "aide-v0.1.17.5-RC2-full-linux-arm64.zip",
+        "bytes": 1343587637,
+        "sha256": "2bb64ec692526b737f1df88bad9114719f87eb013f8c615b4993317bf2f50c79"
+      },
+      "runURL": "https://github.com/skyelan1999/aide/actions/runs/39647305577",
+      "localFullGate": {
+        "checks": 145,
+        "fingerprint": "f99f796841d8c0affd3ca0ade1f813528e4f09c1661387390e0d792a76780fc2",
+        "status": "pass"
+      }
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "runner": "GitHub Actions 1000000041",
+      "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+      "sourceSHA256": "b1e317530cd2d3254b30e9c36169e0757b3700de7111b062adf955d0d913119f",
+      "imageId": "sha256:a6c4f7031025a1f0f111b0fa265dd6a889ac25643e34f8972f390c9b1dabc07b",
+      "baseImageId": "sha256:9ec23ad932d3405f43ad7c0565fdd020ca36a93ec0a6b7987d477a3320a70dc6",
+      "fullGoTests": "native build pass",
+      "smoke": {
+        "status": "pass",
+        "embeddedWorkbenchAssetsVerified": true,
+        "health": 200,
+        "integrity": "ok",
+        "unauthenticated": 401,
+        "version": "0.1.17.5 RC2",
+        "commit": "133fccb84f1fdf013fd89a6a1e9169051f16ae45",
+        "runtimeMode": "release-image",
+        "routingPolicySave": true,
+        "privatePluginInstalled": false
+      },
+      "privacy": {
+        "status": "pass",
+        "platform": "linux/amd64",
+        "layerTarArchivesScanned": 70,
+        "allReferencedLayersScanned": true,
+        "layerEntriesScanned": 47769,
+        "allLayersPluginManifests": [
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/plugin-authoring/manifest.json",
+            "id": "plugin-authoring"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/plugin-authoring/manifest.json",
+            "id": "plugin-authoring"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/archive-tools/manifest.json",
+            "id": "archive-tools"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/browser-control/manifest.json",
+            "id": "browser-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/computer-control/manifest.json",
+            "id": "computer-control"
+          },
+          {
+            "path": "opt/aide/builtin-plugins/markdown-history/manifest.json",
+            "id": "markdown-history"
+          }
+        ],
+        "noPrivatePluginDirectoriesOrUpgradeBackups": true
+      },
+      "archiveImported": true,
+      "asset": {
+        "name": "aide-v0.1.17.5-RC2-full-linux-amd64.zip",
+        "bytes": 1576786144,
+        "sha256": "592e6b4cfc1c756019828369b9cd18121ee96a3a1be147756b281e6086dac606"
+      },
+      "runURL": "https://github.com/skyelan1999/aide/actions/runs/39647305577",
+      "localFullGate": {
+        "checks": 145,
+        "fingerprint": "f99f796841d8c0affd3ca0ade1f813528e4f09c1661387390e0d792a76780fc2",
+        "status": "pass"
+      }
+    }
+  ],
+  "privacy": {
+    "source": {
+      "status": "pass",
+      "sourceZIPPluginScope": "root plugins directory contains only two public testdata files",
+      "privatePluginSourceAbsent": true,
+      "credentialsAndWorkspaceAbsent": true,
+      "everyFileBelongsToReleaseTag": true
+    },
+    "privatePluginPackagesPublished": false,
+    "userDataIncluded": false
+  },
+  "distribution": "One full ZIP for each Docker architecture and immutable-tag source ZIP. Complete runtime and A/B upgrades use existing package-release-assets.sh. Published only after all five independent remote digests match.",
+  "validationBoundary": {
+    "linuxARM64": "Native hosted build full Go tests, runtime assets, authenticated smoke, embedded asset hashes, all image layers, ZIP CRC/SHA and Docker import passed",
+    "linuxAMD64": "Native hosted build full Go tests, runtime assets, authenticated smoke, embedded asset hashes, all image layers, ZIP CRC/SHA and Docker import passed",
+    "localFullGate": "145 checks including 1109 server cases in 12 race shards plus vet passed",
+    "browser": "Local compiled ARM64 release UI verified; hosted images independently match the same embedded asset SHA-256",
+    "nativeWindowsAndMacLaunch": "not_run in this release",
+    "currentUserRuntimeReplaced": false
+  },
+  "runURL": "https://github.com/skyelan1999/aide/actions/runs/39647305577"
+}
