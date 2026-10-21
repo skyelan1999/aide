@@ -45,7 +45,8 @@
       "status": "pass",
       "summary": "Node marketplace and settings navigation regression passed; real full Aide UI with candidate assets and isolated backend verified settings switch save and market removal",
       "evidence": [
-        ".agent-state/plugin-routing-settings-20261022/settings.png"
+        "docs/reviews/evidence/release-0.1.17.5-RC1/settings.png",
+        "docs/reviews/evidence/release-0.1.17.5-RC2/local-full-gate.json"
       ]
     },
     "documentation": {
@@ -66,8 +67,10 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Explicit release authorized; preparing clean release checkout and full verification",
-      "evidence": []
+      "summary": "RC2 tag pushed; full 145-check gate passed; native ARM64 passed; native AMD64 and final public publication pending",
+      "evidence": [
+        "docs/reviews/release-0.1.17.5-RC2-2026-10-22.md"
+      ]
     }
   },
   "release_authorization": "用户：aide release一下（2026-10-22）",
