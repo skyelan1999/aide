@@ -39,6 +39,8 @@ func TestWebResearchRoutingAndAttemptGate(t *testing.T) {
 
 func TestWebResearchCurrentSchemasOverrideOldHistory(t *testing.T) {
 	a := testApp(t)
+	// Current schemas must come from an installed, enabled, matching plugin.
+	a.pluginRegistry.Plugins = []PluginManifest{{ID: "browser-control", Name: "官网", Enabled: true}}
 	a.pluginSurface = []byte(`{"plugins":[{"id":"browser-control","tools":[{"name":"browser_read","executable":true,"parameters":{"type":"object"}}]}]}`)
 	s := &Session{Messages: []Message{{Role: "assistant", Content: "我没有浏览器控制工具"}}}
 	preview := a.buildContextPreview(s, "查官网基本资料", "chat", "", nil, a.settings, ProfileParams{}, true)
