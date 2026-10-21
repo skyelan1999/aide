@@ -37,7 +37,7 @@ func TestCheckUpdatesReturnsVerifiedLauncherLinks(t *testing.T) {
 			t.Fatalf("unexpected update request: %s", r.URL.String())
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`[{"tag_name":"v0.1.15.0-RC1","name":"aide v0.1.15.0 RC1","html_url":"https://github.com/skyelan1999/aide/releases/tag/v0.1.15.0-RC1","body":"New version","published_at":"2026-10-01T00:00:00Z","assets":[{"name":"aide-v0.1.15.0-RC1-macos-arm64.zip","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/aide-v0.1.15.0-RC1-macos-arm64.zip"},{"name":"aide-v0.1.15.0-RC1-full-linux-arm64.zip","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/aide-v0.1.15.0-RC1-full-linux-arm64.zip"},{"name":"aide-v0.1.15.0-RC1-linux-arm64-image.tar.gz","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/image.tar.gz"},{"name":"aide-v0.1.15.0-RC1-windows-arm64.zip","browser_download_url":"https://evil.example/launcher.zip"}]}]`))
+		_, _ = w.Write([]byte(strings.ReplaceAll(`[{"tag_name":"v0.1.15.0-RC1","name":"aide v0.1.15.0 RC1","html_url":"https://github.com/skyelan1999/aide/releases/tag/v0.1.15.0-RC1","body":"New version","published_at":"2026-10-01T00:00:00Z","assets":[{"name":"aide-v0.1.15.0-RC1-macos-arm64.zip","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/aide-v0.1.15.0-RC1-macos-arm64.zip"},{"name":"aide-v0.1.15.0-RC1-full-linux-arm64.zip","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/aide-v0.1.15.0-RC1-full-linux-arm64.zip"},{"name":"aide-v0.1.15.0-RC1-linux-arm64-image.tar.gz","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/image.tar.gz"},{"name":"aide-v0.1.15.0-RC1-windows-arm64.zip","browser_download_url":"https://evil.example/launcher.zip"}]}]`, "linux-arm64", strings.ReplaceAll(runtimePlatform(), "/", "-"))))
 	}))
 	defer github.Close()
 	a := testApp(t)
@@ -64,7 +64,7 @@ func TestCheckUpdatesReturnsVerifiedLauncherLinks(t *testing.T) {
 	if len(got.Assets) != 2 || !isLauncherAsset(got.Assets[0].Name, "v0.1.15.0-RC1") || !isUpdateBundleAsset(got.Assets[1].Name, "v0.1.15.0-RC1") {
 		t.Fatalf("known launcher and unified runtime/update assets on github.com should be returned: %+v", got.Assets)
 	}
-	if len(got.OnlineReleases) != 1 || got.OnlineReleases[0].Tag != "v0.1.15.0-RC1" || !strings.Contains(got.OnlineReleases[0].AssetName, "full-linux-arm64.zip") {
+	if len(got.OnlineReleases) != 1 || got.OnlineReleases[0].Tag != "v0.1.15.0-RC1" || !strings.Contains(got.OnlineReleases[0].AssetName, "full-"+strings.ReplaceAll(runtimePlatform(), "/", "-")+".zip") {
 		t.Fatalf("expected an online-install choice matching this platform: %+v", got.OnlineReleases)
 	}
 }
