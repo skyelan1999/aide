@@ -507,3 +507,5 @@ A protocol1 workbench may opt into its own registered tools through manifest.wor
 ## 2026-10-21：插件文件预览与编辑
 
 启用插件可用 `workbench.fileHandler` 声明扩展名、优先级及可编辑性。工作区和流式引用优先匹配插件，停用或插件报告故障回落原生，标题栏可手动切换。iframe仅获当前文件/同目录资源的分块桥，不接收令牌；修改先暂存，用户在宿主保存，经来源RW和原版本检查后原子替换。详见[文件处理插件接口](architecture/plugin-file-handlers.md)。
+
+插件自动安装开关位于「设置 → AI 与权限 → AI 管理权限 → 插件路由」，仍使用 `/api/plugin-routing` 的实例级策略与 generation 并发校验。市场页只保留搜索、分类和按需求匹配；搜索匹配状态与设置保存状态分别显示。

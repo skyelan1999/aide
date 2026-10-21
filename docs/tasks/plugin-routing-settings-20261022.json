@@ -1,0 +1,76 @@
+{
+  "id": "plugin-routing-settings-20261022",
+  "request": "将插件市场自动安装插件勾选项移到设置",
+  "baseline": "75bde0a88988f9d406627707b11c0d1ba3a14c4a",
+  "initial_status": "M compose.yaml\n?? \"compose 2.yaml\"\n?? docs/tasks/aide-compare-pull-20261020.json\n?? docs/tasks/aide-update-20261019.json\n?? docs/tasks/compare-sources-20261020.json\n?? docs/tasks/compare-unified-entry-20261020.json\n?? docs/tasks/knowledge-snapshot-query-20261019.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/pp-mobile-auto-save-20261021.json\n?? docs/tasks/pp-mobile-polish-20261021.json\n?? docs/tasks/pp-name-save-state-20261021.json\n?? docs/tasks/pp-scan-first-locations-20261021.json\n?? docs/tasks/pp-space-planning-20261021.json\n?? docs/tasks/pp-wbs-dependencies-20261021.json\n?? docs/tasks/starlink-plugin-20261019.json\n?? docs/tasks/testbench-live-integration-20261018.json",
+  "acceptance": [
+    "Market has no automatic-install toggle",
+    "Settings > AI permissions exposes same switch",
+    "Existing GET/PUT generation and rollback behavior preserved",
+    "Actual browser verifies settings and market"
+  ],
+  "scope": [
+    "internal/server/web/plugin-market.js",
+    "internal/server/web/app.js",
+    "internal/server/web/settings-schema.json",
+    "scripts/plugin-market.test.cjs",
+    "docs/architecture.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Toggle relocated to settings; API and permissions unchanged",
+      "evidence": [
+        "internal/server/web/plugin-market.js",
+        "scripts/plugin-market.test.cjs"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Toggle relocated to settings; API and permissions unchanged",
+      "evidence": [
+        "internal/server/web/plugin-market.js",
+        "scripts/plugin-market.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Toggle relocated to settings; API and permissions unchanged",
+      "evidence": [
+        "internal/server/web/plugin-market.js",
+        "scripts/plugin-market.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Node marketplace and settings navigation regression passed; real full Aide UI with candidate assets and isolated backend verified settings switch save and market removal",
+      "evidence": [
+        ".agent-state/plugin-routing-settings-20261022/settings.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Toggle relocated to settings; API and permissions unchanged",
+      "evidence": [
+        "internal/server/web/plugin-market.js",
+        "scripts/plugin-market.test.cjs"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped changes; QA containers/proxy stopped; existing compose and task changes preserved",
+      "evidence": [
+        "internal/server/web/plugin-market.js",
+        "scripts/plugin-market.test.cjs"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Explicit release authorized; preparing clean release checkout and full verification",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户：aide release一下（2026-10-22）",
+  "rollback": "保留 v0.1.17.4-RC2 公开镜像与原数据卷；本次发布不替换日常实例。",
+  "handoff": "Settings > AI and permissions > AI management; daily runtime unchanged. QA uses source assets over isolated existing Aide backend."
+}

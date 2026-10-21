@@ -12544,3 +12544,4 @@ function renderAgentManagementControl() {
   return wrap;
 }
 controlRenderers['agent-management']=renderAgentManagementControl;
+controlRenderers['plugin-routing']=()=>window.AidePluginMarket.renderSettings();

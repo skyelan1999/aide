@@ -185,6 +185,11 @@
           "id": "agent-management",
           "type": "agent-management",
           "label": "AI 管理权限"
+        },
+        {
+          "id": "plugin-routing",
+          "type": "plugin-routing",
+          "label": "插件路由"
         }
       ]
     },
