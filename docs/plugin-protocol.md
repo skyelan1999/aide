@@ -243,7 +243,7 @@ module.exports = {
 
 ### 内置环境说明能力
 
-`environment-guide` 是 Go 上下文构造器集成的内置插件，不是通用 Node 自动上下文 API。注册表中启用该 ID 后，在任务创建时采集有界的本地顶层目录及脱敏来源信息，注入对话/工作流共用的系统上下文，并计入预算。Node 入口仅声明能力。不会执行任意插件输出作为系统指令。详见 [插件说明](../plugins/environment-guide/README.md)。
+`environment-guide` 是 Go 上下文构造器集成的内置插件，不是通用 Node 自动上下文 API。注册表中启用该 ID 后，在任务创建时采集有界的本地顶层目录及脱敏来源信息，注入对话/工作流共用的系统上下文，并计入预算。Node 入口仅声明能力。不会执行任意插件输出作为系统指令。详见 [插件说明](https://github.com/skyelan1999/aide/blob/4dc9a7b0b01fef6ac3550b0b0fcf97db42d45f94/plugins/environment-guide/README.md)。
 
 ## 受信插件的同步服务装配
 
@@ -298,7 +298,7 @@ module.exports = {
 
 搜索是普通公开资料读取；prepare 和确认登记要求对应 Aide/助理的引用管理权限，复用 `ManagementProposal` 的人确认与基准校验。新引用只读，更新保留原启用、可见和读写锁；隐藏/停用的同 ID 引用不由该工具重新打开。工作空间、插件状态/源码/设置、权限、锁屏或缓存摘要变化会拒绝旧提案。已有引用仍走原读写工具，Skill 的 allowed-tools 或正文不会授予权限。
 
-源代码与使用/打包说明见 [技能库 README](../plugins/skill/README.md)。已有 `skill` 插件用既有升级流程保留设置和启停状态；不要直接重复导入同 ID。该源码功能、可上传 ZIP、真实网络检查与正式实例安装/发布状态分开记录于 [任务记录](tasks/skill-reference-plugin-20261018.json)。
+源代码与使用/打包说明见 [技能库 README](https://github.com/skyelan1999/aide-pkg-skill/blob/main/README.md)。已有 `skill` 插件用既有升级流程保留设置和启停状态；不要直接重复导入同 ID。该源码功能、可上传 ZIP、真实网络检查与正式实例安装/发布状态分开记录于 [任务记录](tasks/skill-reference-plugin-20261018.json)。
 
 ## 官方市场安装
 

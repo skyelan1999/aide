@@ -33,7 +33,7 @@ flowchart TD
 | `document_proposals.go`、`generated_documents.go` | 固定文档来源与目标绑定，生成文件提案；四阶段临时副本发布 | 正式目标按配置解析；未配置四阶段保留缓存旧行为，不扩权 |
 | `management.go`、`web/management.js` | 管理工具、四项授权、包预检、人工待办、执行结果 | 管理动作与日常调用分开；执行前重查授权、工作区与来源 |
 | `plugins.go`、`plugin_host.js` | 登记、启停、schema、Node handler、插件工具 | 可信代码；语法预检不是安全审计或实际功能测试 |
-| `skill_catalog.go`、`skill_library.go`、`plugins/skill` | 按任务搜索公开 GitHub Skill、固定提交并校验缓存、准备只读引用 | 新增原生工具；不执行第三方脚本，复用引用管理权限与人工提案。详见[技能库说明](../../plugins/skill/README.md) |
+| `skill_catalog.go`、`skill_library.go`、`plugins/skill` | 按任务搜索公开 GitHub Skill、固定提交并校验缓存、准备只读引用 | 新增原生工具；不执行第三方脚本，复用引用管理权限与人工提案。详见[技能库说明](https://github.com/skyelan1999/aide-pkg-skill/blob/main/README.md) |
 | `mcp_source.go`、`mcp_http.go` | stdio / Streamable HTTP 发现与受限调用 | 仅允许实时声明为只读的工具；宿主 MCP 不自动继承 |
 | `assistant_agent.go`、`assistant_watch.go`、`voice_agent.go` | 助理动作、交办任务、跟进状态、语音意图与历史 | 页面生命周期、身份门、消息授权；代审有独立开关 |
 | `tts/`、`tts_catalog.go` | 合成适配、百炼兼容目录、密钥与参数校验 | 云端可用性与地域/配额相关；浏览器负责音频播放及打断 |

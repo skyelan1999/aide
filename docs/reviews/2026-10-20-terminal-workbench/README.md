@@ -1,6 +1,6 @@
 # Terminal 设备工作台 · 开发候选验收
 
-在原命令提案插件上增加常驻设备终端工作台。支持本地 Bash PTY、真实 OpenSSH 交互、多会话隔离、标签切换、Ctrl+C、窗口尺寸适配、输出查找和磁盘日志。关闭或刷新工作台后已有会话继续运行；停止 Aide/插件会结束连接，后端恢复记录和日志但不重放命令。完整操作与边界见 [Terminal README](../../../plugins/terminal/README.md)。
+在原命令提案插件上增加常驻设备终端工作台。支持本地 Bash PTY、真实 OpenSSH 交互、多会话隔离、标签切换、Ctrl+C、窗口尺寸适配、输出查找和磁盘日志。关闭或刷新工作台后已有会话继续运行；停止 Aide/插件会结束连接，后端恢复记录和日志但不重放命令。完整操作与边界见 [Terminal README](https://github.com/skyelan1999/aide-pkg-terminal/blob/main/README.md)。
 
 源码同时保存在主仓库 `plugins/terminal` 和独立工作区 `/workspace/aide-pkg-terminal`；主仓库新增通用桥接续期、daemon detach 生命周期，以及导入已启用 daemon 包后立即启动后台。旧命令提案和目录工具保留。1.1.0 是未发布候选；主仓库基线 `f795a240cdb37e9b92a37d91664bd1bb3053b809`，独立插件基线 `9d224763c467a8ffe315ea92ce05da967e4d6126`。
 
