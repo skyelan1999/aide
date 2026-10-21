@@ -8,7 +8,7 @@
     "One-use pairing invitation, matching code and independent desktop/phone approvals; no Aide admin token on phone",
     "Multiple independent devices, zone assignment, revoke/expiry and fail-closed scope changes",
     "Idempotent retries and sealed collection; inventory updates require desktop review with baseline checks",
-    "Public Aide source and every image/archive layer exclude private plugin code, installed state, credentials and caches. Private plugin ZIP ships only in private repo release."
+    "Aide source push excludes private plugin code/state/credentials; Aide release and image/archive uploads canceled. ProfessionalProject ZIP is published only to its private repository."
   ],
   "scope": [
     "internal/server/mobile_capture*.go",
@@ -21,9 +21,7 @@
     "docs/architecture/mobile-capture.md",
     "docs/tasks/pp-mobile-stock-20261021.json",
     "scripts/mobile-capture*.test.cjs",
-    "private ProfessionalProject scan UI, barcode fields, atomic batch inventory operation and tests",
-    "version.md via scripts/version.sh",
-    "docs/reviews/release-0.1.17.5-RC1-2026-10-21.md"
+    "private ProfessionalProject scan UI, barcode fields, atomic batch inventory operation and tests"
   ],
   "stages": {
     "requirements": {
@@ -52,14 +50,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused Go race suite, host Node22, private Python34/Node10, actual HTTPS two-client engine integration and Safari desktop workflow/photo QR passed. Physical mobile camera, LAN/certificate deployment and narrow physical viewport NOT_RUN. No full release gate asserted. Release preparation now requires a current full gate; physical-device limitations remain explicit.",
+      "status": "pass",
+      "summary": "User-requested simple checks passed: 8 focused mobile capture Go tests and 22 host MessagePort/UI Node tests. Earlier focused race, actual HTTPS 2-client/engine and Safari desktop evidence retained. Full release run interrupted per user; no full-gate pass asserted. Physical phone/LAN/certificate deployment remain NOT_RUN.",
       "evidence": [
-        ".agent-state/mobile-capture-go.log",
-        ".agent-state/mobile-bridge-node.log",
-        ".agent-state/mobile-stock-runtime/verification.json",
-        ".agent-state/mobile-stock-runtime/acceptance-result.json",
-        ".agent-state/mobile-stock-runtime/browser-result.json"
+        ".agent-state/mobile-release-simple-node.log",
+        ".agent-state/mobile-release-simple-go.log",
+        "docs/architecture/mobile-capture.md"
       ]
     },
     "documentation": {
@@ -78,14 +74,14 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Authorized ProfessionalProject 0.3.0 and Aide release; isolated clean checkout for full gate and public-only artifacts.",
+      "status": "not_run",
+      "summary": "Aide release canceled by user; no version bump/tag/image/archive publication. Code push authorized. Private ProfessionalProject release proceeds separately.",
       "evidence": [
-        "user request 2026-10-21"
+        "user follow-up 2026-10-21"
       ]
     }
   },
-  "release_authorization": "2026-10-21 user explicitly authorized push/release/upload of ProfessionalProject 0.3.0 and corresponding Aide changes; no private plugin in public Aide.",
+  "release_authorization": "Latest user instruction 2026-10-21: Aide simple tests and push only; no Aide release. ProfessionalProject 0.3.0 push/release/upload remains authorized, private distribution only.",
   "rollback": "Feature stays opt-in; remove capture capability to disable new session creation. Existing project journals unchanged before desktop review.",
-  "handoff": "Local 0.3.0 candidate package built, not installed in daily Aide. Physical phone tests require reachable trusted HTTPS and real iOS/Android devices. Main service and user source/draft unchanged. Existing unrelated compose/task changes preserved."
+  "handoff": "Aide code push after simple tests only; no Aide release or production activation. Release-builder experiments remain isolated and are not part of the Aide push. Private plugin release notes identify required mobileCapture-capable source host."
 }

@@ -1,6 +1,6 @@
-# Opt-in mobile collection bridge (0.1.17.5 RC1 release preparation)
+# Opt-in mobile collection bridge (source change)
 
-A generic, bounded collection service for installed workbenches. It does not implement private inventory rules, invoke plugin tools from a phone, grant file access, or persist raw queues. The private plugin stays outside the public Aide source/image. Publishing was explicitly authorized on 2026-10-21; this does not change production listeners or certificate trust.
+A generic, bounded collection service for installed workbenches. It does not implement private inventory rules, invoke plugin tools from a phone, grant file access, or persist raw queues. The private plugin stays outside the public Aide source/image. The latest instruction on 2026-10-21 authorizes Aide code push with simple tests only, and cancels Aide release. Production listeners and certificate trust are unchanged.
 
 ## Protocol and enforcement
 
