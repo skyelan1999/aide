@@ -69,5 +69,11 @@
       "catalog.json": "85568682c7b37595fefa6b5778452b78a8dbfe9e70abb568368a2cb06176dbeb",
       "market.js": "e67e9d89fcc87e243f48f1255538e34864c28712f23b62d27966b7f17828f5e8"
     }
+  },
+  "sourceDelivery": {
+    "status": "PASS",
+    "commit": "da034e8a",
+    "branch": "main",
+    "url": "https://github.com/skyelan1999/aide/commit/da034e8a"
   }
 }

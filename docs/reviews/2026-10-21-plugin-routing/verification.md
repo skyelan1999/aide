@@ -19,3 +19,5 @@
 截图：[窄屏宿主商店](comfort-light-390.png)、[桌面宿主商店](comfort-light-1440.png)、[静态商店需求搜索](store-routing-390.png)。
 
 商店 `327efd2` 已推送，现有 [Pages发布流水线](https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39532234869)成功；线上 routing.json、catalog.json、market.js 与本地对应提交的 SHA-256 完全一致，21条路由已上线。哈希见 verification.json。宿主仍为源码交付，镜像未发布。
+
+宿主实现提交 [da034e8a](https://github.com/skyelan1999/aide/commit/da034e8a) 已推送main。更新源码并使用支持此接口的宿主后，在「插件 → 市场」可开启“允许 Aide 自动安装所需插件”；默认关闭。

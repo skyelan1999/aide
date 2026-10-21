@@ -84,7 +84,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "商店327efd2已推main，Pages成功且线上索引/目录/代码SHA核验一致；宿主等待源码推送，不进行版本/镜像发布：quick140/142无passing full。",
+      "summary": "宿主实现da034e8a已推main；商店327efd2已推main，Pages成功且线上索引/目录/代码SHA核验一致；宿主版本/镜像未发布：quick140/142无passing full，start.command源码依赖TLS校验失败。",
       "evidence": [
         "docs/reviews/2026-10-21-plugin-routing/verification.json",
         "docs/reviews/2026-10-21-plugin-routing/release-check.txt"
@@ -93,12 +93,18 @@
   },
   "release_authorization": "用户本轮做下吧及历史直接推main授权；宿主镜像发布仍受full门禁。",
   "rollback": "回退本任务提交；关闭自动安装开关；已成功安装插件由用户在插件管理中移除，不自动删除用户数据。",
-  "handoff": "实现与相关验收完成，等待源码/商店推送。需更新宿主才能按需加载工具和自动安装；只更新商店不能使旧宿主具备接口。自动安装默认关闭，开关对当前Aide实例生效。",
+  "handoff": "宿主源码da034e8a和商店327efd2已交付；23项Go race、商店8项Python及实际UI验收通过，商店线上21路由已验证。需更新宿主后使用；插件→市场自动安装默认关闭，授权开关对当前Aide实例生效。只更新商店不会给旧宿主添加接口。无宿主Release/tag/镜像部署；原有10个未跟踪账本保留。",
   "shop_delivery": {
     "status": "pass",
     "commit": "327efd299f834b4864abda2b86be003b4949c743",
     "ci": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39532234869",
     "liveIndex": "https://skyelan1999.github.io/aide-pkg-shop/routing.json",
     "onlineSha256": "f8640e1164186bf6c06e35aa63c2b11a7a97051b8dd18c034ce24ef21f0cce55"
+  },
+  "source_delivery": {
+    "status": "pass",
+    "branch": "main",
+    "commit": "da034e8a",
+    "remote": "origin/main"
   }
 }
