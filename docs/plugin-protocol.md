@@ -445,3 +445,9 @@ wireFormat 可为 deepseek、openai-reasoning 或 openai-compatible（空值同�
 Compare 的文件/文件夹右键入口为显式选择加入：插件设置 `fileContextMenu` 必须严格为布尔 `true`，并且插件已启用、无加载错误且具备 protocol 1 工作台。缺省、关闭、未安装、停用、卸载或无有效工作台均不添加 Compare 菜单项。Compare 插件通过自己的 `settingsSchema` 提供「将 Compare 添加到右键菜单」勾选框，默认关闭。
 
 宿主先显示原生文件菜单，异步读取最新插件列表后添加符合条件的入口；插件查询失败不影响原生下载/复制等功能。点击比较或设置左侧时再次校验，跨工作区、登录身份或锁屏恢复代次的过期响应不再接受。关闭此开关不影响从插件面板手动打开工作台。此设置控制 UI 入口，不替代服务端工具、来源与工作区权限。其他插件目前未直接注册该文件右键菜单；原生文件功能不依赖插件启用。
+
+## Provider support declaration (protocol 1)
+
+A no-tool plugin can declare `providerSupport: {"protocol":1,"catalog":"provider-support.json"}` in its manifest. The catalog is validated on installation and read within the installed plugin directory. It supplies exact HTTPS endpoint matches, model names, CNY token rates and optional tier/peak calendar data. Only enabled, healthy, uniquely matching plugins apply; invalid or ambiguous data falls back to manual pricing. No plugin code receives model or billing credentials.
+
+The host keeps per-call rate and key-identity snapshots. Manual provider/key/model overrides take priority, with provider/model inheritance, then plugin pricing, legacy model pricing and the global estimate. Balances are account values, not key-specific wallets. The balance adapters support same-host model Bearer queries and the fixed read-only China-site Alibaba QueryAccountBalance RPC with separately encrypted RAM credentials. Full boundaries, migration and API details: [provider supporter design](prd/2026-10-22-provider-supporter.md).

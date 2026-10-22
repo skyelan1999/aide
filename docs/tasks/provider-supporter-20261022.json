@@ -1,0 +1,74 @@
+{
+  "id": "provider-supporter-20261022",
+  "request": "DeepSeek自动计价余额拆为插件及百炼同等插件，未安装手动单价",
+  "baseline": "bda2272f5e00568685ea736bfffed55d160d7edb",
+  "initial_status": "",
+  "acceptance": [
+    "两实际插件ZIP可安装、启停，官方费率仅在精确提供商地址匹配时应用",
+    "无插件不发余额请求；手动单价按密钥和模型分层保存，0合法",
+    "请求快照保存密钥身份；历史费用不随设置修改重算",
+    "百炼RAM凭据独立加密，不向插件或GET响应回显；模拟验证余额协议",
+    "实际界面选择、保存、继承恢复与窄屏验收"
+  ],
+  "scope": [
+    "internal/server/provider_support*",
+    "internal/server/provider_balance*",
+    "internal/server/provider.go",
+    "internal/server/server.go",
+    "internal/server/plugins.go",
+    "internal/server/web/app.js",
+    "docs",
+    "internal/server/testdata/provider-supporter"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确两插件及按密钥/模型计价，仓库为用户指定公开仓库",
+      "evidence": [
+        "docs/prd/2026-10-22-provider-supporter.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "静态声明式插件，宿主计算、保管凭据和查询，分层手动覆盖",
+      "evidence": [
+        "docs/prd/2026-10-22-provider-supporter.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "声明式价目表，分key/model覆盖、历史快照与独立RAM保险库凭据，已完成源码与UI",
+      "evidence": [
+        "docs/prd/2026-10-22-provider-supporter.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "实际UI与32项相关race/vet通过，待最终合并后门禁",
+      "evidence": [
+        "docs/reviews/provider-supporter-20261022/verification.json",
+        "docs/reviews/provider-supporter-20261022/browser.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "协议、迁移、官方来源与未验证边界已记录",
+      "evidence": [
+        "docs/prd/2026-10-22-provider-supporter.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅源码和本地ZIP；不发布市场/Release，不替换生产",
+      "evidence": []
+    }
+  },
+  "release_authorization": "源码推送沿用本会话授权；仅本地包，不上传市场或Release；不替换生产",
+  "rollback": "停用/卸载支持插件即恢复手动费率；保险库与历史快照保留；生产未更新",
+  "handoff": ""
+}

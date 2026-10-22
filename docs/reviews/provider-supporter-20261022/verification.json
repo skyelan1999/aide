@@ -1,0 +1,37 @@
+{
+  "stage": "provider support feature before PW host merge",
+  "tests": {
+    "relatedGoRace": {
+      "passed": 32,
+      "failed": 0,
+      "vet": "pass",
+      "log": ".agent-state/provider-support/delivery-race-vet.log"
+    },
+    "quick": {
+      "status": "pass",
+      "commands": 144,
+      "scope": "prior source snapshot, rerun required after final integration"
+    },
+    "actualZipUpload": "pass in isolated actual full Aide browser",
+    "realAccounts": "not_run",
+    "paidModels": "not_run",
+    "productionDeployment": "not_run"
+  },
+  "plugins": {
+    "deepseek": {
+      "commit": "932e99d24e2186a869210352e69e8a5c841c5686",
+      "zipSha256": "3568ec13d2a604ce32c7c81ea8373b96116fcada44876ae3cbc7d20d71d5f9d3"
+    },
+    "ali": {
+      "commit": "2f5f5f5bd46ca5e5da1693f341ade6648feefbcd",
+      "zipSha256": "89cdbee4c3a79e84409741f3a2d78ffcbd54a967db6f06671a608d23f76b733f"
+    }
+  },
+  "issues": [
+    20,
+    21,
+    22,
+    23
+  ],
+  "runtime": "ARM64 native Docker, Go1.26.9, 1 CPU /2GiB, synthetic fixtures only"
+}

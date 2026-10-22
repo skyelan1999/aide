@@ -1,0 +1,14 @@
+{
+  "id": "ali-bailian-supporter",
+  "name": "ALiBaiLianSupporter",
+  "version": "0.1.0",
+  "description": "阿里云百炼北京地域的离线官方刊例价档案与账户余额查询声明；密钥仅由 Aide 保管。",
+  "author": "skyelan1999",
+  "license": "MIT",
+  "main": "index.js",
+  "homepage": "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter",
+  "providerSupport": {
+    "protocol": 1,
+    "catalog": "provider-support.json"
+  }
+}

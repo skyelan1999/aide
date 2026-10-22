@@ -49,7 +49,8 @@ type PluginWorkbench struct {
 }
 
 type PluginManifest struct {
-	ModelRouter *PluginModelRouter `json:"modelRouter,omitempty"`
+	ProviderSupport *PluginProviderSupport `json:"providerSupport,omitempty"`
+	ModelRouter     *PluginModelRouter     `json:"modelRouter,omitempty"`
 
 	Workbench      *PluginWorkbench `json:"workbench,omitempty"`
 	ID             string           `json:"id"`
@@ -498,6 +499,9 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 		}
 	}
 	if err := validatePluginModelRouter(manifest.ModelRouter, packageFiles); err != nil {
+		return PluginManifest{}, nil, err
+	}
+	if err := validatePluginProviderSupport(manifest.ProviderSupport, packageFiles); err != nil {
 		return PluginManifest{}, nil, err
 	}
 	manifest.Main = main
