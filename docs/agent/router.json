@@ -797,6 +797,11 @@
         "node",
         "--check",
         "scripts/browser-plugin-file-preview.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/local-mounts.js"
       ]
     ],
     "full": [

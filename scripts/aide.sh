@@ -9,7 +9,7 @@ source_sha() {
   (
     find cmd internal vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
+    for extra in scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -334,10 +334,15 @@ case "$MODE" in
       fi
     fi
     launcher_data_prepare "$DOCKER_BIN" "$IMG"
+    MOUNT_OVERRIDE="$(bash scripts/local-mounts-control.sh prepare "$IMG")"
+    if [[ -n "$MOUNT_OVERRIDE" ]];then
+      case ":${COMPOSE_FILE:-compose.yaml}:" in *":$MOUNT_OVERRIDE:"*) ;; *) export COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml}:$MOUNT_OVERRIDE";; esac
+    fi
     launcher_env_save
     rm -f .cache/aide-manual-stop
     "$DOCKER_BIN" compose up -d --no-build --pull never
     fi
+    bash scripts/local-mounts-control.sh start || echo "本地目录服务未启动，请检查 .aide-data/local-mounts/helper.log。"
     bash scripts/message-lan-control.sh start || echo "消息局域网桥未启动；聊天发现请检查 .aide-data/message-lan/bridge.log，工作台仍可使用。"
     if [[ "$(uname -s)" == Darwin ]] && command -v node >/dev/null 2>&1; then
       bash scripts/safari-bridge-control.sh start || echo "Safari 桥接未启动；Aide 其他功能仍可用。"

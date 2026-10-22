@@ -191,6 +191,12 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	if p == "" {
 		return "", "", nil
 	}
+	if resolved, _, matched := a.mountHostPath(p); matched {
+		return resolved, p, nil
+	}
+	if strings.HasPrefix(p, "/mounts/") {
+		return "", "", errors.New("目录尚未挂载或路径越界")
+	}
 	if resolved, matched, err := a.resolveSkillCachePath(p); matched {
 		return resolved, p, err
 	}
@@ -505,6 +511,10 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
+		return
+	}
+	if _, ro, ok := a.mountHostPath(in.Workspace.Path); ok && ro {
+		fail(w, 400, errors.New("只读目录可作为引用，不能作为需要写入的工作区"))
 		return
 	}
 	if in.Workspace.Mode == "" {

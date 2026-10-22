@@ -511,6 +511,18 @@
           "label": "恢复出厂设置"
         }
       ]
+    },
+    {
+      "id": "local-directories",
+      "title": "本地目录",
+      "description": "管理额外的磁盘目录与访问权限",
+      "controls": [
+        {
+          "id": "local-mounts",
+          "type": "local-mounts",
+          "label": "目录挂载"
+        }
+      ]
     }
   ],
   "navigation": [
@@ -530,7 +542,8 @@
       "description": "文件预览、编辑与知识检索",
       "pages": [
         "file-rendering",
-        "knowledge-index"
+        "knowledge-index",
+        "local-directories"
       ]
     },
     {

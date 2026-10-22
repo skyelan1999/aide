@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -84,9 +85,11 @@ func (c marketCatalog) entries() []marketPlugin {
 }
 
 type marketSnapshot struct {
-	Revision string        `json:"revision"`
-	Fetched  int64         `json:"fetched"`
-	Catalog  marketCatalog `json:"catalog"`
+	Checked      int64         `json:"checked,omitempty"`
+	RefreshError string        `json:"refreshError,omitempty"`
+	Revision     string        `json:"revision"`
+	Fetched      int64         `json:"fetched"`
+	Catalog      marketCatalog `json:"catalog"`
 }
 
 func validateMarket(s marketSnapshot) error {
@@ -111,7 +114,7 @@ func validateMarket(s marketSnapshot) error {
 			return errors.New("官方市场源码地址无效")
 		}
 		for _, image := range p.Screenshots {
-			if len(image) > 1024 || !strings.HasPrefix(image, "https://raw.githubusercontent.com/"+marketRepository+"/") {
+			if !marketScreenshotAllowed(p, image) {
 				return errors.New("官方市场截图地址无效")
 			}
 		}
@@ -124,6 +127,47 @@ func validateMarket(s marketSnapshot) error {
 	}
 	return nil
 }
+
+// Screenshot metadata may live in the shop or the listing's own official
+// repository. Plugin-owned screenshots must be commit-pinned; accepting an
+// arbitrary raw.githubusercontent.com path would expand the catalog boundary.
+func marketScreenshotAllowed(p marketPlugin, raw string) bool {
+	if len(raw) > 1024 || strings.ContainsAny(raw, "%\\\r\n\x00") {
+		return false
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.Host != "raw.githubusercontent.com" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return false
+	}
+	parts := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
+	if len(parts) < 4 || parts[0] != "skyelan1999" {
+		return false
+	}
+	for _, v := range parts {
+		if v == "" || v == "." || v == ".." {
+			return false
+		}
+	}
+	if parts[1] == "aide-pkg-shop" {
+		return true
+	}
+	source, err := url.Parse(p.Source)
+	if err != nil || source.Scheme != "https" || source.Host != "github.com" || source.User != nil || source.RawQuery != "" || source.Fragment != "" {
+		return false
+	}
+	sourceParts := strings.Split(strings.Trim(source.Path, "/"), "/")
+	if len(sourceParts) != 2 && len(sourceParts) != 4 {
+		return false
+	}
+	if sourceParts[0] != parts[0] || sourceParts[1] != parts[1] || !marketRevision.MatchString(parts[2]) {
+		return false
+	}
+	if len(sourceParts) == 4 {
+		return sourceParts[2] == "tree" && sourceParts[3] == parts[2]
+	}
+	return true
+}
+
 func (a *App) marketRoot() (*os.Root, error) {
 	root, err := os.OpenRoot(a.dataPath)
 	if err != nil {
@@ -177,7 +221,8 @@ func (a *App) loadMarket(ctx context.Context, refresh bool) (marketSnapshot, boo
 			cached = marketSnapshot{}
 		}
 	}
-	if !refresh && cached.Fetched > 0 && time.Now().Unix()-cached.Fetched < 600 {
+	age := time.Now().Unix() - cached.Fetched
+	if !refresh && cached.RefreshError == "" && cached.Fetched > 0 && age >= 0 && age < 600 {
 		return cached, false, nil
 	}
 	// Browsing must not wait for GitHub: render a validated snapshot first.
@@ -206,11 +251,19 @@ func (a *App) loadMarket(ctx context.Context, refresh bool) (marketSnapshot, boo
 	}
 	if err != nil {
 		if cached.Revision != "" {
+			// Keep a validated catalog available, but do not hide why it could
+			// not be refreshed or pretend that an unsuccessful attempt was a sync.
+			cached.Checked = time.Now().Unix()
+			cached.RefreshError = err.Error()
+			if feedback, encodeErr := json.Marshal(cached); encodeErr == nil {
+				_ = skillCacheWrite(root, "catalog.json", feedback)
+			}
 			return cached, true, nil
 		}
 		return cached, false, err
 	}
 	fresh.Fetched = time.Now().Unix()
+	fresh.Checked = fresh.Fetched
 	raw, _ = json.Marshal(fresh)
 	if err = skillCacheWrite(root, "catalog.json", raw); err != nil {
 		return cached, false, err
@@ -346,7 +399,11 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		entries = append(entries, item)
 	}
-	jsonOut(w, 200, map[string]any{"plugins": entries, "revision": snapshot.Revision, "sourceCommit": snapshot.Catalog.SourceCommit, "stale": stale, "fetched": snapshot.Fetched, "repository": "https://github.com/" + marketRepository, "workspace": ws, "workspaceRevision": revision})
+	retryAfter := int64(0)
+	if snapshot.RefreshError != "" {
+		retryAfter = max(int64(0), 60-(time.Now().Unix()-snapshot.Checked))
+	}
+	jsonOut(w, 200, map[string]any{"plugins": entries, "revision": snapshot.Revision, "sourceCommit": snapshot.Catalog.SourceCommit, "stale": stale, "fetched": snapshot.Fetched, "checked": snapshot.Checked, "refreshError": snapshot.RefreshError, "retryAfter": retryAfter, "repository": "https://github.com/" + marketRepository, "workspace": ws, "workspaceRevision": revision})
 }
 func (a *App) marketPackage(ctx context.Context, s marketSnapshot, p marketPlugin) ([]byte, error) {
 	if p.Distribution == "private" {

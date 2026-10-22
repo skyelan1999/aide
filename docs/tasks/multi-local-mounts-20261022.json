@@ -1,0 +1,60 @@
+{
+  "id": "multi-local-mounts-20261022",
+  "request": "多个本地目录挂载配置，Windows不同盘符和macOS外置硬盘，界面添加和选择目录，逐项读写权限，完成验收",
+  "baseline": "86d7617c470a0505b9bcf2bdf5c0e044a22f5b98",
+  "initial_status": "",
+  "acceptance": [
+    "UI add/edit/remove multiple host directories, native Windows/macOS picker, independent RO/RW",
+    "Directory picker selects active mounts and maps host paths without crossing boundaries",
+    "Explicit apply recreates only Aide service; desired and active states distinguished; disconnected drives never silently created",
+    "Docker enforces RO; overlap, path traversal, stale revisions and unauthenticated requests rejected",
+    "Focused Go/launcher/UI tests and isolated Docker/browser acceptance with platform limitations recorded"
+  ],
+  "scope": [
+    "internal/localmounts",
+    "cmd/aide-local-mounts",
+    "internal/server/local_mounts.go and focused server/browser integrations",
+    "scripts/local-mounts-control.* and existing launcher/build/package integrations",
+    "docs/prd, docs/tasks, docs/reviews and regression tests"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Explicit multiple local directory mounting request; no production restart or publishing included",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

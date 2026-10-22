@@ -1,6 +1,7 @@
 package server
 
 import (
+	"aide/internal/localmounts"
 	"aide/internal/server/tts"
 	"bufio"
 	"context"
@@ -526,6 +527,8 @@ type App struct {
 	sshLifecycleMu            sync.Mutex
 	sshLifecycles             map[string]*sshSessionLifecycle
 	sshGenerations            map[string]sshSessionVersion
+	localMountConfig          localmounts.Config
+	localMountRoots           map[string]*os.Root
 	localRoot                 *os.Root
 	hostLocal                 string
 	workspaceDisplay          string
@@ -999,6 +1002,7 @@ func New(work, reference, data string) (*App, error) {
 		}
 	}
 	a.localRoot = localRoot
+	a.initLocalMounts()
 	if err := a.loadWorkspaceConfig(); err != nil {
 		a.Close()
 		return nil, err
@@ -1192,6 +1196,9 @@ func (a *App) Close() {
 		a.reference.Close()
 		if a.localRoot != nil {
 			a.localRoot.Close()
+			for _, root := range a.localMountRoots {
+				root.Close()
+			}
 		}
 		for _, r := range a.retiredRoots {
 			r.Close()
@@ -1525,6 +1532,9 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugins/daemons/{id}/stop", a.daemonStopHandler)
 	mux.HandleFunc("POST /api/plugins/daemons/{id}/restart", a.daemonRestartHandler)
 	mux.HandleFunc("GET /api/plugins/daemons/{id}/events", a.daemonEventsHandler)
+	mux.HandleFunc("GET /api/local-mounts", a.localMountSettings)
+	mux.HandleFunc("PUT /api/local-mounts", a.localMountSettings)
+	mux.HandleFunc("POST /api/local-mounts/action", a.localMountAction)
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
 	mux.HandleFunc("POST /api/workspace-config/test", a.testWorkspaceConnection)
 	mux.HandleFunc("GET /api/workspace/secrets", a.listWorkspaceSecrets)

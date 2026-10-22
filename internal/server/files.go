@@ -907,6 +907,9 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]string{"path": dest})
 }
 func (a *App) root(which string) (*os.Root, error) {
+	if strings.HasPrefix(which, "mount:") {
+		return a.mountRoot(which)
+	}
 	if which == "" || which == "workspace" {
 		return a.workspace, nil
 	}

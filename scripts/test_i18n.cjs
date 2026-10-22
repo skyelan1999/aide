@@ -27,7 +27,7 @@ for(const [key,value] of Object.entries(ctx.window.aideEnglish)) {
  assert.deepEqual(slots(value),slots(key),key);
 }
 const source=fs.readFileSync('internal/server/web/app.js','utf8');
-const start=source.indexOf('function browseDirFromValue(value) {');
+const start=source.indexOf('function browseDirFromValue(');
 vm.runInContext(source.slice(start,source.indexOf('async function resolveExistingDir',start)), Object.assign(ctx,{t:x=>x,state:{config:{hostLocal:'/Users/me/aide'}}}));
 for(const [value,want] of [['/Users/me/aide/docs','docs'],['/local/docs','docs'],['~/docs','docs'],['/local/../secret','.'],['/local/docs/../internal','internal']]) assert.equal(ctx.browseDirFromValue(value),want);
 ctx.state.config.hostLocal='C:\\Users\\me';
@@ -37,3 +37,9 @@ console.log('PASS: localization, placeholder integrity, schema ownership, locale
 assert.throws(()=>ctx.browseDirFromValue('/Users/me/aide-other/docs'));
 ctx.state.config.hostLocal='/';
 assert.equal(ctx.browseDirFromValue('/Users/me/Project'),'Users/me/Project');
+
+ctx.state.localMounts=[{id:'archive',path:'E:/资料'},{id:'ssd',path:'/Volumes/SSD/Projects'}];
+assert.equal(ctx.browseDirFromValue('e:/资料/子目录','mount:archive'),'子目录');
+assert.equal(ctx.browseDirFromValue('/Volumes/SSD/Projects/sub','mount:ssd'),'sub');
+assert.throws(()=>ctx.browseDirFromValue('F:/资料/sub','mount:archive'));
+assert.throws(()=>ctx.browseDirFromValue('/Volumes/SSD/Projects2/sub','mount:ssd'));

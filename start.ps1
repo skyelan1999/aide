@@ -425,11 +425,15 @@ if ($sourceBuild -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
 $dataImage = Get-ComposeResult config --images aide
 if ($dataImage.Code -ne 0 -or -not $dataImage.Text) { throw 'Cannot resolve application image for data migration.' }
 Prepare-AideLauncherData $PSScriptRoot $dockerExe $dataImage.Text
+$mountOverride = (& (Join-Path $PSScriptRoot 'scripts/local-mounts-control.ps1') -Action prepare -Image $dataImage.Text -DockerBin $dockerExe -ComposeCommand $ComposeCmd | Out-String).Trim()
+if ($mountOverride -and @($env:COMPOSE_FILE -split ';') -notcontains $mountOverride) { $env:COMPOSE_FILE = $env:COMPOSE_FILE + ';' + $mountOverride }
 Save-AideLauncherEnvironment $PSScriptRoot
 Remove-Item -LiteralPath '.cache/aide-manual-stop' -ErrorAction SilentlyContinue
 if ((Invoke-Compose @startArguments).Code -ne 0) {
     Write-Error "compose up 失败，请检查上方输出。"
 }
+
+try { & (Join-Path $PSScriptRoot 'scripts/local-mounts-control.ps1') -Action start -DockerBin $dockerExe -ComposeCommand $ComposeCmd } catch { Write-Warning ('Local directory helper unavailable: '+$_.Exception.Message) }
 
 try { & (Join-Path $PSScriptRoot 'scripts/message-lan-control.ps1') -Action start -DockerBin $dockerExe -ComposeCommand $ComposeCmd } catch { Write-Warning ('Message LAN bridge unavailable: '+$_.Exception.Message) }
 

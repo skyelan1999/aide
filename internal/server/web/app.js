@@ -7267,8 +7267,9 @@ document.querySelectorAll('.ws-keyinput [data-keyinput]').forEach(b => b.onclick
 document.querySelectorAll('#ws-key-file [data-keymode]').forEach(b => b.onclick = () => setWsKeyMode(b.dataset.keymode));
 $('ws-key-browse').onclick = () => openBrowse('ws-key-refpath');
 /* 目录选择器：按宿主机真实目录浏览（root=local），显示与回填均为本机路径 */
-function hostPathOf(dir) {
-  const base = state.config?.hostLocal || '/local';
+function hostPathOf(dir, root='local') {
+  const mount=(state.localMounts||[]).find(e=>'mount:'+e.id===root);
+  const base = mount?.path || state.config?.hostLocal || '/local';
   if (dir === '.' || dir === '') return base;
   // Windows 的宿主机路径不能与容器内部的 POSIX 路径混用斜杠；否则回填的
   // C:\\Users\\… 无法作为下一次浏览的起点。
@@ -7276,9 +7277,10 @@ function hostPathOf(dir) {
   return base.replace(/\/$/, '') + '/' + dir;
 }
 /* 从输入值推导浏览起点：宿主机路径 → 本地挂载相对路径；空值/其他前缀回退根 */
-function browseDirFromValue(value) {
+function browseDirFromValue(value, root='local') {
   value = (value || '').trim();
-  const base = (state.config?.hostLocal || '/local').replace(/\/$/, '');
+  const mount=(state.localMounts||[]).find(e=>'mount:'+e.id===root);
+  const base = (mount?.path || state.config?.hostLocal || '/local').replace(/\/$/, '');
   const windowsHost = /^[a-z]:[\\/]/i.test(base);
   const normalize = input => String(input || '').replace(/\\/g, '/').replace(/\/+$/, '');
   const sameHostPath = (left, right) => windowsHost ? left.toLowerCase() === right.toLowerCase() : left === right;
@@ -7346,10 +7348,12 @@ async function resolveExistingDir(dir, root = 'local') {
 }
 function openBrowse(field) {
   action(async () => {
-    const root = browseRootForField(field);
+    let root = browseRootForField(field);
+    if(root==='local'){try{const info=await api('/local-mounts');state.localMounts=info.active.entries.filter(e=>!e.error);}catch(_){state.localMounts=[];} const value=$(field).value.replace(/\\/g,'/');const mount=state.localMounts.find(e=>{const base=e.path.replace(/\/$/,'');return /^[a-z]:/i.test(base)?value.toLowerCase()===base.toLowerCase()||value.toLowerCase().startsWith(base.toLowerCase()+'/'):value===base||value.startsWith(base+'/');});if(mount)root='mount:'+mount.id;}
+    setupBrowseMountSelector(root);
     const workspace = root === 'workspace';
     const remote = root === 'remote';
-    const start = remote ? browseRemoteDirFromValue($(field).value) : workspace ? browseWorkspaceDirFromValue($(field).value) : browseDirFromValue($(field).value);
+    const start = remote ? browseRemoteDirFromValue($(field).value) : workspace ? browseWorkspaceDirFromValue($(field).value) : browseDirFromValue($(field).value,root);
     const sourceDraft=field==='src-remote';
     const dir = sourceDraft ? start : await resolveExistingDir(start, root);
     wsState.browse = { field, dir, root, workspace, remote, sourceDraft };
@@ -7360,10 +7364,11 @@ function openBrowse(field) {
 async function loadBrowseDir() {
   const b = wsState.browse;
   const files = b.indexMode ? await api('/files?' + (b.source ? 'source='+encodeURIComponent(b.source)+'&' : 'root='+encodeURIComponent(b.root)+'&') + 'path=' + encodeURIComponent(b.dir)) : b.sourceDraft ? await browseSourceDraft(b.dir) : await api('/files?root=' + b.root + '&path=' + encodeURIComponent(b.dir));
-  $('ws-browse-new').hidden=!!b.sourceDraft||!!b.indexMode;
+  const readOnlyMount=(state.localMounts||[]).some(e=>'mount:'+e.id===b.root&&e.readOnly);
+  $('ws-browse-new').hidden=!!b.sourceDraft||!!b.indexMode||readOnlyMount;
   const sourceName=b.indexMode&&b.source?(state.sources||[]).find(s=>s.id===b.source)?.name||b.source:'';
-  $('ws-browse-path').textContent = b.indexMode ? t('索引来源：{0}',sourceName||t('工作区')) : b.remote ? t('可访问范围：远程账户目录') : b.workspace ? t('可访问范围：远程工作空间') : t('可访问范围：{0}', hostPathOf('.'));
-  $('ws-browse-address').value = b.indexMode || b.workspace || b.remote ? b.dir : hostPathOf(b.dir);
+  $('ws-browse-path').textContent = b.indexMode ? t('索引来源：{0}',sourceName||t('工作区')) : b.remote ? t('可访问范围：远程账户目录') : b.workspace ? t('可访问范围：远程工作空间') : t('可访问范围：{0}', hostPathOf('.',b.root));
+  $('ws-browse-address').value = b.indexMode || b.workspace || b.remote ? b.dir : hostPathOf(b.dir,b.root);
   $('ws-browse-parent').disabled = !b.remote && b.dir === '.';
   $('ws-browse-status').textContent = '';
   const list = $('ws-browse-list');
@@ -7377,13 +7382,13 @@ async function loadBrowseDir() {
     const rename = el('button', 'quiet ws-browse-rename', t('重命名'));
     rename.type = 'button'; rename.title = t('重命名文件夹');
     rename.onclick = () => renameBrowseDirectory(d);
-    row.append(open); if(!b.sourceDraft&&!b.indexMode)row.append(rename); list.append(row);
+    row.append(open); if(!b.sourceDraft&&!b.indexMode&&!readOnlyMount)row.append(rename); list.append(row);
   });
 }
 async function browseAddress() {
   const b = wsState.browse, previous = b.dir;
   try {
-    b.dir = b.indexMode ? browseWorkspaceDirFromValue($('ws-browse-address').value) : b.remote ? browseRemoteDirFromValue($('ws-browse-address').value) : b.workspace ? browseWorkspaceDirFromValue($('ws-browse-address').value) : browseDirFromValue($('ws-browse-address').value);
+    b.dir = b.indexMode ? browseWorkspaceDirFromValue($('ws-browse-address').value) : b.remote ? browseRemoteDirFromValue($('ws-browse-address').value) : b.workspace ? browseWorkspaceDirFromValue($('ws-browse-address').value) : browseDirFromValue($('ws-browse-address').value,b.root);
     await loadBrowseDir();
   } catch (error) {
     b.dir = previous;
@@ -7438,7 +7443,7 @@ function setupBrowseDirectoryActions() {
 }
 setupBrowseDirectoryActions();
 $('ws-browse-parent').onclick = action(async () => { const b = wsState.browse; b.dir = browseParent(b.dir, b.remote); await loadBrowseDir(); });
-$('ws-browse-select').onclick = () => { const b = wsState.browse; if(b.indexMode){b.indexTarget.value=b.dir==='.'?'':b.dir;$('ws-browse-dialog').close();return;} $(b.field).value = b.remote ? (b.dir === '.' ? '' : b.dir) : b.workspace ? (b.dir === '.' ? '' : b.dir) : b.field === 'ws-key-refpath' ? ('/local/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir); $('ws-browse-dialog').close(); };
+$('ws-browse-select').onclick = () => { const b = wsState.browse; if(b.indexMode){b.indexTarget.value=b.dir==='.'?'':b.dir;$('ws-browse-dialog').close();return;} $(b.field).value = b.remote ? (b.dir === '.' ? '' : b.dir) : b.workspace ? (b.dir === '.' ? '' : b.dir) : b.field === 'ws-key-refpath' ? ((b.root.startsWith('mount:')?'/mounts/'+b.root.slice(6):'/local')+'/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir,b.root); $('ws-browse-dialog').close(); };
 
 /* ── 引用多来源（FR-82~84） ── */
 let editingSourceID = '';
@@ -12567,3 +12572,11 @@ function renderAgentManagementControl() {
 }
 controlRenderers['agent-management']=renderAgentManagementControl;
 controlRenderers['plugin-routing']=()=>window.AidePluginMarket.renderSettings();
+
+controlRenderers['local-mounts']=()=>window.AideLocalMounts.render({api,t,el,blocked:()=>lockScreen.locked});
+
+function setupBrowseMountSelector(root){
+ let select=$('ws-browse-mount');if(!select){select=el('select');select.id='ws-browse-mount';select.setAttribute('aria-label',t('选择本地目录'));$('ws-browse-address').parentElement.before(select);select.onchange=action(async()=>{const b=wsState.browse;b.root=select.value;b.dir='.';await loadBrowseDir();});}
+ select.hidden=root==='workspace'||root==='remote';select.replaceChildren();
+ for(const item of [{id:'local',name:t('默认本地目录')},...(state.localMounts||[]).map(e=>({id:'mount:'+e.id,name:e.name+' · '+t(e.readOnly?'只读':'读写')}))]){const o=el('option','',item.name);o.value=item.id;select.append(o);}select.value=root;
+}

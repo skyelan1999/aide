@@ -533,6 +533,10 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		s.Name = strings.TrimSpace(s.Name)
 		switch s.Type {
 		case "local", "skill":
+			if _, ro, ok := a.mountHostPath(s.Config.Path); ok && ro && s.RW {
+				fail(w, 400, errors.New("只读挂载不能登记为读写来源"))
+				return
+			}
 			if strings.TrimSpace(s.Config.Path) == "" {
 				fail(w, 400, errors.New("本地来源需要路径"))
 				return

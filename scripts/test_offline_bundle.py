@@ -22,6 +22,9 @@ class OfflineBundleTests(unittest.TestCase):
         shutil.copy(ROOT / 'scripts/aide.sh', self.root / 'scripts')
         for name in ('launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'resource-guard.sh', 'prebuilt-image.sh'):
             shutil.copy(ROOT / 'scripts' / name, self.root / 'scripts')
+        # Native extraction/preparation is exercised independently against real Docker.
+        # This fixture tests launcher orchestration without running host programs.
+        (self.root / 'scripts/local-mounts-control.sh').write_text('#!/bin/sh\nif [ "$1" = prepare ]; then\n mkdir -p .aide-data/local-mounts\n printf \'{"services":{"aide":{}}}\\n\' > .aide-data/local-mounts/compose.json\n printf \'%s/.aide-data/local-mounts/compose.json\\n\' "$PWD"\nfi\n')
         shutil.copy(ROOT / 'docker/compose.offline.yaml', self.root / 'compose.yaml')
         shutil.copy(ROOT / 'docker/offline.env.example', self.root / '.env.example')
         (self.root / '.aide-image').write_text(f'aide:offline-aaaa {IMAGE_ID} linux/arm64\n')

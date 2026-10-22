@@ -7,5 +7,6 @@ for platform in darwin/arm64 darwin/amd64 linux/arm64 linux/amd64 windows/amd64 
   target_os=${platform%/*}; target_arch=${platform#*/}; suffix=''
   if [ "$target_os" = windows ]; then suffix=.exe; fi
   CGO_ENABLED=0 GOOS="$target_os" GOARCH="$target_arch" go build -mod=vendor -trimpath -ldflags='-s -w' -o "$out/aide-message-lan-$target_os-$target_arch$suffix" ./cmd/aide-message-lan
+  CGO_ENABLED=0 GOOS="$target_os" GOARCH="$target_arch" go build -mod=vendor -trimpath -ldflags='-s -w' -o "$out/aide-local-mounts-$target_os-$target_arch$suffix" ./cmd/aide-local-mounts
 done
-(cd "$out" && sha256sum aide-message-lan-* > SHA256SUMS)
+(cd "$out" && sha256sum aide-message-lan-* aide-local-mounts-* > SHA256SUMS)

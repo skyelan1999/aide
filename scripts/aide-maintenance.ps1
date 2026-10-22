@@ -22,6 +22,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not list AIDE containers.' }
 if ($DryRun) { Write-Host "[dry-run] stop AIDE in $maintenanceRoot; containers: $ids"; exit 0 }
 New-Item -ItemType Directory -Path '.cache' -Force | Out-Null
 New-Item -ItemType File -Path '.cache/aide-manual-stop' -Force | Out-Null
+if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'local-mounts-control.ps1')) { & (Join-Path $PSScriptRoot 'local-mounts-control.ps1') -Action stop }
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'message-lan-control.ps1')) { & (Join-Path $PSScriptRoot 'message-lan-control.ps1') -Action stop }
 foreach ($id in $ids) {
     if ($id) { & $docker stop --time 30 $id; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }

@@ -1750,3 +1750,6 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 
 .reminder-create.reminder-scheduled { max-height:80%; }
 .reminder-scheduled .reminder-form-actions { position:sticky; bottom:-12px; margin:0 -2px -12px; padding:10px 2px 12px; background:var(--panel); z-index:1; border-top:1px solid var(--line); }
+
+/* Multiple host directories: compact rows, wrapping paths and explicit state. */
+.local-mount-settings{display:grid;gap:14px;min-width:0}.local-mount-list{display:grid;gap:12px}.local-mount-card{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.local-mount-row{display:flex;gap:8px;align-items:center;min-width:0}.local-mount-row input{flex:1;min-width:0}.local-mount-row select{width:100px;flex:none}.local-mount-actions{display:flex;gap:8px;flex-wrap:wrap}.local-mount-notice{margin:0;padding:12px;border-left:3px solid var(--brand);background:var(--selected);overflow-wrap:anywhere}.local-mount-card small{overflow-wrap:anywhere}#ws-browse-mount{width:100%;margin-bottom:12px}@media(max-width:540px){.local-mount-card{padding:10px}.local-mount-row{flex-wrap:wrap}.local-mount-row input{flex-basis:100%}.local-mount-actions button{flex:1 1 45%}}

@@ -60,6 +60,7 @@ for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATF
   mkdir -p "$PACKAGE/scripts" "$PACKAGE/docker-images" "$PACKAGE/workspace" "$PACKAGE/context"
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
   cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$PACKAGE/scripts/"
+  cp "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/local-mounts-control.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$ROOT/scripts/message-lan-control.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/prebuilt-image.ps1" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/resource-guard.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
