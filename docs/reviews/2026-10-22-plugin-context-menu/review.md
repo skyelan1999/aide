@@ -34,4 +34,6 @@
 
 截图：[默认关闭](default-off.png)、[设置勾选框](settings-off.png)、[开启后菜单](enabled-menu.png)、[窄屏深色设置](settings-dark-390.png)。
 
-另一个独立请求：全部公开仓库main保护仍被GitHub授权限制，规则创建返回403 Resource not accessible by integration；不能将本次源码修复推送解释为已启用分支保护。
+源码交付已确认：Aide `d57a44e0`、Compare `d7aef2d`均推送main。没有创建新Release或替换部署。
+
+独立的main保护请求：本连接创建规则返回403，未成功写入。随后只读复核25个公开仓库均已有main且protected=true，保护设置来源未核实，不能将其归因于本连接。Aide当前使用传统分支保护而rulesets生效列表为空；owner推送已被服务器接受并返回“Changes must be made through a pull request”绕过提示。推送前仅检查rulesets未覆盖传统保护，核查不完整；后续补充记录通过PR，不使用管理员绕过。
