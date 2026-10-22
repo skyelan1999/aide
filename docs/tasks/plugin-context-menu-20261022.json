@@ -84,5 +84,12 @@
   },
   "release_authorization": "本轮用户要求修改Aide和Compare；沿用会话既有直接main推送授权，不绕过发布门禁。",
   "rollback": "恢复宿主app.js/翻译和Compare manifest前版本；不修改用户文件。",
-  "handoff": "完成修复及实际页面验收；源码待提交/推送，未部署或发布。main保护另受GitHub管理权限403限制。"
+  "handoff": "Aide d57a44e0、Compare d7aef2d修复源码已推送main，未部署或发布新版本。quick两项启动器检查与CAD TLS仍阻塞发行。最新只读复核25个公开仓库main全部protected=true；保护不是本连接403失败写入所启用，本次owner直推出现PR绕过提示，后续经PR。",
+  "source_delivery": {
+    "aide": "d57a44e0",
+    "compare": "d7aef2d",
+    "pushedTo": "main",
+    "newRelease": false,
+    "deployed": false
+  }
 }
