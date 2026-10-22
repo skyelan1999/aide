@@ -17,7 +17,8 @@
     "docs/tasks/aide-cicd-20261022.json",
     "scripts/test_offline_bundle.py (Issue #26: headless Linux fixture isolation)",
     "scripts/test_go_snapshot.py (Issue #27: current-source Office binding; opt-in hosted resources)",
-    "scripts/run_go_test_shards.py / scripts/test_go_test_shards.py (bounded two-worker CI)"
+    "scripts/run_go_test_shards.py / scripts/test_go_test_shards.py (bounded two-worker CI)",
+    "internal/server/attachments_test.go / comments_test.go (Issue #27: checkout-relative Office fixtures)"
   ],
   "stages": {
     "requirements": {
@@ -43,7 +44,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本地quick144、CI合同12项、离线启动13项、分片执行3项、actionlint与文档检查通过；托管Windows/quick通过，完整1170项24分片执行暴露Office路径依赖镜像副本，Issue27先登记后修复，正准备重跑。云端使用两个分片进程与8GiB/4CPU，本地默认不变。",
+      "summary": "本地quick144、CI合同12项、分片3项、离线启动13项、actionlint/docs通过。第二次1170项全跑后仅4项/src写死夹具失败，已修正；隔离容器当前源码的Office/附件/批注/远端工作区定向race通过（16s测试时间）。GitHub Actions Results事故仍有结果延迟；完整第三轮待执行。",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/25",
         "https://github.com/skyelan1999/aide/issues/26",
