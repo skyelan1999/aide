@@ -1,5 +1,5 @@
 {
-  "stage": "provider support feature before PW host merge",
+  "stage": "final merged source full pass",
   "tests": {
     "relatedGoRace": {
       "passed": 32,
@@ -9,13 +9,13 @@
     },
     "quick": {
       "status": "pass",
-      "commands": 144,
-      "scope": "prior source snapshot, rerun required after final integration"
+      "scope": "included in final full gate"
     },
     "actualZipUpload": "pass in isolated actual full Aide browser",
     "realAccounts": "not_run",
     "paidModels": "not_run",
-    "productionDeployment": "not_run"
+    "productionDeployment": "not_run",
+    "englishActualUI": "pass: final merged host, 390px, actual embedded English labels, no page errors"
   },
   "plugins": {
     "deepseek": {
@@ -33,5 +33,15 @@
     22,
     23
   ],
-  "runtime": "ARM64 native Docker, Go1.26.9, 1 CPU /2GiB, synthetic fixtures only"
+  "runtime": "ARM64 native Docker, Go1.26.9, 1 CPU /2GiB, synthetic fixtures only",
+  "knownIdentityBoundary": "Historical records and separately configured legacy assistant credentials lacking provider-key identity stay unknown; never relabeled as the current global key.",
+  "full": {
+    "status": "pass",
+    "fingerprint": "e7de2246d8506247e006b6615d11d95504ad42cb8b3ed6e1b04f60dcace8d8fe",
+    "commands": 147,
+    "serverInventory": 1170,
+    "raceShards": 24,
+    "log": ".agent-state/verify-20261022T113731399944Z.log",
+    "privatePWPackage": "standard full not mounted; unchanged final package previously tested ARM native and AMD emulated"
+  }
 }

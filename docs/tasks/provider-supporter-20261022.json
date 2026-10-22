@@ -43,11 +43,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "实际UI与32项相关race/vet通过，待最终合并后门禁",
+      "status": "pass",
+      "summary": "147项完整门禁、1170项server库存24race分片通过；实际双ZIP与中英文桌面/窄屏UI验收通过；余额模拟验证，未调用真实账户",
       "evidence": [
         "docs/reviews/provider-supporter-20261022/verification.json",
-        "docs/reviews/provider-supporter-20261022/browser.json"
+        "docs/reviews/provider-supporter-20261022/browser.json",
+        "docs/reviews/provider-supporter-20261022/english.json"
       ]
     },
     "documentation": {
@@ -58,8 +59,8 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
+      "status": "pass",
+      "summary": "隔离测试服务已停止，浏览器已关闭；原始日志和本地包忽略，不提交凭据/商业包",
       "evidence": []
     },
     "release": {
@@ -70,5 +71,5 @@
   },
   "release_authorization": "源码推送沿用本会话授权；仅本地包，不上传市场或Release；不替换生产",
   "rollback": "停用/卸载支持插件即恢复手动费率；保险库与历史快照保留；生产未更新",
-  "handoff": ""
+  "handoff": "两公开支持插件源码已推送；本地包已归集；Aide PR #24 合并后生效于新构建。现有生产服务未更新，未上传市场或Release。"
 }

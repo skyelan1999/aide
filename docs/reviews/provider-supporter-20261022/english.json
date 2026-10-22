@@ -1,0 +1,19 @@
+{
+  "scope": "Actual rebuilt merged Aide with English locale; synthetic isolated data only",
+  "binarySHA256": "d067f3c07a340107ad8514e0347fa9d3efd4825abba986e45a69f37434fbd1ba",
+  "appSHA256": "a96b2a33aa607825399e0edd43cfd282080663a88895b329e02d090c4c61dd3c",
+  "englishLocaleSHA256": "dd722fa850a234982c113b3dc1583f6024871a07d9d8081454b243c29df62aa3",
+  "feeFunctionSHA256": "79c8fedaea54cdbb09e4a220cb3760d416fae73bc19cca8e2abd178856e54b26",
+  "checks": {
+    "selectorLabels": [
+      "Pricing provider",
+      "Pricing key",
+      "Pricing model"
+    ],
+    "billingLabelsEnglish": true,
+    "billingSecretFieldsEmpty": true,
+    "narrow390NoDocumentOrPanelOverflow": true
+  },
+  "pageErrors": [],
+  "externalRequests": "No live credentials. Runtime outbound HTTP/HTTPS proxy blocked at loopback port9."
+}
