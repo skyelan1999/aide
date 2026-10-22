@@ -11,3 +11,35 @@ Windows PowerShell 5.1 and a physical Windows Docker Desktop installation are NO
 Rollback: restore the backed-up `start.ps1` and `.aide-image` marker if needed. Do not delete `.aide-data`, `.env`, workspace directories or Docker volumes. No daily production container was restarted for this fix.
 
 Upstream context: https://github.com/moby/moby/issues/48401 documents differing image IDs after archive save/load across Docker image stores.
+
+## Focused regression output
+
+```text
+Loaded image: aide:0.1.17.5-RC2-linux-amd64
+PASS changed-id
+Loaded image: aide:0.1.17.5-RC2-linux-amd64
+PASS legacy
+Loaded image ID: sha256:7777777777777777777777777777777777777777777777777777777777777777
+PASS id-output
+PASS repeat
+PASS bad-hash
+PASS load-failure
+Loaded image: aide:0.1.17.5-RC2-linux-amd64
+Loaded image: other:tag
+PASS ambiguous
+
+PASS empty-output
+Loaded image: aide:0.1.17.5-RC2-linux-amd64
+PASS wrong-platform
+Loaded image: aide:0.1.17.5-RC2-linux-amd64
+PASS missing
+Loaded image: aide:0.1.17.5-RC2-linux-amd64
+PASS tag-failure
+Loaded image: aide:0.1.17.5-RC2-linux-amd64
+PASS readback-failure
+PASS: 12 actual PowerShell offline bootstrap cases (mock Docker; not native Windows)
+```
+
+## Release gate
+
+All 145 full checks passed. The server race suite executed all 1109 top-level tests, fuzz seed sets and examples across 12 disjoint shards; other packages, vet, runtime assets and CAD geometry also passed. Content fingerprint: `d907beba99282c9fa5e2ec596e54f6007539ff1b9c4823d27874fb09653b3ee9`. Actual PowerShell native-command integration additionally matched the existing real Docker image identity through read-only inspection; this does not represent an additional archive import or a Windows-native test.
