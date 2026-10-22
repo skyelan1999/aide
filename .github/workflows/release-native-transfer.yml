@@ -1,0 +1,109 @@
+name: Native release v0.1.17.5 RC3
+on:
+  push:
+    branches: [release-v0.1.17.5-rc3-native-publish]
+    paths-ignore: ['.github/release-tools/local-full-receipt.json']
+permissions:
+  contents: read
+concurrency:
+  group: release-v0.1.17.5-rc3-native-publish
+  cancel-in-progress: false
+jobs:
+  native:
+    if: github.actor == 'skyelan1999' && github.repository == 'skyelan1999/aide'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: amd64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: skyelan1999/aide
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ops
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.1.17.5-RC3
+          fetch-depth: 0
+          path: app
+      - name: Free disposable runner SDK space
+        run: |
+          test "$GITHUB_ACTIONS" = true
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h .
+      - name: Build, verify and stage native release
+        working-directory: app
+        run: python3 ../ops/.github/release-tools/native.py ${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-release-${{ matrix.arch }}
+          path: |
+            app/.agent-state/native-*.json
+            app/.agent-state/*audit*.json
+            app/.agent-state/smoke-*.log
+            app/.agent-state/runtime-*.log
+            app/.agent-state/build-*.log
+          retention-days: 3
+          include-hidden-files: true
+  windows:
+    if: github.actor == 'skyelan1999' && github.repository == 'skyelan1999/aide'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.1.17.5-RC3
+      - name: Windows PowerShell 5.1 isolated bootstrap regression
+        shell: pwsh
+        run: python scripts/test_windows_image_slot.py --pwsh powershell.exe
+      - name: PowerShell 7 isolated bootstrap regression
+        shell: pwsh
+        run: python scripts/test_windows_image_slot.py --pwsh pwsh.exe
+  publish:
+    if: github.actor == 'skyelan1999' && github.repository == 'skyelan1999/aide'
+    permissions:
+      contents: write
+    needs: [native, windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: skyelan1999/aide
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ops
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.1.17.5-RC3
+          fetch-depth: 0
+          path: app
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-release-*
+          path: app/.agent-state/receipts
+          merge-multiple: true
+      - name: Verify remote digests and publish complete release
+        working-directory: app
+        run: python3 ../ops/.github/release-tools/publish.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-publication-receipt
+          path: |
+            app/.agent-state/native-published.json
+            app/.agent-state/publish-assets/SHA256SUMS
+            app/.agent-state/publish-assets/RELEASE-ASSETS.txt
+            app/.agent-state/source-zip-audit.json
+          retention-days: 3
+          include-hidden-files: true
