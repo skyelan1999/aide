@@ -15,7 +15,9 @@
     "scripts/ci",
     "docs/architecture/aide-cicd.md",
     "docs/tasks/aide-cicd-20261022.json",
-    "scripts/test_offline_bundle.py (Issue #26: headless Linux fixture isolation)"
+    "scripts/test_offline_bundle.py (Issue #26: headless Linux fixture isolation)",
+    "scripts/test_go_snapshot.py (Issue #27: current-source Office binding; opt-in hosted resources)",
+    "scripts/run_go_test_shards.py / scripts/test_go_test_shards.py (bounded two-worker CI)"
   ],
   "stages": {
     "requirements": {
@@ -41,11 +43,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本地quick144、CI合同10项、离线启动13项、actionlint与文档检查通过；首轮托管Windows5.1/7通过，quick暴露旧Linux opener未隔离问题，已创建Issue26后修正，托管重新验收待执行。",
+      "summary": "本地quick144、CI合同12项、离线启动13项、分片执行3项、actionlint与文档检查通过；托管Windows/quick通过，完整1170项24分片执行暴露Office路径依赖镜像副本，Issue27先登记后修复，正准备重跑。云端使用两个分片进程与8GiB/4CPU，本地默认不变。",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/25",
         "https://github.com/skyelan1999/aide/issues/26",
-        "https://github.com/skyelan1999/aide/actions/runs/39788449776"
+        "https://github.com/skyelan1999/aide/actions/runs/39788449776",
+        "https://github.com/skyelan1999/aide/issues/27"
       ]
     },
     "documentation": {

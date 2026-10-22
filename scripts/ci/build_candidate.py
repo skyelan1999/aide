@@ -185,7 +185,7 @@ def verification_plan(image):
     return [
         (['python3', 'scripts/agent-route.py', 'verify', 'quick'], {}),
         (['python3', 'scripts/test_runtime_assets.py', image, '--require-lan-bridge'], {}),
-        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_IMAGE': image}),
+        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_IMAGE': image, 'AIDE_TEST_WORKERS': '2'}),
         (['python3', 'scripts/test_cad_geometry.py', image], {}),
     ]
 

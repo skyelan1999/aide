@@ -7,6 +7,7 @@
 - `Aide CI`：main 的 PR、main 推送以及手动运行，执行现有 quick 门禁、CI 交付合同测试、完整 Go race/vet，以及 Windows PowerShell 5.1 / PowerShell 7 启动脚本隔离回归。`gate` 是汇总检查；任一依赖失败或取消均不通过。
 - `Aide Delivery`：仅在同仓库 main 推送对应的 CI 成功后构建；也可在 main 手动构建。它只采用 main 的提交，不采用 PR 的产物或脚本。
 - ARM64 使用原生 `ubuntu-24.04-arm`，AMD64 使用原生 `ubuntu-24.04`。沿用 Dockerfile、version.sh 和 package-release-assets.sh，构建时强制 `AIDE_RUN_TESTS=1`。
+- 云端完整 Go 测试保留全部 24 个互斥分片，使用两个进程、8 GiB / 4 CPU 上限；本地默认仍为单进程、4 GiB / 2 CPU。Office 脚本明确绑定当前源码快照，不依赖测试镜像中的旧副本。
 - 每个候选镜像再运行 quick、候选镜像资源检查、完整 Go race/vet、CAD 检查和隔离 HTTPS 冒烟；不把旧镜像的验证收据用于候选。检查全部镜像层、ZIP CRC、镜像身份及摘要，拒绝插件载荷。
 - Actions 仅保存两份完整 ZIP 和各自 proof，保留三天，不上传插件市场。候选包沿用源码内版本名称，下载时须同时看 proof 的提交 SHA；候选构建不会创建标签、修改 Release 或更改默认更新源。
 

@@ -72,7 +72,7 @@ class CandidateContract(unittest.TestCase):
         plan = candidate.verification_plan('aide:ci-test-arm64')
         self.assertEqual(len(plan), 4)
         self.assertIn('aide:ci-test-arm64', plan[1][0])
-        self.assertEqual(plan[2][1], {'AIDE_TEST_IMAGE': 'aide:ci-test-arm64'})
+        self.assertEqual(plan[2][1], {'AIDE_TEST_IMAGE': 'aide:ci-test-arm64', 'AIDE_TEST_WORKERS': '2'})
         self.assertIn('aide:ci-test-arm64', plan[3][0])
         self.assertFalse(any('verify' in command and 'full' in command for command, _ in plan))
 

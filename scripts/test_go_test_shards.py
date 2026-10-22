@@ -50,7 +50,7 @@ class ShardTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(RuntimeError, 'shards failed'):
                     shards.run_shards([sys.executable, str(fake)],
-                                      ['TestPass', 'TestFail', 'Example', 'FuzzSeeds'], root, count=3)
+                                      ['TestPass', 'TestFail', 'Example', 'FuzzSeeds'], root, count=3, workers=2)
             self.assertEqual(len(list(root.glob('result-*'))), 3,
                              'one failed worker must not prevent the other shards from running')
 

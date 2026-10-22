@@ -19,9 +19,10 @@ ROOT = Path(__file__).resolve().parents[1]
 # in separate processes. Other packages and vet retain their ordinary paths.
 COMMAND = ('set -euo pipefail; snapshot=$(mktemp -d /tmp/aide-verify.XXXXXX); '
            'tar --no-same-owner -xf - -C "$snapshot"; cd "$snapshot"; '
+           'export AIDE_OFFICE_SCRIPTS="$snapshot/scripts/office"; '
            'timeout --signal=TERM --kill-after=10s 45m bash -c '
            "'go test -mod=vendor -race -c -o server.test ./internal/server && "
-           'python3 scripts/run_go_test_shards.py "$PWD/server.test" --cwd internal/server && '
+           'python3 scripts/run_go_test_shards.py "$PWD/server.test" --cwd internal/server --workers="${AIDE_TEST_WORKERS:-1}" && '
            'go test -mod=vendor -race -count=1 -timeout=18m '
            "$(go list -mod=vendor ./... | sed \"\\|^aide/internal/server$|d\") && "
            "go vet -mod=vendor ./...'")
@@ -34,6 +35,10 @@ def main():
     state = ROOT / '.agent-state'
     state.mkdir(exist_ok=True)
     image = os.environ.get('AIDE_TEST_IMAGE', 'aide:local')
+    workers = os.environ.get('AIDE_TEST_WORKERS', '1')
+    if workers not in ('1', '2'):
+        raise ValueError('AIDE_TEST_WORKERS must be 1 or 2')
+    memory, cpus = ('8g', '4') if workers == '2' else ('4g', '2')
     container = 'aide-verify-' + uuid.uuid4().hex[:12]
     with tempfile.TemporaryFile(dir=state) as payload:
         count = 0
@@ -48,9 +53,9 @@ def main():
         print(f'Go snapshot: {count} current files; container-local source; network none', flush=True)
         try:
             subprocess.run(['docker', 'run', '--rm', '-i', '--network', 'none', '--no-healthcheck',
-                            '--memory', '4g', '--memory-swap', '4g', '--cpus', '2', '--pids-limit', '512',
+                            '--memory', memory, '--memory-swap', memory, '--cpus', cpus, '--pids-limit', '512',
                             '--log-driver', 'local', '--log-opt', 'max-size=10m', '--log-opt', 'max-file=3',
-                            '--name', container, '--workdir', '/tmp', '-e', 'AIDE_BUILTIN_PLUGINS=',
+                            '--name', container, '--workdir', '/tmp', '-e', 'AIDE_BUILTIN_PLUGINS=', '-e', 'AIDE_TEST_WORKERS=' + workers,
                             # Reserve headroom for race shadow memory outside the Go heap.
                             '-e', 'GOMEMLIMIT=2GiB', '-e', 'GOGC=50', '--entrypoint',
                             'bash', image, '-c', COMMAND], stdin=payload, check=True, timeout=2750)

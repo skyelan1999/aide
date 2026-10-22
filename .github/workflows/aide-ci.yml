@@ -54,6 +54,7 @@ jobs:
       - name: Full Go race suite and vet in isolated snapshot
         env:
           AIDE_TEST_IMAGE: aide:ci-test
+          AIDE_TEST_WORKERS: '2'
         run: python3 scripts/test_go_snapshot.py
   windows:
     runs-on: windows-2025
