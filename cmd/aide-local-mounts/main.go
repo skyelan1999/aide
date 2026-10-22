@@ -279,9 +279,16 @@ func protected(ctx context.Context, docker string) ([]string, error) {
 	return dirs, nil
 }
 func prepare(ctx context.Context, root, docker string) (string, error) {
+	return prepareRevision(ctx, root, docker, nil)
+}
+func prepareRevision(ctx context.Context, root, docker string, expected *string) (string, error) {
 	p, err := protected(ctx, docker)
 	if err != nil {
 		return "", err
+	}
+	if expected != nil {
+		_, out, err := localmounts.PrepareRevision(root, p, *expected)
+		return out, err
 	}
 	_, out, err := localmounts.Prepare(root, p)
 	return out, err
@@ -315,7 +322,7 @@ func apply(ctx context.Context, root, docker, revision string) error {
 		}
 		backup[n] = b
 	}
-	if _, err = prepare(ctx, root, docker); err != nil {
+	if _, err = prepareRevision(ctx, root, docker, &revision); err != nil {
 		return err
 	}
 	_, err = compose(ctx, docker, "up", "-d", "--no-deps", "--no-build", "--pull", "never", "--wait", "--wait-timeout", "90", "aide")

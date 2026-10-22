@@ -25,10 +25,23 @@ func bind(source, target string, ro bool) Volume {
 // Prepare never creates selected directories. An unplugged drive is omitted,
 // with an explicit error, rather than silently mounted as an empty directory.
 func Prepare(root string, protected []string) (Config, string, error) {
+	return prepare(root, protected, nil)
+}
+
+// PrepareRevision freezes one validated desired snapshot and checks the native
+// confirmation revision before writing any active metadata. Subsequent saves
+// remain pending; no second read can substitute an unconfirmed configuration.
+func PrepareRevision(root string, protected []string, expected string) (Config, string, error) {
+	return prepare(root, protected, &expected)
+}
+func prepare(root string, protected []string, expected *string) (Config, string, error) {
 	dir := filepath.Join(root, ".aide-data", "storage", "data", "local-mounts")
 	desired, err := Read(filepath.Join(dir, "desired.json"))
 	if err != nil {
 		return Config{}, "", err
+	}
+	if expected != nil && Revision(desired) != *expected {
+		return Config{}, "", errors.New("directory configuration changed before preparation; review it again")
 	}
 	active := desired
 	active.Entries = append([]Entry{}, desired.Entries...)

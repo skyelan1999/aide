@@ -191,3 +191,90 @@ func TestHelperStopChild(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestApplyRejectsDesiredChangedDuringComposeQuery(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX executable fixture")
+	}
+	root := t.TempDir()
+	native := filepath.Join(root, ".aide-data/local-mounts")
+	os.MkdirAll(native, 0700)
+	previous := localmounts.Empty()
+	localmounts.Write(filepath.Join(native, "active.json"), previous)
+	localmounts.Write(filepath.Join(native, "compose.json"), map[string]any{"services": map[string]any{}})
+	first := localmounts.Config{Version: 1, Entries: []localmounts.Entry{{ID: "docs", Name: "Confirmed", Path: t.TempDir(), ReadOnly: true}}}
+	second := first
+	second.Entries = append([]localmounts.Entry{}, first.Entries...)
+	second.Entries[0].ReadOnly = false
+	localmounts.Write(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"), first)
+	localmounts.Write(filepath.Join(root, "next.json"), second)
+	script := filepath.Join(root, "docker-compose")
+	body := `#!/bin/sh
+cd "$(dirname "$0")"
+if [ "$1" = config ];then
+ cp next.json .aide-data/storage/data/local-mounts/desired.json
+ printf '%s\n' '{"services":{"aide":{"volumes":[]}}}'
+else
+ touch recreated
+fi
+`
+	os.WriteFile(script, []byte(body), 0700)
+	t.Setenv("AIDE_LOCAL_MOUNTS_COMPOSE", script)
+	prior := confirmApplication
+	confirmApplication = func(context.Context) error { return nil }
+	defer func() { confirmApplication = prior }()
+	if err := apply(context.Background(), root, script, localmounts.Revision(first)); err == nil {
+		t.Fatal("applied unconfirmed replacement desired configuration")
+	}
+	active, err := localmounts.Read(filepath.Join(native, "active.json"))
+	if err != nil || localmounts.Revision(active) != localmounts.Revision(previous) {
+		t.Fatal("rejected revision changed active configuration", err)
+	}
+	if _, err = os.Stat(filepath.Join(root, "recreated")); !os.IsNotExist(err) {
+		t.Fatal("recreated container for unconfirmed configuration")
+	}
+}
+
+func TestApplyFreezesSnapshotWhenLaterSettingsRemainPending(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX executable fixture")
+	}
+	root := t.TempDir()
+	native := filepath.Join(root, ".aide-data/local-mounts")
+	os.MkdirAll(native, 0700)
+	previous := localmounts.Empty()
+	localmounts.Write(filepath.Join(native, "active.json"), previous)
+	localmounts.Write(filepath.Join(native, "compose.json"), map[string]any{"services": map[string]any{}})
+	first := localmounts.Config{Version: 1, Entries: []localmounts.Entry{{ID: "docs", Name: "Confirmed", Path: t.TempDir(), ReadOnly: true}}}
+	second := first
+	second.Entries = append([]localmounts.Entry{}, first.Entries...)
+	second.Entries[0].ReadOnly = false
+	localmounts.Write(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"), first)
+	localmounts.Write(filepath.Join(root, "next.json"), second)
+	script := filepath.Join(root, "docker-compose")
+	body := `#!/bin/sh
+cd "$(dirname "$0")"
+if [ "$1" = config ];then
+  printf '%s\n' '{"services":{"aide":{"volumes":[]}}}'
+else
+ cp next.json .aide-data/storage/data/local-mounts/desired.json
+ touch recreated
+fi
+`
+	os.WriteFile(script, []byte(body), 0700)
+	t.Setenv("AIDE_LOCAL_MOUNTS_COMPOSE", script)
+	prior := confirmApplication
+	confirmApplication = func(context.Context) error { return nil }
+	defer func() { confirmApplication = prior }()
+	if err := apply(context.Background(), root, script, localmounts.Revision(first)); err != nil {
+		t.Fatal(err)
+	}
+	active, err := localmounts.Read(filepath.Join(native, "active.json"))
+	if err != nil || localmounts.Revision(active) != localmounts.Revision(first) {
+		t.Fatal("active snapshot did not preserve confirmed configuration", err)
+	}
+	desired, err := localmounts.Read(filepath.Join(root, ".aide-data/storage/data/local-mounts/desired.json"))
+	if err != nil || localmounts.Revision(desired) != localmounts.Revision(second) {
+		t.Fatal("later settings not preserved as pending", err)
+	}
+}
