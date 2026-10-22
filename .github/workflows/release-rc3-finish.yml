@@ -1,0 +1,83 @@
+name: Finish RC3 verified native release
+on:
+  push:
+    branches: [release-v0.1.17.5-rc3-native-publish]
+    paths: ['.github/workflows/release-rc3-finish.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: rc3-native-finish
+  cancel-in-progress: false
+jobs:
+  windows:
+    if: github.actor == 'skyelan1999' && github.repository == 'skyelan1999/aide'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.1.17.5-RC3
+      - name: PowerShell 5.1 with native system module search path
+        shell: cmd
+        run: |
+          set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules"
+          python scripts/test_windows_image_slot.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+      - name: PowerShell 7 isolated bootstrap regression
+        shell: pwsh
+        run: python scripts/test_windows_image_slot.py --pwsh pwsh.exe
+  publish:
+    if: github.actor == 'skyelan1999' && github.repository == 'skyelan1999/aide'
+    needs: windows
+    permissions:
+      contents: write
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: skyelan1999/aide
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ops
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.1.17.5-RC3
+          fetch-depth: 0
+          path: app
+      - name: Require both exact-tag native build jobs to succeed
+        shell: python
+        run: |
+          import json,subprocess,time
+          for attempt in range(60):
+              jobs=json.loads(subprocess.check_output(['gh','api','repos/skyelan1999/aide/actions/runs/39732730393/jobs'],text=True))['jobs']
+              native=[j for j in jobs if j['name'].startswith('native (')]
+              assert len(native)==2
+              if all(j['status']=='completed' for j in native):
+                  assert all(j['conclusion']=='success' for j in native),native
+                  break
+              time.sleep(30)
+          else:
+              raise RuntimeError('Native build jobs not completed; retain draft')
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 39732730393
+          pattern: native-release-*
+          path: app/.agent-state/receipts
+          merge-multiple: true
+      - name: Verify native receipts, remote digests and publish
+        working-directory: app
+        run: python3 ../ops/.github/release-tools/publish.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-publication-receipt
+          path: |
+            app/.agent-state/native-published.json
+            app/.agent-state/publish-assets/SHA256SUMS
+            app/.agent-state/publish-assets/RELEASE-ASSETS.txt
+            app/.agent-state/source-zip-audit.json
+          retention-days: 3
+          include-hidden-files: true
