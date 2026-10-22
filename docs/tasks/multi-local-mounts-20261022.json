@@ -42,9 +42,14 @@
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Final full PASS: 147 checks, 1127 server entries in 12 disjoint shards, other packages race/vet and CAD; isolated actual browser/Docker apply; platform limitations explicit",
+      "evidence": [
+        "docs/reviews/2026-10-22-multiple-local-directories.md",
+        "internal/server/local_mounts_test.go",
+        "cmd/aide-local-mounts/main_test.go",
+        ".agent-state/full.json"
+      ]
     },
     "documentation": {
       "status": "pass",
@@ -63,8 +68,10 @@
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "Source delivery authorized and prepared; no new Aide Release archive or production deployment in this scope. Physical Windows/native picker acceptance remains separate.",
+      "evidence": [
+        "docs/reviews/2026-10-22-multiple-local-directories.md"
+      ]
     }
   },
   "release_authorization": "User requested pushing completed code and releasing ready plugins. This ledger covers source delivery only; production restart and new Aide release archive are separate outcomes.",

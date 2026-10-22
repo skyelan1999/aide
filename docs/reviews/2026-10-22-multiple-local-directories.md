@@ -26,3 +26,15 @@ Windows 原生选择与真实多盘 Docker Desktop、macOS 选择器实际点选
 ## 回滚
 
 源码提交可还原；期望目录配置保留于数据目录，生效快照和 Compose override 存于宿主 `.aide-data/local-mounts`。应用故障优先使用原启动器与原镜像，避免手动删除用户数据。未向市场或公开 Release 上传商业插件。
+
+## 最终全量结果
+
+2026-10-22，对冻结源码 `90404082060782ca5c30186b1bc8addd939868e4` 运行：
+
+```sh
+AIDE_TEST_IMAGE=aide:local-pp-planning-20261021 python3 scripts/agent-route.py verify full
+```
+
+结果 PASS：147 项流程检查全部 exit 0；服务端 1,127 个顶层 Test/Fuzz/Example 在 12 个互斥分片完整执行，其他 Go 包 race、全项目 vet 和 CAD 几何回归通过。输入指纹 `91b232012028f16509ce06187decfcae16c62b71b75fdfcc0eccd15919175d59`。本地原始记录 `.agent-state/verify-20261022T083332881106Z.log` 和 `.agent-state/full.json`。
+
+这不是 Windows 实机、真实模型 API、远程 SSH 或商业插件完整发行验收。公开宿主源码、商业插件私有源码、本地私有包、公开 Release 与生产安装分别记录；本轮没有重启生产。
