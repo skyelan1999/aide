@@ -114,6 +114,14 @@ func (a *App) workbenchPageLocked(id string) ([]byte, error) {
 	if e != nil || len(b) == 0 || len(b) > maxWorkbenchHTML {
 		return nil, errors.New("工作台 HTML 无效或过大")
 	}
+	if id == "professional-workflow" {
+		if !a.pwEnabledLocked() {
+			return nil, errors.New("PW signed manifest identity invalid")
+		}
+		if err := verifyPWWorkbenchPage(dir, b); err != nil {
+			return nil, err
+		}
+	}
 	return b, nil
 }
 func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
@@ -169,7 +177,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	a.pluginWorkbenchTickets[ticket] = pluginWorkbenchTicket{ID: id, Base: a.managementBaseLocked("plugins", id), Digest: sha256.Sum256(page), Gen: lock.Gen, Expires: now.Add(time.Minute)}
 	response := map[string]any{"url": "/plugin-workbench/" + ticket, "protocol": 1}
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.ID == id && p.Workbench != nil && (len(p.Workbench.Tools) > 0 || document != nil) {
+		if p.ID == id && p.Workbench != nil && (len(p.Workbench.Tools) > 0 || document != nil || (p.ID == "professional-workflow" && p.Workbench.ProfessionalWorkflow)) {
 			if a.pluginWorkbenchBridges == nil {
 				a.pluginWorkbenchBridges = map[string]*pluginWorkbenchBridge{}
 			}
@@ -192,7 +200,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 			t.Bridge = ticket
 			a.pluginWorkbenchTickets[ticket] = t
 			tools := append([]string{}, p.Workbench.Tools...)
-			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
+			response["bridge"] = map[string]any{"protocol": 1, "instanceId": ticket, "tools": tools, "document": document != nil, "professionalWorkflow": p.Workbench.ProfessionalWorkflow && p.ID == "professional-workflow", "mobileCaptureVersion": 3, "mobileCapture": p.Workbench.MobileCapture}
 			break
 		}
 	}

@@ -99,6 +99,27 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, err)
 		return
 	}
+	if req.Method == "workflow.control" {
+		if id != "professional-workflow" || !a.pwAvailableLocked() || req.Arguments["action"] == "approve" {
+			a.mu.Unlock()
+			fail(w, 403, errors.New("PW manual workbench capability denied"))
+			return
+		}
+		if b.Busy || b.Seen[req.RequestID] || len(b.Seen) >= 128 {
+			a.mu.Unlock()
+			fail(w, 409, errors.New("PW request replayed or busy"))
+			return
+		}
+		b.Seen[req.RequestID] = true
+		result, e := a.pwControlLocked(req.Arguments)
+		a.mu.Unlock()
+		if e != nil {
+			fail(w, 400, e)
+			return
+		}
+		jsonOut(w, 200, map[string]any{"requestId": req.RequestID, "status": "result", "result": result})
+		return
+	}
 	if req.Method == "capture.network" || req.Method == "file.target" || req.Method == "file.save.commit" {
 		a.mu.Unlock()
 		a.callWorkbenchNative(w, r, req)

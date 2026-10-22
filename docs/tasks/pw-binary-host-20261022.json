@@ -1,0 +1,72 @@
+{
+  "id": "pw-binary-host-20261022",
+  "request": "Integrate signed commercial PW binary protocol, preserve host permissions and session bridge; no publish or production restart",
+  "baseline": "bda2272f5e00568685ea736bfffed55d160d7edb",
+  "initial_status": "",
+  "acceptance": [
+    "Only signed fixed-identity Linux ARM64/AMD64 PW runtimes enable PW mode",
+    "Private graph scheduling/expansion executes only in signed binary; host preserves IO/model/approval checks",
+    "Sealed verified binary execution with bounded input/output/timeout and clean environment",
+    "Normal workflow, scoped IO, current disabled tools and workspace revision controls regressions"
+  ],
+  "scope": [
+    "internal/server/professional_workflow*.go",
+    "internal/server generic plugin/session/context/dispatch bridges",
+    "internal/server/web host PW mode/control UI",
+    "docs/tasks/pw-binary-host-20261022.json",
+    "docs/prd/2026-10-22-pw-binary-host-boundary.md",
+    "scripts/run_go_test_shards.py and scripts/test_go_snapshot.py bounded full gate"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Signed binary-only workflow host bridge; exact package assets preserved through install and upgrade; workspace controls remain scoped",
+      "evidence": [
+        "internal/server/professional_workflow_runtime.go",
+        "internal/server/professional_workflow_runtime_linux.go",
+        "internal/server/plugins.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Frozen full 147 commands pass: 1150 server inventory across 24 race shards, other packages race/vet, runtime assets/CAD; separate final signed-package ARM native and AMD emulated host bridge pass. Standard full has no private package and runtime-dependent cases skip. Mock models only; no production deployment.",
+      "evidence": [
+        ".agent-state/full.json",
+        ".agent-state/verify-20261022T104855163788Z.log",
+        ".agent-state/pw-binary-host/final-f0bcdad4-arm-hostbridge.log",
+        ".agent-state/pw-binary-host/final-f0bcdad4-amd-hostbridge.log",
+        ".agent-state/pw-binary-host/final-artifact-latest.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Host trust, signed assets, serial protocol, approval and test boundaries documented",
+      "evidence": [
+        "docs/prd/2026-10-22-pw-binary-host-boundary.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Disposable test runners removed; QA temporary test removed; private packages and evidence remain ignored; production untouched",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Parent authorized generic public source commit/push only after verification; no package uploads, host release or production restart.",
+  "rollback": "Revert the isolated host bridge commit; uninstall or disable PW to hide the manual mode; existing chat and workflow paths remain.",
+  "handoff": "Final separate commercial package SHA256 f0bcdad4d89f9c4e9fd48d557c91f66da6d2cad7b6fca2b76517fe98ab5f4f38. Public source contains protocol and permission bridges only. Source push is separate from Aide release and deployment."
+}

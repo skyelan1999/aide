@@ -26,9 +26,10 @@ def partition_tests(names, count):
     return groups
 
 
-def run_shards(command, names, cwd, count=12, timeout=1000, workers=1):
+def run_shards(command, names, cwd, count=24, timeout=1000, workers=1):
     if workers < 1:
         raise ValueError("workers must be positive")
+    # Smaller processes release race shadow memory between groups within 4 GiB.
     groups = partition_tests(names, count)
     env = dict(os.environ, PWD=str(Path(cwd).resolve()))
 
