@@ -351,6 +351,7 @@ async function api(path, options = {}) {
 }
 function action(fn, options) { return window.AideAsyncAction.wrap(fn, e => toast(e.message), options); }
 function setMode(mode) {
+  if (mode==='pw' && (!state.config?.professionalWorkflow || state.session?.kind==='assistant')) return;
   state.mode = mode;
   document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
   const phaseBar = $('workflow-phases');
@@ -807,6 +808,7 @@ function sessionRevision(s) {
     sessionTextRevision(JSON.stringify(sessionPluginPlanView(run))),
     sessionTextRevision(JSON.stringify(run?.steps?.map(s => s.outputSegments) || [])),
     sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
+    sessionTextRevision(JSON.stringify(run?.pw || null)),
     sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
   ].join(':')).join(';');
   return [s.id, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.runningRuns, s.messagesTotal ?? messages.length, state.historyLimit,
@@ -839,8 +841,10 @@ function getSessionWindow(id) { return api('/sessions/' + id + '?limit=' + state
 function sessionRunRenderSignature(run, view = {}) {
   const rendered = [
     sessionPluginPlanView(run),
+
     run.modelRoutes || [], run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
-    run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
+    run.pw, run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
+
     run.strategy, run.profile, run.autoReview, run.assistantManaged, run.approvalState, run.approvalReviews,
     run.pendingQuestion, run.canResume, run.pauseRequested, run.stopRequested, run.attachments, run.steers,
     run.steps?.map(step => [step.name, step.status, step.content, step.reasoning, step.outputSegments]),
@@ -1708,9 +1712,10 @@ function renderRunStatusInto(box, runId) {
     head.append(el('span', 'rsp-spinner'), el('span', 'rsp-phase'), el('span', 'rsp-elapsed'));
     panel.append(head);
   }
-  const awaitingUser = runWaitingForUser(runId);
+  const pwRun = state.session?.runs?.find(r => r.id === runId && r.pw);
+  const awaitingUser = runWaitingForUser(runId) || pwRun?.pw.nodes[pwRun.pw.current]?.status === 'waiting';
   if (awaitingUser) ph.stalled = false;
-  head.querySelector('.rsp-phase').textContent = awaitingUser ? t('等待你的回答或审批（执行计时暂停）') : phaseLabel(ph);
+  head.querySelector('.rsp-phase').textContent = awaitingUser ? t('等待你的回答或审批（执行计时暂停）') : pwRun ? 'PW 节点执行中' : phaseLabel(ph);
   head.querySelector('.rsp-elapsed').hidden = awaitingUser;
   head.querySelector('.rsp-elapsed').textContent = awaitingUser ? '' : formatElapsed(ph.startedAt);
   let noteEl = panel.querySelector('.run-note');
@@ -2244,6 +2249,7 @@ function renderSession() {
     }
   }
   for (const run of state.session?.runs || []) {
+    if(run.pw){run.steps=run.steps||[];run.files=run.files||[];run.commands=run.commands||[];}
     if (run.status === 'resumed') continue;
     if (['running','awaiting_clarification'].includes(run.status)) state.busy = true;
     const renderSignature = sessionRunRenderSignature(run, {
@@ -2253,7 +2259,7 @@ function renderSession() {
     if (appendCachedSessionRun(run, renderSignature, previousRuns, $('timeline'))) continue;
     const box = el('article', 'run'); box.dataset.run = run.id;box.append(renderTaskPrompt(run));
     box.dataset.renderSignature = renderSignature;
-    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
+    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'pw' ? '◈ PW WORKFLOW' : run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
     if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume && run !== state.session.runs.at(-1)) {
       const resume = el('button', 'quiet', t('恢复任务')); resume.type = 'button'; resume.onclick = () => resumeRunById(run.id); meta.append(resume);
     } else if (run.status === 'running' && run.pauseRequested) {
@@ -2266,8 +2272,11 @@ function renderSession() {
     renderClarification(run, box);
     const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails, initial: !previousRuns.get(run.id)?.node.querySelector('.parallel-progress')});
     if (parallelPanel) box.append(parallelPanel);
+
     const routesPanel = window.AideParallelChat?.renderRoutes(run, {el, t, open:openDetails});
     if (routesPanel) box.append(routesPanel);
+    if (run.pw) box.append(renderPWRun(run));
+
     const previousPlanKeys = new Set([...(previousRuns.get(run.id)?.node.querySelectorAll('.plugin-plan') || [])].map(node => node.dataset.key));
     const pluginPlans = window.AidePluginPlans?.render(run, {el, t, open:openDetails, seen:previousPlanKeys, onEvidence:() => openRunOutcome(run.id, pluginPlanSessionId), onCheck:(plan,node) => {
       const sequence = sessionSeq.value, scope = recoveryScope();
@@ -2279,7 +2288,7 @@ function renderSession() {
       },saved:() => { if (active()) refreshSessionSoon(); }});
     }});
     if (pluginPlans) box.append(pluginPlans);
-    if (!run.steps.length && run.status === 'running') box.append(el('p', 'muted', t("正在准备模型请求…")));
+    if (!run.pw && !run.steps.length && run.status === 'running') box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
         renderStepThinking(box, run, step, index);
@@ -2421,6 +2430,7 @@ function renderSession() {
     $('timeline').append(box);
   }
   for (const run of state.session?.runs || []) {
+    if(run.pw){run.steps=run.steps||[];run.files=run.files||[];run.commands=run.commands||[];}
     if (run.status === 'running' && state.live[run.id]) scheduleLiveRender(run.id);
   }
   // Keep one stop action visible; a draft restores the send action without ending the run.
@@ -3581,7 +3591,7 @@ $('task-form').onsubmit = action(async event => {
   event.preventDefault();
   if (state.submitting || state.approvalModeBusy) return; // Enter 连击与点击不可重复创建 run
   const prompt = $('prompt').value.trim(); if (!prompt) return;
-  if (!state.config?.configured) { openSettings(); return; }
+  if (state.mode!=='pw' && !state.config?.configured) { openSettings(); return; }
   if (state.previewOverLimit) { toast(t("上下文预算超限：请缩短任务或减少附件后再发送")); return; }
   state.submitting = true;
   updateSendEnabled(); // 先显示提交态，再等待创建会话/启动任务请求
@@ -3942,7 +3952,7 @@ function setSendMode(running) {
     const last = state.session?.runs?.at(-1);
     const resumable = !run && !state.pendingSessionId && ['paused','interrupted'].includes(last?.status) && last.canResume;
     controls.hidden = !run && !resumable;
-    $('run-control-status').textContent = reconciling ? t('正在同步结果…') : stopping ? t('正在停止本轮…') : pausing ? t('正在暂停任务…') : resumable ? t('已暂停，可从检查点继续') : run?.status === 'awaiting_clarification' ? t('等待你的回答或审批') : t('正在运行 · 可随时插话');
+    $('run-control-status').textContent = reconciling ? t('正在同步结果…') : stopping ? t('正在停止本轮…') : pausing ? t('正在暂停任务…') : resumable ? t('已暂停，可从检查点继续') : run?.status === 'awaiting_clarification' ? t('等待你的回答或审批') : run?.pw ? t('PW 流程运行中 · 等待节点状态') : t('正在运行 · 可随时插话');
     const stop = $('stop-active-run'); stop.hidden = !run; stop.disabled = stopping || reconciling;
     const resume = $('resume-active-run'); resume.hidden = !resumable;
     $('run-control-more').hidden = !run || finishing || reconciling || run.status === 'awaiting_clarification';
@@ -5625,6 +5635,9 @@ function renderProfilesManager(control) {
 }
 /* 聊天栏策略按钮（FR-63） */
 function refreshStrategyUI() {
+  if(state.mode==='pw'&&(!state.config?.professionalWorkflow||state.session?.kind==='assistant'))setMode('chat');
+  const pwButton=$('pw-mode'); if(pwButton) pwButton.classList.toggle('hidden', !state.config?.professionalWorkflow || state.session?.kind==='assistant');
+
   const choice = sessionModelPreferences();
   const p = state.profiles && {...state.profiles, strategy:choice.strategy, activeProfile:choice.profile};
   if (!p) return;
@@ -6741,9 +6754,12 @@ function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPlug
 async function loadPluginsPanel() {
   const data = await api('/plugins');
   state.plugins = data.plugins || [];
+
   if (state.config) state.config.modelRouter = data.modelRouter || {available:false};
   refreshStrategyUI();
   if(!fileContextMenuPlugin('compare')){compareLeftSelection=null;closeFileContextMenu();}
+  if(state.config) state.config.professionalWorkflow = !!data.professionalWorkflow;
+
   renderPluginList();
   const surface = await api('/plugin-surface');
   renderPluginSurface(surface.plugins || []);
@@ -12580,10 +12596,20 @@ function renderAgentManagementControl() {
 controlRenderers['agent-management']=renderAgentManagementControl;
 controlRenderers['plugin-routing']=()=>window.AidePluginMarket.renderSettings();
 
+
 controlRenderers['local-mounts']=()=>window.AideLocalMounts.render({api,t,el,blocked:()=>lockScreen.locked});
 
 function setupBrowseMountSelector(root,field){
  let select=$('ws-browse-mount');if(!select){select=el('select');select.id='ws-browse-mount';select.setAttribute('aria-label',t('选择本地目录'));$('ws-browse-address').parentElement.before(select);select.onchange=action(async()=>{const b=wsState.browse;b.root=select.value;b.dir='.';await loadBrowseDir();});}
  select.hidden=root==='workspace'||root==='remote';select.replaceChildren();
  for(const item of [{id:'local',name:t('默认本地目录')},...(field==='cache-path'?[]:state.localMounts||[]).map(e=>({id:'mount:'+e.id,name:e.name+' · '+t(e.readOnly?'只读':'读写')}))]){const o=el('option','',item.name);o.value=item.id;select.append(o);}select.value=root;
+}
+
+function renderPWRun(run) {
+ const panel=el('section','parallel-progress'); panel.append(el('strong','', 'PW · '+run.pw.definition.name));
+ for(const n of run.pw.definition.nodes){const info=run.pw.nodes[n.id]||{};const row=el('details','parallel-part');row.style.display='block';row.append(el('summary','',n.title+' · '+({pending:'等待',running:'运行中',waiting:'等待确认',completed:'成功',failed:'失败',skipped:'跳过'}[info.status]||info.status)));
+  if(info.output)row.append(el('pre','',info.output));if(info.error)row.append(el('p','',info.error));
+  if(info.status==='waiting'&&run.status==='running'){row.open=true;row.append(el('pre','',JSON.stringify(info.request||{tool:n.tool,arguments:n.arguments,text:n.text},null,2)));for(const [label,approved] of [['确认执行',true],['拒绝',false]]){const b=el('button','quiet',label);b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'approve',sessionId:state.session.id,runId:run.id,nodeId:n.id,approved})});await selectSession(state.session.id)});row.append(b)}}panel.append(row)}
+ if(run.status==='running'){const b=el('button','quiet','停止 PW');b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
+
 }
