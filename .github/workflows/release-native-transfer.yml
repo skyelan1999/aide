@@ -2,7 +2,7 @@ name: Native release v0.1.17.5 RC3
 on:
   push:
     branches: [release-v0.1.17.5-rc3-native-publish]
-    paths-ignore: ['.github/release-tools/local-full-receipt.json']
+    paths: ['.github/release-tools/native.py']
 permissions:
   contents: read
 concurrency:
