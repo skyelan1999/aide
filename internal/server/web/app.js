@@ -802,7 +802,7 @@ function sessionRevision(s) {
   // state. Keep those small control fields in the polling snapshot so a stale
   // card is not kept merely because the last answer text did not move.
   const runStates = runs.map(run => [
-    run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
+    JSON.stringify(run?.modelRoutes || []), run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
     run?.pauseRequested, run?.stopRequested, run?.canResume, run?.approvalState, run?.autoReview,
     sessionTextRevision(JSON.stringify(sessionPluginPlanView(run))),
     sessionTextRevision(JSON.stringify(run?.steps?.map(s => s.outputSegments) || [])),
@@ -839,7 +839,7 @@ function getSessionWindow(id) { return api('/sessions/' + id + '?limit=' + state
 function sessionRunRenderSignature(run, view = {}) {
   const rendered = [
     sessionPluginPlanView(run),
-    run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
+    run.modelRoutes || [], run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
     run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
     run.strategy, run.profile, run.autoReview, run.assistantManaged, run.approvalState, run.approvalReviews,
     run.pendingQuestion, run.canResume, run.pauseRequested, run.stopRequested, run.attachments, run.steers,
@@ -2266,6 +2266,8 @@ function renderSession() {
     renderClarification(run, box);
     const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails, initial: !previousRuns.get(run.id)?.node.querySelector('.parallel-progress')});
     if (parallelPanel) box.append(parallelPanel);
+    const routesPanel = window.AideParallelChat?.renderRoutes(run, {el, t, open:openDetails});
+    if (routesPanel) box.append(routesPanel);
     const previousPlanKeys = new Set([...(previousRuns.get(run.id)?.node.querySelectorAll('.plugin-plan') || [])].map(node => node.dataset.key));
     const pluginPlans = window.AidePluginPlans?.render(run, {el, t, open:openDetails, seen:previousPlanKeys, onEvidence:() => openRunOutcome(run.id, pluginPlanSessionId), onCheck:(plan,node) => {
       const sequence = sessionSeq.value, scope = recoveryScope();
@@ -5630,10 +5632,12 @@ function refreshStrategyUI() {
   const xiaomiModelName = String(state.xiaomiModelSettings?.model || '').trim();
   const xiaomiSelectedModel = state.config?.models?.find(m => m.id === xiaomiModelName);
   const selectedModel = state.config?.models?.find(m => m.id === choice.model);
-  const modelName = xiaomiOwnsModel ? ([xiaomiSelectedModel?.name || xiaomiModelName, modelProviderName(xiaomiSelectedModel?.providerId)].filter(Boolean).join(' · ') || t('小秘独立模型')) : [selectedModel?.name || choice.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
+  const routerAvailable = !document.body.classList.contains('assistant-mode') && state.config?.modelRouter?.available === true;
+  const autoModel = routerAvailable && choice.modelRouter === 'auto';
+  const modelName = autoModel ? 'Auto' : xiaomiOwnsModel ? ([xiaomiSelectedModel?.name || xiaomiModelName, modelProviderName(xiaomiSelectedModel?.providerId)].filter(Boolean).join(' · ') || t('小秘独立模型')) : [selectedModel?.name || choice.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
   const assistantMode = document.body.classList.contains('assistant-mode');
   const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + t(composerAutoReview() ? '辅助审批' : '手动审批'));
-  if (!assistantMode && state.config?.configured) $('model-name').textContent = t('{0} · API 已配置', choice.model);
+  if (!assistantMode && state.config?.configured) $('model-name').textContent = t('{0} · API 已配置', autoModel ? 'Auto' : choice.model);
   $('strategy-label').textContent = label;
   $('strategy-label').title = label + ' · ' + t('当前会话独立配置') + ' · ' + t('推理强度') + ': ' + choice.reasoningEffort;
   const menu = $('strategy-menu');
@@ -5653,12 +5657,13 @@ function refreshStrategyUI() {
   right.classList.toggle('locked', xiaomiOwnsModel);
   right.setAttribute('aria-disabled', String(xiaomiOwnsModel));
   right.append(el('div', 'strategy-menu-sep', t("模型")));
+  if (routerAvailable) right.append(strategyMenuOption('modelRouter', 'auto', 'Auto', t('按任务自动选择已配置模型 · 离线能力档案'), autoModel));
   if (xiaomiOwnsModel) right.append(el('small', 'strategy-menu-locked-note', t('小秘模型由语音助理设置管理')));
   const modelOptions = xiaomiOwnsModel
     ? [{ id: xiaomiModelName, name: xiaomiModelName || t('小秘独立模型') }]
     : (state.config?.models || []);
   for (const m of modelOptions) {
-    const selected = xiaomiOwnsModel || choice.model === m.id;
+    const selected = xiaomiOwnsModel || (!autoModel && choice.model === m.id);
     const description = xiaomiOwnsModel ? t('由小秘模型设置管理') : [modelProviderName(m.providerId), t("{0} · {1}K 上下文", m.id, (m.contextWindow || 65536) / 1024)].filter(Boolean).join(' · ');
     right.append(strategyMenuOption('model', m.id, m.name, description, selected, xiaomiOwnsModel));
   }
@@ -5787,7 +5792,7 @@ function strategyMenuOption(kind, value, name, desc, selected, disabled = false)
     }
     if (state.session?.kind !== 'assistant' && window.AideSessionModelSelection) {
       const owner = state.session?.id || '', scope = recoveryScope();
-      const patch = kind === 'model' ? {model:value} : kind === 'reasoning' ? {reasoningEffort:value} : kind === 'auto' ? {strategy:'auto'} : {strategy:'manual', profile:value};
+      const patch = kind === 'modelRouter' ? {modelRouter:'auto'} : kind === 'model' ? {model:value, modelRouter:''} : kind === 'reasoning' ? {reasoningEffort:value} : kind === 'auto' ? {strategy:'auto'} : {strategy:'manual', profile:value};
       await window.AideSessionModelSelection.change(patch);
       if ((state.session?.id || '') !== owner || recoveryScope() !== scope) return;
       closeStrategyMenu();
@@ -6736,6 +6741,8 @@ function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPlug
 async function loadPluginsPanel() {
   const data = await api('/plugins');
   state.plugins = data.plugins || [];
+  if (state.config) state.config.modelRouter = data.modelRouter || {available:false};
+  refreshStrategyUI();
   if(!fileContextMenuPlugin('compare')){compareLeftSelection=null;closeFileContextMenu();}
   renderPluginList();
   const surface = await api('/plugin-surface');

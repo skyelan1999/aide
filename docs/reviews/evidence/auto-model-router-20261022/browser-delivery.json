@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "environment": "real isolated Aide testApp + actual public router package files, Chromium",
+  "checks": [
+    "top conditional Auto",
+    "session save and reload",
+    "manual exit",
+    "5X remains selected",
+    "light/dark blue/green desktop/narrow no horizontal overflow",
+    "disable/re-enable/uninstall",
+    "no external browser requests"
+  ],
+  "errors": [],
+  "external": []
+}

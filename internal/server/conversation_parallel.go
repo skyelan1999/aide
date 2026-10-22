@@ -14,12 +14,14 @@ import (
 // Parallel analysis never executes tools or writes files. The original task is
 // the only executor and publishes the single, reconciled final answer.
 type ParallelPart struct {
-	Round   int             `json:"round,omitempty"`
-	Context *RequestContext `json:"context,omitempty"`
-	Title   string          `json:"title"`
-	Status  string          `json:"status"`
-	Content string          `json:"content,omitempty"`
-	Error   string          `json:"error,omitempty"`
+	Model    string          `json:"model,omitempty"`
+	Provider string          `json:"provider,omitempty"`
+	Round    int             `json:"round,omitempty"`
+	Context  *RequestContext `json:"context,omitempty"`
+	Title    string          `json:"title"`
+	Status   string          `json:"status"`
+	Content  string          `json:"content,omitempty"`
+	Error    string          `json:"error,omitempty"`
 }
 type ParallelProgress struct {
 	Round          int               `json:"round,omitempty"`
@@ -246,8 +248,9 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	}
 	small.Stop = nil
 	planning = parallelAnalysisMessages(input, planning[len(planning)-1].Content, true)
+	planCfg := a.routedModel(task, cfg, planning, small, nil, "parallel/plan")
 	a.mu.Lock()
-	plannerContext := requestContext(planning, nil, small.MaxTokens, a.modelWindow(cfg.Model))
+	plannerContext := requestContext(planning, nil, small.MaxTokens, a.modelWindow(planCfg.Model))
 	if task.Parallel == nil {
 		task.Parallel = &ParallelProgress{Requested: limit}
 	}
@@ -263,7 +266,6 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		return input, err
 	}
 	planCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
-	planCfg := cfg
 	planCfg.ReasoningEffort = "off" // Scheduling JSON should not exhaust its small output budget on hidden reasoning.
 	text, err := a.parallelCall(planCtx, task, planCfg, planning, small, fmt.Sprintf("parallel/plan-%d", wave), plannerContext)
 	cancel()
@@ -311,11 +313,16 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		workerParams.MaxTokens = 2048
 	}
 	workerInputs := make([][]Message, len(titles))
+	workerConfigs := make([]Settings, len(titles))
+	for i, title := range titles {
+		workerInputs[i] = parallelWorkerMessages(input, title)
+		workerConfigs[i] = a.routedModel(task, cfg, workerInputs[i], workerParams, nil, "parallel/part")
+	}
 	a.mu.Lock()
 	offset := len(task.Parallel.Parts)
 	for i, title := range titles {
 		workerInputs[i] = parallelWorkerMessages(input, title)
-		task.Parallel.Parts = append(task.Parallel.Parts, ParallelPart{Round: wave, Title: title, Status: "running", Context: requestContext(workerInputs[i], nil, workerParams.MaxTokens, a.modelWindow(cfg.Model))})
+		task.Parallel.Parts = append(task.Parallel.Parts, ParallelPart{Model: workerConfigs[i].Model, Provider: routerProviderID(workerConfigs[i]), Round: wave, Title: title, Status: "running", Context: requestContext(workerInputs[i], nil, workerParams.MaxTokens, a.modelWindow(workerConfigs[i].Model))})
 	}
 	a.mu.Unlock()
 	if err := update("running", ""); err != nil {
@@ -331,7 +338,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	defer stopWorkers()
 	for i, title := range titles {
 		go func(index int, title string) {
-			out, callErr := a.parallelCall(workersCtx, task, cfg, workerInputs[index], workerParams, fmt.Sprintf("parallel/wave-%d/part-%d", wave, index+1), task.Parallel.Parts[offset+index].Context)
+			out, callErr := a.parallelCall(workersCtx, task, workerConfigs[index], workerInputs[index], workerParams, fmt.Sprintf("parallel/wave-%d/part-%d", wave, index+1), task.Parallel.Parts[offset+index].Context)
 			results <- result{index, out, callErr}
 		}(i, title)
 	}

@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-22",
+  "baseline": "2ee8a394",
+  "pluginVersion": "0.1.0",
+  "pluginCommit": "84e88bf",
+  "packageSha256": "f633e0d0f7c096600b5da82b6018fd099876992c502de1d6a01f135175d89e2d",
+  "checks": {
+    "pluginNodeTests": "PASS 2 tests",
+    "hostFocusedRace": "PASS 50.143s: AutoModelRouter, ConversationParallel, SessionModelSelection",
+    "wireAdapters": "PASS DeepSeek, GPT, generic compatible, manual legacy",
+    "parallelHTTP": "PASS two independent mock HTTP endpoints overlap with separate keys/models and aggregate usage",
+    "sequentialHTTP": "PASS 1X code/write/code, max concurrency 1",
+    "cancel": "PASS requests canceled and interrupted",
+    "disableBetweenRequests": "PASS restores original manual model and credential",
+    "safari": "PASS actual ZIP install; Auto top of model column; persisted through refresh; 5X selected; disable hides Auto; reenable restores",
+    "package": "PASS strict five file allowlist, deterministic SHA256, real guarded bundle API import",
+    "hostQuick": "PASS 142 checks",
+    "finalCompiledRuntime": "PASS healthy ARM64 candidate; reinstalled ZIP available; Auto session choice survived restart"
+  },
+  "notRun": [
+    "Paid vendor API requests",
+    "Anthropic Messages / Gemini generateContent native protocols",
+    "AMD64 host execution",
+    "Full release gate",
+    "Marketplace or GitHub release publication"
+  ],
+  "dailyRuntime": "unchanged localhost:9999",
+  "notes": [
+    "Screenshot shows Auto selected; 5X checked was verified via accessibility tree below scroll",
+    "Official summaries and maintainer routing weights are separate; no unified official cross-vendor rank",
+    "All runtime API tests use local mock endpoints; no provider credentials in evidence"
+  ],
+  "cleanup": "Owned browser tab, proxy and both QA containers removed; QA snapshots preserved ignored",
+  "evidenceScope": "Historical 2026-10-22 candidate evidence; not the current delivery fingerprint. Screenshot retained locally, excluded from public source."
+}

@@ -1,0 +1,34 @@
+package server
+
+import (
+ "encoding/json"
+ "net"
+ "net/http"
+ "os"
+ "path/filepath"
+ "testing"
+ "time"
+)
+
+// Explicitly requested only by the isolated browser runner. No paid API calls.
+func TestAutoModelRouterBrowserHost(t *testing.T) {
+ evidence:=os.Getenv("AUTO_ROUTER_EVIDENCE");plugin:=os.Getenv("AUTO_ROUTER_PLUGIN")
+ if evidence==""||plugin=="" {t.Skip("isolated browser fixture")}
+ a:=testApp(t)
+ routerSettings(t,a,"http://127.0.0.1:1","http://127.0.0.1:1")
+ a.settings.Model="deepseek-flash";a.settings.ActiveModel="deepseek-flash"
+ a.settings.Models[0].ID="deepseek-flash";a.settings.Models[0].Name="Fixture DeepSeek"
+ a.settings.Models[1].ID="claude-sonnet-4-6";a.settings.Models[1].Name="Fixture Claude"
+ s:=createSession(t,a);s.Title="Auto router isolated acceptance"
+ entries:=map[string]string{}
+ for _,name:=range []string{"manifest.json","index.js","capabilities.json","README.md","LICENSE"} {raw,err:=os.ReadFile(filepath.Join(plugin,name));if err!=nil{t.Fatal(err)};entries[name]=string(raw)}
+ requireStatus(t,pluginBundleRequest(t,a,entries),201)
+ listener,err:=net.Listen("tcp","0.0.0.0:8089");if err!=nil{t.Fatal(err)}
+ server:=&http.Server{Handler:a.Handler(),ReadHeaderTimeout:10*time.Second};defer server.Close()
+ go server.Serve(listener)
+ if err=os.MkdirAll(evidence,0700);err!=nil{t.Fatal(err)}
+ raw,_:=json.Marshal(map[string]string{"token":a.token,"session":s.ID})
+ if err=os.WriteFile(filepath.Join(evidence,"ready.json"),raw,0600);err!=nil{t.Fatal(err)}
+ for i:=0;i<600;i++ {if _,err:=os.Stat(filepath.Join(evidence,"done"));err==nil{return};time.Sleep(500*time.Millisecond)}
+ t.Fatal("browser fixture timed out")
+}

@@ -100,50 +100,52 @@ type Task struct {
 	approvalReviewRound      int64
 	approvalReviewGeneration uint64
 	approvalAnswered         bool
-	WorkflowPhase            string              `json:"workflowPhase,omitempty"`
-	AgentPlan                *AgentPlan          `json:"agentPlan,omitempty"`
-	AgentReviewDone          bool                `json:"agentReviewDone,omitempty"`
-	AgentReviewCount         int                 `json:"agentReviewCount,omitempty"`
-	AgentReviewToolCount     int                 `json:"agentReviewToolCount,omitempty"`
-	ID                       string              `json:"id"`
-	Mode                     string              `json:"mode"`
-	Prompt                   string              `json:"prompt"`
-	AvatarFeedback           bool                `json:"avatarFeedback,omitempty"`
-	AvatarCuesUsed           int                 `json:"avatarCuesUsed,omitempty"`
-	AvatarCue                *AvatarCue          `json:"avatarCue,omitempty"`
-	Status                   string              `json:"status"`
-	Created                  string              `json:"created"`
-	Steps                    []Step              `json:"steps"`
-	Files                    []Change            `json:"files"`
-	Commands                 []string            `json:"commands"`
-	Error                    string              `json:"error,omitempty"`
-	Failures                 int                 `json:"failures,omitempty"` // 工具失败累计次数（失败反馈循环）
-	Applied                  bool                `json:"applied"`
-	Attachments              []Attachment        `json:"attachments"`
-	Parallelism              int                 `json:"parallelism,omitempty"`
-	ParallelPrepared         bool                `json:"parallelPrepared,omitempty"`
-	Parallel                 *ParallelProgress   `json:"parallel,omitempty"`
-	Strategy                 string              `json:"strategy,omitempty"` // manual | auto（FR-63）
-	ResearchFindings         []ResearchFinding   `json:"researchFindings,omitempty"`
-	ToolUses                 []ToolUse           `json:"toolUses,omitempty"` // 工具调用记录（FR-81）
-	Usage                    TokenUsage          `json:"usage,omitempty"`    // 本任务累计 token 用量（轨迹）
-	TopicContext             *RequestContext     `json:"topicContext,omitempty"`
-	ContextAnchor            *ContextUsageAnchor `json:"contextAnchor,omitempty"` // 最近一次模型调用的上下文校准锚点
-	WorkspaceID              string              `json:"workspaceId,omitempty"`   // 提案归属的工作区身份（R02）
-	WorkspaceRev             uint64              `json:"workspaceRev,omitempty"`
-	WorkspaceMode            string              `json:"workspaceMode,omitempty"`       // 任务创建时的工作区模式（工具绑定，R02）
-	WorkspaceRemotePath      string              `json:"workspaceRemotePath,omitempty"` // 任务创建时的远程路径（ssh 工具绑定，R02）
-	AgentRoot                AgentRoot           `json:"agentRoot,omitempty"`           // #61：任务创建时快照的工作区根（CWD/子 agent 继承）
-	Model                    string              `json:"model,omitempty"`               // 本次任务使用的模型（FR-69）
-	Profile                  string              `json:"profile,omitempty"`             // 本次生效的 profile id
-	RequestSnapshots         []RequestSnapshot   `json:"requestSnapshots,omitempty"`    // R08-04：实际发出的 Provider 请求快照（首轮+工具续跑）
-	SnapshotsTruncated       bool                `json:"snapshotsTruncated,omitempty"`  // 快照达到上限后被截断
-	CheckpointMessages       []Message           `json:"checkpointMessages,omitempty"`  // 已完成模型/工具往返，用于暂停后续跑
-	CheckpointStep           string              `json:"checkpointStep,omitempty"`      // 当前未完成阶段；空表示阶段间检查点
-	CanResume                bool                `json:"canResume,omitempty"`
-	PauseRequested           bool                `json:"pauseRequested,omitempty"`
-	StopRequested            bool                `json:"stopRequested,omitempty"`
-	ResumedFrom              string              `json:"resumedFrom,omitempty"`
+
+	ModelRoutes          []ModelRouteDecision `json:"modelRoutes,omitempty"`
+	WorkflowPhase        string               `json:"workflowPhase,omitempty"`
+	AgentPlan            *AgentPlan           `json:"agentPlan,omitempty"`
+	AgentReviewDone      bool                 `json:"agentReviewDone,omitempty"`
+	AgentReviewCount     int                  `json:"agentReviewCount,omitempty"`
+	AgentReviewToolCount int                  `json:"agentReviewToolCount,omitempty"`
+	ID                   string               `json:"id"`
+	Mode                 string               `json:"mode"`
+	Prompt               string               `json:"prompt"`
+	AvatarFeedback       bool                 `json:"avatarFeedback,omitempty"`
+	AvatarCuesUsed       int                  `json:"avatarCuesUsed,omitempty"`
+	AvatarCue            *AvatarCue           `json:"avatarCue,omitempty"`
+	Status               string               `json:"status"`
+	Created              string               `json:"created"`
+	Steps                []Step               `json:"steps"`
+	Files                []Change             `json:"files"`
+	Commands             []string             `json:"commands"`
+	Error                string               `json:"error,omitempty"`
+	Failures             int                  `json:"failures,omitempty"` // 工具失败累计次数（失败反馈循环）
+	Applied              bool                 `json:"applied"`
+	Attachments          []Attachment         `json:"attachments"`
+	Parallelism          int                  `json:"parallelism,omitempty"`
+	ParallelPrepared     bool                 `json:"parallelPrepared,omitempty"`
+	Parallel             *ParallelProgress    `json:"parallel,omitempty"`
+	Strategy             string               `json:"strategy,omitempty"` // manual | auto（FR-63）
+	ResearchFindings     []ResearchFinding    `json:"researchFindings,omitempty"`
+	ToolUses             []ToolUse            `json:"toolUses,omitempty"` // 工具调用记录（FR-81）
+	Usage                TokenUsage           `json:"usage,omitempty"`    // 本任务累计 token 用量（轨迹）
+	TopicContext         *RequestContext      `json:"topicContext,omitempty"`
+	ContextAnchor        *ContextUsageAnchor  `json:"contextAnchor,omitempty"` // 最近一次模型调用的上下文校准锚点
+	WorkspaceID          string               `json:"workspaceId,omitempty"`   // 提案归属的工作区身份（R02）
+	WorkspaceRev         uint64               `json:"workspaceRev,omitempty"`
+	WorkspaceMode        string               `json:"workspaceMode,omitempty"`       // 任务创建时的工作区模式（工具绑定，R02）
+	WorkspaceRemotePath  string               `json:"workspaceRemotePath,omitempty"` // 任务创建时的远程路径（ssh 工具绑定，R02）
+	AgentRoot            AgentRoot            `json:"agentRoot,omitempty"`           // #61：任务创建时快照的工作区根（CWD/子 agent 继承）
+	Model                string               `json:"model,omitempty"`               // 本次任务使用的模型（FR-69）
+	Profile              string               `json:"profile,omitempty"`             // 本次生效的 profile id
+	RequestSnapshots     []RequestSnapshot    `json:"requestSnapshots,omitempty"`    // R08-04：实际发出的 Provider 请求快照（首轮+工具续跑）
+	SnapshotsTruncated   bool                 `json:"snapshotsTruncated,omitempty"`  // 快照达到上限后被截断
+	CheckpointMessages   []Message            `json:"checkpointMessages,omitempty"`  // 已完成模型/工具往返，用于暂停后续跑
+	CheckpointStep       string               `json:"checkpointStep,omitempty"`      // 当前未完成阶段；空表示阶段间检查点
+	CanResume            bool                 `json:"canResume,omitempty"`
+	PauseRequested       bool                 `json:"pauseRequested,omitempty"`
+	StopRequested        bool                 `json:"stopRequested,omitempty"`
+	ResumedFrom          string               `json:"resumedFrom,omitempty"`
 	// #45 子 agent 归属：spawn_subagent 派生的子任务在创建时打上父子会话身份，
 	// 供 toolLoop 记录 ToolUse.Who 及子会话编号/标题。主任务这些字段为空。
 	WorktreeID       string          `json:"worktreeId,omitempty"`
@@ -343,6 +345,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
 		return
 	}
+	cfg, _ = a.routeModelLocked(&Task{ModelSelection: &choice, Prompt: in.Prompt}, cfg, []Message{{Role: "user", Content: in.Prompt, Images: images}}, ProfileParams{MaxTokens: 1024}, nil, "initial")
 	if err := visionGateForConfig(cfg, images); err != nil {
 		fail(w, 400, err)
 		return
@@ -899,6 +902,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	cfg, _ = a.routeModelLocked(&Task{ModelSelection: &choice, Prompt: orig.Prompt}, cfg, []Message{{Role: "user", Content: orig.Prompt, Images: images}}, params, nil, "initial")
 	if err := visionGateForConfig(cfg, images); err != nil {
 		fail(w, 400, err)
 		return
@@ -1106,6 +1110,7 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	cfg, _ = a.routeModelLocked(&Task{ModelSelection: &choice, Prompt: orig.Prompt}, cfg, []Message{{Role: "user", Content: orig.Prompt, Images: images}}, params, nil, "initial")
 	if err := visionGateForConfig(cfg, images); err != nil {
 		fail(w, 400, err)
 		return
@@ -1904,6 +1909,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			saveCheckpoint()
 		}
+		cfg = a.routedModel(task, cfg, input, params, tools, stepName)
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
 			a.mu.Lock()

@@ -802,6 +802,10 @@
         "node",
         "--check",
         "internal/server/web/local-mounts.js"
+      ],
+      [
+        "node",
+        "scripts/auto-model-router-ui.test.cjs"
       ]
     ],
     "full": [

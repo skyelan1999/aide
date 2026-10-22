@@ -49,6 +49,8 @@ type PluginWorkbench struct {
 }
 
 type PluginManifest struct {
+	ModelRouter *PluginModelRouter `json:"modelRouter,omitempty"`
+
 	Workbench      *PluginWorkbench `json:"workbench,omitempty"`
 	ID             string           `json:"id"`
 	Name           string           `json:"name"`
@@ -183,7 +185,7 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 			"workbench":      p.Workbench,
 		})
 	}
-	jsonOut(w, 200, map[string]any{"plugins": items})
+	jsonOut(w, 200, map[string]any{"plugins": items, "modelRouter": a.modelRouterStatusLocked()})
 }
 
 // pluginSettingsSchema reads the schema from the installed plugin manifest so
@@ -494,6 +496,9 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 		if len(page) == 0 || len(page) > maxWorkbenchHTML {
 			return PluginManifest{}, nil, errors.New("插件工作台 HTML 缺失或超过 2 MiB")
 		}
+	}
+	if err := validatePluginModelRouter(manifest.ModelRouter, packageFiles); err != nil {
+		return PluginManifest{}, nil, err
 	}
 	manifest.Main = main
 	return manifest, packageFiles, nil

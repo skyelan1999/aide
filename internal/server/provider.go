@@ -195,6 +195,25 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 		// 多数 OpenAI 兼容端点通过该字段在最后一个 chunk 返回 usage；不支持的端点忽略它。
 		body["stream_options"] = map[string]any{"include_usage": true}
 	}
+	// Only Auto-selected declarations adapt wire parameters. Legacy/manual
+	// requests retain their existing behavior and configuration semantics.
+	if profile := cfg.routedProfile; profile != nil && profile.WireFormat != "deepseek" {
+		delete(body, "thinking")
+		if profile.WireFormat == "openai-reasoning" {
+			if value, ok := body["max_tokens"]; ok {
+				body["max_completion_tokens"] = value
+				delete(body, "max_tokens")
+			}
+			if cfg.ReasoningEffort == "off" {
+				body["reasoning_effort"] = "none"
+			}
+			for _, key := range []string{"temperature", "top_p", "frequency_penalty", "presence_penalty", "stop"} {
+				delete(body, key)
+			}
+		} else {
+			delete(body, "reasoning_effort")
+		}
+	}
 	return body
 }
 

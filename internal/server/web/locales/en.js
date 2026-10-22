@@ -3041,3 +3041,6 @@ Object.assign(window.aideEnglish, {
   "刷新失败，保留可用目录：": "Refresh failed; keeping the available catalog: ",
   "当前使用缓存目录；正在检查更新。": "Showing the cached catalog while checking for updates."
 });
+Object.assign(window.aideEnglish, {'按任务自动选择已配置模型 · 离线能力档案':'Choose configured models per task · offline capability catalog', '模型：{0}':'Model: {0}'});
+
+Object.assign(window.aideEnglish, {'Auto 模型路由 · {0} 次选择':'Auto model routing · {0} choices','生成提案':'Prepare proposal','拆分规划':'Plan subtasks','子任务分析':'Subtask analysis'});
