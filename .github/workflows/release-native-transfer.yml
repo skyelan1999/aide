@@ -64,8 +64,10 @@ jobs:
         with:
           ref: v0.1.17.5-RC3
       - name: Windows PowerShell 5.1 isolated bootstrap regression
-        shell: pwsh
-        run: python scripts/test_windows_image_slot.py --pwsh powershell.exe
+        shell: cmd
+        run: |
+          set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules"
+          python scripts/test_windows_image_slot.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
       - name: PowerShell 7 isolated bootstrap regression
         shell: pwsh
         run: python scripts/test_windows_image_slot.py --pwsh pwsh.exe
