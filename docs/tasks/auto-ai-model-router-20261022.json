@@ -1,0 +1,88 @@
+{
+  "id": "auto-ai-model-router-20261022",
+  "request": "实现 MIT AutoAiModelRouter 插件；安装启用后模型栏顶部 auto，1X 按编排切换，多倍速跨厂家/API/模型并行，官方能力预制、运行离线按名称匹配。",
+  "baseline": "2ee8a394a2c3b5ba84d1d5d4be218c124f29ff42",
+  "initial_status": "M compose.yaml\n?? \"compose 2.yaml\"\n?? docs/tasks/aide-compare-pull-20261020.json\n?? docs/tasks/aide-update-20261019.json\n?? docs/tasks/compare-sources-20261020.json\n?? docs/tasks/compare-unified-entry-20261020.json\n?? docs/tasks/knowledge-snapshot-query-20261019.json\n?? docs/tasks/modulebox-cad-20261018.json\n?? docs/tasks/pp-mobile-auto-save-20261021.json\n?? docs/tasks/pp-mobile-polish-20261021.json\n?? docs/tasks/pp-name-save-state-20261021.json\n?? docs/tasks/pp-scan-first-locations-20261021.json\n?? docs/tasks/pp-space-planning-20261021.json\n?? docs/tasks/pp-wbs-dependencies-20261021.json\n?? docs/tasks/starlink-plugin-20261019.json\n?? docs/tasks/testbench-live-integration-20261018.json",
+  "acceptance": [
+    "Enabled installed plugin adds top Auto model choice; disabled/uninstalled hides it",
+    "Auto choice session scoped and independent of parameter strategy",
+    "1X switches at orchestration boundaries; parallel workers use per-task model/provider/key without plugin credentials",
+    "Offline exact-name catalog with official sources, conservative unknown fallback and capability/context gates",
+    "Mock HTTP multi-provider concurrency/cancellation and browser install/menu acceptance; no paid calls"
+  ],
+  "scope": [
+    "internal/server/auto_model_router.go",
+    "internal/server/plugins.go",
+    "internal/server/session_model_selection.go",
+    "internal/server/workflow.go",
+    "internal/server/conversation_parallel.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/plugin-protocol.md",
+    "docs/prd/2026-10-22-auto-ai-model-router.md",
+    "sibling aide-pkg-AutoAiModelRouter",
+    "internal/server/provider.go",
+    "internal/server/auto_model_router_test.go",
+    "internal/server/web/parallel-chat.js",
+    "scripts/auto-model-router-ui.test.cjs",
+    "scripts/browser-auto-model-router.cjs",
+    "scripts/fixtures/auto-model-router-host.go.txt",
+    "docs/agent/router.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User-approved plugin build with offline official-source capability snapshot and host-managed providers; design recorded",
+      "evidence": [
+        "docs/prd/2026-10-22-auto-ai-model-router.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "User-approved plugin build with offline official-source capability snapshot and host-managed providers; design recorded",
+      "evidence": [
+        "docs/prd/2026-10-22-auto-ai-model-router.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "MIT offline plugin, host declaration/selection engine, per-provider concurrency and guarded wire adapters implemented",
+      "evidence": [
+        "docs/reviews/evidence/auto-model-router-20261022/acceptance.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Current delivery PASS: focused race 23.404s, quick 143 checks, actual isolated host browser, composer/session/parallel Node regression. Full image release gate deferred to combined Aide integration; no paid calls.",
+      "evidence": [
+        "docs/reviews/evidence/auto-model-router-20261022/browser-delivery.json",
+        "docs/reviews/auto-model-router-delivery-20261022.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD, protocol, README and redacted acceptance recorded",
+      "evidence": [
+        "docs/reviews/evidence/auto-model-router-20261022/acceptance.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned Safari QA tab closed; proxy and isolated QA containers stopped/removed; daily instance untouched",
+      "evidence": [
+        "docs/reviews/evidence/auto-model-router-20261022/acceptance.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No new Aide release or production deployment; user authorizes source push and separate MIT plugin prerelease after validation",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User: 你看看还有什么插件没push的都push一下，该release的都release一下; use owner-authenticated push exemption",
+  "rollback": "Disable/uninstall plugin or select manual model; daily runtime not replaced",
+  "handoff": "Host protocol 1 source delivery, real isolated UI and mock multi-provider regression; Aide RC3 packaged runtime does not include this extension. Parent will integrate with mounts/market and run full gate. No private plugin code or credentials in source.",
+  "deliveryBaseline": "86d7617c470a0505b9bcf2bdf5c0e044a22f5b98",
+  "issue": "https://github.com/skyelan1999/aide/issues/12"
+}

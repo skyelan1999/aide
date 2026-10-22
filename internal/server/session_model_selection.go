@@ -9,6 +9,7 @@ import (
 
 // Non-secret choices are session-owned; catalogs and credentials remain shared.
 type SessionModelSelection struct {
+	ModelRouter     string `json:"modelRouter,omitempty"`
 	Strategy        string `json:"strategy"`
 	Profile         string `json:"profile"`
 	Model           string `json:"model"`
@@ -118,6 +119,9 @@ func settingsForSelectedModel(cfg Settings, modelID string) (Settings, error) {
 	return cfg, nil
 }
 func (a *App) selectionSettingsLocked(choice SessionModelSelection) (Settings, error) {
+	if choice.ModelRouter != "" && choice.ModelRouter != "auto" {
+		return Settings{}, errors.New("无效模型路由模式")
+	}
 	if choice.Strategy != "auto" && choice.Strategy != "manual" {
 		return Settings{}, errors.New("策略只支持 manual 或 auto")
 	}
@@ -189,6 +193,12 @@ func (a *App) sessionModelSelectionHandler(w http.ResponseWriter, r *http.Reques
 	if in.Revision != nil && *in.Revision != s.ModelSelectionRevision {
 		fail(w, 409, errors.New("会话配置已变化，请重新选择"))
 		return
+	}
+	if choice.ModelRouter == "auto" {
+		if catalog, _ := a.modelRouterLocked(); catalog == nil {
+			fail(w, 400, errors.New("请先安装并启用有效的模型路由插件"))
+			return
+		}
 	}
 	if _, err := a.selectionSettingsLocked(choice); err != nil {
 		fail(w, 400, err)

@@ -43,9 +43,23 @@
     for (const part of parts) {
       const row = el('div', 'parallel-part');
       row.append(el('span', '', progress.round > 1 ? t('第 {0} 轮 · {1}', part.round || 1, part.title) : part.title), el('small', '', t(statuses[part.status] || '等待')));
+      if (part.model) row.append(el('small', '', t('模型：{0}', part.model)));
       panel.append(row);
     }
     return panel;
   }
-  window.AideParallelChat = {install, sync, set, value, render, normalize, choices};
+  function renderRoutes(run, {el, t, open}) {
+    if (!run.modelRoutes?.length) return null;
+    const panel = el('details', 'parallel-progress model-route-progress');
+    panel.dataset.key = run.id + ':model-routes'; panel.open = !!open?.has(panel.dataset.key);
+    panel.append(el('summary', '', t('Auto 模型路由 · {0} 次选择', run.modelRoutes.length)));
+    const stages = {plan:'规划', propose:'生成提案', review:'审核', chat:'执行', agent:'执行', 'parallel/plan':'拆分规划', 'parallel/part':'子任务分析'};
+    for (const route of run.modelRoutes) {
+      const row = el('div', 'parallel-part');
+      row.append(el('span', '', t(stages[route.stage] || '执行')), el('small', '', route.model + (route.provider ? ' · ' + route.provider : '')));
+      row.title = route.reason || ''; panel.append(row);
+    }
+    return panel;
+  }
+  window.AideParallelChat = {install, sync, set, value, render, renderRoutes, normalize, choices};
 })();

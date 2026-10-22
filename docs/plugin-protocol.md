@@ -428,6 +428,18 @@ workbench.fileExtensions 可声明最多 8 个不重复的小写扩展名，例�
 
 商店 listing 可提供有界 `routing:{keywords,extensions,summary}`，每次上架/升级构建自动生成索引；宿主默认后台更新，在本地匹配需求，只披露选中插件的工具 schema。`route_plugins` 可发现能力，用户单独开启自动安装后可安装缺少的官方公开兼容插件；不会覆盖已安装插件或重新启用已停用插件，也不会扩大执行权限。完整接口、授权与缓存边界见[插件路由](architecture/plugin-routing.md)。
 
+## 模型自动选型声明 · protocol 1 候选扩展（2026-10-22）
+
+manifest 可声明 `"modelRouter":{"protocol":1,"catalog":"capabilities.json"}`。档案为包内单个 JSON 文件（不允许路径、符号链接逃逸；最多128KiB、64个模型、16个角色规则）。宿主导入时验证结构，执行时在工作区启用插件中重新读取；仅一个有效声明可生效。该扩展当前为新源码候选，v0.1.17.5-RC2 尚未包含。
+
+档案包含 protocol/revision/checkedAt、sources[{id,url,assessment}]、models[{id,aliases,wireFormat,contextWindow,vision,tools,structured,weights,source}] 和 rules[{role,keywords}]。weights 的 coding/reasoning/writing/general/fast 为1–5维护者权重，不冒充官方评测得分；source 引用档案内 HTTPS 来源，不进行运行期请求。插件设置可提供 aliases（实际API名到档案ID显式映射）、preference=quality/balanced/fast。
+
+`GET /api/config` 与 `GET /api/plugins` 返回非秘密 modelRouter 状态；会话选择新增 `modelRouter:"auto"`，保留 model 作为手动回退。普通模型选择传 modelRouter 空串退出。宿主只向已配置的 OpenAI-compatible 地址发送请求，密钥从原 SecretVault 按提供商获取；插件不接收凭据。1X按请求阶段重选，多倍率为原有只读分析分路逐路选型；旧插件、普通会话和左侧参数策略不变。禁用/卸载或档案损坏保留回退模型。Task.modelRoutes 最多64项非秘密选择记录，ParallelPart 增加 model/provider；实际用量仍由每次请求归属。
+
+模型窗口取用户配置与档案上限较小值（未配按65536）；图片需宿主确认vision，工具/结构化显式unsupported优先。候选不足不静默扩大上下文或能力；API错误不自动轮试其他厂家。未知模型不作模糊猜测。官方API别名可能在提供商侧漂移，离线快照仅代表核对日，不能验证实际权重版本或实时最优性。
+
+wireFormat 可为 deepseek、openai-reasoning 或 openai-compatible（空值同通用兼容）。它仅选择宿主内置的有界参数转换，不声明新的传输协议：GPT 推理格式使用 max_completion_tokens 并去掉 DeepSeek thinking 和不兼容采样参数；通用网关省略厂商推理扩展。手动调用不应用该适配。请求间停用插件恢复会话手动回退，已发送请求继续服从原取消规则。
+
 ## 文件右键菜单入口
 
 Compare 的文件/文件夹右键入口为显式选择加入：插件设置 `fileContextMenu` 必须严格为布尔 `true`，并且插件已启用、无加载错误且具备 protocol 1 工作台。缺省、关闭、未安装、停用、卸载或无有效工作台均不添加 Compare 菜单项。Compare 插件通过自己的 `settingsSchema` 提供「将 Compare 添加到右键菜单」勾选框，默认关闭。
