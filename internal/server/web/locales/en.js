@@ -3046,3 +3046,36 @@ Object.assign(window.aideEnglish, {'按任务自动选择已配置模型 · 离�
 Object.assign(window.aideEnglish, {'Auto 模型路由 · {0} 次选择':'Auto model routing · {0} choices','生成提案':'Prepare proposal','拆分规划':'Plan subtasks','子任务分析':'Subtask analysis'});
 
 Object.assign(window.aideEnglish, {"添加 Windows 不同盘符或 macOS 外置硬盘中的目录。每个目录独立设置权限，默认只读。工作区与资料可使用这些目录，缓存保留在 Aide 数据区。":"Add folders from Windows drives or macOS external disks, each with independent permissions and read-only by default. Use them for workspace and reference files; cache remains in Aide data storage."});
+
+// Provider pricing and account balance controls.
+Object.assign(window.aideEnglish, {
+  "计价提供商": "Pricing provider",
+  "计价密钥": "Pricing key",
+  "计价模型": "Pricing model",
+  "默认费率适用于未单独配置的模型。选择提供商、密钥和模型可保存独立费率。": "Default rates apply when no specific rate is configured. Select a provider, key and model to save separate rates.",
+  "费用账户凭证": "Billing account credentials",
+  "费用查询使用独立 RAM AccessKey，只授予 QueryAccountBalance 只读权限。模型 API Key 无法替代；凭证仅保存到 Aide 加密保险库。": "Billing queries require a separate RAM AccessKey with only the read-only QueryAccountBalance permission. A model API key cannot replace it. Credentials are stored only in the Aide encrypted vault.",
+  "保存费用凭证": "Save billing credentials",
+  "清除费用凭证": "Clear billing credentials",
+  "未记录密钥": "Key not recorded",
+  "该密钥逐调用快照合计，包含估算；历史记录不按当前费率重算。": "Total from this key’s per-call snapshots, including estimates. Historical records are not recalculated at current rates.",
+  "（其中估算 ¥{0}）": " (including ¥{0} estimated)",
+  "当日模型与密钥费用明细": "Daily cost details by model and key",
+  "未记录模型": "Model not recorded",
+  "调用快照": "Call snapshot",
+  "按插件费率与调用用量快照计算 · 悬停查看明细": "Calculated from plugin rates and usage snapshots · Hover for details",
+  "恢复自动或默认费率": "Restore automatic or default rates",
+  "所有密钥": "All keys",
+  "默认费率": "Default rates",
+  "由 {0} 提供自动计价；实际费用按每次调用的阶梯、模式与用量保存快照。": "Automatic pricing from {0}. Each call records its pricing tier, mode and usage in a cost snapshot.",
+  "支持插件": "support plugin",
+  "自定义费率按调用快照计算；未配置范围使用默认费率估算。历史费用不会重算。": "Custom rates are recorded per call. Unconfigured scopes use default-rate estimates. Historical costs are not recalculated.",
+  "费用凭证已配置；输入新值可替换。": "Billing credentials are configured. Enter new values to replace them.",
+  "尚未配置费用凭证": "Billing credentials are not configured",
+  "此提供商未启用余额支持插件": "No balance support plugin is enabled for this provider",
+  "余额查询需要费用账户凭证": "Balance queries require billing account credentials",
+  "可用额度 {0}": "Available funds {0}",
+  "来自服务商费用账户，可能包含信用额度；不等于现金或模型免费额度。": "From the provider billing account; this may include credit. It is not the cash balance or free model quota.",
+  "请填写完整费用凭证": "Enter both billing credential fields",
+  "全局默认": "Global default"
+});

@@ -37,6 +37,8 @@ const (
 var pluginIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
 type PluginWorkbench struct {
+	ProfessionalWorkflow bool `json:"professionalWorkflow,omitempty"`
+
 	MobileCapture  bool               `json:"mobileCapture,omitempty"`
 	FileHandler    *PluginFileHandler `json:"fileHandler,omitempty"`
 	FileExtensions []string           `json:"fileExtensions,omitempty"`
@@ -49,7 +51,8 @@ type PluginWorkbench struct {
 }
 
 type PluginManifest struct {
-	ModelRouter *PluginModelRouter `json:"modelRouter,omitempty"`
+	ProviderSupport *PluginProviderSupport `json:"providerSupport,omitempty"`
+	ModelRouter     *PluginModelRouter     `json:"modelRouter,omitempty"`
 
 	Workbench      *PluginWorkbench `json:"workbench,omitempty"`
 	ID             string           `json:"id"`
@@ -185,7 +188,7 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 			"workbench":      p.Workbench,
 		})
 	}
-	jsonOut(w, 200, map[string]any{"plugins": items, "modelRouter": a.modelRouterStatusLocked()})
+	jsonOut(w, 200, map[string]any{"plugins": items, "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked()})
 }
 
 // pluginSettingsSchema reads the schema from the installed plugin manifest so
@@ -489,6 +492,9 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 		return PluginManifest{}, nil, errors.New("插件入口缺失或超过 256 KiB")
 	}
 	if manifest.Workbench != nil {
+		if manifest.Workbench.ProfessionalWorkflow && manifest.ID != "professional-workflow" {
+			return PluginManifest{}, nil, errors.New("professionalWorkflow 为 ProfessionalWorkflow 专用宿主能力")
+		}
 		if err := validatePluginWorkbench(manifest.Workbench); err != nil {
 			return PluginManifest{}, nil, err
 		}
@@ -498,6 +504,9 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 		}
 	}
 	if err := validatePluginModelRouter(manifest.ModelRouter, packageFiles); err != nil {
+		return PluginManifest{}, nil, err
+	}
+	if err := validatePluginProviderSupport(manifest.ProviderSupport, packageFiles); err != nil {
 		return PluginManifest{}, nil, err
 	}
 	manifest.Main = main
@@ -587,7 +596,7 @@ func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
 	}
 	manifest.Enabled = true
 	manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
-	if err := atomicJSON(filepath.Join(stage, "manifest.json"), manifest); err != nil {
+	if err := writeInstalledPluginManifest(stage, manifest, packageFiles); err != nil {
 		fail(w, 500, err)
 		return
 	}
@@ -1017,4 +1026,21 @@ func builtinToolNames() []string {
 		}
 	}
 	return names
+}
+
+// Mutable installation state belongs to registry.json. Signed PW assets must
+// retain their exact package bytes for both first installation and upgrades.
+func writeInstalledPluginManifest(directory string, manifest PluginManifest, files map[string][]byte) error {
+	if manifest.ID == "professional-workflow" && manifest.Workbench != nil && manifest.Workbench.ProfessionalWorkflow {
+		raw := files["manifest.json"]
+		if len(raw) == 0 {
+			return errors.New("PW signed package manifest missing")
+		}
+		if err := os.WriteFile(filepath.Join(directory, "manifest.json"), raw, 0644); err != nil {
+			return err
+		}
+		_, err := loadPWRuntime(directory)
+		return err
+	}
+	return atomicJSON(filepath.Join(directory, "manifest.json"), manifest)
 }

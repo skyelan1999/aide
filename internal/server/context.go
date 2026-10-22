@@ -758,6 +758,10 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	if in.Mode == "pw" {
+		jsonOut(w, 200, map[string]any{"contextWindow": 0, "inputEstimate": 0, "outputReserve": 0, "totalEstimate": 0, "overLimit": false, "messages": []any{}, "pw": true})
+		return
+	}
 	in.Prompt = strings.TrimSpace(in.Prompt)
 	if (in.Prompt == "" && !in.Baseline) || len(in.Prompt) > 20000 {
 		fail(w, 400, errors.New("请输入 1–20000 字节的任务"))

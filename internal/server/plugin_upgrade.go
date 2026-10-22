@@ -716,7 +716,7 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	manifest.PackageSHA256 = sum
 	manifest.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	manifest.UpgradeBackup = ".upgrade-backup-" + id + "-" + newID()
-	if err = atomicJSON(filepath.Join(candidate, "manifest.json"), manifest); err != nil {
+	if err = writeInstalledPluginManifest(candidate, manifest, files); err != nil {
 		restartOld()
 		fail(w, 500, err)
 		return

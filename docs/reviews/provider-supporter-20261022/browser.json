@@ -1,0 +1,34 @@
+{
+  "kind": "full production-embedded Aide UI, isolated Docker, actual plugin uploader and real HTTP APIs",
+  "binarySha256": "fe4280465dcce1cad4302216a8dd03414d3c4d6bda2afeabfb45285b2cd3193d",
+  "appJsSha256": "75b2e78ca4dff430f3b262d675076fb94ab18537731a92989ef5fda68786f0f3",
+  "packages": {
+    "deepseek": "3568ec13d2a604ce32c7c81ea8373b96116fcada44876ae3cbc7d20d71d5f9d3",
+    "ali": "89cdbee4c3a79e84409741f3a2d78ffcbd54a967db6f06671a608d23f76b733f"
+  },
+  "checks": {
+    "actualZipUpload": true,
+    "initialActiveProviderKeyModel": true,
+    "exactKeyPriceWrite35andZeroOutput": true,
+    "otherKeyUnaffected": true,
+    "clearOverrideReturnsOfficial": true,
+    "disabledPluginManualFallback": true,
+    "disabledPluginBalanceUnsupported": true,
+    "optionalAliBillingForm": true,
+    "fakeCredentialsPersistedInVault": true,
+    "passwordInputsImmediatelyCleared": true,
+    "billingCredentialsCleared": true,
+    "perKeyCostFromTwoSyntheticHistoricalCalls": true,
+    "dayDetailIncludesModelAndTwoKeyLabels": true,
+    "modelAllKeysRatePersistsAcrossSettingsReopen": true,
+    "historicalCostUnchanged": 0.009000000000000001,
+    "narrow390BothPalettesBothModes": true,
+    "narrowPanelClientAndScroll": 368
+  },
+  "pageErrors": [],
+  "limits": [
+    "Only synthetic history/config/credentials. No real provider credentials, inference, paid calls or external balance calls.",
+    "Runtime HTTP and HTTPS outbound proxy set to unavailable loopback127.0.0.1:9; DeepSeek query displays failure, Ali without billing credentials displays setup.",
+    "Screenshots are full actual embedded application, not earlier component fixture."
+  ]
+}

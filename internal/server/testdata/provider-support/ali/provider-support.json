@@ -1,0 +1,258 @@
+{
+  "protocol": 1,
+  "id": "ali-bailian",
+  "name": "阿里云百炼（北京）",
+  "revision": "2026-10-22",
+  "currency": "CNY",
+  "sources": [
+    "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "https://help.aliyun.com/zh/model-studio/context-cache",
+    "https://www.alibabacloud.com/help/en/user-center/developer-reference/api-bssopenapi-2017-12-14-queryaccountbalance",
+    "https://www.alibabacloud.com/help/en/user-center/developer-reference/api-bssopenapi-2017-12-14-endpoint",
+    "https://help.aliyun.com/en/user-center/developer-reference/api-calling-authorization"
+  ],
+  "providers": [
+    {
+      "host": "dashscope.aliyuncs.com",
+      "paths": [
+        "",
+        "/compatible-mode/v1",
+        "/api/v1"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "names": [
+        "qwen3.8-max",
+        "qwen3.8-max-0902",
+        "qwen3.7-max",
+        "qwen3.7-max-2026-05-20",
+        "qwen3.7-max-2026-06-08"
+      ],
+      "tiers": [
+        {
+          "maxInput": 1000000,
+          "priceIn": 12,
+          "priceOut": 36
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen3.8-flash"
+      ],
+      "tiers": [
+        {
+          "maxInput": 1000000,
+          "priceIn": 0.8,
+          "priceOut": 2.7
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen3.7-plus",
+        "qwen3.7-plus-2026-05-26"
+      ],
+      "tiers": [
+        {
+          "maxInput": 256000,
+          "priceIn": 2,
+          "priceOut": 8
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 6,
+          "priceOut": 24
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen3.6-plus",
+        "qwen3.6-plus-2026-04-02"
+      ],
+      "tiers": [
+        {
+          "maxInput": 256000,
+          "priceIn": 2,
+          "priceOut": 12
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 8,
+          "priceOut": 48
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen3.5-plus",
+        "qwen3.5-plus-2026-02-15",
+        "qwen3.5-plus-2026-04-20"
+      ],
+      "tiers": [
+        {
+          "maxInput": 128000,
+          "priceIn": 0.8,
+          "priceOut": 4.8
+        },
+        {
+          "maxInput": 256000,
+          "priceIn": 2,
+          "priceOut": 12
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 4,
+          "priceOut": 24
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen3.7-flash",
+        "qwen3.7-flash-2026-07-15"
+      ],
+      "tiers": [
+        {
+          "maxInput": 32000,
+          "priceIn": 0.2,
+          "priceOut": 0.8
+        },
+        {
+          "maxInput": 256000,
+          "priceIn": 0.6,
+          "priceOut": 2.4
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 1.2,
+          "priceOut": 4.8
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen3.6-flash",
+        "qwen3.6-flash-2026-04-16"
+      ],
+      "tiers": [
+        {
+          "maxInput": 256000,
+          "priceIn": 1.2,
+          "priceOut": 7.2
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 4.8,
+          "priceOut": 28.8
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen3.5-flash",
+        "qwen3.5-flash-2026-02-23"
+      ],
+      "tiers": [
+        {
+          "maxInput": 128000,
+          "priceIn": 0.2,
+          "priceOut": 2
+        },
+        {
+          "maxInput": 256000,
+          "priceIn": 0.8,
+          "priceOut": 8
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 1.2,
+          "priceOut": 12
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen-flash",
+        "qwen-flash-2025-07-28"
+      ],
+      "tiers": [
+        {
+          "maxInput": 128000,
+          "priceIn": 0.15,
+          "priceOut": 1.5
+        },
+        {
+          "maxInput": 256000,
+          "priceIn": 0.6,
+          "priceOut": 6
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 1.2,
+          "priceOut": 12
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen-max"
+      ],
+      "tiers": [
+        {
+          "maxInput": 0,
+          "priceIn": 2.4,
+          "priceOut": 9.6
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen-long"
+      ],
+      "tiers": [
+        {
+          "maxInput": 0,
+          "priceIn": 0.5,
+          "priceOut": 2
+        }
+      ]
+    },
+    {
+      "names": [
+        "qwen-plus",
+        "qwen-plus-latest",
+        "qwen-plus-2025-12-01"
+      ],
+      "tiers": [
+        {
+          "maxInput": 128000,
+          "priceIn": 0.8,
+          "priceOut": 2,
+          "priceOutThinking": 8
+        },
+        {
+          "maxInput": 256000,
+          "priceIn": 2.4,
+          "priceOut": 20,
+          "priceOutThinking": 24
+        },
+        {
+          "maxInput": 1000000,
+          "priceIn": 4.8,
+          "priceOut": 48,
+          "priceOutThinking": 64
+        }
+      ]
+    }
+  ],
+  "balance": {
+    "endpoint": "https://business.aliyuncs.com/",
+    "auth": "aliyun-rpc",
+    "totalPath": "Data.AvailableAmount",
+    "format": "aliyun-account-balance"
+  }
+}

@@ -216,7 +216,7 @@ func (a *App) modelProvidersOut() []modelProviderOut {
 func (a *App) modelSettingsWithAPIKey(cfg Settings) (Settings, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	key, err := a.modelAPIKeyLocked()
+	key, err := a.modelAPIKeyForConfigLocked(cfg)
 	if err != nil {
 		return cfg, err
 	}

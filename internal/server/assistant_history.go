@@ -131,6 +131,7 @@ func (a *App) xiaomiModelConfigLocked() (Settings, error) {
 		cfg.APIKey = key
 		return cfg, err
 	}
+	cfg.billingIsolated = true
 	cfg.BaseURL, cfg.Model, cfg.ActiveModel = cfg.XiaomiBaseURL, cfg.XiaomiModel, cfg.XiaomiModel
 	cfg.Models = []ModelRef{{ID: cfg.XiaomiModel, Name: cfg.XiaomiModel, ContextWindow: defaultContextWindow}}
 	cfg.APIKey = ""

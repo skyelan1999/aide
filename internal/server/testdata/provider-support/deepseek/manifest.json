@@ -1,0 +1,14 @@
+{
+  "id": "deepseek-supporter",
+  "name": "DeepSeekSupporter",
+  "version": "0.1.0",
+  "description": "DeepSeek 官方端点离线刊例价、峰谷日历和只读余额协议声明；凭证由 Aide 保管。",
+  "author": "skyelan1999",
+  "license": "MIT",
+  "main": "index.js",
+  "homepage": "https://github.com/skyelan1999/aide-pkg-DeepSeekSupporter",
+  "providerSupport": {
+    "protocol": 1,
+    "catalog": "provider-support.json"
+  }
+}

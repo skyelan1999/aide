@@ -21,6 +21,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"math"
 	"math/big"
 	"net"
 	"net/http"
@@ -76,7 +77,8 @@ type providerKeyWrite struct {
 }
 
 type Settings struct {
-	routedProfile *routerProfile // Request-local plugin declaration; never serialized or saved.
+	billingIsolated bool           // A separate credential must never inherit the global provider key identity.
+	routedProfile   *routerProfile // Request-local plugin declaration; never serialized or saved.
 
 	AgentManagement        AgentManagementPermissions `json:"agentManagement"`
 	AssistantAutoReview    bool                       `json:"assistantAutoReview,omitempty"`
@@ -686,12 +688,16 @@ type Pricing struct {
 // PricingState 服务端计价状态：按模型费率 + 未配置模型的刊例默认价。
 // 显式配置（含 0/0 免费）优先于默认；默认价仅用于从未配置过的模型，且记录必须标记 defaulted。
 type PricingState struct {
-	Rates   map[string]Pricing `json:"rates"`
-	Default Pricing            `json:"default"`
+	KeyRates map[string]Pricing `json:"keyRates,omitempty"`
+	Rates    map[string]Pricing `json:"rates"`
+	Default  Pricing            `json:"default"`
 }
 
 // TokenCallRec 逐调用记录（R08）：来源、模型、计价快照、费用。
 type TokenCallRec struct {
+	ProviderID       string  `json:"providerId,omitempty"`
+	KeyID            string  `json:"keyId,omitempty"`
+	KeyLabel         string  `json:"keyLabel,omitempty"`
 	Time             string  `json:"time"`
 	Model            string  `json:"model"`
 	Provider         string  `json:"provider,omitempty"`
@@ -711,60 +717,6 @@ type TokenCallRec struct {
 	PriceInCacheMiss float64 `json:"priceInCacheMiss,omitempty"`
 	PriceOut         float64 `json:"priceOut"`
 	Cost             float64 `json:"cost"`
-}
-
-// DeepSeek's published rates are CNY per million tokens. Cache-hit and
-// cache-miss input tokens have distinct prices, with peak-hour multipliers.
-func deepSeekRate(model string, at time.Time) (modelName string, priceInHit, priceInMiss, priceOut float64, peak bool) {
-	if strings.EqualFold(model, "deepseek-flash") || strings.EqualFold(model, "deepseek-v4-flash") || strings.EqualFold(model, "deepseek-v4-flash-vision-exp") {
-		modelName, priceInHit, priceInMiss, priceOut = "deepseek-flash", 0.02, 1, 4
-	} else if strings.EqualFold(model, "deepseek-v4-pro") {
-		modelName, priceInHit, priceInMiss, priceOut = "deepseek-v4-pro", 0.15, 4.5, 13.5
-	} else {
-		return "", 0, 0, 0, false
-	}
-	peak = deepSeekPeakHour(at)
-	if peak {
-		priceInHit *= 2
-		priceInMiss *= 2
-		priceOut *= 2
-	}
-	return
-}
-
-func isDeepSeekProvider(baseURL string) bool {
-	u, err := url.Parse(strings.TrimSpace(baseURL))
-	return err == nil && strings.EqualFold(u.Hostname(), "api.deepseek.com")
-}
-
-func deepSeekPeakHour(at time.Time) bool {
-	loc, err := time.LoadLocation("Asia/Shanghai")
-	if err != nil {
-		loc = time.FixedZone("CST", 8*60*60)
-	}
-	local := at.In(loc)
-	if local.Weekday() == time.Saturday || local.Weekday() == time.Sunday || isChinaPublicHoliday2026(local) {
-		return false
-	}
-	hour := local.Hour()
-	return hour >= 9 && hour < 12 || hour >= 14 && hour < 18
-}
-
-// Official holiday periods published by the State Council for 2026.
-// Weekends remain idle even when they are make-up working days, per DeepSeek.
-func isChinaPublicHoliday2026(at time.Time) bool {
-	date := at.Format("2006-01-02")
-	for _, span := range [][2]string{
-		{"2026-01-01", "2026-01-03"}, {"2026-02-15", "2026-02-23"},
-		{"2026-04-04", "2026-04-06"}, {"2026-05-01", "2026-05-05"},
-		{"2026-06-19", "2026-06-21"}, {"2026-09-25", "2026-09-27"},
-		{"2026-10-01", "2026-10-07"},
-	} {
-		if date >= span[0] && date <= span[1] {
-			return true
-		}
-	}
-	return false
 }
 
 // TokenDay 单日 Token 消耗（FR-90）。Priced 表示该日累计时存在计价快照；
@@ -1057,11 +1009,17 @@ func New(work, reference, data string) (*App, error) {
 					pr.Rates = map[string]Pricing{}
 				}
 				for m, v := range pr.Rates {
-					if v.PriceIn < 0 || v.PriceOut < 0 {
+					if !validSupportPrice(v.PriceIn) || !validSupportPrice(v.PriceOut) {
 						delete(pr.Rates, m) // 非法费率不采纳
 					}
 				}
-				if pr.Default.PriceIn < 0 || pr.Default.PriceOut < 0 {
+				for k, v := range pr.KeyRates {
+					var parts []string
+					if json.Unmarshal([]byte(k), &parts) != nil || len(parts) != 3 || !validSupportPrice(v.PriceIn) || !validSupportPrice(v.PriceOut) {
+						delete(pr.KeyRates, k)
+					}
+				}
+				if !validSupportPrice(pr.Default.PriceIn) || !validSupportPrice(pr.Default.PriceOut) {
 					pr.Default = Pricing{PriceIn: 2, PriceOut: 8}
 				}
 				a.pricing = pr
@@ -1493,6 +1451,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/models", a.listModels)
 	mux.HandleFunc("POST /api/models", a.listModels)
 	mux.HandleFunc("GET /api/balance", a.listBalance)
+	mux.HandleFunc("GET /api/provider-billing-credentials", a.providerBillingCredentials)
+	mux.HandleFunc("PUT /api/provider-billing-credentials", a.providerBillingCredentials)
 	mux.HandleFunc("GET /api/profiles", a.listProfiles)
 	mux.HandleFunc("GET /api/management-proposals", a.listManagementProposals)
 	mux.HandleFunc("GET /api/management-proposals/{id}", a.getManagementProposal)
@@ -1505,6 +1465,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugin-license/device", a.pluginLicenseDeviceAPI)
 	mux.HandleFunc("POST /api/plugin-market/{id}/install", a.marketInstall)
 	mux.HandleFunc("GET /api/plugin-market/{id}/download", a.marketDownload)
+	mux.HandleFunc("POST /api/professional-workflow/control", a.pwControlHTTP)
 	mux.HandleFunc("GET /api/plugins/file-handlers", a.listPluginFileHandlers)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
@@ -1792,7 +1753,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -3248,8 +3209,9 @@ func Run() error {
 
 // recordTokenUsage 累计当日 Token 消耗并持久化到 /data/token-stats.json（FR-90）。
 func (a *App) recordTokenUsage(u TokenUsage) {
-	a.tokenStatsMu.Lock()
 	now := time.Now()
+	quote := a.providerQuote(u.Provider, u.Model, u.Prompt, now)
+	a.tokenStatsMu.Lock()
 	day := now.UTC().Format("2006-01-02")
 	d := a.tokenStats[day]
 	d.Prompt += u.Prompt
@@ -3265,29 +3227,54 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	if !configured {
 		entry = a.pricing.Default
 	}
-	rec := TokenCallRec{Time: now.UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, CacheHit: u.CacheHit, CacheMiss: u.CacheMiss, CacheKnown: u.CacheKnown, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, CostEstimated: u.Estimated, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
-	if isDeepSeekProvider(u.Provider) {
-		if officialModel, hitRate, missRate, outputRate, peak := deepSeekRate(u.Model, now); officialModel != "" {
-			rec.RateSource = "deepseek-official"
-			rec.Defaulted = false
-			rec.Peak = peak
-			rec.PriceIn = missRate // legacy clients still see the conservative cache-miss input rate
-			rec.PriceInCacheHit, rec.PriceInCacheMiss, rec.PriceOut = hitRate, missRate, outputRate
-			if !rec.CacheKnown {
-				rec.CacheMiss = rec.Prompt
-				rec.CostEstimated = true // usage lacks cache breakdown; estimate conservatively as cache miss
-			}
-			rec.Cost = (float64(rec.CacheHit)*hitRate + float64(rec.CacheMiss)*missRate + float64(rec.Completion)*outputRate) / 1e6
-		} else {
-			rec.RateSource = "custom"
-		}
-	} else if configured {
+	scoped, scopedConfigured := a.pricing.KeyRates[billingScope(u.ProviderID, u.KeyID, u.Model)]
+	if !scopedConfigured && u.ProviderID != "" {
+		scoped, scopedConfigured = a.pricing.KeyRates[billingScope(u.ProviderID, "", u.Model)]
+	}
+	if scopedConfigured {
+		entry = scoped
+		configured = true
+		quote = nil
+	}
+	rec := TokenCallRec{ProviderID: u.ProviderID, KeyID: u.KeyID, KeyLabel: u.KeyLabel, Time: now.UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, CacheHit: u.CacheHit, CacheMiss: u.CacheMiss, CacheKnown: u.CacheKnown, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, CostEstimated: u.Estimated, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
+	if configured {
 		rec.RateSource = "custom"
 	} else {
 		rec.RateSource = "default-estimate"
 	}
-	if rec.RateSource != "deepseek-official" {
-		rec.Cost = float64(rec.Prompt)*rec.PriceIn/1e6 + float64(rec.Completion)*rec.PriceOut/1e6
+	if quote != nil {
+		rec.RateSource = "plugin:" + quote.Source + ":" + quote.Revision
+		rec.Defaulted = false
+		rec.Peak = quote.Peak
+		rec.PriceIn = quote.Tier.PriceIn
+		rec.PriceOut = quote.Tier.PriceOut
+		rec.CostEstimated = rec.CostEstimated || quote.Estimated
+		if quote.Tier.PriceOutThinking != nil {
+			if u.ReasoningKnown {
+				if u.Reasoning {
+					rec.PriceOut = *quote.Tier.PriceOutThinking
+				}
+			} else {
+				rec.PriceOut = math.Max(rec.PriceOut, *quote.Tier.PriceOutThinking)
+				rec.CostEstimated = true
+			}
+		}
+		if quote.Tier.PriceInCacheHit != nil {
+			rec.PriceInCacheHit = *quote.Tier.PriceInCacheHit
+			rec.PriceInCacheMiss = rec.PriceIn
+			if !rec.CacheKnown {
+				rec.CacheMiss = rec.Prompt
+				rec.CostEstimated = true
+			}
+			rec.Cost = (float64(rec.CacheHit)*rec.PriceInCacheHit + float64(rec.CacheMiss)*rec.PriceIn + float64(rec.Completion)*rec.PriceOut) / 1e6
+		} else {
+			rec.Cost = (float64(rec.Prompt)*rec.PriceIn + float64(rec.Completion)*rec.PriceOut) / 1e6
+			if rec.CacheHit > 0 {
+				rec.CostEstimated = true
+			}
+		}
+	} else {
+		rec.Cost = (float64(rec.Prompt)*rec.PriceIn + float64(rec.Completion)*rec.PriceOut) / 1e6
 	}
 	a.tokenCalls = append(a.tokenCalls, rec)
 	if len(a.tokenCalls) > 5000 {
@@ -3301,46 +3288,58 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		a.mu.Lock()
-		active := a.settings.Model
-		baseURL := a.settings.BaseURL
+		model := r.URL.Query().Get("model")
+		if model == "" {
+			model = a.settings.Model
+		}
+		p, kid, err := a.billingTargetLocked(r.URL.Query().Get("providerId"), r.URL.Query().Get("keyId"), model)
+		if err != nil && r.URL.Query().Get("providerId") == "" && r.URL.Query().Get("keyId") == "" {
+			p = ModelProvider{BaseURL: a.settings.BaseURL}
+			kid = ""
+			err = nil
+		}
 		a.mu.Unlock()
-		a.tokenStatsMu.Lock()
-		p := a.pricing
-		a.tokenStatsMu.Unlock()
-		entry, configured := p.Rates[active]
-		if !configured {
-			entry = p.Default
+		if err != nil {
+			fail(w, 400, err)
+			return
 		}
-		deepSeekProvider := isDeepSeekProvider(baseURL)
-		_, hitRate, missRate, outputRate, peak := deepSeekRate(active, time.Now())
-		official := deepSeekProvider && hitRate > 0
-		if official {
-			entry.PriceIn, entry.PriceOut = missRate, outputRate
-			configured = true
+		if r.URL.Query().Get("providerId") != "" && r.URL.Query().Get("keyId") == "" {
+			kid = ""
 		}
-		jsonOut(w, 200, map[string]any{
-			"priceIn":          entry.PriceIn,
-			"priceOut":         entry.PriceOut,
-			"model":            active,
-			"defaulted":        !configured,
-			"rates":            p.Rates,
-			"default":          p.Default,
-			"official":         official,
-			"deepSeekProvider": deepSeekProvider,
-			"priceInCacheHit":  hitRate,
-			"priceInCacheMiss": missRate,
-			"peak":             peak,
-		})
+		jsonOut(w, 200, a.resolvedPricing(p.BaseURL, model, p.ID, kid, r.URL.Query().Get("scope") == "default"))
 		return
 	}
 	var in struct {
-		Model    string  `json:"model"`
-		PriceIn  float64 `json:"priceIn"`
-		PriceOut float64 `json:"priceOut"`
+		Scope      string   `json:"scope"`
+		Clear      bool     `json:"clear"`
+		ProviderID string   `json:"providerId"`
+		KeyID      string   `json:"keyId"`
+		Model      string   `json:"model"`
+		PriceIn    *float64 `json:"priceIn"`
+		PriceOut   *float64 `json:"priceOut"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
 		return
+	}
+	if in.Scope != "" && in.Scope != "default" {
+		fail(w, 400, errors.New("invalid pricing scope"))
+		return
+	}
+	if in.Scope == "default" && (in.ProviderID != "" || in.KeyID != "" || in.Clear) {
+		fail(w, 400, errors.New("default pricing cannot be combined with a specific scope or clear"))
+		return
+	}
+	if !in.Clear && (in.PriceIn == nil || in.PriceOut == nil) {
+		fail(w, 400, errors.New("explicit input and output prices are required; zero means free"))
+		return
+	}
+	priceIn, priceOut := 0.0, 0.0
+	if in.PriceIn != nil {
+		priceIn = *in.PriceIn
+	}
+	if in.PriceOut != nil {
+		priceOut = *in.PriceOut
 	}
 	in.Model = strings.TrimSpace(in.Model)
 	if in.Model == "" {
@@ -3348,23 +3347,51 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 		in.Model = a.settings.Model
 		a.mu.Unlock()
 	}
-	if in.Model == "" {
+	if in.Model == "" && in.Scope != "default" {
 		fail(w, 400, errors.New("请先配置当前模型，或显式指定 model"))
 		return
 	}
-	if in.PriceIn < 0 || in.PriceOut < 0 {
+	if !validSupportPrice(priceIn) || !validSupportPrice(priceOut) {
 		fail(w, 400, errors.New("费率必须 ≥ 0（0 为合法免费，不等于留空）"))
 		return
 	}
+	if in.ProviderID == "" && in.KeyID != "" {
+		fail(w, 400, errors.New("providerId and keyId must be supplied together"))
+		return
+	}
+	if in.ProviderID != "" {
+		a.mu.Lock()
+		_, _, err := a.billingTargetLocked(in.ProviderID, in.KeyID, in.Model)
+		a.mu.Unlock()
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+	}
 	a.tokenStatsMu.Lock()
-	a.pricing.Rates[in.Model] = Pricing{PriceIn: in.PriceIn, PriceOut: in.PriceOut}
+	if in.Clear {
+		if in.ProviderID != "" {
+			delete(a.pricing.KeyRates, billingScope(in.ProviderID, in.KeyID, in.Model))
+		} else {
+			delete(a.pricing.Rates, in.Model)
+		}
+	} else if in.Scope == "default" {
+		a.pricing.Default = Pricing{PriceIn: priceIn, PriceOut: priceOut}
+	} else if in.ProviderID != "" {
+		if a.pricing.KeyRates == nil {
+			a.pricing.KeyRates = map[string]Pricing{}
+		}
+		a.pricing.KeyRates[billingScope(in.ProviderID, in.KeyID, in.Model)] = Pricing{PriceIn: priceIn, PriceOut: priceOut}
+	} else {
+		a.pricing.Rates[in.Model] = Pricing{PriceIn: priceIn, PriceOut: priceOut}
+	}
 	err := atomicJSON(TokenPricingPath(a.dataPath), a.pricing)
 	a.tokenStatsMu.Unlock()
 	if err != nil {
 		fail(w, 500, err)
 		return
 	}
-	jsonOut(w, 200, map[string]any{"model": in.Model, "priceIn": in.PriceIn, "priceOut": in.PriceOut})
+	jsonOut(w, 200, map[string]any{"model": in.Model, "priceIn": priceIn, "priceOut": priceOut})
 }
 
 func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
@@ -3372,6 +3399,10 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 	active := a.settings.Model
 	baseURL := a.settings.BaseURL
 	a.mu.Unlock()
+	a.mu.Lock()
+	provider, keyID, _ := a.billingTargetLocked("", "", active)
+	a.mu.Unlock()
+	pricingSnapshot := a.resolvedPricing(baseURL, active, provider.ID, keyID, false)
 	a.tokenStatsMu.Lock()
 	defer a.tokenStatsMu.Unlock()
 	totals := TokenDay{}
@@ -3401,7 +3432,28 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 	estimatedCost := 0.0
 	modelCost := map[string]float64{}
 	perModel := map[string]TokenDay{}
+	keyCost := map[string]float64{}
+	keyModelCost := map[string]float64{}
+	keyEstimatedCost := map[string]float64{}
+	keyModelEstimatedCost := map[string]float64{}
+	perKey := map[string]TokenDay{}
 	for _, c := range a.tokenCalls {
+		scope := c.ProviderID + ":" + c.KeyID
+		if c.ProviderID == "" || c.KeyID == "" {
+			scope = "unknown"
+		}
+		kd := perKey[scope]
+		kd.Prompt += c.Prompt
+		kd.Completion += c.Completion
+		kd.Total += c.Total
+		kd.Calls++
+		perKey[scope] = kd
+		keyCost[scope] += c.Cost
+		keyModelCost[billingScope(c.ProviderID, c.KeyID, c.Model)] += c.Cost
+		if c.CostEstimated || c.Defaulted {
+			keyEstimatedCost[scope] += c.Cost
+			keyModelEstimatedCost[billingScope(c.ProviderID, c.KeyID, c.Model)] += c.Cost
+		}
 		m := perModel[c.Model]
 		m.Prompt += c.Prompt
 		m.Completion += c.Completion
@@ -3415,17 +3467,6 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		totalCost += c.Cost
 		modelCost[c.Model] += c.Cost
 	}
-	entry, configured := a.pricing.Rates[active]
-	if !configured {
-		entry = a.pricing.Default
-	}
-	_, hitRate, missRate, outputRate, peak := deepSeekRate(active, time.Now())
-	deepSeekProvider := isDeepSeekProvider(baseURL)
-	official := deepSeekProvider && hitRate > 0
-	if official {
-		entry.PriceIn, entry.PriceOut = missRate, outputRate
-		configured = true
-	}
 	jsonOut(w, 200, map[string]any{
 		"days":          a.tokenStats,
 		"totals":        totals,
@@ -3433,21 +3474,10 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		"cost":          totalCost,
 		"estimatedCost": estimatedCost,
 		"modelCost":     modelCost,
-		"perModel":      perModel,
-		"pricing": map[string]any{
-			"priceIn":          entry.PriceIn,
-			"priceOut":         entry.PriceOut,
-			"defaulted":        !configured,
-			"rates":            a.pricing.Rates,
-			"default":          a.pricing.Default,
-			"official":         official,
-			"deepSeekProvider": deepSeekProvider,
-			"model":            active,
-			"priceInCacheHit":  hitRate,
-			"priceInCacheMiss": missRate,
-			"peak":             peak,
-		},
-		"calls": len(a.tokenCalls),
+		"keyCost":       keyCost, "perKey": perKey, "keyModelCost": keyModelCost, "keyEstimatedCost": keyEstimatedCost, "keyModelEstimatedCost": keyModelEstimatedCost,
+		"perModel": perModel,
+		"pricing":  pricingSnapshot,
+		"calls":    len(a.tokenCalls),
 		// R08：已计价/未计价拆分；旧版汇总没有逐调用与计价证据，费用必须显示为未知
 		"pricedTotals":   priced,
 		"unpricedTotals": unpriced,

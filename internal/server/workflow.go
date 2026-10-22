@@ -74,6 +74,8 @@ type AgentRoot struct {
 }
 
 type Task struct {
+	PW *pwExecution `json:"pw,omitempty"`
+
 	pluginRouteToolNames     map[string]bool
 	PluginRoutes             []string                  `json:"pluginRoutes,omitempty"`
 	ModelSelection           *SessionModelSelection    `json:"modelSelection,omitempty"`
@@ -222,6 +224,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
+		return
+	}
+	if in.Mode == "pw" {
+		a.startPW(w, r, in.Prompt, in.Attachments, in.ModelSelection)
 		return
 	}
 	if (in.Parallelism != 0 && !validParallelism(in.Parallelism)) || (in.Mode != "chat" && in.Parallelism > 1) {
@@ -866,6 +872,8 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("任务不存在"))
 		return
 	}
+ if orig.PW!=nil {fail(w,400,errors.New("PW 运行不自动重试或续跑，请核对已发生效果后重新发送"));return}
+
 	if orig.Status == "running" {
 		fail(w, 409, errors.New("任务运行中，无法重试"))
 		return
@@ -1061,6 +1069,8 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("任务不存在"))
 		return
 	}
+ if orig.PW!=nil {fail(w,400,errors.New("PW 运行不自动重试或续跑，请核对已发生效果后重新发送"));return}
+
 	if (orig.Status != "paused" && orig.Status != "interrupted") || !orig.CanResume || len(orig.CheckpointMessages) == 0 {
 		fail(w, 409, errors.New("该任务没有可恢复的检查点"))
 		return
@@ -3963,11 +3973,12 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 }
 
 func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, versions map[string]Change) string {
+	failure := func(message string) string { return recordToolDispatchFailure(ctx, message) }
 	ctx, editorRelease := a.nativeEditorEnter(ctx)
 	defer editorRelease()
 	if !nativeEditorReadTool(call.Function.Name) {
 		if err := a.nativeEditorWriteError(); err != nil {
-			return err.Error()
+			return failure(err.Error())
 		}
 	}
 	a.mu.Lock()
@@ -3989,6 +4000,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	if args == nil {
 		args = map[string]any{}
 	}
+	if err := a.pwBindingToolError(task, call.Function.Name, args); err != nil {
+		return failure(err.Error())
+	}
 	str := func(k string) string { v, _ := args[k].(string); return strings.TrimSpace(v) }
 	rawStr := func(k string) string { v, _ := args[k].(string); return v } // 正文等字段按原字节保留（R06）
 	toolInt := func(k string) int {
@@ -4004,14 +4018,14 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	// The schema filter is only a hint to the model. Enforce deny again here
 	// because callers can submit tool calls that were not advertised.
 	if err := a.sandboxToolError(call.Function.Name); err != nil {
-		return err.Error()
+		return failure(err.Error())
 	}
 	if a.toolDenied(call.Function.Name) || taskToolDenied(task, call.Function.Name) {
-		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
+		return failure("工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用")
 	}
 	if call.Function.Name != "run_plugin_plan" {
 		if err := a.recoveryOperationError(task, call.Function.Name, args, nil); err != nil {
-			return "错误：" + err.Error()
+			return failure("错误：" + err.Error())
 		}
 	}
 	if call.Function.Name == "manage_plugins" || call.Function.Name == "manage_references" {
@@ -4056,22 +4070,22 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	var source Source
 	if sourceID != "" {
 		if call.Function.Name != "write_file" && call.Function.Name != "list_files" && call.Function.Name != "read_file" && call.Function.Name != "mcp_call" && call.Function.Name != "semantic_search" && call.Function.Name != "document_search" && call.Function.Name != "office_document_search" {
-			return "Reference sources are read-only for AI tools"
+			return failure("Reference sources are read-only for AI tools")
 		}
 		a.mu.Lock()
 		src, ok := a.findSource(sourceID)
 		allowed := ok && sourceAIVisible(src, a.wsID())
 		a.mu.Unlock()
 		if !allowed {
-			return "Reference source does not exist or is disabled"
+			return failure("Reference source does not exist or is disabled")
 		}
 		source = src
 		if call.Function.Name == "mcp_call" {
 			if src.Type != "mcp" {
-				return "mcp_call requires an MCP reference source"
+				return failure("mcp_call requires an MCP reference source")
 			}
 		} else if src.Type == "mcp" {
-			return "MCP reference tools must be called with mcp_call"
+			return failure("MCP reference tools must be called with mcp_call")
 		} else {
 			listDir = func(p string) ([]map[string]any, error) {
 				if err := safePath(p); err != nil {
@@ -4126,7 +4140,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		items, err := listDir(p)
 		if err != nil {
-			return "列出目录失败: " + err.Error()
+			return failure("列出目录失败: " + err.Error())
 		}
 		var b strings.Builder
 		count := 0
@@ -4147,7 +4161,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	case "read_file":
 		p := str("path")
 		if p == "" {
-			return "缺少 path 参数"
+			return failure("缺少 path 参数")
 		}
 		if pending := a.pendingNewFileRead(task, p, sourceID); pending != "" {
 			return pending
@@ -4156,7 +4170,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		ext := strings.ToLower(path.Ext(p))
 		if ext == ".docx" || ext == ".xlsx" || ext == ".pptx" || ext == ".pdf" {
 			if err := safePath(p); err != nil {
-				return "路径无效: " + err.Error()
+				return failure("路径无效: " + err.Error())
 			}
 			var raw []byte
 			var err error
@@ -4168,11 +4182,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 				raw, err = readRawBytes(wsRoot, p)
 			}
 			if err != nil {
-				return "读取失败: " + err.Error()
+				return failure("读取失败: " + err.Error())
 			}
 			out, err := officeExtractText(raw, ext)
 			if err != nil {
-				return "文档解析失败: " + err.Error()
+				return failure("文档解析失败: " + err.Error())
 			}
 			return out
 		}
@@ -4181,14 +4195,14 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			if off, lim := toolInt("offset"), toolInt("limit"); off > 0 || lim > 0 {
 				pb, total, rerr := readTextLines(wsRoot, p, off, lim)
 				if rerr != nil {
-					return "读取失败: " + rerr.Error()
+					return failure("读取失败: " + rerr.Error())
 				}
 				return fmt.Sprintf("（%s 共 %d 行，以下从第 %d 行起）\n%s", p, total, off+1, string(pb))
 			}
 		}
 		b, err := readTextFile(p)
 		if err != nil {
-			return "读取失败: " + err.Error()
+			return failure("读取失败: " + err.Error())
 		}
 		if len(b) > 60<<10 {
 			b = b[:60<<10]
@@ -4197,7 +4211,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	case "mcp_call":
 		tool := str("tool")
 		if sourceID == "" || tool == "" {
-			return "缺少 source 或 tool 参数"
+			return failure("缺少 source 或 tool 参数")
 		}
 		arguments, _ := args["arguments"].(map[string]any)
 		if arguments == nil {
@@ -4205,7 +4219,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		result, err := a.callMCPReadOnlyTool(ctx, source, tool, arguments)
 		if err != nil {
-			return "MCP 调用失败: " + err.Error()
+			return failure("MCP 调用失败: " + err.Error())
 		}
 		return result
 	case "docx_structure":
@@ -4277,13 +4291,16 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		pathStr, content := str("path"), rawStr("content")
 		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "source": sourceID, "path": pathStr, "content": content})
 		if err != nil {
-			return "写入提案被拒绝: " + err.Error()
+			return failure("写入提案被拒绝: " + err.Error())
 		}
 		return msg
 	case "read_skill":
 		return a.readHarnessSkill(task, str("name"))
 	case "run_shell":
-		result, _ := a.approvedShell(ctx, task, str("command"), 0)
+		result, ok := a.approvedShell(ctx, task, str("command"), 0)
+		if !ok {
+			return failure(result)
+		}
 		return result
 	case "spawn_subagent":
 		subTask := str("task")
@@ -4424,7 +4441,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		if call.Function.Name == "office_document_search" && a.pluginOwnerOf("office_document_search") != "office" {
 			return "错误：Office 文档检索插件未启用"
 		}
-		return a.documentSearchTool(ctx, wsRoot, task, documentRequest{Query: rawStr("query"), Mode: str("mode"), Source: sourceID, Path: str("path"), Cursor: rawStr("cursor")})
+		result := a.documentSearchTool(ctx, wsRoot, task, documentRequest{Query: rawStr("query"), Mode: str("mode"), Source: sourceID, Path: str("path"), Cursor: rawStr("cursor")})
+		if strings.HasPrefix(result, "错误：") {
+			return failure(result)
+		}
+		return result
 	case "semantic_search":
 		return a.semanticSearch(str("query"), sourceID, wsRoot)
 	case "web_search":

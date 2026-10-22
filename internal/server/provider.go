@@ -72,20 +72,28 @@ func (w *streamIdleWatch) stop() {
 
 // TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
 type TokenUsage struct {
-	Prompt     int    `json:"prompt"`
-	CacheHit   int    `json:"cacheHit,omitempty"`
-	CacheMiss  int    `json:"cacheMiss,omitempty"`
-	CacheKnown bool   `json:"cacheKnown,omitempty"`
-	Completion int    `json:"completion"`
-	Total      int    `json:"total"`
-	Estimated  bool   `json:"estimated,omitempty"`
-	Model      string `json:"model,omitempty"`
-	Provider   string `json:"provider,omitempty"` // R08：调用归属的 provider（baseURL 快照）
+	ProviderID     string `json:"providerId,omitempty"`
+	KeyID          string `json:"keyId,omitempty"`
+	KeyLabel       string `json:"keyLabel,omitempty"`
+	ReasoningKnown bool   `json:"reasoningKnown,omitempty"`
+	Reasoning      bool   `json:"reasoning,omitempty"`
+	Prompt         int    `json:"prompt"`
+	CacheHit       int    `json:"cacheHit,omitempty"`
+	CacheMiss      int    `json:"cacheMiss,omitempty"`
+	CacheKnown     bool   `json:"cacheKnown,omitempty"`
+	Completion     int    `json:"completion"`
+	Total          int    `json:"total"`
+	Estimated      bool   `json:"estimated,omitempty"`
+	Model          string `json:"model,omitempty"`
+	Provider       string `json:"provider,omitempty"` // R08：调用归属的 provider（baseURL 快照）
 }
 
 // providerUsage carries both DeepSeek's explicit cache counters and the
 // OpenAI-compatible prompt_tokens_details.cached_tokens fallback.
 type providerUsage struct {
+	CompletionDetails struct {
+		ReasoningTokens *int `json:"reasoning_tokens"`
+	} `json:"completion_tokens_details"`
 	PromptTokens     int  `json:"prompt_tokens"`
 	CompletionTokens int  `json:"completion_tokens"`
 	TotalTokens      int  `json:"total_tokens"`
@@ -97,6 +105,10 @@ type providerUsage struct {
 }
 
 func applyPromptCacheUsage(dst *TokenUsage, src providerUsage) {
+	if src.CompletionDetails.ReasoningTokens != nil && *src.CompletionDetails.ReasoningTokens > 0 {
+		dst.ReasoningKnown = true
+		dst.Reasoning = *src.CompletionDetails.ReasoningTokens > 0
+	}
 	if src.PromptCacheHit == nil && src.PromptCacheMiss == nil && src.PromptDetails.CachedTokens == nil {
 		return
 	}
@@ -313,6 +325,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		usage.Total = usage.Prompt + usage.Completion
 		usage.Estimated = true
 	}
+	applyBillingIdentity(&usage, cfg)
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(usage)
 	}
@@ -440,6 +453,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			usage.Total = usage.Prompt + usage.Completion
 			usage.Estimated = true
 		}
+		applyBillingIdentity(&usage, cfg)
 		if rec := tokenUsageRecorder.Load(); rec != nil {
 			rec.(func(TokenUsage))(usage)
 		}
@@ -556,6 +570,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		tu.Total = tu.Prompt + tu.Completion
 		tu.Estimated = true
 	}
+	applyBillingIdentity(&tu, cfg)
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(tu)
 	}
@@ -677,50 +692,4 @@ func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonOut(w, 200, map[string]any{"models": ids})
-}
-
-// listBalance 代理 GET {baseURL}/user/balance 查询账户余额（DeepSeek 官方接口）。
-func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	baseURL := a.settings.BaseURL
-	key, _ := a.modelAPIKeyLocked() // 存储的 key 从加密 vault 取；未配置/未解锁时为空，由显式入参覆盖
-	a.mu.Unlock()
-	if baseURL == "" {
-		fail(w, 400, errors.New("请先在模型设置中填写 API Base URL"))
-		return
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "GET", strings.TrimRight(baseURL, "/")+"/user/balance", nil)
-	if err != nil {
-		fail(w, 500, err)
-		return
-	}
-	if key != "" {
-		req.Header.Set("Authorization", "Bearer "+key)
-	}
-	client := &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
-	resp, err := client.Do(req)
-	if err != nil {
-		fail(w, 400, fmt.Errorf("余额查询失败: %w", err))
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		fail(w, 400, fmt.Errorf("余额接口返回 HTTP %d（该服务可能不支持余额查询）", resp.StatusCode))
-		return
-	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
-	if err != nil {
-		fail(w, 400, err)
-		return
-	}
-	var out map[string]any
-	if err := json.Unmarshal(b, &out); err != nil {
-		fail(w, 400, errors.New("余额返回格式无法解析"))
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	_, _ = w.Write(b)
 }
