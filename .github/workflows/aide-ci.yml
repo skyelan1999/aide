@@ -1,0 +1,87 @@
+name: Aide CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aide-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  quick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate workflow syntax with pinned actionlint
+        run: |
+          mkdir -p .agent-state/actionlint
+          curl -fsSL --retry 3 https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o .agent-state/actionlint/archive.tar.gz
+          echo '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  .agent-state/actionlint/archive.tar.gz' | sha256sum -c -
+          tar -xzf .agent-state/actionlint/archive.tar.gz -C .agent-state/actionlint actionlint
+          .agent-state/actionlint/actionlint -shellcheck= -pyflakes= .github/workflows/aide-ci.yml .github/workflows/aide-delivery.yml
+      - name: Repository quick gate and CI contracts
+        run: |
+          python3 scripts/agent-route.py verify quick
+          python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: quick-failure
+          path: .agent-state/verify-*.log
+          include-hidden-files: true
+          retention-days: 3
+  go:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build disposable test environment
+        run: docker build --target dev --build-arg PIP_INDEX_URL=https://pypi.org/simple -t aide:ci-test .
+      - name: Full Go race suite and vet in isolated snapshot
+        env:
+          AIDE_TEST_IMAGE: aide:ci-test
+        run: python3 scripts/test_go_snapshot.py
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Windows PowerShell 5.1 launcher regression
+        shell: cmd
+        run: |
+          set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules"
+          python scripts/test_windows_image_slot.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+      - name: PowerShell 7 launcher regression
+        shell: pwsh
+        run: python scripts/test_windows_image_slot.py --pwsh pwsh.exe
+  gate:
+    if: always()
+    needs: [quick, go, windows]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every check
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          results = json.loads(os.environ['RESULTS'])
+          assert all(v['result'] == 'success' for v in results.values()), results
+          PY

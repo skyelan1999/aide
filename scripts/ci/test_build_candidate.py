@@ -1,0 +1,110 @@
+"""Offline candidate contract tests; no Docker, credentials or external services."""
+import hashlib
+import importlib.util
+import io
+import json
+from pathlib import Path
+import tarfile
+import tempfile
+import unittest
+import zipfile
+
+spec = importlib.util.spec_from_file_location('candidate', Path(__file__).with_name('build_candidate.py'))
+candidate = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(candidate)
+
+
+def tar_bytes(files):
+    data = io.BytesIO()
+    with tarfile.open(fileobj=data, mode='w') as archive:
+        for name, value in files.items():
+            item = tarfile.TarInfo(name)
+            item.size = len(value)
+            archive.addfile(item, io.BytesIO(value))
+    return data.getvalue()
+
+
+class CandidateContract(unittest.TestCase):
+    def test_version_and_native_platform(self):
+        self.assertEqual(candidate.version_tag('1.2.3.4 RC12'), 'v1.2.3.4-RC12')
+        for bad in ('v1.2.3.4-RC1', '1.2.3.4 RC0', '1.2.3 RC1', 'dev', '1.2.3.4 RC1;echo x'):
+            with self.assertRaises(ValueError):
+                candidate.version_tag(bad)
+        candidate.native_platform('arm64', 'linux', 'aarch64')
+        candidate.native_platform('amd64', 'linux', 'x86_64')
+        with self.assertRaises(ValueError):
+            candidate.native_platform('amd64', 'linux', 'aarch64')
+        with self.assertRaises(ValueError):
+            candidate.native_platform('arm64', 'darwin', 'arm64')
+
+    def test_every_image_dependent_check_uses_candidate(self):
+        plan = candidate.verification_plan('aide:ci-test-arm64')
+        self.assertEqual(len(plan), 4)
+        self.assertIn('aide:ci-test-arm64', plan[1][0])
+        self.assertEqual(plan[2][1], {'AIDE_TEST_IMAGE': 'aide:ci-test-arm64'})
+        self.assertIn('aide:ci-test-arm64', plan[3][0])
+        self.assertFalse(any('verify' in command and 'full' in command for command, _ in plan))
+
+    def test_source_excludes_every_installed_plugin(self):
+        candidate.audit_tracked(['cmd/aide/main.go', 'plugins/testdata/public.txt'])
+        for name in ('plugins/official/index.js', 'plugins/private/manifest.json', '.agent-state/token', '../escape'):
+            with self.assertRaises(ValueError):
+                candidate.audit_tracked([name])
+
+    def test_all_layers_are_audited_even_deleted_plugin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'image.tar.gz'
+            def write(files):
+                with tarfile.open(path, 'w:gz') as outer:
+                    layers = ['one/layer.tar', 'two/layer.tar']
+                    payloads = {'manifest.json': json.dumps([{'Layers': layers}]).encode(),
+                                layers[0]: tar_bytes(files), layers[1]: tar_bytes({'data/plugins/.wh.private': b''})}
+                    for name, value in payloads.items():
+                        item = tarfile.TarInfo(name); item.size = len(value)
+                        outer.addfile(item, io.BytesIO(value))
+            write({'usr/local/bin/aide': b'ELF'})
+            # Whiteouts still reveal a previously installed plugin directory.
+            with self.assertRaises(ValueError):
+                candidate.audit_image_layers(path)
+            with tarfile.open(path, 'w:gz') as outer:
+                for name, value in {'manifest.json': b'[{"Layers":["one/layer.tar"]}]',
+                                    'one/layer.tar': tar_bytes({'usr/local/bin/aide': b'ELF', 'usr/lib/krb5/plugins/preauth/library.so': b'legitimate system library'})}.items():
+                    item = tarfile.TarInfo(name); item.size = len(value)
+                    outer.addfile(item, io.BytesIO(value))
+            self.assertEqual(candidate.audit_image_layers(path)['layers'], 1)
+            write({'opt/custom/manifest.json': b'{"id":"hidden","main":"index.js"}'})
+            with self.assertRaises(ValueError):
+                candidate.audit_image_layers(path)
+
+    def test_package_identity_checksums_and_data_boundaries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'full.zip'
+            tag, arch, image = 'v1.2.3.4-RC1', 'arm64', 'sha256:abc'
+            root = 'aide-' + tag + '-full-linux-' + arch
+            payload = b'compressed-docker-image'
+            entries = {
+                root + '/docker-images/manifest.json': json.dumps({'releaseTag': tag, 'platform': 'linux/' + arch, 'imageId': image, 'imageArchive': 'image.tar.gz'}),
+                root + '/docker-images/SHA256SUMS': hashlib.sha256(payload).hexdigest() + '  image.tar.gz\n',
+                root + '/docker-images/image.tar.gz': payload,
+                root + '/.aide-image': 'aide:slot-a ' + image + ' linux/' + arch + ' ' + tag + '\n',
+                root + '/workspace/': '', root + '/.env.example': 'safe=true',
+            }
+            def write(extra=None):
+                with zipfile.ZipFile(path, 'w') as bundle:
+                    for name, value in dict(entries, **(extra or {})).items():
+                        bundle.writestr(name, value)
+            write()
+            self.assertEqual(candidate.validate_full_package(path, tag, arch, image)['status'], 'pass')
+            with self.assertRaises(ValueError):
+                candidate.validate_full_package(path, tag, arch, 'different-image')
+            for name in ('workspace/private.txt', 'plugins/official/index.js', '.env', '../escape'):
+                write({root + '/' + name: 'not allowed'})
+                with self.assertRaises(ValueError):
+                    candidate.validate_full_package(path, tag, arch, image)
+            write({root + '/docker-images/image.tar.gz': b'tampered'})
+            with self.assertRaises(ValueError):
+                candidate.validate_full_package(path, tag, arch, image)
+
+
+if __name__ == '__main__':
+    unittest.main()

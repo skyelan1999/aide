@@ -1,0 +1,65 @@
+{
+  "id": "aide-cicd-20261022",
+  "request": "只针对aide本体做cicd，不带插件；预算耗尽后等待用户通知继续",
+  "baseline": "5b8458168c0186689c51eb1c8ac647dab568e6db",
+  "initial_status": "",
+  "acceptance": [
+    "PR与main触发本体quick/完整Go race-vet/Windows脚本检查，汇总gate拒绝失败与取消",
+    "main检查通过后原生ARM64和AMD64构建本体候选包，不含插件或用户数据",
+    "已有版本标签手动发布，验证共同源码、完整检查、包摘要与远端摘要；拒绝覆盖",
+    "不更换生产服务，不实际发布新版本，不上传插件市场"
+  ],
+  "scope": [
+    ".github/workflows/aide-ci.yml",
+    ".github/workflows/aide-delivery.yml",
+    "scripts/ci",
+    "docs/architecture/aide-cicd.md",
+    "docs/tasks/aide-cicd-20261022.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "仅Aide主仓库；复用version/Dockerfile/packager，PR检查与候选、手动发布分离",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅Aide主仓库；复用version/Dockerfile/packager，PR检查与候选、手动发布分离",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "仅Aide主仓库；复用version/Dockerfile/packager，PR检查与候选、手动发布分离",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "CI合同单测9项通过；本地quick及workflow语法检查运行中，托管运行待验收",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户要求仅Aide本体CI/CD，不带插件；已有源码push授权。此任务不主动发布产品Release。",
+  "rollback": "回退本任务工作流/辅助脚本提交；不涉及生产容器、用户目录或版本切换。",
+  "handoff": "继续验证并推送PR，查看真实GitHub Actions；通过后接入main汇总检查。双架构候选与正式发布独立记录。"
+}
