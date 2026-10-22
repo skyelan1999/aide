@@ -1,0 +1,88 @@
+{
+  "id": "plugin-context-menu-20261022",
+  "request": "Compare插件设置增加“将Compare添加到右键菜单”开关，只有插件启用且开关打开才显示文件右键入口；修改Aide与Compare并检查其他插件同类问题。",
+  "baseline": "e1691cc401bd495d5013552c83dcfef77c584450",
+  "initial_status": "?? docs/reviews/2026-10-22-plugin-secret-design/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/plugin-secret-design-20261022.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "Compare设置提供默认关闭的右键菜单boolean勾选框，未设置/关闭/停用/卸载/错误状态全部隐藏",
+    "右键菜单与点击都校验最新插件状态；延迟响应不能写入关闭菜单或跨工作区/锁屏身份；原生菜单不等待网络",
+    "审查其他文件菜单插件入口，保留原生文件功能及既有预览启用门槛",
+    "实际浏览器检查勾选/保存/重载/停用/卸载/选择比较；公开宿主不引入私有插件代码或二进制"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "scripts/plugin-context-menu.test.cjs",
+    "scripts/fixtures/plugin-context-menu-host.go.txt",
+    "scripts/browser-plugin-context-menu.cjs",
+    "scripts/verify-plugin-context-menu.sh",
+    "docs/plugin-protocol.md",
+    "docs/tasks/plugin-context-menu-20261022.json",
+    "docs/reviews/2026-10-22-plugin-context-menu",
+    "/workspace/aide-pkg-Compare/manifest.json",
+    "/workspace/aide-pkg-Compare/README.md",
+    "/workspace/aide-pkg-Compare/CHANGELOG.md",
+    "/workspace/aide-pkg-Compare/scripts/selection.test.cjs",
+    "docs/reviews/2026-10-22-plugin-context-menu"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "默认关闭并同时要求插件启用，保持手动打开工作台可用；用户要求检查其他插件同类入口。",
+      "evidence": [
+        "用户本轮请求"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "既有插件settingsSchema声明boolean；宿主原生菜单即时显示，Compare异步查新后按布尔开关添加；点击再次查询并绑定工作区/令牌/恢复代次。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "/workspace/aide-pkg-Compare/manifest.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Compare默认关闭的设置勾选框；宿主菜单显示和点击均校验最新状态，过期请求不写UI，停用清除左侧选择。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "Compare manifest.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "定向6组菜单、19组工作台、4组预览、文件打开所有权、i18n及Compare6组/核心/包检查通过；实际Go race+Chromium18.034秒通过。quick140/142，完整发布门禁不通过。",
+      "evidence": [
+        "docs/reviews/2026-10-22-plugin-context-menu/review.md",
+        "docs/reviews/2026-10-22-plugin-context-menu/verification.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新协议、Compare README/Changelog及真实结果和部署边界。",
+      "evidence": [
+        "docs/reviews/2026-10-22-plugin-context-menu/review.md",
+        "docs/reviews/2026-10-22-plugin-context-menu/verification.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "精确删除自有Go夹具，关闭自有浏览器/临时宿主和失败启动下载链；保留其他任务与研究文件，私有程序不入公开仓库。",
+      "evidence": [
+        "docs/reviews/2026-10-22-plugin-context-menu/review.md",
+        "docs/reviews/2026-10-22-plugin-context-menu/verification.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "源码交付准备完成，不发布新版本/镜像；quick两项启动器检查与start.command CAD TLS阻塞发行验收。",
+      "evidence": [
+        "docs/reviews/2026-10-22-plugin-context-menu/review.md",
+        "docs/reviews/2026-10-22-plugin-context-menu/verification.json"
+      ]
+    }
+  },
+  "release_authorization": "本轮用户要求修改Aide和Compare；沿用会话既有直接main推送授权，不绕过发布门禁。",
+  "rollback": "恢复宿主app.js/翻译和Compare manifest前版本；不修改用户文件。",
+  "handoff": "完成修复及实际页面验收；源码待提交/推送，未部署或发布。main保护另受GitHub管理权限403限制。"
+}

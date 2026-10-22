@@ -1,0 +1,1082 @@
+{
+  "baseline": "e1691cc401bd495d5013552c83dcfef77c584450",
+  "runtime": {
+    "platform": "Linux AMD64",
+    "go": "1.26.0",
+    "browser": "Chromium / Playwright"
+  },
+  "sha256": {
+    "internal/server/web/app.js": "6b1eaa210550ae198a39f0304e01f9b3bf710a71c785f2604fe6df2780f9bbec",
+    "internal/server/web/locales/en.js": "f404d77318b35ebb7dbc2d20f08765dd3ad62483dbfa118e547afd65449ceb24",
+    "scripts/plugin-context-menu.test.cjs": "5684b514a532e9ccc27b2465b7ddbc2ed7f99a5c3f778910c6f443582343eab7",
+    "scripts/browser-plugin-context-menu.cjs": "505a266cfbadb67a4d6e4851218ad3a7ed9fff11bdacc797cfb66462e874953c",
+    "scripts/fixtures/plugin-context-menu-host.go.txt": "a155368c144cef399739cd28ec4a380f58c203218992b2c618f60925b0f79122",
+    "scripts/verify-plugin-context-menu.sh": "ff8a0501d49280391445f4c85efba57a3857f5ead17b3354353821b1b94d445d"
+  },
+  "targeted": {
+    "contextMenu": "6/6 PASS",
+    "workbench": "19/19 PASS",
+    "filePreview": "4/4 PASS",
+    "fileOpenOwnership": "PASS",
+    "i18n": "PASS",
+    "privatePluginSelection": "6/6 PASS",
+    "privatePluginPackage": "PASS loader, syntax, native launch after 0644 extraction, ZIP and offline synthetic license",
+    "privateCore": "go test ./core -run Test -count=1 PASS"
+  },
+  "actualHost": {
+    "status": "PASS",
+    "command": "COMPARE_TEST_ARCHIVE=/private/path/compare.zip bash scripts/verify-plugin-context-menu.sh",
+    "durationSeconds": 18.034,
+    "scope": "Actual temporary testApp, final external Compare package, settings API persistence and browser; no paid model, real user data or production deployment"
+  },
+  "quick": {
+    "profile": "quick",
+    "status": "fail",
+    "fingerprint": "9ee6d8f8b99a94ac996346de9a9c436f62752769ffee3fa18372422599f6a238",
+    "head": "e1691cc401bd495d5013552c83dcfef77c584450",
+    "time": "20261022T063257588298Z",
+    "results": [
+      {
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/app.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/live-markdown-scan.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/stable-markdown-cache.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_reminder_styles.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_approval_persistence.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/settings-init.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "scripts/version.sh",
+          "check"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_agent_route.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_go_test_shards.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/check_docs.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/install.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/aide.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_install.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/i18n.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/locales/en.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_i18n.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_stream_url.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_accessibility_port.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_windows_port_lifecycle.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_local_root.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_control_bridge_launchers.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_ui_click_latency.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/ui-response-latency.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-image-path.test.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-download-export.test.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-pdf-layout.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-infrared.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-lensing.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-path.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-timeline.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-topics.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-live-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-template-icons.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/attachment-source-label.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-history-writable.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-document-continuation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-workspace-scene.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-cache.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-coverage-state.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/toast-lifecycle.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/lock-entry.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/lock-cluster.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/lock-cluster-state.test.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/lock-recovery.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-recovery-scroll.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-autosave-retry.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-open-request-ownership.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/continuity-isolation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/continuity-lock-write.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/workspace-scene-transition.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/outcome-pagination.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/outcome-overview-lifecycle.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/outcome-request-ownership.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/session-render-cache.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/run-activity-cards.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/run-stop-ownership.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/session-run-controls.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/task-action-hub.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/recovery-transfer.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/markdown-code.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-code.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/context-meter.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/starmap-logbook.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-logbook.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/steer-user-bubbles.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/git-history.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/git-history.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-unix-metadata.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/parallel-chat.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/parallel-chat.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/session-model-selection.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/session-model-selection.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/xiaomi-model-picker.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/pause-session-isolation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/staged-output.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/reasoning-settings.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_source_fingerprint.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-progressive-cadence.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_maintenance.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_message_lan_launcher.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_local_dependency_image.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-local-frame.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-live-metadata.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-frame-work.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-stellar-scale.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-empty-state.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plugin-plans.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/bootstrap-file-recovery.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/markdown-diagrams.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-ai-exploration.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-file-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/workbench-background.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/knowledge-web-parser.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/crash-monitor.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/crash-monitor.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_launcher_data.py"
+        ],
+        "exit": 1
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/step-preview.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/urdf-preview.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/urdf-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/step-metrology.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/step-import-worker.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/step-metrology.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/step-assembly.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/step-assembly.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/step-worker.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_step_import.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_cad_service.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_cad_dependency_image.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/prepare-cad-base.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "sh",
+          "-n",
+          "docker/cad/install.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-upgrade.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plugin-upgrade.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_cad_windows_checkout.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/starmap-background.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/file-route-location.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "bash",
+          "-n",
+          "scripts/resource-guard.sh"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_resource_guard.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/mcp-source-form.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_prebuilt_publication.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "scripts/test_offline_bundle.py"
+        ],
+        "exit": 1
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/message-center.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/message-center.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/message-notifications.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/message-notifications.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/identity-login-routing.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/assistant-live.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/assistant-live.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test_voice_panel.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/qwen-tts.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/tts-playback.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/assistant-delegation.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/document-proposals.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/management.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/management-permissions.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-market.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/plugin-market.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-file-preview.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-workbench.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "internal/server/web/plugin-workbench-client.js"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--test",
+          "scripts/plugin-workbench.test.cjs",
+          "scripts/plugin-workbench-client.test.cjs",
+          "scripts/plugin-file-preview.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "--check",
+          "scripts/browser-plugin-file-preview.cjs"
+        ],
+        "exit": 0
+      }
+    ],
+    "log": ".agent-state/verify-20261022T063257588298Z.log"
+  },
+  "startCommand": {
+    "status": "BLOCKED",
+    "reason": "CAD PyPI TLS certificate chain failure; old-release fallback download stopped after exact PID/cwd/command ownership checks",
+    "log": ".agent-state/startup/start-20261022T062712-166512.log"
+  },
+  "unverified": [
+    "Production start.command runtime with new code",
+    "Windows/macOS physical runtime",
+    "Native mobile device"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "scope": "Actual isolated Aide testApp + external private ZIP import; no private plugin bytes in public source",
+  "checks": [
+    "default off",
+    "actual settings checkbox, persistence and reload",
+    "settings modal 1440/390 and comfort/blue light/dark, no horizontal overflow",
+    "ordinary workbench remains usable with menu off",
+    "enabled and opted in shows entries and launches workbench",
+    "turn off, disable, reenable and uninstall",
+    "stored left side cleared after revocation",
+    "server-side disable blocks stale click",
+    "native download remains available"
+  ],
+  "errors": [],
+  "external": []
+}

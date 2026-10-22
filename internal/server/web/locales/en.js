@@ -124,6 +124,7 @@ window.aideEnglish = {
  "与 Compare 左侧比较":"Compare with left side",
  "已设为 Compare 左侧：":"Compare left side set: ",
  "请先安装并启用 Compare 插件。":"Install and enable Compare first.",
+ "请启用 Compare 插件，并在插件设置中勾选“将 Compare 添加到右键菜单”。":"Enable Compare and turn on \"Add Compare to the context menu\" in its plugin settings.",
  "请选择两个文件，或两个文件夹。":"Select two files or two folders.",
 "打开工作台":"Open workbench",
 "关闭工作台":"Close workbench",

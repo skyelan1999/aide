@@ -2933,13 +2933,41 @@ function openFileTransferPicker(operation, selectedPaths, target = {root:state.r
   dlg.showModal(); render();
 }
 let compareLeftSelection=null;
+function fileContextMenuPlugin(id,plugins=state.plugins){
+ return plugins.find(p=>p.id===id&&p.enabled===true&&!p.error&&p.workbench?.protocol===1&&p.settings?.fileContextMenu===true);
+}
+async function compareContextMenuSnapshot(scope,current=()=>true){
+ const epoch=chatRecoveryEpoch,token=state.token;
+ const valid=()=>!lockScreen.locked&&!!token&&token===state.token&&epoch===chatRecoveryEpoch&&scope===recoveryScope()&&current();
+ if(!valid())return null;
+ const data=await api('/plugins');if(!valid())return null;
+ const plugins=Array.isArray(data.plugins)?data.plugins:[];
+ return {plugins,plugin:fileContextMenuPlugin('compare',plugins)};
+}
+function compareContextMenuUnavailable(){
+ compareLeftSelection=null;
+ toast(t('请启用 Compare 插件，并在插件设置中勾选“将 Compare 添加到右键菜单”。'));
+}
 async function openCompareSelection(selection,scope){
- if(lockScreen.locked||scope!==recoveryScope())return;
- const data=await api('/plugins');if(lockScreen.locked||scope!==recoveryScope())return;
- state.plugins=data.plugins||[];const plugin=state.plugins.find(p=>p.id==='compare'&&p.enabled&&!p.error&&p.workbench?.protocol===1);
- if(!plugin){toast(t('请先安装并启用 Compare 插件。'));return}
- if(selection.right&&selection.left.directory!==selection.right.directory){toast(t('请选择两个文件，或两个文件夹。'));return}
- await window.AidePluginWorkbench.open(plugin,{...pluginWorkbenchServices(),selection});
+ const snapshot=await compareContextMenuSnapshot(scope);if(!snapshot)return;
+ if(!snapshot.plugin){compareContextMenuUnavailable();return;}
+ state.plugins=snapshot.plugins;
+ if(selection.right&&selection.left.directory!==selection.right.directory){toast(t('请选择两个文件，或两个文件夹。'));return;}
+ await window.AidePluginWorkbench.open(snapshot.plugin,{...pluginWorkbenchServices(),selection});
+}
+async function addCompareContextMenuItems(menu,before,file,target,selectedPaths){
+ const scope=recoveryScope(),snapshot=await compareContextMenuSnapshot(scope,()=>fileCtxMenuEl===menu);
+ if(!snapshot)return;
+ if(!snapshot.plugin){compareLeftSelection=null;return;}
+ const source=target.source?'source:'+target.source:target.root;
+ const side=f=>({source,path:f.path,directory:!!f.dir});
+ const compare=el('button','file-ctx-item',t('用 Compare 比较…'));
+ compare.onclick=action(async e=>{e.stopPropagation();closeFileContextMenu();const picked=state.fileEntries.filter(f=>selectedPaths.includes(f.path));await openCompareSelection({left:side(file),...(picked.length===2?{left:side(picked[0]),right:side(picked[1])}:{})},scope);});
+ const setLeft=el('button','file-ctx-item',t('设为 Compare 左侧'));
+ setLeft.onclick=action(async e=>{e.stopPropagation();closeFileContextMenu();const latest=await compareContextMenuSnapshot(scope);if(!latest)return;if(!latest.plugin){compareContextMenuUnavailable();return;}compareLeftSelection={scope,value:side(file)};toast(t('已设为 Compare 左侧：')+file.path);});
+ menu.insertBefore(compare,before);menu.insertBefore(setLeft,before);
+ if(compareLeftSelection?.scope===scope){const useRight=el('button','file-ctx-item',t('与 Compare 左侧比较'));const left=compareLeftSelection.value;useRight.onclick=action(async e=>{e.stopPropagation();closeFileContextMenu();await openCompareSelection({left,right:side(file)},scope);});menu.insertBefore(useRight,before);}
+ menu.style.top=Math.max(8,Math.min(parseFloat(menu.style.top)||8,innerHeight-Math.min(menu.offsetHeight,innerHeight-16)-8))+'px';
 }
 function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   closeFileContextMenu();
@@ -3017,18 +3045,11 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   props.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await showFileProperties(file, target); });
   del.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await deleteFileEntry(file, target); });
   m.append(attach);
-  if(['workspace','context'].includes(target.root)){
-   const scope=recoveryScope(),source=target.source?'source:'+target.source:target.root;
-   const side=f=>({source,path:f.path,directory:!!f.dir});
-   const compare=el('button','file-ctx-item',t('用 Compare 比较…'));
-   compare.onclick=action(async e=>{e.stopPropagation();closeFileContextMenu();const picked=state.fileEntries.filter(f=>selectedPaths.includes(f.path));await openCompareSelection({left:side(file),...(picked.length===2?{left:side(picked[0]),right:side(picked[1])}:{})},scope)});
-   const setLeft=el('button','file-ctx-item',t('设为 Compare 左侧'));setLeft.onclick=e=>{e.stopPropagation();closeFileContextMenu();compareLeftSelection={scope,value:side(file)};toast(t('已设为 Compare 左侧：')+file.path)};
-   m.append(compare,setLeft);
-   if(compareLeftSelection?.scope===scope){const useRight=el('button','file-ctx-item',t('与 Compare 左侧比较'));const left=compareLeftSelection.value;useRight.onclick=action(async e=>{e.stopPropagation();closeFileContextMenu();await openCompareSelection({left,right:side(file)},scope)});m.append(useRight)}
-  }
   m.append(copyTo, moveTo, download, zipButton, compressMore, extract, ren, props, del);
   document.body.append(m);
   fileCtxMenuEl = m;
+  // Keep native actions immediate; plugin entries appear only after a fresh opt-in check.
+  if(['workspace','context'].includes(target.root))void addCompareContextMenuItems(m,copyTo,file,target,selectedPaths).catch(()=>{});
   m.style.left = Math.max(8, Math.min(ev.clientX, innerWidth - 198)) + 'px';
   m.style.top = Math.max(8, Math.min(ev.clientY, innerHeight - Math.min(m.offsetHeight, innerHeight - 16) - 8)) + 'px';
   setTimeout(() => { document.addEventListener('click', closeFileContextMenu); document.addEventListener('keydown', onFileCtxKey); }, 0);
@@ -6715,6 +6736,7 @@ function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPlug
 async function loadPluginsPanel() {
   const data = await api('/plugins');
   state.plugins = data.plugins || [];
+  if(!fileContextMenuPlugin('compare')){compareLeftSelection=null;closeFileContextMenu();}
   renderPluginList();
   const surface = await api('/plugin-surface');
   renderPluginSurface(surface.plugins || []);
