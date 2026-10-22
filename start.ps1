@@ -79,6 +79,26 @@ function Invoke-Native {
     }
 }
 
+# Docker containerd may rewrite an OCI index ID during a verified archive import.
+# Only resolve references reported by this successful load, never unrelated images.
+function Resolve-AideImportedImage {
+    param([string]$Docker, [string]$ExpectedId, [string]$Platform, [string]$LoadOutput)
+    $metadata = Invoke-Native $Docker @('image', 'inspect', $ExpectedId, '--format', '{{.Id}}|{{.Os}}/{{.Architecture}}') -Capture
+    if ($metadata.Code -ne 0) {
+        $references = @($LoadOutput -split '\r?\n' | ForEach-Object {
+            if ($_ -cmatch '^Loaded image(?: ID)?: ([A-Za-z0-9][A-Za-z0-9._:/@-]*)\s*$') { $Matches[1] }
+        } | Sort-Object -Unique)
+        if ($references.Count -ne 1) { throw '无法唯一确认本次已校验归档导入的镜像；活动槽未修改。' }
+        $metadata = Invoke-Native $Docker @('image', 'inspect', $references[0], '--format', '{{.Id}}|{{.Os}}/{{.Architecture}}') -Capture
+    }
+    if ($metadata.Code -ne 0) { throw '本次导入的 Docker 镜像无法读取。' }
+    $fields = $metadata.Text -split '\|'
+    if ($fields.Count -ne 2 -or $fields[0] -cnotmatch '^sha256:[0-9a-f]{64}$' -or $fields[1] -cne $Platform) {
+        throw '本次导入的 Docker 镜像身份或架构不匹配。'
+    }
+    return $fields[0]
+}
+
 # --- 定位 docker ---
 $dockerExe = $null
 $dockerCmd = Get-Command docker -ErrorAction SilentlyContinue
@@ -277,6 +297,7 @@ if ($offlineBundle) {
     $enginePlatform = (Invoke-Native $dockerExe @('info', '--format', '{{.OSType}}/{{.Architecture}}') -Capture).Text -replace '/aarch64$', '/arm64' -replace '/x86_64$', '/amd64'
     if ($enginePlatform -ne $expectedPlatform) { throw "此离线镜像为 $expectedPlatform，当前 Docker 引擎为 $enginePlatform。请下载匹配架构的 Release 包。" }
     $imageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
+    $resolvedImageId = $expectedImageId
     if ($imageId -ne $expectedImageId) {
         $imageArchive = Join-Path $PSScriptRoot 'docker-images/aide-local.tar.gz'
         if (-not (Test-Path -LiteralPath $imageArchive)) {
@@ -318,18 +339,19 @@ if ($offlineBundle) {
             Remove-Item -LiteralPath $imageArchive -Force -ErrorAction SilentlyContinue
             throw 'Docker 镜像 SHA256 校验失败。'
         }
-        if ((Invoke-Native $dockerExe @('image', 'load', '-i', $imageArchive)).Code -ne 0) { throw '导入 Docker 镜像失败。' }
-        # The immutable release tag from the archive is checked below after it
-        # is assigned to the stable slot tag.
+        $loaded = Invoke-Native $dockerExe @('image', 'load', '-i', $imageArchive) -Capture
+        if ($loaded.Code -ne 0) { throw '导入 Docker 镜像失败。' }
+        Write-Host $loaded.Text
+        $resolvedImageId = Resolve-AideImportedImage $dockerExe $expectedImageId $expectedPlatform $loaded.Text
   }
   # Stable A/B tags keep both package versions selectable without changing the
   # shared Compose volumes. Older launchers are migrated in place to slot A.
   if ($env:AIDE_IMAGE -notlike 'aide:slot-*') { $env:AIDE_IMAGE = 'aide:slot-a' }
   $slotImageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
-  if ($slotImageId -ne $expectedImageId -and (Invoke-Native $dockerExe @('image', 'tag', $expectedImageId, $env:AIDE_IMAGE)).Code -ne 0) { throw '无法初始化 A/B 活动镜像槽。' }
+  if ($slotImageId -ne $resolvedImageId -and (Invoke-Native $dockerExe @('image', 'tag', $resolvedImageId, $env:AIDE_IMAGE)).Code -ne 0) { throw '无法初始化 A/B 活动镜像槽。' }
   $slotImageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
-  if ($slotImageId -ne $expectedImageId) { throw '导入的 Docker 镜像身份与离线包不匹配。' }
-  "$($env:AIDE_IMAGE) $expectedImageId $expectedPlatform $releaseTag" | Set-Content -NoNewline -Encoding ASCII (Join-Path $PSScriptRoot '.aide-image')
+  if ($slotImageId -ne $resolvedImageId) { throw '导入的 Docker 镜像身份与离线包不匹配。' }
+  "$($env:AIDE_IMAGE) $resolvedImageId $expectedPlatform $releaseTag" | Set-Content -NoNewline -Encoding ASCII (Join-Path $PSScriptRoot '.aide-image')
   New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'workspace'), (Join-Path $PSScriptRoot 'context') -Force | Out-Null
   $envPath = Join-Path $PSScriptRoot '.env'
   if (-not (Test-Path -LiteralPath $envPath)) { Copy-Item (Join-Path $PSScriptRoot '.env.example') $envPath }

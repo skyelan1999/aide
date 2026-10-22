@@ -1,0 +1,83 @@
+{
+  "id": "windows-release-image-slot-20261022",
+  "request": "Windows v0.1.17.5-RC2 full AMD64启动失败，Docker报No such image a6c4，start.ps1:329 无法初始化A/B活动镜像槽。定位、修复并验证，不改日常数据。",
+  "baseline": "548de0d0122c4d285441e986d986fbd68f875681",
+  "initial_status": "",
+  "acceptance": [
+    "Reproduce reported RC2 index-ID change with actual PowerShell execution against isolated Docker fixture",
+    "Verify archive SHA256 before trusting a newly loaded image; reject failed, ambiguous and wrong-platform imports",
+    "Tag A/B slot using resolved local image ID and persist marker only after slot identity readback; preserve all user data paths",
+    "Publish a new patch Release with ARM64/AMD64 packages and a standalone RC2 Windows launcher hotfix; distinguish physical Windows NOT_RUN and preserve daily production"
+  ],
+  "scope": [
+    "start.ps1",
+    "scripts/test_windows_image_slot.py",
+    "docs/tasks/windows-release-image-slot-20261022.json",
+    "docs/reviews/windows-release-image-slot-20261022.md",
+    "version.md",
+    "docs/reviews/release-0.1.17.5-RC3-2026-10-22.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed imported image local ID 780817d1... differs from package index ID a6c4f703... on containerd. Caller ran diagnostics from user home; release marker location separately confirmed from public ZIP.",
+      "evidence": [
+        "user Windows diagnostic reply",
+        "v0.1.17.5-RC2 full AMD64 ZIP .aide-image and manifest (HTTP range read)"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Preserve SHA256 and platform checks; resolve only this successful verified load output, read back slot before persisting local ID.",
+      "evidence": [
+        "docs/reviews/windows-release-image-slot-20261022.md",
+        "start.ps1",
+        "scripts/test_windows_image_slot.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Windows launcher implements imported local-ID resolution; regression runner executes actual bootstrap block.",
+      "evidence": [
+        "docs/reviews/windows-release-image-slot-20261022.md",
+        "start.ps1",
+        "scripts/test_windows_image_slot.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "12 PowerShell bootstrap fixtures and 62 focused launcher cases passed; full verification running.",
+      "evidence": [
+        ".agent-state/windows-slot/powershell-tests.log",
+        ".agent-state/windows-slot/reproduced.log",
+        ".agent-state/windows-slot/full.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Added root-cause, recovery, validation boundaries and rollback report.",
+      "evidence": [
+        "docs/reviews/windows-release-image-slot-20261022.md",
+        "start.ps1",
+        "scripts/test_windows_image_slot.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped files; PowerShell runtime and logs remain ignored in .agent-state; no user data removed.",
+      "evidence": [
+        "docs/reviews/windows-release-image-slot-20261022.md",
+        "start.ps1",
+        "scripts/test_windows_image_slot.py"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User: 我现在需要你提供一个临时的修复办法并把做一个最新的release修复这一问题",
+  "rollback": "Restore backed-up start.ps1 and .aide-image; retain existing .aide-data, .env, workspace and Docker volumes. Existing daily service unchanged.",
+  "handoff": ""
+}
