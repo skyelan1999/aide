@@ -72,6 +72,8 @@ else: sys.exit('Unexpected docker operation: '+repr(a))
         opener = self.root / 'bin/open'
         opener.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$FIXTURE_ROOT/opened-url"\n')
         opener.chmod(0o755)
+        # Linux must remain isolated too; never invoke the host desktop opener.
+        shutil.copy(opener, self.root / 'bin/xdg-open')
         curl = self.root / 'bin/curl'
         curl.write_text('''#!/usr/bin/env python3
 import json, os, pathlib, sys

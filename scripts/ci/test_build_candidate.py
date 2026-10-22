@@ -7,6 +7,7 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 spec = importlib.util.spec_from_file_location('candidate', Path(__file__).with_name('build_candidate.py'))
@@ -36,6 +37,36 @@ class CandidateContract(unittest.TestCase):
             candidate.native_platform('amd64', 'linux', 'aarch64')
         with self.assertRaises(ValueError):
             candidate.native_platform('arm64', 'darwin', 'arm64')
+
+    def test_archive_reload_is_nonforced_and_rechecks_identity_before_smoke(self):
+        image = 'aide:ci-deadbeef-arm64'
+        identity = [{'Id': 'sha256:original', 'Os': 'linux', 'Architecture': 'arm64',
+                     'Config': {'Labels': {'aide.srcsha': 'source'}}}]
+        events = []
+        with patch.object(candidate, 'run', side_effect=lambda args: events.append(args)), \
+             patch.object(candidate, 'capture', side_effect=lambda args: events.append(args) or json.dumps(identity)), \
+             patch.object(candidate, 'smoke', return_value={'status': 'pass'}) as smoke:
+            result = candidate.reload_archive(image, Path('/tmp/image.tar.gz'), 'arm64',
+                                              'sha256:original', 'source', 'commit', 'version')
+            self.assertEqual(events, [['docker', 'image', 'rm', image],
+                                      ['docker', 'load', '--input', '/tmp/image.tar.gz'],
+                                      ['docker', 'image', 'inspect', image]])
+            self.assertEqual(result['status'], 'pass')
+            smoke.assert_called_once_with(image, 'arm64', 'commit', 'version')
+        identity[0]['Id'] = 'sha256:wrong'
+        with patch.object(candidate, 'run'), patch.object(candidate, 'capture', return_value=json.dumps(identity)), \
+             patch.object(candidate, 'smoke') as smoke:
+            with self.assertRaises(ValueError):
+                candidate.reload_archive(image, Path('/tmp/image.tar.gz'), 'arm64',
+                                         'sha256:original', 'source', 'commit', 'version')
+            smoke.assert_not_called()
+        with patch.object(candidate, 'run', side_effect=RuntimeError('image in use')) as run, \
+             patch.object(candidate, 'capture') as inspect:
+            with self.assertRaises(RuntimeError):
+                candidate.reload_archive(image, Path('/tmp/image.tar.gz'), 'arm64',
+                                         'sha256:original', 'source', 'commit', 'version')
+            self.assertEqual(run.call_count, 1)
+            inspect.assert_not_called()
 
     def test_every_image_dependent_check_uses_candidate(self):
         plan = candidate.verification_plan('aide:ci-test-arm64')

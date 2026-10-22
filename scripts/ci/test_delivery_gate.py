@@ -28,7 +28,7 @@ class DeliveryGateTests(unittest.TestCase):
                          sourceSHA256='b' * 64, image=image,
                          verification=[dict(command=c, environmentOverrides=e, status='pass') for c, e in verification_plan(image)],
                          smoke=dict(status='pass', installedPlugins=0), privacy=dict(status='pass', pluginPayloads=0),
-                         packageValidation=dict(status='pass'),
+                         packageValidation=dict(status='pass'), importValidation=dict(status='pass'),
                          asset=dict(name=name, bytes=path.stat().st_size, sha256=gate.digest(path)))
             (folder / 'candidate-proof.json').write_text(json.dumps(proof))
         return root / 'aide-candidate-amd64/candidate-proof.json'

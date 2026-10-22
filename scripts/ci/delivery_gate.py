@@ -64,7 +64,7 @@ def validate_candidates(root, tag, sha):
         require(proof.get('status') == 'pass' and proof.get('candidateOnly') is True and
                 proof.get('published') is False and proof.get('pluginsBundled') is False, 'Unverified candidate')
         require((proof.get('tag'), proof.get('commit'), proof.get('platform')) == (tag, sha, 'linux/' + arch), 'Candidate identity mismatch')
-        for key in ('smoke', 'privacy', 'packageValidation'):
+        for key in ('smoke', 'privacy', 'packageValidation', 'importValidation'):
             require(proof.get(key, {}).get('status') == 'pass', 'Missing successful ' + key)
         image = f'aide:ci-{sha[:12]}-{arch}'
         require(proof.get('image') == image, 'Unexpected candidate image')

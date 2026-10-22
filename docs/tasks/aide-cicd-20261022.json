@@ -14,7 +14,8 @@
     ".github/workflows/aide-delivery.yml",
     "scripts/ci",
     "docs/architecture/aide-cicd.md",
-    "docs/tasks/aide-cicd-20261022.json"
+    "docs/tasks/aide-cicd-20261022.json",
+    "scripts/test_offline_bundle.py (Issue #26: headless Linux fixture isolation)"
   ],
   "stages": {
     "requirements": {
@@ -40,17 +41,23 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "CI合同单测9项通过；本地quick及workflow语法检查运行中，托管运行待验收",
-      "evidence": []
+      "summary": "本地quick144、CI合同10项、离线启动13项、actionlint与文档检查通过；首轮托管Windows5.1/7通过，quick暴露旧Linux opener未隔离问题，已创建Issue26后修正，托管重新验收待执行。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/25",
+        "https://github.com/skyelan1999/aide/issues/26",
+        "https://github.com/skyelan1999/aide/actions/runs/39788449776"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "架构/操作文档及阶段记录已写，docs链接检查通过",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
+      "status": "pass",
+      "summary": "只保留忽略的验收日志；无生产容器或用户目录变更",
       "evidence": []
     },
     "release": {
@@ -61,5 +68,5 @@
   },
   "release_authorization": "用户要求仅Aide本体CI/CD，不带插件；已有源码push授权。此任务不主动发布产品Release。",
   "rollback": "回退本任务工作流/辅助脚本提交；不涉及生产容器、用户目录或版本切换。",
-  "handoff": "继续验证并推送PR，查看真实GitHub Actions；通过后接入main汇总检查。双架构候选与正式发布独立记录。"
+  "handoff": "PR25；main已配置GitHub Actions gate检查(strict/app15368)，保留owner审核与admin策略；aide-release环境仅main可部署。候选/正式发布待托管验收，未发布产品版本。"
 }

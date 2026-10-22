@@ -166,6 +166,19 @@ console.log(JSON.stringify({status:'pass',commit:COMMIT,version:VERSION,installe
         subprocess.run(['docker', 'rm', '-f', name], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
+def reload_archive(image, archive, arch, image_id, source, commit, version):
+    # The tag is created by this helper. Never force removal, prune images,
+    # or touch a slot/production tag: an in-use image must fail this gate.
+    run(['docker', 'image', 'rm', image])
+    run(['docker', 'load', '--input', str(archive)])
+    info = json.loads(capture(['docker', 'image', 'inspect', image]))[0]
+    if (info['Id'], info['Os'], info['Architecture'],
+            info['Config']['Labels'].get('aide.srcsha')) != (image_id, 'linux', arch, source):
+        raise ValueError('Reloaded image identity mismatch')
+    return {'status': 'pass', 'imageId': image_id, 'platform': 'linux/' + arch,
+            'sourceSHA256': source, 'smoke': smoke(image, arch, commit, version)}
+
+
 def verification_plan(image):
     # The standard full profile defaults runtime/CAD to aide:local. Use explicit
     # image arguments here instead of retagging a shared local image globally.
@@ -217,13 +230,14 @@ def main():
     privacy = audit_image_layers(archive)
     bundle = out / f'aide-{tag}-full-linux-{args.arch}.zip'
     package = validate_full_package(bundle, tag, args.arch, info['Id'])
+    imported = reload_archive(image, archive, args.arch, info['Id'], source, commit, version)
     if source != capture(['bash', 'scripts/aide.sh', 'source-sha']) or commit != capture(['git', 'rev-parse', 'HEAD']):
         raise ValueError('Source changed during candidate build')
     proof = {'status': 'pass', 'candidateOnly': True, 'published': False, 'pluginsBundled': False,
              'platform': 'linux/' + args.arch, 'commit': commit, 'sourceSHA256': source,
              'version': version, 'tag': tag, 'image': image, 'imageId': info['Id'],
              'verification': verification, 'verificationProfile': 'quick plus explicit candidate-image runtime/race/vet/CAD; not a standard full-profile receipt',
-             'smoke': result, 'privacy': privacy, 'packageValidation': package,
+             'smoke': result, 'privacy': privacy, 'packageValidation': package, 'importValidation': imported,
              'asset': {'name': bundle.name, 'sha256': sha256(bundle), 'bytes': bundle.stat().st_size}}
     (out / 'candidate-proof.json').write_text(json.dumps(proof, indent=2) + '\n')
     print(json.dumps(proof))
