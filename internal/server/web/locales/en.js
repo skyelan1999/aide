@@ -3044,3 +3044,5 @@ Object.assign(window.aideEnglish, {
 Object.assign(window.aideEnglish, {'按任务自动选择已配置模型 · 离线能力档案':'Choose configured models per task · offline capability catalog', '模型：{0}':'Model: {0}'});
 
 Object.assign(window.aideEnglish, {'Auto 模型路由 · {0} 次选择':'Auto model routing · {0} choices','生成提案':'Prepare proposal','拆分规划':'Plan subtasks','子任务分析':'Subtask analysis'});
+
+Object.assign(window.aideEnglish, {"添加 Windows 不同盘符或 macOS 外置硬盘中的目录。每个目录独立设置权限，默认只读。工作区与资料可使用这些目录，缓存保留在 Aide 数据区。":"Add folders from Windows drives or macOS external disks, each with independent permissions and read-only by default. Use them for workspace and reference files; cache remains in Aide data storage."});

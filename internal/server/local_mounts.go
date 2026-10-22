@@ -38,19 +38,59 @@ func (a *App) initLocalMounts() {
 	}
 	a.localMountConfig = c
 }
-func (a *App) mountHostPath(p string) (string, bool, bool) {
+
+// localMountPath retains the opened root and relative path. Callers must use
+// its Root methods for filesystem operations rather than reopen the joined path.
+func (a *App) localMountPath(p string) (*os.Root, string, bool, bool) {
 	for _, e := range a.localMountConfig.Entries {
 		r := a.localMountRoots[e.ID]
 		if r == nil {
 			continue
 		}
-		for _, prefix := range []string{e.Path, localmounts.Target(e)} {
+		for _, prefix := range []string{e.Path, localmounts.Target(e), r.Name()} {
 			if rel, ok := localmounts.Relative(prefix, p); ok {
-				return filepath.Join(r.Name(), filepath.FromSlash(rel)), e.ReadOnly, true
+				return r, filepath.FromSlash(rel), e.ReadOnly, true
 			}
 		}
 	}
-	return "", false, false
+	return nil, "", false, false
+}
+func (a *App) mountHostPath(p string) (string, bool, bool, error) {
+	r, rel, ro, matched := a.localMountPath(p)
+	if !matched {
+		return "", false, false, nil
+	}
+	// A missing leaf is valid for a new cache directory. Validate the longest
+	// existing prefix through Root.Stat, which rejects links escaping this root.
+	for probe := rel; ; probe = filepath.Dir(probe) {
+		if _, err := r.Stat(probe); err == nil {
+			break
+		} else if !os.IsNotExist(err) {
+			return "", ro, true, err
+		}
+		if info, err := r.Lstat(probe); err == nil && info.Mode()&os.ModeSymlink != 0 {
+			return "", ro, true, errors.New("目录符号链接不可用")
+		}
+		if probe == "." {
+			return "", ro, true, errors.New("挂载目录不可用")
+		}
+	}
+	return filepath.Join(r.Name(), rel), ro, true, nil
+}
+func (a *App) openHostRoot(p string) (*os.Root, error) {
+	if r, rel, _, matched := a.localMountPath(p); matched {
+		return r.OpenRoot(rel)
+	}
+	return os.OpenRoot(p)
+}
+func (a *App) mkdirHostPath(p string, mode os.FileMode) error {
+	if r, rel, ro, matched := a.localMountPath(p); matched {
+		if ro {
+			return errors.New("只读目录不能作为需要写入的缓存")
+		}
+		return r.MkdirAll(rel, mode)
+	}
+	return os.MkdirAll(p, mode)
 }
 func (a *App) localMountDir() string { return filepath.Join(a.dataPath, "local-mounts") }
 func readMountObject(p string) map[string]any {

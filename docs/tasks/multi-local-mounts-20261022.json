@@ -24,14 +24,22 @@
       "evidence": []
     },
     "design": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Host-only checked helper and immutable container mount snapshot, CAS settings and independent Docker read-only binds",
+      "evidence": [
+        "docs/prd/2026-10-22-multiple-local-directories.md"
+      ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Settings, active-root browser, native helper, launcher, build and marketplace integration; independent review fixes #11/#13",
+      "evidence": [
+        "cmd/aide-local-mounts/main.go",
+        "internal/localmounts/prepare.go",
+        "internal/server/local_mounts.go",
+        "internal/server/web/local-mounts.js",
+        "scripts/local-mounts-control.ps1"
+      ]
     },
     "verification": {
       "status": "pending",
@@ -39,14 +47,19 @@
       "evidence": []
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "PRD, test boundaries, rollback and issue-first development workflow recorded",
+      "evidence": [
+        "docs/reviews/2026-10-22-multiple-local-directories.md",
+        "docs/agent/WORKFLOW.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned UI fixture container, browser, TLS proxy and native helper stopped; local evidence preserved; production and original dirty checkout unchanged",
+      "evidence": [
+        "docs/reviews/2026-10-22-multiple-local-directories.md"
+      ]
     },
     "release": {
       "status": "pending",
@@ -54,7 +67,7 @@
       "evidence": []
     }
   },
-  "release_authorization": "",
-  "rollback": "",
-  "handoff": ""
+  "release_authorization": "User requested pushing completed code and releasing ready plugins. This ledger covers source delivery only; production restart and new Aide release archive are separate outcomes.",
+  "rollback": "Revert source delivery commit; retain user data and desired settings. Host apply restores prior active snapshot and Compose override on failure, then recreates only Aide. If rollback fails, use the launcher with original image.",
+  "handoff": "Production localhost:9999 remains old image. Windows physical picker/multi-drive and removable-drive unplug require follow-up acceptance; current test evidence is isolated."
 }

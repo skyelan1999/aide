@@ -191,8 +191,8 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	if p == "" {
 		return "", "", nil
 	}
-	if resolved, _, matched := a.mountHostPath(p); matched {
-		return resolved, p, nil
+	if resolved, _, matched, err := a.mountHostPath(p); matched {
+		return resolved, p, err
 	}
 	if strings.HasPrefix(p, "/mounts/") {
 		return "", "", errors.New("目录尚未挂载或路径越界")
@@ -333,6 +333,11 @@ func (a *App) cwdPromptLineLocked() string {
 // applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
 // 每次成功切换递增 wsRevision：旧提案/命令的身份校验依赖该版本（R02）。
 func (a *App) applyWorkspaceConfig() error {
+	if a.wsConfig.Cache.Location != "workspace" {
+		if _, _, _, mounted := a.localMountPath(a.wsConfig.Cache.Path); mounted {
+			return errors.New("新增挂载目录目前仅支持工作区或资料目录，缓存请使用 Aide 内部或原有路径")
+		}
+	}
 	a.wsRevision++
 	display := "/workspace"
 	if a.wsConfig.Workspace.Mode == "ssh" {
@@ -352,7 +357,7 @@ func (a *App) applyWorkspaceConfig() error {
 		if cp == "" {
 			cp = a.workPath // 空路径恢复默认根（R02）
 		}
-		w, err := os.OpenRoot(cp)
+		w, err := a.openHostRoot(cp)
 		if err != nil {
 			return fmt.Errorf("工作空间路径不可用: %w", err)
 		}
@@ -388,14 +393,28 @@ func (a *App) applyWorkspaceConfig() error {
 		cacheContainer = filepath.Join(a.dataPath, "cache", "remote-projects", hash([]byte(a.wsID()+"|"+a.workspaceRemoteCachePath())))
 	} else if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
 		cacheContainer = cp
+	} else if _, _, _, mounted := a.localMountPath(a.wsConfig.Workspace.Path); mounted {
+		cacheContainer = filepath.Join(a.dataPath, "cache", "projects", hash([]byte(a.wsID())))
 	} else if a.containerAbs != "" && a.containerAbs != a.workPath {
 		cacheContainer = filepath.Join(a.containerAbs, ".cache")
 	} else if a.wsConfig.Workspace.Mode == "ssh" {
 		cacheContainer = filepath.Join(a.dataPath, "cache", "projects", hash([]byte(a.wsID())))
 	}
-	_ = os.MkdirAll(cacheContainer, 0755)
+	if _, _, _, mounted := a.localMountPath(cacheContainer); mounted {
+		if err := a.mkdirHostPath(cacheContainer, 0755); err != nil {
+			return fmt.Errorf("缓存路径不可用: %w", err)
+		}
+	} else {
+		_ = os.MkdirAll(cacheContainer, 0755)
+	}
 	a.cacheContainer = cacheContainer
-	_ = os.MkdirAll(a.projectCacheDir(), 0700)
+	if _, _, _, mounted := a.localMountPath(a.projectCacheDir()); mounted {
+		if err := a.mkdirHostPath(a.projectCacheDir(), 0700); err != nil {
+			return fmt.Errorf("项目缓存路径不可用: %w", err)
+		}
+	} else {
+		_ = os.MkdirAll(a.projectCacheDir(), 0700)
+	}
 	if a.voiceAgent != nil {
 		a.voiceAgent.setAideMemoryPath(a.memoryPath())
 	}
@@ -513,7 +532,7 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if _, ro, ok := a.mountHostPath(in.Workspace.Path); ok && ro {
+	if _, ro, ok, _ := a.mountHostPath(in.Workspace.Path); ok && ro {
 		fail(w, 400, errors.New("只读目录可作为引用，不能作为需要写入的工作区"))
 		return
 	}
@@ -590,6 +609,10 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err)
 			return
 		}
+		if _, _, _, mounted := a.localMountPath(cp); mounted {
+			fail(w, 400, errors.New("新增挂载目录目前仅支持工作区或资料目录，缓存请使用 Aide 内部或原有路径"))
+			return
+		}
 		if info, err := os.Stat(cp); err == nil && !info.IsDir() {
 			fail(w, 400, errors.New("缓存路径不是目录"))
 			return
@@ -601,7 +624,7 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err)
 			return
 		}
-		probe, err := os.OpenRoot(cp)
+		probe, err := a.openHostRoot(cp)
 		if err != nil {
 			fail(w, 400, fmt.Errorf("工作空间路径不可用: %w", err))
 			return

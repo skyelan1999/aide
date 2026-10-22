@@ -192,6 +192,9 @@ func (a *App) localSourceRoot(src Source) (*os.Root, error) {
 	if a.startupUnavailableLocalPath(cp) {
 		return nil, errors.New(startupUnavailableSourceMessage)
 	}
+	if r, rel, _, matched := a.localMountPath(cp); matched {
+		return r.OpenRoot(rel)
+	}
 	return a.openLocalSourceRoot(context.Background(), cp)
 }
 func (a *App) saveSources() error {
@@ -533,7 +536,7 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		s.Name = strings.TrimSpace(s.Name)
 		switch s.Type {
 		case "local", "skill":
-			if _, ro, ok := a.mountHostPath(s.Config.Path); ok && ro && s.RW {
+			if _, ro, ok, _ := a.mountHostPath(s.Config.Path); ok && ro && s.RW {
 				fail(w, 400, errors.New("只读挂载不能登记为读写来源"))
 				return
 			}

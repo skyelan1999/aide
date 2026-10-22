@@ -7356,8 +7356,8 @@ async function resolveExistingDir(dir, root = 'local') {
 function openBrowse(field) {
   action(async () => {
     let root = browseRootForField(field);
-    if(root==='local'){try{const info=await api('/local-mounts');state.localMounts=info.active.entries.filter(e=>!e.error);}catch(_){state.localMounts=[];} const value=$(field).value.replace(/\\/g,'/');const mount=state.localMounts.find(e=>{const base=e.path.replace(/\/$/,'');return /^[a-z]:/i.test(base)?value.toLowerCase()===base.toLowerCase()||value.toLowerCase().startsWith(base.toLowerCase()+'/'):value===base||value.startsWith(base+'/');});if(mount)root='mount:'+mount.id;}
-    setupBrowseMountSelector(root);
+    if(root==='local'&&field!=='cache-path'){try{const info=await api('/local-mounts');state.localMounts=info.active.entries.filter(e=>!e.error);}catch(_){state.localMounts=[];} const value=$(field).value.replace(/\\/g,'/');const mount=state.localMounts.find(e=>{const base=e.path.replace(/\/$/,'');return /^[a-z]:/i.test(base)?value.toLowerCase()===base.toLowerCase()||value.toLowerCase().startsWith(base.toLowerCase()+'/'):value===base||value.startsWith(base+'/');});if(mount)root='mount:'+mount.id;}
+    setupBrowseMountSelector(root,field);
     const workspace = root === 'workspace';
     const remote = root === 'remote';
     const start = remote ? browseRemoteDirFromValue($(field).value) : workspace ? browseWorkspaceDirFromValue($(field).value) : browseDirFromValue($(field).value,root);
@@ -12582,8 +12582,8 @@ controlRenderers['plugin-routing']=()=>window.AidePluginMarket.renderSettings();
 
 controlRenderers['local-mounts']=()=>window.AideLocalMounts.render({api,t,el,blocked:()=>lockScreen.locked});
 
-function setupBrowseMountSelector(root){
+function setupBrowseMountSelector(root,field){
  let select=$('ws-browse-mount');if(!select){select=el('select');select.id='ws-browse-mount';select.setAttribute('aria-label',t('选择本地目录'));$('ws-browse-address').parentElement.before(select);select.onchange=action(async()=>{const b=wsState.browse;b.root=select.value;b.dir='.';await loadBrowseDir();});}
  select.hidden=root==='workspace'||root==='remote';select.replaceChildren();
- for(const item of [{id:'local',name:t('默认本地目录')},...(state.localMounts||[]).map(e=>({id:'mount:'+e.id,name:e.name+' · '+t(e.readOnly?'只读':'读写')}))]){const o=el('option','',item.name);o.value=item.id;select.append(o);}select.value=root;
+ for(const item of [{id:'local',name:t('默认本地目录')},...(field==='cache-path'?[]:state.localMounts||[]).map(e=>({id:'mount:'+e.id,name:e.name+' · '+t(e.readOnly?'只读':'读写')}))]){const o=el('option','',item.name);o.value=item.id;select.append(o);}select.value=root;
 }

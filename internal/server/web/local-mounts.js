@@ -2,7 +2,7 @@
 (() => {
  'use strict';
  function render({api,t,el,blocked}) {
-  const box=el('section','local-mount-settings'),intro=el('p','muted',t('添加 Windows 不同盘符或 macOS 外置硬盘中的目录。每个目录独立设置权限，默认只读。'));
+  const box=el('section','local-mount-settings'),intro=el('p','muted',t('添加 Windows 不同盘符或 macOS 外置硬盘中的目录。每个目录独立设置权限，默认只读。工作区与资料可使用这些目录，缓存保留在 Aide 数据区。'));
   const notice=el('p','local-mount-notice'),list=el('div','local-mount-list'),actions=el('div','local-mount-actions');notice.setAttribute('role','status');
   const button=(text,fn,cls='quiet')=>{const b=el('button',cls,t(text));b.type='button';b.onclick=fn;return b;};
   let snapshot=null,entries=[],busy=false,serial=0;
