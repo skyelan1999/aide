@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.17.5 RC3**
+**当前版本：0.1.17.5 RC4**
+
+## 0.1.17.5 RC4（2026-10-23）
+
+- Qwen native text, vision, image, audio and video adapters; independent media output routing and TTS Tools host support; compact account balances and plugin-first pricing.
+
 
 ## 0.1.17.5 RC3（2026-10-22）
 
