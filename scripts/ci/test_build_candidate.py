@@ -120,12 +120,21 @@ class CandidateContract(unittest.TestCase):
                 root + '/.aide-image': 'aide:slot-a ' + image + ' linux/' + arch + ' ' + tag + '\n',
                 root + '/workspace/': '', root + '/.env.example': 'safe=true',
             }
+            for required in candidate.FULL_PACKAGE_STARTUP_FILES:
+                entries.setdefault(root + '/' + required, 'startup fixture')
             def write(extra=None):
                 with zipfile.ZipFile(path, 'w') as bundle:
                     for name, value in dict(entries, **(extra or {})).items():
                         bundle.writestr(name, value)
             write()
             self.assertEqual(candidate.validate_full_package(path, tag, arch, image)['status'], 'pass')
+            for required in candidate.FULL_PACKAGE_STARTUP_FILES:
+                removed = entries.pop(root + '/' + required)
+                write()
+                with self.assertRaisesRegex(ValueError, 'Missing full-package startup file'):
+                    candidate.validate_full_package(path, tag, arch, image)
+                entries[root + '/' + required] = removed
+            write()
             with self.assertRaises(ValueError):
                 candidate.validate_full_package(path, tag, arch, 'different-image')
             for name in ('workspace/private.txt', 'plugins/official/index.js', '.env', '../escape'):

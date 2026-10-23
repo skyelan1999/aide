@@ -109,12 +109,27 @@ def audit_image_layers(archive):
     return {'status': 'pass', 'layers': len(seen), 'entries': entries, 'pluginPayloads': 0}
 
 
+FULL_PACKAGE_STARTUP_FILES = (
+    'start.command', 'start.sh', 'start.ps1', 'start.bat', 'compose.yaml', '.env.example',
+    'scripts/aide.sh', 'scripts/launcher-data.sh', 'scripts/launcher-data.ps1',
+    'scripts/launcher-data.py', 'scripts/resource-guard.sh', 'scripts/resource-guard.ps1',
+    'scripts/prebuilt-image.sh', 'scripts/prebuilt-image.ps1',
+    'scripts/local-mounts-control.sh', 'scripts/local-mounts-control.ps1',
+    'scripts/message-lan-control.sh', 'scripts/message-lan-control.ps1',
+    'scripts/watch-port.sh', 'scripts/watch-port.ps1',
+    'scripts/update-agent.sh', 'scripts/update-agent.ps1',
+)
+
+
 def validate_full_package(path, tag, arch, image_id):
     prefix = f'aide-{tag}-full-linux-{arch}'
     with zipfile.ZipFile(path) as bundle:
         names = bundle.namelist()
         if len(names) != len(set(names)):
             raise ValueError('Duplicate package members')
+        for required in FULL_PACKAGE_STARTUP_FILES:
+            if prefix + '/' + required not in names:
+                raise ValueError('Missing full-package startup file: ' + required)
         for name in names:
             parts = PurePosixPath(name).parts
             if not parts or parts[0] != prefix or '..' in parts or name.startswith('/'):
