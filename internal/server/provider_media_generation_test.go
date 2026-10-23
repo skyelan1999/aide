@@ -14,7 +14,8 @@ import (
 )
 
 func TestMediaGenerationIntent(t *testing.T) {
-	for text, want := range map[string]string{"帮我生成一个三秒的庆贺视频，当前仅用于测试，具体文案你自定": "video", "生成 MP3，内容：你好，测试成功。": "speech", "请帮我画一个阿狸的图片": "image", "你语音是不是可以生成mp3": "", "帮我写生成视频的代码": "", "生成图片识别的测试方案": "", "分析视频": "", "generate an image of a fox": "image"} {
+	for text, want := range map[string]string{"帮我生成一个三秒的庆贺视频，当前仅用于测试，具体文案你自定": "video", "生成一个3秒的庆贺视频，仅用于接口测试。": "video",
+		"生成 MP3，内容：你好，测试成功。": "speech", "请帮我画一个阿狸的图片": "image", "你语音是不是可以生成mp3": "", "帮我写生成视频的代码": "", "生成图片识别的测试方案": "", "分析视频": "", "generate an image of a fox": "image"} {
 		if got := generationIntent(text); got != want {
 			t.Errorf("%q: %s want %s", text, got, want)
 		}

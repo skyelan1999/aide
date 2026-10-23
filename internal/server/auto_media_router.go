@@ -11,16 +11,17 @@ import (
 // artifact requests enter generation; questions, coding and analysis stay text.
 var mediaAction = regexp.MustCompile(`(?i)^(请|麻烦|能不能|可以|你)?\s*(帮我|为我|给我)?\s*(生成|制作|合成|画一|画个|朗读|配音|create |generate |make |synthesize |read aloud)`)
 
+var mediaCodeRequest = regexp.MustCompile(`(?i)(代码|脚本|教程|方案|接口)([，。,;；\s]|$)|\b(code|script|tutorial|how to)\b`)
+
 func generationIntent(prompt string) string {
 	text := strings.ToLower(strings.TrimSpace(prompt))
 	if !mediaAction.MatchString(text) {
 		return ""
 	}
-	for _, word := range []string{"代码", "脚本", "教程", "方案", "接口", "如何", "怎么", "是不是", "能否", "能不能生成", "code", "script", "tutorial", "how to"} {
-		if strings.Contains(text, word) {
-			return ""
-		}
+	if mediaCodeRequest.MatchString(text) {
+		return ""
 	}
+
 	// Video takes precedence over images mentioned in its description.
 	for _, word := range []string{"视频", "video", "mp4"} {
 		if strings.Contains(text, word) {
