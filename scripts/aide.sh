@@ -7,9 +7,9 @@ MODE="${1:-start}"
 # 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
 source_sha() {
   (
-    find cmd internal vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
+    find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
+    for extra in scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -302,8 +302,7 @@ case "$MODE" in
           # A cleared Docker engine may retain a complete bundle on the host.
           # Recover only dependency layers, never activate that older application.
           if ! launcher_local_runtime_ready "$DOCKER_BIN" "$IMG" && {
-            [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" != v1 ]] ||
-            [[ "$("$DOCKER_BIN" image inspect aide:cad-dependencies-v1 --format '{{index .Config.Labels "aide.cad-runtime"}}' 2>/dev/null || true)" != 8.0.1.1.0 ]];
+            [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v2 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" != v2 ]];
           }; then
             seed_status=0
             RECOVERED_SEED="$(launcher_local_build_seed "$DOCKER_BIN")" || seed_status=$?
@@ -315,12 +314,7 @@ case "$MODE" in
           base_status=0
           LOCAL_BASE="$(bash scripts/prepare-local-base.sh "$BUILD_SEED")" || base_status=$?
           if (( base_status == 0 )); then
-            if CAD_BASE="$(bash scripts/prepare-cad-base.sh "$BUILD_SEED")"; then
-              export AIDE_CAD_IMAGE="$CAD_BASE"
-              export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
-            else
-              echo "CAD 依赖尚未准备，停止本地构建；按上方命令安装一次后可完全离线。" >&2; return 1
-            fi
+            export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
             echo "== 使用完整本地依赖镜像，应用构建禁止联网 =="
           elif (( base_status != 3 )); then
             echo "本地依赖镜像准备失败；停止，不转为联网构建。" >&2; return "$base_status"
@@ -449,18 +443,15 @@ case "$MODE" in
     cp LICENSE "$BUNDLE/"
     mkdir -p "$BUNDLE/licenses"
     cp vendor/github.com/yuin/goldmark/v2/LICENSE "$BUNDLE/licenses/goldmark.txt"
-    mkdir -p "$BUNDLE/licenses/cad"
-    cp scripts/cad/licenses/* "$BUNDLE/licenses/cad/"
     printf '%s %s %s v%s\n' "$BUNDLE_TAG" "$IMAGE_ID" "$PLATFORM" "$VERSION" > "$BUNDLE/.aide-image"
     printf 'version=%s\nimage=%s\nplatform=%s\nsrcsha=%s\n' "$VERSION" "$IMAGE_ID" "$PLATFORM" \
       "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.srcsha"}}')" > "$BUNDLE/BUILD.txt"
     "$DOCKER_BIN" image tag "$IMAGE_ID" "$BUNDLE_TAG"
     BUNDLE_IMAGES=("$BUNDLE_TAG")
-    printf 'cadRuntime=%s\n' "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.cad-runtime"}}')" >> "$BUNDLE/BUILD.txt"
-    if [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" == v1 ]] && \
-       [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{.Os}}/{{.Architecture}}')" == "$PLATFORM" ]]; then
-      BUNDLE_IMAGES+=(aide:dependencies-v1)
-      printf 'dependencyImage=%s\n' "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{.Id}}')" >> "$BUNDLE/BUILD.txt"
+    if [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v2 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" == v2 ]] && \
+       [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v2 --format '{{.Os}}/{{.Architecture}}')" == "$PLATFORM" ]]; then
+      BUNDLE_IMAGES+=(aide:dependencies-v2)
+      printf 'dependencyImage=%s\n' "$("$DOCKER_BIN" image inspect aide:dependencies-v2 --format '{{.Id}}')" >> "$BUNDLE/BUILD.txt"
     fi
     "$DOCKER_BIN" image save -o "$BUNDLE/docker-images/aide-local.tar" "${BUNDLE_IMAGES[@]}"
     (cd "$BUNDLE/docker-images" && shasum -a 256 aide-local.tar > SHA256SUMS)

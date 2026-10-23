@@ -48,7 +48,7 @@ vm.createContext(modeScope);vm.runInContext(app.slice(app.indexOf('function setE
 modeScope.setEditorMode('preview');assert.equal(previewCalls[0].at(-1),'<robot name="draft"/>');assert.equal(modeScope.state.file.content,'original','preview must not replace the saved XML');modeScope.setEditorMode('edit');assert.equal(ui('editor-preview').classList.contains('hidden'),true);assert.equal(ui('editor').value,'<robot name="draft"/>');assert.equal(disposals,2);
 modeScope.setFileViewMode('preview');assert.equal(previewCalls[1][2],'context');assert.equal(previewCalls[1][3],'ssh-ref');assert.equal(previewCalls[1][4].readOnly,true);modeScope.setFileViewMode('edit');assert.equal(ui('file-view-preview').classList.contains('hidden'),true);
 (async()=>{
- const wrapper=app.slice(app.indexOf('async function setupUrdfPreview('),app.indexOf('/* STEP/STP uses'));
+ const wrapper=app.slice(app.indexOf('async function setupUrdfPreview('),app.indexOf('/* Optional formats retain'));
  for(const change of ['none','token','workspace','epoch','lock','closed','disposed']){
   let resolve,called=0,release,scopeID='A';const box={isConnected:true,replaceChildren(){throw Error('stale UI must not mutate');}};
   const c={state:{token:'T'},chatRecoveryEpoch:1,lockScreen:{locked:false},recoveryScope:()=>scopeID,$:()=>null,window:{AideUrdfPreview:{setup(options){if(release)release();assert.equal(options.isCurrent(),true,'installing the viewer can release its loading placeholder');called++;}}},ensureVendorScript:()=>new Promise(r=>resolve=r),bindViewerTeardown(_host,fn){release=fn;},teardownViewer(){if(release)release();release=null;},el(){},t:x=>x,fileRawUrl(){},ensureThreeStack(){},detectWebGLContext(){}};

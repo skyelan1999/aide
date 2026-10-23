@@ -395,21 +395,11 @@ if ($sourceBuild) {
     try {
         Test-AideDiskBudget $PSScriptRoot -Build
 if ($sourceBuild -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
-    $localBase = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:dependencies-v1','--format','{{index .Config.Labels "aide.local-base"}}') -Capture
-    if ($localBase.Code -eq 0 -and $localBase.Text -eq 'v1') {
-        $cadBase = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:cad-dependencies-v1','--format','{{index .Config.Labels "aide.cad-runtime"}}') -Capture
-        if ($cadBase.Code -ne 0 -or $cadBase.Text -ne '8.0.1.1.0') {
-            $cadSeed = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:local','--format','{{index .Config.Labels "aide.cad-runtime"}}') -Capture
-            if ($cadSeed.Code -ne 0 -or $cadSeed.Text -ne '8.0.1.1.0') { throw 'Native CAD runtime missing. Bootstrap once: docker build -f docker/Dockerfile.cad -t aide:cad-dependencies-v1 .' }
-            if ((Invoke-Native -File $dockerExe -Arguments @('image','tag','aide:local','aide:cad-dependencies-v1')).Code -ne 0) { throw 'Could not retain native CAD dependencies.' }
-        }
-        $cadPlatform = (Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:cad-dependencies-v1','--format','{{.Os}}/{{.Architecture}}') -Capture).Text
-        $nativePlatform = (Invoke-Native -File $dockerExe -Arguments @('info','--format','{{.OSType}}/{{.Architecture}}') -Capture).Text -replace '/aarch64$', '/arm64' -replace '/x86_64$', '/amd64'
-        if ($cadPlatform -ne $nativePlatform) { throw "CAD dependency platform mismatch: $cadPlatform vs $nativePlatform" }
-        $env:AIDE_CAD_IMAGE = 'aide:cad-dependencies-v1'
+    $localBase = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:dependencies-v2','--format','{{index .Config.Labels "aide.local-base"}}') -Capture
+    if ($localBase.Code -eq 0 -and $localBase.Text -eq 'v2') {
         $env:AIDE_DOCKERFILE = 'Dockerfile.local'
         $env:AIDE_BUILD_NETWORK = 'none'
-        $env:AIDE_DEPENDENCY_IMAGE = 'aide:dependencies-v1'
+        $env:AIDE_DEPENDENCY_IMAGE = 'aide:dependencies-v2'
         Write-Host 'Using complete local dependency image; source build networking disabled.'
     }
 }
@@ -418,7 +408,6 @@ if ($sourceBuild -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
         if ($env:AIDE_RELEASE_FALLBACK -eq '0') { throw }
         Write-Warning ('本地编译失败，尝试已校验的官方 Release 镜像：' + $_.Exception.Message)
         Import-AidePrebuiltImage $PSScriptRoot $dockerExe $prebuiltTarget.Text
-        $env:AIDE_CAD_IMAGE = $prebuiltTarget.Text
         Write-Host '已回退到 Release 镜像；运行版本以镜像实际版本为准。'
     }
 }

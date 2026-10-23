@@ -17,7 +17,6 @@ services:
       AIDE_HOST_LOCAL: ${AIDE_LOCAL_ROOT:-${PWD}/workspace}
       AIDE_WEBSEARCH_URL: ${AIDE_WEBSEARCH_URL:-}
       AIDE_BROWSER_BRIDGE_TOKEN: ${AIDE_BROWSER_BRIDGE_TOKEN:-}
-      AIDE_CAD_URL: http://cad:8082
       AIDE_COMPUTER_BRIDGE_TOKEN: ${AIDE_COMPUTER_BRIDGE_TOKEN:-}
     volumes:
       - type: bind
@@ -40,7 +39,6 @@ services:
         target: /home/aide
         bind:
           create_host_path: false
-    networks: [default, cad-private]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -54,42 +52,3 @@ services:
     pids_limit: 256
     mem_limit: 2g
     cpus: 2
-
-  cad:
-    depends_on:
-      aide:
-        condition: service_healthy
-    image: ${AIDE_IMAGE:?Use start.command or scripts/aide.sh start-bundle}
-    pull_policy: never
-    init: true
-    user: "${AIDE_RUN_UID:-1000}:${AIDE_RUN_GID:-1000}"
-    entrypoint: ["python3", "/opt/aide/cad/server.py"]
-    environment:
-      PYTHONPATH: /opt/aide-cad
-      LD_LIBRARY_PATH: /opt/aide-cad/system
-    volumes:
-      - type: bind
-        source: ./.aide-data/storage/data/cad-auth
-        target: /cad-auth
-        read_only: true
-        bind:
-          create_host_path: false
-    networks: [cad-private]
-    read_only: true
-    tmpfs: ["/tmp:size=512m,mode=1777"]
-    cap_drop: [ALL]
-    security_opt: [no-new-privileges:true]
-    pids_limit: 64
-    mem_limit: 4g
-    cpus: 2
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    restart: unless-stopped
-    healthcheck:
-      disable: true
-networks:
-  cad-private:
-    internal: true

@@ -7907,22 +7907,13 @@ async function setupUrdfPreview(container,filePath,root,source,viewerSpec,xmlTex
   if(canceled||!isCurrent()||!container.isConnected)return;
   return window.AideUrdfPreview.setup({container,filePath,root,source,viewerSpec,xmlText,isCurrent,lockElement:$('lock-screen'),el,t,fileRawUrl,teardownViewer,bindViewerTeardown,ensureThreeStack,ensureVendorScript,detectWebGLContext});
 }
-/* STEP/STP uses the isolated local CAD service, with a bounded WASM compatibility path. */
-async function setupStepPreview(container, filePath, root, source, viewerSpec) {
+/* Optional formats retain a download-only fallback when no file-handler plugin is enabled. */
+function setupStepPreview(container,filePath,root,source,viewerSpec) {
   teardownViewer(container);
-  let canceled=false;
-  bindViewerTeardown(container,()=>{canceled=true;});
-  try { await ensureVendorScript('/step-preview.js?v=3', () => !!window.AideStepPreview); }
-  catch(error) {
-    if(canceled||!container.isConnected)return;
-    teardownViewer(container);
-    const notice=el('div','step-error');notice.append(el('strong','',t('STEP 预览不可用')),el('p','',String(error?.message||t('解析失败'))));
-    const retry=el('button','stl-ctrl',t('重新加载'));retry.onclick=()=>setupStepPreview(container,filePath,root,source,viewerSpec);
-    const download=el('a','stl-download',t('下载原始 STEP 文件'));download.href=fileRawUrl(filePath,root,source,viewerSpec);download.download=String(filePath).split('/').pop();
-    notice.append(retry,download);container.replaceChildren(notice);return;
-  }
-  if(canceled||!container.isConnected)return;
-  return window.AideStepPreview.setup({container,filePath,root,source,viewerSpec,el,t,fileRawUrl,teardownViewer,bindViewerTeardown,detectWebGLContext,ensureThreeStack,ensureVendorScript});
+  const notice=el('div','file-preview-unavailable');
+  notice.append(el('strong','',t('STEP 预览需要 STEP Viewer 插件')),el('p','',t('请在插件市场安装并启用 STEP Viewer。')));
+  const download=el('a','stl-download',t('下载原始 STEP 文件'));download.href=fileRawUrl(filePath,root,source,viewerSpec);download.download=String(filePath).split('/').pop();
+  notice.append(download);container.replaceChildren(notice);
 }
 
 async function setupZipPreview(container, filePath, root, source, viewerSpec) {

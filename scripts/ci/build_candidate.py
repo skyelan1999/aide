@@ -180,13 +180,13 @@ def reload_archive(image, archive, arch, image_id, source, commit, version):
 
 
 def verification_plan(image):
-    # The standard full profile defaults runtime/CAD to aide:local. Use explicit
+    # The standard full profile defaults runtime/optional-plugin boundary to aide:local. Use explicit
     # image arguments here instead of retagging a shared local image globally.
     return [
         (['python3', 'scripts/agent-route.py', 'verify', 'quick'], {}),
         (['python3', 'scripts/test_runtime_assets.py', image, '--require-lan-bridge'], {}),
         (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_IMAGE': image, 'AIDE_TEST_WORKERS': '2'}),
-        (['python3', 'scripts/test_cad_geometry.py', image], {}),
+        (['python3', 'scripts/test_optional_step.py', image], {}),
     ]
 
 
@@ -236,7 +236,7 @@ def main():
     proof = {'status': 'pass', 'candidateOnly': True, 'published': False, 'pluginsBundled': False,
              'platform': 'linux/' + args.arch, 'commit': commit, 'sourceSHA256': source,
              'version': version, 'tag': tag, 'image': image, 'imageId': info['Id'],
-             'verification': verification, 'verificationProfile': 'quick plus explicit candidate-image runtime/race/vet/CAD; not a standard full-profile receipt',
+             'verification': verification, 'verificationProfile': 'quick plus explicit candidate-image runtime/race/vet/optional-plugin boundary; not a standard full-profile receipt',
              'smoke': result, 'privacy': privacy, 'packageValidation': package, 'importValidation': imported,
              'asset': {'name': bundle.name, 'sha256': sha256(bundle), 'bytes': bundle.stat().st_size}}
     (out / 'candidate-proof.json').write_text(json.dumps(proof, indent=2) + '\n')

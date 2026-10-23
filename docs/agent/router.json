@@ -600,11 +600,6 @@
       [
         "node",
         "--check",
-        "internal/server/web/step-preview.js"
-      ],
-      [
-        "node",
-        "--check",
         "internal/server/web/urdf-preview.js"
       ],
       [
@@ -614,64 +609,11 @@
       [
         "node",
         "--check",
-        "internal/server/web/step-metrology.js"
-      ],
-      [
-        "node",
-        "--check",
-        "internal/server/web/step-import-worker.js"
-      ],
-      [
-        "node",
-        "scripts/step-metrology.test.cjs"
-      ],
-      [
-        "node",
-        "--check",
-        "internal/server/web/step-assembly.js"
-      ],
-      [
-        "node",
-        "scripts/step-assembly.test.cjs"
-      ],
-      [
-        "node",
-        "scripts/step-worker.test.cjs"
-      ],
-      [
-        "node",
-        "scripts/test_step_import.cjs"
-      ],
-      [
-        "python3",
-        "scripts/test_cad_service.py"
-      ],
-      [
-        "python3",
-        "scripts/test_cad_dependency_image.py"
-      ],
-      [
-        "bash",
-        "-n",
-        "scripts/prepare-cad-base.sh"
-      ],
-      [
-        "sh",
-        "-n",
-        "docker/cad/install.sh"
-      ],
-      [
-        "node",
-        "--check",
         "internal/server/web/plugin-upgrade.js"
       ],
       [
         "node",
         "scripts/plugin-upgrade.test.cjs"
-      ],
-      [
-        "python3",
-        "scripts/test_cad_windows_checkout.py"
       ],
       [
         "node",
@@ -843,7 +785,7 @@
       ],
       [
         "python3",
-        "scripts/test_cad_geometry.py"
+        "scripts/test_optional_step.py"
       ]
     ]
   },

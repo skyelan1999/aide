@@ -1,75 +1,11 @@
-# STEP 预览、测量与坐标标定
+# STEP/STP optional preview
 
-工作台与独立文件页共用 `step-preview.js`。`.step/.stp`（含原类型可识别的备份文件）优先使用同机 Docker 内的原生 OpenCascade 8.0.1 转换服务，文件不会发往云端。未配置该服务的旧式独立运行环境保留随软件分发的 `occt-import-js@0.0.23` 浏览器兼容路径。验收目标是完整曲面、装配位置、单位和颜色，线框不能替代完整预览。
+STEP preview is provided by the public [STEP Viewer plugin](https://github.com/skyelan1999/aide-pkg-STEPViewer). Aide's default image contains no OCCT runtime, STEP WebAssembly importer or CAD sidecar. Shared Three.js remains for STL and URDF; DXF remains on its independent dxf-parser/SVG path.
 
-## 大文件链路
+The plugin registers `.step` and `.stp` with the generic file-handler bridge. Original files are read-only and read in bounded blocks; the plugin retains the original native OpenCascade converter, units, face colors, assembly identity, metrology and explode controls. Native conversion runs locally with a 384 MiB input limit, bounded geometry, 15-minute deadline and a short lease which expires after the preview is abandoned. Limits do not guarantee arbitrary complex models will load.
 
-- STEP 原始文件预算为 384 MiB，其他原始文件和文本编辑器保持既有 64 MiB 限制。本地工作区、引用来源和宿主浏览根使用受限 `os.Root` 和 `http.ServeContent` 流式响应，支持 Range，不把整个文件装入 Go 堆；来源身份、启用状态及工作区快照校验保留，拒绝路径穿越和符号链接。
-- SSH/SFTP 等远程来源沿用有界读取适配器，STEP 字节预算扩大，读取期限 90 秒，并限制一个远程 STEP 缓冲请求；MCP 虚拟来源仍受原适配器的 64 MiB 限制。文件体积上限不保证远端带宽或服务器能在期限内完成传输。
-- 原生链路：鉴权后的 `/api/file/step-preview` 复用原始文件读取的工作区/来源/路径校验，以管道向私有 CAD 服务传输；凭据只放请求头，不放新接口 URL。转换服务没有宿主端口，只连接内部网络，只读挂载 CAD 专用派生凭据目录，不读取工作台登录令牌，不挂载工作区、会话或设置；临时输入位于最多 512 MiB 的 `/tmp`，完成/失败/取消后删除。
-- CAD 容器内存上限 4 GiB、CPU 2、进程 64，与工作台的 2 GiB 限额独立。全局只接受一个转换；每次转换启动独立子进程。原生解析完成后销毁 STEP 交换读取器、释放中间图，再逐实体网格化，按最多 16,000 个三角面的块输出。单个模型保持 0.1 mm 绝对弦差、0.45 弧度角度参数，保留嵌套装配变换和零件/面颜色。批次使用双精度原点加局部 Float32 坐标，避免将大的原始坐标直接截为 Float32。
-- 浏览器 Worker 流式接收网格块，等待主线程确认后继续读取；原始大文件不进入浏览器/WASM 堆。心跳用于发现断连，不伪装进度。取消/关闭终止请求，服务检测断连后结束对应进程组；900 秒超时强制结束。没有任何几何、漏掉正常曲面或不完整输出明确报错并丢弃场景。
-- 未安装原生服务时，浏览器兼容路径只允许 64 MiB；未知长度且不支持流读取的旧浏览器拒绝无界缓冲。兼容路径的下载、解析和网格转换在专用 Worker 内执行。已知长度时只分配一次输入缓冲；无长度响应仍有累计上限；长度不符报错。解析完成后按批发送可转移缓冲，等待主线程确认才发送下一批。主线程分批创建场景并让出事件循环。
-- 浏览器兼容路径的大装配每批合并几何，使用顶点颜色保留零件/面颜色，减少绘制调用。保留三角面 300 万、原始顶点 900 万和实体 5 万的几何预算；兼容路径的几何预算是在 WASM OCCT 返回之后检查，不能预防解析本身耗尽内存。原生路径逐块检查三百万三角面预算；原生解析峰值由独立容器内存限制兜住，失败不承诺任意复杂模型可读。
-- 两条链路都固定输出毫米单位；浏览器兼容路径 64 MiB 以下线性弦差为 0.1 mm，以上为 0.5 mm，角度参数分别为 0.45/0.8 弧度。使用绝对值，避免以整个大装配的包围盒放大公差、丢掉小零件。兼容路径零三角面即使解析器返回 success 也视为失败；原生路径支持明确输出的独立曲线和孤立点。
-- 显示传输量、初始化、解析耗时及实体构建进度；OCCT 的单次 B-rep 解析没有真实百分比回调，不伪造解析百分比。普通文件总预算 5 分钟，大文件 15 分钟；均可取消并重试。支持 Web Locks 的浏览器同源标签同时只允许一次 STEP 解析，不支持该 API 时只保证当前查看器的清理。
-- 查看器关闭、替换、取消、失败或页面退出时终止 Worker，释放 WebGL/几何/材质/标记、观察器、定时器和全局关闭监听。完成后只在交互、尺寸变化和页面恢复时重绘，不常驻动画循环。工具条随窄视口换行；查看器本身可滚动，极短视口不会把测量控件裁掉。
+The separate platform engine archive is downloaded only after clicking install, checked against the plugin's SHA-256/byte manifest, and installed outside the main image. It can be prepared offline. No provider credentials or model files go to the download server. Engine cache persists separately from plugin source; disabling the plugin removes its file handler, and core offers the original download rather than a bundled STEP renderer.
 
-这些预算是防护和功能边界，不等同于所有小于 384 MiB 的复杂模型都可加载。浏览器、设备内存、几何拓扑和装配组织方式都会影响结果；实际大文件验收见任务收据。
+Default builds no longer prepare or copy CAD dependencies. Local dependency generation v2 rejects CAD-containing seed images: deleting a directory in a later Docker layer would retain all original bytes. Existing runtime/data directories are preserved for rollback; no running production service is stopped by source migration.
 
-
-### 失败曲面恢复与混合几何
-
-正常曲面没有网格时，先以更细的绝对弦差重新离散，再尝试 OpenCascade 的 NURBS 副本；保留原面的样式索引，不修改输入文件。普通曲面仍无法离散就终止，不静默删面。恢复过程使用固定参数序列，仍受转换进程超时、容器内存和总三角面预算约束。
-
-两种严格识别的退化情况保留原始边界并在页面明确提示：整个精确包围盒均处于每个顶点自身公差范围内；或者 UV 裁剪区间宽度严格为零且积分面积严格为零。不能仅凭面积很小、面积积分为零、或网格化失败就判定退化。支撑曲面有面积也不代表它的实际裁剪区域有面积。
-
-原生协议增加 `native-lines` 和 `native-points`，分别携带位置、顶点颜色及双精度原点；主线程确认后继续传输，完成消息核对三角面、线段、点的累计数量。只提取不属于面的独立边和不属于边的孤立点，并补充已确认退化面的边界，避免把全部曲面降为线框。线段预算 50 万、点预算 20 万，每块最多 16,000 个图元。查看器支持线和点的显示、拾取及顶点吸附，测量精度边界与曲面网格相同。
-
-用户私有约 173 MiB 装配文件在旧运行镜像复现中止；修复后本机隔离转换约 82 秒通过，输出约 230 万三角面、776 个零件实例。输入只读且未上传。该结果属于转换层验证，页面交互、最终运行镜像和跨设备交付须分别验收，不能替代专业 CAD 软件逐项对照。
-
-## 爆炸视图与零件拆装
-
-加载完成后点击「装配」进入装配展示模式。可通过模型点击或零件选择器选中零件；支持搜索名称、实例编号/ID（普通匹配列表显示前200项，当前选中项保留）。点击「拆除零件」隐藏该实例，「装回零件」恢复；拆除项仍在选择器中标明，可重新安装。「复原装配」恢复所有实例并把爆炸间距归零。
-
-爆炸间距0–200%，可选径向或X/Y/Z方向。径向按原零件中心相对装配中心的方向偏移；同中心采用确定性的不同方向。轴向按原中心排序均匀分开；100%以整个模型最大尺寸作为相对间距基准。每次从原始实例位置计算，不累积偏移。单零件模型明确禁用爆炸，仍可拆除/装回。滑块松开或切换方向后适配可见几何视角。
-
-这是当前查看器中的装配展示：不删除或改写STEP，不添加外部零件，不创建CAD配合约束、碰撞检测或可导出的B-rep装配修改。爆炸方向不代表真实机械拆卸路径。关闭预览后状态释放。装配面板打开、存在爆炸偏移或拆除项时暂停测量并隐藏原测量标记；复原并收起后恢复，已完成测量保留，未完成点选清除，避免把展示偏移当作原坐标。
-
-原生转换在每个mesh/line/point批次增加`parts:[{id,name,start,count}]`，范围按索引项计，保持连续完整。ID对应XCAF叶实例，同一零件跨多个几何块时保持ID；名称相同的重复实例仍独立。无名称时用实例ID，不因读取缺失Name属性触发OCP绑定崩溃。原生实例最多50,000；既有三角面/线/点预算及确认背压保留。浏览器Worker校验范围完整、名称一致和总实例预算，旧服务没有元数据时仍预览，但明确禁用装配操作，需更新CAD服务后重新加载。
-
-浏览器兼容通道按解析器输出mesh保留身份，合并批次也保留每段范围；未提供的CAD子装配关系不凭空恢复。原生单一叶实例即使内含多个实体，也不按面片虚构零件。两通道默认仍用合并几何；第一次进入装配模式才建立实例组，片段共享原属性/索引缓冲，保留面色、源位置及毫米单位，不复制一套顶点数据。大数量实例的逐件绘制仍受浏览器/GPU性能约束，不保证50,000实例均可流畅交互。
-
-相关回归包括`step-assembly.test.cjs`、`step-worker.test.cjs`、`test-step-assembly-native.py`和`browser-step-assembly.cjs`，实际边界与截图见[本轮验收](../reviews/2026-10-20-step-assembly/README.md)。
-
-## 测量
-
-加载完成后可选择吸附三角网格顶点或直接拾取模型表面。拖动旋转与点击拾取区分，空白点击不会创建原点记录。
-
-| 工具 | 输入及结果 |
-| --- | --- |
-| 坐标点 | 单点 XYZ，单位 mm |
-| 两点距离 | 两点欧氏距离及当前坐标系下 ΔX/ΔY/ΔZ |
-| 三点夹角 | 三点测角，第二个点为角顶点，单位度 |
-| 三点标定 | 依次选原点 O、X 正方向点、XY 平面点，建立右手正交坐标系 |
-
-模型为了显示而居中的偏移会在记录前逆转，因此保存的是 STEP 原始毫米坐标，旋转/缩放/归位不改变测量。标定使用归一化和叉积建立正交基；重合、共线及非有限数值拒绝，不覆盖已有有效坐标系。原始坐标系按钮恢复原坐标显示，已有记录按新坐标重新计算。
-
-最多保留 100 条当前查看器记录，可清除或导出 JSON。导出包括文件名、原始点、坐标系基、变换后坐标、距离/夹角和 `precision: preview-mesh`。记录随查看器关闭释放，不自动写回 STEP，也不修改原文件；需要保留时先导出。
-
-测量基于预览网格，不是精确 B-rep 计量。曲线顶点可能是网格采样点，表面拾取落在三角面上；弦差参数也不代表经过计量认证的误差界限。不支持精确圆径、曲面最短距离、GD&T 或公差检验。
-
-## 回归与压力样例
-
-`step-metrology.test.cjs` 校验坐标变换、右手基、距离/角度、显示偏移及退化点；`step-worker.test.cjs` 校验传输上限、来源、截断、批次背压、合并颜色、内存错误和全局监听清理。Go 测试使用 205 MiB 稀疏文件验证 Range 与大小/来源/路径保护，不代表实际几何解析通过。
-
-`scripts/generate-step-stress.py <新文件> --mib 204` 从随包立方体几何复制、重新编号并平移生成真实复合体；`--layout roots` 生成多独立根组织的对照。生成文件不覆盖已有内容，没有填充注释凑体积。`test_step_stress.cjs` 是显式压力检查，必须校验非零及预期三角面数，不能只看解析器 success。大样例放私有验收目录，不进入源码或镜像包。
-
-
-## Docker 与分发
-
-`Dockerfile` 首次构建安装哈希固定的 `cadquery-ocp-novtk` 与代理包；`Dockerfile.local` 从保留的 `aide:cad-dependencies-v1` 复制完整原生运行时，应用构建仍禁网。`scripts/prepare-cad-base.sh` 可以复用该依赖镜像，也可以从已导入、带 CAD 运行时标记的应用镜像恢复，缺少时明确报错给出一次性准备命令，不在本地构建中悄悄下载。离线镜像包必须包含整个应用镜像及新版 Compose，接收端无需安装 Python 库或单独拉取 CAD 镜像；工作台与转换服务共用这个镜像。停止脚本按启动目录精确定位 `aide` 和 `cad` 服务。
-
-`test_cad_geometry.py` 在禁网、1 GiB 的临时容器验证嵌套装配、旋转平移、红黄蓝面色与毫米/米/英寸统一。204 MiB 真实几何样例原生链路得到 370,440 个预期三角面和 31,900×31,900×1,900 mm 尺寸，单次转换实测约 49 秒；该合成压力样例不代表任意复杂模型均可读取。实际工作台/浏览器/取消测试另见任务账本。
-
-CAD 专用凭据位于启动目录 `.aide-data/storage/data/cad-auth/token`，由工作台以 HMAC-SHA256 域分离派生并原子写入，权限 0600；转换服务仅只读挂载 `cad-auth/`。该凭据不能通过工作台 API 登录。工作台凭据或目标设备改变后，下次转换重新派生，不向模型或浏览器下发。
+Historical native fidelity results remain in earlier task/review records. New optional-plugin and DXF/browser checks and actual release size comparison are tracked in [the extraction task](../tasks/step-public-plugin-20261023.json).

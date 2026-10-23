@@ -9,7 +9,7 @@ import (
 
 const maxStepPreview = 384 << 20
 
-// Only remote CAD adapters buffer whole files; serialize them to bound RSS.
+// Large binary downloads use a bounded streaming adapter; no CAD parser is bundled.
 var stepRemotePreviewGate = make(chan struct{}, 1)
 
 func isStepRaw(p string) bool {

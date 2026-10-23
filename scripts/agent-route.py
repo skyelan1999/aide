@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import re
+import runpy
 import subprocess
 import sys
 
@@ -31,10 +32,11 @@ def task_path(name):
 
 
 def check_timeout(command):
-    # The snapshot runner bounds Docker at2750s and its owned-container cleanup
-    # at10s. Do not kill that owner at the ordinary600s command deadline.
+    # The owner must outlive the actual Docker host deadline and cleanup.
+    # Read the runner's constants without executing its guarded main routine.
     if command[:2] == ['python3', 'scripts/test_go_snapshot.py']:
-        return 2800
+        runner = runpy.run_path(str(ROOT / 'scripts/test_go_snapshot.py'))
+        return runner['HOST_TIMEOUT_SECONDS'] + 30
     return 1200 if command[:3] == ['bash', 'scripts/aide.sh', 'test'] else 600
 
 

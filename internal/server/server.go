@@ -1544,7 +1544,6 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/directory", a.createDirectory)
 	mux.HandleFunc("POST /api/directory/rename", a.renameDirectory)
 	mux.HandleFunc("GET /api/file/raw", a.readFileRaw)
-	mux.HandleFunc("GET /api/file/step-preview", a.stepNativePreview)
 	mux.HandleFunc("GET /api/file/download", a.downloadFile)
 	mux.HandleFunc("POST /api/file/archive", a.createWorkspaceArchive)
 	mux.HandleFunc("POST /api/file/extract", a.extractArchive)
@@ -1690,15 +1689,10 @@ func (a *App) buildHandler() {
 		if r.URL.Path == "/mobile-capture.html" {
 			w.Header().Set("Permissions-Policy", "camera=(self), microphone=(), geolocation=()")
 		}
-		if r.URL.Path == "/step-import-worker.js" {
-			// The upstream OCCT STEP importer builds Embind wrappers at runtime with
-			// Function constructors. Keep that requirement confined to its isolated
-			// worker instead of allowing JavaScript eval on the application document.
-			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src 'self'; worker-src 'none'; frame-ancestors 'none'; base-uri 'none'")
-		} else if strings.HasPrefix(r.URL.Path, "/vendor/drawio/") {
+		if strings.HasPrefix(r.URL.Path, "/vendor/drawio/") {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'")
 		} else {
-			// wasm-unsafe-eval permits same-origin WebAssembly modules (PDF/CAD viewers) without enabling JavaScript eval.
+			// wasm-unsafe-eval permits same-origin WebAssembly modules (PDF viewers) without enabling JavaScript eval.
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'")
 		}
 		// HSTS：仅在非回环的真实 HTTPS 站点下发；localhost/127.0.0.1 不加，避免浏览器把本机
