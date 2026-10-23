@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.17.5 RC4**
+**当前版本：0.1.17.5 RC5**
+
+## 0.1.17.5 RC5（2026-10-23）
+
+- Extract STEP preview into public STEP Viewer; slim default images, preserve DXF, and deliver verified Qwen media and TTS adapters
+
 
 ## 0.1.17.5 RC4（2026-10-23）
 
