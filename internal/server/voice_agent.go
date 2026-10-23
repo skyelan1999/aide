@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,8 +30,9 @@ type VoiceHistoryEntry struct {
 
 // VoiceMemory 小秘的长期记忆：与主记忆区分，记录用户习惯/偏好。
 type VoiceMemory struct {
-	Habits []string `json:"habits,omitempty"`
-	Notes  string   `json:"notes,omitempty"`
+	RecordedAt map[string]string `json:"recordedAt,omitempty"`
+	Habits     []string          `json:"habits,omitempty"`
+	Notes      string            `json:"notes,omitempty"`
 }
 
 const voiceHistoryMax = 200
@@ -148,7 +150,9 @@ func voiceRecentSummary(recent []VoiceHistoryEntry) string {
 // 单向只读：本类型【刻意不提供任何 writeAideMemory 方法】——小秘能看到 aide 记下了什么，
 // 但绝不能改写/污染 aide 的记忆（编译期保证：无写方法即不可写）。
 // 返回内容前先过 canAccessMemory 策略：小秘对 memory/core 仅读放行。
-func (va *VoiceAgent) readAideMemory() string {
+func (va *VoiceAgent) readAideMemory() string { return va.readAideMemoryFor("") }
+
+func (va *VoiceAgent) readAideMemoryFor(query string) string {
 	va.aideMemoryMu.RLock()
 	p := va.aideMemoryPath
 	va.aideMemoryMu.RUnlock()
@@ -156,13 +160,36 @@ func (va *VoiceAgent) readAideMemory() string {
 	if ok, reason := canAccessProjectMemory(root, callerAssistant, p, opRead); !ok {
 		return "（无权读取 aide 记忆：" + reason + "）"
 	}
-	b, err := os.ReadFile(p)
+	f, err := os.Open(p)
+	if err != nil {
+		return "（aide 暂无长期记忆）"
+	}
+	defer f.Close()
+	b, err := io.ReadAll(io.LimitReader(f, (1<<20)+1))
+	truncated := len(b) > 1<<20
+	if truncated {
+		b = b[:1<<20]
+	}
 	if err != nil || strings.TrimSpace(string(b)) == "" {
 		return "（aide 暂无长期记忆）"
 	}
-	s := strings.TrimSpace(string(b))
-	if len(s) > 4000 {
-		s = s[:4000] + "…（已截断）"
+	s := strings.TrimSpace(strings.ToValidUTF8(string(b), ""))
+	if len([]rune(query)) > 200 {
+		query = ""
+	}
+	if query != "" {
+		for _, word := range strings.FieldsFunc(query, func(r rune) bool { return r == ' ' || r == '，' || r == '。' || r == '？' }) {
+			if len([]rune(word)) >= 2 && strings.Contains(strings.ToLower(s), strings.ToLower(word)) {
+				return "来源：项目记忆（命中片段，只读）\n" + historySnippet(s, word)
+			}
+		}
+	}
+	if truncated {
+		s += "…（仅读取前1 MiB，不能视为全篇覆盖）"
+	}
+	r := []rune(s)
+	if len(r) > 4000 {
+		s = string(r[:4000]) + "…（已截断，历史任务约束请用 search_history 定位）"
 	}
 	return s
 }

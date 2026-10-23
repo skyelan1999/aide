@@ -1,0 +1,100 @@
+{
+  "id": "assistant-delivery-loop-20261023",
+  "request": "实现已确认的全部五项助理提升，先不发布不部署",
+  "baseline": "4cdef5964f9f744a5b493282b3414f529d8a31ae",
+  "initial_status": "",
+  "acceptance": [
+    "Explicit artifact requests cannot finish successfully with a promise or missing/invalid file",
+    "Direct, delegated and continuation media requests retain output type and remote-job identity; failures are classified without automatic billable retries",
+    "Parallel waves deduplicate equivalent titles and stop unproductive repeated planning within persisted budgets",
+    "Assistant work ledger reports delivery, blockers, next action and authorized scheduled execution without polling mutations",
+    "Bounded history retrieval returns matching snippets, pagination and sources; narration and downloadable TTS remain isolated",
+    "Focused Go race, Node, quick checks and isolated browser acceptance are recorded separately"
+  ],
+  "scope": [
+    "internal/server backend and web assistant UI",
+    "scripts tests and verification fixtures",
+    "docs architecture and task records; no release, production deployment or paid provider calls"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorized all five assessed improvements",
+      "evidence": [
+        "User: 可以，全部搞一下"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse task/checkpoint/media state, proposal approval, passive watch, reminder scheduler and private memory boundaries; additive fields remain backward compatible",
+      "evidence": [
+        "docs/architecture/assistant-live.md",
+        "docs/architecture/memory-access.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "All five areas implemented in host backend and web UI; no plugin schema update required",
+      "evidence": [
+        "internal/server/task_delivery.go",
+        "internal/server/auto_media_router.go",
+        "internal/server/parallel_progress.go",
+        "internal/server/assistant_work_ledger.go",
+        "internal/server/assistant_retrieval.go",
+        "internal/server/assistant_memory_notes.go",
+        "internal/server/web/assistant-live.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused Go race tests and five Node files passed; actual isolated browser ledger/navigation and WAV decode/playback verified; full checks running",
+      "evidence": [
+        ".agent-state/focused.log",
+        ".agent-state/node.log",
+        ".agent-state/full.log",
+        ".agent-state/browser-server.log",
+        ".agent-state/assistant-ledger-mobile.png"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Architecture updated; final verification and limits pending",
+      "evidence": [
+        "docs/architecture/assistant-live.md",
+        "docs/architecture/memory-access.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "No production state changed. Revert this feature branch to its baseline; additive task/memory fields can be ignored by older readers.",
+  "handoff": "",
+  "issue": "https://github.com/skyelan1999/aide/issues/55",
+  "limitations": [
+    "No live provider calls, cloud voice quality, physical microphone/echo or target hardware acceptance",
+    "Browser harness uses synthetic data and a local WAV; it does not prove native cloud generation succeeds",
+    "No production deployment or version release; 9999 service unchanged",
+    "Full Go snapshot and final package build pending"
+  ],
+  "verification_notes": [
+    "An earlier snapshot run was deliberately superseded after continuation fixes; it is not a passing receipt.",
+    "Default aide:local still contains optional CAD payloads; final full verification uses the existing clean RC7 image aide:ci-47c9e4486001-arm64 without changing production.",
+    "Real browser: desktop light, mobile 390px dark, work ledger navigation and local 0.1-second WAV decoded/ended with no media error; no real microphone or paid cloud synthesis."
+  ],
+  "verification_environment": {
+    "source": "feat/assistant-delivery-loop-20261023",
+    "isolated_browser": "http://localhost:18490 (stopped after acceptance)",
+    "production": "9999 unchanged",
+    "providers": "synthetic HTTP fixtures only",
+    "go": "1.26.9 linux/arm64; network disabled for tests"
+  }
+}

@@ -15,7 +15,7 @@ import (
 // fetched. No authorization header or redirects are forwarded to image hosts.
 var qwenImageAssetHost = regexp.MustCompile(`^[a-z0-9-]+\.oss-(accelerate|cn-[a-z0-9-]+|ap-[a-z0-9-]+|us-[a-z0-9-]+)\.aliyuncs\.com$`)
 
-func (a *App) saveQwenImageAsset(ctx context.Context, markdown string) (string, error) {
+func (a *App) saveQwenImageAsset(ctx context.Context, markdown string, tasks ...*Task) (string, error) {
 	start := strings.Index(markdown, "![生成图片](<")
 	if start < 0 {
 		return markdown, fmt.Errorf("图片链接不存在")
@@ -62,6 +62,13 @@ func (a *App) saveQwenImageAsset(ctx context.Context, markdown string) (string, 
 		return markdown, fmt.Errorf("返回内容不是支持的图片")
 	}
 	filename := "generated/images/qwen-" + newID() + ext
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if len(tasks) > 0 && (tasks[0].WorkspaceID != a.wsID() || tasks[0].WorkspaceRev != a.wsRevision) {
+		return markdown, fmt.Errorf("生成期间工作区已变化；原图片记录保留，未写入新工作区")
+	}
 	if err := putText(a.workspace, filename, data); err != nil {
 		return markdown, fmt.Errorf("保存图片失败")
 	}

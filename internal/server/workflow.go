@@ -103,6 +103,8 @@ type Task struct {
 	approvalReviewGeneration uint64
 	approvalAnswered         bool
 
+	Delivery             *TaskDelivery        `json:"delivery,omitempty"`
+	MediaPrompt          string               `json:"mediaPrompt,omitempty"`
 	MediaGeneration      *MediaGeneration     `json:"mediaGeneration,omitempty"`
 	ModelRoutes          []ModelRouteDecision `json:"modelRoutes,omitempty"`
 	WorkflowPhase        string               `json:"workflowPhase,omitempty"`
@@ -309,6 +311,23 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 				fail(w, 409, errors.New("当前任务正在结束，请稍后发送"))
 				return
 			}
+			if existing.MediaGeneration != nil {
+				if mediaStopInstruction(in.Prompt) {
+					existing.StopRequested = true
+					if cancel := a.cancels[existing.ID]; cancel != nil {
+						cancel()
+					}
+					s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, Type: assistantMessageType(assistantManaged)})
+					if err := a.save(s); err != nil {
+						fail(w, 500, err)
+						return
+					}
+					jsonOut(w, 202, map[string]any{"steered": true, "stopping": true, "runId": existing.ID})
+					return
+				}
+				fail(w, 409, errors.New("原生媒体任务正在生成或下载；当前请求未入队。请等待结果，或先停止当前任务后发送新要求，避免重复生成"))
+				return
+			}
 			// 先探插话通道容量：满则直接拒绝，不得留下“已记录但未投递”的脏消息
 			if !in.Queued {
 				select {
@@ -352,7 +371,28 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
 		return
 	}
-	cfg, _ = a.routeModelLocked(&Task{ModelSelection: &choice, Prompt: in.Prompt}, cfg, []Message{{Role: "user", Content: in.Prompt, Images: images}}, ProfileParams{MaxTokens: 1024}, nil, "initial")
+	mediaPrompt, mediaPrevious := sessionMediaContinuation(s, in.Prompt)
+	initialTask := &Task{ModelSelection: &choice, Prompt: mediaPrompt}
+	if mediaPrevious != nil {
+		initialTask.MediaGeneration = mediaPrevious.MediaGeneration
+	}
+	cfg, initialRoute := a.routeModelLocked(initialTask, cfg, []Message{{Role: "user", Content: in.Prompt, Images: images}}, ProfileParams{MaxTokens: 1024}, nil, "initial")
+	if mediaPrevious != nil && mediaPrevious.MediaGeneration != nil {
+		pinned, pinErr := settingsForSelectedModel(cfg, mediaPrevious.MediaGeneration.Model)
+		if pinErr != nil {
+			fail(w, 400, fmt.Errorf("继续原媒体任务需要恢复原模型配置：%w", pinErr))
+			return
+		}
+		cfg = pinned
+		cfg.generationIntent = mediaPrevious.MediaGeneration.Kind
+		cfg.generationError = ""
+		if initialRoute != nil {
+			initialRoute.Model = cfg.Model
+			initialRoute.Role = cfg.generationIntent
+			initialRoute.Reason = "继续原媒体任务，保留模型和账户绑定；不创建新生成"
+		}
+	}
+
 	if err := visionGateForConfig(cfg, images); err != nil {
 		fail(w, 400, err)
 		return
@@ -375,6 +415,14 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	task := &Task{AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task.MediaPrompt = mediaPrompt
+	if initialRoute != nil {
+		task.ModelRoutes = append(task.ModelRoutes, *initialRoute)
+	}
+	if mediaPrevious != nil && mediaPrevious.MediaGeneration != nil {
+		copyState := *mediaPrevious.MediaGeneration
+		task.MediaGeneration = &copyState
+	}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -625,7 +673,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		a.mu.Lock()
 		task.Steps[index].Content = out
 		if err != nil {
-			if (task.PauseRequested || errors.Is(ctx.Err(), context.DeadlineExceeded)) && strings.TrimSpace(out) != "" && len(chain) > 0 {
+			if (task.PauseRequested || errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(err, errDeliveryIncomplete)) && strings.TrimSpace(out) != "" && len(chain) > 0 {
 				task.CheckpointMessages = append(append([]Message(nil), chain...), Message{Role: "assistant", Content: out}, Message{Role: "user", Content: "上一段正文在暂停时被中断。请接着未完成的位置继续，不要重复已经输出的正文；已完成工具仍以此前结果为准。"})
 			}
 			if task.PauseRequested && errors.Is(ctx.Err(), context.Canceled) {
@@ -677,7 +725,10 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	}
 	if err != nil {
 		task.Error = err.Error()
-		if !task.StopRequested && errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		if !task.StopRequested && errors.Is(err, errDeliveryIncomplete) && len(task.CheckpointMessages) > 0 {
+			task.Status = "paused"
+			task.CanResume = true
+		} else if !task.StopRequested && errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			task.Status = "failed"
 			task.CanResume = false
 			phase := "当前阶段"
@@ -699,6 +750,9 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			} else {
 				task.Status = "cancelled"
 				task.Error = "任务已停止"
+				if task.MediaGeneration != nil && task.MediaGeneration.JobID != "" {
+					task.Error = "已停止本地生成跟进；远端已提交任务可能仍运行，请到服务商核对，未提交取消或新生成"
+				}
 				task.CanResume = false
 				task.CheckpointMessages = nil
 				task.CheckpointStep = ""
@@ -932,7 +986,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	if avatarOverride != nil {
 		avatarEnabled = *avatarOverride
 	}
-	task := &Task{ModelSelection: cloneModelSelection(&choice), Parallelism: orig.Parallelism, ID: newID(), AssistantManaged: orig.AssistantManaged, AssistantAuthorization: orig.AssistantAuthorization, AutoReview: a.taskAutoReviewLocked(orig), WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{MediaPrompt: orig.MediaPrompt, ModelSelection: cloneModelSelection(&choice), Parallelism: orig.Parallelism, ID: newID(), AssistantManaged: orig.AssistantManaged, AssistantAuthorization: orig.AssistantAuthorization, AutoReview: a.taskAutoReviewLocked(orig), WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -1452,6 +1506,7 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		}
 	}
 	task.Applied = true
+	a.finalizeProposalDeliveryLocked(task)
 	task.Status = "completed"
 	task.Error = ""
 	s.Checked = false // 审批应用完成：重新点亮“蓝点+加粗”高亮
@@ -1877,9 +1932,17 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			return "", input, errors.New(cfg.generationError)
 		}
 		if isQwenImageModel(cfg.Model) {
-			return a.imageChat(ctx, cfg, input, task, stepIndex)
+			out, chain, err := a.imageChat(ctx, cfg, input, task, stepIndex)
+			if err == nil {
+				err = a.checkTaskDelivery(task, out)
+			}
+			return out, chain, err
 		}
-		return a.mediaGenerationChat(ctx, cfg, input, task, stepIndex)
+		out, chain, err := a.mediaGenerationChat(ctx, cfg, input, task, stepIndex)
+		if err == nil {
+			err = a.checkTaskDelivery(task, out)
+		}
+		return out, chain, err
 	}
 	a.mu.Lock()
 	var parallelSession *Session
@@ -1936,6 +1999,12 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		a.mu.Unlock()
 		if err := a.checkpointExecution(task, stepName, input, "model_request", nil, ""); err != nil {
 			return "", input, err
+		}
+		if stepName == "chat" && generationIntent(taskMediaPrompt(task)) != "" {
+			native := a.routedModel(task, cfg, input, params, nil, "chat")
+			if mediaTask(native) {
+				return a.toolLoop(ctx, native, input, params, nil, task, versions, stepIndex, checkpoints...)
+			}
 		}
 		if parallelSession != nil && stepName == "chat" {
 			var err error
@@ -2112,6 +2181,11 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				if strings.TrimSpace(out) != "" {
 					input = append(input, Message{Role: "assistant", Content: out})
 				}
+				a.mu.Lock()
+				if (requiredDeliveryKind(steer) != "" || mediaStopInstruction(steer) || strings.HasPrefix(strings.TrimSpace(steer), "不要生成")) && task.MediaGeneration == nil {
+					task.MediaPrompt = steer
+				}
+				a.mu.Unlock()
 				input = append(input, Message{Role: "user", Content: wrapSteer(steer)})
 				continue
 			default:
@@ -2124,6 +2198,11 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				if strings.TrimSpace(out) != "" {
 					input = append(input, Message{Role: "assistant", Content: out})
 				}
+				a.mu.Lock()
+				if (requiredDeliveryKind(queued) != "" || mediaStopInstruction(queued) || strings.HasPrefix(strings.TrimSpace(queued), "不要生成")) && task.MediaGeneration == nil {
+					task.MediaPrompt = queued
+				}
+				a.mu.Unlock()
 				input = append(input, Message{Role: "user", Content: wrapSteer(queued)})
 				continue
 			}
@@ -2188,7 +2267,12 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				continue
 			}
 			if (stepName == "chat" || stepName == "agent") && deliveryPromisedOnly(task.Prompt, out) {
-				return "本轮尚未完成用户要求的产出：模型只返回执行承诺，已达到自动收尾检查或工具轮数上限。已有阶段结果保留在上方；本轮未交付的内容不能算完成。", input, nil
+				return out, input, fmt.Errorf("%w：本轮尚未完成用户要求的产出，模型只返回执行承诺。已有阶段结果保留，可从检查点继续。", errDeliveryIncomplete)
+			}
+			if stepName == "chat" || stepName == "agent" {
+				if err := a.checkTaskDelivery(task, out); err != nil {
+					return out, input, err
+				}
 			}
 			return out, input, nil
 		}

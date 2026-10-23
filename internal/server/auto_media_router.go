@@ -5,16 +5,20 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Output intent is separate from input vision/audio support. Only explicit
 // artifact requests enter generation; questions, coding and analysis stay text.
-var mediaAction = regexp.MustCompile(`(?i)^(请|麻烦|能不能|可以|你)?\s*(帮我|为我|给我)?\s*(生成|制作|合成|画一|画个|朗读|配音|create |generate |make |synthesize |read aloud)`)
+var mediaAction = regexp.MustCompile(`(?i)^(?:(?:请|麻烦|能不能|可以|你|现在|直接|帮我|为我|给我|please|can you|could you)\s*)*(生成|制作|合成|画一|画个|朗读|配音|create\b|generate\b|make\b|synthesize\b|read aloud\b)`)
 
-var mediaCodeRequest = regexp.MustCompile(`(?i)(代码|脚本|教程|方案|接口)([，。,;；\s]|$)|\b(code|script|tutorial|how to)\b`)
+var mediaCodeRequest = regexp.MustCompile(`(?i)(代码|脚本|教程|方案|接口|API)([，。,;；\s]|$)|的(代码|脚本|教程|方案|接口|API)|\b(code|script|tutorial|how to)\b`)
 
 func generationIntent(prompt string) string {
 	text := strings.ToLower(strings.TrimSpace(prompt))
+	for _, prefix := range []string{"小秘，", "小秘,", "助理，", "助理,", "我想让你", "我想要你", "我需要你"} {
+		text = strings.TrimSpace(strings.TrimPrefix(text, prefix))
+	}
 	if !mediaAction.MatchString(text) {
 		return ""
 	}
@@ -106,6 +110,8 @@ func (a *App) routeMediaModelLocked(task *Task, fallback Settings, c *routerCata
 			item.Reason = "宿主尚无此模型的原生生成适配"
 		case err != nil || !isBailianEndpoint(cfg.BaseURL):
 			item.Reason = "需要已配置的百炼接口"
+		case task.MediaGeneration == nil && time.Now().Before(a.mediaHealth[mediaIdentity(cfg)].Until):
+			item.Reason = "此账户模型近期调用失败，暂缓自动选择：" + a.mediaHealth[mediaIdentity(cfg)].Category
 		case model.Capabilities[output+"_generation"] == "unsupported":
 			item.Reason = "已禁用此输出能力"
 		case len(task.Attachments) > 0:
@@ -148,4 +154,44 @@ func (a *App) routeMediaModelLocked(task *Task, fallback Settings, c *routerCata
 	d.Score = best.score
 	d.Reason = fmt.Sprintf("%s 生成 · 适配分 %d · 原生单次生成；评分为维护者能力/速度启发式，非官方排名或账户开通保证", output, best.score)
 	return best.cfg, d
+}
+
+// Only short, explicit continuation requests inherit media intent. Never scan
+// assistant prose or an unrelated old request to initiate a billable job.
+func sessionMediaContinuation(s *Session, prompt string) (string, *Task) {
+	text := strings.Trim(strings.ToLower(strings.TrimSpace(prompt)), "。.!！ ")
+	switch text {
+	case "继续", "继续生成", "继续下载", "重试下载", "接着做", "continue", "resume", "finish it":
+	default:
+		return prompt, nil
+	}
+	if s == nil || len(s.Runs) == 0 {
+		return prompt, nil
+	}
+	prev := s.Runs[len(s.Runs)-1]
+	original := prev.MediaPrompt
+	if original == "" {
+		original = prev.Prompt
+	}
+	if generationIntent(original) == "" {
+		return prompt, nil
+	}
+	if prev.StopRequested || prev.Status == "cancelled" || prev.Status == "stopped" {
+		return prompt, nil
+	}
+	return original, prev
+}
+func taskMediaPrompt(task *Task) string {
+	if task.MediaPrompt != "" {
+		return task.MediaPrompt
+	}
+	return task.Prompt
+}
+
+func mediaStopInstruction(prompt string) bool {
+	switch strings.Trim(strings.ToLower(strings.TrimSpace(prompt)), "。.!！ ") {
+	case "停", "停止", "取消", "停止生成", "停止当前任务", "停止当前生成任务", "取消生成", "stop", "cancel":
+		return true
+	}
+	return false
 }

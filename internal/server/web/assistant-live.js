@@ -102,16 +102,17 @@
         hooks.work?.(events);
         const fresh=events.filter(event=>!seen.has(event.id));for(const event of events)seen.add(event.id);
         while(seen.size>1000)seen.delete(seen.values().next().value);
+        hooks.saveSeen?.([...seen]);
         const meaningful=fresh.filter(event=>event.kind!=='task'||!['running','queued'].includes(event.status));
         const report=baseline?meaningful:meaningful.filter(event=>event.priority>=3);
-        if(report.length){const latest=report.slice(0,5);hooks.events?.(latest);notices.push(...latest.map(event=>event.text));notices=notices.slice(-5);if(!busy&&!finalText&&!interim)void announce();}baseline=true;
+        if(report.length){const latest=report.slice(0,5);hooks.events?.(latest);notices.push(...latest.map(event=>[event.text,event.blocker,event.nextAction].filter(Boolean).join(' ')));notices=notices.slice(-5);if(!busy&&!finalText&&!interim)void announce();}baseline=true;
       }catch(error){if(token===epoch&&error.name!=='AbortError'){failureCount++;if(error.status===401||error.status===423){hooks.error?.(error.message);stop();}else if(failureCount===3){hooks.error?.(error.message);state('recovering');}}}
       finally{polling=false;}}
       if(allowed())pollTimer=later(()=>void poll(),failureCount>=3?30000:10000);
     }
     async function start(withMicrophone=false){
       if(!hooks.valid())return;
-      if(!enabled){enabled=true;epoch++;seen=new Set();baseline=false;ended=[];failureCount=0;}
+      if(!enabled){enabled=true;epoch++;const initial=hooks.loadSeen?.();seen=new Set(Array.isArray(initial)?initial.filter(id=>typeof id==='string').slice(-1000):[]);baseline=false;ended=[];failureCount=0;}
       paused=false;microphone=withMicrophone||microphone;state(microphone?'requesting':'watching');clear(pollTimer);void poll();if(microphone)await listen();
     }
     function resume(){if(!enabled)return;paused=false;epoch++;ended=[];failureCount=0;void poll();microphone?void listen():state('watching');}

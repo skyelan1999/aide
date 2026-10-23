@@ -19,6 +19,7 @@ import (
 // Stored with the run before any billable POST. Submitting without a remote ID
 // is deliberately ambiguous: a resume must not silently create a duplicate.
 type MediaGeneration struct {
+	Output      string     `json:"output,omitempty"`
 	RequestHash string     `json:"requestHash"`
 	Voice       string     `json:"voice,omitempty"`
 	Kind        string     `json:"kind"`
@@ -124,7 +125,7 @@ func mediaJSON(ctx context.Context, client *http.Client, cfg Settings, method, p
 		return nil, errors.New("媒体接口响应不完整或超过大小限制")
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("媒体 API HTTP %d；请检查所选模型开通状态、地域、Key 和限流。账户有余额不等于所有模型已开通；本次没有自动重新生成", resp.StatusCode)
+		return nil, classifyMediaError(resp.StatusCode, raw)
 	}
 	return raw, nil
 }
@@ -313,10 +314,10 @@ func (a *App) saveMediaState(task *Task, state *MediaGeneration) error {
 }
 func (a *App) mediaGenerationChat(ctx context.Context, cfg Settings, input []Message, task *Task, stepIndex int) (string, []Message, error) {
 	format := "mp3"
-	if strings.Contains(strings.ToLower(task.Prompt), "wav") && !strings.Contains(strings.ToLower(task.Prompt), "mp3") {
+	if strings.Contains(strings.ToLower(taskMediaPrompt(task)), "wav") && !strings.Contains(strings.ToLower(taskMediaPrompt(task)), "mp3") {
 		format = "wav"
 	}
-	return a.mediaGenerationChatRequest(ctx, cfg, input, task, stepIndex, task.Prompt, "", format, true)
+	return a.mediaGenerationChatRequest(ctx, cfg, input, task, stepIndex, taskMediaPrompt(task), "", format, true)
 }
 func (a *App) mediaGenerationChatRequest(ctx context.Context, cfg Settings, input []Message, task *Task, stepIndex int, prompt, voice, format string, emit bool) (string, []Message, error) {
 	if err := a.sandboxToolError("tts_generate"); err != nil {
@@ -342,8 +343,10 @@ func (a *App) mediaGenerationChatRequest(ctx context.Context, cfg Settings, inpu
 	client := &http.Client{Timeout: 90 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	err := generateNativeMedia(ctx, cfg, prompt, &state, save, func(text string) { a.publishStream(task.ID, streamEvent{Event: "note", Text: text, Round: 0}) }, client, 15*time.Second)
 	if err != nil {
+		a.recordMediaHealth(cfg, err)
 		return "", input, err
 	}
+	a.recordMediaHealth(cfg, nil)
 	if state.Asset == "" {
 		link, err := mediaDownloadURL(state.ResultURL)
 		if err != nil {

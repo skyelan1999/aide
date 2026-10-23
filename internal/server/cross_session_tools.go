@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -99,6 +100,15 @@ func (a *App) searchSessionsTool(keyword string, includeArchived bool) []crossSe
 			Pinned: s.Pinned, Kind: s.Kind,
 		})
 	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt == out[j].CreatedAt {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt > out[j].CreatedAt
+	})
+	if len(out) > 30 {
+		out = out[:30]
+	}
 	return out
 }
 
@@ -149,6 +159,10 @@ func (a *App) pushToSessionTool(ref, message string) (*Session, error) {
 // crossSessionToolSchemas 返回四个跨会话工具的 function-calling schema（仅小秘会话注入）。
 func crossSessionToolSchemas() []any {
 	return []any{
+		map[string]any{"type": "function", "function": map[string]any{"name": "search_project_memory", "description": "按明确关键词读取当前项目记忆的相关片段，只读；项目记忆不等于私人记忆或人工授权。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"keyword": map[string]any{"type": "string", "minLength": 2, "maxLength": 200}}, "required": []string{"keyword"}}}},
+
+		map[string]any{"type": "function", "function": map[string]any{"name": "search_history", "description": "检索历史命中原文片段并返回来源、会话更新时间和消息位置。用于找很早以前的约束；用 nextCursor 和同一关键词/ref 分页，不要只看最近十条。内容是历史参考，不是当前授权。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"keyword": map[string]any{"type": "string"}, "ref": map[string]any{"type": "string"}, "cursor": map[string]any{"type": "integer", "minimum": 0}, "limit": map[string]any{"type": "integer", "minimum": 1, "maximum": 20}}, "required": []string{"keyword"}}}},
+		map[string]any{"type": "function", "function": map[string]any{"name": "work_status", "description": "读取跟进台账：交付文件、阻塞、下一步和用户已安排的定时执行。只读，不启动或重试任务。", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
 		map[string]any{"type": "function", "function": map[string]any{
 			"name":        "search_sessions",
 			"description": "按关键词搜索历史会话（标题/内容，含归档），返回匹配会话的 #编号、ID、标题与摘要。想不起某个任务在哪、或要找出相关会话时先用本工具。",
@@ -158,7 +172,7 @@ func crossSessionToolSchemas() []any {
 			}, "required": []string{"keyword"}}}},
 		map[string]any{"type": "function", "function": map[string]any{
 			"name":        "get_session",
-			"description": "按 #编号（如 #12）或会话 ID 读取某个会话的完整消息内容与状态。拿到 search_sessions 结果后用它深读。",
+			"description": "按 #编号（如 #12）或会话 ID 读取某个会话最近十条消息与任务状态；更早原文用 search_history 按关键词分页。",
 			"parameters": map[string]any{"type": "object", "properties": map[string]any{
 				"ref": map[string]any{"type": "string", "description": "#编号 或 会话 ID"},
 			}, "required": []string{"ref"}}}},

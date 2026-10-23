@@ -10325,7 +10325,11 @@ function initAssistantLive(){
     for(const event of items.slice(0,8)){
       const row=el('div','assistant-work-item');const label=event.sessionId?el('button','quiet',event.text):el('span','',event.text);
       if(event.sessionId){label.type='button';label.onclick=action(()=>selectSession(event.sessionId));}
-      row.append(label);if(event.detail)row.append(el('small','',event.detail));workItems.append(row);
+      row.append(label);
+      if(event.delivery?.state==='delivered')row.append(el('small','',t('已核验交付')+' · '+event.delivery.artifacts.join(' · ')));
+      if(event.blocker)row.append(el('small','assistant-work-blocker',t('阻塞')+'：'+event.blocker));
+      if(event.nextAction)row.append(el('small','',t('下一步')+'：'+t(event.nextAction)));
+      if(event.detail)row.append(el('small','',event.detail));workItems.append(row);
     }
   };
   const paint=()=>{
@@ -10337,6 +10341,8 @@ function initAssistantLive(){
     $('voice-btn').classList.toggle('recording',value.enabled&&value.microphone&&!value.paused);$('voice-btn').setAttribute('aria-label',t(value.enabled&&value.microphone?'结束持续语音':'开始持续语音'));
   };
   window.aideAssistantLive=window.AideAssistantLive.create({valid,state:paint,
+    loadSeen:()=>{try{return JSON.parse(sessionStorage.getItem('assistant-work-seen:'+assistantEntrySession.id)||'[]');}catch(_){return [];}},
+    saveSeen:ids=>{try{sessionStorage.setItem('assistant-work-seen:'+assistantEntrySession.id,JSON.stringify(ids));}catch(_){}},
     openMicrophone:async()=>{
       const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Ctor)throw new Error(t('当前浏览器不支持语音识别'));
       const recognition=new Ctor();recognition.lang=document.documentElement.lang.startsWith('en')?'en-US':'zh-CN';recognition.continuous=true;recognition.interimResults=true;

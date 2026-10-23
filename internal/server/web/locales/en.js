@@ -1,6 +1,21 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+ "已核验交付":"Verified delivery",
+ "阻塞":"Blocker",
+ "下一步":"Next action",
+ "等待当前执行结果":"Waiting for the current run",
+ "打开任务审阅具体操作；由已有授权范围内的审批流程处理":"Open the task to review the specific action under the existing approval policy",
+ "打开任务回答必要问题；助理不能代答人工审批":"Open the task to answer the required question; the assistant cannot supply human approval",
+ "核对失败原因后决定恢复或重试；未自动重新提交收费请求":"Review the failure before resuming or retrying; no billable request was automatically resubmitted",
+ "打开任务从已有检查点继续；先核对已经执行的操作":"Open the task to resume its checkpoint after reviewing completed actions",
+ "查看交付结果":"View the deliverable",
+ "已停止；只有用户重新交办才继续":"Stopped; only a new user instruction can continue it",
+ "核对交付缺口或待审批文件；不按成功交付汇报":"Review the missing delivery or pending files; this is not a successful delivery",
+ "按用户已保存的执行安排处理；无需保持页面打开，服务必须运行":"Uses the user's saved schedule; the page may close but the service must remain running",
+ "在提醒中心核对并重新安排；未自动重放":"Review and reschedule in Reminders; execution was not automatically replayed",
+ "查看执行结果":"View the execution result",
+
  "保存到原文件":"Save to original file",
  "文件打开方式":"Open file with",
  "工作台原生预览":"Native workbench preview",

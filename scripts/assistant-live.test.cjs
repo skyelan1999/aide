@@ -44,3 +44,14 @@ function fixture(){
  delete speechContext.window.speechSynthesis;await speechContext.webSpeakAwait('no synthesis');
  console.log('PASS continuous assistant: direct voice, reply/resume, echo isolation and voice barge-in, reconnect, short utterance, stop/late permission/late model cancellation, event baseline/dedup, pause and lock boundary');
 })().catch(e=>{console.error(e);process.exitCode=1});
+
+// A page refresh must not announce the same persisted blocker again. Only
+// opaque event IDs are retained; no private text is written to browser storage.
+(async()=>{
+ let saved=[],announced=[];
+ const hooks={valid:()=>true,watch:async()=>[{id:'persisted-blocker',kind:'task',status:'failed',priority:3,text:'Failed'}],loadSeen:()=>saved,saveSeen:ids=>{saved=ids},events:items=>announced.push(...items),setTimeout:()=>1,clearTimeout:()=>{},state:()=>{},speak:async()=>{}};
+ let live=context.window.AideAssistantLive.create(hooks);await live.start(false);await new Promise(resolve=>setImmediate(resolve));live.stop();
+ assert.deepEqual(Array.from(saved),['persisted-blocker']);assert.equal(announced.length,1);
+ live=context.window.AideAssistantLive.create(hooks);await live.start(false);await new Promise(resolve=>setImmediate(resolve));live.stop();assert.equal(announced.length,1);
+ console.log('PASS refresh retains notification dedup without private content');
+})().catch(error=>{console.error(error);process.exitCode=1});

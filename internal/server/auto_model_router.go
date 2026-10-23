@@ -229,7 +229,7 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 		d.Reason = "保留手动回退模型：路由插件已停用、档案无效或声明冲突"
 		return fallback, d
 	}
-	text := task.Prompt
+	text := taskMediaPrompt(task)
 	if output := generationIntent(text); output != "" && (stage == "initial" || stage == "chat") {
 		return a.routeMediaModelLocked(task, fallback, c, p, output, d)
 	}

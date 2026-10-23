@@ -119,7 +119,7 @@ func TestQwenImageChatSingleRequest(t *testing.T) {
 	}
 	w = request(a, "GET", "/api/sessions/"+s.ID, nil)
 	_ = json.Unmarshal(w.Body.Bytes(), &s)
-	if s.Runs[0].Status != "completed" || s.Runs[0].Usage.Total != 0 || len(s.Runs[0].RequestSnapshots) != 1 {
+	if s.Runs[0].Status != "paused" || s.Runs[0].MediaGeneration == nil || s.Runs[0].MediaGeneration.Output == "" || s.Runs[0].Usage.Total != 0 || len(s.Runs[0].RequestSnapshots) != 1 {
 		t.Fatalf("unexpected image run status=%s usage=%+v snapshots=%d", s.Runs[0].Status, s.Runs[0].Usage, len(s.Runs[0].RequestSnapshots))
 	}
 }

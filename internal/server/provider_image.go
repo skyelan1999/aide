@@ -61,10 +61,8 @@ func generateQwenImage(ctx context.Context, cfg Settings, prompt string, rec fun
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusTooManyRequests {
-			return "", fmt.Errorf("图像 API 返回 HTTP 429：请求受限。请检查百炼模型限流、模型开通状态及所选 Key；稍后手动重试，本次未自动重复生图")
-		}
-		return "", fmt.Errorf("图像 API 返回 HTTP %d；请检查模型、基础地址、密钥和服务状态。本次未自动重复生图", resp.StatusCode)
+		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
+		return "", classifyMediaError(resp.StatusCode, raw)
 	}
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, (2<<20)+1))
 	if err != nil || len(raw) > 2<<20 {
@@ -128,23 +126,62 @@ func (a *App) imageChat(ctx context.Context, cfg Settings, input []Message, task
 		}
 	}
 	a.publishStream(task.ID, streamEvent{Event: "note", Text: "正在生成图片…", Round: 0})
-	out, err := generateQwenImage(ctx, cfg, task.Prompt, func(body []byte) {
-		sum := sha256.Sum256(body)
-		a.mu.Lock()
-		defer a.mu.Unlock()
-		task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{Purpose: "image#1", Model: cfg.Model, Messages: []Message{{Role: "user", Content: task.Prompt}}, Body: append(json.RawMessage{}, body...), SHA256: hex.EncodeToString(sum[:]), At: time.Now().UTC().Format(time.RFC3339Nano)})
-	})
-	if err != nil {
-		return "", input, err
+	prompt := taskMediaPrompt(task)
+	a.mu.Lock()
+	state := MediaGeneration{Kind: "image", Model: cfg.Model, Identity: mediaIdentity(cfg), State: "submitting", RequestHash: hash([]byte(prompt))}
+	if task.MediaGeneration != nil {
+		state = *task.MediaGeneration
 	}
-	if saved, saveErr := a.saveQwenImageAsset(ctx, out); saveErr == nil {
+	a.mu.Unlock()
+	if state.Identity != mediaIdentity(cfg) || state.RequestHash != hash([]byte(prompt)) {
+		return "", input, fmt.Errorf("图像任务配置或文案已变化；未重复提交")
+	}
+	if state.Asset != "" {
+		return "![生成图片](" + state.Asset + ")\n[下载图片](" + state.Asset + ")", input, nil
+	}
+	out := state.Output
+	if out == "" {
+		if task.MediaGeneration != nil {
+			return "", input, fmt.Errorf("图像提交结果不明确；请核查服务商记录，未自动重复生图")
+		}
+		if err := a.saveMediaState(task, &state); err != nil {
+			return "", input, err
+		}
+		var err error
+		out, err = generateQwenImage(ctx, cfg, prompt, func(body []byte) {
+			sum := sha256.Sum256(body)
+			a.mu.Lock()
+			defer a.mu.Unlock()
+			task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{Purpose: "image#1", Model: cfg.Model, Messages: []Message{{Role: "user", Content: prompt}}, Body: append(json.RawMessage{}, body...), SHA256: hex.EncodeToString(sum[:]), At: time.Now().UTC().Format(time.RFC3339Nano)})
+		})
+		if err != nil {
+			a.recordMediaHealth(cfg, err)
+			return "", input, err
+		}
+		a.recordMediaHealth(cfg, nil)
+		state.Output = out
+		state.State = "succeeded"
+		if err := a.saveMediaState(task, &state); err != nil {
+			return "", input, err
+		}
+	}
+	var deliveryErr error
+	if saved, saveErr := a.saveQwenImageAsset(ctx, out, task); saveErr == nil {
 		out = saved
+		if links := artifactLink.FindStringSubmatch(saved); len(links) > 1 {
+			state.Asset = links[1]
+		}
+		if err := a.saveMediaState(task, &state); err != nil {
+			return out, input, err
+		}
 	} else {
-		out += "\n\n图片未能自动保存，可使用原始链接下载；请勿为下载而重复生图。"
+		out += "\n\n图片已生成，自动保存失败；可使用原始链接下载，请勿为下载重复生图。"
+		deliveryErr = fmt.Errorf("%w：图片已生成但保存失败：%v", errDeliveryIncomplete, saveErr)
+		_ = a.checkTaskDelivery(task, out)
 	}
 	if err := a.saveOutputSegment(task, stepIndex, 0, out); err != nil {
 		return out, input, err
 	}
 	a.publishStream(task.ID, streamEvent{Event: "delta", Text: out, Round: 0})
-	return out, input, nil
+	return out, input, deliveryErr
 }

@@ -546,6 +546,7 @@ type App struct {
 	sourceSecrets             sourcesSecrets
 	tokenStats                map[string]TokenDay
 	tokenStatsMu              sync.Mutex
+	mediaHealth               map[string]mediaHealth
 	wsRevision                uint64
 	compactingSessions        map[string]bool
 	contextCompactionProgress map[string]contextCompactionProgress

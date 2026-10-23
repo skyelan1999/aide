@@ -167,11 +167,14 @@ func (a *App) dispatchScheduledReminders(now time.Time) {
 			for _, run := range s.Runs {
 				if run.ID == e.RunID {
 					switch run.Status {
-					case "completed", "failed", "cancelled", "resumed":
+					case "completed", "failed", "cancelled", "resumed", "paused", "interrupted", "stopped":
 						old := *e
 						e.State = "succeeded"
 						if run.Status != "completed" {
 							e.State = "failed"
+						}
+						if run.Status == "paused" || run.Status == "interrupted" || run.Status == "stopped" || run.Status == "resumed" {
+							e.State = "interrupted"
 						}
 						e.Error = run.Error
 						e.FinishedAt = now.UTC().Format(time.RFC3339Nano)
