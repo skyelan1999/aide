@@ -70,14 +70,15 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication.",
+      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication. Source branch pushed; PR #37 open, stacked on #36. Release remains pending merge and release gates.",
       "evidence": [
         ".agent-state/balance-pool-build.log",
-        ".agent-state/balance-pool-start.log"
+        ".agent-state/balance-pool-start.log",
+        "https://github.com/skyelan1999/aide/pull/37"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "恢复上一镜像aide:plugin-pricing-repair-20261023与源代码；费用历史和凭证无迁移。报警线仅存当前设备按Key/币种隔离的非敏感偏好。",
-  "handoff": "Local preview running; previous image retained. User must enter Bailian RAM before real balance verification. Preferences scoped by workspace/provider/key/currency. Prepare independent PR stacked on #36."
+  "handoff": "Local preview running; previous image retained. User must enter Bailian RAM before real balance verification. Preferences scoped by workspace/provider/key/currency. PR #37 is open, stacked on #36; source commits a2116fa1 and bb221af8 pushed."
 }
