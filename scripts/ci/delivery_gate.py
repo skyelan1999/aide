@@ -112,7 +112,14 @@ def remote(root):
     if ref['type'] == 'tag':
         ref = json.loads(capture(['gh', 'api', f'repos/{repo}/git/tags/' + ref['sha']]))['object']
     require(ref['type'] == 'commit' and ref['sha'] == sha, 'Remote tag moved')
-    release = json.loads(capture(['gh', 'api', f'repos/{repo}/releases/tags/{tag}']))
+    # The tag endpoint exposes published releases, not a newly created draft.
+    # gh release view resolves drafts for the authenticated publisher; then pin
+    # the API read to the exact database ID and verify its tag before using assets.
+    identity = json.loads(capture(['gh', 'release', 'view', tag, '--repo', repo, '--json', 'databaseId']))
+    release_id = identity.get('databaseId')
+    require(type(release_id) is int and release_id > 0, 'Invalid release database ID')
+    release = json.loads(capture(['gh', 'api', f'repos/{repo}/releases/{release_id}']))
+    require(release.get('id') == release_id and release.get('tag_name') == tag, 'Remote release identity mismatch')
     require(release['draft'] is True, 'Expected an unpublished draft')
     assets = {a['name']: a for a in release['assets']}
     require(set(assets) == set(expected), 'Unexpected or missing remote assets')

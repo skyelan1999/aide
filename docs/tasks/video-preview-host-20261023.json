@@ -11,41 +11,71 @@
     "internal/server/plugin_workbench.go",
     "internal/server/plugin_workbench_test.go",
     "public aide-pkg-VideoPreview source",
-    "isolated preview only"
+    "isolated preview only",
+    "scripts/ci/delivery_gate.py",
+    "scripts/ci/test_delivery_gate.py",
+    "RC6 host release and public video market listing"
   ],
   "stages": {
     "requirements": {
       "status": "pass",
-      "summary": "Project-first public preview, explicit licensing audit"
+      "summary": "Project-first public preview, explicit licensing audit",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
+        "https://github.com/skyelan1999/aide/pull/47"
+      ]
     },
     "design": {
       "status": "pass",
-      "summary": "Project index plus browser media from bounded document bridge; no arbitrary asset paths"
+      "summary": "Project index plus browser media from bounded document bridge; no arbitrary asset paths",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
+        "https://github.com/skyelan1999/aide/pull/47"
+      ]
     },
     "implementation": {
       "status": "pass",
-      "summary": "Blob-only media CSP, separate public plugin with original parser/UI"
+      "summary": "Blob-only media CSP, separate public plugin with original parser/UI; Fix delivery draft lookup via validated database ID, preserving immutable tag and exact asset digest checks (Issue50).",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
+        "https://github.com/skyelan1999/aide/pull/47",
+        "https://github.com/skyelan1999/aide/issues/50"
+      ]
     },
     "verification": {
       "status": "pass",
-      "summary": "Focused TestPluginWorkbenchAuthSandboxAndOneUse PASS; real Safari FCPXML two lanes/two clips/one media, actual 640x360/2.00s H264 playback and frame stepping PASS. Full profile NOT_RUN for this separate host patch.",
+      "summary": "Correct-image full profile PASS for fixed gate inputs: all24 server shards, other race packages/vet, runtime and optional STEP checks. Fingerprint eed61d9e2efb6e9688c8dba88bc5dd5030f97bff0034838a2feb8c6223bf08c2. CI-script16 unit tests pass. Safari and public plugin download/installation evidence retained.",
       "evidence": [
-        ".agent-state/video-host-sandbox.log",
-        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/main/docs/verification.md"
+        "docs/reviews/20261023/video-preview-release-evidence.json",
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3c5d049/docs/release-0.1.0.json"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Plugin PRD, support matrix, copyright notices and verified/not-run boundaries recorded publicly."
+      "summary": "Plugin PRD, support matrix, copyright notices and verified/not-run boundaries recorded publicly.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
+        "https://github.com/skyelan1999/aide/pull/47"
+      ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Separate worktree preserves active main/STEP release source. Original production unchanged."
+      "status": "pass",
+      "summary": "Reviewed scoped source; generated engine/source archives and test caches excluded from Git and main image. Own Safari test tab closed; isolated18490 retained for release acceptance. Production9999 untouched.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/tree/3935bcde407a85be372909f9fabca697b2da151c"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "Separate from ongoing STEP default-runtime extraction release"
+      "status": "in_progress",
+      "summary": "Authorized direct merge completed; gate fix and evidence preparing RC6. Plugin0.1.0 public; marketplacePR6 still held for RC6.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/47",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/6"
+      ]
     }
   },
-  "release_authorization": "User requested public plugin; existing main/STEP release remains independently gated."
+  "release_authorization": "2026-10-23 user: 那你直接合并发布吧，主程序、视频预览插件和市场都更新好。 User explicitly requested direct merge after GitHub same-author approval restriction was explained. PR47 merged via authorized admin merge; no branch-protection change or fabricated review.",
+  "rollback": "No production/data migration or replacement. Keep existing9999 running. To undo host change revert PR47 via normal reviewed change; use previous published RC5 package/immutable tag for a manual runtime rollback with existing data backup. Disable video-preview to restore native file handling; do not automatically delete user files or shared caches. RC5 tag remains immutable.",
+  "handoff": "RC5/STEP release remains with original thread01a153c6-9944-7c13-bd02-a5eb0f097321. RC6/video release prepared in this independent checkout; no concurrent edits to original checkout or marketplacePR5. Video marketPR6 held until compatible host release."
 }

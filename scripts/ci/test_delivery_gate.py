@@ -67,6 +67,35 @@ class DeliveryGateTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 gate.validate_candidates(Path(tmp), '../../main;bad', self.sha)
 
+    def test_remote_draft_uses_id_and_rejects_wrong_identity_or_digest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.fixture(root)
+            for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt'):
+                (root / name).write_text('synthetic manifest')
+            expected, _ = gate.validate_candidates(root, self.tag, self.sha)
+            for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt'):
+                expected[name] = dict(bytes=(root / name).stat().st_size, sha256=gate.digest(root / name))
+            release = dict(id=123, tag_name=self.tag, draft=True, assets=[dict(name=n, size=v['bytes'], digest='sha256:' + v['sha256']) for n, v in expected.items()])
+            def run(identity, record):
+                def fake(args):
+                    if args == ['gh', 'api', f'repos/owner/repo/git/ref/tags/{self.tag}']:
+                        return json.dumps(dict(object=dict(type='commit', sha=self.sha)))
+                    if args == ['gh', 'release', 'view', self.tag, '--repo', 'owner/repo', '--json', 'databaseId']:
+                        return json.dumps(dict(databaseId=identity))
+                    if args == ['gh', 'api', 'repos/owner/repo/releases/123']:
+                        return json.dumps(record)
+                    raise AssertionError('Unexpected remote operation: ' + str(args))
+                with patch.dict(os.environ, dict(RELEASE_TAG=self.tag, RELEASE_SHA=self.sha, GH_REPO='owner/repo')), patch.object(gate, 'capture', side_effect=fake):
+                    gate.remote(root)
+            run(123, release)
+            for record in ({**release, 'id':124}, {**release, 'tag_name':'wrong'}, {**release, 'draft':False}, {**release, 'assets':[]}):
+                with self.subTest(record=record), self.assertRaises(ValueError):
+                    run(123, record)
+            for identity in ('123', True, -1):
+                with self.subTest(identity=identity), self.assertRaisesRegex(ValueError, 'database ID'):
+                    run(identity, release)
+
     def test_manual_tag_must_name_current_main_commit(self):
         def fake(args):
             if args == ['git', 'rev-parse', 'HEAD']:
