@@ -64,7 +64,7 @@ func TestPluginWorkbenchAuthSandboxAndOneUse(t *testing.T) {
 		t.Fatal(w.Code, w.Body.String())
 	}
 	csp := w.Header().Get("Content-Security-Policy")
-	for _, part := range []string{"connect-src 'none'", "sandbox allow-scripts allow-downloads", "frame-ancestors 'self'", "worker-src blob:"} {
+	for _, part := range []string{"connect-src 'none'", "sandbox allow-scripts allow-downloads", "frame-ancestors 'self'", "worker-src blob:", "media-src blob:"} {
 		if !strings.Contains(csp, part) {
 			t.Fatal(csp)
 		}
