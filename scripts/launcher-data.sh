@@ -19,6 +19,19 @@ launcher_env_restore() {
     if [[ "$AIDE_RUN_UID" == 0 ]]; then export AIDE_RUN_UID=1000 AIDE_RUN_GID=1000; fi
   fi
 }
+# Compose reads COMPOSE_FILE from .env without exporting it to this shell.
+# Resolve that value through Compose before adding generated mount overrides.
+launcher_append_compose_override() {
+  local docker_bin="$1" override="$2" base="${COMPOSE_FILE:-}"
+  if [[ -z "$base" ]]; then
+    base="$("$docker_bin" compose config --environment | awk 'index($0,"COMPOSE_FILE=")==1 {print substr($0,14)}')" || return $?
+  fi
+  base="${base:-compose.yaml}"
+  case ":$base:" in
+    *":$override:"*) export COMPOSE_FILE="$base" ;;
+    *) export COMPOSE_FILE="$base:$override" ;;
+  esac
+}
 launcher_env_save() {
   local temporary
   if [[ -f .env ]]; then
