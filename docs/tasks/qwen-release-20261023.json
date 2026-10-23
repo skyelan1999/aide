@@ -15,7 +15,7 @@
     "Aide existing feature/CI PR integration, release version/docs/task records and existing CI release pipeline",
     "aide-pig-ALiBaiLianSupporter release v0.1.2",
     "aide-pkg-AutoAiModelRouter release v0.1.2 (v0.1.1 already public; newer media steering supersedes final target)",
-    "aide-pkg-shop listings for those two public MIT plugins only"
+    "aide-pkg-shop listings for the two original MIT plugins and the subsequently authorized TTS Tools plugin"
   ],
   "stages": {
     "requirements": {
@@ -35,34 +35,46 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "CI integrated without conflict; PR #39 now targets protected main. Release and marketplace preparation continue while independent review is required.",
+      "status": "pass",
+      "summary": "PR #39 merged into main; native Qwen and media routing implementation and independent TTS Tools bridge are complete.",
       "evidence": [
-        "https://github.com/skyelan1999/aide/pull/39"
+        "docs/reviews/release-0.1.17.5-RC4-2026-10-23.md",
+        "docs/reviews/20261023/auto-media-routing.md"
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Current full source fingerprint passed local quick/runtime/24 disjoint Go race shards/other Go packages/vet/CAD; current-source remote CI and recorded paid media/browser acceptance passed.",
+      "evidence": [
+        "docs/reviews/release-0.1.17.5-RC4-2026-10-23.md",
+        "docs/reviews/20261023/auto-media-routing.md"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "PRD, plugin protocol and actual Qwen/media/release acceptance document final behavior and explicit limitations.",
+      "evidence": [
+        "docs/reviews/release-0.1.17.5-RC4-2026-10-23.md",
+        "docs/reviews/20261023/auto-media-routing.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed owned diff and untracked inventory; only untracked .DS_Store metadata cleaned. Backups, running user data, preview images and evidence retained; dependent PRs closed without deleting branches.",
+      "evidence": [
+        "docs/reviews/release-0.1.17.5-RC4-2026-10-23.md",
+        "docs/reviews/20261023/auto-media-routing.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Plugin releases and marketplace verified; core RC4 version and native delivery gates are next.",
+      "evidence": [
+        "docs/reviews/release-0.1.17.5-RC4-2026-10-23.md"
+      ]
     }
   },
-  "release_authorization": "User explicitly requested push release, selected main program plus both plugins, then requested marketplace update.",
+  "release_authorization": "User requested push release, selected main program and both plugins, requested marketplace update, then supplied https://github.com/skyelan1999/aide-pkg-TTSTools for the independent TTS Tools plugin.",
   "rollback": "Retain current local preview and earlier balance-pool image; do not modify live data volumes. Published immutable assets never overwritten; restore marketplace listings with a reviewed revert if needed.",
-  "handoff": "Both originally prepared plugin releases are public prereleases and marketplace PR #2 merged with Pages success. New Auto output-media/TTS steering is being integrated before core release. TTS Tools is a separate new local plugin; assistant default TTS is unchanged. Main still awaits final tests/gate and RC4 release."
+  "handoff": "TTS Tools v0.1.0, BailianSupporter v0.1.2 and AutoAiModelRouter v0.1.2 are public prereleases; exact marketplace packages are deployed and verified. Core RC4 release remains pending final regression and native artifact gates."
 }
