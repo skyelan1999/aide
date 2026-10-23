@@ -43,29 +43,41 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "7项模块回归通过，包含错误隔离、逐Key凭证、并发上限、销毁取消、非法阈值与存储失败。390px页面无横向溢出，报警线刷新后恢复已验证；最终构建与Safari待完成。",
+      "status": "pass",
+      "summary": "8 module tests and 148 quick checks passed; targeted Go ProviderSupport/ProviderBilling tests passed. 390px light/dark fixture: no horizontal overflow; alert Apply and reload persistence verified. Safari: both Key cards visible, real DeepSeek balance succeeded, Bailian pending RAM. No real credentials entered; Bailian real balance NOT_RUN. Fixed settings-sheet visibility integration and repeated Safari acceptance.",
       "evidence": [
-        "scripts/account-balance-pool.test.cjs"
+        "scripts/account-balance-pool.test.cjs",
+        ".agent-state/quick.json",
+        ".agent-state/balance-pool-go.log",
+        ".agent-state/balance-pool-mobile.png",
+        ".agent-state/balance-pool-desktop-dark.png",
+        ".agent-state/balance-pool-safari.png"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Final behavior and limits recorded: per-key display, potentially shared provider account balances never summed, currencies separate. Alert preferences local to device; no recharge or task stopping.",
+      "evidence": [
+        "docs/tasks/account-balance-pool-20261023.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Scoped diff reviewed. Temporary fixture tab closed, viewport reset, own HTTP fixture process on 59634 stopped. Production and local evidence preserved.",
+      "evidence": [
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication.",
+      "evidence": [
+        ".agent-state/balance-pool-build.log",
+        ".agent-state/balance-pool-start.log"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "恢复上一镜像aide:plugin-pricing-repair-20261023与源代码；费用历史和凭证无迁移。报警线仅存当前设备按Key/币种隔离的非敏感偏好。",
-  "handoff": ""
+  "handoff": "Local preview running; previous image retained. User must enter Bailian RAM before real balance verification. Preferences scoped by workspace/provider/key/currency. Prepare independent PR stacked on #36."
 }
