@@ -46,44 +46,55 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused Go race tests and five Node files passed; actual isolated browser ledger/navigation and WAV decode/playback verified; full checks running",
+      "status": "pass",
+      "summary": "139 full gates passed on the current fingerprint; all 24 server race shards, remaining package race tests and vet succeeded; focused 94 cases, Node and actual browser checks passed within the documented synthetic scope",
       "evidence": [
-        ".agent-state/focused.log",
+        ".agent-state/full.json",
+        ".agent-state/verify-20261023T135116632222Z.log",
+        ".agent-state/focused-final.log",
         ".agent-state/node.log",
-        ".agent-state/full.log",
+        ".agent-state/product-smoke.json",
         ".agent-state/browser-server.log",
+        ".agent-state/assistant-ledger-desktop.png",
         ".agent-state/assistant-ledger-mobile.png"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Architecture updated; final verification and limits pending",
+      "status": "pass",
+      "summary": "Architecture, boundaries, rollout and verification limits updated; check_docs passed",
       "evidence": [
         "docs/architecture/assistant-live.md",
-        "docs/architecture/memory-access.md"
+        "docs/architecture/memory-access.md",
+        "python3 scripts/check_docs.py"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed all changed paths; temporary browser tab closed, viewport restored, both disposable acceptance containers and verification containers stopped; production services untouched. Ignored logs/binary and reusable compiler cache retained for review.",
+      "evidence": [
+        "git diff --check",
+        "docker ps",
+        "browser cleanup observations"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "No version bump, tag, GitHub Release, merge or production deployment authorized in this implementation phase; PR 56 is for review",
+      "evidence": [
+        "User prior instruction: first do not release a new version",
+        "https://github.com/skyelan1999/aide/pull/56"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "No production state changed. Revert this feature branch to its baseline; additive task/memory fields can be ignored by older readers.",
-  "handoff": "",
+  "handoff": "All five scoped improvements implemented and locally verified. Code commit 32f1aba20f6beba9fcc0410102ef90c4fe41364d; PR 56 awaiting remote CI/review. PR 54 remains a separate conditional merge task. No release or production deployment. Final receipt metadata changes do not change the tested product fingerprint.",
   "issue": "https://github.com/skyelan1999/aide/issues/55",
   "limitations": [
-    "No live provider calls, cloud voice quality, physical microphone/echo or target hardware acceptance",
-    "Browser harness uses synthetic data and a local WAV; it does not prove native cloud generation succeeds",
-    "No production deployment or version release; 9999 service unchanged",
-    "Full Go snapshot and final package build pending"
+    "No paid live provider calls, cloud voice quality or physical microphone/echo acceptance",
+    "Actual browser playback used a synthetic local WAV; it does not prove cloud generation succeeds",
+    "Full local verification is passing; remote CI and independent review are separate gates",
+    "No production deployment or version release; 9999 remains unchanged"
   ],
   "verification_notes": [
     "An earlier snapshot run was deliberately superseded after continuation fixes; it is not a passing receipt.",
@@ -96,5 +107,118 @@
     "production": "9999 unchanged",
     "providers": "synthetic HTTP fixtures only",
     "go": "1.26.9 linux/arm64; network disabled for tests"
+  },
+  "pull_request": "https://github.com/skyelan1999/aide/pull/56",
+  "code_commit": "32f1aba20f6beba9fcc0410102ef90c4fe41364d",
+  "build": {
+    "platform": "linux/arm64",
+    "mode": "local dev binary; not a release",
+    "sha256": "b077237b5a91f25bcea310fb42144c6a7637572f3c002f2233b0c1057589f49f",
+    "evidence": [
+      ".agent-state/build-product.log",
+      ".agent-state/product-smoke.json"
+    ],
+    "smoke": "health 200, unauthenticated 401, no installed plugins, network none; disposable container stopped"
+  },
+  "browser": {
+    "scope": "real isolated product handler; synthetic data; no production data or keys",
+    "checks": [
+      "desktop light and 390px dark layout",
+      "no horizontal overflow at 390px",
+      "ledger displays blockers, next action, verified local artifact and scheduled execution",
+      "ledger task navigation and generated WAV player",
+      "0.1-second WAV readyState 4, ended true, no media error"
+    ],
+    "microphone": "not_run",
+    "cloud_tts": "not_run",
+    "cleanup": "temporary tab closed, viewport reset, fixture container stopped"
+  },
+  "acceptance_evidence": [
+    {
+      "area": "delivery",
+      "tests": [
+        "TestAssistantDeliveryEvidenceGate",
+        "TestAssistantDeliveryPromiseReturnsIncomplete",
+        "TestQwenImageChatSingleRequest"
+      ],
+      "result": "pass"
+    },
+    {
+      "area": "media continuity and failure classes",
+      "tests": [
+        "TestAssistantMediaIntentContinuity",
+        "TestAssistantMediaFailureClassification",
+        "TestAssistantNativeStopDoesNotQueueOrResubmit",
+        "TestAssistantMediaContinuationPinsModelWithoutAuto",
+        "TestNativeMediaProtocolsAndResume"
+      ],
+      "result": "pass"
+    },
+    {
+      "area": "planning budget",
+      "tests": [
+        "TestAssistantParallelProgressBudgetAndSimilarity",
+        "TestConversationParallelAdaptiveWavesAndLifecycle"
+      ],
+      "result": "pass"
+    },
+    {
+      "area": "work ledger and schedules",
+      "tests": [
+        "TestAssistantLedgerIncludesBlockersDeliveryAndSchedules",
+        "TestAssistantScheduleSurfacesPausedDelivery",
+        "TestAssistantWatchReadOnlyLifecycle"
+      ],
+      "result": "pass"
+    },
+    {
+      "area": "memory and narration",
+      "tests": [
+        "TestAssistantHistoryRetrievesOldMatchesAndPages",
+        "TestAssistantMemoryNotesSourceAndRevocation",
+        "TestAssistantProjectMemoryRetrievesBeyondPrefix",
+        "scripts/assistant-live.test.cjs",
+        "scripts/tts-playback.test.cjs",
+        "TestTTSToolsPreserveAssistantSettings"
+      ],
+      "result": "pass"
+    }
+  ],
+  "reproduce": [
+    "go test -mod=vendor -race -count=1 ./internal/server -run TestAssistant",
+    "node --test scripts/assistant-live.test.cjs scripts/assistant-delegation.test.cjs scripts/tts-playback.test.cjs scripts/qwen-tts.test.cjs scripts/auto-model-router-ui.test.cjs",
+    "python3 scripts/agent-route.py verify full",
+    "python3 scripts/check_docs.py"
+  ],
+  "code_fingerprint": "d820295ffc493f65695e050e800deccf06f669f0f4e2002b57147e5111dd664c",
+  "verification": {
+    "full": {
+      "status": "pass",
+      "checks": 139,
+      "serverInventory": 1200,
+      "serverShards": 24,
+      "race": true,
+      "vet": true,
+      "fingerprintMatches": true,
+      "receipt": ".agent-state/full.json",
+      "log": ".agent-state/verify-20261023T135116632222Z.log",
+      "sourceCommit": "32f1aba20f6beba9fcc0410102ef90c4fe41364d"
+    },
+    "focused": {
+      "status": "pass",
+      "topLevelPassed": 94,
+      "log": ".agent-state/focused-final.log"
+    },
+    "node": {
+      "status": "pass",
+      "files": 5,
+      "log": ".agent-state/node.log"
+    },
+    "docs": {
+      "status": "pass",
+      "markdownFiles": 396,
+      "localLinks": 1364
+    },
+    "remoteCI": "Source commit quick and windows passed; Go check still running when recording. This local record is not remote CI approval."
   }
 }
