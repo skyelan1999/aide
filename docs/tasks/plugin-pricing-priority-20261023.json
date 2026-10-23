@@ -46,29 +46,33 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Go相关回归通过；默认单价简化UI与紧凑布局待最终验收。",
+      "status": "pass",
+      "summary": "Go provider-support, billing, token and pricing regressions; 146 quick checks; local Docker build with Go vet passed. Real Safari accepted default rates, enabled plugin standards, per-key balance label, Bailian RAM form and compact chart. Live Bailian balance NOT_RUN (credentials not configured); no paid inference.",
       "evidence": [
         ".agent-state/plugin-pricing-regression.log",
         ".agent-state/plugin-pricing-quick.log",
-        ".agent-state/plugin-pricing-build.log",
-        ".agent-state/pricing-alignment-safari.png"
+        ".agent-state/pricing-final-safari.png",
+        ".agent-state/pricing-compact-safari.png"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
+      "status": "pass",
+      "summary": "Records the latest default-rate UI, per-key RAM binding and verification boundaries.",
       "evidence": []
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
+      "status": "pass",
+      "summary": "No temporary acceptance services; previous image and private environment backup retained. Production healthy.",
       "evidence": []
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Local runtime updated, source pushed; PR36 open pending merge. Issues35/33 closed after local acceptance. No product Release or marketplace upload.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/36",
+        "https://github.com/skyelan1999/aide/issues/35",
+        "https://github.com/skyelan1999/aide/issues/33"
+      ]
     }
   },
   "release_authorization": "",
