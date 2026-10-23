@@ -24,8 +24,24 @@ Both full ZIPs pass CRC; exact SHA-256 values are in [the comparison record](ste
 - Original native fidelity suite PASS under ARM64 and AMD64 engines: nested assembly placement, part/face colors, NURBS recovery, mixed/pure wire/point models, collapsed-face boundaries, units in mm/metre/inch and finite bounded batches. Two stable part identities and 24 forced chunks verified.
 - Plugin native IO PASS: bounded upload/conversion/paged result, invalid offsets and job-path traversal rejected, competing admission rejected, cancel/reopen. Worker regression covers an empty first result poll followed by mesh acknowledgement/complete. Archive tests reject absolute/traversal/symlink entries.
 - Actual Safari on isolated candidate https://localhost:18489: DXF shows 5 entities (rectangle, circle, line, arc, text), zoom and fit work. STEP opens through the installed plugin, displays 120 triangles, two colored parts and 155×25×35 mm bounds; remove/restore changes installed count 2→1→2, explode slider reaches 100%, reset works, coordinate picking returns X100/Y10/Z35 mm. The browser certificate warning was handled by the user. No paid model calls were made.
-- Full current-source race/vet profile is still in progress; release remains gated. Public plugin release/install download and final main release are tracked separately and are not inferred from these local checks.
+- Fixed-source full race/vet PASS with matching input fingerprint: all 24 server shards, other packages and vet. PR CI quick, Windows, Go and aggregate gate PASS. Public plugin release/install download is verified; final main release remains a separate build and publication gate.
 
 ![DXF native preview after extraction](step-plugin-evidence/dxf-native.jpg)
 
 ![Independent STEP plugin and coordinate picking](step-plugin-evidence/step-plugin-measurement.jpg)
+
+## Published RC3 baseline and release status
+
+GitHub RC3 full ZIP assets are 1,343,601,580 bytes for ARM64 and 1,576,733,772 bytes for AMD64 ([captured metadata](step-plugin-evidence/rc3-published-baseline.json)). The local ARM64 extraction candidate full ZIP is 582,423,051 bytes: 761,178,529 bytes (56.65%) below the published RC3 package. This broader change includes dependency/layer differences; the controlled same-base STEP-only reduction remains 72,319,264 bytes (11.05%). Final public RC5 assets must be compared separately before reporting a published size.
+
+All commands in the first full verification returned zero, but committing tracked deletions during that run changed the tracked-path fingerprint, so its overall receipt is invalid. Full verification is rerunning on fixed commit 1827f3724ebb13325ecb3230018d64cfca4b7c03. No receipt was edited.
+
+## Final plugin installer acceptance
+
+STEP Viewer 0.1.1 commit 13e96e7 adds background engine installation with progress, bounded resumable HTTP Range retries and cache reuse. The first public 0.1.0 installer timed out on a slow GitHub transfer; this was recorded as public plugin issue #1 before repair. An intentionally dropped local HTTP connection resumes by Range and finishes native import; digest rejection and safe extraction remain enforced. A fresh disposable container also downloaded the real pinned public GitHub ARM64 engine, imported OCP and reused the cache successfully. Final 0.1.1 package SHA-256 is d19162b4784c48c0d7c6229c2e2ac13eb4fc4298f586e0772fdd1751f32c8e81, 210,001 bytes; Safari rendered its original two-color-part fixture with 120 triangles and unchanged 155×25×35 mm bounds.
+
+![Final STEP Viewer 0.1.1 Safari acceptance](step-plugin-evidence/step-viewer-0.1.1-safari.jpg)
+
+## Core verification gate
+
+The stable rerun completed successfully with fingerprint `1243260b20d635aae837c9b664f98a09cbee613a55e10859c7a42b44ca1e6ffc` on commit `1827f3724ebb13325ecb3230018d64cfca4b7c03`. [Full command receipt](step-plugin-evidence/step-core-full-verification.json) records every command exit code. Main merge preserves that exact code fingerprint.

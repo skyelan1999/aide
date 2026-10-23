@@ -40,29 +40,37 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Quick, candidate runtime/absence, ARM64+AMD64 fidelity, native plugin IO and actual Safari DXF/STEP interactions PASS. Full source race/vet still running. Controlled full ZIP shrinks 68.97 MiB (11.05%).",
+      "status": "pass",
+      "summary": "Fixed-source full verification PASS with matching fingerprint; all 24 server race shards, other packages and vet PASS. Remote PR CI gate PASS. ARM64+AMD64 converter fidelity, background resumable install, real public engine download, final Safari STEP and built-in DXF acceptance PASS.",
       "evidence": [
+        "docs/reviews/20261023/step-plugin-evidence/step-core-full-verification.json",
         "docs/reviews/20261023/step-plugin-extraction.md",
-        "docs/reviews/20261023/step-plugin-evidence/release-size-comparison.json"
+        "https://github.com/skyelan1999/aide/actions/runs/39920876214"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Current architecture and measured local comparison recorded; final publication results pending.",
+      "status": "pass",
+      "summary": "Current optional architecture, independent runtime installation, real public plugin release, DXF acceptance and measured controlled/published-baseline sizes recorded; docs links and JPEG signatures PASS.",
       "evidence": [
+        "docs/reviews/20261023/step-plugin-extraction.md",
         "docs/architecture/cad-preview.md"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only owned files staged; no private ModuleBox implementation, user state or installed plugin payload in main image. Disposable test installers removed themselves. Existing production and currently reused isolated browser service preserved.",
+      "evidence": [
+        "docs/reviews/20261023/step-plugin-extraction.md",
+        "scripts/test_optional_step.py"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Public STEP Viewer 0.1.1 and both compiled engine archives verified. Main PR46 merged after all checks; RC5 host build and market publication pending.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/46",
+        "https://github.com/skyelan1999/aide-pkg-STEPViewer/releases/tag/v0.1.1"
+      ]
     }
   },
   "release_authorization": "User requested public STEP extraction and previously authorized push release, main plus plugins and marketplace updates.",

@@ -1,0 +1,19 @@
+{
+  "tag": "v0.1.17.5-RC3",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC3",
+  "assets": [
+    {
+      "name": "aide-v0.1.17.5-RC3-full-linux-amd64.zip",
+      "size": 1576733772,
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.5-RC3/aide-v0.1.17.5-RC3-full-linux-amd64.zip",
+      "digest": "sha256:be7c5f74d32ba9cebfb24ccb042714d9f9c9a4eeb23034618fa4ee167de9b7a6"
+    },
+    {
+      "name": "aide-v0.1.17.5-RC3-full-linux-arm64.zip",
+      "size": 1343601580,
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.5-RC3/aide-v0.1.17.5-RC3-full-linux-arm64.zip",
+      "digest": "sha256:569f5e8e9ebad37417722a9cdc18b7df11ec2149c522904e289c633118af3e5b"
+    }
+  ],
+  "comparison_status": "Final RC5 same-architecture release assets are still pending; controlled STEP-only comparison is separate."
+}
