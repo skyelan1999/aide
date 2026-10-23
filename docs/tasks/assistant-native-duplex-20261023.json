@@ -63,9 +63,15 @@
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "144 registered verification commands returned exit 0, including all 24 Go race shards and vet. Automated receipt status fail was solely a fingerprint inventory change caused by committing deletion of the already absent whale MP4 while verification ran. Reconstructing the starting inventory by adding that path with <deleted> exactly reproduces receipt d94225c8cfa36ac42dad9cec2262b67da07c2e4ddcb4e6cd978b14f154c3677c. Current content fingerprint 20a23d5a27d21de6d109bb0a019e3aafdfafd1b29d6b6ddc6a7dcbd100696fe6. This is manual provenance acceptance, not an automated full-pass receipt. Real provider synthetic roundtrip and actual Chromium/Safari transport checks passed; human acoustic quality pending.",
+      "evidence": [
+        ".agent-state/verify-20261023T154259070404Z.log",
+        ".agent-state/full.json",
+        ".agent-state/native-provider-duplex2.log",
+        ".agent-state/native-audio-browser.log",
+        ".agent-state/native-deployed-check.json"
+      ]
     },
     "documentation": {
       "status": "pass",
@@ -85,13 +91,16 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "No release, version bump or tag authorized; local 9999 deployment explicitly authorized and pending final regression.",
-      "evidence": []
+      "summary": "No version bump, tag, push or Release. Explicitly authorized local 9999 deployment completed and healthy; previous container/data backup retained.",
+      "evidence": [
+        ".agent-state/live-backup-20261023T160509Z/result.json",
+        ".agent-state/native-deployed-check.json"
+      ]
     }
   },
   "release_authorization": "",
-  "rollback": "",
-  "handoff": "",
+  "rollback": "Stop/remove only the new aide-aide-1, rename aide-call-rollback-20261023t160509z to aide-aide-1, start it, and restore launcher.env from private backup. Restore data archive only if necessary; current data remains mounted.",
+  "handoff": "9999 now runs native duplex and Studio background. Refresh browser, unlock assistant, grant microphone, redial. Studio is Settings > General > Appearance > Workbench background > 静域. User acoustic/subjective acceptance pending; audio usage not included in text cost graphs.",
   "sources": [
     "https://www.alibabacloud.com/help/en/model-studio/realtime"
   ],
@@ -130,5 +139,44 @@
       ".agent-state/studio-light.png",
       ".agent-state/studio-mobile.png"
     ]
+  },
+  "verification_provenance": {
+    "automated_receipt_status": "fail",
+    "command_count": 144,
+    "failed_commands": 0,
+    "manual_inventory_equivalence_verified": true,
+    "starting_fingerprint": "d94225c8cfa36ac42dad9cec2262b67da07c2e4ddcb4e6cd978b14f154c3677c",
+    "current_fingerprint": "20a23d5a27d21de6d109bb0a019e3aafdfafd1b29d6b6ddc6a7dcbd100696fe6",
+    "inventory_difference": "Committed removal of internal/server/web/backgrounds/whale-girl.mp4; file was already absent throughout tests."
+  },
+  "local_deployment": {
+    "status": "deployed",
+    "commit": "36c9dbf4",
+    "image": "aide:native-duplex-36c9dbf4",
+    "rollbackContainer": "aide-call-rollback-20261023t160509z",
+    "backup": "/Users/skyelan/.codex/worktrees/aide-assistant-voice-call-20261023/.agent-state/live-backup-20261023T160509Z",
+    "health": 200,
+    "callAsset": 200,
+    "published": false,
+    "verification": {
+      "image": "aide:native-duplex-36c9dbf4",
+      "health": "healthy",
+      "buildCommit": "36c9dbf48c38342e2a95bfd89f193a56db328c00",
+      "buildVersion": "dev",
+      "assistantName": "小绵",
+      "sessionCount": 45,
+      "activeSessionIds": [],
+      "assets": {
+        "/healthz": 200,
+        "/assistant-realtime.js": 200,
+        "/assistant-pcm-worklet.js": 200,
+        "/backgrounds/whale-girl.mp4": 404
+      },
+      "callPreflight": 423
+    },
+    "binary_sha256": "b9bbcd75dd15ff8586aba3ec164e84c56d93477b01fd43577f3edc127f27de68",
+    "image_id": "sha256:83e13995a6885fa35657e4285fc7548ea5a69114c6887718b8340bf8c5a3b8d7",
+    "launcher_image_persisted": true,
+    "data_backup_created": true
   }
 }
