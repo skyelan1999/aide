@@ -1,0 +1,68 @@
+{
+  "id": "full-verification-deadline-20261023",
+  "request": "Repair issue #44 full verification outer timeout and complete the authorized corrected release.",
+  "baseline": "a4778c7fa3f97b6e411a4904b523ee27bf9c76b3",
+  "initial_status": "",
+  "acceptance": [
+    "Outer full-check deadline tracks the actual snapshot host timeout with cleanup headroom.",
+    "Budget changes propagate in regression tests; default small-check timeouts remain unchanged.",
+    "A fresh full current-source receipt and remote CI pass before corrected core release."
+  ],
+  "scope": [
+    "scripts/agent-route.py and scripts/test_agent_route.py",
+    "docs/tasks and release review records",
+    "Existing authorized core release process"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Full verification was interrupted at the stale 2800-second owner deadline after all Go test groups had passed.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/44",
+        "https://github.com/skyelan1999/aide/pull/45"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Read the guarded runner constants and derive the outer deadline from HOST_TIMEOUT_SECONDS with cleanup headroom. Preserve a bounded complete run.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/44",
+        "https://github.com/skyelan1999/aide/pull/45"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Outer deadline derives from the evaluated child budget; regression checks the actual deadline and a changed-budget fixture.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/44",
+        "https://github.com/skyelan1999/aide/pull/45"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Six route regressions and fifteen CI contract tests pass; a fresh full source verification is running. Prior failed full receipt is retained unchanged.",
+      "evidence": [
+        "scripts/test_agent_route.py",
+        "scripts/ci/test_snapshot_environment.py"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested push release for the core and plugins; necessary release-gate repair after issue #44.",
+  "rollback": "Preserve failed receipts and immutable RC4 tag; keep working preview and user data intact.",
+  "handoff": ""
+}

@@ -1,0 +1,15 @@
+{
+  "before": {
+    "file": ".agent-state/step-size/before-release/aide-v0.1.17.5-RC4-full-linux-arm64.zip",
+    "bytes": 654742315,
+    "sha256": "01a3a2750c4a4e16c8b8a355df392478068ac1f5f77cea23683c81113438cab1"
+  },
+  "after": {
+    "file": ".agent-state/step-size/after-release/aide-v0.1.17.5-RC4-full-linux-arm64.zip",
+    "bytes": 582423051,
+    "sha256": "1895bed2a9108baa61e566f339920334366dc7c156d9817ed3f26de8abf4efad"
+  },
+  "savedBytes": 72319264,
+  "savedMiB": 68.96902465820312,
+  "savedPercent": 11.045454424310424
+}

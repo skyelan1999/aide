@@ -5,11 +5,6 @@ ARG PYTHON_BASE=python:3.12-slim-bookworm
 # node/golang 同样用本地 tag，避免受限网络下按 digest 拉取 metadata 卡死（与 python 一致）
 FROM node:24-bookworm-slim AS node
 FROM ${PYTHON_BASE} AS python
-FROM ${PYTHON_BASE} AS cad
-COPY docker/cad/requirements.txt /cad-requirements.txt
-COPY docker/cad/install.sh /cad-install.sh
-# Also repair existing Windows checkouts created before the LF attributes.
-RUN sed -i 's/\r$//' /cad-install.sh /cad-requirements.txt && sh /cad-install.sh
 FROM golang:1.26-bookworm AS toolchain
 COPY --from=python /usr/local /usr/local
 RUN ldconfig
@@ -155,8 +150,6 @@ RUN set -ux; \
 # 2.6) Office 工具脚本（#63）：aide 经 os/exec 调用（docx_structure/comments 等）。
 #      查找顺序：$AIDE_OFFICE_SCRIPTS → /workspace/scripts/office（dev 挂仓）→ 本目录。
 COPY scripts/office /opt/aide/office-scripts
-COPY --from=cad /opt/aide-cad /opt/aide-cad
-COPY scripts/cad /opt/aide/cad
 COPY vendor/github.com/yuin/goldmark/v2/LICENSE /opt/aide/licenses/goldmark.txt
 COPY vendor/github.com/gorilla/websocket/LICENSE /opt/aide/licenses/gorilla-websocket.txt
 
@@ -172,7 +165,7 @@ COPY --from=build /opt/aide-message-lan /opt/aide/message-lan
 # 4) 元数据：源码哈希 label 供 aide.sh start 快捷路径比对；版本/环境/用户/健康检查
 #    AIDE_SRC_SHA 由 aide.sh start 计算 cmd+internal+go.mod/go.sum/vendor 哈希后注入。
 ARG AIDE_SRC_SHA=unknown
-LABEL aide.srcsha="${AIDE_SRC_SHA}" aide.cad-runtime="8.0.1.1.0"
+LABEL aide.srcsha="${AIDE_SRC_SHA}"
 ENV AIDE_ADDR=0.0.0.0:8080 AIDE_WORKSPACE=/workspace AIDE_CONTEXT=/context AIDE_DATA=/data
 ENV GOCACHE=/home/aide/.cache/go-build GOPATH=/home/aide/go
 USER aide

@@ -1,0 +1,71 @@
+{
+  "id": "step-public-plugin-20261023",
+  "request": "将 STP/STEP 预览拆成公共插件，默认主包不再包含 STEP 运行依赖，实测 Release 缩减并确认 DXF 预览正常",
+  "baseline": "a4778c7fa3f97b6e411a4904b523ee27bf9c76b3",
+  "initial_status": "?? docs/tasks/full-verification-deadline-20261023.json",
+  "acceptance": [
+    "Default image and archive contain no STEP parser, OCCT runtime or CAD sidecar; no CAD bootstrap in default builds.",
+    "Public optional plugin preserves native converter, assembly and metrology; bounded read-only document bridge, cancellation and hash-verified explicit engine setup.",
+    "Compare same-architecture docker save gzip -1 archives and full release ZIP with byte counts and percentage.",
+    "Actually open DXF in browser and verify render, zoom and fit; retain shared STL/URDF dependencies."
+  ],
+  "scope": [
+    "STEP frontend/native code and tests",
+    "generic file bridge reuse",
+    "Docker/Compose/build/release gates",
+    "public STEP Viewer plugin and marketplace",
+    "controlled browser fixtures and release-size evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests optional public STEP preview to improve default deployment and release size; DXF remains built in.",
+      "evidence": [
+        "User request 2026-10-23"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse bound file-handler bridge; no STEP-specific core conversion API or service. Preserve shared streaming/STL/URDF/DXF and move engine to explicit hash-verified optional install.",
+      "evidence": [
+        "docs/architecture/cad-preview.md",
+        "https://github.com/skyelan1999/aide-pkg-STEPViewer"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Default image/build/Compose/Windows and offline paths slimmed; public optional plugin preserves original native converter, assembly and metrology; local dependency v2 rejects legacy CAD layers.",
+      "evidence": [
+        "docs/reviews/20261023/step-plugin-extraction.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Quick, candidate runtime/absence, ARM64+AMD64 fidelity, native plugin IO and actual Safari DXF/STEP interactions PASS. Full source race/vet still running. Controlled full ZIP shrinks 68.97 MiB (11.05%).",
+      "evidence": [
+        "docs/reviews/20261023/step-plugin-extraction.md",
+        "docs/reviews/20261023/step-plugin-evidence/release-size-comparison.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Current architecture and measured local comparison recorded; final publication results pending.",
+      "evidence": [
+        "docs/architecture/cad-preview.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested public STEP extraction and previously authorized push release, main plus plugins and marketplace updates.",
+  "rollback": "Keep existing production containers/images and data intact. Previous STEP-capable image remains available; only replace after candidate gates and idle-user-work check.",
+  "handoff": ""
+}

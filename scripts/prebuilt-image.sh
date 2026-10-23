@@ -100,6 +100,5 @@ launcher_build_or_release() {
   if [[ "${AIDE_RELEASE_FALLBACK:-1}" != 1 ]]; then return "$build_status"; fi
   echo "本地编译失败（退出码 ${build_status}）；尝试已校验的官方 Release 镜像。" >&2
   launcher_prebuilt_image "$docker_bin" "$target" || return $?
-  export AIDE_CAD_IMAGE="$target"
   echo "已回退到 Release 镜像；运行版本以镜像实际版本为准。" >&2
 }
