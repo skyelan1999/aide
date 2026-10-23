@@ -1,0 +1,51 @@
+{
+  "id": "video-preview-host-20261023",
+  "request": "公共视频工程预览插件，两种都支持，优先剪辑工程；核对第三方版权",
+  "baseline": "1827f3724ebb13325ecb3230018d64cfca4b7c03",
+  "acceptance": [
+    "Opaque workbench permits local Blob video/subtitle media only; external networking remains disabled",
+    "Safari opens synthetic project and actually plays its bound descendant MP4",
+    "Plugin MIT notice retained; no unverified FFmpeg binary or downloader shipped"
+  ],
+  "scope": [
+    "internal/server/plugin_workbench.go",
+    "internal/server/plugin_workbench_test.go",
+    "public aide-pkg-VideoPreview source",
+    "isolated preview only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Project-first public preview, explicit licensing audit"
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Project index plus browser media from bounded document bridge; no arbitrary asset paths"
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Blob-only media CSP, separate public plugin with original parser/UI"
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused TestPluginWorkbenchAuthSandboxAndOneUse PASS; real Safari FCPXML two lanes/two clips/one media, actual 640x360/2.00s H264 playback and frame stepping PASS. Full profile NOT_RUN for this separate host patch.",
+      "evidence": [
+        ".agent-state/video-host-sandbox.log",
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/main/docs/verification.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Plugin PRD, support matrix, copyright notices and verified/not-run boundaries recorded publicly."
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Separate worktree preserves active main/STEP release source. Original production unchanged."
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Separate from ongoing STEP default-runtime extraction release"
+    }
+  },
+  "release_authorization": "User requested public plugin; existing main/STEP release remains independently gated."
+}
