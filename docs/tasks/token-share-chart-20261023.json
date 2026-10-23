@@ -64,9 +64,12 @@
       "evidence": []
     },
     "release": {
-      "status": "in_progress",
-      "summary": "本地镜像已更新且启动健康；待源码推送及PR，不创建产品Release或市场上传",
-      "evidence": []
+      "status": "pass",
+      "summary": "源码已推送并创建PR34待合并；Issue33在本地验收后关闭。本地镜像已更新并启动健康；未创建产品Release或市场上传。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/34",
+        "https://github.com/skyelan1999/aide/issues/33"
+      ]
     }
   },
   "release_authorization": "",
