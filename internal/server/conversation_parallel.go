@@ -24,15 +24,17 @@ type ParallelPart struct {
 	Error    string          `json:"error,omitempty"`
 }
 type ParallelProgress struct {
-	Round          int               `json:"round,omitempty"`
-	Evidence       string            `json:"evidence,omitempty"`
-	PlannerHistory []*RequestContext `json:"plannerHistory,omitempty"`
-	PlannerContext *RequestContext   `json:"plannerContext,omitempty"`
-	MainContext    *RequestContext   `json:"mainContext,omitempty"`
-	Phase          string            `json:"phase"`
-	Requested      int               `json:"requested"`
-	Parts          []ParallelPart    `json:"parts,omitempty"`
-	Reason         string            `json:"reason,omitempty"`
+	Scope           string            `json:"scope,omitempty"`
+	ScopeStartRound int               `json:"scopeStartRound,omitempty"`
+	Round           int               `json:"round,omitempty"`
+	Evidence        string            `json:"evidence,omitempty"`
+	PlannerHistory  []*RequestContext `json:"plannerHistory,omitempty"`
+	PlannerContext  *RequestContext   `json:"plannerContext,omitempty"`
+	MainContext     *RequestContext   `json:"mainContext,omitempty"`
+	Phase           string            `json:"phase"`
+	Requested       int               `json:"requested"`
+	Parts           []ParallelPart    `json:"parts,omitempty"`
+	Reason          string            `json:"reason,omitempty"`
 }
 
 // Reconsider only when execution supplies evidence or the user steers the task.
@@ -202,6 +204,32 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		a.mu.Unlock()
 		return input, err
 	}
+	// At most three planning waves per human scope. New probe output alone
+	// cannot restart fanout indefinitely. Persist across checkpoints/restarts.
+	a.mu.Lock()
+	if task.Parallel == nil {
+		task.Parallel = &ParallelProgress{Requested: limit}
+	}
+	scope := parallelUserScope(input)
+	if task.Parallel.Scope != "" && task.Parallel.Scope != scope {
+		task.Parallel.ScopeStartRound = task.Parallel.Round
+	}
+	task.Parallel.Scope = scope
+	exhausted := task.Parallel.Round-task.Parallel.ScopeStartRound >= 3
+	if exhausted {
+		task.ParallelPrepared = true
+		task.Parallel.Evidence = evidence
+		task.Parallel.Phase = "fallback"
+		task.Parallel.Reason = "已达当前目标的三轮规划预算，复用现有分析，由主任务直接执行"
+	}
+	var budgetErr error
+	if exhausted {
+		budgetErr = a.save(s)
+	}
+	a.mu.Unlock()
+	if exhausted {
+		return input, budgetErr
+	}
 	if !validParallelism(limit) {
 		return input, errors.New("invalid parallelism")
 	}
@@ -233,7 +261,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	var previous []string
 	if task.Parallel != nil {
 		for _, part := range task.Parallel.Parts {
-			if part.Status == "completed" {
+			if part.Title != "" {
 				previous = append(previous, part.Title)
 			}
 		}
@@ -294,7 +322,12 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	for _, title := range titles {
 		done := false
 		for _, old := range previous {
-			if strings.EqualFold(strings.TrimSpace(title), strings.TrimSpace(old)) {
+			if similarParallelTitle(title, old) {
+				done = true
+			}
+		}
+		for _, old := range filtered {
+			if similarParallelTitle(title, old) {
 				done = true
 			}
 		}

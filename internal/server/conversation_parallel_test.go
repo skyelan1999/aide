@@ -228,19 +228,23 @@ func TestConversationParallelAdaptiveWavesAndLifecycle(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(task.Parallel.Parts) != wave*2 || len(task.Parallel.PlannerHistory) != wave-1 {
+		expected := wave
+		if expected > 3 {
+			expected = 3
+		}
+		if len(task.Parallel.Parts) != expected*2 || len(task.Parallel.PlannerHistory) != expected-1 {
 			t.Fatal("earlier wave ledger lost")
 		}
 	}
 	input = append(input, Message{Role: "tool", Content: "next discovery"})
 	_, err := a.prepareParallel(context.Background(), s, task, cfg, input, params)
-	if err != nil || plans.Load() != 13 || task.Parallel.Round != 13 || task.Usage.Total != 13*60 {
-		t.Fatal("new evidence after12 checkpoints was permanently disabled or usage lost")
+	if err != nil || plans.Load() != 3 || task.Parallel.Round != 3 || task.Usage.Total != 3*60 {
+		t.Fatal("probe-only checkpoints exceeded persisted planning budget")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	_, err = a.prepareParallel(ctx, s, task, cfg, input, params)
-	if err != context.Canceled || plans.Load() != 13 {
+	if err != context.Canceled || plans.Load() != 3 {
 		t.Fatal("cancelled checkpoint dispatched a planner")
 	}
 }

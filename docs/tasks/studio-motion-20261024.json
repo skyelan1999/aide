@@ -1,0 +1,129 @@
+{
+  "id": "studio-motion-20261024",
+  "request": "增强静域背景动态效果，保持高级专业，部署9999，不发版",
+  "baseline": "24852786d952868e5126a7eac81cb457c5d2ccaf",
+  "initial_status": "",
+  "acceptance": [
+    "Studio motion visibly changes over a few seconds while text remains stationary",
+    "All three layers pause when hidden, locked or reduced motion",
+    "Browser dark/light/narrow layout verified",
+    "Deploy 9999 with backup and no release"
+  ],
+  "scope": [
+    "internal/server/web/workbench.css",
+    "docs/builtin-background.md",
+    "docs/tasks/studio-motion-20261024.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Increase visible movement without distracting reading.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/studio-motion-browser.log",
+        ".agent-state/studio-motion-dark.png",
+        ".agent-state/studio-motion-light.png",
+        ".agent-state/native-deployed-check.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Offset 12/16/22 second transform-only layers, saturated light kept subdued.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/studio-motion-browser.log",
+        ".agent-state/studio-motion-dark.png",
+        ".agent-state/studio-motion-light.png",
+        ".agent-state/native-deployed-check.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Studio CSS only; native voice and other backgrounds preserved.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/studio-motion-browser.log",
+        ".agent-state/studio-motion-dark.png",
+        ".agent-state/studio-motion-light.png",
+        ".agent-state/native-deployed-check.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Background lifecycle and stylesheet tests pass; real browser light/dark and 390px no overflow; transforms visibly change; reduced motion makes animation-name none on all layers. Build and live health/assets confirmed. Full Go suite not repeated for CSS-only change.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/studio-motion-browser.log",
+        ".agent-state/studio-motion-dark.png",
+        ".agent-state/studio-motion-light.png",
+        ".agent-state/native-deployed-check.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated Studio behavior description.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/studio-motion-browser.log",
+        ".agent-state/studio-motion-dark.png",
+        ".agent-state/studio-motion-light.png",
+        ".agent-state/native-deployed-check.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned fixture closed and container exited normally; viewport reset; user pages preserved.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        ".agent-state/studio-motion-browser.log",
+        ".agent-state/studio-motion-dark.png",
+        ".agent-state/studio-motion-light.png",
+        ".agent-state/native-deployed-check.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No release/version/tag. User-authorized 9999 local deployment completed.",
+      "evidence": [
+        ".agent-state/live-backup-20261023T161638Z/result.json"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Retained prior container aide-call-rollback-20261023t161638z and private data/launcher backup; restore launcher.env if rolling back.",
+  "handoff": "Refresh 9999; existing Studio preference uses stronger motion. No release.",
+  "local_deployment": {
+    "status": "deployed",
+    "commit": "14da0228",
+    "image": "aide:studio-motion-14da0228",
+    "rollbackContainer": "aide-call-rollback-20261023t161638z",
+    "backup": "/Users/skyelan/.codex/worktrees/aide-assistant-voice-call-20261023/.agent-state/live-backup-20261023T161638Z",
+    "health": 200,
+    "callAsset": 200,
+    "published": false,
+    "verified": {
+      "image": "aide:studio-motion-14da0228",
+      "health": "healthy",
+      "buildCommit": "14da0228ef03bc40b040c6fc089e7eaa4a26ab6c",
+      "buildVersion": "dev",
+      "assistantName": "小绵",
+      "sessionCount": 45,
+      "activeSessionIds": [],
+      "assets": {
+        "/healthz": 200,
+        "/assistant-realtime.js": 200,
+        "/assistant-pcm-worklet.js": 200,
+        "/backgrounds/whale-girl.mp4": 404
+      },
+      "callPreflight": 423
+    },
+    "binary_sha256": "eb09b9bce33b19a7005f5f98cc878907623ec9986f6312dad8596630f8aed2a1"
+  },
+  "followup": {
+    "request": "再调慢一点点，然后先push",
+    "changes": "Halo 12→14s, plane 16→19s, line 22→26s; negative offsets remain half-cycle; amplitudes unchanged.",
+    "verification": "PASS: background lifecycle, stylesheet/CSP regression and git diff --check. Timing-only adjustment; browser visual acceptance from preceding revision, not repeated.",
+    "deployment": "Not redeployed for this follow-up; 9999 remains 14da0228.",
+    "push": "Authorized current branch push; remote verification recorded after execution."
+  }
+}

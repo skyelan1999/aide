@@ -72,7 +72,7 @@ dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
 .background-status{font-size:12px;line-height:1.6;overflow-wrap:anywhere;color:var(--text-settings);min-height:1.6em}
 .background-control .muted{font-size:11px;line-height:1.7;color:var(--muted)}
 .workbench-background{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:strict;display:none}
-html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=whale] .workbench-background{display:block}
+html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=studio] .workbench-background{display:block}
 html[data-background]:not([data-background=off]) body{isolation:isolate;background:transparent}
 html[data-background]:not([data-background=off]) :is(.sidebar,.file-panel){background:color-mix(in srgb,var(--panel) 95%,transparent)}
 html[data-background]:not([data-background=off]) .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
@@ -237,3 +237,15 @@ html[data-motion="reduced"] button[data-action-pending]::after{animation:none}
 .command-policy:not([hidden]){display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.5}.command-policy span{flex:1;min-width:0}.command-policy button{flex-shrink:0}.terminal-heading #command-location{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36vw}
 
 .file-transfers-center{width:min(760px,94vw);max-height:88dvh}.file-transfers-center[open]{display:flex;flex-direction:column;overflow:hidden}.file-transfers-center>.dialog-heading,.file-transfer-options{flex-shrink:0}.file-transfer-options{margin-bottom:12px}.file-transfer-options{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.file-transfer-options select{width:90px}.file-transfer-tasks{display:grid;gap:12px;min-height:0;overflow:auto}.file-transfer-task{display:grid;gap:6px;padding:14px;border:1px solid var(--line);border-radius:10px}.file-transfer-task strong{overflow-wrap:anywhere}.file-transfer-task progress{width:100%;height:8px;accent-color:var(--brand)}.file-transfer-task-controls{display:flex;gap:8px;flex-wrap:wrap}.file-transfer-task .task-error{white-space:pre-wrap;overflow-wrap:anywhere}#file-transfers-button{min-width:30px;padding:4px;font-size:20px}
+
+/* Studio: quiet architectural light, no video download or JS animation loop. */
+html[data-background=studio] .workbench-background::before{display:none}
+/* Slow, offset layers keep motion legible without moving the reading surface. */
+.workbench-studio-plane{position:absolute;inset:-30%;opacity:var(--wb-background-strength,.22);background:linear-gradient(115deg,transparent 23%,color-mix(in srgb,var(--accent) 34%,transparent) 42%,transparent 43%,transparent 54%,color-mix(in srgb,var(--accent) 22%,transparent) 70%,transparent 71%);animation:studio-plane-drift 19s ease-in-out -9.5s infinite alternate}
+.workbench-studio-line{position:absolute;inset:-20%;opacity:calc(var(--wb-background-strength,.22)*.8);background:linear-gradient(124deg,transparent 49.88%,color-mix(in srgb,var(--accent) 48%,transparent) 50%,transparent 50.12%);animation:studio-line-drift 26s ease-in-out -13s infinite alternate}
+.workbench-studio-halo{position:absolute;inset:-30%;opacity:var(--wb-background-strength,.22);background:radial-gradient(ellipse 48% 48% at 72% 30%,color-mix(in srgb,var(--accent) 40%,transparent),transparent 85%),radial-gradient(ellipse 35% 40% at 28% 72%,color-mix(in srgb,var(--brand) 26%,transparent),transparent 85%);animation:studio-light-drift 14s ease-in-out -7s infinite alternate}
+@keyframes studio-plane-drift{from{transform:translate3d(-6%,-3%,0) rotate(-27deg)}to{transform:translate3d(7%,5%,0) rotate(-19deg)}}
+@keyframes studio-line-drift{from{transform:translate3d(5%,-3%,0)}to{transform:translate3d(-6%,4%,0)}}
+@keyframes studio-light-drift{from{transform:translate3d(7%,-5%,0) scale(.96)}to{transform:translate3d(-9%,8%,0) scale(1.12)}}
+html[data-background-paused] :is(.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo){animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){:is(.workbench-studio-plane,.workbench-studio-line,.workbench-studio-halo){animation:none!important}}

@@ -60,3 +60,16 @@ When the user explicitly chooses a reference destination, `source` is its ID fro
 The server records source ID, binding fingerprint and actual target path on the proposal. Approval fingerprints and the file UI include that destination; identical relative names in workspace and references remain separate. Existing-file modifications require the attached original and version match. Changing a binding, hiding/locking/removing the reference, or switching workspaces rejects pending writes. Local directory handles and remote connection generations are pinned during application. Partial success is recorded per file. Reads of pending new documents remain pending-proposal notices; local approval receipts read back the bound source, not the workspace. Remote writes keep their normal transfer result boundary and are not described as locally verified bytes.
 
 New files in explicitly configured local bindings can use the independent reviewer; original replacements and remote proposals remain manual. An empty automatic-document binding fails clearly instead of silently using the read-only `/context` fallback. Historical workspace proposals without source metadata keep their original target.
+
+## 交付闭环与工作台账（2026-10-23）
+
+本节描述 `assistant-delivery-loop-20261023` 的本地改进，不能据此认定旧运行实例已升级或本版本已发布。
+
+- 新任务将交付证据单独保存在 `Task.delivery`：`delivered`、`pending_approval` 或 `missing`。对 PNG/JPEG/WebP、MP4、MP3/WAV、PDF、DOCX/XLSX/PPTX、DXF、STL/STEP 和 ZIP 的明确产物请求，完成回复中的相对路径须指向当前本地工作区内可读取、非空、格式扩展名匹配的文件（媒体另做格式签名检查）；提案仍须经过既有审批。签名检查不等于完整解码、内容质量评估或业务验收。没有文件、格式不符或只给执行承诺，均不能作为成功交付；保留检查点供继续。
+- 原生图片也在收费提交前保存状态。提交结果不明时不重发；已有服务商结果但下载失败时保留原结果和缺口，继续时只尝试下载。短句“继续/继续下载”只从紧邻的媒体任务继承文案和原生成状态，不扫描旧助手回复来发起收费任务。已停止的任务不自动复活。生成或下载期间不能消费的改写请求返回明确拒绝，不假装已入队；明确“停止”取消本地跟进。远端已提交任务可能继续运行，停止本地网络请求不代表服务商已取消或退款。
+- Auto 候选在既有能力、端点、Key 和附件过滤之外，参考本次服务进程观察到的同账户模型失败。限流/服务异常暂缓 30 秒，额度、鉴权或开通错误暂缓 5 分钟；参数错误不据此禁用模型。成功请求清除该记录。此缓存不跨服务重启、不主动探测账户、不改变静态能力评分，也不自动切换模型重试收费请求。已有远端任务始终绑定原模型和账户。
+- 同一用户目标最多进行三轮并行规划；新的探测结果不会无限重置预算。检查点保留预算，明确用户插话可形成新目标范围。耗尽预算只回到主执行器，任务不因停止扇出而暂停。标题去重是保守的文字规范化与高重合检查，不是语义向量检索；不同编号和英文主题保留。
+- 小秘的 `work_status` 与页面使用同一只读台账，包含运行编号、交付证据、阻塞、下一步以及用户已安排的定时执行。轮询不重试、不交办、不审批。实际定时执行复用服务端提醒调度器；服务必须运行，浏览器无需保持打开。暂停或中断的定时执行会显式暴露缺口，不自动重放。
+- 页面刷新去重仅在 `sessionStorage` 保存最多 1000 个不透明事件 ID，不保存私人正文。语音播报包含具体阻塞和下一步；麦克风仍须用户手势，锁定和页面隐藏边界沿用既有实现。助理朗读与插件生成可下载 MP3/WAV 的设置保持独立。
+
+实际验证命令、浏览器范围、未测项和发布状态记录在[任务账本](../tasks/assistant-delivery-loop-20261023.json)。旧任务缺少 `delivery` 字段时不会自动补造历史验收证据。

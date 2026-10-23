@@ -7,18 +7,22 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"strings"
 	"time"
 )
 
 type assistantWatchEvent struct {
-	ID        string `json:"id"`
-	Kind      string `json:"kind"`
-	Text      string `json:"text"`
-	SessionID string `json:"sessionId,omitempty"`
-	Status    string `json:"status,omitempty"`
-	Priority  int    `json:"priority"`
-	Detail    string `json:"detail,omitempty"`
+	ID         string        `json:"id"`
+	Kind       string        `json:"kind"`
+	Text       string        `json:"text"`
+	SessionID  string        `json:"sessionId,omitempty"`
+	Status     string        `json:"status,omitempty"`
+	Priority   int           `json:"priority"`
+	Detail     string        `json:"detail,omitempty"`
+	RunID      string        `json:"runId,omitempty"`
+	Blocker    string        `json:"blocker,omitempty"`
+	NextAction string        `json:"nextAction,omitempty"`
+	UpdatedAt  string        `json:"updatedAt,omitempty"`
+	Delivery   *TaskDelivery `json:"delivery,omitempty"`
 }
 
 func watchEvent(kind, key, text, session string) assistantWatchEvent {
@@ -43,45 +47,7 @@ func (a *App) assistantWatch(w http.ResponseWriter, r *http.Request) {
 		fail(w, 423, errors.New("请先解锁小秘会话"))
 		return
 	}
-	events := []assistantWatchEvent{}
-	statusName := map[string]string{"running": "正在处理", "completed": "已完成", "failed": "执行失败", "stopped": "已停止", "cancelled": "已取消", "interrupted": "已中断", "paused": "已暂停", "awaiting_approval": "等待你的审批", "awaiting_clarification": "需要你的回答", "queued": "正在排队"}
-	for _, s := range a.sessions {
-		if s.Deleted || !s.FollowedByAssistant || len(s.Runs) == 0 {
-			continue
-		}
-		run := s.Runs[len(s.Runs)-1]
-		status := statusName[run.Status]
-		if status == "" {
-			status = run.Status
-		}
-		event := watchEvent("task", run.ID+":"+run.Status, fmt.Sprintf("任务 #%d「%s」%s。", s.Number, s.Title, status), s.ID)
-		event.Status = run.Status
-		switch run.Status {
-		case "awaiting_approval", "awaiting_clarification", "failed":
-			event.Priority = 3
-		case "completed":
-			event.Priority = 2
-		default:
-			event.Priority = 1
-		}
-		if run.Status == "completed" {
-			// Only final user-facing content, never private reasoning/tool arguments.
-			for i := len(run.Steps) - 1; i >= 0; i-- {
-				if run.Steps[i].Name != "chat" {
-					continue
-				}
-				content := []rune(strings.TrimSpace(run.Steps[i].Content))
-				if len(content) > 240 {
-					content = append(content[:240], '…')
-				}
-				if len(content) > 0 {
-					event.Detail = string(content)
-					break
-				}
-			}
-		}
-		events = append(events, event)
-	}
+	events := a.assistantWorkLedgerLocked()
 	now := time.Now()
 	for _, reminder := range a.reminders {
 		if reminder.Status != "pending" || reminder.Notify == "none" || reminder.DueAt == "" || reminder.Area == "workspace" && reminder.WorkspaceID != a.wsID() {

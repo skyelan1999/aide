@@ -231,7 +231,7 @@ func (a *App) recordAgenticExchangeLocked(heard string, dec assistantDecision, s
 		return
 	}
 	inType := msgTypeTextIn
-	if source == "voice" {
+	if source == "voice" || source == "call" {
 		inType = msgTypeVoiceIn
 	}
 	s.Messages = append(s.Messages, Message{
@@ -364,8 +364,8 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	source := "text"
-	if in.InputSource == "voice" {
-		source = "voice"
+	if in.InputSource == "voice" || in.InputSource == "call" {
+		source = in.InputSource
 	}
 	text := strings.TrimSpace(in.Text)
 	if text == "" {
@@ -399,12 +399,12 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.isAssistantUnlocked(s.ID) && (source == "voice" || requiresUnlock) {
+	if !a.isAssistantUnlocked(s.ID) && (source != "text" || requiresUnlock) {
 		jsonOut(w, 200, map[string]any{"action": "locked", "reason": "请先解锁小秘会话"})
 		return
 	}
 	runFallback := func(reason string) {
-		if source == "voice" {
+		if source != "text" {
 			fail(w, 503, errors.New("语音助理暂不可用，请检查模型设置后重试"))
 			return
 		}

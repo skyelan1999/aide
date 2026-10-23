@@ -774,6 +774,29 @@
         "scripts/generated-media.test.cjs"
       ],
       [
+        "node",
+        "--check",
+        "internal/server/web/assistant-call.js"
+      ],
+      [
+        "node",
+        "scripts/assistant-call.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/assistant-realtime.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/assistant-pcm-worklet.js"
+      ],
+      [
+        "node",
+        "scripts/assistant-realtime.test.cjs"
+      ],
+      [
         "python3",
         "scripts/test_development_toolbox.py"
       ]

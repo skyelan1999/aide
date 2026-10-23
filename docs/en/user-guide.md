@@ -483,6 +483,6 @@ An AIDE server running in Docker cannot reuse the host Codex desktop app's stdio
 
 Open Messages → Reminders from the main toolbar. Each reminder can include a title, description, due time, priority, global/current-workspace storage area, and notification channel. Search and sorting by priority and due time are supported, along with completion, editing, and deletion. Data is stored in the aide data volume at `reminders/reminders.json`, not in a project directory. Due reminders can appear in a browser popup and as a message in the XiaoMi conversation. The background checker runs every 20 seconds; browser popups are checked while the page is open. Aide AI may create reminders and mark them complete, but cannot list, edit, or delete them. XiaoMi can manage reminders fully. Pausing or closing a task does not remove reminders.
 
-## Built-in whale-girl background
+## Studio workbench background
 
-Settings → Appearance → Workbench background → Whale girl uses the bundled silent looping video without a local upload. Background intensity and the existing hidden-page, lock and reduced-motion rules still apply; the default remains Off. See [actual screenshots and implementation limits](../builtin-background.md).
+Settings → General → Appearance → Workbench background → Studio. Lightweight architectural light adapts to the theme without bundled video. Legacy whale preferences migrate to Studio; uploaded local media remains intact. Motion pauses in the background, while locked, or with reduced motion.

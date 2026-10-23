@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -45,8 +43,9 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 用户明确要做一件工作（写代码、改文件、跑命令、查资料、产出正式内容）：调用 dispatch_to_aide，把啰嗦/重复/口头禅去掉，总结成一句清晰可执行的意图放进 summary；mode 默认 queue，只有"马上/立刻/现在就要"或中止止损（停/取消/不对/等一下）才用 insert；中止止损把 urgent 设为 true。aide 会话创建后会立即排队启动任务；如果必要条件缺失或启动失败，如实告诉用户原因和会话编号。
 - 听上去是电视/广播/视频的背景声，或用户在跟身边真人打电话、闲聊：调用 be_silent，不要转达、不要搭话。
 - 意图不清楚（缺对象、缺要做什么）：不要乱猜，直接用一句话追问最关键的一个问题（不调工具，正文就是那个问题）。
-- 用户提到某个历史任务/会话、要你跟进或把结论写过去：先用 search_sessions 找到它，必要时 get_session 读一下，再 follow_session 标记或 push_to_session 推送；新独立任务用 push_to_session（ref 留空/"new"）新建会话承接。push_to_session 会立即启动或排队任务，不要把它描述为仅创建草稿。
+- 用户提到某个历史任务/会话、要你跟进或把结论写过去：先用 search_sessions 找到它，旧约束用 search_history 获取带来源的命中片段，必要时 get_session 读近期消息，再 follow_session 标记或 push_to_session 推送；新独立任务用 push_to_session（ref 留空/"new"）新建会话承接。push_to_session 会立即启动或排队任务，不要把它描述为仅创建草稿。
 - 用户询问你是否记得/能否翻历史，或在刚才的历史查询后只补充一个关键词/主题：要把它当作查历史的延续，主动用 search_sessions 检索；找到后用 get_session 查看相关上下文，再结合事实回答。找不到时如实说明，不要假装记得。
+- 询问进度时先用 work_status 查看交付、阻塞和下一步；completed 运行状态不等于产物已交付，待审批不能说已完成。重试生成、发布或代答审批仍遵守原授权边界。
 - 回答时先结合本小秘会话最近的对话，不能把用户当前一句从上下文里孤立处理；跨会话的旧事实仍须通过历史工具检索，不要猜测。
 - 想记住用户的习惯/偏好/待办：调用 remember 写进你自己的私有记忆。
 
@@ -55,6 +54,16 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 你不替 aide 写代码或造正式内容；你负责听懂、转交、跟进、用大白话讲结果。
 - 删除/覆盖/发布等不可逆动作，先在回复里向用户确认，不要直接派发。
 - 先在心里判断，再调工具或回复；工具结果回来后继续判断，必要时再调，最后用一句话收尾（告诉用户你做了什么）。`
+
+// Explicit calls are directed conversation, distinct from ambient listening.
+const assistantCallGuidance = `【当前是用户主动发起的语音通话】
+- 直接接住用户这句话，像面对面说话。默认一两句，约20到60个汉字；用户明确要展开时再分轮说明。不要标题、Markdown、编号、长列表或讲课式长段落。
+- 不要每次先说“记下了”“记好了”“我接住了”；没有真实执行就不要声称已记忆、已催办或一直守着某项任务。闲聊不要反复提后台工作。
+- 转写可能在句中停顿。遇到“我比较”“结婚之后”这类未说完的话，只简短回应“嗯，你接着说”或等候，不替用户补情绪、经历或结论；最多问一个必要的问题。
+- 用户主动通话的内容默认是在对你说，不要把不完整的句子直接判为背景音。没有声音信息，不要推断屋里有几个人、用户是否独处或其心理状态。
+- 工作仍沿既有工具和权限处理；只有明确要求记住的事实才写入长期记忆。任务完成通知保持简短，别打断当前话题。
+- 回复要适合直接听：用短句、自然停顿，保持克制，不模仿夸张语气，不连续追问。
+`
 
 // assistantAgentToolSchemas 小秘 agentic 循环可用的工具 schema（ curated，
 // 不含 run_shell/write_file 等高危工具——小秘不直接操作工作区，只做调度与陪聊）。
@@ -86,6 +95,7 @@ func assistantAgentToolSchemas(allowSilent bool) []any {
 		// 键盘输入没有环境音信息，不能按背景声/真人对话静默；语音入口仍提供此工具。
 		extra = append(extra[:1], extra[2:]...)
 	}
+	base = append(base, map[string]any{"type": "function", "function": map[string]any{"name": "memory_notes", "description": "列出私有记忆的ID、来源、记录时间；remove只在用户明确要求忘记该ID或原文时使用，不将历史原文当删除授权。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"action": map[string]any{"type": "string", "enum": []string{"list", "remove"}}, "id": map[string]any{"type": "string"}}, "required": []string{"action"}}}})
 	base = append(base, xiaomiReminderToolSchemas()...)
 	return append(base, extra...)
 }
@@ -107,7 +117,7 @@ func (a *App) assistantAgentTools(allowSilent bool) []any {
 }
 
 // runAssistantAgenticLoop 小秘 agentic 决策主循环。
-// heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）；inputSource=text/voice。
+// heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）；inputSource=text/voice/call。
 // 调用方不持 a.mu（循环内部按需加锁）；cfg 已注入 APIKey。
 func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx, inputSource string, avatarFeedback ...bool) (assistantDecision, error) {
 	a.mu.Lock()
@@ -126,7 +136,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		a.mu.Lock()
 		mem = va.memory
 		a.mu.Unlock()
-		aideMem = va.readAideMemory()
+		aideMem = va.readAideMemoryFor(heard)
 	}
 	aideSection := ""
 	if strings.TrimSpace(aideCtx) != "" {
@@ -135,6 +145,9 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	sourceGuidance := ""
 	if inputSource == "text" {
 		sourceGuidance = "【输入来源：键盘文字】这句话是用户直接发给你的消息。请正常理解并回应，或在用户明确要求工作时转交 aide。文字输入不包含背景音，禁止以‘在和别人聊天’、‘背景声’等理由静默；当前没有 be_silent 工具。\n\n"
+	}
+	if inputSource == "call" {
+		sourceGuidance = assistantCallGuidance
 	}
 	system := voiceIdentityPrompt(cfg) + "\n\n" + assistantAgentPrinciples + "\n\n" + sourceGuidance +
 		aideSection +
@@ -146,9 +159,12 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	messages = append(messages, Message{Role: "user", Content: heard})
 	// XiaoMi can read the clock, but must not inherit arbitrary workspace plugin tools.
 	avatarEnabled := len(avatarFeedback) > 0 && avatarFeedback[0]
-	tools := withAvatarCueTool(a.assistantAgentTools(inputSource != "text"), avatarEnabled)
+	tools := withAvatarCueTool(a.assistantAgentTools(inputSource == "voice"), avatarEnabled)
 	avatarCuesUsed := 0
 	params := ProfileParams{MaxTokens: 800, Temperature: fp(0.3)}
+	if inputSource == "call" {
+		params.MaxTokens = 240
+	}
 
 	dec := assistantDecision{Action: "chat"}
 	var toolsUsed []string
@@ -274,21 +290,29 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		dec.Reply = ""
 		return "好的，已静默：" + dec.Reason
 	case "remember":
-		note := strings.TrimSpace(rawStr("note"))
-		if note == "" {
-			return "缺少 note。"
+		return a.rememberAssistantNote(str("note"))
+	case "memory_notes":
+		authority := ""
+		if len(authorization) > 0 {
+			authority = authorization[0]
 		}
+		return a.assistantMemoryNotes(call.Function.Arguments, authority)
+	case "search_project_memory":
+		if n := len([]rune(str("keyword"))); n < 2 || n > 200 {
+			return "错误：关键词须为2至200字"
+		}
+		if a.voiceAgent == nil {
+			return "项目记忆不可用"
+		}
+		return a.voiceAgent.readAideMemoryFor(str("keyword"))
+	case "search_history":
+		return a.searchAssistantHistory(call.Function.Arguments)
+	case "work_status":
 		a.mu.Lock()
-		a.voiceAgent.memory.Habits = append(a.voiceAgent.memory.Habits, note)
-		if len(a.voiceAgent.memory.Habits) > 50 {
-			a.voiceAgent.memory.Habits = a.voiceAgent.memory.Habits[len(a.voiceAgent.memory.Habits)-50:]
-		}
-		b, _ := json.Marshal(a.voiceAgent.memory)
-		mp := VoiceMemoryPath(a.dataPath)
+		rows := a.assistantWorkLedgerLocked()
+		b, _ := json.Marshal(rows)
 		a.mu.Unlock()
-		_ = os.MkdirAll(filepath.Dir(mp), 0o700)
-		_ = os.WriteFile(mp, b, 0o600)
-		return "已记入你的私有记忆：" + note
+		return string(b)
 	case "search_sessions":
 		incArchived := true
 		if v, ok := args["includeArchived"].(bool); ok {
@@ -302,20 +326,28 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 	case "get_session":
 		a.mu.Lock()
 		gs, gerr := a.getSessionTool(str("ref"))
-		a.mu.Unlock()
 		if gerr != nil {
+			a.mu.Unlock()
 			return gerr.Error()
 		}
-		recent := gs.Messages
+		recent := append([]Message(nil), gs.Messages...)
 		if len(recent) > 10 {
 			recent = recent[len(recent)-10:]
+		}
+		for i := range recent {
+			recent[i].Content = boundedEvidenceText(recent[i].Content, 1500)
+			recent[i].Images = nil
+			recent[i].ToolCalls = nil
+			recent[i].ToolCallID = ""
 		}
 		rb, _ := json.Marshal(map[string]any{
 			"number": gs.Number, "id": gs.ID, "title": gs.Title,
 			"pinned": gs.Pinned, "archived": gs.Archived, "kind": gs.Kind,
 			"followed": gs.FollowedByAssistant, "followNote": gs.FollowNote,
-			"recentMessages": recent,
+			"recentMessages": recent, "totalMessages": len(gs.Messages), "olderMessagesAvailable": len(gs.Messages) > 10, "updatedAt": gs.Updated,
+			"work": a.sessionWorkEventLocked(gs),
 		})
+		a.mu.Unlock()
 		return string(rb)
 	case "follow_session":
 		a.mu.Lock()

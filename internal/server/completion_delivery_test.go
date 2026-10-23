@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -128,7 +129,7 @@ func TestDeliveryPromiseLoopBounded(t *testing.T) {
 	task := &Task{ID: newID(), Prompt: "Write a document", Mode: "chat", Steps: []Step{{Name: "chat"}}, Steer: make(chan string, 1)}
 	registerHarnessFixtureTask(t, a, task)
 	result, _, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{}, nil, task, nil, 0)
-	if err != nil || count != 4 || !strings.Contains(result, "尚未完成") {
+	if !errors.Is(err, errDeliveryIncomplete) || count != 4 || result == "" {
 		t.Fatalf("result=%q calls=%d err=%v", result, count, err)
 	}
 }

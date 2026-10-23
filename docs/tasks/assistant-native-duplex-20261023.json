@@ -1,0 +1,182 @@
+{
+  "id": "assistant-native-duplex-20261023",
+  "request": "接入原生双工音频自然实时通话，部署9999体验，先不发版",
+  "baseline": "cfa00ea7e56f98ff0f1eeabef995ec813c1e6379",
+  "initial_status": "M docs/tasks/assistant-voice-call-20261023.json",
+  "acceptance": [
+    "Native PCM streaming and semantic VAD with no WebSpeech or separate TTS",
+    "Same origin, token authentication, assistant unlock, workspace and lock lifecycle enforced",
+    "Interrupt clears queued audio and truncates unheard output; mute and hangup release capture",
+    "Only server-transcribed current turn can enter existing assistant work permissions",
+    "Real provider synthetic speech roundtrip and browser layout verified separately from human microphone",
+    "Remove whale video and replace with Studio; migrate old preferences",
+    "Back up and deploy to 9999 without release or tags"
+  ],
+  "scope": [
+    "internal/server/assistant_realtime*.go",
+    "internal/server/server.go",
+    "internal/server/web/assistant-*.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/workbench-background.js",
+    "internal/server/web/workbench.css",
+    "internal/server/web/settings-init.js",
+    "internal/server/web/backgrounds/whale-girl.mp4",
+    "scripts/assistant-realtime.test.cjs",
+    "scripts/tts-playback.test.cjs",
+    "scripts/workbench-background.test.cjs",
+    "docs/agent/router.json",
+    "docs/assistant-voice-call.md",
+    "docs/builtin-background.md",
+    "docs/features.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/assistant-native-duplex-20261023.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Native audio proxy, AudioWorklet, streaming playback, interruption and existing assistant permissions. Studio replaces the bundled whale video.",
+      "evidence": [
+        "internal/server/assistant_realtime.go",
+        "internal/server/web/assistant-realtime.js",
+        ".agent-state/native-provider-duplex2.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native audio proxy, AudioWorklet, streaming playback, interruption and existing assistant permissions. Studio replaces the bundled whale video.",
+      "evidence": [
+        "internal/server/assistant_realtime.go",
+        "internal/server/web/assistant-realtime.js",
+        ".agent-state/native-provider-duplex2.log"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Native audio proxy, AudioWorklet, streaming playback, interruption and existing assistant permissions. Studio replaces the bundled whale video.",
+      "evidence": [
+        "internal/server/assistant_realtime.go",
+        "internal/server/web/assistant-realtime.js",
+        ".agent-state/native-provider-duplex2.log"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "144 registered verification commands returned exit 0, including all 24 Go race shards and vet. Automated receipt status fail was solely a fingerprint inventory change caused by committing deletion of the already absent whale MP4 while verification ran. Reconstructing the starting inventory by adding that path with <deleted> exactly reproduces receipt d94225c8cfa36ac42dad9cec2262b67da07c2e4ddcb4e6cd978b14f154c3677c. Current content fingerprint 20a23d5a27d21de6d109bb0a019e3aafdfafd1b29d6b6ddc6a7dcbd100696fe6. This is manual provenance acceptance, not an automated full-pass receipt. Real provider synthetic roundtrip and actual Chromium/Safari transport checks passed; human acoustic quality pending.",
+      "evidence": [
+        ".agent-state/verify-20261023T154259070404Z.log",
+        ".agent-state/full.json",
+        ".agent-state/native-provider-duplex2.log",
+        ".agent-state/native-audio-browser.log",
+        ".agent-state/native-deployed-check.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Native protocol, independent voice, permissions, lifecycle, billing limitation and Studio migration documented; historical whale evidence retained.",
+      "evidence": [
+        "docs/assistant-voice-call.md",
+        "docs/builtin-background.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned Chromium/Safari fixture tabs closed, viewport reset, fixture server requested to stop; user production tabs preserved.",
+      "evidence": [
+        ".agent-state/native-browser.log",
+        ".agent-state/native-audio-browser.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No version bump, tag, push or Release. Explicitly authorized local 9999 deployment completed and healthy; previous container/data backup retained.",
+      "evidence": [
+        ".agent-state/live-backup-20261023T160509Z/result.json",
+        ".agent-state/native-deployed-check.json"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Stop/remove only the new aide-aide-1, rename aide-call-rollback-20261023t160509z to aide-aide-1, start it, and restore launcher.env from private backup. Restore data archive only if necessary; current data remains mounted.",
+  "handoff": "9999 now runs native duplex and Studio background. Refresh browser, unlock assistant, grant microphone, redial. Studio is Settings > General > Appearance > Workbench background > 静域. User acoustic/subjective acceptance pending; audio usage not included in text cost graphs.",
+  "sources": [
+    "https://www.alibabacloud.com/help/en/model-studio/realtime"
+  ],
+  "provider_probe": {
+    "status": "pass",
+    "evidence": ".agent-state/native-provider-duplex2.log",
+    "native_output_bytes": 253440,
+    "synthetic_speech_transcribed": true,
+    "semantic_vad_triggered_response": true,
+    "human_microphone": "not_run"
+  },
+  "browser_acceptance": {
+    "actual_product_handler": true,
+    "synthetic_browser_harness": ".agent-state/native_browser_fixture_test.go",
+    "actual_worklet_capture_and_native_playback": "pass",
+    "native_packets_before_mute": 503,
+    "native_packets_while_muted": 503,
+    "native_packets_after_resume": 688,
+    "closed_upstreams_after_two_browser_calls": 2,
+    "browsers": [
+      "in-app Chromium",
+      "Safari"
+    ],
+    "native_fixture_port": 18492,
+    "native_fixture_closed": true,
+    "human_acoustic_echo_and_quality": "not_run",
+    "studio_themes": [
+      "light",
+      "dark"
+    ],
+    "mobile_width": 390,
+    "mobile_scroll_width": 390,
+    "screenshots": [
+      ".agent-state/native-call-browser.png",
+      ".agent-state/studio-dark.png",
+      ".agent-state/studio-light.png",
+      ".agent-state/studio-mobile.png"
+    ]
+  },
+  "verification_provenance": {
+    "automated_receipt_status": "fail",
+    "command_count": 144,
+    "failed_commands": 0,
+    "manual_inventory_equivalence_verified": true,
+    "starting_fingerprint": "d94225c8cfa36ac42dad9cec2262b67da07c2e4ddcb4e6cd978b14f154c3677c",
+    "current_fingerprint": "20a23d5a27d21de6d109bb0a019e3aafdfafd1b29d6b6ddc6a7dcbd100696fe6",
+    "inventory_difference": "Committed removal of internal/server/web/backgrounds/whale-girl.mp4; file was already absent throughout tests."
+  },
+  "local_deployment": {
+    "status": "deployed",
+    "commit": "36c9dbf4",
+    "image": "aide:native-duplex-36c9dbf4",
+    "rollbackContainer": "aide-call-rollback-20261023t160509z",
+    "backup": "/Users/skyelan/.codex/worktrees/aide-assistant-voice-call-20261023/.agent-state/live-backup-20261023T160509Z",
+    "health": 200,
+    "callAsset": 200,
+    "published": false,
+    "verification": {
+      "image": "aide:native-duplex-36c9dbf4",
+      "health": "healthy",
+      "buildCommit": "36c9dbf48c38342e2a95bfd89f193a56db328c00",
+      "buildVersion": "dev",
+      "assistantName": "小绵",
+      "sessionCount": 45,
+      "activeSessionIds": [],
+      "assets": {
+        "/healthz": 200,
+        "/assistant-realtime.js": 200,
+        "/assistant-pcm-worklet.js": 200,
+        "/backgrounds/whale-girl.mp4": 404
+      },
+      "callPreflight": 423
+    },
+    "binary_sha256": "b9bbcd75dd15ff8586aba3ec164e84c56d93477b01fd43577f3edc127f27de68",
+    "image_id": "sha256:83e13995a6885fa35657e4285fc7548ea5a69114c6887718b8340bf8c5a3b8d7",
+    "launcher_image_persisted": true,
+    "data_backup_created": true
+  }
+}
