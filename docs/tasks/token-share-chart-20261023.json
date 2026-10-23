@@ -1,0 +1,75 @@
+{
+  "id": "token-share-chart-20261023",
+  "request": "修复设置中模型Token占比饼图渲染与标签布局",
+  "baseline": "1cb5aa3e7add7cf61cc1b7dfb3a1940eac06685a",
+  "initial_status": "",
+  "acceptance": [
+    "99.9%与极小分片按真实占比绘制，无跨图引导线或标签覆盖",
+    "模型名称、占比及用量在独立图例中可读，窄屏不溢出",
+    "零数据、单模型、长名称和多模型有定向回归；Safari实际设置验收",
+    "用量卡片、图例、热力图和上下文用量统一按1000进位自动显示K/M/B/T，边界四舍五入后升级单位"
+  ],
+  "scope": [
+    "internal/server/web/model-token-chart.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "scripts/model-token-chart.test.cjs",
+    "docs/agent/router.json",
+    "docs/tasks/token-share-chart-20261023.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按真实份额绘制固定尺寸环图，独立HTML图例替代SVG引导线，保留聚合明细与键盘高亮",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/33"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按真实份额绘制固定尺寸环图，独立HTML图例替代SVG引导线，保留聚合明细与键盘高亮",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/33"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "按真实份额绘制固定尺寸环图，独立HTML图例替代SVG引导线，保留聚合明细与键盘高亮",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/33"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "5项定向回归、146项quick检查、本地Docker构建含Go vet通过；Safari实际环图已验收，明暗与390px隔离布局通过。自动单位在隔离浏览器确认29.8M/23.6K；更新后的Safari页面因用户正在操作未再刷新。",
+      "evidence": [
+        "scripts/model-token-chart.test.cjs",
+        ".agent-state/model-chart-units-quick.log",
+        ".agent-state/model-chart-unit-build.log",
+        ".agent-state/model-chart-unit-start.log",
+        ".agent-state/model-chart-units.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务记录保存验收范围和实际执行状态",
+      "evidence": [
+        "docs/tasks/token-share-chart-20261023.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "隔离预览标签与临时HTTP服务已关闭，生产服务保持运行，原镜像与私有备份保留",
+      "evidence": []
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "本地镜像已更新且启动健康；待源码推送及PR，不创建产品Release或市场上传",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退图表模块、挂载入口、样式与app调用变更；统计与计价数据不变。",
+  "handoff": "本地aide:token-chart-repair-20261023运行。Safari刷新后加载app v213、图表模块v2。原aide:supporter-repair-20261023镜像保留可回滚。"
+}

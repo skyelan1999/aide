@@ -806,6 +806,16 @@
       [
         "node",
         "scripts/auto-model-router-ui.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/model-token-chart.js"
+      ],
+      [
+        "node",
+        "--test",
+        "scripts/model-token-chart.test.cjs"
       ]
     ],
     "full": [

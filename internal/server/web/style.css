@@ -522,15 +522,22 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 
 .model-pie-wrap{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-faint)}
 .model-pie-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:10px}
-.model-pie-body{display:flex;justify-content:center;align-items:center}
-.model-pie-svg{width:100%;height:auto;max-width:380px;display:block;cursor:pointer}
+.model-pie-wrap{container-type:inline-size}
+.model-pie-body{display:grid;grid-template-columns:144px minmax(0,1fr);align-items:center;gap:24px;padding:8px 0}
+.model-pie-plot{position:relative;width:144px;aspect-ratio:1}
+.model-pie-svg{display:block;width:100%;height:100%}
+.model-pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.model-pie-center strong{max-width:90px;font-size:13px;color:var(--text);overflow-wrap:anywhere;text-align:center;font-variant-numeric:tabular-nums}
+.model-pie-center small{font-size:10px;color:var(--muted)}
 .pie-slice{transition:opacity .15s ease}
-.pie-label-group{cursor:default}
-.pie-leader{opacity:.5;transition:opacity .15s ease,stroke-width .15s ease;pointer-events:none}
-.pie-label-name{font-size:10px;fill:var(--text-settings);font-weight:600}
-.pie-label-sub{font-size:9px;fill:var(--muted);font-family:ui-monospace,monospace}
-.pie-label-group.active .pie-leader{opacity:1;stroke-width:1.6}
-.pie-label-group.active .pie-label-name{fill:var(--text)}
+.model-pie-legend{list-style:none;margin:0;padding:0;min-width:0;max-height:240px;overflow:auto}
+.model-pie-row{display:grid;grid-template-columns:8px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:10px 2px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;color:var(--text-settings);font:inherit;cursor:default}
+.model-pie-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.model-pie-dot{width:8px;height:8px;border-radius:50%}
+.model-pie-name{font-size:11px;overflow-wrap:anywhere;min-width:0}
+.model-pie-values{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.model-pie-values small{font-size:10px;color:var(--muted)}
+@container (max-width:420px){.model-pie-body{grid-template-columns:minmax(0,1fr);gap:8px}.model-pie-plot{width:128px;justify-self:center}}
 .model-pie-empty{font-size:10px;color:var(--faintest);text-align:center;padding:20px 0}
 
 .img-viewer{display:flex;flex-direction:column;height:100%;min-height:400px}
