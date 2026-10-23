@@ -1,0 +1,92 @@
+{
+  "status": "pass",
+  "candidateOnly": true,
+  "published": false,
+  "pluginsBundled": false,
+  "platform": "linux/arm64",
+  "commit": "4fc95878f3bff27735f7b1c3c5ff5d22b5d0dbb3",
+  "sourceSHA256": "d37588dcf263a84d7fb959b213dad56f101161744b827938befa5c06bc1938b8",
+  "version": "0.1.17.5 RC5",
+  "tag": "v0.1.17.5-RC5",
+  "image": "aide:ci-4fc95878f3bf-arm64",
+  "imageId": "sha256:2614c706fe387c82c3eec8bb0889cab05326c42331b0d1c680f4b86a3230ed18",
+  "verification": [
+    {
+      "command": [
+        "python3",
+        "scripts/agent-route.py",
+        "verify",
+        "quick"
+      ],
+      "environmentOverrides": {},
+      "status": "pass"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_runtime_assets.py",
+        "aide:ci-4fc95878f3bf-arm64",
+        "--require-lan-bridge"
+      ],
+      "environmentOverrides": {},
+      "status": "pass"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_go_snapshot.py"
+      ],
+      "environmentOverrides": {
+        "AIDE_TEST_IMAGE": "aide:ci-4fc95878f3bf-arm64",
+        "AIDE_TEST_WORKERS": "2"
+      },
+      "status": "pass"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_optional_step.py",
+        "aide:ci-4fc95878f3bf-arm64"
+      ],
+      "environmentOverrides": {},
+      "status": "pass"
+    }
+  ],
+  "verificationProfile": "quick plus explicit candidate-image runtime/race/vet/optional-plugin boundary; not a standard full-profile receipt",
+  "smoke": {
+    "status": "pass",
+    "commit": "4fc95878f3bff27735f7b1c3c5ff5d22b5d0dbb3",
+    "version": "0.1.17.5 RC5",
+    "installedPlugins": 0,
+    "runtimeMode": "release-image"
+  },
+  "privacy": {
+    "status": "pass",
+    "layers": 23,
+    "entries": 45207,
+    "pluginPayloads": 0
+  },
+  "packageValidation": {
+    "status": "pass",
+    "imageId": "sha256:2614c706fe387c82c3eec8bb0889cab05326c42331b0d1c680f4b86a3230ed18",
+    "archiveSHA256": "bfd2f38e3fa30c6ee46a918161666d785edc9ffed95e29ba87cd6957dfcad326"
+  },
+  "importValidation": {
+    "status": "pass",
+    "imageId": "sha256:2614c706fe387c82c3eec8bb0889cab05326c42331b0d1c680f4b86a3230ed18",
+    "platform": "linux/arm64",
+    "sourceSHA256": "d37588dcf263a84d7fb959b213dad56f101161744b827938befa5c06bc1938b8",
+    "smoke": {
+      "status": "pass",
+      "commit": "4fc95878f3bff27735f7b1c3c5ff5d22b5d0dbb3",
+      "version": "0.1.17.5 RC5",
+      "installedPlugins": 0,
+      "runtimeMode": "release-image"
+    }
+  },
+  "asset": {
+    "name": "aide-v0.1.17.5-RC5-full-linux-arm64.zip",
+    "sha256": "140fafa6964b14c970961f8eec5698e2bdf38371ddf456c0a0e3b58c4dd800a1",
+    "bytes": 631524276
+  }
+}

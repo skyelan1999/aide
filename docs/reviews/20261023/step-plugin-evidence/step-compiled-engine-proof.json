@@ -1,0 +1,18 @@
+[
+  {
+    "architecture": "arm64",
+    "format": "ELF64",
+    "machine": 183,
+    "file": "OCP.cpython-312-aarch64-linux-gnu.so",
+    "sha256": "3b4ba2072223bee81d57b4c9047b881555215df2562b3c047dae23fc42db1966",
+    "bytes": 148655361
+  },
+  {
+    "architecture": "amd64",
+    "format": "ELF64",
+    "machine": 62,
+    "file": "OCP.cpython-312-x86_64-linux-gnu.so",
+    "sha256": "9c747307495f05b188795d66487fd34f88562e857d0bce09aefedb11ce4be45e",
+    "bytes": 154204385
+  }
+]

@@ -1,0 +1,42 @@
+{
+  "baseline": "v0.1.17.5-RC3",
+  "release": "v0.1.17.5-RC5",
+  "releaseUrl": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC5",
+  "basis": "Actual public GitHub full ZIP bytes, same architecture; includes all changes since RC3, not only STEP extraction.",
+  "assets": [
+    {
+      "arch": "arm64",
+      "before": {
+        "name": "aide-v0.1.17.5-RC3-full-linux-arm64.zip",
+        "size": 1343601580,
+        "digest": "sha256:569f5e8e9ebad37417722a9cdc18b7df11ec2149c522904e289c633118af3e5b",
+        "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.5-RC3/aide-v0.1.17.5-RC3-full-linux-arm64.zip"
+      },
+      "after": {
+        "name": "aide-v0.1.17.5-RC5-full-linux-arm64.zip",
+        "size": 631524276,
+        "digest": "sha256:140fafa6964b14c970961f8eec5698e2bdf38371ddf456c0a0e3b58c4dd800a1",
+        "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.5-RC5/aide-v0.1.17.5-RC5-full-linux-arm64.zip"
+      },
+      "savedBytes": 712077304,
+      "savedPercent": 52.997653069148676
+    },
+    {
+      "arch": "amd64",
+      "before": {
+        "name": "aide-v0.1.17.5-RC3-full-linux-amd64.zip",
+        "size": 1576733772,
+        "digest": "sha256:be7c5f74d32ba9cebfb24ccb042714d9f9c9a4eeb23034618fa4ee167de9b7a6",
+        "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.5-RC3/aide-v0.1.17.5-RC3-full-linux-amd64.zip"
+      },
+      "after": {
+        "name": "aide-v0.1.17.5-RC5-full-linux-amd64.zip",
+        "size": 634169683,
+        "digest": "sha256:7ce4ab555039c76a033dd5d2f491ff16ba3b15985f8b6c4628d182f45c83b6ac",
+        "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.5-RC5/aide-v0.1.17.5-RC5-full-linux-amd64.zip"
+      },
+      "savedBytes": 942564089,
+      "savedPercent": 59.77953321849695
+    }
+  ]
+}

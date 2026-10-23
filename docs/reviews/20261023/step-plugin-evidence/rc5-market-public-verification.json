@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "url": "https://skyelan1999.github.io/aide-pkg-shop/",
+  "plugin": "step-viewer",
+  "version": "0.1.1",
+  "bytes": 210001,
+  "sha256": "d19162b4784c48c0d7c6229c2e2ac13eb4fc4298f586e0772fdd1751f32c8e81",
+  "minAideVersion": "0.1.17.5 RC5",
+  "publicPackages": 24,
+  "privateListings": 3
+}

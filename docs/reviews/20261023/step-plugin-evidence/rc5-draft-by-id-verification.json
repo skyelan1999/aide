@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "releaseId": 421673896,
+  "tag": "v0.1.17.5-RC5",
+  "commit": "4fc95878f3bff27735f7b1c3c5ff5d22b5d0dbb3",
+  "sourceSHA256": "d37588dcf263a84d7fb959b213dad56f101161744b827938befa5c06bc1938b8",
+  "assets": {
+    "aide-v0.1.17.5-RC5-full-linux-arm64.zip": {
+      "bytes": 631524276,
+      "sha256": "140fafa6964b14c970961f8eec5698e2bdf38371ddf456c0a0e3b58c4dd800a1"
+    },
+    "aide-v0.1.17.5-RC5-full-linux-amd64.zip": {
+      "bytes": 634169683,
+      "sha256": "7ce4ab555039c76a033dd5d2f491ff16ba3b15985f8b6c4628d182f45c83b6ac"
+    },
+    "RELEASE-ASSETS.txt": {
+      "bytes": 894,
+      "sha256": "6dcf702851090472eb0b5ea60c8a08cd7c224e4d1d81d02be38971d1474f2aa1"
+    },
+    "SHA256SUMS": {
+      "bytes": 297,
+      "sha256": "c200fe03aa4a5b0397702ee00d880a0980583a4c00ba27ffa8e612e386799df0"
+    }
+  },
+  "scope": "Native candidate byte validation passed in CI; same immutable source, full plans, exact draft asset set, actual remote bytes/SHA-256 and downloaded metadata independently checked by release ID. Original publisher tag lookup failed with404 (Issue50); no source/tag/assets/receipts were changed."
+}
