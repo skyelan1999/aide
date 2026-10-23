@@ -1,0 +1,76 @@
+{
+  "id": "auto-router-empty-key-20261023",
+  "request": "\u628a\u4fee\u590d\u7684\u5185\u5bb9\u5408\u5230main\uff0c\u5176\u4ed6\u90e8\u5206\u5168\u90e8\u5e9f\u5f03",
+  "baseline": "62daea203c58d761c0894ff4b56b817fbb881efa",
+  "initial_status": "",
+  "acceptance": [
+    "Only Issue 51 missing-key filter and focused regression enter main",
+    "Configured winner and missing winner/all missing fallback pass race tests",
+    "Autonomous product plans, diagnostics and plugin examples discarded; no production deployment or release"
+  ],
+  "scope": [
+    "internal/server/auto_model_router.go: reject empty provider key",
+    "internal/server/auto_model_router_empty_key_test.go",
+    "This minimal fix task record; remove only owned autonomous worktree/branch"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested fix-only integration. Preserve scoring/manual fallback; exclude empty Auto provider key per Issue 51.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/51",
+        "internal/server/auto_model_router.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "User requested fix-only integration. Preserve scoring/manual fallback; exclude empty Auto provider key per Issue 51.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/51",
+        "internal/server/auto_model_router.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "User requested fix-only integration. Preserve scoring/manual fallback; exclude empty Auto provider key per Issue 51.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/51",
+        "internal/server/auto_model_router.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go1.26 Docker: go test -mod=vendor -race -p 1 ./internal/server -run TestAutoModelRouter -count=1 and go vet -mod=vendor ./internal/server passed; docs and diff checks passed",
+      "evidence": [
+        ".agent-state/auto-router-empty-key/check.log",
+        "internal/server/auto_model_router_empty_key_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Only this minimal fix record retained; no autonomous proposals or prototype documentation merged",
+      "evidence": [
+        "scope"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed owned autonomous worktree and feat/autonomous-product-20261023 branch including ignored planning/prototype material; no remote branch existed",
+      "evidence": [
+        "User explicit discard instruction",
+        "git worktree remove --force /Users/skyelan/.codex/worktrees/aide-autonomous-product-20261023",
+        "git branch -D feat/autonomous-product-20261023"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User requests main integration, not a new version or deployment",
+      "evidence": [
+        "request"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Main based on latest remote RC6 commit 62daea20. Only Issue 51 filter, three regression scenarios and this fix record retained. Old autonomous branch/worktree and its planning/prototypes discarded. No version bump or production deployment."
+}

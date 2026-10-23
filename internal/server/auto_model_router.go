@@ -310,7 +310,7 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 			continue
 		}
 		key, err := a.modelAPIKeyForConfigLocked(cfg)
-		if err != nil {
+		if err != nil || key == "" {
 			continue
 		}
 		cfg.APIKey = key
