@@ -38,7 +38,7 @@ def main():
         ['git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], cwd=ROOT).split(b'\0')
     state = ROOT / '.agent-state'
     state.mkdir(exist_ok=True)
-    image = os.environ.get('AIDE_TEST_IMAGE', 'aide:local')
+    image = os.environ.get('AIDE_TEST_TOOLCHAIN_IMAGE', os.environ.get('AIDE_TEST_IMAGE', 'aide:dev'))
     workers = os.environ.get('AIDE_TEST_WORKERS', '1')
     if workers not in ('1', '2'):
         raise ValueError('AIDE_TEST_WORKERS must be 1 or 2')

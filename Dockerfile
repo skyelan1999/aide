@@ -78,11 +78,19 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # 层缓存优化（#46）：把「稳定层」（系统用户 + pip 依赖）放在 COPY 业务二进制【之前】，
 # 把随每次代码/前端改动而变的 COPY 二进制放到最后。这样改 Go/前端只失效最末 COPY 层，
 # pip 层稳定 CACHED、不重复联网下载；运行期镜像自包含、绝不联网 pip。
-FROM toolchain AS runtime
+FROM ${PYTHON_BASE} AS runtime
+# A fresh root is essential: deleting SDK files from toolchain retains its layers.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl git openssh-client procps bzip2 \
+      libstdc++6 libgcc-s1 libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+ENV AIDE_RUNTIME_PROFILE=slim
+LABEL aide.runtime-profile="slim"
 
 # 1) 系统用户与目录（root 执行，早于 USER aide）——稳定层
 RUN groupadd -g 1000 aide && useradd -m -u 1000 -g aide aide \
-    && mkdir -p /data /workspace /context /local /home/aide/.cache/go-build /home/aide/go \
+    && mkdir -p /data /workspace /context /local /home/aide/.cache \
     && chown -R aide:aide /data /workspace /context /local /home/aide
 
 # 2) Office 文档解析依赖（开源免费）——稳定层，pin 版本可复现
@@ -167,7 +175,6 @@ COPY --from=build /opt/aide-message-lan /opt/aide/message-lan
 ARG AIDE_SRC_SHA=unknown
 LABEL aide.srcsha="${AIDE_SRC_SHA}"
 ENV AIDE_ADDR=0.0.0.0:8080 AIDE_WORKSPACE=/workspace AIDE_CONTEXT=/context AIDE_DATA=/data
-ENV GOCACHE=/home/aide/.cache/go-build GOPATH=/home/aide/go
 USER aide
 WORKDIR /workspace
 EXPOSE 8080

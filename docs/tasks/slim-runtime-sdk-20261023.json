@@ -1,0 +1,98 @@
+{
+  "id": "slim-runtime-sdk-20261023",
+  "request": "精简运行镜像，开发工具单独提供",
+  "baseline": "ba11253683d9383c3356387f32e46f4e5c35a3a5",
+  "initial_status": "",
+  "acceptance": [
+    "Default release runtime has no Go SDK, GCC/G++/make/npm and no inherited compiler layers",
+    "Python3.12, Node24, Git/SSH, Office/DXF libraries, offline TTS and prebuilt plugin execution remain verified",
+    "Separate opt-in development toolbox image provides Go1.26, C/C++ compiler and npm; can export/import offline without onsite compilation",
+    "CI runs complete Go race/vet in dedicated development test image, still verifies actual runtime image; no test bypass",
+    "Compare same-source old/new compressed image/full bundle sizes on available architectures with clear native/emulated limits",
+    "Preserve existing RC7 publication; no production deployment or out-of-cadence public release; prepare reviewed integration and next weekly delivery",
+    "Same-version optional ARM64/AMD64 devtools bundles are built, checked, and published separately from ordinary full bundles by the existing weekly release flow",
+    "Daily CI stays candidate-only; public mainline release cadence is at most once per 7 days and human-readable release notes are required"
+  ],
+  "scope": [
+    "Dockerfile runtime stage and separate docker/Dockerfile.sdk toolbox",
+    "Host SDK build/export/run helper; runtime and SDK boundary checks",
+    "CI candidate testing environment split and local-source seed validation",
+    "Minimal runtime badge correction and deployment/SDK documentation",
+    "Independent feat/slim-runtime-sdk-20261023 branch; publication owner retains RC7",
+    "Existing CI candidate/delivery gates and weekly release policy/notes; SDK bundle packaging and validation",
+    "Do not publish another mainline release immediately after current RC7; prepare next weekly delivery"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User selected lean runtime and separately provided development tools; preserve runtime features and offline install",
+      "evidence": [
+        "User request",
+        "acceptance",
+        "scope"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Same-version optional SDK ZIPs for both native architectures; reuse SDK as Go race environment; privacy/checksum/reimport/compile proof mandatory. Daily builds stay candidates; public releases require reviewed tagged notes and >=7-day interval, checked before build and publication, with serialized public publishing.",
+      "evidence": [
+        "scripts/ci/toolbox_candidate.py",
+        "scripts/ci/delivery_gate.py",
+        ".github/workflows/aide-delivery.yml",
+        "docs/architecture/release-cadence.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "SDK bundle packaging and both-architecture required release proof integrated. Weekly cadence counts published RCs, ignores drafts and fails closed; human-readable exact-tag notes required and checked against remote draft body.",
+      "evidence": [
+        "scripts/ci/build_candidate.py",
+        "scripts/ci/toolbox_candidate.py",
+        "scripts/ci/delivery_gate.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Local SDK bundle protocol exercised successfully using existing ARM64 SDK: export, 22-layer privacy audit, ZIP inventory/checksum, archive import, non-root offline Go/C++/npm before and after import. This is protocol validation, not an RC7 official SDK or current-source dual-architecture acceptance. CI contracts and actionlint pass; refreshed quick in progress; native dual-architecture candidate will run after reviewed main integration. Refreshed quick 137 checks and input fingerprint passed; 20 CI contracts and actionlint passed. Live GitHub RC7 publication correctly blocks another public release before 2026-10-30T12:36:05Z. Application Go/embedded frontend sources match the prior 1187-item local race/vet acceptance; this continuation changes delivery/toolbox Python and workflow policy only.",
+      "evidence": [
+        ".agent-state/slim-runtime/weekly-sdk-test/proof.json",
+        "scripts/ci/test_toolbox_candidate.py",
+        "scripts/ci/test_delivery_gate.py",
+        "docs/reviews/20261023/slim-runtime-sdk/weekly-publishing.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Document weekly cadence and source review notes; prepare next weekly feature/compatibility summary; preserve prior measured size evidence as historical local comparison.",
+      "evidence": [
+        "docs/architecture/release-cadence.md",
+        "docs/architecture/development-toolbox.md",
+        "docs/releases/next.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed changes, preserved existing publication and production services. Local SDK protocol archive remains ignored; no SDK added to current RC7. No version bump or public Release created.",
+      "evidence": [
+        "git diff --check",
+        "docs/reviews/20261023/slim-runtime-sdk/weekly-publishing.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Next weekly release preparation only; user requested weekly cadence; existing RC7 remains separately owned",
+      "evidence": [
+        "scope"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Independent branch only; existing main and production containers unchanged. Switch back to prior image/A-B slot if later deployed; no data migration.",
+  "handoff": "RC7 source baseline integrated on isolated branch. Prepare normal reviewed PR for lean runtime, same-version dual native SDK bundles, weekly public cadence and exact-tag human notes. Public RC7 remains unchanged; no immediate RC8 or production deployment. Local checks pass; new current-source native dual-architecture candidate is still pending CI after integration. SDK protocol test names RC7 only as local fixture; not a released SDK asset.",
+  "continuation": {
+    "request": "继续；开发镜像单独提供；后续主线公开release每周一次",
+    "integrationBaseline": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+    "existingRC7": "owned by separate publication task; finish unchanged",
+    "releasePolicy": "prepare next weekly release; no immediate RC8 publication"
+  }
+}

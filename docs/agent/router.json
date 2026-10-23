@@ -795,6 +795,10 @@
       [
         "node",
         "scripts/assistant-realtime.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_development_toolbox.py"
       ]
     ],
     "full": [
