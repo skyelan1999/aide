@@ -1,6 +1,5 @@
 """Regression tests for the route's deletion and release boundaries."""
 import importlib.util
-import ast
 import json
 from pathlib import Path
 import subprocess
@@ -16,12 +15,13 @@ CONFIG = json.loads((route.ROOT / 'docs/agent/router.json').read_text())
 
 class RouteTests(unittest.TestCase):
     def test_snapshot_owner_outlives_its_execution_and_cleanup_deadlines(self):
-        tree = ast.parse((route.ROOT / 'scripts/test_go_snapshot.py').read_text())
-        deadlines = [kw.value.value for node in ast.walk(tree)
-                     if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'run'
-                     for kw in node.keywords if kw.arg == 'timeout' and isinstance(kw.value, ast.Constant)]
-        self.assertGreater(route.check_timeout(['python3', 'scripts/test_go_snapshot.py']), sum(deadlines))
-        self.assertLess(route.check_timeout(['python3', 'scripts/test_go_snapshot.py']), 3000)
+        runner = route.runpy.run_path(str(route.ROOT / 'scripts/test_go_snapshot.py'))
+        deadline = route.check_timeout(['python3', 'scripts/test_go_snapshot.py'])
+        self.assertGreater(deadline, runner['HOST_TIMEOUT_SECONDS'] + 10)
+        self.assertLessEqual(deadline, runner['HOST_TIMEOUT_SECONDS'] + 60)
+        # Changing the child budget must move the owner budget too.
+        with mock.patch.object(route.runpy, 'run_path', return_value={'HOST_TIMEOUT_SECONDS': 1234}):
+            self.assertEqual(route.check_timeout(['python3', 'scripts/test_go_snapshot.py']), 1264)
         self.assertEqual(route.check_timeout(['node', 'scripts/example.test.cjs']), 600)
 
     def test_public_runtime_asset_gate_fails_closed(self):
