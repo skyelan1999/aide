@@ -913,6 +913,7 @@ function paintSessionSelection(id, loading) {
 // Drafts are recovered per workspace; selecting a target never sends them.
 const sessionDrafts = new Map();
 async function selectSession(id) {
+  if(id!==state.session?.id)window.aideAssistantCall?.end();
   window.AideTaskOutcome?.close();
   const seq = ++sessionSeq.value;
   const sameSession = state.session?.id === id;
@@ -10333,9 +10334,11 @@ function initAssistantLive(){
     }
   };
   const paint=()=>{
-    const value=window.aideAssistantLive?.snapshot()||{enabled:false,phase:'off'};
+    let value=window.aideAssistantLive?.snapshot()||{enabled:false,phase:'off'};
+    window.aideAssistantCall?.paint(value);
+    value=window.aideAssistantLive?.snapshot()||value;
     work.hidden=state.session?.kind!=='assistant';if(state.session?.kind!=='assistant'&&!value.enabled){$('voice-btn').setAttribute('aria-label',t('语音输入'));return;}
-    if(value.enabled&&value.microphone&&state.session?.kind==='assistant'){if(value.phase!=='listening')voice.interim='';$('voice-panel').classList.remove('hidden');$('voice-title').textContent=voice.name();voiceSetStatus(value.phase==='listening'?'listening':'standby',t(names[value.phase]||'工作统筹中'));}
+    if(value.enabled&&value.microphone&&state.session?.kind==='assistant'){if(value.phase!=='listening')voice.interim='';$('voice-panel').classList.toggle('hidden',!!window.aideAssistantCall?.active());$('voice-title').textContent=voice.name();voiceSetStatus(value.phase==='listening'?'listening':'standby',t(names[value.phase]||'工作统筹中'));}
     else{$('voice-panel').classList.add('hidden');}
     if(assistantEntrySession)$('assistant-entry')?.querySelector('.assistant-entry-dot')?.classList.toggle('live',value.enabled&&!value.paused);
     $('voice-btn').classList.toggle('recording',value.enabled&&value.microphone&&!value.paused);$('voice-btn').setAttribute('aria-label',t(value.enabled&&value.microphone?'结束持续语音':'开始持续语音'));
@@ -10355,15 +10358,23 @@ function initAssistantLive(){
     watch:async()=>{const result=await api(`/sessions/${assistantEntrySession.id}/assistant-watch`);return result.events||[];},
     work:paintWork,
     events:events=>{for(const event of events)voiceLog('reply',event.text,t('主动跟进'));},
-    speak:text=>state.config?.voiceReplyEnabled&&document.visibilityState!=='hidden'?ttsSpeak(stripMarkdownForSpeech(text),{awaitMode:true,colloquial:false}):Promise.resolve(),
+    speak:text=>(state.config?.voiceReplyEnabled||window.aideAssistantCall?.active())&&document.visibilityState!=='hidden'?ttsSpeak(stripMarkdownForSpeech(text),{awaitMode:true,colloquial:false}):Promise.resolve(),
     interrupted:()=>{voiceLog('standby',t('已打断，正在听你说'));},
     cancelSpeech:ttsCancel,error:message=>{if(message)toast(t(message));},
     transcript:(final,interim)=>{voice.interim=final+interim;voiceRenderStatus();}
   });
   window.aideAssistantLiveSync=()=>{if(!valid())return;const value=window.aideAssistantLive.snapshot();if(!value.enabled)void window.aideAssistantLive.start(false);else if(value.paused)window.aideAssistantLive.resume();};
+  if(window.AideAssistantCall){
+    window.aideAssistantCall=window.AideAssistantCall.create({
+      translate:t,valid:()=>valid()&&state.session?.kind==='assistant'&&document.visibilityState!=='hidden',
+      supported:()=>!!(window.SpeechRecognition||window.webkitSpeechRecognition),
+      live:()=>window.aideAssistantLive,unlockAudio:ttsUnlockAudio,cancelSpeech:ttsCancel,error:toast
+    });
+    work.before(window.aideAssistantCall.element);
+  }
   window.aideAssistantLiveUI=paint;paintWork([]);paint();
-  window.addEventListener('pagehide',()=>window.aideAssistantLive.stop());
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){window.aideAssistantLive.setMicrophone(false);ttsCancel();}else window.aideAssistantLiveSync();});
+  window.addEventListener('pagehide',()=>{window.aideAssistantCall?.end();window.aideAssistantLive.stop();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){window.aideAssistantCall?.end();window.aideAssistantLive.setMicrophone(false);ttsCancel();}else window.aideAssistantLiveSync();});
 }
 if(window.AideAssistantLive)initAssistantLive();
 

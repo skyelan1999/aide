@@ -3136,5 +3136,21 @@ Object.assign(window.aideEnglish, {
   "可用额度 {0}": "Available funds {0}",
   "来自服务商费用账户，可能包含信用额度；不等于现金或模型免费额度。": "From the provider billing account; this may include credit. It is not the cash balance or free model quota.",
   "请填写完整费用凭证": "Enter both billing credential fields",
-  "全局默认": "Global default"
+  "全局默认": "Global default",
+  "语音连接超时，请检查麦克风权限后重试": "Voice connection timed out. Check microphone permission and try again.",
+  "语音通话": "Voice call",
+  "助理语音通话": "Assistant voice call",
+  "通话时长": "Call duration",
+  "可以自然交谈，也可以直接交办工作": "Talk naturally or ask your assistant to handle work",
+  "挂断": "End call",
+  "正在听你说": "Listening to you",
+  "正在思考": "Thinking",
+  "助理正在说话": "Assistant is speaking",
+  "等待你开口": "Ready to listen",
+  "正在恢复连接": "Reconnecting",
+  "通话已中断": "Call interrupted",
+  "麦克风已静音": "Microphone muted",
+  "取消静音": "Unmute",
+  "静音": "Mute",
+
 });

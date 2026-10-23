@@ -772,6 +772,15 @@
       [
         "node",
         "scripts/generated-media.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/assistant-call.js"
+      ],
+      [
+        "node",
+        "scripts/assistant-call.test.cjs"
       ]
     ],
     "full": [
