@@ -17,8 +17,9 @@ type PluginProviderSupport struct {
 	Catalog  string `json:"catalog"`
 }
 type supportProvider struct {
-	Host  string   `json:"host"`
-	Paths []string `json:"paths"`
+	Host            string   `json:"host,omitempty"`
+	WorkspaceRegion string   `json:"workspaceRegion,omitempty"`
+	Paths           []string `json:"paths"`
 }
 type supportTier struct {
 	MaxInput         int      `json:"maxInput"`
@@ -74,7 +75,7 @@ func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 		return nil, errors.New("invalid provider support catalog")
 	}
 	for _, p := range c.Providers {
-		if p.Host == "" || strings.ContainsAny(p.Host, "/:@ \\?#") || len(p.Paths) == 0 || len(p.Paths) > 16 {
+		if (p.Host == "" && p.WorkspaceRegion != "cn-beijing") || (p.Host != "" && p.WorkspaceRegion != "") || strings.ContainsAny(p.Host, "/:@ \\?#*") || len(p.Paths) == 0 || len(p.Paths) > 16 {
 			return nil, errors.New("invalid provider match")
 		}
 		for _, path := range p.Paths {
@@ -144,7 +145,14 @@ func supportMatches(c *supportCatalog, base string) bool {
 		return false
 	}
 	for _, p := range c.Providers {
-		if !strings.EqualFold(u.Hostname(), p.Host) {
+		matched := strings.EqualFold(u.Hostname(), p.Host)
+		if p.WorkspaceRegion == "cn-beijing" {
+			host := strings.ToLower(u.Hostname())
+			suffix := ".cn-beijing.maas.aliyuncs.com"
+			label := strings.TrimSuffix(host, suffix)
+			matched = strings.HasSuffix(host, suffix) && label != "" && !strings.ContainsAny(label, ".:")
+		}
+		if !matched {
 			continue
 		}
 		for _, path := range p.Paths {

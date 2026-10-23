@@ -286,6 +286,16 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 		if required > window || hasImages && (!profile.Vision || !modelSupportsVision(m.ID, cfg.Models)) || len(tools) > 0 && (!profile.Tools || modelCapabilityStatus(cfg, "tool_calls") == "unsupported") || params.ResponseFormat != "" && (!profile.Structured || modelCapabilityStatus(cfg, "structured_output") == "unsupported") {
 			continue
 		}
+		mediaOK := true
+		for _, message := range input {
+			if visionGateForConfig(cfg, message.Images) != nil {
+				mediaOK = false
+				break
+			}
+		}
+		if !mediaOK {
+			continue
+		}
 		key, err := a.modelAPIKeyForConfigLocked(cfg)
 		if err != nil {
 			continue

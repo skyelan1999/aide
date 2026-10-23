@@ -9050,11 +9050,12 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
       a.dataset.internalLink = href;
     });
     // 相对路径图片：改写为 /api/file/raw 原始字节端点（img 无法带 Authorization 头，用 access_token 查询参数）
-    if (basePath) {
+    if (basePath || body.querySelector('img[src^="generated/images/"]')) {
       body.querySelectorAll('img[src]').forEach(img => {
         const orig = img.getAttribute('src') || '';
         if (/^(https?:|data:|blob:|\/\/)/.test(orig)) return;
-        const resolved = resolveMarkdownImagePath(basePath, orig);
+        if (orig.startsWith('generated/images/')) img.classList.add('generated-image');
+        const resolved = basePath ? resolveMarkdownImagePath(basePath, orig) : orig;
         img.src = fileRawUrl(resolved, viewerSpec?.root || 'workspace', viewerSpec?.source || '', viewerSpec);
         img.onerror = () => { img.style.opacity = '0.4'; img.title = t('图片加载失败: {0}', orig); };
       });

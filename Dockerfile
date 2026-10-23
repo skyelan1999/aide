@@ -158,6 +158,7 @@ COPY scripts/office /opt/aide/office-scripts
 COPY --from=cad /opt/aide-cad /opt/aide-cad
 COPY scripts/cad /opt/aide/cad
 COPY vendor/github.com/yuin/goldmark/v2/LICENSE /opt/aide/licenses/goldmark.txt
+COPY vendor/github.com/gorilla/websocket/LICENSE /opt/aide/licenses/gorilla-websocket.txt
 
 # Host checkouts may have private modes (for example after iCloud download).
 # Only shipped public application assets need to be readable by USER aide.

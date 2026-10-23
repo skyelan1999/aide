@@ -47,11 +47,19 @@ var imageAttachmentTypes = map[string]string{
 	".webp": "image/webp",
 }
 
+// Small local media attachments are explicitly selected by the user. The
+// selected-model gate runs before any provider request; arbitrary binary files
+// never become media input by guessing their contents.
+var qwenMediaAttachmentTypes = map[string]string{
+	".wav": "audio/wav", ".mp3": "audio/mpeg", ".mp4": "video/mp4",
+}
+
 // MessageImage 是随 outgoing 用户消息附带的一张图片（多模态）。
 // json:"-" 不持久化、不进 UI 历史：图片是工作区文件，每次 run 重新附加。
 type MessageImage struct {
 	MediaType string
 	DataURL   string
+	Format    string
 }
 
 // ── 视觉能力检测 ──────────────────────────────────────────────────────────────
@@ -88,6 +96,9 @@ func modelSupportsVision(modelID string, models []ModelRef) bool {
 			}
 		}
 	}
+	if qwenModernVision(modelID) {
+		return true
+	}
 	low := strings.ToLower(modelID)
 	for _, frag := range knownVisionFragments {
 		if strings.Contains(low, frag) {
@@ -104,14 +115,7 @@ func recommendedVisionModels() []string {
 
 // visionGateLocked 校验图片附件与当前模型视觉能力是否匹配。调用方必须持有 a.mu。
 func (a *App) visionGateLocked(images []MessageImage) error {
-	if len(images) == 0 {
-		return nil
-	}
-	if !modelSupportsVision(a.settings.Model, a.settings.Models) {
-		return fmt.Errorf("当前模型 %q 不支持图片输入，请在模型设置中切换到支持视觉的模型（如 %s）",
-			a.settings.Model, strings.Join(recommendedVisionModels(), "、"))
-	}
-	return nil
+	return visionGateForConfig(a.settings, images)
 }
 
 // ── 提取与读取 ────────────────────────────────────────────────────────────────
@@ -162,6 +166,10 @@ func (a *App) extractDocumentText(att Attachment) (string, error) {
 
 // readLocalImage 读取本地工作区图片原始字节并编码为 data URL。
 func (a *App) readLocalImage(att Attachment) (MessageImage, error) {
+	return a.readLocalMedia(att, imageAttachmentTypes[strings.ToLower(path.Ext(att.Path))])
+}
+
+func (a *App) readLocalMedia(att Attachment, mediaType string) (MessageImage, error) {
 	if a.workspaceMode() == "ssh" || att.Root == "source" {
 		return MessageImage{}, errors.New("图片附件暂仅支持本地工作区文件")
 	}
@@ -191,13 +199,14 @@ func (a *App) readLocalImage(att Attachment) (MessageImage, error) {
 	if len(b) > maxImageAttachment {
 		return MessageImage{}, fmt.Errorf("图片超过 %d MB 上限", maxImageAttachment>>20)
 	}
-	mt := imageAttachmentTypes[strings.ToLower(path.Ext(att.Path))]
+	mt := mediaType
 	if mt == "" {
 		return MessageImage{}, errors.New("不支持的图片格式")
 	}
 	return MessageImage{
 		MediaType: mt,
 		DataURL:   "data:" + mt + ";base64," + base64.StdEncoding.EncodeToString(b),
+		Format:    strings.TrimPrefix(strings.ToLower(path.Ext(att.Path)), "."),
 	}, nil
 }
 
@@ -237,6 +246,14 @@ func outgoingMessages(msgs []Message) []any {
 		}
 		parts := []any{map[string]any{"type": "text", "text": m.Content}}
 		for _, img := range m.Images {
+			if strings.HasPrefix(img.MediaType, "audio/") {
+				parts = append(parts, map[string]any{"type": "input_audio", "input_audio": map[string]any{"data": img.DataURL, "format": img.Format}})
+				continue
+			}
+			if strings.HasPrefix(img.MediaType, "video/") {
+				parts = append(parts, map[string]any{"type": "video_url", "video_url": map[string]any{"url": img.DataURL}})
+				continue
+			}
 			parts = append(parts, map[string]any{
 				"type":      "image_url",
 				"image_url": map[string]any{"url": img.DataURL},

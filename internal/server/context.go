@@ -299,6 +299,17 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 			continue
 		}
 		ext := strings.ToLower(path.Ext(att.Path))
+		if mt, ok := qwenMediaAttachmentTypes[ext]; ok {
+			media, err := a.readLocalMedia(att, mt)
+			if err != nil {
+				return "", nil, nil, err
+			}
+			images = append(images, media)
+			if err := addText(att.Root, att.Path, "[媒体附件 "+path.Base(att.Path)+"，已作为原生媒体输入随本轮用户消息发送，可直接分析]"); err != nil {
+				return "", nil, nil, err
+			}
+			continue
+		}
 
 		// 1) 图片 → 多模态（是否可发送由调用方 visionGateLocked 判定）
 		if _, isImg := imageAttachmentTypes[ext]; isImg {

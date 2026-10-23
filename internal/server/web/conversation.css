@@ -22,6 +22,7 @@
 #timeline :is(.chat-answer,.stage-answer) pre{white-space:pre;overflow:auto;overflow-wrap:normal}
 #timeline :is(.chat-answer,.stage-answer) table{width:max-content;max-width:100%;overflow-x:auto}
 #timeline :is(.chat-answer,.stage-answer) :where(img,video,svg,canvas){max-width:100%}
+#timeline :is(.chat-answer,.stage-answer) img.generated-image{display:block;width:auto;max-height:min(56vh,520px);object-fit:contain;border-radius:10px}
 /* A streaming marker must not add a line or change width when it blinks. */
 #timeline :is(.chat-answer,.stage-answer) .stream-cursor{position:absolute;right:8px;bottom:5px;line-height:1;width:8px;font-size:12px;pointer-events:none;user-select:none}
 #timeline :is(.chat-answer,.stage-answer).chat-answer-empty{color:var(--muted);font-style:normal}

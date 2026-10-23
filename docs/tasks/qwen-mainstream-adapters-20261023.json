@@ -1,0 +1,96 @@
+{
+  "id": "qwen-mainstream-adapters-20261023",
+  "request": "千问主流模型做好适配；需要插件则制作，需要更新Aide则处理；用户授权使用有余额账户进行少量验收",
+  "baseline": "e193d495b93c6440d32dfa454c98c48118eb23d9",
+  "initial_status": "M internal/server/provider.go\n M internal/server/workflow.go\n?? docs/tasks/qwen-image-api-20261023.json\n?? internal/server/provider_image.go\n?? internal/server/provider_image_test.go",
+  "acceptance": [
+    "Official workspace endpoint and existing vault keys preserved",
+    "Qwen hybrid reasoning uses vendor fields; Omni text output and stream-only models handled",
+    "Bounded local WAV/MP3/MP4 attachments have selected-model gates",
+    "Omni Realtime uses WebSocket text/tool bridge; specialized ASR/TTS protocols excluded",
+    "Image generation single-shot; provider images saved locally and rendered with existing authenticated raw-file endpoint",
+    "Beijing pricing isolated from international endpoints; unknown models retain manual fallback",
+    "Mock regression and minimal actual-account inference recorded separately"
+  ],
+  "scope": [
+    "internal/server/provider*.go",
+    "internal/server/attachments.go",
+    "internal/server/context.go",
+    "internal/server/session_model_selection.go",
+    "internal/server/auto_model_router.go",
+    "internal/server/workflow.go",
+    "internal/server/web/app.js",
+    "go.mod/go.sum/vendor",
+    "existing BailianSupporter and AutoAiModelRouter plugin repositories"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorizes mainstream Qwen adaptation, existing plugin updates and minimal real account verification.",
+      "evidence": [
+        "internal/server/provider_qwen.go",
+        "internal/server/provider_qwen_realtime.go",
+        "internal/server/provider_image_asset.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse provider host, existing supporter/router plugins and encrypted vault; no new credentials or redundant media plugin. Realtime bridge covers text/tools, not microphone/camera UI.",
+      "evidence": [
+        "internal/server/provider_qwen.go",
+        "internal/server/provider_qwen_realtime.go",
+        "internal/server/provider_image_asset.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Core adapters and local image assets implemented; existing BailianSupporter 0.1.2 and AutoAiModelRouter 0.1.1 installed locally.",
+      "evidence": [
+        "internal/server/provider_image.go",
+        "internal/server/provider_qwen.go",
+        "internal/server/provider_qwen_realtime.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Targeted regressions PASS (9.512 s); quick checks PASS; build/vet PASS. Actual text/reasoning/Realtime, vision PNG, spoken WAV (final answer orange) and persisted image display verified. Full package run had six Office environment failures; all six corrected-environment rechecks PASS (5.819 s); not a clean single-run full-suite pass.",
+      "evidence": [
+        "docs/reviews/20261023/qwen-adapters.md",
+        "docs/reviews/20261023/qwen-live-results.json",
+        ".agent-state/qwen-adapters-test.log",
+        ".agent-state/qwen-final-quick.log",
+        ".agent-state/qwen-server-full-test.log",
+        ".agent-state/qwen-office-env-recheck.log",
+        ".agent-state/qwen-image-safari.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Source-backed acceptance report records actual models, protocols, account endpoint correction, local deployment and untested feature boundaries.",
+      "evidence": [
+        "docs/reviews/20261023/qwen-adapters.md",
+        "docs/reviews/20261023/qwen-live-results.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned synthetic fixtures removed from repository; test sessions archived, generated user image retained; existing keys preserved and no secrets or signed URLs included in tracked records.",
+      "evidence": [
+        "docs/reviews/20261023/qwen-adapters.md",
+        "docs/reviews/20261023/qwen-live-results.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local preview deployed; no product Release, branch merge or marketplace publication requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Local adapter/plugin updates authorized; no marketplace or public product Release requested.",
+  "rollback": "Retained aide:balance-pool-ram-links-20261023 and aide:qwen-image-preview-20261023; local settings backup retained inside encrypted-data deployment. No secrets in repository.",
+  "handoff": "Healthy local aide:qwen-mainstream-preview-20261023; source PRs pending merge. Real video and full Realtime voice UI are not claimed.",
+  "plugin_prs": [
+    "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/pull/2",
+    "https://github.com/skyelan1999/aide-pkg-AutoAiModelRouter/pull/2"
+  ]
+}

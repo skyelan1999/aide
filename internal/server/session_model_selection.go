@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -164,8 +165,19 @@ func (a *App) modelAPIKeyForConfigLocked(cfg Settings) (string, error) {
 	return a.vaultKeyByIDLocked(vaultID)
 }
 func visionGateForConfig(cfg Settings, images []MessageImage) error {
-	if len(images) > 0 && !modelSupportsVision(cfg.Model, cfg.Models) {
-		return fmt.Errorf("会话模型 %q 不支持图片输入", cfg.Model)
+	for _, media := range images {
+		if strings.HasPrefix(media.MediaType, "audio/") {
+			m := strings.ToLower(cfg.Model)
+			if !isBailianEndpoint(cfg.BaseURL) || isQwenRealtime(m) || !(strings.HasPrefix(m, "qwen3.8-omni-") || strings.HasPrefix(m, "qwen3.5-omni-") || strings.HasPrefix(m, "qwen3-omni-")) {
+				return fmt.Errorf("会话模型 %q 不支持此音频附件；请选择非 realtime 的千问 Omni 模型", cfg.Model)
+			}
+		} else if strings.HasPrefix(media.MediaType, "video/") {
+			if !isBailianEndpoint(cfg.BaseURL) || isQwenRealtime(cfg.Model) || !qwenModernVision(cfg.Model) {
+				return fmt.Errorf("会话模型 %q 不支持此视频附件；请选择千问多模态模型", cfg.Model)
+			}
+		} else if !modelSupportsVision(cfg.Model, cfg.Models) {
+			return fmt.Errorf("会话模型 %q 不支持图片输入", cfg.Model)
+		}
 	}
 	return nil
 }

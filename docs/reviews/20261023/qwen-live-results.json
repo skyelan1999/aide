@@ -1,0 +1,106 @@
+[
+  {
+    "model": "qwen3.8-flash",
+    "media": "text",
+    "status": "completed",
+    "usage": {
+      "prompt": 11733,
+      "completion": 3,
+      "total": 11736,
+      "model": "qwen3.8-flash"
+    },
+    "requests": 1,
+    "answer": "OK"
+  },
+  {
+    "model": "qwen3.7-plus",
+    "media": "text",
+    "status": "completed",
+    "usage": {
+      "prompt": 11729,
+      "completion": 296,
+      "total": 12025,
+      "model": "qwen3.7-plus"
+    },
+    "requests": 1,
+    "answer": "OK"
+  },
+  {
+    "model": "qwen3.8-omni-flash",
+    "media": "text",
+    "status": "completed",
+    "usage": {
+      "prompt": 11733,
+      "completion": 5,
+      "total": 11738,
+      "model": "qwen3.8-omni-flash"
+    },
+    "requests": 1,
+    "answer": "OK"
+  },
+  {
+    "model": "qwen3.8-omni-flash-realtime",
+    "media": "text",
+    "status": "completed",
+    "usage": {
+      "prompt": 11733,
+      "completion": 6,
+      "total": 11739,
+      "model": "qwen3.8-omni-flash-realtime"
+    },
+    "requests": 1,
+    "answer": "OK"
+  },
+  {
+    "model": "qwen3.8-flash",
+    "media": "red.png",
+    "status": "completed",
+    "usage": {
+      "prompt": 11843,
+      "completion": 7,
+      "total": 11850,
+      "model": "qwen3.8-flash"
+    },
+    "requests": 1,
+    "answer": "红色。"
+  },
+  {
+    "model": "qwen3.8-omni-flash",
+    "media": "tone.wav",
+    "status": "completed",
+    "usage": {
+      "prompt": 11775,
+      "completion": 6,
+      "total": 11781,
+      "model": "qwen3.8-omni-flash"
+    },
+    "requests": 1,
+    "answer": "无"
+  },
+  {
+    "model": "qwen3.8-omni-flash",
+    "media": "speech.wav",
+    "status": "completed",
+    "usage": {
+      "prompt": 12479,
+      "completion": 41,
+      "total": 12520,
+      "model": "qwen3.8-omni-flash"
+    },
+    "requests": 1,
+    "answer": "orange\n\n（说明：这是对文本测试指令的直接回应；我未对附件 speech.wav 做音频识别——当前无法验证其中的语音内容，附件仅为媒体引用。）"
+  },
+  {
+    "model": "qwen3.8-omni-flash",
+    "media": "speech.wav final marker",
+    "status": "completed",
+    "answer": "orange",
+    "requests": 1,
+    "usage": {
+      "prompt": 12486,
+      "completion": 6,
+      "total": 12492,
+      "model": "qwen3.8-omni-flash"
+    }
+  }
+]

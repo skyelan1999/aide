@@ -226,6 +226,7 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 			delete(body, "reasoning_effort")
 		}
 	}
+	adaptQwenChatBody(cfg, body)
 	return body
 }
 
@@ -239,6 +240,17 @@ func modelCapabilityStatus(cfg Settings, capability string) string {
 }
 
 func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte)) (string, []ToolCall, TokenUsage, error) {
+	if isBailianEndpoint(cfg.BaseURL) && !isQwenRealtime(cfg.Model) && (strings.HasPrefix(cfg.Model, "qwen3.5-omni-") || strings.HasPrefix(cfg.Model, "qwen3-omni-")) {
+		out, calls, usage, _, err := completeStream(ctx, cfg, messages, params, tools, rec, nil, nil)
+		return out, calls, usage, err
+	}
+	if isQwenRealtime(cfg.Model) {
+		out, calls, usage, _, err := completeQwenRealtime(ctx, cfg, messages, tools, rec, nil)
+		return out, calls, usage, err
+	}
+	if isQwenImageModel(cfg.Model) {
+		return "", nil, TokenUsage{}, fmt.Errorf("图像模型不支持文本补全，请使用对话模式文生图")
+	}
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
@@ -367,6 +379,12 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 }
 
 func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string), idleTimeout time.Duration) (string, []ToolCall, TokenUsage, string, error) {
+	if isQwenRealtime(cfg.Model) {
+		return completeQwenRealtime(ctx, cfg, messages, tools, rec, onDelta)
+	}
+	if isQwenImageModel(cfg.Model) {
+		return "", nil, TokenUsage{}, "", fmt.Errorf("图像模型不支持流式聊天，请使用对话模式文生图")
+	}
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
