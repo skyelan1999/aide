@@ -14,7 +14,10 @@
     "isolated preview only",
     "scripts/ci/delivery_gate.py",
     "scripts/ci/test_delivery_gate.py",
-    "RC6 host release and public video market listing"
+    "RC6 host release and public video market listing",
+    "scripts/aide.sh",
+    "scripts/test_offline_bundle.py",
+    "macOS Docker Desktop offline identity compatibility repair (Issue52)"
   ],
   "stages": {
     "requirements": {
@@ -35,16 +38,17 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Blob-only media CSP, separate public plugin with original parser/UI; Fix delivery draft lookup via validated database ID, preserving immutable tag and exact asset digest checks (Issue50).",
+      "summary": "Blob-only media CSP, separate public plugin with original parser/UI; Fix delivery draft lookup via validated database ID, preserving immutable tag and exact asset digest checks (Issue50).; Port Windows-style verified-import reference resolution to POSIX launcher for Docker image-store ID differences (Issue52).",
       "evidence": [
         "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
         "https://github.com/skyelan1999/aide/pull/47",
-        "https://github.com/skyelan1999/aide/issues/50"
+        "https://github.com/skyelan1999/aide/issues/50",
+        "https://github.com/skyelan1999/aide/issues/52"
       ]
     },
     "verification": {
-      "status": "pass",
-      "summary": "Correct-image full profile PASS for fixed gate inputs: all24 server shards, other race packages/vet, runtime and optional STEP checks. Fingerprint eed61d9e2efb6e9688c8dba88bc5dd5030f97bff0034838a2feb8c6223bf08c2. CI-script16 unit tests pass. Safari and public plugin download/installation evidence retained.",
+      "status": "in_progress",
+      "summary": "RC6 native CI/full verification passed and public release/market are live. Actual public ARM64 ZIP on Mac exposed offline launcher ID drift.15 offline-launcher tests pass after POSIX repair, including publisher/local ID mismatch, ambiguous references and architecture rejection; real Docker resolution and updated-input full gate pending.",
       "evidence": [
         "docs/reviews/20261023/video-preview-release-evidence.json",
         "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3c5d049/docs/release-0.1.0.json"
@@ -68,7 +72,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Authorized direct merge completed; gate fix and evidence preparing RC6. Plugin0.1.0 public; marketplacePR6 still held for RC6.",
+      "summary": "RC6/VideoPreview0.1.0/marketPR6 published. Actual Mac acceptance foundIssue52; preparing an immutable follow-up host patch release, not replacing existing RC6 assets or production9999.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/47",
         "https://github.com/skyelan1999/aide-pkg-shop/pull/6"

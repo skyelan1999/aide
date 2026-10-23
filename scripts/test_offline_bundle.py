@@ -45,9 +45,13 @@ elif a[:2] == ['info','--format']:
     else: print(os.environ.get('ENGINE_PLATFORM','linux/aarch64'))
 elif a[:2] == ['image','inspect']:
     if not (root/'image-id').exists(): sys.exit(1)
-    print((root/'image-id').read_text())
+    local_id=(root/'image-id').read_text()
+    if os.environ.get('PUBLISHER_ID_MISSING') == '1' and a[2] == os.environ['EXPECTED_ID'] and local_id != os.environ['EXPECTED_ID']: sys.exit(1)
+    if '|' in a[-1]: print(local_id+'|'+os.environ.get('LOADED_PLATFORM','linux/arm64'))
+    else: print(local_id)
 elif a[:2] == ['image','load']:
     (root/'image-id').write_text(os.environ.get('LOADED_ID',os.environ['EXPECTED_ID']))
+    print(os.environ.get('LOAD_OUTPUT',''))
 elif a[:2] == ['volume','inspect']: sys.exit(1)
 elif a[:1] == ['run']:
     import subprocess
@@ -190,6 +194,24 @@ sys.exit(int(os.environ.get('HOST_HEALTH_EXIT','0')))
         self.env['LOADED_ID'] = 'sha256:' + 'b' * 64
         self.assertNotEqual(self.run_start().returncode, 0)
         self.assertNotIn('"compose"', self.calls())
+
+    def test_cross_engine_id_resolves_only_current_import_reference(self):
+        actual='sha256:'+'b'*64
+        self.env.update(PUBLISHER_ID_MISSING='1', LOADED_ID=actual, LOAD_OUTPUT='Loaded image: aide:verified-import')
+        result=self.run_start()
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual((self.root/'.aide-image').read_text().split()[1],actual)
+        self.assertIn('"image", "inspect", "aide:verified-import"',self.calls())
+
+    def test_cross_engine_ambiguous_or_wrong_arch_import_stops(self):
+        for output,platform in [('', 'linux/arm64'), ('Loaded image: aide:one\nLoaded image: aide:two','linux/arm64'), ('Loaded image: aide:one','linux/amd64'), ('Loaded image: $(unsafe)','linux/arm64')]:
+            with self.subTest(output=output,platform=platform):
+                for file in ('image-id','calls'):
+                    (self.root/file).unlink(missing_ok=True)
+                self.env.update(PUBLISHER_ID_MISSING='1',LOADED_ID='sha256:'+'b'*64,LOAD_OUTPUT=output,LOADED_PLATFORM=platform)
+                result=self.run_start()
+                self.assertNotEqual(result.returncode,0)
+                self.assertNotIn('"compose"',self.calls())
 
     def test_release_image_download_resumes_after_interruption(self):
         tag = 'v0.1.14.0-RC99'

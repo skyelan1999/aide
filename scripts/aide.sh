@@ -14,6 +14,25 @@ source_sha() {
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
 }
+resolve_imported_image() {
+  local expected="$1" platform="$2" output="$3" metadata references actual actual_platform
+  metadata="$("$DOCKER_BIN" image inspect "$expected" --format '{{.Id}}|{{.Os}}/{{.Architecture}}' 2>/dev/null || true)"
+  if [[ -z "$metadata" ]]; then
+    # Only references emitted by this just-verified archive import are eligible.
+    references="$(printf '%s\n' "$output" | sed -nE 's/^Loaded image( ID)?: ([A-Za-z0-9][A-Za-z0-9._:/@-]*)[[:space:]]*$/\2/p' | LC_ALL=C sort -u)"
+    if [[ -z "$references" || "$(printf '%s\n' "$references" | wc -l | tr -d '[:space:]')" != 1 ]]; then
+      echo '无法唯一确认本次已校验归档导入的镜像；活动槽未修改。' >&2; return 1
+    fi
+    metadata="$("$DOCKER_BIN" image inspect "$references" --format '{{.Id}}|{{.Os}}/{{.Architecture}}' 2>/dev/null || true)"
+  elif [[ "${metadata%%|*}" != "$expected" ]]; then
+    echo '导入的镜像身份与预期引用不匹配。' >&2; return 1
+  fi
+  actual="${metadata%%|*}"; actual_platform="${metadata#*|}"
+  if [[ ! "$actual" =~ ^sha256:[0-9a-f]{64}$ || "$actual_platform" != "$platform" ]]; then
+    echo '本次导入的 Docker 镜像身份或架构不匹配。' >&2; return 1
+  fi
+  printf '%s\n' "$actual"
+}
 record_archive_sum() {
   local archive_name checksum temporary
   archive_name="$(basename "$1")"
@@ -151,7 +170,9 @@ if [[ "$MODE" == start-bundle ]]; then
     elif command -v sha256sum >/dev/null 2>&1; then ACTUAL_HASH="$(sha256sum "$IMAGE_ARCHIVE" | awk '{print $1}')";
     else echo "缺少 shasum/sha256sum，无法校验下载镜像。" >&2; exit 1; fi
     [[ "$ACTUAL_HASH" == "$EXPECTED_HASH" ]] || { echo "Docker 镜像 SHA256 校验失败。" >&2; rm -f "$IMAGE_ARCHIVE"; exit 1; }
-    "$DOCKER_BIN" image load -i "$IMAGE_ARCHIVE"
+    LOAD_OUTPUT="$("$DOCKER_BIN" image load -i "$IMAGE_ARCHIVE" 2>&1)"
+    printf '%s\n' "$LOAD_OUTPUT"
+    BUNDLE_ID="$(resolve_imported_image "$BUNDLE_ID" "$BUNDLE_PLATFORM" "$LOAD_OUTPUT")"
   fi
   # Release launchers address images through stable A/B tags. Migrate old
   # bundles after loading the immutable release tag, without touching data.
