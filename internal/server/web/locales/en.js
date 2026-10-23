@@ -3152,5 +3152,11 @@ Object.assign(window.aideEnglish, {
   "麦克风已静音": "Microphone muted",
   "取消静音": "Unmute",
   "静音": "Mute",
+  "原生实时通话": "Native realtime call",
+  "双向音频 · 可随时打断": "Duplex audio \u00b7 Interrupt anytime",
+  "当前浏览器不支持实时音频，请使用新版 Safari 或 Chrome": "Realtime audio requires a recent Safari or Chrome browser",
+  "静域": "Studio",
+  "静域 · 柔光与几何层次": "Studio \u00b7 Soft light and architectural layers",
+  "静域为轻量原生背景，随明暗主题自适应。自选素材支持 MP4、WebM、GIF、PNG、JPEG、WebP，最多 30 MiB，仅保存在当前浏览器。后台、锁屏及减少动态效果时暂停。": "Studio is lightweight and adapts to light and dark themes. Local media supports MP4, WebM, GIF, PNG, JPEG and WebP up to 30 MiB, stored in this browser only. Motion pauses in the background, while locked, or with reduced motion.",
 
 });

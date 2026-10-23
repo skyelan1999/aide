@@ -9,9 +9,9 @@
     panel.setAttribute('role','region');panel.setAttribute('aria-label',t('助理语音通话'));
     const orb=document.createElement('div');orb.className='assistant-call-orb';orb.setAttribute('aria-hidden','true');orb.textContent='◌';
     const body=document.createElement('div');body.className='assistant-call-body';
-    const title=document.createElement('strong');title.textContent=t('助理语音通话');
+    const title=document.createElement('strong');title.textContent=t('原生实时通话');
     const status=document.createElement('span');status.setAttribute('role','status');
-    const detail=document.createElement('small');detail.textContent=t('可以自然交谈，也可以直接交办工作');
+    const detail=document.createElement('small');detail.textContent=t('双向音频 · 可随时打断');
     const clock=document.createElement('span');clock.className='assistant-call-clock';clock.setAttribute('aria-label',t('通话时长'));
     const controls=document.createElement('div');controls.className='assistant-call-controls';
     const mute=document.createElement('button');mute.type='button';mute.className='quiet';
@@ -26,11 +26,11 @@
       root.dataset.phase=active?value.phase:'off';
       if(active&&value.phase==='requesting'){if(requestAt===null)requestAt=now();}else requestAt=null;
       status.textContent=t(muted?'麦克风已静音':(labels[value.phase]||'等待你开口'));
-      mute.textContent=t(muted?'取消静音':'静音');mute.setAttribute('aria-pressed',String(muted));
+      mute.disabled=value.phase==='requesting';mute.textContent=t(muted?'取消静音':'静音');mute.setAttribute('aria-pressed',String(muted));
     }
     async function start(){
       if(active||!hooks.valid())return;
-      if(!hooks.supported()){hooks.error(t('当前浏览器不支持语音识别'));return;}
+      if(!hooks.supported()){hooks.error(t('当前浏览器不支持实时音频，请使用新版 Safari 或 Chrome'));return;}
       hooks.unlockAudio();active=true;muted=false;requestAt=null;started=now();updateClock();
       timer=(hooks.setInterval||setInterval)(updateClock,1000);
       // start emits requesting synchronously; do not paint the old inactive snapshot.
@@ -48,7 +48,7 @@
     entry.onclick=()=>void start();mute.onclick=toggleMute;hangup.onclick=end;
     root.addEventListener('keydown',event=>{if(event.key==='Escape'&&active){event.preventDefault();end();}});
     paint({enabled:false,phase:'off'});
-    return Object.freeze({element:root,start,end,paint,active:()=>active});
+    return Object.freeze({element:root,start,end,paint,active:()=>active,caption:text=>{detail.textContent=String(text).slice(-160);}});
   }
   window.AideAssistantCall=Object.freeze({create});
 })();

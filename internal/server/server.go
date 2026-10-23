@@ -593,8 +593,9 @@ type App struct {
 	edgeHealth    edgeHealthState
 	ttsLastEngine string // 最近一次后端合成实际命中的引擎（edge/azure/unavailable）
 	// ── 小秘系统会话密码门（#30）：内存解锁态，锁屏后失效，不持久化 ──
-	assistantUnlockMu sync.Mutex
-	assistantUnlocked map[string]bool
+	assistantUnlockMu       sync.Mutex
+	assistantRealtimeActive map[string]bool
+	assistantUnlocked       map[string]bool
 	// ── 数据完整性（启动校验 + 周期巡检结果）──
 	integrityMu  sync.Mutex
 	integrityRep IntegrityReport
@@ -1407,6 +1408,8 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/sessions/{id}/assistant-call/socket", a.assistantRealtimeSocket)
+	mux.HandleFunc("GET /api/sessions/{id}/assistant-call", a.assistantRealtimeStatus)
 	mux.HandleFunc("GET /api/knowledge-map/index-policy", a.getKnowledgeIndexPolicy)
 	mux.HandleFunc("PUT /api/knowledge-map/index-policy", a.putKnowledgeIndexPolicy)
 	mux.HandleFunc("GET /api/knowledge-map/embedding-policy", a.getEmbeddingPolicy)
@@ -1715,6 +1718,9 @@ func (a *App) buildHandler() {
 				}
 			}
 			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+			if token == "" {
+				token = assistantSocketToken(r)
+			}
 			// EventSource / img 标签无法设置 Authorization 头，events 和 file/raw 路由允许 ?access_token=；
 			// 其余 API 不收 URL 中的凭据，避免令牌进入日志/代理记录。
 			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw") || strings.HasSuffix(r.URL.Path, "/api/file/download") || strings.HasSuffix(r.URL.Path, "/api/file/stream")) {

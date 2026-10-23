@@ -10334,9 +10334,9 @@ function initAssistantLive(){
     }
   };
   const paint=()=>{
-    let value=window.aideAssistantLive?.snapshot()||{enabled:false,phase:'off'};
+    let value=(window.aideAssistantCall?.active()?window.aideAssistantRealtime?.snapshot():window.aideAssistantLive?.snapshot())||{enabled:false,phase:'off'};
     window.aideAssistantCall?.paint(value);
-    value=window.aideAssistantLive?.snapshot()||value;
+    value=(window.aideAssistantCall?.active()?window.aideAssistantRealtime?.snapshot():window.aideAssistantLive?.snapshot())||value;
     work.hidden=state.session?.kind!=='assistant';if(state.session?.kind!=='assistant'&&!value.enabled){$('voice-btn').setAttribute('aria-label',t('语音输入'));return;}
     if(value.enabled&&value.microphone&&state.session?.kind==='assistant'){if(value.phase!=='listening')voice.interim='';$('voice-panel').classList.toggle('hidden',!!window.aideAssistantCall?.active());$('voice-title').textContent=voice.name();voiceSetStatus(value.phase==='listening'?'listening':'standby',t(names[value.phase]||'工作统筹中'));}
     else{$('voice-panel').classList.add('hidden');}
@@ -10365,17 +10365,28 @@ function initAssistantLive(){
       return interim?1200:650;
     },
     events:events=>{for(const event of events)voiceLog('reply',event.text,t('主动跟进'));},
-    speak:text=>(state.config?.voiceReplyEnabled||window.aideAssistantCall?.active())&&document.visibilityState!=='hidden'?ttsSpeak(stripMarkdownForSpeech(text),{awaitMode:true,colloquial:false}):Promise.resolve(),
+    speak:text=>!window.aideAssistantCall?.active()&&state.config?.voiceReplyEnabled&&document.visibilityState!=='hidden'?ttsSpeak(stripMarkdownForSpeech(text),{awaitMode:true,colloquial:false}):Promise.resolve(),
     interrupted:()=>{voiceLog('standby',t('已打断，正在听你说'));},
     cancelSpeech:ttsCancel,error:message=>{if(message)toast(t(message));},
     transcript:(final,interim)=>{voice.interim=final+interim;voiceRenderStatus();}
   });
   window.aideAssistantLiveSync=()=>{if(!valid())return;const value=window.aideAssistantLive.snapshot();if(!value.enabled)void window.aideAssistantLive.start(false);else if(value.paused)window.aideAssistantLive.resume();};
+  if(window.AideAssistantRealtime){
+    window.aideAssistantRealtime=window.AideAssistantRealtime.create({
+      valid:()=>valid()&&state.session?.kind==='assistant'&&document.visibilityState!=='hidden',
+      session:()=>assistantEntrySession.id,token:()=>state.token,device:()=>state.config?.voiceInputDevice,
+      preflight:()=>api(`/sessions/${assistantEntrySession.id}/assistant-call`),
+      state:paint,beforeStart:()=>{ttsCancel();window.aideAssistantLive.stop();},
+      ready:()=>{window.aideAssistantLive.start(false);},
+      transcript:(role,text)=>{voice.interim=text;voiceRenderStatus();window.aideAssistantCall?.caption?.(text);},
+      turn:()=>{const id=state.session?.id;if(id)void selectSession(id);},error:message=>toast(t(message))
+    });
+  }
   if(window.AideAssistantCall){
     window.aideAssistantCall=window.AideAssistantCall.create({
       translate:t,valid:()=>valid()&&state.session?.kind==='assistant'&&document.visibilityState!=='hidden',
-      supported:()=>!!(window.SpeechRecognition||window.webkitSpeechRecognition),
-      live:()=>window.aideAssistantLive,unlockAudio:ttsUnlockAudio,cancelSpeech:ttsCancel,error:toast
+      supported:()=>!!(navigator.mediaDevices?.getUserMedia&&(window.AudioContext||window.webkitAudioContext)&&window.AudioWorkletNode&&window.WebSocket),
+      live:()=>window.aideAssistantRealtime,unlockAudio:ttsUnlockAudio,cancelSpeech:ttsCancel,error:toast
     });
     work.before(window.aideAssistantCall.element);
   }
@@ -10544,6 +10555,7 @@ function voiceReleaseMicStream() {
 }
 $('voice-btn').onclick = action(() => {
   if (state.session?.kind === 'assistant') {
+    if(window.aideAssistantCall?.active()){window.aideAssistantCall.end();return;}
     window.aideAssistantLive?.snapshot().microphone ? stopXiaomiDictation() : startXiaomiDictation();
     return;
   }

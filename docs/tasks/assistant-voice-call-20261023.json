@@ -128,6 +128,19 @@
       "scripts/assistant-live.test.cjs",
       "scripts/tts-playback.test.cjs"
     ],
-    "limits": "未验证真人麦克风与模型/TTS听感；仍为分轮通话，没有原生双工音频或流式语音首包"
+    "limits": "未验证真人麦克风与模型/TTS听感；仍为分轮通话，没有原生双工音频或流式语音首包",
+    "deployment": {
+      "status": "deployed",
+      "url": "https://localhost:9999",
+      "commit": "cfa00ea7e56f98ff0f1eeabef995ec813c1e6379",
+      "image": "aide:assistant-call-cfa00ea7",
+      "backup": ".agent-state/live-backup-20261023T151613Z",
+      "rollback_container": "aide-call-rollback-20261023t151613z",
+      "health": 200,
+      "session_count": 45,
+      "saved_voice_and_rate_unchanged": true,
+      "subjective_live_acceptance": "pending_user",
+      "released": false
+    }
   }
 }

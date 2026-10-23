@@ -1,0 +1,134 @@
+{
+  "id": "assistant-native-duplex-20261023",
+  "request": "接入原生双工音频自然实时通话，部署9999体验，先不发版",
+  "baseline": "cfa00ea7e56f98ff0f1eeabef995ec813c1e6379",
+  "initial_status": "M docs/tasks/assistant-voice-call-20261023.json",
+  "acceptance": [
+    "Native PCM streaming and semantic VAD with no WebSpeech or separate TTS",
+    "Same origin, token authentication, assistant unlock, workspace and lock lifecycle enforced",
+    "Interrupt clears queued audio and truncates unheard output; mute and hangup release capture",
+    "Only server-transcribed current turn can enter existing assistant work permissions",
+    "Real provider synthetic speech roundtrip and browser layout verified separately from human microphone",
+    "Remove whale video and replace with Studio; migrate old preferences",
+    "Back up and deploy to 9999 without release or tags"
+  ],
+  "scope": [
+    "internal/server/assistant_realtime*.go",
+    "internal/server/server.go",
+    "internal/server/web/assistant-*.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/workbench-background.js",
+    "internal/server/web/workbench.css",
+    "internal/server/web/settings-init.js",
+    "internal/server/web/backgrounds/whale-girl.mp4",
+    "scripts/assistant-realtime.test.cjs",
+    "scripts/tts-playback.test.cjs",
+    "scripts/workbench-background.test.cjs",
+    "docs/agent/router.json",
+    "docs/assistant-voice-call.md",
+    "docs/builtin-background.md",
+    "docs/features.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/assistant-native-duplex-20261023.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Native audio proxy, AudioWorklet, streaming playback, interruption and existing assistant permissions. Studio replaces the bundled whale video.",
+      "evidence": [
+        "internal/server/assistant_realtime.go",
+        "internal/server/web/assistant-realtime.js",
+        ".agent-state/native-provider-duplex2.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native audio proxy, AudioWorklet, streaming playback, interruption and existing assistant permissions. Studio replaces the bundled whale video.",
+      "evidence": [
+        "internal/server/assistant_realtime.go",
+        "internal/server/web/assistant-realtime.js",
+        ".agent-state/native-provider-duplex2.log"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Native audio proxy, AudioWorklet, streaming playback, interruption and existing assistant permissions. Studio replaces the bundled whale video.",
+      "evidence": [
+        "internal/server/assistant_realtime.go",
+        "internal/server/web/assistant-realtime.js",
+        ".agent-state/native-provider-duplex2.log"
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Native protocol, independent voice, permissions, lifecycle, billing limitation and Studio migration documented; historical whale evidence retained.",
+      "evidence": [
+        "docs/assistant-voice-call.md",
+        "docs/builtin-background.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned Chromium/Safari fixture tabs closed, viewport reset, fixture server requested to stop; user production tabs preserved.",
+      "evidence": [
+        ".agent-state/native-browser.log",
+        ".agent-state/native-audio-browser.log"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No release, version bump or tag authorized; local 9999 deployment explicitly authorized and pending final regression.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "",
+  "sources": [
+    "https://www.alibabacloud.com/help/en/model-studio/realtime"
+  ],
+  "provider_probe": {
+    "status": "pass",
+    "evidence": ".agent-state/native-provider-duplex2.log",
+    "native_output_bytes": 253440,
+    "synthetic_speech_transcribed": true,
+    "semantic_vad_triggered_response": true,
+    "human_microphone": "not_run"
+  },
+  "browser_acceptance": {
+    "actual_product_handler": true,
+    "synthetic_browser_harness": ".agent-state/native_browser_fixture_test.go",
+    "actual_worklet_capture_and_native_playback": "pass",
+    "native_packets_before_mute": 503,
+    "native_packets_while_muted": 503,
+    "native_packets_after_resume": 688,
+    "closed_upstreams_after_two_browser_calls": 2,
+    "browsers": [
+      "in-app Chromium",
+      "Safari"
+    ],
+    "native_fixture_port": 18492,
+    "native_fixture_closed": true,
+    "human_acoustic_echo_and_quality": "not_run",
+    "studio_themes": [
+      "light",
+      "dark"
+    ],
+    "mobile_width": 390,
+    "mobile_scroll_width": 390,
+    "screenshots": [
+      ".agent-state/native-call-browser.png",
+      ".agent-state/studio-dark.png",
+      ".agent-state/studio-light.png",
+      ".agent-state/studio-mobile.png"
+    ]
+  }
+}
