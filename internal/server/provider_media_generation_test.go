@@ -179,3 +179,20 @@ func TestTTSToolsPreserveAssistantSettings(t *testing.T) {
 		t.Fatal("TTS write/read sandbox boundaries")
 	}
 }
+
+func TestGeneratedMediaRawMIMEAndRange(t *testing.T) {
+	a := testApp(t)
+	dir := filepath.Join(a.workPath, "generated", "speech")
+	os.MkdirAll(dir, 0700)
+	os.WriteFile(filepath.Join(dir, "qwen-abc123.mp3"), []byte("ID3-test-audio"), 0600)
+	r := httptest.NewRequest("GET", "/api/file/raw?root=workspace&path=generated/speech/qwen-abc123.mp3", nil)
+	r.Header.Set("Range", "bytes=0-2")
+	w := httptest.NewRecorder()
+	a.readFileRaw(w, r)
+	if w.Code != 206 || w.Body.String() != "ID3" || w.Header().Get("Content-Type") != "audio/mpeg" || w.Header().Get("Accept-Ranges") != "bytes" {
+		t.Fatal(w.Code, w.Header(), w.Body.String())
+	}
+	if kind, _ := generatedMediaRawType("generated/speech/../../secret.mp3"); kind != "" {
+		t.Fatal("unsafe media path")
+	}
+}

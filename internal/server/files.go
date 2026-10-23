@@ -1476,6 +1476,10 @@ func localDirItems(entries []os.DirEntry, p string) []map[string]any {
 	return items
 }
 func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
+	if ct, limit := generatedMediaRawType(r.URL.Query().Get("path")); ct != "" && a.streamViewerRaw(w, r, ct, limit) {
+		return
+	}
+
 	if isStepRaw(r.URL.Query().Get("path")) && a.streamStepRaw(w, r) {
 		return
 	}
@@ -1535,6 +1539,7 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
 		".gif": "image/gif", ".svg": "image/svg+xml", ".webp": "image/webp",
 		".ico": "image/x-icon", ".bmp": "image/bmp",
+		".mp3": "audio/mpeg", ".wav": "audio/wav", ".mp4": "video/mp4",
 		".pdf": "application/pdf", ".html": "text/html; charset=utf-8",
 		".css": "text/css; charset=utf-8", ".js": "application/javascript",
 		".json": "application/json", ".txt": "text/plain; charset=utf-8",
@@ -1548,6 +1553,10 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Cache-Control", "no-store")
+	if strings.HasPrefix(ct, "audio/") || strings.HasPrefix(ct, "video/") {
+		http.ServeContent(w, r, path.Base(r.URL.Query().Get("path")), time.Time{}, bytes.NewReader(b))
+		return
+	}
 	w.Write(b)
 }
 func (a *App) readFile(w http.ResponseWriter, r *http.Request) {

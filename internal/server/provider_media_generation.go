@@ -402,3 +402,24 @@ func (a *App) mediaGenerationChatRequest(ctx context.Context, cfg Settings, inpu
 	a.publishStream(task.ID, streamEvent{Event: "delta", Text: out, Round: 0})
 	return out, input, nil
 }
+
+var generatedMediaRawPath = regexp.MustCompile(`^generated/(speech|video)/qwen-[a-f0-9]+\.(mp3|wav|mp4)$`)
+
+func generatedMediaRawType(path string) (string, int64) {
+	m := generatedMediaRawPath.FindStringSubmatch(path)
+	if len(m) != 3 {
+		return "", 0
+	}
+	if m[1] == "video" && m[2] == "mp4" {
+		return "video/mp4", 100 << 20
+	}
+	if m[1] == "speech" {
+		if m[2] == "mp3" {
+			return "audio/mpeg", 20 << 20
+		}
+		if m[2] == "wav" {
+			return "audio/wav", 20 << 20
+		}
+	}
+	return "", 0
+}

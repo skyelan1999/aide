@@ -28,6 +28,9 @@ func rawViewerLimit(p string) int64 {
 // hundreds of MiB per HTTP request. Source identity and path checks are the same
 // as the knowledge viewer; remote sources retain their bounded read adapters.
 func (a *App) streamStepRaw(w http.ResponseWriter, r *http.Request) bool {
+	return a.streamViewerRaw(w, r, "application/step", maxStepPreview)
+}
+func (a *App) streamViewerRaw(w http.ResponseWriter, r *http.Request, contentType string, limit int64) bool {
 	q := r.URL.Query()
 	var ar knowledgeArea
 	var root *os.Root
@@ -77,7 +80,7 @@ func (a *App) streamStepRaw(w http.ResponseWriter, r *http.Request) bool {
 		}
 		// Reject FIFO/device leaves before Open, which could otherwise block.
 		if i == len(parts)-1 && !info.Mode().IsRegular() {
-			fail(w, 400, fmt.Errorf("STEP 预览仅支持普通文件"))
+			fail(w, 400, fmt.Errorf("文件预览仅支持普通文件"))
 			return true
 		}
 	}
@@ -92,15 +95,15 @@ func (a *App) streamStepRaw(w http.ResponseWriter, r *http.Request) bool {
 		fail(w, 400, err)
 		return true
 	}
-	if !info.Mode().IsRegular() || info.Size() > maxStepPreview {
-		fail(w, 400, fmt.Errorf("STEP 预览需要普通文件，且不超过 %d MiB", maxStepPreview>>20))
+	if !info.Mode().IsRegular() || info.Size() > limit {
+		fail(w, 400, fmt.Errorf("文件预览需要普通文件，且不超过 %d MiB", limit>>20))
 		return true
 	}
 	if !directLocal && !a.knowledgeAreaCurrent(ar) {
 		fail(w, 400, fmt.Errorf("引用来源已变化"))
 		return true
 	}
-	w.Header().Set("Content-Type", "application/step")
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Cache-Control", "no-store")
 	http.ServeContent(w, r, info.Name(), info.ModTime(), f)
 	return true

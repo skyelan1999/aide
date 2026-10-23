@@ -124,3 +124,7 @@
 
 .run-origin-label{display:inline-block;vertical-align:baseline;margin:0 10px 4px 0;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--selected);color:var(--brand);font-size:11px;line-height:1.5;white-space:nowrap}
 #timeline :is(.chat-answer,.stage-answer) .generated-media{display:block;width:100%;max-width:640px;max-height:360px;margin:10px 0;border-radius:10px;background:var(--panel,#f4f6f9)}
+
+.model-route-progress .parallel-part{display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:10px;row-gap:4px}
+.model-route-progress .parallel-part>small{min-width:0;overflow-wrap:anywhere;white-space:normal}
+.model-route-progress .parallel-part>small:nth-of-type(n+2){grid-column:1/-1;line-height:1.6}
