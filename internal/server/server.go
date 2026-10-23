@@ -77,6 +77,9 @@ type providerKeyWrite struct {
 }
 
 type Settings struct {
+	generationIntent string // Request-local output modality; never persisted as a setting.
+	generationError  string
+
 	billingIsolated bool           // A separate credential must never inherit the global provider key identity.
 	routedProfile   *routerProfile // Request-local plugin declaration; never serialized or saved.
 
@@ -142,7 +145,7 @@ type Settings struct {
 
 const (
 	defaultContextWindow = 65536
-	maxModels            = 20
+	maxModels            = 64
 	maxModelProviders    = 12
 	maxProviderKeys      = 12
 )

@@ -248,8 +248,8 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		out, calls, usage, _, err := completeQwenRealtime(ctx, cfg, messages, tools, rec, nil)
 		return out, calls, usage, err
 	}
-	if isQwenImageModel(cfg.Model) {
-		return "", nil, TokenUsage{}, fmt.Errorf("图像模型不支持文本补全，请使用对话模式文生图")
+	if generationModelOutput(cfg.Model) != "" {
+		return "", nil, TokenUsage{}, fmt.Errorf("媒体生成模型不支持文本补全，请在对话中使用对应的原生生成入口")
 	}
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
@@ -382,7 +382,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	if isQwenRealtime(cfg.Model) {
 		return completeQwenRealtime(ctx, cfg, messages, tools, rec, onDelta)
 	}
-	if isQwenImageModel(cfg.Model) {
+	if generationModelOutput(cfg.Model) != "" {
 		return "", nil, TokenUsage{}, "", fmt.Errorf("图像模型不支持流式聊天，请使用对话模式文生图")
 	}
 	if cfg.BaseURL == "" || cfg.Model == "" {

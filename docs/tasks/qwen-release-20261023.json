@@ -8,13 +8,13 @@
     "Full local release verification passes current source fingerprint",
     "version.sh version/tag from clean main, dual-architecture native packages with matching identities and hashes",
     "Aide GitHub Release public and downloadable; source and private plugin boundaries audited",
-    "BailianSupporter 0.1.2 and AutoAiModelRouter 0.1.1 source merged, GitHub release ZIPs and checksums verified",
+    "BailianSupporter 0.1.2 and AutoAiModelRouter 0.1.2 source merged, GitHub release ZIPs and checksums verified",
     "Marketplace listings reflect exact versions, immutable asset URLs, bytes and SHA256; live catalog and downloads verified"
   ],
   "scope": [
     "Aide existing feature/CI PR integration, release version/docs/task records and existing CI release pipeline",
     "aide-pig-ALiBaiLianSupporter release v0.1.2",
-    "aide-pkg-AutoAiModelRouter release v0.1.1",
+    "aide-pkg-AutoAiModelRouter release v0.1.2 (v0.1.1 already public; newer media steering supersedes final target)",
     "aide-pkg-shop listings for those two public MIT plugins only"
   ],
   "stages": {
@@ -64,5 +64,5 @@
   },
   "release_authorization": "User explicitly requested push release, selected main program plus both plugins, then requested marketplace update.",
   "rollback": "Retain current local preview and earlier balance-pool image; do not modify live data volumes. Published immutable assets never overwritten; restore marketplace listings with a reviewed revert if needed.",
-  "handoff": ""
+  "handoff": "Both originally prepared plugin releases are public prereleases and marketplace PR #2 merged with Pages success. New Auto output-media/TTS steering is being integrated before core release. TTS Tools is a separate new local plugin; assistant default TTS is unchanged. Main still awaits final tests/gate and RC4 release."
 }

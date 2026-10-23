@@ -451,3 +451,9 @@ Compare 的文件/文件夹右键入口为显式选择加入：插件设置 `fil
 A no-tool plugin can declare `providerSupport: {"protocol":1,"catalog":"provider-support.json"}` in its manifest. The catalog is validated on installation and read within the installed plugin directory. It supplies exact HTTPS endpoint matches, model names, CNY token rates and optional tier/peak calendar data. Only enabled, healthy, uniquely matching plugins apply; invalid or ambiguous data falls back to manual pricing. No plugin code receives model or billing credentials.
 
 The host keeps per-call rate and key-identity snapshots. Manual provider/key/model overrides take priority, with provider/model inheritance, then plugin pricing, legacy model pricing and the global estimate. Balances are account values, not key-specific wallets. The balance adapters support same-host model Bearer queries and the fixed read-only China-site Alibaba QueryAccountBalance RPC with separately encrypted RAM credentials. Full boundaries, migration and API details: [provider supporter design](prd/2026-10-22-provider-supporter.md).
+
+### TTS Tools 原生桥接（2026-10-23）
+
+独立安装的 `tts-tools` 插件可以声明 `tts_voices`、`tts_generate`，由宿主固定桥接实现。仅工具归属为该启用插件时允许调用。插件不读取或设置密钥；宿主使用所选语音生成模型的提供商保险库凭证。此桥接与助理的默认朗读提供商、音色、API Key 完全独立。`tts_generate` 接收 `text`（1–600 字）、可选 `model`、`voice`、`format`（mp3/wav），当前仅非实时 Qwen-Audio-TTS 3.0/3.1 flash/plus。省略模型时需要支持 speech 评分的 Auto 路由档案。
+
+生成记录在付费提交前保存，同一任务仅生成一个脚本/音色/格式组合；已提交且结果不明确时禁止自动重建。下载会验证服务商存储域、真实格式与文件大小，再写入绑定的本地工作区 `generated/speech/`。read-only 沙箱禁止生成写入，语音查询仍可用。旧宿主执行插件 handler 时明确报不支持，不伪装成功。该工具不实现声音复刻或实时麦克风；默认朗读继续使用既有 TTS 设置。

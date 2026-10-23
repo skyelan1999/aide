@@ -6210,7 +6210,7 @@ function renderModelList() {
       addModel.onclick = () => {
         const id = modelID.value.trim();
         if (!id) { toast(t('请输入模型 ID')); modelID.focus(); return; }
-        if (draft.models.length >= 20) { toast(t('模型最多 20 个')); return; }
+        if (draft.models.length >= 64) { toast(t('模型最多 64 个')); return; }
         if (draft.models.some(model => model.id === id)) { toast(t('模型 ID 重复：{0}', id)); return; }
         draft.models.push({ id, name: id, providerId: provider.id, contextWindow: 65536 });
         if (!draft.activeModel) draft.activeModel = id;
@@ -9031,6 +9031,20 @@ function setupMarkdownPreview(host, text, path, spec) {
     button.onclick=open;img.ondblclick=open;wrap.append(button);
   });
 }
+function decorateGeneratedMedia(body, viewerSpec) {
+  const shown = new Set();
+  body.querySelectorAll('a[href]').forEach(link => {
+    const path = link.getAttribute('href') || '';
+    const match = path.match(/^generated\/(speech|video)\/qwen-[a-f0-9]+\.(mp3|wav|mp4)$/i);
+    if (!match || (match[1] === 'video') !== (match[2] === 'mp4')) return;
+    const url = fileRawUrl(path, viewerSpec?.root || 'workspace', viewerSpec?.source || '', viewerSpec);
+    link.removeAttribute('data-internal-link'); link.href = url; link.download = path.split('/').pop();
+    if (shown.has(path)) return; shown.add(path);
+    const media = document.createElement(match[1] === 'video' ? 'video' : 'audio');
+    media.className = 'generated-media'; media.controls = true; media.preload = 'metadata'; media.src = url;
+    link.parentNode.insertBefore(media, link);
+  });
+}
 function renderMarkdown(src, live, basePath, viewerSpec) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const fixed = fixCjkEmphasis(String(src || ''));
@@ -9049,6 +9063,7 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
       if (/^(https?:|mailto:|#|data:)/.test(href)) return;
       a.dataset.internalLink = href;
     });
+    decorateGeneratedMedia(body, viewerSpec);
     // 相对路径图片：改写为 /api/file/raw 原始字节端点（img 无法带 Authorization 头，用 access_token 查询参数）
     if (basePath || body.querySelector('img[src^="generated/images/"]')) {
       body.querySelectorAll('img[src]').forEach(img => {

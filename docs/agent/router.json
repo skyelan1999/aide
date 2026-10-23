@@ -826,6 +826,10 @@
         "node",
         "--test",
         "scripts/account-balance-pool.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/generated-media.test.cjs"
       ]
     ],
     "full": [

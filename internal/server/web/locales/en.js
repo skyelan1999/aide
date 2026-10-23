@@ -1273,7 +1273,7 @@ window.aideEnglish = {
   "模型显示名称": "Model display name",
   "显示名称": "Display name",
   "添加模型": "Add model",
-  "模型最多 20 个": "You can add up to 20 models",
+  "模型最多 64 个": "You can add up to 64 models",
   "高级参数与能力": "Advanced limits and capabilities",
   "上下文窗口（tokens）": "Context window (tokens)",
   "模型设置保存失败：{0}": "Could not save model settings: {0}",

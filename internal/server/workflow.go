@@ -103,6 +103,7 @@ type Task struct {
 	approvalReviewGeneration uint64
 	approvalAnswered         bool
 
+	MediaGeneration      *MediaGeneration     `json:"mediaGeneration,omitempty"`
 	ModelRoutes          []ModelRouteDecision `json:"modelRoutes,omitempty"`
 	WorkflowPhase        string               `json:"workflowPhase,omitempty"`
 	AgentPlan            *AgentPlan           `json:"agentPlan,omitempty"`
@@ -611,7 +612,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			stepParams.ResponseFormat = "json_object"
 		}
 		var parallelErr error
-		if name == "chat" && task.Parallelism > 1 {
+		if name == "chat" && task.Parallelism > 1 && !mediaTask(cfg) {
 			input, parallelErr = a.prepareParallel(ctx, s, task, cfg, input, stepParams)
 		}
 		checkpoint(name, input)
@@ -754,7 +755,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	}
 	// R01：模型调用必须发生在全局锁之外；在关闭实时流前完成自动压缩，
 	// 让界面能观察摘要生成、折叠消息和压缩后的实际估算。
-	if !isQwenImageModel(cfg.Model) {
+	if !mediaTask(cfg) {
 		a.maybeAutoCompact(ctx, s, cfg, task.ID)
 	}
 	a.finishLiveRun(s.ID, task.ID, task.Status) // #35：done/interrupted/failed
@@ -764,7 +765,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 // summarizeTopic 每次新任务先总结当前主题并更新会话标题（FR-88）。
 // 独立轻量调用（max_tokens ≤64），失败时保留原标题，不阻断任务。
 func (a *App) summarizeTopic(ctx context.Context, s *Session, task *Task, cfg Settings, params ProfileParams) {
-	if isQwenImageModel(cfg.Model) {
+	if mediaTask(cfg) {
 		return
 	}
 	summaryParams := params
@@ -875,6 +876,10 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if orig == nil {
 		fail(w, 404, errors.New("任务不存在"))
+		return
+	}
+	if orig.MediaGeneration != nil {
+		fail(w, 409, errors.New("媒体任务已提交；请继续原任务查询或下载，重新生成请明确发送新消息"))
 		return
 	}
 	if orig.PW != nil {
@@ -1866,8 +1871,15 @@ func maxToolCallsForRounds(rounds int) int {
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
 func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int, checkpoints ...func(string, []Message)) (string, []Message, error) {
-	if isQwenImageModel(cfg.Model) {
-		return a.imageChat(ctx, cfg, input, task, stepIndex)
+	if mediaTask(cfg) {
+		cfg = a.routedModel(task, cfg, input, params, nil, "chat")
+		if cfg.generationError != "" {
+			return "", input, errors.New(cfg.generationError)
+		}
+		if isQwenImageModel(cfg.Model) {
+			return a.imageChat(ctx, cfg, input, task, stepIndex)
+		}
+		return a.mediaGenerationChat(ctx, cfg, input, task, stepIndex)
 	}
 	a.mu.Lock()
 	var parallelSession *Session
@@ -4247,6 +4259,17 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return a.officeCommentTool(wsRoot, mode, remotePath, str("path"), "add", map[string]any{"quote": str("quote"), "text": str("text"), "author": str("author"), "anchorIndex": toolInt("anchorIndex")})
 	case "docx_resolve_comment":
 		return a.docxTool(wsRoot, mode, str("path"), "docx_resolve_comment.py", str("id"))
+	case "tts_voices":
+		if a.pluginOwnerOf("tts_voices") != "tts-tools" {
+			return "TTS Tools 插件未启用"
+		}
+		return ttsSystemVoices()
+	case "tts_generate":
+		out, err := a.ttsGenerationTool(ctx, task, args)
+		if err != nil {
+			return failure(err.Error())
+		}
+		return out
 	case "office_create":
 		if src, bound := a.generatedDocumentSource(); bound && !a.sourceAIAllowed(src.ID) {
 			return "自动系统文档对当前工作区 AI 不可见"
