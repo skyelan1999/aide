@@ -1,0 +1,57 @@
+{
+  "id": "studio-motion-20261024",
+  "request": "增强静域背景动态效果，保持高级专业，部署9999，不发版",
+  "baseline": "24852786d952868e5126a7eac81cb457c5d2ccaf",
+  "initial_status": "",
+  "acceptance": [
+    "Studio motion visibly changes over a few seconds while text remains stationary",
+    "All three layers pause when hidden, locked or reduced motion",
+    "Browser dark/light/narrow layout verified",
+    "Deploy 9999 with backup and no release"
+  ],
+  "scope": [
+    "internal/server/web/workbench.css",
+    "docs/builtin-background.md",
+    "docs/tasks/studio-motion-20261024.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}
