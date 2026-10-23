@@ -71,12 +71,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('binary', type=Path)
     parser.add_argument('--cwd', type=Path, required=True)
+    parser.add_argument('--workers', type=int, choices=[1, 2], default=1)
     args = parser.parse_args()
     command = [str(args.binary.resolve())]
     result = subprocess.run(command + ['-test.list=.'], cwd=args.cwd,
                             text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             check=True, timeout=30)
-    run_shards(command, test_names(result.stdout), args.cwd)
+    run_shards(command, test_names(result.stdout), args.cwd, workers=args.workers)
 
 
 if __name__ == '__main__':

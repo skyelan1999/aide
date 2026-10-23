@@ -95,7 +95,7 @@ func TestOutgoingMessagesMultimodal(t *testing.T) {
 
 func TestAttachmentContextDocx(t *testing.T) {
 	a := testApp(t)
-	t.Setenv("AIDE_OFFICE_SCRIPTS", "/src/scripts/office")
+	useSourceOfficeScripts(t)
 	makeFixture(t, a, "d.docx", `
 import sys
 from docx import Document
@@ -116,7 +116,7 @@ d.save(sys.argv[1])
 
 func TestAttachmentContextXlsx(t *testing.T) {
 	a := testApp(t)
-	t.Setenv("AIDE_OFFICE_SCRIPTS", "/src/scripts/office")
+	useSourceOfficeScripts(t)
 	makeFixture(t, a, "s.xlsx", `
 import sys
 from openpyxl import Workbook
@@ -133,7 +133,7 @@ wb=Workbook(); ws=wb.active; ws.title="Sheet1"; ws["A1"]="姓名"; ws["B1"]="唯
 
 func TestAttachmentContextPdf(t *testing.T) {
 	a := testApp(t)
-	t.Setenv("AIDE_OFFICE_SCRIPTS", "/src/scripts/office")
+	useSourceOfficeScripts(t)
 	// 手写最小单页 PDF（Helvetica + Tj）
 	gen := `
 import sys

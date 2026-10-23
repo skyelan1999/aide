@@ -1,7 +1,7 @@
 package server
 
 // #63 侧车批注 + Office 工具测试。
-// 运行环境：aide:local 容器（含 python3 + python-docx 1.2.0），仓库挂在 /src。
+// 运行环境需要 python3 + python-docx；脚本绑定当前源码，不依赖挂载位置。
 
 import (
 	"encoding/json"
@@ -11,6 +11,19 @@ import (
 	"strings"
 	"testing"
 )
+
+// useSourceOfficeScripts binds fixtures to this package's current checkout.
+func useSourceOfficeScripts(t *testing.T) {
+	t.Helper()
+	dir, err := filepath.Abs(filepath.Join("..", "..", "scripts", "office"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "extract_text.py")); err != nil {
+		t.Fatalf("current source Office scripts: %v", err)
+	}
+	t.Setenv("AIDE_OFFICE_SCRIPTS", dir)
+}
 
 // writeWorkspaceFile 在测试工作区写一个文件（宿主视角路径）。
 func writeWorkspaceFile(t *testing.T, a *App, name, content string) {
@@ -184,7 +197,7 @@ d.save(sys.argv[1])
 // TestDocxStructureTool docx_structure 解析标题/段落/表格。
 func TestDocxStructureTool(t *testing.T) {
 	a := testApp(t)
-	t.Setenv("AIDE_OFFICE_SCRIPTS", "/src/scripts/office")
+	useSourceOfficeScripts(t)
 	makeFixtureDocx(t, a, "fixture.docx")
 
 	out := a.docxTool(a.workspace, "", "fixture.docx", "docx_structure.py")
@@ -216,7 +229,7 @@ func TestDocxStructureTool(t *testing.T) {
 // TestDocxCommentRoundTrip 加批注→列出→标记解决→重开校验。
 func TestDocxCommentRoundTrip(t *testing.T) {
 	a := testApp(t)
-	t.Setenv("AIDE_OFFICE_SCRIPTS", "/src/scripts/office")
+	useSourceOfficeScripts(t)
 	makeFixtureDocx(t, a, "c.docx")
 
 	if out := a.docxTool(a.workspace, "", "c.docx", "docx_add_comment.py",
@@ -241,7 +254,7 @@ func TestDocxCommentRoundTrip(t *testing.T) {
 // TestDocxToolPathSafety 路径/扩展名/存在性校验。
 func TestDocxToolPathSafety(t *testing.T) {
 	a := testApp(t)
-	t.Setenv("AIDE_OFFICE_SCRIPTS", "/src/scripts/office")
+	useSourceOfficeScripts(t)
 	if out := a.docxTool(a.workspace, "", "../x.docx", "docx_structure.py"); !strings.Contains(out, "路径无效") {
 		t.Fatalf(".. 应被拒绝: %s", out)
 	}

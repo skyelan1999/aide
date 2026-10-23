@@ -1,0 +1,135 @@
+name: Aide Delivery
+on:
+  workflow_run:
+    workflows: [Aide CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Leave empty for candidate only; otherwise an existing version.sh tag on main'
+        required: false
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: aide-delivery-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+jobs:
+  source:
+    if: >-
+      github.repository == 'skyelan1999/aide' &&
+      ((github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      sha: ${{ steps.identity.outputs.sha }}
+      tag: ${{ steps.identity.outputs.tag }}
+      publish: ${{ steps.identity.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate trusted main source and requested tag
+        id: identity
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: python3 scripts/ci/delivery_gate.py source
+      - name: Recheck current source contracts
+        run: |
+          python3 scripts/agent-route.py verify quick
+          python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
+  native:
+    needs: source
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: amd64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - name: Free disposable hosted runner SDK space
+        run: |
+          test "$GITHUB_ACTIONS" = true
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+      - name: Build and verify Aide-only native candidate
+        run: python3 scripts/ci/build_candidate.py --arch ${{ matrix.arch }} --out .agent-state/ci-candidate/${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aide-candidate-${{ matrix.arch }}
+          path: |
+            .agent-state/ci-candidate/${{ matrix.arch }}/*-full-linux-*.zip
+            .agent-state/ci-candidate/${{ matrix.arch }}/candidate-proof.json
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
+  windows:
+    needs: source
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - name: Windows PowerShell 5.1 launcher regression
+        shell: cmd
+        run: |
+          set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules"
+          python scripts/test_windows_image_slot.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+      - name: PowerShell 7 launcher regression
+        shell: pwsh
+        run: python scripts/test_windows_image_slot.py --pwsh pwsh.exe
+  publish:
+    if: needs.source.outputs.publish == 'true'
+    needs: [source, native, windows]
+    environment: aide-release
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.source.outputs.tag }}
+      RELEASE_SHA: ${{ needs.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: aide-candidate-*
+          path: .agent-state/delivery
+      - name: Verify both architectures and prepare checksums
+        run: python3 scripts/ci/delivery_gate.py artifacts --root .agent-state/delivery
+      - name: Create a new draft only
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'Release already exists; refuse overwrite.' >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" --verify-tag --target "$RELEASE_SHA" --draft --prerelease --title "aide $RELEASE_TAG" --notes-file .agent-state/delivery/RELEASE-ASSETS.txt
+          gh release upload "$RELEASE_TAG" .agent-state/delivery/aide-candidate-*/*.zip .agent-state/delivery/SHA256SUMS .agent-state/delivery/RELEASE-ASSETS.txt
+      - name: Verify independently reported remote hashes before publication
+        run: |
+          python3 scripts/ci/delivery_gate.py remote --root .agent-state/delivery
+          gh release edit "$RELEASE_TAG" --draft=false

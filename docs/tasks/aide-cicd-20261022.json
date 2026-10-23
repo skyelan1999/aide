@@ -1,0 +1,79 @@
+{
+  "id": "aide-cicd-20261022",
+  "request": "只针对aide本体做cicd，不带插件；预算耗尽后等待用户通知继续",
+  "baseline": "5b8458168c0186689c51eb1c8ac647dab568e6db",
+  "initial_status": "",
+  "acceptance": [
+    "PR与main触发本体quick/完整Go race-vet/Windows脚本检查，汇总gate拒绝失败与取消",
+    "main检查通过后原生ARM64和AMD64构建本体候选包，不含插件或用户数据",
+    "已有版本标签手动发布，验证共同源码、完整检查、包摘要与远端摘要；拒绝覆盖",
+    "不更换生产服务，不实际发布新版本，不上传插件市场"
+  ],
+  "scope": [
+    ".github/workflows/aide-ci.yml",
+    ".github/workflows/aide-delivery.yml",
+    "scripts/ci",
+    "docs/architecture/aide-cicd.md",
+    "docs/tasks/aide-cicd-20261022.json",
+    "scripts/test_offline_bundle.py (Issue #26: headless Linux fixture isolation)",
+    "scripts/test_go_snapshot.py (Issue #27: current-source Office binding; opt-in hosted resources)",
+    "scripts/run_go_test_shards.py / scripts/test_go_test_shards.py (bounded two-worker CI)",
+    "internal/server/attachments_test.go / comments_test.go (Issue #27: checkout-relative Office fixtures)",
+    "scripts/test_resource_guard.py (Issue #28: bounded snapshot deadline contract)"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "仅Aide主仓库；复用version/Dockerfile/packager，PR检查与候选、手动发布分离",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅Aide主仓库；复用version/Dockerfile/packager，PR检查与候选、手动发布分离",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "仅Aide主仓库；复用version/Dockerfile/packager，PR检查与候选、手动发布分离",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "第三轮云端 quick/Windows 通过；1170 项服务器 race 测试全部通过，但其他包检查触及45分钟总时限（退出124），未完成vet，不能合并。Issue #28 已登记；调整快照75分钟、CI90分钟、候选180分钟预算；本地CI合同13项与actionlint通过，待完整重跑。 调整后本地quick144项、CI合同13项、资源边界7项、actionlint和文档检查通过；Issue #27 已按1170项全通过证据关闭。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/25",
+        "https://github.com/skyelan1999/aide/issues/26",
+        "https://github.com/skyelan1999/aide/actions/runs/39788449776",
+        "https://github.com/skyelan1999/aide/issues/27",
+        "https://github.com/skyelan1999/aide/issues/28",
+        "https://github.com/skyelan1999/aide/actions/runs/39800682747"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构/操作文档及阶段记录已写，docs链接检查通过",
+      "evidence": [
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只保留忽略的验收日志；无生产容器或用户目录变更",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户要求仅Aide本体CI/CD，不带插件；已有源码push授权。此任务不主动发布产品Release。",
+  "rollback": "回退本任务工作流/辅助脚本提交；不涉及生产容器、用户目录或版本切换。",
+  "handoff": "PR25；main已配置GitHub Actions gate检查(strict/app15368)，保留owner审核与admin策略；aide-release环境仅main可部署。候选/正式发布待托管验收，未发布产品版本。"
+}
