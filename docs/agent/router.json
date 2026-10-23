@@ -772,6 +772,10 @@
       [
         "node",
         "scripts/generated-media.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_development_toolbox.py"
       ]
     ],
     "full": [

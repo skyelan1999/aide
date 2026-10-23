@@ -85,6 +85,12 @@ def audit_image_layers(archive):
                 for item in inner:
                     entries += 1
                     parts = PurePosixPath(item.name).parts
+                    normalized = '/'.join(x for x in parts if x != '.')
+                    if (normalized == 'usr/local/go' or normalized.startswith('usr/local/go/') or
+                        normalized == 'usr/lib/gcc' or normalized.startswith('usr/lib/gcc/') or
+                        normalized == 'usr/local/lib/node_modules' or normalized.startswith('usr/local/lib/node_modules/') or
+                        normalized in ('usr/bin/gcc', 'usr/bin/g++', 'usr/bin/make', 'usr/local/bin/npm', 'usr/local/bin/npx')):
+                        raise ValueError('Development tool payload in runtime layer: ' + item.name)
                     # System libraries (e.g. Kerberos) legitimately use plugins/.
                     # Aide install roots and any id/main plugin manifest are forbidden.
                     if 'plugins' in parts:
@@ -200,7 +206,7 @@ def verification_plan(image):
     return [
         (['python3', 'scripts/agent-route.py', 'verify', 'quick'], {}),
         (['python3', 'scripts/test_runtime_assets.py', image, '--require-lan-bridge'], {}),
-        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_IMAGE': image, 'AIDE_TEST_WORKERS': '2'}),
+        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_TOOLCHAIN_IMAGE': image + '-test-tools', 'AIDE_TEST_WORKERS': '2'}),
         (['python3', 'scripts/test_optional_step.py', image], {}),
     ]
 
@@ -231,6 +237,10 @@ def main():
     info = json.loads(capture(['docker', 'image', 'inspect', image]))[0]
     if info['Os'] != 'linux' or info['Architecture'] != args.arch or info['Config']['Labels'].get('aide.srcsha') != source:
         raise ValueError('Built image identity mismatch')
+    # Race/vet use the same source in a dedicated toolchain, never the slim runtime.
+    run(['docker', 'build', '--platform', 'linux/' + args.arch, '--target', 'dev',
+         '--build-arg', 'PIP_INDEX_URL=https://pypi.org/simple',
+         '-t', image + '-test-tools', '.'])
     verification = []
     for command, extra_env in verification_plan(image):
         run(command, env=dict(os.environ, **extra_env))

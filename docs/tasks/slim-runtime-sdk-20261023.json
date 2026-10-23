@@ -1,0 +1,85 @@
+{
+  "id": "slim-runtime-sdk-20261023",
+  "request": "精简运行镜像，开发工具单独提供",
+  "baseline": "ba11253683d9383c3356387f32e46f4e5c35a3a5",
+  "initial_status": "",
+  "acceptance": [
+    "Default release runtime has no Go SDK, GCC/G++/make/npm and no inherited compiler layers",
+    "Python3.12, Node24, Git/SSH, Office/DXF libraries, offline TTS and prebuilt plugin execution remain verified",
+    "Separate opt-in development toolbox image provides Go1.26, C/C++ compiler and npm; can export/import offline without onsite compilation",
+    "CI runs complete Go race/vet in dedicated development test image, still verifies actual runtime image; no test bypass",
+    "Compare same-source old/new compressed image/full bundle sizes on available architectures with clear native/emulated limits",
+    "No main push/version change/RC7 release or production9999 operation"
+  ],
+  "scope": [
+    "Dockerfile runtime stage and separate docker/Dockerfile.sdk toolbox",
+    "Host SDK build/export/run helper; runtime and SDK boundary checks",
+    "CI candidate testing environment split and local-source seed validation",
+    "Minimal runtime badge correction and deployment/SDK documentation",
+    "Independent feat/slim-runtime-sdk-20261023 branch; publication owner retains RC7"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User selected lean runtime and separately provided development tools; preserve runtime features and offline install",
+      "evidence": [
+        "User request",
+        "acceptance",
+        "scope"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Fresh Python slim runtime; optional toolbox image and explicit workspace runner; dev-stage CI Go tests remain separate from real runtime checks",
+      "evidence": [
+        "Dockerfile",
+        "docker/Dockerfile.sdk",
+        "docs/architecture/development-toolbox.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Runtime no longer inherits toolchain; optional SDK build/export/run helper; candidate all-layer compiler rejection; source seed guard; footer lists retained tools",
+      "evidence": [
+        "scripts/development-toolbox.py",
+        "scripts/ci/build_candidate.py",
+        "scripts/test_runtime_assets.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "ARM64 builds, non-root runtime/Office/DXF/TTS-library and 12 helper checks, optional STEP boundary, CA-verified auth/update smoke, all-layer audit, offline SDK export/load and Go/C execution passed. Stable quick 137 checks passed. Final 1187-item/24-shard Go race, remaining package race and vet completed with exit 0; all 5566 controlled snapshot inputs match. AMD64 and formal publication not run. Browser only actual runtime-card component, not full workbench or paid models.",
+      "evidence": [
+        "docs/reviews/20261023/slim-runtime-sdk/evidence.json",
+        "docs/reviews/20261023/slim-runtime-sdk/go-race-vet.txt",
+        "docs/reviews/20261023/slim-runtime-sdk/README.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Document install/use, offline checksum/import, source development and no automatic AI command forwarding; no production or data changes",
+      "evidence": [
+        "docs/architecture/development-toolbox.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed explicit changed paths and diff; closed own IAB component tab and static servers; test/smoke containers exited; removed 13 redundant own archive copies, restored only generated checksum additions. Existing services/data untouched by this task. Retained controlled bundles, SDK export and receipts.",
+      "evidence": [
+        "git diff --check",
+        ".agent-state/slim-runtime/cleanup.json",
+        "docs/reviews/20261023/slim-runtime-sdk/README.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Independent implementation and candidate verification only; RC7 is owned by separate release conversation",
+      "evidence": [
+        "scope"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Independent branch only; existing main and production containers unchanged. Switch back to prior image/A-B slot if later deployed; no data migration.",
+  "handoff": "Independent implementation complete; local commit only, no main integration/version bump/push/release/production deployment. Current RC7 publication remains separate; preserve its launcher fixes during later integration. ARM64 controlled full ZIP 582421638 -> 359665139 bytes (-38.2466%); optional SDK archive 504707691 bytes separately. SDK command forwarding is explicit, not automatic assistant routing."
+}

@@ -20,7 +20,7 @@ elif a[:2]==['image','inspect']:
  print('sha256:'+'a'*64)
 elif a[:2]==['image','load']:(r/'base').touch()
 elif a[:2]==['image','tag']:pass
-elif a[:1]==['run']:sys.exit(1 if os.environ.get('OLD_CAD') else 0)
+elif a[:1]==['run']:sys.exit(1 if os.environ.get('OLD_CAD') or (os.environ.get('SLIM_SEED') and 'command -v go' in a[-1]) else 0)
 elif a[:1]==['build']:
  assert '--pull=false' in a and '--network=none' in a
  (r/'base').touch();sys.exit(int(os.environ.get('BUILD_EXIT','0')))
@@ -45,6 +45,8 @@ else:sys.exit('unexpected docker command: '+repr(a))
   self.env['NO_SEED']='1';r=self.run_prepare();self.assertEqual(r.returncode,3);self.assertFalse(any(a[0]=='build' for a in self.calls()))
  def test_old_cad_seed_is_rejected_without_build(self):
   self.env['OLD_CAD']='1';r=self.run_prepare();self.assertEqual(r.returncode,3);self.assertIn('CAD-containing',r.stderr);self.assertFalse(any(a[0]=='build' for a in self.calls()))
+ def test_slim_seed_reports_development_environment_required(self):
+  self.env['SLIM_SEED']='1';r=self.run_prepare();self.assertEqual(r.returncode,3);self.assertIn('development toolbox',r.stderr);self.assertFalse(any(a[0]=='build' for a in self.calls()))
  def test_failed_local_build_is_not_replaced_with_online_build(self):
   self.env['BUILD_EXIT']='9';r=self.run_prepare();self.assertEqual(r.returncode,9)
 if __name__=='__main__':unittest.main()

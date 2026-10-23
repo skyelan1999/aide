@@ -50,6 +50,12 @@ if ! "$DOCKER_BIN" run --rm --network=none --entrypoint sh "$SEED_ID" -c 'test !
   echo 'Old CAD-containing image cannot seed lean dependencies; build once with AIDE_LOCAL_DEPENDENCIES=0.' >&2
   exit 3
 fi
+# A release runtime is deliberately not a source-build seed. Fail clearly and
+# let the existing caller use its explicit source-development bootstrap path.
+if ! "$DOCKER_BIN" run --rm --network=none --entrypoint sh "$SEED_ID" -c 'command -v go >/dev/null && command -v gcc >/dev/null && command -v npm >/dev/null'; then
+  echo 'Slim runtime cannot seed source dependencies; use a development toolbox image or build the dev target.' >&2
+  exit 3
+fi
 SEED_TAG="aide:dependency-seed-${SEED_ID#sha256:}"
 "$DOCKER_BIN" image tag "$SEED_ID" "$SEED_TAG"
 # Resolve only the locally tagged seed; RUN has no network access.
