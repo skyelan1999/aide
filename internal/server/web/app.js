@@ -5863,14 +5863,12 @@ function fmtStatTokens(n) { return window.AideModelTokenChart.formatTokens(n); }
 function renderTokenStats(control) {
   // R08：计价与费用是服务端事实源（/api/token-pricing + 逐调用快照），前端只展示
   let pricing = { priceIn: 2, priceOut: 8 };
-  let priceScope = {providerId: '', keyId: '', model: ''};
   let scopeConfig = state.config || {};
   let scopeRequest = 0;
   const wrap = el('div', 'settings-control token-stats');
   const head = el('div', 'token-head');
   head.append(el('span', 'token-title', t("Token 消耗")), el('span', 'control-value', ''));
   const chips = el('div', 'token-chips');
-  const balanceChips = el('div', 'token-chips');
   const grid = el('div', 'token-heatmap');
   const legend = el('div', 'token-legend');
   const tip = el('div', 'token-tip');
@@ -5878,29 +5876,9 @@ function renderTokenStats(control) {
   const priceRow = el('div', 'token-price-row');
   const priceFields = el('div', 'token-price-fields');
   const priceNote = el('small', 'token-price-note', '');
-  const balanceRow = el('div', 'token-price-fields');
-  const balanceSelect = el('select', '');
-  balanceSelect.setAttribute('aria-label', t('余额账户'));
-  const balanceLabel = el('label', '', t('余额账户'));
-  balanceLabel.append(balanceSelect); balanceRow.append(balanceLabel);
   const defaultTitle = el('div', 'token-title', t('默认计价标准'));
-  const billing = el('details', '');
-  billing.style.marginBottom = '12px';
-  billing.classList.add('hidden');
-  billing.append(el('summary', '', t('百炼余额 · RAM 费用凭证')));
-  const billingNote = el('small', '', t('费用查询使用独立 RAM AccessKey，只授予 QueryAccountBalance 只读权限。模型 API Key 无法替代；凭证仅保存到 Aide 加密保险库。'));
-  const billingState = el('p', '', '');
-  const billingFields = el('div', 'token-price-fields');
-  const ak = el('input', ''), sk = el('input', '');
-  for (const input of [ak, sk]) { input.type = 'password'; input.autocomplete = 'new-password'; input.spellcheck = false; }
-  ak.setAttribute('aria-label', 'AccessKey ID'); sk.setAttribute('aria-label', 'AccessKey Secret');
-  ak.placeholder = 'AccessKey ID'; sk.placeholder = 'AccessKey Secret';
-  const saveBilling = el('button', '', t('保存费用凭证'));
-  const clearBilling = el('button', '', t('清除费用凭证'));
-  saveBilling.type = clearBilling.type = 'button';
-  billingFields.append(ak, sk, saveBilling, clearBilling);
-  billing.append(billingNote, billingState, billingFields);
-  wrap.append(head, chips, defaultTitle, priceRow, balanceRow, balanceChips, billing, grid, legend, tip, detail);
+  const balanceHost = el('div', '');
+  wrap.append(head, chips, defaultTitle, priceRow, balanceHost, grid, legend, tip, detail);
   const pieWrap = el('div', 'model-pie-wrap');
   wrap.append(pieWrap);
   const failBox = el('p', 'task-error', '');
@@ -6117,73 +6095,18 @@ function renderTokenStats(control) {
   };
   priceFields.append(mkPrice('priceIn', t("输入 ¥/百万")), mkPrice('priceOut', t("输出 ¥/百万")));
   priceRow.append(priceFields, priceNote);
-  const option = (select, value, text) => { const o = el('option', '', text); o.value = value; select.append(o); };
-  const scopeQuery = () => new URLSearchParams(Object.entries(priceScope).filter(([, v]) => v)).toString();
   async function loadScopePricing(fallback) {
     const request = ++scopeRequest;
-    const query = scopeQuery();
-    priceFields.querySelectorAll('input,button').forEach(input => { input.disabled = true; });
-    balanceChips.replaceChildren();
-    billing.classList.add('hidden');
-    ak.value = ''; sk.value = '';
-    const [resolved, balancePricing] = await Promise.all([api('/token-pricing?scope=default'), query ? api('/token-pricing?' + query) : Promise.resolve({})]);
+    const resolved = await api('/token-pricing?scope=default');
     if (request !== scopeRequest || !wrap.isConnected) return;
     pricing = resolved || fallback || pricing;
     const standards = (pricing.standards || []).map(name => t('{0} 计价标准已启用', name));
     priceNote.textContent = standards.length ? standards.join(' · ') + '。' + t('未匹配插件时使用手动默认单价；历史费用不会重算。') : t('未启用计价插件，使用手动默认单价；历史费用不会重算。');
     for (const field of ['priceIn', 'priceOut']) { const input = wrap.querySelector('input[data-price="' + field + '"]'); if (input && document.activeElement !== input) input.value = pricing[field] ?? 0; }
-    priceFields.querySelectorAll('input').forEach(input => { input.disabled = false; });
-    const needsBilling = balancePricing.balanceAuth === 'aliyun-rpc';
-    billing.classList.toggle('hidden', !needsBilling || !priceScope.providerId || !priceScope.keyId);
-    ak.value = ''; sk.value = '';
-    if (needsBilling && priceScope.providerId && priceScope.keyId) {
-      const status = await api('/provider-billing-credentials?' + new URLSearchParams({providerId:priceScope.providerId,keyId:priceScope.keyId}));
-      if (request !== scopeRequest) return;
-      billingState.textContent = status.configured ? t('费用凭证已配置；输入新值可替换。') : t('尚未配置费用凭证');
-    }
-    balanceChips.replaceChildren();
-    if (!priceScope.providerId) return;
-    if (!priceScope.keyId) { balanceChips.append(el('span', 'token-chip', t('请选择 API Key 查看对应可用额度或配置 RAM 凭证'))); return; }
-    const selectedKeyLabel = balanceSelect.selectedOptions[0]?.textContent || priceScope.keyId;
-    try {
-      const balance = await api('/balance?' + query);
-      if (request !== scopeRequest) return;
-      const chip = el('span', 'token-chip'); chip.dataset.balance = 'true';
-      if (balance.supported === false) chip.textContent = t('此提供商未启用余额支持插件');
-      else if (balance.billingCredentialsRequired) { chip.textContent = t('余额查询需要费用账户凭证'); billing.classList.remove('hidden'); }
-      else {
-        const infos = balance.balance_infos || [];
-        chip.textContent = infos.length ? t('密钥 {0} · 账户可用额度 {1}', selectedKeyLabel, infos.map(i => (i.total_balance ?? '?') + ' ' + (i.currency || '')).join(' · ')) : t('余额不可查');
-        chip.title = t('来自服务商费用账户，可能包含信用额度；不等于现金或模型免费额度。');
-      }
-      balanceChips.append(chip);
-    } catch (error) {
-      if (request !== scopeRequest) return;
-      const chip = el('span', 'token-chip', t('余额不可查')); chip.dataset.balance = 'true'; chip.title = error.message; balanceChips.append(chip);
-    }
   }
-  balanceSelect.onchange = () => {
-    const pair = balanceSelect.value ? JSON.parse(balanceSelect.value) : ['', ''];
-    priceScope = {providerId:pair[0], keyId:pair[1], model:''};
-    action(loadScopePricing)();
-  };
-  const writeBilling = async clear => {
-    const providerId = priceScope.providerId, keyId = priceScope.keyId;
-    if (!providerId || !keyId || (!clear && (!ak.value.trim() || !sk.value.trim()))) { toast(t('请填写完整费用凭证')); return; }
-    saveBilling.disabled = clearBilling.disabled = true;
-    const body = clear ? {providerId, keyId, clear:true} : {providerId, keyId, accessKeyId:ak.value.trim(), accessKeySecret:sk.value.trim()};
-    ak.value = ''; sk.value = '';
-    try { await api('/provider-billing-credentials', {method:'PUT', body:JSON.stringify(body)}); await loadScopePricing(); }
-    finally { saveBilling.disabled = clearBilling.disabled = false; }
-  };
-  saveBilling.onclick = action(() => writeBilling(false)); clearBilling.onclick = action(() => writeBilling(true));
   action(async () => {
     scopeConfig = await api('/config');
-    balanceSelect.replaceChildren(); option(balanceSelect, '', t('选择 API Key 查看余额 / RAM 凭证'));
-    for (const provider of scopeConfig.modelProviders || []) for (const key of provider.keys || []) option(balanceSelect, JSON.stringify([provider.id,key.id]), (provider.name || provider.id) + ' / ' + (key.label || key.id));
-    const active = (scopeConfig.models || []).find(model => model.id === (scopeConfig.activeModel || scopeConfig.model));
-    const provider = (scopeConfig.modelProviders || []).find(p => p.id === active?.providerId);
-    if (provider?.activeKeyId) { priceScope = {providerId:provider.id,keyId:provider.activeKeyId,model:''}; balanceSelect.value = JSON.stringify([provider.id,provider.activeKeyId]); }
+    balanceHost.append(window.AideAccountBalancePool.create({api,t,config:scopeConfig,scope:recoveryScope,active:()=>!lockScreen.locked && !!$('settings-sheet')?.classList.contains('open') && wrap.getClientRects().length > 0}));
     await loadStats();
   })();
   return wrap;

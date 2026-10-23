@@ -203,6 +203,7 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	out["providerId"] = p.ID
 	out["keyId"] = kid
 	out["balanceScope"] = "account"
+	out["balanceAuth"] = b.Auth
 	jsonOut(w, 200, out)
 }
 func normalizeBalance(raw []byte, format string) (map[string]any, error) {

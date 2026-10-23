@@ -816,6 +816,16 @@
         "node",
         "--test",
         "scripts/model-token-chart.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/account-balance-pool.js"
+      ],
+      [
+        "node",
+        "--test",
+        "scripts/account-balance-pool.test.cjs"
       ]
     ],
     "full": [
