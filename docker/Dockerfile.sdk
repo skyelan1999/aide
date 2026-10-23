@@ -1,0 +1,23 @@
+# Optional execution toolbox. It is never the default Aide release target.
+ARG AIDE_RUNTIME_IMAGE=aide:local
+FROM golang:1.26-bookworm AS go-sdk
+FROM node:24-bookworm-slim AS node-sdk
+FROM ${AIDE_RUNTIME_IMAGE}
+USER root
+RUN test "$AIDE_RUNTIME_PROFILE" = slim \
+    && apt-get update && apt-get install -y --no-install-recommends \
+      build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=go-sdk /usr/local/go /usr/local/go
+COPY --from=node-sdk /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && mkdir -p /home/aide/.cache/go-build /home/aide/go \
+    && chown -R aide:aide /home/aide
+ENV PATH="/usr/local/go/bin:${PATH}" GOCACHE=/home/aide/.cache/go-build GOPATH=/home/aide/go AIDE_RUNTIME_PROFILE=toolbox
+LABEL aide.runtime-profile="toolbox"
+USER aide
+WORKDIR /workspace
+HEALTHCHECK NONE
+ENTRYPOINT []
+CMD ["bash"]

@@ -60,7 +60,8 @@ class NativeDeliveryGateTests(unittest.TestCase):
         assets = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(assets)
         # Run the actual shipped-inventory gate, including its checksum reads.
-        gate = 'if os.environ.get' + assets.PROGRAM.split('if os.environ.get', 1)[1].split('with tempfile.TemporaryDirectory()', 1)[0]
+        marker = "if os.environ.get('AIDE_REQUIRE_LAN_BRIDGE')"
+        gate = marker + assets.PROGRAM.split(marker, 1)[1].split('with tempfile.TemporaryDirectory()', 1)[0]
         with tempfile.TemporaryDirectory() as temporary, patch.dict(os.environ, {'AIDE_REQUIRE_LAN_BRIDGE': '1'}):
             root = Path(temporary); bridge = root / 'message-lan'; bridge.mkdir()
             entries = []

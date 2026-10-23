@@ -1,0 +1,34 @@
+Go snapshot: 7089 current files; container-local source; network none
+Server inventory: 1187 top-level tests/fuzz seeds/examples; 24 disjoint shards; 1 worker(s); none omitted
+Server shard 1/24: 50 selected, exit=0, elapsed=55.6s
+Server shard 2/24: 50 selected, exit=0, elapsed=37.6s
+Server shard 3/24: 50 selected, exit=0, elapsed=39.4s
+Server shard 4/24: 50 selected, exit=0, elapsed=37.4s
+Server shard 5/24: 50 selected, exit=0, elapsed=50.4s
+Server shard 6/24: 50 selected, exit=0, elapsed=63.4s
+Server shard 7/24: 50 selected, exit=0, elapsed=38.4s
+Server shard 8/24: 50 selected, exit=0, elapsed=46.3s
+Server shard 9/24: 50 selected, exit=0, elapsed=45.5s
+Server shard 10/24: 50 selected, exit=0, elapsed=43.6s
+Server shard 11/24: 50 selected, exit=0, elapsed=34.6s
+Server shard 12/24: 49 selected, exit=0, elapsed=61.7s
+Server shard 13/24: 49 selected, exit=0, elapsed=42.8s
+Server shard 14/24: 49 selected, exit=0, elapsed=49.2s
+Server shard 15/24: 49 selected, exit=0, elapsed=38.3s
+Server shard 16/24: 49 selected, exit=0, elapsed=94.3s
+Server shard 17/24: 49 selected, exit=0, elapsed=49.4s
+Server shard 18/24: 49 selected, exit=0, elapsed=53.5s
+Server shard 19/24: 49 selected, exit=0, elapsed=31.1s
+Server shard 20/24: 49 selected, exit=0, elapsed=32.9s
+Server shard 21/24: 49 selected, exit=0, elapsed=52.5s
+Server shard 22/24: 49 selected, exit=0, elapsed=33.4s
+Server shard 23/24: 49 selected, exit=0, elapsed=29.2s
+Server shard 24/24: 49 selected, exit=0, elapsed=31.0s
+?   	aide/cmd/aide	[no test files]
+ok  	aide/cmd/aide-local-mounts	2.383s
+?   	aide/cmd/aide-message-lan	[no test files]
+?   	aide/cmd/aide-message-relay	[no test files]
+ok  	aide/internal/execsandbox	1.158s
+ok  	aide/internal/localmounts	1.020s
+ok  	aide/internal/messaging	8.341s
+ok  	aide/internal/server/tts	1.530s

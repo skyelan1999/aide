@@ -18,10 +18,32 @@ def check_build_inputs():
         assert ('--from=build', '/opt/aide-message-lan', '/opt/aide/message-lan') in copies, name
 
 PROGRAM = r'''
-import hashlib, json, os, subprocess, tempfile
+import hashlib, json, os, shutil, subprocess, tempfile
 from pathlib import Path
 from docx import Document
 assert os.geteuid() != 0, 'runtime must use its normal non-root user'
+if os.environ.get('AIDE_RUNTIME_PROFILE') == 'slim':
+    for tool in ('go', 'gcc', 'g++', 'cc', 'c++', 'make', 'npm', 'npx'):
+        assert shutil.which(tool) is None, 'unexpected development tool: ' + tool
+    assert not Path('/usr/local/go').exists()
+    assert not Path('/usr/lib/gcc').exists()
+    assert not Path('/usr/local/lib/node_modules').exists()
+    for tool in ('python3', 'node', 'git', 'ssh', 'curl'):
+        assert shutil.which(tool), 'missing runtime tool: ' + tool
+    import sys, ezdxf, openpyxl, pptx, pypdf, cryptography
+    engine = '/usr/local/bin/sherpa-onnx-offline-tts'
+    assert Path(engine).is_file(), 'offline TTS engine missing'
+    assert 'not found' not in subprocess.check_output(['ldd', engine], text=True)
+    assert 'not found' not in subprocess.check_output(['ldd', '/usr/local/bin/node'], text=True)
+    assert sys.version_info[:2] == (3, 12)
+    assert subprocess.check_output(['node', '--version'], text=True).startswith('v24.')
+    with tempfile.TemporaryDirectory() as dxf_directory:
+        dxf_path = Path(dxf_directory) / 'roundtrip.dxf'
+        drawing = ezdxf.new('R2010')
+        drawing.modelspace().add_line((0, 0), (10, 20))
+        drawing.saveas(dxf_path)
+        assert len(ezdxf.readfile(dxf_path).modelspace().query('LINE')) == 1
+
 root = Path('/opt/aide')
 files = []
 def walk_error(error):

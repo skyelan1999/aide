@@ -1,0 +1,85 @@
+{
+  "platform": "linux/arm64",
+  "nativeDockerVM": true,
+  "published": false,
+  "baselineCommit": "ba11253683d9383c3356387f32e46f4e5c35a3a5",
+  "scope": "Controlled local comparison: same application binary/source, previous vs fresh runtime base; not formal release assets",
+  "images": [
+    {
+      "kind": "before",
+      "image": "aide:slim-runtime-baseline-20261023",
+      "imageId": "sha256:be0734a37dd1f1209fc9b55977e5bf9959f7e0ae2cb5356c0df856cc8b7904d1",
+      "imageReportedBytes": 2271274818,
+      "sourceSHA256": "2399170852bed865142d17a526a3524ebebc2c0c9fe0f765dbd403178acfd291",
+      "aideBinarySHA256": "241867d21d38a7214b7abd668a4b390be8047d0c36a3fa0e513dde3789e944b2",
+      "fullBundleBytes": 582421638,
+      "fullBundleSHA256": "434346830b7e624052b2cbcb74cbc58f58640c7c91903bd3fa5d1246778bd7e4",
+      "packageValidation": {
+        "status": "pass",
+        "imageId": "sha256:be0734a37dd1f1209fc9b55977e5bf9959f7e0ae2cb5356c0df856cc8b7904d1",
+        "archiveSHA256": "df996538f6c191edd23a82559e734dfcc45ab1299c9c4ef7c3fe2e62eea820ad"
+      }
+    },
+    {
+      "kind": "after",
+      "image": "aide:slim-runtime-20261023",
+      "imageId": "sha256:c56effd3445ab0017db7aafa2d46fbf22c47a2e8435eba5359882ed05b5f13a3",
+      "imageReportedBytes": 1321503635,
+      "sourceSHA256": "2399170852bed865142d17a526a3524ebebc2c0c9fe0f765dbd403178acfd291",
+      "aideBinarySHA256": "241867d21d38a7214b7abd668a4b390be8047d0c36a3fa0e513dde3789e944b2",
+      "fullBundleBytes": 359665139,
+      "fullBundleSHA256": "711c88598e1bc75be11dfbb5eff2875cee1e628736d36e758d0089c46ed2bf1a",
+      "packageValidation": {
+        "status": "pass",
+        "imageId": "sha256:c56effd3445ab0017db7aafa2d46fbf22c47a2e8435eba5359882ed05b5f13a3",
+        "archiveSHA256": "73b24566bd96c734be51023f3f23073a1c0584880c873e9a7bc9acc1efa2b0e2"
+      }
+    }
+  ],
+  "savedBytes": 222756499,
+  "savedPercent": 38.246604258202375,
+  "amd64": "not_run",
+  "checks": {
+    "runtimeAssets": "pass: non-root, Office roundtrip, DXF roundtrip, Node24/Python3.12, compiler/npm absence, Node/TTS shared libraries and 12 helper digests",
+    "optionalSTEP": "pass: no STEP engine/plugin; DXF/STL assets retained",
+    "apiSmoke": {
+      "status": "pass",
+      "commit": "unknown",
+      "version": "dev",
+      "installedPlugins": 0,
+      "runtimeMode": "release-image"
+    },
+    "imageLayers": {
+      "status": "pass",
+      "layers": 18,
+      "entries": 15017,
+      "pluginPayloads": 0
+    },
+    "sdkExecution": [
+      "go-sdk-ok",
+      "c-sdk-ok",
+      "11.19.1",
+      "v24.22.1",
+      "Python 3.12.15"
+    ],
+    "sdkOfflineImport": "pass: checksum validated and docker load completed",
+    "browser": "Runtime-card component only, actual source markup/CSS rendered in IAB; not a full workbench/browser model test",
+    "fullGo": {
+      "status": "pass",
+      "command": "AIDE_TEST_TOOLCHAIN_IMAGE=aide:development-toolbox-20261023 AIDE_TEST_WORKERS=1 python3 scripts/test_go_snapshot.py",
+      "processExit": 0,
+      "registeredServerItems": 1187,
+      "disjointShardsPassed": 24,
+      "otherPackagesRace": "pass",
+      "vet": "pass",
+      "logSHA256": "3ed5b0ac5cf124e0bf99b58642721bf766f4bf46d77c232cd771b3d1e6a78020",
+      "allCurrentControlledInputsCompared": 5566,
+      "inputMismatches": 0
+    },
+    "quick": {
+      "status": "pass",
+      "checks": 137,
+      "fingerprint": "9822ab6fa020076ab418f54c8f5bc98d40fa794ce325f841c42fa6374fe3454a"
+    }
+  }
+}

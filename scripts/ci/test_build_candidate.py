@@ -68,11 +68,11 @@ class CandidateContract(unittest.TestCase):
             self.assertEqual(run.call_count, 1)
             inspect.assert_not_called()
 
-    def test_every_image_dependent_check_uses_candidate(self):
+    def test_runtime_checks_use_candidate_and_race_uses_separate_toolchain(self):
         plan = candidate.verification_plan('aide:ci-test-arm64')
         self.assertEqual(len(plan), 4)
         self.assertIn('aide:ci-test-arm64', plan[1][0])
-        self.assertEqual(plan[2][1], {'AIDE_TEST_IMAGE': 'aide:ci-test-arm64', 'AIDE_TEST_WORKERS': '2'})
+        self.assertEqual(plan[2][1], {'AIDE_TEST_TOOLCHAIN_IMAGE': 'aide:ci-test-arm64-test-tools', 'AIDE_TEST_WORKERS': '2'})
         self.assertIn('aide:ci-test-arm64', plan[3][0])
         self.assertFalse(any('verify' in command and 'full' in command for command, _ in plan))
 
@@ -103,6 +103,11 @@ class CandidateContract(unittest.TestCase):
                     item = tarfile.TarInfo(name); item.size = len(value)
                     outer.addfile(item, io.BytesIO(value))
             self.assertEqual(candidate.audit_image_layers(path)['layers'], 1)
+            for tool in ('usr/local/go/bin/go', 'usr/lib/gcc/aarch64/12/cc1',
+                         'usr/local/lib/node_modules/npm/package.json', 'usr/bin/make'):
+                write({tool: b'deleted-in-a-later-layer'})
+                with self.assertRaisesRegex(ValueError, 'Development tool payload'):
+                    candidate.audit_image_layers(path)
             write({'opt/custom/manifest.json': b'{"id":"hidden","main":"index.js"}'})
             with self.assertRaises(ValueError):
                 candidate.audit_image_layers(path)

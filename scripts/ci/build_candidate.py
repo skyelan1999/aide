@@ -62,7 +62,7 @@ def audit_tracked(names):
             raise ValueError('Private state must not be tracked: ' + name)
 
 
-def audit_image_layers(archive):
+def audit_image_layers(archive, allow_development_tools=False):
     """Check every referenced layer, including subsequently deleted payloads."""
     with tarfile.open(archive, 'r|gz') as outer:
         for item in outer:
@@ -85,6 +85,12 @@ def audit_image_layers(archive):
                 for item in inner:
                     entries += 1
                     parts = PurePosixPath(item.name).parts
+                    normalized = '/'.join(x for x in parts if x != '.')
+                    if not allow_development_tools and (normalized == 'usr/local/go' or normalized.startswith('usr/local/go/') or
+                        normalized == 'usr/lib/gcc' or normalized.startswith('usr/lib/gcc/') or
+                        normalized == 'usr/local/lib/node_modules' or normalized.startswith('usr/local/lib/node_modules/') or
+                        normalized in ('usr/bin/gcc', 'usr/bin/g++', 'usr/bin/make', 'usr/local/bin/npm', 'usr/local/bin/npx')):
+                        raise ValueError('Development tool payload in runtime layer: ' + item.name)
                     # System libraries (e.g. Kerberos) legitimately use plugins/.
                     # Aide install roots and any id/main plugin manifest are forbidden.
                     if 'plugins' in parts:
@@ -200,7 +206,7 @@ def verification_plan(image):
     return [
         (['python3', 'scripts/agent-route.py', 'verify', 'quick'], {}),
         (['python3', 'scripts/test_runtime_assets.py', image, '--require-lan-bridge'], {}),
-        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_IMAGE': image, 'AIDE_TEST_WORKERS': '2'}),
+        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_TOOLCHAIN_IMAGE': image + '-test-tools', 'AIDE_TEST_WORKERS': '2'}),
         (['python3', 'scripts/test_optional_step.py', image], {}),
     ]
 
@@ -231,6 +237,9 @@ def main():
     info = json.loads(capture(['docker', 'image', 'inspect', image]))[0]
     if info['Os'] != 'linux' or info['Architecture'] != args.arch or info['Config']['Labels'].get('aide.srcsha') != source:
         raise ValueError('Built image identity mismatch')
+    # Race/vet use the same source in a dedicated toolchain, never the slim runtime.
+    run(['python3', 'scripts/development-toolbox.py', 'build',
+         '--runtime', image, '--image', image + '-test-tools'])
     verification = []
     for command, extra_env in verification_plan(image):
         run(command, env=dict(os.environ, **extra_env))
@@ -246,6 +255,8 @@ def main():
     bundle = out / f'aide-{tag}-full-linux-{args.arch}.zip'
     package = validate_full_package(bundle, tag, args.arch, info['Id'])
     imported = reload_archive(image, archive, args.arch, info['Id'], source, commit, version)
+    from toolbox_candidate import package as package_toolbox
+    toolbox = package_toolbox(image + '-test-tools', tag, args.arch, source, commit, out)
     if source != capture(['bash', 'scripts/aide.sh', 'source-sha']) or commit != capture(['git', 'rev-parse', 'HEAD']):
         raise ValueError('Source changed during candidate build')
     proof = {'status': 'pass', 'candidateOnly': True, 'published': False, 'pluginsBundled': False,
@@ -253,6 +264,7 @@ def main():
              'version': version, 'tag': tag, 'image': image, 'imageId': info['Id'],
              'verification': verification, 'verificationProfile': 'quick plus explicit candidate-image runtime/race/vet/optional-plugin boundary; not a standard full-profile receipt',
              'smoke': result, 'privacy': privacy, 'packageValidation': package, 'importValidation': imported,
+             'toolbox': toolbox,
              'asset': {'name': bundle.name, 'sha256': sha256(bundle), 'bytes': bundle.stat().st_size}}
     (out / 'candidate-proof.json').write_text(json.dumps(proof, indent=2) + '\n')
     print(json.dumps(proof))
