@@ -118,5 +118,12 @@
       "callPreflight": 423
     },
     "binary_sha256": "eb09b9bce33b19a7005f5f98cc878907623ec9986f6312dad8596630f8aed2a1"
+  },
+  "followup": {
+    "request": "再调慢一点点，然后先push",
+    "changes": "Halo 12→14s, plane 16→19s, line 22→26s; negative offsets remain half-cycle; amplitudes unchanged.",
+    "verification": "PASS: background lifecycle, stylesheet/CSP regression and git diff --check. Timing-only adjustment; browser visual acceptance from preceding revision, not repeated.",
+    "deployment": "Not redeployed for this follow-up; 9999 remains 14da0228.",
+    "push": "Authorized current branch push; remote verification recorded after execution."
   }
 }
