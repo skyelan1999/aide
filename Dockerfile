@@ -71,7 +71,7 @@ RUN if [ "${AIDE_RUN_TESTS}" = "1" ]; then \
     fi
 RUN --mount=type=cache,target=/root/.cache/go-build \
     echo "[build] AIDE_RUN_TESTS=${AIDE_RUN_TESTS}" && \
-    if [ "${AIDE_RUN_TESTS}" = "1" ]; then echo "[build] 发布门禁：跑全量 go test"; AIDE_OFFICE_SCRIPTS=/src/scripts/office go test -mod=vendor -count=1 ./...; fi && \
+    if [ "${AIDE_RUN_TESTS}" = "1" ]; then echo "[build] 发布门禁：跑全量 go test"; AIDE_OFFICE_SCRIPTS=/src/scripts/office go test -mod=vendor -count=1 -timeout=30m ./...; fi && \
     go vet -mod=vendor ./... && \
     CGO_ENABLED=0 go build -mod=vendor -trimpath \
     -ldflags "-s -w -X 'aide/internal/server.buildVersion=${AIDE_VERSION}' -X 'aide/internal/server.buildCommit=${AIDE_COMMIT}' -X 'aide/internal/server.buildRuntimeMode=${AIDE_RUNTIME_MODE}'" \

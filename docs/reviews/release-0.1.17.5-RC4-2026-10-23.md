@@ -29,3 +29,7 @@ Current-source remote Aide CI run 39901597014 passed quick, full Go race/vet, Wi
 Existing local preview images and settings backup are retained; session/workspace/settings mounts are preserved. Rollback uses the previous image through the existing launcher slot workflow. Published assets are not replaced; marketplace rollback uses a reviewed listing revert. No full native Windows Docker Desktop launch is claimed; Windows checks are launcher fixtures. Voice cloning, realtime speech-file synthesis, batch synthesis and exhaustive Qwen model validation are outside this acceptance. Media routing weights are heuristic preferences, not measured quality rankings. A locally cancelled remote job may still incur provider cost.
 
 Local full verification: PASS; fingerprint `1f5ff9483021e38c6fdf11fccac570618eabcd85b758565a3a407eeb936f65de`; receipt log `.agent-state/verify-20261023T044451828073Z.log`. All checks exited zero. The release artifact pipeline remains pending at this preflight record.
+
+## RC4 delivery stopped
+
+Run 39905317273 failed before publication: ARM64 exposed an outdated six-file runtime helper inventory gate (the build ships twelve), and AMD64 exceeded the implicit ten-minute complete-package Go test deadline. No RC4 public Release or install assets were published. Issue #42 tracks the gate repair; RC4 tag remains immutable and the corrected release will use the next version.sh patch.
