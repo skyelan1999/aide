@@ -38,6 +38,11 @@
       const credentials=node('details','balance-credentials');credentials.hidden=true;
       credentials.append(node('summary','',t('配置 RAM 费用凭证')));
       credentials.append(node('p','balance-pool-caption',t('仅绑定此 API Key。使用可查询账户余额的 RAM AccessKey，与模型 API Key 分开保存。')));
+      const help=node('p','balance-pool-caption');
+      for(const [label,url] of [['RAM 控制台','https://ram.console.aliyun.com/'],['创建 AccessKey 说明','https://help.aliyun.com/zh/ram/user-guide/create-an-accesskey-pair']]) {
+        const link=node('a','',t(label)+' ↗');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.style.marginRight='12px';help.append(link);
+      }
+      credentials.append(help);
       const form=node('div','balance-credentials-form'), ak=node('input',''),sk=node('input','');
       for(const [input,label] of [[ak,'AccessKey ID'],[sk,'AccessKey Secret']]) {input.type='password';input.placeholder=label;input.setAttribute('aria-label',(provider.name||provider.id)+' / '+(key.label||key.id)+' / '+label);input.autocomplete='new-password';input.spellcheck=false;}
       const error=node('p','balance-pool-error','');error.setAttribute('role','status');

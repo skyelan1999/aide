@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "8 module tests and 148 quick checks passed; targeted Go ProviderSupport/ProviderBilling tests passed. 390px light/dark fixture: no horizontal overflow; alert Apply and reload persistence verified. Safari: both Key cards visible, real DeepSeek balance succeeded, Bailian pending RAM. No real credentials entered; Bailian real balance NOT_RUN. Fixed settings-sheet visibility integration and repeated Safari acceptance. Refinement: 8 module tests and 148 quick checks repeated. Reduced tank to 38x72px and moved threshold/scale controls to one compact row; strong blue normal and red low/empty states checked in desktop and 390px fixture. Actual Safari verified new layout and real balance.",
+      "summary": "8 module tests and 148 quick checks passed; targeted Go ProviderSupport/ProviderBilling tests passed. 390px light/dark fixture: no horizontal overflow; alert Apply and reload persistence verified. Safari: both Key cards visible, real DeepSeek balance succeeded, Bailian pending RAM. No real credentials entered; Bailian real balance NOT_RUN. Fixed settings-sheet visibility integration and repeated Safari acceptance. Refinement: 8 module tests and 148 quick checks repeated. Reduced tank to 38x72px and moved threshold/scale controls to one compact row; strong blue normal and red low/empty states checked in desktop and 390px fixture. Actual Safari verified new layout and real balance. RAM links: official console and AccessKey guide verified from Aliyun documentation and visibly confirmed in expanded Safari card. 148 quick checks repeated; links open in a new tab with noopener/noreferrer.",
       "evidence": [
         "scripts/account-balance-pool.test.cjs",
         ".agent-state/quick.json",
@@ -55,7 +55,8 @@
         ".agent-state/balance-pool-safari.png",
         ".agent-state/balance-pool-compact-quick.log",
         ".agent-state/balance-pool-compact-mobile.png",
-        ".agent-state/balance-pool-compact-safari.png"
+        ".agent-state/balance-pool-compact-safari.png",
+        ".agent-state/balance-pool-ram-links-safari.png"
       ]
     },
     "documentation": {
@@ -74,7 +75,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication. Source branch pushed; PR #37 open, stacked on #36. Release remains pending merge and release gates. Compact refinement locally deployed as aide:balance-pool-compact-20261023, buildCommit=534afc49-balance-compact-dirty; prior preview retained.",
+      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication. Source branch pushed; PR #37 open, stacked on #36. Release remains pending merge and release gates. Compact refinement locally deployed as aide:balance-pool-compact-20261023, buildCommit=534afc49-balance-compact-dirty; prior preview retained. RAM help links locally deployed in aide:balance-pool-ram-links-20261023, buildCommit=eeab0778-ram-links-dirty.",
       "evidence": [
         ".agent-state/balance-pool-build.log",
         ".agent-state/balance-pool-start.log",

@@ -3063,6 +3063,8 @@ Object.assign(window.aideEnglish, {
   "余额由服务商返回，可能为同账户共享额度；不同 Key 不重复合计，不同币种分开显示。报警线仅提醒，不会自动充值或停止任务。": "Provider-returned balances may be shared by keys in the same account. Keys are not summed and currencies remain separate. Alerts do not top up accounts or stop tasks.",
   "等待刷新": "Waiting",
   "尚未更新": "Not updated yet",
+  "RAM 控制台": "RAM console",
+  "创建 AccessKey 说明": "Create an AccessKey guide",
   "配置 RAM 费用凭证": "Configure RAM billing credentials",
   "仅绑定此 API Key。使用可查询账户余额的 RAM AccessKey，与模型 API Key 分开保存。": "Bound only to this API key. Use a RAM AccessKey with balance-query permission; stored separately from the inference key.",
   "费用凭证保存失败，请检查权限或解锁状态": "Could not save billing credentials. Check permissions and vault state.",
