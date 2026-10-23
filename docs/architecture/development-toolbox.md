@@ -39,8 +39,14 @@ python3 scripts/development-toolbox.py run --image aide:toolbox --workspace /abs
 
 - 源码开发环境继续使用 `docker build --target dev -t aide:dev .`。精简发行镜像不能直接作为 `Dockerfile.local` 的源码依赖种子；现有缓存或完整开发镜像仍可使用。
 - `test_go_snapshot.py` 优先读取 `AIDE_TEST_TOOLCHAIN_IMAGE`，兼容旧 `AIDE_TEST_IMAGE`，默认 `aide:dev`。Go race/vet 不在精简运行镜像里执行。
-- 原生发布候选流程单独构建相同源码的 `dev` 测试环境；健康、鉴权、Office、DXF、原生辅助程序和 STEP 可选边界仍检查实际运行候选镜像。
+- 原生发布候选流程从精简候选构建同源码的可选工具包，Go race/vet 在工具包内运行；健康、鉴权、Office、DXF、原生辅助程序和 STEP 可选边界仍检查实际运行候选镜像。
 - 镜像层审计拒绝已在后续层删除的 Go/GCC/npm 载荷，防止表面删文件后仍发布编译器层。
 - Python 依赖和预编译引擎没有拆出；助手本地执行 Go/C/npm 构建的便利性有所变化。后续可以增加明确的工具包执行入口，但本次没有自动授权 Docker 操作或扩大工作区权限。
 
 回滚时切回原有镜像/A/B 槽；数据挂载、端口、启动入口和数据格式不变。卸载可选工具镜像不会删除主程序和项目文件。
+
+## 同版发行附件
+
+周更 Release 同时提供 `aide-<tag>-full-linux-<arch>.zip` 普通包和 `aide-<tag>-devtools-linux-<arch>.zip` 可选开发包；两类均有 ARM64/AMD64。开发包包含镜像、内层校验和、身份清单、使用说明、辅助脚本与许可证。外层 ZIP SHA256 与主程序一起列入 Release 的 SHA256SUMS。普通运行包不嵌入开发包。
+
+候选流程在每个原生架构上执行实际 Go/C++/npm 检查、所有层的插件隐私边界审计、归档校验和导入后的重复编译检查；任何一架构或任一类附件缺失都会阻止发布。开发包允许编译器层，但仍拒绝安装插件或用户状态进入镜像。公开发布遵循[每周发布政策](release-cadence.md)。

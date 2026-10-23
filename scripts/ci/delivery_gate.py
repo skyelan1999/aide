@@ -4,6 +4,7 @@
 No build, tag creation, release publication, secret access, or plugin installation.
 """
 import argparse
+import datetime
 import hashlib
 import json
 import os
@@ -39,6 +40,35 @@ def expected_tag():
     return 'v' + version.replace(' RC', '-RC')
 
 
+def check_weekly_cadence(releases, now=None):
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    require(all(r.get('published_at') for r in releases if not r.get('draft')), 'Published release metadata lacks timestamp')
+    published = [datetime.datetime.fromisoformat(r['published_at'].replace('Z', '+00:00'))
+                 for r in releases if not r.get('draft') and r.get('published_at')]
+    if published:
+        earliest = max(published) + datetime.timedelta(days=7)
+        require(now >= earliest, 'Weekly release limit: next publication no earlier than ' + earliest.isoformat())
+
+
+def cadence():
+    repo = os.environ['GH_REPO']
+    require(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo), 'Invalid repository')
+    records = json.loads(capture(['gh', 'api', f'repos/{repo}/releases?per_page=100']))
+    check_weekly_cadence(records)
+    print('PASS: weekly public release cadence')
+
+
+def release_notes(tag):
+    path = ROOT / 'docs/releases' / (tag + '.md')
+    require(path.is_file(), 'Missing reviewed human-readable release notes: ' + str(path))
+    text = path.read_text().strip()
+    require(text.splitlines()[0] == '# aide ' + tag, 'Release notes must name the exact release tag')
+    for title in ('新增与改进', '修复', '升级影响', '已知问题'):
+        require('## ' + title in text, 'Release notes missing section: ' + title)
+    require(len(text) >= 150 and 'TODO' not in text, 'Release notes are incomplete')
+    return text + '\n'
+
+
 def source():
     sha = capture(['git', 'rev-parse', 'HEAD'])
     subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'origin/main'], cwd=ROOT, check=True)
@@ -47,6 +77,8 @@ def source():
     if tag:
         require(tag == expected_tag(), 'Release tag must match scripts/version.sh')
         require(capture(['git', 'rev-parse', 'refs/tags/' + tag + '^{}']) == sha, 'Release tag must identify this main commit')
+        release_notes(tag)
+        cadence()
     output = f'sha={sha}\ntag={tag}\npublish={str(bool(tag)).lower()}\n'
     with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
         stream.write(output)
@@ -81,7 +113,20 @@ def validate_candidates(root, tag, sha):
         path = folder / name
         require(not path.is_symlink() and path.is_file(), 'Missing regular asset')
         require(path.stat().st_size == asset.get('bytes') and digest(path) == asset.get('sha256'), 'Asset size or digest mismatch')
-        require({p.name for p in folder.iterdir()} == {name, 'candidate-proof.json'}, 'Unexpected candidate files')
+        toolbox = proof.get('toolbox', {})
+        require(toolbox.get('status') == 'pass' and toolbox.get('image') == image + '-test-tools', 'Missing verified SDK')
+        require((toolbox.get('platform'), toolbox.get('sourceSHA256'), toolbox.get('commit')) ==
+                ('linux/' + arch, source_hash, sha), 'SDK source/platform mismatch')
+        for key in ('checks', 'privacy', 'importValidation', 'packageValidation'):
+            require(toolbox.get(key, {}).get('status') == 'pass', 'Incomplete SDK verification: ' + key)
+        require(toolbox['privacy'].get('pluginPayloads') == 0, 'SDK contains plugins')
+        sdk = toolbox['asset']
+        sdk_name = f'aide-{tag}-devtools-linux-{arch}.zip'
+        sdk_path = folder / sdk_name
+        require(sdk.get('name') == sdk_name and not sdk_path.is_symlink() and sdk_path.is_file(), 'Invalid SDK asset')
+        require(sdk_path.stat().st_size == sdk.get('bytes') and digest(sdk_path) == sdk.get('sha256'), 'SDK asset size or digest mismatch')
+        expected[sdk_name] = {'bytes': sdk_path.stat().st_size, 'sha256': sdk['sha256']}
+        require({p.name for p in folder.iterdir()} == {name, sdk_name, 'candidate-proof.json'}, 'Unexpected candidate files')
         expected[name] = {'bytes': path.stat().st_size, 'sha256': asset['sha256']}
     require(len(sources) == 1, 'Architectures use different source inputs')
     return expected, sources.pop()
@@ -94,8 +139,10 @@ def artifacts(root):
     require(source_hash == capture(['bash', 'scripts/aide.sh', 'source-sha']), 'Candidate source differs from publisher checkout')
     notes = {'tag': tag, 'commit': sha, 'sourceSHA256': source_hash, 'pluginsBundled': False,
              'architectures': ['linux/arm64', 'linux/amd64'], 'assets': expected,
+             'optionalDevelopmentTools': True, 'cadence': 'at most one public release every 7 days',
              'checks': 'Native build, full repository verification, isolated auth/runtime smoke, all image layers, package CRC and SHA256; Windows PowerShell 5.1 and 7 launcher fixtures.',
              'limits': 'No native Windows Docker Desktop or macOS host launch acceptance; no production deployment.'}
+    (root / 'RELEASE-NOTES.md').write_text(release_notes(tag))
     (root / 'RELEASE-ASSETS.txt').write_text(json.dumps(notes, ensure_ascii=False, indent=2) + '\n')
     expected['RELEASE-ASSETS.txt'] = {'bytes': (root / 'RELEASE-ASSETS.txt').stat().st_size, 'sha256': digest(root / 'RELEASE-ASSETS.txt')}
     (root / 'SHA256SUMS').write_text(''.join(v['sha256'] + '  ' + name + '\n' for name, v in sorted(expected.items())))
@@ -121,6 +168,7 @@ def remote(root):
     release = json.loads(capture(['gh', 'api', f'repos/{repo}/releases/{release_id}']))
     require(release.get('id') == release_id and release.get('tag_name') == tag, 'Remote release identity mismatch')
     require(release['draft'] is True, 'Expected an unpublished draft')
+    require(release.get('body', '').strip() == (root / 'RELEASE-NOTES.md').read_text().strip(), 'Remote release notes mismatch')
     assets = {a['name']: a for a in release['assets']}
     require(set(assets) == set(expected), 'Unexpected or missing remote assets')
     for name, value in expected.items():
@@ -130,11 +178,11 @@ def remote(root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['source', 'artifacts', 'remote'])
+    parser.add_argument('mode', choices=['source', 'artifacts', 'remote', 'cadence'])
     parser.add_argument('--root', type=Path, default=ROOT / '.agent-state/delivery')
     args = parser.parse_args()
-    if args.mode == 'source':
-        source()
+    if args.mode in ('source', 'cadence'):
+        globals()[args.mode]()
     else:
         globals()[args.mode](args.root)
 

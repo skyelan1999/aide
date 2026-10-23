@@ -1,0 +1,56 @@
+{
+  "status": "local_checks_pass",
+  "publiclyReleased": false,
+  "nativeSDKArchitecturesAccepted": [
+    "arm64-protocol-only"
+  ],
+  "nativeAMD64": "pending reviewed main CI candidate",
+  "quick": {
+    "status": "pass",
+    "checks": 137,
+    "fingerprint": "38d1834aba59b0df497d39236c423e66fc78d8fd08891dd5a7f852cb395f0196"
+  },
+  "ciContracts": 20,
+  "actionlint": "pass 1.7.12",
+  "liveCadence": "New RC7 published at 2026-10-23T12:36:05Z blocks immediate release until 2026-10-30T12:36:05Z",
+  "sdkProtocol": {
+    "status": "pass",
+    "image": "aide:development-toolbox-20261023",
+    "imageId": "sha256:36c20ec14332db2d4981e82f52a0a24a271040ffefb80d97d3dfbf5858cc4e28",
+    "platform": "linux/arm64",
+    "sourceSHA256": "673bebe0341f25ec8acac6b12940df2ae61b836c3a5f060c8311764272b84c10",
+    "commit": "local-protocol-test",
+    "checks": {
+      "status": "pass",
+      "go": "go version go1.26.10 linux/arm64",
+      "npm": "11.19.1",
+      "cppCompiled": true,
+      "uid": 1000,
+      "network": "none"
+    },
+    "privacy": {
+      "status": "pass",
+      "layers": 22,
+      "entries": 37573,
+      "pluginPayloads": 0
+    },
+    "importValidation": {
+      "status": "pass",
+      "go": "go version go1.26.10 linux/arm64",
+      "npm": "11.19.1",
+      "cppCompiled": true,
+      "uid": 1000,
+      "network": "none"
+    },
+    "packageValidation": {
+      "status": "pass",
+      "archiveSHA256": "04e235a27103cbbe867eec21c0a3b14e4fda25802053064c18a2897a926af152"
+    },
+    "asset": {
+      "name": "aide-v0.1.17.5-RC7-devtools-linux-arm64.zip",
+      "bytes": 504713183,
+      "sha256": "347ced84a810c663599795944a244dce157ba2697b4dbfa88aac4c01a7a048fd"
+    }
+  },
+  "scope": "Existing ARM64 SDK validates archive/compile/import protocol only; not an official RC7 SDK and not a current-source dual-architecture release"
+}

@@ -41,6 +41,8 @@ jobs:
         id: identity
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: python3 scripts/ci/delivery_gate.py source
       - name: Recheck current source contracts
         run: |
@@ -74,6 +76,7 @@ jobs:
           name: aide-candidate-${{ matrix.arch }}
           path: |
             .agent-state/ci-candidate/${{ matrix.arch }}/*-full-linux-*.zip
+            .agent-state/ci-candidate/${{ matrix.arch }}/*-devtools-linux-*.zip
             .agent-state/ci-candidate/${{ matrix.arch }}/candidate-proof.json
           include-hidden-files: true
           if-no-files-found: error
@@ -99,6 +102,9 @@ jobs:
   publish:
     if: needs.source.outputs.publish == 'true'
     needs: [source, native, windows]
+    concurrency:
+      group: aide-public-release
+      cancel-in-progress: false
     environment: aide-release
     permissions:
       contents: write
@@ -127,9 +133,11 @@ jobs:
             echo 'Release already exists; refuse overwrite.' >&2
             exit 1
           fi
-          gh release create "$RELEASE_TAG" --verify-tag --target "$RELEASE_SHA" --draft --prerelease --title "aide $RELEASE_TAG" --notes-file .agent-state/delivery/RELEASE-ASSETS.txt
+          python3 scripts/ci/delivery_gate.py cadence
+          gh release create "$RELEASE_TAG" --verify-tag --target "$RELEASE_SHA" --draft --prerelease --title "aide $RELEASE_TAG" --notes-file .agent-state/delivery/RELEASE-NOTES.md
           gh release upload "$RELEASE_TAG" .agent-state/delivery/aide-candidate-*/*.zip .agent-state/delivery/SHA256SUMS .agent-state/delivery/RELEASE-ASSETS.txt
       - name: Verify independently reported remote hashes before publication
         run: |
           python3 scripts/ci/delivery_gate.py remote --root .agent-state/delivery
+          python3 scripts/ci/delivery_gate.py cadence
           gh release edit "$RELEASE_TAG" --draft=false
