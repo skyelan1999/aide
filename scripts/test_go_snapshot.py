@@ -17,10 +17,14 @@ ROOT = Path(__file__).resolve().parents[1]
 # Keep every server test while avoiding one package-wide deadline for the
 # growing suite. Compile race instrumentation once, then run disjoint shards
 # in separate processes. Other packages and vet retain their ordinary paths.
+# Allow the complete server inventory, remaining race packages, and vet to finish.
+# The host deadline includes extraction and graceful container termination.
+SUITE_TIMEOUT_SECONDS = 75 * 60
+HOST_TIMEOUT_SECONDS = SUITE_TIMEOUT_SECONDS + 50
 COMMAND = ('set -euo pipefail; snapshot=$(mktemp -d /tmp/aide-verify.XXXXXX); '
            'tar --no-same-owner -xf - -C "$snapshot"; cd "$snapshot"; '
            'export AIDE_OFFICE_SCRIPTS="$snapshot/scripts/office"; '
-           'timeout --signal=TERM --kill-after=10s 45m bash -c '
+           f'timeout --signal=TERM --kill-after=10s {SUITE_TIMEOUT_SECONDS}s bash -c '
            "'go test -mod=vendor -race -c -o server.test ./internal/server && "
            'python3 scripts/run_go_test_shards.py "$PWD/server.test" --cwd internal/server --workers="${AIDE_TEST_WORKERS:-1}" && '
            'go test -mod=vendor -race -count=1 -timeout=18m '
@@ -58,7 +62,7 @@ def main():
                             '--name', container, '--workdir', '/tmp', '-e', 'AIDE_BUILTIN_PLUGINS=', '-e', 'AIDE_TEST_WORKERS=' + workers,
                             # Reserve headroom for race shadow memory outside the Go heap.
                             '-e', 'GOMEMLIMIT=2GiB', '-e', 'GOGC=50', '--entrypoint',
-                            'bash', image, '-c', COMMAND], stdin=payload, check=True, timeout=2750)
+                            'bash', image, '-c', COMMAND], stdin=payload, check=True, timeout=HOST_TIMEOUT_SECONDS)
         finally:
             # A failed run or interrupt must not leave this runner's container behind.
             try:

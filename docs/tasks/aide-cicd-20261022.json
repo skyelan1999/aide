@@ -18,7 +18,8 @@
     "scripts/test_offline_bundle.py (Issue #26: headless Linux fixture isolation)",
     "scripts/test_go_snapshot.py (Issue #27: current-source Office binding; opt-in hosted resources)",
     "scripts/run_go_test_shards.py / scripts/test_go_test_shards.py (bounded two-worker CI)",
-    "internal/server/attachments_test.go / comments_test.go (Issue #27: checkout-relative Office fixtures)"
+    "internal/server/attachments_test.go / comments_test.go (Issue #27: checkout-relative Office fixtures)",
+    "scripts/test_resource_guard.py (Issue #28: bounded snapshot deadline contract)"
   ],
   "stages": {
     "requirements": {
@@ -44,12 +45,14 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本地quick144、CI合同12项、分片3项、离线启动13项、actionlint/docs通过。第二次1170项全跑后仅4项/src写死夹具失败，已修正；隔离容器当前源码的Office/附件/批注/远端工作区定向race通过（16s测试时间）。GitHub Actions Results事故仍有结果延迟；完整第三轮待执行。",
+      "summary": "第三轮云端 quick/Windows 通过；1170 项服务器 race 测试全部通过，但其他包检查触及45分钟总时限（退出124），未完成vet，不能合并。Issue #28 已登记；调整快照75分钟、CI90分钟、候选180分钟预算；本地CI合同13项与actionlint通过，待完整重跑。 调整后本地quick144项、CI合同13项、资源边界7项、actionlint和文档检查通过；Issue #27 已按1170项全通过证据关闭。",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/25",
         "https://github.com/skyelan1999/aide/issues/26",
         "https://github.com/skyelan1999/aide/actions/runs/39788449776",
-        "https://github.com/skyelan1999/aide/issues/27"
+        "https://github.com/skyelan1999/aide/issues/27",
+        "https://github.com/skyelan1999/aide/issues/28",
+        "https://github.com/skyelan1999/aide/actions/runs/39800682747"
       ]
     },
     "documentation": {

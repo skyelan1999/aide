@@ -44,7 +44,7 @@ jobs:
           retention-days: 3
   go:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
