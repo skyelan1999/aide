@@ -37,5 +37,230 @@
       "defaultSTEPBoundary": "PASS, DXF/STL assets retained"
     }
   },
-  "publication": "RC6 and plugin0.1.0/market are public; immutable follow-up host patch pending full and native delivery."
+  "publication": {
+    "status": "PASS",
+    "tag": "v0.1.17.5-RC7",
+    "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+    "release": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC7",
+    "deliveryRun": 39949263487,
+    "publicArchive": {
+      "tag": "v0.1.17.5-RC7",
+      "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+      "image": "sha256:65031f665ca63121d168c999c37c2dffa862cecfb12df7631eea7b054bb4c6da",
+      "imageId": "sha256:65031f665ca63121d168c999c37c2dffa862cecfb12df7631eea7b054bb4c6da",
+      "publisherImageId": "sha256:46d92fae2202b9f29f669e472ea9f123e9b49fd083482f35d92957e215a52759",
+      "idFormatResolution": "verified archive import reference + actual platform/source label",
+      "asset": "aide-v0.1.17.5-RC7-full-linux-arm64.zip",
+      "bytes": 631525993,
+      "sha256": "ad95022739ad75e4e4d4cf2334f099340921afc16e00ccb601be7816e83bd47b",
+      "archiveSHA256": "95b4ed74bbc49f18661294d5272f529cbe5c28792d878e049ebc0534105cd36f",
+      "publicRelease": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC7",
+      "zipCRC": "pass",
+      "publicDownload": "pass",
+      "imported": true
+    },
+    "publicMacBootstrap": {
+      "status": "pass",
+      "tag": "v0.1.17.5-RC7",
+      "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+      "version": "0.1.17.5 RC7",
+      "health": "ok",
+      "runtimeMode": "release-image",
+      "imageId": "sha256:65031f665ca63121d168c999c37c2dffa862cecfb12df7631eea7b054bb4c6da",
+      "launcher": "Unmodified published scripts; only isolated slot alias, port18491 and compose project configured",
+      "startupHelpers": "All22 mandatory startup files present; actual Mac start.command exit0",
+      "production9999": "not operated",
+      "optionalBrowserBridges": "Not invoked: node is absent from the standard system-only PATH used for this fixture"
+    },
+    "marketplace": {
+      "status": "pass",
+      "url": "https://skyelan1999.github.io/aide-pkg-shop/",
+      "sourceCommit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+      "marketPR": "https://github.com/skyelan1999/aide-pkg-shop/pull/7",
+      "mergeCommit": "57e7ebca1684f728c05caa1903994ff0e46d92b4",
+      "pagesRun": 39955074585,
+      "publicPackageCount": 25,
+      "STEPpreserved": "0.1.1",
+      "package": "packages/video-preview/0.1.0-652e923f0a61.zip",
+      "bytes": 45079,
+      "sha256": "652e923f0a6158681974486b91dfafe2723b8ce18de325de208be9bee31ce396",
+      "recommendedHost": "0.1.17.5 RC7"
+    },
+    "pluginEvidenceCommit": "b9539dce47692bab2e79338574bebb66cab993e5",
+    "cleanup": "Owned Safari18490 page closed, user9999 page preserved. Owned18490/18491 containers and fixture helpers stopped; recovery data retained. Production9999 not operated by this task.",
+    "nativeCandidatesBeforePublication": [
+      {
+        "platform": "linux/arm64",
+        "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+        "sourceSHA256": "f0a9d1e11a9b3f82d82c7f1ea81cff903d9551b23c7dfafb03151da7568a59f4",
+        "version": "0.1.17.5 RC7",
+        "imageId": "sha256:46d92fae2202b9f29f669e472ea9f123e9b49fd083482f35d92957e215a52759",
+        "verificationProfile": "quick plus explicit candidate-image runtime/race/vet/optional-plugin boundary; not a standard full-profile receipt",
+        "verification": [
+          {
+            "command": [
+              "python3",
+              "scripts/agent-route.py",
+              "verify",
+              "quick"
+            ],
+            "environmentOverrides": {},
+            "status": "pass"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/test_runtime_assets.py",
+              "aide:ci-47c9e4486001-arm64",
+              "--require-lan-bridge"
+            ],
+            "environmentOverrides": {},
+            "status": "pass"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/test_go_snapshot.py"
+            ],
+            "environmentOverrides": {
+              "AIDE_TEST_IMAGE": "aide:ci-47c9e4486001-arm64",
+              "AIDE_TEST_WORKERS": "2"
+            },
+            "status": "pass"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/test_optional_step.py",
+              "aide:ci-47c9e4486001-arm64"
+            ],
+            "environmentOverrides": {},
+            "status": "pass"
+          }
+        ],
+        "smoke": {
+          "status": "pass",
+          "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+          "version": "0.1.17.5 RC7",
+          "installedPlugins": 0,
+          "runtimeMode": "release-image"
+        },
+        "privacy": {
+          "status": "pass",
+          "layers": 23,
+          "entries": 45207,
+          "pluginPayloads": 0
+        },
+        "packageValidation": {
+          "status": "pass",
+          "imageId": "sha256:46d92fae2202b9f29f669e472ea9f123e9b49fd083482f35d92957e215a52759",
+          "archiveSHA256": "95b4ed74bbc49f18661294d5272f529cbe5c28792d878e049ebc0534105cd36f"
+        },
+        "importValidation": {
+          "status": "pass",
+          "imageId": "sha256:46d92fae2202b9f29f669e472ea9f123e9b49fd083482f35d92957e215a52759",
+          "platform": "linux/arm64",
+          "sourceSHA256": "f0a9d1e11a9b3f82d82c7f1ea81cff903d9551b23c7dfafb03151da7568a59f4",
+          "smoke": {
+            "status": "pass",
+            "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+            "version": "0.1.17.5 RC7",
+            "installedPlugins": 0,
+            "runtimeMode": "release-image"
+          }
+        },
+        "asset": {
+          "name": "aide-v0.1.17.5-RC7-full-linux-arm64.zip",
+          "sha256": "ad95022739ad75e4e4d4cf2334f099340921afc16e00ccb601be7816e83bd47b",
+          "bytes": 631525993
+        }
+      },
+      {
+        "platform": "linux/amd64",
+        "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+        "sourceSHA256": "f0a9d1e11a9b3f82d82c7f1ea81cff903d9551b23c7dfafb03151da7568a59f4",
+        "version": "0.1.17.5 RC7",
+        "imageId": "sha256:83fa14d151d23b014589aae1280e3cf72c431ca7ea1a36638312d280b7f0fe6f",
+        "verificationProfile": "quick plus explicit candidate-image runtime/race/vet/optional-plugin boundary; not a standard full-profile receipt",
+        "verification": [
+          {
+            "command": [
+              "python3",
+              "scripts/agent-route.py",
+              "verify",
+              "quick"
+            ],
+            "environmentOverrides": {},
+            "status": "pass"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/test_runtime_assets.py",
+              "aide:ci-47c9e4486001-amd64",
+              "--require-lan-bridge"
+            ],
+            "environmentOverrides": {},
+            "status": "pass"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/test_go_snapshot.py"
+            ],
+            "environmentOverrides": {
+              "AIDE_TEST_IMAGE": "aide:ci-47c9e4486001-amd64",
+              "AIDE_TEST_WORKERS": "2"
+            },
+            "status": "pass"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/test_optional_step.py",
+              "aide:ci-47c9e4486001-amd64"
+            ],
+            "environmentOverrides": {},
+            "status": "pass"
+          }
+        ],
+        "smoke": {
+          "status": "pass",
+          "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+          "version": "0.1.17.5 RC7",
+          "installedPlugins": 0,
+          "runtimeMode": "release-image"
+        },
+        "privacy": {
+          "status": "pass",
+          "layers": 22,
+          "entries": 45120,
+          "pluginPayloads": 0
+        },
+        "packageValidation": {
+          "status": "pass",
+          "imageId": "sha256:83fa14d151d23b014589aae1280e3cf72c431ca7ea1a36638312d280b7f0fe6f",
+          "archiveSHA256": "cf9b9e4ee8e3708a4c6d93956dc229d93adecd54f476d72ea6dec06e303582c5"
+        },
+        "importValidation": {
+          "status": "pass",
+          "imageId": "sha256:83fa14d151d23b014589aae1280e3cf72c431ca7ea1a36638312d280b7f0fe6f",
+          "platform": "linux/amd64",
+          "sourceSHA256": "f0a9d1e11a9b3f82d82c7f1ea81cff903d9551b23c7dfafb03151da7568a59f4",
+          "smoke": {
+            "status": "pass",
+            "commit": "47c9e4486001549534b9c36e0fe0d5d5d8447114",
+            "version": "0.1.17.5 RC7",
+            "installedPlugins": 0,
+            "runtimeMode": "release-image"
+          }
+        },
+        "asset": {
+          "name": "aide-v0.1.17.5-RC7-full-linux-amd64.zip",
+          "sha256": "1c233288f2dee8335fb1c0d23beea3348b576edcc9f8bf20ef0798f5028c5ae6",
+          "bytes": 634173422
+        }
+      }
+    ]
+  }
 }

@@ -69,22 +69,26 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Reviewed scoped changes. Stopped owned18491 clean-extraction test container and local-mounts/message-lan helpers; retained recovery data. One owned18490 Safari acceptance page remains for final release verification, no extra component tabs. Production9999 not operated by this task.",
+      "summary": "Owned Safari18490 page closed, user9999 page preserved. Owned18490/18491 containers and fixture helpers stopped; recovery data retained. Production9999 not operated by this task.",
       "evidence": [
         "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
         "https://github.com/skyelan1999/aide-pkg-VideoPreview/tree/3935bcde407a85be372909f9fabca697b2da151c"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "RC6/VideoPreview0.1.0/marketPR6 already public. Preparing immutable RC7 follow-up for actual Mac issues52/53; source full passed and no production upgrade requested.",
+      "status": "pass",
+      "summary": "User-authorized PR47 merge; public VideoPreview0.1.0 with exact source and both engine assets; immutable host RC7 published at47c9e448 after combined full and native two-CPU verification. Actual anonymous ARM64 ZIP download/import and unmodified-script Mac startup/CA health/version/commit passed. MarketPR7 merged; Pages and anonymous catalog/package/routing hashes passed. Human-readable release summaries published; no production deployment.",
       "evidence": [
-        "https://github.com/skyelan1999/aide/pull/47",
-        "https://github.com/skyelan1999/aide-pkg-shop/pull/6"
+        "docs/reviews/20261023/video-preview-mac-release-evidence.json",
+        "https://github.com/skyelan1999/aide/actions/runs/39949263487",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC7",
+        "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/b9539dce47692bab2e79338574bebb66cab993e5/docs/release-0.1.0.json",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/7",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/39955074585"
       ]
     }
   },
   "release_authorization": "2026-10-23 user: 那你直接合并发布吧，主程序、视频预览插件和市场都更新好。 User explicitly requested direct merge after GitHub same-author approval restriction was explained. PR47 merged via authorized admin merge; no branch-protection change or fabricated review.",
-  "rollback": "No production/data migration or replacement. Keep existing9999 running. To undo host change revert PR47 via normal reviewed change; use previous published RC5 package/immutable tag for a manual runtime rollback with existing data backup. Disable video-preview to restore native file handling; do not automatically delete user files or shared caches. RC5 tag remains immutable.",
-  "handoff": "Original RC5/STEP/marketPR5 release completed in original thread. This independent checkout owns RC7/video market follow-up; retains original-thread Auto fix ba112536. Original thread acknowledged no concurrent main push or version bump."
+  "rollback": "Production9999 was not upgraded and its data were not migrated. Disable video-preview to return to native preview handling; preserve engine cache/user files. Keep old immutable tags/assets for recovery, but use RC7 rather than known-broken RC6 full ZIP for new bootstrap. Any source revert must preserve data and follow a normal scoped change.",
+  "handoff": "RC7/video/market publication complete. Source tag47c9e448 and all previous public tags/assets remain immutable. Later runtime-SDK slimming remains a separate branch and is outside this release. Release coordination can return to original thread after this documentation-only completion report."
 }
