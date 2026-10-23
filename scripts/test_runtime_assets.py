@@ -37,9 +37,11 @@ assert files, 'application assets are missing'
 if os.environ.get('AIDE_REQUIRE_LAN_BRIDGE') == '1':
     bridge = root / 'message-lan'
     entries = dict(line.split()[::-1] for line in (bridge / 'SHA256SUMS').read_text().splitlines())
-    required = {'aide-message-lan-' + platform + suffix for platform, suffix in (
-        ('darwin-arm64', ''), ('darwin-amd64', ''), ('linux-arm64', ''),
-        ('linux-amd64', ''), ('windows-arm64', '.exe'), ('windows-amd64', '.exe'))}
+    required = {family + '-' + platform + suffix
+        for family in ('aide-message-lan', 'aide-local-mounts')
+        for platform, suffix in (
+            ('darwin-arm64', ''), ('darwin-amd64', ''), ('linux-arm64', ''),
+            ('linux-amd64', ''), ('windows-arm64', '.exe'), ('windows-amd64', '.exe'))}
     assert set(entries) == required, 'native LAN platform inventory mismatch'
     for name, digest in entries.items():
         assert hashlib.sha256((bridge / name).read_bytes()).hexdigest() == digest, name

@@ -46,5 +46,40 @@ class SnapshotEnvironmentTests(unittest.TestCase):
             run.assert_not_called()
 
 
+class NativeDeliveryGateTests(unittest.TestCase):
+    def test_build_stage_full_suite_has_explicit_package_deadline(self):
+        root = Path(__file__).parents[2]
+        for name in ('Dockerfile', 'Dockerfile.local'):
+            source = (root / name).read_text()
+            self.assertIn('go test -mod=vendor -count=1 -timeout=30m ./...', source)
+            self.assertIn('AIDE_RUN_TESTS', source)
+
+    def test_both_helper_families_are_complete_and_tampering_is_rejected(self):
+        import hashlib
+        spec = importlib.util.spec_from_file_location('assets', Path(__file__).parents[1] / 'test_runtime_assets.py')
+        assets = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(assets)
+        # Run the actual shipped-inventory gate, including its checksum reads.
+        gate = 'if os.environ.get' + assets.PROGRAM.split('if os.environ.get', 1)[1].split('with tempfile.TemporaryDirectory()', 1)[0]
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(os.environ, {'AIDE_REQUIRE_LAN_BRIDGE': '1'}):
+            root = Path(temporary); bridge = root / 'message-lan'; bridge.mkdir()
+            entries = []
+            for family in ('aide-message-lan', 'aide-local-mounts'):
+                for platform in ('darwin-arm64', 'darwin-amd64', 'linux-arm64', 'linux-amd64', 'windows-arm64.exe', 'windows-amd64.exe'):
+                    path = bridge / (family + '-' + platform)
+                    path.write_bytes(b'native fixture ' + path.name.encode())
+                    entries.append(hashlib.sha256(path.read_bytes()).hexdigest() + '  ' + path.name)
+            sums = bridge / 'SHA256SUMS'; sums.write_text('\n'.join(entries) + '\n')
+            namespace = {'root': root, 'os': os, 'hashlib': hashlib}
+            exec(gate, namespace)
+            sums.write_text('\n'.join(entries[:-1]) + '\n')
+            with self.assertRaisesRegex(AssertionError, 'inventory mismatch'):
+                exec(gate, namespace)
+            sums.write_text('\n'.join(entries) + '\n')
+            (bridge / 'aide-local-mounts-linux-arm64').write_bytes(b'tampered')
+            with self.assertRaises(AssertionError):
+                exec(gate, namespace)
+
+
 if __name__ == '__main__':
     unittest.main()

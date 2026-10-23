@@ -1,0 +1,68 @@
+{
+  "id": "native-release-gates-20261023",
+  "request": "Repair issue #42 native delivery inventory and bounded build-stage Go suite deadline, then complete the authorized core release.",
+  "baseline": "36811c69fffc226e3578431518e34dbc49bc41e9",
+  "initial_status": "M Dockerfile\n M Dockerfile.local\n M scripts/ci/test_snapshot_environment.py\n M scripts/test_runtime_assets.py",
+  "acceptance": [
+    "Both helper families and all six platforms are checksum-verified; missing and tampered helpers fail.",
+    "Build-stage tests remain complete with an explicit bounded package deadline.",
+    "Full current-source regression and dual-native release pipeline pass before publication."
+  ],
+  "scope": [
+    "Dockerfile and Dockerfile.local full test deadline",
+    "scripts/test_runtime_assets.py inventory and CI contract tests",
+    "Issue #42 review/task records and existing authorized version/release pipeline"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Native delivery run 39905317273 rejected the valid twelve-helper inventory and exhausted the implicit ten-minute package test deadline.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/42",
+        "scripts/ci/test_snapshot_environment.py"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Require both existing helper families on all six targets; preserve exact inventory/hash verification and full tests with a bounded thirty-minute package deadline.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/42",
+        "scripts/ci/test_snapshot_environment.py"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Inventory corrected and both Dockerfiles use explicit timeout; negative missing/tampered helper regressions added.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/42",
+        "scripts/ci/test_snapshot_environment.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "15 CI contract tests pass; actual non-root runtime inventory and Office round-trip pass with all twelve helpers. Current full regression and corrected native delivery remain required.",
+      "evidence": [
+        "scripts/ci/test_snapshot_environment.py",
+        "scripts/test_runtime_assets.py"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested push release for main application and plugins plus marketplace; issue #42 is a necessary release-gate repair.",
+  "rollback": "Keep the RC4 tag immutable and the existing local working preview; no production data or settings changes. Failed RC4 has no public release assets.",
+  "handoff": ""
+}
