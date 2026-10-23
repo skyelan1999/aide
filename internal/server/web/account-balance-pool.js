@@ -90,7 +90,7 @@
         });
         apply.setAttribute('aria-label',(account.provider.name||account.provider.id)+' / '+(account.key.label||account.key.id)+' / '+amount.currency+' / '+t('应用报警设置'));
         controls.append(apply);
-        detail.append(controls);row.append(tank,detail);account.body.append(row);
+        row.append(tank,detail);account.body.append(row,controls);
       }
       const critical=account.gauges.some(g=>g.empty),low=account.gauges.some(g=>g.low);
       account.card.dataset.state=account.stale?'stale':critical?'empty':low?'low':'ready';

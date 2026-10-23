@@ -1765,33 +1765,33 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .local-mount-settings{display:grid;gap:14px;min-width:0}.local-mount-list{display:grid;gap:12px}.local-mount-card{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.local-mount-row{display:flex;gap:8px;align-items:center;min-width:0}.local-mount-row input{flex:1;min-width:0}.local-mount-row select{width:100px;flex:none}.local-mount-actions{display:flex;gap:8px;flex-wrap:wrap}.local-mount-notice{margin:0;padding:12px;border-left:3px solid var(--brand);background:var(--selected);overflow-wrap:anywhere}.local-mount-card small{overflow-wrap:anywhere}#ws-browse-mount{width:100%;margin-bottom:12px}@media(max-width:540px){.local-mount-card{padding:10px}.local-mount-row{flex-wrap:wrap}.local-mount-row input{flex-basis:100%}.local-mount-actions button{flex:1 1 45%}}
 
 /* Account balances are separate provider-returned amounts, never a cash total. */
-.token-stats .account-balance-pool{margin:14px 0 18px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
-.token-stats .balance-pool-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.token-stats .account-balance-pool{--wb-field-height:26px;--wb-field-pad-y:3px;--wb-field-pad-x:6px;--wb-field-font:10px;--balance-alert:#cc3044;margin:10px 0 14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
+.token-stats .balance-pool-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .token-stats .balance-pool-header h4{font-size:13px;line-height:1.4;margin:0;color:var(--text)}
 .token-stats .balance-pool-caption{font-size:10px;line-height:1.5;margin:5px 0 0;color:var(--muted);overflow-wrap:anywhere}
-.token-stats .balance-pool-summary{font-size:10px;margin:0 0 12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.token-stats .balance-pool-summary[data-warning=true]{color:var(--danger,#d65c48)}
+.token-stats .balance-pool-summary{font-size:10px;margin:0 0 8px;color:var(--muted);font-variant-numeric:tabular-nums}
+.token-stats .balance-pool-summary[data-warning=true]{color:var(--balance-alert)}
 .token-stats .balance-pool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
-.token-stats .balance-account-card{--balance-color:var(--accent,#3b82f6);padding:12px;border:1px solid var(--line-faint);border-radius:9px;background:var(--bg);min-width:0}
-.token-stats .balance-account-card[data-state=low]{--balance-color:#d49a36;border-color:color-mix(in srgb,#d49a36 40%,var(--line))}
-.token-stats .balance-account-card[data-state=empty]{--balance-color:#d65c48;border-color:color-mix(in srgb,#d65c48 40%,var(--line))}
+.token-stats .balance-account-card{--balance-color:#2563eb;padding:10px;border:1px solid var(--line-faint);border-radius:9px;background:var(--bg);min-width:0}
+.token-stats .balance-account-card[data-state=low]{--balance-color:var(--balance-alert);border-color:color-mix(in srgb,var(--balance-alert) 45%,var(--line))}
+.token-stats .balance-account-card[data-state=empty]{--balance-color:var(--balance-alert);border-color:color-mix(in srgb,var(--balance-alert) 45%,var(--line))}
 .token-stats .balance-account-card[data-state=stale],.token-stats .balance-account-card[data-state=pending]{--balance-color:var(--muted)}
-.token-stats .balance-account-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
+.token-stats .balance-account-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
 .token-stats .balance-account-head strong{display:block;font-size:11px;line-height:1.5;color:var(--text);overflow-wrap:anywhere}
 .token-stats .balance-account-key{display:block;font-size:10px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
 .token-stats .balance-account-badge{flex-shrink:0;font-size:9px;line-height:1.5;border-radius:4px;padding:2px 5px;color:var(--balance-color);background:color-mix(in srgb,var(--balance-color) 9%,transparent)}
-.token-stats .balance-water-row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;margin:8px 0}
-.token-stats .balance-water-tank{position:relative;height:96px;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--balance-color) 5%,transparent)}
-.token-stats .balance-water{position:absolute;bottom:0;width:100%;background:linear-gradient(0deg,color-mix(in srgb,var(--balance-color) 65%,transparent),color-mix(in srgb,var(--balance-color) 30%,transparent));transition:height .7s ease}
-.token-stats .balance-water:before{content:'';position:absolute;left:-50%;top:-5px;width:200%;height:12px;border-radius:45%;background:color-mix(in srgb,var(--balance-color) 24%,transparent);animation:balance-water-wave 4s ease-in-out infinite alternate}
-.token-stats .balance-alarm-line{position:absolute;left:0;right:0;height:0;border-top:1px dashed #d49a36;z-index:1}
-.token-stats .balance-amount{font-size:24px;line-height:1.2;letter-spacing:-.5px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.token-stats .balance-water-row{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:center;margin:6px 0}
+.token-stats .balance-water-tank{position:relative;height:72px;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--balance-color) 5%,transparent)}
+.token-stats .balance-water{position:absolute;bottom:0;width:100%;background:linear-gradient(0deg,color-mix(in srgb,var(--balance-color) 95%,transparent),color-mix(in srgb,var(--balance-color) 72%,transparent));transition:height .7s ease,background .25s ease}
+.token-stats .balance-water:before{content:'';position:absolute;left:-50%;top:-5px;width:200%;height:12px;border-radius:45%;background:color-mix(in srgb,var(--balance-color) 60%,transparent);animation:balance-water-wave 4s ease-in-out infinite alternate}
+.token-stats .balance-alarm-line{position:absolute;left:0;right:0;height:0;border-top:1px dashed var(--balance-alert);z-index:1}
+.token-stats .balance-amount{font-size:25px;line-height:1.2;letter-spacing:-.5px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
 .token-stats .balance-currency{display:block;font-size:9px;color:var(--muted);line-height:1.5;margin-top:3px}
-.token-stats .balance-alarm-controls{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:9px}
-.token-stats .balance-alarm-controls label{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)}
-.token-stats .balance-alarm-controls input{width:64px;min-width:0;padding:3px 4px;border:1px solid var(--line);border-radius:4px;font-size:10px;font-variant-numeric:tabular-nums}
-.token-stats .balance-account-updated{font-size:9px;line-height:1.5;color:var(--muted);margin-top:10px}
-.token-stats .balance-pool-action{font:inherit;font-size:10px;line-height:1.4;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--text);white-space:nowrap}
+.token-stats .balance-alarm-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line-faint)}
+.token-stats .balance-alarm-controls label{display:grid;gap:3px;min-width:0;margin:0;font-size:9px;color:var(--muted)}
+.token-stats .balance-alarm-controls input{width:100%;box-sizing:border-box;min-width:0;min-height:26px;height:26px;margin:0;padding:3px 6px;border:1px solid var(--line);border-radius:4px;font-size:10px;font-variant-numeric:tabular-nums}
+.token-stats .balance-account-updated{font-size:9px;line-height:1.5;color:var(--muted);margin-top:6px}
+.token-stats .balance-pool-action{font:inherit;font-size:10px;line-height:1.4;min-height:26px;height:26px;margin:0;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--text);white-space:nowrap}
 .token-stats .balance-pool-action:disabled{opacity:.45}
 .token-stats .balance-credentials{border-top:1px solid var(--line-faint);padding-top:8px;margin-top:8px}
 .token-stats .balance-credentials[hidden]{display:none}
@@ -1800,5 +1800,9 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .token-stats .balance-credentials-form input{min-width:0;width:100%;padding:6px;font-size:10px}
 .token-stats .balance-pool-error{font-size:10px;line-height:1.5;color:var(--danger,#d65c48);margin:6px 0 0}
 .token-stats .balance-pool-error:empty{display:none}
+.token-stats .balance-account-card[data-state=low] .balance-amount,.token-stats .balance-account-card[data-state=empty] .balance-amount{color:var(--balance-color)}
+.token-stats .balance-account-card[data-state=low] .balance-account-badge,.token-stats .balance-account-card[data-state=empty] .balance-account-badge{color:var(--balance-alert);background:color-mix(in srgb,var(--balance-alert) 12%,transparent)}
 @keyframes balance-water-wave{from{transform:translateX(-10%) rotate(-4deg)}to{transform:translateX(10%) rotate(4deg)}}
 @media(prefers-reduced-motion:reduce){.token-stats .balance-water{transition:none}.token-stats .balance-water:before{animation:none}}
+
+[data-theme="dark"] .token-stats .account-balance-pool{--wb-field-height:26px;--wb-field-pad-y:3px;--wb-field-pad-x:6px;--wb-field-font:10px;--balance-alert:#ff7080}

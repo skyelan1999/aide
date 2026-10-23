@@ -7,7 +7,8 @@
     "账户余额池展示所有配置Key，真实余额动态水位、币种分开、不合计共享账户余额",
     "每Key/币种报警线和水位刻度在当前设备持久保存，低余额/耗尽/过期/待RAM状态明确",
     "每分钟自动刷新仅在设置可见时执行，最多2个查询并行，销毁取消，凭证不写入浏览器存储",
-    "RAM配置放入对应卡片，Key身份校验，空值不记作0；实际Safari与窄屏验收"
+    "RAM配置放入对应卡片，Key身份校验，空值不记作0；实际Safari与窄屏验收",
+    "Visual refinement: compact cards and controls; saturated blue water, red water/amount/badge/border at or below the alert threshold; unknown balances remain neutral."
   ],
   "scope": [
     "internal/server/web/account-balance-pool.js",
@@ -44,14 +45,17 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "8 module tests and 148 quick checks passed; targeted Go ProviderSupport/ProviderBilling tests passed. 390px light/dark fixture: no horizontal overflow; alert Apply and reload persistence verified. Safari: both Key cards visible, real DeepSeek balance succeeded, Bailian pending RAM. No real credentials entered; Bailian real balance NOT_RUN. Fixed settings-sheet visibility integration and repeated Safari acceptance.",
+      "summary": "8 module tests and 148 quick checks passed; targeted Go ProviderSupport/ProviderBilling tests passed. 390px light/dark fixture: no horizontal overflow; alert Apply and reload persistence verified. Safari: both Key cards visible, real DeepSeek balance succeeded, Bailian pending RAM. No real credentials entered; Bailian real balance NOT_RUN. Fixed settings-sheet visibility integration and repeated Safari acceptance. Refinement: 8 module tests and 148 quick checks repeated. Reduced tank to 38x72px and moved threshold/scale controls to one compact row; strong blue normal and red low/empty states checked in desktop and 390px fixture. Actual Safari verified new layout and real balance.",
       "evidence": [
         "scripts/account-balance-pool.test.cjs",
         ".agent-state/quick.json",
         ".agent-state/balance-pool-go.log",
         ".agent-state/balance-pool-mobile.png",
         ".agent-state/balance-pool-desktop-dark.png",
-        ".agent-state/balance-pool-safari.png"
+        ".agent-state/balance-pool-safari.png",
+        ".agent-state/balance-pool-compact-quick.log",
+        ".agent-state/balance-pool-compact-mobile.png",
+        ".agent-state/balance-pool-compact-safari.png"
       ]
     },
     "documentation": {
@@ -70,7 +74,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication. Source branch pushed; PR #37 open, stacked on #36. Release remains pending merge and release gates.",
+      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication. Source branch pushed; PR #37 open, stacked on #36. Release remains pending merge and release gates. Compact refinement locally deployed as aide:balance-pool-compact-20261023, buildCommit=534afc49-balance-compact-dirty; prior preview retained.",
       "evidence": [
         ".agent-state/balance-pool-build.log",
         ".agent-state/balance-pool-start.log",
