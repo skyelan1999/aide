@@ -25,6 +25,7 @@ const tick=async()=>{for(let i=0;i<5;i++)await Promise.resolve();};
  const first=context.ttsPlayOne('blob:first','qwen');await tick();const a=context.player._audio;
  assert.equal(created,1,'async synthesis must reuse the gesture-activated element');assert.equal(a.playbackRate,1.2);assert.equal(phases.at(-1),'playing');
  a.currentTime=1;a.onended();await first;assert(revoked.includes('blob:first'));assert.equal(intervals.size,0);
+ context.window.aideAssistantCall={active:()=>true};const callAudio=context.ttsPlayOne('blob:call','qwen');await tick();assert.equal(a.playbackRate,1,'calls do not inherit accelerated narration');a.onended();await callAudio;assert.equal(context.state.config.ttsRate,1.2);delete context.window.aideAssistantCall;
  blocked=true;let settled=false;const second=context.ttsPlayOne('blob:blocked','qwen').then(()=>{settled=true;});await tick();
  assert.equal(phases.at(-1),'blocked');assert.equal(settled,false);assert.equal(typeof retry,'function');
  const blockedRetry=retry;blocked=false;blockedRetry();await tick();assert.equal(phases.at(-1),'playing');assert.equal(a.src,'blob:blocked','gesture retry must reuse audio, not bill another synthesis');

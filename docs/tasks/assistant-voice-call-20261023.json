@@ -19,7 +19,12 @@
     "docs/tasks/assistant-voice-call-20261023.json",
     "docs/assistant-voice-call.md",
     "docs/agent/router.json",
-    "scripts/tts-playback.test.cjs"
+    "scripts/tts-playback.test.cjs",
+    "internal/server/assistant_agent.go",
+    "internal/server/assistant_history.go",
+    "internal/server/assistant_call_test.go",
+    "internal/server/web/assistant-live.js",
+    "scripts/assistant-live.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -84,5 +89,45 @@
   "release_authorization": "",
   "rollback": "切回原发行版本；本次没有部署或数据迁移。",
   "handoff": "真实麦克风识别、回声打断听感、真实云端模型与TTS未验收；浏览器实际验收仅入口、连接、静音、挂断、超时和390px布局（scrollWidth=390）。更改默认播报设置的行为由专项回归验证。",
-  "verification_fingerprint": "98227226e9aecd048d754e705356c9fbaa5ca717bd507e67cd675f0d699fc8f2"
+  "verification_fingerprint": "98227226e9aecd048d754e705356c9fbaa5ca717bd507e67cd675f0d699fc8f2",
+  "local_deployment": {
+    "status": "pass",
+    "time": "2026-10-23T15:07:20Z",
+    "url": "https://localhost:9999",
+    "commit": "825e344569beb0cd9672d729e928f52f079796a3",
+    "image": "aide:assistant-call-825e3445",
+    "backup": ".agent-state/live-backup-20261023T150720Z",
+    "rollback_container": "aide-call-rollback-20261023t150720z",
+    "health": "healthy",
+    "sessions_before": 45,
+    "sessions_after": 45,
+    "voice_assistant_name_preserved": true,
+    "active_runs_before": 0,
+    "live_microphone": "not_run",
+    "published": false
+  },
+  "issue": "https://github.com/skyelan1999/aide/issues/57",
+  "naturalness_followup": {
+    "request": "真实体验：音色/语气、接话等待/打断、回复长度全部不自然",
+    "status": "verified_locally",
+    "changes": [
+      "通话使用独立输入来源与口语提示，最大240token",
+      "未说完的句尾延长至1800ms，已完成转写650ms，interim1200ms",
+      "识别结束后允许重连续句，不立即提交",
+      "后台工作通知不在通话插播",
+      "Qwen通话1倍语速，保存的朗读倍率不变"
+    ],
+    "native_duplex_audio": "not_implemented",
+    "live_subjective_acceptance": "pending",
+    "quick": "pass",
+    "quick_checks": 138,
+    "go_race_top_level_pass": 96,
+    "evidence": [
+      ".agent-state/natural-go.log",
+      ".agent-state/natural-quick.log",
+      "scripts/assistant-live.test.cjs",
+      "scripts/tts-playback.test.cjs"
+    ],
+    "limits": "未验证真人麦克风与模型/TTS听感；仍为分轮通话，没有原生双工音频或流式语音首包"
+  }
 }

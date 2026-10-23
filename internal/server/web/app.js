@@ -10148,7 +10148,7 @@ function ttsPlayOne(url, provider) {
     const a = ttsAudioElement();
     a.src=url;
     a.playbackRate=1;
-    if((provider || state.config?.ttsProvider)==='qwen'){a.playbackRate=Number(state.config?.ttsRate)||1;a.preservesPitch=true;}
+    if((provider || state.config?.ttsProvider)==='qwen'){a.playbackRate=window.aideAssistantCall?.active()?1:(Number(state.config?.ttsRate)||1);a.preservesPitch=true;}
     ttsPlayer._audio = a;
     let done = false;
     const generation=ttsPlayer.generation;
@@ -10353,10 +10353,17 @@ function initAssistantLive(){
       if(navigator.mediaDevices?.getUserMedia)stream=await navigator.mediaDevices.getUserMedia({audio:{...(device?{deviceId:{exact:device}}:{}),echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
       return {recognition,stream};
     },
-    send:(text,signal)=>api(`/sessions/${state.session.id}/assistant-message`,{method:'POST',signal,body:JSON.stringify({text,inputSource:'voice',avatarFeedback:!!window.aideAvatarEnabled?.()})}),
+    send:(text,signal)=>api(`/sessions/${state.session.id}/assistant-message`,{method:'POST',signal,body:JSON.stringify({text,inputSource:window.aideAssistantCall?.active()?'call':'voice',avatarFeedback:!!window.aideAvatarEnabled?.()})}),
     reply:async(result,text)=>{voiceLog('sent',text);if(result.avatarCue)window.aideAvatarCue?.(result.avatarCue);if(result.reply)voiceLog('reply',result.reply);const id=state.session?.id;if(id)await selectSession(id);},
     watch:async()=>{const result=await api(`/sessions/${assistantEntrySession.id}/assistant-watch`);return result.events||[];},
     work:paintWork,
+    announceEvents:()=>!window.aideAssistantCall?.active(),
+    deferRecognitionEnd:()=>!!window.aideAssistantCall?.active(),
+    turnDelay:(text,interim)=>{
+      if(!window.aideAssistantCall?.active())return 1100;
+      if(/(?:我比较|我觉得|就是|因为|但是|然后|之后|之前|如果|假如|所以|一个|一种|想要)[，,\s]*$/.test(text))return 1800;
+      return interim?1200:650;
+    },
     events:events=>{for(const event of events)voiceLog('reply',event.text,t('主动跟进'));},
     speak:text=>(state.config?.voiceReplyEnabled||window.aideAssistantCall?.active())&&document.visibilityState!=='hidden'?ttsSpeak(stripMarkdownForSpeech(text),{awaitMode:true,colloquial:false}):Promise.resolve(),
     interrupted:()=>{voiceLog('standby',t('已打断，正在听你说'));},

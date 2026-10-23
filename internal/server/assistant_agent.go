@@ -55,6 +55,16 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 删除/覆盖/发布等不可逆动作，先在回复里向用户确认，不要直接派发。
 - 先在心里判断，再调工具或回复；工具结果回来后继续判断，必要时再调，最后用一句话收尾（告诉用户你做了什么）。`
 
+// Explicit calls are directed conversation, distinct from ambient listening.
+const assistantCallGuidance = `【当前是用户主动发起的语音通话】
+- 直接接住用户这句话，像面对面说话。默认一两句，约20到60个汉字；用户明确要展开时再分轮说明。不要标题、Markdown、编号、长列表或讲课式长段落。
+- 不要每次先说“记下了”“记好了”“我接住了”；没有真实执行就不要声称已记忆、已催办或一直守着某项任务。闲聊不要反复提后台工作。
+- 转写可能在句中停顿。遇到“我比较”“结婚之后”这类未说完的话，只简短回应“嗯，你接着说”或等候，不替用户补情绪、经历或结论；最多问一个必要的问题。
+- 用户主动通话的内容默认是在对你说，不要把不完整的句子直接判为背景音。没有声音信息，不要推断屋里有几个人、用户是否独处或其心理状态。
+- 工作仍沿既有工具和权限处理；只有明确要求记住的事实才写入长期记忆。任务完成通知保持简短，别打断当前话题。
+- 回复要适合直接听：用短句、自然停顿，保持克制，不模仿夸张语气，不连续追问。
+`
+
 // assistantAgentToolSchemas 小秘 agentic 循环可用的工具 schema（ curated，
 // 不含 run_shell/write_file 等高危工具——小秘不直接操作工作区，只做调度与陪聊）。
 func assistantAgentToolSchemas(allowSilent bool) []any {
@@ -107,7 +117,7 @@ func (a *App) assistantAgentTools(allowSilent bool) []any {
 }
 
 // runAssistantAgenticLoop 小秘 agentic 决策主循环。
-// heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）；inputSource=text/voice。
+// heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）；inputSource=text/voice/call。
 // 调用方不持 a.mu（循环内部按需加锁）；cfg 已注入 APIKey。
 func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx, inputSource string, avatarFeedback ...bool) (assistantDecision, error) {
 	a.mu.Lock()
@@ -136,6 +146,9 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	if inputSource == "text" {
 		sourceGuidance = "【输入来源：键盘文字】这句话是用户直接发给你的消息。请正常理解并回应，或在用户明确要求工作时转交 aide。文字输入不包含背景音，禁止以‘在和别人聊天’、‘背景声’等理由静默；当前没有 be_silent 工具。\n\n"
 	}
+	if inputSource == "call" {
+		sourceGuidance = assistantCallGuidance
+	}
 	system := voiceIdentityPrompt(cfg) + "\n\n" + assistantAgentPrinciples + "\n\n" + sourceGuidance +
 		aideSection +
 		fmt.Sprintf("【aide 的长期记忆（只读参考、绝不修改；它不是你自己的记忆）】\n%s\n\n", aideMem) +
@@ -146,9 +159,12 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	messages = append(messages, Message{Role: "user", Content: heard})
 	// XiaoMi can read the clock, but must not inherit arbitrary workspace plugin tools.
 	avatarEnabled := len(avatarFeedback) > 0 && avatarFeedback[0]
-	tools := withAvatarCueTool(a.assistantAgentTools(inputSource != "text"), avatarEnabled)
+	tools := withAvatarCueTool(a.assistantAgentTools(inputSource == "voice"), avatarEnabled)
 	avatarCuesUsed := 0
 	params := ProfileParams{MaxTokens: 800, Temperature: fp(0.3)}
+	if inputSource == "call" {
+		params.MaxTokens = 240
+	}
 
 	dec := assistantDecision{Action: "chat"}
 	var toolsUsed []string

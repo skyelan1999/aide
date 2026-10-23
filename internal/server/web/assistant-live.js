@@ -11,6 +11,8 @@
     let baseline=false, seen=new Set(), ended=[], failureCount=0, notices=[];
     const snapshot=()=>({enabled,microphone,paused,phase,busy});
     const state=value=>{phase=value;hooks.state?.(snapshot());};
+    const turnDelay=()=>hooks.turnDelay?hooks.turnDelay(finalText+interim,!!interim):1100;
+    const armTurn=()=>{clear(speechTimer);speechTimer=later(()=>void submit(),turnDelay());};
     const allowed=()=>enabled&&!paused&&hooks.valid();
     function release(){
       clear(speechTimer);clear(restartTimer);speechTimer=restartTimer=0;
@@ -40,10 +42,10 @@
             if(value.isFinal)finalText+=text;else part+=text;
           }
           interim=part;if(!finalText&&!interim)return;hooks.transcript?.(finalText,interim);
-          clear(speechTimer);speechTimer=later(()=>void submit(),1100);
+          armTurn();
         };
         current.onspeechstart=()=>clear(speechTimer);
-        current.onspeechend=()=>{clear(speechTimer);speechTimer=later(()=>void submit(),1100);};
+        current.onspeechend=()=>{armTurn();};
         current.onerror=event=>{
           if(token!==epoch||rec!==current)return;
           if(event.error==='no-speech'){return;}
@@ -52,7 +54,7 @@
         current.onend=()=>{
           if(token!==epoch||rec!==current||!allowed())return;
           rec=null;stream?.getTracks().forEach(t=>t.stop());stream=null;
-          if((finalText.trim()||interim.trim())&&!busy){void submit();return;}
+          if((finalText.trim()||interim.trim())&&!busy){if(hooks.deferRecognitionEnd?.()){armTurn();restartTimer=later(()=>void listen(),400);return;}void submit();return;}
           const now=Date.now();ended=ended.filter(at=>now-at<60000);ended.push(now);
           if(ended.length>5){hooks.error?.('语音连接频繁中断，请点击麦克风重试');setMicrophone(false);return;}
           restartTimer=later(()=>void listen(),400);
@@ -79,7 +81,7 @@
       finally{if(token===epoch){busy=false;controller=null;settle();}}
     }
     function settle(){if(!allowed()||busy)return;
-      if(finalText||interim){clear(speechTimer);speechTimer=later(()=>void submit(),1100);return;}
+      if(finalText||interim){armTurn();return;}
       if(notices.length)void announce();else if(microphone){if(rec)state('listening');else void listen();}else state('watching');
     }
     async function speak(text){
@@ -105,7 +107,7 @@
         hooks.saveSeen?.([...seen]);
         const meaningful=fresh.filter(event=>event.kind!=='task'||!['running','queued'].includes(event.status));
         const report=baseline?meaningful:meaningful.filter(event=>event.priority>=3);
-        if(report.length){const latest=report.slice(0,5);hooks.events?.(latest);notices.push(...latest.map(event=>[event.text,event.blocker,event.nextAction].filter(Boolean).join(' ')));notices=notices.slice(-5);if(!busy&&!finalText&&!interim)void announce();}baseline=true;
+        if(report.length&&(!hooks.announceEvents||hooks.announceEvents())){const latest=report.slice(0,5);hooks.events?.(latest);notices.push(...latest.map(event=>[event.text,event.blocker,event.nextAction].filter(Boolean).join(' ')));notices=notices.slice(-5);if(!busy&&!finalText&&!interim)void announce();}baseline=true;
       }catch(error){if(token===epoch&&error.name!=='AbortError'){failureCount++;if(error.status===401||error.status===423){hooks.error?.(error.message);stop();}else if(failureCount===3){hooks.error?.(error.message);state('recovering');}}}
       finally{polling=false;}}
       if(allowed())pollTimer=later(()=>void poll(),failureCount>=3?30000:10000);
