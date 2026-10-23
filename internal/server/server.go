@@ -3231,10 +3231,9 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	if !scopedConfigured && u.ProviderID != "" {
 		scoped, scopedConfigured = a.pricing.KeyRates[billingScope(u.ProviderID, "", u.Model)]
 	}
-	if scopedConfigured {
+	if scopedConfigured && quote == nil {
 		entry = scoped
 		configured = true
-		quote = nil
 	}
 	rec := TokenCallRec{ProviderID: u.ProviderID, KeyID: u.KeyID, KeyLabel: u.KeyLabel, Time: now.UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, CacheHit: u.CacheHit, CacheMiss: u.CacheMiss, CacheKnown: u.CacheKnown, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, CostEstimated: u.Estimated, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
 	if configured {

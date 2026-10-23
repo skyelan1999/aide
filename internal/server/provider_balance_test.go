@@ -70,7 +70,7 @@ func TestProviderBillingCredentialsSeparateVaultAndClear(t *testing.T) {
 	if strings.Contains(w.Body.String(), "synthetic-") {
 		t.Fatal("credential response reflected secret")
 	}
-	raw, e := a.vault.Get(billingVaultID("ali"))
+	raw, e := a.vault.Get(billingKeyVaultID("ali", "inference"))
 	if e != nil || !strings.Contains(string(raw), "synthetic-ram-secret") {
 		t.Fatal(e)
 	}
@@ -158,4 +158,33 @@ func TestProviderBillingCredentialsRejectLockedAndUnauthorized(t *testing.T) {
 	w := httptest.NewRecorder()
 	a.Handler().ServeHTTP(w, r)
 	requireStatus(t, w, 401)
+}
+
+func TestProviderBillingCredentialsAreBoundToSelectedAPIKey(t *testing.T) {
+	a := testApp(t)
+	supporterInstall(t, a, "ali")
+	a.settings = Settings{ModelProviders: []ModelProvider{{ID: "ali", BaseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", ActiveKeyID: "a", Keys: []ModelProviderKey{{ID: "a"}, {ID: "b"}}}}}
+	// Initialize the encrypted vault with synthetic material only.
+	supporterVault(t, a, modelProviderVaultID("ali", "a"), "synthetic-inference")
+	for _, key := range []string{"a", "b"} {
+		requireStatus(t, request(a, "PUT", "/api/provider-billing-credentials", map[string]any{"providerId": "ali", "keyId": key, "accessKeyId": "ram-" + key, "accessKeySecret": "secret-" + key}), 200)
+	}
+	for _, key := range []string{"a", "b"} {
+		raw, e := a.vault.Get(billingKeyVaultID("ali", key))
+		if e != nil || !strings.Contains(string(raw), "ram-"+key) {
+			t.Fatal("RAM binding lost", e)
+		}
+	}
+	requireStatus(t, request(a, "PUT", "/api/provider-billing-credentials", map[string]any{"providerId": "ali", "keyId": "a", "clear": true}), 200)
+	w := request(a, "GET", "/api/provider-billing-credentials?providerId=ali&keyId=b", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"configured":true`) {
+		t.Fatal("clear crossed key boundary")
+	}
+	w = request(a, "GET", "/api/balance?providerId=ali&keyId=a", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"billingCredentialsRequired":true`) {
+		t.Fatal("another key's RAM credentials were inherited")
+	}
+	requireStatus(t, request(a, "GET", "/api/provider-billing-credentials?providerId=ali&keyId=unknown", nil), 400)
 }

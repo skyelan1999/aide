@@ -5878,20 +5878,16 @@ function renderTokenStats(control) {
   const priceRow = el('div', 'token-price-row');
   const priceFields = el('div', 'token-price-fields');
   const priceNote = el('small', 'token-price-note', '');
-  const scopeRow = el('div', 'token-price-fields');
-  scopeRow.style.marginBottom = '12px';
-  const providerSelect = el('select', '');
-  const keySelect = el('select', '');
-  const modelSelect = el('select', '');
-  const labelSelect = (label, select) => { const lab = el('label', '', label); select.setAttribute('aria-label', label); select.style.maxWidth = '190px'; lab.append(select); return lab; };
-  scopeRow.append(labelSelect(t('计价提供商'), providerSelect), labelSelect(t('计价密钥'), keySelect), labelSelect(t('计价模型'), modelSelect));
-  const scopeNote = el('small', 'token-price-note', t('默认费率适用于未单独配置的模型。选择提供商、密钥和模型可保存独立费率。'));
-  scopeNote.style.flexBasis = '100%';
-  scopeRow.append(scopeNote);
+  const balanceRow = el('div', 'token-price-fields');
+  const balanceSelect = el('select', '');
+  balanceSelect.setAttribute('aria-label', t('余额账户'));
+  const balanceLabel = el('label', '', t('余额账户'));
+  balanceLabel.append(balanceSelect); balanceRow.append(balanceLabel);
+  const defaultTitle = el('div', 'token-title', t('默认计价标准'));
   const billing = el('details', '');
   billing.style.marginBottom = '12px';
   billing.classList.add('hidden');
-  billing.append(el('summary', '', t('费用账户凭证')));
+  billing.append(el('summary', '', t('百炼余额 · RAM 费用凭证')));
   const billingNote = el('small', '', t('费用查询使用独立 RAM AccessKey，只授予 QueryAccountBalance 只读权限。模型 API Key 无法替代；凭证仅保存到 Aide 加密保险库。'));
   const billingState = el('p', '', '');
   const billingFields = el('div', 'token-price-fields');
@@ -5904,7 +5900,7 @@ function renderTokenStats(control) {
   saveBilling.type = clearBilling.type = 'button';
   billingFields.append(ak, sk, saveBilling, clearBilling);
   billing.append(billingNote, billingState, billingFields);
-  wrap.append(head, chips, balanceChips, scopeRow, priceRow, billing, grid, legend, tip, detail);
+  wrap.append(head, chips, defaultTitle, priceRow, balanceRow, balanceChips, billing, grid, legend, tip, detail);
   const pieWrap = el('div', 'model-pie-wrap');
   wrap.append(pieWrap);
   const failBox = el('p', 'task-error', '');
@@ -6104,7 +6100,7 @@ function renderTokenStats(control) {
       }
       // 以两个输入框的当前值为准（避免第二次修改用过期的模块缓存覆盖第一次的值）
       const readOther = key => { const raw = wrap.querySelector('input[data-price="' + key + '"]')?.value; const n = parseFloat(raw); return Number.isFinite(n) && n >= 0 ? n : pricing[key]; };
-      const next = { ...priceScope, ...(priceScope.providerId ? {} : {scope:'default'}), priceIn: readOther('priceIn'), priceOut: readOther('priceOut') };
+      const next = { scope:'default', priceIn: readOther('priceIn'), priceOut: readOther('priceOut') };
       next[key] = v;
       action(async () => {
         try {
@@ -6120,23 +6116,9 @@ function renderTokenStats(control) {
     return lab;
   };
   priceFields.append(mkPrice('priceIn', t("输入 ¥/百万")), mkPrice('priceOut', t("输出 ¥/百万")));
-  const resetPrice = el('button', 'quiet', t('恢复自动或默认费率'));
-  resetPrice.type = 'button';
-  resetPrice.onclick = action(async () => { await api('/token-pricing', {method:'PUT', body:JSON.stringify({...priceScope, clear:true})}); await loadStats(); });
-  priceFields.append(resetPrice);
   priceRow.append(priceFields, priceNote);
   const option = (select, value, text) => { const o = el('option', '', text); o.value = value; select.append(o); };
-  const scopeQuery = () => priceScope.providerId ? new URLSearchParams(Object.entries(priceScope).filter(([, v]) => v)).toString() : 'scope=default';
-  const syncScopeControls = () => {
-    const provider = (scopeConfig.modelProviders || []).find(p => p.id === priceScope.providerId);
-    keySelect.replaceChildren(); option(keySelect, '', t('所有密钥'));
-    for (const key of provider?.keys || []) option(keySelect, key.id, key.label || key.id);
-    keySelect.value = priceScope.keyId; keySelect.disabled = !provider;
-    modelSelect.replaceChildren(); option(modelSelect, '', t('默认费率'));
-    for (const model of scopeConfig.models || []) if (!provider || model.providerId === provider.id) option(modelSelect, model.id, model.name || model.id);
-    modelSelect.value = priceScope.model;
-    modelSelect.disabled = !provider;
-  };
+  const scopeQuery = () => new URLSearchParams(Object.entries(priceScope).filter(([, v]) => v)).toString();
   async function loadScopePricing(fallback) {
     const request = ++scopeRequest;
     const query = scopeQuery();
@@ -6144,26 +6126,25 @@ function renderTokenStats(control) {
     balanceChips.replaceChildren();
     billing.classList.add('hidden');
     ak.value = ''; sk.value = '';
-    const resolved = await api('/token-pricing' + (query ? '?' + query : ''));
+    const [resolved, balancePricing] = await Promise.all([api('/token-pricing?scope=default'), query ? api('/token-pricing?' + query) : Promise.resolve({})]);
     if (request !== scopeRequest || !wrap.isConnected) return;
     pricing = resolved || fallback || pricing;
-    priceNote.textContent = pricing.official
-      ? t('由 {0} 提供自动计价；实际费用按每次调用的阶梯、模式与用量保存快照。', pricing.supporter || t('支持插件'))
-      : t('自定义费率按调用快照计算；未配置范围使用默认费率估算。历史费用不会重算。');
+    const standards = (pricing.standards || []).map(name => t('{0} 计价标准已启用', name));
+    priceNote.textContent = standards.length ? standards.join(' · ') + '。' + t('未匹配插件时使用手动默认单价；历史费用不会重算。') : t('未启用计价插件，使用手动默认单价；历史费用不会重算。');
     for (const field of ['priceIn', 'priceOut']) { const input = wrap.querySelector('input[data-price="' + field + '"]'); if (input && document.activeElement !== input) input.value = pricing[field] ?? 0; }
-    const hasScope = !priceScope.providerId || !!priceScope.model;
-    priceFields.querySelectorAll('input').forEach(input => { input.disabled = !hasScope; });
-    resetPrice.disabled = !priceScope.providerId || !priceScope.model;
-    const needsBilling = pricing.balanceAuth === 'aliyun-rpc';
-    billing.classList.toggle('hidden', !needsBilling || !priceScope.providerId);
+    priceFields.querySelectorAll('input').forEach(input => { input.disabled = false; });
+    const needsBilling = balancePricing.balanceAuth === 'aliyun-rpc';
+    billing.classList.toggle('hidden', !needsBilling || !priceScope.providerId || !priceScope.keyId);
     ak.value = ''; sk.value = '';
-    if (needsBilling && priceScope.providerId) {
-      const status = await api('/provider-billing-credentials?providerId=' + encodeURIComponent(priceScope.providerId));
+    if (needsBilling && priceScope.providerId && priceScope.keyId) {
+      const status = await api('/provider-billing-credentials?' + new URLSearchParams({providerId:priceScope.providerId,keyId:priceScope.keyId}));
       if (request !== scopeRequest) return;
       billingState.textContent = status.configured ? t('费用凭证已配置；输入新值可替换。') : t('尚未配置费用凭证');
     }
     balanceChips.replaceChildren();
     if (!priceScope.providerId) return;
+    if (!priceScope.keyId) { balanceChips.append(el('span', 'token-chip', t('请选择 API Key 查看对应可用额度或配置 RAM 凭证'))); return; }
+    const selectedKeyLabel = balanceSelect.selectedOptions[0]?.textContent || priceScope.keyId;
     try {
       const balance = await api('/balance?' + query);
       if (request !== scopeRequest) return;
@@ -6172,7 +6153,7 @@ function renderTokenStats(control) {
       else if (balance.billingCredentialsRequired) { chip.textContent = t('余额查询需要费用账户凭证'); billing.classList.remove('hidden'); }
       else {
         const infos = balance.balance_infos || [];
-        chip.textContent = infos.length ? t('可用额度 {0}', infos.map(i => (i.total_balance ?? '?') + ' ' + (i.currency || '')).join(' · ')) : t('余额不可查');
+        chip.textContent = infos.length ? t('密钥 {0} · 账户可用额度 {1}', selectedKeyLabel, infos.map(i => (i.total_balance ?? '?') + ' ' + (i.currency || '')).join(' · ')) : t('余额不可查');
         chip.title = t('来自服务商费用账户，可能包含信用额度；不等于现金或模型免费额度。');
       }
       balanceChips.append(chip);
@@ -6181,14 +6162,16 @@ function renderTokenStats(control) {
       const chip = el('span', 'token-chip', t('余额不可查')); chip.dataset.balance = 'true'; chip.title = error.message; balanceChips.append(chip);
     }
   }
-  providerSelect.onchange = () => { priceScope = {providerId: providerSelect.value, keyId: '', model: ''}; syncScopeControls(); action(loadScopePricing)(); };
-  keySelect.onchange = () => { priceScope.keyId = keySelect.value; action(loadScopePricing)(); };
-  modelSelect.onchange = () => { priceScope.model = modelSelect.value; action(loadScopePricing)(); };
+  balanceSelect.onchange = () => {
+    const pair = balanceSelect.value ? JSON.parse(balanceSelect.value) : ['', ''];
+    priceScope = {providerId:pair[0], keyId:pair[1], model:''};
+    action(loadScopePricing)();
+  };
   const writeBilling = async clear => {
-    const providerId = priceScope.providerId;
-    if (!providerId || (!clear && (!ak.value.trim() || !sk.value.trim()))) { toast(t('请填写完整费用凭证')); return; }
+    const providerId = priceScope.providerId, keyId = priceScope.keyId;
+    if (!providerId || !keyId || (!clear && (!ak.value.trim() || !sk.value.trim()))) { toast(t('请填写完整费用凭证')); return; }
     saveBilling.disabled = clearBilling.disabled = true;
-    const body = clear ? {providerId, clear:true} : {providerId, accessKeyId:ak.value.trim(), accessKeySecret:sk.value.trim()};
+    const body = clear ? {providerId, keyId, clear:true} : {providerId, keyId, accessKeyId:ak.value.trim(), accessKeySecret:sk.value.trim()};
     ak.value = ''; sk.value = '';
     try { await api('/provider-billing-credentials', {method:'PUT', body:JSON.stringify(body)}); await loadScopePricing(); }
     finally { saveBilling.disabled = clearBilling.disabled = false; }
@@ -6196,13 +6179,12 @@ function renderTokenStats(control) {
   saveBilling.onclick = action(() => writeBilling(false)); clearBilling.onclick = action(() => writeBilling(true));
   action(async () => {
     scopeConfig = await api('/config');
-    providerSelect.replaceChildren(); option(providerSelect, '', t('全局默认'));
-    for (const provider of scopeConfig.modelProviders || []) option(providerSelect, provider.id, provider.name || provider.id);
+    balanceSelect.replaceChildren(); option(balanceSelect, '', t('选择 API Key 查看余额 / RAM 凭证'));
+    for (const provider of scopeConfig.modelProviders || []) for (const key of provider.keys || []) option(balanceSelect, JSON.stringify([provider.id,key.id]), (provider.name || provider.id) + ' / ' + (key.label || key.id));
     const active = (scopeConfig.models || []).find(model => model.id === (scopeConfig.activeModel || scopeConfig.model));
     const provider = (scopeConfig.modelProviders || []).find(p => p.id === active?.providerId);
-    if (active && provider) priceScope = {providerId:provider.id, keyId:provider.activeKeyId || '', model:active.id};
-    providerSelect.value = priceScope.providerId;
-    syncScopeControls(); await loadStats();
+    if (provider?.activeKeyId) { priceScope = {providerId:provider.id,keyId:provider.activeKeyId,model:''}; balanceSelect.value = JSON.stringify([provider.id,provider.activeKeyId]); }
+    await loadStats();
   })();
   return wrap;
 }

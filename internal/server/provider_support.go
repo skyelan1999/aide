@@ -324,6 +324,14 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 	quote := a.providerQuote(base, model, 0, time.Now())
 	a.mu.Lock()
 	cat, _ := a.providerSupportLocked(base)
+	standards := []string{}
+	seenStandards := map[string]bool{}
+	for _, provider := range a.settings.ModelProviders {
+		if catalog, owner := a.providerSupportLocked(provider.BaseURL); catalog != nil && owner != nil && !seenStandards[owner.ID] {
+			standards = append(standards, catalog.Name)
+			seenStandards[owner.ID] = true
+		}
+	}
 	balanceAuth := ""
 	if cat != nil && cat.Balance != nil {
 		balanceAuth = cat.Balance.Auth
@@ -339,10 +347,9 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 	if !scopedOK && kid != "" {
 		scoped, scopedOK = a.pricing.KeyRates[billingScope(pid, "", model)]
 	}
-	if scopedOK {
+	if scopedOK && quote == nil {
 		entry = scoped
 		configured = true
-		quote = nil
 	}
 	if defaultOnly {
 		entry = a.pricing.Default
@@ -375,5 +382,5 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 			scopes = append(scopes, map[string]any{"providerId": parts[0], "keyId": parts[1], "model": parts[2], "priceIn": v.PriceIn, "priceOut": v.PriceOut})
 		}
 	}
-	return map[string]any{"priceIn": entry.PriceIn, "priceOut": entry.PriceOut, "model": model, "providerId": pid, "keyId": kid, "defaulted": !configured, "rates": rates, "keyRates": keyRates, "scopes": scopes, "default": a.pricing.Default, "official": quote != nil, "supporter": supporter, "balanceAuth": balanceAuth, "priceInCacheHit": hit, "priceInCacheMiss": miss, "peak": peak}
+	return map[string]any{"priceIn": entry.PriceIn, "priceOut": entry.PriceOut, "model": model, "providerId": pid, "keyId": kid, "defaulted": !configured, "rates": rates, "keyRates": keyRates, "scopes": scopes, "default": a.pricing.Default, "official": quote != nil, "supporter": supporter, "balanceAuth": balanceAuth, "standards": standards, "priceInCacheHit": hit, "priceInCacheMiss": miss, "peak": peak}
 }
