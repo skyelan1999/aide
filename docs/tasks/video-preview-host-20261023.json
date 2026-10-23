@@ -52,10 +52,10 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "RC6 native CI/full verification passed and public release/market are live. Actual public ARM64 ZIP on Mac exposed offline launcher ID drift.15 offline-launcher tests pass after POSIX repair, including publisher/local ID mismatch, ambiguous references and architecture rejection; real Docker resolution and updated-input full gate pending.",
+      "status": "pass",
+      "summary": "Combined main retains ba112536 Auto fix. Updated-input full passed all24 disjoint server shards (1187 registered entries), all other race packages, vet, runtime assets and optional STEP boundary.15 offline launcher tests and6 delivery-package test methods pass; actual Mac repaired-candidate startup+CA-verified health passed. Public RC6/plugin/market playback and public engine acceptance recorded separately.",
       "evidence": [
-        "docs/reviews/20261023/video-preview-release-evidence.json",
+        "docs/reviews/20261023/video-preview-mac-release-evidence.json",
         "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3c5d049/docs/release-0.1.0.json"
       ]
     },
@@ -69,7 +69,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Reviewed scoped source; generated engine/source archives and test caches excluded from Git and main image. Own Safari test tab closed; isolated18490 retained for release acceptance. Production9999 untouched.",
+      "summary": "Reviewed scoped changes. Stopped owned18491 clean-extraction test container and local-mounts/message-lan helpers; retained recovery data. One owned18490 Safari acceptance page remains for final release verification, no extra component tabs. Production9999 not operated by this task.",
       "evidence": [
         "https://github.com/skyelan1999/aide-pkg-VideoPreview/blob/3935bcde407a85be372909f9fabca697b2da151c/docs/verification.md",
         "https://github.com/skyelan1999/aide-pkg-VideoPreview/tree/3935bcde407a85be372909f9fabca697b2da151c"
@@ -77,7 +77,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "RC6/VideoPreview0.1.0/marketPR6 published. Actual Mac acceptance foundIssue52; preparing an immutable follow-up host patch release, not replacing existing RC6 assets or production9999.",
+      "summary": "RC6/VideoPreview0.1.0/marketPR6 already public. Preparing immutable RC7 follow-up for actual Mac issues52/53; source full passed and no production upgrade requested.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/47",
         "https://github.com/skyelan1999/aide-pkg-shop/pull/6"
@@ -86,5 +86,5 @@
   },
   "release_authorization": "2026-10-23 user: 那你直接合并发布吧，主程序、视频预览插件和市场都更新好。 User explicitly requested direct merge after GitHub same-author approval restriction was explained. PR47 merged via authorized admin merge; no branch-protection change or fabricated review.",
   "rollback": "No production/data migration or replacement. Keep existing9999 running. To undo host change revert PR47 via normal reviewed change; use previous published RC5 package/immutable tag for a manual runtime rollback with existing data backup. Disable video-preview to restore native file handling; do not automatically delete user files or shared caches. RC5 tag remains immutable.",
-  "handoff": "RC5/STEP release remains with original thread01a153c6-9944-7c13-bd02-a5eb0f097321. RC6/video release prepared in this independent checkout; no concurrent edits to original checkout or marketplacePR5. Video marketPR6 held until compatible host release."
+  "handoff": "Original RC5/STEP/marketPR5 release completed in original thread. This independent checkout owns RC7/video market follow-up; retains original-thread Auto fix ba112536. Original thread acknowledged no concurrent main push or version bump."
 }

@@ -1,0 +1,41 @@
+{
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/52",
+    "https://github.com/skyelan1999/aide/issues/53"
+  ],
+  "publicRC6Archive": {
+    "bytes": 631503249,
+    "sha256": "a47eb528e2da1fe87cd763f2bebda234a2f1bd55220f1c90da33616e79db4784",
+    "downloadCRCAndEmbeddedArchiveSHA256": "PASS"
+  },
+  "importIdentity": {
+    "publisher": "sha256:aa3bb9c327f1695b1274f2683ba5136795e8ab223814826d0d06c7337ebb3d8a",
+    "macLocal": "sha256:79ac408f4c947ab554cdf2fd599d8217e2af72c35b6f905353d9bbb530d9a9e1",
+    "platform": "linux/arm64",
+    "imageSourceLabel": "2155bc02d86e5f6ed41bcf48ba3dbff1219dec890d56b779532529d4580815fb",
+    "resolvedActualImport": "PASS"
+  },
+  "fixedLauncherAcceptance": {
+    "setup": "Public RC6 ZIP extracted without user state, launcher replaced with Issue52 repair and Issue53 missing helpers supplied from source; image unchanged. Dedicated slot-video-mac-fix-test alias, compose project aide-video-mac-launcher-test, port18491. This is a repaired-candidate test, not unmodified RC6 success.",
+    "startup": "PASS start.command exit0",
+    "health": "PASS host HTTPS CA-verified /healthz; own container healthy",
+    "cleanup": "Stopped owned fixture container and its local-mounts/message-lan helpers; preserved data/receipts. Production9999 not operated by this task.",
+    "optionalBridges": "Safari/computer bridges not started in this isolated bundle; headless browser dependency not installed. No claim of bridge acceptance."
+  },
+  "regression": {
+    "offlineBundle": "PASS15 tests",
+    "packagePayloadGate": "PASS6 test methods, rejects each missing mandatory startup file",
+    "full": {
+      "status": "PASS",
+      "head": "7f4b04cffb3ea9305a03032d747db99daeda3f85",
+      "fingerprint": "99982c02500794bb9c28e2b14e94ebc4f7dc181b172819498a45b170b5e8d6e4",
+      "time": "20261023T113223274010Z",
+      "GoInventory": 1187,
+      "serverShards": 24,
+      "race": "PASS",
+      "vet": "PASS",
+      "defaultSTEPBoundary": "PASS, DXF/STL assets retained"
+    }
+  },
+  "publication": "RC6 and plugin0.1.0/market are public; immutable follow-up host patch pending full and native delivery."
+}
