@@ -17,8 +17,9 @@ type PluginProviderSupport struct {
 	Catalog  string `json:"catalog"`
 }
 type supportProvider struct {
-	Host  string   `json:"host"`
-	Paths []string `json:"paths"`
+	Host            string   `json:"host,omitempty"`
+	WorkspaceRegion string   `json:"workspaceRegion,omitempty"`
+	Paths           []string `json:"paths"`
 }
 type supportTier struct {
 	MaxInput         int      `json:"maxInput"`
@@ -74,7 +75,7 @@ func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 		return nil, errors.New("invalid provider support catalog")
 	}
 	for _, p := range c.Providers {
-		if p.Host == "" || strings.ContainsAny(p.Host, "/:@ \\?#") || len(p.Paths) == 0 || len(p.Paths) > 16 {
+		if (p.Host == "" && p.WorkspaceRegion != "cn-beijing") || (p.Host != "" && p.WorkspaceRegion != "") || strings.ContainsAny(p.Host, "/:@ \\?#*") || len(p.Paths) == 0 || len(p.Paths) > 16 {
 			return nil, errors.New("invalid provider match")
 		}
 		for _, path := range p.Paths {
@@ -144,7 +145,14 @@ func supportMatches(c *supportCatalog, base string) bool {
 		return false
 	}
 	for _, p := range c.Providers {
-		if !strings.EqualFold(u.Hostname(), p.Host) {
+		matched := strings.EqualFold(u.Hostname(), p.Host)
+		if p.WorkspaceRegion == "cn-beijing" {
+			host := strings.ToLower(u.Hostname())
+			suffix := ".cn-beijing.maas.aliyuncs.com"
+			label := strings.TrimSuffix(host, suffix)
+			matched = strings.HasSuffix(host, suffix) && label != "" && !strings.ContainsAny(label, ".:")
+		}
+		if !matched {
 			continue
 		}
 		for _, path := range p.Paths {
@@ -324,6 +332,14 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 	quote := a.providerQuote(base, model, 0, time.Now())
 	a.mu.Lock()
 	cat, _ := a.providerSupportLocked(base)
+	standards := []string{}
+	seenStandards := map[string]bool{}
+	for _, provider := range a.settings.ModelProviders {
+		if catalog, owner := a.providerSupportLocked(provider.BaseURL); catalog != nil && owner != nil && !seenStandards[owner.ID] {
+			standards = append(standards, catalog.Name)
+			seenStandards[owner.ID] = true
+		}
+	}
 	balanceAuth := ""
 	if cat != nil && cat.Balance != nil {
 		balanceAuth = cat.Balance.Auth
@@ -339,10 +355,9 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 	if !scopedOK && kid != "" {
 		scoped, scopedOK = a.pricing.KeyRates[billingScope(pid, "", model)]
 	}
-	if scopedOK {
+	if scopedOK && quote == nil {
 		entry = scoped
 		configured = true
-		quote = nil
 	}
 	if defaultOnly {
 		entry = a.pricing.Default
@@ -375,5 +390,5 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 			scopes = append(scopes, map[string]any{"providerId": parts[0], "keyId": parts[1], "model": parts[2], "priceIn": v.PriceIn, "priceOut": v.PriceOut})
 		}
 	}
-	return map[string]any{"priceIn": entry.PriceIn, "priceOut": entry.PriceOut, "model": model, "providerId": pid, "keyId": kid, "defaulted": !configured, "rates": rates, "keyRates": keyRates, "scopes": scopes, "default": a.pricing.Default, "official": quote != nil, "supporter": supporter, "balanceAuth": balanceAuth, "priceInCacheHit": hit, "priceInCacheMiss": miss, "peak": peak}
+	return map[string]any{"priceIn": entry.PriceIn, "priceOut": entry.PriceOut, "model": model, "providerId": pid, "keyId": kid, "defaulted": !configured, "rates": rates, "keyRates": keyRates, "scopes": scopes, "default": a.pricing.Default, "official": quote != nil, "supporter": supporter, "balanceAuth": balanceAuth, "standards": standards, "priceInCacheHit": hit, "priceInCacheMiss": miss, "peak": peak}
 }

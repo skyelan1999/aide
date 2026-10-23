@@ -19,6 +19,37 @@ storage = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(storage)
 
 
+class ComposeOverrideTests(unittest.TestCase):
+    def append(self, dotenv, exported=None, fail=False):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / '.env').write_text(dotenv)
+            docker = root / 'docker'
+            docker.write_text('#!/bin/sh\n' + ('exit 97\n' if fail else 'cat .env\n'))
+            docker.chmod(0o700)
+            env = dict(os.environ)
+            env.pop('COMPOSE_FILE', None)
+            if exported is not None:
+                env['COMPOSE_FILE'] = exported
+            script = 'set -euo pipefail; source "$1"; launcher_append_compose_override "$2" generated.yaml; launcher_append_compose_override "$2" generated.yaml; printf "%s" "$COMPOSE_FILE"'
+            return subprocess.run(['bash', '-c', script, 'fixture', str(ROOT / 'scripts/launcher-data.sh'), str(docker)], cwd=root, env=env, text=True, capture_output=True)
+
+    def test_dotenv_compose_files_survive_generated_mount_override(self):
+        result = self.append('OTHER=private-fixture\nCOMPOSE_FILE=compose.yaml:compose.macos-root.yaml\n')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, 'compose.yaml:compose.macos-root.yaml:generated.yaml')
+        self.assertNotIn('private-fixture', result.stdout + result.stderr)
+
+    def test_exported_compose_files_keep_precedence_without_resolving_dotenv(self):
+        result = self.append('', exported='custom path/base.yaml:extra.yaml', fail=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, 'custom path/base.yaml:extra.yaml:generated.yaml')
+
+    def test_default_and_resolution_failure(self):
+        self.assertEqual(self.append('OTHER=value\n').stdout, 'compose.yaml:generated.yaml')
+        self.assertNotEqual(self.append('', fail=True).returncode, 0)
+
+
 class LauncherDataTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='aide storage ')

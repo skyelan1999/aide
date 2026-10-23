@@ -1,0 +1,68 @@
+{
+  "id": "qwen-release-20261023",
+  "request": "User: push release; clarified main program and both plugins; additionally requested marketplace update.",
+  "baseline": "93a4b0a5f88bec2dc216b8bb585ba73d64481285",
+  "initial_status": "",
+  "acceptance": [
+    "Consolidated Aide PR reviewed and required CI gate passes",
+    "Full local release verification passes current source fingerprint",
+    "version.sh version/tag from clean main, dual-architecture native packages with matching identities and hashes",
+    "Aide GitHub Release public and downloadable; source and private plugin boundaries audited",
+    "BailianSupporter 0.1.2 and AutoAiModelRouter 0.1.2 source merged, GitHub release ZIPs and checksums verified",
+    "Marketplace listings reflect exact versions, immutable asset URLs, bytes and SHA256; live catalog and downloads verified"
+  ],
+  "scope": [
+    "Aide existing feature/CI PR integration, release version/docs/task records and existing CI release pipeline",
+    "aide-pig-ALiBaiLianSupporter release v0.1.2",
+    "aide-pkg-AutoAiModelRouter release v0.1.2 (v0.1.1 already public; newer media steering supersedes final target)",
+    "aide-pkg-shop listings for those two public MIT plugins only"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Scope confirmed by user, including marketplace.",
+      "evidence": [
+        "docs/agent/WORKFLOW.md",
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing Aide version/release scripts and trusted dual-native delivery pipeline; consolidate dependency stack and CI PR #25 into PR #39. Branch review and gate protection remain in force.",
+      "evidence": [
+        "docs/agent/WORKFLOW.md",
+        "docs/architecture/aide-cicd.md"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "CI integrated without conflict; PR #39 now targets protected main. Release and marketplace preparation continue while independent review is required.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/39"
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User explicitly requested push release, selected main program plus both plugins, then requested marketplace update.",
+  "rollback": "Retain current local preview and earlier balance-pool image; do not modify live data volumes. Published immutable assets never overwritten; restore marketplace listings with a reviewed revert if needed.",
+  "handoff": "Both originally prepared plugin releases are public prereleases and marketplace PR #2 merged with Pages success. New Auto output-media/TTS steering is being integrated before core release. TTS Tools is a separate new local plugin; assistant default TTS is unchanged. Main still awaits final tests/gate and RC4 release."
+}

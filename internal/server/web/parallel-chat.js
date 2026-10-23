@@ -57,7 +57,10 @@
     for (const route of run.modelRoutes) {
       const row = el('div', 'parallel-part');
       row.append(el('span', '', t(stages[route.stage] || '执行')), el('small', '', route.model + (route.provider ? ' · ' + route.provider : '')));
-      row.title = route.reason || ''; panel.append(row);
+      row.title = route.reason || '';
+      if (route.reason) row.append(el('small', '', route.reason));
+      for (const candidate of route.candidates || []) row.append(el('small', '', candidate.model + (candidate.score ? ' · ' + candidate.score : '') + ' · ' + candidate.reason));
+      panel.append(row);
     }
     return panel;
   }

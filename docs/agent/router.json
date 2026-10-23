@@ -806,6 +806,30 @@
       [
         "node",
         "scripts/auto-model-router-ui.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/model-token-chart.js"
+      ],
+      [
+        "node",
+        "--test",
+        "scripts/model-token-chart.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/account-balance-pool.js"
+      ],
+      [
+        "node",
+        "--test",
+        "scripts/account-balance-pool.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/generated-media.test.cjs"
       ]
     ],
     "full": [

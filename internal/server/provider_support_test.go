@@ -273,8 +273,8 @@ func TestProviderSupportScopedPriceWriteAndPersistedKeyIdentity(t *testing.T) {
 		}
 		a.recordTokenUsage(u)
 		rec := supporterLast(a)
-		if key == "first" && (rec.RateSource != "custom" || rec.Cost != 7) {
-			t.Fatalf("scoped override ignored: %+v", rec)
+		if !strings.HasPrefix(rec.RateSource, "plugin:") {
+			t.Fatalf("plugin must take priority over saved manual rates: %+v", rec)
 		}
 		if key == "second" && !strings.HasPrefix(rec.RateSource, "plugin:") {
 			t.Fatalf("scoped rate leaked to other key: %+v", rec)
@@ -340,6 +340,10 @@ func TestProviderSupportBalanceNormalizationAndSigning(t *testing.T) {
 func TestProviderSupportKeyOverridesInheritProviderModelAndAllKeyView(t *testing.T) {
 	a := testApp(t)
 	supporterInstall(t, a, "deepseek")
+	// Manual fallback remains scoped and persistent when the supporter is disabled.
+	for i := range a.pluginRegistry.Plugins {
+		a.pluginRegistry.Plugins[i].Enabled = false
+	}
 	a.settings = Settings{Model: "deepseek-flash", BaseURL: "https://api.deepseek.com", Models: []ModelRef{{ID: "deepseek-flash", ProviderID: "deep"}}, ModelProviders: []ModelProvider{{ID: "deep", BaseURL: "https://api.deepseek.com", ActiveKeyID: "first", Keys: []ModelProviderKey{{ID: "first", Label: "A"}, {ID: "second", Label: "B"}}}}}
 	write := func(key string, in, out float64) {
 		t.Helper()
@@ -491,5 +495,59 @@ func TestProviderSupportZeroReasoningCounterDoesNotProveNonThinkingMode(t *testi
 		if rec.PriceOut != 64 || rec.CostEstimated != (tokens == 0) {
 			t.Fatalf("thinking-mode billing not conservative: %+v", rec)
 		}
+	}
+}
+
+func TestProviderSupportPluginPriorityAndManualFallback(t *testing.T) {
+	a := testApp(t)
+	m := supporterInstall(t, a, "deepseek")
+	base, model := "https://api.deepseek.com", "deepseek-flash"
+	a.pricing.KeyRates = map[string]Pricing{billingScope("deep", "first", model): {PriceIn: 7, PriceOut: 11}, billingScope("deep", "", model): {PriceIn: 3, PriceOut: 5}}
+	usage := func(key string) TokenUsage {
+		return TokenUsage{ProviderID: "deep", KeyID: key, Provider: base, Model: model, Prompt: 1000000, Total: 1000000, CacheKnown: true, CacheMiss: 1000000}
+	}
+	for _, key := range []string{"first", "second"} {
+		q := a.providerQuote(base, model, 0, time.Now())
+		got := a.resolvedPricing(base, model, "deep", key, false)
+		if got["official"] != true || got["priceIn"] != q.Tier.PriceIn {
+			t.Fatalf("editor ignored plugin: %+v", got)
+		}
+		a.recordTokenUsage(usage(key))
+		if rec := supporterLast(a); !strings.HasPrefix(rec.RateSource, "plugin:") || rec.PriceIn != q.Tier.PriceIn {
+			t.Fatalf("snapshot ignored plugin: %+v", rec)
+		}
+	}
+	old := append([]TokenCallRec(nil), a.tokenCalls...)
+	for i := range a.pluginRegistry.Plugins {
+		if a.pluginRegistry.Plugins[i].ID == m.ID {
+			a.pluginRegistry.Plugins[i].Enabled = false
+		}
+	}
+	for _, tc := range []struct {
+		key  string
+		rate float64
+	}{{"first", 7}, {"second", 3}} {
+		got := a.resolvedPricing(base, model, "deep", tc.key, false)
+		if got["official"] != false || got["priceIn"] != tc.rate {
+			t.Fatalf("manual fallback wrong: %+v", got)
+		}
+		a.recordTokenUsage(usage(tc.key))
+		if rec := supporterLast(a); rec.Cost != tc.rate || rec.RateSource != "custom" {
+			t.Fatalf("manual snapshot wrong: %+v", rec)
+		}
+	}
+	for i, rec := range old {
+		if a.tokenCalls[i] != rec {
+			t.Fatal("historical snapshot changed")
+		}
+	}
+	// An enabled plugin with no matching model must not suppress manual pricing.
+	for i := range a.pluginRegistry.Plugins {
+		a.pluginRegistry.Plugins[i].Enabled = true
+	}
+	a.pricing.Rates["unlisted-model"] = Pricing{PriceIn: 9, PriceOut: 13}
+	got := a.resolvedPricing(base, "unlisted-model", "deep", "first", false)
+	if got["official"] != false || got["priceIn"] != float64(9) {
+		t.Fatalf("unmatched model lost manual fallback: %+v", got)
 	}
 }

@@ -5859,18 +5859,16 @@ $('strategy-button').onclick = action(async () => {
 document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
 /* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
-function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
+function fmtStatTokens(n) { return window.AideModelTokenChart.formatTokens(n); }
 function renderTokenStats(control) {
   // R08：计价与费用是服务端事实源（/api/token-pricing + 逐调用快照），前端只展示
   let pricing = { priceIn: 2, priceOut: 8 };
-  let priceScope = {providerId: '', keyId: '', model: ''};
   let scopeConfig = state.config || {};
   let scopeRequest = 0;
   const wrap = el('div', 'settings-control token-stats');
   const head = el('div', 'token-head');
   head.append(el('span', 'token-title', t("Token 消耗")), el('span', 'control-value', ''));
   const chips = el('div', 'token-chips');
-  const balanceChips = el('div', 'token-chips');
   const grid = el('div', 'token-heatmap');
   const legend = el('div', 'token-legend');
   const tip = el('div', 'token-tip');
@@ -5878,35 +5876,10 @@ function renderTokenStats(control) {
   const priceRow = el('div', 'token-price-row');
   const priceFields = el('div', 'token-price-fields');
   const priceNote = el('small', 'token-price-note', '');
-  const scopeRow = el('div', 'token-price-fields');
-  scopeRow.style.marginBottom = '12px';
-  const providerSelect = el('select', '');
-  const keySelect = el('select', '');
-  const modelSelect = el('select', '');
-  const labelSelect = (label, select) => { const lab = el('label', '', label); select.setAttribute('aria-label', label); select.style.maxWidth = '190px'; lab.append(select); return lab; };
-  scopeRow.append(labelSelect(t('计价提供商'), providerSelect), labelSelect(t('计价密钥'), keySelect), labelSelect(t('计价模型'), modelSelect));
-  const scopeNote = el('small', 'token-price-note', t('默认费率适用于未单独配置的模型。选择提供商、密钥和模型可保存独立费率。'));
-  scopeNote.style.flexBasis = '100%';
-  scopeRow.append(scopeNote);
-  const billing = el('details', '');
-  billing.style.marginBottom = '12px';
-  billing.classList.add('hidden');
-  billing.append(el('summary', '', t('费用账户凭证')));
-  const billingNote = el('small', '', t('费用查询使用独立 RAM AccessKey，只授予 QueryAccountBalance 只读权限。模型 API Key 无法替代；凭证仅保存到 Aide 加密保险库。'));
-  const billingState = el('p', '', '');
-  const billingFields = el('div', 'token-price-fields');
-  const ak = el('input', ''), sk = el('input', '');
-  for (const input of [ak, sk]) { input.type = 'password'; input.autocomplete = 'new-password'; input.spellcheck = false; }
-  ak.setAttribute('aria-label', 'AccessKey ID'); sk.setAttribute('aria-label', 'AccessKey Secret');
-  ak.placeholder = 'AccessKey ID'; sk.placeholder = 'AccessKey Secret';
-  const saveBilling = el('button', '', t('保存费用凭证'));
-  const clearBilling = el('button', '', t('清除费用凭证'));
-  saveBilling.type = clearBilling.type = 'button';
-  billingFields.append(ak, sk, saveBilling, clearBilling);
-  billing.append(billingNote, billingState, billingFields);
-  wrap.append(head, chips, balanceChips, scopeRow, priceRow, billing, grid, legend, tip, detail);
+  const defaultTitle = el('div', 'token-title', t('默认计价标准'));
+  const balanceHost = el('div', '');
+  wrap.append(head, chips, defaultTitle, priceRow, balanceHost, grid, legend, tip, detail);
   const pieWrap = el('div', 'model-pie-wrap');
-  pieWrap.innerHTML = `<div class="model-pie-title">${t('模型 Token 占比')}</div><div class="model-pie-body"><svg class="model-pie-svg" viewBox="-82 -12 384 240"></svg></div><div class="model-pie-empty hidden">${t('暂无模型调用数据')}</div>`;
   wrap.append(pieWrap);
   const failBox = el('p', 'task-error', '');
   wrap.append(failBox);
@@ -5973,142 +5946,7 @@ function renderTokenStats(control) {
       chip.title = t("旧版统计没有逐调用与计价证据，费用未知；未按当前费率冒充已发生费用");
       chips.append(chip);
     }
-    // 模型 Token 占比饼图
-    const pm = data.perModel || {};
-    const pmEntries = Object.entries(pm).sort((x, y) => (y[1].total || 0) - (x[1].total || 0));
-    const pmTotal = pmEntries.reduce((s, e) => s + (e[1].total || 0), 0);
-    const pieSvg = pieWrap.querySelector('.model-pie-svg');
-    const pieEmpty = pieWrap.querySelector('.model-pie-empty');
-    pieSvg.innerHTML = '';
-    if (pmEntries.length === 0 || pmTotal === 0) {
-      pieSvg.classList.add('hidden');
-      pieEmpty.classList.remove('hidden');
-    } else {
-      pieSvg.classList.remove('hidden');
-      pieEmpty.classList.add('hidden');
-      const colors = ['#3b82f6','#f59e0b','#8b5cf6','#10b981','#ef4444','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
-      const NS = 'http://www.w3.org/2000/svg';
-      const cx = 112, cy = 116, r = 56;   // 饼心与半径
-      const r2 = r + 6;                    // 引导线径向外延(短)
-      const railR = cx + r + 18;           // 右侧标签列 rail x
-      const railL = cx - r - 18;           // 左侧标签列 rail x
-      // <1% 的极小扇区合并为“其他”，tooltip 保留明细
-      const MIN_PCT = 0.01;
-      const rows = [];
-      let otherDetail = null, otherTotal = 0, otherCalls = 0;
-      pmEntries.forEach(([model, stats]) => {
-        const frac = (stats.total || 0) / pmTotal;
-        if (frac < MIN_PCT) {
-          otherTotal += stats.total || 0;
-          otherCalls += stats.calls || 0;
-          (otherDetail = otherDetail || []).push({ model, total: stats.total || 0, calls: stats.calls || 0, pct: frac * 100 });
-        } else {
-          rows.push({ model, stats, frac });
-        }
-      });
-      if (otherDetail) rows.push({ model: t("其他"), stats: { total: otherTotal, calls: otherCalls, _detail: otherDetail }, frac: otherTotal / pmTotal, _other: true });
-      const slices = [];
-      let angle = -Math.PI / 2;
-      rows.forEach((row, i) => {
-        const frac = row.frac;
-        const sweep = frac * Math.PI * 2;
-        const color = colors[i % colors.length];
-        const isFull = frac >= 0.999;
-        let sliceEl;
-        if (isFull) {
-          // 单模型 100%：画整圆
-          sliceEl = document.createElementNS(NS, 'circle');
-          sliceEl.setAttribute('cx', cx); sliceEl.setAttribute('cy', cy); sliceEl.setAttribute('r', r);
-        } else {
-          const x1 = cx + r * Math.cos(angle), y1 = cy + r * Math.sin(angle);
-          const x2 = cx + r * Math.cos(angle + sweep), y2 = cy + r * Math.sin(angle + sweep);
-          const large = sweep > Math.PI ? 1 : 0;
-          sliceEl = document.createElementNS(NS, 'path');
-          sliceEl.setAttribute('d', `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`);
-        }
-        sliceEl.setAttribute('fill', color);
-        sliceEl.setAttribute('class', 'pie-slice');
-        sliceEl.setAttribute('data-model', row.model);
-        pieSvg.appendChild(sliceEl);
-        // 引导线中点角度：整圆固定取正右(0rad)
-        const mid = isFull ? 0 : angle + sweep / 2;
-        const side = Math.cos(mid) >= 0 ? 1 : -1;   // 1=右 -1=左
-        const ax = cx + r * Math.cos(mid), ay = cy + r * Math.sin(mid);        // 扇区边缘点
-        const bx = cx + r2 * Math.cos(mid), by = cy + r2 * Math.sin(mid);     // 径向短线端点
-        slices.push({ ...row, color, side, sliceEl, ax, ay, bx, by,
-          railX: side === 1 ? railR : railL, labelY: by });
-        angle += sweep;
-      });
-      // 同侧标签纵向碰撞消解：保持角度序(即自然y序)，前向下压+后向上抬拉开最小间距，
-      // 再 clamp 到上下边界并整体垂直居中；序不变 => 径向/rail 两端同序 => 引导线不交叉
-      const minGap = 18;
-      const topBound = 4, bottomBound = 222;
-      [1, -1].forEach(sd => {
-        const g = slices.filter(s => s.side === sd).sort((a, b) => a.labelY - b.labelY);
-        if (!g.length) return;
-        for (let k = 1; k < g.length; k++) {
-          if (g[k].labelY - g[k-1].labelY < minGap) g[k].labelY = g[k-1].labelY + minGap;
-        }
-        for (let k = g.length - 2; k >= 0; k--) {
-          if (g[k+1].labelY - g[k].labelY < minGap) g[k].labelY = g[k+1].labelY - minGap;
-        }
-        if (g[0].labelY < topBound) g.forEach(s => s.labelY += topBound - g[0].labelY);
-        if (g[g.length-1].labelY > bottomBound) g.forEach(s => s.labelY -= g[g.length-1].labelY - bottomBound);
-        const shift = cy - (g[0].labelY + g[g.length-1].labelY) / 2;
-        g.forEach(s => s.labelY += shift);
-        if (g[0].labelY < topBound) g.forEach(s => s.labelY += topBound - g[0].labelY);
-        if (g[g.length-1].labelY > bottomBound) g.forEach(s => s.labelY -= g[g.length-1].labelY - bottomBound);
-      });
-      // 绘制引导线(polyline: 边缘点->径向短线->标签rail) + 边缘圆点 + 两行文字标签
-      slices.forEach(s => {
-        const grp = document.createElementNS(NS, 'g');
-        grp.setAttribute('class', 'pie-label-group');
-        grp.setAttribute('data-model', s.model);
-        const poly = document.createElementNS(NS, 'polyline');
-        poly.setAttribute('points', `${s.ax},${s.ay} ${s.bx},${s.by} ${s.railX},${s.labelY}`);
-        poly.setAttribute('fill', 'none');
-        poly.setAttribute('stroke', s.color);
-        poly.setAttribute('stroke-width', '1');
-        poly.setAttribute('class', 'pie-leader');
-        grp.appendChild(poly);
-        const dot = document.createElementNS(NS, 'circle');
-        dot.setAttribute('cx', s.ax); dot.setAttribute('cy', s.ay);
-        dot.setAttribute('r', '1.6'); dot.setAttribute('fill', s.color);
-        grp.appendChild(dot);
-        const anchor = s.side === 1 ? 'start' : 'end';
-        const tx = s.railX + s.side * 4;
-        const name = document.createElementNS(NS, 'text');
-        name.setAttribute('x', tx); name.setAttribute('y', s.labelY - 2);
-        name.setAttribute('text-anchor', anchor);
-        name.setAttribute('class', 'pie-label-name');
-        const label = s.model.length > 20 ? s.model.slice(0, 18) + '…' : s.model;
-        name.textContent = label;
-        grp.appendChild(name);
-        const sub = document.createElementNS(NS, 'text');
-        sub.setAttribute('x', tx); sub.setAttribute('y', s.labelY + 10);
-        sub.setAttribute('text-anchor', anchor);
-        sub.setAttribute('class', 'pie-label-sub');
-        sub.textContent = fmtStatTokens(s.stats.total || 0) + ' · ' + (s.frac * 100).toFixed(1) + '%';
-        sub.title = s._other && s.stats._detail
-          ? t("其他 {0} 个模型", s.stats._detail.length) + '\n' + s.stats._detail.map(d => `${d.model} · ${fmtStatTokens(d.total)} · ${d.pct.toFixed(1)}%`).join('\n')
-          : t("{0}: {1} tokens · {2} 次调用 · {3}%", s.model, s.stats.total || 0, s.stats.calls || 0, (s.frac * 100).toFixed(1));
-        name.title = sub.title;
-        grp.appendChild(sub);
-        s.grp = grp;
-        pieSvg.appendChild(grp);
-      });
-      // hover 高亮：扇区 + 引导线 + 标签联动
-      slices.forEach(s => {
-        const on = () => { s.sliceEl.setAttribute('opacity', '0.8'); if (s.grp) s.grp.classList.add('active'); };
-        const off = () => { s.sliceEl.setAttribute('opacity', '1'); if (s.grp) s.grp.classList.remove('active'); };
-        s.sliceEl.addEventListener('mouseenter', on);
-        s.sliceEl.addEventListener('mouseleave', off);
-        if (s.grp) {
-          s.grp.addEventListener('mouseenter', on);
-          s.grp.addEventListener('mouseleave', off);
-        }
-      });
-    }
+    window.AideModelTokenChart.render(pieWrap, data.perModel, {t, format:fmtStatTokens});
 
     grid.replaceChildren();
     const today = new Date();
@@ -6240,7 +6078,7 @@ function renderTokenStats(control) {
       }
       // 以两个输入框的当前值为准（避免第二次修改用过期的模块缓存覆盖第一次的值）
       const readOther = key => { const raw = wrap.querySelector('input[data-price="' + key + '"]')?.value; const n = parseFloat(raw); return Number.isFinite(n) && n >= 0 ? n : pricing[key]; };
-      const next = { ...priceScope, ...(priceScope.providerId ? {} : {scope:'default'}), priceIn: readOther('priceIn'), priceOut: readOther('priceOut') };
+      const next = { scope:'default', priceIn: readOther('priceIn'), priceOut: readOther('priceOut') };
       next[key] = v;
       action(async () => {
         try {
@@ -6256,89 +6094,20 @@ function renderTokenStats(control) {
     return lab;
   };
   priceFields.append(mkPrice('priceIn', t("输入 ¥/百万")), mkPrice('priceOut', t("输出 ¥/百万")));
-  const resetPrice = el('button', 'quiet', t('恢复自动或默认费率'));
-  resetPrice.type = 'button';
-  resetPrice.onclick = action(async () => { await api('/token-pricing', {method:'PUT', body:JSON.stringify({...priceScope, clear:true})}); await loadStats(); });
-  priceFields.append(resetPrice);
   priceRow.append(priceFields, priceNote);
-  const option = (select, value, text) => { const o = el('option', '', text); o.value = value; select.append(o); };
-  const scopeQuery = () => priceScope.providerId ? new URLSearchParams(Object.entries(priceScope).filter(([, v]) => v)).toString() : 'scope=default';
-  const syncScopeControls = () => {
-    const provider = (scopeConfig.modelProviders || []).find(p => p.id === priceScope.providerId);
-    keySelect.replaceChildren(); option(keySelect, '', t('所有密钥'));
-    for (const key of provider?.keys || []) option(keySelect, key.id, key.label || key.id);
-    keySelect.value = priceScope.keyId; keySelect.disabled = !provider;
-    modelSelect.replaceChildren(); option(modelSelect, '', t('默认费率'));
-    for (const model of scopeConfig.models || []) if (!provider || model.providerId === provider.id) option(modelSelect, model.id, model.name || model.id);
-    modelSelect.value = priceScope.model;
-    modelSelect.disabled = !provider;
-  };
   async function loadScopePricing(fallback) {
     const request = ++scopeRequest;
-    const query = scopeQuery();
-    priceFields.querySelectorAll('input,button').forEach(input => { input.disabled = true; });
-    balanceChips.replaceChildren();
-    billing.classList.add('hidden');
-    ak.value = ''; sk.value = '';
-    const resolved = await api('/token-pricing' + (query ? '?' + query : ''));
+    const resolved = await api('/token-pricing?scope=default');
     if (request !== scopeRequest || !wrap.isConnected) return;
     pricing = resolved || fallback || pricing;
-    priceNote.textContent = pricing.official
-      ? t('由 {0} 提供自动计价；实际费用按每次调用的阶梯、模式与用量保存快照。', pricing.supporter || t('支持插件'))
-      : t('自定义费率按调用快照计算；未配置范围使用默认费率估算。历史费用不会重算。');
+    const standards = (pricing.standards || []).map(name => t('{0} 计价标准已启用', name));
+    priceNote.textContent = standards.length ? standards.join(' · ') + '。' + t('未匹配插件时使用手动默认单价；历史费用不会重算。') : t('未启用计价插件，使用手动默认单价；历史费用不会重算。');
     for (const field of ['priceIn', 'priceOut']) { const input = wrap.querySelector('input[data-price="' + field + '"]'); if (input && document.activeElement !== input) input.value = pricing[field] ?? 0; }
-    const hasScope = !priceScope.providerId || !!priceScope.model;
-    priceFields.querySelectorAll('input').forEach(input => { input.disabled = !hasScope; });
-    resetPrice.disabled = !priceScope.providerId || !priceScope.model;
-    const needsBilling = pricing.balanceAuth === 'aliyun-rpc';
-    billing.classList.toggle('hidden', !needsBilling || !priceScope.providerId);
-    ak.value = ''; sk.value = '';
-    if (needsBilling && priceScope.providerId) {
-      const status = await api('/provider-billing-credentials?providerId=' + encodeURIComponent(priceScope.providerId));
-      if (request !== scopeRequest) return;
-      billingState.textContent = status.configured ? t('费用凭证已配置；输入新值可替换。') : t('尚未配置费用凭证');
-    }
-    balanceChips.replaceChildren();
-    if (!priceScope.providerId) return;
-    try {
-      const balance = await api('/balance?' + query);
-      if (request !== scopeRequest) return;
-      const chip = el('span', 'token-chip'); chip.dataset.balance = 'true';
-      if (balance.supported === false) chip.textContent = t('此提供商未启用余额支持插件');
-      else if (balance.billingCredentialsRequired) { chip.textContent = t('余额查询需要费用账户凭证'); billing.classList.remove('hidden'); }
-      else {
-        const infos = balance.balance_infos || [];
-        chip.textContent = infos.length ? t('可用额度 {0}', infos.map(i => (i.total_balance ?? '?') + ' ' + (i.currency || '')).join(' · ')) : t('余额不可查');
-        chip.title = t('来自服务商费用账户，可能包含信用额度；不等于现金或模型免费额度。');
-      }
-      balanceChips.append(chip);
-    } catch (error) {
-      if (request !== scopeRequest) return;
-      const chip = el('span', 'token-chip', t('余额不可查')); chip.dataset.balance = 'true'; chip.title = error.message; balanceChips.append(chip);
-    }
   }
-  providerSelect.onchange = () => { priceScope = {providerId: providerSelect.value, keyId: '', model: ''}; syncScopeControls(); action(loadScopePricing)(); };
-  keySelect.onchange = () => { priceScope.keyId = keySelect.value; action(loadScopePricing)(); };
-  modelSelect.onchange = () => { priceScope.model = modelSelect.value; action(loadScopePricing)(); };
-  const writeBilling = async clear => {
-    const providerId = priceScope.providerId;
-    if (!providerId || (!clear && (!ak.value.trim() || !sk.value.trim()))) { toast(t('请填写完整费用凭证')); return; }
-    saveBilling.disabled = clearBilling.disabled = true;
-    const body = clear ? {providerId, clear:true} : {providerId, accessKeyId:ak.value.trim(), accessKeySecret:sk.value.trim()};
-    ak.value = ''; sk.value = '';
-    try { await api('/provider-billing-credentials', {method:'PUT', body:JSON.stringify(body)}); await loadScopePricing(); }
-    finally { saveBilling.disabled = clearBilling.disabled = false; }
-  };
-  saveBilling.onclick = action(() => writeBilling(false)); clearBilling.onclick = action(() => writeBilling(true));
   action(async () => {
     scopeConfig = await api('/config');
-    providerSelect.replaceChildren(); option(providerSelect, '', t('全局默认'));
-    for (const provider of scopeConfig.modelProviders || []) option(providerSelect, provider.id, provider.name || provider.id);
-    const active = (scopeConfig.models || []).find(model => model.id === (scopeConfig.activeModel || scopeConfig.model));
-    const provider = (scopeConfig.modelProviders || []).find(p => p.id === active?.providerId);
-    if (active && provider) priceScope = {providerId:provider.id, keyId:provider.activeKeyId || '', model:active.id};
-    providerSelect.value = priceScope.providerId;
-    syncScopeControls(); await loadStats();
+    balanceHost.append(window.AideAccountBalancePool.create({api,t,config:scopeConfig,scope:recoveryScope,active:()=>!lockScreen.locked && !!$('settings-sheet')?.classList.contains('open') && wrap.getClientRects().length > 0}));
+    await loadStats();
   })();
   return wrap;
 }
@@ -6441,7 +6210,7 @@ function renderModelList() {
       addModel.onclick = () => {
         const id = modelID.value.trim();
         if (!id) { toast(t('请输入模型 ID')); modelID.focus(); return; }
-        if (draft.models.length >= 20) { toast(t('模型最多 20 个')); return; }
+        if (draft.models.length >= 64) { toast(t('模型最多 64 个')); return; }
         if (draft.models.some(model => model.id === id)) { toast(t('模型 ID 重复：{0}', id)); return; }
         draft.models.push({ id, name: id, providerId: provider.id, contextWindow: 65536 });
         if (!draft.activeModel) draft.activeModel = id;
@@ -6492,7 +6261,7 @@ function renderModelList() {
   }
 }
 /* ── 上下文统计：与 /context-preview 共用服务端请求构造，避免浏览器自行猜测。 ── */
-function fmtTokens(n) { return n < 1000 ? String(n) : (n / 1024).toFixed(1) + 'K'; }
+function fmtTokens(n) { return window.AideModelTokenChart.formatTokens(n); }
 state.contextMeterSeq = state.contextMeterSeq || { value: 0 };
 state.contextMeterKey = state.contextMeterKey || '';
 state.contextMeterDraft = state.contextMeterDraft || false;
@@ -6522,8 +6291,7 @@ function contextUsageTotal(usage) {
   return Math.max(0, Number(usage?.total) || (Number(usage?.prompt) || 0) + (Number(usage?.completion) || 0));
 }
 function formatUsageTokens(value) {
-  const count = Math.max(0, Number(value) || 0);
-  return count >= 1000000 ? (count / 1000000).toFixed(2) + 'M' : fmtTokens(count);
+  return fmtTokens(value);
 }
 function currentContextUsage() {
   const runs = state.session?.runs || [];
@@ -9263,6 +9031,20 @@ function setupMarkdownPreview(host, text, path, spec) {
     button.onclick=open;img.ondblclick=open;wrap.append(button);
   });
 }
+function decorateGeneratedMedia(body, viewerSpec) {
+  const shown = new Set();
+  body.querySelectorAll('a[href]').forEach(link => {
+    const path = link.getAttribute('href') || '';
+    const match = path.match(/^generated\/(speech|video)\/qwen-[a-f0-9]+\.(mp3|wav|mp4)$/i);
+    if (!match || (match[1] === 'video') !== (match[2] === 'mp4')) return;
+    const url = fileRawUrl(path, viewerSpec?.root || 'workspace', viewerSpec?.source || '', viewerSpec);
+    link.removeAttribute('data-internal-link'); link.href = url; link.download = path.split('/').pop();
+    if (shown.has(path)) return; shown.add(path);
+    const media = document.createElement(match[1] === 'video' ? 'video' : 'audio');
+    media.className = 'generated-media'; media.controls = true; media.preload = 'metadata'; media.src = url;
+    link.parentNode.insertBefore(media, link);
+  });
+}
 function renderMarkdown(src, live, basePath, viewerSpec) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const fixed = fixCjkEmphasis(String(src || ''));
@@ -9281,12 +9063,14 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
       if (/^(https?:|mailto:|#|data:)/.test(href)) return;
       a.dataset.internalLink = href;
     });
+    decorateGeneratedMedia(body, viewerSpec);
     // 相对路径图片：改写为 /api/file/raw 原始字节端点（img 无法带 Authorization 头，用 access_token 查询参数）
-    if (basePath) {
+    if (basePath || body.querySelector('img[src^="generated/images/"]')) {
       body.querySelectorAll('img[src]').forEach(img => {
         const orig = img.getAttribute('src') || '';
         if (/^(https?:|data:|blob:|\/\/)/.test(orig)) return;
-        const resolved = resolveMarkdownImagePath(basePath, orig);
+        if (orig.startsWith('generated/images/')) img.classList.add('generated-image');
+        const resolved = basePath ? resolveMarkdownImagePath(basePath, orig) : orig;
         img.src = fileRawUrl(resolved, viewerSpec?.root || 'workspace', viewerSpec?.source || '', viewerSpec);
         img.onerror = () => { img.style.opacity = '0.4'; img.title = t('图片加载失败: {0}', orig); };
       });

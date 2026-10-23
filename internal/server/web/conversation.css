@@ -22,6 +22,7 @@
 #timeline :is(.chat-answer,.stage-answer) pre{white-space:pre;overflow:auto;overflow-wrap:normal}
 #timeline :is(.chat-answer,.stage-answer) table{width:max-content;max-width:100%;overflow-x:auto}
 #timeline :is(.chat-answer,.stage-answer) :where(img,video,svg,canvas){max-width:100%}
+#timeline :is(.chat-answer,.stage-answer) img.generated-image{display:block;width:auto;max-height:min(56vh,520px);object-fit:contain;border-radius:10px}
 /* A streaming marker must not add a line or change width when it blinks. */
 #timeline :is(.chat-answer,.stage-answer) .stream-cursor{position:absolute;right:8px;bottom:5px;line-height:1;width:8px;font-size:12px;pointer-events:none;user-select:none}
 #timeline :is(.chat-answer,.stage-answer).chat-answer-empty{color:var(--muted);font-style:normal}
@@ -122,3 +123,8 @@
 .assistant-work-item > small { display: block; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
 
 .run-origin-label{display:inline-block;vertical-align:baseline;margin:0 10px 4px 0;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:var(--selected);color:var(--brand);font-size:11px;line-height:1.5;white-space:nowrap}
+#timeline :is(.chat-answer,.stage-answer) .generated-media{display:block;width:100%;max-width:640px;max-height:360px;margin:10px 0;border-radius:10px;background:var(--panel,#f4f6f9)}
+
+.model-route-progress .parallel-part{display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:10px;row-gap:4px}
+.model-route-progress .parallel-part>small{min-width:0;overflow-wrap:anywhere;white-space:normal}
+.model-route-progress .parallel-part>small:nth-of-type(n+2){grid-column:1/-1;line-height:1.6}

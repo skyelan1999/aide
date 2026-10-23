@@ -25,10 +25,18 @@ type billingCredential struct {
 }
 
 func billingVaultID(provider string) string { return "provider-billing:" + provider }
+func billingKeyVaultID(provider, key string) string {
+	if key == "" {
+		return billingVaultID(provider)
+	}
+	return "provider-billing-key:" + billingScope(provider, key, "")
+}
 func (a *App) providerBillingCredentials(w http.ResponseWriter, r *http.Request) {
 	pid := r.URL.Query().Get("providerId")
+	kid := r.URL.Query().Get("keyId")
 	var in struct {
 		ProviderID      string `json:"providerId"`
+		KeyID           string `json:"keyId"`
 		AccessKeyID     string `json:"accessKeyId"`
 		AccessKeySecret string `json:"accessKeySecret"`
 		Clear           bool   `json:"clear"`
@@ -39,10 +47,11 @@ func (a *App) providerBillingCredentials(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		pid = in.ProviderID
+		kid = in.KeyID
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	p, _, e := a.billingTargetLocked(pid, "", "")
+	p, kid, e := a.billingTargetLocked(pid, kid, "")
 	if e != nil {
 		fail(w, 400, e)
 		return
@@ -52,7 +61,7 @@ func (a *App) providerBillingCredentials(w http.ResponseWriter, r *http.Request)
 		fail(w, 400, errors.New("active provider balance plugin does not require billing credentials"))
 		return
 	}
-	id := billingVaultID(p.ID)
+	id := billingKeyVaultID(p.ID, kid)
 	if r.Method == http.MethodPut {
 		if e := managementGuardLocked(a, r); e != nil {
 			fail(w, 403, e)
@@ -80,7 +89,7 @@ func (a *App) providerBillingCredentials(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-	jsonOut(w, 200, map[string]any{"providerId": p.ID, "configured": a.vault != nil && a.vault.Has(id)})
+	jsonOut(w, 200, map[string]any{"providerId": p.ID, "keyId": kid, "configured": a.vault != nil && a.vault.Has(id)})
 }
 func rpcEscape(v string) string { return strings.ReplaceAll(url.QueryEscape(v), "+", "%20") }
 func signBalanceRPC(ak, secret string, at time.Time, nonce string) url.Values {
@@ -125,10 +134,10 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		var raw string
-		raw, e = a.vaultKeyByIDLocked(billingVaultID(p.ID))
+		raw, e = a.vaultKeyByIDLocked(billingKeyVaultID(p.ID, kid))
 		if e == nil && raw == "" {
 			a.mu.Unlock()
-			jsonOut(w, 200, map[string]any{"supported": true, "billingCredentialsRequired": true, "providerId": p.ID, "balance_infos": []any{}})
+			jsonOut(w, 200, map[string]any{"supported": true, "billingCredentialsRequired": true, "providerId": p.ID, "keyId": kid, "balance_infos": []any{}})
 			return
 		}
 		if e == nil {
@@ -194,6 +203,7 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	out["providerId"] = p.ID
 	out["keyId"] = kid
 	out["balanceScope"] = "account"
+	out["balanceAuth"] = b.Auth
 	jsonOut(w, 200, out)
 }
 func normalizeBalance(raw []byte, format string) (map[string]any, error) {

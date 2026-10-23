@@ -520,18 +520,28 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .vh-text { font-size: 11px; color: var(--brand, #6366f1); margin-top: 2px; }
 .vh-reason { font-size: 10px; color: var(--muted, #888); margin-top: 3px; line-height: 1.5; }
 
-.model-pie-wrap{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-faint)}
-.model-pie-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:10px}
-.model-pie-body{display:flex;justify-content:center;align-items:center}
-.model-pie-svg{width:100%;height:auto;max-width:380px;display:block;cursor:pointer}
+.token-stats .model-pie-wrap{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-faint);container-type:inline-size}
+.token-stats .model-pie-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px}
+.token-stats .model-pie-body{display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center;gap:20px;padding:2px 0}
+.token-stats .model-pie-plot{position:relative;width:112px;aspect-ratio:1}
+.model-pie-svg{display:block;width:100%;height:100%}
+.token-stats .model-pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;transform:translateY(3px);gap:2px}
+.token-stats .model-pie-center strong{max-width:76px;font-size:13px;line-height:1.3;color:var(--text);overflow-wrap:anywhere;text-align:center;font-variant-numeric:tabular-nums}
+.token-stats .model-pie-center small{margin:0;padding:0;font-size:9px;line-height:1.3;color:var(--muted)}
 .pie-slice{transition:opacity .15s ease}
-.pie-label-group{cursor:default}
-.pie-leader{opacity:.5;transition:opacity .15s ease,stroke-width .15s ease;pointer-events:none}
-.pie-label-name{font-size:10px;fill:var(--text-settings);font-weight:600}
-.pie-label-sub{font-size:9px;fill:var(--muted);font-family:ui-monospace,monospace}
-.pie-label-group.active .pie-leader{opacity:1;stroke-width:1.6}
-.pie-label-group.active .pie-label-name{fill:var(--text)}
-.model-pie-empty{font-size:10px;color:var(--faintest);text-align:center;padding:20px 0}
+.token-stats .model-pie-legend{list-style:none;margin:0;padding:0;min-width:0;max-height:216px;overflow:auto}
+.token-stats .model-pie-legend>li{margin:0;padding:0}
+.token-stats .model-pie-row{display:grid;grid-template-columns:7px minmax(0,1fr) auto 48px;align-items:center;gap:10px;width:100%;min-height:36px;padding:8px 2px;border:0;border-bottom:1px solid var(--line-faint);border-radius:0;background:transparent;text-align:left;color:var(--text-settings);font:inherit;line-height:1.4;cursor:default}
+.token-stats .model-pie-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.model-pie-dot{width:7px;height:7px;border-radius:50%}
+.model-pie-name{font-size:11px;overflow-wrap:anywhere;min-width:0}
+.token-stats .model-pie-values{display:contents;font-variant-numeric:tabular-nums;white-space:nowrap}
+.token-stats .model-pie-values strong{grid-column:4;grid-row:1;font-size:11px;line-height:1.4;text-align:right}
+.token-stats .model-pie-values small{grid-column:3;grid-row:1;margin:0;padding:0;font-size:10px;line-height:1.4;color:var(--muted);text-align:right}
+@container (max-width:420px){.token-stats .model-pie-body{grid-template-columns:minmax(0,1fr);gap:6px}.token-stats .model-pie-plot{width:100px;justify-self:center}.token-stats .model-pie-row{gap:7px;grid-template-columns:7px minmax(0,1fr) auto 44px}}
+.model-pie-empty{font-size:10px;color:var(--faintest);text-align:center;padding:16px 0}
+.token-stats .token-heatmap{justify-content:flex-start;padding:8px 0;gap:4px}
+.token-stats .token-legend{margin:8px 0 12px}
 
 .img-viewer{display:flex;flex-direction:column;height:100%;min-height:400px}
 .img-toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line-faint);flex-shrink:0}
@@ -1753,3 +1763,46 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 
 /* Multiple host directories: compact rows, wrapping paths and explicit state. */
 .local-mount-settings{display:grid;gap:14px;min-width:0}.local-mount-list{display:grid;gap:12px}.local-mount-card{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.local-mount-row{display:flex;gap:8px;align-items:center;min-width:0}.local-mount-row input{flex:1;min-width:0}.local-mount-row select{width:100px;flex:none}.local-mount-actions{display:flex;gap:8px;flex-wrap:wrap}.local-mount-notice{margin:0;padding:12px;border-left:3px solid var(--brand);background:var(--selected);overflow-wrap:anywhere}.local-mount-card small{overflow-wrap:anywhere}#ws-browse-mount{width:100%;margin-bottom:12px}@media(max-width:540px){.local-mount-card{padding:10px}.local-mount-row{flex-wrap:wrap}.local-mount-row input{flex-basis:100%}.local-mount-actions button{flex:1 1 45%}}
+
+/* Account balances are separate provider-returned amounts, never a cash total. */
+.token-stats .account-balance-pool{--wb-field-height:26px;--wb-field-pad-y:3px;--wb-field-pad-x:6px;--wb-field-font:10px;--balance-alert:#cc3044;margin:10px 0 14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
+.token-stats .balance-pool-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.token-stats .balance-pool-header h4{font-size:13px;line-height:1.4;margin:0;color:var(--text)}
+.token-stats .balance-pool-caption{font-size:10px;line-height:1.5;margin:5px 0 0;color:var(--muted);overflow-wrap:anywhere}
+.token-stats .balance-pool-summary{font-size:10px;margin:0 0 8px;color:var(--muted);font-variant-numeric:tabular-nums}
+.token-stats .balance-pool-summary[data-warning=true]{color:var(--balance-alert)}
+.token-stats .balance-pool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+.token-stats .balance-account-card{--balance-color:#2563eb;padding:10px;border:1px solid var(--line-faint);border-radius:9px;background:var(--bg);min-width:0}
+.token-stats .balance-account-card[data-state=low]{--balance-color:var(--balance-alert);border-color:color-mix(in srgb,var(--balance-alert) 45%,var(--line))}
+.token-stats .balance-account-card[data-state=empty]{--balance-color:var(--balance-alert);border-color:color-mix(in srgb,var(--balance-alert) 45%,var(--line))}
+.token-stats .balance-account-card[data-state=stale],.token-stats .balance-account-card[data-state=pending]{--balance-color:var(--muted)}
+.token-stats .balance-account-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.token-stats .balance-account-head strong{display:block;font-size:11px;line-height:1.5;color:var(--text);overflow-wrap:anywhere}
+.token-stats .balance-account-key{display:block;font-size:10px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.token-stats .balance-account-badge{flex-shrink:0;font-size:9px;line-height:1.5;border-radius:4px;padding:2px 5px;color:var(--balance-color);background:color-mix(in srgb,var(--balance-color) 9%,transparent)}
+.token-stats .balance-water-row{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:center;margin:6px 0}
+.token-stats .balance-water-tank{position:relative;height:72px;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--balance-color) 5%,transparent)}
+.token-stats .balance-water{position:absolute;bottom:0;width:100%;background:linear-gradient(0deg,color-mix(in srgb,var(--balance-color) 95%,transparent),color-mix(in srgb,var(--balance-color) 72%,transparent));transition:height .7s ease,background .25s ease}
+.token-stats .balance-water:before{content:'';position:absolute;left:-50%;top:-5px;width:200%;height:12px;border-radius:45%;background:color-mix(in srgb,var(--balance-color) 60%,transparent);animation:balance-water-wave 4s ease-in-out infinite alternate}
+.token-stats .balance-alarm-line{position:absolute;left:0;right:0;height:0;border-top:1px dashed var(--balance-alert);z-index:1}
+.token-stats .balance-amount{font-size:25px;line-height:1.2;letter-spacing:-.5px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.token-stats .balance-currency{display:block;font-size:9px;color:var(--muted);line-height:1.5;margin-top:3px}
+.token-stats .balance-alarm-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line-faint)}
+.token-stats .balance-alarm-controls label{display:grid;gap:3px;min-width:0;margin:0;font-size:9px;color:var(--muted)}
+.token-stats .balance-alarm-controls input{width:100%;box-sizing:border-box;min-width:0;min-height:26px;height:26px;margin:0;padding:3px 6px;border:1px solid var(--line);border-radius:4px;font-size:10px;font-variant-numeric:tabular-nums}
+.token-stats .balance-account-updated{font-size:9px;line-height:1.5;color:var(--muted);margin-top:6px}
+.token-stats .balance-pool-action{font:inherit;font-size:10px;line-height:1.4;min-height:26px;height:26px;margin:0;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--text);white-space:nowrap}
+.token-stats .balance-pool-action:disabled{opacity:.45}
+.token-stats .balance-credentials{border-top:1px solid var(--line-faint);padding-top:8px;margin-top:8px}
+.token-stats .balance-credentials[hidden]{display:none}
+.token-stats .balance-credentials summary{font-size:10px;color:var(--text);cursor:pointer}
+.token-stats .balance-credentials-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
+.token-stats .balance-credentials-form input{min-width:0;width:100%;padding:6px;font-size:10px}
+.token-stats .balance-pool-error{font-size:10px;line-height:1.5;color:var(--danger,#d65c48);margin:6px 0 0}
+.token-stats .balance-pool-error:empty{display:none}
+.token-stats .balance-account-card[data-state=low] .balance-amount,.token-stats .balance-account-card[data-state=empty] .balance-amount{color:var(--balance-color)}
+.token-stats .balance-account-card[data-state=low] .balance-account-badge,.token-stats .balance-account-card[data-state=empty] .balance-account-badge{color:var(--balance-alert);background:color-mix(in srgb,var(--balance-alert) 12%,transparent)}
+@keyframes balance-water-wave{from{transform:translateX(-10%) rotate(-4deg)}to{transform:translateX(10%) rotate(4deg)}}
+@media(prefers-reduced-motion:reduce){.token-stats .balance-water{transition:none}.token-stats .balance-water:before{animation:none}}
+
+[data-theme="dark"] .token-stats .account-balance-pool{--wb-field-height:26px;--wb-field-pad-y:3px;--wb-field-pad-x:6px;--wb-field-font:10px;--balance-alert:#ff7080}

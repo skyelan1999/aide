@@ -144,7 +144,10 @@ func TestKnowledgeProgressiveCatalogAccumulatesBeyondOneLargeDirectory(t *testin
 			t.Fatalf("progressive view dropped files between cycles: %d -> %d", lastCount, count)
 		}
 		lastCount, previous = count, candidate
-		if count == want {
+		// Discovery can finish before the budgeted material-reading pass.
+		// Continue the existing bounded loop until both stages are complete.
+		source := coverageSource(t, graph, "workspace")
+		if count == want && source.State == "ready" && source.Coverage != nil && source.Coverage.Pending == 0 && len(source.Coverage.Reasons) == 0 {
 			break
 		}
 	}

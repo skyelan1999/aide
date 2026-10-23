@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -23,6 +24,7 @@ type routerSource struct {
 	Assessment string `json:"assessment"`
 }
 type routerProfile struct {
+	Output        string         `json:"output,omitempty"` // empty=text, image, video, speech
 	WireFormat    string         `json:"wireFormat,omitempty"`
 	ID            string         `json:"id"`
 	Aliases       []string       `json:"aliases"`
@@ -46,14 +48,16 @@ type routerCatalog struct {
 	Rules     []routerRule    `json:"rules"`
 }
 type ModelRouteDecision struct {
-	Stage    string `json:"stage"`
-	Role     string `json:"role"`
-	Model    string `json:"model"`
-	Provider string `json:"provider,omitempty"`
-	Profile  string `json:"profile,omitempty"`
-	Catalog  string `json:"catalog,omitempty"`
-	Reason   string `json:"reason"`
-	At       string `json:"at"`
+	Score      int                   `json:"score,omitempty"`
+	Candidates []mediaRouteCandidate `json:"candidates,omitempty"`
+	Stage      string                `json:"stage"`
+	Role       string                `json:"role"`
+	Model      string                `json:"model"`
+	Provider   string                `json:"provider,omitempty"`
+	Profile    string                `json:"profile,omitempty"`
+	Catalog    string                `json:"catalog,omitempty"`
+	Reason     string                `json:"reason"`
+	At         string                `json:"at"`
 }
 
 var routerCatalogName = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}\.json$`)
@@ -76,6 +80,9 @@ func validateRouterCatalog(raw []byte) (*routerCatalog, error) {
 	names := map[string]bool{}
 	ids := map[string]bool{}
 	for _, m := range c.Models {
+		if m.Output != "" && m.Output != "text" && m.Output != "image" && m.Output != "video" && m.Output != "speech" {
+			return nil, errors.New("模型输出类型无效")
+		}
 		if m.WireFormat != "" && m.WireFormat != "deepseek" && m.WireFormat != "openai-reasoning" && m.WireFormat != "openai-compatible" {
 			return nil, errors.New("模型参数适配声明无效")
 		}
@@ -94,6 +101,9 @@ func validateRouterCatalog(raw []byte) (*routerCatalog, error) {
 			if m.Weights[role] < 1 || m.Weights[role] > 5 {
 				return nil, errors.New("模型适配权重须为1至5")
 			}
+		}
+		if m.Output != "" && m.Output != "text" && (m.Weights[m.Output] < 1 || m.Weights[m.Output] > 5) {
+			return nil, errors.New("媒体生成适配权重须为1至5")
 		}
 	}
 	for _, r := range c.Rules {
@@ -220,6 +230,9 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 		return fallback, d
 	}
 	text := task.Prompt
+	if output := generationIntent(text); output != "" && (stage == "initial" || stage == "chat") {
+		return a.routeMediaModelLocked(task, fallback, c, p, output, d)
+	}
 	if strings.HasPrefix(stage, "parallel/part") {
 		text = ""
 		if len(input) > 0 {
@@ -269,7 +282,7 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 				break
 			}
 		}
-		if profile == nil {
+		if profile == nil || profile.Output != "" && profile.Output != "text" {
 			continue
 		}
 		cfg, err := settingsForSelectedModel(fallback, m.ID)
@@ -284,6 +297,16 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 			window = profile.ContextWindow
 		}
 		if required > window || hasImages && (!profile.Vision || !modelSupportsVision(m.ID, cfg.Models)) || len(tools) > 0 && (!profile.Tools || modelCapabilityStatus(cfg, "tool_calls") == "unsupported") || params.ResponseFormat != "" && (!profile.Structured || modelCapabilityStatus(cfg, "structured_output") == "unsupported") {
+			continue
+		}
+		mediaOK := true
+		for _, message := range input {
+			if visionGateForConfig(cfg, message.Images) != nil {
+				mediaOK = false
+				break
+			}
+		}
+		if !mediaOK {
 			continue
 		}
 		key, err := a.modelAPIKeyForConfigLocked(cfg)
@@ -315,7 +338,8 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 	})
 	best := candidates[0]
 	d.Model, d.Provider, d.Profile = best.cfg.Model, best.provider, best.profile
-	d.Reason = "离线精确名称匹配；按任务角色、能力约束及插件适配权重选择（非官方统一排名）"
+	d.Score = best.score
+	d.Reason = fmt.Sprintf("任务角色 %s · 适配分 %d；已配置候选 %d 个，按能力约束与插件权重选择（非官方统一排名）", d.Role, best.score, len(candidates))
 	return best.cfg, d
 }
 func (a *App) routedModel(task *Task, cfg Settings, input []Message, params ProfileParams, tools []any, stage string) Settings {

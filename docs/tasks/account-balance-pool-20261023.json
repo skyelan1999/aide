@@ -1,0 +1,89 @@
+{
+  "id": "account-balance-pool-20261023",
+  "request": "账户余额集中池，动态UI，所有Key账户卡片，报警线与RAM绑定配置",
+  "baseline": "1de38879d286f1a34c0b7e954a4fe1b18d01ab5d",
+  "initial_status": "",
+  "acceptance": [
+    "账户余额池展示所有配置Key，真实余额动态水位、币种分开、不合计共享账户余额",
+    "每Key/币种报警线和水位刻度在当前设备持久保存，低余额/耗尽/过期/待RAM状态明确",
+    "每分钟自动刷新仅在设置可见时执行，最多2个查询并行，销毁取消，凭证不写入浏览器存储",
+    "RAM配置放入对应卡片，Key身份校验，空值不记作0；实际Safari与窄屏验收",
+    "Visual refinement: compact cards and controls; saturated blue water, red water/amount/badge/border at or below the alert threshold; unknown balances remain neutral."
+  ],
+  "scope": [
+    "internal/server/web/account-balance-pool.js",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/provider_balance.go",
+    "scripts/account-balance-pool.test.cjs",
+    "docs/agent/router.json",
+    "docs/tasks/account-balance-pool-20261023.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "实现集中账户卡片池、金额水位与报警线、凭证折叠、受限并发刷新及可见性/销毁检查。无推理调用，不合计账户或币种。",
+      "evidence": [
+        "internal/server/web/account-balance-pool.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "实现集中账户卡片池、金额水位与报警线、凭证折叠、受限并发刷新及可见性/销毁检查。无推理调用，不合计账户或币种。",
+      "evidence": [
+        "internal/server/web/account-balance-pool.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现集中账户卡片池、金额水位与报警线、凭证折叠、受限并发刷新及可见性/销毁检查。无推理调用，不合计账户或币种。",
+      "evidence": [
+        "internal/server/web/account-balance-pool.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "8 module tests and 148 quick checks passed; targeted Go ProviderSupport/ProviderBilling tests passed. 390px light/dark fixture: no horizontal overflow; alert Apply and reload persistence verified. Safari: both Key cards visible, real DeepSeek balance succeeded, Bailian pending RAM. No real credentials entered; Bailian real balance NOT_RUN. Fixed settings-sheet visibility integration and repeated Safari acceptance. Refinement: 8 module tests and 148 quick checks repeated. Reduced tank to 38x72px and moved threshold/scale controls to one compact row; strong blue normal and red low/empty states checked in desktop and 390px fixture. Actual Safari verified new layout and real balance. RAM links: official console and AccessKey guide verified from Aliyun documentation and visibly confirmed in expanded Safari card. 148 quick checks repeated; links open in a new tab with noopener/noreferrer.",
+      "evidence": [
+        "scripts/account-balance-pool.test.cjs",
+        ".agent-state/quick.json",
+        ".agent-state/balance-pool-go.log",
+        ".agent-state/balance-pool-mobile.png",
+        ".agent-state/balance-pool-desktop-dark.png",
+        ".agent-state/balance-pool-safari.png",
+        ".agent-state/balance-pool-compact-quick.log",
+        ".agent-state/balance-pool-compact-mobile.png",
+        ".agent-state/balance-pool-compact-safari.png",
+        ".agent-state/balance-pool-ram-links-safari.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Final behavior and limits recorded: per-key display, potentially shared provider account balances never summed, currencies separate. Alert preferences local to device; no recharge or task stopping.",
+      "evidence": [
+        "docs/tasks/account-balance-pool-20261023.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed. Temporary fixture tab closed, viewport reset, own HTTP fixture process on 59634 stopped. Production and local evidence preserved.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Local preview only: aide:balance-pool-preview-20261023, buildCommit=1de38879-balance-pool-dirty. Healthy localhost and Safari acceptance. Source commit a2116fa1; no merge, product Release, or marketplace publication. Source branch pushed; PR #37 open, stacked on #36. Release remains pending merge and release gates. Compact refinement locally deployed as aide:balance-pool-compact-20261023, buildCommit=534afc49-balance-compact-dirty; prior preview retained. RAM help links locally deployed in aide:balance-pool-ram-links-20261023, buildCommit=eeab0778-ram-links-dirty.",
+      "evidence": [
+        ".agent-state/balance-pool-build.log",
+        ".agent-state/balance-pool-start.log",
+        "https://github.com/skyelan1999/aide/pull/37"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复上一镜像aide:plugin-pricing-repair-20261023与源代码；费用历史和凭证无迁移。报警线仅存当前设备按Key/币种隔离的非敏感偏好。",
+  "handoff": "Local preview running; previous image retained. User must enter Bailian RAM before real balance verification. Preferences scoped by workspace/provider/key/currency. PR #37 is open, stacked on #36; source commits a2116fa1 and bb221af8 pushed."
+}

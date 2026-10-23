@@ -1,0 +1,66 @@
+{
+  "id": "auto-media-routing-20261023",
+  "request": "Auto应按图片、视频、语音输出能力评分选模，语音支持生成MP3，避免文本模型反复规划代替媒体生成",
+  "baseline": "ba57cb6a977971c6e532900de396b142916d00a5",
+  "initial_status": "",
+  "acceptance": [
+    "Image/video/speech candidates use separate explicit output capability weights and show scores, never infer generation from input vision",
+    "Native generation bypasses parallel planning, topic generation, compaction and blind repeat requests",
+    "Speech files preserve codec and support native MP3 on Qwen-Audio-TTS; existing WAV provider stays compatible",
+    "Video job ID persists before polling and recovery never silently creates duplicate billable jobs",
+    "Focused protocol/cancellation/routing tests and actual provider/browser acceptance recorded separately",
+    "TTS Tools exposes synthesis and system voices, MP3/WAV files, preserves default assistant TTS settings"
+  ],
+  "scope": [
+    "internal/server media/router/task adapters and adjacent tests",
+    "AutoAiModelRouter catalog and versioned release",
+    "docs tasks/reviews and authorized existing release pipeline",
+    "New local aide-pkg-TTSTools plugin: explicit text-to-audio generation independent of assistant default TTS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Add optional output modality profiles, exact adapter allowlist, distinct generation dispatch and bounded artifact persistence; retain legacy protocol and manual selection.",
+      "evidence": [
+        "https://help.aliyun.com/zh/model-studio/qwen-audio-tts-http-api",
+        "https://help.aliyun.com/en/model-studio/text-to-video-api-reference"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Add optional output modality profiles, exact adapter allowlist, distinct generation dispatch and bounded artifact persistence; retain legacy protocol and manual selection.",
+      "evidence": [
+        "https://help.aliyun.com/zh/model-studio/qwen-audio-tts-http-api",
+        "https://help.aliyun.com/en/model-studio/text-to-video-api-reference"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

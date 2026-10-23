@@ -84,8 +84,8 @@ class ResourceGuardTests(unittest.TestCase):
             for flag, value in (('--memory', '4g'), ('--memory-swap', '4g'),
                                 ('--cpus', '2'), ('--pids-limit', '512'), ('--network', 'none')):
                 self.assertEqual(args[args.index(flag)+1], value)
-            self.assertEqual(run.call_args_list[0].kwargs['timeout'], 2750)
-            self.assertIn('45m', args[-1])
+            self.assertEqual(run.call_args_list[0].kwargs['timeout'], snapshot.HOST_TIMEOUT_SECONDS)
+            self.assertIn(f'{snapshot.SUITE_TIMEOUT_SECONDS}s', args[-1])
             self.assertIn('run_go_test_shards.py', args[-1])
             self.assertNotIn('-v', args)
             self.assertEqual(run.call_args_list[1].args[0][:3], ['docker', 'rm', '-f'])

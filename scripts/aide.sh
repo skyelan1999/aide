@@ -336,7 +336,7 @@ case "$MODE" in
     launcher_data_prepare "$DOCKER_BIN" "$IMG"
     MOUNT_OVERRIDE="$(bash scripts/local-mounts-control.sh prepare "$IMG")"
     if [[ -n "$MOUNT_OVERRIDE" ]];then
-      case ":${COMPOSE_FILE:-compose.yaml}:" in *":$MOUNT_OVERRIDE:"*) ;; *) export COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml}:$MOUNT_OVERRIDE";; esac
+      launcher_append_compose_override "$DOCKER_BIN" "$MOUNT_OVERRIDE"
     fi
     launcher_env_save
     rm -f .cache/aide-manual-stop

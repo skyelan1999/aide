@@ -1,0 +1,81 @@
+{
+  "id": "plugin-pricing-priority-20261023",
+  "request": "插件匹配时按插件计价，无匹配插件使用手动费率；分密钥分模型保持隔离",
+  "baseline": "d79c942b8c24c3562862d24fee527164b5088092",
+  "initial_status": "",
+  "acceptance": [
+    "匹配启用插件优先于存储的手动费率，查询与调用快照一致",
+    "无插件、停用或模型不匹配时使用分密钥、提供商/模型及默认手动回退",
+    "余额按所选API Key查询并标注账户级范围；百炼RAM凭证按Key隔离保存与清除",
+    "环图中心与图例数字下移3px，消除通用small上边距影响",
+    "按用户最新要求移除三项计价筛选，保留默认手动单价和启用的插件标准小字；余额账户独立按API Key绑定",
+    "紧凑环图112px、模型/用量/占比同一行，避免双层图例与过大留白"
+  ],
+  "scope": [
+    "internal/server/provider_support.go",
+    "internal/server/server.go",
+    "internal/server/provider_support_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/plugin-pricing-priority-20261023.json",
+    "internal/server/provider_balance.go",
+    "internal/server/provider_balance_test.go",
+    "internal/server/web/style.css"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "插件匹配报价优先，保留无匹配时手动回退；编辑器显示来源且插件单价只读",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/35"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "插件匹配报价优先，保留无匹配时手动回退；编辑器显示来源且插件单价只读",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/35"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "插件计价优先；默认手动单价与插件启用状态显示；独立余额账户绑定RAM；紧凑环图与单行图例",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/35"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go provider-support, billing, token and pricing regressions; 146 quick checks; local Docker build with Go vet passed. Real Safari accepted default rates, enabled plugin standards, per-key balance label, Bailian RAM form and compact chart. Live Bailian balance NOT_RUN (credentials not configured); no paid inference.",
+      "evidence": [
+        ".agent-state/plugin-pricing-regression.log",
+        ".agent-state/plugin-pricing-quick.log",
+        ".agent-state/pricing-final-safari.png",
+        ".agent-state/pricing-compact-safari.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Records the latest default-rate UI, per-key RAM binding and verification boundaries.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No temporary acceptance services; previous image and private environment backup retained. Production healthy.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Local runtime updated, source pushed; PR36 open pending merge. Issues35/33 closed after local acceptance. No product Release or marketplace upload.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/36",
+        "https://github.com/skyelan1999/aide/issues/35",
+        "https://github.com/skyelan1999/aide/issues/33"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本任务源码；恢复.env中的原镜像aide:token-chart-repair-20261023。费率配置与历史数据不迁移不改写。",
+  "handoff": "旧提供商级RAM凭证保留在保险库，但不跨API Key继承。当前Key需要显式绑定RAM账户。旧镜像aide:token-chart-repair-20261023保留。"
+}

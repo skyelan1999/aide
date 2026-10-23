@@ -1,0 +1,87 @@
+{
+  "id": "supporter-runtime-repair-20261023",
+  "request": "修复两个support插件在本机旧宿主未接通的问题，并恢复升级后的目录挂载配置",
+  "baseline": "5b8458168c0186689c51eb1c8ac647dab568e6db",
+  "initial_status": "",
+  "acceptance": [
+    "Installed supporter declarations persist on compatible host; pricing API identifies both plugins",
+    "Isolated per-key/model overrides, zero price, other-key isolation and inheritance work",
+    "Safari shows actual DeepSeek balance and official pricing; BaiLian GLM pricing and missing billing credential state",
+    "Existing workspace, sessions and pending approvals preserved; no market upload or Release"
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/launcher-data.sh",
+    "scripts/test_launcher_data.py",
+    "docs/tasks/supporter-runtime-repair-20261023.json",
+    "Local ignored runtime/config/plugin-registration repair; independent BaiLian Issue1 tariff update"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Repair both disconnected supporter plugins and preserve mounts during local host update",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/29",
+        "https://github.com/skyelan1999/aide/issues/30",
+        "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/issues/1"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Build compatible local host; upgrade original ZIPs preserving settings; use Compose to resolve dotenv before appending mount overrides",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/29",
+        "https://github.com/skyelan1999/aide/issues/30",
+        "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/issues/1"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Local host and declarations repaired; BaiLian0.1.1 installed and source4151e5d pushed; exact glm-5.3 tariff verified from official docs; launcher retains dotenv COMPOSE_FILE",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/29",
+        "https://github.com/skyelan1999/aide/issues/30",
+        "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/issues/1"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS quick144, launcher-storage41, DeepSeek6 and BaiLian5 tests. Actual ZIPs and scoped override/zero/inheritance API checks passed with isolated network-none data. Safari confirmed actual DeepSeek balance, both official prices and BaiLian missing RAM credentials. No paid inference. Full suite not rerun for this host-script-only fix.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/29",
+        "https://github.com/skyelan1999/aide/issues/30",
+        "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/issues/1"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Task evidence and balance credential limitation recorded; official tariff source retained in BaiLian research notes",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/29",
+        "https://github.com/skyelan1999/aide/issues/30",
+        "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/issues/1"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own QA container removed; private backup and prior image preserved. No credentials or user data committed",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/29",
+        "https://github.com/skyelan1999/aide/issues/30",
+        "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/issues/1"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Local runtime repair active; BaiLian source4151e5d pushed; launcher PR pending. No product Release or market upload.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/29",
+        "https://github.com/skyelan1999/aide/issues/30",
+        "https://github.com/skyelan1999/aide-pig-ALiBaiLianSupporter/issues/1"
+      ]
+    }
+  },
+  "release_authorization": "Existing repair and source push authorization; local compatible runtime/plugin repair, no market or product publication.",
+  "rollback": "Private backup in ignored .agent-state/supporter-repair-backup-20261023; retain aide:local-pp-planning-20261021. Restoring old host removes supporter protocol support.",
+  "handoff": "Running aide:supporter-repair-20261023 locally. BaiLian balance still requires independent RAM billing credentials from user; model keys cannot replace them."
+}
