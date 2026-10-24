@@ -81,6 +81,6 @@
     }
   },
   "release_authorization": "用户2026-10-24：这些改动一起升到0.4.15，主程序和插件都部署到9999，验收正常后push和release，市场也更新，别影响现有数据。0.4.15指插件，宿主按version.sh下一RC。",
-  "rollback": "Stop only aide-annotation-acceptance to retire this isolated candidate; preserve its mounted data. Released main and 9999 remain RC9.",
+  "rollback": "Production rollback: in original aide checkout run AIDE_IMAGE=aide:integrity-03fa1298-arm64 AIDE_BUILD_FROM_SOURCE=0 AIDE_OPEN_BROWSER=0 ./start.command, retaining existing mounts and .env. Backup data, project workspace and installed plugins are in original .agent-state/release-rc10/rollback; protected.json records 351 file hashes. Do not restore older user data over current files merely to roll back a program. Restore plugin payload from retained 0.4.14 package/backup while preserving its state if needed.",
   "handoff": "Release in progress; deployment and remote states require final verification."
 }
