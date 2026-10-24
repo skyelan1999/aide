@@ -15,7 +15,7 @@
   const host=document.createElement('section');host.className='plugin-workbench';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
   title.textContent=plugin.workbench.title;notice.textContent=services.t('插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>close();
-  frame.title=plugin.workbench.title;frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
+  frame.title=plugin.workbench.title;frame.setAttribute('allow','fullscreen *');frame.setAttribute('allowfullscreen','');frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
   header.append(title,notice,button);host.append(header,frame);document.body.append(host);
   const reviewBack=document.createElement('button');reviewBack.type='button';reviewBack.className='plugin-workbench-return';reviewBack.hidden=true;reviewBack.textContent=services.t('返回插件工作台');document.body.append(reviewBack);
   const review=document.createElement('button');review.type='button';review.hidden=true;review.textContent=services.t('查看待审批提案');header.append(review);

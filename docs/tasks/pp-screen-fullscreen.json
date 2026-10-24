@@ -1,0 +1,70 @@
+{
+  "id": "pp-screen-fullscreen",
+  "request": "ProfessionalProject甘特图占满整个屏幕，隐藏浏览器地址栏标签栏",
+  "baseline": "74fe40d04c90834de7515f6b47441f6e8eedf28a",
+  "initial_status": "",
+  "acceptance": [
+    "Fullscreen API hides browser chrome and fills display with Gantt preview",
+    "Exit button and one Escape restore editor",
+    "Sandbox remains opaque and retains original restrictions"
+  ],
+  "scope": [
+    "internal/server/web/plugin-workbench.js",
+    "scripts/plugin-workbench.test.cjs",
+    "docs/tasks/pp-screen-fullscreen.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User clarified entire physical screen, not viewport overlay",
+      "evidence": [
+        "User message 2026-10-24"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Delegate fullscreen only to sandbox frame; plugin requests document root and restores dialog top-layer order",
+      "evidence": [
+        "plugin-workbench.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added fullscreen iframe permission; sandbox restrictions unchanged",
+      "evidence": [
+        "internal/server/web/plugin-workbench.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "19 workbench tests pass; actual Safari screen fullscreen and one Escape verified in isolated instance",
+      "evidence": [
+        ".agent-state/pp-screen-fullscreen-test.log",
+        "https://localhost:18491",
+        "Compiled .agent-state/pp-screen-fullscreen-aide with go build -buildvcs=false"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Plugin README and acceptance report describe host dependency and unreleased state",
+      "evidence": [
+        "../aide-pkg-ProfessionalProject/docs/GANTT-STAGES-ACCEPTANCE.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned source and test changes; local evidence ignored",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No new push or release requested; 9999 host binary not replaced",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert host commit; iframe sandbox permissions otherwise unchanged.",
+  "handoff": "Plugin 0.4.12 installed at 9999. Screen fullscreen requires deploying this host patch; tested in independent instance. No production restart."
+}
