@@ -77,7 +77,8 @@ class ResourceGuardTests(unittest.TestCase):
         spec.loader.exec_module(snapshot)
         with tempfile.TemporaryDirectory() as name:
             snapshot.ROOT = Path(name)
-            with mock.patch.object(snapshot.subprocess, 'check_output', return_value=b''), \
+            with mock.patch.dict(os.environ, {'AIDE_TEST_WORKERS': '1'}), \
+                 mock.patch.object(snapshot.subprocess, 'check_output', return_value=b''), \
                  mock.patch.object(snapshot.subprocess, 'run') as run:
                 snapshot.main()
             args = run.call_args_list[0].args[0]
