@@ -11,7 +11,9 @@
   "scope": [
     "internal/server/web/plugin-workbench.js",
     "scripts/plugin-workbench.test.cjs",
-    "docs/tasks/pp-screen-fullscreen.json"
+    "docs/tasks/pp-screen-fullscreen.json",
+    "Dockerfile",
+    "docker/sherpa/README.md"
   ],
   "stages": {
     "requirements": {
@@ -30,7 +32,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Added fullscreen iframe permission; sandbox restrictions unchanged",
+      "summary": "Added fullscreen iframe permission; sandbox restrictions unchanged; resolve upstream sherpa architecture-specific archive names for release blocker #59",
       "evidence": [
         "internal/server/web/plugin-workbench.js"
       ]
@@ -42,7 +44,8 @@
         ".agent-state/pp-screen-fullscreen-test.log",
         "https://localhost:18491",
         "Compiled .agent-state/pp-screen-fullscreen-aide with go build -buildvcs=false",
-        "2026-10-24 live9999 Safari screenshots observed; aide:fullscreen-local-1f3db3bf healthy; data/workspace mounts unchanged"
+        "2026-10-24 live9999 Safari screenshots observed; aide:fullscreen-local-1f3db3bf healthy; data/workspace mounts unchanged",
+        "AMD64 native delivery prior run39997980660 failed missing TTS; corrected upstream x64-shared archive name; final candidate verification pending"
       ]
     },
     "documentation": {

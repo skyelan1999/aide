@@ -123,18 +123,18 @@ ARG SHERPA_OFFLINE=0
 COPY docker/sherpa /sherpa-pkg
 RUN set -ux; \
     arch="$(uname -m)"; \
-    if [ "$arch" = "aarch64" ]; then sarch="aarch64"; else sarch="x64"; fi; \
+    if [ "$arch" = "aarch64" ]; then sarch="aarch64"; spackage="shared-cpu"; else sarch="x64"; spackage="shared"; fi; \
     cd /tmp; \
     sherpa_ok=0; \
     if [ "${SHERPA_OFFLINE}" = "1" ]; then \
       echo "[runtime] sherpa 离线模式：使用 docker/sherpa 本地包"; \
-      if ls /sherpa-pkg/sherpa-onnx-*-shared-cpu.tar.bz2 >/dev/null 2>&1; then \
-        cp /sherpa-pkg/sherpa-onnx-*-shared-cpu.tar.bz2 ./pkg.tar.bz2 && sherpa_ok=1; \
+      if [ -f "/sherpa-pkg/sherpa-onnx-v${SHERPA_VERSION}-linux-${sarch}-${spackage}.tar.bz2" ]; then \
+        cp "/sherpa-pkg/sherpa-onnx-v${SHERPA_VERSION}-linux-${sarch}-${spackage}.tar.bz2" ./pkg.tar.bz2 && sherpa_ok=1; \
       else echo "[runtime] WARN: docker/sherpa/ 中未找到离线包，跳过 sherpa"; fi; \
     else \
       echo "[runtime] sherpa 在线模式：下载 v${SHERPA_VERSION} (${sarch})"; \
       if curl -fSL --retry 3 --retry-delay 2 --connect-timeout 10 -o pkg.tar.bz2 \
-        "https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_VERSION}/sherpa-onnx-v${SHERPA_VERSION}-linux-${sarch}-shared-cpu.tar.bz2" 2>/dev/null; then \
+        "https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_VERSION}/sherpa-onnx-v${SHERPA_VERSION}-linux-${sarch}-${spackage}.tar.bz2" 2>/dev/null; then \
         sherpa_ok=1; \
       else echo "[runtime] WARN: sherpa 下载失败（网络不可达），跳过离线TTS，应用仍正常运行"; fi; \
     fi; \
