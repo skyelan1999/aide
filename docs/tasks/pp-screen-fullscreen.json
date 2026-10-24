@@ -66,14 +66,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Live9999 fullscreen accepted; complete release regression passed; preparing RC8 native candidates",
+      "status": "pass",
+      "summary": "RC8 source/tag pushed and prerelease published after both native candidates and exact remote asset SHA256 gate; final RC8 image deployed9999 with unchanged mounts. Private plugin0.4.13 and market metadata published separately.",
       "evidence": [
-        ".agent-state/pp-screen-full-release-tests-complete.log"
+        "https://github.com/skyelan1999/aide/actions/runs/40069156438",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC8",
+        "RELEASE_TAG=v0.1.17.5-RC8 delivery_gate.py artifacts and remote PASS",
+        "9999 buildVersion0.1.17.5 RC8 buildCommit45cb23e53998bc164e7d9f517e4156efc7950f39; health ok; mounts unchanged"
       ]
     }
   },
   "release_authorization": "User: deploy main program patch to 9999, confirm true fullscreen, then push and release both main program and plugin (2026-10-24).",
   "rollback": "Keep existing aide:studio-motion-14da0228 image and unchanged data/workspace mounts. Restore the recorded old image via the normal launcher if candidate fails. No data migration or volume deletion.",
-  "handoff": "Host patch and plugin0.4.12 deployed on9999; saved project opened read-only; true fullscreen and Escape verified. Release checks in progress."
+  "handoff": "9999 runs released RC8 plus private plugin0.4.13. Whole-display fullscreen and single Escape passed earlier with0.4.12 and the same host permission/API. New0.4.13 progress/executor/handover/icon UI and PP roundtrip passed on isolated18491. Final0.4.13 whole-display repeat remains unconfirmed: coordinate CUA returns noWindowsAvailable and AX activation does not grant Safari fullscreen gesture; user was asked to click manually. No writes to the real project for these tests."
 }
