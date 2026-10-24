@@ -75,12 +75,12 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "New briefing capability and plugin features are local candidates only. No new version, push, release or 9999 installation was requested for these changes. Existing main RC9 release is separate.",
+      "status": "in_progress",
+      "summary": "Authorized production deployment and release; clean release clone excludes unrelated cloud duplicate files. Data backup before switching; publish only after live acceptance.",
       "evidence": []
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户2026-10-24：这些改动一起升到0.4.15，主程序和插件都部署到9999，验收正常后push和release，市场也更新，别影响现有数据。0.4.15指插件，宿主按version.sh下一RC。",
   "rollback": "Stop only aide-annotation-acceptance to retire this isolated candidate; preserve its mounted data. Released main and 9999 remain RC9.",
-  "handoff": "Host source in separate worktree/branch; plugin risk/history and briefing source local commits. 18492 supports review. Production 9999 does not contain these new features. Further deployment/release requires a new user request and full release gates."
+  "handoff": "Release in progress; deployment and remote states require final verification."
 }
