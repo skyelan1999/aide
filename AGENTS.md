@@ -23,3 +23,7 @@ aide = AI + IDE，产品主旨是让人更专注于专业工作。本路由用�
 ## Bug tracking
 
 发现并确认已有功能的 bug 后，先在对应 GitHub 仓库创建 Issue，记录复现步骤、预期/实际行为与影响；修复提交和验收记录关联该 Issue。修复并验收完成后关闭 Issue；仅已写代码、尚未验收或仍有复现时不得关闭。商业插件问题只记录在对应私有仓库，不把私有实现、用户数据、密钥或安装包带入公开 Issue。此规则不要求将新功能开发中尚未完成的代码逐项登记为已有产品缺陷。
+
+## Public/private repository boundary
+
+Keep independent plugins' proposals, internal design, algorithms, experiments and implementation records in their owning repositories. Public Aide changes contain only required host code, generic contracts, neutral compatibility tests and host-facing documentation. Do not copy private plugin plans, user data, credentials or private audit findings into public commits, issues, CI logs, marketplace packages or releases. Inspect exact staged files and package allowlists before publication. Editing HEAD does not remove public Git history; report existing exposure separately instead of treating frequent commits as secrecy.

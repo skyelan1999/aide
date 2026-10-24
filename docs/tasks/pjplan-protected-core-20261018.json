@@ -1,72 +1,7 @@
 {
   "id": "pjplan-protected-core-20261018",
-  "request": "可以：拆分 PjPlan 独立核心，核心自行核验授权；为本地专业核心与未来服务端能力建立可验证实现。",
   "baseline": "5be14a462b6fc202e8f822eba42898683fb2562f",
   "initial_status": "M plugins/registry.json",
-  "acceptance": [
-    "公开连接层保持十个工具契约且不含分类表或规则实现；缺核心明确失败。",
-    "独立核心每次验证独立签名许可、版本、密文摘要及设备公钥；不信任宿主激活设置。",
-    "核心源码与发行秘密不进入三个公开仓库；历史公开内容权利不变。",
-    "隔离测试、交叉构建和真实平台验收分别记录，不启用收费。"
-  ],
-  "scope": [
-    "PjPlan 公开连接层和独立打包脚本；保留原普通包流程。",
-    "独立本地私有核心项目：加密规则、系统凭据库接口、签发和六目标构建工具。",
-    "市场展示元数据及 Aide 内置目录快照与架构说明。",
-    "不含真实发行密钥、收费后台、系统签名、后台服务安装或生产重启。"
-  ],
-  "stages": {
-    "requirements": {
-      "status": "pass",
-      "summary": "按用户同意的独立核心与分离信任边界实现技术候选。",
-      "evidence": [
-        "docs/reviews/2026-10-18-pjplan-protected-core.md"
-      ]
-    },
-    "design": {
-      "status": "pass",
-      "summary": "AES-GCM 规则密文；独立 Ed25519 核心许可；X25519 设备密钥包装。系统凭据库不是硬件不可导出保证。",
-      "evidence": [
-        "docs/reviews/2026-10-18-pjplan-protected-core.md"
-      ]
-    },
-    "implementation": {
-      "status": "pass",
-      "summary": "私有核心 2160766；公开连接层 526b81d；市场 5cc0884。无私有项目远端。",
-      "evidence": [
-        "docs/reviews/2026-10-18-pjplan-protected-core.md"
-      ]
-    },
-    "verification": {
-      "status": "pass",
-      "summary": "隔离 Go race 和 vet 通过；原49规划回归经授权核心通过；实际 Aide Node 主机经连接层调用通过；53项公开 Node 测试通过；6目标交叉构建完成。",
-      "evidence": [
-        "docs/reviews/2026-10-18-pjplan-protected-core.md"
-      ]
-    },
-    "documentation": {
-      "status": "pass",
-      "summary": "已更新市场架构、PjPlan 商业交付说明及私有核心构建/激活/限制文档。",
-      "evidence": [
-        "docs/reviews/2026-10-18-pjplan-protected-core.md"
-      ]
-    },
-    "cleanup": {
-      "status": "pass",
-      "summary": "仅暂存范围内文件；原 plugins/registry.json 保留未暂存。临时测试容器已退出，未启动新持久服务。",
-      "evidence": [
-        "docs/reviews/2026-10-18-pjplan-protected-core.md"
-      ]
-    },
-    "release": {
-      "status": "not_run",
-      "summary": "未推送、未升版、未发布或部署。真实系统凭据库、Docker/三平台物理运行、客户激活、操作系统签名/公证、收费服务均未验收。",
-      "evidence": [
-        "docs/reviews/2026-10-18-pjplan-protected-core.md"
-      ]
-    }
-  },
-  "release_authorization": "仅同意实现独立核心；本轮未授权推送或正式发行。",
-  "rollback": "未替换生产；回退本轮各仓库局部提交即可撤销候选文档/连接层，不删除原源码、用户插件或数据卷。私有核心从未安装启动。",
-  "handoff": "私有核心为同级 aide-pjplan-private-core 本地仓库，无远端。测试使用合成凭据；用户系统钥匙串未访问。连接层候选 ZIP 在 PjPlan/private-release，不能独立作为可售产品。市场仍 coming_soon。"
+  "request": "Historical independent-plugin work; implementation details retained in its owning repository.",
+  "archive_note": "Current public document is a scope-only summary. Historical commits remain accessible. This rewrite does not assert new verification, deployment or release."
 }
