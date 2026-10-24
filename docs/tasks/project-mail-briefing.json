@@ -43,7 +43,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Added project.messages bridge, durable local message timestamps with legacy-compatible decoding, provider metadata stripping and plugin client method. Existing released main remains unchanged.",
+      "summary": "Project message bridge, durable local timestamps and provider metadata stripping deployed with RC10; plugin 0.4.15 adds annotation edit history, daily/weekly briefing export and compact Gantt controls.",
       "evidence": [
         "internal/server/project_briefing.go",
         "internal/server/project_briefing_test.go"
@@ -51,12 +51,13 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Scoped Go race tests passed (29.084s); host JS syntax and diff checks passed. Latest compiled binary restarted on isolated 18492; real API returned two synthetic project-related messages and excluded unrelated project. Safari generated daily and Beijing Monday-Sunday weekly reports, copied subject and combined text with actual paste, downloaded UTF-8 EML and MIME-decoded it successfully. Plugin 111 Python and 53 Node tests passed. Full repository/release gate, narrow-screen layout and external mail client are NOT_RUN.",
+      "summary": "PASS: full local Go race/vet repository verification; GitHub CI 40091530496; native ARM64 and AMD64 candidate build 40091741463 including runtime/auth, privacy, archive/import and development toolbox checks. Plugin 111 Python and 53 Node tests passed. Actual Safari 9999 true fullscreen (browser bars hidden), saved 85-task project, weekly message briefing and UTF-8 EML readback passed. Synthetic annotation history PP roundtrip passed. Narrow-screen layout, external mail client and native Windows Docker Desktop remain NOT_RUN.",
       "evidence": [
-        ".agent-state/project-briefing-tests.log",
-        ".agent-state/project-briefing-build.log",
-        ".agent-state/briefing-api-proof.json",
-        "ProfessionalProject .agent-state/briefing-download-proof.json"
+        "GitHub Actions CI 40091530496",
+        "GitHub Actions Delivery 40091741463",
+        "Original checkout .agent-state/release-rc10/acceptance-9999.json",
+        "Original checkout .agent-state/release-rc10/eml-proof.json",
+        "Original checkout .agent-state/release-rc10/released-binary-proof.json"
       ]
     },
     "documentation": {
@@ -68,19 +69,25 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Reviewed explicit scope and diff; kept synthetic fixtures, old drafts, and acceptance evidence. One Safari workbench page remains for review. No production data writes or deployment by this feature.",
+      "summary": "Original project/session files unchanged; expected five plugin payload files match release ZIP. Same data mounts, old integrity baseline and pre-upgrade archives retained. Cloud duplicate files and Git refs preserved separately. No email sent.",
       "evidence": [
         "git diff --check",
         "Safari 18492 saved synthetic project"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Authorized production deployment and release; clean release clone excludes unrelated cloud duplicate files. Data backup before switching; publish only after live acceptance.",
-      "evidence": []
+      "status": "pass",
+      "summary": "RC10 and ProfessionalProject 0.4.15 deployed to 9999, verified and published. Official ARM64 binary matches live binary. Integrity status ok. Marketplace deployed and live catalog verified at 0.4.15. Explicit user authorization covers this same-day manual release; standing automated cadence retained.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.5-RC10",
+        "https://github.com/skyelan1999/aide-pkg-ProfessionalProject/releases/tag/v0.4.15",
+        "https://skyelan1999.github.io/aide-pkg-shop/",
+        "Original checkout .agent-state/release-rc10/live-data-proof.json",
+        "Original checkout .agent-state/release-rc10/live-market-proof.json"
+      ]
     }
   },
   "release_authorization": "用户2026-10-24：这些改动一起升到0.4.15，主程序和插件都部署到9999，验收正常后push和release，市场也更新，别影响现有数据。0.4.15指插件，宿主按version.sh下一RC。",
   "rollback": "Production rollback: in original aide checkout run AIDE_IMAGE=aide:integrity-03fa1298-arm64 AIDE_BUILD_FROM_SOURCE=0 AIDE_OPEN_BROWSER=0 ./start.command, retaining existing mounts and .env. Backup data, project workspace and installed plugins are in original .agent-state/release-rc10/rollback; protected.json records 351 file hashes. Do not restore older user data over current files merely to roll back a program. Restore plugin payload from retained 0.4.14 package/backup while preserving its state if needed.",
-  "handoff": "Release in progress; deployment and remote states require final verification."
+  "handoff": "Release complete. 9999 is RC10 with ProfessionalProject 0.4.15; integrity ok. Original 85-task project and sessions preserved. Published tag remains pinned to c6d4334d95b350765c9288dacd03d82d5d360480. Final receipt is a documentation-only follow-up."
 }
