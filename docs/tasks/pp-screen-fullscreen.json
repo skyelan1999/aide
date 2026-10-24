@@ -59,12 +59,14 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "No new push or release requested; 9999 host binary not replaced",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Authorized deployment, push and release; full verification running",
+      "evidence": [
+        ".agent-state/pp-screen-full-release-tests.log"
+      ]
     }
   },
-  "release_authorization": "",
-  "rollback": "Revert host commit; iframe sandbox permissions otherwise unchanged.",
+  "release_authorization": "User: deploy main program patch to 9999, confirm true fullscreen, then push and release both main program and plugin (2026-10-24).",
+  "rollback": "Keep existing aide:studio-motion-14da0228 image and unchanged data/workspace mounts. Restore the recorded old image via the normal launcher if candidate fails. No data migration or volume deletion.",
   "handoff": "Plugin 0.4.12 installed at 9999. Screen fullscreen requires deploying this host patch; tested in independent instance. No production restart."
 }
