@@ -37,11 +37,12 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "19 workbench tests pass; actual Safari screen fullscreen and one Escape verified in isolated instance",
+      "summary": "19 focused tests and actual Safari whole-display fullscreen plus single Escape restore passed on isolated18491 and deployed9999; browser chrome hidden and date line/risk/mark visible.",
       "evidence": [
         ".agent-state/pp-screen-fullscreen-test.log",
         "https://localhost:18491",
-        "Compiled .agent-state/pp-screen-fullscreen-aide with go build -buildvcs=false"
+        "Compiled .agent-state/pp-screen-fullscreen-aide with go build -buildvcs=false",
+        "2026-10-24 live9999 Safari screenshots observed; aide:fullscreen-local-1f3db3bf healthy; data/workspace mounts unchanged"
       ]
     },
     "documentation": {
@@ -68,5 +69,5 @@
   },
   "release_authorization": "User: deploy main program patch to 9999, confirm true fullscreen, then push and release both main program and plugin (2026-10-24).",
   "rollback": "Keep existing aide:studio-motion-14da0228 image and unchanged data/workspace mounts. Restore the recorded old image via the normal launcher if candidate fails. No data migration or volume deletion.",
-  "handoff": "Plugin 0.4.12 installed at 9999. Screen fullscreen requires deploying this host patch; tested in independent instance. No production restart."
+  "handoff": "Host patch and plugin0.4.12 deployed on9999; saved project opened read-only; true fullscreen and Escape verified. Release checks in progress."
 }
