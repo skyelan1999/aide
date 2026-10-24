@@ -47,7 +47,8 @@
         "Compiled .agent-state/pp-screen-fullscreen-aide with go build -buildvcs=false",
         "2026-10-24 live9999 Safari screenshots observed; aide:fullscreen-local-1f3db3bf healthy; data/workspace mounts unchanged",
         "AMD64 native delivery prior run39997980660 failed missing TTS; corrected upstream x64-shared archive name; final candidate verification pending",
-        "All1205 server cases and other Go packages/race/vet passed in final-run1; resource fixture exposed inherited AIDE_TEST_WORKERS=2; isolated fixture default and rerunning complete gate."
+        "All1205 server cases and other Go packages/race/vet passed in final-run1; resource fixture exposed inherited AIDE_TEST_WORKERS=2; isolated fixture default and rerunning complete gate.",
+        ".agent-state/verify-20261024T055842598052Z.log: complete quick + all1205 server cases + otherpackages race/vet + runtime assets + optionalSTEP PASS"
       ]
     },
     "documentation": {
@@ -66,7 +67,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Authorized deployment, push and release; full verification running",
+      "summary": "Live9999 fullscreen accepted; complete release regression passed; preparing RC8 native candidates",
       "evidence": [
         ".agent-state/pp-screen-full-release-tests-complete.log"
       ]
