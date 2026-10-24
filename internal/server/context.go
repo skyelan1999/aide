@@ -454,6 +454,7 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 		conversation := conversationHistory(s)
 		for i := range conversation {
 			conversation[i].SourceRunID = ""
+			conversation[i].CreatedAt = ""
 		}
 		start, total := len(conversation), 0
 		for start > 0 && total+contextMessageTokens(conversation[start-1]) < contextHistoryMaxTokens {

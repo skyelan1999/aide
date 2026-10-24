@@ -395,6 +395,7 @@ type ToolCall struct {
 	} `json:"function"`
 }
 type Message struct {
+	CreatedAt   string         `json:"createdAt,omitempty"`   // Local message time; stripped at provider boundary.
 	SourceRunID string         `json:"sourceRunId,omitempty"` // Local conversation provenance; stripped at provider boundary.
 	Role        string         `json:"role"`
 	Content     string         `json:"content"`

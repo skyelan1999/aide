@@ -1,0 +1,86 @@
+{
+  "id": "project-mail-briefing",
+  "request": "项目插件需要一键导出指定日期和周一至周日邮件简报，消息汇总版自动提取当前项目相关的新消息，支持复制粘贴。保留现有数据和未保存草稿。",
+  "baseline": "03fa1298f7cebd89a13026aed8a22c9a5bd0b6e7",
+  "initial_status": "",
+  "acceptance": [
+    "指定日期及周一至周日按北京时间统计",
+    "邮件主题/正文可复制并导出可读UTF-8 EML",
+    "消息汇总自动调用宿主按项目及日期提取有来源的用户/助手消息",
+    "拒绝跨工作区、未声明能力、锁定及过期桥接，不执行发送或模型工具",
+    "隔离实例浏览器验收，保留9999数据和旧验收草稿"
+  ],
+  "scope": [
+    "internal/server/plugin_workbench*",
+    "internal/server/project_briefing*",
+    "internal/server/plugins.go",
+    "internal/server/web/plugin-workbench*",
+    "docs/plugin-protocol.md",
+    "docs/tasks/project-mail-briefing.json",
+    "internal/server/server.go (local message timestamp)",
+    "internal/server/context.go (provider metadata stripping)",
+    "internal/server/workflow.go",
+    "internal/server/interrupted_output.go",
+    "internal/server/professional_workflow.go",
+    "internal/server/attachments.go (provider metadata stripping)",
+    "internal/server/message_time.go (legacy-compatible local timestamp decoding)"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed automatic project-related new messages and Monday-Sunday in Beijing time.",
+      "evidence": [
+        "Current conversation"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Read-only declared capability; explicit project/run provenance and workspace isolation. Actual message timestamps in Beijing time, labeled task-time fallback for legacy messages. No provider call or email sending.",
+      "evidence": [
+        "internal/server/project_briefing.go",
+        "internal/server/message_time.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added project.messages bridge, durable local message timestamps with legacy-compatible decoding, provider metadata stripping and plugin client method. Existing released main remains unchanged.",
+      "evidence": [
+        "internal/server/project_briefing.go",
+        "internal/server/project_briefing_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Scoped Go race tests passed (29.084s); host JS syntax and diff checks passed. Latest compiled binary restarted on isolated 18492; real API returned two synthetic project-related messages and excluded unrelated project. Safari generated daily and Beijing Monday-Sunday weekly reports, copied subject and combined text with actual paste, downloaded UTF-8 EML and MIME-decoded it successfully. Plugin 111 Python and 53 Node tests passed. Full repository/release gate, narrow-screen layout and external mail client are NOT_RUN.",
+      "evidence": [
+        ".agent-state/project-briefing-tests.log",
+        ".agent-state/project-briefing-build.log",
+        ".agent-state/briefing-api-proof.json",
+        "ProfessionalProject .agent-state/briefing-download-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented capability, scoping, time interpretation, bounded extraction, legacy fallback and no-email-send boundary. Plugin README and verification describe local candidate status.",
+      "evidence": [
+        "docs/plugin-protocol.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed explicit scope and diff; kept synthetic fixtures, old drafts, and acceptance evidence. One Safari workbench page remains for review. No production data writes or deployment by this feature.",
+      "evidence": [
+        "git diff --check",
+        "Safari 18492 saved synthetic project"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "New briefing capability and plugin features are local candidates only. No new version, push, release or 9999 installation was requested for these changes. Existing main RC9 release is separate.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Stop only aide-annotation-acceptance to retire this isolated candidate; preserve its mounted data. Released main and 9999 remain RC9.",
+  "handoff": "Host source in separate worktree/branch; plugin risk/history and briefing source local commits. 18492 supports review. Production 9999 does not contain these new features. Further deployment/release requires a new user request and full release gates."
+}

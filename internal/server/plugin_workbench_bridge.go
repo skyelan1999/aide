@@ -99,6 +99,16 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, err)
 		return
 	}
+	if req.Method == "project.messages" {
+		value, status, err := a.projectMessagesForBridgeLocked(req, id, b)
+		a.mu.Unlock()
+		if err != nil {
+			fail(w, status, err)
+			return
+		}
+		jsonOut(w, status, value)
+		return
+	}
 	if req.Method == "workflow.control" {
 		if id != "professional-workflow" || !a.pwAvailableLocked() || req.Arguments["action"] == "approve" {
 			a.mu.Unlock()

@@ -241,6 +241,7 @@ func outgoingMessages(msgs []Message) []any {
 		if len(m.Images) == 0 {
 			copy := *m
 			copy.SourceRunID = ""
+			copy.CreatedAt = ""
 			out[i] = copy
 			continue
 		}

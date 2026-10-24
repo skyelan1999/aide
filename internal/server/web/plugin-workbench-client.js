@@ -15,6 +15,7 @@
    workflow:args=>request('workflow.control',{arguments:args}),
    capture:args=>request('capture.control',{arguments:args}),
    captureNetwork:args=>request('capture.network',{arguments:args}),
+   projectMessages:args=>request('project.messages',{arguments:args}),
    fileTarget:path=>request('file.target',{arguments:{path}}),
    saveFile:(path,content,hash)=>request('file.save',{arguments:{path,content,hash}}),
    documentInfo:(asset='',options={})=>request('document.info',{arguments:{asset,metadataOnly:options.metadataOnly===true}}),

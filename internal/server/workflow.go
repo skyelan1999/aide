@@ -512,7 +512,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		task.CheckpointStep = "plan"
 	}
 	task.CanResume = true
-	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, SourceRunID: task.ID, Type: assistantMessageType(assistantManaged)})
+	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, SourceRunID: task.ID, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano), Type: assistantMessageType(assistantManaged)})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 	oldSelection, oldSelectionRevision := s.ModelSelection, s.ModelSelectionRevision
 	if s.ModelSelection == nil || s.ModelSelection.Model == "" {
@@ -1013,7 +1013,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	}
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...)
 	firstInput := preview.Messages
-	s.Messages = append(s.Messages, Message{Role: "user", Content: orig.Prompt, SourceRunID: task.ID, Type: assistantMessageType(task.AssistantManaged)})
+	s.Messages = append(s.Messages, Message{Role: "user", Content: orig.Prompt, SourceRunID: task.ID, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano), Type: assistantMessageType(task.AssistantManaged)})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 	s.Runs = append(s.Runs, task)
 	if err := a.save(s); err != nil {

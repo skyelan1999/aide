@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // Only public response text belongs in conversation history, never reasoning,
@@ -77,6 +78,7 @@ func (a *App) rememberTaskOutputLocked(s *Session, task *Task, answer string) {
 			return
 		}
 	}
+	message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	s.Messages = append(s.Messages, message)
 }
 

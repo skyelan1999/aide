@@ -345,7 +345,7 @@ func (a *App) startPW(w http.ResponseWriter, r *http.Request, prompt string, att
 	ctx, cancel := context.WithTimeout(a.bgCtx, 15*time.Minute)
 	a.cancels[t.ID] = cancel
 	s.Runs = append(s.Runs, t)
-	s.Messages = append(s.Messages, Message{Role: "user", Content: prompt, SourceRunID: t.ID})
+	s.Messages = append(s.Messages, Message{Role: "user", Content: prompt, SourceRunID: t.ID, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano)})
 	s.Updated = t.Created
 	if err := a.save(s); err != nil {
 		cancel()
@@ -573,7 +573,7 @@ func (a *App) executePW(ctx context.Context, s *Session, t *Task, cfg Settings) 
 		}
 		t.PW.Result = final
 		t.Steps = append(t.Steps, Step{Name: "pw", Status: "completed", Content: final})
-		s.Messages = append(s.Messages, Message{Role: "assistant", Content: final, SourceRunID: t.ID})
+		s.Messages = append(s.Messages, Message{Role: "assistant", Content: final, SourceRunID: t.ID, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano)})
 	}
 	for _, n := range t.PW.Nodes {
 		if n.Status == "pending" || n.Status == "running" || n.Status == "waiting" {
