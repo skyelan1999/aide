@@ -167,6 +167,8 @@ RUN chmod -R a+rX /opt/aide
 
 # 3) 业务二进制（随每次代码/前端改动变化）——最易失效的层放在最后
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
+# Root-managed build identity; runtime upgrades may accept it only after readiness.
+RUN sha256sum /usr/local/bin/aide > /usr/local/bin/aide.sha256 && chmod 0444 /usr/local/bin/aide.sha256
 COPY --from=build /usr/local/bin/aide-message-relay /usr/local/bin/aide-message-relay
 COPY --from=build /opt/aide-message-lan /opt/aide/message-lan
 

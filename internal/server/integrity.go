@@ -57,7 +57,7 @@ type baselineManifest struct {
 }
 
 // BuildBaseline 首次启动生成程序层基线：对运行二进制计算 SHA-256 写入 .integrity/baseline.json。
-// 已存在则不覆盖（基线是本卷首次启动时的程序身份；升级后由部署流程重建）。
+// 已存在则不覆盖；镜像升级的候选验证与就绪确认见 integrity_upgrade.go。
 func BuildBaseline(data string) error {
 	if err := EnsureDirs(data); err != nil {
 		return err

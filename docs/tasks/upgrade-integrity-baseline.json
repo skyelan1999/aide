@@ -1,0 +1,88 @@
+{
+  "id": "upgrade-integrity-baseline",
+  "request": "升级时自动更新完整性基线，确认是正常升级后再更新，避免下次升级又报degraded",
+  "baseline": "16aec9600988f2b15d439e3e3ed1eaca43f37fe5",
+  "initial_status": "",
+  "acceptance": [
+    "Only a root-managed image build digest matching the running binary and a changed version/commit can prepare a transition.",
+    "Do not update before application initialization and first successful health response; recheck identity and data integrity before committing.",
+    "Back up prior baseline and atomically replace it; keep existing data unchanged.",
+    "Unverified/same-identity binary changes, failed readiness and corrupted data retain baseline and alert.",
+    "Cover upgrade, rollback, tampering, backup failure and data preservation with isolated tests."
+  ],
+  "scope": [
+    "internal/server/integrity*.go",
+    "internal/server/server.go",
+    "Dockerfile",
+    "Dockerfile.local",
+    "docs/architecture/software-updates.md",
+    "docs/tasks/upgrade-integrity-baseline.json",
+    "scripts/test_integrity_upgrade_docker.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests automatic safe upgrade baseline refresh; no production restart or release in this implementation turn.",
+      "evidence": [
+        "Issue #60",
+        "Existing RC1 baseline persisted after RC8 image upgrade."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Root-managed image checksum outside persistent data; changed build identity and clean data required; prepare at startup, recheck and commit only at first ready health request. One-shot candidate, backup before atomic replacement, serialized periodic checks.",
+      "evidence": [
+        "internal/server/integrity_upgrade.go",
+        "Dockerfile",
+        "Dockerfile.local"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented Linux packaged-image transition with unchanged initial-install behavior; rejects unknown/same identity, missing/unsafe checksum, changed candidate or data errors. No general baseline-reset API or environment override.",
+      "evidence": [
+        "internal/server/integrity_upgrade.go",
+        "internal/server/integrity_image_linux.go",
+        "internal/server/integrity_image_other.go",
+        "internal/server/server.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Docker Go race integrity tests, focused go vet, quick checks and real isolated two-build upgrade/failed-start/tamper/rollback lifecycle passed. Existing fixture project/settings/token unchanged. Live9999 remains integrity=ok with the same instanceId; no live mounts in lifecycle test.",
+      "evidence": [
+        ".agent-state/integrity-upgrade-tests.log",
+        ".agent-state/integrity-upgrade-vet.log",
+        ".agent-state/integrity-upgrade-runtime/result.json",
+        ".agent-state/verify-20261024T080554891058Z.log",
+        "scripts/test_integrity_upgrade_docker.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented trust boundary, readiness timing, previous-baseline recovery, legacy image and unpackaged runtime limitations.",
+      "evidence": [
+        "docs/architecture/software-updates.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed owned source/test/docs additions; temporary lifecycle containers and images removed by fixture cleanup. Existing services/data preserved; diff check passes.",
+      "evidence": [
+        "git diff --check",
+        "scripts/test_integrity_upgrade_docker.py"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Explicit authorization for RC9 deployment, push and release; full gate, backup and live acceptance required.",
+      "evidence": [
+        "Current user request"
+      ]
+    }
+  },
+  "release_authorization": "用户：那你把这个修复部署到9999，验收正常后把主程序push和release，别影响现有数据。",
+  "rollback": "Before accepting a verified ready build, a content-addressed copy of the prior baseline is retained in .integrity/baseline-before-<digest>.json. On verified older-image rollback, the same readiness validation restores its identity. No project/session/settings migration is introduced.",
+  "handoff": "RC9 release in progress. Preserve9999 mounts, settings, sessions, workspace and ProfessionalProject0.4.14; backup before deployment.",
+  "issue": "https://github.com/skyelan1999/aide/issues/60"
+}

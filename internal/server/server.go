@@ -597,8 +597,9 @@ type App struct {
 	assistantRealtimeActive map[string]bool
 	assistantUnlocked       map[string]bool
 	// ── 数据完整性（启动校验 + 周期巡检结果）──
-	integrityMu  sync.Mutex
-	integrityRep IntegrityReport
+	integrityMu      sync.Mutex
+	integrityRep     IntegrityReport
+	integrityUpgrade *integrityUpgrade
 }
 
 // setIntegrity 记录最近一次完整性校验/自愈报告（healthz 与 /api/debug 读取）。
@@ -847,7 +848,8 @@ func New(work, reference, data string) (*App, error) {
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
 	_ = BuildBaseline(data)
 	a.setIntegrity(SelfHeal(data, VerifyIntegrity(data)))
-	a.background(func() { RunPeriodicIntegrity(a.bgCtx.Done(), data, 5*time.Minute, a.setIntegrity) })
+	a.prepareImageIntegrityUpgrade()
+	a.background(a.runIntegrityChecks)
 	b, err := os.ReadFile(AccessTokenPath(data))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())
@@ -1405,6 +1407,7 @@ func (a *App) buildHandler() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /mobile-capture/api", a.mobileCapturePhone)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		a.confirmImageIntegrityUpgrade()
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
