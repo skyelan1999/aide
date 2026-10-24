@@ -1107,6 +1107,7 @@ func New(work, reference, data string) (*App, error) {
 	// #30：启动幂等确保恰好一个小秘系统会话（永久置顶、密码进入）。
 	a.ensureAssistantSession()
 	a.background(func() { a.reminderLoop(a.bgCtx) })
+	a.background(func() { a.assistantAgentPulseLoop(a.bgCtx) })
 	a.startMessagesIfEnabled()
 	return a, nil
 }
@@ -2378,6 +2379,10 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
+		if a.hasAssistantAgent() {
+			fail(w, 503, errors.New("assistant agent model unavailable"))
+			return
+		}
 		if va != nil {
 			entry := va.recordFallback(text, "未配置模型，直接发送")
 			// #62：语音往来归位到 assistant 会话时间线
@@ -2400,6 +2405,10 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	// 注入模型 API Key 后跑循环；失败则回落到既有 analyze 甄别（保留能力不删）。
 	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice", in.AvatarFeedback)
 	if aerr != nil {
+		if a.hasAssistantAgent() || errors.Is(aerr, errAssistantAgentActive) {
+			fail(w, 503, errors.New("assistant agent failed; no fallback executed"))
+			return
+		}
 		entry, err := va.analyze(r.Context(), cfg, text, in.Context)
 		if err != nil {
 			fb := va.recordFallback(text, "小秘分析失败，直接发送: "+err.Error())

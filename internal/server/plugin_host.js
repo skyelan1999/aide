@@ -383,7 +383,22 @@ if (command === 'validate') validateCommand(args[0]);
 else if (command === 'run') runCommand(args[0], args[1], args[2]);
 else if (command === 'call') callCommand(args[0], args[1], args[2]);
 else if (command === 'daemon') daemonCommand(args[0]);
+else if (command === 'agent') { /* host-only stdin IPC below */ }
 else {
   console.error('未知命令: ' + command);
   process.exit(2);
+}
+
+if (command === 'agent') {
+  let payload='';process.stdin.setEncoding('utf8');
+  process.stdin.on('data',chunk=>{payload+=chunk;if(Buffer.byteLength(payload)>262144)process.exit(2)});
+  process.stdin.on('end',async()=>{
+    try {
+      const request=JSON.parse(payload),loaded=loadPlugin(args[0]);
+      if(request.protocol!==1||loaded.error||typeof loaded.plugin.assistantAgent!=='function')throw Error('unsupported agent');
+      const output=await loaded.plugin.assistantAgent(request.input,{settings:request.settings||{},storage:request.storage});
+      const result=JSON.stringify(output);if(Buffer.byteLength(result)>262144)throw Error('result too large');
+      process.stdout.write(result);
+    } catch (_) { process.stderr.write('Agent invocation failed');process.exitCode=2; }
+  });
 }

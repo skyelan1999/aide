@@ -433,6 +433,10 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
+		if a.hasAssistantAgent() {
+			fail(w, 503, errors.New("assistant agent model unavailable"))
+			return
+		}
 		runFallback("小秘模型未配置，原文已转交 aide")
 		return
 	}
@@ -445,6 +449,10 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
 	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, source, in.AvatarFeedback)
 	if err != nil {
+		if a.hasAssistantAgent() || errors.Is(err, errAssistantAgentActive) {
+			fail(w, 503, errors.New("assistant agent failed; no fallback executed"))
+			return
+		}
 		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
 		detail := strings.ReplaceAll(err.Error(), cfg.BaseURL, "<model-endpoint>")
 		log.Printf("小秘文字决策失败 session=%s model=%s: %s", s.ID, cfg.Model, detail)

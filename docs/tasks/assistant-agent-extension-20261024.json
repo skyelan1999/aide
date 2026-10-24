@@ -1,0 +1,82 @@
+{
+  "id": "assistant-agent-extension-20261024",
+  "request": "Add an optional generic private assistant-agent extension with scoped host IPC and existing tool permission enforcement",
+  "baseline": "03fa1298f7cebd89a13026aed8a22c9a5bd0b6e7",
+  "initial_status": "",
+  "acceptance": [
+    "One enabled provider replaces built-in decision loop; disabled provider restores built-in",
+    "Host-only stdin IPC, no provider credentials in plugin/model args",
+    "Locked, stale workspace or disabled provider cancels access; no silent legacy fallback on active-provider failure",
+    "Text, continuous voice and native audio use the same provider contract",
+    "Only existing allowed host tools remain callable; no privilege expansion",
+    "Public files contain only generic contract and neutral fixtures"
+  ],
+  "scope": [
+    "internal/server/assistant_agent_plugin.go",
+    "internal/server/assistant_agent_plugin_test.go",
+    "internal/server/assistant_agent.go",
+    "internal/server/assistant_history.go",
+    "internal/server/assistant_realtime.go",
+    "internal/server/server.go",
+    "internal/server/plugins.go",
+    "internal/server/plugin_host.js",
+    "docs/plugin-protocol.md",
+    "docs/tasks/assistant-agent-extension-20261024.json",
+    "AGENTS.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "done",
+      "summary": "Optional replacement provider with explicit lifecycle and host permissions.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "internal/server/assistant_agent_plugin_test.go"
+      ]
+    },
+    "design": {
+      "status": "done",
+      "summary": "Versioned host-only IPC and generic native context contract.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "internal/server/assistant_agent_plugin_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "done",
+      "summary": "Text, voice and native context integration with explicit active-provider errors.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "internal/server/assistant_agent_plugin_test.go"
+      ]
+    },
+    "verification": {
+      "status": "done",
+      "summary": "Focused Go race tests passed (18.608s); isolated installed package and browser synthetic dialogue passed. Live native provider and full Go suite NOT_RUN.",
+      "evidence": [
+        ".agent-state/agent-host-final.log",
+        ".agent-state/agent-quick-final.log"
+      ]
+    },
+    "documentation": {
+      "status": "done",
+      "summary": "Generic contract documented; plugin-owned records moved to owning repositories.",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "internal/server/assistant_agent_plugin_test.go"
+      ]
+    },
+    "cleanup": {
+      "status": "done",
+      "summary": "Only owned isolated browser fixture stopped; live service unchanged.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Candidate review only; no merge, release, market publication or live deployment authorized.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Disable the optional provider to restore built-in agent on next interaction; reverting host commit removes the candidate interface.",
+  "handoff": "Generic host candidate only. Provider-private implementation and evidence remain outside this repository."
+}

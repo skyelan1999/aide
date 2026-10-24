@@ -142,6 +142,21 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		fail(w, 400, err)
 		return
 	}
+	agentBinding, agentErr := a.selectedAssistantAgent()
+	if agentErr != nil {
+		fail(w, 503, agentErr)
+		return
+	}
+	nativeSession := realtimeCallSession(cfg)
+	if agentBinding != nil {
+		prepared, e := a.assistantAgentCall(r.Context(), *agentBinding, map[string]any{"phase": "native.begin", "now": time.Now().UTC().Format(time.RFC3339Nano), "identity": voiceIdentityPrompt(cfg)})
+		if e != nil || prepared.Instructions == "" {
+			fail(w, 503, errors.New("assistant agent native context unavailable"))
+			return
+		}
+		nativeSession["instructions"] = prepared.Instructions
+		nativeSession["tools"] = append(nativeSession["tools"].([]any), map[string]any{"type": "function", "name": "assistant_context", "description": "Retrieve assistant context for the current transcribed utterance when earlier experiences or preferences are relevant.", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}})
+	}
 	upgrade := websocket.Upgrader{Subprotocols: []string{"aide-realtime"}, CheckOrigin: func(r *http.Request) bool {
 		u, e := url.Parse(r.Header.Get("Origin"))
 		return e == nil && (u.Scheme == "https" || u.Scheme == "http") && u.Host == r.Host
@@ -197,7 +212,7 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 				if ticks%20 == 0 {
 					_ = upstream.WriteControl(websocket.PingMessage, nil, time.Now().Add(3*time.Second))
 				}
-				if !a.realtimeCallValid(id, workspace) {
+				if !a.realtimeCallValid(id, workspace) || (agentBinding != nil && !a.assistantAgentCurrent(*agentBinding)) {
 					report("助理已锁定或工作区已变化，通话结束")
 					cancel()
 					return
@@ -271,7 +286,7 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		str := func(key string) string { var s string; _ = json.Unmarshal(event[key], &s); return s }
 		switch kind {
 		case "session.created":
-			session := realtimeCallSession(cfg)
+			session := nativeSession
 			if send(map[string]any{"type": "session.update", "session": session}) != nil {
 				return
 			}
@@ -293,6 +308,12 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 			heard = str("transcript")
 			heardID = str("item_id")
 			a.realtimeCallRecord(id, workspace, "user", heard)
+			if agentBinding != nil {
+				if _, e := a.assistantAgentCall(ctx, *agentBinding, map[string]any{"phase": "native.observe", "role": "user", "text": heard, "turnId": heardID, "now": time.Now().UTC().Format(time.RFC3339Nano)}); e != nil {
+					report("Assistant agent observation failed")
+					return
+				}
+			}
 			_ = emit(map[string]any{"type": kind, "transcript": heard, "item_id": heardID})
 		case "response.function_call_arguments.done":
 			callID := str("call_id")
@@ -309,6 +330,14 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 			if ready && str("name") == "assistant_work" && heard != "" && heardID != "" && usedTurn != heardID && toolsUsed <= 32 && a.realtimeCallValid(id, workspace) {
 				usedTurn = heardID
 				result = a.realtimeCallWork(ctx, id, workspace, heard)
+			}
+			if ready && str("name") == "assistant_context" && agentBinding != nil && heard != "" && heardID != "" && toolsUsed <= 32 {
+				prepared, e := a.assistantAgentCall(ctx, *agentBinding, map[string]any{"phase": "native.recall", "heard": heard, "now": time.Now().UTC().Format(time.RFC3339Nano), "identity": voiceIdentityPrompt(cfg)})
+				if e != nil {
+					report("Assistant agent recall failed")
+					return
+				}
+				result = prepared.Instructions
 			}
 			if send(map[string]any{"type": "conversation.item.create", "item": map[string]any{"type": "function_call_output", "call_id": callID, "output": result}}) != nil {
 				return

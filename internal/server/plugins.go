@@ -51,6 +51,7 @@ type PluginWorkbench struct {
 }
 
 type PluginManifest struct {
+	AssistantAgent  *PluginAssistantAgent  `json:"assistantAgent,omitempty"`
 	ProviderSupport *PluginProviderSupport `json:"providerSupport,omitempty"`
 	ModelRouter     *PluginModelRouter     `json:"modelRouter,omitempty"`
 
@@ -490,6 +491,9 @@ func parsePluginBundle(raw []byte) (PluginManifest, map[string][]byte, error) {
 	code := packageFiles[main]
 	if len(code) == 0 || len(code) > maxPluginCode {
 		return PluginManifest{}, nil, errors.New("插件入口缺失或超过 256 KiB")
+	}
+	if manifest.AssistantAgent != nil && manifest.AssistantAgent.Protocol != 1 {
+		return PluginManifest{}, nil, errors.New("unsupported assistant agent protocol")
 	}
 	if manifest.Workbench != nil {
 		if manifest.Workbench.ProfessionalWorkflow && manifest.ID != "professional-workflow" {
