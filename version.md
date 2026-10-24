@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.17.5 RC7**
+**当前版本：0.1.17.5 RC8**
+
+## 0.1.17.5 RC8（2026-10-24）
+
+- Plugin screen fullscreen, voice runtime updates, slim runtime and optional SDK; correct AMD64 offline TTS packaging
+
 
 ## 0.1.17.5 RC7（2026-10-23）
 
