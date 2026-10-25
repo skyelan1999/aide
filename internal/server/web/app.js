@@ -95,7 +95,7 @@ state.liveRound = {}; // Keep per-run streaming rounds initialized on the first 
   tools.insertAdjacentHTML('afterend', '<div class="file-filter"><div class="file-search-box"><input id="file-search" type="search" autocomplete="off" placeholder="搜索文件" aria-label="搜索文件" data-i18n-placeholder="搜索文件" data-i18n-aria-label="搜索文件"><button type="button" id="file-search-scope" aria-pressed="false" title="包含子文件夹" aria-label="包含子文件夹" data-i18n-title="包含子文件夹" data-i18n-aria-label="包含子文件夹">↳</button><button type="button" id="file-search-match" aria-pressed="false" title="精确匹配" aria-label="精确匹配" data-i18n-title="精确匹配" data-i18n-aria-label="精确匹配">＝</button></div></div>');
   const list = $('files');
   list.tabIndex = 0;
-  list.setAttribute('aria-label', uiTextApp('文件列表'));
+  list.setAttribute('aria-label', t('文件列表'));
   list.dataset.i18nAriaLabel = '文件列表';
 })();
 // 纯前端「忽略此提案」集合（无后端拒绝端点）：仅在内存折叠卡片，不写盘、不影响会话
@@ -3561,8 +3561,8 @@ function uploadWithProgress(url, body, onProgress, contentType) {
       onProgress(event.loaded, latestTotal, latestSpeed, '正在传输');
     };
     xhr.upload.onload = () => onProgress(latestLoaded, latestTotal, latestSpeed, '数据已发送，等待服务器确认');
-    xhr.onerror = () => reject(new Error(uiTextApp('网络连接中断')));
-    xhr.onabort = () => reject(new Error(uiTextApp('上传已取消')));
+    xhr.onerror = () => reject(new Error(t('网络连接中断')));
+    xhr.onabort = () => reject(new Error(t('上传已取消')));
     xhr.onload = () => {
       let data = {};
       try { data = JSON.parse(xhr.responseText || '{}'); } catch (_) {}
@@ -3595,7 +3595,7 @@ async function uploadCollected(items, target) {
 // uploadDroppedFiles 兼容旧的扁平 FileList 调用（单文件拖拽入口）。
 async function uploadDroppedFiles(files) {
   const target = currentFileTarget();
-  if (!target.writable) { toast(uiTextApp('当前目录为只读，无法上传')); return; }
+  if (!target.writable) { toast(t('当前目录为只读，无法上传')); return; }
   const items = Array.from(files || []).map(f => ({ file: f, relativePath: f.name }));
   if (!items.length) return;
   await uploadCollected(items, target);
@@ -10184,7 +10184,7 @@ function ttsPlayOne(url, provider) {
       URL.revokeObjectURL(url);
     };
     const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
-    const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error(uiTextApp('合成音频无法播放'))); };
+    const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error(t('合成音频无法播放'))); };
     ttsPlayer._finish=finish;
     const play=()=>{
       if(done||starting||ttsPlayer.cancelled||generation!==ttsPlayer.generation)return;
@@ -10199,7 +10199,7 @@ function ttsPlayOne(url, provider) {
     a.onplaying = () => {ttsPlaybackStatus('playing');window.aideAvatarSignal?.('speaking', true);};
     a.onpause = () => window.aideAvatarSignal?.('speaking', false);
     a.onended = finish;
-    a.onerror = () => fail(new Error(uiTextApp('合成音频解码或播放失败')));
+    a.onerror = () => fail(new Error(t('合成音频解码或播放失败')));
     timer = setInterval(() => {
       if (done) { clearInterval(timer); return; }
       if (ttsPlayer.cancelled || generation!==ttsPlayer.generation) { a.pause(); clearInterval(timer); finish(); return; }
@@ -12548,8 +12548,6 @@ function renderPWRun(run) {
  for(const n of run.pw.definition.nodes){const info=run.pw.nodes[n.id]||{};const row=el('details','parallel-part');row.style.display='block';row.append(el('summary','',n.title+' · '+({pending:'等待',running:'运行中',waiting:'等待确认',completed:'成功',failed:'失败',skipped:'跳过'}[info.status]||info.status)));
   if(info.output)row.append(el('pre','',info.output));if(info.error)row.append(el('p','',info.error));
   if(info.status==='waiting'&&run.status==='running'){row.open=true;row.append(el('pre','',JSON.stringify(info.request||{tool:n.tool,arguments:n.arguments,text:n.text},null,2)));for(const [label,approved] of [['确认执行',true],['拒绝',false]]){const b=el('button','quiet',label);b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'approve',sessionId:state.session.id,runId:run.id,nodeId:n.id,approved})});await selectSession(state.session.id)});row.append(b)}}panel.append(row)}
- if(run.status==='running'){const b=el('button','quiet',uiTextApp('停止 PW'));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
+ if(run.status==='running'){const b=el('button','quiet',t('停止 PW'));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
 
 }
-
-function uiTextApp(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

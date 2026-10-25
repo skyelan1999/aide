@@ -151,4 +151,4 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  return Object.freeze({root,byKey,paths,scene,pathFor,find,levels,thresholds,scaleCounts:Object.freeze(scaleCounts)});
 }});
 
-function uiTextStarmapCosmos(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextStarmapCosmos(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

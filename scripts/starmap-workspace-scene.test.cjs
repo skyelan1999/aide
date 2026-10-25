@@ -1,8 +1,9 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{textContent:'A',value:'A',replaceChildren(){this.textContent=''}});return elements.get(id)};
 function context(saved,workspace='B'){
- const c=vm.createContext({$:el,params:new URLSearchParams(),motionReduced:()=>false,clearEvidencePath(){},clearTimeout,cacheWriteTimer:0,cacheIdentity:null,stellarLogbook:{connecting(){},interrupted(){}},locked:false,loading:false,stopLive(){},graphGeneration:0,codeView:false,AbortController,syncCodeView(){},say(){},api:async path=>path.startsWith('/identity')?({workspace,epoch:'1',policy:'p'}):({workspace,revision:'R',nodes:[],edges:[],sources:[],warnings:[],reset:true}),recoveryInput:0,recoveryAttempt:null,recoveryScopeLoaded:'A',pendingRecoveredView:null,recoveryLoading:false,window:{AideStarmapCache:{read:async()=>null},AideContinuity:{readTab:async()=>saved}},graph:{workspace:'A'},aiAbort:{abort(){c.aborted=true}},aiExplorer:{cancel(){c.aborted=true}},resetDocumentBatch(){c.reset=true},beginGraphTransition(){},applyLiveUpdate(update){c.graph=update},restoreSkyView(value){c.restored=value},liveCursor:'',knowledgeTimeline:{sync(){}},liveFailures:0,redraw(){},scheduleLive(){}});
+ const c=createUiContext(vm, {$:el,params:new URLSearchParams(),motionReduced:()=>false,clearEvidencePath(){},clearTimeout,cacheWriteTimer:0,cacheIdentity:null,stellarLogbook:{connecting(){},interrupted(){}},locked:false,loading:false,stopLive(){},graphGeneration:0,codeView:false,AbortController,syncCodeView(){},say(){},api:async path=>path.startsWith('/identity')?({workspace,epoch:'1',policy:'p'}):({workspace,revision:'R',nodes:[],edges:[],sources:[],warnings:[],reset:true}),recoveryInput:0,recoveryAttempt:null,recoveryScopeLoaded:'A',pendingRecoveredView:null,recoveryLoading:false,window:{AideStarmapCache:{read:async()=>null},AideContinuity:{readTab:async()=>saved}},graph:{workspace:'A'},aiAbort:{abort(){c.aborted=true}},aiExplorer:{cancel(){c.aborted=true}},resetDocumentBatch(){c.reset=true},beginGraphTransition(){},applyLiveUpdate(update){c.graph=update},restoreSkyView(value){c.restored=value},liveCursor:'',knowledgeTimeline:{sync(){}},liveFailures:0,redraw(){},scheduleLive(){}});
  vm.runInContext(source.slice(source.indexOf('function defaultSkyView()'),source.indexOf('function restoreSkyView(')),c);
  vm.runInContext(source.slice(source.indexOf('function progressiveSummary('),source.indexOf('function scheduleLive(')),c);
  vm.runInContext(source.slice(source.indexOf('async function load(){'),source.indexOf('function syncMotion()')),c);return c;
@@ -103,7 +104,7 @@ function context(saved,workspace='B'){
 const widgets=new Map(),widget=id=>{if(!widgets.has(id))widgets.set(id,{value:'nodes',options:[{value:'all'},{value:'nodes'}],scrollTop:0,setAttribute(){}});return widgets.get(id)};
 const searchPanel={scrollTop:81};widget('detail').scrollTop=131;widget('detail-text').scrollTop=870;
 let snapshot;
-const sky=vm.createContext({clearTimeout,locked:false,loading:false,recoveryLoading:false,recoveryTimer:0,recoveryWarning:false,
+const sky=createUiContext(vm, {clearTimeout,locked:false,loading:false,recoveryLoading:false,recoveryTimer:0,recoveryWarning:false,
  window:{AideContinuity:{enabled:()=>true}},AideContinuity:{writeTab:async(scope,kind,id,value)=>{snapshot=structuredClone(value)}},
  graph:{workspace:'W'},cameraTween:{to:{yaw:1.2,pitch:-.25,zoom:1.7}},wheelZoom:{target:2.1},yaw:0,pitch:0,zoom:1,
  codeView:false,region:'workspace',edgeMode:'all',callDepth:'all',focusCode:false,skyTime:170,driftTime:220,
@@ -128,7 +129,7 @@ vm.runInContext('restoreSkyView(legacy)',sky);assert.equal(widget('detail-text')
 sky.cosmos.find=k=>k==='root';vm.runInContext('restoreSkyView(saved)',sky);assert.equal(sky.entered,'root');
 console.log('Star map tab-scoped snapshot, camera/wheel targets, motion phase, panel scroll and ancestor fallback PASS (source VM)');
 
-const retry=vm.createContext({liveTimer:1,liveReady:()=>true,scheduleLive(){},liveAbort:null,graph:{},recoveryScopeLoaded:'',load(){retry.loads=(retry.loads||0)+1}});
+const retry=createUiContext(vm, {liveTimer:1,liveReady:()=>true,scheduleLive(){},liveAbort:null,graph:{},recoveryScopeLoaded:'',load(){retry.loads=(retry.loads||0)+1}});
 vm.runInContext(source.slice(source.indexOf('async function pollLive(){'),source.indexOf('const retrievalMode=')),retry);
 (async()=>{
  await vm.runInContext('pollLive()',retry);assert.equal(retry.loads,1);

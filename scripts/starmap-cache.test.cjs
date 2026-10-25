@@ -1,10 +1,11 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const records=new Map(),db={objectStoreNames:{contains:()=>true},transaction(){
  const tx={objectStore(){return {get(key){const req={result:records.get(key)};queueMicrotask(()=>tx.oncomplete?.());return req;},put(value,key){records.set(key,structuredClone(value));const req={result:key};queueMicrotask(()=>tx.oncomplete?.());return req;}};}};return tx;
 }};
 const indexedDB={open(){const req={result:db};queueMicrotask(()=>{req.onsuccess?.();});return req;}};
-const window={indexedDB};const context=vm.createContext({window,indexedDB,Date,JSON,Promise,Map,Array,setTimeout,clearTimeout});
+const window={indexedDB};const context=createUiContext(vm, {window,indexedDB,Date,JSON,Promise,Map,Array,setTimeout,clearTimeout});
 vm.runInContext(fs.readFileSync('internal/server/web/starmap-cache.js','utf8'),context);
 (async()=>{
  const identity={workspace:'workspace-a',epoch:'4',policy:'hash-a'},graph={nodes:[{id:'F1',text:'cached',readState:'unavailable'}],edges:[],sources:[],warnings:[],truncated:false};
@@ -18,7 +19,7 @@ vm.runInContext(fs.readFileSync('internal/server/web/starmap-cache.js','utf8'),c
  node.cluster={members:[node]};node.projected={n:node};edge.a=node.projected;
  assert.equal(await window.AideStarmapCache.write('knowledge',identity,{nodes:[node],edges:[edge]},'cycle-R'),true,'real layout references must not break cache writes');
  const restored=await window.AideStarmapCache.read('knowledge',identity);assert.equal(restored.graph.nodes[0].id,'cycle');assert.equal(restored.graph.nodes[0].cluster,undefined);assert.equal(restored.graph.edges[0].a,undefined);
- const hungWindow={indexedDB:{open(){return {};}}},hungContext=vm.createContext({window:hungWindow,indexedDB:hungWindow.indexedDB,Date,JSON,Promise,Map,Array,setTimeout,clearTimeout});
+ const hungWindow={indexedDB:{open(){return {};}}},hungContext=createUiContext(vm, {window:hungWindow,indexedDB:hungWindow.indexedDB,Date,JSON,Promise,Map,Array,setTimeout,clearTimeout});
  vm.runInContext(fs.readFileSync('internal/server/web/starmap-cache.js','utf8'),hungContext);
  const started=Date.now();assert.equal(await hungWindow.AideStarmapCache.read('knowledge',identity),null);assert.ok(Date.now()-started<1000,'blocked cache must yield to network');
  console.log('PASS: persistent star map cache write/read and workspace/policy/view isolation');
@@ -33,7 +34,7 @@ function harness(idleDelay=0){
  const setTimeout=(fn,delay=0)=>{const id=++next;timers.set(id,{at:now+delay,fn});return id;};
  const clearTimeout=id=>timers.delete(id);
  const identity={workspace:'A',epoch:'1',policy:'p'};
- const c=vm.createContext({cacheWriteTimer:0,locked:false,cacheIdentity:identity,liveCursor:'R0',graph:{workspace:'A',nodes:[]},codeView:false,liveEpoch:1,setTimeout,clearTimeout,window:{AideStarmapCache:{write(mode,identity,graph,revision){writes.push({mode,workspace:identity.workspace,revision,at:now});return Promise.resolve(true);}},requestIdleCallback:true},requestIdleCallback:fn=>setTimeout(fn,idleDelay)});
+ const c=createUiContext(vm, {cacheWriteTimer:0,locked:false,cacheIdentity:identity,liveCursor:'R0',graph:{workspace:'A',nodes:[]},codeView:false,liveEpoch:1,setTimeout,clearTimeout,window:{AideStarmapCache:{write(mode,identity,graph,revision){writes.push({mode,workspace:identity.workspace,revision,at:now});return Promise.resolve(true);}},requestIdleCallback:true},requestIdleCallback:fn=>setTimeout(fn,idleDelay)});
  vm.runInContext(source.slice(source.indexOf('function scheduleGraphCache('),source.indexOf('async function pollLive(')),c);
  function advance(end){while(true){const row=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!row)break;now=row[1].at;timers.delete(row[0]);row[1].fn();}now=end;}
  return {c,writes,advance,clearTimeout};

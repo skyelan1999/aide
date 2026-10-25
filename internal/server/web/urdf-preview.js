@@ -250,4 +250,4 @@
   window.AideUrdfPreview=Object.freeze({setup,normalizePath,reference,candidates,validateRobot,parseDocument,applyJointValue,readPose,layoutCallouts,prepareStl,validateCollada,readBounded,LIMITS});
 })();
 
-function uiTextUrdfPreview(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextUrdfPreview(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

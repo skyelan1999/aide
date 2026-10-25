@@ -39,4 +39,4 @@ window.AideInfrared={
  return {set,draw,get enabled(){return enabled},get transitioning(){return Math.abs(mix-(enabled?1:0))>.001}};
 }};
 
-function uiTextStarmapInfrared(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextStarmapInfrared(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

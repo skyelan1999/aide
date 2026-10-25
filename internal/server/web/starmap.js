@@ -1151,6 +1151,16 @@ redraw();
 
 function respectMotion(){if(motionReduced()){animate=false;for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();syncMotion();redraw();}}
 addEventListener('aide:motion',respectMotion);motionMedia.addEventListener('change',respectMotion);
+// Repaint owned map chrome after a same-origin language preference change; no model request or page reload.
+window.addEventListener('aide:language', () => {
+  sourceCatalog = currentSources();
+  sourceByRegion = new Map(sourceCatalog.map(source => [source.region, source]));
+  syncMotion(); syncCodeView(); syncGraphChrome();
+  if (selected) select(selected, false);
+  if (retrievalMode() === 'nodes') nodeResults(false);
+  updateLayerLabels(); redraw();
+});
+
 window.aideUI?.subscribe(syncMapPalette);
 matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
 
@@ -1189,14 +1199,4 @@ async function searchDocuments(continuing=false){
 }
 $('document-next').onclick=()=>searchDocuments(true);
 
-function uiTextStarmap(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
-
-// Repaint owned map chrome after a same-origin language preference change; no model request or page reload.
-window.addEventListener('aide:language', () => {
-  sourceCatalog = currentSources();
-  sourceByRegion = new Map(sourceCatalog.map(source => [source.region, source]));
-  syncMotion(); syncCodeView(); syncGraphChrome();
-  if (selected) select(selected, false);
-  if (retrievalMode() === 'nodes') nodeResults(false);
-  updateLayerLabels(); redraw();
-});
+function uiTextStarmap(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

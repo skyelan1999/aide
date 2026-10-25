@@ -22,6 +22,11 @@ assert.equal(output.options[0].value,'语言');assert.equal(input.title,'语言'
 assert.equal(api.sourceName({id:'workspace',name:'工作区'}),'Workspace');
 assert.equal(api.sourceName({id:'project-ref',name:'工作区'}),'工作区');
 assert.equal(api.sourceName({id:'workspace',name:'My workspace'}),'My workspace');
+const createUiContext = require('./fixtures/ui-i18n-context.cjs');
+const englishBridge = createUiContext(vm, {window:{aideI18n:api}});
+assert.equal(vm.runInContext("uiTextStarmap('找到 {0} 个节点', 2)", englishBridge), 'Found 2 nodes');
+const fallbackBridge = createUiContext(vm, {});
+assert.equal(vm.runInContext("uiTextStarmap('找到 {0} 个节点', 0)", fallbackBridge), '找到 0 个节点');
 pref='zh-CN';assert.equal(api.t('语言'),'语言');
 assert.equal(api.t('对{0}说点什么…', '小鲸'),'对小鲸说点什么…');
 pref='invalid';ctx.navigator.language='zh-CN';assert.equal(api.language(),'zh-CN');

@@ -55,4 +55,4 @@ window.AideKnowledgeTopics={create({request,onSaved=()=>{}}){
  update();return {sync(next){if(scope?.workspace===next?.workspace&&scope?.code===next?.code&&scope?.before===next?.before&&scope?.after===next?.after)return;cancel();scope=next;revision=null;topics=[];candidates={before:[],after:[]};topicOptions();name.value='';archiveBody.replaceChildren();archived.hidden=true;for(const side of ['before','after']){fields[side].filter.value='';candidateOptions(side);}status.textContent=next?uiTextStarmapTopics('展开后读取历史片段。'):uiTextStarmapTopics('请先选择两次观察。');update();if(host.open&&scope)load();}};
 }};
 
-function uiTextStarmapTopics(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextStarmapTopics(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

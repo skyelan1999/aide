@@ -115,4 +115,4 @@
  window.AidePluginWorkbench={open,close,selection,prepareFileOpen(){if(!active?.services.document)return true;return close(false,'replace')!==false;}};
 })();
 
-function uiTextPluginWorkbench(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextPluginWorkbench(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

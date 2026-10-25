@@ -60,4 +60,4 @@ window.AideKnowledgeTimeline={create({request}){
  addEventListener('pagehide',cancel);return {sync(next){const changed=!scope||scope.workspace!==next.workspace||scope.code!==next.code;if(changed)clear();scope=next;opened();},lock(value){if(value){scope=null;clear();panel.open=false;}}};
 }};
 
-function uiTextStarmapTimeline(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextStarmapTimeline(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

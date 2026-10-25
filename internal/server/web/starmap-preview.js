@@ -31,4 +31,4 @@ window.AideStarmapPreview={create({origin,workspace,locked,openWindow,note,key})
  };
 }};
 
-function uiTextStarmapPreview(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextStarmapPreview(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

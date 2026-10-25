@@ -1,8 +1,9 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const timers=[],handlers={},calls=[];
-const c=vm.createContext({document:{hidden:true},locked:false,pageLeaving:false,loading:false,drag:null,cosmicFlight:null,
+const c=createUiContext(vm, {document:{hidden:true},locked:false,pageLeaving:false,loading:false,drag:null,cosmicFlight:null,
  liveTimer:0,liveEpoch:1,liveAbort:null,liveCursor:'old',liveFailures:0,codeView:false,recoveryScopeLoaded:'w',
  graph:{workspace:'w',nodes:[{bornAt:100}],sources:[]},performance:{now:()=>10000},
  setTimeout:(fn,delay)=>{timers.push({fn,delay});return timers.length;},clearTimeout:()=>{},

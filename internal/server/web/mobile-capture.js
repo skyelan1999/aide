@@ -26,4 +26,4 @@
  document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});window.addEventListener('pagehide',()=>{stop();token='';clearInterval(timer);});window.addEventListener('beforeunload',event=>{if(pending){event.preventDefault();event.returnValue='';}});if(!isSecureContext)notice(uiTextMobileCapture('需要手机信任的 HTTPS 访问地址。'),true);
 })();
 
-function uiTextMobileCapture(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+function uiTextMobileCapture(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }
