@@ -37,17 +37,17 @@
     if(plugin.id!=='brdplan'||m.pluginId!==plugin.id||m.protocol!==1||!/^editor_[0-9]{1,32}$/.test(m.requestId||'')||!['schematic','pcb'].includes(m.view)||typeof m.sessionPath!=='string'||m.sessionPath.length>500||m.sessionPath.startsWith('/')||m.sessionPath.split('/').some(p=>!p||p==='.'||p==='..')||/[\\\x00-\x1f]/.test(m.sessionPath))return;
     const request={protocol:1,requestId:m.requestId,sessionPath:m.sessionPath,view:m.view};
     const reply=(status,error)=>frame.contentWindow.postMessage({type:'aide.workbench.editor.status',protocol:1,requestId:request.requestId,status,...(error?{error}:{})},'*');
-    editor.hidden=false;editor.disabled=false;editor.textContent=m.view==='pcb'?'打开 PCB 手画编辑器':'打开原理图手画编辑器';notice.textContent='手画会锁定AI写入；请在原生窗口保存并正常关闭';reply('ready');
+    editor.hidden=false;editor.disabled=false;editor.textContent=m.view==='pcb'?'打开 PCB 手画编辑器':'打开原理图手画编辑器';notice.textContent=uiTextPluginWorkbench('手画会锁定AI写入；请在原生窗口保存并正常关闭');reply('ready');
     editor.onclick=async event=>{
      if(!event.isTrusted||invalid()||editor.disabled)return;
      editor.disabled=true;
      const popup=window.open('about:blank','_blank');if(popup)popup.opener=null;
      try{const response=await services.api('/plugins/brdplan/editor/open',{method:'POST',body:JSON.stringify(request),signal:abort.signal});
-      if(invalid())throw Error('工作区已切换');
+      if(invalid())throw Error(uiTextPluginWorkbench('工作区已切换'));
       if(response.protocol!==1||response.status!=='ready'||!/^\/plugin-editor\/[a-f0-9]{64}\/$/.test(response.url)||!(/^[a-f0-9]{64}$/.test(response.editorId)))throw Error('Invalid editor response');
       item.editorId=response.editorId;
-      if(!popup)throw Error('请允许Aide打开编辑器窗口，再次点击恢复');
-      popup.location=response.url;reply('opened');notice.textContent='原生窗口已打开；保存后关闭原生窗口，再刷新工程';
+      if(!popup)throw Error(uiTextPluginWorkbench('请允许Aide打开编辑器窗口，再次点击恢复'));
+      popup.location=response.url;reply('opened');notice.textContent=uiTextPluginWorkbench('原生窗口已打开；保存后关闭原生窗口，再刷新工程');
      }catch(error){popup?.close();reply('error',error.message);services.toast(error.message);}finally{editor.disabled=false;}
     };return;
    }
@@ -114,3 +114,5 @@
  window.addEventListener('pagehide',()=>close(true,'unload'));
  window.AidePluginWorkbench={open,close,selection,prepareFileOpen(){if(!active?.services.document)return true;return close(false,'replace')!==false;}};
 })();
+
+function uiTextPluginWorkbench(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

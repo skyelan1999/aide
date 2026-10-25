@@ -317,7 +317,7 @@
       settle(player, 'fallback');
     } else {
       player.slot.dataset.avatarStatus = 'error';
-      player.canvas.setAttribute('aria-label', '虚拟形象暂时不可用');
+      player.canvas.setAttribute('aria-label', uiTextAvatarPlayer('虚拟形象暂时不可用'));
       settle(player, 'error');
     }
     schedule();
@@ -463,8 +463,8 @@
     const canvas = document.createElement('canvas');
     canvas.className = 'avatar-character avatar-sprite';
     canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', '虚拟形象');
-    canvas.textContent = '虚拟形象';
+    canvas.setAttribute('aria-label', uiTextAvatarPlayer('虚拟形象'));
+    canvas.textContent = uiTextAvatarPlayer('虚拟形象');
     const player = { slot, url, canvas, element: canvas, motion, generation: 0, elapsed: 0, playbackRate: 1, interpolationEnabled: true, drawnFrame: -1, drawnNext: -1, drawnMix: -1, failedSheets: new Set(),
       lastTick: null, inView: !slot.isConnected || slot.getClientRects().length > 0, wasConnected: slot.isConnected, destroyed: false, orphanTimer: 0 };
     const ready = new Promise(resolve => { player.resolveReady = resolve; });
@@ -537,3 +537,5 @@
 
   window.AideAvatarPlayer = Object.freeze({ mount, unmount(slot) { const player = slots.get(slot); if (player) destroy(player); } });
 })();
+
+function uiTextAvatarPlayer(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

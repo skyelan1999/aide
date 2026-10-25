@@ -25,9 +25,9 @@ window.AideDelimitedText = (() => {
       else if(c==='\r'||c==='\n'){
         field();rows.push(row);row=[];if(c==='\r'&&input[i+1]==='\n')i++;ended=true;
       }else if(c==='"'&&!value&&!closed){quoted=true;}
-      else{if(closed||c==='"')throw new Error('CSV 引号格式错误，请在原文中修正');value+=c;}
+      else{if(closed||c==='"')throw new Error(uiTextDelimitedText('CSV 引号格式错误，请在原文中修正'));value+=c;}
     }
-    if(quoted)throw new Error('CSV 引号未闭合，请在原文中修正');
+    if(quoted)throw new Error(uiTextDelimitedText('CSV 引号未闭合，请在原文中修正'));
     if(!ended&&(input.length||row.length||value)){field();rows.push(row);}
     return {rows,delimiter,newline,bom,trailingNewline:ended};
   }
@@ -40,3 +40,5 @@ window.AideDelimitedText = (() => {
   }
   return {parse,stringify};
 })();
+
+function uiTextDelimitedText(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

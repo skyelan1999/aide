@@ -95,7 +95,7 @@
   }
   // Server generations never move backwards, even when HTTP responses arrive out of order.
   function acceptBackendState(data, confirmed = false) {
-    if (!data || typeof data.locked !== 'boolean' || !Number.isSafeInteger(data.gen) || data.gen < 0) throw new Error('锁屏状态响应无效');
+    if (!data || typeof data.locked !== 'boolean' || !Number.isSafeInteger(data.gen) || data.gen < 0) throw new Error(uiTextLockCluster('锁屏状态响应无效'));
     if (backendState && data.gen < backendState.gen) return backendState;
     if(optimisticGen!==null&&data.gen>optimisticGen)optimisticGen=null;
     const changed = !backendState || data.gen !== backendState.gen || data.locked !== backendState.locked;
@@ -118,7 +118,7 @@
     const timer=setTimeout(()=>ctrl?.abort(),BACKEND_FETCH_TIMEOUT_MS);
     try {
       const resp=await fetch('/api/lock-state',{cache:'no-store',headers:{Authorization:'Bearer '+authToken()},signal:ctrl?.signal});
-      if(!resp.ok)throw new Error('锁屏状态读取失败');
+      if(!resp.ok)throw new Error(uiTextLockCluster('锁屏状态读取失败'));
       return acceptBackendState(await resp.json(), true);
     } catch (_) { return null; } finally {clearTimeout(timer);}
   }
@@ -128,7 +128,7 @@
       const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
       try {
         const resp=await fetch('/api/lock-state',{method:'PUT',headers:{Authorization:'Bearer '+authToken(),'Content-Type':'application/json'},body:JSON.stringify({locked:!!locked}),signal:ctrl.signal});
-        if(!resp.ok)throw new Error('锁屏状态保存失败，请重试');
+        if(!resp.ok)throw new Error(uiTextLockCluster('锁屏状态保存失败，请重试'));
         return await resp.json();
       } finally {clearTimeout(timer);}
     });
@@ -329,24 +329,24 @@
   async function prepareUnlock() {
     await writeQueue.catch(()=>{});
     const current=await fetchBackendState();
-    if(!current)throw new Error('无法确认锁屏状态，请重试');
+    if(!current)throw new Error(uiTextLockCluster('无法确认锁屏状态，请重试'));
     return {global:phase==='master'||!bc,gen:current.gen,intent:lockIntent};
   }
   async function handleUnlockSuccess(scope, verifiedState) {
     await writeQueue.catch(()=>{});
-    if(scope?.intent!==undefined&&scope.intent!==lockIntent)throw new Error('锁屏状态已变化，请重新解锁');
+    if(scope?.intent!==undefined&&scope.intent!==lockIntent)throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
     let current;
     if(verifiedState) {
       const expectedGen=scope?.gen+(scope?.global?1:0);
-      if(verifiedState.gen!==expectedGen || (scope?.global&&verifiedState.locked!==false))throw new Error('锁屏状态已变化，请重新解锁');
+      if(verifiedState.gen!==expectedGen || (scope?.global&&verifiedState.locked!==false))throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
       current=acceptBackendState(verifiedState,true);
       // Reconcile subsequent locks in the background; an unavailable follow-up
       // GET must not turn an already committed identity verification into failure.
       fetchBackendState();
     } else current=await fetchBackendState(); // Compatibility with older servers.
-    if(!current)throw new Error('无法确认锁屏状态，请重试');
+    if(!current)throw new Error(uiTextLockCluster('无法确认锁屏状态，请重试'));
     if(scope?.global) {
-      if(current.locked)throw new Error('锁屏状态已变化，请重新解锁');
+      if(current.locked)throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
       optimisticGen=null;masterLocked=false;lastSeenMasterLocked=false;localDismiss=false;
       masterGen=Math.max(masterGen+1,current.gen);
       send('unlock',{masterLocked:false});send('state');
@@ -354,7 +354,7 @@
     } else {
       // The server verified this generation. A leader election during password
       // hashing changes the tab role, not the validity of the identity receipt.
-      if(current.gen!==scope?.gen)throw new Error('锁屏状态已变化，请重新解锁');
+      if(current.gen!==scope?.gen)throw new Error(uiTextLockCluster('锁屏状态已变化，请重新解锁'));
       // A peer may still advertise a lock whose persistence failed. The
       // verified server receipt also dismisses that veil at this generation.
       optimisticGen=null;localDismiss=true;dismissGen=current.gen;
@@ -422,3 +422,5 @@
   window.addEventListener('pagehide',()=>{clearT(syncTimer);clearT(heartbeatTimer);clearT(watchdogTimer);clearT(electionTimer);clearT(joinTimer);clearT(hardJoinTimer);});
 
 })();
+
+function uiTextLockCluster(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

@@ -95,7 +95,7 @@ state.liveRound = {}; // Keep per-run streaming rounds initialized on the first 
   tools.insertAdjacentHTML('afterend', '<div class="file-filter"><div class="file-search-box"><input id="file-search" type="search" autocomplete="off" placeholder="搜索文件" aria-label="搜索文件" data-i18n-placeholder="搜索文件" data-i18n-aria-label="搜索文件"><button type="button" id="file-search-scope" aria-pressed="false" title="包含子文件夹" aria-label="包含子文件夹" data-i18n-title="包含子文件夹" data-i18n-aria-label="包含子文件夹">↳</button><button type="button" id="file-search-match" aria-pressed="false" title="精确匹配" aria-label="精确匹配" data-i18n-title="精确匹配" data-i18n-aria-label="精确匹配">＝</button></div></div>');
   const list = $('files');
   list.tabIndex = 0;
-  list.setAttribute('aria-label', '文件列表');
+  list.setAttribute('aria-label', uiTextApp('文件列表'));
   list.dataset.i18nAriaLabel = '文件列表';
 })();
 // 纯前端「忽略此提案」集合（无后端拒绝端点）：仅在内存折叠卡片，不写盘、不影响会话
@@ -3491,6 +3491,7 @@ function showUploadProgress(total) {
   const text = host.querySelector('.up-text');
   const detail = host.querySelector('.up-detail');
   const progress = host.querySelector('.up-bar');
+  progress.setAttribute('aria-label', t('上传进度'));
   detail.textContent = ''; // 清掉上一次上传遗留的失败明细
   const api = {
     update(processed, current, loaded, requestTotal, speed, status, batch) {
@@ -3541,8 +3542,8 @@ function uploadWithProgress(url, body, onProgress, contentType) {
       onProgress(event.loaded, latestTotal, latestSpeed, '正在传输');
     };
     xhr.upload.onload = () => onProgress(latestLoaded, latestTotal, latestSpeed, '数据已发送，等待服务器确认');
-    xhr.onerror = () => reject(new Error('网络连接中断'));
-    xhr.onabort = () => reject(new Error('上传已取消'));
+    xhr.onerror = () => reject(new Error(uiTextApp('网络连接中断')));
+    xhr.onabort = () => reject(new Error(uiTextApp('上传已取消')));
     xhr.onload = () => {
       let data = {};
       try { data = JSON.parse(xhr.responseText || '{}'); } catch (_) {}
@@ -3575,7 +3576,7 @@ async function uploadCollected(items, target) {
 // uploadDroppedFiles 兼容旧的扁平 FileList 调用（单文件拖拽入口）。
 async function uploadDroppedFiles(files) {
   const target = currentFileTarget();
-  if (!target.writable) { toast('当前目录为只读，无法上传'); return; }
+  if (!target.writable) { toast(uiTextApp('当前目录为只读，无法上传')); return; }
   const items = Array.from(files || []).map(f => ({ file: f, relativePath: f.name }));
   if (!items.length) return;
   await uploadCollected(items, target);
@@ -10164,7 +10165,7 @@ function ttsPlayOne(url, provider) {
       URL.revokeObjectURL(url);
     };
     const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
-    const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error('合成音频无法播放')); };
+    const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error(uiTextApp('合成音频无法播放'))); };
     ttsPlayer._finish=finish;
     const play=()=>{
       if(done||starting||ttsPlayer.cancelled||generation!==ttsPlayer.generation)return;
@@ -10179,7 +10180,7 @@ function ttsPlayOne(url, provider) {
     a.onplaying = () => {ttsPlaybackStatus('playing');window.aideAvatarSignal?.('speaking', true);};
     a.onpause = () => window.aideAvatarSignal?.('speaking', false);
     a.onended = finish;
-    a.onerror = () => fail(new Error('合成音频解码或播放失败'));
+    a.onerror = () => fail(new Error(uiTextApp('合成音频解码或播放失败')));
     timer = setInterval(() => {
       if (done) { clearInterval(timer); return; }
       if (ttsPlayer.cancelled || generation!==ttsPlayer.generation) { a.pause(); clearInterval(timer); finish(); return; }
@@ -12305,7 +12306,8 @@ function openFactoryResetDialog() {
   // 输入"重置"二字
   const confirmLabel = el('label', '', t('输入"重置"以确认'));
   const confirmInput = el('input'); confirmInput.type = 'text'; confirmInput.autocomplete = 'off';
-  confirmInput.placeholder = '重置';
+  const resetConfirmation = t('重置');
+  confirmInput.placeholder = resetConfirmation;
   confirmLabel.append(confirmInput);
   dlg.append(confirmLabel);
 
@@ -12333,7 +12335,7 @@ function openFactoryResetDialog() {
   const refresh = () => {
     pwRow.classList.toggle('hidden', !needPw());
     const anyScope = Object.values(boxes).some(b => b.checked);
-    exec.disabled = !(anyScope && ack.checked && confirmInput.value.trim() === '重置');
+    exec.disabled = !(anyScope && ack.checked && confirmInput.value.trim() === resetConfirmation);
   };
   for (const b of Object.values(boxes)) b.onchange = refresh;
   ack.onchange = refresh;
@@ -12372,12 +12374,12 @@ function openFactoryResetDialog() {
 
 // ===== SQLite 查看器 =====
 async function setupSqliteViewer(container, path, root) {
-  container.innerHTML = '<div class="sqlite-empty">正在加载数据库…</div>';
+  container.innerHTML = '<div class="sqlite-empty">' + escapeHtml(t('正在加载数据库…')) + '</div>';
   try {
     // 获取表列表
     const tables = await api('/sqlite/tables?root=' + root + '&path=' + encodeURIComponent(path));
     if (!tables.length) {
-      container.innerHTML = '<div class="sqlite-empty-center">数据库中没有表</div>';
+      container.innerHTML = '<div class="sqlite-empty-center">' + escapeHtml(t('数据库中没有表')) + '</div>';
       return;
     }
     let html = '<div class="sqlite-layout">';
@@ -12388,7 +12390,7 @@ async function setupSqliteViewer(container, path, root) {
     });
     html += '</div>';
     // 右侧数据区
-    html += '<div class="sqlite-data-pane"><div class="sqlite-data-area">点击左侧表查看数据</div></div>';
+    html += '<div class="sqlite-data-pane"><div class="sqlite-data-area">' + escapeHtml(t('点击左侧表查看数据')) + '</div></div>';
     html += '</div>';
     container.innerHTML = html;
     // 绑定表点击事件
@@ -12398,10 +12400,10 @@ async function setupSqliteViewer(container, path, root) {
         item.style.background = 'var(--surface-hover)';
         const table = item.dataset.table;
         const dataArea = container.querySelector('.sqlite-data-area');
-        dataArea.innerHTML = '<div class="sqlite-empty">加载中…</div>';
+        dataArea.innerHTML = '<div class="sqlite-empty">' + escapeHtml(t('加载中…')) + '</div>';
         try {
           const data = await api('/sqlite/data?root=' + root + '&path=' + encodeURIComponent(path) + '&table=' + encodeURIComponent(table) + '&limit=100&offset=0');
-          let tableHtml = `<div class="sqlite-meta">共 ${data.total} 行，显示前 ${data.rows.length} 行</div>`;
+          let tableHtml = '<div class="sqlite-meta">' + escapeHtml(t('共 {0} 行，显示前 {1} 行', data.total, data.rows.length)) + '</div>';
           tableHtml += '<div class="sqlite-table-wrap"><table class="sqlite-table">';
           tableHtml += '<thead><tr>';
           data.columns.forEach(col => {
@@ -12419,7 +12421,7 @@ async function setupSqliteViewer(container, path, root) {
           tableHtml += '</tbody></table></div>';
           dataArea.innerHTML = tableHtml;
         } catch (e) {
-          dataArea.innerHTML = '<div class="sqlite-error">加载失败: ' + escapeHtml(e.message || '') + '</div>';
+          dataArea.innerHTML = '<div class="sqlite-error">' + escapeHtml(t('加载失败：')) + ' ' + escapeHtml(e.message || '') + '</div>';
         }
       };
     });
@@ -12427,7 +12429,7 @@ async function setupSqliteViewer(container, path, root) {
     const firstTable = container.querySelector('.sqlite-table-item');
     if (firstTable) firstTable.click();
   } catch (e) {
-    container.innerHTML = '<div class="sqlite-error">加载失败: ' + escapeHtml(e.message || '') + '</div>';
+    container.innerHTML = '<div class="sqlite-error">' + escapeHtml(t('加载失败：')) + ' ' + escapeHtml(e.message || '') + '</div>';
   }
 }
 
@@ -12527,6 +12529,8 @@ function renderPWRun(run) {
  for(const n of run.pw.definition.nodes){const info=run.pw.nodes[n.id]||{};const row=el('details','parallel-part');row.style.display='block';row.append(el('summary','',n.title+' · '+({pending:'等待',running:'运行中',waiting:'等待确认',completed:'成功',failed:'失败',skipped:'跳过'}[info.status]||info.status)));
   if(info.output)row.append(el('pre','',info.output));if(info.error)row.append(el('p','',info.error));
   if(info.status==='waiting'&&run.status==='running'){row.open=true;row.append(el('pre','',JSON.stringify(info.request||{tool:n.tool,arguments:n.arguments,text:n.text},null,2)));for(const [label,approved] of [['确认执行',true],['拒绝',false]]){const b=el('button','quiet',label);b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'approve',sessionId:state.session.id,runId:run.id,nodeId:n.id,approved})});await selectSession(state.session.id)});row.append(b)}}panel.append(row)}
- if(run.status==='running'){const b=el('button','quiet','停止 PW');b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
+ if(run.status==='running'){const b=el('button','quiet',uiTextApp('停止 PW'));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
 
 }
+
+function uiTextApp(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

@@ -7,19 +7,19 @@
     const request=indexedDB.open('aide-recovery',1);
     request.onupgradeneeded=()=>request.result.createObjectStore('records',{keyPath:'key'});
     request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
-    request.onblocked=()=>reject(new Error('恢复存储暂不可用'));
+    request.onblocked=()=>reject(new Error(uiTextContinuity('恢复存储暂不可用')));
   }).catch(error=>{database=null;throw error;}));
   const guardedWrites=new Set();
   function trackGuardedWrite(tx){guardedWrites.add(tx);const done=()=>guardedWrites.delete(tx);tx.addEventListener?.('complete',done,{once:true});tx.addEventListener?.('abort',done,{once:true});}
   function abortPendingWrites(){for(const tx of guardedWrites){try{tx.abort();}catch(_e){}}guardedWrites.clear();}
   async function run(mode,operation,active){const db=await open();return new Promise((resolve,reject)=>{
-    if(active&&!active()){reject(new Error('恢复写入已取消'));return;}
+    if(active&&!active()){reject(new Error(uiTextContinuity('恢复写入已取消')));return;}
     const tx=db.transaction('records',mode);if(mode==='readwrite')trackGuardedWrite(tx);let request;
-    try{if(active&&!active()){tx.abort();reject(new Error('恢复写入已取消'));return;}request=operation(tx.objectStore('records'));}
+    try{if(active&&!active()){tx.abort();reject(new Error(uiTextContinuity('恢复写入已取消')));return;}request=operation(tx.objectStore('records'));}
     catch(error){try{tx.abort();}catch(_e){}reject(error);return;}
-    tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error('恢复写入已取消'));else resolve(request.result);};
+    tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error(uiTextContinuity('恢复写入已取消')));else resolve(request.result);};
     tx.onerror=()=>{guardedWrites.delete(tx);reject(tx.error);};
-    tx.onabort=()=>{guardedWrites.delete(tx);reject(tx.error||new Error('恢复存储事务中断'));};
+    tx.onabort=()=>{guardedWrites.delete(tx);reject(tx.error||new Error(uiTextContinuity('恢复存储事务中断')));};
   });}
   const key=(scope,kind,id)=>JSON.stringify([scope,kind,id]);
   // Draft text and its base identify content; the cursor and scroll identify
@@ -31,26 +31,26 @@
   const fileBranch=crypto.randomUUID();
   async function fileTransaction(scope,id,change,active){
     const db=await open();return new Promise((resolve,reject)=>{
-      if(active&&!active()){reject(new Error('恢复写入已取消'));return;}
+      if(active&&!active()){reject(new Error(uiTextContinuity('恢复写入已取消')));return;}
       const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');
       trackGuardedWrite(tx);
       const request=store.get(key(scope,'file-branches',id));let failure;
-      request.onsuccess=()=>{if(active&&!active()){failure=new Error('恢复写入已取消');tx.abort();return;}try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
-      tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error('恢复写入已取消'));else resolve(true);};
-      tx.onerror=()=>{guardedWrites.delete(tx);reject(failure||tx.error);};tx.onabort=()=>{guardedWrites.delete(tx);reject(failure||tx.error||new Error('恢复存储事务中断'));};
+      request.onsuccess=()=>{if(active&&!active()){failure=new Error(uiTextContinuity('恢复写入已取消'));tx.abort();return;}try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
+      tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error(uiTextContinuity('恢复写入已取消')));else resolve(true);};
+      tx.onerror=()=>{guardedWrites.delete(tx);reject(failure||tx.error);};tx.onabort=()=>{guardedWrites.delete(tx);reject(failure||tx.error||new Error(uiTextContinuity('恢复存储事务中断')));};
     });
   }
   async function writeFileDraft(scope,id,value,active){
     if(!enabled()||!scope)return false;
     if(active&&!active())return false;
     const serialized=JSON.stringify(value);
-    if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    if(new Blob([serialized]).size>2*1024*1024)throw new Error(uiTextContinuity('本地恢复内容超过 2 MiB，尚未保存草稿'));
     writeTabCache(tabKey(scope,'file',id),serialized);
     return fileTransaction(scope,id,(store,branches)=>{
       const next=branches.filter(b=>b.branch!==fileBranch);
       if(!next.some(b=>b.text===value.text&&b.hash===value.hash))next.push({...value,branch:fileBranch,updated:Date.now()});
       if(next.length>32||new Blob([JSON.stringify(next)]).size>8*1024*1024)
-        throw new Error('此文件恢复草稿已达上限；请保存或逐项忽略旧草稿，当前编辑仅保留在本标签页');
+        throw new Error(uiTextContinuity('此文件恢复草稿已达上限；请保存或逐项忽略旧草稿，当前编辑仅保留在本标签页'));
       store.put({key:key(scope,'file-branches',id),value:next,updated:Date.now()});
       store.put({key:key(scope,'file',id),value,updated:Date.now()});
     },active);
@@ -88,20 +88,20 @@
   const sameChat=(a,b)=>a?.text===b?.text&&JSON.stringify(a?.attachments||[])===JSON.stringify(b?.attachments||[]);
   async function chatTransaction(scope,id,change,active){
     const db=await open();return new Promise((resolve,reject)=>{
-      if(active&&!active()){reject(new Error('恢复写入已取消'));return;}
+      if(active&&!active()){reject(new Error(uiTextContinuity('恢复写入已取消')));return;}
       const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');trackGuardedWrite(tx);
       const request=store.get(key(scope,'chat-branches',id));let failure;
-      request.onsuccess=()=>{if(active&&!active()){failure=new Error('恢复写入已取消');tx.abort();return;}try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
-      tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error('恢复写入已取消'));else resolve(true);};
+      request.onsuccess=()=>{if(active&&!active()){failure=new Error(uiTextContinuity('恢复写入已取消'));tx.abort();return;}try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
+      tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error(uiTextContinuity('恢复写入已取消')));else resolve(true);};
       tx.onerror=()=>{guardedWrites.delete(tx);reject(failure||tx.error);};
-      tx.onabort=()=>{guardedWrites.delete(tx);reject(failure||tx.error||new Error('恢复存储事务中断'));};
+      tx.onabort=()=>{guardedWrites.delete(tx);reject(failure||tx.error||new Error(uiTextContinuity('恢复存储事务中断')));};
     });
   }
   async function writeChatDraft(scope,id,value,active){
     if(!enabled()||!scope)return false;
     if(active&&!active())return false;
     const serialized=JSON.stringify(value);
-    if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    if(new Blob([serialized]).size>2*1024*1024)throw new Error(uiTextContinuity('本地恢复内容超过 2 MiB，尚未保存草稿'));
     writeTabCache(tabKey(scope,'chat',id),serialized);
     return chatTransaction(scope,id,(store,branches)=>{
       const chatBranch=chatBranchFor(scope,id),next=branches.filter(b=>b.branch!==chatBranch);
@@ -109,7 +109,7 @@
       // branch ownership: a later edit in this tab must preserve that draft.
       if((value.text||value.attachments?.length)&&!next.some(b=>sameChat(b,value)))next.push({...value,branch:chatBranch,updated:Date.now()});
       if(next.length>32||new Blob([JSON.stringify(next)]).size>8*1024*1024)
-        throw new Error('此会话恢复草稿已达上限；当前编辑仅保留在本标签页');
+        throw new Error(uiTextContinuity('此会话恢复草稿已达上限；当前编辑仅保留在本标签页'));
       store.put({key:key(scope,'chat-branches',id),value:next,updated:Date.now()});
       store.put({key:key(scope,'chat',id),value,updated:Date.now()});
     },active);
@@ -157,7 +157,7 @@
   async function write(scope,kind,id,value,active){
     if(!enabled()||!scope)return false;
     if(active&&!active())return false;
-    if(new Blob([JSON.stringify(value)]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    if(new Blob([JSON.stringify(value)]).size>2*1024*1024)throw new Error(uiTextContinuity('本地恢复内容超过 2 MiB，尚未保存草稿'));
     await run('readwrite',store=>store.put({key:key(scope,kind,id),value,updated:Date.now()}),active);return true;
   }
   // sessionStorage belongs to a browsing context: even an opener's initial
@@ -174,7 +174,7 @@
     if(!enabled()||!scope||!['chat','file','file-view'].includes(kind))return false;
     if(active&&!active())return false;
     const serialized=JSON.stringify(value);
-    if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    if(new Blob([serialized]).size>2*1024*1024)throw new Error(uiTextContinuity('本地恢复内容超过 2 MiB，尚未保存草稿'));
     writeTabCache(tabKey(scope,kind,id),serialized,{required:true});
     return true;
   }
@@ -206,7 +206,7 @@
     if(kind==='chat')return writeChatDraft(scope,id,value,active);
     if(!enabled()||!scope)return false;
     const serialized=JSON.stringify(value);
-    if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    if(new Blob([serialized]).size>2*1024*1024)throw new Error(uiTextContinuity('本地恢复内容超过 2 MiB，尚未保存草稿'));
     // The synchronous tab snapshot survives pagehide even if its IndexedDB
     // transaction has not completed when the browser unloads the document.
     writeTabCache(tabKey(scope,kind,id),serialized);
@@ -237,9 +237,9 @@
         try {
           const record=cursor.value,parts=JSON.parse(record.key);
           if(['recovery-operation','recovery-policy'].includes(parts?.[1])){cursor.continue();return;}
-          if(!Array.isArray(parts)||parts.length!==3)throw Error('恢复记录键无效');
+          if(!Array.isArray(parts)||parts.length!==3)throw Error(uiTextContinuity('恢复记录键无效'));
           const size=new Blob([JSON.stringify(record)]).size;bytes+=size;
-          if(includeValues&&bytes>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
+          if(includeValues&&bytes>64*1024*1024)throw Error(uiTextContinuity('恢复备份超过 64 MiB，请保留现有记录并分批处理'));
           const scope=String(parts[0]),kind=String(parts[1]);
           const group=groups.get(scope)||{scope,count:0,bytes:0,kinds:{}};
           group.count++;group.bytes+=size;group.kinds[kind]=(group.kinds[kind]||0)+1;groups.set(scope,group);
@@ -259,7 +259,7 @@
   async function exportRecovery(){
     const snapshot=await recoverySnapshot(true);
     const backup={format:'aide-local-recovery',schema:1,created:new Date().toISOString(),...snapshot};
-    if(new Blob([JSON.stringify(backup)]).size>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
+    if(new Blob([JSON.stringify(backup)]).size>64*1024*1024)throw Error(uiTextContinuity('恢复备份超过 64 MiB，请保留现有记录并分批处理'));
     return backup;
   }
   window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,cacheTab,writeChatDraft,adoptChatDraft,listChatDrafts,dismissChatDraft,sentChatDraft,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft,abortPendingWrites};
@@ -272,3 +272,5 @@
     if(active()&&typeof window.AideContinuity?.pruneExpiredRecoveryOperations==='function')window.AideContinuity.pruneExpiredRecoveryOperations({active}).then(()=>{window.aideRecoveryMaintenanceError='';}).catch(e=>{window.aideRecoveryMaintenanceError=String(e.message||e);});
   },60000);
 })();
+
+function uiTextContinuity(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

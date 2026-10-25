@@ -48,7 +48,7 @@ Data is persisted locally. When using a cloud model, task content, context, and 
 | Command panel | Run, inspect, and cancel individual shell commands | No PTY or persistent shell session |
 | Plugins | Upload, enable, and call tools with executable handlers; built-in draw.io diagram tool | Plugins are trusted code, not a security sandbox |
 | Permissions, voice & personalization | Three-level sandbox (read-only/workspace-write/full-access), per-tool toggles, lock screen; page-owned work coordination, continuous voice, Qwen/Bailian TTS and persistent personas; config backup export/import | The sandbox bounds container privileges, not malicious plugins; speech recognition runs in the browser |
-| Appearance and language | Professional/Classic palettes; light/dark/system; Chinese/English | Browser-local preferences; language does not translate your content |
+| Appearance and language | Professional/Comfort/Classic palettes; light/dark/system; Chinese/English | Browser-local preferences; language does not translate your content |
 
 ## Quick start
 
@@ -126,3 +126,8 @@ This is a trusted, single-user local workbench, not public multi-user hosting. A
 ## Built-in whale-girl background
 
 Settings → Appearance → Workbench background → Whale girl uses the bundled silent looping video without a local upload. Background intensity and the existing hidden-page, lock and reduced-motion rules still apply; the default remains Off. See [actual screenshots and implementation limits](docs/builtin-background.md).
+
+
+## English documentation
+
+The [English documentation center](docs/en/README.md) covers current operation, workspace permissions, knowledge search, native voice calls, plugin development, diagnostics and release/maintenance procedures. Dated evidence and third-party/plugin internals retain their own language and publication boundary.

@@ -18,9 +18,9 @@
   return found.sort((a,b)=>a.start-b.start).filter((r,i,a)=>!i||r.start!==a[i-1].start);
  }
  async function readBounded(response,signal){
-  if(!response.ok)throw Error('资源读取失败（'+response.status+'）');if(Number(response.headers.get('content-length'))>LIMIT)throw Error('单个资源超过 32 MiB');
-  const reader=response.body?.getReader();if(!reader){const b=await response.blob();if(b.size>LIMIT)throw Error('单个资源超过 32 MiB');return b;}
-  const chunks=[];let size=0;try{while(true){if(signal.aborted)throw new DOMException('Cancelled','AbortError');const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>LIMIT)throw Error('单个资源超过 32 MiB');chunks.push(value);}}catch(e){await reader.cancel();throw e;}finally{reader.releaseLock();}
+  if(!response.ok)throw Error('资源读取失败（'+response.status+'）');if(Number(response.headers.get('content-length'))>LIMIT)throw Error(uiTextMarkdownExport('单个资源超过 32 MiB'));
+  const reader=response.body?.getReader();if(!reader){const b=await response.blob();if(b.size>LIMIT)throw Error(uiTextMarkdownExport('单个资源超过 32 MiB'));return b;}
+  const chunks=[];let size=0;try{while(true){if(signal.aborted)throw new DOMException('Cancelled','AbortError');const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>LIMIT)throw Error(uiTextMarkdownExport('单个资源超过 32 MiB'));chunks.push(value);}}catch(e){await reader.cancel();throw e;}finally{reader.releaseLock();}
   return new Blob(chunks,{type:response.headers.get('content-type')||'application/octet-stream'});
  }
  async function exportZIP(o,job){
@@ -28,9 +28,9 @@
   for(const ref of refs){
    if(!ref.value||ref.value.startsWith('#')||/^data:/i.test(ref.value))continue;
    if(/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(ref.value)){external.add(ref.value.replace(/([?&])access_token=[^&#]*/gi,'$1'));continue;}
-   const resolved=o.resolve(ref.value.replace(/\\([() ])/g,'$1'));if(!resolved)throw Error('资源路径无效');
+   const resolved=o.resolve(ref.value.replace(/\\([() ])/g,'$1'));if(!resolved)throw Error(uiTextMarkdownExport('资源路径无效'));
    if(!paths.has(resolved)){
-    if(paths.size>=64)throw Error('资源超过 64 项，请拆分文档');const blob=await readBounded(await o.fetchResource(resolved,job.controller.signal),job.controller.signal);total+=blob.size;if(total>LIMIT)throw Error('资源总量超过 32 MiB，请拆分文档');
+    if(paths.size>=64)throw Error(uiTextMarkdownExport('资源超过 64 项，请拆分文档'));const blob=await readBounded(await o.fetchResource(resolved,job.controller.signal),job.controller.signal);total+=blob.size;if(total>LIMIT)throw Error(uiTextMarkdownExport('资源总量超过 32 MiB，请拆分文档'));
     const dest='resources/'+String(paths.size+1).padStart(3,'0')+'-'+nameOf(resolved);zip.file(dest,blob);paths.set(resolved,dest);
    }
    ref.replacement=paths.get(resolved)+((ref.value.match(/#[^]*$/)||[''])[0]);
@@ -49,13 +49,13 @@
   doc.body.append(body);if(o.renderDiagrams)await job.wait(o.renderDiagrams(body));
   let total=0;
   for(const img of body.querySelectorAll('img')){
-   const url=img.getAttribute('src');if(!url)throw Error('图片地址为空');
-   const blob=await readBounded(await fetch(url,{signal:job.controller.signal,credentials:new URL(url,location.href).origin===location.origin?'same-origin':'omit'}),job.controller.signal);total+=blob.size;if(total>LIMIT)throw Error('图片资源总量超过 32 MiB');
+   const url=img.getAttribute('src');if(!url)throw Error(uiTextMarkdownExport('图片地址为空'));
+   const blob=await readBounded(await fetch(url,{signal:job.controller.signal,credentials:new URL(url,location.href).origin===location.origin?'same-origin':'omit'}),job.controller.signal);total+=blob.size;if(total>LIMIT)throw Error(uiTextMarkdownExport('图片资源总量超过 32 MiB'));
    const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob);});
-   await new Promise((resolve,reject)=>{const signal=job.controller.signal;const finish=(err)=>{clearTimeout(timer);signal.removeEventListener('abort',cancel);img.onload=img.onerror=null;err?reject(err):resolve();};const cancel=()=>finish(new DOMException('Cancelled','AbortError')),timer=setTimeout(()=>finish(Error('图片渲染超时')),15000);signal.addEventListener('abort',cancel,{once:true});img.onload=()=>finish();img.onerror=()=>finish(Error('图片渲染失败'));if(signal.aborted)cancel();else img.src=data;});
+   await new Promise((resolve,reject)=>{const signal=job.controller.signal;const finish=(err)=>{clearTimeout(timer);signal.removeEventListener('abort',cancel);img.onload=img.onerror=null;err?reject(err):resolve();};const cancel=()=>finish(new DOMException('Cancelled','AbortError')),timer=setTimeout(()=>finish(Error(uiTextMarkdownExport('图片渲染超时'))),15000);signal.addEventListener('abort',cancel,{once:true});img.onload=()=>finish();img.onerror=()=>finish(Error(uiTextMarkdownExport('图片渲染失败')));if(signal.aborted)cancel();else img.src=data;});
   }
   await job.wait(doc.fonts?.ready);
-  for(const img of body.querySelectorAll('img'))if(img.naturalWidth*img.naturalHeight>24000000)throw Error('图片像素过大，请缩小后导出');
+  for(const img of body.querySelectorAll('img'))if(img.naturalWidth*img.naturalHeight>24000000)throw Error(uiTextMarkdownExport('图片像素过大，请缩小后导出'));
   return doc.body;
  }
  async function run(format,o,progress=()=>{}){
@@ -77,7 +77,7 @@
     const body=await snapshot(o,job),height=Math.ceil(body.scrollHeight);
     // Long PDFs are rendered a page at a time. Give them a proportional
     // deadline instead of rejecting at an arbitrary document-height limit.
-    if(format!=='pdf'&&height>60000)throw Error('文档过长，请拆分后导出');
+    if(format!=='pdf'&&height>60000)throw Error(uiTextMarkdownExport('文档过长，请拆分后导出'));
     // Rasterize only the blocks visible on this page. Passing the full document
     // to html2canvas for every page makes its cloned DOM grow with the entire
     // document and can exhaust Safari's memory on long Markdown files.
@@ -187,7 +187,7 @@
     };
     const render=async(page,h)=>{if(!alive())throw new DOMException('Cancelled','AbortError');return window.html2canvas(page,{backgroundColor:'#fff',scale:PDF_SCALE,width:WIDTH,height:h,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});};
     if(format==='png'){
-     if(height>10000)throw Error('长图超过 10000 像素，请选择分页 PDF');if(!alive())throw new DOMException('Cancelled','AbortError');const canvas=await window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height,y:0,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('图片生成失败')),'image/png'));canvas.width=canvas.height=0;extension='png';
+     if(height>10000)throw Error(uiTextMarkdownExport('长图超过 10000 像素，请选择分页 PDF'));if(!alive())throw new DOMException('Cancelled','AbortError');const canvas=await window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height,y:0,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error(uiTextMarkdownExport('图片生成失败'))),'image/png'));canvas.width=canvas.height=0;extension='png';
     }else{
      const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});pdf.setProperties({title:stem,creator:'aide'});
      let pageNo=0;
@@ -204,7 +204,7 @@
     }
    }
    if(alive())download(blob,format==='md'?name:stem+'.'+extension);
-  }catch(e){if(job.timedOut)throw Error('导出超时，请检查资源连接或拆分文档');throw e;}finally{clearInterval(guard);clearTimeout(timeout);job.frame?.remove();job.renderFrame?.remove();if(active===job)active=null;}
+  }catch(e){if(job.timedOut)throw Error(uiTextMarkdownExport('导出超时，请检查资源连接或拆分文档'));throw e;}finally{clearInterval(guard);clearTimeout(timeout);job.frame?.remove();job.renderFrame?.remove();if(active===job)active=null;}
  }
  function bind({button,options,t=s=>s,error=()=>{}}){
   button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
@@ -225,3 +225,5 @@
  }
  window.AideMarkdownExport={bind,run,close,references};
 })();
+
+function uiTextMarkdownExport(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }

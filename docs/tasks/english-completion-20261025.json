@@ -1,0 +1,60 @@
+{
+  "id": "english-completion-20261025",
+  "request": "\u628a\u82f1\u6587\u7684\u9002\u914d\u5168\u90e8\u505a\u4e00\u4e0b\uff0c\u5305\u62ec\u9875\u9762\u548c\u6587\u6863\uff0c\u7136\u540e\u63d0\u597dcommit\uff0c\u5408\u5e76\u5230main\u4e0a\u5e76release",
+  "baseline": "45f1d4f2cf8b2f1e0e5a76ae3096dc525bff64f0",
+  "initial_status": "",
+  "acceptance": [
+    "English product-owned UI including standalone pages and dynamic errors",
+    "Current English operating and developer guides reachable from the English index",
+    "User content, protocol identifiers and historical evidence preserved",
+    "Both language directions and draft preservation checked in an isolated browser",
+    "Required CI/review and release gates pass before merge/publication"
+  ],
+  "scope": [
+    "Public Aide web UI and localization",
+    "Current English product/developer documentation",
+    "Focused checks, isolated browser acceptance, native builds and authorized public release"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorized English completion, main merge and public release. Independently owned non-public work is excluded.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/165"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Explicit owned translation sites and shared catalog; no DOM-wide replacement. Historical evidence retains its original language.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Standalone knowledge map and phone capture, dynamic recovery/export/viewer messages, SQLite UI, accessible labels and catalog coverage gate updated. English operating/developer guides added.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Catalog and placeholder tests pass. First isolated browser candidate exposed a generated character-offset error; task-owned JS was regenerated using JavaScript UTF-16 offsets and all changed JS passed syntax checks. Fresh final browser/full checks remain required.",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Original source checkout had 784 numbered untracked copies: 778 byte-identical copies moved to Trash, 6 distinct copies archived outside the repository with checksums and a recovery manifest. No runtime/user-data cleanup; existing tracked launcher edit preserved.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested commits, merge to main and release; confirmed public application only.",
+  "rollback": "",
+  "handoff": "Public-only feature worktree, isolated acceptance port 18489. Existing user runtime is unchanged. No push or merge yet."
+}

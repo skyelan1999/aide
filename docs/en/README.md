@@ -1,26 +1,30 @@
-# aide documentation
-
-> Current source baseline: `0fef6411` (17 October 2026). The [actual UI evidence](../ui-evidence.md), [demo guide](../demo-guide.md), [feature matrix](../features.md), [current design](../design/current-workbench.md) and [module documentation](../architecture/modules.md) use real running-app captures and state their acceptance limits. These canonical references are in Chinese; screenshots do not prove model connectivity, voice playback or cross-device operation.
+# Aide documentation
 
 [简体中文](../README.md) · **English**
 
-**AI+IDE. Turn ideas into your next step.**
+**AI + IDE. Turn ideas into your next step.**
 
-| Goal | Read |
+The maintained English guides below describe the public application. They distinguish source behavior, browser checks, provider/hardware integration and release delivery. A historical screenshot or source feature does not establish that a particular installed image passed a new test.
+
+| Goal | Guide |
 | --- | --- |
-| Understand aide | [Project home](../../README.en.md) |
+| Understand the product | [Project home](../../README.en.md) · [Features](features.md) |
 | Install and sign in | [Installation](installation.md) |
-| Work with projects and AI | [User guide](user-guide.md) |
-| Customize a professional workflow | [Customization](../customization.md) |
-| Understand modules and APIs | [Architecture](../architecture.md) |
-| Back up, upgrade, and recover | [Operations](../../HANDOVER.md) |
-| Develop with an AI client | [Workflow](../agent/WORKFLOW.md) · [Adapters](../agent/ADAPTERS.md) |
-| Implement plugins | [Plugin protocol](../plugin-protocol.md) |
-| Check feature scope | [Requirements](../PRD.md) |
+| Use conversations, models and files | [User guide](user-guide.md) |
+| Configure directories and references | [Workspace paths](workspace-paths.md) |
+| Explore sources and code | [Knowledge map](knowledge-map.md) |
+| Talk to the assistant | [Native voice calls](assistant-voice-call.md) |
+| Customize the workbench | [Customization](customization.md) |
+| Read the system/API design | [Architecture](architecture.md) · [Data layout](architecture/data-layout.md) |
+| Build plugins | [Plugin protocol](plugin-protocol.md) · [Daemon protocol](plugins/daemon-protocol.md) |
+| Stop, recover and update | [Operations](operations.md) · [Docker maintenance](docker-maintenance.md) · [Runtime fallback](runtime-bundle.md) |
+| Develop with an AI client | [Development workflow](development-workflow.md) |
+| Understand requirements and limits | [Product requirements](PRD.md) |
 | Maintain translations | [Localization](localization.md) |
+| Inspect diagnostics | [Debug API](debug-api.md) |
+| Review security | [Vault](security/secret-vault.md) · [TLS](security/tls.md) · [Configuration backups](security/config-backup.md) · [Password hashing](security/password-hashing.md) |
+| Check privacy/compliance templates | [Privacy policy](security/privacy-policy-template.md) · [DPIA](security/dpia-template.md) · [EU compliance](security/eu-compliance.md) |
 
-English documents explain current operation and development. Dated historical reviews, task ledgers, and release notes retain their original language and evidence; they are not presented as newly executed tests. Repository-wide requirements remain in the canonical [PRD](../PRD.md), and workflow gates are defined by [router.json](../agent/router.json). Changes to interfaces, installation, or workflow should update both current-language guides.
+Protocol names, paths, user documents, custom names, model output and provider diagnostics are not translated automatically. UI language does not change prices, currencies or model response language. An installed plugin owns its own interface and documentation; the host catalog does not rewrite third-party code.
 
-English UI support is included from the published 0.1.7.0 RC1 baseline onward (it was absent from 0.1.6.0 RC4). An older RC4 image will not gain it from a browser refresh; use the 0.1.7.0 RC1 release or a current source build, then switch language under Settings → Language.
-
-Installation and the user guide are available in English. The linked architecture, operations, requirements, plugin and development references currently retain their canonical Chinese text.
+Dated task ledgers, reviews, old release notes, source-evidence snapshots and archives retain their original language and claims. They are historical evidence, not current English operating instructions or newly executed tests. Current user/developer entry points above have English guidance; detailed canonical historical references remain linked and explicitly identified as such. See [Documentation coverage](documentation-map.md).
