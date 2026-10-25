@@ -4120,5 +4120,18 @@ window.aideEnglish = {
   "OBJ 几何已读取；MTL 外部材质未加载": "OBJ geometry loaded; external MTL materials were not loaded",
   "DAE 不允许外部 XML 实体": "External XML entities are not allowed in DAE",
   "DAE XML 格式错误": "Invalid DAE XML",
-  "网格中没有可绘制的三角面": "The mesh contains no drawable triangles"
+  "网格中没有可绘制的三角面": "The mesh contains no drawable triangles",
+  "思考中": "Thinking",
+  "辅助审批中，无需操作": "Assisted approval in progress; no action needed",
+  "上游实际": "Actual upstream usage",
+  "接收中": "Receiving",
+  "通知设置": "Notification settings",
+  "免打扰": "Do Not Disturb",
+  "已屏蔽提示": "Alerts blocked",
+  "最终正文": "Final output",
+  "其他已记录正文": "Other recorded output",
+  "正在生成回复…": "Generating reply…",
+  "没有记录到助手正文": "No assistant output was recorded",
+  "已记录应用，仍需复核": "Application recorded; review still needed",
+  "变更提案，尚无应用标记": "Change proposal; no application marker"
 };

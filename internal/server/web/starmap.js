@@ -115,15 +115,15 @@ let sourceCatalog=[],sourceByRegion=new Map();
 // Keep source identity and grouping fields conservative; body observation changes
 // refresh data/citations without reconstructing unchanged spatial relationships.
 const nodeLayoutFields=nodeFields.filter(field=>!['text','readState','size','modified','contentHash'].includes(field));
-const sourceTypes={session:uiTextStarmap('会话'),local:uiTextStarmap('本地目录'),ssh:uiTextStarmap('SSH 工作区'),skill:'Skill',link:uiTextStarmap('HTTP 链接'),mcp:uiTextStarmap('MCP 工具目录'),sftp:'SSH / SFTP','workspace-sftp':uiTextStarmap('工作区 SSH / SFTP'),ftp:'FTP',ftps:'FTPS',smb:'SMB'};
-const sourceStates={ready:uiTextStarmap('已索引'),partial:uiTextStarmap('部分索引'),unavailable:uiTextStarmap('暂不可用'),disabled:uiTextStarmap('已停用'),catalog:uiTextStarmap('仅工具目录')};
-const sourceTypeLabel=type=>sourceTypes[type]||type||uiTextStarmap('未报告类型');
-const sourceStateLabel=state=>sourceStates[state]||uiTextStarmap('未报告状态');
+const sourceTypes={session:'会话',local:'本地目录',ssh:'SSH 工作区',skill:'Skill',link:'HTTP 链接',mcp:'MCP 工具目录',sftp:'SSH / SFTP','workspace-sftp':'工作区 SSH / SFTP',ftp:'FTP',ftps:'FTPS',smb:'SMB'};
+const sourceStates={ready:'已索引',partial:'部分索引',unavailable:'暂不可用',disabled:'已停用',catalog:'仅工具目录'};
+const sourceTypeLabel=type=>uiTextStarmap(sourceTypes[type]||type||'未报告类型');
+const sourceStateLabel=state=>uiTextStarmap(sourceStates[state]||'未报告状态');
 function fallbackSourceName(r){return r==='sessions'?uiTextStarmap('会话'):r==='workspace'?uiTextStarmap('工作区'):r==='context'?uiTextStarmap('引用目录'):graph.nodes.find(n=>n.region===r&&n.path==='.')?.name||uiTextStarmap('引用');}
 function currentSources(){
  // Older servers do not publish a catalog. Derive its visible regions only in
  // that case; a reported empty or unavailable source remains an independent chip.
- if(Array.isArray(graph.sources))return graph.sources.filter(s=>s&&typeof s.region==='string'&&s.region).map(s=>({...s,name:s.name||fallbackSourceName(s.region),nodeCount:Math.max(0,Number(s.nodeCount)||0)}));
+ if(Array.isArray(graph.sources))return graph.sources.filter(s=>s&&typeof s.region==='string'&&s.region).map(s=>({...s,name:(window.aideI18n?.sourceName(s)||s.name)||fallbackSourceName(s.region),nodeCount:Math.max(0,Number(s.nodeCount)||0)}));
  const byRegion=new Map();for(const n of graph.nodes){if(!n.region)continue;let s=byRegion.get(n.region);if(!s){s={id:n.source||n.region,name:n.sourceName||fallbackSourceName(n.region),type:n.sourceType||(n.region==='sessions'?'session':''),region:n.region,state:'ready',nodeCount:0};byRegion.set(n.region,s);}s.nodeCount++;}return [...byRegion.values()];
 }
 function sourceCoverageState(source){
@@ -916,7 +916,7 @@ if($('call-depth')){callDepth=$('call-depth').value;$('call-depth').onchange=()=
 $('edge-mode').onchange=()=>{beginGraphTransition();relationshipOverview();edgeMode=$('edge-mode').value;redraw()};$('focus-code').onclick=()=>{beginGraphTransition();relationshipOverview();focusCode=!focusCode;$('focus-code').setAttribute('aria-pressed',String(focusCode));if(focusCode&&!selected)say(uiTextStarmap('先选中一个文件或函数，再查看指定深度的关系。'));redraw()};syncCodeView();
 
 function syncGraphChrome(){
- stellarLogbook.observe(graph,{code:codeView,region});
+ stellarLogbook.observe({...graph,sources:sourceCatalog},{code:codeView,region});
  $('counts').textContent=`${graph.nodes.length} STARS / ${graph.edges.length} CONNECTIONS`;
  $('code-summary').textContent=graph.code?uiTextStarmap("{0} 份源码 · {1} 个声明 · {2} 条调用候选 · {3} 条类型绑定 · {4} 个未解析调用 · {5} 个未解析导入", graph.code.files, graph.code.symbols, graph.code.calls, graph.code.typedCalls||0, graph.code.unresolved, graph.code.unresolvedImports||0):'';
  $('warnings').textContent=[...(graph.warnings||[]),...(graph.code?.diagnostics||[]),...(graph.truncated?[uiTextStarmap('索引达到数量、深度或时间上限；未覆盖全部文件。')]:[])].join('\n');
@@ -1190,3 +1190,13 @@ async function searchDocuments(continuing=false){
 $('document-next').onclick=()=>searchDocuments(true);
 
 function uiTextStarmap(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? key; }
+
+// Repaint owned map chrome after a same-origin language preference change; no model request or page reload.
+window.addEventListener('aide:language', () => {
+  sourceCatalog = currentSources();
+  sourceByRegion = new Map(sourceCatalog.map(source => [source.region, source]));
+  syncMotion(); syncCodeView(); syncGraphChrome();
+  if (selected) select(selected, false);
+  if (retrievalMode() === 'nodes') nodeResults(false);
+  updateLayerLabels(); redraw();
+});

@@ -24,4 +24,4 @@ Assistant read-aloud, native realtime calls and downloadable speech files are se
 
 Messages reuse the configured account name. Contacts, groups, voice calls and file transfers have separate acceptance flows. Assistant message access defaults off and does not automatically accept invitations. LAN discovery and Internet relay/bootstrap configuration have different reachability constraints.
 
-Appearance includes separate palette and light/dark/system preferences, reduced motion, and the lightweight Sanctuary background. Local media remain in this browser. Hidden pages, locking and reduced-motion settings pause relevant effects.
+Appearance includes separate palette and light/dark/system preferences, reduced motion, and the lightweight Studio background. Local media remain in this browser. Hidden pages, locking and reduced-motion settings pause relevant effects.

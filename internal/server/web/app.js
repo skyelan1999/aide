@@ -150,7 +150,8 @@ function initSidebarResizers() {
     const handle = el('div', `sidebar-resizer sidebar-resizer-${side}`);
     handle.id = `${side}-sidebar-resizer`; handle.dataset.side = side;
     handle.tabIndex = 0; handle.setAttribute('role', 'separator'); handle.setAttribute('aria-orientation', 'vertical');
-    handle.setAttribute('aria-label', t(side === 'left' ? '调整左侧工作区栏宽度' : '调整右侧侧栏宽度'));
+    handle.dataset.i18nAriaLabel = side === 'left' ? '调整左侧工作区栏宽度' : '调整右侧侧栏宽度';
+    handle.setAttribute('aria-label', t(handle.dataset.i18nAriaLabel));
     document.body.append(handle);
     if (Number.isFinite(stored?.[side])) setSidebarWidth(side, stored[side], false);
     updateSidebarHandle(handle, side);
@@ -185,6 +186,7 @@ function initSidebarResizers() {
   new MutationObserver(updateVisibility).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   if ($('file-panel')) new MutationObserver(updateVisibility).observe($('file-panel'), { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', updateVisibility);
+  window.addEventListener('aide:language', updateVisibility);
   updateVisibility();
 }
 initSidebarResizers();
@@ -1954,6 +1956,22 @@ function toolSummaryBrief(use) {
   } catch (error) { /* 非 JSON 参数直接忽略 */ }
   return '';
 }
+// Reply actions share one icon style; labels remain available to keyboard and screen-reader users.
+function setMessageActionIcon(button, kind, label) {
+  const paths = {
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>',
+    read: '<path d="m11 5-6 4H2v6h3l6 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>',
+    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
+    retry: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 12M4 12l2.3 6A7 7 0 0 0 18 17"/>',
+    continue: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+    good: '<path d="M7 10v11H3V10h4Zm0 0 5-8c2 0 3 2 2 4l-1 4h6a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7"/>',
+    bad: '<path d="M7 14V3H3v11h4Zm0 0 5 8c2 0 3-2 2-4l-1-4h6a2 2 0 0 0 2-2l-2-7a2 2 0 0 0-2-2H7"/>'
+  };
+  button.title = label;
+  button.setAttribute('aria-label', label);
+  button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[kind] + '</svg>';
+}
+
 function toolIconSVG(tool) {
   const p = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
   if (tool === 'run_shell') return p + '<path d="M4 17l6-5-6-5"/><path d="M12 19h8"/></svg>';
@@ -2330,30 +2348,31 @@ function renderSession() {
         // 让用户在“做了一堆工具却没结论”时能直接续接；复制/好/坏仅在有正文时可用
         if (!running) {
           const actions = el('div', 'msg-actions');
-          const mk = (label, fn) => {
-            const b = el('button', 'msg-btn', label);
+          const mk = (kind, label, fn) => {
+            const b = el('button', 'msg-btn msg-btn-icon');
+            setMessageActionIcon(b, kind, label);
             b.type = 'button';
             b.onclick = fn;
             return b;
           };
           if (text) {
-            actions.append(mk(t("复制"), async event => {
+            actions.append(mk('copy', t("复制"), async event => {
               try { await window.AideMarkdownCode.copyText(text, event.currentTarget); toast(t("已复制")); }
               catch (_) { toast(t("复制失败")); }
             }));
-            const rb = mk(t("朗读"), () => toggleMechanicalRead(rb, text));
+            const rb = mk('read', t("朗读"), () => toggleMechanicalRead(rb, text));
             rb.classList.add('msg-btn-mech');
             actions.append(rb);
           }
-          actions.append(mk(t("重试"), () => retryRunById(run.id)));
-          if (!(run.canResume && ['paused','interrupted'].includes(run.status))) actions.append(mk(t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
+          actions.append(mk('retry', t("重试"), () => retryRunById(run.id)));
+          if (!(run.canResume && ['paused','interrupted'].includes(run.status))) actions.append(mk('continue', t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
           if (text) {
-            actions.append(mk(t("好"), () => {
+            actions.append(mk('good', t("好"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'good' }) })
                 .then(() => toast(t("已记录到记忆")))
                 .catch(() => toast(t("记录失败")));
             }));
-            actions.append(mk(t("有问题"), () => {
+            actions.append(mk('bad', t("有问题"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'bad' }) })
                 .then(() => toast(t("已记录到记忆")))
                 .catch(() => toast(t("记录失败")));
@@ -10786,20 +10805,20 @@ function mechanicalParts(text){
   while((m=re.exec(flat))){ const x=m[0].trim(); if(x) out.push(x.slice(0,200)); }
   return out.slice(0,60);
 }
-function resetMechButtons(){ document.querySelectorAll('.msg-btn-mech').forEach(b=>b.textContent=t('朗读')); }
+function resetMechButtons(){ document.querySelectorAll('.msg-btn-mech').forEach(b=>setMessageActionIcon(b, 'read', t('朗读'))); }
 function toggleMechanicalRead(btn, text){
-  if(mech.speaking && mech.btn===btn){ ttsCancel(); mech.speaking=false; btn.textContent=t('朗读'); return; }
+  if(mech.speaking && mech.btn===btn){ ttsCancel(); mech.speaking=false; setMessageActionIcon(btn, 'read', t('朗读')); return; }
   if(!('speechSynthesis' in window)){ toast(t('当前浏览器不支持语音合成')); return; }
   resetMechButtons();
   ttsPlayer.halt(); // 只停神经音播放器，避免与机械朗读互相打断
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   const parts = mechanicalParts(text);
   if(!parts.length){ toast(t('没有可朗读的文本')); return; }
-  mech.btn=btn; mech.speaking=true; btn.textContent=t('停止');
+  mech.btn=btn; mech.speaking=true; setMessageActionIcon(btn, 'stop', t('停止'));
   let i=0; let stopped=false;
   function next(){
     if(stopped) return;
-    if(i>=parts.length){ mech.speaking=false; btn.textContent=t('朗读'); mech.btn=null; return; }
+    if(i>=parts.length){ mech.speaking=false; setMessageActionIcon(btn, 'read', t('朗读')); mech.btn=null; return; }
     const u=new SpeechSynthesisUtterance(parts[i]);
     u.onstart=u.onresume=()=>window.aideAvatarSignal?.('speaking', true);
     u.onpause=()=>window.aideAvatarSignal?.('speaking', false);

@@ -19,6 +19,9 @@ const input={id:'语言',title:'语言',options:[{value:'语言',label:'语言'}
 const output=api.schema(input);
 assert.equal(output.id,'语言');assert.equal(output.title,'Language');
 assert.equal(output.options[0].value,'语言');assert.equal(input.title,'语言');
+assert.equal(api.sourceName({id:'workspace',name:'工作区'}),'Workspace');
+assert.equal(api.sourceName({id:'project-ref',name:'工作区'}),'工作区');
+assert.equal(api.sourceName({id:'workspace',name:'My workspace'}),'My workspace');
 pref='zh-CN';assert.equal(api.t('语言'),'语言');
 assert.equal(api.t('对{0}说点什么…', '小鲸'),'对小鲸说点什么…');
 pref='invalid';ctx.navigator.language='zh-CN';assert.equal(api.language(),'zh-CN');
