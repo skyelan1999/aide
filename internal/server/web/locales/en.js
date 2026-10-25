@@ -1,5 +1,4 @@
 'use strict';
-// Explicit product UI strings; user data and protocol fields retain their original values.
 window.aideEnglish = {
   "应用": "Apply",
   "工作区已切换": "Workspace switched",
@@ -4133,5 +4132,8 @@ window.aideEnglish = {
   "正在生成回复…": "Generating reply…",
   "没有记录到助手正文": "No assistant output was recorded",
   "已记录应用，仍需复核": "Application recorded; review still needed",
-  "变更提案，尚无应用标记": "Change proposal; no application marker"
+  "变更提案，尚无应用标记": "Change proposal; no application marker",
+  "等待确认": "Awaiting confirmation",
+  "成功": "Succeeded",
+  "跳过": "Skipped"
 };

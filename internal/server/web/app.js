@@ -12547,9 +12547,9 @@ function setupBrowseMountSelector(root,field){
 
 function renderPWRun(run) {
  const panel=el('section','parallel-progress'); panel.append(el('strong','', 'PW · '+run.pw.definition.name));
- for(const n of run.pw.definition.nodes){const info=run.pw.nodes[n.id]||{};const row=el('details','parallel-part');row.style.display='block';row.append(el('summary','',n.title+' · '+({pending:'等待',running:'运行中',waiting:'等待确认',completed:'成功',failed:'失败',skipped:'跳过'}[info.status]||info.status)));
+ for(const n of run.pw.definition.nodes){const info=run.pw.nodes[n.id]||{};const row=el('details','parallel-part');row.style.display='block';row.append(el('summary','',n.title+' · '+t({pending:'等待',running:'运行中',waiting:'等待确认',completed:'成功',failed:'失败',skipped:'跳过'}[info.status]||info.status)));
   if(info.output)row.append(el('pre','',info.output));if(info.error)row.append(el('p','',info.error));
-  if(info.status==='waiting'&&run.status==='running'){row.open=true;row.append(el('pre','',JSON.stringify(info.request||{tool:n.tool,arguments:n.arguments,text:n.text},null,2)));for(const [label,approved] of [['确认执行',true],['拒绝',false]]){const b=el('button','quiet',label);b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'approve',sessionId:state.session.id,runId:run.id,nodeId:n.id,approved})});await selectSession(state.session.id)});row.append(b)}}panel.append(row)}
+  if(info.status==='waiting'&&run.status==='running'){row.open=true;row.append(el('pre','',JSON.stringify(info.request||{tool:n.tool,arguments:n.arguments,text:n.text},null,2)));for(const [label,approved] of [['确认执行',true],['拒绝',false]]){const b=el('button','quiet',t(label));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'approve',sessionId:state.session.id,runId:run.id,nodeId:n.id,approved})});await selectSession(state.session.id)});row.append(b)}}panel.append(row)}
  if(run.status==='running'){const b=el('button','quiet',t('停止 PW'));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
 
 }
