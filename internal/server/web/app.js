@@ -9833,6 +9833,8 @@ window.addEventListener('aide:language', () => {
   if (languageFocused && $('settings-sheet').classList.contains('open')) $('settings-content').querySelector('[data-language-button][aria-pressed="true"]')?.focus();
   if (state.config) action(refreshConfig)();
   renderSession(); renderAttachments(); renderTrajectory(); renderSourceChips();
+  // Preserve an active inline rename while refreshing owned file-list labels.
+  if (!$('files').querySelector('.file-rename')) renderFileEntries();
   refreshStrategyUI(); refreshCompactInfo(); estimateContext(); renderWorkspaceSummary(); updateSendEnabled();
   scheduleMermaid();
   if (fileView.spec) $('file-view-ro-badge').classList.toggle('hidden', !$('file-view-editor').readOnly);
