@@ -1,6 +1,6 @@
 {
   "id": "english-completion-20261025",
-  "request": "\u628a\u82f1\u6587\u7684\u9002\u914d\u5168\u90e8\u505a\u4e00\u4e0b\uff0c\u5305\u62ec\u9875\u9762\u548c\u6587\u6863\uff0c\u7136\u540e\u63d0\u597dcommit\uff0c\u5408\u5e76\u5230main\u4e0a\u5e76release",
+  "request": "把英文的适配全部做一下，包括页面和文档，然后提好commit，合并到main上并release",
   "baseline": "45f1d4f2cf8b2f1e0e5a76ae3096dc525bff64f0",
   "initial_status": "",
   "acceptance": [
@@ -26,35 +26,57 @@
     "design": {
       "status": "pass",
       "summary": "Explicit owned translation sites and shared catalog; no DOM-wide replacement. Historical evidence retains its original language.",
-      "evidence": []
+      "evidence": [
+        "internal/server/web/i18n.js",
+        "scripts/test_i18n_coverage.cjs"
+      ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Standalone knowledge map and phone capture, dynamic recovery/export/viewer messages, SQLite UI, accessible labels and catalog coverage gate updated. English operating/developer guides added.",
-      "evidence": []
+      "status": "pass",
+      "summary": "893 English catalog additions (4136 unique keys), standalone knowledge map/mobile capture, dynamic recovery/export/viewer/settings UI, workflow states/actions, accessible labels, approved reply icons/header/status styling and release documentation links. Protocol identifiers and user content preserved.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/166",
+        "3b8124daccee369379add894e8b0a182bb5e16ec"
+      ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Catalog and placeholder tests pass. First isolated browser candidate exposed a generated character-offset error; task-owned JS was regenerated using JavaScript UTF-16 offsets and all changed JS passed syntax checks. Fresh final browser/full checks remain required.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Current-input full gate passed all 146 commands, including isolated Go race/vet. Catalog/placeholder and 3603-site coverage checks passed. Isolated ARM64 build and exact served-source identity verified. Real English/Chinese and cross-tab switching preserved task/editor drafts; English knowledge sources, mobile validation, 390px main/settings layout and six reply action icons inspected. No provider, microphone or camera calls. Native release artifacts remain pending.",
+      "evidence": [
+        "python3 scripts/agent-route.py verify full: PASS; 146 commands; input SHA-256 e9240b771353842b32a07c61e36c0ecc63bb762c82e40f0e727a8827d61f1df8",
+        "node scripts/test_i18n.cjs: PASS",
+        "node scripts/test_i18n_coverage.cjs: PASS (3603 explicit translation sites)",
+        "Isolated browser acceptance: localhost:18489 synthetic workspace; no production data mounts; source matches the feature commit"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "13 current English guides added and maintained entry points updated. Dated reviews/tasks, licenses and canonical historical appendices retain their original language and evidence status.",
+      "evidence": [
+        "docs/en/README.md",
+        "docs/en/documentation-map.md",
+        "python3 scripts/check_docs.py: PASS (419 Markdown files; 1441 local links)"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "Original source checkout had 784 numbered untracked copies: 778 byte-identical copies moved to Trash, 6 distinct copies archived outside the repository with checksums and a recovery manifest. No runtime/user-data cleanup; existing tracked launcher edit preserved.",
-      "evidence": []
+      "evidence": [
+        "Original source checkout: git ls-files --others --exclude-standard returned zero files after classification.",
+        "Recovery manifest recheck: all 784 archived/trashed copies match their recorded SHA-256; 778 identical and 6 distinct.",
+        "Isolated browser tabs closed, viewport override reset, acceptance container removed; data/evidence retained outside tracked source."
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "blocked",
+      "summary": "PR #166 is ready for review. main requires the repository-owner approval, but the owner account is also the PR author. An independently satisfied review gate or explicit current administrator-merge authorization is required. No version/tag, release artifact publication or installed-service replacement performed.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/166",
+        ".github/CODEOWNERS"
+      ]
     }
   },
   "release_authorization": "User requested commits, merge to main and release; confirmed public application only.",
-  "rollback": "",
-  "handoff": "Public-only feature worktree, isolated acceptance port 18489. Existing user runtime is unchanged. No push or merge yet."
+  "rollback": "Before merge, retain the feature branch/PR. After merge, use a reviewed git revert and fresh verification; runtime/user data are not part of this change.",
+  "handoff": "Public feature branch pushed as PR #166. Current-input local full/browser/docs acceptance passed. GitHub CI and owner review/merge remain separate gates. Native ARM64/AMD64 packages and publication have not run. Existing installed runtime is unchanged."
 }
