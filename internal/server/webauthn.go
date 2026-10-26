@@ -514,14 +514,10 @@ func (a *App) webAuthnAssertionFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 回写最新 signCount（ValidateLogin 返回的 credential 已含更新后的计数）。
-	credID := base64.RawURLEncoding.EncodeToString(cred.ID)
-	a.webAuthn.mu.Lock()
-	if entry := a.webAuthn.findCredLocked(credID); entry != nil {
-		entry.Credential.Authenticator.SignCount = cred.Authenticator.SignCount
-		_ = a.webAuthn.saveLocked()
+	if err := a.commitWebAuthnCounter(cred); err != nil {
+		fail(w, http.StatusUnauthorized, err)
+		return
 	}
-	a.webAuthn.mu.Unlock()
 
 	response := map[string]any{"ok": true}
 	if r.URL.Query().Get("unlockScreen") == "1" || r.URL.Query().Has("lockGen") {
@@ -538,4 +534,27 @@ func (a *App) webAuthnAssertionFinish(w http.ResponseWriter, r *http.Request) {
 		response["lockState"] = st
 	}
 	jsonOut(w, 200, response)
+}
+
+// commitWebAuthnCounter checks the current credential under the write lock as
+// well as the library warning: concurrent assertions cannot reuse one counter.
+// Counterless authenticators (0 -> 0) remain supported.
+func (a *App) commitWebAuthnCounter(cred *webauthn.Credential) error {
+	a.webAuthn.mu.Lock()
+	defer a.webAuthn.mu.Unlock()
+	entry := a.webAuthn.findCredLocked(base64.RawURLEncoding.EncodeToString(cred.ID))
+	if entry == nil {
+		return errors.New("Passkey credential no longer exists")
+	}
+	previous := entry.Credential.Authenticator.SignCount
+	next := cred.Authenticator.SignCount
+	if cred.Authenticator.CloneWarning || (next <= previous && (next != 0 || previous != 0)) {
+		return errors.New("Passkey signature counter did not advance; use another verification method")
+	}
+	entry.Credential.Authenticator.SignCount = next
+	if err := a.webAuthn.saveLocked(); err != nil {
+		entry.Credential.Authenticator.SignCount = previous
+		return errors.New("Passkey signature counter could not be saved")
+	}
+	return nil
 }

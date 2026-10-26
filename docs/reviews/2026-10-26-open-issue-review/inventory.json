@@ -1569,8 +1569,8 @@
       "number": 124,
       "title": "[P2] Enforce WebAuthn signature-counter clone warnings",
       "url": "https://github.com/skyelan1999/aide/issues/124",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "fixed-on-branch",
+      "evidence": "第2轮：普通验证与主身份认证共用计数提交检查，拒绝CloneWarning与非递增非零计数，锁内复核并发，保留0→0；真实签名双路径race回归通过。"
     },
     {
       "number": 123,

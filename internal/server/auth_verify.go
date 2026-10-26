@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -149,12 +148,5 @@ func (a *App) validateAssertion(origin, challengeB64 string, body []byte) error 
 	if err != nil {
 		return err
 	}
-	credID := base64.RawURLEncoding.EncodeToString(cred.ID)
-	a.webAuthn.mu.Lock()
-	if entry := a.webAuthn.findCredLocked(credID); entry != nil {
-		entry.Credential.Authenticator.SignCount = cred.Authenticator.SignCount
-		_ = a.webAuthn.saveLocked()
-	}
-	a.webAuthn.mu.Unlock()
-	return nil
+	return a.commitWebAuthnCounter(cred)
 }

@@ -1,0 +1,45 @@
+{
+  "cycle": 2,
+  "issue": 124,
+  "red": {
+    "status": "expected failure",
+    "seconds": 21.076,
+    "failedCases": [
+      "master/counter-equal",
+      "master/counter-regression",
+      "finish/counter-equal",
+      "finish/counter-regression"
+    ],
+    "actual": "all four invalid assertions returned HTTP 200 before fix"
+  },
+  "green": {
+    "status": "PASS",
+    "seconds": 22.291,
+    "command": "go test -race ./internal/server -run '^TestMasterPasskeyDynamicOriginAndReplay|^TestPasskeyCounterCommitRechecksCurrentState' -count=1",
+    "checks": [
+      "master and ordinary verification routes",
+      "non-increasing nonzero counters rejected",
+      "counterless 0-to-0 accepted",
+      "increasing counters accepted",
+      "valid signature missing UV still rejected",
+      "dynamic origin and replay rejection",
+      "latest stored counter checked under lock",
+      "library CloneWarning rejected"
+    ]
+  },
+  "adjacent": {
+    "status": "PASS",
+    "seconds": 25.657,
+    "command": "go test -race ./internal/server -run '^TestMasterPasskeyDynamicOriginAndReplay|^TestMasterAuth|Test.*WebAuthn' -count=1"
+  },
+  "runtimeSha256": {
+    "internal/server/auth_verify.go": "f9328fa88abc9b7e92ccdaa97452e7821cc8d5911441fcab4f089867ce813c78",
+    "internal/server/webauthn.go": "8d900d6b2ebce2f10488b5693cc8944a042cc854a58528ff31aa91d14efa3723",
+    "internal/server/auth_passkey_origin_test.go": "0de8e25a175de1fe58551d32333506b26f5c564285c487af09d1ed13181bc96f"
+  },
+  "limits": [
+    "synthetic virtual authenticator, no real passkey hardware",
+    "branch only, no main merge/release",
+    "goal is resumable within session; no background scheduler available"
+  ]
+}
