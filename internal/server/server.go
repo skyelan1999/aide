@@ -489,6 +489,7 @@ type App struct {
 	sessions                  map[string]*Session
 	reminders                 []Reminder
 	messageMu                 sync.Mutex
+	messageMutations          messageMutationGate
 	messages                  *messageCenter
 	messageError              string
 	cancels                   map[string]context.CancelFunc

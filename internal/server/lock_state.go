@@ -63,6 +63,8 @@ func (a *App) loadLockStateLocked() LockStateFile {
 // 每次写单调递增 gen（last-write-wins；gen 用于观察/测试，并让前端可察觉状态切换）。
 // atomicJSON 的临时文件以 0600 创建后 rename，落盘即 0600。
 func (a *App) writeLockState(locked bool) (LockStateFile, error) {
+	finish := a.messageMutations.beginTransition()
+	defer finish()
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	cur := a.loadLockStateLocked()
@@ -127,6 +129,10 @@ func (a *App) unlockScreenState(gen *int64) error {
 func (a *App) verifyScreenState(gen *int64, unlock bool) (LockStateFile, error) {
 	if gen == nil {
 		return LockStateFile{}, errors.New("缺少锁屏代次，请重新解锁")
+	}
+	if unlock {
+		finish := a.messageMutations.beginTransition()
+		defer finish()
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()

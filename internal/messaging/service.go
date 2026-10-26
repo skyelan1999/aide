@@ -515,6 +515,13 @@ func (s *Service) Decide(id string, accept bool) error {
 	return nil
 }
 func (s *Service) Block(peer string, block bool) error {
+	return s.BlockContext(context.Background(), peer, block)
+}
+
+func (s *Service) BlockContext(ctx context.Context, peer string, block bool) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	before := s.consent.Snapshot()
 	if err := s.consent.Block(peer, block); err != nil {
 		return err
@@ -529,7 +536,7 @@ func (s *Service) Block(peer string, block bool) error {
 	err := s.persistLocked()
 	s.mu.Unlock()
 	if block {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		for _, inv := range before.Invitations {
 			if inv.Peer == peer && (inv.Kind == Voice || inv.Kind == Group) {
