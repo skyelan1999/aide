@@ -2159,28 +2159,37 @@
       "number": 108,
       "title": "[P2] Prevent composer submissions from approving shell commands",
       "url": "https://github.com/skyelan1999/aide/issues/108",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "workflow.go startTask 的 awaiting_clarification 分支只排除 assistantManaged，没有检查 PendingQuestion.approvalKind；AnswerCh 传 prompt，harness_runtime.go 以确认字符串放行shell，绕过 answerTask receipt。",
+      "status": "fixed-on-branch",
+      "evidence": "普通composer禁止审批/confirm；answer强制当前问题ID和轮次，落盘失败不投递、保留普通澄清；API/Node控制/SSH绑定回归通过，受限shell实际执行因LandlockABI0受阻。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "workflow.go startTask 的 awaiting_clarification 分支只排除 assistantManaged，没有检查 PendingQuestion.approvalKind；AnswerCh 传 prompt，harness_runtime.go 以确认字符串放行shell，绕过 answerTask receipt。",
+      "repairCommit": "7cb9e59a611e26be943338c5f0d9682fe31a3854",
+      "repairEvidence": "cycle-017.json"
     },
     {
       "number": 107,
       "title": "[P2] Report token usage snapshot write failures",
       "url": "https://github.com/skyelan1999/aide/issues/107",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "server.go recordTokenUsage: atomicJSON 的 saveErr 被显式丢弃，内存统计成功不代表磁盘持久化。",
+      "status": "fixed-on-branch",
+      "evidence": "用量快照写失败输出去私有路径/账本字段的durable=false事件，保留内存累计，下次成功保存含全部期间用量；不承诺失败期间重启恢复。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "server.go recordTokenUsage: atomicJSON 的 saveErr 被显式丢弃，内存统计成功不代表磁盘持久化。",
+      "repairCommit": "2946be023d4c644d417dfb85841a0b7452beb63b",
+      "repairEvidence": "cycle-017.json"
     },
     {
       "number": 106,
       "title": "[P2] Apply the assistant unlock gate before voice fallback",
       "url": "https://github.com/skyelan1999/aide/issues/106",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "server.go:voiceFilter无模型fallback先recordFallback和recordAssistantExchange，再return；isAssistantUnlocked在后面模型分支，因此该fallback缺少同等密码门。",
+      "status": "fixed-on-branch",
+      "evidence": "小秘会话解锁检查前移至无模型/地址/agent回退之前；锁定不返回send或记录转写，已解锁回退及重锁回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "server.go:voiceFilter无模型fallback先recordFallback和recordAssistantExchange，再return；isAssistantUnlocked在后面模型分支，因此该fallback缺少同等密码门。",
+      "repairCommit": "24542fe69d01e7db89761d5ff861179db0a7037e",
+      "repairEvidence": "cycle-017.json"
     },
     {
       "number": 105,
@@ -2690,7 +2699,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 238,
+    "remainingFollowupTargets": 235,
     "followupRepairs": [
       48,
       64,
@@ -2722,7 +2731,10 @@
       100,
       101,
       102,
-      103
+      103,
+      106,
+      107,
+      108
     ]
   }
 }

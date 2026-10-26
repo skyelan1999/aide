@@ -35,7 +35,8 @@
     "docs/security/tts-local.md",
     "docs/security/voice-cloning.md",
     "docs/agent/router.json",
-    "docs/architecture/software-updates.md"
+    "docs/architecture/software-updates.md",
+    "docs/architecture/execution-policy.md"
   ],
   "stages": {
     "requirements": {
@@ -54,14 +55,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第16轮#101/#102/#103修复验证完成；累计45项产品修复、1项测试修正。",
+      "summary": "第17轮#106/#107/#108已修；累计48项产品修复、1项测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "最终相关Go race44.074s、5项模拟发行及6项路由回归、vet、quick、文档检查通过；无真实Docker/模型/SSH设备验收。",
+      "summary": "最终相关race62.754s、shell拒绝路径2.053s、vet、quick通过；受限shell确认实际执行因LandlockABI0失败，明确未通过。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -77,7 +78,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-013.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-014.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-015.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-016.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-016.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-017.json"
       ]
     },
     "documentation": {
@@ -101,11 +103,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第16轮#101/#102/#103已push并评论；累计46项分支修复，原272项剩238跟进。第17轮#106/#107/#108（#104已关闭，#105已修）。",
+  "handoff": "第17轮#106/#107/#108已验证待push评论；累计49项分支修复，原272项剩235跟进。第18轮#109/#110/#113（#111已修，#112已关闭）；受限shell执行Landlock阻塞保留。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "784fb50cf49614381a95e4027e462c405f4f25d9",
-    "pushed": true,
+    "commit": "7cb9e59a611e26be943338c5f0d9682fe31a3854",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
@@ -139,26 +141,26 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 17,
+    "nextCycle": 18,
     "lastCompletedBatch": {
-      "cycle": 16,
+      "cycle": 17,
       "issues": [
-        101,
-        102,
-        103
+        106,
+        107,
+        108
       ],
-      "cumulativeFixed": 46,
-      "cumulativeProductFixed": 45,
+      "cumulativeFixed": 49,
+      "cumulativeProductFixed": 48,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 238,
-      "verification": "PASS targeted race/mock release/vet/quick; no real Docker or host/model calls"
+      "remainingFollowupTargets": 235,
+      "verification": "PASS API/Node/SSH-binding race/vet/quick; actual restricted shell execution BLOCKED LandlockABI0"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      106,
-      107,
-      108
+      109,
+      110,
+      113
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -166,12 +168,12 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 17,
+      "cycle": 18,
       "status": "in_progress",
       "candidates": [
-        106,
-        107,
-        108
+        109,
+        110,
+        113
       ],
       "phase": "latest-bodies-read-source-inspection"
     }
