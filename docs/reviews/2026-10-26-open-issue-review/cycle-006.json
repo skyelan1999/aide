@@ -107,10 +107,15 @@
     "No full release gate, desktop/Windows test or product UI acceptance. All repaired issues remain open until main acceptance."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "71": "https://github.com/skyelan1999/aide/issues/71#issuecomment-6412892750",
+      "73": "https://github.com/skyelan1999/aide/issues/73#issuecomment-6412893750",
+      "76": "https://github.com/skyelan1999/aide/issues/76#issuecomment-6412894691"
+    }
   },
   "sourceSHA256": {
     "internal/server/transfer_jobs.go": "1aeae2901a8befd12e3496bf1821a30eae22c6b522442a40e6e8604a8dec2c31",
@@ -125,5 +130,6 @@
     "internal/server/workflow.go": "f895dd37effcad5497576bc22e29bda180ee9642e80dfb4e1384ccbf8a7895e8",
     "internal/server/sources.go": "9f109c4310ba93c9854cb0aed9c0111b4f31c8750a6f561ccbf7cb5685ef5962",
     "internal/server/source_curl_bounds_test.go": "ba2a3038eee05304e69529f91b7de76b3f42a10074207b7e6900bb321c0b094c"
-  }
+  },
+  "verificationFingerprint": "de5fb22305daf527692d71f62b8124f7a17bf14bbfe28b9a9254c2ffc3fd0563"
 }
