@@ -1,0 +1,379 @@
+{
+  "cycle": 27,
+  "baseline": "31fae736cb1586a8f8bc4a2ce6ae3d28ba1a6ef9",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    142,
+    143,
+    144
+  ],
+  "commits": {
+    "142": "3f6595c034a2d44e119805ecd6a4bf6d2b4ce5a4",
+    "143": "3f6595c034a2d44e119805ecd6a4bf6d2b4ce5a4",
+    "144": "3f6595c034a2d44e119805ecd6a4bf6d2b4ce5a4"
+  },
+  "cumulativeProductFixes": 78,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 79,
+  "original272RemainingFollowup": 205,
+  "red": [
+    {
+      "issue": 142,
+      "command": "AIDE_DRAWIO_COPY=app node scripts/test_drawio_lifecycle_alpha.cjs menus",
+      "result": "EXPECTED_FAIL",
+      "observed": "graph teardown removes all body-attached submenu nodes\n\n2 !== 0"
+    },
+    {
+      "issue": 143,
+      "command": "AIDE_DRAWIO_COPY=app node scripts/test_drawio_lifecycle_alpha.cjs panning",
+      "result": "EXPECTED_FAIL",
+      "observed": "teardown must clear active interval\n\n1 !== 0"
+    },
+    {
+      "issue": 144,
+      "command": "AIDE_DRAWIO_COPY=app node scripts/test_drawio_lifecycle_alpha.cjs alpha",
+      "result": "EXPECTED_FAIL",
+      "observed": "stencil fillalpha changes only its designated alpha\n+ actual - expected\n\n  {\n+   alpha: '0.25',\n+   fillAlpha: 1,\n-   alpha: 0.8,\n-   fillAlpha: '0.25',\n    strokeAlpha: 1\n  }"
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_drawio_lifecycle_alpha.cjs",
+      "result": "PASS",
+      "scope": "Source, actual app.min and standalone mxClient: graph teardown of open/nested/closed submenus and listeners; active timer direct/graph destruction and stale inactive flag fault; positive pan before teardown and no later work; separate fill/stroke/global alpha state."
+    },
+    {
+      "command": "node scripts/test_drawio_geometry_fixes.cjs; node scripts/test_drawio_clone_constraints.cjs; node scripts/test_drawio_layout_fixes.cjs; node scripts/test_drawio_preview_bounds.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "AIDE_DRAWIO_LIFECYCLE_ACCEPTANCE=1 AIDE_DRAWIO_GEOMETRY_ACCEPTANCE=1 AIDE_DRAWIO_SELECT_TABLE=1 AIDE_DRAWIO_LAYOUT_ACCEPTANCE=1 AIDE_DRAWIO_CLONE_CONSTRAINT_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle27-browser node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "PASS",
+      "browserResult": {
+        "checks": [
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "light",
+            "width": 1440,
+            "result": "PASS"
+          },
+          {
+            "case": "actual graph destroy removes open/closed nested popup DOM and all subtree listeners",
+            "theme": "light",
+            "result": "PASS",
+            "menus": 4
+          },
+          {
+            "case": "lazy real auto-pan runs, graph destroy stops interval/listeners and no callbacks after50ms",
+            "theme": "light",
+            "result": "PASS",
+            "panCalls": 12
+          },
+          {
+            "case": "real stencil SVG separates fillalpha/strokealpha/global alpha",
+            "theme": "light",
+            "result": "PASS",
+            "alpha": [
+              {
+                "fill": 0.25,
+                "stroke": 1
+              },
+              {
+                "fill": 1,
+                "stroke": 0.25
+              },
+              {
+                "fill": 0.25,
+                "stroke": 0.25
+              }
+            ]
+          },
+          {
+            "case": "actual selected vertex handler, 15/5/1 snap and preserved page-global raster",
+            "theme": "light",
+            "result": "PASS"
+          },
+          {
+            "case": "real router distinguishes self-loop jetty fallback from distinct terminals; rendered self-loop finite",
+            "theme": "light",
+            "result": "PASS",
+            "points": [
+              {
+                "x": 1114,
+                "y": 781
+              },
+              {
+                "x": 1134,
+                "y": 781
+              },
+              {
+                "x": 1134,
+                "y": 801
+              },
+              {
+                "x": 1114,
+                "y": 801
+              }
+            ]
+          },
+          {
+            "case": "actual SVG canvas zero-radius line, native path length and next endpoint",
+            "theme": "light",
+            "result": "PASS",
+            "d": "M 10 10 L 80 60 L 150 60",
+            "length": 156.02325439453125,
+            "endpoint": {
+              "x": 150,
+              "y": 60
+            }
+          },
+          {
+            "case": "actual duplicateCells remaps custom links, special IDs, wildcards and unmapped inherited names",
+            "theme": "light",
+            "result": "PASS"
+          },
+          {
+            "case": "real pointer leaves graph: clear icons/highlight and remove exact listener on destroy",
+            "theme": "light",
+            "result": "PASS",
+            "resets": 2,
+            "iconsCleared": true,
+            "listenerRemoved": true
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "light",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "light",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 4.100000023841858
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "light",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "select malformed table and construct remaining handles",
+            "theme": "light",
+            "result": "PASS",
+            "handles": 5
+          },
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "dark",
+            "width": 390,
+            "result": "PASS"
+          },
+          {
+            "case": "actual graph destroy removes open/closed nested popup DOM and all subtree listeners",
+            "theme": "dark",
+            "result": "PASS",
+            "menus": 4
+          },
+          {
+            "case": "lazy real auto-pan runs, graph destroy stops interval/listeners and no callbacks after50ms",
+            "theme": "dark",
+            "result": "PASS",
+            "panCalls": 9
+          },
+          {
+            "case": "real stencil SVG separates fillalpha/strokealpha/global alpha",
+            "theme": "dark",
+            "result": "PASS",
+            "alpha": [
+              {
+                "fill": 0.25,
+                "stroke": 1
+              },
+              {
+                "fill": 1,
+                "stroke": 0.25
+              },
+              {
+                "fill": 0.25,
+                "stroke": 0.25
+              }
+            ]
+          },
+          {
+            "case": "actual selected vertex handler, 15/5/1 snap and preserved page-global raster",
+            "theme": "dark",
+            "result": "PASS"
+          },
+          {
+            "case": "real router distinguishes self-loop jetty fallback from distinct terminals; rendered self-loop finite",
+            "theme": "dark",
+            "result": "PASS",
+            "points": [
+              {
+                "x": 534,
+                "y": 781
+              },
+              {
+                "x": 554,
+                "y": 781
+              },
+              {
+                "x": 554,
+                "y": 801
+              },
+              {
+                "x": 534,
+                "y": 801
+              }
+            ]
+          },
+          {
+            "case": "actual SVG canvas zero-radius line, native path length and next endpoint",
+            "theme": "dark",
+            "result": "PASS",
+            "d": "M 10 10 L 80 60 L 150 60",
+            "length": 156.02325439453125,
+            "endpoint": {
+              "x": 150,
+              "y": 60
+            }
+          },
+          {
+            "case": "actual duplicateCells remaps custom links, special IDs, wildcards and unmapped inherited names",
+            "theme": "dark",
+            "result": "PASS"
+          },
+          {
+            "case": "real pointer leaves graph: clear icons/highlight and remove exact listener on destroy",
+            "theme": "dark",
+            "result": "PASS",
+            "resets": 2,
+            "iconsCleared": true,
+            "listenerRemoved": true
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "dark",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "dark",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 4.699999988079071
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "dark",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "select malformed table and construct remaining handles",
+            "theme": "dark",
+            "result": "PASS",
+            "handles": 5
+          },
+          {
+            "case": "expanded",
+            "result": "PASS",
+            "elapsedMs": 1921
+          },
+          {
+            "case": "xml-depth",
+            "result": "PASS",
+            "elapsedMs": 2127
+          },
+          {
+            "case": "cell-depth",
+            "result": "PASS",
+            "elapsedMs": 1925
+          },
+          {
+            "case": "cell-cycle",
+            "result": "PASS",
+            "elapsedMs": 1947
+          },
+          {
+            "case": "inactive-page",
+            "result": "PASS",
+            "elapsedMs": 1828
+          },
+          {
+            "case": "page-count",
+            "result": "PASS",
+            "elapsedMs": 1848
+          },
+          {
+            "case": "aggregate-expansion",
+            "result": "PASS",
+            "elapsedMs": 1934
+          },
+          {
+            "case": "lazy-reference-depth",
+            "result": "PASS",
+            "elapsedMs": 1919
+          }
+        ],
+        "errors": [],
+        "browser": "154.0.8037.57",
+        "actualBundledIframe": true,
+        "fullWorkbench": false
+      },
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle27-browser/result.json",
+      "visualReview": "Viewed actual light1440 multi-level open menus and dark390 stencil SVG (separate fill/stroke/global alpha); all three boxes and normal editor remain visible.",
+      "scope": "Actual shipped iframe/bundle34 cases. Independent owned graph opens root+2 levels, closed submenu included in4-menu listener cleanup. Native lazy scrollPointToVisible creates panningManager; pan ticks actually run, graph destroy clears timer and actual document/graph listener references, no new pans after50ms. Actual stencil generates SVG fill/stroke opacity tuples(.25,1),(1,.25),(.25,.25). Prior28 cases retained, no pageerrors, owned page/context/browser closed."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T205816908595Z.log",
+      "fingerprint": "64754c7a503c1a208bbe810ca27e603c68345c3e900b100a6dd54c4ffb2e451b"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check; node --check internal/server/web/vendor/drawio/js/app.min.js; node --check internal/server/web/vendor/drawio/mxgraph/mxClient.js; node --check internal/server/web/vendor/drawio/mxgraph/src/util/mxPopupMenu.js; node --check internal/server/web/vendor/drawio/mxgraph/src/util/mxPanningManager.js; node --check internal/server/web/vendor/drawio/mxgraph/src/view/mxGraph.js; node --check internal/server/web/vendor/drawio/mxgraph/src/shape/mxStencil.js; node --check scripts/drawio-lifecycle-browser-cases.cjs",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "菜单销毁迭代清理全部多级子菜单，包括未打开子菜单；移除body节点、释放监听并清空活动引用，图/菜单重复销毁安全。",
+    "图在画布/视图销毁前销毁panningManager并置空；管理器stop并独立清理残留thread，移除图鼠标和document mouseup监听，直接销毁也安全。",
+    "模板fillalpha调用setFillAlpha、strokealpha调用setStrokeAlpha；alpha仍调用setAlpha，不跨域修改透明度。",
+    "Four uniquely matched changes in each compiled copy synchronize with source. Panning manager stops before any handler/view destruction. Popup teardown walks all submenu row trees, not only the active chain; root release alone cannot reach body-mounted or detached submenu divs. Vendor headers/licenses retained.",
+    "Menu opening uses real popup/showSubmenu API, not full right-click pointer gesture; panning uses actual lazy scrollPointToVisible and native intervals. Browser checks exact document listener function and graph mouse-listener removal.",
+    "No Go/backend change; no Go test claimed. Full start.command workbench, other browsers/platforms, long-duration soak/native devices NOT_RUN. Existing platform and full-gate blockers retained. No merge/release/deployment."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "07de1271f867d83ad4faeeed8b03eb9bacceb1ecf13d16e846248152599d3195",
+    "docs/architecture/office-viewer.md": "0de90da9289ac7c2955fd69c19c1f73b94210f5b4603eb1326eb688eda2cd8a4",
+    "internal/server/web/vendor/drawio/js/app.min.js": "926e812097d6fc0477d69f54f8b518415859db70ed5346178c35d47f6a78202e",
+    "internal/server/web/vendor/drawio/mxgraph/mxClient.js": "3c6db4942ebcdf5875594e957328e1247fb64e93ffa2c820cd104438679cb0f3",
+    "internal/server/web/vendor/drawio/mxgraph/src/shape/mxStencil.js": "ec4ffda337a33b571b97391c9839469f7a69fda2de5d831a9d1314a11ce30544",
+    "internal/server/web/vendor/drawio/mxgraph/src/util/mxPanningManager.js": "5fee8fc14667bf4d58ad97ae5d6f4f333b569794f1887af3194ead90870f1366",
+    "internal/server/web/vendor/drawio/mxgraph/src/util/mxPopupMenu.js": "26ed46034373e94e909d526c1e5b842f0b409b2f9ce9565c4157aead702b4953",
+    "internal/server/web/vendor/drawio/mxgraph/src/view/mxGraph.js": "1cc2605f5b27b3e5f463baece5a5302b554d2835e895ee9ba1fd87e1e9e24f92",
+    "scripts/browser-drawio-preview-bounds.cjs": "f6b8b262962a75952097f92a400846f57fe8a3fa49929bdf44ae1ef89673a32a",
+    "scripts/drawio-lifecycle-browser-cases.cjs": "ce0d1ce0b14860d16f4f87eba148f3407bb25f50e1d4440150d18d74748505a2",
+    "scripts/test_drawio_lifecycle_alpha.cjs": "3e4ac90987f99cf5900ec87ec78f2213d0c15eff0a6dfd6ec7b4e8ac0b926c76"
+  }
+}

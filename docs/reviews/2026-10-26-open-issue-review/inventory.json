@@ -1859,28 +1859,37 @@
       "number": 144,
       "title": "[Bug] Stencil fillalpha and strokealpha change the global alpha",
       "url": "https://github.com/skyelan1999/aide/issues/144",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxStencil.drawNode fillalpha/strokealpha两分支均调用setAlpha，而canvas有独立setFillAlpha/setStrokeAlpha。",
+      "status": "fixed-on-branch",
+      "evidence": "模板fillalpha调用setFillAlpha、strokealpha调用setStrokeAlpha；alpha仍调用setAlpha，不跨域修改透明度。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxStencil.drawNode fillalpha/strokealpha两分支均调用setAlpha，而canvas有独立setFillAlpha/setStrokeAlpha。",
+      "repairCommit": "3f6595c034a2d44e119805ecd6a4bf6d2b4ce5a4",
+      "repairEvidence": "cycle-027.json"
     },
     {
       "number": 143,
       "title": "[Bug] Destroy the panning manager when destroying a graph",
       "url": "https://github.com/skyelan1999/aide/issues/143",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxPanningManager.destroy仅remove listeners不stop interval；mxGraph.destroy也未调用panningManager.destroy，正常Graph允许auto-panning。",
+      "status": "fixed-on-branch",
+      "evidence": "图在画布/视图销毁前销毁panningManager并置空；管理器stop并独立清理残留thread，移除图鼠标和document mouseup监听，直接销毁也安全。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxPanningManager.destroy仅remove listeners不stop interval；mxGraph.destroy也未调用panningManager.destroy，正常Graph允许auto-panning。",
+      "repairCommit": "3f6595c034a2d44e119805ecd6a4bf6d2b4ce5a4",
+      "repairEvidence": "cycle-027.json"
     },
     {
       "number": 142,
       "title": "[Bug] Remove open popup submenus when destroying a graph",
       "url": "https://github.com/skyelan1999/aide/issues/142",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxPopupMenu.destroy只release/remove根div；submenu通过body单独挂载，hideMenu/hideSubmenu才移除子链。iframe整体移除会释放文档，单graph销毁仍有该缺口。",
+      "status": "fixed-on-branch",
+      "evidence": "菜单销毁迭代清理全部多级子菜单，包括未打开子菜单；移除body节点、释放监听并清空活动引用，图/菜单重复销毁安全。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxPopupMenu.destroy只release/remove根div；submenu通过body单独挂载，hideMenu/hideSubmenu才移除子链。iframe整体移除会释放文档，单graph销毁仍有该缺口。",
+      "repairCommit": "3f6595c034a2d44e119805ecd6a4bf6d2b4ce5a4",
+      "repairEvidence": "cycle-027.json"
     },
     {
       "number": 141,
@@ -2781,7 +2790,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 208,
+    "remainingFollowupTargets": 205,
     "followupRepairs": [
       48,
       64,
@@ -2843,7 +2852,10 @@
       138,
       139,
       140,
-      141
+      141,
+      142,
+      143,
+      144
     ]
   }
 }
