@@ -60,10 +60,13 @@
     "No main merge, release or deployment. Next ordered issues98/99/100 already read from GitHub."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "97": "https://github.com/skyelan1999/aide/issues/97#issuecomment-6421084335"
+    }
   },
   "sourceSHA256": {
     "internal/server/tts/edge.go": "fd8a60a0320f73889a954c73deae370087a475f2d811040b47df56b2f6f0db83",
