@@ -54,11 +54,14 @@
     "本轮无UI变更；完整start.command工作台、Windows/macOS、断电/真实只读卷/真实克隆设备与付费模型验收NOT_RUN。所有mock服务退出，无新增驻留服务。只push审查分支，不合并main、不发行、不部署。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "153": "https://github.com/skyelan1999/aide/issues/153#issuecomment-6429458807"
+    },
+    "verifiedRemoteCommit": "741e03be5a3039f27e45c5683dc4dc37b4047544"
   },
   "sourceSHA256": {
     "docs/security/voice-cloning.md": "f5f231dea77f163a2ff1e27902662f3eb57107a13284ecf82ea1132270a9154d",
