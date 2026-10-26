@@ -89,17 +89,25 @@
     }
   ],
   "notes": [
-    "#90 historical source-confirmed review is preserved as reviewEvidence; runtime and complete call-chain examination supersede it. No product patch needed; close as not supported with regression evidence.",
+    "#90 historical source-confirmed review is preserved as reviewEvidence; runtime and complete call-chain examination supersede it. No product patch needed; close as not supported with regression evidence. Shared safePath protection also confirmed unchanged at upstream15e3130e and report baseline45f1d4f2.",
     "#91 new records discard plugin result text, validate identifier spelling and emit only host outcome/count/date. Legacy detail never enters hint; next normal write replaces legacy detail with fixed status. No startup deletion of user files or promise to sanitize all other prompt sources.",
     "#92 pins use per-App private temporary directories; same inode reuses link, only confirmed refused endpoints with unchanged inode are reaped at creation and scheduled30s; still-live old masters preserved. Stop rejects late pins and stops daemon before deleting owned links. Legacy deterministic directory gets dead-only sweep. Tests invoke reaper directly, not a30s timer acceptance test.",
     "No native macOS/Windows or authenticated OpenSSH acceptance; existing Landlock and/home/aide restrictions remain. Abrupt process kill can leave instance temp directories; no crash-recovery guarantee.",
     "No main merge, release or deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "90": "https://github.com/skyelan1999/aide/issues/90#issuecomment-6420336067",
+      "91": "https://github.com/skyelan1999/aide/issues/91#issuecomment-6420337062",
+      "92": "https://github.com/skyelan1999/aide/issues/92#issuecomment-6420338135"
+    },
+    "closedNotSupported": [
+      90
+    ]
   },
   "sourceSHA256": {
     "internal/server/plugin_source_protected_test.go": "a77410fb925c9d8431a28ed4eeb863a5c25e46521e7cc8970d1cc8410514d721",

@@ -48,7 +48,7 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第11轮修复#91/#92；#90已有共享路径防护，补运行证据后准备评论关闭。累计36项产品修复、1项测试修正。",
+      "summary": "第11轮修复#91/#92；#90已有共享路径防护，补运行证据后已评论关闭。累计36项产品修复、1项测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
@@ -90,16 +90,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第11轮#91/#92已验证待push评论，#90不成立待评论关闭；累计37项分支修复，原272项剩247项跟进。第12轮从#93/#94继续（#95/#96已修）。",
+  "handoff": "第11轮#91/#92已push并评论，#90不成立已评论关闭；累计37项分支修复，原272项剩247项跟进。第12轮从#93/#94继续（#95/#96已修）。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "ded839fe0a8d3d1c7f47bdb357dba52346488c60",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第9轮#84/#85/#86与第10轮#87/#88/#89已push并评论验证证据；合理修复未合并main前保持open。",
+  "issue_comments": "第10轮#87/#88/#89及第11轮#91/#92已push并评论；#90依据既有共享防护与回归证据已评论关闭；合理修复未合并main前保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",

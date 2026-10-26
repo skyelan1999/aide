@@ -2321,12 +2321,13 @@
       "number": 90,
       "title": "[P2] Apply protected-path exclusions to explicitly selected snapshots",
       "url": "https://github.com/skyelan1999/aide/issues/90",
-      "status": "not-supported-awaiting-comment-close",
+      "status": "closed-not-supported",
       "evidence": "运行及完整调用链推翻初步静态判断：pluginSourceRequest入口knowledgeSafePath调用safePath，全部protected组件在本地/远端读取前被拒；补回归eafb3e12，无产品补丁。",
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "reviewEvidence": "plugin_sources.go:protected列表仅递归枚举child名时检查，walk直接file返回copyFile，显式.env及protected root可绕过声明的host exclusion。",
-      "repairEvidence": "cycle-011.json"
+      "repairEvidence": "cycle-011.json",
+      "commentURL": "https://github.com/skyelan1999/aide/issues/90#issuecomment-6420336067"
     },
     {
       "number": 89,
