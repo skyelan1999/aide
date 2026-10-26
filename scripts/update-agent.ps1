@@ -19,18 +19,70 @@ if ((Test-Path -LiteralPath $lock) -and -not (Test-Path -LiteralPath $ownerFile)
 New-Item -ItemType Directory -Path $lock -Force | Out-Null
 try { $owner = [IO.File]::Open($ownerFile, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None) } catch [IO.IOException] { exit 0 }
 
+$diagnosticRoot = Join-Path $PWD '.aide-data'
+New-Item -ItemType Directory -Path $diagnosticRoot -Force | Out-Null
+$updateLog = Join-Path $diagnosticRoot 'update-agent.log'
+$resultOutbox = Join-Path $diagnosticRoot 'update-agent-result.json'
+function Protect-AideUpdateText([string]$Text) {
+  $safe = $Text -replace '(?i)(#token=|Bearer\s+|access[-_]?token["\s:=]+)[^\s"&]+', '$1[redacted]'
+  return $safe
+}
+function Write-AideUpdateLog([string]$Message) {
+  try {
+    if ((Test-Path -LiteralPath $updateLog) -and (Get-Item -LiteralPath $updateLog).Length -gt 2MB) {
+      Move-Item -LiteralPath $updateLog -Destination ($updateLog + '.1') -Force
+    }
+    $line = '{0} {1}' -f [DateTime]::UtcNow.ToString('o'), (Protect-AideUpdateText $Message)
+    Add-Content -LiteralPath $updateLog -Value $line -Encoding UTF8
+  } catch { } # Diagnostics must not turn a healthy activation into a rollback.
+}
+function Save-AideUpdateResult([bool]$Success, [string]$Message) {
+  $safe = Protect-AideUpdateText $Message
+  if ($safe.Length -gt 900) { $safe = $safe.Substring(0,900) }
+  $body = @{operationId=$op;success=$Success;message=$safe} | ConvertTo-Json -Compress
+  [IO.File]::WriteAllText(($resultOutbox + '.tmp'), $body, (New-Object System.Text.UTF8Encoding $false))
+  Move-Item -LiteralPath ($resultOutbox + '.tmp') -Destination $resultOutbox -Force
+}
+function Send-AidePendingResult {
+  if (-not (Test-Path -LiteralPath $resultOutbox)) { return }
+  try {
+    $http = (& curl.exe -k -f -sS --max-time 10 -w '%{http_code}' -o (Join-Path $tmp 'receipt-response.json') -H $headers[0] -H 'Content-Type: application/json' -X POST --data-binary "@$resultOutbox" "$base/agent/result" 2>$null | Out-String).Trim()
+    if ($LASTEXITCODE -eq 0 -or $http -eq '409') {
+      Remove-Item -LiteralPath $resultOutbox -Force
+      Write-AideUpdateLog 'Terminal result acknowledged (or operation already superseded).'
+    }
+  } catch { Write-AideUpdateLog 'Terminal result not yet delivered; retained for retry.' }
+}
 function Invoke-AideSlotLauncher {
-  # Start-Process -Wait waits for the process tree on Windows; start.ps1 spawns
-  # permanent monitors. Wait only for the launcher process, with a quoted path.
+  # Pin the process handle before waiting: Windows PowerShell may otherwise
+  # expose a null ExitCode once Start-Process releases its original handle.
+  # Never wait for the process tree, which includes permanent monitors.
   $launcher = Join-Path $PWD 'start.ps1'
   $env:AIDE_OPEN_BROWSER = '0'
-  $proc = Start-Process -FilePath $currentPowerShell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"' -f $launcher)) -PassThru -WindowStyle Hidden
-  if (-not $proc.WaitForExit(300000)) {
-    $proc.Kill(); $proc.WaitForExit()
-    throw 'Launcher process timed out.'
+  $outputFile = Join-Path $tmp ('launcher-' + [guid]::NewGuid().ToString('N') + '.out')
+  $errorFile = $outputFile + '.err'
+  $proc = $null
+  try {
+    $options = @{FilePath=$currentPowerShell;ArgumentList=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"' -f $launcher));PassThru=$true;RedirectStandardOutput=$outputFile;RedirectStandardError=$errorFile}
+    if ($env:OS -eq 'Windows_NT') { $options.WindowStyle = 'Hidden' }
+    $proc = Start-Process @options
+    $null = $proc.Handle
+    if (-not $proc.WaitForExit(300000)) {
+      $proc.Kill(); $proc.WaitForExit()
+      throw 'Launcher process timed out.'
+    }
+    $exitCode = $proc.ExitCode
+    Write-AideUpdateLog ('Launcher exit code: ' + $exitCode)
+    if ($null -eq $exitCode -or $exitCode -ne 0) { throw ('Target launcher failed (exit ' + $exitCode + ').') }
+  } finally {
+    foreach ($file in @($outputFile,$errorFile)) {
+      if (Test-Path -LiteralPath $file) {
+        foreach ($line in @(Get-Content -LiteralPath $file -Tail 60)) { Write-AideUpdateLog $line }
+        Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+      }
+    }
+    if ($proc) { $proc.Dispose() }
   }
-  $proc.Refresh()
-  if ($proc.ExitCode -ne 0) { throw 'Target launcher failed.' }
 }
 function Resolve-AideUpdateImage([string]$Expected, [string]$Platform, [string]$LoadOutput) {
   # Resolve only IDs/references emitted by this verified archive import.
@@ -50,7 +102,7 @@ function Resolve-AideUpdateImage([string]$Expected, [string]$Platform, [string]$
 function Send-AideUpdateProgress([string]$Status, [int]$Progress, [string]$Message) {
   $file = Join-Path $tmp 'progress.json'
   [IO.File]::WriteAllText($file, (@{operationId=$op;status=$Status;progress=$Progress;message=$Message} | ConvertTo-Json -Compress), (New-Object System.Text.UTF8Encoding $false))
-  & curl.exe -k -f -sS --max-time 10 -H $headers[0] -H 'Content-Type: application/json' -X POST --data-binary "@$file" "$base/agent/progress" 2>$null | Out-Null
+  try { & curl.exe -k -f -sS --max-time 10 -H $headers[0] -H 'Content-Type: application/json' -X POST --data-binary "@$file" "$base/agent/progress" 2>$null | Out-Null } catch { Write-AideUpdateLog 'Progress endpoint temporarily unavailable.' }
 }
 try {
   $docker = (Get-Command docker -ErrorAction Stop).Source
@@ -86,6 +138,8 @@ try {
     $tmp = Join-Path $env:TEMP ('aide-update-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tmp | Out-Null
     try {
+      Send-AidePendingResult
+      if (Test-Path -LiteralPath $resultOutbox) { Start-Sleep -Seconds 3; continue }
       $commandFile = Join-Path $tmp 'command.tsv'
       & curl.exe -k -sS --connect-timeout 3 --max-time 10 -H $headers[0] "$base/agent" -o $commandFile 2>$null | Out-Null
       $line = if (Test-Path $commandFile) { (Get-Content -Raw $commandFile).Trim() } else { '' }
@@ -97,6 +151,7 @@ try {
         }
         if ($f.Count -eq 9 -and $f[0] -match '^[a-f0-9]{32}$' -and $f[1] -in @('A','B') -and ($f[2] -eq '' -or $f[2] -match '^[a-f0-9]{32}$') -and $f[4] -match '^sha256:[a-f0-9]{64}$' -and $f[5] -match '^linux/(arm64|amd64)$' -and $f[3] -match '^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+-RC[0-9]+$' -and $f[7] -ceq ('aide:slot-' + $f[1].ToLowerInvariant()) -and ($f[2] -eq '' -or $f[6] -match '^[a-f0-9]{64}$')) {
           $op,$target,$packageId,$releaseTag,$imageId,$imagePlatform,$imageHash,$imageRef,$version = $f[0..8]
+          Write-AideUpdateLog ('Operation ' + $op + ': target ' + $target + ' ' + $releaseTag)
           Send-AideUpdateProgress 'preparing' 5 'Preparing slot activation'
           $oldMarker = Get-Content -Raw '.aide-image'
           $ready = $false
@@ -124,7 +179,21 @@ try {
             if ($LASTEXITCODE -ne 0) { throw 'Cannot tag the verified target image.' }
             Send-AideUpdateProgress 'activating' 70 'Activating target slot'
             "$imageRef $imageId $imagePlatform $releaseTag" | Set-Content -NoNewline -Encoding ASCII '.aide-image'
-            Invoke-AideSlotLauncher
+            $reuseHealthyImage = $false
+            $previousImageId = ($oldMarker.Trim() -split '\s+')[1]
+            if ($previousImageId -ceq $imageId) {
+              # Same image identity, not merely the same version label: avoid
+              # restarting a healthy runtime just to change the logical slot.
+              $existing = (& $docker compose ps --status running --quiet aide 2>$null | Out-String).Trim()
+              if ($existing -match '^[a-f0-9]{12,64}$') {
+                $existingId = (& $docker inspect $existing --format '{{.Image}}' 2>$null | Out-String).Trim()
+                if ($LASTEXITCODE -eq 0 -and $existingId -ceq $imageId) {
+                  try { $reuseHealthyImage = [bool](& curl.exe -k -f -sS --max-time 3 "https://127.0.0.1:$port/healthz" 2>$null) -and $LASTEXITCODE -eq 0 } catch { $reuseHealthyImage = $false }
+                }
+              }
+            }
+            if ($reuseHealthyImage) { Write-AideUpdateLog 'Identical healthy image; logical slot changed without restarting the service.' }
+            else { Invoke-AideSlotLauncher }
             $running = (& $docker compose ps --status running --quiet aide 2>$null | Out-String).Trim()
             if ($LASTEXITCODE -ne 0 -or $running -notmatch '^[a-f0-9]{12,64}$') { throw 'Target service is not running.' }
             $runningImage = (& $docker inspect $running --format '{{.Image}}' 2>$null | Out-String).Trim()
@@ -134,47 +203,50 @@ try {
             if ($portLine -match ':(\d+)\s*$') { $port = $Matches[1] }
             $healthy = $false
             for ($i=0; $i -lt 45; $i++) { if ((& curl.exe -k -f -sS --max-time 3 "https://127.0.0.1:$port/healthz" 2>$null)) { $healthy = $true; break }; Start-Sleep -Seconds 1 }
-            $result = @{ operationId=$op; success=$healthy; message=$(if ($healthy) {'healthz passed'} else {'health check timed out; restored previous slot'}) } | ConvertTo-Json -Compress
-            if (-not $healthy) {
-              Send-AideUpdateProgress 'rollback' 95 'Restoring the previous slot'
-              Set-Content -NoNewline -Encoding ASCII '.aide-image' $oldMarker
-              Invoke-AideSlotLauncher
-              $portLine = & $docker compose port aide 8080 2>$null | Select-Object -Last 1
-              if ($portLine -match ':(\d+)\s*$') { $port = $Matches[1] }
-            }
+            if (-not $healthy) { throw 'Target health check timed out.' }
             $token = (& $docker compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' 2>$null | Out-String).Trim()
             $headers = @('Authorization: Bearer ' + $token)
             $base = "https://127.0.0.1:$port/api/updates"
-            $resultFile = Join-Path $tmp 'result.json'; [System.IO.File]::WriteAllText($resultFile, $result, (New-Object System.Text.UTF8Encoding $false))
-            & curl.exe -k -f -sS --max-time 10 -H $headers[0] -H 'Content-Type: application/json' -X POST --data-binary "@$resultFile" "$base/agent/result" | Out-Null
-            if ($LASTEXITCODE -eq 0 -and $healthy -and $imageId -cne $f[4]) {
+            Save-AideUpdateResult $true 'healthz passed'
+            Send-AidePendingResult
+            $resultFile = Join-Path $tmp 'canonical.json'
+            if (-not (Test-Path -LiteralPath $resultOutbox) -and $imageId -cne $f[4]) {
               # Persist Docker's canonical local ID after an OCI index import.
               $canonical = @{version=1;activeSlot=$target;slots=@{}}
               $canonical.slots[$target] = @{version=$version;tag=$releaseTag;imageRef=$imageRef;imageId=$imageId;platform=$imagePlatform}
               [IO.File]::WriteAllText($resultFile, ($canonical | ConvertTo-Json -Depth 5 -Compress), (New-Object System.Text.UTF8Encoding $false))
-              & curl.exe -k -f -sS --max-time 10 -H $headers[0] -H 'Content-Type: application/json' -X POST --data-binary "@$resultFile" "$base/agent/sync" | Out-Null
+              try { & curl.exe -k -f -sS --max-time 10 -H $headers[0] -H 'Content-Type: application/json' -X POST --data-binary "@$resultFile" "$base/agent/sync" | Out-Null } catch { Write-AideUpdateLog 'Canonical image metadata sync deferred; activation already completed.' }
             }
           }
         }
       }
     } catch {
+      $activationError = Protect-AideUpdateText $_.Exception.Message
+      Write-AideUpdateLog ('Activation error: ' + $activationError)
       if ($op -and $oldMarker) {
-        Send-AideUpdateProgress 'rollback' 95 'Restoring the previous slot'
-        Set-Content -NoNewline -Encoding ASCII '.aide-image' $oldMarker
-        Invoke-AideSlotLauncher
-        $portLine = & $docker compose port aide 8080 2>$null | Select-Object -Last 1
-        if ($portLine -match ':(\d+)\s*$') { $port = $Matches[1] }
-        $token = (& $docker compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' 2>$null | Out-String).Trim()
-        if ($token) {
-          $resultFile = Join-Path $tmp 'failure.json'
-          $failure = @{ operationId=$op; success=$false; message='package installation failed; restored previous slot' } | ConvertTo-Json -Compress
-          [System.IO.File]::WriteAllText($resultFile, $failure, (New-Object System.Text.UTF8Encoding $false))
-          & curl.exe -k -sS --max-time 10 -H ('Authorization: Bearer ' + $token) -H 'Content-Type: application/json' -X POST --data-binary "@$resultFile" "https://127.0.0.1:$port/api/updates/agent/result" | Out-Null
+        $recovery = 'recovery not completed'
+        try {
+          Send-AideUpdateProgress 'rollback' 95 'Restoring the previous slot'
+          Set-Content -NoNewline -Encoding ASCII '.aide-image' $oldMarker
+          Invoke-AideSlotLauncher
+          $recovery = 'previous slot launcher completed'
+        } catch {
+          $recovery = 'recovery failed: ' + (Protect-AideUpdateText $_.Exception.Message)
+          Write-AideUpdateLog $recovery
         }
+        # Save before attempting HTTP. A failed recovery or unavailable server
+        # must not discard the operation; retry this receipt after restart.
+        Save-AideUpdateResult $false ('Activation failed: ' + $activationError + '; ' + $recovery)
+        try {
+          $portLine = & $docker compose port aide 8080 2>$null | Select-Object -Last 1
+          if ($portLine -match ':(\d+)\s*$') { $port = $Matches[1] }
+          $token = (& $docker compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' 2>$null | Out-String).Trim()
+          if ($token) { $headers = @('Authorization: Bearer ' + $token); $base = "https://127.0.0.1:$port/api/updates"; Send-AidePendingResult }
+        } catch { Write-AideUpdateLog 'Service unavailable; failure receipt retained for retry.' }
       }
       Start-Sleep -Seconds 2
     }
     finally { Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue }
     Start-Sleep -Seconds 3
   }
-} finally { $owner.Dispose() }
+} catch { Write-AideUpdateLog ('Agent stopped: ' + $_.Exception.Message); throw } finally { $owner.Dispose() }
