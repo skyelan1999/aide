@@ -1,0 +1,72 @@
+{
+  "cycle": 12,
+  "baseline": "5a10bdce",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    93
+  ],
+  "commits": {
+    "93": "4e0171418f63bb0e2c19f98d16a6f885aa678b88"
+  },
+  "cumulativeProductFixes": 37,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 38,
+  "original272RemainingFollowup": 246,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "scope": "Isolated local native-editor mock backend and actual host ReverseProxy WebSocket; synthetic fixture data, no production KiCad/BrdPlan or real device."
+  },
+  "red": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue93' -count=1 -timeout=1m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 7.498,
+      "observed": "Page/asset/heartbeat still200 after read-only; arbitrary routes reached backend404 rather than403; old ticket revived after writable restore. Actual upgraded socket stayed open, backend lease close never requested."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue93|^TestNativeEditor|^TestAppClose' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 6.928
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue93|^TestNativeEditor|^TestAppClose|^TestIssue85|^TestIssue92|^TestLockState|^TestSettings' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 41.963,
+      "scope": "Final read-only permanent revocation, true WebSocket echo before/disconnect after settings change, backend close requested, failed settings-persist control, existing native/lock/settings/shutdown tests."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T155238706738Z.log",
+      "fingerprint": "c813018f64a717ca280d8e0b04b4225a7566c804c4476488cfb7d2bb49e82eb8"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427 Markdown/1465 local links"
+    }
+  ],
+  "notes": [
+    "Every native lease owns cancellable context and once-only backend close. Read-only is rechecked at lease lookup; successful settings persistence deletes and cancels all old leases, so restoring writable cannot revive them.",
+    "Proxy requests inherit lease cancellation via context.AfterFunc, which also disconnects an already-upgraded ReverseProxy WebSocket. Watcher teardown is tracked by App lifecycle; shutdown cancels leases and waits for bounded backend close without holding App.mu during that close.",
+    "Failed settings save keeps old writable lease; unknown save state and persistent marker protections remain. Connection revocation is not a saved-file acknowledgement or rollback of already-dispatched backend operations.",
+    "No frontend/UI source change, no actual KiCad save/close acceptance, no release/full gate. Next issue94 migration journaling requires a separate batch;95/96 already repaired, followed by97."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "internal/server/native_editor.go": "9d912fa37f4c26ecbca553ecb73761662a3e9745a53f190e6bacdf5545773838",
+    "internal/server/native_editor_readonly_test.go": "9647eeada19d675869eba838cf9e71ae7f606edb95b2e43bbdfa0d7bdd67bdbc",
+    "internal/server/server.go": "fdf8584edac4c64fc7d21258493c598785dee736110134e865552b8c05a4d1b0"
+  }
+}

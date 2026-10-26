@@ -2288,10 +2288,13 @@
       "number": 93,
       "title": "[P2] Revoke native editor leases when sandbox becomes read-only",
       "url": "https://github.com/skyelan1999/aide/issues/93",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "native_editor.go:nativeEditorLeaseLocked复验锁、workspace、package但不含settings.SandboxMode；创建期read-only门槛不能撤销已发lease或长连接。",
+      "status": "fixed-on-branch",
+      "evidence": "设置成功切只读时永久撤销原生编辑票据及既有HTTP/WebSocket，tracked once-only后台关闭；保存失败保留可写会话，真实本地代理socket及相关race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "native_editor.go:nativeEditorLeaseLocked复验锁、workspace、package但不含settings.SandboxMode；创建期read-only门槛不能撤销已发lease或长连接。",
+      "repairCommit": "4e0171418f63bb0e2c19f98d16a6f885aa678b88",
+      "repairEvidence": "cycle-012.json"
     },
     {
       "number": 92,
@@ -2663,7 +2666,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 247,
+    "remainingFollowupTargets": 246,
     "followupRepairs": [
       48,
       64,
@@ -2686,7 +2689,8 @@
       88,
       89,
       91,
-      92
+      92,
+      93
     ]
   }
 }

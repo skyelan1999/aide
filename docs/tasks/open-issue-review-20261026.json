@@ -29,7 +29,8 @@
     "docs/plugins/daemon-protocol.md",
     "docs/plugin-protocol.md",
     "docs/architecture/plugin-market.md",
-    "docs/architecture/data-layout.md"
+    "docs/architecture/data-layout.md",
+    "docs/architecture/plugin-file-handlers.md"
   ],
   "stages": {
     "requirements": {
@@ -48,14 +49,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第11轮修复#91/#92；#90已有共享路径防护，补运行证据后已评论关闭。累计36项产品修复、1项测试修正。",
+      "summary": "第12轮#93修复验证完成；累计37项产品修复、1项测试修正。下一项#94迁移日志。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "最终相关server race35.518s、vet、quick及文档/路由通过；原生平台、认证SSH及完整UI未验。",
+      "summary": "最终相关server race41.963s、实际本地代理WebSocket、vet、quick、文档/路由通过；真实KiCad保存/关闭及发行门禁未验。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -66,7 +67,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-008.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-009.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-010.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-011.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-011.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-012.json"
       ]
     },
     "documentation": {
@@ -90,11 +92,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第11轮#91/#92已push并评论，#90不成立已评论关闭；累计37项分支修复，原272项剩247项跟进。第12轮从#93/#94继续（#95/#96已修）。",
+  "handoff": "第12轮#93已验证待push评论；累计38项分支修复，原272项剩246项跟进。第13轮从#94开始，再#97（#95/#96已修）。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "ded839fe0a8d3d1c7f47bdb357dba52346488c60",
-    "pushed": true,
+    "commit": "4e0171418f63bb0e2c19f98d16a6f885aa678b88",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
@@ -128,24 +130,21 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 12,
+    "nextCycle": 13,
     "lastCompletedBatch": {
-      "cycle": 11,
+      "cycle": 12,
       "issues": [
-        90,
-        91,
-        92
+        93
       ],
-      "cumulativeFixed": 37,
-      "cumulativeProductFixed": 36,
+      "cumulativeFixed": 38,
+      "cumulativeProductFixed": 37,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 247,
-      "verification": "PASS final targeted race/vet/quick; #90 existing guard validated; no device acceptance"
+      "remainingFollowupTargets": 246,
+      "verification": "PASS actual local proxy WebSocket/targeted race/vet/quick; real native editor save not run"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      93,
       94,
       97
     ],
@@ -155,10 +154,9 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 12,
+      "cycle": 13,
       "status": "in_progress",
       "candidates": [
-        93,
         94,
         97
       ],
