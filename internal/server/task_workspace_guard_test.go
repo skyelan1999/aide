@@ -66,9 +66,10 @@ func TestIssue82MatchingRemoteTaskSkillAndApproval(t *testing.T) {
 	}
 	task.Status = "awaiting_clarification"
 	task.AnswerCh = make(chan string, 1)
-	task.PendingQuestion = json.RawMessage(`{"type":"confirm","approvalKind":"shell","command":"echo owned"}`)
+	task.answerRound = 1
+	task.PendingQuestion = json.RawMessage(`{"type":"confirm","approvalKind":"shell","command":"echo owned","questionId":"owned-current-question","approvalRound":"1"}`)
 	a.sessions["current-session"] = &Session{ID: "current-session", Runs: []*Task{task}}
-	requireStatus(t, request(a, "POST", "/api/sessions/current-session/runs/"+task.ID+"/answer", map[string]any{"answer": "确认"}), 200)
+	requireStatus(t, request(a, "POST", "/api/sessions/current-session/runs/"+task.ID+"/answer", boundQuestionAnswerForTest(t, a, task, "确认")), 200)
 	if len(task.AnswerCh) != 1 {
 		t.Fatal("matching task approval not delivered")
 	}

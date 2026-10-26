@@ -286,6 +286,18 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 				fail(w, 409, errors.New("当前任务正在停止，请稍后发送"))
 				return
 			}
+			var pending struct {
+				Kind string `json:"approvalKind"`
+				Type string `json:"type"`
+			}
+			if err := json.Unmarshal(existing.PendingQuestion, &pending); err != nil && len(existing.PendingQuestion) > 0 {
+				fail(w, 409, errors.New("当前问题信息无效，请刷新后重试"))
+				return
+			}
+			if pending.Kind != "" || pending.Type == "confirm" {
+				fail(w, 409, errors.New("当前任务等待明确确认，请使用对应审批卡片"))
+				return
+			}
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, Type: assistantMessageType(assistantManaged)})
 			s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 			select {
@@ -1300,9 +1312,18 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			var currentQuestion struct {
-				ID string `json:"questionId"`
+				ID   string `json:"questionId"`
+				Kind string `json:"approvalKind"`
+				Type string `json:"type"`
 			}
-			_ = json.Unmarshal(t.PendingQuestion, &currentQuestion)
+			if err := json.Unmarshal(t.PendingQuestion, &currentQuestion); err != nil && len(t.PendingQuestion) > 0 {
+				fail(w, 409, errors.New("当前问题信息无效，请刷新后重试"))
+				return
+			}
+			if (currentQuestion.Kind != "" || currentQuestion.Type == "confirm") && (currentQuestion.ID == "" || in.QuestionID == "" || in.Round == "") {
+				fail(w, 409, errors.New("审批必须绑定当前问题和轮次，请刷新审批卡片"))
+				return
+			}
 			if in.QuestionID != "" && in.QuestionID != currentQuestion.ID {
 				fail(w, 409, errors.New("审批请求已过期，请刷新"))
 				return
