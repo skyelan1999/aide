@@ -2202,28 +2202,37 @@
       "number": 103,
       "title": "[P2] Avoid blocking while writing a large SSH passphrase",
       "url": "https://github.com/skyelan1999/aide/issues/103",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "ssh_keyutil.go:attachPassphraseAskpass同步pw.WriteString(passphrase)发生在启动cmd读取前，超pipe容量会阻塞；JSON1MiB限额大于pipe容量。",
+      "status": "fixed-on-branch",
+      "evidence": "askpass管道异步写入，cleanup关双端等待writer退出；256KiB口令读取/不读取/不启动/取消及生成SSH密钥正负对照通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "ssh_keyutil.go:attachPassphraseAskpass同步pw.WriteString(passphrase)发生在启动cmd读取前，超pipe容量会阻塞；JSON1MiB限额大于pipe容量。",
+      "repairCommit": "784fb50cf49614381a95e4027e462c405f4f25d9",
+      "repairEvidence": "cycle-016.json"
     },
     {
       "number": 102,
       "title": "[P2] Avoid deleting an unrelated aide-rel-test container",
       "url": "https://github.com/skyelan1999/aide/issues/102",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "docker-release.sh:TEST_NAME固定aide-rel-test，启动前和EXIT都无所有权检查rm -f；这是可直接静态确定的破坏性资源归属缺陷，未执行Docker删除。",
+      "status": "fixed-on-branch",
+      "evidence": "发行冒烟仅以本次私有cidfile中有效CID执行cp/stop/rm，失败/冲突/非法CID不按名称删除；5项模拟Docker检查通过，加入quick。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "docker-release.sh:TEST_NAME固定aide-rel-test，启动前和EXIT都无所有权检查rm -f；这是可直接静态确定的破坏性资源归属缺陷，未执行Docker删除。",
+      "repairCommit": "84d01827609deaad99f7d680072c405e46df6c46",
+      "repairEvidence": "cycle-016.json"
     },
     {
       "number": 101,
       "title": "[P2] Reject personality evolution results based on stale snapshots",
       "url": "https://github.com/skyelan1999/aide/issues/101",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "personality_evolution.go:runAutoEvolve及persona.go:manual在模型调用后无版本/快照复验就覆盖settings.Personalities及History，存在并发用户修改丢失。",
+      "status": "fixed-on-branch",
+      "evidence": "模型返回采纳前比较当前完整性格及每人格代次，拒绝过期/重置恢复/重叠结果，不覆盖用户修改或追加旧历史；延迟mock回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "personality_evolution.go:runAutoEvolve及persona.go:manual在模型调用后无版本/快照复验就覆盖settings.Personalities及History，存在并发用户修改丢失。",
+      "repairCommit": "b808b31f78ebd94b0238f5e19503b3443f090eb7",
+      "repairEvidence": "cycle-016.json"
     },
     {
       "number": 100,
@@ -2681,7 +2690,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 241,
+    "remainingFollowupTargets": 238,
     "followupRepairs": [
       48,
       64,
@@ -2710,7 +2719,10 @@
       97,
       98,
       99,
-      100
+      100,
+      101,
+      102,
+      103
     ]
   }
 }

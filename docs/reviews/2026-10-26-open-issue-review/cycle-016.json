@@ -1,0 +1,109 @@
+{
+  "cycle": 16,
+  "baseline": "e26b1a18",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    101,
+    102,
+    103
+  ],
+  "commits": {
+    "101": "b808b31f78ebd94b0238f5e19503b3443f090eb7",
+    "102": "84d01827609deaad99f7d680072c405e46df6c46",
+    "103": "784fb50cf49614381a95e4027e462c405f4f25d9"
+  },
+  "cumulativeProductFixes": 45,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 46,
+  "original272RemainingFollowup": 238,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "scope": "Owned model/mock HTTP fixtures; release script copied into temporary projects with fake Docker/curl/git, no real build/container changes; killable askpass subprocesses and generated test SSH keys, no real endpoint/password."
+  },
+  "red": [
+    {
+      "issue": 101,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue101' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 8.115,
+      "observed": "All8 manual/automatic save/reset/rollback/reset-restore cases overwritten and stale history appended; manual returned200 instead of409."
+    },
+    {
+      "issue": 102,
+      "command": "python3 scripts/test_docker_release.py",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 1.44,
+      "observed": "All4 fake-Docker scenarios removed simulated unrelated aide-rel-test marker via unconditional name-based rm. No actual container existed or was removed."
+    },
+    {
+      "issue": 103,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue103' -count=1 -timeout=1m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 12.041,
+      "observed": "256KiB passphrase blocked attach before reader startup in read/no-read/never-start/canceled-start cases; parent deadlines killed only owned helper processes at3s each."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue101|^TestEvolution|^TestEvolve|^TestPersonality|^TestVoicePersonality|^TestTrigger|^TestCompressMode|^TestEndToEndEvolution|^TestAuditOnAttempt|^TestInsufficientSample|^TestRollback$|^TestReset$|^TestManualEvolveEndpoint' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 35.731,
+      "scope": "Final stale/overlap/independent persona tests and all registered cases in existing personality_evolution_test.go."
+    },
+    {
+      "command": "bash -n scripts/docker-release.sh; python3 scripts/test_docker_release.py; python3 scripts/test_agent_route.py",
+      "result": "PASS",
+      "observed": "5 mock ownership cases1.443s and6 agent-route tests0.010s; no real Docker calls."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue103|^TestSshKeygen' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 5.738
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue101|^TestIssue103|^TestSshKeygen|^TestEvolution|^TestEvolve|^TestPersonality|^TestVoicePersonality|^TestTrigger|^TestCompressMode|^TestEndToEndEvolution|^TestAuditOnAttempt|^TestInsufficientSample|^TestRollback$|^TestReset$|^TestManualEvolveEndpoint' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 44.074,
+      "scope": "Final helper argument/env/script non-disclosure, descriptor/directory cleanup, generated-key positive/wrong-password control plus evolution tests."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T170738031023Z.log",
+      "fingerprint": "7e3288d24e0d1911e58dfa1f30164229350e4b5d1f817bd7df04c9f9465f9796"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465local links"
+    }
+  ],
+  "notes": [
+    "#101 adopted results compare complete live Personality value and per-persona in-memory revision under App.mu before history/state changes. All normal save/reset/rollback/evolution/voice-draft mutations increment revision; reset/restore ABA invalidates older draft. Manual409, automatic stale audit; unrelated persona remains independent. Cannot undo completed upstream model cost.",
+    "#102 per-run unique name plus private cidfile ownership. cp/stop/rm use validated64hex CID written by this run. Failed creation/name collision/invalid CID never trigger name cleanup; failure after CID creation still cleans owned ID.5 mock cases registered in quick alongside shell syntax. This does not certify real Docker/image release behavior.",
+    "#103 asynchronous pipe writer starts after helper setup. Cleanup closes both endpoints, waits writer exit and removes only its helper folder, including no-start/no-reader/canceled-start; passphrase absent from args/env/script.10s command context remains, no pre-Start pipe wait. Linux generated-key tests are not Windows/macOS or actual SSH host acceptance.",
+    "Used repository aide-runtime-release skill for the release script, within branch-only authorization. No main merge, release, deployment, real container teardown or paid model. Previously recorded full-gate/platform blockers remain."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "internal/server/server.go": "11ff32a39a26f0191d6958ba95a71e80bdba1ab1e3a1b90934f340f6cd6a97fd",
+    "internal/server/persona.go": "7eb2a4818cf1b7518efd6891f2191238bf89145f6b27bb8c44aa190cf11278d7",
+    "internal/server/personality_evolution.go": "e2cab15b0062d3c35be2bedc11f448cda9a77d53d6257cf60a4a2418c240eac8",
+    "internal/server/voice_personality.go": "bddbe18c38b351fd80442af6092674ecc4222dea35bf528f95d154d6323f3aea",
+    "internal/server/personality_snapshot_test.go": "644ae65460222cc8604c4ee455751c6d04011c7e2b7f6e0ecad57d535f3f4264",
+    "scripts/docker-release.sh": "b05d6e9cf62da2bcc7e3c32c172b4e6055e31f29b4625400c97641731ab558c2",
+    "scripts/test_docker_release.py": "f7e073e6f737d15370feea0433bd6caabaff7e49190b44a8ae5c5d26be8f73dd",
+    "docs/agent/router.json": "0f88c53cb705ce5b79485f7483707c6650da48161b20cf9e43c910d893d6fa33",
+    "internal/server/ssh_keyutil.go": "40fa7a107f41245e7d625373a2703afbacd03765a8ea3ac088a81610636f3609",
+    "internal/server/ssh_passphrase_pipe_test.go": "195f7db82614b14f44c5bfe30aa162e612656fb61ccd97dc3b0099af33fbe941"
+  }
+}
