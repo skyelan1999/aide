@@ -1925,7 +1925,8 @@
       "status": "reviewed-awaiting-validation",
       "evidence": "createCustomHandles列循环 geo 直接读alternateBounds/x/y，缺少相邻row路径已有的null gate。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "followupObserved": "Actual Chromium cycle24 selecting malformed table throws TypeError reading alternateBounds of null; next ordered batch, not fixed here."
     },
     {
       "number": 135,
@@ -1940,28 +1941,37 @@
       "number": 134,
       "title": "[Bug] Preserve table column indices when cells have no geometry",
       "url": "https://github.com/skyelan1999/aide/issues/134",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "TableLayout.getRowLayout null几何不push placeholder；layoutRow仍按cells索引positions[i+1]，可写NaN。",
+      "status": "fixed-on-branch",
+      "evidence": "表格缺少geometry时保留零宽列边界，后续列索引及有限几何保持正确，不补造缺失geometry，正常列分配保留。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "TableLayout.getRowLayout null几何不push placeholder；layoutRow仍按cells索引positions[i+1]，可写NaN。",
+      "repairCommit": "84d62fbdcdc71789a1a72bbbe29d13f32b1ecc6d",
+      "repairEvidence": "cycle-024.json"
     },
     {
       "number": 133,
       "title": "[Bug] Bound quadratic line-jump work when loading large diagrams",
       "url": "https://github.com/skyelan1999/aide/issues/133",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Graph.updateLineJumps 遍历validEdges并对重叠边逐段求交，未见总work预算；源代码支持最坏二次复杂度，实际卡顿阈值待测。",
+      "status": "fixed-on-branch",
+      "evidence": "每次validation保守工作预算1000000，计入预检扫描、线段配对和交点排序上界；超过128点或预算耗尽清除旧跳点，退化普通连线，不改模型style。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "Graph.updateLineJumps 遍历validEdges并对重叠边逐段求交，未见总work预算；源代码支持最坏二次复杂度，实际卡顿阈值待测。",
+      "repairCommit": "84d62fbdcdc71789a1a72bbbe29d13f32b1ecc6d",
+      "repairEvidence": "cycle-024.json"
     },
     {
       "number": 132,
       "title": "[Bug] Async child layouts stall for cells with inherited property IDs",
       "url": "https://github.com/skyelan1999/aide/issues/132",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Graph.js asyncLayoutsApplying ||= {}，schedule按cell.id读truthy；constructor继承值触发early return。",
+      "status": "fixed-on-branch",
+      "evidence": "实际运行时异步布局状态表改为无原型对象，constructor/toString/hasOwnProperty/__proto__可重跑，dirty合并及自身apply抑制保留。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "Graph.js asyncLayoutsApplying ||= {}，schedule按cell.id读truthy；constructor继承值触发early return。",
+      "repairCommit": "84d62fbdcdc71789a1a72bbbe29d13f32b1ecc6d",
+      "repairEvidence": "cycle-024.json"
     },
     {
       "number": 131,
@@ -2753,7 +2763,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 217,
+    "remainingFollowupTargets": 214,
     "followupRepairs": [
       48,
       64,
@@ -2806,7 +2816,10 @@
       127,
       128,
       130,
-      131
+      131,
+      132,
+      133,
+      134
     ]
   }
 }

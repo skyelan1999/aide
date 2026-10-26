@@ -1,0 +1,204 @@
+{
+  "cycle": 24,
+  "baseline": "b822abf11d674bb4fab9bbe5d59714e6a69a079a",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    132,
+    133,
+    134
+  ],
+  "commits": {
+    "132": "84d62fbdcdc71789a1a72bbbe29d13f32b1ecc6d",
+    "133": "84d62fbdcdc71789a1a72bbbe29d13f32b1ecc6d",
+    "134": "84d62fbdcdc71789a1a72bbbe29d13f32b1ecc6d"
+  },
+  "cumulativeProductFixes": 69,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 70,
+  "original272RemainingFollowup": 214,
+  "red": [
+    {
+      "issue": 132,
+      "command": "node scripts/test_drawio_layout_fixes.cjs ids",
+      "bundledCommand": "AIDE_DRAWIO_BUNDLE_ONLY=1 AIDE_DRAWIO_SKIP_LAYOUT_FIXES=1 node scripts/test_drawio_layout_fixes.cjs ids",
+      "result": "EXPECTED_FAIL",
+      "observed": "constructor dirty run must execute once\n\n0 !== 1"
+    },
+    {
+      "issue": 133,
+      "command": "node scripts/test_drawio_layout_fixes.cjs jumps",
+      "bundledCommand": "AIDE_DRAWIO_BUNDLE_ONLY=1 AIDE_DRAWIO_SKIP_LAYOUT_FIXES=1 node scripts/test_drawio_layout_fixes.cjs jumps",
+      "result": "EXPECTED_FAIL",
+      "observed": "line-jump intersection work must remain bounded; actual=1999000"
+    },
+    {
+      "issue": 134,
+      "command": "node scripts/test_drawio_layout_fixes.cjs table",
+      "bundledCommand": "AIDE_DRAWIO_BUNDLE_ONLY=1 AIDE_DRAWIO_SKIP_LAYOUT_FIXES=1 node scripts/test_drawio_layout_fixes.cjs table",
+      "result": "EXPECTED_FAIL",
+      "observed": "missing geometry must preserve column boundary index\n\n2 !== 3"
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_drawio_layout_fixes.cjs",
+      "result": "PASS",
+      "scope": "Both source and actual bundled functions, installed runtime hooks: five IDs with dirty/coalescing/self-apply/next run; 2000 edge intersection counter, stale jump clearing, points/prior polyline budget and reset; missing first/middle/last/all columns and normal boundaries."
+    },
+    {
+      "command": "node scripts/test_drawio_preview_bounds.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "AIDE_DRAWIO_LAYOUT_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle24-browser node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "PASS",
+      "browserResult": {
+        "checks": [
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "light",
+            "width": 1440,
+            "result": "PASS"
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "light",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "light",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 3.600000023841858
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "light",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "dark",
+            "width": 390,
+            "result": "PASS"
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "dark",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "dark",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 3.700000047683716
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "dark",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "expanded",
+            "result": "PASS",
+            "elapsedMs": 1912
+          },
+          {
+            "case": "xml-depth",
+            "result": "PASS",
+            "elapsedMs": 1826
+          },
+          {
+            "case": "cell-depth",
+            "result": "PASS",
+            "elapsedMs": 1838
+          },
+          {
+            "case": "cell-cycle",
+            "result": "PASS",
+            "elapsedMs": 1809
+          },
+          {
+            "case": "inactive-page",
+            "result": "PASS",
+            "elapsedMs": 1841
+          },
+          {
+            "case": "page-count",
+            "result": "PASS",
+            "elapsedMs": 1788
+          },
+          {
+            "case": "aggregate-expansion",
+            "result": "PASS",
+            "elapsedMs": 1817
+          },
+          {
+            "case": "lazy-reference-depth",
+            "result": "PASS",
+            "elapsedMs": 1990
+          }
+        ],
+        "errors": [],
+        "browser": "154.0.8037.57",
+        "actualBundledIframe": true,
+        "fullWorkbench": false
+      },
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle24-browser/result.json",
+      "visualReview": "Viewed actual light1440 and dark390 table screenshots; absent first geometry and finite Column2/Column3 visible; normal editor saved label and page tabs visible.",
+      "scope": "Actual shipped iframe/bundle; real Graph/mxCells and prepare callback contract, real mxGraphView 2000 state computations (not full 2000-edge import), normal crossing jump restored, actual TableLayout and rendering. Reuses one page/frame and closes contexts/browser."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T202808058361Z.log",
+      "fingerprint": "fe71c36830fb984f8676362a075f88fbbf298f122ba2d95e2e23d4b78df2a8bb"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check; node --check scripts/drawio-layout-browser-cases.cjs; node --check scripts/browser-drawio-preview-bounds.cjs; node --check internal/server/web/vendor/drawio/js/bootstrap.js; node --check internal/server/web/vendor/drawio/js/main.js",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "实际运行时异步布局状态表改为无原型对象，constructor/toString/hasOwnProperty/__proto__可重跑，dirty合并及自身apply抑制保留。",
+    "每次validation保守工作预算1000000，计入预检扫描、线段配对和交点排序上界；超过128点或预算耗尽清除旧跳点，退化普通连线，不改模型style。",
+    "表格缺少geometry时保留零宽列边界，后续列索引及有限几何保持正确，不补造缺失geometry，正常列分配保留。",
+    "Layout hooks install immediately after preview safety before App.main in production and dev paths. No manual minified function replacement.",
+    "Browser async-layout engine is an injected prepare callback contract, not actual ELK/libavoid WASM. Browser line-jump test computes real view states but does not load/render a full2000-edge imported file. Synthetic baseline counters1999000 vs final browser10154 calls; timings3.6/3.7ms are component measurements only.",
+    "During table selection, actual shipped bundle reproduced separate already-open#137 TypeError reading alternateBounds of null. That path is not fixed or claimed PASS here; table layout/rendering is tested without selecting malformed table. #137 is next ordered batch after#135.",
+    "Initial fixture theme argument failure fixed; latest16-case browser round has no pageerrors. Existing#137 is retained as runtime-reproduced-awaiting-fix.",
+    "No Go/backend change; no Go test claimed. Full start.command workbench, actual ELK/libavoid, full large-diagram import, other browser engines/platforms NOT_RUN. No merge/release/deployment."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "6dd8c9316d22b350e0bc7708c4ff399863e0b67cf3e6d68e0a9b3f28a4f5802b",
+    "docs/architecture/office-viewer.md": "9ed638cd16ba2a8fd75325d079bc470ff9360b6bf3fdf3f482a18b8087674d58",
+    "internal/server/web/drawio-layout-fixes.js": "b1833aa9f3af3bbdc945ae55948eaf32fe3b1c92f26d47716954a0282f531657",
+    "internal/server/web/vendor/drawio/index.html": "2af1cda6d50a47082f56c1297bfee51921d3f39132b5ae8abe408710a5870844",
+    "internal/server/web/vendor/drawio/js/bootstrap.js": "9d0627065797801a23a0a402b93f32d08c1a67571f6a689ea06d249f044d79ee",
+    "internal/server/web/vendor/drawio/js/main.js": "7b274e89f0df5190245a235abf634323dea0f1a0854649efb1d2398248ade7ac",
+    "scripts/browser-drawio-preview-bounds.cjs": "52969b2f93155b0fdbf49ee629132659a757dc2eec99d9327c6bdffac561a233",
+    "scripts/drawio-layout-browser-cases.cjs": "4ff7e364299ace5cc2d3a9db507da62f8bfd1d23ac217644e531c1b276a43977",
+    "scripts/test_drawio_layout_fixes.cjs": "3eecfb884b1867348cd58b11bb1fcb60512d789c478be7ea08adb0d0682eafd7"
+  }
+}
