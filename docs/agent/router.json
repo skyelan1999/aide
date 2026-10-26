@@ -833,6 +833,18 @@
       [
         "python3",
         "scripts/test_prebuild_wheels.py"
+      ],
+      [
+        "node",
+        "scripts/test_avatar_pack_paths.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_frame_interpolation.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_mermaid_proof_auth.py"
       ]
     ],
     "full": [
