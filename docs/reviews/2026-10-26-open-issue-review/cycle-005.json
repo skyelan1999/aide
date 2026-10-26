@@ -100,11 +100,16 @@
     "All repair issues stay open pending main acceptance. No merge, release or deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issuesRemainOpenUntilMainAcceptance": true
+    "issuesRemainOpenUntilMainAcceptance": true,
+    "comments": {
+      "68": "https://github.com/skyelan1999/aide/issues/68#issuecomment-6412565282",
+      "69": "https://github.com/skyelan1999/aide/issues/69#issuecomment-6412565940",
+      "373": "https://github.com/skyelan1999/aide/issues/373#issuecomment-6412566756"
+    }
   },
   "sourceSHA256": {
     "scripts/headless-browser-bridge.js": "0c08aab2ad7872b1bd5373b312acc0ab21e6beb9ce62209ece2af7a1dd769811",

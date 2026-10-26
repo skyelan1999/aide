@@ -2439,10 +2439,13 @@
       "number": 76,
       "title": "External source responses are captured without a size limit",
       "url": "https://github.com/skyelan1999/aide/issues/76",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "sources.go:curlListSource.CombinedOutput和curlReadSource.Output在validateTextFileContent前全量缓冲；30秒timeout不是字节上限。",
+      "status": "fixed-on-branch",
+      "evidence": "curl输出捕获时限制文件64MiB/目录4MiB，超限终止且stderr不泄漏；受控子进程先红后绿。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "sources.go:curlListSource.CombinedOutput和curlReadSource.Output在validateTextFileContent前全量缓冲；30秒timeout不是字节上限。",
+      "repairCommit": "2ec2a702",
+      "repairEvidence": "cycle-006.json"
     },
     {
       "number": 75,
@@ -2462,10 +2465,13 @@
       "number": 73,
       "title": "Debug run endpoints expose unredacted tool and model content",
       "url": "https://github.com/skyelan1999/aide/issues/73",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "debug.go:debugRunDetail保留ToolUse.Preview[:200]和task.Error；server debug events映射runEvents，长度截断不是脱敏，独立debug token权限边界与文档冲突。",
+      "status": "fixed-on-branch",
+      "evidence": "实际debug JSON/SSE canary复现后通过；元数据白名单、错误存在标记和owner原接口正对照通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "debug.go:debugRunDetail保留ToolUse.Preview[:200]和task.Error；server debug events映射runEvents，长度截断不是脱敏，独立debug token权限边界与文档冲突。",
+      "repairCommit": "d05357ab",
+      "repairEvidence": "cycle-006.json"
     },
     {
       "number": 72,
@@ -2478,10 +2484,13 @@
       "number": 71,
       "title": "Recursive transfers build an unbounded in-memory manifest",
       "url": "https://github.com/skyelan1999/aide/issues/71",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "transfer_jobs.go:create.walk把所有后代存j.Parts后才save；transfer_stream_fs.go:ReadDir使用Readdir(-1)，顶层1000和深度限制不能限制总清单量。",
+      "status": "fixed-on-branch",
+      "evidence": "真实目录树先红后绿；100000扫描项/16MiB初始JSON/2建单并发，本地及真实SFTP有界枚举、取消和复用race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "transfer_jobs.go:create.walk把所有后代存j.Parts后才save；transfer_stream_fs.go:ReadDir使用Readdir(-1)，顶层1000和深度限制不能限制总清单量。",
+      "repairCommit": "5fb03c0e",
+      "repairEvidence": "cycle-006.json"
     },
     {
       "number": 70,
@@ -2608,13 +2617,16 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 265,
+    "remainingFollowupTargets": 262,
     "followupRepairs": [
       48,
       64,
       66,
       68,
-      69
+      69,
+      71,
+      73,
+      76
     ]
   }
 }
