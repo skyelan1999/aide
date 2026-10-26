@@ -1,8 +1,11 @@
 'use strict';
 window.aideEnglish = {
+  "DOCX 包无效或使用不支持的 ZIP 格式。": "The DOCX package is invalid or uses an unsupported ZIP format.",
+  "DOCX 解压内容超过安全预览限制，请下载后查看。": "Expanded DOCX content exceeds safe preview limits. Download the file to view.",
+  "DOCX 安全解压检查不可用，请下载后查看。": "Safe DOCX decompression checks are unavailable. Download the file to view.",
   "文件超过预览大小限制，请下载后查看。": "This file exceeds browser preview limits. Download it to view.",
   "浏览器不支持有界读取，请下载后查看。": "This browser cannot read a preview with a size limit. Download the file to view.",
-  "DXF 实体或几何数量超过预览限制。": "DXF entities or geometry exceed preview limits.",
+  "DXF 内容超过预览限制，请下载后查看。": "DXF content exceeds preview limits. Download the file to view.",
   "DXF 块引用存在循环或层级过深。": "DXF block references contain a cycle or exceed the nesting limit.",
   "应用": "Apply",
   "工作区已切换": "Workspace switched",

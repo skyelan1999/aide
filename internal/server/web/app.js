@@ -8606,16 +8606,17 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
         }
         case 'TEXT':
         case 'MTEXT': {
+          const label = String(ent.text || '');budget.text(label);
           const p = ent.startPoint || ent.position || {};
           const pt = xf(p.x || 0, p.y || 0);
           const h = ent.textHeight || ent.height || 1;
           const rot = ent.rotation || 0;
           const g = svgEl('g', { transform: 'translate(' + pt[0] + ' ' + pt[1] + ') scale(1,-1)' });
           const tx2 = svgEl('text', { 'font-size': h, fill: dxfEntityColor(ent, layers), 'text-anchor': 'start', 'dominant-baseline': 'alphabetic', 'font-family': 'var(--dxf-font, sans-serif)', transform: 'rotate(' + rot + ')' });
-          tx2.textContent = ent.text || '';
+          tx2.textContent = label;
           g.appendChild(tx2);
           parent.appendChild(g);
-          grow(pt[0] - h, pt[1] - h); grow(pt[0] + h * (ent.text || '').length, pt[1] + h);
+          grow(pt[0] - h, pt[1] - h); grow(pt[0] + h * label.length, pt[1] + h);
           break;
         }
         case 'INSERT': {
@@ -8727,7 +8728,8 @@ async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
   try {
     const r = await fetch(rawUrl);
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const buf = await r.arrayBuffer();
+    const buf = await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.docxBytes);
+    await window.AidePreviewSafety.checkDocx(buf, window.JSZip);
 
     const toolbar = el('div', 'docx-toolbar');
     const info = el('span', 'docx-info', filePath.split('/').pop());

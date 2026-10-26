@@ -43,6 +43,10 @@ async function main() {
   const vertices = Array.from({length: 100}, (_, i) => ({x: i, y: i % 3}));
   const geometry = await fixture({entities: Array.from({length: 3000}, () => ({type: 'INSERT', name: 'poly'})), blocks: {poly: {entities: [{type: 'LWPOLYLINE', vertices}]}}});
   assert.ok(geometry.all.some(node => node.className === 'dxf-error'), 'shared geometry work budget must bound repeated point expansion');
+  const labels = await fixture({entities: Array.from({length: 200}, () => ({type: 'INSERT', name: 'label'})), blocks: {label: {entities: [{type: 'TEXT', text: 'x'.repeat(10000)}]}}});
+  assert.ok(labels.all.some(node => node.className === 'dxf-error'), 'few nodes with repeated large text must not bypass memory budget');
+  const longLabel = await fixture({entities: [{type: 'TEXT', text: 'x'.repeat(16385)}]});
+  assert.ok(longLabel.all.some(node => node.className === 'dxf-error'), 'single oversized text run must reject before DOM assignment');
   let canceled = false;
   const hugeHeader = new Response(new ReadableStream({cancel() {canceled = true;}}), {headers: {'Content-Length': String(5 * 1024 * 1024)}});
   const oversized = await fixture({entities: [line]}, hugeHeader);
