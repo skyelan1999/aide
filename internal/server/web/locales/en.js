@@ -1,5 +1,9 @@
 'use strict';
 window.aideEnglish = {
+  "文件超过预览大小限制，请下载后查看。": "This file exceeds browser preview limits. Download it to view.",
+  "浏览器不支持有界读取，请下载后查看。": "This browser cannot read a preview with a size limit. Download the file to view.",
+  "DXF 实体或几何数量超过预览限制。": "DXF entities or geometry exceed preview limits.",
+  "DXF 块引用存在循环或层级过深。": "DXF block references contain a cycle or exceed the nesting limit.",
   "应用": "Apply",
   "工作区已切换": "Workspace switched",
   "PW 流程运行中 · 等待节点状态": "PW workflow running · Waiting for node status",

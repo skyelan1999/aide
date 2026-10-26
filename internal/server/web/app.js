@@ -8463,7 +8463,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     await ensureDxfParser();
     const r = await fetch(rawUrl);
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    text = await r.text();
+    text = new TextDecoder().decode(await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.dxfBytes));
   } catch (e) {
     meta.textContent = t('加载失败');
     canvas.innerHTML = '';
@@ -8471,9 +8471,11 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     return;
   }
 
-  let doc;
+  let doc, budget;
   try {
+    window.AidePreviewSafety.checkDxfText(text);
     doc = new DxfParser().parseSync(text);
+    budget = window.AidePreviewSafety.createDxfBudget(doc);
   } catch (e) {
     meta.textContent = t('解析失败');
     canvas.innerHTML = '';
@@ -8492,10 +8494,11 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
 
   // 包围盒（DXF Y-up 坐标）
   const bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-  const grow = (x, y) => { if (!isFinite(x) || !isFinite(y)) return; if (x < bb.minX) bb.minX = x; if (x > bb.maxX) bb.maxX = x; if (y < bb.minY) bb.minY = y; if (y > bb.maxY) bb.maxY = y; };
+  const grow = (x, y) => { budget.point(); if (!isFinite(x) || !isFinite(y)) return; if (x < bb.minX) bb.minX = x; if (x > bb.maxX) bb.maxX = x; if (y < bb.minY) bb.minY = y; if (y > bb.maxY) bb.maxY = y; };
 
-  const svg = dxfSvgEl('svg', { class: 'dxf-svg', preserveAspectRatio: 'xMidYMid meet' });
-  const content = dxfSvgEl('g', { transform: 'scale(1,-1)' }); // DXF Y-up → SVG Y-down
+  const svgEl = (tag, attrs) => { budget.node(); return dxfSvgEl(tag, attrs); };
+  const svg = svgEl('svg', { class: 'dxf-svg', preserveAspectRatio: 'xMidYMid meet' });
+  const content = svgEl('g', { transform: 'scale(1,-1)' }); // DXF Y-up → SVG Y-down
   svg.appendChild(content);
   canvas.appendChild(svg);
 
@@ -8504,6 +8507,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     return { stroke: dxfEntityColor(ent, layers), 'stroke-width': penWidth, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
   }
   function renderEntity(ent, parent, xform) {
+    budget.visit();
     const tx = (xform ? xform.dx : 0), ty = (xform ? xform.dy : 0);
     const sxp = (xform ? xform.sx : 1), syp = (xform ? xform.sy : 1);
     const rot = (xform ? (xform.rotDeg || 0) * Math.PI / 180 : 0);
@@ -8518,7 +8522,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           const v = ent.vertices || [];
           if (v.length >= 2) {
             const [x1, y1] = xf(v[0].x, v[0].y), [x2, y2] = xf(v[1].x, v[1].y);
-            parent.appendChild(dxfSvgEl('line', { ...strokeAttrs(ent), x1, y1, x2, y2 }));
+            parent.appendChild(svgEl('line', { ...strokeAttrs(ent), x1, y1, x2, y2 }));
             grow(x1, y1); grow(x2, y2);
           }
           break;
@@ -8526,7 +8530,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
         case 'POINT': {
           const p = ent.position || {};
           const [x, y] = xf(p.x || 0, p.y || 0);
-          parent.appendChild(dxfSvgEl('circle', { cx: x, cy: y, r: penWidth * 2, fill: dxfEntityColor(ent, layers), stroke: 'none' }));
+          parent.appendChild(svgEl('circle', { cx: x, cy: y, r: penWidth * 2, fill: dxfEntityColor(ent, layers), stroke: 'none' }));
           grow(x, y);
           break;
         }
@@ -8534,7 +8538,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           const c = ent.center || {};
           const [cx, cy] = xf(c.x || 0, c.y || 0);
           const r = (ent.radius || 0) * (Math.abs(sxp + syp) / 2 || 1);
-          parent.appendChild(dxfSvgEl('circle', { ...strokeAttrs(ent), cx, cy, r }));
+          parent.appendChild(svgEl('circle', { ...strokeAttrs(ent), cx, cy, r }));
           grow(cx - r, cy - r); grow(cx + r, cy + r);
           break;
         }
@@ -8544,7 +8548,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           const sa = xf(c.x + r * Math.cos(a0), c.y + r * Math.sin(a0));
           const ea = xf(c.x + r * Math.cos(a1), c.y + r * Math.sin(a1));
           const large = (ent.angleLength || 0) > Math.PI ? 1 : 0;
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d: 'M ' + sa[0] + ' ' + sa[1] + ' A ' + r + ' ' + r + ' 0 ' + large + ' 0 ' + ea[0] + ' ' + ea[1] }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d: 'M ' + sa[0] + ' ' + sa[1] + ' A ' + r + ' ' + r + ' 0 ' + large + ' 0 ' + ea[0] + ' ' + ea[1] }));
           const steps = 48;
           for (let i = 0; i <= steps; i++) { const a = a0 + (a1 - a0) * i / steps; const pt = xf(c.x + r * Math.cos(a), c.y + r * Math.sin(a)); grow(pt[0], pt[1]); }
           break;
@@ -8567,7 +8571,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
             d += (i === 0 ? 'M ' : ' L ') + pt[0] + ' ' + pt[1];
             grow(pt[0], pt[1]);
           }
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d }));
           break;
         }
         case 'LWPOLYLINE':
@@ -8588,7 +8592,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
             if (!ent.shape && i === verts.length - 1) break;
           }
           if (ent.shape) d += ' Z';
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d }));
           break;
         }
         case 'SPLINE': {
@@ -8597,7 +8601,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           let d = '';
           pts.forEach((p, i) => { const pt = xf(p.x || 0, p.y || 0); d += (i ? ' L ' : 'M ') + pt[0] + ' ' + pt[1]; grow(pt[0], pt[1]); });
           if (ent.closed) d += ' Z';
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d }));
           break;
         }
         case 'TEXT':
@@ -8606,8 +8610,8 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           const pt = xf(p.x || 0, p.y || 0);
           const h = ent.textHeight || ent.height || 1;
           const rot = ent.rotation || 0;
-          const g = dxfSvgEl('g', { transform: 'translate(' + pt[0] + ' ' + pt[1] + ') scale(1,-1)' });
-          const tx2 = dxfSvgEl('text', { 'font-size': h, fill: dxfEntityColor(ent, layers), 'text-anchor': 'start', 'dominant-baseline': 'alphabetic', 'font-family': 'var(--dxf-font, sans-serif)', transform: 'rotate(' + rot + ')' });
+          const g = svgEl('g', { transform: 'translate(' + pt[0] + ' ' + pt[1] + ') scale(1,-1)' });
+          const tx2 = svgEl('text', { 'font-size': h, fill: dxfEntityColor(ent, layers), 'text-anchor': 'start', 'dominant-baseline': 'alphabetic', 'font-family': 'var(--dxf-font, sans-serif)', transform: 'rotate(' + rot + ')' });
           tx2.textContent = ent.text || '';
           g.appendChild(tx2);
           parent.appendChild(g);
@@ -8619,18 +8623,22 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           if (!blk || !blk.entities) break;
           const p = ent.position || {};
           const pt = xf(p.x || 0, p.y || 0);
-          const sub = dxfSvgEl('g', {});
-          parent.appendChild(sub);
-          blk.entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: ent.rotation || 0, sx: ent.xScale || 1, sy: ent.yScale || 1 }));
+          budget.block(ent.name, () => {
+            const sub = svgEl('g', {});
+            parent.appendChild(sub);
+            blk.entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: ent.rotation || 0, sx: ent.xScale || 1, sy: ent.yScale || 1 }));
+          });
           break;
         }
         case 'DIMENSION': {
           if (ent.block && blocks[ent.block] && blocks[ent.block].entities) {
             const p = ent.anchorPoint || ent.middleOfText || {};
             const pt = xf(p.x || 0, p.y || 0);
-            const sub = dxfSvgEl('g', {});
-            parent.appendChild(sub);
-            blocks[ent.block].entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: 0, sx: 1, sy: 1 }));
+            budget.block(ent.block, () => {
+              const sub = svgEl('g', {});
+              parent.appendChild(sub);
+              blocks[ent.block].entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: 0, sx: 1, sy: 1 }));
+            });
           }
           break;
         }
@@ -8640,17 +8648,23 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
             let d = '';
             pts.slice(0, 4).forEach((p, i) => { const pt = xf(p.x || 0, p.y || 0); d += (i ? ' L ' : 'M ') + pt[0] + ' ' + pt[1]; grow(pt[0], pt[1]); });
             d += ' Z';
-            parent.appendChild(dxfSvgEl('path', { d, fill: dxfEntityColor(ent, layers), stroke: 'none', opacity: '0.6' }));
+            parent.appendChild(svgEl('path', { d, fill: dxfEntityColor(ent, layers), stroke: 'none', opacity: '0.6' }));
           }
           break;
         }
         default:
           break;
       }
-    } catch (e) { /* 单实体异常不中断整图 */ }
+    } catch (e) { if (window.AidePreviewSafety.isLimitError(e)) throw e; /* 单实体格式异常不中断整图 */ }
   }
 
-  entities.forEach(ent => renderEntity(ent, content, null));
+  try { entities.forEach(ent => renderEntity(ent, content, null)); }
+  catch (e) {
+    meta.textContent = t('解析失败');
+    canvas.innerHTML = '';
+    canvas.append(el('div', 'dxf-error', t('DXF 解析失败：') + ' ' + e.message));
+    return;
+  }
 
   if (!isFinite(bb.minX) || bb.minX === bb.maxX) { bb.minX -= 1; bb.maxX += 1; }
   if (!isFinite(bb.minY) || bb.minY === bb.maxY) { bb.minY -= 1; bb.maxY += 1; }
