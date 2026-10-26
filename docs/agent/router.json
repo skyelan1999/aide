@@ -253,6 +253,15 @@
         "scripts/aide.sh"
       ],
       [
+        "bash",
+        "-n",
+        "scripts/docker-release.sh"
+      ],
+      [
+        "python3",
+        "scripts/test_docker_release.py"
+      ],
+      [
         "python3",
         "scripts/test_install.py"
       ],

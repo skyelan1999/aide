@@ -120,3 +120,5 @@ Windows 代理兼容切换命令可选列中的 `-` 占位符及旧式空列。�
 更新代理使用操作系统排他文件句柄保持单实例，进程退出后锁自动释放，不再因空的 `.aide-update-agent.lock` 遗留目录永久停用。若首次替换脚本时仍有旧版后台代理运行，新代理不与其并发操作，需先重启 Windows 结束旧代理，再用新脚本启动。不要在切换进行中替换或删除锁文件。
 
 `python scripts/test_windows_update_agent.py --pwsh <PowerShell路径>` 执行真实代理代码，使用隔离的 Docker、HTTP 与子进程替身，覆盖 12 组切换、回退、并发锁及镜像身份场景。Mac 上 PowerShell 7 结果不替代 Windows PowerShell 5.1、Docker Desktop、原生进程树与完整升级实机验收。详见[任务记录](../tasks/release-manual-switch-20261026.json)。
+
+离线镜像发行脚本 `scripts/docker-release.sh` 的冒烟容器使用每次独立名称及私有 cidfile。证书复制、停止与退出清理均使用该次 Docker 写入的完整64位CID；没有有效CID时不按名称强制删除容器。因此名称冲突、未创建成功或CID格式异常不会删除既有 `aide-rel-test` 或其他工作负载。健康验证和镜像导出门槛保持不变。对应回归以临时目录中的模拟Docker执行，不代替真实镜像构建与导入验收。
