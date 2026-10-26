@@ -1,0 +1,70 @@
+{
+  "id": "release-rc12-20261026",
+  "request": "做完了之后补一次release：包含Windows目录、手动切换修复及主程序零插件市场发现；公开Aide发布，MIXSoul与9999保留本地",
+  "baseline": "72426cfdaec28511e24b842c1c6b79d331134488",
+  "initial_status": "",
+  "acceptance": [
+    "Publish one supplemental public RC12 including the three reviewed local changes; keep MIXSoul implementation/data and installed 9999 private and unchanged.",
+    "Current-source full gate and required CI pass, including real Windows PowerShell 5.1/7 execution with synthetic adapters.",
+    "Release notes disclose host-script upgrade requirements, verification limits and owner-requested one-off cadence exception.",
+    "ARM64/AMD64 full runtime and separate devtools archives pass native build/import/smoke/privacy/hash checks."
+  ],
+  "scope": [
+    "public Aide source commits 5054f934, 710d0f99, 72426cfd",
+    "delivery Windows tests",
+    "RC12 version/notes and publication artifacts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests a supplemental Release after completing core discovery and related Windows fixes.",
+      "evidence": [
+        "Current user message",
+        "docs/releases/v0.1.17.5-RC12.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use existing PR/version.sh/native candidate/publication flow; preserve private boundary and weekly policy, recording this single owner-requested exception. Include the new Windows regressions in trusted delivery jobs.",
+      "evidence": [
+        "scripts/ci/build_candidate.py",
+        ".github/workflows/aide-delivery.yml"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Three local source commits and supplemental notes are prepared; delivery now exercises Windows directory and slot-agent tests on both Windows PowerShell 5.1 and 7.",
+      "evidence": [
+        "5054f934",
+        "710d0f99",
+        "72426cfd",
+        ".github/workflows/aide-delivery.yml"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Targeted gates passed previously. Running current-input full local verification; protected PR CI and native delivery remain pending. Native Windows Desktop end-to-end is explicitly excluded, not claimed passed.",
+      "evidence": [
+        ".agent-state/release-rc12/full.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "2026-10-26 user: 做完了之后补一次release. Public Aide only; prior explicit MIXSoul/local 9999 boundary remains in force. This is a one-off supplemental publication, not a change to weekly cadence.",
+  "rollback": "Retain RC11 official assets; install its matching full runtime and keep .env/.aide-data backups. Windows host scripts must be restored separately when rolling back launcher changes. No change to current 9999 is planned.",
+  "handoff": ""
+}

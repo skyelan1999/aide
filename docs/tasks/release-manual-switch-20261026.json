@@ -1,0 +1,86 @@
+{
+  "id": "release-manual-switch-20261026",
+  "request": "用户报告Windows Release版本升级后手动切换无法执行；排查并修复A/B切换与回退链路",
+  "baseline": "5054f9349f45456f67d5cdd69bbfead244b23d37",
+  "initial_status": "",
+  "acceptance": [
+    "Manual local-slot commands with dash/empty optional fields are executed and acknowledged.",
+    "Package activation verifies archive SHA256 and resolves only the current verified import identity/platform, including containerd ID rewriting.",
+    "Paths containing spaces remain one launcher argument; only the launcher process is awaited.",
+    "Success requires the actual target container image and health; failures restore the previous marker and report failure.",
+    "An abandoned updater lock can recover while an active owner rejects concurrent agents.",
+    "Existing directory/Compose preservation fixes remain covered; real 9999 and private data stay unchanged."
+  ],
+  "scope": [
+    "Windows host update agent",
+    "PowerShell agent regression and Windows CI hook",
+    "bilingual installation/update documentation",
+    "local combined RC11 launcher repair package"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports latest Windows Release manual activation does not switch. Code confirms sentinel mismatch, unquoted paths, descendant-tree wait and directory-only stale lock.",
+      "evidence": [
+        "internal/server/updates.go updateAgentCommand",
+        "scripts/update-agent.ps1 baseline 5054f934"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Retain the existing authenticated command/package/result protocol; normalize optional fields, validate the slot reference and import identity, await only the quoted launcher process, bind health success to actual target image, and hold an exclusive file handle.",
+      "evidence": [
+        "docs/architecture/software-updates.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Host-only repair implements command normalization, launcher wait, recoverable ownership, progress, target identity check, canonical containerd import ID sync and rollback. No product server binary changes.",
+      "evidence": [
+        "scripts/update-agent.ps1",
+        "scripts/test_windows_update_agent.py",
+        ".github/workflows/aide-ci.yml"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Baseline actual PowerShell agent reproduces ignored dash-sentinel command. Fixed real-agent execution passes 12 synthetic Docker/HTTP/process cases on macOS PowerShell 7; includes physical marker restoration and quoted paths with spaces. Directory/port/image bootstrap regressions remain passing. Native Windows PowerShell 5.1, Docker Desktop and process-tree end-to-end NOT_RUN on this Mac; Windows CI coverage added but not run remotely. Server update API regression, repository quick gate, 20 CI contract checks and documentation link checks also pass.",
+      "evidence": [
+        ".agent-state/switch-audit/before.log",
+        ".agent-state/switch-audit/after.log",
+        ".agent-state/switch-audit/directory.log",
+        ".agent-state/switch-audit/image-slot.log",
+        ".agent-state/switch-audit/ci.log",
+        ".agent-state/switch-audit/api.log",
+        ".agent-state/switch-audit/quick.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented switching, rollback, directory scope, old-agent replacement and native acceptance limits in Chinese and English.",
+      "evidence": [
+        "docs/architecture/software-updates.md",
+        "docs/en/installation.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff and synthetic adapters; test containers removed, no real credentials/data copied. Combined repair archive contains only the three Windows launcher scripts, instructions and checksums.",
+      "evidence": [
+        "git diff --check",
+        ".agent-state/switch-audit/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No push, merge, new Release or 9999 deployment requested for this repair. Local Windows launcher repair candidate only.",
+      "evidence": [
+        "Current user request"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Stop the Windows runtime and restore backed-up start.ps1, scripts/watch-port.ps1 and scripts/update-agent.ps1. Preserve .env and .aide-data. A running legacy agent requires Windows restart before replacing ownership mechanism.",
+  "handoff": "Native Windows end-to-end activation/rollback remains outstanding; GitHub issue stays open. Local candidate will include previous RC11 directory repairs.",
+  "issue": "https://github.com/skyelan1999/aide/issues/340"
+}

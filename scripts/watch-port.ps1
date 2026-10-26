@@ -4,7 +4,7 @@
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
 Remove-Item Env:AIDE_PORT -ErrorAction SilentlyContinue
-$env:COMPOSE_FILE = 'compose.yaml'
+if (-not $env:COMPOSE_FILE) { $env:COMPOSE_FILE = 'compose.yaml' }
 $dockerCmd = Get-Command docker -ErrorAction SilentlyContinue
 if (-not $dockerCmd) { exit 0 }
 $docker = $dockerCmd.Source
@@ -40,12 +40,12 @@ function Set-EnvHostPort([string]$Value) {
 try {
     while ($true) {
         if (Test-Path -LiteralPath '.cache/aide-manual-stop') { break }
-        $services = Get-ComposeText @('compose', '-f', 'compose.yaml', 'ps', '--status', 'running', '--services')
+        $services = Get-ComposeText @('compose', 'ps', '--status', 'running', '--services')
         if ($services.Code -ne 0 -or ($services.Text -split '\r?\n') -notcontains 'aide') { break }
 
-        $desired = (Get-ComposeText @('compose', '-f', 'compose.yaml', 'exec', '-T', 'aide', 'sh', '-c', 'cat /data/config/host-port 2>/dev/null || true')).Text
+        $desired = (Get-ComposeText @('compose', 'exec', '-T', 'aide', 'sh', '-c', 'cat /data/config/host-port 2>/dev/null || true')).Text
         if ($desired -match '^\d{1,5}$' -and [int]$desired -ge 1 -and [int]$desired -le 65535) {
-            $mapped = (Get-ComposeText @('compose', '-f', 'compose.yaml', 'port', 'aide', '8080')).Text
+            $mapped = (Get-ComposeText @('compose', 'port', 'aide', '8080')).Text
             $current = if ($mapped -match ':(\d+)\s*$') { $Matches[1] } else { '' }
             if ($current -and $desired -ne $current -and (Test-LocalHostPortAvailable ([int]$desired))) {
                 $envPath = Join-Path $PWD '.env'
@@ -55,13 +55,13 @@ try {
                     Set-EnvHostPort $desired
                     $env:AIDE_PORT = $desired
                     if (Test-Path -LiteralPath '.cache/aide-manual-stop') { break }
-                    $restart = Get-ComposeText @('compose', '-f', 'compose.yaml', 'up', '-d', '--no-build', '--pull', 'never')
+                    $restart = Get-ComposeText @('compose', 'up', '-d', '--no-build', '--pull', 'never')
                     if ($restart.Code -ne 0) { throw 'Compose did not accept the requested port mapping.' }
                 } catch {
                     [System.IO.File]::WriteAllText($envPath, $oldText, (New-Object System.Text.UTF8Encoding $false))
                     if ($null -eq $oldProcessPort) { Remove-Item Env:AIDE_PORT -ErrorAction SilentlyContinue } else { $env:AIDE_PORT = $oldProcessPort }
                     if (Test-Path -LiteralPath '.cache/aide-manual-stop') { break }
-                    Get-ComposeText @('compose', '-f', 'compose.yaml', 'up', '-d', '--no-build', '--pull', 'never') | Out-Null
+                    Get-ComposeText @('compose', 'up', '-d', '--no-build', '--pull', 'never') | Out-Null
                 }
             }
         }

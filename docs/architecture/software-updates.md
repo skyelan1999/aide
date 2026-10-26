@@ -110,3 +110,13 @@ macOS 使用系统 Bash 3.2，因此宿主 shell 代理避免 Bash 4 才支持�
 本轮源码截图环境与生产服务、发行槽隔离；未点击检查更新、上传或切换版本。软件升级是否可执行，应同时核对 runtime mode、构建身份、启动代理和包校验，不能仅凭页面版本文字判断。实际文档证据见[截图范围](../ui-evidence.md)，软件启动后全貌见下图。
 
 ![真实源码实例，非发行升级验收](../images/current-20261017/01-workbench.jpg)
+
+## Windows 宿主代理切换修复（2026-10-26）
+
+Windows 代理兼容切换命令可选列中的 `-` 占位符及旧式空列。切换本地已有槽不要求重复下载升级包。目标引用必须与 A/B 槽匹配；升级包继续校验 SHA256，并在 Docker containerd 改写导入 ID 时，仅从本次已校验归档的导入回执解析唯一引用及平台，再持久化实际本地镜像 ID。
+
+宿主启动路径按一个参数引用，支持 Release 解压目录含空格。代理仅等待 `start.ps1` 进程退出，不能使用会等待整个后代进程树的 `Start-Process -Wait`，因为启动器会启动常驻监控。目标容器使用的镜像 ID 与健康检查均通过后才上报成功；失败则恢复旧 marker 并调用同一启动器回退。目录挂载沿用启动器的 Compose 覆盖配置。
+
+更新代理使用操作系统排他文件句柄保持单实例，进程退出后锁自动释放，不再因空的 `.aide-update-agent.lock` 遗留目录永久停用。若首次替换脚本时仍有旧版后台代理运行，新代理不与其并发操作，需先重启 Windows 结束旧代理，再用新脚本启动。不要在切换进行中替换或删除锁文件。
+
+`python scripts/test_windows_update_agent.py --pwsh <PowerShell路径>` 执行真实代理代码，使用隔离的 Docker、HTTP 与子进程替身，覆盖 12 组切换、回退、并发锁及镜像身份场景。Mac 上 PowerShell 7 结果不替代 Windows PowerShell 5.1、Docker Desktop、原生进程树与完整升级实机验收。详见[任务记录](../tasks/release-manual-switch-20261026.json)。

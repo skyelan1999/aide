@@ -194,3 +194,11 @@ Captured from an isolated source instance on 17 October 2026. This is not an ins
 ![Actual post-start workbench](../images/current-20261017/01-workbench.jpg)
 
 [Environment and all original captures](../ui-evidence.md).
+
+## Windows Release manual slot activation
+
+The Windows host updater accepts both `-` placeholders and legacy empty optional command fields, so activating a previously installed slot does not require a package download. Startup paths are quoted as one argument. The updater waits only for the launcher process, rather than its persistent monitor descendants, then verifies both the running container image ID and health before reporting success. Failed activation restores the previous marker and invokes the same launcher to recover it. Compose directory overrides remain in effect.
+
+For containerd archive imports, only a unique reference from the verified import receipt can resolve a rewritten local image ID; the platform is checked and the canonical ID is synchronized after success. An exclusive OS file handle provides updater ownership and releases automatically on process exit. An old empty lock directory is recoverable. If an older updater is still running when replacing the scripts, restart Windows before launching the repaired version; never remove locks while activation is in progress.
+
+The [Windows manual-switch task](../tasks/release-manual-switch-20261026.json) separates PowerShell execution with synthetic adapters from native Windows/Docker Desktop acceptance. The former does not establish the latter.

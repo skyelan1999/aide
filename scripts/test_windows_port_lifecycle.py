@@ -24,14 +24,23 @@ class WindowsPortLifecycleTests(unittest.TestCase):
     def test_watcher_applies_saved_port_without_changing_shared_data_mounts(self):
         watcher = (ROOT / "scripts/watch-port.ps1").read_text(encoding="utf-8-sig")
         self.assertIn("cat /data/config/host-port", watcher)
-        self.assertIn("'compose', '-f', 'compose.yaml', 'port', 'aide', '8080'", watcher)
+        self.assertIn("'compose', 'port', 'aide', '8080'", watcher)
         self.assertIn("'up', '-d', '--no-build', '--pull', 'never'", watcher)
         self.assertNotIn("down", watcher)
         self.assertNotIn("volume rm", watcher)
 
+    def test_host_agents_keep_launcher_compose_overrides(self):
+        for name in ('watch-port.ps1', 'update-agent.ps1'):
+            text = (ROOT / 'scripts' / name).read_text(encoding='utf-8-sig')
+            self.assertIn("if (-not $env:COMPOSE_FILE) { $env:COMPOSE_FILE = 'compose.yaml' }", text)
+            self.assertNotIn("'-f', 'compose.yaml'", text)
+            self.assertNotIn('compose -f compose.yaml', text)
+        text = (ROOT / 'scripts/update-agent.sh').read_text()
+        self.assertIn('COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml}"', text)
+
     def test_release_packager_includes_watcher_in_windows_and_full_bundles(self):
         packager = (ROOT / "scripts/package-release-assets.sh").read_text()
-        self.assertIn('if [[ "$TARGET" == windows-arm64 ]]; then cp "$ROOT/scripts/watch-port.ps1"', packager)
+        self.assertIn('if [[ "$TARGET" == windows-* ]]; then cp "$ROOT/scripts/watch-port.ps1"', packager)
         self.assertIn('"$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh"', packager)
 
 

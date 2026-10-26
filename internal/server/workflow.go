@@ -180,6 +180,7 @@ const systemPrompt = `You are aide, a careful coding assistant. Answer in the us
 
 var builtinTools = []any{
 	pluginRoutingTool,
+	pluginMarketBrowseTool,
 	pluginPlanTool,
 	map[string]any{"type": "function", "function": map[string]any{"name": "document_search", "description": "Read-only document retrieval shared with Office plugin and star map. mode original performs case-sensitive literal search in extracted original text; mode rag uses local TF-IDF by default, or configured provider embeddings with weighted rank fusion when explicitly enabled. Inspect returned engine and fallback diagnostics. Returns source ID, digest and page/paragraph/sheet/slide locator. Cite chunk IDs, do not infer complete reading; no OCR. Supports PDF/DOCX/XLSX/PPTX/UTF-8 text in current local/SSH workspace or enabled file sources (local, Skill, SFTP, HTTP, FTP/FTPS, SMB); MCP indexes discovered tool descriptions only, never tool result documents.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"original", "rag"}}, "source": map[string]any{"type": "string"}, "path": map[string]any{"type": "string"}, "cursor": map[string]any{"type": "string", "description": "nextCursor from the previous result; keep query, mode, source and path unchanged"}}, "required": []string{"query", "mode"}}}},
 	updatePlanTool,
@@ -1696,6 +1697,7 @@ func (a *App) pluginToolSchemasForOwner(pluginID string) []any {
 
 func (a *App) toolListHint() string {
 	hint := "list_sources（引用来源）; list_files, read_file（直接执行）; write_file（生成提案待批准）; run_shell（沙箱内实际执行并返回输出）"
+	hint += "; browse_plugin_market（内置只读市场列表、搜索和详情；未安装插件也可使用）"
 	hint += "; route_plugins（按需求发现并加载插件工具，不自动扩大权限）"
 	return hint
 }
@@ -4215,6 +4217,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 	}
 	switch call.Function.Name {
+	case "browse_plugin_market":
+		return a.browsePluginMarket(ctx, call.Function.Arguments)
 	case "route_plugins":
 		return a.executePluginRouting(ctx, task, str("query"), str("installId"))
 	case "run_plugin_plan":

@@ -21,6 +21,13 @@ if (-not $DryRun) { Test-AideDiskBudget $PSScriptRoot }
 . (Join-Path $PSScriptRoot 'scripts/launcher-data.ps1')
 if (-not $DryRun) { Restore-AideLauncherEnvironment $PSScriptRoot }
 
+# Process environment wins over Compose .env; defaults must never mask saved paths.
+function Test-AideDirectorySetting([string]$Name) {
+    $path = Join-Path $PSScriptRoot '.env'
+    if (-not (Test-Path -LiteralPath $path)) { return $false }
+    return [bool](Select-String -LiteralPath $path -Pattern ('^\s*(?:export\s+)?' + [regex]::Escape($Name) + '\s*=') -Quiet)
+}
+
 # Release bundles contain a prebuilt, architecture-specific Linux image. Use it
 # directly and never invoke Compose build/pull for an offline installation.
 $offlineMarker = Join-Path $PSScriptRoot '.aide-image'
@@ -33,9 +40,8 @@ if ($offlineBundle) {
     $expectedPlatform = $marker[2]
     $releaseTag = if ($marker.Count -ge 4) { $marker[3] } else { $null }
     $env:COMPOSE_FILE = 'compose.yaml'
-    if (-not $env:AIDE_WORKSPACE) { $env:AIDE_WORKSPACE = Join-Path $PSScriptRoot 'workspace' }
-    if (-not $env:AIDE_CONTEXT) { $env:AIDE_CONTEXT = Join-Path $PSScriptRoot 'context' }
-    if (-not $env:AIDE_LOCAL_ROOT) { $env:AIDE_LOCAL_ROOT = $env:AIDE_WORKSPACE }
+    if (-not $env:AIDE_WORKSPACE -and -not (Test-AideDirectorySetting 'AIDE_WORKSPACE')) { $env:AIDE_WORKSPACE = Join-Path $PSScriptRoot 'workspace' }
+    if (-not $env:AIDE_CONTEXT -and -not (Test-AideDirectorySetting 'AIDE_CONTEXT')) { $env:AIDE_CONTEXT = Join-Path $PSScriptRoot 'context' }
 }
 
 # Compose 的默认 /local 来源使用 $HOME；Windows PowerShell 有 $HOME 自动变量，
@@ -48,10 +54,7 @@ if (-not $env:HOME) {
 # Windows 下目录选择器需要看到当前盘的完整目录树。未在进程环境或 .env 中
 # 显式收窄 AIDE_LOCAL_ROOT 时，默认把系统盘挂到 /local；项目自行配置该变量
 # 时保留其边界，不擅自扩大访问范围。
-$configuredLocalRoot = $false
-if (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.env')) {
-    $configuredLocalRoot = [bool](Select-String -LiteralPath (Join-Path $PSScriptRoot '.env') -Pattern '^\s*AIDE_LOCAL_ROOT\s*=' -Quiet)
-}
+$configuredLocalRoot = Test-AideDirectorySetting 'AIDE_LOCAL_ROOT'
 if (-not $env:AIDE_LOCAL_ROOT -and -not $configuredLocalRoot -and $env:USERPROFILE) {
     $systemDrive = [System.IO.Path]::GetPathRoot($env:USERPROFILE)
     if ($systemDrive) { $env:AIDE_LOCAL_ROOT = $systemDrive }
@@ -223,8 +226,8 @@ $env:BUILDKIT_PROGRESS = 'plain'
 $env:COMPOSE_PROGRESS = 'plain'
 
 # --- /context 绑定目录必须存在，否则 compose 创建容器时直接报错 ---
-if (-not $env:AIDE_CONTEXT) { $env:AIDE_CONTEXT = Join-Path (Split-Path $PSScriptRoot -Parent) 'Harness' }
-if (-not (Test-Path $env:AIDE_CONTEXT)) {
+if (-not $env:AIDE_CONTEXT -and -not (Test-AideDirectorySetting 'AIDE_CONTEXT')) { $env:AIDE_CONTEXT = Join-Path (Split-Path $PSScriptRoot -Parent) 'Harness' }
+if ($env:AIDE_CONTEXT -and -not (Test-Path -LiteralPath $env:AIDE_CONTEXT)) {
     if ($DryRun) {
         Write-Host "[DryRun] 将创建 context 目录：$env:AIDE_CONTEXT"
     } else {

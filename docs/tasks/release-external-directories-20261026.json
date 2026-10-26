@@ -1,0 +1,93 @@
+{
+  "id": "release-external-directories-20261026",
+  "request": "最新版Windows Release不能选择Aide目录以外作为文档目录，检查工作目录、引用、缓存等相关路径并修复",
+  "baseline": "74e156326c39bedb904f511f63537d36b4dce7e7",
+  "initial_status": "",
+  "acceptance": [
+    "Windows Release directory defaults do not mask explicit .env/process AIDE_LOCAL_ROOT, AIDE_WORKSPACE or AIDE_CONTEXT values.",
+    "Fresh Windows Release uses the existing Windows local-root browsing policy rather than forcing package/workspace.",
+    "Host port/update agents preserve the selected Compose override list and extra directory permissions.",
+    "Both Windows architecture launcher packages include the PowerShell port watcher.",
+    "External Windows-style document paths support listing, approval-before-write and readback without redirecting to the workspace.",
+    "Native Windows Docker Desktop/folder-dialog validation remains separately identified; never infer it from macOS or fixtures."
+  ],
+  "scope": [
+    "start.ps1 directory precedence",
+    "host port/update agents Compose preservation",
+    "release launcher packaging",
+    "targeted PowerShell/Go regression and Windows CI coverage",
+    "bilingual workspace-path documentation and task record"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed latest Release on Windows. Shared local boundary affects workspace, system documents and local references.",
+      "evidence": [
+        "User reply: latest Release, Windows",
+        "start.ps1 offline initialization and documented default-root policy"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep source-install defaults and explicit directory scopes; remove offline preemption, retain Compose overrides, fix both architecture archives. No container code or UI changes required.",
+      "evidence": [
+        "start.ps1",
+        "scripts/watch-port.ps1",
+        "scripts/update-agent.ps1",
+        "scripts/update-agent.sh",
+        "scripts/package-release-assets.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Fixed directory setting precedence, watcher/update Compose retention and missing Windows AMD64 watcher. Added actual PowerShell execution tests and external document approval/write/readback regression.",
+      "evidence": [
+        "scripts/test_windows_directory_launcher.py",
+        "internal/server/local_mounts_test.go",
+        "scripts/test_windows_port_lifecycle.py",
+        ".github/workflows/aide-ci.yml"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Local checks PASS: original PowerShell prefix reproduces package/workspace pinning; six corrected precedence cases and two actual watcher iterations pass under macOS PowerShell 7.6.9 with Docker adapter fixture. Twelve image-slot cases, 5 Windows lifecycle checks, 3 local-root checks, 15 offline bundle checks and 20 CI-contract checks pass. Offline Go mount/helper suites pass; 17 server directory/document tests pass, including physical external write/readback with Windows-style Unicode path, no premature write and no workspace fallback. Native Windows PowerShell 5.1, Docker Desktop and native folder dialog NOT_RUN on this Mac; issue remains open.",
+      "evidence": [
+        ".agent-state/directory-audit/before.log",
+        ".agent-state/directory-audit/image-slot.log",
+        ".agent-state/directory-audit/go-regression.log",
+        ".agent-state/directory-audit/document-roundtrip.log",
+        ".agent-state/directory-audit/ci-contracts.log",
+        "python3 scripts/agent-route.py verify quick: PASS (receipt in .agent-state/directory-audit/quick.log)",
+        "python3 scripts/check_docs.py: PASS",
+        ".agent-state/directory-audit/powershell-after.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Chinese/English guides document actual directory scopes, permissions, other-drive setup and verification limits.",
+      "evidence": [
+        "docs/workspace-paths.md",
+        "docs/en/workspace-paths.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped public-source diff reviewed; private checkout, launcher local override, real .env/data and live 9999 preserved. Only disposable test fixtures/containers used.",
+      "evidence": [
+        "git diff --check",
+        ".agent-state/directory-audit/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No new release, merge, push or live 9999 deployment. A Windows launcher-only repair archive is prepared for native verification; it does not contain an application image or private implementation.",
+      "evidence": [
+        "Current user request: diagnose and inspect Windows Release directory behavior"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore backed-up start.ps1, scripts/watch-port.ps1 and scripts/update-agent.ps1 in the Windows Release folder, then restart its launcher. No user configuration is rewritten by the repair archive.",
+  "handoff": "Local fix and related checks complete; native Windows end-to-end acceptance is outstanding. Other drives still require explicit local-directory setup and host confirmation. No release or 9999 deployment performed.",
+  "issue": "https://github.com/skyelan1999/aide/issues/335"
+}

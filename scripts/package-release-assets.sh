@@ -64,7 +64,7 @@ for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATF
   cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$ROOT/scripts/message-lan-control.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/prebuilt-image.ps1" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/resource-guard.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
-  if [[ "$TARGET" == windows-arm64 ]]; then cp "$ROOT/scripts/watch-port.ps1" "$PACKAGE/scripts/"; fi
+  if [[ "$TARGET" == windows-* ]]; then cp "$ROOT/scripts/watch-port.ps1" "$PACKAGE/scripts/"; fi
   cp "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/update-agent.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
