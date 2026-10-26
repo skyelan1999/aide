@@ -15,6 +15,7 @@ package server
 // 与 #29 复用：deriveKey(password) → AES-256-GCM；不新造加密原语。
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -60,8 +61,11 @@ func safeVoiceSampleID(id string) error {
 }
 
 const (
-	voiceSampleMaxBytes = 15 << 20 // 单个样本上限 15MB（3min opus ≈ 3-5MB，留余量）
-	voiceSampleIndex    = "index.json"
+	voiceSampleMaxBytes       = 15 << 20 // 单个样本上限 15MB（3min opus ≈ 3-5MB，留余量）
+	voiceSampleIndex          = "index.json"
+	voiceSampleCipherOverhead = 12 + 16 // AES-GCM nonce and tag
+	voiceCloneMaxSamples      = 16
+	voiceCloneMaxAudioBytes   = 32 << 20
 )
 
 // VoiceSampleMeta 一条样本元数据（index.json 内；不含音频本体）。
@@ -144,9 +148,17 @@ func encryptSampleFile(key []byte, path string, plaintext []byte) error {
 
 // decryptSampleFile 读 <id>.enc 并解密。
 func decryptSampleFile(key []byte, path string) ([]byte, error) {
-	ct, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
+	}
+	defer f.Close()
+	ct, err := io.ReadAll(io.LimitReader(f, voiceSampleMaxBytes+voiceSampleCipherOverhead+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(ct) > voiceSampleMaxBytes+voiceSampleCipherOverhead {
+		return nil, errors.New("样本密文超过大小上限")
 	}
 	block, err := aesGCMBlock(key)
 	if err != nil {
@@ -326,6 +338,20 @@ func (a *App) voiceCloneCreate(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请至少选择一个声音样本"))
 		return
 	}
+	if len(in.SampleIDs) > voiceCloneMaxSamples {
+		fail(w, 400, errors.New("最多选择16个声音样本"))
+		return
+	}
+	seen := map[string]bool{}
+	for i, id := range in.SampleIDs {
+		id = strings.TrimSpace(id)
+		if safeVoiceSampleID(id) != nil || seen[id] {
+			fail(w, 400, errors.New("声音样本ID无效或重复"))
+			return
+		}
+		seen[id] = true
+		in.SampleIDs[i] = id
+	}
 	a.mu.Lock()
 	base := strings.TrimSpace(a.settings.CloneTTSBaseURL)
 	apiKey := a.settings.CloneTTSAPIKey
@@ -350,20 +376,42 @@ func (a *App) voiceCloneCreate(w http.ResponseWriter, r *http.Request) {
 	if backend == "gpt-sovits" {
 		// GPT-SoVITS 走文件上传参考音频
 		samples := []map[string]string{}
-		for _, sid := range in.SampleIDs {
-			if err := safeVoiceSampleID(sid); err != nil {
-				fail(w, 400, fmt.Errorf("非法样本 id %q: %w", sid, err))
-				return
+		err := func() error {
+			release, err := a.voiceSampleMutations.acquire(r.Context(), profile)
+			if err != nil {
+				return err
 			}
-			audio, derr := decryptSampleFile(key, filepath.Join(a.voiceSamplesDir(profile), sid+".enc"))
-			if derr != nil {
-				fail(w, 500, fmt.Errorf("解密样本 %s 失败：%w", sid, derr))
-				return
+			defer release()
+			// Inspect every encrypted size before creating any Base64 payload.
+			var declared int64
+			for _, sid := range in.SampleIDs {
+				st, err := os.Lstat(filepath.Join(a.voiceSamplesDir(profile), sid+".enc"))
+				if err != nil {
+					return err
+				}
+				size := st.Size() - voiceSampleCipherOverhead
+				if !st.Mode().IsRegular() || size < 0 || size > voiceSampleMaxBytes || size > voiceCloneMaxAudioBytes-declared {
+					return errors.New("声音样本大小无效或总音频超过32MiB")
+				}
+				declared += size
 			}
-			samples = append(samples, map[string]string{
-				"id":       sid,
-				"audioB64": base64.StdEncoding.EncodeToString(audio),
-			})
+			total := 0
+			for _, sid := range in.SampleIDs {
+				audio, err := decryptSampleFile(key, filepath.Join(a.voiceSamplesDir(profile), sid+".enc"))
+				if err != nil {
+					return err
+				}
+				if len(audio) > voiceCloneMaxAudioBytes-total {
+					return errors.New("声音样本总音频超过32MiB")
+				}
+				total += len(audio)
+				samples = append(samples, map[string]string{"id": sid, "audioB64": base64.StdEncoding.EncodeToString(audio)})
+			}
+			return nil
+		}()
+		if err != nil {
+			fail(w, 400, err)
+			return
 		}
 		payload["samples"] = samples
 	} else {
@@ -372,8 +420,12 @@ func (a *App) voiceCloneCreate(w http.ResponseWriter, r *http.Request) {
 		payload["sampleIds"] = in.SampleIDs
 	}
 
-	body, _ := json.Marshal(payload)
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, base+"/voices", strings.NewReader(string(body)))
+	body, err := json.Marshal(payload)
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, base+"/voices", bytes.NewReader(body))
 	if err != nil {
 		fail(w, 500, err)
 		return
