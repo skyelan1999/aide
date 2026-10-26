@@ -86,10 +86,15 @@
     "Historical environment/platform/full-release blockers remain; no actual clone model quality, physical recording, native platform or full production workbench acceptance. No main merge, release or deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "98": "https://github.com/skyelan1999/aide/issues/98#issuecomment-6421886703",
+      "99": "https://github.com/skyelan1999/aide/issues/99#issuecomment-6421888181",
+      "100": "https://github.com/skyelan1999/aide/issues/100#issuecomment-6421889331"
+    }
   },
   "sourceSHA256": {
     "internal/server/server.go": "5881dbf5167ea9b464a3c95680d49fc86f5fbfade6b06c1925d2450369e6fdea",
