@@ -15,8 +15,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
+)
+
+const (
+	voiceInferenceMaxSamples      = 16
+	voiceInferenceMaxAudioBytes   = 32 << 20
+	voiceInferenceTranscriptRunes = 800
 )
 
 // VoicePersonalityProfile 性格画像（LLM 推断结果，结构化）。
@@ -89,7 +97,10 @@ func (a *App) computeAcousticFeatures(samples []VoiceSampleMeta, decrypt func(id
 	for _, s := range samples {
 		dur := float64(s.DurationSec)
 		audio, err := decrypt(s.ID)
-		if err == nil && len(audio) > 44 {
+		if err != nil {
+			return voiceAcousticFeatures{}, err
+		}
+		if len(audio) > 44 {
 			if d := wavDurationSec(audio); d > 0 {
 				dur = d
 			}
@@ -97,7 +108,7 @@ func (a *App) computeAcousticFeatures(samples []VoiceSampleMeta, decrypt func(id
 		totalDur += dur
 		if strings.TrimSpace(s.Transcript) != "" {
 			feats.HasTranscript = true
-			totalChars += len([]rune(strings.TrimSpace(s.Transcript)))
+			totalChars += utf8.RuneCountInString(strings.TrimSpace(s.Transcript))
 		}
 	}
 	feats.DurationSec = totalDur
@@ -105,6 +116,37 @@ func (a *App) computeAcousticFeatures(samples []VoiceSampleMeta, decrypt func(id
 		feats.CharsPerSec = float64(totalChars) / totalDur
 	}
 	return feats, nil
+}
+
+// voiceTranscriptPrefix scans at most limit+1 runes without converting the
+// complete stored transcript into a rune slice.
+func voiceTranscriptPrefix(s string, limit int) string {
+	n := 0
+	for i := range s {
+		if n == limit {
+			return s[:i]
+		}
+		n++
+	}
+	return s
+}
+
+func voiceInferenceTranscript(samples []VoiceSampleMeta) string {
+	var text strings.Builder
+	remaining := voiceInferenceTranscriptRunes
+	for _, sample := range samples {
+		if remaining == 0 {
+			break
+		}
+		part := voiceTranscriptPrefix(sample.Transcript, remaining)
+		text.WriteString(part)
+		remaining -= utf8.RuneCountInString(part)
+		if part != "" && remaining > 0 {
+			text.WriteByte('\n')
+			remaining--
+		}
+	}
+	return strings.TrimSpace(text.String())
 }
 
 // voicePersonalityInfer 由样本推断性格画像 + 提示词草稿。
@@ -120,49 +162,99 @@ func (a *App) voicePersonalityInfer(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请至少选择一个声音样本"))
 		return
 	}
+	if len(in.SampleIDs) > voiceInferenceMaxSamples {
+		fail(w, 400, errors.New("推断最多选择16个声音样本"))
+		return
+	}
+	seen := map[string]bool{}
+	ids := make([]string, 0, len(in.SampleIDs))
+	for _, id := range in.SampleIDs {
+		id = strings.TrimSpace(id)
+		if err := safeVoiceSampleID(id); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if !seen[id] {
+			seen[id] = true
+			ids = append(ids, id)
+		}
+	}
 	key, err := a.voiceSampleKey()
 	if err != nil {
 		fail(w, 403, err)
 		return
 	}
 
-	profile := personaXiaomi
-	idx := a.loadVoiceSampleIndex(profile)
-	byID := map[string]VoiceSampleMeta{}
-	for _, it := range idx.Items {
-		byID[it.ID] = it
-	}
-	var samples []VoiceSampleMeta
-	for _, sid := range in.SampleIDs {
-		if m, ok := byID[sid]; ok {
-			samples = append(samples, m)
+	var feats voiceAcousticFeatures
+	var transcriptStr string
+	inputStatus := 400
+	err = func() error {
+		profile := personaXiaomi
+		release, err := a.voiceSampleMutations.acquire(r.Context(), profile)
+		if err != nil {
+			inputStatus = 409
+			return err
 		}
-	}
-	if len(samples) == 0 {
-		fail(w, 404, errors.New("所选样本不存在"))
-		return
-	}
-
-	decrypt := func(id string) ([]byte, error) {
-		return decryptSampleFile(key, sampleEncPath(a, profile, id))
-	}
-	feats, err := a.computeAcousticFeatures(samples, decrypt)
+		defer release()
+		if _, err := a.voiceSamplePassword(); err != nil {
+			inputStatus = 403
+			return err
+		}
+		idx, err := a.readVoiceSampleIndex(profile)
+		if err != nil {
+			inputStatus = 500
+			return err
+		}
+		byID := map[string]VoiceSampleMeta{}
+		for _, item := range idx.Items {
+			byID[item.ID] = item
+		}
+		samples := make([]VoiceSampleMeta, 0, len(ids))
+		var declared int64
+		for _, id := range ids {
+			sample, ok := byID[id]
+			if !ok {
+				inputStatus = 404
+				return errors.New("所选样本不存在")
+			}
+			st, err := os.Lstat(sampleEncPath(a, profile, id))
+			if err != nil {
+				return err
+			}
+			size := st.Size() - voiceSampleCipherOverhead
+			if !st.Mode().IsRegular() || size < 0 || size > voiceSampleMaxBytes || size > voiceInferenceMaxAudioBytes-declared {
+				return errors.New("声音样本大小无效或推断总音频超过32MiB")
+			}
+			declared += size
+			sample.Transcript = voiceTranscriptPrefix(sample.Transcript, voiceInferenceTranscriptRunes)
+			samples = append(samples, sample)
+		}
+		total := 0
+		decrypt := func(id string) ([]byte, error) {
+			if err := r.Context().Err(); err != nil {
+				inputStatus = 409
+				return nil, err
+			}
+			audio, err := decryptSampleFile(key, sampleEncPath(a, profile, id))
+			if err != nil {
+				return nil, err
+			}
+			if len(audio) > voiceInferenceMaxAudioBytes-total {
+				return nil, errors.New("推断实际音频总量超过32MiB")
+			}
+			total += len(audio)
+			return audio, nil
+		}
+		feats, err = a.computeAcousticFeatures(samples, decrypt)
+		if err != nil {
+			return err
+		}
+		transcriptStr = voiceInferenceTranscript(samples)
+		return nil
+	}()
 	if err != nil {
-		fail(w, 500, err)
+		fail(w, inputStatus, err)
 		return
-	}
-
-	// 汇总转写文本（取前 800 字，避免上下文爆炸）
-	var transcript strings.Builder
-	for _, s := range samples {
-		if s.Transcript != "" {
-			transcript.WriteString(s.Transcript)
-			transcript.WriteString("\n")
-		}
-	}
-	transcriptStr := strings.TrimSpace(transcript.String())
-	if len([]rune(transcriptStr)) > 800 {
-		transcriptStr = string([]rune(transcriptStr)[:800])
 	}
 
 	a.mu.Lock()

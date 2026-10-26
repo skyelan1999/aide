@@ -213,7 +213,7 @@ func TestIssue152UnindexedAudioCannotBeDecrypted(t *testing.T) {
 }
 
 func TestIssue151QueuedSampleOperationsRecheckLock(t *testing.T) {
-	for _, operation := range []string{"audio", "upload", "clone"} {
+	for _, operation := range []string{"audio", "upload", "clone", "infer"} {
 		t.Run(operation, func(t *testing.T) {
 			a := testApp(t)
 			id := ownedVoiceSample(t, a)
@@ -235,6 +235,8 @@ func TestIssue151QueuedSampleOperationsRecheckLock(t *testing.T) {
 					done <- rawUpload(a, []byte("owned-audio"), "consented=1")
 				case "clone":
 					done <- request(a, "POST", "/api/voice-clone/create", map[string]any{"sampleIds": []string{id}})
+				case "infer":
+					done <- request(a, "POST", "/api/voice-personality/infer", map[string]any{"sampleIds": []string{id}})
 				}
 			}()
 			deadline := time.Now().Add(3 * time.Second)
