@@ -2509,10 +2509,13 @@
       "number": 66,
       "title": "Completed file transfers permanently consume the 128-transfer capacity",
       "url": "https://github.com/skyelan1999/aide/issues/66",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "messaging/service.go:Request与receiveFileOffer均以len(state.Transfers)>=128拒绝，终态仍留表，历史占用会永久阻止新传输。",
+      "status": "fixed-on-branch",
+      "evidence": "128改为活动传输计数，终态历史/内容保留，cleanup失败仍占容量，并发提交重查；消息完整包race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "b89236e2",
+      "repairEvidence": "cycle-004.json",
+      "reviewEvidence": "messaging/service.go:Request与receiveFileOffer均以len(state.Transfers)>=128拒绝，终态仍留表，历史占用会永久阻止新传输。"
     },
     {
       "number": 65,
@@ -2525,10 +2528,13 @@
       "number": 64,
       "title": "File downloads can produce duplicate ZIP entry names for same-basename selections",
       "url": "https://github.com/skyelan1999/aide/issues/64",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "transfer_worker.go:archive逐top取path.Base(top.Source)，未检测重名，alpha/config与beta/config映射同名；zip.Writer不阻止重名。",
+      "status": "fixed-on-branch",
+      "evidence": "批量下载遇同名末级路径保留整批source-relative父路径，四种冲突和正常平铺控制及传输race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "d29892d9",
+      "repairEvidence": "cycle-004.json",
+      "reviewEvidence": "transfer_worker.go:archive逐top取path.Base(top.Source)，未检测重名，alpha/config与beta/config映射同名；zip.Writer不阻止重名。"
     },
     {
       "number": 63,
@@ -2557,10 +2563,13 @@
       "number": 48,
       "title": "Local-root pending timeout assertion is sensitive to the deadline start boundary",
       "url": "https://github.com/skyelan1999/aide/issues/48",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "source_root_open.go:WithTimeout早于entry.started；test第二轮要求errLocalRootPending，临界时间可能仍判年轻pending并再超时。报告准确描述测试边界敏感，不是重复打开证明。",
+      "status": "fixed-on-branch",
+      "evidence": "共享发起context的deadline；延迟入队/短caller deadline回归与20轮并发race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "5bb54ed1",
+      "repairEvidence": "cycle-004.json",
+      "reviewEvidence": "source_root_open.go:WithTimeout早于entry.started；test第二轮要求errLocalRootPending，临界时间可能仍判年轻pending并再超时。报告准确描述测试边界敏感，不是重复打开证明。"
     },
     {
       "number": 28,
@@ -2582,6 +2591,12 @@
       112
     ],
     "detail": "ordered-review.json",
-    "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。"
+    "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
+    "remainingFollowupTargets": 267,
+    "followupRepairs": [
+      48,
+      64,
+      66
+    ]
   }
 }

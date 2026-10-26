@@ -14,7 +14,10 @@
     "internal/server",
     "scripts",
     "docs/tasks/open-issue-review-20261026.json",
-    "docs/reviews/2026-10-26-open-issue-review"
+    "docs/reviews/2026-10-26-open-issue-review",
+    "internal/messaging",
+    "docs/architecture/resumable-file-transfers.md",
+    "docs/architecture/decentralized-messages.md"
   ],
   "stages": {
     "requirements": {
@@ -33,17 +36,18 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "累计14项产品修复在现有分支；本轮完成原剩余272项逐条审查，新增产品修复0项，合理问题修复目标继续。",
+      "summary": "累计17项产品修复在专用分支；272项原待审已逐条核对，第4轮补修#48/#64/#66。其余合理问题继续按编号处理。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本轮22项Highlight最小复现、实际scanner LF/CRLF验证、隔离Chromium CSP与资产摘要核对完成；产品全量及平台验收未运行。此前14项修复的历史证据单列，不混记。",
+      "summary": "第4轮三项先红后绿；source-root重复20轮、传输专项race、完整messaging race及两包vet通过。不是全量发布/平台验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
-        "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json"
+        "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-004.json"
       ]
     },
     "documentation": {
@@ -67,16 +71,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "原剩余272项按编号升序全部审查完成，#104/#112附证据关闭；14项既有分支修复保留。审查完成不代表修复完成。下一轮按编号处理可执行合理问题：#28等云端复跑，#48 pending边界，#57产品需求，#64压缩名称冲突。只push分支，不合并main/发布。",
+  "handoff": "272项升序审查完成；第4轮补修#48/#64/#66并验证，累计17项分支修复。#28仍等完整云端复跑，#57保留产品需求，下一轮#68/#69/#71。仅push分支，不合并main/发布。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "7936ed69597c7649e68c0b5fa885e636d8501203",
+    "commit": "b89236e23ef5efe29cc8a44594567d509f2e268b",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "原批次评论保留；本轮#104/#112已说明反证/实际函数结果后关闭，其余不因缺复现而关闭。",
+  "issue_comments": "原评论保留；#104/#112已反证关闭；第4轮#48/#64/#66已push并评论红绿证据，未合并/发行所以保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -104,28 +108,25 @@
       "本轮剩余条目均已有处理结论且无可执行项",
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
-    "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/ordered-review.json",
-    "nextCycle": 4,
+    "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
+    "nextCycle": 5,
     "lastCompletedBatch": {
-      "cycle": 3,
-      "type": "ordered-source-review",
-      "reviewed": 272,
-      "pendingReview": 0,
-      "newRepairs": 0,
-      "cumulativeFixed": 14,
-      "closedNotSupported": [
-        104,
-        112
+      "cycle": 4,
+      "issues": [
+        48,
+        64,
+        66
       ],
-      "verification": "22 Highlight minimal reproductions; actual Markdown scanner; isolated Chromium CSP; asset hashes and advisory metadata. Full product/platform acceptance pending."
+      "cumulativeFixed": 17,
+      "pendingReview": 0,
+      "remainingFollowupTargets": 267,
+      "verification": "PASS red/green, repeated source-root and messaging race, transfer race, vet"
     },
     "limits": "后台调度不可用，不承诺对话结束后持续运行；当前会话继续执行。",
     "nextIssueCandidates": [
-      28,
-      48,
-      57,
-      64,
-      66
+      68,
+      69,
+      71
     ]
   },
   "orderedReview": {
