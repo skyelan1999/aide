@@ -63,10 +63,14 @@
     "State comparison cannot assign exclusive authorship when external processes or concurrent commands alter the same files; it does not prove semantic report correctness. Remote workspace delivery boundary unchanged. Windows/macOS, full start.command workbench and real paid provider acceptance NOT_RUN. No merge/release/deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "09964c29378481bffaa06d15e0ed7c2eaae72f61",
+    "issueComments": {
+      "146": "https://github.com/skyelan1999/aide/issues/146#issuecomment-6428827490"
+    }
   },
   "sourceSHA256": {
     "docs/architecture/task-artifact-delivery.md": "a23f435a580b636a1a2409b511b0094b21fafa8c93518e82e523d1f456c3df8a",
