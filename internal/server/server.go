@@ -1147,6 +1147,7 @@ func (a *App) Close() {
 				b.Cancel()
 			}
 		}
+		a.revokeNativeEditorsLocked()
 
 		a.mu.Unlock()
 		a.messageMu.Lock()
@@ -2305,6 +2306,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	assistantApprovalChanged := a.settings.AssistantAutoReview != in.Settings.AssistantAutoReview
 	a.settings = in.Settings
+	if sandboxMode(a.settings.SandboxMode) == "read-only" {
+		a.revokeNativeEditorsLocked()
+	}
 	if assistantApprovalChanged {
 		a.refreshAssistantReviewsLocked()
 	}

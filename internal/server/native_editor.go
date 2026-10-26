@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -24,6 +25,9 @@ type nativeEditorLease struct {
 	LockGen                             int64
 	Target                              nativeEditorTarget
 	Expires                             time.Time
+	Context                             context.Context
+	Cancel                              context.CancelFunc
+	CloseBackend                        func(context.Context) (map[string]any, error)
 }
 type nativeEditorContextKey struct{}
 
@@ -185,7 +189,8 @@ func (a *App) openNativeEditor(w http.ResponseWriter, r *http.Request) {
 	a.nativeEditorOpening = true
 	defer func() { a.nativeEditorOpening = false }()
 	for ticket, old := range a.nativeEditors {
-		nativeEditorRPC(r.Context(), "POST", "/lease/close", map[string]any{"leaseId": old.LeaseID})
+		old.Cancel()
+		old.CloseBackend(r.Context())
 		delete(a.nativeEditors, ticket)
 	}
 	response, e := nativeEditorRPC(r.Context(), "POST", "/lease/open", map[string]any{"generation": target.Generation, "project": target.ProjectStem, "view": target.View})
@@ -205,11 +210,33 @@ func (a *App) openNativeEditor(w http.ResponseWriter, r *http.Request) {
 	}
 	ticket := hex.EncodeToString(secret)
 	lease := &nativeEditorLease{Ticket: ticket, LeaseID: rid, Workspace: a.wsID(), Revision: a.wsRevision, Package: a.pluginPackageDigestLocked("brdplan"), LockGen: lock.Gen, Target: target, Expires: time.Now().Add(60 * time.Second)}
+	lease.Context, lease.Cancel = context.WithCancel(a.bgCtx)
+	var closeOnce sync.Once
+	var closeResult map[string]any
+	var closeErr error
+	lease.CloseBackend = func(ctx context.Context) (map[string]any, error) {
+		closeOnce.Do(func() {
+			closeResult, closeErr = nativeEditorRPC(ctx, "POST", "/lease/close", map[string]any{"leaseId": rid})
+		})
+		return closeResult, closeErr
+	}
+	// Register the lease and its teardown together. Shutdown cannot begin
+	// waiting before this worker is admitted, or leave a late unowned lease.
+	a.bgMu.Lock()
+	if a.bgClosing {
+		a.bgMu.Unlock()
+		lease.Cancel()
+		lease.CloseBackend(context.Background())
+		fail(w, 503, errors.New("Editor host is stopping"))
+		return
+	}
 	if a.nativeEditors == nil {
 		a.nativeEditors = map[string]*nativeEditorLease{}
 	}
 	a.nativeEditors[ticket] = lease
-	go a.watchNativeEditor(ticket)
+	a.bgWg.Add(1)
+	go func() { defer a.bgWg.Done(); a.watchNativeEditor(lease) }()
+	a.bgMu.Unlock()
 	jsonOut(w, 200, map[string]any{"protocol": 1, "status": "ready", "editorId": ticket, "url": "/plugin-editor/" + ticket + "/", "expiresAt": lease.Expires})
 }
 func (a *App) nativeEditorLeaseLocked(ticket string) (*nativeEditorLease, error) {
@@ -218,7 +245,7 @@ func (a *App) nativeEditorLeaseLocked(ticket string) (*nativeEditorLease, error)
 		return nil, errors.New("Editor capability revoked")
 	}
 	lock := a.loadLockStateLocked()
-	if time.Now().After(lease.Expires) || lock.Locked || lock.Gen != lease.LockGen || a.wsRevision != lease.Revision || a.wsID() != lease.Workspace || a.pluginPackageDigestLocked("brdplan") != lease.Package {
+	if sandboxMode(a.settings.SandboxMode) == "read-only" || lease.Context.Err() != nil || time.Now().After(lease.Expires) || lock.Locked || lock.Gen != lease.LockGen || a.wsRevision != lease.Revision || a.wsID() != lease.Workspace || a.pluginPackageDigestLocked("brdplan") != lease.Package {
 		return nil, errors.New("Editor scope expired or revoked")
 	}
 	if _, e := a.workbenchPageLocked("brdplan"); e != nil {
@@ -240,23 +267,35 @@ func (a *App) nativeEditorLeaseLocked(ticket string) (*nativeEditorLease, error)
 	}
 	return lease, nil
 }
-func (a *App) watchNativeEditor(ticket string) {
+func (a *App) revokeNativeEditorsLocked() {
+	for ticket, lease := range a.nativeEditors {
+		delete(a.nativeEditors, ticket)
+		lease.Cancel()
+	}
+}
+
+func (a *App) watchNativeEditor(lease *nativeEditorLease) {
+	defer lease.CloseBackend(context.Background())
+	defer lease.Cancel()
 	timer := time.NewTicker(time.Second)
 	defer timer.Stop()
-	for range timer.C {
+	for {
+		select {
+		case <-lease.Context.Done():
+			return
+		case <-timer.C:
+		}
 		a.mu.Lock()
-		lease := a.nativeEditors[ticket]
-		if lease == nil {
+		if a.nativeEditors[lease.Ticket] != lease {
 			a.mu.Unlock()
 			return
 		}
-		_, e := a.nativeEditorLeaseLocked(ticket)
+		_, e := a.nativeEditorLeaseLocked(lease.Ticket)
 		if e != nil {
-			delete(a.nativeEditors, ticket)
+			delete(a.nativeEditors, lease.Ticket)
 		}
 		a.mu.Unlock()
 		if e != nil {
-			nativeEditorRPC(context.Background(), "POST", "/lease/close", map[string]any{"leaseId": lease.LeaseID})
 			return
 		}
 	}
@@ -270,7 +309,8 @@ func (a *App) closeNativeEditor(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"state": "unknown", "saved": "unknown"})
 		return
 	}
-	out, e := nativeEditorRPC(r.Context(), "POST", "/lease/close", map[string]any{"leaseId": lease.LeaseID})
+	lease.Cancel()
+	out, e := lease.CloseBackend(r.Context())
 	if e != nil {
 		fail(w, 409, e)
 		return
@@ -289,6 +329,11 @@ func (a *App) serveNativeEditor(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, e.Error(), 403)
 		return
 	}
+	ctx, cancel := context.WithCancel(r.Context())
+	stop := context.AfterFunc(copyLease.Context, cancel)
+	defer stop()
+	defer cancel()
+	r = r.WithContext(ctx)
 	asset := r.PathValue("asset")
 	origin := r.Header.Get("Origin")
 	if origin != "" && origin != "null" {
