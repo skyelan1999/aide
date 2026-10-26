@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.17.5 RC11**
+**当前版本：0.1.17.5 RC12**
+
+## 0.1.17.5 RC12（2026-10-26）
+
+- Supplemental release: built-in market discovery and Windows directory/manual activation fixes
+
 
 ## 0.1.17.5 RC11（2026-10-26）
 
