@@ -70,6 +70,11 @@
       "result": "PASS",
       "receipt": ".agent-state/verify-20261026T180010574913Z.log",
       "fingerprint": "e7f42bc8277cad4b8a2b1770d90c466d156caacefaf29756e9edb8954447170e"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
     }
   ],
   "notes": [
@@ -82,10 +87,16 @@
     "Prior Landlock/native-platform/full release-gate blockers remain; no main merge, release or deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "3b14a97e59e79104a03c228d1cebb36a094c23e2",
+    "issueComments": {
+      "109": "https://github.com/skyelan1999/aide/issues/109#issuecomment-6423586113",
+      "110": "https://github.com/skyelan1999/aide/issues/110#issuecomment-6423586935",
+      "113": "https://github.com/skyelan1999/aide/issues/113#issuecomment-6423589210"
+    }
   },
   "sourceSHA256": {
     "internal/server/web/app.js": "9380b4bbc8433baeea7757897371e27e73dc25538388e697fb1cc8656d144f5d",
