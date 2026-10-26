@@ -236,6 +236,46 @@ func (f *transferFS) ReadDir(p string) ([]os.FileInfo, error) {
 	}
 	return f.client.ReadDir(v)
 }
+
+// Directory inventories must be bounded before materializing a manifest.
+// Each recursion level retains at most one local batch or one SFTP packet.
+func (f *transferFS) readDirEach(ctx context.Context, p string, visit func(os.FileInfo) error) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if f.root == nil {
+		v, err := f.remotePath(p)
+		if err != nil {
+			return err
+		}
+		return f.client.ReadDirEachContext(ctx, v, visit)
+	}
+	dir, err := f.root.Open(p)
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		entries, readErr := dir.Readdir(256)
+		for _, entry := range entries {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if err := visit(entry); err != nil {
+				return err
+			}
+		}
+		if readErr == io.EOF {
+			return nil
+		}
+		if readErr != nil {
+			return readErr
+		}
+	}
+}
 func (f *transferFS) Mkdir(p string) error {
 	if p == "." {
 		return nil
