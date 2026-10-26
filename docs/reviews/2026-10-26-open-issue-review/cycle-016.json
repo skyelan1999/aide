@@ -89,10 +89,15 @@
     "Used repository aide-runtime-release skill for the release script, within branch-only authorization. No main merge, release, deployment, real container teardown or paid model. Previously recorded full-gate/platform blockers remain."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "101": "https://github.com/skyelan1999/aide/issues/101#issuecomment-6422660324",
+      "102": "https://github.com/skyelan1999/aide/issues/102#issuecomment-6422661185",
+      "103": "https://github.com/skyelan1999/aide/issues/103#issuecomment-6422662190"
+    }
   },
   "sourceSHA256": {
     "internal/server/server.go": "11ff32a39a26f0191d6958ba95a71e80bdba1ab1e3a1b90934f340f6cd6a97fd",
