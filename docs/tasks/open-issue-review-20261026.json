@@ -60,14 +60,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第25轮#135/#137/#138已修；累计72项产品/实现修复、1项既有测试修正。",
+      "summary": "第26轮#139/#140/#141已修；累计75项产品/实现修复、1项既有测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "源码及打包函数回归、Chromium明暗22项组件、真实复制/选中表格/鼠标移出及quick通过；完整工作台/跨平台未运行。",
+      "summary": "源码/生产包/独立mxClient几何回归、Chromium明暗28项组件及quick通过；完整工作台/完整旋转拖动保存/跨平台未运行。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -92,7 +92,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-022.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-023.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-024.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-025.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-025.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-026.json"
       ]
     },
     "documentation": {
@@ -116,11 +117,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第25轮#135/#137/#138已push并评论；累计73项分支修复，原272项剩211跟进；下一轮#139/#140/#141正文已读。",
+  "handoff": "第26轮#139/#140/#141已修，待push评论；累计76项分支修复，原272项剩208跟进；下一轮#142/#143/#144正文已读。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "efdc8757734bfe1b199941516d66df37b7fba54f",
-    "pushed": true,
+    "commit": "6131e6e6d004207d96e9d5e02ee56fd66fe06625",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
@@ -154,26 +155,26 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 26,
+    "nextCycle": 27,
     "lastCompletedBatch": {
-      "cycle": 25,
+      "cycle": 26,
       "issues": [
-        135,
-        137,
-        138
+        139,
+        140,
+        141
       ],
-      "cumulativeFixed": 73,
-      "cumulativeProductFixed": 72,
+      "cumulativeFixed": 76,
+      "cumulativeProductFixed": 75,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 211,
-      "verification": "PASS source/bundled regressions, actual Chromium22 component cases/quick; full workbench/cross-platform NOT_RUN"
+      "remainingFollowupTargets": 208,
+      "verification": "PASS source/app/mxClient geometry regressions, actual Chromium28 component cases/quick; full workbench/gesture persistence/cross-platform NOT_RUN"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      139,
-      140,
-      141
+      142,
+      143,
+      144
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -181,14 +182,14 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 26,
+      "cycle": 27,
       "status": "in_progress",
       "candidates": [
-        139,
-        140,
-        141
+        142,
+        143,
+        144
       ],
-      "phase": "139-140-141-runtime-reproduced"
+      "phase": "latest-bodies-read-pending-reproduction"
     }
   },
   "orderedReview": {

@@ -1886,28 +1886,37 @@
       "number": 141,
       "title": "[Bug] Handle zero-radius SVG arcs as straight lines",
       "url": "https://github.com/skyelan1999/aide/issues/141",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxUtils.arcToCurves零半径提前返回尚未赋值的result；mxAbstractCanvas2D.arcTo收到undefined不调用lineTo/推进端点。",
+      "status": "fixed-on-branch",
+      "evidence": "画布零半径弧显式lineTo并推进终点，同起终点无操作；公共arcToCurves对零半径返回沿直线的退化三次曲线数组，非零半径行为保留。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxUtils.arcToCurves零半径提前返回尚未赋值的result；mxAbstractCanvas2D.arcTo收到undefined不调用lineTo/推进端点。",
+      "repairCommit": "6131e6e6d004207d96e9d5e02ee56fd66fe06625",
+      "repairEvidence": "cycle-026.json"
     },
     {
       "number": 140,
       "title": "[Bug] Detect self-loops before cloning orthogonal router terminals",
       "url": "https://github.com/skyelan1999/aide/issues/140",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxEdgeStyle.OrthConnector独立scaleCellState clone两个terminal，之后target==source判定self-loop恒不成立。",
+      "status": "fixed-on-branch",
+      "evidence": "正交自环使用原始sourceScaled/targetScaled身份判断，不比较缩放后的两个克隆；自环两端共享较大jetty间距，非自环独立间距保留。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxEdgeStyle.OrthConnector独立scaleCellState clone两个terminal，之后target==source判定self-loop恒不成立。",
+      "repairCommit": "6131e6e6d004207d96e9d5e02ee56fd66fe06625",
+      "repairEvidence": "cycle-026.json"
     },
     {
       "number": 139,
       "title": "[Bug] Keep rotation raster local to the vertex handler",
       "url": "https://github.com/skyelan1999/aide/issues/139",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxVertexHandler.rotateVertex raster=15/5/1 没有var声明，classic script产生全局写；影响限制iframe内命名空间。",
+      "status": "fixed-on-branch",
+      "evidence": "旋转raster声明为处理器局部变量；保留15/5/1度吸附，不创建或覆盖页面全局raster。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxVertexHandler.rotateVertex raster=15/5/1 没有var声明，classic script产生全局写；影响限制iframe内命名空间。",
+      "repairCommit": "6131e6e6d004207d96e9d5e02ee56fd66fe06625",
+      "repairEvidence": "cycle-026.json"
     },
     {
       "number": 138,
@@ -2772,7 +2781,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 211,
+    "remainingFollowupTargets": 208,
     "followupRepairs": [
       48,
       64,
@@ -2831,7 +2840,10 @@
       134,
       135,
       137,
-      138
+      138,
+      139,
+      140,
+      141
     ]
   }
 }

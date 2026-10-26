@@ -1,0 +1,317 @@
+{
+  "cycle": 26,
+  "baseline": "d4d8d5b653db4d24af819fee0fcb1f59ce145644",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    139,
+    140,
+    141
+  ],
+  "commits": {
+    "139": "6131e6e6d004207d96e9d5e02ee56fd66fe06625",
+    "140": "6131e6e6d004207d96e9d5e02ee56fd66fe06625",
+    "141": "6131e6e6d004207d96e9d5e02ee56fd66fe06625"
+  },
+  "cumulativeProductFixes": 75,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 76,
+  "original272RemainingFollowup": 208,
+  "red": [
+    {
+      "issue": 139,
+      "command": "AIDE_DRAWIO_COPY=app node scripts/test_drawio_geometry_fixes.cjs rotation",
+      "result": "EXPECTED_FAIL",
+      "observed": "rotation must not create page-global raster\n\ntrue !== false"
+    },
+    {
+      "issue": 140,
+      "command": "AIDE_DRAWIO_COPY=app node scripts/test_drawio_geometry_fixes.cjs loop",
+      "result": "EXPECTED_FAIL",
+      "observed": "self-loop must use shared max jetty before cloned states lose identity\n\nfalse !== true"
+    },
+    {
+      "issue": 141,
+      "command": "AIDE_DRAWIO_COPY=app node scripts/test_drawio_geometry_fixes.cjs arc",
+      "result": "EXPECTED_FAIL",
+      "observed": "utility returns finite straight cubic for degenerate arc\n+ actual - expected\n\n+ []\n- [\n-   5,\n-   7,\n-   40,\n-   50,\n-   40,\n-   50\n- ]"
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_drawio_geometry_fixes.cjs",
+      "result": "PASS",
+      "scope": "Source, actual app.min and standalone mxClient functions: 15/5/1 snapping with absent/existing global raster; asymmetric/symmetric buffers, exact threshold, scales1/2 and distinct-terminal control path; rx/ry/both/-0 degenerate arcs, same endpoint no-op and normal finite curves. Orth control fixture stops at terminal-routing boundary for nonfallback paths, not full router simulation."
+    },
+    {
+      "command": "node scripts/test_drawio_clone_constraints.cjs; node scripts/test_drawio_layout_fixes.cjs; node scripts/test_drawio_preview_bounds.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "AIDE_DRAWIO_GEOMETRY_ACCEPTANCE=1 AIDE_DRAWIO_SELECT_TABLE=1 AIDE_DRAWIO_LAYOUT_ACCEPTANCE=1 AIDE_DRAWIO_CLONE_CONSTRAINT_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle26-browser node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "PASS",
+      "browserResult": {
+        "checks": [
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "light",
+            "width": 1440,
+            "result": "PASS"
+          },
+          {
+            "case": "actual selected vertex handler, 15/5/1 snap and preserved page-global raster",
+            "theme": "light",
+            "result": "PASS"
+          },
+          {
+            "case": "real router distinguishes self-loop jetty fallback from distinct terminals; rendered self-loop finite",
+            "theme": "light",
+            "result": "PASS",
+            "points": [
+              {
+                "x": 1114,
+                "y": 781
+              },
+              {
+                "x": 1134,
+                "y": 781
+              },
+              {
+                "x": 1134,
+                "y": 801
+              },
+              {
+                "x": 1114,
+                "y": 801
+              }
+            ]
+          },
+          {
+            "case": "actual SVG canvas zero-radius line, native path length and next endpoint",
+            "theme": "light",
+            "result": "PASS",
+            "d": "M 10 10 L 80 60 L 150 60",
+            "length": 156.02325439453125,
+            "endpoint": {
+              "x": 150,
+              "y": 60
+            }
+          },
+          {
+            "case": "actual duplicateCells remaps custom links, special IDs, wildcards and unmapped inherited names",
+            "theme": "light",
+            "result": "PASS"
+          },
+          {
+            "case": "real pointer leaves graph: clear icons/highlight and remove exact listener on destroy",
+            "theme": "light",
+            "result": "PASS",
+            "resets": 2,
+            "iconsCleared": true,
+            "listenerRemoved": true
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "light",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "light",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 4.700000047683716
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "light",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "select malformed table and construct remaining handles",
+            "theme": "light",
+            "result": "PASS",
+            "handles": 5
+          },
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "dark",
+            "width": 390,
+            "result": "PASS"
+          },
+          {
+            "case": "actual selected vertex handler, 15/5/1 snap and preserved page-global raster",
+            "theme": "dark",
+            "result": "PASS"
+          },
+          {
+            "case": "real router distinguishes self-loop jetty fallback from distinct terminals; rendered self-loop finite",
+            "theme": "dark",
+            "result": "PASS",
+            "points": [
+              {
+                "x": 534,
+                "y": 781
+              },
+              {
+                "x": 554,
+                "y": 781
+              },
+              {
+                "x": 554,
+                "y": 801
+              },
+              {
+                "x": 534,
+                "y": 801
+              }
+            ]
+          },
+          {
+            "case": "actual SVG canvas zero-radius line, native path length and next endpoint",
+            "theme": "dark",
+            "result": "PASS",
+            "d": "M 10 10 L 80 60 L 150 60",
+            "length": 156.02325439453125,
+            "endpoint": {
+              "x": 150,
+              "y": 60
+            }
+          },
+          {
+            "case": "actual duplicateCells remaps custom links, special IDs, wildcards and unmapped inherited names",
+            "theme": "dark",
+            "result": "PASS"
+          },
+          {
+            "case": "real pointer leaves graph: clear icons/highlight and remove exact listener on destroy",
+            "theme": "dark",
+            "result": "PASS",
+            "resets": 2,
+            "iconsCleared": true,
+            "listenerRemoved": true
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "dark",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "dark",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 3.400000035762787
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "dark",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "select malformed table and construct remaining handles",
+            "theme": "dark",
+            "result": "PASS",
+            "handles": 5
+          },
+          {
+            "case": "expanded",
+            "result": "PASS",
+            "elapsedMs": 1836
+          },
+          {
+            "case": "xml-depth",
+            "result": "PASS",
+            "elapsedMs": 1834
+          },
+          {
+            "case": "cell-depth",
+            "result": "PASS",
+            "elapsedMs": 1884
+          },
+          {
+            "case": "cell-cycle",
+            "result": "PASS",
+            "elapsedMs": 1863
+          },
+          {
+            "case": "inactive-page",
+            "result": "PASS",
+            "elapsedMs": 1863
+          },
+          {
+            "case": "page-count",
+            "result": "PASS",
+            "elapsedMs": 1929
+          },
+          {
+            "case": "aggregate-expansion",
+            "result": "PASS",
+            "elapsedMs": 1859
+          },
+          {
+            "case": "lazy-reference-depth",
+            "result": "PASS",
+            "elapsedMs": 2051
+          }
+        ],
+        "errors": [],
+        "browser": "154.0.8037.57",
+        "actualBundledIframe": true,
+        "fullWorkbench": false
+      },
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle26-browser/result.json",
+      "visualReview": "Viewed light1440/dark390 actual selected self-loop, target and blue native SVG broken-line fixture; table screenshots retained from prior cases.",
+      "scope": "Actual shipped iframe/bundle28 cases. Real selected vertex handler calculations use constructed mxMouseEvent (not full drag/mouseup persistence). Real OrthConnector/SegmentConnector paths distinguish self versus distinct terminals, actual self-loop SVG rendered with finite points. Real mxSvgCanvas2D outputs M10 10 L80 60 L150 60, native path length156.023254 and endpoint150,60. Previous22 cases retained; no pageerrors. One owned page/context/browser closed."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T204721205365Z.log",
+      "fingerprint": "f6217a202e9483b6e1457838ba2781380f13808da7f9325b779cbb9b96b08614"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check; node --check internal/server/web/vendor/drawio/mxgraph/src/handler/mxVertexHandler.js; node --check internal/server/web/vendor/drawio/mxgraph/src/view/mxEdgeStyle.js; node --check internal/server/web/vendor/drawio/mxgraph/src/util/mxUtils.js; node --check internal/server/web/vendor/drawio/mxgraph/src/util/mxAbstractCanvas2D.js; node --check internal/server/web/vendor/drawio/js/app.min.js; node --check internal/server/web/vendor/drawio/mxgraph/mxClient.js; node --check scripts/drawio-geometry-browser-cases.cjs",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "旋转raster声明为处理器局部变量；保留15/5/1度吸附，不创建或覆盖页面全局raster。",
+    "正交自环使用原始sourceScaled/targetScaled身份判断，不比较缩放后的两个克隆；自环两端共享较大jetty间距，非自环独立间距保留。",
+    "画布零半径弧显式lineTo并推进终点，同起终点无操作；公共arcToCurves对零半径返回沿直线的退化三次曲线数组，非零半径行为保留。",
+    "Four uniquely matched substitutions in each app.min and standalone mxClient synchronize with source; headers/licenses retained. Public utility curve-array contract remains; canvas emits explicit L for zero radii.",
+    "Initial added indentation caught by diff-check corrected; final SVG fixture placed in an owned fixed host and screenshots viewed. No product behavior was altered for the fixture.",
+    "No Go/backend change; no Go test claimed. Full start.command workbench, actual rotation drag/mouseup/save, arbitrary SVG import/export/native CAD, other engines/platforms NOT_RUN. No merge/release/deployment."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "cec0febd8f56bcc834f92de6a593df11093c257454482e4866c1d3930ff826a3",
+    "docs/architecture/office-viewer.md": "4c526a4488a58339c2a7efc2f47424f13e4045b69b10039737d161494dc512b3",
+    "internal/server/web/vendor/drawio/js/app.min.js": "ce9c96784dfba626fb4bcfdbecae05dcf818f056e28abdb14c428bb209c34c3b",
+    "internal/server/web/vendor/drawio/mxgraph/mxClient.js": "837754bf4168b89314870c70d65c4dbadcae9f6a29d6f0fe84c4d83b0a28ab8b",
+    "internal/server/web/vendor/drawio/mxgraph/src/handler/mxVertexHandler.js": "79cea562dcee2180fb8a3a3e0ebfc79a843ad4ea5b9a24bed9b1466b7e08572a",
+    "internal/server/web/vendor/drawio/mxgraph/src/util/mxAbstractCanvas2D.js": "c81781961b629910c7be7b03e18f665cadf0625062e661d8846968bae1d42ed3",
+    "internal/server/web/vendor/drawio/mxgraph/src/util/mxUtils.js": "5b38cf25ba62bc14f9fe672974c43706ee5407bbd1b7519537e0595a45e7b560",
+    "internal/server/web/vendor/drawio/mxgraph/src/view/mxEdgeStyle.js": "04ecbee72084ff9ce2196c029e7e1e3da0fa70f28a44a372b75cca7c8f277dcc",
+    "scripts/browser-drawio-preview-bounds.cjs": "e22d094556718f9224f9dba5ee464b08e389d18bcc892b3b3ed2946ebe64c5f8",
+    "scripts/drawio-geometry-browser-cases.cjs": "d1058779769060b08fd65b38a85e03494bd1d317d9ff411f4090deaddd64477b",
+    "scripts/test_drawio_geometry_fixes.cjs": "4b6200bab9d7d6b4d3634e7cd3c64d6faf9937c21be07176992eb390fa01a6f3"
+  }
+}
