@@ -57,6 +57,8 @@ type transferJob struct {
 	UploadName          string           `json:"uploadName,omitempty"`
 	UploadChunks        map[int64]string `json:"-"`
 	UploadCommitted     bool             `json:"uploadCommitted,omitempty"`
+	RawDownload         bool             `json:"rawDownload,omitempty"`
+	DownloadVersion     string           `json:"downloadVersion,omitempty"`
 	uploading           map[int64]context.CancelFunc
 	uploadWG            sync.WaitGroup
 	checkpointAt        time.Time
@@ -84,6 +86,7 @@ type transferCreate struct {
 	Name            string   `json:"name"`
 	Size            int64    `json:"size"`
 	Concurrency     int      `json:"concurrency"`
+	RawDownload     bool     `json:"rawDownload"`
 }
 
 func (a *App) transfers() *transferManager {
@@ -206,6 +209,9 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 	if in.Operation != "upload" && in.Operation != "copy" && in.Operation != "move" && in.Operation != "download" {
 		return nil, errors.New("无效传输操作")
 	}
+	if in.RawDownload && (in.Operation != "download" || len(in.Paths) != 1) {
+		return nil, errors.New("原文件快照下载需要选择一个普通文件")
+	}
 	if in.Destination == "" {
 		in.Destination = "workspace"
 	}
@@ -221,6 +227,7 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 		}
 	}
 	j := &transferJob{ID: newID(), Operation: in.Operation, Source: in.Source, Destination: in.Destination, Status: "paused", Created: time.Now().UnixMilli(), Concurrency: transferWorkers(in.Concurrency), ChunkSize: transferChunkSize}
+	j.RawDownload = in.RawDownload
 	m.app.mu.Lock()
 	j.Workspace = m.app.wsID()
 	m.app.mu.Unlock()
@@ -296,6 +303,9 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 			}
 			if !info.IsDir() && !info.Mode().IsRegular() {
 				return nil, errors.New("仅支持普通文件与目录")
+			}
+			if in.RawDownload && info.IsDir() {
+				return nil, errors.New("原文件快照下载不支持目录，请使用打包下载")
 			}
 			target := path.Join(in.DestinationPath, path.Base(p))
 			stage := path.Join(in.DestinationPath, fmt.Sprintf(".aide-transfer-%s-%d", j.ID, i))

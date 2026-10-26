@@ -27,6 +27,9 @@ func (m *transferManager) run(ctx context.Context, j *transferJob) error {
 	}
 	defer src.Close()
 	if j.Operation == "download" {
+		if j.RawDownload {
+			return m.fileSnapshot(ctx, j, src)
+		}
 		return m.archive(ctx, j, src)
 	}
 	dst, err := m.app.streamTransferFS(ctx, j.Destination, true)
@@ -575,7 +578,7 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 	if err = m.check(j); err != nil {
 		return err
 	}
-	return os.Rename(name, filepath.Join(m.jobDir(j), "download.zip"))
+	return m.publishDownload(j, name, "download.zip")
 }
 
 func indexOfTransferPart(j *transferJob, p *transferPart) int {
