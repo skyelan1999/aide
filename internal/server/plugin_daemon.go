@@ -15,6 +15,7 @@ package server
 
 import (
 	"bufio"
+	"container/list"
 	"context"
 	"encoding/json"
 	"errors"
@@ -93,8 +94,13 @@ type daemonProc struct {
 	since      time.Time
 	crashCount int
 
-	eventsMu sync.Mutex
-	events   []daemonEvent
+	eventsMu     sync.Mutex
+	events       []daemonEvent
+	eventPool    *daemonEventPool
+	eventBytes   int
+	eventWeights []int
+	eventRefs    []*list.Element
+	eventDrops   int
 
 	startedAt time.Time
 	backoff   time.Duration
@@ -111,10 +117,11 @@ type DaemonManager struct {
 	pluginsPath string
 	mu          sync.Mutex
 	procs       map[string]*daemonProc
+	eventPool   *daemonEventPool
 }
 
 func newDaemonManager(a *App) *DaemonManager {
-	return &DaemonManager{app: a, pluginsPath: a.pluginsPath, procs: map[string]*daemonProc{}}
+	return &DaemonManager{app: a, pluginsPath: a.pluginsPath, procs: map[string]*daemonProc{}, eventPool: &daemonEventPool{}}
 }
 
 // closeReadyOnce 幂等地就绪信号 readyCh（readLoop 与测试 launchHook 共用，避免重启循环重复 close）。
@@ -226,6 +233,9 @@ func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[st
 		return errors.New("daemon 插件设置无法序列化或超过 32 KiB")
 	}
 	m.mu.Lock()
+	if m.eventPool == nil {
+		m.eventPool = &daemonEventPool{}
+	}
 	p, exists := m.procs[id]
 	if !exists {
 		p = &daemonProc{
@@ -234,6 +244,7 @@ func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[st
 			settingsJSON: string(settingsBytes),
 			pending:      map[int64]chan rpcResp{},
 			events:       []daemonEvent{},
+			eventPool:    m.eventPool,
 			stopCh:       make(chan struct{}),
 			backoff:      daemonBaseBackoff,
 		}
@@ -511,12 +522,7 @@ func (p *daemonProc) send(obj any) {
 }
 
 func (p *daemonProc) appendEvent(ev daemonEvent) {
-	p.eventsMu.Lock()
-	defer p.eventsMu.Unlock()
-	p.events = append(p.events, ev)
-	if len(p.events) > daemonEventCap {
-		p.events = p.events[len(p.events)-daemonEventCap:]
-	}
+	p.retainEvent(ev)
 }
 
 // Stop 终止 daemon 插件并释放其占用的端口（协议插件 stop() 钩子负责关套接字）。
@@ -742,8 +748,9 @@ func (m *DaemonManager) Events(id string) []daemonEvent {
 	if p == nil {
 		return []daemonEvent{}
 	}
-	p.eventsMu.Lock()
-	defer p.eventsMu.Unlock()
+	mu := p.eventMutex()
+	mu.Lock()
+	defer mu.Unlock()
 	out := make([]daemonEvent, len(p.events))
 	copy(out, p.events)
 	return out
