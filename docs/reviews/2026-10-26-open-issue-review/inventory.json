@@ -1994,19 +1994,25 @@
       "number": 127,
       "title": "[Bug] Bound decompressed DOCX size in browser preview",
       "url": "https://github.com/skyelan1999/aide/issues/127",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "app.js renderDocx arrayBuffer→docx.renderAsync 无压缩展开预算，64MiB输入限制不限制JSZip输出。",
+      "status": "fixed-on-branch",
+      "evidence": "DOCX有界读取16MiB，预读中央目录限512项、8MiB/项、32MiB总解压，再用固定JSZip3.10.1公开流逐块验证实际输出不累积；超限暂停拒绝进入渲染。正常原有渲染保留，10秒预检截止有虚拟时钟故障回归。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "app.js renderDocx arrayBuffer→docx.renderAsync 无压缩展开预算，64MiB输入限制不限制JSZip输出。",
+      "repairCommit": "1dab3508eb81e3823aaea6133aaefb0a01d8bf06",
+      "repairEvidence": "cycle-022.json"
     },
     {
       "number": 126,
       "title": "[Bug] Bound recursive DXF block expansion during SVG preview",
       "url": "https://github.com/skyelan1999/aide/issues/126",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "app.js renderEntity INSERT/DIMENSION递归无深度/总实体/循环限制，catch不阻止此前累积DOM。",
+      "status": "fixed-on-branch",
+      "evidence": "DXF流式限4MiB及解析前10万行；定义/展开5万实体、5万SVG节点、20万几何点、32层块和循环检查；文本每实体16384字符、合计1Mi字符。INSERT/DIMENSION共用预算，超限清除部分SVG并报错。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "app.js renderEntity INSERT/DIMENSION递归无深度/总实体/循环限制，catch不阻止此前累积DOM。",
+      "repairCommit": "831ceab3cb6697d723aa1111326c8f386021de04",
+      "repairEvidence": "cycle-022.json"
     },
     {
       "number": 125,
@@ -2026,10 +2032,13 @@
       "number": 123,
       "title": "[P2] Preserve queued prompts when steer admission is rejected",
       "url": "https://github.com/skyelan1999/aide/issues/123",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "workflow.go queueUpdate steer 先删除Queue/更新Queued，再select task.Steer，default429无回滚且跳过save。",
+      "status": "fixed-on-branch",
+      "evidence": "排队转插话先实际准入通道，再修改Queue/Steers；满、nil或无接收者返回429时内存及后续落盘完全不变；保留已有成功插话/编辑/删除行为。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "workflow.go queueUpdate steer 先删除Queue/更新Queued，再select task.Steer，default429无回滚且跳过save。",
+      "repairCommit": "19aa4848a67229fbe8df47b30abc20488058fec2",
+      "repairEvidence": "cycle-022.json"
     },
     {
       "number": 122,
@@ -2735,7 +2744,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 223,
+    "remainingFollowupTargets": 220,
     "followupRepairs": [
       48,
       64,
@@ -2782,7 +2791,10 @@
       119,
       120,
       121,
-      122
+      122,
+      123,
+      126,
+      127
     ]
   }
 }
