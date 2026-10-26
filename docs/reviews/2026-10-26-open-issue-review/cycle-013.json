@@ -1,0 +1,81 @@
+{
+  "cycle": 13,
+  "baseline": "e7d08095",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    94
+  ],
+  "commits": {
+    "94": "ff1f1ac3fa4f0a4e7e9be97586927a27441f69eb"
+  },
+  "cumulativeProductFixes": 38,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 39,
+  "original272RemainingFollowup": 245,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "scope": "Owned temporary data volumes and deterministic blocked state-file/destination fixtures. No real data-volume migration, actual disk-full fault or power-loss test."
+  },
+  "red": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue94' -count=1 -timeout=1m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.035,
+      "observed": "Both migrations returned success despite state path occupied by directory; flat conflicting original deleted, session source moved and existing canonical overwritten."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue94|^TestMigration|^TestSessionBucket|^TestDetectLayout|^TestRoundTripAllSessions|^TestSavePicksCanonical|^TestArchiveMove' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 7.372,
+      "scope": "Initial preflight rejection + existing migration suites."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue94|^TestMigration|^TestSessionBucket|^TestDetectLayout|^TestRoundTripAllSessions|^TestSavePicksCanonical|^TestArchiveMove|^TestIntegrity|^TestDataLayout' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 11.871,
+      "scope": "Final verified preimage recovery, exact permissions, retained journal on blocked rollback and retry, corrupt backup refusal, committed marker cleanup, both entry points recover before no-op, manual recovery does not also undo previous completed migration, existing migration and integrity tests."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T160722147525Z.log",
+      "fingerprint": "037ce145def583a3e8dc33fe866e3b08ddb9b5a2e4936adbc6662542ceb1cc15"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465local links"
+    }
+  ],
+  "intermediateFailures": [
+    {
+      "durationSeconds": 5.965,
+      "result": "FAIL",
+      "reason": "Permission test assumed os.WriteFile0640 bypasses restrictive executor umask. Set fixture chmod explicitly, and restore chmod on verified temporary file to preserve captured mode independently of umask."
+    }
+  ],
+  "notes": [
+    "Both migration families stream snapshot all source/target/prior marker preimages into0700/0600 private undo storage before changing files; SHA256 plus original permission metadata. Pending journal and primary result marker publish through synced temporary file and root-confined rename. Final marker and commit-journal errors propagate instead of success.",
+    "Failure attempts restore originals and previous marker, removing only files absent in the preimage. If rollback fails, pending journal and verified preimages remain and startup fails. On next entry pending undo is retried before layout/no-op decisions; committed journals clean up without undo. Component fixtures simulate interruption by reopening persisted pending state, not by killing process or cutting power.",
+    "Manual bucket rollback reports marker-write errors. If it recovers an interrupted latest attempt, it returns without also rolling back the prior successful migration whose marker was restored.",
+    "Migration requires exclusive startup ownership of the volume and extra temporary disk. Existing historical migration backups/quarantine retained; normal completion/recovery deletes only its own undo copies. No filesystem-corruption, power-loss, concurrent external writer or native platform guarantee.",
+    "No user data read/changed, no main merge, release or deployment. Next numbered issue97;95/96 already repaired."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "internal/server/migration.go": "11c000cf79fb8d66743682373c4da2db8de39f0d3ba9ebed7031cdceba06129f",
+    "internal/server/migration_undo.go": "c823738c18ffffc1bd4f298b1c4d0add92fc3a36aaece50247a1f9675e81d24b",
+    "internal/server/migration_journal_failure_test.go": "723041afd17d40805909842b238e7076aaabd13a5b3195a1da2f5509f4ca92fc"
+  }
+}

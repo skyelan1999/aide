@@ -2279,10 +2279,13 @@
       "number": 94,
       "title": "[P2] Fail migrations when rollback journal cannot be persisted",
       "url": "https://github.com/skyelan1999/aide/issues/94",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "migration.go:两个迁移尾部均忽略os.WriteFile(state)错误，且前面已移动文件；缺少journal却返回nil破坏rollback保证。",
+      "status": "fixed-on-branch",
+      "evidence": "两种启动迁移先持久化已验证原件与undo日志，状态写失败返回错误并恢复；恢复受阻保留日志，下次入口先恢复，覆盖冲突源/目标/旧marker及权限，race/vet/quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "migration.go:两个迁移尾部均忽略os.WriteFile(state)错误，且前面已移动文件；缺少journal却返回nil破坏rollback保证。",
+      "repairCommit": "ff1f1ac3fa4f0a4e7e9be97586927a27441f69eb",
+      "repairEvidence": "cycle-013.json"
     },
     {
       "number": 93,
@@ -2666,7 +2669,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 246,
+    "remainingFollowupTargets": 245,
     "followupRepairs": [
       48,
       64,
@@ -2690,7 +2693,8 @@
       89,
       91,
       92,
-      93
+      93,
+      94
     ]
   }
 }
