@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -537,7 +538,7 @@ func (va *VoiceAgent) lock() {
 	va.history = nil
 }
 
-// changePassword 修改密钥（需先解锁并能解开现有密文）。
+// changePassword 修改密钥（需先解锁、验证所提供的原密钥并能解开现有密文）。
 func (va *VoiceAgent) changePassword(oldPw, newPw string) error {
 	if newPw == "" {
 		return errors.New("请设置新密钥")
@@ -546,6 +547,14 @@ func (va *VoiceAgent) changePassword(oldPw, newPw string) error {
 	defer va.mu.Unlock()
 	if len(va.key) == 0 {
 		return errors.New("请先解锁")
+	}
+	if oldPw == "" {
+		return errors.New("请输入原密钥")
+	}
+	current := deriveKey(oldPw)
+	legacy := DeriveAESKeyLegacy(oldPw)
+	if subtle.ConstantTimeCompare(current, va.key)|subtle.ConstantTimeCompare(legacy, va.key) != 1 {
+		return errors.New("原密钥错误")
 	}
 	if va.cachedCipher != "" {
 		if _, err := decryptWithKey(va.key, va.cachedCipher); err != nil {
