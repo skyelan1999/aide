@@ -59,10 +59,13 @@
     "No frontend/UI source change, no actual KiCad save/close acceptance, no release/full gate. Next issue94 migration journaling requires a separate batch;95/96 already repaired, followed by97."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "93": "https://github.com/skyelan1999/aide/issues/93#issuecomment-6420616327"
+    }
   },
   "sourceSHA256": {
     "internal/server/native_editor.go": "9d912fa37f4c26ecbca553ecb73761662a3e9745a53f190e6bacdf5545773838",

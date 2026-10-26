@@ -92,16 +92,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第12轮#93已验证待push评论；累计38项分支修复，原272项剩246项跟进。第13轮从#94开始，再#97（#95/#96已修）。",
+  "handoff": "第12轮#93已push并评论；累计38项分支修复，原272项剩246项跟进。第13轮从#94开始，再#97（#95/#96已修）。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "4e0171418f63bb0e2c19f98d16a6f885aa678b88",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第10轮#87/#88/#89及第11轮#91/#92已push并评论；#90依据既有共享防护与回归证据已评论关闭；合理修复未合并main前保持open。",
+  "issue_comments": "第12轮#93已push并评论；#90依据回归证据关闭，合理修复未合并main前保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
