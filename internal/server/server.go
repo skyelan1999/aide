@@ -2461,7 +2461,7 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		entry.Text = text
 	}
 	// 回写 voice-history.json（向后兼容设置页时间线），并归位到 assistant 会话
-	a.mu.Lock()
+	va.mu.Lock()
 	if !va.encrypted || len(va.key) > 0 {
 		va.history = append(va.history, entry)
 		if len(va.history) > voiceHistoryMax {
@@ -2469,6 +2469,8 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		}
 		va.persistLocked()
 	}
+	va.mu.Unlock()
+	a.mu.Lock()
 	a.recordAgenticExchangeLocked(text, dec, "voice")
 	if entry.Action == "send" {
 		// #34：小秘有效交互计数持久化，达到阈值后台演化。
@@ -2507,13 +2509,20 @@ func (a *App) voiceHistory(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, st)
 }
 
-// voiceHistoryClear 清空小秘历史（保留长期记忆文件）。加密态下同样生效。
+// voiceHistoryClear 清空小秘历史（保留长期记忆文件）。加密态须先解锁。
 func (a *App) voiceHistoryClear(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	va := a.voiceAgent
 	a.mu.Unlock()
 	if va != nil {
-		va.clearHistory()
+		if err := va.clearHistory(); err != nil {
+			status := 500
+			if errors.Is(err, errVoiceHistoryLocked) {
+				status = 403
+			}
+			fail(w, status, err)
+			return
+		}
 	}
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }

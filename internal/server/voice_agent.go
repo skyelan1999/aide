@@ -37,6 +37,8 @@ type VoiceMemory struct {
 
 const voiceHistoryMax = 200
 
+var errVoiceHistoryLocked = errors.New("历史已加密且锁定，请先解锁再清空")
+
 // insertCooldownDur 按「插队敏感度」返回非中止类插队的冷却窗口：
 // 冷却窗口内再次出现的非紧急 insert 会被降级为 queue，避免模型误判频繁打断当前 run。
 // 明确中止/止损类（stop=true）不受此冷却限制，始终插队。
@@ -102,22 +104,33 @@ func newVoiceAgent(dataPath string) *VoiceAgent {
 }
 
 // persistLocked 调用方需已持锁。
-func (va *VoiceAgent) persistLocked() {
+func (va *VoiceAgent) persistLocked() error {
 	f := voiceHistoryFile{Encrypted: va.encrypted}
 	switch {
 	case va.encrypted && len(va.key) > 0:
-		if b, err := json.Marshal(va.history); err == nil {
-			f.Cipher, _ = encryptWithKey(va.key, b)
+		b, err := json.Marshal(va.history)
+		if err != nil {
+			return err
+		}
+		var encErr error
+		f.Cipher, encErr = encryptWithKey(va.key, b)
+		if encErr != nil {
+			return encErr
 		}
 	case va.encrypted:
 		f.Cipher = va.cachedCipher // 锁定：保留原密文
 	default:
 		f.History = va.history
 	}
-	b, _ := json.Marshal(f)
 	hp := VoiceHistoryPath(va.dataPath)
-	_ = os.MkdirAll(filepath.Dir(hp), 0700)
-	_ = os.WriteFile(hp, b, 0o600)
+	if err := os.MkdirAll(filepath.Dir(hp), 0700); err != nil {
+		return err
+	}
+	if err := atomicJSON(hp, f); err != nil {
+		return err
+	}
+	va.cachedCipher = f.Cipher
+	return nil
 }
 
 func voiceMemorySummary(m VoiceMemory) string {
@@ -395,11 +408,19 @@ func (va *VoiceAgent) historyDesc() []VoiceHistoryEntry {
 	return out
 }
 
-func (va *VoiceAgent) clearHistory() {
+func (va *VoiceAgent) clearHistory() error {
 	va.mu.Lock()
+	defer va.mu.Unlock()
+	if va.encrypted && len(va.key) == 0 {
+		return errVoiceHistoryLocked
+	}
+	previous := va.history
 	va.history = nil
-	va.persistLocked()
-	va.mu.Unlock()
+	if err := va.persistLocked(); err != nil {
+		va.history = previous
+		return err
+	}
+	return nil
 }
 
 // encStatus 返回历史加密/解锁状态（不泄露内容）。
@@ -423,9 +444,14 @@ func (va *VoiceAgent) enable(password string) error {
 	if va.encrypted {
 		return errors.New("已启用加密")
 	}
+	previousKey := va.key
 	va.key = deriveKey(password)
 	va.encrypted = true
-	va.persistLocked()
+	if err := va.persistLocked(); err != nil {
+		va.key = previousKey
+		va.encrypted = false
+		return err
+	}
 	return nil
 }
 
@@ -491,11 +517,15 @@ func (va *VoiceAgent) ReWrapAll(oldKey, newKey []byte) error {
 	if err != nil {
 		return err
 	}
+	previousCipher, previousKey := va.cachedCipher, va.key
 	va.cachedCipher = newCipher
 	if len(va.key) > 0 {
 		va.key = newKey
 	}
-	va.persistLocked()
+	if err := va.persistLocked(); err != nil {
+		va.cachedCipher, va.key = previousCipher, previousKey
+		return err
+	}
 	return nil
 }
 
@@ -522,8 +552,12 @@ func (va *VoiceAgent) changePassword(oldPw, newPw string) error {
 			return errors.New("原密钥错误")
 		}
 	}
+	previousKey := va.key
 	va.key = deriveKey(newPw)
-	va.persistLocked()
+	if err := va.persistLocked(); err != nil {
+		va.key = previousKey
+		return err
+	}
 	return nil
 }
 
@@ -534,6 +568,7 @@ func (va *VoiceAgent) disable(password string) error {
 	if !va.encrypted {
 		return nil
 	}
+	previousKey, previousHistory, previousCipher := va.key, va.history, va.cachedCipher
 	if va.cachedCipher != "" {
 		// 新密钥失败回退旧 SHA-256 密钥，兼容迁移中途密文
 		b, err := decryptWithKey(deriveKey(password), va.cachedCipher)
@@ -551,7 +586,11 @@ func (va *VoiceAgent) disable(password string) error {
 	va.encrypted = false
 	va.key = nil
 	va.cachedCipher = ""
-	va.persistLocked()
+	if err := va.persistLocked(); err != nil {
+		va.encrypted = true
+		va.key, va.history, va.cachedCipher = previousKey, previousHistory, previousCipher
+		return err
+	}
 	return nil
 }
 
