@@ -69,11 +69,13 @@ jobs:
           set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules"
           python scripts/test_windows_image_slot.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
           python scripts/test_windows_directory_launcher.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+          python scripts/test_windows_update_agent.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
       - name: PowerShell 7 launcher regression
         shell: pwsh
         run: |
           python scripts/test_windows_image_slot.py --pwsh pwsh.exe
           python scripts/test_windows_directory_launcher.py --pwsh pwsh.exe
+          python scripts/test_windows_update_agent.py --pwsh pwsh.exe
   gate:
     if: always()
     needs: [quick, go, windows]
