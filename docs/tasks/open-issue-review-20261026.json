@@ -24,7 +24,9 @@
     "docs/plugins/office.md",
     "docs/architecture/personality-evolution.md",
     "docs/architecture/office-viewer.md",
-    "docs/architecture/ssh-storage.md"
+    "docs/architecture/ssh-storage.md",
+    "internal/localmounts",
+    "docs/plugins/daemon-protocol.md"
   ],
   "stages": {
     "requirements": {
@@ -43,14 +45,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第8轮#80/#82/#83已修复并验证；累计28项产品修复、1项测试修正，持续目标进行中。",
+      "summary": "第9轮#84/#85/#86已修复验证；累计31项产品修复、1项测试修正。Codex目标自动续接继续。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "第8轮先红后绿；最终相关race24.134s、server vet、完整quick通过。较宽组3项受Landlock ABI及/home/aide权限限制，单独记录失败；非全量验收。",
+      "summary": "整个localmounts race、最终server相关race50.909s、完整messaging race8.361s、三包vet及quick通过；Windows原生/真实设备和全量发行门禁未验。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -58,7 +60,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-005.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-006.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-007.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-008.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-008.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-009.json"
       ]
     },
     "documentation": {
@@ -82,11 +85,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "持续目标已保存，第7轮#77/#78/#79和第8轮#80/#82/#83均已验证、push和评论；累计28项产品修复、1项测试修正，原272项剩256需跟进。下一检查点第9轮#84/#85/#86。只push审查分支，未合并main/发行/部署；无后台调度接口。",
+  "handoff": "第9轮#84/#85/#86验证完成待push/comment登记；累计31项产品修复、1项测试修正；原272项剩253需跟进。第10轮#87/#88/#89；Codex目标自动续接，仅push分支。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "e647baa168f5e74d6d886b6b4f4e28e9bd2e4c70",
-    "pushed": true,
+    "commit": "5d2c0361f9a8d7a71d44cf4031acc19685801268",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
@@ -96,8 +99,8 @@
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
     "status": "in_progress",
-    "executionMode": "current-session-resumable",
-    "backgroundScheduler": "unavailable",
+    "executionMode": "host-managed-goal-continuation",
+    "backgroundScheduler": "codex-goal-continuation",
     "branch": "codex/open-issue-review-20261026",
     "constraints": [
       "只push该分支，禁止合并main、自动合并、发布或部署",
@@ -120,26 +123,26 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 9,
+    "nextCycle": 10,
     "lastCompletedBatch": {
-      "cycle": 8,
+      "cycle": 9,
       "issues": [
-        80,
-        82,
-        83
+        84,
+        85,
+        86
       ],
-      "cumulativeFixed": 29,
-      "cumulativeProductFixed": 28,
+      "cumulativeFixed": 32,
+      "cumulativeProductFixed": 31,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 256,
-      "verification": "PASS related race24.134s, vet, quick; broader3 kernel/home tests recorded as FAIL"
+      "remainingFollowupTargets": 253,
+      "verification": "PASS package/race/vet/quick; nativeWindows/realdevices not run"
     },
-    "limits": "后台调度不可用，不承诺对话结束后持续运行；当前会话继续执行。",
+    "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      84,
-      85,
-      86
+      87,
+      88,
+      89
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -147,14 +150,14 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 9,
-      "status": "pending",
+      "cycle": 10,
+      "status": "in_progress",
       "candidates": [
-        84,
-        85,
-        86
+        87,
+        88,
+        89
       ],
-      "phase": "resume-from-checkpoint"
+      "phase": "inspect-and-reproduce"
     }
   },
   "orderedReview": {

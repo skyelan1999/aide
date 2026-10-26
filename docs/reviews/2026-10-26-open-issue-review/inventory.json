@@ -2351,28 +2351,37 @@
       "number": 86,
       "title": "[P2] Bound daemon event retention by total payload bytes",
       "url": "https://github.com/skyelan1999/aide/issues/86",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "plugin_daemon.go:appendEvent仅以daemonEventCap裁剪数量；scanner允许4MiB/行，retained payload没有字节总量上限。",
+      "status": "fixed-on-branch",
+      "evidence": "单事件32KiB/进程4MiB/管理器32MiB，UTF8/JSON成本截断、旧事件淘汰和数组回收；并发/全局及Node daemon回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "plugin_daemon.go:appendEvent仅以daemonEventCap裁剪数量；scanner允许4MiB/行，retained payload没有字节总量上限。",
+      "repairCommit": "5d2c0361",
+      "repairEvidence": "cycle-009.json"
     },
     {
       "number": 85,
       "title": "[P2] Revalidate the lock generation before mutating message state",
       "url": "https://github.com/skyelan1999/aide/issues/85",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "message_center.go:messageAPI入口readLockState，text分支decode后直接SendText；read分支才重验Gen。解码阻塞期间锁屏的TOCTOU描述成立。",
+      "status": "fixed-on-branch",
+      "evidence": "延迟body在锁定/重新解锁后423；所有受保护变更用可取消租约，锁屏等待退出再提交代次，不持App.mu等网络；消息/锁屏及完整messaging race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "message_center.go:messageAPI入口readLockState，text分支decode后直接SendText；read分支才重验Gen。解码阻塞期间锁屏的TOCTOU描述成立。",
+      "repairCommit": "00c1310d",
+      "repairEvidence": "cycle-009.json"
     },
     {
       "number": 84,
       "title": "[P2] Preserve original byte offsets for Windows mount paths",
       "url": "https://github.com/skyelan1999/aide/issues/84",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "localmounts/config.go:Relative先ToLower(base)再用len(b)+1切原candidate，U+023A大小写UTF8字节长度不同，存在错位；不声称os.Root越界。",
+      "status": "fixed-on-branch",
+      "evidence": "原路径组件EqualFold，不使用转换后字节偏移；Unicode与遍历拒绝先红后绿，整个localmounts race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "localmounts/config.go:Relative先ToLower(base)再用len(b)+1切原candidate，U+023A大小写UTF8字节长度不同，存在错位；不声称os.Root越界。",
+      "repairCommit": "acd47268",
+      "repairEvidence": "cycle-009.json"
     },
     {
       "number": 83,
@@ -2635,7 +2644,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 256,
+    "remainingFollowupTargets": 253,
     "followupRepairs": [
       48,
       64,
@@ -2650,7 +2659,10 @@
       79,
       80,
       82,
-      83
+      83,
+      84,
+      85,
+      86
     ]
   }
 }
