@@ -131,10 +131,16 @@
     "No Go code change; no Go test claimed. Full start.command workbench, other browser engines, Windows/macOS and production acceptance NOT_RUN. Existing platform blockers retained."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "13f68ddcfa876644c5bfa240ecfda2ce81366c9f",
+    "issueComments": {
+      "128": "https://github.com/skyelan1999/aide/issues/128#issuecomment-6426402412",
+      "130": "https://github.com/skyelan1999/aide/issues/130#issuecomment-6426403374",
+      "131": "https://github.com/skyelan1999/aide/issues/131#issuecomment-6426404077"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "e753a9bbb6163a44db1b31ec48d6b93e48dc0579c0aacb72a8c68e682d0e5151",
