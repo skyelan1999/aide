@@ -358,10 +358,16 @@
     "No Go/backend change; no Go test claimed. Full start.command workbench, other browsers/platforms, long-duration soak/native devices NOT_RUN. Existing platform and full-gate blockers retained. No merge/release/deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "25b0c3ebf509d7c82da3e8aeb647dd58fc4e88be",
+    "issueComments": {
+      "142": "https://github.com/skyelan1999/aide/issues/142#issuecomment-6427234737",
+      "143": "https://github.com/skyelan1999/aide/issues/143#issuecomment-6427235733",
+      "144": "https://github.com/skyelan1999/aide/issues/144#issuecomment-6427236328"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "07de1271f867d83ad4faeeed8b03eb9bacceb1ecf13d16e846248152599d3195",
