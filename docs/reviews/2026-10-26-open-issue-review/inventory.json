@@ -2062,28 +2062,37 @@
       "number": 119,
       "title": "[P3] Authenticate proof writes in the local Mermaid CSP fixture server",
       "url": "https://github.com/skyelan1999/aide/issues/119",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "serve-mermaid-csp.py do_POST /proof 仅大小限制，无 Origin/token/Content-Type gate，loopback监听限制网络但不能鉴别本地浏览器写入。",
+      "status": "fixed-on-branch",
+      "evidence": "回环Mermaid proof写入要求每次运行随机令牌、自定义头、精确Host及有Origin时同源，JSON和16KiB限制；拒绝畸形输入，原子替换收据，GET保留严格CSP并加CORP/nosniff。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "serve-mermaid-csp.py do_POST /proof 仅大小限制，无 Origin/token/Content-Type gate，loopback监听限制网络但不能鉴别本地浏览器写入。",
+      "repairCommit": "7b28b3468a433bb802b4a8af46a1d53a97e1f6ae",
+      "repairEvidence": "cycle-020.json"
     },
     {
       "number": 118,
       "title": "[P3] Prevent repeated x3 interpolation from mutating already interpolated frames",
       "url": "https://github.com/skyelan1999/aide/issues/118",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "interpolate_frames_x3.cjs 按 rows*columns 读帧，原地覆写 atlas/manifest，设置provenance后未拦截重跑，也未按实际frames忽略padding。",
+      "status": "fixed-on-branch",
+      "evidence": "已插帧/进行中标记一律拒绝，开始覆盖素材前先原子写进行中标记；按clip实际帧索引读取，排除填充格，保留总时长，按真实RGBA哈希统计uniqueFrames；失败需重建整套原素材后重试。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "interpolate_frames_x3.cjs 按 rows*columns 读帧，原地覆写 atlas/manifest，设置provenance后未拦截重跑，也未按实际frames忽略padding。",
+      "repairCommit": "5d9ad5f2d698afb27919092c5f29d8ce4289db8e",
+      "repairEvidence": "cycle-020.json"
     },
     {
       "number": 117,
       "title": "[P3] Constrain avatar packer IDs and source paths before filesystem writes",
       "url": "https://github.com/skyelan1999/aide/issues/117",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "两 pack_avatar 脚本 pack(job) 直接读取 job.source、job.id 拼 audit/output 路径；expected 清单校验位于后续publish，风险仅本地处理不可信job。",
+      "status": "fixed-on-branch",
+      "evidence": "两个头像打包器共享登记ID/场景、源图片目录及无符号链接路径校验；缓存审计和发布文件名同样校验，生成图先复制到对应输入区域。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "两 pack_avatar 脚本 pack(job) 直接读取 job.source、job.id 拼 audit/output 路径；expected 清单校验位于后续publish，风险仅本地处理不可信job。",
+      "repairCommit": "9af9b26c8fd4c6cf10761cbc1671ce290c875a47",
+      "repairEvidence": "cycle-020.json"
     },
     {
       "number": 116,
@@ -2717,7 +2726,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 229,
+    "remainingFollowupTargets": 226,
     "followupRepairs": [
       48,
       64,
@@ -2758,7 +2767,10 @@
       113,
       114,
       115,
-      116
+      116,
+      117,
+      118,
+      119
     ]
   }
 }

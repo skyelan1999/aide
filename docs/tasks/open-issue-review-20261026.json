@@ -38,7 +38,8 @@
     "docs/architecture/software-updates.md",
     "docs/architecture/execution-policy.md",
     "docs/security/password-hashing.md",
-    "docs/installation.md"
+    "docs/installation.md",
+    "docs/design/virtual-avatar-original-art.md"
   ],
   "stages": {
     "requirements": {
@@ -57,14 +58,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第19轮#114/#115/#116已修；累计54项产品修复、1项测试修正。",
+      "summary": "第20轮#117/#118/#119已修；累计57项产品/实现修复、1项既有测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "认证/锁屏/保险库/重置race35.522s、vet、quick及实际星图Chromium验收通过；wheel生命周期6项模拟Docker测试通过，真实离线构建未执行。",
+      "summary": "路径/插帧Node回归、真实回环proof认证5项、实际Mermaid/严格CSP Chromium和quick通过；Sharp为模拟，无真实原画或整套工作台验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -83,7 +84,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-016.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-017.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-018.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-019.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-019.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-020.json"
       ]
     },
     "documentation": {
@@ -107,11 +109,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第19轮#114/#115/#116已push并评论；累计55项分支修复，原272项剩229跟进；下一轮#117/#118/#119。",
+  "handoff": "第20轮#117/#118/#119验证完成待push评论；累计58项分支修复，原272项剩226跟进；下一轮#120/#121/#122，正文已读取。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "76c0ab404ba09f4869664676838fd9c768e74085",
-    "pushed": true,
+    "commit": "e21f84102b76be5f76afa68c5f37796e77cca09e",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
@@ -145,26 +147,26 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 20,
+    "nextCycle": 21,
     "lastCompletedBatch": {
-      "cycle": 19,
+      "cycle": 20,
       "issues": [
-        114,
-        115,
-        116
+        117,
+        118,
+        119
       ],
-      "cumulativeFixed": 55,
-      "cumulativeProductFixed": 54,
+      "cumulativeFixed": 58,
+      "cumulativeProductFixed": 57,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 229,
-      "verification": "PASS auth race/vet/quick, actual starmap Chromium tests,6mockDocker lifecycle tests; real offline build NOT_RUN"
+      "remainingFollowupTargets": 226,
+      "verification": "PASS path/interpolation Node mocks,5real-loopback proof tests,real Mermaid strictCSP Chromium,quick; real artwork/full workbench NOT_RUN"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      117,
-      118,
-      119
+      120,
+      121,
+      122
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -179,7 +181,7 @@
         118,
         119
       ],
-      "phase": "latest-issues-read-source-inspection"
+      "phase": "verified-preparing-branch-delivery"
     }
   },
   "orderedReview": {
