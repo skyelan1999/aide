@@ -1,0 +1,99 @@
+{
+  "cycle": 18,
+  "baseline": "2a069d8a",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    109,
+    110,
+    113
+  ],
+  "commits": {
+    "109": "3cc8a36b042e2f67b69d389a5839c97b49d34373",
+    "110": "3e249275a11cb13b55dad37051069fd27f158b7a",
+    "113": "ae2344d83fd3e3c762ed066d1f8acb627615b5e2"
+  },
+  "browserFixtureCommit": "3f3e5f4133f982177e886dc9d06a3d8487e5613c",
+  "cumulativeProductFixes": 51,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 52,
+  "original272RemainingFollowup": 232,
+  "red": [
+    {
+      "issue": 109,
+      "command": "node scripts/test_reminder_popup.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Second marker failure suppressed dialog after consuming first reminder."
+    },
+    {
+      "issue": 110,
+      "command": "node scripts/test_voice_sample_duration.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Simulated30-second recording uploaded durationSec5."
+    },
+    {
+      "issue": 113,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue113' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 3.872,
+      "observed": "Locked configured assistant returned200, sent protected marker to mock model and mutated history; unconfigured returned400 instead of403. Initial ordinary positive fixture mistakenly edited deserialized API copy; corrected to edit actual App session before green run."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue113|^TestManualCompaction|^TestRemediationConcurrentCompaction|^TestCompaction|^TestMalformedCompaction|^TestCancelledOutputMaterializeBeforeCompaction|^TestContextPreviewAccumulates|^TestRetryConversationCompacted|^TestSearchAndCompaction' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 14.027
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "node scripts/test_reminder_popup.cjs; node scripts/test_voice_sample_duration.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle18-browser node scripts/browser-reminder-voice-regressions.cjs",
+      "result": "PASS",
+      "scope": "Actual production function source and dialog markup, native Chromium dialog, light1440/dark390, pointer/keyboard close, partial marker failure/retry, simulated40s recording and displayed40s. Production theme/style/macos/workbench CSS. No page errors; owned page/context/browser closed.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle18-browser/result.json",
+      "screenshots": [
+        "light-reminders.png",
+        "light-voice.png",
+        "dark-reminders.png",
+        "dark-voice.png"
+      ],
+      "visualReview": "Viewed dark reminder and dark voice screenshot; dialog items/actions visible, sample row displays40s. Existing voice guide contrast/narrow label wrapping observed, unchanged in this behavioral fix."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T180010574913Z.log",
+      "fingerprint": "e7f42bc8277cad4b8a2b1770d90c466d156caacefaf29756e9edb8954447170e"
+    }
+  ],
+  "notes": [
+    "先完整渲染并成功showModal，再逐项独立保存popup-seen；单项/头像反馈失败不抑制弹窗或后续标记，GET后重查隐藏/策略状态。",
+    "按单次录音单调时钟起止计算秒数，排除麦克风权限等待和结束编码延迟；保留音频及MIME，支持设备自行结束。",
+    "手动压缩入口在配置检查/读取私密历史/模型请求前校验小秘解锁，锁定403；提交时仍锁定则拒绝保存；普通会话和明确解锁正向通过。",
+    "showModal success means dialog opened, not proof user read every notification. Failed marker can retry after close.",
+    "Relocking before commit rejects result; cannot undo upstream data sent by a previously authorized request, and no continuous unlock epoch/cancellation guarantee is claimed.",
+    "Browser acceptance is an isolated actual-source component fixture with mocked APIs/microphone, not a complete start.command workbench, real microphone, model, or device acceptance.",
+    "Prior Landlock/native-platform/full release-gate blockers remain; no main merge, release or deployment."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "internal/server/web/app.js": "9380b4bbc8433baeea7757897371e27e73dc25538388e697fb1cc8656d144f5d",
+    "internal/server/workflow.go": "301f568e8374177f9612179a3123316c733acebac796388b0bdc3559cf17bb68",
+    "internal/server/assistant_compaction_gate_test.go": "b4de36df4c9a216f9752155c38fd1cbcee99d50ee252f16e762b6296243f59b1",
+    "scripts/test_reminder_popup.cjs": "5cb9241e362588a49ebf9f73cd9d80d225fc0b549f753c0c9ee16c75c0d838ae",
+    "scripts/test_voice_sample_duration.cjs": "7b2182b5b5fe5cdd004adfe3c07233878b83d60b43dee007334c82b149c01f99",
+    "scripts/browser-reminder-voice-regressions.cjs": "3063bd948a4ee721d8a0d01fb3fa65ed2764c48d7694544b9b7b84560c58b7d0",
+    "docs/agent/router.json": "d9298d62b6316c53f05ca7980b5de9a81320d2eb467b9929cb5e9876f65dbd47"
+  }
+}

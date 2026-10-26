@@ -2116,10 +2116,13 @@
       "number": 113,
       "title": "[P2] Require assistant unlock before compacting private history",
       "url": "https://github.com/skyelan1999/aide/issues/113",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "workflow.go compactSession 直接 materializeConversationLocked/snapshot/buildCompactionSummary，未见 assistant unlock 门；GET session 有该门。",
+      "status": "fixed-on-branch",
+      "evidence": "手动压缩入口在配置检查/读取私密历史/模型请求前校验小秘解锁，锁定403；提交时仍锁定则拒绝保存；普通会话和明确解锁正向通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "workflow.go compactSession 直接 materializeConversationLocked/snapshot/buildCompactionSummary，未见 assistant unlock 门；GET session 有该门。",
+      "repairCommit": "ae2344d83fd3e3c762ed066d1f8acb627615b5e2",
+      "repairEvidence": "cycle-018.json"
     },
     {
       "number": 112,
@@ -2141,19 +2144,25 @@
       "number": 110,
       "title": "[P3] Store actual duration for browser-recorded voice samples",
       "url": "https://github.com/skyelan1999/aide/issues/110",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "app.js uploadSample 固定 durationSec=5；MediaRecorder 由停止按钮结束，未测量实际耗时。",
+      "status": "fixed-on-branch",
+      "evidence": "按单次录音单调时钟起止计算秒数，排除麦克风权限等待和结束编码延迟；保留音频及MIME，支持设备自行结束。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "app.js uploadSample 固定 durationSec=5；MediaRecorder 由停止按钮结束，未测量实际耗时。",
+      "repairCommit": "3e249275a11cb13b55dad37051069fd27f158b7a",
+      "repairEvidence": "cycle-018.json"
     },
     {
       "number": 109,
       "title": "[P3] Show due reminder popup before saving popup-seen markers",
       "url": "https://github.com/skyelan1999/aide/issues/109",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "app.js checkDuePopups 每条 await popup-seen 完成后才 showModal；中途失败进入 catch，先成功项已持久化已通知。",
+      "status": "fixed-on-branch",
+      "evidence": "先完整渲染并成功showModal，再逐项独立保存popup-seen；单项/头像反馈失败不抑制弹窗或后续标记，GET后重查隐藏/策略状态。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "app.js checkDuePopups 每条 await popup-seen 完成后才 showModal；中途失败进入 catch，先成功项已持久化已通知。",
+      "repairCommit": "3cc8a36b042e2f67b69d389a5839c97b49d34373",
+      "repairEvidence": "cycle-018.json"
     },
     {
       "number": 108,
@@ -2699,7 +2708,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 235,
+    "remainingFollowupTargets": 232,
     "followupRepairs": [
       48,
       64,
@@ -2734,7 +2743,10 @@
       103,
       106,
       107,
-      108
+      108,
+      109,
+      110,
+      113
     ]
   }
 }
