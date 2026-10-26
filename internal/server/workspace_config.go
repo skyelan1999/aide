@@ -663,7 +663,11 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		if !a.vault.Unlocked() {
 			switch {
 			case in.VaultPassword != "":
-				if ok, _ := VerifyPassword(in.VaultPassword, a.settings.UserPasswordHash); !ok {
+				ok, _, verifyErr := a.verifyMasterPassword(in.VaultPassword, a.settings.UserPasswordHash)
+				if writeMasterPasswordCooldown(w, verifyErr) {
+					return
+				}
+				if !ok {
 					// 账户密码只用于本地 vault 解锁，不是本机 access-token。
 					// 不能返回 401：前端会把它误判为工作台登录过期并弹出登录框。
 					fail(w, http.StatusLocked, errors.New("账户密码错误，无法解锁凭证保险库"))

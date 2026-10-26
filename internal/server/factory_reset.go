@@ -136,7 +136,10 @@ func (a *App) FactoryReset(scope ResetScope, password string) (backupPath string
 	// 1) 本人复核：涉及凭据或小秘历史时，若已设置账户密码则必须输入正确密码。
 	needPassword := scope.CredentialsAndKeys || scope.SessionsAndMemory
 	if needPassword && a.settings.UserPasswordHash != "" {
-		ok, _ := VerifyPassword(password, a.settings.UserPasswordHash)
+		ok, _, verifyErr := a.verifyMasterPassword(password, a.settings.UserPasswordHash)
+		if verifyErr != nil {
+			return "", false, verifyErr
+		}
 		if !ok {
 			return "", false, errFactoryAuth
 		}
@@ -370,6 +373,9 @@ func (a *App) postFactoryReset(w http.ResponseWriter, r *http.Request) {
 	}
 	backupPath, needRelogin, err := a.FactoryReset(in.Scope, in.Password)
 	if err != nil {
+		if writeMasterPasswordCooldown(w, err) {
+			return
+		}
 		// 密码错误 401，其余 400。
 		if errors.Is(err, errFactoryAuth) {
 			fail(w, 401, err)

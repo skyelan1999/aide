@@ -222,7 +222,11 @@ func (a *App) webAuthnRegisterStart(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	hash := a.settings.UserPasswordHash
 	a.mu.Unlock()
-	if valid, _ := VerifyPassword(in.OldPassword, hash); !valid {
+	valid, _, verifyErr := a.verifyMasterPassword(in.OldPassword, hash)
+	if writeMasterPasswordCooldown(w, verifyErr) {
+		return
+	}
+	if !valid {
 		fail(w, 401, errors.New("密码错误"))
 		return
 	}
@@ -407,7 +411,11 @@ func (a *App) webAuthnDeleteCredential(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	hash := a.settings.UserPasswordHash
 	a.mu.Unlock()
-	if valid, _ := VerifyPassword(in.OldPassword, hash); !valid {
+	valid, _, verifyErr := a.verifyMasterPassword(in.OldPassword, hash)
+	if writeMasterPasswordCooldown(w, verifyErr) {
+		return
+	}
+	if !valid {
 		fail(w, 401, errors.New("密码错误"))
 		return
 	}

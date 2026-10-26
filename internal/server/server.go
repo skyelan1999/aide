@@ -601,6 +601,7 @@ type App struct {
 	assistantUnlockMu       sync.Mutex
 	assistantRealtimeActive map[string]bool
 	assistantUnlocked       map[string]bool
+	masterPasswordAttempts  masterPasswordAttempts
 	// ── 数据完整性（启动校验 + 周期巡检结果）──
 	integrityMu      sync.Mutex
 	integrityRep     IntegrityReport
@@ -2235,7 +2236,10 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.NewPassword != "" {
 		hasPw := a.settings.UserPasswordHash != ""
 		if hasPw {
-			valid, _ := VerifyPassword(in.OldPassword, a.settings.UserPasswordHash)
+			valid, _, verifyErr := a.verifyMasterPassword(in.OldPassword, a.settings.UserPasswordHash)
+			if writeMasterPasswordCooldown(w, verifyErr) {
+				return
+			}
 			if !valid {
 				fail(w, 400, errors.New("原密码错误"))
 				return
@@ -2643,7 +2647,10 @@ func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 		fail(w, 401, errors.New("密码错误"))
 		return
 	}
-	valid, needsUpgrade := VerifyPassword(in.Password, hash)
+	valid, needsUpgrade, verifyErr := a.verifyMasterPassword(in.Password, hash)
+	if writeMasterPasswordCooldown(w, verifyErr) {
+		return
+	}
 	if !valid {
 		fail(w, 401, errors.New("密码错误"))
 		return
@@ -2703,7 +2710,10 @@ func (a *App) unlockAssistantSession(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"ok": false, "needsPassword": true})
 		return
 	}
-	valid, needsUpgrade := VerifyPassword(in.Password, hash)
+	valid, needsUpgrade, verifyErr := a.verifyMasterPassword(in.Password, hash)
+	if writeMasterPasswordCooldown(w, verifyErr) {
+		return
+	}
 	if !valid {
 		log.Printf("小秘会话密码门失败：密码错误 id=%s", s.ID) // 审计：失败不记录密码
 		fail(w, 401, errors.New("密码错误"))
