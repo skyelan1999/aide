@@ -53,20 +53,33 @@ function Send-AidePendingResult {
     }
   } catch { Write-AideUpdateLog 'Terminal result not yet delivered; retained for retry.' }
 }
+function New-AideLauncherProcess([string]$FilePath, [string[]]$ArgumentList) {
+  # Own the process and redirected streams directly. Start-Process on PS 5.1
+  # can retain redirection-file handles beyond WaitForExit/Dispose.
+  $info = New-Object Diagnostics.ProcessStartInfo
+  $info.FileName = $FilePath
+  $info.Arguments = $ArgumentList -join ' '
+  $info.WorkingDirectory = $PWD.Path
+  $info.UseShellExecute = $false
+  $info.CreateNoWindow = $true
+  $info.RedirectStandardOutput = $true
+  $info.RedirectStandardError = $true
+  $process = New-Object Diagnostics.Process
+  $process.StartInfo = $info
+  try { if (-not $process.Start()) { throw 'Cannot start the launcher.' }; return $process }
+  catch { $process.Dispose(); throw }
+}
 function Invoke-AideSlotLauncher {
-  # Pin the process handle before waiting: Windows PowerShell may otherwise
-  # expose a null ExitCode once Start-Process releases its original handle.
-  # Never wait for the process tree, which includes permanent monitors.
   $launcher = Join-Path $PWD 'start.ps1'
   $env:AIDE_OPEN_BROWSER = '0'
-  $outputFile = Join-Path $tmp ('launcher-' + [guid]::NewGuid().ToString('N') + '.out')
-  $errorFile = $outputFile + '.err'
-  $proc = $null
+  $proc = $null; $output = $null; $errors = $null
   try {
-    $options = @{FilePath=$currentPowerShell;ArgumentList=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"' -f $launcher));PassThru=$true;RedirectStandardOutput=$outputFile;RedirectStandardError=$errorFile}
-    if ($env:OS -eq 'Windows_NT') { $options.WindowStyle = 'Hidden' }
-    $proc = Start-Process @options
+    $proc = New-AideLauncherProcess -FilePath $currentPowerShell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"' -f $launcher))
     $null = $proc.Handle
+    # Drain both pipes concurrently, so a full stderr buffer cannot deadlock
+    # startup. Do not wait for permanent monitor descendants.
+    $output = $proc.StandardOutput.ReadToEndAsync()
+    $errors = $proc.StandardError.ReadToEndAsync()
     if (-not $proc.WaitForExit(300000)) {
       $proc.Kill(); $proc.WaitForExit()
       throw 'Launcher process timed out.'
@@ -75,13 +88,16 @@ function Invoke-AideSlotLauncher {
     Write-AideUpdateLog ('Launcher exit code: ' + $exitCode)
     if ($null -eq $exitCode -or $exitCode -ne 0) { throw ('Target launcher failed (exit ' + $exitCode + ').') }
   } finally {
-    foreach ($file in @($outputFile,$errorFile)) {
-      if (Test-Path -LiteralPath $file) {
-        foreach ($line in @(Get-Content -LiteralPath $file -Tail 60)) { Write-AideUpdateLog $line }
-        Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+    foreach ($reader in @($output,$errors)) {
+      if ($reader) {
+        try {
+          if ($reader.Wait(2000)) {
+            foreach ($line in @($reader.Result -split '\r?\n' | Select-Object -Last 60)) { Write-AideUpdateLog $line }
+          } else { Write-AideUpdateLog 'Launcher output pipe remained open; descendant output was not awaited.' }
+        } catch { Write-AideUpdateLog 'Launcher output stream unavailable.' }
       }
     }
-    if ($proc) { $proc.Dispose() }
+    if ($proc) { $proc.StandardOutput.Dispose(); $proc.StandardError.Dispose(); $proc.Dispose() }
   }
 }
 function Resolve-AideUpdateImage([string]$Expected, [string]$Platform, [string]$LoadOutput) {

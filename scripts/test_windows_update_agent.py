@@ -56,10 +56,9 @@ function Invoke-FixtureDocker {
  if($args[0] -eq 'inspect'){if($case -eq 'same-version'){'OLD'}elseif($case -eq 'wrong-runtime'){'OLD'}elseif($case -eq 'containerd-package'){'LOCAL'}else{'NEW'};return}
  throw "Unexpected Docker fixture: $args"
 }
-function Start-Process {
+function New-AideLauncherProcess {
  param($FilePath,$ArgumentList,[switch]$PassThru,[switch]$Wait,$WindowStyle,$RedirectStandardOutput,$RedirectStandardError)
  if($Wait){throw 'Process-tree wait would include permanent monitors'}
- if(-not $PassThru){throw 'Launcher process handle missing'}
  $expected='"'+(Join-Path $PWD 'start.ps1')+'"'
  if($ArgumentList[-1] -cne $expected){throw 'Launcher path with spaces is unquoted'}
  $marker=([IO.File]::ReadAllText((Join-Path $PWD '.aide-image'))).Trim()
@@ -67,12 +66,16 @@ function Start-Process {
  $exit=if($case -eq 'recovery-launcher-failure' -or ($case -in @('launcher-failure','persistent-outage') -and $marker.StartsWith('aide:slot-b '))){7}else{0}
  if($RedirectStandardOutput){[IO.File]::WriteAllText($RedirectStandardOutput,'https://localhost/#token=fixture-secret')}
  if($RedirectStandardError){[IO.File]::WriteAllText($RedirectStandardError,'launcher diagnostic fixture')}
- $p=[pscustomobject]@{ExitCode=$exit;Handle=1}
+ $p=[pscustomobject]@{ExitCode=$exit;Handle=1;StandardOutput=(New-Object IO.StringReader 'https://localhost/#token=fixture-secret');StandardError=(New-Object IO.StringReader 'launcher diagnostic fixture')}
  $p | Add-Member ScriptMethod WaitForExit {param($Timeout) $global:fixture_waits++;return $true}
  $p | Add-Member ScriptMethod Refresh {}
  $p | Add-Member ScriptMethod Dispose {}
  $p | Add-Member ScriptMethod Kill {}
  return $p
+}
+function Start-Process {
+ param($FilePath,$ArgumentList,[switch]$PassThru,[switch]$Wait,$WindowStyle,$RedirectStandardOutput,$RedirectStandardError)
+ New-AideLauncherProcess @PSBoundParameters
 }
 function curl.exe {
  $global:LASTEXITCODE=0
@@ -115,7 +118,7 @@ finally {if($global:fixture_held){$global:fixture_held.Dispose()}}
 
 
 def test_real_launcher(pwsh, source):
-    """Use the actual Start-Process/.NET Process API, without a process adapter."""
+    """Use the actual .NET Process API, without a process adapter."""
     with tempfile.TemporaryDirectory(prefix='aide real launcher space ') as folder:
         root = Path(folder)
         (root / 'agent.ps1').write_bytes(source.read_bytes())
@@ -129,7 +132,7 @@ $updateLog=Join-Path $PWD 'probe.log'
 $tokens=$null;$parseErrors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'agent.ps1'),[ref]$tokens,[ref]$parseErrors)
 if($parseErrors.Count){throw 'Agent parse failed'}
-foreach($name in @('Protect-AideUpdateText','Write-AideUpdateLog','Invoke-AideSlotLauncher')) {
+foreach($name in @('Protect-AideUpdateText','Write-AideUpdateLog','New-AideLauncherProcess','Invoke-AideSlotLauncher')) {
  $fn=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst]},$false)|Where-Object{$_.Name -eq $name})[0]
  . ([scriptblock]::Create($fn.Extent.Text))
 }
@@ -179,7 +182,14 @@ def main():
         with tempfile.TemporaryDirectory(prefix='aide upgrade space ') as folder:
             root = Path(folder)
             (root / 'scripts').mkdir()
-            shutil.copy2(args.source, root / 'scripts/update-agent.ps1')
+            agent = args.source.read_text(encoding='utf-8-sig')
+            # Replace only the process-construction adapter. The separate native
+            # probe below executes this factory and actual OS processes.
+            if 'function New-AideLauncherProcess' in agent:
+                a = agent.index('function New-AideLauncherProcess')
+                b = agent.index('function Invoke-AideSlotLauncher', a)
+                agent = agent[:a] + agent[b:]
+            (root / 'scripts/update-agent.ps1').write_text(agent, encoding='utf-8-sig')
             (root / 'start.ps1').write_text('# process adapter fixture; never executed\n')
             original = f'aide:slot-a {OLD} linux/amd64 ' + (TAG if case == 'same-version' else 'v0.1.17.5-RC10')
             (root / '.aide-image').write_text(original)
