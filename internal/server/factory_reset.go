@@ -232,8 +232,9 @@ func (a *App) applySessionsAndMemoryReset() error {
 		}
 	}
 	// 内存会话表清空，随后重建恰好一个小秘系统会话。
-	for _, session := range a.sessions {
+	for id, session := range a.sessions {
 		session.Deleted = true
+		a.forgetLiveSessionLocked(id)
 	}
 	a.sessions = map[string]*Session{}
 	for id, cancel := range a.cancels {

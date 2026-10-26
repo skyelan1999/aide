@@ -124,7 +124,7 @@ func TestStreamBrokerCap(t *testing.T) {
 // TestLiveRunHelpersWired：App 级 begin/finish 辅助（与 execute 接线一致）。
 // 模拟一次：开始→流式产出→用户取消，小秘拉到 interrupted 已产出。
 func TestLiveRunHelpersWired(t *testing.T) {
-	a := &App{liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
+	a := &App{liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}, sessions: map[string]*Session{"sessX": {ID: "sessX"}}}
 	a.beginLiveRun("sessX", "run1")
 	if sid := a.liveSessionID("run1"); sid != "sessX" {
 		t.Fatalf("taskID→sessionID 映射错误: %q", sid)

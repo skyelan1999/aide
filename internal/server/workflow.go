@@ -1892,10 +1892,45 @@ func (a *App) finishStream(taskID, status, errMsg string) {
 
 // beginLiveRun 标记某会话开始一轮运行：重置实时缓冲，并记录 taskID→sessionID 映射。
 func (a *App) beginLiveRun(sessionID, taskID string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if session := a.sessions[sessionID]; session == nil || session.Deleted {
+		return
+	}
 	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	if a.liveTaskSess == nil {
+		a.liveTaskSess = map[string]string{}
+	}
+	// A replacement run also fences delayed deltas/finish events from its predecessor.
+	for id, sid := range a.liveTaskSess {
+		if sid == sessionID {
+			delete(a.liveTaskSess, id)
+		}
+	}
 	a.liveTaskSess[taskID] = sessionID
-	a.liveTaskMu.Unlock()
 	a.liveBroker.Publish(sessionID, "", streamRunning)
+}
+
+// Deletion holds a.mu, then liveTaskMu; delta publication holds liveTaskMu
+// through the broker write. No publisher may retain an ID across eviction.
+func (a *App) forgetLiveSessionLocked(sessionID string) {
+	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	for taskID, sid := range a.liveTaskSess {
+		if sid == sessionID {
+			delete(a.liveTaskSess, taskID)
+		}
+	}
+	a.liveBroker.Delete(sessionID)
+}
+
+func (a *App) publishLiveDelta(taskID, delta string) {
+	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	if sessionID := a.liveTaskSess[taskID]; sessionID != "" {
+		a.liveBroker.Publish(sessionID, delta, "")
+	}
 }
 
 // liveSessionID 返回 taskID 所属会话 ID（进行中运行期间有效）。
@@ -1908,8 +1943,11 @@ func (a *App) liveSessionID(taskID string) string {
 // finishLiveRun 标记一轮运行终态并清理映射。cancelled→interrupted（保留已产出），failed→failed。
 func (a *App) finishLiveRun(sessionID, taskID, taskStatus string) {
 	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	if sessionID == "" || a.liveTaskSess[taskID] != sessionID {
+		return
+	}
 	delete(a.liveTaskSess, taskID)
-	a.liveTaskMu.Unlock()
 	status := streamDone
 	switch taskStatus {
 	case "cancelled", "paused":
@@ -2067,9 +2105,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		onDelta := func(delta string) {
 			a.publishStream(task.ID, streamEvent{Event: "delta", Text: delta, Round: round})
 			// #35：把 aide 正文增量桥到会话维度的实时输出缓冲，供小秘拉取。
-			if sid := a.liveSessionID(task.ID); sid != "" {
-				a.liveBroker.Publish(sid, delta, "")
-			}
+			a.publishLiveDelta(task.ID, delta)
 		}
 		onReasoning := func(rc string) {
 			a.publishStream(task.ID, streamEvent{Event: "reasoning", Reasoning: rc, Round: round})

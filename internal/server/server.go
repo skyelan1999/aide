@@ -2938,6 +2938,7 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.Deleted = true
+	a.forgetLiveSessionLocked(id)
 	for _, t := range s.Runs {
 		if t.Status == "running" {
 			if cancel := a.cancels[t.ID]; cancel != nil {
@@ -2966,6 +2967,7 @@ func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		s.Deleted = true
+		a.forgetLiveSessionLocked(id)
 		for _, t := range s.Runs {
 			if t.Status == "running" {
 				if cancel := a.cancels[t.ID]; cancel != nil {
