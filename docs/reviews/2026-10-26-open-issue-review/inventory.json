@@ -2324,28 +2324,37 @@
       "number": 89,
       "title": "[P2] Revalidate cached package manifest against catalog metadata",
       "url": "https://github.com/skyelan1999/aide/issues/89",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "plugin_market.go:marketPackage缓存命中仅matches(size,sha256)立即return；manifest.ID/Version绑定只在network路径，目录重用hash时缓存与新版本不一致未拒绝。",
+      "status": "fixed-on-branch",
+      "evidence": "缓存命中同样校验manifest ID/version，离线匹配成功及不匹配拒绝回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "plugin_market.go:marketPackage缓存命中仅matches(size,sha256)立即return；manifest.ID/Version绑定只在network路径，目录重用hash时缓存与新版本不一致未拒绝。",
+      "repairCommit": "d8bfaf186d588bb93c77791d13216baaf48ac92f",
+      "repairEvidence": "cycle-010.json"
     },
     {
       "number": 88,
       "title": "[P2] Create workbench bridges for declared host capabilities",
       "url": "https://github.com/skyelan1999/aide/issues/88",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "plugin_workbench.go:创建bridge的条件未覆盖仅ProjectMessages/MobileCapture声明，capability字段仅在既有工具/文档等桥创建分支内广告。",
+      "status": "fixed-on-branch",
+      "evidence": "独立projectMessages/mobileCapture能力获得受限桥接，调用及工具拒绝回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "plugin_workbench.go:创建bridge的条件未覆盖仅ProjectMessages/MobileCapture声明，capability字段仅在既有工具/文档等桥创建分支内广告。",
+      "repairCommit": "a0f7bb92acaef707893ac734904dec42757d8f52",
+      "repairEvidence": "cycle-010.json"
     },
     {
       "number": 87,
       "title": "[P2] Require a specific project reference before returning briefing messages",
       "url": "https://github.com/skyelan1999/aide/issues/87",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "project_briefing.go:projectMessagesLocked以strings.Contains匹配用户控制的projectName/pid；声明能力及工作区限制不能证明具体项目关联。",
+      "status": "fixed-on-branch",
+      "evidence": "显式完整项目标记或精确PP附件关联，排除短名称/ID子串误选；race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "project_briefing.go:projectMessagesLocked以strings.Contains匹配用户控制的projectName/pid；声明能力及工作区限制不能证明具体项目关联。",
+      "repairCommit": "a41a7cf3c4943be9c99b5dae113c85a7c06f2712",
+      "repairEvidence": "cycle-010.json"
     },
     {
       "number": 86,

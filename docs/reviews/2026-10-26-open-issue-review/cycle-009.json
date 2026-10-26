@@ -96,10 +96,15 @@
     "No full release gate, native Windows/macOS or physical endpoint validation. Historical Landlock and/home/aide blockers are not counted as passed; no need to rerun unchanged blocked tests in this batch."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "84": "https://github.com/skyelan1999/aide/issues/84#issuecomment-6419706814",
+      "85": "https://github.com/skyelan1999/aide/issues/85#issuecomment-6419708086",
+      "86": "https://github.com/skyelan1999/aide/issues/86#issuecomment-6419709094"
+    }
   },
   "sourceSHA256": {
     "internal/localmounts/config.go": "964a7957944ac53f1f8144d290b33bf51b4bfda8293e3291643a86e0e334e096",
