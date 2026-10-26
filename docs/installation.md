@@ -128,6 +128,7 @@ flowchart TD
 - runtime stage 把稳定层（系统用户 + Office 文档解析 pip 依赖）放在 `COPY` 业务二进制**之前**，把随代码变化的二进制放到最后。这样改 Go/前端只失效最末 COPY 层，pip 层稳定 `CACHED`、不重复联网下载；运行期镜像自包含、绝不联网 pip。
 - 依赖版本已锁定（python-docx==1.2.0、openpyxl==3.1.5、python-pptx==1.0.2、ezdxf==1.4.4），pip 下载经 BuildKit cache mount 复用。
 - **离线/air-gap 首次构建**：联网机先 `bash scripts/prebuild-wheels.sh` 把 manylinux/arm64 wheel 预下载到 `docker/wheels/`，随源码带到离线构建机，构建时加 `--build-arg PIP_OFFLINE=1`（`pip install --no-index --find-links=/wheels`，纯本地、零联网）。`docker/wheels/` 默认仅含 `.gitkeep`；在线构建忽略它。
+  预下载在同文件系统的隔离目录进行，并在容器中以 `--no-index --ignore-installed --dry-run` 校验固定依赖及传递依赖可完整解析，成功后才替换现有目录；下载/校验失败保留原输入，替换失败尝试恢复原目录。并发脚本由 `docker/.wheelhouse-lock` 拒绝重复执行。强制杀进程或掉电可能留下该锁及 `.wheelhouse-stage.*`：先确认没有下载进程，再检查其中 `previous` 和当前 `docker/wheels/`，必要时手动恢复后清锁；目录切换不保证掉电原子性。
 
 ## 5. 配置自己的项目
 
