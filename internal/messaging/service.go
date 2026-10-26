@@ -23,6 +23,7 @@ import (
 const ChunkSize = 1 << 20
 const MaxFileSize int64 = 1 << 30
 const maxReserved int64 = 4 << 30
+const maxActiveFileTransfers = 128
 
 type Message struct {
 	ID       string    `json:"id"`
@@ -303,6 +304,46 @@ func validateManifest(m Manifest) error {
 	}
 	return nil
 }
+
+// The transfer limit bounds active work, not lifetime history. Keep completed
+// incoming records and their encrypted chunks available for later download.
+// Failed cleanup still consumes capacity until its retained resources are freed.
+// The caller holds s.mu; consent retains its separate bounded history.
+func (s *Service) activeFileTransfersLocked() int {
+	invitations := s.consent.Snapshot().Invitations
+	now := time.Now()
+	active := 0
+	for id, f := range s.state.Transfers {
+		if f.CleanupError != "" {
+			active++
+			continue
+		}
+		if f.Cancelled {
+			continue
+		}
+		inv, known := invitations[id]
+		if known {
+			if inv.Status == "declined" || inv.Status == "revoked" || inv.Status == "pending" && !now.Before(inv.Expires) {
+				continue
+			}
+			if inv.Status == "accepted" {
+				complete := true
+				for n := range f.Manifest.Hashes {
+					if !f.Received[n] {
+						complete = false
+						break
+					}
+				}
+				if complete {
+					continue
+				}
+			}
+		}
+		active++
+	}
+	return active
+}
+
 func (s *Service) Request(ctx context.Context, peer string, kind Kind, resource string, manifest *Manifest) (Invitation, error) {
 	if _, err := s.peer(peer); err != nil {
 		return Invitation{}, err
@@ -315,7 +356,7 @@ func (s *Service) Request(ctx context.Context, peer string, kind Kind, resource 
 			return Invitation{}, err
 		}
 		s.mu.Lock()
-		full := len(s.state.Transfers) >= 128
+		full := s.activeFileTransfersLocked() >= maxActiveFileTransfers
 		s.mu.Unlock()
 		if full {
 			return Invitation{}, errors.New("file transfer capacity reached")
@@ -349,6 +390,12 @@ func (s *Service) Request(ctx context.Context, peer string, kind Kind, resource 
 			return inv, err
 		}
 		s.mu.Lock()
+		// Admission must also be checked at commit: concurrent callers may
+		// have consumed the remaining slots since the preflight above.
+		if s.activeFileTransfersLocked() >= maxActiveFileTransfers {
+			s.mu.Unlock()
+			return inv, errors.Join(errors.New("file transfer capacity reached"), s.consent.Revoke(inv.ID))
+		}
 		s.state.Transfers[inv.ID] = Transfer{ID: inv.ID, Peer: peer, Manifest: *manifest, Received: map[int]bool{}, Created: time.Now()}
 		err = s.persistLocked()
 		if err != nil {
@@ -737,7 +784,7 @@ func (s *Service) receiveFileOffer(inv Invitation, m Manifest) error {
 		}
 		return nil
 	}
-	if len(s.state.Transfers) >= 128 {
+	if s.activeFileTransfersLocked() >= maxActiveFileTransfers {
 		return errors.New("file offer capacity exceeded")
 	}
 

@@ -6,7 +6,9 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/hex"
+	"fmt"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 )
@@ -69,6 +71,154 @@ func connectTestNodes(t *testing.T, a, b *testNode) {
 		t.Fatal(e)
 	}
 }
+
+func seedIssue66Transfers(t *testing.T, s *Service, peer, status string, incoming bool, count int) string {
+	t.Helper()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.consent.mu.Lock()
+	defer s.consent.mu.Unlock()
+	data := []byte("history")
+	digest := sha256.Sum256(data)
+	first := ""
+	for n := 1; n <= count; n++ {
+		id := fmt.Sprintf("%032x", n)
+		if first == "" {
+			first = id
+		}
+		inv := Invitation{ID: id, Peer: peer, Kind: File, Resource: id, Direction: "outgoing", Status: "accepted", Expires: time.Now().Add(time.Hour)}
+		if incoming {
+			inv.Direction = "incoming"
+		}
+		f := Transfer{ID: id, Peer: peer, Incoming: incoming, Manifest: Manifest{Name: "history.bin", Size: int64(len(data)), Hashes: []string{hex.EncodeToString(digest[:])}}, Received: map[int]bool{}, Created: time.Now()}
+		switch status {
+		case "cancelled", "cleanup-failed":
+			f.Cancelled = true
+			inv.Status = "revoked"
+			if status == "cleanup-failed" {
+				f.CleanupError = "fixture cleanup still needs retry"
+			}
+		case "declined":
+			inv.Status = "declined"
+		case "expired":
+			inv.Status = "pending"
+			inv.Expires = time.Now().Add(-time.Hour)
+		case "completed":
+			f.Received[0] = true
+			if incoming {
+				if err := s.store.Put("chunk-"+id+"-0", data); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+		s.state.Transfers[id] = f
+		s.consent.state.Invitations[id] = inv
+	}
+	if err := s.persistLocked(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.consent.save(clone(s.consent.state)); err != nil {
+		t.Fatal(err)
+	}
+	return first
+}
+
+func TestIssue66HistoricalTransfersDoNotExhaustActiveCapacity(t *testing.T) {
+	for _, status := range []string{"cancelled", "declined", "expired", "completed"} {
+		t.Run(status, func(t *testing.T) {
+			a, b := newTestNode(t, 71), newTestNode(t, 72)
+			connectTestNodes(t, a, b)
+			seedIssue66Transfers(t, a.s, b.card.Device.Fingerprint, status, false, 128)
+			first := seedIssue66Transfers(t, b.s, a.card.Device.Fingerprint, status, true, 128)
+			manifest := Manifest{Name: "next.bin", Size: 0, Hashes: []string{}}
+			inv, err := a.s.Request(context.Background(), b.card.Device.Fingerprint, File, "next", &manifest)
+			if err != nil {
+				t.Errorf("history blocked a new outgoing transfer: %v", err)
+			} else if _, ok := b.s.consent.Snapshot().Invitations[inv.ID]; !ok {
+				t.Error("new offer was not received by the real peer")
+			}
+			// Exercise the receiving admission path independently, even when the
+			// sender's preflight rejected the request above.
+			incoming, err := b.s.consent.Request(a.card.Device.Fingerprint, File, "next-direct", "incoming", randomID())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := b.s.receiveFileOffer(incoming, manifest); err != nil {
+				t.Errorf("history blocked a new incoming offer: %v", err)
+			}
+			if status == "completed" {
+				var content bytes.Buffer
+				if err := b.s.Download(context.Background(), first, &content); err != nil || content.String() != "history" {
+					t.Fatalf("new admission lost previously received content: %q %v", content.String(), err)
+				}
+			}
+		})
+	}
+}
+
+func TestIssue66ActiveTransfersAndFailedCleanupRemainBounded(t *testing.T) {
+	for _, status := range []string{"active", "cleanup-failed"} {
+		t.Run(status, func(t *testing.T) {
+			a, b := newTestNode(t, 73), newTestNode(t, 74)
+			connectTestNodes(t, a, b)
+			seedIssue66Transfers(t, a.s, b.card.Device.Fingerprint, status, false, 128)
+			seedIssue66Transfers(t, b.s, a.card.Device.Fingerprint, status, true, 128)
+			manifest := Manifest{Name: "next.bin", Hashes: []string{}}
+			if _, err := a.s.Request(context.Background(), b.card.Device.Fingerprint, File, "next", &manifest); err == nil {
+				t.Error("admitted more than 128 active transfers")
+			}
+			incoming, err := b.s.consent.Request(a.card.Device.Fingerprint, File, "next-direct", "incoming", randomID())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := b.s.receiveFileOffer(incoming, manifest); err == nil {
+				t.Error("received more than 128 active transfers")
+			}
+		})
+	}
+}
+
+func TestIssue66ConcurrentRequestsCannotExceedActiveLimit(t *testing.T) {
+	a, b := newTestNode(t, 75), newTestNode(t, 76)
+	connectTestNodes(t, a, b)
+	seedIssue66Transfers(t, a.s, b.card.Device.Fingerprint, "active", false, 127)
+	seedIssue66Transfers(t, b.s, a.card.Device.Fingerprint, "active", true, 127)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	start := make(chan struct{})
+	results := make(chan error, 16)
+	var wg sync.WaitGroup
+	for n := 0; n < 16; n++ {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			<-start
+			_, err := a.s.Request(ctx, b.card.Device.Fingerprint, File, fmt.Sprintf("concurrent-%d", n), &Manifest{Name: "next.bin", Hashes: []string{}})
+			results <- err
+		}(n)
+	}
+	close(start)
+	wg.Wait()
+	close(results)
+	successes := 0
+	for err := range results {
+		if err == nil {
+			successes++
+		}
+	}
+	if successes != 1 {
+		t.Fatalf("127 active transfers should admit exactly one request; admitted %d", successes)
+	}
+	for _, node := range []*testNode{a, b} {
+		node.s.mu.Lock()
+		count := len(node.s.state.Transfers)
+		node.s.mu.Unlock()
+		if count != 128 {
+			t.Fatalf("concurrent admission retained %d active transfers", count)
+		}
+	}
+}
+
 func TestRealNodesContactChatAndBlock(t *testing.T) {
 	a, b := newTestNode(t, 11), newTestNode(t, 12)
 	ctx := context.Background()
