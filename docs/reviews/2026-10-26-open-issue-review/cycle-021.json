@@ -101,10 +101,16 @@
     "Homepage style change is source-only; no site deployment or release. Prior native-platform/Landlock/full-gate blockers persist. No main merge."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "367dc375f415b9a26de37ce50c0a61382940e785",
+    "issueComments": {
+      "120": "https://github.com/skyelan1999/aide/issues/120#issuecomment-6424747746",
+      "121": "https://github.com/skyelan1999/aide/issues/121#issuecomment-6424748711",
+      "122": "https://github.com/skyelan1999/aide/issues/122#issuecomment-6424749371"
+    }
   },
   "sourceSHA256": {
     "internal/server/factory_reset.go": "ea1fdeb50a6c5a619c8be21770ef21b08677a0c611623798f8a19f414f13214b",
