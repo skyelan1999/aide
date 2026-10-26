@@ -2256,10 +2256,13 @@
       "number": 97,
       "title": "[P2] Cap total reassembled Edge TTS WebSocket message size",
       "url": "https://github.com/skyelan1999/aide/issues/97",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "tts/edge.go:16MiB只限制当前frame，opContinuation直接append(buf,payload...)，缺少message总上限与fragment状态校验。",
+      "status": "fixed-on-branch",
+      "evidence": "Edge完整消息16MiB/4096数据分片，正文分配读取前拒绝超限，校验fragment/control序列；边界/交错/下一消息及既有模拟超时回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "tts/edge.go:16MiB只限制当前frame，opContinuation直接append(buf,payload...)，缺少message总上限与fragment状态校验。",
+      "repairCommit": "85b77cf199c563b6f0ac344ae1feaaebf2a53e64",
+      "repairEvidence": "cycle-014.json"
     },
     {
       "number": 96,
@@ -2669,7 +2672,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 245,
+    "remainingFollowupTargets": 244,
     "followupRepairs": [
       48,
       64,
@@ -2694,7 +2697,8 @@
       91,
       92,
       93,
-      94
+      94,
+      97
     ]
   }
 }
