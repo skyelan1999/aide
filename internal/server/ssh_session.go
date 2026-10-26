@@ -422,6 +422,10 @@ func (a *App) wsRuntimeCredentials() (password, keyMaterial, passphrase, directK
 // 注意：workflow 的心跳只是本地定时 ticker，绝不能当作远端存活证据；远端是否被
 // 真正清理由 cleanupRemoteGroup 的复核行（AIDE-CLEANUP:reaped/...）证明。
 func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.Writer) (int, error) {
+	return a.execRemoteSession(ctx, command, stdout, stderr, nil)
+}
+
+func (a *App) execRemoteSession(ctx context.Context, command string, stdout, stderr io.Writer, session *taskSSHSession) (int, error) {
 	runID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), atomic.AddInt64(&remoteRunSeq, 1))
 	pgidFile := "/tmp/.aide-remote-" + runID + ".pgid"
 	// EXIT cleanup preserves the user's last status, including an explicit exit.
@@ -429,9 +433,15 @@ func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.
 	// SSH may launch us as a process-group leader; setsid then forks. Wait for
 	// that child so its status and lifetime, rather than the launcher, is observed.
 	wrapped := "setsid -w bash -c " + shellQuote(inner)
-	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
-	args = append(args, a.sshTarget(), wrapped)
-	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	var args []string
+	var bin string
+	if session != nil {
+		args, bin = session.args(wrapped), session.bin
+	} else {
+		args = append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
+		args, bin = append(args, a.sshTarget(), wrapped), a.sshBin
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -444,7 +454,7 @@ func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.
 	}
 	if ctx.Err() != nil {
 		// 用户取消或超时：显式清除远端进程组（详见 cleanupRemoteGroup）。
-		receipt := a.cleanupRemoteGroup(pgidFile)
+		receipt := a.cleanupRemoteGroupSession(pgidFile, session)
 		return -1, fmt.Errorf("远程命令已取消或超时；%s", receipt)
 	}
 	var ee *exec.ExitError
@@ -497,16 +507,29 @@ func (a *App) execRemotePTY(ctx context.Context, command string, stdin io.Reader
 // 返回形如 "AIDE-CLEANUP:reaped:1234" 的结果行（日志/取证用）；失败或未得到
 // 确认也返回对应收据。它使用独立 context，绝不复用已被取消的 ctx。
 func (a *App) cleanupRemoteGroup(pgidFile string) string {
-	if a.sshBin == "" {
+	return a.cleanupRemoteGroupSession(pgidFile, nil)
+}
+
+func (a *App) cleanupRemoteGroupSession(pgidFile string, session *taskSSHSession) string {
+	bin := a.sshBin
+	if session != nil {
+		bin = session.bin
+	}
+	if bin == "" {
 		return "AIDE-CLEANUP:unconfirmed:no-ssh-client"
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
 	inner := remoteGroupCleanupInner(pgidFile)
 	remote := "bash -c " + shellQuote(inner)
-	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
-	args = append(args, a.sshTarget(), remote)
-	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	var args []string
+	if session != nil {
+		args = session.args(remote)
+	} else {
+		args = append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
+		args = append(args, a.sshTarget(), remote)
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	var out strings.Builder
 	cmd.Stdout = &out

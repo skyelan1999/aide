@@ -1291,6 +1291,10 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, t := range s.Runs {
 		if t.ID == r.PathValue("run") && t.Status == "awaiting_clarification" && t.AnswerCh != nil {
+			if err := a.taskSSHBindingLocked(t); err != nil {
+				fail(w, 409, err)
+				return
+			}
 			if t.StopRequested {
 				fail(w, 409, errors.New("当前任务正在停止，不能继续应答"))
 				return
@@ -3878,8 +3882,13 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 		return "", -1, err
 	}
 	a.mu.Lock()
+	if err := a.taskSSHBindingLocked(task); err != nil {
+		a.mu.Unlock()
+		return "", -1, err
+	}
 	mode := a.settings.SandboxMode
 	timeoutSec := a.settings.ShellTimeout
+	remoteMode := a.workspaceMode() == "ssh"
 	a.mu.Unlock()
 	if mode == "" {
 		mode = "workspace-write"
@@ -3890,33 +3899,30 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 	if timeoutSec > 300 {
 		timeoutSec = 300
 	}
-	if err := shellSandboxPolicy(mode, command, a.workspaceMode() == "ssh", false); err != nil {
+	if err := shellSandboxPolicy(mode, command, remoteMode, false); err != nil {
 		return "", -1, err
 	}
 
-	if a.workspaceMode() == "ssh" {
+	if remoteMode {
 		// SSH 工作区与命令面板共用同一 ControlMaster。让 agent 在同一远程
 		// 工作目录执行命令，避免“已连接但 run_shell 不可用”的能力断层。
-		remotePath := task.WorkspaceRemotePath
-		if remotePath == "" {
-			a.mu.Lock()
-			remotePath = a.wsConfig.Workspace.Path
-			a.mu.Unlock()
+		ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
+		defer cancel()
+		session, release, err := a.taskSSHSession(ctx, task)
+		if err != nil {
+			return "", -1, err
 		}
+		defer release()
+		remotePath := session.directory
 		remote := command
 		if strings.TrimSpace(remotePath) != "" {
 			remote = "cd " + shellQuote(remotePath) + " && " + remote
 		}
-		if cache := a.workspaceRemoteCachePath(); cache != "" {
+		if cache := session.cache; cache != "" {
 			remote = "mkdir -p " + shellQuote(cache) + " && export AIDE_CACHE=" + shellQuote(cache) + " GOCACHE=" + shellQuote(cache) + " && " + remote
 		}
-		ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
-		defer cancel()
-		if err := a.ensureSSHSession(ctx); err != nil {
-			return "", -1, err
-		}
 		var stdoutBuf, stderrBuf strings.Builder
-		code, err := a.execRemote(ctx, remote, &stdoutBuf, &stderrBuf)
+		code, err := a.execRemoteSession(ctx, remote, &stdoutBuf, &stderrBuf, session)
 		stdout, stderr := stdoutBuf.String(), stderrBuf.String()
 		if len(stdout) > 64<<10 {
 			stdout = stdout[:64<<10] + "\n…（stdout已截断 64KB）"
