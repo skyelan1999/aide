@@ -59,10 +59,14 @@
     "Backend-only change: no new browser acceptance claimed. Full start.command workbench, paid provider, long-duration production load, Windows/macOS and full isolated release gate NOT_RUN; prior Landlock/platform blockers persist. No merge/release/deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "7e4af53ca91ff92e7adc6dd02b41ccce90c0b78b",
+    "issueComments": {
+      "145": "https://github.com/skyelan1999/aide/issues/145#issuecomment-6427605308"
+    }
   },
   "sourceSHA256": {
     "docs/assistant-voice-call.md": "2409565ecc67b3526373396baeb86e4b2ea15217f8a2a597b140687c070c50c3",
