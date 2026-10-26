@@ -2399,6 +2399,12 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	va := a.voiceAgent
 	as := a.findAssistantSessionLocked() // #62：语音输入与文字消息走同一把密码门
 	a.mu.Unlock()
+	// Apply the same password gate before model errors or fallback can record
+	// speech or return a send decision, including when no voice agent exists.
+	if as == nil || !a.isAssistantUnlocked(as.ID) {
+		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘已锁定，请在小秘会话中解锁"})
+		return
+	}
 	if cfgErr != nil {
 		fail(w, 423, cfgErr)
 		return
@@ -2414,12 +2420,6 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		} else {
 			jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "未配置模型，直接发送"})
 		}
-		return
-	}
-	// #62 修复：语音输入与文字消息走同一把密码门（assistantUnlocked），与 unlockAssistantSession 一致。
-	// voice-history 的加密锁定（va.encStatus）仅用于设置页历史查看，与此处独立。
-	if as == nil || !a.isAssistantUnlocked(as.ID) {
-		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘已锁定，请在小秘会话中解锁"})
 		return
 	}
 	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。
