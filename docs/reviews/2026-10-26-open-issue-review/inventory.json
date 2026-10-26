@@ -1787,28 +1787,37 @@
       "number": 152,
       "title": "[Bug] Report voice-sample deletion failures instead of success",
       "url": "https://github.com/skyelan1999/aide/issues/152",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "voiceSampleDelete忽略Remove并删索引；wipe忽略ReadDir/Remove/save错误；audio按ID解密不查索引，残留文件可继续访问。",
+      "status": "fixed-on-branch",
+      "evidence": "删除失败500保留索引；清空检查目录/索引/逐文件错误，部分失败500报告removed/failed/indexSaved并保留失败项，支持重试；索引保存失败不报成功。试听串行核对索引，不解密历史孤立文件。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "voiceSampleDelete忽略Remove并删索引；wipe忽略ReadDir/Remove/save错误；audio按ID解密不查索引，残留文件可继续访问。",
+      "repairCommit": "7e235059dd033ec7452a9874357d26cfaa7ccbc8",
+      "repairEvidence": "cycle-031.json"
     },
     {
       "number": 151,
       "title": "[Security] Block voice-sample decryption while the app is locked",
       "url": "https://github.com/skyelan1999/aide/issues/151",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "writeLockState只持久化锁状态不清personaKey；voiceSampleKey仅以非空key授权，无当前锁态检查，音频/克隆/推断共用此门。",
+      "status": "fixed-on-branch",
+      "evidence": "样本密钥入口检查权威锁屏状态；上传/试听/本地克隆准备排队后、克隆与推断调用前复核。锁定403拒绝旧personaKey，损坏锁状态按既有配置fail closed；正常解锁后可用。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "writeLockState只持久化锁状态不清personaKey；voiceSampleKey仅以非空key授权，无当前锁态检查，音频/克隆/推断共用此门。",
+      "repairCommit": "7e235059dd033ec7452a9874357d26cfaa7ccbc8",
+      "repairEvidence": "cycle-031.json"
     },
     {
       "number": 150,
       "title": "[Bug] Report voice-history encryption changes only after saving succeeds",
       "url": "https://github.com/skyelan1999/aide/issues/150",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "VoiceAgent.persistLocked忽略mkdir/marshal/encrypt/write错误，enable/rotate等调用者仍返回成功，可能残留旧明文文件。",
+      "status": "fixed-on-branch",
+      "evidence": "已由#100的b20f7c5b覆盖持久化错误传播与回滚，本轮新增真实HTTP故障/重试回归确认开启、轮换、关闭均失败不报成功；不重复修改历史持久化实现。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "VoiceAgent.persistLocked忽略mkdir/marshal/encrypt/write错误，enable/rotate等调用者仍返回成功，可能残留旧明文文件。",
+      "repairCommit": "b20f7c5b5e7f06813e67027c7141524ca1f83505",
+      "repairEvidence": "cycle-031.json"
     },
     {
       "number": 149,
@@ -2805,7 +2814,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 200,
+    "remainingFollowupTargets": 197,
     "followupRepairs": [
       48,
       64,
@@ -2875,7 +2884,10 @@
       146,
       147,
       148,
-      149
+      149,
+      150,
+      151,
+      152
     ]
   }
 }

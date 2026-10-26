@@ -1,0 +1,92 @@
+{
+  "cycle": 31,
+  "baseline": "842aed2d2987c0c55f9ca49a66f4b22e6437b033",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    150,
+    151,
+    152
+  ],
+  "commits": {
+    "150": "b20f7c5b5e7f06813e67027c7141524ca1f83505",
+    "151": "7e235059dd033ec7452a9874357d26cfaa7ccbc8",
+    "152": "7e235059dd033ec7452a9874357d26cfaa7ccbc8"
+  },
+  "regressionCommit": "7e235059dd033ec7452a9874357d26cfaa7ccbc8",
+  "coveredByPriorFixes": [
+    150
+  ],
+  "newImplementationIssueFixes": 2,
+  "cumulativeProductFixes": 86,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 87,
+  "original272RemainingFollowup": 197,
+  "red": [
+    {
+      "issues": [
+        151,
+        152
+      ],
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue150|^TestIssue151|^TestIssue152' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 13.597,
+      "observed": "锁定audio/upload/clone/infer均200，触发mock克隆并新增样本；删除故障200；部分清空200谎报removed2；目录/索引错误200；孤立音频200。150在既有修复上通过，不声称150在本轮RED。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle31-red-summary.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue150|^TestIssue151|^TestIssue152|^TestVoiceSample|^TestVoicePersonality|^TestIssue98|^TestIssue99|^TestIssue100|^TestIssue149' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 54.34,
+      "scope": "真实HTTP三个历史加密变更故障不改原状态/文件并可重试；锁定四入口403、mock零调用、样本不变、解锁后试听正常；排队后锁定audio/upload/GPT-SoVITS均403；配置密码且锁文件损坏403；删除失败保留索引；部分清空准确计数保留失败项且重试/重复清空；目录/索引读取错误不误删；Linux proc只读目录注入索引保存错误500；孤立音频404；既有上传并发/取消、payload预算、历史回滚/轮换。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle31-final-race.log"
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestVoiceClone' -count=1 -timeout=1m",
+      "result": "PASS",
+      "durationSeconds": 3.555,
+      "scope": "已有本机mock成功绑定音色及无配置路径。"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T225857916697Z.log",
+      "fingerprint": "c49a706c1e4cd7e3425cb7e8512a994e5dfe598436a0170caf9327effdc30c90"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "428Markdown/1466links"
+    }
+  ],
+  "notes": [
+    "已由#100的b20f7c5b覆盖持久化错误传播与回滚，本轮新增真实HTTP故障/重试回归确认开启、轮换、关闭均失败不报成功；不重复修改历史持久化实现。",
+    "样本密钥入口检查权威锁屏状态；上传/试听/本地克隆准备排队后、克隆与推断调用前复核。锁定403拒绝旧personaKey，损坏锁状态按既有配置fail closed；正常解锁后可用。",
+    "删除失败500保留索引；清空检查目录/索引/逐文件错误，部分失败500报告removed/failed/indexSaved并保留失败项，支持重试；索引保存失败不报成功。试听串行核对索引，不解密历史孤立文件。",
+    "累计数按已覆盖issue条目计算，150沿用先前修复并补验，不代表新增第三份实现。",
+    "本轮首次quick仅offline_bundle失败：/tmp可用10393756KiB低于10485760KiB门槛；所有Go任务完成后仅go clean -cache清理本任务GOCACHE=/tmp/aide-issue-review-go-cache，空间恢复17GiB，完整quick重跑通过；用户数据/证据未清理。",
+    "锁检查不撤回已传输音频或已经发出的远端请求，不声称全面取消进行中操作；没有清空全局personaKey，不影响其他独立解锁逻辑。",
+    "删除是单实例profile队列下的顺序操作，不是跨文件事务：若索引保存失败，已删音频不会恢复，500返回indexSaved=false，重试可清理元数据。不会递归删除失败的目录。",
+    "样本删除故障用非空目录替换目标路径注入可移植os.Remove错误；索引写故障用Linux/proc/self/fd只读虚拟目录（仅数字项，不匹配.enc），不访问真实音频。Windows/macOS、真实只读挂载及断电恢复验收NOT_RUN。",
+    "合理issue保持open；#154最新已关闭为#101重复条目，不在本轮待办/计数内。下一批#153/#155/#156最新正文已读。",
+    "完整start.command工作台、真实设备/付费模型未验收；本轮无UI变更，无新常驻服务，无合并main/发行/部署。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/security/voice-cloning.md": "78b91b88ef1295ccbc01a66253ac0aae5b0ee6dcde2efe6382c12a7549a1537f",
+    "internal/server/voice_personality.go": "a5aaa92e2e7dce88cd2e86c953fc563673695cd098c5d1263cffea1534ee7a44",
+    "internal/server/voice_sample_boundary_test.go": "2284170f57861a9117f2e95cc9308a502704b1282b30ae52be91d5f0942fe97f",
+    "internal/server/voice_samples.go": "a5a5be686b6c6afd6e01ded8b3591b445f809dd08a8e2475bda0b983b5051e81"
+  }
+}

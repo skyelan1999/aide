@@ -63,14 +63,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第30轮修复#147/#148/#149；累计83项产品/实现修复、1项既有测试修正。",
+      "summary": "第31轮修复#151/#152，确认#150由先前#100覆盖并补HTTP验收；累计86项产品issue覆盖、1项既有测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "策略/配置/历史及关联交付race35.572s、vet、quick通过；完整工作台/跨平台未运行。",
+      "summary": "声音样本/历史/队列race54.340s、正常克隆race3.555s、vet、quick通过；完整工作台/跨平台未运行。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -100,7 +100,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-027.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-028.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-029.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-030.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-030.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-031.json"
       ]
     },
     "documentation": {
@@ -124,16 +125,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第30轮#147/#148/#149已push并评论；累计84项分支修复，原272项剩200跟进；第31轮#150/#151/#152正文已读，核对既有覆盖和声音样本安全/删除边界。",
+  "handoff": "第31轮#150/#151/#152已验证，待push并评论；累计87项分支覆盖，原272项剩197跟进。下一轮#153/#155/#156正文已读。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "792d42721ff8fc39d1f6a0e9c5224da1967e26f7",
-    "pushed": true,
+    "commit": "7e235059dd033ec7452a9874357d26cfaa7ccbc8",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第30轮#147/#148/#149已push并评论；合理问题保持open等待main合并验收。",
+  "issue_comments": "第31轮待push后评论；合理问题保持open等待main合并验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -162,26 +163,29 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 31,
+    "nextCycle": 32,
     "lastCompletedBatch": {
-      "cycle": 30,
+      "cycle": 31,
       "issues": [
-        147,
-        148,
-        149
+        150,
+        151,
+        152
       ],
-      "cumulativeFixed": 84,
-      "cumulativeProductFixed": 83,
+      "coveredByPriorFixes": [
+        150
+      ],
+      "cumulativeFixed": 87,
+      "cumulativeProductFixed": 86,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 200,
-      "verification": "PASS targeted race35.572s,vet,quick; full workbench/cross-platform NOT_RUN"
+      "remainingFollowupTargets": 197,
+      "verification": "PASS targeted race54.340s,clone race3.555s,vet,quick; full workbench/cross-platform NOT_RUN"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      150,
-      151,
-      152
+      153,
+      155,
+      156
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -196,7 +200,7 @@
         151,
         152
       ],
-      "phase": "latest-bodies-read-checking-prior-coverage-and-sample-boundaries"
+      "phase": "validated-awaiting-push-and-comments"
     }
   },
   "orderedReview": {
