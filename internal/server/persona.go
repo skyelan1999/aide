@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // deriveKey 从用户密码派生 32 字节 AES-256 密钥。
@@ -483,7 +484,7 @@ func (a *App) personalitySave(w http.ResponseWriter, r *http.Request) {
 		Enabled bool   `json:"enabled"`
 		Prompt  string `json:"prompt"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, errors.New("请求格式错误"))
 		return
 	}
@@ -491,6 +492,10 @@ func (a *App) personalitySave(w http.ResponseWriter, r *http.Request) {
 	prompt := strings.TrimSpace(in.Prompt)
 	if prompt == "" {
 		prompt = defaultPersonalityPrompt(id)
+	}
+	if utf8.RuneCountInString(prompt) > personalityMaxPromptChars {
+		fail(w, 400, fmt.Errorf("性格提示词超过 %d 字上限", personalityMaxPromptChars))
+		return
 	}
 	a.mu.Lock()
 	p := a.personalityLocked(id)
