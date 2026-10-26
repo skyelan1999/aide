@@ -845,6 +845,20 @@
       [
         "python3",
         "scripts/test_mermaid_proof_auth.py"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/ui_queue_check.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/ui_stream_check.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_ui_acceptance_scope.cjs"
       ]
     ],
     "full": [
