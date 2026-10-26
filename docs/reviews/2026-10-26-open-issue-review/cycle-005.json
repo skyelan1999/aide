@@ -1,0 +1,119 @@
+{
+  "cycle": 5,
+  "type": "repairs-after-ordered-review",
+  "baseline": "244706765cacd78f207195331da1f51e1aaeb4a4",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    68,
+    69,
+    373
+  ],
+  "cumulativeFixedOnBranch": 20,
+  "cumulativeProductFixes": 19,
+  "toolingFixes": 1,
+  "commits": {
+    "68": "dfca5690659405032a9376288b3b645c446dfd44",
+    "69": "8c1b5437e5808eb9929c5d6f2e26f7702aadf563",
+    "373": "1c7f6fde4e029c878f7ced6e91b55ee04cdb47d4"
+  },
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "toolchain": "/workspace/.aide-cloud/go/bin/go",
+    "browser": "/usr/bin/chromium via pinned Playwright; isolated local peers, no user profile",
+    "activation": "Explicit Go toolchain/cache variables. No AIDE_DATA import, existing user storage, product UI/start.command, real SSH device or paid provider."
+  },
+  "red": [
+    {
+      "issue": 68,
+      "command": "CHROME_PATH=/usr/bin/chromium node scripts/test_headless_websocket.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Original bridge admitted one out-of-scope WebSocket handshake; expected zero."
+    },
+    {
+      "issue": 69,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue69' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 1.904,
+      "observed": "ZIP/TAR parent-file conflicts accepted; write failure left .aide-unpack staging trees."
+    },
+    {
+      "issue": 373,
+      "command": "python3 scripts/test_launcher_data.py LauncherDataTests.test_windows_import_sets_container_user_ownership",
+      "result": "EXPECTED_FAIL",
+      "observed": "Expected chown of auth/cad-auth but got none under UID/GID 1000; reproduced in isolated files from baseline 24470676."
+    }
+  ],
+  "green": [
+    {
+      "command": "CHROME_PATH=/usr/bin/chromium node scripts/test_headless_websocket.cjs",
+      "result": "PASS",
+      "scope": "Actual Chromium handshake denial, bidirectional allowed echo, live policy narrowing, upstream closure, and revoked page host."
+    },
+    {
+      "command": "CHROME_PATH=/usr/bin/chromium NODE_OPTIONS='--require /tmp/aide-headless-system-chromium.cjs' node scripts/test_headless_browser.cjs",
+      "result": "PASS",
+      "scope": "Existing controls, late PDF links, page transition, PDF bytes, redirect scope/size/magic checks. Test-only executablePath injection; product source unmodified."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue69|^TestReadArchive|^TestTarExtraction|^TestWorkspaceArchiveFormatsRoundTrip|^TestReferenceDownloadAndSafeExtraction|^TestWritableSourceFile|^TestSourceFile|^TestLargeTransferSFTP' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 16.21,
+      "scope": "Local API and synthetic real SFTP protocol over owned subprocess pipes; live SSH opt-in test skipped."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "node --check scripts/headless-browser-bridge.js && node --check scripts/test_headless_websocket.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_launcher_data.py",
+      "result": "PASS",
+      "observed": "42 tests in 2.034s; mismatch and matching ownership controls."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T092037755380Z.log",
+      "scope": "Approved local socket/subprocess execution; not full release validation."
+    }
+  ],
+  "initialQuickFailure": {
+    "result": "FAIL",
+    "receipt": ".agent-state/verify-20261026T091250711778Z.log",
+    "causes": [
+      "Sandbox Node-to-Python timeout and Unix socket EPERM disappeared on approved rerun.",
+      "UID-dependent ownership expectation independently reproduced at baseline and fixed as #373."
+    ],
+    "intermediateCorrections": [
+      "New matching-ownership control initially observed unrelated set_owner calls; isolated that helper before final pass.",
+      "SFTP publication test initially used os.IsExist on errors.Join; switched to errors.Is for API and test.",
+      "Browser regression caught unsupported protocol close code 1008; production uses application code 4003."
+    ]
+  },
+  "notes": [
+    "#68 covers Chromium ws/wss policy mapping; WSS TLS and Safari not separately exercised. Closed upstream transports depend on Playwright/browser shutdown; per-frame admission rechecks current policy.",
+    "#69 rejects path-role conflicts before staging, keeps publication no-overwrite, and uses a pinned filesystem for writes and cleanup. If SFTP loses connectivity or refuses deletion, cleanup can fail and is returned with the primary error. Existing size/count restrictions remain.",
+    "#373 changes tests only, not production filesystem ownership or container policy.",
+    "All repair issues stay open pending main acceptance. No merge, release or deployment."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issuesRemainOpenUntilMainAcceptance": true
+  },
+  "sourceSHA256": {
+    "scripts/headless-browser-bridge.js": "0c08aab2ad7872b1bd5373b312acc0ab21e6beb9ce62209ece2af7a1dd769811",
+    "scripts/test_headless_websocket.cjs": "6707785ad95fa7b5949054b35bd971ffa670f8461b18e040227eb0f9503adb81",
+    "internal/server/archive_extraction.go": "df92b2288a8d689cd2ce59561540fe34af508bcfee418610a6eab4ad2b89704c",
+    "internal/server/archive_formats.go": "8191931e671e4aae00d9305714d3f025b402087d6d509e73e5a714927bafa2c7",
+    "internal/server/files.go": "98390f55feca67d05de0a0062d22c1745167538310c77b667304219a2b853ce5",
+    "internal/server/archive_test.go": "913ce0b9f1b6582866762b64913fd1aba64a277ff3c8c700fc2c182eec492938",
+    "internal/server/transfer_sftp_test.go": "660d0b9cde775c4cf588bca03dd9b170aeaea3dcaaa477c3dfb796bfbbda9f0f",
+    "scripts/test_launcher_data.py": "4378c6797da0fc84fe61444845b3a154f389ea968a6d13799678a031fa0d6570"
+  }
+}

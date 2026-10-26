@@ -5,6 +5,16 @@
   "note": "清单是处理状态，不表示待审条目已验证；合理条目保持open直到后续合并和验收闭环。",
   "issues": [
     {
+      "number": 373,
+      "title": "Launcher ownership regression test fails when executor already uses UID 1000",
+      "url": "https://github.com/skyelan1999/aide/issues/373",
+      "status": "fixed-on-branch",
+      "discoveredDuringRepair": true,
+      "evidence": "UID1000基线复现；测试独立构造ownership mismatch，增加matching control；42项通过。",
+      "repairCommit": "1c7f6fde",
+      "repairEvidence": "cycle-005.json"
+    },
+    {
       "number": 358,
       "title": "[Bug] Mockup Email template is indexed under calendar search tags",
       "url": "https://github.com/skyelan1999/aide/issues/358",
@@ -2484,19 +2494,25 @@
       "number": 69,
       "title": "Archive extraction accepts file/directory path conflicts and leaks staging trees",
       "url": "https://github.com/skyelan1999/aide/issues/69",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "files.go:readArchiveFiles只seen[name]精确去重，extractArchive的tmp创建后mkdir/write失败直接return；未全路径冲突检测或统一cleanup。",
+      "status": "fixed-on-branch",
+      "evidence": "ZIP/TAR冲突写入前拒绝；本地及合成SFTP失败清理/无覆盖发布race通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "files.go:readArchiveFiles只seen[name]精确去重，extractArchive的tmp创建后mkdir/write失败直接return；未全路径冲突检测或统一cleanup。",
+      "repairCommit": "8c1b5437",
+      "repairEvidence": "cycle-005.json"
     },
     {
       "number": 68,
       "title": "Headless browser allowlist does not restrict WebSocket connections",
       "url": "https://github.com/skyelan1999/aide/issues/68",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "headless-browser-bridge.js:makeContext和更新策略均只ctx.route HTTP；没有routeWebSocket，浏览器协议scope缺少WS接入控制。",
+      "status": "fixed-on-branch",
+      "evidence": "真实Chromium已复现并修复域外WS握手；动态撤销已有连接/帧转发回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "headless-browser-bridge.js:makeContext和更新策略均只ctx.route HTTP；没有routeWebSocket，浏览器协议scope缺少WS接入控制。",
+      "repairCommit": "dfca5690",
+      "repairEvidence": "cycle-005.json"
     },
     {
       "number": 67,
@@ -2592,11 +2608,13 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 267,
+    "remainingFollowupTargets": 265,
     "followupRepairs": [
       48,
       64,
-      66
+      66,
+      68,
+      69
     ]
   }
 }
