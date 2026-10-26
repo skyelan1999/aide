@@ -2069,6 +2069,7 @@ window.aideEnglish = {
   "(子会话启动)": "(sub-session started)",
   "(空)": "(empty)",
   "draw.io 加载超时": "draw.io load timeout",
+  "draw.io 内容超过安全预览限制，请下载后查看": "draw.io content exceeds safe preview limits. Download the file to view it.",
   "{0} 加载后仍不可用": "{0} still unavailable after loading",
   "{0}: {1} tokens · {2} 次调用 · {3}%": "{0}: {1} tokens · {2} calls · {3}%",
   "任务在后台继续运行，小秘已暂停听写与朗读。": "Tasks continue running in the background; the voice assistant has paused dictation and narration.",

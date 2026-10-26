@@ -7684,18 +7684,28 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
   }, 15000);
   if (window[handlerKey]) window.removeEventListener('message', window[handlerKey]);
   window[handlerKey] = (ev) => {
-    if (ev.source !== iframe.contentWindow) return;
+    if (ev.source !== iframe.contentWindow || ev.origin !== window.location.origin) return;
     let msg;
     try { msg = JSON.parse(ev.data); } catch (e) { return; }
-    if (msg.event === 'init') {
+    if (!msg || typeof msg !== 'object' || timedOut) return;
+    if (msg.event === 'aide-preview-error') {
       clearTimeout(timeoutId);
       loaded = true;
-      iframe.contentWindow.postMessage(JSON.stringify({ action: 'load', xml: xml || '<mxfile host="aide-local"><diagram></diagram></mxfile>' }), '*');
+      timedOut = true;
+      iframe.remove();
+      const error = document.createElement('p');
+      error.style.cssText = 'padding:24px;color:var(--text-dim)';
+      error.textContent = t('draw.io 内容超过安全预览限制，请下载后查看');
+      container.replaceChildren(error);
+    } else if (msg.event === 'init') {
+      clearTimeout(timeoutId);
+      loaded = true;
+      iframe.contentWindow.postMessage(JSON.stringify({ action: 'load', xml: xml || '<mxfile host="aide-local"><diagram></diagram></mxfile>' }), window.location.origin);
     } else if (msg.event === 'save') {
       const newXml = msg.xml;
       if (newXml && onSave) {
         onSave(newXml);
-        iframe.contentWindow.postMessage(JSON.stringify({ action: 'status', message: '已保存' }), '*');
+        iframe.contentWindow.postMessage(JSON.stringify({ action: 'status', message: '已保存' }), window.location.origin);
       }
     } else if (msg.event === 'exit') {
       // draw.io 请求关闭，忽略（由用户控制弹窗）

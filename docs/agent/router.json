@@ -872,6 +872,15 @@
       [
         "node",
         "scripts/test_docx_preview_bounds.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/drawio-preview-safety.js"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_preview_bounds.cjs"
       ]
     ],
     "full": [
