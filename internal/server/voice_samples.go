@@ -541,9 +541,18 @@ func (a *App) voiceCloneCreate(w http.ResponseWriter, r *http.Request) {
 
 	// 绑定 voiceID 到设置
 	a.mu.Lock()
+	candidate := a.settings
+	candidate.CloneVoiceID = out.VoiceID
+	if err := atomicJSON(SettingsPath(a.dataPath), candidate); err != nil {
+		a.mu.Unlock()
+		jsonOut(w, 500, map[string]any{
+			"error":   "音色已创建，但本地绑定保存失败；原绑定已保留，可使用返回的 voiceID 手动配置",
+			"voiceID": out.VoiceID, "status": out.Status, "bound": false,
+		})
+		return
+	}
 	a.settings.CloneVoiceID = out.VoiceID
 	a.mu.Unlock()
-	_ = atomicJSON(SettingsPath(a.dataPath), &a.settings)
 
 	jsonOut(w, 200, map[string]any{"voiceID": out.VoiceID, "status": out.Status, "bound": true})
 }
