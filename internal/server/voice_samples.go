@@ -34,8 +34,8 @@ import (
 // voiceProfileRe / voiceSampleIDRe 白名单：profile 仅允许小写字母数字连字符；
 // id 仅允许 hex（newID() 产 32 hex，upload 拼接 64 hex）。拒绝 ../ 与绝对路径越界。
 var (
-	voiceProfileRe   = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)
-	voiceSampleIDRe  = regexp.MustCompile(`^[a-f0-9]{16,128}$`)
+	voiceProfileRe  = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)
+	voiceSampleIDRe = regexp.MustCompile(`^[a-f0-9]{16,128}$`)
 )
 
 // safeVoiceProfile 规范化 profile：空 → xiaomi；非法值返回错误。
@@ -66,18 +66,18 @@ const (
 
 // VoiceSampleMeta 一条样本元数据（index.json 内；不含音频本体）。
 type VoiceSampleMeta struct {
-	ID         string `json:"id"`
-	CreatedAt  string `json:"createdAt"`
-	Bytes      int    `json:"bytes"`
-	MIMEType   string `json:"mimeType"`
-	DurationSec int   `json:"durationSec,omitempty"`
-	Transcript string `json:"transcript,omitempty"` // 浏览器 STT 转写（可选，性格推断用）
-	Consented  bool   `json:"consented"`            // 录制前已勾选"本人或已授权"
-	Note       string `json:"note,omitempty"`
+	ID          string `json:"id"`
+	CreatedAt   string `json:"createdAt"`
+	Bytes       int    `json:"bytes"`
+	MIMEType    string `json:"mimeType"`
+	DurationSec int    `json:"durationSec,omitempty"`
+	Transcript  string `json:"transcript,omitempty"` // 浏览器 STT 转写（可选，性格推断用）
+	Consented   bool   `json:"consented"`            // 录制前已勾选"本人或已授权"
+	Note        string `json:"note,omitempty"`
 }
 
 type voiceSampleIndexFile struct {
-	Profile string           `json:"profile"`
+	Profile string            `json:"profile"`
 	Items   []VoiceSampleMeta `json:"items"`
 }
 
@@ -193,11 +193,11 @@ func (a *App) voiceSampleUpload(w http.ResponseWriter, r *http.Request) {
 
 	id := newID() + newID()
 	meta := VoiceSampleMeta{
-		ID:         id,
-		CreatedAt:  time.Now().UTC().Format(time.RFC3339Nano),
-		Bytes:      len(audio),
-		MIMEType:   r.Header.Get("Content-Type"),
-		Consented:  true,
+		ID:        id,
+		CreatedAt: time.Now().UTC().Format(time.RFC3339Nano),
+		Bytes:     len(audio),
+		MIMEType:  r.Header.Get("Content-Type"),
+		Consented: true,
 	}
 	if ds := r.URL.Query().Get("durationSec"); ds != "" {
 		var d int
@@ -205,6 +205,12 @@ func (a *App) voiceSampleUpload(w http.ResponseWriter, r *http.Request) {
 		meta.DurationSec = d
 	}
 	meta.Transcript = strings.TrimSpace(r.URL.Query().Get("transcript"))
+	release, err := a.voiceSampleMutations.acquire(r.Context(), profile)
+	if err != nil {
+		fail(w, 409, err)
+		return
+	}
+	defer release()
 
 	dir := a.voiceSamplesDir(profile)
 	if err := os.MkdirAll(dir, 0700); err != nil {
@@ -248,6 +254,12 @@ func (a *App) voiceSampleDelete(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	release, err := a.voiceSampleMutations.acquire(r.Context(), profile)
+	if err != nil {
+		fail(w, 409, err)
+		return
+	}
+	defer release()
 	idx := a.loadVoiceSampleIndex(profile)
 	found := false
 	kept := idx.Items[:0]
@@ -415,6 +427,12 @@ func (a *App) voiceSamplesWipe(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	release, err := a.voiceSampleMutations.acquire(r.Context(), profile)
+	if err != nil {
+		fail(w, 409, err)
+		return
+	}
+	defer release()
 	dir := a.voiceSamplesDir(profile)
 	entries, _ := os.ReadDir(dir)
 	removed := 0
@@ -427,7 +445,6 @@ func (a *App) voiceSamplesWipe(w http.ResponseWriter, r *http.Request) {
 	_ = a.saveVoiceSampleIndex(profile, voiceSampleIndexFile{Profile: profile})
 	jsonOut(w, 200, map[string]any{"removed": removed})
 }
-
 
 // aesGCMBlock 用 32B 密钥构造 AES-256-GCM 实例（样本加密复用 #29 的加密原语）。
 func aesGCMBlock(key []byte) (cipher.AEAD, error) {

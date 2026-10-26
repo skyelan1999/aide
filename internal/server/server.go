@@ -515,6 +515,7 @@ type App struct {
 	marketMu                  sync.Mutex
 	marketInstallMu           sync.Mutex
 	pluginCalls               pluginCallQueues
+	voiceSampleMutations      pluginCallQueues // independent FIFO per voice profile
 	pluginResources           pluginResourceQueue
 	pluginSurface             []byte
 	daemons                   *DaemonManager // 协议 v1.2：常驻守护插件管理器
