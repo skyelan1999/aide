@@ -2089,28 +2089,37 @@
       "number": 116,
       "title": "[P3] Preserve the existing wheelhouse until replacement download succeeds",
       "url": "https://github.com/skyelan1999/aide/issues/116",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "prebuild-wheels.sh 在 docker pip download 前 find -delete 清空已有wheel，无暂存成功后替换。",
+      "status": "fixed-on-branch",
+      "evidence": "同文件系统暂存新wheel集，容器离线忽略已装包dry-run解析验证成功后替换；失败保留旧集，提升失败尝试还原；独占锁拒绝并发，容器按宿主UID:GID写入。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "prebuild-wheels.sh 在 docker pip download 前 find -delete 清空已有wheel，无暂存成功后替换。",
+      "repairCommit": "359f197561b5c8a8a83a4abf4dc8f36a1abc8846",
+      "repairEvidence": "cycle-019.json"
     },
     {
       "number": 115,
       "title": "[P3] Rate-limit master-password verification and vault unlock attempts",
       "url": "https://github.com/skyelan1999/aide/issues/115",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "auth_verify.go/apikey_vault.go 密码失败直接401，未共享失败预算/冷却。已有 Bearer gate 与 Argon2id，风险限持token请求。",
+      "status": "fixed-on-branch",
+      "evidence": "全部直接账户VerifyPassword入口改用每App共享、串行KDF预算；一分钟连续5错后429+Retry-After，冷却一分钟，拒绝不延长；成功/窗口到期重置，无密码/Passkey不计密码预算。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "auth_verify.go/apikey_vault.go 密码失败直接401，未共享失败预算/冷却。已有 Bearer gate 与 Argon2id，风险限持token请求。",
+      "repairCommit": "5a7b9439437005008a8272b802f4843b82d9e4f9",
+      "repairEvidence": "cycle-019.json"
     },
     {
       "number": 114,
       "title": "[P2] Reset rendered starmap state when workspace identity changes mid-load",
       "url": "https://github.com/skyelan1999/aide/issues/114",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "starmap.js load 的 updates/identity 不同 workspace 分支只清 graph/liveCursor，未走 applyLiveUpdate reset，旁路缓存布局/selection/detail 状态清理。",
+      "status": "fixed-on-branch",
+      "evidence": "身份/updates不一致走空图共享重置并立即重新读identity；清旧布局/选中/详情/搜索/AI/恢复投影，取消旧AI及旧画布/详情过渡动画，不应用或缓存不可信工作区响应。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "starmap.js load 的 updates/identity 不同 workspace 分支只清 graph/liveCursor，未走 applyLiveUpdate reset，旁路缓存布局/selection/detail 状态清理。",
+      "repairCommit": "5f06984cea5295a793555b424a7bae37d32bf84a",
+      "repairEvidence": "cycle-019.json"
     },
     {
       "number": 113,
@@ -2708,7 +2717,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 232,
+    "remainingFollowupTargets": 229,
     "followupRepairs": [
       48,
       64,
@@ -2746,7 +2755,10 @@
       108,
       109,
       110,
-      113
+      113,
+      114,
+      115,
+      116
     ]
   }
 }
