@@ -1,0 +1,162 @@
+{
+  "cycle": 7,
+  "type": "repairs-after-ordered-review",
+  "baseline": "3773b6bbe3a2c1b2bbc249f1e5a5ecd2193dacd8",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    77,
+    78,
+    79
+  ],
+  "commits": {
+    "77": "5fbc93f5dc3e345f0fb2c72388394a7297491c2c",
+    "78": "b4881676c4dba8a01ae6cda192b2b834b1d6ecbc",
+    "79": "939fc3e20cce3efc7611ade636cc13a5fe7800af"
+  },
+  "cumulativeFixedOnBranch": 26,
+  "cumulativeProductFixes": 25,
+  "toolingFixes": 1,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "toolchain": "/workspace/.aide-cloud/go/bin/go",
+    "cache": "/tmp/aide-issue-review-go-cache",
+    "pythonLibraries": [
+      "python-docx",
+      "openpyxl",
+      "python-pptx",
+      "pypdf"
+    ],
+    "browser": "system /usr/bin/chromium via pinned Playwright",
+    "isolation": "Owned temporary files and subprocesses only; no real SSH/FTP devices, user data, paid providers, main merge, release or deployment. Explicit toolchain/cache variables; no AIDE_DATA import. Dedicated Chromium context/local API fixture, not full workbench via start.command."
+  },
+  "red": [
+    {
+      "issue": 77,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue77' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 13.665,
+      "observed": "Legacy DOCX script ran for oversized raw/expanded/corrupt ZIP input. Resource probe reported unlimited soft/hard address space. Attachment negative assertions run after repair; initial fatal DOCX assertion prevented those assertions in red."
+    },
+    {
+      "issue": 77,
+      "command": "python3 scripts/test_office_extraction_bounds.py",
+      "result": "EXPECTED_FAIL",
+      "observed": "All4 formats retained5.3–7.8MB output from10000 generated blocks instead of stopping iteration."
+    },
+    {
+      "issue": 78,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue78' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 1.984,
+      "observed": "Same-size/mtime source replacement returned206 EEEE under old strong tag. rawDownload ignored and returned PK ZIP bytes instead of original file bytes."
+    },
+    {
+      "issue": 79,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue79SFTP' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 6.452,
+      "observed": "Workspace/source each accepted75497472 bytes; both stdout/stderr batch producers emitted16777216 bytes with success."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue77|^TestDocx|^TestOffice|^TestLegacyDoc' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 27.954
+    },
+    {
+      "command": "python3 scripts/test_office_extraction_bounds.py",
+      "result": "PASS",
+      "observed": "4 synthetic adapter tests; bounded iteration, workbook close, positive control. Python Office libraries are installed; Go Office group also exercised real libraries."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue79SFTP|^TestSFTPGenerationBoundReadWriteRejectNewConfig$|^TestLargeTransferSFTP' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 7.525
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue78|^TestLargeTransfer.*Range|^TestLargeTransferArchive' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 6.133
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue77|^TestIssue78|^TestIssue79SFTP|^TestDocx|^TestOffice|^TestLegacyDoc|^TestLargeTransfer|^TestSFTPGenerationBoundReadWriteRejectNewConfig|^TestIsSFTPNotExist' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 62.105,
+      "scope": "Final product code, including raw snapshot >64MiB, crash/rebuild validator, restart persistence, Range consistency, false/stale SFTP STAT growth, missing-file/binary compatibility and existing large transfers."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue78SFTPFileSnapshot$' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 3.293,
+      "scope": "Actual SFTP protocol via owned subprocess: SSH workspace and independent source snapshots stay fixed after source mutation."
+    },
+    {
+      "command": "CHROME_PATH=/usr/bin/chromium node scripts/browser-transfer-snapshot.cjs",
+      "result": "PASS",
+      "scope": "Real Chromium current transfer UI with local API fixture: native raw/ZIP download, filename/content, immutable job URLs, original task labels at1280px/390px. FileSystem Access picker is not automated; existing range-save logic unchanged."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "node --check internal/server/web/file-transfers.js && node --check scripts/browser-transfer-snapshot.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T132619432268Z.log",
+      "fingerprint": "58eba382730d7c0adf74c705848311066d300a739a9ffcded31c889cef3ff80a"
+    },
+    {
+      "command": "python3 scripts/check_docs.py",
+      "result": "PASS",
+      "observed": "427 Markdown files,1465 local links, JPEG signatures, FR-01..100"
+    },
+    {
+      "command": "python3 scripts/agent-route.py check && git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "intermediateCorrections": [
+    "Initial #78 test expected200 for create; existing API correctly returns201. Corrected fixture before recording meaningful red results.",
+    "Crash simulation initially changed a completed manifest to running without restoring parts (completed jobs deliberately discard parts). Corrected fixture to retain the real in-flight manifest; no product workaround.",
+    "Browser fixture initially lacked UTF-8 response charset and misdecoded labels; fixed test server charset before passing."
+  ],
+  "notes": [
+    "#77 raw64MiB, OOXML10000 members and128MiB declared+actual expansion/CRC; Linux parser address space512MiB and2 workers, shared60s wait/run budget. PDF has raw/header checks and parser memory bound, not an OOXML expanded-byte check. Direct legacy write tools still require source not externally mutated during preflight/execution.",
+    "#77 extractor retains at most240000 characters/4096 blocks; generators close on early exit. Local attachments preserve their existing higher-level rune budget. Non-Linux resource limits and desktop Office acceptance not run.",
+    "#78 file manager creates rawDownload=true for ordinary files; directories/explicit archives retain ZIP. Persistent cache consumes data disk up to file size and is removed with the task; all preparation is streamed. Old direct URLs use weak metadata ETags, so old conditional splicing is rejected and clients should create snapshot jobs. Every preparation persists a fresh representation version; source changes during preparation are still outside atomic source snapshot guarantees.",
+    "#78 actual product UI via start.command and actual save-file picker not run. Chromium used isolated current-JS component with synthetic API; backend behavior separately exercised through real HTTP handlers and actual SFTP protocol.",
+    "#79 preview reads use SFTP stat plus LimitReader64MiB+1, without local spool; workspace absolute cache/document paths retained. Independent sources enforce enabled/config/root checks, generation changes rejected. Legacy batch merged output4MiB and existing command-diagnostic parsing retained; typed missing-file errors remain recognized.",
+    "Real SSH authentication/device, Windows/macOS, full repository release gates not run. Previously recorded /home/aide permissions limitation is unchanged; this cycle did not rerun those known blocked broad tests."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "internal/server/office.go": "13a1c44a9d78ce3aff93acc9421c622796594367d5cac78bcdfbccd3006866cf",
+    "internal/server/office_artifact.go": "7b578e7103f8b7403099432dfd11ed35d497e3e1e504c4ae649798e7d9085711",
+    "internal/server/attachments.go": "cd8284213e3c97e5be7f12d30fb1349698bbce01b4f3d69f313e8ae09c7f71b2",
+    "internal/server/office_bounds_test.go": "07b896f894656e03cbcd80ca2308c12f6b9593f562c005f33effaf814fbd1c3d",
+    "scripts/office/extract_text.py": "37e973af647f97a6585b844bf20b180a7ee93cac3f173ffb6614678bfc77c41d",
+    "scripts/test_office_extraction_bounds.py": "5806a9928e801c1b13372c407d4f74e92527cd974ac82b6e927f7907c451ae6c",
+    "internal/server/transfer_jobs.go": "b088c9041a6a63957d4e850ab62f3a52d6efd71e199f0cade6bb071eb2b20481",
+    "internal/server/transfer_worker.go": "0d8fdf901c9b59f0ebb865015849546ff8b146a7ae18a7f87282ececcc59de82",
+    "internal/server/transfer_journal.go": "bdd16cf7166c47ffe88c35df262253acadb1729f6d5f53b9f5224c101210f0c1",
+    "internal/server/transfer_download.go": "90b94a07771799d6adb49c4cb07b749858fa4117fcb994520677d240a554d3e6",
+    "internal/server/transfer_snapshot.go": "82c94d9539e3b72ef1a41bda86d2300c7587d10acd0387a71125044334e6bf4e",
+    "internal/server/download_version_test.go": "d82a4d69eaafcbf7e2c69c87cd58f0d12a9aad733e7095fb696a013345f14286",
+    "internal/server/web/file-transfers.js": "cb1f1ffc3ab2b0acf4a22b7f743d4083a3530ea56f0ec47170ae5ad477dc1573",
+    "scripts/browser-transfer-snapshot.cjs": "3efbfc90fcf28a510ae936e0612074ab46732696711d363cea21a49df0650864",
+    "internal/server/ssh_session.go": "4440a75c76cc27b35a1f5213bf6cbd0ef58438f3ea9751b725570bfdd8ffe6fe",
+    "internal/server/sftp_bounded_read.go": "9c9e63781ec777c68b55891601c3dfc1780b7f33db59968d3b42eb30725091a9",
+    "internal/server/sftp_bounds_test.go": "9bcff00fb521f0f88f80787717b99355257dacf5b200ae29069c8aec3c010e57",
+    "internal/server/files.go": "a63bf312d54c06b8f8ca4278d21e0e995ebdf00366eb2e6c8c831159fc452afc"
+  }
+}

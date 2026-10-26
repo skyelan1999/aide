@@ -2412,28 +2412,37 @@
       "number": 79,
       "title": "SFTP reads download unbounded remote files before enforcing size limits",
       "url": "https://github.com/skyelan1999/aide/issues/79",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "ssh_session.go:sftpReadExpected和sftpReadSourceExpected均先无界get至临时文件再os.ReadFile；远程文件/列表只在返回后被限制。",
+      "status": "fixed-on-branch",
+      "evidence": "预览SFTP流读取双重64MiB保护且无本地spool；批输出4MiB，真实协议/增长STAT/二进制及缺失文件兼容通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "ssh_session.go:sftpReadExpected和sftpReadSourceExpected均先无界get至临时文件再os.ReadFile；远程文件/列表只在返回后被限制。",
+      "repairCommit": "939fc3e2",
+      "repairEvidence": "cycle-007.json"
     },
     {
       "number": 78,
       "title": "Range downloads can mix file versions when metadata ETags collide",
       "url": "https://github.com/skyelan1999/aide/issues/78",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "transfer_download.go:serveTransferFile hash(identity,size,mtime)为元数据ETag；同尺寸同mtime内容替换不能被If-Match检出，多次range可能混合版本。",
+      "status": "fixed-on-branch",
+      "evidence": "持久原格式快照及强表示版本，mutable直读弱ETag；同大小mtime替换/重启/重建、>64MiB、真实SFTP与Chromium组件通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "transfer_download.go:serveTransferFile hash(identity,size,mtime)为元数据ETag；同尺寸同mtime内容替换不能被If-Match检出，多次range可能混合版本。",
+      "repairCommit": "b4881676",
+      "repairEvidence": "cycle-007.json"
     },
     {
       "number": 77,
       "title": "Legacy Office parsing paths can exhaust memory on unbounded documents",
       "url": "https://github.com/skyelan1999/aide/issues/77",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "office.go:docxTool与attachments.go:extractDocumentText直接交给runOfficeScript；仅路径/扩展/存在性，未调用新路径checkOfficeArchive，stdout上限不限制解析内存。",
+      "status": "fixed-on-branch",
+      "evidence": "旧Office入口统一raw/OOXML实际展开检查、Linux512MiB/2进程及提取时截断；Go/Python先红后绿。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "office.go:docxTool与attachments.go:extractDocumentText直接交给runOfficeScript；仅路径/扩展/存在性，未调用新路径checkOfficeArchive，stdout上限不限制解析内存。",
+      "repairCommit": "5fbc93f5",
+      "repairEvidence": "cycle-007.json"
     },
     {
       "number": 76,
@@ -2617,7 +2626,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 262,
+    "remainingFollowupTargets": 259,
     "followupRepairs": [
       48,
       64,
@@ -2626,7 +2635,10 @@
       69,
       71,
       73,
-      76
+      76,
+      77,
+      78,
+      79
     ]
   }
 }
