@@ -283,7 +283,7 @@ func (a *App) voicePersonalityAdopt(w http.ResponseWriter, r *http.Request) {
 	cur.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	a.settings.Personalities[id] = cur
 	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked()
+	a.persistPersonalitiesLocked(id)
 	a.persistPersonalityStateLocked()
 	a.mu.Unlock()
 	jsonOut(w, 200, map[string]any{"adopted": true, "updatedAt": cur.UpdatedAt, "evolutions": cur.Evolutions})

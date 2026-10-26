@@ -460,7 +460,16 @@ func (a *App) personalityLocked(id string) Personality {
 }
 
 // persistPersonalitiesLocked 写回 settings.json。调用方需持 a.mu。
-func (a *App) persistPersonalitiesLocked() {
+func (a *App) persistPersonalitiesLocked(changedIDs ...string) {
+	if len(changedIDs) == 0 {
+		changedIDs = []string{personaAide, personaXiaomi}
+	}
+	if a.personalityRevisions == nil {
+		a.personalityRevisions = map[string]uint64{}
+	}
+	for _, id := range changedIDs {
+		a.personalityRevisions[id]++
+	}
 	atomicJSON(SettingsPath(a.dataPath), a.settings)
 }
 
@@ -506,7 +515,7 @@ func (a *App) personalitySave(w http.ResponseWriter, r *http.Request) {
 		a.settings.Personalities = map[string]Personality{}
 	}
 	a.settings.Personalities[id] = p
-	a.persistPersonalitiesLocked()
+	a.persistPersonalitiesLocked(id)
 	a.mu.Unlock()
 	jsonOut(w, 200, map[string]any{"ok": true, "enabled": p.Enabled, "prompt": p.Prompt})
 }
@@ -550,6 +559,7 @@ func (a *App) personalityEvolve(w http.ResponseWriter, r *http.Request) {
 	id := validPersonalityID(in.ID)
 	a.mu.Lock()
 	cur := a.personalityLocked(id)
+	revision := a.personalityRevisions[id]
 	cfg := a.settings
 	sample := a.personalitySampleLocked(id)
 	a.mu.Unlock()
@@ -565,6 +575,12 @@ func (a *App) personalityEvolve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
+	if a.personalityRevisions[id] != revision || a.personalityLocked(id) != cur {
+		a.mu.Unlock()
+		a.finishPersonalityAttempt(id, "manual", "stale", cur, cur, "性格已变化，未采纳旧快照的演化结果")
+		fail(w, 409, errors.New("性格已变化，演化结果未采用，请重新发起"))
+		return
+	}
 	if a.settings.Personalities == nil {
 		a.settings.Personalities = map[string]Personality{}
 	}
@@ -573,7 +589,7 @@ func (a *App) personalityEvolve(w http.ResponseWriter, r *http.Request) {
 	st.LastEvolvedAt = res.Personality.UpdatedAt
 	a.settings.Personalities[id] = res.Personality
 	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked()
+	a.persistPersonalitiesLocked(id)
 	a.persistPersonalityStateLocked()
 	a.mu.Unlock()
 	a.finishPersonalityAttempt(id, "manual", "success", cur, res.Personality, res.Note)

@@ -357,6 +357,7 @@ func (a *App) runAutoEvolve(id string, mode personalityMode, trigger string, sam
 	defer func() { _ = recover() }()
 	a.mu.Lock()
 	cur := a.personalityLocked(id)
+	revision := a.personalityRevisions[id]
 	if !cur.Enabled {
 		a.mu.Unlock()
 		return
@@ -378,6 +379,11 @@ func (a *App) runAutoEvolve(id string, mode personalityMode, trigger string, sam
 	switch res.Status {
 	case "adopted":
 		a.mu.Lock()
+		if a.personalityRevisions[id] != revision || a.personalityLocked(id) != cur {
+			a.mu.Unlock()
+			a.finishPersonalityAttempt(id, trigger, "stale", cur, cur, "性格已变化，未采纳旧快照的演化结果")
+			return
+		}
 		if a.settings.Personalities == nil {
 			a.settings.Personalities = map[string]Personality{}
 		}
@@ -386,7 +392,7 @@ func (a *App) runAutoEvolve(id string, mode personalityMode, trigger string, sam
 		st.LastEvolvedAt = res.Personality.UpdatedAt
 		a.settings.Personalities[id] = res.Personality
 		a.personalityState.Entries[id] = st
-		a.persistPersonalitiesLocked()
+		a.persistPersonalitiesLocked(id)
 		a.persistPersonalityStateLocked()
 		a.mu.Unlock()
 		a.finishPersonalityAttempt(id, trigger, "success", cur, res.Personality, res.Note)
@@ -447,7 +453,7 @@ func (a *App) personalityRollbackLocked(id string) (Personality, bool) {
 	}
 	a.settings.Personalities[id] = cur
 	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked()
+	a.persistPersonalitiesLocked(id)
 	a.persistPersonalityStateLocked()
 	return cur, true
 }
@@ -461,7 +467,7 @@ func (a *App) personalityResetLocked(id string) {
 	st.History = nil
 	st.CountSinceEvolve = 0
 	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked()
+	a.persistPersonalitiesLocked(id)
 	a.persistPersonalityStateLocked()
 }
 
