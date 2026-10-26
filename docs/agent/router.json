@@ -820,6 +820,19 @@
       [
         "node",
         "scripts/test_voice_sample_duration.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_starmap_identity_race.cjs"
+      ],
+      [
+        "bash",
+        "-n",
+        "scripts/prebuild-wheels.sh"
+      ],
+      [
+        "python3",
+        "scripts/test_prebuild_wheels.py"
       ]
     ],
     "full": [
