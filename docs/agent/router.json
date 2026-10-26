@@ -890,6 +890,10 @@
       [
         "node",
         "scripts/test_drawio_layout_fixes.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_clone_constraints.cjs"
       ]
     ],
     "full": [

@@ -1,7 +1,7 @@
 'use strict';
 module.exports = async function (frame, out, theme) {
   const assert = require('node:assert/strict'), path = require('node:path');
-  const checks = await frame.evaluate(async (theme) => {
+  const checks = await frame.evaluate(async ({theme,selectTable}) => {
     if (!AideDrawioLayouts.installed || !ownedInstalledBeforeMain) throw new Error('layout hooks not installed');
     const graph = ownedEditor.graph, model = graph.model, parent = graph.getDefaultParent(), checks = [];
     const getLayout = graph.layoutManager.getLayout, callbacks = [], owned = new Set();let applies = 0;
@@ -53,11 +53,16 @@ module.exports = async function (frame, out, theme) {
     }
     const positions=new TableLayout(graph).getRowLayout(rows[0],table.geometry.width);
     if(positions.length!==3 || rows[0].children[0].geometry!==null) throw new Error('missing table column index');
-    // Selecting this malformed table has a separate known handle bug (#137), next in the ordered queue.
+    if (selectTable) graph.setSelectionCell(table);
     checks.push({case:'real table layout, missing first geometry, finite later columns and unchanged absent geometry',theme,result:'PASS',positions:Array.from(positions)});
+    if (selectTable) {
+      const handler=graph.selectionCellsHandler.getHandler(table);
+      if(!handler || !handler.customHandles || !handler.customHandles.length)throw new Error('missing table selection handles');
+      checks.push({case:'select malformed table and construct remaining handles',theme,result:'PASS',handles:handler.customHandles.length});
+    }
     return checks;
-  }, theme);
-  assert.equal(checks.length,3);
+  }, {theme,selectTable:Boolean(process.env.AIDE_DRAWIO_SELECT_TABLE)});
+  assert.equal(checks.length,process.env.AIDE_DRAWIO_SELECT_TABLE?4:3);
   await frame.page().screenshot({path:path.join(out,theme+'-table-layout.png')});
   return checks;
 };

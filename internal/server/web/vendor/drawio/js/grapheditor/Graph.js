@@ -17966,17 +17966,18 @@ if (typeof mxVertexHandler !== 'undefined')
 		 */
 		Graph.prototype.createCellMapping = function(mapping, lookup, cellMapping)
 		{
-			cellMapping = (cellMapping != null) ? cellMapping : new Object();
+			cellMapping = (cellMapping != null) ? cellMapping : Object.create(null);
 			
 			for (var objectId in mapping)
 			{
 				var cellId = lookup[objectId];
 				
-				if (cellMapping[cellId] == null)
+				if (!Object.prototype.hasOwnProperty.call(cellMapping, cellId) || cellMapping[cellId] == null)
 				{
 					// Uses empty string if clone ID was null which means
 					// the cell was cloned but not inserted into the model.
-					cellMapping[cellId] = mapping[objectId].getId() || '';
+					Object.defineProperty(cellMapping, cellId, {value: mapping[objectId].getId() || '',
+						writable: true, enumerable: true, configurable: true});
 				}
 			}
 			
@@ -25961,6 +25962,7 @@ if (typeof mxVertexHandler !== 'undefined')
 						{
 							var colState = graph.view.getState(cols[index]);
 							var geo = graph.getCellGeometry(cols[index]);
+							if (geo == null) return;
 							var g = (geo.alternateBounds != null) ? geo.alternateBounds : geo;
 
 							if (colState == null)

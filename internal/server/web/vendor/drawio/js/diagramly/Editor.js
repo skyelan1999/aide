@@ -11400,7 +11400,7 @@
 				}
 				else
 				{
-					var temp = mapping[action[name][i]];
+					var temp = Object.prototype.hasOwnProperty.call(mapping, action[name][i]) ? mapping[action[name][i]] : null;
 					
 					if (temp != null)
 					{
