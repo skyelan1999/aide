@@ -185,10 +185,16 @@
     "No Go/backend change; no Go test claimed. Full start.command workbench, actual ELK/libavoid, full large-diagram import, other browser engines/platforms NOT_RUN. No merge/release/deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "a7ed26634c74b8aa8b10105f010b8c503eec396c",
+    "issueComments": {
+      "132": "https://github.com/skyelan1999/aide/issues/132#issuecomment-6426631440",
+      "133": "https://github.com/skyelan1999/aide/issues/133#issuecomment-6426632476",
+      "134": "https://github.com/skyelan1999/aide/issues/134#issuecomment-6426633570"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "6dd8c9316d22b350e0bc7708c4ff399863e0b67cf3e6d68e0a9b3f28a4f5802b",
