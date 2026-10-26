@@ -1841,10 +1841,13 @@
       "number": 146,
       "title": "[Bug] Task delivery can accept stale workspace files as new artifacts",
       "url": "https://github.com/skyelan1999/aide/issues/146",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "task_delivery.go只验证当前存在非空/扩展名或浅签名，不关联本次task写事件；旧文件链接也满足delivered，是否允许复用需结合任务意图。",
+      "status": "fixed-on-branch",
+      "evidence": "交付前验证本任务文件状态变化或服务端生成/审批写入记录；工具/模型之前有界采集并持久化目录及SHA基线，旧文件及只改mtime不算交付。新建/改写、原生恢复、已应用写入保留；根/任务证据变化拒绝提交，哈希在全局锁外，完成后清除基线。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "task_delivery.go只验证当前存在非空/扩展名或浅签名，不关联本次task写事件；旧文件链接也满足delivered，是否允许复用需结合任务意图。",
+      "repairCommit": "1ac0f7d4965ffe65304cc32c7c2558d45261bbee",
+      "repairEvidence": "cycle-029.json"
     },
     {
       "number": 145,
@@ -2793,7 +2796,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 204,
+    "remainingFollowupTargets": 203,
     "followupRepairs": [
       48,
       64,
@@ -2859,7 +2862,8 @@
       142,
       143,
       144,
-      145
+      145,
+      146
     ]
   }
 }
