@@ -881,6 +881,15 @@
       [
         "node",
         "scripts/test_drawio_preview_bounds.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/drawio-layout-fixes.js"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_layout_fixes.cjs"
       ]
     ],
     "full": [

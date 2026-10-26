@@ -74,6 +74,7 @@ async function main() {
       assert.equal(await frame.evaluate(()=>ownedEditor.graph.model.getCell('2').value.trim()), 'Edited owned label');
       await page.screenshot({path:path.join(out,theme+'-drawio.png')});
       checks.push({case:'normal compressed multi-page, edit and save',theme,width,result:'PASS'});
+      if (process.env.AIDE_DRAWIO_LAYOUT_ACCEPTANCE) checks.push(...await require('./drawio-layout-browser-cases.cjs')(frame,out,theme));
     }
     const flat = '<mxGraphModel><root>' + Array.from({length:129},(_,n)=>{const i=128-n;return '<mxCell id="'+i+'"'+(i?' parent="'+(i-1)+'"':'')+'/>';}).join('') + '</root></mxGraphModel>';
     const largePage = compressed('<mxGraphModel><!--'+'x'.repeat(6*1024*1024)+'--><root><mxCell id="0"/></root></mxGraphModel>');
