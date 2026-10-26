@@ -12,9 +12,12 @@ const root = path.resolve(__dirname, '..');
 const cliArgs = process.argv.slice(2);
 const usage = `Usage: node scripts/pack_avatar_art.cjs [variant-id ...] [options]
 
-Inputs:  .agent-state/avatar-generation/{variant-id}.json
+Inputs:  .agent-state/avatar-enhanced/{variant-id}.json
 Outputs: internal/server/web/avatars/xiaomi-original/
-Reviews: .agent-state/avatar-packed/ (frame hashes and contact sheets)
+Reviews: .agent-state/avatar-enhanced-packed/ (frame hashes and contact sheets)
+
+Artwork source: filename relative to the input directory, or an absolute file
+within that directory. Copy generated images there first; symlinks are rejected.
 
 Options:
   --force          Re-extract selected source drawings even when cached.
@@ -52,6 +55,7 @@ if (cliArgs.includes('--check-deps')) { console.log(`Sharp ${sharp.versions?.sha
 const inputDir = path.join(root, '.agent-state/avatar-enhanced');
 const outputDir = path.join(root, 'internal/server/web/avatars/xiaomi-enhanced');
 const auditDir = path.join(root, '.agent-state/avatar-enhanced-packed');
+let packPaths;
 const size = 256, columns = 6;
 const MIN_FRAMES = 32, MAX_FRAMES = 60;
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
@@ -167,11 +171,15 @@ function detectFrames(data, width, height) {
 }
 
 async function pack(job, options) {
-  const source = await fs.readFile(job.source), fingerprint = hash(source);
-  const auditPath = path.join(auditDir, job.id + '.json');
+  const safe = await packPaths.job(job);
+  const source = await fs.readFile(safe.source), fingerprint = hash(source);
+  const auditPath = safe.audit;
   let prior;
   try {
     prior = JSON.parse(await fs.readFile(auditPath, 'utf8'));
+  } catch (error) { if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error; }
+  if (prior) {
+    packPaths.record(prior, job);
     if (!options.force && prior.sourceSHA256 === fingerprint && prior.pipelineVersion === 2) {
       // Descriptive metadata may be corrected after reviewing the same drawings.
       if (prior.label !== job.label || prior.scene !== job.scene) {
@@ -180,7 +188,7 @@ async function pack(job, options) {
       }
       return prior;
     }
-  } catch {}
+  }
   const { data, info } = await sharp(source).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { frames, warnings, rowCounts } = detectFrames(data, info.width, info.height);
   if (frames.length < MIN_FRAMES) warnings.push(`insufficient distinct drawings: detected ${frames.length}, minimum ${MIN_FRAMES}`);
@@ -237,8 +245,11 @@ async function publish(records, allowPartial) {
   for (const job of expected) {
     const record = records.find(candidate => candidate.id === job.id);
     if (!record?.usable || !record.reviewed || record.scene !== job.scene) continue;
+    packPaths.record(record, job);
     const current = JSON.parse(await fs.readFile(path.join(inputDir, job.id + '.json'), 'utf8'));
-    if (record.sourceSHA256 !== hash(await fs.readFile(current.source))) throw new Error(`${job.id}: reviewed artwork is stale`);
+    if (current.id !== job.id) throw new Error('Published avatar job ID mismatch');
+    const safe = await packPaths.job(current);
+    if (record.sourceSHA256 !== hash(await fs.readFile(safe.source))) throw new Error(`${job.id}: reviewed artwork is stale`);
     usable.push(record);
   }
   if (!allowPartial && usable.length !== expected.length) throw new Error(`Missing reviewed variants: ${expected.filter(job => !usable.some(record => record.id === job.id)).map(job => job.id).join(', ')}`);
@@ -269,7 +280,7 @@ async function publish(records, allowPartial) {
 
 (async () => {
   const args = cliArgs, ids = args.filter(arg => !arg.startsWith('--'));
-  await fs.mkdir(outputDir, { recursive: true }); await fs.mkdir(auditDir, { recursive: true });
+  packPaths = await require('./avatar_pack_paths.cjs')({root, inputDir, outputDir, auditDir});
   const jobs = (await fs.readdir(inputDir)).filter(name => name.endsWith('.json')).sort();
   for (const file of jobs) {
     const job = JSON.parse(await fs.readFile(path.join(inputDir, file), 'utf8'));
