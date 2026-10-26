@@ -21,7 +21,10 @@
     "docs/plugins/computer-browser-control.md",
     "vendor/github.com/pkg/sftp/client.go",
     "docs/debug-api.md",
-    "docs/plugins/office.md"
+    "docs/plugins/office.md",
+    "docs/architecture/personality-evolution.md",
+    "docs/architecture/office-viewer.md",
+    "docs/architecture/ssh-storage.md"
   ],
   "stages": {
     "requirements": {
@@ -40,21 +43,22 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第7轮#77/#78/#79已修复并验证；累计25项产品修复、1项测试修正。持续目标保持进行中。",
+      "summary": "第8轮#80/#82/#83已修复并验证；累计28项产品修复、1项测试修正，持续目标进行中。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "第7轮先红后绿；最终race62.105s、SFTP快照补测3.293s、真实Chromium下载组件、Python4项、server vet及完整quick通过；非全量发布/真实设备验收。",
+      "summary": "第8轮先红后绿；最终相关race24.134s、server vet、完整quick通过。较宽组3项受Landlock ABI及/home/aide权限限制，单独记录失败；非全量验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-004.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-005.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-006.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-007.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-007.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-008.json"
       ]
     },
     "documentation": {
@@ -78,16 +82,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第7轮#77/#78/#79已验证，待本轮push/comment回填；累计25项产品修复、1项测试修正；原272项剩259需跟进。目标进行中，第8轮#80/#82/#83。仅push审查分支。",
+  "handoff": "第8轮#80/#82/#83已验证待push/comment回填；累计28项产品修复、1项测试修正；原272项剩256需跟进。目标进行中，第9轮#84/#85/#86。仅push审查分支，不合并main。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "939fc3e20cce3efc7611ade636cc13a5fe7800af",
+    "commit": "e647baa168f5e74d6d886b6b4f4e28e9bd2e4c70",
     "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第5轮#68/#69/#373、第6轮#71/#73/#76均已push并评论验证证据；合理修复未合并main前保持open。",
+  "issue_comments": "第7轮#77/#78/#79已push并评论；第8轮#80/#82/#83待push后回填；合理修复未合并前保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -116,26 +120,26 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 8,
+    "nextCycle": 9,
     "lastCompletedBatch": {
-      "cycle": 7,
+      "cycle": 8,
       "issues": [
-        77,
-        78,
-        79
+        80,
+        82,
+        83
       ],
-      "cumulativeFixed": 26,
-      "cumulativeProductFixed": 25,
+      "cumulativeFixed": 29,
+      "cumulativeProductFixed": 28,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 259,
-      "verification": "PASS focused race62.105s, SFTP snapshot3.293s, Chromium component, Python4, vet, quick"
+      "remainingFollowupTargets": 256,
+      "verification": "PASS related race24.134s, vet, quick; broader3 kernel/home tests recorded as FAIL"
     },
     "limits": "后台调度不可用，不承诺对话结束后持续运行；当前会话继续执行。",
     "nextIssueCandidates": [
-      80,
-      82,
-      83
+      84,
+      85,
+      86
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -143,14 +147,14 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 8,
-      "status": "in_progress",
+      "cycle": 9,
+      "status": "pending",
       "candidates": [
-        80,
-        82,
-        83
+        84,
+        85,
+        86
       ],
-      "phase": "inspect-latest-issues"
+      "phase": "resume-from-checkpoint"
     }
   },
   "orderedReview": {

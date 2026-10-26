@@ -134,10 +134,15 @@
     "Real SSH authentication/device, Windows/macOS, full repository release gates not run. Previously recorded /home/aide permissions limitation is unchanged; this cycle did not rerun those known blocked broad tests."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "77": "https://github.com/skyelan1999/aide/issues/77#issuecomment-6417297204",
+      "78": "https://github.com/skyelan1999/aide/issues/78#issuecomment-6417298336",
+      "79": "https://github.com/skyelan1999/aide/issues/79#issuecomment-6417298949"
+    }
   },
   "sourceSHA256": {
     "internal/server/office.go": "13a1c44a9d78ce3aff93acc9421c622796594367d5cac78bcdfbccd3006866cf",

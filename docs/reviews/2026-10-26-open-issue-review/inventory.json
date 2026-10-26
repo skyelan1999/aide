@@ -2378,19 +2378,25 @@
       "number": 83,
       "title": "[P2] Bound sidecar comment reply text before persistence",
       "url": "https://github.com/skyelan1999/aide/issues/83",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "comments.go:update正文限制maxCommentText，而Reply分支只验证非空和数量再append，未限制字数；每次1MiB的HTTP限额不能限制50条累计大小。",
+      "status": "fixed-on-branch",
+      "evidence": "回复正文4000/作者100字符，保留50条上限；失败请求不写入同批其他改动，Unicode正例通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "comments.go:update正文限制maxCommentText，而Reply分支只验证非空和数量再append，未限制字数；每次1MiB的HTTP限额不能限制50条累计大小。",
+      "repairCommit": "e647baa1",
+      "repairEvidence": "cycle-008.json"
     },
     {
       "number": 82,
       "title": "[P2] In-flight SSH tasks can access the newly selected workspace",
       "url": "https://github.com/skyelan1999/aide/issues/82",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "harness_runtime.go:readHarnessSkill使用task旧remotePath却调用a.sftpRead无expected；workflow SSH分支ensureSSHSession使用当前连接，工作区切换未在这些调用绑定远端generation，跨工作区风险合理。",
+      "status": "fixed-on-branch",
+      "evidence": "旧远程任务Skill/shell/审批绑定校验；任务独占socket硬链接、捕获目标及同连接取消清理。实际Unix socket及受控进程先红后绿；真实认证主机待验。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "harness_runtime.go:readHarnessSkill使用task旧remotePath却调用a.sftpRead无expected；workflow SSH分支ensureSSHSession使用当前连接，工作区切换未在这些调用绑定远端generation，跨工作区风险合理。",
+      "repairCommit": "502cad90",
+      "repairEvidence": "cycle-008.json"
     },
     {
       "number": 81,
@@ -2403,10 +2409,13 @@
       "number": 80,
       "title": "Personality API accepts unbounded prompts and injects them into every system message",
       "url": "https://github.com/skyelan1999/aide/issues/80",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "persona.go:personalitySave直接json.NewDecoder，无MaxBytesReader或prompt上限；入settings后context使用完整prompt，与evolution上限不一致。",
+      "status": "fixed-on-branch",
+      "evidence": "人格手动保存1MiB/单JSON/4000Unicode字符，失败不修改内存和磁盘；边界和既有人格回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "persona.go:personalitySave直接json.NewDecoder，无MaxBytesReader或prompt上限；入settings后context使用完整prompt，与evolution上限不一致。",
+      "repairCommit": "69015b31",
+      "repairEvidence": "cycle-008.json"
     },
     {
       "number": 79,
@@ -2626,7 +2635,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 259,
+    "remainingFollowupTargets": 256,
     "followupRepairs": [
       48,
       64,
@@ -2638,7 +2647,10 @@
       76,
       77,
       78,
-      79
+      79,
+      80,
+      82,
+      83
     ]
   }
 }
