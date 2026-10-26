@@ -2,6 +2,14 @@
 
 工作目录与 Docker 可访问范围是两项不同配置。浏览器可以选择已挂载范围内的任意目录；保存工作目录不会自动添加新的 Docker 挂载。
 
+## Windows Release 本地目录
+
+Windows Release 的工作目录、自动系统文档和本地引用共用已挂载的本机目录范围。未显式设置 `AIDE_LOCAL_ROOT` 时，Windows 启动器沿用系统盘根目录的浏览策略；进程环境或 `.env` 中显式设置的 `AIDE_LOCAL_ROOT` 优先，并保留限制。`AIDE_WORKSPACE`、`AIDE_CONTEXT` 的 `.env` 值也不能被离线包默认目录覆盖。选择路径不会自动开放其他盘符。
+
+只共享指定项目目录时，在 Release 文件夹的 `.env` 中设置绝对路径，例如 `AIDE_LOCAL_ROOT=D:/Projects`；工作目录和文档目录可选择该范围内的子目录。其他盘符或外置盘通过“设置 → 文件与知识 → 本地目录”添加，保存后“应用并重启”，并在本机确认。文档需要写入时选择读写权限；额外挂载中的工作区缓存仍留在 Aide 数据区，不能把额外挂载指定为缓存位置。Docker Desktop 文件共享和操作系统权限仍然适用。
+
+端口调整及 A/B 升级继续使用启动器选定的 Compose 文件组合，保留已配置额外目录的挂载和权限。Windows AMD64 与 ARM64 启动包均需包含 `scripts/watch-port.ps1`。相关修复及验收边界见 [Windows Release 目录修复](tasks/release-external-directories-20261026.json)。
+
 ## 从根目录导航
 
 Docker Desktop 的 Linux 虚拟机根目录不是 macOS 根目录。不要直接用 `/:/local`。

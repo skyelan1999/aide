@@ -3,17 +3,17 @@ $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
 $currentPowerShell = (Get-Process -Id $PID).Path
 Remove-Item Env:AIDE_PORT -ErrorAction SilentlyContinue
-$env:COMPOSE_FILE = 'compose.yaml'
+if (-not $env:COMPOSE_FILE) { $env:COMPOSE_FILE = 'compose.yaml' }
 if (-not (Test-Path -LiteralPath '.aide-image')) { exit 0 }
 $lock = Join-Path $PWD '.aide-update-agent.lock'
 try { New-Item -ItemType Directory -Path $lock -ErrorAction Stop | Out-Null } catch { exit 0 }
 try {
   $docker = (Get-Command docker -ErrorAction Stop).Source
   $marker = (Get-Content -Raw '.aide-image').Trim() -split '\s+'
-  $portLine = & $docker compose -f compose.yaml port aide 8080 2>$null | Select-Object -Last 1
+  $portLine = & $docker compose port aide 8080 2>$null | Select-Object -Last 1
   if ($portLine -notmatch ':(\d+)\s*$') { exit 0 }
   $port = $Matches[1]
-  $token = (& $docker compose -f compose.yaml exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' 2>$null | Out-String).Trim()
+  $token = (& $docker compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' 2>$null | Out-String).Trim()
   if (-not $token) { exit 0 }
   $base = "https://127.0.0.1:$port/api/updates"
   $headers = @('Authorization: Bearer ' + $token)

@@ -21,3 +21,11 @@ CSV/TSV tables preserve strings, leading zeros, BOM and line-ending style. Suppo
 Markdown headings H1–H6 provide an accessible outline outside code blocks. The outline collapses on selection, outside click or Escape and adapts to narrow preview widths. Editing, draft recovery and version restoration update the preview without changing document content merely to navigate.
 
 Uploads, pasted images and dropped attachments use the selected writable source and explicit save flow. History and recovery drafts are separate from server-saved files. Verify actual save receipts and reopen the intended source before calling a change persistent.
+
+## Windows Release directory scope
+
+Working directories, automatic system documents and local references share the mounted host-directory boundary. Without an explicit `AIDE_LOCAL_ROOT`, the Windows launcher uses its existing system-drive-root browsing policy. An explicit process environment or `.env` value retains its narrower scope. Offline defaults must also respect `.env` values for `AIDE_WORKSPACE` and `AIDE_CONTEXT`.
+
+To share only a project tree, set an absolute path such as `AIDE_LOCAL_ROOT=D:/Projects` in the Release folder's `.env`. Select document/workspace subdirectories within that boundary. Add directories on other drives under **Settings → Files & knowledge → Local directories**, save, then apply and restart with host confirmation. Choose read/write access when documents need to be saved. Workspaces on extra mounts keep their cache in the Aide data area; extra mounts cannot be selected as cache destinations. Selecting a path does not automatically grant access to another drive; Docker Desktop sharing and OS permissions still apply.
+
+Port changes and A/B upgrades preserve the launcher's Compose overrides, including extra directory mounts and permissions. Both Windows AMD64 and ARM64 launcher archives must ship `scripts/watch-port.ps1`. See the [repair and verification record](../tasks/release-external-directories-20261026.json); native Windows acceptance is tracked separately from PowerShell fixtures on macOS.

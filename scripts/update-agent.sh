@@ -18,7 +18,7 @@ LOCK=.aide-update-agent.lock
 mkdir "$LOCK" 2>/dev/null || exit 0
 trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT INT TERM
 
-compose() { COMPOSE_FILE=compose.yaml "$DOCKER_BIN" compose "$@"; }
+compose() { COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml}" "$DOCKER_BIN" compose "$@"; }
 unset AIDE_PORT
 port="$(compose port aide 8080 2>/dev/null | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' | tail -1)"
 [[ "$port" =~ ^[0-9]{1,5}$ ]] || exit 0

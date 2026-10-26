@@ -191,3 +191,50 @@ func TestLocalMountWorkspaceKeepsCacheInternal(t *testing.T) {
 		}
 	}
 }
+
+// Release directory selection must feed the same external root into browsing,
+// system-document proposals and the final approved write, including Windows
+// spelling/Unicode paths while the server itself runs in a Linux container.
+func TestLocalMountExternalSystemDocumentsRoundTrip(t *testing.T) {
+	a := testApp(t)
+	outside := t.TempDir()
+	docs := filepath.Join(outside, "资料目录")
+	if err := os.Mkdir(docs, 0700); err != nil {
+		t.Fatal(err)
+	}
+	root, err := os.OpenRoot(outside)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	a.localMountConfig = localmounts.Config{Version: 1, Entries: []localmounts.Entry{{ID: "external", Name: "External documents", Path: "E:/Projects"}}}
+	a.localMountRoots = map[string]*os.Root{"external": root}
+	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
+		"docs": map[string]any{"location": "local", "path": `e:\Projects\资料目录`},
+	}), 200)
+	s, task := documentProposalTask(a)
+	if _, err := proposeDocument(a, task, nil, "report.md", "external document receipt"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(docs, "report.md")); !os.IsNotExist(err) {
+		t.Fatal("wrote before approval")
+	}
+	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs/"+task.ID+"/apply", nil), 200)
+	body, err := os.ReadFile(filepath.Join(docs, "report.md"))
+	if err != nil || string(body) != "external document receipt" {
+		t.Fatalf("external write: %s %v", body, err)
+	}
+	if _, err := a.workspace.Stat("report.md"); !os.IsNotExist(err) {
+		t.Fatal("document incorrectly written to workspace")
+	}
+	listed := request(a, "GET", "/api/files?root=context&source=system-docs&path=.", nil)
+	requireStatus(t, listed, 200)
+	if !strings.Contains(listed.Body.String(), "report.md") {
+		t.Fatal(listed.Body.String())
+	}
+	read := request(a, "GET", "/api/file?root=context&source=system-docs&path=report.md", nil)
+	requireStatus(t, read, 200)
+	if !strings.Contains(read.Body.String(), "external document receipt") {
+		t.Fatal(read.Body.String())
+	}
+}
