@@ -296,10 +296,16 @@
     "No Go/backend change; no Go test claimed. Full start.command workbench, actual rotation drag/mouseup/save, arbitrary SVG import/export/native CAD, other engines/platforms NOT_RUN. No merge/release/deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "444c4ff045606e13c3eff637c548bace08d48f0d",
+    "issueComments": {
+      "139": "https://github.com/skyelan1999/aide/issues/139#issuecomment-6427009337",
+      "140": "https://github.com/skyelan1999/aide/issues/140#issuecomment-6427010371",
+      "141": "https://github.com/skyelan1999/aide/issues/141#issuecomment-6427011040"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "cec0febd8f56bcc834f92de6a593df11093c257454482e4866c1d3930ff826a3",
