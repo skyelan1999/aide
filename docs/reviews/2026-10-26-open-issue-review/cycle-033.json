@@ -1,0 +1,79 @@
+{
+  "cycle": 33,
+  "baseline": "1fd7dc8ba021a19c11333e26e83d237d1f7f0e1d",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    155
+  ],
+  "commits": {
+    "155": "3796ae10dd784c7fbd5ad9fe614adff5a3e18e3b"
+  },
+  "cumulativeProductFixes": 88,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 89,
+  "original272RemainingFollowup": 195,
+  "red": [
+    {
+      "issue": 155,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue155' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 10.578,
+      "observed": "11故障组合：save/settings；reset/rollback/evolve/voice-adopt/automatic分别settings/state。前9个HTTP仍200，后2个自动发布新提示词/历史/revision。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle33-155-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue155|^TestIssue101|^TestPersonality|^TestEvolution|^TestEvolve|^TestOnPersonality|^TestEndToEndEvolution|^TestCompressMode|^TestAuditOnAttempt|^TestInsufficientSample|^TestRollback|^TestReset|^TestManualEvolve|^TestVoicePersonality|^TestIssue120|^TestFactoryReset' -count=1 -timeout=5m",
+      "result": "PASS",
+      "durationSeconds": 68.357,
+      "scope": "11组合真实HTTP/自动演化文件故障与成功重试，原prompt/History/count/revision及可读原件保留；新建状态文件在设置失败时删除；触发/尝试元数据保存失败不发布；既有演化预算/身份/审计/取样/回滚、#101并发ABA、声音采纳与FactoryReset/#120。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle33-final-race.log"
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestTriggerAfterMessageCount$|^TestTriggerPersistence$' -count=1 -timeout=1m",
+      "result": "PASS",
+      "durationSeconds": 3.113,
+      "scope": "既有正向20条触发归零与落盘计数重新加载。"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T231622026015Z.log",
+      "fingerprint": "4ea09c445d38bfc925be5559d289c7d278ded6fd0577b0e9fab68583c337200b"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "428Markdown/1466links"
+    }
+  ],
+  "notes": [
+    "性格保存/重置/回滚/手动与自动演化/声音性格采纳先保存候选，再发布内存与revision；错误500，后台记failed。两文件更新先写状态，设置失败补偿恢复旧状态（原来缺失则删除新文件），补偿错误显式返回。计数/尝试元数据保存失败不发布，History候选复制。",
+    "两个配置文件是锁内顺序原子替换与补偿写，不是跨文件原子事务。没有持久化事务日志；进程终止/断电窗口可能留下部分写入。若补偿也失败，返回合并错误、内存保留原配置，磁盘必须检查；本轮未注入补偿本身失败、未做崩溃/断电恢复验收，不能将普通失败回归等同此保证。",
+    "成功演化的LastAttempt成功元数据与History在同一候选状态中保存，之后只追加尽力审计；失败尝试保存失败记录服务端日志，不发布幽灵状态。审计日志追加仍非事务保证。",
+    "既有TestRollback仅因内部helper现在返回error而适配并断言nil，不计额外测试bug修复。错误保存不增加revision；已成功重置等仍使旧模型草稿失效，现有并发ABA用例通过。",
+    "完整start.command工作台、Windows/macOS、真实只读挂载/设备/付费模型、断电恢复NOT_RUN；本轮无UI改动、无常驻测试服务。只push分支，不合并main/发行/部署；合理issue保持open。",
+    "下一轮#156声音推断fan-out，之后#157文件绑定TOCTOU、#158研究值边界；最新正文已读，未冒充其修复完成。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/architecture/personality-evolution.md": "d38cfe078e50693b8c0a5a6c8cda91a621dd1b2aec7eda2eca370eefc7d2e072",
+    "internal/server/persona.go": "185c3dda3fe2ba34af8aef8ac602e3ebede93a44319eb371c037b866367790cf",
+    "internal/server/personality_evolution.go": "8ba9abc13df7d9d0f8e03fcf4e558bf674d4acd4de4a077f963d07f5985a92cb",
+    "internal/server/personality_evolution_test.go": "0dfe9e4e65cae247edd70296ec382ef52e29745e13b0b04ca3979a4caf6aa1f9",
+    "internal/server/personality_persistence.go": "12f0000a1d04dba8eb8387d5adb44453cf6805a28e36d4a5606b201eaaa7bc29",
+    "internal/server/personality_persistence_test.go": "260d6e3744273bb8d8146c32ff826db08ab25137d05e0af83ba6eca2706f825c",
+    "internal/server/voice_personality.go": "3611b5db77a9369f36f2387b62b51bfc233ad1701ad73c5ff07c544e796b5364"
+  }
+}

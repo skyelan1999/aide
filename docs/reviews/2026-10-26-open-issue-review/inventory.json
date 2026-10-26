@@ -1769,10 +1769,13 @@
       "number": 155,
       "title": "[Bug] Surface personality save and rollback persistence failures",
       "url": "https://github.com/skyelan1999/aide/issues/155",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "persistPersonalitiesLocked/persistPersonalityStateLocked吞atomicJSON错误，save/reset/rollback/adopt仍宣告完成，涉及多文件事务一致性。",
+      "status": "fixed-on-branch",
+      "evidence": "性格保存/重置/回滚/手动与自动演化/声音性格采纳先保存候选，再发布内存与revision；错误500，后台记failed。两文件更新先写状态，设置失败补偿恢复旧状态（原来缺失则删除新文件），补偿错误显式返回。计数/尝试元数据保存失败不发布，History候选复制。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "persistPersonalitiesLocked/persistPersonalityStateLocked吞atomicJSON错误，save/reset/rollback/adopt仍宣告完成，涉及多文件事务一致性。",
+      "repairCommit": "3796ae10dd784c7fbd5ad9fe614adff5a3e18e3b",
+      "repairEvidence": "cycle-033.json"
     },
     {
       "number": 153,
@@ -2817,7 +2820,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 196,
+    "remainingFollowupTargets": 195,
     "followupRepairs": [
       48,
       64,
@@ -2891,7 +2894,8 @@
       150,
       151,
       152,
-      153
+      153,
+      155
     ]
   }
 }
