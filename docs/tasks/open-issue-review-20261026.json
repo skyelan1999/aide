@@ -7,7 +7,8 @@
     "完整盘点289个open issues，按证据判断，重复条目评论关闭",
     "合理问题用合成隔离回归先复现再修复，不因暂未复现关闭",
     "修改在专用分支push，禁止合并main或发布",
-    "保留用户原有未跟踪文件，结果逐条关联issue与命令"
+    "保留用户原有未跟踪文件，结果逐条关联issue与命令",
+    "按编号升序逐条核对原剩余272项，完整记录源码判断、运行证据和未验证边界，不以审查代替修复"
   ],
   "scope": [
     "internal/server",
@@ -32,23 +33,25 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "首批13项已实现，全部289项尚未审完。",
+      "summary": "累计14项产品修复在现有分支；本轮完成原剩余272项逐条审查，新增产品修复0项，合理问题修复目标继续。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "首批13项完成：134项相关race通过，5项SSH环境受限；vet/文档/diff通过。其余273项未验证。",
+      "summary": "本轮22项Highlight最小复现、实际scanner LF/CRLF验证、隔离Chromium CSP与资产摘要核对完成；产品全量及平台验收未运行。此前14项修复的历史证据单列，不混记。",
       "evidence": [
-        "docs/reviews/2026-10-26-open-issue-review/verification.json"
+        "docs/reviews/2026-10-26-open-issue-review/verification.json",
+        "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "289项逐条处理状态及首轮证据记录完成，不将待审条目误标为已核实。",
+      "summary": "原289项状态及272项升序审查逐项记录完成，明确源码/运行/修复区别。",
       "evidence": [
-        "docs/reviews/2026-10-26-open-issue-review/inventory.json"
+        "docs/reviews/2026-10-26-open-issue-review/inventory.json",
+        "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
       ]
     },
     "cleanup": {
@@ -64,15 +67,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "目标与循环规则已建立；第2轮修复#124并验收通过，累计14项分支修复，仍272项待审。仅push专用分支，禁止合并main/发布。无可调用的后台调度接口，不承诺会话结束后持续运行。",
+  "handoff": "原剩余272项按编号升序全部审查完成，#104/#112附证据关闭；14项既有分支修复保留。审查完成不代表修复完成。下一轮按编号处理可执行合理问题：#28等云端复跑，#48 pending边界，#57产品需求，#64压缩名称冲突。只push分支，不合并main/发布。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "ae48fa7e",
+    "commit": "7936ed69597c7649e68c0b5fa885e636d8501203",
     "pushed": true,
     "mergedToMain": false,
-    "released": false
+    "released": false,
+    "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "13项修复证据和2项已有修复/环境受限说明已评论成功；#63重复已关闭。",
+  "issue_comments": "原批次评论保留；本轮#104/#112已说明反证/实际函数结果后关闭，其余不因缺复现而关闭。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -89,7 +93,7 @@
     ],
     "cycle": [
       "读取最新open issues和已有清单，避免重复修复",
-      "选择优先级最高的未审/可执行项，核对代码与复现条件",
+      "按编号升序核对清单中尚未修复且可执行的合理问题；已审结果作为入口，不反复从零盘点",
       "不成立/重复：记录证据后评论关闭；成立：先补回归再修复",
       "运行相关检查，失败继续修复；受限明确记录而非算通过",
       "提交并push专用分支，评论issue并更新清单与检查点",
@@ -100,22 +104,51 @@
       "本轮剩余条目均已有处理结论且无可执行项",
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
-    "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 3,
+    "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/ordered-review.json",
+    "nextCycle": 4,
     "lastCompletedBatch": {
-      "cycle": 2,
-      "issues": [
-        124
-      ],
+      "cycle": 3,
+      "type": "ordered-source-review",
+      "reviewed": 272,
+      "pendingReview": 0,
+      "newRepairs": 0,
       "cumulativeFixed": 14,
-      "pendingReview": 272,
-      "verification": "PASS real signed assertions on both endpoints, replay/current-counter check; 22.291s race"
+      "closedNotSupported": [
+        104,
+        112
+      ],
+      "verification": "22 Highlight minimal reproductions; actual Markdown scanner; isolated Chromium CSP; asset hashes and advisory metadata. Full product/platform acceptance pending."
     },
     "limits": "后台调度不可用，不承诺对话结束后持续运行；当前会话继续执行。",
     "nextIssueCandidates": [
-      145,
-      76,
-      79
+      28,
+      48,
+      57,
+      64,
+      66
     ]
+  },
+  "orderedReview": {
+    "status": "pass",
+    "target": 272,
+    "reviewed": 272,
+    "remaining": 0,
+    "verdictCounts": {
+      "existing-fix-awaiting-hosted-validation": 1,
+      "impact-not-established": 3,
+      "needs-platform-reproduction": 1,
+      "needs-product-decision": 2,
+      "needs-runtime-reproduction": 1,
+      "needs-specification": 1,
+      "not-supported-as-reported": 2,
+      "reasonable-feature": 1,
+      "runtime-reproduced": 22,
+      "source-confirmed": 211,
+      "source-confirmed-optional": 27
+    },
+    "report": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
+    "machineRecord": "docs/reviews/2026-10-26-open-issue-review/ordered-review.json",
+    "artifactSHA256": "78a6be98c47990d95d9867694d0b677d397a7cd76d550a740feccef99f07783a",
+    "repairsComplete": false
   }
 }

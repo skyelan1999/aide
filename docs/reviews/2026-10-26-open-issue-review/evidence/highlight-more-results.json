@@ -1,0 +1,37 @@
+{
+  "285": {
+    "language": "groovy",
+    "code": "def simple = \"Hello $name\"\ndef expression = \"Hello ${name.toUpperCase()}\"",
+    "html": "<span class=\"hljs-keyword\">def</span> simple = <span class=\"hljs-string\">&quot;Hello $name&quot;</span>\n<span class=\"hljs-keyword\">def</span> expression = <span class=\"hljs-string\">&quot;Hello ${name.toUpperCase()}&quot;</span>"
+  },
+  "286": {
+    "language": "perl",
+    "code": "my $s = \"items: @{[ map { $_ * 2 } @items ]}\";",
+    "html": "<span class=\"hljs-keyword\">my</span> $s = <span class=\"hljs-string\">&quot;items: <span class=\"hljs-subst\">@{[ <span class=\"hljs-keyword\">map</span> { $_ * <span class=\"hljs-number\">2</span> }</span> @items ]}&quot;</span>;"
+  },
+  "287": {
+    "language": "r",
+    "code": "x <- 1.25\nx <- 1e+3\nx = 1.25\nx<- 1.25",
+    "html": "x <span class=\"hljs-operator\">&lt;-</span> 1.25\nx <span class=\"hljs-operator\">&lt;-</span> 1e<span class=\"hljs-operator\">+</span><span class=\"hljs-number\">3</span>\nx <span class=\"hljs-operator\">=</span> <span class=\"hljs-number\">1.25</span>\nx<span class=\"hljs-operator\">&lt;-</span> <span class=\"hljs-number\">1.25</span>"
+  },
+  "288": {
+    "language": "ruby",
+    "code": "text = \"value: #{ { a: 1 } }\"\ntext = %Q{value: #{ { a: 1 } }}",
+    "html": "text = <span class=\"hljs-string\">&quot;value: <span class=\"hljs-subst\">#{ { <span class=\"hljs-symbol\">a:</span> <span class=\"hljs-number\">1</span> }</span> }&quot;</span>\ntext = <span class=\"hljs-string\">%Q{value: <span class=\"hljs-subst\">#{ { <span class=\"hljs-symbol\">a:</span> <span class=\"hljs-number\">1</span> }</span> }</span>}"
+  },
+  "289": {
+    "language": "swift",
+    "code": "let raw = ####\"value \\####(42)\"####\nlet regex = ####/foo/####",
+    "html": "<span class=\"hljs-keyword\">let</span> raw <span class=\"hljs-operator\">=</span> #<span class=\"hljs-string\">###&quot;value \\####(42)&quot;###</span>#\n<span class=\"hljs-keyword\">let</span> regex <span class=\"hljs-operator\">=</span> #<span class=\"hljs-regexp\">###/foo/###</span>#"
+  },
+  "290": {
+    "language": "scala",
+    "code": "val text = s\"value ${ { val n = 1; n } }\"",
+    "html": "<span class=\"hljs-keyword\">val</span> text = <span class=\"hljs-string\">s&quot;value <span class=\"hljs-subst\">${ { val n = 1; n }</span> }&quot;</span>"
+  },
+  "291": {
+    "language": "scss",
+    "code": "$name: \"world\";\n.message { content: \"Hello, #{$name}\"; }",
+    "html": "<span class=\"hljs-variable\">$name</span>: <span class=\"hljs-string\">&quot;world&quot;</span>;\n<span class=\"hljs-selector-class\">.message</span> { <span class=\"hljs-attribute\">content</span>: <span class=\"hljs-string\">&quot;Hello, #{$name}&quot;</span>; }"
+  }
+}

@@ -8,113 +8,145 @@
       "number": 358,
       "title": "[Bug] Mockup Email template is indexed under calendar search tags",
       "url": "https://github.com/skyelan1999/aide/issues/358",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Mockup Forms Email复用calendar date tags，addDataEntry还追加Email标题所以Email可搜，但calendar/date产生false positive。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 357,
       "title": "[P3] Keep the iOS palette sidebar reference local",
       "url": "https://github.com/skyelan1999/aide/issues/357",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Ios.addIosPalette sb=this无声明，构造sidebar常规初始化写window.sb；与224搜索缺失不同位置。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 355,
       "title": "[Bug] GMDL stepper templates are incorrectly indexed as tabs",
       "url": "https://github.com/skyelan1999/aide/issues/355",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Gmdl.addGMDLSteppersPalette dt错误沿用tab，所有stepper entry均带tab，增加不相关search命中。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 354,
       "title": "[Bug] GMDL single-line field focus variants have incorrect names and search tags",
       "url": "https://github.com/skyelan1999/aide/issues/354",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Gmdl focus blue underline/label模板title仍normal，其他灰色normal模板tag focus；需按实际state分清修title还是tag。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 353,
       "title": "[Bug] GMDL checkbox and radio labels have extra closing parentheses",
       "url": "https://github.com/skyelan1999/aide/issues/353",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Gmdl Checkbox/Radio模板title多余))，实际示例包含Checkbox(on,hover))；search terms正确，只是展示名。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 352,
       "title": "[P3] Keep table rendering scale local",
       "url": "https://github.com/skyelan1999/aide/issues/352",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "TableShape.paintForeground s=this.scale无var，classic script污染iframe window.s；正常table渲染可达。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 351,
       "title": "[P3] Add spacing to the superscript formatting button",
       "url": "https://github.com/skyelan1999/aide/issues/351",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Format创建sup后再次写sub.style.marginLeft，sup缺预期间距；轻微富文本UI问题，布局截图待验。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 350,
       "title": "[P3] Avoid duplicating units after invalid geometry input",
       "url": "https://github.com/skyelan1999/aide/issues/350",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Arrange geometry focus保存含unit完整initialValue，NaN fallback再拼unit，100 px→100 px px；不修改模型，仅错误恢复显示。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 349,
       "title": "[P2] Scope temporary editor keyboard handlers to each instance",
       "url": "https://github.com/skyelan1999/aide/issues/349",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "createKeyHandler读取现有keyHandler.getFunction后覆盖mxKeyHandler.prototype.getFunction闭包捕获graph/ui，destroy只销毁实例；反复presentation会链式retain已关窗口。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 347,
       "title": "[P2] Restrict chromeless toolbar navigation URLs to the same origin",
       "url": "https://github.com/skyelan1999/aide/issues/347",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "chromeless toolbar back/refresh URL通过scheme sanitizer后允许外域https并点击导航，源码事实成立；这是可配置返回地址，是否必须same-origin属产品/嵌入契约，默认AIDE embed非chrome=0且frame CSP会影响导航，不能直接算未授权静默redirect。",
+      "reviewVerdict": "needs-product-decision",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 346,
       "title": "[P3] Keep shape picker cell traversal local",
       "url": "https://github.com/skyelan1999/aide/issues/346",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "installShapePicker相对parent遍历cell=temp未声明，写window.cell并继续graph.model.getParent(cell)；局部声明可修。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 345,
       "title": "[P3] Keep PNG parser chunk data local",
       "url": "https://github.com/skyelan1999/aide/issues/345",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "grapheditor.EditorUi.parsePng未知chunk value=fread未声明，写window.value；data来源本地PNG，不构成跨域泄露。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 344,
       "title": "[P3] Keep FilenameDialog row variable local",
       "url": "https://github.com/skyelan1999/aide/issues/344",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "FilenameDialog row=document.createElement无声明，经典脚本写iframe window.row；仅同文档global碰撞风险。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 343,
       "title": "[P2] Cap stripe rendering for oversized iOS shapes",
       "url": "https://github.com/skyelan1999/aide/issues/343",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxMockupiOS iPhone/bgStriped/iPad按w以5/7递增画stripe，无count cap，超大geometry会引起过量同步绘制。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 342,
       "title": "[P2] Bound Icon Grid rendering for untrusted grid sizes",
       "url": "https://github.com/skyelan1999/aide/issues/342",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "iOS IconGrid gridSize字符串原样split用于背景/前景双重循环，无dimensions/total cell限制；小XML可要求极大同步work，未执行巨量循环。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 341,
       "title": "[P3] Clear the comments refresh timer when its window is destroyed",
       "url": "https://github.com/skyelan1999/aide/issues/341",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "CommentsWindow直接setInterval(refreshCommentsTime,60000)不保存ID，installResizeHandler destroy callback仅移除comments listener；支持comments的后端+同document重开会累积。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 340,
@@ -127,29 +159,37 @@
       "number": 339,
       "title": "[P3] Handle prototype-named cell IDs in anchored comments",
       "url": "https://github.com/skyelan1999/aide/issues/339",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "anchored comments updateCommentOverlays cells={}丢__proto__ own key，跨页remaining={}也误认为已登记；需要Drive等支持anchor后端，AIDE本地embedded file不当然有此能力。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 338,
       "title": "[P3] Preserve selected descendants of prototype-named cells in JSON export",
       "url": "https://github.com/skyelan1999/aide/issues/338",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "JSON selection export selected={}，ancestor constructor继承truthy被视为已选，使只选child被跳过。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 337,
       "title": "[P3] Use a prototype-safe set for CSV layout scoping",
       "url": "https://github.com/skyelan1999/aide/issues/337",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "scopeLayoutsToCells cellSet={}且只认===true，__proto__赋true不建own key，合法CSV identity cell被排除layout。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 336,
       "title": "[P3] Wait for an in-flight Org Chart layout load",
       "url": "https://github.com/skyelan1999/aide/issues/336",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "loadOrgChartLayouts条件!loadingOrgChart，已有inflight时走else onload立即调用，不等待constructor可用；orgchart CSV并发载入可部分插入后throw。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 335,
@@ -162,1401 +202,1801 @@
       "number": 334,
       "title": "[P3] Finish file imports when FileReader fails",
       "url": "https://github.com/skyelan1999/aide/issues/334",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "EditorUi.importFiles remain barrier只由onload路径完成，FileReader无onerror/onabort slot释放；错误/中止时spinner/completion可悬挂。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 333,
       "title": "[P3] Keep Mermaid generation results local",
       "url": "https://github.com/skyelan1999/aide/issues/333",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "EditorUi.generateOpenAiMermaidDiagram callback result=response.result/response无局部声明，产生iframe window.result；AI diagram生成端点在默认离线配置是否启用待确认。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 332,
       "title": "[P3] Use a prototype-safe map for imported page links",
       "url": "https://github.com/skyelan1999/aide/issues/332",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "EditorUi.importXml/addLocalPagesToMapping用{}存任意pageID，__proto__字符串赋值不建own key，updatePageLink读继承object可生成[object Object]链接。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 331,
       "title": "[P3] URL-encode imported page IDs in generated links",
       "url": "https://github.com/skyelan1999/aide/issues/331",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "EditorUi.createLink params.push('page-id='+getId())未encode，进口ID的&/#会拆query/fragment，其他参数已有encode。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 330,
       "title": "[P3] Keep SVG export conversion counter local",
       "url": "https://github.com/skyelan1999/aide/issues/330",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "EditorUi.replaceAlternateContent counter=switches.length未声明，异步done读写同window.counter，跨export可干扰，需局部变量。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 329,
       "title": "[P3] Preserve hidden tags for pages named __proto__",
       "url": "https://github.com/skyelan1999/aide/issues/329",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "EditorUi.getHiddenTagsMap result={}，result[page.getId()]=tags对于__proto__改prototype而不新增own key，JSON导出漏hidden tags。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 328,
       "title": "[P2] Escape diagram background in HTML export",
       "url": "https://github.com/skyelan1999/aide/issues/328",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Editor root background原样进入graph.background，EditorUi.getHtml串入body style属性不escape/验CSS color，可注入导出HTML属性；导出文件打开时原AIDE响应CSP不随文件继承，实际完整导出运行待验。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 327,
       "title": "[P3] Resolve custom actions for prototype-named cell IDs",
       "url": "https://github.com/skyelan1999/aide/issues/327",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "getCellsForAction和Animation.collectReferencedCells seen={}，!seen[id]会漏constructor等合法ID，影响动作目标及快照清理。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 326,
       "title": "[P3] Avoid inherited object keys when matching diagram tags",
       "url": "https://github.com/skyelan1999/aide/issues/326",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Graph.getCellsForTags lookup={}并以lookup[tag]!=null认成员，constructor/toString/__proto__继承值可错误匹配未请求tag。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 325,
       "title": "[P3] Preserve the focused line-end spacing input on refresh",
       "url": "https://github.com/skyelan1999/aide/issues/325",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Format endSpacing刷新却判断activeElement!=startSpacing，end输入聚焦时仍覆写未提交值；相邻start分支正确。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 324,
       "title": "[P2] Preserve custom multi-color controls on refresh",
       "url": "https://github.com/skyelan1999/aide/issues/324",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Format.createArrayCellColorOption IIFE捕获index但getter/listener用values[i]；循环结束i=len后refresh拿undefined，影响多颜色控件。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 323,
       "title": "[P3] Reject non-positive imported page dimensions",
       "url": "https://github.com/skyelan1999/aide/issues/323",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Editor imported pageWidth/pageHeight只检查!isNaN，不限制>0或finite；背景页及page breaks除法可产生NaN/Infinity或负几何。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 322,
       "title": "[P3] Keep PageSetupDialog preset detection local",
       "url": "https://github.com/skyelan1999/aide/issues/322",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "PageSetupDialog匹配preset赋detected=true无声明，也无后续读取；清理应删除无用赋值或局部声明，作用限iframe global。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 321,
       "title": "[P3] Handle malformed percent escapes in embedded PNG XML",
       "url": "https://github.com/skyelan1999/aide/issues/321",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Editor.extractGraphModelFromPng try/catch后再次decodeURIComponent(result)，%ZZ可在catch外抛URIError，使PNG常规插入fallback中断。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 320,
       "title": "[P3] Keep mxEdgeHandler bend sizing variables local",
       "url": "https://github.com/skyelan1999/aide/issues/320",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxEdgeHandler.redrawInnerBends label重叠分支w/h赋值无var声明，classic bundle产生iframe window全局写。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 319,
       "title": "[P2] Reject self-loop connection instead of inserting a dangling edge",
       "url": "https://github.com/skyelan1999/aide/issues/319",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Graph marker.getCell wrapper无条件this.error=null，base invalid self-loop置null target后错误被清；allowDanglingEdges默认true使释放可插入dangling。完整手势待复现。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 318,
       "title": "[P3] Avoid partial edge insertion for malformed newEdgeStyle",
       "url": "https://github.com/skyelan1999/aide/issues/318",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Graph.connectionHandler.insertEdge先base插入model，再applyNewEdgeStyle JSON.parse；preview catch使坏style仍能连线，插入后throw只endUpdate不rollback。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 317,
       "title": "[P3] Remove the outline resize listener when destroying it",
       "url": "https://github.com/skyelan1999/aide/issues/317",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "grapheditor.EditorUi.createOutline注册匿名window.resize闭包，outline.destroy无reference可移除；theme重建outline在同document可累积。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 316,
       "title": "[P3] Cancel the tap-and-hold timer when destroying a graph",
       "url": "https://github.com/skyelan1999/aide/issues/316",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxGraph touch/pen timer持有me/graph，destroy未clearTimeout或invalidate，350ms内销毁可在null container上触发TAP_AND_HOLD。整体iframe销毁与单graph销毁须区分。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 315,
       "title": "[P2] Respect swimlane direction when hit-testing its content",
       "url": "https://github.com/skyelan1999/aide/issues/315",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "hitsSwimlaneContent用getStartSize只按horizontal top/left，未采用getActualStartSize方向/flip，connection/touch target调用会错误划分title/content。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 314,
       "title": "[P3] Restore allowNegativeCoordinates when moveCells fails",
       "url": "https://github.com/skyelan1999/aide/issues/314",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxGraph.moveCells目标parent非空时临时allowNegativeCoordinates=true，cellsMoved抛错未restore；default本来true，仅显式false调用者+异常才改变政策。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 313,
       "title": "[P3] Restore updateEdgeParent when cellsAdded fails",
       "url": "https://github.com/skyelan1999/aide/issues/313",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxGraph.cellsAdded临时覆盖model.updateEdgeParent，model.add之后才restore，异常路径无finally；同步EXECUTE listener可throw留下wrapper。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 312,
       "title": "[P3] Fix undefined route pattern references in mxEdgeStyle.getRoutePattern",
       "url": "https://github.com/skyelan1999/aide/issues/312",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxEdgeStyle.getRoutePattern直接引用未定义routePatterns/inlineRoutePatterns，实际定义为mxEdgeStyle属性；内置OrthConnector未调用，限公共helper调用者。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 311,
       "title": "Security: unescaped initialText in cell editor permits script execution",
       "url": "https://github.com/skyelan1999/aide/issues/311",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "mxCellEditor初始文本分支innerHTML=initialText未escape，HTML注入成立；但drawio CSP script-src self unsafe-eval没有unsafe-inline，报告event-handler脚本执行缺证，IME/integration不可信来源也需说明。保留escape修复需求而非已证实XSS。",
+      "reviewVerdict": "impact-not-established",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 310,
       "title": "[Bug] Print preview removes HTML labels because hint filter always returns false",
       "url": "https://github.com/skyelan1999/aide/issues/310",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "grapheditor.Editor print preview isTextLabel wrapper return !node.className == 'geHint' &&...，布尔与非数值字符串宽松比较恒false；cleanup据此移除nonSVG HTML label。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 309,
       "title": "[Bug] Print preview leaves graph control renderer overridden",
       "url": "https://github.com/skyelan1999/aide/issues/309",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxPrintPreview printControls true覆盖cellRenderer.initControl，finally仅恢复initializeOverlay，后续控件可能沿用print renderer；默认false仅opt-in受影响。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 308,
       "title": "[Bug] Swimlane layout crashes on cells with null geometry",
       "url": "https://github.com/skyelan1999/aide/issues/308",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "SwimlaneLayout.isPort直接cell.geometry.relative，optional null geometry可抛；邻Hierarchical有null guard，swimlane公共API第一方入口待确认。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 307,
       "title": "[Bug] mxHierarchicalLayout keeps stale roots across execute calls",
       "url": "https://github.com/skyelan1999/aide/issues/307",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Hierarchical.execute仅roots!=null时赋this.roots，后次省略不clear；正常菜单新建实例不复用，缺陷限复用对象调用方。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 306,
       "title": "[Bug] Legacy radial tree childLayout throws when no usable root remains",
       "url": "https://github.com/skyelan1999/aide/issues/306",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "RadialTree.execute在compact parent之后直接getVertexBounds(root).x；没有usable root可空。新container设置已拒绝radial，旧persisted childLayout仍需guard/migration。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 305,
       "title": "[Bug] Report ERROR_NOT_ALL_ASSIGNED from AdjustTokenPrivileges",
       "url": "https://github.com/skyelan1999/aide/issues/305",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "AdjustTokenPrivileges仅r1==0报告e1，不处理BOOL成功但ERROR_NOT_ALL_ASSIGNED，合理ABI反馈问题；无第一方调用，未跑Windows。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 304,
       "title": "[Bug] Close temporary Winsock sockets with Closesocket",
       "url": "https://github.com/skyelan1999/aide/issues/304",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Windows LoadConnectEx/loadWSASendRecvMsg临时Socket defer CloseHandle，Windows socket应Closesocket；once仅一次有限泄漏，非无限增长。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 303,
       "title": "[Bug] PSAPI working-set bit accessors always return false",
       "url": "https://github.com/skyelan1999/aide/issues/303",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "PSAPI Shared/Locked/LargePage/Bad mask非bit0却==1，设置对应位也恒false；静态位运算可确认，不代表当前AIDE使用这些API。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 302,
       "title": "[P2] Preserve security descriptor errors when reading absent ACLs",
       "url": "https://github.com/skyelan1999/aide/issues/302",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Windows SECURITY_DESCRIPTOR DACL/SACL先取得err，随后!present无条件覆盖ERROR_OBJECT_NOT_FOUND，无法保留API failure；无AIDE调用/Windows运行证据。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 301,
       "title": "[P3] Propagate BSD extended attribute listing errors",
       "url": "https://github.com/skyelan1999/aide/issues/301",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "BSD ListxattrNS/FlistxattrNS/LlistxattrNS调用返回e，却if e!=nil时return0,err(named nil)，明确丢错；外部upstream修复链接待独立核验。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 300,
       "title": "[P3] Return an error for empty NetBSD sysctl query results",
       "url": "https://github.com/skyelan1999/aide/issues/300",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "syscall_netbsd.sysctlNodes按olen/sz make，零结果直接&nodes[0]；需要实际NetBSD空节点环境补验证，无第一方相关调用。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 299,
       "title": "[P3] Return an error for empty socket control messages",
       "url": "https://github.com/skyelan1999/aide/issues/299",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "ParseOneSocketControlMessage直接进入helper并读b[0]，无len guard；批量parser有header长度循环限制。无AIDE调用，Go运行尝试受工具链阻塞。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 298,
       "title": "[P3] Quote the Docker volume path in mkall.sh",
       "url": "https://github.com/skyelan1999/aide/issues/298",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "x/sys unix/mkall.sh docker --volume命令替换未引用，空格路径会拆参；仅vendored生成脚本，未运行真实docker build。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 297,
       "title": "[P3] Return an error for unmapped FreeBSD capability indexes",
       "url": "https://github.com/skyelan1999/aide/issues/297",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "cap_freebsd.rightToIndex对bit2idx中-1 sentinel返回nil error；Set/Clear/IsSet仅校验i>=n，负索引可panic；无AIDE调用，FreeBSD未跑。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 296,
       "title": "[P2] Ignore EDX as a second Tee result on Linux/386",
       "url": "https://github.com/skyelan1999/aide/issues/296",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "linux386 Tee确组合r1<<32|r0，单ssize_t syscall的ABI疑点合理；未找到AIDE调用，须核对Go386 Syscall6实现和真实tee字节数。当前/usr/bin/go不是Go compiler，复现未执行成功。",
+      "reviewVerdict": "needs-platform-reproduction",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 295,
       "title": "[P3] Validate payload lengths before parsing Linux control messages",
       "url": "https://github.com/skyelan1999/aide/issues/295",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "sockcmsg_linux ParseUnixCredentials/OrigDstAddr无payload长度验证，直接&m.Data[0]/unsafe结构读取；无第一方调用。尝试Go复现受当前go命令非Go工具链阻塞，不能算runtime PASS。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 294,
       "title": "[P3] Reject dedupe destination counts above uint16",
       "url": "https://github.com/skyelan1999/aide/issues/294",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "unix.IoctlFileDedupeRange len(Info)直接cast uint16，无超65535拒绝；未找到第一方AIDE调用，不应宣称当前传输路径受影响。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 293,
       "title": "[P2] Return an error for missing NetBSD ARM64 sysctl nodes",
       "url": "https://github.com/skyelan1999/aide/issues/293",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "cpu_netbsd_arm64.nametomib缺子节点时return nil,err(此前nil)，sysctlCPUID随后&mib[0]可panic；NetBSD ARM64平台待验证。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 292,
       "title": "[P3] Do not infer ARM64 SM3 from the Windows LRCPC flag",
       "url": "https://github.com/skyelan1999/aide/issues/292",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "x/sys cpu_windows_arm64同LRCPC feature分支设置HasSM3，两个独立指令集不应混推；无非vendor HasSM3调用，未证实现有AIDE fault。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 291,
       "title": "[P3] Highlight interpolation inside SCSS quoted strings",
       "url": "https://github.com/skyelan1999/aide/issues/291",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际scss quoted string保留#{$name}普通string而非variable/interpolation；语法支持增强，非Sass编译问题。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 290,
       "title": "[P3] Preserve nested Scala braces in string interpolation highlighting",
       "url": "https://github.com/skyelan1999/aide/issues/290",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际scala ${block}在内部block右brace结束subst，外插值brace为string。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 289,
       "title": "[P3] Support Swift extended delimiters with more than three hashes",
       "url": "https://github.com/skyelan1999/aide/issues/289",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际swift四hash raw/regex仅三hash在string/regexp scope，两端各一hash裸露，插值未标识，确认有限枚举。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 288,
       "title": "[P3] Track nested braces in Ruby string interpolation",
       "url": "https://github.com/skyelan1999/aide/issues/288",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际ruby普通和%Q插值均在hash右brace提前结束subst，外插值brace回string。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 287,
       "title": "[P3] Preserve numeric highlighting after spaced R assignment",
       "url": "https://github.com/skyelan1999/aide/issues/287",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际r输出x <- 1.25无number、1e+3拆operator/number；x=和无前空格x<-控制正确，确认spaced assignment特殊mode吞数字。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 286,
       "title": "[P3] Track nested braces in Perl string interpolation",
       "url": "https://github.com/skyelan1999/aide/issues/286",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际perl输出map {...}右brace提前结束subst，@items ]}回落string；复现嵌套表达式作用域缺失。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 285,
       "title": "[P3] Highlight Groovy GString interpolation expressions",
       "url": "https://github.com/skyelan1999/aide/issues/285",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际groovy输出GString的$name/${expression}为完整string，无variable/subst；属于可选语法着色增强，不影响Groovy执行。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 283,
       "title": "[P3] Track nested braces in F# string interpolation",
       "url": "https://github.com/skyelan1999/aide/issues/283",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际fsharp record表达式右brace结束subst，插值外brace回落string，确认报告着色缺陷。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 281,
       "title": "[P3] Highlight base-36 digits in Erlang integer literals",
       "url": "https://github.com/skyelan1999/aide/issues/281",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际erlang 36#helloworld只将36标number，16#ff全标number；radix>16字母digit不支持。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 280,
       "title": "[P3] Track nested braces in Elixir interpolation expressions",
       "url": "https://github.com/skyelan1999/aide/issues/280",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际elixir map interpolation输出在map的}结束subst，外层插值}回落string。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 279,
       "title": "[P3] Highlight XML entity references with digits in their names",
       "url": "https://github.com/skyelan1999/aide/issues/279",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际xml输出&foo;为symbol而&foo2;仅escaped普通文本，digit-containing合法实体名未识别。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 278,
       "title": "[P3] Match Lua long-bracket delimiter levels",
       "url": "https://github.com/skyelan1999/aide/issues/278",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际lua long string/comment在不同级别]==]提前结束，仍在内容的text落回普通代码。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 277,
       "title": "[P3] Track nested function calls in Makefile highlighting",
       "url": "https://github.com/skyelan1999/aide/issues/277",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际makefile nested subst/shell输出variable span在inner )结束，最后outer )未包括。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 276,
       "title": "[P3] Track nested braces in Dart string interpolation",
       "url": "https://github.com/skyelan1999/aide/issues/276",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际dart输出map右brace提前结束subst，.length}回落string。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 275,
       "title": "[P3] Match CMake bracket delimiters to their opening length",
       "url": "https://github.com/skyelan1999/aide/issues/275",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际cmake bracket注释和string均在错误级别]==]提前结束，确认opening/closing等号数未绑定。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 274,
       "title": "[P3] Preserve Go parameter scope for nested function types",
       "url": "https://github.com/skyelan1999/aide/issues/274",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际go输出params在嵌套func(int,string)的右括号结束，外层)位于function span之外。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 273,
       "title": "[P3] Highlight GraphQL block strings with embedded quotes",
       "url": "https://github.com/skyelan1999/aide/issues/273",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际graphql输出triple quoted字符串拆为多个普通string，quoted裸文本，确认缺block string模式。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 272,
       "title": "[P3] Track nested braces in C# interpolation expressions",
       "url": "https://github.com/skyelan1999/aide/issues/272",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际csharp输出List initializer右brace结束subst，.Count}留在string，确认嵌套brace着色缺陷。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 271,
       "title": "[P3] Keep quoted Vim comments in comment scope",
       "url": "https://github.com/skyelan1999/aide/issues/271",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际vim输出quoted comment前段string、末段comment，中间quoted裸文本；整个行本应comment。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 270,
       "title": "[P3] Highlight unquoted and nested Bash command substitutions",
       "url": "https://github.com/skyelan1999/aide/issues/270",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际bash输出顶层$(date)无subst span，双引号嵌套$(echo $(id))在inner右括号就结束subst；仅着色语义。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 269,
       "title": "[P3] Support Kotlin block comments nested more than once",
       "url": "https://github.com/skyelan1999/aide/issues/269",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "本地hljs实际输出三层Kotlin注释在第二个*/后将val stillComment标keyword/number，仍处外层注释，复现报告着色错误。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 268,
       "title": "[P2] Prevent quadratic scans in JavaScript JSX tag detection",
       "url": "https://github.com/skyelan1999/aide/issues/268",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "实际加载checked-in highlight bundle+独立language覆盖，4000/8000重复<A> JS约80/231ms、TS79/231ms，确认同步开销；大小与硬件相关，非完整浏览器卡死验收。",
+      "reviewVerdict": "runtime-reproduced",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 267,
       "title": "GCP2 HexIcon maps distinct product choices to duplicate stencil IDs",
       "url": "https://github.com/skyelan1999/aide/issues/267",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxGCP2 HexIcon enum Cloud Resource Manager复用cloud_iam，Monitoring复用cloud_deployment_manager，用户不同选项不能对应不同图标。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 266,
       "title": "Cisco Safe generic appliance thumbnails keep resource icons at 50% opacity",
       "url": "https://github.com/skyelan1999/aide/issues/266",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxCiscoSafe opacity默认false→parseFloat NaN，背景dots设0.5后恢复NaN；Canvas2D globalAlpha忽略非finite，resource可能沿用0.5，SVG结果另需检查。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 265,
       "title": "Bug AWS4 ProductIcon ignores opacity and transparent gradient styles",
       "url": "https://github.com/skyelan1999/aide/issues/265",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxAWS4 ProductIcon在var fillColor/gradientColor赋值前判断none，永远不会置stop透明；opacity百分数原样传gradient alpha。全局shape opacity另生效，实际视觉不能仅凭数字推断。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 264,
       "title": "[Security] Bound ZIP entry count in browser archive preview",
       "url": "https://github.com/skyelan1999/aide/issues/264",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "app.setupZipPreview JSZip.loadAsync后Object.values全量sort并逐entry创建DOM，无entry/row总限，server maxArchiveFiles不覆盖此前端路径。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 263,
       "title": "[Bug] Org chart single-column options select the opposite alignment",
       "url": "https://github.com/skyelan1999/aide/issues/263",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxOrgChartLayout branchOptimizerAllSingleColumnLeft返回singleColumnRight，Right返回Left；菜单对应选项及策略ParentAlignment方向相反。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 262,
       "title": "[Bug] Radial tree layout reuses stale rows across executions",
       "url": "https://github.com/skyelan1999/aide/issues/262",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxRadialTreeLayout.row/rowMinX等数组放prototype，calcRowDims只覆盖当前深度不截尾，execute继续用row.length，跨实例/重复布局可残留旧节点。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 261,
       "title": "[Performance] Avoid repeated Array.shift in median rank ordering",
       "url": "https://github.com/skyelan1999/aide/issues/261",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxMedianHybridCrossingReduction.medianRank排序后每项shift，存在反复头删，替换cursor可避免；实际引擎优化/规模延迟需测。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 260,
       "title": "[Performance] Avoid quadratic edge scans in hierarchical traversal",
       "url": "https://github.com/skyelan1999/aide/issues/260",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxHierarchicalLayout.traverse每incident edge再全扫edges统计parallel，degree平方循环，Graph flowLayout使用此类。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 259,
       "title": "[Performance] Avoid enumerating every path in swimlane rank setup",
       "url": "https://github.com/skyelan1999/aide/issues/259",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxSwimlaneModel.maxChainDfs每出边clone(seen)，同lane合流节点重复路径遍历无memo，可指数路径；没有第一方UI入口证据，限bundled mxSwimlaneLayout API。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 258,
       "title": "[Bug] View XML export drops function-valued cell styles",
       "url": "https://github.com/skyelan1999/aide/issues/258",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxGraphViewCodec.encodeCell判断typeof function && typeof object不可能，后续filter丢function style；尚无第一方getViewXml调用，范围为bundled API扩展调用。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 257,
       "title": "[Bug] Avoid leaking edge geometry into a global variable",
       "url": "https://github.com/skyelan1999/aide/issues/257",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxCoordinateAssignment.resetEdgeLabels geometry=clone无声明，classic script污染iframe window.geometry，碰撞后果取决于其他代码。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 256,
       "title": "[Bug] Guard custom edge handles against zero-length segments",
       "url": "https://github.com/skyelan1999/aide/issues/256",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Shapes.createEdgeHandle position/update均dx/dist、dy/dist无零长处理，coincident endpoint/waypoint可NaN；完整选择/拖拽验收待做。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 255,
       "title": "[Bug] Preserve top-right corner style in Rect2 inner outline",
       "url": "https://github.com/skyelan1999/aide/issues/255",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Shapes.moveNEInner/lineNEInner先if !right，随后else if(...||right)必真，非square右上角分支不可达。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 254,
       "title": "[Bug] Fix oversized diagram export fallback referencing undefined xml",
       "url": "https://github.com/skyelan1999/aide/issues/254",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "legacy ExportDialog.saveLocalFile(data,...) oversized分支mxUtils.popup(xml)，xml未定义；当前diagramly现代export是否调用该legacy helper需浏览器路径验证。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 253,
       "title": "[Security] Bound decompressed XML size for PNG diagram imports",
       "url": "https://github.com/skyelan1999/aide/issues/253",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "grapheditor.Editor PNG zTXt解码pako.inflate/inflateRaw无展开预算，EditorUi PNG embedded XML分支先于普通image尺寸限制，独立于mxfile直接解压。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 252,
       "title": "[Security] Enforce SHA-256 checks for offline TTS model archives",
       "url": "https://github.com/skyelan1999/aide/issues/252",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "tts-setup四个MODEL SHA空，verify_tarball只有expsha非空才比较，否则打印note后成功；verify-only也无可信摘要输入。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 251,
       "title": "[Performance] Avoid quadratic work for many Markdown reference definitions",
       "url": "https://github.com/skyelan1999/aide/issues/251",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Goldmark link_ref.Transform逐remove append剩余lines导致重复搬移；与250不同阶段，单升级需确认是否同时修此循环，实际耗时未跑。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 250,
       "title": "[Performance] Bound Goldmark emphasis parsing for saved Markdown",
       "url": "https://github.com/skyelan1999/aide/issues/250",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Goldmark v2.1.6 delimiter.go fast path候选失败推进scanStart后继续扫描，下一opener重复后缀；knowledge_conclusion_markdown调用default parser。已有64KiB/索引预算降低规模但不消除复杂度。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 249,
       "title": "[Bug] Freehand outlines collapse at consecutive sharp turns",
       "url": "https://github.com/skyelan1999/aide/issues/249",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "perfect-freehand接入与1.2.3依赖报告可对应，锐角失真还依赖上游具体point序列/资源约束，源码接入不证明视觉缺陷；需固定输入截图对比，不仅凭upstream存在就定论。",
+      "reviewVerdict": "needs-runtime-reproduction",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 248,
       "title": "[Security] Validate origin of embedded Draw.io messages",
       "url": "https://github.com/skyelan1999/aide/issues/248",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "setupDrawioFrame仅验source并postMessage('*')，缺origin检查属合理加固；但主页面default-src self也限制frame导航，隔离Chromium实际CSP阻止外部iframe加载，报告_self外域接管链当前未成立，保留补证。",
+      "reviewVerdict": "impact-not-established",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 246,
       "title": "[Bug] RoughJS dashed fill hangs when dashOffset and dashGap are both zero",
       "url": "https://github.com/skyelan1999/aide/issues/246",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "RoughJS dashed filler r=floor(length/(offset+gap))再for(i<r)，两个style0可产生Infinity，Editor原样传dashGap/dashOffset；未运行无限循环用例。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 245,
       "title": "[Security] DOMPurify 3.4.15 in-place SVG sanitization may leave detached descendants active",
       "url": "https://github.com/skyelan1999/aide/issues/245",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "本地bundle为DOMPurify3.4.15，Graph.sanitizeNode使用IN_PLACE且hook调用node.remove；已通过GitHub公开advisory API独立确认GHSA-p98j-92pf-mc4p影响>=3.4.13 <=3.4.15、GHSA-6688-9rhm-gjv2影响<=3.4.15，first_patched_version均3.4.16。AIDE实际脚本执行仍未复现。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 244,
       "title": "[Bug] DOCX preview styles are blocked by the default CSP",
       "url": "https://github.com/skyelan1999/aide/issues/244",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "DOCX renderer生成inline style，主页面style-src self无nonce/unsafe-inline；隔离Chromium复用实际CSP，inlineStyleApplied=false，支持样式被阻断判断，完整DOCX视觉验收待做。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 243,
       "title": "[Bug] Validate DOCX symbol values before rendering them as HTML",
       "url": "https://github.com/skyelan1999/aide/issues/243",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "docx-preview.renderSymbol用innerHTML=`&#x${e.char};`且未检验hex，允许注入DOM；默认CSP阻inline事件，报告限定HTML注入合理，不等同已证实XSS。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 242,
       "title": "[Bug] Canvas renderer ignores gradient direction",
       "url": "https://github.com/skyelan1999/aide/issues/242",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxJsCanvas.setGradient无条件createLinearGradient(0,y,0,y+h)，direction仅保存state不用于实际gradient。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 241,
       "title": "[Bug] Canvas renderer applies miter limit to lineJoin",
       "url": "https://github.com/skyelan1999/aide/issues/241",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxJsCanvas.setMiterLimit写ctx.lineJoin=value而不是miterLimit，canvas thumbnail/export调用路径存在。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 240,
       "title": "[Bug] Async custom libraries are indexed under the wrong library",
       "url": "https://github.com/skyelan1999/aide/issues/240",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "customEntries循环var entry/k，IIFE只捕获lib，deferred dataLoaded仍引用entry.id/k可串库；preload分支未按报告行号设置library，需要分别复现，定向修deferred闭包。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 239,
       "title": "[Bug] Web Icons and Web Logos use misspelled Diigo and Friendfeed tags",
       "url": "https://github.com/skyelan1999/aide/issues/239",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-WebIcons icon/logo Diigo/Friendfeed tags diiigo/fiendfeed，title正确已补索引；仅冗余错别名，不是不可发现。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 238,
       "title": "[Bug] Veeam palette search tags include unrelated categories",
       "url": "https://github.com/skyelan1999/aide/issues/238",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Veeam Encryption key tag dns、Backup file tag audio、Users/Status gn storage，搜索附加错误词。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 237,
       "title": "[Bug] UML 2.5 palette contains misspelled labels and search tags",
       "url": "https://github.com/skyelan1999/aide/issues/237",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-UML25 preudostate/Occurence/Secification/occurence等在本地存在；Accept Event title正确会补search，不能声称该正确词完全不可检索。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 236,
       "title": "[Bug] SysML Rate example misspells distribution",
       "url": "https://github.com/skyelan1999/aide/issues/236",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Sysml Rate cell文本包含rate = distributuion，示例文字错拼。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 235,
       "title": "[Bug] Salesforce industry palette misspells Philanthropy",
       "url": "https://github.com/skyelan1999/aide/issues/235",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Salesforce两个philantrophy变体title/tag错拼，历史stencil key同样错拼；保留key兼容修复展示。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 234,
       "title": "[Security] DOCX preview accepts script-scheme hyperlinks",
       "url": "https://github.com/skyelan1999/aide/issues/234",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "docx-preview.renderHyperlink确直接赋r.target无scheme限制，但AIDE默认script-src无unsafe-inline。用实际CSP隔离Chromium点击javascript链接，scriptExecuted=false；不能按原报告断言默认策略下XSS，仍应allowlist链接作为纵深加固。",
+      "reviewVerdict": "impact-not-established",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 233,
       "title": "[Bug] SAP palette shows misspelled labels and repeated legend text",
       "url": "https://github.com/skyelan1999/aide/issues/233",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-SAP API Managment错拼、四个legend值全Description#1，若干产品title直接用下划线；仅资产模板文案/metadata问题。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 232,
       "title": "[Bug] Rack palette has reversed Aruba labels and incorrect search metadata",
       "url": "https://github.com/skyelan1999/aide/issues/232",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Rack Aruba9004 front/back显示互换，M915 tag M820，switch tag server；Aruba分支未设置currentSearchEntryLibrary。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 231,
       "title": "[Bug] P&ID palette has misspelled and mismatched search metadata",
       "url": "https://github.com/skyelan1999/aide/issues/231",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-PID Separators继承pidFittings reverse-library，gn也pid.fittings；autoRecirc tag blockBleed、Averging label确存在。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 230,
       "title": "[Bug] Office palette has misspelled labels and unrelated search tags",
       "url": "https://github.com/skyelan1999/aide/issues/230",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Office Workloaad/Vociemail可见错拼，database orange/green/ghosted tag blue、Subsite tag substitute；Exchange title其实正确，错拼在历史key与tag。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 229,
       "title": "[Bug] Network 2018 palette registers the same PC entry twice",
       "url": "https://github.com/skyelan1999/aide/issues/229",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Network两条PC entry样式100x70/title/tag完全一致，同palette重复。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 228,
       "title": "[Bug] Mockup alphanumeric sample omits W and vertical rulers use horizontal tags",
       "url": "https://github.com/skyelan1999/aide/issues/228",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Mockup alphanumeric文本V直接接X漏W；Vertical Ruler tag horizontal，paragraph tag peragraph。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 227,
       "title": "[Bug] MSCAE Azure palette contains mislabeled and duplicated entries",
       "url": "https://github.com/skyelan1999/aide/issues/227",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-MSCAE backup_online label local、RPD remoting错拼，Router/Marketplace/Relay/Topics/Connections/StorSimple均重复同模板；可按文件批修但不是同一用户功能故障。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 226,
       "title": "[Bug] Kubernetes palette assigns unrelated resource search tags",
       "url": "https://github.com/skyelan1999/aide/issues/226",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Kubernetes CRD/HPA/SVC显式tag crb/group/sts，labeled STS/SVC tag secret，均与prIcon不符。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 225,
       "title": "[Bug] iOS7 palette assigns incorrect tablet and keyboard search tags",
       "url": "https://github.com/skyelan1999/aide/issues/225",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Ios7 ipad13inch tag tablet10，四种iKeybNumb tag keyboard letters，标题仍能补numbers/13搜索。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 224,
       "title": "[Bug] iOS composite templates are missing from palette search",
       "url": "https://github.com/skyelan1999/aide/issues/224",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Ios复合模板以addEntry(null,fn)注册；Sidebar.addEntry仅非空string tags入index，内部createVertexTemplateFromCells title不自动补。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 223,
       "title": "[Bug] Infographic palette assigns unrelated stencil search tags",
       "url": "https://github.com/skyelan1999/aide/issues/223",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Infographic Trapezoid tag partConcEllipse、barCallout tag ribbonRolled，模板title会补正确词，但错误词仍索引。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 222,
       "title": "[Bug] IBM Cloud network palette assigns unrelated search tags",
       "url": "https://github.com/skyelan1999/aide/issues/222",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-IBMCloud Global/Classic Load Balancer显式tag network load balancer、Bridge tag internet，属于搜索语义噪声，图形自身未错。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 221,
       "title": "[Bug] IBM VPC Rules stencil has incorrect search tags",
       "url": "https://github.com/skyelan1999/aide/issues/221",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-IBM Rules.svg title Rules但tag load balancer listener，邻项已有独立listener图形。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 220,
       "title": "[Bug] GMDL disabled button variants are indexed as pressed",
       "url": "https://github.com/skyelan1999/aide/issues/220",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Gmdl四个DISABLED value的raised button title均Pressed；createVertexTemplateEntry把title加入tag而非value，disabled发现性受影响。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 219,
       "title": "[Bug] GCP expanded machine cards ignore the supplied storage count",
       "url": "https://github.com/skyelan1999/aide/issues/219",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "addGCP2ExpandedMachineCard第二variant storageNumCell硬编码123，首variant使用storageNum参数，调用传入1也会显示123。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 218,
       "title": "[Bug] GCP Zones Note template sets an invalid font color",
       "url": "https://github.com/skyelan1999/aide/issues/218",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-GCP2 Note style fontColor=#;9E9E9E，分号分离使fontColor仅#，需浏览器验默认色表现。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 217,
       "title": "[Bug] GCP palette has incorrect labels and search terms",
       "url": "https://github.com/skyelan1999/aide/issues/217",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "GCP2/GCPIcons多个复制标签与typo在源码仍存在，重点Istio卡片用forseti tag、Cloud Vision value却translation tag、Taffic Director显示；未验证每个query搜索效果。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 216,
       "title": "[Bug] Fluid Power palette has mismatched ISO codes and spelling errors",
       "url": "https://github.com/skyelan1999/aide/issues/216",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-FluidPower X10100错tagX10090、vavle/x110020/single a0cting等均存在，低影响元数据拼写；标题会补部分正确搜索。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 215,
       "title": "[Bug] Floorplan revolving door has left-door search tags",
       "url": "https://github.com/skyelan1999/aide/issues/215",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Floorplan doorRevolving显式tags doorLeft，标题正确，只增加不相关搜索命中。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 214,
       "title": "[Bug] Electrical palette misspells Fluorescent Lamp",
       "url": "https://github.com/skyelan1999/aide/issues/214",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Electrical Flourescent Lamp title/tag错拼；stencil历史key同错拼，修复展示时不能直接破坏asset引用。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 213,
       "title": "[Bug] Electrical palette search tags map unrelated symbols",
       "url": "https://github.com/skyelan1999/aide/issues/213",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Electrical NOT tag xor、Voltmeter tag ammeter、3-conductor tag2和4/8bus tag3均在本地存在；标题补正确搜索但仍误命中。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 212,
       "title": "[Bug] Electrical palette labels a current source as a transformer and Protective Earth as Equipotential",
       "url": "https://github.com/skyelan1999/aide/issues/212",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Electrical current_source却title Transformer，protective_earth却title Equipotential；不同符号已有独立定义，语义错配。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 211,
       "title": "[Bug] Cumulus color palette misspells Energy Yellow",
       "url": "https://github.com/skyelan1999/aide/issues/211",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Cumulus #FFC82E swatch title/tag Energy Jellow，展示与搜索拼写问题。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 210,
       "title": "[Bug] Cisco Safe Intrusion Prevention template uses the detection icon",
       "url": "https://github.com/skyelan1999/aide/issues/210",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-CiscoSafe Architecture/Design Intrusion Prevention引用intrusion_detection；另一个prevention_2也tag detection，身份/搜索不符。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 209,
       "title": "[Bug] Cisco19 Surveillance Camera has a misspelled fillColorStyles key",
       "url": "https://github.com/skyelan1999/aide/issues/209",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Cisco19 surveillance_camera2 fillColorStyls错拼，Format读取fillColorStyles；二级颜色控制具体UI待测。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 208,
       "title": "[Bug] Cisco19 threat intelligence stencil is titled as Monitoring",
       "url": "https://github.com/skyelan1999/aide/issues/208",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Cisco19 threat_intelligence图形却title/tag Monitoring，与已有monitor stencil重复标签，身份不匹配。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 207,
       "title": "[Bug] Cisco19 wireless access point title is misspelled",
       "url": "https://github.com/skyelan1999/aide/issues/207",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Cisco19 wireless_access_point2 title Wireless Acess Point，tags access point正确，低影响拼写。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 206,
       "title": "[Bug] Cabinet motor starter stencils are titled as circuit breakers",
       "url": "https://github.com/skyelan1999/aide/issues/206",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "Sidebar-Cabinet motor_starter_*确label Motor Circuit Breaker，但工业设备可能为组合电动机保护/起动器；仅标识不足证明图形设备分类错，需对照库原始规格后改名。",
+      "reviewVerdict": "needs-specification",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 205,
       "title": "[Bug] C4 diagram title templates store mismatched c4Type values",
       "url": "https://github.com/skyelan1999/aide/issues/205",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-C4 System Context title c4Type=ContainerScopeBoundary，Components title=ContainerDiagramTitle，与c4Name/模板类不符；保留兼容性需要确认下游消费。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 204,
       "title": "[Bug] Bootstrap nested navigation repeats a sample item label",
       "url": "https://github.com/skyelan1999/aide/issues/204",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Bootstrap nested nav item8/item9相邻两个cell值均Item 3-1，编号示例重复。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 203,
       "title": "[Bug] Bootstrap modal content template title is misspelled",
       "url": "https://github.com/skyelan1999/aide/issues/203",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Bootstrap modal模板title Modal conent，search tag modal content正确，仅展示拼写。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 202,
       "title": "[Bug] Bootstrap horizontal list group misspells a sample label",
       "url": "https://github.com/skyelan1999/aide/issues/202",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Bootstrap horizontal list实际cell值Dapibus ac facilis in，与邻模板facilisis不一致，仅sample copy。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 201,
       "title": "[Bug] Bootstrap checkbox input group title is missing a space",
       "url": "https://github.com/skyelan1999/aide/issues/201",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Bootstrap input-group模板title为Input groupwith checkbox，tag正确，仅tooltip元数据缺空格。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 200,
       "title": "[Bug] Bootstrap directional dropdown templates declare undersized bounds",
       "url": "https://github.com/skyelan1999/aide/issues/200",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Bootstrap compound Dropup bg到y193却申报高153，Dropright/Dropleft内容超出170宽，createVertexTemplateFromCells传入bounds不一致；具体拖放效果待浏览器。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 199,
       "title": "[Bug] Bootstrap card templates contain repeated misspellings in sample copy",
       "url": "https://github.com/skyelan1999/aide/issues/199",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Bootstrap card实际cell value含Last udated 3 mind ago/paragraphy，不只工具提示，属于低影响示例文案问题。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 198,
       "title": "[Bug] BPMN Multiple Start gateway is indexed as multiple end",
       "url": "https://github.com/skyelan1999/aide/issues/198",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-BPMN Multiple Start显式tag multiple end；标题含start仍可补搜索，主要错误end命中。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 197,
       "title": "[Bug] BPMN palette registers a blank call choreography template as bzzzzt",
       "url": "https://github.com/skyelan1999/aide/issues/197",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-BPMN同组存在空bg模板名bzzzzt，紧接完整Call Choreography模板，placeholder确实作为entry注册。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 196,
       "title": "[Bug] Azure2 App Space Component palette entry misspells its displayed name",
       "url": "https://github.com/skyelan1999/aide/issues/196",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Azure2 App_Space_Component asset/tag正确，title Compoment错拼，仅展示缺陷。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 195,
       "title": "[Bug] Atlassian Checkbox (off) palette entry is indexed as checkbox on",
       "url": "https://github.com/skyelan1999/aide/issues/195",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Atlassian Checkbox(off)显式tag checkbox on；标题会追加off，报告称off完全缺失有夸大，但on误命中成立。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 194,
       "title": "[Bug] Arrows2 Callout with Quad Arrow has a misspelled search synonym",
       "url": "https://github.com/skyelan1999/aide/issues/194",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Arrows2 quad callout tag four war，标题无four way，遗漏正确同义词。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 193,
       "title": "[Bug] ArchiMate 3.2 palette entries carry unrelated search tags",
       "url": "https://github.com/skyelan1999/aide/issues/193",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-ArchiMate3 Application Interface/Data Object/Representation等tag来自component/service/contract，标题仍可搜索，主要是误命中与分类噪声。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 192,
       "title": "[Bug] ArchiMate palette includes misspelled and misassigned search tags",
       "url": "https://github.com/skyelan1999/aide/issues/192",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-ArchiMate infraastructure/assesment错拼，Requirement误tag goal；标题会补正确词，因此部分只是多余错误匹配。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 191,
       "title": "[Bug] Android Contact Badge Normal and Pressed entries use the Focused shape",
       "url": "https://github.com/skyelan1999/aide/issues/191",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-Android Normal/Pressed四个模板全部contact_badge_focused，同Focused样式；需检查已有normal/pressed stencil再替换。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 190,
       "title": "[Bug] Allied Telesis palette misspells Video Conference Terminal",
       "url": "https://github.com/skyelan1999/aide/issues/190",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-AlliedTelesis Vdeo Conference Terminal title/tag错拼；asset文件名本身也Vdeo，需保留引用或同步迁移。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 189,
       "title": "[Bug] Alibaba Cloud ACMS entry misspells Configuration Management",
       "url": "https://github.com/skyelan1999/aide/issues/189",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-AlibabaCloud ACMS title/tag均Manangement拼写错误；stencil key也用历史拼写，修复展示不宜直接改asset标识。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 188,
       "title": "[Bug] Active Directory palette entries include an unrelated active search tag",
       "url": "https://github.com/skyelan1999/aide/issues/188",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "Sidebar-ActiveDirectory Cluster Server/Interface确有active tag，但均属Active Directory图集，active可以作为家族搜索词；不能仅凭标签认定不合理，需明确搜索分类约定，不按报告直接关闭或改。",
+      "reviewVerdict": "needs-product-decision",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 187,
       "title": "[Bug] AWS18 Management Tools shows Patch Manager twice",
       "url": "https://github.com/skyelan1999/aide/issues/187",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-AWS4b相邻两条patch_manager样式/尺寸/文本/tags完全相同，无去重，重复注册。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 186,
       "title": "[Bug] AWS18 right-pointing arrows are labeled as left",
       "url": "https://github.com/skyelan1999/aide/issues/186",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-AWS4b三个endArrow-only模板仍label/tag left，对照startArrow-only邻项可确认复制错误；右向标签缺失。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 185,
       "title": "[Bug] AWS4 palette entries use unrelated search tags",
       "url": "https://github.com/skyelan1999/aide/issues/185",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-AWS4 notification使用users tags且title null；json_script/connector/存储项也存在复制的无关标签。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 184,
       "title": "[Bug] AWS 3D directional arrows are indexed as northeast",
       "url": "https://github.com/skyelan1999/aide/issues/184",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-AWS3D arrowSE/SW/NW均以north east tags注册；标题含缩写但未补全south/west搜索词。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 183,
       "title": "[Bug] AWS3 SDK palette reuses the Android stencil for other languages",
       "url": "https://github.com/skyelan1999/aide/issues/183",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Sidebar-AWS3 SDK中iOS/Ruby/Python/PHP/.NET等均使用android stencil，仅改fill。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 182,
       "title": "[Performance] Recompute of the full freehand stroke on every move",
       "url": "https://github.com/skyelan1999/aide/issues/182",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxFreehand.updateSvgPath每point复制全部drawPoints再PerfectFreehand重建SVG，长期stroke前缀重复计算；实际延迟随硬件待测。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 181,
       "title": "[Bug] Bound animated GIF export frame count",
       "url": "https://github.com/skyelan1999/aide/issues/181",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "gif/AnimatedExport直接Math.max(2,round(fps*duration/1000))无max，总帧留内存；flowAnimationDuration由图style控制。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 180,
       "title": "[Bug] Enforce Trello attachment limits using byte size",
       "url": "https://github.com/skyelan1999/aide/issues/180",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "TrelloClient.writeFile用data.length检查但multipart发送Blob，Blob只有size；Init默认禁用Trello/App需tr=1，AIDE默认工作台入口未证实可达。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 179,
       "title": "[Bug] Handle BMP decode failures during VSDX import",
       "url": "https://github.com/skyelan1999/aide/issues/179",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "VSDX bmp zipEntry.async.then中BmpDecoder/canvas抛错无catch，成功尾部才processedFiles++，doneCheck不再满足导致悬挂。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 178,
       "title": "[Bug] Bound NURBS degree during VSDX edge import",
       "url": "https://github.com/skyelan1999/aide/issues/178",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "NURBS degree仅clamp控制点数量，evaluateNURBS嵌套degree循环并逐knot span采样，无degree/work预算，最坏复杂度仍待实测。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 177,
       "title": "[Bug] Avoid quadratic parsing of VSDX PolylineTo formulas",
       "url": "https://github.com/skyelan1999/aide/issues/177",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "PolylineTo.handle对split后的polyEntriesList循环splice(0,1)，反复移动余下数组，缺point/work限。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 176,
       "title": "[Bug] Bound decompressed VSDX/VSSX size during import",
       "url": "https://github.com/skyelan1999/aide/issues/176",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "VSDX importer对XML/media zipEntry.async并发完整展开，filesCount只计完成无字节预算；本地Visio分支包括vsdx/vssx。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 175,
       "title": "[P2] Map Lucidchart Alexa Voice Service blocks to the voice service stencil",
       "url": "https://github.com/skyelan1999/aide/issues/175",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Extensions IoT_AlexaVoiceServiceAWS19映射alexa_skill而非侧栏已有alexa_voice_service_2。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 174,
       "title": "[P2] Map Lucidchart AppSync blocks to the AppSync stencil",
       "url": "https://github.com/skyelan1999/aide/issues/174",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Extensions AWSAppSyncAWS19 resIcon=aws4.sqs，与AppSync红色变体及侧栏appsync不同。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 173,
       "title": "[P2] Map Lucidchart MySQL RDS blocks to the MySQL stencil",
       "url": "https://github.com/skyelan1999/aide/issues/173",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Extensions AmazonRDSMySQLDBinstance2017指ms_sql_instance，邻项MySQL alternate指mysql_db_instance_2。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 172,
       "title": "[P2] Preserve plug valve type in Lucidchart imports",
       "url": "https://github.com/skyelan1999/aide/issues/172",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Extensions PEPlugValveBlock valveType=ball，而本地mxPidValves有独立plug类型；导入语义错误。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 171,
       "title": "[P2] Preserve NPN and PNP polarity when importing Lucidchart BJTs",
       "url": "https://github.com/skyelan1999/aide/issues/171",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Extensions legacy EE_BJT_NPN1→pnp/PNP1→npn反向，V2与侧栏命名均为正向。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 170,
       "title": "[P3] Fix Lucidchart Android refresh icon style mapping",
       "url": "https://github.com/skyelan1999/aide/issues/170",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Extensions AndroidIconRefresh映射是 + 'ios7.icons.repeat'，一元加转换NaN，与邻项s+前缀不一致。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 169,
       "title": "[P2] Apply message label styles to Lucidchart EI message cells",
       "url": "https://github.com/skyelan1999/aide/issues/169",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Extensions Lucid EIMessage/History写item2.style而非item2[i].style；确认两处同样数组/单元格对象混用。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 168,
       "title": "[P2] Validate animation step entries before rendering",
       "url": "https://github.com/skyelan1999/aide/issues/168",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Editor.parseAnimationData只保证steps数组，Dialogs.getStepKey直接访问null step，fadeTo null也直接解引用。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 167,
       "title": "[P2] Preserve null values in custom AI request templates",
       "url": "https://github.com/skyelan1999/aide/issues/167",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Draw.io Dialogs.populateTemplate new obj.constructor，typeof null分支递归必抛；仅custom aiConfigs请求模板入口，AIDE默认配置可达性待浏览器确认。",
+      "reviewVerdict": "source-confirmed-optional",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 164,
       "title": "[P2] Validate SFTP server replies before decoding",
       "url": "https://github.com/skyelan1999/aide/issues/164",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "SFTP client.ReadDir/RealPath NAME分支仍调用unchecked unmarshalUint32/String，可越界panic；与163的count分配问题独立。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 163,
       "title": "[P2] Bound SFTP extended attribute counts before allocation",
       "url": "https://github.com/skyelan1999/aide/issues/163",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "vendor/pkg/sftp packet.go attrs.extended直接make(count)，虽有包长度上限但未按剩余字节约束count；需要已配置恶意/受损SFTP端。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 162,
       "title": "[P3] Keep enhanced avatar asset hashes in sync after interpolation",
       "url": "https://github.com/skyelan1999/aide/issues/162",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "读取实际art-audit逐文件SHA256比较，102/102不符；interpolation35项而manifest34项。interpolation脚本覆写资产未刷新art-audit。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 160,
       "title": "[P3] Bound OBJ face and edge counts before rendering the preview",
       "url": "https://github.com/skyelan1999/aide/issues/160",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "example OBJ parse对每f/l索引推入edges，仅限vertices/8MiB，draw全量边同步绘制；仅可选示例插件。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 159,
       "title": "[P3] Keep the R08-04 fixture write inside the isolated test root",
       "url": "https://github.com/skyelan1999/aide/issues/159",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "r08_04_api_checks.py scenario_first_call直接mkdir/open('/local/docs/fixture-b.txt','w')，实际source却指root下src_dir；未执行破坏性脚本。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 158,
       "title": "[Bug] Require whole-value matches for research findings",
       "url": "https://github.com/skyelan1999/aide/issues/158",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "recordResearchFinding仅strings.Contains(quote,value)，5匹配150；已有精确quote并非完整numeric/token匹配。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 157,
       "title": "[Security] Enforce workflow file bindings during filesystem access",
       "url": "https://github.com/skyelan1999/aide/issues/157",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "pwBindingToolError单独Lstat检查后再dispatcher执行Root.Open/Rename，存在可变父路径的check/use窗口；os.Root仍阻止越工作区，节点绑定竞态须定向复现。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 156,
       "title": "[Security] Bound sample fan-out in voice-personality inference",
       "url": "https://github.com/skyelan1999/aide/issues/156",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "voicePersonalityInfer保留重复SampleIDs，逐项解密；transcript先全部拼接后截800runes，1MiB请求上限不能约束音频处理预算。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 155,
       "title": "[Bug] Surface personality save and rollback persistence failures",
       "url": "https://github.com/skyelan1999/aide/issues/155",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "persistPersonalitiesLocked/persistPersonalityStateLocked吞atomicJSON错误，save/reset/rollback/adopt仍宣告完成，涉及多文件事务一致性。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 153,
       "title": "[Bug] Report cloned voice ID persistence failures",
       "url": "https://github.com/skyelan1999/aide/issues/153",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "voiceCloneCreate先写内存CloneVoiceID，解锁后忽略atomicJSON错误，返回bound:true；还应避免无锁序列化settings。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 152,
       "title": "[Bug] Report voice-sample deletion failures instead of success",
       "url": "https://github.com/skyelan1999/aide/issues/152",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "voiceSampleDelete忽略Remove并删索引；wipe忽略ReadDir/Remove/save错误；audio按ID解密不查索引，残留文件可继续访问。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 151,
       "title": "[Security] Block voice-sample decryption while the app is locked",
       "url": "https://github.com/skyelan1999/aide/issues/151",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "writeLockState只持久化锁状态不清personaKey；voiceSampleKey仅以非空key授权，无当前锁态检查，音频/克隆/推断共用此门。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 150,
       "title": "[Bug] Report voice-history encryption changes only after saving succeeds",
       "url": "https://github.com/skyelan1999/aide/issues/150",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "VoiceAgent.persistLocked忽略mkdir/marshal/encrypt/write错误，enable/rotate等调用者仍返回成功，可能残留旧明文文件。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 149,
       "title": "[Bug] Verify old password before rotating voice-history key",
       "url": "https://github.com/skyelan1999/aide/issues/149",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "VoiceAgent.changePassword(oldPw,newPw)不读取oldPw，仅用已有va.key解密cachedCipher，endpoint无补充旧密码验证。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 148,
       "title": "[Bug] Roll back profile state when persistence fails",
       "url": "https://github.com/skyelan1999/aide/issues/148",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "updateProfiles先替换profileState再saveProfiles，失败500不恢复原内存状态。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 147,
       "title": "[Bug] Bound workspace routing policy file reads",
       "url": "https://github.com/skyelan1999/aide/issues/147",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "profiles.go readRoutingPolicy两分支os.ReadFile，无文件类型与字节上限，工作区symlink可指向特殊文件。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 146,
       "title": "[Bug] Task delivery can accept stale workspace files as new artifacts",
       "url": "https://github.com/skyelan1999/aide/issues/146",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "task_delivery.go只验证当前存在非空/扩展名或浅签名，不关联本次task写事件；旧文件链接也满足delivered，是否允许复用需结合任务意图。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 145,
       "title": "[Bug] Evict live output buffers when deleting sessions",
       "url": "https://github.com/skyelan1999/aide/issues/145",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "StreamBroker.runs仅每session限100KiB，无全局限/删除入口；deleteSession不移除broker记录。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 144,
       "title": "[Bug] Stencil fillalpha and strokealpha change the global alpha",
       "url": "https://github.com/skyelan1999/aide/issues/144",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxStencil.drawNode fillalpha/strokealpha两分支均调用setAlpha，而canvas有独立setFillAlpha/setStrokeAlpha。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 143,
       "title": "[Bug] Destroy the panning manager when destroying a graph",
       "url": "https://github.com/skyelan1999/aide/issues/143",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxPanningManager.destroy仅remove listeners不stop interval；mxGraph.destroy也未调用panningManager.destroy，正常Graph允许auto-panning。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 142,
       "title": "[Bug] Remove open popup submenus when destroying a graph",
       "url": "https://github.com/skyelan1999/aide/issues/142",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxPopupMenu.destroy只release/remove根div；submenu通过body单独挂载，hideMenu/hideSubmenu才移除子链。iframe整体移除会释放文档，单graph销毁仍有该缺口。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 141,
       "title": "[Bug] Handle zero-radius SVG arcs as straight lines",
       "url": "https://github.com/skyelan1999/aide/issues/141",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxUtils.arcToCurves零半径提前返回尚未赋值的result；mxAbstractCanvas2D.arcTo收到undefined不调用lineTo/推进端点。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 140,
       "title": "[Bug] Detect self-loops before cloning orthogonal router terminals",
       "url": "https://github.com/skyelan1999/aide/issues/140",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxEdgeStyle.OrthConnector独立scaleCellState clone两个terminal，之后target==source判定self-loop恒不成立。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 139,
       "title": "[Bug] Keep rotation raster local to the vertex handler",
       "url": "https://github.com/skyelan1999/aide/issues/139",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxVertexHandler.rotateVertex raster=15/5/1 没有var声明，classic script产生全局写；影响限制iframe内命名空间。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 138,
       "title": "[Bug] Reset connection constraint markers when pointer leaves graph",
       "url": "https://github.com/skyelan1999/aide/issues/138",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxConstraintHandler.update 创建mouseleaveHandler(reset)却监听resetHandler，destroy移除另一个函数。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 137,
       "title": "[Bug] Guard missing cell geometry when creating table column handles",
       "url": "https://github.com/skyelan1999/aide/issues/137",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "createCustomHandles列循环 geo 直接读alternateBounds/x/y，缺少相邻row路径已有的null gate。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 135,
       "title": "[Bug] Preserve custom action cell IDs when duplicating diagrams",
       "url": "https://github.com/skyelan1999/aide/issues/135",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "createCellMapping new Object，cellMapping[constructor]非null导致不写clone ID；Editor action映射会将函数值JSON序列化为null。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 134,
       "title": "[Bug] Preserve table column indices when cells have no geometry",
       "url": "https://github.com/skyelan1999/aide/issues/134",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "TableLayout.getRowLayout null几何不push placeholder；layoutRow仍按cells索引positions[i+1]，可写NaN。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 133,
       "title": "[Bug] Bound quadratic line-jump work when loading large diagrams",
       "url": "https://github.com/skyelan1999/aide/issues/133",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Graph.updateLineJumps 遍历validEdges并对重叠边逐段求交，未见总work预算；源代码支持最坏二次复杂度，实际卡顿阈值待测。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 132,
       "title": "[Bug] Async child layouts stall for cells with inherited property IDs",
       "url": "https://github.com/skyelan1999/aide/issues/132",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Graph.js asyncLayoutsApplying ||= {}，schedule按cell.id读truthy；constructor继承值触发early return。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 131,
       "title": "[Bug] Bound nested cell hierarchy during draw.io load",
       "url": "https://github.com/skyelan1999/aide/issues/131",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxGraphModel.cellAdded 沿解码后child递归，无层数预算；parent关系深度独立于XML深度。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 130,
       "title": "[Bug] Bound XML nesting depth in draw.io preview",
       "url": "https://github.com/skyelan1999/aide/issues/130",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "mxCodec.addElement 对每个XML child递归，无深度预算；为浏览器可用性风险，未实测具体栈阈值。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 128,
       "title": "[Bug] Bound decompressed draw.io diagram size in browser preview",
       "url": "https://github.com/skyelan1999/aide/issues/128",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "Graph.decompress base64→pako.inflateRaw(to:string)→decodeURIComponent 无展开预算，AIDE load透传文件到iframe。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 127,
       "title": "[Bug] Bound decompressed DOCX size in browser preview",
       "url": "https://github.com/skyelan1999/aide/issues/127",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "app.js renderDocx arrayBuffer→docx.renderAsync 无压缩展开预算，64MiB输入限制不限制JSZip输出。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 126,
       "title": "[Bug] Bound recursive DXF block expansion during SVG preview",
       "url": "https://github.com/skyelan1999/aide/issues/126",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "app.js renderEntity INSERT/DIMENSION递归无深度/总实体/循环限制，catch不阻止此前累积DOM。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 125,
@@ -1576,85 +2016,109 @@
       "number": 123,
       "title": "[P2] Preserve queued prompts when steer admission is rejected",
       "url": "https://github.com/skyelan1999/aide/issues/123",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "workflow.go queueUpdate steer 先删除Queue/更新Queued，再select task.Steer，default429无回滚且跳过save。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 122,
       "title": "[P3] Fix the invalid hero caption font shorthand",
       "url": "https://github.com/skyelan1999/aide/issues/122",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "site/style.css .hero-side p font:12px/1.8 inherit 不符合shorthand语法；letter-spacing已有1px，报告声称继承2.2px部分不成立。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 121,
       "title": "[P2] Isolate and clean up data created by UI acceptance scripts",
       "url": "https://github.com/skyelan1999/aide/issues/121",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "ui_queue_check/stream_check 直接填当前#prompt，无独立session/finally；fail process.exit，queue另创建6会话未清理。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 120,
       "title": "[P2] Report persistence failures during factory reset",
       "url": "https://github.com/skyelan1999/aide/issues/120",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "factory_reset.go 三个void reset helper不传播删除/atomicJSON错误，主函数仍返回nil；凭据成功标记不代表全部落盘。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 119,
       "title": "[P3] Authenticate proof writes in the local Mermaid CSP fixture server",
       "url": "https://github.com/skyelan1999/aide/issues/119",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "serve-mermaid-csp.py do_POST /proof 仅大小限制，无 Origin/token/Content-Type gate，loopback监听限制网络但不能鉴别本地浏览器写入。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 118,
       "title": "[P3] Prevent repeated x3 interpolation from mutating already interpolated frames",
       "url": "https://github.com/skyelan1999/aide/issues/118",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "interpolate_frames_x3.cjs 按 rows*columns 读帧，原地覆写 atlas/manifest，设置provenance后未拦截重跑，也未按实际frames忽略padding。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 117,
       "title": "[P3] Constrain avatar packer IDs and source paths before filesystem writes",
       "url": "https://github.com/skyelan1999/aide/issues/117",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "两 pack_avatar 脚本 pack(job) 直接读取 job.source、job.id 拼 audit/output 路径；expected 清单校验位于后续publish，风险仅本地处理不可信job。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 116,
       "title": "[P3] Preserve the existing wheelhouse until replacement download succeeds",
       "url": "https://github.com/skyelan1999/aide/issues/116",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "prebuild-wheels.sh 在 docker pip download 前 find -delete 清空已有wheel，无暂存成功后替换。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 115,
       "title": "[P3] Rate-limit master-password verification and vault unlock attempts",
       "url": "https://github.com/skyelan1999/aide/issues/115",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "auth_verify.go/apikey_vault.go 密码失败直接401，未共享失败预算/冷却。已有 Bearer gate 与 Argon2id，风险限持token请求。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 114,
       "title": "[P2] Reset rendered starmap state when workspace identity changes mid-load",
       "url": "https://github.com/skyelan1999/aide/issues/114",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "starmap.js load 的 updates/identity 不同 workspace 分支只清 graph/liveCursor，未走 applyLiveUpdate reset，旁路缓存布局/selection/detail 状态清理。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 113,
       "title": "[P2] Require assistant unlock before compacting private history",
       "url": "https://github.com/skyelan1999/aide/issues/113",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "workflow.go compactSession 直接 materializeConversationLocked/snapshot/buildCompactionSummary，未见 assistant unlock 门；GET session 有该门。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 112,
       "title": "[P3] Normalize CRLF before detecting live Markdown fences",
       "url": "https://github.com/skyelan1999/aide/issues/112",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "closed-not-supported",
+      "evidence": "advanceLiveBoundary 正则 /^ {0,3}(```|~~~)/ 仅匹配前缀，没有行尾锚点；尾部 CR 不阻止匹配。空白判定也显式容忍 CR。将用实际函数做最小验证。 已额外核对报告基线45f1d4f，正则与CR处理相同。",
+      "reviewVerdict": "not-supported-as-reported",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 111,
@@ -1667,36 +2131,46 @@
       "number": 110,
       "title": "[P3] Store actual duration for browser-recorded voice samples",
       "url": "https://github.com/skyelan1999/aide/issues/110",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "app.js uploadSample 固定 durationSec=5；MediaRecorder 由停止按钮结束，未测量实际耗时。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 109,
       "title": "[P3] Show due reminder popup before saving popup-seen markers",
       "url": "https://github.com/skyelan1999/aide/issues/109",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "app.js checkDuePopups 每条 await popup-seen 完成后才 showModal；中途失败进入 catch，先成功项已持久化已通知。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 108,
       "title": "[P2] Prevent composer submissions from approving shell commands",
       "url": "https://github.com/skyelan1999/aide/issues/108",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "workflow.go startTask 的 awaiting_clarification 分支只排除 assistantManaged，没有检查 PendingQuestion.approvalKind；AnswerCh 传 prompt，harness_runtime.go 以确认字符串放行shell，绕过 answerTask receipt。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 107,
       "title": "[P2] Report token usage snapshot write failures",
       "url": "https://github.com/skyelan1999/aide/issues/107",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "server.go recordTokenUsage: atomicJSON 的 saveErr 被显式丢弃，内存统计成功不代表磁盘持久化。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 106,
       "title": "[P2] Apply the assistant unlock gate before voice fallback",
       "url": "https://github.com/skyelan1999/aide/issues/106",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "server.go:voiceFilter无模型fallback先recordFallback和recordAssistantExchange，再return；isAssistantUnlocked在后面模型分支，因此该fallback缺少同等密码门。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 105,
@@ -1709,57 +2183,73 @@
       "number": 104,
       "title": "[P2] Preserve upload targets on Windows during concurrent publish",
       "url": "https://github.com/skyelan1999/aide/issues/104",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "closed-not-supported",
+      "evidence": "现分支和报告基线45f1d4f2的transfer_rename_other.go完全相同：普通文件分支使用root.Link(old,new)，失败即返回再Remove(old)，不走Lstat+Rename。报告所述Windows文件check-then-rename路径不可达；目录fallback需另行举证，不能按文件覆盖结论关闭/修补Link保护。",
+      "reviewVerdict": "not-supported-as-reported",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 103,
       "title": "[P2] Avoid blocking while writing a large SSH passphrase",
       "url": "https://github.com/skyelan1999/aide/issues/103",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "ssh_keyutil.go:attachPassphraseAskpass同步pw.WriteString(passphrase)发生在启动cmd读取前，超pipe容量会阻塞；JSON1MiB限额大于pipe容量。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 102,
       "title": "[P2] Avoid deleting an unrelated aide-rel-test container",
       "url": "https://github.com/skyelan1999/aide/issues/102",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "docker-release.sh:TEST_NAME固定aide-rel-test，启动前和EXIT都无所有权检查rm -f；这是可直接静态确定的破坏性资源归属缺陷，未执行Docker删除。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 101,
       "title": "[P2] Reject personality evolution results based on stale snapshots",
       "url": "https://github.com/skyelan1999/aide/issues/101",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "personality_evolution.go:runAutoEvolve及persona.go:manual在模型调用后无版本/快照复验就覆盖settings.Personalities及History，存在并发用户修改丢失。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 100,
       "title": "[P2] Refresh cached ciphertext after encrypted history changes",
       "url": "https://github.com/skyelan1999/aide/issues/100",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "voice_agent.go:persistLocked新encrypt未赋cachedCipher，locked分支复写旧cachedCipher；clearHistory置空history但保留旧cipher，unlock又解出旧历史。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 99,
       "title": "[P2] Bound clone creation sample count and decoded audio size",
       "url": "https://github.com/skyelan1999/aide/issues/99",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "voice_samples.go:create GPT-SoVITS samples遍历所有SampleIDs逐项解密并Base64保留，没有去重或总decoded预算；1MiB请求体不限制展开后的音频。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 98,
       "title": "[P2] Serialize voice sample index mutations",
       "url": "https://github.com/skyelan1999/aide/issues/98",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "voice_samples.go:upload/delete先load index再append/filter再save，无包围整个RMW的profile锁；原子文件替换不能防丢更新。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 97,
       "title": "[P2] Cap total reassembled Edge TTS WebSocket message size",
       "url": "https://github.com/skyelan1999/aide/issues/97",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "tts/edge.go:16MiB只限制当前frame，opContinuation直接append(buf,payload...)，缺少message总上限与fragment状态校验。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 96,
@@ -1779,92 +2269,118 @@
       "number": 94,
       "title": "[P2] Fail migrations when rollback journal cannot be persisted",
       "url": "https://github.com/skyelan1999/aide/issues/94",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "migration.go:两个迁移尾部均忽略os.WriteFile(state)错误，且前面已移动文件；缺少journal却返回nil破坏rollback保证。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 93,
       "title": "[P2] Revoke native editor leases when sandbox becomes read-only",
       "url": "https://github.com/skyelan1999/aide/issues/93",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "native_editor.go:nativeEditorLeaseLocked复验锁、workspace、package但不含settings.SandboxMode；创建期read-only门槛不能撤销已发lease或长连接。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 92,
       "title": "[P2] Reclaim obsolete pinned SSH control socket links",
       "url": "https://github.com/skyelan1999/aide/issues/92",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "plugin_terminal_context.go:pinTerminalSSHMaster为每inode identity创建hard link，仓库搜索仅找到创建与测试cleanup，未发现生产关联的释放生命周期。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 91,
       "title": "[P2] Keep plugin result text untrusted in persistent experience prompts",
       "url": "https://github.com/skyelan1999/aide/issues/91",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "plugin_learning.go:pluginExperienceHint将e.Detail插入系统提示中的成功/失败建议；sanitizeExpDetail只单行和长度，不改变不可信结果的指令属性。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 90,
       "title": "[P2] Apply protected-path exclusions to explicitly selected snapshots",
       "url": "https://github.com/skyelan1999/aide/issues/90",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "plugin_sources.go:protected列表仅递归枚举child名时检查，walk直接file返回copyFile，显式.env及protected root可绕过声明的host exclusion。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 89,
       "title": "[P2] Revalidate cached package manifest against catalog metadata",
       "url": "https://github.com/skyelan1999/aide/issues/89",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "plugin_market.go:marketPackage缓存命中仅matches(size,sha256)立即return；manifest.ID/Version绑定只在network路径，目录重用hash时缓存与新版本不一致未拒绝。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 88,
       "title": "[P2] Create workbench bridges for declared host capabilities",
       "url": "https://github.com/skyelan1999/aide/issues/88",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "plugin_workbench.go:创建bridge的条件未覆盖仅ProjectMessages/MobileCapture声明，capability字段仅在既有工具/文档等桥创建分支内广告。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 87,
       "title": "[P2] Require a specific project reference before returning briefing messages",
       "url": "https://github.com/skyelan1999/aide/issues/87",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "project_briefing.go:projectMessagesLocked以strings.Contains匹配用户控制的projectName/pid；声明能力及工作区限制不能证明具体项目关联。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 86,
       "title": "[P2] Bound daemon event retention by total payload bytes",
       "url": "https://github.com/skyelan1999/aide/issues/86",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "plugin_daemon.go:appendEvent仅以daemonEventCap裁剪数量；scanner允许4MiB/行，retained payload没有字节总量上限。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 85,
       "title": "[P2] Revalidate the lock generation before mutating message state",
       "url": "https://github.com/skyelan1999/aide/issues/85",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "message_center.go:messageAPI入口readLockState，text分支decode后直接SendText；read分支才重验Gen。解码阻塞期间锁屏的TOCTOU描述成立。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 84,
       "title": "[P2] Preserve original byte offsets for Windows mount paths",
       "url": "https://github.com/skyelan1999/aide/issues/84",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "localmounts/config.go:Relative先ToLower(base)再用len(b)+1切原candidate，U+023A大小写UTF8字节长度不同，存在错位；不声称os.Root越界。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 83,
       "title": "[P2] Bound sidecar comment reply text before persistence",
       "url": "https://github.com/skyelan1999/aide/issues/83",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "comments.go:update正文限制maxCommentText，而Reply分支只验证非空和数量再append，未限制字数；每次1MiB的HTTP限额不能限制50条累计大小。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 82,
       "title": "[P2] In-flight SSH tasks can access the newly selected workspace",
       "url": "https://github.com/skyelan1999/aide/issues/82",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "harness_runtime.go:readHarnessSkill使用task旧remotePath却调用a.sftpRead无expected；workflow SSH分支ensureSSHSession使用当前连接，工作区切换未在这些调用绑定远端generation，跨工作区风险合理。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 81,
@@ -1877,36 +2393,46 @@
       "number": 80,
       "title": "Personality API accepts unbounded prompts and injects them into every system message",
       "url": "https://github.com/skyelan1999/aide/issues/80",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "persona.go:personalitySave直接json.NewDecoder，无MaxBytesReader或prompt上限；入settings后context使用完整prompt，与evolution上限不一致。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 79,
       "title": "SFTP reads download unbounded remote files before enforcing size limits",
       "url": "https://github.com/skyelan1999/aide/issues/79",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "ssh_session.go:sftpReadExpected和sftpReadSourceExpected均先无界get至临时文件再os.ReadFile；远程文件/列表只在返回后被限制。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 78,
       "title": "Range downloads can mix file versions when metadata ETags collide",
       "url": "https://github.com/skyelan1999/aide/issues/78",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "transfer_download.go:serveTransferFile hash(identity,size,mtime)为元数据ETag；同尺寸同mtime内容替换不能被If-Match检出，多次range可能混合版本。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 77,
       "title": "Legacy Office parsing paths can exhaust memory on unbounded documents",
       "url": "https://github.com/skyelan1999/aide/issues/77",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "office.go:docxTool与attachments.go:extractDocumentText直接交给runOfficeScript；仅路径/扩展/存在性，未调用新路径checkOfficeArchive，stdout上限不限制解析内存。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 76,
       "title": "External source responses are captured without a size limit",
       "url": "https://github.com/skyelan1999/aide/issues/76",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "sources.go:curlListSource.CombinedOutput和curlReadSource.Output在validateTextFileContent前全量缓冲；30秒timeout不是字节上限。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 75,
@@ -1926,8 +2452,10 @@
       "number": 73,
       "title": "Debug run endpoints expose unredacted tool and model content",
       "url": "https://github.com/skyelan1999/aide/issues/73",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "debug.go:debugRunDetail保留ToolUse.Preview[:200]和task.Error；server debug events映射runEvents，长度截断不是脱敏，独立debug token权限边界与文档冲突。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 72,
@@ -1940,8 +2468,10 @@
       "number": 71,
       "title": "Recursive transfers build an unbounded in-memory manifest",
       "url": "https://github.com/skyelan1999/aide/issues/71",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "transfer_jobs.go:create.walk把所有后代存j.Parts后才save；transfer_stream_fs.go:ReadDir使用Readdir(-1)，顶层1000和深度限制不能限制总清单量。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 70,
@@ -1954,15 +2484,19 @@
       "number": 69,
       "title": "Archive extraction accepts file/directory path conflicts and leaks staging trees",
       "url": "https://github.com/skyelan1999/aide/issues/69",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "files.go:readArchiveFiles只seen[name]精确去重，extractArchive的tmp创建后mkdir/write失败直接return；未全路径冲突检测或统一cleanup。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 68,
       "title": "Headless browser allowlist does not restrict WebSocket connections",
       "url": "https://github.com/skyelan1999/aide/issues/68",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "headless-browser-bridge.js:makeContext和更新策略均只ctx.route HTTP；没有routeWebSocket，浏览器协议scope缺少WS接入控制。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 67,
@@ -1975,8 +2509,10 @@
       "number": 66,
       "title": "Completed file transfers permanently consume the 128-transfer capacity",
       "url": "https://github.com/skyelan1999/aide/issues/66",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "messaging/service.go:Request与receiveFileOffer均以len(state.Transfers)>=128拒绝，终态仍留表，历史占用会永久阻止新传输。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 65,
@@ -1989,8 +2525,10 @@
       "number": 64,
       "title": "File downloads can produce duplicate ZIP entry names for same-basename selections",
       "url": "https://github.com/skyelan1999/aide/issues/64",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "transfer_worker.go:archive逐top取path.Base(top.Source)，未检测重名，alpha/config与beta/config映射同名；zip.Writer不阻止重名。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 63,
@@ -2010,22 +2548,40 @@
       "number": 57,
       "title": "Make assistant voice calls conversational instead of narration",
       "url": "https://github.com/skyelan1999/aide/issues/57",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "app.js:voice queue/drain/pause机制存在，但已读rec.onend只停止监听；报告的“结束立即提交”需在具体通话路径复核。短口语回复、通知和语速是合理产品需求，不能按非传统bug关闭。",
+      "reviewVerdict": "reasonable-feature",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 48,
       "title": "Local-root pending timeout assertion is sensitive to the deadline start boundary",
       "url": "https://github.com/skyelan1999/aide/issues/48",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-validation",
+      "evidence": "source_root_open.go:WithTimeout早于entry.started；test第二轮要求errLocalRootPending，临界时间可能仍判年轻pending并再超时。报告准确描述测试边界敏感，不是重复打开证明。",
+      "reviewVerdict": "source-confirmed",
+      "reviewRecord": "ordered-review.json"
     },
     {
       "number": 28,
       "title": "CI: full Go snapshot deadline expires after all server shards pass",
       "url": "https://github.com/skyelan1999/aide/issues/28",
-      "status": "pending-review",
-      "evidence": "尚未逐条验证，不作不合理判断"
+      "status": "reviewed-awaiting-evidence",
+      "evidence": "scripts/test_go_snapshot.py:SUITE_TIMEOUT_SECONDS=75*60，HOST+50；aide-ci.yml go job 90分钟。已有211a327e修复和issue评论，仍缺完整hosted rerun，不重复改预算或关闭。",
+      "reviewVerdict": "existing-fix-awaiting-hosted-validation",
+      "reviewRecord": "ordered-review.json"
     }
-  ]
+  ],
+  "orderedReview": {
+    "target": 272,
+    "reviewed": 272,
+    "remaining": 0,
+    "repairsThisReviewBatch": 0,
+    "closedNotSupported": [
+      104,
+      112
+    ],
+    "detail": "ordered-review.json",
+    "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。"
+  }
 }
