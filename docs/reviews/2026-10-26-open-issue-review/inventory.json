@@ -1814,28 +1814,37 @@
       "number": 149,
       "title": "[Bug] Verify old password before rotating voice-history key",
       "url": "https://github.com/skyelan1999/aide/issues/149",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "VoiceAgent.changePassword(oldPw,newPw)不读取oldPw，仅用已有va.key解密cachedCipher，endpoint无补充旧密码验证。",
+      "status": "fixed-on-branch",
+      "evidence": "历史轮换必须提供正确旧历史密钥，以常量时间比较验证当前/旧版派生密钥，错误或空值400不改状态；正确轮换保留历史，兼容旧密文。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "VoiceAgent.changePassword(oldPw,newPw)不读取oldPw，仅用已有va.key解密cachedCipher，endpoint无补充旧密码验证。",
+      "repairCommit": "792d42721ff8fc39d1f6a0e9c5224da1967e26f7",
+      "repairEvidence": "cycle-030.json"
     },
     {
       "number": 148,
       "title": "[Bug] Roll back profile state when persistence fails",
       "url": "https://github.com/skyelan1999/aide/issues/148",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "updateProfiles先替换profileState再saveProfiles，失败500不恢复原内存状态。",
+      "status": "fixed-on-branch",
+      "evidence": "配置先原子保存成功，再在原锁内发布内存状态；保存失败500保留原配置，支持重试。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "updateProfiles先替换profileState再saveProfiles，失败500不恢复原内存状态。",
+      "repairCommit": "792d42721ff8fc39d1f6a0e9c5224da1967e26f7",
+      "repairEvidence": "cycle-030.json"
     },
     {
       "number": 147,
       "title": "[Bug] Bound workspace routing policy file reads",
       "url": "https://github.com/skyelan1999/aide/issues/147",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "profiles.go readRoutingPolicy两分支os.ReadFile，无文件类型与字节上限，工作区symlink可指向特殊文件。",
+      "status": "fixed-on-branch",
+      "evidence": "工程策略限定为1MiB普通文件，os.Root与非阻塞安全打开拒绝链接/管道，读取前后核对身份与大小/mtime，保留JSON优先和Markdown兜底。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "profiles.go readRoutingPolicy两分支os.ReadFile，无文件类型与字节上限，工作区symlink可指向特殊文件。",
+      "repairCommit": "792d42721ff8fc39d1f6a0e9c5224da1967e26f7",
+      "repairEvidence": "cycle-030.json"
     },
     {
       "number": 146,
@@ -2796,7 +2805,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 203,
+    "remainingFollowupTargets": 200,
     "followupRepairs": [
       48,
       64,
@@ -2863,7 +2872,10 @@
       143,
       144,
       145,
-      146
+      146,
+      147,
+      148,
+      149
     ]
   }
 }
