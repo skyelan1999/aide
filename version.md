@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.17.5 RC10**
+**当前版本：0.1.17.5 RC11**
+
+## 0.1.17.5 RC11（2026-10-26）
+
+- 补齐英文工作台、独立页面和当前指南；优化回答操作图标与动态标签。 Complete English UI and current guides; refine reply-action icons and dynamic labels.
+
 
 ## 0.1.17.5 RC10（2026-10-24）
 

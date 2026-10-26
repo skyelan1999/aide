@@ -68,15 +68,16 @@
       ]
     },
     "release": {
-      "status": "blocked",
-      "summary": "PR #166 is ready for review. main requires the repository-owner approval, but the owner account is also the PR author. An independently satisfied review gate or explicit current administrator-merge authorization is required. No version/tag, release artifact publication or installed-service replacement performed.",
+      "status": "in_progress",
+      "summary": "PR #166 passed quick, Go, Windows and required gate checks at head 28c6427a8b2e74e321c805e677e832ddf664d564. Merged with current user-authorized administrator privileges as c01276eaaecf0d0eadabd48c2daccfb5429a449f. RC11 version PR, native packages and publication are being prepared.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/166",
-        ".github/CODEOWNERS"
+        "https://github.com/skyelan1999/aide/actions/runs/40215712973",
+        "docs/releases/v0.1.17.5-RC11.md"
       ]
     }
   },
-  "release_authorization": "User requested commits, merge to main and release; confirmed public application only.",
+  "release_authorization": "2026-10-26: user explicitly authorized administrator merge and publication for this English release flow, including necessary version commits. Public application only; independently owned non-public work remains excluded. The explicit current publication request is a one-off exception to the normal weekly cadence.",
   "rollback": "Before merge, retain the feature branch/PR. After merge, use a reviewed git revert and fresh verification; runtime/user data are not part of this change.",
-  "handoff": "Public feature branch pushed as PR #166. Current-input local full/browser/docs acceptance passed. GitHub CI and owner review/merge remain separate gates. Native ARM64/AMD64 packages and publication have not run. Existing installed runtime is unchanged."
+  "handoff": "English source merged to main; local full/browser/docs acceptance passed. RC11 release preparation in progress. Existing installed runtime is unchanged."
 }
