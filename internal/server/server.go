@@ -536,6 +536,7 @@ type App struct {
 	sshLifecycleMu            sync.Mutex
 	sshLifecycles             map[string]*sshSessionLifecycle
 	sshGenerations            map[string]sshSessionVersion
+	terminalPins              terminalMasterPins
 	localMountConfig          localmounts.Config
 	localMountRoots           map[string]*os.Root
 	localRoot                 *os.Root
@@ -1124,6 +1125,9 @@ func (a *App) Close() {
 			a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
 		}
 		a.bgMu.Unlock()
+		a.terminalPins.mu.Lock()
+		a.terminalPins.closed = true
+		a.terminalPins.mu.Unlock()
 
 		a.transferMu.Lock()
 		transfers := a.transferManager
@@ -1165,6 +1169,7 @@ func (a *App) Close() {
 		if a.daemons != nil {
 			a.daemons.StopAll() // 协议 v1.2：终止常驻守护插件子进程并释放端口
 		}
+		a.closeTerminalMasterPins()
 		a.workspace.Close()
 		a.reference.Close()
 		if a.localRoot != nil {
