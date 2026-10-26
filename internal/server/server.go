@@ -3323,7 +3323,19 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	}
 	saveErr := atomicJSON(TokenStatsPath(a.dataPath), map[string]any{"version": 2, "days": a.tokenStats, "calls": a.tokenCalls})
 	a.tokenStatsMu.Unlock()
-	_ = saveErr
+	if saveErr != nil {
+		// Report durability loss without copying model/key identity or private
+		// data paths from PathError/LinkError into the operational event.
+		cause := saveErr
+		for {
+			unwrapped := errors.Unwrap(cause)
+			if unwrapped == nil {
+				break
+			}
+			cause = unwrapped
+		}
+		log.Printf("token_stats_persist_failed durable=false cause=%q", cause.Error())
+	}
 }
 
 func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
