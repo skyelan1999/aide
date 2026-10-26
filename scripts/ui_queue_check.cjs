@@ -1,5 +1,7 @@
 // 无头浏览器验收 aide 排队/插话 UI（需要 playwright-core + CHROME_PATH；缺依赖时 SKIP）。
 // 覆盖：运行中发送按钮可见、排队条渲染与操作、插话消息入时间线、live 状态不被队列操作重置。
+// Each execution creates isolated sessions and cancels/deletes them in finally, including assertion failures.
+// Use a disposable mock-provider instance; these UI flows can start model work in their own sessions.
 // 用法：BASE_URL=... AIDE_TOKEN=<token> CHROME_PATH=<path> node scripts/ui_queue_check.cjs
 'use strict';
 // 排队/插话 UI 验收：运行中发送按钮可见、排队条渲染与操作、插话入时间线、live 不因队列操作重置。
@@ -8,17 +10,10 @@ const BASE = process.env.BASE_URL || 'http://127.0.0.1:18097';
 const TOKEN = process.env.AIDE_TOKEN || '';
 const CHROME = process.env.CHROME_PATH || '';
 
-function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
+function fail(msg) { throw new Error('FAIL: ' + msg); }
 
-(async () => {
-  const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await page.goto(BASE, { waitUntil: 'load' });
-  await page.evaluate(t => localStorage.setItem('aide-token', t), TOKEN);
-  await page.reload({ waitUntil: 'load' });
-  await page.waitForTimeout(1000);
-
-  // 启动一个慢速 chat 任务
+const {runOwnedUI} = require('./ui_acceptance_scope.cjs');
+runOwnedUI({chromium, base: BASE, token: TOKEN, chrome: CHROME, label: 'queue'}, async ({page}) => {
   await page.fill('#prompt', '队列验收任务');
   await page.click('#send');
   await page.waitForTimeout(1200);
@@ -192,7 +187,7 @@ function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
   await page.evaluate(async () => {
     state.showArchived = false;
     // 填充会话使列表超出容器高度，让底部项的菜单触发向上弹出（唯一标题避免历史数据污染）
-    window.__fillPrefix = '填充' + Date.now() + '_';
+    window.__fillPrefix = window.__aideUITestRunTag + 'fill-';
     for (let i = 0; i < 6; i++) {
       await api('/sessions', { method: 'POST', body: JSON.stringify({ title: window.__fillPrefix + i }) });
     }
@@ -332,6 +327,5 @@ function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
   });
   console.log('MENU_OCCLUSION:', JSON.stringify(occ));
   if (!occ.onTop) fail('菜单仍被其他元素遮挡');
-  await browser.close();
-  console.log('PASS: 排队/插话 UI 流程');
-})().catch(e => { console.error('FATAL', e); process.exit(1); });
+}).then(() => { console.log('PASS: 排队/插话 UI 流程及自有数据清理'); })
+  .catch(e => { console.error('FATAL', e); process.exitCode = 1; });
