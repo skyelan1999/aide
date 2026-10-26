@@ -103,10 +103,16 @@
     "Browser verification is actual-source component with generated local fixtures and real libraries, not a full start.command workbench, native CAD/Word/WPS, SSH/device or production acceptance. No real user files, paid model, merge, release or deployment. Existing platform/full-gate blockers persist."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "679463f98211666c7a36575669b5457590ce9333",
+    "issueComments": {
+      "123": "https://github.com/skyelan1999/aide/issues/123#issuecomment-6425694940",
+      "126": "https://github.com/skyelan1999/aide/issues/126#issuecomment-6425695795",
+      "127": "https://github.com/skyelan1999/aide/issues/127#issuecomment-6425696612"
+    }
   },
   "sourceSHA256": {
     "internal/server/workflow.go": "4fc08b7228e808533e9f201cd66e4b5bd8df3e7fd40f80099a5105a010c296fd",
