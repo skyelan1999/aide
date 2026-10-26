@@ -775,6 +775,9 @@ func readArchiveFiles(data []byte) ([]extractedArchiveFile, error) {
 		}
 		files = append(files, f)
 	}
+	if err := validateArchiveLayout(files); err != nil {
+		return nil, err
+	}
 	return files, nil
 }
 
@@ -813,96 +816,41 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
-	remoteMode := a.workspaceMode() == "ssh"
+	fs, err := a.streamTransferFS(r.Context(), "workspace", true)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	defer fs.Close()
+	var lookupErr error
 	dest, err := availableArchiveDestination(destBase, func(candidate string) bool {
-		if remoteMode {
-			return a.sftpExists(a.workspaceRemotePath(candidate))
+		if lookupErr != nil {
+			return true
 		}
-		_, statErr := a.workspace.Stat(candidate)
+		_, statErr := fs.Stat(candidate)
+		if statErr != nil && !os.IsNotExist(statErr) {
+			lookupErr = statErr
+		}
 		return statErr == nil
 	})
+	if lookupErr != nil {
+		fail(w, 400, lookupErr)
+		return
+	}
 	if err != nil {
 		fail(w, 409, err)
 		return
 	}
-	if remoteMode {
-		if a.sftpExists(a.workspaceRemotePath(dest)) {
-			fail(w, 409, errors.New("解压目标已存在"))
-			return
+	if err = writeExtractedArchive(fs, dest, files); err != nil {
+		status := 500
+		if fs.root == nil {
+			status = 400
 		}
-		tmp := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
-		if err := a.sftpMakeDirectory(a.workspaceRemotePath(tmp)); err != nil {
-			fail(w, 400, err)
-			return
+		if errors.Is(err, os.ErrExist) {
+			status = 409
 		}
-		dirs := map[string]bool{}
-		for _, f := range files {
-			dir := f.path
-			if !f.dir {
-				dir = path.Dir(dir)
-			}
-			for dir != "." && dir != "" {
-				dirs[dir] = true
-				dir = path.Dir(dir)
-			}
-		}
-		ordered := make([]string, 0, len(dirs))
-		for dir := range dirs {
-			ordered = append(ordered, dir)
-		}
-		sort.Slice(ordered, func(i, j int) bool { return strings.Count(ordered[i], "/") < strings.Count(ordered[j], "/") })
-		for _, dir := range ordered {
-			if err := a.sftpMakeDirectory(a.workspaceRemotePath(path.Join(tmp, dir))); err != nil {
-				fail(w, 400, err)
-				return
-			}
-		}
-		for _, f := range files {
-			if f.dir {
-				continue
-			}
-			target := path.Join(tmp, f.path)
-			if err := a.sftpWrite(a.workspaceRemotePath(target), f.data); err != nil {
-				fail(w, 400, err)
-				return
-			}
-		}
-		if err := a.sftpRenameDirectory(a.workspaceRemotePath(tmp), a.workspaceRemotePath(dest)); err != nil {
-			fail(w, 400, err)
-			return
-		}
-	} else {
-		if _, err := a.workspace.Stat(dest); err == nil {
-			fail(w, 409, errors.New("解压目标已存在"))
-			return
-		}
-		tmp := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
-		if err := a.workspace.Mkdir(tmp, 0755); err != nil {
-			fail(w, 400, err)
-			return
-		}
-		for _, f := range files {
-			target := path.Join(tmp, f.path)
-			if f.dir {
-				if err := a.workspace.MkdirAll(target, 0755); err != nil {
-					fail(w, 500, err)
-					return
-				}
-			} else {
-				if err := a.workspace.MkdirAll(path.Dir(target), 0755); err != nil {
-					fail(w, 500, err)
-					return
-				}
-				if err := a.workspace.WriteFile(target, f.data, 0644); err != nil {
-					fail(w, 500, err)
-					return
-				}
-			}
-		}
-		if err := a.workspace.Rename(tmp, dest); err != nil {
-			fail(w, 500, err)
-			return
-		}
+		fail(w, status, err)
+		return
 	}
 	jsonOut(w, 200, map[string]string{"path": dest})
 }

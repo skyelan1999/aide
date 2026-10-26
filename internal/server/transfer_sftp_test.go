@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pkg/sftp"
@@ -95,5 +97,39 @@ func TestLargeTransferSFTPRandomAccessAndResume(t *testing.T) {
 	if _, e = fs.Open("escape/private", os.O_RDONLY); e == nil {
 		t.Fatal("SFTP escaped root")
 	}
+
+	t.Run("issue69 archive publication and failure cleanup", func(t *testing.T) {
+		files, err := readArchiveFiles(makeZIP(t, map[string]string{"nested/readme.txt": "remote archive"}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := writeExtractedArchive(fs, "extracted", files); err != nil {
+			t.Fatal(err)
+		}
+		content, err := os.ReadFile(filepath.Join(remote, "extracted/nested/readme.txt"))
+		if err != nil || string(content) != "remote archive" {
+			t.Fatalf("SFTP archive output = %q, %v", content, err)
+		}
+		bad := []extractedArchiveFile{{path: "good.txt", data: []byte("staged")}, {path: strings.Repeat("x", 256) + "/bad.txt", data: []byte("fail")}}
+		if err := writeExtractedArchive(fs, "failed", bad); err == nil {
+			t.Fatal("SFTP accepted an unwritable extraction path")
+		}
+		if err := writeExtractedArchive(fs, "extracted", files); !errors.Is(err, os.ErrExist) {
+			t.Fatalf("SFTP publication did not preserve existing destination: %v", err)
+		}
+		entries, err := os.ReadDir(remote)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, item := range entries {
+			if item.Name() == "failed" || strings.HasPrefix(item.Name(), ".aide-unpack-") {
+				t.Fatalf("SFTP extraction failure left staging output: %v", entries)
+			}
+		}
+		content, err = os.ReadFile(filepath.Join(remote, "extracted/nested/readme.txt"))
+		if err != nil || string(content) != "remote archive" {
+			t.Fatal("failed publication changed existing received content", err)
+		}
+	})
 
 }

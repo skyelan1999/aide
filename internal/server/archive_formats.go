@@ -295,6 +295,9 @@ func readTarArchive(r io.Reader) ([]extractedArchiveFile, error) {
 	if len(files) == 0 {
 		return nil, errors.New("归档为空")
 	}
+	if err := validateArchiveLayout(files); err != nil {
+		return nil, err
+	}
 	return files, nil
 }
 
