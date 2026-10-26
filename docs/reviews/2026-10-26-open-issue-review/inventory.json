@@ -2229,28 +2229,37 @@
       "number": 100,
       "title": "[P2] Refresh cached ciphertext after encrypted history changes",
       "url": "https://github.com/skyelan1999/aide/issues/100",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "voice_agent.go:persistLocked新encrypt未赋cachedCipher，locked分支复写旧cachedCipher；clearHistory置空history但保留旧cipher，unlock又解出旧历史。",
+      "status": "fixed-on-branch",
+      "evidence": "历史原子落盘成功后刷新密文缓存；锁定清空403，失败清空500不丢历史，密钥状态切换失败回滚，锁/解锁/重启回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "voice_agent.go:persistLocked新encrypt未赋cachedCipher，locked分支复写旧cachedCipher；clearHistory置空history但保留旧cipher，unlock又解出旧历史。",
+      "repairCommit": "b20f7c5b5e7f06813e67027c7141524ca1f83505",
+      "repairEvidence": "cycle-015.json"
     },
     {
       "number": 99,
       "title": "[P2] Bound clone creation sample count and decoded audio size",
       "url": "https://github.com/skyelan1999/aide/issues/99",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "voice_samples.go:create GPT-SoVITS samples遍历所有SampleIDs逐项解密并Base64保留，没有去重或总decoded预算；1MiB请求体不限制展开后的音频。",
+      "status": "fixed-on-branch",
+      "evidence": "克隆最多16个不同样本，GPT-SoVITS总音频32MiB，所有密文大小预检及有界实际解密；mock正负路径通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "voice_samples.go:create GPT-SoVITS samples遍历所有SampleIDs逐项解密并Base64保留，没有去重或总decoded预算；1MiB请求体不限制展开后的音频。",
+      "repairCommit": "bcb1b32d4adb73c4852f1fed8d406d323e6d4488",
+      "repairEvidence": "cycle-015.json"
     },
     {
       "number": 98,
       "title": "[P2] Serialize voice sample index mutations",
       "url": "https://github.com/skyelan1999/aide/issues/98",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "voice_samples.go:upload/delete先load index再append/filter再save，无包围整个RMW的profile锁；原子文件替换不能防丢更新。",
+      "status": "fixed-on-branch",
+      "evidence": "样本上传/删除/清空按profile串行，成功样本不丢索引、取消不改数据、其他profile独立；并发回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "voice_samples.go:upload/delete先load index再append/filter再save，无包围整个RMW的profile锁；原子文件替换不能防丢更新。",
+      "repairCommit": "59245432bb676485f97a52098e41532b2db1bf17",
+      "repairEvidence": "cycle-015.json"
     },
     {
       "number": 97,
@@ -2672,7 +2681,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 244,
+    "remainingFollowupTargets": 241,
     "followupRepairs": [
       48,
       64,
@@ -2698,7 +2707,10 @@
       92,
       93,
       94,
-      97
+      97,
+      98,
+      99,
+      100
     ]
   }
 }

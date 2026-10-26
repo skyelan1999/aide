@@ -32,7 +32,8 @@
     "docs/architecture/data-layout.md",
     "docs/architecture/plugin-file-handlers.md",
     "internal/server/tts",
-    "docs/security/tts-local.md"
+    "docs/security/tts-local.md",
+    "docs/security/voice-cloning.md"
   ],
   "stages": {
     "requirements": {
@@ -51,14 +52,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第14轮#97修复验证完成；累计39项产品修复、1项测试修正，下一轮#98/#99/#100。",
+      "summary": "第15轮#98/#99/#100修复验证完成；累计42项产品修复、1项测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "最终Edge相关race1.875s、tts vet、quick、文档/路由通过；未调用真实TTS服务。",
+      "summary": "全部Voice前缀及98/99/100 race35.210s、vet、清缓存后quick、文档/路由通过；均隔离mock，真实录音/克隆效果未验。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -72,7 +73,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-011.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-012.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-013.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-014.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-014.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-015.json"
       ]
     },
     "documentation": {
@@ -96,11 +98,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第14轮#97已push并评论；累计40项分支修复，原272项剩244项跟进。第15轮#98/#99/#100。",
+  "handoff": "第15轮#98/#99/#100已验证待push评论；累计43项分支修复，原272项剩241需跟进。第16轮#101/#102/#103，保留环境恢复检查点。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "85b77cf199c563b6f0ac344ae1feaaebf2a53e64",
-    "pushed": true,
+    "commit": "b20f7c5b5e7f06813e67027c7141524ca1f83505",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
@@ -134,24 +136,26 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 15,
+    "nextCycle": 16,
     "lastCompletedBatch": {
-      "cycle": 14,
+      "cycle": 15,
       "issues": [
-        97
+        98,
+        99,
+        100
       ],
-      "cumulativeFixed": 40,
-      "cumulativeProductFixed": 39,
+      "cumulativeFixed": 43,
+      "cumulativeProductFixed": 42,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 244,
-      "verification": "PASS in-memory Edge frame/race/vet/quick; no live TTS"
+      "remainingFollowupTargets": 241,
+      "verification": "PASS all Voice+issue race/vet/quick after owned cache cleanup; no real audio/model"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      98,
-      99,
-      100
+      101,
+      102,
+      103
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -159,19 +163,14 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 15,
+      "cycle": 16,
       "status": "in_progress",
       "candidates": [
-        98,
-        99,
-        100
+        101,
+        102,
+        103
       ],
-      "phase": "latest-issue-bodies-read-awaiting-runtime-reproduction",
-      "findings": [
-        "#98源码：样本上传/删除/清空索引读改写缺少同profile串行；需并发复现并兼顾wipe。",
-        "#99源码：克隆sampleIds无去重、数量或累计音频预算；需隔离mock回归，不调用真实克隆服务。",
-        "#100源码：新历史密文未更新缓存，锁定清空仍持久化旧缓存；需同实例锁/解锁及删除失败回归。"
-      ]
+      "phase": "latest-bodies-read-source-inspection"
     }
   },
   "orderedReview": {
