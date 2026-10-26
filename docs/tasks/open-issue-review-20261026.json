@@ -30,7 +30,9 @@
     "docs/plugin-protocol.md",
     "docs/architecture/plugin-market.md",
     "docs/architecture/data-layout.md",
-    "docs/architecture/plugin-file-handlers.md"
+    "docs/architecture/plugin-file-handlers.md",
+    "internal/server/tts",
+    "docs/security/tts-local.md"
   ],
   "stages": {
     "requirements": {
@@ -93,16 +95,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第13轮#94已验证待push评论；累计39项分支修复，原272项剩245项跟进。第14轮#97（#95/#96已修）。",
+  "handoff": "第13轮#94已push并评论；累计39项分支修复，原272项剩245项跟进。第14轮#97（#95/#96已修）。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "ff1f1ac3fa4f0a4e7e9be97586927a27441f69eb",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第12轮#93已push并评论；#90依据回归证据关闭，合理修复未合并main前保持open。",
+  "issue_comments": "第13轮#94已push并评论；#90按既有保护与运行证据关闭；合理修复未合并main前保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",

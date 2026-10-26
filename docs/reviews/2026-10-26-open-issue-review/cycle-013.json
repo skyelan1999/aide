@@ -68,10 +68,13 @@
     "No user data read/changed, no main merge, release or deployment. Next numbered issue97;95/96 already repaired."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "94": "https://github.com/skyelan1999/aide/issues/94#issuecomment-6420942894"
+    }
   },
   "sourceSHA256": {
     "internal/server/migration.go": "11c000cf79fb8d66743682373c4da2db8de39f0d3ba9ebed7031cdceba06129f",
