@@ -35,9 +35,10 @@ const (
 
 // 超时分层（#42）：区分连接 / 握手 / 首包三类，避免首包稍慢即误判 edge 不可用而降级浏览器机械音。
 // 用 var 便于测试注入短超时。生产值：
-//   dialTimeout      TCP/TLS 建连 5s
-//   handshakeTimeout WSS 升级握手 5s（含本地 Sec-MS-GEC 生成，不含音频）
-//   firstByteTimeout 第一个音频字节 5s（WSS 握手 + GEC + 首次连接常超 1.5s，放宽到 5s）
+//
+//	dialTimeout      TCP/TLS 建连 5s
+//	handshakeTimeout WSS 升级握手 5s（含本地 Sec-MS-GEC 生成，不含音频）
+//	firstByteTimeout 第一个音频字节 5s（WSS 握手 + GEC + 首次连接常超 1.5s，放宽到 5s）
 var (
 	dialTimeout      = 5 * time.Second
 	handshakeTimeout = 5 * time.Second
@@ -102,8 +103,8 @@ type edge struct {
 func newEdge(cfg Config) *edge { return &edge{cfg: cfg} }
 
 func (e *edge) Name() string    { return "edge" }
-func (e *edge) Format() string   { return "mp3" }
-func (e *edge) Available() bool  { return true } // 联网可用性在 Synth 时探测
+func (e *edge) Format() string  { return "mp3" }
+func (e *edge) Available() bool { return true } // 联网可用性在 Synth 时探测
 
 // Synth 建立一条 edge-tts 会话并把 MP3 字节流作为 ReadCloser 返回。
 // 读取端 Close 会中断连接。连接/握手/首包超时自动用新 ConnectionId 重试 edgeMaxRetries 次；
@@ -383,12 +384,14 @@ func randHex(n int) string {
 // ─── 最小 RFC6455 WebSocket 客户端 ──────────────────────────────────────────
 
 const (
-	opContinuation = 0x0
-	opText         = 0x1
-	opBinary       = 0x2
-	opClose        = 0x8
-	opPing         = 0x9
-	opPong         = 0xA
+	opContinuation   = 0x0
+	opText           = 0x1
+	opBinary         = 0x2
+	opClose          = 0x8
+	opPing           = 0x9
+	opPong           = 0xA
+	edgeMaxMessage   = 16 << 20
+	edgeMaxFragments = 4096
 )
 
 type wsConn struct {
@@ -487,6 +490,7 @@ func (w *wsConn) writeFrame(opcode byte, payload []byte) error {
 func (w *wsConn) readMessage() (byte, []byte, error) {
 	var buf []byte
 	var opcode byte
+	fragments := 0
 	for {
 		b0, err := w.rd.ReadByte()
 		if err != nil {
@@ -499,40 +503,51 @@ func (w *wsConn) readMessage() (byte, []byte, error) {
 		fin := b0&0x80 != 0
 		op := b0 & 0x0f
 		masked := b1&0x80 != 0
-		l := int(b1 & 0x7f)
-		switch l {
+		if b0&0x70 != 0 || masked {
+			return 0, nil, errors.New("edge-tts 不支持扩展位或带掩码的服务端帧")
+		}
+		length := uint64(b1 & 0x7f)
+		switch length {
 		case 126:
 			var ext [2]byte
 			if _, err := io.ReadFull(w.rd, ext[:]); err != nil {
 				return 0, nil, err
 			}
-			l = int(binary.BigEndian.Uint16(ext[:]))
+			length = uint64(binary.BigEndian.Uint16(ext[:]))
 		case 127:
 			var ext [8]byte
 			if _, err := io.ReadFull(w.rd, ext[:]); err != nil {
 				return 0, nil, err
 			}
-			l = int(binary.BigEndian.Uint64(ext[:]))
+			length = binary.BigEndian.Uint64(ext[:])
 		}
-		// 硬上限 16 MiB：防止恶意/异常端点声明超大帧致 OOM。
-		const edgeMaxFrame = 16 << 20
-		if l < 0 || l > edgeMaxFrame {
-			return 0, nil, fmt.Errorf("edge-tts 帧长度超限: %d", l)
+		if length > edgeMaxMessage {
+			return 0, nil, fmt.Errorf("edge-tts 帧长度超限: %d", length)
 		}
-		var mk [4]byte
-		if masked {
-			if _, err := io.ReadFull(w.rd, mk[:]); err != nil {
-				return 0, nil, err
+		l := int(length) // checked before conversion, including on 32-bit hosts
+		switch op {
+		case opClose, opPing, opPong:
+			if !fin || l > 125 {
+				return 0, nil, errors.New("edge-tts 控制帧格式无效")
 			}
+		case opContinuation, opText, opBinary:
+			if op == opContinuation && opcode == 0 || op != opContinuation && opcode != 0 {
+				return 0, nil, errors.New("edge-tts 消息分片顺序无效")
+			}
+			fragments++
+			if fragments > edgeMaxFragments {
+				return 0, nil, errors.New("edge-tts 消息分片数量超限")
+			}
+			if len(buf) > edgeMaxMessage-l {
+				return 0, nil, errors.New("edge-tts 消息累计长度超限")
+			}
+		default:
+			return 0, nil, errors.New("edge-tts 帧操作码无效")
 		}
+		// Enforce limits before allocating or reading this fragment's body.
 		payload := make([]byte, l)
 		if _, err := io.ReadFull(w.rd, payload); err != nil {
 			return 0, nil, err
-		}
-		if masked {
-			for i := range payload {
-				payload[i] ^= mk[i%4]
-			}
 		}
 		switch op {
 		case opPing:
