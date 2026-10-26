@@ -103,10 +103,16 @@
     "MockDocker tests do not prove actual pinned wheel availability, real registry/network, native macOS/Windows behavior or complete image release. Existing platform/full-gate blockers remain; no paid model/device or user data accessed."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "ae8cfbe9f056e4d446f038d68396e72815ebb29c",
+    "issueComments": {
+      "114": "https://github.com/skyelan1999/aide/issues/114#issuecomment-6423940060",
+      "115": "https://github.com/skyelan1999/aide/issues/115#issuecomment-6423941092",
+      "116": "https://github.com/skyelan1999/aide/issues/116#issuecomment-6423942040"
+    }
   },
   "sourceSHA256": {
     "internal/server/web/starmap.js": "64eaf8eb09150104aa2f2742619f64b0379ee4f58337707882569e99684841a7",
