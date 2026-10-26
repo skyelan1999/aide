@@ -486,7 +486,12 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	defer idleWatch.stop()
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64<<10), 1<<20) // 单个 chunk 上限 1 MiB
+	streamBytes := 0
 	for scanner.Scan() {
+		streamBytes += len(scanner.Bytes())
+		if streamBytes > 8<<20 {
+			return content.String(), nil, TokenUsage{}, "", errors.New("provider stream exceeds 8 MiB byte limit")
+		}
 		select {
 		case <-streamCtx.Done():
 			// 用户主动停止：保留已流式输出的部分内容

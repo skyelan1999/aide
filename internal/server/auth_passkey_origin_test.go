@@ -19,7 +19,7 @@ import (
 
 // A virtual authenticator signs real WebAuthn assertion bytes, without weakening verification.
 func TestMasterPasskeyDynamicOriginAndReplay(t *testing.T) {
-	for _, kind := range []string{"valid", "changed-http-origin", "changed-signed-origin", "invalid-signature"} {
+	for _, kind := range []string{"valid", "changed-http-origin", "changed-signed-origin", "invalid-signature", "missing-user-verification"} {
 		t.Run(kind, func(t *testing.T) {
 			a := testApp(t)
 			key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -69,6 +69,9 @@ func TestMasterPasskeyDynamicOriginAndReplay(t *testing.T) {
 			auth := make([]byte, 37)
 			copy(auth, rpHash[:])
 			auth[32] = 5
+			if kind == "missing-user-verification" {
+				auth[32] = 1
+			}
 			binary.BigEndian.PutUint32(auth[33:], 1)
 			clientHash := sha256.Sum256(client)
 			signed := append(append([]byte{}, auth...), clientHash[:]...)

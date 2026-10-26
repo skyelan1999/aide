@@ -245,7 +245,7 @@ func (a *App) webAuthnRegisterStart(w http.ResponseWriter, r *http.Request) {
 	creation, session, err := a.webAuthn.wa.BeginRegistration(user,
 		webauthn.WithAuthenticatorSelection(protocol.AuthenticatorSelection{
 			AuthenticatorAttachment: protocol.Platform,
-			UserVerification:        protocol.VerificationPreferred,
+			UserVerification:        protocol.VerificationRequired,
 			ResidentKey:             protocol.ResidentKeyRequirementPreferred,
 			RequireResidentKey:      nil,
 		}),
@@ -457,7 +457,7 @@ func (a *App) webAuthnAssertionStart(w http.ResponseWriter, r *http.Request) {
 	}
 	assertion, session, err := a.webAuthn.wa.BeginLogin(user,
 		webauthn.WithAllowedCredentials(allowList),
-		webauthn.WithUserVerification(protocol.VerificationPreferred),
+		webauthn.WithUserVerification(protocol.VerificationRequired),
 	)
 	if err != nil {
 		fail(w, 500, err)

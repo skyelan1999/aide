@@ -1055,6 +1055,10 @@ func New(work, reference, data string) (*App, error) {
 			log.Printf("跳过损坏会话文件 %s: %v", filepath.Base(path), err) // R09：坏文件不阻断启动
 			continue
 		}
+		if !validSessionID(s.ID) {
+			log.Printf("跳过无效会话ID文件 %s", filepath.Base(path))
+			continue
+		}
 		if s.Deleted {
 			continue // 删除墓碑残留：不载入
 		}
@@ -1205,6 +1209,9 @@ func sessionBucketFor(s *Session) string {
 // 归档/取消归档/小秘会话换桶，或旧版本曾把同一份会话写进多个桶时，这里负责把磁盘收敛到
 // “一个 id 恰好一份、且在正确桶”的状态。Deleted 墓碑不落盘（任务取消后的收尾保存同样跳过）。
 func (a *App) save(s *Session) error {
+	if s == nil || !validSessionID(s.ID) {
+		return errors.New("invalid session ID")
+	}
 	if s.Deleted {
 		return nil
 	}
@@ -1920,9 +1927,15 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, errVaultLocked)
 			return
 		}
-		a.storeModelAPIKeyPlaintextLocked(in.APIKey)
+		if err := a.storeModelAPIKeyPlaintextLocked(in.APIKey); err != nil {
+			fail(w, 500, errors.New("模型凭据未能安全保存"))
+			return
+		}
 	case in.ClearKey:
-		a.clearModelAPIKeyLocked()
+		if err := a.clearModelAPIKeyLocked(); err != nil {
+			fail(w, 500, errors.New("模型凭据未能安全删除"))
+			return
+		}
 	}
 	in.Settings.APIKey = "" // 永不把明文写回 settings.json
 	if in.Models == nil {

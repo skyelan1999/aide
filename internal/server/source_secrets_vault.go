@@ -39,6 +39,7 @@ type sourceCredPayload struct {
 func (a *App) sourceCredentialLocked(id string) (password, key string) {
 	if a.vault != nil && a.vault.Unlocked() && a.vault.Has(sourceVaultID(id)) {
 		if pt, err := a.vault.Get(sourceVaultID(id)); err == nil {
+			defer zeroBytes(pt)
 			var p sourceCredPayload
 			if json.Unmarshal(pt, &p) == nil {
 				return p.Password, p.Key
@@ -58,9 +59,10 @@ func (a *App) sourceHasSecretLocked(id string) bool {
 }
 
 // storeSourceCredentialLocked 把用户新录入/清空的来源凭据收敛进 vault 与回退明文。
-//  - password/key 均为空：删除 vault 条目与内存明文（用户显式 clear）。
-//  - vault 已解锁且密封成功：密文入库，内存明文随之清除（避免再被落盘为明文）。
-//  - vault 未解锁或密封失败：保留内存明文作为回退，由后续 migrateLegacySourceSecretsLocked 重试。
+//   - password/key 均为空：删除 vault 条目与内存明文（用户显式 clear）。
+//   - vault 已解锁且密封成功：密文入库，内存明文随之清除（避免再被落盘为明文）。
+//   - vault 未解锁或密封失败：保留内存明文作为回退，由后续 migrateLegacySourceSecretsLocked 重试。
+//
 // 调用方持有 a.mu。
 func (a *App) storeSourceCredentialLocked(id, password, key string) {
 	vaultID := sourceVaultID(id)

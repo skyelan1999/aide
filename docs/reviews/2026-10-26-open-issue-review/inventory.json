@@ -1,0 +1,2031 @@
+{
+  "baseline": "9cee2c88",
+  "initialOpenCount": 289,
+  "scope": "skyelan1999/aide",
+  "note": "清单是处理状态，不表示待审条目已验证；合理条目保持open直到后续合并和验收闭环。",
+  "issues": [
+    {
+      "number": 358,
+      "title": "[Bug] Mockup Email template is indexed under calendar search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/358",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 357,
+      "title": "[P3] Keep the iOS palette sidebar reference local",
+      "url": "https://github.com/skyelan1999/aide/issues/357",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 355,
+      "title": "[Bug] GMDL stepper templates are incorrectly indexed as tabs",
+      "url": "https://github.com/skyelan1999/aide/issues/355",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 354,
+      "title": "[Bug] GMDL single-line field focus variants have incorrect names and search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/354",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 353,
+      "title": "[Bug] GMDL checkbox and radio labels have extra closing parentheses",
+      "url": "https://github.com/skyelan1999/aide/issues/353",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 352,
+      "title": "[P3] Keep table rendering scale local",
+      "url": "https://github.com/skyelan1999/aide/issues/352",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 351,
+      "title": "[P3] Add spacing to the superscript formatting button",
+      "url": "https://github.com/skyelan1999/aide/issues/351",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 350,
+      "title": "[P3] Avoid duplicating units after invalid geometry input",
+      "url": "https://github.com/skyelan1999/aide/issues/350",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 349,
+      "title": "[P2] Scope temporary editor keyboard handlers to each instance",
+      "url": "https://github.com/skyelan1999/aide/issues/349",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 347,
+      "title": "[P2] Restrict chromeless toolbar navigation URLs to the same origin",
+      "url": "https://github.com/skyelan1999/aide/issues/347",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 346,
+      "title": "[P3] Keep shape picker cell traversal local",
+      "url": "https://github.com/skyelan1999/aide/issues/346",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 345,
+      "title": "[P3] Keep PNG parser chunk data local",
+      "url": "https://github.com/skyelan1999/aide/issues/345",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 344,
+      "title": "[P3] Keep FilenameDialog row variable local",
+      "url": "https://github.com/skyelan1999/aide/issues/344",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 343,
+      "title": "[P2] Cap stripe rendering for oversized iOS shapes",
+      "url": "https://github.com/skyelan1999/aide/issues/343",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 342,
+      "title": "[P2] Bound Icon Grid rendering for untrusted grid sizes",
+      "url": "https://github.com/skyelan1999/aide/issues/342",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 341,
+      "title": "[P3] Clear the comments refresh timer when its window is destroyed",
+      "url": "https://github.com/skyelan1999/aide/issues/341",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 340,
+      "title": "Windows Release manual slot activation is ignored or hangs in host updater",
+      "url": "https://github.com/skyelan1999/aide/issues/340",
+      "status": "existing-fix-pending-platform-acceptance",
+      "evidence": "main 710d0f99，记录明确Windows实机验收待执行"
+    },
+    {
+      "number": 339,
+      "title": "[P3] Handle prototype-named cell IDs in anchored comments",
+      "url": "https://github.com/skyelan1999/aide/issues/339",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 338,
+      "title": "[P3] Preserve selected descendants of prototype-named cells in JSON export",
+      "url": "https://github.com/skyelan1999/aide/issues/338",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 337,
+      "title": "[P3] Use a prototype-safe set for CSV layout scoping",
+      "url": "https://github.com/skyelan1999/aide/issues/337",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 336,
+      "title": "[P3] Wait for an in-flight Org Chart layout load",
+      "url": "https://github.com/skyelan1999/aide/issues/336",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 335,
+      "title": "Windows Release launcher pins local directories to bundled workspace and overrides .env paths",
+      "url": "https://github.com/skyelan1999/aide/issues/335",
+      "status": "existing-fix-pending-platform-acceptance",
+      "evidence": "main 5054f934，记录明确Windows实机验收待执行"
+    },
+    {
+      "number": 334,
+      "title": "[P3] Finish file imports when FileReader fails",
+      "url": "https://github.com/skyelan1999/aide/issues/334",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 333,
+      "title": "[P3] Keep Mermaid generation results local",
+      "url": "https://github.com/skyelan1999/aide/issues/333",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 332,
+      "title": "[P3] Use a prototype-safe map for imported page links",
+      "url": "https://github.com/skyelan1999/aide/issues/332",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 331,
+      "title": "[P3] URL-encode imported page IDs in generated links",
+      "url": "https://github.com/skyelan1999/aide/issues/331",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 330,
+      "title": "[P3] Keep SVG export conversion counter local",
+      "url": "https://github.com/skyelan1999/aide/issues/330",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 329,
+      "title": "[P3] Preserve hidden tags for pages named __proto__",
+      "url": "https://github.com/skyelan1999/aide/issues/329",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 328,
+      "title": "[P2] Escape diagram background in HTML export",
+      "url": "https://github.com/skyelan1999/aide/issues/328",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 327,
+      "title": "[P3] Resolve custom actions for prototype-named cell IDs",
+      "url": "https://github.com/skyelan1999/aide/issues/327",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 326,
+      "title": "[P3] Avoid inherited object keys when matching diagram tags",
+      "url": "https://github.com/skyelan1999/aide/issues/326",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 325,
+      "title": "[P3] Preserve the focused line-end spacing input on refresh",
+      "url": "https://github.com/skyelan1999/aide/issues/325",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 324,
+      "title": "[P2] Preserve custom multi-color controls on refresh",
+      "url": "https://github.com/skyelan1999/aide/issues/324",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 323,
+      "title": "[P3] Reject non-positive imported page dimensions",
+      "url": "https://github.com/skyelan1999/aide/issues/323",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 322,
+      "title": "[P3] Keep PageSetupDialog preset detection local",
+      "url": "https://github.com/skyelan1999/aide/issues/322",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 321,
+      "title": "[P3] Handle malformed percent escapes in embedded PNG XML",
+      "url": "https://github.com/skyelan1999/aide/issues/321",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 320,
+      "title": "[P3] Keep mxEdgeHandler bend sizing variables local",
+      "url": "https://github.com/skyelan1999/aide/issues/320",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 319,
+      "title": "[P2] Reject self-loop connection instead of inserting a dangling edge",
+      "url": "https://github.com/skyelan1999/aide/issues/319",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 318,
+      "title": "[P3] Avoid partial edge insertion for malformed newEdgeStyle",
+      "url": "https://github.com/skyelan1999/aide/issues/318",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 317,
+      "title": "[P3] Remove the outline resize listener when destroying it",
+      "url": "https://github.com/skyelan1999/aide/issues/317",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 316,
+      "title": "[P3] Cancel the tap-and-hold timer when destroying a graph",
+      "url": "https://github.com/skyelan1999/aide/issues/316",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 315,
+      "title": "[P2] Respect swimlane direction when hit-testing its content",
+      "url": "https://github.com/skyelan1999/aide/issues/315",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 314,
+      "title": "[P3] Restore allowNegativeCoordinates when moveCells fails",
+      "url": "https://github.com/skyelan1999/aide/issues/314",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 313,
+      "title": "[P3] Restore updateEdgeParent when cellsAdded fails",
+      "url": "https://github.com/skyelan1999/aide/issues/313",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 312,
+      "title": "[P3] Fix undefined route pattern references in mxEdgeStyle.getRoutePattern",
+      "url": "https://github.com/skyelan1999/aide/issues/312",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 311,
+      "title": "Security: unescaped initialText in cell editor permits script execution",
+      "url": "https://github.com/skyelan1999/aide/issues/311",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 310,
+      "title": "[Bug] Print preview removes HTML labels because hint filter always returns false",
+      "url": "https://github.com/skyelan1999/aide/issues/310",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 309,
+      "title": "[Bug] Print preview leaves graph control renderer overridden",
+      "url": "https://github.com/skyelan1999/aide/issues/309",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 308,
+      "title": "[Bug] Swimlane layout crashes on cells with null geometry",
+      "url": "https://github.com/skyelan1999/aide/issues/308",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 307,
+      "title": "[Bug] mxHierarchicalLayout keeps stale roots across execute calls",
+      "url": "https://github.com/skyelan1999/aide/issues/307",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 306,
+      "title": "[Bug] Legacy radial tree childLayout throws when no usable root remains",
+      "url": "https://github.com/skyelan1999/aide/issues/306",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 305,
+      "title": "[Bug] Report ERROR_NOT_ALL_ASSIGNED from AdjustTokenPrivileges",
+      "url": "https://github.com/skyelan1999/aide/issues/305",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 304,
+      "title": "[Bug] Close temporary Winsock sockets with Closesocket",
+      "url": "https://github.com/skyelan1999/aide/issues/304",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 303,
+      "title": "[Bug] PSAPI working-set bit accessors always return false",
+      "url": "https://github.com/skyelan1999/aide/issues/303",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 302,
+      "title": "[P2] Preserve security descriptor errors when reading absent ACLs",
+      "url": "https://github.com/skyelan1999/aide/issues/302",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 301,
+      "title": "[P3] Propagate BSD extended attribute listing errors",
+      "url": "https://github.com/skyelan1999/aide/issues/301",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 300,
+      "title": "[P3] Return an error for empty NetBSD sysctl query results",
+      "url": "https://github.com/skyelan1999/aide/issues/300",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 299,
+      "title": "[P3] Return an error for empty socket control messages",
+      "url": "https://github.com/skyelan1999/aide/issues/299",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 298,
+      "title": "[P3] Quote the Docker volume path in mkall.sh",
+      "url": "https://github.com/skyelan1999/aide/issues/298",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 297,
+      "title": "[P3] Return an error for unmapped FreeBSD capability indexes",
+      "url": "https://github.com/skyelan1999/aide/issues/297",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 296,
+      "title": "[P2] Ignore EDX as a second Tee result on Linux/386",
+      "url": "https://github.com/skyelan1999/aide/issues/296",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 295,
+      "title": "[P3] Validate payload lengths before parsing Linux control messages",
+      "url": "https://github.com/skyelan1999/aide/issues/295",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 294,
+      "title": "[P3] Reject dedupe destination counts above uint16",
+      "url": "https://github.com/skyelan1999/aide/issues/294",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 293,
+      "title": "[P2] Return an error for missing NetBSD ARM64 sysctl nodes",
+      "url": "https://github.com/skyelan1999/aide/issues/293",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 292,
+      "title": "[P3] Do not infer ARM64 SM3 from the Windows LRCPC flag",
+      "url": "https://github.com/skyelan1999/aide/issues/292",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 291,
+      "title": "[P3] Highlight interpolation inside SCSS quoted strings",
+      "url": "https://github.com/skyelan1999/aide/issues/291",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 290,
+      "title": "[P3] Preserve nested Scala braces in string interpolation highlighting",
+      "url": "https://github.com/skyelan1999/aide/issues/290",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 289,
+      "title": "[P3] Support Swift extended delimiters with more than three hashes",
+      "url": "https://github.com/skyelan1999/aide/issues/289",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 288,
+      "title": "[P3] Track nested braces in Ruby string interpolation",
+      "url": "https://github.com/skyelan1999/aide/issues/288",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 287,
+      "title": "[P3] Preserve numeric highlighting after spaced R assignment",
+      "url": "https://github.com/skyelan1999/aide/issues/287",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 286,
+      "title": "[P3] Track nested braces in Perl string interpolation",
+      "url": "https://github.com/skyelan1999/aide/issues/286",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 285,
+      "title": "[P3] Highlight Groovy GString interpolation expressions",
+      "url": "https://github.com/skyelan1999/aide/issues/285",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 283,
+      "title": "[P3] Track nested braces in F# string interpolation",
+      "url": "https://github.com/skyelan1999/aide/issues/283",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 281,
+      "title": "[P3] Highlight base-36 digits in Erlang integer literals",
+      "url": "https://github.com/skyelan1999/aide/issues/281",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 280,
+      "title": "[P3] Track nested braces in Elixir interpolation expressions",
+      "url": "https://github.com/skyelan1999/aide/issues/280",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 279,
+      "title": "[P3] Highlight XML entity references with digits in their names",
+      "url": "https://github.com/skyelan1999/aide/issues/279",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 278,
+      "title": "[P3] Match Lua long-bracket delimiter levels",
+      "url": "https://github.com/skyelan1999/aide/issues/278",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 277,
+      "title": "[P3] Track nested function calls in Makefile highlighting",
+      "url": "https://github.com/skyelan1999/aide/issues/277",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 276,
+      "title": "[P3] Track nested braces in Dart string interpolation",
+      "url": "https://github.com/skyelan1999/aide/issues/276",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 275,
+      "title": "[P3] Match CMake bracket delimiters to their opening length",
+      "url": "https://github.com/skyelan1999/aide/issues/275",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 274,
+      "title": "[P3] Preserve Go parameter scope for nested function types",
+      "url": "https://github.com/skyelan1999/aide/issues/274",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 273,
+      "title": "[P3] Highlight GraphQL block strings with embedded quotes",
+      "url": "https://github.com/skyelan1999/aide/issues/273",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 272,
+      "title": "[P3] Track nested braces in C# interpolation expressions",
+      "url": "https://github.com/skyelan1999/aide/issues/272",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 271,
+      "title": "[P3] Keep quoted Vim comments in comment scope",
+      "url": "https://github.com/skyelan1999/aide/issues/271",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 270,
+      "title": "[P3] Highlight unquoted and nested Bash command substitutions",
+      "url": "https://github.com/skyelan1999/aide/issues/270",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 269,
+      "title": "[P3] Support Kotlin block comments nested more than once",
+      "url": "https://github.com/skyelan1999/aide/issues/269",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 268,
+      "title": "[P2] Prevent quadratic scans in JavaScript JSX tag detection",
+      "url": "https://github.com/skyelan1999/aide/issues/268",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 267,
+      "title": "GCP2 HexIcon maps distinct product choices to duplicate stencil IDs",
+      "url": "https://github.com/skyelan1999/aide/issues/267",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 266,
+      "title": "Cisco Safe generic appliance thumbnails keep resource icons at 50% opacity",
+      "url": "https://github.com/skyelan1999/aide/issues/266",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 265,
+      "title": "Bug AWS4 ProductIcon ignores opacity and transparent gradient styles",
+      "url": "https://github.com/skyelan1999/aide/issues/265",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 264,
+      "title": "[Security] Bound ZIP entry count in browser archive preview",
+      "url": "https://github.com/skyelan1999/aide/issues/264",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 263,
+      "title": "[Bug] Org chart single-column options select the opposite alignment",
+      "url": "https://github.com/skyelan1999/aide/issues/263",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 262,
+      "title": "[Bug] Radial tree layout reuses stale rows across executions",
+      "url": "https://github.com/skyelan1999/aide/issues/262",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 261,
+      "title": "[Performance] Avoid repeated Array.shift in median rank ordering",
+      "url": "https://github.com/skyelan1999/aide/issues/261",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 260,
+      "title": "[Performance] Avoid quadratic edge scans in hierarchical traversal",
+      "url": "https://github.com/skyelan1999/aide/issues/260",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 259,
+      "title": "[Performance] Avoid enumerating every path in swimlane rank setup",
+      "url": "https://github.com/skyelan1999/aide/issues/259",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 258,
+      "title": "[Bug] View XML export drops function-valued cell styles",
+      "url": "https://github.com/skyelan1999/aide/issues/258",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 257,
+      "title": "[Bug] Avoid leaking edge geometry into a global variable",
+      "url": "https://github.com/skyelan1999/aide/issues/257",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 256,
+      "title": "[Bug] Guard custom edge handles against zero-length segments",
+      "url": "https://github.com/skyelan1999/aide/issues/256",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 255,
+      "title": "[Bug] Preserve top-right corner style in Rect2 inner outline",
+      "url": "https://github.com/skyelan1999/aide/issues/255",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 254,
+      "title": "[Bug] Fix oversized diagram export fallback referencing undefined xml",
+      "url": "https://github.com/skyelan1999/aide/issues/254",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 253,
+      "title": "[Security] Bound decompressed XML size for PNG diagram imports",
+      "url": "https://github.com/skyelan1999/aide/issues/253",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 252,
+      "title": "[Security] Enforce SHA-256 checks for offline TTS model archives",
+      "url": "https://github.com/skyelan1999/aide/issues/252",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 251,
+      "title": "[Performance] Avoid quadratic work for many Markdown reference definitions",
+      "url": "https://github.com/skyelan1999/aide/issues/251",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 250,
+      "title": "[Performance] Bound Goldmark emphasis parsing for saved Markdown",
+      "url": "https://github.com/skyelan1999/aide/issues/250",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 249,
+      "title": "[Bug] Freehand outlines collapse at consecutive sharp turns",
+      "url": "https://github.com/skyelan1999/aide/issues/249",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 248,
+      "title": "[Security] Validate origin of embedded Draw.io messages",
+      "url": "https://github.com/skyelan1999/aide/issues/248",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 246,
+      "title": "[Bug] RoughJS dashed fill hangs when dashOffset and dashGap are both zero",
+      "url": "https://github.com/skyelan1999/aide/issues/246",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 245,
+      "title": "[Security] DOMPurify 3.4.15 in-place SVG sanitization may leave detached descendants active",
+      "url": "https://github.com/skyelan1999/aide/issues/245",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 244,
+      "title": "[Bug] DOCX preview styles are blocked by the default CSP",
+      "url": "https://github.com/skyelan1999/aide/issues/244",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 243,
+      "title": "[Bug] Validate DOCX symbol values before rendering them as HTML",
+      "url": "https://github.com/skyelan1999/aide/issues/243",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 242,
+      "title": "[Bug] Canvas renderer ignores gradient direction",
+      "url": "https://github.com/skyelan1999/aide/issues/242",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 241,
+      "title": "[Bug] Canvas renderer applies miter limit to lineJoin",
+      "url": "https://github.com/skyelan1999/aide/issues/241",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 240,
+      "title": "[Bug] Async custom libraries are indexed under the wrong library",
+      "url": "https://github.com/skyelan1999/aide/issues/240",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 239,
+      "title": "[Bug] Web Icons and Web Logos use misspelled Diigo and Friendfeed tags",
+      "url": "https://github.com/skyelan1999/aide/issues/239",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 238,
+      "title": "[Bug] Veeam palette search tags include unrelated categories",
+      "url": "https://github.com/skyelan1999/aide/issues/238",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 237,
+      "title": "[Bug] UML 2.5 palette contains misspelled labels and search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/237",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 236,
+      "title": "[Bug] SysML Rate example misspells distribution",
+      "url": "https://github.com/skyelan1999/aide/issues/236",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 235,
+      "title": "[Bug] Salesforce industry palette misspells Philanthropy",
+      "url": "https://github.com/skyelan1999/aide/issues/235",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 234,
+      "title": "[Security] DOCX preview accepts script-scheme hyperlinks",
+      "url": "https://github.com/skyelan1999/aide/issues/234",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 233,
+      "title": "[Bug] SAP palette shows misspelled labels and repeated legend text",
+      "url": "https://github.com/skyelan1999/aide/issues/233",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 232,
+      "title": "[Bug] Rack palette has reversed Aruba labels and incorrect search metadata",
+      "url": "https://github.com/skyelan1999/aide/issues/232",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 231,
+      "title": "[Bug] P&ID palette has misspelled and mismatched search metadata",
+      "url": "https://github.com/skyelan1999/aide/issues/231",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 230,
+      "title": "[Bug] Office palette has misspelled labels and unrelated search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/230",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 229,
+      "title": "[Bug] Network 2018 palette registers the same PC entry twice",
+      "url": "https://github.com/skyelan1999/aide/issues/229",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 228,
+      "title": "[Bug] Mockup alphanumeric sample omits W and vertical rulers use horizontal tags",
+      "url": "https://github.com/skyelan1999/aide/issues/228",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 227,
+      "title": "[Bug] MSCAE Azure palette contains mislabeled and duplicated entries",
+      "url": "https://github.com/skyelan1999/aide/issues/227",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 226,
+      "title": "[Bug] Kubernetes palette assigns unrelated resource search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/226",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 225,
+      "title": "[Bug] iOS7 palette assigns incorrect tablet and keyboard search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/225",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 224,
+      "title": "[Bug] iOS composite templates are missing from palette search",
+      "url": "https://github.com/skyelan1999/aide/issues/224",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 223,
+      "title": "[Bug] Infographic palette assigns unrelated stencil search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/223",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 222,
+      "title": "[Bug] IBM Cloud network palette assigns unrelated search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/222",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 221,
+      "title": "[Bug] IBM VPC Rules stencil has incorrect search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/221",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 220,
+      "title": "[Bug] GMDL disabled button variants are indexed as pressed",
+      "url": "https://github.com/skyelan1999/aide/issues/220",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 219,
+      "title": "[Bug] GCP expanded machine cards ignore the supplied storage count",
+      "url": "https://github.com/skyelan1999/aide/issues/219",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 218,
+      "title": "[Bug] GCP Zones Note template sets an invalid font color",
+      "url": "https://github.com/skyelan1999/aide/issues/218",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 217,
+      "title": "[Bug] GCP palette has incorrect labels and search terms",
+      "url": "https://github.com/skyelan1999/aide/issues/217",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 216,
+      "title": "[Bug] Fluid Power palette has mismatched ISO codes and spelling errors",
+      "url": "https://github.com/skyelan1999/aide/issues/216",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 215,
+      "title": "[Bug] Floorplan revolving door has left-door search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/215",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 214,
+      "title": "[Bug] Electrical palette misspells Fluorescent Lamp",
+      "url": "https://github.com/skyelan1999/aide/issues/214",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 213,
+      "title": "[Bug] Electrical palette search tags map unrelated symbols",
+      "url": "https://github.com/skyelan1999/aide/issues/213",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 212,
+      "title": "[Bug] Electrical palette labels a current source as a transformer and Protective Earth as Equipotential",
+      "url": "https://github.com/skyelan1999/aide/issues/212",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 211,
+      "title": "[Bug] Cumulus color palette misspells Energy Yellow",
+      "url": "https://github.com/skyelan1999/aide/issues/211",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 210,
+      "title": "[Bug] Cisco Safe Intrusion Prevention template uses the detection icon",
+      "url": "https://github.com/skyelan1999/aide/issues/210",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 209,
+      "title": "[Bug] Cisco19 Surveillance Camera has a misspelled fillColorStyles key",
+      "url": "https://github.com/skyelan1999/aide/issues/209",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 208,
+      "title": "[Bug] Cisco19 threat intelligence stencil is titled as Monitoring",
+      "url": "https://github.com/skyelan1999/aide/issues/208",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 207,
+      "title": "[Bug] Cisco19 wireless access point title is misspelled",
+      "url": "https://github.com/skyelan1999/aide/issues/207",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 206,
+      "title": "[Bug] Cabinet motor starter stencils are titled as circuit breakers",
+      "url": "https://github.com/skyelan1999/aide/issues/206",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 205,
+      "title": "[Bug] C4 diagram title templates store mismatched c4Type values",
+      "url": "https://github.com/skyelan1999/aide/issues/205",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 204,
+      "title": "[Bug] Bootstrap nested navigation repeats a sample item label",
+      "url": "https://github.com/skyelan1999/aide/issues/204",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 203,
+      "title": "[Bug] Bootstrap modal content template title is misspelled",
+      "url": "https://github.com/skyelan1999/aide/issues/203",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 202,
+      "title": "[Bug] Bootstrap horizontal list group misspells a sample label",
+      "url": "https://github.com/skyelan1999/aide/issues/202",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 201,
+      "title": "[Bug] Bootstrap checkbox input group title is missing a space",
+      "url": "https://github.com/skyelan1999/aide/issues/201",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 200,
+      "title": "[Bug] Bootstrap directional dropdown templates declare undersized bounds",
+      "url": "https://github.com/skyelan1999/aide/issues/200",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 199,
+      "title": "[Bug] Bootstrap card templates contain repeated misspellings in sample copy",
+      "url": "https://github.com/skyelan1999/aide/issues/199",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 198,
+      "title": "[Bug] BPMN Multiple Start gateway is indexed as multiple end",
+      "url": "https://github.com/skyelan1999/aide/issues/198",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 197,
+      "title": "[Bug] BPMN palette registers a blank call choreography template as bzzzzt",
+      "url": "https://github.com/skyelan1999/aide/issues/197",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 196,
+      "title": "[Bug] Azure2 App Space Component palette entry misspells its displayed name",
+      "url": "https://github.com/skyelan1999/aide/issues/196",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 195,
+      "title": "[Bug] Atlassian Checkbox (off) palette entry is indexed as checkbox on",
+      "url": "https://github.com/skyelan1999/aide/issues/195",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 194,
+      "title": "[Bug] Arrows2 Callout with Quad Arrow has a misspelled search synonym",
+      "url": "https://github.com/skyelan1999/aide/issues/194",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 193,
+      "title": "[Bug] ArchiMate 3.2 palette entries carry unrelated search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/193",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 192,
+      "title": "[Bug] ArchiMate palette includes misspelled and misassigned search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/192",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 191,
+      "title": "[Bug] Android Contact Badge Normal and Pressed entries use the Focused shape",
+      "url": "https://github.com/skyelan1999/aide/issues/191",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 190,
+      "title": "[Bug] Allied Telesis palette misspells Video Conference Terminal",
+      "url": "https://github.com/skyelan1999/aide/issues/190",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 189,
+      "title": "[Bug] Alibaba Cloud ACMS entry misspells Configuration Management",
+      "url": "https://github.com/skyelan1999/aide/issues/189",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 188,
+      "title": "[Bug] Active Directory palette entries include an unrelated active search tag",
+      "url": "https://github.com/skyelan1999/aide/issues/188",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 187,
+      "title": "[Bug] AWS18 Management Tools shows Patch Manager twice",
+      "url": "https://github.com/skyelan1999/aide/issues/187",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 186,
+      "title": "[Bug] AWS18 right-pointing arrows are labeled as left",
+      "url": "https://github.com/skyelan1999/aide/issues/186",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 185,
+      "title": "[Bug] AWS4 palette entries use unrelated search tags",
+      "url": "https://github.com/skyelan1999/aide/issues/185",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 184,
+      "title": "[Bug] AWS 3D directional arrows are indexed as northeast",
+      "url": "https://github.com/skyelan1999/aide/issues/184",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 183,
+      "title": "[Bug] AWS3 SDK palette reuses the Android stencil for other languages",
+      "url": "https://github.com/skyelan1999/aide/issues/183",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 182,
+      "title": "[Performance] Recompute of the full freehand stroke on every move",
+      "url": "https://github.com/skyelan1999/aide/issues/182",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 181,
+      "title": "[Bug] Bound animated GIF export frame count",
+      "url": "https://github.com/skyelan1999/aide/issues/181",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 180,
+      "title": "[Bug] Enforce Trello attachment limits using byte size",
+      "url": "https://github.com/skyelan1999/aide/issues/180",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 179,
+      "title": "[Bug] Handle BMP decode failures during VSDX import",
+      "url": "https://github.com/skyelan1999/aide/issues/179",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 178,
+      "title": "[Bug] Bound NURBS degree during VSDX edge import",
+      "url": "https://github.com/skyelan1999/aide/issues/178",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 177,
+      "title": "[Bug] Avoid quadratic parsing of VSDX PolylineTo formulas",
+      "url": "https://github.com/skyelan1999/aide/issues/177",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 176,
+      "title": "[Bug] Bound decompressed VSDX/VSSX size during import",
+      "url": "https://github.com/skyelan1999/aide/issues/176",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 175,
+      "title": "[P2] Map Lucidchart Alexa Voice Service blocks to the voice service stencil",
+      "url": "https://github.com/skyelan1999/aide/issues/175",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 174,
+      "title": "[P2] Map Lucidchart AppSync blocks to the AppSync stencil",
+      "url": "https://github.com/skyelan1999/aide/issues/174",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 173,
+      "title": "[P2] Map Lucidchart MySQL RDS blocks to the MySQL stencil",
+      "url": "https://github.com/skyelan1999/aide/issues/173",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 172,
+      "title": "[P2] Preserve plug valve type in Lucidchart imports",
+      "url": "https://github.com/skyelan1999/aide/issues/172",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 171,
+      "title": "[P2] Preserve NPN and PNP polarity when importing Lucidchart BJTs",
+      "url": "https://github.com/skyelan1999/aide/issues/171",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 170,
+      "title": "[P3] Fix Lucidchart Android refresh icon style mapping",
+      "url": "https://github.com/skyelan1999/aide/issues/170",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 169,
+      "title": "[P2] Apply message label styles to Lucidchart EI message cells",
+      "url": "https://github.com/skyelan1999/aide/issues/169",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 168,
+      "title": "[P2] Validate animation step entries before rendering",
+      "url": "https://github.com/skyelan1999/aide/issues/168",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 167,
+      "title": "[P2] Preserve null values in custom AI request templates",
+      "url": "https://github.com/skyelan1999/aide/issues/167",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 164,
+      "title": "[P2] Validate SFTP server replies before decoding",
+      "url": "https://github.com/skyelan1999/aide/issues/164",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 163,
+      "title": "[P2] Bound SFTP extended attribute counts before allocation",
+      "url": "https://github.com/skyelan1999/aide/issues/163",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 162,
+      "title": "[P3] Keep enhanced avatar asset hashes in sync after interpolation",
+      "url": "https://github.com/skyelan1999/aide/issues/162",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 160,
+      "title": "[P3] Bound OBJ face and edge counts before rendering the preview",
+      "url": "https://github.com/skyelan1999/aide/issues/160",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 159,
+      "title": "[P3] Keep the R08-04 fixture write inside the isolated test root",
+      "url": "https://github.com/skyelan1999/aide/issues/159",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 158,
+      "title": "[Bug] Require whole-value matches for research findings",
+      "url": "https://github.com/skyelan1999/aide/issues/158",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 157,
+      "title": "[Security] Enforce workflow file bindings during filesystem access",
+      "url": "https://github.com/skyelan1999/aide/issues/157",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 156,
+      "title": "[Security] Bound sample fan-out in voice-personality inference",
+      "url": "https://github.com/skyelan1999/aide/issues/156",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 155,
+      "title": "[Bug] Surface personality save and rollback persistence failures",
+      "url": "https://github.com/skyelan1999/aide/issues/155",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 153,
+      "title": "[Bug] Report cloned voice ID persistence failures",
+      "url": "https://github.com/skyelan1999/aide/issues/153",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 152,
+      "title": "[Bug] Report voice-sample deletion failures instead of success",
+      "url": "https://github.com/skyelan1999/aide/issues/152",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 151,
+      "title": "[Security] Block voice-sample decryption while the app is locked",
+      "url": "https://github.com/skyelan1999/aide/issues/151",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 150,
+      "title": "[Bug] Report voice-history encryption changes only after saving succeeds",
+      "url": "https://github.com/skyelan1999/aide/issues/150",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 149,
+      "title": "[Bug] Verify old password before rotating voice-history key",
+      "url": "https://github.com/skyelan1999/aide/issues/149",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 148,
+      "title": "[Bug] Roll back profile state when persistence fails",
+      "url": "https://github.com/skyelan1999/aide/issues/148",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 147,
+      "title": "[Bug] Bound workspace routing policy file reads",
+      "url": "https://github.com/skyelan1999/aide/issues/147",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 146,
+      "title": "[Bug] Task delivery can accept stale workspace files as new artifacts",
+      "url": "https://github.com/skyelan1999/aide/issues/146",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 145,
+      "title": "[Bug] Evict live output buffers when deleting sessions",
+      "url": "https://github.com/skyelan1999/aide/issues/145",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 144,
+      "title": "[Bug] Stencil fillalpha and strokealpha change the global alpha",
+      "url": "https://github.com/skyelan1999/aide/issues/144",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 143,
+      "title": "[Bug] Destroy the panning manager when destroying a graph",
+      "url": "https://github.com/skyelan1999/aide/issues/143",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 142,
+      "title": "[Bug] Remove open popup submenus when destroying a graph",
+      "url": "https://github.com/skyelan1999/aide/issues/142",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 141,
+      "title": "[Bug] Handle zero-radius SVG arcs as straight lines",
+      "url": "https://github.com/skyelan1999/aide/issues/141",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 140,
+      "title": "[Bug] Detect self-loops before cloning orthogonal router terminals",
+      "url": "https://github.com/skyelan1999/aide/issues/140",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 139,
+      "title": "[Bug] Keep rotation raster local to the vertex handler",
+      "url": "https://github.com/skyelan1999/aide/issues/139",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 138,
+      "title": "[Bug] Reset connection constraint markers when pointer leaves graph",
+      "url": "https://github.com/skyelan1999/aide/issues/138",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 137,
+      "title": "[Bug] Guard missing cell geometry when creating table column handles",
+      "url": "https://github.com/skyelan1999/aide/issues/137",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 135,
+      "title": "[Bug] Preserve custom action cell IDs when duplicating diagrams",
+      "url": "https://github.com/skyelan1999/aide/issues/135",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 134,
+      "title": "[Bug] Preserve table column indices when cells have no geometry",
+      "url": "https://github.com/skyelan1999/aide/issues/134",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 133,
+      "title": "[Bug] Bound quadratic line-jump work when loading large diagrams",
+      "url": "https://github.com/skyelan1999/aide/issues/133",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 132,
+      "title": "[Bug] Async child layouts stall for cells with inherited property IDs",
+      "url": "https://github.com/skyelan1999/aide/issues/132",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 131,
+      "title": "[Bug] Bound nested cell hierarchy during draw.io load",
+      "url": "https://github.com/skyelan1999/aide/issues/131",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 130,
+      "title": "[Bug] Bound XML nesting depth in draw.io preview",
+      "url": "https://github.com/skyelan1999/aide/issues/130",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 128,
+      "title": "[Bug] Bound decompressed draw.io diagram size in browser preview",
+      "url": "https://github.com/skyelan1999/aide/issues/128",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 127,
+      "title": "[Bug] Bound decompressed DOCX size in browser preview",
+      "url": "https://github.com/skyelan1999/aide/issues/127",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 126,
+      "title": "[Bug] Bound recursive DXF block expansion during SVG preview",
+      "url": "https://github.com/skyelan1999/aide/issues/126",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 125,
+      "title": "[P2] Require user verification for WebAuthn master authentication",
+      "url": "https://github.com/skyelan1999/aide/issues/125",
+      "status": "fixed-on-branch",
+      "evidence": "WebAuthn注册及断言要求UV；真实签名但缺UV的合成断言拒绝"
+    },
+    {
+      "number": 124,
+      "title": "[P2] Enforce WebAuthn signature-counter clone warnings",
+      "url": "https://github.com/skyelan1999/aide/issues/124",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 123,
+      "title": "[P2] Preserve queued prompts when steer admission is rejected",
+      "url": "https://github.com/skyelan1999/aide/issues/123",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 122,
+      "title": "[P3] Fix the invalid hero caption font shorthand",
+      "url": "https://github.com/skyelan1999/aide/issues/122",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 121,
+      "title": "[P2] Isolate and clean up data created by UI acceptance scripts",
+      "url": "https://github.com/skyelan1999/aide/issues/121",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 120,
+      "title": "[P2] Report persistence failures during factory reset",
+      "url": "https://github.com/skyelan1999/aide/issues/120",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 119,
+      "title": "[P3] Authenticate proof writes in the local Mermaid CSP fixture server",
+      "url": "https://github.com/skyelan1999/aide/issues/119",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 118,
+      "title": "[P3] Prevent repeated x3 interpolation from mutating already interpolated frames",
+      "url": "https://github.com/skyelan1999/aide/issues/118",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 117,
+      "title": "[P3] Constrain avatar packer IDs and source paths before filesystem writes",
+      "url": "https://github.com/skyelan1999/aide/issues/117",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 116,
+      "title": "[P3] Preserve the existing wheelhouse until replacement download succeeds",
+      "url": "https://github.com/skyelan1999/aide/issues/116",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 115,
+      "title": "[P3] Rate-limit master-password verification and vault unlock attempts",
+      "url": "https://github.com/skyelan1999/aide/issues/115",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 114,
+      "title": "[P2] Reset rendered starmap state when workspace identity changes mid-load",
+      "url": "https://github.com/skyelan1999/aide/issues/114",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 113,
+      "title": "[P2] Require assistant unlock before compacting private history",
+      "url": "https://github.com/skyelan1999/aide/issues/113",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 112,
+      "title": "[P3] Normalize CRLF before detecting live Markdown fences",
+      "url": "https://github.com/skyelan1999/aide/issues/112",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 111,
+      "title": "[P2] Report failed secret writes during config import",
+      "url": "https://github.com/skyelan1999/aide/issues/111",
+      "status": "fixed-on-branch",
+      "evidence": "敏感备份导入传播文件写入/保险库错误，保险库失败恢复内存条目"
+    },
+    {
+      "number": 110,
+      "title": "[P3] Store actual duration for browser-recorded voice samples",
+      "url": "https://github.com/skyelan1999/aide/issues/110",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 109,
+      "title": "[P3] Show due reminder popup before saving popup-seen markers",
+      "url": "https://github.com/skyelan1999/aide/issues/109",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 108,
+      "title": "[P2] Prevent composer submissions from approving shell commands",
+      "url": "https://github.com/skyelan1999/aide/issues/108",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 107,
+      "title": "[P2] Report token usage snapshot write failures",
+      "url": "https://github.com/skyelan1999/aide/issues/107",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 106,
+      "title": "[P2] Apply the assistant unlock gate before voice fallback",
+      "url": "https://github.com/skyelan1999/aide/issues/106",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 105,
+      "title": "[P2] Validate persisted session IDs before writing session files",
+      "url": "https://github.com/skyelan1999/aide/issues/105",
+      "status": "fixed-on-branch",
+      "evidence": "启动/保存/SessionPath校验ASCII ID，保留无效输入文件不加载"
+    },
+    {
+      "number": 104,
+      "title": "[P2] Preserve upload targets on Windows during concurrent publish",
+      "url": "https://github.com/skyelan1999/aide/issues/104",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 103,
+      "title": "[P2] Avoid blocking while writing a large SSH passphrase",
+      "url": "https://github.com/skyelan1999/aide/issues/103",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 102,
+      "title": "[P2] Avoid deleting an unrelated aide-rel-test container",
+      "url": "https://github.com/skyelan1999/aide/issues/102",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 101,
+      "title": "[P2] Reject personality evolution results based on stale snapshots",
+      "url": "https://github.com/skyelan1999/aide/issues/101",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 100,
+      "title": "[P2] Refresh cached ciphertext after encrypted history changes",
+      "url": "https://github.com/skyelan1999/aide/issues/100",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 99,
+      "title": "[P2] Bound clone creation sample count and decoded audio size",
+      "url": "https://github.com/skyelan1999/aide/issues/99",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 98,
+      "title": "[P2] Serialize voice sample index mutations",
+      "url": "https://github.com/skyelan1999/aide/issues/98",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 97,
+      "title": "[P2] Cap total reassembled Edge TTS WebSocket message size",
+      "url": "https://github.com/skyelan1999/aide/issues/97",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 96,
+      "title": "[P3] Reject fractional workflow template revisions",
+      "url": "https://github.com/skyelan1999/aide/issues/96",
+      "status": "fixed-on-branch",
+      "evidence": "模板revision必须为数字且精确等于当前整数版本"
+    },
+    {
+      "number": 95,
+      "title": "[P2] Bound accumulated provider stream output",
+      "url": "https://github.com/skyelan1999/aide/issues/95",
+      "status": "fixed-on-branch",
+      "evidence": "流式响应在处理每行前累计8MiB数据预算，覆盖正文/工具/推理与元数据"
+    },
+    {
+      "number": 94,
+      "title": "[P2] Fail migrations when rollback journal cannot be persisted",
+      "url": "https://github.com/skyelan1999/aide/issues/94",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 93,
+      "title": "[P2] Revoke native editor leases when sandbox becomes read-only",
+      "url": "https://github.com/skyelan1999/aide/issues/93",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 92,
+      "title": "[P2] Reclaim obsolete pinned SSH control socket links",
+      "url": "https://github.com/skyelan1999/aide/issues/92",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 91,
+      "title": "[P2] Keep plugin result text untrusted in persistent experience prompts",
+      "url": "https://github.com/skyelan1999/aide/issues/91",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 90,
+      "title": "[P2] Apply protected-path exclusions to explicitly selected snapshots",
+      "url": "https://github.com/skyelan1999/aide/issues/90",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 89,
+      "title": "[P2] Revalidate cached package manifest against catalog metadata",
+      "url": "https://github.com/skyelan1999/aide/issues/89",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 88,
+      "title": "[P2] Create workbench bridges for declared host capabilities",
+      "url": "https://github.com/skyelan1999/aide/issues/88",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 87,
+      "title": "[P2] Require a specific project reference before returning briefing messages",
+      "url": "https://github.com/skyelan1999/aide/issues/87",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 86,
+      "title": "[P2] Bound daemon event retention by total payload bytes",
+      "url": "https://github.com/skyelan1999/aide/issues/86",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 85,
+      "title": "[P2] Revalidate the lock generation before mutating message state",
+      "url": "https://github.com/skyelan1999/aide/issues/85",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 84,
+      "title": "[P2] Preserve original byte offsets for Windows mount paths",
+      "url": "https://github.com/skyelan1999/aide/issues/84",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 83,
+      "title": "[P2] Bound sidecar comment reply text before persistence",
+      "url": "https://github.com/skyelan1999/aide/issues/83",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 82,
+      "title": "[P2] In-flight SSH tasks can access the newly selected workspace",
+      "url": "https://github.com/skyelan1999/aide/issues/82",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 81,
+      "title": "[P2] Integrity status reports ok when directory repair fails",
+      "url": "https://github.com/skyelan1999/aide/issues/81",
+      "status": "fixed-on-branch",
+      "evidence": "目录修复失败不能报告健康，成功修复更新目录检查状态"
+    },
+    {
+      "number": 80,
+      "title": "Personality API accepts unbounded prompts and injects them into every system message",
+      "url": "https://github.com/skyelan1999/aide/issues/80",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 79,
+      "title": "SFTP reads download unbounded remote files before enforcing size limits",
+      "url": "https://github.com/skyelan1999/aide/issues/79",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 78,
+      "title": "Range downloads can mix file versions when metadata ETags collide",
+      "url": "https://github.com/skyelan1999/aide/issues/78",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 77,
+      "title": "Legacy Office parsing paths can exhaust memory on unbounded documents",
+      "url": "https://github.com/skyelan1999/aide/issues/77",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 76,
+      "title": "External source responses are captured without a size limit",
+      "url": "https://github.com/skyelan1999/aide/issues/76",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 75,
+      "title": "Decrypted source credential buffer is not zeroed after use",
+      "url": "https://github.com/skyelan1999/aide/issues/75",
+      "status": "fixed-on-branch",
+      "evidence": "来源凭据解密缓冲区在所有返回路径尽力清零；不声称所有字符串均擦除"
+    },
+    {
+      "number": 74,
+      "title": "SSH workspace paths can inject SFTP batch commands via newlines",
+      "url": "https://github.com/skyelan1999/aide/issues/74",
+      "status": "fixed-on-branch",
+      "evidence": "SSH Workspace.Path存储前拒绝NUL/CR/LF"
+    },
+    {
+      "number": 73,
+      "title": "Debug run endpoints expose unredacted tool and model content",
+      "url": "https://github.com/skyelan1999/aide/issues/73",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 72,
+      "title": "Config export accepts unbounded request bodies",
+      "url": "https://github.com/skyelan1999/aide/issues/72",
+      "status": "fixed-on-branch",
+      "evidence": "配置导出有界解码并拒绝损坏/多对象JSON，保留空请求兼容"
+    },
+    {
+      "number": 71,
+      "title": "Recursive transfers build an unbounded in-memory manifest",
+      "url": "https://github.com/skyelan1999/aide/issues/71",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 70,
+      "title": "SQLite viewer accepts negative limits and materializes the full table",
+      "url": "https://github.com/skyelan1999/aide/issues/70",
+      "status": "fixed-on-branch",
+      "evidence": "SQLite limit限定1..1000，offset非负整数，启动Python前拒绝异常参数"
+    },
+    {
+      "number": 69,
+      "title": "Archive extraction accepts file/directory path conflicts and leaks staging trees",
+      "url": "https://github.com/skyelan1999/aide/issues/69",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 68,
+      "title": "Headless browser allowlist does not restrict WebSocket connections",
+      "url": "https://github.com/skyelan1999/aide/issues/68",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 67,
+      "title": "Model API key settings report success when vault persistence fails",
+      "url": "https://github.com/skyelan1999/aide/issues/67",
+      "status": "fixed-on-branch",
+      "evidence": "模型key保存/删除落盘失败返回错误，恢复原内存条目"
+    },
+    {
+      "number": 66,
+      "title": "Completed file transfers permanently consume the 128-transfer capacity",
+      "url": "https://github.com/skyelan1999/aide/issues/66",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 65,
+      "title": "Plugin upgrade downgrade guard accepts older prereleases with the same numeric version",
+      "url": "https://github.com/skyelan1999/aide/issues/65",
+      "status": "fixed-on-branch",
+      "evidence": "复用市场数字/预发布版本比较，忽略build metadata"
+    },
+    {
+      "number": 64,
+      "title": "File downloads can produce duplicate ZIP entry names for same-basename selections",
+      "url": "https://github.com/skyelan1999/aide/issues/64",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 63,
+      "title": "Project briefing sorts RFC3339 timestamps lexically across time zones",
+      "url": "https://github.com/skyelan1999/aide/issues/63",
+      "status": "duplicate-closed",
+      "evidence": "与#62标题正文完全相同，已评论并关闭，保留#62"
+    },
+    {
+      "number": 62,
+      "title": "Project briefing sorts RFC3339 timestamps lexically across time zones",
+      "url": "https://github.com/skyelan1999/aide/issues/62",
+      "status": "fixed-on-branch",
+      "evidence": "按解析后的时间点排序，先排序再截断，保留原始时间展示"
+    },
+    {
+      "number": 57,
+      "title": "Make assistant voice calls conversational instead of narration",
+      "url": "https://github.com/skyelan1999/aide/issues/57",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 48,
+      "title": "Local-root pending timeout assertion is sensitive to the deadline start boundary",
+      "url": "https://github.com/skyelan1999/aide/issues/48",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    },
+    {
+      "number": 28,
+      "title": "CI: full Go snapshot deadline expires after all server shards pass",
+      "url": "https://github.com/skyelan1999/aide/issues/28",
+      "status": "pending-review",
+      "evidence": "尚未逐条验证，不作不合理判断"
+    }
+  ]
+}

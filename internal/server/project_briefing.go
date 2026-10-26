@@ -11,6 +11,7 @@ import (
 )
 
 type projectBriefMessage struct {
+	instant   time.Time
 	Day       string `json:"day"`
 	At        string `json:"at"`
 	Source    string `json:"source"`
@@ -105,12 +106,12 @@ func (a *App) projectMessagesLocked(name, pid, file string, start, end time.Time
 			if err != nil || at.Before(start) || !at.Before(end) {
 				continue
 			}
-			rows = append(rows, projectBriefMessage{Day: at.In(start.Location()).Format("2006-01-02"), At: atText, Source: source, SessionID: s.ID, RunID: run.ID, Role: message.Role, Content: message.Content, Match: matches[run.ID]})
+			rows = append(rows, projectBriefMessage{instant: at, Day: at.In(start.Location()).Format("2006-01-02"), At: atText, Source: source, SessionID: s.ID, RunID: run.ID, Role: message.Role, Content: message.Content, Match: matches[run.ID]})
 		}
 	}
 	sort.SliceStable(rows, func(i, j int) bool {
-		if rows[i].At != rows[j].At {
-			return rows[i].At > rows[j].At
+		if !rows[i].instant.Equal(rows[j].instant) {
+			return rows[i].instant.After(rows[j].instant)
 		}
 		if rows[i].SessionID != rows[j].SessionID {
 			return rows[i].SessionID < rows[j].SessionID

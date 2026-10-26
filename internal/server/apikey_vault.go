@@ -265,28 +265,47 @@ func (a *App) migratePendingLegacyAPIKeyLocked() {
 // storeModelAPIKeyPlaintextLocked 把一个用户新录入的明文 key 收敛进 vault。
 // vault 已解锁：直接加密入库；未解锁：暂存待解锁后迁移。无论哪条路径，settings.json 都不留明文。
 // 调用方持有 a.mu。
-func (a *App) storeModelAPIKeyPlaintextLocked(plain string) {
+func (a *App) storeModelAPIKeyPlaintextLocked(plain string) error {
 	plain = strings.TrimSpace(plain)
 	if plain == "" {
-		return
+		return nil
 	}
-	if a.vault != nil && a.vault.Unlocked() {
-		if err := a.vault.Put(VaultIDModelAPIKey, VaultTypeModelAPIKey, "模型 API Key", []byte(plain), ""); err == nil {
-			_ = a.vault.Save()
-			return
+	if a.vault == nil || !a.vault.Unlocked() {
+		a.pendingLegacyAPIKey = plain
+		return nil
+	}
+	previous, existed := a.vault.entries[VaultIDModelAPIKey]
+	if err := a.vault.Put(VaultIDModelAPIKey, VaultTypeModelAPIKey, "模型 API Key", []byte(plain), ""); err != nil {
+		return err
+	}
+	if err := a.vault.Save(); err != nil {
+		if existed {
+			a.vault.entries[VaultIDModelAPIKey] = previous
+		} else {
+			a.vault.Delete(VaultIDModelAPIKey)
 		}
+		return err
 	}
-	a.pendingLegacyAPIKey = plain
+	a.pendingLegacyAPIKey = ""
+	return nil
 }
 
-// clearModelAPIKeyLocked 删除 vault 中的模型 key（用户显式 clearKey）。调用方持有 a.mu。
-func (a *App) clearModelAPIKeyLocked() {
-	a.pendingLegacyAPIKey = ""
+// Failed durable deletion must retain the usable in-memory credential.
+func (a *App) clearModelAPIKeyLocked() error {
 	if a.vault == nil {
-		return
+		a.pendingLegacyAPIKey = ""
+		return nil
 	}
+	previous, existed := a.vault.entries[VaultIDModelAPIKey]
 	a.vault.Delete(VaultIDModelAPIKey)
-	_ = a.vault.Save()
+	if err := a.vault.Save(); err != nil {
+		if existed {
+			a.vault.entries[VaultIDModelAPIKey] = previous
+		}
+		return err
+	}
+	a.pendingLegacyAPIKey = ""
+	return nil
 }
 
 // shredFile 尽力原地覆写文件为等长随机字节（best-effort 擦除）。

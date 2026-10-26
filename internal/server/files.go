@@ -1992,6 +1992,14 @@ func (a *App) sqliteQueryData(w http.ResponseWriter, r *http.Request) {
 	if offset == "" {
 		offset = "0"
 	}
+	pageSize, limitErr := strconv.Atoi(limit)
+	pageOffset, offsetErr := strconv.ParseInt(offset, 10, 64)
+	if limitErr != nil || pageSize < 1 || pageSize > 1000 || offsetErr != nil || pageOffset < 0 {
+		fail(w, http.StatusBadRequest, errors.New("invalid sqlite pagination: limit must be 1..1000 and offset a non-negative integer"))
+		return
+	}
+	limit = strconv.Itoa(pageSize)
+	offset = strconv.FormatInt(pageOffset, 10)
 	tmpPath, err := a.resolveSqlitePath(r)
 	if err != nil {
 		fail(w, 400, err)

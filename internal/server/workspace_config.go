@@ -543,6 +543,12 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("连接方式只支持 local 或 ssh"))
 		return
 	}
+	if in.Workspace.Mode == "ssh" {
+		if err := validateWorkspaceRemotePath(in.Workspace.Path); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	}
 	if in.Workspace.Port == 0 {
 		in.Workspace.Port = 22
 	}

@@ -204,9 +204,24 @@ func TLSCertPath(data string) string { return filepath.Join(CertsDir(data), Cert
 // TLSKeyPath TLS 私钥：certs/key.pem。
 func TLSKeyPath(data string) string { return filepath.Join(CertsDir(data), KeyFileName) }
 
-// SessionPath 会话文件：sessions/<bucket>/session-<id>.json。
-// bucket ∈ "active" | "archived" | "assistant"；非法 bucket 回退 active。
+// Session IDs are generated ASCII identifiers, never filesystem paths.
+func validSessionID(id string) bool {
+	if len(id) == 0 || len(id) > 256 {
+		return false
+	}
+	for _, r := range id {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
+}
+
+// SessionPath returns an empty path for invalid IDs; invalid buckets default to active.
 func SessionPath(data, id, bucket string) string {
+	if !validSessionID(id) {
+		return ""
+	}
 	var dir string
 	switch bucket {
 	case "archived":
