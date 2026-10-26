@@ -5204,6 +5204,11 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
+	if sess.Kind == assistantSessionKind && !a.isAssistantUnlocked(sess.ID) {
+		a.mu.Unlock()
+		fail(w, 403, errors.New("请先解锁小秘会话"))
+		return
+	}
 	if a.settings.Model == "" {
 		a.mu.Unlock()
 		fail(w, 400, errors.New("请先配置模型"))
@@ -5262,6 +5267,11 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "folding", BeforeTokens: beforeTokens, Folded: split})
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if sess.Kind == assistantSessionKind && !a.isAssistantUnlocked(sess.ID) {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "小秘会话已锁定，压缩结果未保存"}, UpdatedAt: time.Now()}
+		fail(w, 403, errors.New("请先解锁小秘会话"))
+		return
+	}
 	// 提交校验：消息前缀必须仍与快照一致（未被并发修改）
 	if len(sess.Messages) != baseLen {
 		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话已被修改，压缩取消；原会话内容已保留"}, UpdatedAt: time.Now()}
