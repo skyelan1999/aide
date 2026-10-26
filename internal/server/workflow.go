@@ -5590,6 +5590,10 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 // 先订阅、后复查任务状态：任务在“检查状态”与“订阅”之间结束时，订阅者仍能通过
 // channel close 或复查得到终态，不会永久挂起；订阅时已结束的任务立即回发 status+done 并关闭。
 func (a *App) runEvents(w http.ResponseWriter, r *http.Request) {
+	a.serveRunEvents(w, r, false)
+}
+
+func (a *App) serveRunEvents(w http.ResponseWriter, r *http.Request, diagnostic bool) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		fail(w, 500, errors.New("streaming unsupported"))
@@ -5620,6 +5624,13 @@ func (a *App) runEvents(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 
 	writeEvent := func(ev streamEvent) {
+		if diagnostic {
+			var allowed bool
+			ev, allowed = debugStreamMetadata(ev)
+			if !allowed {
+				return
+			}
+		}
 		body, _ := json.Marshal(ev)
 		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", ev.Event, body)
 		flusher.Flush()

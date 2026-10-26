@@ -1676,7 +1676,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/debug/overview", a.debugOverview)
 	mux.HandleFunc("GET /api/debug/sessions", a.debugSessions)
 	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}", a.debugRunDetail)
-	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}/events", a.runEvents)
+	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}/events", a.debugRunEvents)
 	mux.HandleFunc("GET /api/debug/errors", a.debugErrors)
 	mux.HandleFunc("GET /api/debug/stats", a.tokenStatsHandler)
 	mux.HandleFunc("POST /api/debug/actions/ping-provider", a.debugPingProvider)
