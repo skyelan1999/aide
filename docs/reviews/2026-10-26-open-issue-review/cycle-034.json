@@ -1,0 +1,72 @@
+{
+  "cycle": 34,
+  "baseline": "20d7003907f17b7718553c5da6da1044ade6291a",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    156
+  ],
+  "commits": {
+    "156": "4bb4bfefbc96b7040ad43c9b1a4901f25f31ba67"
+  },
+  "cumulativeProductFixes": 89,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 90,
+  "original272RemainingFollowup": 194,
+  "red": [
+    {
+      "issue": 156,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue156' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 14.223,
+      "observed": "count17重复ID、aggregate36MiB、oversized、corrupt、invalid-id均200且各调模型一次；两个重复ID被计为两个样本；100000rune转写被完整计入特征后才截取。32MiB/16项合法边界本身未失败。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle34-156-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue156|^TestIssue151|^TestIssue152|^TestIssue153|^TestIssue155|^TestVoicePersonality|^TestVoiceSample|^TestVoiceClone|^TestIssue98|^TestIssue99' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 71.853,
+      "scope": "真实合成密文：拒绝数量/总量/单项超限与损坏且模型零调用；未知ID404/非法ID400/非普通文件400；去重只计一次；16项及恰好32MiB可用；100000rune转写在特征前截取、模型片段800rune；排队取消409无模型、排队锁屏新增infer403；既有样本删除、克隆持久化、性格保存/队列/预算回归。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle34-final-race.log"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T232750398414Z.log",
+      "fingerprint": "d44c384f043b37951e3b4c32935d78cf445582c53cb674f19156502fa716d12c"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "428Markdown/1466links"
+    }
+  ],
+  "notes": [
+    "声音推断先限制请求16项并规范/去重ID，在profile队列内复核锁屏与索引，普通密文预检每项15MiB/总32MiB，再复核解密累计量；损坏/超限不调模型。特征前每份转写取800rune，模型转写拼接时累计800rune，不先构造完整字符串/rune数组；支持取消排队。",
+    "输入列表在去重前限制16项；合法重复项合并，未知选项不再静默忽略。全部选中文件在任何解密前完成普通文件/实际大小预检，不信任index.Bytes；解密后累计实际音频复核，解密失败不再被computeAcousticFeatures忽略。",
+    "特征的转写字符数基于每项最多800Unicode字符片段，长转写的语速估计因此与原全文不同；模型转写总计最多800字符含分隔符。前缀扫描不为整份存储文本分配rune数组，汇总在写入Builder前截取。",
+    "准备阶段与profile写队列互斥，排队后锁屏复核、取消检查及模型前复核；准备完成释放队列再调模型。不能撤回已发出的模型请求。",
+    "这是单次所选输入与解密预算，不是样本索引存储配额、索引解析总量上限或所有并发请求的总内存上限。私有样本目录的外部并发写入不在队列协调范围；实际字节复核不等同于防御恶意文件替换的原子快照。",
+    "unknown-id/special-file/排队取消是首轮RED后补充的GREEN用例，不声称原RED日志已含这些新增断言。既有#151队列用例新增infer，未计额外issue修复。",
+    "完整start.command工作台、Windows/macOS、真实录音/设备/付费模型验收NOT_RUN。本轮无UI修改、无常驻测试服务；只push分支、不合并main/发行/部署，合理issue保持open。",
+    "下一项#157工作流绑定检查/文件访问竞态，随后#158研究值边界；最新正文已读，尚未完成它们的复现或修复。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/security/voice-cloning.md": "7ebf8b52b9c4a521a92b52107741f7d350136b70f2dbfaacc6278d8653820be1",
+    "internal/server/voice_inference_bounds_test.go": "f4af0ac5d83e421c7ae07385d21d24fcf8f5576ffbdcb417492b3d19d307ee4a",
+    "internal/server/voice_personality.go": "be01b65fc58be2e14e257da52abed04de2fa0d36f9f7605b3d6f07775afac21c",
+    "internal/server/voice_sample_boundary_test.go": "8b77a23750b07028217fe3c43d80c354ad6d0ad714d394a4cc3769197274fffd"
+  }
+}

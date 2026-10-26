@@ -63,14 +63,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第33轮修复#155；累计88项产品issue在分支覆盖、1项既有测试修正（#150沿用既有修复并补验）。",
+      "summary": "第34轮修复#156；累计89项产品issue在分支覆盖、1项既有测试修正（#150沿用既有修复并补验）。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "性格持久化/并发/恢复出厂race68.357s、触发正向race3.113s、vet、quick通过；双文件补偿非跨文件事务，崩溃/补偿失败注入未验收。",
+      "summary": "推断输入预算、取消/锁屏与声音/性格关联race71.853s、vet、quick通过；完整工作台/跨平台/真实模型未验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -103,7 +103,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-030.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-031.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-032.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-033.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-033.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-034.json"
       ]
     },
     "documentation": {
@@ -127,16 +128,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第33轮#155已push并评论；累计89项分支覆盖，原272项剩195跟进。第34轮从#156开始，随后#157/#158；声音推断调用链已读，准备有界样本/转写回归。",
+  "handoff": "第34轮#156已验证，待push并评论；累计90项分支覆盖，原272项剩194跟进。下一项#157，随后#158；正文已读，绑定调用链调查中。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "3796ae10dd784c7fbd5ad9fe614adff5a3e18e3b",
-    "pushed": true,
+    "commit": "4bb4bfefbc96b7040ad43c9b1a4901f25f31ba67",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第33轮#155已push并评论；合理问题保持open等待main合并验收。",
+  "issue_comments": "第34轮待push后评论；合理问题保持open等待main合并验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -165,22 +166,21 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 34,
+    "nextCycle": 35,
     "lastCompletedBatch": {
-      "cycle": 33,
+      "cycle": 34,
       "issues": [
-        155
+        156
       ],
-      "cumulativeFixed": 89,
-      "cumulativeProductFixed": 88,
+      "cumulativeFixed": 90,
+      "cumulativeProductFixed": 89,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 195,
-      "verification": "PASS race68.357s,trigger race3.113s,vet,quick; no cross-file crash-atomic guarantee; workbench/cross-platform NOT_RUN"
+      "remainingFollowupTargets": 194,
+      "verification": "PASS race71.853s,vet,quick; workbench/cross-platform/real provider NOT_RUN"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      156,
       157,
       158
     ],
@@ -193,11 +193,9 @@
       "cycle": 34,
       "status": "in_progress",
       "candidates": [
-        156,
-        157,
-        158
+        156
       ],
-      "phase": "latest-bodies-read-preparing-inference-fanout-regression"
+      "phase": "validated-awaiting-push-and-comment"
     }
   },
   "orderedReview": {

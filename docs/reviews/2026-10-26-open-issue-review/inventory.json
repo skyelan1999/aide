@@ -1760,10 +1760,13 @@
       "number": 156,
       "title": "[Security] Bound sample fan-out in voice-personality inference",
       "url": "https://github.com/skyelan1999/aide/issues/156",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "voicePersonalityInfer保留重复SampleIDs，逐项解密；transcript先全部拼接后截800runes，1MiB请求上限不能约束音频处理预算。",
+      "status": "fixed-on-branch",
+      "evidence": "声音推断先限制请求16项并规范/去重ID，在profile队列内复核锁屏与索引，普通密文预检每项15MiB/总32MiB，再复核解密累计量；损坏/超限不调模型。特征前每份转写取800rune，模型转写拼接时累计800rune，不先构造完整字符串/rune数组；支持取消排队。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "voicePersonalityInfer保留重复SampleIDs，逐项解密；transcript先全部拼接后截800runes，1MiB请求上限不能约束音频处理预算。",
+      "repairCommit": "4bb4bfefbc96b7040ad43c9b1a4901f25f31ba67",
+      "repairEvidence": "cycle-034.json"
     },
     {
       "number": 155,
@@ -2820,7 +2823,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 195,
+    "remainingFollowupTargets": 194,
     "followupRepairs": [
       48,
       64,
@@ -2895,7 +2898,8 @@
       151,
       152,
       153,
-      155
+      155,
+      156
     ]
   }
 }
