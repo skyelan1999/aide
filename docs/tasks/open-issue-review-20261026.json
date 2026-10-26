@@ -64,5 +64,13 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "首批13项修复和验收完成，#63重复关闭；#335/#340保留平台验收；其余273项仍待审查。仅推送专用分支，未合并main。"
+  "handoff": "首批修复已push ae48fa7e，15条证据评论完成；未合并main或发行。13项修复、#63重复关闭、#335/#340待平台验收，其余273项仍待逐项审查。",
+  "source_delivery": {
+    "branch": "codex/open-issue-review-20261026",
+    "commit": "ae48fa7e",
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false
+  },
+  "issue_comments": "13项修复证据和2项已有修复/环境受限说明已评论成功；#63重复已关闭。"
 }
