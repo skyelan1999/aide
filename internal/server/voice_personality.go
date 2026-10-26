@@ -279,17 +279,15 @@ func (a *App) voicePersonalityAdopt(w http.ResponseWriter, r *http.Request) {
 	// 旧版入回滚栈
 	st := a.personalityStateLocked(id)
 	st.History = appendHistory(st.History, strings.TrimSpace(cur.Prompt))
-	if a.settings.Personalities == nil {
-		a.settings.Personalities = map[string]Personality{}
-	}
 	cur.Prompt = prompt
 	cur.Enabled = true
 	cur.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	a.settings.Personalities[id] = cur
-	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked(id)
-	a.persistPersonalityStateLocked()
+	err := a.commitPersonalityLocked(id, &cur, &st)
 	a.mu.Unlock()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
 	jsonOut(w, 200, map[string]any{"adopted": true, "updatedAt": cur.UpdatedAt, "evolutions": cur.Evolutions})
 }
 

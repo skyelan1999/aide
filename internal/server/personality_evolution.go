@@ -95,11 +95,6 @@ func (a *App) loadPersonalityState() {
 	}
 }
 
-// persistPersonalityStateLocked 原子写回状态文件。调用方需持 a.mu。
-func (a *App) persistPersonalityStateLocked() error {
-	return atomicJSON(PersonalityStatePath(a.dataPath), &a.personalityState)
-}
-
 // personalityStateLocked 读取某人格状态（无记录返回零值）。调用方需持 a.mu。
 func (a *App) personalityStateLocked(id string) personalityStateEntry {
 	if e, ok := a.personalityState.Entries[id]; ok {
@@ -133,8 +128,10 @@ func (a *App) onPersonalityInteractLocked(id string) (fire bool, trigger string)
 		trigger = "time_elapsed"
 		fire = true
 	}
-	a.personalityState.Entries[id] = st
-	a.persistPersonalityStateLocked()
+	if err := a.commitPersonalityStateLocked(id, st); err != nil {
+		log.Printf("personality-interact[%s]: 保存触发计数失败: %v", id, err)
+		return false, ""
+	}
 	return fire, trigger
 }
 
@@ -223,7 +220,7 @@ func appendHistory(hist []string, old string) []string {
 	if old == "" {
 		return hist
 	}
-	hist = append(hist, old)
+	hist = append(append([]string(nil), hist...), old)
 	if len(hist) > personalityHistoryLimit {
 		hist = hist[len(hist)-personalityHistoryLimit:]
 	}
@@ -384,18 +381,18 @@ func (a *App) runAutoEvolve(id string, mode personalityMode, trigger string, sam
 			a.finishPersonalityAttempt(id, trigger, "stale", cur, cur, "性格已变化，未采纳旧快照的演化结果")
 			return
 		}
-		if a.settings.Personalities == nil {
-			a.settings.Personalities = map[string]Personality{}
-		}
 		st := a.personalityStateLocked(id)
 		st.History = appendHistory(st.History, strings.TrimSpace(cur.Prompt)) // 保留旧版用于回滚
 		st.LastEvolvedAt = res.Personality.UpdatedAt
-		a.settings.Personalities[id] = res.Personality
-		a.personalityState.Entries[id] = st
-		a.persistPersonalitiesLocked(id)
-		a.persistPersonalityStateLocked()
+		st.LastAttemptAt = time.Now().UTC().Format(time.RFC3339Nano)
+		st.LastAttemptResult, st.LastAttemptNote = "success", res.Note
+		err := a.commitPersonalityLocked(id, &res.Personality, &st)
 		a.mu.Unlock()
-		a.finishPersonalityAttempt(id, trigger, "success", cur, res.Personality, res.Note)
+		if err != nil {
+			a.finishPersonalityAttempt(id, trigger, "failed", cur, cur, "性格保存失败: "+err.Error())
+			return
+		}
+		a.appendPersonalityAudit(id, trigger, "success", cur, res.Personality, res.Note)
 	case "unchanged":
 		// 无实质变化：不更新、不计数，仅记录
 		a.finishPersonalityAttempt(id, trigger, "unchanged", cur, cur, res.Note)
@@ -405,16 +402,22 @@ func (a *App) runAutoEvolve(id string, mode personalityMode, trigger string, sam
 }
 
 // finishPersonalityAttempt 记录一次尝试：更新状态文件 + 追加审计 jsonl + log.Printf。
-func (a *App) finishPersonalityAttempt(id, trigger, result string, old, new Personality, note string) {
+func (a *App) finishPersonalityAttempt(id, trigger, result string, old, new Personality, note string) error {
 	a.mu.Lock()
 	st := a.personalityStateLocked(id)
 	st.LastAttemptAt = time.Now().UTC().Format(time.RFC3339Nano)
 	st.LastAttemptResult = result
 	st.LastAttemptNote = note
-	a.personalityState.Entries[id] = st
-	a.persistPersonalityStateLocked()
+	err := a.commitPersonalityStateLocked(id, st)
 	a.mu.Unlock()
+	if err != nil {
+		log.Printf("personality-evolve[%s]: 保存尝试状态失败: %v", id, err)
+	}
+	a.appendPersonalityAudit(id, trigger, result, old, new, note)
+	return err
+}
 
+func (a *App) appendPersonalityAudit(id, trigger, result string, old, new Personality, note string) {
 	entry := personalityAuditEntry{
 		At:         time.Now().UTC().Format(time.RFC3339Nano),
 		ID:         id,
@@ -438,39 +441,28 @@ func (a *App) finishPersonalityAttempt(id, trigger, result string, old, new Pers
 // ── 回滚 ───────────────────────────────────────────────────────────────────
 
 // personalityRollbackLocked 恢复上一版性格（弹出回滚栈顶）。无历史返回 false。调用方需持 a.mu。
-func (a *App) personalityRollbackLocked(id string) (Personality, bool) {
+func (a *App) personalityRollbackLocked(id string) (Personality, bool, error) {
 	st := a.personalityStateLocked(id)
 	if len(st.History) == 0 {
-		return a.personalityLocked(id), false
+		return a.personalityLocked(id), false, nil
 	}
 	prev := st.History[len(st.History)-1]
 	st.History = st.History[:len(st.History)-1]
 	cur := a.personalityLocked(id)
 	cur.Prompt = prev
 	cur.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	if a.settings.Personalities == nil {
-		a.settings.Personalities = map[string]Personality{}
+	if err := a.commitPersonalityLocked(id, &cur, &st); err != nil {
+		return a.personalityLocked(id), true, err
 	}
-	a.settings.Personalities[id] = cur
-	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked(id)
-	a.persistPersonalityStateLocked()
-	return cur, true
+	return cur, true, nil
 }
 
 // personalityResetLocked 重置为默认并清空回滚历史。调用方需持 a.mu。
 func (a *App) personalityResetLocked(id string) error {
-	if a.settings.Personalities != nil {
-		delete(a.settings.Personalities, id)
-	}
 	st := a.personalityStateLocked(id)
 	st.History = nil
 	st.CountSinceEvolve = 0
-	a.personalityState.Entries[id] = st
-	if err := a.persistPersonalitiesLocked(id); err != nil {
-		return err
-	}
-	return a.persistPersonalityStateLocked()
+	return a.commitPersonalityLocked(id, nil, &st)
 }
 
 // errPersonalityNoHistory 无历史可回滚。

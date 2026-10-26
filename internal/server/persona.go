@@ -459,20 +459,6 @@ func (a *App) personalityLocked(id string) Personality {
 	return Personality{Prompt: defaultPersonalityPrompt(id)}
 }
 
-// persistPersonalitiesLocked 写回 settings.json。调用方需持 a.mu。
-func (a *App) persistPersonalitiesLocked(changedIDs ...string) error {
-	if len(changedIDs) == 0 {
-		changedIDs = []string{personaAide, personaXiaomi}
-	}
-	if a.personalityRevisions == nil {
-		a.personalityRevisions = map[string]uint64{}
-	}
-	for _, id := range changedIDs {
-		a.personalityRevisions[id]++
-	}
-	return atomicJSON(SettingsPath(a.dataPath), a.settings)
-}
-
 // ── HTTP ──────────────────────────────────────────────────────────────────
 func (a *App) personalityGet(w http.ResponseWriter, r *http.Request) {
 	id := validPersonalityID(r.URL.Query().Get("id"))
@@ -511,12 +497,12 @@ func (a *App) personalitySave(w http.ResponseWriter, r *http.Request) {
 	p.Enabled = in.Enabled
 	p.Prompt = prompt
 	p.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	if a.settings.Personalities == nil {
-		a.settings.Personalities = map[string]Personality{}
-	}
-	a.settings.Personalities[id] = p
-	a.persistPersonalitiesLocked(id)
+	err := a.commitPersonalityLocked(id, &p, nil)
 	a.mu.Unlock()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
 	jsonOut(w, 200, map[string]any{"ok": true, "enabled": p.Enabled, "prompt": p.Prompt})
 }
 
@@ -527,9 +513,13 @@ func (a *App) personalityReset(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&in)
 	id := validPersonalityID(in.ID)
 	a.mu.Lock()
-	a.personalityResetLocked(id) // #34：清空性格 + 回滚历史 + 计数
+	err := a.personalityResetLocked(id) // #34：清空性格 + 回滚历史 + 计数
 	p := a.personalityLocked(id)
 	a.mu.Unlock()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
 	jsonOut(w, 200, map[string]any{"ok": true, "enabled": p.Enabled, "prompt": p.Prompt})
 }
 
@@ -541,8 +531,12 @@ func (a *App) personalityRollback(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&in)
 	id := validPersonalityID(in.ID)
 	a.mu.Lock()
-	p, ok := a.personalityRollbackLocked(id)
+	p, ok, err := a.personalityRollbackLocked(id)
 	a.mu.Unlock()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
 	if !ok {
 		fail(w, 404, errPersonalityNoHistory)
 		return
@@ -581,18 +575,19 @@ func (a *App) personalityEvolve(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("性格已变化，演化结果未采用，请重新发起"))
 		return
 	}
-	if a.settings.Personalities == nil {
-		a.settings.Personalities = map[string]Personality{}
-	}
 	st := a.personalityStateLocked(id)
 	st.History = appendHistory(st.History, strings.TrimSpace(cur.Prompt))
 	st.LastEvolvedAt = res.Personality.UpdatedAt
-	a.settings.Personalities[id] = res.Personality
-	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked(id)
-	a.persistPersonalityStateLocked()
+	st.LastAttemptAt = time.Now().UTC().Format(time.RFC3339Nano)
+	st.LastAttemptResult, st.LastAttemptNote = "success", res.Note
+	err := a.commitPersonalityLocked(id, &res.Personality, &st)
 	a.mu.Unlock()
-	a.finishPersonalityAttempt(id, "manual", "success", cur, res.Personality, res.Note)
+	if err != nil {
+		a.finishPersonalityAttempt(id, "manual", "failed", cur, cur, "性格保存失败: "+err.Error())
+		fail(w, 500, err)
+		return
+	}
+	a.appendPersonalityAudit(id, "manual", "success", cur, res.Personality, res.Note)
 	jsonOut(w, 200, map[string]any{
 		"ok": true, "enabled": res.Personality.Enabled, "prompt": res.Personality.Prompt,
 		"evolutions": res.Personality.Evolutions, "updatedAt": res.Personality.UpdatedAt,

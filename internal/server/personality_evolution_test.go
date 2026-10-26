@@ -444,8 +444,11 @@ func TestRollback(t *testing.T) {
 	}
 
 	a.mu.Lock()
-	p, ok := a.personalityRollbackLocked(personaAide)
+	p, ok, err := a.personalityRollbackLocked(personaAide)
 	a.mu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !ok {
 		t.Fatal("应有可回滚历史")
 	}
