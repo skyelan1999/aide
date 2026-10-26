@@ -73,11 +73,16 @@
     "只push审查分支，不合并main、不发行、不部署，合理issue保持open。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "147": "https://github.com/skyelan1999/aide/issues/147#issuecomment-6429196899",
+      "148": "https://github.com/skyelan1999/aide/issues/148#issuecomment-6429196938",
+      "149": "https://github.com/skyelan1999/aide/issues/149#issuecomment-6429197626"
+    },
+    "verifiedRemoteCommit": "28a9f9545308ecfed941073736ae21d154de094d"
   },
   "sourceSHA256": {
     "docs/security/password-hashing.md": "bffbd063a4837185362a03e5d0f84508e5a094483b00a10b1a2142c3ebaee258",
