@@ -153,15 +153,13 @@ func (a *App) extractDocumentText(att Attachment) (string, error) {
 	if err != nil || !st.Mode().IsRegular() {
 		return "", fmt.Errorf("文件不存在或不是普通文件: %s", att.Path)
 	}
-	script, err := officeScriptPath("extract_text.py")
+	raw, err := readRawBytes(root, att.Path)
 	if err != nil {
 		return "", err
 	}
-	out, err := runOfficeScript(root.Name(), script, att.Path)
-	if err != nil {
-		return "", fmt.Errorf("提取文档 %s 失败：%w", path.Base(att.Path), err)
-	}
-	return out, nil
+	// Keep the attachment caller's existing rune budget; the common parser
+	// still bounds raw input, expansion, address space and generated output.
+	return officeExtractTextLimit(raw, strings.ToLower(path.Ext(att.Path)), officeMaxStdout)
 }
 
 // readLocalImage 读取本地工作区图片原始字节并编码为 data URL。

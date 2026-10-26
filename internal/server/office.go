@@ -26,6 +26,21 @@ import (
 // officeScriptTimeout 单次 office 转换脚本执行上限（python3 + soffice 转换损坏文档可能死锁）。
 var officeScriptTimeout = 60 * time.Second
 
+var officeParserSlots = make(chan struct{}, 2)
+
+// Same Linux address-space ceiling as document_analysis/extract.py. Set it
+// before importing parser libraries, and preserve a stricter inherited limit.
+const officeParserBootstrap = `import os, runpy, sys
+if sys.platform.startswith('linux'):
+    import resource
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    limit = min([512 << 20] + [n for n in (soft, hard) if n >= 0])
+    resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
+sys.argv = sys.argv[1:]
+sys.path[0] = os.path.dirname(os.path.abspath(sys.argv[0]))
+runpy.run_path(sys.argv[0], run_name='__main__')
+`
+
 // officeMaxStdout / officeMaxStderr 限制脚本输出，防止脚本狂写致内存膨胀。
 const (
 	officeMaxStdout = 1 << 20 // 1 MiB
@@ -118,7 +133,13 @@ func runOfficeScript(workdir, script string, args ...string) (string, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), officeScriptTimeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, bin, append([]string{script}, args...)...)
+	select {
+	case officeParserSlots <- struct{}{}:
+		defer func() { <-officeParserSlots }()
+	case <-ctx.Done():
+		return "", errors.New("Office 解析等待超时，请稍后重试")
+	}
+	cmd := exec.CommandContext(ctx, bin, append([]string{"-c", officeParserBootstrap, script}, args...)...)
 	cmd.Dir = workdir
 	// 独立进程组；超时/取消时 kill 整个组（含 soffice 子进程）。
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -180,8 +201,17 @@ func (a *App) docxTool(wsRoot *os.Root, mode, p, script string, extra ...string)
 	if !strings.HasSuffix(strings.ToLower(p), ".docx") {
 		return "仅支持 .docx 文件（旧版 .doc 请先另存为 .docx）"
 	}
-	if st, err := wsRoot.Stat(p); err != nil || st.IsDir() {
+	f, err := wsRoot.Open(p)
+	if err != nil {
 		return "文件不存在: " + p
+	}
+	defer f.Close()
+	st, err := f.Stat()
+	if err != nil || !st.Mode().IsRegular() {
+		return "文件不存在或不是普通文件: " + p
+	}
+	if err := checkOfficeArchiveReader(f, st.Size()); err != nil {
+		return err.Error()
 	}
 	sp, err := officeScriptPath(script)
 	if err != nil {

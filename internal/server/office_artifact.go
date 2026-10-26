@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -19,10 +20,14 @@ import (
 // A small compressed XLSX can still expand into a huge XML payload. Bound
 // expansion before handing untrusted workspace/reference bytes to openpyxl.
 func checkOfficeArchive(b []byte) error {
-	if len(b) == 0 || len(b) > maxRawFile {
+	return checkOfficeArchiveReader(bytes.NewReader(b), int64(len(b)))
+}
+
+func checkOfficeArchiveReader(r io.ReaderAt, size int64) error {
+	if size <= 0 || size > maxRawFile {
 		return errors.New("Office 文件为空或超过大小限制")
 	}
-	z, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
+	z, err := zip.NewReader(r, size)
 	if err != nil {
 		return errors.New("Office 文件不是有效的 OOXML ZIP")
 	}
@@ -35,6 +40,25 @@ func checkOfficeArchive(b []byte) error {
 			return errors.New("Office 文件解压后超过 128 MiB 限制")
 		}
 		expanded += file.UncompressedSize64
+	}
+	// Verify actual decompressed bytes and CRC as a stream. ZIP metadata alone
+	// is not a trustworthy expansion bound, and no member is retained in RAM.
+	var actual int64
+	for _, file := range z.File {
+		r, err := file.Open()
+		if err != nil {
+			return errors.New("Office 文件条目无效")
+		}
+		remaining := int64(128<<20) - actual
+		n, readErr := io.Copy(io.Discard, io.LimitReader(r, remaining+1))
+		closeErr := r.Close()
+		if n > remaining {
+			return errors.New("Office 文件实际解压后超过 128 MiB 限制")
+		}
+		if readErr != nil || closeErr != nil || uint64(n) != file.UncompressedSize64 {
+			return errors.New("Office 文件内容损坏或展开大小无效")
+		}
+		actual += n
 	}
 	return nil
 }
@@ -101,6 +125,10 @@ func officeCreateBytes(kind string, spec any) ([]byte, error) {
 }
 
 func officeExtractText(b []byte, ext string) (string, error) {
+	return officeExtractTextLimit(b, ext, 60<<10)
+}
+
+func officeExtractTextLimit(b []byte, ext string, outputLimit int) (string, error) {
 	if strings.EqualFold(ext, ".pdf") {
 		if len(b) == 0 || len(b) > maxRawFile {
 			return "", errors.New("PDF 文件为空或超过大小限制")
@@ -124,8 +152,8 @@ func officeExtractText(b []byte, ext string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(out) > 60<<10 {
-		out = out[:60<<10] + "\n…（已截断）"
+	if len(out) > outputLimit {
+		out = out[:outputLimit] + "\n…（已截断）"
 	}
 	return out, nil
 }
