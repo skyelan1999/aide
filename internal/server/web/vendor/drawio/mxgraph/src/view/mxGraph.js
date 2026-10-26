@@ -13964,6 +13964,11 @@ mxGraph.prototype.destroy = function()
 	if (!this.destroyed)
 	{
 		this.destroyed = true;
+		if (this.panningManager != null)
+		{
+			this.panningManager.destroy();
+			this.panningManager = null;
+		}
 		
 		if (this.tooltipHandler != null)
 		{
