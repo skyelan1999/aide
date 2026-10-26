@@ -446,6 +446,18 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 	if e = space.CheckSpace(j.Size); e != nil {
 		return e
 	}
+	// Keep the existing flat top-level layout unless selected items share a
+	// basename. In that case preserve every source-relative path so that a
+	// disambiguated name cannot collide with another selected root either.
+	keepParents := false
+	basenames := make(map[string]bool, len(j.Tops))
+	for _, top := range j.Tops {
+		base := path.Base(top.Source)
+		if basenames[base] {
+			keepParents = true
+		}
+		basenames[base] = true
+	}
 	name := filepath.Join(m.jobDir(j), "download.zip.part")
 	out, e := os.OpenFile(name, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if e != nil {
@@ -453,6 +465,7 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 	}
 	zw := zip.NewWriter(out)
 	var err error
+	entries := make(map[string]bool)
 	for _, p := range j.Parts {
 		if err = ctx.Err(); err != nil {
 			break
@@ -466,7 +479,11 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 		relative := ""
 		for _, top := range j.Tops {
 			if p.Target == top.Stage || len(p.Target) > len(top.Stage) && p.Target[:len(top.Stage)+1] == top.Stage+"/" {
-				relative = path.Base(top.Source) + p.Target[len(top.Stage):]
+				prefix := path.Base(top.Source)
+				if keepParents {
+					prefix = top.Source
+				}
+				relative = prefix + p.Target[len(top.Stage):]
 				break
 			}
 		}
@@ -474,6 +491,11 @@ func (m *transferManager) archive(ctx context.Context, j *transferJob, src *tran
 			err = errors.New("归档路径无效")
 			break
 		}
+		if entries[relative] {
+			err = errors.New("归档路径重复，不能创建有歧义的下载文件")
+			break
+		}
+		entries[relative] = true
 		hdr := &zip.FileHeader{Name: relative, Method: zip.Store}
 		if p.Dir {
 			hdr.Name += "/"
