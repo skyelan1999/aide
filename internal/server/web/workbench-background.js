@@ -14,12 +14,12 @@
   let database;
   function db() {
     if (!database) database = new Promise((resolve, reject) => {
-      if (!window.indexedDB) return reject(new Error('本地背景存储不可用'));
+      if (!window.indexedDB) return reject(new Error(uiTextWorkbenchBackground('本地背景存储不可用')));
       const request = indexedDB.open('aide.workbench-background', 1);
       request.onupgradeneeded = () => request.result.createObjectStore('assets');
       request.onsuccess = () => { request.result.onversionchange = () => { request.result.close(); database = null; }; resolve(request.result); };
       request.onerror = () => reject(request.error);
-      request.onblocked = () => reject(new Error('本地背景存储不可用'));
+      request.onblocked = () => reject(new Error(uiTextWorkbenchBackground('本地背景存储不可用')));
     }).catch(error => { database = null; throw error; });
     return database;
   }
@@ -30,7 +30,7 @@
       const store = transaction.objectStore('assets');
       const request = operation === 'get' ? store.get('current') : operation === 'put' ? store.put(value, 'current') : store.delete('current');
       transaction.oncomplete = () => resolve(request.result);
-      transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error('本地背景存储不可用'));
+      transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error(uiTextWorkbenchBackground('本地背景存储不可用')));
     });
   }
   function blocked() {
@@ -166,3 +166,5 @@
   window.AideBackground = {renderSettings};
   apply();
 })();
+
+function uiTextWorkbenchBackground(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

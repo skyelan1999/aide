@@ -1,3 +1,4 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const block=source.slice(source.indexOf('let pathAbort='),source.indexOf('// Store navigation metadata'));
@@ -6,7 +7,7 @@ const el=id=>{if(!elements.has(id))elements.set(id,{value:'',checked:false,child
 const node={id:'a',name:'入口',path:'main.go',root:'workspace',line:2,endLine:3,contentHash:'hash',origin:'origin'};
 const target={id:'b',name:'报告来源',path:'report.md',root:'workspace',origin:'origin'};
 let answer,resolve;
-const c=vm.createContext({$:el,document:{createElement:()=>({dataset:{},children:[],append(...nodes){this.children.push(...nodes)}})},locked:false,loading:false,liveCursor:'r',graph:{workspace:'w'},codeView:true,selected:node,nodeByID:new Map([['a',node]]),redraw(){},select(){},api:async()=>answer,AbortController,setTimeout,clearTimeout,console});
+const c=createUiContext(vm, {$:el,document:{createElement:()=>({dataset:{},children:[],append(...nodes){this.children.push(...nodes)}})},locked:false,loading:false,liveCursor:'r',graph:{workspace:'w'},codeView:true,selected:node,nodeByID:new Map([['a',node]]),redraw(){},select(){},api:async()=>answer,AbortController,setTimeout,clearTimeout,console});
 vm.runInContext(block,c);
 const layerContext={window:{}};vm.runInNewContext(fs.readFileSync('internal/server/web/starmap-structure.js','utf8'),layerContext);
 const chainKinds=['dom_event','event_callback','http_request','http_route','route_handler','call_candidate'];

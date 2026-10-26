@@ -36,7 +36,12 @@
       }
     });
   }
-  window.aideI18n = { t, language, schema, applyStatic };
+  function sourceName(source) {
+    const defaults = {sessions:'会话', workspace:'工作区', context:'引用目录', 'system-docs':'自动系统文档'};
+    const key = defaults[source?.id || source?.root || source?.region];
+    return key && source?.name === key ? t(key) : source?.name;
+  }
+  window.aideI18n = { t, language, schema, applyStatic, sourceName };
   let previous = language();
   applyStatic();
   function changed() {

@@ -1,6 +1,7 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
-const c=vm.createContext({});
+const c=createUiContext(vm, {});
 vm.runInContext(source.slice(source.indexOf('function progressiveSummary('),source.indexOf('function scheduleLive(')),c);
 const pending={sources:[{state:'partial',coverage:{progressive:true,pending:5}}]};
 assert.equal(c.progressiveSummary({...pending,nodes:[{},{}]}),'分批扫描中 · 已载入 2 个节点 · 待扫 5 个目录任务 · 待复核 0 个条目');

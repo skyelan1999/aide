@@ -1,7 +1,8 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync(process.argv[2]||'internal/server/web/starmap.js','utf8');
 const code=source.slice(source.indexOf('const stellarBands='),source.indexOf('function syncMapPalette('));
-const ctx={mapPalette:{light:false,highContrast:false},highlightedStarIDs:new Set(),codeView:false,glowSprite:()=>({}),window:{},graph:{nodes:[],edges:[]},nodeByID:new Map()};vm.createContext(ctx);vm.runInContext(code,ctx);
+const ctx={mapPalette:{light:false,highContrast:false},highlightedStarIDs:new Set(),codeView:false,glowSprite:()=>({}),window:{},graph:{nodes:[],edges:[]},nodeByID:new Map()};createUiContext(vm, ctx);vm.runInContext(code,ctx);
 const oldCapNodes=[64,128].map(connectionCount=>{const node={id:'cap'+connectionCount,connectionCount};ctx.applyStellarColor(node);return node;});
 assert.ok(ctx.stellarVisual(oldCapNodes[1],0).radius>ctx.stellarVisual(oldCapNodes[0],0).radius,'doubling high connection counts must still increase visible size');
 assert.equal(typeof ctx.stellarScale,'function');

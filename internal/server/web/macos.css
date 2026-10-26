@@ -942,3 +942,27 @@ button:has(> .icon) {
 
 .plugin-effect-dialog .plugin-recovery-ack {display:flex;align-items:flex-start;}
 .plugin-recovery-ack input {width:auto;}
+
+/* The desktop sidebar is persistent; its mobile drawer toggle is not a desktop control. */
+@media (min-width: 701px) {
+  #sidebar-toggle { display: none !important; }
+}
+
+/* Workspace connection and assistant activity share one indicator width. */
+.ws-assistant-card #workspace-config-button > .live-dot {
+  width: 4.667px;
+  height: 36px;
+  border-radius: 999px;
+  flex: 0 0 4.667px;
+}
+.ws-assistant-card .assistant-entry-dot {
+  width: 4.667px;
+  height: 4.667px;
+  flex: 0 0 4.667px;
+}
+
+.ws-assistant-card #workspace-config-button > .live-dot,
+.ws-assistant-card .assistant-entry-dot.live {
+  background: var(--success);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--success) 45%, transparent);
+}

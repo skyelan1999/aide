@@ -3,7 +3,7 @@
 window.AideStarmapAssist={
  create({busy,scope}){
   let active=null,shown=null;
-  const describe=job=>job.label+(job.updated?' · 索引已有更新，回答依据本次读取的资料，可重新探索核对。':'');
+  const describe=job=>job.label+(job.updated?uiTextStarmapAssist(' · 索引已有更新，回答依据本次读取的资料，可重新探索核对。'):'');
   return {
    start(label){
     active?.controller.abort();
@@ -21,10 +21,10 @@ window.AideStarmapAssist={
  selection({find,docs,selected,results,question,search}){
   const nodes=find?[]:(selected?[selected]:docs?[]:results).filter(n=>n.kind!=='directory').slice(0,8);
   let query=(question||'').trim()||(search||'').trim();
-  if(!query&&!find&&nodes.length)query='请解释这些资料如何协作，列出关键结论、关联和证据缺口，并引用编号。';
-  if(!query)throw Error('请先输入要探索的问题。');
-  if(!find&&!docs&&!nodes.length)throw Error('先选择一个文件或搜索结果，再理解；也可以输入问题后使用“AI 知识搜索”。');
-  return {query,ids:nodes.map(n=>n.id),label:find?'AI 搜索 · 当前来源':docs?'正文检索 · '+(nodes[0]?.name||'当前来源'):'理解 · '+nodes.map(n=>n.name||n.id).join('、')};
+  if(!query&&!find&&nodes.length)query=uiTextStarmapAssist('请解释这些资料如何协作，列出关键结论、关联和证据缺口，并引用编号。');
+  if(!query)throw Error(uiTextStarmapAssist('请先输入要探索的问题。'));
+  if(!find&&!docs&&!nodes.length)throw Error(uiTextStarmapAssist('先选择一个文件或搜索结果，再理解；也可以输入问题后使用“AI 知识搜索”。'));
+  return {query,ids:nodes.map(n=>n.id),label:find?uiTextStarmapAssist('AI 搜索 · 当前来源'):docs?uiTextStarmapAssist('正文检索 · ')+(nodes[0]?.name||uiTextStarmapAssist('当前来源')):uiTextStarmapAssist('理解 · ')+nodes.map(n=>n.name||n.id).join('、')};
  },
  render(target,text,references,onReference){
   // Deliberately small Markdown subset. Never interpret HTML or model URLs.
@@ -50,3 +50,5 @@ window.AideStarmapAssist={
   }
  }
 };
+
+function uiTextStarmapAssist(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

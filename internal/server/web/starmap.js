@@ -9,7 +9,7 @@ const params=new URLSearchParams(location.search), channelName=params.get('chann
 const channel=channelName&&/^[a-zA-Z0-9-]{10,100}$/.test(channelName)?new BroadcastChannel('aide-stars-'+channelName):null;
 let token=localStorage.getItem('aide-token')||'',graph={nodes:[],edges:[],sources:[],warnings:[]},selected=null,region='',results=[],yaw=0,pitch=.1,zoom=1,drag=null,projection=[],width=0,height=0,pixelRatio=0,loading=false;
 const motionReduced=()=>document.documentElement.dataset.motion==='reduced'||matchMedia('(prefers-reduced-motion: reduce)').matches;
-const infrared=window.AideInfrared.create({button:$('infrared'),note:$('infrared-note'),redraw:()=>redraw(),motionEnabled:()=>motionEnabled(),onChange:enabled=>{scheduleSkyRecovery();say(enabled?'红外伪彩视觉模拟已开启 · 非真实观测数据':'已恢复可见光星图配色');}});
+const infrared=window.AideInfrared.create({button:$('infrared'),note:$('infrared-note'),redraw:()=>redraw(),motionEnabled:()=>motionEnabled(),onChange:enabled=>{scheduleSkyRecovery();say(enabled?uiTextStarmap('红外伪彩视觉模拟已开启 · 非真实观测数据'):uiTextStarmap('已恢复可见光星图配色'));}});
 let codeView=params.get('code')==='1',edgeMode='all',focusCode=false,focusCache=null,focusKey='',graphGeneration=0,layoutGeneration=0,loadAbort=null,aiAbort=null;
 let documentAbort=null,documentGeneration=0,documentBatch=null;
 function resetDocumentBatch(){documentBatch=null;$('document-progress').hidden=true;$('document-next').hidden=true;}
@@ -17,8 +17,8 @@ function resetDocumentBatch(){documentBatch=null;$('document-progress').hidden=t
 let liveCursor='',liveTimer=0,liveAbort=null,liveEpoch=0,liveFailures=0,liveAnimationUntil=0,cacheIdentity=null,cacheWriteTimer=0;
 let liveReconcile=false,liveWireNodes=new Map(),liveStableScenes=new Map(),liveGhosts=[];
 let pathAbort=null,pathGeneration=0,pathResult=null;
-function evidenceConfidenceLabel(value){return ({type_binding:'快照类型绑定',name_candidate:'静态名称候选',dom_selector_candidate:'DOM选择器候选',source_binding:'词法绑定',source_template:'静态URL模板',http_route_candidate:'方法与路径候选',source_declaration:'源声明',source_path:'路径匹配',explicit_reference:'显式引用'})[value]||'';}
-function clearEvidencePath(message='路径基于当前索引，不等于运行轨迹。',clearInputs=false){
+function evidenceConfidenceLabel(value){return ({type_binding:uiTextStarmap('快照类型绑定'),name_candidate:uiTextStarmap('静态名称候选'),dom_selector_candidate:uiTextStarmap('DOM选择器候选'),source_binding:uiTextStarmap('词法绑定'),source_template:uiTextStarmap('静态URL模板'),http_route_candidate:uiTextStarmap('方法与路径候选'),source_declaration:uiTextStarmap('源声明'),source_path:uiTextStarmap('路径匹配'),explicit_reference:uiTextStarmap('显式引用')})[value]||'';}
+function clearEvidencePath(message=uiTextStarmap('路径基于当前索引，不等于运行轨迹。'),clearInputs=false){
  pathGeneration++;pathAbort?.abort();pathAbort=null;pathResult=null;$('path-run').disabled=false;$('path-steps').replaceChildren();$('path-status').textContent=message;
  if(clearInputs){$('path-from').value='';$('path-to').value='';}redraw();
 }
@@ -32,30 +32,30 @@ function pathSourceLink(n,line){
 }
 function renderEvidencePath(result){
  $('path-steps').replaceChildren();
- $('path-status').textContent=result.found?`${result.steps.length} 步 · 当前索引证据路径${result.truncated?' · 索引仍有缺口':''}`:`当前索引及规则下未找到路径${result.limited?' · 搜索达到32步或16000节点限制':''}${result.truncated?' · 索引不完整':''}。不代表没有真实联系。`;
- const labels={call_typed:'快照类型绑定',call_candidate:'静态名称候选',dom_event:'按钮事件候选',event_callback:'事件回调绑定',http_request:'HTTP请求声明',http_route:'HTTP路由候选',route_handler:'路由处理函数候选',defines:'源码声明',imports:'导入路径',mention:'文本提及',attachment:'会话附件',contains:'目录归属'};
+ $('path-status').textContent=result.found?uiTextStarmap("{0} 步 · 当前索引证据路径{1}", result.steps.length, result.truncated?uiTextStarmap(' · 索引仍有缺口'):''):uiTextStarmap("当前索引及规则下未找到路径{0}{1}。不代表没有真实联系。", result.limited?uiTextStarmap(' · 搜索达到32步或16000节点限制'):'', result.truncated?uiTextStarmap(' · 索引不完整'):'');
+ const labels={call_typed:uiTextStarmap('快照类型绑定'),call_candidate:uiTextStarmap('静态名称候选'),dom_event:uiTextStarmap('按钮事件候选'),event_callback:uiTextStarmap('事件回调绑定'),http_request:uiTextStarmap('HTTP请求声明'),http_route:uiTextStarmap('HTTP路由候选'),route_handler:uiTextStarmap('路由处理函数候选'),defines:uiTextStarmap('源码声明'),imports:uiTextStarmap('导入路径'),mention:uiTextStarmap('文本提及'),attachment:uiTextStarmap('会话附件'),contains:uiTextStarmap('目录归属')};
  for(const [i,n] of result.nodes.entries()){
   const row=document.createElement('li'),button=document.createElement('button');button.type='button';button.className='code-relation';button.textContent=n.name+' · '+n.id;button.onclick=()=>{const current=nodeByID.get(n.id);if(current)select(current);};row.append(button);
-  const link=pathSourceLink(n);if(link){const a=document.createElement('a');a.dataset.filePreview='';a.href=link;a.target='_blank';a.rel='noopener';a.textContent='打开原文件 ↗';row.append(a);}
-  const step=result.steps[i];if(step){const e=step.edge,p=document.createElement('p');p.textContent=`${step.reversed?'逆向探索 ←':'沿关系 →'} ${labels[e.kind]||e.kind}${e.confidence&&evidenceConfidenceLabel(e.confidence)!==labels[e.kind]?' · '+(evidenceConfidenceLabel(e.confidence)||'静态证据'):''}${e.line?' · L'+e.line+(e.column?':'+e.column:''):''}`+(e.evidence?' · '+e.evidence:' · 此关系未提供源位置证据');row.append(p);
-   const origin=result.nodes.find(node=>node.id===e.from),href=e.line&&pathSourceLink(origin,e.line);if(href){const a=document.createElement('a');a.dataset.filePreview='';a.href=href;a.target='_blank';a.rel='noopener';a.textContent='查看关系源位置 ↗';row.append(a);}}
+  const link=pathSourceLink(n);if(link){const a=document.createElement('a');a.dataset.filePreview='';a.href=link;a.target='_blank';a.rel='noopener';a.textContent=uiTextStarmap('打开原文件 ↗');row.append(a);}
+  const step=result.steps[i];if(step){const e=step.edge,p=document.createElement('p');p.textContent=`${step.reversed?uiTextStarmap('逆向探索 ←'):uiTextStarmap('沿关系 →')} ${labels[e.kind]||e.kind}${e.confidence&&evidenceConfidenceLabel(e.confidence)!==labels[e.kind]?' · '+(evidenceConfidenceLabel(e.confidence)||uiTextStarmap('静态证据')):''}${e.line?' · L'+e.line+(e.column?':'+e.column:''):''}`+(e.evidence?' · '+e.evidence:uiTextStarmap(' · 此关系未提供源位置证据'));row.append(p);
+   const origin=result.nodes.find(node=>node.id===e.from),href=e.line&&pathSourceLink(origin,e.line);if(href){const a=document.createElement('a');a.dataset.filePreview='';a.href=href;a.target='_blank';a.rel='noopener';a.textContent=uiTextStarmap('查看关系源位置 ↗');row.append(a);}}
   $('path-steps').append(row);
  }
 }
 async function queryEvidencePath(){
  if(locked||loading||!liveCursor)return;
- clearEvidencePath('正在寻找当前索引中的证据路径…');
+ clearEvidencePath(uiTextStarmap('正在寻找当前索引中的证据路径…'));
  const gen=pathGeneration,revision=liveCursor,workspace=graph.workspace,mode=codeView,controller=new AbortController();pathAbort=controller;$('path-run').disabled=true;
  const timeout=setTimeout(()=>controller.abort(),6000);
  try{const result=await api('/paths',{method:'POST',signal:controller.signal,body:JSON.stringify({workspace,revision,code:mode,from:$('path-from').value.trim(),to:$('path-to').value.trim(),undirected:$('path-undirected').checked,includeStructure:$('path-structure').checked})});
   if(locked||gen!==pathGeneration||revision!==liveCursor||workspace!==graph.workspace||mode!==codeView)return;
-  if(result.revision!==revision||result.workspace!==workspace)throw Error('路径版本不一致，请重新查询。');
+  if(result.revision!==revision||result.workspace!==workspace)throw Error(uiTextStarmap('路径版本不一致，请重新查询。'));
   pathResult=result;renderEvidencePath(result);redraw();
- }catch(e){if(gen===pathGeneration&&!locked)$('path-status').textContent=e.name==='AbortError'?'查询已取消或超时，请重试。':e.message;}
+ }catch(e){if(gen===pathGeneration&&!locked)$('path-status').textContent=e.name==='AbortError'?uiTextStarmap('查询已取消或超时，请重试。'):e.message;}
  finally{clearTimeout(timeout);if(gen===pathGeneration){pathAbort=null;$('path-run').disabled=false;}}
 }
 $('path-form').onsubmit=e=>{e.preventDefault();queryEvidencePath();};
-for(const side of ['from','to'])$('path-set-'+side).onclick=()=>{if(!selected){$('path-status').textContent='先搜索或点击一个节点。';return;}clearEvidencePath();$('path-'+side).value=selected.id;$('path-explorer').open=true;};
+for(const side of ['from','to'])$('path-set-'+side).onclick=()=>{if(!selected){$('path-status').textContent=uiTextStarmap('先搜索或点击一个节点。');return;}clearEvidencePath();$('path-'+side).value=selected.id;$('path-explorer').open=true;};
 $('path-clear').onclick=()=>clearEvidencePath(undefined,true);
 for(const id of ['path-from','path-to','path-undirected','path-structure'])$(id).addEventListener('input',()=>clearEvidencePath());
 function drawEvidencePath(){
@@ -78,7 +78,7 @@ function persistSkyView(active=()=>!locked){
   camera:{yaw:destination.yaw,pitch:destination.pitch,zoom:wheelZoom?.target??destination.zoom},motionPhase:{skyTime,driftTime},
   scroll:{search:document.querySelector('.search-panel').scrollTop,detail:$('detail').scrollTop,detailText:$('detail-text').scrollTop},
   path:cosmicScene?cosmicPath(cosmicScene.group).map(g=>g.key):[],selected:selected?{id:selected.id,origin:selected.origin||''}:null,animate,infrared:infrared.enabled};
- AideContinuity.writeTab(scope,'scene','starmap',value,{active:()=>active()&&!locked&&scope==='knowledge:'+graph.workspace}).catch(e=>{if(!recoveryWarning&&!locked){recoveryWarning=true;say('星图恢复记录保存失败 · '+e.message);}});
+ AideContinuity.writeTab(scope,'scene','starmap',value,{active:()=>active()&&!locked&&scope==='knowledge:'+graph.workspace}).catch(e=>{if(!recoveryWarning&&!locked){recoveryWarning=true;say(uiTextStarmap('星图恢复记录保存失败 · ')+e.message);}});
 }
 function scheduleSkyRecovery(){if(locked)return;clearTimeout(recoveryTimer);recoveryTimer=setTimeout(persistSkyView,850);}
 function defaultSkyView(){
@@ -105,7 +105,7 @@ function restoreSkyView(value){
  if(typeof value.animate==='boolean')animate=value.animate&&!motionReduced();
  if(typeof value.infrared==='boolean')infrared.set(value.infrared,false);
  document.querySelector('.search-panel').scrollTop=finite(value.scroll?.search,0,0,1000000);$('detail').scrollTop=finite(value.scroll?.detail,0,0,1000000);$('detail-text').scrollTop=finite(value.scroll?.detailText,0,0,1000000);
- syncMotion();syncCodeView();syncGraphChrome();syncCosmicNav();redraw();say('已恢复上次星图视角与筛选；未自动执行检索或 AI。');
+ syncMotion();syncCodeView();syncGraphChrome();syncCosmicNav();redraw();say(uiTextStarmap('已恢复上次星图视角与筛选；未自动执行检索或 AI。'));
 }
 addEventListener('scroll',()=>{if(!locked&&!loading)scheduleSkyRecovery();},{capture:true,passive:true});
 for(const event of ['pointerup','pointercancel','wheel','click','input','change','keydown'])addEventListener(event,()=>{if(!locked){recoveryInput++;if(loading)pendingRecoveredView=null;scheduleSkyRecovery();}},{passive:true});
@@ -117,34 +117,34 @@ let sourceCatalog=[],sourceByRegion=new Map();
 const nodeLayoutFields=nodeFields.filter(field=>!['text','readState','size','modified','contentHash'].includes(field));
 const sourceTypes={session:'会话',local:'本地目录',ssh:'SSH 工作区',skill:'Skill',link:'HTTP 链接',mcp:'MCP 工具目录',sftp:'SSH / SFTP','workspace-sftp':'工作区 SSH / SFTP',ftp:'FTP',ftps:'FTPS',smb:'SMB'};
 const sourceStates={ready:'已索引',partial:'部分索引',unavailable:'暂不可用',disabled:'已停用',catalog:'仅工具目录'};
-const sourceTypeLabel=type=>sourceTypes[type]||type||'未报告类型';
-const sourceStateLabel=state=>sourceStates[state]||'未报告状态';
-function fallbackSourceName(r){return r==='sessions'?'会话':r==='workspace'?'工作区':r==='context'?'引用目录':graph.nodes.find(n=>n.region===r&&n.path==='.')?.name||'引用';}
+const sourceTypeLabel=type=>uiTextStarmap(sourceTypes[type]||type||'未报告类型');
+const sourceStateLabel=state=>uiTextStarmap(sourceStates[state]||'未报告状态');
+function fallbackSourceName(r){return r==='sessions'?uiTextStarmap('会话'):r==='workspace'?uiTextStarmap('工作区'):r==='context'?uiTextStarmap('引用目录'):graph.nodes.find(n=>n.region===r&&n.path==='.')?.name||uiTextStarmap('引用');}
 function currentSources(){
  // Older servers do not publish a catalog. Derive its visible regions only in
  // that case; a reported empty or unavailable source remains an independent chip.
- if(Array.isArray(graph.sources))return graph.sources.filter(s=>s&&typeof s.region==='string'&&s.region).map(s=>({...s,name:s.name||fallbackSourceName(s.region),nodeCount:Math.max(0,Number(s.nodeCount)||0)}));
+ if(Array.isArray(graph.sources))return graph.sources.filter(s=>s&&typeof s.region==='string'&&s.region).map(s=>({...s,name:(window.aideI18n?.sourceName(s)||s.name)||fallbackSourceName(s.region),nodeCount:Math.max(0,Number(s.nodeCount)||0)}));
  const byRegion=new Map();for(const n of graph.nodes){if(!n.region)continue;let s=byRegion.get(n.region);if(!s){s={id:n.source||n.region,name:n.sourceName||fallbackSourceName(n.region),type:n.sourceType||(n.region==='sessions'?'session':''),region:n.region,state:'ready',nodeCount:0};byRegion.set(n.region,s);}s.nodeCount++;}return [...byRegion.values()];
 }
 function sourceCoverageState(source){
  const c=source.coverage;
  if(source.state!=='ready'&&source.state!=='partial')return sourceStateLabel(source.state);
  if(!c)return sourceStateLabel(source.state);
- if(c.refreshProgress)return '更新扫描中 · 保留上次完整星图';
- if(c.discoveryBlocked&&!c.materialPending)return '范围受限';
- if(c.readErrors>0)return c.progressive&&(c.pending>0||c.materialPending>0)?'分批扫描中 · 正文读取异常':'部分正文不可读';
- if(c.materialPending>0)return '正文与目录分批复核中';
- if(c.reasons?.length)return '范围受限';
- if(c.progressive&&c.pending>0)return '分批扫描中';
- return source.state==='partial'?'部分索引':'限定范围已扫描';
+ if(c.refreshProgress)return uiTextStarmap('更新扫描中 · 保留上次完整星图');
+ if(c.discoveryBlocked&&!c.materialPending)return uiTextStarmap('范围受限');
+ if(c.readErrors>0)return c.progressive&&(c.pending>0||c.materialPending>0)?uiTextStarmap('分批扫描中 · 正文读取异常'):uiTextStarmap('部分正文不可读');
+ if(c.materialPending>0)return uiTextStarmap('正文与目录分批复核中');
+ if(c.reasons?.length)return uiTextStarmap('范围受限');
+ if(c.progressive&&c.pending>0)return uiTextStarmap('分批扫描中');
+ return source.state==='partial'?uiTextStarmap('部分索引'):uiTextStarmap('限定范围已扫描');
 }
 function sourceCoverageLabel(source){
  const c=source.coverage;if(!c)return '';
- const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败',material_pending:'正文与目录等待复核','file-read-error':'部分文件正文读取失败',catalog_limit:'索引目录容量上限',scope_missing:'配置范围不存在'};
- const progress=c.refreshProgress?`更新扫描第 ${c.cycle||1} 轮，已发现 ${c.refreshFiles||0} 个文件 / ${c.refreshDirectories||0} 个目录，待扫描 ${c.pending||0} 个目录任务；当前展示上次完整星图`:(c.progressive?`累计索引 ${c.files} 个文件 / ${c.directories} 个目录；单批预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层；第 ${c.cycle||1} 轮；待扫描 ${c.pending||0} 个目录任务；容量上限 ${c.catalogLimit||0} 条`:`已扫描 ${c.files} 个文件 / ${c.directories} 个目录；预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层`);
- const limits=c.reasons?.length?'；受限：'+c.reasons.map(r=>reasons[r]||r).join('、'):'';
- const status=c.refreshProgress?'':c.progressive?((c.pending&&!c.discoveryBlocked||c.materialPending)?'；分批扫描与复核中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
- return progress+(c.materialPending>0?`；${c.materialPending} 个条目等待复核`:'')+(c.readPending>0?`；${c.readPending} 个文件等待内容复核`:'')+(c.readErrors>0?`；${c.readErrors} 个文件正文暂不可读`:'')+(c.scopePaths?.length?'；索引范围：'+c.scopePaths.join('、'):'')+`；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+limits+status;
+ const reasons={files:uiTextStarmap('文件预算'),directories:uiTextStarmap('目录预算'),depth:uiTextStarmap('目录深度'),time:uiTextStarmap('扫描时限'),directory_entries:uiTextStarmap('单目录条目预算'),read_error:uiTextStarmap('读取失败'),material_pending:uiTextStarmap('正文与目录等待复核'),'file-read-error':uiTextStarmap('部分文件正文读取失败'),catalog_limit:uiTextStarmap('索引目录容量上限'),scope_missing:uiTextStarmap('配置范围不存在')};
+ const progress=c.refreshProgress?uiTextStarmap("更新扫描第 {0} 轮，已发现 {1} 个文件 / {2} 个目录，待扫描 {3} 个目录任务；当前展示上次完整星图", c.cycle||1, c.refreshFiles||0, c.refreshDirectories||0, c.pending||0):(c.progressive?uiTextStarmap("累计索引 {0} 个文件 / {1} 个目录；单批预算 {2} 文件 / {3} 目录 / {4} 层；第 {5} 轮；待扫描 {6} 个目录任务；容量上限 {7} 条", c.files, c.directories, c.fileBudget, c.directoryBudget, c.depthBudget, c.cycle||1, c.pending||0, c.catalogLimit||0):uiTextStarmap("已扫描 {0} 个文件 / {1} 个目录；预算 {2} 文件 / {3} 目录 / {4} 层", c.files, c.directories, c.fileBudget, c.directoryBudget, c.depthBudget));
+ const limits=c.reasons?.length?uiTextStarmap('；受限：')+c.reasons.map(r=>reasons[r]||r).join('、'):'';
+ const status=c.refreshProgress?'':c.progressive?((c.pending&&!c.discoveryBlocked||c.materialPending)?uiTextStarmap('；分批扫描与复核中，保留上一轮已知节点'):c.reasons?.length?uiTextStarmap('；本轮队列已结束，仍有未覆盖范围'):uiTextStarmap('；本轮限定范围扫描完成')):c.reasons?.length?'':uiTextStarmap('；限定目录范围内扫描完成');
+ return progress+(c.materialPending>0?uiTextStarmap("；{0} 个条目等待复核", c.materialPending):'')+(c.readPending>0?uiTextStarmap("；{0} 个文件等待内容复核", c.readPending):'')+(c.readErrors>0?uiTextStarmap("；{0} 个文件正文暂不可读", c.readErrors):'')+(c.scopePaths?.length?uiTextStarmap('；索引范围：')+c.scopePaths.join('、'):'')+uiTextStarmap("；文本仅前 {0} KiB；全库总数未统计", c.textBytesPerFile/1024)+limits+status;
 }
 
 function nodeSource(n){const s=sourceByRegion.get(n.region);return {id:s?.id||n.source||n.region,name:s?.name||n.sourceName||fallbackSourceName(n.region),type:s?.type||n.sourceType||(n.region==='sessions'?'session':''),state:s?.state||'',message:s?.message||''};}
@@ -152,7 +152,7 @@ function nodeSourceLabel(n){const s=nodeSource(n);return [s.name,s.type?sourceTy
 function syncNodeSourceChrome(){
  const outlineMatch=selected?.outline?.entries?.length&&!selected.documentCitation?nodeOutlineMatch(selected,searchQuery.split(/\s+/).filter(Boolean)):null;
  const preview=selected&&pathSourceLink(selected,outlineMatch?.line);$('node-open').hidden=!preview||!selected?.origin;$('node-open').href=preview||'#';
- if(selected){const s=nodeSource(selected);$('detail-source').textContent=nodeSourceLabel(selected)+(s.id?' · 来源 #'+s.id:'')+(s.type==='mcp'?' · 仅工具名称与说明，不含工具执行结果或远端文档正文；不会调用工具。':s.state&&s.state!=='ready'?' · '+sourceStateLabel(s.state):'');}
+ if(selected){const s=nodeSource(selected);$('detail-source').textContent=nodeSourceLabel(selected)+(s.id?uiTextStarmap(' · 来源 #')+s.id:'')+(s.type==='mcp'?uiTextStarmap(' · 仅工具名称与说明，不含工具执行结果或远端文档正文；不会调用工具。'):s.state&&s.state!=='ready'?' · '+sourceStateLabel(s.state):'');}
  for(const box of [$('results'),$('ai-found')])for(const b of box.querySelectorAll('[data-source-node]')){const current=nodeByID.get(b.dataset.sourceNode),original=b.sourceNode;const n=current?{...current,format:current.origin===original?.origin?original?.format||current.format:current.format}:original;if(n){b.textContent=nodeSourceLabel(n);b.title=b.textContent;}}
 }
 function appendSourceLabel(parent,n){const meta=document.createElement('small');meta.className='source-meta';meta.dataset.sourceNode=n.id;meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;parent.append(meta);return meta;}
@@ -163,7 +163,7 @@ function stopLive(clearCursor=false){clearTimeout(liveTimer);liveTimer=0;liveEpo
 // Continue unfinished catalogues promptly; completed/failed sources retain their normal cadence.
 function progressiveSummary(g){
  const sources=(g.sources||[]).filter(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0&&!s.coverage.discoveryBlocked||s.coverage.materialPending>0));
- return sources.length?'分批扫描中 · 已载入 '+g.nodes.length+' 个节点 · 待扫 '+sources.reduce((sum,s)=>sum+(s.coverage.pending||0),0)+' 个目录任务 · 待复核 '+sources.reduce((sum,s)=>sum+(s.coverage.materialPending||0),0)+' 个条目':'';
+ return sources.length?uiTextStarmap('分批扫描中 · 已载入 ')+g.nodes.length+uiTextStarmap(' 个节点 · 待扫 ')+sources.reduce((sum,s)=>sum+(s.coverage.pending||0),0)+uiTextStarmap(' 个目录任务 · 待复核 ')+sources.reduce((sum,s)=>sum+(s.coverage.materialPending||0),0)+uiTextStarmap(' 个条目'):'';
 }
 function progressiveDelay(g,duration=0){
  const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0&&!s.coverage.discoveryBlocked||s.coverage.materialPending>0));
@@ -198,7 +198,7 @@ async function pollLive(){
   if(document.hidden){liveFailures=0;return;}
   if(graph.workspace&&update.workspace!==graph.workspace){persistSkyView();load();return;}
   applyLiveUpdate(update);liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();
- }catch(e){if(epoch===liveEpoch&&!locked&&!pageLeaving){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
+ }catch(e){if(epoch===liveEpoch&&!locked&&!pageLeaving){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say(uiTextStarmap('自动同步暂不可用，保留当前星图并稍后重试。'));}}
  finally{clearTimeout(timeout);if(liveAbort===controller)liveAbort=null;if(epoch===liveEpoch)scheduleLive(liveFailures?Math.min(30000,2000*Math.pow(2,liveFailures)):progressiveDelay(graph,performance.now()-started));}
 }
 
@@ -227,7 +227,7 @@ function readMapPalette(){
 let mapPalette=readMapPalette();
 const skyText=()=>mapPalette.highContrast?mapPalette.text:'#e3ebf3',skyMuted=()=>mapPalette.highContrast?mapPalette.muted:'#aebdca';
 // Celestial colors are a visual metaphor; degree is unique non-structural neighbors.
-const stellarBands=[{min:0,name:'孤立灰星',dark:'#8e969f',light:'#8b9198'},{min:1,name:'暖红星',dark:'#d8a294',light:'#ad7668'},{min:3,name:'金色星',dark:'#e1c293',light:'#9c8259'},{min:7,name:'白色星',dark:'#e4e2d6',light:'#71808d'},{min:15,name:'蓝白星',dark:'#b4d2eb',light:'#6086a7'},{min:31,name:'蓝色星',dark:'#93c4eb',light:'#4b80a8'},{min:63,name:'蓝色强光星',dark:'#7db9e8',light:'#3b76a6'}];
+const stellarBands=[{min:0,name:uiTextStarmap('孤立灰星'),dark:'#8e969f',light:'#8b9198'},{min:1,name:uiTextStarmap('暖红星'),dark:'#d8a294',light:'#ad7668'},{min:3,name:uiTextStarmap('金色星'),dark:'#e1c293',light:'#9c8259'},{min:7,name:uiTextStarmap('白色星'),dark:'#e4e2d6',light:'#71808d'},{min:15,name:uiTextStarmap('蓝白星'),dark:'#b4d2eb',light:'#6086a7'},{min:31,name:uiTextStarmap('蓝色星'),dark:'#93c4eb',light:'#4b80a8'},{min:63,name:uiTextStarmap('蓝色强光星'),dark:'#7db9e8',light:'#3b76a6'}];
 function stellarScale(value){
  const count=Number.isFinite(value)?Math.min(Number.MAX_SAFE_INTEGER,Math.max(0,Math.floor(value))):0;
  // Each rank adds 1, 2, 4, 8... connections: cumulative thresholds 1, 3, 7...
@@ -312,7 +312,7 @@ function revealPanel(el,shown){
 function settlePanels(){for(const [el,a]of panelAnimations){a.cancel();if(el.inert)el.hidden=true;}panelAnimations.clear();}
 function openAI(){revealPanel($('ai-body'),true);$('ai-toggle').setAttribute('aria-expanded','true');}
 function say(s){$('status').textContent=s;}
-async function api(p,options={}){const r=await fetch('/api/knowledge-map'+p,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok){window.AideCrash?.reportServer(d);throw Error(d.error||'读取失败，请回到工作台登录');}return d;}
+async function api(p,options={}){const r=await fetch('/api/knowledge-map'+p,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok){window.AideCrash?.reportServer(d);throw Error(d.error||uiTextStarmap('读取失败，请回到工作台登录'));}return d;}
 function seeded(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}h ^= h >>> 16; h = Math.imul(h, 0x7feb352d); h ^= h >>> 15; h = Math.imul(h, 0x846ca68b); h ^= h >>> 16; return (h>>>0)/4294967296;}
 function skyHash(x,y){let h=Math.imul(x|0,0x45d9f3b)^Math.imul(y|0,0x119de1f3);h=Math.imul(h^(h>>>16),0x45d9f3b);return ((h^(h>>>16))>>>0)/4294967296;}
 function skyNoise(x,y,columns,rows){const px=x*columns,py=y*rows,x0=Math.floor(px),y0=Math.floor(py),fx=px-x0,fy=py-y0,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy),a=skyHash(x0,y0),b=skyHash(x0+1,y0),c=skyHash(x0,y0+1),d=skyHash(x0+1,y0+1);return (a+(b-a)*sx)+((c+(d-c)*sx)-(a+(b-a)*sx))*sy;}
@@ -393,18 +393,18 @@ function cosmicTexture(depth,variant=0){
  g.globalCompositeOperation='destination-out';for(let i=0;i<12;i++){const x=54+i*23,y=185+Math.sin(i*.57+variant)*24,r=14+seeded(key+'dark'+i)*15,f=g.createRadialGradient(x,y,0,x,y,r);f.addColorStop(0,'#00000099');f.addColorStop(1,'#00000000');g.fillStyle=f;g.fillRect(x-r,y-r,r*2,r*2);}g.globalCompositeOperation='source-over';
  cosmicTextureCache.set(key,c);while(cosmicTextureCache.size>12)cosmicTextureCache.delete(cosmicTextureCache.keys().next().value);return c;
 }
-function cosmicLabel(depth){return cosmos?.levels?.[depth]||['知识宇宙','超星系团','星系团','星系群','银河','旋臂','恒星系统','节点'][depth];}
+function cosmicLabel(depth){return cosmos?.levels?.[depth]||[uiTextStarmap('知识宇宙'),uiTextStarmap('超星系团'),uiTextStarmap('星系团'),uiTextStarmap('星系群'),uiTextStarmap('银河'),uiTextStarmap('旋臂'),uiTextStarmap('恒星系统'),uiTextStarmap('节点')][depth];}
 function cosmicEmptyMessage(){
  const text=value=>globalThis.aideI18n?.t(value)||value;
  const source=region?sourceByRegion.get(region):null;
- if(source?.state==='disabled')return text('此来源已停用，请在引用配置中启用');
- if(source?.detached)return text('当前索引未报告此来源，请选择其他星域');
- if(source?.state==='unavailable')return text('来源暂不可用，请在星际日志查看原因');
+ if(source?.state==='disabled')return text(uiTextStarmap('此来源已停用，请在引用配置中启用'));
+ if(source?.detached)return text(uiTextStarmap('当前索引未报告此来源，请选择其他星域'));
+ if(source?.state==='unavailable')return text(uiTextStarmap('来源暂不可用，请在星际日志查看原因'));
  const sources=source?[source]:sourceCatalog;
- if(loading||sources.some(s=>s.coverage?.pending>0||s.coverage?.refreshProgress))return text('正在分批扫描，节点将陆续显示');
- if(graph.nodes.some(n=>!region||n.region===region))return text('当前视图没有匹配节点，请调整聚焦或返回上层');
- if(!source&&sources.some(s=>s.state==='unavailable'))return text('部分来源暂不可用，请在星际日志查看原因');
- return text(source?'当前来源暂无节点，请检查目录或索引范围':'尚未发现节点，请添加引用或检查工作区');
+ if(loading||sources.some(s=>s.coverage?.pending>0||s.coverage?.refreshProgress))return text(uiTextStarmap('正在分批扫描，节点将陆续显示'));
+ if(graph.nodes.some(n=>!region||n.region===region))return text(uiTextStarmap('当前视图没有匹配节点，请调整聚焦或返回上层'));
+ if(!source&&sources.some(s=>s.state==='unavailable'))return text(uiTextStarmap('部分来源暂不可用，请在星际日志查看原因'));
+ return text(source?uiTextStarmap('当前来源暂无节点，请检查目录或索引范围'):uiTextStarmap('尚未发现节点，请添加引用或检查工作区'));
 }
 function cosmicData(key){
  if(cosmicSceneCache.has(key))return cosmicSceneCache.get(key);const scene=cosmos?.scene(key);if(!scene)return null;
@@ -465,11 +465,11 @@ function cosmicPath(group){const path=[];for(let g=group;g;g=g.parent)path.unshi
 function cosmicPreferred(){return cosmicRecords.find(r=>r.group.key===cosmicSelected)?.group||cosmicRecords.find(r=>r.group.key===cosmicHover)?.group||cosmicScene?.children.reduce((best,g)=>!best||g.members.length>best.members.length?g:best,null);}
 function syncCosmicNav(){
  const hud=$('cosmic-nav');if(!hud)return;hud.hidden=!cosmicScene;document.body.classList.toggle('cosmic-mode',cosmicEnabled);document.body.classList.remove('cosmic-legacy');
- if(!cosmicScene){$('cosmic-title').textContent='知识星域';$('cosmic-meta').textContent='等待索引';return;}
+ if(!cosmicScene){$('cosmic-title').textContent=uiTextStarmap('知识星域');$('cosmic-meta').textContent=uiTextStarmap('等待索引');return;}
  const counts=cosmicScene.scaleCounts||[],units=[];for(let depth=1;depth<7;depth++)if(counts[depth])units.push(counts[depth]+' '+cosmicLabel(depth));
- const calls=structure?.entry('calls'),hasCalls=cosmicScene.members.some(id=>calls?.levels.has(id));$('cosmic-title').textContent=cosmicScene.group.nodeID?cosmicScene.group.label:cosmicScene.group.parent?cosmicScene.group.label+' · '+cosmicLabel(cosmicScene.depth):'知识宇宙';
- $('cosmic-meta').textContent=(units.length?units.join(' · ')+' · ':'')+cosmicScene.members.length+' 个真实节点 · '+(hasCalls?'星色按关联数 · 星等按调用层':'星色与光晕按有效关联数');
- canvas.setAttribute('aria-label','知识星域。拖动环顾，滚轮靠近；恒星系统近景可点击跃迁门前往已连接星域。双击进入，滚轮远离或 Alt 加左方向键返回。');
+ const calls=structure?.entry('calls'),hasCalls=cosmicScene.members.some(id=>calls?.levels.has(id));$('cosmic-title').textContent=cosmicScene.group.nodeID?cosmicScene.group.label:cosmicScene.group.parent?cosmicScene.group.label+' · '+cosmicLabel(cosmicScene.depth):uiTextStarmap('知识宇宙');
+ $('cosmic-meta').textContent=(units.length?units.join(' · ')+' · ':'')+cosmicScene.members.length+uiTextStarmap(' 个真实节点 · ')+(hasCalls?uiTextStarmap('星色按关联数 · 星等按调用层'):uiTextStarmap('星色与光晕按有效关联数'));
+ canvas.setAttribute('aria-label',uiTextStarmap('知识星域。拖动环顾，滚轮靠近；恒星系统近景可点击跃迁门前往已连接星域。双击进入，滚轮远离或 Alt 加左方向键返回。'));
 }
 function enterCosmic(key,animateFlight=true,keepSelection=false){
  if(!cosmos||locked)return;const data=cosmicData(key);if(!data)return;if(key===cosmicKey){syncCosmicNav();return;}
@@ -575,7 +575,7 @@ function drawCosmicGate(gate,cx,cy,zoom,fade=1,orbitScale=1){
  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade*(.38+stability*.55);ctx.lineWidth=.85+stability*1.35;ctx.strokeStyle=aperture;ctx.beginPath();ctx.ellipse(0,0,8+capacity*3,15+capacity*5,-.08,Math.PI*.12,Math.PI*.88);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,8+capacity*3,15+capacity*5,.08,Math.PI*1.12,Math.PI*1.88);ctx.stroke();
  ctx.lineWidth=.65+stability*.7;ctx.globalAlpha=fade*(.3+stability*.5);ctx.strokeStyle=skyText();for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*12,-13);ctx.quadraticCurveTo(side*(7+capacity*3),0,side*12,13);ctx.stroke();ctx.beginPath();ctx.moveTo(side*12,-13);ctx.lineTo(side*5,-17);ctx.moveTo(side*12,13);ctx.lineTo(side*5,17);ctx.stroke();}
  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*(.24+emission*.72);const core=ctx.createRadialGradient(0,0,0,0,0,9+capacity*5);core.addColorStop(0,'#ffffff');core.addColorStop(.18,aperture);core.addColorStop(.54,aperture+'a0');core.addColorStop(1,aperture+'00');ctx.fillStyle=core;ctx.beginPath();ctx.ellipse(0,0,3+capacity*2,6+capacity*4,0,0,tau);ctx.fill();ctx.restore();ctx.globalCompositeOperation='source-over';
- if(zoom>=1.55){ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText('跃迁门 · '+gate.targetLabel,gx+12,gy-7);ctx.globalAlpha=fade*.76;ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText('稳定 '+Math.round(stability*100)+'% · 通行规模 '+Math.round(capacity*100)+'%',gx+12,gy+7);}
+ if(zoom>=1.55){ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(uiTextStarmap('跃迁门 · ')+gate.targetLabel,gx+12,gy-7);ctx.globalAlpha=fade*.76;ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText(uiTextStarmap('稳定 ')+Math.round(stability*100)+uiTextStarmap('% · 通行规模 ')+Math.round(capacity*100)+'%',gx+12,gy+7);}
 }
 function drawKeplerOrbit(cx,cy,semiMajor,eccentricity,argument,inclination,color,fade){
  const b=semiMajor*Math.sqrt(1-eccentricity*eccentricity);ctx.save();ctx.translate(cx-eccentricity*semiMajor*Math.cos(argument),cy-eccentricity*semiMajor*Math.sin(argument)*inclination);ctx.rotate(argument);ctx.scale(1,inclination);ctx.globalAlpha=fade*.14;ctx.strokeStyle=color;ctx.lineWidth=.5;ctx.beginPath();ctx.ellipse(0,0,semiMajor,b,0,0,tau);ctx.stroke();ctx.restore();
@@ -679,7 +679,7 @@ function drawCosmicLocalSystem(now,fade=1){
    positions.set(node.id,{x,y});const hit={n:node,p:{x,y,onScreen:true},owner:{group:focus.owner.group},local:true};cosmicLocalHits.push(hit);
    if(edge){ctx.globalAlpha=fade*.36;ctx.strokeStyle=mapPalette.star;ctx.lineWidth=.7;ctx.setLineDash(edge.dashed?[3,4]:[]);ctx.beginPath();ctx.moveTo(center.x,center.y);ctx.lineTo(x,y);ctx.stroke();ctx.setLineDash([]);}
    drawCosmicPlanet(node,x,y,r,hostPower,orbitRadius,center.x,center.y,fade);const halo=Math.max(7,Math.log2((node.connectionCount||0)+1)*5)*mag;ctx.globalAlpha=fade*.32;ctx.drawImage(glowSprite(node.starColor||mapPalette.star),x-halo/2,y-halo/2,halo,halo);
-   if(zoom>=1.7){ctx.globalAlpha=fade*.92;ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(node.drawLabel||node.name||node.id,x+7,y-5);ctx.globalAlpha=fade*.68;ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText((node.connectionCount||0)+' 条连接',x+7,y+8);}
+   if(zoom>=1.7){ctx.globalAlpha=fade*.92;ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(node.drawLabel||node.name||node.id,x+7,y-5);ctx.globalAlpha=fade*.68;ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText((node.connectionCount||0)+uiTextStarmap(' 条连接'),x+7,y+8);}
   });ctx.restore();
  }
  for(const gate of gateAnchors){const anchor=positions.get(gate.anchorNodeID);if(anchor)drawCosmicGate(gate,anchor.x,anchor.y,zoom,fade,1.85*localScale);}
@@ -731,7 +731,7 @@ function drawCosmos(now,t){
  for(const hole of lensHoles)drawBlackHole(hole,now,fade);
  if(cosmicScene.depth===7&&zoom>=1.18)drawCosmicLocalSystem(now,fade);
  for(const hole of lensHoles)drawBlackHoleLensOverlay(hole,cosmicStars,cosmicStarEdges,fade);
- for(const r of cosmicRecords){if(!r.p.onScreen||r.group.nodeID||r.group.key!==cosmicHover&&r.group.key!==cosmicSelected)continue;ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(r.label,r.p.x+15,r.p.y-15);ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText(r.group.members.length+' 个真实节点',r.p.x+15,r.p.y);}
+ for(const r of cosmicRecords){if(!r.p.onScreen||r.group.nodeID||r.group.key!==cosmicHover&&r.group.key!==cosmicSelected)continue;ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(r.label,r.p.x+15,r.p.y-15);ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText(r.group.members.length+uiTextStarmap(' 个真实节点'),r.p.x+15,r.p.y);}
  if(!cosmicScene.members.length){ctx.font='13px -apple-system,sans-serif';ctx.fillStyle=skyText();const maxWidth=Math.max(1,Math.min(520,width-32)),labelX=Math.min(Math.max(cx,16+maxWidth/2),width-16-maxWidth/2);ctx.textAlign='center';ctx.fillText(cosmicEmptyMessage(),labelX,cy,maxWidth);}
  ctx.restore();projection=data?.projection||[];drawLiveGhosts(now,drift);
  if(flight){ctx.save();ctx.globalAlpha=1-k;const s=flight.direction>0?1+.60*k:1-.22*k;ctx.translate(flight.anchor.x,flight.anchor.y);ctx.scale(s,s);ctx.translate(-flight.anchor.x,-flight.anchor.y);ctx.drawImage(flight.canvas,0,0,width,height);ctx.restore();if(u===1)cosmicFlight=null;}
@@ -796,16 +796,16 @@ function refreshView(){
  updateLayerLabels();
 }
 function updateLayerLabels(){
- const title=layerState?.mode==='calls'?'静态调用候选':layerState?.mode==='imports'?'模块导入':layerState?.mode==='hierarchy'?'声明层级':'关系';
- const maxDepth=layerState?.maxDepth??0,hasLayers=!!layerState?.levels.size,hopName=layerState?.mode==='calls'?'调用':layerState?.mode==='imports'?'导入':'结构';
- const localRange=selected?'已解析至 '+maxDepth+' 跳'+(focusCode?' · 聚焦 '+(callDepth==='all'?'全部已解析跳数':'向外 '+callDepth+' 跳'):''):'';
- if($('layer-summary'))$('layer-summary').textContent=hasLayers?`${title} · ${selected?'从当前节点向外':(layerState.rootIDs?.size||0)+' 个入口候选'} · ${selected?localRange:'全局 '+(maxDepth+1)+' 层'}`:'当前索引没有可分层的连接';
+ const title=layerState?.mode==='calls'?uiTextStarmap('静态调用候选'):layerState?.mode==='imports'?uiTextStarmap('模块导入'):layerState?.mode==='hierarchy'?uiTextStarmap('声明层级'):uiTextStarmap('关系');
+ const maxDepth=layerState?.maxDepth??0,hasLayers=!!layerState?.levels.size,hopName=layerState?.mode==='calls'?uiTextStarmap('调用'):layerState?.mode==='imports'?uiTextStarmap('导入'):uiTextStarmap('结构');
+ const localRange=selected?uiTextStarmap('已解析至 ')+maxDepth+uiTextStarmap(' 跳')+(focusCode?uiTextStarmap(' · 聚焦 ')+(callDepth==='all'?uiTextStarmap('全部已解析跳数'):uiTextStarmap('向外 ')+callDepth+uiTextStarmap(' 跳')):''):'';
+ if($('layer-summary'))$('layer-summary').textContent=hasLayers?`${title} · ${selected?uiTextStarmap('从当前节点向外'):(layerState.rootIDs?.size||0)+uiTextStarmap(' 个入口候选')} · ${selected?localRange:uiTextStarmap('全局 ')+(maxDepth+1)+uiTextStarmap(' 层')}`:uiTextStarmap('当前索引没有可分层的连接');
  const callLayers=structure?.entry('calls'),selectedHasCalls=selected&&callLayers?.levels.has(selected.id);
- if($('magnitude-key'))$('magnitude-key').textContent=callLayers?.levels.size?(selectedHasCalls?'当前节点最亮 · 调用跳数 1、2、3…逐步变暗':'同等关联数下，静态调用层 1、2、3…逐层变暗')+' · 星等仅表示调用结构距离':'无调用层证据 · 星色与光晕按有效关联数';
+ if($('magnitude-key'))$('magnitude-key').textContent=callLayers?.levels.size?(selectedHasCalls?uiTextStarmap('当前节点最亮 · 调用跳数 1、2、3…逐步变暗'):uiTextStarmap('同等关联数下，静态调用层 1、2、3…逐层变暗'))+uiTextStarmap(' · 星等仅表示调用结构距离'):uiTextStarmap('无调用层证据 · 星色与光晕按有效关联数');
  if($('detail-level')){
   $('detail-level').hidden=!selected;
   const globalDepth=selected?.globalVisualDepth,cycle=selected&&callLayers?.cycles.has(selected.id);
-  $('detail-level').textContent=(selected?`${selected.connectionCount||0} 个有效关联 · ${selected.stellarLevel||0}级恒星 · ${selected.stellarBand} · 下一级 ${selected.nextStellarThreshold??'超出安全计数范围'} 个关联${highlightedStarIDs.has(selected.id)?' · 高亮星':''} · `:'')+(Number.isFinite(globalDepth)?`调用星等 · 全局静态调用层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
+  $('detail-level').textContent=(selected?uiTextStarmap("{0} 个有效关联 · {1}级恒星 · {2} · 下一级 {3} 个关联{4} · ", selected.connectionCount||0, selected.stellarLevel||0, selected.stellarBand, selected.nextStellarThreshold??uiTextStarmap('超出安全计数范围'), highlightedStarIDs.has(selected.id)?uiTextStarmap(' · 高亮星'):''):'')+(Number.isFinite(globalDepth)?uiTextStarmap("调用星等 · 全局静态调用层 {0}", globalDepth+1):uiTextStarmap('调用关系未知 · 基准星等'))+(selected?uiTextStarmap(' · 当前节点（选中增亮）'):'')+(cycle?uiTextStarmap(' · 候选闭环'):'');
 
  }
 }
@@ -880,61 +880,61 @@ function nodeResults(announce=true){
   let button=previous.get(n.id);if(!button){button=document.createElement('button');button.className='result';button.type='button';button.dataset.nodeID=n.id;button.append(document.createElement('code'),document.createElement('span'));const path=document.createElement('small');path.className='result-path';button.lastChild.append(path);appendSourceLabel(button.lastChild,n);button.onclick=()=>{const node=nodeByID.get(button.dataset.nodeID);if(node)select(node);};}
   const mark=button.firstChild,label=button.lastChild,path=label.querySelector('.result-path'),meta=label.querySelector('.source-meta');if(mark.textContent!==n.id)mark.textContent=n.id;
   if(!label.firstChild||label.firstChild===path)label.insertBefore(document.createTextNode(n.name),path);else if(label.firstChild.textContent!==n.name)label.firstChild.textContent=n.name;
-  const outlineMatch=nodeOutlineMatch(n,terms),locator=(n.path||'会话 #'+n.number)+(outlineMatch?' · L'+outlineMatch.line+' · '+outlineMatch.text:'');if(path.textContent!==locator)path.textContent=locator;
+  const outlineMatch=nodeOutlineMatch(n,terms),locator=(n.path||uiTextStarmap('会话 #')+n.number)+(outlineMatch?' · L'+outlineMatch.line+' · '+outlineMatch.text:'');if(path.textContent!==locator)path.textContent=locator;
   meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;
   keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
  }
  for(const child of [...box.children])if(!keep.has(child))child.remove();
- if(announce){const s=sourceByRegion.get(region);say(!results.length&&s?`${s.name} · ${sourceStateLabel(s.state)} · 当前范围暂无可检索节点`:q?`找到 ${results.length} 个节点`:'点击星点，开始探索');}redraw();
+ if(announce){const s=sourceByRegion.get(region);say(!results.length&&s?uiTextStarmap("{0} · {1} · 当前范围暂无可检索节点", s.name, sourceStateLabel(s.state)):q?uiTextStarmap("找到 {0} 个节点", results.length):uiTextStarmap('点击星点，开始探索'));}redraw();
 }
-function search(){resetDocumentBatch();searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say('输入问题后点击探索，检索文档正文。');redraw();return;}nodeResults();}
+function search(){resetDocumentBatch();searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say(uiTextStarmap('输入问题后点击探索，检索文档正文。'));redraw();return;}nodeResults();}
 
-function nodeDetailText(n){if(n.readState==='unavailable')return '正文暂不可读取；当前仅显示文件信息，其他文件继续索引。';if(n.readState==='pending')return '当前内容等待分批复核；仅显示文件信息。';return n.text||'此节点仅索引名称，尚未读取正文。';}
-function select(n,focus=true){if(selected?.id!==n.id){beginGraphTransition();$('detail').scrollTop=0;}$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=nodeDetailText(n);const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
+function nodeDetailText(n){if(n.readState==='unavailable')return uiTextStarmap('正文暂不可读取；当前仅显示文件信息，其他文件继续索引。');if(n.readState==='pending')return uiTextStarmap('当前内容等待分批复核；仅显示文件信息。');return n.text||uiTextStarmap('此节点仅索引名称，尚未读取正文。');}
+function select(n,focus=true){if(selected?.id!==n.id){beginGraphTransition();$('detail').scrollTop=0;}$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?uiTextStarmap('CONVERSATION / 会话'):n.region==='workspace'?uiTextStarmap('WORKSPACE / 工作区'):uiTextStarmap('REFERENCE / 引用');$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||uiTextStarmap('会话 #')+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=nodeDetailText(n);const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=uiTextStarmap("{0} 条连接 · {1}", edges.length, n.kind==='symbol'?uiTextStarmap('声明附近片段'):(n.size||0)+uiTextStarmap(' 字节'));$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
 function renderCodeInsight(n){
  const on=codeView||n.kind==='symbol';$('code-insight').hidden=!on;if(!on)return;
- $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):'文件 / 模块视角';
+ $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):uiTextStarmap('文件 / 模块视角');
  $('code-open').hidden=!n.path||n.kind==='directory';const spec={root:n.root,path:n.path,readOnly:true,origin:n.origin||'',knowledgeWorkspace:graph.workspace};if(n.line){spec.line=n.line;spec.endLine=n.endLine;spec.codeHash=n.contentHash;}if(n.source)spec.source=n.source;if(n.format)spec.format=n.format;$('code-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));
  const byID=nodeByID,edges=graph.edges;
- function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');const confidence=evidenceConfidenceLabel(edge?.confidence);if(confidence){const tag=document.createElement('small');tag.textContent=confidence;b.append(tag);}b.title=(node.path||'')+' / '+node.id+(edge?.evidence?' / '+edge.evidence:'');b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent='仅显示前24项，可用函数名继续搜索。';box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent='当前索引内未发现；不代表项目中不存在。';box.append(p);}}
+ function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');const confidence=evidenceConfidenceLabel(edge?.confidence);if(confidence){const tag=document.createElement('small');tag.textContent=confidence;b.append(tag);}b.title=(node.path||'')+' / '+node.id+(edge?.evidence?' / '+edge.evidence:'');b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent=uiTextStarmap('仅显示前24项，可用函数名继续搜索。');box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent=uiTextStarmap('当前索引内未发现；不代表项目中不存在。');box.append(p);}}
  const mapped=(es,dir)=>es.map(e=>({node:byID.get(e[dir]),edge:e})).filter(x=>x.node);
- const hierarchy=[...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.to===n.id),'from').map(x=>({...x,label:'上级 / '})),...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.from===n.id),'to').map(x=>({...x,label:'声明 / '}))];
- list('code-hierarchy','代码层级',hierarchy);list('code-callers','调用关系 ←',mapped(edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.to===n.id),'from'));list('code-callees','调用关系 →',mapped(edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.from===n.id),'to'));
- list('code-imports','导入路径证据',mapped(edges.filter(e=>e.kind==='imports'&&(e.from===n.id||e.from===n.parentFile)),'to'));
+ const hierarchy=[...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.to===n.id),'from').map(x=>({...x,label:uiTextStarmap('上级 / ')})),...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.from===n.id),'to').map(x=>({...x,label:uiTextStarmap('声明 / ')}))];
+ list('code-hierarchy',uiTextStarmap('代码层级'),hierarchy);list('code-callers',uiTextStarmap('调用关系 ←'),mapped(edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.to===n.id),'from'));list('code-callees',uiTextStarmap('调用关系 →'),mapped(edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.from===n.id),'to'));
+ list('code-imports',uiTextStarmap('导入路径证据'),mapped(edges.filter(e=>e.kind==='imports'&&(e.from===n.id||e.from===n.parentFile)),'to'));
  const unresolved=(graph.code?.unresolvedRelations||[]).filter(r=>r.from===n.id||r.file===n.id),unresolvedBox=$('code-unresolved');unresolvedBox.replaceChildren();
- const unresolvedTitle=document.createElement('h3');unresolvedTitle.textContent='未解析关系 · '+unresolved.length+(graph.code?.relationsTruncated?'（记录达到上限）':'');unresolvedBox.append(unresolvedTitle);
- const reasons={dynamic_binding:'动态绑定',ambiguous_name:'名称歧义',outside_index_or_unknown_binding:'索引外或绑定未知',outside_index_or_unresolved_path:'索引外或路径未解析'};
- for(const r of unresolved.slice(0,24)){const file=byID.get(r.file),row=document.createElement(file?.path?'a':'p');row.className='code-relation';row.textContent=(r.kind==='import'?'导入 / ':'调用 / ')+r.name+(r.line?' · L'+r.line:'');const reason=document.createElement('small');reason.textContent=reasons[r.reason]||'未解析';row.append(reason);if(file?.path){const link={root:file.root,path:file.path,origin:file.origin||'',readOnly:true,knowledgeWorkspace:graph.workspace,codeHash:file.contentHash};if(file.source)link.source=file.source;if(r.line)link.line=r.line;row.dataset.filePreview='';row.href='/#file='+encodeURIComponent(JSON.stringify(link));row.target='_blank';row.rel='noopener';row.title='查看源位置 · '+file.path;}unresolvedBox.append(row);}
- if(unresolved.length>24||!unresolved.length){const p=document.createElement('p');p.className='code-caveat';p.textContent=unresolved.length>24?'仅显示前24项；更多记录可在索引证据中检查。':'当前记录未发现；不代表没有未解析关系。';unresolvedBox.append(p);}
+ const unresolvedTitle=document.createElement('h3');unresolvedTitle.textContent=uiTextStarmap('未解析关系 · ')+unresolved.length+(graph.code?.relationsTruncated?uiTextStarmap('（记录达到上限）'):'');unresolvedBox.append(unresolvedTitle);
+ const reasons={dynamic_binding:uiTextStarmap('动态绑定'),ambiguous_name:uiTextStarmap('名称歧义'),outside_index_or_unknown_binding:uiTextStarmap('索引外或绑定未知'),outside_index_or_unresolved_path:uiTextStarmap('索引外或路径未解析')};
+ for(const r of unresolved.slice(0,24)){const file=byID.get(r.file),row=document.createElement(file?.path?'a':'p');row.className='code-relation';row.textContent=(r.kind==='import'?uiTextStarmap('导入 / '):uiTextStarmap('调用 / '))+r.name+(r.line?' · L'+r.line:'');const reason=document.createElement('small');reason.textContent=reasons[r.reason]||uiTextStarmap('未解析');row.append(reason);if(file?.path){const link={root:file.root,path:file.path,origin:file.origin||'',readOnly:true,knowledgeWorkspace:graph.workspace,codeHash:file.contentHash};if(file.source)link.source=file.source;if(r.line)link.line=r.line;row.dataset.filePreview='';row.href='/#file='+encodeURIComponent(JSON.stringify(link));row.target='_blank';row.rel='noopener';row.title=uiTextStarmap('查看源位置 · ')+file.path;}unresolvedBox.append(row);}
+ if(unresolved.length>24||!unresolved.length){const p=document.createElement('p');p.className='code-caveat';p.textContent=unresolved.length>24?uiTextStarmap('仅显示前24项；更多记录可在索引证据中检查。'):uiTextStarmap('当前记录未发现；不代表没有未解析关系。');unresolvedBox.append(p);}
  const adj=new Map();for(const e of edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind))){if(!adj.has(e.from))adj.set(e.from,[]);adj.get(e.from).push(e.to)}
  let cycle=null,visited=0;const pending=[[n.id]];while(pending.length&&visited++<600){const route=pending.shift();if(route.length>12)continue;for(const to of adj.get(route.at(-1))||[]){if(to===n.id){cycle=[...route,to];break;}if(!route.includes(to)&&pending.length<600)pending.push([...route,to]);}if(cycle)break;}
- $('code-recursion').textContent=cycle?'静态候选闭环：'+cycle.map(id=>byID.get(id)?.name||id).join(' → '):'未发现12层 / 600步范围内的候选闭环；不构成无递归证明。';
+ $('code-recursion').textContent=cycle?uiTextStarmap('静态候选闭环：')+cycle.map(id=>byID.get(id)?.name||id).join(' → '):uiTextStarmap('未发现12层 / 600步范围内的候选闭环；不构成无递归证明。');
 }
 function syncCodeView(){for(const [id,on]of [['view-code',codeView],['view-knowledge',!codeView]]){$(id).setAttribute('aria-pressed',String(on));$(id).disabled=loading;}$('code-tools').hidden=!codeView;$('retrieval-mode').disabled=codeView;document.body.classList.toggle('code-view',codeView);}
 $('view-code').onclick=()=>{if(loading||codeView)return;aiExplorer.cancel();$('answer').textContent='';$('usage').textContent='';$('ai-found').replaceChildren();codeView=true;syncCodeView();load()};$('view-knowledge').onclick=()=>{if(loading||!codeView)return;aiExplorer.cancel();$('answer').textContent='';$('usage').textContent='';$('ai-found').replaceChildren();codeView=false;syncCodeView();load()};
-if($('call-depth')){callDepth=$('call-depth').value;$('call-depth').onchange=()=>{beginGraphTransition();relationshipOverview();callDepth=$('call-depth').value;if(selected){focusCode=true;$('focus-code').setAttribute('aria-pressed','true');}else say('先选中节点，深度将用于向外聚焦。');invalidateView();redraw();};}
-$('edge-mode').onchange=()=>{beginGraphTransition();relationshipOverview();edgeMode=$('edge-mode').value;redraw()};$('focus-code').onclick=()=>{beginGraphTransition();relationshipOverview();focusCode=!focusCode;$('focus-code').setAttribute('aria-pressed',String(focusCode));if(focusCode&&!selected)say('先选中一个文件或函数，再查看指定深度的关系。');redraw()};syncCodeView();
+if($('call-depth')){callDepth=$('call-depth').value;$('call-depth').onchange=()=>{beginGraphTransition();relationshipOverview();callDepth=$('call-depth').value;if(selected){focusCode=true;$('focus-code').setAttribute('aria-pressed','true');}else say(uiTextStarmap('先选中节点，深度将用于向外聚焦。'));invalidateView();redraw();};}
+$('edge-mode').onchange=()=>{beginGraphTransition();relationshipOverview();edgeMode=$('edge-mode').value;redraw()};$('focus-code').onclick=()=>{beginGraphTransition();relationshipOverview();focusCode=!focusCode;$('focus-code').setAttribute('aria-pressed',String(focusCode));if(focusCode&&!selected)say(uiTextStarmap('先选中一个文件或函数，再查看指定深度的关系。'));redraw()};syncCodeView();
 
 function syncGraphChrome(){
- stellarLogbook.observe(graph,{code:codeView,region});
+ stellarLogbook.observe({...graph,sources:sourceCatalog},{code:codeView,region});
  $('counts').textContent=`${graph.nodes.length} STARS / ${graph.edges.length} CONNECTIONS`;
- $('code-summary').textContent=graph.code?`${graph.code.files} 份源码 · ${graph.code.symbols} 个声明 · ${graph.code.calls} 条调用候选 · ${graph.code.typedCalls||0} 条类型绑定 · ${graph.code.unresolved} 个未解析调用 · ${graph.code.unresolvedImports||0} 个未解析导入`:'';
- $('warnings').textContent=[...(graph.warnings||[]),...(graph.code?.diagnostics||[]),...(graph.truncated?['索引达到数量、深度或时间上限；未覆盖全部文件。']:[])].join('\n');
+ $('code-summary').textContent=graph.code?uiTextStarmap("{0} 份源码 · {1} 个声明 · {2} 条调用候选 · {3} 条类型绑定 · {4} 个未解析调用 · {5} 个未解析导入", graph.code.files, graph.code.symbols, graph.code.calls, graph.code.typedCalls||0, graph.code.unresolved, graph.code.unresolvedImports||0):'';
+ $('warnings').textContent=[...(graph.warnings||[]),...(graph.code?.diagnostics||[]),...(graph.truncated?[uiTextStarmap('索引达到数量、深度或时间上限；未覆盖全部文件。')]:[])].join('\n');
  const box=$('regions'),previous=new Map([...box.children].map(el=>[el.dataset.region,el])),keep=new Set();
  sourceCatalog=currentSources();
  // A removed source does not silently broaden an existing search to all sources.
  // Retain its selected chip until the user explicitly chooses another region.
- if(region&&!sourceCatalog.some(s=>s.region===region)){const old=previous.get(region)?.sourceDescriptor;sourceCatalog.push({id:old?.id||region,name:old?.name||fallbackSourceName(region),type:old?.type||'',region,state:'unavailable',nodeCount:graph.nodes.filter(n=>n.region===region).length,detached:true,message:'当前索引不再报告此来源，已保留筛选。请选择其他星域以继续。'});}
+ if(region&&!sourceCatalog.some(s=>s.region===region)){const old=previous.get(region)?.sourceDescriptor;sourceCatalog.push({id:old?.id||region,name:old?.name||fallbackSourceName(region),type:old?.type||'',region,state:'unavailable',nodeCount:graph.nodes.filter(n=>n.region===region).length,detached:true,message:uiTextStarmap('当前索引不再报告此来源，已保留筛选。请选择其他星域以继续。')});}
  sourceByRegion=new Map(sourceCatalog.map(s=>[s.region,s]));
- for(const [i,s]of [{region:'',name:'全部星域'},...sourceCatalog].entries()){
+ for(const [i,s]of [{region:'',name:uiTextStarmap('全部星域')},...sourceCatalog].entries()){
   const r=s.region;let button=previous.get(r);if(!button){button=document.createElement('button');button.type='button';button.dataset.region=r;button.append(document.createElement('span'),document.createElement('small'));button.firstChild.className='source-chip-name';button.lastChild.className='source-chip-meta';button.onclick=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiExplorer.cancel();$('ai-found').replaceChildren();$('answer').textContent='';$('usage').textContent='';selected=null;revealPanel($('detail'),false);region=button.dataset.region;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);syncGraphChrome();search();};}
   button.sourceDescriptor=s;button.classList.toggle('source-chip',!!r);button.dataset.state=s.state||'';button.firstChild.textContent=s.name;
-  const state=s.detached?'已移除':sourceCoverageState(s),type=sourceTypeLabel(s.type),meta=r?`${type} · ${state} · ${s.nodeCount} 颗星`:'';
-  button.dataset.count=r?String(s.nodeCount):String(graph.nodes.length);button.lastChild.textContent=r?state:'已索引节点，非文件总数';button.lastChild.hidden=false;button.title=r?[s.name,meta,'来源 #'+s.id,sourceCoverageLabel(s),s.message].filter(Boolean).join(' · '):'查看全部已索引来源';button.setAttribute('aria-label',r?s.name+'，'+meta+'，来源 '+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
+  const state=s.detached?uiTextStarmap('已移除'):sourceCoverageState(s),type=sourceTypeLabel(s.type),meta=r?uiTextStarmap("{0} · {1} · {2} 颗星", type, state, s.nodeCount):'';
+  button.dataset.count=r?String(s.nodeCount):String(graph.nodes.length);button.lastChild.textContent=r?state:uiTextStarmap('已索引节点，非文件总数');button.lastChild.hidden=false;button.title=r?[s.name,meta,uiTextStarmap('来源 #')+s.id,sourceCoverageLabel(s),s.message].filter(Boolean).join(' · '):uiTextStarmap('查看全部已索引来源');button.setAttribute('aria-label',r?s.name+'，'+meta+uiTextStarmap('，来源 ')+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
  }
  for(const child of [...box.children])if(!keep.has(child))child.remove();
  const catalog=$('source-catalog'),prior=new Map([...catalog.children].map(el=>[el.dataset.region,el])),retained=new Set();
- for(const [i,s]of sourceCatalog.entries()){let item=prior.get(s.region);if(!item){item=document.createElement('li');item.dataset.region=s.region;item.append(document.createElement('strong'),document.createElement('span'),document.createElement('small'));}item.dataset.state=s.state;item.classList.toggle('source-current',s.region===region);item.children[0].textContent=s.name;item.children[1].textContent=`${sourceTypeLabel(s.type)} · ${s.detached?'已移除':sourceStateLabel(s.state)} · ${s.nodeCount} 颗星 · 来源 #${s.id}`+(s.region===region?' · 当前筛选':'');item.children[2].textContent=[sourceCoverageLabel(s),s.message].filter(Boolean).join('。')||(s.type==='mcp'?'仅已保存的工具名称与说明；不调用工具，也不读取工具执行结果。':s.state==='ready'&&!s.nodeCount?'当前来源尚无可索引节点。':'');item.children[2].hidden=!item.children[2].textContent;retained.add(item);if(catalog.children[i]!==item)catalog.insertBefore(item,catalog.children[i]||null);}
+ for(const [i,s]of sourceCatalog.entries()){let item=prior.get(s.region);if(!item){item=document.createElement('li');item.dataset.region=s.region;item.append(document.createElement('strong'),document.createElement('span'),document.createElement('small'));}item.dataset.state=s.state;item.classList.toggle('source-current',s.region===region);item.children[0].textContent=s.name;item.children[1].textContent=uiTextStarmap("{0} · {1} · {2} 颗星 · 来源 #{3}", sourceTypeLabel(s.type), s.detached?uiTextStarmap('已移除'):sourceStateLabel(s.state), s.nodeCount, s.id)+(s.region===region?uiTextStarmap(' · 当前筛选'):'');item.children[2].textContent=[sourceCoverageLabel(s),s.message].filter(Boolean).join('。')||(s.type==='mcp'?uiTextStarmap('仅已保存的工具名称与说明；不调用工具，也不读取工具执行结果。'):s.state==='ready'&&!s.nodeCount?uiTextStarmap('当前来源尚无可索引节点。'):'');item.children[2].hidden=!item.children[2].textContent;retained.add(item);if(catalog.children[i]!==item)catalog.insertBefore(item,catalog.children[i]||null);}
  for(const item of [...catalog.children])if(!retained.has(item))item.remove();$('source-catalog-section').hidden=!sourceCatalog.length;
  syncNodeSourceChrome();
 }
@@ -946,7 +946,7 @@ function drawLiveGhosts(now,drift){
  }ctx.restore();liveGhosts=remaining;
 }
 function applyLiveUpdate(update,initial=false){
- if(!update||typeof update.revision!=='string'||!Array.isArray(update.nodes)||!Array.isArray(update.edges))throw Error('自动同步响应不完整');
+ if(!update||typeof update.revision!=='string'||!Array.isArray(update.nodes)||!Array.isArray(update.edges))throw Error(uiTextStarmap('自动同步响应不完整'));
  if(documentBatch){
   const incoming=new Map(update.nodes.map(node=>[node.id,node])),removed=new Set(update.removedNodes||[]);
   const activeSources=Array.isArray(update.sources)?new Set(update.sources.filter(source=>!['removed','disabled'].includes(source.state)).map(source=>source.id)):null;
@@ -957,17 +957,17 @@ function applyLiveUpdate(update,initial=false){
    return current&&['origin','path','source','contentHash','modified','size'].some(field=>file[field]!==undefined&&current[field]!==undefined&&file[field]!==current[field]);
   });
   if(graph.workspace!==update.workspace||invalidHits.length){
-   documentGeneration++;documentAbort?.abort();resetDocumentBatch();$('results').textContent='检索来源已变化，请重新探索文档正文。';$('document-insight').hidden=true;
+   documentGeneration++;documentAbort?.abort();resetDocumentBatch();$('results').textContent=uiTextStarmap('检索来源已变化，请重新探索文档正文。');$('document-insight').hidden=true;
    if(selected?.documentCitation&&invalidHits.some(hit=>hit.file.id===selected.id)){filePreview.close();selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
   }
  }
- if(initial||update.workspace!==graph.workspace)clearEvidencePath('星图已同步，请选择路径节点。',true);
+ if(initial||update.workspace!==graph.workspace)clearEvidencePath(uiTextStarmap('星图已同步，请选择路径节点。'),true);
  else if(update.revision!==liveCursor){
-  if(pathAbort)clearEvidencePath('查询期间索引已更新，请重新查询。');
+  if(pathAbort)clearEvidencePath(uiTextStarmap('查询期间索引已更新，请重新查询。'));
   else if(pathResult){
    const ids=new Set(pathResult.nodes.map(n=>n.id)),keys=new Set(pathResult.steps.map(s=>edgeKey(s.edge)));
    const changed=!pathResult.found||(update.reset&&pathResult.nodes.some(n=>!update.nodes.some(current=>current.id===n.id)))||(update.removedNodes||[]).some(id=>ids.has(id))||update.nodes.some(n=>ids.has(n.id)&&liveWireNodes.get(n.id)!==JSON.stringify(n))||(update.removedEdges||[]).some(e=>keys.has(edgeKey(e)))||(update.reset&&pathResult.steps.some(s=>!update.edges.some(e=>edgeKey(e)===edgeKey(s.edge))));
-   if(changed)clearEvidencePath('路径涉及的节点或关系已变化，请重新查询。');
+   if(changed)clearEvidencePath(uiTextStarmap('路径涉及的节点或关系已变化，请重新查询。'));
    else pathResult.revision=update.revision; // Every displayed node and edge is still present, unchanged.
   }
  }
@@ -975,7 +975,7 @@ function applyLiveUpdate(update,initial=false){
  if(initial||differentWorkspace||!graph.workspace){
   if(differentWorkspace)filePreview.close();
   if(!initial)graphGeneration++;
-  if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='工作区资料已更新，当前理解已中止；请重新探索。';aiExplorer.cancel();
+  if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent=uiTextStarmap('工作区资料已更新，当前理解已中止；请重新探索。');aiExplorer.cancel();
   liveGhosts=[];liveAnimationUntil=0;liveStableScenes.clear();liveReconcile=false;liveWireNodes=new Map(update.nodes.map(n=>[n.id,JSON.stringify(n)]));
   graph={workspace:update.workspace,nodes:update.nodes,edges:update.edges,sources:Array.isArray(update.sources)?update.sources:null,warnings:update.warnings||[],truncated:!!update.truncated,code:update.code};
   documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;selected=null;revealPanel($('detail'),false);region='';layout();syncGraphChrome();search();const progress=progressiveSummary(graph);if(progress)say(progress);return;
@@ -996,7 +996,7 @@ function applyLiveUpdate(update,initial=false){
  if(documentChanged){documentGeneration++;documentAbort?.abort();}
  if(Array.isArray(update.sources))graph.sources=update.sources;
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
- if(!changed.length&&!removed.size&&!edgesChanged){say(progressiveSummary(graph)||(update.stale?'正在建立最新索引 · 当前显示上次完整星图':'已同步'));if(!cosmicScene?.members.length)redraw();return;}
+ if(!changed.length&&!removed.size&&!edgesChanged){say(progressiveSummary(graph)||(update.stale?uiTextStarmap('正在建立最新索引 · 当前显示上次完整星图'):uiTextStarmap('已同步')));if(!cosmicScene?.members.length)redraw();return;}
  const now=performance.now(),motion=motionEnabled(),selectionID=selected?.id,selectionChanged=changed.some(n=>n.id===selectionID),citation=selected?.documentCitation;
  if(selectionChanged&&incoming.get(selectionID)?.origin!==selected?.origin)filePreview.close();
  if(motion)for(const star of cosmicStars){if(removed.has(star.n.id)&&star.p.onScreen)liveGhosts.push({cosmic:true,x:star.x,y:star.y,z:star.z,color:mapPalette.star,radius:1.3,start:now});}
@@ -1008,15 +1008,15 @@ function applyLiveUpdate(update,initial=false){
  aiExplorer.updated();
  if(selectionID&&!oldNodes.has(selectionID)){filePreview.close();selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
  else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
- if(layoutChanged)layout(true);else invalidateView();if(selected&&citation&&!selectionChanged)selected={...nodeByID.get(selectionID),documentCitation:citation};if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent='当前原文已更新；保留检索结果，重新探索可核对最新摘录。';}
+ if(layoutChanged)layout(true);else invalidateView();if(selected&&citation&&!selectionChanged)selected={...nodeByID.get(selectionID),documentCitation:citation};if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent=uiTextStarmap('当前原文已更新；保留检索结果，重新探索可核对最新摘录。');}
  refreshView();ensureCosmicView();syncGraphChrome();
- if(selected){$('detail-name').textContent=selected.name;$('detail-path').textContent=(selected.path||'会话 #'+selected.number)+(selected.line?' : '+selected.line+'–'+selected.endLine:'');$('detail-region').textContent=selected.kind==='symbol'?'CODE / '+selected.language:selected.region==='sessions'?'CONVERSATION / 会话':selected.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('insert').disabled=selected.kind==='directory';$('understand').disabled=selected.kind==='directory';$('neighbors').textContent=`${(edgeAdjacency.get(selected.id)||[]).length} 条连接`;if(selectionChanged){$('detail-text').textContent=nodeDetailText(selected);$('document-insight').hidden=true;delete selected.documentCitation;}renderCodeInsight(selected);}
+ if(selected){$('detail-name').textContent=selected.name;$('detail-path').textContent=(selected.path||uiTextStarmap('会话 #')+selected.number)+(selected.line?' : '+selected.line+'–'+selected.endLine:'');$('detail-region').textContent=selected.kind==='symbol'?'CODE / '+selected.language:selected.region==='sessions'?uiTextStarmap('CONVERSATION / 会话'):selected.region==='workspace'?uiTextStarmap('WORKSPACE / 工作区'):uiTextStarmap('REFERENCE / 引用');$('insert').disabled=selected.kind==='directory';$('understand').disabled=selected.kind==='directory';$('neighbors').textContent=uiTextStarmap("{0} 条连接", (edgeAdjacency.get(selected.id)||[]).length);if(selectionChanged){$('detail-text').textContent=nodeDetailText(selected);$('document-insight').hidden=true;delete selected.documentCitation;}renderCodeInsight(selected);}
  liveAnimationUntil=motion?now+(added.length?Math.min(added.length-1,20)*32+680:380):0;
- say(progressiveSummary(graph)||(update.stale?'正在建立最新索引 · 当前显示上次完整星图':'已同步')+(added.length?' · '+added.length+' 颗新星':'')+(removed.size?' · '+removed.size+' 个节点移出':'')+(changed.length>added.length?' · '+(changed.length-added.length)+' 个节点更新':''));redraw();
+ say(progressiveSummary(graph)||(update.stale?uiTextStarmap('正在建立最新索引 · 当前显示上次完整星图'):uiTextStarmap('已同步'))+(added.length?' · '+added.length+uiTextStarmap(' 颗新星'):'')+(removed.size?' · '+removed.size+uiTextStarmap(' 个节点移出'):'')+(changed.length>added.length?' · '+(changed.length-added.length)+uiTextStarmap(' 个节点更新'):''));redraw();
 }
 async function load(){
- clearEvidencePath('正在同步星图，请同步完成后查询。',true);
- if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView,input=recoveryInput;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
+ clearEvidencePath(uiTextStarmap('正在同步星图，请同步完成后查询。'),true);
+ if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView,input=recoveryInput;loadAbort=new AbortController();syncCodeView();say(uiTextStarmap('正在连接本地星图…'));
  if(!recoveryAttempt)recoveryAttempt={workspace:graph.workspace||'',input};
  try{
   const identity=await api('/identity?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
@@ -1025,7 +1025,7 @@ async function load(){
   if(recoveryScopeLoaded!==identity.workspace&&recoveryAttempt.workspace!==identity.workspace)recoveryAttempt={workspace:identity.workspace,input:recoveryAttempt.workspace?input:recoveryAttempt.input};
   if(identityChanged){applyLiveUpdate({workspace:identity.workspace,revision:'pending',reset:true,nodes:[],edges:[],sources:[],warnings:[]},true);liveCursor='';}
   const cached=await window.AideStarmapCache?.read(mode?'code':'knowledge',cacheIdentity).catch(()=>null);if(locked||generation!==graphGeneration||mode!==codeView)return;
-  if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
+  if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say(uiTextStarmap('已载入本地星图 · 正在同步最新变化…'));}
   const update=await api('/updates?background=1&code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(update.workspace!==identity.workspace){cacheIdentity=null;graph={nodes:[],edges:[],sources:[],warnings:[]};liveCursor='';return;}
   if(cached?.revision===liveCursor){applyLiveUpdate(update);}
@@ -1041,12 +1041,12 @@ async function load(){
    if(changedWorkspace){aiExplorer.cancel();aiAbort=null;$('answer').textContent='';$('usage').textContent='';$('question').value='';$('ai-found').replaceChildren();resetDocumentBatch();}
    if(pendingRecoveredView?.version===1&&!params.has('code')&&typeof pendingRecoveredView.codeView==='boolean'&&pendingRecoveredView.codeView!==codeView){codeView=pendingRecoveredView.codeView;graphGeneration++;return;}
   }
-  if(pendingRecoveredView){restoreSkyView(pendingRecoveredView);pendingRecoveredView=null;}liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');
+  if(pendingRecoveredView){restoreSkyView(pendingRecoveredView);pendingRecoveredView=null;}liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();if(update.stale)say(uiTextStarmap('正在建立最新索引 · 当前显示上次完整星图'));
  }catch(e){if(!locked&&e.name!=='AbortError'){liveFailures++;stellarLogbook.interrupted();say(e.message);}}
  finally{loading=false;syncCodeView();redraw();if(!locked&&generation!==graphGeneration)load();else scheduleLive(progressiveDelay(graph));}
 }
-function syncMotion(){ $('motion').textContent=animate?'动效 · 开':'动效 · 关';$('motion').setAttribute('aria-pressed',String(animate)); }
-$('motion').onclick=()=>{if(motionReduced()){say('当前已减少动态效果，请在工作台外观或系统设置中调整。');return;}animate=!animate;if(!animate){for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();}syncMotion();redraw();};syncMotion();
+function syncMotion(){ $('motion').textContent=animate?uiTextStarmap('动效 · 开'):uiTextStarmap('动效 · 关');$('motion').setAttribute('aria-pressed',String(animate)); }
+$('motion').onclick=()=>{if(motionReduced()){say(uiTextStarmap('当前已减少动态效果，请在工作台外观或系统设置中调整。'));return;}animate=!animate;if(!animate){for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();}syncMotion();redraw();};syncMotion();
 addEventListener('visibilitychange',()=>{
  const now=performance.now();cancelAnimationFrame(frame);frame=0;
  if(document.hidden){persistSkyView();scheduleLive(2000);pausedAt=now;drag=null;settlePanels();}
@@ -1055,7 +1055,7 @@ addEventListener('visibilitychange',()=>{
 $('search-form').onsubmit=e=>{e.preventDefault();if(retrievalMode()==='nodes')search();else searchDocuments()};$('search').oninput=search;$('close-detail').onclick=()=>{beginGraphTransition();selected=null;revealPanel($('detail'),false);redraw()};$('home').onclick=()=>{if(cosmicEnabled&&cosmos&&cosmicKey!==cosmos.root.key)enterCosmic(cosmos.root.key);else moveCamera({yaw:0,pitch:.1,zoom:1},850);};
 canvas.onpointerdown=e=>{if(locked||cosmicEnabled&&cosmicFlight)return;interruptCamera();interactionUntil=performance.now()+220;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};canvas.setPointerCapture(e.pointerId);};
 canvas.onpointermove=e=>{if(!drag){if(cosmicEnabled&&!cosmicFlight){const gate=cosmicGatePick(e.clientX,e.clientY),r=gate?null:cosmicPick(e.clientX,e.clientY),next=gate?.targetKey||r?.group.key||'';if(next!==cosmicHover){cosmicHover=next;canvas.style.cursor=next?'pointer':'grab';redraw();}}return;}yaw+= (e.clientX-drag.x)/width*2;if(cosmicEnabled)yaw=clamp(yaw,-2.5,2.5);pitch=clamp(pitch+(e.clientY-drag.y)/height*1.5,-1,1);drag.x=e.clientX;drag.y=e.clientY;interactionUntil=performance.now()+220;redraw();};
-canvas.onpointerup=e=>{if(drag&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5){if(cosmicEnabled){const gate=cosmicGatePick(e.clientX,e.clientY);if(gate){enterCosmic(gate.targetKey);say('跃迁星门已连接至 '+gate.targetLabel+' · '+gate.count+' 条真实索引连线。');}else{const star=cosmicStarPick(e.clientX,e.clientY);if(star){if(star.local)cosmicLocate(star.n);else focusCosmicStar(star);select(star.n,false);}else{const r=cosmicPick(e.clientX,e.clientY);if(r&&!r.group.nodeID){cosmicSelected=r.group.key;cosmicFocusID='';cosmicAimX=cosmicAimY=0;syncCosmicNav();say('已选中 '+r.group.label+'，双击或继续滚轮靠近，进入这个星域。');redraw();}}}}else{let nearest=null,distance=20;for(const p of projection){if(!p.onScreen)continue;const d=Math.hypot(p.x-e.clientX,p.y-e.clientY);if(d<distance){nearest=p;distance=d;}}if(nearest)select(nearest.n,false);}}drag=null;interactionUntil=performance.now()+180;};
+canvas.onpointerup=e=>{if(drag&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5){if(cosmicEnabled){const gate=cosmicGatePick(e.clientX,e.clientY);if(gate){enterCosmic(gate.targetKey);say(uiTextStarmap('跃迁星门已连接至 ')+gate.targetLabel+' · '+gate.count+uiTextStarmap(' 条真实索引连线。'));}else{const star=cosmicStarPick(e.clientX,e.clientY);if(star){if(star.local)cosmicLocate(star.n);else focusCosmicStar(star);select(star.n,false);}else{const r=cosmicPick(e.clientX,e.clientY);if(r&&!r.group.nodeID){cosmicSelected=r.group.key;cosmicFocusID='';cosmicAimX=cosmicAimY=0;syncCosmicNav();say(uiTextStarmap('已选中 ')+r.group.label+uiTextStarmap('，双击或继续滚轮靠近，进入这个星域。'));redraw();}}}}else{let nearest=null,distance=20;for(const p of projection){if(!p.onScreen)continue;const d=Math.hypot(p.x-e.clientX,p.y-e.clientY);if(d<distance){nearest=p;distance=d;}}if(nearest)select(nearest.n,false);}}drag=null;interactionUntil=performance.now()+180;};
 canvas.ondblclick=e=>{if(!cosmicEnabled||cosmicFlight||locked)return;const star=cosmicStarPick(e.clientX,e.clientY);if(star){if(star.local)cosmicLocate(star.n);else{focusCosmicStar(star);const path=cosmos.pathFor(star.n.id),index=path.findIndex(g=>g.key===cosmicKey),child=path[index+1];if(child)enterCosmic(child.key,true,true);}select(star.n,false);return;}const r=cosmicPick(e.clientX,e.clientY);if(r&&!r.group.nodeID)enterCosmic(r.group.key);else if(cosmicScene?.group.parent)enterCosmic(cosmicScene.group.parent.key);};
 canvas.onpointerleave=()=>{cosmicHover='';canvas.style.cursor='grab';};
 canvas.onpointercancel=()=>{drag=null;};
@@ -1072,7 +1072,7 @@ canvas.addEventListener('wheel',e=>{
  if(!motionEnabled()){zoom=target;wheelZoom=null;}else{wheelZoom={target,last:now};}
  redraw();
 },{passive:false});
-$('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?'请依据原文关键词 '+$('search').value+' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。':codeView?'请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。':'请解释这个节点的内容、相关文件与证据缺口。';$('question').focus();askAI(false)};
+$('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?uiTextStarmap('请依据原文关键词 ')+$('search').value+uiTextStarmap(' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。'):codeView?uiTextStarmap('请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。'):uiTextStarmap('请解释这个节点的内容、相关文件与证据缺口。');$('question').focus();askAI(false)};
 const filePreview=window.AideStarmapPreview.create({origin:location.origin,workspace:()=>graph.workspace,locked:()=>locked,openWindow:href=>window.open(href,'_blank'),note:message=>say(message),key:crypto.randomUUID()});
 function openNodePreview(n){const match=nodeOutlineMatch(n,searchQuery.split(/\s+/).filter(Boolean));const href=pathSourceLink(selected?.id===n?.id&&selected.documentCitation?selected:n,match?.line);if(href)filePreview.open(href);}
 document.addEventListener('click',event=>{
@@ -1084,7 +1084,7 @@ const aiExplorer=window.AideStarmapAssist.create({
  busy(value){$('ask').disabled=value;$('find-ai').disabled=value;$('ai-stop').hidden=!value;$('answer').setAttribute('aria-busy',String(value));},
  scope(value){$('ai-scope').textContent=value;}
 });
-$('ai-stop').onclick=()=>{if(aiExplorer.cancel())$('answer').textContent='已停止本次探索，可以修改问题后重试。';};
+$('ai-stop').onclick=()=>{if(aiExplorer.cancel())$('answer').textContent=uiTextStarmap('已停止本次探索，可以修改问题后重试。');};
 async function askAI(find=false){
  if(locked)return;
  let spec;
@@ -1093,9 +1093,9 @@ async function askAI(find=false){
  const workspace=graph.workspace,mode=codeView,source=region,retrieval=retrievalMode();
  const job=aiExplorer.start(spec.label);aiAbort=job.controller;
  const current=()=>!locked&&aiExplorer.current(job)&&workspace===graph.workspace&&mode===codeView&&source===region&&retrieval===retrievalMode();
- const timeout=setTimeout(()=>{if(current()){aiExplorer.cancel();$('answer').textContent='探索超时，请缩小资料范围或稍后重试。';}},55000);
+ const timeout=setTimeout(()=>{if(current()){aiExplorer.cancel();$('answer').textContent=uiTextStarmap('探索超时，请缩小资料范围或稍后重试。');}},55000);
  job.controller.signal.addEventListener('abort',()=>clearTimeout(timeout),{once:true});
- $('answer').textContent='正在读取资料并生成回答…';$('usage').textContent='';$('ai-found').replaceChildren();
+ $('answer').textContent=uiTextStarmap('正在读取资料并生成回答…');$('usage').textContent='';$('ai-found').replaceChildren();
  try {
   const d=await api('/assist',{method:'POST',signal:job.controller.signal,body:JSON.stringify({query:spec.query,ids:spec.ids,workspace,code:mode,retrievalMode:retrieval!=='nodes'?'rag':'nodes',region:source})});
   if(!current())return;
@@ -1103,12 +1103,12 @@ async function askAI(find=false){
   window.AideStarmapAssist.render($('answer'),d.answer,references,ref=>{
    if(locked||workspace!==graph.workspace||mode!==codeView||source!==region||retrieval!==retrievalMode())return;
    const node=nodeByID.get(ref.node.id);
-   if(!node||node.origin!==ref.node.origin){say('来源已移出当前索引，请重新探索。');return;}
+   if(!node||node.origin!==ref.node.origin){say(uiTextStarmap('来源已移出当前索引，请重新探索。'));return;}
    if(ref.hit)selectDocument(ref.hit);else select(node);openNodePreview(ref.hit?{...node,format:ref.hit.file.format||node.format}:node);
   });
   if(d.retrieval){renderDocumentResults(d.retrieval,'ai-found');$('warnings').textContent=(d.retrieval.warnings||[]).join('\n');}
-  const u=d.usage||{};$('usage').textContent=[d.model,u.total!=null?'用量 '+u.total+' tokens'+(u.estimated?'（估算）':''):''].filter(Boolean).join(' · ');
-  for(const n of d.retrieval?[]:(d.references||[])){const b=document.createElement('button');b.type='button';b.className='result';const code=document.createElement('code'),label=document.createElement('span');code.textContent=n.id;label.textContent=n.name;appendSourceLabel(label,n);b.append(code,label);b.onclick=()=>{const node=nodeByID.get(n.id);if(node&&node.origin===n.origin){select(node);openNodePreview(node);}else say('来源已移出当前索引，请重新探索。');};$('ai-found').append(b);}
+  const u=d.usage||{};$('usage').textContent=[d.model,u.total!=null?uiTextStarmap('用量 ')+u.total+' tokens'+(u.estimated?uiTextStarmap('（估算）'):''):''].filter(Boolean).join(' · ');
+  for(const n of d.retrieval?[]:(d.references||[])){const b=document.createElement('button');b.type='button';b.className='result';const code=document.createElement('code'),label=document.createElement('span');code.textContent=n.id;label.textContent=n.name;appendSourceLabel(label,n);b.append(code,label);b.onclick=()=>{const node=nodeByID.get(n.id);if(node&&node.origin===n.origin){select(node);openNodePreview(node);}else say(uiTextStarmap('来源已移出当前索引，请重新探索。'));};$('ai-found').append(b);}
  }catch(e){if(current()&&e.name!=='AbortError')$('answer').textContent=e.message;}
  finally{clearTimeout(timeout);aiExplorer.finish(job);if(aiAbort===job.controller)aiAbort=null;}
 }
@@ -1119,11 +1119,11 @@ function requestInsertionSessions(){if(channel&&!locked)channel.postMessage({typ
 $('insert-session').addEventListener('focus',requestInsertionSessions);
 $('insert').onclick=()=>{
  if(locked||!selected)return;
- if(!channel){say('请从工作台的星图按钮打开，以连接会话。');return;}
+ if(!channel){say(uiTextStarmap('请从工作台的星图按钮打开，以连接会话。'));return;}
  const value=$('insert-session').value.trim();
  const target=value?insertionSessions.find(s=>s.id===value||String(s.number)===value.replace(/^#/,'')||('#'+s.number+' · '+s.title)===value):null;
- if(value&&!target){say('未找到目标会话，请选择列表中的会话或输入完整 ID／#编号。');requestInsertionSessions();return;}
- channel.postMessage({type:'insert',session:target?.id||'',id:selected.id,workspace:graph.workspace,origin:selected.origin||'',document:selected.documentCitation||null});say('正在插入目标会话草稿…');
+ if(value&&!target){say(uiTextStarmap('未找到目标会话，请选择列表中的会话或输入完整 ID／#编号。'));requestInsertionSessions();return;}
+ channel.postMessage({type:'insert',session:target?.id||'',id:selected.id,workspace:graph.workspace,origin:selected.origin||'',document:selected.documentCitation||null});say(uiTextStarmap('正在插入目标会话草稿…'));
 };
 if(channel){channel.onmessage=e=>{
  if(e.data?.type==='ack')say(e.data.message);
@@ -1133,7 +1133,7 @@ if(channel){channel.onmessage=e=>{
   insertionSessions=Array.isArray(e.data.sessions)?e.data.sessions:[];
   $('insert-sessions').replaceChildren(...insertionSessions.map(s=>{const option=document.createElement('option');option.value=s.id;option.label='#'+s.number+' · '+s.title;return option;}));
   const original=insertionSessions.find(s=>s.id===e.data.originalSession);
-  $('insert-target-note').textContent=(original?'默认原会话 #'+original.number+'；':'')+'支持完整 ID 或 #编号，仅插入草稿。';
+  $('insert-target-note').textContent=(original?uiTextStarmap('默认原会话 #')+original.number+'；':'')+uiTextStarmap('支持完整 ID 或 #编号，仅插入草稿。');
  }
 };}
 
@@ -1144,13 +1144,23 @@ function setLocked(value){
  // should clear or reload the graph; the first notification still initializes it.
  if(lockStateKnown&&locked===value)return;
  if(value&&!locked)persistSkyView();
- lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();if(value)filePreview.close();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryAttempt=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiExplorer.cancel();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';$('usage').textContent='';}else load();redraw();}
+ lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();if(value)filePreview.close();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath(uiTextStarmap('星图已锁定。'),true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryAttempt=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiExplorer.cancel();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';$('usage').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(()=>setLocked(LockCluster.effectiveLocked()));}else setLocked(false);
 for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();
 
 function respectMotion(){if(motionReduced()){animate=false;for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();syncMotion();redraw();}}
 addEventListener('aide:motion',respectMotion);motionMedia.addEventListener('change',respectMotion);
+// Repaint owned map chrome after a same-origin language preference change; no model request or page reload.
+window.addEventListener('aide:language', () => {
+  sourceCatalog = currentSources();
+  sourceByRegion = new Map(sourceCatalog.map(source => [source.region, source]));
+  syncMotion(); syncCodeView(); syncGraphChrome();
+  if (selected) select(selected, false);
+  if (retrievalMode() === 'nodes') nodeResults(false);
+  updateLayerLabels(); redraw();
+});
+
 window.aideUI?.subscribe(syncMapPalette);
 matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
 
@@ -1159,10 +1169,10 @@ function selectDocument(hit){
  select(hit.file);selected={...selected,...hit.file,origin:hit.file.origin||'',documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin:hit.file.origin||''}};
  if(Number.isSafeInteger(hit.line)&&hit.line>0){selected.line=hit.line;selected.endLine=hit.line;selected.contentHash=hit.hash;}
  syncNodeSourceChrome();$('detail-text').textContent=hit.text;$('document-insight').hidden=false;
- $('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;
+ $('document-locator').textContent=hit.id+' · '+hit.locator+uiTextStarmap(' · 段内字符偏移 ')+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;
  $('document-open').href=pathSourceLink(selected);
 }
-function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>{selectDocument(hit);if(id==='ai-found')openNodePreview(hit.file);};box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent='未检索到匹配原文；请检查关键词、来源范围与提取诊断。';box.append(p);}}
+function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>{selectDocument(hit);if(id==='ai-found')openNodePreview(hit.file);};box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent=uiTextStarmap('未检索到匹配原文；请检查关键词、来源范围与提取诊断。');box.append(p);}}
 async function searchDocuments(continuing=false){
  if(locked||loading)return;
  const mode=retrievalMode(),query=$('search').value,workspace=graph.workspace;
@@ -1172,7 +1182,7 @@ async function searchDocuments(continuing=false){
  const gen=++documentGeneration;
  documentAbort?.abort();documentAbort=new AbortController();$('document-next').disabled=true;
  if(!previous)resetDocumentBatch();
- say('正在提取与检索文档正文…');
+ say(uiTextStarmap('正在提取与检索文档正文…'));
  try{
   const d=await api('/documents/search',{method:'POST',signal:documentAbort.signal,body:JSON.stringify({query,mode,workspace,region,cursor:previous?.cursor||''})});
   if(locked||gen!==documentGeneration||workspace!==graph.workspace)return;
@@ -1180,11 +1190,13 @@ async function searchDocuments(continuing=false){
   documentBatch={key,cursor:d.nextCursor||'',hits:hits.filter(h=>!seen.has(h.id)&&seen.add(h.id))};
   renderDocumentResults({hits:documentBatch.hits});
   $('document-progress').hidden=false;
-  $('document-coverage').textContent=globalThis.aideI18n?.t('已检查 {0} / {1} 份已索引文档{2}{3}',d.scanned,d.total,d.matchOffset?globalThis.aideI18n.t(' · 已返回 {0} 条命中',d.matchOffset):'',d.nextCursor?globalThis.aideI18n.t(' · 可继续检索'):globalThis.aideI18n.t(' · 当前范围检查完毕'))||`已检查 ${d.scanned} / ${d.total} 份已索引文档${d.matchOffset?` · 已返回 ${d.matchOffset} 条命中`:''}${d.nextCursor?' · 可继续检索':' · 当前范围检查完毕'}`;
+  $('document-coverage').textContent=globalThis.aideI18n?.t(uiTextStarmap('已检查 {0} / {1} 份已索引文档{2}{3}'),d.scanned,d.total,d.matchOffset?globalThis.aideI18n.t(uiTextStarmap(' · 已返回 {0} 条命中'),d.matchOffset):'',d.nextCursor?globalThis.aideI18n.t(uiTextStarmap(' · 可继续检索')):globalThis.aideI18n.t(uiTextStarmap(' · 当前范围检查完毕')))||uiTextStarmap("已检查 {0} / {1} 份已索引文档{2}{3}", d.scanned, d.total, d.matchOffset?uiTextStarmap(" · 已返回 {0} 条命中", d.matchOffset):'', d.nextCursor?uiTextStarmap(' · 可继续检索'):uiTextStarmap(' · 当前范围检查完毕'));
   $('document-next').hidden=!d.nextCursor;
-  $('warnings').textContent=[...d.warnings,...(d.truncated?['索引／提取／结果达到限制，不能据此声称全文无匹配。']:[])].join('\n');
-  say(`${d.files} 份文档 · ${d.chunks} 个片段 · 累计 ${documentBatch.hits.length} 条结果 · ${mode==='original'?'逐字原文':d.engine?.startsWith('weighted-rrf')?'关键词 + 向量 RAG':'本地关键词 RAG'}`);
+  $('warnings').textContent=[...d.warnings,...(d.truncated?[uiTextStarmap('索引／提取／结果达到限制，不能据此声称全文无匹配。')]:[])].join('\n');
+  say(uiTextStarmap("{0} 份文档 · {1} 个片段 · 累计 {2} 条结果 · {3}", d.files, d.chunks, documentBatch.hits.length, mode==='original'?uiTextStarmap('逐字原文'):d.engine?.startsWith('weighted-rrf')?uiTextStarmap('关键词 + 向量 RAG'):uiTextStarmap('本地关键词 RAG')));
  }catch(e){if(!locked&&gen===documentGeneration&&e.name!=='AbortError'){resetDocumentBatch();say(e.message);}}
  finally{if(gen===documentGeneration)$('document-next').disabled=false;}
 }
 $('document-next').onclick=()=>searchDocuments(true);
+
+function uiTextStarmap(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

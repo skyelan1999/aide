@@ -18,11 +18,11 @@ Voice reply, voice and speed settings live in Settings → Voice Assistant. Qwen
 
 ![Actual Qwen configuration; no key or live synthesis](../images/current-20261017/07-qwen-tts.jpg)
 
-Actual cumulative session usage is separate from each request's context window. Parallel lanes do not share a single window. Missing upstream usage remains unknown; estimates are explicitly labeled. See the canonical [feature scope](../features.md) and [module design](../architecture/modules.md) for implementation boundaries.
+Actual cumulative session usage is separate from each request's context window. Parallel lanes do not share a single window. Missing upstream usage remains unknown; estimates are explicitly labeled. See [feature scope](features.md) and [architecture](architecture.md) for implementation boundaries.
 
 [简体中文](../user-guide.md) · **English**
 
-This guide follows the current `0.1.17.0 RC2` source workline. Published images may not include every candidate change described here; check [task records](../tasks/) and the [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
+This guide describes the public source workline. Published images may differ; verify the running build and its release receipt. Historical screenshots and task records retain their original acceptance scope. See [Installation](installation.md) for setup.
 
 ## 1. Find your way around
 
@@ -38,11 +38,11 @@ Open the aide logo → **Settings → Language**. Click **中文** or **English*
 
 Language switching updates product-owned text and starter prompts. It does **not** translate conversations, filenames, file contents, custom names, model responses, terminal output, plugin descriptions, or unknown provider/server diagnostics. Existing draft text remains unchanged. To request an English model answer, write your request in English or explicitly ask the model to answer in English.
 
-**English coverage (0.1.10.2 RC1):** all product-owned UI strings are localized. The 52 previously fragmented strings—whole sentences split into concatenated `t()` pieces—have been consolidated into complete sentences with `{0}`/`{1}` placeholders, so English mode no longer falls back to mixed Chinese fragments.
+English mode covers product-owned labels, settings, source/viewer errors, knowledge-map exploration/history and the phone capture page. It does not translate user text or installed plugins. See [Localization](localization.md) for validation scope.
 
 The login screen and standalone file view also provide a language selector. UI language does not convert currencies: CNY pricing remains CNY.
 
-Under **Appearance**, select Professional or Classic, each with Light, Dark, and System modes. System appearance and browser-default language are independent settings. **About** shows the running build version and the GitHub repository.
+Under **Appearance**, select Professional, Comfort or Classic, independently of Light, Dark or System mode. System appearance and browser-default language are independent settings. **About** shows the running build version and the GitHub repository.
 
 ### Settings overview
 
@@ -486,3 +486,8 @@ Open Messages → Reminders from the main toolbar. Each reminder can include a t
 ## Studio workbench background
 
 Settings → General → Appearance → Workbench background → Studio. Lightweight architectural light adapts to the theme without bundled video. Legacy whale preferences migrate to Studio; uploaded local media remains intact. Motion pauses in the background, while locked, or with reduced motion.
+
+
+## Current topic guides
+
+See [workspace/source paths](workspace-paths.md), [knowledge search and history](knowledge-map.md), [native realtime voice calls](assistant-voice-call.md), [plugin lifecycle](plugin-protocol.md), and [maintenance/recovery](operations.md). These English guides describe current workflows; historical screenshots above retain their original dates.

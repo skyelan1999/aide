@@ -4,16 +4,16 @@
   const LIMITS=Object.freeze({xml:4*1024*1024,asset:32*1024*1024,texture:8*1024*1024,total:128*1024*1024,links:2048,geometries:4096,assets:512,triangles:3000000});
   function normalizePath(value) {
     const path=String(value||'').replace(/\\/g,'/');
-    if(path.startsWith('/')||/^[a-z][a-z0-9+.-]*:/i.test(path)||/[\x00-\x1f?#]/.test(path))throw Error('资源路径必须位于当前工作区内');
-    const parts=[];for(const part of path.split('/')){if(!part||part==='.')continue;if(part==='..'){if(!parts.length)throw Error('资源路径超出当前工作区');parts.pop();}else parts.push(part);}return parts.join('/');
+    if(path.startsWith('/')||/^[a-z][a-z0-9+.-]*:/i.test(path)||/[\x00-\x1f?#]/.test(path))throw Error(uiTextUrdfPreview('资源路径必须位于当前工作区内'));
+    const parts=[];for(const part of path.split('/')){if(!part||part==='.')continue;if(part==='..'){if(!parts.length)throw Error(uiTextUrdfPreview('资源路径超出当前工作区'));parts.pop();}else parts.push(part);}return parts.join('/');
   }
   const directory=path=>String(path).split('/').slice(0,-1).join('/');
   const ancestors=path=>{const parts=directory(path).split('/').filter(Boolean),out=[];for(let i=parts.length;i>=0&&out.length<12;i--)out.push(parts.slice(0,i).join('/'));return out;};
   function reference(value) {
-    const name=String(value||'').trim();if(!name||/[\x00-\x1f?#\\]/.test(name))throw Error('无效的模型资源引用');
+    const name=String(value||'').trim();if(!name||/[\x00-\x1f?#\\]/.test(name))throw Error(uiTextUrdfPreview('无效的模型资源引用'));
     const match=/^package:\/\/([a-zA-Z0-9_-]+)\/(.+)$/.exec(name);
     const path=decodeURIComponent(match?match[2]:name);
-    if(path.startsWith('/')||/^[a-z][a-z0-9+.-]*:/i.test(path)||/[\x00-\x1f?#\\]/.test(path))throw Error('不加载外部网址或绝对文件路径');
+    if(path.startsWith('/')||/^[a-z][a-z0-9+.-]*:/i.test(path)||/[\x00-\x1f?#\\]/.test(path))throw Error(uiTextUrdfPreview('不加载外部网址或绝对文件路径'));
     if(match)normalizePath(path);
     return {package:match?.[1]||'',path};
   }
@@ -25,46 +25,46 @@
   }
   const direct=(node,name)=>[...node.children].filter(child=>child.localName===name);
   function validateRobot(robot) {
-    if(robot?.localName!=='robot')throw Error('文件必须包含 robot 根节点');
+    if(robot?.localName!=='robot')throw Error(uiTextUrdfPreview('文件必须包含 robot 根节点'));
     const links=direct(robot,'link'),joints=direct(robot,'joint');
-    if(!links.length||links.length>LIMITS.links||joints.length>LIMITS.links)throw Error('机器人连杆数量为空或超出预览预算');
-    const named=items=>{const map=new Map();for(const item of items){const name=item.getAttribute('name');if(!name||name in Object.prototype||/["\\]/.test(name)||map.has(name))throw Error('连杆或关节名称缺失／重复');map.set(name,item);}return map;};
+    if(!links.length||links.length>LIMITS.links||joints.length>LIMITS.links)throw Error(uiTextUrdfPreview('机器人连杆数量为空或超出预览预算'));
+    const named=items=>{const map=new Map();for(const item of items){const name=item.getAttribute('name');if(!name||name in Object.prototype||/["\\]/.test(name)||map.has(name))throw Error(uiTextUrdfPreview('连杆或关节名称缺失／重复'));map.set(name,item);}return map;};
     named(direct(robot,'material'));
     const geometryNodes=[...robot.getElementsByTagName('geometry')];let primitiveBudget=0,meshCount=0;
-    if(geometryNodes.length>LIMITS.geometries)throw Error('几何元素数量超出预览预算');
+    if(geometryNodes.length>LIMITS.geometries)throw Error(uiTextUrdfPreview('几何元素数量超出预览预算'));
     for(const geometry of geometryNodes){const kind=geometry.children[0]?.localName;if(kind==='mesh')meshCount++;else primitiveBudget+=({box:12,cylinder:120,sphere:1800})[kind]||0;}
-    if(meshCount>LIMITS.assets||primitiveBudget>LIMITS.triangles)throw Error('几何复杂度超出预览预算');
+    if(meshCount>LIMITS.assets||primitiveBudget>LIMITS.triangles)throw Error(uiTextUrdfPreview('几何复杂度超出预览预算'));
     const byLink=named(links),byJoint=named(joints),children=new Map(),parents=new Set();
     for(const joint of joints){
-      if(direct(joint,'parent').length!==1||direct(joint,'child').length!==1||['origin','axis','limit','mimic'].some(tag=>direct(joint,tag).length>1))throw Error('关节节点存在缺失或重复定义');
+      if(direct(joint,'parent').length!==1||direct(joint,'child').length!==1||['origin','axis','limit','mimic'].some(tag=>direct(joint,tag).length>1))throw Error(uiTextUrdfPreview('关节节点存在缺失或重复定义'));
       const type=joint.getAttribute('type');if(!['fixed','revolute','continuous','prismatic','planar','floating'].includes(type))throw Error('不支持的关节类型：'+type);
       const parent=direct(joint,'parent')[0]?.getAttribute('link'),child=direct(joint,'child')[0]?.getAttribute('link');
-      if(!byLink.has(parent)||!byLink.has(child)||parent===child||parents.has(child))throw Error('关节的父子连杆无效或重复');
+      if(!byLink.has(parent)||!byLink.has(child)||parent===child||parents.has(child))throw Error(uiTextUrdfPreview('关节的父子连杆无效或重复'));
       parents.add(child);if(!children.has(parent))children.set(parent,[]);children.get(parent).push(child);
-      if(type==='revolute'||type==='prismatic'){const limit=direct(joint,'limit')[0],low=Number(limit?.getAttribute('lower')),high=Number(limit?.getAttribute('upper'));if(!limit||!limit.hasAttribute('lower')||!limit.hasAttribute('upper')||!Number.isFinite(low)||!Number.isFinite(high)||low>high)throw Error('旋转／移动关节需要有效上下限');}
-      const axis=direct(joint,'axis')[0];if(axis&&!axis.getAttribute('xyz')?.trim())throw Error('关节轴缺少 xyz');if(axis&&['revolute','continuous','prismatic','planar'].includes(type)&&axis.getAttribute('xyz')?.trim().split(/\s+/).map(Number).every(v=>v===0))throw Error('关节轴不能为零：'+joint.getAttribute('name')+'（'+type+'）');
+      if(type==='revolute'||type==='prismatic'){const limit=direct(joint,'limit')[0],low=Number(limit?.getAttribute('lower')),high=Number(limit?.getAttribute('upper'));if(!limit||!limit.hasAttribute('lower')||!limit.hasAttribute('upper')||!Number.isFinite(low)||!Number.isFinite(high)||low>high)throw Error(uiTextUrdfPreview('旋转／移动关节需要有效上下限'));}
+      const axis=direct(joint,'axis')[0];if(axis&&!axis.getAttribute('xyz')?.trim())throw Error(uiTextUrdfPreview('关节轴缺少 xyz'));if(axis&&['revolute','continuous','prismatic','planar'].includes(type)&&axis.getAttribute('xyz')?.trim().split(/\s+/).map(Number).every(v=>v===0))throw Error('关节轴不能为零：'+joint.getAttribute('name')+'（'+type+'）');
     }
-    const roots=links.filter(link=>!parents.has(link.getAttribute('name')));if(roots.length!==1)throw Error('URDF 必须是一棵连通的机器人树');
-    const visited=new Set(),queue=[[roots[0].getAttribute('name'),0]];for(let i=0;i<queue.length;i++){const [name,depth]=queue[i];if(depth>256)throw Error('连杆树深度超出预览预算');if(visited.has(name))throw Error('机器人存在循环关节');visited.add(name);queue.push(...(children.get(name)||[]).map(child=>[child,depth+1]));}if(visited.size!==links.length)throw Error('机器人存在循环或断开的连杆');
-    for(const joint of joints){const seen=new Set([joint.getAttribute('name')]);const mimic=direct(joint,'mimic')[0];let target=mimic?.getAttribute('joint');if(mimic&&!target)throw Error('mimic 缺少目标关节');while(target){if(seen.has(target)||!byJoint.has(target))throw Error('mimic 关节引用无效或成环');seen.add(target);if(seen.size>64)throw Error('mimic 关节链超出预览预算');if(!['revolute','continuous','prismatic'].includes(joint.getAttribute('type'))||!['revolute','continuous','prismatic'].includes(byJoint.get(target).getAttribute('type')))throw Error('mimic 仅支持单自由度关节');target=direct(byJoint.get(target),'mimic')[0]?.getAttribute('joint');}}
+    const roots=links.filter(link=>!parents.has(link.getAttribute('name')));if(roots.length!==1)throw Error(uiTextUrdfPreview('URDF 必须是一棵连通的机器人树'));
+    const visited=new Set(),queue=[[roots[0].getAttribute('name'),0]];for(let i=0;i<queue.length;i++){const [name,depth]=queue[i];if(depth>256)throw Error(uiTextUrdfPreview('连杆树深度超出预览预算'));if(visited.has(name))throw Error(uiTextUrdfPreview('机器人存在循环关节'));visited.add(name);queue.push(...(children.get(name)||[]).map(child=>[child,depth+1]));}if(visited.size!==links.length)throw Error(uiTextUrdfPreview('机器人存在循环或断开的连杆'));
+    for(const joint of joints){const seen=new Set([joint.getAttribute('name')]);const mimic=direct(joint,'mimic')[0];let target=mimic?.getAttribute('joint');if(mimic&&!target)throw Error(uiTextUrdfPreview('mimic 缺少目标关节'));while(target){if(seen.has(target)||!byJoint.has(target))throw Error(uiTextUrdfPreview('mimic 关节引用无效或成环'));seen.add(target);if(seen.size>64)throw Error(uiTextUrdfPreview('mimic 关节链超出预览预算'));if(!['revolute','continuous','prismatic'].includes(joint.getAttribute('type'))||!['revolute','continuous','prismatic'].includes(byJoint.get(target).getAttribute('type')))throw Error(uiTextUrdfPreview('mimic 仅支持单自由度关节'));target=direct(byJoint.get(target),'mimic')[0]?.getAttribute('joint');}}
     for(const node of [robot,...robot.getElementsByTagName('*')]){
-      if(node.hasAttribute('name')&&node.getAttribute('name') in Object.prototype)throw Error('模型名称与保留字段冲突');
-      if(['visual','collision'].includes(node.localName)&&direct(node,'geometry').length!==1)throw Error('可视／碰撞节点需要一个 geometry');
-      const required={box:['size'],sphere:['radius'],cylinder:['radius','length'],color:['rgba']}[node.localName];if(required?.some(attr=>!node.hasAttribute(attr)))throw Error('几何或材质缺少必需属性');
-      if(node.localName==='mesh'&&!node.getAttribute('filename')?.trim())throw Error('网格缺少文件名');
-      if(node.localName==='geometry'&&([...node.children].length!==1||!['mesh','box','sphere','cylinder'].includes(node.children[0]?.localName)))throw Error('不支持的 URDF 几何类型');
-      if(node.prefix==='xacro'||node.localName==='include'||node.getAttribute('quat_xyzw'))throw Error('请先将 Xacro／扩展坐标描述转换为标准 URDF');
+      if(node.hasAttribute('name')&&node.getAttribute('name') in Object.prototype)throw Error(uiTextUrdfPreview('模型名称与保留字段冲突'));
+      if(['visual','collision'].includes(node.localName)&&direct(node,'geometry').length!==1)throw Error(uiTextUrdfPreview('可视／碰撞节点需要一个 geometry'));
+      const required={box:['size'],sphere:['radius'],cylinder:['radius','length'],color:['rgba']}[node.localName];if(required?.some(attr=>!node.hasAttribute(attr)))throw Error(uiTextUrdfPreview('几何或材质缺少必需属性'));
+      if(node.localName==='mesh'&&!node.getAttribute('filename')?.trim())throw Error(uiTextUrdfPreview('网格缺少文件名'));
+      if(node.localName==='geometry'&&([...node.children].length!==1||!['mesh','box','sphere','cylinder'].includes(node.children[0]?.localName)))throw Error(uiTextUrdfPreview('不支持的 URDF 几何类型'));
+      if(node.prefix==='xacro'||node.localName==='include'||node.getAttribute('quat_xyzw'))throw Error(uiTextUrdfPreview('请先将 Xacro／扩展坐标描述转换为标准 URDF'));
       for(const attr of ['xyz','rpy','scale','size','rgba'])if(node.hasAttribute(attr)){const values=node.getAttribute(attr).trim().split(/\s+/).map(Number);if(values.length!==(attr==='rgba'?4:3)||!values.every(Number.isFinite)||(attr==='size'&&values.some(v=>v<=0))||(attr==='scale'&&values.some(v=>v===0))||(attr==='rgba'&&values.some(v=>v<0||v>1)))throw Error('无效的 URDF 数值：'+attr);}
       for(const attr of ['radius','length','lower','upper','multiplier','offset'])if(node.hasAttribute(attr)){const value=Number(node.getAttribute(attr));if(!node.getAttribute(attr).trim()||!Number.isFinite(value)||(['radius','length'].includes(attr)&&value<=0))throw Error('无效的 URDF 数值：'+attr);}
     }
     return {links:links.length,joints:joints.length,packages:[...new Set([...robot.getElementsByTagName('*')].filter(n=>['mesh','texture'].includes(n.localName)&&n.getAttribute('filename')?.trim()).map(n=>reference(n.getAttribute('filename')).package).filter(Boolean))]};
   }
   function parseDocument(text) {
-    if(/<!DOCTYPE|<!ENTITY|\$\{|\$\(/i.test(text))throw Error('请先展开 Xacro；预览不执行宏或外部 XML 实体');
-    const doc=new DOMParser().parseFromString(text,'application/xml');if(doc.getElementsByTagName('parsererror').length)throw Error('URDF XML 格式错误');validateRobot(doc.documentElement);return doc;
+    if(/<!DOCTYPE|<!ENTITY|\$\{|\$\(/i.test(text))throw Error(uiTextUrdfPreview('请先展开 Xacro；预览不执行宏或外部 XML 实体'));
+    const doc=new DOMParser().parseFromString(text,'application/xml');if(doc.getElementsByTagName('parsererror').length)throw Error(uiTextUrdfPreview('URDF XML 格式错误'));validateRobot(doc.documentElement);return doc;
   }
   function applyJointValue(joint,value) {
-    if(!Number.isFinite(value))throw Error('关节值必须为有限数字');
+    if(!Number.isFinite(value))throw Error(uiTextUrdfPreview('关节值必须为有限数字'));
     const clamp=(item,v)=>['revolute','prismatic'].includes(item.jointType)?Math.max(item.limit.lower,Math.min(item.limit.upper,v)):v;
     joint.setJointValue(clamp(joint,value));
     // The compatible upstream loader propagates mimic before its own limit clamp.
@@ -72,32 +72,32 @@
     const queue=[joint];for(let i=0;i<queue.length;i++)for(const child of queue[i].mimicJoints||[]){child.setJointValue(clamp(child,queue[i].jointValue[0]*child.multiplier+child.offset));queue.push(child);}
   }
   function prepareStl(data) {
-    if(data.byteLength<84)throw Error('STL 数据过短');
+    if(data.byteLength<84)throw Error(uiTextUrdfPreview('STL 数据过短'));
     const count=new DataView(data.buffer,data.byteOffset,data.byteLength).getUint32(80,true),expected=84+count*50;
-    if(count&&expected<=data.byteLength){if(count>LIMITS.triangles)throw Error('STL 三角面超出预览预算');return expected===data.byteLength?data:data.slice(0,expected);}
+    if(count&&expected<=data.byteLength){if(count>LIMITS.triangles)throw Error(uiTextUrdfPreview('STL 三角面超出预览预算'));return expected===data.byteLength?data:data.slice(0,expected);}
     let ascii=false;for(let i=0;i<5;i++)if([115,111,108,105,100].every((b,j)=>data[i+j]===b))ascii=true;
-    if(!ascii)throw Error('STL 面数与文件长度不一致');
-    const text=new TextDecoder().decode(data);let faces=0,vertices=0;for(const _ of text.matchAll(/\bfacet\b/g)){if(++faces>LIMITS.triangles)throw Error('STL 三角面超出预览预算');}for(const _ of text.matchAll(/\bvertex\b/g))vertices++;
-    if(!faces||vertices!==faces*3)throw Error('STL 三角面数据不完整');return data;
+    if(!ascii)throw Error(uiTextUrdfPreview('STL 面数与文件长度不一致'));
+    const text=new TextDecoder().decode(data);let faces=0,vertices=0;for(const _ of text.matchAll(/\bfacet\b/g)){if(++faces>LIMITS.triangles)throw Error(uiTextUrdfPreview('STL 三角面超出预览预算'));}for(const _ of text.matchAll(/\bvertex\b/g))vertices++;
+    if(!faces||vertices!==faces*3)throw Error(uiTextUrdfPreview('STL 三角面数据不完整'));return data;
   }
   function validateCollada(doc) {
     let total=0;
-    const numbers=text=>{const result=[];for(const match of String(text||'').matchAll(/\S+/g)){const n=Number(match[0]);if(!Number.isSafeInteger(n)||n<0)throw Error('DAE 索引无效');result.push(n);if(result.length>LIMITS.triangles*3)throw Error('DAE 索引超出预览预算');}return result;};
+    const numbers=text=>{const result=[];for(const match of String(text||'').matchAll(/\S+/g)){const n=Number(match[0]);if(!Number.isSafeInteger(n)||n<0)throw Error(uiTextUrdfPreview('DAE 索引无效'));result.push(n);if(result.length>LIMITS.triangles*3)throw Error(uiTextUrdfPreview('DAE 索引超出预览预算'));}return result;};
     for(const tag of ['triangles','polylist'])for(const primitive of doc.getElementsByTagName(tag)){
-      const count=Number(primitive.getAttribute('count'));if(!Number.isSafeInteger(count)||count<0||count>LIMITS.triangles)throw Error('DAE 面数超出预览预算');
-      const offsets=direct(primitive,'input').map(n=>Number(n.getAttribute('offset')||0));if(!offsets.length||offsets.some(v=>!Number.isSafeInteger(v)||v<0||v>16))throw Error('DAE 索引步长无效');const stride=Math.max(...offsets)+1;
+      const count=Number(primitive.getAttribute('count'));if(!Number.isSafeInteger(count)||count<0||count>LIMITS.triangles)throw Error(uiTextUrdfPreview('DAE 面数超出预览预算'));
+      const offsets=direct(primitive,'input').map(n=>Number(n.getAttribute('offset')||0));if(!offsets.length||offsets.some(v=>!Number.isSafeInteger(v)||v<0||v>16))throw Error(uiTextUrdfPreview('DAE 索引步长无效'));const stride=Math.max(...offsets)+1;
       let vertices=count*3;
-      if(tag==='polylist'){const counts=numbers(direct(primitive,'vcount')[0]?.textContent);if(counts.length!==count||counts.some(v=>v<3))throw Error('DAE 多边形数量不一致');vertices=counts.reduce((n,v)=>n+v,0);total+=counts.reduce((n,v)=>n+v-2,0);}else total+=count;
-      if(total>LIMITS.triangles)throw Error('DAE 三角面超出预览预算');
-      let actual=0;for(const p of direct(primitive,'p'))for(const match of p.textContent.matchAll(/\S+/g)){const value=Number(match[0]);if(!Number.isSafeInteger(value)||value<0)throw Error('DAE 索引无效');actual++;if(actual>vertices*stride)throw Error('DAE 索引数量不一致');}if(actual!==vertices*stride)throw Error('DAE 面数与索引不一致');
+      if(tag==='polylist'){const counts=numbers(direct(primitive,'vcount')[0]?.textContent);if(counts.length!==count||counts.some(v=>v<3))throw Error(uiTextUrdfPreview('DAE 多边形数量不一致'));vertices=counts.reduce((n,v)=>n+v,0);total+=counts.reduce((n,v)=>n+v-2,0);}else total+=count;
+      if(total>LIMITS.triangles)throw Error(uiTextUrdfPreview('DAE 三角面超出预览预算'));
+      let actual=0;for(const p of direct(primitive,'p'))for(const match of p.textContent.matchAll(/\S+/g)){const value=Number(match[0]);if(!Number.isSafeInteger(value)||value<0)throw Error(uiTextUrdfPreview('DAE 索引无效'));actual++;if(actual>vertices*stride)throw Error(uiTextUrdfPreview('DAE 索引数量不一致'));}if(actual!==vertices*stride)throw Error(uiTextUrdfPreview('DAE 面数与索引不一致'));
     }
   }
   async function readBounded(response,limit,signal) {
     if(!response.ok)throw Error('HTTP '+response.status);
-    if(Number(response.headers.get('Content-Length'))>limit){await response.body?.cancel();throw Error('资源文件超出预览大小预算');}
-    if(!response.body) {const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>limit)throw Error('资源文件超出预览大小预算');return bytes;}
+    if(Number(response.headers.get('Content-Length'))>limit){await response.body?.cancel();throw Error(uiTextUrdfPreview('资源文件超出预览大小预算'));}
+    if(!response.body) {const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>limit)throw Error(uiTextUrdfPreview('资源文件超出预览大小预算'));return bytes;}
     const reader=response.body.getReader(),chunks=[];let size=0;
-    try{for(;;){if(signal?.aborted)throw new DOMException('Aborted','AbortError');const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>limit)throw Error('资源文件超出预览大小预算');chunks.push(value);}}catch(error){await reader.cancel().catch(()=>{});throw error;}finally{reader.releaseLock();}
+    try{for(;;){if(signal?.aborted)throw new DOMException('Aborted','AbortError');const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>limit)throw Error(uiTextUrdfPreview('资源文件超出预览大小预算'));chunks.push(value);}}catch(error){await reader.cancel().catch(()=>{});throw error;}finally{reader.releaseLock();}
     const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}return bytes;
   }
   // URDF RPY uses fixed-axis roll/pitch/yaw: Rz(yaw) Ry(pitch) Rx(roll).
@@ -155,12 +155,12 @@
       object.traverse(node=>{
         if(node.geometry&&!geometries.has(node.geometry)&&!nextGeometries.has(node.geometry)){
           nextGeometries.add(node.geometry);const position=node.geometry.attributes?.position;
-          if(node.isMesh&&(!position||position.count<3||(node.geometry.index?.count||position.count)%3!==0))throw Error('网格中没有有效三角面');
-          if(position&&node.isMesh){count+=(node.geometry.index?.count||position.count)/3;node.geometry.computeBoundingBox();if(!node.geometry.boundingBox.isEmpty()&&!node.geometry.boundingBox.min.toArray().concat(node.geometry.boundingBox.max.toArray()).every(Number.isFinite))throw Error('模型网格包含无效坐标');}
+          if(node.isMesh&&(!position||position.count<3||(node.geometry.index?.count||position.count)%3!==0))throw Error(uiTextUrdfPreview('网格中没有有效三角面'));
+          if(position&&node.isMesh){count+=(node.geometry.index?.count||position.count)/3;node.geometry.computeBoundingBox();if(!node.geometry.boundingBox.isEmpty()&&!node.geometry.boundingBox.min.toArray().concat(node.geometry.boundingBox.max.toArray()).every(Number.isFinite))throw Error(uiTextUrdfPreview('模型网格包含无效坐标'));}
         }
         for(const material of [].concat(node.material||[])){nextMaterials.add(material);if('wireframe'in material)material.wireframe=wireframe;for(const value of Object.values(material))if(value?.isTexture)nextTextures.add(value);}
       });
-      if(triangles+count>LIMITS.triangles)throw Error('三角面数量超出预览预算');
+      if(triangles+count>LIMITS.triangles)throw Error(uiTextUrdfPreview('三角面数量超出预览预算'));
       triangles+=count;objects.add(object);nextGeometries.forEach(g=>geometries.add(g));nextMaterials.forEach(m=>materials.add(m));nextTextures.forEach(x=>textures.add(x));return object;
     };
     function teardown(){if(disposed)return;disposed=true;clearHighlight();abort.abort();for(const button of toolbar.querySelectorAll('button'))button.disabled=true;for(const input of side.querySelectorAll('input'))input.disabled=true;for(const item of pending.splice(0))item.reject(new DOMException('Aborted','AbortError'));if(frame)cancelAnimationFrame(frame);observer?.disconnect();lockObserver?.disconnect();document.removeEventListener('visibilitychange',resume);renderer?.domElement.removeEventListener('pointerdown',pickStart);renderer?.domElement.removeEventListener('pointerup',pickEnd);renderer?.domElement.removeEventListener('pointercancel',pickCancel);controls?.dispose();if(robot)try{robot.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[])){materials.add(material);for(const value of Object.values(material))if(value?.isTexture)textures.add(value);}});}catch{}geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(x=>x.dispose());blobURLs.forEach(url=>URL.revokeObjectURL(url));if(renderer){if(contextLost)renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.dispose();renderer.forceContextLoss();}canvas.replaceChildren();side.replaceChildren();cache.clear();textureCache.clear();objects.clear();geometries.clear();materials.clear();textures.clear();blobURLs.clear();jointInputs.length=0;poseNodes.length=0;selectedNode=null;calloutCards.length=0;poseSelect.replaceChildren();axes.length=0;jobs.length=0;robot=null;scene=null;camera=null;renderer=null;controls=null;}
@@ -169,12 +169,12 @@
     function fail(error){if(disposed)return;teardown();cancel.hidden=true;const notice=el('div','urdf-error');notice.append(el('strong','',t('URDF 预览不可用')),el('p','',String(error?.message||error)),button('重新加载',()=>setup(options)));canvas.replaceChildren(notice);meta.textContent=t('预览已结束');}
     function fit(){if(!robot||!renderer||!current())return;revealSelection=!!selectedNode;robot.updateMatrixWorld(true);const box=new THREE.Box3();robot.traverseVisible(node=>{if(node.isMesh&&node.geometry){node.geometry.computeBoundingBox();box.union(node.geometry.boundingBox.clone().applyMatrix4(node.matrixWorld));}});if(box.isEmpty())box.set(new THREE.Vector3(-.5,-.5,0),new THREE.Vector3(.5,.5,1));const center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3()),radius=Math.max(size.length()/2,.01),width=Math.max(canvas.clientWidth,1),height=Math.max(canvas.clientHeight,1),available=width,dist=radius/Math.sin(camera.fov*Math.PI/360)*Math.max(1,height/available)*1.25;camera.clearViewOffset();camera.position.copy(center).add(new THREE.Vector3(1,-1,.75).normalize().multiplyScalar(dist));camera.near=Math.max(dist/10000,.00001);camera.far=Math.max(dist*100,100);camera.updateProjectionMatrix();controls.target.copy(center);controls.update();draw();}
     function updateVisibility(){robot?.traverse(node=>{if(node.isURDFVisual)node.visible=!collisionMode;if(node.isURDFCollider)node.visible=collisionMode;});draw();}
-    async function bytes(path,limit=LIMITS.asset){if(!current())throw new DOMException('Aborted','AbortError');path=normalizePath(path);if(!cache.has(path)){if(cache.size>=LIMITS.assets)throw Error('资源文件数量超出预览预算');cache.set(path,(async()=>{const response=await fetch(fileRawUrl(path,root,source,viewerSpec),{signal:abort.signal,credentials:'same-origin',cache:'no-store'}),data=await readBounded(response,limit,abort.signal);if(!current())throw new DOMException('Aborted','AbortError');bytesUsed+=data.length;if(bytesUsed>LIMITS.total)throw Error('模型资源总量超出预览预算');return data;})());}const data=await cache.get(path);if(data.length>limit)throw Error('资源文件超出预览大小预算');return data;}
+    async function bytes(path,limit=LIMITS.asset){if(!current())throw new DOMException('Aborted','AbortError');path=normalizePath(path);if(!cache.has(path)){if(cache.size>=LIMITS.assets)throw Error(uiTextUrdfPreview('资源文件数量超出预览预算'));cache.set(path,(async()=>{const response=await fetch(fileRawUrl(path,root,source,viewerSpec),{signal:abort.signal,credentials:'same-origin',cache:'no-store'}),data=await readBounded(response,limit,abort.signal);if(!current())throw new DOMException('Aborted','AbortError');bytesUsed+=data.length;if(bytesUsed>LIMITS.total)throw Error(uiTextUrdfPreview('模型资源总量超出预览预算'));return data;})());}const data=await cache.get(path);if(data.length>limit)throw Error(uiTextUrdfPreview('资源文件超出预览大小预算'));return data;}
     if(options.packageRoots)Object.assign(packageRoots,options.packageRoots);
     const manifestCache=new Map();
     async function discoverPackage(pkg,base){if(Object.prototype.hasOwnProperty.call(packageRoots,pkg))return;for(const dir of ancestors(base)){const path=[dir,'package.xml'].filter(Boolean).join('/');if(!manifestCache.has(path))manifestCache.set(path,bytes(path,65536).then(data=>{const doc=new DOMParser().parseFromString(new TextDecoder().decode(data),'application/xml');return doc.documentElement.localName==='package'?direct(doc.documentElement,'name')[0]?.textContent.trim():null;}).catch(()=>null));if(await manifestCache.get(path)===pkg){packageRoots[pkg]=dir;return;}}}
     async function resource(ref,base,limit){const info=reference(ref);if(info.package)await discoverPackage(info.package,base);let last;for(const path of candidates(ref,base,packageRoots)){try{return {path,data:await bytes(path,limit)};}catch(error){if(disposed)throw error;last=error;}}throw Error(t('无法读取资源：')+ref+' · '+String(last?.message||''));}
-    async function texture(ref,base){const id=base+'\n'+ref;if(!textureCache.has(id))textureCache.set(id,(async()=>{const {path,data}=await resource(ref,base,LIMITS.texture);if(!current())throw new DOMException('Aborted','AbortError');const ext=path.split('.').pop().toLowerCase(),type={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif'}[ext];if(!type)throw Error('仅支持 PNG/JPEG/WebP/GIF 纹理');const url=URL.createObjectURL(new Blob([data],{type}));blobURLs.add(url);return url;})());return textureCache.get(id);}
+    async function texture(ref,base){const id=base+'\n'+ref;if(!textureCache.has(id))textureCache.set(id,(async()=>{const {path,data}=await resource(ref,base,LIMITS.texture);if(!current())throw new DOMException('Aborted','AbortError');const ext=path.split('.').pop().toLowerCase(),type={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif'}[ext];if(!type)throw Error(uiTextUrdfPreview('仅支持 PNG/JPEG/WebP/GIF 纹理'));const url=URL.createObjectURL(new Blob([data],{type}));blobURLs.add(url);return url;})());return textureCache.get(id);}
     const work=task=>new Promise((resolve,reject)=>{pending.push({task,resolve,reject});pump();});
     function pump(){while(active<2&&pending.length&&!disposed){const item=pending.shift();active++;Promise.resolve().then(item.task).then(item.resolve,item.reject).finally(()=>{active--;pump();});}}
     const jointInputs=[],poseNodes=[],calloutCards=[];
@@ -203,11 +203,11 @@
     function updateInspector(){if(side.hidden||!selectedNode||!robot)return;const pose=readPose(selectedNode,poseFrame.value==='parent'?selectedNode.parent||robot:robot,THREE);[...pose.xyz,...pose.rpy].forEach((value,index)=>{valueFields[index].textContent=(Math.abs(value)<.0005?0:value).toFixed(3);valueFields[index].title=String(value);});const joint=selectedNode.isURDFJoint?selectedNode:selectedNode.parent?.isURDFJoint?selectedNode.parent:null;poseJoint.textContent=joint?joint.name+' · '+joint.jointType+(joint.jointValue?.length?' · '+joint.jointValue.map(n=>Number(n).toFixed(3)).join(', ')+(joint.jointType==='prismatic'?' m':['revolute','continuous'].includes(joint.jointType)?' rad':''): ''):t('根连杆');}
     function syncJointValues(){for(const {joint,index,range,value} of jointInputs){range.value=joint.jointValue[index];value.textContent=Number(joint.jointValue[index]).toFixed(3);}updatePose();}
     try{
-      const xml=options.xmlText===undefined?new TextDecoder().decode(await bytes(filePath,LIMITS.xml)):String(options.xmlText);if(new TextEncoder().encode(xml).length>LIMITS.xml)throw Error('URDF 文件超出预览大小预算');const doc=parseDocument(xml),info=validateRobot(doc.documentElement);
+      const xml=options.xmlText===undefined?new TextDecoder().decode(await bytes(filePath,LIMITS.xml)):String(options.xmlText);if(new TextEncoder().encode(xml).length>LIMITS.xml)throw Error(uiTextUrdfPreview('URDF 文件超出预览大小预算'));const doc=parseDocument(xml),info=validateRobot(doc.documentElement);
       await ensureThreeStack();await ensureVendorScript('/vendor/ColladaLoader.js',()=>!!THREE.ColladaLoader);await ensureVendorScript('/vendor/OBJLoader.js',()=>!!THREE.OBJLoader);await ensureVendorScript('/vendor/urdf-loader/URDFLoader.js',()=>!!window.URDFLoader);
       if(!current()||!container.isConnected){teardown();return;}if(!detectWebGLContext())throw Error(t('当前浏览器未提供可用的 WebGL 图形上下文。'));
       scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,1,.001,1000);camera.up.set(0,0,1);renderer=new THREE.WebGLRenderer({antialias:true,failIfMajorPerformanceCaveat:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputEncoding=THREE.sRGBEncoding;renderer.setClearColor(0x202831);canvas.append(renderer.domElement);renderer.domElement.addEventListener('pointerdown',pickStart);renderer.domElement.addEventListener('pointerup',pickEnd);renderer.domElement.addEventListener('pointercancel',pickCancel);selectionOutline=track(new THREE.Box3Helper(new THREE.Box3(),0x65d9ff));selectionOutline.visible=false;selectionOutline.material.transparent=true;selectionOutline.material.opacity=.45;selectionOutline.material.depthTest=false;selectionOutline.renderOrder=10;scene.add(selectionOutline);contextLost=event=>{event.preventDefault();if(!disposed)fail(Error(t('图形上下文已丢失，请重新加载预览')));};renderer.domElement.addEventListener('webglcontextlost',contextLost);scene.add(new THREE.HemisphereLight(0xffffff,0x556477,1));const light=new THREE.DirectionalLight(0xffffff,.9);light.position.set(3,-4,7);scene.add(light);const grid=track(new THREE.GridHelper(10,20,0x617183,0x354351));grid.rotation.x=Math.PI/2;for(const material of [].concat(grid.material)){material.transparent=true;material.opacity=.3;material.depthWrite=false;}scene.add(grid);controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.addEventListener('change',draw);document.addEventListener('visibilitychange',resume);observer=new ResizeObserver(()=>{if(disposed)return;const w=canvas.clientWidth,h=canvas.clientHeight;if(w>0&&h>0){renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();revealSelection=!!selectedNode;draw();}});observer.observe(canvas);
-      const manager=new THREE.LoadingManager();manager.setURLModifier(url=>{if(!blobURLs.has(url))throw Error('已阻止模型引用外部网址');return url;});manager.onLoad=draw;manager.onError=url=>warn('纹理',Error('纹理加载失败'));const loader=new window.URDFLoader(manager);loader.parseVisual=true;loader.parseCollision=true;loader.workingPath='';
+      const manager=new THREE.LoadingManager();manager.setURLModifier(url=>{if(!blobURLs.has(url))throw Error(uiTextUrdfPreview('已阻止模型引用外部网址'));return url;});manager.onLoad=draw;manager.onError=url=>warn('纹理',Error(uiTextUrdfPreview('纹理加载失败')));const loader=new window.URDFLoader(manager);loader.parseVisual=true;loader.parseCollision=true;loader.workingPath='';
       const assetRefs=new Map(),assetMaterials=new Map(),materialInstances=new Map(),definitions=new Map(direct(doc.documentElement,'material').map(node=>[node.getAttribute('name'),node]));let resourceID=0;
       for(const node of doc.getElementsByTagName('*'))for(const attr of ['xyz','rpy','scale','size','rgba'])if(node.hasAttribute(attr))node.setAttribute(attr,node.getAttribute(attr).trim().split(/\s+/).join(' '));
       for(const node of [...doc.getElementsByTagName('mesh')]){const ref=node.getAttribute('filename');reference(ref);const ext=reference(ref).path.split('.').pop().toLowerCase(),id='aide-mesh-'+(++resourceID)+'.'+ext;assetRefs.set(id,ref);const visual=node.parentElement?.parentElement,declared=visual&&direct(visual,'material')[0];if(declared)assetMaterials.set(id,definitions.get(declared.getAttribute('name'))||declared);node.setAttribute('filename',id);}
@@ -219,15 +219,15 @@
         if(materialInstances.has(node))return materialInstances.get(node);
         const material=new THREE.MeshPhongMaterial(),color=direct(node,'color')[0],image=direct(node,'texture')[0]?.getAttribute('filename');
         if(color){const rgba=color.getAttribute('rgba').trim().split(/\s+/).map(Number);material.color.setRGB(...rgba.slice(0,3)).convertSRGBToLinear();material.opacity=rgba[3];material.transparent=rgba[3]<1;material.depthWrite=!material.transparent;}
-        if(image){if(!blobURLs.has(image))throw Error('纹理来源无效');material.map=new THREE.TextureLoader(manager).load(image);material.map.encoding=THREE.sRGBEncoding;textures.add(material.map);}
+        if(image){if(!blobURLs.has(image))throw Error(uiTextUrdfPreview('纹理来源无效'));material.map=new THREE.TextureLoader(manager).load(image);material.map.encoding=THREE.sRGBEncoding;textures.add(material.map);}
         materialInstances.set(node,material);materials.add(material);return material;
       };
-      const loadMesh=async id=>{const ref=assetRefs.get(id);if(!ref)throw Error('未知的网格引用');const {path,data}=await resource(ref,filePath,LIMITS.asset),ext=path.split('.').pop().toLowerCase();if(!current())throw new DOMException('Aborted','AbortError');let object;
+      const loadMesh=async id=>{const ref=assetRefs.get(id);if(!ref)throw Error(uiTextUrdfPreview('未知的网格引用'));const {path,data}=await resource(ref,filePath,LIMITS.asset),ext=path.split('.').pop().toLowerCase();if(!current())throw new DOMException('Aborted','AbortError');let object;
         if(ext==='stl'){const checked=prepareStl(data),geometry=new THREE.STLLoader().parse(checked.buffer);geometry.computeVertexNormals();object=new THREE.Mesh(geometry);}
-        else if(ext==='obj'){const text=new TextDecoder().decode(data);if(/^\s*mtllib\s/m.test(text))warn(ref,Error('OBJ 几何已读取；MTL 外部材质未加载'));object=new THREE.OBJLoader().parse(text);}
-        else if(ext==='dae'){const text=new TextDecoder().decode(data);if(/<!DOCTYPE|<!ENTITY/i.test(text))throw Error('DAE 不允许外部 XML 实体');const dae=new DOMParser().parseFromString(text,'application/xml');if(dae.getElementsByTagName('parsererror').length)throw Error('DAE XML 格式错误');validateCollada(dae);for(const library of dae.getElementsByTagName('library_images'))for(const image of library.getElementsByTagName('init_from')){const imageRef=image.textContent.trim();try{image.textContent=await texture(imageRef,path);}catch(error){warn(imageRef,error);image.textContent=neutralImage();}}if(!current())throw new DOMException('Aborted','AbortError');object=new THREE.ColladaLoader(manager).parse(new XMLSerializer().serializeToString(dae),'').scene;}
+        else if(ext==='obj'){const text=new TextDecoder().decode(data);if(/^\s*mtllib\s/m.test(text))warn(ref,Error(uiTextUrdfPreview('OBJ 几何已读取；MTL 外部材质未加载')));object=new THREE.OBJLoader().parse(text);}
+        else if(ext==='dae'){const text=new TextDecoder().decode(data);if(/<!DOCTYPE|<!ENTITY/i.test(text))throw Error(uiTextUrdfPreview('DAE 不允许外部 XML 实体'));const dae=new DOMParser().parseFromString(text,'application/xml');if(dae.getElementsByTagName('parsererror').length)throw Error(uiTextUrdfPreview('DAE XML 格式错误'));validateCollada(dae);for(const library of dae.getElementsByTagName('library_images'))for(const image of library.getElementsByTagName('init_from')){const imageRef=image.textContent.trim();try{image.textContent=await texture(imageRef,path);}catch(error){warn(imageRef,error);image.textContent=neutralImage();}}if(!current())throw new DOMException('Aborted','AbortError');object=new THREE.ColladaLoader(manager).parse(new XMLSerializer().serializeToString(dae),'').scene;}
         else throw Error('不支持的网格格式：'+ext+'（支持 STL / DAE / OBJ）');
-        let meshCount=0;object.traverse(node=>{if(node.isMesh)meshCount++;});if(!meshCount)throw Error('网格中没有可绘制的三角面');
+        let meshCount=0;object.traverse(node=>{if(node.isMesh)meshCount++;});if(!meshCount)throw Error(uiTextUrdfPreview('网格中没有可绘制的三角面'));
         if(!object.isMesh&&assetMaterials.has(id)){const material=groupMaterial(assetMaterials.get(id));const replaced=new Set();object.traverse(node=>{if(node.isMesh){[].concat(node.material||[]).forEach(old=>replaced.add(old));node.material=material;}});replaced.forEach(old=>{for(const value of Object.values(old))if(value?.isTexture)value.dispose();old.dispose();});}
         object.traverse(node=>{if(node.isMesh&&node.geometry&&!node.geometry.getAttribute('normal'))node.geometry.computeVertexNormals();});
         if(!current()){object.traverse(n=>{n.geometry?.dispose();for(const m of [].concat(n.material||[]))m.dispose();});throw new DOMException('Aborted','AbortError');}try{return track(object);}catch(error){object.traverse(node=>{if(node.geometry&&!geometries.has(node.geometry))node.geometry.dispose();for(const material of [].concat(node.material||[]))if(!materials.has(material)){for(const value of Object.values(material))if(value?.isTexture&&!textures.has(value))value.dispose();material.dispose();}});throw error;}
@@ -249,3 +249,5 @@
   }
   window.AideUrdfPreview=Object.freeze({setup,normalizePath,reference,candidates,validateRobot,parseDocument,applyJointValue,readPose,layoutCallouts,prepareStl,validateCollada,readBounded,LIMITS});
 })();
+
+function uiTextUrdfPreview(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

@@ -12,7 +12,7 @@ window.AideInfrared={
  create({button,note,redraw,onChange,motionEnabled}){
  let enabled=false,mix=0,from=0,started=0,last=-Infinity,gw=0,gh=0,field;
  const surface=document.createElement('canvas'),c=surface.getContext('2d');
- function set(value,announce=true){enabled=!!value;from=mix;started=performance.now();last=-Infinity;if(!motionEnabled())mix=enabled?1:0;button.setAttribute('aria-pressed',String(enabled));note.hidden=!enabled;button.querySelector('span').textContent=enabled?'红外 · 开':'红外';redraw();if(announce)onChange(enabled);}
+ function set(value,announce=true){enabled=!!value;from=mix;started=performance.now();last=-Infinity;if(!motionEnabled())mix=enabled?1:0;button.setAttribute('aria-pressed',String(enabled));note.hidden=!enabled;button.querySelector('span').textContent=enabled?uiTextStarmapInfrared('红外 · 开'):uiTextStarmapInfrared('红外');redraw();if(announce)onChange(enabled);}
  button.onclick=()=>set(!enabled);
  function draw(ctx,points,width,height,now){
   const target=enabled?1:0;if(!motionEnabled())mix=target;else{const t=Math.min(1,Math.max(0,(now-started)/420));mix=from+(target-from)*(t*t*(3-2*t));}
@@ -38,3 +38,5 @@ window.AideInfrared={
  }
  return {set,draw,get enabled(){return enabled},get transitioning(){return Math.abs(mix-(enabled?1:0))>.001}};
 }};
+
+function uiTextStarmapInfrared(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

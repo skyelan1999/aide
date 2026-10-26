@@ -75,6 +75,9 @@ for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATF
   cat > "$PACKAGE/README.txt" <<EOF
 aide $VERSION - $TARGET launcher package
 
+English documentation: https://github.com/skyelan1999/aide/blob/$TAG/docs/en/README.md
+简体中文文档: https://github.com/skyelan1999/aide/blob/$TAG/docs/README.md
+
 1. Install Docker Desktop (macOS/Windows) or Docker Engine with Compose v2 (Ubuntu).
 2. Run the platform launcher in this folder. If the image is not already present, it downloads the matching Release image and SHA256SUMS, verifies the SHA256 and image ID, then imports and starts aide without building or pulling.
 3. The first launch downloads about 500 MB and requires internet access. To prepare an offline install, download $IMAGE_ASSET and SHA256SUMS and place both in docker-images/ before launch.
@@ -115,6 +118,9 @@ printf '{"format":"aide-update-package","version":1,"releaseTag":"%s","platform"
   "$TAG" "$PLATFORM" "$IMAGE_ASSET" "$IMAGE_ID" > "$FULL_PACKAGE/docker-images/manifest.json"
 cat > "$FULL_PACKAGE/README.txt" <<EOF
 aide $VERSION - complete runtime and upgrade package
+
+English documentation: https://github.com/skyelan1999/aide/blob/$TAG/docs/en/README.md
+简体中文文档: https://github.com/skyelan1999/aide/blob/$TAG/docs/README.md
 
 This single ZIP supports both a new installation and an in-app A/B upgrade.
 It includes the platform launchers and one verified Docker image archive.

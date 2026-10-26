@@ -272,3 +272,9 @@ dialog::backdrop { background:var(--backdrop); }
   .switch input:checked+.switch-slider::before { background:HighlightText; }
   .switch input:focus-visible+.switch-slider { outline-color:Highlight; }
 }
+
+/* Compact reply actions, with the same hit area for every icon. */
+.msg-actions .msg-btn-icon { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; min-height:32px; padding:0; flex:0 0 32px; }
+.msg-actions .msg-btn-icon svg { width:16px; height:16px; pointer-events:none; }
+.msg-actions .msg-btn-icon:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+@media (pointer:coarse) { .msg-actions .msg-btn-icon { width:40px; height:40px; min-height:40px; flex-basis:40px; } }

@@ -1,6 +1,7 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const c=vm.createContext({window:{},URL,URLSearchParams});vm.runInContext(fs.readFileSync('internal/server/web/starmap-preview.js','utf8'),c);
+const c=createUiContext(vm, {window:{},URL,URLSearchParams});vm.runInContext(fs.readFileSync('internal/server/web/starmap-preview.js','utf8'),c);
 const spec={root:'context',source:'ssh-reference',path:'docs/guide.md',origin:'origin-1',readOnly:true,knowledgeWorkspace:'work-1',format:'.md',line:42,endLine:46,codeHash:'hash-1'};
 const href=spec=>'/#file='+encodeURIComponent(JSON.stringify(spec));let locked=false,workspace='work-1',opened=[],notes=[],blocked=false,pending=false;
 function makeWindow(url){let here=new URL(url);return {closed:false,opener:{},focuses:0,focus(){this.focuses++},close(){this.closed=true},get location(){const win=this;return {get href(){return here.href},get origin(){return here.origin},replace(url){here=new URL(url);win.navigations=(win.navigations||0)+1}}},navigate(url){here=new URL(url)}};}
@@ -18,14 +19,14 @@ locked=true;assert.equal(owner.open(href(spec)),false);locked=false;workspace='o
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8'),html=fs.readFileSync('internal/server/web/starmap.html','utf8');
 assert.match(html,/id="node-open" data-file-preview/);assert.match(source,/if\(ref\.hit\)selectDocument\(ref\.hit\);else select\(node\);openNodePreview\(ref\.hit\?/);assert.match(source,/if\(id==='ai-found'\)openNodePreview\(hit\.file\)/);
 // The actual locator builder must preserve origin, source, format and line data.
-const locator=vm.createContext({graph:{workspace:'work-1'}});vm.runInContext(source.slice(source.indexOf('function pathSourceLink('),source.indexOf('function renderEvidencePath(')),locator);
+const locator=createUiContext(vm, {graph:{workspace:'work-1'}});vm.runInContext(source.slice(source.indexOf('function pathSourceLink('),source.indexOf('function renderEvidencePath(')),locator);
 const built=vm.runInContext(`pathSourceLink(${JSON.stringify({id:'C1',kind:'symbol',...spec,contentHash:spec.codeHash})},43)`,locator),actual=JSON.parse(decodeURIComponent(built.split('=')[1]));assert.equal(actual.source,spec.source);assert.equal(actual.origin,spec.origin);assert.equal(actual.line,43);assert.equal(actual.endLine,43);assert.equal(actual.codeHash,spec.codeHash);assert.equal(actual.readOnly,true);
 assert.equal(vm.runInContext('pathSourceLink({kind:"directory",path:"docs"})',locator),null);
 
 // Exercise the actual map wiring: ordinary preview clicks must never navigate
 // the map, and later files reuse the one owned preview tab.
 const mapOpened=[],mapNotes=[];
-const wiring=vm.createContext({window:{AideStarmapPreview:c.window.AideStarmapPreview,open(url,target){assert.equal(target,'_blank');const win=makeWindow(url);mapOpened.push({url,win});return win;}},location:{origin:'https://aide.test',assign(){throw Error('map must not navigate');}},graph:{workspace:'work-1'},locked:false,crypto:{randomUUID:()=> 'map-owned'},say:message=>mapNotes.push(message)});
+const wiring=createUiContext(vm, {window:{AideStarmapPreview:c.window.AideStarmapPreview,open(url,target){assert.equal(target,'_blank');const win=makeWindow(url);mapOpened.push({url,win});return win;}},location:{origin:'https://aide.test',assign(){throw Error('map must not navigate');}},graph:{workspace:'work-1'},locked:false,crypto:{randomUUID:()=> 'map-owned'},say:message=>mapNotes.push(message)});
 vm.runInContext(source.slice(source.indexOf('const filePreview='),source.indexOf('function openNodePreview(')),wiring);
 assert.equal(vm.runInContext('filePreview.open('+JSON.stringify(href(spec))+')',wiring),true);
 assert.equal(mapOpened.length,1);assert.deepEqual(JSON.parse(new URLSearchParams(new URL(mapOpened[0].url).hash.slice(1)).get('file')),spec);
@@ -37,7 +38,7 @@ const localSpec={...spec,root:'workspace',source:'',path:'src/main.go',origin:'w
 // Return navigation never accepts a different origin/path or forwards secrets.
 const fileRouteSource=fs.readFileSync('internal/server/web/file-route.js','utf8');
 for(const [value,expected] of [['/starmap.html?channel=owned&code=1&access_token=secret','/starmap.html?channel=owned&code=1'],['https://other.test/starmap.html',null],['javascript:alert(1)',null],['/admin',null],['/starmap.html?channel=bad%20channel','/starmap.html']]){
- const routeContext=vm.createContext({window:{},URL,URLSearchParams,location:{origin:'https://aide.test',search:'?starmapReturn='+encodeURIComponent(value)}});vm.runInContext(fileRouteSource,routeContext);assert.equal(routeContext.window.AideFileRoute.returnToMap(),expected);
+ const routeContext=createUiContext(vm, {window:{},URL,URLSearchParams,location:{origin:'https://aide.test',search:'?starmapReturn='+encodeURIComponent(value)}});vm.runInContext(fileRouteSource,routeContext);assert.equal(routeContext.window.AideFileRoute.returnToMap(),expected);
 }
 
 // Document text locations use the server's structured line and raw-file hash,

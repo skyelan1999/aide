@@ -1,6 +1,7 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
-const context=vm.createContext({sourceStateLabel:v=>({ready:'已索引',partial:'部分索引',unavailable:'暂不可用'})[v]});
+const context=createUiContext(vm, {sourceStateLabel:v=>({ready:'已索引',partial:'部分索引',unavailable:'暂不可用'})[v]});
 vm.runInContext(source.slice(source.indexOf('function sourceCoverageState('),source.indexOf('function sourceCoverageLabel(')),context);
 for(const [input,expected] of [
  [{state:'partial',coverage:{progressive:true,pending:3}},'分批扫描中'],

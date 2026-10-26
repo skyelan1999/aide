@@ -95,7 +95,7 @@ state.liveRound = {}; // Keep per-run streaming rounds initialized on the first 
   tools.insertAdjacentHTML('afterend', '<div class="file-filter"><div class="file-search-box"><input id="file-search" type="search" autocomplete="off" placeholder="搜索文件" aria-label="搜索文件" data-i18n-placeholder="搜索文件" data-i18n-aria-label="搜索文件"><button type="button" id="file-search-scope" aria-pressed="false" title="包含子文件夹" aria-label="包含子文件夹" data-i18n-title="包含子文件夹" data-i18n-aria-label="包含子文件夹">↳</button><button type="button" id="file-search-match" aria-pressed="false" title="精确匹配" aria-label="精确匹配" data-i18n-title="精确匹配" data-i18n-aria-label="精确匹配">＝</button></div></div>');
   const list = $('files');
   list.tabIndex = 0;
-  list.setAttribute('aria-label', '文件列表');
+  list.setAttribute('aria-label', t('文件列表'));
   list.dataset.i18nAriaLabel = '文件列表';
 })();
 // 纯前端「忽略此提案」集合（无后端拒绝端点）：仅在内存折叠卡片，不写盘、不影响会话
@@ -150,7 +150,8 @@ function initSidebarResizers() {
     const handle = el('div', `sidebar-resizer sidebar-resizer-${side}`);
     handle.id = `${side}-sidebar-resizer`; handle.dataset.side = side;
     handle.tabIndex = 0; handle.setAttribute('role', 'separator'); handle.setAttribute('aria-orientation', 'vertical');
-    handle.setAttribute('aria-label', t(side === 'left' ? '调整左侧工作区栏宽度' : '调整右侧侧栏宽度'));
+    handle.dataset.i18nAriaLabel = side === 'left' ? '调整左侧工作区栏宽度' : '调整右侧侧栏宽度';
+    handle.setAttribute('aria-label', t(handle.dataset.i18nAriaLabel));
     document.body.append(handle);
     if (Number.isFinite(stored?.[side])) setSidebarWidth(side, stored[side], false);
     updateSidebarHandle(handle, side);
@@ -185,6 +186,7 @@ function initSidebarResizers() {
   new MutationObserver(updateVisibility).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   if ($('file-panel')) new MutationObserver(updateVisibility).observe($('file-panel'), { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', updateVisibility);
+  window.addEventListener('aide:language', updateVisibility);
   updateVisibility();
 }
 initSidebarResizers();
@@ -1954,6 +1956,22 @@ function toolSummaryBrief(use) {
   } catch (error) { /* 非 JSON 参数直接忽略 */ }
   return '';
 }
+// Reply actions share one icon style; labels remain available to keyboard and screen-reader users.
+function setMessageActionIcon(button, kind, label) {
+  const paths = {
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>',
+    read: '<path d="m11 5-6 4H2v6h3l6 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>',
+    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>',
+    retry: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 12M4 12l2.3 6A7 7 0 0 0 18 17"/>',
+    continue: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+    good: '<path d="M7 10v11H3V10h4Zm0 0 5-8c2 0 3 2 2 4l-1 4h6a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7"/>',
+    bad: '<path d="M7 14V3H3v11h4Zm0 0 5 8c2 0 3-2 2-4l-1-4h6a2 2 0 0 0 2-2l-2-7a2 2 0 0 0-2-2H7"/>'
+  };
+  button.title = label;
+  button.setAttribute('aria-label', label);
+  button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths[kind] + '</svg>';
+}
+
 function toolIconSVG(tool) {
   const p = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
   if (tool === 'run_shell') return p + '<path d="M4 17l6-5-6-5"/><path d="M12 19h8"/></svg>';
@@ -2330,30 +2348,31 @@ function renderSession() {
         // 让用户在“做了一堆工具却没结论”时能直接续接；复制/好/坏仅在有正文时可用
         if (!running) {
           const actions = el('div', 'msg-actions');
-          const mk = (label, fn) => {
-            const b = el('button', 'msg-btn', label);
+          const mk = (kind, label, fn) => {
+            const b = el('button', 'msg-btn msg-btn-icon');
+            setMessageActionIcon(b, kind, label);
             b.type = 'button';
             b.onclick = fn;
             return b;
           };
           if (text) {
-            actions.append(mk(t("复制"), async event => {
+            actions.append(mk('copy', t("复制"), async event => {
               try { await window.AideMarkdownCode.copyText(text, event.currentTarget); toast(t("已复制")); }
               catch (_) { toast(t("复制失败")); }
             }));
-            const rb = mk(t("朗读"), () => toggleMechanicalRead(rb, text));
+            const rb = mk('read', t("朗读"), () => toggleMechanicalRead(rb, text));
             rb.classList.add('msg-btn-mech');
             actions.append(rb);
           }
-          actions.append(mk(t("重试"), () => retryRunById(run.id)));
-          if (!(run.canResume && ['paused','interrupted'].includes(run.status))) actions.append(mk(t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
+          actions.append(mk('retry', t("重试"), () => retryRunById(run.id)));
+          if (!(run.canResume && ['paused','interrupted'].includes(run.status))) actions.append(mk('continue', t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
           if (text) {
-            actions.append(mk(t("好"), () => {
+            actions.append(mk('good', t("好"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'good' }) })
                 .then(() => toast(t("已记录到记忆")))
                 .catch(() => toast(t("记录失败")));
             }));
-            actions.append(mk(t("有问题"), () => {
+            actions.append(mk('bad', t("有问题"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'bad' }) })
                 .then(() => toast(t("已记录到记忆")))
                 .catch(() => toast(t("记录失败")));
@@ -3491,6 +3510,7 @@ function showUploadProgress(total) {
   const text = host.querySelector('.up-text');
   const detail = host.querySelector('.up-detail');
   const progress = host.querySelector('.up-bar');
+  progress.setAttribute('aria-label', t('上传进度'));
   detail.textContent = ''; // 清掉上一次上传遗留的失败明细
   const api = {
     update(processed, current, loaded, requestTotal, speed, status, batch) {
@@ -3541,8 +3561,8 @@ function uploadWithProgress(url, body, onProgress, contentType) {
       onProgress(event.loaded, latestTotal, latestSpeed, '正在传输');
     };
     xhr.upload.onload = () => onProgress(latestLoaded, latestTotal, latestSpeed, '数据已发送，等待服务器确认');
-    xhr.onerror = () => reject(new Error('网络连接中断'));
-    xhr.onabort = () => reject(new Error('上传已取消'));
+    xhr.onerror = () => reject(new Error(t('网络连接中断')));
+    xhr.onabort = () => reject(new Error(t('上传已取消')));
     xhr.onload = () => {
       let data = {};
       try { data = JSON.parse(xhr.responseText || '{}'); } catch (_) {}
@@ -3575,7 +3595,7 @@ async function uploadCollected(items, target) {
 // uploadDroppedFiles 兼容旧的扁平 FileList 调用（单文件拖拽入口）。
 async function uploadDroppedFiles(files) {
   const target = currentFileTarget();
-  if (!target.writable) { toast('当前目录为只读，无法上传'); return; }
+  if (!target.writable) { toast(t('当前目录为只读，无法上传')); return; }
   const items = Array.from(files || []).map(f => ({ file: f, relativePath: f.name }));
   if (!items.length) return;
   await uploadCollected(items, target);
@@ -9813,6 +9833,8 @@ window.addEventListener('aide:language', () => {
   if (languageFocused && $('settings-sheet').classList.contains('open')) $('settings-content').querySelector('[data-language-button][aria-pressed="true"]')?.focus();
   if (state.config) action(refreshConfig)();
   renderSession(); renderAttachments(); renderTrajectory(); renderSourceChips();
+  // Preserve an active inline rename while refreshing owned file-list labels.
+  if (!$('files').querySelector('.file-rename')) renderFileEntries();
   refreshStrategyUI(); refreshCompactInfo(); estimateContext(); renderWorkspaceSummary(); updateSendEnabled();
   scheduleMermaid();
   if (fileView.spec) $('file-view-ro-badge').classList.toggle('hidden', !$('file-view-editor').readOnly);
@@ -10164,7 +10186,7 @@ function ttsPlayOne(url, provider) {
       URL.revokeObjectURL(url);
     };
     const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
-    const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error('合成音频无法播放')); };
+    const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error(t('合成音频无法播放'))); };
     ttsPlayer._finish=finish;
     const play=()=>{
       if(done||starting||ttsPlayer.cancelled||generation!==ttsPlayer.generation)return;
@@ -10179,7 +10201,7 @@ function ttsPlayOne(url, provider) {
     a.onplaying = () => {ttsPlaybackStatus('playing');window.aideAvatarSignal?.('speaking', true);};
     a.onpause = () => window.aideAvatarSignal?.('speaking', false);
     a.onended = finish;
-    a.onerror = () => fail(new Error('合成音频解码或播放失败'));
+    a.onerror = () => fail(new Error(t('合成音频解码或播放失败')));
     timer = setInterval(() => {
       if (done) { clearInterval(timer); return; }
       if (ttsPlayer.cancelled || generation!==ttsPlayer.generation) { a.pause(); clearInterval(timer); finish(); return; }
@@ -10785,20 +10807,20 @@ function mechanicalParts(text){
   while((m=re.exec(flat))){ const x=m[0].trim(); if(x) out.push(x.slice(0,200)); }
   return out.slice(0,60);
 }
-function resetMechButtons(){ document.querySelectorAll('.msg-btn-mech').forEach(b=>b.textContent=t('朗读')); }
+function resetMechButtons(){ document.querySelectorAll('.msg-btn-mech').forEach(b=>setMessageActionIcon(b, 'read', t('朗读'))); }
 function toggleMechanicalRead(btn, text){
-  if(mech.speaking && mech.btn===btn){ ttsCancel(); mech.speaking=false; btn.textContent=t('朗读'); return; }
+  if(mech.speaking && mech.btn===btn){ ttsCancel(); mech.speaking=false; setMessageActionIcon(btn, 'read', t('朗读')); return; }
   if(!('speechSynthesis' in window)){ toast(t('当前浏览器不支持语音合成')); return; }
   resetMechButtons();
   ttsPlayer.halt(); // 只停神经音播放器，避免与机械朗读互相打断
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   const parts = mechanicalParts(text);
   if(!parts.length){ toast(t('没有可朗读的文本')); return; }
-  mech.btn=btn; mech.speaking=true; btn.textContent=t('停止');
+  mech.btn=btn; mech.speaking=true; setMessageActionIcon(btn, 'stop', t('停止'));
   let i=0; let stopped=false;
   function next(){
     if(stopped) return;
-    if(i>=parts.length){ mech.speaking=false; btn.textContent=t('朗读'); mech.btn=null; return; }
+    if(i>=parts.length){ mech.speaking=false; setMessageActionIcon(btn, 'read', t('朗读')); mech.btn=null; return; }
     const u=new SpeechSynthesisUtterance(parts[i]);
     u.onstart=u.onresume=()=>window.aideAvatarSignal?.('speaking', true);
     u.onpause=()=>window.aideAvatarSignal?.('speaking', false);
@@ -12305,7 +12327,8 @@ function openFactoryResetDialog() {
   // 输入"重置"二字
   const confirmLabel = el('label', '', t('输入"重置"以确认'));
   const confirmInput = el('input'); confirmInput.type = 'text'; confirmInput.autocomplete = 'off';
-  confirmInput.placeholder = '重置';
+  const resetConfirmation = t('重置');
+  confirmInput.placeholder = resetConfirmation;
   confirmLabel.append(confirmInput);
   dlg.append(confirmLabel);
 
@@ -12333,7 +12356,7 @@ function openFactoryResetDialog() {
   const refresh = () => {
     pwRow.classList.toggle('hidden', !needPw());
     const anyScope = Object.values(boxes).some(b => b.checked);
-    exec.disabled = !(anyScope && ack.checked && confirmInput.value.trim() === '重置');
+    exec.disabled = !(anyScope && ack.checked && confirmInput.value.trim() === resetConfirmation);
   };
   for (const b of Object.values(boxes)) b.onchange = refresh;
   ack.onchange = refresh;
@@ -12372,12 +12395,12 @@ function openFactoryResetDialog() {
 
 // ===== SQLite 查看器 =====
 async function setupSqliteViewer(container, path, root) {
-  container.innerHTML = '<div class="sqlite-empty">正在加载数据库…</div>';
+  container.innerHTML = '<div class="sqlite-empty">' + escapeHtml(t('正在加载数据库…')) + '</div>';
   try {
     // 获取表列表
     const tables = await api('/sqlite/tables?root=' + root + '&path=' + encodeURIComponent(path));
     if (!tables.length) {
-      container.innerHTML = '<div class="sqlite-empty-center">数据库中没有表</div>';
+      container.innerHTML = '<div class="sqlite-empty-center">' + escapeHtml(t('数据库中没有表')) + '</div>';
       return;
     }
     let html = '<div class="sqlite-layout">';
@@ -12388,7 +12411,7 @@ async function setupSqliteViewer(container, path, root) {
     });
     html += '</div>';
     // 右侧数据区
-    html += '<div class="sqlite-data-pane"><div class="sqlite-data-area">点击左侧表查看数据</div></div>';
+    html += '<div class="sqlite-data-pane"><div class="sqlite-data-area">' + escapeHtml(t('点击左侧表查看数据')) + '</div></div>';
     html += '</div>';
     container.innerHTML = html;
     // 绑定表点击事件
@@ -12398,10 +12421,10 @@ async function setupSqliteViewer(container, path, root) {
         item.style.background = 'var(--surface-hover)';
         const table = item.dataset.table;
         const dataArea = container.querySelector('.sqlite-data-area');
-        dataArea.innerHTML = '<div class="sqlite-empty">加载中…</div>';
+        dataArea.innerHTML = '<div class="sqlite-empty">' + escapeHtml(t('加载中…')) + '</div>';
         try {
           const data = await api('/sqlite/data?root=' + root + '&path=' + encodeURIComponent(path) + '&table=' + encodeURIComponent(table) + '&limit=100&offset=0');
-          let tableHtml = `<div class="sqlite-meta">共 ${data.total} 行，显示前 ${data.rows.length} 行</div>`;
+          let tableHtml = '<div class="sqlite-meta">' + escapeHtml(t('共 {0} 行，显示前 {1} 行', data.total, data.rows.length)) + '</div>';
           tableHtml += '<div class="sqlite-table-wrap"><table class="sqlite-table">';
           tableHtml += '<thead><tr>';
           data.columns.forEach(col => {
@@ -12419,7 +12442,7 @@ async function setupSqliteViewer(container, path, root) {
           tableHtml += '</tbody></table></div>';
           dataArea.innerHTML = tableHtml;
         } catch (e) {
-          dataArea.innerHTML = '<div class="sqlite-error">加载失败: ' + escapeHtml(e.message || '') + '</div>';
+          dataArea.innerHTML = '<div class="sqlite-error">' + escapeHtml(t('加载失败：')) + ' ' + escapeHtml(e.message || '') + '</div>';
         }
       };
     });
@@ -12427,7 +12450,7 @@ async function setupSqliteViewer(container, path, root) {
     const firstTable = container.querySelector('.sqlite-table-item');
     if (firstTable) firstTable.click();
   } catch (e) {
-    container.innerHTML = '<div class="sqlite-error">加载失败: ' + escapeHtml(e.message || '') + '</div>';
+    container.innerHTML = '<div class="sqlite-error">' + escapeHtml(t('加载失败：')) + ' ' + escapeHtml(e.message || '') + '</div>';
   }
 }
 
@@ -12524,9 +12547,9 @@ function setupBrowseMountSelector(root,field){
 
 function renderPWRun(run) {
  const panel=el('section','parallel-progress'); panel.append(el('strong','', 'PW · '+run.pw.definition.name));
- for(const n of run.pw.definition.nodes){const info=run.pw.nodes[n.id]||{};const row=el('details','parallel-part');row.style.display='block';row.append(el('summary','',n.title+' · '+({pending:'等待',running:'运行中',waiting:'等待确认',completed:'成功',failed:'失败',skipped:'跳过'}[info.status]||info.status)));
+ for(const n of run.pw.definition.nodes){const info=run.pw.nodes[n.id]||{};const row=el('details','parallel-part');row.style.display='block';row.append(el('summary','',n.title+' · '+t({pending:'等待',running:'运行中',waiting:'等待确认',completed:'成功',failed:'失败',skipped:'跳过'}[info.status]||info.status)));
   if(info.output)row.append(el('pre','',info.output));if(info.error)row.append(el('p','',info.error));
-  if(info.status==='waiting'&&run.status==='running'){row.open=true;row.append(el('pre','',JSON.stringify(info.request||{tool:n.tool,arguments:n.arguments,text:n.text},null,2)));for(const [label,approved] of [['确认执行',true],['拒绝',false]]){const b=el('button','quiet',label);b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'approve',sessionId:state.session.id,runId:run.id,nodeId:n.id,approved})});await selectSession(state.session.id)});row.append(b)}}panel.append(row)}
- if(run.status==='running'){const b=el('button','quiet','停止 PW');b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
+  if(info.status==='waiting'&&run.status==='running'){row.open=true;row.append(el('pre','',JSON.stringify(info.request||{tool:n.tool,arguments:n.arguments,text:n.text},null,2)));for(const [label,approved] of [['确认执行',true],['拒绝',false]]){const b=el('button','quiet',t(label));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'approve',sessionId:state.session.id,runId:run.id,nodeId:n.id,approved})});await selectSession(state.session.id)});row.append(b)}}panel.append(row)}
+ if(run.status==='running'){const b=el('button','quiet',t('停止 PW'));b.onclick=action(async()=>{await api('/professional-workflow/control',{method:'POST',body:JSON.stringify({action:'cancel',sessionId:state.session.id,runId:run.id})});await selectSession(state.session.id)});panel.append(b)}return panel;
 
 }

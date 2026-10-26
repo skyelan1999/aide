@@ -1,7 +1,8 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const moduleSource=fs.readFileSync('internal/server/web/starmap-assist.js','utf8'),source=fs.readFileSync('internal/server/web/starmap.js','utf8');
-const c=vm.createContext({window:{},AbortController,setTimeout,clearTimeout});vm.runInContext(moduleSource,c);const assist=c.window.AideStarmapAssist;
+const c=createUiContext(vm, {window:{},AbortController,setTimeout,clearTimeout});vm.runInContext(moduleSource,c);const assist=c.window.AideStarmapAssist;
 let busy=false,scope='';const owner=assist.create({busy:v=>busy=v,scope:v=>scope=v});
 const first=owner.start('first');owner.updated();assert.equal(first.controller.signal.aborted,false);assert.match(scope,/索引已有更新/);
 owner.cancel();assert.equal(busy,false);assert.equal(owner.current(first),false);

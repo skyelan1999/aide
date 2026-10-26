@@ -1,5 +1,6 @@
+const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/starmap.js','utf8'),c=vm.createContext({});
+const source=fs.readFileSync('internal/server/web/starmap.js','utf8'),c=createUiContext(vm, {});
 vm.runInContext(source.slice(source.indexOf('function nodeOutlineMatch('),source.indexOf('function nodeResults(')),c);
 const n={outline:{entries:[{kind:'heading',line:900,text:'## Late recovery'},{kind:'heading',line:100,text:'## Earlier'}]}};
 assert.equal(c.nodeOutlineMatch(n,['late','recovery']).line,900);
