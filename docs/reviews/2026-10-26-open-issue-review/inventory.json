@@ -1778,10 +1778,13 @@
       "number": 153,
       "title": "[Bug] Report cloned voice ID persistence failures",
       "url": "https://github.com/skyelan1999/aide/issues/153",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "voiceCloneCreate先写内存CloneVoiceID，解锁后忽略atomicJSON错误，返回bound:true；还应避免无锁序列化settings。",
+      "status": "fixed-on-branch",
+      "evidence": "克隆服务成功后先在a.mu内原子保存候选设置，再发布CloneVoiceID与bound:true；保存失败500/bound:false保留旧绑定，并返回已创建的远端voiceID供手动恢复，不自动重试或删除远端音色。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "voiceCloneCreate先写内存CloneVoiceID，解锁后忽略atomicJSON错误，返回bound:true；还应避免无锁序列化settings。",
+      "repairCommit": "986a761eafa113617986028037c596675187015c",
+      "repairEvidence": "cycle-032.json"
     },
     {
       "number": 152,
@@ -2814,7 +2817,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 197,
+    "remainingFollowupTargets": 196,
     "followupRepairs": [
       48,
       64,
@@ -2887,7 +2890,8 @@
       149,
       150,
       151,
-      152
+      152,
+      153
     ]
   }
 }
