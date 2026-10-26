@@ -2035,28 +2035,37 @@
       "number": 122,
       "title": "[P3] Fix the invalid hero caption font shorthand",
       "url": "https://github.com/skyelan1999/aide/issues/122",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "site/style.css .hero-side p font:12px/1.8 inherit 不符合shorthand语法；letter-spacing已有1px，报告声称继承2.2px部分不成立。",
+      "status": "fixed-on-branch",
+      "evidence": "首页hero caption把无效font简写改为font-size12px和line-height1.8；真实Chrome原字号10px、修复后12px/21.6px，原有1px字距保留，390窄屏仍隐藏。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "site/style.css .hero-side p font:12px/1.8 inherit 不符合shorthand语法；letter-spacing已有1px，报告声称继承2.2px部分不成立。",
+      "repairCommit": "d8260189697e69c94458b990fa71248a6b28ed48",
+      "repairEvidence": "cycle-021.json"
     },
     {
       "number": 121,
       "title": "[P2] Isolate and clean up data created by UI acceptance scripts",
       "url": "https://github.com/skyelan1999/aide/issues/121",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "ui_queue_check/stream_check 直接填当前#prompt，无独立session/finally；fail process.exit，queue另创建6会话未清理。",
+      "status": "fixed-on-branch",
+      "evidence": "队列和流式验收通过共享helper创建随机标签专属会话；浏览器只允许写自有会话，列表/归档/导出只展示自有数据。finally取消运行并删除所有自有会话，包含丢失创建响应恢复、清理失败继续其他项并失败退出；PASS在清理成功后才输出。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "ui_queue_check/stream_check 直接填当前#prompt，无独立session/finally；fail process.exit，queue另创建6会话未清理。",
+      "repairCommit": "f0a9bec332ed4bcc5700ffeee968abfe58cd275c",
+      "repairEvidence": "cycle-021.json"
     },
     {
       "number": 120,
       "title": "[P2] Report persistence failures during factory reset",
       "url": "https://github.com/skyelan1999/aide/issues/120",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "factory_reset.go 三个void reset helper不传播删除/atomicJSON错误，主函数仍返回nil；凭据成功标记不代表全部落盘。",
+      "status": "fixed-on-branch",
+      "evidence": "重置各范围逐步检查保存/删除/人格状态/小秘重建/令牌/目录/审计错误；失败500并报告failedScope、completedScopes、partial、backupPath。设置先保存再切内存，token原子替换成功后才切内存；备份唯一且原子保存，明确配置备份不是整卷恢复。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "factory_reset.go 三个void reset helper不传播删除/atomicJSON错误，主函数仍返回nil；凭据成功标记不代表全部落盘。",
+      "repairCommit": "b92c91e1c84fe19b434da588860760005b54c465",
+      "repairEvidence": "cycle-021.json"
     },
     {
       "number": 119,
@@ -2726,7 +2735,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 226,
+    "remainingFollowupTargets": 223,
     "followupRepairs": [
       48,
       64,
@@ -2770,7 +2779,10 @@
       116,
       117,
       118,
-      119
+      119,
+      120,
+      121,
+      122
     ]
   }
 }

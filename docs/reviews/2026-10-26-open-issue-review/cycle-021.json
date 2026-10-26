@@ -1,0 +1,122 @@
+{
+  "cycle": 21,
+  "baseline": "7f3a7bfa",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    120,
+    121,
+    122
+  ],
+  "commits": {
+    "120": "b92c91e1c84fe19b434da588860760005b54c465",
+    "121": "f0a9bec332ed4bcc5700ffeee968abfe58cd275c",
+    "122": "d8260189697e69c94458b990fa71248a6b28ed48"
+  },
+  "verificationRegistrationCommit": "a151e1103049b8b0d68f7aa61eb1efe993ee9366",
+  "cumulativeProductFixes": 60,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 61,
+  "original272RemainingFollowup": 223,
+  "red": [
+    {
+      "issue": 120,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue120' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 8.349,
+      "observed": "Settings/session-file/memory/plugin-experience/voice-history/personality-state/source-secret/access-token write/remove faults all returned200 withoktrue; settings failure changed memory. Multi-scope partial fault also returned200 without recovery failure metadata."
+    },
+    {
+      "issue": 121,
+      "command": "node scripts/test_ui_acceptance_scope.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Actual queue CLI executed in owned VM/mockbrowser typed队列验收任务 into preselected foreign user session before any isolation; directprocess.exit modeled as fatal termination."
+    },
+    {
+      "issue": 122,
+      "command": "AIDE_SITE_CASE=red node /workspace/scratch/issue-review-20261026/cycle21-site-browser.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Real Chromium computed10px vs expected12px; preexisting letterSpacing already1px, so this portion of report impact was inaccurate."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue120|^TestFactoryReset|^TestIssue115|^TestIssue101|^TestPersonality' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 36.576,
+      "scope": "Owned data only:8filesystem faults, partial completed scope receipt, backup/audit failure, unique backup preservation, unreadable bucket, successful reset/unauthorized/password controls, shared password budget and personality persistence/revision compatibility."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "node scripts/test_ui_acceptance_scope.cjs",
+      "result": "PASS",
+      "scope": "Both actual CLIs under injected post-start UI failure: foreign prompt/run untouched, owned run canceled, own session deleted, browser closed. Seven fillers cleanup, creation-commit/lost-response recovery, failed delete reported while other deletions continue. Mock browser/API; no real provider."
+    },
+    {
+      "command": "node scripts/browser-ui-acceptance-scope.cjs",
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle21-121-browser.log",
+      "scope": "ActualChromium plus ownedHTTPfixture: primary+6fillers, archive/export/list filtering, foreign/global/bulk mutations denied before backend, started run canceled and all owned sessions deleted after assertion failure; synthetic user conversation byte-identical. Page/context/browser/server closed."
+    },
+    {
+      "command": "AIDE_SITE_CASE=green node /workspace/scratch/issue-review-20261026/cycle21-site-browser.cjs",
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle21-site/green.json",
+      "scope": "Actual shipped siteHTML/CSS/JS, local resource fixture, Chromium1440caption12px/21.6px and inheritedmono/letterSpacing1px;390captiondisplaynone; no pageerrors. Viewed desktop screenshot.",
+      "screenshots": [
+        "/workspace/scratch/issue-review-20261026/cycle21-site/desktop.png",
+        "/workspace/scratch/issue-review-20261026/cycle21-site/mobile.png"
+      ]
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T185427887155Z.log",
+      "fingerprint": "1dcf493f5c8b4029d478fe7c132d77af08731edfae79bd0af3ebceb559bbef3b"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "intermediateFailures": [
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "FAIL_ENVIRONMENT",
+      "receipt": ".agent-state/verify-20261026T185217268205Z.log",
+      "observed": "Only test_offline_bundle.py nonzero: temporaryfilesystem10138124KiBfree, below10GiB startup guard. After all Go commands completed, cleaned ONLY task-owned GOCACHE=/tmp/aide-issue-review-go-cache via go clean -cache; then finalquickPASS. No user data or original untracked files removed."
+    }
+  ],
+  "notes": [
+    "重置各范围逐步检查保存/删除/人格状态/小秘重建/令牌/目录/审计错误；失败500并报告failedScope、completedScopes、partial、backupPath。设置先保存再切内存，token原子替换成功后才切内存；备份唯一且原子保存，明确配置备份不是整卷恢复。",
+    "队列和流式验收通过共享helper创建随机标签专属会话；浏览器只允许写自有会话，列表/归档/导出只展示自有数据。finally取消运行并删除所有自有会话，包含丢失创建响应恢复、清理失败继续其他项并失败退出；PASS在清理成功后才输出。",
+    "首页hero caption把无效font简写改为font-size12px和line-height1.8；真实Chrome原字号10px、修复后12px/21.6px，原有1px字距保留，390窄屏仍隐藏。",
+    "Reset is sequential, not transactional rollback. Failed scope may already have removed files. Backup contains settings and available envelope materials, not full sessions/memory/project/token/KDF data. Recovery limits are explicit in API error and user guide; no claim that importing configuration restores an entire volume.",
+    "The direct password/personality persistence functions now return errors for reset callers to propagate. Other preexisting callers retaining ignored return behavior are not declared repaired here.",
+    "UI runner guardrails prevent accidental writes outside this run, not a security sandbox for malicious test code. It requires an already unlocked workbench and does not unlock/change the global lock. Hard kill or server unavailability can prevent cleanup; normal assertions/errors use finally and failures remain visible.",
+    "Full legacy queue/stream UI scenarios against start.command workbench and a real provider were NOT_RUN; the actual CLI failure lifecycle and real browser ownership fixture were verified separately. No paid model/user device/data access.",
+    "Homepage style change is source-only; no site deployment or release. Prior native-platform/Landlock/full-gate blockers persist. No main merge."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "internal/server/factory_reset.go": "ea1fdeb50a6c5a619c8be21770ef21b08677a0c611623798f8a19f414f13214b",
+    "internal/server/persona.go": "ebb26dd136e015329dc82f5c3c3908875e35611c093bed16db42c8065d600171",
+    "internal/server/personality_evolution.go": "553aebf88e41b4707c2f428cd094c7867a5faae0a3c7976939fc70472064da81",
+    "internal/server/factory_reset_failure_test.go": "55b6a5c41dbe72f6e65b51d24552ffabe3ab2728fafa3a07581912dee0ed64af",
+    "scripts/ui_acceptance_scope.cjs": "7c2a665c0a7e0a098a659fbdf19529aac1b0da554b1c716a9ee95e2302697e9d",
+    "scripts/ui_queue_check.cjs": "cf6a2e8274a587937eec802854895927f4db824e357f0149aaabcebab9d795c1",
+    "scripts/ui_stream_check.cjs": "571702b44269db45ccd10f93c7027069cf6d65c0184eaeae502780f74970c20d",
+    "scripts/test_ui_acceptance_scope.cjs": "ac803c4d57c25cca1d96e1a26214fc59fd7902789935e41a8a682a86efacd498",
+    "scripts/browser-ui-acceptance-scope.cjs": "2d5c4a1226fd090deeac0c5c15ba4574b9410b73203a1db5b91b51a68681ae3f",
+    "site/style.css": "eec24eef6414890ff3575e3b3b6ad08c2d20359f451ea05c00dd4c994473f883",
+    "docs/agent/router.json": "40ee9892f6b4b67bc32d926f72906d76fcba3060abbf7eed6f3a9fa488a1afc4"
+  }
+}
