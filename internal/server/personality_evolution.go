@@ -96,8 +96,8 @@ func (a *App) loadPersonalityState() {
 }
 
 // persistPersonalityStateLocked 原子写回状态文件。调用方需持 a.mu。
-func (a *App) persistPersonalityStateLocked() {
-	_ = atomicJSON(PersonalityStatePath(a.dataPath), &a.personalityState)
+func (a *App) persistPersonalityStateLocked() error {
+	return atomicJSON(PersonalityStatePath(a.dataPath), &a.personalityState)
 }
 
 // personalityStateLocked 读取某人格状态（无记录返回零值）。调用方需持 a.mu。
@@ -459,7 +459,7 @@ func (a *App) personalityRollbackLocked(id string) (Personality, bool) {
 }
 
 // personalityResetLocked 重置为默认并清空回滚历史。调用方需持 a.mu。
-func (a *App) personalityResetLocked(id string) {
+func (a *App) personalityResetLocked(id string) error {
 	if a.settings.Personalities != nil {
 		delete(a.settings.Personalities, id)
 	}
@@ -467,8 +467,10 @@ func (a *App) personalityResetLocked(id string) {
 	st.History = nil
 	st.CountSinceEvolve = 0
 	a.personalityState.Entries[id] = st
-	a.persistPersonalitiesLocked(id)
-	a.persistPersonalityStateLocked()
+	if err := a.persistPersonalitiesLocked(id); err != nil {
+		return err
+	}
+	return a.persistPersonalityStateLocked()
 }
 
 // errPersonalityNoHistory 无历史可回滚。

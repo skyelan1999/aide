@@ -460,7 +460,7 @@ func (a *App) personalityLocked(id string) Personality {
 }
 
 // persistPersonalitiesLocked 写回 settings.json。调用方需持 a.mu。
-func (a *App) persistPersonalitiesLocked(changedIDs ...string) {
+func (a *App) persistPersonalitiesLocked(changedIDs ...string) error {
 	if len(changedIDs) == 0 {
 		changedIDs = []string{personaAide, personaXiaomi}
 	}
@@ -470,7 +470,7 @@ func (a *App) persistPersonalitiesLocked(changedIDs ...string) {
 	for _, id := range changedIDs {
 		a.personalityRevisions[id]++
 	}
-	atomicJSON(SettingsPath(a.dataPath), a.settings)
+	return atomicJSON(SettingsPath(a.dataPath), a.settings)
 }
 
 // ── HTTP ──────────────────────────────────────────────────────────────────

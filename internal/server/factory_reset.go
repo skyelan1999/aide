@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -43,7 +42,7 @@ func factoryResetAuditPath(data string) string {
 }
 
 // writeFactoryResetAudit 追加一条出厂重置审计（时间、scope、备份路径、结果）。绝不记录凭据正文。
-func writeFactoryResetAudit(data string, scope ResetScope, backupPath, result string) {
+func writeFactoryResetAudit(data string, scope ResetScope, backupPath, result string) error {
 	entry := map[string]any{
 		"time":        time.Now().UTC().Format(time.RFC3339Nano),
 		"settings":    scope.Settings,
@@ -55,20 +54,29 @@ func writeFactoryResetAudit(data string, scope ResetScope, backupPath, result st
 	}
 	b, err := json.Marshal(entry)
 	if err != nil {
-		return
+		return err
 	}
-	_ = os.MkdirAll(AuditDir(data), 0700)
+	if err := os.MkdirAll(AuditDir(data), 0700); err != nil {
+		return err
+	}
 	f, err := os.OpenFile(factoryResetAuditPath(data), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
-		return
+		return err
 	}
-	defer f.Close()
-	_, _ = f.Write(append(b, '\n'))
+	_, writeErr := f.Write(append(b, '\n'))
+	if writeErr == nil {
+		writeErr = f.Sync()
+	}
+	closeErr := f.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	return closeErr
 }
 
-// buildResetBackup 执行破坏性操作之前，把当前完整状态打包成可导入的配置备份信封，
+// buildResetBackup 执行破坏性操作之前，把设置和可读取的信封材料打包为配置备份，
 // 写到 /data/config/backups/factory-reset-<ts>.json（含 secrets 加密信封 + 小秘历史）。
-// 返回备份文件绝对路径。任何读不到的可选材料（如未启用的小秘历史）跳过，不阻断备份。
+// 返回备份文件绝对路径。可选材料不可读时跳过；不是完整数据卷或会话/记忆备份。
 func (a *App) buildResetBackup() (string, error) {
 	// 持锁期间只做读盘，备份落盘在锁外完成（此处调用方已持锁，读 a.settings 安全）。
 	sb, err := json.MarshalIndent(a.settings, "", "  ")
@@ -101,16 +109,12 @@ func (a *App) buildResetBackup() (string, error) {
 	if b, e := os.ReadFile(VoiceHistoryPath(a.dataPath)); e == nil && json.Valid(b) {
 		bk.VoiceHistory = b
 	}
-	out, err := json.MarshalIndent(bk, "", "  ")
-	if err != nil {
-		return "", err
-	}
 	if err := os.MkdirAll(ConfigBackupsDir(a.dataPath), 0700); err != nil {
 		return "", err
 	}
-	name := "factory-reset-" + time.Now().Format("20060102-150405") + ".json"
+	name := "factory-reset-" + time.Now().Format("20060102-150405") + "-" + newID() + ".json"
 	path := filepath.Join(ConfigBackupsDir(a.dataPath), name)
-	if err := os.WriteFile(path, out, 0600); err != nil {
+	if err := atomicJSON(path, bk); err != nil {
 		return "", err
 	}
 	return path, nil
@@ -121,13 +125,16 @@ func (a *App) buildResetBackup() (string, error) {
 //
 // 全程持 a.mu；先备份、后清除、再重新初始化，最后写审计。永不触碰 workPath / reference。
 func (a *App) FactoryReset(scope ResetScope, password string) (backupPath string, needRelogin bool, err error) {
+	completed := []string{}
 	defer func() {
 		// 审计无论成败都写；失败时记录错误，备份路径可能为空。
 		result := "ok"
 		if err != nil {
 			result = "error: " + err.Error()
 		}
-		writeFactoryResetAudit(a.dataPath, scope, backupPath, result)
+		if auditErr := writeFactoryResetAudit(a.dataPath, scope, backupPath, result); auditErr != nil && err == nil {
+			err = &factoryResetFailure{Scope: "audit", Completed: completed, Partial: true, Cause: auditErr}
+		}
 	}()
 
 	a.mu.Lock()
@@ -148,29 +155,32 @@ func (a *App) FactoryReset(scope ResetScope, password string) (backupPath string
 	// 2) 自动备份（破坏性操作前）。
 	backupPath, err = a.buildResetBackup()
 	if err != nil {
-		return "", false, fmt.Errorf("重置前自动备份失败，已中止：%w", err)
+		return "", false, &factoryResetFailure{Scope: "backup", Completed: completed, Cause: fmt.Errorf("重置前自动备份失败，已中止：%w", err)}
 	}
 
-	// 3) 按 scope 执行。
-	if scope.Settings {
-		a.applySettingsReset(scope.CredentialsAndKeys)
-	}
-	if scope.SessionsAndMemory {
-		a.applySessionsAndMemoryReset()
-	}
-	if scope.CredentialsAndKeys {
-		needRelogin = true
-		a.applyCredentialsReset()
-	}
-	if scope.WorkspaceConfig {
-		if e := a.applyWorkspaceConfigReset(); e != nil {
-			return backupPath, needRelogin, e
+	// Scopes are intentionally sequential, not an all-or-nothing transaction.
+	// Stop on failure and retain a precise checkpoint for partial recovery.
+	initialToken := a.token
+	for _, step := range []struct {
+		selected bool
+		name     string
+		apply    func() error
+	}{
+		{scope.Settings, "settings", func() error { return a.applySettingsReset(scope.CredentialsAndKeys) }},
+		{scope.SessionsAndMemory, "sessionsAndMemory", a.applySessionsAndMemoryReset},
+		{scope.CredentialsAndKeys, "credentialsAndKeys", a.applyCredentialsReset},
+		{scope.WorkspaceConfig, "workspaceConfig", a.applyWorkspaceConfigReset},
+		{true, "directories", func() error { return EnsureDirs(a.dataPath) }},
+	} {
+		if !step.selected {
+			continue
 		}
-	}
-
-	// 4) 重新初始化默认目录骨架（幂等）。
-	if e := EnsureDirs(a.dataPath); e != nil {
-		return backupPath, needRelogin, e
+		stepErr := step.apply()
+		needRelogin = a.token != initialToken
+		if stepErr != nil {
+			return backupPath, needRelogin, &factoryResetFailure{Scope: step.name, Completed: append([]string{}, completed...), Partial: true, Cause: stepErr}
+		}
+		completed = append(completed, step.name)
 	}
 	return backupPath, needRelogin, nil
 }
@@ -178,7 +188,7 @@ func (a *App) FactoryReset(scope ResetScope, password string) (backupPath string
 // applySettingsReset 把设置收敛为当前版本默认值。
 // wipeCredentials=true 时一并清零凭据类字段；否则保留 API Key/密码哈希/调试令牌等，
 // 使"仅重置设置"不破坏登录态与已接入模型。调用方持 a.mu。
-func (a *App) applySettingsReset(wipeCredentials bool) {
+func (a *App) applySettingsReset(wipeCredentials bool) error {
 	cur := a.settings
 	next := defaultSettings()
 	// 会话编号是单调计数器，重置设置不回退编号（避免历史编号语义混乱）。
@@ -205,35 +215,53 @@ func (a *App) applySettingsReset(wipeCredentials bool) {
 		next.DebugAccessEnabled = cur.DebugAccessEnabled
 		next.DebugAllowOrigins = cur.DebugAllowOrigins
 	}
-	a.settings = next
-	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
-		log.Printf("出厂重置：写回 settings.json 失败: %v", err)
+	if err := atomicJSON(SettingsPath(a.dataPath), next); err != nil {
+		return err
 	}
+	a.settings = next
+	return nil
 }
 
 // applySessionsAndMemoryReset 清空所有会话（active/archived/assistant）、aide 核心记忆、
 // 小秘历史/长期记忆，并把性格恢复默认。调用方持 a.mu。不删 /workspace /context 用户文件。
-func (a *App) applySessionsAndMemoryReset() {
+func (a *App) applySessionsAndMemoryReset() error {
 	// 会话文件：清空三个 bucket 下的 session-*.json。
 	for _, dir := range sessionBucketDirs(a.dataPath) {
-		_ = removeGlob(dir, "session-*.json")
+		if err := removeGlob(dir, "session-*.json"); err != nil {
+			return err
+		}
 	}
 	// 内存会话表清空，随后重建恰好一个小秘系统会话。
+	for _, session := range a.sessions {
+		session.Deleted = true
+	}
 	a.sessions = map[string]*Session{}
 	for id, cancel := range a.cancels {
 		cancel()
 		delete(a.cancels, id)
 	}
 	// aide 核心记忆 + 反馈（可再生的 cache/ 保留）。
-	_ = removeGlob(MemoryCoreDir(a.dataPath), "*.json")
-	_ = removeGlob(MemoryFeedbackDir(a.dataPath), "*.json")
+	if err := removeGlob(MemoryCoreDir(a.dataPath), "*.json"); err != nil {
+		return err
+	}
+	if err := removeGlob(MemoryFeedbackDir(a.dataPath), "*.json"); err != nil {
+		return err
+	}
 	// 核心记忆为 Markdown 落盘（*.json 通配匹配不到）：显式删除核心记忆与插件经验，
 	// 否则「会话与记忆」重置后旧记忆仍会注入。
-	_ = os.Remove(a.memoryPath())
-	_ = a.resetPluginExperience()
+	if err := removeResetFile(a.memoryPath()); err != nil {
+		return err
+	}
+	if err := a.resetPluginExperience(); err != nil {
+		return err
+	}
 	// 小秘历史与长期记忆：删文件并让 voiceAgent 重新加载为空。
-	_ = os.Remove(VoiceHistoryPath(a.dataPath))
-	_ = os.Remove(VoiceMemoryPath(a.dataPath))
+	if err := removeResetFile(VoiceHistoryPath(a.dataPath)); err != nil {
+		return err
+	}
+	if err := removeResetFile(VoiceMemoryPath(a.dataPath)); err != nil {
+		return err
+	}
 	if a.voiceAgent != nil {
 		a.voiceAgent = newVoiceAgent(a.dataPath)
 		a.voiceAgent.setAideMemoryPath(a.memoryPath())
@@ -241,21 +269,23 @@ func (a *App) applySessionsAndMemoryReset() {
 	}
 	// 性格恢复默认（aide + xiaomi），清空自定义性格密文与解锁缓存。
 	for _, id := range []string{personaAide, personaXiaomi} {
-		a.personalityResetLocked(id)
+		if err := a.personalityResetLocked(id); err != nil {
+			return err
+		}
 	}
 	a.settings.PersonaCiphers = map[string]string{}
 	a.settings.PersonaCipher = ""
 	a.personaCustom = map[string]string{}
 	a.personaKey = ""
 	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
-		log.Printf("出厂重置：清空性格后写回 settings.json 失败: %v", err)
+		return err
 	}
 	// 重建小秘系统会话（ensureAssistantSession 内部会再次自取锁——这里用可重入安全的直接构造）。
-	a.ensureAssistantSessionAfterReset()
+	return a.ensureAssistantSessionAfterReset()
 }
 
 // ensureAssistantSessionAfterReset 重置会话后重建唯一小秘系统会话。调用方已持 a.mu。
-func (a *App) ensureAssistantSessionAfterReset() {
+func (a *App) ensureAssistantSessionAfterReset() error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	s := &Session{
 		ID: newID(), Title: a.assistantNameLocked(),
@@ -263,65 +293,95 @@ func (a *App) ensureAssistantSessionAfterReset() {
 		Messages: []Message{}, Runs: []*Task{},
 		Kind: assistantSessionKind, Pinned: true,
 	}
-	a.assignSessionNumber(s)
-	a.sessions[s.ID] = s
-	if err := a.save(s); err != nil {
-		log.Printf("出厂重置：重建小秘会话失败: %v", err)
+	next := a.settings
+	s.Number = max(1, next.NextSessionSeq)
+	next.NextSessionSeq = s.Number + 1
+	if err := atomicJSON(SettingsPath(a.dataPath), next); err != nil {
+		return err
 	}
+	a.settings = next
+	if err := a.save(s); err != nil {
+		return err
+	}
+	a.sessions[s.ID] = s
+	return nil
 }
 
 // applyCredentialsReset 清除全部认证与密钥材料：密码哈希、API Key、vault、来源/工作区密钥、
 // 调试令牌、WebAuthn、KDF salt、access-token。随后重新生成 access-token 强制重新登录。
 // 调用方持 a.mu。
-func (a *App) applyCredentialsReset() {
+func (a *App) applyCredentialsReset() error {
+	next := a.settings
 	// 1) 内存设置里的凭据类字段清零（applySettingsReset 已在 wipeCredentials 时落盘；
 	//    这里兜底，即使未勾 Settings 也确保凭据字段被清）。
-	a.settings.APIKey = ""
-	a.settings.TTSAPIKey = ""
-	a.settings.TTSAzureKey = ""
-	a.settings.CloneTTSAPIKey = ""
-	a.settings.UserPasswordHash = ""
-	a.settings.PersonaCiphers = map[string]string{}
-	a.settings.PersonaCipher = ""
-	a.settings.DebugTokenHash = ""
-	a.settings.DebugTokenCreatedAt = ""
-	a.settings.DebugTokenExpiresAt = ""
-	a.settings.DebugAccessEnabled = false
-	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
-		log.Printf("出厂重置：清除凭据后写回 settings.json 失败: %v", err)
+	next.APIKey = ""
+	next.TTSAPIKey = ""
+	next.TTSAzureKey = ""
+	next.CloneTTSAPIKey = ""
+	next.UserPasswordHash = ""
+	next.PersonaCiphers = map[string]string{}
+	next.PersonaCipher = ""
+	next.DebugTokenHash = ""
+	next.DebugTokenCreatedAt = ""
+	next.DebugTokenExpiresAt = ""
+	next.DebugAccessEnabled = false
+	if err := atomicJSON(SettingsPath(a.dataPath), next); err != nil {
+		return err
 	}
+	a.settings = next
 	a.personaCustom = map[string]string{}
 	a.personaKey = ""
 
 	// 2) auth/：access-token（删后重建）、kdf-salt、webauthn 凭证。
-	_ = os.Remove(AccessTokenPath(a.dataPath))
-	_ = os.Remove(KdfSaltPath(a.dataPath))
-	_ = os.Remove(WebAuthnCredsPath(a.dataPath))
+	// The old access token is replaced atomically only after other work succeeds.
+	if err := removeResetFile(KdfSaltPath(a.dataPath)); err != nil {
+		return err
+	}
+	if err := removeResetFile(WebAuthnCredsPath(a.dataPath)); err != nil {
+		return err
+	}
 	if a.webAuthn != nil {
+		a.webAuthn.mu.Lock()
 		a.webAuthn.loadLocked() // 重新读盘（文件已删）→ 空凭证
+		a.webAuthn.mu.Unlock()
 	}
 	// 内存解锁态全部失效。
 	a.clearAssistantUnlock()
 
 	// 3) secrets/：vault 信封、来源密钥、工作区旧明文密钥。
-	_ = os.Remove(SourcesSecretsPath(a.dataPath))
-	_ = os.Remove(WorkspaceSecretsPath(a.dataPath))
-	_ = os.Remove(WorkspaceSecretsPath(a.dataPath) + ".migrated")
+	if err := removeResetFile(SourcesSecretsPath(a.dataPath)); err != nil {
+		return err
+	}
+	if err := removeResetFile(WorkspaceSecretsPath(a.dataPath)); err != nil {
+		return err
+	}
+	if err := removeResetFile(WorkspaceSecretsPath(a.dataPath) + ".migrated"); err != nil {
+		return err
+	}
 	if a.vault != nil {
-		_ = os.Remove(a.vault.Path())
-		if nv, err := newSecretVault(a.dataPath); err == nil {
-			_ = nv.Load() // 空保险库
-			a.vault = nv
+		a.vault.Lock()
+		if err := removeResetFile(a.vault.Path()); err != nil {
+			return err
 		}
+		nv, err := newSecretVault(a.dataPath)
+		if err != nil {
+			return err
+		}
+		if err := nv.Load(); err != nil {
+			return err
+		}
+		a.vault = nv
 	}
 	// 来源密钥内存清空（vault 已在上一步连同 vault.enc 一并重建为空，无残留）。
 	a.sourceSecrets = sourcesSecrets{Secrets: map[string]sourceSecretEntry{}}
 
 	// 4) 重新生成 access-token，使当前前端立即掉线、回到登录/首次引导。
 	tok := []byte(newID() + newID())
-	if err := os.WriteFile(AccessTokenPath(a.dataPath), tok, 0600); err == nil {
-		a.token = strings.TrimSpace(string(tok))
+	if err := writeResetToken(AccessTokenPath(a.dataPath), tok); err != nil {
+		return err
 	}
+	a.token = strings.TrimSpace(string(tok))
+	return nil
 }
 
 // applyWorkspaceConfigReset 把工作空间配置回到本地默认（local、空路径、无 SSH 凭据引用）。
@@ -334,18 +394,74 @@ func (a *App) applyWorkspaceConfigReset() error {
 	return a.saveWorkspaceConfig()
 }
 
-// removeGlob 删除 dir 下匹配 pattern 的所有普通文件（不递归、不删目录）。
-// 单个删除失败不阻断其余文件。
-func removeGlob(dir, pattern string) error {
-	matches, err := filepath.Glob(filepath.Join(dir, pattern))
+// removeResetFile treats absence as already reset, but reports every other error.
+func removeResetFile(path string) error {
+	err := os.Remove(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
+}
+
+func writeResetToken(path string, token []byte) error {
+	f, err := os.CreateTemp(filepath.Dir(path), ".aide-reset-token-*")
 	if err != nil {
 		return err
 	}
-	for _, m := range matches {
-		_ = os.Remove(m)
+	defer os.Remove(f.Name())
+	_, writeErr := f.Write(token)
+	if writeErr == nil {
+		writeErr = f.Sync()
+	}
+	closeErr := f.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	if closeErr != nil {
+		return closeErr
+	}
+	return os.Rename(f.Name(), path)
+}
+
+// removeGlob stops at the first failure. ReadDir errors cannot silently turn
+// unreadable buckets into an empty, successfully reset result.
+func removeGlob(dir, pattern string) error {
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		matched, err := filepath.Match(pattern, entry.Name())
+		if err != nil {
+			return err
+		}
+		if !matched {
+			continue
+		}
+		if entry.IsDir() {
+			return fmt.Errorf("重置目标不是文件：%s", filepath.Join(dir, entry.Name()))
+		}
+		if err := removeResetFile(filepath.Join(dir, entry.Name())); err != nil {
+			return err
+		}
 	}
 	return nil
 }
+
+type factoryResetFailure struct {
+	Scope     string
+	Completed []string
+	Partial   bool
+	Cause     error
+}
+
+func (e *factoryResetFailure) Error() string {
+	return fmt.Sprintf("重置范围 %s 失败：%v", e.Scope, e.Cause)
+}
+func (e *factoryResetFailure) Unwrap() error { return e.Cause }
 
 // ── HTTP 端点 ──────────────────────────────────────────────────────────────────
 
@@ -381,7 +497,16 @@ func (a *App) postFactoryReset(w http.ResponseWriter, r *http.Request) {
 			fail(w, 401, err)
 			return
 		}
-		fail(w, 400, err)
+		var partial *factoryResetFailure
+		if errors.As(err, &partial) {
+			message := fmt.Sprintf("%v；配置备份：%s。备份不包含完整会话/项目文件，勿当作整卷回滚。", err, backupPath)
+			if partial.Partial {
+				message += " 重置可能已部分执行，请先核对状态再恢复或重试。"
+			}
+			jsonOut(w, 500, map[string]any{"ok": false, "error": message, "partial": partial.Partial, "failedScope": partial.Scope, "completedScopes": partial.Completed, "backupPath": backupPath, "needRelogin": needRelogin})
+			return
+		}
+		fail(w, 500, err)
 		return
 	}
 	jsonOut(w, 200, map[string]any{
