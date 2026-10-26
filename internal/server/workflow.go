@@ -5779,6 +5779,14 @@ func (a *App) queueUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	case "steer":
 		content := task.Queue[index]
+		// Admission may fail (including nil/no receiver). A rejected conversion
+		// must leave both the prompt queue and its display record untouched.
+		select {
+		case task.Steer <- content:
+		default:
+			fail(w, 429, errors.New("插话通道已满"))
+			return
+		}
 		task.Queue = append(task.Queue[:index], task.Queue[index+1:]...)
 		steerIdx := -1
 		for i, st := range task.Steers {
@@ -5789,12 +5797,6 @@ func (a *App) queueUpdate(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 			}
-		}
-		select {
-		case task.Steer <- content:
-		default:
-			fail(w, 429, errors.New("插话通道已满"))
-			return
 		}
 	default:
 		fail(w, 400, errors.New("未知操作"))
