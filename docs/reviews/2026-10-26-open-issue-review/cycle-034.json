@@ -57,11 +57,14 @@
     "下一项#157工作流绑定检查/文件访问竞态，随后#158研究值边界；最新正文已读，尚未完成它们的复现或修复。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "156": "https://github.com/skyelan1999/aide/issues/156#issuecomment-6429806035"
+    },
+    "verifiedRemoteCommit": "cb3826cc28540070ac7445afd17b0e1c893851eb"
   },
   "sourceSHA256": {
     "docs/security/voice-cloning.md": "7ebf8b52b9c4a521a92b52107741f7d350136b70f2dbfaacc6278d8653820be1",
