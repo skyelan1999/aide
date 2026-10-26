@@ -77,11 +77,16 @@
     "完整start.command工作台、真实设备/付费模型未验收；本轮无UI变更，无新常驻服务，无合并main/发行/部署。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "150": "https://github.com/skyelan1999/aide/issues/150#issuecomment-6429360354",
+      "151": "https://github.com/skyelan1999/aide/issues/151#issuecomment-6429361045",
+      "152": "https://github.com/skyelan1999/aide/issues/152#issuecomment-6429361866"
+    },
+    "verifiedRemoteCommit": "e3b4d009c2fc3b081fb9655491d92f73ff4761c4"
   },
   "sourceSHA256": {
     "docs/security/voice-cloning.md": "78b91b88ef1295ccbc01a66253ac0aae5b0ee6dcde2efe6382c12a7549a1537f",

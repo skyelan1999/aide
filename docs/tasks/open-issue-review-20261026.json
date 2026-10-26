@@ -125,16 +125,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第31轮#150/#151/#152已验证，待push并评论；累计87项分支覆盖，原272项剩197跟进。下一轮#153/#155/#156正文已读。",
+  "handoff": "第31轮#150/#151/#152已push并评论；累计87项分支覆盖（150沿用先前修复并补验），原272项剩197跟进；第32轮从#153/#155/#156继续，正文已读，#154为既有关闭重复项。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "7e235059dd033ec7452a9874357d26cfaa7ccbc8",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第31轮待push后评论；合理问题保持open等待main合并验收。",
+  "issue_comments": "第31轮#150/#151/#152已push并评论；合理问题保持open等待main合并验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -193,14 +193,14 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 31,
+      "cycle": 32,
       "status": "in_progress",
       "candidates": [
-        150,
-        151,
-        152
+        153,
+        155,
+        156
       ],
-      "phase": "validated-awaiting-push-and-comments"
+      "phase": "latest-bodies-read-investigating-clone-and-personality-persistence"
     }
   },
   "orderedReview": {
