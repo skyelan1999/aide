@@ -175,6 +175,10 @@ func (a *App) voicePersonalityInfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := a.voiceSamplePassword(); err != nil {
+		fail(w, 403, err)
+		return
+	}
 	profileResult, promptDraft, err := a.inferPersonalityLLM(r.Context(), cfg, cur.Prompt, feats, transcriptStr)
 	if err != nil {
 		// LLM 不可用时仍允许手动编辑，但把错误明确返回给页面，避免把失败伪装成成功画像。
