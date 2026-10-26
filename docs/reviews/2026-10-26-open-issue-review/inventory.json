@@ -1967,28 +1967,37 @@
       "number": 131,
       "title": "[Bug] Bound nested cell hierarchy during draw.io load",
       "url": "https://github.com/skyelan1999/aide/issues/131",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxGraphModel.cellAdded 沿解码后child递归，无层数预算；parent关系深度独立于XML深度。",
+      "status": "fixed-on-branch",
+      "evidence": "解码前检查每模型父ID链/循环及包装对象ID，实际对象解码限128层；注册根前检查10000节点/128层/循环及共享子节点。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxGraphModel.cellAdded 沿解码后child递归，无层数预算；parent关系深度独立于XML深度。",
+      "repairCommit": "39acde7fa769a43e21c1ff86d5041f1444b4a881",
+      "repairEvidence": "cycle-023.json"
     },
     {
       "number": 130,
       "title": "[Bug] Bound XML nesting depth in draw.io preview",
       "url": "https://github.com/skyelan1999/aide/issues/130",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxCodec.addElement 对每个XML child递归，无深度预算；为浏览器可用性风险，未实测具体栈阈值。",
+      "status": "fixed-on-branch",
+      "evidence": "DOMParser前词法限128层/50000节点和8MiB，排除注释/CDATA/引号中的标记；拒绝DTD；DOM及首次索引再次迭代检查。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxCodec.addElement 对每个XML child递归，无深度预算；为浏览器可用性风险，未实测具体栈阈值。",
+      "repairCommit": "39acde7fa769a43e21c1ff86d5041f1444b4a881",
+      "repairEvidence": "cycle-023.json"
     },
     {
       "number": 128,
       "title": "[Bug] Bound decompressed draw.io diagram size in browser preview",
       "url": "https://github.com/skyelan1999/aide/issues/128",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Graph.decompress base64→pako.inflateRaw(to:string)→decodeURIComponent 无展开预算，AIDE load透传文件到iframe。",
+      "status": "fixed-on-branch",
+      "evidence": "draw.io逐块解压限8MiB；8MiB XML/base64输入、64页/16MiB压缩页总展开，检查非激活页；超限移除iframe并显示固定提示。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "Graph.decompress base64→pako.inflateRaw(to:string)→decodeURIComponent 无展开预算，AIDE load透传文件到iframe。",
+      "repairCommit": "39acde7fa769a43e21c1ff86d5041f1444b4a881",
+      "repairEvidence": "cycle-023.json"
     },
     {
       "number": 127,
@@ -2744,7 +2753,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 220,
+    "remainingFollowupTargets": 217,
     "followupRepairs": [
       48,
       64,
@@ -2794,7 +2803,10 @@
       122,
       123,
       126,
-      127
+      127,
+      128,
+      130,
+      131
     ]
   }
 }
