@@ -2297,28 +2297,36 @@
       "number": 92,
       "title": "[P2] Reclaim obsolete pinned SSH control socket links",
       "url": "https://github.com/skyelan1999/aide/issues/92",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "plugin_terminal_context.go:pinTerminalSSHMaster为每inode identity创建hard link，仓库搜索仅找到创建与测试cleanup，未发现生产关联的释放生命周期。",
+      "status": "fixed-on-branch",
+      "evidence": "每App独立固定socket目录，回收确认失效的链接并保留在线旧master，退出清理及并发回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "plugin_terminal_context.go:pinTerminalSSHMaster为每inode identity创建hard link，仓库搜索仅找到创建与测试cleanup，未发现生产关联的释放生命周期。",
+      "repairEvidence": "cycle-011.json",
+      "repairCommit": "ded839fe0a8d3d1c7f47bdb357dba52346488c60"
     },
     {
       "number": 91,
       "title": "[P2] Keep plugin result text untrusted in persistent experience prompts",
       "url": "https://github.com/skyelan1999/aide/issues/91",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "plugin_learning.go:pluginExperienceHint将e.Detail插入系统提示中的成功/失败建议；sanitizeExpDetail只单行和长度，不改变不可信结果的指令属性。",
+      "status": "fixed-on-branch",
+      "evidence": "插件经验只保留成败元数据，旧正文不入提示；新旧注入样本及既有经验回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "plugin_learning.go:pluginExperienceHint将e.Detail插入系统提示中的成功/失败建议；sanitizeExpDetail只单行和长度，不改变不可信结果的指令属性。",
+      "repairEvidence": "cycle-011.json",
+      "repairCommit": "943c566794948b26321c6772e938f9814c49814e"
     },
     {
       "number": 90,
       "title": "[P2] Apply protected-path exclusions to explicitly selected snapshots",
       "url": "https://github.com/skyelan1999/aide/issues/90",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "plugin_sources.go:protected列表仅递归枚举child名时检查，walk直接file返回copyFile，显式.env及protected root可绕过声明的host exclusion。",
+      "status": "not-supported-awaiting-comment-close",
+      "evidence": "运行及完整调用链推翻初步静态判断：pluginSourceRequest入口knowledgeSafePath调用safePath，全部protected组件在本地/远端读取前被拒；补回归eafb3e12，无产品补丁。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "plugin_sources.go:protected列表仅递归枚举child名时检查，walk直接file返回copyFile，显式.env及protected root可绕过声明的host exclusion。",
+      "repairEvidence": "cycle-011.json"
     },
     {
       "number": 89,
@@ -2648,12 +2656,13 @@
     "remaining": 0,
     "repairsThisReviewBatch": 0,
     "closedNotSupported": [
+      90,
       104,
       112
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 253,
+    "remainingFollowupTargets": 247,
     "followupRepairs": [
       48,
       64,
@@ -2671,7 +2680,12 @@
       83,
       84,
       85,
-      86
+      86,
+      87,
+      88,
+      89,
+      91,
+      92
     ]
   }
 }
