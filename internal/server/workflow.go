@@ -103,6 +103,8 @@ type Task struct {
 	approvalReviewGeneration uint64
 	approvalAnswered         bool
 
+	DeliveryBaseline *TaskDeliveryBaseline `json:"deliveryBaseline,omitempty"`
+
 	Delivery             *TaskDelivery        `json:"delivery,omitempty"`
 	MediaPrompt          string               `json:"mediaPrompt,omitempty"`
 	MediaGeneration      *MediaGeneration     `json:"mediaGeneration,omitempty"`
@@ -805,7 +807,12 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		s.Archived = true
 		s.AutoArchived = true
 	}
+	baseline := task.DeliveryBaseline
+	if task.Status == "completed" && task.Delivery != nil && task.Delivery.State == "delivered" {
+		task.DeliveryBaseline = nil
+	}
 	if saveErr := a.save(s); saveErr != nil {
+		task.DeliveryBaseline = baseline
 		task.Status = "failed"
 		task.Error = "会话保存失败: " + saveErr.Error()
 	}
@@ -1991,6 +1998,9 @@ func maxToolCallsForRounds(rounds int) int {
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
 func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int, checkpoints ...func(string, []Message)) (string, []Message, error) {
+	if err := a.prepareTaskDeliveryBaseline(ctx, task); err != nil {
+		return "", input, err
+	}
 	if mediaTask(cfg) {
 		cfg = a.routedModel(task, cfg, input, params, nil, "chat")
 		if cfg.generationError != "" {
