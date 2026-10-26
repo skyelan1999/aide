@@ -76,10 +76,15 @@
     "No main merge, release or deployment. Previously documented Landlock and SSH platform fixture limitations remain."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "87": "https://github.com/skyelan1999/aide/issues/87#issuecomment-6420016015",
+      "88": "https://github.com/skyelan1999/aide/issues/88#issuecomment-6420017072",
+      "89": "https://github.com/skyelan1999/aide/issues/89#issuecomment-6420018315"
+    }
   },
   "sourceSHA256": {
     "internal/server/project_briefing.go": "2bcb3c8b1a304b9535a4176142816ce174a6090df1cc2bd2d6bbe0a56f017079",
