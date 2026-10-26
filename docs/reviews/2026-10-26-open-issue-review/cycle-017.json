@@ -92,10 +92,16 @@
     "API and mock-control paths passed; actual restricted local shell confirmation execution is blocked by existing Landlock capability. User-device/browser/production/full-release gate not run. No main merge, release or deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "verifiedRemoteCommit": "2a069d8a",
+    "issueComments": {
+      "106": "https://github.com/skyelan1999/aide/issues/106#issuecomment-6423384974",
+      "107": "https://github.com/skyelan1999/aide/issues/107#issuecomment-6423385820",
+      "108": "https://github.com/skyelan1999/aide/issues/108#issuecomment-6423386339"
+    }
   },
   "sourceSHA256": {
     "internal/server/server.go": "368e9b29b54bbcbab600278c4c5a800b9fa3817f8da0797a5505bbdabc60bdd2",
