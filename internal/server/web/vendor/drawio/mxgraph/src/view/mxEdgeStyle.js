@@ -1096,7 +1096,7 @@ var mxEdgeStyle =
 		//console.log('sourceBuffer', sourceBuffer);
 		//console.log('targetBuffer', targetBuffer);
 		// Workaround for loop routing within buffer zone
-		if (source != null && target == source)
+		if (sourceScaled != null && targetScaled == sourceScaled)
 		{
 			targetBuffer = Math.max(sourceBuffer, targetBuffer);
 			sourceBuffer = targetBuffer;

@@ -2830,7 +2830,8 @@ var mxUtils =
 		
         if (r1 === 0 || r2 === 0) 
         {
-        	return result;
+			// A degenerate cubic preserves the public curve-array contract and straight endpoint.
+			return (x === 0 && y === 0) ? [] : [x0, y0, x0 + x, y0 + y, x0 + x, y0 + y];
         }
         
         var fS = sweepFlag;

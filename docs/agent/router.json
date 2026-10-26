@@ -894,6 +894,10 @@
       [
         "node",
         "scripts/test_drawio_clone_constraints.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_geometry_fixes.cjs"
       ]
     ],
     "full": [
