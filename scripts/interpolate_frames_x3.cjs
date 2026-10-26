@@ -20,6 +20,28 @@ const hash = v => crypto.createHash('sha256').update(v).digest('hex');
 async function main() {
   const dir = path.join(root, 'internal/server/web/avatars/xiaomi-enhanced');
   const manifest = JSON.parse(await fs.readFile(path.join(dir, 'manifest.json'), 'utf8'));
+  if (Object.hasOwn(manifest.provenance || {}, 'interpolation') || Object.hasOwn(manifest.provenance || {}, 'interpolationInProgress')) {
+    throw new Error('Interpolation already completed or interrupted; restore original packed assets and manifest before retrying.');
+  }
+  // Preflight the entire manifest before modifying any asset. Clip indices are
+  // the actual source sequence; atlas cells beyond it may just be padding.
+  for (const [id, sheet] of Object.entries(manifest.sheets)) {
+    const clip = manifest.clips?.[id];
+    if (!Number.isSafeInteger(sheet.columns) || sheet.columns < 1 || !Number.isSafeInteger(sheet.rows) || sheet.rows < 1 ||
+        !Number.isSafeInteger(sheet.columns * sheet.rows) || !clip || clip.sheet !== id || !Array.isArray(clip.frames) || !clip.frames.length ||
+        clip.frames.some(frame => !Number.isSafeInteger(frame) || frame < 0 || frame >= sheet.columns * sheet.rows) ||
+        !Array.isArray(clip.durations) || clip.durations.length !== clip.frames.length || clip.durations.some(ms => !Number.isSafeInteger(ms) || ms <= 0) ||
+        !Number.isSafeInteger(clip.durations.reduce((sum, ms) => sum + ms, 0)) || clip.durations.reduce((sum, ms) => sum + ms, 0) < clip.frames.length * 3 - 2) {
+      throw new Error(`Invalid original frame metadata: ${id}`);
+    }
+  }
+  const saveManifest = async () => {
+    const temporary = path.join(dir, '.interpolation-manifest-' + crypto.randomUUID() + '.json');
+    try {await fs.writeFile(temporary, JSON.stringify(manifest, null, 2), {flag: 'wx'});await fs.rename(temporary, path.join(dir, 'manifest.json'));}
+    finally {await fs.rm(temporary, {force: true});}
+  };
+  manifest.provenance = {...manifest.provenance, interpolationInProgress: new Date().toISOString()};
+  await saveManifest(); // An interrupted in-place run must never become fresh input.
   const newClips = {}, newVariants = {}, newSheets = {};
   const audit = [];
 
@@ -27,7 +49,7 @@ async function main() {
     const atlasPath = path.join(dir, sheet.src);
     const { data, info } = await sharp(atlasPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const cols = sheet.columns, rows = sheet.rows, frames = [];
-    for (let i = 0; i < cols * rows; i++) {
+    for (const i of manifest.clips[id].frames) {
       const cx = (i % cols) * size, cy = Math.floor(i / cols) * size;
       const frame = Buffer.alloc(size * size * 4);
       for (let y = 0; y < size; y++) data.copy(frame, (y * size) * 4, ((cy + y) * info.width + cx) * 4, ((cy + y) * info.width + cx + size) * 4);
@@ -64,19 +86,22 @@ async function main() {
     await sharp(atlasBuf, { raw: { width: columns*size, height: outRows*size, channels: 4 } })
       .webp({ quality: 91, alphaQuality: 100, effort: 5 }).toFile(atlasPath);
 
-    // Animated webp — duration divided by 3 to keep total length
-    const origDuration = manifest.clips[id].durations[0] || 75;
-    const newDuration = Math.round(origDuration / 3);
+    // Preserve exact total playback time, including non-uniform source delays.
+    const totalDuration = manifest.clips[id].durations.reduce((sum, ms) => sum + ms, 0);
+    const duration = Math.floor(totalDuration / out.length), remainder = totalDuration % out.length;
+    const durations = Array.from({length: out.length}, (_, i) => duration + (i < remainder ? 1 : 0));
+    const newDuration = Math.round(totalDuration / out.length);
     await sharp(Buffer.concat(out), { raw: { width: size, height: size*out.length, channels: 4, pageHeight: size } })
-      .webp({ quality: 87, alphaQuality: 100, effort: 4, loop: manifest.clips[id].loop ? 0 : 1, delay: Array(out.length).fill(newDuration) })
+      .webp({ quality: 87, alphaQuality: 100, effort: 4, loop: manifest.clips[id].loop ? 0 : 1, delay: durations })
       .toFile(path.join(dir, `${id}.webp`));
 
     const clip = manifest.clips[id];
-    newClips[id] = { sheet: id, frames: Array.from({length: out.length},(_,i)=>i), durations: Array(out.length).fill(newDuration), loop: clip.loop };
+    newClips[id] = { sheet: id, frames: Array.from({length: out.length},(_,i)=>i), durations, loop: clip.loop };
     newSheets[id] = { src: sheet.src, columns, rows: outRows };
     const v = manifest.variants[id];
-    newVariants[id] = { ...v, frames: out.length, uniqueFrames: out.length, duration: newDuration };
-    audit.push({ id, originalFrames: frames.length, newFrames: out.length, duration: newDuration });
+    const uniqueFrames = new Set(out.map(hash)).size;
+    newVariants[id] = { ...v, frames: out.length, uniqueFrames, duration: newDuration };
+    audit.push({ id, originalFrames: frames.length, newFrames: out.length, uniqueFrames, totalDuration, durations });
     console.log(`${id}: ${frames.length} -> ${out.length} frames @ ${newDuration}ms`);
   }
 
@@ -84,8 +109,9 @@ async function main() {
   manifest.clips = newClips;
   manifest.variants = newVariants;
   manifest.provenance = { ...manifest.provenance, interpolation: 'alpha-blend x3 between original frames', interpolatedAt: new Date().toISOString() };
-  await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2));
   await fs.writeFile(path.join(dir, 'frame-interpolation-audit.json'), JSON.stringify(audit, null, 2));
+  delete manifest.provenance.interpolationInProgress;
+  await saveManifest();
   console.log('Done. Total variants:', Object.keys(newVariants).length);
 }
 main().catch(e => { console.error(e); process.exit(1); });
