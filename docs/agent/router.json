@@ -859,6 +859,19 @@
       [
         "node",
         "scripts/test_ui_acceptance_scope.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/preview-safety.js"
+      ],
+      [
+        "node",
+        "scripts/test_dxf_preview_bounds.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_docx_preview_bounds.cjs"
       ]
     ],
     "full": [

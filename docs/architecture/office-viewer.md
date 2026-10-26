@@ -175,10 +175,12 @@ comments/
 
 ### 3. docx-preview 渲染行为
 
-- 经 `/api/file/raw?path=…&access_token=…` 取 ArrayBuffer → `docx.renderAsync(blob, container)`；
+- 经 `/api/file/raw?path=…&access_token=…` 有界读取，再完成 ZIP 预检后交给 `docx.renderAsync(bytes, container)`；
 - 保留原排版：标题/段落/表格/列表/图片；内部滚动不撑乱布局（复用 PDF 查看器 flex 滚动容器）；
 - 只读：不回写 `.docx`，工具栏不显示保存；
 - 历史实现为批注侧车：前端拿到渲染 DOM 后，按 `anchorQuote` 在文本中查找、`anchorIndex` 消歧高亮，调 §2 的 CRUD 端点增/删/回复/解决；`stale=true` 时给"锚点可能失效"提示，不删除批注。
+
+浏览器预览压缩输入最多16MiB、512条目、单条目解压8MiB、总解压32MiB。先检查普通单卷ZIP中央目录的计数、大小和范围，再使用固定JSZip3.10.1的公开流接口逐块计数实际输出并丢弃，不用`async()`累积预检结果；伪造声明大小同样会被实际计数拒绝。预检总时间上限10秒，超限暂停流并拒绝渲染；当前有界压缩块可能继续完成解码，后续输出不再计入或保留。正常通过后才进入既有DOCX渲染器。加密/多卷/ZIP64等不支持的包及库版本变化均拒绝安全预检，展示下载查看提示。该门禁检查输入及ZIP解压资源，不替代OOXML语义、图片像素或排版检查；不修改原文件或通用上传/下载大小。
 
 ### 3.1 原生 DOCX 批注升级（office-native-comments）
 
@@ -189,6 +191,8 @@ comments/
 - `ensureVendorScript('/vendor/dxf-parser/dxf-parser.js')` 懒加载；
 - SVG 渲染：Y 翻转、包围盒自适应窗口、支持 LINE/CIRCLE/ARC/ELLIPSE/LWPOLYLINE/POLYLINE/SPLINE/TEXT/MTEXT/INSERT 递归/DIMENSION；
 - ACI 颜色、图层、线宽映射；工具栏缩放 ± / 适应窗口；只读禁用保存。
+
+DXF输入最多4MiB，流式读取到界即取消；解析前最多100,000行，避免解析器先创建过大的行数组。定义与展开各最多50,000实体，SVG最多50,000节点，几何处理最多200,000点，文本单实体最多16,384字符、总计1Mi字符，避免少量节点重复大文本绕过内存预算；INSERT和DIMENSION共用32层块深度及当前递归路径循环检查，允许同一块在不同分支重复使用。任何预算或循环失败都会清除部分SVG并显示预览错误，不被单实体格式容错吞掉。这些资源边界只限制预览，可下载完整文件后使用CAD工具处理。
 
 ## 附件文本提取与图片多模态（#63 扩展，后端）
 
