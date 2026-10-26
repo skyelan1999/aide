@@ -61,11 +61,14 @@
     "下一轮#156声音推断fan-out，之后#157文件绑定TOCTOU、#158研究值边界；最新正文已读，未冒充其修复完成。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "155": "https://github.com/skyelan1999/aide/issues/155#issuecomment-6429658524"
+    },
+    "verifiedRemoteCommit": "5da47de0968033a7dc2d735e6217e3aa54edde89"
   },
   "sourceSHA256": {
     "docs/architecture/personality-evolution.md": "d38cfe078e50693b8c0a5a6c8cda91a621dd1b2aec7eda2eca370eefc7d2e072",
