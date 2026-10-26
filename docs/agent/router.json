@@ -816,6 +816,10 @@
       [
         "node",
         "scripts/test_reminder_popup.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_voice_sample_duration.cjs"
       ]
     ],
     "full": [

@@ -11234,34 +11234,38 @@ function renderVoiceCloneControl() {
   wrap.append(guide, guideText);
 
   // ── 录音 ──
-  let mediaRec = null, chunks = [];
+  let stopRecording = null;
   const recBtn = el('button','quiet',t('开始录音')); recBtn.type='button';
   const stopBtn = el('button','quiet',t('停止并上传')); stopBtn.type='button'; stopBtn.disabled=true;
   recBtn.onclick = action(async () => {
     if (!consent.checked) { toast(t('请先勾选同意')); return; }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      mediaRec = new MediaRecorder(stream);
-      chunks = [];
+      const mediaRec = new MediaRecorder(stream), chunks = [];
+      let stoppedAt = null;
       mediaRec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
       mediaRec.onstop = async () => {
         stream.getTracks().forEach(t=>t.stop());
+        const durationSec = Math.max(1, Math.round(((stoppedAt ?? performance.now()) - startedAt) / 1000));
         const blob = new Blob(chunks, {type: mediaRec.mimeType || 'audio/webm'});
-        await uploadSample(blob);
+        await uploadSample(blob, durationSec);
         recBtn.disabled=false; stopBtn.disabled=true;
         loadSamples();
       };
+      const startedAt = performance.now();
       mediaRec.start();
+      stopRecording = () => {
+        if (mediaRec.state !== 'inactive') { stoppedAt = performance.now(); mediaRec.stop(); }
+      };
       recBtn.disabled=true; stopBtn.disabled=false;
     } catch(e) { toast(t('无法访问麦克风：')+e.message); }
   });
-  stopBtn.onclick = () => { if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop(); };
+  stopBtn.onclick = () => { stopRecording?.(); };
   wrap.append(recBtn, stopBtn);
 
-  async function uploadSample(blob) {
-    const fd = new FormData();
+  async function uploadSample(blob, durationSec) {
     try {
-      const res = await fetch('/api/voice-sample/upload?consented=1&durationSec=5', {
+      const res = await fetch('/api/voice-sample/upload?consented=1&durationSec=' + encodeURIComponent(durationSec), {
         method:'POST', headers:{Authorization:'Bearer '+(state.token||'')}, body: blob
       });
       if (!res.ok) { const e=await res.json().catch(()=>({})); toast(t('上传失败：')+(e.error||res.status)); return; }
