@@ -1913,29 +1913,38 @@
       "number": 138,
       "title": "[Bug] Reset connection constraint markers when pointer leaves graph",
       "url": "https://github.com/skyelan1999/aide/issues/138",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxConstraintHandler.update 创建mouseleaveHandler(reset)却监听resetHandler，destroy移除另一个函数。",
+      "status": "fixed-on-branch",
+      "evidence": "mouseleave注册真正reset的同一回调，指针离开清除焦点图标与高亮，destroy移除实际注册函数。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "mxConstraintHandler.update 创建mouseleaveHandler(reset)却监听resetHandler，destroy移除另一个函数。",
+      "repairCommit": "efdc8757734bfe1b199941516d66df37b7fba54f",
+      "repairEvidence": "cycle-025.json"
     },
     {
       "number": 137,
       "title": "[Bug] Guard missing cell geometry when creating table column handles",
       "url": "https://github.com/skyelan1999/aide/issues/137",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "createCustomHandles列循环 geo 直接读alternateBounds/x/y，缺少相邻row路径已有的null gate。",
+      "status": "fixed-on-branch",
+      "evidence": "表格列控制句柄构造跳过null geometry，保留其他列/行句柄，不补造geometry；明暗实际选中缺失几何表格均创建5个剩余句柄。",
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
-      "followupObserved": "Actual Chromium cycle24 selecting malformed table throws TypeError reading alternateBounds of null; next ordered batch, not fixed here."
+      "followupObserved": "Actual Chromium cycle24 selecting malformed table throws TypeError reading alternateBounds of null; next ordered batch, not fixed here.",
+      "reviewEvidence": "createCustomHandles列循环 geo 直接读alternateBounds/x/y，缺少相邻row路径已有的null gate。",
+      "repairCommit": "efdc8757734bfe1b199941516d66df37b7fba54f",
+      "repairEvidence": "cycle-025.json"
     },
     {
       "number": 135,
       "title": "[Bug] Preserve custom action cell IDs when duplicating diagrams",
       "url": "https://github.com/skyelan1999/aide/issues/135",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "createCellMapping new Object，cellMapping[constructor]非null导致不写clone ID；Editor action映射会将函数值JSON序列化为null。",
+      "status": "fixed-on-branch",
+      "evidence": "克隆ID映射默认无原型，写入按自身属性及defineProperty，外部传入普通映射保留identity并安全处理__proto__；动作链接只读自身映射，保留未映射ID/通配符及空ID过滤。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "createCellMapping new Object，cellMapping[constructor]非null导致不写clone ID；Editor action映射会将函数值JSON序列化为null。",
+      "repairCommit": "efdc8757734bfe1b199941516d66df37b7fba54f",
+      "repairEvidence": "cycle-025.json"
     },
     {
       "number": 134,
@@ -2763,7 +2772,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 214,
+    "remainingFollowupTargets": 211,
     "followupRepairs": [
       48,
       64,
@@ -2819,7 +2828,10 @@
       131,
       132,
       133,
-      134
+      134,
+      135,
+      137,
+      138
     ]
   }
 }
