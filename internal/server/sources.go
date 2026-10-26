@@ -390,9 +390,11 @@ func (a *App) curlListSource(src Source, p string) ([]map[string]any, error) {
 	if len(args) > 0 {
 		args[len(args)-1] = strings.TrimRight(args[len(args)-1], "/") + "/"
 	}
-	out, err := exec.CommandContext(ctx, a.curlBin, args...).CombinedOutput()
+	// Bound output during capture, not after buffering a remote response.
+	// Stderr is discarded by knowledgeRun and never parsed as directory names.
+	out, err := knowledgeRun(ctx, exec.CommandContext(ctx, a.curlBin, args...), 4<<20)
 	if err != nil {
-		return nil, fmt.Errorf("获取列表失败: %s", strings.TrimSpace(string(out)))
+		return nil, fmt.Errorf("获取列表失败: %w", err)
 	}
 	items := []map[string]any{}
 	for _, line := range strings.Split(string(out), "\n") {
@@ -442,7 +444,7 @@ func (a *App) curlReadSource(src Source, p string) ([]byte, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), curlTimeout)
 	defer cancel()
-	out, err := exec.CommandContext(ctx, a.curlBin, a.curlArgs(src, p)...).Output()
+	out, err := knowledgeRun(ctx, exec.CommandContext(ctx, a.curlBin, a.curlArgs(src, p)...), maxFile)
 	if err != nil {
 		return nil, fmt.Errorf("读取失败: %v", err)
 	}
