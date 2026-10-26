@@ -42,29 +42,36 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Targeted gates passed previously. Running current-input full local verification; protected PR CI and native delivery remain pending. Native Windows Desktop end-to-end is explicitly excluded, not claimed passed.",
+      "status": "pass",
+      "summary": "Current-source local full gate passed after selecting the slim STEP-check image and Go+Node test toolchain. GitHub run 40275273448 passed quick, Windows 5.1/7, Go race/vet and gate. Native delivery remains a release-stage requirement.",
       "evidence": [
-        ".agent-state/release-rc12/full.log"
+        ".agent-state/full.json",
+        "https://github.com/skyelan1999/aide/actions/runs/40275273448"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Bilingual release notes and launcher upgrade warnings reviewed; native Windows Desktop limits and one-off owner-requested cadence exception remain explicit.",
+      "evidence": [
+        "docs/releases/v0.1.17.5-RC12.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Public tracked diff reviewed; no installed plugin payload, private implementation or user data added. Original checkout and live private service remain unchanged.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/348"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "PR #348 merged with explicit owner administrator authorization at 9cee2c88; preparing version PR and native candidates. No tag or release published yet.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/348"
+      ]
     }
   },
-  "release_authorization": "2026-10-26 user: 做完了之后补一次release. Public Aide only; prior explicit MIXSoul/local 9999 boundary remains in force. This is a one-off supplemental publication, not a change to weekly cadence.",
+  "release_authorization": "2026-10-26 user: 做完了之后补一次release. Public Aide only; prior explicit MIXSoul/local 9999 boundary remains in force. This is a one-off supplemental publication, not a change to weekly cadence. Current owner reply: 授权本次管理员合并并发布 RC12, including PR #348 and the necessary version PR after successful CI. No protection changes.",
   "rollback": "Retain RC11 official assets; install its matching full runtime and keep .env/.aide-data backups. Windows host scripts must be restored separately when rolling back launcher changes. No change to current 9999 is planned.",
   "handoff": ""
 }
