@@ -102,10 +102,15 @@
     "No merge, release, deploy or full release gate."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "comments": {
+      "80": "https://github.com/skyelan1999/aide/issues/80#issuecomment-6417636397",
+      "82": "https://github.com/skyelan1999/aide/issues/82#issuecomment-6417637257",
+      "83": "https://github.com/skyelan1999/aide/issues/83#issuecomment-6417638239"
+    }
   },
   "sourceSHA256": {
     "internal/server/persona.go": "9828df3fb7c061dea58e1b210617707217fffd27d9075c4ad6d62afcc8c86c10",
