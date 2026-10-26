@@ -22,7 +22,7 @@ func recoveryOperation(tool string, args map[string]any) string {
 func (a *App) recoveryOperationError(task *Task, tool string, args map[string]any, skipPlan *PluginExecutionPlan) error {
 	// Built-in read observations are needed to verify external state.
 	switch tool {
-	case "read_file", "list_files", "list_sources", "document_search", "semantic_search":
+	case "browse_plugin_market", "read_file", "list_files", "list_sources", "document_search", "semantic_search":
 		return nil
 	}
 	a.mu.Lock()

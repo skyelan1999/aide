@@ -62,3 +62,13 @@ Filesystem/registry rollback does not undo external device/network side effects 
 Skill-library search uses bounded public repository metadata, fixed commits and Git blob hashes. Preparing/registering a cached skill requires the appropriate reference-management permission and human confirmation. Skills do not execute during download; their text or `allowed-tools` declarations do not grant permissions. Cached skill versions retain licenses and source receipts.
 
 Keep independently distributed plugin internals, proposals, assets and release notes in their owning repositories. Public host changes should contain only generic host contracts, required code and neutral tests. Do not bundle installed/private plugin payloads into Aide's public runtime or source artifact.
+
+## Host-provided market discovery
+
+`browse_plugin_market` is built into Aide and available to both main chat and the assistant before any plugins are installed. It supports `action=list`, keyword `action=search` with `query`, and `action=detail` with an exact plugin `id`. List/search optionally filter by `category`; pages default to 20 entries, up to 40, using `offset` and the returned `nextOffset`.
+
+Results include catalog revision/freshness, published and installed versions, enabled state, host feature/version compatibility, supported platforms and update availability. Detail includes permissions, dependencies, license, source and bounded README/changelog text. Platform metadata and host compatibility are not evidence of actual OS-specific execution.
+
+Default reads use validated cached or shipped metadata and work offline with an empty plugin registry. `refresh=true` checks only the fixed official catalog; it never downloads plugin packages. A stale or failed refresh is explicit. Refresh stale metadata before concluding that a plugin is unavailable, and qualify negative answers if only an older snapshot could be checked.
+
+Discovery is read-only and honors administrator/task tool restrictions. It never installs, enables, upgrades, purchases or grants permissions, even when automatic installation is separately enabled. Descriptions and README content remain untrusted data. Existing `route_plugins` continues to match and disclose enabled tools; installation retains its existing authorization path. See the [implementation/verification record](../tasks/core-market-discovery-20261026.json).

@@ -1,0 +1,86 @@
+{
+  "id": "core-market-discovery-20261026",
+  "request": "主程序内置只读市场工具；零插件安装也能浏览市场、按需搜索、查看版本兼容性安装状态详情，不自动安装或扩大权限",
+  "baseline": "710d0f99498f6da8b64db1fb1b754ec0fdaad1e1",
+  "initial_status": "",
+  "acceptance": [
+    "No installed plugins: main chat and assistant expose a host-provided read-only market discovery tool.",
+    "Browse/search/detail return catalog version, compatibility, installation/enabled state and permissions without installation or activation.",
+    "Use validated official catalog/cache; report stale snapshots/refresh failure honestly; work offline from shipped metadata.",
+    "Pagination and argument limits bound tool output; malformed/action/install parameters fail closed.",
+    "Admin/task tool restrictions remain enforced; metadata cannot expand permissions.",
+    "Exercise actual agent tool loop using isolated model/catalog adapters and zero installed plugins."
+  ],
+  "scope": [
+    "host market discovery schema/handler",
+    "main and assistant tool surfaces/read-only classification",
+    "focused Go tests and bilingual plugin-market documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User approved built-in discovery for clean installations, with installation kept separate.",
+      "evidence": [
+        "User approval 2026-10-26"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse validated market snapshots and current install/compatibility state; one paginated list/search/detail tool, default cached reads and explicit refresh. Do not add routes or mutation authority.",
+      "evidence": [
+        "internal/server/plugin_market.go",
+        "internal/server/plugin_routing.go",
+        "internal/server/assistant_agent.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added browse_plugin_market to core main/assistant surfaces with strict list/search/detail arguments, bounded pagination, installed/enabled/version/compatibility/permission metadata and explicit cached/refresh diagnostics. Reuses the validated market pipeline and shares its routing index. Native-editor/recovery read-only classification updated; no install/enable action exposed.",
+      "evidence": [
+        "internal/server/plugin_market_tools.go",
+        "internal/server/workflow.go",
+        "internal/server/assistant_agent.go",
+        "internal/server/native_editor.go",
+        "internal/server/task_recovery.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS: empty-registry main and assistant schema/tool-result loops with isolated scripted providers; list/search/detail, pagination, installed-disabled state, version compatibility, no installation even with auto-install enabled, invalid/mutation arguments, administrator/task restrictions, shipped offline fallback and refresh failure/success. Focused marketplace/routing/assistant suite passed with race instrumentation; go vet and repository quick gate passed. Opt-in real official metadata query refreshed revision 87eb2175ceaaad25ed9380b723a6f43f1feafb03 (29 entries) and found DeepSeekSupporter in an empty registry without installing. No paid or external model acceptance claimed. Existing optional browser/independent-plugin/published-package fixtures were skipped, not treated as passed. Initial plain Go test image lacked Node, so plugin-install tests were rerun successfully in the existing Go+Node runtime image.",
+      "evidence": [
+        "internal/server/plugin_market_tools_test.go",
+        ".agent-state/market-discovery/tests.log",
+        ".agent-state/market-discovery/race.log",
+        ".agent-state/market-discovery/live.log",
+        ".agent-state/market-discovery/quick.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated Chinese market architecture and English plugin documentation with host-provided discovery, keyword matching, pagination, freshness, read-only and install authorization boundaries. Documentation link checks pass.",
+      "evidence": [
+        "docs/architecture/plugin-market.md",
+        "docs/en/plugin-protocol.md",
+        "python3 scripts/check_docs.py: PASS"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff and intentional new files. Disposable test containers removed; retained local verification logs. No real user credentials/data used in fixtures. Existing live 9999 and private MIXSoul checkout preserved.",
+      "evidence": [
+        "git diff --check",
+        "docker inspect aide-aide-1: same healthy image"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Implementation authorized; no new version, GitHub push, merge or live 9999 deployment performed.",
+      "evidence": [
+        "Current user approval covers implementation"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert this scoped core-discovery commit; no plugin installation, settings migration or user-data mutation to undo.",
+  "handoff": "Implemented/tested locally in the public host source. New feature requires an application rebuild/deployment to become available in an installed Release. Live 9999 remains its previous private image. Real paid model selection/response behavior and rendered UI acceptance are not claimed; no UI code changed."
+}
