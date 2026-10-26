@@ -305,15 +305,22 @@ func (cs *commentStore) update(id string, in updateInput) (*Comment, error) {
 	}
 	if in.Reply != nil {
 		t := strings.TrimSpace(in.Reply.Text)
+		author := strings.TrimSpace(in.Reply.Author)
 		if t == "" {
 			return nil, errors.New("回复内容不能为空")
+		}
+		if len([]rune(t)) > maxCommentText {
+			return nil, fmt.Errorf("回复内容超过 %d 字上限", maxCommentText)
+		}
+		if len([]rune(author)) > maxCommentAuthor {
+			return nil, errors.New("回复作者名过长")
 		}
 		if len(c.Replies) >= maxCommentReplies {
 			return nil, fmt.Errorf("回复超过 %d 条上限", maxCommentReplies)
 		}
 		c.Replies = append(c.Replies, CommentReply{
 			Text:      t,
-			Author:    strings.TrimSpace(in.Reply.Author),
+			Author:    author,
 			CreatedAt: nowRFC3339(),
 		})
 		changed = true
