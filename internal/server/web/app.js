@@ -1587,16 +1587,18 @@ async function stopRunById(runId) {
     if (popupBusy || $('reminder-alert').open || document.visibilityState === 'hidden' || !center.messageUI?.allowReminderPopup()) return;
     popupBusy = true;
     try {
-      const due = await api('/reminders/due'); if (!due.length || !center.messageUI?.allowReminderPopup()) {popupBusy=false;return;}
+      const due = await api('/reminders/due'); if (!due.length || document.visibilityState === 'hidden' || !center.messageUI?.allowReminderPopup()) {popupBusy=false;return;}
       const host = $('reminder-alert-items'); host.replaceChildren();
       for (const item of due) {
         const row = el('div', 'reminder-alert-item'); row.append(el('strong', '', item.title));
         row.append(el('small', '', t('{0} 优先级 · {1}', t(item.priority), fmt(item.dueAt))));
         host.append(row);
-        await api('/reminders/' + encodeURIComponent(item.id) + '/popup-seen', {method:'POST', body:'{}'});
       }
       $('reminder-alert').showModal();
-      window.aideAvatarFeedback?.('notification');
+      try { window.aideAvatarFeedback?.('notification'); } catch (_) {}
+      for (const item of due) {
+        try { await api('/reminders/' + encodeURIComponent(item.id) + '/popup-seen', {method:'POST', body:'{}'}); } catch (_) {}
+      }
     } catch (_) { popupBusy = false; }
   }
   button.onclick = () => openCenter(false); $('reminder-center-close').onclick = () => { closeSidePanels(); button.focus(); };

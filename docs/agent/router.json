@@ -812,6 +812,10 @@
       [
         "python3",
         "scripts/test_development_toolbox.py"
+      ],
+      [
+        "node",
+        "scripts/test_reminder_popup.cjs"
       ]
     ],
     "full": [
