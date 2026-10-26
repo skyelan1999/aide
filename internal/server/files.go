@@ -1719,6 +1719,9 @@ func isSFTPNotExistErr(err error) bool {
 	if err == nil {
 		return false
 	}
+	if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
 	for _, line := range strings.Split(err.Error(), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "sftp>") {

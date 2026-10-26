@@ -617,7 +617,19 @@ func (a *App) runSFTPBatch(ctx context.Context, args []string, batch string) ([]
 	cmd.Stdin = strings.NewReader(batch)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	cmd.WaitDelay = 2 * time.Second
-	out, err := cmd.CombinedOutput()
+	w := &knowledgeLimitWriter{max: 4 << 20, stop: func() {
+		if cmd.Process != nil {
+			_ = cmd.Process.Kill()
+		}
+	}}
+	// Using one writer for both streams keeps exec's capture serialized and
+	// preserves OpenSSH diagnostics without an unbounded CombinedOutput buffer.
+	cmd.Stdout, cmd.Stderr = w, w
+	err := cmd.Run()
+	out := w.buf.Bytes()
+	if w.overflow {
+		return nil, errors.New("SFTP 输出超过 4 MiB 限制")
+	}
 	// OpenSSH sftp's ls can print a readdir failure while exiting zero. Preserve
 	// command diagnostics as operation errors for reads and writes alike.
 	if err == nil && sftpCommandDiagnosticFailed(string(out)) {
@@ -765,17 +777,11 @@ func (a *App) sftpReadAtGeneration(remoteFile string, generation uint64) ([]byte
 }
 
 func (a *App) sftpReadExpected(remoteFile string, expected *uint64) ([]byte, error) {
-	tmp, err := os.CreateTemp("", "aide-sftp-*")
-	if err != nil {
-		return nil, err
-	}
-	tmpPath := tmp.Name()
-	tmp.Close()
-	defer os.Remove(tmpPath)
-	if _, err := a.sftpBatchExpected("get "+shellQuoteRemote(remoteFile)+" "+shellQuoteRemote(tmpPath)+"\n", expected); err != nil {
-		return nil, err
-	}
-	return os.ReadFile(tmpPath)
+	return a.readSFTPBounded("workspace", sshControlSocket, expected, func(fs *transferFS) (transferFile, error) {
+		// Workspace cache/system-document paths may intentionally be outside the
+		// workspace directory. Preserve this existing absolute-path interface.
+		return fs.client.Open(remoteFile)
+	})
 }
 
 func (a *App) sftpWrite(remoteFile string, b []byte) error {
@@ -1180,18 +1186,16 @@ func (a *App) sftpReadSource(src Source, p string) ([]byte, error) {
 	return a.sftpReadSourceExpected(src, p, nil)
 }
 func (a *App) sftpReadSourceExpected(src Source, p string, expected *uint64) ([]byte, error) {
-	remoteFile := pathJoinRemote(src.Config.Path, p)
-	tmp, err := os.CreateTemp("", "aide-src-sftp-*")
-	if err != nil {
-		return nil, err
+	a.mu.Lock()
+	current, ok := a.findSource(src.ID)
+	valid := ok && current.Enabled && markdownSourceIdentity(current) == markdownSourceIdentity(src)
+	a.mu.Unlock()
+	if !valid {
+		return nil, errors.New("SFTP 来源已变化或停用，请重新访问")
 	}
-	tmpPath := tmp.Name()
-	tmp.Close()
-	defer os.Remove(tmpPath)
-	if _, err := a.sftpBatchSourceExpected(src, "get "+shellQuoteRemote(remoteFile)+" "+shellQuoteRemote(tmpPath)+"\n", expected, false); err != nil {
-		return nil, err
-	}
-	return os.ReadFile(tmpPath)
+	return a.readSFTPBounded(src.ID, sourceSocket(src.ID), expected, func(fs *transferFS) (transferFile, error) {
+		return fs.Open(p, os.O_RDONLY)
+	})
 }
 
 func (a *App) sftpWriteSource(src Source, p string, b []byte) error {

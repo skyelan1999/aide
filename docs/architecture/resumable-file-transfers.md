@@ -9,7 +9,7 @@
 - 上传暂停后可以继续。页面刷新后重新选择原文件；已确认的所有分块都会与重选文件校验，内容不同则拒绝拼接。服务重启后未完成任务加载为暂停，点击继续恢复。
 - Chromium 在安全上下文中提供 `showSaveFilePicker` 时，下载以并发 HTTP Range 写入所选文件。文件句柄和逐块摘要存在 IndexedDB；刷新后继续并按需重新授予文件写权限。恢复先检查实际磁盘内容，崩溃时未提交的块会重新下载。
 - 浏览器没有文件系统保存 API 时，使用原生下载列表；服务端支持 Range/If-Range，但继续下载和并发策略由浏览器决定。Safari、Firefox及不安全 HTTP 来源没有应用内并发落盘保证。
-- 目录下载先在服务端流式生成 ZIP64，再下载固定归档。生成过程暂停/重启后重新生成；已经生成的 ZIP 支持分段续传。归档缓存占用数据盘，可通过移除归档任务记录释放。
+- 单个文件下载先在服务端流式准备保留原文件名的固定快照；目录/显式打包下载准备ZIP64。准备过程使用有界缓冲，暂停/重启后可重新准备；已完成的快照和归档供后续并发分段读取，不跟随源文件变化。缓存占用数据盘，原文件快照可能额外占用相当于文件大小的空间，可通过移除任务记录释放。准备完成前不提供分段内容。
 - 批量归档默认以所选文件或目录的名称作为顶层。若不同来源路径的末级名称重复，整批保留相对于当前文件来源根目录的路径，例如 `alpha/config` 与 `beta/config`，避免解压时同名内容覆盖；恢复生成沿用相同规则。
 
 ## 持久化与完整性
@@ -20,7 +20,7 @@
 
 发布前写入 Publishing 意图，以便识别重命名已发生但元信息未更新的崩溃窗口。已有同名目标不会被覆盖。移动在全部目标已发布且验证后才进入逐项删除阶段；只删除任务清单捕获的源项，不递归删除后来新增的内容。源变更、删除失败等显示失败并保留已发布目标供核对；多顶层任务不构成跨文件系统事务。传输期间应停止其他程序修改源文件/目录。
 
-分块必须有准确长度和 `X-Chunk-SHA256`；重复确认相同摘要幂等，摘要不同拒绝。发布时重新校验目标，并校验复制/移动来源。下载使用 ETag、If-Match和精确Content-Range，拒绝混合不同版本；直接文件 ETag 基于来源身份、路径、长度和修改时间，不是全文件加密摘要。强行保持相同长度和时间的外部修改不属于稳定源文件保证。
+分块必须有准确长度和 `X-Chunk-SHA256`；重复确认相同摘要幂等，摘要不同拒绝。发布时重新校验目标，并校验复制/移动来源。文件管理下载通过固定任务快照的强ETag、If-Match和精确Content-Range保持各块来自同一表示；每次重新准备先持久化新的版本标识，避免相同大小/时间戳的缓存重建沿用旧标识。旧的直接文件URL仍可流式或无条件Range读取，但元数据ETag标为弱验证值，不再支持用该值进行If-Match安全拼接；需要可靠续传的客户端应创建快照任务。准备快照期间仍应停止外部程序改写源文件，普通文件系统复制不构成源端原子快照。
 
 ## 边界与兼容
 
@@ -32,6 +32,7 @@
 - SFTP 同时检查 REALPATH 和各级 LSTAT，禁止静态符号链接越界。协议没有类似本地 os.Root 的安全目录句柄，远端账号/文件系统须可信，不能抵御有写权限的对端进程在检查和操作之间恶意替换父目录。
 - 预览、文本编辑、压缩/解压保护独立保留。旧 `/api/file/upload` 的64MiB请求预算、旧multipart批量上传的每文件64MiB/每请求256MiB保护保留；文件管理上传已改用新分块入口，单文件大小不受这两个旧接口限制。
 - 旧FTP/FTPS/HTTP/SMB来源的curl文本读取在捕获过程中限制64MiB，目录列表限制4MiB、最多返回2000项；溢出立即终止子进程。stderr不进入列表或错误响应。这些是旧预览/来源接口的资源限制，与传输中心的文件字节限制分开。
+- SSH工作区和独立SFTP来源的旧预览读取使用独立SFTP协议通道，在STAT和读取过程中限制64MiB，不先下载到本地临时文件；文件在STAT之后增长时仍受限制。连接代次变化会拒绝结果，独立来源沿用启用/配置/路径检查。旧SFTP批命令合并输出在捕获时限制4MiB，保留限额内的OpenSSH错误识别；超限终止子进程。工作区缓存/系统文档仍可通过原有绝对路径接口访问。
 - 暂存取消失败会保留错误及记录，可恢复连接后移除记录重试清理；不会删除已发布文件。更换了原目标配置时不自动清理未知位置。
 
 ## API
@@ -40,14 +41,14 @@
 
 | 方法 | 路径 | 行为 |
 | --- | --- | --- |
-| POST | `/api/file/transfers` | 创建upload/copy/move/download任务，包含workspaceId、source、destination、paths或name/size、concurrency；copy/move/download异步开始 |
+| POST | `/api/file/transfers` | 创建upload/copy/move/download任务，包含workspaceId、source、destination、paths或name/size、concurrency；copy/move/download异步开始；download可设rawDownload=true创建单个普通文件的原格式快照，默认为ZIP |
 | GET | `/api/file/transfers?offset=0` | 当前有效工作区任务摘要，每页100项 |
 | GET | `/api/file/transfers/{id}` | 单任务状态，未提交上传包含已确认分块摘要 |
 | PUT | `/api/file/transfers/{id}/chunks/{index}` | 上传一个最多4MiB的精确长度分块；需X-Chunk-SHA256 |
 | POST | `/api/file/transfers/{id}/{resume,commit,pause,cancel}` | 恢复、提交、暂停、取消；恢复可设置并发 |
 | DELETE | `/api/file/transfers/{id}` | 移除非运行中任务和私有暂存/归档缓存，保留已发布文件 |
 | GET/HEAD | `/api/file/stream?root=workspace&path=…&workspaceId=…` | 本地/SSH文件元信息和Range下载；source参数用于引用 |
-| GET/HEAD | `/api/file/stream?job=…` | 已准备好的固定ZIP下载 |
+| GET/HEAD | `/api/file/stream?job=…` | 已准备好的固定原文件/ZIP下载，强ETag支持条件Range |
 
 旧download及transfer接口兼容使用流式通道；旧直接归档请求每次新建归档任务，持久续传应使用显式任务ID。
 
