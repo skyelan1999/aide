@@ -1,0 +1,77 @@
+{
+  "cycle": 28,
+  "baseline": "fb8bf09b50a61a5d514f904037d650e5089a2d99",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    145
+  ],
+  "investigatedCandidates": [
+    145,
+    146,
+    147
+  ],
+  "commits": {
+    "145": "13274ef3668e4a2586b3f94893473e357b57cfc2"
+  },
+  "cumulativeProductFixes": 79,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 80,
+  "original272RemainingFollowup": 204,
+  "red": [
+    {
+      "issue": 145,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue145' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 5.76,
+      "observed": "--- FAIL: TestIssue145BrokerGlobalRetention (0.00s)\n    stream_broker_retention_test.go:22: retained 401 runs, want at most 256\n--- FAIL: TestIssue145SessionDeleteEvictsOutput (5.70s)\n    --- FAIL: TestIssue145SessionDeleteEvictsOutput/false (4.79s)\n        stream_broker_retention_test.go:52: deleted session still retains live output\n    --- FAIL: TestIssue145SessionDeleteEvictsOutput/true (0.91s)\n        stream_broker_retention_test.go:52: deleted session still retains live output\nFAIL\nFAIL\taide/internal/server\t5.760s\nFAIL"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue145|^TestStreamBroker|^TestLiveRunHelpersWired|^TestFactoryReset|^TestIssue120' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 30.589,
+      "scope": "Global401-run churn to256 bound; active capacity saturation pins old mirrors, LRU terminal eviction/read touch; single/archived bulk deletion; replacement run fences old delta/finish; 8x1000 concurrent publication vs deletion; late begin/finish/delta rejected; reset eviction; existing live-output semantics and factory-reset failure/backup/audit paths."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T211157161999Z.log",
+      "fingerprint": "334562454cae55bc159abba848f7eb4de00271139ca22bc1e369587877e2ea08"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "live broker最多256条、100KiB/条，LRU优先回收终态，已有活跃输出保留；单删/批删归档/会话重置原子移除实时缓存及任务绑定，迟到增量/终态/启动不能复活已删除会话，替代运行隔离旧增量/终态。",
+    "Cache admission at256 active entries deliberately omits a new live mirror until an entry becomes evictable. It does not cancel or alter primary SSE/session transcript persistence. Terminal/interrupted caches are best-effort memory mirrors, not durable history; older terminal partials may be evicted. Text bound25MiB, allocation overhead additional.",
+    "App lock order a.mu -> liveTaskMu -> broker.mu. Delta holds only liveTaskMu through publication; deletion drops bindings and cache together, with no growing tombstone set. New begin verifies session is still registered/not Deleted; late finish checks task binding.",
+    "beginLiveRun replaces predecessor mappings for the same session, so old delta and finish cannot modify the replacement cache. This does not introduce full execution-attempt generation fencing for arbitrarily reordered starts/resumes.",
+    "Existing helper fixture now registers its synthetic session, matching production begin requirements; prior output and interruption assertions preserved. No provider, model, real user data or SSH device used.",
+    "This cycle independently completes#145; #146 artifact provenance needs a separate implementation and #147 policy reads remains queued. Latest#146/#147/#148 bodies read; no claim of fixing those yet.",
+    "Backend-only change: no new browser acceptance claimed. Full start.command workbench, paid provider, long-duration production load, Windows/macOS and full isolated release gate NOT_RUN; prior Landlock/platform blockers persist. No merge/release/deployment."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "docs/assistant-voice-call.md": "2409565ecc67b3526373396baeb86e4b2ea15217f8a2a597b140687c070c50c3",
+    "docs/en/assistant-voice-call.md": "de2d2838c5e34968dd6a3b11342263fe563dcea765f4dc924b4b1bc037f3f1fd",
+    "internal/server/factory_reset.go": "478ae199a677496869fbc5090c98d520acb632f21614f92de2a19c2e92412acd",
+    "internal/server/server.go": "f440e7e567d6bfb3ebe8bea5ce183ff96b0915ab7ddb0d892d293a6a09b89095",
+    "internal/server/stream_broker.go": "cb552324a18484f4e1c146f4d774173741dabb53b0b3fad6c97e0e9da7d8dd2d",
+    "internal/server/stream_broker_retention_test.go": "ba6b69a5162877c3fd38cc646da239f34701945be39b2ba7b57e03e9cd18c846",
+    "internal/server/stream_broker_test.go": "27463597ee35bcfdb7615971bd4727cff2e8fbad8a32dfb88eec345c3a3033e0",
+    "internal/server/workflow.go": "19cc16c6c716a081116a3fd0a87e16444dfcbc6b9abe6ab30654b30339718f4e"
+  }
+}

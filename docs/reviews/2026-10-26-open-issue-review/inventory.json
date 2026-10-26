@@ -1850,10 +1850,13 @@
       "number": 145,
       "title": "[Bug] Evict live output buffers when deleting sessions",
       "url": "https://github.com/skyelan1999/aide/issues/145",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "StreamBroker.runs仅每session限100KiB，无全局限/删除入口；deleteSession不移除broker记录。",
+      "status": "fixed-on-branch",
+      "evidence": "live broker最多256条、100KiB/条，LRU优先回收终态，已有活跃输出保留；单删/批删归档/会话重置原子移除实时缓存及任务绑定，迟到增量/终态/启动不能复活已删除会话，替代运行隔离旧增量/终态。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "StreamBroker.runs仅每session限100KiB，无全局限/删除入口；deleteSession不移除broker记录。",
+      "repairCommit": "13274ef3668e4a2586b3f94893473e357b57cfc2",
+      "repairEvidence": "cycle-028.json"
     },
     {
       "number": 144,
@@ -2790,7 +2793,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 205,
+    "remainingFollowupTargets": 204,
     "followupRepairs": [
       48,
       64,
@@ -2855,7 +2858,8 @@
       141,
       142,
       143,
-      144
+      144,
+      145
     ]
   }
 }
