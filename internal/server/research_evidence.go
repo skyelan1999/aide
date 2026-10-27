@@ -25,7 +25,7 @@ var researchStatusTool = map[string]any{"type": "function", "function": map[stri
 	"parameters": map[string]any{"type": "object", "properties": map[string]any{}},
 }}
 var recordResearchTool = map[string]any{"type": "function", "function": map[string]any{
-	"name": "record_research_finding", "description": "Record one parameter before modeling. source/calculation requires an existing successful tool record, an exact quote and value present in that quote. assumption must state its limitation. This checks traceability, not scientific accuracy or official authority. Conversion requires actual calculation evidence; does not write workspace files.",
+	"name": "record_research_finding", "description": "Record one parameter before modeling. source/calculation requires an existing successful tool record and a whole value in an exact quote, retaining its numeric/token boundaries in the original result. assumption must state its limitation. This checks traceability, not scientific accuracy or official authority. Conversion requires actual calculation evidence; does not write workspace files.",
 	"parameters": map[string]any{"type": "object", "properties": map[string]any{
 		"name": map[string]any{"type": "string"}, "value": map[string]any{"type": "string"}, "unit": map[string]any{"type": "string"},
 		"kind":     map[string]any{"type": "string", "enum": []string{"source", "calculation", "assumption"}},
@@ -117,8 +117,8 @@ func (a *App) recordResearchFinding(task *Task, raw string) string {
 		if use.Tool == "update_plan" || use.Tool == "research_status" || use.Tool == "record_research_finding" || use.Tool == "ask_user" || use.Tool == "write_file" || evidenceFailure(use.Result) {
 			return "错误：该记录不是成功读取或计算的证据"
 		}
-		if !strings.Contains(use.Result, f.Quote) || !strings.Contains(f.Quote, f.Value) {
-			return "错误：工具结果中没有此精确片段或参数值，不可记为已核实；换算或推断须另列并实际计算"
+		if !researchFindingValueMatches(use.Result, f.Quote, f.Value) {
+			return "错误：工具结果中没有此完整参数值及精确片段，不可记为已核实；换算或推断须另列并实际计算"
 		}
 	default:
 		return "错误：kind仅允许source/calculation/assumption"
