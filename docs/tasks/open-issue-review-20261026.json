@@ -49,7 +49,8 @@
     "docs/architecture/workflow-file-bindings.md",
     "docs/architecture/research-evidence.md",
     "examples/file-preview-plugin",
-    "docs/reviews/2026-09-23/evidence/runners/r08_04_api_checks.py"
+    "docs/reviews/2026-09-23/evidence/runners/r08_04_api_checks.py",
+    "vendor/github.com/pkg/sftp/packet.go"
   ],
   "stages": {
     "requirements": {
@@ -137,16 +138,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第38轮#162已修复与验证，等待push评论；当前素材字节未改变，历史证据保留。下一项#163正文与vendored解码器已读，尚未新增测试或修改。",
+  "handoff": "第38轮#162已push并评论，累计95项覆盖，原272项剩189。第39轮#163 SFTP扩展属性count源码与正文已读，下一步用net.Pipe客户端测试和有界分配测量复现，避免实际巨量分配。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "8787c077401e208bba50c345da23d92c4c1846a9",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第37轮#159/#160已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第38轮#162已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -198,14 +199,12 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 38,
+      "cycle": 39,
       "status": "in_progress",
       "candidates": [
-        162
+        163
       ],
-      "phase": "verified-awaiting-push-and-comment",
-      "baselineEvidence": "/workspace/scratch/issue-review-20261026/cycle38-162-baseline-audit.json",
-      "observed": "102/102文件哈希不符；art34/manifest34/interpolation35(stale sleeping-v2)，manifest没有interpolation标记，需保留旧证据并区分当前文件哈希与历史提取信息。"
+      "phase": "latest-body-and-vendored-attrs-decoder-read-awaiting-bounded-allocation-reproduction"
     }
   },
   "orderedReview": {

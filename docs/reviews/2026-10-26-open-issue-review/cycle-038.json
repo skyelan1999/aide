@@ -85,11 +85,14 @@
     "无常驻服务，用户未跟踪文件保留；只push分支、不合并main/发行/部署，合理issue保持open；下一项#163 SFTP扩展属性count分配。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "162": "https://github.com/skyelan1999/aide/issues/162#issuecomment-6431340193"
+    },
+    "verifiedRemoteCommit": "df1c26b616da4e19fc882fcff9329d4a846792fd"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "362f6ecefb84216b4e3b565eb1a3001ea47d59675abc563e4bc923c330fa80fe",
