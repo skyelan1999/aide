@@ -1562,10 +1562,12 @@
       "number": 181,
       "title": "[Bug] Bound animated GIF export frame count",
       "url": "https://github.com/skyelan1999/aide/issues/181",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "gif/AnimatedExport直接Math.max(2,round(fps*duration/1000))无max，总帧留内存；flowAnimationDuration由图style控制。",
+      "status": "fixed-on-branch",
+      "evidence": "GIF导出器计划/渲染入口均限300帧并验证有效参数，修正CSS秒单位识别；真实超长flow UI拒绝与2帧实际编码/原生解码恢复通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "e550bef163e1a2d48fd3627b2d893393297117ff",
+      "repairEvidence": "cycle-050.json"
     },
     {
       "number": 180,
@@ -2874,7 +2876,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 173,
+    "remainingFollowupTargets": 172,
     "followupRepairs": [
       48,
       64,
@@ -2971,7 +2973,8 @@
       177,
       178,
       179,
-      180
+      180,
+      181
     ]
   },
   "newlyDiscoveredIssues": [
