@@ -271,3 +271,22 @@ draw.io源码及本地打包文件同步维护以下交互修正：复制自定�
 Lucidchart 的 `EIMessageBlock` 和 `EIMessageHistoryBlock` 导入时，把每个 `message_N` 的标签样式追加到对应子单元格，保留各自字号、颜色与粗斜体；已有历史头部 `message_0` 保持原处理。源码 `Extensions.js` 与生产动态加载的 `extensions.min.js`、集成版本 `integrate.min.js` 同步修正，主 `app.min.js` 不包含这份转换器。
 
 浏览器回归使用实际 `convertLucidChart` / `LucidImporter.importState`、图模型与文本渲染器，分别预载三份文件中的完整 LucidImporter 代码段，验证四条不同格式消息及已有正确头部。模拟输入在桌面明色和窄屏暗色下验证；这不替代真实Lucidchart文件/账号、完整文件选择交互或离线自动加载的验收。
+
+
+### Lucidchart 符号身份与内置图形缓存
+
+导入类型与渲染目标保持一致，源码及两份分发转换器同步维护：
+
+| Lucidchart 类型 | 渲染目标 |
+| --- | --- |
+| `AndroidIconRefresh` | `mxgraph.ios7.icons.repeat` |
+| `EE_BJT_NPN1` / `EE_BJT_PNP1` | 各自的 NPN / PNP 晶体管图形 |
+| `PEPlugValveBlock` | `pid2valves.valve`，`valveType=plug` |
+| `AmazonRDSMySQLDBinstance2017` | `aws3.mysql_db_instance` |
+| `AWSAppSyncAWS19` | `aws4.resourceIcon`，`resIcon=mxgraph.aws4.appsync` |
+
+真实导入回归同时核对消息样式、图模型的类型字段、实际注册的渲染器/Stencil及正确的相邻类型对照，覆盖源码、动态扩展包和集成包。
+
+回归还发现原文档XML预算误拦了内置AWS4缓存，已作为#128的回归补修。`stencils.min.js` 的闭包私有表只允许自身的字符串条目使用独立XML解析器；该表来自随产品分发的常量，解析器不导出，损坏XML报错，继承属性不被当成内置缓存。动态回退和用户文档仍走既有路径，不扩大文档节点、深度或解压预算。此边界信任的是分发代码本身，不提供对被修改代码或恶意同源脚本的隔离。
+
+回归对同一实际缓存文本分别验证：内置同步/异步加载成功，而作为用户输入的完整XML仍被原有预算拒绝；也覆盖损坏缓存和继承条目。实际缓存文本为5,088,259字节，与独立XML文件的空白格式不同，负例使用缓存本身的文本，避免混淆。运行 `AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/tmp/aide-lucid-evidence node scripts/browser-drawio-preview-bounds.cjs` 可复跑这些合成组件用例；它不是完整工作台、真实Lucidchart账号或文件选择交互的验收。

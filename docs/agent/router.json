@@ -933,6 +933,11 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/js/integrate.min.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/stencils.min.js"
       ]
     ],
     "full": [

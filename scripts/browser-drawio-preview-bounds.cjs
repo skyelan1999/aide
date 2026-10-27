@@ -98,7 +98,8 @@ async function main() {
       ['inactive-page', '<mxfile><diagram>'+compressed(model)+'</diagram><diagram>'+compressed(flat)+'</diagram></mxfile>'],
       ['page-count','<mxfile>'+'<diagram/>'.repeat(65)+'</mxfile>'],
       ['aggregate-expansion','<mxfile>'+('<diagram>'+largePage+'</diagram>').repeat(3)+'</mxfile>'],
-      ['lazy-reference-depth',lazy]
+      ['lazy-reference-depth',lazy],
+      ...(process.env.AIDE_DRAWIO_LUCID_ACCEPTANCE ? [['untrusted-stencil-shaped-xml',require('./drawio-lucid-message-browser-cases.cjs').cachedAsset('aws4.xml')]] : [])
     ]) {
       const start = Date.now();await open(xml);
       await page.getByText('draw.io 内容超过安全预览限制，请下载后查看',{exact:true}).waitFor({timeout:30000});
