@@ -92,6 +92,7 @@ async function main() {
       if (process.env.AIDE_DRAWIO_GIF_ACCEPTANCE) checks.push(...await require('./drawio-gif-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_FREEHAND_ACCEPTANCE) checks.push(...await require('./drawio-freehand-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_SDK_REVIEW) checks.push(...await require('./drawio-sdk-review-browser-cases.cjs')(frame,out,theme));
+      if (process.env.AIDE_DRAWIO_PALETTE_SEARCH_ACCEPTANCE) checks.push(...await require('./drawio-palette-search-browser-cases.cjs')(frame,out,theme));
     }
     const flat = '<mxGraphModel><root>' + Array.from({length:129},(_,n)=>{const i=128-n;return '<mxCell id="'+i+'"'+(i?' parent="'+(i-1)+'"':'')+'/>';}).join('') + '</root></mxGraphModel>';
     const largePage = compressed('<mxGraphModel><!--'+'x'.repeat(6*1024*1024)+'--><root><mxCell id="0"/></root></mxGraphModel>');

@@ -949,6 +949,10 @@
       ],
       [
         "node",
+        "scripts/test_drawio_palette_search.cjs"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
       ],
