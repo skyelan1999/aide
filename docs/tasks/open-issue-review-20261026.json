@@ -192,10 +192,10 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "61轮464原生审查合入准备完成：明确保留兼容入口，native显式可选；所有可执行检查通过，当前Windows实机仍需测试。将提交真正双parent merge并push专用分支，未合main/Release；下一轮191，原272剩163。",
+  "handoff": "#464原生方案已真正双parent合入当前分支 c11f9613，保留默认兼容入口及agent/监控/迁移，修正native回退/镜像/归属/源码指纹/许可证；184quick及相关检查通过待push。当前Windows新代码未实测，保持issueopen；下一原队列191。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": null,
+    "commit": "c11f9613f62068a463724e5b5df6a59d98cd3d68",
     "pushed": false,
     "mergedToMain": false,
     "released": false,
@@ -302,7 +302,7 @@
       ],
       "lastExplicitIssue": {
         "number": 464,
-        "status": "native-plan-reviewed-integration-awaiting-push",
+        "status": "reviewed-native-plan-merged-on-branch-awaiting-push",
         "evidence": "cycle-061.json"
       },
       "lastRefresh": "2026-10-27T09:22:35.725221+00:00",

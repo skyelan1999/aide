@@ -131,7 +131,9 @@
     "No subagents; ownedtoolingcontainers --rm/networknone;temporarytinyimage tagsremoved;toolchaincache kept forrebuild. Rootexe/armPE/PDB/cacheexcludedfromGit.",
     "Upstreambinary had no MIT notice strings; finalexe embedsnlohmann/miniznotices accessiblewith--licenses. PEbytesverified; actualWindows --licenses execution remainsNOT_RUN."
   ],
-  "commits": {},
+  "commits": {
+    "464": "c11f9613f62068a463724e5b5df6a59d98cd3d68"
+  },
   "artifacts": {
     "amd64": {
       "path": "aide-launcher.exe",
@@ -192,5 +194,9 @@
     "start.bat": "9ca263f7798a61c41842edcf346aafe11702b307f94ae57265f768612cbffab2",
     "start.ps1": "1e905f068fffc4e6284e6b334f1cd6700f3f425b9c9977e6b2f210b805841987",
     "stop.bat": "0dbd466980543d6abc14b6ed034f96b4f1ba18970225528e2e9e1590bda74d59"
-  }
+  },
+  "mergeParents": [
+    "5e6f2d7a4ebb0657f362137598c9f8162e2b84aa",
+    "268bde94cd71a2fe420f36f4194dc6a76fa3b2c9"
+  ]
 }
