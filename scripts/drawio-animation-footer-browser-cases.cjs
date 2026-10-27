@@ -46,19 +46,21 @@ module.exports=async function(frame,out,theme){
       assert.equal((await cancel.boundingBox()).y,(await save.boundingBox()).y,tag+' primary actions stay together');
       await cancel.focus();await cancel.press('Tab');assert.equal(await save.evaluate(el=>el===document.activeElement),true,tag+' Cancel→Save keyboard order');
       await save.press('Enter');assert.deepEqual(await frame.evaluate(()=>ownedFooterSaves.map(data=>data.steps)),[[{wait:1}]]);
-      await frame.evaluate(()=>ownedFooter.window.destroy());
+      await frame.evaluate(()=>ownedFooter.destroy());
       // A real pointer click at the right edge proves Save is not merely
       // represented by a DOM box outside an overflow-hidden ancestor.
       await frame.evaluate(({width,height})=>{window.ownedFooter=new AnimationDialog(ownedUi,10,20,width,height,{kind:'action',initial:{steps:[{wait:1}]},save:data=>ownedFooterSaves.push(JSON.parse(JSON.stringify(data)))});},{width,height});
       const size=await save.boundingBox();await save.click({position:{x:size.width-2,y:size.height/2}});
       assert.equal(await frame.evaluate(()=>ownedFooterSaves.length),2);
-      await frame.evaluate(()=>{ownedFooter.window.destroy();window.ownedFooter=new AnimationDialog(ownedUi,10,20,360,360,{kind:'action',initial:{steps:[{wait:1}]},save:()=>{throw Error('Cancel must not save clean data');}});});
+      await frame.evaluate(()=>{ownedFooter.destroy();window.ownedFooter=new AnimationDialog(ownedUi,10,20,360,360,{kind:'action',initial:{steps:[{wait:1}]},save:()=>{throw Error('Cancel must not save clean data');}});});
       await cancel.click();assert.equal(await frame.evaluate(()=>ownedFooter.window.isVisible()),false);
       checks.push({case:'animation footer visible/hit-tested; Cancel→Save keyboard Enter, Save edge click and clean Cancel',file,theme,language,width,height,result:'PASS'});
-     }finally{await frame.evaluate(()=>{if(window.ownedFooter){ownedFooter.window.destroy();delete window.ownedFooter;}});}
+     }finally{await frame.evaluate(()=>{if(window.ownedFooter){ownedFooter.destroy();delete window.ownedFooter;}});}
     }
    }
   }
  }finally{await frame.evaluate(()=>{window.AnimationDialog=ownedFooterOriginal;mxResources.get=ownedFooterGet;delete window.ownedFooterOriginal;delete window.ownedFooterGet;delete window.ownedFooterSaves;});}
+ // Exercise the official destructor's resize-listener cleanup explicitly.
+ await frame.evaluate(()=>window.dispatchEvent(new Event('resize')));
  return checks;
 };

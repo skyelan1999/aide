@@ -25,7 +25,7 @@ module.exports=async function(frame,out,theme){
   await dialog.getByRole('button',{name:preview,exact:true}).last().click();await frame.waitForFunction(()=>ownedAnimCalls>0);
   await dialog.getByRole('button',{name:save,exact:true}).click();
   assert.deepEqual(await frame.evaluate(()=>JSON.parse(ownedAnimGraph.getAttributeForCell(ownedAnimRoot,'animation'))),{animation:{steps:[{wait:1}],loop:false}});
-  await frame.evaluate(()=>{ownedAnim.window.destroy();delete window.ownedAnim;});
+  await frame.evaluate(()=>{ownedAnim.destroy();delete window.ownedAnim;});
   checks.push({case:'page invalid rows retained, save/preview blocked, delete bad rows, valid preview and save',theme,result:'PASS'});
   await frame.evaluate(()=>{
    window.ownedActionInitial={title:'Owned invalid action',steps:[{fadeTo:null}]};window.ownedActionBefore=JSON.stringify(ownedActionInitial);window.ownedActionSaved=null;
@@ -37,7 +37,7 @@ module.exports=async function(frame,out,theme){
   await dialog.getByRole('button',{name:save,exact:true}).click();
   assert.deepEqual(await frame.evaluate(()=>ownedActionSaved.steps),[{wait:1}]);
   assert.equal(await frame.evaluate(()=>JSON.stringify(ownedActionInitial)===ownedActionBefore),true);
-  await frame.evaluate(()=>{ownedAnim.window.destroy();delete window.ownedAnim;});
+  await frame.evaluate(()=>{ownedAnim.destroy();delete window.ownedAnim;});
   checks.push({case:'action mode retains invalid input, raw correction saves without mutating caller',theme,result:'PASS'});
   await frame.evaluate(()=>{
    window.ownedActionSaved=null;
@@ -49,7 +49,7 @@ module.exports=async function(frame,out,theme){
   await frame.evaluate(()=>ownedAnim.window.setVisible(false));assert.equal(await frame.evaluate(()=>ownedActionSaved),null);
   assert.equal(await frame.evaluate(()=>ownedAnim.window.isVisible()),true,'invalid close keeps editor and draft available');
   assert.deepEqual(JSON.parse(await dialog.locator('textarea').inputValue()).steps,[null,{flow:null}]);
-  await frame.evaluate(()=>{ownedAnim.window.destroy();delete window.ownedAnim;});
+  await frame.evaluate(()=>{ownedAnim.destroy();delete window.ownedAnim;});
   checks.push({case:'dirty malformed steps cannot autosave through close',theme,result:'PASS'});
   await frame.evaluate(()=>{
    const before=ownedAnimCalls;
@@ -62,10 +62,12 @@ module.exports=async function(frame,out,theme){
   checks.push({case:'player validates before constructor/play effects, including mutation after construction',theme,result:'PASS'});
  }finally{
   await frame.evaluate(()=>{
-   if(window.ownedAnim){ownedAnim.window.destroy();delete window.ownedAnim;}
+   if(window.ownedAnim){ownedAnim.destroy();delete window.ownedAnim;}
    ownedAnimGraph.executeCustomActions=ownedAnimExecute;
    ownedAnimGraph.setAttributeForCell(ownedAnimRoot,'animation',ownedAnimOriginal);
   });
  }
+ // Exercise the official destructor's resize-listener cleanup explicitly.
+ await frame.evaluate(()=>window.dispatchEvent(new Event('resize')));
  return checks;
 };

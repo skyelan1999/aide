@@ -945,6 +945,10 @@
       ],
       [
         "node",
+        "scripts/test_drawio_freehand_preview.cjs"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
       ],
