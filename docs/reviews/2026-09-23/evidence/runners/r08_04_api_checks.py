@@ -256,9 +256,6 @@ def main():
             src_dir = app.root / 'home' / 'docs'
             src_dir.mkdir(parents=True, exist_ok=True)
             (src_dir / 'fixture-b.txt').write_text(case['attachments'][1]['content'])
-            # 容器内等价于生产 /local 挂载：把来源目录落到 /local/docs
-            os.makedirs('/local/docs', exist_ok=True)
-            open('/local/docs/fixture-b.txt', 'w').write(case['attachments'][1]['content'])
             app.api('PUT', '/api/sources', {'sources': [{'id': 'fixture-docs', 'name': 'docs', 'type': 'local', 'enabled': True, 'config': {'path': str(src_dir)}}]}, status=200)
             sid = app.create()
             app.stop()
