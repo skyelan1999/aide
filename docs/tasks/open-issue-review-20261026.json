@@ -69,14 +69,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第46轮修复177 PolylineTo二次移位及公式/点数预算；累计107项产品/验收issue覆盖及1项额外测试修正。",
+      "summary": "第47轮修复178 NURBS公式/度数/控制点/单边工作预算；累计108项产品/验收issue覆盖及1项额外测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "三份真实handler线性/边界回归，实际行工厂/几何/Stencil及既有Visio/Lucidchart共37组浏览器、最终quick/文档通过；完整工作台/真实复杂文件/全部几何和跨平台未验收。",
+      "summary": "三份真实方法预算回归，实际行工厂/边曲线/渲染及既有功能共43组浏览器、最终quick/文档通过；完整工作台/真实NURBS压缩包/复杂曲线语义和跨平台未验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -122,7 +122,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-043.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-044.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-045.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-046.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-046.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-047.json"
       ]
     },
     "documentation": {
@@ -146,11 +147,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第46轮177已push评论，最新交付d86c7e71；累计108覆盖，原272剩176，额外441待后续。第47轮178已读完整源码并运行有限路径探针，下一步补拒绝回归和度数/控制点/工作量限制；尚未改产品代码。",
+  "handoff": "第47轮178已提交验收，待push评论；累计109覆盖，原272剩175，额外441待后续。下一179最新正文已读，尚未修改或新增回归。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "df3533b25b9addf7beeebcf01ff700ad25e6b3c4",
-    "pushed": true,
+    "commit": "70c146847d480a4cd33f98f32306af1b0fe78529",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
@@ -185,23 +186,23 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 47,
+    "nextCycle": 48,
     "lastCompletedBatch": {
-      "cycle": 46,
+      "cycle": 47,
       "issues": [
-        177
+        178
       ],
-      "cumulativeFixed": 108,
-      "cumulativeProductFixed": 107,
+      "cumulativeFixed": 109,
+      "cumulativeProductFixed": 108,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 176,
-      "verification": "PASS actual source/bundled linear/budget methods, XML row/geometry/stencil and existing 37 browser groups, final quick/docs; full workbench/real complex Visio/all coordinate semantics/cross-platform NOT_RUN",
+      "remainingFollowupTargets": 175,
+      "verification": "PASS actual NURBS methods/budgets, XML row/edge/stencil and existing 43 browser groups, final quick/docs; full workbench/real NURBS archive/complex curve semantics/cross-platform NOT_RUN",
       "remainingAdditionalFollowupTargets": 1
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      178
+      179
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -214,7 +215,7 @@
       "candidates": [
         178
       ],
-      "phase": "source-reviewed-finite-probe-awaiting-budget-regression",
+      "phase": "verified-awaiting-push-and-comments",
       "observed": "178 getControlPoints.nurbsSegsTo先split公式，再按控制点数钳制度数，De Boor每span四采样且每次O(p²)。有限探针degree=12/16内部控制点已得到17输出点（约2ms）；仅证明路径可执行，不算超限拒绝回归或漏洞卡死复现，未改产品代码。",
       "probe": {
         "path": "/workspace/scratch/issue-review-20261026/cycle47-nurbs-probe.cjs",

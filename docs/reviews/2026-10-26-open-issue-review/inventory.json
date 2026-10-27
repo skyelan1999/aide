@@ -1589,10 +1589,12 @@
       "number": 178,
       "title": "[Bug] Bound NURBS degree during VSDX edge import",
       "url": "https://github.com/skyelan1999/aide/issues/178",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "NURBS degree仅clamp控制点数量，evaluateNURBS嵌套degree循环并逐knot span采样，无degree/work预算，最坏复杂度仍待实测。",
+      "status": "fixed-on-branch",
+      "evidence": "NURBS限制公式65536代码单元/度数8/控制点256，并按单边累计评估预算250000拒绝；真实方法及行工厂/渲染回归通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "70c146847d480a4cd33f98f32306af1b0fe78529",
+      "repairEvidence": "cycle-047.json"
     },
     {
       "number": 177,
@@ -2868,7 +2870,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 176,
+    "remainingFollowupTargets": 175,
     "followupRepairs": [
       48,
       64,
@@ -2962,7 +2964,8 @@
       174,
       175,
       176,
-      177
+      177,
+      178
     ]
   },
   "newlyDiscoveredIssues": [
