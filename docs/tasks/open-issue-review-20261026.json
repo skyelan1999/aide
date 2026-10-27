@@ -165,17 +165,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "53轮441及168分发followup验证完成待push；累计115覆盖，原272剩172。54轮优先369的回滚异常/诊断，再恢复182 stash1ae8bb0（未计数）。保留用户文件，仅push分支。",
+  "handoff": "53轮441及168分发followup已push/评论，累计115覆盖，原272剩172；54轮优先369回滚异常/诊断，再恢复182 stash1ae8bb0（未计数）。仅push分支，保留用户文件。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "54a3bc37945061378ea5c8eea54083380970ab30",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": null
+    "evidenceCommit": "d431aaabb601abe43ae2934da611ad93d3adcbf2"
   },
-  "issue_comments": "53轮441和168 followup待push后回填；合理问题保持open。",
+  "issue_comments": "53轮441及168分发followup已push并评论，合理问题保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",

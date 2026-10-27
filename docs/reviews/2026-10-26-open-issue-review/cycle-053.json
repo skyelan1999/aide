@@ -74,11 +74,15 @@
     "Original272 review artifact/count unchanged;441 is extra and now covered.182 exact local stash retained, not counted."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "441": "https://github.com/skyelan1999/aide/issues/441#issuecomment-6435841887",
+      "168": "https://github.com/skyelan1999/aide/issues/168#issuecomment-6435842471"
+    },
+    "remoteCommit": "d431aaabb601abe43ae2934da611ad93d3adcbf2"
   },
   "sourceSHA256": {
     "docs/architecture/office-viewer.md": "ff96571d9c9d320413f1187fd6e3582189cd31f9013e7249007fa26e88ed74b7",
