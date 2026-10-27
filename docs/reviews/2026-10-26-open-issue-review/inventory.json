@@ -1625,55 +1625,67 @@
       "number": 174,
       "title": "[P2] Map Lucidchart AppSync blocks to the AppSync stencil",
       "url": "https://github.com/skyelan1999/aide/issues/174",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Extensions AWSAppSyncAWS19 resIcon=aws4.sqs，与AppSync红色变体及侧栏appsync不同。",
+      "status": "fixed-on-branch",
+      "evidence": "AWSAppSyncAWS19的resIcon改为aws4.appsync，实际资源图标渲染；既有正确红色变体对照保持。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+      "repairEvidence": "cycle-043.json"
     },
     {
       "number": 173,
       "title": "[P2] Map Lucidchart MySQL RDS blocks to the MySQL stencil",
       "url": "https://github.com/skyelan1999/aide/issues/173",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Extensions AmazonRDSMySQLDBinstance2017指ms_sql_instance，邻项MySQL alternate指mysql_db_instance_2。",
+      "status": "fixed-on-branch",
+      "evidence": "AmazonRDSMySQLDBinstance2017使用aws3.mysql_db_instance，不再用ms_sql_instance；原MSSQL对照保持，实际stencil身份验证。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+      "repairEvidence": "cycle-043.json"
     },
     {
       "number": 172,
       "title": "[P2] Preserve plug valve type in Lucidchart imports",
       "url": "https://github.com/skyelan1999/aide/issues/172",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Extensions PEPlugValveBlock valveType=ball，而本地mxPidValves有独立plug类型；导入语义错误。",
+      "status": "fixed-on-branch",
+      "evidence": "PEPlugValveBlock使用valveType=plug，实际PID自定义渲染器接收plug；球阀对照保持ball。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+      "repairEvidence": "cycle-043.json"
     },
     {
       "number": 171,
       "title": "[P2] Preserve NPN and PNP polarity when importing Lucidchart BJTs",
       "url": "https://github.com/skyelan1999/aide/issues/171",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Extensions legacy EE_BJT_NPN1→pnp/PNP1→npn反向，V2与侧栏命名均为正向。",
+      "status": "fixed-on-branch",
+      "evidence": "修正旧EE_BJT_NPN1/PNP1反向映射，分别使用NPN/PNP stencil，_V2正确映射保持；实际注册图形身份验证。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+      "repairEvidence": "cycle-043.json"
     },
     {
       "number": 170,
       "title": "[P3] Fix Lucidchart Android refresh icon style mapping",
       "url": "https://github.com/skyelan1999/aide/issues/170",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Extensions AndroidIconRefresh映射是 + 'ios7.icons.repeat'，一元加转换NaN，与邻项s+前缀不一致。",
+      "status": "fixed-on-branch",
+      "evidence": "AndroidIconRefresh从NaN改为mxgraph.ios7.icons.repeat，实际Repeat stencil渲染；Info邻近映射保持。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+      "repairEvidence": "cycle-043.json"
     },
     {
       "number": 169,
       "title": "[P2] Apply message label styles to Lucidchart EI message cells",
       "url": "https://github.com/skyelan1999/aide/issues/169",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Extensions Lucid EIMessage/History写item2.style而非item2[i].style；确认两处同样数组/单元格对象混用。",
+      "status": "fixed-on-branch",
+      "evidence": "EIMessage/History的message_N标签样式写到对应mxCell而不是item2数组，source/extensions.min/integrate.min同步；计算样式和真实mxText保持各自字号、颜色、粗斜体，既有message_0正确处理不变。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "cf44be4ddf99af7a98a7b457c035640d52f487cd",
+      "repairEvidence": "cycle-043.json"
     },
     {
       "number": 168,
@@ -2086,7 +2098,15 @@
       "reviewRecord": "ordered-review.json",
       "reviewEvidence": "Graph.decompress base64→pako.inflateRaw(to:string)→decodeURIComponent 无展开预算，AIDE load透传文件到iframe。",
       "repairCommit": "39acde7fa769a43e21c1ff86d5041f1444b4a881",
-      "repairEvidence": "cycle-023.json"
+      "repairEvidence": "cycle-023.json",
+      "followupRegressionFixes": [
+        {
+          "cycle": 43,
+          "commit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+          "evidence": "cycle-043.json",
+          "summary": "合法内置AWS4缓存与不可信文档XML分开解析，损坏/继承条目拒绝，原文档预算保留。"
+        }
+      ]
     },
     {
       "number": 127,
@@ -2842,7 +2862,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 185,
+    "remainingFollowupTargets": 179,
     "followupRepairs": [
       48,
       64,
@@ -2927,7 +2947,13 @@
       163,
       164,
       167,
-      168
+      168,
+      169,
+      170,
+      171,
+      172,
+      173,
+      174
     ]
   },
   "newlyDiscoveredIssues": [
