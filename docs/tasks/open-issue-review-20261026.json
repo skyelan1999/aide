@@ -17,7 +17,8 @@
     "369回滚再次失败不能跳出agent；保留原故障与恢复结果、受限脱敏持久日志、有界实际launcher子进程和断线结果重试；相同operation结果幂等且不得清除新pending，Windows实机首因仍未知。",
     "464最新followup覆盖Docker Desktop/containerd在受信任image引用下返回规范configID；仅成功已校验归档load回执可定位fallback，严格平台/源码/CAD校验仍保留；提供字段级错误并移除tar.exe执行依赖。",
     "182在原有完整提交/单vertex/undo语义下仅限制预览重算；核对支持平滑档位和完整采样，真实源码/两分发浏览器及新441/168动画段联验，保留明确性能/视觉边界。",
-    "审查268bde94原生Windows方案，合理部分合入当前修复分支；保留现有更新/监控/迁移与测试，不恢复已修tar/镜像身份问题；构建与可执行验证明确平台边界。"
+    "审查268bde94原生Windows方案，合理部分合入当前修复分支；保留现有更新/监控/迁移与测试，不恢复已修tar/镜像身份问题；构建与可执行验证明确平台边界。",
+    "62轮191六个ContactBadge模板实际状态/尺寸/颜色匹配独立资源，192–195纠正显式搜索词并保留原style/value与正确相邻项；源码/两分发/明暗真实索引查询与渲染，已有图不自动改写。"
   ],
   "scope": [
     "internal/server",
@@ -100,14 +101,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "61轮审查合入464原生启动器，保留默认兼容/更新/监控/迁移并修复native回退/安装归属/源码指纹与分发回归；不重复计数。",
+      "summary": "62轮修正Android三态引用及ArchiMate/QuadArrow/Checkbox搜索词，保留已有图形尺寸与内容。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "38portable、24PS导入+真实Docker、既有17/22/8/4PS回归、Go相关race/vet及交叉编译、两nativePE编译与门禁、184quick通过。当前Win32/新目录UI/新镜像/完整Release NOT_RUN。",
+      "summary": "62轮三实现/明暗22browsergroups errors[]，184quick通过；全工作台图库拖放及当前464 Windows实机仍NOT_RUN。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -168,7 +169,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-058.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-059.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-060.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-061.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-061.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-062.json"
       ]
     },
     "documentation": {
@@ -192,15 +194,15 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "#464原生审查合并及收据已push，merge c11f9613，评论 https://github.com/skyelan1999/aide/issues/464#issuecomment-6440210135。默认兼容能力保留，native显式选择；184quick等通过，当前Windows新代码仍待实机。原272剩163，累计124覆盖不重复计464；下一原队列191。",
+  "handoff": "第62轮#191–#195真实浏览器复现并修复，22组browser及184quick通过；产品提交70ce07f823bfe57418a1bd3e5819196c46f2bf2c，正在交付修复分支。原272剩158，累计129覆盖（128产品+1工具）；下一原队列196。#464原生方案已合入，当前修改仍待Windows实机。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "c11f9613f62068a463724e5b5df6a59d98cd3d68",
-    "pushed": true,
+    "commit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "04f793a3e5e9d008893b639481ca023d81a41048"
+    "evidenceCommit": null
   },
   "issue_comments": "61轮464已push并回填完整审查/实测边界：https://github.com/skyelan1999/aide/issues/464#issuecomment-6440210135",
   "goal": {
@@ -231,24 +233,31 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 62,
+    "nextCycle": 63,
     "lastCompletedBatch": {
-      "cycle": 61,
+      "cycle": 62,
       "issues": [
-        464
+        191,
+        192,
+        193,
+        194,
+        195
       ],
-      "cumulativeFixed": 124,
-      "cumulativeProductFixed": 123,
+      "cumulativeFixed": 129,
+      "cumulativeProductFixed": 128,
       "toolingFixes": 1,
-      "remainingFollowupTargets": 163,
+      "remainingFollowupTargets": 158,
       "remainingAdditionalFollowupTargets": 0,
-      "verification": "Nativecore mergedwithcompatible resolutions;38portable,24PSimport+realDocker,17startup/22agent/8child/4gate,Go race/vet/crossbuild,bothnativePE targets,184quick PASS;currentWin32NR"
+      "verification": "22 browsergroups/errors[],184quick;component scope,fullpicker/drag NOT_RUN",
+      "delivery": "pending push"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      191,
-      192,
-      193
+      196,
+      197,
+      198,
+      199,
+      200
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -259,9 +268,13 @@
       "cycle": 62,
       "status": "in_progress",
       "candidates": [
-        191
+        191,
+        192,
+        193,
+        194,
+        195
       ],
-      "phase": "resume-independent-badge-state-runtime-review-after-native-delivery"
+      "phase": "verified-committed-preparing-branch-delivery"
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -305,7 +318,7 @@
         "status": "reviewed-native-plan-merged-and-pushed",
         "evidence": "cycle-061.json"
       },
-      "lastRefresh": "2026-10-27T09:22:35.725221+00:00",
+      "lastRefresh": "2026-10-27T11:27:14.909447+00:00",
       "lastExplicitRequest": "464最新原生方案已审查，保留兼容能力后合入当前分支；191随后继续。"
     },
     "pausedWork": [

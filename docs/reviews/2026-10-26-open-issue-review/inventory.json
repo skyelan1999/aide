@@ -1436,46 +1436,56 @@
       "number": 195,
       "title": "[Bug] Atlassian Checkbox (off) palette entry is indexed as checkbox on",
       "url": "https://github.com/skyelan1999/aide/issues/195",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-Atlassian Checkbox(off)显式tag checkbox on；标题会追加off，报告称off完全缺失有夸大，但on误命中成立。",
+      "status": "fixed-on-branch",
+      "evidence": "Checkbox(off)显式词由on改off；原标题补词已能找到，修复精确on桶污染。 三实现/明暗22组browser errors[]及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+      "repairEvidence": "cycle-062.json"
     },
     {
       "number": 194,
       "title": "[Bug] Arrows2 Callout with Quad Arrow has a misspelled search synonym",
       "url": "https://github.com/skyelan1999/aide/issues/194",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-Arrows2 quad callout tag four war，标题无four way，遗漏正确同义词。",
+      "status": "fixed-on-branch",
+      "evidence": "four war更正four way；基线真实查询miss，修复后命中。 三实现/明暗22组browser errors[]及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+      "repairEvidence": "cycle-062.json"
     },
     {
       "number": 193,
       "title": "[Bug] ArchiMate 3.2 palette entries carry unrelated search tags",
       "url": "https://github.com/skyelan1999/aide/issues/193",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-ArchiMate3 Application Interface/Data Object/Representation等tag来自component/service/contract，标题仍可搜索，主要是误命中与分类噪声。",
+      "status": "fixed-on-branch",
+      "evidence": "AM3接口、对象、Representation、SystemSoftware、Equipment显式词更正；两种表示及原有Component/Service/Device控制验证。 三实现/明暗22组browser errors[]及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+      "repairEvidence": "cycle-062.json"
     },
     {
       "number": 192,
       "title": "[Bug] ArchiMate palette includes misspelled and misassigned search tags",
       "url": "https://github.com/skyelan1999/aide/issues/192",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-ArchiMate infraastructure/assesment错拼，Requirement误tag goal；标题会补正确词，因此部分只是多余错误匹配。",
+      "status": "fixed-on-branch",
+      "evidence": "Infrastructure/Assessment拼写及Requirement语义显式词更正；Goal控制保留。 三实现/明暗22组browser errors[]及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+      "repairEvidence": "cycle-062.json"
     },
     {
       "number": 191,
       "title": "[Bug] Android Contact Badge Normal and Pressed entries use the Focused shape",
       "url": "https://github.com/skyelan1999/aide/issues/191",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-Android Normal/Pressed四个模板全部contact_badge_focused，同Focused样式；需检查已有normal/pressed stencil再替换。",
+      "status": "fixed-on-branch",
+      "evidence": "四个Normal/Pressed新模板改对应现有stencil；实际6状态/尺寸和3独立参考SVG比对通过。 三实现/明暗22组browser errors[]及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+      "repairEvidence": "cycle-062.json"
     },
     {
       "number": 190,
@@ -2897,7 +2907,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 172,
+    "remainingFollowupTargets": 158,
     "followupRepairs": [
       48,
       64,
@@ -2995,7 +3005,12 @@
       178,
       179,
       180,
-      181
+      181,
+      191,
+      192,
+      193,
+      194,
+      195
     ]
   },
   "newlyDiscoveredIssues": [
@@ -3066,7 +3081,7 @@
     "nextOwnerCandidates": [],
     "originalAscendingReviewComplete": true,
     "repairOrderNow": "explicit user > new owner reports > original ascending queue",
-    "original272RemainingFollowup": 171,
+    "original272RemainingFollowup": 158,
     "lastExplicitIssue": 464
   }
 }

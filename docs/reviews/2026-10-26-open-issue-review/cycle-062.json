@@ -1,0 +1,92 @@
+{
+  "cycle": 62,
+  "baseline": "ba4936a702ab1ef6a7af2115ed64c21184938133",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    191,
+    192,
+    193,
+    194,
+    195
+  ],
+  "commits": {
+    "191": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+    "192": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+    "193": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+    "194": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
+    "195": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c"
+  },
+  "cumulativeProductFixes": 128,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 129,
+  "original272RemainingFollowup": 158,
+  "additionalFollowupIssues": [],
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "AIDE_DRAWIO_STATE_SEARCH_ACCEPTANCE=1 node scripts/browser-drawio-preview-bounds.cjs (source restored from baseline; fixed bytes restored in finally)",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle62-state-red-query.log",
+      "observed": "Four Normal/Pressed templates actually render Focused;17 metadata entries contain wrong/missing explicit tokens. Quad Arrow four way actual query misses. Other queries may already hit through title augmentation/fuzzy matching; do not claim complete nondiscoverability."
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_STATE_SEARCH_ACCEPTANCE=1 AIDE_DRAWIO_SIDEBAR_METADATA_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle62-state-green-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154 actual bundled iframe,22groups/errors[]:source/app/integrate×light1440/dark390 sixnewcases;each6state-size badge renders vs3distinct references,17factory/index/query/render targets,5unchanged controls;6prior186–190 cases+10base.1390captured factories is initialization count, not all1390validation. Desktop badge screenshot visually inspected.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle62-state-green-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "Pinned Terser5.39 sync --check, node --check all5sources/2bundles/4helpers; node scripts/test_drawio_palette_search.cjs",
+      "scope": "Both bundles outside7selected assignments byte-identical to baseline;17non-tag metadata fields and5fullcontrols unchanged;6badge entry fields unchanged except intended alias;stencil XML unchanged.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle62-checkpoint.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 184,
+      "fingerprint": "b8f2b5b28c1f3f0dda27cef07dbe6565baac56ea382f5d2d9e9a9edb82ebd6ef",
+      "receipt": ".agent-state/verify-20261027T112515004185Z.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py; git diff --check; git diff --cached --check",
+      "observed": "429Markdown/1471local links before receipt; final docs gate recorded at delivery."
+    }
+  ],
+  "failedChecksResolved": [
+    "Initial owned browser helper had an extra parenthesis; corrected node syntax before valid product RED. Earlier title-query green refined to required-word queries; reran source baseline and final22group green."
+  ],
+  "securityReview": [
+    "New insertion templates only;existing diagrams not rewritten. Focused and both badge sizes preserved; references use existing independentresource states.",
+    "ArchiMate explicit semantic words, four war→four way and Checkboxoff on→off only;title augmentation/fuzzy matching retained.",
+    "Trusted shipped JS executes with isolated Sidebar receiver; no live palette mutation or external/device/model calls; owned browser contexts close finally."
+  ],
+  "notRun": [
+    "Full Aide workbench library picker and actual drag/drop;all1390entries and global fuzzyranking. Component real factory/index/render evidence has bounded scope.",
+    "Go/full/native suites not repeated for frontendmetadata. Current modified #464 Windows exe/runtime remains pending realWindows;crossbuild does not replace native execution.",
+    "No mainmerge,Release/tag/deploy or productionrestart. Allfive reasonable reports remainopen pendingmain."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/architecture/office-viewer.md": "c1b000d2f2d23eee88977cf40560f74710077e0bfaa752159e56f0d9d989e867",
+    "internal/server/web/vendor/drawio/js/app.min.js": "42a9c9664495b0141e0748a930c3741c0a64f202ae7e0cfe598a8603377513e9",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Android.js": "7272e4d2495de2c57f6f6eae4014ad905cdee8701ee3945750a32283f82889a6",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-ArchiMate.js": "ca4254f37066c53a76af4fcc8e02c21c4464261f933dacdeb8f24beb059f06bb",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-ArchiMate3.js": "c76239a77e2798e6cc39a80fe3ff636e1066ca67a515f5429cc86b386f837831",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Arrows2.js": "44d585ffd324a7daf632f3fd83c3569bf33ecfc1b019c010a85c83ce388c95ed",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Atlassian.js": "da9b0b2bf02385362e768c4bc3691a8b99ac5c693251d6033fe838e80142276f",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "e1a211bdbe1b2f843a39f76cdfb8d187e91b020f756fe9c49c1057aa6fce645c",
+    "scripts/browser-drawio-preview-bounds.cjs": "df6d86b61239b7ffd13d3186a09b57de3678a9b1603b6575d3c4824422af4b29",
+    "scripts/drawio-state-search-browser-cases.cjs": "1761af4b907f0e1ceb8d1d6ab5ded0bb92d2f40880344df17bd866d9fdf5d3de",
+    "scripts/drawio-state-search-review.cjs": "c5c96457e563711043362344ffb9b8979f748326aee9f3c8fe1909c0d35fcd9c",
+    "scripts/sync_drawio_palette_search.cjs": "65250ce1ff001efe0f93d9e73336dbe649abba5d60c5fea7d4b9d92a14e06623"
+  }
+}
