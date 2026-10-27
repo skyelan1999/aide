@@ -56,16 +56,19 @@
     "vendored pkg/sftp扩展属性在分配前检查count<=剩余字节/8，以uint64比较并返回既有短包错误；实际客户端/内存管道证明原8字节载荷引起33555336字节分配，修复后通过有限预算、最大计数拒绝及合法属性/截短数据回归。",
     "本地回补上游c1bc2fffcb14f580c4d365ae9660fa149ec1dba5对应检查；模块仍v1.13.10，不伪装依赖升级，未来刷新vendor须保留或确认包含该补丁。",
     "每项至少两个uint32前缀，共8字节；用uint64比较，不进行不可信count乘法或int截断。既有字符串和256KiB包限制保留；正常属性不受影响。",
-    "内存回归的8MiB是保守测试阈值，不是产品分配配额。计数与包字节关联后限制该单次slice分配，不保证其他协议路径或并发总内存。",
+    "本轮使用完整包头及ID，聚焦扩展属性；下一项164另行检查NAME字符串/计数及接收路由解析，不能声称所有SFTP报文已加固。",
     "真实包头/ID在客户端接收路由要求完整，本轮聚焦扩展属性；下一项164另行检查NAME字符串/计数解析，不能声称所有SFTP报文已加固。",
     "无常驻服务，用户未跟踪文件保留；只push分支，不合并main/发行/部署，合理issue保持open。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "163": "https://github.com/skyelan1999/aide/issues/163#issuecomment-6431398852"
+    },
+    "verifiedRemoteCommit": "a591b7df11d0bca92eca5504bf1f48a1c1eacad6"
   },
   "sourceSHA256": {
     "docs/architecture/ssh-storage.md": "ebdabab36be10bdfb62dc19936b32314bfd46609ea9ea1b016ad3f4535419fef",

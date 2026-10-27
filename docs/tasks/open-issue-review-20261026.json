@@ -139,16 +139,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第39轮#163修复与最终验证完成，等待push评论；下一项#164正文及ReadDir/RealPath未检查NAME字段调用链已读，尚未新增回归或修改。",
+  "handoff": "第39轮#163已push并评论，累计96项覆盖，原272项剩188。第40轮#164正文与ReadDir/RealPath调用链已读；conn.recv已使用unmarshalUint32Safe检查路由ID，方法内仍用不安全count/string助手。下一步用内存管道复现短NAME，修复时保留#71的ReadDirEachContext和取消/visitor边界。尚未新增164回归或修改。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "f14967d46830981c6dca04bd33f28fab5bdea301",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第38轮#162已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第39轮#163已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -200,12 +200,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 39,
+      "cycle": 40,
       "status": "in_progress",
       "candidates": [
-        163
+        164
       ],
-      "phase": "verified-awaiting-push-and-comment"
+      "phase": "latest-body-and-name-reply-decoders-read-awaiting-owned-pipe-reproduction",
+      "observed": "conn.recv路由ID已checked；ReadDir与RealPath的NAME count/string仍未检查，需按真实可达报文复现，保留#71 visitor/cancel扩展。"
     }
   },
   "orderedReview": {
