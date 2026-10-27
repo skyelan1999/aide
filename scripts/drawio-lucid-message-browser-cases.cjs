@@ -107,7 +107,21 @@ module.exports=async function(frame,out,theme){
   }
   results.push({case:'Lucidchart refresh, BJT polarity, plug valve, MySQL, AppSync and distinct Alexa service/skill identities with registered renderers and unchanged neighbors',file,theme,result:'PASS'});
   const existing=observed.find(c=>c.value==='Owned existing history');assert.ok(existing?.style.includes('fontSize=15;'),'already correct history header remains styled');
-  if(file==='extensions.min.js')await frame.page().screenshot({path:path.join(out,theme+'-lucid-message-styles.png')});
+  if(file==='extensions.min.js'){
+   // Narrow layouts can initially scroll the imported cells off screen. Fit
+   // before recording visual evidence, without changing the style assertions.
+   await frame.evaluate(()=>ownedUi.actions.get('fitWindow').funct());
+   const visible=await frame.evaluate(()=>{
+    const graph=ownedEditor.graph;
+    return ['IoT_AlexaVoiceServiceAWS19','IoT_AlexaSkillAWS19'].map(kind=>{
+     const cell=Object.values(graph.model.cells).find(c=>(c.style||'').includes('lucidId=owned-map-'+kind+';'));
+     const box=graph.view.getState(cell).shape.node.getBoundingClientRect();
+     return box.width>0&&box.height>0&&box.left>=0&&box.top>=0&&box.right<=innerWidth&&box.bottom<=innerHeight;
+    });
+   });
+   assert.deepEqual(visible,[true,true],'both distinct Alexa symbols must be on screen for the screenshot');
+   await frame.page().screenshot({path:path.join(out,theme+'-lucid-message-styles.png')});
+  }
   results.push({case:'actual Lucidchart conversion/render keeps independent EI message/history font size/color/emphasis',file,theme,result:'PASS'});
  }
  return results;
