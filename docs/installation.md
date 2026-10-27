@@ -146,6 +146,8 @@ AIDE_LOCAL_ROOT=/absolute/path/to/projects
 
 ## 6. 登录与连接模型
 
+Windows 启动器在恢复配置前，会用当前用户 SID 通过 .NET 直接写入 `.aide-data` 的私有 DACL，阻断继承并仅授予该用户完全控制；不通过 `Set-Acl` 解析域账号名，不修改 owner/group。已有目录也会重新保护，避免首次保护失败后重试跳过，或保留虽然已阻断继承但仍允许其他账号的 ACL；保护失败则停止恢复配置。Windows 原生 ACL 与断域环境可用 `python scripts/test_windows_launcher_acl.py --pwsh powershell.exe --require-native` 复测，Linux/PowerShell 7 的流程替身测试不代替该验收。
+
 Windows 启动器在健康检查通过后，若系统未配置默认浏览器，只警告并保留已就绪的服务；可手动打开终端输出的地址，或设置 `AIDE_OPEN_BROWSER=0` 跳过自动打开。目录 helper 停止时，已退出的旧进程删除 PID 文件属于正常完成；升级先使用镜像内新提取且经 SHA-256 校验的 helper 停止旧进程，仍存活的进程或其他停止错误会阻止替换。
 
 macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 `https://localhost:8097`，在本机终端运行 `docker compose exec -T aide cat /data/auth/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
