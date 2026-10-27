@@ -71,11 +71,14 @@
     "无常驻服务，原用户未跟踪文件保留；只push分支，不合并main/发行/部署，合理issue保持open。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "164": "https://github.com/skyelan1999/aide/issues/164#issuecomment-6431534253"
+    },
+    "verifiedRemoteCommit": "2932c25341d40619c0d14572ff0a74b22928c632"
   },
   "sourceSHA256": {
     "docs/architecture/ssh-storage.md": "b4d67966235ae5e4e5640d2b524692f00c3249f8c606c140191b6b3f4067381d",

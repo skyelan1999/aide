@@ -140,16 +140,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第40轮#164修复与最终验证完成，等待push评论；下一原清单项167已读最新正文与Dialogs.populateTemplate，尚未确认实际bundle入口或新增回归。165关闭、166已合并PR，均不在清单。",
+  "handoff": "第40轮#164已push并评论，累计97项分支覆盖，原272项剩187。第41轮#167最新正文/Dialogs.js及app.min.js等价helper已找到，均new obj.constructor且typeof null递归；app.min局部Aa(ca,da)未做null检查。尚未新增回归或修改，需模拟配置/请求而不调用真实模型，并验证模板setup异常有可见错误。165关闭、166是已合并PR均不在清单。Go缓存已清理，仅本任务可再生缓存，日志和用户文件保留。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "207ae52e88dde795c0f6fb3ddc6db96440e09f5a",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第39轮#163已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第40轮#164已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -201,13 +201,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 40,
+      "cycle": 41,
       "status": "in_progress",
       "candidates": [
-        164
+        167
       ],
-      "phase": "verified-awaiting-push-and-comment",
-      "observed": "conn.recv路由ID已checked；ReadDir与RealPath的NAME count/string仍未检查，需按真实可达报文复现，保留#71 visitor/cancel扩展。"
+      "phase": "latest-body-source-and-shipped-minified-null-copier-read-awaiting-reproduction",
+      "observed": "Dialogs.js populateTemplate及app.min.js局部Aa=function(ca,da){var na=new ca.constructor...typeof R==object?Aa(R,da)...}同样缺null处理；自定义aiConfigs可选路径，网络setup错误展示及实际UI入口待验证。"
     }
   },
   "orderedReview": {
