@@ -99,6 +99,27 @@ function Expand-AidePrebuiltImage([string]$Archive, [string]$Destination) {
         throw 'Prebuilt image member was not found.'
     } finally { if ($null -ne $gzip) { $gzip.Dispose() };if ($null -ne $inputFile) { $inputFile.Dispose() } }
 }
+function Get-AideDockerImageInfo([string]$Docker, [string]$Reference) {
+    # PS5.1 can drop quotes inside a Go-template argument passed to native
+    # Docker. Parse one JSON object; label keys stay inside PowerShell instead.
+    $result=Invoke-Native $Docker @('image','inspect',$Reference,'--format','{{json .}}') -Capture
+    if ($result.Code -ne 0) { return [pscustomobject]@{Code=$result.Code;Image=$null} }
+    try {
+        $text=$result.Text.Trim()
+        if (-not $text.StartsWith('{') -or -not $text.EndsWith('}')) { throw 'Expected object' }
+        $metadata=ConvertFrom-Json -InputObject $text -ErrorAction Stop
+        return [pscustomobject]@{Code=0;Image=$metadata}
+    } catch { return [pscustomobject]@{Code=1;Image=$null} }
+}
+function Get-AideDockerImageIdentity([string]$Docker, [string]$Reference) {
+    $result=Get-AideDockerImageInfo $Docker $Reference
+    if ($result.Code -ne 0) { return [pscustomobject]@{Code=1;Text=''} }
+    $m=$result.Image
+    if ($m.Id -isnot [string] -or $m.Os -isnot [string] -or $m.Architecture -isnot [string]) { return [pscustomobject]@{Code=1;Text=''} }
+    $source=$m.Config.Labels.'aide.srcsha';$cad=$m.Config.Labels.'aide.cad-runtime'
+    if (($null -ne $source -and $source -isnot [string]) -or ($null -ne $cad -and $cad -isnot [string])) { return [pscustomobject]@{Code=1;Text=''} }
+    return [pscustomobject]@{Code=0;Text=($m.Id+'|'+$m.Os+'/'+$m.Architecture+'|'+$source+'|'+$cad)}
+}
 function Confirm-AidePrebuiltIdentity($Metadata, [string]$Platform, [string]$Source) {
     if ($Metadata.Code -ne 0) { throw 'Imported runtime identity unavailable; activation refused.' }
     $parts=$Metadata.Text -split '\|'
@@ -122,8 +143,7 @@ function Import-AidePrebuiltImage([string]$Root, [string]$Docker, [string]$Targe
     if ($image -cnotmatch '^sha256:[a-f0-9]{64}$' -or $source -cnotmatch '^[a-f0-9]{64}$' -or $digest -cnotmatch '^[a-f0-9]{64}$') { throw 'Invalid prebuilt manifest identity.' }
     if ($url -cnotmatch '^https://github\.com/skyelan1999/aide/releases/download/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+\.tar\.gz$' -or $fields[5] -ne 'bundle') { throw 'Invalid prebuilt archive URL/type.' }
     if ($Target -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._/:@-]*$') { throw 'Invalid prebuilt target image.' }
-    $format='{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}|{{index .Config.Labels "aide.cad-runtime"}}'
-    $identity=Invoke-Native $Docker @('image','inspect',$image,'--format',$format) -Capture
+    $identity=Get-AideDockerImageIdentity $Docker $image
     $loaded=$null
     if ($identity.Code -ne 0) {
         $cache=Join-Path $Root 'docker-images'; New-Item -ItemType Directory -Force $cache | Out-Null
@@ -145,7 +165,7 @@ function Import-AidePrebuiltImage([string]$Root, [string]$Docker, [string]$Targe
         } finally { Remove-Item -LiteralPath $temporary -Recurse -Force }
     }
     if ($null -ne $loaded) {
-        $identity=Invoke-Native $Docker @('image','inspect',$image,'--format',$format) -Capture
+        $identity=Get-AideDockerImageIdentity $Docker $image
         if ($identity.Code -ne 0) {
             # A locator is trusted only when emitted by this successful load
             # of the SHA256-verified archive. Never scan unrelated local tags.
@@ -153,7 +173,7 @@ function Import-AidePrebuiltImage([string]$Root, [string]$Docker, [string]$Targe
                 if ($_ -cmatch '^Loaded image(?: ID)?: ([A-Za-z0-9][A-Za-z0-9._:/@-]*)\s*$') { $Matches[1] }
             } | Sort-Object -Unique)
             if ($references.Count -ne 1) { throw 'Cannot uniquely resolve this verified prebuilt import; activation refused.' }
-            $identity=Invoke-Native $Docker @('image','inspect',$references[0],'--format',$format) -Capture
+            $identity=Get-AideDockerImageIdentity $Docker $references[0]
         }
     }
     # Docker Desktop/containerd and classic engines can expose different image
@@ -173,8 +193,8 @@ function Test-AideLocalRuntime([string]$Docker, [string]$Target) {
     $platform = Invoke-Native $Docker @('info','--format','{{.OSType}}/{{.Architecture}}') -Capture
     if ($platform.Code -ne 0) { return $false }
     $native = $platform.Text -replace '/aarch64$', '/arm64' -replace '/x86_64$', '/amd64'
-    $metadata = Invoke-Native $Docker @('image','inspect',$Target,'--format','{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}') -Capture
+    $metadata = Get-AideDockerImageIdentity $Docker $Target
     if ($metadata.Code -ne 0) { return $false }
     $parts = $metadata.Text -split '\|'
-    return ($parts.Count -eq 3 -and $parts[0] -cmatch '^sha256:[a-f0-9]{64}$' -and $parts[1] -ceq $native -and $parts[2] -cmatch '^[a-f0-9]{64}$')
+    return ($parts.Count -eq 4 -and $parts[0] -cmatch '^sha256:[a-f0-9]{64}$' -and $parts[1] -ceq $native -and $parts[2] -cmatch '^[a-f0-9]{64}$')
 }

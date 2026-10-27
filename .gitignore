@@ -3,6 +3,7 @@
 .aide-data/
 .DS_Store
 bin/
+/aide-launcher.exe
 test-results/
 tmp/
 *.log

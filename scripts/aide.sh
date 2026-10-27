@@ -8,8 +8,9 @@ MODE="${1:-start}"
 source_sha() {
   (
     find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
+    if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
+    for extra in scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -449,7 +450,10 @@ case "$MODE" in
     STAGING="$(mktemp -d "$PROJECT_DIR/.agent-state/bundle.XXXXXX")"
     trap 'rm -rf "$STAGING"; rm -f "$ARCHIVE.partial"' EXIT
     BUNDLE="$STAGING/aide-offline"
+    WINDOWS_LAUNCHER="$(bash scripts/windows-launcher-asset.sh "${PLATFORM#linux/}" "$IMG")"
     mkdir -p "$BUNDLE/scripts" "$BUNDLE/docker-images" "$BUNDLE/workspace" "$BUNDLE/context"
+    cp "$WINDOWS_LAUNCHER" "$BUNDLE/aide-launcher.exe"
+    cp scripts/windows-launcher-asset.sh "$BUNDLE/scripts/"
     cp start.command start.sh start.bat start.ps1 stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
     cp scripts/aide-maintenance.sh scripts/aide-maintenance.ps1 "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/watch-port.ps1 scripts/update-agent.sh scripts/update-agent.ps1 scripts/message-lan-control.sh scripts/message-lan-control.ps1 "$BUNDLE/scripts/"

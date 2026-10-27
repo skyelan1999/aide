@@ -208,3 +208,11 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 ![启动后的实际工作台](images/current-20261017/01-workbench.jpg)
 
 [完整原图、环境与边界](ui-evidence.md)。
+
+### Windows 原生启动器预览
+
+可选的[原生 Windows 启动器](../native/windows-launcher/README.md)不需要宿主 PowerShell/Python。使用
+`python scripts/build-windows-launcher.py --image <本地Linux镜像>` 构建后，直接运行
+`aide-launcher.exe`，或设置 `AIDE_WINDOWS_LAUNCHER_MODE=native` 再使用 BAT 入口。
+默认 BAT 入口保留旧数据迁移、后台端口监控和 A/B 更新代理；这些能力尚未在原生路径提供。
+保留现有 `.env`、`.aide-data` 和工作区；原生启动报错时不会静默切换到另一条启动路径。

@@ -142,3 +142,5 @@ Windows 预构建导入接受 Docker 对受控清单固定引用返回的规范 
 终态先写入`pending-result.json`，API暂不可达时重新获取本机端口及令牌后重发，不再次执行同一激活。若服务器已处理回执或已有较新操作，409后查询当前operation再丢弃过期回执，不以旧结果完成新任务。此流程兼容既有RC12 API，不要求新增服务端协议；后端回归继续验证旧operation不能清除新pending。令牌轮换后轮询使用刷新后的Authorization。
 
 `python scripts/test_windows_update_agent.py --pwsh <PowerShell路径>` 测协议与失败状态；`python scripts/test_windows_update_launcher_process.py --pwsh <PowerShell路径>` 实际启动隔离PowerShell子进程，检查退出码、异常、常驻后代、超时和日志脱敏/轮转/链接。Linux适配器只省略不支持的WindowStyle，进程与包装器真实执行；Docker/HTTP状态测试使用替身，不等于用户Windows/Docker Desktop实机验收。
+
+原生 Windows 启动器目前作为显式可选路径合入；保留默认 BAT/PowerShell 启动、A/B代理、端口监控与旧数据迁移，不把原生启动成功等同于升级能力已移植。直接运行原生 exe 或设置 `AIDE_WINDOWS_LAUNCHER_MODE=native` 时不启动新的兼容后台代理；需要应用内升级和动态端口处理时使用默认兼容入口。

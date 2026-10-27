@@ -202,3 +202,13 @@ The Windows host updater accepts both `-` placeholders and legacy empty optional
 For containerd archive imports, only a unique reference from the verified import receipt can resolve a rewritten local image ID; the platform is checked and the canonical ID is synchronized after success. An exclusive OS file handle provides updater ownership and releases automatically on process exit. An old empty lock directory is recoverable. If an older updater is still running when replacing the scripts, restart Windows before launching the repaired version; never remove locks while activation is in progress.
 
 The [Windows manual-switch task](../tasks/release-manual-switch-20261026.json) separates PowerShell execution with synthetic adapters from native Windows/Docker Desktop acceptance. The former does not establish the latter.
+
+### Windows native launcher preview
+
+The optional [native Windows launcher](../../native/windows-launcher/README.md)
+can run without host PowerShell/Python. Build `aide-launcher.exe` with
+`python scripts/build-windows-launcher.py --image <local-linux-image>`, then run
+it directly or set `AIDE_WINDOWS_LAUNCHER_MODE=native` before using the BAT files.
+The default BAT path retains the existing migration, background port watcher
+and A/B updater; those features are not yet provided by native mode. Existing
+data must be preserved. A native error does not silently switch startup paths.

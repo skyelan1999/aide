@@ -975,6 +975,10 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/js/stencils.min.js"
+      ],
+      [
+        "python3",
+        "scripts/test_native_distribution.py"
       ]
     ],
     "full": [

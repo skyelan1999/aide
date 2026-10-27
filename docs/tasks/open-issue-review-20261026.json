@@ -100,14 +100,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "60轮186–190相邻五项metadata/重复项修复，累计123产品/验收+1测试修正；原272剩163。",
+      "summary": "61轮审查合入464原生启动器，保留默认兼容/更新/监控/迁移并修复native回退/安装归属/源码指纹与分发回归；不重复计数。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "三实现×明暗八目标真实索引/查询/渲染、图片解码、计数2→1与3left控制；含185共22组browser errors[]，183quick、字节证明/同步/docs通过。",
+      "summary": "38portable、24PS导入+真实Docker、既有17/22/8/4PS回归、Go相关race/vet及交叉编译、两nativePE编译与门禁、184quick通过。当前Win32/新目录UI/新镜像/完整Release NOT_RUN。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -167,7 +167,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-057.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-058.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-059.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-060.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-060.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-061.json"
       ]
     },
     "documentation": {
@@ -191,15 +192,15 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "用户明确要求审查并合入464原生方案，191仅metadata暂停无未提交代码；计划保留兼容启动/更新/监控/迁移，修复native回退等阻塞再合入。",
+  "handoff": "61轮464原生审查合入准备完成：明确保留兼容入口，native显式可选；所有可执行检查通过，当前Windows实机仍需测试。将提交真正双parent merge并push专用分支，未合main/Release；下一轮191，原272剩163。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
-    "pushed": true,
+    "commit": null,
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "a314e5ccfcf9bc98fa317456bb36fcde47f46c31"
+    "evidenceCommit": null
   },
   "issue_comments": "60轮186–190均已推送并逐项评论，实际URL见cycle-060.json；合理问题保持open等main。",
   "goal": {
@@ -230,22 +231,18 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 61,
+    "nextCycle": 62,
     "lastCompletedBatch": {
-      "cycle": 60,
+      "cycle": 61,
       "issues": [
-        186,
-        187,
-        188,
-        189,
-        190
+        464
       ],
       "cumulativeFixed": 124,
       "cumulativeProductFixed": 123,
       "toolingFixes": 1,
       "remainingFollowupTargets": 163,
       "remainingAdditionalFollowupTargets": 0,
-      "verification": "PASS8targets×3implementations×themes,22browsergroups errors[],183quick,sync/bytes/docs;fullworkbench NOT_RUN"
+      "verification": "Nativecore mergedwithcompatible resolutions;38portable,24PSimport+realDocker,17startup/22agent/8child/4gate,Go race/vet/crossbuild,bothnativePE targets,184quick PASS;currentWin32NR"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
@@ -259,15 +256,12 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 61,
+      "cycle": 62,
       "status": "in_progress",
       "candidates": [
-        464
+        191
       ],
-      "phase": "review-native-branch-prepare-compatible-integration",
-      "sourceBranch": "codex/windows-native-launcher-20261027",
-      "sourceCommit": "268bde94cd71a2fe420f36f4194dc6a76fa3b2c9",
-      "pausedIssue": 191
+      "phase": "resume-independent-badge-state-runtime-review-after-native-delivery"
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -289,7 +283,7 @@
         "documented-blocker-with-no-new-action"
       ],
       "preempt": "Only explicit user steering interrupts an in-progress repair; preserve paused changes.",
-      "explicitIssue": 464,
+      "explicitIssue": null,
       "nextOwnerCandidates": [],
       "knownBlockedOwnerIssues": [
         340,
@@ -308,11 +302,11 @@
       ],
       "lastExplicitIssue": {
         "number": 464,
-        "status": "fixed-on-branch",
-        "evidence": "cycle-051.json"
+        "status": "native-plan-reviewed-integration-awaiting-push",
+        "evidence": "cycle-061.json"
       },
       "lastRefresh": "2026-10-27T09:22:35.725221+00:00",
-      "lastExplicitRequest": "你看下464的新回复，看看是否合理，合理的话把方案合并进来"
+      "lastExplicitRequest": "464最新原生方案已审查，保留兼容能力后合入当前分支；191随后继续。"
     },
     "pausedWork": [
       {
@@ -353,14 +347,15 @@
     "deferredOwnerReports": [
       {
         "issue": 464,
-        "reason": "用户要求先做别的，回头实机测试后补log；当前followup代码仅完成已有验证与push检查点，再转369。",
+        "reason": "用户明确要求审查并合入最新原生方案；本轮代码与验证完成，后续当前Win32改动仍需实机验收。",
         "request": "你先做别的吧，我回头测好了吧log贴进去",
         "recordedAt": "2026-10-27T07:39:44.345924+00:00",
-        "latestReviewedComment": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6436051112",
+        "latestReviewedComment": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6437631048",
         "resumeTrigger": "new owner test log or explicit steering",
-        "branchFollowupEvidence": "cycle-054.json",
+        "branchFollowupEvidence": "cycle-061.json",
         "latestObservedComment": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6437631048",
-        "latestObservedClassification": "Separate native-launcher branch delivery reported in comments; no new failure log. Read-only Chinese/marker classification to avoid credential output; no other branch code merged here."
+        "latestObservedClassification": "Separate native-launcher branch delivery reported in comments; no new failure log. Read-only Chinese/marker classification to avoid credential output; no other branch code merged here.",
+        "status": "superseded-by-explicit-reviewed-integration"
       }
     ]
   },

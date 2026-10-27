@@ -43,17 +43,20 @@ function Invoke-Native {
  if($Arguments[0] -eq 'info'){$text='linux/x86_64'}
  elseif($Arguments[0] -eq 'image' -and $Arguments[1] -eq 'inspect'){
   $reference=$Arguments[2];$format=$Arguments[-1]
+  if($format -like '*index .Config.Labels*'){return [pscustomobject]@{Code=64;Text='fixture PS5.1 quoted Go-template failure'}}
   if($reference -eq 'aide:local'){$text='sha256:'+('d'*64)}
   elseif($reference -eq 'EXPECTED' -and ($env:FIXTURE_CASE -eq 'installed' -or $script:loaded)){
    if($env:FIXTURE_CASE -in @('load-reference','load-id-reference','ambiguous','empty-output')){$code=1}else{$text='CANONICAL'}
   }elseif($reference -in @('aide:from-this-load','CANONICAL') -and $script:loaded){$text='CANONICAL'}
   else{$code=1}
-  if($code -eq 0 -and $format -like '*|*'){
+  if($code -eq 0 -and $format -eq '{{json .}}'){
    $platform=if($env:FIXTURE_CASE -in @('wrong-platform','local-wrong-platform')){'linux/arm64'}else{'linux/amd64'}
    $src=if($env:FIXTURE_CASE -eq 'wrong-source'){'e'*64}elseif($env:FIXTURE_CASE -eq 'local-invalid-source'){'unknown'}else{'SOURCE'}
    $cad=if($env:FIXTURE_CASE -eq 'wrong-cad'){'missing'}elseif($env:FIXTURE_CASE -like 'local-*'){''}else{'8.0.1.1.0'}
-   $text+='|'+$platform+'|'+$src
-   if($format -like '*cad-runtime*'){$text+='|'+$cad}
+   if($env:FIXTURE_CASE -eq 'local-typed-source'){$src=@('SOURCE')}
+   $parts=$platform.Split('/')
+   $text=@{Id=$text;Os=$parts[0];Architecture=$parts[1];Config=@{Labels=@{'aide.srcsha'=$src;'aide.cad-runtime'=$cad}}}|ConvertTo-Json -Depth 4 -Compress
+   if($env:FIXTURE_CASE -eq 'local-malformed-json'){$text='{private-fixture-sentinel'}
   }
  }
  elseif($Arguments[0] -eq 'image' -and $Arguments[1] -eq 'load'){
@@ -122,7 +125,7 @@ def main():
     if not args.pwsh:
         parser.error('PowerShell required; pass --pwsh')
     cases = args.selected or ('installed', 'canonical-load', 'load-reference', 'load-id-reference', 'pax-path', 'gnu-path', 'gnu-number', 'tar-denied',
-                              'local-lean', 'local-invalid-source', 'local-wrong-platform',
+                              'local-lean', 'local-invalid-source', 'local-wrong-platform', 'local-typed-source', 'local-malformed-json',
                               'wrong-platform', 'wrong-source', 'wrong-cad', 'ambiguous', 'empty-output',
                               'bad-checksum', 'missing-member', 'symlink-member', 'truncated-member', 'bad-header', 'large-pax')
     for case in cases:
@@ -143,6 +146,7 @@ def main():
                                     env=env, capture_output=True, text=True, encoding='utf-8-sig', timeout=25)
             assert result.returncode == 0, (case, result.stdout, result.stderr)
             data = json.loads(result.stdout)
+            assert 'private-fixture-sentinel' not in result.stdout + result.stderr
             success = case in ('installed', 'canonical-load', 'load-reference', 'load-id-reference', 'pax-path', 'gnu-path', 'gnu-number', 'tar-denied', 'local-lean')
             assert data['failed'] != success, (case, data)
             calls = data['calls']

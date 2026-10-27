@@ -406,8 +406,8 @@ if ($sourceBuild) {
     try {
         Test-AideDiskBudget $PSScriptRoot -Build
 if ($sourceBuild -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
-    $localBase = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:dependencies-v2','--format','{{index .Config.Labels "aide.local-base"}}') -Capture
-    if ($localBase.Code -eq 0 -and $localBase.Text -eq 'v2') {
+    $localBase = Get-AideDockerImageInfo $dockerExe 'aide:dependencies-v2'
+    if ($localBase.Code -eq 0 -and $localBase.Image.Config.Labels.'aide.local-base' -eq 'v2') {
         $env:AIDE_DOCKERFILE = 'Dockerfile.local'
         $env:AIDE_BUILD_NETWORK = 'none'
         $env:AIDE_DEPENDENCY_IMAGE = 'aide:dependencies-v2'

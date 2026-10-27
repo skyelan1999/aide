@@ -3,12 +3,20 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 
 class SourceFingerprintTests(unittest.TestCase):
+    def test_native_manifest_under_ascii_locale(self):
+        env = dict(os.environ, PYTHONUTF8='0', PYTHONCOERCECLOCALE='0', LC_ALL='C')
+        code = "import importlib.util; s=importlib.util.spec_from_file_location('native_build', 'scripts/build-windows-launcher.py'); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print(len(m.source_manifest()['files']))"
+        result = subprocess.run([sys.executable, '-c', code], cwd=ROOT, env=env, text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertGreater(int(result.stdout), 10)
+
     def test_caller_collation_does_not_change_source_identity(self):
         # Require a real differing host collation, rather than a locale name
         # silently falling back to C on machines without locale data.

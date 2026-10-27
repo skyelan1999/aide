@@ -7,6 +7,7 @@ calling workflow. Heavy Docker work happens only through this explicit CLI.
 import argparse
 import hashlib
 import json
+import struct
 import os
 import platform
 from pathlib import Path, PurePosixPath
@@ -115,7 +116,21 @@ def audit_image_layers(archive, allow_development_tools=False):
     return {'status': 'pass', 'layers': len(seen), 'entries': entries, 'pluginPayloads': 0}
 
 
+def validate_windows_launcher_architecture(data, arch):
+    if arch not in ('amd64', 'arm64'):
+        raise ValueError('Unsupported Windows architecture')
+    if len(data) < 64 or data[:2] != b'MZ':
+        raise ValueError('Malformed Windows launcher PE')
+    offset = struct.unpack_from('<I', data, 0x3c)[0]
+    if offset < 64 or offset > len(data) - 24 or data[offset:offset + 4] != b'PE\0\0':
+        raise ValueError('Malformed Windows launcher PE')
+    expected = 0x8664 if arch == 'amd64' else 0xaa64
+    if struct.unpack_from('<H', data, offset + 4)[0] != expected:
+        raise ValueError('Windows launcher PE architecture does not match package')
+
+
 FULL_PACKAGE_STARTUP_FILES = (
+    'aide-launcher.exe', 'scripts/windows-launcher-asset.sh',
     'start.command', 'start.sh', 'start.ps1', 'start.bat', 'compose.yaml', '.env.example',
     'scripts/aide.sh', 'scripts/launcher-data.sh', 'scripts/launcher-data.ps1',
     'scripts/launcher-data.py', 'scripts/resource-guard.sh', 'scripts/resource-guard.ps1',
@@ -136,6 +151,10 @@ def validate_full_package(path, tag, arch, image_id):
         for required in FULL_PACKAGE_STARTUP_FILES:
             if prefix + '/' + required not in names:
                 raise ValueError('Missing full-package startup file: ' + required)
+        binary = prefix + '/aide-launcher.exe'
+        if bundle.getinfo(binary).file_size > 16 * 1024 * 1024:
+            raise ValueError('Windows launcher exceeds package size limit')
+        validate_windows_launcher_architecture(bundle.read(binary), arch)
         for name in names:
             parts = PurePosixPath(name).parts
             if not parts or parts[0] != prefix or '..' in parts or name.startswith('/'):

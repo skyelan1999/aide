@@ -53,6 +53,16 @@ func compose(ctx context.Context, docker string, args ...string) ([]byte, error)
 }
 
 func refreshForwarders(ctx context.Context, root, docker string) error {
+	if runtime.GOOS == "windows" && os.Getenv("AIDE_WINDOWS_LAUNCHER_MODE") == "native" {
+		launcher := filepath.Join(root, "aide-launcher.exe")
+		if info, err := os.Stat(launcher); err != nil || !info.Mode().IsRegular() {
+			return errors.New("native Windows launcher missing; restore aide-launcher.exe")
+		}
+		if _, err := command(ctx, launcher, "refresh-helpers", "--root", root, "--no-browser"); err != nil {
+			return fmt.Errorf("Aide restarted, but native forwarding refresh failed: %w", err)
+		}
+		return nil
+	}
 	suffix := ".sh"
 	if runtime.GOOS == "windows" {
 		suffix = ".ps1"
@@ -240,12 +250,31 @@ func acquireHelper(dir string) (func(), error) {
 	return nil, errors.New("cannot acquire directory helper lock")
 }
 
+func nativeWindowsLauncher() string {
+	executable, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	launcher := filepath.Join(filepath.Dir(executable), "..", "..", "aide-launcher.exe")
+	if info, err := os.Stat(launcher); err != nil || !info.Mode().IsRegular() {
+		return ""
+	}
+	return launcher
+}
+
 func choose(ctx context.Context) (string, error) {
 	switch runtime.GOOS {
 	case "darwin":
 		out, err := command(ctx, "/usr/bin/osascript", "-e", `POSIX path of (choose folder with prompt "选择允许 Aide 访问的目录")`)
 		return strings.TrimRight(strings.TrimSpace(string(out)), "/"), err
 	case "windows":
+		if launcher := nativeWindowsLauncher(); launcher != "" {
+			out, err := command(ctx, launcher, "choose-directory")
+			return strings.TrimSpace(string(out)), err
+		}
+		if os.Getenv("AIDE_WINDOWS_LAUNCHER_MODE") == "native" {
+			return "", errors.New("native Windows launcher missing; restore aide-launcher.exe")
+		}
 		out, err := command(ctx, "powershell.exe", "-NoProfile", "-STA", "-Command", `[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false);Add-Type -AssemblyName System.Windows.Forms;$d=New-Object System.Windows.Forms.FolderBrowserDialog;$d.Description='Choose a directory for Aide';if($d.ShowDialog() -eq 'OK'){[Console]::Write($d.SelectedPath)}else{exit 2}`)
 		return strings.TrimSpace(string(out)), err
 	default:
@@ -258,6 +287,13 @@ func confirmApply(ctx context.Context) error {
 		_, err := command(ctx, "/usr/bin/osascript", "-e", `display dialog "Aide 将按已保存的目录权限重新创建应用容器。请先保存工作，运行中的会话和手机连接将中断。" buttons {"取消", "应用并重启"} default button "取消" cancel button "取消"`)
 		return err
 	case "windows":
+		if launcher := nativeWindowsLauncher(); launcher != "" {
+			_, err := command(ctx, launcher, "confirm-directory-restart")
+			return err
+		}
+		if os.Getenv("AIDE_WINDOWS_LAUNCHER_MODE") == "native" {
+			return errors.New("native Windows launcher missing; restore aide-launcher.exe")
+		}
 		_, err := command(ctx, "powershell.exe", "-NoProfile", "-STA", "-Command", `Add-Type -AssemblyName System.Windows.Forms;if([System.Windows.Forms.MessageBox]::Show('Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.','Aide directories','OKCancel','Warning') -ne 'OK'){exit 2}`)
 		return err
 	default:
