@@ -7,7 +7,7 @@ MODE="${1:-start}"
 case "$MODE" in start|stop) ;; *) echo 'Usage: message-lan-control.sh {start|stop}' >&2; exit 2;; esac
 DIR="$ROOT/.aide-data/storage/data/messages/lan-bridge"
 NATIVE="$ROOT/.aide-data/message-lan"
-case "$(uname -s)" in Darwin) target_os=darwin;; Linux) target_os=linux;; *) echo 'Use message-lan-control.ps1 on Windows.' >&2; exit 2;; esac
+case "$(uname -s)" in Darwin) target_os=darwin;; Linux) target_os=linux;; *) echo 'Use aide-launcher.exe on Windows.' >&2; exit 2;; esac
 case "$(uname -m)" in arm64|aarch64) target_arch=arm64;; x86_64|amd64) target_arch=amd64;; *) echo 'Unsupported LAN bridge architecture.' >&2; exit 2;; esac
 NAME="aide-message-lan-$target_os-$target_arch"
 BIN="$NATIVE/$NAME"

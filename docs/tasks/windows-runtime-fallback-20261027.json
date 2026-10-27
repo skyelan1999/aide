@@ -1,0 +1,78 @@
+{
+  "id": "windows-runtime-fallback-20261027",
+  "request": "解决 start.bat Docker Hub 超时后 Release 镜像身份校验失败",
+  "baseline": "0ed5ab87fa83d608d53e9674396f06f1ad9cd6a3",
+  "initial_status": "?? docs/plugins/docmost-mcp.md\n?? docs/tasks/docmost-connect-20261019.json",
+  "acceptance": [
+    "Windows PowerShell 5.1 and PowerShell 7 validate the same pinned local Release runtime without embedded-quote Docker templates.",
+    "ID, architecture, source and CAD mismatch and malformed metadata remain rejected before activation.",
+    "Verified fallback activates aide:local and an isolated network-disabled runtime reaches healthy status; existing service is retained.",
+    "PS5.1 native Docker stderr for missing optional helper continues only with no configured mounts; configured/malformed mounts, transport and checksum errors remain fatal.",
+    "Windows source and offline installs share resolved Compose port checks, skip occupied ports, persist the selection, and reuse the current project port on repeat launch.",
+    "Current slim runtime is accepted locally with a native platform and source digest; pinned legacy Release CAD checks remain strict. User model entries are retained."
+  ],
+  "scope": [
+    "start.ps1",
+    "scripts/prebuilt-image.ps1",
+    "scripts/test_windows_runtime_identity.ps1",
+    "docs/installation.md",
+    "docs/tasks/windows-runtime-fallback-20261027.json",
+    "scripts/local-mounts-control.ps1",
+    "scripts/test_windows_directory_fallback.ps1",
+    "scripts/test_windows_port_selection.ps1",
+    "scripts/test_windows_port_selection.ps1"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/464"
+      ],
+      "summary": "Fix the latest startup error reported in GitHub issue #464; preserve user data and the existing healthy instance."
+    },
+    "design": {
+      "status": "pass",
+      "evidence": [
+        "scripts/prebuilt-image.ps1",
+        "start.ps1"
+      ],
+      "summary": "Read JSON metadata instead of quoted Go label-key templates; preserve strict pinned Release checks. Apply the same native compatibility fix to local dependency label detection. Port conflict follow-up: distinct offline/source working directories keep distinct projects and data; share port selection using resolved Compose JSON precedence and exclusive host socket probing. Accept current Dockerfile slim profile for local reuse only."
+    },
+    "implementation": {
+      "status": "pass",
+      "evidence": [
+        "scripts/test_windows_runtime_identity.ps1"
+      ],
+      "summary": "Windows image identity and dependency-label queries now use JSON; added acceptance and rejection fixtures with optional native Docker checks. Follow-up: directory helper Docker invocations now capture raw stderr under Continue and branch on exit code; only explicit missing-helper errors allow the existing no-mount fallback. Container creation uses --pull never."
+    },
+    "verification": {
+      "status": "pass",
+      "evidence": [
+        "docs/tasks/windows-native-launcher-20261027.json"
+      ],
+      "summary": "Before fix: same pinned amd64 Release validates on PS 7.6.5 but native inspect exits 64 on PS 5.1.26100.9711. After fix: both native versions validate aide:local and pinned c9ed3977bcc7; both run identity fixtures successfully. PS5.1 actual Import-AidePrebuiltImage activated aide:local without download/build. Network-none, no-user-mount temporary container reached healthz integrity=ok/service=aide/status=ok and was removed. git diff --check passed. DryRun completed in sandbox (engine unavailable there); complete interactive start.bat, helpers and browser acceptance NOT_RUN. Existing aide-offline-aide-1 remains healthy. Follow-up helper fix: PS5.1 and PS7 each passed six native-stderr fixture cases (missing/empty mounts accepted; configured/malformed mounts, transport failure and missing checksums rejected) and four real Docker cases against aide:local in disposable directories. Complete isolated source-mode start.ps1 on PS5.1, independent Compose project aide464-592fa4e914, random port 50444, disposable data/mounts and browser disabled exited 0 with health check passed. Optional LAN bridge readiness still warned. Test Compose project was removed and test LAN helper stopped; existing offline instance remains healthy. Existing directory precedence and watcher regressions passed 8 cases on PS5.1 after test-only TEMP/PSExecutionPolicyPreference setup. Initial sandbox TEMP and execution-policy attempts failed before tests; no system policy changed. Go-dependent previous recovery suite NOT_RUN (host Go unavailable). Final follow-up: real source startup now selects/saves 8098 while separate offline installation keeps 8097. Old pinned fallback restarted with model-count incompatibility; user models preserved, current local slim image validated and activated with old image rollback tag retained. PS5.1 actual startup health/LAN passed after replacement. Five shared-port selection fixtures passed under both PS5.1 and PS7, covering busy/free/owned/exhausted/invalid; isolated full collision startup passed. User then chose native C++ replacement; see windows-native-launcher-20261027 task."
+    },
+    "documentation": {
+      "status": "pass",
+      "evidence": [
+        "docs/installation.md"
+      ],
+      "summary": "Documented PS5.1 JSON metadata compatibility, strict checks, native regression command and remaining Docker Hub network requirement. Added missing optional helper behavior, preserved configured-mount protection and real Docker fallback regression commands."
+    },
+    "cleanup": {
+      "status": "pass",
+      "evidence": [
+        "git status --short"
+      ],
+      "summary": "Temporary smoke container removed; existing service and unrelated untracked docmost files preserved. Reusable regression belongs in scripts; local diagnostics are ignored under .agent-state."
+    },
+    "release": {
+      "status": "not_run",
+      "evidence": [],
+      "summary": "Local fix only; no commit/push/merge/Release. Issue #464 stays open for optional LAN readiness and default browser/manual interaction acceptance."
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only scoped code changes. aide:local was absent and now points to verified Release c9ed3977bcc7; existing slot-a and running offline container were not replaced. Do not roll back user data.",
+  "handoff": "Windows startup errors fixed locally. Current source instance healthy at 8098 using modern slim aide:local, offline instance healthy at 8097; all model settings preserved. User chose a Docker-built C++ exe, implemented and tested in windows-native-launcher-20261027. No publish/merge. Legacy image preserved for rollback; fixed old Release manifest remains historical and not silently promoted. User subsequently requested removing all PS1 sources; intermediate scripts and their obsolete tests were removed after the native replacement passed. This record preserves earlier diagnosis, not a promise that removed paths remain current. Branch handoff authorized under codex/windows-native-launcher-20261027; final pushed SHA and remaining acceptance points are recorded in issue #464. No main merge or product Release."
+}

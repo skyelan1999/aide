@@ -150,4 +150,4 @@ WebAuthn 要求 **Secure Context**（`https://` 或 `http://localhost`）。0.1.
 - `internal/server/webauthn.go`：按请求校验 localhost origin，并将 challenge 与发起端口绑定；finish 阶段仅接受 challenge 原 origin。
 - `internal/server/tls_test.go`：证书生成/SAN/权限、TLS 套件白名单、308 跳转保留 `r.Host`+URI、Peek 分类（0x16 vs 明文）、certs 迁移、localhost 不加 HSTS。
 - `Dockerfile`：`HEALTHCHECK` 改 `curl -fsSk https://127.0.0.1:8080/healthz`（单端口后明文 `/healthz` 会是 308，必须打 https）。
-- `scripts/aide.sh` / `start.ps1`：健康检查与打开 URL 改 https。
+- `scripts/aide.sh` / `aide-launcher.exe`：健康检查与打开 URL 改 https。

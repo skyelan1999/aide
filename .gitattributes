@@ -11,3 +11,7 @@ docker/cad/requirements.txt text eol=lf
 
 # The prebuilt runtime index is shared by POSIX and Windows launchers.
 docker/prebuilt-images.tsv text eol=lf
+
+# Keep the pinned upstream JSON header byte-identical across Windows checkouts.
+native/windows-launcher/third_party/json.hpp -text
+native/windows-launcher/third_party/LICENSE.json -text whitespace=-blank-at-eol

@@ -53,11 +53,18 @@ func compose(ctx context.Context, docker string, args ...string) ([]byte, error)
 }
 
 func refreshForwarders(ctx context.Context, root, docker string) error {
-	suffix := ".sh"
 	if runtime.GOOS == "windows" {
-		suffix = ".ps1"
+		launcher := filepath.Join(root, "aide-launcher.exe")
+		if info, err := os.Stat(launcher); err != nil || !info.Mode().IsRegular() {
+			return errors.New("native Windows launcher missing; restore aide-launcher.exe")
+		}
+		cmd := exec.CommandContext(ctx, launcher, "refresh-helpers", "--root", root, "--no-browser")
+		if _, err := cmd.Output(); err != nil {
+			return fmt.Errorf("Aide restarted, but native forwarding refresh failed: %w", err)
+		}
+		return nil
 	}
-	script := filepath.Join(root, "scripts", "message-lan-control"+suffix)
+	script := filepath.Join(root, "scripts", "message-lan-control.sh")
 	if info, err := os.Stat(script); os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -65,13 +72,7 @@ func refreshForwarders(ctx context.Context, root, docker string) error {
 	} else if !info.Mode().IsRegular() {
 		return errors.New("message forwarding controller is not a regular file")
 	}
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		// Fixed PowerShell source; paths and implementation choice are data only.
-		cmd = exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-Command", `$ErrorActionPreference='Stop';$c=if($env:AIDE_LOCAL_MOUNTS_COMPOSE -and $env:AIDE_LOCAL_MOUNTS_COMPOSE -ne 'docker'){@($env:AIDE_LOCAL_MOUNTS_COMPOSE)}else{@($env:AIDE_REFRESH_DOCKER,'compose')}; & $env:AIDE_REFRESH_SCRIPT -Action start -DockerBin $env:AIDE_REFRESH_DOCKER -ComposeCommand $c`)
-	} else {
-		cmd = exec.CommandContext(ctx, "bash", script, "start")
-	}
+	cmd := exec.CommandContext(ctx, "bash", script, "start")
 	cmd.Env = append(os.Environ(), "DOCKER_BIN="+docker, "AIDE_REFRESH_DOCKER="+docker, "AIDE_REFRESH_SCRIPT="+script)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("Aide restarted, but message/mobile forwarding refresh failed; restart the launcher: %w", err)
@@ -240,13 +241,29 @@ func acquireHelper(dir string) (func(), error) {
 	return nil, errors.New("cannot acquire directory helper lock")
 }
 
+func nativeWindowsLauncher() (string, error) {
+	executable, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	launcher := filepath.Join(filepath.Dir(executable), "..", "..", "aide-launcher.exe")
+	if info, err := os.Stat(launcher); err != nil || !info.Mode().IsRegular() {
+		return "", errors.New("native Windows launcher missing; restore aide-launcher.exe")
+	}
+	return launcher, nil
+}
+
 func choose(ctx context.Context) (string, error) {
 	switch runtime.GOOS {
 	case "darwin":
 		out, err := command(ctx, "/usr/bin/osascript", "-e", `POSIX path of (choose folder with prompt "选择允许 Aide 访问的目录")`)
 		return strings.TrimRight(strings.TrimSpace(string(out)), "/"), err
 	case "windows":
-		out, err := command(ctx, "powershell.exe", "-NoProfile", "-STA", "-Command", `[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false);Add-Type -AssemblyName System.Windows.Forms;$d=New-Object System.Windows.Forms.FolderBrowserDialog;$d.Description='Choose a directory for Aide';if($d.ShowDialog() -eq 'OK'){[Console]::Write($d.SelectedPath)}else{exit 2}`)
+		launcher, err := nativeWindowsLauncher()
+		if err != nil {
+			return "", err
+		}
+		out, err := command(ctx, launcher, "choose-directory")
 		return strings.TrimSpace(string(out)), err
 	default:
 		return "", errors.New("native directory selection requires Windows or macOS; enter an absolute directory instead")
@@ -258,7 +275,11 @@ func confirmApply(ctx context.Context) error {
 		_, err := command(ctx, "/usr/bin/osascript", "-e", `display dialog "Aide 将按已保存的目录权限重新创建应用容器。请先保存工作，运行中的会话和手机连接将中断。" buttons {"取消", "应用并重启"} default button "取消" cancel button "取消"`)
 		return err
 	case "windows":
-		_, err := command(ctx, "powershell.exe", "-NoProfile", "-STA", "-Command", `Add-Type -AssemblyName System.Windows.Forms;if([System.Windows.Forms.MessageBox]::Show('Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.','Aide directories','OKCancel','Warning') -ne 'OK'){exit 2}`)
+		launcher, err := nativeWindowsLauncher()
+		if err != nil {
+			return err
+		}
+		_, err = command(ctx, launcher, "confirm-directory-restart")
 		return err
 	default:
 		return errors.New("use the launcher to apply directory changes on this operating system")

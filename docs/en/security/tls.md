@@ -138,4 +138,4 @@ Offline / air-gapped environments are unaffected: the certificate is generated l
 - `internal/server/webauthn.go`: validates localhost origins per request and binds each challenge to its initiating origin; finish accepts only that origin.
 - `internal/server/tls_test.go`: cert generation/SAN/permissions, TLS cipher whitelist, 308 redirect preserving `r.Host`+URI, Peek classification (0x16 vs plaintext), certs migration, HSTS off on localhost.
 - `Dockerfile`: `HEALTHCHECK` switched to `curl -fsSk https://127.0.0.1:8080/healthz` (after single-port, plaintext `/healthz` returns 308, so the check must hit https).
-- `scripts/aide.sh` / `start.ps1`: health check and opened URL switched to https.
+- `scripts/aide.sh` / `aide-launcher.exe`: health check and opened URL switched to https.

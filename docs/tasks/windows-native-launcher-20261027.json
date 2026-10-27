@@ -1,0 +1,94 @@
+{
+  "id": "windows-native-launcher-20261027",
+  "request": "使用 C 或 C++ 或 Rust 原生 exe 替代 PowerShell Windows 启动器",
+  "baseline": "0ed5ab87fa83d608d53e9674396f06f1ad9cd6a3",
+  "initial_status": "M docs/installation.md\n M scripts/local-mounts-control.ps1\n M scripts/prebuilt-image.ps1\n M start.ps1\n?? docs/plugins/docmost-mcp.md\n?? docs/tasks/docmost-connect-20261019.json\n?? docs/tasks/windows-runtime-fallback-20261027.json\n?? scripts/test_windows_directory_fallback.ps1\n?? scripts/test_windows_port_selection.ps1\n?? scripts/test_windows_runtime_identity.ps1",
+  "acceptance": [
+    "Deliver a runnable C++ Windows exe built entirely with compiler tooling in Docker; normal exe startup does not launch PowerShell or require host Python.",
+    "Preserve installation root, private data, current Compose identity, model settings, validated local runtime, helper checks, health and browser behavior.",
+    "Handle occupied ports and repeat startup; exercise self-contained bootstrap and Unicode paths in isolated real Windows/Docker tests.",
+    "Provide source, fixed toolchain/dependency hashes, build commands, native start/stop/status and explicit unsupported migration/monitor/update-agent boundaries.",
+    "User explicitly requested deleting every repository PS1 file and cleaning unnecessary untracked contents; native start/stop/cache entries have no PowerShell fallback.",
+    "Native open prepares an encoded token link without logging the credential and opens an installed browser when the Windows HTTPS association is missing."
+  ],
+  "scope": [
+    "native/windows-launcher",
+    "scripts/build-windows-launcher.py",
+    "scripts/test_windows_native_launcher.py",
+    "start.bat",
+    "stop.bat",
+    ".gitignore",
+    "docs/installation.md",
+    "docs/tasks/windows-native-launcher-20261027.json",
+    "clean-docker-cache.bat",
+    "all tracked PS1 sources and obsolete PowerShell-only tests",
+    "cmd/aide-local-mounts/main.go",
+    "scripts/windows-launcher-asset.sh",
+    "scripts/test_native_distribution.py",
+    "scripts/package-release-assets.sh",
+    "scripts/aide.sh",
+    "scripts/launcher-data.sh",
+    "scripts/ci/build_candidate.py",
+    "docs/agent/router.json",
+    "current installation and architecture docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "evidence": [
+        "native/windows-launcher/README.md"
+      ],
+      "summary": "User chose the best native C/C++/Rust option and explicitly requested toolchains/dependencies in Docker; selected C++17 direct Win32 with no PowerShell runtime."
+    },
+    "design": {
+      "status": "pass",
+      "evidence": [
+        "native/windows-launcher/main.cpp"
+      ],
+      "summary": "Direct CreateProcessW argument arrays, restricted inherited handle lists, separate captured stdout/stderr, private SID ACL, JSON metadata, existing Compose and container-only atomic data preparation. Native start/stop/status; no new persistent monitor. Background-monitor patch rejected by auto-review and not applied."
+    },
+    "implementation": {
+      "status": "pass",
+      "evidence": [
+        "scripts/build-windows-launcher.py",
+        "scripts/test_windows_native_launcher.py"
+      ],
+      "summary": "Delivered 1230848-byte AMD64 native C++ exe, SHA256 8b04b12a6134d03d18614520cd95f7e35758b61b93504f1553ede836117facb4. start.bat/stop.bat prefer it; legacy scripts remain. Compiler and cache run only in network-disabled Docker with fixed Linux Zig and JSON hashes. Private output files, restricted inherited handles, atomic container data preparation, metadata validation and safe legacy helper PID-race recovery included. Follow-up: removed 12 tracked and 3 newly created PS1 files plus 6 obsolete Python/PowerShell-only tests. Windows BAT entries now require the exe; cache maintenance, directory picker/confirmation and helper refresh have native actions. Build/package paths ship and architecture-check the PE binary, not scripts. Native Go helper source no longer invokes PowerShell."
+    },
+    "verification": {
+      "summary": "Final executable: native Unicode/quote and JSON-redaction/image self-test passed; real Windows/Docker integration passed standalone bootstrap in a Unicode path with no host Python/PowerShell on PATH, occupied random port selection, persistent .env, unchanged container ID on repeat start, health, status and stop; test resources removed. Direct native start and status against actual workspace succeeded at 8098 with directory and LAN helpers ready; 8097 offline instance retained. PE import table contains Windows system DLLs only, no separately installed C++/Python/PowerShell runtime. Initial repeat-start fixture failed for legacy helper PID cleanup race, fixed then complete integration passed twice. Browser association/UI, actual archive downloads/import, legacy migration and ARM64 runtime NOT_RUN. git diff --check and docs links passed. Final binary SHA256 42b0dbaa1c250941d8a10ea348f495d1fb0091909a40b3bb5ff89f3b263253a9. Final native integration and token encoding tests passed. Real native open first diagnosed missing system HTTPS association, then installed-browser fallback opened Edge; browser UI showed authenticated workbench and local service connected, fragment consumed after login. No token logged. Docker-only Go 1.26.0 tests passed for cmd/aide-local-mounts/internal/localmounts and Windows amd64 helper cross-compile succeeded. Linux suite: data 42, offline 15, bridge 5, candidate 6, route 6, native distribution 3; source fingerprint 2 (1 skipped for host locale) passed. Shell syntax and correct/wrong PE architecture gates passed. Initial offline tests exposed CRLF .command checkout and CRLF Compose identity; checkout normalized to existing LF attributes and project-name CR handled, then all 15 passed. Docs links and diff check passed.",
+      "evidence": [
+        "scripts/test_windows_native_launcher.py",
+        "native/windows-launcher/main.cpp",
+        "scripts/build-windows-launcher.py"
+      ],
+      "status": "pass"
+    },
+    "documentation": {
+      "summary": "Current Windows docs use native exe only; explicitly document browser association fallback, no PS1 fallback, no native legacy migration or background port/A-B agent parity. Historical reviews/tasks retain historical facts.",
+      "evidence": [
+        "native/windows-launcher/README.md",
+        "docs/installation.md"
+      ],
+      "status": "pass"
+    },
+    "cleanup": {
+      "summary": "User-authorized cleanup removed repository PS1 files, obsolete tests, own 2 disposable startup fixture directories and 6 generated diagnostic entries. Native C++/JSON license/source, build/test scripts, task records and both pre-existing Docmost untracked documents retained as necessary work. Restored unchanged checkout formatting and refreshed 17 hash-equal Git entries; staged diff remained byte-identical (empty). No git clean, reset, user data cleanup or actual Docker cache prune. Executable ignored as build artifact; Docker toolchain volume/cache retained for rebuilds.",
+      "evidence": [
+        ".gitignore",
+        "scripts/build-windows-launcher.py"
+      ],
+      "status": "pass"
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Product Release/merge not requested. Branch handoff prepared for codex/windows-native-launcher-20261027 from 0ed5ab87; final pushed commit and remote verification will be recorded in issue #464.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/464"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requested creating a branch from the current version, pushing it, and recording changes, principles, causes and handoff in issue #464. Authorized Git branch/commit/push and issue update only; no main merge, version bump, tag or Release publication.",
+  "rollback": "Use a prior Git revision/package for the removed PowerShell implementation if necessary. Preserve .aide-data, .env and all model settings; do not restore older data. Native exe and current 8098 application remain usable, 8097 offline installation unaffected.",
+  "handoff": "User explicitly authorized all repository PS1 removal and unnecessary-file cleanup. Delivered native exe at workspace root, token/browser fallback verified through actual browser workbench. Native exe SHA256 42b0dbaa1c250941d8a10ea348f495d1fb0091909a40b3bb5ff89f3b263253a9. User subsequently authorized a scoped branch commit and push: codex/windows-native-launcher-20261027. Final commit identity is recorded in issue #464 after remote verification. Remaining untracked items are required native source/tests/records or pre-existing Docmost documents. Windows in-app background A/B agent, background port monitoring, legacy migration and ARM64 runtime remain unimplemented/unverified; no fallback PS1 remains. Newly changed Go helper source is cross-compiled; current image snapshot predates that helper source change and image rebuild/publication was not performed."
+}

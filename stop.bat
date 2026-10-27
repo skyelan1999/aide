@@ -1,8 +1,12 @@
 @echo off
-set "PS_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-where pwsh >nul 2>nul
-if not errorlevel 1 set "PS_EXE=pwsh"
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%~dp0stop.ps1" %*
-set "MAINTENANCE_EXIT=%ERRORLEVEL%"
-if not "%MAINTENANCE_EXIT%"=="0" pause
-exit /b %MAINTENANCE_EXIT%
+if not exist "%~dp0aide-launcher.exe" (
+  echo Missing aide-launcher.exe. Build it with scripts/build-windows-launcher.py or restore the complete package.
+  pause
+  exit /b 1
+)
+"%~dp0aide-launcher.exe" stop %*
+if errorlevel 1 (
+  echo Action failed. Press any key to close...
+  pause >nul
+  exit /b 1
+)

@@ -359,9 +359,9 @@ sys.exit(91)
                 r=subprocess.run(['bash','-c',script],env=env,text=True,capture_output=True)
                 self.assertEqual(r.returncode,0,r.stderr);self.assertIn('RESULT:'+expected,r.stdout)
     def test_source_checkout_and_windows_entry_build_policy(self):
-        shell=(ROOT/'scripts/aide.sh').read_text();ps=(ROOT/'start.ps1').read_text(encoding='utf-8-sig')
+        shell=(ROOT/'scripts/aide.sh').read_text();native=(ROOT/'native/windows-launcher/main.cpp').read_text()
         self.assertIn('launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}"',shell);self.assertIn('launcher_prebuilt_image "$DOCKER_BIN" "$IMG"',shell)
-        self.assertIn("$env:AIDE_BUILD_FROM_SOURCE -ne '0'",ps);self.assertIn('if ((Invoke-Compose build aide).Code -ne 0)',ps);self.assertIn("$env:AIDE_RELEASE_FALLBACK -eq '0'",ps)
+        self.assertIn('AIDE_BUILD_FROM_SOURCE',native);self.assertIn('L"build",L"aide"',native);self.assertIn('AIDE_RELEASE_FALLBACK',native)
         self.assertIn('AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start',(ROOT/'scripts/install.sh').read_text())
 
 class RunningRuntimeReuseTests(unittest.TestCase):

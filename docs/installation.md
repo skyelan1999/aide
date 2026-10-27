@@ -18,9 +18,11 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC8 Rel
 
 ## 2. 下载同一版本的源码
 
-从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `start.ps1` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP 不含镜像，首次启动时会从同一 GitHub Release 下载并校验约 500 MB 镜像；连接中断会自动续传，只有校验并启动服务成功后才会打开浏览器。轻量 ZIP 不能用于 A/B 升级。
+从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `aide-launcher.exe` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP 不含镜像，首次启动时会从同一 GitHub Release 下载并校验约 500 MB 镜像；连接中断会自动续传，只有校验并启动服务成功后才会打开浏览器。轻量 ZIP 不能用于 A/B 升级。
 
-Release 离线启动器会读取已保存的宿主端口；首次启动遇到端口占用时，会在默认端口后选择并保存可用端口。Windows 离线包和完整发行包会启动宿主端口监视器，在设置中更改端口后更新 Compose 映射并重启服务；`/data` 与工作区数据卷继续共用。源码开发启动使用仓库 `.env` 配置，不启用 Release 包的自动升级流程。
+当前开发工作区新增 C++ 原生 `aide-launcher.exe`：双击启动，或运行 `aide-launcher.exe stop` / `status`。`start.bat`、`stop.bat` 和 `clean-docker-cache.bat` 统一调用它，运行不依赖 PowerShell 或宿主 Python；仍需 Docker Desktop。它保留当前目录的 Compose、数据和镜像，可自动避让其他安装占用的端口。源码与容器内编译方法见 [原生启动器说明](../native/windows-launcher/README.md)。exe 是本机构建产物，本轮尚未发布新 Release；原生版本暂不包含旧卷自动迁移、后台端口监控和应用内 A/B 升级代理，旧卷迁移需先通过受支持的迁移流程完成；后台端口监控和 Windows A/B 升级代理尚未提供。
+
+原生 Windows 启动器在端口被占用时会选择并保存空闲端口；更改 `.env` 中的端口后重新启动即可应用。macOS/Linux 离线包继续使用其宿主端口监视器。所有启动方式保留 `/data` 与工作区目录。
 
 | 下载项 | 启动方式 | 目标系统 |
 | --- | --- | --- |
@@ -146,9 +148,15 @@ AIDE_LOCAL_ROOT=/absolute/path/to/projects
 
 ## 6. 登录与连接模型
 
-Windows 启动器在恢复配置前，会用当前用户 SID 通过 .NET 直接写入 `.aide-data` 的私有 DACL，阻断继承并仅授予该用户完全控制；不通过 `Set-Acl` 解析域账号名，不修改 owner/group。已有目录也会重新保护，避免首次保护失败后重试跳过，或保留虽然已阻断继承但仍允许其他账号的 ACL；保护失败则停止恢复配置。Windows 原生 ACL 与断域环境可用 `python scripts/test_windows_launcher_acl.py --pwsh powershell.exe --require-native` 复测，Linux/PowerShell 7 的流程替身测试不代替该验收。
+Windows 原生启动器在恢复配置前，通过当前用户 SID 设置 `.aide-data` 的私有 DACL；不解析域账号名，不修改 owner/group，保护失败则停止。可运行 `python scripts/test_windows_native_launcher.py` 验收真实 Windows/Docker 启动流程。
 
 Windows 启动器在健康检查通过后，若系统未配置默认浏览器，只警告并保留已就绪的服务；可手动打开终端输出的地址，或设置 `AIDE_OPEN_BROWSER=0` 跳过自动打开。目录 helper 停止时，已退出的旧进程删除 PID 文件属于正常完成；升级先使用镜像内新提取且经 SHA-256 校验的 helper 停止旧进程，仍存活的进程或其他停止错误会阻止替换。
+
+Windows 原生启动器直接读取 Docker JSON 元数据；镜像 ID、架构、源码摘要及对应运行环境标识仍严格校验。有效本地镜像可复用，Docker Hub 连接超时无需通过反复联网构建规避。
+
+较旧 Release 镜像可能不含 Windows 目录 helper：仅在未配置额外挂载时跳过；已配置挂载、配置损坏、Docker 通信错误或校验文件缺失仍会停止，需恢复匹配的新镜像。
+
+Windows 源码目录与离线安装均会读取 Compose 实际解析的端口配置；端口被其他实例占用时，尝试后续最多 100 个端口，将选中的端口写入当前安装的 `.env`，保留其他实例运行。再次启动本项目时复用其现有端口。当前 Dockerfile 的 slim 镜像使用 `aide.runtime-profile=slim` 标识，Windows 本地复用校验接受其平台与源码摘要，不要求旧版捆绑 CAD 标签；清单固定的旧 Release 回退仍保留原 CAD 校验。旧 Release 可能不支持新配置中的模型数量，不应通过删除模型配置来兼容；应使用匹配的新版镜像。
 
 macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 `https://localhost:8097`，在本机终端运行 `docker compose exec -T aide cat /data/auth/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
 
@@ -193,9 +201,9 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 
 ## 普通设备快速启动与开发构建
 
-源码仓库和 Release 启动包都默认使用预构建完整镜像。源码目录的 start.command、start.sh 和 start.bat/start.ps1 按 docker/prebuilt-images.tsv 选择 Docker 引擎架构匹配的镜像；优先复用已导入镜像及本地归档，缺少时从该仓库的 Release 下载，校验 SHA256、镜像 ID、平台、源码指纹和原生 CAD 运行时后启动。不会因为清理 Docker 缓存或本地源码指纹变化而自动编译。已有私有 .env、.aide-data 和工作区继续保留。
+源码仓库和 Release 启动包都默认使用预构建完整镜像。源码目录的 start.command、start.sh 和 aide-launcher.exe/start.bat 按 docker/prebuilt-images.tsv 选择 Docker 引擎架构匹配的镜像；优先复用已导入镜像及本地归档，缺少时从该仓库的 Release 下载，校验 SHA256、镜像 ID、平台、源码指纹和原生 CAD 运行时后启动。不会因为清理 Docker 缓存或本地源码指纹变化而自动编译。已有私有 .env、.aide-data 和工作区继续保留。
 
-开发者需要运行尚未发布的本地代码时，macOS/Linux 执行 `AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start`；PowerShell 设置 `$env:AIDE_BUILD_FROM_SOURCE='1'` 后运行 start.ps1。`scripts/install.sh --source` 也会显式选择源码构建。预构建模式使用清单指定的发布快照，不执行未打包的本地改动。
+开发者需要运行本地代码时，macOS/Linux 执行 `AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start`；Windows 执行 `aide-launcher.exe --force-build`。`scripts/install.sh --source` 也显式选择源码构建。
 
 完整 Release 包解压后启动时直接校验并导入包内镜像，后续复用本地镜像。缺少匹配架构的已发布镜像会明确停止并指出需要对应包，不会误用 ARM64 镜像启动 x64 引擎，也不会悄悄回退到编译。当前 ARM64 验收不代表 x64 或 Windows 实机通过。Windows 源码目录的首次完整包导入使用 tar.exe 临时解压内层镜像，需预留磁盘空间；导入后删除本次临时解压文件，保留压缩包供下次离线恢复。
 

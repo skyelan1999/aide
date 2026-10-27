@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess,sys,os
 ROOT=Path(__file__).resolve().parents[1]
 def check_source():
- for name in ('Dockerfile','Dockerfile.local','compose.yaml','docker/compose.offline.yaml','scripts/aide.sh','start.ps1'):
+ for name in ('Dockerfile','Dockerfile.local','compose.yaml','docker/compose.offline.yaml','scripts/aide.sh','native/windows-launcher/main.cpp'):
   text=(ROOT/name).read_text()
   for banned in ('AIDE_CAD_IMAGE','AIDE_CAD_URL','prepare-cad-base','scripts/cad','cad-private','--from=cad'):
    assert banned not in text,(name,banned)

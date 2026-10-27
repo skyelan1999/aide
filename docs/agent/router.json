@@ -293,10 +293,6 @@
       ],
       [
         "python3",
-        "scripts/test_windows_port_lifecycle.py"
-      ],
-      [
-        "python3",
         "scripts/test_local_root.py"
       ],
       [
@@ -967,6 +963,10 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/js/stencils.min.js"
+      ],
+      [
+        "python3",
+        "scripts/test_native_distribution.py"
       ]
     ],
     "full": [

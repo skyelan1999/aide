@@ -29,9 +29,9 @@ bash scripts/install.sh --check
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-Download `aide-<tag>-full-linux-<arch>.zip` from a GitHub Release for the complete runtime package. After extraction, run `start.command` on macOS, `start.ps1` or `start.bat` on Windows, or `start.sh` on Ubuntu. The launcher verifies and imports the bundled Docker image, so first launch does not need to download the image. The same ZIP can be uploaded from Settings > Software Update on an existing Release installation. If macOS automatically extracts it, select the extracted full package folder; the updater locates and verifies the payload under `docker-images/`. Lightweight platform launcher ZIPs do not include the image; on first launch they download and verify the approximately 500 MB image from the same GitHub Release. Interrupted transfers resume automatically, and the browser opens only after the image is verified and the service is healthy. Lightweight ZIPs cannot be used for A/B updates.
+Download `aide-<tag>-full-linux-<arch>.zip` from a GitHub Release for the complete runtime package. After extraction, run `start.command` on macOS, `aide-launcher.exe` or `start.bat` on Windows, or `start.sh` on Ubuntu. The launcher verifies and imports the bundled Docker image, so first launch does not need to download the image. The same ZIP can be uploaded from Settings > Software Update on an existing Release installation. If macOS automatically extracts it, select the extracted full package folder; the updater locates and verifies the payload under `docker-images/`. Lightweight platform launcher ZIPs do not include the image; on first launch they download and verify the approximately 500 MB image from the same GitHub Release. Interrupted transfers resume automatically, and the browser opens only after the image is verified and the service is healthy. Lightweight ZIPs cannot be used for A/B updates.
 
-Release launchers read the persisted host port. On first launch, if the default port is occupied, they select and save the next available port. Windows offline and full packages run a host-side port monitor that applies Settings port changes by updating the Compose mapping and restarting the service; `/data` and workspace volumes remain shared. Source development startup uses the repository `.env` and does not enable the Release package's automatic upgrade flow.
+Release launchers read the persisted host port. On first launch, if the default port is occupied, they select and save the next available port. The native Windows launcher applies the saved `.env` port on startup and has no background port monitor; `/data` and workspace volumes remain shared. Source development startup uses the repository `.env` and does not enable the Release package's automatic upgrade flow.
 
 | Asset | Launch | Target |
 | --- | --- | --- |
@@ -195,7 +195,9 @@ Captured from an isolated source instance on 17 October 2026. This is not an ins
 
 [Environment and all original captures](../ui-evidence.md).
 
-## Windows Release manual slot activation
+## Historical Windows Release manual slot activation
+
+The current Windows C++ launcher replaces the removed PowerShell scripts. Background A/B activation is not yet implemented in the native launcher; the following records describe earlier releases.
 
 The Windows host updater accepts both `-` placeholders and legacy empty optional command fields, so activating a previously installed slot does not require a package download. Startup paths are quoted as one argument. The updater waits only for the launcher process, rather than its persistent monitor descendants, then verifies both the running container image ID and health before reporting success. Failed activation restores the previous marker and invokes the same launcher to recover it. Compose directory overrides remain in effect.
 

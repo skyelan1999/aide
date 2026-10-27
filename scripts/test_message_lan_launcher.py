@@ -73,6 +73,6 @@ else:raise SystemExit(87)
         for name in ('compose.yaml','docker/compose.offline.yaml'):
             source=(ROOT/name).read_text();self.assertIn('"127.0.0.1::45840"',source);self.assertIn('AIDE_MESSAGE_LAN_BRIDGE:',source)
         self.assertIn('scripts/message-lan-control.sh start',(ROOT/'scripts/aide.sh').read_text())
-        self.assertIn('message-lan-control.ps1',(ROOT/'start.ps1').read_text(encoding='utf-8-sig'))
-        self.assertIn('message-lan-control.ps1',(ROOT/'scripts/package-release-assets.sh').read_text())
+        self.assertIn('void helpers()', (ROOT/'native/windows-launcher/main.cpp').read_text())
+        self.assertIn('aide-launcher.exe',(ROOT/'scripts/package-release-assets.sh').read_text())
 if __name__=='__main__':unittest.main()

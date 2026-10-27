@@ -9,9 +9,9 @@ Run maintenance launchers from the relevant source checkout or offline installat
 | macOS | `stop.command` | `clean-docker-cache.command` |
 | Linux | `bash stop.sh` | `bash clean-docker-cache.sh` |
 | Windows | `stop.bat` | `clean-docker-cache.bat` |
-| PowerShell | `./stop.ps1` | `./clean-docker-cache.ps1` |
+| Windows native CLI | `aide-launcher.exe stop` | `aide-launcher.exe clean-cache` |
 
-Shell entries accept `--dry-run`; PowerShell accepts `-DryRun`. Existing command entries are `bash scripts/aide.sh stop` and `bash scripts/aide.sh clean-cache`. If Docker is unavailable, maintenance reports it rather than starting Docker Desktop.
+Shell entries accept `--dry-run`; the native cache command accepts `--dry-run`. Existing command entries are `bash scripts/aide.sh stop` and `bash scripts/aide.sh clean-cache`. If Docker is unavailable, maintenance reports it rather than starting Docker Desktop.
 
 Stop identifies containers from the installation's Compose directory and Aide service labels, supporting custom project names and macOS physical/logical path aliases. It does not guess by port or stop another installation. Repeating stop with no matching running container succeeds. On macOS it also stops that installation's registered host bridges. `.cache/aide-manual-stop` prevents the port watcher recreating the container; ordinary start clears it. Avoid stopping during an A/B update switch.
 
