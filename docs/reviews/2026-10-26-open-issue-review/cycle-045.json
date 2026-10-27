@@ -83,11 +83,14 @@
     "根协调者承担前端、安全、验证角色，无子agent。保留用户未跟踪文件、无常驻服务、不合并main/发行/部署。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "176": "https://github.com/skyelan1999/aide/issues/176#issuecomment-6433181816"
+    },
+    "remoteCommit": "9494bef7c2a71472c78c2f8a1417518c2ccf1b4e"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "cfb611fcfc5eabb5ca068b48ae406d243f888fdede53aa2160c0fa294ab58a98",

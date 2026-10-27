@@ -145,17 +145,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第45轮176已提交并验收，待push评论；累计107覆盖，原272剩177，额外441待后续。下一177已读正文与PolylineTo源码，尚未新增回归或修改。",
+  "handoff": "第45轮176已push并评论；累计107覆盖，原272剩177，额外441待后续。第46轮177最新正文及PolylineTo源码已读，尚未修改/新增回归。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "98f33d5582a289bf942fcced73004d07ea3aaf82",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "aafe7beeb1235716bad43c79c97e10efb23c3ce2"
+    "evidenceCommit": "9494bef7c2a71472c78c2f8a1417518c2ccf1b4e"
   },
-  "issue_comments": "第44轮175已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第45轮176已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -208,13 +208,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 45,
+      "cycle": 46,
       "status": "in_progress",
       "candidates": [
-        176
+        177
       ],
-      "phase": "verified-awaiting-push-and-comments",
-      "observed": "decodeVsdx用JSZip.loadAsync后并发展开XML/rels/media；VSSX复用该路径。须限制输入、条目数、单项/累计实际展开字节及展开并发。"
+      "phase": "latest-body-read-awaiting-regression",
+      "observed": "PolylineTo.handle通过splice(0,1)反复移除坐标项，需改为线性索引并限制公式/点数；与176解压预算不同。"
     },
     "additionalFollowupIssues": [
       441
