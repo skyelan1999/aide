@@ -46,7 +46,7 @@ module.exports = async function createAvatarPackPaths({root, inputDir, outputDir
     return {source, audit};
   }
   // Check every fixed publication destination as well as per-job destinations.
-  for (const file of ['manifest.json', 'art-audit.json']) await checkPath(path.join(outputDir, file));
+  for (const file of ['manifest.json', 'art-audit.json', 'frame-interpolation-audit.json']) await checkPath(path.join(outputDir, file));
   await fs.mkdir(outputDir, {recursive: true});await fs.mkdir(auditDir, {recursive: true});
   return {job, record};
 };

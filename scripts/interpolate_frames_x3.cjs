@@ -6,6 +6,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { createRequire } = require('node:module');
+const {verifyAssetAudit,fileHashes,atomicJSON}=require('./avatar_asset_audit.cjs');
 const root = path.resolve(__dirname, '..');
 const sharp = (() => {
   try { return require('sharp'); }
@@ -23,6 +24,8 @@ async function main() {
   if (Object.hasOwn(manifest.provenance || {}, 'interpolation') || Object.hasOwn(manifest.provenance || {}, 'interpolationInProgress')) {
     throw new Error('Interpolation already completed or interrupted; restore original packed assets and manifest before retrying.');
   }
+  const {records: originalAudit}=await verifyAssetAudit(dir);
+  const originalByID=new Map(originalAudit.map(record=>[record.id,record]));
   // Preflight the entire manifest before modifying any asset. Clip indices are
   // the actual source sequence; atlas cells beyond it may just be padding.
   for (const [id, sheet] of Object.entries(manifest.sheets)) {
@@ -43,7 +46,7 @@ async function main() {
   manifest.provenance = {...manifest.provenance, interpolationInProgress: new Date().toISOString()};
   await saveManifest(); // An interrupted in-place run must never become fresh input.
   const newClips = {}, newVariants = {}, newSheets = {};
-  const audit = [];
+  const audit = [], publishedAudit = [];
 
   for (const [id, sheet] of Object.entries(manifest.sheets)) {
     const atlasPath = path.join(dir, sheet.src);
@@ -99,9 +102,14 @@ async function main() {
     newClips[id] = { sheet: id, frames: Array.from({length: out.length},(_,i)=>i), durations, loop: clip.loop };
     newSheets[id] = { src: sheet.src, columns, rows: outRows };
     const v = manifest.variants[id];
-    const uniqueFrames = new Set(out.map(hash)).size;
+    const frameHashes=out.map(hash),uniqueFrames = new Set(frameHashes).size;
     newVariants[id] = { ...v, frames: out.length, uniqueFrames, duration: newDuration };
-    audit.push({ id, originalFrames: frames.length, newFrames: out.length, uniqueFrames, totalDuration, durations });
+    const original=originalByID.get(id),files=await fileHashes(dir,manifest,id);
+    const sourceExtraction=original.sourceExtraction||{frameCount:original.frameCount,uniqueFrames:original.uniqueFrames,frameHashes:original.frameHashes,files:original.files,fileAudit:original.fileAudit};
+    publishedAudit.push({...original,sourceExtraction,frameCount:out.length,uniqueFrames,frameHashes,files,
+      frameMetadataScope:'selected input and blended output RGBA before WebP encoding',
+      fileAudit:{kind:'interpolation-output',sourceProvenanceVerified:original.fileAudit?.sourceProvenanceVerified===true}});
+    audit.push({ id, originalFrames: frames.length, newFrames: out.length, uniqueFrames, totalDuration, durations, sourceFiles:original.files,files });
     console.log(`${id}: ${frames.length} -> ${out.length} frames @ ${newDuration}ms`);
   }
 
@@ -109,9 +117,11 @@ async function main() {
   manifest.clips = newClips;
   manifest.variants = newVariants;
   manifest.provenance = { ...manifest.provenance, interpolation: 'alpha-blend x3 between original frames', interpolatedAt: new Date().toISOString() };
-  await fs.writeFile(path.join(dir, 'frame-interpolation-audit.json'), JSON.stringify(audit, null, 2));
+  await atomicJSON(dir,'art-audit.json',publishedAudit);
+  await atomicJSON(dir,'frame-interpolation-audit.json',audit);
   delete manifest.provenance.interpolationInProgress;
   await saveManifest();
+  await verifyAssetAudit(dir);
   console.log('Done. Total variants:', Object.keys(newVariants).length);
 }
 main().catch(e => { console.error(e); process.exit(1); });

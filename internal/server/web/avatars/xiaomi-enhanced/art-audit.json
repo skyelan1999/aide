@@ -45,12 +45,22 @@
       "0113084fa0f5b5eb1b2366151b18ebf373ec93b6a62a3939ba478b7eee04127c"
     ],
     "files": {
-      "awaiting_user-v1-atlas.webp": "ac71b444320d6587ff03c3f105876bb10608955f8efb345fa9505e6b61567e90",
-      "awaiting_user-v1.webp": "6e42a62fdc555eefabc916331e08e3f460da438b3e9e4edd2b66bcf8e767e617",
-      "awaiting_user-v1-poster.webp": "9f37faff7e700417e6c2ce61b5ba05319e4f603049dce6aa60bdcd03132e4d0e"
+      "awaiting_user-v1-atlas.webp": "13512cee8222f1fcd10e4c7d886d1317fcf18b96ace299f5ac429d27853a5514",
+      "awaiting_user-v1.webp": "dc7a28423de51299834883aee29cb63a7717641ed02da0bd9993e9a6cf127518",
+      "awaiting_user-v1-poster.webp": "bc2fbdc52162b74565ff184054f7edbe2b826301cb22d638ae93f53ce225e46c"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "awaiting_user-v1-atlas.webp": "ac71b444320d6587ff03c3f105876bb10608955f8efb345fa9505e6b61567e90",
+        "awaiting_user-v1.webp": "6e42a62fdc555eefabc916331e08e3f460da438b3e9e4edd2b66bcf8e767e617",
+        "awaiting_user-v1-poster.webp": "9f37faff7e700417e6c2ce61b5ba05319e4f603049dce6aa60bdcd03132e4d0e"
+      }
+    }
   },
   {
     "id": "awaiting_user-v2",
@@ -98,12 +108,22 @@
       "d7e7d076328d3f26f9180e6b068d233a4a59fc603094a9b8077dca27e63ace51"
     ],
     "files": {
-      "awaiting_user-v2-atlas.webp": "d222a47b509bc5beab5d593a228a58ebd2480ecdf9c9a58a1a1a4f0ebdce17af",
-      "awaiting_user-v2.webp": "1b328bda3b0b2792bb4ff0f7615026e11f4db0dc91b79c53ce835c25f7af8936",
-      "awaiting_user-v2-poster.webp": "cfd39f0e1388a53b160fd333f093d614dea631783858d0da390412e10e8cbe69"
+      "awaiting_user-v2-atlas.webp": "bc58591647014abb84e747deec97f6f71f0de202961580ef0871aa833720570a",
+      "awaiting_user-v2.webp": "3e3f12704a2c3c109ca116489758ec8d0c5e157966669f7062466f65a4e99432",
+      "awaiting_user-v2-poster.webp": "4e56f5a39b87888714ce3dff18757adf82297db6ec31e2a4e97ce6999e396974"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "awaiting_user-v2-atlas.webp": "d222a47b509bc5beab5d593a228a58ebd2480ecdf9c9a58a1a1a4f0ebdce17af",
+        "awaiting_user-v2.webp": "1b328bda3b0b2792bb4ff0f7615026e11f4db0dc91b79c53ce835c25f7af8936",
+        "awaiting_user-v2-poster.webp": "cfd39f0e1388a53b160fd333f093d614dea631783858d0da390412e10e8cbe69"
+      }
+    }
   },
   {
     "id": "completed-v2",
@@ -151,12 +171,22 @@
       "4929f8f554b216e2cca74aad4388dd45148db6ace95d090f9729626eb0bce997"
     ],
     "files": {
-      "completed-v2-atlas.webp": "d88c68eb520cad0cce50177519ed90c29996a3bcffabfce47383f2afb3a83678",
-      "completed-v2.webp": "6eddf6a85ec3a70ef33e159714d051d8b7f9b1cb02feb005a614bfa5f8d74490",
-      "completed-v2-poster.webp": "3a1089c932ae769ce83cccf781a0454f5630bef3a1ca9f85f61cf435fa7b30c4"
+      "completed-v2-atlas.webp": "312220fc02a7f9099f7cbacf04789c34a261855b2e40f86610e545a5a756aef2",
+      "completed-v2.webp": "88d1d6a748f006d0c67c0ce84d9949ea646daaf2007e1224c4d7a63b67269d83",
+      "completed-v2-poster.webp": "8dc4ca491f17e5f3396a5fc0346dec45385943734cec31bfd6bbd8f8d65291c7"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "completed-v2-atlas.webp": "d88c68eb520cad0cce50177519ed90c29996a3bcffabfce47383f2afb3a83678",
+        "completed-v2.webp": "6eddf6a85ec3a70ef33e159714d051d8b7f9b1cb02feb005a614bfa5f8d74490",
+        "completed-v2-poster.webp": "3a1089c932ae769ce83cccf781a0454f5630bef3a1ca9f85f61cf435fa7b30c4"
+      }
+    }
   },
   {
     "id": "completed-v3",
@@ -204,12 +234,22 @@
       "07a7027b3e61a231c594697a6b311b71a52f4c34393fd566f47236adef659347"
     ],
     "files": {
-      "completed-v3-atlas.webp": "77acfd1e4fd28a1b88470babc28687801e998da588bce50dae41ffa01d1cd19c",
-      "completed-v3.webp": "e76234a759763398ed83e2e2a6431251bbd1756b9217145a7251df47293225eb",
-      "completed-v3-poster.webp": "ac28db8eb461bb407acace2d90351b9477ec1076aa05fba9322e2ebe0ad07cd6"
+      "completed-v3-atlas.webp": "cd722a7c654c56a041fe185b77d6433f05584c37e2eb2bb028d731620d4805ea",
+      "completed-v3.webp": "5a7ab18ab152dca09afaf81fcb7e9295925c04faee143b149fded192269c4c8f",
+      "completed-v3-poster.webp": "83f185633740ed208488339f1afd7a801b4203689aa0ff8f6bde9fd5f6f43c4d"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "completed-v3-atlas.webp": "77acfd1e4fd28a1b88470babc28687801e998da588bce50dae41ffa01d1cd19c",
+        "completed-v3.webp": "e76234a759763398ed83e2e2a6431251bbd1756b9217145a7251df47293225eb",
+        "completed-v3-poster.webp": "ac28db8eb461bb407acace2d90351b9477ec1076aa05fba9322e2ebe0ad07cd6"
+      }
+    }
   },
   {
     "id": "creating-v1",
@@ -257,12 +297,22 @@
       "f9abc92c8dfd8af60a59b3ad44c0c5d49a2b0b3882530ab57d2d3eb1fd698e69"
     ],
     "files": {
-      "creating-v1-atlas.webp": "f581fec2487b646454375e9b077caec44a45f46b03adf56d2eedcc08e5fa4b3e",
-      "creating-v1.webp": "1934e855b23f783a08b74f29c3d72a454f78d69fa1fc01df1ca347c657ceb730",
-      "creating-v1-poster.webp": "852e24099654186366e8c21ec2b4a937308f37e2555a18cd6df2e5088c393d02"
+      "creating-v1-atlas.webp": "1d9ca9fd0bba8c67fc74d250d2780abd69bdf032137c0cc1f13e5dc64272e495",
+      "creating-v1.webp": "77415f1a406ea1f0c2867973624516ddc43a697d48dce8356fbd3dfc44c63d36",
+      "creating-v1-poster.webp": "8b86b47458787ef0fd0acba1472852412c7538bee321176f277cd345ce9761fe"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "creating-v1-atlas.webp": "f581fec2487b646454375e9b077caec44a45f46b03adf56d2eedcc08e5fa4b3e",
+        "creating-v1.webp": "1934e855b23f783a08b74f29c3d72a454f78d69fa1fc01df1ca347c657ceb730",
+        "creating-v1-poster.webp": "852e24099654186366e8c21ec2b4a937308f37e2555a18cd6df2e5088c393d02"
+      }
+    }
   },
   {
     "id": "creating-v2",
@@ -310,12 +360,22 @@
       "d8f86f00ebb97bb66422a23fdd7e25b8703f70df116fc6323a11061f2b1ac4cf"
     ],
     "files": {
-      "creating-v2-atlas.webp": "c72915e464b8df55bba23c957dddcfe42aed1291dbb302e13ac0acab00b97cd8",
-      "creating-v2.webp": "578d404db55b13fc57f3d8ee2b060fd2cf76967e32accc9e95c96ab5ead6aace",
-      "creating-v2-poster.webp": "a7a61c92d20f9a7d33b132bf00b8dbd62b5659a186b3688cdda94fa0f0b22358"
+      "creating-v2-atlas.webp": "42012ef0a533672dea8e30c890bdc7bf11bd05751f9d6a28a55df90f4b3f17eb",
+      "creating-v2.webp": "09254c1ee13275c4d5374031709864478eea2db0e8ba679f0aa0da52145a9540",
+      "creating-v2-poster.webp": "18b362f4b6911c5998bc925da7258406b48630ea638a0a074979670516ed0a65"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "creating-v2-atlas.webp": "c72915e464b8df55bba23c957dddcfe42aed1291dbb302e13ac0acab00b97cd8",
+        "creating-v2.webp": "578d404db55b13fc57f3d8ee2b060fd2cf76967e32accc9e95c96ab5ead6aace",
+        "creating-v2-poster.webp": "a7a61c92d20f9a7d33b132bf00b8dbd62b5659a186b3688cdda94fa0f0b22358"
+      }
+    }
   },
   {
     "id": "error-v1",
@@ -363,12 +423,22 @@
       "10bc27291d1c47632bc8699de9ef555a896f62ae9bfd5932b45a5df99d9cd40a"
     ],
     "files": {
-      "error-v1-atlas.webp": "b5a931430944a25a42a79fc168e6dff8a5ccc1f337aa85e85a1b36e2ee43dc63",
-      "error-v1.webp": "cdfba89bacf68af9687ca72a2195ae5927dc975fe37b19f05989c91820141b0b",
-      "error-v1-poster.webp": "faa530aaa3778e5c6346cf919660b460c224557601c287e1c5d9bfec683a24aa"
+      "error-v1-atlas.webp": "b321380d42c1a813e0fafd87c2adf6f5daa7deb88ded41c2a53e0a3add2b1b65",
+      "error-v1.webp": "89d0f0f2861752b133c94ead0096663ef1fc5e9aff35c134f89bac91c9cb4353",
+      "error-v1-poster.webp": "e85f1173a1fa079059c06fa2fb66ca630cb0b572ee53997642816b5a738de593"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "error-v1-atlas.webp": "b5a931430944a25a42a79fc168e6dff8a5ccc1f337aa85e85a1b36e2ee43dc63",
+        "error-v1.webp": "cdfba89bacf68af9687ca72a2195ae5927dc975fe37b19f05989c91820141b0b",
+        "error-v1-poster.webp": "faa530aaa3778e5c6346cf919660b460c224557601c287e1c5d9bfec683a24aa"
+      }
+    }
   },
   {
     "id": "error-v2",
@@ -416,12 +486,22 @@
       "dce70709c65b9aaa117d8b6a45152e8e2f52a2017c80c983916bcb18600a200f"
     ],
     "files": {
-      "error-v2-atlas.webp": "e8c23a4cbf24f9716c80627a4ad2eb7070b8561e7682f150302e982adc1ff2dd",
-      "error-v2.webp": "fc7f698561c3baa790b7a759be31b42c88fe52d03e36062a4570004d48b43ffd",
-      "error-v2-poster.webp": "19f112705da18beb7411d613303c503ae213e7ad007ec4432b153f7e084018d4"
+      "error-v2-atlas.webp": "f8437ff55fd14e54f22b2cc7f4f21172f401e8fb0b6a7699490b8a43d94b6df3",
+      "error-v2.webp": "b2a623c71532b2b330c5127af3d0a4011f3d7ab268d364215df6efaa6c6e39e9",
+      "error-v2-poster.webp": "dcbe7dcbd8e2d824437d52e657b16c067d70708401c44c5d28f639e64e9ec76b"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "error-v2-atlas.webp": "e8c23a4cbf24f9716c80627a4ad2eb7070b8561e7682f150302e982adc1ff2dd",
+        "error-v2.webp": "fc7f698561c3baa790b7a759be31b42c88fe52d03e36062a4570004d48b43ffd",
+        "error-v2-poster.webp": "19f112705da18beb7411d613303c503ae213e7ad007ec4432b153f7e084018d4"
+      }
+    }
   },
   {
     "id": "error-v3",
@@ -469,12 +549,22 @@
       "7d715092575b2537973d7565f0cc617f1ef507b558ed37d194ef9a89bde543f1"
     ],
     "files": {
-      "error-v3-atlas.webp": "306933962dbe47e0cd733309c5c1bbb806f370d7e2afc2928fee3e876a203ba0",
-      "error-v3.webp": "6cd1663c17a5040bb0402fc9b41776ae1b61decc7ab2f4cb90296d20337e7a53",
-      "error-v3-poster.webp": "3d0fd2b25eb94d6c36bfa09e44c22fd57b6428b33b8d87c7762cd70be5319edf"
+      "error-v3-atlas.webp": "341e6795183878099443264433f16a7d93108204cf57273e02f981fff5f01ed0",
+      "error-v3.webp": "5dd91e9e714dd8b8c2e9eeea2595e6d25a1263b746e030a09910798793288e5d",
+      "error-v3-poster.webp": "31a05b6225e5adf754d4126b59a8c4482aca08d6a64cc3f3b4fd7e27bdae0c14"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "error-v3-atlas.webp": "306933962dbe47e0cd733309c5c1bbb806f370d7e2afc2928fee3e876a203ba0",
+        "error-v3.webp": "6cd1663c17a5040bb0402fc9b41776ae1b61decc7ab2f4cb90296d20337e7a53",
+        "error-v3-poster.webp": "3d0fd2b25eb94d6c36bfa09e44c22fd57b6428b33b8d87c7762cd70be5319edf"
+      }
+    }
   },
   {
     "id": "executing-v1",
@@ -522,12 +612,22 @@
       "23cb4229396ba4fab1583563454a2d067ba6a7c22f2e27a4e6e5020314d4f28d"
     ],
     "files": {
-      "executing-v1-atlas.webp": "d8f483cb2a7a99dc577558a34b198acedce9ec60428071b39b5f0ebd7c450de9",
-      "executing-v1.webp": "83e68e898858a3d26789fb01c53fc1dc1e54e271118f5634328380e7bf121f48",
-      "executing-v1-poster.webp": "c6207884c08a60a360d6ffee58d77b0c6b9708d6eb5cb0e753750d90000b1a8e"
+      "executing-v1-atlas.webp": "55eb245fb10772a6c81b59ab1ae29078c1238f8ca4ee60ccafe4f2bdcc5deb58",
+      "executing-v1.webp": "8d566737949f9c89f24967c2a6d2f2cc3b9ef3ec58ee7ead597b9fbe61fa3dd5",
+      "executing-v1-poster.webp": "779fdbb8e110158ec0db1702b1bac7c0bedce06a7161e9d9b0a7057c9826f43d"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "executing-v1-atlas.webp": "d8f483cb2a7a99dc577558a34b198acedce9ec60428071b39b5f0ebd7c450de9",
+        "executing-v1.webp": "83e68e898858a3d26789fb01c53fc1dc1e54e271118f5634328380e7bf121f48",
+        "executing-v1-poster.webp": "c6207884c08a60a360d6ffee58d77b0c6b9708d6eb5cb0e753750d90000b1a8e"
+      }
+    }
   },
   {
     "id": "executing-v2",
@@ -575,12 +675,22 @@
       "6b4e831c7c03ff6d7c6252ba56e6a3652de8e3044874b619611f0003838927b2"
     ],
     "files": {
-      "executing-v2-atlas.webp": "3dda3e29ea9c54e773340783fa24ea34dc88a91a427b9e5e7b41d5951862f726",
-      "executing-v2.webp": "b21f0631410a52f4ba42dce15a15a6cf206929185c2da91639085cafc6d9eac4",
-      "executing-v2-poster.webp": "93df18bafec301ade9372687247d113e5120c3c37c6a9e26c00aacfae024940c"
+      "executing-v2-atlas.webp": "aee389ec89fb168a3b7f3c5542e225b54bd787b9d94b2a46d895ac62255afe8f",
+      "executing-v2.webp": "4c53deaa8bffad4303892679049fa715bd934acd2049acf716124f66650052ea",
+      "executing-v2-poster.webp": "762076f9d13ee51d830fa062cb8eb3523de6e959cacd2022c6d7e84d0b39147f"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "executing-v2-atlas.webp": "3dda3e29ea9c54e773340783fa24ea34dc88a91a427b9e5e7b41d5951862f726",
+        "executing-v2.webp": "b21f0631410a52f4ba42dce15a15a6cf206929185c2da91639085cafc6d9eac4",
+        "executing-v2-poster.webp": "93df18bafec301ade9372687247d113e5120c3c37c6a9e26c00aacfae024940c"
+      }
+    }
   },
   {
     "id": "generating-v1",
@@ -628,12 +738,22 @@
       "88170710a90a80ec16c64c777558785e0f591a10390319c77edac40fc211bc3b"
     ],
     "files": {
-      "generating-v1-atlas.webp": "513e9eb1d8ced712263da75923d33341111673c6a426fe114a74f7a72b4599c6",
-      "generating-v1.webp": "cac0f531fc4024df57731638736181ba6d78a78aa460c856b97062f4c15ab453",
-      "generating-v1-poster.webp": "d7aaffe7038e319cd2b56f93310980c39fc1d08068ae9d13c587a3d0bbc6273d"
+      "generating-v1-atlas.webp": "ecc604b223d52e53aaa2c8737f7620d71094c35fac801bbc2f87359e937bc2bf",
+      "generating-v1.webp": "6f09b59cf0223e4ba584f223ca7f04dd667c55418bcc8f76fe257bf9c440bccc",
+      "generating-v1-poster.webp": "b0ebe07285d939b0cda80c9cf2647ef45520359c0b778e13bbf40a74cf1019d3"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "generating-v1-atlas.webp": "513e9eb1d8ced712263da75923d33341111673c6a426fe114a74f7a72b4599c6",
+        "generating-v1.webp": "cac0f531fc4024df57731638736181ba6d78a78aa460c856b97062f4c15ab453",
+        "generating-v1-poster.webp": "d7aaffe7038e319cd2b56f93310980c39fc1d08068ae9d13c587a3d0bbc6273d"
+      }
+    }
   },
   {
     "id": "generating-v2",
@@ -681,12 +801,22 @@
       "291df4890f9eade662449d9d26238de7fc97f53a0e3bd7cb24f0ce0a9f6c9208"
     ],
     "files": {
-      "generating-v2-atlas.webp": "899f5f8725fe078c41cf52a7c42c0ef12f18c1f21938b6c2d1c10f957e22fc74",
-      "generating-v2.webp": "ef1f20046e9c8a75038aa7e1f983ab4cbd68b381c80fc1196d2252cb1d2c64a4",
-      "generating-v2-poster.webp": "421a1b5c8acfd40d60bb05529ce893050648012b24e439bbbaec0b52d515b2b9"
+      "generating-v2-atlas.webp": "b4c032b7250856bc89a3eba484494963925d9c1cb67b36b043fddcd2e3ecd043",
+      "generating-v2.webp": "76ec15bccb172ba2a231f8e2839473cb7d11fea300dc7f94d56b27d3592a0178",
+      "generating-v2-poster.webp": "500c09520702f1ac838552369f1ba30c7e5af55d552049d4d45ffa1ee891952e"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "generating-v2-atlas.webp": "899f5f8725fe078c41cf52a7c42c0ef12f18c1f21938b6c2d1c10f957e22fc74",
+        "generating-v2.webp": "ef1f20046e9c8a75038aa7e1f983ab4cbd68b381c80fc1196d2252cb1d2c64a4",
+        "generating-v2-poster.webp": "421a1b5c8acfd40d60bb05529ce893050648012b24e439bbbaec0b52d515b2b9"
+      }
+    }
   },
   {
     "id": "idle-v1",
@@ -734,12 +864,22 @@
       "b5b186c3a69d57a60b531a8ecc16f3617931e4202356eec717ed76d9d1d801c6"
     ],
     "files": {
-      "idle-v1-atlas.webp": "13f20df969bc8de16e239d6b481fdefeb23f2fda8dbba7b83520644341e69c56",
-      "idle-v1.webp": "8ffedf8f7e9588d0f4bb1aa81333a64c09ba244723737bef16b0b124d916595c",
-      "idle-v1-poster.webp": "e40c636d3a673a0c1709150430740325b1d128580c7e67b74d4924fb8b4d28f7"
+      "idle-v1-atlas.webp": "3b722e8b83d9b575c0be7c9eed2d6b59ae335a73dc727542b0f6c743827f0edf",
+      "idle-v1.webp": "8ebd9fdc936ea85fab1d0bd73ca7cf34b25a85dee4ba16424408db458499ec67",
+      "idle-v1-poster.webp": "e5f1f8dcef1b22e6c721b7d2b0e29925b06685f2a8a7becad634b70618b26f25"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "idle-v1-atlas.webp": "13f20df969bc8de16e239d6b481fdefeb23f2fda8dbba7b83520644341e69c56",
+        "idle-v1.webp": "8ffedf8f7e9588d0f4bb1aa81333a64c09ba244723737bef16b0b124d916595c",
+        "idle-v1-poster.webp": "e40c636d3a673a0c1709150430740325b1d128580c7e67b74d4924fb8b4d28f7"
+      }
+    }
   },
   {
     "id": "idle-v2",
@@ -787,12 +927,22 @@
       "a93d933c1c44d513393b9718b978a9a3a5dfc8b7cd4b304596c7bd1bf0d05012"
     ],
     "files": {
-      "idle-v2-atlas.webp": "87d96347020e887096f06e73492de1bbd040d115470459e2a54c9c1ed54199bf",
-      "idle-v2.webp": "d7e6563a768d291e7dc6e3a14618985103da5d9a8161a4576b3e88aee5f91a28",
-      "idle-v2-poster.webp": "3f7b7b62159091ec70331d77613a6aa97c9ab46af4c13ae8e42356610eb5dc44"
+      "idle-v2-atlas.webp": "a833c7bf6be1d2d7f486984558d34fb46a01c624a95637afc3186bbc8c84c303",
+      "idle-v2.webp": "aa752763d0a2a920e3dd3dada6ab13ee623282ff93094f35f2bd0ad6682f756c",
+      "idle-v2-poster.webp": "70c25c5f476a4e5946fd64fd7c6d83e269ced9b00814548ff40a76175bb98064"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "idle-v2-atlas.webp": "87d96347020e887096f06e73492de1bbd040d115470459e2a54c9c1ed54199bf",
+        "idle-v2.webp": "d7e6563a768d291e7dc6e3a14618985103da5d9a8161a4576b3e88aee5f91a28",
+        "idle-v2-poster.webp": "3f7b7b62159091ec70331d77613a6aa97c9ab46af4c13ae8e42356610eb5dc44"
+      }
+    }
   },
   {
     "id": "idle-v3",
@@ -840,12 +990,22 @@
       "0a1aaa6924a917406462773c97060459acb67c8f7bb0294189ca943b5e7cd635"
     ],
     "files": {
-      "idle-v3-atlas.webp": "ba549634a05efb71df701cfc42089cfa6bfa89bbfa0601c50b2e1464ef130c2f",
-      "idle-v3.webp": "5d9ed0b42c33d7fe4da81263d29d7baf4ada07977831b311c43f5489eea53d76",
-      "idle-v3-poster.webp": "92d6f0c91ab45f1cf40cbf3cc8e52d33207c527b1e142b7848caad9a707bc69a"
+      "idle-v3-atlas.webp": "2d3fc7c958439f1e97bbeeabfca21ea029d19b4bb3f7831548818074937c8704",
+      "idle-v3.webp": "7fefd5a92e54ea846f20011aed91f2362cd9e76ee09451eabe1b395799072ac1",
+      "idle-v3-poster.webp": "e8a5d8b9539bdf5e7184e75cfd30ad27b679ea4b05bb5f44b3d74ee7e75aa4dd"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "idle-v3-atlas.webp": "ba549634a05efb71df701cfc42089cfa6bfa89bbfa0601c50b2e1464ef130c2f",
+        "idle-v3.webp": "5d9ed0b42c33d7fe4da81263d29d7baf4ada07977831b311c43f5489eea53d76",
+        "idle-v3-poster.webp": "92d6f0c91ab45f1cf40cbf3cc8e52d33207c527b1e142b7848caad9a707bc69a"
+      }
+    }
   },
   {
     "id": "listening-v1",
@@ -893,14 +1053,24 @@
       "dea7ed2af93a1245320abb0f4fb818ad97d75cebc6ef241177d3482e6b377610"
     ],
     "files": {
-      "listening-v1-atlas.webp": "0969c8b7cd865839052707be5ea73b9ea0a620d6e85e73b82c77efe57045a0c5",
-      "listening-v1.webp": "e894eeeabb04d4231fdeedbd1bf0ef4b24f531503de95606ee47e4e20c603723",
-      "listening-v1-poster.webp": "39fab7e3afa811849605a9e7e468609ace1d194047222858b2fa78e290c79f05"
+      "listening-v1-atlas.webp": "26a1e1df0bc6baad738a94173557634e773d85aef9c123fe0688d08e210d81a8",
+      "listening-v1.webp": "f5263948b2f2ff378f8bdd0364d10adfe77f98e91310a16c2abf5f6d8f9ce80a",
+      "listening-v1-poster.webp": "a6129a0d9b071ce30965367f98b840b9f6d81ff8da9c0c2921e31fe28568d66d"
     },
     "warnings": [
       "frame 36: 42 opaque pixels touch the source boundary"
     ],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "listening-v1-atlas.webp": "0969c8b7cd865839052707be5ea73b9ea0a620d6e85e73b82c77efe57045a0c5",
+        "listening-v1.webp": "e894eeeabb04d4231fdeedbd1bf0ef4b24f531503de95606ee47e4e20c603723",
+        "listening-v1-poster.webp": "39fab7e3afa811849605a9e7e468609ace1d194047222858b2fa78e290c79f05"
+      }
+    }
   },
   {
     "id": "listening-v2",
@@ -948,15 +1118,25 @@
       "9eb37391639fd68be7f7466d32ffc8e043cb1add083a153421064bbea8a26e1c"
     ],
     "files": {
-      "listening-v2-atlas.webp": "55fc145e174aba3c30d129eb5fdeb57dd9e26fc2d1221241e8034be2b80eb1c0",
-      "listening-v2.webp": "896d0cf0e02bcdd543db64ed7f3d50aee9d3f4b1644694b5c4beb495275b611f",
-      "listening-v2-poster.webp": "2d24428db4c44d4f8deb97e540ec6e3495a6177ca95fa7f95fbc6fb6d7c152a1"
+      "listening-v2-atlas.webp": "c075da5cc0d3ff3f22ecbd0cf22a1950a37c96737e777c408296773dacfe07f8",
+      "listening-v2.webp": "ab3ff93f844546aebce458f4a29ef327e3f98513994a8fdca9d73b2c096fb406",
+      "listening-v2-poster.webp": "7410e0cf79a4c297def25f00bb70af524ff6d03b4871fac9c39f6ec989133862"
     },
     "warnings": [
       "frame 18: 35 opaque pixels touch the source boundary",
       "frame 24: 27 opaque pixels touch the source boundary"
     ],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "listening-v2-atlas.webp": "55fc145e174aba3c30d129eb5fdeb57dd9e26fc2d1221241e8034be2b80eb1c0",
+        "listening-v2.webp": "896d0cf0e02bcdd543db64ed7f3d50aee9d3f4b1644694b5c4beb495275b611f",
+        "listening-v2-poster.webp": "2d24428db4c44d4f8deb97e540ec6e3495a6177ca95fa7f95fbc6fb6d7c152a1"
+      }
+    }
   },
   {
     "id": "notification-v1",
@@ -1004,12 +1184,22 @@
       "522f6e529fc2772fa032b9bede9fd73ef41bce80a836f0f9724d33b61f63bb3e"
     ],
     "files": {
-      "notification-v1-atlas.webp": "d8154b76f9cc7cfe434e210240a02ef5db6a2856a502878e055d16bd930d1a9d",
-      "notification-v1.webp": "13a9eb7e3eb14fa65e23f8764947b68e46a55cb01da6193b23648aa171411452",
-      "notification-v1-poster.webp": "3b976570ee94abb750acf6e7765499b0c3ccca22639c9386f80be3b809715b95"
+      "notification-v1-atlas.webp": "4aedd2514480f423052e673c48f5a8118122079fcac7f7ce2e14df5f93437ae3",
+      "notification-v1.webp": "2e5c23c420055dabdabcd597e05893eb4a20780b933815bf06bbb929d2deb17e",
+      "notification-v1-poster.webp": "52e899e3d3a1cfb8a048802d714e630d167872b74b9df7a710c341fa117988fd"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "notification-v1-atlas.webp": "d8154b76f9cc7cfe434e210240a02ef5db6a2856a502878e055d16bd930d1a9d",
+        "notification-v1.webp": "13a9eb7e3eb14fa65e23f8764947b68e46a55cb01da6193b23648aa171411452",
+        "notification-v1-poster.webp": "3b976570ee94abb750acf6e7765499b0c3ccca22639c9386f80be3b809715b95"
+      }
+    }
   },
   {
     "id": "notification-v2",
@@ -1057,12 +1247,22 @@
       "d061486584dce105ab96d6abf913b3278a62ff177738a243c69ad89129fe546c"
     ],
     "files": {
-      "notification-v2-atlas.webp": "5d1c6a63c1fd2352ee975e8f00975b913fec1d0e24938c518b65a6e7c61f19a1",
-      "notification-v2.webp": "21672bde02a85971ce2e68eb8aa1ed6586cc68b3f908e174f03a1cc3f64b1f81",
-      "notification-v2-poster.webp": "91c24f20f145834fc10cc84d16d1f5899b8b127a832a27d7eeb01437e5e1b3d7"
+      "notification-v2-atlas.webp": "57d1ea2656b4bb7f5409226f108829d0611c7496e1e3f8bed049c89fe93fd8e7",
+      "notification-v2.webp": "7c34f152bd15c7468c3f99d043563f87fbbe2d3a48b5d2a1d6f144f377785fbe",
+      "notification-v2-poster.webp": "83dbdf97a578cf79dfa6c545b24239aa0288b2efed6b9bea6a444705c6ae45d7"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "notification-v2-atlas.webp": "5d1c6a63c1fd2352ee975e8f00975b913fec1d0e24938c518b65a6e7c61f19a1",
+        "notification-v2.webp": "21672bde02a85971ce2e68eb8aa1ed6586cc68b3f908e174f03a1cc3f64b1f81",
+        "notification-v2-poster.webp": "91c24f20f145834fc10cc84d16d1f5899b8b127a832a27d7eeb01437e5e1b3d7"
+      }
+    }
   },
   {
     "id": "paused-v2",
@@ -1110,12 +1310,22 @@
       "800cd4a5094cd71bb368d56d374940869686b6919b48e951014ae8b705006421"
     ],
     "files": {
-      "paused-v2-atlas.webp": "1742d5cab254fd00dec19f3c5860f51fa510e7597200176318b0e169857f4c71",
-      "paused-v2.webp": "beafc367a315ad904e85e2c24734eb3eb814a341b0eedd3ab35667af66c51b1d",
-      "paused-v2-poster.webp": "c7d6fb8070a1abe4d2038be6cdb36aeac01941ee51064ad13773644c433065f8"
+      "paused-v2-atlas.webp": "7773a2a35ec2a1d54fa347f61605e731f88c5ec789e224c9c03d94df4e62f556",
+      "paused-v2.webp": "59e6cd140aad104f121d0cce6c92ca6e15e61ddba066dece6cf07b85d439351f",
+      "paused-v2-poster.webp": "a3a6be750c165bc25dde5ff4655a83ca3adb20b3ce69296b752fd48e0d660fa2"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "paused-v2-atlas.webp": "1742d5cab254fd00dec19f3c5860f51fa510e7597200176318b0e169857f4c71",
+        "paused-v2.webp": "beafc367a315ad904e85e2c24734eb3eb814a341b0eedd3ab35667af66c51b1d",
+        "paused-v2-poster.webp": "c7d6fb8070a1abe4d2038be6cdb36aeac01941ee51064ad13773644c433065f8"
+      }
+    }
   },
   {
     "id": "reading-v1",
@@ -1163,12 +1373,22 @@
       "1f4c576adb251230ee3f4ba205f4ba23b58112ac7ba21384f44625459f89ca3c"
     ],
     "files": {
-      "reading-v1-atlas.webp": "a69874b6ae25529b78cf52b0437c9109f99f6eccd3384c6a4886fd1716d04d3c",
-      "reading-v1.webp": "ade92ef4d6b48ab93b7ae90a1f4ca2909185e249266116a820578dfb8809f11a",
-      "reading-v1-poster.webp": "fa179a98f8737084e1f5344d371bd25320ed69b32d4e8eb67fdba0a99321d16e"
+      "reading-v1-atlas.webp": "6b507f6230677e6f3a55e354727c1204827ca6449a6eea3e9297f4d40afc43be",
+      "reading-v1.webp": "b2f709bf2eae4f004bedb8c52ad9bbfbaa7ec5949bab2a4e840416ce7b44eaee",
+      "reading-v1-poster.webp": "c4a788e42c03b8aece569b07561dd9755100436e00f7809c13eea398c1fb1bcb"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "reading-v1-atlas.webp": "a69874b6ae25529b78cf52b0437c9109f99f6eccd3384c6a4886fd1716d04d3c",
+        "reading-v1.webp": "ade92ef4d6b48ab93b7ae90a1f4ca2909185e249266116a820578dfb8809f11a",
+        "reading-v1-poster.webp": "fa179a98f8737084e1f5344d371bd25320ed69b32d4e8eb67fdba0a99321d16e"
+      }
+    }
   },
   {
     "id": "reading-v2",
@@ -1216,12 +1436,22 @@
       "5fa7065b2eafe53a07f8cc30a1cf116c7402c6fa8a6ce00cefb8fd5e1746d7d3"
     ],
     "files": {
-      "reading-v2-atlas.webp": "af461e95684f0681434c41ed1f85b4563ed916225d9c08c18961189ef30aa613",
-      "reading-v2.webp": "36952493257d66a896d504347c0bf43da16093d76c9ca8fe71c039266c69aee4",
-      "reading-v2-poster.webp": "41337723a44b4d7353e0d7d5d78c3e5afa06d0cba82b6f9787092df6244c0948"
+      "reading-v2-atlas.webp": "5a7c29884aa887a6642628f27560f828a897d89fd361c2eb8973009a5bb63c62",
+      "reading-v2.webp": "f5af19fe0694a63350f2bf13acb5f9ba9406c18099a8d2d800192369ed115465",
+      "reading-v2-poster.webp": "f7a64b87e6df03bfdd4e807708693f80f6acadc8bd3f131d92b82fa960e8d32b"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "reading-v2-atlas.webp": "af461e95684f0681434c41ed1f85b4563ed916225d9c08c18961189ef30aa613",
+        "reading-v2.webp": "36952493257d66a896d504347c0bf43da16093d76c9ca8fe71c039266c69aee4",
+        "reading-v2-poster.webp": "41337723a44b4d7353e0d7d5d78c3e5afa06d0cba82b6f9787092df6244c0948"
+      }
+    }
   },
   {
     "id": "searching-v1",
@@ -1269,12 +1499,22 @@
       "a2b971873b093010c87cc33ae40032723fdee1c8aab923424eaa9c273a69016c"
     ],
     "files": {
-      "searching-v1-atlas.webp": "bbe396b0da8ae202f907fdbf58b7f513a0f9f5eac5c097622b58219c10095606",
-      "searching-v1.webp": "d1f2b0ae67689647531d8cdcfb2d686cb831d2415db85b82da0fb3c8f8c7b8cd",
-      "searching-v1-poster.webp": "5e7f583f7eaf0c651e808ae1e044c70e58b2dd8ca7166d1c491828d5adbf04b9"
+      "searching-v1-atlas.webp": "efa81a344f02a6113344a89e6f51a65607b8e5037b595ff31f7e0640494f33f7",
+      "searching-v1.webp": "ae3b9cc2aa92bb3dc63499992de51f81ab2cb243b20fcc6b79d70d43dd78c7ec",
+      "searching-v1-poster.webp": "806cdaa3ee0289eefe3e75860405f5b161fb90df163d9c1604672c39f4bc9c39"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "searching-v1-atlas.webp": "bbe396b0da8ae202f907fdbf58b7f513a0f9f5eac5c097622b58219c10095606",
+        "searching-v1.webp": "d1f2b0ae67689647531d8cdcfb2d686cb831d2415db85b82da0fb3c8f8c7b8cd",
+        "searching-v1-poster.webp": "5e7f583f7eaf0c651e808ae1e044c70e58b2dd8ca7166d1c491828d5adbf04b9"
+      }
+    }
   },
   {
     "id": "searching-v2",
@@ -1322,12 +1562,22 @@
       "2166c29ff287858df4a13da16e4f38b29d9aafe5b76af2e363fd8eb4025c12cf"
     ],
     "files": {
-      "searching-v2-atlas.webp": "923dc99da6c60c1dbfcfcbc5d6560bc010b82d68b1abbd8148c43fd77b47ec69",
-      "searching-v2.webp": "8c5c3fe234741b41e6531f933dd1078eb97d7cbcab57be22cb02752e36c6c4dd",
-      "searching-v2-poster.webp": "f42fb76b8b118026e31ed9fd69fda08eb195fde423a7060e1c2d02a481ca6da2"
+      "searching-v2-atlas.webp": "93be4638e9e31167b56427988224b39a375797bcf786d9746b6f31146ded60cc",
+      "searching-v2.webp": "611331b5c20864a4aa348902b8998752db4649ea7ce9eef8c0bccf97fb7c10e6",
+      "searching-v2-poster.webp": "8c6d0caf1328a71ddea4ed5d83c6598f85ec1626941b3156124eaed8ef31f37b"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "searching-v2-atlas.webp": "923dc99da6c60c1dbfcfcbc5d6560bc010b82d68b1abbd8148c43fd77b47ec69",
+        "searching-v2.webp": "8c5c3fe234741b41e6531f933dd1078eb97d7cbcab57be22cb02752e36c6c4dd",
+        "searching-v2-poster.webp": "f42fb76b8b118026e31ed9fd69fda08eb195fde423a7060e1c2d02a481ca6da2"
+      }
+    }
   },
   {
     "id": "sleeping-v1",
@@ -1375,12 +1625,22 @@
       "7cfb4d438504acc905bcc18f5900ce368fda61577ba5c0953d9fe4be4104185d"
     ],
     "files": {
-      "sleeping-v1-atlas.webp": "9ae6bf18d2791e012036252d63d70dfdbff61d9b1bb5d25c2333a853e6233c32",
-      "sleeping-v1.webp": "6d771806198d2178d7bb3dcc1bb9d0027628136344fbe69e3dc2630b061265c9",
-      "sleeping-v1-poster.webp": "2e103aecbb431d740645f11824a3233d572e1231a1059483a82bd8085390a4a3"
+      "sleeping-v1-atlas.webp": "afb477d0dfaafe4a1f11595cc1e206c9729c311d601868d73fb91a8115a4bbe3",
+      "sleeping-v1.webp": "58c75ac9738ff730f714e4f189dd1f33e7fe9d9ea64aed39160d806c23f0a51c",
+      "sleeping-v1-poster.webp": "f477623e84db082ddb08875b5458458903e2d386c9c244f4701f5c32a027651f"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "sleeping-v1-atlas.webp": "9ae6bf18d2791e012036252d63d70dfdbff61d9b1bb5d25c2333a853e6233c32",
+        "sleeping-v1.webp": "6d771806198d2178d7bb3dcc1bb9d0027628136344fbe69e3dc2630b061265c9",
+        "sleeping-v1-poster.webp": "2e103aecbb431d740645f11824a3233d572e1231a1059483a82bd8085390a4a3"
+      }
+    }
   },
   {
     "id": "sleeping-v3",
@@ -1428,12 +1688,22 @@
       "b940d59a124a8617981b5eb5536020d62b35c514ac9f9c2e09c9069dab27eac7"
     ],
     "files": {
-      "sleeping-v3-atlas.webp": "ebf341dd97912a2a235372af796d53702eb3f9894a14094e8ca1f0843337f651",
-      "sleeping-v3.webp": "6c2f253481361a9b4943470968f3780ac6fe97b64356960a9c65c18f1d9126d0",
-      "sleeping-v3-poster.webp": "d571fd4bcdcf08890681bb772b88dbb58498885cbb8313d892a74d574d19136a"
+      "sleeping-v3-atlas.webp": "14c9e1a12c58be208da52edb136f9647ec9fd0298d3cabe05fff2d6a7ac500ee",
+      "sleeping-v3.webp": "cf42c88f1b226db5aa1bd15ca1e78b87924dae242c782585004ee483a3d0a6f9",
+      "sleeping-v3-poster.webp": "cfc359d57fbea3dae022d03f7f141836da440ac8ec89616a057c9a2f8be2465a"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "sleeping-v3-atlas.webp": "ebf341dd97912a2a235372af796d53702eb3f9894a14094e8ca1f0843337f651",
+        "sleeping-v3.webp": "6c2f253481361a9b4943470968f3780ac6fe97b64356960a9c65c18f1d9126d0",
+        "sleeping-v3-poster.webp": "d571fd4bcdcf08890681bb772b88dbb58498885cbb8313d892a74d574d19136a"
+      }
+    }
   },
   {
     "id": "speaking-v1",
@@ -1481,12 +1751,22 @@
       "9faa0ffd281aadf395f9f40d4239fdbcae7fe9f7d48a89aac77a39cd5a97f2e2"
     ],
     "files": {
-      "speaking-v1-atlas.webp": "5a5a3a0c3903a176760ed3293b291144c22a7ecc69995e3195357f8a19a0fa79",
-      "speaking-v1.webp": "204d7f39c91372ef40267e63e87008be096a140d101ea5a571e0cc7b0474a480",
-      "speaking-v1-poster.webp": "57004206a58e23dde319f872e3c8542c51ef1552e960b801465395b899b04809"
+      "speaking-v1-atlas.webp": "8b4559af422639949cf3c8c131b1f10a44bce096cea7bec80d26b57250992552",
+      "speaking-v1.webp": "e33263d89172f2bb4334421c4692e57698c1ba083aed85703263372c76ec53b8",
+      "speaking-v1-poster.webp": "d0d3a26f5803e7d9c2703c962ab12a274dd02801bb8d5107d15441e03e0de6e0"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "speaking-v1-atlas.webp": "5a5a3a0c3903a176760ed3293b291144c22a7ecc69995e3195357f8a19a0fa79",
+        "speaking-v1.webp": "204d7f39c91372ef40267e63e87008be096a140d101ea5a571e0cc7b0474a480",
+        "speaking-v1-poster.webp": "57004206a58e23dde319f872e3c8542c51ef1552e960b801465395b899b04809"
+      }
+    }
   },
   {
     "id": "speaking-v2",
@@ -1534,12 +1814,22 @@
       "0363d2be5c6f064a64d25c6c28aada59aee430b11e7e8dc3a28fd160dbf160dc"
     ],
     "files": {
-      "speaking-v2-atlas.webp": "85acce949064e144eb8d87244e1c773d2ebe33ae5b5a3ee25693932206ae77dd",
-      "speaking-v2.webp": "914c069d467996e0d2f089b97a115f1bb3158b80742098d58a181fdb12169235",
-      "speaking-v2-poster.webp": "12546e24e8722b8f1d92f0c64ba579cd03106db726b05e8d486166a1bdddd45b"
+      "speaking-v2-atlas.webp": "2385b29f0199b80943a7ef2566f97d3a27884b400079c853830c8a5f082a0c36",
+      "speaking-v2.webp": "bf86a4c264b465066be5166ec33cc3305880699ac63281f423a4e1be5cefcc86",
+      "speaking-v2-poster.webp": "845b16ccfefce1299bb69342518e27bb01baab2b642ccde25563e16071ed262c"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "speaking-v2-atlas.webp": "85acce949064e144eb8d87244e1c773d2ebe33ae5b5a3ee25693932206ae77dd",
+        "speaking-v2.webp": "914c069d467996e0d2f089b97a115f1bb3158b80742098d58a181fdb12169235",
+        "speaking-v2-poster.webp": "12546e24e8722b8f1d92f0c64ba579cd03106db726b05e8d486166a1bdddd45b"
+      }
+    }
   },
   {
     "id": "thinking-v1",
@@ -1587,12 +1877,22 @@
       "4e8170b4a7132fc1e0696d0d5d874065623e0771cd79dbdc92bae3436ff0a1c7"
     ],
     "files": {
-      "thinking-v1-atlas.webp": "fc83fc9f7525e9088d4f80b4abb8cc20cfe7461758f0343a4f254567da6c7a95",
-      "thinking-v1.webp": "f7ae12566b3870cd01c33febc18730ff1d0df9e0f9ca366224bb40c3a90b5ad1",
-      "thinking-v1-poster.webp": "ac3e558018c3185b161a9b51b370b837e2fe0c19e7f3641ff85a982a8fbf3e90"
+      "thinking-v1-atlas.webp": "bdb3504683a09c0297a153bd4a21c1ece3f6146040d7791b6ef39a9502766a00",
+      "thinking-v1.webp": "20b06ae8c93433377f85818dd3c9848748c1bab61002f12c940e084052f7e306",
+      "thinking-v1-poster.webp": "e933d36c86afce2d48b37cd3b6178ff1726e50c7ff6b746a6c35063c6decf22b"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "thinking-v1-atlas.webp": "fc83fc9f7525e9088d4f80b4abb8cc20cfe7461758f0343a4f254567da6c7a95",
+        "thinking-v1.webp": "f7ae12566b3870cd01c33febc18730ff1d0df9e0f9ca366224bb40c3a90b5ad1",
+        "thinking-v1-poster.webp": "ac3e558018c3185b161a9b51b370b837e2fe0c19e7f3641ff85a982a8fbf3e90"
+      }
+    }
   },
   {
     "id": "thinking-v2",
@@ -1640,12 +1940,22 @@
       "093bc47349db2a3f2436f8a450b1d03d1c4edaaa0cddcbad3a8a943dacb3b539"
     ],
     "files": {
-      "thinking-v2-atlas.webp": "b9f35995dd3f704e2b68355faeb72e2f160cd844aee8119dc506dd97e44e4115",
-      "thinking-v2.webp": "90b6be5d0d1f71cf61042c9c40f086beee93471a023986b2ef9f4d3aa33f7b48",
-      "thinking-v2-poster.webp": "e23c31e1b86fcba8fc3cb5dbbe8a8e6a17486ef6f92a0b5860b89a47a46fd3a5"
+      "thinking-v2-atlas.webp": "a9e2df884534b67724a6e1231f79b7c3212ffceb426c01f3e9ec7b8c89d174e5",
+      "thinking-v2.webp": "3e052802ee9e849a74dc0fb3ca8a68082c7b0dc1535ee0a9f7f5d6c931023d22",
+      "thinking-v2-poster.webp": "a9efee8045c3b8656a10226b53e9bb485f730aabc75c97132f2a5a5b2d5ec6c3"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "thinking-v2-atlas.webp": "b9f35995dd3f704e2b68355faeb72e2f160cd844aee8119dc506dd97e44e4115",
+        "thinking-v2.webp": "90b6be5d0d1f71cf61042c9c40f086beee93471a023986b2ef9f4d3aa33f7b48",
+        "thinking-v2-poster.webp": "e23c31e1b86fcba8fc3cb5dbbe8a8e6a17486ef6f92a0b5860b89a47a46fd3a5"
+      }
+    }
   },
   {
     "id": "thinking-v3",
@@ -1693,12 +2003,22 @@
       "85c06d363d084d9c124f5e2840c40939b2bfcfd5d728944295eb3dca3d1596df"
     ],
     "files": {
-      "thinking-v3-atlas.webp": "833590631f6af17f2054cb0431b54d2ecbfcd5ff05958e319fe19b99d6203390",
-      "thinking-v3.webp": "959a40cb28b2c2d58b76fa5d10c503580ebbde56e71d8ee9018d7aa9c3793f44",
-      "thinking-v3-poster.webp": "606800b7cc61c4eda15d68b2c099ab076a10769e18d33a42da20c6dab9f9471d"
+      "thinking-v3-atlas.webp": "3a23710c38cdc319231cd4b50f96d3890e6f2556114b6e0b7e55db5d481aab79",
+      "thinking-v3.webp": "079ca698986fbd7b7632a0766368239d5e4569b112d7b89ec8ddf3f93f1d89d2",
+      "thinking-v3-poster.webp": "e8e13a953e4db8b688b9f7e88f796616249deab9dacf12abe829001ef03ffb20"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "thinking-v3-atlas.webp": "833590631f6af17f2054cb0431b54d2ecbfcd5ff05958e319fe19b99d6203390",
+        "thinking-v3.webp": "959a40cb28b2c2d58b76fa5d10c503580ebbde56e71d8ee9018d7aa9c3793f44",
+        "thinking-v3-poster.webp": "606800b7cc61c4eda15d68b2c099ab076a10769e18d33a42da20c6dab9f9471d"
+      }
+    }
   },
   {
     "id": "waiting-v1",
@@ -1746,12 +2066,22 @@
       "82ab9bb0d188122c845916053696357ac73c1ca310a2243c0c4edb8e22206c84"
     ],
     "files": {
-      "waiting-v1-atlas.webp": "6e90437db8b08bc4fce8ac3125d0e6cc069c4dc960777a7858ae8df8810f23e4",
-      "waiting-v1.webp": "35871730f452e71e44b7147bba01b073d7b8e2b64d19f0525ddfdc95fd5bd5e6",
-      "waiting-v1-poster.webp": "430730d3b9cc528f2ee6a8fb85b3e596bb90aebb1bab3f60cd97d43af8171e52"
+      "waiting-v1-atlas.webp": "e615748183e77725f16cee1bd7c2e4713030cfef820f74dd1e55a1fc658a7efe",
+      "waiting-v1.webp": "0c72a612af414dc8543a04c9dbe2e0e4326c2c1271c248c64db8d6c739011bba",
+      "waiting-v1-poster.webp": "40eb30a31acfc7c06b6ecd5bdf53e9b16a002f61b254a64a1dbd8b8add016608"
     },
     "warnings": [],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "waiting-v1-atlas.webp": "6e90437db8b08bc4fce8ac3125d0e6cc069c4dc960777a7858ae8df8810f23e4",
+        "waiting-v1.webp": "35871730f452e71e44b7147bba01b073d7b8e2b64d19f0525ddfdc95fd5bd5e6",
+        "waiting-v1-poster.webp": "430730d3b9cc528f2ee6a8fb85b3e596bb90aebb1bab3f60cd97d43af8171e52"
+      }
+    }
   },
   {
     "id": "waiting-v2",
@@ -1799,15 +2129,25 @@
       "63542804bf958f24b8e313bcd3a85ad2eb6feceb99304ae92fef1bff66c8c88e"
     ],
     "files": {
-      "waiting-v2-atlas.webp": "480afa75c690369a3cbf37a52ee1c65fb5ea93f876c95e2a709e5f18843ae5bc",
-      "waiting-v2.webp": "34a87ca784156ee7a554b94d238b3d0aa6c7427a0eeb130e1c2e67aead77dfa2",
-      "waiting-v2-poster.webp": "6cae18fae6ecfe6568bef02ec05a12dc13d34b4500966063dc5f74b8bf32ebd3"
+      "waiting-v2-atlas.webp": "ab9bc1744430028d90491c0470344795c2bcfa78138ff5c38a02a97fcd7d10d5",
+      "waiting-v2.webp": "463e0eea8534d2402625132e9a0ffad318b9c0e85c814dd02c701540bcb93022",
+      "waiting-v2-poster.webp": "96ca70c54134e20fddf095957379a8841f9a849509794652ee8a6c8f39c56c8a"
     },
     "warnings": [
       "frame 24: 25 opaque pixels touch the source boundary",
       "frame 30: 19 opaque pixels touch the source boundary",
       "frame 36: 18 opaque pixels touch the source boundary"
     ],
-    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration"
+    "extraction": "alpha-connected components; attached antialiasing retained; detached matte speckles discarded; uniform aspect-preserving scale and per-row floor registration",
+    "fileAudit": {
+      "kind": "existing-file-snapshot",
+      "sourceProvenanceVerified": false,
+      "frameMetadataScope": "historical extraction; not revalidated against current files",
+      "previousFiles": {
+        "waiting-v2-atlas.webp": "480afa75c690369a3cbf37a52ee1c65fb5ea93f876c95e2a709e5f18843ae5bc",
+        "waiting-v2.webp": "34a87ca784156ee7a554b94d238b3d0aa6c7427a0eeb130e1c2e67aead77dfa2",
+        "waiting-v2-poster.webp": "6cae18fae6ecfe6568bef02ec05a12dc13d34b4500966063dc5f74b8bf32ebd3"
+      }
+    }
   }
 ]

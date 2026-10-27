@@ -906,6 +906,10 @@
       [
         "node",
         "scripts/test_obj_preview_bounds.cjs"
+      ],
+      [
+        "node",
+        "scripts/avatar_asset_audit.cjs"
       ]
     ],
     "full": [

@@ -275,6 +275,8 @@ async function publish(records, allowPartial) {
     publishedAudit.push({ id, scene, label, sourceSHA256, frameCount, uniqueFrames, frameHashes, files, warnings, extraction });
   }
   await fs.writeFile(path.join(outputDir, 'art-audit.json'), JSON.stringify(publishedAudit, null, 2) + '\n');
+  // A fresh extraction supersedes any prior interpolation publication.
+  await fs.rm(path.join(outputDir,'frame-interpolation-audit.json'),{force:true});
   return { variants: usable.length, scenes: Object.keys(scenes).length };
 }
 

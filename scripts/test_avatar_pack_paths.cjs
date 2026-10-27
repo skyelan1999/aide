@@ -17,10 +17,10 @@ function fixture(script) {
     atlas: 'idle-v1-atlas.webp', animation: 'idle-v1.webp', poster: 'idle-v1-poster.webp', reviewed: true, frameCount: 36};
   const write = (target, value) => fs.writeFileSync(target, JSON.stringify(value));
   const sharp = path.join(root, 'owned-sharp.cjs');fs.writeFileSync(sharp, "module.exports=function(){throw Error('image processor must not run in cached/path-only fixture');};");
-  return {root, input, audit, output, job, record, write, run() {
+  return {root, input, audit, output, job, record, write, run(args=[]) {
     write(path.join(input, 'owned-job.json'), job);write(path.join(audit, 'idle-v1.json'), record);
-    return spawnSync(process.execPath, [path.join(root, 'scripts', script)], {cwd: root, encoding: 'utf8', timeout: 10000,
-      env: {...process.env, AIDE_SHARP_MODULE: sharp}});
+    const result=spawnSync(process.execPath, [path.join(root, 'scripts', script),...args], {cwd: root, encoding: 'utf8', timeout: 10000,
+      env: {...process.env, AIDE_SHARP_MODULE: sharp}});assert.ifError(result.error);return result;
   }, close() {fs.rmSync(root, {recursive: true, force: true});}};
 }
 function scenario(script, callback) {const f = fixture(script);try {callback(f);} finally {f.close();}}
@@ -51,4 +51,14 @@ for (const script of ['pack_avatar_art.cjs', 'pack_avatar_enhanced.cjs']) {
     assert.equal(JSON.parse(fs.readFileSync(path.join(f.audit, 'idle-v1.json'))).label, f.job.label);
   });
 }
+scenario('pack_avatar_enhanced.cjs',f=>{
+  Object.assign(f.record,{usable:true,uniqueFrames:36,frameHashes:Array(36).fill('a'.repeat(64)),columns:6,rows:6,duration:75});
+  f.write(path.join(f.input,'idle-v1.json'),f.job);
+  for(const name of [f.record.atlas,f.record.animation,f.record.poster])fs.writeFileSync(path.join(f.output,name),'owned cached asset '+name);
+  const stale=path.join(f.output,'frame-interpolation-audit.json');fs.writeFileSync(stale,'[{"id":"stale"}]');
+  const result=f.run(['--publish','--allow-partial']);assert.equal(result.status,0,result.stderr);
+  assert.equal(fs.existsSync(stale),false,'fresh publication must remove stale interpolation status');
+  const verified=spawnSync(process.execPath,[path.resolve('scripts/avatar_asset_audit.cjs'),f.output],{encoding:'utf8',timeout:10000});
+  assert.equal(verified.status,0,verified.stderr);
+});
 console.log('PASS both packers reject traversal, external/symlink source, symlink audit/output roots and unknown IDs; valid cached relative artwork remains usable');
