@@ -65,11 +65,15 @@
     "No mainmerge,Release/tag/deploy,productionrestart. Reasonableissuesstayopenpendingmain."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "199": "https://github.com/skyelan1999/aide/issues/199#issuecomment-6446168042",
+      "200": "https://github.com/skyelan1999/aide/issues/200#issuecomment-6446168508"
+    },
+    "remoteCommit": "c864124244943305c62d57b92ddfd469e1166122"
   },
   "sourceSHA256": {
     "docs/architecture/office-viewer.md": "555e59f0ae6b277c83e269df8456d9a5cbc7bce9cbb0ea19014b5356b4f1a318",

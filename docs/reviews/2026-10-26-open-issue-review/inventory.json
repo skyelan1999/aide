@@ -1396,7 +1396,8 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "fe19335011dd72046466a37b300356f9b8d163af",
-      "repairEvidence": "cycle-064.json"
+      "repairEvidence": "cycle-064.json",
+      "repairComment": "https://github.com/skyelan1999/aide/issues/200#issuecomment-6446168508"
     },
     {
       "number": 199,
@@ -1407,7 +1408,8 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "fe19335011dd72046466a37b300356f9b8d163af",
-      "repairEvidence": "cycle-064.json"
+      "repairEvidence": "cycle-064.json",
+      "repairComment": "https://github.com/skyelan1999/aide/issues/199#issuecomment-6446168042"
     },
     {
       "number": 198,
