@@ -929,6 +929,10 @@
       ],
       [
         "node",
+        "scripts/test_drawio_visio_nurbs.cjs"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
       ],

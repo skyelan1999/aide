@@ -12915,12 +12915,20 @@ var com;
                         // row's X,Y cells; the knot vector is the C cell, the formula's
                         // per-point knots, the A cell and the formula's first argument
                         // repeated degree + 1 times.
+                        // Conservative De Boor work units, shared across this edge.
+                        var nurbsWorkRemaining = 250000;
+                        function nurbsLimit() {
+                            var error = new Error('Visio NURBS resource limit exceeded (65536 characters, degree 8, 256 control points)');
+                            error.code = 'AIDE_VISIO_LIMIT';
+                            throw error;
+                        }
                         function nurbsSegsTo(row) {
                             if (row.formulaE == null || row.x == null || row.y == null)
                             {
                                 return false;
                             }
 
+                            if (row.formulaE.length > 65536) nurbsLimit();
                             var eValue = row.formulaE.replace(/NURBS\s*\(/i, '').replace(/\)\s*$/, '');
                             var values = eValue.split(/\s*,\s*/);
 
@@ -12938,6 +12946,16 @@ var com;
                             {
                                 return false;
                             }
+
+                            // Include the current point and the row endpoint. Bound
+                            // work before constructing/evaluating this row's curve.
+                            if (degree > 8 || values.length > 4 + 4 * 254) nurbsLimit();
+                            var controlCount = 2 + Math.floor((values.length - 4) / 4);
+                            var workDegree = Math.min(degree, controlCount - 1);
+                            var work = (1 + 4 * controlCount) * ((workDegree + 1) * (workDegree + 1) +
+                                Math.ceil(Math.log2(controlCount + 1)) + 4) + 4 * (controlCount + workDegree + 1);
+                            if (work > nurbsWorkRemaining) nurbsLimit();
+                            nurbsWorkRemaining -= work;
 
                             // xType/yType 0 = relative (fraction of Width/Height),
                             // otherwise local coordinates in inches

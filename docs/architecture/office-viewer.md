@@ -307,3 +307,12 @@ VSDX/VSSX 共用 `mxVsdxCodec.loadArchive`：压缩输入最多8MiB，JSZip目�
 PolylineTo按顺序索引读取坐标，避免每一对坐标都移动数组剩余内容；不再复制两遍字段数组。公式原文最多262,144个UTF-16代码单元，规范化后最多4,096对坐标（不含独立的末尾终点），超限以 `AIDE_VISIO_LIMIT` 拒绝，发生在写入该行的形状位置之前。正常坐标换算、终点与闭合处理保持既有语义；本轮不改其他几何算法或坐标模式解释。
 
 源码及两份分发包用 `scripts/sync_drawio_visio_polyline.cjs` 同步，工具依赖与Visio压缩包同步脚本一样为外部Terser **5.39.0**；`AIDE_TERSER_MODULE=/path/to/node_modules/terser node scripts/sync_drawio_visio_polyline.cjs --check` 只读核对。单测检查实际前端方法不再反复从数组头部删除，并验证普通路径、限制与精确点数边界。实际浏览器将Visio XML交给行工厂/几何转换，检查超限拒绝、恢复及转换路径的真实Stencil渲染。设置 `AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_POLYLINE_ACCEPTANCE=1` 运行上述浏览器脚本可复跑；这不是包含PolylineTo的真实微软压缩包、复杂坐标语义或所有几何运算的验收。
+
+
+### Visio NURBS 边曲线的计算预算
+
+边转换的NURBSTo公式原文最多65,536个UTF-16代码单元，有效度数最多8，包含当前点和末尾终点在内最多256个控制点；无效公式原有的直线回退保持。完成结构/大小检查后、构建该行控制点及进入De Boor计算前，按最大采样次数、度数、二分查找与遍历开销保守计费。每次 `getControlPoints` 调用共250,000个工作单位，跨同一条边内的NURBS行共享，超过剩余额度以 `AIDE_VISIO_LIMIT` 拒绝；新的边转换重新计费，不把复杂曲线静默截断或降阶。
+
+源码与两份分发包用外部Terser **5.39.0** 和 `scripts/sync_drawio_visio_nurbs.cjs` 同步；`AIDE_TERSER_MODULE=/path/to/node_modules/terser node scripts/sync_drawio_visio_nurbs.cjs --check` 只读验证。生成时捕获分发包的命名空间，避免方法内部同名局部变量干扰。单测检查真实转换方法的普通三次曲线、度数/控制点/公式边界、共享工作预算和独立重试。浏览器结合实际Visio行工厂及 `VsdxShape` 方法转换合成XML行，再以真实图编辑器渲染曲线；设置 `AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_NURBS_ACCEPTANCE=1` 可复跑。
+
+这是单条边的NURBS评估工作预算，不是文件所有几何算法或整个页面的严格耗时/内存上限。高于上述限制的复杂合法曲线也会拒绝；完整工作台、真实微软压缩包、复杂权重/坐标语义及跨平台未在此组件回归中验收。
