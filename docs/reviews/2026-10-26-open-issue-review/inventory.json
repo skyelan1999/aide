@@ -1742,10 +1742,12 @@
       "number": 158,
       "title": "[Bug] Require whole-value matches for research findings",
       "url": "https://github.com/skyelan1999/aide/issues/158",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "recordResearchFinding仅strings.Contains(quote,value)，5匹配150；已有精确quote并非完整numeric/token匹配。",
+      "status": "fixed-on-branch",
+      "evidence": "完整值须同时位于精确引用及原工具结果的数字/标识符边界，阻止150→5及截短引用绕过；保留符号、小数、分组、指数与编号，数学负号/eE明确等价；拒绝修订保留原记录，重叠引用与长周期结果安全搜索。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "4e89c59e92571229cb54cdcd12afe0897a5b9deb",
+      "repairEvidence": "cycle-036.json"
     },
     {
       "number": 157,
@@ -2826,7 +2828,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 193,
+    "remainingFollowupTargets": 192,
     "followupRepairs": [
       48,
       64,
@@ -2903,7 +2905,8 @@
       153,
       155,
       156,
-      157
+      157,
+      158
     ]
   }
 }
