@@ -141,16 +141,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第41轮#167修复与验证完成，等待push评论；下一项168动画空步骤/空action载荷，已读最新正文，尚未读调用链/新增回归/改代码。",
+  "handoff": "第41轮#167已push并评论，累计98项分支覆盖，原272项剩186。Cycle42 #168最新正文与Editor.parseAnimationData/loadFromContext/getStepKey/stepLabel已读：parse只验证steps为数组，null step及fadeTo/flow:null能使渲染崩溃。尚未补回归或改源码；需保留坏数据以便修复而不是静默丢弃，并兼顾page/action模式与播放入口。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "3ac59a5e491eda6f36c9bcf9bacbf9ca68101560",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第40轮#164已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第41轮#167已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -202,13 +202,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 41,
+      "cycle": 42,
       "status": "in_progress",
       "candidates": [
-        167
+        168
       ],
-      "phase": "verified-awaiting-push-and-comment",
-      "observed": "Dialogs.js populateTemplate及app.min.js局部Aa=function(ca,da){var na=new ca.constructor...typeof R==object?Aa(R,da)...}同样缺null处理；自定义aiConfigs可选路径，网络setup错误展示及实际UI入口待验证。"
+      "phase": "latest-body-parser-and-dialog-null-dereference-source-read-awaiting-reproduction",
+      "observed": "parseAnimationData normalize仅校验steps数组；Dialog page模式parse抛错会清空，action模式直接clone初始对象；getStepKey(step)直接索引，stepLabel对fadeTo.value/flow.start未判空。应验证可恢复错误与原数据保留，不静默保存成空。"
     }
   },
   "orderedReview": {

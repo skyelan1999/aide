@@ -80,11 +80,14 @@
     "无常驻测试服务；保留原用户未跟踪文件；只push分支，不合并main/发行/部署，合理issue保持open。下一项168动画step空值，最新正文已读取。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "167": "https://github.com/skyelan1999/aide/issues/167#issuecomment-6431691597"
+    },
+    "verifiedRemoteCommit": "eb5689d3c65fe5c1435c5e8548bdf3018580531a"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "4ecf699af91d3dd090eed1238bceb0a8fbb55785f2630367210b52325cc3dd03",
