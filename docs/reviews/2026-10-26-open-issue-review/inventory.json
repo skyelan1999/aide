@@ -1409,28 +1409,34 @@
       "number": 198,
       "title": "[Bug] BPMN Multiple Start gateway is indexed as multiple end",
       "url": "https://github.com/skyelan1999/aide/issues/198",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-BPMN Multiple Start显式tag multiple end；标题含start仍可补搜索，主要错误end命中。",
+      "status": "fixed-on-branch",
+      "evidence": "Start显式end→start并离开精确end索引桶，End控制保留；原标题补词本可命中，不夸大搜索影响。 三实现明暗22组browser及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "94da7948838d9941ca3273b63abfb9f5830fadcf",
+      "repairEvidence": "cycle-063.json"
     },
     {
       "number": 197,
       "title": "[Bug] BPMN palette registers a blank call choreography template as bzzzzt",
       "url": "https://github.com/skyelan1999/aide/issues/197",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-BPMN同组存在空bg模板名bzzzzt，紧接完整Call Choreography模板，placeholder确实作为entry注册。",
+      "status": "fixed-on-branch",
+      "evidence": "真实空占位0children已移除；保留54Choreography工厂完整字段，两参与方朝向及六变体实际插入渲染。 三实现明暗22组browser及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "94da7948838d9941ca3273b63abfb9f5830fadcf",
+      "repairEvidence": "cycle-063.json"
     },
     {
       "number": 196,
       "title": "[Bug] Azure2 App Space Component palette entry misspells its displayed name",
       "url": "https://github.com/skyelan1999/aide/issues/196",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-Azure2 App_Space_Component asset/tag正确，title Compoment错拼，仅展示缺陷。",
+      "status": "fixed-on-branch",
+      "evidence": "App Space Component标题修正，原资源/查询保留；实际SVG加载/工厂/查询通过。 三实现明暗22组browser及184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "94da7948838d9941ca3273b63abfb9f5830fadcf",
+      "repairEvidence": "cycle-063.json"
     },
     {
       "number": 195,
@@ -2912,7 +2918,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 158,
+    "remainingFollowupTargets": 155,
     "followupRepairs": [
       48,
       64,
@@ -3015,7 +3021,10 @@
       192,
       193,
       194,
-      195
+      195,
+      196,
+      197,
+      198
     ]
   },
   "newlyDiscoveredIssues": [
@@ -3086,7 +3095,7 @@
     "nextOwnerCandidates": [],
     "originalAscendingReviewComplete": true,
     "repairOrderNow": "explicit user > new owner reports > original ascending queue",
-    "original272RemainingFollowup": 158,
+    "original272RemainingFollowup": 155,
     "lastExplicitIssue": 464
   }
 }
