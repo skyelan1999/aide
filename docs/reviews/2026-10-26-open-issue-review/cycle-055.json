@@ -83,11 +83,14 @@
     "Owner369 is an additional report outside original272; coverage116 includes115product/acceptance+1tooling. Original172 remaining unchanged. Next resume182 scoped stash1ae8bb0, after refreshing owner metadata and latest body."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "369": "https://github.com/skyelan1999/aide/issues/369#issuecomment-6436812430"
+    },
+    "remoteCommit": "a7371b25fd19447fbd323a68ad736277025894f7"
   },
   "sourceSHA256": {
     "scripts/update-agent.ps1": "7878ec74e83b6b74a215c32a7fd27d907d5a3e4ebb4321ca9c698e98091a41d2",

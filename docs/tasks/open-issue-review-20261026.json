@@ -170,17 +170,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "55轮369最终验证完成待push；累计116覆盖，原272剩172，额外已确认待修为0（Windows等验收单列）。56轮恢复182 stash1ae8bb0；369原stash a00be49e已恢复并提交，勿再次apply。464按用户等其新log。",
+  "handoff": "55轮369已push/评论，累计116覆盖、原272剩172；当前56轮精确恢复182 stash1ae8bb0并联验新441/168段。369旧stash a00be49e已完成勿再apply；464按用户等新log。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "ace42691040e7d12f0d707eb5601b811f835fa77",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": null
+    "evidenceCommit": "a7371b25fd19447fbd323a68ad736277025894f7"
   },
-  "issue_comments": "55轮369待push回填，合理问题保持open等待native/main验收。",
+  "issue_comments": "55轮369已push并评论 https://github.com/skyelan1999/aide/issues/369#issuecomment-6436812430；保持open等待native/main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -300,9 +300,9 @@
       },
       {
         "issue": 369,
-        "status": "completed-in-cycle55-awaiting-push",
+        "status": "completed-and-pushed-cycle55",
         "stash": "a00be49e3c50c9602cf4b9d655a50b87e49163fe",
-        "published": false,
+        "published": true,
         "countedAsFixed": true,
         "verifiedScope": "19 synthetic-agent cases and6 real PS child cases passed preliminarily; final unsafe-termination edits not rerun. New Go API-message regression is RED; backend prefix not fixed. No final quick/docs/delivery.",
         "evidence": [
