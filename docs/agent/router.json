@@ -937,6 +937,10 @@
       ],
       [
         "node",
+        "scripts/test_drawio_trello_limits.cjs"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
       ],

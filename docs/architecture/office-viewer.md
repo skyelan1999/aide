@@ -325,3 +325,12 @@ XML/rels及媒体的异步读取和转换统一接入错误处理。BMP解码、
 源码与两份分发转换器通过Visio压缩包同步脚本维护。回归使用实际源码/分发BMP解码器和有限合成文件，覆盖坏BMP、多个失败条目、画布异常、同步/异步读取错误、旧空结果回退，以及真实1×1红色BMP的像素与导出。浏览器以真实VSDX/VSSX入口检查错误窗口、关闭、同运行时正常重试及故障注入的画布导出错误；开启 `AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_MEDIA_ACCEPTANCE=1` 可复跑。
 
 这不改变BMP解码器本身的结构校验或新增像素预算，也不代表所有BMP/EMF格式、真实复杂微软文件或后续全部异步页面回调均已验收。验证的正常BMP为1×1、24位；完整工作台及跨平台未验收。
+
+
+### 可选 Trello 附件的字节上限
+
+Trello客户端在上传前按实际附件Blob的 `size` 检查，字符串先按原上传方式构建Blob并复用同一对象提交，Blob/File保留原对象。中文、emoji等UTF-8字节和PNG导出的Blob都经过相同检查；错误提示使用附件本体字节数。现有边界不变：达到10,000,000字节即拒绝，不包含multipart表单的其他字段。该上限属于可选Trello附件，不改变通用文件传输限制。
+
+源码 `TrelloClient.js` 与 `app.min.js` 的writeFile用外部Terser **5.39.0** 和 `scripts/sync_drawio_trello_limits.cjs` 同步，`--check` 只读核对。VM回归用较小的16字节配置检查Blob、File、中文、emoji、ASCII及精确边界；浏览器检查原10,000,000字节配置、真实Blob/FormData、PNG插入/保存的超限路径和错误窗口。
+
+AIDE默认嵌入页会清理并禁用Trello客户端，默认工作台入口未启用该集成。浏览器回归在App初始化清理前捕获真实分发构造器，与源码方法一起进行隔离测试，并断言全局客户端仍为空；授权与XHR使用mock，未读取真实账号凭据或上传至Trello。设置 `AIDE_DRAWIO_TRELLO_ACCEPTANCE=1` 可复跑；它不是完整工作台、真实Trello账户、PNG真实生成或云端上传验收。
