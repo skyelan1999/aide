@@ -918,6 +918,21 @@
       [
         "node",
         "scripts/test_drawio_animation_validation.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/diagramly/Extensions.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/extensions.min.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/integrate.min.js"
       ]
     ],
     "full": [

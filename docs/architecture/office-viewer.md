@@ -264,3 +264,10 @@ draw.io源码及本地打包文件同步维护以下交互修正：复制自定�
 动画源码与分发包的校验、播放器和窗口函数通过 `scripts/sync_drawio_animation.cjs` 同步。维护时在独立工具目录安装Terser **5.39.0**，设置 `AIDE_TERSER_MODULE=/path/to/node_modules/terser`，运行 `node scripts/sync_drawio_animation.cjs`；追加 `--check` 只读确认一致。脚本不安装依赖、不联网，也不改变产品运行时依赖。
 
 源码/打包版回归与实际窗口验证覆盖空步骤/空载荷、嵌套错误、遍历边界、保留原值、删除与文本修正、自动保存保护及播放前拒绝。桌面明色和390px暗色功能验收通过；窄屏页脚保存按钮裁切另登记为[#441](https://github.com/skyelan1999/aide/issues/441)，未在此轮混改布局。浏览器同时回归上轮AI模板及已有预览门禁，全程为合成数据和模拟响应。
+
+
+### Lucidchart EI 消息文字样式
+
+Lucidchart 的 `EIMessageBlock` 和 `EIMessageHistoryBlock` 导入时，把每个 `message_N` 的标签样式追加到对应子单元格，保留各自字号、颜色与粗斜体；已有历史头部 `message_0` 保持原处理。源码 `Extensions.js` 与生产动态加载的 `extensions.min.js`、集成版本 `integrate.min.js` 同步修正，主 `app.min.js` 不包含这份转换器。
+
+浏览器回归使用实际 `convertLucidChart` / `LucidImporter.importState`、图模型与文本渲染器，分别预载三份文件中的完整 LucidImporter 代码段，验证四条不同格式消息及已有正确头部。模拟输入在桌面明色和窄屏暗色下验证；这不替代真实Lucidchart文件/账号、完整文件选择交互或离线自动加载的验收。

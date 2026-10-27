@@ -10537,7 +10537,7 @@ LucidImporter = {};
 					{
 						case 'EIMessageBlock' :
 							item2[i].value = convertText(p['message_' + (i + 1)]);
-							item2.style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
+							item2[i].style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
 							break;
 						case 'EICommandMessageBlock' :
 							item2[i].value = 'C';
@@ -10985,7 +10985,7 @@ LucidImporter = {};
 						item2[i] = new mxCell('', new mxGeometry(w - 20, currY, 20, 20), 'part=1;');
 					item2[i].vertex = true;
 					item2[i].value = convertText(p['message_' + (i + 1)]);
-					item2.style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
+					item2[i].style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
 					v.insert(item2[i]);
 					
 					item2[i].style += addAllStyles(item2[i].style, p, a, item2[i], isLastLblHTML);
