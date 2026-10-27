@@ -121,11 +121,14 @@
     "Docker orphan/CAD warning and global resource budgets were not grounds to delete containers or alter user settings."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "464": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6435428813"
+    },
+    "remoteCommit": "df370b9dce3a30de3ac24f4c4ac342fbdefeb37b"
   },
   "sourceSHA256": {
     "AGENTS.md": "fb8c960ff62e2134dd9d002eea6d01f76f9f1653beb071c856253dffeb7861ce",
