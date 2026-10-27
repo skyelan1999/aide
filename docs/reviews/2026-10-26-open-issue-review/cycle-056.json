@@ -1,6 +1,6 @@
 {
   "cycle": 56,
-  "baseline": "451b8c8e",
+  "baseline": "451b8c8e141f08f8f6e4b54c79c9e6c0cd825672",
   "branch": "codex/open-issue-review-20261026",
   "issues": [
     182
@@ -81,11 +81,14 @@
     "Original272 remaining172→171; aggregate117 includes116product/acceptance+1prior tooling. Next183 latest body read; verify actual AWS SDK glyph intent/available stencils before accepting the static wrong-icon claim."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "182": "https://github.com/skyelan1999/aide/issues/182#issuecomment-6437486892"
+    },
+    "remoteCommit": "9518dd990c68e320e976e824d950dad027dec825"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "adef1ae0780d7c35c02d357baf37701843951c9f2aad5f6cc55f1a8d712d2187",
