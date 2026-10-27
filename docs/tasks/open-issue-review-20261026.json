@@ -146,17 +146,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第46轮177已提交验收，待push评论；累计108覆盖、原272剩176，额外441待后续。下一178/179最新正文已读但未改代码或新增回归。",
+  "handoff": "第46轮177已push并评论；累计108覆盖，原272剩176，额外441待后续。第47轮178/179最新正文已读，尚未新增回归或改代码。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "df3533b25b9addf7beeebcf01ff700ad25e6b3c4",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "9494bef7c2a71472c78c2f8a1417518c2ccf1b4e"
+    "evidenceCommit": "83b71a0c77398c766fd408494bd3dac293536064"
   },
-  "issue_comments": "第45轮176已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第46轮177已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -209,13 +209,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 46,
+      "cycle": 47,
       "status": "in_progress",
       "candidates": [
-        177
+        178
       ],
-      "phase": "verified-awaiting-push-and-comments",
-      "observed": "PolylineTo.handle通过splice(0,1)反复移除坐标项，需改为线性索引并限制公式/点数；与176解压预算不同。"
+      "phase": "latest-body-read-awaiting-regression",
+      "observed": "178 NURBSTo高阶De Boor评估缺少公式/度数/控制点/工作量上限，需先有限复现。179 malformed BMP异步转换会丢失完成回调，正文已读但尚未实现。"
     },
     "additionalFollowupIssues": [
       441
