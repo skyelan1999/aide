@@ -1679,10 +1679,12 @@
       "number": 168,
       "title": "[P2] Validate animation step entries before rendering",
       "url": "https://github.com/skyelan1999/aide/issues/168",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Editor.parseAnimationData只保证steps数组，Dialogs.getStepKey直接访问null step，fadeTo null也直接解引用。",
+      "status": "fixed-on-branch",
+      "evidence": "动画解析校验步骤/已知动作载荷及嵌套结构，错误携带原数据；页面/链接编辑器显示可删除错误行或编辑文本修正，无效时阻止保存、预览和关闭自动保存并保留窗口草稿。播放器构造/播放前验证，源码/分发包确定性同步，实际浏览器恢复和既有功能22项通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "bda7084ec15ca3b04379f3b777f12d227fb350f2",
+      "repairEvidence": "cycle-042.json"
     },
     {
       "number": 167,
@@ -2840,7 +2842,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 186,
+    "remainingFollowupTargets": 185,
     "followupRepairs": [
       48,
       64,
@@ -2924,7 +2926,20 @@
       162,
       163,
       164,
-      167
+      167,
+      168
     ]
-  }
+  },
+  "newlyDiscoveredIssues": [
+    {
+      "number": 441,
+      "title": "[P3] Keep animation footer actions visible at narrow widths",
+      "url": "https://github.com/skyelan1999/aide/issues/441",
+      "status": "confirmed-awaiting-repair",
+      "discoveredDuringCycle": 42,
+      "original272": false,
+      "evidence": "真实bundled动画窗口390px视口、370px窗口，页脚Save右缘裁切；无wrap的flex布局及overflow hidden，查重无匹配；未混入168校验修复。",
+      "browserEvidence": "/workspace/scratch/issue-review-20261026/cycle42-browser-final/dark-animation-invalid.png"
+    }
+  ]
 }
