@@ -1,0 +1,100 @@
+{
+  "cycle": 35,
+  "baseline": "07eb2fbe169f77fa1309f6e6f45acf6bb701f3e3",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    157
+  ],
+  "commits": {
+    "157": "340ae6cb0b2dd67f8710280fc77243defe6d32eb"
+  },
+  "cumulativeProductFixes": 90,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 91,
+  "original272RemainingFollowup": 193,
+  "red": [
+    {
+      "issue": 157,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue157' -count=1 -v -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 2.014,
+      "observed": "隔离宿主夹具真实触发：list_files第35次目录替换读出未绑定兄弟目录条目；审批返回200/applied:true且写到重定向兄弟目录。初版使用pwFixture的日志实际全SKIP，不算复现。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle35-157-host-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue157|^TestIssue146|^TestIssue147|^TestRead|^TestR03|^TestDocumentProposal|^TestSourceProposalVisibilityAndWriteLocks$|^TestSourceProposalRejectsLockedCreation$|^TestApproval|^TestRemembered|^TestGlobalApproval|^TestMarkdownHistory|^TestMarkdownRestore|^TestHistoryObject|^TestAssistantDelivery|^Test.*FileApplication' -count=1 -v -timeout=5m",
+      "result": "PASS",
+      "durationSeconds": 58.328,
+      "scope": "5000次实际read_file/分行/list_files与外部目录替换并发无兄弟目录泄露，恢复后合法读取；captured/legacy/mixed提案拒绝重定向且修复目录后可应用；序列化标记、当前PW移除仍约束、旧Current=end兼容；固定目录/原始字节/UTF-16 JSON/叶链接/新建目录/权限与工具限制/审批指纹/旧提案读回；既有文件读写、审批/记忆、混合文档/历史/交付与147策略安全打开。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle35-final-race.log"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T000529269599Z.log",
+      "fingerprint": "2e2617d4293028bdec6da0c6bb4fda08870819775440d39ab5eaefdaa2b84287"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1468links"
+    }
+  ],
+  "environmentLimitedRuns": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue157|^TestIssue146|^TestIssue147|^TestRead|^TestR03|^TestDocumentProposal|^TestSourceProposal|^TestApproval|^TestRemembered|^TestGlobalApproval|^TestMarkdownHistory|^TestMarkdownRestore|^TestHistoryObject|^TestAssistantDelivery' -count=1 -v -timeout=5m",
+      "result": "FAIL_ENVIRONMENT",
+      "durationSeconds": 58.038,
+      "observed": "仅TestSourceProposalIndependentSFTP失败：SSH 本地配置目录不可用: mkdir /home/aide: permission denied。真实SSH目录未创建/更改；该独立远程用例在最终本地目标列表中明确排除，其他来源可见性/写锁用例保留。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle35-broad-race-environment-failure.log"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "SKIP",
+      "scope": "首轮使用pwFixture时缺少PW_TEST_RUNTIME_DIR，两个新测试实际被跳过，非PASS验收；后改用只启用宿主合同的单元夹具（断言pwAvailable=false），没有执行/伪造商业运行时或改签名门禁。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle35-157-preflight.log"
+    },
+    {
+      "result": "SKIP",
+      "scope": "最终相关用例TestAssistantDeliveryBrowserFixture未启用，TestIssue146CaseAliasesAreNotNewPaths在大小写敏感卷跳过。完整工作台、商业引擎、Windows/macOS、真实SSH仍NOT_RUN。"
+    }
+  ],
+  "notes": [
+    "文件绑定的实际读/列举/审批写入改为逐组件固定目录句柄并核对身份，普通文件非阻塞验证打开，目录项元数据由固定目录Lstat快照。约束随提案NoSymlinks持久化并纳入审批指纹；人工/记忆/混合文档/读回共用约束，旧提案按保存的可写绑定保守恢复，节点结束后仍有效。",
+    "对全路径先Lstat后统一Root.Open仍有检查/使用间隙；现在每级打开相对固定父目录、比较前后Lstat与打开句柄身份，后续不重新解析可变父路径。叶普通文件复用已有非阻塞身份验证打开。目录Info原始路径重解析也用相对固定目录Lstat快照规避。",
+    "write_file当前生成提案，不是直接写入；真实审批applyTaskGuarded/混合document目标也做安全打开。新提案由宿主捕获根约束，模型输入不决定NoSymlinks，约束纳入审批载荷；正常无绑定读写保留既有工作区内链接行为（单元验证）。",
+    "旧提案无标记时按任务保存的工作流定义中任一匹配可写绑定保守约束，可能对重叠的旧混合节点提案施加更严格规则。审批和已应用结果读回均不依赖当前节点仍在运行。",
+    "固定目录是操作时取得的目录能力，不提供绑定内容的不可变快照或外部进程写协调。逐文件原子替换不保证多文件事务；可变工作区中其他进程仍能修改绑定目录内内容。",
+    "新测试仅是Aide公共宿主的文件访问与审批单元测试，未读取商业代码/签名私钥/私有安装包，商业运行时原签名门禁未改。NoSymlinks变更为公开宿主提案元数据，无UI新控件。",
+    "初版编译将标准库适配器误写为os.FileInfoToDirEntry，已改为io/fs.FileInfoToDirEntry；随后宿主扩展回归7.055s通过。最终再补旧提案读回并通过上述58.328s关联回归。",
+    "独立SFTP用例在进入远程读写前由既有/home/aide权限保护阻挡；未为消除测试错误修改用户SSH目录或弱化校验，保留阻塞。",
+    "无常驻测试服务；保留原用户未跟踪文件。只push修复分支、不合并main/发行/部署，合理issue保持open。下一项#158研究记录数值边界。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/architecture.md": "e1e1fb853fef3147365a553d902ec748286acb5ca83e865cab16eabeb252ba01",
+    "docs/architecture/workflow-file-bindings.md": "1ea5f73702f7d54eb1471b6af949db0e8e255c15a07e332c9adf02e4a66229cb",
+    "internal/server/approval_file_result.go": "47a0a23af15093dcd8b499ae5751b83c78799b0833c4e7df14e6db767aa82394",
+    "internal/server/approval_policy.go": "3745e35b9eebc9393d14eb70bf3f6c868d2109a7318a2cc89d9589a5f5858616",
+    "internal/server/document_proposals.go": "11852667cb2f63f007e0007401df93d49ca41b12fb5d04261b679def2f84a417",
+    "internal/server/files.go": "52f48557fc400a417e0759019b641df4fa7ce28be4da95d23a43b3eb8837bc41",
+    "internal/server/professional_workflow_bindings.go": "163d0e0b8e30a7fd327efa45d9ba6a4e8384337ebe0ed5afa66b965aed940492",
+    "internal/server/task_delivery.go": "0a3e5e37612768045ff10c3f3d5fe08bf0b10552809af60ac16424d9230ce39f",
+    "internal/server/workflow.go": "5b0f13bd085969baefe8f84de9b995140c90d7bb1c5480ad0feef4e2ee6ae51e",
+    "internal/server/workflow_binding_race_test.go": "95a3c1b8ef1f74c4d73ed2792f713c3ef3bfb78ade93d768e550a00d16a526e7",
+    "internal/server/workflow_bound_files.go": "560926f4179434be55a5dbf80c3f9e3361321bc86885f019a205b44466fd5603"
+  }
+}

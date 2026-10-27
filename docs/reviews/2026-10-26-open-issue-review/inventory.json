@@ -1751,10 +1751,13 @@
       "number": 157,
       "title": "[Security] Enforce workflow file bindings during filesystem access",
       "url": "https://github.com/skyelan1999/aide/issues/157",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "pwBindingToolError单独Lstat检查后再dispatcher执行Root.Open/Rename，存在可变父路径的check/use窗口；os.Root仍阻止越工作区，节点绑定竞态须定向复现。",
+      "status": "fixed-on-branch",
+      "evidence": "文件绑定的实际读/列举/审批写入改为逐组件固定目录句柄并核对身份，普通文件非阻塞验证打开，目录项元数据由固定目录Lstat快照。约束随提案NoSymlinks持久化并纳入审批指纹；人工/记忆/混合文档/读回共用约束，旧提案按保存的可写绑定保守恢复，节点结束后仍有效。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "reviewEvidence": "pwBindingToolError单独Lstat检查后再dispatcher执行Root.Open/Rename，存在可变父路径的check/use窗口；os.Root仍阻止越工作区，节点绑定竞态须定向复现。",
+      "repairCommit": "340ae6cb0b2dd67f8710280fc77243defe6d32eb",
+      "repairEvidence": "cycle-035.json"
     },
     {
       "number": 156,
@@ -2823,7 +2826,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 194,
+    "remainingFollowupTargets": 193,
     "followupRepairs": [
       48,
       64,
@@ -2899,7 +2902,8 @@
       152,
       153,
       155,
-      156
+      156,
+      157
     ]
   }
 }
