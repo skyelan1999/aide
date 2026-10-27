@@ -291,3 +291,12 @@ Lucidchart 的 `EIMessageBlock` 和 `EIMessageHistoryBlock` 导入时，把每�
 回归还发现原文档XML预算误拦了内置AWS4缓存，已作为#128的回归补修。`stencils.min.js` 的闭包私有表只允许自身的字符串条目使用独立XML解析器；该表来自随产品分发的常量，解析器不导出，损坏XML报错，继承属性不被当成内置缓存。动态回退和用户文档仍走既有路径，不扩大文档节点、深度或解压预算。此边界信任的是分发代码本身，不提供对被修改代码或恶意同源脚本的隔离。
 
 回归对同一实际缓存文本分别验证：内置同步/异步加载成功，而作为用户输入的完整XML仍被原有预算拒绝；也覆盖损坏缓存和继承条目。实际缓存文本为5,088,259字节，与独立XML文件的空白格式不同，负例使用缓存本身的文本，避免混淆。运行 `AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/tmp/aide-lucid-evidence node scripts/browser-drawio-preview-bounds.cjs` 可复跑这些合成组件用例；它不是完整工作台、真实Lucidchart账号或文件选择交互的验收。
+
+
+### 本地 Visio 导入的 ZIP 展开预算
+
+VSDX/VSSX 共用 `mxVsdxCodec.loadArchive`：压缩输入最多8MiB，JSZip目录最多1,024个保留条目（包含目录与未使用条目）；需要的XML/rels及媒体成员各最多8MiB，累计实际展开最多16MiB。头部声明仅作提前拒绝，流式读取继续累计真实字节；一个压缩成员完成后才开始下一个，出错停止后续成员。检查通过的原始字节交给原有XML、UTF-16及媒体转换流程，不修改原文件。VSSX把错误回调传入共用路径，超限错误可进入既有错误窗口，之后仍可导入有效文件。
+
+源码和两份分发转换器同步维护。`scripts/sync_drawio_visio_archive.cjs` 使用外部工具目录中的Terser **5.39.0**，通过 `AIDE_TERSER_MODULE=/path/to/node_modules/terser node scripts/sync_drawio_visio_archive.cjs` 更新对应代码段；加 `--check` 只读验证，不安装依赖或联网。构造器工厂内的赋值使用其局部构造器，避免初始化时写到旧的全局类。
+
+单测使用分发JSZip验证输入/成员/累计/数量边界、伪造或缺失声明、实际展开的串行性、原始字节保留、损坏ZIP及VSSX错误转交。浏览器用完整的源码/分发Visio转换器代码段调用真实 `doImportVisio`，检查两种格式的超限错误、实际错误窗口与同运行时恢复，正常夹具是单个空白页面和空图库。运行 `AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/tmp/aide-visio-evidence node scripts/browser-drawio-preview-bounds.cjs` 可复跑。这不替代完整工作台、真实微软文件/复杂主控形状、媒体解码像素预算、后续几何算法或整个集成启动的验收；解压流停止以库的块边界为粒度，不承诺整个导入的严格进程内存或耗时上限。

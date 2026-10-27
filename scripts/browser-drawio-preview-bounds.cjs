@@ -78,6 +78,7 @@ async function main() {
       assert.equal(await frame.evaluate(()=>ownedEditor.graph.model.getCell('2').value.trim()), 'Edited owned label');
       await page.screenshot({path:path.join(out,theme+'-drawio.png')});
       checks.push({case:'normal compressed multi-page, edit and save',theme,width,result:'PASS'});
+      if (process.env.AIDE_DRAWIO_VISIO_ACCEPTANCE) checks.push(...await require('./drawio-visio-archive-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_LUCID_ACCEPTANCE) checks.push(...await require('./drawio-lucid-message-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_ANIMATION_ACCEPTANCE) checks.push(...await require('./drawio-animation-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_AI_ACCEPTANCE) checks.push(...await require('./drawio-ai-template-browser-cases.cjs')(frame,out,theme,aiRequests));

@@ -178,6 +178,72 @@ var com;
                  * @return {string}
                  */
                 //FIXME TODO add charset support
+                /* AIDE Visio archive budgets #176 */
+                // Untrusted ZIP metadata is only an early check. Count actual
+                // streamed bytes, and expand one compressed entry at a time.
+                mxVsdxCodec.loadArchive = function (file) {
+                    var inputBytes = file == null ? NaN :
+                        (typeof file === 'string' ? file.length :
+                            (typeof file.size === 'number' ? file.size :
+                                (typeof file.byteLength === 'number' ? file.byteLength : file.length)));
+                    var entryLimit = 8 * 1024 * 1024;
+                    var totalLimit = 16 * 1024 * 1024;
+                    function limit() {
+                        var error = new Error('Visio import resource limit exceeded (8 MiB input/member, 16 MiB expanded, 1024 entries)');
+                        error.code = 'AIDE_VISIO_LIMIT';
+                        return error;
+                    }
+                    if (!Number.isSafeInteger(inputBytes) || inputBytes < 0 || inputBytes > entryLimit) {
+                        return Promise.reject(limit());
+                    }
+                    return JSZip.loadAsync(file).then(function (zip) {
+                        var names = Object.keys(zip.files);
+                        if (names.length > 1024) throw limit();
+                        var entries = [], declaredTotal = 0;
+                        names.forEach(function (name) {
+                            var entry = zip.files[name], lower = entry.name.toLowerCase();
+                            if (!entry.dir && (/\.(xml|rels)$/.test(lower) || lower.indexOf(mxVsdxCodec.vsdxPlaceholder + '/media') === 0)) {
+                                var declared = entry._data && entry._data.uncompressedSize;
+                                if (declared != null) {
+                                    if (!Number.isSafeInteger(declared) || declared < 0 || declared > entryLimit) throw limit();
+                                    declaredTotal += declared;
+                                    if (declaredTotal > totalLimit) throw limit();
+                                }
+                                entries.push(entry);
+                            }
+                        });
+                        // Retain bounded raw members, not their compressed workers.
+                        // Existing XML/UTF-16/media conversion runs on these bytes.
+                        var result = new JSZip(), total = 0, index = 0;
+                        function next() {
+                            if (index === entries.length) return result;
+                            var entry = entries[index++];
+                            return new Promise(function (resolve, reject) {
+                                var chunks = [], size = 0, settled = false;
+                                var stream = entry.internalStream('uint8array');
+                                function abort(error) {
+                                    if (settled) return;
+                                    settled = true;stream.pause();chunks = null;reject(error);
+                                }
+                                stream.on('data', function (chunk) {
+                                    if (settled) return;
+                                    size += chunk.length;total += chunk.length;
+                                    if (size > entryLimit || total > totalLimit) {abort(limit());return;}
+                                    chunks.push(chunk);
+                                }).on('error', abort).on('end', function () {
+                                    if (settled) return;
+                                    settled = true;
+                                    var bytes = new Uint8Array(size), offset = 0;
+                                    chunks.forEach(function (chunk) {bytes.set(chunk, offset);offset += chunk.length;});
+                                    chunks = null;
+                                    result.file(entry.name, bytes, {binary: true, createFolders: false});
+                                    resolve();
+                                }).resume();
+                            }).then(next);
+                        }
+                        return next();
+                    });
+                };
                 mxVsdxCodec.prototype.decodeVsdx = function (file, callback, charset, onerror) {
                     var _this = this;
                     var docData = ({});
@@ -307,7 +373,7 @@ var com;
 	                    	}
                     };
                     
-                    JSZip.loadAsync(file)
+                    mxVsdxCodec.loadArchive(file)
                     .then(function(zip)
                     {
                     	if (Object.keys(zip.files).length == 0)
@@ -1901,6 +1967,7 @@ var com;
                     _this.editorUi = editorUi;
                     return _this;
                 }
+                /* AIDE Visio stencil error forwarding #176 */
                 mxVssxCodec.prototype.decodeVssx = function (file, callback, charset, onerror) {
                 	var _this = this;
                     var library = { str: "<mxlibrary>[", toString: function () { return this.str; } };
@@ -2040,7 +2107,7 @@ var com;
 	                    		}
 	                    	}
                     	}
-                    }, charset);
+                    }, charset, onerror);
                 };
                 mxVssxCodec.prototype.normalizeGeo = function (cell) {
                     var geo = cell.getGeometry();

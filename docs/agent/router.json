@@ -921,6 +921,15 @@
       ],
       [
         "node",
+        "scripts/test_drawio_visio_archive.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/vendor/drawio/js/diagramly/Extensions.js"
       ],
