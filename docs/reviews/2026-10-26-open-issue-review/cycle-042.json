@@ -93,18 +93,21 @@
   "notes": [
     "动画解析校验步骤/已知动作载荷及嵌套结构，错误携带原数据；页面/链接编辑器显示可删除错误行或编辑文本修正，无效时阻止保存、预览和关闭自动保存并保留窗口草稿。播放器构造/播放前验证，源码/分发包确定性同步，实际浏览器恢复和既有功能22项通过。",
     "校验最多100000步骤/128层，未知字段保留；属于已知动作结构检查，不是全自定义动作语义或大型DOM渲染保证。原始存储syntax坏JSON的历史空白回退未修改。",
-    "错误数据保留并可按行删除整个步骤或raw修复，不自动过滤。输入caller对象在action模式先clone；graph属性在显式保存通过前不改。",
+    "错误数据保留并可按行删除整个步骤或raw修复，不自动过滤。输入caller对象在action模式先clone；graph属性只通过已校验的保存流程写入（含既有关闭自动保存）。",
     "applyChanges与关闭自动保存均有校验guard，无效关闭保留窗口；现有Discard明确丢弃路径保持。AnimationPlayer构造/开始play校验，不宣称运行中任意外部对象变异或所有直接custom-action执行器已加固。",
     "重生成器只处理三个动画段，Terser5.39.0安装在独立/workspace/.aide-cloud/issue-review-tools，npm带--ignore-scripts；未改产品依赖。--check不写入、不联网；正常运行不需要该工具依赖。",
     "原272剩185，另有新441待后续修复，未混计原清单或新增关闭；下一项169 Lucidchart message样式，最新正文已读。",
     "无常驻服务，原用户未跟踪文件保留；只push分支，不合并main/发行/部署，合理issue保持open。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "168": "https://github.com/skyelan1999/aide/issues/168#issuecomment-6432138477"
+    },
+    "verifiedRemoteCommit": "a7d0571dc80d689049720c2481bf10f6eacedc82"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "cb8204ca27fb119f82ada0f8b9f8d93263bdc44752656d652e0f9ef343b65afd",
