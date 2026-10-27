@@ -689,7 +689,7 @@
 			this.addEntry(dt + 'card', function()
 	   		{
 			   	var bg = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font style="font-size: 12px" color="#999999">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font style="font-size: 12px" color="#999999">Last updated 3 mins ago</font>',
 			   			new mxGeometry(0, 0, 800, 310), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=bottom;align=left;spacing=20;fontSize=14;');
 			   	bg.vertex = true;
 			   	var button1 = new mxCell('Image cap', new mxGeometry(0, 0, 800, 180), s + 'topButton;rSize=5;perimeter=none;whiteSpace=wrap;fillColor=#868E96;strokeColor=#DFDFDF;fontColor=#DEE2E6;resizeWidth=1;fontSize=18;');
@@ -703,7 +703,7 @@
 			this.addEntry(dt + 'card', function()
 	   		{
 			   	var bg = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font style="font-size: 12px" color="#999999">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font style="font-size: 12px" color="#999999">Last updated 3 mins ago</font>',
 			   			new mxGeometry(0, 0, 800, 310), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;fontSize=14;');
 			   	bg.vertex = true;
 			   	var button1 = new mxCell('Image cap', new mxGeometry(0, 1, 800, 180), s + 'bottomButton;rSize=5;perimeter=none;whiteSpace=wrap;fillColor=#868E96;strokeColor=#DFDFDF;fontColor=#DEE2E6;resizeWidth=1;fontSize=18;');
@@ -733,7 +733,7 @@
 			this.addEntry(dt + 'card', function()
 	   		{
 			   	var bg = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font style="font-size: 12px" color="#999999">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font style="font-size: 12px" color="#999999">Last updated 3 mins ago</font>',
 			   			new mxGeometry(0, 0, 480, 240), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;fontSize=14;spacingLeft=170;');
 			   	bg.vertex = true;
 			   	var button1 = new mxCell('Image', new mxGeometry(0, 0, 170, 240), s + 'leftButton;rSize=5;perimeter=none;whiteSpace=wrap;fillColor=#868E96;strokeColor=#DFDFDF;fontColor=#DEE2E6;resizeWidth=1;fontSize=18;');
@@ -958,7 +958,7 @@
 			   			new mxGeometry(0, 0, 780, 360), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;');
 			   	bg.vertex = true;
 			   	var item1 = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font color="#999999" style="font-size: 12px">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>',
 			   			new mxGeometry(0, 0, 260, 360), s + 'leftButton;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;spacingBottom=0;fontSize=14;spacingTop=160;');
 			   	item1.geometry.relative = true;
 			   	item1.vertex = true;
@@ -969,7 +969,7 @@
 			   	item1.insert(button1);
 				
 			   	var item2 = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This card has supporting text below as a natural lead-in to additional content.<br><br><font color="#999999" style="font-size: 12px">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This card has supporting text below as a natural lead-in to additional content.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>',
 			   			new mxGeometry(0, 0, 260, 360), 'html=1;shadow=0;dashed=0;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;spacingBottom=0;fontSize=14;spacingTop=160;');
 			   	item2.geometry.relative = true;
 			   	item2.geometry.offset = new mxPoint(260, 0);
@@ -981,7 +981,7 @@
 			   	item2.insert(button2);
 				
 			   	var item3 = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.<br><br><font color="#999999" style="font-size: 12px">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>',
 			   			new mxGeometry(1, 0, 260, 360), s + 'rightButton;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;spacingBottom=0;fontSize=14;spacingTop=160;');
 			   	item3.geometry.relative = true;
 			   	item3.geometry.offset = new mxPoint(-260, 0);
@@ -1056,7 +1056,7 @@
 			this.addEntry(dt + 'card group', function()
 	   		{
 			   	var item1 = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font color="#999999" style="font-size: 12px">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>',
 			   			new mxGeometry(0, 0, 260, 360), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;spacingBottom=0;fontSize=14;spacingTop=160;');
 			   	item1.geometry.relative = true;
 			   	item1.vertex = true;
@@ -1066,7 +1066,7 @@
 			   	item1.insert(button1);
 				
 			   	var item2 = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This card has supporting text below as a natural lead-in to additional content.<br><br><font color="#999999" style="font-size: 12px">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This card has supporting text below as a natural lead-in to additional content.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>',
 			   			new mxGeometry(280, 0, 260, 360), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;spacingBottom=0;fontSize=14;spacingTop=160;');
 			   	item2.vertex = true;
 			   	var button2 = new mxCell('Image cap', new mxGeometry(0, 0, 260, 160), s + 'topButton;rSize=5;perimeter=none;whiteSpace=wrap;fillColor=#868E96;strokeColor=#DFDFDF;fontColor=#DEE2E6;resizeWidth=1;fontSize=18;');
@@ -1075,7 +1075,7 @@
 			   	item2.insert(button2);
 				
 			   	var item3 = new mxCell(
-			   			'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.<br><br><font color="#999999" style="font-size: 12px">Last udated 3 mind ago</font>', 
+						'<b><font style="font-size: 20px">Card title</font></b><br><br>This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>',
 			   			new mxGeometry(560, 0, 260, 360), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=left;spacing=20;spacingBottom=0;fontSize=14;spacingTop=160;');
 			   	item3.vertex = true;
 			   	var button3 = new mxCell('Image cap', new mxGeometry(0, 0, 260, 160), s + 'topButton;rSize=5;perimeter=none;whiteSpace=wrap;fillColor=#868E96;strokeColor=#DFDFDF;fontColor=#DEE2E6;resizeWidth=1;fontSize=18;');
@@ -1206,7 +1206,7 @@
 			   	item4.vertex = true;
 			   	
 			   	var item5 = new mxCell(
-			   			'<font style="font-size: 18px">Card title</font><br><br>This card has a regular title and short paragraphy of text below it.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>', 
+						'<font style="font-size: 18px">Card title</font><br><br>This card has a regular title and short paragraph of text below it.<br><br><font color="#999999" style="font-size: 12px">Last updated 3 mins ago</font>',
 			   			new mxGeometry(330, 450, 320, 130), s + 'rrect;rSize=5;strokeColor=#DFDFDF;html=1;whiteSpace=wrap;fillColor=#ffffff;fontColor=#000000;verticalAlign=top;align=center;spacing=10;spacingBottom=0;fontSize=14;spacingTop=0;');
 			   	item5.vertex = true;
 			   	
@@ -1637,7 +1637,7 @@
 
 				item1.insert(sb.cloneCell(field3, 'Separated link'));
 				
-		   		return sb.createVertexTemplateFromCells([bg, item1], 170, 153, 'Dropup button');
+				return sb.createVertexTemplateFromCells([bg, item1], 170, 193, 'Dropup button');
 			}),
 			
 			this.addEntry(dt + 'dropright button', function()
@@ -1686,7 +1686,7 @@
 
 				item1.insert(sb.cloneCell(field3, 'Separated link'));
 				
-		   		return sb.createVertexTemplateFromCells([bg, item1], 170, 153, 'Dropright button');
+				return sb.createVertexTemplateFromCells([bg, item1], 268, 150, 'Dropright button');
 			}),
 			
 			this.addEntry(dt + 'dropleft button', function()
@@ -1735,7 +1735,7 @@
 
 				item1.insert(sb.cloneCell(field3, 'Separated link'));
 				
-		   		return sb.createVertexTemplateFromCells([bg, item1], 170, 153, 'Dropleft button');
+				return sb.createVertexTemplateFromCells([bg, item1], 258, 150, 'Dropleft button');
 			}),
 			
 			this.addEntry('list with active item', function()

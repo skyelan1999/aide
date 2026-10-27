@@ -371,3 +371,5 @@ AWS19/当前及 AWS18 图库还按实际对象索引 notification、JSON Script�
 Android Contact Badge 的 Normal、Pressed 模板分别引用现有对应状态 stencil，覆盖 40/60 两种尺寸；Focused 保持原样，已有图文件不自动改写。ArchiMate2/3 的显式搜索词与对应语义一致，Quad Arrow 的 `four way` 及 Atlassian Checkbox(off) 的 `off` 搜索词也已校正；标题补词和近似匹配保留。设置 `AIDE_DRAWIO_STATE_SEARCH_ACCEPTANCE=1` 检查六个状态/尺寸模板与三个独立状态参考的实际 SVG 渲染，以及十七个搜索词条的真实工厂、索引、查询和渲染，覆盖源码与两份分发、明暗主题。此检查属于组件验收，未执行完整图库选择器及实际拖放。
 
 Azure2 的 App Space Component 标题使用正确拼写，已有 SVG 路径和搜索词保持原样。BPMN Choreographies 移除了名为 `bzzzzt` 的空框占位；两种参与方朝向的完整 Call Choreography 及其六个循环/多实例变体保留。Gateways 的 Multiple Start 显式索引词改为 start，Multiple End 保留。设置 `AIDE_DRAWIO_BPMN_PALETTE_ACCEPTANCE=1` 可执行选定子图库的真实工厂、索引查询、部件检查、画布插入渲染和本地图片加载；验收独立于全量压缩搜索缓存，不覆盖完整工作台图库选择器和鼠标拖放。
+
+Bootstrap 卡片的新插入文字使用 `Last updated 3 mins ago` 和 `paragraph`，不自动修改旧图。复合 Dropup、Dropright、Dropleft 模板的声明足迹分别为 170×193、268×150、258×150，与现有根部件几何相符；单按钮和菜单内容保持原样。设置 `AIDE_DRAWIO_BOOTSTRAP_ACCEPTANCE=1` 验证真实工厂、卡片文字渲染、实际 `createItem` 预览与落点处理，并在桌面用鼠标拖入三个复合菜单；窄屏只验收预览和落点处理，不声称执行了窄屏鼠标拖放。双根模板在当前图编辑器中不能直接拆分边，此修复不新增该能力。
