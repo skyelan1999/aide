@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path"
-	"path/filepath"
 	"strings"
 )
 
@@ -78,17 +76,49 @@ func pwBoundTool(name string) bool {
 	return name == "read_file" || name == "list_files" || name == "write_file"
 }
 func (a *App) pwBindingToolError(t *Task, name string, args map[string]any) error {
+	_, err := a.pwBindingAccess(t, name, args)
+	return err
+}
+
+func pwBindingIncludes(b pwBinding, target string) bool {
+	return target == b.Path || b.Kind == "directory" && (b.Path == "." || strings.HasPrefix(target, b.Path+"/"))
+}
+
+// Approval can occur after the originating node completes. Keep the explicit
+// proposal flag and conservatively recover old proposals from their workflow's
+// stored write bindings instead of relying on PW.Current.
+func pwChangeNoSymlinks(t *Task, f Change) bool {
+	if f.Source != "" {
+		return false
+	}
+	if f.NoSymlinks {
+		return true
+	}
+	if t == nil || t.PW == nil {
+		return false
+	}
+	for _, node := range t.PW.Definition.Nodes {
+		for _, binding := range node.Bindings {
+			if binding.Access != "read" && pwBindingIncludes(binding, path.Clean(f.Path)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (a *App) pwBindingAccess(t *Task, name string, args map[string]any) (bool, error) {
 	a.mu.Lock()
 	if t != nil && t.PW != nil {
 		if !a.pwEnabledLocked() || t.WorkspaceID != a.wsID() || t.WorkspaceRev != a.wsRevision || a.loadLockStateLocked().Locked {
 			a.mu.Unlock()
-			return errors.New("PW 权限或工作区已变化")
+			return false, errors.New("PW 权限或工作区已变化")
 		}
 	}
 	n := pwCurrentNode(t)
 	if n == nil || len(n.Bindings) == 0 {
 		a.mu.Unlock()
-		return nil
+		return false, nil
 	}
 	bindings := append([]pwBinding(nil), n.Bindings...)
 	root := a.wsRoots[t.WorkspaceID]
@@ -98,24 +128,24 @@ func (a *App) pwBindingToolError(t *Task, name string, args map[string]any) erro
 	mode := t.WorkspaceMode
 	a.mu.Unlock()
 	if mode == "ssh" {
-		return errors.New("当前文件绑定只支持本地工作区")
+		return false, errors.New("当前文件绑定只支持本地工作区")
 	}
 	if !pwBoundTool(name) {
-		return errors.New("文件绑定节点仅支持受约束的文件读取、目录列举和写入提案；请在独立节点调用插件或命令")
+		return false, errors.New("文件绑定节点仅支持受约束的文件读取、目录列举和写入提案；请在独立节点调用插件或命令")
 	}
 	if source, _ := args["source"].(string); source != "" {
-		return errors.New("文件绑定节点不能读取未绑定的引用来源")
+		return false, errors.New("文件绑定节点不能读取未绑定的引用来源")
 	}
 	target, _ := args["path"].(string)
 	if name == "list_files" && target == "" {
 		target = "."
 	}
 	if target == "" || strings.ContainsAny(target, "\\\x00") || path.IsAbs(target) {
-		return errors.New("文件绑定路径无效")
+		return false, errors.New("文件绑定路径无效")
 	}
 	target = path.Clean(target)
 	if target == ".." || strings.HasPrefix(target, "../") {
-		return errors.New("文件绑定禁止上级路径")
+		return false, errors.New("文件绑定禁止上级路径")
 	}
 	allowed := false
 	writing := name == "write_file"
@@ -123,37 +153,25 @@ func (a *App) pwBindingToolError(t *Task, name string, args map[string]any) erro
 		if writing && b.Access == "read" || !writing && b.Access == "write" {
 			continue
 		}
-		if target == b.Path || b.Kind == "directory" && (b.Path == "." || strings.HasPrefix(target, b.Path+"/")) {
+		if pwBindingIncludes(b, target) {
 			allowed = true
 			break
 		}
 	}
 	if !allowed {
-		return fmt.Errorf("路径 %s 超出节点的%s绑定", target, map[bool]string{true: "写入", false: "读取"}[writing])
+		return false, fmt.Errorf("路径 %s 超出节点的%s绑定", target, map[bool]string{true: "写入", false: "读取"}[writing])
 	}
 	if root == nil {
-		return errors.New("绑定工作区不可用")
+		return false, errors.New("绑定工作区不可用")
 	}
-	// Reject symlinks as well as textual traversal; original os.Root dispatcher
-	// still enforces the workspace boundary when opening the actual resource.
-	current := root.Name()
-	for _, part := range strings.Split(target, "/") {
-		if part == "." {
-			continue
-		}
-		current = filepath.Join(current, part)
-		info, err := os.Lstat(current)
-		if os.IsNotExist(err) && writing {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			return errors.New("绑定路径不能包含符号链接")
-		}
+	exists, err := boundPathExists(root, target)
+	if err != nil {
+		return false, err
 	}
-	return nil
+	if !exists && !writing {
+		return false, errors.New("绑定文件或目录不存在")
+	}
+	return true, nil
 }
 func (a *App) pwAutoInputs(ctx context.Context, t *Task, n pwNode, versions map[string]Change) (string, error) {
 	var out strings.Builder

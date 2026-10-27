@@ -50,6 +50,8 @@ type Change struct {
 	BaseHash   string `json:"baseHash"`
 	Before     string `json:"before"`
 	Applied    bool   `json:"applied,omitempty"`
+
+	NoSymlinks bool `json:"noSymlinks,omitempty"` // captured host file-binding constraint
 }
 type ToolUse struct {
 	Tool    string `json:"tool"`
@@ -1489,6 +1491,12 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		return
 	}
 	if a.workspaceMode() == "ssh" {
+		for _, f := range task.Files {
+			if pwChangeNoSymlinks(task, f) {
+				fail(w, 409, errors.New("文件绑定提案仅支持本地工作区"))
+				return
+			}
+		}
 		a.applySSHProposalLocked(w, r, s, task)
 		return
 	}
@@ -1496,7 +1504,11 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		if f.Applied {
 			continue
 		}
-		if err := checkVersion(a.workspace, f.Path, f.BaseHash); err != nil {
+		check := checkVersion
+		if pwChangeNoSymlinks(task, f) {
+			check = checkBoundVersion
+		}
+		if err := check(a.workspace, f.Path, f.BaseHash); err != nil {
 			fail(w, 409, fmt.Errorf("%s: %w", f.Path, err))
 			return
 		}
@@ -1513,8 +1525,13 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		original := *f
 		root := a.workspace
 		identity := a.wsID()
+		bound := pwChangeNoSymlinks(task, original)
 		a.mu.Unlock()
-		writeErr := a.withMarkdownHistory("workspace:"+identity, original.Path, []byte(original.Content), func(p string) ([]byte, error) { return readRawBytes(root, p) }, func() error { return putText(root, original.Path, []byte(original.Content)) })
+		read, write := readRawBytes, putText
+		if bound {
+			read, write = readBoundRawBytes, putBoundText
+		}
+		writeErr := a.withMarkdownHistory("workspace:"+identity, original.Path, []byte(original.Content), func(p string) ([]byte, error) { return read(root, p) }, func() error { return write(root, original.Path, []byte(original.Content)) })
 		a.mu.Lock()
 		if i >= len(task.Files) || task.Files[i] != original || a.wsID() != identity {
 			fail(w, 409, errors.New("保存期间提案已变化，请检查文件状态"))
@@ -4188,7 +4205,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	if args == nil {
 		args = map[string]any{}
 	}
-	if err := a.pwBindingToolError(task, call.Function.Name, args); err != nil {
+	bound, err := a.pwBindingAccess(task, call.Function.Name, args)
+	if err != nil {
 		return failure(err.Error())
 	}
 	str := func(k string) string { v, _ := args[k].(string); return strings.TrimSpace(v) }
@@ -4235,6 +4253,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			}
 			return a.sftpList(pathJoinRemote(remotePath, p))
 		}
+		if bound {
+			return a.listBoundLocalDir(wsRoot, p)
+		}
 		return a.listLocalDir(wsRoot, p)
 	}
 	readTextFile := func(p string) ([]byte, error) {
@@ -4251,6 +4272,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 				return nil, err
 			}
 			return b, nil
+		}
+		if bound {
+			return readBoundText(wsRoot, p)
 		}
 		return readText(wsRoot, p)
 	}
@@ -4369,7 +4393,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			} else if mode == "ssh" {
 				raw, err = a.sftpRead(pathJoinRemote(remotePath, p))
 			} else {
-				raw, err = readRawBytes(wsRoot, p)
+				read := readRawBytes
+				if bound {
+					read = readBoundRawBytes
+				}
+				raw, err = read(wsRoot, p)
 			}
 			if err != nil {
 				return failure("读取失败: " + err.Error())
@@ -4383,7 +4411,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		// 本地工作区大文件分段：offset(行,0起)/limit(行数) 流式只读窗口，不全量入上下文
 		if sourceID == "" && mode != "ssh" {
 			if off, lim := toolInt("offset"), toolInt("limit"); off > 0 || lim > 0 {
-				pb, total, rerr := readTextLines(wsRoot, p, off, lim)
+				opener := wsRoot.Open
+				if bound {
+					opener = boundFileOpener(wsRoot)
+				}
+				pb, total, rerr := readTextLinesWithOpener(p, off, lim, opener)
 				if rerr != nil {
 					return failure("读取失败: " + rerr.Error())
 				}
@@ -4490,7 +4522,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return string(raw)
 	case "write_file":
 		pathStr, content := str("path"), rawStr("content")
-		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "source": sourceID, "path": pathStr, "content": content})
+		var bindingRoot *os.Root
+		if bound {
+			bindingRoot = wsRoot
+		}
+		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "source": sourceID, "path": pathStr, "content": content}, bindingRoot)
 		if err != nil {
 			return failure("写入提案被拒绝: " + err.Error())
 		}
@@ -4839,7 +4875,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 }
 
 // recordToolProposal 把工具写操作转为待批准提案。
-func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[string]any) (string, error) {
+func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[string]any, bindingRoots ...*os.Root) (string, error) {
 	if err := a.nativeEditorWriteError(); err != nil {
 		return "", err
 	}
@@ -4873,12 +4909,26 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 		if totalBytes > maxProposalTotal {
 			return "", fmt.Errorf("提案内容总量超过 %d MiB", maxProposalTotal>>20)
 		}
-		change := Change{Path: pathStr, Content: content, Applied: false}
+		var bindingRoot *os.Root
+		if len(bindingRoots) > 0 {
+			bindingRoot = bindingRoots[0]
+		}
+		change := Change{Path: pathStr, Content: content, Applied: false, NoSymlinks: bindingRoot != nil}
 		if v, ok := versions[pathStr]; ok {
 			change.BaseHash = v.BaseHash
 			change.Before = v.Before
 		} else {
-			if a.workspaceStatExists(pathStr) {
+			var exists bool
+			if bindingRoot != nil {
+				var err error
+				exists, err = boundPathExists(bindingRoot, pathStr)
+				if err != nil {
+					return "", err
+				}
+			} else {
+				exists = a.workspaceStatExists(pathStr)
+			}
+			if exists {
 				return "", fmt.Errorf("现有文件 %s 未附加到任务，请先附加再生成修改", pathStr)
 			}
 			change.BaseHash = ""

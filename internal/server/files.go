@@ -118,10 +118,14 @@ func validateTextFileContent(p string, b []byte) ([]byte, error) {
 }
 
 func readText(root *os.Root, p string) ([]byte, error) {
+	return readTextWithOpener(p, root.Open)
+}
+
+func readTextWithOpener(p string, openFile func(string) (*os.File, error)) ([]byte, error) {
 	if err := safePath(p); err != nil {
 		return nil, err
 	}
-	f, err := root.Open(p)
+	f, err := openFile(p)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +152,12 @@ func readText(root *os.Root, p string) ([]byte, error) {
 // 全程只缓冲目标窗口，逐行扫描时同时检测整个文件是否含 NUL（二进制拒绝），
 // 对返回窗口做 UTF-8 校验。返回：窗口内容、文件总行数。
 func readTextLines(root *os.Root, p string, offset, limit int) ([]byte, int, error) {
+	return readTextLinesWithOpener(p, offset, limit, root.Open)
+}
+
+func readTextLinesWithOpener(p string, offset, limit int, openFile func(string) (*os.File, error)) ([]byte, int, error) {
 	if ext := strings.ToLower(path.Ext(p)); ext == ".json" || ext == ".jsonl" || ext == ".jsonc" {
-		b, err := readText(root, p)
+		b, err := readTextWithOpener(p, openFile)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -170,7 +178,7 @@ func readTextLines(root *os.Root, p string, offset, limit int) ([]byte, int, err
 	if err := safePath(p); err != nil {
 		return nil, 0, err
 	}
-	f, err := root.Open(p)
+	f, err := openFile(p)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -300,10 +308,14 @@ const (
 
 // readRawBytes 返回文件的原始字节，不做 UTF-8/文本校验（供 /api/file/raw 查看器使用）。
 func readRawBytes(root *os.Root, p string) ([]byte, error) {
+	return readRawBytesWithOpener(p, root.Open)
+}
+
+func readRawBytesWithOpener(p string, openFile func(string) (*os.File, error)) ([]byte, error) {
 	if err := safePath(p); err != nil {
 		return nil, err
 	}
-	f, err := root.Open(p)
+	f, err := openFile(p)
 	if err != nil {
 		return nil, err
 	}
@@ -1739,6 +1751,10 @@ func isSFTPNotExistErr(err error) bool {
 
 func checkVersion(root *os.Root, p, expected string) error {
 	b, err := readText(root, p)
+	return checkReadVersion(b, err, expected)
+}
+
+func checkReadVersion(b []byte, err error, expected string) error {
 	if errors.Is(err, os.ErrNotExist) {
 		if expected == "" {
 			return nil
@@ -1764,6 +1780,10 @@ func putText(root *os.Root, p string, b []byte) error {
 	if st, err := root.Stat(p); err == nil {
 		mode = st.Mode().Perm()
 	}
+	return putAtomicFile(root, p, b, mode)
+}
+
+func putAtomicFile(root *os.Root, p string, b []byte, mode os.FileMode) error {
 	tmp := path.Join(path.Dir(p), ".aide-write-"+newID())
 	f, err := root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
 	if err != nil {

@@ -49,7 +49,7 @@ func (a *App) recordReviewedFileResult(task *Task) {
 		lines = append(lines, "应用记录显示已写入；当前工作区已变化或为远程环境，未进行本地字节读回验证。")
 	} else {
 		for _, f := range task.Files {
-			b, err := a.readAppliedProposalLocked(f)
+			b, err := a.readAppliedProposalLocked(task, f)
 			if err != nil {
 				lines = append(lines, fmt.Sprintf("- `%s`：应用后读回失败：%v。", proposalDisplayPath(f), err))
 				status = "failed"

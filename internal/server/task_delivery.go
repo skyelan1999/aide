@@ -198,7 +198,7 @@ func (a *App) finalizeProposalDeliveryLocked(task *Task) {
 	}
 	d := &TaskDelivery{State: "missing", Kind: task.Delivery.Kind, Reason: "提案已应用，尚未验证交付文件", CheckedAt: time.Now().UTC().Format(time.RFC3339Nano)}
 	for _, f := range task.Files {
-		b, err := a.readAppliedProposalLocked(f)
+		b, err := a.readAppliedProposalLocked(task, f)
 		if err == nil && len(b) > 0 && string(b) == f.Content {
 			d.Artifacts = append(d.Artifacts, proposalDisplayPath(f))
 		}
