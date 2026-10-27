@@ -54,11 +54,14 @@
     "Go race/vet未重复，本批前端静态映射及浏览器回归。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "175": "https://github.com/skyelan1999/aide/issues/175#issuecomment-6433019799"
+    },
+    "remoteCommit": "aafe7beeb1235716bad43c79c97e10efb23c3ce2"
   },
   "sourceSHA256": {
     "docs/architecture/office-viewer.md": "4c19c2522f3ee6ad9e6e78b59ba2604201c2db7fdd1379d6274ec974cb8a8008",
