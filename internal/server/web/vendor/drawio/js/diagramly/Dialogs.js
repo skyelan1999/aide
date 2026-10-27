@@ -11882,25 +11882,22 @@ var ChatWindow = function(editorUi, x, y, w, h)
 	// in string properties recursively
 	var populateTemplate = function(obj, resolver)
 	{
-		var result = new obj.constructor();
-
-		for (var key in obj)
+		// Custom request templates are JSON: retain primitives (including
+		// null), arrays and literal property names without invoking constructors.
+		if (obj === null || typeof obj !== 'object')
 		{
-			var value = obj[key];
-
-			if (typeof value === 'object')
-			{
-				result[key] = populateTemplate(value, resolver);
-			}
-			else if (typeof value === 'string')
-			{
-				result[key] = Editor.replacePlaceholders(value, resolver);
-			}
-			else
-			{
-				result[key] = value;
-			}
+			return (typeof obj === 'string') ?
+				Editor.replacePlaceholders(obj, resolver) : obj;
 		}
+
+		var result = Array.isArray(obj) ? [] : {};
+
+		Object.keys(obj).forEach(function(key)
+		{
+			Object.defineProperty(result, key, {value:
+				populateTemplate(obj[key], resolver), enumerable: true,
+				configurable: true, writable: true});
+		});
 
 		return result;
 	};
@@ -12238,11 +12235,21 @@ var ChatWindow = function(editorUi, x, y, w, h)
 				return value;
 			};
 
-			var params = populateTemplate(config.request, resolver);
-			threadHistory(params, historyTurns);
+			var params;
 
 			processMessage = function()
 			{
+				try
+				{
+					params = populateTemplate(config.request, resolver);
+					threadHistory(params, historyTurns);
+				}
+				catch (e)
+				{
+					handleError(e);
+					return;
+				}
+
 				showWaiting();
 
 				editorUi.createTimeout(editorUi.editor.generateTimeout, function(timeout)

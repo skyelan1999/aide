@@ -9,7 +9,7 @@ const model = '<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/><m
 async function main() {
   const out = process.env.AIDE_COMPONENT_EVIDENCE_DIR;assert.ok(out);fs.mkdirSync(out, {recursive:true});
   const browser = await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-  const errors = [], checks = [];let context;
+  const errors = [], checks = [], aiRequests = [];let context;
   try {
     context = await browser.newContext();const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
@@ -34,6 +34,10 @@ async function main() {
     await context.route('**/*', async route => {
       const url = new URL(route.request().url());
       if (url.origin !== 'https://aide-drawio-owned.test') return route.abort();
+      if(process.env.AIDE_DRAWIO_AI_ACCEPTANCE&&url.pathname==='/owned-ai-template'){
+        aiRequests.push(JSON.parse(route.request().postData()));
+        return route.fulfill({contentType:'application/json',body:JSON.stringify({choices:[{message:{content:'Owned mock answer '+aiRequests.length}}]})});
+      }
       if (url.pathname === '/') return route.fulfill({contentType:'text/html',body:'<!doctype html><meta charset="utf-8"><title>Owned draw.io component</title><body style="margin:0;background:#fff;color:#333"><main id="preview" style="height:95vh"></main>'});
       const file = path.resolve(web, '.' + decodeURIComponent(url.pathname) + (url.pathname.endsWith('/')?'index.html':''));
       if (!file.startsWith(web + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return route.fulfill({status:404,body:''});
@@ -74,6 +78,7 @@ async function main() {
       assert.equal(await frame.evaluate(()=>ownedEditor.graph.model.getCell('2').value.trim()), 'Edited owned label');
       await page.screenshot({path:path.join(out,theme+'-drawio.png')});
       checks.push({case:'normal compressed multi-page, edit and save',theme,width,result:'PASS'});
+      if (process.env.AIDE_DRAWIO_AI_ACCEPTANCE) checks.push(...await require('./drawio-ai-template-browser-cases.cjs')(frame,out,theme,aiRequests));
       if (process.env.AIDE_DRAWIO_LIFECYCLE_ACCEPTANCE) checks.push(...await require('./drawio-lifecycle-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_GEOMETRY_ACCEPTANCE) checks.push(...await require('./drawio-geometry-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_CLONE_CONSTRAINT_ACCEPTANCE) checks.push(...await require('./drawio-clone-constraint-browser-cases.cjs')(frame,theme));

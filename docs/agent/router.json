@@ -910,6 +910,10 @@
       [
         "node",
         "scripts/avatar_asset_audit.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_ai_templates.cjs"
       ]
     ],
     "full": [
