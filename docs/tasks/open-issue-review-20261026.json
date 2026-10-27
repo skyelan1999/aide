@@ -147,17 +147,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第47轮178已提交验收，待push评论；累计109覆盖，原272剩175，额外441待后续。下一179最新正文已读，尚未修改或新增回归。",
+  "handoff": "第47轮178已push并评论；累计109覆盖，原272剩175，额外441待后续。第48轮179最新正文已读，尚未新增回归或改代码。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "70c146847d480a4cd33f98f32306af1b0fe78529",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "83b71a0c77398c766fd408494bd3dac293536064"
+    "evidenceCommit": "97a37dcfc2e51b9196555a1eebb66337a49b2887"
   },
-  "issue_comments": "第46轮177已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第47轮178已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -210,18 +210,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 47,
+      "cycle": 48,
       "status": "in_progress",
       "candidates": [
-        178
+        179
       ],
-      "phase": "verified-awaiting-push-and-comments",
-      "observed": "178 getControlPoints.nurbsSegsTo先split公式，再按控制点数钳制度数，De Boor每span四采样且每次O(p²)。有限探针degree=12/16内部控制点已得到17输出点（约2ms）；仅证明路径可执行，不算超限拒绝回归或漏洞卡死复现，未改产品代码。",
-      "probe": {
-        "path": "/workspace/scratch/issue-review-20261026/cycle47-nurbs-probe.cjs",
-        "result": "PATH_EXECUTED_WITHOUT_BUDGET",
-        "scope": "实际源码getControlPoints方法+隔离假shape/geometry类型；换算因子100；非真实微软文件/完整工作台。"
-      }
+      "phase": "latest-body-read-awaiting-regression",
+      "observed": "179 BMP异步转换回调未处理BmpDecoder/canvas异常，filesCount无法达到processedFiles，需用坏BMP有限复现并保证完成/错误回调恰好一次；现有ZIP门禁不覆盖此媒体转换错误。"
     },
     "additionalFollowupIssues": [
       441
