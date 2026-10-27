@@ -1481,46 +1481,56 @@
       "number": 190,
       "title": "[Bug] Allied Telesis palette misspells Video Conference Terminal",
       "url": "https://github.com/skyelan1999/aide/issues/190",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-AlliedTelesis Vdeo Conference Terminal title/tag错拼；asset文件名本身也Vdeo，需保留引用或同步迁移。",
+      "status": "fixed-on-branch",
+      "evidence": "更正Video Conference Terminal标题与tags；原Vdeo SVG资源路径保留且真实加载通过。 三实现/明暗真实索引渲染，22组合browser errors[]及183quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+      "repairEvidence": "cycle-060.json"
     },
     {
       "number": 189,
       "title": "[Bug] Alibaba Cloud ACMS entry misspells Configuration Management",
       "url": "https://github.com/skyelan1999/aide/issues/189",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-AlibabaCloud ACMS title/tag均Manangement拼写错误；stencil key也用历史拼写，修复展示不宜直接改asset标识。",
+      "status": "fixed-on-branch",
+      "evidence": "更正ACMS Configuration Management标题与tags；历史misspelled stencil alias保留兼容。 三实现/明暗真实索引渲染，22组合browser errors[]及183quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+      "repairEvidence": "cycle-060.json"
     },
     {
       "number": 188,
       "title": "[Bug] Active Directory palette entries include an unrelated active search tag",
       "url": "https://github.com/skyelan1999/aide/issues/188",
-      "status": "reviewed-awaiting-evidence",
-      "evidence": "Sidebar-ActiveDirectory Cluster Server/Interface确有active tag，但均属Active Directory图集，active可以作为家族搜索词；不能仅凭标签认定不合理，需明确搜索分类约定，不按报告直接关闭或改。",
+      "status": "fixed-on-branch",
+      "evidence": "Cluster Server/Interface用自身具体词替换复制的active标签；原图片及标题不变。 三实现/明暗真实索引渲染，22组合browser errors[]及183quick通过。",
       "reviewVerdict": "needs-product-decision",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+      "repairEvidence": "cycle-060.json"
     },
     {
       "number": 187,
       "title": "[Bug] AWS18 Management Tools shows Patch Manager twice",
       "url": "https://github.com/skyelan1999/aide/issues/187",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-AWS4b相邻两条patch_manager样式/尺寸/文本/tags完全相同，无去重，重复注册。",
+      "status": "fixed-on-branch",
+      "evidence": "删去完全相同的第二个PatchManager注册；实际factory计数2→1，不改保留项。 三实现/明暗真实索引渲染，22组合browser errors[]及183quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+      "repairEvidence": "cycle-060.json"
     },
     {
       "number": 186,
       "title": "[Bug] AWS18 right-pointing arrows are labeled as left",
       "url": "https://github.com/skyelan1999/aide/issues/186",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-AWS4b三个endArrow-only模板仍label/tag left，对照startArrow-only邻项可确认复制错误；右向标签缺失。",
+      "status": "fixed-on-branch",
+      "evidence": "三种AWS18 endArrow模板标题与索引改right，保留三个left控制及所有style。 三实现/明暗真实索引渲染，22组合browser errors[]及183quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+      "repairEvidence": "cycle-060.json"
     },
     {
       "number": 185,

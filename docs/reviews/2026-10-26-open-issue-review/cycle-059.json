@@ -56,11 +56,14 @@
     "Go/full suite/native platforms not rerun for metadata/test/docs change. No main merge, release/deployment. #464 remains user-deferred pending new test logs."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "185": "https://github.com/skyelan1999/aide/issues/185#issuecomment-6438030020"
+    },
+    "remoteCommit": "ec5049d1fa31daeb2dc8c2b5d8fff46fe9c73071"
   },
   "sourceSHA256": {
     "scripts/drawio-aws-search-review.cjs": "ce9dd1f1c0391f2ab4ea85da731a96b8c2a75f50998bd58b643a03d0264bf16e",
