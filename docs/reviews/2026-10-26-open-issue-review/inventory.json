@@ -1607,10 +1607,12 @@
       "number": 176,
       "title": "[Bug] Bound decompressed VSDX/VSSX size during import",
       "url": "https://github.com/skyelan1999/aide/issues/176",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "VSDX importer对XML/media zipEntry.async并发完整展开，filesCount只计完成无字节预算；本地Visio分支包括vsdx/vssx。",
+      "status": "fixed-on-branch",
+      "evidence": "VSDX/VSSX共用串行流式ZIP预算，限制实际成员/累计字节；错误转交及同运行时有效恢复验收通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "98f33d5582a289bf942fcced73004d07ea3aaf82",
+      "repairEvidence": "cycle-045.json"
     },
     {
       "number": 175,
@@ -2864,7 +2866,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 178,
+    "remainingFollowupTargets": 177,
     "followupRepairs": [
       48,
       64,
@@ -2956,7 +2958,8 @@
       172,
       173,
       174,
-      175
+      175,
+      176
     ]
   },
   "newlyDiscoveredIssues": [
