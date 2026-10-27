@@ -902,6 +902,10 @@
       [
         "node",
         "scripts/test_drawio_lifecycle_alpha.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_obj_preview_bounds.cjs"
       ]
     ],
     "full": [
