@@ -1616,10 +1616,12 @@
       "number": 175,
       "title": "[P2] Map Lucidchart Alexa Voice Service blocks to the voice service stencil",
       "url": "https://github.com/skyelan1999/aide/issues/175",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Extensions IoT_AlexaVoiceServiceAWS19映射alexa_skill而非侧栏已有alexa_voice_service_2。",
+      "status": "fixed-on-branch",
+      "evidence": "IoT_AlexaVoiceServiceAWS19改用alexa_voice_service_2，实际三转换器/模型/图形检查通过，Skill对照保持。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "451ac35385d76899a8efcd062f0dbf5db40ced4f",
+      "repairEvidence": "cycle-044.json"
     },
     {
       "number": 174,
@@ -2862,7 +2864,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 179,
+    "remainingFollowupTargets": 178,
     "followupRepairs": [
       48,
       64,
@@ -2953,7 +2955,8 @@
       171,
       172,
       173,
-      174
+      174,
+      175
     ]
   },
   "newlyDiscoveredIssues": [
