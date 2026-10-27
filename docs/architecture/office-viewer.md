@@ -365,3 +365,5 @@ AWS 3D 的四个单向箭头分别按 NE/SE/SW/NW、完整方向词和连写方�
 源码及两份分发的选定 palette 方法用 `scripts/sync_drawio_palette_search.cjs` 和外部 Terser5.39.0 同步，`--check` 只读核对。设置 `AIDE_DRAWIO_PALETTE_SEARCH_ACCEPTANCE=1` 运行组件浏览器脚本，检查真实索引/排序及十个图形渲染，覆盖三份实现和明暗主题。搜索继续保留发音近似匹配；正确方向应排在其他方向的模糊结果之前。这是组件验收，未执行完整工作台的图库选择器和拖放流程。
 
 AWS19/当前及 AWS18 图库还按实际对象索引 notification、JSON Script、Connector、EC2 实例型号、Systems Manager 子项及数据库/网络类别，避免沿用相邻对象的搜索词。Archive/Vault 保留原本正确的图形和搜索词，修正颠倒的显示标题；不改已有图文件。设置 `AIDE_DRAWIO_AWS_SEARCH_ACCEPTANCE=1` 通过原始初始化器传入真实样式参数，检查十四个目标的实际索引、查询命中和 stencil 渲染，并覆盖两分发及明暗。标题追加及模糊匹配原本可让部分错误词条被搜到，因此不把每个词条都描述成原来完全不可发现。
+
+相邻旧版图库还校正 AWS18 三种右箭头的标题和 right 搜索词，并移除重复的 Patch Manager 模板；左箭头与双向模板保留。Active Directory 的 Cluster Server/Interface 使用自身搜索词。Alibaba ACMS 与 Allied Telesis Video Conference Terminal 的标题和搜索词更正拼写，已有 `acms_application_configuration_manangement` 形状别名及 `Vdeo_Conference_Terminal.svg` 资源路径保持兼容。设置 `AIDE_DRAWIO_SIDEBAR_METADATA_ACCEPTANCE=1` 检查真实索引/查询、唯一条目计数、左向控制及八个图元/本地图片加载；仍属于组件验证，未替代完整图库选择器和实际拖放。
