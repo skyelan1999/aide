@@ -1,0 +1,58 @@
+{
+  "cycle": 57,
+  "baseline": "ea957d50f596987b9583b10787f2c80942ea2f56",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    183
+  ],
+  "verdict": "not-supported-as-reported",
+  "cumulativeProductFixes": 116,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 117,
+  "original272RemainingFollowup": 170,
+  "additionalFollowupIssues": [],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_SDK_REVIEW=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle57-sdk-browser-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154:16groups/errors[] including6 SDKsource/app/integrate ×light/dark; captures14 actual palette entry arguments perconstructor then inserts unchanged styles and original empty values in real editor, real stencil SVG rendered. Review labels added separately. Source/cached XML and visually inspected desktop screenshot show generic colored cube; no Android robot/platform branding. Separate iOS descriptor has same cube geometry with small coordinate rounding/order differences.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle57-sdk-browser-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick (escalated after sandbox EPERM)",
+      "checks": 182,
+      "receipt": ".agent-state/verify-20261027T085724383758Z.log",
+      "fingerprint": "9996ee69a4d2db9a53f13fe00d8275a3c55f931d02bca8499f7c8f584060a840"
+    }
+  ],
+  "failedChecksResolved": [
+    {
+      "observed": "First owned fixture called graph.removeCells() without required array; corrected to explicit getSelectionCells, rerun passed. No product change."
+    },
+    {
+      "observed": "Initial quick sandbox blocked existing subprocess/socket fixtures with EPERM (avatar/frame/mermaid). Repeated unchanged code with permitted local execution: all182 checks passed.",
+      "evidence": ".agent-state/verify-20261027T085547868954Z.log"
+    }
+  ],
+  "conclusion": [
+    "Internal alias mxgraph.aws3.android is indeed reused, but its actual geometry is a generic SDK cube. All advertised platform entries preserve distinct color/title/search terms; issue assertion that the Android platform logo is displayed is contradicted by real rendering and descriptor inspection.",
+    "AWS3 provides no separate Ruby/Python/PHP/.NET/JS/Java/Xamarin/Node shape in this family. Replacing legacy icons with AWS2 is a design change, not evidence of fixing a demonstrated wrong Android logo. No product patch warranted for this report.",
+    "Frozen original ordered-review source-confirmed classification remains untouched as historical static review. Inventory supersedes it with runtime evidence; not counted as another product fix."
+  ],
+  "notRun": [
+    "Actual palette picker interaction/drag-drop, full Aide workbench, platform SDK logo redesign or external AWS trademark specification verification. Factory capture plus actual styled graph rendering is the bounded scope.",
+    "Go/tests/full suite not repeated for observational browser helper; no main merge, release/deployment. #464 remains user-deferred pending new Windows test log."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "scripts/drawio-sdk-review-browser-cases.cjs": "e64f9fd84fa0561d0188a1cff945bdad59930f4f1794efbdb8af088818a3f872",
+    "scripts/browser-drawio-preview-bounds.cjs": "21fc2a59eea50d536625adc44ba8200b187ef79bb8be2d10bfddca8ec120e678"
+  }
+}

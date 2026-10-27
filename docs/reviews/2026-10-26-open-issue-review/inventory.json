@@ -1544,10 +1544,12 @@
       "number": 183,
       "title": "[Bug] AWS3 SDK palette reuses the Android stencil for other languages",
       "url": "https://github.com/skyelan1999/aide/issues/183",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-AWS3 SDK中iOS/Ruby/Python/PHP/.NET等均使用android stencil，仅改fill。",
+      "status": "verified-not-supported-awaiting-close",
+      "evidence": "真实源码/app/integrate ×明暗渲染显示通用SDK方块及各语言独立颜色；Android内部alias不包含Android平台logo，iOS独立模板也是通用方块。原静态推断被实际descriptor/渲染反证，无产品补丁。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairEvidence": "cycle-057.json",
+      "runtimeVerdict": "not-supported-as-reported"
     },
     {
       "number": 182,
