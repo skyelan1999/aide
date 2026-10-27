@@ -73,11 +73,14 @@
     "用户原未跟踪文件保留，无常驻服务。只push修复分支，不合并main/发行/部署。下一180最新正文已读，未改代码或新增回归。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "179": "https://github.com/skyelan1999/aide/issues/179#issuecomment-6433846078"
+    },
+    "remoteCommit": "a3f81fab52d06345a2876da2d90ae26eb697c73c"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "e85f9bbaf7ab150ce27c6fcf64706dda2f0accdc90dd1d49dc93c94c0244b9e1",
