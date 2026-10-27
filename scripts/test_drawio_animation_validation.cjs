@@ -1,13 +1,17 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 function parsers(){
- const source=fs.readFileSync('internal/server/web/vendor/drawio/js/diagramly/Editor.js','utf8'),bundle=fs.readFileSync('internal/server/web/vendor/drawio/js/app.min.js','utf8');
+ const source=fs.readFileSync('internal/server/web/vendor/drawio/js/diagramly/Editor.js','utf8');
  const marker='/* AIDE animation validation #168 */';
  let a=source.indexOf(marker);if(a<0)a=source.indexOf('Editor.parseAnimationData = function');
  const p=source.indexOf('Editor.parseAnimationData = function',a),b=source.indexOf('\n\t};',p)+5;
- let c=bundle.indexOf(marker);if(c<0)c=bundle.indexOf('Editor.parseAnimationData=function');
- const d=bundle.indexOf('Editor.AnimationPlayer=function',c);assert.ok(a>=0&&b>a&&c>=0&&d>c);
- return [['source',source.slice(a,b)],['bundle',bundle.slice(c,d)]];
+ assert.ok(a>=0&&b>a);
+ return [['source',source.slice(a,b)],...['app.min.js','integrate.min.js'].map(file=>{
+  const bundle=fs.readFileSync('internal/server/web/vendor/drawio/js/'+file,'utf8');
+  let c=bundle.indexOf(marker);if(c<0)c=bundle.indexOf('Editor.parseAnimationData=function');
+  const d=bundle.indexOf('Editor.AnimationPlayer=function',c);assert.ok(c>=0&&d>c);
+  return [file,bundle.slice(c,d)];
+ })];
 }
 function main(){
  for(const [name,code]of parsers()){

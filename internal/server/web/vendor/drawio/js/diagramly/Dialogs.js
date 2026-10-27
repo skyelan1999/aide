@@ -15444,11 +15444,17 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 
 	// Bottom action row — generous margin-top per docs/dialog-style-guide.md
 	// (CustomDialog uses 34px; we use 20px because mxWindow already has
-	// its own title-bar chrome above the content). No flex-wrap here —
-	// the spacer's behavior gets undefined when buttons wrap; the
-	// minimum dialog size (360px) keeps all buttons on one line.
+	// its own title-bar chrome above the content). Wrap at narrow sizes
+	// or with longer translations; keep wrapped actions right-aligned
+	// and let the step list absorb the footer's additional height.
 	var actions = document.createElement('div');
-	actions.style.cssText = 'margin-top:20px;display:flex;gap:6px;flex:0 0 auto';
+	actions.style.cssText = 'margin-top:20px;display:flex;gap:6px;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end;align-items:center';
+	var secondaryActions = document.createElement('div');
+	secondaryActions.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:100%';
+	var primaryActions = document.createElement('div');
+	primaryActions.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;max-width:100%;margin-left:auto';
+	actions.appendChild(secondaryActions);
+	actions.appendChild(primaryActions);
 
 	// `playingSteps` is hoisted to the top of the function — see comment
 	// there. It tracks the currently-playing step(s) as a Set so a parallel
@@ -15488,7 +15494,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	};
 
 	// Help button — opens the end-user manual in a new window.
-	actions.appendChild(editorUi.createHelpIcon(ANIMATION_HELP_URL));
+	secondaryActions.appendChild(editorUi.createHelpIcon(ANIMATION_HELP_URL));
 
 	var thisDialog = this;
 
@@ -15571,7 +15577,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		previewBtn.title = mxResources.get('preview');
 	});
 	previewBtn.title = mxResources.get('preview');
-	actions.appendChild(previewBtn);
+	secondaryActions.appendChild(previewBtn);
 
 	// Reset — restores the canvas to its pre-preview state and stops
 	// any running playback. Disabled until a preview session is open.
@@ -15592,11 +15598,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	resetBtn.title = mxResources.get('reset');
 	resetBtnRef = resetBtn;
 	updateResetBtn();
-	actions.appendChild(resetBtn);
-
-	var spacer = document.createElement('span');
-	spacer.style.flex = '1 1 auto';
-	actions.appendChild(spacer);
+	secondaryActions.appendChild(resetBtn);
 
 	var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
 	{
@@ -15620,7 +15622,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		cancelBtn.title = mxResources.get('cancel');
 	});
 	cancelBtn.title = mxResources.get('cancel');
-	actions.appendChild(cancelBtn);
+	primaryActions.appendChild(cancelBtn);
 
 	applyBtn = mxUtils.button(mxResources.get('save'), function()
 	{
@@ -15648,7 +15650,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	applyBtn.title = mxResources.get('save');
 	applyBtn.disabled = !jsonValid;
 	previewBtn.disabled = !jsonValid;
-	actions.appendChild(applyBtn);
+	primaryActions.appendChild(applyBtn);
 
 	div.appendChild(actions);
 

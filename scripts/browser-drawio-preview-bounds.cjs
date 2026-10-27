@@ -83,6 +83,7 @@ async function main() {
       if (process.env.AIDE_DRAWIO_VISIO_ACCEPTANCE) checks.push(...await require('./drawio-visio-archive-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_LUCID_ACCEPTANCE) checks.push(...await require('./drawio-lucid-message-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_ANIMATION_ACCEPTANCE) checks.push(...await require('./drawio-animation-browser-cases.cjs')(frame,out,theme));
+      if (process.env.AIDE_DRAWIO_ANIMATION_FOOTER_ACCEPTANCE) checks.push(...await require('./drawio-animation-footer-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_AI_ACCEPTANCE) checks.push(...await require('./drawio-ai-template-browser-cases.cjs')(frame,out,theme,aiRequests));
       if (process.env.AIDE_DRAWIO_LIFECYCLE_ACCEPTANCE) checks.push(...await require('./drawio-lifecycle-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_GEOMETRY_ACCEPTANCE) checks.push(...await require('./drawio-geometry-browser-cases.cjs')(frame,out,theme));
