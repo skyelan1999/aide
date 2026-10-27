@@ -941,6 +941,10 @@
       ],
       [
         "node",
+        "scripts/test_drawio_gif_frames.cjs"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js"
       ],

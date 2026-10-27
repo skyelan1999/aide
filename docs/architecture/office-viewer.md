@@ -334,3 +334,14 @@ Trello客户端在上传前按实际附件Blob的 `size` 检查，字符串先�
 源码 `TrelloClient.js` 与 `app.min.js` 的writeFile用外部Terser **5.39.0** 和 `scripts/sync_drawio_trello_limits.cjs` 同步，`--check` 只读核对。VM回归用较小的16字节配置检查Blob、File、中文、emoji、ASCII及精确边界；浏览器检查原10,000,000字节配置、真实Blob/FormData、PNG插入/保存的超限路径和错误窗口。
 
 AIDE默认嵌入页会清理并禁用Trello客户端，默认工作台入口未启用该集成。浏览器回归在App初始化清理前捕获真实分发构造器，与源码方法一起进行隔离测试，并断言全局客户端仍为空；授权与XHR使用mock，未读取真实账号凭据或上传至Trello。设置 `AIDE_DRAWIO_TRELLO_ACCEPTANCE=1` 可复跑；它不是完整工作台、真实Trello账户、PNG真实生成或云端上传验收。
+
+
+### 动画 GIF 导出的帧数预算
+
+`AnimatedGifExport` 每次导出最多300帧，保留至少2帧的原行为。自动/默认FPS和时长的既有falsy回退保持；解析后的有效FPS与时长必须为正有限数。计算得到的帧数须为安全整数且不超过上限，检查发生在移除SVG动画CSS、嵌入图片和创建编码器之前。公开 `renderFrames` 入口也在分配画布/编码器前复核帧数与FPS，避免绕过主导出入口。超限进入原错误回调，实际UI停止转圈并提示缩短动画时长或降低帧率，不静默截断动画。
+
+自动时长识别支持CSS毫秒、秒及科学计数法，覆盖浏览器把长毫秒值规范化为秒的实际SVG。源码与 `app.min.js`、`integrate.min.js` 的导出器用外部Terser **5.39.0** 和 `scripts/sync_drawio_gif_frames.cjs` 同步，`--check` 只读核对；GIF编码器本身不改。
+
+有限回归在计划阶段截获旧代码产生的15,000,000帧，未实际渲染大动画；还检查300帧精确边界、非法有效参数、直接渲染入口及默认值回退。浏览器在合成图中启用flow动画，通过实际导出UI验证超长SVG在编码器创建前报错和spinner恢复，然后缩短时长，经真实SVG栅格化、对应源码/分发编码器、FileReader和saveData调用生成两帧GIF，解析文件块并以浏览器原生解码检查尺寸。saveData被测试截获，不实际下载或写用户文件。设置 `AIDE_DRAWIO_GIF_ACCEPTANCE=1` 可复跑。
+
+这是导出器的帧数预算，不是所有图像尺寸、编码器独立调用或进程总内存/耗时的保证；超出预算的合法长动画也会拒绝。完整工作台文件选择/保存对话框、300帧实际长导出、全部画质/透明度语义及跨平台未验收。
