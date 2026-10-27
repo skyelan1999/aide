@@ -90,11 +90,15 @@
     "保留用户未跟踪文件，无常驻测试服务；只push修复分支，不合并main、发行或部署，合理issue保持open。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "159": "https://github.com/skyelan1999/aide/issues/159#issuecomment-6431175925",
+      "160": "https://github.com/skyelan1999/aide/issues/160#issuecomment-6431179885"
+    },
+    "verifiedRemoteCommit": "dd5c5f13434b6f3c99308a81627a2c3a4b0aea78"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "601dcaaa5225eadc8224e35e92448ec863e9267f8a4c6c430482cc57b69d7c59",

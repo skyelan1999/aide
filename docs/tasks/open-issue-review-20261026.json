@@ -136,16 +136,16 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第37轮#159/#160已修复并本地验收，等待push及评论；累计94项覆盖，原272项剩190；下一轮#162增强头像审计，#161已关闭重复102。",
+  "handoff": "第37轮#159/#160已push并评论；累计94项分支覆盖，原272项剩190。Cycle38 #162最新正文、脚本和现有审计已读，102/102文件哈希不符、插帧记录35而manifest34（stale sleeping-v2）；manifest无插帧标记且当前帧数与历史插帧记录不符，不能靠重算哈希补造来源。下一步先补隔离生成器/审计回归，保留历史提取证据并验证输出哈希，不修改现有图像。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "1e444cfc35c5430d84cf4012c9be76033832ee89",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
   },
-  "issue_comments": "第36轮#158已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第37轮#159/#160已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -198,13 +198,14 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 37,
+      "cycle": 38,
       "status": "in_progress",
       "candidates": [
-        159,
-        160
+        162
       ],
-      "phase": "verified-awaiting-push-and-comments"
+      "phase": "latest-body-script-and-readonly-audit-confirmed-awaiting-isolated-generator-reproduction",
+      "baselineEvidence": "/workspace/scratch/issue-review-20261026/cycle38-162-baseline-audit.json",
+      "observed": "102/102文件哈希不符；art34/manifest34/interpolation35(stale sleeping-v2)，manifest没有interpolation标记，需保留旧证据并区分当前文件哈希与历史提取信息。"
     }
   },
   "orderedReview": {
