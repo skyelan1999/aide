@@ -369,3 +369,5 @@ AWS19/当前及 AWS18 图库还按实际对象索引 notification、JSON Script�
 相邻旧版图库还校正 AWS18 三种右箭头的标题和 right 搜索词，并移除重复的 Patch Manager 模板；左箭头与双向模板保留。Active Directory 的 Cluster Server/Interface 使用自身搜索词。Alibaba ACMS 与 Allied Telesis Video Conference Terminal 的标题和搜索词更正拼写，已有 `acms_application_configuration_manangement` 形状别名及 `Vdeo_Conference_Terminal.svg` 资源路径保持兼容。设置 `AIDE_DRAWIO_SIDEBAR_METADATA_ACCEPTANCE=1` 检查真实索引/查询、唯一条目计数、左向控制及八个图元/本地图片加载；仍属于组件验证，未替代完整图库选择器和实际拖放。
 
 Android Contact Badge 的 Normal、Pressed 模板分别引用现有对应状态 stencil，覆盖 40/60 两种尺寸；Focused 保持原样，已有图文件不自动改写。ArchiMate2/3 的显式搜索词与对应语义一致，Quad Arrow 的 `four way` 及 Atlassian Checkbox(off) 的 `off` 搜索词也已校正；标题补词和近似匹配保留。设置 `AIDE_DRAWIO_STATE_SEARCH_ACCEPTANCE=1` 检查六个状态/尺寸模板与三个独立状态参考的实际 SVG 渲染，以及十七个搜索词条的真实工厂、索引、查询和渲染，覆盖源码与两份分发、明暗主题。此检查属于组件验收，未执行完整图库选择器及实际拖放。
+
+Azure2 的 App Space Component 标题使用正确拼写，已有 SVG 路径和搜索词保持原样。BPMN Choreographies 移除了名为 `bzzzzt` 的空框占位；两种参与方朝向的完整 Call Choreography 及其六个循环/多实例变体保留。Gateways 的 Multiple Start 显式索引词改为 start，Multiple End 保留。设置 `AIDE_DRAWIO_BPMN_PALETTE_ACCEPTANCE=1` 可执行选定子图库的真实工厂、索引查询、部件检查、画布插入渲染和本地图片加载；验收独立于全量压缩搜索缓存，不覆盖完整工作台图库选择器和鼠标拖放。
