@@ -69,11 +69,18 @@
     "Go/full suite/nativeplatforms not repeated for metadata/test/docs. No main merge,release/deployment. #464 user-deferred pending newtestlog; reasonable fixed reports stayopen."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "186": "https://github.com/skyelan1999/aide/issues/186#issuecomment-6438169934",
+      "187": "https://github.com/skyelan1999/aide/issues/187#issuecomment-6438170925",
+      "188": "https://github.com/skyelan1999/aide/issues/188#issuecomment-6438171659",
+      "189": "https://github.com/skyelan1999/aide/issues/189#issuecomment-6438172225",
+      "190": "https://github.com/skyelan1999/aide/issues/190#issuecomment-6438172862"
+    },
+    "remoteCommit": "a314e5ccfcf9bc98fa317456bb36fcde47f46c31"
   },
   "sourceSHA256": {
     "scripts/drawio-sidebar-metadata-review.cjs": "7a0cf4b5890f84e5bf0914586978743c4377e8a18656e1bc58b96fb4d7aafde4",
