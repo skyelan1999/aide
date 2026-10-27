@@ -69,14 +69,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第45轮修复176 Visio ZIP流预算及VSSX错误转交；累计106项产品/验收issue覆盖及1项额外测试修正。",
+      "summary": "第46轮修复177 PolylineTo二次移位及公式/点数预算；累计107项产品/验收issue覆盖及1项额外测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "真实JSZip三方法预算回归、完整Visio转换器doImportVisio/窗口/恢复与Lucidchart等共31组浏览器场景、最终quick/文档/路由通过；完整工作台/真实复杂微软文件/媒体像素及跨平台未验收。",
+      "summary": "三份真实handler线性/边界回归，实际行工厂/几何/Stencil及既有Visio/Lucidchart共37组浏览器、最终quick/文档通过；完整工作台/真实复杂文件/全部几何和跨平台未验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -121,7 +121,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-042.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-043.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-044.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-045.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-045.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-046.json"
       ]
     },
     "documentation": {
@@ -145,11 +146,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第45轮176已push并评论；累计107覆盖，原272剩177，额外441待后续。第46轮177最新正文及PolylineTo源码已读，尚未修改/新增回归。",
+  "handoff": "第46轮177已提交验收，待push评论；累计108覆盖、原272剩176，额外441待后续。下一178/179最新正文已读但未改代码或新增回归。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "98f33d5582a289bf942fcced73004d07ea3aaf82",
-    "pushed": true,
+    "commit": "df3533b25b9addf7beeebcf01ff700ad25e6b3c4",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
@@ -184,23 +185,23 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 46,
+    "nextCycle": 47,
     "lastCompletedBatch": {
-      "cycle": 45,
+      "cycle": 46,
       "issues": [
-        176
+        177
       ],
-      "cumulativeFixed": 107,
-      "cumulativeProductFixed": 106,
+      "cumulativeFixed": 108,
+      "cumulativeProductFixed": 107,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 177,
-      "verification": "PASS actual JSZip budgets, complete converter VSDX/VSSX error/recovery/UI, 31 browser groups including Lucidchart, final quick/docs; full workbench/real complex Visio/media/cross-platform NOT_RUN",
+      "remainingFollowupTargets": 176,
+      "verification": "PASS actual source/bundled linear/budget methods, XML row/geometry/stencil and existing 37 browser groups, final quick/docs; full workbench/real complex Visio/all coordinate semantics/cross-platform NOT_RUN",
       "remainingAdditionalFollowupTargets": 1
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      177
+      178
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -213,7 +214,7 @@
       "candidates": [
         177
       ],
-      "phase": "latest-body-read-awaiting-regression",
+      "phase": "verified-awaiting-push-and-comments",
       "observed": "PolylineTo.handle通过splice(0,1)反复移除坐标项，需改为线性索引并限制公式/点数；与176解压预算不同。"
     },
     "additionalFollowupIssues": [

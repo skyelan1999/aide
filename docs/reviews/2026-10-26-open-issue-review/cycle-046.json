@@ -1,0 +1,85 @@
+{
+  "cycle": 46,
+  "baseline": "6e8a443b7c75f6b07783f6c98452401d03b263c9",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    177
+  ],
+  "commits": {
+    "177": "df3533b25b9addf7beeebcf01ff700ad25e6b3c4"
+  },
+  "cumulativeProductFixes": 107,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 108,
+  "original272RemainingFollowup": 176,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "issue": 177,
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_visio_polyline.cjs",
+      "observed": "实际源码PolylineTo.handle解析5813字符/1000点公式，输出1001段，但发生2002次splice(0,1)，线性读取断言失败。未运行无限压力或声称页面崩溃。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle46-polyline-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_visio_polyline.cjs (also in final quick)",
+      "scope": "源码/两分发真实handler：1000点不再前端删除数组；普通输出、终点及闭合保持；262144代码单元原文长度与4096坐标对上限、精确点数边界、null空操作与inh原拒绝通过。VM换算因子为1，非真实单位换算验收。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle46-polyline-green.log"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_POLYLINE_ACCEPTANCE=1 AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle46-browser-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "真实完整Visio转换器中的XML行工厂/geometry.getPathXML/PolylineTo、实际换算系数，限制错误在shape位置写入前出现、同环境重试输出一致，并用实际mxStencil渲染结果并断言可见。源码/两分发、1440明色与390暗色，含176导入/错误窗口恢复、Lucidchart/可信缓存/原资源预算共37组，零pageerror，finally关闭自建context。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle46-browser-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261027T035002689290Z.log",
+      "fingerprint": "6fe6f584eed1351d1530952dac3fff5bfaa0b73ce22f75ff9d37f7b821746b3c"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_visio_polyline.cjs --check; same archive sync --check; node --check (3 new scripts); python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links；两分发在PolylineTo handler之外字节不变。"
+    }
+  ],
+  "securityReview": [
+    "原公式长度先于规范化/拆分检查；拆分坐标数先于位置写入/输出路径循环检查；字段顺序读取去掉二次数组复制和移位，正常端点/闭合逻辑保留。",
+    "这是每个PolylineTo公式/坐标对的边界，独立于176压缩包预算；不声称全部Visio几何、文件累计渲染或后续曲线计算有严格时间上限。根协调者顺序复核，无子agent。"
+  ],
+  "notRun": [
+    "完整Aide工作台、包含PolylineTo的真实微软压缩包、复杂坐标模式/全部几何语义、跨平台和整个integrate启动；浏览器XML行及模型为合成组件路径。",
+    "Go race/vet未重复，本批前端方法及回归工具。"
+  ],
+  "notes": [
+    "公式限制单位是UTF-16代码单元，非UTF-8字节；4096坐标对不含独立末尾终点。未混改坐标模式解释。",
+    "已有176单位/流预算单测与浏览器、169–175符号/样式及128缓存边界均在本轮最终回归；不是重复计数。",
+    "178 NURBS度数与179 BMP异步错误正文已读，仅下一项178继续，尚未写新回归或改其代码。",
+    "保留用户原未跟踪文件，无常驻服务，只push修复分支，不合并main/发行/部署。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "b4ba4b120657bb3e79c3efe6ac778b043a99ccb4272d9616d256c7288d048a2a",
+    "docs/architecture/office-viewer.md": "7fddefb87d94cf0388702389b1a5eea0eb81ae1832a4e1cc8d2d2fedf849ed86",
+    "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js": "81b2ede1096c9855d2c622cb0e9455d657b04281b140bde62e9aadb3873185dc",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "442c34ee3ed6d2ec9d98a4c9abbe4028a24161f9a6a682dd89782e5a15d883cd",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "753f85f77606e32567aea96203deec36e6102e59e065fbe153fc2f7cc1b49da6",
+    "scripts/drawio-visio-archive-browser-cases.cjs": "b70d4d440b36a5c096d80d0e309b054972a731e8f2279bbd332d91dfbcb975f6",
+    "scripts/drawio-visio-polyline-browser-cases.cjs": "3335b7821b027a242756e45ea0d5aac7334f58cdfee093d14982247a7fee115c",
+    "scripts/sync_drawio_visio_polyline.cjs": "68bbfcb95124ee2c14a12106b76b18c7c9504d98f5b7707e4f2c2104b2771a55",
+    "scripts/test_drawio_visio_polyline.cjs": "7a8b36601cb31eadd6e0624e6e7b576761d00cd8d15da741eb8a6a9756883b47"
+  }
+}

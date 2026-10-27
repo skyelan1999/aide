@@ -1598,10 +1598,12 @@
       "number": 177,
       "title": "[Bug] Avoid quadratic parsing of VSDX PolylineTo formulas",
       "url": "https://github.com/skyelan1999/aide/issues/177",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "PolylineTo.handle对split后的polyEntriesList循环splice(0,1)，反复移动余下数组，缺point/work限。",
+      "status": "fixed-on-branch",
+      "evidence": "PolylineTo顺序索引读取并限制262144代码单元/4096坐标对；真实行工厂/几何/渲染回归及quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "df3533b25b9addf7beeebcf01ff700ad25e6b3c4",
+      "repairEvidence": "cycle-046.json"
     },
     {
       "number": 176,
@@ -2866,7 +2868,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 177,
+    "remainingFollowupTargets": 176,
     "followupRepairs": [
       48,
       64,
@@ -2959,7 +2961,8 @@
       173,
       174,
       175,
-      176
+      176,
+      177
     ]
   },
   "newlyDiscoveredIssues": [
