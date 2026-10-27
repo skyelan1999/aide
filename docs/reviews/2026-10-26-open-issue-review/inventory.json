@@ -1571,10 +1571,12 @@
       "number": 180,
       "title": "[Bug] Enforce Trello attachment limits using byte size",
       "url": "https://github.com/skyelan1999/aide/issues/180",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "TrelloClient.writeFile用data.length检查但multipart发送Blob，Blob只有size；Init默认禁用Trello/App需tr=1，AIDE默认工作台入口未证实可达。",
+      "status": "fixed-on-branch",
+      "evidence": "可选Trello库按实际提交Blob.size限制，Blob/File/UTF8与PNG插入保存拒绝回归通过；默认AIDE全局客户端仍禁用，不声称默认可达。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "fb46de0e650311206bd1f48f7549bf7463601780",
+      "repairEvidence": "cycle-049.json"
     },
     {
       "number": 179,
@@ -2872,7 +2874,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 174,
+    "remainingFollowupTargets": 173,
     "followupRepairs": [
       48,
       64,
@@ -2968,7 +2970,8 @@
       176,
       177,
       178,
-      179
+      179,
+      180
     ]
   },
   "newlyDiscoveredIssues": [
