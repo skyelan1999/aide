@@ -1,0 +1,76 @@
+{
+  "cycle": 59,
+  "baseline": "3b26a792b9c2362f85574392663d02f94af3a0b5",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    185
+  ],
+  "commits": {
+    "185": "d0d69a493dd3a55f1777c6e079640154b740615d"
+  },
+  "cumulativeProductFixes": 118,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 119,
+  "original272RemainingFollowup": 168,
+  "additionalFollowupIssues": [],
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "AIDE_DRAWIO_AWS_SEARCH_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle59-aws-search-red node scripts/browser-drawio-preview-bounds.cjs",
+      "observed": "Real source initializers capture1640entries;14targets show wrong tags/2titles. Both notification entries absent from actual query results. Other targets can already match by appended title or existing fuzzy search; not all were undiscoverable. Screenshot also shows Vault title on archive glyph and Archive title on safe/vault glyph.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle59-aws-search-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_AWS_SEARCH_ACCEPTANCE=1 AIDE_DRAWIO_PALETTE_SEARCH_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle59-aws-search-green node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154,22groups/errors[]:6AWS cases source/app/integrate ×themes each14targets and1640captured factory entries (only14targetsearch/render assertions);6existing184directions plus10base. Actual top-level initializer supplies styles; live factory/addEntry/soundex/search on isolated receiver; actual14style/value cells render with correct registered stencils. Desktop screenshot visually inspected; original default values preserved, review annotations separate.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle59-aws-search-green/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_palette_search.cjs --check; node --check both bundles and new helpers; node scripts/test_drawio_palette_search.cjs",
+      "scope": "10selectedAWS methods plus previous184sync; outside those10methods both bundles byte-identical to baseline.14target baseline/current descriptor comparison preserves styles/shapes/dimensions/values; only tags and2titles differ."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 183,
+      "receipt": ".agent-state/verify-20261027T091229830166Z.log",
+      "fingerprint": "589da59cc055ab8b46f61dc76c4e69ab0eaec3ac675d4adcf6fa8863472ae413"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links."
+    }
+  ],
+  "securityReview": [
+    "Source8current tags,3legacy entry tags and1legacy shared category string fixed; affects legacy network category entries, not just one sampled VPC. Archive/Vault tags already described correct stencil identity; fixed2reversedtitles rather than cross-swapping correct tags. No renderer/file changes.",
+    "Original source/app/integrate methods executed in trusted local component only. Isolated index avoids mutating live sidebar/libraries; owns synthetic cells/browser context, closed finally. No external AWS call/model/device/account credentials. Scoped synchronization adds no runtime dependency.",
+    "Regression is actual before/after runtime search evidence, not a new mirrored unit test for each typo. Existing184quick regression remains unchanged."
+  ],
+  "notRun": [
+    "Full workbench palette picker, drag/drop, all1640entries rendered/searched, all fuzzy ranking interactions and external AWS documentation. Capture1640 count is not complete1640item validation.",
+    "Go/full suite/native platforms not rerun for metadata/test/docs change. No main merge, release/deployment. #464 remains user-deferred pending new test logs."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "scripts/drawio-aws-search-review.cjs": "ce9dd1f1c0391f2ab4ea85da731a96b8c2a75f50998bd58b643a03d0264bf16e",
+    "scripts/drawio-aws-search-browser-cases.cjs": "b374dda56c5990bd65409dbfdb99993dc43d8e9f873e4960c99d033b8144270d",
+    "scripts/sync_drawio_palette_search.cjs": "11411fdda18db055bb1fd59fef4004c59e1d87578cf51e84a813779f0c49c525",
+    "scripts/browser-drawio-preview-bounds.cjs": "abc54c9b7c94fa60ee81b219a22587ddac3cefe485a227d25d83ab6ad846877c",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-AWS4.js": "b371c251eefed5ca3363720e2e4149e3d0d8c9e43d1d8b70ba253f169e6bba8b",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-AWS4b.js": "725204f4a288cc44daa2f9632790e96a2c7f882779cd5a09e759109c6b2fc049",
+    "internal/server/web/vendor/drawio/js/app.min.js": "4abae7e8889934a044cb531ffc16b3cd4adb93e7c00679501735a6e6e15f9e3d",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "8d1dfb22785d59b4548ff17b149c9c3d1d862e048eb4434a51f974f9a488b707",
+    "docs/architecture/office-viewer.md": "5f5c7253e974fc19faf9f65c33597d7ee74ec7428107a87d826b630fa0803eca"
+  }
+}

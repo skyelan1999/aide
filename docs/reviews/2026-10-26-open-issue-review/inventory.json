@@ -1526,10 +1526,12 @@
       "number": 185,
       "title": "[Bug] AWS4 palette entries use unrelated search tags",
       "url": "https://github.com/skyelan1999/aide/issues/185",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-AWS4 notification使用users tags且title null；json_script/connector/存储项也存在复制的无关标签。",
+      "status": "fixed-on-branch",
+      "evidence": "当前AWS tags和AWS18补充notification/database/postgresql/network更正；Archive/Vault原tags正确，只改反标题。真实14目标/三实现明暗索引查询渲染，22组浏览器errors[]及183quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "d0d69a493dd3a55f1777c6e079640154b740615d",
+      "repairEvidence": "cycle-059.json"
     },
     {
       "number": 184,
