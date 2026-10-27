@@ -192,17 +192,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "#464原生方案已真正双parent合入当前分支 c11f9613，保留默认兼容入口及agent/监控/迁移，修正native回退/镜像/归属/源码指纹/许可证；184quick及相关检查通过待push。当前Windows新代码未实测，保持issueopen；下一原队列191。",
+  "handoff": "#464原生审查合并及收据已push，merge c11f9613，评论 https://github.com/skyelan1999/aide/issues/464#issuecomment-6440210135。默认兼容能力保留，native显式选择；184quick等通过，当前Windows新代码仍待实机。原272剩163，累计124覆盖不重复计464；下一原队列191。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "c11f9613f62068a463724e5b5df6a59d98cd3d68",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": null
+    "evidenceCommit": "04f793a3e5e9d008893b639481ca023d81a41048"
   },
-  "issue_comments": "60轮186–190均已推送并逐项评论，实际URL见cycle-060.json；合理问题保持open等main。",
+  "issue_comments": "61轮464已push并回填完整审查/实测边界：https://github.com/skyelan1999/aide/issues/464#issuecomment-6440210135",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -302,7 +302,7 @@
       ],
       "lastExplicitIssue": {
         "number": 464,
-        "status": "reviewed-native-plan-merged-on-branch-awaiting-push",
+        "status": "reviewed-native-plan-merged-and-pushed",
         "evidence": "cycle-061.json"
       },
       "lastRefresh": "2026-10-27T09:22:35.725221+00:00",

@@ -118,11 +118,14 @@
     "Fullrepo/serverrace,fullworkbench UI,no paidmodel/realdevice,no productionrestart,mainmerge,tag,Release/deploy."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "464": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6440210135"
+    },
+    "remoteCommit": "04f793a3e5e9d008893b639481ca023d81a41048"
   },
   "notes": [
     "Issue464 alreadycovered earlier;nativefollowupdoesnotincreaseissuecount. Userexplicitlyresumed it;191 metadata-only reviewpausedwithoutworktreechanges.",
