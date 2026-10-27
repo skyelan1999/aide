@@ -1213,7 +1213,7 @@ func (a *App) updateAgentResult(w http.ResponseWriter, r *http.Request) {
 		state.ActiveSlot = state.Pending.Target
 		state.LastMessage = "已切换到槽 " + state.ActiveSlot
 	} else {
-		state.LastMessage = "槽切换失败并已回滚：" + req.Message
+		state.LastMessage = "槽切换失败：" + req.Message
 	}
 	state.Pending = nil
 	if err := a.saveUpdateStateLocked(state); err != nil {
