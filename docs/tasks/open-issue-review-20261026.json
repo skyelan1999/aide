@@ -143,16 +143,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第43轮169–174及128缓存回归已完成最终验证，待push评论；累计105覆盖，原272剩179，额外441待后续。下一175正文已读，代码/夹具未动。",
+  "handoff": "第43轮169–174及128缓存回归已push并评论；累计105覆盖，原272剩179，额外441待后续。第44轮175已读最新正文，先补真实导入回归。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
+    "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
+    "evidenceCommit": "1f3000d5e447b18e99907b758537f5b4d86b3504"
   },
-  "issue_comments": "第42轮#168已push并评论；合理问题保持open等待main验收。新441已登记待独立修复。",
+  "issue_comments": "第43轮169–174与128回归补修均已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -210,21 +211,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 43,
+      "cycle": 44,
       "status": "in_progress",
       "candidates": [
-        169,
-        170,
-        171,
-        172,
-        173,
-        174
+        175
       ],
-      "phase": "verified-awaiting-push-and-comments",
-      "observed": "Extensions.js EIMessageBlock与EIMessageHistoryBlock均把getLabelStyle写到item2数组而非item2[i].style；实际app.min没有该字符串，须查动态加载的Lucidchart转换器，先补真实fixture。",
-      "followupRegressions": [
-        128
-      ]
+      "phase": "latest-body-read-awaiting-regression",
+      "observed": "IoT_AlexaVoiceServiceAWS19 当前使用 alexa_skill；AWS4目录提供独立 alexa_voice_service_2。下一176/177正文已读但尚未实现。"
     },
     "additionalFollowupIssues": [
       441

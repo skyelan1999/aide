@@ -125,11 +125,20 @@
     "无常驻服务，原用户未跟踪文件保留；只push分支，不合并main/发行/部署，合理issue保持open。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "169": "https://github.com/skyelan1999/aide/issues/169#issuecomment-6432948894",
+      "170": "https://github.com/skyelan1999/aide/issues/170#issuecomment-6432949530",
+      "171": "https://github.com/skyelan1999/aide/issues/171#issuecomment-6432949883",
+      "172": "https://github.com/skyelan1999/aide/issues/172#issuecomment-6432950287",
+      "173": "https://github.com/skyelan1999/aide/issues/173#issuecomment-6432950797",
+      "174": "https://github.com/skyelan1999/aide/issues/174#issuecomment-6432951112",
+      "128": "https://github.com/skyelan1999/aide/issues/128#issuecomment-6432951673"
+    },
+    "remoteCommit": "1f3000d5e447b18e99907b758537f5b4d86b3504"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "4774b789a4ce0c674593ca71fad524b2d7beb2e67e440c98393b131eb7f78f67",
