@@ -1580,10 +1580,12 @@
       "number": 179,
       "title": "[Bug] Handle BMP decode failures during VSDX import",
       "url": "https://github.com/skyelan1999/aide/issues/179",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "VSDX bmp zipEntry.async.then中BmpDecoder/canvas抛错无catch，成功尾部才processedFiles++，doneCheck不再满足导致悬挂。",
+      "status": "fixed-on-branch",
+      "evidence": "XML/媒体异步异常统一进入单次终态，坏BMP不再丢回调；VSDX/VSSX错误窗口与真实1pxBMP/画布导出和恢复验收通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "757357414315990a96898650ae24de1a39cce23c",
+      "repairEvidence": "cycle-048.json"
     },
     {
       "number": 178,
@@ -2870,7 +2872,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 175,
+    "remainingFollowupTargets": 174,
     "followupRepairs": [
       48,
       64,
@@ -2965,7 +2967,8 @@
       175,
       176,
       177,
-      178
+      178,
+      179
     ]
   },
   "newlyDiscoveredIssues": [

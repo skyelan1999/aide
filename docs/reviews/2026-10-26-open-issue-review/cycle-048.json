@@ -1,0 +1,93 @@
+{
+  "cycle": 48,
+  "baseline": "f2fdd0909cf0c05fe4b6a5c9c6188875e379418f",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    179
+  ],
+  "commits": {
+    "179": "757357414315990a96898650ae24de1a39cce23c"
+  },
+  "cumulativeProductFixes": 109,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 110,
+  "original272RemainingFollowup": 174,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "issue": 179,
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_visio_media_errors.cjs (before fix)",
+      "observed": "实际源码方法/真实BMP解码器处理两个4字节坏BMP；80ms有限观察零完成/错误回调、两次Invalid BMP File未处理Promise拒绝，单次终态断言失败。未无限等待或使用用户文件。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle48-media-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_visio_media_errors.cjs (also in final quick)",
+      "scope": "三份真实导入方法/BMP解码器，假canvas/model：坏BMP与VSSX错误转交、多个失败只通知一次、实际1px24位红色BMP的RGBA、canvas异常、成员async同步抛错/Promise拒绝、无错误回调时一次空结果回退；未处理拒绝均为空。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle48-media-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_MEDIA_ACCEPTANCE=1 AIDE_DRAWIO_NURBS_ACCEPTANCE=1 AIDE_DRAWIO_POLYLINE_ACCEPTANCE=1 AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle48-browser-final-clean node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154真实draw.io iframe；完整Visio源码/两分发代码及对应真实BmpDecoder，VSDX/VSSX两坏BMP只一次错误/UI关闭后有效空白页或空图库恢复，实际1pxBMP像素/JPEG导出、故障注入的canvas导出错误及重试。原Visio预算/NURBS/PolylineTo/Lucidchart/缓存/预览资源门禁共49组，1440明色与390暗色，零pageerror，finally恢复自建Canvas hook、关闭自建context。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle48-browser-final-clean/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261027T043138889929Z.log",
+      "fingerprint": "b0072e85b72844989f361493605b8f2a3ce0ba0fae39a66dbce76664a51a67ad"
+    },
+    {
+      "result": "PASS",
+      "command": "all 3 Visio sync scripts --check with external Terser5.39.0; node --check (3 changed/new browser/test scripts); python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links；两分发在archive/decode块之外字节不变，NURBS/PolylineTo/stencil错误转交同步检查通过。"
+    }
+  ],
+  "preflightFailures": [
+    {
+      "result": "FAIL_WHITESPACE",
+      "observed": "首次diff/quick捕获修改行继承的混合缩进及尾部空格。未在quick运行中修改源码；失败结束后只清理目标行空白，同步检查确认分发包不变，再跑最终quick及49组浏览器通过。",
+      "receipt": ".agent-state/verify-20261027T043007273453Z.log",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle48-quick.log"
+    }
+  ],
+  "securityReview": [
+    "基础decodeVsdx每次调用独立finished终态，正常完成与失败先置终态再通知；异步读取/转换的异常和外层Promise失败统一到fail，晚到处理回调不再运行/完成计数不再触发重复成功。",
+    "失败不需要补造完成计数，而是直接终止等待并通知。VSSX沿用176错误转交；EMF原有容错跳过保留；缺Uint8Array支持时明确错误；原ZIP/XML/几何预算及鉴权未放宽。",
+    "root顺序承担前端/验证/安全复核，无子agent；这不保证调用方自身抛错或所有后续异步页面转换的错误路径均已覆盖。"
+  ],
+  "notRun": [
+    "完整Aide工作台、真实复杂微软压缩包、所有BMP/EMF类型/像素预算/完整结构校验、后续全部异步页面转换与跨平台；正常BMP只验1x1 24位，正常文件为空白页/空图库内未引用媒体。",
+    "Go race/vet未重复，本批前端异步终态及回归工具。"
+  ],
+  "notes": [
+    "浏览器分发导入器提取段扩展为包含实际BmpDecoder；源码对应解码器单独按原路径加载，没有用源版解码器冒充两份打包解码器。",
+    "基础导入器empty ZIP现在返回明确No Visio data found错误，而非空错误值；完成与错误通知均经终态保护。",
+    "用户原未跟踪文件保留，无常驻服务。只push修复分支，不合并main/发行/部署。下一180最新正文已读，未改代码或新增回归。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "e85f9bbaf7ab150ce27c6fcf64706dda2f0accdc90dd1d49dc93c94c0244b9e1",
+    "docs/architecture/office-viewer.md": "56f5340af435325ac4ff8930b82d6a6e5bac78cfe9f25e4934c44a59cc2fa8d2",
+    "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js": "2ce465e0d61f69d7b18e6b3589cc8d8044ab3f5abb64954b2e899ac0595d67a2",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "9fc5a5689291138c4dab2460de0c522c5dbcc74e45e248f618d15c0894a121f5",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "bac3324aa743a366c229fac8dac96e03f935b72a0717fe54e6db3444b72dca2c",
+    "scripts/drawio-visio-archive-browser-cases.cjs": "db51c2443e5ec90916fd706897bf493b517bdf0045a9b6a00ede73f8a9af7132",
+    "scripts/drawio-visio-media-browser-cases.cjs": "9ae74b88c3fcbcebb2b443a5deb03521b847e725db8149bada8755074fb8e76e",
+    "scripts/test_drawio_visio_archive.cjs": "0d141575aabe3318f9974da7141b670242e7c676b680659d36c64cd9b812ed40",
+    "scripts/test_drawio_visio_media_errors.cjs": "353f2bbd315cc9f967b9fd32b6f73841f601d3f0daa4b05aa0a19945ccb1a0f0"
+  }
+}
