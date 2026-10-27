@@ -4,7 +4,7 @@ const {files}=require('./test_drawio_visio_archive.cjs');
 function importer(file){
  const text=fs.readFileSync('internal/server/web/vendor/drawio/js/'+file,'utf8');
  if(file===files[0])return text;
- const a=text.indexOf('var __extends='),b=text.indexOf(';(function(){function g(){return{m11:',a);
+ const a=text.indexOf('function BmpDecoder('),b=text.indexOf(';(function(){function g(){return{m11:',a);
  assert.ok(a>=0&&b>a,'locate full distributed Visio converter');return text.slice(a,b+1);
 }
 module.exports=async function(frame,out,theme){
@@ -44,6 +44,7 @@ module.exports=async function(frame,out,theme){
   await dialog.waitFor();await frame.page().screenshot({path:path.join(out,theme+'-visio-limit.png')});
   await frame.getByRole('button',{name:'OK',exact:true}).click();
   assert.equal(await dialog.count(),0);
+  if(process.env.AIDE_DRAWIO_MEDIA_ACCEPTANCE)checks.push(...await require('./drawio-visio-media-browser-cases.cjs')(frame,out,theme,file));
   if(process.env.AIDE_DRAWIO_NURBS_ACCEPTANCE)checks.push(...await require('./drawio-visio-nurbs-browser-cases.cjs')(frame,out,theme,file));
   if(process.env.AIDE_DRAWIO_POLYLINE_ACCEPTANCE)checks.push(...await require('./drawio-visio-polyline-browser-cases.cjs')(frame,out,theme,file));
   checks.push({case:'actual doImportVisio VSDX/VSSX oversized error and same-runtime valid page/library recovery; visible import error dialog',file,theme,result:'PASS',details:result});

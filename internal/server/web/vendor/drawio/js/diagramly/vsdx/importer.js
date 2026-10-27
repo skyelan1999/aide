@@ -248,6 +248,23 @@ var com;
                     var _this = this;
                     var docData = ({});
                     var mediaData = ({});
+                    var finished = false;
+                    function fail(error) {
+                        if (finished) return;
+                        finished = true;
+                        if (onerror != null) onerror(error);
+                        else if (callback) callback("");
+                    }
+                    function complete(xml) {
+                        if (finished) return;
+                        finished = true;
+                        if (callback) callback(xml);
+                    }
+                    function consume(entry, type, handle) {
+                        return entry.async(type).then(function (data) {
+                            if (!finished) handle(data);
+                        }).catch(fail);
+                    }
 
                     var allDone = function () 
                     {
@@ -335,10 +352,7 @@ var com;
 		                    var dateAfter = new Date();
 	                       	//console.log("File processed in " + (dateAfter - dateBefore) + "ms");
 		                    //console.log(xmlBuilder.str);
-		                    if (callback) 
-		                    {
-	                     		callback(xmlBuilder.str);
-		                    }
+		                    complete(xmlBuilder.str);
 	                    }
                     };
 
@@ -348,7 +362,7 @@ var com;
                     
                     var doneCheck = function()
                     {
-	                    	if (processedFiles == filesCount)
+                            if (!finished && processedFiles == filesCount)
 	                    	{
 	                    		var dateAfter = new Date();
 		                         //console.log(processedFiles + " File extracted in " + (dateAfter - dateBefore) + "ms");
@@ -360,14 +374,7 @@ var com;
 		                    	{
 		                    		console.log(e);
 		                    		
-		                    		if (onerror != null) 
-		                    		{
-		                    			onerror(e);
-		                    		}
-		                    		else
-		                    		{
-		                    			callback("");
-		                    		}
+                                    fail(e);
 		                    	}
 
 	                    	}
@@ -378,10 +385,7 @@ var com;
                     {
                     	if (Object.keys(zip.files).length == 0)
                     	{
-                    		if (onerror != null)
-                    		{
-                    			onerror();
-                    		}
+                            fail(new Error("No Visio data found"));
                     	}
                     	else
                     	{
@@ -395,7 +399,7 @@ var com;
 	                            if (name.indexOf('.xml') == nameLen - 4 || name.indexOf('.rels') == nameLen - 5) //xml files
 	                            {
 	                            	filesCount++;
-	        	                    zipEntry.async("string").then(function (str) 
+                                    consume(zipEntry, "string", function (str)
 	        	                  	{
         	                    		if (!(str.length === 0)) {
 	        	    						//UTF-8 BOM causes exception while parsing, so remove it
@@ -444,7 +448,7 @@ var com;
 	                            	filesCount++;
 	                            	if ((function (str, searchString) { var pos = str.length - searchString.length; var lastIndex = str.indexOf(searchString, pos); return lastIndex !== -1 && lastIndex === pos; })(name, ".emf"))
 	                            	{
-                                        zipEntry.async("arraybuffer").then(function(buffer)
+                                        consume(zipEntry, "arraybuffer", function(buffer)
                                         {
                                             try
                                             {
@@ -465,7 +469,7 @@ var com;
 	                            	else if ((function (str, searchString) { var pos = str.length - searchString.length; var lastIndex = str.indexOf(searchString, pos); return lastIndex !== -1 && lastIndex === pos; })(name, ".bmp")) {
 	                            		if (JSZip.support.uint8array) 
 	                            		{
-			                            	zipEntry.async("uint8array").then(function (bmpData) 
+                                            consume(zipEntry, "uint8array", function (bmpData)
 			           	                  	{
 			                            		var bitmap = new BmpDecoder(bmpData);
 			                            		
@@ -481,10 +485,14 @@ var com;
 			        	                    	doneCheck();
 			           	                   	});
 	                            		}
+                                    else
+                                    {
+                                        fail(new Error("BMP decoding is not supported"));
+                                    }
 	                            	}
 	                            	else
 	                            	{
-		                            	zipEntry.async("base64").then(function (base64Str) 
+                                        consume(zipEntry, "base64", function (base64Str)
 		           	                  	{
 	//	                                    if ((function (str, searchString) { var pos = str.length - searchString.length; var lastIndex = str.indexOf(searchString, pos); return lastIndex !== -1 && lastIndex === pos; })(name, ".bmp")) {
 	//	                                        try 
@@ -523,13 +531,7 @@ var com;
 	                        });
 
                     	}
-                    }, function (e) {
-                    		//console.log("Error!" + e.message);
-                    		if (onerror != null)
-                    		{
-                    			onerror(e);
-                    		}
-                    });                    
+                    }).catch(fail);
                 };
                 mxVsdxCodec.prototype.createMxGraph = function () {
                     var graph = new Graph();

@@ -25,12 +25,12 @@ function stencilMethod(file){
  const b=text.indexOf(file===files[0]?'mxVssxCodec.prototype.normalizeGeo':'k.prototype.normalizeGeo=',a);
  assert.ok(a>=0&&b>a);return text.slice(a,b);
 }
-function runtime(file,zip=JSZip){
+function runtime(file,zip=JSZip,extras={}){
  const parsed=[];function Codec(){}
  Codec.vsdxPlaceholder='visio';Codec.incorrectXMLReqExp=[];
  Codec.parseXml=text=>{parsed.push(text.length);return {firstChild:{nodeType:1}};};
  const stop=new Error('owned-stop-after-parse');Codec.prototype.importNodes=()=>{throw stop;};
- const context={mxVsdxCodec:Codec,m:Codec,com:{mxgraph:{io:{mxVsdxCodec:function PreviousCodec(){}}}},JSZip:zip,console:{log(){}},Promise,Uint8Array,ArrayBuffer,Number,Error,Object};
+ const context={mxVsdxCodec:Codec,m:Codec,com:{mxgraph:{io:{mxVsdxCodec:function PreviousCodec(){}}}},JSZip:zip,console:{log(){}},Promise,Uint8Array,ArrayBuffer,Number,Error,Object,...extras};
  vm.runInNewContext(methods(file),context,{timeout:5000});
  assert.equal(typeof Codec.loadArchive,'function','assign the loader before publishing the constructor');
  assert.equal(typeof Codec.prototype.decodeVsdx,'function','assign decode on the local constructor');
@@ -41,7 +41,7 @@ function runtime(file,zip=JSZip){
  vm.runInNewContext(stencilMethod(file),context,{timeout:5000});
  assert.equal(typeof StencilCodec.prototype.decodeVssx,'function');
  context.com.mxgraph.io.mxVssxCodec=StencilCodec;
- return {Codec,StencilCodec,parsed,stop};
+ return {Codec,StencilCodec,parsed,stop,context};
 }
 async function runDecode(r,data,stencil=false){
  return new Promise((resolve,reject)=>{
