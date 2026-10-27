@@ -162,17 +162,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "52轮467分支修复完成且流程/quick通过，Windows原生DACL/断域验收未运行；待push回填。累计114覆盖，原272剩172；下轮53优先441/369，再恢复182 stash 1ae8bb0（未push/未计数）。",
+  "handoff": "52轮467及51轮464分支修复已push并评论，账号优先策略已生效；累计114覆盖，原272剩172。Windows原生DACL/断域及Docker Desktop验收未运行。目标继续，第53轮按策略先441/369，再恢复182 stash 1ae8bb0（未push/未计数）；原有用户文件保留。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "a8bc5a9f5a7b6f60166e367f0b63f236b3d1d92e",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": null
+    "evidenceCommit": "96a7c96fc5b99443c3b9d31ab161981664122b86"
   },
-  "issue_comments": "第52轮467待push后评论，保持open等待Windows/main验收。",
+  "issue_comments": "第52轮467已push并评论 https://github.com/skyelan1999/aide/issues/467#issuecomment-6435557952；464/467均保持open等待Windows/main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",

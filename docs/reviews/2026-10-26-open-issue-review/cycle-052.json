@@ -60,11 +60,14 @@
     "182 remains paused in exact local stash 1ae8bb0bb926630140df3c7483831b63b7e0e85c, not counted or published; original user untracked files unchanged."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "467": "https://github.com/skyelan1999/aide/issues/467#issuecomment-6435557952"
+    },
+    "remoteCommit": "96a7c96fc5b99443c3b9d31ab161981664122b86"
   },
   "sourceSHA256": {
     "scripts/launcher-data.ps1": "dac05b1faf81f04421b138dd976c263b9976845e464b3b42c6819f0b5819a595",
