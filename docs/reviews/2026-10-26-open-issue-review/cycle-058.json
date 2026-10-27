@@ -1,0 +1,84 @@
+{
+  "cycle": 58,
+  "baseline": "8bda5def744d9a9ca6410a190488df6f48515bc6",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    184
+  ],
+  "commits": {
+    "184": "a08deaac92857e0e449ff6a84653ee5e350599c0"
+  },
+  "cumulativeProductFixes": 117,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 118,
+  "original272RemainingFollowup": 169,
+  "additionalFollowupIssues": [],
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_palette_search.cjs against HEAD pre-fix palette assignments",
+      "observed": "ArrowSE is missing its se direction token (and retains NE words); source regression fails before bundle checks. Bounded metadata capture, no malformed diagram.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle58-direction-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_palette_search.cjs",
+      "scope": "Source/app/integrate actual assignments:4direction token sets,3NW/SE axis sets,3unchanged NE controls; icon identity/dimensions not modified.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle58-direction-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_PALETTE_SEARCH_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle58-directions-browser-all node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "16groups/errors[] including6source/app/integrate×themes. Perconstructor12abbreviated/spaced/concatenated direction queries rank intended arrow first; additional south east search finds3corrected axes. Live factory/addEntry/soundex/ranked search with isolated sidebar index,10actualstyles rendered; no live sidebar mutation. Screenshot inspected confirms corrected axes.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle58-directions-browser-all/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_palette_search.cjs --check; node --check both bundles; bounded snapshot range comparison",
+      "scope": "Pinned5.39.0 selected method synchronized; outside chosen AWS3D palette assignment byte-identical to baseline in both bundles. Source only9tag strings change, no shapes/dimensions/colors/values changed."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 183,
+      "receipt": ".agent-state/verify-20261027T090554864314Z.log",
+      "fingerprint": "733dc22b741b2669c11e2f32d9c342df20e5be37078c44f83d3720888904123e"
+    }
+  ],
+  "failedChecksResolved": [
+    {
+      "observed": "First metadata fixture lacked addEntry/edge factory and then contained a local wrong variable; corrected adapters/assertion before recording valid RED. Python RED message assertion initially expected south but earliest missing token is se; exact captured RED inspected and confirmed. Product files always restored in finally."
+    },
+    {
+      "observed": "Initial browser expected no fuzzy alternatives at all, but NE legitimately includes lower-ranked NW through Soundex. Adjusted to existing ranked contract: intended arrow first; separate metadata regression rejects incorrect direction tags. No product search behavior changed."
+    }
+  ],
+  "securityReview": [
+    "Only palette search metadata changes; parsed actual drawing commands establish three nominally NE lines are NW/SE axes, source and screenshot independently agree. NE arrowless/dashed/flat controls preserve correct direction. Bidirectional and arrowless lines index both axis directions; no new geometry or renderer.",
+    "Scoped method synchronization changes no unrelated bundle bytes. Parser handles trusted assignments without regexp/template literals; it is not an untrusted JavaScript parser. No runtime dependencies, live network/model/device activity or user data involved."
+  ],
+  "notRun": [
+    "Full Aide workbench palette picker interaction/actual drag-drop, exhaustive all-library fuzzy ranking and external AWS icon documentation. Tests execute real shipped factory/index/search in isolated receiver and render unchanged styles, not full user workflow.",
+    "Go/full suite not repeated for palette metadata/test/docs change. No main merge/release/deployment; #464 deferred per user until new test logs."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "49288566328604d7508abb35eff50361f09e8ed48ad36e0bfaf2714a22a9a911",
+    "docs/architecture/office-viewer.md": "0a8b7c4303975afd80149eb53284096793db6dc1ae8e7edc12e79c1a78417869",
+    "scripts/test_drawio_palette_search.cjs": "7b3bbc20d4b99d46d2e0c1121f1ee1cb77fea99c43b244072ea40a7f74705aee",
+    "scripts/sync_drawio_palette_search.cjs": "33a43a8b876a6b0985578e8f89f4f6529f1ce6fbf912670cda671dec6df334b5",
+    "scripts/drawio-palette-search-browser-cases.cjs": "e88667262bbe3efdebe09a9b9f3a4391c8c4ccd0af241324e0668ea83aade10b",
+    "scripts/browser-drawio-preview-bounds.cjs": "7e7af70ad6727bd19534748d7889b363c1ef4b21bc726beb520a758842971eab",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-AWS3D.js": "6197ddfc8c0986a2943ca2f354a10ca343caa3b4e06d5b07f95ba9d06832134b",
+    "internal/server/web/vendor/drawio/js/app.min.js": "068b1fb674f96af17a2cb98115f0edb83566064f97468bd3c42694902b9beb78",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "87485ee8b098b1d96d64ba3a57bd3c5ab26e1a70449ff98d93aefe53ae60f92d"
+  }
+}

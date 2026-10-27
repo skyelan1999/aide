@@ -45,11 +45,17 @@
     "Go/tests/full suite not repeated for observational browser helper; no main merge, release/deployment. #464 remains user-deferred pending new Windows test log."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "183": "https://github.com/skyelan1999/aide/issues/183#issuecomment-6437725953"
+    },
+    "remoteCommit": "8bda5def744d9a9ca6410a190488df6f48515bc6",
+    "closed": [
+      183
+    ]
   },
   "sourceSHA256": {
     "scripts/drawio-sdk-review-browser-cases.cjs": "e64f9fd84fa0561d0188a1cff945bdad59930f4f1794efbdb8af088818a3f872",

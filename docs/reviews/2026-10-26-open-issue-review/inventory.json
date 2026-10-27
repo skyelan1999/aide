@@ -1535,21 +1535,24 @@
       "number": 184,
       "title": "[Bug] AWS 3D directional arrows are indexed as northeast",
       "url": "https://github.com/skyelan1999/aide/issues/184",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-AWS3D arrowSE/SW/NW均以north east tags注册；标题含缩写但未补全south/west搜索词。",
+      "status": "fixed-on-branch",
+      "evidence": "四个单向箭头方向词各自正确；三条NW/SE轴移除错误NE标记并索引两端方向，另三条NE控制保留。三实现/明暗真实索引排序和10图形渲染通过，未改几何。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "a08deaac92857e0e449ff6a84653ee5e350599c0",
+      "repairEvidence": "cycle-058.json"
     },
     {
       "number": 183,
       "title": "[Bug] AWS3 SDK palette reuses the Android stencil for other languages",
       "url": "https://github.com/skyelan1999/aide/issues/183",
-      "status": "verified-not-supported-awaiting-close",
+      "status": "closed-not-supported",
       "evidence": "真实源码/app/integrate ×明暗渲染显示通用SDK方块及各语言独立颜色；Android内部alias不包含Android平台logo，iOS独立模板也是通用方块。原静态推断被实际descriptor/渲染反证，无产品补丁。",
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairEvidence": "cycle-057.json",
-      "runtimeVerdict": "not-supported-as-reported"
+      "runtimeVerdict": "not-supported-as-reported",
+      "commentURL": "https://github.com/skyelan1999/aide/issues/183#issuecomment-6437725953"
     },
     {
       "number": 182,
