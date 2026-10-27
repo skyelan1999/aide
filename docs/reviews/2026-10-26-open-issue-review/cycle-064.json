@@ -1,0 +1,84 @@
+{
+  "cycle": 64,
+  "baseline": "7866ee905ab3ec7fcb5f29d82582e28d985b5e77",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    199,
+    200
+  ],
+  "commits": {
+    "199": "fe19335011dd72046466a37b300356f9b8d163af",
+    "200": "fe19335011dd72046466a37b300356f9b8d163af"
+  },
+  "cumulativeProductFixes": 133,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 134,
+  "original272RemainingFollowup": 153,
+  "additionalFollowupIssues": [],
+  "priorityRefresh": "Owner reports unchanged since cycle63;467 body proposal alreadycovered/no newruntimefailure.",
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle64-bootstrap-red.log",
+      "observed": "Actual257factories materialize9bad timestampstrings and1paragraphy. ActualcreateItem and desktoprealpointer previews170x153 while compoundextents170x193/268x150/258x150. All3 pointerdrops succeed, roots2/children1+5;bugisfootprintmismatch,notdropfailure."
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_BOOTSTRAP_ACCEPTANCE=1 AIDE_DRAWIO_BPMN_PALETTE_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle64-bootstrap-green node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154;22groups/errors[] =source/app/integrate×light1440/dark390 sixnewcases+6prior196–198+10base. Each9card factory records/actualHTMLrender and3compound createItem preview+normaldrop+3singlecontrols;desktop each3realmouse drags,total9. Newpreviewdimensions exactly170x193/268x150/258x150. ActualHTMLcorrectedtextpresent,no misspellings.257factoriesconstructed,not257visualacceptance. Desktop card/dropdown screenshots visually inspected.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle64-bootstrap-green/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "Beforeafterrecords/source scope comparison;PinnedTerser5.39 sync --check;node --checksource/2bundles/4helpers",
+      "scope": "9cardrecords equal afteronlyapprovedtext replacements;3compound cellgeometry/style snapshots+3singlecontrols identical;whole source scope13changedlines(10text+3bounds),changedlinewhitespacecleaned. Bothbundles outsideoneBootstrapassignment byteidentical;finalwhitespacecleanup doesnotchangebundles andsynccheckpasses.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle64-comparison.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 184,
+      "fingerprint": "61f93eb8fb225bca3619bd136b525c5697037b174fcfa98513c87c0043ee5cc6",
+      "receipt": ".agent-state/verify-20261027T152819807376Z.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py;git diff --check;git diff --cached --check",
+      "observed": "429Markdown/1471local links"
+    }
+  ],
+  "reportCorrection": "Realgraph.isSplitTarget returnsfalse for all3two-rootcompoundtemplates. Edge-splitcentering impactnotconfirmed;fix addressesactualpreview/dropdeclaredfootprint withoutaddingedge-splitsupport.",
+  "failedChecksResolved": [
+    "Initialfocusedgitdiffcheck flaggedinheritedspacesbeforetabs/trailingwhitespace on13editedvendorlines. Firstquickonlygitdiffcheckfailed;183othercommandspassed. Cleanedonlythose13lines;syntaxandbundlesyncunchanged;final184quickallpass. Finalbrowser22greenwasbeforethiswhitespaceonlycleanup;distributedJSbyteidenticalandpinnedsourcecompilationcheckpassedaftercleanup."
+  ],
+  "securityReview": [
+    "Onlysampletextanddeclaredtemplateboundschange. Componentgeometries/styles/singlebuttons retained;existingdiagramfilesnotrewritten.",
+    "ActualdesktopdragsthroughrealcreateIteminstalledsources;normaldropusesactualhandler. No syntheticforcededgesplittoinflateacceptance.",
+    "Trustedshippedfactoryinownediframe;noexternal/model/devicecalls. Testtraylistenersreleased/removed,drag sourcesreset,ownbrowsercontextclosedfinally."
+  ],
+  "notRun": [
+    "CompleteAideworkbenchBootstraplibrarypicker andphysicalnarrowviewportdragdrop;componentdesktopactualmousepathonly. Narrowchecksactualfactory/HTML/createItempreview/dropfunction.",
+    "Directedge-splitunsupportedfortwo-roottemplates;notclaimedverifiednornewcapability. Fullall257templatevisualreviewnotperformed.",
+    "Go/full/native suitesnotrepeatedforfrontendtemplates. Currentmodified464/467Windowsruntime remainsNOT_RUN.",
+    "No mainmerge,Release/tag/deploy,productionrestart. Reasonableissuesstayopenpendingmain."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/architecture/office-viewer.md": "555e59f0ae6b277c83e269df8456d9a5cbc7bce9cbb0ea19014b5356b4f1a318",
+    "internal/server/web/vendor/drawio/js/app.min.js": "c97af2e356e517f2583e693ce7ceae640dde8cead00e96c8654dcd64997aedff",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Bootstrap.js": "19ad7db6ae6290f967ea7ecd695405f910c9c7243c498e502f349d51b53e7d1a",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "2c85558fabbf56c5a2fa25f0d5135716c130ac5f1d9197cdfd528b63da4f29a3",
+    "scripts/browser-drawio-preview-bounds.cjs": "1b593aa1a899714b9e83a5a2336778ad96b049de1925b0ef4c3b0d67ac2ac848",
+    "scripts/drawio-bootstrap-palette-browser-cases.cjs": "44bd59a4ec0efe3fc7bede6f6e09b0e40aea88b2539c4ddbc6a97a2677b85ec7",
+    "scripts/drawio-bootstrap-palette-review.cjs": "702cde4cdb381ce7c2dd5baf66cff1d8a19d34c20b081e1f73a56a91b50f583a",
+    "scripts/sync_drawio_palette_search.cjs": "81d1b7aaaaa952293a70f1142c568a86f9f11c1528ed8ae5eb3901fcd3b7fa61"
+  }
+}

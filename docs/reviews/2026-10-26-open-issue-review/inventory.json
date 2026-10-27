@@ -1391,19 +1391,23 @@
       "number": 200,
       "title": "[Bug] Bootstrap directional dropdown templates declare undersized bounds",
       "url": "https://github.com/skyelan1999/aide/issues/200",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-Bootstrap compound Dropup bg到y193却申报高153，Dropright/Dropleft内容超出170宽，createVertexTemplateFromCells传入bounds不一致；具体拖放效果待浏览器。",
+      "status": "fixed-on-branch",
+      "evidence": "实际createItem/桌面鼠标预览确认欠尺寸，声明修为170x193/268x150/258x150，原部件与三单按钮控制保留。实际双根isSplitTarget=false，边拆分影响未证实。 三实现明暗22组browser、桌面9次指针拖入、184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "fe19335011dd72046466a37b300356f9b8d163af",
+      "repairEvidence": "cycle-064.json"
     },
     {
       "number": 199,
       "title": "[Bug] Bootstrap card templates contain repeated misspellings in sample copy",
       "url": "https://github.com/skyelan1999/aide/issues/199",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Sidebar-Bootstrap card实际cell value含Last udated 3 mind ago/paragraphy，不只工具提示，属于低影响示例文案问题。",
+      "status": "fixed-on-branch",
+      "evidence": "九处时间文字和一处paragraph拼写修正；九卡片工厂字段仅批准文字变化，实际HTML渲染通过。 三实现明暗22组browser、桌面9次指针拖入、184quick通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "fe19335011dd72046466a37b300356f9b8d163af",
+      "repairEvidence": "cycle-064.json"
     },
     {
       "number": 198,
@@ -2921,7 +2925,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 155,
+    "remainingFollowupTargets": 153,
     "followupRepairs": [
       48,
       64,
@@ -3027,7 +3031,9 @@
       195,
       196,
       197,
-      198
+      198,
+      199,
+      200
     ]
   },
   "newlyDiscoveredIssues": [
@@ -3098,7 +3104,7 @@
     "nextOwnerCandidates": [],
     "originalAscendingReviewComplete": true,
     "repairOrderNow": "explicit user > new owner reports > original ascending queue",
-    "original272RemainingFollowup": 155,
+    "original272RemainingFollowup": 153,
     "lastExplicitIssue": 464
   }
 }
