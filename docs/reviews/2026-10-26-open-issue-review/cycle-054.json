@@ -81,11 +81,14 @@
     "369 remains uncounted/unpublished in scoped stash a00be49e3c50c9602cf4b9d655a50b87e49163fe;182 still scoped stash1ae8bb0. No original user files stashed. #464 coverage not counted twice."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "464": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6436520895"
+    },
+    "remoteCommit": "a997589db51eaa8da5a407750bd0860e62b9cec9"
   },
   "sourceSHA256": {
     "scripts/prebuilt-image.ps1": "0b29800ed80d0c213517b63a2dd05961631b989a99f104d6d3d4e7986c42c0d2",
