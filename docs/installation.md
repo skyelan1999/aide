@@ -146,6 +146,8 @@ AIDE_LOCAL_ROOT=/absolute/path/to/projects
 
 ## 6. 登录与连接模型
 
+Windows 启动器在健康检查通过后，若系统未配置默认浏览器，只警告并保留已就绪的服务；可手动打开终端输出的地址，或设置 `AIDE_OPEN_BROWSER=0` 跳过自动打开。目录 helper 停止时，已退出的旧进程删除 PID 文件属于正常完成；升级先使用镜像内新提取且经 SHA-256 校验的 helper 停止旧进程，仍存活的进程或其他停止错误会阻止替换。
+
 macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 `https://localhost:8097`，在本机终端运行 `docker compose exec -T aide cat /data/auth/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
 
 > aide 自 0.1.11 起主端口走 **HTTPS**：首次启动自动在数据目录生成仅本机回环可用的自签证书，浏览器会提示"连接不是私密连接"，点 **高级 → 继续前往 localhost** 即可（例外对本机这张证书长期有效）。请用 `localhost` 而非 `127.0.0.1` 打开，WebAuthn / Touch ID 的 RP ID 不支持 IP 字面量。命令行健康检查用 `curl -k https://...` 跳过自签校验。离线环境证书本地生成，不受影响。详见 [安全：HTTPS/TLS 入口加固](security/tls.md)。

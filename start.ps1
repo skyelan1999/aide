@@ -82,6 +82,14 @@ function Invoke-Native {
     }
 }
 
+# Opening a browser is optional after health succeeds. Do not echo the
+# exception: Windows may include the access-token URL in its error message.
+function Open-AideLauncherBrowser([string]$Url) {
+    if ($env:AIDE_OPEN_BROWSER -eq '0') { return }
+    try { Start-Process -FilePath $Url -ErrorAction Stop }
+    catch { Write-Warning 'Aide is ready, but the default browser could not open. Use the address printed above.' -WarningAction Continue }
+}
+
 # Docker containerd may rewrite an OCI index ID during a verified archive import.
 # Only resolve references reported by this successful load, never unrelated images.
 function Resolve-AideImportedImage {
@@ -453,7 +461,7 @@ Write-Host "aide 已就绪：$url （自签证书，浏览器告警请选 继续
 if (-not $token) {
     Write-Host "未自动读到令牌，已打开登录页；可运行：$($ComposeCmd -join ' ') exec -T aide cat /data/auth/access-token"
 }
-if ($env:AIDE_OPEN_BROWSER -ne '0') { Start-Process $url }
+Open-AideLauncherBrowser -Url $url
 if ($offlineBundle -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'scripts/update-agent.ps1'))) {
     $currentPowerShell = (Get-Process -Id $PID).Path
     $updateAgentPath = Join-Path $PSScriptRoot 'scripts/update-agent.ps1'

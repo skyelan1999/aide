@@ -158,13 +158,20 @@ func clearDeadLock(path string) (bool, error) {
 	}
 	// Do not remove a replacement owner's lock.
 	again, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return true, nil // The exiting owner already removed its lock.
+	}
 	if err != nil {
 		return false, err
 	}
 	if string(again) != string(raw) {
 		return false, nil
 	}
-	return true, os.Remove(path)
+	err = os.Remove(path)
+	if os.IsNotExist(err) {
+		err = nil // Removal by the owner is also a successful cleanup.
+	}
+	return true, err
 }
 func stopHelper(dir string, timeout time.Duration) error {
 	if err := os.WriteFile(filepath.Join(dir, "stop"), []byte("stop"), 0600); err != nil {
