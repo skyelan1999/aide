@@ -1,0 +1,98 @@
+{
+  "cycle": 41,
+  "baseline": "14646f303a3c534b5716c531812fa24a8f184277",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    167
+  ],
+  "commits": {
+    "167": "3ac59a5e491eda6f36c9bcf9bacbf9ca68101560"
+  },
+  "cumulativeProductFixes": 97,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 98,
+  "original272RemainingFollowup": 186,
+  "red": [
+    {
+      "issue": 167,
+      "command": "node scripts/test_drawio_ai_templates.cjs / independent source+bundle null probe",
+      "result": "EXPECTED_FAIL",
+      "observed": "source与实际minified helper均对{optional:null}抛Cannot read properties of null (reading constructor)；原new obj.constructor对JSON字面constructor:null也失败。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle41-167-null-red.log"
+    },
+    {
+      "issue": 167,
+      "command": "AIDE_DRAWIO_AI_ACCEPTANCE=1 ... node scripts/browser-drawio-preview-bounds.cjs (corrected selector)",
+      "result": "EXPECTED_FAIL",
+      "observed": "实际bundled ChatWindow配置含null，真实键盘Send后模拟接口调用0，未出现回复或可见错误；夹具等待回复失败并保留截图，测试页finally关闭。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle41-167-browser-red-fixed-selector.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_drawio_ai_templates.cjs",
+      "result": "PASS",
+      "scope": "source及bundle：嵌套null/数组/布尔/数值/空字符串、根基本类型、占位符替换、literal constructor/__proto__、不修改输入和深拷贝。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle41-167-green.log"
+    },
+    {
+      "command": "AIDE_DRAWIO_AI_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle41-browser-green node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "PASS",
+      "scope": "真实bundled ChatWindow，模拟本地模型HTTP响应，desktop1440 light/narrow390 dark：null/数组/基本类型与prompt/model占位符原样传输、模板未改；有效JSON但错误contents:[null]触发可见setup错误+retry，失败时无HTTP请求，修正request后手动retry并保留正确3条历史角色。含已有压缩多页编辑保存及8类资源拒绝，共14项，零pageerror，finally关闭自建context/browser。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle41-browser-green/result.json",
+      "browser": "154.0.8037.57"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T014357539574Z.log",
+      "fingerprint": "c290710ce962c92c12cc65e6b83e83b1c2cc72ae08f5dcfd8756c925053533c4"
+    },
+    {
+      "command": "node --check (Dialogs.js/app.min.js + 3 test/browser scripts); python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1469links"
+    }
+  ],
+  "preflightFailures": [
+    {
+      "result": "FAIL_TEST_FIXTURE",
+      "observed": "首次浏览器locator(.mxWindow)同时选中外层div与内层table，strict-mode失败，不算产品复现；改为div.mxWindow后完成上述真RED和GREEN。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle41-167-browser-red.log"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "NOT_RUN",
+      "scope": "真实模型/密钥、ConfigEditor持久化设置操作、完整Aide工作台和跨平台；实际ChatWindow直接配置Editor.aiConfigs，所有外部请求被隔离路由拒绝，只有自建模型响应mock。"
+    },
+    {
+      "result": "NOT_RUN",
+      "scope": "Go race/vet未重复执行，本轮仅vendoredJS、前端回归/quick配置与文档变化。"
+    }
+  ],
+  "notes": [
+    "draw.io自定义AI模板按JSON复制，保留null/基本类型/数组/自身字段，不调用constructor，保留constructor与__proto__字面键且不改输入；模板与历史准备移入现有重试函数，异常显示回复错误/重试且不发请求，修正后沿用历史快照。源码和实际app.min同步，真实ChatWindow模拟接口验收通过。",
+    "修复只影响draw.io可选自定义AI配置路径，不自动启用模型或修改Aide模型路由。测试不读取真实凭据、不产生付费模型调用。",
+    "只复制自身可枚举JSON字段，保留字面键而不改变对象原型；正常JSON基本类型保持类型，不调用模板字段提供的构造器。",
+    "失败重试重新复制同一配置对象的当前request字段，历史使用该次发送时的快照；错误以原createError文本写入并复用本地化Error/Retry，不自动重试。",
+    "准备异常不触发模型请求，错误用户消息仍在对话中供重试；不是保证任意非JSON对象/循环/深层数据都能成功或所有网络setup异常均已处理。",
+    "无常驻测试服务；保留原用户未跟踪文件；只push分支，不合并main/发行/部署，合理issue保持open。下一项168动画step空值，最新正文已读取。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "4ecf699af91d3dd090eed1238bceb0a8fbb55785f2630367210b52325cc3dd03",
+    "docs/architecture/office-viewer.md": "b6c9b2c16f0d69adf2d5a890872704468ad16a14f9e8c2579cce6ea94a0bacc5",
+    "internal/server/web/vendor/drawio/js/app.min.js": "219f978c31bf2d4f72c5c23d79989dca439da1b181467722f095cf0a1827f2e4",
+    "internal/server/web/vendor/drawio/js/diagramly/Dialogs.js": "b6304478d065031fe0576755d9cacc1a135e21fad739b3b5b4c62060e171623f",
+    "scripts/browser-drawio-preview-bounds.cjs": "7a2bf1974fc14dc4189e00fe0abd36a46f6e57ac2e6b342e2ded75c0d4c70884",
+    "scripts/drawio-ai-template-browser-cases.cjs": "5779025b34ebc52f1042625daf2d9472151c0fc6ab4253b0a2f280bd0014d83d",
+    "scripts/test_drawio_ai_templates.cjs": "5b2a8c10b728c030db8575623adde2e9f4a7a4623f90c3a4e24c0af3fd54415f"
+  }
+}

@@ -1688,10 +1688,12 @@
       "number": 167,
       "title": "[P2] Preserve null values in custom AI request templates",
       "url": "https://github.com/skyelan1999/aide/issues/167",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "Draw.io Dialogs.populateTemplate new obj.constructor，typeof null分支递归必抛；仅custom aiConfigs请求模板入口，AIDE默认配置可达性待浏览器确认。",
+      "status": "fixed-on-branch",
+      "evidence": "draw.io自定义AI模板按JSON复制，保留null/基本类型/数组/自身字段，不调用constructor，保留constructor与__proto__字面键且不改输入；模板与历史准备移入现有重试函数，异常显示回复错误/重试且不发请求，修正后沿用历史快照。源码和实际app.min同步，真实ChatWindow模拟接口验收通过。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "3ac59a5e491eda6f36c9bcf9bacbf9ca68101560",
+      "repairEvidence": "cycle-041.json"
     },
     {
       "number": 164,
@@ -2838,7 +2840,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 187,
+    "remainingFollowupTargets": 186,
     "followupRepairs": [
       48,
       64,
@@ -2921,7 +2923,8 @@
       160,
       162,
       163,
-      164
+      164,
+      167
     ]
   }
 }
