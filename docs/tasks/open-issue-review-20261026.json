@@ -150,17 +150,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第50轮181已提交验收，待push评论；累计112覆盖，原272剩172，额外441待后续。下一182最新正文已读，尚未新增回归或改代码。",
+  "handoff": "第50轮181已push并评论；累计112覆盖，原272剩172，额外441待后续。第51轮182最新正文已读，尚未新增回归或改代码。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "e550bef163e1a2d48fd3627b2d893393297117ff",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "d5808f510f28e174b6c702e2df0196d1c5edfb67"
+    "evidenceCommit": "746c0fa326762657b58ed979de62d334cbcdf44f"
   },
-  "issue_comments": "第49轮180已push并评论，说明可选路径及默认禁用边界；合理问题保持open等待main验收。",
+  "issue_comments": "第50轮181已push并评论；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -213,13 +213,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 50,
+      "cycle": 51,
       "status": "in_progress",
       "candidates": [
-        181
+        182
       ],
-      "phase": "verified-awaiting-push-and-comments",
-      "observed": "181 AnimatedExport从flowAnimationDuration生成totalFrames且无上限，GifEncoder保留所有编码帧；需先用有限mock复现帧计划，再在栅格化前验证/限制帧数并真实浏览器验证错误与正常导出。"
+      "phase": "latest-body-read-awaiting-regression",
+      "observed": "182报告长Freehand笔划每次move复制历史点并重新生成全stroke，需先有限计数/实际交互复现，再限制单次重算成本且保留正常绘制/撤销/提交行为；尚未改代码。"
     },
     "additionalFollowupIssues": [
       441
