@@ -12934,6 +12934,8 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		jsonValid = (msg == null);
 		jsonError.style.display = (msg == null) ? 'none' : 'block';
 		if (msg != null) jsonError.textContent = msg;
+		if (applyBtn != null) applyBtn.disabled = !jsonValid;
+		if (previewBtn != null) previewBtn.disabled = !jsonValid;
 	};
 
 	// Formats a JSON parse error for the inline message. Engines that
@@ -12999,9 +13001,9 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 			}
 			catch (e)
 			{
-				// Malformed JSON in the stored attribute — start empty
-				// rather than failing to open the dialog.
-				data = Editor.parseAnimationData(null);
+				// Retain parsed invalid steps so rows can be removed or repaired.
+				// Keep the existing malformed-JSON fallback when no data exists.
+				data = e.animationData || Editor.parseAnimationData(null);
 			}
 		}
 		else
@@ -13993,6 +13995,13 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	var renderList = function()
 	{
 		stepList.innerHTML = '';
+		try
+		{
+			Editor.validateAnimationData(data);
+			if (!advancedCheckbox.checked) showJsonError(null);
+		}
+		catch (e) { showJsonError(describeJsonError(list.value, e)); }
+		if (!Array.isArray(data.steps)) return;
 
 		if (data.steps.length == 0)
 		{
@@ -14642,6 +14651,24 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	// grouping/expanding logic is needed in the UI.
 	var makeStepRow = function(step, idx, isLast)
 	{
+		if (Editor.getAnimationStepError(step) != null)
+		{
+			var invalid = rowBase(isLast);
+			invalid.setAttribute('data-animation-invalid', idx);
+			var label = document.createElement('span');
+			label.style.cssText = 'flex:1;white-space:normal;word-break:break-word';
+			mxUtils.write(label, mxResources.get('invalidInput') + ' (' + (idx + 1) + ')');
+			invalid.appendChild(label);
+			invalid.appendChild(makeIconButton('✕', mxResources.get('delete'), true, function()
+			{
+				data.steps.splice(idx, 1);
+				selectedSteps.clear();
+				selectionAnchor = null;
+				refresh();
+			}));
+			return invalid;
+		}
+
 		var info = stepLabel(step);
 		var key = getStepKey(step);
 		var schema = (key != null) ? CustomActionDialog.SCHEMAS[key] : null;
@@ -14894,7 +14921,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		// the right side of the row out to the edge.)
 		var previewIconBtn = makeIconButton('▶',
 			mxResources.get('preview'),
-			true, function()
+			jsonValid, function()
 			{
 				startPreviewSession();
 				var single = JSON.parse(JSON.stringify(
@@ -14973,6 +15000,12 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 			// Surface the parse error and mark invalid (Save is blocked).
 			// data is intentionally left at the last valid state so an
 			// in-progress typo doesn't wipe the user's steps.
+			if (e.animationData != null)
+			{
+				data = e.animationData;
+				selectedSteps.clear();
+				selectionAnchor = null;
+			}
 			showJsonError(describeJsonError(list.value, e));
 		}
 	});
@@ -15466,6 +15499,10 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	// serialize it however it stores the link.
 	var applyChanges = function()
 	{
+		if (!jsonValid) return false;
+		try { Editor.validateAnimationData(data); }
+		catch (e) { showJsonError(describeJsonError(list.value, e)); return false; }
+
 		if (kind == 'page')
 		{
 			var root = graph.getModel().getRoot();
@@ -15510,6 +15547,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 
 	previewBtn = mxUtils.button(mxResources.get('preview'), function()
 	{
+		if (!jsonValid) return;
 		stopPlayer();
 		startPreviewSession();
 		player = new Editor.AnimationPlayer(graph, data);
@@ -15596,7 +15634,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 			return;
 		}
 
-		applyChanges();
+		if (applyChanges() === false) return;
 		thisDialog.window.setVisible(false);
 	});
 	applyBtn.className = 'geBtn gePrimaryBtn';
@@ -15604,8 +15642,12 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	{
 		applyBtn.textContent = mxResources.get('save');
 		applyBtn.title = mxResources.get('save');
+		applyBtn.disabled = !jsonValid;
+		previewBtn.disabled = !jsonValid;
 	});
 	applyBtn.title = mxResources.get('save');
+	applyBtn.disabled = !jsonValid;
+	previewBtn.disabled = !jsonValid;
 	actions.appendChild(applyBtn);
 
 	div.appendChild(actions);
@@ -15711,7 +15753,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	{
 		if (visible === false && dirty)
 		{
-			applyChanges();
+			if (applyChanges() === false) return;
 		}
 		origSetVisible(visible);
 	};

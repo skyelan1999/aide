@@ -13359,6 +13359,57 @@
 		return {animation: {steps: steps}};
 	};
 
+	/* AIDE animation validation #168 */
+	Editor.validateAnimationData = function(data)
+	{
+		var pending = [{data: data, depth: 0}], count = 0;
+		var objectActions = ['fadeIn', 'fadeOut', 'fadeTo', 'opacity',
+			'wipeIn', 'wipeOut', 'popIn', 'popOut', 'flow', 'toggle',
+			'show', 'hide', 'select', 'style', 'toggleStyle', 'highlight',
+			'scroll', 'viewbox', 'tags', 'animation'];
+		var fail = function(index)
+		{
+			var error = new Error(mxResources.get('invalidInput') + ' (' + (index + 1) + ')');
+			error.animationData = data;
+			throw error;
+		};
+
+		for (var n = 0; n < pending.length; n++)
+		{
+			var entry = pending[n], steps = entry.data != null ? entry.data.steps : null;
+			if (!Array.isArray(steps) || entry.depth > 128) fail(0);
+			for (var i = 0; i < steps.length; i++)
+			{
+				var step = steps[i];
+				if (++count > 100000 || step == null || typeof step !== 'object' || Array.isArray(step)) fail(i);
+				for (var j = 0; j < objectActions.length; j++)
+				{
+					var key = objectActions[j];
+					if (Object.prototype.hasOwnProperty.call(step, key) &&
+						(step[key] == null || typeof step[key] !== 'object' || Array.isArray(step[key]))) fail(i);
+				}
+				if (Object.prototype.hasOwnProperty.call(step, 'wait') &&
+					((typeof step.wait !== 'number' && typeof step.wait !== 'string') ||
+					(typeof step.wait === 'string' && step.wait.trim() === '') ||
+					!isFinite(Number(step.wait)) || Number(step.wait) < 0)) fail(i);
+				if (Object.prototype.hasOwnProperty.call(step, 'open') && typeof step.open !== 'string') fail(i);
+				if (Object.prototype.hasOwnProperty.call(step, 'animation'))
+				{
+					if (!Array.isArray(step.animation.steps)) fail(i);
+					pending.push({data: step.animation, depth: entry.depth + 1});
+				}
+			}
+		}
+		return data;
+	};
+
+	Editor.getAnimationStepError = function(step)
+	{
+		try { Editor.validateAnimationData({steps: [step]}); }
+		catch (e) { return e.message; }
+		return null;
+	};
+
 	/**
 	 * Returns the normalized {steps: [...], loop} structure for an animation
 	 * value stored on a cell, page root, or custom-link action. Accepts:
@@ -13382,7 +13433,7 @@
 			// autoplay; `loop` toggles repeat playback.
 			data.loop = (data.loop == null) ? true : !!data.loop;
 			data.enabled = (data.enabled == null) ? true : !!data.enabled;
-			return data;
+			return Editor.validateAnimationData(data);
 		};
 
 		if (value == null || value === '')
@@ -13593,6 +13644,8 @@
 		{
 			return;
 		}
+
+		Editor.validateAnimationData(this.data);
 
 		opts = opts || {};
 		this.running = true;

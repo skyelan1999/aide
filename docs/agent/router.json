@@ -914,6 +914,10 @@
       [
         "node",
         "scripts/test_drawio_ai_templates.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_animation_validation.cjs"
       ]
     ],
     "full": [
