@@ -1697,10 +1697,12 @@
       "number": 164,
       "title": "[P2] Validate SFTP server replies before decoding",
       "url": "https://github.com/skyelan1999/aide/issues/164",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "SFTP client.ReadDir/RealPath NAME分支仍调用unchecked unmarshalUint32/String，可越界panic；与163的count分配问题独立。",
+      "status": "fixed-on-branch",
+      "evidence": "ReadDir/ReadDirEachContext/RealPath/ReadLink采用安全NAME头部与条目解码，按每项至少12字节验证数量，逐个校验filename/longname/attrs，保留单路径count=1、目录属性/点过滤/visitor取消；实际客户端44种畸形操作组合拒绝且无panic，既有ID路由拒绝与163分配保护通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "207ae52e88dde795c0f6fb3ddc6db96440e09f5a",
+      "repairEvidence": "cycle-040.json"
     },
     {
       "number": 163,
@@ -2836,7 +2838,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 188,
+    "remainingFollowupTargets": 187,
     "followupRepairs": [
       48,
       64,
@@ -2918,7 +2920,8 @@
       159,
       160,
       162,
-      163
+      163,
+      164
     ]
   }
 }
