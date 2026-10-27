@@ -1715,10 +1715,12 @@
       "number": 162,
       "title": "[P3] Keep enhanced avatar asset hashes in sync after interpolation",
       "url": "https://github.com/skyelan1999/aide/issues/162",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "读取实际art-audit逐文件SHA256比较，102/102不符；interpolation35项而manifest34项。interpolation脚本覆写资产未刷新art-audit。",
+      "status": "fixed-on-branch",
+      "evidence": "插帧先验证输入文件哈希，输出同步更新art与插帧审计的新帧数据及输入/输出文件哈希，保留sourceExtraction；审计原子替换失败保留该文件与进行中标记。现有34套/102文件仅刷新字节快照，旧102哈希保留、历史35条插帧记录原样归档，所有图像字节不变；新只读验证器加入quick，重新发布清除旧插帧状态。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "8787c077401e208bba50c345da23d92c4c1846a9",
+      "repairEvidence": "cycle-038.json"
     },
     {
       "number": 160,
@@ -2832,7 +2834,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 190,
+    "remainingFollowupTargets": 189,
     "followupRepairs": [
       48,
       64,
@@ -2912,7 +2914,8 @@
       157,
       158,
       159,
-      160
+      160,
+      162
     ]
   }
 }
