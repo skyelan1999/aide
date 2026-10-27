@@ -1724,19 +1724,23 @@
       "number": 160,
       "title": "[P3] Bound OBJ face and edge counts before rendering the preview",
       "url": "https://github.com/skyelan1999/aide/issues/160",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "example OBJ parse对每f/l索引推入edges，仅限vertices/8MiB，draw全量边同步绘制；仅可选示例插件。",
+      "status": "fixed-on-branch",
+      "evidence": "OBJ示例对UTF-8输入、单行、顶点、面/线记录、单面索引和累计边设限，追加前检查；按行扫描避免全文件split，失败不保留部分几何并禁用准备保存，合法编辑恢复；生成页/ZIP重建，真实Chromium桌面与窄屏通过。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "1e444cfc35c5430d84cf4012c9be76033832ee89",
+      "repairEvidence": "cycle-037.json"
     },
     {
       "number": 159,
       "title": "[P3] Keep the R08-04 fixture write inside the isolated test root",
       "url": "https://github.com/skyelan1999/aide/issues/159",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "r08_04_api_checks.py scenario_first_call直接mkdir/open('/local/docs/fixture-b.txt','w')，实际source却指root下src_dir；未执行破坏性脚本。",
+      "status": "fixed-on-branch",
+      "evidence": "删除历史R08-04脚本多余的固定/local/docs创建/覆盖操作；实际fixture及source配置继续使用隔离root下同一目录。拦截探针前有外部mkdir/open、后为零，未操作真实/local。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "363e552f1c07c222759f1d50d8e13e70e2471fdf",
+      "repairEvidence": "cycle-037.json"
     },
     {
       "number": 158,
@@ -2828,7 +2832,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 192,
+    "remainingFollowupTargets": 190,
     "followupRepairs": [
       48,
       64,
@@ -2906,7 +2910,9 @@
       155,
       156,
       157,
-      158
+      158,
+      159,
+      160
     ]
   }
 }

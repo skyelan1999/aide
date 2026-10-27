@@ -47,7 +47,9 @@
     "docs/architecture/task-artifact-delivery.md",
     "docs/architecture.md",
     "docs/architecture/workflow-file-bindings.md",
-    "docs/architecture/research-evidence.md"
+    "docs/architecture/research-evidence.md",
+    "examples/file-preview-plugin",
+    "docs/reviews/2026-09-23/evidence/runners/r08_04_api_checks.py"
   ],
   "stages": {
     "requirements": {
@@ -66,14 +68,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第36轮修复#158；累计91项产品issue覆盖及1项既有测试修正。",
+      "summary": "第37轮修复#159/#160；累计93项原始产品/验收issue覆盖及1项额外既有测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本轮研究引用/调查路由race4.061s、vet、quick及文档检查通过；真实模型/完整工作台/跨平台NOT_RUN。",
+      "summary": "159隔离写入探针、160源/生成页资源边界与真实Chromium组件桌面/窄屏验收、quick/文档/路由/diff通过；完整工作台/历史完整runner/跨平台未验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -109,7 +111,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-033.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-034.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-035.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-036.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-036.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-037.json"
       ]
     },
     "documentation": {
@@ -133,11 +136,11 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第36轮#158已push并评论；累计92项分支覆盖，原272项剩192跟进。第37轮#159隔离拦截探针已证实固定/local写入；#160最新正文已读，#161已是关闭重复102。",
+  "handoff": "第37轮#159/#160已修复并本地验收，等待push及评论；累计94项覆盖，原272项剩190；下一轮#162增强头像审计，#161已关闭重复102。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "4e89c59e92571229cb54cdcd12afe0897a5b9deb",
-    "pushed": true,
+    "commit": "1e444cfc35c5430d84cf4012c9be76033832ee89",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md"
@@ -171,23 +174,23 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 37,
+    "nextCycle": 38,
     "lastCompletedBatch": {
-      "cycle": 36,
+      "cycle": 37,
       "issues": [
-        158
+        159,
+        160
       ],
-      "cumulativeFixed": 92,
-      "cumulativeProductFixed": 91,
+      "cumulativeFixed": 94,
+      "cumulativeProductFixed": 93,
       "toolingFixes": 1,
       "pendingReview": 0,
-      "remainingFollowupTargets": 192,
-      "verification": "PASS research/related race4.061s,vet,quick,docs; real-model/workbench/cross-platform NOT_RUN"
+      "remainingFollowupTargets": 190,
+      "verification": "PASS isolated fixture probe, OBJ VM and Chromium component, quick/docs; full workbench/historical full runner/cross-platform NOT_RUN"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      159,
-      160
+      162
     ],
     "userReaffirmed": {
       "request": "设置为目标，继续修",
@@ -201,7 +204,7 @@
         159,
         160
       ],
-      "phase": "159-red-intercepted-external-write-160-source-read"
+      "phase": "verified-awaiting-push-and-comments"
     }
   },
   "orderedReview": {

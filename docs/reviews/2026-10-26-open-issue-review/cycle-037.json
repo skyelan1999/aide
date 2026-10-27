@@ -1,0 +1,109 @@
+{
+  "cycle": 37,
+  "baseline": "f2410483d7ff3f9433ae5d3a6af3f3d43a153e51",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    159,
+    160
+  ],
+  "commits": {
+    "159": "363e552f1c07c222759f1d50d8e13e70e2471fdf",
+    "160": "1e444cfc35c5430d84cf4012c9be76033832ee89"
+  },
+  "cumulativeProductFixes": 93,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 94,
+  "original272RemainingFollowup": 190,
+  "red": [
+    {
+      "issue": 159,
+      "command": "python3 /workspace/scratch/issue-review-20261026/issue159-probe.py",
+      "result": "EXPECTED_FAIL",
+      "observed": "AST提取实际scenario_first_call并用模拟App/provider运行到source配置；/local/docs mkdir及fixture写入均被拦截/重定向，不触碰真实外部路径；src_dir本身正确。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle37-159-red.log"
+    },
+    {
+      "issue": 160,
+      "command": "node scripts/test_obj_preview_bounds.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "原示例接受2049索引面，未抛出预算错误。测试未制造浏览器OOM或声称真实崩溃。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle37-160-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "python3 /workspace/scratch/issue-review-20261026/issue159-probe.py",
+      "result": "PASS",
+      "observed": "配置source仍在root内并包含正确fixture；外部写入尝试为零。Python AST语法检查通过。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle37-159-green.log"
+    },
+    {
+      "command": "node scripts/test_obj_preview_bounds.cjs",
+      "result": "PASS",
+      "scope": "源页/生成页各自验证索引/记录/累计边/单行/输入UTF8/顶点上限、失败清空与恢复、恰好2048索引和10万边、负数斜线索引、正常绘制。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle37-160-green.log"
+    },
+    {
+      "command": "AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle37-obj-browser node scripts/browser-obj-preview-bounds.cjs",
+      "result": "PASS",
+      "scope": "真实生成HTML及嵌入MessageChannel客户端，模拟宿主；Chromium154，桌面1440 light/窄屏390 dark，6项：加载/键盘旋转/编辑超限与禁用/修正恢复/保存字节回执/初始累计边超限与document.error/只读限制。零pageerror，finally关闭自建context及browser。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle37-obj-browser/result.json"
+    },
+    {
+      "command": "python3 examples/file-preview-plugin/build.py + generated/ZIP readback comparison",
+      "result": "PASS",
+      "observed": "viewer.html精确等于源页替换当前仓库客户端，ZIP各文件及LICENSE与源文件一致；重建同步现有客户端6个已有方法，本轮未修改客户端协议或权限。"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T010507334617Z.log",
+      "fingerprint": "aff1ea968aa394cfe14e12a8092da881d0f05fd316e487d33865e2adcb999302"
+    },
+    {
+      "command": "node --check scripts/test_obj_preview_bounds.cjs; node --check scripts/browser-obj-preview-bounds.cjs; python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1468links"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "NOT_RUN",
+      "scope": "历史R08完整服务端验收（依赖原/private/tmp fixture及candidate binary）；本轮仅运行实际场景到source配置的隔离探针。"
+    },
+    {
+      "result": "NOT_RUN",
+      "scope": "完整工作台导入/真实SFTP/跨平台设备；浏览器是实际OBJ页面+实际客户端+模拟宿主，不声称整套Aide集成。"
+    },
+    {
+      "result": "NOT_RUN",
+      "scope": "Go race/vet未重复执行；本轮仅Python历史脚本和可选示例HTML/JS，无Go源码变更。"
+    }
+  ],
+  "notes": [
+    "删除历史R08-04脚本多余的固定/local/docs创建/覆盖操作；实际fixture及source配置继续使用隔离root下同一目录。拦截探针前有外部mkdir/open、后为零，未操作真实/local。",
+    "OBJ示例对UTF-8输入、单行、顶点、面/线记录、单面索引和累计边设限，追加前检查；按行扫描避免全文件split，失败不保留部分几何并禁用准备保存，合法编辑恢复；生成页/ZIP重建，真实Chromium桌面与窄屏通过。",
+    "OBJ预算：8MiB UTF-8、单行65536字符、10万顶点、10万面/线记录、每条2048索引、累计10万边；同步解析/绘制仍受固定预算约束，不声称任意大型CAD或多标签并发内存上限。",
+    "159是原272项中的runner缺陷；计入本批issue覆盖，额外toolingFixes=1仍指先前#373夹具纠正，不重复计数。",
+    "未增加159提交测试，仅保留隔离探针证据；160有实质资源边界回归并加入quick。",
+    "161先前已关闭为102重复，不计新增关闭/修复；162最新正文及实际审计文件已读，下一轮继续。",
+    "保留用户未跟踪文件，无常驻测试服务；只push修复分支，不合并main、发行或部署，合理issue保持open。"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "601dcaaa5225eadc8224e35e92448ec863e9267f8a4c6c430482cc57b69d7c59",
+    "docs/reviews/2026-09-23/evidence/runners/r08_04_api_checks.py": "51fefdc81ae0f3306edb1db5960f9d13feef718529e0e011a87e68b9bdfd733a",
+    "examples/file-preview-plugin/README.md": "ab8e6ca68f32a197f81746fca93a4bdc9ca378e9b9a4465aa2a0dfacf0a86299",
+    "examples/file-preview-plugin/example-plugin.zip": "299615abe7d42ba31ff439fd76ec25a828f57739255f45141481174547407bac",
+    "examples/file-preview-plugin/viewer.html": "b83599f3bef018c31b40879320a48c640015cb13d9ab39184a8fe8fe27525cfe",
+    "examples/file-preview-plugin/viewer.src.html": "e1dbff1b52c9a4f52a8a4315d191d6ba8978fd04a269fa1b7c2c0bccfb23757a",
+    "scripts/browser-obj-preview-bounds.cjs": "16e765b3440465499b63f35cb41b7f9ffb8f37f07309a00b7b4faa489498d2f7",
+    "scripts/test_obj_preview_bounds.cjs": "51dce92125739559222010c973747848c04e63dba86eade69d7588a66750ef1b"
+  }
+}
