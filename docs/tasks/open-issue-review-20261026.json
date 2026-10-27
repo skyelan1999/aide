@@ -149,17 +149,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第49轮180已提交验收，待push评论；累计111覆盖，原272剩173，额外441待后续。可选路径默认仍禁用。下一181正文已读，尚未新增回归或改代码。",
+  "handoff": "第49轮180已push并评论；累计111覆盖，原272剩173，额外441待后续。默认Trello仍禁用。第50轮181最新正文已读，尚未新增回归或改代码。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "fb46de0e650311206bd1f48f7549bf7463601780",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "a3f81fab52d06345a2876da2d90ae26eb697c73c"
+    "evidenceCommit": "d5808f510f28e174b6c702e2df0196d1c5edfb67"
   },
-  "issue_comments": "第48轮179已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第49轮180已push并评论，说明可选路径及默认禁用边界；合理问题保持open等待main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -212,13 +212,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 49,
+      "cycle": 50,
       "status": "in_progress",
       "candidates": [
-        180
+        181
       ],
-      "phase": "verified-awaiting-push-and-comments",
-      "observed": "180 TrelloClient附件上限用data.length，Blob应按size，字符串应按实际上传UTF-8字节；最新正文已读，需用隔离Trello上传mock先复现，禁止真实账号/令牌或上传。"
+      "phase": "latest-body-read-awaiting-regression",
+      "observed": "181 AnimatedExport从flowAnimationDuration生成totalFrames且无上限，GifEncoder保留所有编码帧；需先用有限mock复现帧计划，再在栅格化前验证/限制帧数并真实浏览器验证错误与正常导出。"
     },
     "additionalFollowupIssues": [
       441
