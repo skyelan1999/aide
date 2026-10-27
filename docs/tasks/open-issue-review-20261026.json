@@ -8,7 +8,9 @@
     "合理问题用合成隔离回归先复现再修复，不因暂未复现关闭",
     "修改在专用分支push，禁止合并main或发布",
     "保留用户原有未跟踪文件，结果逐条关联issue与命令",
-    "按编号升序逐条核对原剩余272项，完整记录源码判断、运行证据和未验证边界，不以审查代替修复"
+    "按编号升序逐条核对原剩余272项，完整记录源码判断、运行证据和未验证边界，不以审查代替修复",
+    "按用户新策略优先明确指定464及skyelan1999新报告，再回原编号队列；保存被打断的182工作，不把其初步验证算完成。",
+    "464覆盖PID停止幂等/旧helper升级、健康服务的可选浏览器启动、LAN可信镜像提取；用有限隔离回归记录证据及Windows实机未验证边界。"
   ],
   "scope": [
     "internal/server",
@@ -50,7 +52,13 @@
     "docs/architecture/research-evidence.md",
     "examples/file-preview-plugin",
     "docs/reviews/2026-09-23/evidence/runners/r08_04_api_checks.py",
-    "vendor/github.com/pkg/sftp/packet.go"
+    "vendor/github.com/pkg/sftp/packet.go",
+    "cmd/aide-local-mounts",
+    "start.ps1",
+    "scripts/local-mounts-control.ps1",
+    "scripts/message-lan-control.ps1",
+    "AGENTS.md",
+    "docs/agent/WORKFLOW.md"
   ],
   "stages": {
     "requirements": {
@@ -69,14 +77,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第50轮修复181 GIF帧预算及实际CSS时长识别；累计111项产品/验收issue覆盖及1项额外测试修正。",
+      "summary": "第51轮修复464 Windows helper停止竞态、旧二进制升级、浏览器非致命失败及LAN镜像身份回退；新增账号报告优先策略。累计112项产品/验收issue及1项额外测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "三份真实导出器计划/入口回归、超长flow UI拒绝、实际两帧GIF编码/结构/原生解码及既有组件共59组浏览器、最终quick/文档通过；完整工作台/保存对话框/300帧长渲染/全部画质及跨平台未验收。",
+      "summary": "Go helper包race/vet、Windows amd64交叉编译、17组真实PowerShell7/Linux隔离回归、既有目录/端口监视回归及181项quick通过；Windows5.1/Docker Desktop实机启动未验证。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -126,7 +134,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-047.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-048.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-049.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-050.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-050.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-051.json"
       ]
     },
     "documentation": {
@@ -150,17 +159,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第50轮181已push并评论；累计112覆盖，原272剩172，额外441待后续。第51轮182最新正文已读，尚未新增回归或改代码。",
+  "handoff": "第51轮464修复及账号优先策略已验证，待push记录；下一52轮先看新467，再441/369，最后恢复182。182 stash 1ae8bb0未push/未计数；累计113覆盖，原272剩172，额外确认441待修。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "e550bef163e1a2d48fd3627b2d893393297117ff",
-    "pushed": true,
+    "commit": "17ab31ae060dc00fd090537ab60efde295614514",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "746c0fa326762657b58ed979de62d334cbcdf44f"
+    "evidenceCommit": null
   },
-  "issue_comments": "第50轮181已push并评论；合理问题保持open等待main验收。",
+  "issue_comments": "第51轮464待push后回填；合理问题保持open等main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -176,8 +185,8 @@
       "保留用户数据、原有未跟踪文件，不调用付费模型或真实设备"
     ],
     "cycle": [
-      "读取最新open issues和已有清单，避免重复修复",
-      "按编号升序核对清单中尚未修复且可执行的合理问题；已审结果作为入口，不反复从零盘点",
+      "刷新最新issue及确认账号skyelan1999的open报告，排除分支已覆盖条目并按优先策略选择",
+      "优先用户指定、再当前账号新报告（新到旧），其余原272清单按编号继续；有明确阻塞则记录并转可执行项",
       "不成立/重复：记录证据后评论关闭；成立：先补回归再修复",
       "运行相关检查，失败继续修复；受限明确记录而非算通过",
       "提交并push专用分支，评论issue并更新清单与检查点",
@@ -189,22 +198,25 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 51,
+    "nextCycle": 52,
     "lastCompletedBatch": {
-      "cycle": 50,
+      "cycle": 51,
       "issues": [
-        181
+        464
       ],
-      "cumulativeFixed": 112,
-      "cumulativeProductFixed": 111,
+      "cumulativeFixed": 113,
+      "cumulativeProductFixed": 112,
       "toolingFixes": 1,
       "pendingReview": 0,
       "remainingFollowupTargets": 172,
-      "verification": "PASS real GIF plans/entry guards and long-flow UI error/2-frame encoding/native decode, existing 59 browser groups, final quick/docs; full workbench/save dialog/300-frame render/all quality/cross-platform NOT_RUN",
+      "verification": "PASS helper race/vet, Windows helper cross-build, 17 PS7/Linux recovery cases, existing directory/watch regression and 181 quick checks; Windows5.1/Docker Desktop NOT_RUN",
       "remainingAdditionalFollowupTargets": 1
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
+      467,
+      441,
+      369,
       182
     ],
     "userReaffirmed": {
@@ -213,18 +225,73 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 51,
+      "cycle": 52,
       "status": "in_progress",
       "candidates": [
-        182
+        467
       ],
-      "phase": "latest-body-read-awaiting-regression",
-      "observed": "182报告长Freehand笔划每次move复制历史点并重新生成全stroke，需先有限计数/实际交互复现，再限制单次重算成本且保留正常绘制/撤销/提交行为；尚未改代码。"
+      "phase": "owner-priority-metadata-read-awaiting-triage",
+      "observed": "刷新已确认账号skyelan1999发现新467，创建于2026-10-27T06:25:02Z；尚未核对正文/附件，不算已确认bug或修复。当前464完整安全检查点完成后优先处理。"
     },
     "additionalFollowupIssues": [
       441
     ],
-    "remainingAdditionalFollowupTargets": 1
+    "remainingAdditionalFollowupTargets": 1,
+    "priorityPolicy": {
+      "version": 1,
+      "userRequest": "添加策略，优先修复本账号新提的问题",
+      "recordedAt": "2026-10-27T06:09:33.759884+00:00",
+      "ownerLogin": "skyelan1999",
+      "identityEvidence": "gh api user and issue464 author both skyelan1999",
+      "order": [
+        "explicit-user-selected-issue",
+        "unhandled-open-reports-by-confirmed-owner-newest-first",
+        "remaining-original-queue-by-number"
+      ],
+      "refresh": "At each cycle start, refresh owner open reports; do not automatically change confirmed owner on auth changes.",
+      "skip": [
+        "fixed-on-branch-awaiting-main",
+        "closed-or-duplicate",
+        "documented-blocker-with-no-new-action"
+      ],
+      "preempt": "Only explicit user steering interrupts an in-progress repair; preserve paused changes.",
+      "explicitIssue": null,
+      "nextOwnerCandidates": [
+        467,
+        441,
+        369
+      ],
+      "knownBlockedOwnerIssues": [
+        340,
+        335,
+        57,
+        28
+      ],
+      "alreadyCoveredOwnerIssues": [
+        373,
+        62,
+        48
+      ],
+      "lastExplicitIssue": {
+        "number": 464,
+        "status": "fixed-on-branch",
+        "evidence": "cycle-051.json"
+      },
+      "lastRefresh": "2026-10-27T06:32:24.184717+00:00"
+    },
+    "pausedWork": [
+      {
+        "issue": 182,
+        "status": "paused-by-explicit-owner-priority",
+        "stash": "1ae8bb0bb926630140df3c7483831b63b7e0e85c",
+        "published": false,
+        "countedAsFixed": false,
+        "unit": "/workspace/scratch/issue-review-20261026/cycle51-freehand-green.log",
+        "browser": "/workspace/scratch/issue-review-20261026/cycle51-browser-initial/result.json",
+        "verifiedScope": "22 component browser groups and finite preview counters pass; no final quick/docs/delivery yet.",
+        "resume": "After owner-priority467/441/369 handling, apply exact stash; retain until conflicts and final verification resolved. No user untracked files stashed."
+      }
+    ]
   },
   "orderedReview": {
     "status": "pass",

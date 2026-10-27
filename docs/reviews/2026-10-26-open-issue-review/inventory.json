@@ -2987,6 +2987,43 @@
       "original272": false,
       "evidence": "真实bundled动画窗口390px视口、370px窗口，页脚Save右缘裁切；无wrap的flex布局及overflow hidden，查重无匹配；未混入168校验修复。",
       "browserEvidence": "/workspace/scratch/issue-review-20261026/cycle42-browser-final/dark-animation-invalid.png"
+    },
+    {
+      "number": 464,
+      "title": "Windows start.bat startup/helper/browser failures",
+      "url": "https://github.com/skyelan1999/aide/issues/464",
+      "status": "fixed-on-branch",
+      "origin": "owner-reported",
+      "author": "skyelan1999",
+      "createdAt": "2026-10-27T05:43:53Z",
+      "original272": false,
+      "priority": "explicit-user-first",
+      "evidence": "PID disappearance handled idempotently, verified new helper stops old owner, optional browser failure warns, LAN reference fallback requires exact fresh-container digest plus SHA256. Go race/vet, Windows helper cross-build and real PS7/Linux fixture tests pass; native Windows/Docker Desktop acceptance pending.",
+      "repairCommit": "17ab31ae060dc00fd090537ab60efde295614514",
+      "repairEvidence": "cycle-051.json"
+    },
+    {
+      "number": 467,
+      "title": "issue of release aide-v0.1.17.5-RC12-full-linux-amd64.zip",
+      "url": "https://github.com/skyelan1999/aide/issues/467",
+      "author": "skyelan1999",
+      "createdAt": "2026-10-27T06:25:02Z",
+      "status": "awaiting-owner-priority-triage",
+      "original272": false,
+      "evidence": "Owner metadata refresh during464; body not yet triaged, not counted as confirmed followup or fixed."
     }
-  ]
+  ],
+  "priorityPolicy": {
+    "ownerLogin": "skyelan1999",
+    "explicitIssue": null,
+    "nextOwnerCandidates": [
+      467,
+      441,
+      369
+    ],
+    "originalAscendingReviewComplete": true,
+    "repairOrderNow": "explicit user > new owner reports > original ascending queue",
+    "original272RemainingFollowup": 172,
+    "lastExplicitIssue": 464
+  }
 }
