@@ -1706,10 +1706,12 @@
       "number": 163,
       "title": "[P2] Bound SFTP extended attribute counts before allocation",
       "url": "https://github.com/skyelan1999/aide/issues/163",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "vendor/pkg/sftp packet.go attrs.extended直接make(count)，虽有包长度上限但未按剩余字节约束count；需要已配置恶意/受损SFTP端。",
+      "status": "fixed-on-branch",
+      "evidence": "vendored pkg/sftp扩展属性在分配前检查count<=剩余字节/8，以uint64比较并返回既有短包错误；实际客户端/内存管道证明原8字节载荷引起33555336字节分配，修复后通过有限预算、最大计数拒绝及合法属性/截短数据回归。",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "f14967d46830981c6dca04bd33f28fab5bdea301",
+      "repairEvidence": "cycle-039.json"
     },
     {
       "number": 162,
@@ -2834,7 +2836,7 @@
     ],
     "detail": "ordered-review.json",
     "note": "固定272项已审完；仍有大量修复/验收待做，不代表全部解决。",
-    "remainingFollowupTargets": 189,
+    "remainingFollowupTargets": 188,
     "followupRepairs": [
       48,
       64,
@@ -2915,7 +2917,8 @@
       158,
       159,
       160,
-      162
+      162,
+      163
     ]
   }
 }
