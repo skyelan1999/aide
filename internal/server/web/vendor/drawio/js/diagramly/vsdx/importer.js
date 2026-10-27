@@ -7726,6 +7726,12 @@ var com;
                         PolylineTo.prototype.handle = function (p, shape) {
                             var result = "";
                             if (this.x != null && this.y != null && this.formulaA != null) {
+                                function limit() {
+                                    var error = new Error('Visio polyline resource limit exceeded (262144 characters, 4096 points)');
+                                    error.code = 'AIDE_VISIO_LIMIT';
+                                    throw error;
+                                }
+                                if (this.formulaA.length > 256 * 1024) limit();
                                 var h = shape.getHeight();
                                 var w = shape.getWidth();
                                 var x = this.x * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
@@ -7744,14 +7750,15 @@ var com;
                                 } })(aValue, "inh")) {
                                     throw Object.defineProperty(new Error(), '__classes', { configurable: true, value: ['java.lang.Throwable', 'java.lang.Object', 'java.lang.RuntimeException', 'java.lang.IllegalArgumentException', 'java.lang.Exception'] });
                                 }
-                                var polyEntriesList = (aValue.split(",").slice(0).slice(0));
-                                var xRel = parseFloat(/* remove */ polyEntriesList.splice(0, 1));
-                                var yRel = parseFloat(/* remove */ polyEntriesList.splice(0, 1));
+                                var polyEntriesList = aValue.split(",");
+                                if (polyEntriesList.length > 2 + 4096 * 2) limit();
+                                var xRel = parseFloat(polyEntriesList[0]);
+                                var yRel = parseFloat(polyEntriesList[1]);
                                 var currX = 0;
                                 var currY = 0;
-                                while ((polyEntriesList.length > 0)) {
-                                    currX = parseFloat(/* remove */ polyEntriesList.splice(0, 1)) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
-                                    currY = parseFloat(/* remove */ polyEntriesList.splice(0, 1)) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
+                                for (var pointIndex = 2; pointIndex < polyEntriesList.length; pointIndex += 2) {
+                                    currX = parseFloat(polyEntriesList[pointIndex]) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
+                                    currY = parseFloat(polyEntriesList[pointIndex + 1]) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
                                     if (xRel === 1) {
                                         currX = currX * 100.0 / w;
                                     }

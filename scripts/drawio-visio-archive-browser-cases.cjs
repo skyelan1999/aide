@@ -44,6 +44,7 @@ module.exports=async function(frame,out,theme){
   await dialog.waitFor();await frame.page().screenshot({path:path.join(out,theme+'-visio-limit.png')});
   await frame.getByRole('button',{name:'OK',exact:true}).click();
   assert.equal(await dialog.count(),0);
+  if(process.env.AIDE_DRAWIO_POLYLINE_ACCEPTANCE)checks.push(...await require('./drawio-visio-polyline-browser-cases.cjs')(frame,out,theme,file));
   checks.push({case:'actual doImportVisio VSDX/VSSX oversized error and same-runtime valid page/library recovery; visible import error dialog',file,theme,result:'PASS',details:result});
  }
  return checks;
