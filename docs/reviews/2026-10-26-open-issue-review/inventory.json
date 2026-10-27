@@ -1553,10 +1553,12 @@
       "number": 182,
       "title": "[Performance] Recompute of the full freehand stroke on every move",
       "url": "https://github.com/skyelan1999/aide/issues/182",
-      "status": "reviewed-awaiting-validation",
-      "evidence": "mxFreehand.updateSvgPath每point复制全部drawPoints再PerfectFreehand重建SVG，长期stroke前缀重复计算；实际延迟随硬件待测。",
+      "status": "fixed-on-branch",
+      "evidence": "Only bounded preview tail regenerated (max512/520 supported presets), original full final stroke preserved;36finite counter and24actual freehand/84combined browser groups,182quick pass. One complete model cell/undo-redo/cleanup; no native pen latency claim.",
       "reviewVerdict": "source-confirmed",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "8598918ef12d0fa31331e590b36630d7cda28fca",
+      "repairEvidence": "cycle-056.json"
     },
     {
       "number": 181,
@@ -3047,7 +3049,7 @@
     "nextOwnerCandidates": [],
     "originalAscendingReviewComplete": true,
     "repairOrderNow": "explicit user > new owner reports > original ascending queue",
-    "original272RemainingFollowup": 172,
+    "original272RemainingFollowup": 171,
     "lastExplicitIssue": 464
   }
 }
