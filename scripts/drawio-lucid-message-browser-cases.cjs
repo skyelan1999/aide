@@ -7,6 +7,8 @@ const mappings=[
  [171,'EE_BJT_PNP1',{shape:'mxgraph.electrical.transistors.pnp_transistor_1'}],
  [172,'PEPlugValveBlock',{shape:'mxgraph.pid2valves.valve',valveType:'plug'}],
  [173,'AmazonRDSMySQLDBinstance2017',{shape:'mxgraph.aws3.mysql_db_instance'}],
+ [175,'IoT_AlexaVoiceServiceAWS19',{shape:'mxgraph.aws4.alexa_voice_service_2'}],
+ [null,'IoT_AlexaSkillAWS19',{shape:'mxgraph.aws4.alexa_skill'}],
  [174,'AWSAppSyncAWS19',{shape:'mxgraph.aws4.resourceIcon',resIcon:'mxgraph.aws4.appsync'}],
  [null,'AndroidIconInformation',{shape:'mxgraph.ios7.icons.info'}],
  [null,'EE_BJT_NPN1_V2',{shape:'mxgraph.electrical.transistors.npn_transistor_1'}],
@@ -100,9 +102,10 @@ module.exports=async function(frame,out,theme){
    for(const [key,value]of Object.entries(expected))assert.equal(cell.rendererStyle[key],value,'renderer receives correct identity '+kind);
    if(expected.shape==='mxgraph.ios7.icons.repeat')assert.equal(cell.icon?.toLowerCase(),'repeat');
    if(expected.shape.includes('.transistors.')||expected.shape.includes('.aws3.'))assert.equal(cell.icon?.toLowerCase().replace(/ /g,'_'),expected.shape.split('.').at(-1));
+   if(expected.shape.startsWith('mxgraph.aws4.alexa_'))assert.equal(cell.icon?.toLowerCase().replace(/ /g,'_'),expected.shape.split('.').at(-1));
    if(expected.resIcon)assert.equal(cell.resourceIcon?.toLowerCase(),'appsync');
   }
-  results.push({case:'Lucidchart refresh, BJT polarity, plug valve, MySQL and AppSync identities with registered renderers and unchanged neighbors',file,theme,result:'PASS'});
+  results.push({case:'Lucidchart refresh, BJT polarity, plug valve, MySQL, AppSync and distinct Alexa service/skill identities with registered renderers and unchanged neighbors',file,theme,result:'PASS'});
   const existing=observed.find(c=>c.value==='Owned existing history');assert.ok(existing?.style.includes('fontSize=15;'),'already correct history header remains styled');
   if(file==='extensions.min.js')await frame.page().screenshot({path:path.join(out,theme+'-lucid-message-styles.png')});
   results.push({case:'actual Lucidchart conversion/render keeps independent EI message/history font size/color/emphasis',file,theme,result:'PASS'});

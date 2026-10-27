@@ -3442,7 +3442,7 @@ LucidImporter = {};
 			'IoT_ActuatorAWS19' : 'shape=mxgraph.aws4.actuator;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_AlexaEnabledDeviceAWS19' : 'shape=mxgraph.aws4.alexa_enabled_device;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_AlexaSkillAWS19' : 'shape=mxgraph.aws4.alexa_skill;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
-			'IoT_AlexaVoiceServiceAWS19' : 'shape=mxgraph.aws4.alexa_skill;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
+			'IoT_AlexaVoiceServiceAWS19' : 'shape=mxgraph.aws4.alexa_voice_service_2;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_BankAWS19' : 'shape=mxgraph.aws4.bank;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_BicycleAWS19' : 'shape=mxgraph.aws4.bycicle;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_CameraAWS19' : 'shape=mxgraph.aws4.camera;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',

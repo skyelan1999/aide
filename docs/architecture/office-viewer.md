@@ -284,6 +284,7 @@ Lucidchart 的 `EIMessageBlock` 和 `EIMessageHistoryBlock` 导入时，把每�
 | `PEPlugValveBlock` | `pid2valves.valve`，`valveType=plug` |
 | `AmazonRDSMySQLDBinstance2017` | `aws3.mysql_db_instance` |
 | `AWSAppSyncAWS19` | `aws4.resourceIcon`，`resIcon=mxgraph.aws4.appsync` |
+| `IoT_AlexaVoiceServiceAWS19` | `aws4.alexa_voice_service_2`；Alexa Skill 仍为 `aws4.alexa_skill` |
 
 真实导入回归同时核对消息样式、图模型的类型字段、实际注册的渲染器/Stencil及正确的相邻类型对照，覆盖源码、动态扩展包和集成包。
 
