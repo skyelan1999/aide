@@ -16,7 +16,8 @@
     "同时补齐168在integrate分发漏同步的现有校验；三份真实parser回归及两分发同步检查，非动画段字节不变，不重复计数。",
     "369回滚再次失败不能跳出agent；保留原故障与恢复结果、受限脱敏持久日志、有界实际launcher子进程和断线结果重试；相同operation结果幂等且不得清除新pending，Windows实机首因仍未知。",
     "464最新followup覆盖Docker Desktop/containerd在受信任image引用下返回规范configID；仅成功已校验归档load回执可定位fallback，严格平台/源码/CAD校验仍保留；提供字段级错误并移除tar.exe执行依赖。",
-    "182在原有完整提交/单vertex/undo语义下仅限制预览重算；核对支持平滑档位和完整采样，真实源码/两分发浏览器及新441/168动画段联验，保留明确性能/视觉边界。"
+    "182在原有完整提交/单vertex/undo语义下仅限制预览重算；核对支持平滑档位和完整采样，真实源码/两分发浏览器及新441/168动画段联验，保留明确性能/视觉边界。",
+    "审查268bde94原生Windows方案，合理部分合入当前修复分支；保留现有更新/监控/迁移与测试，不恢复已修tar/镜像身份问题；构建与可执行验证明确平台边界。"
   ],
   "scope": [
     "internal/server",
@@ -66,7 +67,21 @@
     "AGENTS.md",
     "docs/agent/WORKFLOW.md",
     "scripts/launcher-data.ps1",
-    "scripts/prebuilt-image.ps1"
+    "scripts/prebuilt-image.ps1",
+    "native/windows-launcher",
+    ".gitattributes",
+    ".gitignore",
+    "start.bat",
+    "stop.bat",
+    "clean-docker-cache.bat",
+    "docs/architecture/launcher-storage.md",
+    "docs/docker-maintenance.md",
+    "docs/en/installation.md",
+    "docs/en/docker-maintenance.md",
+    "docs/security/tls.md",
+    "docs/en/security/tls.md",
+    "docs/tasks/windows-native-launcher-20261027.json",
+    "docs/tasks/windows-runtime-fallback-20261027.json"
   ],
   "stages": {
     "requirements": {
@@ -176,7 +191,7 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "60轮186–190修复/收据已push及逐项评论，原272剩163、累计124覆盖。61轮191真实状态图待验证；不同会话在464评论登记了独立原生启动器分支交付，未出现新的报错日志，不自动合入本分支。只push不合并main。",
+  "handoff": "用户明确要求审查并合入464原生方案，191仅metadata暂停无未提交代码；计划保留兼容启动/更新/监控/迁移，修复native回退等阻塞再合入。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
@@ -247,10 +262,12 @@
       "cycle": 61,
       "status": "in_progress",
       "candidates": [
-        191
+        464
       ],
-      "phase": "body-read-independent-stencils-found-verify-real-state-rendering",
-      "observed": "Android contact badge source allfocused, independent focused/normal/pressed descriptors exist in stencils/android/android.xml; runtime comparison required before fix."
+      "phase": "review-native-branch-prepare-compatible-integration",
+      "sourceBranch": "codex/windows-native-launcher-20261027",
+      "sourceCommit": "268bde94cd71a2fe420f36f4194dc6a76fa3b2c9",
+      "pausedIssue": 191
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -272,7 +289,7 @@
         "documented-blocker-with-no-new-action"
       ],
       "preempt": "Only explicit user steering interrupts an in-progress repair; preserve paused changes.",
-      "explicitIssue": null,
+      "explicitIssue": 464,
       "nextOwnerCandidates": [],
       "knownBlockedOwnerIssues": [
         340,
@@ -295,7 +312,7 @@
         "evidence": "cycle-051.json"
       },
       "lastRefresh": "2026-10-27T09:22:35.725221+00:00",
-      "lastExplicitRequest": "464 followup deferred for owner testing; continue other work"
+      "lastExplicitRequest": "你看下464的新回复，看看是否合理，合理的话把方案合并进来"
     },
     "pausedWork": [
       {
