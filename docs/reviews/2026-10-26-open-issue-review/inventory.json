@@ -1441,7 +1441,8 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
-      "repairEvidence": "cycle-062.json"
+      "repairEvidence": "cycle-062.json",
+      "repairComment": "https://github.com/skyelan1999/aide/issues/195#issuecomment-6440766720"
     },
     {
       "number": 194,
@@ -1452,7 +1453,8 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
-      "repairEvidence": "cycle-062.json"
+      "repairEvidence": "cycle-062.json",
+      "repairComment": "https://github.com/skyelan1999/aide/issues/194#issuecomment-6440766381"
     },
     {
       "number": 193,
@@ -1463,7 +1465,8 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
-      "repairEvidence": "cycle-062.json"
+      "repairEvidence": "cycle-062.json",
+      "repairComment": "https://github.com/skyelan1999/aide/issues/193#issuecomment-6440766031"
     },
     {
       "number": 192,
@@ -1474,7 +1477,8 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
-      "repairEvidence": "cycle-062.json"
+      "repairEvidence": "cycle-062.json",
+      "repairComment": "https://github.com/skyelan1999/aide/issues/192#issuecomment-6440765517"
     },
     {
       "number": 191,
@@ -1485,7 +1489,8 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "70ce07f823bfe57418a1bd3e5819196c46f2bf2c",
-      "repairEvidence": "cycle-062.json"
+      "repairEvidence": "cycle-062.json",
+      "repairComment": "https://github.com/skyelan1999/aide/issues/191#issuecomment-6440764993"
     },
     {
       "number": 190,

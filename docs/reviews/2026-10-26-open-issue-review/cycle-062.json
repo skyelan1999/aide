@@ -69,11 +69,18 @@
     "No mainmerge,Release/tag/deploy or productionrestart. Allfive reasonable reports remainopen pendingmain."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "191": "https://github.com/skyelan1999/aide/issues/191#issuecomment-6440764993",
+      "192": "https://github.com/skyelan1999/aide/issues/192#issuecomment-6440765517",
+      "193": "https://github.com/skyelan1999/aide/issues/193#issuecomment-6440766031",
+      "194": "https://github.com/skyelan1999/aide/issues/194#issuecomment-6440766381",
+      "195": "https://github.com/skyelan1999/aide/issues/195#issuecomment-6440766720"
+    },
+    "remoteCommit": "115d5ed75dfeae1d798093d7947f010722326592"
   },
   "sourceSHA256": {
     "docs/architecture/office-viewer.md": "c1b000d2f2d23eee88977cf40560f74710077e0bfaa752159e56f0d9d989e867",
