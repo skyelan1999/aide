@@ -13,7 +13,9 @@
     "464覆盖PID停止幂等/旧helper升级、健康服务的可选浏览器启动、LAN可信镜像提取；用有限隔离回归记录证据及Windows实机未验证边界。",
     "467使用当前用户SID直接设置私有DACL，避免Set-Acl域名解析；已有目录也先完成保护再恢复配置；权限失败必须阻止读取，Windows原生未验证如实记录。",
     "441动画窗口页脚在最小360px/390px视口及桌面保持全部控件可见可点；真实浏览器验证源码及两分发构造器、中英德文、明暗及Save/Cancel键盘行为。",
-    "同时补齐168在integrate分发漏同步的现有校验；三份真实parser回归及两分发同步检查，非动画段字节不变，不重复计数。"
+    "同时补齐168在integrate分发漏同步的现有校验；三份真实parser回归及两分发同步检查，非动画段字节不变，不重复计数。",
+    "369回滚再次失败不能跳出agent；保留原故障与恢复结果、受限脱敏持久日志、有界实际launcher子进程和断线结果重试；相同operation结果幂等且不得清除新pending，Windows实机首因仍未知。",
+    "464最新followup覆盖Docker Desktop/containerd在受信任image引用下返回规范configID；仅成功已校验归档load回执可定位fallback，严格平台/源码/CAD校验仍保留；提供字段级错误并移除tar.exe执行依赖。"
   ],
   "scope": [
     "internal/server",
@@ -62,7 +64,8 @@
     "scripts/message-lan-control.ps1",
     "AGENTS.md",
     "docs/agent/WORKFLOW.md",
-    "scripts/launcher-data.ps1"
+    "scripts/launcher-data.ps1",
+    "scripts/prebuilt-image.ps1"
   ],
   "stages": {
     "requirements": {
@@ -81,14 +84,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "53轮修复441窄屏footer并补168 integrate漏同步（不重复计数）；累计114产品/验收issue及1测试修正。",
+      "summary": "54轮补464 canonical镜像身份与托管解包；已有issue followup不重复计数。累计114产品/验收+1测试；55轮恢复369。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "三份parser/sync、36页脚/共60真实浏览器组、181 quick及docs通过；完整工作台/全部语言/拖拽resize/full integrate启动未验收。",
+      "summary": "22真实PS7导入/归档组、真实Docker微小镜像导入/规范ID/标签清理、181quick及docs通过；Windows实机与完整官方镜像未验收，按用户暂缓。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -141,7 +144,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-050.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-051.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-052.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-053.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-053.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-054.json"
       ]
     },
     "documentation": {
@@ -165,17 +169,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "53轮441及168分发followup已push/评论，累计115覆盖，原272剩172；54轮优先369回滚异常/诊断，再恢复182 stash1ae8bb0（未计数）。仅push分支，保留用户文件。",
+  "handoff": "54轮464已完成安全检查点待push；按用户要求等其Windows测试新log，继续55轮369。恢复a00be49e stash后补server失败文案/终止不明及最终回归；182 stash1ae8bb0保留。覆盖115/原272剩172不变。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "54a3bc37945061378ea5c8eea54083380970ab30",
-    "pushed": true,
+    "commit": "ddbb676ccaa388ebbd90643abf843119fcf101b7",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "d431aaabb601abe43ae2934da611ad93d3adcbf2"
+    "evidenceCommit": null
   },
-  "issue_comments": "53轮441及168分发followup已push并评论，合理问题保持open。",
+  "issue_comments": "54轮464 followup待push回填；用户暂缓实测，合理报告保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -204,21 +208,20 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 54,
+    "nextCycle": 55,
     "lastCompletedBatch": {
-      "cycle": 53,
-      "issues": [
-        441
-      ],
+      "cycle": 54,
+      "issues": [],
       "followups": [
-        168
+        464
       ],
+      "newCoverage": 0,
       "cumulativeFixed": 115,
       "cumulativeProductFixed": 114,
       "toolingFixes": 1,
       "pendingReview": 0,
       "remainingFollowupTargets": 172,
-      "verification": "PASS36 footer/60 actual browser groups,3 parsers/sync,181 quick/docs; full workbench/all languages/full integrate NOT_RUN",
+      "verification": "PASS22 PS7 importer/tar cases plus real owned Docker image import and181 quick; native Windows/public complete image NOT_RUN/user-deferred",
       "remainingAdditionalFollowupTargets": 1
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
@@ -232,13 +235,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 54,
+      "cycle": 55,
       "status": "in_progress",
       "candidates": [
         369
       ],
-      "phase": "owner-priority-latest-body-and-source-confirmed",
-      "observed": "369确认恢复catch里launcher再次异常会跳出agent，95%缺terminal结果；无持久输出。需嵌套恢复保护/有界真实子进程/脱敏诊断/可重试结果；首发Windows故障未知。"
+      "phase": "resume-scoped-stash-after464-safe-checkpoint",
+      "observed": "用户要求先做别的并后续给464新log；恢复369 stash a00be49e，原19agent/6realchild初步通过、Go文案回归RED、最后unsafe-termination改动未重跑。"
     },
     "additionalFollowupIssues": [
       369
@@ -285,7 +288,8 @@
         "status": "fixed-on-branch",
         "evidence": "cycle-051.json"
       },
-      "lastRefresh": "2026-10-27T06:56:45.524426+00:00"
+      "lastRefresh": "2026-10-27T07:18:24.047761+00:00",
+      "lastExplicitRequest": "464 followup deferred for owner testing; continue other work"
     },
     "pausedWork": [
       {
@@ -298,11 +302,36 @@
         "browser": "/workspace/scratch/issue-review-20261026/cycle51-browser-initial/result.json",
         "verifiedScope": "22 component browser groups and finite preview counters pass; no final quick/docs/delivery yet.",
         "resume": "After owner-priority467/441/369 handling, apply exact stash; retain until conflicts and final verification resolved. No user untracked files stashed."
+      },
+      {
+        "issue": 369,
+        "status": "paused-by-explicit-464-followup",
+        "stash": "a00be49e3c50c9602cf4b9d655a50b87e49163fe",
+        "published": false,
+        "countedAsFixed": false,
+        "verifiedScope": "19 synthetic-agent cases and6 real PS child cases passed preliminarily; final unsafe-termination edits not rerun. New Go API-message regression is RED; backend prefix not fixed. No final quick/docs/delivery.",
+        "evidence": [
+          "/workspace/scratch/issue-review-20261026/cycle54-agent-green-expanded.log",
+          "/workspace/scratch/issue-review-20261026/cycle54-real-launcher-green-initial.log",
+          "/workspace/scratch/issue-review-20261026/cycle54-server-red.log"
+        ],
+        "resume": "Apply exact stash after explicit464 followup, retain until conflicts/final verification resolved. Original user untracked files not stashed."
       }
     ],
     "nativeAcceptancePending": [
       464,
       467
+    ],
+    "deferredOwnerReports": [
+      {
+        "issue": 464,
+        "reason": "用户要求先做别的，回头实机测试后补log；当前followup代码仅完成已有验证与push检查点，再转369。",
+        "request": "你先做别的吧，我回头测好了吧log贴进去",
+        "recordedAt": "2026-10-27T07:39:44.345924+00:00",
+        "latestReviewedComment": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6436051112",
+        "resumeTrigger": "new owner test log or explicit steering",
+        "branchFollowupEvidence": "cycle-054.json"
+      }
     ]
   },
   "orderedReview": {

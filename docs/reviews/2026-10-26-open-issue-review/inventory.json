@@ -3004,7 +3004,16 @@
       "priority": "explicit-user-first",
       "evidence": "PID disappearance handled idempotently, verified new helper stops old owner, optional browser failure warns, LAN reference fallback requires exact fresh-container digest plus SHA256. Go race/vet, Windows helper cross-build and real PS7/Linux fixture tests pass; native Windows/Docker Desktop acceptance pending.",
       "repairCommit": "17ab31ae060dc00fd090537ab60efde295614514",
-      "repairEvidence": "cycle-051.json"
+      "repairEvidence": "cycle-051.json",
+      "followups": [
+        {
+          "cycle": 54,
+          "commit": "ddbb676ccaa388ebbd90643abf843119fcf101b7",
+          "evidence": "cycle-054.json",
+          "status": "branch-fix-owner-testing-deferred",
+          "scope": "Canonical prebuilt identity, managed fixed-member extraction, lean runtime reuse; native Windows/source-network cause pending new owner log."
+        }
+      ]
     },
     {
       "number": 467,
