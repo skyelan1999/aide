@@ -64,11 +64,14 @@
     "Go/full suite not repeated for palette metadata/test/docs change. No main merge/release/deployment; #464 deferred per user until new test logs."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "184": "https://github.com/skyelan1999/aide/issues/184#issuecomment-6437900225"
+    },
+    "remoteCommit": "e8a729e7f4759c6f13307e0b37f79d712ff7a38a"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "49288566328604d7508abb35eff50361f09e8ed48ad36e0bfaf2714a22a9a911",

@@ -174,17 +174,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "58轮184已验证/提交待push，原272剩169，累计118覆盖；59轮185包括AWS18评论待修。464按用户等待新的测试log。",
+  "handoff": "58轮184修复/收据已push及评论，原272剩169，累计118覆盖。59轮185含AWS18补充报告；464按用户等新的测试log。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "a08deaac92857e0e449ff6a84653ee5e350599c0",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": null
+    "evidenceCommit": "e8a729e7f4759c6f13307e0b37f79d712ff7a38a"
   },
-  "issue_comments": "57轮183已附运行证据评论关闭：https://github.com/skyelan1999/aide/issues/183#issuecomment-6437725953",
+  "issue_comments": "58轮184已推送并评论 https://github.com/skyelan1999/aide/issues/184#issuecomment-6437900225；合理条目保持open等待main。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
