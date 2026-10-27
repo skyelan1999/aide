@@ -119,7 +119,7 @@
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.forums;',
 					 w2, w2, 'Forums', null, null, null, this.getTagsForStencil(gn, 'forums', dt).join(' ')),
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.generic_database;',
-					 w2, w2, 'Generic\ndatabase', null, null, null, this.getTagsForStencil(gn, 'generic databas', dt).join(' ')),
+					 w2, w2, 'Generic\ndatabase', null, null, null, this.getTagsForStencil(gn, 'generic database', dt).join(' ')),
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.internet;',
 					 w2, w2, 'Internet', null, null, null, this.getTagsForStencil(gn, 'internet', dt).join(' ')),
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.internet_alt1;',
@@ -158,7 +158,7 @@
 			 this.createVertexTemplateEntry(n3 + 'illustration_users;pointerEvents=1',
 					 100, 100, 'users', null, null, null, this.getTagsForStencil(gn, 'users', dt).join(' ')),
 			 this.createVertexTemplateEntry(n3 + 'illustration_notification;pointerEvents=1',
-					 100, 81, 'notification', null, null, null, this.getTagsForStencil(gn, 'users', dt).join(' ')),
+					 100, 81, 'notification', null, null, null, this.getTagsForStencil(gn, 'notification', dt).join(' ')),
 			 this.createVertexTemplateEntry(n3 + 'illustration_devices;pointerEvents=1',
 					 100, 73, 'devices', null, null, null, this.getTagsForStencil(gn, 'devices', dt).join(' ')),
 			 this.createVertexTemplateEntry(n3 + 'illustration_desktop;pointerEvents=1',
@@ -515,7 +515,7 @@
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.sql_replica;',
 					 w2, w2, 'SQL replica', null, null, null, this.getTagsForStencil(gn, 'sql replica', dt).join(' ')),
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.postgresql_instance;',
-					 w2, w2, 'PostgreSQL\ninstance', null, null, null, this.getTagsForStencil(gn, 'postresql instance', dt).join(' ')),
+					 w2, w2, 'PostgreSQL\ninstance', null, null, null, this.getTagsForStencil(gn, 'postgresql instance', dt).join(' ')),
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.dense_compute_node;',
 					 w2, w2, 'Dense\ncompute node', null, null, null, this.getTagsForStencil(gn, 'dense compute node', dt).join(' ')),
 			 this.createVertexTemplateEntry(n2 + 'resourceIcon;resIcon=' + gn + '.dense_storage_node;',
@@ -893,7 +893,7 @@
 
 	Sidebar.prototype.addAWS4bNetworkContentDeliveryPalette = function(w, h, w2, n, n2, gn, sb)
 	{
-		var dt = 'aws amazon web service netowrk content delivery ';
+		var dt = 'aws amazon web service network content delivery ';
 		
 		this.addPaletteFunctions('aws4bNetwork Content Delivery', 'AWS18 / Network & Content Delivery', false,
 		[
