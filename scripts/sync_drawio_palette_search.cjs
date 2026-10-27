@@ -2,7 +2,7 @@
 // Regenerate only reviewed palette assignments, preserving unrelated bundles.
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {assignment}=require('./test_drawio_layout_fixes.cjs');
-const methods=[...require('./test_drawio_palette_search.cjs').methods,...require('./drawio-aws-search-review.cjs').methods,...require('./drawio-sidebar-metadata-review.cjs').methods];
+const methods=[...require('./test_drawio_palette_search.cjs').methods,...require('./drawio-aws-search-review.cjs').methods,...require('./drawio-sidebar-metadata-review.cjs').methods,...require('./drawio-state-search-review.cjs').methods];
 const tool=process.env.AIDE_TERSER_MODULE||'terser';
 assert.equal(require(tool+'/package.json').version,'5.39.0');
 const base='internal/server/web/vendor/drawio/js/';
