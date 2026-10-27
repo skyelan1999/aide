@@ -146,7 +146,7 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第46轮177已push并评论；累计108覆盖，原272剩176，额外441待后续。第47轮178/179最新正文已读，尚未新增回归或改代码。",
+  "handoff": "第46轮177已push评论，最新交付d86c7e71；累计108覆盖，原272剩176，额外441待后续。第47轮178已读完整源码并运行有限路径探针，下一步补拒绝回归和度数/控制点/工作量限制；尚未改产品代码。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "df3533b25b9addf7beeebcf01ff700ad25e6b3c4",
@@ -214,8 +214,13 @@
       "candidates": [
         178
       ],
-      "phase": "latest-body-read-awaiting-regression",
-      "observed": "178 NURBSTo高阶De Boor评估缺少公式/度数/控制点/工作量上限，需先有限复现。179 malformed BMP异步转换会丢失完成回调，正文已读但尚未实现。"
+      "phase": "source-reviewed-finite-probe-awaiting-budget-regression",
+      "observed": "178 getControlPoints.nurbsSegsTo先split公式，再按控制点数钳制度数，De Boor每span四采样且每次O(p²)。有限探针degree=12/16内部控制点已得到17输出点（约2ms）；仅证明路径可执行，不算超限拒绝回归或漏洞卡死复现，未改产品代码。",
+      "probe": {
+        "path": "/workspace/scratch/issue-review-20261026/cycle47-nurbs-probe.cjs",
+        "result": "PATH_EXECUTED_WITHOUT_BUDGET",
+        "scope": "实际源码getControlPoints方法+隔离假shape/geometry类型；换算因子100；非真实微软文件/完整工作台。"
+      }
     },
     "additionalFollowupIssues": [
       441
