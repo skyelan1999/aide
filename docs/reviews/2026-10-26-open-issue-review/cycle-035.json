@@ -78,11 +78,14 @@
     "无常驻测试服务；保留原用户未跟踪文件。只push修复分支、不合并main/发行/部署，合理issue保持open。下一项#158研究记录数值边界。"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueComments": {}
+    "issueComments": {
+      "157": "https://github.com/skyelan1999/aide/issues/157#issuecomment-6430406443"
+    },
+    "verifiedRemoteCommit": "16423f9b79f181fe371e923c5b364a5715d43c14"
   },
   "sourceSHA256": {
     "docs/architecture.md": "e1e1fb853fef3147365a553d902ec748286acb5ca83e865cab16eabeb252ba01",
