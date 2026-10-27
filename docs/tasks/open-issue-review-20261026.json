@@ -10,7 +10,8 @@
     "保留用户原有未跟踪文件，结果逐条关联issue与命令",
     "按编号升序逐条核对原剩余272项，完整记录源码判断、运行证据和未验证边界，不以审查代替修复",
     "按用户新策略优先明确指定464及skyelan1999新报告，再回原编号队列；保存被打断的182工作，不把其初步验证算完成。",
-    "464覆盖PID停止幂等/旧helper升级、健康服务的可选浏览器启动、LAN可信镜像提取；用有限隔离回归记录证据及Windows实机未验证边界。"
+    "464覆盖PID停止幂等/旧helper升级、健康服务的可选浏览器启动、LAN可信镜像提取；用有限隔离回归记录证据及Windows实机未验证边界。",
+    "467使用当前用户SID直接设置私有DACL，避免Set-Acl域名解析；已有目录也先完成保护再恢复配置；权限失败必须阻止读取，Windows原生未验证如实记录。"
   ],
   "scope": [
     "internal/server",
@@ -58,7 +59,8 @@
     "scripts/local-mounts-control.ps1",
     "scripts/message-lan-control.ps1",
     "AGENTS.md",
-    "docs/agent/WORKFLOW.md"
+    "docs/agent/WORKFLOW.md",
+    "scripts/launcher-data.ps1"
   ],
   "stages": {
     "requirements": {
@@ -77,14 +79,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第51轮修复464 Windows helper停止竞态、旧二进制升级、浏览器非致命失败及LAN镜像身份回退；新增账号报告优先策略。累计112项产品/验收issue及1项额外测试修正。",
+      "summary": "第52轮按账号优先修复新467 SID/DACL设置及已有目录权限重试；累计113项产品/验收issue及1项额外测试修正，Windows原生验收待执行。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Go helper包race/vet、Windows amd64交叉编译、17组真实PowerShell7/Linux隔离回归、既有目录/端口监视回归及181项quick通过；Windows5.1/Docker Desktop实机启动未验证。",
+      "summary": "467四组真实PowerShell7恢复流程回归（仅权限adapter替身）和AST、181项quick通过；Windows NTFS/断域环境未运行，未用Linux回归冒充。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -135,7 +137,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-048.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-049.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-050.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-051.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-051.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-052.json"
       ]
     },
     "documentation": {
@@ -159,17 +162,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第51轮464及账号优先策略已push并评论，原272剩172，累计113覆盖。下一52轮按新策略先看467，再441/369，最后恢复182；182 stash 1ae8bb0未push/未计数。Windows5.1/Docker Desktop实机验收未执行。",
+  "handoff": "52轮467分支修复完成且流程/quick通过，Windows原生DACL/断域验收未运行；待push回填。累计114覆盖，原272剩172；下轮53优先441/369，再恢复182 stash 1ae8bb0（未push/未计数）。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "17ab31ae060dc00fd090537ab60efde295614514",
-    "pushed": true,
+    "commit": "a8bc5a9f5a7b6f60166e367f0b63f236b3d1d92e",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "df370b9dce3a30de3ac24f4c4ac342fbdefeb37b"
+    "evidenceCommit": null
   },
-  "issue_comments": "第51轮464已push并评论 https://github.com/skyelan1999/aide/issues/464#issuecomment-6435428813；保持open等待Windows/main验收。",
+  "issue_comments": "第52轮467待push后评论，保持open等待Windows/main验收。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -198,23 +201,22 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 52,
+    "nextCycle": 53,
     "lastCompletedBatch": {
-      "cycle": 51,
+      "cycle": 52,
       "issues": [
-        464
+        467
       ],
-      "cumulativeFixed": 113,
-      "cumulativeProductFixed": 112,
+      "cumulativeFixed": 114,
+      "cumulativeProductFixed": 113,
       "toolingFixes": 1,
       "pendingReview": 0,
       "remainingFollowupTargets": 172,
-      "verification": "PASS helper race/vet, Windows helper cross-build, 17 PS7/Linux recovery cases, existing directory/watch regression and 181 quick checks; Windows5.1/Docker Desktop NOT_RUN",
+      "verification": "PASS real PS7 restore gate with mocked Windows ACL adapter, AST and181 quick; Windows native NTFS/domain NOT_RUN",
       "remainingAdditionalFollowupTargets": 1
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      467,
       441,
       369,
       182
@@ -225,13 +227,13 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 52,
+      "cycle": 53,
       "status": "in_progress",
       "candidates": [
-        467
+        441
       ],
-      "phase": "owner-priority-metadata-read-awaiting-triage",
-      "observed": "刷新已确认账号skyelan1999发现新467，创建于2026-10-27T06:25:02Z；尚未核对正文/附件，不算已确认bug或修复。当前464完整安全检查点完成后优先处理。"
+      "phase": "owner-priority-next-report-awaiting-latest-body-read",
+      "observed": "464/467在分支覆盖并保持open待Windows验收，按新优先策略下一441窄屏动画窗口；本轮未开始改动其UI。随后369，再恢复原182。"
     },
     "additionalFollowupIssues": [
       441
@@ -257,7 +259,6 @@
       "preempt": "Only explicit user steering interrupts an in-progress repair; preserve paused changes.",
       "explicitIssue": null,
       "nextOwnerCandidates": [
-        467,
         441,
         369
       ],
@@ -268,16 +269,18 @@
         28
       ],
       "alreadyCoveredOwnerIssues": [
-        373,
+        48,
         62,
-        48
+        373,
+        464,
+        467
       ],
       "lastExplicitIssue": {
         "number": 464,
         "status": "fixed-on-branch",
         "evidence": "cycle-051.json"
       },
-      "lastRefresh": "2026-10-27T06:32:24.184717+00:00"
+      "lastRefresh": "2026-10-27T06:41:23.950080+00:00"
     },
     "pausedWork": [
       {
@@ -291,6 +294,10 @@
         "verifiedScope": "22 component browser groups and finite preview counters pass; no final quick/docs/delivery yet.",
         "resume": "After owner-priority467/441/369 handling, apply exact stash; retain until conflicts and final verification resolved. No user untracked files stashed."
       }
+    ],
+    "nativeAcceptancePending": [
+      464,
+      467
     ]
   },
   "orderedReview": {

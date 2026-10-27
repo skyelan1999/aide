@@ -3008,16 +3008,18 @@
       "url": "https://github.com/skyelan1999/aide/issues/467",
       "author": "skyelan1999",
       "createdAt": "2026-10-27T06:25:02Z",
-      "status": "awaiting-owner-priority-triage",
+      "status": "fixed-on-branch",
       "original272": false,
-      "evidence": "Owner metadata refresh during464; body not yet triaged, not counted as confirmed followup or fixed."
+      "evidence": "Replace Set-Acl with SID-based .NET DACL-only setter; protect existing roots before restore and fail closed. PS7/Linux restore-gate/AST and181 quick pass. Actual Windows NTFS/domain acceptance pending; browser part covered464.",
+      "repairCommit": "a8bc5a9f5a7b6f60166e367f0b63f236b3d1d92e",
+      "repairEvidence": "cycle-052.json",
+      "validationStatus": "flow-tests-pass-native-windows-not-run"
     }
   ],
   "priorityPolicy": {
     "ownerLogin": "skyelan1999",
     "explicitIssue": null,
     "nextOwnerCandidates": [
-      467,
       441,
       369
     ],
