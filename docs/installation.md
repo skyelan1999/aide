@@ -197,7 +197,7 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 
 开发者需要运行尚未发布的本地代码时，macOS/Linux 执行 `AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start`；PowerShell 设置 `$env:AIDE_BUILD_FROM_SOURCE='1'` 后运行 start.ps1。`scripts/install.sh --source` 也会显式选择源码构建。预构建模式使用清单指定的发布快照，不执行未打包的本地改动。
 
-完整 Release 包解压后启动时直接校验并导入包内镜像，后续复用本地镜像。缺少匹配架构的已发布镜像会明确停止并指出需要对应包，不会误用 ARM64 镜像启动 x64 引擎，也不会悄悄回退到编译。当前 ARM64 验收不代表 x64 或 Windows 实机通过。Windows 源码目录的首次完整包导入使用 tar.exe 临时解压内层镜像，需预留磁盘空间；导入后删除本次临时解压文件，保留压缩包供下次离线恢复。
+完整 Release 包解压后启动时直接校验并导入包内镜像，后续复用本地镜像。缺少匹配架构的已发布镜像会明确停止并指出需要对应包，不会误用 ARM64 镜像启动 x64 引擎，也不会悄悄回退到编译。当前 ARM64 验收不代表 x64 或 Windows 实机通过。Windows 源码目录的官方回退导入使用 .NET GZip/tar 流读取固定的 `aide-offline/docker-images/aide-local.tar` 普通文件，不再执行 `tar.exe`，不提取其他归档路径；需预留内层镜像的磁盘空间，本次临时文件随后删除。外层归档 SHA-256 仍先校验，清单固定引用或本次成功导入的唯一回执用于定位，平台、源码指纹及旧版归档的 CAD 标签校验通过后，使用 Docker 返回的规范镜像 ID 激活。真实不匹配会指出具体字段并拒绝激活。保留压缩包供下次离线恢复。Windows 本地轻量核心镜像复用只要求有效平台和源码标签，独立 CAD 插件不再作为核心镜像复用的条件。
 
 发布时须从已验证镜像执行 export-bundle（package-release-assets.sh 已接入），一同提交更新后的预构建清单与校验记录，并上传清单引用的完整包及 SHA256SUMS。仓库入口与 Release 解压入口都要实际验收，核对下载附件的大小、摘要和镜像身份；不能只推代码或薄启动器。保留旧附件作为回滚，不覆盖已发布的同名文件。
 

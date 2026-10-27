@@ -122,3 +122,11 @@ Windows 代理兼容切换命令可选列中的 `-` 占位符及旧式空列。�
 `python scripts/test_windows_update_agent.py --pwsh <PowerShell路径>` 执行真实代理代码，使用隔离的 Docker、HTTP 与子进程替身，覆盖 12 组切换、回退、并发锁及镜像身份场景。Mac 上 PowerShell 7 结果不替代 Windows PowerShell 5.1、Docker Desktop、原生进程树与完整升级实机验收。详见[任务记录](../tasks/release-manual-switch-20261026.json)。
 
 离线镜像发行脚本 `scripts/docker-release.sh` 的冒烟容器使用每次独立名称及私有 cidfile。证书复制、停止与退出清理均使用该次 Docker 写入的完整64位CID；没有有效CID时不按名称强制删除容器。因此名称冲突、未创建成功或CID格式异常不会删除既有 `aide-rel-test` 或其他工作负载。健康验证和镜像导出门槛保持不变。对应回归以临时目录中的模拟Docker执行，不代替真实镜像构建与导入验收。
+
+## Windows 官方回退镜像导入（2026-10-27）
+
+Windows 预构建导入接受 Docker 对受控清单固定引用返回的规范 config ID；固定引用导入后仍无法解析时，只允许本次成功 `docker image load` 回执中的唯一引用，随后严格核对架构、源码指纹及该旧版归档要求的 CAD 标签。不扫描本地任意标签，不修改公开清单。激活以规范 ID 为准，先保留原目标标签的回滚引用。错误分别标明身份、平台、源码或 CAD 字段，避免将合法的 manifest/config ID 差异合并为身份错误。
+
+完整包外层 SHA-256 通过后，.NET GZip 流只读取指定普通文件到本次私有临时目录，不执行外部 tar.exe；支持 USTAR、PAX 路径/尺寸与 GNU 长文件名/正数尺寸，PAX 元数据每项最多64KiB。其他成员只跳过，不按归档路径写盘；目标链接、坏校验头、截断或缺失成员拒绝导入。只导入后验证镜像不等于实际 Windows/Docker Desktop 启动验收，也不修复 Docker Hub 网络超时。
+
+`python scripts/test_windows_prebuilt_import.py --pwsh <PowerShell路径>` 运行真实 PowerShell 解包/校验配合隔离 Docker/HTTP 适配器；加 `--docker <docker路径>` 导入一个带唯一标签的微小空镜像，验证 manifest/config 身份与本次导入回执路径，不运行容器、不替换 Aide 标签，最后移除自建标签。Windows PowerShell5.1、用户机器的网络与完整官方镜像导入仍需分别验收。
