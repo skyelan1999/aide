@@ -143,4 +143,8 @@ Windows 预构建导入接受 Docker 对受控清单固定引用返回的规范 
 
 `python scripts/test_windows_update_agent.py --pwsh <PowerShell路径>` 测协议与失败状态；`python scripts/test_windows_update_launcher_process.py --pwsh <PowerShell路径>` 实际启动隔离PowerShell子进程，检查退出码、异常、常驻后代、超时和日志脱敏/轮转/链接。Linux适配器只省略不支持的WindowStyle，进程与包装器真实执行；Docker/HTTP状态测试使用替身，不等于用户Windows/Docker Desktop实机验收。
 
-原生 Windows 启动器目前作为显式可选路径合入；保留默认 BAT/PowerShell 启动、A/B代理、端口监控与旧数据迁移，不把原生启动成功等同于升级能力已移植。直接运行原生 exe 或设置 `AIDE_WINDOWS_LAUNCHER_MODE=native` 时不启动新的兼容后台代理；需要应用内升级和动态端口处理时使用默认兼容入口。
+原生 Windows 默认入口现由同一个 `aide-launcher.exe` 提供，BAT 不再调用 PS1。当前用户级 controller 监督同 EXE 的 port/update worker，目录/LAN 组件由 EXE 内嵌并落到私有缓存。不同后台任务可以运行，安装目录的生命周期锁串行执行端口、目录 Apply 与 A/B 切换；`host-status` 不等待该锁。它不注册 SCM 服务，不跨用户连接 Docker Desktop。
+
+原生 A/B 的准备、激活、结果和 canonical-ID 同步写入 `.aide-data/native/update/transaction.json`。激活前持久保存旧 marker；目标失败恢复并验证旧镜像，进程终止不确认则持久阻塞，不自动回滚。回执及同步重试不重复激活；过期 operation 不覆盖新状态。下载令牌仅送入固定 loopback API 的 WinHTTP 内存请求，不进入子进程参数。ZIP 固定成员解包/迁移仍在受控 Linux 容器内使用 Python，不要求宿主安装 Python。
+
+原生 controller 持有旧 updater 的安装锁，切换前要求旧代理退出，并接续既有 pending-result。原有 PS1 源码和测试保留为历史兼容对照，前文 PowerShell 命令不再描述默认入口。平台运行证据与交叉编译分开记录；生产事务核心测试不代替 Windows Job/ACL、Docker Desktop、真实 A/B 与数据迁移验收。具体命令和阻塞恢复边界见[原生主机说明](../../native/windows-launcher/README.md)。

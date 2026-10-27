@@ -4,6 +4,8 @@
 Uses a local runtime only. No PowerShell, downloads, production data or browser.
 """
 import argparse
+import ctypes
+from ctypes import wintypes
 import hashlib
 import json
 import os
@@ -127,13 +129,48 @@ def main():
             assert before == after, 'Repeat start unexpectedly recreated the app'
             assert (root / '.env').read_text() == saved, 'Repeat start changed saved port'
             launch('status')
+            resident = json.loads(launch('host-status'))
+            assert resident['running'] and resident['state'] == 'running', resident
+            assert set(resident['workers']) == {'port', 'update'}, resident
+            assert all(item['running'] for item in resident['workers'].values()), resident
+            duplicate = launch('supervise')
+            assert json.loads(launch('host-status'))['generation'] == resident['generation']
+            # Hold the actual exclusive lifecycle file: status must remain
+            # independent of a long mutation and must not spawn more workers.
+            kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+            create = kernel.CreateFileW
+            create.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                               wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+            create.restype = wintypes.HANDLE
+            close = kernel.CloseHandle
+            close.argtypes = [wintypes.HANDLE]
+            close.restype = wintypes.BOOL
+            handle = create(str(root / '.aide-data/native/startup.lock'), 0xC0000000, 0, None, 4, 0x80, None)
+            assert handle != wintypes.HANDLE(-1).value, ctypes.get_last_error()
+            try:
+                started = time.monotonic()
+                current = json.loads(launch('host-status'))
+                assert time.monotonic() - started < 5, 'host-status waited on the lifecycle lock'
+                assert current['generation'] == resident['generation']
+                assert {key: item['pid'] for key, item in current['workers'].items()} == {
+                    key: item['pid'] for key, item in resident['workers'].items()}
+            finally:
+                assert close(handle)
+            launch('host-stop')
+            stopped = json.loads(launch('host-status'))
+            assert not stopped['running'] and stopped['state'] == 'stopped', stopped
+            assert not any(item['running'] for item in stopped.get('tasks', {}).values()), stopped
+            assert subprocess.check_output([docker, 'compose', 'ps', '-q', 'aide'], cwd=root, env=owned_env, text=True).strip() == after
+            launch()
+            restarted = json.loads(launch('host-status'))
+            assert restarted['running'] and restarted['generation'] != resident['generation']
             # Token must not leak to console or durable native logs.
             logs = (root / '.aide-data/native/launcher.log').read_text()
             assert '#token=' not in logs and '#token=' not in output
             launch('stop')
             state = subprocess.check_output([docker, 'compose', 'ps', '--status', 'running', '-q'], cwd=root, env=owned_env, text=True)
             assert not state.strip(), 'Native stop left app running'
-            print('PASS native single-exe bootstrap, Unicode paths, collision, repeat start, status and stop')
+            print('PASS native bootstrap/ownership/port, bounded user-session tasks, concurrent status and stop/restart')
         finally:
             listener.close()
             owned_env = project_env()

@@ -1,123 +1,123 @@
-# Windows native launcher
+# Windows native host
 
-Double-click `aide-launcher.exe` beside the existing installation. The executable calls Win32 and Docker
-directly: no PowerShell, cmd command strings, host Python, .NET or separately
-installed C++ runtime is needed. Docker Desktop and its Compose plugin remain
-required. C++17 sources and pinned MIT JSON/miniz dependencies are in this directory.
-
-The merged distribution keeps the existing PowerShell startup, migration, port
-watcher and A/B update agent. BAT entrypoints use that compatible path by default.
-Set `AIDE_WINDOWS_LAUNCHER_MODE=native` for an explicit native BAT invocation, or
-run the exe directly. A native failure never silently starts the other path.
-An exe-only empty directory can bootstrap without the compatibility scripts.
+`aide-launcher.exe` is the Windows startup and resident host entrypoint. The BAT
+shortcuts call it directly. Docker Desktop with Linux containers and Compose is
+required; host PowerShell, Python, .NET and an installed C++ runtime are not.
+Legacy PS1 sources remain in the repository for migration reference and regression
+coverage. New Windows/full packages do not ship the PS1 lifecycle chain.
 
 ```text
-aide-launcher.exe start
-aide-launcher.exe stop
+aide-launcher.exe start --no-browser
+aide-launcher.exe host-status
 aide-launcher.exe status
 aide-launcher.exe open
+aide-launcher.exe stop
+aide-launcher.exe host-stop
 aide-launcher.exe clean-cache --dry-run
-aide-launcher.exe --root "C:\path with spaces\aide" --no-browser
-aide-launcher.exe --force-build
+aide-launcher.exe --root "C:\path with spaces\aide" --project my-install
 ```
 
-The default root is the executable's directory, independent of the current
-terminal directory. Source checkouts retain their existing Compose file and
-`.aide-data`. In an empty directory the single executable supplies the embedded
-offline Compose template and atomic data preparer; a validated local image or
-complete matching offline Release archive is still required. The data preparer
-runs with Python **inside an isolated Linux container**, never on the host.
+The default root is the executable's directory. An empty directory can bootstrap
+from a validated local image or the embedded, SHA256-pinned official image
+manifest. Existing Compose/environment files and data remain in place. Explicit
+source builds use `AIDE_BUILD_FROM_SOURCE=1` or `--force-build` and the same source
+fingerprint inventory as the POSIX launcher. Normal startup prefers a validated
+local runtime or the published runtime. No native failure silently invokes PS1.
 
-The native path preserves private SID-based data ACLs, saved environment/project
-identity, Unicode paths, platform/source/runtime checks, local-first startup,
-SHA256-verified archive import, explicit source builds, port collision handling,
-directory/LAN helper checksum checks, health checks and optional browser opening.
-Logs contain the address without a login token. Child processes inherit only
-their own standard handles, so persistent helpers cannot keep the launcher or
-its caller waiting on output pipes. Stop affects only the current project and
-retains all data. Application model configuration is never truncated to fit an
-older image.
+## One distributed executable, concurrent tasks
 
-Native legacy-container/volume migration is deliberately refused before data is
-changed; use the retained default `start.bat` migration workflow first. Native background
-port monitoring and in-app A/B update-agent parity are not included in this
-delivery. Change the port in `.env` and launch again. Windows background A/B update
-activation is not supported by the native path; use the default compatibility
-entrypoint for application-driven upgrades and port changes. No extra persistent
-monitor is installed by the native launcher. Existing host helpers are part of
-the application and are started/stopped with it.
+The executable embeds the current compiled directory/LAN components, their
+SHA256 values and dependency notices, Compose/data preparation resources, and the
+update protocol implementation. Components are materialized into private caches
+when needed; they are not separate downloads or manually installed programs.
+This is one distributed EXE, not one OS process or a replacement for Docker.
 
-## Build in Docker
+A controller starts bounded port and update worker processes using the **same
+EXE**. Directory and LAN helpers belong to its kill-on-close Win32 Job. A worker
+can restart without abandoning the helper processes or creating an unbounded
+number of workers. The Job allows at most 32 active processes. Mutating lifecycle
+operations share one exclusive installation lock, including directory Apply;
+`host-status` reads local state without waiting for that lock or Docker.
+
+The default is a background process in the current user's login session, with
+that user's Docker context and interactive folder picker. Startup starts it;
+`stop` ends the owned process tree and stops the current Compose project while
+retaining data. `host-stop` ends only the native background tasks. It is not an
+SCM/LocalSystem service, a login auto-start registration, or a daemon surviving
+logout. No service registration or account/password storage is performed.
+
+Ports saved in the app are checked and applied by the port task. Recreation must
+pass a bounded health wait; ordinary failure restores the previous environment
+and recreates the previous configuration. The update task supports existing A/B
+commands, fixed-member package extraction, SHA256 and runtime/platform/source
+validation, target identity/health checks, previous-slot recovery, and durable
+result/canonical-ID acknowledgement retries. Interrupted transactions restore the
+old marker and recover the previous image before new work. The controller holds
+the legacy updater lock and imports any previous pending result; an active legacy
+updater must be stopped before switching host implementations.
+
+Migration adopts only a unique same-root container/project. Named-volume or bind
+sources are mounted read-only, active/unreadable sessions prevent migration, and
+the existing atomic data preparer commits a receipt before activation. Source
+volumes/containers are retained. A new root cannot infer ownership of orphaned
+global volumes; use an explicit `--project NAME` only for the intended legacy
+project. Foreign or ambiguous container ownership refuses lifecycle operations.
+Data preparation and update ZIP extraction run Python **inside a verified Linux
+container**, never on the Windows host. Temporary Linux containers have random
+operation names plus root/operation labels; only matching owned containers are
+cleaned after interruption. A Windows process exit alone does not prove that a
+Docker container stopped.
+
+State lives under `.aide-data/native`, with current-user SID DACLs, atomic writes,
+reparse checks, generation/PID/creation-time identity and bounded/redacted logs.
+`host-status` reports worker phase and `stopRequired`. Unknown child termination
+or legacy unsafe-update markers fail closed: inspect the owned process/container
+state and transaction before removing the blocker; restart does not erase it.
+A directory-command timeout marker is cleared only after a full stop confirms the
+same controller generation and application have stopped. Docker unavailable or
+unconfirmed termination keeps the blocker. Preserve `.env`, `.aide-data`, storage
+receipts and original data when troubleshooting. Stop all native tasks before
+replacing a running launcher EXE; application A/B updates change the image, not
+the host executable.
+
+## Build and verify
+
+Build prerequisites are Python 3.11+, an **existing Go 1.26+ compiler** (PATH,
+`--go`, or `AIDE_NATIVE_GO`), and a local Linux Docker image with Python 3.12+.
+The script builds current Windows Go components, collects their licenses, and
+cross-compiles C++17 with the SHA256-pinned Zig 0.15.2 toolchain in a networkless
+Docker container. It does not install a compiler on the host. Its dedicated
+`aide-native-launcher-toolchain-v0152` volume caches the compiler.
 
 ```text
 python scripts/build-windows-launcher.py --image aide:local
 python scripts/build-windows-launcher.py --image aide:local --arch arm64
-```
-
-Build orchestration requires Python 3.11+ and a local Linux Docker image
-with Python 3.12+. The toolchain matches the local Linux image CPU (amd64/arm64).
-The pinned official Zig 0.15.2 Linux toolchain is SHA256
-verified, extracted and executed in Docker, with compiler/cache storage in the
-dedicated `aide-native-launcher-toolchain-v0152` volume. The compiler container
-has no network and never pulls an image. There is no host compiler installation.
-The AMD64 executable is written to `aide-launcher.exe`; ARM64 is written to
-`bin/aide-launcher-arm64.exe`. Binaries are build artifacts, not Git sources.
-
-## Verification
-
-```text
-aide-launcher.exe --self-test
-python scripts/test_windows_native_launcher.py
-```
-
-The integration test needs real Windows and Docker Desktop, uses an isolated
-Unicode path and project, exercises native bootstrap, occupied-port selection,
-repeat start, status and stop, then removes only its own Compose resources.
-Browser interaction, real legacy data migration, archive download/import and
-ARM64 execution need separate acceptance evidence.
-
-Automatic sign-in reads the private token without a shell, URL-encodes it and passes it only to the browser. If the system HTTPS association is missing, an installed Opera/Edge/Chrome/Firefox executable is located without changing default-browser settings. Console/log output reports token attachment without revealing the credential.
-
-## Integration review for issue 464
-
-The integration retains compatibility scripts and their regression coverage,
-unlike the original native-only proposal. It also replaces external tar.exe
-with the bounded-memory gzip/tar reader in `archive.hpp`: only one fixed regular
-image member is sent to a CREATE_NEW file in an owned directory, with gzip CRC,
-tar header, metadata bounds and duplicate-member checks. SHA256 validation of the
-outer published bundle still precedes extraction.
-
-Pinned immutable-reference lookups may return a different canonical Docker
-config ID. That ID is accepted only after platform/source/legacy CAD validation;
-if immutable lookup remains unavailable after a verified successful load, only
-its unique load receipt can locate the image. Offline-package config IDs remain
-strict. Native synchronous children use an owned Win32 job; an unconfirmed stop
-prevents further action. Persistent application helpers use a separate spawn.
-
-Portable production-code checks run with an existing C++ compiler:
-
-```text
+python scripts/test_windows_native_host.py
+python scripts/test_windows_native_package.py
 python scripts/test_windows_native_portable.py
 ```
 
-Those checks and cross-compilation do not establish Win32 execution, ACLs,
-Docker Desktop, browser interaction, old-volume migration or complete Release
-acceptance. Current integration evidence is recorded separately from the
-upstream machine's historical results.
+Outputs are ignored build artifacts: `aide-launcher.exe` for AMD64 and
+`bin/aide-launcher-arm64.exe` for ARM64. `--licenses` prints the embedded JSON/miniz
+MIT notices and Go dependency notices without starting Aide. The gzip/tar reader
+extracts only the fixed regular image member with bounded memory and CRC/header
+checks; update ZIP extraction also refuses duplicate, encrypted and special
+members. Pinned published digest lookups may resolve a canonical config ID only
+after platform/source/runtime verification; local offline markers remain strict.
 
-Fresh installs use a stable project identity derived from their installation
-root, honoring explicit/stored Compose identities. Before lifecycle actions,
-existing project containers must identify the same filesystem directory; a
-foreign or missing owner refuses the action. Legacy data is checked before
-port settings are rewritten. The Windows integration harness now exercises
-default identity and rejection of an unrelated root's stop request, and will
-refuse an older exe before running those scenarios. These new Win32 scenarios
-still require execution on Windows; portable filesystem checks are separate.
+On **real Windows**, with a disposable local runtime image, run:
 
-Native source builds use the existing POSIX source-input inventory embedded at
-compile time and its exact sorted hash-line format, including duplicates.
-A portable check compares the resulting fingerprint with `aide.sh source-sha`.
-The existing target image is retained under a rollback reference before Docker
-load can replace its embedded repository tag.
+```text
+aide-launcher.exe --self-test
+python scripts/test_windows_native_launcher.py --image aide:local
+go test ./cmd/aide-local-mounts
+```
 
-The standalone executable embeds both MIT dependency notices; `aide-launcher.exe --licenses` displays them without starting the application.
+The harness owns an isolated Unicode directory/project and tests bootstrap,
+occupied ports, repeated start, foreign-root refusal, resident-task identity,
+nonblocking status, stop/restart and state/token hygiene. Cross-compilation,
+portable transaction fault tests and Linux Go tests do **not** establish Win32
+Job/NTFS ACL behavior, Docker Desktop, folder dialogs, actual legacy migration,
+real A/B updates, ARM64 execution or macOS behavior. These require platform
+acceptance; no claim that every Windows computer is supported follows from a
+successful build.

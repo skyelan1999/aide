@@ -1,0 +1,176 @@
+{
+  "cycle": 65,
+  "recordedAt": "2026-10-28T01:47:04.650443+08:00",
+  "baseline": "278fb3230afe3d869c3e3c4be12c231bcd11332d",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    464
+  ],
+  "kind": "explicit-user-native-host-followup",
+  "cumulativeProductFixes": 133,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 134,
+  "original272RemainingFollowup": 153,
+  "priorityRefresh": "confirmed skyelan1999;ownerlist467/464/441/373/369/340/335/62/57/48/28 unchanged;explicit464 first",
+  "design": {
+    "distribution": "one native aide-launcher.exe;CLI and resident worker roles dispatch same binary",
+    "concurrency": "resident controller manages bounded port/update worker processes of same exe;read-only status remains available;mutating lifecycle uses per-installation exclusive lock",
+    "runtimeDependencies": "Windows system APIs +DockerDesktop/Compose;existing Python preparation/extraction only inside verified Linuxruntime container,no hostPS/Python",
+    "serviceChoice": "user explicitly chose default user-level background;noautomaticSCM registration",
+    "helperPackaging": "current Go helpers compiled and embedded in same distributed EXE;SHA256 checked before execution from private cache;content-addressed incbin input and build-time exact byte verification"
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 185,
+      "fingerprint": "514c7f07318abcd3a098809da4da54bb8be650ba9e2366da26b3ca1cc3d1b72e",
+      "receipt": ".agent-state/verify-20261027T174306196964Z.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_native_host.py",
+      "checks": 35,
+      "scope": "actual production host_state.hpp protocol,command fields,crash recovery,result/sync retries,unsafe blockers,redaction,Compose literals andSHA manifests",
+      "evidence": "/workspace/scratch/issue-review-20261026/native-host-core-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_native_portable.py",
+      "checks": 38,
+      "scope": "actual production archive/image/source/installation core;not Win32",
+      "evidence": "/workspace/scratch/issue-review-20261026/native-host-portable-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_native_package.py;also networknone/read-only Linux Docker execution",
+      "checks": 9,
+      "scope": "exact embedded package_image.py;unique member,symlink/special/encrypted/CRC/truncation/overwrite/budget andidle/malformed/flat sessions",
+      "evidence": "/workspace/scratch/issue-review-20261026/native-host-package-container.log"
+    },
+    {
+      "result": "PASS",
+      "command": "go test -race +go vet ./cmd/aide-local-mounts ./internal/localmounts ./cmd/aide-message-lan",
+      "scope": "Linux real OS tests;message-lan has no unit tests",
+      "evidence": "/workspace/scratch/issue-review-20261026/native-host-go-race-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "go test -c WindowsAMD64/ARM64 andDarwinARM64;build-windows-launcher.py AMD64/ARM64",
+      "scope": "compilation only;Windows execution NOT_RUN",
+      "binaryArtifacts": [
+        {
+          "arch": "amd64",
+          "bytes": 9871872,
+          "sha256": "540728209d064c9c0519bc79b6e1bbf7ef0d49f370c466410e2cce2260f60513",
+          "components": {
+            "local-mounts": {
+              "bytes": 3211776,
+              "sha256": "bee41df00955c92f9cee78b789630480df0129557ef4b8bce50f30bb8ca2b221"
+            },
+            "message-lan": {
+              "bytes": 5087744,
+              "sha256": "8ab43445b44073ca18d457fdf42398ab28f38d6df79ab039925f8a9cf322a70a"
+            }
+          },
+          "systemImports": "pass",
+          "embeddedNotices": "pass"
+        },
+        {
+          "arch": "arm64",
+          "bytes": 9094656,
+          "sha256": "2079696e1d2673f3deb4585b096f0b8057b715b2759b10ebd62d47f84471d943",
+          "components": {
+            "local-mounts": {
+              "bytes": 2982912,
+              "sha256": "6d9a598d5416669fa8b519b7075457eb17b01455d4adb3e5225913c1bddd96e2"
+            },
+            "message-lan": {
+              "bytes": 4652032,
+              "sha256": "745d78f80d09fc903d0aa8eb35d2b41d4e1de5d75d541f0e823eeacf9dae28e3"
+            }
+          },
+          "systemImports": "pass",
+          "embeddedNotices": "pass"
+        }
+      ]
+    },
+    {
+      "result": "PASS",
+      "command": "python3 -m unittest discover -s scripts/ci -p test_*.py",
+      "checks": 20,
+      "evidence": "/workspace/scratch/issue-review-20261026/native-host-ci-contracts.log"
+    },
+    {
+      "result": "PASS",
+      "scope": "actual DockerCompose4 literal bind-source roundtrips;15POSIX offline/3sourcefingerprint;42data tests inquick;YAML parse;bash-n;Pythoncompile;docs429/1472links;gitdiffcheck"
+    }
+  ],
+  "failedChecksResolved": [
+    "Initial quick used sandbox and hit local socket/HTTP EPERM;final quick ran with authorized local-test permissions and all185passed.",
+    "BAT CRLF was flagged by repo diffcheck;retained original LF style. Updated packaging-only static expectations to native exe,retaining legacy PS regression source tests.",
+    "Byte-for-byte PE review caught Zig .incbin dependency cache reuse of an old AMD64 helper. Builder now uses content-addressed assembly/object names and refuses any binary missing exact current helper bytes/digests/licenses. Both final builds and independent byte proof passed.",
+    "Real Composeconfig doubles literal dollar sources. Native Windows FS/boundary paths decode one serialization layer;actualCompose4cases andproductionportable3checks passed.",
+    "Thin Windows package has a marker but no local image manifest. Native path now derives only validated tagged official asset names,gets boundedSHA256SUMS over HTTPS,verifiesarchiveSHA/imageID/platform/runtime;actual WinHTTP download NOT_RUN."
+  ],
+  "securityReview": [
+    "Coordinator reviewed same-root/project ownership,read-only legacy mounts,active-session preflight,atomic migration receipt andold data retention.",
+    "One root lifecycle lock includingWindowsdirectoryApply;boundedJob32processes;restrictedstandard handle inheritance;native PID+creation+module identity.",
+    "Cancellation confirms owned Windows tree before automatic recovery;owned Linux tempcontainers have randomnonce/rootlabels andstrictCID/Name checks;unknown unsafe blockers never autoerase.",
+    "Credentials remain memory/private files;WinHTTP auth restrictedfixedloopbackAPI,noredirect/noimplicitAuth/noProxy;remote officialHTTPS certificate checks unchanged;logs bounded/redacted.",
+    "EmbeddedPE SHA validatedbeforecacheexecution;build-time exactbytes+licenseproof. Stopping the matched controller generation is required before clearingknown directorytimeoutblocker;otherblockedstate requiresinspection."
+  ],
+  "notRun": [
+    "Windows EXE execution/Job/NTFS ACL/DockerDesktop",
+    "Windows folder picker/browser/manual-stop during real A/B and legacy migration",
+    "Windows ARM64 and macOS native execution",
+    "Actual tagged thin-package WinHTTP download/import and production full candidate build",
+    "GitHub hosted workflow execution;YAML parsed locally,actionlint unavailable",
+    "No main merge,tag,Release,productiondeploy orsystemserviceinstallation."
+  ],
+  "preservation": {
+    "userUntrackedFiles": "retained/notstaged",
+    "paused201to205Stash": "569d896d53fe34ae4515b62d03d80c0d0af4efa7",
+    "existingPartialBytes": 785354752,
+    "buildArtifacts": "ignored local only;notpublished"
+  },
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueRemainsOpen": true
+  },
+  "sourceSHA256": {
+    ".github/workflows/aide-ci.yml": "21006bd1757dacb882016f6897ed8e9e53e29d8c4eb50deefcf81c4847894ceb",
+    ".github/workflows/aide-delivery.yml": "c0f79ec0a21f4be7136cd7a5b099121e29d805a78152a81c0ecacf57afccff33",
+    "clean-docker-cache.bat": "4da7df7f28c67094d5a143b943bfe189fe8421c843915480731428910dcdb72a",
+    "cmd/aide-local-mounts/main.go": "199f311ac3ee44a201c9e55fc1e8b5dc53b38448d0119cbcb64623c2d079fe0d",
+    "cmd/aide-local-mounts/process_unix.go": "189007242e682e03b737609979620450c48a6fe20c43f5f08e3e8a99a22b7b85",
+    "cmd/aide-local-mounts/process_windows.go": "afbb77ce248cb6d3b74be5706802710d3a2cf12efdc1443b23e390dc83e72645",
+    "cmd/aide-local-mounts/process_windows_test.go": "e460744a6f0ebf9864f4f09c3c19e8141d7c7dd28b893b9769fb65feb547b84f",
+    "docs/agent/router.json": "a234b83f6f9ce92dbbfb04c20ad325a0ff26846f8fccdf0be924e957830f114f",
+    "docs/architecture/software-updates.md": "9823ae476b60fa461a0ba805ff22a7f1495df8855be6076fc84845a0813fa2f6",
+    "docs/en/installation.md": "601faac71327199c84580a0d910ab6bb895d05ad067e556e6bd6412650adb688",
+    "docs/installation.md": "86bfaf936defa3c3040641e9b32621032b7947f539179d5945b2c62473064b46",
+    "native/windows-launcher/README.md": "0e4ea7231023693bc2a4be7c477a79dbf3c4c434a5297ba37cfc7337cd006766",
+    "native/windows-launcher/host_scheduler.hpp": "695bdb4153d11025331d4076f1e4a7b30b661e6dc9d95830524fac62e28eccba",
+    "native/windows-launcher/host_state.hpp": "33d251881cb34673f03e68c7716b5dd696eae409d662561d254b98f6fa75b99c",
+    "native/windows-launcher/host_windows.hpp": "01d8ad02baf8829a2328a48bc2ef0251a363c35cb2491cb94e7474f62a4d25a5",
+    "native/windows-launcher/main.cpp": "13659a504f9f1dc3e79e4d39fde36d56553e1b942ea1666c949d9d2e1d06a3b9",
+    "native/windows-launcher/native_http.hpp": "236d0c3e368d0a0166e2d49686a8a83daa9d273d4d9144d1cbb0b0e54a0b13c3",
+    "native/windows-launcher/package_image.py": "5cb5bb1a69d411c37d5976ec6c820f75e2637122946aa14a949edab005e73de7",
+    "scripts/aide.sh": "b2fc4a2fef013dba76c6520213fde86ddd49a25470828f3c583e63d5c5619ae0",
+    "scripts/build-windows-launcher.py": "683286d588fe628c1ffd369a4dfdfa07e49f9fb73a99176f58d271f4395c9365",
+    "scripts/ci/build_candidate.py": "892f9c83a0c11c971404288e709b157132fd43a28f31becc1ae9663b7cb397df",
+    "scripts/native_host_portable.cpp": "ab9e8cf94b41bb1364320d99908569d5a152ca088c9730bb91d5c5d44d5f2fba",
+    "scripts/package-release-assets.sh": "1e8baf4454f8ec2a9a649e05ac17d1d571f9bb0699961d2b76e6f4a6ddebc539",
+    "scripts/test_message_lan_launcher.py": "1f249722229f27aafed47daa891576ea2ba51cd40476748685754b812a922d37",
+    "scripts/test_windows_native_host.py": "b6c8fc026bb1f50e8cf63f7bec2fe310354fa78d1495ec3d5dbaa424fd6f871a",
+    "scripts/test_windows_native_launcher.py": "4465776c6a9d1ea401a9617987350d96eb90c4a20fce687f81d19f1d8d1e3032",
+    "scripts/test_windows_native_package.py": "4999ebe9f84ea940fe621307ab33e2849a10153ca464d17e8218fa74712f35ac",
+    "scripts/test_windows_port_lifecycle.py": "9c9679210f5922ef790ab9251d85d47c8326a76083f20da3ad1fffd1f4314be4",
+    "start.bat": "8007297c219c18d45f0e58b54083076eab14354cb304990cdc2c397317ffc969",
+    "stop.bat": "e93a9f9d232837c692d6a59ae7edddfdb0b0eeff6de1d9baca23e64994d2b41f"
+  }
+}

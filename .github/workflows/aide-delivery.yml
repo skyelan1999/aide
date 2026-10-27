@@ -65,6 +65,10 @@ jobs:
         with:
           ref: ${{ needs.source.outputs.sha }}
           persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
       - name: Free disposable hosted runner SDK space
         run: |
           test "$GITHUB_ACTIONS" = true
@@ -91,6 +95,13 @@ jobs:
         with:
           ref: ${{ needs.source.outputs.sha }}
           persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Native Windows process and lifecycle lock regression
+        shell: cmd
+        run: go test ./cmd/aide-local-mounts -run ^TestNative -count=1
       - name: Windows PowerShell 5.1 launcher regression
         shell: cmd
         run: |

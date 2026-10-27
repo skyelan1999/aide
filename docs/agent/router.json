@@ -979,6 +979,10 @@
       [
         "python3",
         "scripts/test_native_distribution.py"
+      ],
+      [
+        "python3",
+        "scripts/test_windows_native_package.py"
       ]
     ],
     "full": [

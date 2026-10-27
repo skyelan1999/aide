@@ -18,7 +18,7 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC8 Rel
 
 ## 2. 下载同一版本的源码
 
-从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `start.ps1` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP 不含镜像，首次启动时会从同一 GitHub Release 下载并校验约 500 MB 镜像；连接中断会自动续传，只有校验并启动服务成功后才会打开浏览器。轻量 ZIP 不能用于 A/B 升级。
+从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `aide-launcher.exe` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP 不含镜像，首次启动时会从同一 GitHub Release 下载并校验约 500 MB 镜像；macOS/Linux 下载中断可自动续传；原生 Windows 下载中断会清理本次临时下载并在下次重试，只有校验并启动服务成功后才会打开浏览器。轻量 ZIP 不能用于 A/B 升级。
 
 Release 离线启动器会读取已保存的宿主端口；首次启动遇到端口占用时，会在默认端口后选择并保存可用端口。Windows 离线包和完整发行包会启动宿主端口监视器，在设置中更改端口后更新 Compose 映射并重启服务；`/data` 与工作区数据卷继续共用。源码开发启动使用仓库 `.env` 配置，不启用 Release 包的自动升级流程。
 
@@ -146,7 +146,7 @@ AIDE_LOCAL_ROOT=/absolute/path/to/projects
 
 ## 6. 登录与连接模型
 
-Windows 启动器在恢复配置前，会用当前用户 SID 通过 .NET 直接写入 `.aide-data` 的私有 DACL，阻断继承并仅授予该用户完全控制；不通过 `Set-Acl` 解析域账号名，不修改 owner/group。已有目录也会重新保护，避免首次保护失败后重试跳过，或保留虽然已阻断继承但仍允许其他账号的 ACL；保护失败则停止恢复配置。Windows 原生 ACL 与断域环境可用 `python scripts/test_windows_launcher_acl.py --pwsh powershell.exe --require-native` 复测，Linux/PowerShell 7 的流程替身测试不代替该验收。
+Windows 原生启动器在恢复配置前，会用当前用户 SID 通过 Win32 直接写入 `.aide-data` 的私有 DACL，阻断继承并仅授予该用户完全控制；不通过 `Set-Acl` 解析域账号名，不修改 owner/group。已有目录也会重新保护，避免首次保护失败后重试跳过，或保留虽然已阻断继承但仍允许其他账号的 ACL；保护失败则停止恢复配置。原生 EXE 的 NTFS ACL、断域环境和 Docker Desktop 需要 Windows 实机验收；`scripts/test_windows_launcher_acl.py` 只覆盖保留的历史 PS1 实现，不代替原生 EXE 验收。
 
 Windows 启动器在健康检查通过后，若系统未配置默认浏览器，只警告并保留已就绪的服务；可手动打开终端输出的地址，或设置 `AIDE_OPEN_BROWSER=0` 跳过自动打开。目录 helper 停止时，已退出的旧进程删除 PID 文件属于正常完成；升级先使用镜像内新提取且经 SHA-256 校验的 helper 停止旧进程，仍存活的进程或其他停止错误会阻止替换。
 
@@ -193,9 +193,9 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 
 ## 普通设备快速启动与开发构建
 
-源码仓库和 Release 启动包都默认使用预构建完整镜像。源码目录的 start.command、start.sh 和 start.bat/start.ps1 按 docker/prebuilt-images.tsv 选择 Docker 引擎架构匹配的镜像；优先复用已导入镜像及本地归档，缺少时从该仓库的 Release 下载，校验 SHA256、镜像 ID、平台、源码指纹和原生 CAD 运行时后启动。不会因为清理 Docker 缓存或本地源码指纹变化而自动编译。已有私有 .env、.aide-data 和工作区继续保留。
+源码仓库和 Release 启动包都默认使用预构建完整镜像。源码目录的 start.command、start.sh 和 start.bat 按 docker/prebuilt-images.tsv 选择 Docker 引擎架构匹配的镜像；优先复用已导入镜像及本地归档，缺少时从该仓库的 Release 下载，校验 SHA256、镜像 ID、平台、源码指纹和原生 CAD 运行时后启动。不会因为清理 Docker 缓存或本地源码指纹变化而自动编译。已有私有 .env、.aide-data 和工作区继续保留。
 
-开发者需要运行尚未发布的本地代码时，macOS/Linux 执行 `AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start`；PowerShell 设置 `$env:AIDE_BUILD_FROM_SOURCE='1'` 后运行 start.ps1。`scripts/install.sh --source` 也会显式选择源码构建。预构建模式使用清单指定的发布快照，不执行未打包的本地改动。
+开发者需要运行尚未发布的本地代码时，macOS/Linux 执行 `AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start`；Windows 运行 `aide-launcher.exe --force-build`。`scripts/install.sh --source` 也会显式选择源码构建。预构建模式使用清单指定的发布快照，不执行未打包的本地改动。
 
 完整 Release 包解压后启动时直接校验并导入包内镜像，后续复用本地镜像。缺少匹配架构的已发布镜像会明确停止并指出需要对应包，不会误用 ARM64 镜像启动 x64 引擎，也不会悄悄回退到编译。当前 ARM64 验收不代表 x64 或 Windows 实机通过。Windows 源码目录的官方回退导入使用 .NET GZip/tar 流读取固定的 `aide-offline/docker-images/aide-local.tar` 普通文件，不再执行 `tar.exe`，不提取其他归档路径；需预留内层镜像的磁盘空间，本次临时文件随后删除。外层归档 SHA-256 仍先校验，清单固定引用或本次成功导入的唯一回执用于定位，平台、源码指纹及旧版归档的 CAD 标签校验通过后，使用 Docker 返回的规范镜像 ID 激活。真实不匹配会指出具体字段并拒绝激活。保留压缩包供下次离线恢复。Windows 本地轻量核心镜像复用只要求有效平台和源码标签，独立 CAD 插件不再作为核心镜像复用的条件。
 
@@ -209,10 +209,10 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 
 [完整原图、环境与边界](ui-evidence.md)。
 
-### Windows 原生启动器预览
+### Windows 单文件后台主机
 
-可选的[原生 Windows 启动器](../native/windows-launcher/README.md)不需要宿主 PowerShell/Python。使用
-`python scripts/build-windows-launcher.py --image <本地Linux镜像>` 构建后，直接运行
-`aide-launcher.exe`，或设置 `AIDE_WINDOWS_LAUNCHER_MODE=native` 再使用 BAT 入口。
-默认 BAT 入口保留旧数据迁移、后台端口监控和 A/B 更新代理；这些能力尚未在原生路径提供。
-保留现有 `.env`、`.aide-data` 和工作区；原生启动报错时不会静默切换到另一条启动路径。
+[原生 Windows 主机](../native/windows-launcher/README.md)由一个分发 EXE 承载启动、停止、端口协调、A/B 更新和目录/LAN 组件。BAT 默认直接调用 EXE；运行时无需宿主 PowerShell/Python。组件按内嵌 SHA256 校验并自动落入私有缓存，Docker Desktop 和 Compose 仍需安装。
+
+默认后台驻留在当前用户登录会话，同 EXE 的端口/更新 worker 并行运行，容器变更按安装目录加锁。`aide-launcher.exe host-status` 可查询任务状态；`stop` 停止本安装及后台任务，保留数据；`host-stop` 只停后台任务。不自动注册系统服务或登录启动项。旧安装迁移保留源容器/卷，仅接受同根目录的明确归属；孤立旧项目可显式使用 `--project NAME`。
+
+源码构建 EXE 需要现有 Go 1.26+、Python 和本地 Linux 工具镜像：`python scripts/build-windows-launcher.py --image <本地Linux镜像>`。交叉编译和便携故障测试不代替 Windows Job、NTFS ACL、Docker Desktop、A/B 更新、旧数据迁移与 ARM64 实机验收；当前验证范围见该实现说明。保留 `.env`、`.aide-data` 和工作区；不确认的进程终止会留下阻塞标记，不能用重启自动抹掉。
