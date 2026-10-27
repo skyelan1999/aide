@@ -1710,7 +1710,9 @@
       "reviewVerdict": "source-confirmed",
       "reviewRecord": "ordered-review.json",
       "repairCommit": "bda7084ec15ca3b04379f3b777f12d227fb350f2",
-      "repairEvidence": "cycle-042.json"
+      "repairEvidence": "cycle-042.json",
+      "followupEvidence": "cycle-053.json",
+      "followupCommit": "54a3bc37945061378ea5c8eea54083380970ab30"
     },
     {
       "number": 167,
@@ -2982,11 +2984,13 @@
       "number": 441,
       "title": "[P3] Keep animation footer actions visible at narrow widths",
       "url": "https://github.com/skyelan1999/aide/issues/441",
-      "status": "confirmed-awaiting-repair",
+      "status": "fixed-on-branch",
       "discoveredDuringCycle": 42,
       "original272": false,
-      "evidence": "真实bundled动画窗口390px视口、370px窗口，页脚Save右缘裁切；无wrap的flex布局及overflow hidden，查重无匹配；未混入168校验修复。",
-      "browserEvidence": "/workspace/scratch/issue-review-20261026/cycle42-browser-final/dark-animation-invalid.png"
+      "evidence": "Grouped wrapping footer keeps Cancel/Save together and fully hit-testable at360 minimum and390 viewport.36 actual source/app/integrate footer groups across3 languages/2themes;60 browser groups total pass.",
+      "browserEvidence": "/workspace/scratch/issue-review-20261026/cycle42-browser-final/dark-animation-invalid.png",
+      "repairCommit": "54a3bc37945061378ea5c8eea54083380970ab30",
+      "repairEvidence": "cycle-053.json"
     },
     {
       "number": 464,
@@ -3014,13 +3018,21 @@
       "repairCommit": "a8bc5a9f5a7b6f60166e367f0b63f236b3d1d92e",
       "repairEvidence": "cycle-052.json",
       "validationStatus": "flow-tests-pass-native-windows-not-run"
+    },
+    {
+      "number": 369,
+      "title": "Windows RC12 slot activation can remain at95% during rollback without durable diagnostics",
+      "url": "https://github.com/skyelan1999/aide/issues/369",
+      "author": "skyelan1999",
+      "original272": false,
+      "status": "confirmed-awaiting-repair",
+      "evidence": "Latest body read: recovery Invoke-AideSlotLauncher in catch has no nested guard; failed recovery escapes without terminal result. Hidden launch has no durable diagnostic redirection. Actual host first failure unconfirmed."
     }
   ],
   "priorityPolicy": {
     "ownerLogin": "skyelan1999",
     "explicitIssue": null,
     "nextOwnerCandidates": [
-      441,
       369
     ],
     "originalAscendingReviewComplete": true,

@@ -11,7 +11,9 @@
     "按编号升序逐条核对原剩余272项，完整记录源码判断、运行证据和未验证边界，不以审查代替修复",
     "按用户新策略优先明确指定464及skyelan1999新报告，再回原编号队列；保存被打断的182工作，不把其初步验证算完成。",
     "464覆盖PID停止幂等/旧helper升级、健康服务的可选浏览器启动、LAN可信镜像提取；用有限隔离回归记录证据及Windows实机未验证边界。",
-    "467使用当前用户SID直接设置私有DACL，避免Set-Acl域名解析；已有目录也先完成保护再恢复配置；权限失败必须阻止读取，Windows原生未验证如实记录。"
+    "467使用当前用户SID直接设置私有DACL，避免Set-Acl域名解析；已有目录也先完成保护再恢复配置；权限失败必须阻止读取，Windows原生未验证如实记录。",
+    "441动画窗口页脚在最小360px/390px视口及桌面保持全部控件可见可点；真实浏览器验证源码及两分发构造器、中英德文、明暗及Save/Cancel键盘行为。",
+    "同时补齐168在integrate分发漏同步的现有校验；三份真实parser回归及两分发同步检查，非动画段字节不变，不重复计数。"
   ],
   "scope": [
     "internal/server",
@@ -79,14 +81,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "第52轮按账号优先修复新467 SID/DACL设置及已有目录权限重试；累计113项产品/验收issue及1项额外测试修正，Windows原生验收待执行。",
+      "summary": "53轮修复441窄屏footer并补168 integrate漏同步（不重复计数）；累计114产品/验收issue及1测试修正。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "467四组真实PowerShell7恢复流程回归（仅权限adapter替身）和AST、181项quick通过；Windows NTFS/断域环境未运行，未用Linux回归冒充。",
+      "summary": "三份parser/sync、36页脚/共60真实浏览器组、181 quick及docs通过；完整工作台/全部语言/拖拽resize/full integrate启动未验收。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -138,7 +140,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-049.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-050.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-051.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-052.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-052.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-053.json"
       ]
     },
     "documentation": {
@@ -162,17 +165,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "52轮467及51轮464分支修复已push并评论，账号优先策略已生效；累计114覆盖，原272剩172。Windows原生DACL/断域及Docker Desktop验收未运行。目标继续，第53轮按策略先441/369，再恢复182 stash 1ae8bb0（未push/未计数）；原有用户文件保留。",
+  "handoff": "53轮441及168分发followup验证完成待push；累计115覆盖，原272剩172。54轮优先369的回滚异常/诊断，再恢复182 stash1ae8bb0（未计数）。保留用户文件，仅push分支。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "a8bc5a9f5a7b6f60166e367f0b63f236b3d1d92e",
-    "pushed": true,
+    "commit": "54a3bc37945061378ea5c8eea54083380970ab30",
+    "pushed": false,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "evidenceCommit": "96a7c96fc5b99443c3b9d31ab161981664122b86"
+    "evidenceCommit": null
   },
-  "issue_comments": "第52轮467已push并评论 https://github.com/skyelan1999/aide/issues/467#issuecomment-6435557952；464/467均保持open等待Windows/main验收。",
+  "issue_comments": "53轮441和168 followup待push后回填；合理问题保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -201,23 +204,25 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 53,
+    "nextCycle": 54,
     "lastCompletedBatch": {
-      "cycle": 52,
+      "cycle": 53,
       "issues": [
-        467
+        441
       ],
-      "cumulativeFixed": 114,
-      "cumulativeProductFixed": 113,
+      "followups": [
+        168
+      ],
+      "cumulativeFixed": 115,
+      "cumulativeProductFixed": 114,
       "toolingFixes": 1,
       "pendingReview": 0,
       "remainingFollowupTargets": 172,
-      "verification": "PASS real PS7 restore gate with mocked Windows ACL adapter, AST and181 quick; Windows native NTFS/domain NOT_RUN",
+      "verification": "PASS36 footer/60 actual browser groups,3 parsers/sync,181 quick/docs; full workbench/all languages/full integrate NOT_RUN",
       "remainingAdditionalFollowupTargets": 1
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      441,
       369,
       182
     ],
@@ -227,16 +232,16 @@
       "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
     },
     "currentCycle": {
-      "cycle": 53,
+      "cycle": 54,
       "status": "in_progress",
       "candidates": [
-        441
+        369
       ],
-      "phase": "owner-priority-next-report-awaiting-latest-body-read",
-      "observed": "464/467在分支覆盖并保持open待Windows验收，按新优先策略下一441窄屏动画窗口；本轮未开始改动其UI。随后369，再恢复原182。"
+      "phase": "owner-priority-latest-body-and-source-confirmed",
+      "observed": "369确认恢复catch里launcher再次异常会跳出agent，95%缺terminal结果；无持久输出。需嵌套恢复保护/有界真实子进程/脱敏诊断/可重试结果；首发Windows故障未知。"
     },
     "additionalFollowupIssues": [
-      441
+      369
     ],
     "remainingAdditionalFollowupTargets": 1,
     "priorityPolicy": {
@@ -259,7 +264,6 @@
       "preempt": "Only explicit user steering interrupts an in-progress repair; preserve paused changes.",
       "explicitIssue": null,
       "nextOwnerCandidates": [
-        441,
         369
       ],
       "knownBlockedOwnerIssues": [
@@ -272,6 +276,7 @@
         48,
         62,
         373,
+        441,
         464,
         467
       ],
@@ -280,7 +285,7 @@
         "status": "fixed-on-branch",
         "evidence": "cycle-051.json"
       },
-      "lastRefresh": "2026-10-27T06:41:23.950080+00:00"
+      "lastRefresh": "2026-10-27T06:56:45.524426+00:00"
     },
     "pausedWork": [
       {

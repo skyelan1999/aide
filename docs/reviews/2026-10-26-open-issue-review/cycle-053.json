@@ -1,0 +1,93 @@
+{
+  "cycle": 53,
+  "baseline": "b0ed640a27ca842973ffc481b116f1127345a63d",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    441
+  ],
+  "followupIssues": [
+    168
+  ],
+  "commits": {
+    "441": "54a3bc37945061378ea5c8eea54083380970ab30",
+    "168-followup": "54a3bc37945061378ea5c8eea54083380970ab30"
+  },
+  "cumulativeProductFixes": 114,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 115,
+  "original272RemainingFollowup": 172,
+  "additionalFollowupIssues": [
+    369
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "AIDE_DRAWIO_ANIMATION_FOOTER_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=<scratch>/cycle53-footer-red node scripts/browser-drawio-preview-bounds.cjs (before fix)",
+      "observed": "Actual app bundle 360x360 dialog: Save right403 exceeds dialog right371; edge hit=false, clipped in screenshot.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle53-footer-red.log"
+    },
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_animation_validation.cjs (integrate added before sync)",
+      "observed": "Existing #168 fixes present in source/app but integrate parser accepts null step; reproduced by actual bundled parser, not a new issue count.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle53-integrate-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_ANIMATION_FOOTER_ACCEPTANCE=1 AIDE_DRAWIO_ANIMATION_ACCEPTANCE=1 AIDE_DRAWIO_GIF_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle53-browser-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154.0.8037.57 real bundled iframe, 60 groups, zero pageerror; 36 footer groups across source/app/integrate constructors, real English/German/Chinese resource strings, light1440/dark390 viewports,360x360 and900x650/370x650 windows. Controls contained and edge hit-tested, primary pair same row, actual Tab→Enter save, right-edge pointer save and clean Cancel. Existing malformed/valid animation editing/player and real 2-frame GIF export/native decode/resource rejection retained.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle53-browser-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_animation_validation.cjs; AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_animation.cjs --check",
+      "scope": "Source and both actual parsers reject null/known bad payloads, retain invalid data, bound nested/aggregate steps; normal data controls. Existing source parser/play/dialog compiled into both distributions with pinned Terser5.39.0; outside these three segments byte-identical to baseline."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 181,
+      "receipt": ".agent-state/verify-20261027T065410052238Z.log",
+      "fingerprint": "8a3ac4c7718658b4d37c533bd43d30d0dce785c8f3449940f6d857e20eaf426e"
+    },
+    {
+      "result": "PASS",
+      "command": "node --check changed/source/both full bundle JS; python3 scripts/check_docs.py; git diff --check",
+      "observed": "429 Markdown /1469 local links. Visual inspection of 360 light-English and dark-German screenshots: paired Cancel/Save fully visible."
+    }
+  ],
+  "securityReview": [
+    "Footer keeps existing control order, callbacks and validation; two flex groups wrap, step list shrinks through its existing min-height0 flex behavior. No width minimum increase, data truncation or input-guard removal.",
+    "#168 integrate omission corrected through existing deterministic sync script including required validation helpers/play/dialog together; avoids referencing missing helper when replacing only dialog. Does not count #168 twice.",
+    "Constructor acceptance uses actual app runtime dependencies and real bundled labels with resource lookup temporarily substituted; globals restored and Chromium context closed. No user documents, external network or model calls. Root sequential review; no subagents."
+  ],
+  "notRun": [
+    "Full Aide workbench, native devices, all languages, live language-picker updates, pointer drag-resize gestures, and full integrate application startup. Source/bundle constructors were invoked in the real app component runtime.",
+    "Go race/vet not repeated for frontend/JS/tooling/doc changes. No merge/main/release/deploy."
+  ],
+  "notes": [
+    "Initial wrap alone made Save visible on a separate row; final grouped layout keeps Cancel and Save together. Final evidence was rerun after grouping; initial pass is not claimed for final content.",
+    "Latest owner369 body read: confirmed unguarded recovery launcher in catch, no durable output; first actual Windows activation cause remains unknown. Next cycle addresses this before paused original182.",
+    "Original272 review artifact/count unchanged;441 is extra and now covered.182 exact local stash retained, not counted."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/architecture/office-viewer.md": "ff96571d9c9d320413f1187fd6e3582189cd31f9013e7249007fa26e88ed74b7",
+    "internal/server/web/vendor/drawio/js/diagramly/Dialogs.js": "8a5174f518a7788a168bd5b84c337c52d3ecdfbba2ec233990ab5f3af58b7109",
+    "internal/server/web/vendor/drawio/js/app.min.js": "4ee0dfa892f7cbdad3cd54310884b08ef7e55da2748d1491f1e354011c5d2f55",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "9cdcfa63616b7aca7c59db8586cd9234a336ac5c00c976d3f43ef4c8ecb6a0c3",
+    "scripts/browser-drawio-preview-bounds.cjs": "c618a2de752f466e03ff2c047b064b4ea2932ddcb60c24a71417dcbbb754d50c",
+    "scripts/drawio-animation-footer-browser-cases.cjs": "e70ee46fc938d6ad1e1890413b241ddef8ce61d5eb6e893fdc3292af946a9392",
+    "scripts/sync_drawio_animation.cjs": "c3c69583c7de9997dcbe4dd5f3094687551b00b3fb056a6620838fa5baba4068",
+    "scripts/test_drawio_animation_validation.cjs": "722a11524ea9c9cd9f67798996fdccf2bed7b3e73ced4623ecc99515a0b1c58a"
+  }
+}
