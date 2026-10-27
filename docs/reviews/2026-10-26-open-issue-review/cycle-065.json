@@ -135,11 +135,16 @@
     "buildArtifacts": "ignored local only;notpublished"
   },
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issueRemainsOpen": true
+    "issueRemainsOpen": true,
+    "sourceCommit": "5ea85f555e0c787e6f0bb9d87380637d25fccc38",
+    "remoteCommit": "5ea85f555e0c787e6f0bb9d87380637d25fccc38",
+    "issueComments": {
+      "464": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6449493444"
+    }
   },
   "sourceSHA256": {
     ".github/workflows/aide-ci.yml": "21006bd1757dacb882016f6897ed8e9e53e29d8c4eb50deefcf81c4847894ceb",
@@ -172,5 +177,8 @@
     "scripts/test_windows_port_lifecycle.py": "9c9679210f5922ef790ab9251d85d47c8326a76083f20da3ad1fffd1f4314be4",
     "start.bat": "8007297c219c18d45f0e58b54083076eab14354cb304990cdc2c397317ffc969",
     "stop.bat": "e93a9f9d232837c692d6a59ae7edddfdb0b0eeff6de1d9baca23e64994d2b41f"
+  },
+  "commits": {
+    "464": "5ea85f555e0c787e6f0bb9d87380637d25fccc38"
   }
 }

@@ -118,7 +118,7 @@
   },
   "release_authorization": "既有用户授权只push修复分支，禁止main/发行/部署；不实际安装系统服务。",
   "rollback": "未合并main；可按提交revert源码。替换运行中的EXE前先stop。旧源卷/容器不删除，原生事务保留旧marker；未知进程终止阻塞需核查，不静默回退PS1或删除持久状态。",
-  "handoff": "源码/构建/便携验证完成，待push修复分支并回填464；实机验收blocked，保持464open。201–205仅辅助脚本在原stash中，后续第66轮按明确归属恢复，禁止覆盖新464任务。",
+  "handoff": "源码5ea85f55已push指定修复分支，464已回填且保持OPEN。Windows Job/NTFS/DockerDesktop及真实A/B/迁移/HTTPS仍待实机验收；本轮无main/tag/Release/部署。后续第66轮可恢复201–205的owned helper stash，禁止覆盖本次任务。",
   "pausedQueue": {
     "cycle": 65,
     "issues": [
@@ -133,9 +133,11 @@
   },
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
-    "released": false
+    "released": false,
+    "commit": "5ea85f555e0c787e6f0bb9d87380637d25fccc38",
+    "issueComment": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6449493444"
   },
   "userChoice": "默认用户级后台驻留，兼容DockerDesktop；不自动注册系统服务。",
   "userAdditionalRequest": "尽可能做成能够多任务运行的单个exe，到时候封装的时候会方便很多",
