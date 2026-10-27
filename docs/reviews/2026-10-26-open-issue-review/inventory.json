@@ -3034,16 +3034,17 @@
       "url": "https://github.com/skyelan1999/aide/issues/369",
       "author": "skyelan1999",
       "original272": false,
-      "status": "confirmed-awaiting-repair",
-      "evidence": "Latest body read: recovery Invoke-AideSlotLauncher in catch has no nested guard; failed recovery escapes without terminal result. Hidden launch has no durable diagnostic redirection. Actual host first failure unconfirmed."
+      "status": "fixed-on-branch",
+      "evidence": "Recovery exception now captured, original failure+recovery preserved, sanitized bounded logs, durable terminal-result retry/obsolete409 handling, owned launcher-only wait/tree timeout and unsafe blocker.22agent/8real child cases, targeted Go race/vet and181quick pass; native host first cause remains unknown.",
+      "repairCommit": "ace42691040e7d12f0d707eb5601b811f835fa77",
+      "repairEvidence": "cycle-055.json",
+      "validationStatus": "PS7-flow-real-child-and-Go-pass-native-Windows-not-run"
     }
   ],
   "priorityPolicy": {
     "ownerLogin": "skyelan1999",
     "explicitIssue": null,
-    "nextOwnerCandidates": [
-      369
-    ],
+    "nextOwnerCandidates": [],
     "originalAscendingReviewComplete": true,
     "repairOrderNow": "explicit user > new owner reports > original ascending queue",
     "original272RemainingFollowup": 172,
