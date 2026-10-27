@@ -3,99 +3,22 @@ package server
 import (
 	"encoding/binary"
 	"fmt"
-	"io"
-	"net"
 	"runtime"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/pkg/sftp"
 )
 
-// Speak SFTP over an owned in-memory pipe, without SSH credentials, devices,
-// network listeners or server filesystem access. The real vendored Client
-// handles handshake, request routing and attribute decoding.
 func issue163Client(t *testing.T, attrs []byte) *sftp.Client {
 	t.Helper()
-	server, conn := net.Pipe()
-	_ = server.SetDeadline(time.Now().Add(15 * time.Second))
-	_ = conn.SetDeadline(time.Now().Add(15 * time.Second))
-	done := make(chan error, 1)
-	go func() {
-		defer server.Close()
-		read := func() ([]byte, error) {
-			var head [4]byte
-			if _, err := io.ReadFull(server, head[:]); err != nil {
-				return nil, err
-			}
-			n := binary.BigEndian.Uint32(head[:])
-			if n < 1 || n > 1024 {
-				return nil, fmt.Errorf("owned fixture request length %d", n)
-			}
-			data := make([]byte, n)
-			_, err := io.ReadFull(server, data)
-			return data, err
+	return issueSFTPPacketClient(t, func(req []byte) ([]byte, error) {
+		if req[0] != 7 {
+			return nil, fmt.Errorf("unexpected Lstat fixture request %x", req)
 		}
-		send := func(data []byte) error {
-			packet := binary.BigEndian.AppendUint32(nil, uint32(len(data)))
-			packet = append(packet, data...)
-			_, err := server.Write(packet)
-			return err
-		}
-		init, err := read()
-		if err != nil {
-			done <- err
-			return
-		}
-		if len(init) != 5 || init[0] != 1 {
-			done <- fmt.Errorf("unexpected INIT %x", init)
-			return
-		}
-		if err = send([]byte{2, 0, 0, 0, 3}); err != nil {
-			done <- err
-			return
-		}
-		for {
-			req, err := read()
-			if err != nil {
-				if err == io.EOF || err == io.ErrClosedPipe {
-					err = nil
-				}
-				done <- err
-				return
-			}
-			if len(req) < 5 || req[0] != 7 {
-				done <- fmt.Errorf("unexpected request %x", req)
-				return
-			}
-			reply := append([]byte{105}, req[1:5]...)
-			reply = append(reply, attrs...)
-			if err = send(reply); err != nil {
-				done <- err
-				return
-			}
-		}
-	}()
-	client, err := sftp.NewClientPipe(conn, conn)
-	if err != nil {
-		conn.Close()
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		_ = client.Close()
-		_ = conn.Close()
-		_ = server.Close()
-		select {
-		case err := <-done:
-			if err != nil {
-				t.Errorf("owned SFTP server: %v", err)
-			}
-		case <-time.After(2 * time.Second):
-			t.Error("owned SFTP server did not stop")
-		}
+		reply := append([]byte{105}, req[1:5]...)
+		return append(reply, attrs...), nil
 	})
-	return client
 }
 
 func issue163Attrs(count uint32, entries []byte) []byte {
