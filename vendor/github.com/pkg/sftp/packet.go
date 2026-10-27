@@ -225,6 +225,12 @@ func unmarshalFileStat(flags uint32, b []byte) (*FileStat, []byte, error) {
 			return nil, b, err
 		}
 
+		// Each extended entry contains two uint32-prefixed strings. Bound the
+		// remote count before allocating (upstream c1bc2fffcb14f580c4d365ae9660fa149ec1dba5).
+		if uint64(count) > uint64(len(b))/8 {
+			return nil, b, errShortPacket
+		}
+
 		ext := make([]StatExtended, count)
 		for i := uint32(0); i < count; i++ {
 			var typ string
