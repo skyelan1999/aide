@@ -420,7 +420,11 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 				state, text = "skipped", "Not dispatched: "+r.err.Error()
 			}
 		} else {
-			text, proposals = normalizePluginResult(r.raw)
+			if err := capturePluginImages(ctx, r.raw); err != nil {
+				state, text = "uncertain", "Invalid image evidence: "+err.Error()
+			} else {
+				text, proposals = normalizePluginResult(r.raw)
+			}
 			if len(proposals) > 0 {
 				state = "proposed"
 			}

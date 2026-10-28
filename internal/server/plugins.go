@@ -978,6 +978,10 @@ func normalizePluginResult(raw any) (string, []map[string]any) {
 				// binary screenshot data into a text-only tool message.
 				summary := make(map[string]any, len(t))
 				for k, v := range t {
+					if k == "images" && t["protocol"] == "plugin-tool-images-v1" {
+						summary["imageNotice"] = "图像以独立视觉证据传递；仅支持 plugin-tool-images-v1 的视觉请求可见。旧宿主或纯文本模型不能据此声称已看图。"
+						continue
+					}
 					if k == "imageBase64" {
 						summary["imageNotice"] = "截图已返回；当前文本工具结果不包含图像，不能据此声称已看见屏幕。"
 						continue

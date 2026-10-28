@@ -1,0 +1,78 @@
+{
+  "id": "file-preview-20261028",
+  "request": "File Preview 公共插件及通用图像结果接入，真实视觉复查验收后发布公共市场；不动9999及MIXSoul",
+  "baseline": "15e3130ecd0dc7a2a4c6b1813c9d2082d072ed58",
+  "initial_status": "",
+  "acceptance": [
+    "Bounded raster image results reach next model request as actual image parts, never base64 text",
+    "Automatic vision routing or explicit unsupported-model error before provider call",
+    "No image bytes in ordinary tool result records; old images expire from subsequent evidence payloads",
+    "Existing source permissions and project identity retained; no renderer in core image"
+  ],
+  "scope": [
+    "internal/server/plugin_images.go",
+    "internal/server/workflow.go",
+    "internal/server/provider.go",
+    "internal/server/plugins.go",
+    "internal/server/plugin_host.js",
+    "internal/server/plugin_market.go",
+    "focused tests and generic host task record"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User approved independent public File Preview; generic host image-result protocol only.",
+      "evidence": [
+        "user: 可以，做吧，做好了放到公共商店"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-round bounded image sink, user image message after all tool replies; existing capability-aware route and provider vision gate. Plugin owns renderer and docs.",
+      "evidence": [
+        "internal/server/plugin_images.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented protocol-discriminated bounded raster sink, provider image gate, per-round evidence expiry and market feature admission. Renderer remains external.",
+      "evidence": [
+        "internal/server/plugin_images.go",
+        "internal/server/plugin_host.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Local focused Go integration and repository quick gate passed. Five protocol tests cover real tool-loop wire images, auto vision routing, unsupported provider rejection, legacy metadata, budgets and expiry. Installed public plugin passed seven synthetic formats via real isolated host APIs; Word/PPT pages and crop visually inspected. Remote full CI remains a separate release condition; no live model semantic acceptance claimed.",
+      "evidence": [
+        "go test ./internal/server -run TestPluginImages|TestPluginPlan|TestOutgoing|TestVisionGate|TestMarketCompatible -count=1",
+        "python3 scripts/agent-route.py verify quick"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Generic contract and coverage boundaries documented in code/task; plugin renderer details remain in its owning repository.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-FilePreview",
+        "internal/server/plugin_images.go"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only generic host files and synthetic Go fixtures staged. No renderer runtime/dependencies, private code, data or credentials.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "PR #555 requires current-head CI and repository approval. No main Release/version/tag or 9999 deployment authorized.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/555"
+      ]
+    }
+  },
+  "release_authorization": "User: 可以，做吧，做好了放到公共商店. Public plugin publication authorized; no Aide main version/tag/release or 9999 deployment requested.",
+  "rollback": "Revert generic protocol commit; feature-gated plugin unavailable on older hosts. No persisted schema migration.",
+  "handoff": ""
+}
