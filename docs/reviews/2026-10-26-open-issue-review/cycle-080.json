@@ -66,10 +66,20 @@
     "Mainmerge,Release/tag,market/deploy."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "398": "https://github.com/skyelan1999/aide/issues/398#issuecomment-6467128166",
+      "399": "https://github.com/skyelan1999/aide/issues/399#issuecomment-6467128791",
+      "400": "https://github.com/skyelan1999/aide/issues/400#issuecomment-6467129569",
+      "403": "https://github.com/skyelan1999/aide/issues/403#issuecomment-6467130055",
+      "404": "https://github.com/skyelan1999/aide/issues/404#issuecomment-6467130801",
+      "405": "https://github.com/skyelan1999/aide/issues/405#issuecomment-6467131718",
+      "406": "https://github.com/skyelan1999/aide/issues/406#issuecomment-6467132380",
+      "407": "https://github.com/skyelan1999/aide/issues/407#issuecomment-6467133242"
+    },
+    "remoteSourceCommit": "3502674c29740d1f125fbac60007ad8ceddff2f9"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "cbf266a9653a0bd2a22119d525d494c0a6738d97a12d0a542ba8a32729f76ce8",
@@ -93,5 +103,10 @@
     "scripts/drawio-traversal-review.cjs": "9e8ba7514c5c9a7558b7af05ebf4845914ea66d7d017b1c1b8dac9702648044c",
     "scripts/sync_drawio_traversal.cjs": "e001713500b33e8cd1b21e22bc809e165be23d7170740128256f845b8594a666",
     "scripts/test_parser_layout_resources.cjs": "e1b59a4cbcd3ef5a6d8a287e0d3d5a26b1af9da6c645821821825162c7448462"
-  }
+  },
+  "completedAt": "2026-10-28T10:54:38.621342+00:00",
+  "cumulativeFixedOnBranch": 316,
+  "cumulativeProductFixes": 315,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }

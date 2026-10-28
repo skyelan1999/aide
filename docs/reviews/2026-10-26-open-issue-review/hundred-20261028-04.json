@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 17,
+  "fixedCount": 25,
   "fixedIssues": [
     565,
     563,
@@ -22,7 +22,15 @@
     394,
     395,
     396,
-    397
+    397,
+    398,
+    399,
+    400,
+    403,
+    404,
+    405,
+    406,
+    407
   ],
   "issues": {
     "565": {
@@ -160,6 +168,70 @@
       "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/397#issuecomment-6466655323"
+    },
+    "398": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Reject non-progressing LAYER,VPORT and POLYLINE records with parse errors;valid DXF previews remain available.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/398#issuecomment-6467128166"
+    },
+    "399": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Bound the three hierarchical path traversals to256 levels and report recoverable errors before stack overflow.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/399#issuecomment-6467128791"
+    },
+    "400": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Use explicit DFS frames for mxGraph.traverse,preserving edge-visited semantics,callback order,pruning and inverse traversal.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/400#issuecomment-6467129569"
+    },
+    "403": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Consume each ZIP64 extensible record exactly once and reject short headers or payloads crossing the declared record boundary.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/403#issuecomment-6467130055"
+    },
+    "404": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Use iterative WebCola component DFS and retain traversal/component ordering.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/404#issuecomment-6467130801"
+    },
+    "405": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Reject more than1000 visible vertices before WebCola conversion and dense allocation;hidden vertices do not consume that budget.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/405#issuecomment-6467131718"
+    },
+    "406": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Merge WebCola pairing-heap children iteratively while preserving pairing order and sorted pops.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/406#issuecomment-6467132380"
+    },
+    "407": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Construct group parent-child links with a prototype-safe index map instead of all-group pair scans.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/407#issuecomment-6467133242"
     }
   },
   "blockedIssues": [
