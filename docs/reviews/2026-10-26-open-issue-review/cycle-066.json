@@ -75,11 +75,19 @@
     "Creatinganewhost-managedautonomousbackgroundgoal:currenttoolcataloghasnogoal/schedulerAPI;persistedgoalrecordandactive-sessionexecutiononly."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
     "deployed": false,
-    "issuesRemainOpenPendingMain": true
+    "issuesRemainOpenPendingMain": true,
+    "remoteSourceCommit": "18840f9f5ef6f36d445890f1c4f189e072c2ec80",
+    "issueComments": {
+      "201": "https://github.com/skyelan1999/aide/issues/201#issuecomment-6458299734",
+      "202": "https://github.com/skyelan1999/aide/issues/202#issuecomment-6458300399",
+      "203": "https://github.com/skyelan1999/aide/issues/203#issuecomment-6458300958",
+      "204": "https://github.com/skyelan1999/aide/issues/204#issuecomment-6458301422",
+      "205": "https://github.com/skyelan1999/aide/issues/205#issuecomment-6458301753"
+    }
   },
   "preservation": {
     "pausedStash": "569d896d53fe34ae4515b62d03d80c0d0af4efa7",
@@ -94,5 +102,12 @@
     "scripts/drawio-caption-metadata-browser-cases.cjs": "771c44a72d94678c14230e1d096d1bd6045fce300c32e0853543d9d0ef376223",
     "scripts/drawio-caption-metadata-review.cjs": "d846cb3713557fb0065c1436fa8a3a11d6e520c5af5f145ea8129a125ab84a44",
     "scripts/sync_drawio_palette_search.cjs": "f372f06c15096eab4a6d74ca910a61532feeac71858d5dbe77fc09d908548623"
+  },
+  "commits": {
+    "201": "18840f9f5ef6f36d445890f1c4f189e072c2ec80",
+    "202": "18840f9f5ef6f36d445890f1c4f189e072c2ec80",
+    "203": "18840f9f5ef6f36d445890f1c4f189e072c2ec80",
+    "204": "18840f9f5ef6f36d445890f1c4f189e072c2ec80",
+    "205": "18840f9f5ef6f36d445890f1c4f189e072c2ec80"
   }
 }
