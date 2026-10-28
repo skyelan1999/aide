@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 91,
+  "fixedCount": 94,
   "fixedIssues": [
     565,
     563,
@@ -96,7 +96,10 @@
     543,
     544,
     401,
-    402
+    402,
+    418,
+    419,
+    421
   ],
   "issues": {
     "565": {
@@ -826,6 +829,30 @@
       "commit": "0d5d5324f2f87ca1dfa389c2dabbf706661ea9f1",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/402#issuecomment-6469666967"
+    },
+    "418": {
+      "status": "fixed-verified-pushed",
+      "cycle": 88,
+      "summary": "Observe the asynchronous factory before publishing Avoid; resolve readiness to unavailable on sync/async failures and preserve stderr filtering.",
+      "commit": "5c1664b2783770840b082c91f516810cb933d519",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/418#issuecomment-6470051939"
+    },
+    "419": {
+      "status": "fixed-verified-pushed",
+      "cycle": 88,
+      "summary": "Validate Org Chart height against the intended upper bound.",
+      "commit": "5c1664b2783770840b082c91f516810cb933d519",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/419#issuecomment-6470053052"
+    },
+    "421": {
+      "status": "fixed-verified-pushed",
+      "cycle": 88,
+      "summary": "Preflight box-parent relationships before tree construction and generated trees before recursive passes; bound depth/nodes and detect cycles.",
+      "commit": "5c1664b2783770840b082c91f516810cb933d519",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/421#issuecomment-6470054261"
     }
   },
   "blockedIssues": [
