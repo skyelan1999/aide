@@ -1112,6 +1112,41 @@
         "node",
         "--check",
         "scripts/sync_drawio_device_shapes.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-mathjax-issue-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/math4/es5/ui/safe.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/bussproofs.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/centernot.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mathtools.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mhchem.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/physics.js"
       ]
     ],
     "full": [
