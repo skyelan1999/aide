@@ -10,3 +10,9 @@ test('499 highest Unicode scalar remains accepted',()=>assert.doesNotThrow(()=>k
 test('530 deeply nested groups fail with bounded error',()=>assert.throws(()=>katex.renderToString('{'.repeat(5000)+'x'+'}'.repeat(5000)),/AIDE_MATH_LIMIT/));
 test('531 finite dimensions are clamped before layout',()=>{const result=katex.renderToString('\\rule{1000em}{1em}',{strict:false,output:'html'});assert(!result.includes('1000em'));assert(result.includes('20em'));});
 test('ordinary math and literal braces still render',()=>{for(const text of ['x^2+1','\\frac{a}{b}','\\{x\\}','\\text{owned math}'])assert.match(katex.renderToString(text),/katex/);});
+
+test('530 parser depth cannot be hidden by TeX comments',()=>assert.throws(()=>katexRaw.renderToString('{% } \n'.repeat(70)+'x'+'}'.repeat(70)),/AIDE_MATH_LIMIT/));
+test('530 explicit TeX groups share the parser budget',()=>assert.throws(()=>katexRaw.renderToString('\\begingroup'.repeat(70)+'x'+'\\endgroup'.repeat(70)),/AIDE_MATH_LIMIT/));
+test('literal braces in verbatim text do not consume group depth',()=>assert.match(katex.renderToString('\\verb|'+ '{'.repeat(80)+'|'),/katex/));
+
+test('530 depth accounting ignores polluted Object.prototype',()=>{vm.runInContext('Object.prototype._aideMathDepth=-Infinity',sandbox);try{assert.throws(()=>katexRaw.renderToString('{'.repeat(70)+'x'+'}'.repeat(70)),/AIDE_MATH_LIMIT/);}finally{vm.runInContext('delete Object.prototype._aideMathDepth',sandbox);}});
