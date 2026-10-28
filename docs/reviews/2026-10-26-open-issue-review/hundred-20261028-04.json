@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 85,
+  "fixedCount": 89,
   "fixedIssues": [
     565,
     563,
@@ -90,7 +90,11 @@
     408,
     409,
     410,
-    424
+    424,
+    539,
+    541,
+    543,
+    544
   ],
   "issues": {
     "565": {
@@ -772,6 +776,38 @@
       "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/424#issuecomment-6469294974"
+    },
+    "539": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Validate binary STL face count against available bytes and allocation budget before geometry arrays.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/539#issuecomment-6469539943"
+    },
+    "541": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Validate all DAE float-array declarations, finite values and aggregate count before loader token splitting.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/541#issuecomment-6469540508"
+    },
+    "543": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Detect Collada reference/containment cycles iteratively; bound expanded nodes and depth including reverse declarations.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/543#issuecomment-6469541253"
+    },
+    "544": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Bound direct/expanded DAE lights before construction and aggregate imported lights across mesh assets.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/544#issuecomment-6469542268"
     }
   },
   "blockedIssues": [
