@@ -1279,6 +1279,30 @@
         "node",
         "--check",
         "internal/server/web/vendor/marked.min.js"
+      ],
+      [
+        "node",
+        "scripts/mermaid-math.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-mermaid-resource-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-freehand-corners.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-assistant-call-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-drawio-message-origin.cjs"
       ]
     ],
     "full": [
