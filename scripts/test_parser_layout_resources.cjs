@@ -173,10 +173,8 @@ async function main() {
         assert.equal(doc.entities.length, 1);
         assert.equal(doc.entities[0].type, "LINE");
     }));
-    const oracleContext = ctx(), oracleText = require("child_process").execFileSync("git", [ "show", "dbd06b6f:" + r.base + "mxgraph/src/view/mxGraph.js" ], {
-        encoding: "utf8",
-        maxBuffer: 8 * 1024 * 1024
-    });
+    const oracleContext = ctx(), oracleText = fs.readFileSync(
+        require("node:path").join(__dirname, "fixtures/mxgraph-traverse-oracle.js"), "utf8");
     vm.runInContext(require("./drawio-editing-review.cjs").assignment(oracleText, "mxGraph.prototype.traverse"), oracleContext);
     for (const file of [ null, "mxgraph/mxClient.js", "js/app.min.js", "js/integrate.min.js", "js/viewer.min.js", "js/viewer-static.min.js" ]) {
         const c = ctx(), data = r.snippets(file);
