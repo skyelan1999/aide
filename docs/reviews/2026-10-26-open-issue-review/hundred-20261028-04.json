@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 94,
+  "fixedCount": 96,
   "fixedIssues": [
     565,
     563,
@@ -99,7 +99,9 @@
     402,
     418,
     419,
-    421
+    421,
+    417,
+    423
   ],
   "issues": {
     "565": {
@@ -853,6 +855,22 @@
       "commit": "5c1664b2783770840b082c91f516810cb933d519",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/421#issuecomment-6470054261"
+    },
+    "417": {
+      "status": "fixed-verified-pushed",
+      "cycle": 89,
+      "summary": "Evaluate negation per claim occurrence and contrastive clause, retain explicit retractions, and check later affirmative PDF claims against actual receipts.",
+      "commit": "10cc846d04837fa8361254a3c8644c187ee6bc36",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/417#issuecomment-6470157356"
+    },
+    "423": {
+      "status": "fixed-verified-pushed",
+      "cycle": 89,
+      "summary": "Redact complete double/single-quoted credential values including escaped quotes and unterminated values; preserve unrelated unquoted status fields.",
+      "commit": "10cc846d04837fa8361254a3c8644c187ee6bc36",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/423#issuecomment-6470158257"
     }
   },
   "blockedIssues": [

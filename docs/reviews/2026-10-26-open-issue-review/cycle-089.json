@@ -36,8 +36,18 @@
     "Main merge,Release/tag,market/deploy."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
-    "released": false
-  }
+    "released": false,
+    "remoteSourceCommit": "10cc846d04837fa8361254a3c8644c187ee6bc36",
+    "issueComments": {
+      "417": "https://github.com/skyelan1999/aide/issues/417#issuecomment-6470157356",
+      "423": "https://github.com/skyelan1999/aide/issues/423#issuecomment-6470158257"
+    }
+  },
+  "completedAt": "2026-10-28T13:24:05.527086+00:00",
+  "cumulativeFixedOnBranch": 387,
+  "cumulativeProductFixes": 386,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }
