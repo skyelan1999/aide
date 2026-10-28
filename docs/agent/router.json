@@ -1166,6 +1166,20 @@
         "node",
         "--check",
         "scripts/drawio-resource-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_plantuml_converter_issues.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-plantuml-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/plantuml/drawio-plantuml.min.js"
       ]
     ],
     "full": [

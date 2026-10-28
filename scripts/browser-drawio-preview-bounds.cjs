@@ -107,6 +107,7 @@ async function main() {
       if (process.env.AIDE_DRAWIO_CAPTION_METADATA_ACCEPTANCE) checks.push(...await require('./drawio-caption-metadata-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_FIFTY_PALETTE_ACCEPTANCE) checks.push(...await require('./drawio-fifty-palette-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_IMPORT_SECURITY_ACCEPTANCE) checks.push(...await require('./drawio-import-security-browser-cases.cjs')(frame,out,theme));
+      if (process.env.AIDE_DRAWIO_PLANTUML_ISSUE_REVIEW) checks.push(...await require('./drawio-plantuml-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_RESOURCE_REVIEW) checks.push(...await require('./drawio-resource-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_DEVICE_SHAPE_REVIEW) checks.push(...await require('./drawio-device-shape-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_CORS_REVIEW) checks.push(...await require('./drawio-cors-browser-cases.cjs')(frame,out,theme));
