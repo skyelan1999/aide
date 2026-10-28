@@ -4,27 +4,8 @@
   "startedAt": "2026-10-28T04:07:55.822915+00:00",
   "baselineCommit": "5c7ce8b96cc9e82718e7e3640852500672351271",
   "target": 50,
-  "fixedCount": 32,
-  "verifiedPendingPush": [
-    307,
-    308,
-    309,
-    310,
-    312,
-    313,
-    314,
-    315,
-    316,
-    317,
-    318,
-    319,
-    320,
-    321,
-    322,
-    323,
-    324,
-    325
-  ],
+  "fixedCount": 50,
+  "verifiedPendingPush": [],
   "fixedIssues": [
     259,
     260,
@@ -57,7 +38,25 @@
     289,
     290,
     291,
-    306
+    306,
+    307,
+    308,
+    309,
+    310,
+    312,
+    313,
+    314,
+    315,
+    316,
+    317,
+    318,
+    319,
+    320,
+    321,
+    322,
+    323,
+    324,
+    325
   ],
   "blockedIssues": [],
   "alreadyCovered": [
@@ -292,102 +291,163 @@
       "comment": "https://github.com/skyelan1999/aide/issues/291#issuecomment-6461101175"
     },
     "307": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Reset hierarchical roots on every execution; reused layouts include disconnected components"
+      "summary": "Reset hierarchical roots on every execution; reused layouts include disconnected components",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/307#issuecomment-6461412878"
     },
     "308": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Treat cells without geometry as non-ports instead of throwing"
+      "summary": "Treat cells without geometry as non-ports instead of throwing",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/308#issuecomment-6461413204"
     },
     "309": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Restore print renderer overlay and control hooks on success and rendering failure"
+      "summary": "Restore print renderer overlay and control hooks on success and rendering failure",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/309#issuecomment-6461413680"
     },
     "310": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Keep HTML print labels, filter geHint class tokens, and correct the base text-label node reference"
+      "summary": "Keep HTML print labels, filter geHint class tokens, and correct the base text-label node reference",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/310#issuecomment-6461414070"
     },
     "312": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Qualify orthogonal route pattern tables on mxEdgeStyle"
+      "summary": "Qualify orthogonal route pattern tables on mxEdgeStyle",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/312#issuecomment-6461414380"
     },
     "313": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Restore model.updateEdgeParent when a model listener throws during cellsAdded"
+      "summary": "Restore model.updateEdgeParent when a model listener throws during cellsAdded",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/313#issuecomment-6461414704"
     },
     "314": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Restore negative-coordinate policy when movement listeners throw"
+      "summary": "Restore negative-coordinate policy when movement listeners throw",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/314#issuecomment-6461415013"
     },
     "315": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Hit-test the actual scaled and flipped swimlane content rectangle"
+      "summary": "Hit-test the actual scaled and flipped swimlane content rectangle",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/315#issuecomment-6461415343"
     },
     "316": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Cancel pending tap-and-hold timers and invalidate flags when graph is destroyed"
+      "summary": "Cancel pending tap-and-hold timers and invalidate flags when graph is destroyed",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/316#issuecomment-6461415694"
     },
     "317": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Release the outline window resize listener with the outline"
+      "summary": "Release the outline window resize listener with the outline",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/317#issuecomment-6461416072"
     },
     "318": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Validate source newEdgeStyle before inserting an edge into the model"
+      "summary": "Validate source newEdgeStyle before inserting an edge into the model",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/318#issuecomment-6461416401"
     },
     "319": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Preserve rejected vertex/self-loop errors while respecting dangling-edge policy and parent promotion"
+      "summary": "Preserve rejected vertex/self-loop errors while respecting dangling-edge policy and parent promotion",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/319#issuecomment-6461416815"
     },
     "320": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Keep overlapping bend handle dimensions local"
+      "summary": "Keep overlapping bend handle dimensions local",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/320#issuecomment-6461417179"
     },
     "321": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Return null for malformed percent-encoded PNG metadata while preserving size limits"
+      "summary": "Return null for malformed percent-encoded PNG metadata while preserving size limits",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/321#issuecomment-6461417605"
     },
     "322": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Remove unused writes to global detected during page preset selection"
+      "summary": "Remove unused writes to global detected during page preset selection",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/322#issuecomment-6461418053"
     },
     "323": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Reject non-finite and non-positive imported page dimensions"
+      "summary": "Reject non-finite and non-positive imported page dimensions",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/323#issuecomment-6461418451"
     },
     "324": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Capture each array-color index for getter and refresh callbacks"
+      "summary": "Capture each array-color index for getter and refresh callbacks",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/324#issuecomment-6461418829"
     },
     "325": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 72,
-      "summary": "Preserve focused end-spacing input during unrelated model changes"
+      "summary": "Preserve focused end-spacing input during unrelated model changes",
+      "commit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1",
+      "comment": "https://github.com/skyelan1999/aide/issues/325#issuecomment-6461419135"
     }
   },
-  "status": "in_progress",
+  "status": "completed",
   "policy": "Only new fixed,verified,pushed reports count;no main merge,Release ordeployment. Previous50 excluded.",
   "deferred": [
     {
       "number": 249,
       "reason": "Upstream reproduction pointsequence secured;PR113 and116 remainunmerged withconflictingcorner/vector/endcapchanges.No narrowgeometryfixverified;continueotherreports,notcounted."
+    },
+    {
+      "numbers": [
+        292,
+        293,
+        294,
+        295,
+        296,
+        297,
+        298,
+        299,
+        300,
+        301,
+        302,
+        303,
+        304,
+        305
+      ],
+      "reason": "Third-party platform-wrapper reports: no established Aide execution path or completed platform acceptance; not counted as fixed."
+    },
+    {
+      "number": 311,
+      "reason": "Security report still needs dedicated dynamic validation; remains open and uncounted. Prioritize before the next numerical batch."
     }
-  ]
+  ],
+  "completedAt": "2026-10-28T05:27:16.807909+00:00",
+  "completionReason": "fifty-new-verified-pushed-fixes-reached"
 }

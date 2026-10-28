@@ -47,7 +47,7 @@
   "original272RemainingFollowup": 48,
   "batchTarget": 50,
   "batchVerified": 50,
-  "batchPushed": 32,
+  "batchPushed": 50,
   "design": "Focused source repairs; synchronize only matching function spans in five shipped drawio assets with pinned Terser 5.39.0. Preserve minified wrapper aliases and all bytes outside reviewed spans.",
   "red": {
     "result": "EXPECTED_FAIL",
@@ -73,7 +73,7 @@
     {
       "result": "PASS",
       "evidence": "/workspace/scratch/issue-review-20261026/cycle72-bundle-audit.json",
-      "scope": "All five asset copies parse; bytes outside the nineteen assigned functions and route-pattern property remain unchanged. Variant subsets contain only their relevant methods."
+      "scope": "All five asset copies parse; bytes outside the eighteen assigned functions and the route-pattern property remain unchanged. Variant subsets contain only their relevant methods."
     },
     {
       "result": "PASS",
@@ -121,9 +121,30 @@
     "Main merge, Release/tag, image build or production deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
-  }
+    "issueComments": {
+      "307": "https://github.com/skyelan1999/aide/issues/307#issuecomment-6461412878",
+      "308": "https://github.com/skyelan1999/aide/issues/308#issuecomment-6461413204",
+      "309": "https://github.com/skyelan1999/aide/issues/309#issuecomment-6461413680",
+      "310": "https://github.com/skyelan1999/aide/issues/310#issuecomment-6461414070",
+      "312": "https://github.com/skyelan1999/aide/issues/312#issuecomment-6461414380",
+      "313": "https://github.com/skyelan1999/aide/issues/313#issuecomment-6461414704",
+      "314": "https://github.com/skyelan1999/aide/issues/314#issuecomment-6461415013",
+      "315": "https://github.com/skyelan1999/aide/issues/315#issuecomment-6461415343",
+      "316": "https://github.com/skyelan1999/aide/issues/316#issuecomment-6461415694",
+      "317": "https://github.com/skyelan1999/aide/issues/317#issuecomment-6461416072",
+      "318": "https://github.com/skyelan1999/aide/issues/318#issuecomment-6461416401",
+      "319": "https://github.com/skyelan1999/aide/issues/319#issuecomment-6461416815",
+      "320": "https://github.com/skyelan1999/aide/issues/320#issuecomment-6461417179",
+      "321": "https://github.com/skyelan1999/aide/issues/321#issuecomment-6461417605",
+      "322": "https://github.com/skyelan1999/aide/issues/322#issuecomment-6461418053",
+      "323": "https://github.com/skyelan1999/aide/issues/323#issuecomment-6461418451",
+      "324": "https://github.com/skyelan1999/aide/issues/324#issuecomment-6461418829",
+      "325": "https://github.com/skyelan1999/aide/issues/325#issuecomment-6461419135"
+    },
+    "remoteSourceCommit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1"
+  },
+  "completedAt": "2026-10-28T05:27:16.807909+00:00"
 }
