@@ -1,0 +1,45 @@
+{
+  "cycle": 99,
+  "issues": [
+    581
+  ],
+  "baseline": "63585e93",
+  "fix": "Update stale SSH read fixtures to real binary SFTP subsystem, preserve CLI writes/lifecycle, use owned temporary remote paths; explicit briefing scope marker and safe failure diagnosis.",
+  "red": {
+    "hostedRun": "40726999602",
+    "localLog": "/workspace/scratch/issue-review-20261026/cycle99-go-baseline.log",
+    "hostBoundary": "Native direct run cannot create Docker-specific /home/aide. Final execution uses disposable isolated container."
+  },
+  "green": [
+    {
+      "scope": "Actual race test binary, real SFTP over owned pipes, temporary files, no network",
+      "passedIncludingSubtests": 19,
+      "log": "/workspace/scratch/issue-review-20261026/cycle99-final-green.log",
+      "runtime": "Go1.26.0 Linux AMD64; disposable desktop base image6b75fcfab1d3; read-only existing Node and Office dependencies"
+    },
+    {
+      "status": "pass",
+      "checks": 256,
+      "fingerprint": "a4618450d091d182ebf674429f8548afd1891253ecaf74a2513210801b317396",
+      "receipt": ".agent-state/verify-20261028T183417198229Z.log"
+    }
+  ],
+  "intermediateFailures": [
+    "Quick restricted sandbox blocked sockets/processes; rerun with required test permissions passed.",
+    "Container missing Office/Node dependencies; mount existing read-only dependencies; final full selected run passed."
+  ],
+  "notRun": [
+    "Full branch Go suite/vet or hosted final CI",
+    "Native Windows/Docker Desktop or real SSH auth",
+    "Main merge/release/deploy"
+  ],
+  "delivery": {
+    "commit": "5c195336",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnBranch": 424,
+  "productFixed": 421,
+  "toolingFixes": 3,
+  "remainingOriginal104": 71
+}
