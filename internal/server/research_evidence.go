@@ -261,16 +261,37 @@ func (a *App) researchStatus(task *Task) string {
 var researchFullCoverageClaim = regexp.MustCompile(`(?:完整\s*\d+\s*页(?:手册|文档)?(?:已读|已覆盖|全部读完)|全篇已读|全篇已查尽|全覆盖|全部页已读)`)
 
 func affirmativeResearchClaim(out, claim string) bool {
-	for _, clause := range strings.FieldsFunc(out, func(r rune) bool { return strings.ContainsRune("。；;！!\n", r) }) {
-		if !strings.Contains(clause, claim) {
-			continue
-		}
-		negated := false
-		for _, cue := range []string{"不能说", "不可称", "不支持", "未", "没有", "撤回", "错误", "不准确", "此前", "上轮", "并非", "不等于"} {
-			negated = negated || strings.Contains(clause, cue)
-		}
-		if !negated {
-			return true
+	if claim == "" {
+		return false
+	}
+	// Contrast starts a new assertion scope; a prior denial must not hide a later claim.
+	out = strings.NewReplacer("但是", "；", "然而", "；", "不过", "；", "但", "；").Replace(out)
+	for _, clause := range strings.FieldsFunc(out, func(r rune) bool { return strings.ContainsRune("。；;！!\n，,？?", r) }) {
+		previousEnd := 0
+		for previousEnd < len(clause) {
+			at := strings.Index(clause[previousEnd:], claim)
+			if at < 0 {
+				break
+			}
+			start := previousEnd + at
+			end := start + len(claim)
+			prefix := clause[previousEnd:start]
+			negated := false
+			for _, cue := range []string{"不能说", "不可称", "不支持", "未", "没有", "撤回", "错误", "不准确", "此前", "上轮", "并非", "不等于", "无法说", "不代表", "不意味着"} {
+				negated = negated || strings.Contains(prefix, cue)
+			}
+			// Retractions can follow a quoted assertion rather than precede it.
+			suffix := strings.TrimLeft(clause[end:], " \t\r\n\"'“”‘’「」『』")
+			for _, subject := range []string{"这一说法", "这种说法", "该说法", "的说法", "这一表述", "这个结论"} {
+				suffix = strings.TrimSpace(strings.TrimPrefix(suffix, subject))
+			}
+			for _, cue := range []string{"不准确", "错误", "不成立", "并非事实", "是不准确", "是错误", "是不成立"} {
+				negated = negated || strings.HasPrefix(suffix, cue)
+			}
+			if !negated {
+				return true
+			}
+			previousEnd = end
 		}
 	}
 	return false

@@ -29,7 +29,7 @@ type systemLogBuffer struct {
 var (
 	systemLogs        = &systemLogBuffer{entries: make([]systemLogEntry, 0, systemLogCapacity)}
 	logSecretPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`(?i)(["']?\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|password|passwd|secret)\b["']?\s*[:=]\s*["']?)([^"'\s,;}]+)`),
+		regexp.MustCompile(`(?i)(["']?\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|password|passwd|secret)\b["']?\s*[:=]\s*)("(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|[^"'\s,;}]+)`),
 		regexp.MustCompile(`(?i)(\bBearer\s+)[A-Za-z0-9._~+/=-]+`),
 		regexp.MustCompile(`(?i)(https?://[^\s?#]+\?)[^\s#]+`),
 	}
