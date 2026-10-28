@@ -4,8 +4,9 @@
   "startedAt": "2026-10-28T04:07:55.822915+00:00",
   "baselineCommit": "5c7ce8b96cc9e82718e7e3640852500672351271",
   "target": 50,
-  "fixedCount": 0,
-  "verifiedPendingPush": [
+  "fixedCount": 10,
+  "verifiedPendingPush": [],
+  "fixedIssues": [
     259,
     260,
     261,
@@ -17,7 +18,6 @@
     267,
     306
   ],
-  "fixedIssues": [],
   "blockedIssues": [],
   "alreadyCovered": [
     {
@@ -27,54 +27,74 @@
   ],
   "issues": {
     "259": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Swimlane rank uses reachable DAG topological longest chains;cycles explicitly rejected after documented cycle-removal prerequisite"
+      "summary": "Swimlane rank uses reachable DAG topological longest chains;cycles explicitly rejected after documented cycle-removal prerequisite",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/259#issuecomment-6460742743"
     },
     "260": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Cache opposite terminals andaggregate signed parallel-edge counts once;preserve directed/undirected incoming offset semantics"
+      "summary": "Cache opposite terminals andaggregate signed parallel-edge counts once;preserve directed/undirected incoming offset semantics",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/260#issuecomment-6460743333"
     },
     "261": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Consume sorted median rank by cursor whilepreserving reserved cells"
+      "summary": "Consume sorted median rank by cursor whilepreserving reserved cells",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/261#issuecomment-6460744237"
     },
     "262": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Reset six row arrays androot/node perradial execution;different instances anddeep-to-shallow remainisolated"
+      "summary": "Reset six row arrays androot/node perradial execution;different instances anddeep-to-shallow remainisolated",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/262#issuecomment-6460744797"
     },
     "263": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "SingleColumnLeft/Right choose matching actualOrgChart strategies inall3bundles"
+      "summary": "SingleColumnLeft/Right choose matching actualOrgChart strategies inall3bundles",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/263#issuecomment-6460745103"
     },
     "264": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "ZIP preview checksrawbytes/centralmetadata beforeJSZip,cap1000 entries,render100rows/page;downloadpreserved"
+      "summary": "ZIP preview checksrawbytes/centralmetadata beforeJSZip,cap1000 entries,render100rows/page;downloadpreserved",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/264#issuecomment-6460745460"
     },
     "265": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Resolve gradient colors before endpointtransparency;stops0/1 retain configureCanvas opacitywithout doublemultiplication"
+      "summary": "Resolve gradient colors before endpointtransparency;stops0/1 retain configureCanvas opacitywithout doublemultiplication",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/265#issuecomment-6460745866"
     },
     "266": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Generic appliance dotsusehalf incoming alpha,resource restoresincoming alpha inclmissingstyle"
+      "summary": "Generic appliance dotsusehalf incoming alpha,resource restoresincoming alpha inclmissingstyle",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/266#issuecomment-6460746216"
     },
     "267": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Monitoring referencesexisting cloud_monitoring;unsupportedResourceManager duplicate removed;oldIAMsavedvaluesretained"
+      "summary": "Monitoring referencesexisting cloud_monitoring;unsupportedResourceManager duplicate removed;oldIAMsavedvaluesretained",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/267#issuecomment-6460746605"
     },
     "306": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 70,
-      "summary": "Adjacent radial method nowreturns safelywhenno usable root/node remains"
+      "summary": "Adjacent radial method nowreturns safelywhenno usable root/node remains",
+      "commit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+      "comment": "https://github.com/skyelan1999/aide/issues/306#issuecomment-6460746893"
     }
   },
   "status": "in_progress",

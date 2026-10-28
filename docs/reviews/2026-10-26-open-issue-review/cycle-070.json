@@ -31,7 +31,7 @@
   "original272RemainingFollowup": 88,
   "batchTarget": 50,
   "batchVerified": 10,
-  "batchPushed": 0,
+  "batchPushed": 10,
   "red": {
     "layout": "/workspace/scratch/issue-review-20261026/cycle70-layout-red.log",
     "render": "/workspace/scratch/issue-review-20261026/cycle70-browser-red/light-second-layout-source.json",
@@ -93,9 +93,22 @@
     "Mainmerge,Release/tag,deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
-    "released": false
+    "released": false,
+    "remoteSourceCommit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+    "issueComments": {
+      "259": "https://github.com/skyelan1999/aide/issues/259#issuecomment-6460742743",
+      "260": "https://github.com/skyelan1999/aide/issues/260#issuecomment-6460743333",
+      "261": "https://github.com/skyelan1999/aide/issues/261#issuecomment-6460744237",
+      "262": "https://github.com/skyelan1999/aide/issues/262#issuecomment-6460744797",
+      "263": "https://github.com/skyelan1999/aide/issues/263#issuecomment-6460745103",
+      "264": "https://github.com/skyelan1999/aide/issues/264#issuecomment-6460745460",
+      "265": "https://github.com/skyelan1999/aide/issues/265#issuecomment-6460745866",
+      "266": "https://github.com/skyelan1999/aide/issues/266#issuecomment-6460746216",
+      "267": "https://github.com/skyelan1999/aide/issues/267#issuecomment-6460746605",
+      "306": "https://github.com/skyelan1999/aide/issues/306#issuecomment-6460746893"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "e9141c64191a442d63b05e4e723e2c9a76e58ebc1ad09fdee64218dea16bb3f1",
