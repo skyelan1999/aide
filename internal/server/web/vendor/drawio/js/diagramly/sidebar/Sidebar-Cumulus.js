@@ -117,7 +117,7 @@
 			 this.createVertexTemplateEntry('fillColor=#009271;strokeColor=none;whiteSpace=wrap;html=1;',
 					 sc * 25, sc * 25, '', 'Observatory', true, null, this.getTagsForStencil(gn, 'color observatory', dt).join(' ')),
 			 this.createVertexTemplateEntry('fillColor=#FFC82E;strokeColor=none;whiteSpace=wrap;html=1;',
-					 sc * 25, sc * 25, '', 'Energy Jellow', true, null, this.getTagsForStencil(gn, 'color energy jellow', dt).join(' ')),
+					 sc * 25, sc * 25, '', 'Energy Yellow', true, null, this.getTagsForStencil(gn, 'color energy yellow', dt).join(' ')),
 			 this.createVertexTemplateEntry('fillColor=#FFA12D;strokeColor=none;whiteSpace=wrap;html=1;',
 					 sc * 25, sc * 25, '', 'Neon Carrot', true, null, this.getTagsForStencil(gn, 'color neon carrot', dt).join(' ')),
 			 this.createVertexTemplateEntry('fillColor=#F1446F;strokeColor=none;whiteSpace=wrap;html=1;',

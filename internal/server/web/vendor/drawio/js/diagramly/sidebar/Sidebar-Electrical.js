@@ -95,7 +95,7 @@
 			this.createVertexTemplateEntry(meiecl + 'nand_2;', 66, 80, '', 'NAND (IEC)', null, null, this.getTagsForStencil(gnmeiecl, 'nand', dtmeiecl).join(' ')),
 			this.createVertexTemplateEntry(meiecl + 'or;', 60, 80, '', 'OR (IEC)', null, null, this.getTagsForStencil(gnmeiecl, 'or', dtmeiecl).join(' ')),
 			this.createVertexTemplateEntry(meiecl + 'nor_2;', 66, 80, '', 'NOR (IEC)', null, null, this.getTagsForStencil(gnmeiecl, 'nor', dtmeiecl).join(' ')),
-			this.createVertexTemplateEntry(meiecl + 'not_2;', 66, 80, '', 'NOT (IEC)', null, null, this.getTagsForStencil(gnmeiecl, 'xor', dtmeiecl).join(' ')),
+			this.createVertexTemplateEntry(meiecl + 'not_2;', 66, 80, '', 'NOT (IEC)', null, null, this.getTagsForStencil(gnmeiecl, 'not', dtmeiecl).join(' ')),
 			this.createVertexTemplateEntry(meiecl + 'xor;', 60, 80, '', 'XOR (IEC)', null, null, this.getTagsForStencil(gnmeiecl, 'xor', dtmeiecl).join(' ')),
 			this.createVertexTemplateEntry(
 					'shadow=0;dashed=0;align=center;html=1;strokeWidth=1;shape=mxgraph.electrical.logic_gates.dual_inline_ic;labelNames=a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t;whiteSpace=wrap;', 
@@ -235,7 +235,7 @@
 			this.createVertexTemplateEntry(mei + 'pot_trans_3_windings;', 
 					67, 96, '', 'Pot. Trans. 3 Windings', null, null, this.getTagsForStencil(gnmei, 'potential transformer 3 three windings', dtmei).join(' ')),
 			this.createVertexTemplateEntry('verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;strokeWidth=1;shape=mxgraph.electrical.signal_sources.current_source;', 
-					40, 60, '', 'Transformer', null, null, this.getTagsForStencil(gnmei, '', dtmei).join(' ')),
+					40, 60, '', 'Current Source', null, null, this.getTagsForStencil(gnmess, 'current source', dtmess).join(' ')),
 			this.createVertexTemplateEntry(mei + 'adjustable_transformer;', 
 					46, 60, '', 'Adjustable Transformer', null, null, this.getTagsForStencil(gnmei, 'adjustable_transformer', dtmei).join(' ')),
 			this.createVertexTemplateEntry(mei + '1_phase_induction_volt_reg;', 
@@ -591,7 +591,7 @@
 			this.createVertexTemplateEntry(mein + 'signal_generator;', 
 					90, 90, '', 'Signal Generator', null, null, this.getTagsForStencil(gnmein, 'signal_generator', dtmein).join(' ')),
 			this.createVertexTemplateEntry('verticalLabelPosition=middle;shadow=0;dashed=0;align=center;html=1;verticalAlign=middle;strokeWidth=1;shape=ellipse;aspect=fixed;fontSize=50;', 
-					90, 90, 'V', 'Voltmeter', null, null, this.getTagsForStencil(gnmein, 'ampermeter ammeter', dtmein).join(' '))
+					90, 90, 'V', 'Voltmeter', null, null, this.getTagsForStencil(gnmein, 'voltmeter', dtmein).join(' '))
 		]);
 
 		this.setCurrentSearchEntryLibrary('electrical', 'electrical\Misc');
@@ -631,7 +631,7 @@
 			this.createVertexTemplateEntry(mem + 'neon_lamp_2;', 
 					60, 50, '', 'Neon Lamp', null, null, this.getTagsForStencil(gnmem, 'neon_lamp_2', dtmem).join(' ')),
 			this.createVertexTemplateEntry(mem + 'flourescent_lamp', 
-					80, 30, '', 'Flourescent Lamp', null, null, this.getTagsForStencil(gnmess, 'flourescent lamp', dtmem).join(' ')),
+					80, 30, '', 'Fluorescent Lamp', null, null, this.getTagsForStencil(gnmem, 'fluorescent lamp', dtmem).join(' ')),
 			this.createVertexTemplateEntry(meoe + 'lamp', 
 					50, 100, '', 'Lamp', null, null, this.getTagsForStencil(gnmess, 'lamp', dtmeoe).join(' ')),
 			this.createVertexTemplateEntry(mem + 'thermocouple;', 
@@ -708,7 +708,7 @@
 			this.createVertexTemplateEntry(mess + 'equipotential;', 
 					90, 90, '', 'Equipotential', null, null, this.getTagsForStencil(gnmess, 'equipotential', dtmess).join(' ')),
 			this.createVertexTemplateEntry(mess + 'protective_earth;', 
-					25, 20, '', 'Equipotential', null, null, this.getTagsForStencil(gnmess, 'protective_earth earth ground', dtmess).join(' ')),
+					25, 20, '', 'Protective Earth', null, null, this.getTagsForStencil(gnmess, 'protective_earth earth ground', dtmess).join(' ')),
 			this.createVertexTemplateEntry(mess + 'signal_ground;', 
 					45, 30, '', 'Ground', null, null, this.getTagsForStencil(gnmess, 'signal_ground earth', dtmess).join(' ')),
 			this.createVertexTemplateEntry(mem + 'chassis;', 
@@ -794,15 +794,15 @@
 			this.createVertexTemplateEntry(mem + 'f_m_2_conductor_3', 
 					100, 50, '', 'F/M 2 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 2 conductor', dtmer).join(' ')),
 			this.createVertexTemplateEntry(mem + 'f_m_3_conductor_1', 
-					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 2 conductor', dtmer).join(' ')),
+					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 3 conductor', dtmer).join(' ')),
 			this.createVertexTemplateEntry(mem + 'f_m_3_conductor_2', 
-					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 2 conductor', dtmer).join(' ')),
+					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 3 conductor', dtmer).join(' ')),
 			this.createVertexTemplateEntry(mem + 'f_m_3_conductor_3', 
-					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 2 conductor', dtmer).join(' ')),
+					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 3 conductor', dtmer).join(' ')),
 			this.createVertexTemplateEntry(mem + 'f_m_3_conductor_4', 
-					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 2 conductor', dtmer).join(' ')),
+					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 3 conductor', dtmer).join(' ')),
 			this.createVertexTemplateEntry(mem + 'f_m_3_conductor_5', 
-					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 2 conductor', dtmer).join(' ')),
+					100, 100, '', 'F/M 3 Conductor', null, null, this.getTagsForStencil(gnmess, 'fm 3 conductor', dtmer).join(' ')),
 			this.createVertexTemplateEntry(mem + 'plug_socket_connection', 
 					20, 20, '', 'Plug-Socket Connection', null, null, this.getTagsForStencil(gnmess, 'Plug Socket Connection', dtmer).join(' '))
 		]);
@@ -1012,17 +1012,17 @@
 			this.createVertexTemplateEntry(metr + '3_line_bus;', 
 					130, 30, '', '3-Line Bus', null, null, this.getTagsForStencil(gnmetr, '3 three line bus', dtmetr).join(' ')),
 			this.createVertexTemplateEntry(metr + '4_line_bus;', 
-					130, 75, '', '4-Line Bus', null, null, this.getTagsForStencil(gnmetr, '3 three line bus', dtmetr).join(' ')),
+					130, 75, '', '4-Line Bus', null, null, this.getTagsForStencil(gnmetr, '4 four line bus', dtmetr).join(' ')),
 			this.createVertexTemplateEntry(metr + '8_line_bus;', 
-					130, 180, '', '8-Line Bus', null, null, this.getTagsForStencil(gnmetr, '3 three line bus', dtmetr).join(' ')),
+					130, 180, '', '8-Line Bus', null, null, this.getTagsForStencil(gnmetr, '8 eight line bus', dtmetr).join(' ')),
 			this.createVertexTemplateEntry(metr + 'twoLineBusElbow;notch=25;', 
 					120, 120, '', '2-Line Bus Elbow', null, null, this.getTagsForStencil(gnmetr, '2 two line bus elbow', dtmetr).join(' ')),
 			this.createVertexTemplateEntry(metr + 'threeLineBusElbow;notch=30;', 
-					120, 120, '', '3-Line Bus Elbow', null, null, this.getTagsForStencil(gnmetr, '3 two line bus elbow', dtmetr).join(' ')),
+					120, 120, '', '3-Line Bus Elbow', null, null, this.getTagsForStencil(gnmetr, '3 three line bus elbow', dtmetr).join(' ')),
 			this.createVertexTemplateEntry(metr + 'fourLineBusElbow;notch=75;', 
-					120, 120, '', '4-Line Bus Elbow', null, null, this.getTagsForStencil(gnmetr, '4 two line bus elbow', dtmetr).join(' ')),
+					120, 120, '', '4-Line Bus Elbow', null, null, this.getTagsForStencil(gnmetr, '4 four line bus elbow', dtmetr).join(' ')),
 			this.createVertexTemplateEntry(metr + 'eightLineBusElbow;notch=180;', 
-					200, 200, '', '8-Line Bus Elbow', null, null, this.getTagsForStencil(gnmetr, '8 two line bus elbow', dtmetr).join(' '))
+					200, 200, '', '8-Line Bus Elbow', null, null, this.getTagsForStencil(gnmetr, '8 eight line bus elbow', dtmetr).join(' '))
 		];
 
 		this.addPalette('electrical\Transmission', 'Electrical / Transmission Paths', false, mxUtils.bind(this, function(content)

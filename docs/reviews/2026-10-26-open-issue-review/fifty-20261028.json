@@ -1,0 +1,123 @@
+{
+  "request": "继续修复50个",
+  "startedAt": "2026-10-28T01:55:17.431508+00:00",
+  "baselineCommit": "26554928a37bb2c699c9df1422cace9056b9e530",
+  "target": 50,
+  "fixedCount": 0,
+  "verifiedPendingPush": [
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215
+  ],
+  "fixedIssues": [],
+  "blockedIssues": [],
+  "alreadyCovered": [
+    {
+      "number": 248,
+      "evidence": "39acde7f: setupDrawioFrame source+origin checks and explicit targetOrigin already implemented;not counted again."
+    }
+  ],
+  "candidatePlan": [
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    256,
+    257,
+    258
+  ],
+  "issues": {
+    "206": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "207": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "208": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "209": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "210": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "211": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "212": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "213": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "214": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    },
+    "215": {
+      "status": "verified-pending-push",
+      "cycle": 67
+    }
+  },
+  "status": "in_progress",
+  "policy": "Only new, verified and pushed fixes count toward50;blocked/already-fixed are excluded;retain current branch only,no main/release/deploy."
+}

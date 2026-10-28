@@ -1,0 +1,85 @@
+{
+  "cycle": 67,
+  "baseline": "26554928a37bb2c699c9df1422cace9056b9e530",
+  "issues": [
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215
+  ],
+  "cumulativeProductFixes": 148,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 149,
+  "original272RemainingFollowup": 138,
+  "batchTarget": 50,
+  "batchVerified": 10,
+  "batchPushed": 0,
+  "priorityRefresh": "skyelan1999 open reports unchanged;464/467 native acceptance pending;no new owner failures.",
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle67-red/light-fifty-palette-source.json",
+    "scope": "Actual factories, index, resource identities and metadata fail expected values. #209 secondary color already available through fallback;no UI absence claimed."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_FIFTY_PALETTE_ACCEPTANCE=1 ... node scripts/browser-drawio-preview-bounds.cjs",
+      "checks": 16,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle67-green/result.json",
+      "scope": "Source/app/integrate × light1440/dark390:26 targeted insertions per variant,actual search,independent stencil names andactualFormat Fill controls. Owned iframe,not full workbench."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 185,
+      "fingerprint": "fc5d685d136bb51969a56d6a4717255f0a3556c2f86c9ad35f28a0f723c67063",
+      "receipt": ".agent-state/verify-20261028T015254697162Z.log"
+    },
+    {
+      "result": "PASS",
+      "scope": "Both bundles byte-identical outside9 changed method assignments;genuine MotorCircuitBreaker/Monitoring/Equipotential/leftDoor controls identical;Terser5.39 sync check;diffcheck."
+    }
+  ],
+  "corrections": [
+    "#206 specification resolved using independent cabinets.xml MotorStarter names and separate motor_cb controls.",
+    "#209 field-key typo fixed;real baseline Format panel already exposes fillColor2,so do not report missing-control reproduction.",
+    "#210 Architecture references existing genuine capability prevention resource;Design detection title restored andprevention_2 tags corrected,without inventing missingarchitecture asset.",
+    "Harness fixed actual ellipse Voltmeter selector,semicolon-free lamp marker,synchronous Format refresh andcontrol selection before final acceptance."
+  ],
+  "securityReview": [
+    "Trusted template constants only;asset identifiers retained except reviewed prevention resource reference.",
+    "No user diagrams rewritten,external/model/device calls or new parsers.",
+    "Browser fixed local origin only,owned context closedfinally;userfiles/stashes retained."
+  ],
+  "notRun": [
+    "Full workbench palette picker/physicalhover;all shapes visual acceptance beyond targeted resources.",
+    "Go/full/native tests unchanged for metadata edits.",
+    "Main merge,Release/tag/deploy orproductionrestart."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false
+  },
+  "sourceSHA256": {
+    "internal/server/web/vendor/drawio/js/app.min.js": "ee042c63ef78be2f69bac5706b17ce7259346875e4dfb5ac95d48570292999f7",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Cabinet.js": "125697545489557283e3dd46ea1f3cf8aa04ccad6dc373e9f3d8cb68984e2fcc",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Cisco19.js": "2d0b37a92f98a3696d542ae8fc45be52688757b55895ada504ef36ef696c1ba3",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-CiscoSafe.js": "fe747c089956de0cea5444e91f1d00807099f64c4a9ef8ab5b34b04bb4355daf",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Cumulus.js": "ad1db5430d137b3129ea9718bd43faa4e7adff21d61fbf9c5425801ba1518ff0",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Electrical.js": "efc8bd129ed0c7dccbab3dc9b9bb87df01e245b358f7b040aac4a5b28d776a1b",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Floorplan.js": "84719abdb2f3d5ad24e813b95474d9b97e49703f3c915e558238971db0344d52",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "fc3242c28720ad1cb000c9f4e8283fed230a9f27a21caab0e827630190bd241b",
+    "scripts/browser-drawio-preview-bounds.cjs": "ce9c0a3b4b0b5073733a77083e2ddcea955a62e2d4ed97d9ad62774bcbe127a8",
+    "scripts/drawio-fifty-palette-browser-cases.cjs": "1f6cf795736e66520134acdff44247afcde9fc066b8371ae472ab9fa87dd4511",
+    "scripts/drawio-fifty-palette-review.cjs": "f4bcb12c529ca67c1e294c01831909a1c090aaeb2dc7bea4cc2ffdb29f45a2ff",
+    "scripts/sync_drawio_palette_search.cjs": "dc37d274b09a8b23013180e40e3fe7436fd82acf60f0dac1243dc0e6cce59e50"
+  }
+}

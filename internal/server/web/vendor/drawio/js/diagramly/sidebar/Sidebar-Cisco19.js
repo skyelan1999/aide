@@ -255,7 +255,7 @@
 			this.createVertexTemplateEntry(s + 'rect;prIcon=dual_mode_access_point;fillColor=#FAFAFA;strokeColor=#005073;', 
 					w * 1.28, h, '', 'Dual Mode Access Point', null, null, this.getTagsForStencil(gn, 'dual mode access point', dt).join(' ')),
 			this.createVertexTemplateEntry('points=[[0.03,0.36,0],[0.18,0,0],[0.5,0.34,0],[0.82,0,0],[0.97,0.36,0],[1,0.67,0],[0.975,0.975,0],[0.5,1,0],[0.025,0.975,0],[0,0.67,0]];' + s3 + 'wireless_access_point2;fillColor=#fafafa;strokeColor=#005073;', 
-					w, h, '', 'Wireless Acess Point', null, null, this.getTagsForStencil(gn, 'access point', dt).join(' ')),
+					w, h, '', 'Wireless Access Point', null, null, this.getTagsForStencil(gn, 'access point', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;prIcon=wireless_location_appliance;fillColor=#FAFAFA;strokeColor=#005073;', 
 					w, h, '', 'Wireless Location Appliance', null, null, this.getTagsForStencil(gn, 'location appliance', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;prIcon=wireless_lan_controller;fillColor=#FAFAFA;strokeColor=#005073;', 
@@ -314,7 +314,7 @@
 					w * 1.28, h, '', 'Cisco Unified Contact Center Enterprise and Hosted', null, null, this.getTagsForStencil(gn, 'cisco unified contact center enterprise and hosted', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;prIcon=h323;fillColor=#FAFAFA;strokeColor=#005073;', 
 					w * 1.28, h, '', 'H.323', null, null, this.getTagsForStencil(gn, 'h323', dt).join(' ')),
-			this.createVertexTemplateEntry('points=[[0.015,0.015,0],[0.5,0,0],[0.985,0.015,0],[1,0.22,0],[0.985,0.43,0],[0.73,0.85,0],[0.5,1,0],[0.285,0.85,0],[0.015,0.43,0],[0,0.22,0]];' + s3 + 'surveillance_camera2;fillColorStyls=fillColor2;fillColor2=#00bceb;fillColor=#fafafa;strokeColor=#005073;', 
+			this.createVertexTemplateEntry('points=[[0.015,0.015,0],[0.5,0,0],[0.985,0.015,0],[1,0.22,0],[0.985,0.43,0],[0.73,0.85,0],[0.5,1,0],[0.285,0.85,0],[0.015,0.43,0],[0,0.22,0]];' + s3 + 'surveillance_camera2;fillColorStyles=fillColor2;fillColor2=#00bceb;fillColor=#fafafa;strokeColor=#005073;',
 					w * 1.28, h, '', 'Surveillance Camera', null, null, this.getTagsForStencil(gn, 'surveillance camera', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;prIcon=monitor;fillColor=#FAFAFA;strokeColor=#005073;', 
 					w * 1.28, h, '', 'Monitor', null, null, this.getTagsForStencil(gn, 'monitor', dt).join(' ')),
@@ -576,7 +576,7 @@
 			this.createVertexTemplateEntry(s + 'rect;prIcon=virtual_private_network_connector;fillColor=#FAFAFA;strokeColor=#005073;', 
 					w * 1.28, h, '', 'Virtual Private Network Connector', null, null, this.getTagsForStencil(gn, 'connector', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;prIcon=threat_intelligence;fillColor=#FAFAFA;strokeColor=#005073;',
-					w, h, '', 'Monitoring', null, null, this.getTagsForStencil(gn, 'monitoring', dt).join(' '))
+					w, h, '', 'Threat Intelligence', null, null, this.getTagsForStencil(gn, 'threat intelligence', dt).join(' '))
 		]);
 	};
 	
