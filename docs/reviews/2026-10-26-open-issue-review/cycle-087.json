@@ -1,0 +1,51 @@
+{
+  "cycle": 87,
+  "baseline": "3c813617bd10ac92cd597aea9739736da3745a21",
+  "issues": [
+    401,
+    402
+  ],
+  "fixes": {
+    "401": "Strip global keyframes recursively from temporary/final adopted styles and serialized SVG while retaining scoped diagram styling.",
+    "402": "Preflight DOM depth/node budgets before export recursion and after diagram rendering; return recoverable errors and release frames."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 2,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle87-red-final/result.json"
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 239,
+      "fingerprint": "d017fd995f825c982cab260c21efb64bf0561d015c2d15a0cd3225ae23833dc5",
+      "receipt": ".agent-state/verify-20261028T125732082061Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 2,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle87-green/result.json",
+      "scope": "Actual strict-CSP Mermaid integration, direct/nested global keyframes excluded from temporary/final styles, host opacity0.75 retained and classDef color retained. Deep/flat/post-diagram DOM rejects before rasterizer; ordinary actual html2canvas PNG9901bytes, success/error frames released."
+    },
+    {
+      "result": "PASS",
+      "checks": 3,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle87-csp/browser-proof.json",
+      "scope": "Existing strict-CSP Mermaid theme/render/release integration,4diagrams per check, authenticated proof204."
+    }
+  ],
+  "harnessCorrections": [
+    "Specify UTF-8 as in the real product.",
+    "Extend existing DOM/CSSOM mocks for new preflight/template APIs without changing their race/cancellation assertions."
+  ],
+  "notRun": [
+    "Full Aide workbench/start.command, native Windows/macOS.",
+    "No stack overflow/OOM was induced; the baseline rasterizer-entry trap proves missing preflight and the fixed guard prevents entry.",
+    "Main merge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  }
+}

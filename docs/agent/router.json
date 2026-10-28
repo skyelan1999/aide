@@ -1237,6 +1237,11 @@
         "node",
         "--check",
         "internal/server/web/vendor/STLLoader.js"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-markdown-boundaries.cjs"
       ]
     ],
     "full": [
