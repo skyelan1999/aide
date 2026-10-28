@@ -45,7 +45,7 @@
   "original272RemainingFollowup": 98,
   "batchTarget": 50,
   "batchVerified": 50,
-  "batchPushed": 33,
+  "batchPushed": 50,
   "priorityRefresh": "2026-10-28 owner report set unchanged;464/467 have no new runtime log.",
   "red": {
     "runtime": "/workspace/scratch/issue-review-20261026/cycle69-red/result.json",
@@ -133,10 +133,30 @@
     "Main merge,Release/tag,deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "remoteSourceCommit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+    "issueComments": {
+      "234": "https://github.com/skyelan1999/aide/issues/234#issuecomment-6459871470",
+      "240": "https://github.com/skyelan1999/aide/issues/240#issuecomment-6459871955",
+      "241": "https://github.com/skyelan1999/aide/issues/241#issuecomment-6459872372",
+      "242": "https://github.com/skyelan1999/aide/issues/242#issuecomment-6459872855",
+      "243": "https://github.com/skyelan1999/aide/issues/243#issuecomment-6459873319",
+      "244": "https://github.com/skyelan1999/aide/issues/244#issuecomment-6459873720",
+      "245": "https://github.com/skyelan1999/aide/issues/245#issuecomment-6459874150",
+      "246": "https://github.com/skyelan1999/aide/issues/246#issuecomment-6459874592",
+      "250": "https://github.com/skyelan1999/aide/issues/250#issuecomment-6459874977",
+      "251": "https://github.com/skyelan1999/aide/issues/251#issuecomment-6459875409",
+      "252": "https://github.com/skyelan1999/aide/issues/252#issuecomment-6459875867",
+      "253": "https://github.com/skyelan1999/aide/issues/253#issuecomment-6459876232",
+      "254": "https://github.com/skyelan1999/aide/issues/254#issuecomment-6459876722",
+      "255": "https://github.com/skyelan1999/aide/issues/255#issuecomment-6459877144",
+      "256": "https://github.com/skyelan1999/aide/issues/256#issuecomment-6459877681",
+      "257": "https://github.com/skyelan1999/aide/issues/257#issuecomment-6459878098",
+      "258": "https://github.com/skyelan1999/aide/issues/258#issuecomment-6459878494"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "2017dd7cdb3037ebac76bd8398d2d37894f6debc3b21c7a2ec44720aa9321174",

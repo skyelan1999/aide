@@ -3,26 +3,8 @@
   "startedAt": "2026-10-28T01:55:17.431508+00:00",
   "baselineCommit": "26554928a37bb2c699c9df1422cace9056b9e530",
   "target": 50,
-  "fixedCount": 33,
-  "verifiedPendingPush": [
-    234,
-    240,
-    241,
-    242,
-    243,
-    244,
-    245,
-    246,
-    250,
-    251,
-    252,
-    253,
-    254,
-    255,
-    256,
-    257,
-    258
-  ],
+  "fixedCount": 50,
+  "verifiedPendingPush": [],
   "fixedIssues": [
     206,
     207,
@@ -52,11 +34,28 @@
     231,
     232,
     233,
+    234,
     235,
     236,
     237,
     238,
-    239
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    256,
+    257,
+    258
   ],
   "blockedIssues": [],
   "alreadyCovered": [
@@ -340,91 +339,135 @@
       "comment": "https://github.com/skyelan1999/aide/issues/239#issuecomment-6459289620"
     },
     "234": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "DOCX 超链接仅允许 HTTP/HTTPS/mailto 和相对/片段地址；不宣称默认CSP下已复现脚本执行"
+      "summary": "DOCX 超链接仅允许 HTTP/HTTPS/mailto 和相对/片段地址；不宣称默认CSP下已复现脚本执行",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/234#issuecomment-6459871470"
     },
     "240": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "异步库闭包捕获 entry/k，预载回调也设置并重置索引归属"
+      "summary": "异步库闭包捕获 entry/k，预载回调也设置并重置索引归属",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/240#issuecomment-6459871955"
     },
     "241": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "Canvas miterLimit 正确写入 miterLimit 而不改 lineJoin"
+      "summary": "Canvas miterLimit 正确写入 miterLimit 而不改 lineJoin",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/241#issuecomment-6459872372"
     },
     "242": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "Canvas 渐变按东南西北方向生成实际坐标"
+      "summary": "Canvas 渐变按东南西北方向生成实际坐标",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/242#issuecomment-6459872855"
     },
     "243": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "DOCX 符号仅解析合法 Unicode 十六进制码点并写 textContent"
+      "summary": "DOCX 符号仅解析合法 Unicode 十六进制码点并写 textContent",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/243#issuecomment-6459873319"
     },
     "244": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "DOCX 生成样式在隔离作用域的 CSSOM stylesheet 中应用，保持默认CSP；支持编号伪元素和释放"
+      "summary": "DOCX 生成样式在隔离作用域的 CSSOM stylesheet 中应用，保持默认CSP；支持编号伪元素和释放",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/244#issuecomment-6459873720"
     },
     "245": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "三份 DOMPurify 升至官方3.4.16，保留 Graph 的 SVG 安全hook"
+      "summary": "三份 DOMPurify 升至官方3.4.16，保留 Graph 的 SVG 安全hook",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/245#issuecomment-6459874150"
     },
     "246": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "RoughJS 零/非有限周期停止生成填充虚线，超额次数在循环前拒绝"
+      "summary": "RoughJS 零/非有限周期停止生成填充虚线，超额次数在循环前拒绝",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/246#issuecomment-6459874592"
     },
     "250": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "Goldmark 强调快速路径有界，长行/不匹配候选回到标准解析器"
+      "summary": "Goldmark 强调快速路径有界，长行/不匹配候选回到标准解析器",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/250#issuecomment-6459874977"
     },
     "251": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "Goldmark 引用定义移除改成一次线性压紧段落行"
+      "summary": "Goldmark 引用定义移除改成一次线性压紧段落行",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/251#issuecomment-6459875409"
     },
     "252": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "TTS 四模型及 espeak 固定 SHA256，离线验证支持可信摘要，缺失/不匹配即失败；临时目录验证完整再安装"
+      "summary": "TTS 四模型及 espeak 固定 SHA256，离线验证支持可信摘要，缺失/不匹配即失败；临时目录验证完整再安装",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/252#issuecomment-6459875867"
     },
     "253": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "PNG 图纸元数据流式有界解压，zlib/raw 兼容；解码前限制输入且超限不退到第二次解压"
+      "summary": "PNG 图纸元数据流式有界解压，zlib/raw 兼容；解码前限制输入且超限不退到第二次解压",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/253#issuecomment-6459876232"
     },
     "254": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "超大 XML/SVG 导出 fallback 使用传入 data"
+      "summary": "超大 XML/SVG 导出 fallback 使用传入 data",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/254#issuecomment-6459876722"
     },
     "255": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "Rect2 双线/框架右上内轮廓保留选定角样式"
+      "summary": "Rect2 双线/框架右上内轮廓保留选定角样式",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/255#issuecomment-6459877144"
     },
     "256": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "零长度段采用有限方向，空/单点安全退出；真实link/pipe/flexArrow句柄无NaN"
+      "summary": "零长度段采用有限方向，空/单点安全退出；真实link/pipe/flexArrow句柄无NaN",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/256#issuecomment-6459877681"
     },
     "257": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "层次布局边标签几何临时变量本地声明"
+      "summary": "层次布局边标签几何临时变量本地声明",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/257#issuecomment-6459878098"
     },
     "258": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 69,
-      "summary": "view XML 注册函数样式按名称序列化，未知函数省略"
+      "summary": "view XML 注册函数样式按名称序列化，未知函数省略",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/258#issuecomment-6459878494"
     }
   },
-  "status": "in_progress",
-  "policy": "Only new, verified and pushed fixes count toward50;blocked/already-fixed are excluded;retain current branch only,no main/release/deploy."
+  "status": "completed",
+  "policy": "Only new, verified and pushed fixes count toward50;blocked/already-fixed are excluded;retain current branch only,no main/release/deploy.",
+  "completedAt": "2026-10-28T03:28:49.257007+00:00",
+  "latestSourceCommit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+  "finalVerification": {
+    "browserChecks": 34,
+    "browserErrors": [],
+    "quickChecks": 188,
+    "commonMarkExamplesUnchanged": 652,
+    "sourceFingerprint": "4213c535e609aee793cfafa8c765d884f525481ab82b54098642dc711708eda0",
+    "record": "docs/reviews/2026-10-26-open-issue-review/cycle-069.json"
+  }
 }
