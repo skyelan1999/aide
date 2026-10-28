@@ -57,7 +57,7 @@
   },
   "batchTarget": 50,
   "batchVerified": 36,
-  "batchPushed": 11,
+  "batchPushed": 36,
   "red": {
     "result": "EXPECTED_FAIL",
     "evidence": [
@@ -105,10 +105,37 @@
     "Main merge, Release/tag or deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "336": "https://github.com/skyelan1999/aide/issues/336#issuecomment-6462308960",
+      "337": "https://github.com/skyelan1999/aide/issues/337#issuecomment-6462309674",
+      "338": "https://github.com/skyelan1999/aide/issues/338#issuecomment-6462310085",
+      "339": "https://github.com/skyelan1999/aide/issues/339#issuecomment-6462310785",
+      "341": "https://github.com/skyelan1999/aide/issues/341#issuecomment-6462311163",
+      "342": "https://github.com/skyelan1999/aide/issues/342#issuecomment-6462311594",
+      "343": "https://github.com/skyelan1999/aide/issues/343#issuecomment-6462311987",
+      "344": "https://github.com/skyelan1999/aide/issues/344#issuecomment-6462312732",
+      "345": "https://github.com/skyelan1999/aide/issues/345#issuecomment-6462313208",
+      "346": "https://github.com/skyelan1999/aide/issues/346#issuecomment-6462313623",
+      "347": "https://github.com/skyelan1999/aide/issues/347#issuecomment-6462314074",
+      "349": "https://github.com/skyelan1999/aide/issues/349#issuecomment-6462314431",
+      "350": "https://github.com/skyelan1999/aide/issues/350#issuecomment-6462314828",
+      "351": "https://github.com/skyelan1999/aide/issues/351#issuecomment-6462315186",
+      "352": "https://github.com/skyelan1999/aide/issues/352#issuecomment-6462315560",
+      "353": "https://github.com/skyelan1999/aide/issues/353#issuecomment-6462315967",
+      "354": "https://github.com/skyelan1999/aide/issues/354#issuecomment-6462316393",
+      "355": "https://github.com/skyelan1999/aide/issues/355#issuecomment-6462316820",
+      "357": "https://github.com/skyelan1999/aide/issues/357#issuecomment-6462317198",
+      "358": "https://github.com/skyelan1999/aide/issues/358#issuecomment-6462317651",
+      "359": "https://github.com/skyelan1999/aide/issues/359#issuecomment-6462318086",
+      "360": "https://github.com/skyelan1999/aide/issues/360#issuecomment-6462318509",
+      "361": "https://github.com/skyelan1999/aide/issues/361#issuecomment-6462318908",
+      "362": "https://github.com/skyelan1999/aide/issues/362#issuecomment-6462319263",
+      "551": "https://github.com/skyelan1999/aide/issues/551#issuecomment-6462319583"
+    },
+    "remoteSourceCommit": "5bdd3aee096639e10f64d43be02dbd25d61a482c"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "6ff709712460ceb0b78083f7a88b0b5f2d2667e2677801267e1378808886f206",
@@ -142,5 +169,10 @@
     "scripts/drawio-workbench-browser-cases.cjs": "a892f0da269790862070d0958cd6b0978f4f5652a6ccb382332951150ccf2dc3",
     "scripts/drawio-workbench-palette-browser-cases.cjs": "b4c14ef1a2553be486b63a5a8d0ce5effd4f95e5e178af770ebc7ff9f8265229",
     "scripts/sync_drawio_workbench_review.cjs": "dc849b4fe328cec68aaa3216b9302770883d0cc241b141ad0377c170d26670a8"
-  }
+  },
+  "completedAt": "2026-10-28T06:27:19.225716+00:00",
+  "cumulativeFixedOnBranch": 275,
+  "cumulativeProductFixes": 274,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }

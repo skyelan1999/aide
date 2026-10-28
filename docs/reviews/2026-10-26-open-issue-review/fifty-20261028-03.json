@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T05:47:59.238790+00:00",
   "baselineCommit": "c3b2ed78b395c5fab5e25197564eb3c029710f7f",
   "target": 50,
-  "fixedCount": 11,
+  "fixedCount": 36,
   "fixedIssues": [
     311,
     326,
@@ -16,9 +16,6 @@
     332,
     333,
     334,
-    365
-  ],
-  "verifiedPendingPush": [
     336,
     337,
     338,
@@ -43,8 +40,10 @@
     360,
     361,
     362,
+    365,
     551
   ],
+  "verifiedPendingPush": [],
   "blockedIssues": [],
   "alreadyCovered": [],
   "issues": {
@@ -126,129 +125,179 @@
       "comment": "https://github.com/skyelan1999/aide/issues/365#issuecomment-6461900427"
     },
     "336": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Queue concurrent Org Chart callbacks until the constructor loads; handle failure, timeout, retry, callback errors and spinner ownership"
+      "summary": "Queue concurrent Org Chart callbacks until the constructor loads; handle failure, timeout, retry, callback errors and spinner ownership",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/336#issuecomment-6462308960"
     },
     "337": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Use a prototype-free scoped-layout cell set"
+      "summary": "Use a prototype-free scoped-layout cell set",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/337#issuecomment-6462309674"
     },
     "338": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Preserve selected descendants of prototype-named unselected ancestors in JSON export"
+      "summary": "Preserve selected descendants of prototype-named unselected ancestors in JSON export",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/338#issuecomment-6462310085"
     },
     "339": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Use prototype-free sets for non-current comment anchors and current-page overlays"
+      "summary": "Use prototype-free sets for non-current comment anchors and current-page overlays",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/339#issuecomment-6462310785"
     },
     "341": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Clear the comments refresh interval when its window is destroyed"
+      "summary": "Clear the comments refresh interval when its window is destroyed",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/341#issuecomment-6462311163"
     },
     "342": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Validate Icon Grid dimensions and cap each rendering pass at 1000 icons"
+      "summary": "Validate Icon Grid dimensions and cap each rendering pass at 1000 icons",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/342#issuecomment-6462311594"
     },
     "343": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Sample oversized iOS stripes with at most about 1000 stripes while retaining normal spacing"
+      "summary": "Sample oversized iOS stripes with at most about 1000 stripes while retaining normal spacing",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/343#issuecomment-6462311987"
     },
     "344": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Keep FilenameDialog row local"
+      "summary": "Keep FilenameDialog row local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/344#issuecomment-6462312732"
     },
     "345": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Keep PNG parser ancillary chunk data local"
+      "summary": "Keep PNG parser ancillary chunk data local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/345#issuecomment-6462313208"
     },
     "346": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Keep shape-picker relative-parent traversal local"
+      "summary": "Keep shape-picker relative-parent traversal local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/346#issuecomment-6462313623"
     },
     "347": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Allow only same-origin Back/Refresh toolbar destinations; rejected Refresh targets reload locally"
+      "summary": "Allow only same-origin Back/Refresh toolbar destinations; rejected Refresh targets reload locally",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/347#issuecomment-6462314074"
     },
     "349": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Install special keyboard dispatch on each key handler instance instead of the global prototype"
+      "summary": "Install special keyboard dispatch on each key handler instance instead of the global prototype",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/349#issuecomment-6462314431"
     },
     "350": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Restore invalid geometry fields without duplicating their unit"
+      "summary": "Restore invalid geometry fields without duplicating their unit",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/350#issuecomment-6462314828"
     },
     "351": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Apply the intended margin to the superscript button"
+      "summary": "Apply the intended margin to the superscript button",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/351#issuecomment-6462315186"
     },
     "352": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Keep table painting scale local"
+      "summary": "Keep table painting scale local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/352#issuecomment-6462315560"
     },
     "353": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Remove the extra closing parenthesis from all 28 selection-control names"
+      "summary": "Remove the extra closing parenthesis from all 28 selection-control names",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/353#issuecomment-6462315967"
     },
     "354": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Correct two blue focus titles and three gray normal search tags, retaining the separate existing focus controls"
+      "summary": "Correct two blue focus titles and three gray normal search tags, retaining the separate existing focus controls",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/354#issuecomment-6462316393"
     },
     "355": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Index all eleven Steppers under stepper instead of tab"
+      "summary": "Index all eleven Steppers under stepper instead of tab",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/355#issuecomment-6462316820"
     },
     "357": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Capture the iOS Sidebar locally and keep factories independent of window.sb"
+      "summary": "Capture the iOS Sidebar locally and keep factories independent of window.sb",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/357#issuecomment-6462317198"
     },
     "358": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Index Email under email/mail and preserve Calendar search isolation"
+      "summary": "Index Email under email/mail and preserve Calendar search isolation",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/358#issuecomment-6462317651"
     },
     "359": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Make both SAP Area and Default Shapes collections searchable by category"
+      "summary": "Make both SAP Area and Default Shapes collections searchable by category",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/359#issuecomment-6462318086"
     },
     "360": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Make the Full Port label part of its composite parent"
+      "summary": "Make the Full Port label part of its composite parent",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/360#issuecomment-6462318509"
     },
     "361": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Use the existing electrical AND stencil for AND Gate and the native OR renderer for OR Gate"
+      "summary": "Use the existing electrical AND stencil for AND Gate and the native OR renderer for OR Gate",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/361#issuecomment-6462318908"
     },
     "362": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Give Infrastructure/Tenant roles their own search terms while retaining their resource and color"
+      "summary": "Give Infrastructure/Tenant roles their own search terms while retaining their resource and color",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/362#issuecomment-6462319263"
     },
     "551": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 74,
-      "summary": "Capture each initializer Sidebar in seven factories that previously depended on the iOS global"
+      "summary": "Capture each initializer Sidebar in seven factories that previously depended on the iOS global",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/551#issuecomment-6462319583"
     }
   },
   "status": "in_progress",
