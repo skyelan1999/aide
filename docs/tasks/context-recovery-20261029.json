@@ -8,7 +8,8 @@
     "压缩完整覆盖长消息正文和工具参数，不在模型读取前丢掉中段",
     "压缩和运行中上下文整理保留工具调用/结果边界",
     "流中断不标成功、不执行未完成工具、不自动重复已有正文",
-    "gpt-6.1-sol与deepseek-flash实际模型对照，隔离合成数据"
+    "gpt-6.1-sol与deepseek-flash实际模型对照，隔离合成数据",
+    "补测gpt-6.1-sol和deepseek-flash真实5x/10x：各有5/10路实际完成，摘要进入新会话，输出任务覆盖无重复"
   ],
   "scope": [
     "internal/server上下文、压缩、并行和流输出及对应测试",
@@ -41,13 +42,18 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "最终代码：两个真实模型各1x/3x全部通过；3x确有多路完成；只给新会话摘要。450条历史连续多批压缩、旧用量校准失效、Flash形态兼容及EOF暂停/恢复均通过；受影响Go race/vet与quick通过。",
+      "summary": "两个真实模型各1x/3x及新增5x/10x均通过。新增四组共30路真实分析完成，单轮扇出，原始聊天历史不传入新会话，CASE编号各一次、无其他组识别码；预算和快照完整性检查通过。6.1用量为Bridge估算，Flash为上游用量。原有450条历史连续压缩、EOF暂停恢复及race/quick回归证据保留。",
       "evidence": [
         "docs/reviews/2026-10-29/context-recovery-model-proof.json",
         "docs/reviews/2026-10-29/context-recovery-before.txt",
         ".agent-state/context-recovery-final-validation.log",
         ".agent-state/context-model-live.log",
-        ".agent-state/context-final-quick.log"
+        ".agent-state/context-final-quick.log",
+        "docs/reviews/2026-10-29/context-recovery-high-fanout-proof.json",
+        ".agent-state/context-high-fanout-live.log",
+        ".agent-state/context-high-fanout-build.log",
+        ".agent-state/context-high-fanout-validation.log",
+        ".agent-state/quick.json"
       ]
     },
     "documentation": {
@@ -73,7 +79,7 @@
   },
   "release_authorization": "",
   "rollback": "独立worktree fix/context-recovery-20261029；不覆盖现用9999或原目录start.command",
-  "handoff": "修复PR #589已推送并ready for review：https://github.com/skyelan1999/aide/pull/589。远端CI与独立审批待完成，未合并。真实模型覆盖1x/3x，10x为协议/调度回归，未新增真实10x调用。现用9999仍为aide:mixsoul-local-fa9550d6，未替换，未升版。",
+  "handoff": "PR #589补充真实5x/10x验收，两个模型均实际完成5/10路，共30路；生产代码与前一版指纹一致。未合并、未发版、未替换9999，未改提供商设置。现用9999仍为aide:mixsoul-local-fa9550d6。远端CI与独立审批需在最新head重新核对。单次合成验收不代表真实项目或持续负载可靠率。",
   "interpretation": "用户已确认4.1 Flash对应现有deepseek-flash，6.1使用gpt-6.1-sol。当前范围为核心修复和隔离合成验收；不替换9999，不发布Aide版本。",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/580"
