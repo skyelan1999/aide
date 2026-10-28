@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 69,
+  "fixedCount": 81,
   "fixedIssues": [
     565,
     563,
@@ -74,7 +74,19 @@
     525,
     526,
     527,
-    528
+    528,
+    452,
+    453,
+    454,
+    455,
+    456,
+    457,
+    459,
+    460,
+    461,
+    462,
+    465,
+    466
   ],
   "issues": {
     "565": {
@@ -628,6 +640,102 @@
       "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/528#issuecomment-6468848033"
+    },
+    "452": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Retain the raw URI on malformed UTF-8 and complete/consume filename drops.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/452#issuecomment-6469185034"
+    },
+    "453": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Use a prototype-free set for custom stencil color keys.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/453#issuecomment-6469186067"
+    },
+    "454": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Use canonical own checks for object-valued shape-picker entries.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/454#issuecomment-6469186711"
+    },
+    "455": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Use default toolbar settings on malformed URI/JSON or non-object config.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/455#issuecomment-6469187348"
+    },
+    "456": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Anchor layer popups below the top viewer toolbar.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/456#issuecomment-6469188301"
+    },
+    "457": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Correct the base fallback serializer to mxUtils; full app Pages override already worked and the reported complete-app symptom was not reproduced.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/457#issuecomment-6469189081"
+    },
+    "459": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Keep selected cells for synchronous steps in mixed async layout chains.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/459#issuecomment-6469189796"
+    },
+    "460": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Reject non-positive/non-integer Explore page sizes before constructing a viewer.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/460#issuecomment-6469190391"
+    },
+    "461": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Declare the attribute-copy iterator locally.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/461#issuecomment-6469191059"
+    },
+    "462": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Clean up repeated click handlers and document/model/mouse listeners/highlight on destruction.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/462#issuecomment-6469191728"
+    },
+    "465": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Validate positive safe-integer Fit sheet counts before forwarding print/export arguments.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/465#issuecomment-6469192440"
+    },
+    "466": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Store duplicate-page IDs in a prototype-free dictionary.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/466#issuecomment-6469193098"
     }
   },
   "blockedIssues": [
