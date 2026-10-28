@@ -1078,6 +1078,25 @@
         "node",
         "--check",
         "scripts/sync_drawio_import_plugin_review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/drawio-linear-regex.js"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_cors_linear.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_linear_regex.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-cors-browser-cases.cjs"
       ]
     ],
     "full": [

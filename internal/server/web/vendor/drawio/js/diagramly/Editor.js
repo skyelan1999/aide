@@ -5128,7 +5128,7 @@
 		}
 		
 		// Does not use proxy for same domain
-		if (url.substring(0, window.location.origin.length) == window.location.origin)
+		if (Graph.isSameOrigin(url))
 		{
 			return true;
 		}
@@ -5136,7 +5136,21 @@
 		// Blocked by CSP in production but allowed for hosted deployment
 		if (urlParams['cors'] != null && this.corsRegExp == null)
 		{
-			this.corsRegExp = new RegExp(decodeURIComponent(urlParams['cors']));
+			// Rejected rules are cached too. Never fall back to native RegExp.
+			this.corsRegExp = {test: function() { return false; }};
+			try
+			{
+				var raw = urlParams['cors'];
+				if (typeof raw == 'string' && raw.length <= 6144 && window.AideDrawioLinearRegex != null)
+				{
+					var matcher = window.AideDrawioLinearRegex.compile(decodeURIComponent(raw));
+					if (matcher != null) this.corsRegExp = matcher;
+				}
+			}
+			catch (e)
+			{
+				// Invalid URI escapes and unsupported regex syntax use normal proxy routing.
+			}
 		}
 		
 		// No access-control-allow-origin for some Iconfinder images, add this when fixed:
