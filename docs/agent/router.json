@@ -1303,6 +1303,16 @@
         "node",
         "--check",
         "scripts/browser-drawio-message-origin.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-mathjax-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/cases.js"
       ]
     ],
     "full": [
