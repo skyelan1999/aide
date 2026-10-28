@@ -1,0 +1,97 @@
+{
+  "cycle": 80,
+  "baseline": "dbd06b6f938c5b391dbb3d483963b344797e82a6",
+  "issues": [
+    398,
+    399,
+    400,
+    403,
+    404,
+    405,
+    406,
+    407
+  ],
+  "fixes": {
+    "398": "Reject non-progressing LAYER,VPORT and POLYLINE records with parse errors;valid DXF previews remain available.",
+    "399": "Bound the three hierarchical path traversals to256 levels and report recoverable errors before stack overflow.",
+    "400": "Use explicit DFS frames for mxGraph.traverse,preserving edge-visited semantics,callback order,pruning and inverse traversal.",
+    "403": "Consume each ZIP64 extensible record exactly once and reject short headers or payloads crossing the declared record boundary.",
+    "404": "Use iterative WebCola component DFS and retain traversal/component ordering.",
+    "405": "Reject more than1000 visible vertices before WebCola conversion and dense allocation;hidden vertices do not consume that budget.",
+    "406": "Merge WebCola pairing-heap children iteratively while preserving pairing order and sorted pops.",
+    "407": "Construct group parent-child links with a prototype-safe index map instead of all-group pair scans."
+  },
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle80-unit-red.log",
+      "scope": "Original DXF three loops timeout800ms in ownedWorkers;recursive hierarchy/tree/components/heap overflow;validZIP64extension rejected in both library copies."
+    },
+    {
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle80-webcola-red.log",
+      "scope": "405 reaches controlled conversion sink before any size check;407 makes40000parent lookups for200groups."
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 223,
+      "fingerprint": "adc8a5aa5ec8cab83f9c396fb0b8bd3e3c3049ddda34e9dd833572fe5cedc348",
+      "receipt": ".agent-state/verify-20261028T104803389487Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 40,
+      "receipt": ".agent-state/verify-20261028T104803389487Z.log",
+      "scope": "Resource script included inquick:DXF malformed errors/validLINE;12000-node forward/reverse graph traversal;128-level hierarchy acceptance and12000-node explicit budget rejection;1200callback-order comparisons against old recursive oracle over cyclic/forked/pruned graphs;15000-node WebCola components;20000-child heap sorted removal;1000visible-node boundary/hidden cases;ZIP64zero/single/multiple/short/corrupt extension cases in both copies.200group parent lookups drop40000to400."
+    },
+    {
+      "result": "PASS",
+      "checks": 46,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle80-browser/result.json",
+      "scope": "ActualChromium154,light1440/dark390;real mxGraphModels,3000-node traversal,smallhierarchy layout and320-node rejection with closed modelupdates;source+5bundle method variants;actualWebCola1001visible-node rejection andnested-group conversion;actualappDXF malformed-error screens andvalidSVG preview;pageerrors[]."
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle80-audit.json",
+      "scope": "Five compiled assets unchanged outside4reviewed functions perasset;syntax andpinnedgenerator sync pass."
+    }
+  ],
+  "compatibility": "Hierarchical layout paths deeper than256 andWebCola layouts above1000visible vertices now return explicit resource errors. Other limits are unchanged. Library versions/licenses preserved;DXFREADME records original andpatched hashes.",
+  "notRun": [
+    "FullAideworkbench,start.command,Windows/macOSnative,realdevice/files.",
+    "ArbitraryWebCola animations or all layout strategies;scoped data/algorithms/hostbudget tested.",
+    "FullDocker Go profile;noGochange.",
+    "Mainmerge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "cbf266a9653a0bd2a22119d525d494c0a6738d97a12d0a542ba8a32729f76ce8",
+    "internal/server/web/vendor/drawio/js/app.min.js": "8d4d52c9584b55d787846db94ae4b0d293b550c7672c28f12a0f9635eb624ad2",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "4846bb23333d772534158f6de4f874e878a5965b0434598e7569238472ca6eed",
+    "internal/server/web/vendor/drawio/js/jszip/jszip.min.js": "8b9f893a06aae4056c258aaf3abda40b8ca4da7952e28621f6603c284cebd16e",
+    "internal/server/web/vendor/drawio/js/viewer-static.min.js": "60c6daf2176cd0db1708eb5ad380fd0de8af0c26d745fe85d29c45d3a16fd411",
+    "internal/server/web/vendor/drawio/js/viewer.min.js": "2c99476382a162bc2cc4678da3660386fb3f37506ec0e65accb1248e9f768845",
+    "internal/server/web/vendor/drawio/mxgraph/mxClient.js": "2fc14033ec83518be8d406b4166aa77d136b655ac93a55c9578b22c4af9dd4ea",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/model/mxGraphHierarchyModel.js": "ec46ada3c907f4ee5a40f006f27284235ab43fa357d804b5defa596973cd0fd0",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/mxHierarchicalLayout.js": "0092435005c8c9d3e65f9f577b2c2746b0694cdd16fa7694d39dfebb30a577e5",
+    "internal/server/web/vendor/drawio/mxgraph/src/view/mxGraph.js": "4eb36851990a0c356431163dea0ae763af835a569769fe928b453d43ac9dde18",
+    "internal/server/web/vendor/drawio/plugins/webcola/cola.min.js": "300a63ed59732477ac16b623b2ff58d641f993fcef75bcb4c2aef12335d269a5",
+    "internal/server/web/vendor/drawio/plugins/webcola/mxWebColaAdaptor.js": "bcc61331a64e6f2f068172ec1ffa385baa4219a1cb538f66c0e55f9a3b8cd15e",
+    "internal/server/web/vendor/dxf-parser/CHECKSUMS.txt": "1320ad414255cfa8c31f21b8a532335ec6c065a5716f9f2d4c3e1590765834e0",
+    "internal/server/web/vendor/dxf-parser/README.md": "1ec9938f58bd10a725f992bcf54d58dbd03b2b254dc41d42da593cc932dce7ea",
+    "internal/server/web/vendor/dxf-parser/dxf-parser.js": "74fb04157666bda026156efe1bab8ee87414aecf25fc88fdae85fdff02edf1ab",
+    "internal/server/web/vendor/jszip.min.js": "ec50ead4c565ec661c98de2451c079130f73ba0e362ead630d7bc114fadf6904",
+    "scripts/browser-drawio-preview-bounds.cjs": "6d974a4f4f6ba30b84ef77b347bad3a299e086962a7ca9f2706905df11648a7c",
+    "scripts/drawio-resource-browser-cases.cjs": "c6c6f2ddd9212ce7fbd0da78784fe3bb2e16f82891f1c757e065155efd67e4b4",
+    "scripts/drawio-traversal-review.cjs": "9e8ba7514c5c9a7558b7af05ebf4845914ea66d7d017b1c1b8dac9702648044c",
+    "scripts/sync_drawio_traversal.cjs": "e001713500b33e8cd1b21e22bc809e165be23d7170740128256f845b8594a666",
+    "scripts/test_parser_layout_resources.cjs": "e1b59a4cbcd3ef5a6d8a287e0d3d5a26b1af9da6c645821821825162c7448462"
+  }
+}

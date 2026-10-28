@@ -699,13 +699,15 @@ mxHierarchicalLayout.prototype.getEdgesBetween = function(source, target, direct
  * allVertices - Array of cell paths for the visited cells.
  */
 mxHierarchicalLayout.prototype.traverse = function(vertex, directed, edge, allVertices, currentComp,
-											hierarchyVertices, filledVertexSet)
+											hierarchyVertices, filledVertexSet, depth)
 {
 	if (vertex != null && allVertices != null)
 	{
 		// Has this vertex been seen before in any traversal
 		// And if the filled vertex set is populated, only 
 		// process vertices in that it contains
+		depth = depth || 0;
+		if (depth > 256) throw new Error("Hierarchical layout path limit exceeded (256)");
 		var vertexID = mxObjectIdentity.get(vertex);
 		
 		if ((allVertices[vertexID] == null)
@@ -752,7 +754,7 @@ mxHierarchicalLayout.prototype.traverse = function(vertex, directed, edge, allVe
 					{
 						currentComp = this.traverse(next, directed, edges[i], allVertices,
 							currentComp, hierarchyVertices,
-							filledVertexSet);
+							filledVertexSet, depth + 1);
 					}
 				}
 			}

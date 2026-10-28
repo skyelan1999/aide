@@ -12747,38 +12747,33 @@ mxGraph.prototype.findTreeRoots = function(parent, isolate, invert)
  */
 mxGraph.prototype.traverse = function(vertex, directed, func, edge, visited, inverse)
 {
-	if (func != null && vertex != null)
-	{
-		directed = (directed != null) ? directed : true;
-		inverse = (inverse != null) ? inverse : false;
-		visited = visited || new mxDictionary();
-		
-		if (edge == null || !visited.get(edge))
-		{
-			visited.put(edge, true);
-			var result = func(vertex, edge);
-			
-			if (result == null || result)
-			{
-				var edgeCount = this.model.getEdgeCount(vertex);
-				
-				if (edgeCount > 0)
-				{
-					for (var i = 0; i < edgeCount; i++)
-					{
-						var e = this.model.getEdgeAt(vertex, i);
-						var isSource = this.model.getTerminal(e, true) == vertex;
-						
-						if (!directed || (!inverse == isSource))
-						{
-							var next = this.model.getTerminal(e, !isSource);
-							this.traverse(next, directed, func, e, visited, inverse);
-						}
-					}
-				}
-			}
-		}
-	}
+ if (func == null || vertex == null) return;
+ directed = directed != null ? directed : true;
+ inverse = inverse != null ? inverse : false;
+ visited = visited || new mxDictionary();
+ // Frames preserve recursive order, visitor pruning and live edge lookups.
+ var stack = [{vertex:vertex, edge:edge, entered:false}];
+ while (stack.length)
+ {
+  var frame = stack[stack.length - 1];
+  if (!frame.entered)
+  {
+   if (frame.vertex == null || (frame.edge != null && visited.get(frame.edge))) { stack.pop(); continue; }
+   visited.put(frame.edge, true);
+   var result = func(frame.vertex, frame.edge);
+   if (result != null && !result) { stack.pop(); continue; }
+   frame.entered = true;
+   frame.edgeCount = this.model.getEdgeCount(frame.vertex);
+   frame.index = 0;
+  }
+  if (frame.index >= frame.edgeCount) { stack.pop(); continue; }
+  var e = this.model.getEdgeAt(frame.vertex, frame.index++);
+  var isSource = this.model.getTerminal(e, true) == frame.vertex;
+  if (!directed || (!inverse == isSource))
+  {
+   stack.push({vertex:this.model.getTerminal(e, !isSource), edge:e, entered:false});
+  }
+ }
 };
 
 /**

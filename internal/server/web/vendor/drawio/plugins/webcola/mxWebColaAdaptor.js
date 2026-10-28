@@ -37,6 +37,19 @@ function mxWebColaAdaptor(graph, dimension, movableVertices, options)
  */
 {
   this.graph = graph;
+  // Dense distances, weights and Hessians scale with visible vertex count.
+  var pending = [graph.getModel().root], scanned = new Set(), visibleCount = 0;
+  var budgetView = graph.getView();
+  while (pending.length)
+  {
+    var cell = pending.pop();
+    if (cell == null || scanned.has(cell)) continue;
+    scanned.add(cell);
+    if (cell.isVertex() && budgetView.getState(cell) != null && ++visibleCount > 1000)
+      throw new Error('WebCola visible vertex limit exceeded (1000)');
+    var children = cell.children || [];
+    for (var i = 0; i < children.length; i++) pending.push(children[i]);
+  }
   this.dimension = dimension;
   if (typeof dimension === 'undefined')
   {
@@ -460,19 +473,16 @@ mxWebColaAdaptor.prototype.graphToLayout = function(graph, movableVertices)
     groupToParent[groupId] = parentId;
     groupId++;
   }
-  // here scan newly formed groups if their parent is a child of any of the nodes in any of the groups
+  // Link each group to its direct parent once; preserve child index order.
+  var groupByParent = Object.create(null);
+  for (var i = 0; i < preliminaryGroups.length; i++)
+    groupByParent[preliminaryGroups[i].parentId] = i;
   for (var i = 0; i < preliminaryGroups.length; i++)
   {
-    var parentGroup = preliminaryGroups[i];
-    var parentId = parentGroup.parentId;
-    for (var j = 0; j < preliminaryGroups.length; j++)
-    {
-      if (i == j)
-        continue;
-      var groupParentId = cells[preliminaryGroups[j].parentId].getParent().id;
-      if (parentId == groupParentId)
-        parentGroup.groups.push(j);
-    }
+    var parentId = cells[preliminaryGroups[i].parentId].getParent().id;
+    var parentIndex = groupByParent[parentId];
+    if (parentIndex != null && parentIndex !== i)
+      preliminaryGroups[parentIndex].groups.push(i);
   }
   // finalize groups
   var groups = [];

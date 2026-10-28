@@ -1147,6 +1147,25 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/physics.js"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-traversal-review.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_parser_layout_resources.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_traversal.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-resource-browser-cases.cjs"
       ]
     ],
     "full": [
