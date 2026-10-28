@@ -789,9 +789,9 @@
 			this.createVertexTemplateEntry(s2 + 'misc.ruler2;dx=100;rulerOrient=up;unitSize=10;fontColor=#999999;spacingLeft=96;align=left;verticalAlign=middle;spacingBottom=0;spacingTop=10;spacingRight=0;spacing=0;' + skcl9, 
 					350, 30, '1', 'Horizontal Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'horizontal').join(' ')),
 			this.createVertexTemplateEntry(s2 + 'misc.ruler2;dx=100;rulerOrient=down;unitSize=10;fontColor=#999999;spacingLeft=96;align=left;verticalAlign=middle;spacingBottom=10;spacingTop=0;spacingRight=0;rotation=-90;spacing=0;' + skcl9, 
-					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'horizontal').join(' ')),
+					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'vertical').join(' ')),
 			this.createVertexTemplateEntry(s2 + 'misc.ruler2;dx=100;rulerOrient=up;unitSize=10;fontColor=#999999;spacingLeft=96;align=left;verticalAlign=middle;spacingBottom=0;spacingTop=10;spacingRight=0;rotation=-90;spacing=0;' + skcl9, 
-					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'horizontal').join(' ')),
+					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'vertical').join(' ')),
 					
 			this.addEntry(dt + 'revision table', function()
 			{
@@ -963,9 +963,9 @@
 			this.createVertexTemplateEntry(s2 + 'text.captcha;fontColor=#666666;fontSize=25;fillColor2=#88aaff;' + skcl6 + 'mainText=',
 					150, 50, 'fG2yQ23', 'Captcha', null, null, this.getTagsForStencil(gn, 'captcha', dt).join(' ')),
 			this.createVertexTemplateEntry(s2 + 'text.alphanumeric;linkText=;html=1;fontStyle=4;fontSize=17;fontColor=#0000ff;',
-					450, 50, '0-9 A B C D E F G H I J K L M N O P Q R S T U V X Y Z', 'Alphanumeric', null, null, this.getTagsForStencil(gn, 'alphanumeric', dt).join(' ')),
+					450, 50, '0-9 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z', 'Alphanumeric', null, null, this.getTagsForStencil(gn, 'alphanumeric', dt).join(' ')),
 			this.createVertexTemplateEntry('text;spacingTop=-5;whiteSpace=wrap;html=1;align=left;fontSize=12;fontFamily=Helvetica;fillColor=none;strokeColor=none;', 
-					250, 470, loremText, 'Paragraph of Text', null, null, this.getTagsForStencil(gn, 'peragraph of text', dt).join(' ')),
+					250, 470, loremText, 'Paragraph of Text', null, null, this.getTagsForStencil(gn, 'paragraph of text', dt).join(' ')),
 			
 	 		this.addDataEntry('table', 180, 80, 'Table', '7Zjfb9owEMf/mrxO+bHQ8krYuoftpUzas0sOYs3xRc6xkP71OyemrEDaBKpKZJWCZJ/Ph/392F9F8aIk394ZUWQ/MAXlRV+8KDGI1LbybQJKeaEvUy+ae2Ho888Lv3aMBs2oXwgDmvpMCNsJf4TaQBtpAyXVygXKTBS2SeLBhmYZ5bzMecDNKpMEi0Is7XjFm+BYScLQQj7akM/9JWoSUoNxc5aolChK2RRrMzKp0u+ixg3t/mbX42oGf8MvmVLGYyFH3ILBEGw7N92E3I7vAHMgU3NK5erYjNtWGD8Duc7ctF1MlG1//TR1LyE3nIqnFY0GKnqPlRUVjXy0SiknyqGMZSVzJTR8A5EehGaY1i5EWLiWghW55gMSYe46xu3WP4kiNVj8FGYNu5SVVCpBhZaeRm35Fyg1NQLFM35YssT/FHsx7yzhfrDv82PTDSWoGSSfAlsWREkVlNSXZXgey/Dmcpafj1ha+fkoh37QSZXXTlKoe1iS0Os+V4aviLbZew4nZB+GFlnUlbJHa57JNAVti/L5Wrj1Br2kj16VfjpQeVdsL87gakIRGC2Ij/1Gp+URzqd19iIcdxPuvrfjJ7x9zmNEwCcf9vwu9lw/h/mqW08ud+ubI7SG4TVWzXP9ZZt9hcbdi8PkPK9+Qfczru5Btbe9ure9+F6hbV/Cd6BTXxHu6YdTv6dTx1FPp36D9+rA77jK4X9h1dPRv1YHQS/AY/XqDsCjeavm7v4TVZv+7xesvw==')
 		];

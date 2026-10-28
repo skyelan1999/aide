@@ -133,7 +133,7 @@
 			
 		    this.createVertexTemplateEntry('fillColor=#4DA1F5;strokeColor=none;shadow=1;gradientColor=none;fontSize=14;align=left;spacingLeft=50;fontColor=#ffffff;whiteSpace=wrap;html=1;', 
 		    		1000, 40, 'Architecture: App Engine and Cloud Endpoints', 'Title bar', null, null, this.getTagsForStencil(gn, '', dt + 'title bar').join(' ')),
-		    this.createVertexTemplateEntry('strokeColor=none;shadow=0;gradientColor=none;fontSize=11;align=left;spacing=10;fontColor=#;9E9E9E;verticalAlign=top;spacingTop=100;whiteSpace=wrap;html=1;fillColor=#ffffff;',
+			this.createVertexTemplateEntry('strokeColor=none;shadow=0;gradientColor=none;fontSize=11;align=left;spacing=10;fontColor=#9E9E9E;verticalAlign=top;spacingTop=100;whiteSpace=wrap;html=1;fillColor=#ffffff;',
 		    		300, 350, 'Use this note to call out\nor clarify parts of a diagram', 'Note', null, null, this.getTagsForStencil(gn, '', dt + 'note').join(' ')),
 		    		
 			this.addEntry(dt + 'project', function()
@@ -297,7 +297,7 @@
 		    this.createVertexTemplateEntry(n + 'aspect_ratio', 
 		    		s * 100, s * 92, null, 'Aspect Ratio', null, null, this.getTagsForStencil(gn, '', dt + 'aspect ratio').join(' ')),
 		    this.createVertexTemplateEntry(n + 'scale', 
-		    		s * 100, s * 92, null, 'Check', null, null, this.getTagsForStencil(gn, '', dt + 'check scale aspect ratio').join(' ')),
+					s * 100, s * 92, null, 'Scale', null, null, this.getTagsForStencil(gn, '', dt + 'scale aspect ratio').join(' ')),
 		    this.createVertexTemplateEntry(n + 'big_query', 
 		    		s * 99, s * 100, null, 'Big Query', null, null, this.getTagsForStencil(gn, '', dt + 'big query').join(' ')),
 		    this.createVertexTemplateEntry(n + 'search', 
@@ -512,7 +512,7 @@
 		this.addGCP2ServiceCard('Persistent\nDisk Snapshot', 'persistent_disk_snapshot', 130, 44, dt + 'persistent disk snapshot', fns);
 		this.addGCP2ServiceCard('Persistent\nDisk', 'persistent_disk_snapshot', 110, 44, dt + 'persistent disk', fns);
 		this.addGCP2ServiceCard('Network\nLoad\nBalancer', 'network_load_balancer', 100, 56, dt + 'network load balancer', fns);
-		this.addGCP2ServiceCard('Google\n Network W/\nEdge Cache', 'google_network_edge_cache', 120, 56, dt + 'google network witch edge cache', fns);
+		this.addGCP2ServiceCard('Google\n Network W/\nEdge Cache', 'google_network_edge_cache', 120, 56, dt + 'google network with edge cache', fns);
 		this.addGCP2ServiceCard('Push\nNotification\nService', 'push_notification_service', 110, 56, dt + 'push notification service', fns);
 		this.addGCP2ServiceCard('Blank One Line', 'blank', 140, 44, dt + 'blank one line', fns);
 
@@ -568,7 +568,7 @@
 		this.addGCP2UserProductCardSet('Kubernetes\nEngine', 140, 180, 60, 26, 30, dt + 'kubernetes engine gke', fns, icon);
 
 		icon = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiB2aWV3Qm94PSIwIDAgMjAgMjAiPiYjeGE7CTxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+JiN4YTsJLnN0MHtmaWxsOiM0Mjg1ZjQ7fSYjeGE7CTwvc3R5bGU+JiN4YTsJPHBhdGggY2xhc3M9InN0MCIgZD0iTTEwIDBhMTAgMTAgMCAxIDAgMTAgMTBoMEExMCAxMCAwIDAgMCAxMCAwem0wIDE4YTggOCAwIDAgMS00LjE4LTEuMThsMy41OC0yLjA3aDB2LTQuNUw1LjUxIDh2NC41MmwyLjc1IDEuNTktMy40NiAyQTggOCAwIDAgMSA2LjA4IDN2NGgwTDEwIDkuMjggMTMuOSA3IDEwIDQuNzcgNy4yNCA2LjM2VjIuNDdhOCA4IDAgMCAxIDEwLjMxIDQuNyA4LjEgOC4xIDAgMCAxIC41MSAyLjgzdi4wN0wxNC40NiA4aDBsLTMuOSAyLjI2djQuNTFsMy45LTIuMjVWOS4zNGwzLjQ1IDJBOCA4IDAgMCAxIDEwIDE4eiIvPiYjeGE7PC9zdmc+;';
-		this.addGCP2UserProductCardSet('Container-\nOptimized OS', 150, 210, 60, 30, 30, dt + 'container optimized os operating sysyem', fns, icon);
+		this.addGCP2UserProductCardSet('Container-\nOptimized OS', 150, 210, 60, 30, 30, dt + 'container optimized os operating system', fns, icon);
 
 		icon = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjM2NS40NjQ5OTY3NzA0MjQ5MyIgaGVpZ2h0PSIzNzkuMjIyOTk0NDYzNTc3OTUiIHZpZXdCb3g9IjAgMCA5Ni42OTU5OTkxNDU1MDc4MSAxMDAuMzM1OTk4NTM1MTU2MjUiPiYjeGE7PHN0eWxlIHR5cGU9InRleHQvY3NzIj4mI3hhOwkuc3Qwe2ZpbGw6IzQyODVmNDt9JiN4YTsJLnN0MXtmaWxsOiNhZWNiZmE7fSYjeGE7PC9zdHlsZT4mI3hhOwk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMjkuNzk0IDEwMC4zMzZMNDYuOTIgNTAuMTY4aDQ5Ljc3NnpNMCA5OS42NzFsMTIuOTc2LTQ5LjUwMkgyOS4yMkwxNi44OTcgOTIuMDU0eiIvPiYjeGE7CTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0yOS43OTQgMEw0Ni45MiA1MC4xNjhoNDkuNzc2ek0wIC42NjZsMTIuOTc2IDQ5LjUwMkgyOS4yMkwxNi44OTcgOC4yODN6Ii8+JiN4YTs8L3N2Zz4=;';
 		this.addGCP2UserProductCardSet('Cloud Run', 140, 140, 60, 30, 30, dt + 'run', fns, icon);
@@ -965,7 +965,7 @@
 		this.addGCP2UserProductCardSet('Cloud\nBuild', 110, 140, 60, 26, 30, dt + 'build', fns, icon);
 
 		icon = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjQyNCIgaGVpZ2h0PSI0MjQiIHZpZXdCb3g9IjAgMCA0MjQgNDI0Ij4mI3hhOwk8c3R5bGUgdHlwZT0idGV4dC9jc3MiPiYjeGE7CS5zdDB7ZmlsbDojNDI4NWY0O30mI3hhOwk8L3N0eWxlPiYjeGE7CTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik00MjQgMHY0MjRIMFYwek0yMTIgOTcuODQ2Yy0zNy44ODQgMC03MC4xNjQgMjMuOTktODIuNDc4IDU3LjYwOGgwbC0zLjQwMy4wMDFjLTQyLjYzNCAwLTc3LjE5NiAzNC41NjItNzcuMTk2IDc3LjE5NnMzNC41NjIgNzcuMTk2IDc3LjE5NiA3Ny4xOTZoMCAxNzEuNzYzYzQyLjYzNCAwIDc3LjE5Ni0zNC41NjIgNzcuMTk2LTc3LjE5NnMtMzQuNTYyLTc3LjE5Ni03Ny4xOTYtNzcuMTk2aDBsLTMuNDAzLS4wMDFDMjgyLjE2NCAxMjEuODM3IDI0OS44ODQgOTcuODQ2IDIxMiA5Ny44NDZ6IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz4mI3hhOzwvc3ZnPg==;';
-		this.addGCP2UserProductCardSet('Gradle App\nEnginge Plugin', 160, 220, 60, 30, 30, dt + 'gradle app engine plugin', fns, icon);
+		this.addGCP2UserProductCardSet('Gradle App\nEngine Plugin', 160, 220, 60, 30, 30, dt + 'gradle app engine plugin', fns, icon);
 
 		icon = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjExLjI1OTk5OTI3NTIwNzUyIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIHZpZXdCb3g9IjAgMCAyMCAxMS4yNTk5OTkyNzUyMDc1MiI+JiN4YTsJPHN0eWxlIHR5cGU9InRleHQvY3NzIj4mI3hhOwkuc3Qwe2ZpbGw6IzQyODVmNDt9JiN4YTsJLnN0MXtmaWxsOiM2NjlkZjY7fSYjeGE7CS5zdDJ7ZmlsbDojYWVjYmZhO30mI3hhOwk8L3N0eWxlPiYjeGE7CTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik00LjY4IDEuNDJIMi40MkwwIDUuNjdsMi40MiA0LjI2aDIuMjZMMi4yNyA1LjY3eiIvPiYjeGE7CTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0wIDUuNjdsMS4xMSAxLjk3IDEuNDYtMS40NS0uMy0uNTJ6Ii8+JiN4YTsJPHBhdGggY2xhc3M9InN0MiIgZD0iTTEzIDBINy4xMkwzLjgxIDUuNjNsMy4zMSA1LjU5SDEzbDMuMjktNS41OXptLTIuOTMgOC4zNmEyLjY0IDIuNjQgMCAxIDEgMi42Ni0yLjY0IDIuNjUgMi42NSAwIDAgMS0yLjY2IDIuNjR6TTIuNDIgMS40MkwwIDUuNjlsMS4xMSAxLjk3IDEuMTYtMS45NyAyLjQxLTQuMjd6Ii8+JiN4YTsJPHBhdGggY2xhc3M9InN0MSIgZD0iTTEzIC4wOGgwbC0xLjcgMy4zM2EyLjY2IDIuNjYgMCAwIDEtMS4yNSA1IDIuNjIgMi42MiAwIDAgMS0xLjE4LS4yN2wtMS43NSAzLjEySDEzbDMuMjktNS42M3ptMi4zMiA5Ljg1aDIuMjdMMjAgNS42N2wtMi40MS00LjI1aC0yLjI3bDIuNDEgNC4yNXoiPiYjeGE7CTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yMCA1LjY3TDE4Ljg5IDMuN2wtMS40NiAxLjQ2LjMuNTF6Ii8+JiN4YTsJPHBhdGggY2xhc3M9InN0MiIgZD0iTTE3LjU5IDkuOTNMMjAgNS42NWwtMS4xMS0xLjk3LTEuMTYgMS45Ny0yLjQxIDQuMjh6Ii8+JiN4YTs8L3BhdGg+PC9zdmc+;';
 		this.addGCP2UserProductCardSet('Cloud Tools for\nVisual Studio', 160, 230, 60, 30, 16, dt + 'tools for visual studio', fns, icon);
@@ -1326,7 +1326,7 @@
 		this.addGCP2UserDeviceCard('Game', 'game', 1, 0.54, 0, dt + 'game', fns);
 		this.addGCP2UserDeviceCard('Gateway', 'gateway_icon', 1, 0.44, 0, dt + 'gateway icon', fns);
 		this.addGCP2UserDeviceCard('Laptop', 'laptop', 1, 0.66, 0, dt + 'laptop', fns);
-		this.addGCP2UserDeviceCard('Lightbulb', 'lightbulb', 0.7, 1, 0, dt + 'lighbulb', fns);
+		this.addGCP2UserDeviceCard('Lightbulb', 'lightbulb', 0.7, 1, 0, dt + 'lightbulb', fns);
 		this.addGCP2UserDeviceCard('List', 'list', 0.89, 1, 0, dt + 'list', fns);
 		this.addGCP2UserDeviceCard('Live', 'live', 0.74, 1, 0, dt + 'live', fns);
 		this.addGCP2UserDeviceCard('Local-Compute', 'compute_engine_icon', 1, 0.89, 15, dt + 'local compute', fns);
@@ -1360,7 +1360,7 @@
 		this.addGCP2ProductCardSet('Kubernetes', 'kubernetes_logo', 1, 0.97, 130, 130, dt + 'kubernetes', fns);
 		this.addGCP2ProductCardSet('TensorFlow', 'tensorflow_logo', 0.94, 1, 130, 130, dt + 'tensorflow', fns);
 		this.addGCP2ProductCardSet('Forseti\nSecurity', 'forseti_logo', 0.98, 1, 110, 150, dt + 'forseti', fns);
-		this.addGCP2ProductCardSet('Istio', 'istio_logo', 0.67, 1, 80, 90, dt + 'forseti', fns);
+		this.addGCP2ProductCardSet('Istio', 'istio_logo', 0.67, 1, 80, 90, dt + 'istio', fns);
 		this.addGCP2ProductCardSet('Firebase', 'firebase', 0.72, 1, 100, 100, dt + 'firebase', fns);
 		this.addGCP2ProductCardSet('Fastly', 'fastly', 1, 0.39, 100, 100, dt + 'fastly', fns);
 		this.addGCP2ProductCardSet('AdMob', 'admob', 1, 1, 110, 110, dt + 'admob', fns);
@@ -1386,7 +1386,7 @@
 		var sb = this;
 		var s = 1;
 		var n = 'editableCssRules=.*;sketch=0;html=1;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;spacingTop=-6;fontSize=11;fontStyle=1;fontColor=#999999;shape=image;aspect=fixed;imageAspect=0;';
-		var dt = 'gcp google cloud platform icons icon compute ';
+		var dt = 'gcp google cloud platform icons icon ai and machine learning ';
 		var gn = 'mxgraph.gcp2';
 		var fns = [];
 		
@@ -1416,7 +1416,7 @@
 		    this.createVertexTemplateEntry(n + 'image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjE4IiB2aWV3Qm94PSIwIDAgMjAgMTgiPiYjeGE7CTxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+JiN4YTsJLnN0MHtmaWxsOiM0Mjg1ZjQ7fSYjeGE7CS5zdDF7ZmlsbDojNjY5ZGY2O2ZpbGwtcnVsZTpldmVub2RkfSYjeGE7CTwvc3R5bGU+JiN4YTsJPHBhdGggY2xhc3M9InN0MCIgZD0iTTE1LjkxIDcuMmgtMS44MkwxMCAxOGgxLjgybDEtMi43aDQuMzJsMSAyLjdIMjB6bS0yLjM5IDYuM0wxNSA5LjZsMS40OCAzLjl6Ii8+JiN4YTsJPHBhdGggY2xhc3M9InN0MSIgZD0iTTEwLjc5IDExLjc3TDguNDggOS41MWgwYTE1LjYyIDE1LjYyIDAgMCAwIDMuNC01LjkxaDIuNjdWMS44SDguMThWMEg2LjM2djEuOEgwdjEuNzloMTAuMTVhMTQuMDYgMTQuMDYgMCAwIDEtMi44OCA0LjgyIDE0LjU1IDE0LjU1IDAgMCAxLTIuMS0zSDMuMzVhMTYgMTYgMCAwIDAgMi43MSA0LjFMMS40NCAxNGwxLjI5IDEuMyA0LjU0LTQuNSAyLjgzIDIuOHoiLz4mI3hhOzwvc3ZnPg==;', 
 		    		s * 42, s * 38, 'Cloud\nTranslation API', null, null, null, this.getTagsForStencil(gn, '', dt + 'cloud translation api application programming interface').join(' ')),
 		    this.createVertexTemplateEntry(n + 'image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMjAgMTYiPiYjeGE7CTxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+JiN4YTsJLnN0MHtmaWxsOiM2NjlkZjY7fSYjeGE7CS5zdDF7ZmlsbDojYWVjYmZhO30mI3hhOwkuc3Qye2ZpbGw6IzQyODVmNDt9JiN4YTsJPC9zdHlsZT4mI3hhOwk8ZyBjbGFzcz0ic3QwIj4mI3hhOwkJPHBhdGggZD0iTTEwIDE2TDAgOGg0bDYgNC45OXoiLz4mI3hhOwkJPHBhdGggZD0iTTIwIDhsLTEwIDh2LTMuMDFMMTYgOHoiLz4mI3hhOwk8L2c+JiN4YTsJPGcgY2xhc3M9InN0MSI+JiN4YTsJCTxwYXRoIGQ9Ik0xMCAzLjAxTDQgOEgwbDEwLTh6Ii8+JiN4YTsJCTxwYXRoIGQ9Ik0yMCA4TDEwIDB2My4wMUwxNiA4eiIvPiYjeGE7CTwvZz4mI3hhOwk8Y2lyY2xlIGNsYXNzPSJzdDIiIGN4PSIxMCIgY3k9IjgiIHI9IjIiLz4mI3hhOzwvc3ZnPg==;', 
-		    		s * 42, s * 34, 'Cloud\nVision API', null, null, null, this.getTagsForStencil(gn, '', dt + 'cloud translation api application programming interface').join(' ')),
+					s * 42, s * 34, 'Cloud\nVision API', null, null, null, this.getTagsForStencil(gn, '', dt + 'cloud vision api application programming interface').join(' ')),
 		    this.createVertexTemplateEntry(n + 'image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjM3Ny42MDkwNzg2ODcyMTAwNiIgaGVpZ2h0PSIzMDYuMjk2NTE2MDQzNTQ3NzQiIHZpZXdCb3g9IjAuMDE5MDAwMDAxMjUxNjk3NTQgMC4yMzIwMDAwMDgyMjU0NDA5OCA5OS45MDkwMDQyMTE0MjU3OCA4MS4wNDEwMDAzNjYyMTA5NCI+JiN4YTs8c3R5bGUgdHlwZT0idGV4dC9jc3MiPiYjeGE7CS5zdDB7ZmlsbDojNjY5ZGY2O30mI3hhOwkuc3Qxe2ZpbGw6I2FlY2JmYTt9JiN4YTsJLnN0MntmaWxsOiM0Mjg1ZjQ7fSYjeGE7PC9zdHlsZT4mI3hhOwk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMjUuMTgzLjIzMkw3LjM1MyAzNy4zNjYuMDQ4IDM3LjMzbC0uMDI5IDYgMjkuNDkyLjE0NmMxLjA4NiA2LjE1IDYuNDk5IDEwLjg3NiAxMi45NDQgMTAuODc2IDcuMjE4IDAgMTMuMTQ0LTUuOTI3IDEzLjE0NC0xMy4xNDRzLTUuOTI3LTEzLjE0NS0xMy4xNDQtMTMuMTQ1Yy01LjkyNCAwLTEwLjk3NiAzLjk5My0xMi41OTcgOS40MTVsLTEyLjU0NC0uMDYyTDMwLjg0NSA5LjIzMmgzMC4xMjl2LTlIMjUuMTgzem0xNy4yNzEgMzQuODNhNi4wOSA2LjA5IDAgMCAxIDYuMTQ1IDYuMTQ1IDYuMDkgNi4wOSAwIDAgMS02LjE0NSA2LjE0NGMtMi42MTYgMC00LjgwOS0xLjU3My01LjcwNi0zLjg0bDMuMjE0LjAxNi4wMjktNi0yLjQ3My0uMDEyYzEuMTEyLTEuNDk2IDIuODk2LTIuNDUzIDQuOTM2LTIuNDUzek0xNy44ODIgNDUuNzExbC04LjA4NiAzLjk1MSAxNS40NDEgMzEuNjExaDM1LjczNnYtOUgzMC44NThMMTcuODgyIDQ1LjcxMXoiLz4mI3hhOwk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNjAuOTc0IDgxLjI3M2gzOC45NTRWNjAuOTIyaC05LjAwM3YxMS4zNTJINjAuOTc0em0wLTcyLjA0MWgyOS45NTF2MTEuNzU1aDkuMDAzVi4yMzJINjAuOTc0eiIvPiYjeGE7CTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik03NS43OTYgMjAuOTg3djguOTk5aDI0LjEzMnYtOC45OTl6TTYxLjExIDM1LjkyOHY5aDM4LjgxN3YtOXpNNzEuMjc0IDUxLjkxdjkuMDEyaDI4LjY1M1Y1MS45MXoiLz4mI3hhOzwvc3ZnPg==;', 
 		    		s * 42, s * 34, 'Data\nLabeling', null, null, null, this.getTagsForStencil(gn, '', dt + 'data labeling').join(' ')),
 		    this.createVertexTemplateEntry(n + 'image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjIwIiB2aWV3Qm94PSIwIDAgMTggMjAiPiYjeGE7CTxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+JiN4YTsJLnN0MHtmaWxsOiM0Mjg1ZjQ7fSYjeGE7CS5zdDF7ZmlsbDojNjY5ZGY2O30mI3hhOwk8L3N0eWxlPiYjeGE7CTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04IDBoMnYyMEg4ek00IDZoMnY4SDR6bTggMGgydjhoLTJ6TTAgM2gydjE0SDB6bTE2IDBoMnYxNGgtMnoiLz4mI3hhOwk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNOCAwaDJ2MTBIOHpNNCA2aDJ2NEg0em04IDBoMnY0aC0yek0wIDNoMnY3SDB6bTE2IDBoMnY3aC0yeiIvPiYjeGE7PC9zdmc+;', 
@@ -1508,7 +1508,7 @@
 		var sb = this;
 		var s = 1;
 		var n = 'editableCssRules=.*;sketch=0;html=1;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;spacingTop=-6;fontSize=11;fontStyle=1;fontColor=#999999;shape=image;aspect=fixed;imageAspect=0;';
-		var dt = 'gcp google cloud platform icons icon compute ';
+		var dt = 'gcp google cloud platform icons icon data analytics ';
 		var gn = 'mxgraph.gcp2';
 		var fns = [];
 		
@@ -1955,7 +1955,7 @@
 		var sb = this;
 		var s = 1;
 		var n = 'editableCssRules=.*;sketch=0;html=1;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;spacingTop=-6;fontSize=11;fontStyle=1;fontColor=#999999;shape=image;aspect=fixed;imageAspect=0;';
-		var dt = 'gcp google cloud platform icons icon security ';
+		var dt = 'gcp google cloud platform icons icon migration ';
 		var gn = 'mxgraph.gcp2';
 		var fns = [];
 		
@@ -1990,7 +1990,7 @@
 		var sb = this;
 		var s = 1;
 		var n = 'editableCssRules=.*;sketch=0;html=1;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;spacingTop=-6;fontSize=11;fontStyle=1;fontColor=#999999;shape=image;aspect=fixed;imageAspect=0;';
-		var dt = 'gcp google cloud platform icons icon security ';
+		var dt = 'gcp google cloud platform icons icon hybrid and multi cloud ';
 		var gn = 'mxgraph.gcp2';
 		var fns = [];
 		
@@ -2021,7 +2021,7 @@
 		var sb = this;
 		var s = 1;
 		var n = 'editableCssRules=.*;sketch=0;html=1;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;spacingTop=-6;fontSize=11;fontStyle=1;fontColor=#999999;shape=image;aspect=fixed;imageAspect=0;';
-		var dt = 'gcp google cloud platform icons icon security ';
+		var dt = 'gcp google cloud platform icons icon open source ';
 		var gn = 'mxgraph.gcp2';
 		var fns = [];
 		
@@ -2334,7 +2334,7 @@
 				    storageCell.vertex = true;
 			    	bg.insert(storageCell);
 				    
-				    var storageNumCell = new mxCell('123', 
+					var storageNumCell = new mxCell(storageNum,
 				    		new mxGeometry(0, 0, 25, 18), 'sketch=0;connectable=0;rounded=1;arcSize=50;part=1;fillColor=#3B8CF0;strokeColor=none;html=1;fontColor=#ffffff;spacingTop=-2;');
 				    storageNumCell.geometry.relative = true;
 				    storageNumCell.geometry.offset = new mxPoint(81, 69);

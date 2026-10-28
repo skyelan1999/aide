@@ -45,7 +45,6 @@
 			this.createVertexTemplateEntry(s0 + s + 'monitor;', 80, 65, '', 'Monitor', null, null, this.getTagsForStencil(gn, 'monitor', dt).join(' ')),
 			this.createVertexTemplateEntry(s0 + s + 'nas_filer;', 100, 35, '', 'NAS Filer', null, null, this.getTagsForStencil(gn, 'NAS Filer', dt).join(' ')),
 			this.createVertexTemplateEntry(s0 + s + 'patch_panel;', 100, 35, '', 'Patch Panel', null, null, this.getTagsForStencil(gn, 'patch_panel', dt).join(' ')),
-			this.createVertexTemplateEntry(s0 + s + 'pc;', 100, 70, '', 'PC', null, null, this.getTagsForStencil(gn, 'pc', dt).join(' ')),
 			this.createVertexTemplateEntry(s0 + s + 'phone_1;', 100, 70, '', 'Phone', null, null, this.getTagsForStencil(gn, 'phone_1', dt).join(' ')),
 			this.createVertexTemplateEntry(s0 + s + 'phone_2;', 100, 90, '', 'Phone', null, null, this.getTagsForStencil(gn, 'phone_2', dt).join(' ')),
 			this.createVertexTemplateEntry(s0 + s + 'printer;', 100, 100, '', 'Printer', null, null, this.getTagsForStencil(gn, 'printer', dt).join(' ')),

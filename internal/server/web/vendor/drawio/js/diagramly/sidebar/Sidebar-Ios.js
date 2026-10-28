@@ -127,7 +127,7 @@
 				return sb.createVertexTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Button bar');
 			}),
 		    
-			this.addEntry(null, function()
+			this.addEntry(dt + 'app bar portrait', function()
 			{
 			   	var bg = new mxCell('', new mxGeometry(0, 0, 175, 15), s4 + 'iAppBar;fillColor2=#eeeeee;fillColor3=#999999;signalColor=#0099ff;statusIconColor=#999999;statusIconAccentColor=#cccccc;compassNeedleColor=#990000;compassNeedleStroke=#333333;callBtnGradient=#E2FFEB;callBtnColor=#008215;strokeWidth=1;sketch=0;');
 			   	bg.vertex = true;
@@ -141,7 +141,7 @@
 				return sb.createVertexTemplateFromCells([bg], bg.geometry.width, bg.geometry.height, 'App bar (portrait)');
 			}),
 		
-			this.addEntry(null, function()
+			this.addEntry(dt + 'app bar landscape', function()
 			{
 			   	var bg = new mxCell('', new mxGeometry(0, 0, 280, 15), s4 + 'iAppBar;fillColor2=#eeeeee;fillColor3=#999999;signalColor=#0099ff;statusIconColor=#999999;statusIconAccentColor=#cccccc;compassNeedleColor=#990000;compassNeedleStroke=#333333;callBtnGradient=#E2FFEB;callBtnColor=#008215;strokeWidth=1;sketch=0;');
 			   	bg.vertex = true;
@@ -155,7 +155,7 @@
 				return sb.createVertexTemplateFromCells([bg], bg.geometry.width, bg.geometry.height, 'App bar (landscape)');
 			}),
 				
-			this.addEntry(null, function()
+			this.addEntry(dt + 'top bar', function()
 			{
 			   	var bg = new mxCell('', new mxGeometry(0, 0, 175, 15), s4 + 'iTopBar2;opacity=50;fillColor=#999999;strokeColor=#cccccc;strokeWidth=1;sketch=0;');
 			   	bg.vertex = true;
@@ -169,7 +169,7 @@
 				return sb.createVertexTemplateFromCells([bg], bg.geometry.width, bg.geometry.height, 'Top bar');
 			}),
 			
-			this.addEntry(null, function()
+			this.addEntry(dt + 'top bar locked', function()
 			{
 			   	var bg = new mxCell('', new mxGeometry(0, 0, 175, 15), s4 + 'iTopBarLocked;fillColor2=#000000;statusIconColor=#cccccc;strokeWidth=1;sketch=0;');
 			   	bg.vertex = true;
@@ -342,7 +342,7 @@
 			this.createVertexTemplateEntry(s3 + 'iPin;fillColor2=#ffa500;fillColor3=#885000;strokeColor=#997000;pinStemColor=#666666;', sizeX * 0.05, sizeY * 0.0625, '', 'Pin', null, null, null),
 			this.createVertexTemplateEntry(s + 'iVideoControls;barPos=20;fillColor2=#000000;iconColor=#ffffff;barGradient=#444444;barColor=#ffffff;progressGradient=#96D1FF;progressColor=#003377;sketch=0;', sizeX * 0.87, sizeY * 0.125, '', 'Video controls', null, null, null),
 
-			this.addEntry(null, function()
+			this.addEntry(dt + 'url bar', function()
 			{
 			   	var bg = new mxCell('Page title', new mxGeometry(0, 0, 175, 30), s4 + 'iURLBar;verticalAlign=top;fontSize=8;spacingTop=-5;fillColor2=#cccccc;fillColor3=#003377;fieldColor=#ffffff;fieldStroke=#008cff;cancelBtnGradient=#cccccc;cancelBtnColor=#001144;iconBgColor=#bbbbbb;iconColor=#ffffff;align=center;sketch=0;whiteSpace=wrap;');
 			   	bg.vertex = true;
@@ -364,7 +364,7 @@
 			this.createVertexTemplateEntry(s + 'iIconGrid;gridSize=3,3;', sizeX * 0.75, sizeY * 0.375, '', 'Icon grid', null, null, null),
 			this.createVertexTemplateEntry(s2 + 'iCopy;fillColor=#000000;buttonText=;fontColor=#ffffff;spacingBottom=6;fontSize=9;fillColor2=#000000;fillColor3=#ffffff;align=center;sketch=0;whiteSpace=wrap;', sizeX * 0.2, sizeY * 0.06875, 'Copy', 'Copy', null, null, null),
 			
-			this.addEntry(null, function()
+			this.addEntry(dt + 'copy area', function()
 			{
 			   	var bg = new mxCell('Copy', new mxGeometry(sizeX * 0.05, 0, sizeX * 0.2, sizeY * 0.06875), s4 + 'iCopy;fillColor=#000000;buttonText=;fontColor=#ffffff;spacingBottom=6;fontSize=9;fillColor2=#000000;fillColor3=#ffffff;align=center;sketch=0;whiteSpace=wrap;');
 			   	bg.vertex = true;

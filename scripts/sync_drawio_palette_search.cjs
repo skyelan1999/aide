@@ -2,7 +2,7 @@
 // Regenerate only reviewed palette assignments, preserving unrelated bundles.
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {assignment}=require('./test_drawio_layout_fixes.cjs');
-const methods=[...require('./test_drawio_palette_search.cjs').methods,...require('./drawio-aws-search-review.cjs').methods,...require('./drawio-sidebar-metadata-review.cjs').methods,...require('./drawio-state-search-review.cjs').methods,...require('./drawio-bpmn-palette-review.cjs').methods,...require('./drawio-bootstrap-palette-review.cjs').methods,...require('./drawio-caption-metadata-review.cjs').c4Methods,...require('./drawio-fifty-palette-review.cjs').patchMethods];
+const methods=[...require('./test_drawio_palette_search.cjs').methods,...require('./drawio-aws-search-review.cjs').methods,...require('./drawio-sidebar-metadata-review.cjs').methods,...require('./drawio-state-search-review.cjs').methods,...require('./drawio-bpmn-palette-review.cjs').methods,...require('./drawio-bootstrap-palette-review.cjs').methods,...require('./drawio-caption-metadata-review.cjs').c4Methods,...require('./drawio-fifty-palette-review.cjs').patchMethods,...require('./drawio-enterprise-palette-review.cjs').patchMethods];
 const tool=process.env.AIDE_TERSER_MODULE||'terser';
 assert.equal(require(tool+'/package.json').version,'5.39.0');
 const base='internal/server/web/vendor/drawio/js/';

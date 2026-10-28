@@ -747,7 +747,7 @@
 			this.createVertexTemplateEntry(s + 'retail;fillColor=none;strokeColor=none;', w * 0.75, h, '', 'Retail', null, null, this.getTagsForStencil(gn, 'retail', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'manufacturing;fillColor=none;strokeColor=none;', w, h, '', 'Manufacturing', null, null, this.getTagsForStencil(gn, 'manufacturing', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'health;fillColor=none;strokeColor=none;', w, h * 0.84, '', 'Health', null, null, this.getTagsForStencil(gn, 'health', dt).join(' ')),
-			this.createVertexTemplateEntry(s + 'philantrophy;fillColor=none;strokeColor=none;', w * 0.83, h, '', 'Philantrophy', null, null, this.getTagsForStencil(gn, 'philantrophy', dt).join(' ')),
+			this.createVertexTemplateEntry(s + 'philantrophy;fillColor=none;strokeColor=none;', w * 0.83, h, '', 'Philanthropy', null, null, this.getTagsForStencil(gn, 'philanthropy', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'non_profit;fillColor=none;strokeColor=none;', w, h * 0.93, '', 'Non-profit', null, null, this.getTagsForStencil(gn, 'non profit', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'education;fillColor=none;strokeColor=none;', w, h * 0.67, '', 'Education', null, null, this.getTagsForStencil(gn, 'education', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'sustainability;fillColor=none;strokeColor=none;', w, h, '', 'Sustainability', null, null, this.getTagsForStencil(gn, 'sustainability', dt).join(' ')),
@@ -764,7 +764,7 @@
 			this.createVertexTemplateEntry(s + 'retail2;fillColor=none;strokeColor=none;', w, h, '', 'Retail', null, null, this.getTagsForStencil(gn, 'retail', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'manufacturing2;fillColor=none;strokeColor=none;', w, h, '', 'Manufacturing', null, null, this.getTagsForStencil(gn, 'manufacturing', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'health2;fillColor=none;strokeColor=none;', w, h, '', 'Health', null, null, this.getTagsForStencil(gn, 'health', dt).join(' ')),
-			this.createVertexTemplateEntry(s + 'philantrophy2;fillColor=none;strokeColor=none;', w, h, '', 'Philantrophy', null, null, this.getTagsForStencil(gn, 'philantrophy', dt).join(' ')),
+			this.createVertexTemplateEntry(s + 'philantrophy2;fillColor=none;strokeColor=none;', w, h, '', 'Philanthropy', null, null, this.getTagsForStencil(gn, 'philanthropy', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'non_profit2;fillColor=none;strokeColor=none;', w, h, '', 'Non-profit', null, null, this.getTagsForStencil(gn, 'non profit', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'education2;fillColor=none;strokeColor=none;', w, h, '', 'Education', null, null, this.getTagsForStencil(gn, 'education', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'sustainability2;fillColor=none;strokeColor=none;', w, h, '', 'Sustainability', null, null, this.getTagsForStencil(gn, 'sustainability', dt).join(' '))

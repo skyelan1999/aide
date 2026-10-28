@@ -219,7 +219,7 @@
 			this.createVertexTemplateEntry(st + 'SAP_Credential_Store',
 				 s * 50, s * 50, '', 'SAP Credential Store', null, null, this.getTagsForStencil(gn, 'credential store', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Cloud_Logging',
-				 s * 50, s * 50, '', 'SAP_Cloud_Logging', null, null, this.getTagsForStencil(gn, 'cloud logging', dt).join(' ')),
+				 s * 50, s * 50, '', 'SAP Cloud Logging', null, null, this.getTagsForStencil(gn, 'cloud logging', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Monitoring_service_for_SAP_BTP',
 				 s * 50, s * 50, '', 'SAP Monitoring service for SAP BTP', null, null, this.getTagsForStencil(gn, 'monitoring service for btp', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Master_Data_Integration',
@@ -289,7 +289,7 @@
 			this.createVertexTemplateEntry(st + 'SAP_Integration_Suite_-_Advanced_Event_Mesh',
 				 s * 50, s * 50, '', 'Advanced Event Mesh', null, null, this.getTagsForStencil(gn, 'advanced event mesh', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Integration_Suite_-_API_Managment',
-				 s * 50, s * 50, '', 'API Managment', null, null, this.getTagsForStencil(gn, 'api application programming interface managment', dt).join(' ')),
+				 s * 50, s * 50, '', 'API Management', null, null, this.getTagsForStencil(gn, 'api application programming interface management', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Integration_Suite_-_Cloud_Integration',
 				 s * 50, s * 50, '', 'Cloud Integration', null, null, this.getTagsForStencil(gn, 'cloud integration', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Integration_Suite_-_Data_Space_Integration',
@@ -313,7 +313,7 @@
 			this.createVertexTemplateEntry(st + 'SAP_Integration_Suite',
 				 s * 50, s * 50, '', 'SAP Integration Suite', null, null, this.getTagsForStencil(gn, 'integration suite', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Business_Accelerator_Hub',
-				 s * 50, s * 50, '', 'SAP_Business_Accelerator_Hub', null, null, this.getTagsForStencil(gn, 'business accelerator hub', dt).join(' ')),
+				 s * 50, s * 50, '', 'SAP Business Accelerator Hub', null, null, this.getTagsForStencil(gn, 'business accelerator hub', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'API_Business_Hub_Enterprise',
 				 s * 50, s * 50, '', 'API Business Hub Enterprise', null, null, this.getTagsForStencil(gn, 'api application programming interface business hub enterprise', dt).join(' '))
 		]);
@@ -353,7 +353,7 @@
 			this.createVertexTemplateEntry(st + 'Application_Frontend_Service',
 				 s * 50, s * 50, '', 'Application Frontend Service', null, null, this.getTagsForStencil(gn, 'application frontend service', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'HTML5_App_Repository',
-				 s * 50, s * 50, '', 'HTML5_App_Repository', null, null, this.getTagsForStencil(gn, 'html5 app repository', dt).join(' ')),
+				 s * 50, s * 50, '', 'HTML5 App Repository', null, null, this.getTagsForStencil(gn, 'html5 app repository', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'UI5_flexibility_for_key_users',
 				 s * 50, s * 50, '', 'UI5 flexibility for key users', null, null, this.getTagsForStencil(gn, 'ui5 flexibility for key users', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_Mobile_Services',
@@ -407,7 +407,7 @@
 			this.createVertexTemplateEntry(st + 'SAP_Digital_Assistant',
 				 s * 50, s * 50, '', 'SAP Digital Assistant', null, null, this.getTagsForStencil(gn, 'sap digital assistant', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_AI_Core',
-				 s * 50, s * 50, '', 'SAP_AI_Core', null, null, this.getTagsForStencil(gn, 'ai core artificial intelligence', dt).join(' ')),
+				 s * 50, s * 50, '', 'SAP AI Core', null, null, this.getTagsForStencil(gn, 'ai core artificial intelligence', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'Invoice_Object_Recommendation2',
 				 s * 50, s * 50, '', 'Invoice Object Recommendation', null, null, this.getTagsForStencil(gn, 'invoice object recommendation', dt).join(' ')),
 			this.createVertexTemplateEntry(st + 'SAP_AI_Launchpad',
@@ -955,7 +955,7 @@
 			   	edge2.geometry.setTerminalPoint(new mxPoint(15, 70), true);
 			   	edge2.geometry.setTerminalPoint(new mxPoint(80, 70), false);
 				bg.insert(edge2);
-			    var label2 = new mxCell('Description #1', new mxGeometry(90, 60, 90, 20), 'part=1;fillColor=none;strokeColor=none;align=left;fontSize=10;fontColor=#556B82;');
+				var label2 = new mxCell('Description #2', new mxGeometry(90, 60, 90, 20), 'part=1;fillColor=none;strokeColor=none;align=left;fontSize=10;fontColor=#556B82;');
 		    	label2.vertex = true;
 				bg.insert(label2);
 				
@@ -965,7 +965,7 @@
 			   	edge3.geometry.setTerminalPoint(new mxPoint(15, 90), true);
 			   	edge3.geometry.setTerminalPoint(new mxPoint(80, 90), false);
 				bg.insert(edge3);
-			    var label3 = new mxCell('Description #1', new mxGeometry(90, 80, 90, 20), 'part=1;fillColor=none;strokeColor=none;align=left;fontSize=10;fontColor=#556B82;');
+				var label3 = new mxCell('Description #3', new mxGeometry(90, 80, 90, 20), 'part=1;fillColor=none;strokeColor=none;align=left;fontSize=10;fontColor=#556B82;');
 		    	label3.vertex = true;
 				bg.insert(label3);
 				
@@ -975,7 +975,7 @@
 			   	edge4.geometry.setTerminalPoint(new mxPoint(15, 110), true);
 			   	edge4.geometry.setTerminalPoint(new mxPoint(80, 110), false);
 				bg.insert(edge4);
-			    var label4 = new mxCell('Description #1', new mxGeometry(90, 100, 90, 20), 'part=1;fillColor=none;strokeColor=none;align=left;fontSize=10;fontColor=#556B82;');
+				var label4 = new mxCell('Description #4', new mxGeometry(90, 100, 90, 20), 'part=1;fillColor=none;strokeColor=none;align=left;fontSize=10;fontColor=#556B82;');
 		    	label4.vertex = true;
 				bg.insert(label4);
 				

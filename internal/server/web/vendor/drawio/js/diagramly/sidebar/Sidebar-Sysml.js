@@ -1786,7 +1786,7 @@
 		    	var cardCell = new mxCell('act', new mxGeometry(0, 0, 200, 100), s + 'isActStream;align=left;spacingLeft=5;verticalAlign=top;spacingTop=-3;fontStyle=1;');
 		    	cardCell.vertex = true;
 		    	var label1 = new mxCell(
-		    			'{ rate = constant }\n{ rate = distributuion}\n&lt;&lt;continuous&gt;&gt;\n&lt;&lt;discrete&gt;&gt;', 
+						'{ rate = constant }\n{ rate = distribution}\n&lt;&lt;continuous&gt;&gt;\n&lt;&lt;discrete&gt;&gt;',
 		    			new mxGeometry(200, 50, 0, 0), 'resizable=0;html=1;align=left;verticalAlign=top;labelPosition=left;verticalLabelPosition=middle;labelBackgroundColor=none;fontSize=10;spacingTop=5;');
 		    	label1.geometry.relative = false;
 		    	label1.setConnectable(false);
@@ -1796,7 +1796,7 @@
 			   	return sb.createVertexTemplateFromCells([cardCell], cardCell.geometry.width, cardCell.geometry.height, 'Rate');
 			}),
 			this.addDataEntry(dt + 'rate', 300, 60, 'Rate',
-				'7ZVNj5swEIZ/ja8RgTarHgO73dNKK+XSHh0YgbXGg+xhA/vrOwZDlnxUqOqhhx5QPK/H43dGD0EkWd09W9lUL1iAFsmTSDKLSOOq7jLQWsSRKkTyKOI44kfE3+/sbofdqJEWDK05EI8H3qVuYVT2OSk0o+yo10GuqGZzj1uRpK6SjVfrrvS+N653td4ol6Ehi5yVnipFcGhk7tNOnMSa1Ko0HObsDCwL4WawBN1d94MUrD8D1kC255Rw4NvYXHRSBVXhQGg4qkCVVaiyC5p0Y1zOlc6j4UWYzu1JJVeTEg/cQ2QlAf8MUpSjcSTZPAsPLOxEnGwj3+x1bqEcWXVsqfXzXmbHO1n7oWm6ivgKUqbF1s16uciaojXF2ENuwZv6XakLFKAo4RBC0Ec8PZ2F9BMnwx6vK7Tqg11LjwaPx9Le2mEHG2AkUoutKcDP2fsFU0z7Bo2v6RlRudT7gBChNwedoh/TGV7/9OvNV9+aPIJOZf5WDpUz1GjP1QYHB/Xh7W/juUHf1QJDh63NYfGarCDTgpak3pelbnEXjr6iGnDpA2UXpLLXEigkXcA637qK3y//+f1Dfif8lmzeZPcOqfy/2M+o+mAtq3zfP0dqN5EaUP3b5HJ4/v6N6Z8/j78A'),
+				'7ZVNj5swEIZ/ja8RgTarHgO73dNKK+XSHh0YgbXGg+xhA/vrOwZDlnxUqOqhhx5QPK/H43dGD0EkWd09W9lUL1iAFsmTSDKLSOOq7jLQWsSRKkTyKOI44kfE3+/sbofdqJEWDK05EI8H3qVuYVT2OSk0o+yo10GuqGZzj1uRpK6SjVfrrvS+N653td4ol6Ehi5yVnipFcGhk7tNOnMSa1Ko0HObsDCwL4WawBN1d94MUrD8D1kC255Rw4NvYXHRSBVXhQGg4qkCVVaiyC5p0Y1zOlc6j4UWYzu1JJVeTEg/cQ2QlAf8MUpSjcSTZPAsPLOxEnGwj3+x1bqEcWXVsh3Evk+OdrP3MNF1FfAMp02LrZr1cZE3RmmJsIbfgPf2u1AUJUJRwCCHoI56ezkL6CZNhj9cVWvXBrqUng6djaW/tsIMNMBGpxdYU4Mfs/YIppn2Dxtf0iKhc6n0giNCbg07Rj+kMr3/69earb00eQacyfyuHyhlqtOdqg4OD+vD2t/HcoO9qQaHD1uaweEtWgGlBS1Lvy1K3sAtHX1ENtPQBsgtQ2WsJFJIuWJ1vXYXvl//4/hm+E31LNG+iewdU/lfsZ1J9sBZVvu+fA7WbQA2k/m1wOTx//cb0zx/HXw=='),
 	
 		    this.addEntry(dt + 'control flow', function()
 		    {

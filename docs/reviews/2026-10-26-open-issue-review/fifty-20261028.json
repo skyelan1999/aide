@@ -4,7 +4,31 @@
   "baselineCommit": "26554928a37bb2c699c9df1422cace9056b9e530",
   "target": 50,
   "fixedCount": 10,
-  "verifiedPendingPush": [],
+  "verifiedPendingPush": [
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    235,
+    236,
+    237,
+    238,
+    239
+  ],
   "fixedIssues": [
     206,
     207,
@@ -136,6 +160,121 @@
       "cycle": 67,
       "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
       "comment": "https://github.com/skyelan1999/aide/issues/215#issuecomment-6458581613"
+    },
+    "216": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "FluidPower 搜索标识及拼写"
+    },
+    "217": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "GCP 产品和图标搜索分类与名称"
+    },
+    "218": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Note 字体颜色常量"
+    },
+    "219": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "机器卡片第二变体使用 storageNum 实参"
+    },
+    "220": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "禁用按钮标题"
+    },
+    "221": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "IBM Rules 搜索词"
+    },
+    "222": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "IBMCloud 三个负载均衡模板搜索词"
+    },
+    "223": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Infographic 梯形和标注搜索词"
+    },
+    "224": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "IOS 六个缺失搜索项"
+    },
+    "225": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "IOS7 iPad 与数字键盘搜索词"
+    },
+    "226": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Kubernetes 资源搜索词"
+    },
+    "227": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "MSCAE 名称搜索词及六组完全相同重复注册"
+    },
+    "228": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Mockup W 字符、垂直标尺和段落搜索词"
+    },
+    "229": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Network 完全相同 PC 重复注册"
+    },
+    "230": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Office 标题与数据库、Subsites 搜索词"
+    },
+    "231": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "PID 分离器反向索引、阀和测量器搜索词"
+    },
+    "232": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Rack 正反面标题、型号和 Aruba 库标识"
+    },
+    "233": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "SAP API 标题与四个 Description 默认文字"
+    },
+    "235": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Salesforce Philanthropy 标题和搜索词"
+    },
+    "236": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "SysML distribution 默认文字和压缩模板"
+    },
+    "237": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "UML 2.5 默认文字及搜索词"
+    },
+    "238": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "Veeam 加密/备份及 UsersStatus 分类"
+    },
+    "239": {
+      "status": "verified-pending-push",
+      "cycle": 68,
+      "summary": "WebIcons Diigo 与 Friendfeed 搜索词"
     }
   },
   "status": "in_progress",

@@ -241,8 +241,8 @@
 			this.addIBMCloudPrescribedNode('Load Balancer', 'load-balancer--vpc', dt + 'load balancer', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Application Load Balancer', 'load-balancer--application', dt + 'application load balancer', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Network Load Balancer', 'load-balancer--network', dt + 'network load balancer', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
-			this.addIBMCloudPrescribedNode('Global Load Balancer', 'load-balancer--global', dt + 'network load balancer', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
-			this.addIBMCloudPrescribedNode('Classic Load Balancer', 'load-balancer--classic', dt + 'network load balancer', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
+			this.addIBMCloudPrescribedNode('Global Load Balancer', 'load-balancer--global', dt + 'global load balancer', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
+			this.addIBMCloudPrescribedNode('Classic Load Balancer', 'load-balancer--classic', dt + 'classic load balancer', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Floating IP', 'floating-ip', dt + 'floating ip', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Network Interface', 'network-interface', dt + 'network interface', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Endpoint Gateway', 'ibm-cloud--vpc-endpoints', dt + 'endpoint gateway', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
@@ -253,7 +253,7 @@
 			this.addIBMCloudPrescribedNode('DNS Services', 'dns-services', dt + 'dns services', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Internet Services', 'ibm-cloud--internet-services', dt + 'internet services', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Internet', 'wikis', dt + 'internet', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
-			this.addIBMCloudPrescribedNode('Bridge', 'arrows--horizontal', dt + 'internet', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
+			this.addIBMCloudPrescribedNode('Bridge', 'arrows--horizontal', dt + 'bridge', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Router', 'router', dt + 'router', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('VLAN', 'vlan', dt + 'vlan virtual lan local area network', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');
 			this.addIBMCloudPrescribedNode('Classic VLAN', 'vlan--ibm', dt + 'classic vlan virtual lan local area network', fns, d, d2, '#1192E8', 'none', '#ffffff', 'none');

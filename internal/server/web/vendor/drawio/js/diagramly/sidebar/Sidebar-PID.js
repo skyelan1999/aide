@@ -27,7 +27,7 @@
 		this.addPidCrushersGrindingPalette();
 		this.setCurrentSearchEntryLibrary('pid', 'pidFittings');
 		this.addPidFittingsPalette();
-		this.setCurrentSearchEntryLibrary('pid', 'pidFittings');
+		this.setCurrentSearchEntryLibrary('pid', 'pidSeparators');
 		this.addPidSeparatorsPalette();
 			
 		var pidLibs = ['Instruments', 'Misc', 'Valves', 'Compressors', 'Engines', 'Filters', 'Flow Sensors', 'Piping', 'Crushers Grinding', 'Fittings', 'Separators'];
@@ -191,7 +191,7 @@
 			this.createVertexTemplateEntry(sv + 'angleGlobe;actuator=man', 100, 120, '', 'Angle Globe Valve (Manual)', null, null, this.getTagsForStencil(gn, 'valve', dt + 'angle globe manual').join(' ')),
 			this.createVertexTemplateEntry(sv + 'threeWay;actuator=none', 100, 80, '', '3 Way Valve', null, null, this.getTagsForStencil(gn, 'valve', dt + 'three way').join(' ')),
 			this.createVertexTemplateEntry(sv + 'threeWay;actuator=man', 100, 120, '', '3 Way Valve (Manual)', null, null, this.getTagsForStencil(gn, 'valve', dt + 'three way manual').join(' ')),
-			this.createVertexTemplateEntry(s + 'autoRecircValve', 100, 60, '', 'Auto Recirculation Valve', null, null, this.getTagsForStencil(gn, 'blockBleedValve', dt + 'auto recirculation').join(' '))
+			this.createVertexTemplateEntry(s + 'autoRecircValve', 100, 60, '', 'Auto Recirculation Valve', null, null, this.getTagsForStencil(gn, 'autoRecircValve', dt + 'auto recirculation').join(' '))
 		]);
 	};
 	
@@ -297,7 +297,7 @@
 		this.addPaletteFunctions('pidFlow Sensors', 'Process Engineering / Flow Sensors', false,
 		[
 			this.createVertexTemplateEntry(s + 'averging_pitot_tube;', 
-					50, 50, '', 'Averging Pitot Tube', null, null, this.getTagsForStencil(gn, 'averging_pitot_tube', dt).join(' ')),
+					50, 50, '', 'Averaging Pitot Tube', null, null, this.getTagsForStencil(gn, 'averging_pitot_tube', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'coriolis;', 
 					50, 50, '', 'Coriolis', null, null, this.getTagsForStencil(gn, 'coriolis', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'flow_nozzle;', 
@@ -455,7 +455,7 @@
 	{
 		var s = "html=1;dashed=0;outlineConnect=0;align=center;" + mxConstants.STYLE_SHAPE + "=mxgraph.pid.separators.";
 		var sb = mxConstants.STYLE_VERTICAL_LABEL_POSITION + '=bottom;align=center;dashed=0;html=1;' + mxConstants.STYLE_VERTICAL_ALIGN + '=top;' + mxConstants.STYLE_SHAPE + "=mxgraph.pid.separators.";
-		var gn = 'mxgraph.pid.fittings';
+		var gn = 'mxgraph.pid.separators';
 		var dt = 'process instrumentation separators separator ';
 		
 		this.addPaletteFunctions('pidSeparators', 'Process Engineering / Separators', false,

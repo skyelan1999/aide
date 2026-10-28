@@ -128,7 +128,7 @@
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#e0e0e0;strokeColor=none;fontStyle=1;shadow=1',
 					100, 36, 'PRESSED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#000000;strokeColor=none;fontStyle=1;opacity=12;fontColor=#BDBDBD;',
-					100, 36, 'DISABLED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
+					100, 36, 'DISABLED', 'Raised Button (Disabled)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#2196F3;strokeColor=none;fontStyle=1;shadow=1;fontColor=#ffffff;',
 					100, 36, 'NORMAL', 'Raised Button (Normal)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#2196F3;strokeColor=none;fontStyle=1;shadow=1;fontColor=#ffffff;',
@@ -138,7 +138,7 @@
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#2196F3;strokeColor=none;fontStyle=1;shadow=1;fontColor=#ffffff;',
 					100, 36, 'PRESSED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;strokeColor=none;fontStyle=1;opacity=12;fontColor=#BDBDBD;shadow=0;',
-					100, 36, 'DISABLED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
+					100, 36, 'DISABLED', 'Raised Button (Disabled)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=none;strokeColor=none;fontStyle=1;shadow=0;',
 					100, 36, 'NORMAL', 'Raised Button (Normal)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#999999;opacity=20;strokeColor=none;fontStyle=1;shadow=0;',
@@ -148,7 +148,7 @@
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#999999;opacity=40;strokeColor=none;fontStyle=1;',
 					100, 36, 'PRESSED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;opacity=26;strokeColor=none;fontStyle=1;opacity=12;fontColor=#BDBDBD;shadow=0;',
-					100, 36, 'DISABLED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
+					100, 36, 'DISABLED', 'Raised Button (Disabled)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=none;strokeColor=none;fontStyle=1;fontColor=#ffffff;shadow=0;',
 					100, 36, 'NORMAL', 'Raised Button (Normal)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#cccccc;opacity=15;strokeColor=none;fontStyle=1;fontColor=#ffffff;shadow=0;',
@@ -158,7 +158,7 @@
 			this.createVertexTemplateEntry(s + 'rect;fillColor=#cccccc;opacity=25;strokeColor=none;fontStyle=1;fontColor=#ffffff;shadow=0;',
 					100, 36, 'PRESSED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'rect;fillColor=none;strokeColor=none;fontStyle=1;opacity=12;fontColor=#BDBDBD;shadow=1;',
-					100, 36, 'DISABLED', 'Raised Button (Pressed)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
+					100, 36, 'DISABLED', 'Raised Button (Disabled)', null, null, this.getTagsForStencil(gn, 'button', dt).join(' ')),
 
 			this.addEntry('dropdown menu', function()
 			{

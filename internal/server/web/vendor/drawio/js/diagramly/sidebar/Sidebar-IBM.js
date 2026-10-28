@@ -545,7 +545,7 @@
 			 this.createVertexTemplateEntry(s + 'LoadBalancerListener.svg;',
 					 d, d, '', 'Load Balancer Listener', false, null, this.getTagsForStencil(gn, 'load balancer listener', dt).join(' ')),
 			 this.createVertexTemplateEntry(s + 'Rules.svg;',
-					 d, d, '', 'Rules', false, null, this.getTagsForStencil(gn, 'load balancer listener', dt).join(' ')),
+					 d, d, '', 'Rules', false, null, this.getTagsForStencil(gn, 'rules', dt).join(' ')),
 			 this.createVertexTemplateEntry(s + 'ImageService.svg;',
 					 d, d, '', 'Image Service', false, null, this.getTagsForStencil(gn, 'image service', dt).join(' ')),
 			 this.createVertexTemplateEntry(s + 'Key.svg;',
