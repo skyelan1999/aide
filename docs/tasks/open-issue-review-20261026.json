@@ -283,23 +283,22 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 104,
+    "nextCycle": 105,
     "lastCompletedBatch": {
-      "cycle": 103,
+      "cycle": 104,
       "issues": [
-        587
+        583,
+        584,
+        586
       ],
       "cumulativeFixed": 428,
-      "independentPluginFixes": 2,
-      "verification": "22Python+4Node; equality499501->1;localpackage",
-      "delivery": "aide-pkg-VideoPreview2b448e4"
+      "independentPluginFixes": 5,
+      "verification": "25new+33prior actualSQLite;realrace fixtures",
+      "delivery": "aide-pkg-sqliteccdfe00"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      586,
       585,
-      584,
-      583,
       425,
       426
     ],
@@ -1262,13 +1261,17 @@
         },
         {
           "number": 583,
-          "status": "pending-owner-priority",
-          "reason": "New confirmed-account report; independent plugin source"
+          "status": "fixed-on-independent-plugin-branch",
+          "reason": "New confirmed-account report; independent plugin source",
+          "commit": "ccdfe00",
+          "evidence": "cycle-104.json"
         },
         {
           "number": 584,
-          "status": "pending-owner-priority",
-          "reason": "New confirmed-account report; independent plugin source"
+          "status": "fixed-on-independent-plugin-branch",
+          "reason": "New confirmed-account report; independent plugin source",
+          "commit": "ccdfe00",
+          "evidence": "cycle-104.json"
         },
         {
           "number": 585,
@@ -1277,8 +1280,10 @@
         },
         {
           "number": 586,
-          "status": "pending-owner-priority",
-          "reason": "New confirmed-account report; independent plugin source"
+          "status": "fixed-on-independent-plugin-branch",
+          "reason": "New confirmed-account report; independent plugin source",
+          "commit": "ccdfe00",
+          "evidence": "cycle-104.json"
         },
         {
           "number": 587,
@@ -1311,6 +1316,30 @@
         "branch": "codex/open-issue-review-20261028",
         "commit": "2b448e4",
         "evidence": "cycle-103.json",
+        "released": false
+      },
+      {
+        "issue": 583,
+        "repo": "skyelan1999/aide-pkg-sqlite",
+        "branch": "codex/open-issue-review-20261028",
+        "commit": "ccdfe00",
+        "evidence": "cycle-104.json",
+        "released": false
+      },
+      {
+        "issue": 584,
+        "repo": "skyelan1999/aide-pkg-sqlite",
+        "branch": "codex/open-issue-review-20261028",
+        "commit": "ccdfe00",
+        "evidence": "cycle-104.json",
+        "released": false
+      },
+      {
+        "issue": 586,
+        "repo": "skyelan1999/aide-pkg-sqlite",
+        "branch": "codex/open-issue-review-20261028",
+        "commit": "ccdfe00",
+        "evidence": "cycle-104.json",
         "released": false
       }
     ]
