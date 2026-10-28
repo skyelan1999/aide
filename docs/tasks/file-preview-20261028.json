@@ -42,27 +42,34 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused Go integration and quick gate passed; isolated installed-plugin UI acceptance underway. Controlled provider wire checks are not live vision-model semantic evaluation.",
+      "status": "pass",
+      "summary": "Local focused Go integration and repository quick gate passed. Five protocol tests cover real tool-loop wire images, auto vision routing, unsupported provider rejection, legacy metadata, budgets and expiry. Installed public plugin passed seven synthetic formats via real isolated host APIs; Word/PPT pages and crop visually inspected. Remote full CI remains a separate release condition; no live model semantic acceptance claimed.",
       "evidence": [
         "go test ./internal/server -run TestPluginImages|TestPluginPlan|TestOutgoing|TestVisionGate|TestMarketCompatible -count=1",
         "python3 scripts/agent-route.py verify quick"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Generic contract and coverage boundaries documented in code/task; plugin renderer details remain in its owning repository.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-FilePreview",
+        "internal/server/plugin_images.go"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only generic host files and synthetic Go fixtures staged. No renderer runtime/dependencies, private code, data or credentials.",
+      "evidence": [
+        "git diff --check"
+      ]
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "PR #555 requires current-head CI and repository approval. No main Release/version/tag or 9999 deployment authorized.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/555"
+      ]
     }
   },
   "release_authorization": "User: 可以，做吧，做好了放到公共商店. Public plugin publication authorized; no Aide main version/tag/release or 9999 deployment requested.",

@@ -11,6 +11,8 @@ import (
 	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -116,5 +118,57 @@ func TestPluginImagesActualToolLoopWire(t *testing.T) {
 		if strings.Contains(u.Result, encoded) {
 			t.Fatal("base64 leaked into tool ledger")
 		}
+	}
+}
+
+func TestPluginImagesProtocolAndRoundBudget(t *testing.T) {
+	legacy := map[string]any{"images": []any{map[string]any{"name": "ordinary metadata"}}}
+	if err := capturePluginImages(context.Background(), legacy); err != nil {
+		t.Fatal("legacy metadata changed", err)
+	}
+	text, _ := normalizePluginResult(legacy)
+	if !strings.Contains(text, "ordinary metadata") {
+		t.Fatal("legacy metadata stripped")
+	}
+	s := &pluginImageSink{}
+	ctx := context.WithValue(context.Background(), pluginImageKey{}, s)
+	part := map[string]any{"mediaType": "image/png", "dataBase64": previewRaster(t)}
+	raw := map[string]any{"protocol": "plugin-tool-images-v1", "images": []any{part, part, part, part}}
+	if err := capturePluginImages(ctx, raw); err != nil {
+		t.Fatal(err)
+	}
+	if err := capturePluginImages(ctx, map[string]any{"protocol": "plugin-tool-images-v1", "images": []any{part}}); err == nil {
+		t.Fatal("round image limit not enforced")
+	}
+	wire, _ := json.Marshal(outgoingMessages([]Message{{Role: "user", Type: "tool_visual_evidence", Content: "old automatic evidence"}}))
+	if !strings.Contains(string(wire), "Image payload absent") {
+		t.Fatal("restored checkpoint implies images are present")
+	}
+}
+func TestPluginImagesAutoRouteRequiresVision(t *testing.T) {
+	a := testApp(t)
+	routerFixture(t, a)
+	cfg := routerSettings(t, a, "http://a.invalid", "http://b.invalid")
+	file := filepath.Join(a.pluginsPath, "router-fixture", "capabilities.json")
+	b, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var catalog routerCatalog
+	if json.Unmarshal(b, &catalog) != nil {
+		t.Fatal("catalog")
+	}
+	catalog.Models[1].Vision = true
+	b, _ = json.Marshal(catalog)
+	if err := os.WriteFile(file, b, 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg.Models[1].Vision = true
+	a.settings.Models[1].Vision = true
+	input := appendPluginImages([]Message{{Role: "user", Content: "code implement"}}, &pluginImageSink{images: []MessageImage{{MediaType: "image/png", DataURL: "data:image/png;base64," + previewRaster(t)}}})
+	task := &Task{Prompt: "code implement", ModelSelection: &SessionModelSelection{ModelRouter: "auto"}}
+	selected := a.routedModel(task, cfg, input, ProfileParams{MaxTokens: 1024}, nil, "chat")
+	if selected.Model != "write-model" {
+		t.Fatal("router selected a text-only profile for actual images", selected.Model)
 	}
 }
