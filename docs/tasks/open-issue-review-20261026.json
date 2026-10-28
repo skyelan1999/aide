@@ -283,24 +283,28 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 105,
+    "nextCycle": 106,
     "lastCompletedBatch": {
-      "cycle": 104,
+      "cycle": 105,
       "issues": [
-        583,
-        584,
-        586
+        585
       ],
       "cumulativeFixed": 428,
-      "independentPluginFixes": 5,
-      "verification": "25new+33prior actualSQLite;realrace fixtures",
-      "delivery": "aide-pkg-sqliteccdfe00"
+      "independentPluginFixes": 6,
+      "verification": "2Python/3Nodefiles;realOSsparsefile+bridgeoffset;localpackage",
+      "delivery": "aide-pkg-STEPViewer60065c6"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      585,
       425,
-      426
+      426,
+      429,
+      432,
+      433,
+      437,
+      438,
+      439,
+      440
     ],
     "userReaffirmed": {
       "request": "继续100，先看1999账号提交的内容",
@@ -1275,8 +1279,10 @@
         },
         {
           "number": 585,
-          "status": "pending-owner-priority",
-          "reason": "New confirmed-account report; independent plugin source"
+          "status": "fixed-on-independent-plugin-branch",
+          "reason": "New confirmed-account report; independent plugin source",
+          "commit": "60065c6",
+          "evidence": "cycle-105.json"
         },
         {
           "number": 586,
@@ -1340,6 +1346,14 @@
         "branch": "codex/open-issue-review-20261028",
         "commit": "ccdfe00",
         "evidence": "cycle-104.json",
+        "released": false
+      },
+      {
+        "issue": 585,
+        "repo": "skyelan1999/aide-pkg-STEPViewer",
+        "branch": "codex/open-issue-review-20261028",
+        "commit": "60065c6",
+        "evidence": "cycle-105.json",
         "released": false
       }
     ]
