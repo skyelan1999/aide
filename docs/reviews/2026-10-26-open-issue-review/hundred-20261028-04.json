@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 89,
+  "fixedCount": 91,
   "fixedIssues": [
     565,
     563,
@@ -94,7 +94,9 @@
     539,
     541,
     543,
-    544
+    544,
+    401,
+    402
   ],
   "issues": {
     "565": {
@@ -808,6 +810,22 @@
       "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/544#issuecomment-6469542268"
+    },
+    "401": {
+      "status": "fixed-verified-pushed",
+      "cycle": 87,
+      "summary": "Strip global keyframes recursively from temporary/final adopted styles and serialized SVG while retaining scoped diagram styling.",
+      "commit": "0d5d5324f2f87ca1dfa389c2dabbf706661ea9f1",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/401#issuecomment-6469666130"
+    },
+    "402": {
+      "status": "fixed-verified-pushed",
+      "cycle": 87,
+      "summary": "Preflight DOM depth/node budgets before export recursion and after diagram rendering; return recoverable errors and release frames.",
+      "commit": "0d5d5324f2f87ca1dfa389c2dabbf706661ea9f1",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/402#issuecomment-6469666967"
     }
   },
   "blockedIssues": [
