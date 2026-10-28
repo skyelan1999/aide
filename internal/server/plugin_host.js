@@ -104,6 +104,7 @@ function makeToolAPI(pluginDir, workspace = '/workspace', terminalContext, sourc
     return target;
   };
   return {
+    capabilities: ["plugin-tool-images-v1"],
     workspaceRoot: workspace,
     terminalContext,
     sources: sourceSocket ? input => new Promise((resolve,reject) => {

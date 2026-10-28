@@ -2298,6 +2298,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			a.publishStream(task.ID, streamEvent{Event: "note", Text: msg, Round: round})
 			return msg, input, nil
 		}
+		imageSink := &pluginImageSink{}
 		for callIndex, call := range calls {
 			toolCallsUsed += pluginPlanDispatchCost(call)
 			if call.Function.Name != "run_plugin_plan" {
@@ -2330,7 +2331,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 					}
 				}
 			}(call.ID, call.Function.Name)
-			result := a.executeToolCall(ctx, call, task, versions)
+			result := a.executeToolCall(context.WithValue(ctx, pluginImageKey{}, imageSink), call, task, versions)
 			close(hbStop)
 			signature := call.Function.Name + "\x00" + call.Function.Arguments + "\x00" + result
 			repeatedCallResults[signature]++
@@ -2405,6 +2406,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				return msg, input, nil
 			}
 		}
+		input = appendPluginImages(input, imageSink)
 		a.mu.Lock()
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
 		a.mu.Unlock()
@@ -4615,6 +4617,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		raw, err := a.callPluginToolContext(ctx, pluginID, call.Function.Name, args)
 		if err != nil {
 			return "错误：插件工具失败: " + err.Error()
+		}
+		if err := capturePluginImages(ctx, raw); err != nil {
+			return "错误：" + err.Error()
 		}
 		text, proposals := normalizePluginResult(raw)
 		for _, prop := range proposals {

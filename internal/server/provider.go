@@ -240,6 +240,9 @@ func modelCapabilityStatus(cfg Settings, capability string) string {
 }
 
 func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte)) (string, []ToolCall, TokenUsage, error) {
+	if err := gateMessageImages(cfg, messages); err != nil {
+		return "", nil, TokenUsage{}, err
+	}
 	if isBailianEndpoint(cfg.BaseURL) && !isQwenRealtime(cfg.Model) && (strings.HasPrefix(cfg.Model, "qwen3.5-omni-") || strings.HasPrefix(cfg.Model, "qwen3-omni-")) {
 		out, calls, usage, _, err := completeStream(ctx, cfg, messages, params, tools, rec, nil, nil)
 		return out, calls, usage, err
@@ -379,6 +382,9 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 }
 
 func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string), idleTimeout time.Duration) (string, []ToolCall, TokenUsage, string, error) {
+	if err := gateMessageImages(cfg, messages); err != nil {
+		return "", nil, TokenUsage{}, "", err
+	}
 	if isQwenRealtime(cfg.Model) {
 		return completeQwenRealtime(ctx, cfg, messages, tools, rec, onDelta)
 	}
