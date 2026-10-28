@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 96,
+  "fixedCount": 98,
   "fixedIssues": [
     565,
     563,
@@ -101,7 +101,9 @@
     419,
     421,
     417,
-    423
+    423,
+    415,
+    416
   ],
   "issues": {
     "565": {
@@ -871,6 +873,22 @@
       "commit": "10cc846d04837fa8361254a3c8644c187ee6bc36",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/423#issuecomment-6470158257"
+    },
+    "415": {
+      "status": "fixed-verified-pushed",
+      "cycle": 90,
+      "summary": "Reject invalid or >2000 PDF page counts before creating placeholders or issuing per-page metadata requests; destroy the rejected document loading task.",
+      "commit": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/415#issuecomment-6470421032"
+    },
+    "416": {
+      "status": "fixed-verified-pushed",
+      "cycle": 90,
+      "summary": "Keep loading tasks reachable by idempotent teardown; abort fetches, destroy the task owner, discard late completion and suppress password updates after closing.",
+      "commit": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/416#issuecomment-6470421923"
     }
   },
   "blockedIssues": [
