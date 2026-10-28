@@ -73,7 +73,7 @@
   },
   "release_authorization": "",
   "rollback": "独立worktree fix/context-recovery-20261029；不覆盖现用9999或原目录start.command",
-  "handoff": "修复关联Issue #580；真实模型覆盖1x/3x，10x保持协议/调度回归覆盖，未新增真实10x调用。现用9999仍为aide:mixsoul-local-fa9550d6，未替换。准备独立修复PR，未合并、未升版。",
+  "handoff": "修复PR #589已推送并ready for review：https://github.com/skyelan1999/aide/pull/589。远端CI与独立审批待完成，未合并。真实模型覆盖1x/3x，10x为协议/调度回归，未新增真实10x调用。现用9999仍为aide:mixsoul-local-fa9550d6，未替换，未升版。",
   "interpretation": "用户已确认4.1 Flash对应现有deepseek-flash，6.1使用gpt-6.1-sol。当前范围为核心修复和隔离合成验收；不替换9999，不发布Aide版本。",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/580"
