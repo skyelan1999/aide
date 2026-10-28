@@ -1194,6 +1194,16 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/js/mermaid/drawio-mermaid.min.js"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-mermaid-svg-issues.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/mermaid.min.js"
       ]
     ],
     "full": [

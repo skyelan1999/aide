@@ -1,0 +1,13 @@
+[
+{"issue":469,"source":"block-beta\n classDef __proto__ fill:#f96\n __proto__"},
+{"issue":515,"source":"pie\n \"constructor\" : 1"},
+{"issue":517,"source":"timeline\n : orphan event","error":"Timeline.*period"},
+{"issue":521,"source":"---\ntitle: Q&A < draft\n---\nflowchart TD\nA --> B"},
+{"issue":522,"source":"sankey-beta\nA,B,abc","error":"Sankey.*finite"},
+{"issue":523,"source":"requirementDiagram\nrequirement __proto__ {\nid: R1\ntext: Sample\nrisk: low\nverifyMethod: test\n}"},
+{"issue":524,"source":"sequenceDiagram\nparticipant Bob\n__proto__->>Bob: hello"},
+{"issue":525,"source":"classDiagram\nclass Bob\nclass __proto__\n__proto__ <|-- Bob"},
+{"issue":526,"source":"xychart-beta\nline [HUGE, 2]","error":"XYChart.*finite"},
+{"issue":527,"source":"erDiagram\n__proto__ {\nstring name\n}"},
+{"issue":528,"source":"gantt\ndateFormat YYYY-MM-DD\nsection A\nParent : __proto__, 2024-01-01, 3d\nChild : after __proto__, 2d"}
+]
