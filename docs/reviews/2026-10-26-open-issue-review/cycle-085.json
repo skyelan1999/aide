@@ -1,0 +1,61 @@
+{
+  "cycle": 85,
+  "baseline": "4f49d4fe7bab8103a9b5874a7bc28adef1e402fc",
+  "issues": [
+    408,
+    409,
+    410,
+    424
+  ],
+  "fixes": {
+    "408": "Fix downward enclosure-arrow redundant-strike spelling in both SVG and CHTML.",
+    "409": "Use a nonzero hypot divisor for zero-size enclosure-arrow geometry in both outputs.",
+    "410": "Bound column-repeat count and expanded template size before Array allocation.",
+    "424": "Inspect the over child when inferring a munderover operator accent."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 8,
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle85-red-svg-final/result.json",
+      "/workspace/scratch/issue-review-20261026/cycle85-red-chtml/result.json"
+    ]
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 235,
+      "fingerprint": "d4f5582f31b8355db22ef0024ec0e457a1563bdabcdcd1ee6f49061e392b97c2",
+      "receipt": ".agent-state/verify-20261028T124105790611Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 8,
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle85-green-svg/result.json",
+        "/workspace/scratch/issue-review-20261026/cycle85-green-chtml/result.json"
+      ],
+      "scope": "Actual local MathJax TeX startup, SVG and CHTML, redundant notation removal, finite zero-size arrows, no oversized column allocation, ordinary/nested repeated-column controls and MmlFactory over-accent inference."
+    },
+    {
+      "result": "PASS",
+      "checks": 6,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle85-prior-math.log",
+      "scope": "Prior cycle79 formula/security regression in actual SVG renderer."
+    }
+  ],
+  "harnessCorrections": [
+    "MathML input is not bundled; use actual TeX/enclose/unicode paths and direct MmlFactory tree inference.",
+    "Detect exported SvgMenclose/ChtmlMenclose classes by their public arrowData prototype method."
+  ],
+  "notRun": [
+    "Full Aide workbench/start.command or native platforms.",
+    "Every MathJax package or font.",
+    "Main merge, Release/tag, market/deploy."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  }
+}

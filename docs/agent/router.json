@@ -1218,6 +1218,11 @@
         "node",
         "--check",
         "scripts/sync_drawio_ui_robustness.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-mathjax-layout-issues.cjs"
       ]
     ],
     "full": [

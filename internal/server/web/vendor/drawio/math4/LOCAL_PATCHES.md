@@ -9,3 +9,7 @@ The upstream version remains 4.1.3. Keep the existing upstream and mhchem licens
 - #397: identity matrices allow at most 32 rows/columns; placeholder matrices allow at most 64 per axis, 1,024 cells and an estimated expansion budget bounded by configured `maxBuffer` (at most 32 KiB). Checks precede array/string expansion. Ordinary matrix syntax, including `mqty`, is retained.
 
 Run `node scripts/browser-mathjax-issue-review.cjs` with `AIDE_COMPONENT_EVIDENCE_DIR` pointing to an owned evidence directory. It uses local MathJax startup, the same initial loader list as Aide, TeX `require`, AsciiMath, Safe and SVG in Chromium. All requests stay on its owned test origin. It does not connect to users' workspaces or call a model.
+
+Cycle 85 additionally fixes #408 (redundant downward-arrow strike spelling in SVG and CHTML), #409 (finite zero-size enclosure-arrow geometry via a nonzero hypot divisor in both outputs), #410 (column repetition limited to 10,000 repeats and 32,768 expanded characters before Array allocation), and #424 (identify the over child when inferring a munderover operator accent). Source version and license remain 4.1.3.
+
+`browser-mathjax-layout-issues.cjs` verifies both actual SVG/CHTML outputs with local TeX extensions, zero-size geometry, a controlled allocation trap, ordinary/nested column controls, and MmlFactory accent inference. Aide does not bundle input/mml; the test deliberately uses its real TeX input path.
