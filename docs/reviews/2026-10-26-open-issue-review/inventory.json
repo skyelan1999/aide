@@ -1001,10 +1001,12 @@
       "number": 249,
       "title": "[Bug] Freehand outlines collapse at consecutive sharp turns",
       "url": "https://github.com/skyelan1999/aide/issues/249",
-      "status": "reviewed-awaiting-evidence",
-      "evidence": "perfect-freehand接入与1.2.3依赖报告可对应，锐角失真还依赖上游具体point序列/资源约束，源码接入不证明视觉缺陷；需固定输入截图对比，不仅凭upstream存在就定论。",
+      "status": "fixed-on-branch",
+      "evidence": "Runtime zero-width collapse reproduced; corrected signed corner joins; actual Chromium and bundled editor regressions pass.",
       "reviewVerdict": "needs-runtime-reproduction",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "976b6545",
+      "repairEvidence": "cycle-094.json"
     },
     {
       "number": 248,

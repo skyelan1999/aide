@@ -110,7 +110,8 @@
       "evidence": [
         "internal/server/issue_review_bounds_test.go",
         "docs/reviews/2026-10-26-open-issue-review/cycle-092.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-093.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-093.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-094.json"
       ]
     },
     "verification": {
@@ -208,7 +209,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-090.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-091.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-092.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-093.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-093.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-094.json"
       ]
     },
     "documentation": {
@@ -275,32 +277,18 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 94,
+    "nextCycle": 95,
     "lastCompletedBatch": {
-      "cycle": 92,
+      "cycle": 94,
       "issues": [
-        292,
-        293,
-        294,
-        295,
-        296,
-        297,
-        298,
-        299,
-        300,
-        301,
-        302,
-        303,
-        304,
-        305
+        249
       ],
-      "cumulativeFixed": 405,
-      "cumulativeProductFixed": 404,
+      "cumulativeFixed": 407,
+      "cumulativeProductFixed": 406,
       "toolingFixes": 1,
-      "remainingFollowupTargets": 1,
-      "verification": "247quick,11platformcontracts/12cases,4Linuxrace,5cross-platformbuilds,20CIcontracts",
-      "delivery": "72b0b891e9311abfeb4c04d014b1a416e1154d66",
-      "coverageFollowup": "cycle-093.json"
+      "remainingFollowupTargets": 0,
+      "verification": "247quick,34bundledbrowser,8cornercases+5controls",
+      "delivery": "976b6545"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
@@ -321,12 +309,9 @@
       "instruction": "New target100; first inspect unhandled skyelan1999 reports."
     },
     "currentCycle": {
-      "cycle": 94,
+      "cycle": 95,
       "status": "in_progress",
-      "phase": "freehand-corner-geometry",
-      "issues": [
-        249
-      ]
+      "phase": "component-resource-boundaries"
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -1208,7 +1193,8 @@
         302,
         303,
         304,
-        305
+        305,
+        249
       ],
       "blocked": [],
       "falseReports": [],
@@ -1216,7 +1202,7 @@
         28,
         57
       ],
-      "remainingUncovered": 87,
+      "remainingUncovered": 86,
       "coveredExistingBranch": [
         248
       ]
