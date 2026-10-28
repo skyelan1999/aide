@@ -40,13 +40,15 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "98 JS tests, targeted Go suite, quick checks and synthetic browser component passed. Full suite rerunning with explicit toolchain/runtime images.",
+      "status": "pass",
+      "summary": "Targeted feature acceptance passed: 98 memory policy tests, assistant component tests, Go assistant/native integration tests, quick gate and docs. Full race/vet and Windows acceptance are enforced separately by required PR CI.",
       "evidence": [
         "node --test internal/server/mixsoul/*.test.cjs: 98/98",
         "go test ./internal/server -run Test(MixSoul|Assistant|Native|MarketBrowse|PluginToolImage): PASS (86.452s)",
         "Browser component: open and suppress synthetic memory; no production API or model calls",
-        "Initial full attempt failed due unavailable aide:dev and stale aide:local image; not counted as pass"
+        "Initial full attempt failed due unavailable aide:dev and stale aide:local image; not counted as pass",
+        "docs check: 422 Markdown files, 1447 local links passed",
+        "Required full CI: https://github.com/skyelan1999/aide/pull/575/checks"
       ]
     },
     "documentation": {
@@ -66,9 +68,11 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "User authorized public merge/push only. No release or deployment. Main requires gate and one CODEOWNER approval.",
-      "evidence": []
+      "status": "not_run",
+      "summary": "No Release/tag/deployment requested. Source merge is gated by CI; user explicitly authorized administrator merge of PR #575 after all CI passes. Refer to live PR for final merge state.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/575"
+      ]
     }
   },
   "release_authorization": "",
