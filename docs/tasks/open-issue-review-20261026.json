@@ -197,7 +197,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-081.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-082.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-083.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-084.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-084.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-085.json"
       ]
     },
     "documentation": {
@@ -224,17 +225,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "新增100目标81/100已交付，账号优先565/563已处理，561重复合并；最新cycle84，下一轮先刷新账号报告，再继续编号队列。仍只push分支，不main合并/Release/deploy。扩展SSH写入夹具失败与完整工作台/原生系统未验证边界见cycle077。",
+  "handoff": "新增100目标85/100已交付，账号优先565/563已处理，561重复合并；最新cycle85，下一轮先刷新账号报告，再继续编号队列。仍只push分支，不main合并/Release/deploy。扩展SSH写入夹具失败与完整工作台/原生系统未验证边界见cycle077。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+    "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-084.json"
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-085.json"
   },
-  "issue_comments": "本轮100项已完成81/100，逐项修复、验证、push与评论见hundred-20261028-04.json。",
+  "issue_comments": "本轮100项已完成85/100，逐项修复、验证、push与评论见hundred-20261028-04.json。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -263,40 +264,32 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 85,
+    "nextCycle": 86,
     "lastCompletedBatch": {
-      "cycle": 84,
+      "cycle": 85,
       "issues": [
-        452,
-        453,
-        454,
-        455,
-        456,
-        457,
-        459,
-        460,
-        461,
-        462,
-        465,
-        466
+        408,
+        409,
+        410,
+        424
       ],
-      "cumulativeFixed": 372,
-      "cumulativeProductFixed": 371,
+      "cumulativeFixed": 376,
+      "cumulativeProductFixed": 375,
       "toolingFixes": 1,
       "remainingFollowupTargets": 18,
-      "verification": "234quick;see cycle-084.json",
-      "delivery": "98c33e5578f12f14b37c00a264d77e405654c4c2"
+      "verification": "235quick;see cycle-085.json",
+      "delivery": "dc1f354f4219dd6a1e654457b29d31d337f87e79"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      467,
-      468,
-      469,
-      470,
-      471,
-      472,
-      473,
-      474
+      425,
+      426,
+      427,
+      428,
+      429,
+      430,
+      431,
+      432
     ],
     "userReaffirmed": {
       "request": "继续100，先看1999账号提交的内容",
@@ -304,22 +297,14 @@
       "instruction": "New target100; first inspect unhandled skyelan1999 reports."
     },
     "currentCycle": {
-      "cycle": 84,
+      "cycle": 85,
       "status": "pass",
       "phase": "pushed-commented-checkpoint",
       "issues": [
-        452,
-        453,
-        454,
-        455,
-        456,
-        457,
-        459,
-        460,
-        461,
-        462,
-        465,
-        466
+        408,
+        409,
+        410,
+        424
       ]
     },
     "additionalFollowupIssues": [],
@@ -444,7 +429,7 @@
       "request": "继续100，先看1999账号提交的内容",
       "sequence": 4,
       "targetFixed": 100,
-      "newFixed": 81,
+      "newFixed": 85,
       "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
       "baselineCumulative": 291,
       "baselineRemaining": 18,
@@ -531,7 +516,11 @@
         461,
         462,
         465,
-        466
+        466,
+        408,
+        409,
+        410,
+        424
       ],
       "blockedIssues": [
         391

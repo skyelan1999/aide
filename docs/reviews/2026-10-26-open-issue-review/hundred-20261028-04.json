@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 81,
+  "fixedCount": 85,
   "fixedIssues": [
     565,
     563,
@@ -86,7 +86,11 @@
     461,
     462,
     465,
-    466
+    466,
+    408,
+    409,
+    410,
+    424
   ],
   "issues": {
     "565": {
@@ -736,6 +740,38 @@
       "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/466#issuecomment-6469193098"
+    },
+    "408": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Fix downward enclosure-arrow redundant-strike spelling in both SVG and CHTML.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/408#issuecomment-6469292684"
+    },
+    "409": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Use a nonzero hypot divisor for zero-size enclosure-arrow geometry in both outputs.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/409#issuecomment-6469293567"
+    },
+    "410": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Bound column-repeat count and expanded template size before Array allocation.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/410#issuecomment-6469294320"
+    },
+    "424": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Inspect the over child when inferring a munderover operator accent.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/424#issuecomment-6469294974"
     }
   },
   "blockedIssues": [
