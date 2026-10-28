@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 49,
+  "fixedCount": 58,
   "fixedIssues": [
     565,
     563,
@@ -54,7 +54,16 @@
     492,
     494,
     495,
-    496
+    496,
+    434,
+    436,
+    445,
+    446,
+    447,
+    448,
+    449,
+    450,
+    451
   ],
   "issues": {
     "565": {
@@ -448,6 +457,78 @@
       "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/496#issuecomment-6467916052"
+    },
+    "434": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Use canonical own checks for sequence links/GitGraph identifiers.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/434#issuecomment-6468666192"
+    },
+    "436": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Preserve special flowchart IDs with prototype-free parse/IR/layout indexes.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/436#issuecomment-6468667021"
+    },
+    "445": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Preserve special state IDs through parsing, layout and actual XML import.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/445#issuecomment-6468667733"
+    },
+    "446": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Allocate state note/group/region IDs against a reserved user-ID namespace.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/446#issuecomment-6468668507"
+    },
+    "447": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Skip Kanban style directives rather than creating phantom columns.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/447#issuecomment-6468669318"
+    },
+    "448": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Reject radar tick counts over 1000 in parser and direct layout before allocation.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/448#issuecomment-6468670144"
+    },
+    "449": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Use prototype-free Sankey node/degree indexes and canonical own checks.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/449#issuecomment-6468670939"
+    },
+    "450": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Retain explicit reset-frame source relations while suppressing inferred ones.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/450#issuecomment-6468671637"
+    },
+    "451": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Limit nested flowchart groups to 64 and preflight public IR layout depth/work iteratively.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/451#issuecomment-6468672373"
     }
   },
   "blockedIssues": [
