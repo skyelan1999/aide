@@ -58,7 +58,8 @@ func hasParallelBriefing(input []Message) bool {
 }
 
 type ContextUsageAnchor struct {
-	Scope string `json:"scope,omitempty"` // parallel_merge contains transient working notes, absent from later baseline
+	Scope       string `json:"scope,omitempty"`       // transient parallel/active summaries are absent from later baseline
+	CompactedAt string `json:"compactedAt,omitempty"` // binds calibration to the session history generation
 
 	Usage              TokenUsage `json:"usage"`
 	PromptEstimate     int        `json:"promptEstimate"`
@@ -456,13 +457,11 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 			conversation[i].SourceRunID = ""
 			conversation[i].CreatedAt = ""
 		}
-		start, total := len(conversation), 0
-		for start > 0 && total+contextMessageTokens(conversation[start-1]) < contextHistoryMaxTokens {
-			start--
-			total += contextMessageTokens(conversation[start])
-		}
-		history = append(history, conversation[start:]...)
-		historyCount = len(conversation) - start
+		// Meter all unsummarized history. Silently taking a fixed suffix loses
+		// constraints and can start inside a tool exchange. Preflight compaction
+		// owns fitting this request to the selected model's actual budget.
+		history = append(history, conversation...)
+		historyCount = len(conversation)
 	}
 	history = append(history, Message{Role: "user", Content: prompt + contextText, Images: images})
 	instruction := chatInstruction
@@ -526,11 +525,14 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 			// Parallel working notes are not persisted in conversation history. Their
 			// tokenization delta must not inflate the next ordinary request's baseline.
 			run := s.Runs[i]
-			if anchor != nil && (anchor.Scope == "parallel_merge" || anchor.Scope == "" && run.ParallelPrepared && run.Parallel != nil && run.Parallel.Phase != "fallback" && len(run.Parallel.Parts) > 1) {
+			if anchor != nil && (anchor.Scope == "parallel_merge" || anchor.Scope == "active_compact" || anchor.Scope == "" && run.ParallelPrepared && run.Parallel != nil && run.Parallel.Phase != "fallback" && len(run.Parallel.Parts) > 1) {
 				break
 			}
 			if anchor == nil || anchor.Usage.Estimated || anchor.Usage.Prompt <= 0 || anchor.Usage.Completion < 0 {
 				continue
+			}
+			if anchor.CompactedAt != s.CompactedAt {
+				break // Old tokenization deltas no longer describe the compressed history.
 			}
 			if anchor.HeaderFingerprint != fingerprint {
 				break // header 已换到其他模型/系统提示/工具集合，不复用旧 usage

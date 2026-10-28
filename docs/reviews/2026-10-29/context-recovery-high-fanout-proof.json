@@ -1,0 +1,892 @@
+{
+  "recordedAt": "2026-10-28T19:14:24.393480+00:00",
+  "issue": "https://github.com/skyelan1999/aide/issues/580",
+  "pullRequest": "https://github.com/skyelan1999/aide/pull/589",
+  "productionBaseCommit": "b2ef45630eb9e7adb073b5c1356d865926381c85",
+  "sourceSHA256": {
+    "internal/server/context.go": "b303199ac827e2d0e409576a3b182039744e2ef26c77d4c2a86b79e2443cf641",
+    "internal/server/context_recovery.go": "7832dc92cae80b2c37fada330a508106d7304f7a0c370dee47bb1793b7075903",
+    "internal/server/conversation_parallel.go": "94b0b0fdde531dafb3aba54353dd8674f9db86f74026b0874ec5f05d1e80073e",
+    "internal/server/provider.go": "4e6b5e8121d846e5e11520a50de71f053f62829e49128e341a97cc896332a24f",
+    "internal/server/workflow.go": "df46d27838723eb7ac035dd5f296d7acce2087c1a80dc726f070c5da60761ffc"
+  },
+  "harnessSHA256": "743f15aa362c9e188977a817418b1bdc1e3439bb9d3ae4c0123fa69fdbad53da",
+  "environment": "macOS arm64 native Go test executable cross-built in the existing linux/arm64 Go CI image; temporary synthetic App instances, no real session/project memory loaded",
+  "selection": "AIDE_CONTEXT_LIVE_PARALLELISM=5,10; TestContextRecoveryLiveModels; explicit existing read-only credential-envelope opt-in",
+  "result": "PASS: four live cases, 30 completed real analysis workers; all in round 1",
+  "method": [
+    "Force active compaction at a synthetic 4096-token window; retain a unique middle-of-source code and 27.4 MHz threshold.",
+    "Carry only the model-produced summary into a fresh API session with no original chat messages; ask for five or ten independent named drafts.",
+    "Restore configured model windows for the actual planner/worker/main requests; require exactly N started and completed workers.",
+    "Require each final CASE label exactly once, fitted request budgets, successful completion and no replay of the complete raw source. Inspect final codes for foreign-case contamination."
+  ],
+  "liveCases": [
+    {
+      "answer": "识别码：R73186-gpt-5；阈值：27.4 MHz。\n以下为合成项目 SYNTHETIC-FROST-gpt-6.1-sol-5 的独立验收草案，均未执行。\n\n[CASE01] 身份认证与角色权限边界：建议①用失效令牌及退出后的旧会话访问受保护接口；②用低权限账号直调管理接口、跨用户读取对象。留存：脱敏请求响应、角色矩阵、审计日志。未知：撤销机制、角色继承规则。\n\n[CASE02] 备份恢复与灾难演练：建议①从隔离备份恢复并校验完整性；②模拟主站失效，检查切换、回切及RPO/RTO。留存：备份清单、恢复日志、校验报告、演练时间线。未知：目标指标、灾备拓扑、恢复兼容性。\n\n[CASE03] 数据库迁移与事务一致性：建议①核对迁移前后行数、校验和及约束；②注入事务中断，检查完整回滚及重试无重复。留存：迁移脚本、核对报告、事务日志。未知：数据库版本、DDL事务支持、隔离级别、停机窗口。\n\n[CASE04] 断网重连与消息幂等：建议①发送后确认前断网，检查重连补发无丢失；②同消息ID并发重投并重启消费者，检查业务仅生效一次。留存：断网时序、消息ID、收发日志、落库记录。未知：重试策略、去重窗口及持久化机制。\n\n[CASE05] 时间戳与时区及钟漂：建议①检查UTC存储及夏令时重复、缺失时刻的转换；②模拟钟漂与校时回拨，检查事件排序。留存：输入输出、偏移曲线、日志。未知：时区库版本、允许漂移、排序规则；不预设27.4 MHz与钟漂的关系。",
+      "caseLabelsExactlyOnce": true,
+      "elapsedSeconds": 52,
+      "model": "gpt-6.1-sol",
+      "noSourceReplay": true,
+      "originalHistorySupplied": false,
+      "parallelism": 5,
+      "parts": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1738,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1738,
+              "completion": 35,
+              "total": 1773,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE01]身份认证与角色权限边界验收建议：不超过140字，包含两条具体检查建议、应留存证据及未知项；仅针对合成项目SYNTHETIC-FROST-gpt-6.1-sol-5，不调用工具，不声称已执行，标明待核实事实。",
+          "status": "completed",
+          "content": "[CASE01] 建议：①以失效令牌、退出后旧会话访问受保护接口；②以低权限账号直调管理员接口并跨用户读取对象。应留存：请求响应、角色矩阵、脱敏审计日志。待核实：合成项目的认证组件版本、令牌撤销机制及角色继承规则。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1738,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1738,
+              "completion": 36,
+              "total": 1774,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE02]备份恢复与灾难演练验收建议：不超过140字，包含两条具体检查建议、应留存证据及未知项；仅针对合成项目SYNTHETIC-FROST-gpt-6.1-sol-5，不调用工具，不声称已执行，标明待核实事实。",
+          "status": "completed",
+          "content": "[CASE02] 建议：①从隔离备份恢复并校验数据完整性；②模拟主站失效，检查切换、回切及RPO/RTO。应留存备份清单、恢复日志、校验结果与演练时间线。待核实：目标指标、灾备拓扑、备份软件版本及恢复兼容性；以上均未执行。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1738,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1738,
+              "completion": 36,
+              "total": 1774,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE03]数据库迁移与事务一致性验收建议：不超过140字，包含两条具体检查建议、应留存证据及未知项；仅针对合成项目SYNTHETIC-FROST-gpt-6.1-sol-5，不调用工具，不声称已执行，标明待核实事实。",
+          "status": "completed",
+          "content": "[CASE03] 建议：①迁移前后核对行数、校验和及约束；②注入事务中断，检查原子回滚与重试无重复。应留存：迁移脚本、核对报告、事务日志。待核实：数据库版本、DDL事务支持、隔离级别及停机窗口；版本相关行为需主执行者确认。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1738,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1738,
+              "completion": 40,
+              "total": 1778,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE04]断网重连与消息幂等验收建议：不超过140字，包含两条具体检查建议、应留存证据及未知项；仅针对合成项目SYNTHETIC-FROST-gpt-6.1-sol-5，不调用工具，不声称已执行，标明待核实事实。",
+          "status": "completed",
+          "content": "[CASE04] 断网重连与消息幂等（合成项目）：①建议在发送后、确认前断网，检查重连补发无丢失；②建议同消息ID并发重投并重启消费者，检查业务仅生效一次。应留存断网时序、消息ID、收发日志及落库记录。待核实：客户端/消息代理版本、重试策略及去重窗口。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1745,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1745,
+              "completion": 37,
+              "total": 1782,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE05]时间戳与时区及钟漂验收建议：不超过140字，包含两条具体检查建议、应留存证据及未知项；仅针对合成项目SYNTHETIC-FROST-gpt-6.1-sol-5，不调用工具，不声称已执行，标明待核实事实；不得改动约定阈值27.4 MHz或臆定其与钟漂的关系。",
+          "status": "completed",
+          "content": "[CASE05] 建议①检查UTC存储与时区转换，覆盖夏令时重复及缺失时刻；②模拟钟漂与校时回拨，检查事件排序。留存输入输出、偏移曲线及日志。待核实：时区库/同步服务版本、允许漂移及排序规则；不预设27.4 MHz与钟漂的关系。"
+        }
+      ],
+      "requestBudgetsFit": true,
+      "requestSnapshots": 7,
+      "snapshotsTruncated": false,
+      "status": "completed",
+      "summaryPreservedMiddleFacts": true,
+      "usage": {
+        "prompt": 13138,
+        "completion": 524,
+        "total": 13662,
+        "estimated": true,
+        "model": "gpt-6.1-sol"
+      },
+      "workers": 5,
+      "noForeignCaseCode": true
+    },
+    {
+      "answer": "识别码：R73186-gpt-10；阈值：27.4 MHz。以下为 SYNTHETIC-FROST-gpt-6.1-sol-10 验收草案，仅为建议，未执行检查。\n\n[CASE01] 身份认证与角色权限边界：①检查错误凭据、过期及注销会话被拒；②按角色矩阵检查横向、纵向越权及接口直访。留存：脱敏请求响应、认证日志、权限矩阵。未知：认证版本、会话策略、角色定义。\n\n[CASE02] 备份恢复与灾难演练：①隔离恢复全量及增量备份，核对校验值；②模拟主站失效，计时切换及回切。留存：备份清单、恢复日志、切换时间线。未知：RPO/RTO、演练范围、恢复兼容性。\n\n[CASE03] 数据库迁移与事务一致性：①演练迁移失败回滚，核对行数、校验和及约束；②并发提交时注入中断，检查原子性与隔离性。留存：迁移脚本、前后快照、事务日志。未知：数据库版本、隔离级别、DDL事务支持。\n\n[CASE04] 断网重连与消息幂等：①断网积压后重连，核对补发及丢失；②重复投递同一消息，检查业务仅生效一次。留存：消息ID、重试日志、业务记录对照。未知：重试上限、去重窗口、顺序保证。\n\n[CASE05] 时间戳与时区及钟漂：①跨时区及夏令时切换，核对存储和显示；②注入钟漂与校时跳变，检查排序及超时。留存：时区配置、校时日志、事件时间线。未知：允许偏差、时间源、时区库版本。\n\n[CASE06] 并发负载与资源容量：①阶梯加压，检查P95延迟及错误率；②持续加载至容量边界，检查资源饱和与卸载后恢复。留存：负载脚本、环境配置、监控曲线。未知：目标并发、SLO、持续时长、资源配额。\n\n[CASE07] 键盘操作与无障碍：①仅用键盘遍历控件，检查焦点可见、顺序及弹窗退出；②用屏幕阅读器检查控件名称、角色及错误播报。留存：操作录像、焦点轨迹、播报记录。未知：目标平台、辅助技术版本、适用标准。\n\n[CASE08] 三端文件路径及编码：①三端互传中文、空格及大小写差异文件，检查路径与名称保真；②交叉读写UTF-8及历史编码文件，检查乱码和换行。留存：样本、哈希、路径及读写日志。未知：三端平台、文件系统、编码范围。\n\n[CASE09] 密钥轮换与泄露响应：①轮换密钥，检查新钥生效、旧钥按期失效；②模拟泄露，检查吊销、告警及应急替换。留存：脱敏配置、调用结果、处置时间线，不留明文密钥。未知：密钥类型、缓存期限、吊销传播时限。\n\n[CASE10] 审计证据与记录保全：①抽查登录、权限变更及删除事件的操作者、时间和结果；②模拟篡改与到期清理，检查告警、保全及授权。留存：脱敏日志、校验值、告警与审批记录。未知：保留期限、合规要求、防篡改机制。",
+      "caseLabelsExactlyOnce": true,
+      "elapsedSeconds": 60,
+      "model": "gpt-6.1-sol",
+      "noSourceReplay": true,
+      "originalHistorySupplied": false,
+      "parallelism": 10,
+      "parts": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1755,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1755,
+              "completion": 36,
+              "total": 1791,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE01]身份认证与角色权限边界验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE01] 建议：①验证错误凭据、会话过期及注销后访问均被拒绝；②按角色矩阵测试横向、纵向越权及接口直访。留存脱敏请求响应、认证日志与权限矩阵。未知：认证组件版本、会话策略及角色定义；版本相关行为需主执行者核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1754,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1754,
+              "completion": 36,
+              "total": 1790,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE02]备份恢复与灾难演练验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE02] 建议：①抽取全量及增量备份，在隔离环境恢复并核对数据校验值；②模拟主站失效，计时切换及回切。留存备份清单、恢复日志、计时记录。未知：RPO/RTO目标、演练授权范围；备份软件版本及恢复兼容性需主执行者核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1755,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1755,
+              "completion": 38,
+              "total": 1793,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE03]数据库迁移与事务一致性验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE03] 建议：①演练迁移失败回滚，核对行数、校验和及约束；②并发提交并注入中断，检查原子性、隔离性与重复写入。应留存：迁移脚本、前后快照、事务日志及断言结果。未知：数据库版本、隔离级别及DDL事务支持，需主执行者核实版本差异。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1754,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1754,
+              "completion": 36,
+              "total": 1790,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE04]断网重连与消息幂等验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE04] 建议①断网积压后重连，检查消息补发与丢失；②重复投递同一消息，检查业务仅生效一次。应留存：消息ID、重试日志、业务记录对照。未知：重试上限、去重窗口及顺序保证；客户端与服务端版本相关行为待主执行者核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1754,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1754,
+              "completion": 35,
+              "total": 1789,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE05]时间戳与时区及钟漂验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE05] 建议：①跨UTC与本地时区、夏令时切换，核对存储及显示；②注入钟漂与校时跳变，检查事件排序和超时。留存时区配置、校时日志及带时间戳记录；未知：允许偏差、时间源；依赖系统与时区库版本，须主执行方核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1754,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1754,
+              "completion": 39,
+              "total": 1793,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE06]并发负载与资源容量验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE06] 建议：①按目标并发阶梯加压，检查P95延迟及错误率；②持续施压至容量边界，检查CPU、内存、连接池饱和及卸载后恢复。留存负载脚本、配置、监控曲线和错误日志。未知：目标并发、SLO及持续时长；运行时版本与资源配额需主执行者核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1754,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1754,
+              "completion": 36,
+              "total": 1790,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE07]键盘操作与无障碍验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE07] 建议：①仅用键盘遍历控件，检查焦点可见、顺序合理、弹窗无焦点陷阱；②用屏幕阅读器检查名称、角色及错误播报。留存：操作录像、焦点轨迹、播报记录。未知：目标系统、浏览器及辅助技术版本与适用标准，需主执行方核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1758,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1758,
+              "completion": 38,
+              "total": 1796,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE08]三端文件路径及编码验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；三端具体平台未知，不擅自认定；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE08] 建议：①三端互传含中文、空格及大小写差异的文件，检查路径解析与名称保真；②交叉读写UTF-8及历史编码文件，检查乱码与换行。留存：样本、哈希、路径及读写日志。未知：三端平台、文件系统及版本；版本相关限制待主执行方核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1754,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1754,
+              "completion": 36,
+              "total": 1790,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE09]密钥轮换与泄露响应验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE09] 建议①轮换密钥，检查新钥生效、旧钥按期失效；②模拟泄露，检查吊销、告警及应急替换。应留存：脱敏配置、调用结果、告警与处置时间线。未知：密钥类型、缓存期限；依赖平台能力，API及版本差异需主执行者核实。"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "openai",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1754,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "openai",
+              "keyId": "key-58ba8e7d-3098-41ed-b3e8-110bcb5d13fc",
+              "keyLabel": "密钥 1",
+              "prompt": 1754,
+              "completion": 39,
+              "total": 1793,
+              "estimated": true,
+              "model": "gpt-6.1-sol",
+              "provider": "http://127.0.0.1:8787/v1"
+            }
+          },
+          "title": "独立起草[CASE10]审计证据与记录保全验收建议：两条具体检查、应留存证据及未知项，总计不超过140字；仅提建议，不声称执行，不使用工具。",
+          "status": "completed",
+          "content": "[CASE10] 建议：①抽查登录、权限变更、删除记录的操作者、时间及结果是否完整；②模拟篡改与到期清理，检查告警、保全及授权。留存：脱敏日志、校验值、告警与审批记录。未知：保留期限、合规要求；日志格式及防篡改能力依赖具体版本，需主执行者核实。"
+        }
+      ],
+      "requestBudgetsFit": true,
+      "requestSnapshots": 12,
+      "snapshotsTruncated": false,
+      "status": "completed",
+      "summaryPreservedMiddleFacts": true,
+      "usage": {
+        "prompt": 22298,
+        "completion": 864,
+        "total": 23162,
+        "estimated": true,
+        "model": "gpt-6.1-sol"
+      },
+      "workers": 10,
+      "noForeignCaseCode": true
+    },
+    {
+      "answer": "识别码：R73186-deepseek-5；阈值：27.4 MHz。以下为五个相互独立的验收草案，均未执行任何工具，内容为建议而非已执行结果。\n\n[CASE01] 身份认证与角色权限边界\n建议：①按角色权限矩阵逐角色尝试访问非授权接口，确认全部被拒绝；②验证会话过期、注销后令牌立即失效，并检查默认拒绝策略。\n留存证据：越权测试记录、角色权限矩阵、认证日志、配置快照。\n未知项：认证协议与角色模型、账号清单未提供。\n\n[CASE02] 备份恢复与灾难演练\n建议：①随机抽取一份全量备份，在隔离环境实际恢复，核对行数与校验和；②模拟主库宕机，记录 RTO/RPO 实测值。\n留存证据：恢复日志、校验和比对表、演练时间线与签字记录。\n未知项：备份保留周期、RTO/RPO 目标值、演练频率均未提供。\n\n[CASE03] 数据库迁移与事务一致性\n建议：①在预发布环境执行迁移脚本，验证升级与回滚可重复执行且前后校验和一致；②注入中途失败，确认事务整体回滚、无半迁移状态。\n留存证据：脚本版本号、执行日志、前后行数与校验和对比、回滚演练记录。\n未知项：数据库类型与版本、迁移工具、是否允许停机窗口。\n\n[CASE04] 断网重连与消息幂等\n建议：①模拟断网重连，核对重发报文与幂等键一致，确认服务端仅落库一次；②并发重复投递同一消息，验证返回一致且无重复副作用。\n留存证据：断网/重连日志、重发报文与幂等键、落库记录、重复投递响应对比。\n未知项：幂等键生成规则、重连退避策略、消息保留窗口。\n\n[CASE05] 时间戳与时区及钟漂\n建议：①验证各节点统一以 UTC 存储、按业务时区展示，覆盖夏令时切换边界；②注入时钟偏移（如 ±5 分钟）与 NTP 失步，核对事件排序、超时与过期判定。\n留存证据：时区配置快照、偏移注入测试日志、事件时间线比对记录。\n未知项：允许钟漂阈值、NTP 源与同步周期、夏令时覆盖地区。\n\n说明：各领域均按独立任务单列，未合并或拆分；上述未知项需在正式验收前由项目方补充确认。",
+      "caseLabelsExactlyOnce": true,
+      "elapsedSeconds": 10,
+      "model": "deepseek-flash",
+      "noSourceReplay": true,
+      "originalHistorySupplied": false,
+      "parallelism": 5,
+      "parts": [
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1782,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2197,
+              "cacheHit": 768,
+              "cacheMiss": 1429,
+              "cacheKnown": true,
+              "completion": 101,
+              "total": 2298,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "起草 [CASE01] 身份认证与角色权限边界 验收草案：两条具体检查建议、应留存证据、未知项，不超过140字",
+          "status": "completed",
+          "content": "[CASE01] 身份认证与角色权限边界\n检查建议：①用越权矩阵逐角色尝试访问非授权接口，确认均返回拒绝；②验证会话过期、注销后令牌立即失效，并检查默认拒绝策略。\n留存证据：越权测试记录、角色权限矩阵、认证日志与配置快照。\n未知项：认证协议与角色模型未提供，具体阈值和账号清单待确认。\n（约120字；协议细节需主执行者核实）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1782,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2196,
+              "cacheHit": 768,
+              "cacheMiss": 1428,
+              "cacheKnown": true,
+              "completion": 110,
+              "total": 2306,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "起草 [CASE02] 备份恢复与灾难演练 验收草案：两条具体检查建议、应留存证据、未知项，不超过140字",
+          "status": "completed",
+          "content": "[CASE02] 备份恢复与灾难演练\n检查建议：①随机抽取一份全量备份，在隔离环境实际恢复，并核对数据行数与校验和；②模拟主库宕机，记录RTO/RPO实测值。\n留存证据：恢复日志、校验和比对表、演练时间线与签字记录。\n未知项：备份保留周期、RTO/RPO目标值、演练频率均未提供。\n（约120字；RTO/RPO目标值需主执行方核实，属版本敏感项。）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1782,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2196,
+              "cacheHit": 768,
+              "cacheMiss": 1428,
+              "cacheKnown": true,
+              "completion": 111,
+              "total": 2307,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "起草 [CASE03] 数据库迁移与事务一致性 验收草案：两条具体检查建议、应留存证据、未知项，不超过140字",
+          "status": "completed",
+          "content": "[CASE03] 数据库迁移与事务一致性\n检查建议：①在预发布环境执行迁移脚本，验证升级与回滚均可重复执行，且迁移前后数据校验和一致；②注入中途失败，确认事务整体回滚、无半迁移状态。\n留存证据：迁移脚本版本号、执行日志、前后行数与校验和对比、回滚演练记录。\n未知项：数据库类型与版本、迁移工具、是否允许停机窗口。\n（约120字；具体数据库/工具版本需主执行器核实）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1782,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2199,
+              "cacheHit": 768,
+              "cacheMiss": 1431,
+              "cacheKnown": true,
+              "completion": 147,
+              "total": 2346,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "起草 [CASE04] 断网重连与消息幂等 验收草案：两条具体检查建议、应留存证据、未知项，不超过140字",
+          "status": "completed",
+          "content": "[CASE04] 断网重连与消息幂等\n检查建议：①模拟断网后重连，核对客户端重发与去重键（消息ID/幂等键）是否一致，确认服务端仅落库一次；②并发重复投递同一消息，验证返回结果一致且无重复副作用。\n留存证据：断网/重连日志、重发报文与幂等键、服务端落库记录、重复投递响应对比。\n未知项：幂等键生成规则、重连退避策略、消息保留窗口未明确，需核实。\n\n（约135字；幂等键规则与重连参数属版本敏感项，需主执行方核实。）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1782,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2198,
+              "cacheHit": 768,
+              "cacheMiss": 1430,
+              "cacheKnown": true,
+              "completion": 114,
+              "total": 2312,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "起草 [CASE05] 时间戳与时区及钟漂 验收草案：两条具体检查建议、应留存证据、未知项，不超过140字",
+          "status": "completed",
+          "content": "[CASE05] 时间戳与时区及钟漂\n检查建议：①验证各节点统一使用 UTC 存储、按业务时区展示，并覆盖夏令时切换边界；②注入时钟偏移（如 ±5 分钟）与 NTP 失步，核对事件排序、超时与过期判定。\n留存证据：时区配置快照、偏移注入测试日志、事件时间线比对记录。\n未知项：允许钟漂阈值、NTP 源与同步周期、夏令时覆盖地区均未明确，需核实。"
+        }
+      ],
+      "requestBudgetsFit": true,
+      "requestSnapshots": 7,
+      "snapshotsTruncated": false,
+      "status": "completed",
+      "summaryPreservedMiddleFacts": true,
+      "usage": {
+        "prompt": 17144,
+        "completion": 1358,
+        "total": 18502,
+        "model": "deepseek-flash"
+      },
+      "workers": 5,
+      "noForeignCaseCode": true
+    },
+    {
+      "answer": "识别码：R73186-deepseek-10；阈值：27.4 MHz。以下为十个相互独立的验收草案，均未执行任何工具，建议仅为待验证的检查项。\n\n[CASE01] 身份认证与角色权限边界\n建议：①按角色权限矩阵逐项尝试越权访问非授权接口，确认均被拒绝；②验证会话过期、登出后令牌失效及多因素认证绕过路径。\n证据：越权测试记录、角色权限矩阵、认证日志、配置快照。\n未知项：角色清单与最小权限基线、令牌有效期、MFA 策略。\n\n[CASE02] 备份恢复与灾难演练\n建议：①抽取最近全量与增量备份，在隔离环境实际恢复，核对行数、校验和与业务抽检；②核查演练是否覆盖 RTO/RPO，问题是否闭环。\n证据：备份策略与保留周期、演练记录及时间戳、恢复比对报告、整改跟踪单。\n未知项：RTO/RPO 指标、介质与异地存放方式、演练频率。\n\n[CASE03] 数据库迁移与事务一致性\n建议：①在预发布库执行迁移脚本，验证升级与回滚可重复执行，失败时整体回滚无残留结构；②构造迁移中断与并发写入，核对隔离级别、锁等待与行数校验和。\n证据：脚本版本与校验和、执行日志、前后结构与行数快照、回滚结果、隔离配置。\n未知项：数据库类型版本、是否允许停机、数据量级、回滚时限。\n\n[CASE04] 断网重连与消息幂等\n建议：①断网重连场景注入重复与乱序消息，核对按唯一键去重、重发不产生重复业务效果；②核对退避、会话恢复与离线补投边界，确认不重复计费或入库。\n证据：重连日志、唯一键与去重命中记录、投递前后数据快照、补投清单。\n未知项：唯一键生成规则与保留期、跨端是否共享幂等域、补投窗口上限。\n\n[CASE05] 时间戳与时区及钟漂\n建议：①核对各服务统一以 UTC 存储、按用户时区展示，并检查夏令时切换边界；②注入时钟偏移（如±5分钟）验证超时、令牌有效期与排序逻辑。\n证据：NTP 同步状态与偏移日志、时区配置、偏移注入测试记录。\n未知项：允许钟漂阈值、跨时区用户范围、闰秒处理策略。\n\n[CASE06] 并发负载与资源容量\n建议：①按峰值并发逐级加压，记录响应时间、错误率与 CPU/内存/连接池占用，定位拐点；②做长稳与突发混合测试，验证限流、排队、超时与降级按设计生效。\n证据：压测脚本与参数、监控曲线、拐点数据、限流降级日志、环境配置快照。\n未知项：峰值并发目标、SLO 阈值、资源配额上限。\n\n[CASE07] 键盘操作与无障碍\n建议：①仅用键盘完成主流程（Tab/Shift+Tab 焦点顺序、Enter/Space 激活、Esc 关闭），确认焦点可见且无焦点陷阱；②用屏幕阅读器抽查关键控件的名称、角色、状态与错误提示播报。\n证据：焦点顺序录屏、无障碍树快照、问题清单与复测记录。\n未知项：目标 WCAG 版本与等级、支持的屏幕阅读器与浏览器组合、是否含移动端。\n\n[CASE08] 三端文件路径及编码\n建议：①在 Windows、macOS、Linux 用同一组含中文、空格、emoji 的文件名测试上传、下载、重命名与同步，核对分隔符与大小写敏感性；②对 UTF-8（含/不含 BOM）与 GBK 文本做导入导出往返比对，检查乱码与截断。\n证据：三端用例表、文件名清单、往返比对结果、失败截图与日志。\n未知项：各端 OS 与文件系统版本、NFC/NFD 归一化支持、目标编码规范。\n\n[CASE09] 密钥轮换与泄露响应\n建议：①抽查最近一次轮换记录，核对轮换周期、双密钥重叠窗口与旧密钥吊销时间是否与策略一致；②模拟泄露，验证能否在约定时限内完成吊销、重签与通知，并确认回滚路径。\n证据：轮换审批单、密钥版本与生效/吊销时间戳、演练时间线与通知回执。\n未知项：轮换周期与响应时限数值、密钥托管方式、是否覆盖第三方密钥。\n\n[CASE10] 审计证据与记录保全\n建议：①抽取关键操作日志，核对操作者、时间、对象、结果四要素齐全，并确认不可篡改（哈希链或只写存储）；②模拟删除或修改尝试，验证保留期、防删策略与异地副本生效。\n证据：日志样本、保留策略配置、防篡改校验记录、恢复演练截图。\n未知项：法定保留期限、存储介质寿命、第三方托管责任划分。",
+      "caseLabelsExactlyOnce": true,
+      "elapsedSeconds": 10,
+      "model": "deepseek-flash",
+      "noSourceReplay": true,
+      "originalHistorySupplied": false,
+      "parallelism": 10,
+      "parts": [
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2182,
+              "cacheHit": 768,
+              "cacheMiss": 1414,
+              "cacheKnown": true,
+              "completion": 118,
+              "total": 2300,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE01] 身份认证与角色权限边界：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "识别码 R73186-deepseek-10；阈值 27.4 MHz。\n\n[CASE01] 身份认证与角色权限边界\n检查建议：①用越权矩阵逐角色尝试访问非授权接口，确认均返回拒绝；②验证会话过期、登出后令牌失效及多因素认证绕过路径。\n留存证据：越权测试记录、角色权限矩阵、认证日志与配置快照。\n未知项：角色清单与最小权限基线未提供；令牌有效期、MFA 策略待确认（版本敏感，需主执行方核实）。"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2181,
+              "cacheHit": 768,
+              "cacheMiss": 1413,
+              "cacheKnown": true,
+              "completion": 134,
+              "total": 2315,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE02] 备份恢复与灾难演练：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE02] 备份恢复与灾难演练\n\n检查建议：①抽取最近一次全量备份和增量备份，在隔离环境中实际恢复，并核对恢复后的数据行数、校验和与业务抽检结果；②核查灾难演练记录是否覆盖恢复时间目标（RTO）和恢复点目标（RPO），并确认演练中发现的问题是否已闭环。\n\n应留存证据：备份策略与保留周期文档、恢复演练记录及时间戳、恢复后数据比对报告、问题整改跟踪单。\n\n未知项：RTO/RPO 具体指标、备份介质与异地存放方式、演练频率均未提供，需核实。"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2181,
+              "cacheHit": 768,
+              "cacheMiss": 1413,
+              "cacheKnown": true,
+              "completion": 149,
+              "total": 2330,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE03] 数据库迁移与事务一致性：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE03] 数据库迁移与事务一致性\n\n检查建议：①在预发布库执行迁移脚本，验证升级与回滚均可重复执行，且失败时整体回滚、无半成品结构；②构造迁移中途中断与并发写入场景，核对事务隔离级别、锁等待与数据行数/校验和一致。\n\n应留存证据：迁移脚本版本与校验和、执行日志、前后表结构与行数快照、回滚结果、事务隔离配置。\n\n未知项：目标数据库类型与版本、是否允许停机、数据量级、回滚时限要求。\n\n（约135字；具体隔离级别与DDL事务行为随数据库版本而异，需主执行方按实际版本核实。）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2184,
+              "cacheHit": 768,
+              "cacheMiss": 1416,
+              "cacheKnown": true,
+              "completion": 177,
+              "total": 2361,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE04] 断网重连与消息幂等：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE04] 断网重连与消息幂等（草案，未执行）\n\n建议检查：①在弱网或断网后重连的场景中，注入重复投递和乱序消息，核对服务端是否按消息唯一键去重，并确认客户端重发不会产生重复业务效果；②核对重连退避、会话恢复与离线消息补投的边界，确认补投不会重复计费或重复入库。\n\n应留存证据：断网重连日志、消息唯一键与去重命中记录、重复投递前后的业务数据快照、补投清单。\n\n未知项：唯一键生成规则与保留期、跨端重发是否共享幂等域、补投窗口上限。\n\n（约120字；具体退避参数与幂等存储实现属版本敏感项，需主执行器核实。）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2183,
+              "cacheHit": 768,
+              "cacheMiss": 1415,
+              "cacheKnown": true,
+              "completion": 126,
+              "total": 2309,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE05] 时间戳与时区及钟漂：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE05] 时间戳与时区及钟漂（草案，未执行）\n建议：①核对各服务时间戳统一采用UTC存储、按用户时区展示，并检查夏令时切换边界；②注入时钟偏移（如±5分钟）验证超时、令牌有效期与排序逻辑。\n证据：NTP同步状态与偏移日志、时区配置、偏移注入测试记录。\n未知项：允许钟漂阈值、跨时区用户范围、闰秒处理策略。\n（约120字；具体NTP/夏令时规则随版本与地区而异，需主执行方核实。）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2181,
+              "cacheHit": 768,
+              "cacheMiss": 1413,
+              "cacheKnown": true,
+              "completion": 140,
+              "total": 2321,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE06] 并发负载与资源容量：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE06] 并发负载与资源容量（草案，未执行）\n\n建议1：按峰值并发逐级加压，记录响应时间、错误率、CPU/内存/连接池占用，找出拐点。\n建议2：做长稳与突发混合测试，验证限流、排队、超时和降级是否按设计生效。\n\n应留存证据：压测脚本与参数、监控曲线、拐点数据、限流/降级日志、环境配置快照。\n\n未知项：峰值并发目标值、SLO 阈值、资源配额上限均未提供，需确认。\n\n（约120字；具体数值与工具版本需主执行方核实）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1772,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2180,
+              "cacheHit": 768,
+              "cacheMiss": 1412,
+              "cacheKnown": true,
+              "completion": 150,
+              "total": 2330,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE07] 键盘操作与无障碍：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE07] 键盘操作与无障碍（草案，未执行）\n\n建议检查：\n1. 仅用键盘完成主流程（Tab/Shift+Tab 焦点顺序、Enter/Space 激活、Esc 关闭），确认焦点可见且不陷入陷阱。\n2. 用屏幕阅读器抽查关键控件名称、角色、状态与错误提示的播报。\n\n应留存证据：焦点顺序录屏、无障碍树快照、问题清单及复测记录。\n\n未知项：目标无障碍标准（WCAG 版本/等级）、支持的屏幕阅读器与浏览器组合、是否含移动端。\n\n（约120字；WCAG 版本与具体成功准则编号属版本敏感项，需主执行方核实。）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2182,
+              "cacheHit": 768,
+              "cacheMiss": 1414,
+              "cacheKnown": true,
+              "completion": 150,
+              "total": 2332,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE08] 三端文件路径及编码：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE08] 三端文件路径及编码（草案，未执行）\n建议：①在 Windows、macOS、Linux 三端各用同一组含中文、空格、emoji 的文件名，测试上传、下载、重命名和同步，并核对路径分隔符与大小写敏感性。②对 UTF-8（含 BOM 与无 BOM）、GBK 编码的文本做导入导出往返比对，检查乱码与截断。\n证据：三端测试用例表、文件名清单、往返比对结果、失败截图与日志。\n未知项：各端 OS 与文件系统版本、是否支持 NFC/NFD 归一化、目标编码规范。\n（约135字）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2182,
+              "cacheHit": 768,
+              "cacheMiss": 1414,
+              "cacheKnown": true,
+              "completion": 141,
+              "total": 2323,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE09] 密钥轮换与泄露响应：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE09] 密钥轮换与泄露响应\n\n检查建议：①抽查最近一次轮换记录，核对轮换周期、双密钥重叠窗口及旧密钥吊销时间是否与策略一致；②模拟一次泄露，验证能否在约定时限内完成吊销、重签与通知，并确认回滚路径。\n\n应留存证据：轮换审批单、密钥版本与生效/吊销时间戳、泄露演练时间线与通知回执。\n\n未知项：轮换周期与响应时限的具体数值、密钥托管方式、是否覆盖第三方密钥。\n\n（约135字；具体时限、周期等阈值需主执行方按项目实际核实，本草案未执行任何工具。）"
+        },
+        {
+          "model": "deepseek-flash",
+          "provider": "default",
+          "round": 1,
+          "context": {
+            "inputEstimate": 1773,
+            "outputReserve": 2048,
+            "contextWindow": 65536,
+            "usage": {
+              "providerId": "default",
+              "keyId": "legacy",
+              "keyLabel": "API Key",
+              "prompt": 2181,
+              "cacheHit": 768,
+              "cacheMiss": 1413,
+              "cacheKnown": true,
+              "completion": 126,
+              "total": 2307,
+              "model": "deepseek-flash",
+              "provider": "https://api.deepseek.com"
+            }
+          },
+          "title": "[CASE10] 审计证据与记录保全：起草两条具体检查建议、应留存证据与未知项，不超过140字。",
+          "status": "completed",
+          "content": "[CASE10] 审计证据与记录保全\n\n检查建议：①抽取关键操作日志，核对操作者、时间、对象、结果四要素是否齐全，并确认日志不可篡改（例如采用哈希链或只写存储）；②模拟一次删除或修改尝试，验证保留期、防删策略与异地副本是否生效。\n\n应留存证据：日志样本、保留策略配置、防篡改校验记录、恢复演练截图。\n\n未知项：法定保留期限、存储介质寿命、第三方托管责任划分。\n\n（约120字；保留期与合规要求需主执行按适用法规核实）"
+        }
+      ],
+      "requestBudgetsFit": true,
+      "requestSnapshots": 12,
+      "snapshotsTruncated": false,
+      "status": "completed",
+      "summaryPreservedMiddleFacts": true,
+      "usage": {
+        "prompt": 29065,
+        "completion": 2875,
+        "total": 31940,
+        "model": "deepseek-flash"
+      },
+      "workers": 10,
+      "noForeignCaseCode": true
+    }
+  ],
+  "limits": [
+    "One synthetic run per model and parallelism; not a statistical reliability or sustained-load benchmark.",
+    "High fanout ran with configured 65536-token windows after forced 4096-token compaction; this is not a near-capacity 10x or real-project test.",
+    "gpt-6.1-sol usage is marked estimated by the Codex Bridge path; deepseek-flash usage is upstream-reported. These totals exclude the separate pre-run compaction calls.",
+    "No real tools, UI/browser, restart, production deployment, provider-setting write, merge or release in this follow-up. Previous mock cancellation/resume checks remain separate.",
+    "Summaries remain selective and bounded; successful synthetic fact recall does not establish lossless long-term memory."
+  ],
+  "validation": {
+    "liveMatrix": "PASS: 133.69s, four cases",
+    "focusedGo": "PASS: ContextRecovery plus parallel fanout/cancel/end-to-end/budget-and-resume, 5.022s",
+    "quick": {
+      "status": "pass",
+      "fingerprint": "c67f562f8d6a67b75c3afecbc95dc2d426e23b7db2170cfb94d8740c38ddbd28",
+      "head": "b2ef45630eb9e7adb073b5c1356d865926381c85",
+      "log": ".agent-state/verify-20261028T191844667286Z.log"
+    },
+    "docs": "PASS: 423 Markdown files, 1449 local links; git diff --check passed",
+    "environmentRetry": "Docker quick could not resolve the host Git worktree pointer; rerun on the host passed. The Go tests in that container passed."
+  }
+}
