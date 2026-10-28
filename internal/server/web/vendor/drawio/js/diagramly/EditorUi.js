@@ -3200,7 +3200,7 @@
 				var nodes = node.getElementsByTagName('diagram');
 
 				// Checks for duplicate page IDs
-				var pages = {};
+				var pages = Object.create(null);
 
 				if (nodes.length > 0)
 				{

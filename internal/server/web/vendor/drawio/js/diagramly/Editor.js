@@ -12808,6 +12808,14 @@
 		// Preview or print
 		function preview(print)
 		{
+			if (fitRadio.checked)
+			{
+				var across = Number(sheetsAcrossInput.value), down = Number(sheetsDownInput.value);
+				if (!Number.isSafeInteger(across) || across < 1 || !Number.isSafeInteger(down) || down < 1)
+				{
+					throw new Error('Fit sheet counts must be positive integers');
+				}
+			}
 			editorUi.lastPrintPagesRadioChecked = pagesRadio.checked;
 			editorUi.lastPrintSelectionOnlyChecked = selectionOnlyRadio.checked;
 			editorUi.lastPrintCropRadioChecked = cropRadio.checked;

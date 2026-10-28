@@ -1204,6 +1204,20 @@
         "node",
         "--check",
         "internal/server/web/vendor/mermaid.min.js"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_ui_fallback.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-ui-robustness-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_ui_robustness.cjs"
       ]
     ],
     "full": [

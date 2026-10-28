@@ -3670,7 +3670,9 @@ var FilenameDialog = function(editorUi, filename, buttonText, fn, label,
 	
 				    if (mxUtils.indexOf(evt.dataTransfer.types, 'text/uri-list') >= 0)
 				    {
-				    	nameInput.value = decodeURIComponent(evt.dataTransfer.getData('text/uri-list'));
+					var uri = evt.dataTransfer.getData('text/uri-list');
+					try { uri = decodeURIComponent(uri); } catch (e) { /* Keep the original URI on invalid UTF-8. */ }
+					nameInput.value = uri;
 				    	genericBtn.click();
 				    }
 	

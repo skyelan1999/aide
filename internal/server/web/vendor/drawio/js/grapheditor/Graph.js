@@ -2733,6 +2733,10 @@ Graph.fadeNodes = function(nodes, start, end, done, delay)
 Graph.exploreFromCell = function(sourceGraph, selectionCell, config)
 {
 	var pageSize = (config != null && config.pageSize != null) ? config.pageSize : 8;
+	if (!Number.isSafeInteger(pageSize) || pageSize <= 0)
+	{
+		throw new Error('Explore page size must be a positive integer');
+	}
 	var minSize = (config != null && config.minSize != null) ? config.minSize : 180;
 
 	//
@@ -7597,6 +7601,7 @@ var graphDestroy = Graph.prototype.destroy;
 Graph.prototype.destroy = function()
 {
 	this.destroyBrowserTranslate();
+	if (this.clickHandlerCleanup != null) this.clickHandlerCleanup();
 	graphDestroy.apply(this, arguments);
 };
 
@@ -20292,6 +20297,7 @@ if (typeof mxVertexHandler !== 'undefined')
 			var span = elt.ownerDocument.createElement((tagName != null) ? tagName : 'span');
 			var attributes = Array.prototype.slice.call(elt.attributes);
 			
+			var attr;
 			while (attr = attributes.pop())
 			{
 				span.setAttribute(attr.nodeName, attr.nodeValue);
@@ -21239,6 +21245,7 @@ if (typeof mxVertexHandler !== 'undefined')
 		 */
 		Graph.prototype.addClickHandler = function(highlight, beforeClick, onClick)
 		{
+			if (this.clickHandlerCleanup != null) this.clickHandlerCleanup();
 			// Replaces links in labels for consistent right-clicks
 			var checkLinks = mxUtils.bind(this, function()
 			{
@@ -21465,13 +21472,22 @@ if (typeof mxVertexHandler !== 'undefined')
 			};
 
 			// Ignores built-in click handling
-			graph.click = function(me) {};
+			var previousClick = graph.click;
+			var disabledClick = function(me) {};
+			graph.click = disabledClick;
 			graph.addMouseListener(mouseListener);
-			
-			mxEvent.addListener(document, 'mouseleave', function(evt)
+			var documentLeave = function(evt) { mouseListener.clear(); };
+			mxEvent.addListener(document, 'mouseleave', documentLeave);
+			graph.clickHandlerCleanup = function()
 			{
+				graph.clickHandlerCleanup = null;
+				mxEvent.removeListener(document, 'mouseleave', documentLeave);
+				graph.model.removeListener(checkLinks);
+				graph.removeMouseListener(mouseListener);
 				mouseListener.clear();
-			});
+				if (mouseListener.highlight != null) mouseListener.highlight.destroy();
+				if (graph.click === disabledClick) graph.click = previousClick;
+			};
 		};
 		
 		/**
