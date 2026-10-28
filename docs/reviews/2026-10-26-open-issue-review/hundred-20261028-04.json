@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 98,
+  "fixedCount": 100,
   "fixedIssues": [
     565,
     563,
@@ -103,7 +103,9 @@
     417,
     423,
     415,
-    416
+    416,
+    420,
+    430
   ],
   "issues": {
     "565": {
@@ -889,6 +891,22 @@
       "commit": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/416#issuecomment-6470421923"
+    },
+    "420": {
+      "status": "fixed-verified-pushed",
+      "cycle": 91,
+      "summary": "Backport upstream c6a25bb bounded reference-label scanning while preserving long ordinary text runs and anchored tokenizers.",
+      "commit": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/420#issuecomment-6470560135"
+    },
+    "430": {
+      "status": "fixed-verified-pushed",
+      "cycle": 91,
+      "summary": "Backport upstream PR4013 nonempty href or immediate-close empty href alternative to avoid whitespace repartitioning.",
+      "commit": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/430#issuecomment-6470561375"
     }
   },
   "blockedIssues": [
@@ -904,9 +922,43 @@
       "classification": "duplicate-consolidated-under563",
       "comment": "https://github.com/skyelan1999/aide/issues/561#issuecomment-6466040789",
       "counted": false
+    },
+    {
+      "number": 458,
+      "classification": "invalid-report-closed",
+      "reason": "Mapped arguments preserve clamps in the current non-strict scripts.",
+      "comment": "https://github.com/skyelan1999/aide/issues/458#issuecomment-6469039188",
+      "counted": false
+    },
+    {
+      "number": 422,
+      "classification": "invalid-report-closed",
+      "reason": "Actual Hanger2/4 layouts pass; vertical AdjustSpacer runs before horizontal merging.",
+      "comment": "https://github.com/skyelan1999/aide/issues/422#issuecomment-6469964081",
+      "counted": false
     }
   ],
   "verifiedPendingPush": [],
-  "status": "in_progress",
-  "policy": "Only newly fixed,verified,pushed unique issues count; owner skyelan1999 first. Previous fixes excluded. Branch only; no main merge,Release or deploy."
+  "status": "completed",
+  "policy": "Only newly fixed,verified,pushed unique issues count; owner skyelan1999 first. Previous fixes excluded. Branch only; no main merge,Release or deploy.",
+  "completedAt": "2026-10-28T13:42:18.370551+00:00",
+  "completionReason": "requested-100-new-unique-verified-pushed-fixes-reached",
+  "completionReport": "docs/reviews/2026-10-26-open-issue-review/hundred-20261028-04.md",
+  "sourceCommit": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
+  "verification": {
+    "quickChecks": 247,
+    "fingerprint": "afc4da50ae380ee8d5c0edb5bc0e0a9430063ff65b2692ab1a44a3899a5ac8a9",
+    "receipt": ".agent-state/verify-20261028T133733898919Z.log"
+  },
+  "duplicateCountValidation": {
+    "newUnique": 100,
+    "overlapWithEarlierCycles": 0
+  },
+  "ownerPriority": {
+    "newOwnerReportsHandled": [
+      565,
+      563
+    ],
+    "lastRefresh": "/workspace/scratch/issue-review-20261026/hundred-final-owner-refresh.json"
+  }
 }

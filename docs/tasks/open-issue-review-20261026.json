@@ -203,7 +203,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-087.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-088.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-089.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-090.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-090.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-091.json"
       ]
     },
     "documentation": {
@@ -214,7 +215,8 @@
         "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
         "docs/reviews/2026-10-26-open-issue-review/fifty-20261028-02.json",
         "docs/reviews/2026-10-26-open-issue-review/fifty-20261028-03.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-076.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-076.json",
+        "docs/reviews/2026-10-26-open-issue-review/hundred-20261028-04.md"
       ]
     },
     "cleanup": {
@@ -230,17 +232,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "新增100目标98/100已交付，账号优先565/563已处理，561重复合并；最新cycle90，下一轮先刷新账号报告，再继续编号队列。仍只push分支，不main合并/Release/deploy。扩展SSH写入夹具失败与完整工作台/原生系统未验证边界见cycle077。",
+  "handoff": "本次“继续100，先看1999账号”已完成100/100个新增、去重、验证、push并逐项评论的修复。账号优先565/563已交付；561重复并入563，458/422经实测关闭误报，均不计数。全量清单与分批证据见hundred-20261028-04.json/.md。仅分支，未合main/Release/deploy。原272后续仍18项；391需匹配运行时复现，369/464/467仍待原生验收。没有后台调度；收到继续请求时先刷新账号报告，再按检查点继续。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a",
+    "commit": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-090.json"
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-091.json"
   },
-  "issue_comments": "本轮100项已完成98/100，逐项修复、验证、push与评论见hundred-20261028-04.json。",
+  "issue_comments": "本轮100项均已逐项评论并记录URL；100个编号与cycle1至76已有编号无交集。误报/重复关闭记录未计数。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -269,30 +271,36 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 91,
+    "nextCycle": 92,
     "lastCompletedBatch": {
-      "cycle": 90,
+      "cycle": 91,
       "issues": [
-        415,
-        416
+        420,
+        430
       ],
-      "cumulativeFixed": 389,
-      "cumulativeProductFixed": 388,
+      "cumulativeFixed": 391,
+      "cumulativeProductFixed": 390,
       "toolingFixes": 1,
       "remainingFollowupTargets": 18,
-      "verification": "244quick;see cycle-090.json",
-      "delivery": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a"
+      "verification": "247quick;see cycle-091.json",
+      "delivery": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
+      "requestedTarget": 100,
+      "requestedNewFixed": 100,
+      "completionReport": "docs/reviews/2026-10-26-open-issue-review/hundred-20261028-04.md"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      417,
-      418,
-      419,
-      420,
-      421,
-      422,
-      423,
-      424
+      391,
+      411,
+      412,
+      413,
+      414,
+      425,
+      426,
+      427,
+      428,
+      429,
+      431
     ],
     "userReaffirmed": {
       "request": "继续100，先看1999账号提交的内容",
@@ -300,12 +308,12 @@
       "instruction": "New target100; first inspect unhandled skyelan1999 reports."
     },
     "currentCycle": {
-      "cycle": 90,
-      "status": "pass",
-      "phase": "pushed-commented-checkpoint",
+      "cycle": 91,
+      "status": "completed",
+      "phase": "requested-batch-completed",
       "issues": [
-        415,
-        416
+        420,
+        430
       ]
     },
     "additionalFollowupIssues": [],
@@ -430,12 +438,12 @@
       "request": "继续100，先看1999账号提交的内容",
       "sequence": 4,
       "targetFixed": 100,
-      "newFixed": 98,
+      "newFixed": 100,
       "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
       "baselineCumulative": 291,
       "baselineRemaining": 18,
       "startedAt": "2026-10-28T09:49:12.803816+00:00",
-      "status": "in_progress",
+      "status": "completed",
       "fixedIssues": [
         565,
         563,
@@ -534,14 +542,18 @@
         417,
         423,
         415,
-        416
+        416,
+        420,
+        430
       ],
       "blockedIssues": [
         391
       ],
       "verifiedPendingPush": [],
       "ledger": "docs/reviews/2026-10-26-open-issue-review/hundred-20261028-04.json",
-      "countPolicy": "Only newly fixed,verified,pushed unique issues count; owner skyelan1999 first. Previous fixes excluded. Branch only; no main merge,Release or deploy."
+      "countPolicy": "Only newly fixed,verified,pushed unique issues count; owner skyelan1999 first. Previous fixes excluded. Branch only; no main merge,Release or deploy.",
+      "completedAt": "2026-10-28T13:42:18.370551+00:00",
+      "completionReason": "requested-100-new-unique-verified-pushed-fixes-reached"
     },
     "completedRequestedBatches": [
       {
@@ -749,6 +761,127 @@
         "countPolicy": "Only new fixed, verified and pushed issues count. Previous two batches excluded. No main merge, Release or deploy.",
         "completedAt": "2026-10-28T08:51:54.889622+00:00",
         "completionReason": "requested-fifty-new-verified-pushed-fixes-reached"
+      },
+      {
+        "request": "继续100，先看1999账号提交的内容",
+        "sequence": 4,
+        "targetFixed": 100,
+        "newFixed": 100,
+        "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
+        "baselineCumulative": 291,
+        "baselineRemaining": 18,
+        "startedAt": "2026-10-28T09:49:12.803816+00:00",
+        "status": "completed",
+        "fixedIssues": [
+          565,
+          563,
+          382,
+          383,
+          384,
+          385,
+          386,
+          387,
+          388,
+          389,
+          390,
+          392,
+          393,
+          394,
+          395,
+          396,
+          397,
+          398,
+          399,
+          400,
+          403,
+          404,
+          405,
+          406,
+          407,
+          435,
+          444,
+          468,
+          470,
+          471,
+          472,
+          473,
+          475,
+          476,
+          477,
+          478,
+          479,
+          481,
+          482,
+          483,
+          484,
+          485,
+          488,
+          490,
+          491,
+          492,
+          494,
+          495,
+          496,
+          434,
+          436,
+          445,
+          446,
+          447,
+          448,
+          449,
+          450,
+          451,
+          469,
+          515,
+          517,
+          521,
+          522,
+          523,
+          524,
+          525,
+          526,
+          527,
+          528,
+          452,
+          453,
+          454,
+          455,
+          456,
+          457,
+          459,
+          460,
+          461,
+          462,
+          465,
+          466,
+          408,
+          409,
+          410,
+          424,
+          539,
+          541,
+          543,
+          544,
+          401,
+          402,
+          418,
+          419,
+          421,
+          417,
+          423,
+          415,
+          416,
+          420,
+          430
+        ],
+        "blockedIssues": [
+          391
+        ],
+        "verifiedPendingPush": [],
+        "ledger": "docs/reviews/2026-10-26-open-issue-review/hundred-20261028-04.json",
+        "countPolicy": "Only newly fixed,verified,pushed unique issues count; owner skyelan1999 first. Previous fixes excluded. Branch only; no main merge,Release or deploy.",
+        "completedAt": "2026-10-28T13:42:18.370551+00:00",
+        "completionReason": "requested-100-new-unique-verified-pushed-fixes-reached"
       }
     ],
     "additionalOpenReportsSnapshot": {
@@ -934,7 +1067,8 @@
       "policy": "Continue after completed third50; no main merge,Release or deploy.",
       "lastCheckpoint": "2026-10-28T09:35:29.692808+00:00",
       "record": "docs/reviews/2026-10-26-open-issue-review/cycle-076.json"
-    }
+    },
+    "awaitingContinuation": true
   },
   "orderedReview": {
     "status": "pass",
