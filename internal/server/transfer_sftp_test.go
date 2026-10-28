@@ -17,6 +17,31 @@ type transferSFTPStdio struct{}
 func (transferSFTPStdio) Read(b []byte) (int, error)  { return os.Stdin.Read(b) }
 func (transferSFTPStdio) Write(b []byte) (int, error) { return os.Stdout.Write(b) }
 func (transferSFTPStdio) Close() error                { return nil }
+
+// attachOwnedSFTPProtocol retains the SSH lifecycle/CLI stubs but gives the
+// subsystem channel an actual SFTP server over pipes. Only temporary test files
+// are addressed; no network listener, credentials or installed sshd is needed.
+func attachOwnedSFTPProtocol(t *testing.T, a *App, entered, release, failure string) {
+	t.Helper()
+	bin, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	script, err := os.ReadFile(a.sshBin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hook := "for arg do if [ \"$arg\" = sftp ]; then\n"
+	if entered != "" {
+		hook += "touch " + shellQuote(entered) + "\nwhile [ ! -f " + shellQuote(release) + " ]; do sleep 0.01; done\n"
+	}
+	if failure != "" {
+		hook += "printf '%s\\n' " + shellQuote(failure) + " >&2\nexit 1\n"
+	}
+	hook += "exec env AIDE_TRANSFER_SFTP_HELPER=1 " + shellQuote(bin) + " -test.run='^TestTransferSFTPProcess$'\nfi; done\n"
+	writeStub(t, a.sshBin, strings.Replace(string(script), "#!/bin/sh\n", "#!/bin/sh\n"+hook, 1))
+}
+
 func TestTransferSFTPProcess(t *testing.T) {
 	if os.Getenv("AIDE_TRANSFER_SFTP_HELPER") != "1" {
 		t.Skip("subprocess protocol helper")

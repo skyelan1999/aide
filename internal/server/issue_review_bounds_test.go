@@ -65,7 +65,7 @@ c=sqlite3.connect(sys.argv[1]);c.execute('create table records(n integer)');c.ex
 }
 func TestIssue62BriefingSortsInstantsBeforeTruncation(t *testing.T) {
 	a := testApp(t)
-	s := &Session{ID: "s", Runs: []*Task{{ID: "run", Prompt: "Project X", WorkspaceID: a.wsID()}}}
+	s := &Session{ID: "s", Runs: []*Task{{ID: "run", Prompt: "[project-name:Project X]", WorkspaceID: a.wsID()}}}
 	for i := 0; i < 100; i++ {
 		s.Messages = append(s.Messages, Message{Role: "user", Content: "older", SourceRunID: "run", CreatedAt: "2026-10-24T02:00:00+08:00"})
 	}
@@ -73,7 +73,10 @@ func TestIssue62BriefingSortsInstantsBeforeTruncation(t *testing.T) {
 	a.sessions = map[string]*Session{"s": s}
 	start, _ := time.Parse(time.RFC3339, "2026-10-23T00:00:00Z")
 	rows, omitted := a.projectMessagesLocked("Project X", "", "", start, start.Add(48*time.Hour))
-	if len(rows) != 100 || omitted != 1 || rows[0].Content != "newer" || rows[0].At != "2026-10-23T20:00:00Z" {
+	if len(rows) != 100 {
+		t.Fatalf("rows=%d want100 omitted=%d", len(rows), omitted)
+	}
+	if omitted != 1 || rows[0].Content != "newer" || rows[0].At != "2026-10-23T20:00:00Z" {
 		t.Fatalf("incorrect chronological truncation: count=%d omitted=%d first=%+v", len(rows), omitted, rows[0])
 	}
 }
