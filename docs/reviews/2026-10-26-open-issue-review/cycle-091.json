@@ -1,0 +1,58 @@
+{
+  "cycle": 91,
+  "baseline": "423598271adfe653849466f07fc6a16c92bf050a",
+  "issues": [
+    420,
+    430
+  ],
+  "fixes": {
+    "420": "Backport upstream c6a25bb bounded reference-label scanning while preserving long ordinary text runs and anchored tokenizers.",
+    "430": "Backport upstream PR4013 nonempty href or immediate-close empty href alternative to avoid whitespace repartitioning."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 2,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle91-red-final.log",
+    "scope": "Independent workers terminate at5seconds on60,000escaped-bracket reference candidates and100,000-space incomplete href. 63ordinary controls pass before patch."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 247,
+      "fingerprint": "afc4da50ae380ee8d5c0edb5bc0e0a9430063ff65b2692ab1a44a3899a5ac8a9",
+      "receipt": ".agent-state/verify-20261028T133733898919Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 65,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle91-green.log",
+      "scope": "63golden Markdown outputs in default/GFM/pedantic modes plus2controlled worker probes, now~781ms and~0.52ms; timings are local observations,not universal limits."
+    },
+    {
+      "result": "PASS",
+      "checks": 65,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle91-browser/result.json",
+      "scope": "Actual browser UMD bundle: same63golden outputs,2performance probes (~763ms/~0.5ms), and visible empty/reference links."
+    }
+  ],
+  "upstream": [
+    "https://github.com/markedjs/marked/commit/c6a25bb",
+    "https://github.com/markedjs/marked/pull/4013"
+  ],
+  "patchAudit": {
+    "originalSHA256": "15fabce5b65898b32b03f5ed25e9f891a729ad4c0d6d877110a7744aa847a894",
+    "patchedSHA256": "60c258cae70944213baab7d3dc0dcbfba94ddb93074568a4aa64f96642a9ee62",
+    "version": "12.0.2",
+    "licensePreserved": true
+  },
+  "notRun": [
+    "Every Marked complexity report/input; this is a scoped backport,not a claim of globally linear parsing.",
+    "Full Aide workbench/start.command,native Windows/macOS.",
+    "Main merge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  }
+}

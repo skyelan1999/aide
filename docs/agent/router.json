@@ -1265,6 +1265,20 @@
         "node",
         "--check",
         "scripts/browser-pdf-preview-lifecycle.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_marked_link_scans.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-marked-link-scans.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/marked.min.js"
       ]
     ],
     "full": [
