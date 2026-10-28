@@ -20,7 +20,8 @@
     "审查268bde94原生Windows方案，合理部分合入当前修复分支；保留现有更新/监控/迁移与测试，不恢复已修tar/镜像身份问题；构建与可执行验证明确平台边界。",
     "62轮191六个ContactBadge模板实际状态/尺寸/颜色匹配独立资源，192–195纠正显式搜索词并保留原style/value与正确相邻项；源码/两分发/明暗真实索引查询与渲染，已有图不自动改写。",
     "63轮196实际Azure标题/资源/查询一致；197调用真实BPMN工厂确认并移除空白占位，保留完整Call模板与变体；198纠正Start显式索引并保留End；三实现/明暗实际插入渲染及原字段控制对比。",
-    "64轮199实际工厂生成卡片文字纠错，保留样式/尺寸；200三种复合方向菜单用实际工厂几何、createItem/预览/拖入流程确认足迹并更正声明尺寸，单按钮控制保留；三实现/明暗验收，不虚构edge-split支持。"
+    "64轮199实际工厂生成卡片文字纠错，保留样式/尺寸；200三种复合方向菜单用实际工厂几何、createItem/预览/拖入流程确认足迹并更正声明尺寸，单按钮控制保留；三实现/明暗验收，不虚构edge-split支持。",
+    "66轮201–204四处Bootstrap标题/文字与205两处C4类型纠正；三实现明暗真实索引/插入渲染/属性对话框/保存重载，旧C4元数据与相邻模板不改写。"
   ],
   "scope": [
     "internal/server",
@@ -103,14 +104,14 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "65轮464原生单EXE多任务controller/port/update+内嵌目录LAN、A/B/迁移和默认打包入口完成；当前源码准备push，真实Windows仍待验收。",
+      "summary": "66轮201–205六个模板默认字段已修复并同步两分发，不改已有C4图纸。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "65轮185quick、35生产hostcore、38portable、9容器helper、20CIcontracts及Go race/vet、Windows双PE+DarwinGo编译/内嵌字节通过；Windows Job/ACL/Desktop/A-B/迁移与实际下载NOT_RUN。",
+      "summary": "66轮16真实browser/errors[]、42C4属性保存重载和实际EditData对话框、185quick及两分发scope比较通过；Windows实机仍待验证。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -175,7 +176,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-062.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-063.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-064.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-065.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-065.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-066.json"
       ]
     },
     "documentation": {
@@ -199,7 +201,7 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第65轮464单EXE多任务源码5ea85f55已push，已回填464且保持OPEN；Windows实机待验收。原272覆盖仍134=133product+1tool，剩153。第66轮继续201–205，原辅助stash保留，不得覆盖新任务状态；只推分支，无main/Release/部署。",
+  "handoff": "持续目标记录已恢复，本会话第66轮201–205修复和验收完成，待push回填。累计139=138product+1tool，原272剩148。第67轮206–210，保持owner优先；当前无hostgoalAPI，不能承诺离线自动续跑。原用户文件与stash保留。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
     "commit": "5ea85f555e0c787e6f0bb9d87380637d25fccc38",
@@ -214,8 +216,8 @@
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
     "status": "in_progress",
-    "executionMode": "host-managed-goal-continuation",
-    "backgroundScheduler": "codex-goal-continuation",
+    "executionMode": "active-session-with-persisted-checkpoints",
+    "backgroundScheduler": "not-available-in-current-client",
     "branch": "codex/open-issue-review-20261026",
     "constraints": [
       "只push该分支，禁止合并main、自动合并、发布或部署",
@@ -238,42 +240,48 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 66,
+    "nextCycle": 67,
     "lastCompletedBatch": {
-      "cycle": 65,
+      "cycle": 66,
       "issues": [
-        464
+        201,
+        202,
+        203,
+        204,
+        205
       ],
-      "kind": "explicit-user-followup-no-coverage-increment",
-      "cumulativeFixed": 134,
-      "cumulativeProductFixed": 133,
+      "cumulativeFixed": 139,
+      "cumulativeProductFixed": 138,
       "toolingFixes": 1,
-      "remainingFollowupTargets": 153,
+      "remainingFollowupTargets": 148,
       "remainingAdditionalFollowupTargets": 0,
-      "verification": "185quick/35hostcore/38portable/9containerpackage/20CIcontracts/Go race+vet/dualPE+payload;Windows runtime NOT_RUN",
-      "delivery": "source pushed 5ea85f555e0c787e6f0bb9d87380637d25fccc38;464comment posted;Windows acceptance pending;no main/release/deploy"
+      "verification": "16actualbrowsergroups/errors[],42C4roundtrips,actualEditData,185quick;fullpicker/physicaltooltiphover NOT_RUN",
+      "delivery": "verificationcomplete,pushpending"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      201,
-      202,
-      203,
-      204,
-      205
+      206,
+      207,
+      208,
+      209,
+      210
     ],
     "userReaffirmed": {
-      "request": "设置为目标，继续修",
-      "recordedAt": "2026-10-26T11:59:21.109999+00:00",
-      "instruction": "继续现有循环目标，按编号修复并push审查分支；不合并main。"
+      "request": "继续设定目标修复其他issue",
+      "recordedAt": "2026-10-28T01:25:24.105394+00:00",
+      "instruction": "继续循环修复目标，优先本账号新报告，再按编号；只push修复分支，不合并main。"
     },
     "currentCycle": {
-      "cycle": 65,
-      "status": "completed-source-delivery",
+      "cycle": 66,
+      "status": "verification-complete-pending-push",
       "candidates": [
-        464
+        201,
+        202,
+        203,
+        204,
+        205
       ],
-      "phase": "native-multitask-source-pushed-windows-runtime-pending",
-      "acceptance": "Windows native runtime NOT_RUN;do not close464"
+      "phase": "final-source-checked"
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -317,7 +325,7 @@
         "status": "native-multitask-source-pushed-windows-runtime-pending",
         "evidence": "cycle-065.json"
       },
-      "lastRefresh": "2026-10-28T01:47:04.650443+08:00",
+      "lastRefresh": "2026-10-28T01:25:24.105404+00:00",
       "lastExplicitRequest": "464将其余PS1任务整合原生exe/服务，默认链路不依赖PS1；保持macOS/Linux现有能力。",
       "owner467LatestReview": {
         "updatedAt": "2026-10-27T15:10:48Z",
@@ -362,9 +370,10 @@
           204,
           205
         ],
-        "status": "paused-by-explicit-464-native-service-request",
+        "status": "completed-owned-helpers-resumed-cycle66",
         "stash": "569d896d53fe34ae4515b62d03d80c0d0af4efa7",
-        "resume": "After nativehost delivery, restore owned helpers/task carefully;do notoverwritefresh464 task state. Preliminary helperbaseline invalid forC4 isolation;not productRED/PASS."
+        "resume": "Do notreapply;helperscorrectedandcompletedcycle66;stashretainedhistoricalbackup.",
+        "resumeEvidence": "Restored two owned helper files and one optional browser hook;kept stash and didnotapply oldtaskJSON."
       }
     ],
     "nativeAcceptancePending": [

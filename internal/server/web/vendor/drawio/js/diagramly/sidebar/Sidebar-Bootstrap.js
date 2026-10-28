@@ -2623,7 +2623,7 @@
 			   	item3.vertex = true;
 			   	item2.insert(item3);
 				
-		   		return sb.createVertexTemplateFromCells([item1], 800, 40, 'Input groupwith checkbox');
+				return sb.createVertexTemplateFromCells([item1], 800, 40, 'Input group with checkbox');
 			}),
 				    
 			this.addEntry(dt + 'input group with radio button', function()
@@ -3143,7 +3143,7 @@
 					'text;strokeColor=inherit;align=center;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;shape=mxgraph.bootstrap.leftButton;rSize=5;fillColor=inherit;fontColor=inherit;');
 				field1.vertex = true;
 				cell.insert(field1);
-				var field2 = new mxCell('Dapibus ac facilis in', new mxGeometry(0, 0, 140, 30),
+				var field2 = new mxCell('Dapibus ac facilisis in', new mxGeometry(0, 0, 140, 30),
 					'text;strokeColor=inherit;align=center;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;rSize=5;fillColor=inherit;fontColor=inherit;');
 				field2.vertex = true;
 				cell.insert(field2);
@@ -3619,7 +3619,7 @@
 			   	item9.vertex = true;
 			   	bg.insert(item9);
 			   	
-		   		return sb.createVertexTemplateFromCells([bg], bg.geometry.width, bg.geometry.height, 'Modal conent');
+				return sb.createVertexTemplateFromCells([bg], bg.geometry.width, bg.geometry.height, 'Modal content');
 			}),
 					
 			this.addEntry('button group horizontal', function()
@@ -4545,7 +4545,7 @@
 			   	var item8 = new mxCell('Item 3-1', new mxGeometry(0, 240, 100, 40), s + 'rrect;rSize=5;fillColor=none;strokeColor=none;perimeter=none;whiteSpace=wrap;align=left;spacingLeft=30;fontColor=#0085FC;fontSize=14;');
 			   	item8.vertex = true;
 			   	cell.insert(item8);
-			   	var item9 = new mxCell('Item 3-1', new mxGeometry(0, 280, 100, 40), s + 'rrect;rSize=5;fillColor=none;strokeColor=none;perimeter=none;whiteSpace=wrap;align=left;spacingLeft=30;fontColor=#0085FC;fontSize=14;');
+				var item9 = new mxCell('Item 3-2', new mxGeometry(0, 280, 100, 40), s + 'rrect;rSize=5;fillColor=none;strokeColor=none;perimeter=none;whiteSpace=wrap;align=left;spacingLeft=30;fontColor=#0085FC;fontSize=14;');
 			   	item9.vertex = true;
 			   	cell.insert(item9);
 

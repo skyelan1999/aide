@@ -243,7 +243,7 @@
 		    	bg.setValue(mxUtils.createXmlDocument().createElement('object'));
 		    	bg.setAttribute('placeholders', '1');
 		        bg.setAttribute('c4Name', '[System Context] Diagram title');
-		        bg.setAttribute('c4Type', 'ContainerScopeBoundary');
+				bg.setAttribute('c4Type', 'SystemContextDiagramTitle');
 		        bg.setAttribute('c4Description', 'Diagram short description');
 		    	bg.setAttribute('label', '<font style="font-size: 16px"><b><div style="text-align: left">%c4Name%</div></b></font><div style="text-align: left">%c4Description%</div>');
 			    
@@ -271,7 +271,7 @@
 		    	bg.setValue(mxUtils.createXmlDocument().createElement('object'));
 		    	bg.setAttribute('placeholders', '1');
 		        bg.setAttribute('c4Name', '[Components] Diagram title');
-		        bg.setAttribute('c4Type', 'ContainerDiagramTitle');
+				bg.setAttribute('c4Type', 'ComponentDiagramTitle');
 		        bg.setAttribute('c4Description', 'Diagram short description');
 		    	bg.setAttribute('label', '<font style="font-size: 16px"><b><div style="text-align: left">%c4Name%</div></b></font><div style="text-align: left">%c4Description%</div>');
 			    

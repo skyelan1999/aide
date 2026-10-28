@@ -1,0 +1,98 @@
+{
+  "cycle": 66,
+  "recordedAt": "2026-10-28T09:33:56.363787+08:00",
+  "baseline": "82929cca6ab91d00874d51f594d1dbb24fc2a344",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    201,
+    202,
+    203,
+    204,
+    205
+  ],
+  "cumulativeProductFixes": 138,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 139,
+  "original272RemainingFollowup": 148,
+  "priorityRefresh": "Confirmedskyelan1999;openownerlistunchanged;464updatedonlyourdeliverycomment;467proposalunchanged;nativeacceptancepending.",
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "scope": "Actual source factories/index/HTMLrenderer/Save-reload reproduce4Bootstrapfaults and2C4wrongtypes;factoryErrors[];8specificmismatches,not8issues. C4globalSb isactual live sidebar;capturebindsthefreevariablewithoutchangingit.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle66-caption-red/light-captions-source.json"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_CAPTION_METADATA_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=.../cycle66-caption-green node scripts/browser-drawio-preview-bounds.cjs",
+      "checks": 16,
+      "scope": "Chromium154 actualbundlediframe;source/app/integrate×light1440/dark390=6newgroups plus10base. Eachconstructs276factories(noallvisualclaim),renders7targets+3controls,usesactualsearch,actualEditData dialog,actualSavebutton/protocolandsetGraphXmlreload. 7C4metadatarecordsroundtrippergroup=42;includes2legacytypesunchanged. Readabledesktopsamplesandnarrowdarkpropertydialogvisuallyinspected;allmismatches/errors[].",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle66-caption-green/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "Baseline/current snapshots+bundle assignment stripping;Terser5.39 sync --check;node --check;git diff --check",
+      "scope": "Only6defaultfieldlineschange(4Bootstrap+2C4);targetsidenticalafterexactapprovedreplacements,3controlsidentical;outside2assignmentsbothbundlesbyteidentical. OriginalC4containerscopeboundaryandcontainertitletypesretained.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle66-scope/comparison.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 185,
+      "fingerprint": "65e53099a443e5f1217cae2cfb5f752d8f05621df4e2e00165ac49240ce09d8b",
+      "receipt": ".agent-state/verify-20261028T013148618977Z.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py;git diff --check",
+      "scope": "429Markdown/1472links;newJSONreceiptsparsedandreviewed"
+    }
+  ],
+  "changes": {
+    "201": "Input groupwith checkbox ->Input group with checkbox",
+    "202": "Onlyhorizontal sample facilis ->facilisis",
+    "203": "Modal conent ->Modal content",
+    "204": "OnlyItem3 second child ->Item3-2",
+    "205": "SystemContext title ->SystemContextDiagramTitle;Components title ->ComponentDiagramTitle;noexistingmetadatarewrite"
+  },
+  "securityReview": [
+    "Changesonlytrustedpaletteconstants;noexternalnetwork/modelcalls,HTMLtemplateinjectionornewimportbehavior.",
+    "C4typeconsumersnotfoundelsewhereoutsidepalette/bundles;newdefaultsonly,oldsavedvaluesarenotnormalized.",
+    "Ownedbrowserrouteallowsfixedlocaltestoriginonly;owncontext/pageclosedfinally. No user pages/data orproductionrestart.",
+    "Existingpausedstashretained;onlytwoownedhelperfilesandoptionalhookrestored,notoldtaskJSON."
+  ],
+  "testHarnessCorrections": [
+    "EarlierpausedC4capture incorrectlyletfree sb resolve realDOMfactory;bindlocalcapture andleavewindow.sb intact. Notreportedasa productbug.",
+    "Renderchecksallowzero-size decorativegeometrywhile requiring actualpositive-size shapesconnected;sampletextverifiedusingrealrenderedDOM.",
+    "Initialreadablecaptureusedwrongpageorigin;switchedactualPageView offandfitWindow,visuallyconfirmedcorrectedtext."
+  ],
+  "notRun": [
+    "CompleteAideworkbenchBootstrap/C4librarypicker,201/203physicaltooltiphoverandphysicalnarrowviewportdrag;actualfactories/index/renderandC4property/saveUIverified.",
+    "All276templatesfullvisualacceptance;onlyselected7plus3controlsand2legacyroundtripcases.",
+    "Go/full/nativechecksnotrepeatedforsixfrontendconstants;previous464/467WindowsruntimeNOT_RUNunchanged.",
+    "Mainmerge,Release/tag/deploy orproductionrestart.",
+    "Creatinganewhost-managedautonomousbackgroundgoal:currenttoolcataloghasnogoal/schedulerAPI;persistedgoalrecordandactive-sessionexecutiononly."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issuesRemainOpenPendingMain": true
+  },
+  "preservation": {
+    "pausedStash": "569d896d53fe34ae4515b62d03d80c0d0af4efa7",
+    "userUntrackedFiles": "unchanged/notstaged"
+  },
+  "sourceSHA256": {
+    "internal/server/web/vendor/drawio/js/app.min.js": "e1fb53a46e146e56321feded46e32c2d975b63d4a126b5c4dbfdf0e6e11a8006",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Bootstrap.js": "901f70b2dd35f2a8a52c19a38f8e0bfe9620608e39c2b761e352a032d9269091",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-C4.js": "00b593897c28d5d5e786f1d2d2783a53cd5dd2e36634f6c78f698c1a41ba5d49",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "423a9b613d18a4fc283549d4b4d0867866f14c4d00edf8865e5d7ecf125fb88d",
+    "scripts/browser-drawio-preview-bounds.cjs": "1d7f69874910ad86561a8fcfa3830d3c2e2e51edc6d9a563aa43d278b191c6fd",
+    "scripts/drawio-caption-metadata-browser-cases.cjs": "771c44a72d94678c14230e1d096d1bd6045fce300c32e0853543d9d0ef376223",
+    "scripts/drawio-caption-metadata-review.cjs": "d846cb3713557fb0065c1436fa8a3a11d6e520c5af5f145ea8129a125ab84a44",
+    "scripts/sync_drawio_palette_search.cjs": "f372f06c15096eab4a6d74ca910a61532feeac71858d5dbe77fc09d908548623"
+  }
+}
