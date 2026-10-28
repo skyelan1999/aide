@@ -1331,6 +1331,26 @@
         "node",
         "--check",
         "scripts/browser-html2canvas-scans.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-template-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-dompurify-stack.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/sanitizer/purify.min.js"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-drawio-preview-bounds.cjs"
       ]
     ],
     "full": [
