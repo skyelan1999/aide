@@ -1,0 +1,72 @@
+{
+  "id": "windows-slot-recovery-20261026",
+  "request": "Windows RC12 to RC12 activation remains at 95% Restoring the previous slot; no persistent updater logs are available",
+  "baseline": "15e3130ecd0dc7a2a4c6b1813c9d2082d072ed58",
+  "initial_status": "",
+  "acceptance": [
+    "Recovery launcher failure must not terminate the agent or leave an unreported 95% operation.",
+    "Preserve sanitized activation/recovery errors and retry terminal receipts after an API outage/restart.",
+    "Exercise real launcher child-process exit codes plus same-version activation and recovery failure fixtures.",
+    "Do not modify private source, live 9999 or user data; Windows Desktop first-failure cause remains unconfirmed."
+  ],
+  "scope": [
+    "scripts/update-agent.ps1",
+    "scripts/test_windows_update_agent.py",
+    "diagnostic documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Reproduce persistent rollback/95%, preserve diagnostics and retry receipts, cover same-image activation; first Windows host failure remains unknown.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/369"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Bound launcher process wait and independently guard rollback; retain redacted logs and terminal result outbox; only reuse a runtime with verified identical image ID and health.",
+      "evidence": [
+        "docs/reviews/2026-10-26/windows-slot-95-recovery.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Host agent and regression fixtures updated; no runtime/private/live-service changes.",
+      "evidence": [
+        "scripts/update-agent.ps1",
+        "scripts/test_windows_update_agent.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Local PowerShell 7 fixtures and actual child-process checks passed; original RC12 script reproduces uncaught recovery failure. Windows CI and affected Windows Desktop acceptance remain pending.",
+      "evidence": [
+        ".agent-state/slot-recovery/agent-tests.log",
+        ".agent-state/slot-recovery/rc12-reproduction.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual diagnosis, scope limits and host-only repair instructions added.",
+      "evidence": [
+        "docs/reviews/2026-10-26/windows-slot-95-recovery.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed focused diff; diagnostic logs/output remain ignored and tokens are redacted. No user data or installed runtime changed.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Refs #369. Prepare host-only patch and PR; no authorization for a new public release or new administrator merge is inferred from the completed RC12 publication. Keep issue open pending real Windows retry.",
+  "issue": "https://github.com/skyelan1999/aide/issues/369"
+}
