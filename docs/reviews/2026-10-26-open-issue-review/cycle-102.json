@@ -1,0 +1,53 @@
+{
+  "cycle": 102,
+  "issues": [
+    588
+  ],
+  "repository": "skyelan1999/aide-pkg-terminal",
+  "branch": "codex/open-issue-review-20261028",
+  "baseline": "3bf0502",
+  "fix": "Native bidirectional pipe backpressure; preserve half-close; tear down paired sockets; refuse excess peers before connecting upstream.",
+  "red": {
+    "forwardQueuedBytes": 29558890,
+    "sourcePaused": false,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle102-terminal-red.log"
+  },
+  "green": [
+    {
+      "scope": "Actual loopback slow receivers;32MiB per direction; byte count and SHA256 exact after drain; no connection leaks",
+      "observedQueuedBytes": [
+        65536,
+        65536
+      ],
+      "sourcePaused": [
+        true,
+        true
+      ],
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle102-terminal-green.log"
+    },
+    {
+      "scope": "8communications regressions incl SSH/UDP/virtualserial",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle102-terminal-regressions.log"
+    },
+    {
+      "scope": "Complete plugin suite with existing pyserial venv on PATH",
+      "tests": 36,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle102-terminal-final.log"
+    }
+  ],
+  "intermediateFailure": "Initial full suite used Python without pyserial; existing venv has3.5. Final full run passed.",
+  "notRun": [
+    "All OS fixed queue-size guarantee",
+    "Real devices/external TCP targets",
+    "Main merge/new release/market publication"
+  ],
+  "delivery": {
+    "commit": "262fb36",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnAideBranch": 428,
+  "independentPluginFixes": 1,
+  "remainingOriginal104": 67
+}
