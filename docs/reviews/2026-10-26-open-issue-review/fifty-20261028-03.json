@@ -43,7 +43,22 @@
     365,
     551
   ],
-  "verifiedPendingPush": [],
+  "verifiedPendingPush": [
+    363,
+    366,
+    367,
+    368,
+    371,
+    372,
+    374,
+    375,
+    376,
+    377,
+    378,
+    379,
+    380,
+    381
+  ],
   "blockedIssues": [],
   "alreadyCovered": [],
   "issues": {
@@ -298,8 +313,84 @@
       "summary": "Capture each initializer Sidebar in seven factories that previously depended on the iOS global",
       "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
       "comment": "https://github.com/skyelan1999/aide/issues/551#issuecomment-6462319583"
+    },
+    "363": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Reject malformed percent-encoded PDF diagram metadata without escaping the import path"
+    },
+    "366": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Normalize empty/out-of-range page ranges on change and immediately before print/export submission"
+    },
+    "367": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Bound ZIP inputs to 32MiB compressed, 1000 entries, and one 8MiB expanded payload; enforce actual streamed bytes even with dishonest metadata"
+    },
+    "368": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Find noncoincident marker directions and deduplicate sampled arrow polylines so finite nonzero paths remain visible"
+    },
+    "371": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Skip recursive SysML composite inclusion while retaining subsequent valid symbols"
+    },
+    "372": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Only call own function entries in BPMN background, outline and symbol painter tables"
+    },
+    "374": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Reject inherited emoji lookup values before SVG text rendering"
+    },
+    "375": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Replace wrapping 32-bit connector masks with independent sets of segment IDs; copy sets before merging point memberships"
+    },
+    "376": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Choose Org Chart parents only among the eligible direct vertices of the selected layer"
+    },
+    "377": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Keep Explore pagination values local to each explorer invocation"
+    },
+    "378": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Reject automatic Update-plugin XML POSTs to cross-origin or unsafe URLs before serializing graph data"
+    },
+    "379": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Reset SQL primary keys for each import and remove SQL row cloning dependence on the iOS global"
+    },
+    "380": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Parse MySQL FOREIGN KEY and REFERENCES keywords case-insensitively"
+    },
+    "381": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 75,
+      "summary": "Honor replay-delay with finite nonnegative timer bounds and retain legacy delay-delay fallback"
     }
   },
   "status": "in_progress",
-  "policy": "Only new fixed, verified and pushed issues count. Previous two batches excluded. No main merge, Release or deploy."
+  "policy": "Only new fixed, verified and pushed issues count. Previous two batches excluded. No main merge, Release or deploy.",
+  "deferred": [
+    {
+      "number": 364,
+      "reason": "The cors parameter currently accepts arbitrary regex syntax. A bounded replacement still needs compatibility design and dedicated validation; no fix claimed or counted in this batch."
+    }
+  ]
 }

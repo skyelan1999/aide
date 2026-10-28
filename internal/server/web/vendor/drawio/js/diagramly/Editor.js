@@ -2604,7 +2604,9 @@
 			result = Editor.extractGraphModelFromXref(obj);
 		}
 		
-		if (result != null)
+		try
+		{
+			if (result != null)
 		{
 			// Decodes the string escapes of external editors that rewrite
 			// the subject as a literal string (eg. Preview escapes the
@@ -2614,6 +2616,12 @@
 				replace(/\\([\\()])/g, '$1').
 				replace(/\\\(/g, "(").
 				replace(/\\\)/g, ")"));
+		}
+
+		}
+		catch (e)
+		{
+			return null;
 		}
 
 		return result;
@@ -12342,13 +12350,15 @@
 		});
 		
 		function validatePageRange()
-		{
-			pagesToInput.value = Math.max(1, Math.min(pageCount,
-				Math.max(parseInt(pagesToInput.value), parseInt(pagesFromInput.value))));
-			pagesFromInput.value = Math.max(1, Math.min(pageCount,
-				Math.min(parseInt(pagesToInput.value), parseInt(pagesFromInput.value))));
-		};
-		
+        {
+            var from = parseInt(pagesFromInput.value, 10);
+            var to = parseInt(pagesToInput.value, 10);
+            from = isFinite(from) ? Math.max(1, Math.min(pageCount, from)) : currentPage;
+            to = isFinite(to) ? Math.max(1, Math.min(pageCount, to)) : from;
+            pagesFromInput.value = Math.min(from, to);
+            pagesToInput.value = Math.max(from, to);
+        };
+
 		mxEvent.addListener(pagesFromInput, 'change', validatePageRange);
 		mxEvent.addListener(pagesToInput, 'change', validatePageRange);
 		
@@ -12811,6 +12821,7 @@
 			editorUi.lastPrintSheetsAcross = sheetsAcrossInput.value;
 			editorUi.lastPrintSheetsDown = sheetsDownInput.value;
 
+			validatePageRange();
 			var args = {};
 			args.border = parseInt(borderInput.value);
 			args.scale = parseInt(zoomInput.value) / 100;

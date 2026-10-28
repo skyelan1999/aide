@@ -14647,102 +14647,76 @@
 	 * Imports the given zip file.
 	 */
 	EditorUi.prototype.importZipFile = function(file, success, onerror)
-	{
-		var ui = this;
-		
-		var delayed = mxUtils.bind(this, function()
-		{
-			this.loadingExtensions = false;
-			
-			if (typeof JSZip  !== 'undefined')
-			{
-				JSZip.loadAsync(file).then(function(zip) 
-		        {
-		        	if (mxUtils.isEmptyObject(zip.files))
-		        	{
-		        		onerror();
-		        	}
-		        	else
-		        	{
-		        		var gliffyLatestVer = {version: 0};
-		        		var drawioFound = false;
-		        		
-		                zip.forEach(function (relativePath, zipEntry) 
-		                {
-		                	var name = zipEntry.name.toLowerCase();
-							
-		                    if (name == 'diagram/diagram.xml') //draw.io zip format has the latest diagram version at diagram/diagram.xml
-		                    {
-		                    	drawioFound = true;
-		                    	
-			                    zipEntry.async("string").then(function(str){
-			                    	if (str.indexOf('<mxfile ') == 0)
-			                    	{
-			                    		success(str);
-			                    	}
-			                    	else
-		                    		{
-			                    		onerror();
-		                    		}
-			                    });
-		                    }
-		                    else if (name.indexOf('versions/') == 0) //Gliffy zip format has the versions inside versions folder
-		                   	{
-		                    	var version = parseInt(name.substr(9)); //9 is the length of versions/
-		                    	
-		                    	if (version > gliffyLatestVer.version)
-		                    	{
-		                    		gliffyLatestVer = {version: version, zipEntry: zipEntry}
-		                    	}
-		                   	}
-		                });
-		                
-		                if (gliffyLatestVer.version > 0)
-		            	{
-		                	gliffyLatestVer.zipEntry.async("string").then(function(data)
-		                	{
-		                		if (ui.isGliffyData(data, file.name))
-		                		{
-									ui.importGliffy(data, function(xml)
-									{
-										success(xml);
-									}, function()
-									{
-										onerror();
-									}, file.name);
-		                		}
-		                		else
-		            			{
-		                			onerror();
-		            			}
-		                	});
-		            	}
-		                else if (!drawioFound)
-		            	{
-		                	onerror();
-		            	}
-		        	}
-		        }, function (e) {
-		    		onerror(e);
-		        }); 
-			}
-			else
-			{
-				onerror();
-			}
-		});
-		
-		if (typeof JSZip === 'undefined' && !this.loadingExtensions && !this.isOffline(true))
-		{
-			this.loadingExtensions = true;
-			mxscript(window.DRAWIO_SERVER_URL + 'js/extensions.min.js', delayed,
-				null, null, null, onerror);
-		}
-		else
-		{
-			delayed();
-		}
-	};
+{
+    var ui = this;
+    var settled = false;
+    var maxCompressed = 32 * 1024 * 1024, maxExpanded = 8 * 1024 * 1024;
+    var size = file != null ? (file.size != null ? file.size : (file.byteLength != null ? file.byteLength : file.length)) : null;
+    function limit()
+    {
+        var error = new Error('Diagram ZIP import is limited to 32 MiB compressed and 8 MiB expanded.');
+        error.code = 'AIDE_DRAWIO_LIMIT';
+        return error;
+    }
+    function fail(error) { if (!settled) { settled = true; onerror(error || new Error(mxResources.get('invalidOrMissingFile'))); } }
+    function complete(xml) { if (!settled) { settled = true; success(xml); } }
+    if (typeof size !== 'number' || !isFinite(size) || size < 0 || size > maxCompressed) { fail(limit()); return; }
+    // Exactly one payload is chosen per archive, bounding aggregate expansion too.
+    function readEntry(entry)
+    {
+        return new Promise(function(resolve, reject)
+        {
+            if (entry._data != null && entry._data.uncompressedSize > maxExpanded) { reject(limit()); return; }
+            var bytes = 0, parts = [], decoder = new TextDecoder('utf-8'), done = false;
+            var stream = entry.internalStream('uint8array');
+            stream.on('data', function(chunk)
+            {
+                if (done) return;
+                bytes += chunk.byteLength;
+                if (bytes > maxExpanded) { done = true; stream.pause(); parts = []; reject(limit()); return; }
+                parts.push(decoder.decode(chunk, {stream: true}));
+            }).on('error', function(error) { if (!done) { done = true; parts = []; reject(error); } })
+            .on('end', function() { if (!done) { done = true; parts.push(decoder.decode()); resolve(parts.join('')); } }).resume();
+        });
+    }
+    var delayed = mxUtils.bind(this, function()
+    {
+        this.loadingExtensions = false;
+        if (typeof JSZip === 'undefined') { fail(); return; }
+        JSZip.loadAsync(file).then(function(zip)
+        {
+            var drawio = null, gliffy = null, latest = -1, count = 0;
+            zip.forEach(function(path, entry)
+            {
+                if (++count > 1000) throw limit();
+                var name = entry.name.toLowerCase();
+                if (!entry.dir && name === 'diagram/diagram.xml' && drawio == null) drawio = entry;
+                else if (!entry.dir && new RegExp('^versions/[0-9]+$').test(name))
+                {
+                    var version = Number(name.substring(9));
+                    if (version > latest) { latest = version; gliffy = entry; }
+                }
+            });
+            var entry = drawio || gliffy;
+            if (entry == null) { fail(); return; }
+            return readEntry(entry).then(function(data)
+            {
+                if (drawio != null)
+                {
+                    if (data.indexOf('<mxfile ') == 0 || data.indexOf('<mxfile>') == 0) complete(data); else fail();
+                }
+                else if (ui.isGliffyData(data, file.name)) ui.importGliffy(data, complete, fail, file.name);
+                else fail();
+            });
+        }).catch(fail);
+    });
+    if (typeof JSZip === 'undefined' && !this.loadingExtensions && !this.isOffline(true))
+    {
+        this.loadingExtensions = true;
+        mxscript(window.DRAWIO_SERVER_URL + 'js/extensions.min.js', delayed, null, null, null, fail);
+    }
+    else delayed();
+};
 	
 	/**
 	 * Imports the given XML into the existing diagram.

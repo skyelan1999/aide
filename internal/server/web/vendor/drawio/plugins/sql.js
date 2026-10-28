@@ -102,7 +102,8 @@ Draw.loadPlugin(function(ui) {
 
         var columnType = propertyModel.IsPrimaryKey && propertyModel.IsForeignKey ? 'PK | FK' : propertyModel.IsPrimaryKey ? 'PK' : propertyModel.IsForeignKey ? 'FK' : '';
 
-        var left = sb.cloneCell(rowCell, columnType);
+        var left = rowCell.clone();
+        left.value = columnType;
         left.connectable = false;
         left.style = 'shape=partialRectangle;top=0;left=0;bottom=0;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=180;points=[];portConstraint=eastwest;part=1;'
         left.geometry.width = 54;
@@ -128,7 +129,7 @@ Draw.loadPlugin(function(ui) {
         var referencesSQL = name.substring(referencesIndex, name.length);
 
         //Remove references syntax
-        referencesSQL = referencesSQL.replace("REFERENCES ", '');
+        referencesSQL = referencesSQL.replace(/^references\s+/i, '');
 
         //Get Table and Property Index
         var referencedTableIndex = referencesSQL.indexOf("(");
@@ -141,7 +142,7 @@ Draw.loadPlugin(function(ui) {
         var referencedPropertyName = referencesSQL.substring(referencedTableIndex + 1, referencedPropertyIndex);
 
         //Get ForeignKey 
-        var foreignKey = foreignKeySQL.replace("FOREIGN KEY (", '').replace(")", '').replace(" ", '');
+        var foreignKey = foreignKeySQL.replace(/^foreign\s+key\s*\(/i, '').replace(/\)\s*$/, '').trim();
 
         //Create ForeignKey
         var foreignKeyOriginModel = CreateForeignKey(foreignKey, currentTableModel.Name, referencedPropertyName, referencedTableName, true);
@@ -356,6 +357,7 @@ Draw.loadPlugin(function(ui) {
         exportedTables = 0;
         tableList = [];
         foreignKeyList = [];
+        primaryKeyList = [];
 
         var currentTableModel = null;
 

@@ -2732,8 +2732,8 @@ Graph.fadeNodes = function(nodes, start, end, done, delay)
  */
 Graph.exploreFromCell = function(sourceGraph, selectionCell, config)
 {
-	pageSize = (config != null && config.pageSize != null) ? config.pageSize : 8;
-	minSize = (config != null && config.minSize != null) ? config.minSize : 180;
+	var pageSize = (config != null && config.pageSize != null) ? config.pageSize : 8;
+	var minSize = (config != null && config.minSize != null) ? config.minSize : 180;
 
 	//
 	// Main function

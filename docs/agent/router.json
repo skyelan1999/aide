@@ -1063,6 +1063,21 @@
         "node",
         "--check",
         "scripts/sync_drawio_workbench_review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-import-plugin-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-import-plugin-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_import_plugin_review.cjs"
       ]
     ],
     "full": [

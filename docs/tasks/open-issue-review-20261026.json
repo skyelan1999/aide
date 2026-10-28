@@ -113,7 +113,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "第三批36/50已验证；本组25项通过202quick和22组实际组件浏览器检查。",
+      "summary": "第三批50/50已验证；最终205quick与34组联合真实组件浏览器检查通过，pageerrors=[]。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -187,7 +187,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-071.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-072.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-073.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-074.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-074.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-075.json"
       ]
     },
     "documentation": {
@@ -303,37 +304,25 @@
       "instruction": "继续循环修复目标，优先本账号新报告，再按编号；只push修复分支，不合并main。"
     },
     "currentCycle": {
-      "cycle": 74,
-      "status": "completed",
-      "phase": "pushed-and-commented",
+      "cycle": 75,
+      "status": "in_progress",
+      "phase": "verified-awaiting-push",
       "candidates": [
-        336,
-        337,
-        338,
-        339,
-        341,
-        342,
-        343,
-        344,
-        345,
-        346,
-        347,
-        349,
-        350,
-        351,
-        352,
-        353,
-        354,
-        355,
-        357,
-        358,
-        359,
-        360,
-        361,
-        362,
-        551
-      ],
-      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c"
+        363,
+        366,
+        367,
+        368,
+        371,
+        372,
+        374,
+        375,
+        376,
+        377,
+        378,
+        379,
+        380,
+        381
+      ]
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -370,7 +359,8 @@
         373,
         441,
         464,
-        467
+        467,
+        551
       ],
       "lastExplicitIssue": {
         "number": 464,
@@ -383,7 +373,7 @@
         "updatedAt": "2026-10-27T15:10:48Z",
         "classification": "body edited with earlier SID-only ACL proposal;latest2comments unchanged and covered cycle52;no new runtime failure;keepcurrent stricter DACL reapplication"
       },
-      "lastRefreshEvidence": "/workspace/scratch/issue-review-20261026/cycle73-owner-refresh.json"
+      "lastRefreshEvidence": "/workspace/scratch/issue-review-20261026/cycle75-owner-refresh.json"
     },
     "pausedWork": [
       {
@@ -497,7 +487,22 @@
         551
       ],
       "blockedIssues": [],
-      "verifiedPendingPush": [],
+      "verifiedPendingPush": [
+        363,
+        366,
+        367,
+        368,
+        371,
+        372,
+        374,
+        375,
+        376,
+        377,
+        378,
+        379,
+        380,
+        381
+      ],
       "ledger": "docs/reviews/2026-10-26-open-issue-review/fifty-20261028-03.json",
       "countPolicy": "Only new fixed, verified and pushed issues count. Previous two batches excluded. No main merge, Release or deploy."
     },
