@@ -779,6 +779,7 @@ window.aideEnglish = {
   "正在读取压缩包…": "Reading archive…",
   "下载 ZIP": "Download ZIP",
   "压缩包为空": "The archive is empty",
+  "压缩包加载失败": "The archive could not be loaded",
   "压缩包加载失败：": "Could not load archive: ",
   "{0} 个文件 · {1} 个文件夹": "{0} file(s) · {1} folder(s)",
   "名称": "Name",

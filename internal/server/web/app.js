@@ -7950,6 +7950,9 @@ function setupStepPreview(container,filePath,root,source,viewerSpec) {
 }
 
 async function setupZipPreview(container, filePath, root, source, viewerSpec) {
+  teardownViewer(container);
+  let canceled = false;
+  bindViewerTeardown(container, () => { canceled = true; });
   container.innerHTML = '';
   const viewer = el('div', 'zip-viewer');
   const toolbar = el('div', 'zip-toolbar');
@@ -7962,18 +7965,43 @@ async function setupZipPreview(container, filePath, root, source, viewerSpec) {
     if (!window.JSZip) throw new Error('JSZip unavailable');
     const response = await fetch(fileRawUrl(filePath, root, source, viewerSpec));
     if (!response.ok) throw new Error('HTTP ' + response.status);
-    const zip = await window.JSZip.loadAsync(await response.arrayBuffer(), { createFolders: true });
+    const safety = window.AidePreviewSafety;
+    const bytes = await safety.readBytes(response, safety.limits.zipBytes);
+    safety.checkZipDirectory(bytes, {bytes: safety.limits.zipBytes, entries: safety.limits.zipEntries, partBytes: Infinity, expandedBytes: Infinity});
+    if (canceled) return;
+    const zip = await window.JSZip.loadAsync(bytes, { createFolders: false });
+    if (canceled) return;
     const entries = Object.values(zip.files).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    let files = 0, dirs = 0;
-    for (const entry of entries) {
-      if (entry.dir) dirs++; else files++;
-      const row = el('div', 'zip-entry' + (entry.dir ? ' zip-entry-dir' : ''));
-      row.append(el('span', 'zip-entry-icon', entry.dir ? '▱' : '≡'), el('span', 'zip-entry-name', entry.name));
-      list.append(row);
-    }
+    const files = entries.filter(entry => !entry.dir).length;
+    const dirs = entries.length - files;
     meta.textContent = t('{0} 个文件 · {1} 个文件夹', files, dirs);
-    if (!entries.length) list.append(el('div', 'zip-empty', t('压缩包为空')));
+    const pages = Math.max(1, Math.ceil(entries.length / safety.limits.zipPageRows));
+    let page = 0;
+    const pagination = el('div', 'zip-pagination');
+    const previous = el('button', 'zip-prev', t('上一页'));
+    const pageInfo = el('span', 'zip-page-info');
+    const next = el('button', 'zip-next', t('下一页'));
+    previous.type = next.type = 'button';
+    pagination.append(previous, pageInfo, next);
+    if (pages > 1) toolbar.append(pagination);
+    function renderPage() {
+      list.replaceChildren();
+      const start = page * safety.limits.zipPageRows;
+      for (const entry of entries.slice(start, start + safety.limits.zipPageRows)) {
+        const row = el('div', 'zip-entry' + (entry.dir ? ' zip-entry-dir' : ''));
+        row.append(el('span', 'zip-entry-icon', entry.dir ? '▱' : '≡'), el('span', 'zip-entry-name', entry.name));
+        list.append(row);
+      }
+      if (!entries.length) list.append(el('div', 'zip-empty', t('压缩包为空')));
+      previous.disabled = page === 0;
+      next.disabled = page === pages - 1;
+      pageInfo.textContent = (page + 1) + ' / ' + pages;
+    }
+    previous.onclick = () => { if (page > 0) { page--; renderPage(); } };
+    next.onclick = () => { if (page + 1 < pages) { page++; renderPage(); } };
+    renderPage();
   } catch (err) {
+    if (canceled) return;
     meta.textContent = t('加载失败');
     list.append(el('div', 'zip-error', t('压缩包加载失败：') + (err.message || String(err))));
   }

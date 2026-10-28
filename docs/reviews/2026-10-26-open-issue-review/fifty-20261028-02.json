@@ -1,0 +1,88 @@
+{
+  "request": "继续修复50个",
+  "sequence": 2,
+  "startedAt": "2026-10-28T04:07:55.822915+00:00",
+  "baselineCommit": "5c7ce8b96cc9e82718e7e3640852500672351271",
+  "target": 50,
+  "fixedCount": 0,
+  "verifiedPendingPush": [
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    306
+  ],
+  "fixedIssues": [],
+  "blockedIssues": [],
+  "alreadyCovered": [
+    {
+      "number": 248,
+      "evidence": "39acde7f already provides origin/source checks;excluded from new batch."
+    }
+  ],
+  "issues": {
+    "259": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Swimlane rank uses reachable DAG topological longest chains;cycles explicitly rejected after documented cycle-removal prerequisite"
+    },
+    "260": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Cache opposite terminals andaggregate signed parallel-edge counts once;preserve directed/undirected incoming offset semantics"
+    },
+    "261": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Consume sorted median rank by cursor whilepreserving reserved cells"
+    },
+    "262": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Reset six row arrays androot/node perradial execution;different instances anddeep-to-shallow remainisolated"
+    },
+    "263": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "SingleColumnLeft/Right choose matching actualOrgChart strategies inall3bundles"
+    },
+    "264": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "ZIP preview checksrawbytes/centralmetadata beforeJSZip,cap1000 entries,render100rows/page;downloadpreserved"
+    },
+    "265": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Resolve gradient colors before endpointtransparency;stops0/1 retain configureCanvas opacitywithout doublemultiplication"
+    },
+    "266": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Generic appliance dotsusehalf incoming alpha,resource restoresincoming alpha inclmissingstyle"
+    },
+    "267": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Monitoring referencesexisting cloud_monitoring;unsupportedResourceManager duplicate removed;oldIAMsavedvaluesretained"
+    },
+    "306": {
+      "status": "verified-pending-push",
+      "cycle": 70,
+      "summary": "Adjacent radial method nowreturns safelywhenno usable root/node remains"
+    }
+  },
+  "status": "in_progress",
+  "policy": "Only new fixed,verified,pushed reports count;no main merge,Release ordeployment. Previous50 excluded.",
+  "deferred": [
+    {
+      "number": 249,
+      "reason": "Upstream reproduction pointsequence secured;PR113 and116 remainunmerged withconflictingcorner/vector/endcapchanges.No narrowgeometryfixverified;continueotherreports,notcounted."
+    }
+  ]
+}

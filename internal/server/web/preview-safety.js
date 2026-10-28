@@ -2,7 +2,7 @@
 (function (root) {
   const MiB = 1024 * 1024;
   const limits = Object.freeze({dxfBytes: 4 * MiB, dxfLines: 100000, dxfEntities: 50000, dxfDepth: 32, dxfNodes: 50000, dxfPoints: 200000, dxfTextChars: MiB, dxfTextEntityChars: 16384,
-    docxBytes: 16 * MiB, docxPartBytes: 8 * MiB, docxExpandedBytes: 32 * MiB, docxEntries: 512, docxMs: 10000});
+    docxBytes: 16 * MiB, docxPartBytes: 8 * MiB, docxExpandedBytes: 32 * MiB, docxEntries: 512, docxMs: 10000, zipBytes: 64 * MiB, zipEntries: 1000, zipPageRows: 100});
   function limit(key) {
     const error = new Error(root.aideI18n?.t(key) || key);error.code = 'AIDE_PREVIEW_LIMIT';return error;
   }
@@ -58,29 +58,32 @@
   }
   const badZip = () => limit('DOCX 包无效或使用不支持的 ZIP 格式。');
   const largeZip = () => limit('DOCX 解压内容超过安全预览限制，请下载后查看。');
-  function checkZipDirectory(bytes) {
-    if (bytes.byteLength > limits.docxBytes) throw oversized();
+  function checkZipDirectory(bytes, options) {
+    const bounds = options || {bytes: limits.docxBytes, entries: limits.docxEntries, partBytes: limits.docxPartBytes, expandedBytes: limits.docxExpandedBytes};
+    const invalid = options ? () => limit('压缩包加载失败') : badZip;
+    const tooLarge = options ? oversized : largeZip;
+    if (bytes.byteLength > bounds.bytes) throw oversized();
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);let end = -1;
     for (let i = bytes.byteLength - 22; i >= Math.max(0, bytes.byteLength - 65557); i--) {
       if (view.getUint32(i, true) === 0x06054b50 && i + 22 + view.getUint16(i + 20, true) === bytes.byteLength) {end = i;break;}
     }
-    if (end < 0 || view.getUint16(end + 4, true) !== 0 || view.getUint16(end + 6, true) !== 0) throw badZip();
+    if (end < 0 || view.getUint16(end + 4, true) !== 0 || view.getUint16(end + 6, true) !== 0) throw invalid();
     const count = view.getUint16(end + 10, true), size = view.getUint32(end + 12, true), offset = view.getUint32(end + 16, true);
-    if (count > limits.docxEntries) throw largeZip();
-    if (view.getUint16(end + 8, true) !== count || offset + size !== end) throw badZip();
+    if (count > bounds.entries) throw tooLarge();
+    if (view.getUint16(end + 8, true) !== count || offset + size !== end) throw invalid();
     let cursor = offset, expanded = 0;
     for (let i = 0; i < count; i++) {
-      if (cursor + 46 > end || view.getUint32(cursor, true) !== 0x02014b50) throw badZip();
+      if (cursor + 46 > end || view.getUint32(cursor, true) !== 0x02014b50) throw invalid();
       const flags = view.getUint16(cursor + 8, true), method = view.getUint16(cursor + 10, true);
       const compressed = view.getUint32(cursor + 20, true), unpacked = view.getUint32(cursor + 24, true);
       const local = view.getUint32(cursor + 42, true);
-      if ((flags & 1) || ![0, 8].includes(method) || compressed > bytes.byteLength || local + 30 > bytes.byteLength) throw badZip();
+      if ((flags & 1) || ![0, 8].includes(method) || compressed > bytes.byteLength || local + 30 > bytes.byteLength) throw invalid();
       expanded += unpacked;
-      if (unpacked > limits.docxPartBytes || expanded > limits.docxExpandedBytes) throw largeZip();
+      if (unpacked > bounds.partBytes || expanded > bounds.expandedBytes) throw tooLarge();
       cursor += 46 + view.getUint16(cursor + 28, true) + view.getUint16(cursor + 30, true) + view.getUint16(cursor + 32, true);
-      if (cursor > end) throw badZip();
+      if (cursor > end) throw invalid();
     }
-    if (cursor !== end) throw badZip();
+    if (cursor !== end) throw invalid();
   }
   async function checkDocx(input, JSZip) {
     const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -116,7 +119,7 @@
       throw badZip();
     }
   }
-  const api = {limits, readBytes, checkDxfText, createDxfBudget, checkDocx, limit, isLimitError: error => error?.code === 'AIDE_PREVIEW_LIMIT'};
+  const api = {limits, readBytes, checkDxfText, createDxfBudget, checkDocx, checkZipDirectory, limit, isLimitError: error => error?.code === 'AIDE_PREVIEW_LIMIT'};
   root.AidePreviewSafety = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

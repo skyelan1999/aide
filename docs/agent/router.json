@@ -996,6 +996,14 @@
       [
         "python3",
         "scripts/test_tts_archive_integrity.py"
+      ],
+      [
+        "node",
+        "scripts/test_zip_preview_bounds.cjs"
+      ],
+      [
+        "node",
+        "scripts/drawio-layout-second-review.cjs"
       ]
     ],
     "full": [

@@ -340,11 +340,11 @@ Bridge.define('RPOrgChart',
         },
 
         branchOptimizerAllSingleColumnLeft: function (node) {
-            return node.getIsAssistantRoot() ? null : "singleColumnRight";
+            return node.getIsAssistantRoot() ? null : "singleColumnLeft";
         },
 
         branchOptimizerAllSingleColumnRight: function (node) {
-            return node.getIsAssistantRoot() ? null : "singleColumnLeft";
+            return node.getIsAssistantRoot() ? null : "singleColumnRight";
         },
 
         branchOptimizerStackers: function(node) {

@@ -43,7 +43,7 @@ mxShapeCiscoSafeCompositeIcon.prototype.paintVertexShape = function(c, x, y, w, 
 	var bgDotColor = mxUtils.getValue(this.state.style, 'bgDotColor', '#ffffff');
 	var fillColor = mxUtils.getValue(this.state.style, 'fillColor', 'none');
 	var shadow = mxUtils.getValue(this.state.style, 'shadow', false);
-	var opacity = parseFloat(mxUtils.getValue(this.state.style, 'opacity', false));
+	var opacity = c.state.alpha;
 	
 	c.translate(x, y);
 	
@@ -127,7 +127,7 @@ mxShapeCiscoSafeCompositeIcon.prototype.paintVertexShape = function(c, x, y, w, 
 			stencil.drawShape(c, this, w * 0.26, h * 0.26, w * 0.48, h * 0.48)
 		}
 		
-		c.setAlpha(0.5);
+		c.setAlpha(opacity * 0.5);
 		c.setFillColor(bgDotColor);
 		
 		c.ellipse(w * 0.105, h * 0.48, w * 0.04, h * 0.04);
@@ -148,7 +148,7 @@ mxShapeCiscoSafeCompositeIcon.prototype.paintVertexShape = function(c, x, y, w, 
 		c.ellipse(w * 0.17, h * 0.79, w * 0.04, h * 0.04);
 		c.fill();
 		
-		c.setAlpha(opacity / 100);
+		c.setAlpha(opacity);
 
 	}
 	else

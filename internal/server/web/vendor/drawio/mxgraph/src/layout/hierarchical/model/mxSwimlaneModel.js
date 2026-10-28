@@ -485,41 +485,49 @@ mxSwimlaneModel.prototype.initialRank = function()
  */
 mxSwimlaneModel.prototype.maxChainDfs = function(parent, root, connectingEdge, seen, chainCount)
 {
-	if (root != null)
+	if (root == null || seen[mxCellPath.create(root.cell)] != null) return;
+	// Cycle removal precedes ranking. Discover the reachable DAG once, then
+	// propagate longest same-lane chains in topological order.
+	var nodes = new Map(), pending = [root], ranks = [], cursor = 0;
+	nodes.set(root, {incoming: 0, edges: [], distance: chainCount});
+	while (cursor < pending.length)
 	{
-		var rootId = mxCellPath.create(root.cell);
-
-		if (seen[rootId] == null)
+		var node = pending[cursor++], record = nodes.get(node);
+		var edges = node.connectsAsSource.slice();
+		for (var i = 0; i < edges.length; i++)
 		{
-			seen[rootId] = root;
-			var slIndex = root.swimlaneIndex;
-			
-			if (this.ranksPerGroup[slIndex] == null || this.ranksPerGroup[slIndex] < chainCount)
+			var target = edges[i].target;
+			if (node.swimlaneIndex <= target.swimlaneIndex && seen[mxCellPath.create(target.cell)] == null)
 			{
-				this.ranksPerGroup[slIndex] = chainCount;
-			}
-
-			// Copy the connects as source list so that visitors
-			// can change the original for edge direction inversions
-			var outgoingEdges = root.connectsAsSource.slice();
-
-			for (var i = 0; i < outgoingEdges.length; i++)
-			{
-				var internalEdge = outgoingEdges[i];
-				var targetNode = internalEdge.target;
-
-				// Only navigate in source->target direction within the same
-				// swimlane, or from a lower index swimlane to a higher one
-				if (root.swimlaneIndex < targetNode.swimlaneIndex)
+				if (!nodes.has(target))
 				{
-					this.maxChainDfs(root, targetNode, internalEdge, mxUtils.clone(seen, null , true), 0);
+					nodes.set(target, {incoming: 0, edges: [], distance: -Infinity});
+					pending.push(target);
 				}
-				else if (root.swimlaneIndex == targetNode.swimlaneIndex)
-				{
-					this.maxChainDfs(root, targetNode, internalEdge, mxUtils.clone(seen, null , true), chainCount + 1);
-				}
+				record.edges.push(target);
+				nodes.get(target).incoming++;
 			}
 		}
+	}
+	var ready = [], processed = 0;
+	nodes.forEach(function(record, node) { if (record.incoming == 0) ready.push(node); });
+	for (var head = 0; head < ready.length; head++)
+	{
+		var node = ready[head], record = nodes.get(node), lane = node.swimlaneIndex;
+		ranks[lane] = Math.max(ranks[lane] == null ? -Infinity : ranks[lane], record.distance);
+		processed++;
+		for (var i = 0; i < record.edges.length; i++)
+		{
+			var target = record.edges[i], next = nodes.get(target);
+			next.distance = Math.max(next.distance, lane == target.swimlaneIndex ? record.distance + 1 : 0);
+			if (--next.incoming == 0) ready.push(target);
+		}
+	}
+	if (processed != nodes.size) throw new Error('Swimlane ranking requires cycle removal');
+	seen[mxCellPath.create(root.cell)] = root;
+	for (var i = 0; i < ranks.length; i++)
+	{
+		if (ranks[i] != null) this.ranksPerGroup[i] = Math.max(this.ranksPerGroup[i] == null ? -Infinity : this.ranksPerGroup[i], ranks[i]);
 	}
 };
 

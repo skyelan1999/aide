@@ -725,50 +725,27 @@ mxHierarchicalLayout.prototype.traverse = function(vertex, directed, edge, allVe
 			}
 
 			var edges = this.getEdges(vertex);
-			var edgeIsSource = [];
+			var edgeIsSource = [], edgeTargets = [], netCounts = new Map();
 
 			for (var i = 0; i < edges.length; i++)
 			{
 				edgeIsSource[i] = (this.getVisibleTerminal(edges[i], true) == vertex);
+				edgeTargets[i] = this.getVisibleTerminal(edges[i], !edgeIsSource[i]);
+				netCounts.set(edgeTargets[i], (netCounts.get(edgeTargets[i]) || 0) + (edgeIsSource[i] ? 1 : -1));
 			}
 
 			for (var i = 0; i < edges.length; i++)
 			{
 				if (!directed || edgeIsSource[i])
 				{
-					var next = this.getVisibleTerminal(edges[i], !edgeIsSource[i]);
+					var next = edgeTargets[i];
 					
 					// Check whether there are more edges incoming from the target vertex than outgoing
 					// The hierarchical model treats bi-directional parallel edges as being sourced
 					// from the more "sourced" terminal. If the directions are equal in number, the direction
 					// is that of the natural direction from the roots of the layout.
 					// The checks below are slightly more verbose than need be for performance reasons
-					var netCount = 1;
-
-					for (var j = 0; j < edges.length; j++)
-					{
-						if (j == i)
-						{
-							continue;
-						}
-						else
-						{
-							var isSource2 = edgeIsSource[j];
-							var otherTerm = this.getVisibleTerminal(edges[j], !isSource2);
-							
-							if (otherTerm == next)
-							{
-								if (isSource2)
-								{
-									netCount++;
-								}
-								else
-								{
-									netCount--;
-								}
-							}
-						}
-					}
+					var netCount = netCounts.get(next) + (edgeIsSource[i] ? 0 : 2);
 
 					if (netCount >= 0)
 					{
