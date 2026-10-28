@@ -4,8 +4,18 @@
   "startedAt": "2026-10-28T04:07:55.822915+00:00",
   "baselineCommit": "5c7ce8b96cc9e82718e7e3640852500672351271",
   "target": 50,
-  "fixedCount": 10,
-  "verifiedPendingPush": [
+  "fixedCount": 32,
+  "verifiedPendingPush": [],
+  "fixedIssues": [
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
     268,
     269,
     270,
@@ -27,18 +37,7 @@
     288,
     289,
     290,
-    291
-  ],
-  "fixedIssues": [
-    259,
-    260,
-    261,
-    262,
-    263,
-    264,
-    265,
-    266,
-    267,
+    291,
     306
   ],
   "blockedIssues": [],
@@ -120,114 +119,158 @@
       "comment": "https://github.com/skyelan1999/aide/issues/306#issuecomment-6460746893"
     },
     "268": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "JS/TS JSX closing-tag index"
+      "summary": "JS/TS JSX closing-tag index",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/268#issuecomment-6461093096"
     },
     "269": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Kotlin nested comments"
+      "summary": "Kotlin nested comments",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/269#issuecomment-6461093577"
     },
     "270": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Bash unquoted/nested command substitutions"
+      "summary": "Bash unquoted/nested command substitutions",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/270#issuecomment-6461094117"
     },
     "271": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Vim leading quoted comments"
+      "summary": "Vim leading quoted comments",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/271#issuecomment-6461094497"
     },
     "272": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "C# nested interpolation braces"
+      "summary": "C# nested interpolation braces",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/272#issuecomment-6461094896"
     },
     "273": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "GraphQL block strings"
+      "summary": "GraphQL block strings",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/273#issuecomment-6461095264"
     },
     "274": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Go nested function parameters"
+      "summary": "Go nested function parameters",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/274#issuecomment-6461095620"
     },
     "275": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "CMake exact bracket lengths"
+      "summary": "CMake exact bracket lengths",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/275#issuecomment-6461096009"
     },
     "276": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Dart nested interpolation braces"
+      "summary": "Dart nested interpolation braces",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/276#issuecomment-6461096356"
     },
     "277": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Make nested function parentheses"
+      "summary": "Make nested function parentheses",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/277#issuecomment-6461096857"
     },
     "278": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Lua exact non-nesting long delimiters"
+      "summary": "Lua exact non-nesting long delimiters",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/278#issuecomment-6461097227"
     },
     "279": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "XML Name entity characters"
+      "summary": "XML Name entity characters",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/279#issuecomment-6461097652"
     },
     "280": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Elixir nested interpolation"
+      "summary": "Elixir nested interpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/280#issuecomment-6461097977"
     },
     "281": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Erlang base2–36 digits withradixvalidation"
+      "summary": "Erlang base2–36 digits withradixvalidation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/281#issuecomment-6461098308"
     },
     "283": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "F# nested interpolation"
+      "summary": "F# nested interpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/283#issuecomment-6461098660"
     },
     "285": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Groovy GString brace/shorthand/dollar-slashy interpolation"
+      "summary": "Groovy GString brace/shorthand/dollar-slashy interpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/285#issuecomment-6461099013"
     },
     "286": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Perl nested interpolation"
+      "summary": "Perl nested interpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/286#issuecomment-6461099348"
     },
     "287": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "R spaced assignment lookahead"
+      "summary": "R spaced assignment lookahead",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/287#issuecomment-6461099749"
     },
     "288": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Ruby nested interpolation"
+      "summary": "Ruby nested interpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/288#issuecomment-6461100128"
     },
     "289": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Swift arbitrary raw hash counts andmatchinginterpolation"
+      "summary": "Swift arbitrary raw hash counts andmatchinginterpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/289#issuecomment-6461100524"
     },
     "290": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "Scala nested interpolation"
+      "summary": "Scala nested interpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/290#issuecomment-6461100852"
     },
     "291": {
-      "status": "verified-pending-push",
+      "status": "fixed-verified-pushed",
       "cycle": 71,
-      "summary": "SCSS quoted interpolation"
+      "summary": "SCSS quoted interpolation",
+      "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+      "comment": "https://github.com/skyelan1999/aide/issues/291#issuecomment-6461101175"
     }
   },
   "status": "in_progress",

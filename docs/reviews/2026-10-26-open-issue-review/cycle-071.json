@@ -55,7 +55,7 @@
   "original272RemainingFollowup": 66,
   "batchTarget": 50,
   "batchVerified": 32,
-  "batchPushed": 10,
+  "batchPushed": 32,
   "design": "One audited registration-layer patch appended to pinnedcore;individualupstreamgrammarsunchanged;corebuiltinsandreloadedstandalonesbothtransformed;originalcoreprefixSHA837a6fa...unchangedandsyncguarded.",
   "red": {
     "result": "EXPECTED_FAIL",
@@ -107,9 +107,34 @@
     "Mainmerge,Release/tag,deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
-    "released": false
+    "released": false,
+    "remoteSourceCommit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
+    "issueComments": {
+      "268": "https://github.com/skyelan1999/aide/issues/268#issuecomment-6461093096",
+      "269": "https://github.com/skyelan1999/aide/issues/269#issuecomment-6461093577",
+      "270": "https://github.com/skyelan1999/aide/issues/270#issuecomment-6461094117",
+      "271": "https://github.com/skyelan1999/aide/issues/271#issuecomment-6461094497",
+      "272": "https://github.com/skyelan1999/aide/issues/272#issuecomment-6461094896",
+      "273": "https://github.com/skyelan1999/aide/issues/273#issuecomment-6461095264",
+      "274": "https://github.com/skyelan1999/aide/issues/274#issuecomment-6461095620",
+      "275": "https://github.com/skyelan1999/aide/issues/275#issuecomment-6461096009",
+      "276": "https://github.com/skyelan1999/aide/issues/276#issuecomment-6461096356",
+      "277": "https://github.com/skyelan1999/aide/issues/277#issuecomment-6461096857",
+      "278": "https://github.com/skyelan1999/aide/issues/278#issuecomment-6461097227",
+      "279": "https://github.com/skyelan1999/aide/issues/279#issuecomment-6461097652",
+      "280": "https://github.com/skyelan1999/aide/issues/280#issuecomment-6461097977",
+      "281": "https://github.com/skyelan1999/aide/issues/281#issuecomment-6461098308",
+      "283": "https://github.com/skyelan1999/aide/issues/283#issuecomment-6461098660",
+      "285": "https://github.com/skyelan1999/aide/issues/285#issuecomment-6461099013",
+      "286": "https://github.com/skyelan1999/aide/issues/286#issuecomment-6461099348",
+      "287": "https://github.com/skyelan1999/aide/issues/287#issuecomment-6461099749",
+      "288": "https://github.com/skyelan1999/aide/issues/288#issuecomment-6461100128",
+      "289": "https://github.com/skyelan1999/aide/issues/289#issuecomment-6461100524",
+      "290": "https://github.com/skyelan1999/aide/issues/290#issuecomment-6461100852",
+      "291": "https://github.com/skyelan1999/aide/issues/291#issuecomment-6461101175"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "655ecfeaf3cfbed6d55db4f297521270e4102d88775f56ad3c590744f52594ee",
