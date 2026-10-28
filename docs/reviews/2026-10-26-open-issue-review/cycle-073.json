@@ -29,7 +29,7 @@
   },
   "batchTarget": 50,
   "batchVerified": 11,
-  "batchPushed": 0,
+  "batchPushed": 11,
   "red": {
     "result": "EXPECTED_FAIL",
     "evidence": "/workspace/scratch/issue-review-20261026/cycle73-red-corrected/result.json",
@@ -67,10 +67,23 @@
     "No real credentials, production data or model requests; isolated browser closes in finally."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "311": "https://github.com/skyelan1999/aide/issues/311#issuecomment-6461895900",
+      "326": "https://github.com/skyelan1999/aide/issues/326#issuecomment-6461896538",
+      "327": "https://github.com/skyelan1999/aide/issues/327#issuecomment-6461896989",
+      "328": "https://github.com/skyelan1999/aide/issues/328#issuecomment-6461897462",
+      "329": "https://github.com/skyelan1999/aide/issues/329#issuecomment-6461897945",
+      "330": "https://github.com/skyelan1999/aide/issues/330#issuecomment-6461898475",
+      "331": "https://github.com/skyelan1999/aide/issues/331#issuecomment-6461898921",
+      "332": "https://github.com/skyelan1999/aide/issues/332#issuecomment-6461899300",
+      "333": "https://github.com/skyelan1999/aide/issues/333#issuecomment-6461899640",
+      "334": "https://github.com/skyelan1999/aide/issues/334#issuecomment-6461900015",
+      "365": "https://github.com/skyelan1999/aide/issues/365#issuecomment-6461900427"
+    },
+    "remoteSourceCommit": "d2b77b626ab5c6641e07db16558e029578a967bf"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "470618c9e245643a0f0e8e6fb4354453592fbea4a3183c74c0a20430562b537a",
@@ -86,5 +99,10 @@
     "scripts/drawio-data-integrity-review.cjs": "f140303e25b348c9042718f6a518d6dbfb92f6b8764f13021d81294bd175f7a9",
     "scripts/drawio-data-integrity-browser-cases.cjs": "15058a0f33635dbd079a1dfb7a28fa00ce3ac5e0e12672428aa40b5fcc765130",
     "scripts/sync_drawio_data_integrity.cjs": "127fd868978ba524fd9d24a83142ad42d1dd4fdfe0edf84b61d3299802f95695"
-  }
+  },
+  "completedAt": "2026-10-28T05:57:40.422463+00:00",
+  "cumulativeFixedOnBranch": 250,
+  "cumulativeProductFixes": 249,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 38
 }

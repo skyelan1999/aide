@@ -4,9 +4,8 @@
   "startedAt": "2026-10-28T05:47:59.238790+00:00",
   "baselineCommit": "c3b2ed78b395c5fab5e25197564eb3c029710f7f",
   "target": 50,
-  "fixedCount": 0,
-  "fixedIssues": [],
-  "verifiedPendingPush": [
+  "fixedCount": 11,
+  "fixedIssues": [
     311,
     326,
     327,
@@ -19,63 +18,86 @@
     334,
     365
   ],
+  "verifiedPendingPush": [],
   "blockedIssues": [],
   "alreadyCovered": [],
   "issues": {
     "311": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Escape initial cell-editing text before HTML insertion; markup remains literal and event handlers cannot run"
+      "summary": "Escape initial cell-editing text before HTML insertion; markup remains literal and event handlers cannot run",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/311#issuecomment-6461895900"
     },
     "326": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Use prototype-free requested-tag lookup; explicit prototype-named tags remain valid"
+      "summary": "Use prototype-free requested-tag lookup; explicit prototype-named tags remain valid",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/326#issuecomment-6461896538"
     },
     "327": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Use prototype-free action union, exclusion and animation-reference ID sets"
+      "summary": "Use prototype-free action union, exclusion and animation-reference ID sets",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/327#issuecomment-6461896989"
     },
     "328": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Validate the HTML export background as a CSS color and HTML-escape the attribute"
+      "summary": "Validate the HTML export background as a CSS color and HTML-escape the attribute",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/328#issuecomment-6461897462"
     },
     "329": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Preserve hidden-tag serialization for arbitrary page IDs including __proto__"
+      "summary": "Preserve hidden-tag serialization for arbitrary page IDs including __proto__",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/329#issuecomment-6461897945"
     },
     "330": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Make the SVG fallback conversion counter local and finish synchronous empty-switch paths once"
+      "summary": "Make the SVG fallback conversion counter local and finish synchronous empty-switch paths once",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/330#issuecomment-6461898475"
     },
     "331": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "URL-encode page IDs in generated share links without corrupting embedded copy fragments"
+      "summary": "URL-encode page IDs in generated share links without corrupting embedded copy fragments",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/331#issuecomment-6461898921"
     },
     "332": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Use prototype-safe page remapping and own-key reads during real multi-page import"
+      "summary": "Use prototype-safe page remapping and own-key reads during real multi-page import",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/332#issuecomment-6461899300"
     },
     "333": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Keep generated response data local to the callback"
+      "summary": "Keep generated response data local to the callback",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/333#issuecomment-6461899640"
     },
     "334": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Complete FileReader error/abort barrier slots once so successful files and spinner can finish"
+      "summary": "Complete FileReader error/abort barrier slots once so successful files and spinner can finish",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/334#issuecomment-6461900015"
     },
     "365": {
-      "status": "fixed-verified-awaiting-push",
+      "status": "fixed-verified-pushed",
       "cycle": 73,
-      "summary": "Count distinct requested and actual tags in AND selectors"
+      "summary": "Count distinct requested and actual tags in AND selectors",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/365#issuecomment-6461900427"
     }
   },
   "status": "in_progress",
