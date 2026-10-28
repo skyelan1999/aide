@@ -1,0 +1,67 @@
+{
+  "cycle": 100,
+  "issues": [
+    580
+  ],
+  "baseline": "391cdff8",
+  "fix": [
+    "Count all uncompacted history; admission can compact/reject visibly.",
+    "Retain complete tool exchanges at compaction boundaries.",
+    "Send all source content/arguments through bounded map/reduce pieces.",
+    "Reject SSE without completion markers while preserving text/usage and withholding calls.",
+    "Bind usage anchors to compaction generation and actual summary fingerprint.",
+    "Recheck actual growing routed request before every tool-loop provider request; overflow preserves partial output/checkpoint and reports error."
+  ],
+  "red": {
+    "failedFunctions": 6,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle100-red.log",
+    "activeLoop": "Baseline sent60 requests without stopping context growth; fixed sends1 then rejects overflow."
+  },
+  "green": [
+    {
+      "scope": "Final focused synthetic provider race regressions",
+      "passedIncludingSubtests": 10,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle100-final.log"
+    },
+    {
+      "scope": "Extended related regression; NOT a passing whole invocation",
+      "passedLines": 105,
+      "blocked": "PluginPlanROS2 sequential hook requires unavailable Landlock. Same baseline binary fails; direct helper reports ABI0/ENOSYS.",
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle100-regressions.log",
+        "/workspace/scratch/issue-review-20261026/cycle100-sequential-baseline.log"
+      ]
+    },
+    {
+      "status": "pass",
+      "checks": 256,
+      "fingerprint": "dd5e1f5e5e1dfaf39cef63f5f4bf2972356a93f9d23d992dd4331f33f0a51952",
+      "receipt": ".agent-state/verify-20261028T184459533108Z.log"
+    },
+    {
+      "scope": "go vet -mod=vendor ./internal/server",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle100-vet-confirmed.log"
+    }
+  ],
+  "notRun": [
+    "Full branch CI",
+    "Real provider/paid calls",
+    "Automatic active-loop compaction (explicit bounded stop implemented)",
+    "Native Windows/devices",
+    "Main merge/release/deploy"
+  ],
+  "delivery": {
+    "commit": "c4aa0877",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnBranch": 425,
+  "productFixed": 422,
+  "toolingFixes": 3,
+  "remainingOriginal104": 71,
+  "additionalPending": [
+    578,
+    579
+  ]
+}
