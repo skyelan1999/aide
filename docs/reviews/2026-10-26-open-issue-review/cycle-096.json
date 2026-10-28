@@ -1,0 +1,50 @@
+{
+  "cycle": 96,
+  "issues": [
+    577
+  ],
+  "type": "tooling-fix",
+  "baseline": "84144509",
+  "fix": "Retain the historical small-graph recursive oracle as an attributed test fixture; no runtime Git-history dependency. No check skipped or checkout permission expanded.",
+  "red": {
+    "status": "EXPECTED_FAIL",
+    "scope": "Actual hosted shallow checkout fails git show dbd06b6f; Git-forbidden local probe independently reproduces",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle96-shallow-red.log",
+    "hostedRun": "https://github.com/skyelan1999/aide/actions/runs/40726999602"
+  },
+  "green": [
+    {
+      "status": "PASS",
+      "scope": "Full parser/layout resource regression with Git forbidden",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle96-shallow-green.log"
+    },
+    {
+      "status": "PASS",
+      "checks": 40,
+      "scope": "Exact final script and normalized oracle fixture; all graph seeds/variants/resource cases retained",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle96-green-final.log"
+    },
+    {
+      "status": "PASS",
+      "checks": 252,
+      "fingerprint": "549b4e988c55a0aff4d8219ca2eb1b9f427a033a65c9024fb47750db14912796",
+      "receipt": ".agent-state/verify-20261028T175228225960Z.log",
+      "note": "Only trailing whitespace of historical fixture removed after this receipt; final focused regression and staged diff rerun."
+    }
+  ],
+  "notRun": [
+    "New hosted whole-branch run not yet repeated; prior run also has independent Go fixture failures.",
+    "Main merge/release/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "commit": "e8664607",
+    "comment": "https://github.com/skyelan1999/aide/issues/577#issuecomment-6476632614",
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnBranch": 420,
+  "productFixed": 418,
+  "toolingFixes": 2,
+  "remainingOriginal104": 74,
+  "additionalDiscoveredOpen": []
+}
