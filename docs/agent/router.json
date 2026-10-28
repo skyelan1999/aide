@@ -1097,6 +1097,21 @@
         "node",
         "--check",
         "scripts/drawio-cors-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-device-shape-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-device-shape-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_device_shapes.cjs"
       ]
     ],
     "full": [

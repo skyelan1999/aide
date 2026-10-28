@@ -1,0 +1,84 @@
+{
+  "cycle": 78,
+  "baseline": "73e9947a54440f458467c87f88abf8a7114ee57d",
+  "issues": [
+    382,
+    383,
+    384,
+    385,
+    386,
+    387,
+    388,
+    389,
+    390
+  ],
+  "fixes": {
+    "382": "Interpret60 Rack/F5 boolean declarations as0/1 so rear,DC,ears andmask flags behave as stored.",
+    "383": "Normalize absent tree folding selections,copy cell arrays,and forward the retained cells to core folding.",
+    "384": "Use prototype-free WebCola active/parent/node-index maps for diagram IDs.",
+    "385": "Treat zero field size as no separators and bound very small iOS7SelectBar drawing steps to1000.",
+    "386": "Store finite zero barPos when the scroll-handle travel range is nonpositive.",
+    "387": "Render exposed ArchiMatePath appType through the existing communication-path foreground branch.",
+    "388": "Cap four EIP channel constraint arrays at10000 anchors,retaining ordinary10-unit spacing.",
+    "389": "Use at least1 and at most1000 dashed-arrow steps,skipping zero-length/nonfinite paths before division.",
+    "390": "Clamp CalloutDouble90Arrow dy2 against height in both painter and connection constraints."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle78-red2/result.json",
+    "scope": "All9 defects reproduced in actual owned component;zero-step and huge-anchor cases use controlled drawing/allocation budgets to terminate baseline."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 212,
+      "fingerprint": "01a657bd807e98c61fbcf0ea4d282b2195dcca8bddfa2a9195e2c6f453c089bb",
+      "receipt": ".agent-state/verify-20261028T100750780820Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 70,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle78-acceptance/result.json",
+      "scope": "ActualChromium154 drawioiframe,light1440/dark390;source,shapes,integrate,viewer-static method variants;standaloneRackF5,Trees,WebCola adaptor;realcells/folding andSVGcanvas call arguments;errors[]. Baseedit/save and bounded-preview checks included."
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle78-audit-final.json",
+      "scope": "Three compiled assets byte-identical outside10reviewed functions perasset;syntax andsync validated."
+    }
+  ],
+  "harnessCorrections": [
+    "Initial plugin constructor lived in Function scope;explicitly exposed the owned fixture constructor before validred2.",
+    "ArchiMate renderer logic resides in foreground,not outer paintVertexShape;sync target corrected,and needless outer-method re-minification reverted before finalacceptance.",
+    "No-argument Array.splice() does not delete cells as the original report claims;confirmed null handling and forwarded empty array defects are repaired."
+  ],
+  "notRun": [
+    "FullAide workbench,start.command,realSSH/devices,Windows/macOSnative.",
+    "FullDocker profile;noGo code changed in thiscycle.",
+    "Mainmerge,Release/tag,deploy."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {}
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "d04d44f9ba1ef77b7e4e27a68936487fc30923c6845f21d8c99d48a11ee59e15",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "4fa7ff49e66b24306e7029289eb79c6765be7c46eb08fe623759b6d338d0789a",
+    "internal/server/web/vendor/drawio/js/shapes-14-6-5.min.js": "0ae3f4a4c330962a78b3fa0f1a9a9edd4ae2edf8d0a30e8c42da08e4f5f6078b",
+    "internal/server/web/vendor/drawio/js/viewer-static.min.js": "5639911980ed933b82aec6ad46fda701baccfc5e20dc700bfe653b78b4262f0e",
+    "internal/server/web/vendor/drawio/plugins/rackF5.js": "11d00549b2f2e026742a06aca502968a7332f7693145cbd498ac88eece492fe0",
+    "internal/server/web/vendor/drawio/plugins/trees/trees.js": "613916c8fabdb279e64a694d3ac4cf8ece9488b5d7e87e5ed26ca70f824b250e",
+    "internal/server/web/vendor/drawio/plugins/webcola/mxWebColaAdaptor.js": "a66b00908068c957456edda09aa389a993e98e86f18455db74fe6fa3e4f04aae",
+    "internal/server/web/vendor/drawio/shapes/ios7/mxIOS7Ui.js": "bba17645f6c23681f842f1787cd66b333ac2dbb7bef657274c2b106137f67bf0",
+    "internal/server/web/vendor/drawio/shapes/mockup/mxMockupNavigation.js": "bcc5c72ba9e1e6b6633464fd9d3c85f1d9b40ea632367e274ce58f9a382edee1",
+    "internal/server/web/vendor/drawio/shapes/mxArchiMate.js": "bad858e9f06f34d328cc463909a3ce4e8f1fd7c32d1c567c73701f3045c89a79",
+    "internal/server/web/vendor/drawio/shapes/mxArrows.js": "794b1f4e53bfe9b30dcc6bdb0e61c82a4edff333032f9a3e1d7249b1497d60ff",
+    "internal/server/web/vendor/drawio/shapes/mxEip.js": "d176ed71b79dcecd6c2b80fb1f9dbe1ea0e82bad4c6d1e1d0912d0f73b2fc882",
+    "scripts/browser-drawio-preview-bounds.cjs": "e898017ff31ceb9b76e075da4ba6887696a2500977a682879d972199a0a2bc46",
+    "scripts/drawio-device-shape-browser-cases.cjs": "c1b71f69415af7ec2d6f3cb2373754801de2182360f7da69cc1894e2281c99cb",
+    "scripts/drawio-device-shape-review.cjs": "4867e666d1122c2694a31b719ea7c45e16db93c2afef840e3ceb0efd16f91fdd",
+    "scripts/sync_drawio_device_shapes.cjs": "890a06cb70554b92a92455c662d6abb0aae9b26cf144059d9fcd94d2536304fe"
+  }
+}

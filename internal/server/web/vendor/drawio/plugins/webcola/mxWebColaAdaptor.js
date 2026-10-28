@@ -340,7 +340,7 @@ mxWebColaAdaptor.prototype.graphToLayout = function(graph, movableVertices)
   
   var nodeCells = {};
   var linkCells = {};
-  var cellIds = {};
+  var cellIds = Object.create(null);
   var edgeIds = {};
   var colaId = 0;
   var nodes = [];
@@ -653,8 +653,8 @@ mxWebColaAdaptor.prototype.findActiveVertices = function(graph)
    * @param graph input graph
    */
 {
-  var inactiveToActiveMap = {};
-  var activeVertices = {};
+  var inactiveToActiveMap = Object.create(null);
+  var activeVertices = Object.create(null);
   var root = graph.getModel().root;
   var cellsToExplore = [{vertex: root, isActive: true, activeParent: root}]
   while (cellsToExplore.length > 0)
