@@ -11434,7 +11434,7 @@
 		// Union of cells from `cells` and `tags`. De-dup by id so a
 		// cell that matches both selectors doesn't get the action
 		// applied twice.
-		var seen = {};
+		var seen = Object.create(null);
 		var union = [];
 		var merge = function(cells)
 		{
@@ -11482,7 +11482,7 @@
 		// semantics on `cells`.
 		if (action.excludeCells != null && action.excludeCells.length > 0)
 		{
-			var excludeIds = {};
+			var excludeIds = Object.create(null);
 			var excludeAll = false;
 
 			for (var i = 0; i < action.excludeCells.length; i++)
@@ -11676,11 +11676,11 @@
 			cells = (cells != null) ? cells : this.model.getDescendants(this.model.getRoot());
 
 			var tagCount = 0;
-			var lookup = {};
+			var lookup = Object.create(null);
 
 			for (var i = 0; i < tagList.length; i++)
 			{
-				if (tagList[i].length > 0)
+				if (tagList[i].length > 0 && lookup[tagList[i]] !== true)
 				{
 					lookup[tagList[i]] = true;
 					tagCount++;
@@ -11702,14 +11702,16 @@
 						// OR mode matches as soon as one tag overlaps. AND mode
 						// keeps the original requirement (every listed tag must
 						// be present), short-circuiting once the count hits.
-						if (orMode || tmp.length >= tagList.length)
+						if (orMode || tmp.length >= tagCount)
 						{
 							var matchCount = 0;
+							var matched = Object.create(null);
 
 							for (var j = 0; j < tmp.length && (matchCount < tagCount); j++)
 							{
-								if (lookup[tmp[j]] != null)
+								if (lookup[tmp[j]] === true && matched[tmp[j]] !== true)
 								{
+									matched[tmp[j]] = true;
 									matchCount++;
 								}
 							}
@@ -13532,7 +13534,7 @@
 	Editor.AnimationPlayer.prototype.collectReferencedCells = function()
 	{
 		var steps = this.data.steps || [];
-		var seen = {};
+		var seen = Object.create(null);
 		var cells = [];
 
 		for (var i = 0; i < steps.length; i++)

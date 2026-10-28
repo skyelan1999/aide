@@ -1028,6 +1028,21 @@
         "node",
         "--check",
         "scripts/sync_drawio_editing_review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-data-integrity-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-data-integrity-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_data_integrity.cjs"
       ]
     ],
     "full": [

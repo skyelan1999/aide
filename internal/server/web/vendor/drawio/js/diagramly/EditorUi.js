@@ -3025,7 +3025,7 @@
 			var scale = graph.view.scale;
 			var x0 = Math.floor(bounds.x / scale - graph.view.translate.x);
 			var y0 = Math.floor(bounds.y / scale - graph.view.translate.y);
-			bg = graph.background;
+			bg = mxUtils.isValidColor(graph.background) ? graph.background : null;
 	
 			// Embed script only used if no redirect
 			if (redirect == null)
@@ -3087,7 +3087,7 @@
 				'</title>\n' : '') : '<title>draw.io</title>\n') +
 			((redirect != null) ? '<meta http-equiv="refresh" content="0;URL=\'' + redirect + '\'"/>\n' : '') +
 			'</head>\n<body' +
-			(((redirect == null && bg != null && bg != mxConstants.NONE) ? ' style="background-color:' + bg + ';">' : '>')) +
+			(((redirect == null && bg != null && bg != mxConstants.NONE) ? ' style="background-color:' + mxUtils.htmlEntities(bg) + ';">' : '>')) +
 			'\n<div class="mxgraph" style="' + style + '">\n' +
 			'<div style="width:1px;height:1px;overflow:hidden;">' + data + '</div>\n</div>\n' +
 			((redirect == null) ? '<script type="text/javascript" src="' + js + '"></script>' :
@@ -3758,7 +3758,7 @@
 	EditorUi.prototype.getHiddenTagsMap = function()
 	{
 		var graph = this.editor.graph;
-		var result = {};
+		var result = Object.create(null);
 		var hasHiddenTags = false;
 
 		if (this.pages != null)
@@ -8497,7 +8497,7 @@
 		
 		// Replaces alternate content with image of text
 		var switches = root.getElementsByTagName('switch');
-		counter = switches.length;
+		var counter = switches.length;
 
 		var done = mxUtils.bind(this, function()
 		{
@@ -8691,7 +8691,7 @@
 			}))(switches[i]);
 		}
 
-		if (counter == 0)
+		if (switches.length == 0)
 		{
 			callback(root);
 		}
@@ -9178,7 +9178,7 @@
 
 		if (linkPage != null && typeof linkPage.getId === 'function')
 		{
-			params.push('page-id=' + linkPage.getId());
+			params.push('page-id=' + encodeURIComponent(linkPage.getId()));
 		}
 
 		if (transparent)
@@ -11638,13 +11638,13 @@
 	 */
 	EditorUi.prototype.addLocalPagesToMapping = function(mapping)
 	{
-		mapping = (mapping != null) ? mapping : {};
+		mapping = (mapping != null) ? mapping : Object.create(null);
 
 		if (this.pages != null)
 		{
 			for (var i = 0; i < this.pages.length; i++)
 			{
-				mapping[this.pages[i].getId()] = this.pages[i].getId();
+				Object.defineProperty(mapping, this.pages[i].getId(), {value: this.pages[i].getId(), writable: true, enumerable: true, configurable: true});
 			}
 		}
 
@@ -11678,7 +11678,7 @@
 				try
 				{
 					var doc = mxUtils.parseXml(xml);
-					var mapping = {};
+					var mapping = Object.create(null);
 					
 					// Checks for mxfile with multiple pages
 					var node = this.editor.extractGraphModel(doc.documentElement, this.pages != null);
@@ -11906,7 +11906,8 @@
 	{
 		if (Graph.isPageLink(href))
 		{
-			var newId = mapping[href.substring(href.indexOf(',') + 1)];
+			var pageId = href.substring(href.indexOf(',') + 1);
+			var newId = Object.prototype.hasOwnProperty.call(mapping, pageId) ? mapping[pageId] : null;
 			href = (newId != null) ? 'data:page/id,' + newId : null;
 		}
 		else if (href.substring(0, 17) == 'data:action/json,')
@@ -13100,6 +13101,7 @@
 							this.tryAndHandle(mxUtils.bind(this, function()
 							{
 								var response = req.getText();
+								var result;
 
 								try
 								{
@@ -14984,10 +14986,13 @@
 				var count = files.length;
 				var remain = count;
 				var queue = [];
+				var completed = Object.create(null);
 				
 				// Barrier waits for all files to be loaded asynchronously
 				var barrier = mxUtils.bind(this, function(index, fnc)
 				{
+					if (completed[index]) return;
+					completed[index] = true;
 					queue[index] = fnc;
 					
 					if (--remain == 0)
@@ -15043,9 +15048,24 @@
 						if (file != null)
 						{
 							var reader = new FileReader();
+							var failed = mxUtils.bind(this, function()
+							{
+								if (completed[index]) return;
+								try
+								{
+									this.handleError(reader.error || new Error(mxResources.get('invalidOrMissingFile')));
+								}
+								finally
+								{
+									barrier(index, function() { return []; });
+								}
+							});
+							reader.onerror = failed;
+							reader.onabort = failed;
 							
 							reader.onload = mxUtils.bind(this, function(e)
 							{
+								if (completed[index]) return;
 								if (filterFn == null || filterFn(file))
 								{
 									try

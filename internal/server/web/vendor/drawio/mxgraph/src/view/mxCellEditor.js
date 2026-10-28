@@ -894,7 +894,7 @@ mxCellEditor.prototype.startEditing = function(cell, trigger, initialText)
 				
 				if (initialText != null)
 				{
-					this.textarea.innerHTML = initialText;
+					this.textarea.innerHTML = mxUtils.htmlEntities(initialText);
 
 					// Moves cursor after initial text
 					var range = document.createRange();

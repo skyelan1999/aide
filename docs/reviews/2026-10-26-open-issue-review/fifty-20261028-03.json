@@ -1,0 +1,83 @@
+{
+  "request": "继续修复50个",
+  "sequence": 3,
+  "startedAt": "2026-10-28T05:47:59.238790+00:00",
+  "baselineCommit": "c3b2ed78b395c5fab5e25197564eb3c029710f7f",
+  "target": 50,
+  "fixedCount": 0,
+  "fixedIssues": [],
+  "verifiedPendingPush": [
+    311,
+    326,
+    327,
+    328,
+    329,
+    330,
+    331,
+    332,
+    333,
+    334,
+    365
+  ],
+  "blockedIssues": [],
+  "alreadyCovered": [],
+  "issues": {
+    "311": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Escape initial cell-editing text before HTML insertion; markup remains literal and event handlers cannot run"
+    },
+    "326": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Use prototype-free requested-tag lookup; explicit prototype-named tags remain valid"
+    },
+    "327": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Use prototype-free action union, exclusion and animation-reference ID sets"
+    },
+    "328": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Validate the HTML export background as a CSS color and HTML-escape the attribute"
+    },
+    "329": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Preserve hidden-tag serialization for arbitrary page IDs including __proto__"
+    },
+    "330": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Make the SVG fallback conversion counter local and finish synchronous empty-switch paths once"
+    },
+    "331": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "URL-encode page IDs in generated share links without corrupting embedded copy fragments"
+    },
+    "332": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Use prototype-safe page remapping and own-key reads during real multi-page import"
+    },
+    "333": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Keep generated response data local to the callback"
+    },
+    "334": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Complete FileReader error/abort barrier slots once so successful files and spinner can finish"
+    },
+    "365": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 73,
+      "summary": "Count distinct requested and actual tags in AND selectors"
+    }
+  },
+  "status": "in_progress",
+  "policy": "Only new fixed, verified and pushed issues count. Previous two batches excluded. No main merge, Release or deploy."
+}
