@@ -113,7 +113,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-093.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-094.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-095.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-096.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-096.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-097.json"
       ]
     },
     "verification": {
@@ -214,7 +215,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-093.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-094.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-095.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-096.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-096.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-097.json"
       ]
     },
     "documentation": {
@@ -245,12 +247,12 @@
   "handoff": "本次“继续100，先看1999账号”已完成100/100个新增、去重、验证、push并逐项评论的修复。账号优先565/563已交付；561重复并入563，458/422经实测关闭误报，均不计数。全量清单与分批证据见hundred-20261028-04.json/.md。仅分支，未合main/Release/deploy。原272后续仍18项；391需匹配运行时复现，369/464/467仍待原生验收。没有后台调度；收到继续请求时先刷新账号报告，再按检查点继续。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "e8664607",
+    "commit": "20914cd2",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-096.json"
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-097.json"
   },
   "issue_comments": "本轮100项均已逐项评论并记录URL；100个编号与cycle1至76已有编号无交集。误报/重复关闭记录未计数。",
   "goal": {
@@ -281,18 +283,18 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 97,
+    "nextCycle": 98,
     "lastCompletedBatch": {
-      "cycle": 96,
+      "cycle": 97,
       "issues": [
-        577
+        391
       ],
-      "cumulativeFixed": 420,
-      "cumulativeProductFixed": 418,
+      "cumulativeFixed": 421,
+      "cumulativeProductFixed": 419,
       "toolingFixes": 2,
       "remainingFollowupTargets": 0,
-      "verification": "252quick;Git-disabled/final parser layout scripts",
-      "delivery": "e8664607"
+      "verification": "254quick,18cases+6prior realbrowser",
+      "delivery": "20914cd2"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
@@ -311,11 +313,12 @@
       "instruction": "New target100; first inspect unhandled skyelan1999 reports."
     },
     "currentCycle": {
-      "cycle": 97,
+      "cycle": 98,
       "status": "in_progress",
-      "phase": "numcases-comment-scanner",
+      "phase": "marked-masking-and-block-grammar",
       "issues": [
-        391
+        412,
+        431
       ]
     },
     "additionalFollowupIssues": [],
@@ -1212,7 +1215,8 @@
         529,
         530,
         531,
-        562
+        562,
+        391
       ],
       "blocked": [],
       "falseReports": [],
@@ -1220,7 +1224,7 @@
         28,
         57
       ],
-      "remainingUncovered": 74,
+      "remainingUncovered": 73,
       "coveredExistingBranch": [
         248
       ],
