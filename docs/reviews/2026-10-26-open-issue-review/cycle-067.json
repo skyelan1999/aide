@@ -19,7 +19,7 @@
   "original272RemainingFollowup": 138,
   "batchTarget": 50,
   "batchVerified": 10,
-  "batchPushed": 0,
+  "batchPushed": 10,
   "priorityRefresh": "skyelan1999 open reports unchanged;464/467 native acceptance pending;no new owner failures.",
   "red": {
     "result": "EXPECTED_FAIL",
@@ -63,10 +63,23 @@
     "Main merge,Release/tag/deploy orproductionrestart."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "deployed": false
+    "deployed": false,
+    "remoteSourceCommit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "issueComments": {
+      "206": "https://github.com/skyelan1999/aide/issues/206#issuecomment-6458577709",
+      "207": "https://github.com/skyelan1999/aide/issues/207#issuecomment-6458578309",
+      "208": "https://github.com/skyelan1999/aide/issues/208#issuecomment-6458578885",
+      "209": "https://github.com/skyelan1999/aide/issues/209#issuecomment-6458579260",
+      "210": "https://github.com/skyelan1999/aide/issues/210#issuecomment-6458579680",
+      "211": "https://github.com/skyelan1999/aide/issues/211#issuecomment-6458580141",
+      "212": "https://github.com/skyelan1999/aide/issues/212#issuecomment-6458580530",
+      "213": "https://github.com/skyelan1999/aide/issues/213#issuecomment-6458580889",
+      "214": "https://github.com/skyelan1999/aide/issues/214#issuecomment-6458581238",
+      "215": "https://github.com/skyelan1999/aide/issues/215#issuecomment-6458581613"
+    }
   },
   "sourceSHA256": {
     "internal/server/web/vendor/drawio/js/app.min.js": "ee042c63ef78be2f69bac5706b17ce7259346875e4dfb5ac95d48570292999f7",
@@ -81,5 +94,17 @@
     "scripts/drawio-fifty-palette-browser-cases.cjs": "1f6cf795736e66520134acdff44247afcde9fc066b8371ae472ab9fa87dd4511",
     "scripts/drawio-fifty-palette-review.cjs": "f4bcb12c529ca67c1e294c01831909a1c090aaeb2dc7bea4cc2ffdb29f45a2ff",
     "scripts/sync_drawio_palette_search.cjs": "dc37d274b09a8b23013180e40e3fe7436fd82acf60f0dac1243dc0e6cce59e50"
+  },
+  "commits": {
+    "206": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "207": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "208": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "209": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "210": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "211": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "212": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "213": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "214": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+    "215": "3f92744df2e501d84a8d5b62bbb440cc4346eb81"
   }
 }

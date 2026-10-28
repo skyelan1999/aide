@@ -3,8 +3,9 @@
   "startedAt": "2026-10-28T01:55:17.431508+00:00",
   "baselineCommit": "26554928a37bb2c699c9df1422cace9056b9e530",
   "target": 50,
-  "fixedCount": 0,
-  "verifiedPendingPush": [
+  "fixedCount": 10,
+  "verifiedPendingPush": [],
+  "fixedIssues": [
     206,
     207,
     208,
@@ -16,7 +17,6 @@
     214,
     215
   ],
-  "fixedIssues": [],
   "blockedIssues": [],
   "alreadyCovered": [
     {
@@ -78,44 +78,64 @@
   ],
   "issues": {
     "206": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/206#issuecomment-6458577709"
     },
     "207": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/207#issuecomment-6458578309"
     },
     "208": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/208#issuecomment-6458578885"
     },
     "209": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/209#issuecomment-6458579260"
     },
     "210": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/210#issuecomment-6458579680"
     },
     "211": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/211#issuecomment-6458580141"
     },
     "212": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/212#issuecomment-6458580530"
     },
     "213": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/213#issuecomment-6458580889"
     },
     "214": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/214#issuecomment-6458581238"
     },
     "215": {
-      "status": "verified-pending-push",
-      "cycle": 67
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/215#issuecomment-6458581613"
     }
   },
   "status": "in_progress",
