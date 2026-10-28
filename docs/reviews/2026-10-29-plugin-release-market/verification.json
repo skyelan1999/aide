@@ -1,0 +1,58 @@
+{
+  "status": "PARTIAL_MARKET_DEPLOYMENT_BLOCKED",
+  "date": "2026-10-29 Asia/Shanghai",
+  "account": "skyelan1999",
+  "terminal": {
+    "version": "1.5.2",
+    "releaseTarget": "17227d72ef3017858de3f9e0c30bd06a9941668e",
+    "branchHead": "3bf0502",
+    "sha256": "36984e8e16e33f785f7128a08097271ade036b31cd7223c39be1a01a9fa6a10c",
+    "bytes": 1063504,
+    "nodeTests": 34,
+    "extractedRuntimeTests": 25,
+    "publicReleaseLinkDownload": "PASS",
+    "releaseAssets": 0,
+    "delivery": "Fixed-commit versioned archive; uploads endpoint HTTP401"
+  },
+  "compare": {
+    "version": "0.3.3",
+    "private": true,
+    "releaseTarget": "29418cecea45c8a002a07edbba121690b0c5da8f",
+    "goRaceTests": 20,
+    "goVet": "PASS",
+    "nodeTests": 6,
+    "extractedLinuxAmd64Package": "PASS",
+    "arm64": "Cross-compiled and ELF/hash checked; NOT_RUN native execution this turn",
+    "market": "coming_soon, no public archive/download/license fields",
+    "releaseAssets": 0,
+    "delivery": "Private fixed-commit versioned archive; uploads endpoint HTTP401"
+  },
+  "market": {
+    "branch": "release/terminal-1.5.2-20261029",
+    "commit": "43f12cab7e9b311bbfa6bf74959a1cf5e5de5192",
+    "pr": "https://github.com/skyelan1999/aide-pkg-shop/pull/15",
+    "listingTests": 10,
+    "routingSearch": "PASS",
+    "catalogAllPublicPackages": "PASS29",
+    "browser": "PASS search/1.5.2 details/download identity/private display-only",
+    "unrelatedEntries": "Content and order preserved",
+    "onlineVersion": "1.5.1",
+    "onlineCheck": "Current catalog/routing/ZIP identity PASS; new deployment NOT_RUN",
+    "existingPagesRun": "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/40695819677",
+    "existingPagesCommit": "6d425fb1332f1db01610d630d7c08d5ba18b1f88",
+    "blocker": "REVIEW_REQUIRED; PR author and only CODEOWNER both skyelan1999; authors cannot approve own PR. Normal merge rejected; auto-merge unavailable. No admin bypass or protection changes."
+  },
+  "limitations": [
+    "Full Aide host UI not exercised; no Aide core release, image build, main merge or production restart.",
+    "Physical serial hardware and native Windows/macOS NOT_RUN.",
+    "Input-latency browser proof uses real Chromium/OpenSSH/TLS relay and substituted serial12ms host bridge; loopback timing does not predict user network.",
+    "Compare private archive tested natively on Linux AMD64; current ARM64 execution NOT_RUN.",
+    "Public/private fixed-commit blob downloads verified; Terminal public Release-link HTTP download independently verified.",
+    "ZIP contains earlier installation README introduction; current repository README, market description and Release notes point to 1.5.2. Artifact and old versions were not overwritten."
+  ],
+  "documentationChecks": {
+    "checkDocs": "PASS431 Markdown files,1501 local links,JPEG signatures,FR01..100",
+    "diffCheck": "PASS",
+    "taskEvidenceReferences": "PASS"
+  }
+}

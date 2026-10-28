@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "baseline": false,
+  "scope": "Actual Chromium xterm render, OpenSSH host-key and password authentication, generated Python TLS1.3 relay; host bridge substituted with serial12ms calls, remote echo delayed15ms; loopback only, not user network",
+  "results": [
+    {
+      "kind": "ssh-direct",
+      "samplesMs": [
+        65,
+        129,
+        147,
+        129,
+        119,
+        66,
+        121,
+        105,
+        70,
+        65
+      ],
+      "medianMs": 119,
+      "p90Ms": 129,
+      "maxMs": 147,
+      "bridgeCalls": 85,
+      "maxInFlight": 1,
+      "automaticProbes": 0,
+      "probesWhileActive": 0,
+      "reconnectVerified": false
+    },
+    {
+      "kind": "ssh-relay-tls",
+      "samplesMs": [
+        95,
+        100,
+        112,
+        125,
+        120,
+        69,
+        118,
+        56,
+        107,
+        105
+      ],
+      "medianMs": 107,
+      "p90Ms": 120,
+      "maxMs": 125,
+      "bridgeCalls": 91,
+      "maxInFlight": 1,
+      "automaticProbes": 0,
+      "probesWhileActive": 0,
+      "reconnectVerified": false
+    }
+  ],
+  "errors": []
+}
