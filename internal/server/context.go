@@ -64,6 +64,8 @@ type ContextUsageAnchor struct {
 	PromptEstimate     int        `json:"promptEstimate"`
 	CompletionEstimate int        `json:"completionEstimate"`
 	HeaderFingerprint  string     `json:"headerFingerprint"`
+	CompactedAt        string     `json:"compactedAt,omitempty"`
+	SummaryFingerprint string     `json:"summaryFingerprint,omitempty"`
 }
 
 func utf16CodeUnits(s string) int {
@@ -128,7 +130,6 @@ const (
 	contextMessageOverhead      = 4
 	contextContentBlockOverhead = 4
 	contextImageUpperBoundCost  = 384
-	contextHistoryMaxTokens     = 15000
 )
 
 func estimateContextTextTokens(characters int) int {
@@ -456,13 +457,10 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 			conversation[i].SourceRunID = ""
 			conversation[i].CreatedAt = ""
 		}
-		start, total := len(conversation), 0
-		for start > 0 && total+contextMessageTokens(conversation[start-1]) < contextHistoryMaxTokens {
-			start--
-			total += contextMessageTokens(conversation[start])
-		}
-		history = append(history, conversation[start:]...)
-		historyCount = len(conversation) - start
+		// All uncompacted messages participate in preview and admission. A fixed
+		// tail cap silently discards constraints and can orphan tool results.
+		history = append(history, conversation...)
+		historyCount = len(conversation)
 	}
 	history = append(history, Message{Role: "user", Content: prompt + contextText, Images: images})
 	instruction := chatInstruction
@@ -527,6 +525,9 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 			// tokenization delta must not inflate the next ordinary request's baseline.
 			run := s.Runs[i]
 			if anchor != nil && (anchor.Scope == "parallel_merge" || anchor.Scope == "" && run.ParallelPrepared && run.Parallel != nil && run.Parallel.Phase != "fallback" && len(run.Parallel.Parts) > 1) {
+				break
+			}
+			if anchor != nil && (anchor.CompactedAt != s.CompactedAt || anchor.SummaryFingerprint != contextSummaryFingerprint(history)) {
 				break
 			}
 			if anchor == nil || anchor.Usage.Estimated || anchor.Usage.Prompt <= 0 || anchor.Usage.Completion < 0 {
@@ -869,4 +870,16 @@ func (a *App) runRequestsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	fail(w, 404, errors.New("任务不存在"))
+}
+
+// Bind usage calibration to the actual summary sent, including its folded count.
+// A concurrent compaction must not label an old in-flight request as new history.
+func contextSummaryFingerprint(messages []Message) string {
+	for _, message := range messages {
+		if message.Role == "system" && strings.HasPrefix(message.Content, "历史摘要（已压缩 ") {
+			sum := sha256.Sum256([]byte(message.Content))
+			return hex.EncodeToString(sum[:])
+		}
+	}
+	return ""
 }

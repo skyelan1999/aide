@@ -487,6 +487,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64<<10), 1<<20) // 单个 chunk 上限 1 MiB
 	streamBytes := 0
+	streamEnded := false
 	for scanner.Scan() {
 		streamBytes += len(scanner.Bytes())
 		if streamBytes > 8<<20 {
@@ -510,6 +511,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		}
 		payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		if payload == "[DONE]" {
+			streamEnded = true
 			break
 		}
 		var chunk streamChunk
@@ -596,6 +598,14 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	applyBillingIdentity(&tu, cfg)
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(tu)
+	}
+	if streamCtx.Err() != nil {
+		return text, nil, tu, finishReason, streamCtx.Err()
+	}
+	if !streamEnded && finishReason == "" {
+		// HTTP EOF is not a completion marker. In particular, never dispatch
+		// potentially incomplete tool calls from a truncated stream.
+		return text, nil, tu, "", fmt.Errorf("模型流式响应在完成标记前中断，已保留部分输出: %w", io.ErrUnexpectedEOF)
 	}
 	return text, calls, tu, finishReason, nil
 }

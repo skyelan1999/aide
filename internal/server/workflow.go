@@ -2107,6 +2107,19 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			saveCheckpoint()
 		}
 		cfg = a.routedModel(task, cfg, input, params, tools, stepName)
+		// Recheck the actual growing request after routing and parallel notes,
+		// not only the initial preview. Keep all input/checkpoints on overflow.
+		a.mu.Lock()
+		window := a.modelWindow(cfg.Model)
+		compactedAt := ""
+		if session := a.approvalSessionLocked(task); session != nil {
+			compactedAt = session.CompactedAt
+		}
+		a.mu.Unlock()
+		estimate := estimateProviderPromptTokens(input, tools)
+		if estimate+params.MaxTokens > window {
+			return partialResult(round, lastOut, input, fmt.Errorf("当前请求上下文约 %d tokens，连同输出预留 %d 超过模型窗口 %d；已保留历史与部分输出，请压缩会话后继续", estimate, params.MaxTokens, window))
+		}
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
 			a.mu.Lock()
@@ -2205,6 +2218,8 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			Usage: usage, PromptEstimate: estimateProviderPromptTokens(input, tools),
 			CompletionEstimate: contextMessageTokens(Message{Role: "assistant", Content: out, ToolCalls: calls}),
 			HeaderFingerprint:  contextHeaderFingerprint(cfg, system, tools),
+			CompactedAt:        compactedAt,
+			SummaryFingerprint: contextSummaryFingerprint(input),
 		}
 		lastOut = out
 		a.mu.Unlock()
@@ -5257,7 +5272,34 @@ func (a *App) snapshotForCompactBudget(sess *Session, keepBudget int) (compactSn
 	if split <= 0 {
 		return compactSnapshot{}, 0
 	}
+	// A retained tool result must keep the assistant call that owns it, even
+	// when the complete exchange exceeds the preferred recent-history budget.
+	split = compactProtocolBoundary(sess.Messages, split)
+	if split <= 0 {
+		return compactSnapshot{}, 0
+	}
 	return compactSnapshot{prevCompact: sess.Compact, prevCount: sess.CompactedMessages, messages: cloneCompactMessages(sess.Messages[:split])}, split
+}
+
+// Return the last boundary at or before limit with no outstanding tool calls.
+// This also handles assistants issuing multiple calls with separate results.
+func compactProtocolBoundary(messages []Message, limit int) int {
+	pending := map[string]bool{}
+	safe := 0
+	for i, message := range messages[:limit] {
+		if message.Role == "assistant" {
+			for _, call := range message.ToolCalls {
+				pending[call.ID] = true
+			}
+		}
+		if message.Role == "tool" {
+			delete(pending, message.ToolCallID)
+		}
+		if len(pending) == 0 {
+			safe = i + 1
+		}
+	}
+	return safe
 }
 
 func cloneCompactMessages(messages []Message) []Message {
@@ -5428,21 +5470,10 @@ type compactSummaryRecord struct {
 }
 
 func compactSourceText(m Message) string {
-	runes := []rune(m.Content)
-	if len(runes) > compactSummaryMaxChars {
-		runes = append(append([]rune{}, runes[:900]...), []rune("\n…中间内容已省略；保留原会话直至摘要成功提交…\n")...)
-		runes = append(runes, []rune(m.Content)[len([]rune(m.Content))-300:]...)
-	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "[%s] %s", m.Role, string(runes))
-	remaining := 600
+	fmt.Fprintf(&b, "[%s] %s", m.Role, m.Content)
 	for _, call := range m.ToolCalls {
-		if remaining <= 0 {
-			break
-		}
-		args := clip(call.Function.Arguments, remaining)
-		fmt.Fprintf(&b, "\n[tool call %s] %s", call.Function.Name, args)
-		remaining -= len([]rune(args))
+		fmt.Fprintf(&b, "\n[tool call %s id=%s] %s", call.Function.Name, call.ID, call.Function.Arguments)
 	}
 	if m.ToolCallID != "" {
 		fmt.Fprintf(&b, "\n[tool result for %s]", m.ToolCallID)
@@ -5569,7 +5600,14 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 		}
 	}
 	for _, message := range folded {
-		bounded = append(bounded, Message{Role: message.Role, Content: compactSourceText(message)})
+		// Split complete source text instead of clipping its middle or tool
+		// arguments. Each piece reaches the bounded map/reduce pipeline.
+		source := []rune(compactSourceText(message))
+		for len(source) > 0 {
+			n := min(compactSummaryMaxChars, len(source))
+			bounded = append(bounded, Message{Role: message.Role, Content: string(source[:n])})
+			source = source[n:]
+		}
 	}
 	groups := compactBatches(bounded, compactSummaryInputBudget)
 	partials := make([]string, 0, len(groups))
