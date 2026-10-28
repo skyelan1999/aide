@@ -92,10 +92,36 @@
     "Mainmerge,Release/tag,market/deploy."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "435": "https://github.com/skyelan1999/aide/issues/435#issuecomment-6467898933",
+      "444": "https://github.com/skyelan1999/aide/issues/444#issuecomment-6467899868",
+      "468": "https://github.com/skyelan1999/aide/issues/468#issuecomment-6467900834",
+      "470": "https://github.com/skyelan1999/aide/issues/470#issuecomment-6467901509",
+      "471": "https://github.com/skyelan1999/aide/issues/471#issuecomment-6467903101",
+      "472": "https://github.com/skyelan1999/aide/issues/472#issuecomment-6467903745",
+      "473": "https://github.com/skyelan1999/aide/issues/473#issuecomment-6467904480",
+      "475": "https://github.com/skyelan1999/aide/issues/475#issuecomment-6467905465",
+      "476": "https://github.com/skyelan1999/aide/issues/476#issuecomment-6467906237",
+      "477": "https://github.com/skyelan1999/aide/issues/477#issuecomment-6467906899",
+      "478": "https://github.com/skyelan1999/aide/issues/478#issuecomment-6467907561",
+      "479": "https://github.com/skyelan1999/aide/issues/479#issuecomment-6467908396",
+      "481": "https://github.com/skyelan1999/aide/issues/481#issuecomment-6467908959",
+      "482": "https://github.com/skyelan1999/aide/issues/482#issuecomment-6467909764",
+      "483": "https://github.com/skyelan1999/aide/issues/483#issuecomment-6467910383",
+      "484": "https://github.com/skyelan1999/aide/issues/484#issuecomment-6467911006",
+      "485": "https://github.com/skyelan1999/aide/issues/485#issuecomment-6467911622",
+      "488": "https://github.com/skyelan1999/aide/issues/488#issuecomment-6467912294",
+      "490": "https://github.com/skyelan1999/aide/issues/490#issuecomment-6467912829",
+      "491": "https://github.com/skyelan1999/aide/issues/491#issuecomment-6467913385",
+      "492": "https://github.com/skyelan1999/aide/issues/492#issuecomment-6467914290",
+      "494": "https://github.com/skyelan1999/aide/issues/494#issuecomment-6467914823",
+      "495": "https://github.com/skyelan1999/aide/issues/495#issuecomment-6467915364",
+      "496": "https://github.com/skyelan1999/aide/issues/496#issuecomment-6467916052"
+    },
+    "remoteSourceCommit": "ac7196e043d694d1c559affb132ec5217c64689f"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "a0d922bba426019a2eaa37dd3e8f0c8eca46e5c5d959a493e03a5f13ed8eca7d",
@@ -105,5 +131,10 @@
     "scripts/drawio-plantuml-browser-cases.cjs": "837c6e790df760dd9fa33fffa2c5cc25c45237362288d84ef1bfa64826d4a566",
     "scripts/fixtures/plantuml-issue-cases.json": "076bfdc9d555832d1e4ab61888db030ece15ca47ba1c0598709316c4886b2607",
     "scripts/test_plantuml_converter_issues.cjs": "7cf66f2b6e9032089bf0d8117c362b4be7144d05629a4029e23c667dc6203a88"
-  }
+  },
+  "completedAt": "2026-10-28T11:33:58.520400+00:00",
+  "cumulativeFixedOnBranch": 340,
+  "cumulativeProductFixes": 339,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }

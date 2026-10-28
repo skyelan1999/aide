@@ -193,7 +193,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-077.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-078.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-079.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-080.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-080.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-081.json"
       ]
     },
     "documentation": {
@@ -220,17 +221,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "新增100目标25/100已交付，账号优先565/563已处理，561重复合并；最新cycle80，下一轮先刷新账号报告，再继续编号队列。仍只push分支，不main合并/Release/deploy。扩展SSH写入夹具失败与完整工作台/原生系统未验证边界见cycle077。",
+  "handoff": "新增100目标49/100已交付，账号优先565/563已处理，561重复合并；最新cycle81，下一轮先刷新账号报告，再继续编号队列。仍只push分支，不main合并/Release/deploy。扩展SSH写入夹具失败与完整工作台/原生系统未验证边界见cycle077。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+    "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-080.json"
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-081.json"
   },
-  "issue_comments": "本轮100项已完成25/100，逐项修复、验证、push与评论见hundred-20261028-04.json。",
+  "issue_comments": "本轮100项已完成49/100，逐项修复、验证、push与评论见hundred-20261028-04.json。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -259,36 +260,71 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 81,
+    "nextCycle": 82,
     "lastCompletedBatch": {
-      "cycle": 80,
+      "cycle": 81,
       "issues": [
-        398,
-        399,
-        400,
-        403,
-        404,
-        405,
-        406,
-        407
+        435,
+        444,
+        468,
+        470,
+        471,
+        472,
+        473,
+        475,
+        476,
+        477,
+        478,
+        479,
+        481,
+        482,
+        483,
+        484,
+        485,
+        488,
+        490,
+        491,
+        492,
+        494,
+        495,
+        496
       ],
-      "cumulativeFixed": 316,
-      "cumulativeProductFixed": 315,
+      "cumulativeFixed": 340,
+      "cumulativeProductFixed": 339,
       "toolingFixes": 1,
       "remainingFollowupTargets": 18,
-      "verification": "223quick;see cycle-080.json",
-      "delivery": "3502674c29740d1f125fbac60007ad8ceddff2f9"
+      "verification": "226quick;see cycle-081.json",
+      "delivery": "ac7196e043d694d1c559affb132ec5217c64689f"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
+      401,
+      402,
       408,
       409,
       410,
-      411,
-      412,
-      413,
-      414,
-      415
+      434,
+      436,
+      445,
+      446,
+      447,
+      448,
+      449,
+      450,
+      451,
+      452,
+      453,
+      454,
+      455,
+      456,
+      457,
+      458,
+      459,
+      460,
+      461,
+      462,
+      465,
+      466
     ],
     "userReaffirmed": {
       "request": "继续100，先看1999账号提交的内容",
@@ -297,9 +333,9 @@
     },
     "currentCycle": {
       "cycle": 81,
-      "status": "in_progress",
-      "phase": "plantuml-controls-pass-browser-verification",
-      "candidates": [
+      "status": "pass",
+      "phase": "pushed-commented-checkpoint",
+      "issues": [
         435,
         444,
         468,
@@ -379,7 +415,7 @@
         "updatedAt": "2026-10-27T15:10:48Z",
         "classification": "body edited with earlier SID-only ACL proposal;latest2comments unchanged and covered cycle52;no new runtime failure;keepcurrent stricter DACL reapplication"
       },
-      "lastRefreshEvidence": "/workspace/scratch/issue-review-20261026/cycle79-owner-refresh.json"
+      "lastRefreshEvidence": "/workspace/scratch/issue-review-20261026/cycle81-owner-refresh.json"
     },
     "pausedWork": [
       {
@@ -448,7 +484,7 @@
       "request": "继续100，先看1999账号提交的内容",
       "sequence": 4,
       "targetFixed": 100,
-      "newFixed": 25,
+      "newFixed": 49,
       "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
       "baselineCumulative": 291,
       "baselineRemaining": 18,
@@ -479,7 +515,31 @@
         404,
         405,
         406,
-        407
+        407,
+        435,
+        444,
+        468,
+        470,
+        471,
+        472,
+        473,
+        475,
+        476,
+        477,
+        478,
+        479,
+        481,
+        482,
+        483,
+        484,
+        485,
+        488,
+        490,
+        491,
+        492,
+        494,
+        495,
+        496
       ],
       "blockedIssues": [
         391
