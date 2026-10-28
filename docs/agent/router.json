@@ -1313,6 +1313,15 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/cases.js"
+      ],
+      [
+        "node",
+        "scripts/test_marked_resource_scans.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-marked-resource-scans.cjs"
       ]
     ],
     "full": [
