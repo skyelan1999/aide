@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 11,
+  "fixedCount": 17,
   "fixedIssues": [
     565,
     563,
@@ -16,7 +16,13 @@
     387,
     388,
     389,
-    390
+    390,
+    392,
+    393,
+    394,
+    395,
+    396,
+    397
   ],
   "issues": {
     "565": {
@@ -106,9 +112,63 @@
       "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/390#issuecomment-6466251483"
+    },
+    "392": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Bound nested centerOver reparsing to8 shared levels and restore parser depth on every exit.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/392#issuecomment-6466651907"
+    },
+    "393": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Bound proof trees to64 inferences using a counter on the persistent proof stack item;clear rejected balancing lists.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/393#issuecomment-6466652602"
+    },
+    "394": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Bound nested UnderOverBracket reparsing to8 shared levels and preserve the original ordinary-formula implementation.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/394#issuecomment-6466653064"
+    },
+    "395": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Check mhchem group depth before its recursive state machine,rejecting depth above64.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/395#issuecomment-6466653778"
+    },
+    "396": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Apply existingSafe policy to AsciiMathMathML output;return the error root on filter failure and restore the caller root.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/396#issuecomment-6466654379"
+    },
+    "397": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Check Physics matrix axes,cells and estimated expansion before allocation;retain ordinarymqty syntax.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/397#issuecomment-6466655323"
     }
   },
-  "blockedIssues": [],
+  "blockedIssues": [
+    {
+      "number": 391,
+      "reason": "Need matching runtime reproduction;reported sample and invalid control not reliable under tested configuration. No source change or fixed count.",
+      "record": "cycle-079.json"
+    }
+  ],
   "alreadyCovered": [
     {
       "number": 561,

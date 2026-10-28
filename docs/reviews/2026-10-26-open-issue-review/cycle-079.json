@@ -57,10 +57,18 @@
     "Mainmerge,Release/tag,market/deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "392": "https://github.com/skyelan1999/aide/issues/392#issuecomment-6466651907",
+      "393": "https://github.com/skyelan1999/aide/issues/393#issuecomment-6466652602",
+      "394": "https://github.com/skyelan1999/aide/issues/394#issuecomment-6466653064",
+      "395": "https://github.com/skyelan1999/aide/issues/395#issuecomment-6466653778",
+      "396": "https://github.com/skyelan1999/aide/issues/396#issuecomment-6466654379",
+      "397": "https://github.com/skyelan1999/aide/issues/397#issuecomment-6466655323"
+    },
+    "remoteSourceCommit": "0ada939f39df2f6db3ac37723eb0bba738cee616"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "13890f73ef3a3e7859c2f3ca388aaff09658b9d24eea93017869ddcedf5a6bd6",
@@ -72,5 +80,10 @@
     "internal/server/web/vendor/drawio/math4/es5/ui/safe.js": "010301f8d1259f90898138138daa0e5fe1c1193ecfd715e7b924d43ea0dc8125",
     "internal/server/web/vendor/drawio/math4/LOCAL_PATCHES.md": "0510084aaff3c9ba23058c08a2b2bd3a68e3bfa08ed1218be52dfa78b1c3c33a",
     "scripts/browser-mathjax-issue-review.cjs": "7eda653d60de38945ad71543c0ac6d7577bace861b6eb47a370f2bfb8db18928"
-  }
+  },
+  "completedAt": "2026-10-28T10:30:54.531954+00:00",
+  "cumulativeFixedOnBranch": 308,
+  "cumulativeProductFixes": 307,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }
