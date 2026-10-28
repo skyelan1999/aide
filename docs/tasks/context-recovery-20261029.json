@@ -1,0 +1,81 @@
+{
+  "id": "context-recovery-20261029",
+  "request": "你趁机使用6.1和4.1flash修一下1x和多x上下文压缩异常，上下文管理异常和输出异常的问题",
+  "baseline": "757fc347dda31979ddf230898a90777fa3cd65de",
+  "initial_status": "",
+  "acceptance": [
+    "1x及多x的未压缩历史不会静默丢弃；超限可解释压缩或拒绝",
+    "压缩完整覆盖长消息正文和工具参数，不在模型读取前丢掉中段",
+    "压缩和运行中上下文整理保留工具调用/结果边界",
+    "流中断不标成功、不执行未完成工具、不自动重复已有正文",
+    "gpt-6.1-sol与deepseek-flash实际模型对照，隔离合成数据"
+  ],
+  "scope": [
+    "internal/server上下文、压缩、并行和流输出及对应测试",
+    "scripts合成验收与docs任务/架构记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认4.1 Flash对应已配置deepseek-flash；测试使用两个明确模型和合成对话，保留9999",
+      "evidence": [
+        "user confirmation",
+        "baseline 757fc347"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "完整计量，源消息分块而非截中段；工具协议边界；运行中/路由后预算检查；可恢复的流中断",
+      "evidence": [
+        "四个新增用例在main基线失败",
+        ".agent-state/context-recovery-regression.log"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "context.go, workflow.go, conversation_parallel.go, provider.go及新context_recovery.go，覆盖预检、执行和并行路径",
+      "evidence": [
+        "focused Go regression passed",
+        ".agent-state/context-recovery-final-build.log"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "最终代码：两个真实模型各1x/3x全部通过；3x确有多路完成；只给新会话摘要。450条历史连续多批压缩、旧用量校准失效、Flash形态兼容及EOF暂停/恢复均通过；受影响Go race/vet与quick通过。",
+      "evidence": [
+        "docs/reviews/2026-10-29/context-recovery-model-proof.json",
+        "docs/reviews/2026-10-29/context-recovery-before.txt",
+        ".agent-state/context-recovery-final-validation.log",
+        ".agent-state/context-model-live.log",
+        ".agent-state/context-final-quick.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构记录覆盖最终行为和未验证边界；真实模型输出均为合成项目。",
+      "evidence": [
+        "docs/architecture/context-recovery.md",
+        "check_docs.py passed"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "新增源码、测试及脱敏证据归属已审阅；凭据、真实会话、原始配置和运行二进制均未暂存。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前请求未授权Aide主程序发版或替换9999；Codex Bridge上一任务的发版范围不自动扩展",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "独立worktree fix/context-recovery-20261029；不覆盖现用9999或原目录start.command",
+  "handoff": "修复关联Issue #580；真实模型覆盖1x/3x，10x保持协议/调度回归覆盖，未新增真实10x调用。现用9999仍为aide:mixsoul-local-fa9550d6，未替换。准备独立修复PR，未合并、未升版。",
+  "interpretation": "用户已确认4.1 Flash对应现有deepseek-flash，6.1使用gpt-6.1-sol。当前范围为核心修复和隔离合成验收；不替换9999，不发布Aide版本。",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/580"
+  ]
+}

@@ -137,6 +137,8 @@ var tokenUsageRecorder atomic.Value // func(TokenUsage)
 // emptyCompletionError 上游正常结束（HTTP 200、流跑完）但既无正文也无工具调用。
 // 这是“空返回”根因分类里的 d 类：模型在长工具链后什么都没说就停了。
 // toolLoop 据此区分“可兜底续接”与“真·上游错误”，避免盲重试把空响应原样重放。
+var errIncompleteProviderStream = errors.New("模型流式响应提前结束")
+
 type emptyCompletionError struct {
 	finish string // 上游最后一个 finish_reason（stop/length/content_filter/…），可能为空
 }
@@ -487,6 +489,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	var content strings.Builder
 	toolCallsByIndex := map[int]*ToolCall{}
 	var finishReason string
+	streamEnded := false
 	var usage *providerUsage
 	idleWatch := startStreamIdleWatch(streamCtx, cancelStream, idleTimeout)
 	defer idleWatch.stop()
@@ -511,6 +514,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		}
 		payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		if payload == "[DONE]" {
+			streamEnded = true
 			break
 		}
 		var chunk streamChunk
@@ -597,6 +601,9 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	applyBillingIdentity(&tu, cfg)
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(tu)
+	}
+	if !streamEnded && finishReason == "" {
+		return text, nil, tu, "", fmt.Errorf("%w，已保留部分正文；请从检查点继续", errIncompleteProviderStream)
 	}
 	return text, calls, tu, finishReason, nil
 }

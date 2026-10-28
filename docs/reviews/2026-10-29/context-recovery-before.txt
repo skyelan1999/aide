@@ -1,0 +1,21 @@
+--- FAIL: TestContextRecoveryRetainsUncompactedHistory (0.88s)
+    context_recovery_test.go:19: uncompacted history silently discarded
+--- FAIL: TestContextRecoveryCompactionKeepsToolExchange (0.24s)
+    context_recovery_test.go:26: compaction retained orphan tool result
+--- FAIL: TestContextRecoverySummarySeesMiddleContent (0.26s)
+    context_recovery_test.go:37: source middle discarded before summarizer saw it
+--- FAIL: TestContextRecoveryStreamEOFIsNotSuccess (0.00s)
+    context_recovery_test.go:43: unterminated stream was treated as a complete answer <nil>
+FAIL
+FAIL	aide/internal/server	1.419s
+FAIL
+--- FAIL: TestContextRecoveryCompactionInvalidatesOldUsageAnchor (0.44s)
+    context_recovery_test.go:187: compacted history still inherits pre-compaction token pressure
+FAIL
+FAIL	aide/internal/server	0.454s
+FAIL
+--- FAIL: TestContextRecoveryPreflightCompactsMultipleHistoryBatches (0.43s)
+    context_recovery_test.go:267: status 400 want 202: {"error":"自动压缩后仍超出上下文预算：输入估算 18847 tokens + 输出预留 8192 tokens = 27039，模型窗口 16000；请减少附件/提示内容或新建会话"}
+FAIL
+FAIL	aide/internal/server	0.441s
+FAIL

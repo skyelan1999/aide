@@ -147,8 +147,16 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 	a.mu.Lock()
 	window := a.modelWindow(cfg.Model)
 	a.mu.Unlock()
-	if estimateProviderPromptTokens(input, nil)+params.MaxTokens > window {
-		return "", errors.New("parallel context exceeds model window")
+	var contextErr error
+	input, contextErr = a.fitActiveContext(ctx, cfg, input, params, nil, task)
+	if contextErr != nil {
+		return "", contextErr
+	}
+	if callContext != nil {
+		a.mu.Lock()
+		callContext.InputEstimate = estimateProviderPromptTokens(input, nil)
+		callContext.ContextWindow = window
+		a.mu.Unlock()
 	}
 	rec := func(body []byte) {
 		sum := sha256.Sum256(body)
