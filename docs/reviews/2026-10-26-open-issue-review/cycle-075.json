@@ -38,7 +38,7 @@
   },
   "batchTarget": 50,
   "batchVerified": 50,
-  "batchPushed": 36,
+  "batchPushed": 50,
   "red": {
     "result": "EXPECTED_FAIL",
     "evidence": "/workspace/scratch/issue-review-20261026/cycle75-red-final/result.json",
@@ -84,10 +84,29 @@
     "Main merge, Release/tag or deployment."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "363": "https://github.com/skyelan1999/aide/issues/363#issuecomment-6462907151",
+      "366": "https://github.com/skyelan1999/aide/issues/366#issuecomment-6462907980",
+      "367": "https://github.com/skyelan1999/aide/issues/367#issuecomment-6462908688",
+      "368": "https://github.com/skyelan1999/aide/issues/368#issuecomment-6462909367",
+      "371": "https://github.com/skyelan1999/aide/issues/371#issuecomment-6462909776",
+      "372": "https://github.com/skyelan1999/aide/issues/372#issuecomment-6462910432",
+      "374": "https://github.com/skyelan1999/aide/issues/374#issuecomment-6462911349",
+      "375": "https://github.com/skyelan1999/aide/issues/375#issuecomment-6462911813",
+      "376": "https://github.com/skyelan1999/aide/issues/376#issuecomment-6462912387",
+      "377": "https://github.com/skyelan1999/aide/issues/377#issuecomment-6462912889",
+      "378": "https://github.com/skyelan1999/aide/issues/378#issuecomment-6462913356",
+      "379": "https://github.com/skyelan1999/aide/issues/379#issuecomment-6462913936",
+      "380": "https://github.com/skyelan1999/aide/issues/380#issuecomment-6462914426",
+      "381": "https://github.com/skyelan1999/aide/issues/381#issuecomment-6462914938"
+    },
+    "remoteSourceCommit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+    "additionalFollowupComments": {
+      "551": "https://github.com/skyelan1999/aide/issues/551#issuecomment-6462958994"
+    }
   },
   "sourceSHA256": {
     "docs/agent/router.json": "1a1509b3b77876ab45e5c9b427bac4729c6dfe1f0557e8e50e40abdb9a572342",
@@ -115,5 +134,26 @@
     "scripts/drawio-import-plugin-review.cjs": "fa882ea1898c5bdd0885ab58344e1560b4451650ab7a65054601f354dc9c163a",
     "scripts/drawio-import-plugin-browser-cases.cjs": "939ce1677fa91d0c3a3ef2e91b6b86b66af2bcbefbe2263207655996288d9a85",
     "scripts/sync_drawio_import_plugin_review.cjs": "a43a8a93685cc04cb4c67e020a5d60098a25735b045172c67b6feaa12a65b074"
-  }
+  },
+  "issueVerification": {
+    "363": "实际 PDF Subject 提取：畸形百分号返回 null，合法嵌入 mxfile 正常返回。",
+    "366": "真实打印对话框：清空任一范围、越界输入和未触发 change 的直接提交均得到合法页码。",
+    "367": "真实 File/JSZip：正常 draw.io、最新 Gliffy 版本、9MiB 膨胀拒绝及失真元数据下的流式字节阻断；压缩尺寸在解析前检查。",
+    "368": "实际 mxConnector/mxArrowConnector 与 SVG Canvas：首尾重复点及全重合点保持有限坐标，有长度的路径仍产生 SVG。",
+    "371": "实际 SysML 绘制器：symbol0/symbol1 自引用不再递归，后续正常矩形符号保留；使用受控绘图预算。",
+    "372": "浏览器内真实 BPMN 绘制器：__proto__/constructor/toString 在背景、轮廓、符号及事件路径不再作为 painter 调用，正常绘制分支保留。",
+    "374": "已知 emoji 返回文本，原型键不会返回对象/函数；实际图中该无效 emoji 渲染不再抛异常。",
+    "375": "实际组织结构图：3/34 子节点，最大4/35段连接器；段身份不重复，坐标有限，连续路点无几何跳跃。",
+    "376": "实际分组内节点连向图层节点的布局不再产生缺失父节点异常，分组和图层节点位置有效。",
+    "377": "实际打开/关闭 Explore：配置值使用本次作用域，window.pageSize/minSize 哨兵保持不变。",
+    "378": "独立插件在真实运行时加载：绝对/相对协议的跨域目标均无 POST；同源目标仍将合成 XML 传入受控请求接收器。",
+    "379": "实际 SQL 弹窗按钮与绘制结果：首次有PK、同名表第二次无PK；不提供 window.sb 仍能完成导入。",
+    "380": "实际 MySQL 导入控件：大写、小写、混合大小写 FOREIGN KEY/REFERENCES 均生成相应 FK 单元格。",
+    "381": "实际 Replay 插件调度调用：replay-delay=5000/0 及非法/负值对应5000/0/1000/1000；未执行真实等待播放。"
+  },
+  "completedAt": "2026-10-28T07:06:11.511022+00:00",
+  "cumulativeFixedOnBranch": 289,
+  "cumulativeProductFixes": 288,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }
