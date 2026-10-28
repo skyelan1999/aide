@@ -1242,6 +1242,24 @@
         "node",
         "--check",
         "scripts/browser-markdown-boundaries.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_libavoid_readiness.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_orgchart_assembly_mirror.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-orgchart-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/libavoid-js/libavoid.min.js"
       ]
     ],
     "full": [
