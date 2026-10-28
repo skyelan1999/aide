@@ -1004,6 +1004,15 @@
       [
         "node",
         "scripts/drawio-layout-second-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/highlight-grammar-fixes.js"
+      ],
+      [
+        "node",
+        "scripts/test_highlight_grammar_review.cjs"
       ]
     ],
     "full": [

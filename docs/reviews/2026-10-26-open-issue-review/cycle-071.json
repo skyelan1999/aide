@@ -1,0 +1,124 @@
+{
+  "cycle": 71,
+  "baseline": "ebc51dec678e8ee36e8497a5ba217b062da836c7",
+  "issues": [
+    268,
+    269,
+    270,
+    271,
+    272,
+    273,
+    274,
+    275,
+    276,
+    277,
+    278,
+    279,
+    280,
+    281,
+    283,
+    285,
+    286,
+    287,
+    288,
+    289,
+    290,
+    291
+  ],
+  "fixes": {
+    "268": "JS/TS JSX closing-tag index",
+    "269": "Kotlin nested comments",
+    "270": "Bash unquoted/nested command substitutions",
+    "271": "Vim leading quoted comments",
+    "272": "C# nested interpolation braces",
+    "273": "GraphQL block strings",
+    "274": "Go nested function parameters",
+    "275": "CMake exact bracket lengths",
+    "276": "Dart nested interpolation braces",
+    "277": "Make nested function parentheses",
+    "278": "Lua exact non-nesting long delimiters",
+    "279": "XML Name entity characters",
+    "280": "Elixir nested interpolation",
+    "281": "Erlang base2–36 digits withradixvalidation",
+    "283": "F# nested interpolation",
+    "285": "Groovy GString brace/shorthand/dollar-slashy interpolation",
+    "286": "Perl nested interpolation",
+    "287": "R spaced assignment lookahead",
+    "288": "Ruby nested interpolation",
+    "289": "Swift arbitrary raw hash counts andmatchinginterpolation",
+    "290": "Scala nested interpolation",
+    "291": "SCSS quoted interpolation"
+  },
+  "cumulativeProductFixes": 220,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 221,
+  "original272RemainingFollowup": 66,
+  "batchTarget": 50,
+  "batchVerified": 32,
+  "batchPushed": 10,
+  "design": "One audited registration-layer patch appended to pinnedcore;individualupstreamgrammarsunchanged;corebuiltinsandreloadedstandalonesbothtransformed;originalcoreprefixSHA837a6fa...unchangedandsyncguarded.",
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle71-red.log",
+    "scope": "All21semanticcasesfailandJS/TSrepeat-tag suffixwork5,999,000 for2000tagsinbothbaselinepaths."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle71-controls.log",
+      "scope": "56semanticpositive/negativecases withsource/bundle/core-only/standalone loading paths;rawtextunchanged;JS/TSsuffixworkbounded."
+    },
+    {
+      "result": "PASS",
+      "checks": 4,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle71-browser-final/result.json",
+      "scope": "Actual Markdowndecorate andtext-editoroverlay ×56cases ×source/bundle ×light1440/dark390 =448 path/case assertions;pageerrors[];ownedlocalpage,notfullworkbench.Screenshotinspected."
+    },
+    {
+      "result": "PASS",
+      "checks": 192,
+      "fingerprint": "45c00fdb862300f1b9476bf0d61a253d17d93761ce4deef2b025c45bd88df564",
+      "receipt": ".agent-state/verify-20261028T045110703440Z.log"
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle71-jsx-benchmark.json",
+      "scope": "Singlehost16k-tag JS/TS before~824ms,after~69ms. This islocalobservedtiming,nogeneralperformanceguarantee."
+    },
+    {
+      "result": "PASS",
+      "scope": "Repair suffix exactlymatchesmaintainedsource;original11.9corebyteprefixunchangedandSHAguarded;docs/diffchecks."
+    }
+  ],
+  "corrections": [
+    "Groovy reusesfrozensharedquotemodes;copy-on-write replacement preservesupstreamconstants.",
+    "Swift nestedrawstrings useactivehashstack ratherthansharedmode.data;perhighlight/auto sessionreset prevents unfinishedstateleaks.",
+    "Lua longdelimitersmatchlevels butdonotnest,includingdifferentlevelopenersinsidecontent.",
+    "Sourcebrowserfile andbundledsuffix eachtested;factorywrappingdoesnotneedalteringall22rawassetfiles."
+  ],
+  "securityReview": [
+    "No codeexecution/compilerinvocation;highlightoutputescapesHTMLandbothapplicationpathsretainrawtext.",
+    "Originalcoreandlicensepreserved;syncfailswhenupstreamcorechangeswithoutreview.",
+    "No networkexfiltrationorusercredentials;browserfixedownedoriginandfinallyclosedcontext."
+  ],
+  "notRun": [
+    "Actual languagecompilers/interpreters andsemanticlanguagevalidation beyondscopedfixtures.",
+    "Fullworkbench/manualselection;Windows/macOSnativeacceptance.",
+    "Mainmerge,Release/tag,deployment."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "655ecfeaf3cfbed6d55db4f297521270e4102d88775f56ad3c590744f52594ee",
+    "internal/server/web/vendor/highlight.js/README.md": "9fcb4376f9507d7044c38dc3ea4db90fec76f5f0aeeaa64a490000b4034d78d1",
+    "internal/server/web/vendor/highlight.js/highlight.min.js": "d548b4aae2886fa7062b1912b076a5654cd443dbd8d25717c3528b9d9d923742",
+    "internal/server/web/highlight-grammar-fixes.js": "0423a3094cc82ca393224b1639c6b064f7be9b443392b0788b37da539a08f7f4",
+    "scripts/highlight-grammar-review-cases.cjs": "69813cc2d7c52e9d2301683dd9d06fb99559f0dad811cc6045d3907b6a3aea8d",
+    "scripts/test_highlight_grammar_review.cjs": "b46daa47a0f0b800d52e545939cd7904fb677e52716ad9e70f97e3e6a50e2923",
+    "scripts/browser-highlight-grammar-review.cjs": "ef0d720bf7edb1d73f212b8d7c21578b525cd33cd97faba002dae7429935c4d3",
+    "scripts/sync_highlight_grammar_fixes.cjs": "38dc4834655e8758ae9ecebef21cbf54feb152e94de952b7c18267236afbebdd"
+  }
+}
