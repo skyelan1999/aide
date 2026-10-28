@@ -1180,6 +1180,20 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/js/plantuml/drawio-plantuml.min.js"
+      ],
+      [
+        "node",
+        "scripts/test_mermaid_native_issues.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-mermaid-native-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/drawio/js/mermaid/drawio-mermaid.min.js"
       ]
     ],
     "full": [

@@ -1,0 +1,75 @@
+{
+  "cycle": 82,
+  "baseline": "948c9471847a09ea6be9ffb3401cc38aca75eab8",
+  "issues": [
+    434,
+    436,
+    445,
+    446,
+    447,
+    448,
+    449,
+    450,
+    451
+  ],
+  "fixes": {
+    "434": "Use canonical own checks for sequence links/GitGraph identifiers.",
+    "436": "Preserve special flowchart IDs with prototype-free parse/IR/layout indexes.",
+    "445": "Preserve special state IDs through parsing, layout and actual XML import.",
+    "446": "Allocate state note/group/region IDs against a reserved user-ID namespace.",
+    "447": "Skip Kanban style directives rather than creating phantom columns.",
+    "448": "Reject radar tick counts over 1000 in parser and direct layout before allocation.",
+    "449": "Use prototype-free Sankey node/degree indexes and canonical own checks.",
+    "450": "Retain explicit reset-frame source relations while suppressing inferred ones.",
+    "451": "Limit nested flowchart groups to 64 and preflight public IR layout depth/work iteratively."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 18,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle82-native-red-final.log"
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 229,
+      "fingerprint": "7df685e6f053946b9f975745e78e40311a724465ad5ac3161c796eb4691f173f",
+      "receipt": ".agent-state/verify-20261028T121041787315Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 18,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle82-native-final.log",
+      "scope": "Both identical native module copies; 9 reports plus ordinary layout controls and direct forged-IR limits."
+    },
+    {
+      "result": "PASS",
+      "checks": 28,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle82-browser2/result.json",
+      "scope": "Actual EditorUi.parseMermaidDiagram using embedded extensions, XML imported into real Graphs, finite geometry/SVG; light1440/dark390 and preview boundary cases."
+    }
+  ],
+  "patchAudit": {
+    "ownCalls": 11,
+    "parserIrMapInitializers": 25,
+    "layoutMapInitializers": 50,
+    "embeddedCopies": 1,
+    "outsideEmbeddedModuleUnchanged": true,
+    "baselineSHA256": "bad64ba2b1d695148be341fd00e5d1c25e12d7145736c222978f2011001892e8",
+    "patchedSHA256": "e89d1fba40fbd66a5f657c44e60c2b7e1b70c1482c33811d17d50ee393a2d251"
+  },
+  "harnessCorrections": [
+    "Bootstrap requires upstream dynamic-function support in isolated VM.",
+    "Sankey layout exposes sankeyLinks, not links.",
+    "Embedded source replacement uses a function callback to avoid replacement-string dollar expansion; corrected before final checks."
+  ],
+  "notRun": [
+    "Full Aide workbench/start.command, Windows/macOS native.",
+    "Every possible Mermaid syntax/layout option.",
+    "Main merge, Release/tag, market/deploy."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  }
+}
