@@ -803,6 +803,22 @@
       [
         "python3",
         "scripts/test_development_toolbox.py"
+      ],
+      [
+        "node",
+        "--test",
+        "internal/server/mixsoul/dynamics.test.cjs",
+        "internal/server/mixsoul/embedding-auth.test.cjs",
+        "internal/server/mixsoul/emotion.test.cjs",
+        "internal/server/mixsoul/initiative.test.cjs",
+        "internal/server/mixsoul/native-memory.test.cjs",
+        "internal/server/mixsoul/quotation.test.cjs",
+        "internal/server/mixsoul/store.test.cjs",
+        "internal/server/mixsoul/system.test.cjs",
+        "internal/server/mixsoul/topic.test.cjs",
+        "scripts/assistant-composer-entry.test.cjs",
+        "scripts/assistant-initiative.test.cjs",
+        "scripts/test_assistant_result_refresh.cjs"
       ]
     ],
     "full": [
