@@ -1013,6 +1013,21 @@
       [
         "node",
         "scripts/test_highlight_grammar_review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-editing-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-editing-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_editing_review.cjs"
       ]
     ],
     "full": [

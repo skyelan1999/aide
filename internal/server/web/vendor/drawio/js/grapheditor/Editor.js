@@ -957,15 +957,22 @@ Editor.extractGraphModelFromPng = function(data)
 		// ignores decoding errors
 	}
 	
-	if (result != null && result.charAt(0) == '%')
+	try
 	{
-		result = decodeURIComponent(result);
-	}
+		if (result != null && result.charAt(0) == '%')
+		{
+			result = decodeURIComponent(result);
+		}
 	
-	// Workaround for double encoded content
-	if (result != null && result.charAt(0) == '%')
+		// Workaround for double encoded content
+		if (result != null && result.charAt(0) == '%')
+		{
+			result = decodeURIComponent(result);
+		}
+	}
+	catch (e)
 	{
-		result = decodeURIComponent(result);
+		return null;
 	}
 	
 	return result;
@@ -1508,7 +1515,7 @@ Editor.prototype.readGraphState = function(node)
 	var pw = parseFloat(node.getAttribute('pageWidth'));
 	var ph = parseFloat(node.getAttribute('pageHeight'));
 	
-	if (!isNaN(pw) && !isNaN(ph))
+	if (isFinite(pw) && isFinite(ph) && pw > 0 && ph > 0)
 	{
 		this.graph.pageFormat = new mxRectangle(0, 0, pw, ph);
 	}
@@ -2776,7 +2783,7 @@ PrintDialog.createPrintPreview = function(graph, scale, pf, border, x0, y0, auto
 
 	preview.isTextLabel = function(node)
 	{
-		return !node.className == 'geHint' && isTextLabel.apply(this, arguments);
+		return !/(^|\s)geHint(\s|$)/.test(node.getAttribute('class') || '') && isTextLabel.apply(this, arguments);
 	};
 
 	// Makes relative links absolute
@@ -3365,7 +3372,7 @@ PageSetupDialog.addPageFormatPanel = function(div, namePostfix, pageFormat, page
 					landscapeCheckBox.removeAttribute('checked');
 					landscapeCheckBox.defaultChecked = false;
 					landscapeCheckBox.checked = false;
-					detected = true;
+
 				}
 				else if (pageFormat.width == f.format.height && pageFormat.height == f.format.width)
 				{
@@ -3376,7 +3383,7 @@ PageSetupDialog.addPageFormatPanel = function(div, namePostfix, pageFormat, page
 					landscapeCheckBox.setAttribute('checked', 'checked');
 					landscapeCheckBox.defaultChecked = true;
 					landscapeCheckBox.checked = true;
-					detected = true;
+
 				}
 			}
 		}

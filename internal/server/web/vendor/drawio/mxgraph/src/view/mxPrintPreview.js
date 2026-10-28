@@ -530,6 +530,7 @@ mxPrintPreview.prototype.open = function(css, targetWindow, forcePageBreaks, kee
 		// Closing the window while the page is being rendered may cause an
 		// exception in IE. This and any other exceptions are simply ignored.
 		var previousInitializeOverlay = this.graph.cellRenderer.initializeOverlay;
+		var previousInitControl = this.graph.cellRenderer.initControl;
 		var customPageFormat = pageFormat != null;
 		pageFormat = mxRectangle.fromRectangle((pageFormat != null) ? pageFormat : this.pageFormat);
 	
@@ -749,6 +750,7 @@ mxPrintPreview.prototype.open = function(css, targetWindow, forcePageBreaks, kee
 	finally
 	{
 		this.graph.cellRenderer.initializeOverlay = previousInitializeOverlay;
+		this.graph.cellRenderer.initControl = previousInitControl;
 	}
 
 	return this.wnd;
@@ -1247,7 +1249,7 @@ mxPrintPreview.prototype.createSvgGrid = function(svg, clip)
  */
 mxPrintPreview.prototype.isTextLabel = function(node)
 {
-	return tmp.style.cursor == 'default' || node.nodeName.toLowerCase() == 'div';
+	return node.style.cursor == 'default' || node.nodeName.toLowerCase() == 'div';
 };
 
 /**

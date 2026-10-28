@@ -31,6 +31,10 @@ for (const variant of [ "source", "app.min.js", "integrate.min.js" ]) {
     vm.runInContext(assignment(s, "Editor.extractGraphModelFromPng"), ctx);
     const E = ctx.Editor, xml = "<mxGraphModel><root/></mxGraphModel>";
     for (const [raw, plain] of [ [ false, false ], [ true, false ], [ false, true ] ]) assert.equal(E.extractGraphModelFromPng(png(plain ? xml : encodeURIComponent(xml), raw, plain)), xml);
+    for (const malformed of ['%ZZ', '%25ZZ', '%E0%A4%A']) {
+        assert.equal(E.extractGraphModelFromPng(png(malformed, false, true)), null);
+    }
+    assert.equal(E.extractGraphModelFromPng(png(encodeURIComponent(encodeURIComponent(xml)), false, true)), xml);
     const bomb = png("x".repeat(9 * 1024 * 1024));
     if (process.env.AIDE_PNG_CATALOG) {
         console.log(variant, "expanded bytes", E.extractGraphModelFromPng(bomb).length);

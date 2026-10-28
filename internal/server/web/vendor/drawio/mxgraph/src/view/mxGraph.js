@@ -4942,8 +4942,14 @@ mxGraph.prototype.cellsAdded = function(cells, parent, index, source, target, ab
 						}
 					};
 
-					this.model.add(parent, cells[i], index + i);
-					this.model.updateEdgeParent = updateEdgeParent;
+					try
+					{
+						this.model.add(parent, cells[i], index + i);
+					}
+					finally
+					{
+						this.model.updateEdgeParent = updateEdgeParent;
+					}
 					
 					if (this.autoSizeCellsOnAdd)
 					{
@@ -6625,11 +6631,16 @@ mxGraph.prototype.moveCells = function(cells, dx, dy, clone, target, evt, mappin
 				this.setAllowNegativeCoordinates(true);
 			}
 			
-			this.cellsMoved(cells, dx, dy, !clone && this.isDisconnectOnMove()
+			try
+			{
+				this.cellsMoved(cells, dx, dy, !clone && this.isDisconnectOnMove()
 					&& this.isAllowDanglingEdges(), target == null,
 					this.isExtendParentsOnMove() && target == null);
-			
-			this.setAllowNegativeCoordinates(previous);
+			}
+			finally
+			{
+				this.setAllowNegativeCoordinates(previous);
+			}
 
 			if (target != null)
 			{
@@ -12147,25 +12158,13 @@ mxGraph.prototype.intersects = function(state, x, y)
 mxGraph.prototype.hitsSwimlaneContent = function(swimlane, x, y)
 {
 	var state = this.getView().getState(swimlane);
-	var size = this.getStartSize(swimlane);
-	
-	if (state != null)
-	{
-		var scale = this.getView().getScale();
-		x -= state.x;
-		y -= state.y;
-		
-		if (size.width > 0 && x > 0 && x > size.width * scale)
-		{
-			return true;
-		}
-		else if (size.height > 0 && y > 0 && y > size.height * scale)
-		{
-			return true;
-		}
-	}
-	
-	return false;
+	if (state == null) return false;
+	var size = this.getActualStartSize(swimlane);
+	var scale = this.getView().getScale();
+	x -= state.x;
+	y -= state.y;
+	return x > size.x * scale && y > size.y * scale &&
+		x < state.width - size.width * scale && y < state.height - size.height * scale;
 };
 
 /**
@@ -13964,6 +13963,13 @@ mxGraph.prototype.destroy = function()
 	if (!this.destroyed)
 	{
 		this.destroyed = true;
+		if (this.tapAndHoldThread != null)
+		{
+			window.clearTimeout(this.tapAndHoldThread);
+			this.tapAndHoldThread = null;
+		}
+		this.tapAndHoldValid = false;
+		this.tapAndHoldInProgress = false;
 		if (this.panningManager != null)
 		{
 			this.panningManager.destroy();

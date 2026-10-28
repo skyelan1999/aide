@@ -5,7 +5,26 @@
   "baselineCommit": "5c7ce8b96cc9e82718e7e3640852500672351271",
   "target": 50,
   "fixedCount": 32,
-  "verifiedPendingPush": [],
+  "verifiedPendingPush": [
+    307,
+    308,
+    309,
+    310,
+    312,
+    313,
+    314,
+    315,
+    316,
+    317,
+    318,
+    319,
+    320,
+    321,
+    322,
+    323,
+    324,
+    325
+  ],
   "fixedIssues": [
     259,
     260,
@@ -271,6 +290,96 @@
       "summary": "SCSS quoted interpolation",
       "commit": "0da7580772fd5713f53171ae90dd4fd7060acc4d",
       "comment": "https://github.com/skyelan1999/aide/issues/291#issuecomment-6461101175"
+    },
+    "307": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Reset hierarchical roots on every execution; reused layouts include disconnected components"
+    },
+    "308": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Treat cells without geometry as non-ports instead of throwing"
+    },
+    "309": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Restore print renderer overlay and control hooks on success and rendering failure"
+    },
+    "310": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Keep HTML print labels, filter geHint class tokens, and correct the base text-label node reference"
+    },
+    "312": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Qualify orthogonal route pattern tables on mxEdgeStyle"
+    },
+    "313": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Restore model.updateEdgeParent when a model listener throws during cellsAdded"
+    },
+    "314": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Restore negative-coordinate policy when movement listeners throw"
+    },
+    "315": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Hit-test the actual scaled and flipped swimlane content rectangle"
+    },
+    "316": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Cancel pending tap-and-hold timers and invalidate flags when graph is destroyed"
+    },
+    "317": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Release the outline window resize listener with the outline"
+    },
+    "318": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Validate source newEdgeStyle before inserting an edge into the model"
+    },
+    "319": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Preserve rejected vertex/self-loop errors while respecting dangling-edge policy and parent promotion"
+    },
+    "320": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Keep overlapping bend handle dimensions local"
+    },
+    "321": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Return null for malformed percent-encoded PNG metadata while preserving size limits"
+    },
+    "322": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Remove unused writes to global detected during page preset selection"
+    },
+    "323": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Reject non-finite and non-positive imported page dimensions"
+    },
+    "324": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Capture each array-color index for getter and refresh callbacks"
+    },
+    "325": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 72,
+      "summary": "Preserve focused end-spacing input during unrelated model changes"
     }
   },
   "status": "in_progress",

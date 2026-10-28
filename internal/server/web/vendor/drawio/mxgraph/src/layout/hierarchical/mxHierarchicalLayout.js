@@ -219,6 +219,7 @@ mxHierarchicalLayout.prototype.getModel = function()
 mxHierarchicalLayout.prototype.execute = function(parent, roots)
 {
 	this.parent = parent;
+	this.roots = null;
 	var model = this.graph.model;
 	this.edgesCache = new mxDictionary();
 	this.edgeSourceTermCache = new mxDictionary();

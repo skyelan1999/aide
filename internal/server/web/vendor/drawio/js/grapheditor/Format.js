@@ -1415,7 +1415,7 @@ BaseFormatPanel.prototype.createArrayCellColorOption = function(label, colorKey,
 		{
 			div.appendChild(this.createColorOption(label + ' (' + (index + 1) + ')', function()
 			{
-				return values[i];
+				return values[index];
 			}, function(color)
 			{
 				graph.getModel().beginUpdate();
@@ -1452,7 +1452,7 @@ BaseFormatPanel.prototype.createArrayCellColorOption = function(label, colorKey,
 								style[colorKey] : undefinedValue) : null;
 							values = (value != null) ?
 								mxUtils.parseColorList(value) : [];
-							apply(values[i], true);
+							apply(values[index], true);
 						}
 					};
 					
@@ -7334,7 +7334,7 @@ StyleFormatPanel.prototype.addStroke = function(container)
 			endSize.value = (isNaN(tmp)) ? '' : this.inUnit(tmp) + ' ' + this.getUnit();
 		}
 		
-		if (force || document.activeElement != startSpacing)
+		if (force || document.activeElement != endSpacing)
 		{
 			var tmp = parseFloat(mxUtils.getValue(ss.style, mxConstants.STYLE_TARGET_PERIMETER_SPACING, 0));
 			endSpacing.value = (isNaN(tmp)) ? '' : this.inUnit(tmp) + ' ' + this.getUnit();

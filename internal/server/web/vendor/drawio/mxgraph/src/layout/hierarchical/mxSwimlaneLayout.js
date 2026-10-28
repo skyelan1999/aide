@@ -728,7 +728,7 @@ mxSwimlaneLayout.prototype.filterDescendants = function(cell, result)
  */
 mxSwimlaneLayout.prototype.isPort = function(cell)
 {
-	if (cell.geometry.relative)
+	if (cell != null && cell.geometry != null && cell.geometry.relative)
 	{
 		return true;
 	}

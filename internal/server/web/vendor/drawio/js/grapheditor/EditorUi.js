@@ -7399,10 +7399,22 @@ EditorUi.prototype.createOutline = function(wnd)
 {
 	var outline = new mxOutline(this.editor.graph);
 
-	mxEvent.addListener(window, 'resize', function()
+	var resize = function()
 	{
 		outline.update(false);
-	});
+	};
+	mxEvent.addListener(window, 'resize', resize);
+	var destroy = outline.destroy;
+	var released = false;
+	outline.destroy = function()
+	{
+		if (!released)
+		{
+			released = true;
+			mxEvent.removeListener(window, 'resize', resize);
+		}
+		return destroy.apply(this, arguments);
+	};
 	
 	return outline;
 };

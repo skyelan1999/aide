@@ -1115,6 +1115,11 @@ Graph = function(container, model, renderHint, stylesheet, themes, standalone)
 		// Applies newEdgeStyle
 		this.connectionHandler.insertEdge = function(parent, id, value, source, target, style)
 		{
+			// Validate before the base handler mutates the model.
+			if (source != null)
+			{
+				Graph.decodeNewEdgeStyle(this.graph.getCellStyle(source)['newEdgeStyle']);
+			}
 			var edge = mxConnectionHandler.prototype.insertEdge.apply(this, arguments);
 
 			if (source != null)
@@ -17838,7 +17843,26 @@ if (typeof mxVertexHandler !== 'undefined')
 			{
 				var result = markerGetCell.apply(this, arguments);
 			
-				this.error = null;
+				// Ignore an invalid edge target as empty canvas, while retaining
+				// vertex validation errors such as a forbidden self-loop.
+				var cell = me.getCell();
+				if (cell == null && this.currentPoint != null)
+				{
+					cell = this.graph.getCellAt(this.currentPoint.x, this.currentPoint.y);
+				}
+				// Match the base marker's promotion to a connectable parent.
+				if (cell != null && !this.graph.isCellConnectable(cell))
+				{
+					var parent = this.graph.model.getParent(cell);
+					if (this.graph.model.isVertex(parent) && this.graph.isCellConnectable(parent))
+					{
+						cell = parent;
+					}
+				}
+				if (result == null && cell != null && this.graph.model.isEdge(cell))
+				{
+					this.error = this.graph.allowDanglingEdges ? null : '';
+				}
 				
 				return result;
 			});

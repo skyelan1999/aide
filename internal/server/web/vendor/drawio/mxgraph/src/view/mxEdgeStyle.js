@@ -1664,13 +1664,13 @@ var mxEdgeStyle =
 			targetIndex += 4;
 		}
 
-		var result = routePatterns[sourceIndex - 1][targetIndex - 1];
+		var result = mxEdgeStyle.routePatterns[sourceIndex - 1][targetIndex - 1];
 
 		if (dx == 0 || dy == 0)
 		{
-			if (inlineRoutePatterns[sourceIndex - 1][targetIndex - 1] != null)
+			if (mxEdgeStyle.inlineRoutePatterns[sourceIndex - 1][targetIndex - 1] != null)
 			{
-				result = inlineRoutePatterns[sourceIndex - 1][targetIndex - 1];
+				result = mxEdgeStyle.inlineRoutePatterns[sourceIndex - 1][targetIndex - 1];
 			}
 		}
 
