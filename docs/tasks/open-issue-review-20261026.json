@@ -247,12 +247,12 @@
   "handoff": "本次“继续100，先看1999账号”已完成100/100个新增、去重、验证、push并逐项评论的修复。账号优先565/563已交付；561重复并入563，458/422经实测关闭误报，均不计数。全量清单与分批证据见hundred-20261028-04.json/.md。仅分支，未合main/Release/deploy。原272后续仍18项；391需匹配运行时复现，369/464/467仍待原生验收。没有后台调度；收到继续请求时先刷新账号报告，再按检查点继续。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "20914cd2",
+    "commit": "f83ca368",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-097.json"
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-098.json"
   },
   "issue_comments": "本轮100项均已逐项评论并记录URL；100个编号与cycle1至76已有编号无交集。误报/重复关闭记录未计数。",
   "goal": {
@@ -283,18 +283,19 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 98,
+    "nextCycle": 99,
     "lastCompletedBatch": {
-      "cycle": 97,
+      "cycle": 98,
       "issues": [
-        391
+        412,
+        431
       ],
-      "cumulativeFixed": 421,
-      "cumulativeProductFixed": 419,
+      "cumulativeFixed": 423,
+      "cumulativeProductFixed": 421,
       "toolingFixes": 2,
       "remainingFollowupTargets": 0,
-      "verification": "254quick,18cases+6prior realbrowser",
-      "delivery": "20914cd2"
+      "verification": "256quick;68Node+131browser original controls,3workers,prior regressions",
+      "delivery": "f83ca368"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
@@ -1216,7 +1217,9 @@
         530,
         531,
         562,
-        391
+        391,
+        412,
+        431
       ],
       "blocked": [],
       "falseReports": [],
@@ -1224,7 +1227,7 @@
         28,
         57
       ],
-      "remainingUncovered": 73,
+      "remainingUncovered": 71,
       "coveredExistingBranch": [
         248
       ],
