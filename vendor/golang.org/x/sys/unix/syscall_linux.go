@@ -2137,7 +2137,15 @@ func Signalfd(fd int, sigmask *Sigset_t, flags int) (newfd int, err error) {
 //sys	Sync()
 //sys	Syncfs(fd int) (err error)
 //sysnb	Sysinfo(info *Sysinfo_t) (err error)
-//sys	Tee(rfd int, wfd int, len int, flags int) (n int64, err error)
+//sys	tee(rfd int, wfd int, len int, flags int) (n int, err error) = SYS_TEE
+
+// Tee duplicates up to len bytes between pipes. The kernel returns ssize_t,
+// including on 32-bit architectures; widen only that single return value.
+func Tee(rfd int, wfd int, len int, flags int) (n int64, err error) {
+	count, err := tee(rfd, wfd, len, flags)
+	return int64(count), err
+}
+
 //sysnb	TimerfdCreate(clockid int, flags int) (fd int, err error)
 //sysnb	TimerfdGettime(fd int, currValue *ItimerSpec) (err error)
 //sysnb	TimerfdSettime(fd int, flags int, newValue *ItimerSpec, oldValue *ItimerSpec) (err error)

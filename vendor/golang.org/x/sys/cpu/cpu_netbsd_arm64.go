@@ -68,6 +68,9 @@ func sysctlNodes(mib []int32) ([]sysctlNode, error) {
 	}
 
 	// Now that we know the size, get the actual nodes.
+	if olen < sz || olen%sz != 0 {
+		return nil, syscall.ENOENT
+	}
 	nodes := make([]sysctlNode, olen/sz)
 	np := (*byte)(unsafe.Pointer(&nodes[0]))
 	if err := sysctl(mib, np, &olen, qp, sz); err != nil {
@@ -109,7 +112,7 @@ func nametomib(name string) ([]int32, error) {
 			}
 		}
 		if len(mib) != partno+1 {
-			return nil, err
+			return nil, syscall.ENOENT
 		}
 	}
 

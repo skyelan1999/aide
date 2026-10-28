@@ -29,6 +29,7 @@ COMMAND = ('set -euo pipefail; snapshot=$(mktemp -d /tmp/aide-verify.XXXXXX); '
            'python3 scripts/run_go_test_shards.py "$PWD/server.test" --cwd internal/server --workers="${AIDE_TEST_WORKERS:-1}" && '
            'go test -mod=vendor -race -count=1 -timeout=18m '
            "$(go list -mod=vendor ./... | sed \"\\|^aide/internal/server$|d\") && "
+           'python3 scripts/test_xsys_platform_contracts.py && '
            "go vet -mod=vendor ./...'")
 
 

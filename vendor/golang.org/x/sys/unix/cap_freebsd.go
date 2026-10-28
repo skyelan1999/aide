@@ -33,7 +33,7 @@ func capidxbit(right uint64) int {
 
 func rightToIndex(right uint64) (int, error) {
 	idx := capidxbit(right)
-	if idx < 0 || idx >= len(bit2idx) {
+	if idx < 0 || idx >= len(bit2idx) || bit2idx[idx] < 0 {
 		return -2, fmt.Errorf("index for right 0x%x out of range", right)
 	}
 	return bit2idx[idx], nil
