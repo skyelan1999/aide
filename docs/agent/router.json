@@ -1223,6 +1223,20 @@
         "node",
         "--check",
         "scripts/browser-mathjax-layout-issues.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_cad_light_aggregate.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-cad-asset-budgets.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/vendor/STLLoader.js"
       ]
     ],
     "full": [

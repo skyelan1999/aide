@@ -146,6 +146,13 @@
 
 				const reader = new DataView( data );
 				const faces = reader.getUint32( 80, true );
+				// Validate the declaration before allocating vertex/normal/color arrays.
+				if ( faces > 3000000 || 84 + faces * 50 > reader.byteLength ) {
+
+					throw new Error( 'STL face count exceeds available data or preview budget' );
+
+				}
+
 				let r,
 					g,
 					b,

@@ -1,0 +1,64 @@
+{
+  "cycle": 86,
+  "baseline": "a273918f0f74c607ce2e044e556ab7f2b9751b5c",
+  "issues": [
+    539,
+    541,
+    543,
+    544
+  ],
+  "fixes": {
+    "539": "Validate binary STL face count against available bytes and allocation budget before geometry arrays.",
+    "541": "Validate all DAE float-array declarations, finite values and aggregate count before loader token splitting.",
+    "543": "Detect Collada reference/containment cycles iteratively; bound expanded nodes and depth including reverse declarations.",
+    "544": "Bound direct/expanded DAE lights before construction and aggregate imported lights across mesh assets."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 4,
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle86-red/result.json",
+      "/workspace/scratch/issue-review-20261026/cycle86-aggregate-red.log"
+    ]
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 238,
+      "fingerprint": "ee474017d44d3366a2f1b9e193b3ce2cce7cff76cc063da1d04638dfd77eca01",
+      "receipt": ".agent-state/verify-20261028T125310108575Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 4,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle86-final-boundaries/result.json",
+      "scope": "Actual STL/Collada libraries and DAE preflight in Chromium; no large STL allocation, real triangle/light controls, aggregate sources, cycle/reuse checks and128-depth/16-light boundaries."
+    },
+    {
+      "result": "PASS",
+      "checks": 1,
+      "scope": "Aggregate light tracking across actual Three.js groups, repeated tracking and failed-addition atomicity."
+    },
+    {
+      "result": "PASS",
+      "checks": 9,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle86-urdf-browser/result.json",
+      "scope": "Actual URDF WebGL component UI,9/121-link models,mobile/desktop,light/dark,palettes,pose controls,camera preservation and teardown. Errors[]."
+    }
+  ],
+  "patchAudit": {
+    "STLOriginalSHA256": "c392b93d1331e64082cbd76deb850fe5de11385472a3f4c5b7fe82ba216cb49e",
+    "STLPatchedSHA256": "e7b502eb4a0322cda67d924f3f3de96c61be1034fcd26ab27d1e0fe83a96a709",
+    "ThreeAndColladaVendorLibrariesUnchanged": true
+  },
+  "notRun": [
+    "Full Aide workbench/start.command,native-device GPU testing.",
+    "Every Collada feature/animation; oversized resources deliberately produce per-asset warnings.",
+    "Main merge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  }
+}
