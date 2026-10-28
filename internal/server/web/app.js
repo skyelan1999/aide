@@ -8050,7 +8050,13 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     else if (document.body.classList.contains('file-view-mode')) history.back();
   };
 
-  let cancelled = false, pdfDoc = null, io = null;
+  let cancelled = false, pdfDoc = null, loadingTask = null, io = null;
+  const abort = new AbortController(), destroyedResources = new WeakSet();
+  const destroyResource = (resource) => {
+    if (!resource || destroyedResources.has(resource)) return;
+    destroyedResources.add(resource);
+    try { Promise.resolve(resource.destroy()).catch(() => {}); } catch (e) {}
+  };
   const pageList = [], holders = [];
   const dpr = window.devicePixelRatio || 1;
   let scale = 1, baseWidth = 0, numPages = 0;
@@ -8059,45 +8065,64 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   const setMeta = (txt) => { meta.textContent = txt; };
   const fail = (msg) => { scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
   const teardown = () => {
+    if (cancelled) return;
     cancelled = true;
+    abort.abort();
     renderGeneration++;
     for (const h of holders) { if (h && h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; } }
     if (io) { io.disconnect(); io = null; }
-    if (pdfDoc) { try { pdfDoc.destroy(); } catch (e) {} pdfDoc = null; }
+    destroyResource(loadingTask || pdfDoc);
+    loadingTask = null; pdfDoc = null;
   };
   bindViewerTeardown(container, teardown);
 
   // 1) 取字节（复用图片/STL 的 raw 端点，带 access_token 查询参数）
   let buf;
   try {
-    const r = await fetch(rawUrl);
+    const r = await fetch(rawUrl, { signal: abort.signal });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     buf = await r.arrayBuffer();
-  } catch (e) { fail(t('无法读取 PDF：') + escapeHtml(e.message)); return; }
+  } catch (e) { if (!cancelled) fail(t('无法读取 PDF：') + escapeHtml(e.message)); return; }
+  if (cancelled) return;
 
   // 2) 加载本地 pdf.js 模块
   let pdfjs;
   try { pdfjs = await ensurePdfJs(); }
-  catch (e) { fail(t('PDF 渲染组件加载失败（离线 vendor 缺失？）：') + escapeHtml(e.message)); return; }
+  catch (e) { if (!cancelled) fail(t('PDF 渲染组件加载失败（离线 vendor 缺失？）：') + escapeHtml(e.message)); return; }
+  if (cancelled) return;
 
   // 3) 打开文档（加密 PDF 走 onPassword 回调）
-  const task = pdfjs.getDocument({ data: buf });
+  const task = loadingTask = pdfjs.getDocument({ data: buf });
   task.onPassword = (updatePassword, reason) => {
+    if (cancelled) return;
     // reason: 0 = NEED_PASSWORD，1 = INCORRECT_PASSWORD
     passwordPrompt(reason === 1 ? t('密码不正确，请重试') : t('该 PDF 已加密，请输入打开密码'))
       .then(pw => {
-        if (pw == null) { task.destroy(); fail(t('已取消：需要密码才能打开该 PDF')); return; }
+        if (cancelled) return;
+        if (pw == null) { teardown(); fail(t('已取消：需要密码才能打开该 PDF')); return; }
         updatePassword(pw);
       });
   };
-  try { pdfDoc = await task.promise; }
+  try {
+    const loaded = await task.promise;
+    if (cancelled) { destroyResource(task); return; }
+    pdfDoc = loaded;
+  }
   catch (e) {
+    if (cancelled) return;
+    teardown();
     if (e && e.name === 'PasswordException') return; // 取消/错误已由 onPassword 给出提示
     fail(t('PDF 已损坏或无法解析：') + escapeHtml(e.message)); return;
   }
   if (cancelled || !pdfDoc) return;
 
   numPages = pdfDoc.numPages;
+  // Bound DOM placeholders and sequential metadata requests before either allocation loop.
+  if (!Number.isSafeInteger(numPages) || numPages < 1 || numPages > 2000) {
+    teardown();
+    fail(t('PDF 页数无效或超过预览上限（2000 页），请拆分后查看'));
+    return;
+  }
   pageTotal.textContent = '/ ' + numPages;
   pageInput.value = '1';
 

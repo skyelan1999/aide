@@ -4122,6 +4122,7 @@ window.aideEnglish = {
   "模型灯光总数超出预览预算": "Total model lights exceed the preview budget",
   "文档结构过深，请简化后导出": "Document nesting is too deep; simplify it before exporting",
   "文档节点过多，请拆分后导出": "The document has too many nodes; split it before exporting",
+  "PDF 页数无效或超过预览上限（2000 页），请拆分后查看": "Invalid PDF page count or more than the 2,000-page preview limit; split the file to view it",
   "DAE 面数超出预览预算": "DAE face count exceeds the preview budget",
   "DAE 索引步长无效": "Invalid DAE index stride",
   "DAE 多边形数量不一致": "DAE polygon counts do not match",

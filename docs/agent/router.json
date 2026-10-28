@@ -1260,6 +1260,11 @@
         "node",
         "--check",
         "internal/server/web/vendor/drawio/js/libavoid-js/libavoid.min.js"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-preview-lifecycle.cjs"
       ]
     ],
     "full": [
