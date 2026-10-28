@@ -8,6 +8,8 @@
     let speaking=false,spokenText='',echoUntil=0,opening=0,openSerial=0;
     const normalize=text=>String(text).toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
     const echo=text=>{const value=normalize(text),spoken=normalize(spokenText);return value&&spoken&&spoken.includes(value);};
+    let lastActivity=Date.now(),lastInitiativeCheck=0,initiativeController=null,autonomousAudio=false;
+    const activity=()=>{lastActivity=Date.now();initiativeController?.abort();if(autonomousAudio&&speaking){autonomousAudio=false;speaking=false;notices=[];hooks.cancelSpeech?.();}};
     let baseline=false, seen=new Set(), ended=[], failureCount=0, notices=[];
     const snapshot=()=>({enabled,microphone,paused,phase,busy});
     const state=value=>{phase=value;hooks.state?.(snapshot());};
@@ -19,8 +21,8 @@
       if(rec){const old=rec;rec=null;old.onend=old.onresult=old.onerror=old.onstart=old.onspeechstart=old.onspeechend=null;try{old.abort();}catch(_){}}
       stream?.getTracks().forEach(track=>track.stop());stream=null;
     }
-    function stop(){enabled=false;microphone=false;paused=false;epoch++;opening=0;controller?.abort();controller=null;busy=false;speaking=false;spokenText='';notices=[];release();clear(pollTimer);pollTimer=0;hooks.cancelSpeech?.();finalText=interim='';state('off');}
-    function pause(){if(!enabled)return;paused=true;epoch++;opening=0;speaking=false;spokenText='';finalText=interim='';controller?.abort();controller=null;busy=false;release();clear(pollTimer);hooks.cancelSpeech?.();state('paused');}
+    function stop(){initiativeController?.abort();enabled=false;microphone=false;paused=false;epoch++;opening=0;controller?.abort();controller=null;busy=false;speaking=false;spokenText='';notices=[];release();clear(pollTimer);pollTimer=0;hooks.cancelSpeech?.();finalText=interim='';state('off');}
+    function pause(){initiativeController?.abort();if(!enabled)return;paused=true;epoch++;opening=0;speaking=false;spokenText='';finalText=interim='';controller?.abort();controller=null;busy=false;release();clear(pollTimer);hooks.cancelSpeech?.();state('paused');}
     async function listen(){
       if(!allowed()||!microphone||(busy&&!speaking)||rec||opening)return;
       const token=epoch,openTicket=++openSerial;opening=openTicket;if(!speaking)state('requesting');
@@ -41,7 +43,7 @@
             }
             if(value.isFinal)finalText+=text;else part+=text;
           }
-          interim=part;if(!finalText&&!interim)return;hooks.transcript?.(finalText,interim);
+          interim=part;if(!finalText&&!interim)return;activity();hooks.transcript?.(finalText,interim);
           armTurn();
         };
         current.onspeechstart=()=>clear(speechTimer);
@@ -88,7 +90,7 @@
       const token=epoch;speaking=true;spokenText=text;finalText=interim='';
       state('speaking');if(microphone)await listen();
       if(token!==epoch||!allowed()||!speaking)return;
-      try{await hooks.speak?.(text);}finally{if(token===epoch){speaking=false;echoUntil=Date.now()+1200;}}
+      try{await hooks.speak?.(text);}finally{if(token===epoch){speaking=false;echoUntil=Date.now()+1200;lastActivity=Date.now();}}
     }
     async function announce(){
       if(!allowed()||busy||!notices.length)return;
@@ -108,11 +110,19 @@
         const meaningful=fresh.filter(event=>event.kind!=='task'||!['running','queued'].includes(event.status));
         const report=baseline?meaningful:meaningful.filter(event=>event.priority>=3);
         if(report.length&&(!hooks.announceEvents||hooks.announceEvents())){const latest=report.slice(0,5);hooks.events?.(latest);notices.push(...latest.map(event=>[event.text,event.blocker,event.nextAction].filter(Boolean).join(' ')));notices=notices.slice(-5);if(!busy&&!finalText&&!interim)void announce();}baseline=true;
+        if(hooks.initiative&&allowed()&&!busy&&!speaking&&!notices.length&&!finalText&&!interim&&Date.now()-lastActivity>=30000&&Date.now()-lastInitiativeCheck>=30000&&(!hooks.canInitiate||hooks.canInitiate())){
+          lastInitiativeCheck=Date.now();const pending=new AbortController();initiativeController=pending;
+          try{const result=await hooks.initiative(pending.signal);
+            const current=()=>token===epoch&&allowed()&&!pending.signal.aborted&&!busy&&(!hooks.canInitiate||hooks.canInitiate());
+            if(current()&&result?.reply){await hooks.proactiveReply?.(result.reply);if(current()){notices.push(result.reply);autonomousAudio=true;void announce().finally(()=>{autonomousAudio=false;});}}
+          }finally{if(initiativeController===pending)initiativeController=null;}
+        }
       }catch(error){if(token===epoch&&error.name!=='AbortError'){failureCount++;if(error.status===401||error.status===423){hooks.error?.(error.message);stop();}else if(failureCount===3){hooks.error?.(error.message);state('recovering');}}}
       finally{polling=false;}}
       if(allowed())pollTimer=later(()=>void poll(),failureCount>=3?30000:10000);
     }
     async function start(withMicrophone=false){
+      activity();
       if(!hooks.valid())return;
       if(!enabled){enabled=true;epoch++;const initial=hooks.loadSeen?.();seen=new Set(Array.isArray(initial)?initial.filter(id=>typeof id==='string').slice(-1000):[]);baseline=false;ended=[];failureCount=0;}
       paused=false;microphone=withMicrophone||microphone;state(microphone?'requesting':'watching');clear(pollTimer);void poll();if(microphone)await listen();
@@ -124,7 +134,7 @@
       if(microphone){if(!enabled||paused)void start(true);else void listen();}
       else{release();finalText=interim='';if(allowed()&&!busy)state('watching');}
     }
-    return Object.freeze({start,stop,pause,resume,snapshot,reply,setMicrophone});
+    return Object.freeze({start,stop,pause,resume,snapshot,reply,setMicrophone,activity});
   }
   window.AideAssistantLive=Object.freeze({create});
 })();

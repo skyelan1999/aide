@@ -1,0 +1,81 @@
+{
+  "id": "mixsoul-public-main",
+  "request": "把 MIXSoul 合并到公开主线并 push；不发版不部署，排除用户数据及私有开发历史",
+  "baseline": "a26214e596d4cbe147bb0e224dfa305cf04fc6cb",
+  "initial_status": "",
+  "acceptance": [
+    "Opt-in engine and memory UI compile against current main",
+    "Synthetic memory, topic isolation, deletion and native conversation regressions pass",
+    "No local history, user data, credentials or deployment overrides published",
+    "Push clean implementation PR; no release or deployment"
+  ],
+  "scope": [
+    "internal/server assistant and MIXSoul runtime",
+    "Synthetic regression scripts",
+    "Public setup documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Curate product snapshot on current main without private commit ancestry; retain opt-in engine and existing license.",
+      "evidence": [
+        "User authorized merge and push on 2026-10-29",
+        "Baseline a26214e5"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Curate product snapshot on current main without private commit ancestry; retain opt-in engine and existing license.",
+      "evidence": [
+        "User authorized merge and push on 2026-10-29",
+        "Baseline a26214e5"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Curated assistant engine, native speech/memory linkage, management UI and status follow-up; excluded unrelated model limits, palette, launchers and all private documents.",
+      "evidence": [
+        "docs/architecture/mixsoul.md",
+        "git diff --check"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Targeted feature acceptance passed: 98 memory policy tests, assistant component tests, Go assistant/native integration tests, quick gate and docs. Full race/vet and Windows acceptance are enforced separately by required PR CI.",
+      "evidence": [
+        "node --test internal/server/mixsoul/*.test.cjs: 98/98",
+        "go test ./internal/server -run Test(MixSoul|Assistant|Native|MarketBrowse|PluginToolImage): PASS (86.452s)",
+        "Browser component: open and suppress synthetic memory; no production API or model calls",
+        "Initial full attempt failed due unavailable aide:dev and stale aide:local image; not counted as pass",
+        "docs check: 422 Markdown files, 1447 local links passed",
+        "Required full CI: https://github.com/skyelan1999/aide/pull/575/checks"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Added public setup/data/provenance/limitations guide; retained original module license.",
+      "evidence": [
+        "docs/architecture/mixsoul.md",
+        "git diff --check"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No private ancestry, user chats, memory files, local credentials or deployment overrides included.",
+      "evidence": [
+        "docs/architecture/mixsoul.md",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No Release/tag/deployment requested. Source merge is gated by CI; user explicitly authorized administrator merge of PR #575 after all CI passes. Refer to live PR for final merge state.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/575"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "9999 and local MIXSoul repository preserved; public feature opt-in via AIDE_ASSISTANT_ENGINE=mixsoul."
+}

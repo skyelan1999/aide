@@ -3,6 +3,7 @@ package server
 import (
 	"aide/internal/messaging"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -95,5 +96,19 @@ func (a *App) assistantWatch(w http.ResponseWriter, r *http.Request) {
 	if len(events) > 100 {
 		events = events[:100]
 	}
-	jsonOut(w, 200, map[string]any{"events": events})
+	quiet := false
+	if b, e := a.selectedMixSoul(); b != nil || e != nil {
+		quiet = true
+		if e == nil {
+			if state, err := a.mixSoulCall(r.Context(), *b, map[string]any{"phase": "initiative.status", "now": time.Now().UTC().Format(time.RFC3339Nano)}); err == nil {
+				var parsed struct {
+					Quiet bool `json:"quiet"`
+				}
+				if json.Unmarshal(state.State, &parsed) == nil {
+					quiet = parsed.Quiet
+				}
+			}
+		}
+	}
+	jsonOut(w, 200, map[string]any{"events": events, "proactiveQuiet": quiet})
 }

@@ -1,4 +1,5 @@
 'use strict';
+// Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
   "应用": "Apply",
   "工作区已切换": "Workspace switched",
@@ -4135,5 +4136,34 @@ window.aideEnglish = {
   "变更提案，尚无应用标记": "Change proposal; no application marker",
   "等待确认": "Awaiting confirmation",
   "成功": "Succeeded",
-  "跳过": "Skipped"
+  "跳过": "Skipped",
+  "记忆管理": "Memory manager",
+  "情绪事件": "Emotion event",
+  "久远": "Distant",
+  "已更新": "Updated",
+  "有效至": "Valid until",
+  "完成期限": "Completion deadline",
+  "这里管理当前工作区的长期记忆。删除不会清除聊天历史、旧备份或外部模型留存。": "Manage long-term memory in this workspace. Deleting memory does not remove chat history, old backups or provider retention.",
+  "记忆条目": "Memory records",
+  "整理队列": "Maintenance queue",
+  "解除主题屏蔽": "Unblock topic",
+  "保留强度": "Retention strength",
+  "已屏蔽": "Suppressed",
+  "可提及": "May mention",
+  "记录时间": "Recorded",
+  "最后确认": "Last confirmed",
+  "已被更正": "Superseded by",
+  "已合并至": "Merged into",
+  "允许提及": "Allow mention",
+  "不再提及": "Suppress mention",
+  "撤销合并": "Undo merge",
+  "更正记忆内容": "Correct memory content",
+  "保存更正": "Save correction",
+  "将删除此记忆及其来源和派生关联记录，旧备份不受影响。": "Delete this memory, its source and derived records. Old backups remain.",
+  "暂无长期记忆": "No long-term memories",
+  "主动交流": "Proactive conversation",
+  "请先解锁助理会话": "Unlock the assistant session first",
+  "会话已切换": "Session switched",
+  "权重": "Weight",
+  "更正": "Correct"
 };

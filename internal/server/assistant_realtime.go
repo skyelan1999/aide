@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -142,6 +144,22 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		fail(w, 400, err)
 		return
 	}
+	agentBinding, agentErr := a.selectedMixSoul()
+	if agentErr != nil {
+		fail(w, 503, agentErr)
+		return
+	}
+	nativeCallID := newID()
+	nativeSession := realtimeCallSession(cfg)
+	if agentBinding != nil {
+		prepared, e := a.mixSoulCall(r.Context(), *agentBinding, map[string]any{"phase": "native.begin", "callId": nativeCallID, "now": time.Now().UTC().Format(time.RFC3339Nano), "identity": voiceIdentityPrompt(cfg)})
+		if e != nil || prepared.Instructions == "" {
+			fail(w, 503, errors.New("assistant agent native context unavailable"))
+			return
+		}
+		nativeSession["instructions"] = prepared.Instructions
+		nativeSession["tools"] = append(nativeSession["tools"].([]any), map[string]any{"type": "function", "name": "assistant_context", "description": "Retrieve assistant context for the current transcribed utterance when earlier experiences or preferences are relevant.", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}})
+	}
 	upgrade := websocket.Upgrader{Subprotocols: []string{"aide-realtime"}, CheckOrigin: func(r *http.Request) bool {
 		u, e := url.Parse(r.Header.Get("Origin"))
 		return e == nil && (u.Scheme == "https" || u.Scheme == "http") && u.Host == r.Host
@@ -153,6 +171,17 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Minute)
 	defer cancel()
+	// Ordinary socket hangup is not revocation of an already accepted utterance.
+	// Every write still checks assistant unlock, vault and workspace revision.
+	persist := func(input map[string]any) (mixSoulResponse, error) {
+		input["callId"] = nativeCallID
+		saveCtx, stop := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stop()
+		return a.mixSoulCall(saveCtx, *agentBinding, input)
+	}
+	if agentBinding != nil {
+		defer func() { _, _ = persist(map[string]any{"phase": "native.end"}) }()
+	}
 	var clientMu, upMu, audioMu sync.Mutex
 	emittedAudio := map[string]int{}
 	emit := func(event any) error {
@@ -179,11 +208,27 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		upstream.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		return upstream.WriteJSON(v)
 	}
+	// Qwen Omni documents instructions on session.update, not response.create.
+	// Keep the update and trigger adjacent; a provider may silently ignore an
+	// unsupported per-response instructions object rather than reject it.
+	nativeInstructionOverride := false
+	respondWithInstructions := func(instructions string) error {
+		upMu.Lock()
+		defer upMu.Unlock()
+		upstream.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		if e := upstream.WriteJSON(map[string]any{"type": "session.update", "session": map[string]any{"instructions": instructions}}); e != nil {
+			return e
+		}
+		nativeInstructionOverride = true
+		return upstream.WriteJSON(map[string]any{"type": "response.create"})
+	}
 	upstream.SetReadLimit(2 << 20)
 	client.SetReadLimit(96 << 10)
 	upstream.SetPongHandler(func(string) error { return upstream.SetReadDeadline(time.Now().Add(60 * time.Second)) })
 	// One reader per socket. Closing either side unblocks both readers.
 	go func() { <-ctx.Done(); upstream.Close(); client.Close() }()
+	var nativeReady atomic.Bool
+	var lastMicrophoneEnergy atomic.Int64
 	go func() {
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
@@ -197,7 +242,8 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 				if ticks%20 == 0 {
 					_ = upstream.WriteControl(websocket.PingMessage, nil, time.Now().Add(3*time.Second))
 				}
-				if !a.realtimeCallValid(id, workspace) {
+
+				if !a.realtimeCallValid(id, workspace) || (agentBinding != nil && !a.mixSoulCurrent(*agentBinding)) {
 					report("助理已锁定或工作区已变化，通话结束")
 					cancel()
 					return
@@ -205,7 +251,6 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 			}
 		}
 	}()
-	ready := false
 	// Only audio/control data from the browser. Model instructions, tool outputs,
 	// histories and credential-bearing payloads are never accepted from this socket.
 	go func() {
@@ -229,6 +274,9 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 				b, e := base64.StdEncoding.DecodeString(in.Audio)
 				if e != nil || len(b) == 0 || len(b) > 16000 || len(b)%2 != 0 {
 					return
+				}
+				if nativePCMHasSpeechEnergy(b) {
+					lastMicrophoneEnergy.Store(time.Now().UnixNano())
 				}
 				if send(map[string]any{"type": in.Type, "audio": in.Audio}) != nil {
 					return
@@ -258,33 +306,250 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 	heard := ""
 	heardID := ""
 	usedTurn := ""
+	nativeLearned := map[string]bool{}
+	ledger := newNativeTurnLedger()
+	activeResponse := ""
+	toolResponsePending := false
+	toolResponseProactive := false
+	reviewTurns := map[string]bool{}
+	quotationTurns := map[string]nativeQuotation{}
+	speechRetried := map[string]bool{}
+	initiativeEligible, initiativePending := false, false
+	initiativeInterrupted := false
+	toneRetryProactive := false
+	toneRetryTurn := ""
+	nativeLearningCount := 0
+	lastObservedOrder := -1
 	seen := map[string]bool{}
 	toolsUsed := 0
-	for {
-		upstream.SetReadDeadline(time.Now().Add(60 * time.Second))
-		var event map[string]json.RawMessage
-		if upstream.ReadJSON(&event) != nil {
+	retryTone := func() bool {
+		if toneRetryTurn == "" || activeResponse != "" {
+			return true
+		}
+		turn := toneRetryTurn
+		toneRetryTurn = ""
+		if turn != heardID {
+			return true
+		}
+		// Apply through the documented session configuration before triggering
+		// the bounded retry. The next observed user turn restores full context.
+		if toneRetryProactive {
+			initiativePending = true
+		}
+		proactive := toneRetryProactive
+		toneRetryProactive = false
+		instructions := nativeCalibratedSpeechInstructions(voiceIdentityPrompt(cfg), heard)
+		if q := quotationTurns[turn]; q.valid() && !proactive {
+			instructions = nativeVerbatimSpeechInstructions(voiceIdentityPrompt(cfg), heard, q)
+		}
+		return respondWithInstructions(instructions) == nil
+	}
+	rejectSpeech := func(reply *nativeReplyEvidence, reason string) bool {
+		if os.Getenv("AIDE_NATIVE_ACCEPTANCE_DIAGNOSTICS") == "1" {
+			limit := reply.review.maxAudioBytes
+			if limit <= 0 {
+				limit = 480000
+			}
+			if reply.review.audioBytes > limit || len(reply.review.events) >= 1024 {
+				reason = "buffer-limit"
+			}
+			nativeProviderDiagnostic(a.dataPath, "speech_review", reason, reply.text, cfg.APIKey, a.token)
+		}
+		reply.canceled = true
+		reply.review.rejected = true
+		reply.review.events = nil
+		toolResponsePending = false
+		if reply.turn != heardID {
+			return true
+		}
+		if speechRetried[reply.turn] {
+			if reply.quotation.valid() && reason == "quotation" {
+				report("本轮未能逐字复述原文，请重试")
+			} else {
+				report("本轮语音表达未通过校准，请换一种说法重试")
+			}
+			return false
+		}
+		speechRetried[reply.turn] = true
+		toneRetryTurn = reply.turn
+		toneRetryProactive = reply.proactive
+		if send(map[string]any{"type": "response.cancel"}) != nil {
+			return false
+		}
+		return retryTone()
+	}
+	playbackUntil := time.Now()
+	releaseSpeech := func(reply *nativeReplyEvidence) bool {
+		if reply.review == nil || reply.review.rejected {
+			return true
+		}
+		events := reply.review.events
+		reply.review.events = nil
+		reply.review.enabled = false
+		for _, e := range events {
+			var kind string
+			_ = json.Unmarshal(e["type"], &kind)
+			if kind == "response.audio.delta" {
+				var delta, item string
+				_ = json.Unmarshal(e["delta"], &delta)
+				_ = json.Unmarshal(e["item_id"], &item)
+				pcm, _ := base64.StdEncoding.DecodeString(delta)
+				audioMu.Lock()
+				emittedAudio[item] += len(pcm)
+				if playbackUntil.Before(time.Now()) {
+					playbackUntil = time.Now()
+				}
+				playbackUntil = playbackUntil.Add(time.Duration(len(pcm)) * time.Second / 48000)
+				audioMu.Unlock()
+			}
+			if kind == "response.audio_transcript.done" {
+				var text string
+				_ = json.Unmarshal(e["transcript"], &text)
+				a.realtimeCallRecord(id, workspace, "assistant", text)
+			}
+			if emit(e) != nil {
+				return false
+			}
+		}
+		return true
+	}
+	checkSpeech := func(reply *nativeReplyEvidence) bool {
+		if reply.review == nil || !reply.review.enabled || reply.review.rejected || reply.text == "" {
+			return true
+		}
+		affect, known := reviewTurns[reply.turn]
+		if !known {
+			return true
+		}
+		remainder := reply.text
+		if reply.quotation.valid() {
+			var ok bool
+			remainder, ok = nativeQuotationRemainder(reply.text, reply.quotation)
+			if !ok {
+				return rejectSpeech(reply, "quotation")
+			}
+			remainder = nativeQuotationAffectRemainder(remainder, reply.quotation)
+		}
+		if (affect || reply.proactive || reply.quotation.valid()) && speculativeSpeechNeedsRevision(remainder) || reply.proactive && initiativeSpeechUnsafe(remainder) {
+			return rejectSpeech(reply, "affect")
+		}
+		return releaseSpeech(reply)
+	}
+	initiativeCount := 0
+	inputSpeaking := false
+	lastConversationActivity := time.Now()
+	saveReplies := func() {
+		if agentBinding == nil {
 			return
+		}
+		for _, reply := range ledger.ready() {
+			if saved, e := persist(map[string]any{"phase": "native.observe", "role": "assistant", "text": reply.text, "turnId": reply.turn, "evidenceTurnIds": reply.inputs, "proactive": reply.proactive, "now": time.Now().UTC().Format(time.RFC3339Nano)}); e == nil {
+				reply.saved = true
+				var state struct {
+					Pending bool `json:"initiativePending"`
+				}
+				_ = json.Unmarshal(saved.State, &state)
+				initiativeEligible = state.Pending
+			}
+		}
+	}
+	// One socket reader pumps events so an idle tick never blocks incoming speech.
+	events := make(chan map[string]json.RawMessage, 1)
+	go func() {
+		defer close(events)
+		for {
+			var e map[string]json.RawMessage
+			upstream.SetReadDeadline(time.Now().Add(60 * time.Second))
+			if upstream.ReadJSON(&e) != nil {
+				return
+			}
+			select {
+			case events <- e:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	lastTimeRefresh := time.Now()
+	initiativeTicker := time.NewTicker(time.Second)
+	defer initiativeTicker.Stop()
+	for {
+		var event map[string]json.RawMessage
+		select {
+		case <-ctx.Done():
+			return
+		case <-initiativeTicker.C:
+			if agentBinding != nil && nativeReady.Load() && nativeClockRefreshDue(time.Now(), lastTimeRefresh, time.Unix(0, lastMicrophoneEnergy.Load()), inputSpeaking, activeResponse != "" || initiativePending, playbackUntil) {
+				refreshed, e := a.mixSoulCall(ctx, *agentBinding, map[string]any{"phase": "native.time", "now": time.Now().UTC().Format(time.RFC3339Nano), "identity": voiceIdentityPrompt(cfg)})
+				if e != nil || refreshed.Instructions == "" {
+					report("助理时间上下文更新失败，通话结束")
+					return
+				}
+				if send(map[string]any{"type": "session.update", "session": map[string]any{"instructions": refreshed.Instructions}}) != nil {
+					return
+				}
+				lastTimeRefresh = time.Now()
+			}
+			if agentBinding == nil || !nativeReady.Load() || !initiativeEligible || initiativeCount >= 3 || initiativePending || activeResponse != "" || inputSpeaking || heardID == "" || time.Since(lastConversationActivity) < 30*time.Second || time.Now().Before(playbackUntil.Add(25*time.Second)) {
+				continue
+			}
+			initiativeEligible = false
+			claim, e := a.mixSoulCall(ctx, *agentBinding, map[string]any{"phase": "initiative.claim", "channel": "native", "callId": nativeCallID, "now": time.Now().UTC().Format(time.RFC3339Nano), "identity": voiceIdentityPrompt(cfg)})
+			if e != nil || claim.Instructions == "" {
+				continue
+			}
+			select {
+			case incoming, ok := <-events:
+				if !ok {
+					return
+				}
+				event = incoming
+			default:
+				initiativePending = true
+				initiativeInterrupted = false
+				initiativeCount++
+				lastConversationActivity = time.Now()
+				if respondWithInstructions(claim.Instructions) != nil {
+					return
+				}
+				continue
+			}
+		case e, ok := <-events:
+			if !ok {
+				return
+			}
+			event = e
 		}
 		var kind string
 		_ = json.Unmarshal(event["type"], &kind)
 		str := func(key string) string { var s string; _ = json.Unmarshal(event[key], &s); return s }
 		switch kind {
 		case "session.created":
-			session := realtimeCallSession(cfg)
+			session := nativeSession
 			if send(map[string]any{"type": "session.update", "session": session}) != nil {
 				return
 			}
 		case "session.updated":
-			ready = true
-			_ = emit(map[string]any{"type": "aide.ready", "model": "qwen3.8-omni-flash-realtime", "voice": "Tina", "inputRate": 16000, "outputRate": 24000})
+			if !nativeReady.Swap(true) {
+				_ = emit(map[string]any{"type": "aide.ready", "model": "qwen3.8-omni-flash-realtime", "voice": "Tina", "inputRate": 16000, "outputRate": 24000})
+			}
 		case "error":
 			// Do not forward provider bodies or URLs containing account details.
 			var e struct {
-				Code string `json:"code"`
+				Code    string `json:"code"`
+				Type    string `json:"type"`
+				Message string `json:"message"`
 			}
 			_ = json.Unmarshal(event["error"], &e)
+			if os.Getenv("AIDE_NATIVE_ACCEPTANCE_DIAGNOSTICS") == "1" {
+				nativeProviderDiagnostic(a.dataPath, e.Type, e.Code, e.Message, cfg.APIKey, a.token)
+			}
 			if e.Code == "response_cancel_not_active" || e.Code == "response_cancel_not_active_error" {
+				continue
+			}
+			// Qwen omits code for this specific VAD/tool continuation race.
+			// The existing native response continues; never retry or redial here.
+			if nativeResponseAlreadyActive(e.Type, e.Message) {
 				continue
 			}
 			report("实时音频服务返回错误（" + e.Code + "），通话已结束；未自动重复计费连接")
@@ -292,7 +557,77 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		case "conversation.item.input_audio_transcription.completed":
 			heard = str("transcript")
 			heardID = str("item_id")
+			if heard == "" || heardID == "" {
+				continue
+			}
+			inputOrder := -1
+			for i, item := range ledger.inputs {
+				if item == heardID {
+					inputOrder = i
+					break
+				}
+			}
+			isolatedFragment := inputOrder < 0 || inputOrder < lastObservedOrder
+			if inputOrder > lastObservedOrder {
+				lastObservedOrder = inputOrder
+			}
 			a.realtimeCallRecord(id, workspace, "user", heard)
+			if agentBinding != nil {
+				if observed, e := persist(map[string]any{"phase": "native.observe", "role": "user", "text": heard, "turnId": heardID, "isolatedFragment": isolatedFragment, "now": time.Now().UTC().Format(time.RFC3339Nano), "identity": voiceIdentityPrompt(cfg)}); e != nil {
+					report("Assistant agent observation failed")
+					return
+				} else if observed.Instructions != "" {
+					var state struct {
+						Context struct {
+							Calibration struct {
+								Review bool `json:"reviewBeforeAudio"`
+							} `json:"speechCalibration"`
+							Quotation nativeQuotation `json:"nativeQuotation"`
+						} `json:"context"`
+					}
+					_ = json.Unmarshal(observed.State, &state)
+					reviewTurns[heardID] = state.Context.Calibration.Review
+					quotationTurns[heardID] = state.Context.Quotation
+					if send(map[string]any{"type": "session.update", "session": map[string]any{"instructions": observed.Instructions}}) != nil {
+						return
+					}
+					nativeInstructionOverride = state.Context.Quotation.valid()
+				}
+				if heard != "" && heardID != "" && !nativeLearned[heardID] && nativeLearningCount < 16 {
+					nativeLearned[heardID] = true
+					nativeLearningCount++
+					binding, statement, turn := *agentBinding, heard, heardID
+					a.background(func() {
+						learnCtx, stop := context.WithTimeout(context.Background(), 45*time.Second)
+						defer stop()
+						a.learnMixSoulNative(learnCtx, binding, statement, turn)
+					})
+				}
+			}
+			ledger.transcript(heardID, heard)
+			if review, known := reviewTurns[heardID]; known {
+				for _, reply := range ledger.replies {
+					if reply.turn != heardID || reply.review == nil || reply.review.rejected {
+						continue
+					}
+					if !reply.proactive {
+						reply.quotation = quotationTurns[heardID]
+					}
+					if reply.quotation.valid() {
+						reply.review.maxAudioBytes = 1440000
+					}
+					if reply.text != "" {
+						if !checkSpeech(reply) {
+							return
+						}
+					} else if !review && !reply.quotation.valid() && !reply.proactive {
+						if !releaseSpeech(reply) {
+							return
+						}
+					}
+				}
+			}
+			saveReplies()
 			_ = emit(map[string]any{"type": kind, "transcript": heard, "item_id": heardID})
 		case "response.function_call_arguments.done":
 			callID := str("call_id")
@@ -305,24 +640,81 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 			}
 			seen[callID] = true
 			toolsUsed++
+			toolHeard, toolTurn := "", ""
+			toolIsProactive := false
+			responseID := str("response_id")
+			if responseID == "" {
+				responseID = activeResponse
+			}
+			if reply := ledger.replies[responseID]; reply != nil {
+				toolTurn = reply.turn
+				toolIsProactive = reply.proactive
+				toolHeard = ledger.heard[toolTurn]
+			}
 			result := "未执行：没有本轮已转写的用户原话，或该轮已经处理。"
-			if ready && str("name") == "assistant_work" && heard != "" && heardID != "" && usedTurn != heardID && toolsUsed <= 32 && a.realtimeCallValid(id, workspace) {
-				usedTurn = heardID
-				result = a.realtimeCallWork(ctx, id, workspace, heard)
+			if !toolIsProactive && nativeReady.Load() && str("name") == "assistant_work" && toolHeard != "" && toolTurn == heardID && usedTurn != toolTurn && toolsUsed <= 32 && a.realtimeCallValid(id, workspace) {
+				usedTurn = toolTurn
+				result = a.realtimeCallWork(ctx, id, workspace, toolHeard)
+			}
+			if !toolIsProactive && nativeReady.Load() && str("name") == "assistant_context" && agentBinding != nil && toolHeard != "" && toolsUsed <= 32 {
+				prepared, e := a.mixSoulCall(ctx, *agentBinding, map[string]any{"phase": "native.recall", "callId": nativeCallID, "heard": toolHeard, "now": time.Now().UTC().Format(time.RFC3339Nano), "identity": voiceIdentityPrompt(cfg)})
+				if e != nil {
+					report("Assistant agent recall failed")
+					return
+				}
+				result = prepared.Instructions
 			}
 			if send(map[string]any{"type": "conversation.item.create", "item": map[string]any{"type": "function_call_output", "call_id": callID, "output": result}}) != nil {
 				return
+			}
+			if activeResponse != "" {
+				toolResponsePending = true
+				toolResponseProactive = toolIsProactive
+				continue
+			}
+			if toolIsProactive {
+				initiativePending = true
 			}
 			if send(map[string]any{"type": "response.create"}) != nil {
 				return
 			}
 		case "response.audio_transcript.done":
+			if reply := ledger.replies[str("response_id")]; reply != nil {
+				reply.text = str("transcript")
+				if reply.review != nil && reply.review.enabled {
+					if reply.review.rejected {
+						continue
+					}
+					reply.review.hold(event, 0)
+					if reply.review.rejected {
+						if !rejectSpeech(reply, "buffer") {
+							return
+						}
+					} else if !checkSpeech(reply) {
+						return
+					}
+					saveReplies()
+					continue
+				}
+				if reply.canceled {
+					continue
+				}
+			}
+			saveReplies()
 			a.realtimeCallRecord(id, workspace, "assistant", str("transcript"))
 			_ = emit(event)
 		case "response.audio.delta":
 			audioBytes, e := base64.StdEncoding.DecodeString(str("delta"))
 			if e != nil {
 				return
+			}
+			if reply := ledger.replies[str("response_id")]; reply != nil && reply.review.hold(event, len(audioBytes)) {
+				if reply.review.rejected && !reply.canceled {
+					if !rejectSpeech(reply, "buffer") {
+						return
+					}
+				}
+				continue
 			}
 			item := str("item_id")
 			audioMu.Lock()
@@ -331,17 +723,126 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 				return
 			}
 			emittedAudio[item] += len(audioBytes)
+			if playbackUntil.Before(time.Now()) {
+				playbackUntil = time.Now()
+			}
+			playbackUntil = playbackUntil.Add(time.Duration(len(audioBytes)) * time.Second / 48000)
 			audioMu.Unlock()
 			if emit(event) != nil {
 				return
 			}
 		case "input_audio_buffer.speech_started":
+			// A quoted replay/proactive instruction applies to one turn only.
+			// Restore before the next audio-triggered response, without waiting
+			// for its potentially late ASR and inheriting the old quote format.
+			if nativeInstructionOverride {
+				if send(map[string]any{"type": "session.update", "session": map[string]any{"instructions": nativeSession["instructions"]}}) != nil {
+					return
+				}
+				nativeInstructionOverride = false
+			}
+			inputSpeaking = true
+			if initiativePending {
+				initiativeInterrupted = true
+			}
+			initiativeEligible = false
+			toolResponseProactive = false
+			lastConversationActivity = time.Now()
+			playbackUntil = time.Now()
 			heard = ""
 			heardID = ""
+			toolResponsePending = false
+			toneRetryTurn = ""
+			if reply := ledger.replies[activeResponse]; reply != nil {
+				reply.canceled = true
+				if reply.review != nil {
+					reply.review.rejected = true
+					reply.review.events = nil
+				}
+			}
 			if emit(event) != nil {
 				return
 			}
-		case "input_audio_buffer.speech_stopped", "response.created", "response.audio.done", "response.audio_transcript.delta", "response.done", "response.output_item.added":
+		case "response.created":
+			var response struct {
+				ID string `json:"id"`
+			}
+			_ = json.Unmarshal(event["response"], &response)
+			activeResponse = response.ID
+			ledger.created(response.ID)
+			if reply := ledger.replies[response.ID]; reply != nil {
+				reply.proactive = initiativePending
+				initiativePending = false
+				if inputSpeaking || reply.proactive && initiativeInterrupted {
+					reply.canceled = true
+					_ = send(map[string]any{"type": "response.cancel"})
+				}
+				review, known := reviewTurns[reply.turn]
+				if !reply.proactive {
+					reply.quotation = quotationTurns[reply.turn]
+				}
+				reply.review = &nativeSpeechReview{enabled: agentBinding != nil && (reply.proactive || !known || review || reply.quotation.valid()), rejected: reply.canceled}
+				if reply.quotation.valid() {
+					reply.review.maxAudioBytes = 1440000
+				}
+				if reply.proactive {
+					initiativeInterrupted = false
+				}
+			}
+			if emit(event) != nil {
+				return
+			}
+		case "input_audio_buffer.speech_stopped":
+			inputSpeaking = false
+			lastConversationActivity = time.Now()
+			ledger.commit(str("item_id"))
+			if emit(event) != nil {
+				return
+			}
+		case "response.done":
+			lastConversationActivity = time.Now()
+			var response struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			}
+			_ = json.Unmarshal(event["response"], &response)
+			if reply := ledger.replies[response.ID]; reply != nil {
+				reply.done = true
+				reply.canceled = reply.canceled || response.Status != "" && response.Status != "completed"
+			}
+			if activeResponse == response.ID {
+				activeResponse = ""
+			}
+			saveReplies()
+			if !retryTone() {
+				return
+			}
+			if toolResponsePending && activeResponse == "" {
+				toolResponsePending = false
+				if toolResponseProactive {
+					initiativePending = true
+				}
+				toolResponseProactive = false
+				if send(map[string]any{"type": "response.create"}) != nil {
+					return
+				}
+			}
+			if emit(event) != nil {
+				return
+			}
+		case "response.audio.done", "response.audio_transcript.delta":
+			if reply := ledger.replies[str("response_id")]; reply != nil && reply.review.hold(event, 0) {
+				if reply.review.rejected && !reply.canceled {
+					if !rejectSpeech(reply, "buffer") {
+						return
+					}
+				}
+				continue
+			}
+			if emit(event) != nil {
+				return
+			}
+		case "response.output_item.added":
 			if emit(event) != nil {
 				return
 			}
@@ -408,6 +909,6 @@ func (a *App) realtimeCallWork(ctx context.Context, id, workspace, heard string)
 func realtimeCallSession(cfg Settings) map[string]any {
 	instruction := voiceIdentityPrompt(cfg) + "\n" + assistantCallGuidance + "\n你通过原生音频实时交谈。遇到用户明确交办工作、查询任务进展或管理事项，调用 assistant_work；它将用户本轮原话交给现有助理权限链处理。工具成功前不要声称已经完成或交办。闲聊直接回答。不要自行执行工作区命令。"
 	tool := map[string]any{"type": "function", "name": "assistant_work", "description": "用户明确交办任务或查询工作时，通过现有助理安全权限链处理本轮原话；闲聊不用。", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}
-	session := map[string]any{"modalities": []string{"text", "audio"}, "instructions": instruction, "turn_detection": map[string]any{"type": "semantic_vad", "silence_duration_ms": 650}, "input_audio_transcription": map[string]any{"model": "gummy-realtime-v1"}, "audio": map[string]any{"input": map[string]any{"format": map[string]any{"type": "pcm", "sample_rate": 16000, "sample_format": "s16le", "channels": 1, "packing": "interleaved", "channel_layout": "mono"}}, "output": map[string]any{"voice": "Tina", "format": map[string]any{"type": "pcm", "sample_rate": 24000}}}, "tools": []any{tool}, "tool_choice": "auto"}
+	session := map[string]any{"modalities": []string{"text", "audio"}, "instructions": instruction, "turn_detection": map[string]any{"type": nativeVADMode(), "silence_duration_ms": 650}, "input_audio_transcription": map[string]any{"model": "qwen3-asr-flash-realtime"}, "audio": map[string]any{"input": map[string]any{"format": map[string]any{"type": "pcm", "sample_rate": 16000, "sample_format": "s16le", "channels": 1, "packing": "interleaved", "channel_layout": "mono"}}, "output": map[string]any{"voice": "Tina", "format": map[string]any{"type": "pcm", "sample_rate": 24000}}}, "tools": []any{tool}, "tool_choice": "auto"}
 	return session
 }

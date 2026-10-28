@@ -406,6 +406,7 @@ type Message struct {
 	ToolCallID  string         `json:"tool_call_id,omitempty"`
 }
 type Session struct {
+	AssistantResultNotices map[string]string      `json:"assistantResultNotices,omitempty"` // Persisted executor-event receipts, local only.
 	ModelSelectionRevision uint64                 `json:"modelSelectionRevision,omitempty"`
 	ModelSelection         *SessionModelSelection `json:"modelSelection,omitempty"`
 	ID                     string                 `json:"id"`
@@ -473,6 +474,8 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 const assistantSessionKind = "assistant"
 
 type App struct {
+	assistantEngine           string // operator-selected startup choice; never a plugin capability
+	mixSoulCalls              pluginCallQueues
 	mu                        sync.Mutex
 	historyMu                 sync.Mutex
 	filesMu                   sync.Mutex
@@ -572,6 +575,7 @@ type App struct {
 	personaCustom             map[string]string    // 解锁后：personaID -> 解密出的自定义性格明文
 	voiceAgent                *VoiceAgent          // 语音小秘 agent（记忆+历史）
 	personalityState          personalityStateFile // 性格演化触发计数/回滚历史（#34，持久化 config/personality-state.json）
+	assistantResultsWake      chan struct{}
 	bgCtx                     context.Context
 	bgCancel                  context.CancelFunc
 	bgWg                      sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
@@ -808,6 +812,14 @@ func atomicJSON(path string, v any) error {
 	return os.Rename(name, path)
 }
 func New(work, reference, data string) (*App, error) {
+	assistantEngine := strings.TrimSpace(os.Getenv("AIDE_ASSISTANT_ENGINE"))
+	if assistantEngine == "" {
+		assistantEngine = "builtin"
+	}
+	if assistantEngine != "builtin" && assistantEngine != "mixsoul" {
+		return nil, errors.New("unsupported local assistant engine")
+	}
+
 	for _, dir := range []string{work, reference, data} {
 		if err := os.MkdirAll(dir, 0700); err != nil {
 			return nil, err
@@ -846,6 +858,7 @@ func New(work, reference, data string) (*App, error) {
 	}
 	a.startedAt = time.Now().UTC()
 	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
+	a.assistantResultsWake = make(chan struct{}, 1)
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
 	_ = BuildBaseline(data)
 	a.setIntegrity(SelfHeal(data, VerifyIntegrity(data)))
@@ -1105,9 +1118,12 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, fmt.Errorf("修复会话编号失败: %w", err)
 	}
+	a.assistantEngine = assistantEngine
 	// #30：启动幂等确保恰好一个小秘系统会话（永久置顶、密码进入）。
 	a.ensureAssistantSession()
 	a.background(func() { a.reminderLoop(a.bgCtx) })
+	a.background(func() { a.mixSoulPulseLoop(a.bgCtx) })
+	a.background(func() { a.assistantResultLoop(a.bgCtx) })
 	a.startMessagesIfEnabled()
 	return a, nil
 }
@@ -1221,6 +1237,12 @@ func (a *App) save(s *Session) error {
 			if err := os.Remove(stale); err != nil {
 				log.Printf("清理桶外会话副本失败 %s: %v", stale, err)
 			}
+		}
+	}
+	if s.FollowedByAssistant && s.Kind != assistantSessionKind {
+		select {
+		case a.assistantResultsWake <- struct{}{}:
+		default:
 		}
 	}
 	return nil
@@ -1595,6 +1617,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession) // #30 小秘会话密码门
 	mux.HandleFunc("GET /api/sessions/{id}/assistant-watch", a.assistantWatch)
+	mux.HandleFunc("POST /api/sessions/{id}/assistant-initiative", a.assistantInitiative)
+	mux.HandleFunc("POST /api/sessions/{id}/assistant-memory", a.mixSoulMemoryManagement)
 	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler) // 小秘键盘消息，不经过语音环境过滤
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/pause", a.pauseTask)
@@ -2379,6 +2403,10 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
+		if a.mixSoulEnabled() {
+			fail(w, 503, errors.New("assistant agent model unavailable"))
+			return
+		}
 		if va != nil {
 			entry := va.recordFallback(text, "未配置模型，直接发送")
 			// #62：语音往来归位到 assistant 会话时间线
@@ -2401,6 +2429,10 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	// 注入模型 API Key 后跑循环；失败则回落到既有 analyze 甄别（保留能力不删）。
 	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice", in.AvatarFeedback)
 	if aerr != nil {
+		if a.mixSoulEnabled() || errors.Is(aerr, errMixSoulActive) {
+			fail(w, 503, errors.New("assistant agent failed; no fallback executed"))
+			return
+		}
 		entry, err := va.analyze(r.Context(), cfg, text, in.Context)
 		if err != nil {
 			fb := va.recordFallback(text, "小秘分析失败，直接发送: "+err.Error())
