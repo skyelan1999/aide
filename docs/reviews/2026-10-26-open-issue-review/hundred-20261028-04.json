@@ -4,7 +4,7 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 58,
+  "fixedCount": 69,
   "fixedIssues": [
     565,
     563,
@@ -63,7 +63,18 @@
     448,
     449,
     450,
-    451
+    451,
+    469,
+    515,
+    517,
+    521,
+    522,
+    523,
+    524,
+    525,
+    526,
+    527,
+    528
   ],
   "issues": {
     "565": {
@@ -529,6 +540,94 @@
       "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/451#issuecomment-6468672373"
+    },
+    "469": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Use prototype-free block and style databases, including clear/reset.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/469#issuecomment-6468839604"
+    },
+    "515": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Retain prototype-named pie categories across parser resets.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/515#issuecomment-6468840527"
+    },
+    "517": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Reject orphan Timeline event rows with a descriptive error.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/517#issuecomment-6468841516"
+    },
+    "521": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Decode sanitized entities at the SVG text sink so titles display correctly.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/521#issuecomment-6468842694"
+    },
+    "522": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Reject empty/nonfinite Sankey values before adding links.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/522#issuecomment-6468843427"
+    },
+    "523": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Preserve requirement/element names with prototype-free databases.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/523#issuecomment-6468844642"
+    },
+    "524": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Store sequence participants and actor lifecycle IDs in prototype-free maps.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/524#issuecomment-6468845571"
+    },
+    "525": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Preserve class IDs through database, Graphlib and Dagre layout indexes.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/525#issuecomment-6468846150"
+    },
+    "526": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Reject nonfinite XY plot values before scale/layout.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/526#issuecomment-6468846732"
+    },
+    "527": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Store ER entities in a prototype-free map including resets.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/527#issuecomment-6468847419"
+    },
+    "528": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Retain prototype-named Gantt task indices and clear stale indices with the task list.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/528#issuecomment-6468848033"
     }
   },
   "blockedIssues": [

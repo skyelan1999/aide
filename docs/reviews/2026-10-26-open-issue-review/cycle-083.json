@@ -73,8 +73,27 @@
     "Main merge, Release/tag, market/deploy."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
-    "released": false
-  }
+    "released": false,
+    "remoteSourceCommit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+    "issueComments": {
+      "469": "https://github.com/skyelan1999/aide/issues/469#issuecomment-6468839604",
+      "515": "https://github.com/skyelan1999/aide/issues/515#issuecomment-6468840527",
+      "517": "https://github.com/skyelan1999/aide/issues/517#issuecomment-6468841516",
+      "521": "https://github.com/skyelan1999/aide/issues/521#issuecomment-6468842694",
+      "522": "https://github.com/skyelan1999/aide/issues/522#issuecomment-6468843427",
+      "523": "https://github.com/skyelan1999/aide/issues/523#issuecomment-6468844642",
+      "524": "https://github.com/skyelan1999/aide/issues/524#issuecomment-6468845571",
+      "525": "https://github.com/skyelan1999/aide/issues/525#issuecomment-6468846150",
+      "526": "https://github.com/skyelan1999/aide/issues/526#issuecomment-6468846732",
+      "527": "https://github.com/skyelan1999/aide/issues/527#issuecomment-6468847419",
+      "528": "https://github.com/skyelan1999/aide/issues/528#issuecomment-6468848033"
+    }
+  },
+  "completedAt": "2026-10-28T12:21:58.327665+00:00",
+  "cumulativeFixedOnBranch": 360,
+  "cumulativeProductFixes": 359,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }
