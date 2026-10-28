@@ -242,9 +242,9 @@ func (a *App) recordAgenticExchangeLocked(heard string, dec assistantDecision, s
 	outContent := dec.Reply
 	switch dec.Action {
 	case "dispatch":
-		outContent = "已转交 aide：" + dec.DispatchText
-		if strings.TrimSpace(dec.Reason) != "" {
-			outContent += "（" + dec.Reason + "）"
+		outContent = dec.Reply
+		if outContent == "" {
+			outContent = "我先确认一下这项工作能否启动。"
 		}
 	case "ask":
 		outType = msgTypeVoiceAsk
@@ -375,6 +375,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// 在锁内取 *Session 指针副本，避免与 dispatchToAideLocked 并发写 a.sessions 触发 map 竞争。
 	a.mu.Lock()
 	s := a.sessions[r.PathValue("id")]
+	workspace := a.wsID()
 	if s != nil {
 		if err := a.validateScheduleDispatchLocked(r.Context(), s); err != nil {
 			a.mu.Unlock()
@@ -433,6 +434,10 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
+		if a.mixSoulEnabled() {
+			fail(w, 503, errors.New("assistant agent model unavailable"))
+			return
+		}
 		runFallback("小秘模型未配置，原文已转交 aide")
 		return
 	}
@@ -445,6 +450,10 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
 	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, source, in.AvatarFeedback)
 	if err != nil {
+		if a.mixSoulEnabled() || errors.Is(err, errMixSoulActive) {
+			fail(w, 503, errors.New("assistant agent failed; no fallback executed"))
+			return
+		}
 		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
 		detail := strings.ReplaceAll(err.Error(), cfg.BaseURL, "<model-endpoint>")
 		log.Printf("小秘文字决策失败 session=%s model=%s: %s", s.ID, cfg.Model, detail)
@@ -459,7 +468,9 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, err)
 		return
 	}
-	a.recordAgenticExchangeLocked(text, dec, source)
+	if dec.Action != "dispatch" {
+		a.recordAgenticExchangeLocked(text, dec, source)
+	}
 	if dec.Action == "dispatch" {
 		disp = a.dispatchToAideLocked(dec.DispatchText)
 		fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
@@ -480,12 +491,20 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	replyOut := dec.Reply
 	if dec.Action == "dispatch" {
 		if disp != nil && disp["started"] == true {
-			replyOut = fmt.Sprintf("好，我已经启动 aide 会话 #%v 开始处理了，我会帮你盯着。", disp["number"])
+			replyOut = assistantStartedReply(dec.DispatchText)
 		} else if disp == nil {
 			replyOut = "我识别到了这项工作，但没能创建 aide 会话；请稍后重试。"
 		} else {
 			replyOut = fmt.Sprintf("我已创建 aide 会话 #%v，但暂时没能启动：%v。任务草稿留在会话里，处理好模型配置后可以继续。", disp["number"], disp["startError"])
 		}
+	}
+	if dec.Action == "dispatch" {
+		dec.Reply = replyOut
+		a.mu.Lock()
+		if a.wsID() == workspace {
+			a.recordAgenticExchangeLocked(text, dec, source)
+		}
+		a.mu.Unlock()
 	}
 	jsonOut(w, 200, map[string]any{
 		"action": dec.Action, "text": dec.DispatchText, "ask": dec.Ask,
