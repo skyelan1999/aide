@@ -58,10 +58,21 @@
     "Mainmerge,Release/tag,deploy."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "382": "https://github.com/skyelan1999/aide/issues/382#issuecomment-6466245920",
+      "383": "https://github.com/skyelan1999/aide/issues/383#issuecomment-6466246749",
+      "384": "https://github.com/skyelan1999/aide/issues/384#issuecomment-6466247461",
+      "385": "https://github.com/skyelan1999/aide/issues/385#issuecomment-6466248275",
+      "386": "https://github.com/skyelan1999/aide/issues/386#issuecomment-6466249190",
+      "387": "https://github.com/skyelan1999/aide/issues/387#issuecomment-6466249799",
+      "388": "https://github.com/skyelan1999/aide/issues/388#issuecomment-6466250419",
+      "389": "https://github.com/skyelan1999/aide/issues/389#issuecomment-6466250905",
+      "390": "https://github.com/skyelan1999/aide/issues/390#issuecomment-6466251483"
+    },
+    "remoteSourceCommit": "78ee39b52e397aaeec6ab266011422ee18091dd9"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "d04d44f9ba1ef77b7e4e27a68936487fc30923c6845f21d8c99d48a11ee59e15",
@@ -80,5 +91,10 @@
     "scripts/drawio-device-shape-browser-cases.cjs": "c1b71f69415af7ec2d6f3cb2373754801de2182360f7da69cc1894e2281c99cb",
     "scripts/drawio-device-shape-review.cjs": "4867e666d1122c2694a31b719ea7c45e16db93c2afef840e3ceb0efd16f91fdd",
     "scripts/sync_drawio_device_shapes.cjs": "890a06cb70554b92a92455c662d6abb0aae9b26cf144059d9fcd94d2536304fe"
-  }
+  },
+  "completedAt": "2026-10-28T10:11:35.301086+00:00",
+  "cumulativeFixedOnBranch": 302,
+  "cumulativeProductFixes": 301,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }

@@ -4,10 +4,19 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 2,
+  "fixedCount": 11,
   "fixedIssues": [
     565,
-    563
+    563,
+    382,
+    383,
+    384,
+    385,
+    386,
+    387,
+    388,
+    389,
+    390
   ],
   "issues": {
     "565": {
@@ -25,6 +34,78 @@
       "commit": "0b0e2133ea84773392721050fd04e50526019e09",
       "repository": "skyelan1999/aide",
       "comment": "https://github.com/skyelan1999/aide/issues/563#issuecomment-6466039896"
+    },
+    "382": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Interpret60 Rack/F5 boolean declarations as0/1 so rear,DC,ears andmask flags behave as stored.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/382#issuecomment-6466245920"
+    },
+    "383": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Normalize absent tree folding selections,copy cell arrays,and forward the retained cells to core folding.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/383#issuecomment-6466246749"
+    },
+    "384": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Use prototype-free WebCola active/parent/node-index maps for diagram IDs.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/384#issuecomment-6466247461"
+    },
+    "385": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Treat zero field size as no separators and bound very small iOS7SelectBar drawing steps to1000.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/385#issuecomment-6466248275"
+    },
+    "386": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Store finite zero barPos when the scroll-handle travel range is nonpositive.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/386#issuecomment-6466249190"
+    },
+    "387": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Render exposed ArchiMatePath appType through the existing communication-path foreground branch.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/387#issuecomment-6466249799"
+    },
+    "388": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Cap four EIP channel constraint arrays at10000 anchors,retaining ordinary10-unit spacing.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/388#issuecomment-6466250419"
+    },
+    "389": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Use at least1 and at most1000 dashed-arrow steps,skipping zero-length/nonfinite paths before division.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/389#issuecomment-6466250905"
+    },
+    "390": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Clamp CalloutDouble90Arrow dy2 against height in both painter and connection constraints.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/390#issuecomment-6466251483"
     }
   },
   "blockedIssues": [],
