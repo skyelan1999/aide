@@ -105,8 +105,8 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "第三批50/50已交付；继续修复364和新登记564，验证完成待push。",
+      "status": "pass",
+      "summary": "第三批50/50已交付；继续额外完成364/564，两项均验证、push并回填评论。",
       "evidence": [
         "internal/server/issue_review_bounds_test.go"
       ]
@@ -194,12 +194,13 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "原289项状态及272项升序审查逐项记录完成，明确源码/运行/修复区别。",
+      "summary": "累计291项分支修复（290产品+1工具）；第三批固定50项不变，额外2项单独记录，原272目标剩18后续项。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/inventory.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
         "docs/reviews/2026-10-26-open-issue-review/fifty-20261028-02.json",
-        "docs/reviews/2026-10-26-open-issue-review/fifty-20261028-03.json"
+        "docs/reviews/2026-10-26-open-issue-review/fifty-20261028-03.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-076.json"
       ]
     },
     "cleanup": {
@@ -215,17 +216,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第三批新增50/50全部完成，源提交1a3ae34b6eada381927c737cc26e06967bc6bffd，205quick及34组联合真实组件浏览器验证通过。下一轮优先验证364受限CORS正则兼容方案，再382起；249几何及292–305平台包装器仍为原后续项，不计修复。原272目标剩18项，后续新增报告另有队列；源码/运行/修复状态不可混淆。只push修复分支，未main合并、Release或部署。完整工作台、Windows/macOS实机未运行；用户原文件、镜像及stash保留。当前客户端无后台调度器，仅保存续接检查点。",
+  "handoff": "第三批新增50/50已全部push并逐项评论；继续额外完成364与564，源提交7bf762b2431e9a2909d966b4877f98f3c425cfbf，209quick、1290规则对照及44组联合真实组件浏览器验证通过。下轮优先检查账号新报告565、563、561，再382起；249几何与292–305平台包装器仍记录阻塞，不计修复。累计291（290产品+1工具）；原272目标剩18项，后续新增报告另有队列。只push分支，未合并main、Release或部署；完整工作台、Windows/macOS实机未运行。保留用户原文件、镜像、stash。当前无后台调度器，仅保存续接检查点。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+    "commit": "7bf762b2431e9a2909d966b4877f98f3c425cfbf",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-075.json"
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-076.json"
   },
-  "issue_comments": "第三批新增50/50全部push并逐项回填；提交/评论见fifty-20261028-03.json；551后续SQL修复不重复计数。未合并main保持open。",
+  "issue_comments": "第三批50/50已逐项评论；继续完成364/564，源码与2条评论见cycle-076.json。未合并main，保持open。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -254,35 +255,25 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 76,
+    "nextCycle": 77,
     "lastCompletedBatch": {
-      "cycle": 75,
+      "cycle": 76,
       "issues": [
-        363,
-        366,
-        367,
-        368,
-        371,
-        372,
-        374,
-        375,
-        376,
-        377,
-        378,
-        379,
-        380,
-        381
+        364,
+        564
       ],
-      "cumulativeFixed": 289,
-      "cumulativeProductFixed": 288,
+      "cumulativeFixed": 291,
+      "cumulativeProductFixed": 290,
       "toolingFixes": 1,
       "remainingFollowupTargets": 18,
-      "verification": "205 quick;34 actual browser groups",
-      "delivery": "pushed 1a3ae34b6eada381927c737cc26e06967bc6bffd;14 comments"
+      "verification": "209quick;1290corpus comparisons;44 actual browser groups",
+      "delivery": "pushed 7bf762b2431e9a2909d966b4877f98f3c425cfbf;2comments"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      364,
+      565,
+      563,
+      561,
       382,
       383,
       384,
@@ -296,9 +287,9 @@
     },
     "currentCycle": {
       "cycle": 76,
-      "status": "in_progress",
-      "phase": "verified-awaiting-branch-push",
-      "candidates": [
+      "status": "pass",
+      "phase": "pushed-commented-checkpoint",
+      "issues": [
         364,
         564
       ]
@@ -343,7 +334,8 @@
         441,
         464,
         467,
-        551
+        551,
+        564
       ],
       "lastExplicitIssue": {
         "number": 464,
@@ -804,9 +796,14 @@
       "request": "继续",
       "startedAt": "2026-10-28T08:59:22.942860+00:00",
       "baselineCommit": "e4a3ae1db159b0fdd3957716ce80597db125face",
-      "newFixed": 0,
-      "issues": [],
-      "policy": "Continue after completed third50; no main merge,Release or deploy."
+      "newFixed": 2,
+      "issues": [
+        364,
+        564
+      ],
+      "policy": "Continue after completed third50; no main merge,Release or deploy.",
+      "lastCheckpoint": "2026-10-28T09:35:29.692808+00:00",
+      "record": "docs/reviews/2026-10-26-open-issue-review/cycle-076.json"
     }
   },
   "orderedReview": {

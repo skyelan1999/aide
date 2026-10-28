@@ -76,10 +76,14 @@
     "Main merge,Release/tag/deployment; user authorizes branch push only."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {}
+    "issueComments": {
+      "364": "https://github.com/skyelan1999/aide/issues/364#issuecomment-6465523386",
+      "564": "https://github.com/skyelan1999/aide/issues/564#issuecomment-6465524194"
+    },
+    "remoteSourceCommit": "7bf762b2431e9a2909d966b4877f98f3c425cfbf"
   },
   "sourceSHA256": {
     "docs/agent/router.json": "3f7e8c348792f5eb2ea72bab065ded95dca6689af5afc7ffa0a3808b0031b71a",
@@ -99,5 +103,10 @@
     "scripts/sync_drawio_linear_regex.cjs": "695e5a888f09b22158cc1ee8f5b972707887e25f49eb35d7536ebf2660c66edc",
     "scripts/test_drawio_cors_linear.cjs": "3a1b77536ee757329c77488e2e0846f97b6ce604db3257e1b2b6ef79fd0ca1af"
   },
-  "verificationCompletedAt": "2026-10-28T09:33:41.405382+00:00"
+  "verificationCompletedAt": "2026-10-28T09:33:41.405382+00:00",
+  "completedAt": "2026-10-28T09:35:29.692808+00:00",
+  "cumulativeFixedOnBranch": 291,
+  "cumulativeProductFixes": 290,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
 }

@@ -429,5 +429,14 @@
     }
   ],
   "completedAt": "2026-10-28T07:08:53.784952+00:00",
-  "completionReason": "fifty-new-verified-pushed-fixes-reached"
+  "completionReason": "fifty-new-verified-pushed-fixes-reached",
+  "afterBatchFollowups": {
+    "364": {
+      "status": "resolved-after-batch",
+      "cycle": 76,
+      "commit": "7bf762b2431e9a2909d966b4877f98f3c425cfbf",
+      "record": "cycle-076.json",
+      "countedInThisFifty": false
+    }
+  }
 }
