@@ -4,11 +4,38 @@
   "startedAt": "2026-10-28T09:49:12.803816+00:00",
   "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
   "target": 100,
-  "fixedCount": 0,
-  "fixedIssues": [],
-  "issues": {},
+  "fixedCount": 2,
+  "fixedIssues": [
+    565,
+    563
+  ],
+  "issues": {
+    "565": {
+      "status": "fixed-verified-pushed",
+      "cycle": 77,
+      "summary": "Prioritize pending terminal input over queued background calls with bounded8-request fairness;retain strict single-flight and no replay.",
+      "commit": "756abfa118294eb92a182668ce1e4cef56b71a78",
+      "repository": "skyelan1999/aide-pkg-terminal",
+      "comment": "https://github.com/skyelan1999/aide/issues/565#issuecomment-6466006732"
+    },
+    "563": {
+      "status": "fixed-verified-pushed",
+      "cycle": 77,
+      "summary": "Resolve SSH tool list paths once against the task snapshot root, preserving relative result paths and containment checks.",
+      "commit": "0b0e2133ea84773392721050fd04e50526019e09",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/563#issuecomment-6466039896"
+    }
+  },
   "blockedIssues": [],
-  "alreadyCovered": [],
+  "alreadyCovered": [
+    {
+      "number": 561,
+      "classification": "duplicate-consolidated-under563",
+      "comment": "https://github.com/skyelan1999/aide/issues/561#issuecomment-6466040789",
+      "counted": false
+    }
+  ],
   "verifiedPendingPush": [],
   "status": "in_progress",
   "policy": "Only newly fixed,verified,pushed unique issues count; owner skyelan1999 first. Previous fixes excluded. Branch only; no main merge,Release or deploy."

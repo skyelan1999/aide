@@ -79,15 +79,24 @@
     "Windows/macOS native acceptance,full Docker profile,main merge,Release,market/deploy."
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
     "released": false,
-    "issueComments": {},
+    "issueComments": {
+      "565": "https://github.com/skyelan1999/aide/issues/565#issuecomment-6466006732",
+      "563": "https://github.com/skyelan1999/aide/issues/563#issuecomment-6466039896",
+      "561": "https://github.com/skyelan1999/aide/issues/561#issuecomment-6466040789"
+    },
     "externalSourceCommit": "756abfa118294eb92a182668ce1e4cef56b71a78",
-    "externalSourceBranch": "codex/open-issue-review-20261028"
+    "externalSourceBranch": "codex/open-issue-review-20261028",
+    "remoteSourceCommit": "0b0e2133ea84773392721050fd04e50526019e09"
   },
   "sourceSHA256": {
     "internal/server/workflow.go": "32037c3336dae27be0cf3eec891fdc6781869883be883a9b3161311463559e5b",
     "internal/server/workflow_remote_root_test.go": "25b86651e061cb293ccfe1fcd836539f0e4b0ddd303502a4c8c9b5bf451edb09"
-  }
+  },
+  "completedAt": "2026-10-28T10:03:35.088634+00:00",
+  "cumulativeFixedOnBranch": 293,
+  "cumulativeProductFixes": 292,
+  "toolingFixes": 1
 }

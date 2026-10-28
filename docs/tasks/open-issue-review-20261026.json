@@ -189,7 +189,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-073.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-074.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-075.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-076.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-076.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-077.json"
       ]
     },
     "documentation": {
@@ -216,17 +217,17 @@
   },
   "release_authorization": "仅push专用分支，用户明确禁止合并main；不发行、不部署。",
   "rollback": "所有修复仅在分支，main未修改；可逐提交revert。",
-  "handoff": "第三批新增50/50已全部push并逐项评论；继续额外完成364与564，源提交7bf762b2431e9a2909d966b4877f98f3c425cfbf，209quick、1290规则对照及44组联合真实组件浏览器验证通过。下轮优先检查账号新报告565、563、561，再382起；249几何与292–305平台包装器仍记录阻塞，不计修复。累计291（290产品+1工具）；原272目标剩18项，后续新增报告另有队列。只push分支，未合并main、Release或部署；完整工作台、Windows/macOS实机未运行。保留用户原文件、镜像、stash。当前无后台调度器，仅保存续接检查点。",
+  "handoff": "新增100项目标2/100已修复验证push：565在独立Terminal分支，563在原Aide修复分支。561重复合并跟踪。下一轮382起；扩展SSH写入夹具失败已基线复现，不将其声称通过。仍不main合并、Release或部署。",
   "source_delivery": {
     "branch": "codex/open-issue-review-20261026",
-    "commit": "7bf762b2431e9a2909d966b4877f98f3c425cfbf",
+    "commit": "0b0e2133ea84773392721050fd04e50526019e09",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-076.json"
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-077.json"
   },
-  "issue_comments": "第三批50/50已逐项评论；继续完成364/564，源码与2条评论见cycle-076.json。未合并main，保持open。",
+  "issue_comments": "本轮100项已完成2项(565/563)并回填；561按同症状合并到563关闭，不计数。",
   "goal": {
     "id": "aide-open-issues-continuous-repair",
     "title": "循环审查并修复 Aide open issues",
@@ -255,30 +256,31 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "docs/reviews/2026-10-26-open-issue-review/inventory.json",
-    "nextCycle": 77,
+    "nextCycle": 78,
     "lastCompletedBatch": {
-      "cycle": 76,
+      "cycle": 77,
       "issues": [
-        364,
-        564
+        565,
+        563
       ],
-      "cumulativeFixed": 291,
-      "cumulativeProductFixed": 290,
+      "cumulativeFixed": 293,
+      "cumulativeProductFixed": 292,
       "toolingFixes": 1,
       "remainingFollowupTargets": 18,
-      "verification": "209quick;1290corpus comparisons;44 actual browser groups",
-      "delivery": "pushed 7bf762b2431e9a2909d966b4877f98f3c425cfbf;2comments"
+      "verification": "209quick;3focusedGo race groups;34Terminal tests;20browser echo samples",
+      "delivery": "0b0e2133ea84773392721050fd04e50526019e09 plus externalTerminal commit"
     },
     "limits": "当前由Codex现有目标自动续接；平台/设备验收或工具受限时逐项记录阻塞，不擅自扩大授权。",
     "nextIssueCandidates": [
-      565,
-      563,
-      561,
       382,
       383,
       384,
       385,
-      386
+      386,
+      387,
+      388,
+      389,
+      390
     ],
     "userReaffirmed": {
       "request": "继续100，先看1999账号提交的内容",
@@ -286,9 +288,20 @@
       "instruction": "New target100; first inspect unhandled skyelan1999 reports."
     },
     "currentCycle": {
-      "cycle": 77,
+      "cycle": 78,
       "status": "in_progress",
-      "phase": "owner-report-review"
+      "candidates": [
+        382,
+        383,
+        384,
+        385,
+        386,
+        387,
+        388,
+        389,
+        390
+      ],
+      "phase": "browser-baseline"
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -311,11 +324,7 @@
       ],
       "preempt": "Only explicit user steering interrupts an in-progress repair; preserve paused changes.",
       "explicitIssue": null,
-      "nextOwnerCandidates": [
-        565,
-        563,
-        561
-      ],
+      "nextOwnerCandidates": [],
       "knownBlockedOwnerIssues": [
         340,
         335,
@@ -331,7 +340,10 @@
         464,
         467,
         551,
-        564
+        561,
+        563,
+        564,
+        565
       ],
       "lastExplicitIssue": {
         "number": 464,
@@ -413,13 +425,16 @@
       "request": "继续100，先看1999账号提交的内容",
       "sequence": 4,
       "targetFixed": 100,
-      "newFixed": 0,
+      "newFixed": 2,
       "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
       "baselineCumulative": 291,
       "baselineRemaining": 18,
       "startedAt": "2026-10-28T09:49:12.803816+00:00",
       "status": "in_progress",
-      "fixedIssues": [],
+      "fixedIssues": [
+        565,
+        563
+      ],
       "blockedIssues": [],
       "verifiedPendingPush": [],
       "ledger": "docs/reviews/2026-10-26-open-issue-review/hundred-20261028-04.json",
