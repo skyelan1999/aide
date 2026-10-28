@@ -1124,7 +1124,7 @@
 		    {
 		    	var cardCell = new mxCell('Transmission', new mxGeometry(0, 0, 160, 60), s + 'port1;fontStyle=1;whiteSpace=wrap;align=center;');
 		    	cardCell.vertex = true;
-		    	var label1 = new mxCell('&lt;&lt;full&gt;&gt;\np1', new mxGeometry(0, 20, 20, 20), inh + 'shape=rect;points=[[0,0.5,0]];html=1;resizable=1;align=right;verticalAlign=bottom;labelPosition=left;verticalLabelPosition=top;labelBackgroundColor=none;fontSize=10;paart=1;');
+			var label1 = new mxCell('&lt;&lt;full&gt;&gt;\np1', new mxGeometry(0, 20, 20, 20), inh + 'shape=rect;points=[[0,0.5,0]];html=1;resizable=1;align=right;verticalAlign=bottom;labelPosition=left;verticalLabelPosition=top;labelBackgroundColor=none;fontSize=10;part=1;');
 		    	label1.geometry.relative = false;
 		    	label1.vertex = true;
 		    	cardCell.insert(label1);

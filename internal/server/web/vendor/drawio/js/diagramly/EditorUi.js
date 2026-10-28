@@ -27781,7 +27781,7 @@
 	 */
 	EditorUi.prototype.scopeLayoutsToCells = function(layouts, subset)
 	{
-		var cellSet = {};
+		var cellSet = Object.create(null);
 
 		for (var i = 0; i < subset.length; i++)
 		{
@@ -28067,63 +28067,47 @@
 	 * Loads orgchart layouts and executes the given function.
 	 */
 	EditorUi.prototype.loadOrgChartLayouts = function(fn, noSpinner)
-	{
-		this.createTimeout(null, mxUtils.bind(this, function(timeout)
-		{
-			var onload = mxUtils.bind(this, function()
-			{
-				this.loadingOrgChart = false;
-
-				if (timeout.clear())
-				{
-					Graph.layoutNames.push('mxOrgChartLayout');
-					this.spinner.stop();
-					fn();
-				}
-			});
-
-			var onerror = mxUtils.bind(this, function(e)
-			{
-				this.loadingOrgChart = false;
-
-				if (timeout.clear())
-				{
-					this.handleError(e);
-				}
-			});
-
-			if (typeof mxOrgChartLayout === 'undefined' && !this.loadingOrgChart && !this.isOffline(true))
-			{
-				if (noSpinner || this.spinner.spin(document.body, mxResources.get('loading')))
-				{
-					this.loadingOrgChart = true;
-
-					if (urlParams['dev'] == '1')
-					{
-						mxscript('js/orgchart/bridge.min.js', function()
-						{
-							mxscript('js/orgchart/bridge.collections.min.js', function()
-							{
-								mxscript('js/orgchart/OrgChart.Layout.min.js', function()
-								{
-									mxscript('js/orgchart/mxOrgChartLayout.js',
-										onload, null, null, null, onerror);											
-								}, null, null, null, onerror);		
-							}, null, null, null, onerror);	
-						}, null, null, null, onerror);
-					}
-					else
-					{
-						mxscript(window.DRAWIO_SERVER_URL + 'js/orgchart.min.js', onload, null, null, null, onerror);
-					}
-				}
-			}
-			else
-			{
-				onload();
-			}
-		}), onerror);
-	};
+{
+    if (typeof mxOrgChartLayout !== 'undefined') { fn(); return; }
+    if (this.orgChartLoadCallbacks != null) { this.orgChartLoadCallbacks.push(fn); return; }
+    if (this.isOffline(true)) { this.handleError(new Error(mxResources.get('errorLoadingFile'))); return; }
+    if (!noSpinner && !this.spinner.spin(document.body, mxResources.get('loading'))) return;
+    var callbacks = this.orgChartLoadCallbacks = [fn];
+    this.loadingOrgChart = true;
+    var settled = false;
+    var finish = mxUtils.bind(this, function(error)
+    {
+        if (settled) return;
+        settled = true;
+        this.orgChartLoadCallbacks = null;
+        this.loadingOrgChart = false;
+        if (!noSpinner) this.spinner.stop();
+        if (error != null) { this.handleError(error); return; }
+        if (Graph.layoutNames.indexOf('mxOrgChartLayout') < 0) Graph.layoutNames.push('mxOrgChartLayout');
+        var callbackError = null;
+        for (var i = 0; i < callbacks.length; i++)
+        {
+            try { callbacks[i](); } catch (e) { if (callbackError == null) callbackError = e; }
+        }
+        if (callbackError != null) this.handleError(callbackError);
+    });
+    this.createTimeout(null, mxUtils.bind(this, function(timeout)
+    {
+        var onerror = function(error) { if (timeout.clear()) finish(error || new Error(mxResources.get('errorLoadingFile'))); };
+        var files = urlParams['dev'] == '1' ? ['js/orgchart/bridge.min.js', 'js/orgchart/bridge.collections.min.js',
+            'js/orgchart/OrgChart.Layout.min.js', 'js/orgchart/mxOrgChartLayout.js'] : [window.DRAWIO_SERVER_URL + 'js/orgchart.min.js'];
+        var load = function(index)
+        {
+            if (settled) return;
+            if (index == files.length)
+            {
+                if (timeout.clear()) finish(typeof mxOrgChartLayout !== 'undefined' ? null : new Error(mxResources.get('errorLoadingFile')));
+            }
+            else mxscript(files[index], function() { load(index + 1); }, null, null, null, onerror);
+        };
+        load(0);
+    }), finish);
+};
 	
 	/**
 	 *
@@ -29654,7 +29638,7 @@
 		{
 			// Exports the selected cells and their descendants, skipping cells
 			// whose ancestor is also selected to avoid duplicates
-			var selected = {};
+			var selected = Object.create(null);
 
 			for (var i = 0; i < selectionCells.length; i++)
 			{
@@ -30872,7 +30856,7 @@
 
 					if (page.root != null)
 					{
-						var remaining = {};
+						var remaining = Object.create(null);
 						var count = 0;
 
 						for (var i = 0; i < ids.length; i++)
@@ -31116,7 +31100,7 @@
 			file.commentCache != null && !this.editor.isChromelessView())
 		{
 			var pageId = (this.currentPage != null) ? this.currentPage.getId() : null;
-			var cells = {};
+			var cells = Object.create(null);
 
 			for (var i = 0; i < file.commentCache.length; i++)
 			{
@@ -33332,7 +33316,7 @@ var CommentsWindow = function(editorUi, x, y, w, h, saveCallback)
 	});
 
 	//Periodically refresh time every one minute
-	setInterval(refreshCommentsTime, 60000);
+	var refreshCommentsThread = setInterval(refreshCommentsTime, 60000);
 	this.refreshCommentsTime = refreshCommentsTime;
 	
 	this.window = new mxWindow(mxResources.get('comments'), div, x, y, w, h, true, true);
@@ -33350,6 +33334,8 @@ var CommentsWindow = function(editorUi, x, y, w, h, saveCallback)
 
 	editorUi.installResizeHandler(this, true, function()
 	{
+		clearInterval(refreshCommentsThread);
+		refreshCommentsThread = null;
 		editorUi.removeListener(commentsChangedListener);
 	});
 };

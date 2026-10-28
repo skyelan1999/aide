@@ -233,14 +233,15 @@ mxShapeMockupiPhone.prototype.foreground = function(c, x, y, w, h, rSize)
 		var strokeColor2 = '#657E8F';
 
 		c.setStrokeColor(strokeColor2);
-		var i = 5;
+		var stripeStep = Math.max(5, w / 1000);
+		var i = stripeStep;
 		c.begin();
 
 		while (i < w)
 		{
 			c.moveTo(i, 0);
 			c.lineTo(i, h);
-			i = i + 5;
+			i = i + stripeStep;
 		}
 
 		c.stroke();
@@ -782,14 +783,15 @@ mxShapeMockupiBgStriped.prototype.foreground = function(c, x, y, w, h)
 	var strokeColor2 = mxUtils.getValue(this.style, mxMockupC.STYLE_STROKECOLOR2, '');
 
 	c.setStrokeColor(strokeColor2);
-	var i = 5;
+	var stripeStep = Math.max(5, w / 1000);
+		var i = stripeStep;
 	c.begin();
 
 	while (i < w)
 	{
 		c.moveTo(i, 0);
 		c.lineTo(i, h);
-		i = i + 5;
+		i = i + stripeStep;
 	}
 
 	c.stroke();
@@ -5690,7 +5692,10 @@ mxShapeMockupiIconGrid.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 	var gridSize = mxUtils.safeDecodeURIComponent(mxUtils.getValue(this.style, mxMockupC.GRID_SIZE, '3,3').toString()).split(',');
-	this.background(c, w, h, gridSize);
+	gridSize = [Number(gridSize[0]), Number(gridSize[1])];
+    if (!isFinite(gridSize[0]) || !isFinite(gridSize[1]) || gridSize[0] < 1 || gridSize[1] < 1) return;
+    gridSize = [Math.min(1000, Math.floor(gridSize[0])), Math.min(1000, Math.floor(gridSize[1]))];
+    this.background(c, w, h, gridSize);
 	c.setShadow(false);
 
 	this.foreground(c, w, h, gridSize);
@@ -5706,9 +5711,10 @@ mxShapeMockupiIconGrid.prototype.background = function(c, w, h, gridSize)
 	var boxSizeX = w / (parseInt(gridSize[0],10) + (gridSize[0]-1) * 0.5);
 	var boxSizeY = h / (parseInt(gridSize[1],10) + (gridSize[1]-1) * 0.5);
 
-	for (var i = 0; i < gridSize[0]; i++)
+	var count = 0;
+	for (var i = 0; i < gridSize[0] && count < 1000; i++)
 	{
-		for (var j = 0; j < gridSize[1]; j++)
+		for (var j = 0; j < gridSize[1] && count++ < 1000; j++)
 		{
 			c.rect(boxSizeX * 1.5 * i, boxSizeY * 1.5 * j, boxSizeX, boxSizeY);
 			c.fillAndStroke();
@@ -5721,9 +5727,10 @@ mxShapeMockupiIconGrid.prototype.foreground = function(c, w, h, gridSize)
 	var boxSizeX = w / (parseInt(gridSize[0],10) + (gridSize[0]-1) * 0.5);
 	var boxSizeY = h / (parseInt(gridSize[1],10) + (gridSize[1]-1) * 0.5);
 
-	for (var i = 0; i < gridSize[0]; i++)
+	var count = 0;
+	for (var i = 0; i < gridSize[0] && count < 1000; i++)
 	{
-		for (var j = 0; j < gridSize[1]; j++)
+		for (var j = 0; j < gridSize[1] && count++ < 1000; j++)
 		{
 			c.begin();
 			c.moveTo(boxSizeX * 1.5 * i, boxSizeY * 1.5 * j);
@@ -6181,14 +6188,15 @@ mxShapeMockupiPad.prototype.foreground = function(c, x, y, w, h, rSize)
 		var strokeColor2 = '#657E8F';
 
 		c.setStrokeColor(strokeColor2);
-		var i = 7;
+		var stripeStep = Math.max(7, w / 1000);
+		var i = stripeStep;
 		c.begin();
 
 		while (i < w)
 		{
 			c.moveTo(i, 0);
 			c.lineTo(i, h);
-			i = i + 7;
+			i = i + stripeStep;
 		}
 
 		c.stroke();

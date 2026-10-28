@@ -1155,7 +1155,7 @@ EditorUi = function(editor, container, lightbox)
 			 }
 		 }
 		 
-		 value = fread(f,n);
+		 var value = fread(f,n);
 		 fread(f,4);
 		 
 		 if (type == 'IEND')
@@ -2101,7 +2101,7 @@ EditorUi.prototype.installShapePicker = function()
 					
 					while (temp != null && graph.model.isVertex(temp) && geo != null && geo.relative)
 					{
-						cell = temp;
+						var cell = temp;
 						temp = graph.model.getParent(cell)
 						geo = graph.getCellGeometry(temp);
 					}
@@ -3932,7 +3932,7 @@ EditorUi.prototype.initCanvas = function()
 			{
 				var backUrl = Graph.sanitizeLink(toolbarConfig.backBtn.url);
 
-				if (backUrl != null)
+				if (backUrl != null && Graph.isSameOrigin(backUrl))
 				{
 					addButton(mxUtils.bind(this, function(evt)
 					{
@@ -4214,6 +4214,7 @@ EditorUi.prototype.initCanvas = function()
 			{
 				var refreshUrl = (toolbarConfig.refreshBtn.url == null) ? null :
 					Graph.sanitizeLink(toolbarConfig.refreshBtn.url);
+				if (refreshUrl != null && !Graph.isSameOrigin(refreshUrl)) refreshUrl = null;
 
 				addButton(mxUtils.bind(this, function(evt)
 				{
@@ -7678,7 +7679,7 @@ EditorUi.prototype.createKeyHandler = function(editor)
 		39: mxConstants.DIRECTION_EAST, 40: mxConstants.DIRECTION_SOUTH};
 	var keyHandlerGetFunction = keyHandler.getFunction;
 
-	mxKeyHandler.prototype.getFunction = function(evt)
+	keyHandler.getFunction = function(evt)
 	{
 		if (graph.isEnabled())
 		{

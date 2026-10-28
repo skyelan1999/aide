@@ -3721,7 +3721,7 @@ var FilenameDialog = function(editorUi, filename, buttonText, fn, label,
 		table.appendChild(content);
 	}
 	
-	row = document.createElement('div');
+	var row = document.createElement('div');
 	row.style.gridColumn = '1 / span 2';
 	row.style.paddingTop = (hints != null) ? '6px' : '14px';
 	row.style.whiteSpace = 'nowrap';

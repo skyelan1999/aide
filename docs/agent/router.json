@@ -1043,6 +1043,26 @@
         "node",
         "--check",
         "scripts/sync_drawio_data_integrity.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-workbench-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-workbench-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-workbench-palette-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/sync_drawio_workbench_review.cjs"
       ]
     ],
     "full": [

@@ -3467,7 +3467,7 @@ ArrangePanel.prototype.addGeometryHandler = function(input, fn)
 
 			if (isNaN(value))
 			{
-				input.value = initialValue + ' ' + panel.getUnit();
+				input.value = (typeof initialValue == 'number') ? initialValue + ' ' + panel.getUnit() : initialValue;
 			}
 			else if (value != initialValue)
 			{
@@ -4057,7 +4057,7 @@ TextFormatPanel.prototype.addFont = function(container)
 		{
 			document.execCommand('superscript', false, null);
 		}, stylePanel3)
-		sub.style.marginLeft = '10px';
+		sup.style.marginLeft = '10px';
 		
 		var tmp = stylePanel3.cloneNode(false);
 		tmp.style.paddingTop = '4px';

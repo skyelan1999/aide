@@ -1748,7 +1748,7 @@
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'checkbox;strokeColor=none;fillColor=#009587;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (on, hover))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (on, hover)');
 			}),
 			this.addEntry(dt + 'checkbox on focused pressed light dark', function()
 			{
@@ -1757,13 +1757,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'checkbox;strokeColor=none;fillColor=#009587;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (on, focused or pressed))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (on, focused or pressed)');
 			}),
 			this.addEntry(dt + 'checkbox on disabled light', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'checkbox;strokeColor=none;fillColor=#B0B0B0;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (on, disabled, light))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (on, disabled, light)');
 			}),
 			this.addEntry(dt + 'checkbox on disabled focused light', function()
 			{
@@ -1772,13 +1772,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'checkbox;strokeColor=none;fillColor=#B0B0B0;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (on, disabled, focused, light))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (on, disabled, focused, light)');
 			}),
 			this.addEntry(dt + 'checkbox off hover light', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'checkbox;strokeColor=#666666;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, hover, light))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, hover, light)');
 			}),
 			this.addEntry(dt + 'checkbox off focused pressed light', function()
 			{
@@ -1787,13 +1787,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'checkbox;strokeColor=#666666;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, focused or pressed, light))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, focused or pressed, light)');
 			}),
 			this.addEntry(dt + 'checkbox off disabled light', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'checkbox;strokeColor=#B0B0B0;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, disabled, light))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, disabled, light)');
 			}),
 			this.addEntry(dt + 'checkbox off disabled focused light', function()
 			{
@@ -1802,13 +1802,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'checkbox;strokeColor=#B0B0B0;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, disabled, focused, light))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, disabled, focused, light)');
 			}),
 			this.addEntry(dt + 'checkbox on disabled dark', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'checkbox;strokeColor=none;fillColor=#676767;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (on, disabled, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (on, disabled, dark)');
 			}),
 			this.addEntry(dt + 'checkbox on disabled focused dark', function()
 			{
@@ -1817,13 +1817,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'checkbox;strokeColor=none;fillColor=#676767;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (on, disabled, focused, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (on, disabled, focused, dark)');
 			}),
 			this.addEntry(dt + 'checkbox off hover dark', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'checkbox;strokeColor=#ffffff;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, hover, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, hover, dark)');
 			}),
 			this.addEntry(dt + 'checkbox off focused pressed dark', function()
 			{
@@ -1832,13 +1832,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'checkbox;strokeColor=#ffffff;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, focused or pressed, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, focused or pressed, dark)');
 			}),
 			this.addEntry(dt + 'checkbox off disabled dark', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'checkbox;strokeColor=#666666;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, disabled, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Checkbox (off, disabled, dark)');
 			}),
 			this.addEntry(dt + 'checkbox off disabled focused dark', function()
 			{
@@ -1847,13 +1847,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'checkbox;strokeColor=#666666;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, disabled, focused, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Checkbox (off, disabled, focused, dark)');
 			}),
 			this.addEntry(dt + 'radio button on hover light dark', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'radiobutton;strokeColor=#009587;fillColor=#009587;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (on, hover))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (on, hover)');
 			}),
 			this.addEntry(dt + 'radio button on focused pressed light dark', function()
 			{
@@ -1862,13 +1862,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'radiobutton;strokeColor=#009587;fillColor=#009587;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (on, focused or pressed))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (on, focused or pressed)');
 			}),
 			this.addEntry(dt + 'radio button on disabled light', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'radiobutton;strokeColor=#B0B0B0;fillColor=#B0B0B0;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (on, disabled, light))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (on, disabled, light)');
 			}),
 			this.addEntry(dt + 'radio button on disabled focused light', function()
 			{
@@ -1877,13 +1877,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'radiobutton;strokeColor=#B0B0B0;fillColor=#B0B0B0;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (on, disabled, focused, light))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (on, disabled, focused, light)');
 			}),
 			this.addEntry(dt + 'radio button off hover light', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'radiobutton;strokeColor=#666666;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, hover, light))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, hover, light)');
 			}),
 			this.addEntry(dt + 'radio button off focused pressed light', function()
 			{
@@ -1892,13 +1892,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'radiobutton;strokeColor=#666666;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, focused or pressed, light))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, focused or pressed, light)');
 			}),
 			this.addEntry(dt + 'radio button off disabled light', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'radiobutton;strokeColor=#B0B0B0;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, disabled, light))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, disabled, light)');
 			}),
 			this.addEntry(dt + 'radio button off disabled focused light', function()
 			{
@@ -1907,13 +1907,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'radiobutton;strokeColor=#B0B0B0;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, disabled, focused, light))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, disabled, focused, light)');
 			}),
 			this.addEntry(dt + 'radio button on disabled dark', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'radiobutton;strokeColor=#676767;fillColor=#676767;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (on, disabled, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (on, disabled, dark)');
 			}),
 			this.addEntry(dt + 'radio button on disabled focused dark', function()
 			{
@@ -1922,13 +1922,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'radiobutton;strokeColor=#676767;fillColor=#676767;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (on, disabled, focused, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (on, disabled, focused, dark)');
 			}),
 			this.addEntry(dt + 'radio button off hover dark', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'radiobutton;strokeColor=#ffffff;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, hover, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, hover, dark)');
 			}),
 			this.addEntry(dt + 'radio button off focused pressed dark', function()
 			{
@@ -1937,13 +1937,13 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'radiobutton;strokeColor=#ffffff;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, focused or pressed, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, focused or pressed, dark)');
 			}),
 			this.addEntry(dt + 'radio button off disabled dark', function()
 			{
 				var bg1 = new mxCell('', new mxGeometry(0, 0, 16, 16), s2 + 'radiobutton;strokeColor=#666666;fillColor=none;strokeWidth=2;aspect=fixed;sketch=0;html=1;');
 				bg1.vertex = true;
-				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, disabled, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 16, 16, 'Radio button (off, disabled, dark)');
 			}),
 			this.addEntry(dt + 'radio button off disabled focused dark', function()
 			{
@@ -1952,7 +1952,7 @@
 				var part1 = new mxCell('', new mxGeometry(16, 16, 16, 16), s2 + 'radiobutton;strokeColor=#666666;fillColor=none;strokeWidth=2;sketch=0;html=1;');
 				part1.vertex = true;
 				bg1.insert(part1);
-				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, disabled, focused, dark))');
+				return sb.createVertexTemplateFromCells([bg1], 48, 48, 'Radio button (off, disabled, focused, dark)');
 			}),
 			this.addEntry(dt + 'switch on light', function()
 			{
@@ -2064,7 +2064,7 @@
 		var s = "dashed=0;shape=";
 		var s2 = "dashed=0;shape=mxgraph.gmdl.";
 		var gn = 'mxgraph.gmdl';
-		var dt = 'gmdl google media design library tab ';
+		var dt = 'gmdl google media design library stepper ';
 		var sb = this;
 		
 		var fns = [
@@ -2271,9 +2271,9 @@
 				text2.vertex = true;
 				var part1 = new mxCell('', new mxGeometry(0, 45, 346, 10), s + 'line;strokeWidth=2;noLabel=1;strokeColor=#1F9BFD;');
 				part1.vertex = true;
-				return sb.createVertexTemplateFromCells([text1, text2, part1], 346, 55, 'Single-line text field (normal, light)');
+				return sb.createVertexTemplateFromCells([text1, text2, part1], 346, 55, 'Single-line text field (focused, light)');
 			}),
-			this.addEntry(dt + 'single line text field focus light', function()
+			this.addEntry(dt + 'single line text field normal light', function()
 			{
 				var text1 = new mxCell('Label text', new mxGeometry(0, 0, 346, 30), 'text;fontColor=#cccccc;fontSize=12;verticalAlign=middle;strokeColor=none;fillColor=none;whiteSpace=wrap;html=1;');
 				text1.vertex = true;
@@ -2283,7 +2283,7 @@
 				part1.vertex = true;
 				return sb.createVertexTemplateFromCells([text1, text2, part1], 346, 55, 'Single-line text field (normal, light)');
 			}),
-			this.addEntry(dt + 'single line text field focus light dark', function()
+			this.addEntry(dt + 'single line text field normal light dark', function()
 			{
 				var text1 = new mxCell('Label text', new mxGeometry(0, 0, 346, 30), 'text;fontColor=#999999;fontSize=12;verticalAlign=middle;strokeColor=none;fillColor=none;textOpacity=80;whiteSpace=wrap;html=1;');
 				text1.vertex = true;
@@ -2301,9 +2301,9 @@
 				text2.vertex = true;
 				var part1 = new mxCell('', new mxGeometry(0, 45, 346, 10), s + 'line;strokeWidth=2;noLabel=1;strokeColor=#1F9BFD;');
 				part1.vertex = true;
-				return sb.createVertexTemplateFromCells([text1, text2, part1], 346, 55, 'Single-line text field (normal, dark)');
+				return sb.createVertexTemplateFromCells([text1, text2, part1], 346, 55, 'Single-line text field (focused, dark)');
 			}),
-			this.addEntry(dt + 'single line text field focus dark', function()
+			this.addEntry(dt + 'single line text field normal dark', function()
 			{
 				var text1 = new mxCell('Label text', new mxGeometry(0, 0, 346, 30), 'text;fontColor=#999999;fontSize=12;verticalAlign=middle;strokeColor=none;fillColor=none;whiteSpace=wrap;html=1;');
 				text1.vertex = true;

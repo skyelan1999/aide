@@ -13,6 +13,8 @@ async function main() {
   try {
     context = await browser.newContext();const page = await context.newPage();
     page.on('pageerror', error => {errors.push(error.message);fs.appendFileSync(path.join(out,'page-errors.log'),error.stack+'\n');});
+    if (process.env.AIDE_DRAWIO_TRACE) page.on('console', message => fs.appendFileSync(path.join(out,'console.log'),message.type()+': '+message.text()+'\n'));
+
     await context.addInitScript(() => {
       if (window === window.parent) return;
       let safety;
@@ -42,11 +44,15 @@ async function main() {
       if (url.pathname === '/') return route.fulfill({contentType:'text/html',body:'<!doctype html><meta charset="utf-8"><title>Owned draw.io component</title><body style="margin:0;background:#fff;color:#333"><main id="preview" style="height:95vh"></main>'});
       const file = path.resolve(web, '.' + decodeURIComponent(url.pathname) + (url.pathname.endsWith('/')?'index.html':''));
       if (!file.startsWith(web + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return route.fulfill({status:404,body:''});
+      const bootRoot = process.env.AIDE_DRAWIO_BOOTSTRAP_ASSETS;
+      if (bootRoot && url.pathname.startsWith('/vendor/drawio/')) {const ownedAsset=path.join(bootRoot,url.pathname.slice('/vendor/drawio/'.length));if(fs.existsSync(ownedAsset)&&fs.statSync(ownedAsset).isFile())return route.fulfill({contentType:'application/javascript',body:fs.readFileSync(ownedAsset)});}
       const ext = path.extname(file), type = {'.js':'application/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.gif':'image/gif','.xml':'application/xml','.txt':'text/plain'}[ext] || 'application/octet-stream';
       return route.fulfill({contentType:type,body:fs.readFileSync(file)});
     });
     await page.goto('https://aide-drawio-owned.test/');
     await page.evaluate(() => {window.t = value => value;window.ownedSaves = [];});
+    if (process.env.AIDE_DRAWIO_TRACE) await page.evaluate(() => window.addEventListener('message', e => console.log('owned-message', typeof e.data === 'string' ? e.data : JSON.stringify(e.data))));
+
     await page.addScriptTag({content:setup});
     async function open(xml) {
       await page.evaluate(xml => setupDrawioFrame(document.querySelector('#preview'), xml, value=>ownedSaves.push(value), 'ownedDrawioHandler'), xml);
@@ -101,6 +107,7 @@ async function main() {
       if (process.env.AIDE_DRAWIO_CAPTION_METADATA_ACCEPTANCE) checks.push(...await require('./drawio-caption-metadata-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_FIFTY_PALETTE_ACCEPTANCE) checks.push(...await require('./drawio-fifty-palette-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_IMPORT_SECURITY_ACCEPTANCE) checks.push(...await require('./drawio-import-security-browser-cases.cjs')(frame,out,theme));
+      if (process.env.AIDE_DRAWIO_WORKBENCH_REVIEW) {if(!process.env.AIDE_DRAWIO_WORKBENCH_PALETTE_ONLY)checks.push(...await require('./drawio-workbench-browser-cases.cjs')(frame,out,theme));checks.push(...await require('./drawio-workbench-palette-browser-cases.cjs')(frame,out,theme));}
       if (process.env.AIDE_DRAWIO_DATA_REVIEW) checks.push(...await require('./drawio-data-integrity-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_EDITING_REVIEW) checks.push(...await require('./drawio-editing-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_SECOND_LAYOUT_ACCEPTANCE) checks.push(...await require('./drawio-second-layout-browser-cases.cjs')(frame,out,theme));

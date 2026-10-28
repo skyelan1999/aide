@@ -18,7 +18,33 @@
     334,
     365
   ],
-  "verifiedPendingPush": [],
+  "verifiedPendingPush": [
+    336,
+    337,
+    338,
+    339,
+    341,
+    342,
+    343,
+    344,
+    345,
+    346,
+    347,
+    349,
+    350,
+    351,
+    352,
+    353,
+    354,
+    355,
+    357,
+    358,
+    359,
+    360,
+    361,
+    362,
+    551
+  ],
   "blockedIssues": [],
   "alreadyCovered": [],
   "issues": {
@@ -98,6 +124,131 @@
       "summary": "Count distinct requested and actual tags in AND selectors",
       "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
       "comment": "https://github.com/skyelan1999/aide/issues/365#issuecomment-6461900427"
+    },
+    "336": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Queue concurrent Org Chart callbacks until the constructor loads; handle failure, timeout, retry, callback errors and spinner ownership"
+    },
+    "337": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Use a prototype-free scoped-layout cell set"
+    },
+    "338": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Preserve selected descendants of prototype-named unselected ancestors in JSON export"
+    },
+    "339": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Use prototype-free sets for non-current comment anchors and current-page overlays"
+    },
+    "341": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Clear the comments refresh interval when its window is destroyed"
+    },
+    "342": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Validate Icon Grid dimensions and cap each rendering pass at 1000 icons"
+    },
+    "343": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Sample oversized iOS stripes with at most about 1000 stripes while retaining normal spacing"
+    },
+    "344": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Keep FilenameDialog row local"
+    },
+    "345": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Keep PNG parser ancillary chunk data local"
+    },
+    "346": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Keep shape-picker relative-parent traversal local"
+    },
+    "347": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Allow only same-origin Back/Refresh toolbar destinations; rejected Refresh targets reload locally"
+    },
+    "349": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Install special keyboard dispatch on each key handler instance instead of the global prototype"
+    },
+    "350": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Restore invalid geometry fields without duplicating their unit"
+    },
+    "351": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Apply the intended margin to the superscript button"
+    },
+    "352": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Keep table painting scale local"
+    },
+    "353": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Remove the extra closing parenthesis from all 28 selection-control names"
+    },
+    "354": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Correct two blue focus titles and three gray normal search tags, retaining the separate existing focus controls"
+    },
+    "355": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Index all eleven Steppers under stepper instead of tab"
+    },
+    "357": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Capture the iOS Sidebar locally and keep factories independent of window.sb"
+    },
+    "358": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Index Email under email/mail and preserve Calendar search isolation"
+    },
+    "359": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Make both SAP Area and Default Shapes collections searchable by category"
+    },
+    "360": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Make the Full Port label part of its composite parent"
+    },
+    "361": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Use the existing electrical AND stencil for AND Gate and the native OR renderer for OR Gate"
+    },
+    "362": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Give Infrastructure/Tenant roles their own search terms while retaining their resource and color"
+    },
+    "551": {
+      "status": "fixed-verified-awaiting-push",
+      "cycle": 74,
+      "summary": "Capture each initializer Sidebar in seven factories that previously depended on the iOS global"
     }
   },
   "status": "in_progress",

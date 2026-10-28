@@ -113,7 +113,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "第三批首11项通过198quick及16组实际组件浏览器检查；其余39项待处理。",
+      "summary": "第三批36/50已验证；本组25项通过202quick和22组实际组件浏览器检查。",
       "evidence": [
         "docs/reviews/2026-10-26-open-issue-review/verification.json",
         "docs/reviews/2026-10-26-open-issue-review/ordered-verification.json",
@@ -186,7 +186,8 @@
         "docs/reviews/2026-10-26-open-issue-review/cycle-070.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-071.json",
         "docs/reviews/2026-10-26-open-issue-review/cycle-072.json",
-        "docs/reviews/2026-10-26-open-issue-review/cycle-073.json"
+        "docs/reviews/2026-10-26-open-issue-review/cycle-073.json",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-074.json"
       ]
     },
     "documentation": {
@@ -288,22 +289,36 @@
       "instruction": "继续循环修复目标，优先本账号新报告，再按编号；只push修复分支，不合并main。"
     },
     "currentCycle": {
-      "cycle": 73,
-      "status": "completed",
+      "cycle": 74,
+      "status": "in_progress",
+      "phase": "verified-awaiting-push",
       "candidates": [
-        311,
-        326,
-        327,
-        328,
-        329,
-        330,
-        331,
-        332,
-        333,
-        334
-      ],
-      "phase": "pushed-and-commented",
-      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf"
+        336,
+        337,
+        338,
+        339,
+        341,
+        342,
+        343,
+        344,
+        345,
+        346,
+        347,
+        349,
+        350,
+        351,
+        352,
+        353,
+        354,
+        355,
+        357,
+        358,
+        359,
+        360,
+        361,
+        362,
+        551
+      ]
     },
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
@@ -442,7 +457,33 @@
         365
       ],
       "blockedIssues": [],
-      "verifiedPendingPush": [],
+      "verifiedPendingPush": [
+        336,
+        337,
+        338,
+        339,
+        341,
+        342,
+        343,
+        344,
+        345,
+        346,
+        347,
+        349,
+        350,
+        351,
+        352,
+        353,
+        354,
+        355,
+        357,
+        358,
+        359,
+        360,
+        361,
+        362,
+        551
+      ],
       "ledger": "docs/reviews/2026-10-26-open-issue-review/fifty-20261028-03.json",
       "countPolicy": "Only new fixed, verified and pushed issues count. Previous two batches excluded. No main merge, Release or deploy."
     },

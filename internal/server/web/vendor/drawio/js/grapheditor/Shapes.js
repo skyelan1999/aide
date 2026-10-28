@@ -355,7 +355,7 @@
 			// Negative transform to avoid save/restore
 			c.rotate(-this.getShapeRotation(), flipH, flipV, x + w / 2, y + h / 2);
 			
-			s = this.scale;
+			var s = this.scale;
 			x = this.bounds.x / s;
 			y = this.bounds.y / s;
 			w = this.bounds.width / s;
