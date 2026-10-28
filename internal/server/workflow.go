@@ -4251,7 +4251,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			if err := safePath(p); err != nil {
 				return nil, err
 			}
-			return a.sftpList(pathJoinRemote(remotePath, p))
+			// remotePath is already the task root; sftpList would add the current root again.
+			return a.sftpListRemote(pathJoinRemote(remotePath, p), p)
 		}
 		if bound {
 			return a.listBoundLocalDir(wsRoot, p)
