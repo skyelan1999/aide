@@ -34,16 +34,14 @@ func (p *linkReferenceParagraphTransformer) Transform(node *ast.Paragraph, reade
 		break
 	}
 
-	offset := 0
+	// Compact retained segments once instead of shifting the whole suffix per definition.
+	read, write := 0, 0
 	for _, remove := range removes {
-		if len(lines) == 0 {
-			break
-		}
-		s := lines[remove[1]-offset:]
-		lines = lines[0 : remove[0]-offset]
-		lines = append(lines, s...)
-		offset = remove[1]
+		write += copy(lines[write:], lines[read:remove[0]])
+		read = remove[1]
 	}
+	write += copy(lines[write:], lines[read:])
+	lines = lines[:write]
 
 	if len(lines) == 0 {
 		node.Parent().RemoveChild(node)

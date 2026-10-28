@@ -4,7 +4,25 @@
   "baselineCommit": "26554928a37bb2c699c9df1422cace9056b9e530",
   "target": 50,
   "fixedCount": 33,
-  "verifiedPendingPush": [],
+  "verifiedPendingPush": [
+    234,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    256,
+    257,
+    258
+  ],
   "fixedIssues": [
     206,
     207,
@@ -320,6 +338,91 @@
       "summary": "WebIcons Diigo 与 Friendfeed 搜索词",
       "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
       "comment": "https://github.com/skyelan1999/aide/issues/239#issuecomment-6459289620"
+    },
+    "234": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "DOCX 超链接仅允许 HTTP/HTTPS/mailto 和相对/片段地址；不宣称默认CSP下已复现脚本执行"
+    },
+    "240": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "异步库闭包捕获 entry/k，预载回调也设置并重置索引归属"
+    },
+    "241": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "Canvas miterLimit 正确写入 miterLimit 而不改 lineJoin"
+    },
+    "242": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "Canvas 渐变按东南西北方向生成实际坐标"
+    },
+    "243": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "DOCX 符号仅解析合法 Unicode 十六进制码点并写 textContent"
+    },
+    "244": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "DOCX 生成样式在隔离作用域的 CSSOM stylesheet 中应用，保持默认CSP；支持编号伪元素和释放"
+    },
+    "245": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "三份 DOMPurify 升至官方3.4.16，保留 Graph 的 SVG 安全hook"
+    },
+    "246": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "RoughJS 零/非有限周期停止生成填充虚线，超额次数在循环前拒绝"
+    },
+    "250": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "Goldmark 强调快速路径有界，长行/不匹配候选回到标准解析器"
+    },
+    "251": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "Goldmark 引用定义移除改成一次线性压紧段落行"
+    },
+    "252": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "TTS 四模型及 espeak 固定 SHA256，离线验证支持可信摘要，缺失/不匹配即失败；临时目录验证完整再安装"
+    },
+    "253": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "PNG 图纸元数据流式有界解压，zlib/raw 兼容；解码前限制输入且超限不退到第二次解压"
+    },
+    "254": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "超大 XML/SVG 导出 fallback 使用传入 data"
+    },
+    "255": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "Rect2 双线/框架右上内轮廓保留选定角样式"
+    },
+    "256": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "零长度段采用有限方向，空/单点安全退出；真实link/pipe/flexArrow句柄无NaN"
+    },
+    "257": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "层次布局边标签几何临时变量本地声明"
+    },
+    "258": {
+      "status": "verified-pending-push",
+      "cycle": 69,
+      "summary": "view XML 注册函数样式按名称序列化，未知函数省略"
     }
   },
   "status": "in_progress",

@@ -105,3 +105,7 @@ piper 类自动附带共享 `espeak-ng-data.tar.bz2`（~7MB）。
 - **试听按钮一直「播放中…」**：已修——试听有 8s 硬超时 + finally 复位按钮；后端 fetch 也有 20s 客户端超时。
 - **首次合成慢**：模型冷加载需几秒（~100MB），属正常；之后同进程内常驻。
 - 二进制路径/模型目录可用环境变量覆盖：`SHERPA_BIN`、`SHERPA_TTS_DIR`。
+
+模型安装器固定校验四个官方模型和 espeak 数据包的 SHA-256，摘要来源见 [tts-model-checksums.json](tts-model-checksums.json)。镜像下载同样必须匹配固定摘要，缺少摘要或不匹配即停止，不会报告安装成功。体积仅作参考。
+
+离线原名归档可用 `bash scripts/tts-setup --verify-only /path/to/vits-piper-zh_CN-huayan-medium.tar.bz2`；改名或自有模型必须另外提供从可信来源取得的 `--sha256 <64位摘要>`。不要把待检文件自行计算的摘要当作独立信任依据。安装器在临时目录验证 ONNX、tokens 和对应词典/音素目录，验证完成后才写入目标目录。

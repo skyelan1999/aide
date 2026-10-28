@@ -24,10 +24,10 @@ async function renderFixture(bytes, response, zipImpl = JSZip) {
     closest() {return null;}
   }
   const context = {console, Response, Uint8Array, ArrayBuffer, DataView, TextDecoder, setTimeout, clearTimeout,
-    isDocPath: () => false, isBackupPath: () => false, t: value => value, escapeHtml: value => value,
+    teardownViewer() {}, bindViewerTeardown() {}, isDocPath: () => false, isBackupPath: () => false, t: value => value, escapeHtml: value => value,
     el: (...args) => new Element(...args), fileRawUrl: () => '/owned.docx', fetch: async () => response || new Response(bytes),
-    document: {body: {classList: {contains: () => false}}}, history: {back() {}},
-    window: {JSZip: zipImpl, docx: {async renderAsync() {rendered++;}}}};
+    document: {createElement: tag => new Element(tag), body: {classList: {contains: () => false}}}, history: {back() {}},
+    window: {AideDocxStyles: {apply:()=>()=>{}}, JSZip: zipImpl, docx: {async renderAsync() {rendered++;}}}};
   vm.createContext(context);vm.runInContext(fs.readFileSync('internal/server/web/preview-safety.js', 'utf8'), context);
   vm.runInContext(docxSource(), context);const container = new Element('div');context.ownedContainer = container;
   await vm.runInContext('setupDocxPreview(ownedContainer,"owned.docx","workspace","",{readOnly:true,origin:"owned"})', context);

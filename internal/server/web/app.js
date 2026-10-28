@@ -8720,6 +8720,9 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
 
 /* ── docx-preview 渲染器：保留标题/表格/图片/列表，支持批注 ── */
 async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
+  teardownViewer(container);
+  let canceled = false, releaseStyles = () => {};
+  bindViewerTeardown(container, () => { canceled = true; releaseStyles(); });
   container.innerHTML = '';
   const loading = el('div', 'docx-loading', t('正在加载 Word 文档…'));
   loading.style.cssText = 'padding:40px;text-align:center;color:var(--text-dim)';
@@ -8740,6 +8743,7 @@ async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const buf = await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.docxBytes);
     await window.AidePreviewSafety.checkDocx(buf, window.JSZip);
+    if (canceled) return;
 
     const toolbar = el('div', 'docx-toolbar');
     const info = el('span', 'docx-info', filePath.split('/').pop());
@@ -8759,13 +8763,16 @@ async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
 
     btnClose.onclick = () => { const dlg = container.closest('dialog'); if (dlg) dlg.close(); else if (document.body.classList.contains('file-view-mode')) history.back(); };
 
-    await window.docx.renderAsync(buf, docxBody, null, {
+    const docxStyles = document.createElement('div');
+    await window.docx.renderAsync(buf, docxBody, docxStyles, {
       className: 'docx-rendered',
       inWrapper: true,
       ignoreWidth: false,
       ignoreHeight: false,
       experimental: true,
     });
+    if (canceled) return;
+    releaseStyles = window.AideDocxStyles.apply(docxBody, docxStyles);
     loading.remove();
 
     // Knowledge views pin source identity and remain read-only. The existing

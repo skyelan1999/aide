@@ -100,6 +100,8 @@ async function main() {
       if (process.env.AIDE_DRAWIO_BOOTSTRAP_ACCEPTANCE) checks.push(...await require('./drawio-bootstrap-palette-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_CAPTION_METADATA_ACCEPTANCE) checks.push(...await require('./drawio-caption-metadata-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_FIFTY_PALETTE_ACCEPTANCE) checks.push(...await require('./drawio-fifty-palette-browser-cases.cjs')(frame,out,theme));
+      if (process.env.AIDE_DRAWIO_IMPORT_SECURITY_ACCEPTANCE) checks.push(...await require('./drawio-import-security-browser-cases.cjs')(frame,out,theme));
+      if (process.env.AIDE_DRAWIO_RUNTIME_ISSUE_ACCEPTANCE) checks.push(...await require('./drawio-runtime-issue-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_ENTERPRISE_PALETTE_ACCEPTANCE) checks.push(...await require('./drawio-enterprise-palette-browser-cases.cjs')(frame,out,theme));
     }
     const flat = '<mxGraphModel><root>' + Array.from({length:129},(_,n)=>{const i=128-n;return '<mxCell id="'+i+'"'+(i?' parent="'+(i-1)+'"':'')+'/>';}).join('') + '</root></mxGraphModel>';

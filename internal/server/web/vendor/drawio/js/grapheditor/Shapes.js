@@ -6126,7 +6126,7 @@
 		{
 			c.moveTo(w, indent);
 		}
-		else if((topRightStyle == 'square' || (topRightStyle == 'default' && rectStyle == 'square' )) || right)
+		else if((topRightStyle == 'square' || (topRightStyle == 'default' && rectStyle == 'square' )))
 		{
 			c.moveTo(w - indent, indent);
 		}
@@ -6148,7 +6148,7 @@
 		{
 			c.lineTo(w, indent);
 		}
-		else if((topRightStyle == 'square' || (topRightStyle == 'default' && rectStyle == 'square' )) || right)
+		else if((topRightStyle == 'square' || (topRightStyle == 'default' && rectStyle == 'square' )))
 		{
 			c.lineTo(w - indent, indent);
 		}
@@ -7969,7 +7969,7 @@
 			{
 				var pts = state.absolutePoints;
 
-				if (pts != null && pts.length > 0)
+				if (pts != null && pts.length > 1)
 				{
 					var n = pts.length - 1;
 					
@@ -7983,7 +7983,7 @@
 
 					var dist = Math.sqrt(dx * dx + dy * dy);
 					
-					var pt = getPosition.call(this, dist, dx / dist, dy / dist, p0, p1);
+					var pt = getPosition.call(this, dist, (dist > 0 ? dx / dist : 1), (dist > 0 ? dy / dist : 0), p0, p1);
 					
 					return new mxPoint(pt.x / s - tr.x, pt.y / s - tr.y);
 				}
@@ -7994,6 +7994,7 @@
 			}, function(bounds, pt, me)
 			{
 				var pts = state.absolutePoints;
+				if (pts == null || pts.length < 2) return;
 				var n = pts.length - 1;
 				
 				var tr = state.view.translate;
@@ -8008,7 +8009,7 @@
 				pt.x = (pt.x + tr.x) * s;
 				pt.y = (pt.y + tr.y) * s;
 
-				setPosition.call(this, dist, dx / dist, dy / dist, p0, p1, pt, me);
+				setPosition.call(this, dist, (dist > 0 ? dx / dist : 1), (dist > 0 ? dy / dist : 0), p0, p1, pt, me);
 			});
 		};
 		

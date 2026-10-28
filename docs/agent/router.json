@@ -983,6 +983,19 @@
       [
         "python3",
         "scripts/test_windows_native_package.py"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/docx-style-bridge.js"
+      ],
+      [
+        "node",
+        "scripts/test_drawio_png_import.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_tts_archive_integrity.py"
       ]
     ],
     "full": [

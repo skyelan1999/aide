@@ -856,6 +856,34 @@ Editor.repairTruncatedXml = function(text)
 Editor.extractGraphModelFromPng = function(data)
 {
 	var result = null;
+	var maxBytes = 8 * 1024 * 1024;
+	function limit()
+	{
+		var error = new Error('PNG diagram resource limit exceeded');
+		error.code = 'AIDE_DRAWIO_LIMIT';
+		throw error;
+	}
+	function inflateText(buffer, raw)
+	{
+		var stream = new pako.Inflate({raw: raw, chunkSize: 16384});
+		var chunks = [], size = 0;
+		stream.onData = function(chunk)
+		{
+			size += chunk.length;
+			if (size > maxBytes) limit();
+			chunks.push(chunk);
+		};
+		for (var pos = 0; pos < buffer.length; pos += 4096)
+		{
+			stream.push(buffer.subarray(pos, pos + 4096), pos + 4096 >= buffer.length);
+			if (stream.err) throw new Error('Invalid PNG diagram metadata');
+		}
+		if (!stream.ended) throw new Error('Incomplete PNG diagram metadata');
+		var output = new Uint8Array(size), offset = 0;
+		for (var i = 0; i < chunks.length; i++) { output.set(chunks[i], offset); offset += chunks[i].length; }
+		return new TextDecoder('utf-8').decode(output);
+	}
+	if (typeof data != 'string' || data.length > 12 * 1024 * 1024) limit();
 	
 	try
 	{
@@ -863,6 +891,7 @@ Editor.extractGraphModelFromPng = function(data)
 
 		// Workaround for invalid character error in Safari
 		var binary = (window.atob && !mxClient.IS_SF) ? atob(base64) : Base64.decode(base64, true);
+		if (binary.length > maxBytes) limit();
 		
 		EditorUi.parsePng(binary, mxUtils.bind(this, function(pos, type, length)
 		{
@@ -883,13 +912,14 @@ Editor.extractGraphModelFromPng = function(data)
 					try
 					{
 						// Spec-compliant zTXt is a zlib (RFC 1950) datastream
-						xmlData = pako.inflate(buffer, {to: 'string'});
+						xmlData = inflateText(buffer, false);
 					}
 					catch (e)
 					{
+						if (e.code == 'AIDE_DRAWIO_LIMIT') throw e;
 						// Fallback for PNGs written by the pre-fix CLI, which
 						// stored a raw DEFLATE stream [jgraph/drawio-desktop#2425]
-						xmlData = pako.inflateRaw(buffer, {to: 'string'});
+						xmlData = inflateText(buffer, true);
 					}
 
 					// Workaround for Java URL Encoder using + for spaces, which isn't compatible with JS
@@ -923,6 +953,7 @@ Editor.extractGraphModelFromPng = function(data)
 	}
 	catch (e)
 	{
+		if (e.code == 'AIDE_DRAWIO_LIMIT') throw e;
 		// ignores decoding errors
 	}
 	
