@@ -473,127 +473,169 @@
       "number": 305,
       "title": "[Bug] Report ERROR_NOT_ALL_ASSIGNED from AdjustTokenPrivileges",
       "url": "https://github.com/skyelan1999/aide/issues/305",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "AdjustTokenPrivileges仅r1==0报告e1，不处理BOOL成功但ERROR_NOT_ALL_ASSIGNED，合理ABI反馈问题；无第一方调用，未跑Windows。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 304,
       "title": "[Bug] Close temporary Winsock sockets with Closesocket",
       "url": "https://github.com/skyelan1999/aide/issues/304",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "Windows LoadConnectEx/loadWSASendRecvMsg临时Socket defer CloseHandle，Windows socket应Closesocket；once仅一次有限泄漏，非无限增长。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 303,
       "title": "[Bug] PSAPI working-set bit accessors always return false",
       "url": "https://github.com/skyelan1999/aide/issues/303",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "PSAPI Shared/Locked/LargePage/Bad mask非bit0却==1，设置对应位也恒false；静态位运算可确认，不代表当前AIDE使用这些API。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 302,
       "title": "[P2] Preserve security descriptor errors when reading absent ACLs",
       "url": "https://github.com/skyelan1999/aide/issues/302",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "Windows SECURITY_DESCRIPTOR DACL/SACL先取得err，随后!present无条件覆盖ERROR_OBJECT_NOT_FOUND，无法保留API failure；无AIDE调用/Windows运行证据。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 301,
       "title": "[P3] Propagate BSD extended attribute listing errors",
       "url": "https://github.com/skyelan1999/aide/issues/301",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "BSD ListxattrNS/FlistxattrNS/LlistxattrNS调用返回e，却if e!=nil时return0,err(named nil)，明确丢错；外部upstream修复链接待独立核验。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 300,
       "title": "[P3] Return an error for empty NetBSD sysctl query results",
       "url": "https://github.com/skyelan1999/aide/issues/300",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "syscall_netbsd.sysctlNodes按olen/sz make，零结果直接&nodes[0]；需要实际NetBSD空节点环境补验证，无第一方相关调用。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 299,
       "title": "[P3] Return an error for empty socket control messages",
       "url": "https://github.com/skyelan1999/aide/issues/299",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "ParseOneSocketControlMessage直接进入helper并读b[0]，无len guard；批量parser有header长度循环限制。无AIDE调用，Go运行尝试受工具链阻塞。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 298,
       "title": "[P3] Quote the Docker volume path in mkall.sh",
       "url": "https://github.com/skyelan1999/aide/issues/298",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "x/sys unix/mkall.sh docker --volume命令替换未引用，空格路径会拆参；仅vendored生成脚本，未运行真实docker build。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 297,
       "title": "[P3] Return an error for unmapped FreeBSD capability indexes",
       "url": "https://github.com/skyelan1999/aide/issues/297",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "cap_freebsd.rightToIndex对bit2idx中-1 sentinel返回nil error；Set/Clear/IsSet仅校验i>=n，负索引可panic；无AIDE调用，FreeBSD未跑。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 296,
       "title": "[P2] Ignore EDX as a second Tee result on Linux/386",
       "url": "https://github.com/skyelan1999/aide/issues/296",
-      "status": "reviewed-awaiting-evidence",
+      "status": "fixed-on-branch",
       "evidence": "linux386 Tee确组合r1<<32|r0，单ssize_t syscall的ABI疑点合理；未找到AIDE调用，须核对Go386 Syscall6实现和真实tee字节数。当前/usr/bin/go不是Go compiler，复现未执行成功。",
       "reviewVerdict": "needs-platform-reproduction",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 295,
       "title": "[P3] Validate payload lengths before parsing Linux control messages",
       "url": "https://github.com/skyelan1999/aide/issues/295",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "sockcmsg_linux ParseUnixCredentials/OrigDstAddr无payload长度验证，直接&m.Data[0]/unsafe结构读取；无第一方调用。尝试Go复现受当前go命令非Go工具链阻塞，不能算runtime PASS。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 294,
       "title": "[P3] Reject dedupe destination counts above uint16",
       "url": "https://github.com/skyelan1999/aide/issues/294",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "unix.IoctlFileDedupeRange len(Info)直接cast uint16，无超65535拒绝；未找到第一方AIDE调用，不应宣称当前传输路径受影响。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 293,
       "title": "[P2] Return an error for missing NetBSD ARM64 sysctl nodes",
       "url": "https://github.com/skyelan1999/aide/issues/293",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "cpu_netbsd_arm64.nametomib缺子节点时return nil,err(此前nil)，sysctlCPUID随后&mib[0]可panic；NetBSD ARM64平台待验证。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 292,
       "title": "[P3] Do not infer ARM64 SM3 from the Windows LRCPC flag",
       "url": "https://github.com/skyelan1999/aide/issues/292",
-      "status": "reviewed-awaiting-validation",
+      "status": "fixed-on-branch",
       "evidence": "x/sys cpu_windows_arm64同LRCPC feature分支设置HasSM3，两个独立指令集不应混推；无非vendor HasSM3调用，未证实现有AIDE fault。",
       "reviewVerdict": "source-confirmed-optional",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "72b0b891",
+      "repairEvidence": "cycle-092.json",
+      "nativeAcceptance": "LinuxAMD64 actual API and OS-call fixtures passed; Windows/BSD/386 native run not claimed"
     },
     {
       "number": 291,
@@ -968,10 +1010,12 @@
       "number": 248,
       "title": "[Security] Validate origin of embedded Draw.io messages",
       "url": "https://github.com/skyelan1999/aide/issues/248",
-      "status": "reviewed-awaiting-evidence",
-      "evidence": "setupDrawioFrame仅验source并postMessage('*')，缺origin检查属合理加固；但主页面default-src self也限制frame导航，隔离Chromium实际CSP阻止外部iframe加载，报告_self外域接管链当前未成立，保留补证。",
+      "status": "fixed-on-branch",
+      "evidence": "Source+origin and exact reply target already implemented; real cross-origin navigation/WindowProxy tests pass.",
       "reviewVerdict": "impact-not-established",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairCommit": "39acde7f",
+      "repairEvidence": "cycle-093.json"
     },
     {
       "number": 246,
@@ -2888,10 +2932,11 @@
       "number": 57,
       "title": "Make assistant voice calls conversational instead of narration",
       "url": "https://github.com/skyelan1999/aide/issues/57",
-      "status": "reviewed-awaiting-evidence",
-      "evidence": "app.js:voice queue/drain/pause机制存在，但已读rec.onend只停止监听；报告的“结束立即提交”需在具体通话路径复核。短口语回复、通知和语速是合理产品需求，不能按非传统bug关闭。",
+      "status": "resolved-on-main",
+      "evidence": "Existing main implementation verified this turn; closed completed, not counted as new source fix.",
       "reviewVerdict": "reasonable-feature",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairEvidence": "cycle-093.json"
     },
     {
       "number": 48,
@@ -2909,10 +2954,11 @@
       "number": 28,
       "title": "CI: full Go snapshot deadline expires after all server shards pass",
       "url": "https://github.com/skyelan1999/aide/issues/28",
-      "status": "reviewed-awaiting-evidence",
-      "evidence": "scripts/test_go_snapshot.py:SUITE_TIMEOUT_SECONDS=75*60，HOST+50；aide-ci.yml go job 90分钟。已有211a327e修复和issue评论，仍缺完整hosted rerun，不重复改预算或关闭。",
+      "status": "resolved-on-main",
+      "evidence": "Existing main implementation verified this turn; closed completed, not counted as new source fix.",
       "reviewVerdict": "existing-fix-awaiting-hosted-validation",
-      "reviewRecord": "ordered-review.json"
+      "reviewRecord": "ordered-review.json",
+      "repairEvidence": "cycle-092.json"
     }
   ],
   "orderedReview": {
