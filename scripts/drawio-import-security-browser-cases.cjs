@@ -4,7 +4,7 @@ const fs = require("fs"), path = require("path"), assert = require("assert/stric
 
 const base = "internal/server/web/vendor/drawio/js/";
 
-function png(text, raw = false, plain = false) {
+function png(text, raw = false, plain = false, compressed = null) {
     const chunk = (type, data) => {
         const header = Buffer.alloc(8);
         header.writeUInt32BE(data.length);
@@ -19,7 +19,7 @@ function png(text, raw = false, plain = false) {
         end.writeUInt32BE((crc ^ -1) >>> 0);
         return Buffer.concat([ header, data, end ]);
     };
-    const body = plain ? Buffer.concat([ Buffer.from("mxGraphModel\0"), Buffer.from(text) ]) : Buffer.concat([ Buffer.from("mxGraphModel\0\0"), raw ? zlib.deflateRawSync(text) : zlib.deflateSync(text) ]);
+    const body = plain ? Buffer.concat([ Buffer.from("mxGraphModel\0"), Buffer.from(text) ]) : Buffer.concat([ Buffer.from("mxGraphModel\0\0"), compressed || (raw ? zlib.deflateRawSync(text) : zlib.deflateSync(text)) ]);
     return "data:image/png;base64," + Buffer.concat([ Buffer.from([ 137, 80, 78, 71, 13, 10, 26, 10 ]), chunk("IHDR", Buffer.from([ 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0 ])), chunk(plain ? "tEXt" : "zTXt", body), chunk("IEND", Buffer.alloc(0)) ]).toString("base64");
 }
 
@@ -38,6 +38,8 @@ module.exports = async function(frame, out, theme) {
             png: png(encodeURIComponent(xml)),
             raw: png(encodeURIComponent(xml), true),
             plain: png(xml, false, true),
+            gzip: png(xml,false,false,zlib.gzipSync(xml)),
+            members: png(xml,false,false,Buffer.concat([...Array.from({length:4000},()=>zlib.gzipSync("")),zlib.gzipSync(xml)])),
             bomb: png("x".repeat(9 * 1024 * 1024)),
             rawBomb: png("x".repeat(9 * 1024 * 1024), true)
         };
@@ -117,6 +119,7 @@ module.exports = async function(frame, out, theme) {
             const E = {};
             Function("Editor", d.extract)(E);
             for (const name of [ "png", "raw", "plain" ]) check(E.extractGraphModelFromPng(d[name]) === d.xml, "253 " + name + " metadata");
+            for (const name of ["gzip","members"]) check(E.extractGraphModelFromPng(d[name])===null,"414 reject non-zlib "+name);
             for (const name of [ "bomb", "rawBomb" ]) {
                 let code;
                 try {

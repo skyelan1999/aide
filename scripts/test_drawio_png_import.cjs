@@ -30,6 +30,11 @@ for (const variant of [ "source", "app.min.js", "integrate.min.js" ]) {
     vm.runInContext(assignment(fs.readFileSync(base + "grapheditor/EditorUi.js", "utf8"), "EditorUi.parsePng"), ctx);
     vm.runInContext(assignment(s, "Editor.extractGraphModelFromPng"), ctx);
     const E = ctx.Editor, xml = "<mxGraphModel><root/></mxGraphModel>";
+    // PNG zTXt allows one RFC1950 zlib stream, not concatenated gzip members.
+    const zlib = require('node:zlib');
+    for (const compressed of [zlib.gzipSync(xml), Buffer.concat([...Array.from({length:4000},()=>zlib.gzipSync('')),zlib.gzipSync(xml)])]) {
+        assert.equal(E.extractGraphModelFromPng(png(xml,false,false,compressed)),null,'gzip is not PNG zTXt');
+    }
     for (const [raw, plain] of [ [ false, false ], [ true, false ], [ false, true ] ]) assert.equal(E.extractGraphModelFromPng(png(plain ? xml : encodeURIComponent(xml), raw, plain)), xml);
     for (const malformed of ['%ZZ', '%25ZZ', '%E0%A4%A']) {
         assert.equal(E.extractGraphModelFromPng(png(malformed, false, true)), null);

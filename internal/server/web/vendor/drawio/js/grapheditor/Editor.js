@@ -865,7 +865,7 @@ Editor.extractGraphModelFromPng = function(data)
 	}
 	function inflateText(buffer, raw)
 	{
-		var stream = new pako.Inflate({raw: raw, chunkSize: 16384});
+		var stream = new pako.Inflate({raw: raw, windowBits: raw ? -15 : 15, chunkSize: 16384});
 		var chunks = [], size = 0;
 		stream.onData = function(chunk)
 		{

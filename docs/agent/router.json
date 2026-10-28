@@ -1322,6 +1322,15 @@
         "node",
         "--check",
         "scripts/browser-marked-resource-scans.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_html2canvas_scans.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-html2canvas-scans.cjs"
       ]
     ],
     "full": [

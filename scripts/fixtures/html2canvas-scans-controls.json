@@ -1,0 +1,3153 @@
+{
+  "tokens": [
+    {
+      "input": "Arial, \"Noto Sans\", sans-serif",
+      "output": [
+        {
+          "type": 20,
+          "value": "Arial"
+        },
+        {
+          "type": 4
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "Noto Sans"
+        },
+        {
+          "type": 4
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "sans-serif"
+        }
+      ]
+    },
+    {
+      "input": "'quoted \\\"string'",
+      "output": [
+        {
+          "type": 0,
+          "value": "quoted \"string"
+        }
+      ]
+    },
+    {
+      "input": "\"line\\\nbreak\"",
+      "output": [
+        {
+          "type": 0,
+          "value": "linebreak"
+        }
+      ]
+    },
+    {
+      "input": "\"broken\nstring\"",
+      "output": [
+        {
+          "type": 1
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "string"
+        },
+        {
+          "type": 0,
+          "value": ""
+        }
+      ]
+    },
+    {
+      "input": "url(https://owned.invalid/a.png)",
+      "output": [
+        {
+          "type": 22,
+          "value": "https://owned.invalid/a.png"
+        }
+      ]
+    },
+    {
+      "input": "linear-gradient(45deg,rgba(1,2,3,.5),red)",
+      "output": [
+        {
+          "type": 19,
+          "value": "linear-gradient"
+        },
+        {
+          "type": 15,
+          "number": 45,
+          "flags": 4,
+          "unit": "deg"
+        },
+        {
+          "type": 4
+        },
+        {
+          "type": 19,
+          "value": "rgba"
+        },
+        {
+          "type": 17,
+          "number": 1,
+          "flags": 4
+        },
+        {
+          "type": 4
+        },
+        {
+          "type": 17,
+          "number": 2,
+          "flags": 4
+        },
+        {
+          "type": 4
+        },
+        {
+          "type": 17,
+          "number": 3,
+          "flags": 4
+        },
+        {
+          "type": 4
+        },
+        {
+          "type": 17,
+          "number": 0.5,
+          "flags": 8
+        },
+        {
+          "type": 3
+        },
+        {
+          "type": 4
+        },
+        {
+          "type": 20,
+          "value": "red"
+        },
+        {
+          "type": 3
+        }
+      ]
+    },
+    {
+      "input": "U+00A0-00FF",
+      "output": [
+        {
+          "type": 20,
+          "value": "U00FF"
+        }
+      ]
+    },
+    {
+      "input": "--x:calc(100% - 2px);/*comment*/",
+      "output": [
+        {
+          "type": 6,
+          "value": "-"
+        },
+        {
+          "type": 20,
+          "value": "-x"
+        },
+        {
+          "type": 26
+        },
+        {
+          "type": 19,
+          "value": "calc"
+        },
+        {
+          "type": 16,
+          "number": 100,
+          "flags": 4
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 6,
+          "value": "-"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 15,
+          "number": 2,
+          "flags": 4,
+          "unit": "px"
+        },
+        {
+          "type": 3
+        },
+        {
+          "type": 27
+        }
+      ]
+    },
+    {
+      "input": "\\41 BC 123e-2px #abc !important",
+      "output": [
+        {
+          "type": 20,
+          "value": "ABC"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 15,
+          "number": 1.23,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 5,
+          "value": "abc",
+          "flags": 2
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 6,
+          "value": "!"
+        },
+        {
+          "type": 20,
+          "value": "important"
+        }
+      ]
+    },
+    {
+      "input": "\"unterminated",
+      "output": [
+        {
+          "type": 0,
+          "value": "unterminated"
+        }
+      ]
+    },
+    {
+      "input": "url(a\\ b)",
+      "output": [
+        {
+          "type": 22,
+          "value": "a b"
+        }
+      ]
+    },
+    {
+      "input": "𝛼é_日本語",
+      "output": [
+        {
+          "type": 20,
+          "value": "𝛼é_日本語"
+        }
+      ]
+    },
+    {
+      "input": "0.5px \"s0\\41 \" /*c*/ x-0",
+      "output": [
+        {
+          "type": 15,
+          "number": 0.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s0A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-0"
+        }
+      ]
+    },
+    {
+      "input": "1.5px \"s1\\41 \" /*c*/ x-1",
+      "output": [
+        {
+          "type": 15,
+          "number": 1.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s1A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-1"
+        }
+      ]
+    },
+    {
+      "input": "2.5px \"s2\\41 \" /*c*/ x-2",
+      "output": [
+        {
+          "type": 15,
+          "number": 2.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s2A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-2"
+        }
+      ]
+    },
+    {
+      "input": "3.5px \"s3\\41 \" /*c*/ x-3",
+      "output": [
+        {
+          "type": 15,
+          "number": 3.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s3A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-3"
+        }
+      ]
+    },
+    {
+      "input": "4.5px \"s4\\41 \" /*c*/ x-4",
+      "output": [
+        {
+          "type": 15,
+          "number": 4.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s4A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-4"
+        }
+      ]
+    },
+    {
+      "input": "5.5px \"s5\\41 \" /*c*/ x-5",
+      "output": [
+        {
+          "type": 15,
+          "number": 5.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s5A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-5"
+        }
+      ]
+    },
+    {
+      "input": "6.5px \"s6\\41 \" /*c*/ x-6",
+      "output": [
+        {
+          "type": 15,
+          "number": 6.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s6A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-6"
+        }
+      ]
+    },
+    {
+      "input": "7.5px \"s7\\41 \" /*c*/ x-7",
+      "output": [
+        {
+          "type": 15,
+          "number": 7.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s7A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-7"
+        }
+      ]
+    },
+    {
+      "input": "8.5px \"s8\\41 \" /*c*/ x-8",
+      "output": [
+        {
+          "type": 15,
+          "number": 8.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s8A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-8"
+        }
+      ]
+    },
+    {
+      "input": "9.5px \"s9\\41 \" /*c*/ x-9",
+      "output": [
+        {
+          "type": 15,
+          "number": 9.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s9A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-9"
+        }
+      ]
+    },
+    {
+      "input": "10.5px \"s10\\41 \" /*c*/ x-10",
+      "output": [
+        {
+          "type": 15,
+          "number": 10.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s10A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-10"
+        }
+      ]
+    },
+    {
+      "input": "11.5px \"s11\\41 \" /*c*/ x-11",
+      "output": [
+        {
+          "type": 15,
+          "number": 11.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s11A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-11"
+        }
+      ]
+    },
+    {
+      "input": "12.5px \"s12\\41 \" /*c*/ x-12",
+      "output": [
+        {
+          "type": 15,
+          "number": 12.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s12A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-12"
+        }
+      ]
+    },
+    {
+      "input": "13.5px \"s13\\41 \" /*c*/ x-13",
+      "output": [
+        {
+          "type": 15,
+          "number": 13.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s13A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-13"
+        }
+      ]
+    },
+    {
+      "input": "14.5px \"s14\\41 \" /*c*/ x-14",
+      "output": [
+        {
+          "type": 15,
+          "number": 14.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s14A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-14"
+        }
+      ]
+    },
+    {
+      "input": "15.5px \"s15\\41 \" /*c*/ x-15",
+      "output": [
+        {
+          "type": 15,
+          "number": 15.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s15A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-15"
+        }
+      ]
+    },
+    {
+      "input": "16.5px \"s16\\41 \" /*c*/ x-16",
+      "output": [
+        {
+          "type": 15,
+          "number": 16.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s16A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-16"
+        }
+      ]
+    },
+    {
+      "input": "17.5px \"s17\\41 \" /*c*/ x-17",
+      "output": [
+        {
+          "type": 15,
+          "number": 17.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s17A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-17"
+        }
+      ]
+    },
+    {
+      "input": "18.5px \"s18\\41 \" /*c*/ x-18",
+      "output": [
+        {
+          "type": 15,
+          "number": 18.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s18A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-18"
+        }
+      ]
+    },
+    {
+      "input": "19.5px \"s19\\41 \" /*c*/ x-19",
+      "output": [
+        {
+          "type": 15,
+          "number": 19.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s19A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-19"
+        }
+      ]
+    },
+    {
+      "input": "20.5px \"s20\\41 \" /*c*/ x-20",
+      "output": [
+        {
+          "type": 15,
+          "number": 20.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s20A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-20"
+        }
+      ]
+    },
+    {
+      "input": "21.5px \"s21\\41 \" /*c*/ x-21",
+      "output": [
+        {
+          "type": 15,
+          "number": 21.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s21A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-21"
+        }
+      ]
+    },
+    {
+      "input": "22.5px \"s22\\41 \" /*c*/ x-22",
+      "output": [
+        {
+          "type": 15,
+          "number": 22.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s22A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-22"
+        }
+      ]
+    },
+    {
+      "input": "23.5px \"s23\\41 \" /*c*/ x-23",
+      "output": [
+        {
+          "type": 15,
+          "number": 23.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s23A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-23"
+        }
+      ]
+    },
+    {
+      "input": "24.5px \"s24\\41 \" /*c*/ x-24",
+      "output": [
+        {
+          "type": 15,
+          "number": 24.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s24A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-24"
+        }
+      ]
+    },
+    {
+      "input": "25.5px \"s25\\41 \" /*c*/ x-25",
+      "output": [
+        {
+          "type": 15,
+          "number": 25.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s25A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-25"
+        }
+      ]
+    },
+    {
+      "input": "26.5px \"s26\\41 \" /*c*/ x-26",
+      "output": [
+        {
+          "type": 15,
+          "number": 26.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s26A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-26"
+        }
+      ]
+    },
+    {
+      "input": "27.5px \"s27\\41 \" /*c*/ x-27",
+      "output": [
+        {
+          "type": 15,
+          "number": 27.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s27A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-27"
+        }
+      ]
+    },
+    {
+      "input": "28.5px \"s28\\41 \" /*c*/ x-28",
+      "output": [
+        {
+          "type": 15,
+          "number": 28.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s28A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-28"
+        }
+      ]
+    },
+    {
+      "input": "29.5px \"s29\\41 \" /*c*/ x-29",
+      "output": [
+        {
+          "type": 15,
+          "number": 29.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s29A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-29"
+        }
+      ]
+    },
+    {
+      "input": "30.5px \"s30\\41 \" /*c*/ x-30",
+      "output": [
+        {
+          "type": 15,
+          "number": 30.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s30A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-30"
+        }
+      ]
+    },
+    {
+      "input": "31.5px \"s31\\41 \" /*c*/ x-31",
+      "output": [
+        {
+          "type": 15,
+          "number": 31.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s31A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-31"
+        }
+      ]
+    },
+    {
+      "input": "32.5px \"s32\\41 \" /*c*/ x-32",
+      "output": [
+        {
+          "type": 15,
+          "number": 32.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s32A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-32"
+        }
+      ]
+    },
+    {
+      "input": "33.5px \"s33\\41 \" /*c*/ x-33",
+      "output": [
+        {
+          "type": 15,
+          "number": 33.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s33A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-33"
+        }
+      ]
+    },
+    {
+      "input": "34.5px \"s34\\41 \" /*c*/ x-34",
+      "output": [
+        {
+          "type": 15,
+          "number": 34.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s34A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-34"
+        }
+      ]
+    },
+    {
+      "input": "35.5px \"s35\\41 \" /*c*/ x-35",
+      "output": [
+        {
+          "type": 15,
+          "number": 35.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s35A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-35"
+        }
+      ]
+    },
+    {
+      "input": "36.5px \"s36\\41 \" /*c*/ x-36",
+      "output": [
+        {
+          "type": 15,
+          "number": 36.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s36A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-36"
+        }
+      ]
+    },
+    {
+      "input": "37.5px \"s37\\41 \" /*c*/ x-37",
+      "output": [
+        {
+          "type": 15,
+          "number": 37.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s37A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-37"
+        }
+      ]
+    },
+    {
+      "input": "38.5px \"s38\\41 \" /*c*/ x-38",
+      "output": [
+        {
+          "type": 15,
+          "number": 38.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s38A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-38"
+        }
+      ]
+    },
+    {
+      "input": "39.5px \"s39\\41 \" /*c*/ x-39",
+      "output": [
+        {
+          "type": 15,
+          "number": 39.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s39A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-39"
+        }
+      ]
+    },
+    {
+      "input": "40.5px \"s40\\41 \" /*c*/ x-40",
+      "output": [
+        {
+          "type": 15,
+          "number": 40.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s40A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-40"
+        }
+      ]
+    },
+    {
+      "input": "41.5px \"s41\\41 \" /*c*/ x-41",
+      "output": [
+        {
+          "type": 15,
+          "number": 41.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s41A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-41"
+        }
+      ]
+    },
+    {
+      "input": "42.5px \"s42\\41 \" /*c*/ x-42",
+      "output": [
+        {
+          "type": 15,
+          "number": 42.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s42A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-42"
+        }
+      ]
+    },
+    {
+      "input": "43.5px \"s43\\41 \" /*c*/ x-43",
+      "output": [
+        {
+          "type": 15,
+          "number": 43.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s43A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-43"
+        }
+      ]
+    },
+    {
+      "input": "44.5px \"s44\\41 \" /*c*/ x-44",
+      "output": [
+        {
+          "type": 15,
+          "number": 44.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s44A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-44"
+        }
+      ]
+    },
+    {
+      "input": "45.5px \"s45\\41 \" /*c*/ x-45",
+      "output": [
+        {
+          "type": 15,
+          "number": 45.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s45A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-45"
+        }
+      ]
+    },
+    {
+      "input": "46.5px \"s46\\41 \" /*c*/ x-46",
+      "output": [
+        {
+          "type": 15,
+          "number": 46.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s46A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-46"
+        }
+      ]
+    },
+    {
+      "input": "47.5px \"s47\\41 \" /*c*/ x-47",
+      "output": [
+        {
+          "type": 15,
+          "number": 47.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s47A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-47"
+        }
+      ]
+    },
+    {
+      "input": "48.5px \"s48\\41 \" /*c*/ x-48",
+      "output": [
+        {
+          "type": 15,
+          "number": 48.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s48A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-48"
+        }
+      ]
+    },
+    {
+      "input": "49.5px \"s49\\41 \" /*c*/ x-49",
+      "output": [
+        {
+          "type": 15,
+          "number": 49.5,
+          "flags": 8,
+          "unit": "px"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 0,
+          "value": "s49A"
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 31
+        },
+        {
+          "type": 20,
+          "value": "x-49"
+        }
+      ]
+    }
+  ],
+  "breaks": [
+    {
+      "input": "1/1/1/1",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            47,
+            49,
+            47,
+            49,
+            47,
+            49
+          ],
+          "required": false,
+          "start": 0,
+          "end": 7
+        }
+      ]
+    },
+    {
+      "input": "1/1/1/1",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            47,
+            49,
+            47,
+            49,
+            47,
+            49
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            49,
+            47,
+            49,
+            47,
+            49
+          ],
+          "required": false,
+          "start": 2,
+          "end": 4
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            49,
+            47,
+            49,
+            47,
+            49
+          ],
+          "required": false,
+          "start": 4,
+          "end": 6
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            49,
+            47,
+            49,
+            47,
+            49
+          ],
+          "required": false,
+          "start": 6,
+          "end": 7
+        }
+      ]
+    },
+    {
+      "input": "1/1/1/1",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            47,
+            49,
+            47,
+            49,
+            47,
+            49
+          ],
+          "required": false,
+          "start": 0,
+          "end": 7
+        }
+      ]
+    },
+    {
+      "input": "Hello world",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 0,
+          "end": 6
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 6,
+          "end": 11
+        }
+      ]
+    },
+    {
+      "input": "Hello world",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 0,
+          "end": 1
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 1,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 2,
+          "end": 3
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 3,
+          "end": 4
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 4,
+          "end": 6
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 6,
+          "end": 7
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 7,
+          "end": 8
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 8,
+          "end": 9
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 9,
+          "end": 10
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 10,
+          "end": 11
+        }
+      ]
+    },
+    {
+      "input": "Hello world",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 0,
+          "end": 6
+        },
+        {
+          "codePoints": [
+            72,
+            101,
+            108,
+            108,
+            111,
+            32,
+            119,
+            111,
+            114,
+            108,
+            100
+          ],
+          "required": false,
+          "start": 6,
+          "end": 11
+        }
+      ]
+    },
+    {
+      "input": "中文中文",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 0,
+          "end": 1
+        },
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 1,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 2,
+          "end": 3
+        },
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 3,
+          "end": 4
+        }
+      ]
+    },
+    {
+      "input": "中文中文",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 0,
+          "end": 1
+        },
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 1,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 2,
+          "end": 3
+        },
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 3,
+          "end": 4
+        }
+      ]
+    },
+    {
+      "input": "中文中文",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            20013,
+            25991,
+            20013,
+            25991
+          ],
+          "required": false,
+          "start": 0,
+          "end": 4
+        }
+      ]
+    },
+    {
+      "input": "1,234.56%",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 0,
+          "end": 9
+        }
+      ]
+    },
+    {
+      "input": "1,234.56%",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 2,
+          "end": 3
+        },
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 3,
+          "end": 4
+        },
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 4,
+          "end": 6
+        },
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 6,
+          "end": 7
+        },
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 7,
+          "end": 9
+        }
+      ]
+    },
+    {
+      "input": "1,234.56%",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            44,
+            50,
+            51,
+            52,
+            46,
+            53,
+            54,
+            37
+          ],
+          "required": false,
+          "start": 0,
+          "end": 9
+        }
+      ]
+    },
+    {
+      "input": "(12.5) and $12",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 0,
+          "end": 7
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 7,
+          "end": 11
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 11,
+          "end": 14
+        }
+      ]
+    },
+    {
+      "input": "(12.5) and $12",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 2,
+          "end": 4
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 4,
+          "end": 7
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 7,
+          "end": 8
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 8,
+          "end": 9
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 9,
+          "end": 11
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 11,
+          "end": 13
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 13,
+          "end": 14
+        }
+      ]
+    },
+    {
+      "input": "(12.5) and $12",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 0,
+          "end": 7
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 7,
+          "end": 11
+        },
+        {
+          "codePoints": [
+            40,
+            49,
+            50,
+            46,
+            53,
+            41,
+            32,
+            97,
+            110,
+            100,
+            32,
+            36,
+            49,
+            50
+          ],
+          "required": false,
+          "start": 11,
+          "end": 14
+        }
+      ]
+    },
+    {
+      "input": "A/B/C",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 2,
+          "end": 4
+        },
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 4,
+          "end": 5
+        }
+      ]
+    },
+    {
+      "input": "A/B/C",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 2,
+          "end": 4
+        },
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 4,
+          "end": 5
+        }
+      ]
+    },
+    {
+      "input": "A/B/C",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 2,
+          "end": 4
+        },
+        {
+          "codePoints": [
+            65,
+            47,
+            66,
+            47,
+            67
+          ],
+          "required": false,
+          "start": 4,
+          "end": 5
+        }
+      ]
+    },
+    {
+      "input": "🇨🇳🇺🇸 a",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 2,
+          "end": 5
+        },
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 5,
+          "end": 6
+        }
+      ]
+    },
+    {
+      "input": "🇨🇳🇺🇸 a",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 2,
+          "end": 5
+        },
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 5,
+          "end": 6
+        }
+      ]
+    },
+    {
+      "input": "🇨🇳🇺🇸 a",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 0,
+          "end": 2
+        },
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 2,
+          "end": 5
+        },
+        {
+          "codePoints": [
+            127464,
+            127475,
+            127482,
+            127480,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 5,
+          "end": 6
+        }
+      ]
+    },
+    {
+      "input": "1//1,1.1/1 a",
+      "options": {
+        "wordBreak": "normal",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 0,
+          "end": 11
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 11,
+          "end": 12
+        }
+      ]
+    },
+    {
+      "input": "1//1,1.1/1 a",
+      "options": {
+        "wordBreak": "break-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 0,
+          "end": 3
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 3,
+          "end": 5
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 5,
+          "end": 7
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 7,
+          "end": 9
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 9,
+          "end": 11
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 11,
+          "end": 12
+        }
+      ]
+    },
+    {
+      "input": "1//1,1.1/1 a",
+      "options": {
+        "wordBreak": "keep-all",
+        "lineBreak": "normal"
+      },
+      "output": [
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 0,
+          "end": 11
+        },
+        {
+          "codePoints": [
+            49,
+            47,
+            47,
+            49,
+            44,
+            49,
+            46,
+            49,
+            47,
+            49,
+            32,
+            97
+          ],
+          "required": false,
+          "start": 11,
+          "end": 12
+        }
+      ]
+    }
+  ]
+}
