@@ -1433,7 +1433,12 @@
         502,
         503,
         504,
-        505
+        505,
+        506,
+        507,
+        508,
+        509,
+        611
       ],
       "retainedNative": [
         335,
@@ -1450,19 +1455,19 @@
         587,
         588
       ],
-      "currentIssue": 602,
-      "nextCycle": 118,
+      "currentIssue": 510,
+      "nextCycle": 120,
       "newReports": [
         597,
         598,
         607,
-        608
+        608,
+        611
       ],
       "sourceFixedAwaitingIntegration": [
         426,
         598,
         429,
-        601,
         432,
         433,
         437,
@@ -1482,10 +1487,15 @@
         502,
         503,
         504,
-        505
+        505,
+        506,
+        507,
+        508,
+        509,
+        611
       ],
       "latestActualOpen": 90,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-117.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-119.json",
       "original83NewFixed": [
         426,
         429,
@@ -1508,11 +1518,16 @@
         502,
         503,
         504,
-        505
+        505,
+        506,
+        507,
+        508,
+        509
       ],
       "additionalFixed": [
         598,
-        601
+        601,
+        611
       ],
       "mainBaselineCI": {
         "run": 40798417426,
@@ -1528,23 +1543,31 @@
         600,
         601,
         602,
-        604
+        604,
+        611
       ],
       "ownerReportFollowup": {
         "599": "raw example has no newlines;strong/code parse;awaiting display/source clarification,keepopen",
         "600": "external independent CodexBridgePR8 candidate95ef575;do notduplicate",
         "604": "Independent CodexBridgePR8 now merged065822e; source integrated; real account quota/device acceptance not claimed",
-        "602": "Current report remains open; inspect independent plugin main after #506 checkpoint; GUI PATH discovery is next owner-priority actionable item"
+        "602": "Source fix07c3f09 in independent CodexBridgePR10,0.3.1candidate;44Node/nativeGo race/vet/6builds/actualLinuxpage pass; protectedreview,CI and realMac/WindowsaccountGUI acceptance pending"
       },
-      "verifiedLocalAwaitingPush": [
-        506
-      ],
+      "verifiedLocalAwaitingPush": [],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "5577720b",
+      "lastPushedCommit": "442bde1a",
       "lastMetadataRefresh": "2026-10-29T05:10:11.227296+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 507,
-      "ownerPriorityRepository": "/workspace/aide-pkg-CodexBridge"
+      "ownerPriorityRepository": "/workspace/aide-pkg-CodexBridge",
+      "latestIntegratedMain": "1ca40079",
+      "mainSyncRecord": "docs/reviews/2026-10-26-open-issue-review/main-sync-20261029.json",
+      "codexBridge602PR": "https://github.com/skyelan1999/aide-pkg-CodexBridge/pull/10",
+      "independentlyIntegrated": [
+        601
+      ],
+      "closedCoreIssues": [
+        601
+      ]
     }
   },
   "orderedReview": {

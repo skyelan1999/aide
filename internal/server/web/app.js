@@ -8024,8 +8024,8 @@ let _pdfjsPromise = null;
 function ensurePdfJs() {
   if (_pdfjsPromise) return _pdfjsPromise;
   _pdfjsPromise = (async () => {
-    const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs?v=5');
-    pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=5';
+    const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs?v=6');
+    pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=6';
     return pdfjs;
   })();
   return _pdfjsPromise;

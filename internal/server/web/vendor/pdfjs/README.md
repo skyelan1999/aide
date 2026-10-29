@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `895c72c332dbd608a07ae54003e5e42741c566ade52ddbd2a00c8e57ffa35d9d` |
-| `pdf.worker.min.mjs` | `2a0565629f7d8c787624251fb80ddfba93ce2345f2a970da4c0856ad93009a8f` |
+| `pdf.worker.min.mjs` | `972154f38ce697fee94fac08dfe6afe8be8b2efce496555ef0234489fc117acf` |
 
 校验：
 
@@ -84,3 +84,13 @@ PDF.js API/其余 worker 仍为 4.4.168 加上述本地补丁。仅替换私有�
 `PDFImage` 识别过滤器列表中的最后一项，修正 `numComp` 拼写并传递实际颜色分量；DeviceRGBA 使用自动 RGBA 模式，避免把缺失 alpha 补零为透明。正常指定颜色空间时依上游行为丢弃多余分量或为缺失分量补零。已有图片尺寸、行、解析结构、缓存和 LZW 预算保留；不声称此更新解决所有原生编解码报告。
 
 `node scripts/pdf-jpx-components-review.cjs` 验证 18 种原生分量/填充及 24 种 PDFImage 参数/过滤器组合、短流失败和清理后再次解码。合成 4×4 图像由 Pillow 生成，保存在 `scripts/fixtures/pdf-jpx-components.json`。真实浏览器脚本 `scripts/browser-pdf-jpx-components.cjs` 验证六种颜色/透明度/多过滤器场景的像素；可设置 `AIDE_PDF_UPSTREAM_JPX_DIR` 加跑固定提交的两份上游回归 PDF（从上游下载到临时目录，不随产品分发），检查全部十张图片均有解码结果且无解码错误。
+
+## 颜色别名与 PDF 函数（#507–#509、#611）
+
+颜色空间解析为每次独立调用维护活动集合与深度，按解析后的 Name 或对象身份识别循环，最多 128 层；异常退出也恢复状态，异步入口之间不共享计数。常规命名别名、Indexed 和重复调用可继续使用。
+
+Type0 采样函数先校验 Domain/Range 与 Size/Encode/Decode 的维度，再构建小数组。最多 8 个输入维度、32 个输出分量和总计 1048576 个样本值（所有 Size 维度与输出分量的乘积）；支持 1/2/4/8/12/16/24/32 位样本，按字节向上取整读取并检查短流，超限在分配/样本循环之前拒绝。合法 32 位值使用无符号移位，`0xffffffff` 正确归一化为 1，避免渐变被当成负数钳为黑色。预算针对单个函数；不是整页所有函数的累计计算时限。
+
+PostScript 条件块最多同时进入 128 层，解析错误后恢复计数。原有 if/ifelse 跳转输出保留；该限制不等于全部 PostScript 指令数或求值工作量预算。PDF.js 原有容错可能略过非法颜色图片或替换异常渐变，不保证超限文档完整显示。
+
+`node scripts/pdf-function-depth-review.cjs` 验证实际 worker 中的循环/边界/清理、分配前拦截、采样精度、普通渐变函数及条件控制；`scripts/browser-pdf-function-depth.cjs` 验证七个实际 PDF/worker 场景及灰色图片、常规/32 位采样渐变、PostScript 常量渐变的像素。

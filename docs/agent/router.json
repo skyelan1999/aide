@@ -1463,6 +1463,15 @@
         "node",
         "--check",
         "scripts/browser-pdf-jpx-components.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-function-depth-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-function-depth.cjs"
       ]
     ],
     "full": [

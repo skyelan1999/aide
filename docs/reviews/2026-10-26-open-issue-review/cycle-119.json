@@ -1,0 +1,54 @@
+{
+  "cycle": 119,
+  "issues": [
+    507,
+    508,
+    509,
+    611
+  ],
+  "fix": [
+    "Per-parse ColorSpace active identities and depth128 with finally cleanup",
+    "Sampled-function dimensions<=8inputs/32outputs and total<=1048576samples before allocation; precise byte reads and EOF validation",
+    "PostScript active blockdepth128 with cleanup",
+    "Unsigned32bit sampled values correct (new611 filed before modification)"
+  ],
+  "red": {
+    "result": "6 failing groups; existing if/ifelse operator control passes",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle119-red.json",
+    "scope": "controlled1024-resolution trap and array-allocation trap; no uncontrolled recursion/large allocation stress"
+  },
+  "green": [
+    {
+      "scope": "7 actual-worker groups including cycle/depth/async independence, sample boundaries/packed precision/gradient and normal condition controls",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle119-green.json"
+    },
+    {
+      "scope": "7 actual browser PDF cases, normal alias/Type0/PS/32bitgradient pixels and bounded invalid inputs",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle119-browser-final/result.json"
+    },
+    {
+      "scope": "30 prior actual browser cases (8JPX,6decoder,6resource,5canvas,5lifecycle)",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle119-*-regression.log"
+    },
+    {
+      "scope": "quick",
+      "checks": 286,
+      "status": "pass",
+      "fingerprint": "ed554b505340b7137a7dca0e4b34542880ca17d2f3896f2d481d263bee74ea27",
+      "log": ".agent-state/verify-20261029T054506240590Z.log"
+    }
+  ],
+  "limits": [
+    "Per-function and per-call limits, not total document memory/evaluation time.",
+    "PDF.js soft error handling may omit invalid inline images or use a dummy shading; no complete over-budget rendering claim.",
+    "No real workbench/device/account run."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verified, ready for source commit/push; main review pending"
+  }
+}
