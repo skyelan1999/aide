@@ -4198,4 +4198,10 @@ window.aideEnglish = {
   "正在恢复排版…": "Restoring formatting…",
   "暂以纯文本显示": "Showing plain text temporarily",
   "重新排版": "Retry formatting",
+  "网格点选": "Mesh selection",
+  "点选复杂度超出预览预算，请从连杆层级选择。": "Mesh selection exceeds preview limits. Choose a link in the hierarchy.",
+  "纹理尺寸无效或格式不受支持": "Texture dimensions are invalid or unsupported.",
+  "纹理像素超出预览预算": "Texture pixels exceed preview limits.",
+  "纹理累计像素超出预览预算": "Total texture pixels exceed preview limits.",
+  "不预览动画纹理": "Animated textures are not previewed.",
 };

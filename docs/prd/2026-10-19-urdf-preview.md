@@ -13,7 +13,7 @@
 - 支持 box、sphere、cylinder 和 mesh；mesh 支持 STL、DAE、OBJ。URDF 的连杆、joint origin、rpy、mesh scale 和材质颜色参与真实模型变换。坐标采用 URDF 的 Z 向上、长度米、角度弧度；不根据几何尺寸猜测 STL／OBJ 的单位。
 - 支持 fixed、revolute、continuous、prismatic 和 mimic；有范围的关节按 limits 夹紧，mimic 使用父关节夹紧后的实际值。floating／planar 暂只展示初始姿态，并在面板说明不支持调节。提供关节归零和连杆层级。
 - 相对资源路径相对于 URDF 或 DAE 所在文件解析。`package://包名/相对路径` 优先识别祖先目录里的 `package.xml`，也尝试同名包目录；特殊布局可以在“ROS 资源包路径”中填写相对当前工作区的包目录，根目录填 `.`。覆盖仅用于本次查看器，不修改项目或 ROS 环境。
-- 纹理支持 PNG、JPEG、WebP、GIF；URDF 和 DAE 相对纹理都通过文件接口读取。显式 URDF 材质也覆盖 OBJ／DAE 的 mesh group；没有显式覆盖时保留 DAE 自带材质。缺少法线时补算法线，STL 按实际三角面计算法线。OBJ 外部 MTL 暂不加载，遇到 mtllib 会显示说明。
+- 纹理支持静态 PNG、JPEG、WebP、GIF；URDF 和 DAE 相对纹理都通过文件接口读取。显式 URDF 材质也覆盖 OBJ／DAE 的 mesh group；没有显式覆盖时保留 DAE 自带材质。缺少法线时补算法线，STL 按实际三角面计算法线。OBJ 外部 MTL 暂不加载，遇到 mtllib 会显示说明。
 - 缺少 mesh 时保留其他可用部件并标明缺失文件；缺少 DAE 纹理时用中性纹理保留几何，同时显示资源问题。不要把带“部分资源未加载”的模型当作完整结果。
 
 所有依赖请求都沿用同一个 workspace／source／knowledgeOrigin 文件 API 范围，不直接加载 URDF 中的外部 URL、file URI 或越界路径。SSH 引用复用已有服务端文件读取和鉴权；本功能不安装 ROS，也不向浏览器暴露 SSH 凭据。
@@ -47,3 +47,11 @@ RPY采用URDF固定轴XYZ，即Rz(yaw) Ry(pitch) Rx(roll)，与相机无关；�
 模型点击与超过5px的旋转拖动分开处理。高亮只作用于所选模块，不连带子模块，切换后恢复原材质。运动、归零、碰撞模型和异步网格到达更新高亮。销毁时释放临时材质、线框、SVG、事件和图形资源；按交互调度绘制，没有常驻动画循环。
 
 本轮轻量化的实际验收范围见[2026-10-20记录](../reviews/2026-10-20-urdf-lightweight/README.md)。
+
+## 点选和纹理预算补充（#540、#542）
+
+网格点选先使用加载阶段已验证的包围盒过滤，按候选实例及材质分组（包括重叠组）合计最多10000个三角面，再调用固定r128的Mesh.raycast。命中只保留最近一个，不构建/排序全部交点。候选过密时保持完整几何显示，展开提示和检查器中的连杆层级按钮，支持点击或键盘选择，不用近似命中误选模型。离开射线的密集部件和不可见子树不参与预算。该边界针对点选，不保证模型的全部绘制/GPU填充工作量有总上限。
+
+在创建纹理Blob URL前读取并校验PNG/JPEG/GIF/WebP头部：最长边4096、单张最多4Mi像素；GIF子帧和WebP画布/帧尺寸一并核对，动画PNG/GIF/WebP不预览。进入浏览器Image/TextureLoader之前按加载请求累计最多16Mi像素；重复URL加载和缓存命中也保守计数。累计超限时替换为已有中性纹理并保留几何，说明原因；URDF直接纹理无效时保留无纹理材质。预算是声明栅格像素和加载请求上限，不是所有编解码临时内存/元数据、所有标签页或GPU内存的完整限制。关闭预览释放原有Blob、纹理及几何，新的预览使用新预算。
+
+定向验证：`node scripts/urdf-interaction-budget.test.cjs`。真实Three.js/WebGL交互：`AIDE_COMPONENT_EVIDENCE_DIR=<目录> node scripts/browser-urdf-interaction-budgets.cjs`；原有多主题/尺寸布局用`browser-urdf-lightweight.cjs`回归。验收记录见问题队列第126轮，不代表完整部署或真实机器人设备验收。

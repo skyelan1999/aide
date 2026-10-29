@@ -1522,6 +1522,15 @@
         "node",
         "--check",
         "scripts/browser-pdf-embedded-dimensions.cjs"
+      ],
+      [
+        "node",
+        "scripts/urdf-interaction-budget.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-urdf-interaction-budgets.cjs"
       ]
     ],
     "full": [

@@ -7970,7 +7970,7 @@ async function setupStlPreview(container, filePath, root, source, viewerSpec) {
 /* URDF keeps XML editing and uses the same scoped raw API for its assets. */
 async function setupUrdfPreview(container,filePath,root,source,viewerSpec,xmlText) {
   teardownViewer(container);let canceled=false;const token=state.token,scope=recoveryScope(),epoch=chatRecoveryEpoch;const isCurrent=()=>token===state.token&&scope===recoveryScope()&&epoch===chatRecoveryEpoch&&!lockScreen.locked;bindViewerTeardown(container,()=>{canceled=true;});
-  try {await ensureVendorScript('/urdf-preview.js?v=7',()=>!!window.AideUrdfPreview);}
+  try {await ensureVendorScript('/urdf-preview.js?v=8',()=>!!window.AideUrdfPreview);}
   catch(error){if(!canceled&&isCurrent()&&container.isConnected){const notice=el('div','urdf-error');notice.append(el('strong','',t('URDF 预览不可用')),el('p','',String(error.message||error)));container.replaceChildren(notice);}return;}
   if(canceled||!isCurrent()||!container.isConnected)return;
   return window.AideUrdfPreview.setup({container,filePath,root,source,viewerSpec,xmlText,isCurrent,lockElement:$('lock-screen'),el,t,fileRawUrl,teardownViewer,bindViewerTeardown,ensureThreeStack,ensureVendorScript,detectWebGLContext});

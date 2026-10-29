@@ -1451,7 +1451,9 @@
         535,
         536,
         537,
-        538
+        538,
+        540,
+        542
       ],
       "retainedNative": [
         335,
@@ -1468,8 +1470,8 @@
         587,
         588
       ],
-      "currentIssue": 540,
-      "nextCycle": 126,
+      "currentIssue": 545,
+      "nextCycle": 127,
       "newReports": [
         597,
         598,
@@ -1518,10 +1520,12 @@
         535,
         536,
         537,
-        538
+        538,
+        540,
+        542
       ],
-      "latestActualOpen": 90,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-125.json",
+      "latestActualOpen": 91,
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-126.json",
       "original83NewFixed": [
         426,
         429,
@@ -1560,7 +1564,9 @@
         535,
         536,
         537,
-        538
+        538,
+        540,
+        542
       ],
       "additionalFixed": [
         598,
@@ -1597,14 +1603,12 @@
         "612": "Checkednewreportat124checkpoint. IndependentPR13/51feb7b,0.3.3publishedandmarketlive,9CI/realmacOSUIpass;originalWindowsbuild/browser/errorunknown. Keepopenpendingfielddiagnostic;noexecutableLinux-onlyfixleft."
       },
       "verifiedLocalAwaitingPush": [
-        535,
-        536,
-        537,
-        538
+        540,
+        542
       ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "154b3bda",
-      "lastMetadataRefresh": "2026-10-29T07:31:17.124795+00:00",
+      "lastPushedCommit": "352815b3",
+      "lastMetadataRefresh": "2026-10-29T08:38:48.145240+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,
       "ownerPriorityRepository": "/workspace/aide-pkg-CodexBridge",

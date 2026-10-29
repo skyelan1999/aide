@@ -1,7 +1,146 @@
 /* Offline URDF preview. Resource paths stay in the current file API scope. */
 (() => {
   'use strict';
-  const LIMITS=Object.freeze({xml:4*1024*1024,asset:32*1024*1024,texture:8*1024*1024,total:128*1024*1024,links:2048,geometries:4096,assets:512,triangles:3000000,colladaFloats:3000000,colladaNodes:10000,colladaDepth:128,colladaLights:16});
+  const LIMITS=Object.freeze({xml:4*1024*1024,asset:32*1024*1024,texture:8*1024*1024,total:128*1024*1024,links:2048,geometries:4096,assets:512,triangles:3000000,pickTriangles:10000,textureEdge:4096,texturePixels:4*1024*1024,textureTotalPixels:16*1024*1024,colladaFloats:3000000,colladaNodes:10000,colladaDepth:128,colladaLights:16});
+  function nearestMeshPick(THREE,robot,ray) {
+    const inverse=new THREE.Matrix4(),local=new THREE.Ray(),candidates=[];
+    let triangles=0,limited=false,hit=null;
+    robot.traverseVisible(node=>{
+      if(limited||!node.isMesh)return;
+      const geometry=node.geometry,box=geometry?.boundingBox;
+      // Bounds are computed and validated while loading, never from dense triangles on a click.
+      if(!box||!geometry.attributes?.position){limited=true;return;}
+      const determinant=node.matrixWorld.determinant();if(!Number.isFinite(determinant)||determinant===0)return;
+      inverse.copy(node.matrixWorld).invert();local.copy(ray.ray).applyMatrix4(inverse);
+      if(!local.intersectsBox(box))return;
+      const elements=geometry.index?.count||geometry.attributes.position.count;
+      let count=elements/3;
+      if(Array.isArray(node.material)){
+        if(geometry.groups.length>LIMITS.pickTriangles){limited=true;return;}
+        count=0;for(const group of geometry.groups){if(!Number.isSafeInteger(group.start)||!Number.isSafeInteger(group.count)||group.start<0||group.count<0){limited=true;return;}count+=Math.ceil(Math.max(0,Math.min(elements,group.start+group.count)-group.start)/3);}
+      }
+      if(!Number.isSafeInteger(count)||count<0||triangles+count>LIMITS.pickTriangles){limited=true;return;}
+      triangles+=count;candidates.push(node);
+    });
+    if(limited)return {limited:true,hit:null,triangles};
+    // The pinned Mesh.raycast only needs push(); retain one hit instead of an array to sort.
+    const nearest={push(value){if(!hit||value.distance<hit.distance)hit=value;}};
+    for(const node of candidates)node.raycast(ray,nearest);
+    return {limited:false,hit,triangles};
+  }
+  function textureSize(width,height) {
+    if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1)throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));
+    if(width>LIMITS.textureEdge||height>LIMITS.textureEdge||width*height>LIMITS.texturePixels)throw Error(uiTextUrdfPreview('纹理像素超出预览预算'));
+    return {width,height,pixels:width*height};
+  }
+  function textureDimensions(data,extension) {
+    const invalid=()=>{throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));};
+    const animated=()=>{throw Error(uiTextUrdfPreview('不预览动画纹理'));};
+    if(!data||!Number.isSafeInteger(data.byteLength)||data.byteLength>LIMITS.texture)invalid();
+    const bytes=data instanceof Uint8Array?data:new Uint8Array(data),view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),length=bytes.length;
+    const ascii=(offset,count)=>String.fromCharCode(...bytes.subarray(offset,offset+count));
+    const bounds=(offset,count)=>{if(offset<0||offset+count>length)invalid();};
+    if(extension==='png'){
+      bounds(0,33);if(ascii(0,8)!=='\x89PNG\r\n\x1a\n'||view.getUint32(8)!==13||ascii(12,4)!=='IHDR')invalid();
+      const size=textureSize(view.getUint32(16),view.getUint32(20));let cursor=8,chunks=0;
+      while(cursor<length){bounds(cursor,12);if(++chunks>65536)invalid();const count=view.getUint32(cursor),type=ascii(cursor+4,4);bounds(cursor,count+12);
+        if(type==='acTL')animated();if(type==='IHDR'&&cursor!==8)invalid();cursor+=count+12;if(type==='IEND'){if(count!==0||cursor!==length)invalid();return size;}}
+      invalid();
+    }
+    if(extension==='jpg'||extension==='jpeg'){
+      bounds(0,2);if(bytes[0]!==255||bytes[1]!==216)invalid();let cursor=2,segments=0,size=null;
+      while(cursor<length){if(++segments>65536)invalid();if(bytes[cursor++]!==255)invalid();while(bytes[cursor]===255)cursor++;bounds(cursor,1);const marker=bytes[cursor++];
+        if(marker===217)invalid();if(marker===1||marker>=208&&marker<=215)continue;
+        bounds(cursor,2);const count=view.getUint16(cursor);if(count<2)invalid();bounds(cursor,count);
+        if(marker===218){if(!size)invalid();return size;}
+        if([192,193,194].includes(marker)){const components=bytes[cursor+7];if(size||bytes[cursor+2]!==8||![1,3,4].includes(components)||count!==8+components*3)invalid();for(let i=0;i<components;i++){const sampling=bytes[cursor+9+i*3];if((sampling>>4)<1||(sampling>>4)>4||(sampling&15)<1||(sampling&15)>4)invalid();}size=textureSize(view.getUint16(cursor+5),view.getUint16(cursor+3));}
+        cursor+=count;}
+      invalid();
+    }
+    if(extension==='gif'){
+      bounds(0,13);if(!['GIF87a','GIF89a'].includes(ascii(0,6)))invalid();const size=textureSize(view.getUint16(6,true),view.getUint16(8,true));let cursor=13,frames=0,blocks=0;
+      if(bytes[10]&128){const count=3*2**((bytes[10]&7)+1);bounds(cursor,count);cursor+=count;}
+      const skipBlocks=()=>{for(;;){bounds(cursor,1);if(++blocks>65536)invalid();const count=bytes[cursor++];if(!count)return;bounds(cursor,count);cursor+=count;}};
+      while(cursor<length){const marker=bytes[cursor++];if(marker===59){if(frames!==1||cursor!==length)invalid();return size;}
+        if(marker===33){bounds(cursor,1);cursor++;skipBlocks();continue;}
+        if(marker!==44)invalid();if(++frames>1)animated();bounds(cursor,9);const left=view.getUint16(cursor,true),top=view.getUint16(cursor+2,true),width=view.getUint16(cursor+4,true),height=view.getUint16(cursor+6,true),flags=bytes[cursor+8];textureSize(width,height);if(left+width>size.width||top+height>size.height)invalid();cursor+=9;
+        if(flags&128){const count=3*2**((flags&7)+1);bounds(cursor,count);cursor+=count;}bounds(cursor,1);cursor++;skipBlocks();}
+      invalid();
+    }
+    if(extension==='webp'){
+      bounds(0,12);if(ascii(0,4)!=='RIFF'||ascii(8,4)!=='WEBP'||view.getUint32(4,true)+8!==length)invalid();
+      let cursor=12,canvas=null,frame=null,chunks=0;
+      const u24=offset=>bytes[offset]+bytes[offset+1]*256+bytes[offset+2]*65536;
+      while(cursor<length){bounds(cursor,8);if(++chunks>65536)invalid();const type=ascii(cursor,4),count=view.getUint32(cursor+4,true),start=cursor+8;bounds(start,count+(count&1));
+        if(type==='ANIM'||type==='ANMF')animated();
+        if(type==='VP8X'){if(canvas||count<10)invalid();if(bytes[start]&2)animated();canvas=textureSize(u24(start+4)+1,u24(start+7)+1);}
+        if(type==='VP8 '){if(frame||count<10||(bytes[start]&1)||ascii(start+3,3)!=='\x9d\x01\x2a'||(view.getUint16(start+6,true)&49152)||(view.getUint16(start+8,true)&49152))invalid();frame=textureSize(view.getUint16(start+6,true),view.getUint16(start+8,true));}
+        if(type==='VP8L'){if(frame||count<5||bytes[start]!==47)invalid();const bits=view.getUint32(start+1,true);if(bits>>>29)invalid();frame=textureSize((bits&16383)+1,(bits>>>14&16383)+1);}
+        cursor=start+count+(count&1);}
+      if(!frame||canvas&&(canvas.width!==frame.width||canvas.height!==frame.height))invalid();return canvas||frame;
+    }
+    invalid();
+  }
+  function createTextureBudget() {
+    let used=0;
+    return Object.freeze({reserve(info){const size=textureSize(info.width,info.height);if(used+size.pixels>LIMITS.textureTotalPixels)throw Error(uiTextUrdfPreview('纹理累计像素超出预览预算'));used+=size.pixels;},get usedPixels(){return used;}});
+  }
+  function textureSize(width,height) {
+    if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1)throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));
+    if(width>LIMITS.textureEdge||height>LIMITS.textureEdge||width*height>LIMITS.texturePixels)throw Error(uiTextUrdfPreview('纹理像素超出预览预算'));
+    return {width,height,pixels:width*height};
+  }
+  function textureDimensions(data,extension) {
+    const invalid=()=>{throw Error(uiTextUrdfPreview('纹理尺寸无效或格式不受支持'));};
+    const animated=()=>{throw Error(uiTextUrdfPreview('不预览动画纹理'));};
+    if(!data||!Number.isSafeInteger(data.byteLength)||data.byteLength>LIMITS.texture)invalid();
+    const bytes=data instanceof Uint8Array?data:new Uint8Array(data),view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),length=bytes.length;
+    const ascii=(offset,count)=>String.fromCharCode(...bytes.subarray(offset,offset+count));
+    const bounds=(offset,count)=>{if(offset<0||offset+count>length)invalid();};
+    if(extension==='png'){
+      bounds(0,33);if(ascii(0,8)!=='\x89PNG\r\n\x1a\n'||view.getUint32(8)!==13||ascii(12,4)!=='IHDR')invalid();
+      const size=textureSize(view.getUint32(16),view.getUint32(20));let cursor=8,chunks=0;
+      while(cursor<length){bounds(cursor,12);if(++chunks>65536)invalid();const count=view.getUint32(cursor),type=ascii(cursor+4,4);bounds(cursor,count+12);
+        if(type==='acTL')animated();if(type==='IHDR'&&cursor!==8)invalid();cursor+=count+12;if(type==='IEND'){if(count!==0||cursor!==length)invalid();return size;}}
+      invalid();
+    }
+    if(extension==='jpg'||extension==='jpeg'){
+      bounds(0,2);if(bytes[0]!==255||bytes[1]!==216)invalid();let cursor=2,segments=0;
+      while(cursor<length){if(++segments>65536)invalid();if(bytes[cursor++]!==255)invalid();while(bytes[cursor]===255)cursor++;bounds(cursor,1);const marker=bytes[cursor++];
+        if(marker===217||marker===218)invalid();if(marker===1||marker>=208&&marker<=215)continue;
+        bounds(cursor,2);const count=view.getUint16(cursor);if(count<2)invalid();bounds(cursor,count);
+        if([192,193,194].includes(marker)){if(count<8||bytes[cursor+2]!==8)invalid();return textureSize(view.getUint16(cursor+5),view.getUint16(cursor+3));}
+        cursor+=count;}
+      invalid();
+    }
+    if(extension==='gif'){
+      bounds(0,13);if(!['GIF87a','GIF89a'].includes(ascii(0,6)))invalid();const size=textureSize(view.getUint16(6,true),view.getUint16(8,true));let cursor=13,frames=0,blocks=0;
+      if(bytes[10]&128){const count=3*2**((bytes[10]&7)+1);bounds(cursor,count);cursor+=count;}
+      const skipBlocks=()=>{for(;;){bounds(cursor,1);if(++blocks>65536)invalid();const count=bytes[cursor++];if(!count)return;bounds(cursor,count);cursor+=count;}};
+      while(cursor<length){const marker=bytes[cursor++];if(marker===59){if(frames!==1||cursor!==length)invalid();return size;}
+        if(marker===33){bounds(cursor,1);cursor++;skipBlocks();continue;}
+        if(marker!==44)invalid();if(++frames>1)animated();bounds(cursor,9);const left=view.getUint16(cursor,true),top=view.getUint16(cursor+2,true),width=view.getUint16(cursor+4,true),height=view.getUint16(cursor+6,true),flags=bytes[cursor+8];textureSize(width,height);if(left+width>size.width||top+height>size.height)invalid();cursor+=9;
+        if(flags&128){const count=3*2**((flags&7)+1);bounds(cursor,count);cursor+=count;}bounds(cursor,1);cursor++;skipBlocks();}
+      invalid();
+    }
+    if(extension==='webp'){
+      bounds(0,12);if(ascii(0,4)!=='RIFF'||ascii(8,4)!=='WEBP'||view.getUint32(4,true)+8!==length)invalid();
+      let cursor=12,canvas=null,frame=null,chunks=0;
+      const u24=offset=>bytes[offset]+bytes[offset+1]*256+bytes[offset+2]*65536;
+      while(cursor<length){bounds(cursor,8);if(++chunks>65536)invalid();const type=ascii(cursor,4),count=view.getUint32(cursor+4,true),start=cursor+8;bounds(start,count+(count&1));
+        if(type==='ANIM'||type==='ANMF')animated();
+        if(type==='VP8X'){if(canvas||count<10)invalid();if(bytes[start]&2)animated();canvas=textureSize(u24(start+4)+1,u24(start+7)+1);}
+        if(type==='VP8 '){if(frame||count<10||(bytes[start]&1)||ascii(start+3,3)!=='\x9d\x01\x2a')invalid();frame=textureSize(view.getUint16(start+6,true)&16383,view.getUint16(start+8,true)&16383);}
+        if(type==='VP8L'){if(frame||count<5||bytes[start]!==47)invalid();const bits=view.getUint32(start+1,true);if(bits>>>29)invalid();frame=textureSize((bits&16383)+1,(bits>>>14&16383)+1);}
+        cursor=start+count+(count&1);}
+      if(!frame||canvas&&(canvas.width!==frame.width||canvas.height!==frame.height))invalid();return canvas||frame;
+    }
+    invalid();
+  }
+  function createTextureBudget() {
+    let used=0;
+    return Object.freeze({reserve(info){const size=textureSize(info.width,info.height);if(used+size.pixels>LIMITS.textureTotalPixels)throw Error(uiTextUrdfPreview('纹理累计像素超出预览预算'));used+=size.pixels;},get usedPixels(){return used;}});
+  }
   function normalizePath(value) {
     const path=String(value||'').replace(/\\/g,'/');
     if(path.startsWith('/')||/^[a-z][a-z0-9+.-]*:/i.test(path)||/[\x00-\x1f?#]/.test(path))throw Error(uiTextUrdfPreview('资源路径必须位于当前工作区内'));
@@ -176,13 +315,14 @@
     teardownViewer(container);container.replaceChildren();
     let disposed=false,renderer=null,controls=null,observer=null,lockObserver=null,contextLost=null,frame=0,robot=null,scene=null,camera=null,triangles=0,bytesUsed=0,finished=0,expected=0;
     const current=()=>!disposed&&options.isCurrent?.()!==false;
+    const textureBudget=createTextureBudget(),textureDimensionsByURL=new Map(),textureBudgetWarned=new Set();
     const abort=new AbortController(),blobURLs=new Set(),objects=new Set(),importedLights=new Set(),geometries=new Set(),materials=new Set(),textures=new Set(),cache=new Map(),textureCache=new Map(),packageRoots=Object.create(null),pending=[],jobs=[];let active=0;
     const viewer=el('section','urdf-viewer'),toolbar=el('div','urdf-toolbar'),meta=el('span','urdf-meta',t('正在读取 URDF…')),body=el('div','urdf-body'),canvas=el('div','urdf-canvas'),side=el('aside','urdf-side'),jointHost=el('div','urdf-joints'),linkHost=el('details','urdf-links'),warnings=el('details','urdf-warnings'),warningTitle=el('summary','',t('资源问题')),warningList=el('ul'),packageBox=el('details','urdf-packages'),packageFields=el('div');
     meta.setAttribute('role','status');meta.setAttribute('aria-live','polite');canvas.setAttribute('aria-label',t('机器人三维预览'));
     const button=(text,fn)=>{const b=el('button','stl-ctrl',t(text));b.type='button';b.onclick=fn;return b;};
     const reset=button('重置视角',()=>fit()),zero=button('关节归零',()=>{for(const joint of Object.values(robot?.joints||{}))if(joint.type!=='URDFMimicJoint'&&['revolute','continuous','prismatic'].includes(joint.jointType))applyJointValue(joint,0);syncJointValues();draw();}),cancel=button('取消加载',()=>fail(Error(t('已取消加载'))));
     const toggle=(text,fn)=>{const b=button(text,()=>{const value=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(value));fn(value);});b.setAttribute('aria-pressed','false');return b;};
-    let showAnnotations=false,collisionMode=false,showAxes=false,wireframe=false,revealSelection=false,selectedNode=null,calloutPage=0,selectionOutline=null,pointerStart=null;const axes=[],highlighted=new Map(),highlightMaterials=new Set();
+    let showAnnotations=false,collisionMode=false,showAxes=false,wireframe=false,revealSelection=false,selectedNode=null,calloutPage=0,selectionOutline=null,pointerStart=null,pickLimitWarned=false;const axes=[],highlighted=new Map(),highlightMaterials=new Set();
     const collision=toggle('碰撞模型',value=>{collisionMode=value;updateVisibility();fit();}),axisButton=toggle('坐标轴',value=>{showAxes=value;axes.forEach(a=>a.visible=value);draw();}),wire=toggle('线框',value=>{wireframe=value;materials.forEach(m=>{if('wireframe'in m)m.wireframe=value;});draw();});
     const posePanel=el('section','urdf-pose'),poseSelect=el('select'),poseFrame=el('select');posePanel.hidden=false;
     poseSelect.setAttribute('aria-label',t('坐标节点'));poseFrame.setAttribute('aria-label',t('参考坐标系'));
@@ -220,7 +360,7 @@
       if(triangles+count>LIMITS.triangles)throw Error(uiTextUrdfPreview('三角面数量超出预览预算'));
       triangles+=count;nextLights.forEach(light=>importedLights.add(light));objects.add(object);nextGeometries.forEach(g=>geometries.add(g));nextMaterials.forEach(m=>materials.add(m));nextTextures.forEach(x=>textures.add(x));return object;
     };
-    function teardown(){if(disposed)return;disposed=true;clearHighlight();abort.abort();for(const button of toolbar.querySelectorAll('button'))button.disabled=true;for(const input of side.querySelectorAll('input'))input.disabled=true;for(const item of pending.splice(0))item.reject(new DOMException('Aborted','AbortError'));if(frame)cancelAnimationFrame(frame);observer?.disconnect();lockObserver?.disconnect();document.removeEventListener('visibilitychange',resume);renderer?.domElement.removeEventListener('pointerdown',pickStart);renderer?.domElement.removeEventListener('pointerup',pickEnd);renderer?.domElement.removeEventListener('pointercancel',pickCancel);controls?.dispose();if(robot)try{robot.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[])){materials.add(material);for(const value of Object.values(material))if(value?.isTexture)textures.add(value);}});}catch{}geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(x=>x.dispose());blobURLs.forEach(url=>URL.revokeObjectURL(url));if(renderer){if(contextLost)renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.dispose();renderer.forceContextLoss();}canvas.replaceChildren();side.replaceChildren();cache.clear();textureCache.clear();objects.clear();importedLights.clear();geometries.clear();materials.clear();textures.clear();blobURLs.clear();jointInputs.length=0;poseNodes.length=0;selectedNode=null;calloutCards.length=0;poseSelect.replaceChildren();axes.length=0;jobs.length=0;robot=null;scene=null;camera=null;renderer=null;controls=null;}
+    function teardown(){if(disposed)return;disposed=true;clearHighlight();abort.abort();for(const button of toolbar.querySelectorAll('button'))button.disabled=true;for(const input of side.querySelectorAll('input'))input.disabled=true;for(const item of pending.splice(0))item.reject(new DOMException('Aborted','AbortError'));if(frame)cancelAnimationFrame(frame);observer?.disconnect();lockObserver?.disconnect();document.removeEventListener('visibilitychange',resume);renderer?.domElement.removeEventListener('pointerdown',pickStart);renderer?.domElement.removeEventListener('pointerup',pickEnd);renderer?.domElement.removeEventListener('pointercancel',pickCancel);controls?.dispose();if(robot)try{robot.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[])){materials.add(material);for(const value of Object.values(material))if(value?.isTexture)textures.add(value);}});}catch{}geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(x=>x.dispose());blobURLs.forEach(url=>URL.revokeObjectURL(url));if(renderer){if(contextLost)renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.dispose();renderer.forceContextLoss();}canvas.replaceChildren();side.replaceChildren();cache.clear();textureCache.clear();objects.clear();importedLights.clear();geometries.clear();materials.clear();textures.clear();blobURLs.clear();textureDimensionsByURL.clear();textureBudgetWarned.clear();jointInputs.length=0;poseNodes.length=0;selectedNode=null;calloutCards.length=0;poseSelect.replaceChildren();axes.length=0;jobs.length=0;robot=null;scene=null;camera=null;renderer=null;controls=null;}
     bindViewerTeardown(container,teardown);
     if(options.lockElement){lockObserver=new MutationObserver(()=>{if(!current()&&!disposed)fail(Error(t('工作区或锁屏状态已变化，请重新打开预览')));});lockObserver.observe(options.lockElement,{attributes:true,attributeFilter:['hidden','class']});}
     function fail(error){if(disposed)return;teardown();cancel.hidden=true;const notice=el('div','urdf-error');notice.append(el('strong','',t('URDF 预览不可用')),el('p','',String(error?.message||error)),button('重新加载',()=>setup(options)));canvas.replaceChildren(notice);meta.textContent=t('预览已结束');}
@@ -231,7 +371,7 @@
     const manifestCache=new Map();
     async function discoverPackage(pkg,base){if(Object.prototype.hasOwnProperty.call(packageRoots,pkg))return;for(const dir of ancestors(base)){const path=[dir,'package.xml'].filter(Boolean).join('/');if(!manifestCache.has(path))manifestCache.set(path,bytes(path,65536).then(data=>{const doc=new DOMParser().parseFromString(new TextDecoder().decode(data),'application/xml');return doc.documentElement.localName==='package'?direct(doc.documentElement,'name')[0]?.textContent.trim():null;}).catch(()=>null));if(await manifestCache.get(path)===pkg){packageRoots[pkg]=dir;return;}}}
     async function resource(ref,base,limit){const info=reference(ref);if(info.package)await discoverPackage(info.package,base);let last;for(const path of candidates(ref,base,packageRoots)){try{return {path,data:await bytes(path,limit)};}catch(error){if(disposed)throw error;last=error;}}throw Error(t('无法读取资源：')+ref+' · '+String(last?.message||''));}
-    async function texture(ref,base){const id=base+'\n'+ref;if(!textureCache.has(id))textureCache.set(id,(async()=>{const {path,data}=await resource(ref,base,LIMITS.texture);if(!current())throw new DOMException('Aborted','AbortError');const ext=path.split('.').pop().toLowerCase(),type={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif'}[ext];if(!type)throw Error(uiTextUrdfPreview('仅支持 PNG/JPEG/WebP/GIF 纹理'));const url=URL.createObjectURL(new Blob([data],{type}));blobURLs.add(url);return url;})());return textureCache.get(id);}
+    async function texture(ref,base){const id=base+'\n'+ref;if(!textureCache.has(id))textureCache.set(id,(async()=>{const {path,data}=await resource(ref,base,LIMITS.texture);if(!current())throw new DOMException('Aborted','AbortError');const ext=path.split('.').pop().toLowerCase(),type={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif'}[ext];if(!type)throw Error(uiTextUrdfPreview('仅支持 PNG/JPEG/WebP/GIF 纹理'));const dimensions=textureDimensions(data,ext),url=URL.createObjectURL(new Blob([data],{type}));blobURLs.add(url);textureDimensionsByURL.set(url,{...dimensions,path});return url;})());return textureCache.get(id);}
     const work=task=>new Promise((resolve,reject)=>{pending.push({task,resolve,reject});pump();});
     function pump(){while(active<2&&pending.length&&!disposed){const item=pending.shift();active++;Promise.resolve().then(item.task).then(item.resolve,item.reject).finally(()=>{active--;pump();});}}
     const jointInputs=[],poseNodes=[],calloutCards=[];
@@ -244,7 +384,7 @@
     function selectNode(node,reveal=false){if(!node||disposed)return;selectedNode=node;poseSelect.value=String(poseNodes.indexOf(node));if(reveal){showAnnotations=true;poseButton.setAttribute('aria-pressed','true');setInspector(true);}refreshHighlight();revealSelection=true;draw();}
     function pickStart(event){pointerStart=event.button===0&&event.isPrimary!==false?{x:event.clientX,y:event.clientY,id:event.pointerId}:null;}
     function pickCancel(){pointerStart=null;}
-    function pickEnd(event){const start=pointerStart;pointerStart=null;if(!start||start.id!==event.pointerId||Math.hypot(event.clientX-start.x,event.clientY-start.y)>5||!robot||disposed)return;const rect=renderer.domElement.getBoundingClientRect(),ray=new THREE.Raycaster();robot.updateMatrixWorld(true);ray.setFromCamera(new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2),camera);for(const hit of ray.intersectObject(robot,true)){if(!hit.object.isMesh)continue;let visible=true;for(let parent=hit.object;parent;parent=parent.parent)if(!parent.visible)visible=false;if(!visible)continue;let node=hit.object;while(node&&!node.isURDFLink)node=node.parent;if(node){selectNode(node,true);return;}}}
+    function pickEnd(event){const start=pointerStart;pointerStart=null;if(!start||start.id!==event.pointerId||Math.hypot(event.clientX-start.x,event.clientY-start.y)>5||!robot||disposed)return;const rect=renderer.domElement.getBoundingClientRect(),ray=new THREE.Raycaster();robot.updateMatrixWorld(true);ray.setFromCamera(new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2),camera);const result=nearestMeshPick(THREE,robot,ray);if(result.limited){if(!pickLimitWarned){pickLimitWarned=true;warn(t('网格点选'),Error(t('点选复杂度超出预览预算，请从连杆层级选择。')));}warnings.open=true;setInspector(true);linkHost.open=true;linkHost.querySelector('button')?.focus({preventScroll:true});return;}let node=result.hit?.object;while(node&&!node.isURDFLink)node=node.parent;if(node)selectNode(node,true);}
     function updatePose(){if(disposed)return;nameLayer.hidden=!showAnnotations;draw();}
     function updateNameLabels(){
       const expanded=false,enabled=showAnnotations;nameLayer.hidden=!enabled;if(!robot)return;robot.updateMatrixWorld(true);camera.updateMatrixWorld(true);updateHighlightBounds();updateInspector();if(!enabled)return;
@@ -264,7 +404,7 @@
       await ensureThreeStack();await ensureVendorScript('/vendor/ColladaLoader.js',()=>!!THREE.ColladaLoader);await ensureVendorScript('/vendor/OBJLoader.js',()=>!!THREE.OBJLoader);await ensureVendorScript('/vendor/urdf-loader/URDFLoader.js',()=>!!window.URDFLoader);
       if(!current()||!container.isConnected){teardown();return;}if(!detectWebGLContext())throw Error(t('当前浏览器未提供可用的 WebGL 图形上下文。'));
       scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,1,.001,1000);camera.up.set(0,0,1);renderer=new THREE.WebGLRenderer({antialias:true,failIfMajorPerformanceCaveat:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputEncoding=THREE.sRGBEncoding;renderer.setClearColor(0x202831);canvas.append(renderer.domElement);renderer.domElement.addEventListener('pointerdown',pickStart);renderer.domElement.addEventListener('pointerup',pickEnd);renderer.domElement.addEventListener('pointercancel',pickCancel);selectionOutline=track(new THREE.Box3Helper(new THREE.Box3(),0x65d9ff));selectionOutline.visible=false;selectionOutline.material.transparent=true;selectionOutline.material.opacity=.45;selectionOutline.material.depthTest=false;selectionOutline.renderOrder=10;scene.add(selectionOutline);contextLost=event=>{event.preventDefault();if(!disposed)fail(Error(t('图形上下文已丢失，请重新加载预览')));};renderer.domElement.addEventListener('webglcontextlost',contextLost);scene.add(new THREE.HemisphereLight(0xffffff,0x556477,1));const light=new THREE.DirectionalLight(0xffffff,.9);light.position.set(3,-4,7);scene.add(light);const grid=track(new THREE.GridHelper(10,20,0x617183,0x354351));grid.rotation.x=Math.PI/2;for(const material of [].concat(grid.material)){material.transparent=true;material.opacity=.3;material.depthWrite=false;}scene.add(grid);controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.addEventListener('change',draw);document.addEventListener('visibilitychange',resume);observer=new ResizeObserver(()=>{if(disposed)return;const w=canvas.clientWidth,h=canvas.clientHeight;if(w>0&&h>0){renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();revealSelection=!!selectedNode;draw();}});observer.observe(canvas);
-      const manager=new THREE.LoadingManager();manager.setURLModifier(url=>{if(!blobURLs.has(url))throw Error(uiTextUrdfPreview('已阻止模型引用外部网址'));return url;});manager.onLoad=draw;manager.onError=url=>warn('纹理',Error(uiTextUrdfPreview('纹理加载失败')));const loader=new window.URDFLoader(manager);loader.parseVisual=true;loader.parseCollision=true;loader.workingPath='';
+      const manager=new THREE.LoadingManager();manager.setURLModifier(url=>{if(!blobURLs.has(url))throw Error(uiTextUrdfPreview('已阻止模型引用外部网址'));const info=textureDimensionsByURL.get(url);if(info)try{textureBudget.reserve(info);}catch(error){if(!textureBudgetWarned.has(url)){textureBudgetWarned.add(url);warn(info.path,error);}return neutralImage();}return url;});manager.onLoad=draw;manager.onError=url=>warn('纹理',Error(uiTextUrdfPreview('纹理加载失败')));const loader=new window.URDFLoader(manager);loader.parseVisual=true;loader.parseCollision=true;loader.workingPath='';
       const assetRefs=new Map(),assetMaterials=new Map(),materialInstances=new Map(),definitions=new Map(direct(doc.documentElement,'material').map(node=>[node.getAttribute('name'),node]));let resourceID=0;
       for(const node of doc.getElementsByTagName('*'))for(const attr of ['xyz','rpy','scale','size','rgba'])if(node.hasAttribute(attr))node.setAttribute(attr,node.getAttribute(attr).trim().split(/\s+/).join(' '));
       for(const node of [...doc.getElementsByTagName('mesh')]){const ref=node.getAttribute('filename');reference(ref);const ext=reference(ref).path.split('.').pop().toLowerCase(),id='aide-mesh-'+(++resourceID)+'.'+ext;assetRefs.set(id,ref);const visual=node.parentElement?.parentElement,declared=visual&&direct(visual,'material')[0];if(declared)assetMaterials.set(id,definitions.get(declared.getAttribute('name'))||declared);node.setAttribute('filename',id);}
@@ -291,7 +431,7 @@
       };
       loader.loadMeshCb=(id,_manager,done)=>{expected++;const job=work(()=>loadMesh(id)).then(object=>{if(disposed)return;done(object);track(object);updateVisibility();refreshHighlight();draw();},error=>{if(!disposed)warn(assetRefs.get(id)||id,error);}).finally(()=>{finished++;if(!disposed)meta.textContent=t('网格加载')+' '+finished+'/'+expected+' · '+info.links+' '+t('连杆')+' · '+info.joints+' '+t('关节');});jobs.push(job);};
       robot=loader.parse(doc);scene.add(robot);track(robot);for(const joint of Object.values(robot.joints))if(joint.type!=='URDFMimicJoint'&&['revolute','continuous','prismatic'].includes(joint.jointType))applyJointValue(joint,0);updateVisibility();
-      for(const [name,link]of Object.entries(robot.links)){const row=el('div','urdf-link-row',name);let depth=0;for(let parent=link.parent;parent&&parent!==robot;parent=parent.parent)if(parent.isURDFJoint)depth++;row.style.paddingInlineStart=Math.min(depth*10,120)+'px';linkHost.append(row);const axis=track(new THREE.AxesHelper(.08));axis.visible=showAxes;link.add(axis);axes.push(axis);}
+      for(const [name,link]of Object.entries(robot.links)){const row=el('button','urdf-link-row',name);row.type='button';row.onclick=()=>selectNode(link,true);let depth=0;for(let parent=link.parent;parent&&parent!==robot;parent=parent.parent)if(parent.isURDFJoint)depth++;row.style.paddingInlineStart=Math.min(depth*10,120)+'px';linkHost.append(row);const axis=track(new THREE.AxesHelper(.08));axis.visible=showAxes;link.add(axis);axes.push(axis);}
       for(const [name,joint]of Object.entries(robot.joints)){if(joint.jointType==='fixed'||joint.type==='URDFMimicJoint')continue;const row=el('div','urdf-joint');row.append(el('strong','',name),el('small','',joint.jointType));jointHost.append(row);if(['floating','planar'].includes(joint.jointType)){row.append(el('small','',t('仅显示初始姿态，暂不支持调节')));continue;}
         joint.jointValue.forEach((_,index)=>{const angular=['continuous','revolute'].includes(joint.jointType)||(joint.jointType==='floating'&&index>=3),low=['revolute','prismatic'].includes(joint.jointType)?joint.limit.lower:angular?-Math.PI:-1,high=['revolute','prismatic'].includes(joint.jointType)?joint.limit.upper:angular?Math.PI:1;
           const label=el('label','urdf-joint-input'),value=el('output'),range=el('input');range.type='range';range.min=low;range.max=high;range.step='any';range.value=joint.jointValue[index];range.setAttribute('aria-label',name+(joint.jointValue.length>1?' '+index:''));range.oninput=()=>{if(disposed)return;const values=[...joint.jointValue];values[index]=Number(range.value);applyJointValue(joint,values[index]);syncJointValues();draw();};label.append(range,value);row.append(label);jointInputs.push({joint,index,range,value});});}
@@ -304,7 +444,7 @@
       await Promise.all(jobs);cache.clear();textureCache.clear();manifestCache.clear();materialInstances.clear();if(disposed)return;robot.traverse(node=>{for(const m of [].concat(node.material||[]))materials.add(m);});fit();cancel.hidden=true;meta.textContent=info.links+' '+t('连杆')+' · '+info.joints+' '+t('关节')+' · '+Math.round(triangles)+' '+t('三角面')+(warningList.children.length?' · '+t('部分资源未加载'):'');
     }catch(error){if(!disposed)fail(error);}
   }
-  window.AideUrdfPreview=Object.freeze({setup,normalizePath,reference,candidates,validateRobot,parseDocument,applyJointValue,readPose,layoutCallouts,prepareStl,validateCollada,readBounded,LIMITS});
+  window.AideUrdfPreview=Object.freeze({setup,nearestMeshPick,textureDimensions,createTextureBudget,normalizePath,reference,candidates,validateRobot,parseDocument,applyJointValue,readPose,layoutCallouts,prepareStl,validateCollada,readBounded,LIMITS});
 })();
 
 function uiTextUrdfPreview(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }
