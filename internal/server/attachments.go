@@ -24,8 +24,10 @@ import (
 const (
 	// maxDocExtractChars 单个文档提取文本上限（按 rune 计），超出截断并标注。
 	maxDocExtractChars = 60000
-	// maxAttachmentChars 所有附件注入上下文的总字符上限（UTF-8 字节）。
-	maxAttachmentChars = 200000
+	// maxAttachmentContextBytes bounds assembly memory, not model capacity.
+	// The shared preview/start context meter applies the selected model's window.
+	// Larger inputs remain available through read_file's bounded range/line path.
+	maxAttachmentContextBytes = 64 << 20
 	// maxImageAttachment 单张图片大小上限。
 	maxImageAttachment = 5 << 20
 )
