@@ -1367,6 +1367,11 @@
         "scripts/assistant-composer-entry.test.cjs",
         "scripts/assistant-initiative.test.cjs",
         "scripts/test_assistant_result_refresh.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-markdown-export-cancel.cjs"
       ]
     ],
     "full": [

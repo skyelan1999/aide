@@ -1,0 +1,71 @@
+{
+  "cycle": 107,
+  "issues": [
+    426
+  ],
+  "baselineMain": "d1a77ac9307bcb31bd7f9576190af4e2f05d04c7",
+  "branch": "codex/remaining-83-20261029",
+  "fix": [
+    "Pass per-export AbortSignal to actual local html2canvas, PNG/PDF UI and frame/encoding waits.",
+    "Prevent cancelled async-generator resumption and drop generator references.",
+    "Remove owned clone frames and polling, cancel owned image waits, clear newly allocated canvases; retain caller-owned canvas and unrelated frames.",
+    "Cancel remaining job resources in finalization and advance export/vendor cache URLs."
+  ],
+  "red": {
+    "appPaths": 8,
+    "resourceCases": 3,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle107/red-resources/result.json",
+    "observed": "PNG pending; PDF UI returns but clone remains and onclone resumes after font promise release. Owned canvas is not cleared and late image paints continue."
+  },
+  "green": [
+    {
+      "scope": "Actual Chromium PNG/PDF close/lock/invalid/timeout8cases,3real library ownership/abort cases; actual normal PNG/PDF with image pixel control",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle107/final-http-browser/result.json",
+      "redPixels": 1260,
+      "errors": []
+    },
+    {
+      "scope": "Node CSS/linebreak86goldens, pressure workers, ordinal controls",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle107/canvas-regressions.log"
+    },
+    {
+      "scope": "Actual browser CSS86goldens, worker500k, public canvas list markers light/dark; screenshot visually inspected",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle107/canvas-browser/result.json"
+    },
+    {
+      "scope": "Actual existing Markdown boundary cases401/402",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle107/markdown-boundaries.log"
+    },
+    {
+      "scope": "Quick",
+      "status": "pass",
+      "checks": 264,
+      "fingerprint": "a80d8998ec45ff36efa173c80bf1951c330ff14640bafea08dbd39d096c71988",
+      "receipt": ".agent-state/verify-20261029T015828077460Z.log"
+    }
+  ],
+  "limits": [
+    "Cannot preempt synchronous JavaScript or already-submitted native canvas encoding.",
+    "Component testing; full workbench, real devices and paid providers not claimed.",
+    "Not merged to main or released."
+  ],
+  "additionalDiscovered": [
+    {
+      "issue": 598,
+      "status": "confirmed-open-not-fixed-in-this-cycle",
+      "reason": "Inline data images fail fetch under actual workbench CSP; actual baseline Chromium reproduced.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle107/inline-baseline-red.json"
+    },
+    {
+      "issue": 597,
+      "status": "new-other-author-report-pending-PDF-review",
+      "reason": "JP2 PCLR channel expansion report; no source change yet."
+    }
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  },
+  "newSourceFixedThisContinuation": 1
+}

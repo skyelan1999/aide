@@ -82,7 +82,7 @@
      const estimatedPages=Math.max(1,Math.ceil(String(o.markdown||'').length/2500));
      clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+estimatedPages*2000));
     }
-    await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js',()=>!!window.html2canvas));
+    await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js?v=2',()=>!!window.html2canvas));
     if(format==='pdf')await job.wait(o.load('/vendor/markdown-export/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF));
     const body=await snapshot(o,job),height=Math.ceil(body.scrollHeight);
     // Long PDFs are rendered a page at a time. Give them a proportional
@@ -195,26 +195,25 @@
      }
      renderDoc.body.replaceChildren(page);return page;
     };
-    const render=async(page,h)=>{if(!alive())throw new DOMException('Cancelled','AbortError');return window.html2canvas(page,{backgroundColor:'#fff',scale:PDF_SCALE,width:WIDTH,height:h,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});};
+    const render=async(page,h)=>{if(!alive())throw new DOMException('Cancelled','AbortError');return window.html2canvas(page,{backgroundColor:'#fff',scale:PDF_SCALE,width:WIDTH,height:h,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000,signal:job.controller.signal});};
     if(format==='png'){
-     if(height>10000)throw Error(uiTextMarkdownExport('长图超过 10000 像素，请选择分页 PDF'));if(!alive())throw new DOMException('Cancelled','AbortError');const canvas=await window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height,y:0,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error(uiTextMarkdownExport('图片生成失败'))),'image/png'));canvas.width=canvas.height=0;extension='png';
+     if(height>10000)throw Error(uiTextMarkdownExport('长图超过 10000 像素，请选择分页 PDF'));if(!alive())throw new DOMException('Cancelled','AbortError');const canvas=await job.wait(window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height,y:0,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000,signal:job.controller.signal}));try{blob=await job.wait(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error(uiTextMarkdownExport('图片生成失败'))),'image/png')));}finally{canvas.width=canvas.height=0;}extension='png';
     }else{
      const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});pdf.setProperties({title:stem,creator:'aide'});
      let pageNo=0;
      for(const range of pageRanges){const {y,height:h}=range,slice=pageSlice(y,h);
       progress(pageNo+1,pageRanges.length);
       // Let the progress state paint before starting another expensive canvas render.
-      await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
-      // html2canvas has no AbortSignal support. Race its promise against the
-      // export job so timeout, lock, or editor close can settle the UI even
-      // when a large page render itself stalls.
-      const canvas=await job.wait(render(slice,h));slice.remove();if(pageNo++)pdf.addPage();pdf.addImage(canvas.toDataURL('image/jpeg',PDF_JPEG_QUALITY),'JPEG',12,12,186,h/WIDTH*186,undefined,'FAST');canvas.width=canvas.height=0;
+      await job.wait(new Promise(resolve=>requestAnimationFrame(()=>resolve())));
+      // The bundled renderer observes this job's signal and releases its own
+      // clone/canvas resources. Also settle UI waits when native encoding stalls.
+      const canvas=await job.wait(render(slice,h));try{if(pageNo++)pdf.addPage();pdf.addImage(canvas.toDataURL('image/jpeg',PDF_JPEG_QUALITY),'JPEG',12,12,186,h/WIDTH*186,undefined,'FAST');}finally{slice.remove();canvas.width=canvas.height=0;}
      }
      blob=pdf.output('blob');extension='pdf';
     }
    }
    if(alive())download(blob,format==='md'?name:stem+'.'+extension);
-  }catch(e){if(job.timedOut)throw Error(uiTextMarkdownExport('导出超时，请检查资源连接或拆分文档'));throw e;}finally{clearInterval(guard);clearTimeout(timeout);job.frame?.remove();job.renderFrame?.remove();if(active===job)active=null;}
+  }catch(e){if(job.timedOut)throw Error(uiTextMarkdownExport('导出超时，请检查资源连接或拆分文档'));throw e;}finally{clearInterval(guard);clearTimeout(timeout);job.controller.abort();job.frame?.remove();job.renderFrame?.remove();if(active===job)active=null;}
  }
  function bind({button,options,t=s=>s,error=()=>{}}){
   button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
