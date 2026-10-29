@@ -1,0 +1,40 @@
+{
+  "cycle": 129,
+  "issues": [
+    617
+  ],
+  "problem": "Final visitor cancellation raced another READDIR/EOF; confirmed CI40847623085 and3/40 old repeated runs.",
+  "fix": "Check context before every READDIR and immediately after successful visitor; visitor error takes precedence and deferred close retained.",
+  "red": {
+    "oldExisting": "3/40 failures: cancelled final visitor returned nil",
+    "newBoundary": "--- FAIL: TestIssue617VisitorCancellationStopsBeforeNextReadDir (0.00s)\n    --- FAIL: TestIssue617VisitorCancellationStopsBeforeNextReadDir/visitor-error=false (0.00s)\n        sftp_cancel_boundary_test.go:54: cancellation boundary: err=context canceled reads=2 closes=1\nFAIL\nFAIL\taide/internal/server\t0.041s\nFAIL\n"
+  },
+  "green": {
+    "boundaryAndNAME100": "ok  \taide/internal/server\t3.582s\n",
+    "manifestOnce": "ok  \taide/internal/server\t10.976s\n"
+  },
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "0e2f059831a4a65866b5d9328dced89b1cb9317eb16a233b0022516f484eb725",
+    "head": "1acfd359d0b13c733ad02c2b074dbd3fc2e29672",
+    "time": "20261029T101538538075Z",
+    "log": ".agent-state/verify-20261029T101538538075Z.log"
+  },
+  "quickChecks": 305,
+  "iterationCorrection": "Initial repetition regex also matched TestIssue71 large directory creation (100000 files per iteration). Stopped owned go/server.test processes375573/378549 after ~5min, not counted PASS. Final only164/617 repeated100;71 once.",
+  "ownerPriority": {
+    "615": "Existing independent pluginPR15/corePR616; integration/release/Windows acceptance pending, no duplicate changes."
+  },
+  "delivery": {
+    "PR": 609,
+    "status": "verifiedreadytopush;fullCIrerunandmainreviewpending"
+  },
+  "next": {
+    "cycle": 130,
+    "issues": [
+      566,
+      567
+    ]
+  }
+}

@@ -1,0 +1,811 @@
+{
+  "cycle": 128,
+  "issues": [
+    552,
+    553,
+    554,
+    556,
+    557,
+    558,
+    559,
+    560
+  ],
+  "red": {
+    "checks": 15,
+    "rows": [
+      {
+        "name": "552 TTC counts/truncation stop before offset expansion",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned TTC offset trap"
+      },
+      {
+        "name": "552 valid1/256 offset layouts and version2 footer",
+        "status": "PASS"
+      },
+      {
+        "name": "553 excessive Unicode/glyph spans reject before append",
+        "status": "FAIL",
+        "error": "The expression evaluated to a falsy value:\n\n  assert(caught&&format(caught))\n"
+      },
+      {
+        "name": "553 normal format12 maps, stable deduplication and aggregate budget",
+        "status": "PASS"
+      },
+      {
+        "name": "554 types4/5 bound vertices before next reader access",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned mesh read trap"
+      },
+      {
+        "name": "554 patch output checked before allocation and document quotas shared",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned patch allocation trap"
+      },
+      {
+        "name": "554 normal actual mesh constructor and decode parameters",
+        "status": "PASS"
+      },
+      {
+        "name": "554 types6/7 record count is bounded before another patch",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned patch record trap"
+      },
+      {
+        "name": "554 actual Coons/tensor patch tessellation preserves normal geometry",
+        "status": "PASS"
+      },
+      {
+        "name": "556 parser operator quota and expression depth avoid stack overflow",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned PS operator trap"
+      },
+      {
+        "name": "556 valid deep expression falls back to bounded interpreter",
+        "status": "PASS"
+      },
+      {
+        "name": "557 entity scans skip unclosed suffix and preserve complete-prefix semantics",
+        "status": "FAIL",
+        "error": "owned unclosed entity regex trap"
+      },
+      {
+        "name": "558 negative and mixed appearance bounds remain exact",
+        "status": "FAIL",
+        "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    -120,\n    -120,\n+   5e-324,\n+   5e-324\n-   -20,\n-   -20\n  ]\n"
+      },
+      {
+        "name": "559 no usable geometry returns before font work",
+        "status": "FAIL",
+        "error": "owned unusable widget font trap"
+      },
+      {
+        "name": "559 multiline sizing uses bounded monotone search",
+        "status": "FAIL",
+        "error": "owned linear font-size search trap"
+      }
+    ]
+  },
+  "green": {
+    "checks": 15,
+    "rows": [
+      {
+        "name": "552 TTC counts/truncation stop before offset expansion",
+        "status": "PASS"
+      },
+      {
+        "name": "552 valid1/256 offset layouts and version2 footer",
+        "status": "PASS"
+      },
+      {
+        "name": "553 excessive Unicode/glyph spans reject before append",
+        "status": "PASS"
+      },
+      {
+        "name": "553 normal format12 maps, stable deduplication and aggregate budget",
+        "status": "PASS"
+      },
+      {
+        "name": "554 types4/5 bound vertices before next reader access",
+        "status": "PASS"
+      },
+      {
+        "name": "554 patch output checked before allocation and document quotas shared",
+        "status": "PASS"
+      },
+      {
+        "name": "554 normal actual mesh constructor and decode parameters",
+        "status": "PASS"
+      },
+      {
+        "name": "554 types6/7 record count is bounded before another patch",
+        "status": "PASS"
+      },
+      {
+        "name": "554 actual Coons/tensor patch tessellation preserves normal geometry",
+        "status": "PASS"
+      },
+      {
+        "name": "556 parser operator quota and expression depth avoid stack overflow",
+        "status": "PASS"
+      },
+      {
+        "name": "556 valid deep expression falls back to bounded interpreter",
+        "status": "PASS"
+      },
+      {
+        "name": "557 entity scans skip unclosed suffix and preserve complete-prefix semantics",
+        "status": "PASS"
+      },
+      {
+        "name": "558 negative and mixed appearance bounds remain exact",
+        "status": "PASS"
+      },
+      {
+        "name": "559 no usable geometry returns before font work",
+        "status": "PASS"
+      },
+      {
+        "name": "559 multiline sizing uses bounded monotone search",
+        "status": "PASS",
+        "detail": {
+          "checks": 9,
+          "fontSize": 0.02
+        }
+      }
+    ]
+  },
+  "streamRed": {
+    "checks": 6,
+    "rows": [
+      {
+        "name": "560 worker repeated error/close/cancel streams release both maps",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\n100 !== 0\n"
+      },
+      {
+        "name": "560 worker cancel after terminal cleanup is acknowledged",
+        "status": "FAIL",
+        "error": "owned message timeout"
+      },
+      {
+        "name": "560 worker failed error notification still deletes sink",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+      },
+      {
+        "name": "560 api repeated error/close/cancel streams release both maps",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\n100 !== 0\n"
+      },
+      {
+        "name": "560 api cancel after terminal cleanup is acknowledged",
+        "status": "FAIL",
+        "error": "owned message timeout"
+      },
+      {
+        "name": "560 api failed error notification still deletes sink",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+      }
+    ]
+  },
+  "streamGreen": {
+    "checks": 6,
+    "rows": [
+      {
+        "name": "560 worker repeated error/close/cancel streams release both maps",
+        "status": "PASS",
+        "detail": {
+          "errorStreams": 100,
+          "retainedSinks": 0,
+          "retainedControllers": 0
+        }
+      },
+      {
+        "name": "560 worker cancel after terminal cleanup is acknowledged",
+        "status": "PASS"
+      },
+      {
+        "name": "560 worker failed error notification still deletes sink",
+        "status": "PASS"
+      },
+      {
+        "name": "560 api repeated error/close/cancel streams release both maps",
+        "status": "PASS",
+        "detail": {
+          "errorStreams": 100,
+          "retainedSinks": 0,
+          "retainedControllers": 0
+        }
+      },
+      {
+        "name": "560 api cancel after terminal cleanup is acknowledged",
+        "status": "PASS"
+      },
+      {
+        "name": "560 api failed error notification still deletes sink",
+        "status": "PASS"
+      }
+    ]
+  },
+  "browser": [
+    {
+      "mode": "ttc-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "annotations": [],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "ttc-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "annotations": [],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: FormatError: TrueType Collection count/version exceeds preview limit"
+      ]
+    },
+    {
+      "mode": "cmap-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "annotations": [],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "cmap-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "annotations": [],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: FormatError: TrueType format12 range exceeds preview limit"
+      ]
+    },
+    {
+      "mode": "mesh-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "shadingFill"
+      ],
+      "annotations": [],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "mesh6-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "shadingFill"
+      ],
+      "annotations": [],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "mesh7-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "shadingFill"
+      ],
+      "annotations": [],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "mesh-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "shadingFill"
+      ],
+      "annotations": [],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        255,
+        105,
+        180,
+        255
+      ],
+      "nativeDummyShading": true,
+      "messages": [
+        "Warning: FormatError: PDF mesh geometry exceeds preview budget",
+        "Warning: FormatError: PDF mesh geometry exceeds preview budget"
+      ]
+    },
+    {
+      "mode": "ps-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "shadingFill"
+      ],
+      "annotations": [],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        64,
+        64,
+        64,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "ps-deep",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "shadingFill"
+      ],
+      "annotations": [],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        128,
+        128,
+        128,
+        255
+      ],
+      "messages": [
+        "Warning: PostScript expression exceeds preview depth limit",
+        "Warning: PostScript expression exceeds preview depth limit"
+      ]
+    },
+    {
+      "mode": "ps-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "shadingFill"
+      ],
+      "annotations": [],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        255,
+        105,
+        180,
+        255
+      ],
+      "nativeDummyShading": true,
+      "messages": [
+        "Warning: FormatError: PostScript function exceeds preview operator limit",
+        "Warning: FormatError: PostScript function exceeds preview operator limit"
+      ]
+    },
+    {
+      "mode": "xfa-entities",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 17,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginAnnotation",
+        "beginMarkedContent",
+        "save",
+        "beginText",
+        "dependency",
+        "setFont",
+        "setFillRGBColor",
+        "setTextMatrix",
+        "moveText",
+        "showText",
+        "endText",
+        "restore",
+        "endMarkedContent",
+        "endAnnotation"
+      ],
+      "annotations": [
+        {
+          "rect": [
+            10,
+            10,
+            90,
+            40
+          ],
+          "value": "A"
+        }
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "annotation-negative",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 13,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginAnnotation",
+        "paintFormXObjectBegin",
+        "save",
+        "setLineWidth",
+        "setStrokeRGBColor",
+        "constructPath",
+        "stroke",
+        "restore",
+        "paintFormXObjectEnd",
+        "endAnnotation"
+      ],
+      "annotations": [
+        {
+          "rect": [
+            -120,
+            -120,
+            -20,
+            -20
+          ]
+        }
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "widget-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 17,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginAnnotation",
+        "beginMarkedContent",
+        "save",
+        "beginText",
+        "dependency",
+        "setFont",
+        "setFillRGBColor",
+        "setTextMatrix",
+        "moveText",
+        "showText",
+        "endText",
+        "restore",
+        "endMarkedContent",
+        "endAnnotation"
+      ],
+      "annotations": [
+        {
+          "rect": [
+            10,
+            10,
+            90,
+            13
+          ],
+          "value": "A"
+        }
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "widget-tiny",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginAnnotation",
+        "beginMarkedContent",
+        "save",
+        "restore",
+        "endMarkedContent",
+        "endAnnotation"
+      ],
+      "annotations": [
+        {
+          "rect": [
+            10,
+            10,
+            90,
+            11
+          ],
+          "value": "A"
+        }
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    }
+  ],
+  "streamBrowser": {
+    "rows": [
+      {
+        "case": "100actualworkererrorstreams",
+        "status": "PASS",
+        "owned": "stats",
+        "id": 1,
+        "sinks": 0
+      },
+      {
+        "case": "backpressureerror",
+        "status": "PASS",
+        "bytes": 4,
+        "owned": "stats",
+        "id": 2,
+        "sinks": 0
+      },
+      {
+        "case": "closeandcancel",
+        "status": "PASS",
+        "owned": "stats",
+        "id": 3,
+        "sinks": 0
+      },
+      {
+        "case": "terminalcancelrace",
+        "status": "PASS",
+        "owned": "stats",
+        "id": 4,
+        "sinks": 0
+      }
+    ],
+    "errors": [],
+    "scope": "Actual API MessageHandler in Chromium connected to actual worker MessageHandler over a transferred MessagePort; synthetic streams only."
+  },
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "ccfa719552a91e44d8f1f4ffc79a4b81a4cdb60d4294027cd30404769e330beb",
+    "head": "58cbc688045ed67e2375624cce547db820bf0c97",
+    "time": "20261029T100817188507Z",
+    "log": ".agent-state/verify-20261029T100817188507Z.log"
+  },
+  "quickChecks": 305,
+  "fixtureDeterminism": "Generator rerun SHA256 exact match",
+  "iterationCorrections": [
+    "Large-gradient expectation corrected to actual native hotpink DummyShading plus warning; not full gradient rendering.",
+    "Fake failed-port fixture required removeEventListener noop for destroy.",
+    "Added mesh6/7 browser fixtures initially did not match mesh- classifier; fixed and all15 rerun passed."
+  ],
+  "limits": [
+    "Local geometry/parse budgets; not total PDF memory/time.",
+    "Deep in-budget PS expression falls back to interpreter; oversized PS rejected.",
+    "Real Chromium API/worker stream MessagePort lifecycle verified; no deployed workbench claim."
+  ],
+  "ci": {
+    "run": 40847623085,
+    "head": "58cbc688",
+    "status": "failure",
+    "detail": "Go shard16 TestIssue164ValidNamesKeepAttributesAndVisitorSemantics/visitor-cancel=true lost boundary; quick/windows success. Investigate next checkpoint."
+  },
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "localverifiedreadytopush; mainreviewpending"
+  },
+  "next": {
+    "cycle": 129,
+    "priority": "Investigate Go CI visitor cancellation, then566/567"
+  }
+}

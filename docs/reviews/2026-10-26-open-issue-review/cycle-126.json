@@ -1,0 +1,334 @@
+{
+  "cycle": 126,
+  "issues": [
+    540,
+    542
+  ],
+  "implementation": [
+    "Visible bounding-box candidates before any trianglequery;10000trianglesbudgetincludesinstance/materialgroupoverlap;nearestpushsinkretainsonehit",
+    "Densecandidateopenslimitreasonandrealkeyboard/clickablelinkhierarchywithoutapproximatehitselection",
+    "Pre-BlobPNG/JPEG/GIF/WebPstaticheaderdimensions<=4096edge/4Mipixels;animatedtexturesrejected",
+    "LoadingManagerURLmodifierreservesaggregate16MipixelsperdecodeattemptincludingrepeatedURLs;neutraltexturepreservesDAEgeometrywhenoverbudget"
+  ],
+  "red": {
+    "baseline": "352815b3",
+    "allHitCollectionCalled": true,
+    "oversizeTextureReachedBlob": true,
+    "actualLargeIntersectionOrRasterAllocation": false
+  },
+  "green": {
+    "checks": 7,
+    "rows": [
+      {
+        "name": "540 bounded nearest visible hit with actual r128 triangle intersections",
+        "status": "PASS",
+        "detail": {
+          "testedTriangles": 6000,
+          "retainedHits": 1
+        }
+      },
+      {
+        "name": "540 dense candidates and duplicate material groups reject before any triangle query",
+        "status": "PASS"
+      },
+      {
+        "name": "540 off-ray dense bounds, invisible ancestors and transformed meshes",
+        "status": "PASS"
+      },
+      {
+        "name": "542 real static PNG/JPEG/GIF/WebP lossy/lossless headers and animations",
+        "status": "PASS"
+      },
+      {
+        "name": "542 dimensions rejected before raster decode; malformed headers fail boundedly",
+        "status": "PASS"
+      },
+      {
+        "name": "542 inclusive per-preview pixel quota is shared and failure does not grow it",
+        "status": "PASS"
+      },
+      {
+        "name": "542 actual URL modifier charges every decode request and substitutes neutral before loading",
+        "status": "PASS"
+      }
+    ]
+  },
+  "browser": [
+    {
+      "mode": "normal",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "triangleQueries": 1,
+      "allHitQueries": 0
+    },
+    {
+      "mode": "dense",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "triangleQueries": 0,
+      "allHitQueries": 0
+    },
+    {
+      "mode": "texture-normal-png",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-normal-jpeg",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-normal-gif",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-normal-webp",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-large-dae",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "rejectedBeforeBlob": true,
+      "decodedImages": [
+        {
+          "width": 1,
+          "height": 1
+        }
+      ]
+    },
+    {
+      "mode": "texture-large-urdf",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "rejectedBeforeBlob": true,
+      "decodedImages": []
+    },
+    {
+      "mode": "texture-animated-dae",
+      "width": 1280,
+      "theme": "light",
+      "locale": "en-US",
+      "status": "PASS",
+      "rejectedBeforeBlob": true,
+      "decodedImages": [
+        {
+          "width": 1,
+          "height": 1
+        }
+      ]
+    },
+    {
+      "mode": "normal",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "triangleQueries": 1,
+      "allHitQueries": 0
+    },
+    {
+      "mode": "dense",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "triangleQueries": 0,
+      "allHitQueries": 0
+    },
+    {
+      "mode": "texture-normal-png",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-normal-jpeg",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-normal-gif",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-normal-webp",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "rejectedBeforeBlob": false,
+      "decodedImages": [
+        {
+          "width": 8,
+          "height": 8
+        }
+      ]
+    },
+    {
+      "mode": "texture-large-dae",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "rejectedBeforeBlob": true,
+      "decodedImages": [
+        {
+          "width": 1,
+          "height": 1
+        }
+      ]
+    },
+    {
+      "mode": "texture-large-urdf",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "rejectedBeforeBlob": true,
+      "decodedImages": []
+    },
+    {
+      "mode": "texture-animated-dae",
+      "width": 390,
+      "theme": "dark",
+      "locale": "zh-CN",
+      "status": "PASS",
+      "rejectedBeforeBlob": true,
+      "decodedImages": [
+        {
+          "width": 1,
+          "height": 1
+        }
+      ]
+    }
+  ],
+  "layoutRegression": {
+    "status": "PASS",
+    "scope": "Owned component page with actual product JS/CSS, offline Three.js, real WebGL and synthetic 9/121-link robot; no workbench deployment or user data.",
+    "checks": [
+      "inspector collapsed by default",
+      "one-line24px labels; max6/3; no overlap",
+      "camera preserved on labels, selection and panel resize",
+      "root/parent XYZ and moving joint RPY in inspector",
+      "display tools and Escape",
+      "121-link selection pagination retained across resize; fixed joints omitted from adjustment controls",
+      "1280 desktop and390 narrow, blue/comfort light/dark",
+      "all-fixed model retains pose inspector without controls",
+      "teardown releases canvas"
+    ],
+    "errors": []
+  },
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "7d09a2687793101727562b16dbcb9adf9f78ae631bf964cb12c43666e07287ff",
+    "head": "352815b3d4a203f928151d3415f24103bbfb965f",
+    "time": "20261029T083355478927Z",
+    "log": ".agent-state/verify-20261029T083355478927Z.log"
+  },
+  "quickChecks": 299,
+  "iterationCorrections": [
+    "First dense fixture timedout beforeinspectorobservation;use low-fillrate denseSTLandexplicitfreshfirst-frame/10stimeouts toisolateselectbehaviorfromsoftwareGPUcost. ItwasnotrecordedPASS.",
+    "RealUI found newlimitreasonhiddeninsidecollapsedwarnings;openreasononlimitedclick.",
+    "Linkhierarchywasdisplay-only;makeitnativebuttonswithfocusandselectionratherthanadvertisefallbackthatcannotbeused.",
+    "Negative texture tests explicitly expand warnings and waitfor1x1DAEneutraltexture, not only absence oflargeBlob."
+  ],
+  "limits": [
+    "Trianglebudgetonlyforpicking,notallscene/GPUoverdrawcost.",
+    "Texturebudgetisdeclaredrasterpixels/loadingattempts,notallcodecmetadata/scratch/GPUmemoryoralltabs.",
+    "AggregatequotausescontrolledactualURLmodifierunit;doesnotdecode4x2048texturesasstress.",
+    "PredecodeoversizefixturesusemodifiedheadersandBlobtrap;no actual4096x4096decode.",
+    "ActualownedcomponentWebGL/syntheticmodels,notfullworkbenchdeployment/device."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verifiedreadytopush;mainreviewpending"
+  },
+  "next": {
+    "cycle": 127,
+    "issues": [
+      545,
+      546,
+      547,
+      548,
+      549,
+      550
+    ]
+  }
+}

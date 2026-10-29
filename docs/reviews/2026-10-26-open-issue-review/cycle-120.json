@@ -1,0 +1,65 @@
+{
+  "cycle": 120,
+  "issues": [
+    599
+  ],
+  "userClarification": "All Markdown symbols appeared literally. User explicitly prioritized this report.",
+  "rootCause": "Assistant-session timeline used el/textContent for both assistant content and reply fields, bypassing the shared Markdown renderer.",
+  "fix": [
+    "Assistant-role content/reply use existing Markdown/CJK/code-decoration/sanitizer; user input remains literal",
+    "Unchanged assistant DOM is reused; visible fields, same-length edits, dispatch target, language and parser readiness invalidate it",
+    "Plain fallbacks never enter stable cache; replaced parser clears cache; a shared local recovery load coalesces requests, then requires manual retry after failure",
+    "Recovery redraws current session and visible previews from current draft values; locked/logged-out views do not redraw"
+  ],
+  "red": [
+    {
+      "scope": "actual pre-fix assistant timeline block",
+      "result": "0strong versus6expected despite a working parser",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle120-assistant-red.log"
+    },
+    {
+      "scope": "pre-fix renderer/cache",
+      "result": "loaded parser still reused raw fallback; explicit cache clear recovered formatting",
+      "evidence": "/workspace/scratch/issue-review-20261026/diagnose599.json"
+    }
+  ],
+  "green": [
+    {
+      "scope": "10actualcomponentbrowsercases on user example;4theme/widthprofiles andauto/manualrecovery,6strong5code; userliteral,replyfield,dispatch,nodereuse,editinvalidation,sanitization,drafts and ownership/lockraces",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle120-markdown-example-final/result.json"
+    },
+    {
+      "scope": "10structuredsourcebrowsercases,1heading2listitems plus samecontrols",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle120-markdown-structured-final/result.json"
+    },
+    {
+      "scope": "finalquick",
+      "checks": 287,
+      "status": "pass",
+      "fingerprint": "33926954be245fef4d2bcce21c58ebd13039d688f6c3c15ad37b0edabbc939bc",
+      "log": ".agent-state/verify-20261029T065734623849Z.log"
+    }
+  ],
+  "initialQuickFailure": {
+    "status": "fail",
+    "tests": [
+      "markdown-image-path.test.js",
+      "generated-media.test.cjs"
+    ],
+    "reason": "Old broad source slices executed the new DOM listener inside non-DOM VMs. Changed fixtures to Acorn extraction of only the original target functions; retained original assertions.",
+    "log": ".agent-state/verify-20261029T064623472012Z.log",
+    "reportCorrection": "Prematurely reported quick pass from terminal tail; corrected commentary, did not commit/push on the failed receipt, reran complete quick successfully."
+  },
+  "boundaries": [
+    "Actual assistant timeline branch/formatter/cache functions in controlled browser, not full deployed workbench or real model",
+    "No guessed newlines or history/provider/draft writes",
+    "Voice-log summaries and call captions remain plain text; optional display-surface clarification still pending"
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verified, preparingcommit/push; notmain/deployed"
+  }
+}

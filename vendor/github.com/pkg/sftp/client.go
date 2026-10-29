@@ -401,6 +401,9 @@ func (c *Client) readDirContext(ctx context.Context, p string, visit func(os.Fil
 	var entries []os.FileInfo
 	var done = false
 	for !done {
+		if err = ctx.Err(); err != nil {
+			break
+		}
 		id := c.nextID()
 		typ, data, err1 := c.sendPacket(ctx, nil, &sshFxpReaddirPacket{
 			ID:     id,
@@ -434,6 +437,10 @@ func (c *Client) readDirContext(ctx context.Context, p string, visit func(os.Fil
 						return nil, err
 					}
 					if err := visit(entry); err != nil {
+						return nil, err
+					}
+					// AIDE #617: cancellation by the final visitor must not race a new READDIR/EOF.
+					if err := ctx.Err(); err != nil {
 						return nil, err
 					}
 				}

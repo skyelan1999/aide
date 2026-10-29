@@ -1,0 +1,59 @@
+{
+  "cycle": 116,
+  "issues": [
+    501,
+    502,
+    503,
+    504,
+    505
+  ],
+  "fix": [
+    "LZW per-buffer64MiB allocation guard",
+    "JBIG2 extended count/retention alignment, bounds, progress,65536refs/segments and relative unknown-length terminator",
+    "2048 entries each for global image/ref/failure caches, at most2distinct pages per tracked ref, existing50MB pixel policy retained",
+    "Indexed lookup1..256entries before allocation",
+    "atlas target padding, own rows only, left padding across wraps"
+  ],
+  "red": {
+    "status": "6 failing groups plus normal LZW pass on original worker; source/output traps avoid excessive native allocation or infinite loop",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle116-red.json"
+  },
+  "green": [
+    {
+      "scope": "10 Node groups, actual worker classes;54 header combinations, exact65536segment boundary,570atlas edge/corner pixels, source preservation and cache clear/byte budgets",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle116-green.json"
+    },
+    {
+      "scope": "6 real Chromium API/worker cases: normal/expanding LZW, valid extended JBIG2 1x1, valid/invalidIndexed, display atlas optimization and actual colored pixels",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle116-browser-final/result.json"
+    },
+    {
+      "scope": "previous6resource+5canvas+5lifecycle browser cases",
+      "status": "PASS",
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle116-resource-regression.log",
+        "/workspace/scratch/issue-review-20261026/cycle116-canvas-regression.log",
+        "/workspace/scratch/issue-review-20261026/cycle116-lifecycle-regression.log"
+      ]
+    },
+    {
+      "scope": "quick",
+      "checks": 281,
+      "status": "pass",
+      "fingerprint": "13744208f7b7ea8ea53ed9d3243d64dc2b5bc33ea7130b001c97faf9bac73a05",
+      "log": ".agent-state/verify-20261029T045643301979Z.log"
+    }
+  ],
+  "testBoundaries": [
+    "LZW browser fixture28756encoded bytes expands toward64MiB; actual guard observed by test-only exception logger. No baseline expansion stress run.",
+    "First JBIG2 browser fixture lacked PageInformation and produced a normal decode failure; final valid fixture includes PageInformation and eight referred segments,4decodedbytes.",
+    "getOperatorList requests raw operators; separate test-only trace confirms actual display grouping10inlineimages.",
+    "No full workbench/device run; single-stream/cache policy is not total PDF resource guarantee."
+  ],
+  "delivery": {
+    "status": "verified local, GitHub credentials unavailable",
+    "lastPushedCommit": "0fc630bd"
+  }
+}

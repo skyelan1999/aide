@@ -1,0 +1,421 @@
+{
+  "cycle": 124,
+  "issues": [
+    532,
+    533,
+    534
+  ],
+  "implementation": [
+    "Graphics save stack and Eval/Text/Canvas clone ancestry bounded256, renderer checks before native context mutation; cross-Form ancestor chains cannot bypass localstack",
+    "CCITT Columns1..65536 and nonnegativeRows;knownrows16Mipixelbudget before scratch allocation",
+    "Flate image prefix reading cancels unused tail;fullnativeoutput64MiB,no budget-errorfallback;manualbuffer/hint64MiB cap"
+  ],
+  "red": [
+    {
+      "checks": 5,
+      "rows": [
+        {
+          "name": "532 evaluator stack256 boundary rejects without mutation and restores",
+          "status": "FAIL",
+          "error": "Missing expected exception (format)."
+        },
+        {
+          "name": "532 actual EvalState/TextState/CanvasExtraState clone ancestry bounded across nested owners",
+          "status": "FAIL",
+          "error": "Missing expected exception (format)."
+        },
+        {
+          "name": "532 renderer rejects before canvas/stack mutation and supports normal restore",
+          "status": "FAIL",
+          "error": "Missing expected exception (format)."
+        },
+        {
+          "name": "533 invalid columns/rows reject before scratch allocation or source read",
+          "status": "FAIL",
+          "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned fax allocation trap"
+        },
+        {
+          "name": "533 default/65536-column scratch boundary and ordinary white row",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "checks": 5,
+      "rows": [
+        {
+          "name": "534 requested prefix cancels before reading trailing chunks",
+          "status": "FAIL",
+          "error": "Expected values to be strictly equal:\n\n3 !== 1\n"
+        },
+        {
+          "name": "534 full-output budget rejects before concatenation and never falls back",
+          "status": "FAIL",
+          "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned unwanted fallback"
+        },
+        {
+          "name": "534 invalid requested size rejects before resetting or decoding source",
+          "status": "FAIL",
+          "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned source reset trap"
+        },
+        {
+          "name": "534 manual buffer and constructor hints reject before allocation",
+          "status": "FAIL",
+          "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned Flate allocation trap"
+        },
+        {
+          "name": "534 native real compressed prefix/EOF/zero and manual fallback controls",
+          "status": "PASS"
+        }
+      ]
+    }
+  ],
+  "green": [
+    {
+      "checks": 5,
+      "rows": [
+        {
+          "name": "532 evaluator stack256 boundary rejects without mutation and restores",
+          "status": "PASS"
+        },
+        {
+          "name": "532 actual EvalState/TextState/CanvasExtraState clone ancestry bounded across nested owners",
+          "status": "PASS"
+        },
+        {
+          "name": "532 renderer rejects before canvas/stack mutation and supports normal restore",
+          "status": "PASS"
+        },
+        {
+          "name": "533 invalid columns/rows reject before scratch allocation or source read",
+          "status": "PASS"
+        },
+        {
+          "name": "533 default/65536-column scratch boundary and ordinary white row",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "checks": 5,
+      "rows": [
+        {
+          "name": "534 requested prefix cancels before reading trailing chunks",
+          "status": "PASS"
+        },
+        {
+          "name": "534 full-output budget rejects before concatenation and never falls back",
+          "status": "PASS"
+        },
+        {
+          "name": "534 invalid requested size rejects before resetting or decoding source",
+          "status": "PASS"
+        },
+        {
+          "name": "534 manual buffer and constructor hints reject before allocation",
+          "status": "PASS"
+        },
+        {
+          "name": "534 native real compressed prefix/EOF/zero and manual fallback controls",
+          "status": "PASS"
+        }
+      ]
+    }
+  ],
+  "browser": {
+    "cycle124-browser-final": [
+      {
+        "mode": "graphics-normal",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 131,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          0,
+          0,
+          255,
+          255
+        ],
+        "messages": []
+      },
+      {
+        "mode": "graphics-large",
+        "status": "PASS",
+        "operations": 512,
+        "documentDestroyed": true,
+        "messages": [
+          "Warning: getOperatorList - ignoring errors during \"GetOperatorList: page 0\" task: \"FormatError: PDF graphics-state depth exceeds preview limit\".",
+          "Warning: getOperatorList - ignoring errors during \"GetOperatorList: page 0\" task: \"FormatError: PDF graphics-state depth exceeds preview limit\"."
+        ]
+      },
+      {
+        "mode": "fax-normal",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 8,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          255,
+          255,
+          255,
+          255
+        ],
+        "messages": []
+      },
+      {
+        "mode": "fax-large",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 8,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          255,
+          255,
+          255,
+          255
+        ],
+        "emptyImagePlaceholder": true,
+        "messages": [
+          "Warning: Invalid stream: \"FormatError: CCITT dimensions exceed preview limit\"",
+          "Warning: Invalid stream: \"FormatError: CCITT dimensions exceed preview limit\"",
+          "Warning: Invalid stream: \"FormatError: CCITT dimensions exceed preview limit\""
+        ]
+      }
+    ],
+    "cycle124-flate-browser": [
+      {
+        "mode": "flate-normal",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 5,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          255,
+          0,
+          0,
+          255
+        ],
+        "messages": []
+      },
+      {
+        "mode": "flate-trailing",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 5,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          255,
+          0,
+          0,
+          255
+        ],
+        "messages": []
+      },
+      {
+        "mode": "flate-fallback",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 5,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          255,
+          0,
+          0,
+          255
+        ],
+        "messages": []
+      }
+    ],
+    "cycle124-resource-regression": [
+      {
+        "mode": "form-normal",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 50,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          0,
+          0,
+          255,
+          255
+        ],
+        "messages": []
+      },
+      {
+        "mode": "form-cycle",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 30,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "messages": [
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\"."
+        ]
+      },
+      {
+        "mode": "form-depth",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 2560,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "messages": []
+      },
+      {
+        "mode": "pattern-normal",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 3,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "expectedPixel": [
+          0,
+          0,
+          255,
+          255
+        ],
+        "messages": []
+      },
+      {
+        "mode": "pattern-cycle",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 3,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "messages": [
+          "Warning: getOperatorList - ignoring errors during \"GetOperatorList: page 0\" task: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring errors during \"GetOperatorList: page 0\" task: \"FormatError: Recursive PDF resource expansion\"."
+        ]
+      },
+      {
+        "mode": "hybrid-cycle",
+        "status": "PASS",
+        "options": {
+          "maxImageSize": 16777216,
+          "canvasMaxAreaInBytes": 33554432
+        },
+        "operations": 50,
+        "pages": 1,
+        "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+        "messages": [
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+          "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\"."
+        ]
+      }
+    ]
+  },
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "5b007daaf53f5431d831219f6fe68015f57d76f1d02e7fd6137d440a45924866",
+    "head": "4649fbb0ee1703cbcc8a86db445222aaa41cb706",
+    "time": "20261029T075334809119Z",
+    "log": ".agent-state/verify-20261029T075334809119Z.log"
+  },
+  "quickChecks": 295,
+  "harnessCorrections": [
+    "Initial graphics test expected explicit pdf-error;actualoptimizer can return512boundedoperators. Accept bounded omission or controllederror, while actualrendererunitasserts pre-context rejection.",
+    "Initial invalidfax pixel assumption expectedblue;PDF.js Invalidstream recovery substitutes emptyimage, renderedwhite. Verifiedwarningandplaceholderratherthanclaimfullimagerender.",
+    "NestedForm depth regression accepts earlier graphics ancestry guard as well as resource depthguard;both enforce bounded expansion."
+  ],
+  "limits": [
+    "Perstate/perstream budgets, not aggregate documentwork/memory.",
+    "Some malformedcontentisomittedorplaceholder;originalfile available.",
+    "Prefiximage decoding intentionally cancels before trailing checksum validation.",
+    "Native fulloutput copy can coexistwithretainedchunks;64MiBoutputdoesnotmean64MiBtotalprocessmemory.",
+    "CCITT unknownRows0retainsoriginalsemantics;notglobalCCITTdecodedoutputbudget.",
+    "Componentbrowser/syntheticPDFonly,not deployedworkbench/device."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verified,readytopush;mainreviewpending"
+  },
+  "next": {
+    "cycle": 125,
+    "issues": [
+      535,
+      536,
+      537,
+      538
+    ]
+  }
+}

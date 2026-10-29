@@ -1,0 +1,59 @@
+{
+  "cycle": 110,
+  "issues": [
+    601
+  ],
+  "priority": "new confirmed-owner report",
+  "fix": "Remove fixed200000-byte attachment gate;64MiB assembly resource cap checked before writes;linear builder;selected-model preview/start meter retained;existing extraction notices preserved.",
+  "red": {
+    "status": "reproduced on baseline a682a8f3",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle110-601-red.log",
+    "result": "ASCII200000bytes,Chinese200001bytes,multiplefiles rejected195KB;unreadable second file hidden by same old gate"
+  },
+  "green": [
+    {
+      "scope": "real HTTP preview/start with actual attachment path and local synthetic provider;ASCII/Chinese/multiplefiles beyondoldcap;large model receives exact attachment block;small model previewoverlimit/startreject with no provider call",
+      "status": "PASS"
+    },
+    {
+      "scope": "actual64MiB assembled boundary accepted;8bytesover rejected with read_file guidance and no partialsuccess",
+      "status": "PASS"
+    },
+    {
+      "scope": "focused race/context/retry/visibility/attachment/document controls",
+      "topLevelTests": 15,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle110-601-race.log"
+    },
+    {
+      "scope": "two actual DOCX extracts total>200kbytes retainboth60krune truncation notices;tailomittedexplicitly;race",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle110-601-documents.log"
+    },
+    {
+      "scope": "quick",
+      "checks": 268,
+      "status": "pass",
+      "fingerprint": "c761504e30a2124205ebd348e103bebc636bfc7bb15a2328af54fa85cc7c0b3b",
+      "log": ".agent-state/verify-20261029T030215816078Z.log"
+    }
+  ],
+  "intermediateTestCorrections": [
+    "Observe the actual attachment request separately from the existing auxiliary title request.",
+    "Small-model selection fixture includes required strategy/profile fields."
+  ],
+  "limits": [
+    "UTF16/4 context meter is an estimate,not provider tokenizer/account acceptance.",
+    "64MiB resource cap is independent of token window;larger sources use existing bounded read_file path.",
+    "Document60krune extraction and8attachment limits remain."
+  ],
+  "notRun": [
+    "live model/account",
+    "full Docker runtime image",
+    "main integration/release"
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "status": "verified pending push"
+  }
+}

@@ -205,7 +205,8 @@ DXF输入最多4MiB，流式读取到界即取消；解析前最多100,000行，
 - 库：docx=python-docx、xlsx=openpyxl（只读+data_only）、pptx=python-pptx、pdf=pypdf（Dockerfile 已加 pypdf==6.19.0）。
 - 提取脚本与现有 office 工具同一查找链：`$AIDE_OFFICE_SCRIPTS → /workspace/scripts/office → /opt/aide/office-scripts`。
 - 边界：单文档提取上限 `maxDocExtractChars=60000` rune，超出截断并标注「…已截断，共 N 字」；
-  全部附件上下文总上限 `maxAttachmentChars=200000`；提取失败明确报错（不静默丢内容）；
+  不再按固定 200000 字节（195 KB）拒绝附件。预览与实际发送共用所选模型的上下文预算，包含系统提示、历史、附件、工具与输出预留；超出模型窗口时明确报告，未发送内容不声称已读。
+  文本组装保留 `maxAttachmentTextBytes=16 MiB` 资源上限（含标签），在拼接前检查；超限提示分批附加或使用文件工具分段读取。普通文本单文件读取、文档提取及最多 8 个附件的现有边界保持；提取失败明确报错（不静默丢内容）；
   SSH 工作区 / 参考来源库暂不支持（脚本跑在容器内），返回明确提示。
 - 确实无法解析的二进制（非上述类型）改文案："…aide 暂不能解析的二进制格式；可让 aide 直接在工作区打开该文件"。
 

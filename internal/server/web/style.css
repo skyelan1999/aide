@@ -1169,6 +1169,8 @@ dialog.master-auth{width:min(380px,90vw)}
 .am-body{flex:1;min-width:0}
 .am-text{font-size:13px;line-height:1.6;color:var(--text)}
 .am-reply{font-size:13px;line-height:1.6;color:var(--text-dim);margin-top:4px;padding-left:10px;border-left:2px solid var(--line-mid)}
+.am-reply.md-body>:first-child{margin-top:0}
+.am-reply.md-body>:last-child{margin-bottom:0}
 .am-dispatched{display:block;width:100%;margin-top:6px;padding:8px 12px;border:1px solid var(--accent);border-radius:6px;background:color-mix(in srgb, var(--accent) 8%, transparent);color:var(--accent);font-size:12px;cursor:pointer;text-align:left}
 .am-dispatched:hover{background:color-mix(in srgb, var(--accent) 15%, transparent)}
 

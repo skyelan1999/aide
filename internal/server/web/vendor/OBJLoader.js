@@ -417,8 +417,13 @@
 
 		}
 
-		parse( text ) {
+		parse( text, triangleBudget = Infinity ) {
 
+			// Aide #429: a finite caller budget bounds fan expansion before token arrays.
+			if ( triangleBudget !== Infinity && ( ! Number.isSafeInteger( triangleBudget ) || triangleBudget < 0 ) ) {
+				throw new TypeError( 'OBJ triangle budget must be a non-negative safe integer' );
+			}
+			let triangleCount = 0;
 			const state = new ParserState();
 
 			if ( text.indexOf( '\r\n' ) !== - 1 ) {
@@ -488,6 +493,17 @@
 				} else if ( lineFirstChar === 'f' ) {
 
 					const lineData = line.substr( 1 ).trim();
+					if ( triangleBudget !== Infinity ) {
+						const tokens = /\S+/g;
+						let references = 0;
+						while ( tokens.exec( lineData ) !== null ) {
+							if ( ++ references > 2 && ++ triangleCount > triangleBudget ) {
+								const error = new Error( 'OBJ triangle budget exceeded' );
+								error.code = 'AIDE_OBJ_LIMIT';
+								throw error;
+							}
+						}
+					}
 					const vertexData = lineData.split( /\s+/ );
 					const faceVertices = []; // Parse the face vertex data into an easy to work with format
 

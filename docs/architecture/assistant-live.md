@@ -73,3 +73,13 @@ New files in explicitly configured local bindings can use the independent review
 - 页面刷新去重仅在 `sessionStorage` 保存最多 1000 个不透明事件 ID，不保存私人正文。语音播报包含具体阻塞和下一步；麦克风仍须用户手势，锁定和页面隐藏边界沿用既有实现。助理朗读与插件生成可下载 MP3/WAV 的设置保持独立。
 
 实际验证命令、浏览器范围、未测项和发布状态记录在[任务账本](../tasks/assistant-delivery-loop-20261023.json)。旧任务缺少 `delivery` 字段时不会自动补造历史验收证据。
+
+## Assistant timeline Markdown (#599, 2026-10-29)
+
+Assistant-session history uses the same local Markdown parser, CJK emphasis correction, code decoration and HTML sanitization as ordinary chat. Both assistant-role content and a message's reply field render as Markdown; user content remains literal text. Source text, speech synthesis and backend history are not rewritten. Headings/list syntax still requires real line breaks; inline `###` is not repaired by inserting guessed newlines.
+
+Unchanged assistant rows retain their rendered DOM within the same session. Visible content, role/type, dispatched target, language or parser availability invalidate that row, including edits with the same string length. This avoids repeatedly rebuilding code/diagram output during polling.
+
+If the initial local parser script is unavailable, readable plain text remains visible with a formatting status. One shared automatic recovery load is attempted; a failed load waits for the explicit Retry formatting button rather than looping. Successful loading clears HTML/live-block caches and redraws the current session and visible Markdown previews using current unsaved editor values. Completion during logout/lock does not redraw private views. Plain fallbacks never enter the stable HTML cache, and a replacement parser invalidates that cache.
+
+Actual component acceptance covers the user's example (six strong spans/five inline-code spans), structured headings/lists, assistant content/reply fields, literal user text, dispatched navigation, sanitized markup, current-session/lock races and draft retention at desktop/narrow widths in light/dark themes. This does not claim a full deployed workbench, microphone, or real-model acceptance. Voice-log summaries and call captions retain their existing plain-text presentation; the fix targets the assistant conversation timeline.

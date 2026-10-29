@@ -1,0 +1,27 @@
+{
+  "main": "1ca40079",
+  "PR": 606,
+  "mergeCommit": "442bde1a",
+  "conflicts": [
+    "internal/server/attachments.go",
+    "internal/server/context.go"
+  ],
+  "resolution": "Keep latest main attachment assembly16MiB guard and current-input-only model preflight; adapt own exact-boundary test/documentation. Preserve both regression suites and centralized public-plugin issue workflow.",
+  "verification": [
+    {
+      "scope": "targeted attachment/context/server Go race",
+      "status": "PASS",
+      "elapsed": "44.456s",
+      "evidence": "/workspace/scratch/issue-review-20261026/main-sync-attachment-race.log"
+    },
+    {
+      "scope": "quick",
+      "checks": 284,
+      "status": "pass",
+      "fingerprint": "e0c813bdc3115c4761f4253b7e275dadee4b867aaec51cc6adc97d06765cb713",
+      "log": ".agent-state/verify-20261029T052653520078Z.log"
+    }
+  ],
+  "recordingCorrection": "First documentation generator expected a checks field instead of results; no record was emitted. The tested merge was committed/pushed442bde1a; this record corrects its bookkeeping without changing source.",
+  "limits": "Cycle11064MiB evidence is historical; final merged behavior uses main16MiB. Full CI runs again after push. No main merge/bypass performed."
+}

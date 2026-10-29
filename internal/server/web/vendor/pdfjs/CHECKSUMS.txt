@@ -1,4 +1,2 @@
-# PDF.js 4.4.168 — Apache-2.0 (Mozilla Foundation)
-# Source: https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/
-895c72c332dbd608a07ae54003e5e42741c566ade52ddbd2a00c8e57ffa35d9d  pdf.min.mjs
-a7cf858ab0bbe21a00ef438c24a4ef5833c3d05935a294382c8d0773a8958f50  pdf.worker.min.mjs
+d22d0aa0c37f79e6e99f64e2dd3d4cd5b4b7c4a9fd60b39cb8866cc6068f7654  pdf.min.mjs
+e92c356981c782ff00c2e4d29deaca51dfcfb0d7d961bce74fc7448d5119045b  pdf.worker.min.mjs

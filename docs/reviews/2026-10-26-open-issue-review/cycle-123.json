@@ -1,0 +1,319 @@
+{
+  "cycle": 123,
+  "issues": [
+    512,
+    513,
+    514
+  ],
+  "implementation": [
+    "CID widths:16bitCIDbounds,orderedranges,completeverticaltriples,shared131072assignmentbudgetbeforeexpansion",
+    "Squiggly:finitecoordinates,progresschecksand65536segmentsperappearanceacrossquadsbeforepathoutput",
+    "CMap:inclusive131072mappingworkperinstance;range/array/mapOneandoverwritessharebudget;U32charcodesvalidated"
+  ],
+  "red": {
+    "checks": 6,
+    "rows": [
+      {
+        "name": "512 invalid CID range/array dimensions reject before writes",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned width trap"
+      },
+      {
+        "name": "512 full16bit CID horizontal/vertical endpoints and exact aggregate limit",
+        "status": "FAIL",
+        "error": "Missing expected exception (format)."
+      },
+      {
+        "name": "514 huge/invalid CMap spans reject before first assignment",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned CMap write trap"
+      },
+      {
+        "name": "514 inclusive131072 limit, cumulative overwrites/mapOne and normal mappings",
+        "status": "FAIL",
+        "error": "Missing expected exception (format)."
+      },
+      {
+        "name": "513 huge/nonfinite coordinates stop before path generation",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned annotation point trap"
+      },
+      {
+        "name": "513 ordinary wave geometry and aggregate quad point budget",
+        "status": "FAIL",
+        "error": "Missing expected exception (format)."
+      }
+    ]
+  },
+  "green": {
+    "checks": 6,
+    "rows": [
+      {
+        "name": "512 invalid CID range/array dimensions reject before writes",
+        "status": "PASS"
+      },
+      {
+        "name": "512 full16bit CID horizontal/vertical endpoints and exact aggregate limit",
+        "status": "PASS"
+      },
+      {
+        "name": "514 huge/invalid CMap spans reject before first assignment",
+        "status": "PASS"
+      },
+      {
+        "name": "514 inclusive131072 limit, cumulative overwrites/mapOne and normal mappings",
+        "status": "PASS"
+      },
+      {
+        "name": "513 huge/nonfinite coordinates stop before path generation",
+        "status": "PASS"
+      },
+      {
+        "name": "513 ordinary wave geometry and aggregate quad point budget",
+        "status": "PASS"
+      }
+    ]
+  },
+  "browser": [
+    {
+      "mode": "cid-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "cid-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: loadFont - translateFont failed: \"FormatError: CID width expansion exceeds preview limit\".",
+        "Warning: Error during font loading: CID width expansion exceeds preview limit"
+      ]
+    },
+    {
+      "mode": "cid-vertical-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: loadFont - translateFont failed: \"FormatError: CID width expansion exceeds preview limit\".",
+        "Warning: Error during font loading: CID width expansion exceeds preview limit"
+      ]
+    },
+    {
+      "mode": "cmap-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "cmap-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Invalid cMap data: FormatError: CMap expansion exceeds preview mapping limit"
+      ]
+    },
+    {
+      "mode": "squiggle-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 14,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginAnnotation",
+        "paintFormXObjectBegin",
+        "save",
+        "setDash",
+        "setLineWidth",
+        "setStrokeRGBColor",
+        "constructPath",
+        "stroke",
+        "restore",
+        "paintFormXObjectEnd",
+        "endAnnotation"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "squiggle-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 3,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: _parsedAnnotations: \"FormatError: Squiggly annotation exceeds preview point limit\"."
+      ]
+    }
+  ],
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "f4a2edef8861e5d66167a9126593aa61b080cf0077b61bb39596f122429f0b26",
+    "head": "867fa8cf7fc1d60b88a72f8b1ef84a06203e364b",
+    "time": "20261029T073913845664Z",
+    "log": ".agent-state/verify-20261029T073913845664Z.log"
+  },
+  "quickChecks": 291,
+  "implementationCorrection": "First unit run found reversed CID range with zero count slipped through shared zero-length reservation. Added explicit ordered-range validation and reran before quick.",
+  "limits": [
+    "Per-font/CMap/annotation budgets, not aggregate memory across entire document.",
+    "Existing PDF.js recovery may omit invalid fonts/annotations/mappings; original file remains available.",
+    "Baseline uses controlled write/point append traps; no original huge allocation or nonterminating loop run.",
+    "Real browser preview component/local worker, not full deployed workbench/device."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verified ready to push;main review pending"
+  },
+  "next": {
+    "cycle": 124,
+    "issues": [
+      532,
+      533
+    ]
+  }
+}

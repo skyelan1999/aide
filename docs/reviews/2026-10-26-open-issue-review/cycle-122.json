@@ -1,0 +1,262 @@
+{
+  "cycle": 122,
+  "issues": [
+    510,
+    511
+  ],
+  "implementation": [
+    "Task-scoped active resource identity set on each PartialEvaluator, shared across Form/Pattern expansion; reject cycles and combined depth>128 before expanding",
+    "Async finally holds lease through actual operator-list completion; exceptions release it; completed siblings and independent tasks remain valid"
+  ],
+  "red": {
+    "checks": 7,
+    "rows": [
+      {
+        "name": "form self/mutual cycles reject before owned recursion trap and recover",
+        "status": "FAIL",
+        "error": "The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned recursion trap"
+      },
+      {
+        "name": "form depth128 boundary and cleanup after failure",
+        "status": "FAIL",
+        "error": "Missing expected rejection."
+      },
+      {
+        "name": "pattern self/mutual cycles reject before owned recursion trap and recover",
+        "status": "FAIL",
+        "error": "The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned recursion trap"
+      },
+      {
+        "name": "pattern depth128 boundary and cleanup after failure",
+        "status": "FAIL",
+        "error": "Missing expected rejection."
+      },
+      {
+        "name": "cross-kind cycle is detected, repeated siblings remain valid",
+        "status": "FAIL",
+        "error": "The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned recursion trap"
+      },
+      {
+        "name": "independent concurrent tasks do not share active resources",
+        "status": "PASS"
+      },
+      {
+        "name": "thrown or aborted child releases active resource lease",
+        "status": "PASS"
+      }
+    ]
+  },
+  "green": {
+    "checks": 7,
+    "rows": [
+      {
+        "name": "form self/mutual cycles reject before owned recursion trap and recover",
+        "status": "PASS"
+      },
+      {
+        "name": "form depth128 boundary and cleanup after failure",
+        "status": "PASS"
+      },
+      {
+        "name": "pattern self/mutual cycles reject before owned recursion trap and recover",
+        "status": "PASS"
+      },
+      {
+        "name": "pattern depth128 boundary and cleanup after failure",
+        "status": "PASS"
+      },
+      {
+        "name": "cross-kind cycle is detected, repeated siblings remain valid",
+        "status": "PASS"
+      },
+      {
+        "name": "independent concurrent tasks do not share active resources",
+        "status": "PASS"
+      },
+      {
+        "name": "thrown or aborted child releases active resource lease",
+        "status": "PASS"
+      }
+    ]
+  },
+  "browser": [
+    {
+      "mode": "form-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 50,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "form-cycle",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 30,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "messages": [
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\"."
+      ]
+    },
+    {
+      "mode": "form-depth",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 2570,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "messages": [
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: PDF resource expansion exceeds preview depth limit\"."
+      ]
+    },
+    {
+      "mode": "pattern-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 3,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "pattern-cycle",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 3,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "messages": [
+        "Warning: getOperatorList - ignoring errors during \"GetOperatorList: page 0\" task: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring errors during \"GetOperatorList: page 0\" task: \"FormatError: Recursive PDF resource expansion\"."
+      ]
+    },
+    {
+      "mode": "hybrid-cycle",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 50,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "messages": [
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\".",
+        "Warning: getOperatorList - ignoring XObject: \"FormatError: Recursive PDF resource expansion\"."
+      ]
+    }
+  ],
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "a995df7ae9ec58c98af0c8d307fd366cb002293499daf7090773608300d10aac",
+    "head": "921c74b0b64d03d1a1c2a6cdf21d49f091d57420",
+    "time": "20261029T072942119415Z",
+    "log": ".agent-state/verify-20261029T072942119415Z.log"
+  },
+  "quickChecks": 289,
+  "limits": [
+    "Rejects cycles and simultaneous nesting only; no total operator-list or acyclic wide-graph budget.",
+    "Existing PDF.js error recovery may omit invalid resources; full content remains available as original file.",
+    "Actual component browser/PDF worker, not full deployed Aide/device.",
+    "No baseline OOM run; controlled512-call traps prove missing guard safely."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verified; ready to push, main review pending"
+  },
+  "next": {
+    "cycle": 123,
+    "issues": [
+      512,
+      513,
+      514
+    ]
+  }
+}
