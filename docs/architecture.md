@@ -79,6 +79,8 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 任务快照记录工作区身份；旧提案、编辑器保存需要通过身份和哈希检查。文件应用为逐文件原子替换，可能部分成功。压缩用结构化摘要与近期历史构造后续请求，不保证删除 Runs 或缩小磁盘。
 
+工作流节点的文件绑定还在实际文件打开与审批替换阶段固定目录句柄、复核文件身份，约束随提案保存；边界与验证范围见[工作流文件绑定](architecture/workflow-file-bindings.md)。
+
 文件管理的本地/SSH大文件操作使用持久分块传输中心；分块校验、恢复、磁盘与浏览器兼容边界见[文件传输架构](architecture/resumable-file-transfers.md)。
 
 上下文完整计量、工具交换边界、运行中整理与流中断恢复见 [上下文恢复](architecture/context-recovery.md)。

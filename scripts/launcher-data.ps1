@@ -2,20 +2,30 @@
 function Assert-AideRealPath([string]$Path) {
     if ((Test-Path -LiteralPath $Path) -and ((Get-Item -Force -LiteralPath $Path).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Persistent configuration cannot be a link or junction.' }
 }
+function Protect-AideLauncherDataDirectory([string]$Path) {
+    $directory = Get-Item -Force -LiteralPath $Path
+    $acl = New-Object Security.AccessControl.DirectorySecurity
+    $acl.SetAccessRuleProtection($true, $false)
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent().User
+    $rule = New-Object Security.AccessControl.FileSystemAccessRule($identity, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
+    $acl.AddAccessRule($rule)
+    # Only the SID-based DACL is modified. Set-Acl can resolve owner/group
+    # account names through an unavailable domain even with a SID-based ACE.
+    if ($PSVersionTable.PSEdition -eq 'Core') {
+        [IO.FileSystemAclExtensions]::SetAccessControl($directory, $acl)
+    } else {
+        $directory.SetAccessControl($acl)
+    }
+}
 function Restore-AideLauncherEnvironment([string]$Root) {
     $persistentRoot = Join-Path $Root '.aide-data'
     Assert-AideRealPath $persistentRoot
     if (-not (Test-Path -LiteralPath $persistentRoot)) {
         New-Item -ItemType Directory -Path $persistentRoot | Out-Null
-        if ($env:OS -eq 'Windows_NT') {
-            $acl = New-Object Security.AccessControl.DirectorySecurity
-            $acl.SetAccessRuleProtection($true, $false)
-            $identity = [Security.Principal.WindowsIdentity]::GetCurrent().User
-            $rule = New-Object Security.AccessControl.FileSystemAccessRule($identity, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
-            $acl.AddAccessRule($rule)
-            Set-Acl -LiteralPath $persistentRoot -AclObject $acl
-        }
     }
+    # Retry after a failed first startup too. A protected DACL alone does not
+    # prove it grants access only to the current SID. Fail before reading config.
+    if ($env:OS -eq 'Windows_NT') { Protect-AideLauncherDataDirectory $persistentRoot }
     foreach ($name in @('.env','.aide-data/launcher.env','.aide-data/compose-project')) { Assert-AideRealPath (Join-Path $Root $name) }
     $environmentPath = Join-Path $Root '.env'
     $backup = Join-Path $persistentRoot 'launcher.env'

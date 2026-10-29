@@ -448,7 +448,7 @@
 				return sb.createVertexTemplateFromCells([cell1], 140, 60, 'State with exit point'); 
 			}),
 			this.createVertexTemplateEntry('ellipse;fillColor=strokeColor;html=1;', 30, 30,
-				   	'', 'Initial preudostate / node', null, null, dt + 'initial pseudostate'),
+					'', 'Initial pseudostate / node', null, null, dt + 'initial pseudostate'),
 			this.createVertexTemplateEntry('ellipse;html=1;shape=endState;fillColor=strokeColor;', 30, 30,
 				   	'', 'Final state / node', null, null, dt + 'final state'),
 			this.createVertexTemplateEntry('ellipse;html=1;', 30, 30,
@@ -631,7 +631,7 @@
 			this.createVertexTemplateEntry('html=1;shape=mxgraph.infographic.ribbonSimple;notch1=0;notch2=20;align=center;verticalAlign=middle;fontSize=14;fontStyle=0;fillColor=#FFFFFF;whiteSpace=wrap;', 160, 40,
 				   	'SendObjectAction1', 'Send Object Action', null, null, dt + 'send object action'),
 			this.createVertexTemplateEntry('html=1;shape=mxgraph.infographic.ribbonSimple;notch1=20;notch2=0;align=center;verticalAlign=middle;fontSize=14;fontStyle=0;fillColor=#FFFFFF;flipH=0;spacingRight=0;spacingLeft=14;whiteSpace=wrap;', 170, 40,
-				   	'AcceptEventAction1', 'Accept Event Action', null, null, dt + 'acceppt event action'),
+					'AcceptEventAction1', 'Accept Event Action', null, null, dt + 'accept event action'),
 			this.createVertexTemplateEntry('shape=collate;html=1;', 40, 40,
 				   	'', 'Time Event Trigger', null, null, dt + 'time event trigger'),
 			this.createVertexTemplateEntry('shape=mxgraph.uml25.actionParams;html=1;align=center;verticalAlign=top;absoluteArcSize=1;arcSize=10;dashed=0;spacingLeft=10;spacingTop=5;whiteSpace=wrap;', 150, 50,
@@ -677,7 +677,7 @@
 				'7VRLboMwED2N98SWmnUhaTaNVDW9gANTsGRsd2wg6ek7gAlJW6RuumoXSOP3GXvwk5nI6tMOpav2tgDNxJaJDK0NY1WfMtCa8UQVTGwY5wl9jD8ssKuBTZxEMOEnBj4aWqkbGJFH9QpaGYitfDjryPhKur5saj2JmEgdoKohABKjI/w0Y2lXqQAHJ/Pe2tGghFWhpkk3Kypza4IkC8Z1gda9SCyhP34yCLSWzqvjcIweQcgb9KqFZ/DqfUJtE/qtM2sM5JPZWQyE+IC0Rw+C9KEDT2VqoNsWJRymAdcp43dvTf/nU7gQF4iJ+yteH+2Vexbx7JNooUELGFQu9YKVBmyhuPEmNwK0jSm+KNabodFwo7QBnBZTMUAxEjuwdFl4JkmnilBFRTImJ6lAlVW0iQmUfgTKi3cOGRUxZ99nTixmjv9n7u9lbjLEl+pXMkjL+U0duJsn9wM='),
 			this.addDataEntry(dt + 'lifeline execution', 220, 300, 'Lifelines',
 				'7ZbRjpwgFIafhssmKmO3vay63Zs2aTp9AVbPKgkKBRxn+vQ9II7OOjaTbrJp0o2awH/ODwKfJxKat8cHzVTzVVYgCL0nNNdS2rHVHnMQgiQRrwgtSJJE+JDk80Y09tFIMQ2dvcWQjIYDEz2Myhf+BIJ3ECLGnkSImIYp1+xbMSURminQvAULGiMiyN9mLRsabmGvWOmsAy4Utca2uNIixmYpO8vQokO/0lL9YLoG9/qRTxCCKcMf/Ws4RUPZa8MP8B0M/zWpsrdu6lx2HZSTWUltUTFW4xxOBGbsAAabWQfDfVXDflrgXUaS9z97t/MZnANnidBPi7h4lAv3nJTkz5I2BjiAtrxkYsOKCzxAdeGNLhK07LtqlXFX+IH8ieIEcNykwksBiQeQeFj6hCmTIVATDbyyTdCioDXA6yYMQyeRmVGoz2PN0GEjcHedQbpicIXeAhgl8ST9bGmGt9uW5ZOStHA7NUbiReTdHIo3TfFVU1o8Ax2xamQtOyaWqF9F0HqY9+7bMeuP5y/5fAkfT1yIXAqp/dbSD5G7buUm+SM3u3R0nMbux2sUrSE60/YSiHabhSx+K2T/XyF7lcKVvhWu1yxcN/Gw+0cKFHbnvzgfu/jJ+w0='),
-			this.addDataEntry(dt + 'destruction occurence specification', 100, 300, 'Destruction Occurence Specification',
+			this.addDataEntry(dt + 'destruction occurrence specification', 100, 300, 'Destruction Occurrence Specification',
 				'lVTLbsMgEPwa7g6Oml5rO82llaqmP0DsrUHCxgX86td3wTiPJq7Sg6VldgbY3TEkTqthp1nDX1UBksRbEqdaKTtF1ZCClIRGoiBxRiiN8CP0eSG78tmoYRpqe4+AToKOyRYm5EV8ghQ1hK2MHWXIGM4aF7aVnEkkThrQogILGjMywG8nLOm5sLBvWO6kPRaKGLcVVpqtMMxVbRlKdFgXWjUfTJfgrh95gpSsMeLgr+EQDXmrjejgHYz4nlHVWnd0quoa8lncKG0RMVbjGQ4EZmwPBsOkhn5blLCfC9wkhD58ta7zCRwTR4jET2d5eVBn6hOJpr9ICxt0oK3ImVyQYoEdFBfa6IKgVVsXV4xN5jfyE8UDYFh0hYeCJXagcFh6REovCssDI5qcE3EQJQ+yeAaZmYDyqD2ZDIPgs9uei68895fVMpyWVqOzBjMcijBZ6z2ydzxz5cm7WkBvt2CYK50UYyA/hvVZh9Y3GrT+f39wefrffe7iOfgB'),
 		 	this.addEntry(dt + 'interaction', function()
 			{
@@ -1004,7 +1004,7 @@
 				edge2.edge = true;
 				cell1.insertEdge(edge2, true);
 
-				return sb.createEdgeTemplateFromCells([cell1, edge1, edge2], 140, 20, 'Association / Instance Secification');
+				return sb.createEdgeTemplateFromCells([cell1, edge1, edge2], 140, 20, 'Association / Instance Specification');
 			}),
 			this.addEntry('association instance specification connector', function()
 			{
@@ -1016,7 +1016,7 @@
 				edge1.geometry.relative = true;
 				edge1.edge = true;
 				
-				return sb.createVertexTemplateFromCells([cell1, edge1], 140, 22, 'Association / Instance Secification');
+				return sb.createVertexTemplateFromCells([cell1, edge1], 140, 22, 'Association / Instance Specification');
 			}),
 			this.addEntry('Redefine', function()
 			{
@@ -1114,7 +1114,7 @@
 				
 				return sb.createEdgeTemplateFromCells([cell1, cell2, edge1], 100, 100, 'Collaboration');
 			}),
-		 	this.createEdgeTemplateEntry('html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;', 160, 0, '&lt;&lt;occurence&gt;&gt;', 'Collaboration Use', null, 'collaboration use'),
+			this.createEdgeTemplateEntry('html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=open;endFill=0;dashed=1;', 160, 0, '&lt;&lt;occurrence&gt;&gt;', 'Collaboration Use', null, 'collaboration use'),
 		 	this.addEntry('Extension', function()
 			{
 				var edge = new mxCell('{required}', new mxGeometry(-1, 0, 0, 0), 'html=1;verticalAlign=bottom;labelBackgroundColor=none;endArrow=block;endFill=1;endSize=6;align=left;');

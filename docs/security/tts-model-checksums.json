@@ -1,0 +1,42 @@
+{
+  "source": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models",
+  "checkedAt": "2026-10-28T03:12:47.634442+00:00",
+  "trustBoundary": "Initial pins obtained from official HTTPS GitHub release downloads, exact API sizes checked; chaowen also matches GitHub asset digest. These are fixed local integrity pins, not vendor signatures. Mirrors cannot change the expected digest.",
+  "assets": [
+    {
+      "browser_download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/espeak-ng-data.tar.bz2",
+      "digest": null,
+      "name": "espeak-ng-data.tar.bz2",
+      "size": 7252012,
+      "sha256": "4135ccf82e1f40613491c0874d4945ae9e9c7840933d8e25a6f9e003d9ebf533"
+    },
+    {
+      "browser_download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-zh-hf-theresa.tar.bz2",
+      "digest": null,
+      "name": "vits-zh-hf-theresa.tar.bz2",
+      "size": 120596617,
+      "sha256": "f337638c49689e1d87135c4e224daa1aacc0109e784b1cf78eafb1b14a1d9e92"
+    },
+    {
+      "browser_download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-zh-hf-fanchen-wnj.tar.bz2",
+      "digest": null,
+      "name": "vits-zh-hf-fanchen-wnj.tar.bz2",
+      "size": 119159130,
+      "sha256": "4035c68899e951ccc6e863e6088ba0898fba0ccd5a88df7f2b784a9b0da88503"
+    },
+    {
+      "browser_download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-zh_CN-huayan-medium.tar.bz2",
+      "digest": null,
+      "name": "vits-piper-zh_CN-huayan-medium.tar.bz2",
+      "size": 67255926,
+      "sha256": "dbdfec42b91d9cee31cce9ff4b3e9c305eb6fbf60546d071f7e46273554cce6b"
+    },
+    {
+      "browser_download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-zh_CN-chaowen-medium.tar.bz2",
+      "digest": "sha256:1b69bdcf10bb6331c7f8a7591940febeb175c6bb86caa3802d96531f8e4ad211",
+      "name": "vits-piper-zh_CN-chaowen-medium.tar.bz2",
+      "size": 60443846,
+      "sha256": "1b69bdcf10bb6331c7f8a7591940febeb175c6bb86caa3802d96531f8e4ad211"
+    }
+  ]
+}

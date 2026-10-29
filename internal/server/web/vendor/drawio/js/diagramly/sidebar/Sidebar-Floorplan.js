@@ -7,6 +7,7 @@
 	// Adds Floorplan shapes
 	Sidebar.prototype.addFloorplanPalette = function()
 	{
+		var sb = this;
 		var w = 100;
 		var h = 100;
 		var s = mxConstants.STYLE_VERTICAL_LABEL_POSITION + '=bottom;html=1;' + mxConstants.STYLE_VERTICAL_ALIGN + '=top;align=center;shape=mxgraph.floorplan.';
@@ -64,7 +65,7 @@
 			this.createVertexTemplateEntry(s + 'doorOpposing;dx=0.5;', 
 					160, 165, '', 'Door, Opposing', null, null, this.getTagsForStencil(gn, 'doorOpposing', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'doorRevolving;aspect=fixed;', 
-					80, 85, '', 'Door, Revolving', null, null, this.getTagsForStencil(gn, 'doorLeft', dt).join(' ')),
+					80, 85, '', 'Door, Revolving', null, null, this.getTagsForStencil(gn, 'doorRevolving', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'doorPocket;dx=0.5;', 
 					104, 10, '', 'Door, Pocket', null, null, this.getTagsForStencil(gn, 'doorPocket', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'doorDoublePocket;dx=0.25;', 

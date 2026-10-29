@@ -1155,7 +1155,7 @@ EditorUi = function(editor, container, lightbox)
 			 }
 		 }
 		 
-		 value = fread(f,n);
+		 var value = fread(f,n);
 		 fread(f,4);
 		 
 		 if (type == 'IEND')
@@ -1478,7 +1478,7 @@ EditorUi.prototype.findCommonProperties = function(cell, properties, addAll, sst
 				state.shape.stencil.desc != null)
 			{
 				var stencil = state.shape.stencil
-				var handledKeys = [];
+				var handledKeys = Object.create(null);
 				
 				var getStencilColors = mxUtils.bind(this, function(nodeName)
 				{
@@ -2101,7 +2101,7 @@ EditorUi.prototype.installShapePicker = function()
 					
 					while (temp != null && graph.model.isVertex(temp) && geo != null && geo.relative)
 					{
-						cell = temp;
+						var cell = temp;
 						temp = graph.model.getParent(cell)
 						geo = graph.getCellGeometry(temp);
 					}
@@ -2720,7 +2720,7 @@ EditorUi.prototype.getCellsForShapePicker = function(cell, hovering, showEdges)
 
 				for (var key in value)
 				{
-					if (value.hasOwnProperty(key))
+					if (Object.prototype.hasOwnProperty.call(value, key))
 					{
 						obj.setAttribute(key, value[key]);
 					}
@@ -3866,7 +3866,16 @@ EditorUi.prototype.initCanvas = function()
 		// as this may be used in a viewer that has no CSS
 		if (urlParams['toolbar'] != '0')
 		{
-			var toolbarConfig = JSON.parse(decodeURIComponent(urlParams['toolbar-config'] || '{}'));
+			var toolbarConfig = {};
+			try
+			{
+				var parsedToolbar = JSON.parse(decodeURIComponent(urlParams['toolbar-config'] || '{}'));
+				if (parsedToolbar != null && typeof parsedToolbar === 'object' && !Array.isArray(parsedToolbar))
+				{
+					toolbarConfig = parsedToolbar;
+				}
+			}
+			catch (e) { /* Optional malformed toolbar configuration falls back to defaults. */ }
 			
 			this.chromelessToolbar = document.createElement('div');
 			this.chromelessToolbar.style.position = 'fixed';
@@ -3932,7 +3941,7 @@ EditorUi.prototype.initCanvas = function()
 			{
 				var backUrl = Graph.sanitizeLink(toolbarConfig.backBtn.url);
 
-				if (backUrl != null)
+				if (backUrl != null && Graph.isSameOrigin(backUrl))
 				{
 					addButton(mxUtils.bind(this, function(evt)
 					{
@@ -4145,8 +4154,16 @@ EditorUi.prototype.initCanvas = function()
 						this.layersDialog.style.width = '160px';
 						this.layersDialog.style.padding = '4px 2px 4px 2px';
 						this.layersDialog.style.left = r.left + 'px';
-						this.layersDialog.style.bottom = parseInt(this.chromelessToolbar.style.bottom) +
-							this.chromelessToolbar.offsetHeight + 4 + 'px';
+						if (graph.isViewer())
+						{
+							this.layersDialog.style.top = Math.max(0,
+								this.chromelessToolbar.getBoundingClientRect().bottom + 4) + 'px';
+						}
+						else
+						{
+							this.layersDialog.style.bottom = (parseInt(this.chromelessToolbar.style.bottom) || 0) +
+								this.chromelessToolbar.offsetHeight + 4 + 'px';
+						}
 
 						this.layersDialog.style.backgroundColor = '#000000';
 						this.layersDialog.style.color = '#ffffff';
@@ -4214,6 +4231,7 @@ EditorUi.prototype.initCanvas = function()
 			{
 				var refreshUrl = (toolbarConfig.refreshBtn.url == null) ? null :
 					Graph.sanitizeLink(toolbarConfig.refreshBtn.url);
+				if (refreshUrl != null && !Graph.isSameOrigin(refreshUrl)) refreshUrl = null;
 
 				addButton(mxUtils.bind(this, function(evt)
 				{
@@ -5391,7 +5409,7 @@ EditorUi.prototype.getDiagramSnapshot = function()
  */
 EditorUi.prototype.updateDiagramData = function(snapshot, node)
 {
-	this.replaceDiagramData(xUtils.getXml(node));
+	this.replaceDiagramData(mxUtils.getXml(node));
 };
 
 /**
@@ -7180,6 +7198,7 @@ EditorUi.prototype.executeLayouts = function(layouts, post)
 		var self = this;
 		var graph = this.editor.graph;
 		var parent = graph.getDefaultParent();
+		var cells = graph.getSelectionCells();
 		var idx = 0;
 
 		var next = function()
@@ -7209,7 +7228,7 @@ EditorUi.prototype.executeLayouts = function(layouts, post)
 			{
 				self.executeLayout(function()
 				{
-					layout.execute(parent);
+					layout.execute(parent, cells.length == 0 ? null : cells);
 				}, true, next);
 			}
 		};
@@ -7399,10 +7418,22 @@ EditorUi.prototype.createOutline = function(wnd)
 {
 	var outline = new mxOutline(this.editor.graph);
 
-	mxEvent.addListener(window, 'resize', function()
+	var resize = function()
 	{
 		outline.update(false);
-	});
+	};
+	mxEvent.addListener(window, 'resize', resize);
+	var destroy = outline.destroy;
+	var released = false;
+	outline.destroy = function()
+	{
+		if (!released)
+		{
+			released = true;
+			mxEvent.removeListener(window, 'resize', resize);
+		}
+		return destroy.apply(this, arguments);
+	};
 	
 	return outline;
 };
@@ -7666,7 +7697,7 @@ EditorUi.prototype.createKeyHandler = function(editor)
 		39: mxConstants.DIRECTION_EAST, 40: mxConstants.DIRECTION_SOUTH};
 	var keyHandlerGetFunction = keyHandler.getFunction;
 
-	mxKeyHandler.prototype.getFunction = function(evt)
+	keyHandler.getFunction = function(evt)
 	{
 		if (graph.isEnabled())
 		{

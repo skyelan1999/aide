@@ -6,6 +6,7 @@
 {
 	Sidebar.prototype.addInfographicPalette = function()
 	{
+		var sb = this;
 		var w = 100;
 		var h = 100;
 		var s = 'whiteSpace=wrap;html=1;shape=mxgraph.infographic.';
@@ -21,7 +22,7 @@
 			this.createVertexTemplateEntry(s4 + 'pie;fillColor=#10739E;strokeColor=none;startAngle=0.2;endAngle=0.9;', w, h, '', 'Pie', null, null, this.getTagsForStencil(gn, 'pie', dt).join(' ')),
 			this.createVertexTemplateEntry(s4 + 'arc;strokeColor=#10739E;strokeWidth=6;startAngle=0.3;endAngle=0.1;', w, h, '', 'Arc', null, null, this.getTagsForStencil(gn, 'arc', dt).join(' ')),
 			this.createVertexTemplateEntry(s4 + 'partConcEllipse;fillColor=#10739E;strokeColor=none;startAngle=0.25;endAngle=0.1;arcWidth=0.5;', w, h, '', 'Partial Concentric Ellipse', null, null, this.getTagsForStencil(gn, 'partConcEllipse', dt).join(' ')),
-			this.createVertexTemplateEntry(s2 + 'parallelogram;dx=15;fillColor=#10739E;strokeColor=none;', w, h * 0.7, '', 'Trapezoid', null, null, this.getTagsForStencil(gn, 'partConcEllipse', dt).join(' ')),
+			this.createVertexTemplateEntry(s2 + 'parallelogram;dx=15;fillColor=#10739E;strokeColor=none;', w, h * 0.7, '', 'Trapezoid', null, null, this.getTagsForStencil(gn, 'parallelogram', dt).join(' ')),
 			this.createVertexTemplateEntry(
 					'html=1;shape=mxgraph.infographic.ribbonSimple;notch1=20;notch2=20;fillColor=#10739E;strokeColor=none;align=center;verticalAlign=middle;fontColor=#ffffff;fontSize=14;fontStyle=1;', 
 					w * 2, h * 0.4, 'Label', 'Ribbon', null, null, this.getTagsForStencil(gn, 'ribbonRolled', dt).join(' ')),
@@ -48,7 +49,7 @@
 					w * 2, h * 2, 'Label', 'Banner (half fold)', null, null, this.getTagsForStencil(gn, 'bannerHalfFold', dt).join(' ')),
 			this.createVertexTemplateEntry(
 					'html=1;shape=mxgraph.infographic.barCallout;dx=100;dy=30;fillColor=#10739E;strokeColor=none;align=center;verticalAlign=top;fontColor=#ffffff;fontSize=14;fontStyle=1;shadow=0;spacingTop=5;', 
-					w * 2, h * 0.7, 'Label', 'Bar with callout', null, null, this.getTagsForStencil(gn, 'ribbonRolled', dt).join(' ')),
+					w * 2, h * 0.7, 'Label', 'Bar with callout', null, null, this.getTagsForStencil(gn, 'barCallout', dt).join(' ')),
 			this.createVertexTemplateEntry(
 					'html=1;shape=mxgraph.infographic.flag;dx=30;dy=20;fillColor=#10739E;strokeColor=none;align=center;verticalAlign=top;fontColor=#ffffff;fontSize=14;fontStyle=1;shadow=0;spacingTop=5;', 
 					w * 2, h * 0.7, 'Label', 'Flag', null, null, this.getTagsForStencil(gn, 'flag', dt).join(' ')),

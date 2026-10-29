@@ -1,0 +1,135 @@
+{
+  "cycle": 6,
+  "type": "repairs-after-ordered-review",
+  "baseline": "43baafcb33c796f260e22c90b1d0c70c10b6b296",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    71,
+    73,
+    76
+  ],
+  "commits": {
+    "71": "5fb03c0e675e14283473081e04d0faf67450ebf1",
+    "73": "d05357ab146c1dba63a8fd1d29b6083754486e58",
+    "76": "2ec2a702c78264cbd6f6089a95778b870546ad31"
+  },
+  "cumulativeFixedOnBranch": 23,
+  "cumulativeProductFixes": 22,
+  "toolingFixes": 1,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "toolchain": "/workspace/.aide-cloud/go/bin/go",
+    "cache": "/workspace/.aide-cloud/go-cache",
+    "activation": "Explicit PATH/GOCACHE/GOPATH, not user AIDE_DATA; no real SSH credentials/devices, paid models or product UI used."
+  },
+  "red": [
+    {
+      "issue": 71,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue71RecursiveManifestAdmissionBounds$' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 7.6,
+      "observed": "Accepted 100001-entry recursive tree and a 5012-entry tree with long paths; both rejected after repair."
+    },
+    {
+      "issue": 73,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue73' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 2.767,
+      "observed": "Synthetic private-content canaries leaked through sessions/detail/errors/bundle and live SSE for Bearer and query debug tokens."
+    },
+    {
+      "issue": 76,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue76CurlOutputIsBoundedDuringCapture$' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 6.217,
+      "observed": "12MiB listing accepted; 72MiB producer finished before file validation; failed curl stderr exposed credential canary."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue71' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 7.973,
+      "scope": "Real temporary file trees; local and actual in-memory SFTP protocol over net.Pipe: early visitor stop, context cancellation, multi-packet/batch and nested reuse; builder saturation admission."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue71|^TestIssue69|^TestIssue64|^TestLargeTransfer|^TestLocalRootOpen' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 38.252,
+      "scope": "Before final stricter indentation-aware manifest check; final TestIssue71 also passes below."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue73|^TestDebug|^TestRunEvents' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 12.149,
+      "scope": "Real authenticated JSON/SSE routes with synthetic data, owner error visibility positive control, debug auth/audit and streaming lifecycle."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue71|^TestIssue73|^TestIssue76CurlOutputIsBoundedDuringCapture|^TestDebug|^TestRunEvents|^TestCurl|^TestSources' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 24.689,
+      "scope": "Final source; both manifest thresholds, real SFTP iteration, diagnostic projection, bounded curl child termination and existing small source fixtures."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T093800050678Z.log",
+      "scope": "Approved local socket/subprocess execution, after clearing only rebuildable Go cache to restore required free disk space."
+    }
+  ],
+  "failedBroaderRun": {
+    "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue76CurlOutputIsBoundedDuringCapture|^TestCurl|^Test.*Source' -count=1 -timeout=3m",
+    "result": "FAIL",
+    "durationSeconds": 62.664,
+    "failures": [
+      "TestSourceProposalIndependentSFTP",
+      "TestSourceBrowseDraftDoesNotSaveSource",
+      "TestSSHSourceSessionMustVerifyMaster"
+    ],
+    "cause": "SSH local config requires /home/aide, not writable by executor; same environment limitation as prior cycle. No external directory created to disguise a pass."
+  },
+  "initialQuick": {
+    "result": "FAIL",
+    "receipt": ".agent-state/verify-20261026T093546764601Z.log",
+    "cause": "Only test_offline_bundle failed: startup free-space gate requires10GiB; root had8.4GiB. Go compilation cache was8.6GiB.",
+    "resolution": "Explicit GOCACHE=/workspace/.aide-cloud/go-cache go clean -cache cleared only rebuildable compiler outputs. Root then17GiB free; complete quick rerun PASS. No user storage, untracked file or image removed."
+  },
+  "notes": [
+    "#71 limits100000 scanned entries including skipped protected/invalid names,16MiB initial on-disk JSON including indentation, and2 simultaneous create operations. Local lists batch256; SFTP visitor API processes one protocol packet at a time and retains upstream ReadDir behavior. Vendoring/upgrading must retain the documented extension.",
+    "File byte sizes remain independent of metadata caps. Existing saved jobs are not migrated/deleted; this repair bounds new admission, not aggregate retained job history.",
+    "#73 diagnostic routes redact content for both debug and owner credentials; original owner session routes retain detailed data. Diagnostic stream uses a new-value allowlist so unknown events and fields default to omission. Metadata such as IDs, model/tool names and numeric progress remains visible.",
+    "#76 reuses knowledgeRun:64MiB file stdout,4MiB listing stdout, discard stderr, terminate child on overflow. Actual FTP/FTPS/SMB servers were not contacted.",
+    "Compilation initially caught a missing fmt import in #73; corrected before passing groups.",
+    "No full release gate, desktop/Windows test or product UI acceptance. All repaired issues remain open until main acceptance."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "comments": {
+      "71": "https://github.com/skyelan1999/aide/issues/71#issuecomment-6412892750",
+      "73": "https://github.com/skyelan1999/aide/issues/73#issuecomment-6412893750",
+      "76": "https://github.com/skyelan1999/aide/issues/76#issuecomment-6412894691"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/transfer_jobs.go": "1aeae2901a8befd12e3496bf1821a30eae22c6b522442a40e6e8604a8dec2c31",
+    "internal/server/transfer_stream_fs.go": "fdf586fd1241d7f3347c4429f11691e1d727b037cf247ab1c999d15ee286cff1",
+    "internal/server/transfer_manifest.go": "39f2e9fbf62dfb384409457f6d7a88fcbfa4bc3a49018c0e525682bb57ddb907",
+    "internal/server/transfer_manifest_test.go": "211dda6bd7b60177284bb16c6dbb3119a679a72e43b83f1b999114909609e761",
+    "vendor/github.com/pkg/sftp/client.go": "f1fea1585d8b1a68c4bf36c65dca3815a8e35704641d45284a0139ca31712890",
+    "internal/server/debug.go": "676a5969251dc09a77f2fbffe68acaddd0e7dd5cc79c85bf53642c1898e14d49",
+    "internal/server/debug_redaction.go": "db39ae977f5425095ab4ec8bb0ba92a7044fe25e69185f728924d5653d23c8dd",
+    "internal/server/debug_redaction_test.go": "174c2be468dd3a5d2ff9233be62e321cfd44ab213e0b3e659df7b8f565982435",
+    "internal/server/server.go": "624d8b87ea976068dbb45316c63da79a747ce3c9fdea84d20a142bcaafdde16c",
+    "internal/server/workflow.go": "f895dd37effcad5497576bc22e29bda180ee9642e80dfb4e1384ccbf8a7895e8",
+    "internal/server/sources.go": "9f109c4310ba93c9854cb0aed9c0111b4f31c8750a6f561ccbf7cb5685ef5962",
+    "internal/server/source_curl_bounds_test.go": "ba2a3038eee05304e69529f91b7de76b3f42a10074207b7e6900bb321c0b094c"
+  },
+  "verificationFingerprint": "de5fb22305daf527692d71f62b8124f7a17bf14bbfe28b9a9254c2ffc3fd0563"
+}

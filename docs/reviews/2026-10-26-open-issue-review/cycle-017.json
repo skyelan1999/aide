@@ -1,0 +1,117 @@
+{
+  "cycle": 17,
+  "baseline": "9a880431",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    106,
+    107,
+    108
+  ],
+  "commits": {
+    "106": "24542fe69d01e7db89761d5ff861179db0a7037e",
+    "107": "2946be023d4c644d417dfb85841a0b7452beb63b",
+    "108": "7cb9e59a611e26be943338c5f0d9682fe31a3854"
+  },
+  "cumulativeProductFixes": 48,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 49,
+  "original272RemainingFollowup": 235,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "scope": "Owned temporary data, authenticated in-process APIs, injected filesystem failures, fake model/provider fixtures, real Node control handlers with mock actions and synthetic SSH binding fixture. No real speech, billable request or desktop action."
+  },
+  "red": [
+    {
+      "issues": [
+        106,
+        107
+      ],
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue106|^TestIssue107' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 7.049,
+      "observed": "No-model/no-base locked fallback returned send, wrote2 protected conversation messages and voice history; no-agent also send; relock ineffective. Token state-write failure produced no operational event."
+    },
+    {
+      "issue": 108,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue108' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 10.047,
+      "observed": "Composer确认 returned202 and delivered to shell/confirm channels. Missing questionId and/or round on answer returned200 and persisted/delivered; already-wrong nonempty bindings rejected as positive negative-control."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue106|^TestVoiceFilter|^TestAssistantAgentic|^TestVoiceFilterDispatch|^TestAssistantSession' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 16.991
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue107|^TestProviderSupportDeepSeek|^TestProviderSupportAli|^TestProviderSupportScoped|^TestProviderSupportKeyOverrides|^TestProviderSupportKeyless' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 7.217
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue106|^TestIssue107|^TestIssue108|^TestClarify|^TestApprovalRemember|^TestControlWorkflow|^TestIssue82|^TestVoiceFilter|^TestAssistantAgentic|^TestProviderSupportDeepSeek|^TestProviderSupportAli|^TestProviderSupportScoped|^TestProviderSupportKeyOverrides|^TestProviderSupportKeyless|^TestHarnessManualApprovalSaveFailure' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 62.754,
+      "scope": "Final current/missing/stale bindings, composer denial leaves disk/memory unchanged, malformed metadata refusal, human receipt save failure prevents channel delivery, ordinary clarification preserved; Node browser/computer confirm/reject/cancel/revoke cases and remote-workspace binding controls."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestRunShellRequiresExactConfirmationForWrites$/^declined$' -count=1 -timeout=1m",
+      "result": "PASS",
+      "durationSeconds": 2.053
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T173247784473Z.log",
+      "fingerprint": "88376551c141b1d922cbfbe67388de5bb6d5983c8ddfdf26894c88a5cd97c8b7"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465local links"
+    }
+  ],
+  "blocked": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue108|^TestClarify|^TestApprovalRemember|^TestControlWorkflow|^TestRunShellRequires|^TestIssue82' -count=1 -timeout=4m",
+      "result": "FAIL_ENVIRONMENT",
+      "durationSeconds": 43.373,
+      "observed": "Only TestRunShellRequiresExactConfirmationForWrites/confirmed failed after successful approval: Linux LandlockABI>=6 required, executorABI0/function not implemented. Restricted command did not execute. No sandbox weakening or claim that this execution path passed."
+    }
+  ],
+  "notes": [
+    "#106 assistant session unlock precedes fallback/model error handling; no-model/no-base/no-agent cannot return send while locked or persist transcript. Positive fallback explicitly unlocks session; after relock denied. Assistant session gate is distinct from encrypted-history viewing lock.",
+    "#107 recordTokenUsage keeps successful provider outcome and accumulated memory, but logs token_stats_persist_failed durable=false with deepest underlying error only, omitting private paths and ledger/model/key fields. Next successful save includes accumulated usage. Logging surfaces failure; it is not a new recovery journal or promise that restarting before any successful save preserves usage.",
+    "#108 composer/runs cannot answer approvals or type=confirm questions; answer requires nonempty current questionId and round for those questions. Wrong bindings, malformed questions and failed receipt persistence do not deliver. Ordinary input clarification retains legacy composer/optional-binding compatibility. Existing test clients now submit the real generated question identity; no checks weakened.",
+    "API and mock-control paths passed; actual restricted local shell confirmation execution is blocked by existing Landlock capability. User-device/browser/production/full-release gate not run. No main merge, release or deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "verifiedRemoteCommit": "2a069d8a",
+    "issueComments": {
+      "106": "https://github.com/skyelan1999/aide/issues/106#issuecomment-6423384974",
+      "107": "https://github.com/skyelan1999/aide/issues/107#issuecomment-6423385820",
+      "108": "https://github.com/skyelan1999/aide/issues/108#issuecomment-6423386339"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/server.go": "368e9b29b54bbcbab600278c4c5a800b9fa3817f8da0797a5505bbdabc60bdd2",
+    "internal/server/assistant_history_test.go": "d57ff8ee73da7ad7012edbffd77810290ea0999f724d412660032bca77c64232",
+    "internal/server/voice_fallback_gate_test.go": "ac1b4a562f271b819a806c2c8815571a417210352e1946e140ca8561138b525d",
+    "internal/server/token_snapshot_failure_test.go": "3223d876f69837f768219c2dea9fe19a56c0c89fb97175d8936d4ecc0f0e57d0",
+    "internal/server/workflow.go": "81e0140f3f1e53694654f78cd2ab6fffbaebf72c35e546cb0fe51521ee56bb5d",
+    "internal/server/composer_approval_gate_test.go": "1188c1ffd2d73fec683527d39a004748f3df7a3c9651070f09f41dcedfcb21b4",
+    "internal/server/control_workflow_test.go": "8cacc0cebef9b17871f8f864fb94bd34e2fe470c9480fc571b705290c7eb73e1",
+    "internal/server/workflow_shell_approval_test.go": "fdf56c84bfbcab2014e0d8fef46f050cb4c7ac16b0774faa88c29d3286a6333c",
+    "internal/server/task_workspace_guard_test.go": "07b0ff786481880ea50cddd60cd9184a770ab876840969e9d0f18b13c0a940f4"
+  }
+}

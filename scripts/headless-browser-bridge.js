@@ -9,25 +9,68 @@ const { chromium } = require('./browser-runtime/node_modules/playwright');
 const { validateURL: safeURL } = require('./browser-url-policy.cjs');
 const token = process.env.AIDE_BROWSER_BRIDGE_TOKEN || '';
 const port = Number(process.env.AIDE_HEADLESS_BRIDGE_PORT || 17779);
-let browser, context, page;
+let browser, context, page, requestScope;
 let queue = Promise.resolve();
 
 async function launch() {
   if (!browser?.isConnected()) browser = await chromium.launch({ headless: true });
   return browser;
 }
+function validateSocketURL(raw, rules) {
+  const url = new URL(raw);
+  if (!['ws:', 'wss:'].includes(url.protocol)) throw new Error('Invalid WebSocket URL');
+  url.protocol = url.protocol === 'wss:' ? 'https:' : 'http:';
+  return safeURL(url.href, rules);
+}
+async function closeScopedSocket(scope, socket, code = 4003, reason = 'Website scope changed') {
+  if (!scope.sockets.delete(socket)) return;
+  // Playwright closes the upstream through the browser WebSocket API, which
+  // only permits 1000 or application codes 3000–4999 (not protocol code 1008).
+  const validCode = code === 1000 || (code >= 3000 && code <= 4999);
+  const options = { code: validCode ? code : 1000, reason };
+  await Promise.allSettled([socket.client.close(options), socket.server.close(options)]);
+}
+async function updateScope(scope, rules) {
+  scope.rules = [...rules];
+  await Promise.all(Array.from(scope.sockets, socket => {
+    try { validateSocketURL(socket.url, scope.rules); }
+    catch (_) { return closeScopedSocket(scope, socket); }
+  }));
+}
 async function makeContext(rules) {
   const ctx = await (await launch()).newContext({ serviceWorkers: 'block', acceptDownloads: false });
+  if (typeof ctx.routeWebSocket !== 'function') {
+    await ctx.close();
+    throw new Error('Browser runtime requires WebSocket routing; reinstall the pinned browser runtime');
+  }
+  const scope = { rules: [...rules], sockets: new Set() };
   // Enforce the website scope before requests, including redirects and frames.
   await ctx.route('**/*', route => {
-    try { safeURL(route.request().url(), rules); return route.continue(); }
+    try { safeURL(route.request().url(), scope.rules); return route.continue(); }
     catch (_) { return route.abort('blockedbyclient'); }
+  });
+  // HTTP routing does not intercept WebSocket handshakes. Route them before
+  // creating any page, then recheck frames against the live scope as well.
+  await ctx.routeWebSocket('**/*', client => {
+    try { validateSocketURL(client.url(), scope.rules); }
+    catch (_) { void client.close({ code: 4003, reason: 'Website is not allowed' }).catch(() => {}); return; }
+    const socket = { client, server: client.connectToServer(), url: client.url() };
+    scope.sockets.add(socket);
+    const forward = (target, message) => {
+      try { validateSocketURL(socket.url, scope.rules); target.send(message); }
+      catch (_) { void closeScopedSocket(scope, socket); }
+    };
+    client.onMessage(message => forward(socket.server, message));
+    socket.server.onMessage(message => forward(client, message));
+    const closed = (code, reason) => void closeScopedSocket(scope, socket, code ?? 1000, reason ?? '');
+    client.onClose(closed);
+    socket.server.onClose(closed);
   });
   const tab = await ctx.newPage();
   tab.setDefaultTimeout(10000);
   tab.on('dialog', dialog => void dialog.dismiss());
   tab.on('popup', popup => void popup.close());
-  return { ctx, tab };
+  return { ctx, tab, scope };
 }
 async function snapshot(tab, rules) {
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -94,18 +137,15 @@ async function execute(route, input) {
     const url = safeURL(input.url, rules);
     if (context) await context.close();
     const session = await makeContext(rules);
-    context = session.ctx; page = session.tab;
+    context = session.ctx; page = session.tab; requestScope = session.scope;
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
     return snapshot(page, rules);
   }
   if (!page || page.isClosed()) throw new Error('Open an allowed page with browser_navigate first');
+  // Narrowing the allowlist also revokes existing WebSocket connections.
+  // Apply it even when the current page itself is no longer allowed.
+  await updateScope(requestScope, rules);
   safeURL(page.url(), rules);
-  // A changed allowlist replaces request scope, not just the final response check.
-  await context.unroute('**/*');
-  await context.route('**/*', request => {
-    try { safeURL(request.request().url(), rules); return request.continue(); }
-    catch (_) { return request.abort('blockedbyclient'); }
-  });
   if (route === '/v1/click' || route === '/v1/fill') {
     if (typeof input.selector !== 'string' || !input.selector.trim() || input.selector.length > 500) throw new Error('Invalid selector');
     if (route === '/v1/click') await page.locator(input.selector).click();

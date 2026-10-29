@@ -61,7 +61,7 @@ func TestRunShellRequiresExactConfirmationForWrites(t *testing.T) {
 			if status != "awaiting_clarification" {
 				t.Fatal("write command did not pause for user confirmation")
 			}
-			w := request(a, "POST", "/api/sessions/"+session.ID+"/runs/"+task.ID+"/answer", map[string]string{"answer": tc.answer})
+			w := request(a, "POST", "/api/sessions/"+session.ID+"/runs/"+task.ID+"/answer", boundQuestionAnswerForTest(t, a, task, tc.answer))
 			requireStatus(t, w, 200)
 			select {
 			case got := <-result:

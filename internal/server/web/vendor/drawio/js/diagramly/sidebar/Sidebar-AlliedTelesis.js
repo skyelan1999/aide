@@ -91,7 +91,7 @@
 			 this.createVertexTemplateEntry(s + 'Tablet_Alternative.svg;',
 					 d * 0.58, d * 0.8, '', 'Tablet Alternative', false, null, this.getTagsForStencil(gn, 'tablet alternative', dt).join(' ')),
 			 this.createVertexTemplateEntry(s + 'Vdeo_Conference_Terminal.svg;',
-					 d * 0.53, d * 0.75, '', 'Vdeo Conference Terminal', false, null, this.getTagsForStencil(gn, 'vdeo conference terminal', dt).join(' ')),
+					 d * 0.53, d * 0.75, '', 'Video Conference Terminal', false, null, this.getTagsForStencil(gn, 'video conference terminal', dt).join(' ')),
 			 this.createVertexTemplateEntry(s + 'VOIP_IP_phone.svg;',
 					 d * 0.5, d * 0.76, '', 'VOIP IP Phone', false, null, this.getTagsForStencil(gn, 'voip ip phone voice over internet protocol', dt).join(' '))
 		];

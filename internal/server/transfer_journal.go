@@ -111,6 +111,7 @@ func transferSummary(j *transferJob, detail bool) map[string]any {
 		tops[i] = *t
 	}
 	out := map[string]any{"id": j.ID, "operation": j.Operation, "workspace": j.Workspace, "status": j.Status, "error": j.Error, "created": j.Created, "updated": j.Updated, "size": j.Size, "completed": j.Completed, "concurrency": j.Concurrency, "chunkSize": j.ChunkSize, "tops": tops, "uploadName": j.UploadName, "uploadCommitted": j.UploadCommitted}
+	out["rawDownload"] = j.RawDownload
 	if detail && j.Operation == "upload" && !j.UploadCommitted {
 		chunks := make(map[int64]string, len(j.UploadChunks))
 		for n, digest := range j.UploadChunks {
@@ -146,7 +147,7 @@ func (m *transferManager) cleanup(j *transferJob) error {
 			}
 		}
 	}
-	for _, name := range []string{"upload.data", "download.zip.part"} {
+	for _, name := range []string{"upload.data", "download.zip.part", "download.file.part"} {
 		if e := os.Remove(filepath.Join(m.jobDir(j), name)); e != nil && !os.IsNotExist(e) {
 			result = errors.Join(result, e)
 		}

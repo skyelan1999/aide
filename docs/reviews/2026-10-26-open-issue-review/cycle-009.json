@@ -1,0 +1,122 @@
+{
+  "cycle": 9,
+  "baseline": "526ecfa9",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    84,
+    85,
+    86
+  ],
+  "commits": {
+    "84": "acd47268f25415e9ba43b15ef02aea236aff5517",
+    "85": "00c1310d0919d1d5c403c55974bc195adb05532d",
+    "86": "5d2c0361f9a8d7a71d44cf4031acc19685801268"
+  },
+  "cumulativeProductFixes": 31,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 32,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "cache": "/tmp/aide-issue-review-go-cache",
+    "isolation": "Explicit existing toolchain/cache variables. Owned temporary folders, local network and Node daemon fixtures. No user storage, real device, paid model, product UI, merge, release or deployment."
+  },
+  "red": [
+    {
+      "issue": 84,
+      "command": "go test -mod=vendor -race ./internal/localmounts -run '^TestIssue84' -count=1",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.008,
+      "observed": "Projects became rojects; Unicode descendants cut inside UTF-8; ../secret became accepted ./secret."
+    },
+    {
+      "issue": 85,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue85' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 23.357,
+      "observed": "Delayed block returned200 and persisted blocked consent after lock and after lock/unlock. Ten other routes admitted stale generation, then failed validation400 instead of423; not claiming those invalid payloads changed their service state."
+    },
+    {
+      "issue": 86,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue86' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 5.693,
+      "observed": "Single event encoded1700076 bytes,180-event history response306013861 bytes. Fixture reused source strings; this measured response size, not a306MB retained-RSS measurement."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/localmounts -count=1",
+      "result": "PASS",
+      "durationSeconds": 1.011,
+      "scope": "Entire package; Windows spelling and Unicode semantics executed on Linux, not a native Windows filesystem test."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue85|^TestMessage|^TestLockState|^TestLockScreen|^TestVerifyScreen' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 33.853
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue86|^TestDaemonEventReporting$' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 2.897
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue85|^TestIssue86|^TestMessage|^TestLockState|^TestDaemon' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 50.909,
+      "scope": "Final multi-lease cancellation/barrier order, cleanup exemptions, delayed mutations,24-process global event eviction,12 concurrent producers/readers and existing actual Node daemon lifecycle."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/messaging -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 8.361
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server ./internal/messaging ./internal/localmounts",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T151056402530Z.log",
+      "fingerprint": "928b42c7ec5174b7fd69dccb39fa6dad1c0bcc67f766d797344f737c10f2678e"
+    },
+    {
+      "command": "python3 scripts/check_docs.py && python3 scripts/agent-route.py check && git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465local links"
+    }
+  ],
+  "notes": [
+    "#84 compares original path components using EqualFold only for Windows paths; no transformed byte offset or traversal normalization. Native Windows and platform-specific filename collation not exercised.",
+    "#85 buffers bounded input before admission; all non-GET/HEAD workbench message requests except cancel/voice-release get a generation-bound cancellation lease. Lock/unlock transitions close admission, cancel all leases and await handler completion before persisting generation, without holding App.mu during network waits. Legacy Block wraps BlockContext for compatibility.",
+    "Already dispatched peer operations cannot be rolled back; background inbound messaging remains separate. No claim of a distributed transaction or instantaneous lock publication while an admitted non-cancellable local commit is finishing.",
+    "#86 encoded per-event32KiB, process4MiB/1000 events, manager32MiB including conservative512-byte metadata charge. Cloned UTF-8 prefixes count JSON escaping; global queue contains only live entries; evicted references cleared and arrays compact/released. Bounds retained history/API responses, not plugin process memory or scanner buffers.",
+    "Goal host now supplies automatic goal-continuation context and stop_goal; current task/GOAL capability note updated from historical session-only limitation. Authorization unchanged.",
+    "No full release gate, native Windows/macOS or physical endpoint validation. Historical Landlock and/home/aide blockers are not counted as passed; no need to rerun unchanged blocked tests in this batch."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "comments": {
+      "84": "https://github.com/skyelan1999/aide/issues/84#issuecomment-6419706814",
+      "85": "https://github.com/skyelan1999/aide/issues/85#issuecomment-6419708086",
+      "86": "https://github.com/skyelan1999/aide/issues/86#issuecomment-6419709094"
+    }
+  },
+  "sourceSHA256": {
+    "internal/localmounts/config.go": "964a7957944ac53f1f8144d290b33bf51b4bfda8293e3291643a86e0e334e096",
+    "internal/localmounts/relative_unicode_test.go": "ff95c63fbf0e983380d2e3d60841439a5476b6a19af2ffa82a01d6f19c8aa3c9",
+    "internal/server/message_mutation_gate.go": "fc9060bf070cce477146d4d3712a37485e64f644b6b7c00dc679fcba9519c2ec",
+    "internal/server/message_lock_generation_test.go": "6a36466374451170b153bf25b08eba9a1929683f9d86d5b327424c38858f29a8",
+    "internal/server/lock_state.go": "f7670ab6bfea09ea943fc5b8dca677e6fb6116c03e87b532cd5d381a0ef8240b",
+    "internal/server/message_center.go": "498057ab5108598b9adac4733888c626be353294f793bd9599fdd722b3f87602",
+    "internal/server/server.go": "35d22cdd12582fb064dcf03b5ffcd75d858c4ca55d8da68e692e3c9b91ed4ef4",
+    "internal/messaging/service.go": "fdf51ce0b0c954c5ada41e67fafeaba3bd083a2a504f6d5664fd83492fba1c5d",
+    "internal/server/plugin_daemon.go": "10702da33dfe94e5a764d2293aa53c5dafd8b52cf67dd9dfe69912c97c78cc81",
+    "internal/server/daemon_event_budget.go": "a719ea9f249979e81e1ef5bdd3420555b9648095ffb9ce1addac1546c630f719",
+    "internal/server/daemon_event_bounds_test.go": "8ceee1e8cdd26ced07a07da5aed185d9ad9ce26a87ada9253845d44cfd1f5b2f"
+  }
+}

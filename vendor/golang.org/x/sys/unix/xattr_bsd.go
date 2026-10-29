@@ -201,7 +201,7 @@ func ListxattrNS(file string, nsid int, dest []byte) (sz int, err error) {
 
 	s, e := ExtattrListFile(file, nsid, uintptr(d), destsiz)
 	if e != nil {
-		return 0, err
+		return 0, e
 	}
 
 	return s, nil
@@ -237,7 +237,7 @@ func FlistxattrNS(fd int, nsid int, dest []byte) (sz int, err error) {
 
 	s, e := ExtattrListFd(fd, nsid, uintptr(d), destsiz)
 	if e != nil {
-		return 0, err
+		return 0, e
 	}
 
 	return s, nil
@@ -273,7 +273,7 @@ func LlistxattrNS(link string, nsid int, dest []byte) (sz int, err error) {
 
 	s, e := ExtattrListLink(link, nsid, uintptr(d), destsiz)
 	if e != nil {
-		return 0, err
+		return 0, e
 	}
 
 	return s, nil

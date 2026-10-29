@@ -83,7 +83,9 @@ Draw.loadPlugin(function(ui) {
 	if (ui.editor.isChromelessView())
 	{
 		var replayData = urlParams['replay-data'];
-		var delay = parseInt(urlParams['delay-delay'] || 1000);
+		var delay = Number(urlParams['replay-delay'] != null ? urlParams['replay-delay'] : (urlParams['delay-delay'] || 1000));
+        if (!isFinite(delay) || delay < 0) delay = 1000;
+        delay = Math.min(delay, 2147483647);
 		
 		if (replayData != null)
 		{

@@ -14,6 +14,12 @@
   function connect(){if(closed)return Promise.reject(Error('Client closed'));if(port)return Promise.resolve({protocol:1,tools:tools.slice(),capabilities:capabilities.slice()});if(!connecting){connecting=new Promise((resolve,reject)=>{settle={resolve,reject,timer:setTimeout(()=>revoke('Host bridge unavailable'),10000)};});window.parent.postMessage({type:'aide.workbench.ready',protocol:1,requestIds:'monotonic'},'*');}return connecting;}
   async function request(method,body){await connect();if(closed||!port)throw Error('Bridge closed');if(pending.size)throw Error('A call is already pending');const requestId='r_'+(++next);return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('Reply timeout; outcome uncertain, do not automatically retry'));},320000);pending.set(requestId,{resolve,reject,timer});try{port.postMessage({protocol:1,requestId,method,...body});}catch(e){pending.delete(requestId);clearTimeout(timer);reject(e);}});}
   return {connect,
+   workflow:args=>request('workflow.control',{arguments:args}),
+   capture:args=>request('capture.control',{arguments:args}),
+   captureNetwork:args=>request('capture.network',{arguments:args}),
+   projectMessages:args=>request('project.messages',{arguments:args}),
+   fileTarget:path=>request('file.target',{arguments:{path}}),
+   saveFile:(path,content,hash)=>request('file.save',{arguments:{path,content,hash}}),
    documentInfo:(asset='',options={})=>request('document.info',{arguments:{asset,metadataOnly:options.metadataOnly===true}}),
    readDocument:(args={})=>request('document.read',{arguments:args}),
    pluginAssetInfo:(asset,options={})=>request('document.package.info',{arguments:{asset,metadataOnly:options.metadataOnly===true}}),
@@ -33,10 +39,38 @@
 </script><script>
 'use strict';
 const client=AideWorkbenchClient.create('mesh-file-preview'),$=id=>document.getElementById(id);let version='',vertices=[],edges=[],editable=false;let operations=Promise.resolve();const enqueue=fn=>{const result=operations.then(fn);operations=result.catch(()=>{});return result;};
-function parse(text){vertices=[];edges=[];for(const line of text.split(/\r?\n/)){const parts=line.trim().split(/\s+/);if(parts[0]==='v'){const v=parts.slice(1,4).map(Number);if(v.length!==3||v.some(x=>!Number.isFinite(x)))throw Error('invalid vertex');vertices.push(v);}if(parts[0]==='f'||parts[0]==='l'){const face=parts.slice(1).map(x=>{const n=Number(x.split('/')[0]);return n<0?vertices.length+n:n-1;});if(face.some(n=>!Number.isInteger(n)||n<0||n>=vertices.length))throw Error('invalid face');for(let i=0;i<face.length-1;i++)edges.push([face[i],face[i+1]]);if(parts[0]==='f'&&face.length>2)edges.push([face.at(-1),face[0]]);}}if(!vertices.length||vertices.length>100000)throw Error('unsupported model');}
+const OBJ_LIMITS=Object.freeze({bytes:8*1024*1024,lineChars:65536,vertices:100000,records:100000,indices:2048,edges:100000});
+function objLimit(){const e=Error('示例模型超过预览限制，请使用完整查看器');e.code='AIDE_OBJ_LIMIT';throw e;}
+function parse(text){
+ vertices=[];edges=[];
+ if(text.length>OBJ_LIMITS.bytes||new TextEncoder().encode(text).byteLength>OBJ_LIMITS.bytes)objLimit();
+ const nextVertices=[],nextEdges=[];let records=0;
+ for(let start=0;start<text.length;){
+  let end=text.indexOf('\n',start);if(end<0)end=text.length;
+  if(end-start>OBJ_LIMITS.lineChars)objLimit();
+  const parts=text.slice(start,end).trim().split(/\s+/);start=end+1;
+  if(parts[0]==='v'){
+   if(nextVertices.length>=OBJ_LIMITS.vertices)objLimit();
+   const v=parts.slice(1,4).map(Number);
+   if(v.length!==3||v.some(x=>!Number.isFinite(x)))throw Error('invalid vertex');
+   nextVertices.push(v);
+  }
+  if(parts[0]==='f'||parts[0]==='l'){
+   if(++records>OBJ_LIMITS.records||parts.length-1>OBJ_LIMITS.indices)objLimit();
+   const count=Math.max(0,parts.length-2)+(parts[0]==='f'&&parts.length>3?1:0);
+   if(count>OBJ_LIMITS.edges-nextEdges.length)objLimit();
+   const face=parts.slice(1).map(x=>{const slash=x.indexOf('/'),n=Number(slash<0?x:x.slice(0,slash));return n<0?nextVertices.length+n:n-1;});
+   if(face.some(n=>!Number.isInteger(n)||n<0||n>=nextVertices.length))throw Error('invalid face');
+   for(let i=0;i<face.length-1;i++)nextEdges.push([face[i],face[i+1]]);
+   if(parts[0]==='f'&&face.length>2)nextEdges.push([face.at(-1),face[0]]);
+  }
+ }
+ if(!nextVertices.length)throw Error('unsupported model');
+ vertices=nextVertices;edges=nextEdges;
+}
 function draw(){const canvas=$('canvas'),ctx=canvas.getContext('2d'),angle=Number($('angle').value)*Math.PI/180;ctx.clearRect(0,0,canvas.width,canvas.height);if(!vertices.length)return;const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];for(const v of vertices)for(let i=0;i<3;i++){min[i]=Math.min(min[i],v[i]);max[i]=Math.max(max[i],v[i]);}const center=min.map((v,i)=>(v+max[i])/2),size=Math.max(...min.map((v,i)=>max[i]-v),.001);const points=vertices.map(v=>{const x=(v[0]-center[0])/size,y=(v[1]-center[1])/size,z=(v[2]-center[2])/size;return[400+(x*Math.cos(angle)+z*Math.sin(angle))*400,300+(-y*.85+(z*Math.cos(angle)-x*Math.sin(angle))*.3)*400];});ctx.strokeStyle='#97cbb9';ctx.lineWidth=2;ctx.beginPath();for(const [a,b]of edges){ctx.moveTo(...points[a]);ctx.lineTo(...points[b]);}ctx.stroke();}
 $('angle').oninput=draw;
-$('editor').oninput=()=>{if(editable)void enqueue(()=>client.setDocumentDirty(true)).catch(e=>$('status').textContent=e.message);try{parse($('editor').value);draw();$('status').textContent='尚未保存';}catch(_){$('status').textContent='模型语法待修正';}};
+$('editor').oninput=()=>{if(editable)void enqueue(()=>client.setDocumentDirty(true)).catch(e=>$('status').textContent=e.message);try{parse($('editor').value);draw();$('prepare').disabled=!editable;$('status').textContent='尚未保存';}catch(e){draw();$('prepare').disabled=true;$('status').textContent=e.code==='AIDE_OBJ_LIMIT'?e.message:'模型语法待修正';}};
 $('prepare').onclick=async()=>{try{parse($('editor').value);$('prepare').disabled=true;$('editor').readOnly=true;const bytes=new TextEncoder().encode($('editor').value);await enqueue(()=>client.saveDocument(bytes,version));$('status').textContent='等待宿主保存确认';}catch(e){$('status').textContent=e.message;$('prepare').disabled=!editable;$('editor').readOnly=!editable;}};
 client.onEvent(e=>{if(e.event==='document.saved'){version=e.result.version;$('status').textContent='已保存';$('prepare').disabled=!editable;$('editor').readOnly=!editable;}});
 (async()=>{try{const info=(await client.documentInfo()).result;version=info.version;editable=info.editable;if(info.size>8*1024*1024)throw Error('示例模型超过8MiB，请使用完整查看器');const bytes=new Uint8Array(info.size);for(let offset=0;offset<info.size;){const result=(await client.readDocument({offset})).result;const data=Uint8Array.from(atob(result.data),c=>c.charCodeAt(0));bytes.set(data,offset);offset+=data.length;if(!data.length)throw Error('empty range');}const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);parse(text);$('editor').value=text;$('editor').readOnly=!editable;$('prepare').disabled=!editable;draw();$('status').textContent=editable?'可编辑 · '+info.path:'只读 · '+info.path;}catch(e){$('status').textContent=e.message;try{await client.failDocumentPreview();}catch(_){}}})();

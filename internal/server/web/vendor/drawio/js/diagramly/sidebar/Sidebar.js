@@ -1684,7 +1684,7 @@
 
 					for (var k = 0; entry.libs != null && k < entry.libs.length; k++)
 					{
-						(mxUtils.bind(this, function(lib)
+						(mxUtils.bind(this, function(lib, entry, k)
 						{
 							var data = null;
 							var error = null;
@@ -1817,7 +1817,9 @@
 											if (doc.documentElement.nodeName == 'mxlibrary')
 											{
 												data = JSON.parse(mxUtils.getTextContent(doc.documentElement));
-												this.addEntries(data, doc.documentElement.getAttribute('tags'));
+												this.setCurrentSearchEntryLibrary(entry.id, entry.id + '.' + k);
+												try { this.addEntries(data, doc.documentElement.getAttribute('tags')); }
+												finally { this.setCurrentSearchEntryLibrary(); }
 												barrier();
 											}
 											else
@@ -1843,7 +1845,7 @@
 									barrier();
 								}
 							}
-						}))(entry.libs[k]);
+						}))(entry.libs[k], entry, k);
 					}
 				}
 			}

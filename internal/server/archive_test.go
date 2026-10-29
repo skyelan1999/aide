@@ -4,10 +4,13 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 	"testing"
@@ -150,6 +153,143 @@ func TestReadArchiveFilesDeduplicatesNormalizedPaths(t *testing.T) {
 	data := makeZIP(t, map[string]string{"folder/file.txt": "one", `folder\file.txt`: "two"})
 	if _, err := readArchiveFiles(data); err == nil || !strings.Contains(err.Error(), "重复路径") {
 		t.Fatalf("canonical duplicate paths: got %v, want duplicate-path error", err)
+	}
+}
+
+func issue69Archive(t *testing.T, format string, entries []string) []byte {
+	t.Helper()
+	var raw bytes.Buffer
+	if format == "zip" {
+		zw := zip.NewWriter(&raw)
+		for _, name := range entries {
+			w, err := zw.Create(name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.HasSuffix(name, "/") {
+				_, _ = io.WriteString(w, "fixture")
+			}
+		}
+		if err := zw.Close(); err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		tw := tar.NewWriter(&raw)
+		for _, name := range entries {
+			hdr := &tar.Header{Name: name, Mode: 0644, Typeflag: tar.TypeReg, Size: 7}
+			if strings.HasSuffix(name, "/") {
+				hdr.Typeflag, hdr.Size = tar.TypeDir, 0
+			}
+			if err := tw.WriteHeader(hdr); err != nil {
+				t.Fatal(err)
+			}
+			if hdr.Size > 0 {
+				_, _ = io.WriteString(tw, "fixture")
+			}
+		}
+		if err := tw.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return raw.Bytes()
+}
+
+func TestIssue69ArchiveRejectsFileParentConflictsBeforeExtraction(t *testing.T) {
+	for _, format := range []string{"zip", "tar"} {
+		for n, entries := range [][]string{
+			{"a", "a/b.txt"},
+			{"a/b.txt", "a"},
+			{"a/b.txt", "a/"}, // Valid explicit directory after its child.
+			{"a", "a-unrelated", "a/b.txt"},
+			{`a\b.txt`, "a"},
+		} {
+			t.Run(fmt.Sprintf("%s/%d", format, n), func(t *testing.T) {
+				data := issue69Archive(t, format, entries)
+				_, err := readArchiveFilesForPath(data, "fixture."+format)
+				if n == 2 {
+					if err != nil {
+						t.Fatalf("valid late directory rejected: %v", err)
+					}
+					return
+				}
+				if err == nil {
+					t.Fatal("file used as a parent directory was accepted")
+				}
+				a := testApp(t)
+				name := "conflict." + format
+				if err := a.workspace.WriteFile(name, data, 0600); err != nil {
+					t.Fatal(err)
+				}
+				response := request(a, "POST", "/api/file/extract", map[string]string{"root": "workspace", "path": name})
+				requireStatus(t, response, 400)
+				items, err := os.ReadDir(a.workPath)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, item := range items {
+					if item.Name() == "conflict" || strings.HasPrefix(item.Name(), ".aide-unpack-") {
+						t.Fatalf("rejected layout left output behind: %v", items)
+					}
+				}
+			})
+		}
+	}
+}
+
+func TestIssue69FailedWorkspaceExtractionCleansStage(t *testing.T) {
+	for _, format := range []string{"zip", "tar"} {
+		t.Run(format, func(t *testing.T) {
+			a := testApp(t)
+			name := "failure." + format
+			data := issue69Archive(t, format, []string{"good.txt", strings.Repeat("x", 256) + "/bad.txt"})
+			if err := a.workspace.WriteFile(name, data, 0600); err != nil {
+				t.Fatal(err)
+			}
+			response := request(a, "POST", "/api/file/extract", map[string]string{"root": "workspace", "path": name})
+			if response.Code < 400 {
+				t.Fatalf("unwritable archive path succeeded: %s", response.Body.String())
+			}
+			items, err := os.ReadDir(a.workPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, item := range items {
+				if item.Name() == "failure" || strings.HasPrefix(item.Name(), ".aide-unpack-") {
+					t.Fatalf("failed extraction retained its private stage: %v", items)
+				}
+			}
+		})
+	}
+}
+
+func TestIssue69ArchivePublicationPreservesExistingDestination(t *testing.T) {
+	a := testApp(t)
+	if err := a.workspace.Mkdir("existing", 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.workspace.WriteFile("existing/keep.txt", []byte("original"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	fs, err := a.streamTransferFS(context.Background(), "workspace", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fs.Close()
+	if err := writeExtractedArchive(fs, "existing", []extractedArchiveFile{{path: "new.txt", data: []byte("new")}}); !errors.Is(err, os.ErrExist) {
+		t.Fatalf("publication conflict = %v", err)
+	}
+	data, err := a.workspace.ReadFile("existing/keep.txt")
+	if err != nil || string(data) != "original" {
+		t.Fatal("existing archive destination changed", err)
+	}
+	items, err := os.ReadDir(a.workPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range items {
+		if strings.HasPrefix(item.Name(), ".aide-unpack-") {
+			t.Fatal("failed publication left a staging directory")
+		}
 	}
 }
 

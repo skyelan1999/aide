@@ -1,0 +1,52 @@
+{
+  "cycle": 104,
+  "issues": [
+    583,
+    584,
+    586
+  ],
+  "repository": "skyelan1999/aide-pkg-sqlite",
+  "branch": "codex/open-issue-review-20261028",
+  "baseline": "45db2e2",
+  "fix": [
+    "Linear per-statement lexical write-confirmation guard; exclude quoted/comment/bind content and subquery WHERE; reject NUL.",
+    "SQLite native authorizer validates each actual ATTACH, including exec/query/transactions; unknown expression/bound names and file URI denied.",
+    "CSV real parent validation and pinned directory descriptor, exclusive0600 temporary file,atomic publication; final destination links never followed."
+  ],
+  "red": {
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle104-sqlite-red.log"
+  },
+  "green": [
+    {
+      "scope": "Actual Node24.19 SQLite engine; new safety,CTE/trigger/FK,rollback,positive scoped writes,ATTACH and real path races",
+      "tests": 25,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle104-sqlite-final.log"
+    },
+    {
+      "scope": "ExistingCRUD/transactions/schema/defaultreadonly/limits/locking/CSV/dump",
+      "tests": 33,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle104-sqlite-final-prior.log"
+    }
+  ],
+  "runtime": "Disposable no-network container with tmpfs/workspace,/context,/local; no user files",
+  "limits": [
+    "Linux/proc/self/fd and full DatabaseSync.setAuthorizer API required; unsupported runtime fails closed.",
+    "Unknown dynamic ATTACH names and file URI rejected; safe mounted literals/:memory: supported.",
+    "Not a general SQL semantic auditor or OS isolation for arbitrary plugin code.",
+    "Does not claim all main-database/dump pathname race protection."
+  ],
+  "notRun": [
+    "Real user DBs",
+    "Main merge/release/market"
+  ],
+  "delivery": {
+    "commit": "ccdfe00",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnAideBranch": 428,
+  "independentPluginFixes": 5,
+  "remainingOriginal104": 67
+}

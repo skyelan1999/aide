@@ -3632,7 +3632,7 @@ ExportDialog.saveLocalFile = function(editorUi, data, filename, format)
 	else
 	{
 		mxUtils.alert(mxResources.get('drawingTooLarge'));
-		mxUtils.popup(xml);
+		mxUtils.popup(data);
 	}
 };
 

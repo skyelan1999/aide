@@ -1,0 +1,119 @@
+{
+  "cycle": 20,
+  "baseline": "01ddc327",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    117,
+    118,
+    119
+  ],
+  "commits": {
+    "117": "9af9b26c8fd4c6cf10761cbc1671ce290c875a47",
+    "118": "5d9ad5f2d698afb27919092c5f29d8ce4289db8e",
+    "119": "7b28b3468a433bb802b4a8af46a1d53a97e1f6ae"
+  },
+  "verificationRegistrationCommit": "e21f84102b76be5f76afa68c5f37796e77cca09e",
+  "cumulativeProductFixes": 57,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 58,
+  "original272RemainingFollowup": 226,
+  "red": [
+    {
+      "issue": 117,
+      "command": "node scripts/test_avatar_pack_paths.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Traversal job../../escape returned0 from cached audit path outside audit root; expected refusal before writes."
+    },
+    {
+      "issue": 118,
+      "command": "node scripts/test_frame_interpolation.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Already interpolated manifest processed successfully0 rather than refusing, overwriting owned fixture output."
+    },
+    {
+      "issue": 119,
+      "command": "python3 scripts/test_mermaid_proof_auth.py MermaidProofAuthenticationTests.test_cross_origin_simple_post_cannot_overwrite_proof",
+      "result": "EXPECTED_FAIL",
+      "observed": "Cross-origin text/plain forged pass POST returned204 rather than403."
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_avatar_pack_paths.cjs",
+      "result": "PASS",
+      "cases": 20,
+      "scope": "Both actual packer CLIs in owned copied trees; traversal/unknownIDs, external/symlinksource, audit/output symlink, cached record ID and asset filename poisoning refused. Cached valid absolute/relative artwork remains usable. Sharp stub must not execute; no real extraction or art acceptance."
+    },
+    {
+      "command": "node scripts/test_frame_interpolation.cjs",
+      "result": "PASS",
+      "scope": "Actual script with mockSharp/owned files: prior marker refuses without any image read/write; actual3 selected source frames yield7, padding excluded and360ms preserved; metadata preflight no writes; encoding failure keeps marker and refuses retry. No shipped assets modified or real image/visual acceptance."
+    },
+    {
+      "command": "python3 scripts/test_mermaid_proof_auth.py",
+      "result": "PASS",
+      "tests": 5,
+      "durationSeconds": 0.252,
+      "scope": "Real owned loopback processes and receipt files; cross-origin, wrong/missing/nonASCII token, wrongHost, media type, malformed/list/oversized body refused; valid same-origin token204, CSP/CORP/nosniff verified. All owned processes stopped."
+    },
+    {
+      "command": "node --check scripts/avatar_pack_paths.cjs; node --check scripts/pack_avatar_art.cjs; node --check scripts/pack_avatar_enhanced.cjs; node --check scripts/interpolate_frames_x3.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle20-browser node scripts/browser-mermaid-proof-auth.cjs",
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle20-browser/browser-proof.json",
+      "scope": "Real shipped Mermaid vendor and markdown renderer under fixture strictCSP.4diagram types, light/dark/light, detached sheet cleanup, successful authenticated proof204 and validreceipt, manual dark-toggle. No page errors; owned page/context/browser and Python fixture stopped.",
+      "screenshots": [
+        "mermaid-light.png",
+        "mermaid-dark.png"
+      ],
+      "visualReview": "Viewed dark screenshot; flow/sequence/class/state diagrams readable with expected dark panel and author-custom node color."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T182927072814Z.log",
+      "fingerprint": "a51952def9ac1e3fb6fa582bba7553d03ab01bbbb83d58eaf105efe0977b527c"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "两个头像打包器共享登记ID/场景、源图片目录及无符号链接路径校验；缓存审计和发布文件名同样校验，生成图先复制到对应输入区域。",
+    "已插帧/进行中标记一律拒绝，开始覆盖素材前先原子写进行中标记；按clip实际帧索引读取，排除填充格，保留总时长，按真实RGBA哈希统计uniqueFrames；失败需重建整套原素材后重试。",
+    "回环Mermaid proof写入要求每次运行随机令牌、自定义头、精确Host及有Origin时同源，JSON和16KiB限制；拒绝畸形输入，原子替换收据，GET保留严格CSP并加CORP/nosniff。",
+    "Avatar checks protect against malformed/untrusted local metadata; not kernel isolation against same-privilege concurrent filesystem replacement. Artwork must now live under the documented original/enhanced input directory; help and design documentation updated.",
+    "Interpolation protects reruns via refusal and durable progress marker. It still modifies assets in place; not an atomic whole-pack transaction or automatic rollback. Restore all original atlas/animation/manifest before retry, not merely delete marker. Total timing preserved, not a claim that pixel interpolation or local motion quality is verified.",
+    "Proof authentication protects cross-origin browser writes; a hostile local process able to read fixture tokens or edit operator receipt files is outside this boundary. No token retained in evidence.",
+    "This cycle changes authoring/test scripts only. No new Go runtime test needed; earlier Go results remain recorded per-cycle. Full workbench/native device/image release gate not run; prior platform blockers persist. No main merge/release/deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "verifiedRemoteCommit": "4df6bdc19637f0813ca092113c27a93dda9d6d0b",
+    "issueComments": {
+      "117": "https://github.com/skyelan1999/aide/issues/117#issuecomment-6424210534",
+      "118": "https://github.com/skyelan1999/aide/issues/118#issuecomment-6424211147",
+      "119": "https://github.com/skyelan1999/aide/issues/119#issuecomment-6424212108"
+    }
+  },
+  "sourceSHA256": {
+    "scripts/avatar_pack_paths.cjs": "00013560fe5cbe7c15ad41922fd9dd4ab72624b6a8223c601b38bebbb5c5d822",
+    "scripts/pack_avatar_art.cjs": "3bd4df077385d9a70e7cf85af64be8a1a1da73303ddfa048ee90f5048f195b4d",
+    "scripts/pack_avatar_enhanced.cjs": "e2f90738c0f70c4066f54b3d1bc5c25a6eb45296ba4c2ddb03423022b5693888",
+    "scripts/test_avatar_pack_paths.cjs": "24fea07eec5ca7b9a876793137e5b39889ebad93f1fc54e1e1af8a9c197a8179",
+    "scripts/interpolate_frames_x3.cjs": "737d00725f003a00f02e4b50da783747a9804ed2159958f0724347019bd434bb",
+    "scripts/test_frame_interpolation.cjs": "aee45393b7020ead9583731334f6b70045f617606990d3dd79b6689f9c71d8ea",
+    "scripts/fixtures/serve-mermaid-csp.py": "7c187c20754b58691ecf32e4236bfdefba516a19cef7f1a9182777b1546b9576",
+    "scripts/test_mermaid_proof_auth.py": "522cdf381805c5ef6a35606fee38aefaf6a5f1d3cee5450e0d379d26caf849ac",
+    "scripts/browser-mermaid-proof-auth.cjs": "9f657063874e964cc33f1cccf2c12abcaf3b59b4956644a304dceffa29e42649",
+    "docs/agent/router.json": "e2e57d86f59a7c3965cc5123640fa71ea68c0366e348b8ee3d4756bb331b57b1"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "cycle": 60,
+  "baseline": "ec5049d1fa31daeb2dc8c2b5d8fff46fe9c73071",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    186,
+    187,
+    188,
+    189,
+    190
+  ],
+  "commits": {
+    "186": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+    "187": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+    "188": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+    "189": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2",
+    "190": "80ee833163bb9cc174e2b1ba86b65f63000ca0e2"
+  },
+  "cumulativeProductFixes": 123,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 124,
+  "original272RemainingFollowup": 163,
+  "additionalFollowupIssues": [],
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "AIDE_DRAWIO_SIDEBAR_METADATA_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle60-sidebar-red-valid node scripts/browser-drawio-preview-bounds.cjs",
+      "observed": "Real source initializer/factory/index:3end-arrow entries labeled/tagged left and absent from right query;2identicalPatchManager entries;Cluster/Interface specific tags active;2misspelled titles/tags. Existing title append/fuzzy matching means latter spelling/specific-tag targets may still be found; do not claim all absent.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle60-sidebar-red-valid.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_SIDEBAR_METADATA_ACCEPTANCE=1 AIDE_DRAWIO_AWS_SEARCH_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle60-sidebar-green node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154,22groups/errors[]:6newcases(source/app/integrate×light/dark),each8target realfactory/index/query/render;3leftcontrols;Patchcount1;3localSVGassets actually load;Patch/ACMS realregisteredstencils.6existing185AWS +10base.1550capturedentries is initialization count, not full1550validation. Desktop screenshot visually inspected.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle60-sidebar-green/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_palette_search.cjs --check; node --check newhelpers/bundles; node scripts/test_drawio_palette_search.cjs",
+      "scope": "Pinned5.39.0 source distribution synchronization; outside5selected assignments bothbundles byte-identical to baseline.8target before/after style/shape/dimensions/value unchanged;3leftcontrol fullrecords equal;Patch2→1. All6newcases have realPatch/ACMSstencil descriptors."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 183,
+      "receipt": ".agent-state/verify-20261027T091933101079Z.log",
+      "fingerprint": "dec5b5fe0b9cb3e792e196d38609567e3c019e57ecb9e376c3f7d6ea2d5abd41"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links."
+    }
+  ],
+  "failedChecksResolved": [
+    {
+      "observed": "Initial owned screenshot annotation assumed non-nulltitle;PatchManager intentionally uses value with title=null. Corrected annotation fallback before capturing valid product RED. No product field changed for this fixture."
+    }
+  ],
+  "securityReview": [
+    "Only3rightarrow titles/tags,oneidenticalduplicate registration removal,2specifictags and2spellingtitle/tag pairs change. Left/double arrow style preserved;existing diagrams not rewritten.",
+    "HistoricalACMS misspelledstencil alias andVdeo SVGassetpath retained;only user-facing title/search changes. Localimage decode checks prove referencedassets stillload;actualACMSstencil remainsregistered.",
+    "Exact selected-assignment sync inbothbundles;unrelatedbytesunchanged. Trusted shippedJS evaluated in isolatedSidebar receiver, no live library mutation or external/model/devicecalls. Browser ownedcontext closedfinally."
+  ],
+  "notRun": [
+    "Full Aide workbench palette library picker/actual drag-drop, all1550entries and global fuzzy search ranking, external vendor namingverification. Component indexed factory/render evidence is bounded scope.",
+    "Go/full suite/nativeplatforms not repeated for metadata/test/docs. No main merge,release/deployment. #464 user-deferred pending newtestlog; reasonable fixed reports stayopen."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "186": "https://github.com/skyelan1999/aide/issues/186#issuecomment-6438169934",
+      "187": "https://github.com/skyelan1999/aide/issues/187#issuecomment-6438170925",
+      "188": "https://github.com/skyelan1999/aide/issues/188#issuecomment-6438171659",
+      "189": "https://github.com/skyelan1999/aide/issues/189#issuecomment-6438172225",
+      "190": "https://github.com/skyelan1999/aide/issues/190#issuecomment-6438172862"
+    },
+    "remoteCommit": "a314e5ccfcf9bc98fa317456bb36fcde47f46c31"
+  },
+  "sourceSHA256": {
+    "scripts/drawio-sidebar-metadata-review.cjs": "7a0cf4b5890f84e5bf0914586978743c4377e8a18656e1bc58b96fb4d7aafde4",
+    "scripts/drawio-sidebar-metadata-browser-cases.cjs": "4f5682ae2b0d7d06168ca50c100904e70f181a9a0c336a332bfd92e6c45344e0",
+    "scripts/sync_drawio_palette_search.cjs": "3b8885bb3152776c135525e7fa285ca212d934d0392952c4db040127c08dbb56",
+    "scripts/browser-drawio-preview-bounds.cjs": "c84e8cb1706d3e4322fad83d57037a105b7700437115a89d64ca9402a6a2cd7e",
+    "docs/architecture/office-viewer.md": "fd6f57ed74c78b50c72538f7fb37a7dce3fbf07d0f31a30bc4ba1f3e253e5caa",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-AWS4b.js": "8807b17b6c25fd853a71ad0f1fde7cb4429a46481b76d9e15dfdae0d1e5be3f7",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-ActiveDirectory.js": "97bbde35dc2151a6ba709eb664c69d88443627e85fce5583ad236e1dedc0fdcc",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-AlibabaCloud.js": "2d1f7689f03aa97e3a4a3d3f0aa3bb2eb4150472604b0f5f3d8024b6cc62aeac",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-AlliedTelesis.js": "8d4e6b4eb3bd2edb0fa60cc3956319b13d27ef902c2bc64bb38111f148d84d9e",
+    "internal/server/web/vendor/drawio/js/app.min.js": "373180bbd5d9d8136feacbfee6c1600be80fe55417d26dd3fdd76a0ac8657151",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "49c700c8606c0bf146fa9ecfa9b7f33c0ff10073840be91487fd979f35dc7b5a"
+  }
+}

@@ -903,6 +903,7 @@ body.file-view-mode .file-view-preview.file-view-immersive iframe{flex:1;width:1
 
 .zip-viewer{display:flex;flex-direction:column;min-height:280px;max-height:62vh;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
 .zip-toolbar{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;min-width:0}.zip-toolbar strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.zip-meta{margin-left:auto;color:var(--muted);white-space:nowrap}.zip-download{flex:0 0 auto;color:var(--brand);font-weight:600;text-decoration:none}.zip-download:hover{text-decoration:underline}
+.zip-toolbar{flex-wrap:wrap}.zip-pagination{display:flex;align-items:center;gap:6px;flex:0 0 auto}.zip-pagination button{padding:4px 8px;font-size:12px}.zip-page-info{white-space:nowrap;color:var(--muted)}
 .zip-list{overflow:auto;padding:6px}.zip-entry{display:flex;gap:8px;align-items:center;padding:6px 7px;border-radius:6px;font:12px/1.4 var(--font-mono,monospace)}.zip-entry:hover{background:var(--bg-inset)}.zip-entry-dir{font-weight:650}.zip-entry-icon{color:var(--muted);width:14px;text-align:center}.zip-entry-name{overflow-wrap:anywhere}.zip-empty,.zip-error{padding:16px 10px;color:var(--muted);font-size:12px}.zip-error{color:var(--danger)}
 
 .voice-narrate-toggle{display:inline-flex;align-items:center;gap:4px}

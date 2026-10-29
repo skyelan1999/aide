@@ -178,10 +178,93 @@ var com;
                  * @return {string}
                  */
                 //FIXME TODO add charset support
+                /* AIDE Visio archive budgets #176 */
+                // Untrusted ZIP metadata is only an early check. Count actual
+                // streamed bytes, and expand one compressed entry at a time.
+                mxVsdxCodec.loadArchive = function (file) {
+                    var inputBytes = file == null ? NaN :
+                        (typeof file === 'string' ? file.length :
+                            (typeof file.size === 'number' ? file.size :
+                                (typeof file.byteLength === 'number' ? file.byteLength : file.length)));
+                    var entryLimit = 8 * 1024 * 1024;
+                    var totalLimit = 16 * 1024 * 1024;
+                    function limit() {
+                        var error = new Error('Visio import resource limit exceeded (8 MiB input/member, 16 MiB expanded, 1024 entries)');
+                        error.code = 'AIDE_VISIO_LIMIT';
+                        return error;
+                    }
+                    if (!Number.isSafeInteger(inputBytes) || inputBytes < 0 || inputBytes > entryLimit) {
+                        return Promise.reject(limit());
+                    }
+                    return JSZip.loadAsync(file).then(function (zip) {
+                        var names = Object.keys(zip.files);
+                        if (names.length > 1024) throw limit();
+                        var entries = [], declaredTotal = 0;
+                        names.forEach(function (name) {
+                            var entry = zip.files[name], lower = entry.name.toLowerCase();
+                            if (!entry.dir && (/\.(xml|rels)$/.test(lower) || lower.indexOf(mxVsdxCodec.vsdxPlaceholder + '/media') === 0)) {
+                                var declared = entry._data && entry._data.uncompressedSize;
+                                if (declared != null) {
+                                    if (!Number.isSafeInteger(declared) || declared < 0 || declared > entryLimit) throw limit();
+                                    declaredTotal += declared;
+                                    if (declaredTotal > totalLimit) throw limit();
+                                }
+                                entries.push(entry);
+                            }
+                        });
+                        // Retain bounded raw members, not their compressed workers.
+                        // Existing XML/UTF-16/media conversion runs on these bytes.
+                        var result = new JSZip(), total = 0, index = 0;
+                        function next() {
+                            if (index === entries.length) return result;
+                            var entry = entries[index++];
+                            return new Promise(function (resolve, reject) {
+                                var chunks = [], size = 0, settled = false;
+                                var stream = entry.internalStream('uint8array');
+                                function abort(error) {
+                                    if (settled) return;
+                                    settled = true;stream.pause();chunks = null;reject(error);
+                                }
+                                stream.on('data', function (chunk) {
+                                    if (settled) return;
+                                    size += chunk.length;total += chunk.length;
+                                    if (size > entryLimit || total > totalLimit) {abort(limit());return;}
+                                    chunks.push(chunk);
+                                }).on('error', abort).on('end', function () {
+                                    if (settled) return;
+                                    settled = true;
+                                    var bytes = new Uint8Array(size), offset = 0;
+                                    chunks.forEach(function (chunk) {bytes.set(chunk, offset);offset += chunk.length;});
+                                    chunks = null;
+                                    result.file(entry.name, bytes, {binary: true, createFolders: false});
+                                    resolve();
+                                }).resume();
+                            }).then(next);
+                        }
+                        return next();
+                    });
+                };
                 mxVsdxCodec.prototype.decodeVsdx = function (file, callback, charset, onerror) {
                     var _this = this;
                     var docData = ({});
                     var mediaData = ({});
+                    var finished = false;
+                    function fail(error) {
+                        if (finished) return;
+                        finished = true;
+                        if (onerror != null) onerror(error);
+                        else if (callback) callback("");
+                    }
+                    function complete(xml) {
+                        if (finished) return;
+                        finished = true;
+                        if (callback) callback(xml);
+                    }
+                    function consume(entry, type, handle) {
+                        return entry.async(type).then(function (data) {
+                            if (!finished) handle(data);
+                        }).catch(fail);
+                    }
 
                     var allDone = function () 
                     {
@@ -269,10 +352,7 @@ var com;
 		                    var dateAfter = new Date();
 	                       	//console.log("File processed in " + (dateAfter - dateBefore) + "ms");
 		                    //console.log(xmlBuilder.str);
-		                    if (callback) 
-		                    {
-	                     		callback(xmlBuilder.str);
-		                    }
+		                    complete(xmlBuilder.str);
 	                    }
                     };
 
@@ -282,7 +362,7 @@ var com;
                     
                     var doneCheck = function()
                     {
-	                    	if (processedFiles == filesCount)
+                            if (!finished && processedFiles == filesCount)
 	                    	{
 	                    		var dateAfter = new Date();
 		                         //console.log(processedFiles + " File extracted in " + (dateAfter - dateBefore) + "ms");
@@ -294,28 +374,18 @@ var com;
 		                    	{
 		                    		console.log(e);
 		                    		
-		                    		if (onerror != null) 
-		                    		{
-		                    			onerror(e);
-		                    		}
-		                    		else
-		                    		{
-		                    			callback("");
-		                    		}
+                                    fail(e);
 		                    	}
 
 	                    	}
                     };
                     
-                    JSZip.loadAsync(file)
+                    mxVsdxCodec.loadArchive(file)
                     .then(function(zip)
                     {
                     	if (Object.keys(zip.files).length == 0)
                     	{
-                    		if (onerror != null)
-                    		{
-                    			onerror();
-                    		}
+                            fail(new Error("No Visio data found"));
                     	}
                     	else
                     	{
@@ -329,7 +399,7 @@ var com;
 	                            if (name.indexOf('.xml') == nameLen - 4 || name.indexOf('.rels') == nameLen - 5) //xml files
 	                            {
 	                            	filesCount++;
-	        	                    zipEntry.async("string").then(function (str) 
+                                    consume(zipEntry, "string", function (str)
 	        	                  	{
         	                    		if (!(str.length === 0)) {
 	        	    						//UTF-8 BOM causes exception while parsing, so remove it
@@ -378,7 +448,7 @@ var com;
 	                            	filesCount++;
 	                            	if ((function (str, searchString) { var pos = str.length - searchString.length; var lastIndex = str.indexOf(searchString, pos); return lastIndex !== -1 && lastIndex === pos; })(name, ".emf"))
 	                            	{
-                                        zipEntry.async("arraybuffer").then(function(buffer)
+                                        consume(zipEntry, "arraybuffer", function(buffer)
                                         {
                                             try
                                             {
@@ -399,7 +469,7 @@ var com;
 	                            	else if ((function (str, searchString) { var pos = str.length - searchString.length; var lastIndex = str.indexOf(searchString, pos); return lastIndex !== -1 && lastIndex === pos; })(name, ".bmp")) {
 	                            		if (JSZip.support.uint8array) 
 	                            		{
-			                            	zipEntry.async("uint8array").then(function (bmpData) 
+                                            consume(zipEntry, "uint8array", function (bmpData)
 			           	                  	{
 			                            		var bitmap = new BmpDecoder(bmpData);
 			                            		
@@ -415,10 +485,14 @@ var com;
 			        	                    	doneCheck();
 			           	                   	});
 	                            		}
+                                    else
+                                    {
+                                        fail(new Error("BMP decoding is not supported"));
+                                    }
 	                            	}
 	                            	else
 	                            	{
-		                            	zipEntry.async("base64").then(function (base64Str) 
+                                        consume(zipEntry, "base64", function (base64Str)
 		           	                  	{
 	//	                                    if ((function (str, searchString) { var pos = str.length - searchString.length; var lastIndex = str.indexOf(searchString, pos); return lastIndex !== -1 && lastIndex === pos; })(name, ".bmp")) {
 	//	                                        try 
@@ -457,13 +531,7 @@ var com;
 	                        });
 
                     	}
-                    }, function (e) {
-                    		//console.log("Error!" + e.message);
-                    		if (onerror != null)
-                    		{
-                    			onerror(e);
-                    		}
-                    });                    
+                    }).catch(fail);
                 };
                 mxVsdxCodec.prototype.createMxGraph = function () {
                     var graph = new Graph();
@@ -1901,6 +1969,7 @@ var com;
                     _this.editorUi = editorUi;
                     return _this;
                 }
+                /* AIDE Visio stencil error forwarding #176 */
                 mxVssxCodec.prototype.decodeVssx = function (file, callback, charset, onerror) {
                 	var _this = this;
                     var library = { str: "<mxlibrary>[", toString: function () { return this.str; } };
@@ -2040,7 +2109,7 @@ var com;
 	                    		}
 	                    	}
                     	}
-                    }, charset);
+                    }, charset, onerror);
                 };
                 mxVssxCodec.prototype.normalizeGeo = function (cell) {
                     var geo = cell.getGeometry();
@@ -7659,6 +7728,12 @@ var com;
                         PolylineTo.prototype.handle = function (p, shape) {
                             var result = "";
                             if (this.x != null && this.y != null && this.formulaA != null) {
+                                function limit() {
+                                    var error = new Error('Visio polyline resource limit exceeded (262144 characters, 4096 points)');
+                                    error.code = 'AIDE_VISIO_LIMIT';
+                                    throw error;
+                                }
+                                if (this.formulaA.length > 256 * 1024) limit();
                                 var h = shape.getHeight();
                                 var w = shape.getWidth();
                                 var x = this.x * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
@@ -7677,14 +7752,15 @@ var com;
                                 } })(aValue, "inh")) {
                                     throw Object.defineProperty(new Error(), '__classes', { configurable: true, value: ['java.lang.Throwable', 'java.lang.Object', 'java.lang.RuntimeException', 'java.lang.IllegalArgumentException', 'java.lang.Exception'] });
                                 }
-                                var polyEntriesList = (aValue.split(",").slice(0).slice(0));
-                                var xRel = parseFloat(/* remove */ polyEntriesList.splice(0, 1));
-                                var yRel = parseFloat(/* remove */ polyEntriesList.splice(0, 1));
+                                var polyEntriesList = aValue.split(",");
+                                if (polyEntriesList.length > 2 + 4096 * 2) limit();
+                                var xRel = parseFloat(polyEntriesList[0]);
+                                var yRel = parseFloat(polyEntriesList[1]);
                                 var currX = 0;
                                 var currY = 0;
-                                while ((polyEntriesList.length > 0)) {
-                                    currX = parseFloat(/* remove */ polyEntriesList.splice(0, 1)) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
-                                    currY = parseFloat(/* remove */ polyEntriesList.splice(0, 1)) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
+                                for (var pointIndex = 2; pointIndex < polyEntriesList.length; pointIndex += 2) {
+                                    currX = parseFloat(polyEntriesList[pointIndex]) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
+                                    currY = parseFloat(polyEntriesList[pointIndex + 1]) * com.mxgraph.io.vsdx.mxVsdxUtils.conversionFactor_$LI$();
                                     if (xRel === 1) {
                                         currX = currX * 100.0 / w;
                                     }
@@ -12841,12 +12917,20 @@ var com;
                         // row's X,Y cells; the knot vector is the C cell, the formula's
                         // per-point knots, the A cell and the formula's first argument
                         // repeated degree + 1 times.
+                        // Conservative De Boor work units, shared across this edge.
+                        var nurbsWorkRemaining = 250000;
+                        function nurbsLimit() {
+                            var error = new Error('Visio NURBS resource limit exceeded (65536 characters, degree 8, 256 control points)');
+                            error.code = 'AIDE_VISIO_LIMIT';
+                            throw error;
+                        }
                         function nurbsSegsTo(row) {
                             if (row.formulaE == null || row.x == null || row.y == null)
                             {
                                 return false;
                             }
 
+                            if (row.formulaE.length > 65536) nurbsLimit();
                             var eValue = row.formulaE.replace(/NURBS\s*\(/i, '').replace(/\)\s*$/, '');
                             var values = eValue.split(/\s*,\s*/);
 
@@ -12864,6 +12948,16 @@ var com;
                             {
                                 return false;
                             }
+
+                            // Include the current point and the row endpoint. Bound
+                            // work before constructing/evaluating this row's curve.
+                            if (degree > 8 || values.length > 4 + 4 * 254) nurbsLimit();
+                            var controlCount = 2 + Math.floor((values.length - 4) / 4);
+                            var workDegree = Math.min(degree, controlCount - 1);
+                            var work = (1 + 4 * controlCount) * ((workDegree + 1) * (workDegree + 1) +
+                                Math.ceil(Math.log2(controlCount + 1)) + 4) + 4 * (controlCount + workDegree + 1);
+                            if (work > nurbsWorkRemaining) nurbsLimit();
+                            nurbsWorkRemaining -= work;
 
                             // xType/yType 0 = relative (fraction of Width/Height),
                             // otherwise local coordinates in inches

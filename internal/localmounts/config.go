@@ -54,18 +54,27 @@ func Normalize(p string) (string, error) {
 }
 func Relative(base, candidate string) (string, bool) {
 	b, p := strings.ReplaceAll(base, "\\", "/"), strings.ReplaceAll(candidate, "\\", "/")
-	if Windows(b) {
-		b = strings.ToLower(b)
-		p = strings.ToLower(p)
-	}
+	windows := Windows(b)
 	b = strings.TrimRight(b, "/")
-	if p == b {
-		return ".", true
-	}
-	if !strings.HasPrefix(p, b+"/") {
+	baseParts, candidateParts := strings.Split(b, "/"), strings.Split(p, "/")
+	if len(candidateParts) < len(baseParts) {
 		return "", false
 	}
-	rel := strings.ReplaceAll(candidate, "\\", "/")[len(b)+1:]
+	for i, component := range baseParts {
+		match := component == candidateParts[i]
+		if windows {
+			match = strings.EqualFold(component, candidateParts[i])
+		}
+		if !match {
+			return "", false
+		}
+	}
+	if len(candidateParts) == len(baseParts) {
+		return ".", true
+	}
+	// Use the candidate's original components. Unicode case folding can change
+	// UTF-8 lengths, so transformed prefix lengths cannot index the input.
+	rel := strings.Join(candidateParts[len(baseParts):], "/")
 	// Do not normalize traversal into a different mounted root.
 	for _, v := range strings.Split(rel, "/") {
 		if v == ".." {

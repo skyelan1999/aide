@@ -140,9 +140,9 @@ mxBpmnShape.prototype.redrawPath = function(c, x, y, w, h, layer)
 	{
 		if (bg != null)
 		{
-			var f = this.backgrounds[bg];
+			var f = Object.prototype.hasOwnProperty.call(this.backgrounds, bg) ? this.backgrounds[bg] : null;
 
-			if (f != null)
+			if (typeof f == 'function')
 			{
 				c.translate(x, y);
 				f.call(this, c, x, y, w, h, layer);
@@ -188,9 +188,9 @@ mxBpmnShape.prototype.redrawPath = function(c, x, y, w, h, layer)
 
 		if (o != null)
 		{
-			var f = this.outlines[o];
+			var f = Object.prototype.hasOwnProperty.call(this.outlines, o) ? this.outlines[o] : null;
 
-			if (f != null)
+			if (typeof f == 'function')
 			{
 				f.call(this, c, x, y, w, h, bg === mxBpmnShape.prototype.eventTypeEnum.GATEWAY);
 			}
@@ -208,9 +208,9 @@ mxBpmnShape.prototype.redrawPath = function(c, x, y, w, h, layer)
 
 		if (s != null)
 		{
-			var f = this.symbols[s];
+			var f = Object.prototype.hasOwnProperty.call(this.symbols, s) ? this.symbols[s] : null;
 
-			if (f != null)
+			if (typeof f == 'function')
 			{
 				var strokeColor = c.state.strokeColor;
 				var fillColor = c.state.fillColor;
@@ -910,9 +910,9 @@ mxShapeBpmnEvent.prototype.strictDrawShape = function(c, x, y, w, h, outline, sy
 
 	if (outline != null)
 	{
-		var f = mxShapeBpmnEvent.prototype.outlines[outline];
+		var f = Object.prototype.hasOwnProperty.call(mxShapeBpmnEvent.prototype.outlines, outline) ? mxShapeBpmnEvent.prototype.outlines[outline] : null;
 
-		if (f != null)
+		if (typeof f == 'function')
 		{
 			c.translate(x,y);
 			f.call(this, c, x, y, w, h);
@@ -927,9 +927,9 @@ mxShapeBpmnEvent.prototype.strictDrawShape = function(c, x, y, w, h, outline, sy
 
 	if (symbol != null)
 	{
-		var f = mxShapeBpmnEvent.prototype.symbols[symbol];
+		var f = Object.prototype.hasOwnProperty.call(mxShapeBpmnEvent.prototype.symbols, symbol) ? mxShapeBpmnEvent.prototype.symbols[symbol] : null;
 
-		if (f != null)
+		if (typeof f == 'function')
 		{
 			var strokeColor = c.state.strokeColor;
 			var fillColor = c.state.fillColor;

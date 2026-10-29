@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -83,7 +82,7 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 			if err := a.ensureSSHSession(ctx); err != nil {
 				return nil, errors.New("工作区 SSH 连接不可用，请检查工作区认证设置")
 			}
-			pinned, err := pinTerminalSSHMaster(dataPath, sshControlSocket)
+			pinned, err := a.pinTerminalMaster(sshControlSocket)
 			if err != nil {
 				return nil, err
 			}
@@ -223,26 +222,45 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 // and OpenSSH attaching. A hard link pins this exact Unix socket inode: a late
 // attachment either reaches the admitted master or fails, never the next host.
 func pinTerminalSSHMaster(dataPath, socket string) (string, error) {
+	dir := terminalMasterPinDir(dataPath)
+	if err := os.Mkdir(dir, 0700); err != nil && !os.IsExist(err) {
+		return "", err
+	}
+	return pinTerminalSSHMasterInDir(dir, socket)
+}
+
+func pinTerminalSSHMasterInDir(dir, socket string) (string, error) {
 	info, err := os.Lstat(socket)
 	if err != nil || info.Mode()&os.ModeSocket == 0 {
 		return "", errors.New("工作区 SSH 主连接不可用")
-	}
-	owner := sha256.Sum256([]byte(dataPath))
-	dir := filepath.Join(os.TempDir(), "aide-terminal-masters-"+hex.EncodeToString(owner[:8]))
-	if err := os.Mkdir(dir, 0700); err != nil && !os.IsExist(err) {
-		return "", err
 	}
 	st, err := os.Lstat(dir)
 	if err != nil || !st.IsDir() || st.Mode()&os.ModeSymlink != 0 || st.Mode().Perm() != 0700 {
 		return "", errors.New("SSH 连接固定目录无效")
 	}
-	identity := sha256.Sum256([]byte(fmt.Sprintf("%s:%v", socket, info.Sys())))
-	pinned := filepath.Join(dir, hex.EncodeToString(identity[:16]))
-	if err := os.Link(socket, pinned); err != nil && !os.IsExist(err) {
+	reapTerminalMasterPins(context.Background(), dir, st, false)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+	for _, entry := range entries {
+		if !terminalPinName(entry.Name()) {
+			continue
+		}
+		linked, err := os.Lstat(filepath.Join(dir, entry.Name()))
+		if err == nil && os.SameFile(info, linked) {
+			return filepath.Join(dir, entry.Name()), nil
+		}
+	}
+	// Inode identity is checked below. A fresh random name avoids dependence on
+	// mutable stat fields such as link count or access time.
+	pinned := filepath.Join(dir, newID())
+	if err := os.Link(socket, pinned); err != nil {
 		return "", errors.New("无法固定工作区 SSH 连接")
 	}
 	linked, err := os.Lstat(pinned)
 	if err != nil || !os.SameFile(info, linked) {
+		_ = os.Remove(pinned)
 		return "", errors.New("工作区 SSH 连接已变化")
 	}
 	return pinned, nil

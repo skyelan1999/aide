@@ -1,0 +1,54 @@
+{
+  "cycle": 94,
+  "issues": [
+    249
+  ],
+  "baseline": "1246fb7c",
+  "fix": "Current-vector sharp caps and full signed turns with complementary arcs; upstream0424318 plus review sign handling, no upstream version claim.",
+  "red": {
+    "status": "EXPECTED_FAIL",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle94-corners-red/result.json",
+    "scope": "8rotations/mirrors all lose centerline width"
+  },
+  "green": [
+    {
+      "status": "PASS",
+      "controls": 5,
+      "cornerCases": 8,
+      "crossSections": 200,
+      "coveredSamplesPerSection": 15,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle94-corners-green/result.json"
+    },
+    {
+      "status": "PASS",
+      "checks": 34,
+      "errors": [],
+      "scope": "Actual bundled drawio3implementations,2modes/themes,pointer drawing,save,undo/redo,bounds",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle94-drawio-browser/result.json"
+    },
+    {
+      "status": "PASS",
+      "checks": 36,
+      "command": "node scripts/test_drawio_freehand_preview.cjs"
+    },
+    {
+      "status": "PASS",
+      "checks": 247,
+      "fingerprint": "2cf5feb42d2787863baac002076ebcf4739950ccb998b167db3be3194c8a3c06",
+      "receipt": ".agent-state/verify-20261028T165825072137Z.log"
+    }
+  ],
+  "notRun": [
+    "Full Aide start.command workbench,native/mobile pen hardware,resource-constrained device timing.",
+    "Main merge,release,deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "commit": "976b6545",
+    "comment": "https://github.com/skyelan1999/aide/issues/249#issuecomment-6475384295",
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnBranch": 407,
+  "original272RemainingFollowup": 0,
+  "remainingAllSnapshot": 86
+}

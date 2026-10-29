@@ -636,13 +636,22 @@ mxPopupMenu.prototype.destroy = function()
 {
 	if (this.div != null)
 	{
-		mxEvent.release(this.div);
-		
-		if (this.div.parentNode != null)
+		// Submenus live on document.body, outside the root menu DOM subtree.
+		var pending = [this];
+		while (pending.length > 0)
 		{
-			this.div.parentNode.removeChild(this.div);
+			var parent = pending.pop();
+			for (var row = (parent.tbody != null) ? parent.tbody.firstChild : null;
+				row != null; row = row.nextSibling)
+			{
+				if (row.div != null) pending.push(row);
+			}
+			mxEvent.release(parent.div);
+			if (parent.div.parentNode != null) parent.div.parentNode.removeChild(parent.div);
+			parent.activeRow = null;
+			parent.div = parent.table = parent.tbody = null;
 		}
-		
-		this.div = null;
+		this.eventReceiver = null;
+		this.containsItems = false;
 	}
 };

@@ -120,7 +120,10 @@ type migrationState struct {
 }
 
 // MigrateFlatToLayered 把平铺 /data 一次性迁移到分层布局。幂等、可重入、可回滚。
-func MigrateFlatToLayered(data string) error {
+func MigrateFlatToLayered(data string) (returnErr error) {
+	if err := recoverMigrationUndo(data, "flat-migration"); err != nil {
+		return err
+	}
 	layout, err := DetectLayout(data)
 	if err != nil {
 		return err
@@ -131,6 +134,30 @@ func MigrateFlatToLayered(data string) error {
 	if err := EnsureDirs(data); err != nil {
 		return fmt.Errorf("迁移：建立分层目录失败: %w", err)
 	}
+	paths := []string{migrationStatePath(data)}
+	for name, dest := range flatFileMap(data) {
+		src := filepath.Join(data, name)
+		if _, err := os.Lstat(src); os.IsNotExist(err) {
+			continue
+		}
+		paths = append(paths, src, dest)
+	}
+	legacySessions, err := filepath.Glob(filepath.Join(data, "session-*.json"))
+	if err != nil {
+		return err
+	}
+	for _, src := range legacySessions {
+		paths = append(paths, src, SessionPath(data, sessionIDFromName(filepath.Base(src)), "active"))
+	}
+	undo, err := beginMigrationUndo(data, "flat-migration", paths)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if returnErr != nil {
+			returnErr = errors.Join(returnErr, undo.rollback())
+		}
+	}()
 
 	ts := time.Now().UTC().Format("20060102T150405")
 	backupDir := filepath.Join(IntegrityDir(data), "migration-backup-"+ts)
@@ -211,8 +238,11 @@ func MigrateFlatToLayered(data string) error {
 		BackupDir:     backupDir,
 		QuarantineDir: quarantineMigrated,
 	}
-	if b, err := json.MarshalIndent(st, "", "  "); err == nil {
-		_ = os.WriteFile(migrationStatePath(data), b, 0600)
+	if err := atomicMigrationState(data, migrationStatePath(data), st); err != nil {
+		return fmt.Errorf("保存迁移状态失败: %w", err)
+	}
+	if err := undo.commit(); err != nil {
+		return err
 	}
 	log.Printf("数据分层迁移完成：%d 个文件已归位（原件移入 %s，备份 %s）", len(moved), quarantineMigrated, backupDir)
 	return nil
@@ -400,10 +430,10 @@ func migrateLegacyTLSDir(data string) error {
 
 // sessionRebalanceState 会话桶归位迁移的结果标记（可回滚）。
 type sessionRebalanceState struct {
-	Stage         string   `json:"stage"` // done | rolled-back
-	RebalancedAt  string   `json:"rebatedAt,omitempty"`
-	BackupDir     string   `json:"backupDir,omitempty"`
-	QuarantineDir string   `json:"quarantineDir,omitempty"`
+	Stage         string `json:"stage"` // done | rolled-back
+	RebalancedAt  string `json:"rebatedAt,omitempty"`
+	BackupDir     string `json:"backupDir,omitempty"`
+	QuarantineDir string `json:"quarantineDir,omitempty"`
 	// Moved 被迁出原位置的文件清单，元素为相对 data 根的路径（如
 	// "sessions/archived/session-x.json" 或平铺根 "session-x.json"）。回滚时从隔离区原样移回。
 	Moved []string `json:"moved,omitempty"`
@@ -429,7 +459,10 @@ type sessionCand struct {
 
 // rebalanceSessionBuckets 启动时把错位/重复/平铺残留的会话文件归位到唯一正确的桶。
 // 幂等、可重入、可回滚；损坏会话原地保留，绝不丢数据。
-func rebalanceSessionBuckets(data string) error {
+func rebalanceSessionBuckets(data string) (returnErr error) {
+	if err := recoverMigrationUndo(data, "session-bucket-migration"); err != nil {
+		return err
+	}
 	cands, err := scanSessionCandidates(data)
 	if err != nil {
 		return err
@@ -475,6 +508,22 @@ func rebalanceSessionBuckets(data string) error {
 	if err := EnsureDirs(data); err != nil {
 		return fmt.Errorf("会话归位：建立目录失败: %w", err)
 	}
+	paths := []string{sessionRebalanceStatePath(data)}
+	for _, pl := range plans {
+		paths = append(paths, SessionPath(data, pl.id, pl.cb))
+		for _, member := range pl.members {
+			paths = append(paths, member.abs)
+		}
+	}
+	undo, err := beginMigrationUndo(data, "session-bucket-migration", paths)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if returnErr != nil {
+			returnErr = errors.Join(returnErr, undo.rollback())
+		}
+	}()
 	ts := time.Now().UTC().Format("20060102T150405")
 	backupDir := filepath.Join(IntegrityDir(data), "session-bucket-backup-"+ts)
 	quarantineDir := filepath.Join(QuarantineDir(data), "session-bucket-"+ts)
@@ -549,8 +598,11 @@ func rebalanceSessionBuckets(data string) error {
 	sort.Strings(st.Moved)
 	sort.Strings(st.Added)
 	sort.Strings(st.Overwritten)
-	if b, err := json.MarshalIndent(st, "", "  "); err == nil {
-		_ = os.WriteFile(sessionRebalanceStatePath(data), b, 0600)
+	if err := atomicMigrationState(data, sessionRebalanceStatePath(data), st); err != nil {
+		return fmt.Errorf("保存会话归位状态失败: %w", err)
+	}
+	if err := undo.commit(); err != nil {
+		return err
 	}
 	log.Printf("会话桶归位完成：%d 个会话归位（隔离 %d，备份 %s）", len(plans), len(st.Moved), backupDir)
 	return nil
@@ -619,6 +671,12 @@ func compareSessionCand(a, b sessionCand) bool {
 // RollbackSessionBucketMigration 回滚会话桶归位迁移：
 // 隔离文件移回原位置、删除新增、从备份还原被覆盖内容。幂等：非 done 状态直接返回。
 func RollbackSessionBucketMigration(data string) error {
+	// Recovering the latest interrupted attempt is the requested rollback;
+	// do not then roll back the previous completed migration whose marker was
+	// just restored as part of that recovery.
+	if recovered, err := recoverMigrationUndoResult(data, "session-bucket-migration"); err != nil || recovered {
+		return err
+	}
 	b, err := os.ReadFile(sessionRebalanceStatePath(data))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -668,8 +726,8 @@ func RollbackSessionBucketMigration(data string) error {
 	st.Moved = nil
 	st.Added = nil
 	st.Overwritten = nil
-	if nb, err := json.MarshalIndent(st, "", "  "); err == nil {
-		_ = os.WriteFile(sessionRebalanceStatePath(data), nb, 0600)
+	if err := atomicMigrationState(data, sessionRebalanceStatePath(data), st); err != nil {
+		return fmt.Errorf("保存会话回滚状态失败: %w", err)
 	}
 	log.Printf("会话桶归位已回滚：%d 个文件恢复原位", len(st.Moved)+len(st.Added)+len(st.Overwritten))
 	return nil

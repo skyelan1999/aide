@@ -148,6 +148,98 @@ func TestLargeTransferArchiveStreamsAndRanges(t *testing.T) {
 		t.Fatal("archive range bytes")
 	}
 }
+
+func TestIssue64ArchivePreservesDistinctSelectedPaths(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		files map[string]string
+		paths []string
+		want  map[string]string
+	}{
+		{
+			name:  "same file basenames",
+			files: map[string]string{"alpha/config": "alpha", "beta/config": "beta"},
+			paths: []string{"alpha/config", "beta/config"},
+			want:  map[string]string{"alpha/config": "alpha", "beta/config": "beta"},
+		},
+		{
+			name:  "same directory basenames",
+			files: map[string]string{"alpha/logs/device.txt": "alpha", "beta/logs/device.txt": "beta"},
+			paths: []string{"alpha/logs", "beta/logs"},
+			want:  map[string]string{"alpha/logs/device.txt": "alpha", "beta/logs/device.txt": "beta"},
+		},
+		{
+			name:  "file and directory basename",
+			files: map[string]string{"alpha/device": "file", "beta/device/log": "directory"},
+			paths: []string{"alpha/device", "beta/device"},
+			want:  map[string]string{"alpha/device": "file", "beta/device/log": "directory"},
+		},
+		{
+			name:  "preserve all parents when one pair collides",
+			files: map[string]string{"a/same": "a", "b/same": "b", "elsewhere/a": "third"},
+			paths: []string{"elsewhere/a", "b/same", "a/same"},
+			want:  map[string]string{"a/same": "a", "b/same": "b", "elsewhere/a": "third"},
+		},
+		{
+			name:  "distinct basenames retain existing flat layout",
+			files: map[string]string{"alpha/a.txt": "a", "beta/b.txt": "b"},
+			paths: []string{"alpha/a.txt", "beta/b.txt"},
+			want:  map[string]string{"a.txt": "a", "b.txt": "b"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a := testApp(t)
+			for name, content := range tc.files {
+				file := filepath.Join(a.workPath, name)
+				if err := os.MkdirAll(filepath.Dir(file), 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(file, []byte(content), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			m := a.transfers()
+			j, err := m.create(context.Background(), transferCreate{Operation: "download", Paths: tc.paths})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err = m.start(j); err != nil {
+				t.Fatal(err)
+			}
+			testTransferWait(t, m, j)
+			archive, err := zip.OpenReader(filepath.Join(m.jobDir(j), "download.zip"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer archive.Close()
+			seen := map[string]bool{}
+			files := 0
+			for _, entry := range archive.File {
+				if seen[entry.Name] {
+					t.Fatalf("ambiguous duplicate ZIP entry: %q", entry.Name)
+				}
+				seen[entry.Name] = true
+				if entry.FileInfo().IsDir() {
+					continue
+				}
+				files++
+				r, err := entry.Open()
+				if err != nil {
+					t.Fatal(err)
+				}
+				content, err := io.ReadAll(r)
+				r.Close()
+				if want, ok := tc.want[entry.Name]; err != nil || !ok || string(content) != want {
+					t.Fatalf("ZIP entry %q = %q, error=%v; expected paths %v", entry.Name, content, err, tc.want)
+				}
+			}
+			if files != len(tc.want) {
+				t.Fatalf("archive has %d files, want %d", files, len(tc.want))
+			}
+		})
+	}
+}
+
 func TestLargeTransferPauseQueueAndContextBoundary(t *testing.T) {
 	a := testApp(t)
 	_ = os.WriteFile(filepath.Join(a.workPath, "source.bin"), []byte("source"), 0600)

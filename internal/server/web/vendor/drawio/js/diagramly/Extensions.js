@@ -177,7 +177,7 @@ LucidImporter = {};
 //			'AndroidIconForward' NA
 			'AndroidIconNext': s + 'ios7.misc.right',
 			'AndroidIconPrevious': s + 'ios7.misc.left',
-			'AndroidIconRefresh' : + 'ios7.icons.repeat',
+			'AndroidIconRefresh' : s + 'ios7.icons.repeat',
 			'AndroidIconInformation': s + 'ios7.icons.info',
 //			'AndroidIconHelp' NA
 			'AndroidIconSearch': s + 'ios7.icons.looking_glass',
@@ -1821,9 +1821,9 @@ LucidImporter = {};
 			'EE_Vdd' : s + 'electrical.signal_sources.vdd;verticalLabelPosition=bottom;verticalAlign=top',
 //Transistors
 			
-			'EE_BJT_NPN1' : s + 'electrical.transistors.pnp_transistor_1',
+			'EE_BJT_NPN1' : s + 'electrical.transistors.npn_transistor_1',
 			'EE_BJT_NPN1_V2' : s + 'electrical.transistors.npn_transistor_1;',
-			'EE_BJT_PNP1' : s + 'electrical.transistors.npn_transistor_1',
+			'EE_BJT_PNP1' : s + 'electrical.transistors.pnp_transistor_1',
 			'EE_BJT_PNP1_V2' : s + 'electrical.transistors.pnp_transistor_1',
 			'EE_JFET_P' : s + 'electrical.transistors.p-channel_jfet_1;flipV=1',
 			'EE_JFET_P_V2' : s + 'electrical.transistors.p-channel_jfet_1;flipV=1',
@@ -2454,7 +2454,7 @@ LucidImporter = {};
 			'PEButterflyValve2Block' : s + 'pid2valves.valve;flipH=1;valveType=butterfly;verticalLabelPosition=bottom;verticalAlign=top',
 			'PEBallValveBlock' : s + 'pid2valves.valve;valveType=ball;verticalLabelPosition=bottom;verticalAlign=top',
 			'PEDiaphragmBlock' : s + 'pid2valves.valve;valveType=ball;verticalLabelPosition=bottom;verticalAlign=top', 
-			'PEPlugValveBlock' : s + 'pid2valves.valve;valveType=ball;verticalLabelPosition=bottom;verticalAlign=top',
+			'PEPlugValveBlock' : s + 'pid2valves.valve;valveType=plug;verticalLabelPosition=bottom;verticalAlign=top',
 			'PECheckValveBlock' : s + 'pid2valves.valve;valveType=check;verticalLabelPosition=bottom;verticalAlign=top',
 			'PECheckValve2Block' : s + 'pid2valves.valve;valveType=check;verticalLabelPosition=bottom;verticalAlign=top',
 			'PEAngleValveBlock' : cs,
@@ -2924,7 +2924,7 @@ LucidImporter = {};
 			'AmazonRDSinstancestandby2017' : 'shape=mxgraph.aws3.rds_db_instance_standby_multi_az;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
 			'AmazonRDSMSSQLinstance2017' : 'shape=mxgraph.aws3.ms_sql_instance;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
 			'AmazonRDSMSSQLinstancealternate2017' : 'shape=mxgraph.aws3.ms_sql_instance_2;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
-			'AmazonRDSMySQLDBinstance2017' : 'shape=mxgraph.aws3.ms_sql_instance;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
+			'AmazonRDSMySQLDBinstance2017' : 'shape=mxgraph.aws3.mysql_db_instance;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
 			'AmazonRDSMySQLinstancealternate2017' : 'shape=mxgraph.aws3.mysql_db_instance_2;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
 			'AmazonRDSoracleDBinstance2017' : 'shape=mxgraph.aws3.oracle_db_instance;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
 			'AmazonRDSOracleDBinstancealternate2017' : 'shape=mxgraph.aws3.oracle_db_instance_2;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;pointerEvents=1',
@@ -3196,7 +3196,7 @@ LucidImporter = {};
 			'AmazonMQAWS19' : 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.mq;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=#ffffff;pointerEvents=1',
 			'AmazonSimpleNotificationServiceSNSAWS19' : 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=#ffffff;pointerEvents=1',
 			'AmazonSimpleQueueServiceSQSAWS19' : 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=#ffffff;pointerEvents=1',
-			'AWSAppSyncAWS19' : 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=#ffffff;pointerEvents=1',
+			'AWSAppSyncAWS19' : 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.appsync;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=#ffffff;pointerEvents=1',
 			'AWSStepFunctionsAWS19' : 'shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.step_functions;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=#ffffff;pointerEvents=1',
 			'AmazonSimpleNotificationServiceSNS_EmailNotificationAWS19' : 'shape=mxgraph.aws4.email_notification;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'AmazonSimpleNotificationServiceSNS_HTTPNotificationAWS19' : 'shape=mxgraph.aws4.http_notification;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
@@ -3442,7 +3442,7 @@ LucidImporter = {};
 			'IoT_ActuatorAWS19' : 'shape=mxgraph.aws4.actuator;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_AlexaEnabledDeviceAWS19' : 'shape=mxgraph.aws4.alexa_enabled_device;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_AlexaSkillAWS19' : 'shape=mxgraph.aws4.alexa_skill;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
-			'IoT_AlexaVoiceServiceAWS19' : 'shape=mxgraph.aws4.alexa_skill;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
+			'IoT_AlexaVoiceServiceAWS19' : 'shape=mxgraph.aws4.alexa_voice_service_2;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_BankAWS19' : 'shape=mxgraph.aws4.bank;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_BicycleAWS19' : 'shape=mxgraph.aws4.bycicle;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
 			'IoT_CameraAWS19' : 'shape=mxgraph.aws4.camera;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;strokeColor=none;pointerEvents=1',
@@ -10537,7 +10537,7 @@ LucidImporter = {};
 					{
 						case 'EIMessageBlock' :
 							item2[i].value = convertText(p['message_' + (i + 1)]);
-							item2.style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
+							item2[i].style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
 							break;
 						case 'EICommandMessageBlock' :
 							item2[i].value = 'C';
@@ -10985,7 +10985,7 @@ LucidImporter = {};
 						item2[i] = new mxCell('', new mxGeometry(w - 20, currY, 20, 20), 'part=1;');
 					item2[i].vertex = true;
 					item2[i].value = convertText(p['message_' + (i + 1)]);
-					item2.style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
+					item2[i].style += getLabelStyle(p['message_' + (i + 1)], isLastLblHTML);
 					v.insert(item2[i]);
 					
 					item2[i].style += addAllStyles(item2[i].style, p, a, item2[i], isLastLblHTML);

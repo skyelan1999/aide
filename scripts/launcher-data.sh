@@ -11,6 +11,7 @@ launcher_env_restore() {
   if [[ ! -e .aide-image && -f .aide-data/image ]]; then cp -p .aide-data/image .aide-image; fi
   if [[ -z "${COMPOSE_PROJECT_NAME:-}" && -f .aide-data/compose-project ]]; then
     COMPOSE_PROJECT_NAME="$(cat .aide-data/compose-project)"
+    COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME%$'\r'}"
     [[ "$COMPOSE_PROJECT_NAME" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { echo 'Invalid stored Compose identity.' >&2; return 1; }
     export COMPOSE_PROJECT_NAME
   fi
@@ -82,6 +83,7 @@ launcher_data_prepare() {
   [[ -z "$project" ]] || explicit_project=1
   if [[ -z "$project" ]]; then project="$(awk '$1=="name:"{print $2;exit}' compose.yaml)"; fi
   project="${project:-aide}"
+  project="${project%$'\r'}"
   [[ "$project" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { echo 'Invalid Compose project identity.' >&2; return 1; }
   own="$(launcher_legacy_owner "$docker_bin" "$root" "$project" "$explicit_project")" || return
   if [[ -n "$own" ]]; then project="$("$docker_bin" inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$own")"; fi

@@ -1,0 +1,205 @@
+{
+  "cycle": 61,
+  "baseline": "5e6f2d7a4ebb0657f362137598c9f8162e2b84aa",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    464
+  ],
+  "upstream": {
+    "branch": "codex/windows-native-launcher-20261027",
+    "commit": "268bde94cd71a2fe420f36f4194dc6a76fa3b2c9",
+    "base": "0ed5ab87fa83d608d53e9674396f06f1ad9cd6a3",
+    "comment": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6437631048",
+    "scope": "Read current handoff and full55file diff; fixed raw JSON header pinned hash, not a claim to independently re-audit upstream25526line dependency."
+  },
+  "cumulativeProductFixes": 123,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 124,
+  "original272RemainingFollowup": 163,
+  "additionalFollowupIssues": [],
+  "decision": {
+    "verdict": "accept-core-with-reviewed-resolutions",
+    "accepted": [
+      "Native Win32 lifecycle/Unicode argv/restricted childhandles/privateSIDACL/JSONmetadata/portcollision/tokenbrowserfallback;Go nativepicker/confirmation/forwarding integration;fixedtoolchain/PEpackaging.",
+      "Retain current compatibility startup,oldmigration,watcher,ABagent and all previous tests; BAT native mode explicit via AIDE_WINDOWS_LAUNCHER_MODE=native or directexe. No automatic failover after native failure."
+    ],
+    "declined": [
+      "Upstream deletion of all PS1 and6PowerShell-only tests: native has no equivalent migration/backgroundAB/portwatcher. Default replacement would drop existing capabilities.",
+      "Reintroducing external tar.exe,strictmanifest==configID comparison,subset sourcefingerprint and global defaultproject ownership assumptions."
+    ]
+  },
+  "integrationFixes": [
+    "Streaming fixed regular tar member only to CREATE_NEW ownedfile: pinned miniz3.1 rawdeflate core plus gzipCRC/header/trailer,tarsums,PAX/GNU,bounded64KiBmetadata,duplicate/link/truncation rejection. OuterSHA256 verification stays before extraction; rollback reference retained before Docker load can change a tag.",
+    "CanonicalimageID accepted frompinnedimmutable lookup or sole receipt of successfulverifiedload;strictplatform/source/legacyCAD retained;offlineexport configIDstrict. Field-specific errors.",
+    "PS5.1 quotedGo-template rootcause addressed in retained importer/localreuse/dependencybase via {{json .}} plusPowerShellJSON, not embedded quotedlabelkeys.",
+    "ExistingPOSIXsource inventory embeddedfromliteralconfiguration, exactsortedhashlineformat inclduplicates; portableCPP inventory+hash compared to actual aide.sh source-sha. Hostsourcefile read explicitUTF8.",
+    "Newroot getsstable ownproject; explicit/storedprojectcontainers mustownsamefilesystemdirectory beforeactions. Legacydata validationbeforeportrewrite. Windowsharness rejectsolderexe beforedefaultproject/foreignstop scenarios and cleansonlyverifiedownidentity.",
+    "Synchronouschildren inownedkill-on-closeJobObject, confirmedtree exitbeforecapture/nextaction; persistenthelpers separate. Boundedmetadata read while streaming;SHAfile read errorsrefused. Win32 runtime specifics remainNOT_RUN.",
+    "BuildC andC++units separately; fixed Zig0.15.2 hashesforLinuxamd64/arm64 compilerhosts;actualcrossbuildtoWindowsamd64/arm64. MandatorynativePE+architecture/size checksforfullcandidate andexport;universalreexporthelper shipped;MITnoticesembeddedwith--licenses."
+  ],
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "scope": "PS7 executing old prebuilt helper against adapter reproducing confirmedPS5.1 quotedtemplate error64; installed validimage cannotactivate. This is a bounded model, not nativePS5.1 reproduction.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle61-native-review/prebuilt-json-red.log"
+    },
+    {
+      "result": "EXPECTED_FAIL",
+      "scope": "ActualPythonASCIIlocale reading originalnative source-manifest function failsUnicodeDecodeError onrepoShellsource;explicitUTF8 fixesit.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle61-native-review/build-locale-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_native_portable.py",
+      "checks": 38,
+      "scope": "ExactproductionCPParchive/image/receipt/sourceinventory/installationownership code compiledwith existinghostC++;validPAX/GNU/USTAR/base256,dictionarywrap8MiB/incompressible2MiB,input/headerCRC,corrupt/truncated/link/duplicatemember拒绝,canonicalID/mismatch/type/ambiguousreceipt controls,actualrepoPOSIXfingerprintequal,own/alias/foreign/missingFSownership. Not Win32lifecycle.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle61-native-review/portable-accepted.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_prebuilt_import.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh --docker /usr/local/bin/docker",
+      "checks": 24,
+      "scope": "ActualPS7withDocker/HTTPadapters plusrealtinyemptyimageimport,tagscopedcleanup. MalformedJSON/type rejectedwithoutprivatefixtureleak;managedfixedmember rulesanddistinctmanifest/config identity retained.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle61-native-review/prebuilt-json-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "Related preservedPS regressions with actualPS7/Linux",
+      "scope": "17startup/browser/directory/LAN;22agentadapters;8realownedchildprocess;4permission-gate/AST cases. Not nativeWin5.1/NTFS/taskkill.",
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/startup-recovery.log",
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/update-agent.log",
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/update-process.log",
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/launcher-acl.log"
+      ]
+    },
+    {
+      "result": "PASS",
+      "command": "go test -race ./cmd/aide-local-mounts ./internal/localmounts -count=1 -timeout=120s;go vet samepackages;GOOS=windows GOARCH=amd64 go build helper",
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/go-race.log",
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/go-vet.log"
+      ]
+    },
+    {
+      "result": "PASS",
+      "command": "Existing isolated Python suites",
+      "scope": "42dataprotection,15offlinebootstrap,5LANlauncher,6candidate(inclallrequiredstartupfilesandPE),3PEgate tests(bothactualshellgate andcandidatevalidator),3sourcefingerprint inclASCIIlocale; no appinstance oruserfiles changed."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/build-windows-launcher.py --image 6b75fcfab1d3 [--arch arm64]",
+      "scope": "Official fixedZig0.15.2 Linuxamd64 compiler innetworknone/--rm ownedcontainers;Windowsamd64+arm64 targetbuilds,actualPEarchitecture/sizegate/systemDLLimports/embeddedMITnotices checked. Binary/PDB not committed.",
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/build-amd64-delivery.log",
+        "/workspace/scratch/issue-review-20261026/cycle61-native-review/build-arm64-delivery.log"
+      ]
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 184,
+      "fingerprint": "f94f6ab9dea0f70967b2e88d596e115a6737523a895181b07b43b0e530895211",
+      "receipt": ".agent-state/verify-20261027T105126862053Z.log"
+    }
+  ],
+  "failedChecksResolved": [
+    "Firstportable test used wrong malformedfixture names; corrected to actualbad-header/truncated-member beforevalid green.",
+    "FirstminizWindowsbuild passedC++standardflag toC source;build separateCobject thenC++link, botharches pass.",
+    "Pinned upstreamminizMITlicensehasrawCRLF; stageddiff initially flagsCR aswhitespace. Keptbyteexactlicenseandnarrowcr-at-eol attribute;checks pass. Initialquick184wasPASS butbeforefinalattributes/notice/locale edits, so notusedasfinalreceipt.",
+    "Newlocale regression initially missedsys import; corrected beforefinal3testpass."
+  ],
+  "notRun": [
+    "Currentmodifiedexe actualWindows/PowerShell5.1/NTFS/domain/Win32JobObject/nativeargv/browser; newdefaultproject andforeignroot-stop Windowsintegrationharness isready butNOT_RUN. UpstreamreportedWindowsresultsarehistorical, notcurrentproof.",
+    "RealWindowsDockerDesktop lifecycle,newdirectoryUIwithrebuiltGohelperimage,officialfullRelease download/import,existinglegacyvolumemigration andfullnativeAB/portmonitorparity. Compiledsourcehelper notnewpublishedimage.",
+    "NativeARM64Windows execution andLinuxARM64compilerhost execution. BothWindowstargetPEs crosscompiled onLinuxamd64 only.",
+    "Fullrepo/serverrace,fullworkbench UI,no paidmodel/realdevice,no productionrestart,mainmerge,tag,Release/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "464": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6440210135"
+    },
+    "remoteCommit": "04f793a3e5e9d008893b639481ca023d81a41048"
+  },
+  "notes": [
+    "Issue464 alreadycovered earlier;nativefollowupdoesnotincreaseissuecount. Userexplicitlyresumed it;191 metadata-only reviewpausedwithoutworktreechanges.",
+    "Merge commit mustretainboth5e6f2d7a and268bde94 parents;all userpreexistinguntracked tasks/research preserved. Sourcebranchremoteverifiedstill268bde94.",
+    "Importednative/runtime tasksmarkedupstreamhistorical, with currentreceiptpointer; theiroldnative-only deletion/WindowsPASS text not adopted as currentacceptance.",
+    "No subagents; ownedtoolingcontainers --rm/networknone;temporarytinyimage tagsremoved;toolchaincache kept forrebuild. Rootexe/armPE/PDB/cacheexcludedfromGit.",
+    "Upstreambinary had no MIT notice strings; finalexe embedsnlohmann/miniznotices accessiblewith--licenses. PEbytesverified; actualWindows --licenses execution remainsNOT_RUN."
+  ],
+  "commits": {
+    "464": "c11f9613f62068a463724e5b5df6a59d98cd3d68"
+  },
+  "artifacts": {
+    "amd64": {
+      "path": "aide-launcher.exe",
+      "bytes": 1356288,
+      "sha256": "84531ce5d618f62cdb51a8d10f665422d831bc8f80c51a24fa267260f98c7755",
+      "execution": "NOT_RUN current Windows exe",
+      "notices": "embedded MIT notices verified by actual PE bytes"
+    },
+    "arm64": {
+      "path": "bin/aide-launcher-arm64.exe",
+      "bytes": 1264640,
+      "sha256": "ca24c387eeaf58bdb03ab3f24362040c076fd76a3650a87d860053e39e3f438d",
+      "execution": "NOT_RUN current Windows exe",
+      "notices": "embedded MIT notices verified by actual PE bytes"
+    }
+  },
+  "sourceSHA256": {
+    ".gitattributes": "735de52c95bbb58315db0c84debabdf36290cdc4097a8779cd8b768b594db84f",
+    ".gitignore": "a024131681847fb126c0fb60ec2a53288c52d0480cc6f979dec787e330c77e1e",
+    "clean-docker-cache.bat": "9f44906d31ba459e49f84b695bf0bb5e6313e9c40e5915b2f0d444141caaa672",
+    "cmd/aide-local-mounts/main.go": "851b7b829df55a50a4894dc5f68e8c6afa9d51055a60e5d4a3516919480c91ad",
+    "docs/agent/router.json": "5ab2e1e2e6b7d1ff4664adff09f2a94281f24a0f37bd857c3eef5e794bcaff5c",
+    "docs/architecture/software-updates.md": "05da12c05b9c9f6de07013eebf5773270085ba10cc178aaadb21351d184b7ee7",
+    "docs/en/installation.md": "2448e91b3088d307602315aa181a11d491a6140374650c8e2ea2f261c29ed645",
+    "docs/installation.md": "962b2d94b8de48b539ff111f1cff9f7007d792c8ac786c2cca3f3747211a0fa2",
+    "docs/tasks/windows-native-launcher-20261027.json": "f6aa9b3acd13b2ff0bb7433a3a1526cb1a4139d4530b14d807d06d4dd9d6260f",
+    "docs/tasks/windows-runtime-fallback-20261027.json": "16b4b5403940f20842170323325ae5c2893a690816fb1ccb3f842703714d7cb3",
+    "native/windows-launcher/README.md": "274292eb7c4f278a516a2374e0af9c48f651a53f8e74a3b6dcae00cbd4f6419d",
+    "native/windows-launcher/archive.hpp": "51d3ab92ce3557448d57992627fd3397087f818cb2cfaf3010efa97603262f80",
+    "native/windows-launcher/image.hpp": "71b068702f545bc066582c859944e89a1c96f5fe463c2a0b7be8c21fa7bff635",
+    "native/windows-launcher/installation.hpp": "6fa4f0393a9e64db4c5350905c142d9bfa48fea6365c88117a3d61ba0e91d519",
+    "native/windows-launcher/main.cpp": "e1d46673b5dff1229758ca75b50fdb72d31c3ef6404e1290e38da3179b947685",
+    "native/windows-launcher/source_inputs.hpp": "f95457c999f5705b6e827aae1bce2a770ca6121b440098ac378652b682b61e9a",
+    "native/windows-launcher/third_party/LICENSE.json": "46a65cffd1ea955132d95a8dd921640714a8d6b537d2e4e482d31145ae95b603",
+    "native/windows-launcher/third_party/README.md": "ad956a2d6161e5c5ef5e6c58d4aa97109919932dbaa678a89c9e092ee1c8ef7c",
+    "native/windows-launcher/third_party/json.hpp": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63",
+    "native/windows-launcher/third_party/miniz/LICENSE": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3",
+    "native/windows-launcher/third_party/miniz/miniz.h": "edc0862c2d858d7dd444f48e035788a218ea4a5d2a5d1d0a0f8cf95ff266ed96",
+    "native/windows-launcher/third_party/miniz/miniz_common.h": "6320fa10a5d21db9f78594d92745bc27593c1e6bed657104c22da0a9bd687b49",
+    "native/windows-launcher/third_party/miniz/miniz_export.h": "195259dc89fb3f83a96426a90ee03dc45acef113150cd3475ea9cfbf1f7784f3",
+    "native/windows-launcher/third_party/miniz/miniz_tinfl.c": "ff9cc5426df23a78070b5b8fa2dcb7aea68faac466169a883b4ffb8727532350",
+    "native/windows-launcher/third_party/miniz/miniz_tinfl.h": "da4850920fdf09f8877d9affabe1ebba1852ce4b1ebbd121f2ba7a7ea8e57e5d",
+    "scripts/aide.sh": "d8d56bd1fef6e039e95d9d6b1736fbbb1868447800d91fca22e6ca463b8fcbd5",
+    "scripts/build-windows-launcher.py": "7687f66dbc8c85516415267d5cbe7165b1a1144b26e1cb63cd54640c3f5e4a60",
+    "scripts/ci/build_candidate.py": "d6f71089604b783617ade72251c0263f1def49ea7cea89f185f52991793821d0",
+    "scripts/ci/test_build_candidate.py": "1f757a5a338c334f3ebe8d9991fafbdcc0dfad7786dbae7fb68b185d3c043080",
+    "scripts/launcher-data.sh": "0400c9ce9ffc699fbac0d30bbfea282df16bbe4e068cb71f20bb9d7c3e8225d1",
+    "scripts/message-lan-control.sh": "905a18aa80f499949daa54fdb2dc01a55e450eaf42a84caffeadc589f1d380ff",
+    "scripts/native_launcher_portable.cpp": "0d87c7693d3bfbd49936c76fc45d7a7115dc2e08f86afc165f5dd91c15192643",
+    "scripts/package-release-assets.sh": "08b802ffa5e00a22de7968572dde05a6814919a5d4bf50cc3f28131a0715e945",
+    "scripts/prebuilt-image.ps1": "bda45ca033ce6a17034ac1ebd27806f44d4b678c0abf96531c1a4e3486c80d84",
+    "scripts/test_native_distribution.py": "25033fda76e9407f4b9bef993d0a1f6b27abaf8d63901f6bd4478532f4496491",
+    "scripts/test_source_fingerprint.py": "48ae88306aff4648a0e09f4308b2fba9b222fd048db3a9ac7404648f05708ac1",
+    "scripts/test_windows_native_launcher.py": "72c086e5b6391364983a00cd1bc77adc1cc1505b6006442f64b444c3e073b9a2",
+    "scripts/test_windows_native_portable.py": "957369887391be81133a7a9f21b8106396a1b8a15577fd2266704d74de35416e",
+    "scripts/test_windows_prebuilt_import.py": "ce53293c23daf3c2d8d8d4e3a8779661c01b730a1042bfea8d3ffc96c98fb28d",
+    "scripts/windows-launcher-asset.sh": "765f20a86c4cb0a897b53300dc35547a7f5342733fa0f96267f6a44d841f8911",
+    "start.bat": "9ca263f7798a61c41842edcf346aafe11702b307f94ae57265f768612cbffab2",
+    "start.ps1": "1e905f068fffc4e6284e6b334f1cd6700f3f425b9c9977e6b2f210b805841987",
+    "stop.bat": "0dbd466980543d6abc14b6ed034f96b4f1ba18970225528e2e9e1590bda74d59"
+  },
+  "mergeParents": [
+    "5e6f2d7a4ebb0657f362137598c9f8162e2b84aa",
+    "268bde94cd71a2fe420f36f4194dc6a76fa3b2c9"
+  ]
+}

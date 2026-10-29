@@ -1,0 +1,4511 @@
+{
+  "request": "合入main、测试回归，推送后关闭通过的问题",
+  "pullRequest": "https://github.com/skyelan1999/aide/pull/595",
+  "baselineBranch": "da8ac4631877ed464528e6257a6a236a6fac132a",
+  "baselineMain": "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
+  "state": "in_progress",
+  "closurePolicy": "No issue close until exact source is contained in verified remote main and required regression passes. A GitHub review requirement must not be bypassed.",
+  "issues": [
+    {
+      "author": "skyelan1999",
+      "number": 48,
+      "title": "Local-root pending timeout assertion is sensitive to the deadline start boundary",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-004.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 62,
+      "title": "Project briefing sorts RFC3339 timestamps lexically across time zones",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 64,
+      "title": "File downloads can produce duplicate ZIP entry names for same-basename selections",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-004.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 65,
+      "title": "Plugin upgrade downgrade guard accepts older prereleases with the same numeric version",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 66,
+      "title": "Completed file transfers permanently consume the 128-transfer capacity",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-004.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 67,
+      "title": "Model API key settings report success when vault persistence fails",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 68,
+      "title": "Headless browser allowlist does not restrict WebSocket connections",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-005.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 69,
+      "title": "Archive extraction accepts file/directory path conflicts and leaks staging trees",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-005.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 70,
+      "title": "SQLite viewer accepts negative limits and materializes the full table",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 71,
+      "title": "Recursive transfers build an unbounded in-memory manifest",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-006.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 72,
+      "title": "Config export accepts unbounded request bodies",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 73,
+      "title": "Debug run endpoints expose unredacted tool and model content",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-006.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 74,
+      "title": "SSH workspace paths can inject SFTP batch commands via newlines",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 75,
+      "title": "Decrypted source credential buffer is not zeroed after use",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 76,
+      "title": "External source responses are captured without a size limit",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-006.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 77,
+      "title": "Legacy Office parsing paths can exhaust memory on unbounded documents",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-007.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 78,
+      "title": "Range downloads can mix file versions when metadata ETags collide",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-007.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 79,
+      "title": "SFTP reads download unbounded remote files before enforcing size limits",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-007.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 80,
+      "title": "Personality API accepts unbounded prompts and injects them into every system message",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-008.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 81,
+      "title": "[P2] Integrity status reports ok when directory repair fails",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 82,
+      "title": "[P2] In-flight SSH tasks can access the newly selected workspace",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-008.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 83,
+      "title": "[P2] Bound sidecar comment reply text before persistence",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-008.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 84,
+      "title": "[P2] Preserve original byte offsets for Windows mount paths",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-009.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 85,
+      "title": "[P2] Revalidate the lock generation before mutating message state",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-009.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 86,
+      "title": "[P2] Bound daemon event retention by total payload bytes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-009.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 87,
+      "title": "[P2] Require a specific project reference before returning briefing messages",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-010.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 88,
+      "title": "[P2] Create workbench bridges for declared host capabilities",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-010.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 89,
+      "title": "[P2] Revalidate cached package manifest against catalog metadata",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-010.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 91,
+      "title": "[P2] Keep plugin result text untrusted in persistent experience prompts",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-011.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 92,
+      "title": "[P2] Reclaim obsolete pinned SSH control socket links",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-011.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 93,
+      "title": "[P2] Revoke native editor leases when sandbox becomes read-only",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-012.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 94,
+      "title": "[P2] Fail migrations when rollback journal cannot be persisted",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-013.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 95,
+      "title": "[P2] Bound accumulated provider stream output",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 96,
+      "title": "[P3] Reject fractional workflow template revisions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 97,
+      "title": "[P2] Cap total reassembled Edge TTS WebSocket message size",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-014.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 98,
+      "title": "[P2] Serialize voice sample index mutations",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-015.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 99,
+      "title": "[P2] Bound clone creation sample count and decoded audio size",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-015.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 100,
+      "title": "[P2] Refresh cached ciphertext after encrypted history changes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-015.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 101,
+      "title": "[P2] Reject personality evolution results based on stale snapshots",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-016.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 102,
+      "title": "[P2] Avoid deleting an unrelated aide-rel-test container",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-016.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 103,
+      "title": "[P2] Avoid blocking while writing a large SSH passphrase",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-016.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 105,
+      "title": "[P2] Validate persisted session IDs before writing session files",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 106,
+      "title": "[P2] Apply the assistant unlock gate before voice fallback",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-017.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 107,
+      "title": "[P2] Report token usage snapshot write failures",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-017.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 108,
+      "title": "[P2] Prevent composer submissions from approving shell commands",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-017.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 109,
+      "title": "[P3] Show due reminder popup before saving popup-seen markers",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-018.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 110,
+      "title": "[P3] Store actual duration for browser-recorded voice samples",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-018.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 111,
+      "title": "[P2] Report failed secret writes during config import",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 113,
+      "title": "[P2] Require assistant unlock before compacting private history",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-018.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 114,
+      "title": "[P2] Reset rendered starmap state when workspace identity changes mid-load",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-019.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 115,
+      "title": "[P3] Rate-limit master-password verification and vault unlock attempts",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-019.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 116,
+      "title": "[P3] Preserve the existing wheelhouse until replacement download succeeds",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-019.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 117,
+      "title": "[P3] Constrain avatar packer IDs and source paths before filesystem writes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-020.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 118,
+      "title": "[P3] Prevent repeated x3 interpolation from mutating already interpolated frames",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-020.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 119,
+      "title": "[P3] Authenticate proof writes in the local Mermaid CSP fixture server",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-020.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 120,
+      "title": "[P2] Report persistence failures during factory reset",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-021.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 121,
+      "title": "[P2] Isolate and clean up data created by UI acceptance scripts",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-021.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 122,
+      "title": "[P3] Fix the invalid hero caption font shorthand",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-021.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 123,
+      "title": "[P2] Preserve queued prompts when steer admission is rejected",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-022.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 124,
+      "title": "[P2] Enforce WebAuthn signature-counter clone warnings",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-002.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 125,
+      "title": "[P2] Require user verification for WebAuthn master authentication",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "verification.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 126,
+      "title": "[Bug] Bound recursive DXF block expansion during SVG preview",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-022.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 127,
+      "title": "[Bug] Bound decompressed DOCX size in browser preview",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-022.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 128,
+      "title": "[Bug] Bound decompressed draw.io diagram size in browser preview",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-023.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 130,
+      "title": "[Bug] Bound XML nesting depth in draw.io preview",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-023.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 131,
+      "title": "[Bug] Bound nested cell hierarchy during draw.io load",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-023.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 132,
+      "title": "[Bug] Async child layouts stall for cells with inherited property IDs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-024.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 133,
+      "title": "[Bug] Bound quadratic line-jump work when loading large diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-024.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 134,
+      "title": "[Bug] Preserve table column indices when cells have no geometry",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-024.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 135,
+      "title": "[Bug] Preserve custom action cell IDs when duplicating diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-025.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 137,
+      "title": "[Bug] Guard missing cell geometry when creating table column handles",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-025.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 138,
+      "title": "[Bug] Reset connection constraint markers when pointer leaves graph",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-025.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 139,
+      "title": "[Bug] Keep rotation raster local to the vertex handler",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-026.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 140,
+      "title": "[Bug] Detect self-loops before cloning orthogonal router terminals",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-026.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 141,
+      "title": "[Bug] Handle zero-radius SVG arcs as straight lines",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-026.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 142,
+      "title": "[Bug] Remove open popup submenus when destroying a graph",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-027.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 143,
+      "title": "[Bug] Destroy the panning manager when destroying a graph",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-027.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 144,
+      "title": "[Bug] Stencil fillalpha and strokealpha change the global alpha",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-027.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 145,
+      "title": "[Bug] Evict live output buffers when deleting sessions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-028.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 146,
+      "title": "[Bug] Task delivery can accept stale workspace files as new artifacts",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-029.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 147,
+      "title": "[Bug] Bound workspace routing policy file reads",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-030.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 148,
+      "title": "[Bug] Roll back profile state when persistence fails",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-030.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 149,
+      "title": "[Bug] Verify old password before rotating voice-history key",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-030.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 150,
+      "title": "[Bug] Report voice-history encryption changes only after saving succeeds",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-031.json",
+        "cycle-031.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 151,
+      "title": "[Security] Block voice-sample decryption while the app is locked",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-031.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 152,
+      "title": "[Bug] Report voice-sample deletion failures instead of success",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-031.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 153,
+      "title": "[Bug] Report cloned voice ID persistence failures",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-032.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 155,
+      "title": "[Bug] Surface personality save and rollback persistence failures",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-033.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 156,
+      "title": "[Security] Bound sample fan-out in voice-personality inference",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-034.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 157,
+      "title": "[Security] Enforce workflow file bindings during filesystem access",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-035.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 158,
+      "title": "[Bug] Require whole-value matches for research findings",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-036.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 159,
+      "title": "[P3] Keep the R08-04 fixture write inside the isolated test root",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-037.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 160,
+      "title": "[P3] Bound OBJ face and edge counts before rendering the preview",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-037.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 162,
+      "title": "[P3] Keep enhanced avatar asset hashes in sync after interpolation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-038.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 163,
+      "title": "[P2] Bound SFTP extended attribute counts before allocation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-039.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 164,
+      "title": "[P2] Validate SFTP server replies before decoding",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-040.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 167,
+      "title": "[P2] Preserve null values in custom AI request templates",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-041.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 168,
+      "title": "[P2] Validate animation step entries before rendering",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-042.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 169,
+      "title": "[P2] Apply message label styles to Lucidchart EI message cells",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-043.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 170,
+      "title": "[P3] Fix Lucidchart Android refresh icon style mapping",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-043.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 171,
+      "title": "[P2] Preserve NPN and PNP polarity when importing Lucidchart BJTs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-043.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 172,
+      "title": "[P2] Preserve plug valve type in Lucidchart imports",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-043.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 173,
+      "title": "[P2] Map Lucidchart MySQL RDS blocks to the MySQL stencil",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-043.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 174,
+      "title": "[P2] Map Lucidchart AppSync blocks to the AppSync stencil",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-043.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 175,
+      "title": "[P2] Map Lucidchart Alexa Voice Service blocks to the voice service stencil",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-044.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 176,
+      "title": "[Bug] Bound decompressed VSDX/VSSX size during import",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-045.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 177,
+      "title": "[Bug] Avoid quadratic parsing of VSDX PolylineTo formulas",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-046.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 178,
+      "title": "[Bug] Bound NURBS degree during VSDX edge import",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-047.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 179,
+      "title": "[Bug] Handle BMP decode failures during VSDX import",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-048.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 180,
+      "title": "[Bug] Enforce Trello attachment limits using byte size",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-049.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 181,
+      "title": "[Bug] Bound animated GIF export frame count",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-050.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 182,
+      "title": "[Performance] Recompute of the full freehand stroke on every move",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-056.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 184,
+      "title": "[Bug] AWS 3D directional arrows are indexed as northeast",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-058.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 185,
+      "title": "[Bug] AWS4 palette entries use unrelated search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-059.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 186,
+      "title": "[Bug] AWS18 right-pointing arrows are labeled as left",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-060.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 187,
+      "title": "[Bug] AWS18 Management Tools shows Patch Manager twice",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-060.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 188,
+      "title": "[Bug] Active Directory palette entries include an unrelated active search tag",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-060.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 189,
+      "title": "[Bug] Alibaba Cloud ACMS entry misspells Configuration Management",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-060.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 190,
+      "title": "[Bug] Allied Telesis palette misspells Video Conference Terminal",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-060.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 191,
+      "title": "[Bug] Android Contact Badge Normal and Pressed entries use the Focused shape",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-062.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 192,
+      "title": "[Bug] ArchiMate palette includes misspelled and misassigned search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-062.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 193,
+      "title": "[Bug] ArchiMate 3.2 palette entries carry unrelated search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-062.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 194,
+      "title": "[Bug] Arrows2 Callout with Quad Arrow has a misspelled search synonym",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-062.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 195,
+      "title": "[Bug] Atlassian Checkbox (off) palette entry is indexed as checkbox on",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-062.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 196,
+      "title": "[Bug] Azure2 App Space Component palette entry misspells its displayed name",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-063.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 197,
+      "title": "[Bug] BPMN palette registers a blank call choreography template as bzzzzt",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-063.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 198,
+      "title": "[Bug] BPMN Multiple Start gateway is indexed as multiple end",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-063.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 199,
+      "title": "[Bug] Bootstrap card templates contain repeated misspellings in sample copy",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-064.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 200,
+      "title": "[Bug] Bootstrap directional dropdown templates declare undersized bounds",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-064.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 201,
+      "title": "[Bug] Bootstrap checkbox input group title is missing a space",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-066.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 202,
+      "title": "[Bug] Bootstrap horizontal list group misspells a sample label",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-066.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 203,
+      "title": "[Bug] Bootstrap modal content template title is misspelled",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-066.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 204,
+      "title": "[Bug] Bootstrap nested navigation repeats a sample item label",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-066.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 205,
+      "title": "[Bug] C4 diagram title templates store mismatched c4Type values",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-066.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 206,
+      "title": "[Bug] Cabinet motor starter stencils are titled as circuit breakers",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 207,
+      "title": "[Bug] Cisco19 wireless access point title is misspelled",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 208,
+      "title": "[Bug] Cisco19 threat intelligence stencil is titled as Monitoring",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 209,
+      "title": "[Bug] Cisco19 Surveillance Camera has a misspelled fillColorStyles key",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 210,
+      "title": "[Bug] Cisco Safe Intrusion Prevention template uses the detection icon",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 211,
+      "title": "[Bug] Cumulus color palette misspells Energy Yellow",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 212,
+      "title": "[Bug] Electrical palette labels a current source as a transformer and Protective Earth as Equipotential",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 213,
+      "title": "[Bug] Electrical palette search tags map unrelated symbols",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 214,
+      "title": "[Bug] Electrical palette misspells Fluorescent Lamp",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 215,
+      "title": "[Bug] Floorplan revolving door has left-door search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-067.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 216,
+      "title": "[Bug] Fluid Power palette has mismatched ISO codes and spelling errors",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 217,
+      "title": "[Bug] GCP palette has incorrect labels and search terms",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 218,
+      "title": "[Bug] GCP Zones Note template sets an invalid font color",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 219,
+      "title": "[Bug] GCP expanded machine cards ignore the supplied storage count",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 220,
+      "title": "[Bug] GMDL disabled button variants are indexed as pressed",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 221,
+      "title": "[Bug] IBM VPC Rules stencil has incorrect search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 222,
+      "title": "[Bug] IBM Cloud network palette assigns unrelated search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 223,
+      "title": "[Bug] Infographic palette assigns unrelated stencil search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 224,
+      "title": "[Bug] iOS composite templates are missing from palette search",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 225,
+      "title": "[Bug] iOS7 palette assigns incorrect tablet and keyboard search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 226,
+      "title": "[Bug] Kubernetes palette assigns unrelated resource search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 227,
+      "title": "[Bug] MSCAE Azure palette contains mislabeled and duplicated entries",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 228,
+      "title": "[Bug] Mockup alphanumeric sample omits W and vertical rulers use horizontal tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 229,
+      "title": "[Bug] Network 2018 palette registers the same PC entry twice",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 230,
+      "title": "[Bug] Office palette has misspelled labels and unrelated search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 231,
+      "title": "[Bug] P&ID palette has misspelled and mismatched search metadata",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 232,
+      "title": "[Bug] Rack palette has reversed Aruba labels and incorrect search metadata",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 233,
+      "title": "[Bug] SAP palette shows misspelled labels and repeated legend text",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 234,
+      "title": "[Security] DOCX preview accepts script-scheme hyperlinks",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 235,
+      "title": "[Bug] Salesforce industry palette misspells Philanthropy",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 236,
+      "title": "[Bug] SysML Rate example misspells distribution",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 237,
+      "title": "[Bug] UML 2.5 palette contains misspelled labels and search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 238,
+      "title": "[Bug] Veeam palette search tags include unrelated categories",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 239,
+      "title": "[Bug] Web Icons and Web Logos use misspelled Diigo and Friendfeed tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-068.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 240,
+      "title": "[Bug] Async custom libraries are indexed under the wrong library",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 241,
+      "title": "[Bug] Canvas renderer applies miter limit to lineJoin",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 242,
+      "title": "[Bug] Canvas renderer ignores gradient direction",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 243,
+      "title": "[Bug] Validate DOCX symbol values before rendering them as HTML",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 244,
+      "title": "[Bug] DOCX preview styles are blocked by the default CSP",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 245,
+      "title": "[Security] DOMPurify 3.4.15 in-place SVG sanitization may leave detached descendants active",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 246,
+      "title": "[Bug] RoughJS dashed fill hangs when dashOffset and dashGap are both zero",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 248,
+      "title": "[Security] Validate origin of embedded Draw.io messages",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-093.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 249,
+      "title": "[Bug] Freehand outlines collapse at consecutive sharp turns",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-094.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 250,
+      "title": "[Performance] Bound Goldmark emphasis parsing for saved Markdown",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 251,
+      "title": "[Performance] Avoid quadratic work for many Markdown reference definitions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 252,
+      "title": "[Security] Enforce SHA-256 checks for offline TTS model archives",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 253,
+      "title": "[Security] Bound decompressed XML size for PNG diagram imports",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 254,
+      "title": "[Bug] Fix oversized diagram export fallback referencing undefined xml",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 255,
+      "title": "[Bug] Preserve top-right corner style in Rect2 inner outline",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 256,
+      "title": "[Bug] Guard custom edge handles against zero-length segments",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 257,
+      "title": "[Bug] Avoid leaking edge geometry into a global variable",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 258,
+      "title": "[Bug] View XML export drops function-valued cell styles",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-069.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 259,
+      "title": "[Performance] Avoid enumerating every path in swimlane rank setup",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 260,
+      "title": "[Performance] Avoid quadratic edge scans in hierarchical traversal",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 261,
+      "title": "[Performance] Avoid repeated Array.shift in median rank ordering",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 262,
+      "title": "[Bug] Radial tree layout reuses stale rows across executions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 263,
+      "title": "[Bug] Org chart single-column options select the opposite alignment",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 264,
+      "title": "[Security] Bound ZIP entry count in browser archive preview",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 265,
+      "title": "Bug AWS4 ProductIcon ignores opacity and transparent gradient styles",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 266,
+      "title": "Cisco Safe generic appliance thumbnails keep resource icons at 50% opacity",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 267,
+      "title": "GCP2 HexIcon maps distinct product choices to duplicate stencil IDs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 268,
+      "title": "[P2] Prevent quadratic scans in JavaScript JSX tag detection",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 269,
+      "title": "[P3] Support Kotlin block comments nested more than once",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 270,
+      "title": "[P3] Highlight unquoted and nested Bash command substitutions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 271,
+      "title": "[P3] Keep quoted Vim comments in comment scope",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 272,
+      "title": "[P3] Track nested braces in C# interpolation expressions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 273,
+      "title": "[P3] Highlight GraphQL block strings with embedded quotes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 274,
+      "title": "[P3] Preserve Go parameter scope for nested function types",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 275,
+      "title": "[P3] Match CMake bracket delimiters to their opening length",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 276,
+      "title": "[P3] Track nested braces in Dart string interpolation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 277,
+      "title": "[P3] Track nested function calls in Makefile highlighting",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 278,
+      "title": "[P3] Match Lua long-bracket delimiter levels",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 279,
+      "title": "[P3] Highlight XML entity references with digits in their names",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 280,
+      "title": "[P3] Track nested braces in Elixir interpolation expressions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 281,
+      "title": "[P3] Highlight base-36 digits in Erlang integer literals",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 283,
+      "title": "[P3] Track nested braces in F# string interpolation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 285,
+      "title": "[P3] Highlight Groovy GString interpolation expressions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 286,
+      "title": "[P3] Track nested braces in Perl string interpolation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 287,
+      "title": "[P3] Preserve numeric highlighting after spaced R assignment",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 288,
+      "title": "[P3] Track nested braces in Ruby string interpolation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 289,
+      "title": "[P3] Support Swift extended delimiters with more than three hashes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 290,
+      "title": "[P3] Preserve nested Scala braces in string interpolation highlighting",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 291,
+      "title": "[P3] Highlight interpolation inside SCSS quoted strings",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-071.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 292,
+      "title": "[P3] Do not infer ARM64 SM3 from the Windows LRCPC flag",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 293,
+      "title": "[P2] Return an error for missing NetBSD ARM64 sysctl nodes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 294,
+      "title": "[P3] Reject dedupe destination counts above uint16",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 295,
+      "title": "[P3] Validate payload lengths before parsing Linux control messages",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 296,
+      "title": "[P2] Ignore EDX as a second Tee result on Linux/386",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 297,
+      "title": "[P3] Return an error for unmapped FreeBSD capability indexes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 298,
+      "title": "[P3] Quote the Docker volume path in mkall.sh",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 299,
+      "title": "[P3] Return an error for empty socket control messages",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 300,
+      "title": "[P3] Return an error for empty NetBSD sysctl query results",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 301,
+      "title": "[P3] Propagate BSD extended attribute listing errors",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 302,
+      "title": "[P2] Preserve security descriptor errors when reading absent ACLs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 303,
+      "title": "[Bug] PSAPI working-set bit accessors always return false",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 304,
+      "title": "[Bug] Close temporary Winsock sockets with Closesocket",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 305,
+      "title": "[Bug] Report ERROR_NOT_ALL_ASSIGNED from AdjustTokenPrivileges",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-092.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 306,
+      "title": "[Bug] Legacy radial tree childLayout throws when no usable root remains",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-070.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 307,
+      "title": "[Bug] mxHierarchicalLayout keeps stale roots across execute calls",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 308,
+      "title": "[Bug] Swimlane layout crashes on cells with null geometry",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 309,
+      "title": "[Bug] Print preview leaves graph control renderer overridden",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 310,
+      "title": "[Bug] Print preview removes HTML labels because hint filter always returns false",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 311,
+      "title": "Security: unescaped initialText in cell editor permits script execution",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 312,
+      "title": "[P3] Fix undefined route pattern references in mxEdgeStyle.getRoutePattern",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 313,
+      "title": "[P3] Restore updateEdgeParent when cellsAdded fails",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 314,
+      "title": "[P3] Restore allowNegativeCoordinates when moveCells fails",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 315,
+      "title": "[P2] Respect swimlane direction when hit-testing its content",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 316,
+      "title": "[P3] Cancel the tap-and-hold timer when destroying a graph",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 317,
+      "title": "[P3] Remove the outline resize listener when destroying it",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 318,
+      "title": "[P3] Avoid partial edge insertion for malformed newEdgeStyle",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 319,
+      "title": "[P2] Reject self-loop connection instead of inserting a dangling edge",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 320,
+      "title": "[P3] Keep mxEdgeHandler bend sizing variables local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 321,
+      "title": "[P3] Handle malformed percent escapes in embedded PNG XML",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 322,
+      "title": "[P3] Keep PageSetupDialog preset detection local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 323,
+      "title": "[P3] Reject non-positive imported page dimensions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 324,
+      "title": "[P2] Preserve custom multi-color controls on refresh",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 325,
+      "title": "[P3] Preserve the focused line-end spacing input on refresh",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-072.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 326,
+      "title": "[P3] Avoid inherited object keys when matching diagram tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 327,
+      "title": "[P3] Resolve custom actions for prototype-named cell IDs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 328,
+      "title": "[P2] Escape diagram background in HTML export",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 329,
+      "title": "[P3] Preserve hidden tags for pages named __proto__",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 330,
+      "title": "[P3] Keep SVG export conversion counter local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 331,
+      "title": "[P3] URL-encode imported page IDs in generated links",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 332,
+      "title": "[P3] Use a prototype-safe map for imported page links",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 333,
+      "title": "[P3] Keep Mermaid generation results local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 334,
+      "title": "[P3] Finish file imports when FileReader fails",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 335,
+      "title": "Windows Release launcher pins local directories to bundled workspace and overrides .env paths",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 336,
+      "title": "[P3] Wait for an in-flight Org Chart layout load",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 337,
+      "title": "[P3] Use a prototype-safe set for CSV layout scoping",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 338,
+      "title": "[P3] Preserve selected descendants of prototype-named cells in JSON export",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 339,
+      "title": "[P3] Handle prototype-named cell IDs in anchored comments",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 340,
+      "title": "Windows Release manual slot activation is ignored or hangs in host updater",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 341,
+      "title": "[P3] Clear the comments refresh timer when its window is destroyed",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 342,
+      "title": "[P2] Bound Icon Grid rendering for untrusted grid sizes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 343,
+      "title": "[P2] Cap stripe rendering for oversized iOS shapes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 344,
+      "title": "[P3] Keep FilenameDialog row variable local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 345,
+      "title": "[P3] Keep PNG parser chunk data local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 346,
+      "title": "[P3] Keep shape picker cell traversal local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 347,
+      "title": "[P2] Restrict chromeless toolbar navigation URLs to the same origin",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 349,
+      "title": "[P2] Scope temporary editor keyboard handlers to each instance",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 350,
+      "title": "[P3] Avoid duplicating units after invalid geometry input",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 351,
+      "title": "[P3] Add spacing to the superscript formatting button",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 352,
+      "title": "[P3] Keep table rendering scale local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 353,
+      "title": "[Bug] GMDL checkbox and radio labels have extra closing parentheses",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 354,
+      "title": "[Bug] GMDL single-line field focus variants have incorrect names and search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 355,
+      "title": "[Bug] GMDL stepper templates are incorrectly indexed as tabs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 357,
+      "title": "[P3] Keep the iOS palette sidebar reference local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 358,
+      "title": "[Bug] Mockup Email template is indexed under calendar search tags",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 359,
+      "title": "[Bug] SAP Area and Default Shapes palettes are missing from search",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 360,
+      "title": "[Bug] SysML Full Port label is not grouped with its parent",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 361,
+      "title": "[Bug] Threat Modeling AND and OR gates use the wrong shapes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 362,
+      "title": "[Bug] VVD role templates reuse the Administrator search tag",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 363,
+      "title": "[P3] Handle malformed percent escapes in embedded PDF diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 364,
+      "title": "[P2] Bound CORS regex work to prevent browser hangs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-076.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 365,
+      "title": "[P3] Count distinct tags in AND selectors",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-073.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 366,
+      "title": "[P3] Validate empty page ranges before printing",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 367,
+      "title": "[P2] Bound decompression of imported diagram ZIP files",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 368,
+      "title": "[Bug] Prevent arrow edge rendering failures for zero-length terminal segments",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 369,
+      "title": "Windows RC12 slot activation can remain at 95% during rollback without durable diagnostics",
+      "status": "retain-native-user-environment-acceptance",
+      "sourceEvidence": [
+        "cycle-055.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 371,
+      "title": "[Bug] Prevent recursive self-inclusion in SysML composite shapes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 372,
+      "title": "[Bug] Guard BPMN shape dispatch against inherited object keys",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 373,
+      "title": "Launcher ownership regression test fails when executor already uses UID 1000",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-005.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 374,
+      "title": "[Bug] Reject inherited keys in emoji lookup before canvas rendering",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 375,
+      "title": "[Bug] Preserve distinct org chart connector segments beyond 31",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 376,
+      "title": "[Bug] Resolve Org Chart parents only within the selected layer",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 377,
+      "title": "[P3] Keep Explore pagination settings local",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 378,
+      "title": "[P2] Require trusted targets for chromeless Update plugin POSTs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 379,
+      "title": "[P3] Reset parsed primary keys between SQL imports",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 380,
+      "title": "[P3] Parse case-insensitive MySQL foreign-key syntax",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 381,
+      "title": "[P3] Honor the replay-delay URL parameter",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-075.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 382,
+      "title": "[Bug] Rack/F5 boolean style flags treat '0' as true",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 383,
+      "title": "[Bug] Preserve tree cells in the Trees foldCells override",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 384,
+      "title": "[P2] Guard WebCola layout against __proto__ cell IDs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 385,
+      "title": "[Bug] Prevent infinite render loop when iOS7 Select Bar dx2 is zero",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 386,
+      "title": "[Bug] Avoid NaN barPos for a 100px Mockup Scroll Bar",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 387,
+      "title": "[Bug] ArchiMate Application type Path is missing its renderer branch",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 388,
+      "title": "[P2] Bound EIP channel connection point generation for huge widths",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 389,
+      "title": "[Bug] Guard Arrow Dashed v2 when stepSize is zero",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 390,
+      "title": "[Bug] Clamp Callout Double 90 Arrow height by shape height",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-078.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 391,
+      "title": "[Bug] Ignore commented ampersands in numcases conditions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-097.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 392,
+      "title": "[P2] Prevent exponential parsing in nested centernot expressions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-079.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 393,
+      "title": "[P2] Avoid quadratic bounding-box work in nested bussproofs trees",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-079.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 394,
+      "title": "[P2] Avoid exponential parsing in nested mathtools brackets",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-079.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 395,
+      "title": "[P2] Avoid quadratic parsing in deeply nested mhchem \\ce commands",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-079.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 396,
+      "title": "[P3] Apply MathJax safe filters to AsciiMath attributes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-079.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 397,
+      "title": "[P2] Bound dimensions before expanding Physics matrices",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-079.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 398,
+      "title": "[P2] Ensure malformed DXF input cannot trap parser loops",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 399,
+      "title": "[P2] Prevent stack overflow in deep hierarchical layout traversals",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 400,
+      "title": "[P2] Bound recursive traversal for deep tree operations",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 401,
+      "title": "[P2] Scope Mermaid keyframes to prevent workbench animation collisions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-087.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 402,
+      "title": "[P3] Bound recursive DOM traversal during Markdown export",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-087.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 403,
+      "title": "Bug Parse ZIP64 extensible data within its declared record boundary",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 404,
+      "title": "[P2] Bound recursive WebCola component traversal",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 405,
+      "title": "[P2] Bound WebCola layout's dense matrix allocation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 406,
+      "title": "[P2] Bound WebCola pairing-heap merge recursion",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 407,
+      "title": "[P2] Avoid quadratic scans when building WebCola groups",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-080.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 408,
+      "title": "P3 Fix the misspelled redundant notation for MathJax down arrows",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-085.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 409,
+      "title": "P3 Handle empty content when sizing MathJax diagonal arrows",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-085.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 410,
+      "title": "[P2] Bound repeated array columns before expansion",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-085.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 411,
+      "title": "[P2] Bound Mermaid themeCSS before Markdown export tokenization",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-101.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 412,
+      "title": "[P2] Avoid quadratic inline masking in Markdown parsing",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-098.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 414,
+      "title": "[Security] Limit concatenated gzip members in PNG metadata inflation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-101.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 415,
+      "title": "[Security] Bound page counts before creating PDF preview placeholders",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-090.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 416,
+      "title": "Destroy PDF.js loading task when preview closes during document loading",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-090.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 417,
+      "title": "Research coverage guard misses affirmative claims after same-clause negation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-089.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 418,
+      "title": "[P3] Await libavoid initialization before publishing readiness",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-088.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 419,
+      "title": "[P3] Enforce the maximum box height in Org Chart layout",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-088.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 420,
+      "title": "[P2] Bound Marked reference-link scans in Markdown parsing",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-091.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 421,
+      "title": "[Bug] Bound recursive traversal in Org Chart layout",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-088.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 423,
+      "title": "[P3] Redact complete quoted credential values in system logs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-089.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 424,
+      "title": "[P3] Check the over child when inferring munderover math accents",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-085.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 425,
+      "title": "[P2] Bound recursive template traversal in DOMPurify",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-106.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 426,
+      "title": "[P2] Stop Markdown export renders when the job is cancelled or times out",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 427,
+      "title": "[P3] Honor zero-valued list item ordinals in Markdown export",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-101.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 429,
+      "title": "[P2] Enforce the triangle budget before parsing OBJ assets",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 430,
+      "title": "[P2] Prevent quadratic backtracking on empty inline-link destinations",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-091.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 431,
+      "title": "[P2] Bound regex backtracking in Markdown HTML and fence parsing",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-098.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 432,
+      "title": "[P2] Bound PDF.js predictor rows derived from untrusted DecodeParms",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 433,
+      "title": "[P2] Bound memory use when decoding oversized PDF images",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 434,
+      "title": "[P3] Avoid shadowable hasOwnProperty in Mermaid input maps",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 435,
+      "title": "[P3] Avoid shadowable hasOwnProperty in PlantUML preprocessing maps",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 436,
+      "title": "[P2] Prevent Mermaid flowchart IDs from modifying Object.prototype",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 437,
+      "title": "[P2] Prevent quadratic backtracking in C/C++ highlighting",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 438,
+      "title": "[P2] Prevent quadratic backtracking in C# highlighting",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 439,
+      "title": "P2 Avoid quadratic backtracking in INI/TOML key highlighting",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 440,
+      "title": "P2 Prevent quadratic scans in Ruby heredoc detection",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan1999",
+      "number": 441,
+      "title": "[P3] Keep animation footer actions visible at narrow widths",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-053.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 442,
+      "title": "[P2] Bound recursive PDF object parsing depth",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 443,
+      "title": "[P2] Bound XRef stream entry expansion during PDF parsing",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 444,
+      "title": "[P3] Prevent PlantUML Gantt task IDs from shadowing parser methods",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 445,
+      "title": "[P3] Preserve Mermaid stateDiagram nodes named __proto__",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 446,
+      "title": "[P3] Avoid Mermaid state note ID collisions with user states",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 447,
+      "title": "[P3] Avoid turning Kanban style statements into extra columns",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 448,
+      "title": "[P2] Cap Mermaid Radar ticks to prevent UI denial of service",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 449,
+      "title": "[P3] Handle Mermaid Sankey nodes named __proto__ safely",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 450,
+      "title": "[P3] Preserve explicit sources on Mermaid EventModeling reset frames",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 451,
+      "title": "[P3] Avoid stack overflow on deeply nested Mermaid subgraphs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-082.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 452,
+      "title": "[P3] Handle URI decode failures in filename dialog drops",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 453,
+      "title": "[P3] Keep prototype-named custom stencil colors in the format panel",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 454,
+      "title": "[P3] Handle custom shape values that shadow hasOwnProperty",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 455,
+      "title": "[P3] Handle malformed chromeless toolbar configuration",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 456,
+      "title": "[P3] Position the viewer layers dialog below its top toolbar",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 457,
+      "title": "[Bug] Use mxUtils when applying standalone graph model XML",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 459,
+      "title": "[P3] Preserve selected cells in mixed asynchronous layout sequences",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 460,
+      "title": "[P3] Reject non-positive Explore page sizes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 461,
+      "title": "[P3] Avoid leaking a global from Graph.replaceElement",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 462,
+      "title": "[P3] Remove the document listener registered by Graph.addClickHandler",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 463,
+      "title": "[P2] Bound Mermaid flowchart parsing for long whitespace runs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 464,
+      "title": "Run start.bat in (codex/open-issue-review-20261026) commit 1aba53e402f1fb2d7c3648d95a671fa4a981a5cb report error",
+      "status": "retain-native-user-environment-acceptance",
+      "sourceEvidence": [
+        "cycle-051.json",
+        "cycle-061.json",
+        "cycle-065.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 465,
+      "title": "[P3] Reject zero sheet counts in print fit settings",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 466,
+      "title": "[P3] Accept prototype-named page IDs when loading diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-084.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 467,
+      "title": "issue of release aide-v0.1.17.5-RC12-full-linux-amd64.zip",
+      "status": "retain-native-user-environment-acceptance",
+      "sourceEvidence": [
+        "cycle-052.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 468,
+      "title": "[P3] Avoid shadowable hasOwnProperty in PlantUML Salt menus",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 469,
+      "title": "[P3] Use prototype-safe maps in Mermaid block diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 470,
+      "title": "[P3] Define FGCOLOR for Hacker theme arrow labels",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 471,
+      "title": "[P3] Normalize bare hex colors in Mars theme output",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 472,
+      "title": "[P3] Honor a predefined font in the Mono theme",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 473,
+      "title": "[P3] Avoid sandstone theme internals flooding NWDiag warnings",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 474,
+      "title": "[P2] Bound regex evaluation in PlantUML splitstr_regex",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 475,
+      "title": "[P3] Avoid shadowable hasOwnProperty in PlantUML JSON size helper",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 476,
+      "title": "[P3] Prevent PlantUML style var() crash for hasOwnProperty variables",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 477,
+      "title": "[P3] Avoid inherited prototype keys in PlantUML style matching",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 478,
+      "title": "[P3] Handle special participant IDs in PlantUML sequence diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 479,
+      "title": "[P3] Handle __proto__ state IDs in PlantUML transitions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 480,
+      "title": "[P2] Bound repeated layout work for nested PlantUML states",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 481,
+      "title": "[P3] Handle inherited object keys in PlantUML class diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 482,
+      "title": "[P3] Preserve PlantUML activity layout for __proto__ swimlanes",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 483,
+      "title": "[P3] Handle prototype-sensitive IDs in PlantUML component diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 484,
+      "title": "[P3] Keep PlantUML component edge-pair keys unambiguous",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 485,
+      "title": "[P3] Handle prototype-sensitive IDs in PlantUML object diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 486,
+      "title": "[P2] Avoid quadratic scans for PlantUML object map links",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 487,
+      "title": "[P2] Bound quadratic note placement in PlantUML object diagrams",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 488,
+      "title": "[P3] Handle prototype-sensitive actor IDs in PlantUML use-case diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 489,
+      "title": "[P3] Bound recursion for deeply nested PlantUML class packages",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 490,
+      "title": "[P3] Preserve prototype-named nodes in PlantUML NWDiag diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 491,
+      "title": "[P3] Guard prototype-sensitive IDs in PlantUML C4 layout maps",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 492,
+      "title": "[P3] Avoid shadowable hasOwnProperty in PlantUML WBS aliases",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 493,
+      "title": "[P3] Bound recursion for deeply nested PlantUML activity branches",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 494,
+      "title": "[P3] Guard PlantUML Gantt named periods against hasOwnProperty collisions",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 495,
+      "title": "[P3] Resolve __proto__ aliases in PlantUML ArchiMate relationships",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 496,
+      "title": "[P3] Handle __proto__ states in PlantUML timing diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-081.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 497,
+      "title": "[Security] Update bundled KaTeX to a release fixed for GHSA-238p-pmpm-9mq7",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 498,
+      "title": "[Bug] Render consecutive KaTeX expressions in Mermaid labels separately",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 499,
+      "title": "[Bug] Allow \\char to emit U+10FFFF in Mermaid labels",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 500,
+      "title": "[P2] Limit canvas dimensions when rendering unusually large PDF pages",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 501,
+      "title": "[P2] Bound PDF.js LZW stream expansion during PDF preview",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 502,
+      "title": "[P2] Prevent infinite loops in PDF.js JBIG2 segment parsing",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 503,
+      "title": "[P2] Bound global PDF image cache entries when image decoding fails",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 504,
+      "title": "[P2] Cap Indexed color-space lookup table allocations",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 505,
+      "title": "[P2] Preserve edge pixels when grouping inline images",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 506,
+      "title": "[P2] Handle JPX images whose component count differs from the PDF ColorSpace",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 507,
+      "title": "[P3] Detect cyclic named ColorSpace resource aliases",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 508,
+      "title": "[P2] Bound PDF.js sampled-function allocations from untrusted /Size",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 509,
+      "title": "[P3] Bound recursive parsing of nested PDF PostScript conditionals",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 510,
+      "title": "[P2] Prevent recursive PDF Form XObject expansion",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 511,
+      "title": "[P2] Bound recursive PDF tiling-pattern expansion",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 512,
+      "title": "[P2] Bound PDF.js CID font width table expansion",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 513,
+      "title": "[P2] Prevent PDF.js Squiggly annotations from trapping the render worker",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 514,
+      "title": "[P2] Bound PDF.js CMap expansion to avoid hundreds of megabytes from a tiny PDF",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 515,
+      "title": "[P3] Preserve prototype-named categories in Mermaid pie charts",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 516,
+      "title": "[P3] Skip no-progress 100-pass scans in Mermaid Journey and Timeline",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 517,
+      "title": "[P3] Reject Timeline event rows without a preceding period",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 518,
+      "title": "[P3] Bound recursion in Mermaid init directive sanitization",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 519,
+      "title": "[P3] Bound recursive parsing of Mermaid themeCSS nesting",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 520,
+      "title": "[P2] Avoid superlinear work when wrapping long Mermaid sequence messages",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 521,
+      "title": "[P3] Preserve Mermaid diagram titles as plain text",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 522,
+      "title": "[P3] Reject invalid values in Mermaid Sankey diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 523,
+      "title": "[P3] Preserve Mermaid requirement names that collide with inherited keys",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 524,
+      "title": "[P3] Preserve Mermaid sequence participants named __proto__",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 525,
+      "title": "[P3] Handle Mermaid class IDs named __proto__",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 526,
+      "title": "[P3] Reject overflowing numeric data in Mermaid XY charts",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 527,
+      "title": "[P3] Handle inherited keys in Mermaid ER entity names",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 528,
+      "title": "[P3] Preserve Mermaid Gantt tasks with __proto__ IDs",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-083.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 529,
+      "title": "[P2] Avoid repeated descendant scans in nested Mermaid flowcharts",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 530,
+      "title": "[P3] Handle deeply nested groups in Mermaid math labels",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 531,
+      "title": "[P2] Bound KaTeX dimensions in Mermaid sequence diagrams",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 532,
+      "title": "[P2] Bound nested PDF graphics-state depth during rendering",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 533,
+      "title": "[P2] Bound CCITTFaxDecode Columns before allocating scanline arrays",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 534,
+      "title": "[P2] Bound FlateDecode image expansion before buffering",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 535,
+      "title": "[P2] Bound JBIG2 Page Information dimensions before allocation",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 536,
+      "title": "[P2] Bound JPEG SOF dimensions before allocating decoder blocks",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 537,
+      "title": "[P2] Bound JPX output allocation by image extents",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 538,
+      "title": "[P2] Reject invalid CFF INDEX offSize before scanning offsets",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 539,
+      "title": "[P2] Validate STL face count before allocating geometry arrays",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-086.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 540,
+      "title": "[P2] Bound URDF mesh-picking intersections for dense STL assets",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 541,
+      "title": "[P2] Bound Collada float-array parsing before allocation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-086.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 542,
+      "title": "[P2] Bound decoded dimensions of URDF DAE textures",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 543,
+      "title": "[P3] Detect cyclic Collada instance_node references before scene construction",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-086.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 544,
+      "title": "[P2] Bound Collada light instances before shader generation",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-086.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 545,
+      "title": "[P3] Bound PDF inline-image cache-key conversion",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 546,
+      "title": "[P2] Reject truncated CFF charset ranges before looping",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 547,
+      "title": "[P2] Bound PDF CFF FDSelect expansion by glyph count",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 548,
+      "title": "[P2] Bound PDF Type 2 CharString operand stack growth",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 549,
+      "title": "[P3] Bound Type 1 CharString subroutine recursion",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 550,
+      "title": "[P3] Guard recursive TrueType composite glyph compilation",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan1999",
+      "number": 551,
+      "title": "[Bug] Remove implicit iOS sidebar-global dependencies from palette factories",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-074.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 552,
+      "title": "[P2] Bound TrueType Collection font count before allocating offsets",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 553,
+      "title": "[P2] Bound TrueType format-12 cmap expansion before mapping glyphs",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 554,
+      "title": "[P2] Bound PDF mesh shading vertex expansion",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 556,
+      "title": "[P3] Bound recursive traversal of Type 4 PostScript expressions",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 557,
+      "title": "[P2] Avoid quadratic XML entity scans in XFA datasets",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 558,
+      "title": "[P3] Preserve negative bounds when building default annotation appearances",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 559,
+      "title": "[P2] Stop auto-size loop when a multiline widget has no usable height",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 560,
+      "title": "[P2] Delete worker stream sinks after stream errors",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 562,
+      "title": "[P3] Preserve neutral theme stateBorder in Mermaid init directives",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-095.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 563,
+      "title": "[Bug] SSH 工作区读取目录时重复拼接工作区路径，导致 SFTP 失败",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-077.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 564,
+      "title": "[Bug] Compare parsed origins before bypassing the draw.io image proxy",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-076.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 565,
+      "title": "[terminal] SSH 会话输入回显迟缓：650ms 输出轮询与输入共用串行 Bridge，积压输出未及时追赶",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-077.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 566,
+      "title": "[P2] Bound Type 1 Length1 before allocating font decode buffers",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 567,
+      "title": "[P2] Avoid eagerly decoding embedded files during PDF preview",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 568,
+      "title": "[P2] Cap SIZ-derived JPX component buffers during tile updates",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 569,
+      "title": "[P2] Check OpenJPEG input allocation before copying into Wasm",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 570,
+      "title": "[P2] Upsample subsampled JPX component planes before copying",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 571,
+      "title": "[P3] Avoid using the old MCT base pointer after realloc in bundled OpenJPEG",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 572,
+      "title": "[P2] Bound memory growth from oversized JP2 FTYP compatibility lists",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 573,
+      "title": "[P2] Cap per-tile JPX metadata allocation from SIZ tile counts",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 574,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPM headers",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 576,
+      "title": "[P2] Bound Tier-2 segment growth from attacker-declared coding passes",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan1999",
+      "number": 577,
+      "title": "[CI] Parser/layout quick regression depends on unavailable Git history in shallow checkout",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-096.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 578,
+      "title": "[P3] Check signed arithmetic in reversible MCT decoding",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 579,
+      "title": "[P2] Bound ICC profile copies during JP2 header parsing",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan1999",
+      "number": 581,
+      "title": "test: Go CI SSH protocol fixtures and project briefing references are stale",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "cycle-099.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 582,
+      "title": "[P2] Sign-extend signed int16 MCT offsets before conversion",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan1999",
+      "number": 583,
+      "title": "[P2] sqlite_execute misses unscoped writes after whitespace or earlier statements",
+      "status": "retain-independent-plugin-branch-not-integrated",
+      "sourceEvidence": [
+        "cycle-104.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 584,
+      "title": "[P2] sqlite_export CSV follows symlinks outside the allowed roots",
+      "status": "retain-independent-plugin-branch-not-integrated",
+      "sourceEvidence": [
+        "cycle-104.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 585,
+      "title": "[P2] STEP Viewer file-size limit rejects models below its 3M-triangle cap",
+      "status": "retain-independent-plugin-branch-not-integrated",
+      "sourceEvidence": [
+        "cycle-105.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 586,
+      "title": "[P2] sqlite_execute lets any safe string satisfy the ATTACH path check",
+      "status": "retain-independent-plugin-branch-not-integrated",
+      "sourceEvidence": [
+        "cycle-104.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 587,
+      "title": "[P2] Video Preview media de-duplication is quadratic on untrusted project paths",
+      "status": "retain-independent-plugin-branch-not-integrated",
+      "sourceEvidence": [
+        "cycle-103.json"
+      ]
+    },
+    {
+      "author": "skyelan1999",
+      "number": 588,
+      "title": "[P2] TCP proxy ignores socket backpressure and can buffer unbounded traffic",
+      "status": "retain-independent-plugin-branch-not-integrated",
+      "sourceEvidence": [
+        "cycle-102.json"
+      ]
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 590,
+      "title": "[P2] Check Wasm32 calloc byte-size overflow in JPEG 2000 packet iterator",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 591,
+      "title": "[P3] Reject unsupported progression-order values in POC markers",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 592,
+      "title": "[P3] Reject reserved ROI styles in RGN markers",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 593,
+      "title": "[P2] Cap main-header marker-index growth from repeated COM markers",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "author": "skyelan99-png",
+      "number": 594,
+      "title": "[P3] Free nested decoder allocations when precinct code-block growth fails",
+      "status": "retain-unfixed-or-native-pending",
+      "sourceEvidence": []
+    },
+    {
+      "number": 596,
+      "title": "Browser regression fixtures have stale preview dependencies and ChatWindow cleanup",
+      "author": "skyelan1999",
+      "status": "candidate-awaiting-final-regression-and-main-integration",
+      "sourceEvidence": [
+        "Current integration: owned Chromium preview and combined ChatWindow/template regression"
+      ]
+    }
+  ],
+  "localVerification": {
+    "quick": {
+      "status": "pass",
+      "fingerprint": "a84e2f451d6f6a44ef7cc9533d7ac295754a3c66c47c060e2cbd2c08f981ae88",
+      "log": ".agent-state/verify-20261029T002713759708Z.log",
+      "checks": 263
+    },
+    "contextRecoveryRace": {
+      "status": "PASS",
+      "command": "go test -mod=vendor -race ./internal/server -run ^TestContextRecovery -count=1 -timeout=5m",
+      "durationSeconds": 25.31,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-context-final.log"
+    },
+    "browsers": {
+      "status": "PASS",
+      "suites": 37,
+      "record": "integration-2026-10-29-browsers.json"
+    },
+    "ciContracts": {
+      "status": "PASS",
+      "tests": 20
+    },
+    "runtimeImageChecks": {
+      "status": "BLOCKED",
+      "reason": "aide:local runtime image is absent; both runtime asset and optional STEP image probes exit125. No runtime image acceptance or full release gate claimed."
+    },
+    "screenshotsVisuallyInspected": [
+      "/workspace/scratch/issue-review-20261026/merge-preview-harness-final/dark-docx.png"
+    ],
+    "vet": {
+      "status": "PASS",
+      "command": "go vet -mod=vendor ./...",
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-vet.log"
+    },
+    "wholeBranchDiffCheck": "PASS against origin/main, after trimming one whitespace-only line in a browser test"
+  },
+  "integrationConflicts": {
+    "count": 6,
+    "paths": [
+      "docs/agent/router.json",
+      "internal/server/context.go",
+      "internal/server/provider.go",
+      "internal/server/context_recovery_test.go",
+      "internal/server/workflow.go",
+      "internal/server/web/index.html"
+    ],
+    "resolution": "Union of regression commands and asset imports; preserve main active compaction and resumable partial-response handling together with branch summary fingerprints, EOF detection, byte limits and safety tests."
+  },
+  "candidateCount": 426,
+  "retainedCount": 83,
+  "hostedCI": "Pending final pushed head",
+  "protectionObserved": {
+    "mainProtected": true,
+    "pullRequestReviewDecision": "REVIEW_REQUIRED",
+    "author": "skyelan1999",
+    "codeOwner": "skyelan1999",
+    "protectionRulesRead": "HTTP403 for integration token; PR API confirms review requirement"
+  },
+  "regressionReport": "integration-2026-10-29.md",
+  "latestReplyCheck": {
+    "since": "2026-10-28T23:36:39Z",
+    "recentOpenMetadata": 3,
+    "onlyPreviouslyCoveredUpdatedReport": 425,
+    "note": "425 update corresponds to existing review comment; #596 contains this integration fixture repair. Never dump credential-bearing issue464 body."
+  }
+}

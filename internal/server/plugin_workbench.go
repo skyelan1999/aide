@@ -180,7 +180,7 @@ func (a *App) openPluginWorkbench(w http.ResponseWriter, r *http.Request) {
 	a.pluginWorkbenchTickets[ticket] = pluginWorkbenchTicket{ID: id, Base: a.managementBaseLocked("plugins", id), Digest: sha256.Sum256(page), Gen: lock.Gen, Expires: now.Add(time.Minute)}
 	response := map[string]any{"url": "/plugin-workbench/" + ticket, "protocol": 1}
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.ID == id && p.Workbench != nil && ((p.ID == "codex-bridge" && p.Workbench.HostComponent == "codex-bridge") || len(p.Workbench.Tools) > 0 || document != nil || (p.ID == "professional-workflow" && p.Workbench.ProfessionalWorkflow)) {
+		if p.ID == id && p.Workbench != nil && ((p.ID == "codex-bridge" && p.Workbench.HostComponent == "codex-bridge") || len(p.Workbench.Tools) > 0 || document != nil || p.Workbench.ProjectMessages || p.Workbench.MobileCapture || (p.ID == "professional-workflow" && p.Workbench.ProfessionalWorkflow)) {
 			if a.pluginWorkbenchBridges == nil {
 				a.pluginWorkbenchBridges = map[string]*pluginWorkbenchBridge{}
 			}

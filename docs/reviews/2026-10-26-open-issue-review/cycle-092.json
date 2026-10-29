@@ -1,0 +1,125 @@
+{
+  "cycle": 92,
+  "baseline": "14a4d8bdda544dc434e21c15bbc977071d76db04",
+  "issues": [
+    292,
+    293,
+    294,
+    295,
+    296,
+    297,
+    298,
+    299,
+    300,
+    301,
+    302,
+    303,
+    304,
+    305
+  ],
+  "fixes": {
+    "292": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：LRCPC 不再隐含设置独立的 SM3 能力。",
+    "293": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：缺少 CPU sysctl 子节点及空查询返回 ENOENT，保留最小特性回退。",
+    "294": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：拒绝超过 uint16 的去重目标数，在分配和 ioctl 前返回 EINVAL。",
+    "295": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：读取 Ucred/IPv4/IPv6 固定结构前检查 payload 长度。",
+    "296": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：Tee 的内部 syscall 使用 ABI 的单个 ssize_t/int 返回值，再保持公开 int64 接口；生成声明及各 Linux 架构包装同步。",
+    "297": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：FreeBSD capability 映射拒绝保留的 -1 索引，Set/Clear/IsSet 不再负索引。",
+    "298": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：引用完整 Docker --volume 参数，含空格的源码路径保持一个参数。",
+    "299": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：单条控制消息解析在读 header 前拒绝空/短输入。",
+    "300": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：NetBSD 空 sysctl 查询在 nodes[0] 前返回 ENOENT。",
+    "301": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：BSD 三个 *listxattrNS 包装返回实际 syscall 错误，而非尚为 nil 的命名返回值。",
+    "302": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：仅成功读取且 ACL 不存在时返回 OBJECT_NOT_FOUND，保留底层失败。",
+    "303": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：四个 working-set 位 accessor 使用非零判断。",
+    "304": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：ConnectEx/WSASendRecvMsg 扩展查询临时 socket 使用 Closesocket，包括 ioctl 失败路径。",
+    "305": "已在修复分支提交 [72b0b891](https://github.com/skyelan1999/aide/commit/72b0b891)：BOOL 成功但 ERROR_NOT_ALL_ASSIGNED 时返回该错误，生成声明与包装同步。"
+  },
+  "red": {
+    "status": "EXPECTED_FAIL",
+    "platformContracts": "11methods/12cases fail behaviorally on original source; final baseline has no setup/build failures",
+    "linux": "Actual public APIs reproduce count truncation and empty payload/header panic",
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle92-contract-baseline-final.log",
+      "/workspace/scratch/issue-review-20261026/cycle92-linux-red.log",
+      "/workspace/scratch/issue-review-20261026/cycle92-header-red.log"
+    ]
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 11,
+      "cases": 12,
+      "scope": "Actual vendor function bodies with deterministic OS/API fixtures",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle92-contract-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 4,
+      "scope": "LinuxAMD64 public API race incl real pipe Tee",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle92-linux-green.log"
+    },
+    {
+      "result": "PASS",
+      "scope": "Linux386,NetBSDARM64,FreeBSDAMD64,WindowsARM64/AMD64 packages; WindowsAMD64 test cross-build",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle92-cross-build.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 20,
+      "scope": "CI contracts",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle92-ci-contracts.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 247,
+      "fingerprint": "38a9b77aaac83ef6d77a8d2f1e4bb196b494790e99bdea114cd188865355905e",
+      "receipt": ".agent-state/verify-20261028T164109669237Z.log"
+    }
+  ],
+  "notRun": [
+    "Linux386 ELF execution rejected by current kernel; fixture/cross-build are not native386 execution.",
+    "Windows/BSD native execution pending; Windows real API tests wired into CI.",
+    "Full current-branch suite, full Aide UI,main merge/release/deploy."
+  ],
+  "existingResolved": [
+    {
+      "issue": 28,
+      "status": "RESOLVED_EXISTING_MAIN_FIX_HOSTED_VERIFIED",
+      "mainCommit": "a26214e596d4cbe147bb0e224dfa305cf04fc6cb",
+      "runURL": "https://github.com/skyelan1999/aide/actions/runs/40663202500",
+      "runConclusion": "success",
+      "goJob": {
+        "id": 122731083193,
+        "conclusion": "success",
+        "startedAt": "2026-10-28T09:18:26Z",
+        "completedAt": "2026-10-28T09:42:39Z"
+      },
+      "snapshotBudgetSeconds": 4500,
+      "jobBudgetMinutes": 90,
+      "scope": "Full Go race suite and vet succeeded on GitHub-hosted runner after existing budget fix; not a claim current repair branch entire suite passed."
+    }
+  ],
+  "delivery": {
+    "pushed": true,
+    "commit": "72b0b891e9311abfeb4c04d014b1a416e1154d66",
+    "mergedToMain": false,
+    "released": false,
+    "comments": {
+      "292": "https://github.com/skyelan1999/aide/issues/292#issuecomment-6474983296",
+      "293": "https://github.com/skyelan1999/aide/issues/293#issuecomment-6474984022",
+      "294": "https://github.com/skyelan1999/aide/issues/294#issuecomment-6474984697",
+      "295": "https://github.com/skyelan1999/aide/issues/295#issuecomment-6474985216",
+      "296": "https://github.com/skyelan1999/aide/issues/296#issuecomment-6474985656",
+      "297": "https://github.com/skyelan1999/aide/issues/297#issuecomment-6474986132",
+      "298": "https://github.com/skyelan1999/aide/issues/298#issuecomment-6474986593",
+      "299": "https://github.com/skyelan1999/aide/issues/299#issuecomment-6474987008",
+      "300": "https://github.com/skyelan1999/aide/issues/300#issuecomment-6474987717",
+      "301": "https://github.com/skyelan1999/aide/issues/301#issuecomment-6474988220",
+      "302": "https://github.com/skyelan1999/aide/issues/302#issuecomment-6474988649",
+      "303": "https://github.com/skyelan1999/aide/issues/303#issuecomment-6474989139",
+      "304": "https://github.com/skyelan1999/aide/issues/304#issuecomment-6474989631",
+      "305": "https://github.com/skyelan1999/aide/issues/305#issuecomment-6474990086"
+    }
+  },
+  "cumulativeFixedOnBranch": 405,
+  "original272RemainingFollowup": 3
+}

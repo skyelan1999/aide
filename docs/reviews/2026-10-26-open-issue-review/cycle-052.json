@@ -1,0 +1,77 @@
+{
+  "cycle": 52,
+  "baseline": "50ac91f416e53e5b993ceccc51432b0c55bea522",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    467
+  ],
+  "commits": {
+    "467": "a8bc5a9f5a7b6f60166e367f0b63f236b3d1d92e"
+  },
+  "cumulativeProductFixes": 113,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 114,
+  "original272RemainingFollowup": 172,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "python3 scripts/test_windows_launcher_acl.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh (before fix)",
+      "observed": "An existing .aide-data is allowed to restore launcher.env without invoking any protection. This reproduces retry bypass after a previous failed Set-Acl; it is not native reproduction of the domain-trust error.",
+      "evidence": "/workspace/scratch/issue-review-20261026/issue467-acl-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_launcher_acl.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh",
+      "scope": "Real PS7 restore function with only the Windows permission adapter mocked: existing/new directory gated before config restore, permission error blocks restore, POSIX behavior unchanged. AST parses shipped implementation and excludes Set-Acl invocation. Four gate cases and static AST; not actual Windows DACL execution.",
+      "evidence": "/workspace/scratch/issue-review-20261026/issue467-acl-green.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 181,
+      "receipt": ".agent-state/verify-20261027T063839329201Z.log",
+      "fingerprint": "f3316f910bdc3ba5afd3da3fd70ff6c784eb199cf01058c20b2123ab360de5b1"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 -m py_compile scripts/test_windows_launcher_acl.py; python3 scripts/check_docs.py; git diff --check",
+      "observed": "UTF8 BOM preserved; 429 Markdown / 1469 local links pass."
+    }
+  ],
+  "securityReview": [
+    "Set private DACL through .NET using WindowsIdentity.User SID; fresh DirectorySecurity modifies only Access, without setting/translating owner/group. PS Core uses FileSystemAclExtensions; Desktop uses DirectoryInfo.SetAccessControl. Native Windows behavior remains pending.",
+    "Reapply the original current-user-only inheritable FullControl policy to existing .aide-data too, before reading persistent settings. Do not assume AreAccessRulesProtected alone establishes a private ACL: a protected DACL can contain Everyone ACEs. Do not swallow permission errors or weaken to a warning.",
+    "No ownership changes, elevated account requests, domain trust repairs, actual user ACL writes or real credentials in tests. Root sequential review; no subagents. Public owner comments contain access tokens; only redacted issue data inspected, none copied into tracked evidence."
+  ],
+  "notRun": [
+    "Actual Windows PowerShell5.1 / PowerShell7 NTFS DACL calls, owner/group persistence and disconnected-domain environment. Linux permission adapter is mocked; AST is static only.",
+    "Native Windows test branch is provided: python scripts/test_windows_launcher_acl.py --pwsh powershell.exe --require-native. It checks initial private SID rule, repair of an existing protected fixture ACL containing Everyone, restore after protection and repeated startup. It must be executed on Windows; it does not deliberately break domain trust.",
+    "No Go rerun (PowerShell/docs only), Docker Desktop, Release repackaging or deployment. #467 browser exception is already covered by #464 and is not a second new defect count."
+  ],
+  "notes": [
+    "New owner report467 was selected before older441/369/original queue, following new persisted priority policy. Reasonable report remains open awaiting native acceptance and main.",
+    "Current branch repair does not retroactively modify previously published RC12 ZIP. No merge, tag, release or deployment authorized.",
+    "182 remains paused in exact local stash 1ae8bb0bb926630140df3c7483831b63b7e0e85c, not counted or published; original user untracked files unchanged."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "467": "https://github.com/skyelan1999/aide/issues/467#issuecomment-6435557952"
+    },
+    "remoteCommit": "96a7c96fc5b99443c3b9d31ab161981664122b86"
+  },
+  "sourceSHA256": {
+    "scripts/launcher-data.ps1": "dac05b1faf81f04421b138dd976c263b9976845e464b3b42c6819f0b5819a595",
+    "scripts/test_windows_launcher_acl.py": "dfa12fac24b2274f00c6d35e6acebb9f2e257d4cce6b7835201ea96b60fc93eb",
+    "docs/installation.md": "4b2adbca75e1d18f9082b1a15ff871387ed7e0421df4b621a92df85c7a92def1"
+  }
+}

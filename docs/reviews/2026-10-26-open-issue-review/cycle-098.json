@@ -1,0 +1,64 @@
+{
+  "cycle": 98,
+  "issues": [
+    412,
+    431
+  ],
+  "baseline": "8dd7440c",
+  "fix": "Replace repeated emphasis masks and remove overlapping HTML/paragraph block scans; preserve v12 phase order and golden semantics.",
+  "red": {
+    "mask": "8s timeout",
+    "html": "8s timeout",
+    "fence": "7097ms (completed)",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle98-red-final.log"
+  },
+  "green": [
+    {
+      "scope": "Node original HTML/token goldens and actual isolated workers",
+      "controls": 68,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle98-green.log"
+    },
+    {
+      "scope": "Actual Chromium strict CSP: original goldens, workers and links",
+      "controls": 131,
+      "probes": 3,
+      "visibleLinks": 2,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle98-browser-green.log"
+    },
+    {
+      "scope": "Prior node/browser regressions",
+      "checks": [
+        65,
+        63
+      ],
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle98-prior-node.log",
+        "/workspace/scratch/issue-review-20261026/cycle98-prior-browser.log"
+      ]
+    },
+    {
+      "status": "pass",
+      "checks": 256,
+      "fingerprint": "bd2d3aa75889e46c52ac8c71aae8a38aec5a33d309f5005b1caba3650f07debb",
+      "receipt": ".agent-state/verify-20261028T182201715464Z.log"
+    }
+  ],
+  "assetSHA256": {
+    "baseline": "60c258cae70944213baab7d3dc0dcbfba94ddb93074568a4aa64f96642a9ee62",
+    "patched": "a225338c10c2307a8085a610673b9da2eb7c91cc9674d4ec586c45c9feb04c56"
+  },
+  "notRun": [
+    "Universal resource guarantee or all browsers",
+    "Full workbench/native devices",
+    "Main merge/release/deployment"
+  ],
+  "delivery": {
+    "commit": "f83ca368",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnBranch": 423,
+  "productFixed": 421,
+  "toolingFixes": 2,
+  "remainingOriginal104": 71
+}

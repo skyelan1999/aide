@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -52,8 +53,9 @@ func TestVoiceEncryptLifecycle(t *testing.T) {
 	}
 	b, _ := os.ReadFile(VoiceHistoryPath(dir))
 	bs := string(b)
-	if !strings.Contains(bs, `"encrypted":true`) {
-		t.Fatalf("file not marked encrypted: %s", bs)
+	var envelope voiceHistoryFile
+	if err := json.Unmarshal(b, &envelope); err != nil || !envelope.Encrypted {
+		t.Fatalf("file not marked encrypted: %v", err)
 	}
 	if strings.Contains(bs, "解锁态又听到一句") || strings.Contains(bs, "启用加密前的一条记录") {
 		t.Fatalf("cipher file must not contain plaintext heard: %s", bs)

@@ -39,14 +39,24 @@
   zip.file(nameOf(o.title),source);zip.file('export-manifest.json',JSON.stringify({format:1,resources:[...paths.values()],externalResources:[...external],note:'当前 Markdown 草稿与直接引用资源；外部链接保留，未下载；不递归打包链接文档内的资源。'},null,2));
   return job.wait(zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:3}}));
  }
+ // Preflight before recursive cloning, page slicing or html2canvas traversal.
+ function validateDOM(root){
+  const pending=[{node:root,depth:0}];let count=0;
+  while(pending.length){
+   const {node,depth}=pending.pop();
+   if(depth>128)throw Error(uiTextMarkdownExport('文档结构过深，请简化后导出'));
+   if(++count>50000||pending.length+node.childNodes.length>50000)throw Error(uiTextMarkdownExport('文档节点过多，请拆分后导出'));
+   for(let i=0;i<node.childNodes.length;i++)pending.push({node:node.childNodes[i],depth:depth+1});
+  }
+ }
  async function snapshot(o,job){
   if(job.controller.signal.aborted)throw new DOMException('Cancelled','AbortError');
   const frame=document.createElement('iframe');frame.className='markdown-print-frame';frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;document.body.append(frame);job.frame=frame;
   const doc=frame.contentDocument;doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>');doc.close();
-  const style=doc.createElement('style');style.textContent=css;doc.head.append(style);const body=doc.createElement('main');body.innerHTML=o.html;
+  const style=doc.createElement('style');style.textContent=css;doc.head.append(style);const body=doc.createElement('main');body.innerHTML=o.html;validateDOM(body);
   body.querySelectorAll('script,iframe,object,embed,form,input,button,textarea,select').forEach(e=>e.remove());
   for(const e of body.querySelectorAll('*'))for(const a of [...e.attributes])if(/^on/i.test(a.name)||['srcdoc','style','srcset'].includes(a.name))e.removeAttribute(a.name);
-  doc.body.append(body);if(o.renderDiagrams)await job.wait(o.renderDiagrams(body));
+  doc.body.append(body);if(o.renderDiagrams)await job.wait(o.renderDiagrams(body));validateDOM(body);
   let total=0;
   for(const img of body.querySelectorAll('img')){
    const url=img.getAttribute('src');if(!url)throw Error(uiTextMarkdownExport('图片地址为空'));

@@ -1,7 +1,7 @@
 /* Offline URDF preview. Resource paths stay in the current file API scope. */
 (() => {
   'use strict';
-  const LIMITS=Object.freeze({xml:4*1024*1024,asset:32*1024*1024,texture:8*1024*1024,total:128*1024*1024,links:2048,geometries:4096,assets:512,triangles:3000000});
+  const LIMITS=Object.freeze({xml:4*1024*1024,asset:32*1024*1024,texture:8*1024*1024,total:128*1024*1024,links:2048,geometries:4096,assets:512,triangles:3000000,colladaFloats:3000000,colladaNodes:10000,colladaDepth:128,colladaLights:16});
   function normalizePath(value) {
     const path=String(value||'').replace(/\\/g,'/');
     if(path.startsWith('/')||/^[a-z][a-z0-9+.-]*:/i.test(path)||/[\x00-\x1f?#]/.test(path))throw Error(uiTextUrdfPreview('资源路径必须位于当前工作区内'));
@@ -81,6 +81,61 @@
     if(!faces||vertices!==faces*3)throw Error(uiTextUrdfPreview('STL 三角面数据不完整'));return data;
   }
   function validateCollada(doc) {
+    // Account for all sources, including unused geometries, before ColladaLoader splits tokens.
+    let floatTotal=0;
+    for(const array of doc.getElementsByTagName('float_array')) {
+      const count=Number(array.getAttribute('count'));
+      if(!Number.isSafeInteger(count)||count<0||count>LIMITS.colladaFloats-floatTotal)throw Error(uiTextUrdfPreview('DAE 浮点数值超出预览预算'));
+      let actual=0;
+      for(const token of array.textContent.matchAll(/\S+/g)) {
+        if(++actual>count||!Number.isFinite(Number(token[0])))throw Error(uiTextUrdfPreview('DAE 浮点数值数量或内容无效'));
+      }
+      if(actual!==count)throw Error(uiTextUrdfPreview('DAE 浮点数值数量不一致'));
+      floatTotal+=actual;
+    }
+    if(doc.getElementsByTagName('instance_light').length>LIMITS.colladaLights)throw Error(uiTextUrdfPreview('DAE 灯光数量超出预览预算'));
+    const nodes=[...doc.getElementsByTagName('node')],byId=new Map(),edges=new Map(),colors=new Map(),costs=new Map();
+    if(nodes.length>LIMITS.colladaNodes)throw Error(uiTextUrdfPreview('DAE 节点数量超出预览预算'));
+    for(const node of nodes) {
+      const id=node.getAttribute('id');
+      if(id){if(byId.has(id))throw Error(uiTextUrdfPreview('DAE 节点 ID 重复'));byId.set(id,node);}
+    }
+    for(const node of nodes) {
+      const children=direct(node,'node');
+      for(const ref of direct(node,'instance_node')) {
+        const url=ref.getAttribute('url')||'',target=url[0]==='#'?byId.get(url.slice(1)):null;
+        if(!target)throw Error(uiTextUrdfPreview('DAE 节点引用无效'));
+        children.push(target);
+      }
+      edges.set(node,children);
+    }
+    // Iterative DFS detects reference/containment cycles and budgets expanded DAG instances.
+    for(const node of nodes)if(!colors.has(node)) {
+      const stack=[{node,index:0}];colors.set(node,1);
+      while(stack.length) {
+        const frame=stack[stack.length-1],children=edges.get(frame.node);
+        if(frame.index<children.length) {
+          const child=children[frame.index++];
+          if(colors.get(child)===1)throw Error(uiTextUrdfPreview('DAE 节点引用存在循环'));
+          if(colors.get(child)===2)continue;
+          if(stack.length>=LIMITS.colladaDepth)throw Error(uiTextUrdfPreview('DAE 节点深度超出预览预算'));
+          colors.set(child,1);stack.push({node:child,index:0});
+        } else {
+          let expanded=1,depth=1,lights=direct(frame.node,'instance_light').length;
+          for(const child of children){const cost=costs.get(child);expanded+=cost.nodes;depth=Math.max(depth,1+cost.depth);lights+=cost.lights;}
+          if(depth>LIMITS.colladaDepth)throw Error(uiTextUrdfPreview('DAE 节点深度超出预览预算'));
+          if(expanded>LIMITS.colladaNodes)throw Error(uiTextUrdfPreview('DAE 展开节点数量超出预览预算'));
+          if(lights>LIMITS.colladaLights)throw Error(uiTextUrdfPreview('DAE 灯光数量超出预览预算'));
+          costs.set(frame.node,{nodes:expanded,depth,lights});colors.set(frame.node,2);stack.pop();
+        }
+      }
+    }
+    let sceneNodes=0,sceneLights=0;
+    for(const node of nodes)if(node.parentElement?.localName==='visual_scene') {
+      const cost=costs.get(node);sceneNodes+=cost.nodes;sceneLights+=cost.lights;
+      if(sceneNodes>LIMITS.colladaNodes)throw Error(uiTextUrdfPreview('DAE 场景节点数量超出预览预算'));
+      if(sceneLights>LIMITS.colladaLights)throw Error(uiTextUrdfPreview('DAE 场景灯光数量超出预览预算'));
+    }
     let total=0;
     const numbers=text=>{const result=[];for(const match of String(text||'').matchAll(/\S+/g)){const n=Number(match[0]);if(!Number.isSafeInteger(n)||n<0)throw Error(uiTextUrdfPreview('DAE 索引无效'));result.push(n);if(result.length>LIMITS.triangles*3)throw Error(uiTextUrdfPreview('DAE 索引超出预览预算'));}return result;};
     for(const tag of ['triangles','polylist'])for(const primitive of doc.getElementsByTagName(tag)){
@@ -121,7 +176,7 @@
     teardownViewer(container);container.replaceChildren();
     let disposed=false,renderer=null,controls=null,observer=null,lockObserver=null,contextLost=null,frame=0,robot=null,scene=null,camera=null,triangles=0,bytesUsed=0,finished=0,expected=0;
     const current=()=>!disposed&&options.isCurrent?.()!==false;
-    const abort=new AbortController(),blobURLs=new Set(),objects=new Set(),geometries=new Set(),materials=new Set(),textures=new Set(),cache=new Map(),textureCache=new Map(),packageRoots=Object.create(null),pending=[],jobs=[];let active=0;
+    const abort=new AbortController(),blobURLs=new Set(),objects=new Set(),importedLights=new Set(),geometries=new Set(),materials=new Set(),textures=new Set(),cache=new Map(),textureCache=new Map(),packageRoots=Object.create(null),pending=[],jobs=[];let active=0;
     const viewer=el('section','urdf-viewer'),toolbar=el('div','urdf-toolbar'),meta=el('span','urdf-meta',t('正在读取 URDF…')),body=el('div','urdf-body'),canvas=el('div','urdf-canvas'),side=el('aside','urdf-side'),jointHost=el('div','urdf-joints'),linkHost=el('details','urdf-links'),warnings=el('details','urdf-warnings'),warningTitle=el('summary','',t('资源问题')),warningList=el('ul'),packageBox=el('details','urdf-packages'),packageFields=el('div');
     meta.setAttribute('role','status');meta.setAttribute('aria-live','polite');canvas.setAttribute('aria-label',t('机器人三维预览'));
     const button=(text,fn)=>{const b=el('button','stl-ctrl',t(text));b.type='button';b.onclick=fn;return b;};
@@ -151,8 +206,9 @@
     const draw=()=>{if(!frame&&current()&&renderer&&!document.hidden)frame=requestAnimationFrame(()=>{frame=0;if(current()&&!document.hidden&&container.isConnected){updateNameLabels();renderer.render(scene,camera);}});};
     const resume=()=>{if(document.hidden&&frame){cancelAnimationFrame(frame);frame=0;}else draw();};
     const track=object=>{
-      const nextGeometries=new Set(),nextMaterials=new Set(),nextTextures=new Set();let count=0;
+      const nextGeometries=new Set(),nextMaterials=new Set(),nextTextures=new Set(),nextLights=new Set();let count=0;
       object.traverse(node=>{
+        if(node.isLight&&!importedLights.has(node))nextLights.add(node);
         if(node.geometry&&!geometries.has(node.geometry)&&!nextGeometries.has(node.geometry)){
           nextGeometries.add(node.geometry);const position=node.geometry.attributes?.position;
           if(node.isMesh&&(!position||position.count<3||(node.geometry.index?.count||position.count)%3!==0))throw Error(uiTextUrdfPreview('网格中没有有效三角面'));
@@ -160,10 +216,11 @@
         }
         for(const material of [].concat(node.material||[])){nextMaterials.add(material);if('wireframe'in material)material.wireframe=wireframe;for(const value of Object.values(material))if(value?.isTexture)nextTextures.add(value);}
       });
+      if(importedLights.size+nextLights.size>LIMITS.colladaLights)throw Error(uiTextUrdfPreview('模型灯光总数超出预览预算'));
       if(triangles+count>LIMITS.triangles)throw Error(uiTextUrdfPreview('三角面数量超出预览预算'));
-      triangles+=count;objects.add(object);nextGeometries.forEach(g=>geometries.add(g));nextMaterials.forEach(m=>materials.add(m));nextTextures.forEach(x=>textures.add(x));return object;
+      triangles+=count;nextLights.forEach(light=>importedLights.add(light));objects.add(object);nextGeometries.forEach(g=>geometries.add(g));nextMaterials.forEach(m=>materials.add(m));nextTextures.forEach(x=>textures.add(x));return object;
     };
-    function teardown(){if(disposed)return;disposed=true;clearHighlight();abort.abort();for(const button of toolbar.querySelectorAll('button'))button.disabled=true;for(const input of side.querySelectorAll('input'))input.disabled=true;for(const item of pending.splice(0))item.reject(new DOMException('Aborted','AbortError'));if(frame)cancelAnimationFrame(frame);observer?.disconnect();lockObserver?.disconnect();document.removeEventListener('visibilitychange',resume);renderer?.domElement.removeEventListener('pointerdown',pickStart);renderer?.domElement.removeEventListener('pointerup',pickEnd);renderer?.domElement.removeEventListener('pointercancel',pickCancel);controls?.dispose();if(robot)try{robot.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[])){materials.add(material);for(const value of Object.values(material))if(value?.isTexture)textures.add(value);}});}catch{}geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(x=>x.dispose());blobURLs.forEach(url=>URL.revokeObjectURL(url));if(renderer){if(contextLost)renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.dispose();renderer.forceContextLoss();}canvas.replaceChildren();side.replaceChildren();cache.clear();textureCache.clear();objects.clear();geometries.clear();materials.clear();textures.clear();blobURLs.clear();jointInputs.length=0;poseNodes.length=0;selectedNode=null;calloutCards.length=0;poseSelect.replaceChildren();axes.length=0;jobs.length=0;robot=null;scene=null;camera=null;renderer=null;controls=null;}
+    function teardown(){if(disposed)return;disposed=true;clearHighlight();abort.abort();for(const button of toolbar.querySelectorAll('button'))button.disabled=true;for(const input of side.querySelectorAll('input'))input.disabled=true;for(const item of pending.splice(0))item.reject(new DOMException('Aborted','AbortError'));if(frame)cancelAnimationFrame(frame);observer?.disconnect();lockObserver?.disconnect();document.removeEventListener('visibilitychange',resume);renderer?.domElement.removeEventListener('pointerdown',pickStart);renderer?.domElement.removeEventListener('pointerup',pickEnd);renderer?.domElement.removeEventListener('pointercancel',pickCancel);controls?.dispose();if(robot)try{robot.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[])){materials.add(material);for(const value of Object.values(material))if(value?.isTexture)textures.add(value);}});}catch{}geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(x=>x.dispose());blobURLs.forEach(url=>URL.revokeObjectURL(url));if(renderer){if(contextLost)renderer.domElement.removeEventListener('webglcontextlost',contextLost);renderer.dispose();renderer.forceContextLoss();}canvas.replaceChildren();side.replaceChildren();cache.clear();textureCache.clear();objects.clear();importedLights.clear();geometries.clear();materials.clear();textures.clear();blobURLs.clear();jointInputs.length=0;poseNodes.length=0;selectedNode=null;calloutCards.length=0;poseSelect.replaceChildren();axes.length=0;jobs.length=0;robot=null;scene=null;camera=null;renderer=null;controls=null;}
     bindViewerTeardown(container,teardown);
     if(options.lockElement){lockObserver=new MutationObserver(()=>{if(!current()&&!disposed)fail(Error(t('工作区或锁屏状态已变化，请重新打开预览')));});lockObserver.observe(options.lockElement,{attributes:true,attributeFilter:['hidden','class']});}
     function fail(error){if(disposed)return;teardown();cancel.hidden=true;const notice=el('div','urdf-error');notice.append(el('strong','',t('URDF 预览不可用')),el('p','',String(error?.message||error)),button('重新加载',()=>setup(options)));canvas.replaceChildren(notice);meta.textContent=t('预览已结束');}

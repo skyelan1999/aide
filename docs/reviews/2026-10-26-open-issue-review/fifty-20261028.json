@@ -1,0 +1,473 @@
+{
+  "request": "继续修复50个",
+  "startedAt": "2026-10-28T01:55:17.431508+00:00",
+  "baselineCommit": "26554928a37bb2c699c9df1422cace9056b9e530",
+  "target": 50,
+  "fixedCount": 50,
+  "verifiedPendingPush": [],
+  "fixedIssues": [
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    256,
+    257,
+    258
+  ],
+  "blockedIssues": [],
+  "alreadyCovered": [
+    {
+      "number": 248,
+      "evidence": "39acde7f: setupDrawioFrame source+origin checks and explicit targetOrigin already implemented;not counted again."
+    }
+  ],
+  "candidatePlan": [
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    256,
+    257,
+    258
+  ],
+  "issues": {
+    "206": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/206#issuecomment-6458577709"
+    },
+    "207": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/207#issuecomment-6458578309"
+    },
+    "208": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/208#issuecomment-6458578885"
+    },
+    "209": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/209#issuecomment-6458579260"
+    },
+    "210": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/210#issuecomment-6458579680"
+    },
+    "211": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/211#issuecomment-6458580141"
+    },
+    "212": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/212#issuecomment-6458580530"
+    },
+    "213": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/213#issuecomment-6458580889"
+    },
+    "214": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/214#issuecomment-6458581238"
+    },
+    "215": {
+      "status": "fixed-verified-pushed",
+      "cycle": 67,
+      "commit": "3f92744df2e501d84a8d5b62bbb440cc4346eb81",
+      "comment": "https://github.com/skyelan1999/aide/issues/215#issuecomment-6458581613"
+    },
+    "216": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "FluidPower 搜索标识及拼写",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/216#issuecomment-6459279475"
+    },
+    "217": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "GCP 产品和图标搜索分类与名称",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/217#issuecomment-6459279859"
+    },
+    "218": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Note 字体颜色常量",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/218#issuecomment-6459280316"
+    },
+    "219": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "机器卡片第二变体使用 storageNum 实参",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/219#issuecomment-6459280910"
+    },
+    "220": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "禁用按钮标题",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/220#issuecomment-6459281327"
+    },
+    "221": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "IBM Rules 搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/221#issuecomment-6459281769"
+    },
+    "222": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "IBMCloud 三个负载均衡模板搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/222#issuecomment-6459282352"
+    },
+    "223": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Infographic 梯形和标注搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/223#issuecomment-6459283010"
+    },
+    "224": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "IOS 六个缺失搜索项",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/224#issuecomment-6459283407"
+    },
+    "225": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "IOS7 iPad 与数字键盘搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/225#issuecomment-6459283842"
+    },
+    "226": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Kubernetes 资源搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/226#issuecomment-6459284212"
+    },
+    "227": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "MSCAE 名称搜索词及六组完全相同重复注册",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/227#issuecomment-6459284624"
+    },
+    "228": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Mockup W 字符、垂直标尺和段落搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/228#issuecomment-6459285302"
+    },
+    "229": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Network 完全相同 PC 重复注册",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/229#issuecomment-6459285728"
+    },
+    "230": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Office 标题与数据库、Subsites 搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/230#issuecomment-6459286138"
+    },
+    "231": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "PID 分离器反向索引、阀和测量器搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/231#issuecomment-6459286503"
+    },
+    "232": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Rack 正反面标题、型号和 Aruba 库标识",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/232#issuecomment-6459286879"
+    },
+    "233": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "SAP API 标题与四个 Description 默认文字",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/233#issuecomment-6459287322"
+    },
+    "235": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Salesforce Philanthropy 标题和搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/235#issuecomment-6459287728"
+    },
+    "236": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "SysML distribution 默认文字和压缩模板",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/236#issuecomment-6459288082"
+    },
+    "237": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "UML 2.5 默认文字及搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/237#issuecomment-6459288584"
+    },
+    "238": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "Veeam 加密/备份及 UsersStatus 分类",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/238#issuecomment-6459289038"
+    },
+    "239": {
+      "status": "fixed-verified-pushed",
+      "cycle": 68,
+      "summary": "WebIcons Diigo 与 Friendfeed 搜索词",
+      "commit": "163e9d30f6a5863eb6e27ec721be8f0c1a1d3466",
+      "comment": "https://github.com/skyelan1999/aide/issues/239#issuecomment-6459289620"
+    },
+    "234": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "DOCX 超链接仅允许 HTTP/HTTPS/mailto 和相对/片段地址；不宣称默认CSP下已复现脚本执行",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/234#issuecomment-6459871470"
+    },
+    "240": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "异步库闭包捕获 entry/k，预载回调也设置并重置索引归属",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/240#issuecomment-6459871955"
+    },
+    "241": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "Canvas miterLimit 正确写入 miterLimit 而不改 lineJoin",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/241#issuecomment-6459872372"
+    },
+    "242": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "Canvas 渐变按东南西北方向生成实际坐标",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/242#issuecomment-6459872855"
+    },
+    "243": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "DOCX 符号仅解析合法 Unicode 十六进制码点并写 textContent",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/243#issuecomment-6459873319"
+    },
+    "244": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "DOCX 生成样式在隔离作用域的 CSSOM stylesheet 中应用，保持默认CSP；支持编号伪元素和释放",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/244#issuecomment-6459873720"
+    },
+    "245": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "三份 DOMPurify 升至官方3.4.16，保留 Graph 的 SVG 安全hook",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/245#issuecomment-6459874150"
+    },
+    "246": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "RoughJS 零/非有限周期停止生成填充虚线，超额次数在循环前拒绝",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/246#issuecomment-6459874592"
+    },
+    "250": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "Goldmark 强调快速路径有界，长行/不匹配候选回到标准解析器",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/250#issuecomment-6459874977"
+    },
+    "251": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "Goldmark 引用定义移除改成一次线性压紧段落行",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/251#issuecomment-6459875409"
+    },
+    "252": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "TTS 四模型及 espeak 固定 SHA256，离线验证支持可信摘要，缺失/不匹配即失败；临时目录验证完整再安装",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/252#issuecomment-6459875867"
+    },
+    "253": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "PNG 图纸元数据流式有界解压，zlib/raw 兼容；解码前限制输入且超限不退到第二次解压",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/253#issuecomment-6459876232"
+    },
+    "254": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "超大 XML/SVG 导出 fallback 使用传入 data",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/254#issuecomment-6459876722"
+    },
+    "255": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "Rect2 双线/框架右上内轮廓保留选定角样式",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/255#issuecomment-6459877144"
+    },
+    "256": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "零长度段采用有限方向，空/单点安全退出；真实link/pipe/flexArrow句柄无NaN",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/256#issuecomment-6459877681"
+    },
+    "257": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "层次布局边标签几何临时变量本地声明",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/257#issuecomment-6459878098"
+    },
+    "258": {
+      "status": "fixed-verified-pushed",
+      "cycle": 69,
+      "summary": "view XML 注册函数样式按名称序列化，未知函数省略",
+      "commit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+      "comment": "https://github.com/skyelan1999/aide/issues/258#issuecomment-6459878494"
+    }
+  },
+  "status": "completed",
+  "policy": "Only new, verified and pushed fixes count toward50;blocked/already-fixed are excluded;retain current branch only,no main/release/deploy.",
+  "completedAt": "2026-10-28T03:28:49.257007+00:00",
+  "latestSourceCommit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+  "finalVerification": {
+    "browserChecks": 34,
+    "browserErrors": [],
+    "quickChecks": 188,
+    "commonMarkExamplesUnchanged": 652,
+    "sourceFingerprint": "4213c535e609aee793cfafa8c765d884f525481ab82b54098642dc711708eda0",
+    "record": "docs/reviews/2026-10-26-open-issue-review/cycle-069.json"
+  }
+}

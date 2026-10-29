@@ -377,6 +377,22 @@ func (c *Client) ReadDir(p string) ([]os.FileInfo, error) {
 // The passed context can be used to cancel the operation
 // returning all entries listed up to the cancellation.
 func (c *Client) ReadDirContext(ctx context.Context, p string) ([]os.FileInfo, error) {
+	return c.readDirContext(ctx, p, nil)
+}
+
+// ReadDirEachContext is an AIDE extension for bounded directory enumeration.
+// It visits entries as packets arrive without retaining the entire listing.
+// Returning an error stops enumeration and closes the directory handle.
+// Keep this extension when refreshing the vendored module (AIDE issue #71).
+func (c *Client) ReadDirEachContext(ctx context.Context, p string, visit func(os.FileInfo) error) error {
+	if visit == nil {
+		return fmt.Errorf("nil directory visitor")
+	}
+	_, err := c.readDirContext(ctx, p, visit)
+	return err
+}
+
+func (c *Client) readDirContext(ctx context.Context, p string, visit func(os.FileInfo) error) ([]os.FileInfo, error) {
 	handle, err := c.opendir(ctx, p)
 	if err != nil {
 		return nil, err
@@ -397,24 +413,30 @@ func (c *Client) ReadDirContext(ctx context.Context, p string) ([]os.FileInfo, e
 		}
 		switch typ {
 		case sshFxpName:
-			sid, data := unmarshalUint32(data)
-			if sid != id {
-				return nil, &unexpectedIDErr{id, sid}
+			count, data, err := unmarshalNameHeader(id, data)
+			if err != nil {
+				return nil, err
 			}
-			count, data := unmarshalUint32(data)
 			for i := uint32(0); i < count; i++ {
-				var filename string
-				filename, data = unmarshalString(data)
-				_, data = unmarshalString(data) // discard longname
-				var attr *FileStat
-				attr, data, err = unmarshalAttrs(data)
+				filename, attr, rest, err := unmarshalNameEntry(data)
+				data = rest
 				if err != nil {
 					return nil, err
 				}
 				if filename == "." || filename == ".." {
 					continue
 				}
-				entries = append(entries, fileInfoFromStat(attr, path.Base(filename)))
+				entry := fileInfoFromStat(attr, path.Base(filename))
+				if visit == nil {
+					entries = append(entries, entry)
+				} else {
+					if err := ctx.Err(); err != nil {
+						return nil, err
+					}
+					if err := visit(entry); err != nil {
+						return nil, err
+					}
+				}
 			}
 		case sshFxpStatus:
 			// TODO(dfc) scope warning!
@@ -506,16 +528,7 @@ func (c *Client) ReadLink(p string) (string, error) {
 	}
 	switch typ {
 	case sshFxpName:
-		sid, data := unmarshalUint32(data)
-		if sid != id {
-			return "", &unexpectedIDErr{id, sid}
-		}
-		count, data := unmarshalUint32(data)
-		if count != 1 {
-			return "", unexpectedCount(1, count)
-		}
-		filename, _ := unmarshalString(data) // ignore dummy attributes
-		return filename, nil
+		return unmarshalSingleName(id, data)
 	case sshFxpStatus:
 		return "", normaliseError(unmarshalStatus(id, data))
 	default:
@@ -942,16 +955,7 @@ func (c *Client) RealPath(path string) (string, error) {
 	}
 	switch typ {
 	case sshFxpName:
-		sid, data := unmarshalUint32(data)
-		if sid != id {
-			return "", &unexpectedIDErr{id, sid}
-		}
-		count, data := unmarshalUint32(data)
-		if count != 1 {
-			return "", unexpectedCount(1, count)
-		}
-		filename, _ := unmarshalString(data) // ignore attributes
-		return filename, nil
+		return unmarshalSingleName(id, data)
 	case sshFxpStatus:
 		return "", normaliseError(unmarshalStatus(id, data))
 	default:

@@ -1,0 +1,53 @@
+{
+  "cycle": 103,
+  "issues": [
+    587
+  ],
+  "repository": "skyelan1999/aide-pkg-VideoPreview",
+  "branch": "codex/open-issue-review-20261028",
+  "baseline": "b9539dc",
+  "fix": "Per-inspection hash set for media paths; preserve order,first labels,unverified status and10k limit.",
+  "red": {
+    "equalityOperations": 499501,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle103-video-red.log"
+  },
+  "green": [
+    {
+      "scope": "1000 long-prefix decoded paths+duplicate; equality/hash semantics retained; real adapter traversal",
+      "equalityOperations": 1,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle103-video-final-python.log"
+    },
+    {
+      "scope": "Python project/engine-archive/package tests",
+      "tests": 22,
+      "status": "PASS"
+    },
+    {
+      "scope": "Node actual plugin upload/parse IO and model tests",
+      "tests": 4,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle103-video-final-node.log"
+    },
+    {
+      "scope": "Local candidate archive and allowlist only, not publication",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle103-video-package.json"
+    }
+  ],
+  "intermediateFailures": [
+    "New clone has no generated dist; package fixture failed until local candidate generated.",
+    "Restricted process launch affected initial Node IO; final authorized run passed."
+  ],
+  "notRun": [
+    "UI layout changed: no",
+    "Real videos or external engine download",
+    "Main merge/release/market"
+  ],
+  "delivery": {
+    "commit": "2b448e4",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnAideBranch": 428,
+  "independentPluginFixes": 2,
+  "remainingOriginal104": 67
+}

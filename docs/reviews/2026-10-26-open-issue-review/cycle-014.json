@@ -1,0 +1,75 @@
+{
+  "cycle": 14,
+  "baseline": "778b8bdb",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    97
+  ],
+  "commits": {
+    "97": "85b77cf199c563b6f0ac344ae1feaaebf2a53e64"
+  },
+  "cumulativeProductFixes": 39,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 40,
+  "original272RemainingFollowup": 244,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "scope": "In-memory RFC6455 frames and existing simulated Edge timeout/retry connections. No live TTS endpoint, paid model or recorded user audio."
+  },
+  "red": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server/tts -run '^TestIssue97' -count=1 -timeout=1m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.532,
+      "observed": "Accepted17825792-byte fragmented message,4097 empty data fragments, stray continuation/new data inside fragments, fragmented/oversized controls and reserved opcode. Oversized continuation tried to read absent body and returnedEOF."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server/tts -run '^TestIssue97|^TestDialTimeout|^TestHandshakeTimeout|^TestFirstByteTimeout|^TestRetryOnTimeout|^TestNonTimeoutNoRetry|^TestErrEdgeClosedClassified' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 1.875,
+      "scope": "Final16MiB exact boundary,4096-fragment boundary, subsequent message state reset, valid ping/pong interleave and pong response, header rejection before excess payload, existing simulated timeouts and retry classification."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server/tts",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T161423120497Z.log",
+      "fingerprint": "343692ca4c8df51ea6e72233f243fccdebbf2dadfd6f37a5e9368cbb23a17753"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465local links"
+    }
+  ],
+  "intermediateFailures": [
+    {
+      "result": "TEST_FIXTURE_BUILD_FAIL",
+      "reason": "Initial sink embedded both net.Conn and bytes.Buffer, giving ambiguous Read selector. Added explicit dummy Read before obtaining actual red test results; no product changes needed for fixture error."
+    }
+  ],
+  "notes": [
+    "Each reassembled message payload<=16MiB, data frames<=4096; per-frame cap remains16MiB. Validate aggregate length/fragment sequence before next body allocation/read, with uint64 length checked before int conversion.",
+    "Reject invalid continuation/data sequencing, reserved opcodes/extension bits, masked server frames and fragmented or>125-byte controls; valid controls can interleave data fragments. Per-message local state resets for subsequent messages.",
+    "Limits describe message payloads, not total concurrent synthesis memory or complete streaming audio length. No live service compatibility, native32-bit execution, UI acceptance or complete tts live/network suite; intentionally did not run TestChainSynthFallback because it can reach actual Edge endpoint.",
+    "No main merge, release or deployment. Next ordered issues98/99/100 already read from GitHub."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "comments": {
+      "97": "https://github.com/skyelan1999/aide/issues/97#issuecomment-6421084335"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/tts/edge.go": "fd8a60a0320f73889a954c73deae370087a475f2d811040b47df56b2f6f0db83",
+    "internal/server/tts/edge_fragment_test.go": "0ab3ae1a77af48dd4618da4bac1f5407f689b56f2e1cc16e9ecbcf7ca8098441"
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "cycle": 76,
+  "baseline": "e4a3ae1db159b0fdd3957716ce80597db125face",
+  "issues": [
+    364,
+    564
+  ],
+  "fixes": {
+    "364": "Use a bounded RE2JS matcher for untrusted draw.io cors URL rules; never invoke the native backtracking engine for these rules.",
+    "564": "Compare parsed origins before image-proxy bypass; origin-prefixed external hostnames route through the proxy."
+  },
+  "batchPolicy": "Two additional fixes after the completed third50, not added to its count.",
+  "dependency": {
+    "name": "re2js",
+    "version": "2.9.1",
+    "license": "MIT",
+    "upstreamSHA256": "c826d974feef561e90d526ec78d9ac57f418040a49b7b2b5d862f69ebddd3b2f",
+    "provenance": "Unmodified npm browser UMD; full MIT notice retained in generated bootstraps.",
+    "runtime": "Locally shipped; no external library request, eval or generated Function. Owned namespace and SHA256 build identity cover engine,adapter,license."
+  },
+  "compatibility": {
+    "limits": {
+      "decodedPatternUTF16": 512,
+      "encodedParameterUTF16": 6144,
+      "matchInputUTF16": 8192,
+      "programInstructions": 4096
+    },
+    "unsupported": "Lookaround and backreferences are rejected; invalid, oversized or undecodable rules use normal image proxy routing. No native regex fallback.",
+    "retained": "Common URL-rule test semantics, known providers, relative same-origin paths and desktop branches.",
+    "impact": "564 affects image conversion/routing reliability; not a browser CORS bypass or credential-leak claim."
+  },
+  "red": [
+    {
+      "issue": 364,
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle76-red-valid-url.log",
+      "details": "Actual baseline Editor method in an owned Worker exceeds1500ms for valid HTTPS URL with40 repeated path characters under nested quantifiers; worker terminated."
+    },
+    {
+      "issue": 564,
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle76-origin-red/light-cors-source.json",
+      "details": "Actual origin predicate and image converter misroute a hostname beginning with location.origin. Registered564 before repair."
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 209,
+      "fingerprint": "9105ccf1023bfd7bdffc8b0d8101ef8ad190233d3e7fc45c60236dae65ed37d2",
+      "receipt": ".agent-state/verify-20261028T093117105965Z.log",
+      "scope": "Repository quick profile, including five CORS API variants,1290 distinct-corpus comparisons, bounds/rejection/cache and bootstrap namespace/build-identity tests."
+    },
+    {
+      "result": "PASS",
+      "checks": 44,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle76-combined-final/result.json",
+      "scope": "Actual bundled iframe Chromium154,light1440/dark390. CORS source plus4 bundle variants; direct/proxy fallback and origin cases; continued label edit/save XML. Combined prior data/workbench/import/plugin cases; errors[]. Dark screenshot inspected.",
+      "timing": "Worst CORS probe observed5.8ms locally; not a universal device or input performance guarantee."
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle76-audit.json",
+      "scope": "Four bundle prefixes identical; all unrelated bytes unchanged after masking the reviewed method and prefix. Syntax, pinned upstreamSHA256, standalone script loading order and generator --check pass."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py",
+      "scope": "429Markdown files and1473local links."
+    }
+  ],
+  "notRun": [
+    "Full Aide workbench via start.command; browser evidence is isolated actual component acceptance.",
+    "Windows/macOS native/device acceptance; this cycle changes JavaScript only.",
+    "Full Docker Go race/vet profile; no Go code changed.",
+    "Main merge,Release/tag/deployment; user authorizes branch push only."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {
+      "364": "https://github.com/skyelan1999/aide/issues/364#issuecomment-6465523386",
+      "564": "https://github.com/skyelan1999/aide/issues/564#issuecomment-6465524194"
+    },
+    "remoteSourceCommit": "7bf762b2431e9a2909d966b4877f98f3c425cfbf"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "3f7e8c348792f5eb2ea72bab065ded95dca6689af5afc7ffa0a3808b0031b71a",
+    "internal/server/web/drawio-linear-regex.js": "c6d5dd5db73b780e230452d4c26a06d372bbba9a047d39408467ecc2c0caf1fa",
+    "internal/server/web/vendor/drawio/index.html": "8236768a4ad58f6f7256974f5f51bc7eceda8de268305b97c9ef9d555455c215",
+    "internal/server/web/vendor/drawio/js/app.min.js": "232ab65a56735bf3cfaf1aaed6e392eab7b9e7773c36b3b0403e798b66f7de45",
+    "internal/server/web/vendor/drawio/js/diagramly/Editor.js": "ac4308660e0f37f7a9476ce1990fad15784480c0b3429c1705b91488241305ee",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "9bc79bcb0f1d7a660f1d7f09f225f1e9a895fec936f715d42aa5a2a7d4450d74",
+    "internal/server/web/vendor/drawio/js/re2js-safe.min.js": "211cd6ee414d23ac4de7718c5f14af22898c30061ff2e993fe400c9f85c0875d",
+    "internal/server/web/vendor/drawio/js/re2js/LICENSE": "b80a94f2c3c0b8bd6af849511cef624ad9feecbc0151d08bacad86ebab4cb46e",
+    "internal/server/web/vendor/drawio/js/re2js/README.md": "911d19078e938184379713f4a38b22744d92c9b9280f8460d83e165253635098",
+    "internal/server/web/vendor/drawio/js/re2js/re2js.umd.js": "c826d974feef561e90d526ec78d9ac57f418040a49b7b2b5d862f69ebddd3b2f",
+    "internal/server/web/vendor/drawio/js/viewer-static.min.js": "e963ea8243ec7b3adc0e9ab526d5d0e6690f5dc25db56b757a46917a017beffd",
+    "internal/server/web/vendor/drawio/js/viewer.min.js": "df012485e640d87f887cdd606e7c438b1dc2623684fac58f813c3b07d8166bc8",
+    "scripts/browser-drawio-preview-bounds.cjs": "2d85f84304e1a2197ef3a32bdcc7eb17238fb1143605f091ecb186f3b1d04968",
+    "scripts/drawio-cors-browser-cases.cjs": "a2ba1eb284c9aa583e1a2ab3c27555e64509bb46c6e5d81a0ace1903d0aa4bb2",
+    "scripts/sync_drawio_linear_regex.cjs": "695e5a888f09b22158cc1ee8f5b972707887e25f49eb35d7536ebf2660c66edc",
+    "scripts/test_drawio_cors_linear.cjs": "3a1b77536ee757329c77488e2e0846f97b6ce604db3257e1b2b6ef79fd0ca1af"
+  },
+  "verificationCompletedAt": "2026-10-28T09:33:41.405382+00:00",
+  "completedAt": "2026-10-28T09:35:29.692808+00:00",
+  "cumulativeFixedOnBranch": 291,
+  "cumulativeProductFixes": 290,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

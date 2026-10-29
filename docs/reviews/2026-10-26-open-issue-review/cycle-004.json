@@ -1,0 +1,121 @@
+{
+  "cycle": 4,
+  "type": "repairs-after-ordered-review",
+  "baseline": "40860859",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    48,
+    64,
+    66
+  ],
+  "cumulativeFixedOnBranch": 17,
+  "commits": {
+    "48": "5bb54ed1",
+    "64": "d29892d9",
+    "66": "b89236e2"
+  },
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "toolchain": "/workspace/.aide-cloud/go/bin/go",
+    "cache": "/workspace/.aide-cloud/go-cache",
+    "activation": "Explicit toolchain PATH/GOCACHE/GOPATH; did not source AIDE_DATA or connect to existing user storage. No application/browser startup required for these backend tests.",
+    "discovery": "Host default /usr/bin/go is not the compiler; existing toolchain restored for this cycle. Existing Docker image lacks Go; no image installation/build required."
+  },
+  "red": [
+    {
+      "issue": 48,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestLocalRootOpenPendingUsesInitiatingDeadline$' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.731,
+      "observed": "Retry returned errLocalRootTimeout instead of errLocalRootPending after delayed deadline construction."
+    },
+    {
+      "issue": 64,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue64ArchivePreservesDistinctSelectedPaths$' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 4.712,
+      "observed": "Four cases produced flattened config/logs/device/a paths; expected distinct source-relative paths. Non-colliding control retained its layout."
+    },
+    {
+      "issue": 66,
+      "command": "go test -mod=vendor -race ./internal/messaging -run '^TestIssue66' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.244,
+      "observed": "Cancelled/declined/expired/completed histories each blocked new outgoing Request and incoming receiveFileOffer."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestLocalRootOpen' -count=20 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 34.723
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue64Archive|^TestLargeTransfer|^TestLocalRootOpen' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 21.031,
+      "scope": "Synthetic local HTTP/SFTP and source/ZIP tests; live SSH test remains opt-in, no real devices.",
+      "initialAttempt": "Same group first failed under sandbox because httptest listener was denied (EPERM); rerun with approved escalation passed."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/messaging -run '^TestIssue66|^TestRealFile' -count=5 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 4.896
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/messaging -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 8.301
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server ./internal/messaging",
+      "result": "PASS"
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue64Archive|^TestLargeTransfer|^TestLocalRootOpen' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 21.232,
+      "scope": "Final committed source and dependency contents; no live SSH endpoint."
+    },
+    {
+      "command": "python3 scripts/check_docs.py",
+      "result": "PASS",
+      "observed": "427 Markdown files, 1463 local links, JPEG signatures, FR-01..100"
+    },
+    {
+      "command": "python3 scripts/agent-route.py check",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "sourceSHA256": {
+    "internal/server/source_root_open.go": "4552aad0ee6f8994c8c74d434308a17d20ec68012df40cbd259c4a1061316f72",
+    "internal/server/source_root_open_test.go": "a4d0539ea37e6f67038cb23b5877cfaaf16b62ca483e7f68f74cb56558eaf5e4",
+    "internal/server/transfer_worker.go": "c9101763bc90d69a199931eff9e28e0d0db40d3a814134240d19ded8cdbf4397",
+    "internal/server/transfer_recovery_test.go": "a5e7363e27cba237f380f4cfa11d6d5ac6b47ce9bc152d442d647d97e8f1b8cc",
+    "internal/messaging/service.go": "cae07eb3c9f696ed34c82d08167560465a1a8e7dd6f44603d9ef282140c371ae",
+    "internal/messaging/service_test.go": "80a2c671283b36913a87d3028b8240e5d9815b63b238e41d7d01ccf9f98604eb"
+  },
+  "notes": [
+    "#48 preserves the originating caller deadline and no longer restarts pending-age timing at admission. The uncancellable OS operation remains deduplicated and late handles remain reaped.",
+    "#64 retains parent paths for the entire selected batch only when basenames collide. Prepared ZIPs remain immutable; unprepared/resumed archives use the deterministic new mapping.",
+    "#66 keeps terminal history/received chunks and charges cleanup failures; 128 is now an active-work limit with a second admission check under lock. The separate 4096-invitation, encrypted object-size and 4GiB receive quotas still apply.",
+    "#28 still needs full hosted validation; targeted local repeat is not a full CI rerun.",
+    "#57 remains a product need requiring call-flow/browser validation; no live microphone or paid provider used."
+  ],
+  "delivery": {
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issuesRemainOpenUntilMainAcceptance": true,
+    "pushed": true,
+    "comments": {
+      "48": "https://github.com/skyelan1999/aide/issues/48#issuecomment-6411907479",
+      "64": "https://github.com/skyelan1999/aide/issues/64#issuecomment-6411908223",
+      "66": "https://github.com/skyelan1999/aide/issues/66#issuecomment-6411909103"
+    }
+  }
+}

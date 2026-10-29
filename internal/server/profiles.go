@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -240,11 +240,11 @@ func (a *App) updateProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	in.Version = 1
-	a.profileState = in
-	if err := a.saveProfiles(); err != nil {
+	if err := atomicJSON(a.profilesPath, in); err != nil {
 		fail(w, 500, err)
 		return
 	}
+	a.profileState = in
 	jsonOut(w, 200, map[string]any{"ok": true, "strategy": a.profileState.Strategy, "activeProfile": a.profileState.ActiveProfile, "profiles": a.allProfiles()})
 }
 
@@ -286,10 +286,36 @@ func extractJSONFence(b []byte) []byte {
 
 // readRoutingPolicy 读取工程目录策略：routing-policy.json 优先，
 // routing-policy.md 内 JSON 代码块兜底；两者均缺失或解析失败返回 nil。
-func (a *App) readRoutingPolicy() *routingPolicy {
-	b, err := os.ReadFile(filepath.Join(a.workPath, routingPolicyJSON))
+const routingPolicyMaxBytes = 1 << 20
+
+func (a *App) readRoutingPolicyFile(name string) ([]byte, error) {
+	root, err := os.OpenRoot(a.workPath)
 	if err != nil {
-		b, err = os.ReadFile(filepath.Join(a.workPath, routingPolicyMD))
+		return nil, err
+	}
+	defer root.Close()
+	f, info, err := openDeliveryFile(root, name)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	if info.Size() > routingPolicyMaxBytes {
+		return nil, errors.New("路由策略文件超过1MiB")
+	}
+	b, err := io.ReadAll(io.LimitReader(f, routingPolicyMaxBytes+1))
+	after, statErr := f.Stat()
+	linked, linkErr := root.Lstat(name)
+	if err != nil || len(b) > routingPolicyMaxBytes || statErr != nil || linkErr != nil ||
+		!os.SameFile(info, after) || !os.SameFile(info, linked) || info.Size() != after.Size() || !info.ModTime().Equal(after.ModTime()) {
+		return nil, errors.New("路由策略文件已变化或不可读取")
+	}
+	return b, nil
+}
+
+func (a *App) readRoutingPolicy() *routingPolicy {
+	b, err := a.readRoutingPolicyFile(routingPolicyJSON)
+	if err != nil {
+		b, err = a.readRoutingPolicyFile(routingPolicyMD)
 		if err != nil {
 			return nil
 		}

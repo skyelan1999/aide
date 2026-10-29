@@ -1,0 +1,204 @@
+{
+  "totalPluginRepositories": 39,
+  "publicRepositories": 28,
+  "privateRepositories": 11,
+  "public": [
+    {
+      "repo": "skyelan1999/aide-pkg-ArchiveTools",
+      "auditedMain": "c9cccdec70e85bab9df1d04658efe59cda71ddc7",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-BrowserControl",
+      "auditedMain": "4d424ddfd42b8cbf8572f5d8558aa471d1be66a7",
+      "previousRelease": "v1.1.0",
+      "resultingRelease": "v1.1.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-ComputerControl",
+      "auditedMain": "d37d767485ea6f44e9405e3a2ad47705cdfbd99c",
+      "previousRelease": "v1.2.0",
+      "resultingRelease": "v1.2.0",
+      "decision": "Current Release matches runtime; retain existing version."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-CurrentTime",
+      "auditedMain": "99bd69c279860e5bec87f23587a4c3b3c0558215",
+      "previousRelease": "v1.1.0",
+      "resultingRelease": "v1.1.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-EnvGuide",
+      "auditedMain": "ce0f9564925576e435bd5d112f3ed47c433d69bd",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-LunarCalendar",
+      "auditedMain": "b007f312e4ce51e0c10303e602e5da84f40bd15f",
+      "previousRelease": "v1.1.0",
+      "resultingRelease": "v1.1.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-MarkdownHistory",
+      "auditedMain": "a29e95b07cf1033de5cca7c335c860a1ac1a15a1",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-PluginAuthoring",
+      "auditedMain": "82670da7068ba9e98c2602be3f79f161ee4cd880",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-StarLink",
+      "auditedMain": "cf12a7be8decca9017ac2fea73ac5167e55341ec",
+      "previousRelease": "v0.1.4",
+      "resultingRelease": "v0.1.4",
+      "decision": "Optional native delivery/build preparation; existing public JS release and market identity retained."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-almanac",
+      "auditedMain": "08d735e0558f93d7d4456b11491c434c9aac72d2",
+      "previousRelease": "v1.1.0",
+      "resultingRelease": "v1.1.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-feedback",
+      "auditedMain": "acaa4f7aaa6c42e97a48fb6f3d2c7136b7430e30",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-goal",
+      "auditedMain": "8f6687423e83c4cc4de8a2ca9552f494ee6cb0e3",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Archive hosting, README/license attribution and repository policy changes; retain fixed existing artifact."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-office",
+      "auditedMain": "362d0cf2fcaf08ac6b2907bdf8342135cbd019a0",
+      "previousRelease": "v1.1.0",
+      "resultingRelease": "v1.1.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-plan",
+      "auditedMain": "23ef684d8e76d5401b2235ddad732eea9f3fd2c8",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Archive hosting, README/license attribution and repository policy changes; retain fixed existing artifact."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-skill",
+      "auditedMain": "b0615b1da4301f94e36e7f30286b4451902b3a8e",
+      "previousRelease": "v1.1.0",
+      "resultingRelease": "v1.1.0",
+      "decision": "Archive hosting, README/license attribution and repository policy changes; retain fixed existing artifact."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-sqlite",
+      "auditedMain": "6e28f68938888a7db994dd3206694d05641fa06b",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-subagent",
+      "auditedMain": "a5e309da8f39a8443002ceafa7262e9d71e01406",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-terminal",
+      "auditedMain": "0180d35ad9a96b925b7147fe735141611a0f9e99",
+      "previousRelease": "v1.5.1",
+      "resultingRelease": "v1.5.2",
+      "decision": "New verified input-scheduling fix #565 on fix branch; publish v1.5.2 prerelease."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-todo",
+      "auditedMain": "ccd80ba74fd934711755232d5886ae58398fb6ad",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-workflow",
+      "auditedMain": "ee2795d43ba92b10730132484ade65228bbf82b1",
+      "previousRelease": "v1.0.0",
+      "resultingRelease": "v1.0.0",
+      "decision": "Only CODEOWNERS changed; no runtime release required."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-CodexBridge",
+      "auditedMain": "f5561a25c623cc9314438b04d388a7c2a17ed3e2",
+      "previousRelease": "v0.1.1",
+      "resultingRelease": "v0.1.1",
+      "decision": "Current Release matches runtime; retain existing version."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-FilePreview",
+      "auditedMain": "d945229598d455d069b1dc377a7fa0ed4c0e6fcf",
+      "previousRelease": "v0.1.0",
+      "resultingRelease": "v0.1.0",
+      "decision": "Current Release matches runtime; retain existing version."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-RViz",
+      "auditedMain": "da01e9db62ce87aaddf07c953a70019ea46100ad",
+      "previousRelease": "v0.1.1",
+      "resultingRelease": "v0.1.1",
+      "decision": "Current Release matches runtime; retain existing version."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-DeepSeekSupporter",
+      "auditedMain": "acc4b94a2c629761f310d81370e4f30a133de49b",
+      "previousRelease": "v0.1.0",
+      "resultingRelease": "v0.1.0",
+      "decision": "Current Release matches runtime; retain existing version."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-VideoPreview",
+      "auditedMain": "b9539dce47692bab2e79338574bebb66cab993e5",
+      "previousRelease": "v0.1.0",
+      "resultingRelease": "v0.1.0",
+      "decision": "Documentation/test evidence only since current Release."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-STEPViewer",
+      "auditedMain": "13e96e7f14d5eb5bce391d044afa9fcfdd2c93a0",
+      "previousRelease": "v0.1.1",
+      "resultingRelease": "v0.1.1",
+      "decision": "Current Release matches runtime; retain existing version."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-TTSTools",
+      "auditedMain": "a5774b4af5ea9d1eedc6f2c8b1f3ce74d2acc42b",
+      "previousRelease": "v0.1.0",
+      "resultingRelease": "v0.1.0",
+      "decision": "Current Release matches runtime; retain existing version."
+    },
+    {
+      "repo": "skyelan1999/aide-pkg-AutoAiModelRouter",
+      "auditedMain": "9e7878109d80f317f526109f406cc65e85886352",
+      "previousRelease": "v0.1.2",
+      "resultingRelease": "v0.1.2",
+      "decision": "Current Release matches runtime; retain existing version."
+    }
+  ],
+  "privateSummary": "11 private repositories reviewed. Compare 0.3.3 private prerelease prepared and published. Other private repositories have no newly verified release candidate in this task; no scaffolding, private source paths, package hashes or license materials copied to public evidence."
+}

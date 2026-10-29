@@ -1,0 +1,53 @@
+{
+  "cycle": 90,
+  "baseline": "b8eb9194d8f3ff92c8b12cffe12d6ff4b5f929c1",
+  "issues": [
+    415,
+    416
+  ],
+  "fixes": {
+    "415": "Reject invalid or >2000 PDF page counts before creating placeholders or issuing per-page metadata requests; destroy the rejected document loading task.",
+    "416": "Keep loading tasks reachable by idempotent teardown; abort fetches, destroy the task owner, discard late completion and suppress password updates after closing."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 2,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle90-red-final/result.json",
+    "scope": "Actual PDF.js worker; huge numPages metadata is injected and an11-placeholder trap prevents unsafe allocation. Closing a gated loading task fails immediate destroy assertion. Normal3-page control passes."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 244,
+      "fingerprint": "d605b4f04329ce723f7911e6cf82687f2d1f4b3ba7f654e9163160c240490299",
+      "receipt": ".agent-state/verify-20261028T133115562175Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 5,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle90-runtime-final/result.json",
+      "scope": "Actual local PDF.js worker; excessive metadata rejects with0holders and1destroy, close-during-load, late success, close-before-password-reply, ordinary3-page canvas rendering/teardown. Errors[]."
+    }
+  ],
+  "notRun": [
+    "A real billion-page file was not generated; the metadata/placeholder trap is a controlled boundary test.",
+    "Full Aide workbench/start.command or native platforms.",
+    "Every PDF feature/encryption type; supported preview size is now at most2000pages.",
+    "Main merge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "remoteSourceCommit": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a",
+    "issueComments": {
+      "415": "https://github.com/skyelan1999/aide/issues/415#issuecomment-6470421032",
+      "416": "https://github.com/skyelan1999/aide/issues/416#issuecomment-6470421923"
+    }
+  },
+  "completedAt": "2026-10-28T13:34:47.749857+00:00",
+  "cumulativeFixedOnBranch": 389,
+  "cumulativeProductFixes": 388,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

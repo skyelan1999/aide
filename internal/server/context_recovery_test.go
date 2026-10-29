@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -214,6 +216,7 @@ func TestContextRecoveryCompactionInvalidatesOldUsageAnchor(t *testing.T) {
 		t.Fatal("compacted history still inherits pre-compaction token pressure")
 	}
 	anchor.CompactedAt = s.CompactedAt
+	anchor.SummaryFingerprint = contextSummaryFingerprint(a.buildContextPreview(s, "next", "chat", "", nil, a.settings, params, true).Messages)
 	if a.buildContextPreview(s, "next", "chat", "", nil, a.settings, params, false).Breakdown.UsageCalibration == 0 {
 		t.Fatal("new-generation calibration was disabled")
 	}
@@ -270,5 +273,70 @@ func TestContextRecoveryPreflightCompactsMultipleHistoryBatches(t *testing.T) {
 	defer a.mu.Unlock()
 	if s.CompactedMessages <= 400 || s.Runs[0].Status != "completed" {
 		t.Fatal("long history did not progress through multiple compaction passes")
+	}
+}
+
+func TestContextRecoverySummaryFingerprintInvalidatesOldAnchor(t *testing.T) {
+	a := testApp(t)
+	a.settings = Settings{Model: "fixture", Models: []ModelRef{{ID: "fixture", ContextWindow: 65536}}}
+	s := &Session{ID: "calibration", Messages: []Message{{Role: "user", Content: "question"}}}
+	base := a.buildContextPreview(s, "next", "chat", "", nil, a.settings, ProfileParams{}, true)
+	s.Runs = []*Task{{ID: "run", ContextAnchor: &ContextUsageAnchor{Usage: TokenUsage{Prompt: 50000}, PromptEstimate: 100, HeaderFingerprint: contextHeaderFingerprint(a.settings, base.Messages[0].Content, base.Tools)}}}
+	before := a.buildContextPreview(s, "next", "chat", "", nil, a.settings, ProfileParams{}, false)
+	if before.Breakdown.UsageCalibration == 0 {
+		t.Fatal("control calibration missing")
+	}
+	s.Compact = "short summary"
+	s.CompactedMessages = 10
+	s.CompactedAt = "2026-10-28T18:00:00Z"
+	after := a.buildContextPreview(s, "next", "chat", "", nil, a.settings, ProfileParams{}, false)
+	if after.Breakdown.UsageCalibration != 0 {
+		t.Fatalf("stale generation calibration%d", after.Breakdown.UsageCalibration)
+	}
+	// Even if a request completed after the generation changed, its old input
+	// cannot calibrate the new summary. A genuinely new request can calibrate.
+	anchor := s.Runs[0].ContextAnchor
+	anchor.CompactedAt = s.CompactedAt
+	stale := a.buildContextPreview(s, "next", "chat", "", nil, a.settings, ProfileParams{}, true)
+	if stale.Breakdown.UsageCalibration != 0 {
+		t.Fatal("concurrent old input calibrated new summary")
+	}
+	anchor.SummaryFingerprint = contextSummaryFingerprint(stale.Messages)
+	fresh := a.buildContextPreview(s, "next", "chat", "", nil, a.settings, ProfileParams{}, false)
+	if fresh.Breakdown.UsageCalibration == 0 {
+		t.Fatal("new generation calibration lost")
+	}
+
+}
+
+func TestContextRecoveryActiveCompactionFailureRetainsPartial(t *testing.T) {
+	a := testApp(t)
+	var requests atomic.Int32
+	partial := strings.Repeat("Z", 18000)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"finish_reason": "length", "message": Message{Role: "assistant", Content: partial}}}})
+	}))
+	defer provider.Close()
+	a.settings.Models = []ModelRef{{ID: "fixture", ContextWindow: 4096}}
+	task := &Task{ID: newID(), Prompt: "write", Mode: "chat", Status: "running", Steps: []Step{{Name: "chat"}}, Steer: make(chan string, 1)}
+	registerHarnessFixtureTask(t, a, task)
+	out, chain, e := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{MaxTokens: 128}, nil, task, nil, 0)
+	// First request produces the partial answer; a bounded summary attempt then
+	// fails validation. No oversized continuation is sent and the partial survives.
+	if e == nil || requests.Load() != 2 || !strings.Contains(e.Error(), "摘要不是有效 JSON") || !strings.Contains(out, partial) || len(chain) < 2 {
+		t.Fatalf("overflow not stopped with partial retained: requests%d outLen%d chain%d err%v", requests.Load(), len(out), len(chain), e)
+	}
+}
+
+func TestContextRecoveryTruncatedToolCallNeverDispatches(t *testing.T) {
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte(`data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"owned","type":"function","function":{"name":"read_file","arguments":"{}"}}]}}]}` + "\n\n"))
+	}))
+	defer provider.Close()
+	_, calls, usage, _, err := completeStream(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, nil, ProfileParams{}, nil, nil, nil, nil)
+	if !errors.Is(err, io.ErrUnexpectedEOF) || len(calls) != 0 || usage.Total == 0 {
+		t.Fatalf("truncated calls escaped or usage lost: calls%d usage%d err%v", len(calls), usage.Total, err)
 	}
 }

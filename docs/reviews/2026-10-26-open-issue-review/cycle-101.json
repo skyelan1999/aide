@@ -1,0 +1,150 @@
+{
+  "cycle": 101,
+  "issues": [
+    411,
+    414,
+    427
+  ],
+  "falseReport": 428,
+  "baseline": "b6bc3b09",
+  "fix": [
+    "Cursor-based CSS tokenizer and string slices",
+    "Explicit zero LI ordinals; absent attribute remains absent",
+    "PNG zTXt zlib-only inflate plus legacy raw fallback; source/app/integrate synchronized"
+  ],
+  "red": {
+    "css": "500k CSS worker8s deadline exceeded",
+    "ordinals": [
+      "1.",
+      "2.",
+      "3."
+    ],
+    "PNG": "gzip accepted as diagram XML",
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle101-red.log",
+      "/workspace/scratch/issue-review-20261026/cycle101-png-red.log"
+    ]
+  },
+  "green": [
+    {
+      "scope": "Original token/linebreak goldens, pressure workers and actual ordinal formatter",
+      "controls": 86,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle101-canvas-final.log"
+    },
+    {
+      "scope": "Actual Chromium tokens/workers and public html2canvas light/dark canvas",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle101-canvas-browser/result.json",
+      "screenshot": "/workspace/scratch/issue-review-20261026/cycle101-canvas-browser/canvas.png",
+      "visuallyInspected": true
+    },
+    {
+      "scope": "Actual draw.io bundled iframe desktop/narrow light/dark; 3copies; normal edits/save and PNG compression checks",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle101-png-browser/result.json"
+    },
+    {
+      "scope": "Actual pako source/app/integrate regression",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle101-png-green.log"
+    },
+    {
+      "status": "pass",
+      "checks": 258,
+      "fingerprint": "930b18c2ea26347fb522ac4134f490eb5beff12605ad19d9a04407f89226fd3b",
+      "receipt": ".agent-state/verify-20261028T185918691533Z.log"
+    }
+  ],
+  "falseReportEvidence": {
+    "scope": "Actual original LB25 loops instrumented with operation counter. Original production wA function restored unchanged, no numeric-rule patch. This disproves this report, not all complexity risks.",
+    "rows": [
+      {
+        "kind": "alternating",
+        "inputCharacters": 20001,
+        "LB25Steps": 20000,
+        "ms": 32.664659
+      },
+      {
+        "kind": "slashes",
+        "inputCharacters": 10002,
+        "LB25Steps": 10001,
+        "ms": 12.971017000000003
+      },
+      {
+        "kind": "commas",
+        "inputCharacters": 10002,
+        "LB25Steps": 10001,
+        "ms": 11.154534999999996
+      },
+      {
+        "kind": "suffix",
+        "inputCharacters": 10200,
+        "LB25Steps": 10100,
+        "ms": 13.320673999999997
+      },
+      {
+        "kind": "alternating",
+        "inputCharacters": 40001,
+        "LB25Steps": 40000,
+        "ms": 58.643518
+      },
+      {
+        "kind": "slashes",
+        "inputCharacters": 20002,
+        "LB25Steps": 20001,
+        "ms": 20.788486000000006
+      },
+      {
+        "kind": "commas",
+        "inputCharacters": 20002,
+        "LB25Steps": 20001,
+        "ms": 21.055116999999996
+      },
+      {
+        "kind": "suffix",
+        "inputCharacters": 20400,
+        "LB25Steps": 20200,
+        "ms": 22.20178900000002
+      },
+      {
+        "kind": "alternating",
+        "inputCharacters": 80001,
+        "LB25Steps": 80000,
+        "ms": 118.03062900000003
+      },
+      {
+        "kind": "slashes",
+        "inputCharacters": 40002,
+        "LB25Steps": 40001,
+        "ms": 44.324888999999985
+      },
+      {
+        "kind": "commas",
+        "inputCharacters": 40002,
+        "LB25Steps": 40001,
+        "ms": 42.95784499999996
+      },
+      {
+        "kind": "suffix",
+        "inputCharacters": 40800,
+        "LB25Steps": 40400,
+        "ms": 46.31525199999999
+      }
+    ]
+  },
+  "assetSHA256": {
+    "baselineCanvas": "e87e550794322e574a1fda0c1549a3c70dae5a93d9113417a429016838eab8cb",
+    "patchedCanvas": "31eb2428a97584bafd3edc53f50e605554790a4a570cac358db174366685cac6"
+  },
+  "notRun": [
+    "Full start.command workbench",
+    "All browsers/devices",
+    "Main merge/release/deployment"
+  ],
+  "delivery": {
+    "commit": "89c07d67",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnBranch": 428,
+  "productFixed": 425,
+  "toolingFixes": 3,
+  "remainingOriginal104": 67
+}

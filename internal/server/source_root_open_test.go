@@ -11,6 +11,60 @@ import (
 	"time"
 )
 
+// Delay before the bounded context is installed, after WithTimeout has chosen
+// its deadline. This models a scheduling/admission delay without depending on
+// whether a timer happens to fire just before or after another goroutine runs.
+type delayedRootDeadlineContext struct {
+	context.Context
+	delay time.Duration
+}
+
+func (c delayedRootDeadlineContext) Deadline() (time.Time, bool) {
+	time.Sleep(c.delay)
+	return c.Context.Deadline()
+}
+
+func TestLocalRootOpenPendingUsesInitiatingDeadline(t *testing.T) {
+	a := &App{}
+	release := make(chan struct{})
+	var once sync.Once
+	t.Cleanup(func() { once.Do(func() { close(release) }) })
+	var calls atomic.Int32
+	a.localRootOpens.open = func(string) (*os.Root, error) {
+		calls.Add(1)
+		<-release
+		return nil, os.ErrNotExist
+	}
+	ctx := delayedRootDeadlineContext{Context: context.Background(), delay: localRootOpenTimeout / 3}
+	if root, err := a.openLocalSourceRoot(ctx, "blocked-root"); root != nil || !errors.Is(err, errLocalRootTimeout) {
+		t.Fatalf("initial open: root=%v err=%v", root, err)
+	}
+	if root, err := a.openLocalSourceRoot(context.Background(), "blocked-root"); root != nil || !errors.Is(err, errLocalRootPending) {
+		t.Fatalf("retry after initiating deadline must be pending: root=%v err=%v", root, err)
+	}
+	if calls.Load() != 1 {
+		t.Fatalf("pending retry started another opener: %d", calls.Load())
+	}
+}
+
+func TestLocalRootOpenPendingUsesShortCallerDeadline(t *testing.T) {
+	a := &App{}
+	release := make(chan struct{})
+	t.Cleanup(func() { close(release) })
+	a.localRootOpens.open = func(string) (*os.Root, error) {
+		<-release
+		return nil, os.ErrNotExist
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), localRootOpenTimeout/4)
+	defer cancel()
+	if _, err := a.openLocalSourceRoot(ctx, "blocked-root"); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("initial caller deadline was not preserved: %v", err)
+	}
+	if _, err := a.openLocalSourceRoot(context.Background(), "blocked-root"); !errors.Is(err, errLocalRootPending) {
+		t.Fatalf("retry after caller deadline must be pending: %v", err)
+	}
+}
+
 func TestLocalRootOpenTimeoutDeduplicatesAndClosesLateHandle(t *testing.T) {
 	a := &App{}
 	release := make(chan struct{})

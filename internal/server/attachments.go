@@ -24,8 +24,9 @@ import (
 const (
 	// maxDocExtractChars 单个文档提取文本上限（按 rune 计），超出截断并标注。
 	maxDocExtractChars = 60000
-	// maxAttachmentChars 所有附件注入上下文的总字符上限（UTF-8 字节）。
-	maxAttachmentChars = 200000
+	// maxAttachmentTextBytes bounds extraction/assembly memory independently of the
+	// selected model's token window. It is not an upload or model-context limit.
+	maxAttachmentTextBytes = 16 << 20
 	// maxImageAttachment 单张图片大小上限。
 	maxImageAttachment = 5 << 20
 )
@@ -153,15 +154,13 @@ func (a *App) extractDocumentText(att Attachment) (string, error) {
 	if err != nil || !st.Mode().IsRegular() {
 		return "", fmt.Errorf("文件不存在或不是普通文件: %s", att.Path)
 	}
-	script, err := officeScriptPath("extract_text.py")
+	raw, err := readRawBytes(root, att.Path)
 	if err != nil {
 		return "", err
 	}
-	out, err := runOfficeScript(root.Name(), script, att.Path)
-	if err != nil {
-		return "", fmt.Errorf("提取文档 %s 失败：%w", path.Base(att.Path), err)
-	}
-	return out, nil
+	// Keep the attachment caller's existing rune budget; the common parser
+	// still bounds raw input, expansion, address space and generated output.
+	return officeExtractTextLimit(raw, strings.ToLower(path.Ext(att.Path)), officeMaxStdout)
 }
 
 // readLocalImage 读取本地工作区图片原始字节并编码为 data URL。

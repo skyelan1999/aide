@@ -1,0 +1,140 @@
+{
+  "cycle": 81,
+  "baseline": "57f68b2a67c85ba2c8cec987c94f81625eda1c67",
+  "issues": [
+    435,
+    444,
+    468,
+    470,
+    471,
+    472,
+    473,
+    475,
+    476,
+    477,
+    478,
+    479,
+    481,
+    482,
+    483,
+    484,
+    485,
+    488,
+    490,
+    491,
+    492,
+    494,
+    495,
+    496
+  ],
+  "fixes": {
+    "435": "Use canonical own-property checks and prototype-free preprocessor maps/subpart dictionaries.",
+    "444": "Keep Gantt task aliases from replacing lookup methods.",
+    "468": "Use canonical own checks and a prototype-free Salt popup dictionary.",
+    "470": "Define a background-aware Hacker foreground fallback while preserving caller colors.",
+    "471": "Emit valid #prefixed Mars theme colors.",
+    "472": "Recognize variable names in ifdef/ifndef and preserve an explicitly supplied Mono font.",
+    "473": "Consume complete NWDiag skinparam blocks so theme internals are not dropped-line warnings.",
+    "475": "Use canonical own checks when measuring JSON objects containing hasOwnProperty.",
+    "476": "Resolve stylesheet variables with canonical own checks.",
+    "477": "Require own name/stereotype matches rather than inherited constructor entries.",
+    "478": "Use prototype-free sequence parser maps and canonical own checks.",
+    "479": "Use prototype-free state parser index and state renderer adjacency/layout caches.",
+    "481": "Use prototype-free class node,adjacency and layout caches.",
+    "482": "Index activity swimlanes in a prototype-free dictionary.",
+    "483": "Use prototype-free component ID/layout caches and canonical own checks.",
+    "484": "Key unordered component edge pairs using serialized tuples rather than ambiguous pipe joins.",
+    "485": "Use prototype-free object-diagram caches and canonical own checks.",
+    "488": "Use prototype-free use-case actor/node/adjacency/layout caches.",
+    "490": "Use prototype-free NWDiag node measurement and position caches.",
+    "491": "Use prototype-free C4 alias measurement/layout caches.",
+    "492": "Use a prototype-free WBS alias map and canonical own checks.",
+    "494": "Use prototype-free Gantt period/layout caches and canonical own checks.",
+    "495": "Resolve ArchiMate relationship aliases from a prototype-free map.",
+    "496": "Store timing state rows in a prototype-free dictionary."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 24,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle81-plant-red-final.log",
+    "scope": "Everyreporthasanobservablefailurewithactualbundle:exceptions,invalidgeometry/endpoints,false stereotypes,themedcolor/font/warnings or unrelatedpair offsets."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 226,
+      "fingerprint": "ed17b8fcefd25230cc6bd2390365b587f83175ab9576dd718a6da5255fd176c8",
+      "receipt": ".agent-state/verify-20261028T112506211522Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 24,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle81-plant-acceptance.log",
+      "scope": "Nativeconverterfixturecasesplusordinary-namecontrols,finitenumericgeometry,validrelationshiprefs,uniqueIDs,explicit/defaultfonts,light/dark/callerforegroundchoices,stereotypepositive/negativeandObject/prototypeown-keyintegrity. Additional5smokescoverMindmap,JSON,YAML,legacyactivity,andnamedsubparts."
+    },
+    {
+      "result": "PASS",
+      "checks": 58,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle81-browser-final/result.json",
+      "scope": "ActualEditorUi.parsePlantUmlDiagram loadandconvert;all24XMLmodelsimportedintorealmxGraphs,SVGpathsandgeometryfinite,light1440/dark390;errors[]. No externalPlantUMLservice."
+    }
+  ],
+  "patchAudit": {
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle81-plant-patch-audit.json",
+    "scope": "224directown-checkcallsusecanonicalnativecheck;127declaredmapinitializersplusstateindexresetand2recorddictionarieshaveprototype-free storage in the affected parser/renderers. Supplemental narrowly matched edits coverthemes/conditionals/NWDiagskinparamblocks/stereotypematching andcomponenttuple keys. Licenses/themeauthor metadata preserved.",
+    "baselineSHA256": "27597711cfc3cf9659fb248c074e78ab35c1083e7487875aa1c465e1c37d58bf",
+    "patchedSHA256": "1a9e813f3321a6abfd2187356f04b334d8738f19bcffff16fb8c4ea3213891c7"
+  },
+  "notRun": [
+    "FullAideworkbench,start.command,Windows/macOSnative.",
+    "AllpossiblePlantUMLsyntax/options or externalincludeproviders;selectedreportsandcontrolsarecovered.",
+    "FullDocker Go profile;noGochange.",
+    "Mainmerge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {
+      "435": "https://github.com/skyelan1999/aide/issues/435#issuecomment-6467898933",
+      "444": "https://github.com/skyelan1999/aide/issues/444#issuecomment-6467899868",
+      "468": "https://github.com/skyelan1999/aide/issues/468#issuecomment-6467900834",
+      "470": "https://github.com/skyelan1999/aide/issues/470#issuecomment-6467901509",
+      "471": "https://github.com/skyelan1999/aide/issues/471#issuecomment-6467903101",
+      "472": "https://github.com/skyelan1999/aide/issues/472#issuecomment-6467903745",
+      "473": "https://github.com/skyelan1999/aide/issues/473#issuecomment-6467904480",
+      "475": "https://github.com/skyelan1999/aide/issues/475#issuecomment-6467905465",
+      "476": "https://github.com/skyelan1999/aide/issues/476#issuecomment-6467906237",
+      "477": "https://github.com/skyelan1999/aide/issues/477#issuecomment-6467906899",
+      "478": "https://github.com/skyelan1999/aide/issues/478#issuecomment-6467907561",
+      "479": "https://github.com/skyelan1999/aide/issues/479#issuecomment-6467908396",
+      "481": "https://github.com/skyelan1999/aide/issues/481#issuecomment-6467908959",
+      "482": "https://github.com/skyelan1999/aide/issues/482#issuecomment-6467909764",
+      "483": "https://github.com/skyelan1999/aide/issues/483#issuecomment-6467910383",
+      "484": "https://github.com/skyelan1999/aide/issues/484#issuecomment-6467911006",
+      "485": "https://github.com/skyelan1999/aide/issues/485#issuecomment-6467911622",
+      "488": "https://github.com/skyelan1999/aide/issues/488#issuecomment-6467912294",
+      "490": "https://github.com/skyelan1999/aide/issues/490#issuecomment-6467912829",
+      "491": "https://github.com/skyelan1999/aide/issues/491#issuecomment-6467913385",
+      "492": "https://github.com/skyelan1999/aide/issues/492#issuecomment-6467914290",
+      "494": "https://github.com/skyelan1999/aide/issues/494#issuecomment-6467914823",
+      "495": "https://github.com/skyelan1999/aide/issues/495#issuecomment-6467915364",
+      "496": "https://github.com/skyelan1999/aide/issues/496#issuecomment-6467916052"
+    },
+    "remoteSourceCommit": "ac7196e043d694d1c559affb132ec5217c64689f"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "a0d922bba426019a2eaa37dd3e8f0c8eca46e5c5d959a493e03a5f13ed8eca7d",
+    "internal/server/web/vendor/drawio/js/plantuml/LOCAL_PATCHES.md": "76bc91524a2a94b5ce9344287c0e69c4550e0edf8480090abca46abf929bfd51",
+    "internal/server/web/vendor/drawio/js/plantuml/drawio-plantuml.min.js": "1a9e813f3321a6abfd2187356f04b334d8738f19bcffff16fb8c4ea3213891c7",
+    "scripts/browser-drawio-preview-bounds.cjs": "535199554149f0be720dd7202eabfa5f6d2f8f03abf08683107c444b463cd89c",
+    "scripts/drawio-plantuml-browser-cases.cjs": "837c6e790df760dd9fa33fffa2c5cc25c45237362288d84ef1bfa64826d4a566",
+    "scripts/fixtures/plantuml-issue-cases.json": "076bfdc9d555832d1e4ab61888db030ece15ca47ba1c0598709316c4886b2607",
+    "scripts/test_plantuml_converter_issues.cjs": "7cf66f2b6e9032089bf0d8117c362b4be7144d05629a4029e23c667dc6203a88"
+  },
+  "completedAt": "2026-10-28T11:33:58.520400+00:00",
+  "cumulativeFixedOnBranch": 340,
+  "cumulativeProductFixes": 339,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

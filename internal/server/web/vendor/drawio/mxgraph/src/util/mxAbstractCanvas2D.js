@@ -658,6 +658,11 @@ mxAbstractCanvas2D.prototype.curveTo = function(x1, y1, x2, y2, x3, y3)
  */
 mxAbstractCanvas2D.prototype.arcTo = function(rx, ry, angle, largeArcFlag, sweepFlag, x, y)
 {
+	if (rx === 0 || ry === 0)
+	{
+		if (x !== this.lastX || y !== this.lastY) this.lineTo(x, y);
+		return;
+	}
 	var curves = mxUtils.arcToCurves(this.lastX, this.lastY, rx, ry, angle, largeArcFlag, sweepFlag, x, y);
 	
 	if (curves != null)

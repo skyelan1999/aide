@@ -967,6 +967,7 @@ mxVertexHandler.prototype.rotateVertex = function(me)
 	// Rotation raster
 	if (this.rotationRaster && this.graph.isGridEnabledEvent(me.getEvent()))
 	{
+		var raster;
 		var dx = point.x - this.state.getCenterX();
 		var dy = point.y - this.state.getCenterY();
 		var dist = Math.sqrt(dx * dx + dy * dy);

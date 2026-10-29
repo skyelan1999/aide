@@ -280,7 +280,7 @@ mxShapeEipMessageChannel.prototype.getConstraints = function(style, w, h)
 
 	var currW = 10;
 	
-	while (currW < w)
+	while (currW < w && constr.length < 10000)
 	{
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, currW, 0));
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, currW, 0));
@@ -376,7 +376,7 @@ mxShapeEipDatatypeChannel.prototype.getConstraints = function(style, w, h)
 
 	var currW = 10;
 	
-	while (currW < w)
+	while (currW < w && constr.length < 10000)
 	{
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, currW, 0));
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, currW, 0));
@@ -485,7 +485,7 @@ mxShapeEipDeadLetterChannel.prototype.getConstraints = function(style, w, h)
 
 	var currW = 10;
 	
-	while (currW < w)
+	while (currW < w && constr.length < 10000)
 	{
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, currW, 0));
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, currW, 0));
@@ -589,7 +589,7 @@ mxShapeEipInvalidMessageChannel.prototype.getConstraints = function(style, w, h)
 
 	var currW = 10;
 	
-	while (currW < w)
+	while (currW < w && constr.length < 10000)
 	{
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false, null, currW, 0));
 		constr.push(new mxConnectionConstraint(new mxPoint(0, 1), false, null, currW, 0));

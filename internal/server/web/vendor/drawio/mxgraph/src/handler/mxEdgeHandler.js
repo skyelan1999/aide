@@ -2474,8 +2474,8 @@ mxEdgeHandler.prototype.redrawInnerBends = function(p0, pe)
 				}
 				else if (this.handleImage == null && this.labelShape.visible && mxUtils.intersects(this.bends[i].bounds, this.labelShape.bounds))
 				{
-					w = mxConstants.HANDLE_SIZE + 3;
-					h = mxConstants.HANDLE_SIZE + 3;
+					var w = mxConstants.HANDLE_SIZE + 3;
+					var h = mxConstants.HANDLE_SIZE + 3;
 					this.bends[i].bounds = new mxRectangle(Math.round(x - w / 2), Math.round(y - h / 2), w, h);
 				}
 				

@@ -124,7 +124,10 @@ func (a *App) unlockWorkspaceVault(w http.ResponseWriter, r *http.Request) {
 		fail(w, 401, errors.New("未设置登录密码"))
 		return
 	}
-	ok, _ := VerifyPassword(in.Password, hash)
+	ok, _, verifyErr := a.verifyMasterPassword(in.Password, hash)
+	if writeMasterPasswordCooldown(w, verifyErr) {
+		return
+	}
 	if !ok {
 		fail(w, 401, errors.New("账户密码错误"))
 		return

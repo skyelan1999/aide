@@ -35,19 +35,12 @@ mxShapeAws4ProductIcon.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var opacity = parseFloat(mxUtils.getValue(this.style, 'opacity', '100'));
-	var op1 = opacity;
-	var op2 = opacity;
-	
-	if (fillColor == 'none')
-	{
-		op1 = 0;
-	}
-	
-	if (gradientColor == 'none')
-	{
-		op2 = 0;
-	}
+	var fillColor = mxUtils.getValue(this.state.style, 'fillColor', '#ffffff');
+	var gradientColor = mxUtils.getValue(this.state.style, 'gradientColor', fillColor);
+	// configureCanvas already applies overall opacity. Gradient stops only
+	// represent endpoint transparency, avoiding a second opacity factor.
+	var op1 = fillColor == 'none' ? 0 : 1;
+	var op2 = gradientColor == 'none' ? 0 : 1;
 
 	var ind = 1;
 	var strokeColor = mxUtils.getValue(this.state.style, 'strokeColor', 'none');
@@ -62,12 +55,12 @@ mxShapeAws4ProductIcon.prototype.paintVertexShape = function(c, x, y, w, h)
 	c.fill();
 
 	c.setShadow(false);
-	var fillColor = mxUtils.getValue(this.state.style, 'fillColor', '#ffffff');
-	var gradientColor = mxUtils.getValue(this.state.style, 'gradientColor', fillColor);
+
+
 	var gradientDir = mxUtils.getValue(this.state.style, 'gradientDirection', 'south');
-	
+
 	c.setFillColor(fillColor);
-	c.setGradient(fillColor, gradientColor, 0, 0, w, h, gradientDir, op1, op2);	
+	c.setGradient(op1 == 0 ? '#ffffff' : fillColor, op2 == 0 ? '#ffffff' : gradientColor, 0, 0, w, h, gradientDir, op1, op2);
 
 	c.begin();
 	c.moveTo(ind, ind);
@@ -76,7 +69,7 @@ mxShapeAws4ProductIcon.prototype.paintVertexShape = function(c, x, y, w, h)
 	c.lineTo(ind, w - ind);
 	c.close();
 	c.fill();
-	
+
 
 	var prIcon = mxUtils.getValue(this.state.style, 'prIcon', '');
 	var stencil = mxStencilRegistry.getStencil(prIcon);

@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "base": "http://127.0.0.1:40959/",
+  "pluginCount": 32,
+  "terminalVersion": "1.5.2",
+  "downloadBytes": 1063504,
+  "downloadSha256": "36984e8e16e33f785f7128a08097271ade036b31cd7223c39be1a01a9fa6a10c",
+  "downloadName": "aide-pkg-terminal-v1.5.2.zip",
+  "comparePrivateDisplayOnly": true,
+  "pageErrors": []
+}

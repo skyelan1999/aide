@@ -1,0 +1,616 @@
+{
+  "generatedAt": "2026-10-28T23:36:39.762686+00:00",
+  "repository": "skyelan1999/aide",
+  "branch": "codex/open-issue-review-20261026",
+  "latestSourceCommit": "e34d994c68316bc7b641e89ebc54c73b75951ded",
+  "liveOpenCount": 508,
+  "sourceCoveredOpenCount": 434,
+  "pendingCount": 74,
+  "original104Remaining": [
+    335,
+    340,
+    426,
+    429,
+    432,
+    433,
+    437,
+    438,
+    439,
+    440,
+    442,
+    443,
+    474,
+    480,
+    486,
+    487,
+    489,
+    493,
+    500,
+    501,
+    502,
+    503,
+    504,
+    505,
+    506,
+    507,
+    508,
+    509,
+    510,
+    511,
+    512,
+    513,
+    514,
+    532,
+    533,
+    534,
+    535,
+    536,
+    537,
+    538,
+    540,
+    542,
+    545,
+    546,
+    547,
+    548,
+    549,
+    550,
+    552,
+    553,
+    554,
+    556,
+    557,
+    558,
+    559,
+    560,
+    566,
+    567,
+    568,
+    569,
+    570,
+    571,
+    572,
+    573,
+    574,
+    576
+  ],
+  "newPendingReports": [
+    578,
+    579,
+    582,
+    590,
+    591,
+    592,
+    593,
+    594
+  ],
+  "pendingEntries": [
+    {
+      "number": 335,
+      "title": "Windows Release launcher pins local directories to bundled workspace and overrides .env paths",
+      "author": "skyelan1999",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/335"
+    },
+    {
+      "number": 340,
+      "title": "Windows Release manual slot activation is ignored or hangs in host updater",
+      "author": "skyelan1999",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/340"
+    },
+    {
+      "number": 426,
+      "title": "[P2] Stop Markdown export renders when the job is cancelled or times out",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/426"
+    },
+    {
+      "number": 429,
+      "title": "[P2] Enforce the triangle budget before parsing OBJ assets",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/429"
+    },
+    {
+      "number": 432,
+      "title": "[P2] Bound PDF.js predictor rows derived from untrusted DecodeParms",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/432"
+    },
+    {
+      "number": 433,
+      "title": "[P2] Bound memory use when decoding oversized PDF images",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/433"
+    },
+    {
+      "number": 437,
+      "title": "[P2] Prevent quadratic backtracking in C/C++ highlighting",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/437"
+    },
+    {
+      "number": 438,
+      "title": "[P2] Prevent quadratic backtracking in C# highlighting",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/438"
+    },
+    {
+      "number": 439,
+      "title": "P2 Avoid quadratic backtracking in INI/TOML key highlighting",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/439"
+    },
+    {
+      "number": 440,
+      "title": "P2 Prevent quadratic scans in Ruby heredoc detection",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/440"
+    },
+    {
+      "number": 442,
+      "title": "[P2] Bound recursive PDF object parsing depth",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/442"
+    },
+    {
+      "number": 443,
+      "title": "[P2] Bound XRef stream entry expansion during PDF parsing",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/443"
+    },
+    {
+      "number": 474,
+      "title": "[P2] Bound regex evaluation in PlantUML splitstr_regex",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/474"
+    },
+    {
+      "number": 480,
+      "title": "[P2] Bound repeated layout work for nested PlantUML states",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/480"
+    },
+    {
+      "number": 486,
+      "title": "[P2] Avoid quadratic scans for PlantUML object map links",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/486"
+    },
+    {
+      "number": 487,
+      "title": "[P2] Bound quadratic note placement in PlantUML object diagrams",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/487"
+    },
+    {
+      "number": 489,
+      "title": "[P3] Bound recursion for deeply nested PlantUML class packages",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/489"
+    },
+    {
+      "number": 493,
+      "title": "[P3] Bound recursion for deeply nested PlantUML activity branches",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/493"
+    },
+    {
+      "number": 500,
+      "title": "[P2] Limit canvas dimensions when rendering unusually large PDF pages",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/500"
+    },
+    {
+      "number": 501,
+      "title": "[P2] Bound PDF.js LZW stream expansion during PDF preview",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/501"
+    },
+    {
+      "number": 502,
+      "title": "[P2] Prevent infinite loops in PDF.js JBIG2 segment parsing",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/502"
+    },
+    {
+      "number": 503,
+      "title": "[P2] Bound global PDF image cache entries when image decoding fails",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/503"
+    },
+    {
+      "number": 504,
+      "title": "[P2] Cap Indexed color-space lookup table allocations",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/504"
+    },
+    {
+      "number": 505,
+      "title": "[P2] Preserve edge pixels when grouping inline images",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/505"
+    },
+    {
+      "number": 506,
+      "title": "[P2] Handle JPX images whose component count differs from the PDF ColorSpace",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/506"
+    },
+    {
+      "number": 507,
+      "title": "[P3] Detect cyclic named ColorSpace resource aliases",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/507"
+    },
+    {
+      "number": 508,
+      "title": "[P2] Bound PDF.js sampled-function allocations from untrusted /Size",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/508"
+    },
+    {
+      "number": 509,
+      "title": "[P3] Bound recursive parsing of nested PDF PostScript conditionals",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/509"
+    },
+    {
+      "number": 510,
+      "title": "[P2] Prevent recursive PDF Form XObject expansion",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/510"
+    },
+    {
+      "number": 511,
+      "title": "[P2] Bound recursive PDF tiling-pattern expansion",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/511"
+    },
+    {
+      "number": 512,
+      "title": "[P2] Bound PDF.js CID font width table expansion",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/512"
+    },
+    {
+      "number": 513,
+      "title": "[P2] Prevent PDF.js Squiggly annotations from trapping the render worker",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/513"
+    },
+    {
+      "number": 514,
+      "title": "[P2] Bound PDF.js CMap expansion to avoid hundreds of megabytes from a tiny PDF",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/514"
+    },
+    {
+      "number": 532,
+      "title": "[P2] Bound nested PDF graphics-state depth during rendering",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/532"
+    },
+    {
+      "number": 533,
+      "title": "[P2] Bound CCITTFaxDecode Columns before allocating scanline arrays",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/533"
+    },
+    {
+      "number": 534,
+      "title": "[P2] Bound FlateDecode image expansion before buffering",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/534"
+    },
+    {
+      "number": 535,
+      "title": "[P2] Bound JBIG2 Page Information dimensions before allocation",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/535"
+    },
+    {
+      "number": 536,
+      "title": "[P2] Bound JPEG SOF dimensions before allocating decoder blocks",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/536"
+    },
+    {
+      "number": 537,
+      "title": "[P2] Bound JPX output allocation by image extents",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/537"
+    },
+    {
+      "number": 538,
+      "title": "[P2] Reject invalid CFF INDEX offSize before scanning offsets",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/538"
+    },
+    {
+      "number": 540,
+      "title": "[P2] Bound URDF mesh-picking intersections for dense STL assets",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/540"
+    },
+    {
+      "number": 542,
+      "title": "[P2] Bound decoded dimensions of URDF DAE textures",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/542"
+    },
+    {
+      "number": 545,
+      "title": "[P3] Bound PDF inline-image cache-key conversion",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/545"
+    },
+    {
+      "number": 546,
+      "title": "[P2] Reject truncated CFF charset ranges before looping",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/546"
+    },
+    {
+      "number": 547,
+      "title": "[P2] Bound PDF CFF FDSelect expansion by glyph count",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/547"
+    },
+    {
+      "number": 548,
+      "title": "[P2] Bound PDF Type 2 CharString operand stack growth",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/548"
+    },
+    {
+      "number": 549,
+      "title": "[P3] Bound Type 1 CharString subroutine recursion",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/549"
+    },
+    {
+      "number": 550,
+      "title": "[P3] Guard recursive TrueType composite glyph compilation",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/550"
+    },
+    {
+      "number": 552,
+      "title": "[P2] Bound TrueType Collection font count before allocating offsets",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/552"
+    },
+    {
+      "number": 553,
+      "title": "[P2] Bound TrueType format-12 cmap expansion before mapping glyphs",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/553"
+    },
+    {
+      "number": 554,
+      "title": "[P2] Bound PDF mesh shading vertex expansion",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/554"
+    },
+    {
+      "number": 556,
+      "title": "[P3] Bound recursive traversal of Type 4 PostScript expressions",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/556"
+    },
+    {
+      "number": 557,
+      "title": "[P2] Avoid quadratic XML entity scans in XFA datasets",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/557"
+    },
+    {
+      "number": 558,
+      "title": "[P3] Preserve negative bounds when building default annotation appearances",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/558"
+    },
+    {
+      "number": 559,
+      "title": "[P2] Stop auto-size loop when a multiline widget has no usable height",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/559"
+    },
+    {
+      "number": 560,
+      "title": "[P2] Delete worker stream sinks after stream errors",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/560"
+    },
+    {
+      "number": 566,
+      "title": "[P2] Bound Type 1 Length1 before allocating font decode buffers",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/566"
+    },
+    {
+      "number": 567,
+      "title": "[P2] Avoid eagerly decoding embedded files during PDF preview",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/567"
+    },
+    {
+      "number": 568,
+      "title": "[P2] Cap SIZ-derived JPX component buffers during tile updates",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/568"
+    },
+    {
+      "number": 569,
+      "title": "[P2] Check OpenJPEG input allocation before copying into Wasm",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/569"
+    },
+    {
+      "number": 570,
+      "title": "[P2] Upsample subsampled JPX component planes before copying",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/570"
+    },
+    {
+      "number": 571,
+      "title": "[P3] Avoid using the old MCT base pointer after realloc in bundled OpenJPEG",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/571"
+    },
+    {
+      "number": 572,
+      "title": "[P2] Bound memory growth from oversized JP2 FTYP compatibility lists",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/572"
+    },
+    {
+      "number": 573,
+      "title": "[P2] Cap per-tile JPX metadata allocation from SIZ tile counts",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/573"
+    },
+    {
+      "number": 574,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPM headers",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/574"
+    },
+    {
+      "number": 576,
+      "title": "[P2] Bound Tier-2 segment growth from attacker-declared coding passes",
+      "author": "skyelan99-png",
+      "source": "initial104",
+      "url": "https://github.com/skyelan1999/aide/issues/576"
+    },
+    {
+      "number": 578,
+      "title": "[P3] Check signed arithmetic in reversible MCT decoding",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/578"
+    },
+    {
+      "number": 579,
+      "title": "[P2] Bound ICC profile copies during JP2 header parsing",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/579"
+    },
+    {
+      "number": 582,
+      "title": "[P2] Sign-extend signed MCT integer arrays before conversion",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/582"
+    },
+    {
+      "number": 590,
+      "title": "[P2] Check Wasm32 calloc byte-size overflow in JPEG 2000 packet iterator",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/590"
+    },
+    {
+      "number": 591,
+      "title": "[P3] Reject unsupported progression-order values in POC markers",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/591"
+    },
+    {
+      "number": 592,
+      "title": "[P3] Reject reserved ROI styles in RGN markers",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/592"
+    },
+    {
+      "number": 593,
+      "title": "[P2] Cap main-header marker-index growth from repeated COM markers",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/593"
+    },
+    {
+      "number": 594,
+      "title": "[P3] Free nested decoder allocations when precinct code-block growth fails",
+      "author": "skyelan99-png",
+      "source": "new-report",
+      "url": "https://github.com/skyelan1999/aide/issues/594"
+    }
+  ],
+  "nativeAcceptanceAlsoPending": [
+    335,
+    340,
+    369,
+    464,
+    467
+  ],
+  "countingNote": "Coverage means source/evidence on branches, not merged/released/closed issues.335/340 are in74;369/464/467 are source-covered but native acceptance still pending.",
+  "priority": "Explicit user request,then new unhandled skyelan1999 reports newest first,then original remaining ascending;continue others when blocked."
+}

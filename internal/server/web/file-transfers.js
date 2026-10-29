@@ -31,7 +31,7 @@
    if(!v){v={card:node('article','file-transfer-task'),title:node('strong'),operation:node('small','muted'),status:node('span','muted'),progress:node('progress'),size:node('small','muted'),error:node('p','task-error'),controls:node('div','file-transfer-task-controls')};v.card.dataset.transferId=j.id;v.card.append(v.title,v.operation,v.status,v.progress,v.size,v.error,v.controls);views.set(j.id,v);}
    if(v.card!==cursor)list.insertBefore(v.card,cursor);cursor=v.card.nextSibling;
    v.title.textContent=local?j.name:(j.uploadName||j.tops?.map(x=>x.source||x.target).join(', ')||j.id);
-   v.operation.textContent=tr(({copy:'复制',move:'移动',upload:'上传',download:'打包下载'})[j.operation]||'下载');
+   v.operation.textContent=tr(j.rawDownload?'下载':({copy:'复制',move:'移动',upload:'上传',download:'打包下载'})[j.operation]||'下载');
    v.status.textContent=tr(active.get(j.id)?.phase==='verifying'?'校验已传分块':j.operation==='upload'&&active.has(j.id)?'上传中':j.status==='running'&&j.completed>=j.size?'校验并发布':states[j.status]||j.status);
    v.progress.max=Math.max(1,j.size||0);v.progress.value=j.status==='complete'?v.progress.max:j.completed||0;v.size.textContent=bytes(j.completed||0)+' / '+bytes(j.size||0);v.error.hidden=!j.error;v.error.textContent=j.error||'';
    const key=JSON.stringify([j.status,active.has(j.id),j.uploadCommitted,document.documentElement.lang]);if(key===v.key)continue;v.key=key;v.controls.replaceChildren();const controls=v.controls;
@@ -90,10 +90,10 @@
   finally{if(writable)await writable.close().catch(()=>{});active.delete(j.id);await save(j);paint();schedule();}
  }
  function picker(name){return window.showSaveFilePicker?window.showSaveFilePicker({suggestedName:name}):null;}
- async function savePrepared(j){const name=j.tops.length===1?j.tops[0].source.split('/').pop()+'.zip':'download.zip';return startDownload('/file/stream?job='+encodeURIComponent(j.id),name,picker(name));}
+ async function savePrepared(j){const name=j.tops.length===1?j.tops[0].source.split('/').pop()+(j.rawDownload?'':'.zip'):'download.zip';return startDownload('/file/stream?job='+encodeURIComponent(j.id),name,picker(name));}
  function download(file,archive,target){
   const name=file.name+(archive?'.zip':'');const handle=picker(name);const scope=services.scope();
-  return(async()=>{if(archive){if(handle)await handle;const j=await create({operation:'download',source:target.source||'workspace',paths:[file.path]});open();while(valid(scope)){const current=await services.api('/file/transfers/'+j.id);if(current.status==='complete')return startDownload('/file/stream?job='+j.id,name,handle);if(['failed','cancelled','paused'].includes(current.status))return;await new Promise(r=>setTimeout(r,500));}}else{const query=new URLSearchParams({path:file.path,workspaceId:scope});if(target.source)query.set('source',target.source);else query.set('root',target.root||'workspace');return startDownload('/file/stream?'+query,name,handle);}})().catch(e=>{if(e.name!=='AbortError')services.notice(e.message);});
+  return(async()=>{if(handle)await handle;const j=await create({operation:'download',source:target.source||'workspace',paths:[file.path],rawDownload:!archive});open();while(valid(scope)){const current=await services.api('/file/transfers/'+j.id);if(current.status==='complete')return startDownload('/file/stream?job='+encodeURIComponent(j.id),name,handle);if(['failed','cancelled','paused'].includes(current.status))return;await new Promise(r=>setTimeout(r,500));}})().catch(e=>{if(e.name!=='AbortError')services.notice(e.message);});
  }
  window.AideTransfers={mount(s){services=s;void idb('downloads','readonly',s=>s.getAll()).then(records=>{downloads=Array.from(new Map([...(records||[]),...downloads].map(j=>[j.id,j])).values());for(const j of downloads){if(j.status==='running')j.status='paused';}paint();}).catch(e=>services.notice(e.message));const b=button('文件传输',open);b.id='file-transfers-button';delete b.dataset.i18n;b.textContent='⇅';b.title=tr('文件传输');b.dataset.i18nTitle='文件传输';b.dataset.i18nAriaLabel='文件传输';b.setAttribute('aria-label',tr('文件传输'));b.classList.add('icon-button');document.getElementById('refresh-files').before(b);},open,create,upload,download,hash};
 })();

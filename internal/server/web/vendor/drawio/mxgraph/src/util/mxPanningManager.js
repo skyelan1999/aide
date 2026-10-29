@@ -231,6 +231,12 @@ function mxPanningManager(graph)
 	
 	this.destroy = function()
 	{
+		this.stop();
+		if (this.thread != null)
+		{
+			window.clearInterval(this.thread);
+			this.thread = null;
+		}
 		graph.removeMouseListener(this.mouseListener);
 		mxEvent.removeListener(document, 'mouseup', this.mouseUpListener);
 	};

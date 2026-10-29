@@ -35,9 +35,9 @@ mxRackF5BigIp1600.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -113,9 +113,9 @@ mxRackF5BigIp2x00.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -191,9 +191,9 @@ mxRackF5BigIp3600.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -269,9 +269,9 @@ mxRackF5BigIp3900.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -347,9 +347,9 @@ mxRackF5BigIp4x00.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -425,9 +425,9 @@ mxRackF5BigIp5x00.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -503,9 +503,9 @@ mxRackF5Em4000.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -581,9 +581,9 @@ mxRackF5BigIp6900.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -645,9 +645,9 @@ mxRackF5BigIp89x0.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -709,9 +709,9 @@ mxRackF5BigIp7x00.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -773,9 +773,9 @@ mxRackF5BigIp10x00.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -837,9 +837,9 @@ mxRackF5BigIp110x0.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -901,9 +901,9 @@ mxRackF5Viprion2400.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var bladeNum = parseInt(mxUtils.getValue(this.style, 'bladeNum', '4'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -985,11 +985,11 @@ mxRackF5Viprion4400.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var hasMask = mxUtils.getValue(this.style, 'hasMask', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var hasMask = mxUtils.getValue(this.style, 'hasMask', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
 	var bladeType = mxUtils.getValue(this.style, 'bladeType', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var bladeNum = parseInt(mxUtils.getValue(this.style, 'bladeNum', '0'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -1089,8 +1089,8 @@ mxRackF5Viprion4800.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
 	var bladeNum = parseInt(mxUtils.getValue(this.style, 'bladeNum', '0'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -1187,9 +1187,9 @@ mxRackF5BigIpi2000.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -1265,9 +1265,9 @@ mxRackF5BigIpi4000.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -1343,9 +1343,9 @@ mxRackF5BigIpi5000.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -1421,9 +1421,9 @@ mxRackF5BigIpi7000.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 
@@ -1499,9 +1499,9 @@ mxRackF5BigIpi10000.prototype.paintVertexShape = function(c, x, y, w, h)
 {
 	c.translate(x, y);
 
-	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1');
-	var isFront = mxUtils.getValue(this.style, 'isFront', '0');
-	var isDC = mxUtils.getValue(this.style, 'isDC', '0');
+	var hasEars = mxUtils.getValue(this.style, 'hasEars', '1') == '1';
+	var isFront = mxUtils.getValue(this.style, 'isFront', '0') == '1';
+	var isDC = mxUtils.getValue(this.style, 'isDC', '0') == '1';
 	var psNum = parseInt(mxUtils.getValue(this.style, 'psNum', '2'));
 	var stencilPath = mxUtils.getValue(this.style, 'path', 'img/lib/f5/');
 

@@ -1,0 +1,92 @@
+{
+  "cycle": 63,
+  "baseline": "f32b5825ed493a72b08094056ff0e697c8969661",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    196,
+    197,
+    198
+  ],
+  "commits": {
+    "196": "94da7948838d9941ca3273b63abfb9f5830fadcf",
+    "197": "94da7948838d9941ca3273b63abfb9f5830fadcf",
+    "198": "94da7948838d9941ca3273b63abfb9f5830fadcf"
+  },
+  "cumulativeProductFixes": 131,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 132,
+  "original272RemainingFollowup": 155,
+  "additionalFollowupIssues": [],
+  "priorityRefresh": "Owner467 body updated15:10 with earlier ACL proposal;latestcomments unchanged,existingcycle52 coversfailureandstrictDACLreapplication. No new actionable failure;continue196.",
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle63-bpmn-red-final.log",
+      "observed": "Real source factories:misspelled Azure title;plain call count3 inclzerochild bzzzzt;MultipleStart explicit end token/exactendbucket. Rendered blank placeholder vs populatedcells screenshot visually inspected."
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_BPMN_PALETTE_ACCEPTANCE=1 AIDE_DRAWIO_STATE_SEARCH_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle63-bpmn-green node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "22groups/errors[] Chromium154;source/app/integrate×light1440/dark390:6newcases each11actualinsertedtemplates(twoCallorientations/sixvariants/Azure/Start/End),assetdecode,indexqueries andexactbuckets;6previous191–195+10base.285factoriesmaterialized,not285rendered. Selected subpalettes with isolated receiver/index;fullcompressedsearchcache excluded. Desktop screenshot visually inspected.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle63-bpmn-green/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "PinnedTerser5.39 sync --check;node --check2sources/2bundles/4helpers;beforeaftercellrecordcomparison",
+      "observed": "54retainedchoreographyfactories exactlyequal;oneplaceholderremoved,286→285factories;Azuretitleonly,Start explicittagonly,Endunchanged;bothbundles outside3assignments byteidentical.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle63-comparison.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 184,
+      "fingerprint": "41167b726077a7813538e49d47443523248f14ecc08ac4c4b093da71acdd26b1",
+      "receipt": ".agent-state/verify-20261027T151816901602Z.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py;git diff --check;git diff --cached --check",
+      "observed": "429Markdown/1471local links"
+    }
+  ],
+  "failedChecksResolved": [
+    "Initial helper inheritedlazycompressedindex,whichappendedrecords duringquery;isolatedsearchIndexData=null before validRED.",
+    "Initial acceptance assumedoneplain/threevariants;actualfactoryinspectfoundtwoparticipantorientationswithdifferentgrayparts,soexpectedtwo/sixandkeptall. FinalvalidREDcontains onlyproductdiagnostics."
+  ],
+  "securityReview": [
+    "Onlyemptyregistrationremoved;retainedcompletefactoriesbyteequivalent. No olddiagramrewrite,assetrenameorSVGchanges.",
+    "Titleaugmentation/fuzzysearchretained;Startquerypreviouslymayhittitle,wrongexplicitendbucketisremoved.",
+    "Trustedshippedassignmentsrunisolatedreceiver;actualimport/render usesownedgraph;browsercontextclosedfinally,noexternal/device/modelcalls."
+  ],
+  "notRun": [
+    "FullAideworkbenchlibrarypicker/mouse dragdrop/fullcompressedsearchcache;selectedfactory/index/insertion/renderdoesnotproveentireUI.",
+    "All285factorytemplatesnotvisuallyvalidated;54choreographiescomparedasrecords,11targetsrendered.",
+    "Go/full/native suitesnotrepeatedforfrontendmetadata. Currentmodified464/467Windowsruntime remainsNOT_RUN.",
+    "No mainmerge,Release/tag/deploy,productionrestart. Reasonableissuesstayopenpendingmain."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "196": "https://github.com/skyelan1999/aide/issues/196#issuecomment-6445915196",
+      "197": "https://github.com/skyelan1999/aide/issues/197#issuecomment-6445915896",
+      "198": "https://github.com/skyelan1999/aide/issues/198#issuecomment-6445916612"
+    },
+    "remoteCommit": "659e7110edc197bc742e3dff2cfc830efbf55d60"
+  },
+  "sourceSHA256": {
+    "docs/architecture/office-viewer.md": "f327868211e721bbe31abf5933b178d681164ae18f823ae76794353ce3f9b5a0",
+    "internal/server/web/vendor/drawio/js/app.min.js": "5796c284398eab014ae429cee78634435c6f530bc2a30a8751e5875fe3674bd4",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-Azure2.js": "be64b162cb7934753cc9726112492dfa56ddd2bd291ebc236bfd471df0e547b0",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar-BPMN.js": "c0219ce91aec69970e994b8de4d997034bb77d827660ca57514c46c1b071a72e",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "597a0c91e54147d5e008947f02868c8a8a0cb24724b78fd630c1f84dc6ac667a",
+    "scripts/browser-drawio-preview-bounds.cjs": "1d8b9a46f796ab77baba6a935f1463a0d459923699c4f94166c67dbce727b579",
+    "scripts/drawio-bpmn-palette-browser-cases.cjs": "46a3b460a0d3c10ade7ea577f54cb2d69add09ef65b3d99a28dfafef00eeb0fa",
+    "scripts/drawio-bpmn-palette-review.cjs": "9596b32dd0a0e010e7ed039f0a59eda90ebcec1a2b24c30cb905ab3cd77fcb03",
+    "scripts/sync_drawio_palette_search.cjs": "656c2439af7c826161b08eff203390dba1003fe69dea97e22bb774d24517d6dd"
+  }
+}

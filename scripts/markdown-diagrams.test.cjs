@@ -1,15 +1,15 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync('internal/server/web/markdown-diagrams.js','utf8'),window={};
-const document={documentElement:{dataset:{theme:'light'}},defaultView:{MutationObserver:class{observe(){}disconnect(){}}},getElementById:()=>null};
+const document={documentElement:{dataset:{theme:'light'}},defaultView:{MutationObserver:class{observe(){}disconnect(){}}},getElementById:()=>null,createElement:()=>({content:{querySelectorAll:()=>[]},innerHTML:''})};
 vm.runInNewContext(source,{window,document,crypto:require('node:crypto').webcrypto});
 const api=window.AideMarkdownDiagrams;
 function luminance(hex){const c=hex.slice(1).match(/../g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return c[0]*.2126+c[1]*.7152+c[2]*.0722;}
 function contrast(a,b){const x=[luminance(a),luminance(b)].sort((a,b)=>b-a);return(x[0]+.05)/(x[1]+.05);}
-for(const dark of [false,true]){assert.equal(api.configuration(dark).htmlLabels,false);const v=api.configuration(dark).themeVariables;for(const fill of ['primaryColor','secondaryColor','tertiaryColor','clusterBkg','edgeLabelBackground'])assert(contrast(v.textColor,v[fill])>=4.5,fill);assert(contrast(v.lineColor,v.background)>=3);assert(contrast(v.primaryBorderColor,v.primaryColor)>=3);}
+for(const dark of [false,true]){assert.equal(api.configuration(dark).htmlLabels,false);assert.equal(api.configuration(dark,true).htmlLabels,true);assert.equal(api.configuration(dark,true).flowchart.htmlLabels,true);assert.equal(api.configuration(dark,true).securityLevel,'strict');const v=api.configuration(dark).themeVariables;for(const fill of ['primaryColor','secondaryColor','tertiaryColor','clusterBkg','edgeLabelBackground'])assert(contrast(v.textColor,v[fill])>=4.5,fill);assert(contrast(v.lineColor,v.background)>=3);assert(contrast(v.primaryBorderColor,v.primaryColor)>=3);}
 let removed;
-const doc={adoptedStyleSheets:[],documentElement:{},defaultView:{CSSStyleSheet:class{replaceSync(css){this.css=css;}},MutationObserver:class{constructor(fn){removed=fn;}observe(){}}}};
-function node(text){return {textContent:text,dataset:{},ownerDocument:doc,isConnected:true,querySelectorAll:s=>s==='svg style'?[{textContent:'#diagram .node{fill:blue}'}]:[],set innerHTML(v){this.svg=v;this.textContent='rendered label';}};}
+const doc={adoptedStyleSheets:[],documentElement:{},defaultView:{CSSStyleSheet:class{replaceSync(css){this.css=css;this.cssRules=[];}},MutationObserver:class{constructor(fn){removed=fn;}observe(){}}}};
+function node(text){return {textContent:text,dataset:{},ownerDocument:doc,isConnected:true,querySelectorAll:s=>s==='svg style'?[{textContent:'#diagram .node{fill:blue}',ownerDocument:doc}]:[],set innerHTML(v){this.svg=v;this.textContent='rendered label';}};}
 const a=node('flowchart TD\n A-->B'),host={querySelectorAll:()=>[a]};let calls=[],configuration,release,delay=false;
 window.mermaid={initialize:c=>{configuration=c;},render:async(_id,text)=>{const dark=configuration.themeVariables.darkMode;calls.push({dark,text});if(delay){delay=false;await new Promise(r=>release=r);}return {svg:'svg-'+dark};}};
 const load=async()=>{};

@@ -1,0 +1,153 @@
+{
+  "cycle": 43,
+  "baseline": "6a88011b1106a2d4108227987f547fd90b86cb01",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    169,
+    170,
+    171,
+    172,
+    173,
+    174
+  ],
+  "commits": {
+    "169": "cf44be4ddf99af7a98a7b457c035640d52f487cd",
+    "170": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+    "171": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+    "172": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+    "173": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+    "174": "b694f65e77cb76cf23919b84cd08f1a95218f686"
+  },
+  "followupRegressions": [
+    {
+      "issue": 128,
+      "commit": "b694f65e77cb76cf23919b84cd08f1a95218f686",
+      "countedAsNewCoverage": false,
+      "preRepairComment": "https://github.com/skyelan1999/aide/issues/128#issuecomment-6432611880",
+      "observed": "先前文档XML预算误拦内置AWS4缓存，stencils.min loader经mxUtils.parseXml触发AIDE_DRAWIO_LIMIT并使预览移除。私有缓存自身字符串条目改用独立原生XML解析；损坏XML/继承条目拒绝，文档预算和回退路径未放宽。"
+    }
+  ],
+  "cumulativeProductFixes": 104,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 105,
+  "original272RemainingFollowup": 179,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "issue": 169,
+      "command": "AIDE_DRAWIO_LUCID_ACCEPTANCE=1 ... node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "真实convertLucidChart/importState/图模型缺少预期18px消息字号，数组style赋值没有进入子cell。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle43-169-browser-red.log"
+    },
+    {
+      "issues": [
+        170,
+        171,
+        172,
+        173,
+        174
+      ],
+      "command": "same browser fixture with corrected control identities",
+      "result": "EXPECTED_FAIL",
+      "observed": "实际图模型报告6个错配：refresh→label；NPN/PNP相反；plug→ball；MySQL→MSSQL；AppSync→SQS。正确的6个相邻对照均无错配。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle43-170-174-browser-red-corrected.log"
+    },
+    {
+      "issue": 128,
+      "result": "REGRESSION_REPRODUCED",
+      "observed": "目标映射已改正后AppSync素材仍缺失；实际console调用栈确认内置缓存被文档节点预算拒绝，frame被移除。非缺依赖环境失败。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle43-aws-stencil-trace.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle43-browser-all-final node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "PASS",
+      "scope": "真实EditorUi.convertLucidChart预载源码及两份分发LucidImporter完整闭包，图模型/计算样式/mxText/stencil/自定义渲染器；1440 light与390 dark各6个修正映射+6邻近对照、4独立消息和既有头部；私有AWS4缓存同步/异步、损坏XML/继承条目拒绝；相同缓存文本作为不可信输入仍拒绝，含既有编辑保存/资源门禁共25组，零pageerror，finally关闭自建浏览器context。",
+      "browser": "154.0.8037.57",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle43-browser-all-final/result.json"
+    },
+    {
+      "command": "node scripts/test_drawio_preview_bounds.cjs",
+      "result": "PASS",
+      "scope": "原打包解压器及XML/DOM/单元格深度、循环、跨模型等既有资源限制。"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T031231508475Z.log",
+      "fingerprint": "1eccb1391ca2dc942afeac173a0ec245f67449b36f0a5c126b28902ab149bee2"
+    },
+    {
+      "command": "node --check (source/extensions/integrate/stencils + 2 browser scripts); python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1469links"
+    },
+    {
+      "command": "bounded diff and cache text audit",
+      "result": "PASS",
+      "observed": "169只改每份转换器的两处目标；170–174只改六处身份映射；私有编码缓存常量字节不变。负例提取实际缓存文本5088259字节，SHA256=d577382093fdff61d555efa6abe87136dd78746b7deb0bbb8d90876692010428；并非格式不同的独立XML文件。"
+    }
+  ],
+  "preflightFailures": [
+    {
+      "result": "FAIL_TEST_FIXTURE_CONTROL",
+      "observed": "第一版combined对照误写成不存在的AmazonAppSyncAWS19，额外两项假错配；核对源码改为AWSAppSync_redAWS19后，真RED只余6个报告错配，未把拼写错误计成产品问题。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle43-170-174-browser-red.log"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "NOT_RUN",
+      "scope": "完整Aide工作台、真实Lucidchart账号/文件选择、全部集成bootstrap或离线自动加载、跨平台。实际转换API在预载真实Importer后调用，不声称所有外部格式/所有渲染语义均已覆盖。"
+    },
+    {
+      "result": "NOT_RUN",
+      "scope": "Go race/vet未重复执行，本批为vendored前端代码、静态资产loader、浏览器回归/quick配置及文档。"
+    }
+  ],
+  "notes": [
+    "EIMessage/History的message_N标签样式写到对应mxCell而不是item2数组，source/extensions.min/integrate.min同步；计算样式和真实mxText保持各自字号、颜色、粗斜体，既有message_0正确处理不变。",
+    "AndroidIconRefresh从NaN改为mxgraph.ios7.icons.repeat，实际Repeat stencil渲染；Info邻近映射保持。",
+    "修正旧EE_BJT_NPN1/PNP1反向映射，分别使用NPN/PNP stencil，_V2正确映射保持；实际注册图形身份验证。",
+    "PEPlugValveBlock使用valveType=plug，实际PID自定义渲染器接收plug；球阀对照保持ball。",
+    "AmazonRDSMySQLDBinstance2017使用aws3.mysql_db_instance，不再用ms_sql_instance；原MSSQL对照保持，实际stencil身份验证。",
+    "AWSAppSyncAWS19的resIcon改为aws4.appsync，实际资源图标渲染；既有正确红色变体对照保持。",
+    "128仅为已有覆盖的回归补修，不重复计数；已在修改前向128回填实际证据。可信数据来自脚本闭包私有静态缓存自身字符串条目，不导出解析器，不根据攻击者提供的root名称提高预算；正常文档/动态图形字符串继续原有限制。",
+    "缓存边界信任分发代码本身；不是对恶意同源脚本或被修改分发代码的隔离。根协调者按安全流程复核了自身属性检查、同步/异步路径及相同XML的不可信拒绝；没有放宽原预算或改变服务端权限。",
+    "真实stock图形目录与sidebar标签交叉核对BJT、阀型及云服务身份；未知整个Lucid格式和大型导入资源保证不在此批。",
+    "169早期单独16组/quick已通过后，170–174顺序合并到相同批；最终25组及上述新指纹覆盖全部最终代码，未拿旧169quick替代。",
+    "原272剩179，另新441窄屏footer待后续。下一项175 Alexa Voice Service映射已读最新正文，尚未新增回归或改代码。",
+    "无常驻服务，原用户未跟踪文件保留；只push分支，不合并main/发行/部署，合理issue保持open。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "169": "https://github.com/skyelan1999/aide/issues/169#issuecomment-6432948894",
+      "170": "https://github.com/skyelan1999/aide/issues/170#issuecomment-6432949530",
+      "171": "https://github.com/skyelan1999/aide/issues/171#issuecomment-6432949883",
+      "172": "https://github.com/skyelan1999/aide/issues/172#issuecomment-6432950287",
+      "173": "https://github.com/skyelan1999/aide/issues/173#issuecomment-6432950797",
+      "174": "https://github.com/skyelan1999/aide/issues/174#issuecomment-6432951112",
+      "128": "https://github.com/skyelan1999/aide/issues/128#issuecomment-6432951673"
+    },
+    "remoteCommit": "1f3000d5e447b18e99907b758537f5b4d86b3504"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "4774b789a4ce0c674593ca71fad524b2d7beb2e67e440c98393b131eb7f78f67",
+    "docs/architecture/office-viewer.md": "ac3bcf5a84faea075f2a91ffbbfb0295fbf5e86574d8178231405a62dd4a7c6a",
+    "internal/server/web/vendor/drawio/js/diagramly/Extensions.js": "5372a90531e9bd175632a7f91640fa786357b2c54781f58ff2300600c301aa08",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "e34cd09e84e1d398b94f1e7cf6dca7462fdf7dada269ba90ad63f2adbe1ff6f5",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "ba652f369b336f934abd424af3fa85d96a0bce8e3495ae7b626e2138a7ca4f07",
+    "internal/server/web/vendor/drawio/js/stencils.min.js": "f34bf11dcfe9dd659567750eede6ba364a15a0e73a52f146f128d4e88c674af4",
+    "scripts/browser-drawio-preview-bounds.cjs": "001973b57804a99b7a14936bf4cbbff92a7efdc924d65057a859588777c0d733",
+    "scripts/drawio-lucid-message-browser-cases.cjs": "c5873f26b38732d8cec91d50e9bef534b32a5cd407e7ae354dc3a0fd55c92e82"
+  }
+}

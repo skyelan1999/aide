@@ -57,6 +57,8 @@ type transferJob struct {
 	UploadName          string           `json:"uploadName,omitempty"`
 	UploadChunks        map[int64]string `json:"-"`
 	UploadCommitted     bool             `json:"uploadCommitted,omitempty"`
+	RawDownload         bool             `json:"rawDownload,omitempty"`
+	DownloadVersion     string           `json:"downloadVersion,omitempty"`
 	uploading           map[int64]context.CancelFunc
 	uploadWG            sync.WaitGroup
 	checkpointAt        time.Time
@@ -64,14 +66,15 @@ type transferJob struct {
 	cancel              context.CancelFunc
 }
 type transferManager struct {
-	app     *App
-	dir     string
-	mu      sync.Mutex
-	jobs    map[string]*transferJob
-	wg      sync.WaitGroup
-	closed  bool
-	slots   chan struct{}
-	runners chan struct{}
+	app      *App
+	dir      string
+	mu       sync.Mutex
+	jobs     map[string]*transferJob
+	wg       sync.WaitGroup
+	closed   bool
+	slots    chan struct{}
+	runners  chan struct{}
+	builders chan struct{}
 }
 type transferCreate struct {
 	Workspace       string   `json:"workspaceId"`
@@ -83,6 +86,7 @@ type transferCreate struct {
 	Name            string   `json:"name"`
 	Size            int64    `json:"size"`
 	Concurrency     int      `json:"concurrency"`
+	RawDownload     bool     `json:"rawDownload"`
 }
 
 func (a *App) transfers() *transferManager {
@@ -91,7 +95,7 @@ func (a *App) transfers() *transferManager {
 	if a.transferManager != nil {
 		return a.transferManager
 	}
-	m := &transferManager{app: a, dir: filepath.Join(a.dataPath, "file-transfers"), jobs: map[string]*transferJob{}, slots: make(chan struct{}, 8), runners: make(chan struct{}, 2)}
+	m := &transferManager{app: a, dir: filepath.Join(a.dataPath, "file-transfers"), jobs: map[string]*transferJob{}, slots: make(chan struct{}, 8), runners: make(chan struct{}, 2), builders: make(chan struct{}, 2)}
 	_ = os.MkdirAll(m.dir, 0700)
 	entries, _ := os.ReadDir(m.dir)
 	for _, e := range entries {
@@ -193,8 +197,20 @@ func transferWorkers(n int) int {
 	return n
 }
 func (m *transferManager) create(ctx context.Context, in transferCreate) (*transferJob, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	select {
+	case m.builders <- struct{}{}:
+		defer func() { <-m.builders }()
+	default:
+		return nil, errors.New("传输清单创建繁忙，请稍后重试")
+	}
 	if in.Operation != "upload" && in.Operation != "copy" && in.Operation != "move" && in.Operation != "download" {
 		return nil, errors.New("无效传输操作")
+	}
+	if in.RawDownload && (in.Operation != "download" || len(in.Paths) != 1) {
+		return nil, errors.New("原文件快照下载需要选择一个普通文件")
 	}
 	if in.Destination == "" {
 		in.Destination = "workspace"
@@ -211,6 +227,7 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 		}
 	}
 	j := &transferJob{ID: newID(), Operation: in.Operation, Source: in.Source, Destination: in.Destination, Status: "paused", Created: time.Now().UnixMilli(), Concurrency: transferWorkers(in.Concurrency), ChunkSize: transferChunkSize}
+	j.RawDownload = in.RawDownload
 	m.app.mu.Lock()
 	j.Workspace = m.app.wsID()
 	m.app.mu.Unlock()
@@ -239,6 +256,7 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 			return nil, err
 		}
 	}
+	budget := transferManifestBudget{bytes: 4096 + len(j.SourceIdentity) + len(j.DestinationIdentity)}
 	if in.Operation == "upload" {
 		if in.Size < 0 || validTransferPath(in.Name) != nil {
 			return nil, errors.New("无效文件路径或大小")
@@ -267,6 +285,9 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 		defer src.Close()
 		seen := map[string]bool{}
 		for i, p := range in.Paths {
+			if err := budget.discover(); err != nil {
+				return nil, err
+			}
 			if validTransferPath(p) != nil || seen[p] {
 				return nil, errors.New("源路径无效或重复")
 			}
@@ -282,6 +303,9 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 			}
 			if !info.IsDir() && !info.Mode().IsRegular() {
 				return nil, errors.New("仅支持普通文件与目录")
+			}
+			if in.RawDownload && info.IsDir() {
+				return nil, errors.New("原文件快照下载不支持目录，请使用打包下载")
 			}
 			target := path.Join(in.DestinationPath, path.Base(p))
 			stage := path.Join(in.DestinationPath, fmt.Sprintf(".aide-transfer-%s-%d", j.ID, i))
@@ -305,7 +329,11 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 					return nil, errors.New("不能传输到自身或子目录")
 				}
 			}
-			j.Tops = append(j.Tops, &transferTop{Source: p, Target: target, Stage: stage, Dir: info.IsDir()})
+			top := &transferTop{Source: p, Target: target, Stage: stage, Dir: info.IsDir()}
+			if err := budget.add(top); err != nil {
+				return nil, err
+			}
+			j.Tops = append(j.Tops, top)
 			var walk func(string, string, os.FileInfo, int) error
 			walk = func(p, to string, info os.FileInfo, depth int) error {
 				if e := ctx.Err(); e != nil {
@@ -321,6 +349,9 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 					return errors.New("不支持设备文件或管道")
 				}
 				part := &transferPart{Source: p, Target: to, Size: info.Size(), Mod: info.ModTime().UnixNano(), Dir: info.IsDir(), Chunks: map[int64]string{}}
+				if err := budget.add(part); err != nil {
+					return err
+				}
 				j.Parts = append(j.Parts, part)
 				if !info.IsDir() {
 					if info.Size() < 0 || j.Size > int64(^uint64(0)>>1)-info.Size() {
@@ -329,19 +360,15 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 					j.Size += info.Size()
 					return nil
 				}
-				children, e := src.ReadDir(p)
-				if e != nil {
-					return e
-				}
-				for _, c := range children {
+				return src.readDirEach(ctx, p, func(c os.FileInfo) error {
+					if err := budget.discover(); err != nil {
+						return err
+					}
 					if validTransferPath(path.Join(p, c.Name())) != nil {
-						continue
+						return nil
 					}
-					if e = walk(path.Join(p, c.Name()), path.Join(to, c.Name()), c, depth+1); e != nil {
-						return e
-					}
-				}
-				return nil
+					return walk(path.Join(p, c.Name()), path.Join(to, c.Name()), c, depth+1)
+				})
 			}
 			if e = walk(p, stage, info, 0); e != nil {
 				return nil, e
@@ -349,6 +376,10 @@ func (m *transferManager) create(ctx context.Context, in transferCreate) (*trans
 		}
 	}
 	if err = m.check(j); err != nil {
+		return nil, err
+	}
+	j.Updated = time.Now().UnixMilli()
+	if err = validateTransferManifestSize(j); err != nil {
 		return nil, err
 	}
 	if err = os.MkdirAll(m.jobDir(j), 0700); err != nil {

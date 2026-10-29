@@ -52,7 +52,9 @@
         "macOS bootstrap extract/start/reuse/stop; UID 1000 container authenticated status: PASS",
         "Plugin PR #15: nine Windows/macOS/Linux CI jobs SUCCESS",
         "Chromium desktop and 390px dark English: five lifecycle operations PASS against actual Linux manager with synthetic Codex; parent fixture only",
-        "python3 scripts/agent-route.py verify quick: PASS; .agent-state/verify-20261029T095138498211Z.log"
+        "python3 scripts/agent-route.py verify quick: PASS; .agent-state/verify-20261029T095138498211Z.log",
+        "Merged current main: native host 35 + portable 38 + package 9 checks PASS; Win32 desktop NOT_RUN",
+        "Merged current main: targeted Go race PASS (22.741s), go vet PASS, Node 24 PASS"
       ]
     },
     "documentation": {
@@ -71,14 +73,14 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "本轮快速 push 配套 PR；尚未合并、发版或上架 0.4.0。完整 Aide 发行验收仍待完成。",
+      "status": "in_progress",
+      "summary": "用户本轮明确要求发布；插件 PR #15 已正常合并，Aide PR #616 同步当前 main 并接入原生 Windows 发行启动器，发行构建与市场更新进行中。",
       "evidence": [
         "Public market remains 0.3.4"
       ]
     }
   },
-  "release_authorization": "用户要求快速 push，并明确允许修改 Aide；历史发布授权存在，当前未通过完整发行门禁。",
+  "release_authorization": "用户本轮消息：发布。未授权本次管理员绕过审批或部署 9999。",
   "rollback": "保留旧完整发行包和镜像；切回前停止认证的新 helper，保留用户安装数据。",
   "handoff": "先完成配套 Aide CI 与发行验收，再协调 Codex Bridge 0.4.0 与市场发布。9999 未部署。"
 }

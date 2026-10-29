@@ -15,7 +15,6 @@ func sshApplyFixture(t *testing.T, holdPhase, readFailure string) (*App, *Sessio
 	t.Helper()
 	a := testApp(t)
 	reliabilitySSHStub(t, a, true)
-	a.wsConfig.Workspace.Path = "."
 	dir := t.TempDir()
 	remote := filepath.Join(dir, "remote")
 	if err := os.Mkdir(remote, 0700); err != nil {
@@ -25,6 +24,12 @@ func sshApplyFixture(t *testing.T, holdPhase, readFailure string) (*App, *Sessio
 		t.Fatal(err)
 	}
 	entered, release := filepath.Join(dir, "entered"), filepath.Join(dir, "release")
+	a.wsConfig.Workspace.Path = remote
+	readMarker := ""
+	if holdPhase == "get" {
+		readMarker = entered
+	}
+	attachOwnedSFTPProtocol(t, a, readMarker, release, readFailure)
 	t.Cleanup(func() { _ = os.WriteFile(release, nil, 0600) })
 	writes := filepath.Join(dir, "writes")
 	a.sftpBin = filepath.Join(dir, "sftp")

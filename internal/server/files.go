@@ -118,10 +118,14 @@ func validateTextFileContent(p string, b []byte) ([]byte, error) {
 }
 
 func readText(root *os.Root, p string) ([]byte, error) {
+	return readTextWithOpener(p, root.Open)
+}
+
+func readTextWithOpener(p string, openFile func(string) (*os.File, error)) ([]byte, error) {
 	if err := safePath(p); err != nil {
 		return nil, err
 	}
-	f, err := root.Open(p)
+	f, err := openFile(p)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +152,12 @@ func readText(root *os.Root, p string) ([]byte, error) {
 // 全程只缓冲目标窗口，逐行扫描时同时检测整个文件是否含 NUL（二进制拒绝），
 // 对返回窗口做 UTF-8 校验。返回：窗口内容、文件总行数。
 func readTextLines(root *os.Root, p string, offset, limit int) ([]byte, int, error) {
+	return readTextLinesWithOpener(p, offset, limit, root.Open)
+}
+
+func readTextLinesWithOpener(p string, offset, limit int, openFile func(string) (*os.File, error)) ([]byte, int, error) {
 	if ext := strings.ToLower(path.Ext(p)); ext == ".json" || ext == ".jsonl" || ext == ".jsonc" {
-		b, err := readText(root, p)
+		b, err := readTextWithOpener(p, openFile)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -170,7 +178,7 @@ func readTextLines(root *os.Root, p string, offset, limit int) ([]byte, int, err
 	if err := safePath(p); err != nil {
 		return nil, 0, err
 	}
-	f, err := root.Open(p)
+	f, err := openFile(p)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -300,10 +308,14 @@ const (
 
 // readRawBytes 返回文件的原始字节，不做 UTF-8/文本校验（供 /api/file/raw 查看器使用）。
 func readRawBytes(root *os.Root, p string) ([]byte, error) {
+	return readRawBytesWithOpener(p, root.Open)
+}
+
+func readRawBytesWithOpener(p string, openFile func(string) (*os.File, error)) ([]byte, error) {
 	if err := safePath(p); err != nil {
 		return nil, err
 	}
-	f, err := root.Open(p)
+	f, err := openFile(p)
 	if err != nil {
 		return nil, err
 	}
@@ -775,6 +787,9 @@ func readArchiveFiles(data []byte) ([]extractedArchiveFile, error) {
 		}
 		files = append(files, f)
 	}
+	if err := validateArchiveLayout(files); err != nil {
+		return nil, err
+	}
 	return files, nil
 }
 
@@ -813,96 +828,41 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
-	remoteMode := a.workspaceMode() == "ssh"
+	fs, err := a.streamTransferFS(r.Context(), "workspace", true)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	defer fs.Close()
+	var lookupErr error
 	dest, err := availableArchiveDestination(destBase, func(candidate string) bool {
-		if remoteMode {
-			return a.sftpExists(a.workspaceRemotePath(candidate))
+		if lookupErr != nil {
+			return true
 		}
-		_, statErr := a.workspace.Stat(candidate)
+		_, statErr := fs.Stat(candidate)
+		if statErr != nil && !os.IsNotExist(statErr) {
+			lookupErr = statErr
+		}
 		return statErr == nil
 	})
+	if lookupErr != nil {
+		fail(w, 400, lookupErr)
+		return
+	}
 	if err != nil {
 		fail(w, 409, err)
 		return
 	}
-	if remoteMode {
-		if a.sftpExists(a.workspaceRemotePath(dest)) {
-			fail(w, 409, errors.New("解压目标已存在"))
-			return
+	if err = writeExtractedArchive(fs, dest, files); err != nil {
+		status := 500
+		if fs.root == nil {
+			status = 400
 		}
-		tmp := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
-		if err := a.sftpMakeDirectory(a.workspaceRemotePath(tmp)); err != nil {
-			fail(w, 400, err)
-			return
+		if errors.Is(err, os.ErrExist) {
+			status = 409
 		}
-		dirs := map[string]bool{}
-		for _, f := range files {
-			dir := f.path
-			if !f.dir {
-				dir = path.Dir(dir)
-			}
-			for dir != "." && dir != "" {
-				dirs[dir] = true
-				dir = path.Dir(dir)
-			}
-		}
-		ordered := make([]string, 0, len(dirs))
-		for dir := range dirs {
-			ordered = append(ordered, dir)
-		}
-		sort.Slice(ordered, func(i, j int) bool { return strings.Count(ordered[i], "/") < strings.Count(ordered[j], "/") })
-		for _, dir := range ordered {
-			if err := a.sftpMakeDirectory(a.workspaceRemotePath(path.Join(tmp, dir))); err != nil {
-				fail(w, 400, err)
-				return
-			}
-		}
-		for _, f := range files {
-			if f.dir {
-				continue
-			}
-			target := path.Join(tmp, f.path)
-			if err := a.sftpWrite(a.workspaceRemotePath(target), f.data); err != nil {
-				fail(w, 400, err)
-				return
-			}
-		}
-		if err := a.sftpRenameDirectory(a.workspaceRemotePath(tmp), a.workspaceRemotePath(dest)); err != nil {
-			fail(w, 400, err)
-			return
-		}
-	} else {
-		if _, err := a.workspace.Stat(dest); err == nil {
-			fail(w, 409, errors.New("解压目标已存在"))
-			return
-		}
-		tmp := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
-		if err := a.workspace.Mkdir(tmp, 0755); err != nil {
-			fail(w, 400, err)
-			return
-		}
-		for _, f := range files {
-			target := path.Join(tmp, f.path)
-			if f.dir {
-				if err := a.workspace.MkdirAll(target, 0755); err != nil {
-					fail(w, 500, err)
-					return
-				}
-			} else {
-				if err := a.workspace.MkdirAll(path.Dir(target), 0755); err != nil {
-					fail(w, 500, err)
-					return
-				}
-				if err := a.workspace.WriteFile(target, f.data, 0644); err != nil {
-					fail(w, 500, err)
-					return
-				}
-			}
-		}
-		if err := a.workspace.Rename(tmp, dest); err != nil {
-			fail(w, 500, err)
-			return
-		}
+		fail(w, status, err)
+		return
 	}
 	jsonOut(w, 200, map[string]string{"path": dest})
 }
@@ -1771,6 +1731,9 @@ func isSFTPNotExistErr(err error) bool {
 	if err == nil {
 		return false
 	}
+	if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
 	for _, line := range strings.Split(err.Error(), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "sftp>") {
@@ -1788,6 +1751,10 @@ func isSFTPNotExistErr(err error) bool {
 
 func checkVersion(root *os.Root, p, expected string) error {
 	b, err := readText(root, p)
+	return checkReadVersion(b, err, expected)
+}
+
+func checkReadVersion(b []byte, err error, expected string) error {
 	if errors.Is(err, os.ErrNotExist) {
 		if expected == "" {
 			return nil
@@ -1813,6 +1780,10 @@ func putText(root *os.Root, p string, b []byte) error {
 	if st, err := root.Stat(p); err == nil {
 		mode = st.Mode().Perm()
 	}
+	return putAtomicFile(root, p, b, mode)
+}
+
+func putAtomicFile(root *os.Root, p string, b []byte, mode os.FileMode) error {
 	tmp := path.Join(path.Dir(p), ".aide-write-"+newID())
 	f, err := root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
 	if err != nil {
@@ -1992,6 +1963,14 @@ func (a *App) sqliteQueryData(w http.ResponseWriter, r *http.Request) {
 	if offset == "" {
 		offset = "0"
 	}
+	pageSize, limitErr := strconv.Atoi(limit)
+	pageOffset, offsetErr := strconv.ParseInt(offset, 10, 64)
+	if limitErr != nil || pageSize < 1 || pageSize > 1000 || offsetErr != nil || pageOffset < 0 {
+		fail(w, http.StatusBadRequest, errors.New("invalid sqlite pagination: limit must be 1..1000 and offset a non-negative integer"))
+		return
+	}
+	limit = strconv.Itoa(pageSize)
+	offset = strconv.FormatInt(pageOffset, 10)
 	tmpPath, err := a.resolveSqlitePath(r)
 	if err != nil {
 		fail(w, 400, err)

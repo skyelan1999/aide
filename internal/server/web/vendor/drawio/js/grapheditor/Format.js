@@ -1415,7 +1415,7 @@ BaseFormatPanel.prototype.createArrayCellColorOption = function(label, colorKey,
 		{
 			div.appendChild(this.createColorOption(label + ' (' + (index + 1) + ')', function()
 			{
-				return values[i];
+				return values[index];
 			}, function(color)
 			{
 				graph.getModel().beginUpdate();
@@ -1452,7 +1452,7 @@ BaseFormatPanel.prototype.createArrayCellColorOption = function(label, colorKey,
 								style[colorKey] : undefinedValue) : null;
 							values = (value != null) ?
 								mxUtils.parseColorList(value) : [];
-							apply(values[i], true);
+							apply(values[index], true);
 						}
 					};
 					
@@ -3467,7 +3467,7 @@ ArrangePanel.prototype.addGeometryHandler = function(input, fn)
 
 			if (isNaN(value))
 			{
-				input.value = initialValue + ' ' + panel.getUnit();
+				input.value = (typeof initialValue == 'number') ? initialValue + ' ' + panel.getUnit() : initialValue;
 			}
 			else if (value != initialValue)
 			{
@@ -4057,7 +4057,7 @@ TextFormatPanel.prototype.addFont = function(container)
 		{
 			document.execCommand('superscript', false, null);
 		}, stylePanel3)
-		sub.style.marginLeft = '10px';
+		sup.style.marginLeft = '10px';
 		
 		var tmp = stylePanel3.cloneNode(false);
 		tmp.style.paddingTop = '4px';
@@ -7334,7 +7334,7 @@ StyleFormatPanel.prototype.addStroke = function(container)
 			endSize.value = (isNaN(tmp)) ? '' : this.inUnit(tmp) + ' ' + this.getUnit();
 		}
 		
-		if (force || document.activeElement != startSpacing)
+		if (force || document.activeElement != endSpacing)
 		{
 			var tmp = parseFloat(mxUtils.getValue(ss.style, mxConstants.STYLE_TARGET_PERIMETER_SPACING, 0));
 			endSpacing.value = (isNaN(tmp)) ? '' : this.inUnit(tmp) + ' ' + this.getUnit();

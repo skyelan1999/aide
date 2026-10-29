@@ -1,0 +1,153 @@
+{
+  "date": "2026-10-26",
+  "branch": "codex/open-issue-review-20261026",
+  "sourceBaseline": "7936ed69597c7649e68c0b5fa885e636d8501203",
+  "sourceReview": {
+    "target": 272,
+    "reviewed": 272,
+    "ascendingExactCoverage": true,
+    "perIssueEvidencePresent": true,
+    "referencedFilesFingerprintCount": 265,
+    "fingerprintsMatch": true,
+    "runtimeReproducedHighlightIssues": [
+      268,
+      269,
+      270,
+      271,
+      272,
+      273,
+      274,
+      275,
+      276,
+      277,
+      278,
+      279,
+      280,
+      281,
+      283,
+      285,
+      286,
+      287,
+      288,
+      289,
+      290,
+      291
+    ],
+    "productRepairsThisBatch": 0,
+    "overallRepairGoalComplete": false
+  },
+  "checks": [
+    {
+      "command": "node docs/reviews/2026-10-26-open-issue-review/evidence/live-boundary-probe.cjs",
+      "result": "PASS",
+      "observed": [
+        {
+          "eol": "LF",
+          "fenceOpen": true,
+          "boundary": 0
+        },
+        {
+          "eol": "CRLF",
+          "fenceOpen": true,
+          "boundary": 0
+        }
+      ],
+      "scope": "Actual extracted scanner function, not full streaming UI."
+    },
+    {
+      "command": "node /tmp/aide-review-highlight.cjs and node /tmp/aide-review-highlight-more.cjs (preserved as evidence/highlight-probe.cjs and highlight-more-probe.cjs)",
+      "result": "OBSERVED",
+      "scope": "Actual bundled grammar outputs; not language compiler correctness or full AIDE UI acceptance.",
+      "raw": [
+        "evidence/highlight-results.json",
+        "evidence/highlight-more-results.json"
+      ]
+    },
+    {
+      "command": "node docs/reviews/2026-10-26-open-issue-review/evidence/csp-probe.cjs",
+      "result": "PASS",
+      "observed": {
+        "scriptExecuted": false,
+        "inlineStyleApplied": false,
+        "externalFrameLoaded": false
+      },
+      "scope": "Fresh isolated Chromium; all requests intercepted, main-page CSP only. Full DOCX and diagram exploit flows NOT_RUN.",
+      "initialAttempt": "Sandbox launch failed with setsockopt EPERM/SIGTRAP; rerun with approved escalation passed."
+    },
+    {
+      "command": "Python hashlib SHA256 compare checked-in enhanced avatar art-audit files",
+      "result": "ISSUE_REPRODUCED",
+      "observed": {
+        "checkedHashes": 102,
+        "mismatches": 102,
+        "interpolationIDs": 35,
+        "manifestVariants": 34
+      }
+    },
+    {
+      "command": "gh api /advisories/GHSA-p98j-92pf-mc4p and /advisories/GHSA-6688-9rhm-gjv2",
+      "result": "READ_VERIFIED",
+      "observed": {
+        "GHSA-p98j-92pf-mc4p": {
+          "affected": ">= 3.4.13, <= 3.4.15",
+          "firstPatched": "3.4.16"
+        },
+        "GHSA-6688-9rhm-gjv2": {
+          "affected": "<= 3.4.15",
+          "firstPatched": "3.4.16"
+        }
+      }
+    },
+    {
+      "command": "GOARCH=386 CGO_ENABLED=0 go run -mod=vendor /tmp/aide-xsys-probe.go",
+      "result": "BLOCKED",
+      "observed": "Go: Unknown option: run. Current /usr/bin/go is not the Go compiler. No #295/#296/#299 runtime PASS claimed."
+    },
+    {
+      "command": "python3 scripts/check_docs.py",
+      "result": "PASS",
+      "observed": "427 Markdown files, 1462 local links, JPEG signatures, FR-01..100",
+      "earlierFailure": "Initial run caught the not-yet-created ordered-verification.json link; receipt was created and check rerun successfully."
+    },
+    {
+      "command": "python3 scripts/agent-route.py check",
+      "result": "PASS",
+      "scope": "Route and specialist skill files present; no full product verification implied."
+    },
+    {
+      "command": "node --check for the four preserved evidence/*.cjs probes",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "githubActions": [
+    {
+      "issue": 104,
+      "action": "commented-and-closed-not-planned",
+      "comment": "https://github.com/skyelan1999/aide/issues/104#issuecomment-6411406382",
+      "basis": "Ordinary-file path returns after exclusive hardlink; claimed directory fallback unreachable for files."
+    },
+    {
+      "issue": 112,
+      "action": "commented-and-closed-not-planned",
+      "comment": "https://github.com/skyelan1999/aide/issues/112#issuecomment-6411407581",
+      "basis": "Prefix regex and actual scanner execution contradict stated CRLF trigger."
+    }
+  ],
+  "notRun": [
+    "Full product browser acceptance via start.command: no product code change this review batch",
+    "Windows/BSD/ARM64 native acceptance",
+    "Full Go test/race/vet in current environment",
+    "Full exploit or real user-document execution",
+    "Release/build/deploy: user prohibits main merge and release"
+  ],
+  "constraints": {
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "backgroundSchedulerAvailable": false
+  }
+}

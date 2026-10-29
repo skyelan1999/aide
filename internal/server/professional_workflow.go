@@ -207,8 +207,8 @@ func (a *App) pwControlLocked(args map[string]any) (any, error) {
 		}
 		return nil, errors.New("运行不存在")
 	}
-	rev, _ := args["revision"].(float64)
-	if int(rev) != store.Revision {
+	rev, validRevision := args["revision"].(float64)
+	if !validRevision || rev != float64(store.Revision) {
 		return nil, errors.New("模板库已变化，请刷新后重试")
 	}
 	switch action {

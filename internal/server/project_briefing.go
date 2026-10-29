@@ -11,6 +11,7 @@ import (
 )
 
 type projectBriefMessage struct {
+	instant   time.Time
 	Day       string `json:"day"`
 	At        string `json:"at"`
 	Source    string `json:"source"`
@@ -41,9 +42,9 @@ func (a *App) projectMessagesForBridgeLocked(req workbenchBridgeRequest, id stri
 		}
 	}
 	name := strings.TrimSpace(stringValue(req.Arguments["projectName"]))
-	pid := stringValue(req.Arguments["projectId"])
+	pid := strings.TrimSpace(stringValue(req.Arguments["projectId"]))
 	file := stringValue(req.Arguments["path"])
-	if utf8.RuneCountInString(name) < 2 || len(name) > 600 || len(pid) > 80 || len(file) > 1000 || (file != "" && (safePath(file) != nil || !strings.EqualFold(path.Ext(file), ".pp"))) {
+	if utf8.RuneCountInString(name) < 2 || len(name) > 600 || len(pid) > 80 || strings.ContainsAny(name+pid, "\r\n\x00") || len(file) > 1000 || (file != "" && (safePath(file) != nil || !strings.EqualFold(path.Ext(file), ".pp"))) {
 		return nil, 400, errors.New("valid project identity and optional PP path required")
 	}
 	zone := time.FixedZone("Asia/Shanghai", 8*3600)
@@ -71,12 +72,7 @@ func (a *App) projectMessagesLocked(name, pid, file string, start, end time.Time
 			if run == nil || run.WorkspaceID != a.wsID() {
 				continue
 			}
-			match := ""
-			if len(pid) >= 8 && strings.Contains(run.Prompt, pid) {
-				match = "projectId"
-			} else if strings.Contains(strings.ToLower(run.Prompt), strings.ToLower(name)) {
-				match = "projectName"
-			}
+			match := explicitProjectReference(run.Prompt, name, pid)
 			if file != "" {
 				for _, attachment := range run.Attachments {
 					if attachment.Root == "workspace" && attachment.Source == "" && !attachment.Directory && attachment.Path == file {
@@ -105,12 +101,12 @@ func (a *App) projectMessagesLocked(name, pid, file string, start, end time.Time
 			if err != nil || at.Before(start) || !at.Before(end) {
 				continue
 			}
-			rows = append(rows, projectBriefMessage{Day: at.In(start.Location()).Format("2006-01-02"), At: atText, Source: source, SessionID: s.ID, RunID: run.ID, Role: message.Role, Content: message.Content, Match: matches[run.ID]})
+			rows = append(rows, projectBriefMessage{instant: at, Day: at.In(start.Location()).Format("2006-01-02"), At: atText, Source: source, SessionID: s.ID, RunID: run.ID, Role: message.Role, Content: message.Content, Match: matches[run.ID]})
 		}
 	}
 	sort.SliceStable(rows, func(i, j int) bool {
-		if rows[i].At != rows[j].At {
-			return rows[i].At > rows[j].At
+		if !rows[i].instant.Equal(rows[j].instant) {
+			return rows[i].instant.After(rows[j].instant)
 		}
 		if rows[i].SessionID != rows[j].SessionID {
 			return rows[i].SessionID < rows[j].SessionID
@@ -137,4 +133,38 @@ func (a *App) projectMessagesLocked(name, pid, file string, start, end time.Time
 		out = append(out, row)
 	}
 	return out, omitted
+}
+
+// A plain word or ID substring is not evidence of project membership. Text
+// references use explicit, complete markers; exact PP attachments remain an
+// independent selection source. Scan without materializing all prompt matches.
+func explicitProjectReference(prompt, name, pid string) string {
+	match := ""
+	for {
+		start := strings.IndexByte(prompt, '[')
+		if start < 0 {
+			return match
+		}
+		prompt = prompt[start+1:]
+		end := strings.IndexByte(prompt, ']')
+		if end < 0 {
+			return match
+		}
+		reference := prompt[:end]
+		prompt = prompt[end+1:]
+		if strings.ContainsAny(reference, "\r\n") {
+			continue
+		}
+		kind, value, ok := strings.Cut(reference, ":")
+		if !ok {
+			continue
+		}
+		value = strings.TrimSpace(value)
+		if kind == "project-id" && len(pid) >= 8 && value == pid {
+			return "projectId"
+		}
+		if kind == "project-name" && name != "" && strings.EqualFold(value, name) {
+			match = "projectName"
+		}
+	}
 }

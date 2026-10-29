@@ -1,0 +1,99 @@
+{
+  "cycle": 54,
+  "baseline": "0ed5ab87fa83d608d53e9674396f06f1ad9cd6a3",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [],
+  "followupIssues": [
+    464
+  ],
+  "newCoverage": 0,
+  "commits": {
+    "464-followup": "ddbb676ccaa388ebbd90643abf843119fcf101b7"
+  },
+  "cumulativeProductFixes": 114,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 115,
+  "original272RemainingFollowup": 172,
+  "additionalFollowupIssues": [
+    369
+  ],
+  "additionalFollowupCount": 1,
+  "ownerSteering": [
+    "464看下最新的报错",
+    "你先做别的吧，我回头测好了吧log贴进去"
+  ],
+  "reportedEvidence": [
+    "https://github.com/skyelan1999/aide/issues/464#issuecomment-6435844401",
+    "https://github.com/skyelan1999/aide/issues/464#issuecomment-6436051112"
+  ],
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "python3 scripts/test_windows_prebuilt_import.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh --case installed (before fix)",
+      "observed": "Canonical config ID differs from manifest reference while platform/source/CAD match; old importer needlessly imports again then reports exactly Imported runtime identity/platform/source/CAD mismatch. Native tar adapter controlled for this regression; separate denied-tar fixture also covered.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle54-464-prebuilt-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_prebuilt_import.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh --docker /usr/local/bin/docker",
+      "scope": "22 actual PS7/Linux importer/managed gzip-tar cases with native/Docker adapters; installed canonical alias, load tag/ID receipt, PAX/GNU name/base256 size, denied external tar (not invoked), lean local core, wrong source/platform/CAD, ambiguous/empty provenance, bad archive/header hash, missing/link/truncated member,64KiB metadata cap. Actual local Docker imports a uniquely tagged empty fixture image through the real Invoke-Native adapter, verifies config ID distinct from OCI manifest, target identity, and removal of both owned tags; no containers run.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle54-464-prebuilt-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 181,
+      "receipt": ".agent-state/verify-20261027T074339430655Z.log",
+      "fingerprint": "75a1edbc5e35530372dae6690109def946f09d55ce9553d1b10fad5c4f9d897c"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 -m py_compile scripts/test_windows_prebuilt_import.py; python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links; public manifest unchanged."
+    }
+  ],
+  "readOnlyArchiveObservation": {
+    "path": "docker-images/aide-0.1.17.1-RC1-linux-amd64-c9ed3977bcc7-offline.tar.gz.partial",
+    "bytes": 785354752,
+    "configSHA256": "6d8abf2f7db925efdd6b66fe162efa095960bc6546ef1859c05b962f04b8df2a",
+    "manifestImage": "sha256:c9ed3977bcc7fe8f85f756a9e1cecaf1232375946705933fbee044e5c092afbb",
+    "source": "21c7f4e47f9c468dd71e42a3ee2596276c1dc3f1b7a6543c0d55b062e5df3955",
+    "platform": "linux/amd64",
+    "CAD": "8.0.1.1.0",
+    "scope": "Only read existing incomplete archive prefix; no rename/delete/write/full digest verification or public image load. Supports diagnosis but does not establish complete artifact integrity."
+  },
+  "securityReview": [
+    "Archive SHA256 remains mandatory before import. Immutable manifest reference is inspected directly; only when unavailable after successful verified load may its single emitted locator be used. Returned canonical ID is activated only after strict platform/source/legacy-CAD checks; no arbitrary local-tag scan or relaxed metadata match.",
+    "No external tar executable or general-path extraction. Stream fixed regular member into a GUID-owned temporary file with CreateNew; validate tar header/number/PAX boundaries, skip all unrelated paths, reject target links/truncation/oversized metadata. Temporary extraction removed on all importer outcomes.",
+    "Windows local lean-runtime reuse no longer requires a CAD label removed from current Dockerfiles; platform and64-hex source label remain required. Explicit force/source policy remains in caller. Legacy manifest-selected archive still requires its known CAD tag.",
+    "No public manifest changes, user archive modifications, DNS/proxy/firewall/domain changes, app image retagging or Aide process restarts in acceptance. Root sequential review; no subagents."
+  ],
+  "notRun": [
+    "Native Windows PowerShell5.1/Windows filesystem and Docker Desktop, complete official935957137-byte image import and actual owner startup. User explicitly deferred to later test/log.",
+    "Owner Docker Hub/auth connection timeout itself is not repaired by this launcher change; successful source compilation depends on network or configured local dependencies. Official fallback runs its actual published version, not the repair branch application binary.",
+    "Full Go server tests not rerun for PowerShell/test/docs changes. Bash importer unchanged; no main merge/release/deploy."
+  ],
+  "notes": [
+    "Current user deferred464 while final checks ran; finish this already-written reviewable checkpoint and resume369. No further464 diagnosis until new owner evidence.",
+    "GNU test fixture initially shadowed its BytesIO variable; corrected, then all22cases/native probe/final quick rerun. Earlier quick receipt is not used for final content.",
+    "369 remains uncounted/unpublished in scoped stash a00be49e3c50c9602cf4b9d655a50b87e49163fe;182 still scoped stash1ae8bb0. No original user files stashed. #464 coverage not counted twice."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "464": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6436520895"
+    },
+    "remoteCommit": "a997589db51eaa8da5a407750bd0860e62b9cec9"
+  },
+  "sourceSHA256": {
+    "scripts/prebuilt-image.ps1": "0b29800ed80d0c213517b63a2dd05961631b989a99f104d6d3d4e7986c42c0d2",
+    "scripts/test_windows_prebuilt_import.py": "e027cf80e045e7ba2954054a4c032e82477e783bdfe9569841423fec0f59882d",
+    "docs/installation.md": "c77a068a206a9ca3aff8d380738f207ee89aaa33b172bfb66b93aadc3249581a",
+    "docs/architecture/software-updates.md": "c28c06324f1e664d3e101a08f90d0a3b2f4e38e61109a7797735f988be92b829"
+  }
+}

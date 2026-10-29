@@ -1,0 +1,77 @@
+{
+  "cycle": 36,
+  "baseline": "63bbfd81b6e790d5433b08e06c2497673040b578",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    158
+  ],
+  "commits": {
+    "158": "4e89c59e92571229cb54cdcd12afe0897a5b9deb"
+  },
+  "cumulativeProductFixes": 91,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 92,
+  "original272RemainingFollowup": 192,
+  "red": [
+    {
+      "issue": 158,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue158' -count=1 -timeout=1m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.043,
+      "observed": "原实现接受数字/小数/符号/指数/分组/标识符片段与截短引用，错误修订覆盖已有150。数学负号/eE正例是新增兼容格式要求，不混作假阳性缺陷。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle36-158-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue158|^TestWebResearch|^TestAutonomousResearch|^TestAutonomousExplicitPDF' -count=1 -v -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 4.061,
+      "scope": "source/calculation各50例、窄引用长结果/重叠/周期引用/拒绝修订；已有调查路由、工具尝试与答案纠正链路。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle36-final-race.log"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T005933044778Z.log",
+      "fingerprint": "4781207d7a4415d34df4b1ec75bc9bcd00e4bde7c3c5f9b5f99638f97993da19"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1468links"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "NOT_RUN",
+      "scope": "真实模型/完整工作台/Windows/macOS；本轮无UI变更，不调用付费模型。"
+    }
+  ],
+  "notes": [
+    "完整值须同时位于精确引用及原工具结果的数字/标识符边界，阻止150→5及截短引用绕过；保留符号、小数、分组、指数与编号，数学负号/eE明确等价；拒绝修订保留原记录，重叠引用与长周期结果安全搜索。",
+    "只检查可追溯字面值，不验证单位语义、参数语义或科学正确性；不猜测区域格式、不换算、不用浮点数，历史记录不重写。",
+    "KMP用于精确引用搜索，保留重叠与后来完整匹配；参数/引用沿用已有长度限制，结果不整体字符化。",
+    "无常驻测试服务，原用户未跟踪文件保留。只push分支，不合并main、发行或部署；合理issue保持open。下一项#159历史脚本越界fixture写入。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "158": "https://github.com/skyelan1999/aide/issues/158#issuecomment-6431091526"
+    },
+    "verifiedRemoteCommit": "f6bb25b4e1aa8d1c12d52afb0e207f6fce7cbfe1"
+  },
+  "sourceSHA256": {
+    "docs/architecture/research-evidence.md": "789a5e27a36762720b9ff32f75db948f9cabef59ceb746ea6b554792a157df6a",
+    "internal/server/research_evidence.go": "69af8ef60cae94d5a731ce937d7c1e375394b97f54e83e52e9e18d090cca7a10",
+    "internal/server/research_value_match.go": "fa235b996c187f3443f13db24680005e4db9e3afeb8efa8ac1d1e10ca05385c0",
+    "internal/server/research_value_match_test.go": "ab5e2dc02641b37e348d5844f544b760087287418aa90d69df4fc00a73ec5547"
+  }
+}

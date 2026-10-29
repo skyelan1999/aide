@@ -492,6 +492,7 @@ type App struct {
 	sessions                  map[string]*Session
 	reminders                 []Reminder
 	messageMu                 sync.Mutex
+	messageMutations          messageMutationGate
 	messages                  *messageCenter
 	messageError              string
 	cancels                   map[string]context.CancelFunc
@@ -517,6 +518,8 @@ type App struct {
 	marketMu                  sync.Mutex
 	marketInstallMu           sync.Mutex
 	pluginCalls               pluginCallQueues
+	voiceSampleMutations      pluginCallQueues  // independent FIFO per voice profile
+	personalityRevisions      map[string]uint64 // guarded by mu; invalidates in-flight drafts
 	pluginResources           pluginResourceQueue
 	pluginSurface             []byte
 	daemons                   *DaemonManager // 协议 v1.2：常驻守护插件管理器
@@ -538,6 +541,7 @@ type App struct {
 	sshLifecycleMu            sync.Mutex
 	sshLifecycles             map[string]*sshSessionLifecycle
 	sshGenerations            map[string]sshSessionVersion
+	terminalPins              terminalMasterPins
 	localMountConfig          localmounts.Config
 	localMountRoots           map[string]*os.Root
 	localRoot                 *os.Root
@@ -601,6 +605,7 @@ type App struct {
 	assistantUnlockMu       sync.Mutex
 	assistantRealtimeActive map[string]bool
 	assistantUnlocked       map[string]bool
+	masterPasswordAttempts  masterPasswordAttempts
 	// ── 数据完整性（启动校验 + 周期巡检结果）──
 	integrityMu      sync.Mutex
 	integrityRep     IntegrityReport
@@ -1068,6 +1073,10 @@ func New(work, reference, data string) (*App, error) {
 			log.Printf("跳过损坏会话文件 %s: %v", filepath.Base(path), err) // R09：坏文件不阻断启动
 			continue
 		}
+		if !validSessionID(s.ID) {
+			log.Printf("跳过无效会话ID文件 %s", filepath.Base(path))
+			continue
+		}
 		if s.Deleted {
 			continue // 删除墓碑残留：不载入
 		}
@@ -1135,6 +1144,9 @@ func (a *App) Close() {
 			a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
 		}
 		a.bgMu.Unlock()
+		a.terminalPins.mu.Lock()
+		a.terminalPins.closed = true
+		a.terminalPins.mu.Unlock()
 
 		a.transferMu.Lock()
 		transfers := a.transferManager
@@ -1154,6 +1166,7 @@ func (a *App) Close() {
 				b.Cancel()
 			}
 		}
+		a.revokeNativeEditorsLocked()
 
 		a.mu.Unlock()
 		a.messageMu.Lock()
@@ -1176,6 +1189,7 @@ func (a *App) Close() {
 		if a.daemons != nil {
 			a.daemons.StopAll() // 协议 v1.2：终止常驻守护插件子进程并释放端口
 		}
+		a.closeTerminalMasterPins()
 		a.workspace.Close()
 		a.reference.Close()
 		if a.localRoot != nil {
@@ -1221,6 +1235,9 @@ func sessionBucketFor(s *Session) string {
 // 归档/取消归档/小秘会话换桶，或旧版本曾把同一份会话写进多个桶时，这里负责把磁盘收敛到
 // “一个 id 恰好一份、且在正确桶”的状态。Deleted 墓碑不落盘（任务取消后的收尾保存同样跳过）。
 func (a *App) save(s *Session) error {
+	if s == nil || !validSessionID(s.ID) {
+		return errors.New("invalid session ID")
+	}
 	if s.Deleted {
 		return nil
 	}
@@ -1693,7 +1710,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/debug/overview", a.debugOverview)
 	mux.HandleFunc("GET /api/debug/sessions", a.debugSessions)
 	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}", a.debugRunDetail)
-	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}/events", a.runEvents)
+	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}/events", a.debugRunEvents)
 	mux.HandleFunc("GET /api/debug/errors", a.debugErrors)
 	mux.HandleFunc("GET /api/debug/stats", a.tokenStatsHandler)
 	mux.HandleFunc("POST /api/debug/actions/ping-provider", a.debugPingProvider)
@@ -1944,9 +1961,15 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, errVaultLocked)
 			return
 		}
-		a.storeModelAPIKeyPlaintextLocked(in.APIKey)
+		if err := a.storeModelAPIKeyPlaintextLocked(in.APIKey); err != nil {
+			fail(w, 500, errors.New("模型凭据未能安全保存"))
+			return
+		}
 	case in.ClearKey:
-		a.clearModelAPIKeyLocked()
+		if err := a.clearModelAPIKeyLocked(); err != nil {
+			fail(w, 500, errors.New("模型凭据未能安全删除"))
+			return
+		}
 	}
 	in.Settings.APIKey = "" // 永不把明文写回 settings.json
 	if in.Models == nil {
@@ -2237,7 +2260,10 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.NewPassword != "" {
 		hasPw := a.settings.UserPasswordHash != ""
 		if hasPw {
-			valid, _ := VerifyPassword(in.OldPassword, a.settings.UserPasswordHash)
+			valid, _, verifyErr := a.verifyMasterPassword(in.OldPassword, a.settings.UserPasswordHash)
+			if writeMasterPasswordCooldown(w, verifyErr) {
+				return
+			}
 			if !valid {
 				fail(w, 400, errors.New("原密码错误"))
 				return
@@ -2310,6 +2336,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	assistantApprovalChanged := a.settings.AssistantAutoReview != in.Settings.AssistantAutoReview
 	a.settings = in.Settings
+	if sandboxMode(a.settings.SandboxMode) == "read-only" {
+		a.revokeNativeEditorsLocked()
+	}
 	if assistantApprovalChanged {
 		a.refreshAssistantReviewsLocked()
 	}
@@ -2398,6 +2427,12 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	va := a.voiceAgent
 	as := a.findAssistantSessionLocked() // #62：语音输入与文字消息走同一把密码门
 	a.mu.Unlock()
+	// Apply the same password gate before model errors or fallback can record
+	// speech or return a send decision, including when no voice agent exists.
+	if as == nil || !a.isAssistantUnlocked(as.ID) {
+		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘已锁定，请在小秘会话中解锁"})
+		return
+	}
 	if cfgErr != nil {
 		fail(w, 423, cfgErr)
 		return
@@ -2417,12 +2452,6 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		} else {
 			jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "未配置模型，直接发送"})
 		}
-		return
-	}
-	// #62 修复：语音输入与文字消息走同一把密码门（assistantUnlocked），与 unlockAssistantSession 一致。
-	// voice-history 的加密锁定（va.encStatus）仅用于设置页历史查看，与此处独立。
-	if as == nil || !a.isAssistantUnlocked(as.ID) {
-		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘已锁定，请在小秘会话中解锁"})
 		return
 	}
 	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。
@@ -2469,7 +2498,7 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		entry.Text = text
 	}
 	// 回写 voice-history.json（向后兼容设置页时间线），并归位到 assistant 会话
-	a.mu.Lock()
+	va.mu.Lock()
 	if !va.encrypted || len(va.key) > 0 {
 		va.history = append(va.history, entry)
 		if len(va.history) > voiceHistoryMax {
@@ -2477,6 +2506,8 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		}
 		va.persistLocked()
 	}
+	va.mu.Unlock()
+	a.mu.Lock()
 	a.recordAgenticExchangeLocked(text, dec, "voice")
 	if entry.Action == "send" {
 		// #34：小秘有效交互计数持久化，达到阈值后台演化。
@@ -2515,13 +2546,20 @@ func (a *App) voiceHistory(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, st)
 }
 
-// voiceHistoryClear 清空小秘历史（保留长期记忆文件）。加密态下同样生效。
+// voiceHistoryClear 清空小秘历史（保留长期记忆文件）。加密态须先解锁。
 func (a *App) voiceHistoryClear(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	va := a.voiceAgent
 	a.mu.Unlock()
 	if va != nil {
-		va.clearHistory()
+		if err := va.clearHistory(); err != nil {
+			status := 500
+			if errors.Is(err, errVoiceHistoryLocked) {
+				status = 403
+			}
+			fail(w, status, err)
+			return
+		}
 	}
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }
@@ -2641,7 +2679,10 @@ func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 		fail(w, 401, errors.New("密码错误"))
 		return
 	}
-	valid, needsUpgrade := VerifyPassword(in.Password, hash)
+	valid, needsUpgrade, verifyErr := a.verifyMasterPassword(in.Password, hash)
+	if writeMasterPasswordCooldown(w, verifyErr) {
+		return
+	}
 	if !valid {
 		fail(w, 401, errors.New("密码错误"))
 		return
@@ -2701,7 +2742,10 @@ func (a *App) unlockAssistantSession(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"ok": false, "needsPassword": true})
 		return
 	}
-	valid, needsUpgrade := VerifyPassword(in.Password, hash)
+	valid, needsUpgrade, verifyErr := a.verifyMasterPassword(in.Password, hash)
+	if writeMasterPasswordCooldown(w, verifyErr) {
+		return
+	}
 	if !valid {
 		log.Printf("小秘会话密码门失败：密码错误 id=%s", s.ID) // 审计：失败不记录密码
 		fail(w, 401, errors.New("密码错误"))
@@ -2926,6 +2970,7 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.Deleted = true
+	a.forgetLiveSessionLocked(id)
 	for _, t := range s.Runs {
 		if t.Status == "running" {
 			if cancel := a.cancels[t.ID]; cancel != nil {
@@ -2954,6 +2999,7 @@ func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		s.Deleted = true
+		a.forgetLiveSessionLocked(id)
 		for _, t := range s.Runs {
 			if t.Status == "running" {
 				if cancel := a.cancels[t.ID]; cancel != nil {
@@ -3321,7 +3367,19 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	}
 	saveErr := atomicJSON(TokenStatsPath(a.dataPath), map[string]any{"version": 2, "days": a.tokenStats, "calls": a.tokenCalls})
 	a.tokenStatsMu.Unlock()
-	_ = saveErr
+	if saveErr != nil {
+		// Report durability loss without copying model/key identity or private
+		// data paths from PathError/LinkError into the operational event.
+		cause := saveErr
+		for {
+			unwrapped := errors.Unwrap(cause)
+			if unwrapped == nil {
+				break
+			}
+			cause = unwrapped
+		}
+		log.Printf("token_stats_persist_failed durable=false cause=%q", cause.Error())
+	}
 }
 
 func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {

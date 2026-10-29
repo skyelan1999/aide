@@ -1,0 +1,78 @@
+{
+  "cycle": 39,
+  "baseline": "dce547e0a68e1bfa7bae82573659562f12708d01",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    163
+  ],
+  "commits": {
+    "163": "f14967d46830981c6dca04bd33f28fab5bdea301"
+  },
+  "cumulativeProductFixes": 95,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 96,
+  "original272RemainingFollowup": 188,
+  "red": [
+    {
+      "issue": 163,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue163' -count=1 -v -timeout=1m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.034,
+      "observed": "实际vendored客户端通过net.Pipe完成握手/Lstat，8字节扩展属性载荷使TotalAlloc增加33555336字节后才拒绝。只用有限count=1<<20，没有用极端count制造OOM。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle39-163-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue163|^TestIssue79|^TestIssue78SFTPFileSnapshot$|^TestIssue71DirectoryEnumerationStopsAndCancels$' -count=1 -v -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 7.834,
+      "scope": "163相同路径分配<8MiB保守预算，随后测试UINT32_MAX拒绝、同连接再次拒绝、零项/空字符串/两项合法扩展/截短/错误字符串长度；已有SFTP快照/读取输出限制/目录提前停止与取消。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle39-final-race.log"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T012154208904Z.log",
+      "fingerprint": "c7af7f89424810dea44844363b47a8648167ae2bf4b90cbefa28b8256c94116f"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1469links"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "NOT_RUN",
+      "scope": "真实用户SSH设备/完整工作台、Windows/macOS/32位运行；内存管道使用真实客户端与解码器，模拟对端协议，不需要凭据或网络监听。"
+    }
+  ],
+  "notes": [
+    "vendored pkg/sftp扩展属性在分配前检查count<=剩余字节/8，以uint64比较并返回既有短包错误；实际客户端/内存管道证明原8字节载荷引起33555336字节分配，修复后通过有限预算、最大计数拒绝及合法属性/截短数据回归。",
+    "本地回补上游c1bc2fffcb14f580c4d365ae9660fa149ec1dba5对应检查；模块仍v1.13.10，不伪装依赖升级，未来刷新vendor须保留或确认包含该补丁。",
+    "每项至少两个uint32前缀，共8字节；用uint64比较，不进行不可信count乘法或int截断。既有字符串和256KiB包限制保留；正常属性不受影响。",
+    "本轮使用完整包头及ID，聚焦扩展属性；下一项164另行检查NAME字符串/计数及接收路由解析，不能声称所有SFTP报文已加固。",
+    "真实包头/ID在客户端接收路由要求完整，本轮聚焦扩展属性；下一项164另行检查NAME字符串/计数解析，不能声称所有SFTP报文已加固。",
+    "无常驻服务，用户未跟踪文件保留；只push分支，不合并main/发行/部署，合理issue保持open。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "163": "https://github.com/skyelan1999/aide/issues/163#issuecomment-6431398852"
+    },
+    "verifiedRemoteCommit": "a591b7df11d0bca92eca5504bf1f48a1c1eacad6"
+  },
+  "sourceSHA256": {
+    "docs/architecture/ssh-storage.md": "ebdabab36be10bdfb62dc19936b32314bfd46609ea9ea1b016ad3f4535419fef",
+    "internal/server/sftp_attribute_bounds_test.go": "d0fda935b3938493335757593c496fcea68c2de5e52a68f1679aaf5f28ca8efb",
+    "vendor/github.com/pkg/sftp/packet.go": "7ae6609fa60d5022f146a029474a5842062b28f47d0a6066bf0a9da68583f69e"
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "cycle": 25,
+  "baseline": "a00b42a456f97f906505b070c023fc963d1025fe",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    135,
+    137,
+    138
+  ],
+  "commits": {
+    "135": "efdc8757734bfe1b199941516d66df37b7fba54f",
+    "137": "efdc8757734bfe1b199941516d66df37b7fba54f",
+    "138": "efdc8757734bfe1b199941516d66df37b7fba54f"
+  },
+  "cumulativeProductFixes": 72,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 73,
+  "original272RemainingFollowup": 211,
+  "red": [
+    {
+      "issue": 135,
+      "result": "EXPECTED_FAIL",
+      "command": "AIDE_DRAWIO_BUNDLE_ONLY=1 node scripts/test_drawio_clone_constraints.cjs clone",
+      "observed": "must map special source ID constructor\n+ actual - expected\n\n+ [Function: Object]\n- 'clone-constructor'"
+    },
+    {
+      "issue": 137,
+      "result": "EXPECTED_FAIL",
+      "command": "AIDE_DRAWIO_SELECT_TABLE=1 AIDE_DRAWIO_LAYOUT_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle25-red-browser node scripts/browser-drawio-preview-bounds.cjs",
+      "observed": "frame.evaluate: TypeError: Cannot read properties of null (reading 'alternateBounds')\n    at mxVertexHandler.<anonymous> (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:3435:147)\n    at https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:110:94\n    at mxVertexHandler.createCustomHandles (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:3438:397)\n    at mxVertexHandler.createCustomHandles (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:4251:21)\n    at mxVertexHandler.refresh (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:1773:481)\n    at mxVertexHandler.refresh (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:3454:386)\n    at mxVertexHandler.init (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:1771:305)\n    at new mxVertexHandler (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:1767:57)\n    at mxGraph.createVertexHandler (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:1502:382)\n    at mxGraph.createHandler (https://aide-drawio-owned.test/vendor/drawio/js/app.min.js:1502:292)\n    at module.exports (/workspace/aide/scripts/drawio-layout-browser-cases.cjs:4:30)\n    at main (/workspace/aide/scripts/browser-drawio-preview-bounds.cjs:77:119)"
+    },
+    {
+      "issue": 138,
+      "result": "EXPECTED_FAIL",
+      "command": "AIDE_DRAWIO_BUNDLE_ONLY=1 node scripts/test_drawio_clone_constraints.cjs leave",
+      "observed": "mouseleave must clear focus even when its cell still exists\n+ actual - expected\n\n+ {\n+   cell: {}\n+ }\n- null"
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_drawio_clone_constraints.cjs",
+      "result": "PASS",
+      "scope": "Actual source and bundled functions: five source IDs × default/null-prototype or caller-supplied ordinary mappings, supplied identity preserved, __proto__ safe write, cells/excludeCells/layers remap, wildcard/unmapped inherited valueOf retained, empty clone removed; real update/reset/destroy functions against deterministic listener fixture."
+    },
+    {
+      "command": "node scripts/test_drawio_layout_fixes.cjs; node scripts/test_drawio_preview_bounds.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "AIDE_DRAWIO_SELECT_TABLE=1 AIDE_DRAWIO_LAYOUT_ACCEPTANCE=1 AIDE_DRAWIO_CLONE_CONSTRAINT_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle25-browser node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "PASS",
+      "browserResult": {
+        "checks": [
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "light",
+            "width": 1440,
+            "result": "PASS"
+          },
+          {
+            "case": "actual duplicateCells remaps custom links, special IDs, wildcards and unmapped inherited names",
+            "theme": "light",
+            "result": "PASS"
+          },
+          {
+            "case": "real pointer leaves graph: clear icons/highlight and remove exact listener on destroy",
+            "theme": "light",
+            "result": "PASS",
+            "resets": 2,
+            "iconsCleared": true,
+            "listenerRemoved": true
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "light",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "light",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 4
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "light",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "select malformed table and construct remaining handles",
+            "theme": "light",
+            "result": "PASS",
+            "handles": 5
+          },
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "dark",
+            "width": 390,
+            "result": "PASS"
+          },
+          {
+            "case": "actual duplicateCells remaps custom links, special IDs, wildcards and unmapped inherited names",
+            "theme": "dark",
+            "result": "PASS"
+          },
+          {
+            "case": "real pointer leaves graph: clear icons/highlight and remove exact listener on destroy",
+            "theme": "dark",
+            "result": "PASS",
+            "resets": 2,
+            "iconsCleared": true,
+            "listenerRemoved": true
+          },
+          {
+            "case": "real graph async prepare contract, special IDs, coalesced dirty/self-apply/next run",
+            "theme": "dark",
+            "result": "PASS",
+            "applies": 15
+          },
+          {
+            "case": "real view 2000 edges, conservative budget, clear stale jumps, reset and normal crossing",
+            "theme": "dark",
+            "result": "PASS",
+            "pairs": 10154,
+            "elapsedMs": 3.400000035762787
+          },
+          {
+            "case": "real table layout, missing first geometry, finite later columns and unchanged absent geometry",
+            "theme": "dark",
+            "result": "PASS",
+            "positions": [
+              0,
+              135,
+              270
+            ]
+          },
+          {
+            "case": "select malformed table and construct remaining handles",
+            "theme": "dark",
+            "result": "PASS",
+            "handles": 5
+          },
+          {
+            "case": "expanded",
+            "result": "PASS",
+            "elapsedMs": 1834
+          },
+          {
+            "case": "xml-depth",
+            "result": "PASS",
+            "elapsedMs": 1894
+          },
+          {
+            "case": "cell-depth",
+            "result": "PASS",
+            "elapsedMs": 1931
+          },
+          {
+            "case": "cell-cycle",
+            "result": "PASS",
+            "elapsedMs": 1837
+          },
+          {
+            "case": "inactive-page",
+            "result": "PASS",
+            "elapsedMs": 1827
+          },
+          {
+            "case": "page-count",
+            "result": "PASS",
+            "elapsedMs": 1856
+          },
+          {
+            "case": "aggregate-expansion",
+            "result": "PASS",
+            "elapsedMs": 2551
+          },
+          {
+            "case": "lazy-reference-depth",
+            "result": "PASS",
+            "elapsedMs": 2062
+          }
+        ],
+        "errors": [],
+        "browser": "154.0.8037.57",
+        "actualBundledIframe": true,
+        "fullWorkbench": false
+      },
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle25-browser/result.json",
+      "visualReview": "Viewed light1440/dark390 actual table selection screenshots: remaining handle borders and Column2/Column3 visible; missing geometry unchanged.",
+      "scope": "Actual shipped iframe/bundle22 cases. Real graph duplicateCells/setLinkForCell/getLinkForCell remaps five IDs preserving source links; actual pointer moves from graph to parent outside iframe and clears two icons/highlight; destroy then DOM dispatch verifies no listener remains. Actual malformed table selection constructs5 handles each theme. Prior10 bounds and6 layout cases retained. Owned contexts/browser closed."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T203749531178Z.log",
+      "fingerprint": "00be8dd36c7f35fb82d7345ca241829940a362778e3c7f7e491b9607b1d6ad4d"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check; node --check internal/server/web/vendor/drawio/js/app.min.js; node --check internal/server/web/vendor/drawio/js/diagramly/Editor.js; node --check internal/server/web/vendor/drawio/js/grapheditor/Graph.js; node --check internal/server/web/vendor/drawio/mxgraph/src/handler/mxConstraintHandler.js; node --check scripts/drawio-clone-constraint-browser-cases.cjs",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "克隆ID映射默认无原型，写入按自身属性及defineProperty，外部传入普通映射保留identity并安全处理__proto__；动作链接只读自身映射，保留未映射ID/通配符及空ID过滤。",
+    "表格列控制句柄构造跳过null geometry，保留其他列/行句柄，不补造geometry；明暗实际选中缺失几何表格均创建5个剩余句柄。",
+    "mouseleave注册真正reset的同一回调，指针离开清除焦点图标与高亮，destroy移除实际注册函数。",
+    "Four uniquely matched substitutions synchronize app.min.js with Graph.js/Editor.js/mxConstraintHandler.js. Vendor headers/licenses and Editor.js original no-final-newline retained. Production tests load actual modified bundle, not only source.",
+    "#137 was separately reproduced during cycle24 then before patch using focused browser flag; now actual selection succeeds. Cycle24 historical receipt remains unchanged, latest inventory points here.",
+    "No Go/backend change; no Go test claimed. Full start.command workbench, other engines/platforms/native devices NOT_RUN. Existing ELK/full import and platform blockers persist. No merge/release/deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "verifiedRemoteCommit": "e39eeef5a05782b1da9c9cd9bff9bf742019317f",
+    "issueComments": {
+      "135": "https://github.com/skyelan1999/aide/issues/135#issuecomment-6426856830",
+      "137": "https://github.com/skyelan1999/aide/issues/137#issuecomment-6426857713",
+      "138": "https://github.com/skyelan1999/aide/issues/138#issuecomment-6426858739"
+    }
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "68c6fb2537949f508d33220254797ff90a43c74e549cc84e924ace0f3de2c1f6",
+    "docs/architecture/office-viewer.md": "3347f198f5166f134d504e3d4f59ab543aade00bafa7c579562ef0c5d4eed7a5",
+    "internal/server/web/vendor/drawio/js/app.min.js": "575cd73ea1e6b2a27e9b94a03e061c529e1f22b1bb6e932f33ba4c7c71a9fa8a",
+    "internal/server/web/vendor/drawio/js/diagramly/Editor.js": "e035387a6264f05b3b6cb96d9f544a1c76177da14a6968fec82579020045b047",
+    "internal/server/web/vendor/drawio/js/grapheditor/Graph.js": "fe4b17784250f655d38136c40591a11b2fd382e83ca876cec380890a9173e4c1",
+    "internal/server/web/vendor/drawio/mxgraph/src/handler/mxConstraintHandler.js": "33ca8ad24d75927555e54806c6416421472046df6fdc1c4cf426b7128e5551b7",
+    "scripts/browser-drawio-preview-bounds.cjs": "43ba9cd670a5f5f14b57b7c54a7c3933f19a620234918af423446a2564ecb4d4",
+    "scripts/drawio-clone-constraint-browser-cases.cjs": "78010700dec3556e1f4c0eadab8b2193b9eec3cd56f46d4a6aaed296e2f0e331",
+    "scripts/drawio-layout-browser-cases.cjs": "2411ed0eb7007a00f4ea3d7c975e0a183ed61f63a10c068bc013706f633f4b67",
+    "scripts/test_drawio_clone_constraints.cjs": "10a40fc0308c5b48c4d43b1aa80c7ce6049d349ba689117ef9a83036679a7940"
+  }
+}

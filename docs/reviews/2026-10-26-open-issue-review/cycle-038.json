@@ -1,0 +1,109 @@
+{
+  "cycle": 38,
+  "baseline": "8ef45be05700969e5fb73667966f2be909ec4ee6",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    162
+  ],
+  "commits": {
+    "162": "8787c077401e208bba50c345da23d92c4c1846a9"
+  },
+  "cumulativeProductFixes": 94,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 95,
+  "original272RemainingFollowup": 189,
+  "red": [
+    {
+      "issue": 162,
+      "command": "node scripts/test_frame_interpolation.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "隔离模拟Sharp实际执行旧生成器后，owned-atlas.webp输出已改变而art-audit仍保留输入哈希。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle38-162-generator-red.log"
+    },
+    {
+      "issue": 162,
+      "command": "node scripts/avatar_asset_audit.cjs (before snapshot repair)",
+      "result": "EXPECTED_FAIL",
+      "observed": "只读核对102/102文件哈希不符；新增验证器拒绝当前包。旧插帧35项、manifest34，无插帧标记且帧数不一致。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle38-162-published-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_frame_interpolation.cjs",
+      "result": "PASS",
+      "scope": "模拟Sharp/临时目录：原序列与总时长、重跑拒绝、错误输入帧/哈希/ID/重复/路径/旧审计预检无写入；输出哈希与帧数据、sourceExtraction保留；只读验证拒绝字节/审计帧数篡改；图像与审计故障保留进行中标记，原审计文件及临时清理。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle38-162-generator-final.log"
+    },
+    {
+      "command": "node scripts/test_avatar_pack_paths.cjs",
+      "result": "PASS",
+      "scope": "两个打包器既有路径/符号链接回归；新增增强包缓存素材重新publish移除旧插帧审计并通过独立只读文件验证。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle38-162-pack-final.log"
+    },
+    {
+      "command": "node scripts/avatar_asset_audit.cjs",
+      "result": "PASS",
+      "observed": "34 variants / 102 asset hashes；102原字节SHA与基线完全一致，102旧哈希及所有历史提取字段保留，旧插帧审计字节一致归档。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle38-162-published-green.log"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T011622961769Z.log",
+      "fingerprint": "bd6ba9eaeb014a2c551ff872bc000fa2369962f55d7a5683d22e711895495c2f"
+    },
+    {
+      "command": "node --check (6 changed scripts); python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1469links"
+    }
+  ],
+  "environmentLimitedRuns": [
+    {
+      "result": "FAIL_ENVIRONMENT",
+      "scope": "扩展审计故障用例初次spawnSync被沙箱EPERM阻挡，不算产品失败/通过。夹具现显式assert.ifError(result.error)，避免负例把启动错误误算成功；允许子进程后完整复跑通过。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle38-162-generator-audit-preflight.log"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "NOT_RUN",
+      "scope": "真实Sharp重编码、原画来源/视觉复核、完整工作台或跨平台；本轮不改图像字节，不调用模型。"
+    },
+    {
+      "result": "NOT_RUN",
+      "scope": "Go race/vet未重复执行，本轮只有离线素材维护脚本与JSON元数据/文档变更。"
+    }
+  ],
+  "notes": [
+    "插帧先验证输入文件哈希，输出同步更新art与插帧审计的新帧数据及输入/输出文件哈希，保留sourceExtraction；审计原子替换失败保留该文件与进行中标记。现有34套/102文件仅刷新字节快照，旧102哈希保留、历史35条插帧记录原样归档，所有图像字节不变；新只读验证器加入quick，重新发布清除旧插帧状态。",
+    "当前manifest没有interpolation标记，不能由旧35项日志推定当前文件已经插帧；快照仅验证当前字节一致，fileAudit.sourceProvenanceVerified=false及frameMetadataScope明确不补造来源。",
+    "每份审计原子替换不是整套文件事务；其他已写资产或另一份审计不会自动回滚。失败保留进行中状态，仍需原素材整套恢复；没有同权限外部进程并发写协调或数字签名认证。",
+    "原始提取frameHashes和sourceSHA历史事实均保留；新输出RGBA帧哈希是编码前数据，不声称与有损WebP解码帧逐字节相同。",
+    "历史插帧审计归档SHA256=072770aaee0a89ddaddfeeca3cc7fe6998a4c6de3cc5a454ba2b6ef0f67264b8；stale sleeping-v2原样保留在历史档，不冒充当前变体。",
+    "无常驻服务，用户未跟踪文件保留；只push分支、不合并main/发行/部署，合理issue保持open；下一项#163 SFTP扩展属性count分配。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "162": "https://github.com/skyelan1999/aide/issues/162#issuecomment-6431340193"
+    },
+    "verifiedRemoteCommit": "df1c26b616da4e19fc882fcff9329d4a846792fd"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "362f6ecefb84216b4e3b565eb1a3001ea47d59675abc563e4bc923c330fa80fe",
+    "docs/design/virtual-avatar-original-art.md": "62cf0ced13ef86dab3f4f4eb8b4ee0a356b3258b608b5c500b7099b281676d19",
+    "docs/reviews/2026-10-26-open-issue-review/cycle-038-legacy-interpolation-audit.json": "072770aaee0a89ddaddfeeca3cc7fe6998a4c6de3cc5a454ba2b6ef0f67264b8",
+    "internal/server/web/avatars/xiaomi-enhanced/art-audit.json": "89c74923bb208ba99d5e6f8033b6f079bc1a683ebc8b8a647e8293c7a417997a",
+    "scripts/avatar_asset_audit.cjs": "465bb1811e150146cf27ff109ecdb8e270f5eeb437776aa36b054d2f5f521e6d",
+    "scripts/avatar_pack_paths.cjs": "b0224f39b734dd5fd590afde81b4bc8a22250ece93e32950a239855b801ac4aa",
+    "scripts/interpolate_frames_x3.cjs": "85df3ed532e7b0d4deb3e214add0644e8bfee524b4271d69276402f02bf33148",
+    "scripts/pack_avatar_enhanced.cjs": "3ce74c7eaef3fd0579d7e4d90d39bc94d5009cca027a867937b4c0b791991633",
+    "scripts/test_avatar_pack_paths.cjs": "0815283a5d78e55042b2c3609fb6c13d70f590d6c3ea7d20799d82d161271319",
+    "scripts/test_frame_interpolation.cjs": "c37a2ff96622f33b31b7fb46d60d9ddaf3bcf3d04e96ceed6a5c114239d0ed2e"
+  }
+}

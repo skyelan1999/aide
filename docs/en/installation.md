@@ -29,7 +29,7 @@ bash scripts/install.sh --check
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-Download `aide-<tag>-full-linux-<arch>.zip` from a GitHub Release for the complete runtime package. After extraction, run `start.command` on macOS, `start.ps1` or `start.bat` on Windows, or `start.sh` on Ubuntu. The launcher verifies and imports the bundled Docker image, so first launch does not need to download the image. The same ZIP can be uploaded from Settings > Software Update on an existing Release installation. If macOS automatically extracts it, select the extracted full package folder; the updater locates and verifies the payload under `docker-images/`. Lightweight platform launcher ZIPs do not include the image; on first launch they download and verify the approximately 500 MB image from the same GitHub Release. Interrupted transfers resume automatically, and the browser opens only after the image is verified and the service is healthy. Lightweight ZIPs cannot be used for A/B updates.
+Download `aide-<tag>-full-linux-<arch>.zip` from a GitHub Release for the complete runtime package. After extraction, run `start.command` on macOS, `aide-launcher.exe` or `start.bat` on Windows, or `start.sh` on Ubuntu. The launcher verifies and imports the bundled Docker image, so first launch does not need to download the image. The same ZIP can be uploaded from Settings > Software Update on an existing Release installation. If macOS automatically extracts it, select the extracted full package folder; the updater locates and verifies the payload under `docker-images/`. Lightweight platform launcher ZIPs do not include the image; on first launch they download and verify the approximately 500 MB image from the same GitHub Release. macOS/Linux transfers resume after interruption; native Windows removes its owned partial download and retries on the next start. The browser opens only after the image is verified and the service is healthy. Lightweight ZIPs cannot be used for A/B updates.
 
 Release launchers read the persisted host port. On first launch, if the default port is occupied, they select and save the next available port. Windows offline and full packages run a host-side port monitor that applies Settings port changes by updating the Compose mapping and restarting the service; `/data` and workspace volumes remain shared. Source development startup uses the repository `.env` and does not enable the Release package's automatic upgrade flow.
 
@@ -202,3 +202,26 @@ The Windows host updater accepts both `-` placeholders and legacy empty optional
 For containerd archive imports, only a unique reference from the verified import receipt can resolve a rewritten local image ID; the platform is checked and the canonical ID is synchronized after success. An exclusive OS file handle provides updater ownership and releases automatically on process exit. An old empty lock directory is recoverable. If an older updater is still running when replacing the scripts, restart Windows before launching the repaired version; never remove locks while activation is in progress.
 
 The [Windows manual-switch task](../tasks/release-manual-switch-20261026.json) separates PowerShell execution with synthetic adapters from native Windows/Docker Desktop acceptance. The former does not establish the latter.
+
+### Windows single-file resident host
+
+The [native Windows host](../../native/windows-launcher/README.md) distributes one
+EXE for lifecycle commands, port coordination, A/B updates and embedded directory/
+LAN components. BAT shortcuts call it directly; host PowerShell/Python is not a
+runtime dependency. Docker Desktop and Compose remain required. Embedded helper
+components are SHA256-verified and automatically cached, not separate installers.
+
+The controller runs in the current user's login session and supervises port/update
+workers of the same EXE. Container mutations use one installation lock;
+`aide-launcher.exe host-status` reads task state independently. `stop` ends this
+installation's background tasks and containers, retaining data; `host-stop` only
+stops host tasks. No Windows service or login startup entry is registered.
+Legacy migration requires unambiguous same-root ownership; select an intended
+orphan project explicitly with `--project NAME`.
+
+Building needs existing Go 1.26+, Python and a local Linux tool image. Portable
+fault tests and cross-compilation do not establish Windows Job/NTFS ACL behavior,
+Docker Desktop, real migration/A/B updates, ARM64 or macOS acceptance. Preserve
+`.env`, `.aide-data` and workspaces. Unconfirmed termination leaves a blocker;
+restart does not silently clear unknown unsafe state. See the implementation
+notes for build commands, diagnostics and remaining platform checks.

@@ -173,7 +173,8 @@ Draw.loadPlugin(function(ui)
 		this.model.beginUpdate();
 		try
 		{
-			var newCells = cells.splice();
+			cells = cells != null ? cells : this.getFoldableCells(this.getSelectionCells(), collapse);
+			var newCells = cells.slice();
 			var tmp = [];
 			
 			for (var i = 0; i < cells.length; i++)
@@ -206,7 +207,7 @@ Draw.loadPlugin(function(ui)
 			}
 			
 			cells = newCells;
-			graphFoldCells.apply(this, arguments);
+			return graphFoldCells.call(this, collapse, recurse, newCells, checkFoldable, evt);
 		}
 		finally
 		{

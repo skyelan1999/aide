@@ -3,6 +3,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import struct
 from pathlib import Path
 import tarfile
 import tempfile
@@ -127,6 +128,12 @@ class CandidateContract(unittest.TestCase):
             }
             for required in candidate.FULL_PACKAGE_STARTUP_FILES:
                 entries.setdefault(root + '/' + required, 'startup fixture')
+            binary = bytearray(128)
+            binary[:2] = b'MZ'
+            struct.pack_into('<I', binary, 0x3c, 64)
+            binary[64:68] = b'PE\0\0'
+            struct.pack_into('<H', binary, 68, 0x8664 if arch == 'amd64' else 0xaa64)
+            entries[root + '/aide-launcher.exe'] = bytes(binary)
             def write(extra=None):
                 with zipfile.ZipFile(path, 'w') as bundle:
                     for name, value in dict(entries, **(extra or {})).items():

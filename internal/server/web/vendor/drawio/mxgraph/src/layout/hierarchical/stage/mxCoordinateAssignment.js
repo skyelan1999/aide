@@ -1676,7 +1676,7 @@ mxCoordinateAssignment.prototype.setEdgePosition = function(cell)
 			if (this.layout.resetEdgeLabels &&
 				realEdge.geometry != null)
 			{
-				geometry = realEdge.geometry.clone();
+				var geometry = realEdge.geometry.clone();
 				geometry.relative = true;
 				geometry.x = 0;
 				geometry.y = 0;

@@ -23,7 +23,7 @@ mxShapeSysMLComposite.prototype.paintForeground = function(c, x, y, w, h)
 	{
 		var shape = mxCellRenderer.defaultShapes[this.style['symbol0']];
 
-		if (shape != null)
+		if (typeof shape == 'function' && shape != mxShapeSysMLComposite && shape.prototype.paintVertexShape != null)
 		{
 			c.save();
 
@@ -44,7 +44,7 @@ mxShapeSysMLComposite.prototype.paintForeground = function(c, x, y, w, h)
 		{
 			shape = mxCellRenderer.defaultShapes[this.style['symbol' + counter]];
 				
-			if (shape != null)
+			if (typeof shape == 'function' && shape != mxShapeSysMLComposite && shape.prototype.paintVertexShape != null)
 			{
 				var align = this.style['symbol' + counter + 'Align'];
 				var valign = this.style['symbol' + counter + 'VerticalAlign'];

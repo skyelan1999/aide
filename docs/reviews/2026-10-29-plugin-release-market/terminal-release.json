@@ -1,0 +1,76 @@
+{
+  "version": "1.5.2",
+  "sourceFix": "756abfa118294eb92a182668ce1e4cef56b71a78",
+  "bytes": 1063504,
+  "sha256": "36984e8e16e33f785f7128a08097271ade036b31cd7223c39be1a01a9fa6a10c",
+  "nodeSuite": {
+    "passed": 34,
+    "failed": 0,
+    "skipped": 0
+  },
+  "extractedRuntime": {
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "status": "PASS",
+    "baseline": false,
+    "scope": "Actual Chromium xterm render, OpenSSH host-key and password authentication, generated Python TLS1.3 relay; host bridge substituted with serial12ms calls, remote echo delayed15ms; loopback only, not user network",
+    "results": [
+      {
+        "kind": "ssh-direct",
+        "samplesMs": [
+          65,
+          129,
+          147,
+          129,
+          119,
+          66,
+          121,
+          105,
+          70,
+          65
+        ],
+        "medianMs": 119,
+        "p90Ms": 129,
+        "maxMs": 147,
+        "bridgeCalls": 85,
+        "maxInFlight": 1,
+        "automaticProbes": 0,
+        "probesWhileActive": 0,
+        "reconnectVerified": false
+      },
+      {
+        "kind": "ssh-relay-tls",
+        "samplesMs": [
+          95,
+          100,
+          112,
+          125,
+          120,
+          69,
+          118,
+          56,
+          107,
+          105
+        ],
+        "medianMs": 107,
+        "p90Ms": 120,
+        "maxMs": 125,
+        "bridgeCalls": 91,
+        "maxInFlight": 1,
+        "automaticProbes": 0,
+        "probesWhileActive": 0,
+        "reconnectVerified": false
+      }
+    ],
+    "errors": []
+  },
+  "packageRuntimeMatchesTestedSources": true,
+  "limitations": [
+    "Full start.command hosted workbench NOT_RUN; authenticated bridge fixture is substituted.",
+    "Physical serial hardware and native Windows/macOS NOT_RUN.",
+    "Pre-release; existing host capability requirements unchanged."
+  ]
+}

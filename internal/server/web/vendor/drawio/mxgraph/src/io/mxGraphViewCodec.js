@@ -119,7 +119,7 @@ mxCodecRegistry.register(function()
 				    	var value = state.style[i];
 		
 				    	// Tries to turn objects and functions into strings
-					    if (typeof(value) == 'function' &&
+					    if (typeof(value) == 'function' ||
 							typeof(value) == 'object')
 						{
 					    	value = mxStyleRegistry.getName(value);

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -349,7 +350,7 @@ func (a *App) debugOverview(w http.ResponseWriter, r *http.Request) {
 		},
 		"tts": map[string]any{
 			"edgeAvailable": edgeAvail,
-			"edgeLastError": edgeErr,
+			"edgeLastError": debugRedactedError(edgeErr),
 			"checkedAt":     edgeChecked.UTC().Format(time.RFC3339Nano),
 		},
 		"personality": pers,
@@ -397,9 +398,9 @@ func (a *App) debugSessions(w http.ResponseWriter, r *http.Request) {
 		if filter != "" && status != filter {
 			continue
 		}
-		v := debugSessionView{ID: s.ID, Title: s.Title, Status: status, Updated: s.Updated, Runs: len(s.Runs)}
+		v := debugSessionView{ID: s.ID, Status: status, Updated: s.Updated, Runs: len(s.Runs)}
 		if last != nil {
-			lr := debugRunView{ID: last.ID, Created: last.Created, Status: last.Status, Mode: last.Mode, Model: last.Model, Failures: last.Failures, Error: last.Error, Usage: last.Usage}
+			lr := debugRunView{ID: last.ID, Created: last.Created, Status: last.Status, Mode: last.Mode, Model: last.Model, Failures: last.Failures, Error: debugRedactedError(last.Error), Usage: last.Usage}
 			v.LastRun = &lr
 		}
 		out = append(out, v)
@@ -455,20 +456,16 @@ func (a *App) debugRunDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	steps := make([]debugStep, 0, len(task.Steps))
-	for _, st := range task.Steps {
-		steps = append(steps, debugStep{Name: st.Name, Status: st.Status})
+	for i, st := range task.Steps {
+		steps = append(steps, debugStep{Name: fmt.Sprintf("step-%d", i+1), Status: st.Status})
 	}
 	tools := make([]debugToolUse, 0, len(task.ToolUses))
 	for _, tu := range task.ToolUses {
-		prev := tu.Preview
-		if len(prev) > 200 {
-			prev = prev[:200]
-		}
-		tools = append(tools, debugToolUse{Tool: tu.Tool, Preview: prev})
+		tools = append(tools, debugToolUse{Tool: tu.Tool})
 	}
 	jsonOut(w, 200, debugRunDetailView{
 		SessionID: sid, RunID: rid, Status: task.Status, Created: task.Created,
-		Mode: task.Mode, Model: task.Model, Failures: task.Failures, Error: task.Error,
+		Mode: task.Mode, Model: task.Model, Failures: task.Failures, Error: debugRedactedError(task.Error),
 		Usage: task.Usage, Steps: steps, ToolUses: tools,
 	})
 }
@@ -478,6 +475,9 @@ func (a *App) debugErrors(w http.ResponseWriter, r *http.Request) {
 	recent := make([]recentError, len(a.errorRing))
 	copy(recent, a.errorRing)
 	a.debugMu.Unlock()
+	for i := range recent {
+		recent[i].Message = debugRedactedError(recent[i].Message)
+	}
 	// 最近 50 条
 	if len(recent) > 50 {
 		recent = recent[len(recent)-50:]
@@ -606,6 +606,9 @@ func (a *App) debugDiagnosticBundle(w http.ResponseWriter, r *http.Request) {
 	errs := make([]recentError, len(a.errorRing))
 	copy(errs, a.errorRing)
 	a.debugMu.Unlock()
+	for i := range errs {
+		errs[i].Message = debugRedactedError(errs[i].Message)
+	}
 	if len(errs) > 50 {
 		errs = errs[len(errs)-50:]
 	}
@@ -624,7 +627,7 @@ func (a *App) debugDiagnosticBundle(w http.ResponseWriter, r *http.Request) {
 		for _, t := range s.Runs {
 			recent = append(recent, st{
 				Updated: s.Updated,
-				Run:     bundleRun{SessionID: s.ID, RunID: t.ID, Status: t.Status, Model: t.Model, Failures: t.Failures, Error: t.Error},
+				Run:     bundleRun{SessionID: s.ID, RunID: t.ID, Status: t.Status, Model: t.Model, Failures: t.Failures, Error: debugRedactedError(t.Error)},
 			})
 		}
 	}

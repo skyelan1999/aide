@@ -1,0 +1,89 @@
+{
+  "cycle": 50,
+  "baseline": "256531576a721e611d7a98973d86b7264cbaa3a4",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    181
+  ],
+  "commits": {
+    "181": "e550bef163e1a2d48fd3627b2d893393297117ff"
+  },
+  "cumulativeProductFixes": 111,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 112,
+  "original272RemainingFollowup": 172,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "issue": 181,
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_gif_frames.cjs (before fix)",
+      "observed": "实际源码doExport对1000000000ms/15FPS计划15000000帧并进入convertImages；测试覆盖renderFrames只记录计划，不实际栅格化，预期帧限制错误未出现。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle50-gif-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_gif_frames.cjs (also in final quick)",
+      "scope": "源码/app/integrate真实导出器；超限先于样式修改/图片转换拒绝；普通15帧/最少2帧/精确300帧计划、负数/无限有效参数/301帧、直接renderFrames的非整数/无限/非法数量在encoder前拒绝；原falsy默认值回退及CSS秒/指数单位解析。300帧仅验证计划，不实际渲染。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle50-gif-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_GIF_ACCEPTANCE=1 AIDE_DRAWIO_TRELLO_ACCEPTANCE=1 AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_MEDIA_ACCEPTANCE=1 AIDE_DRAWIO_NURBS_ACCEPTANCE=1 AIDE_DRAWIO_POLYLINE_ACCEPTANCE=1 AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle50-browser-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154，合成图显式启用flow动画，真实SVG识别1000000000ms；实际exportAnimatedGif UI错误/停止spinner，受控encoder探针在漏门禁时会抛错阻止大渲染，实际坏例encoder构造数为0。源码及两分发对应真实GifEncoder/AnimatedGifExport分别生成2帧125x45 GIF，经SVG→canvas→GIF→FileReader→截获saveData，结构遍历及原生Image解码核对尺寸；含既有组件共59组，零pageerror，1440明色/390暗色。finally恢复测试hooks/flow开关并关闭context。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle50-browser-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261027T051246977815Z.log",
+      "fingerprint": "78ce3c8dc3e584a5d27e15ec1bb91e970ec9d5b6a896c57350ff5abef35f112a"
+    },
+    {
+      "result": "PASS",
+      "command": "GIF sync --check and Trello sync --check with external Terser5.39.0; node --check (3 new scripts, source AnimatedExport, whole app/integrate); python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links；app/integrate除AnimatedGifExport之外字节不变，GIF编码器未改。"
+    }
+  ],
+  "securityReview": [
+    "300帧固定预算，先验证有效正有限FPS/时长和安全整数帧数，再去样式/嵌图/创建编码器；直接renderFrames也在编码器/画布分配前检查，避免低层入口绕过。原至少2帧和falsy默认值回退保持。",
+    "CSSOM会把毫秒规范化成秒，时长解析支持s/ms/科学计数，浏览器实际长flow SVG确认同一超限路径；不靠单位误读来隐藏大帧数。",
+    "这是导出器帧数预算，不是所有尺寸/独立GifEncoder调用或整个进程CPU/内存的保证。合法长动画超过预算也会拒绝。root顺序复核，无子agent。"
+  ],
+  "notRun": [
+    "完整Aide工作台文件选择/下载/保存对话框、实际300帧长渲染、全部画质/透明度/循环/混合动画语义与跨平台。saveData截获不写用户文件；原生解码和GIF块检查不冒称所有帧像素保真验收。",
+    "Go race/vet未重复，本批前端GIF导出与回归工具。"
+  ],
+  "notes": [
+    "源码和app/integrate整段AnimatedGifExport由固定工具同步；extensions不含该类未改，GifEncoder代码及其单独API未新增限制。",
+    "初步代码曾把0/NaN显式选项直接判无效，提交前按原falsy默认行为调整并补回归；最终证据覆盖最终代码，不把兼容性调整当成额外issue覆盖。",
+    "默认Trello仍禁用，上一可选客户端隔离测试继续通过；Visio/Lucidchart及原资源门禁联验。",
+    "保留用户原未跟踪文件，无常驻服务；只push修复分支，不合并main/发行/部署。下一182最新正文已读，尚未改代码/新增回归。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "181": "https://github.com/skyelan1999/aide/issues/181#issuecomment-6434417005"
+    },
+    "remoteCommit": "746c0fa326762657b58ed979de62d334cbcdf44f"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "09be3b18590ea0347ac30368f7093a59615db69183e94a574ec3842130d10478",
+    "docs/architecture/office-viewer.md": "642f0045830afa6926cac8d537593f487dd7f5a3bee56af7b6efa82cc00a3374",
+    "internal/server/web/vendor/drawio/js/app.min.js": "6dd4a34e9b50e7e273ffd4fd94cf54e2f1fb97371fa0c122e4674fe830f03045",
+    "internal/server/web/vendor/drawio/js/diagramly/gif/AnimatedExport.js": "27be9f21b46dd05dbffadce858cb6bbe1aa4719f99b72ce12ba2d873b015d2a2",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "d2cd3756b6cda4b74986be7ca09eeb5b6c8add02c7b4a33a0088c215712a01e9",
+    "scripts/browser-drawio-preview-bounds.cjs": "a807bab6b08eb0d16e69ff3a4f11b74f2f2f592056f8b52c8e974e623d608fac",
+    "scripts/drawio-gif-browser-cases.cjs": "a84bd17e1c4ab58e6cd4fb8d61e161de1879d9091c10e6c47a481c4f495cd72e",
+    "scripts/sync_drawio_gif_frames.cjs": "437ca86d5044e3bd3560e3be1d239ec8bcfd0867e707af49a1730cdd52b20ad3",
+    "scripts/test_drawio_gif_frames.cjs": "8fec78b413df3167fa5dec47b79322dea99d929b126aaddc49d4a5770e06ba8c"
+  }
+}

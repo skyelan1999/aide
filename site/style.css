@@ -49,7 +49,7 @@ h1{font-size:clamp(60px,6.9vw,88px);line-height:1.24;font-weight:730;letter-spac
 .hero-note>span:first-child{font-size:16px;color:#7e8796}
 .note-dot{color:#b2bac7;margin:0 3px}
 .hero-side{position:absolute;right:9px;top:75px;text-align:right;display:flex;flex-direction:column;font:10px/1.8 var(--mono);letter-spacing:2.2px;color:#9aa4b4}
-.hero-side p{margin:15px 0 0;font:12px/1.8 inherit;letter-spacing:1px}
+.hero-side p{margin:15px 0 0;font-size:12px;line-height:1.8;letter-spacing:1px}
 .connection-mark{height:89px;position:relative;margin:28px 0 0}
 .connection-mark i{position:absolute;right:0;top:0;display:block;border:1px solid #ccd6e7;width:66px;height:66px;border-radius:50%}
 .connection-mark i:nth-child(2){right:31px;top:19px;border-color:#3478f6}

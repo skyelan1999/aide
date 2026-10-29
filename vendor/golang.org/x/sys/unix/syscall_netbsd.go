@@ -50,6 +50,9 @@ func sysctlNodes(mib []_C_int) (nodes []Sysctlnode, err error) {
 	}
 
 	// Now that we know the size, get the actual nodes.
+	if olen < sz || olen%sz != 0 {
+		return nil, ENOENT
+	}
 	nodes = make([]Sysctlnode, olen/sz)
 	np := (*byte)(unsafe.Pointer(&nodes[0]))
 	if err = sysctl(mib, np, &olen, qp, sz); err != nil {

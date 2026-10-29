@@ -13,7 +13,7 @@
 
 | 文件 | SHA-256 |
 |---|---|
-| `dxf-parser.js` | `445dd62529369a4ef32520d8b6232031ea8af01f1029b08b2d876ff6b7807b7b` |
+| `dxf-parser.js` | `74fb04157666bda026156efe1bab8ee87414aecf25fc88fdae85fdff02edf1ab` |
 | `LICENSE` | `56eb37102e6e49ce363e8021f017fe0a6de61d3705273bed307110a3386cb42f` |
 
 校验：
@@ -37,3 +37,7 @@ shasum -a 256 -c CHECKSUMS.txt
 2. 重新下载 `dist/dxf-parser.js` 与 `LICENSE` 覆盖本目录；
 3. 更新本文件与 `CHECKSUMS.txt` 的版本号和 SHA-256；
 4. `node --check dxf-parser.js`、重建镜像、真机点 .dxf 验收。
+
+## 本地修复（Issue #398）
+
+上游1.1.2原始bundle的SHA256为`445dd62529369a4ef32520d8b6232031ea8af01f1029b08b2d876ff6b7807b7b`。当前副本保留原版本及MIT许可，回补LAYER/VPORT未知记录和POLYLINE序列的前进检查；畸形输入返回解析错误，不让循环停留在同一记录。上表及CHECKSUMS.txt记录修复后实际文件摘要。替换vendor时须保留修复或确认上游已包含。

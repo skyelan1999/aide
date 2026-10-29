@@ -1622,7 +1622,7 @@ mxShapeArrows2CalloutDouble90Arrow.prototype.paintVertexShape = function(c, x, y
 	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
 	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
 	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
-	var dy2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var dy2 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
 	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
 
 	c.begin();
@@ -1705,7 +1705,7 @@ mxShapeArrows2CalloutDouble90Arrow.prototype.getConstraints = function(style, w,
 	var dy1 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy1', this.dy1))));
 	var dx1 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx1', this.dx1))));
 	var dx2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dx2', this.dx2))));
-	var dy2 = Math.max(0, Math.min(w, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
+	var dy2 = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'dy2', this.dy2))));
 	var arrowHead = Math.max(0, Math.min(h, parseFloat(mxUtils.getValue(this.style, 'arrowHead', this.arrowHead))));
 
 	constr.push(new mxConnectionConstraint(new mxPoint(0, 0), false));
@@ -2845,13 +2845,14 @@ mxShapeArrowsWedgeArrowDashed2.prototype.paintEdgeShape = function(c, pts)
 	var dx = pe.x - p0.x;
 	var dy = pe.y - p0.y;
 	var dist = Math.sqrt(dx * dx + dy * dy);	
+	if (!isFinite(dist) || dist <= 0) return;
 	var nx = dx * startWidth / dist;
 	var ny = dy * startWidth / dist;
 	var cnx = nx; // current nx
 	var cny = ny; // current ny
 	var pcx = p0.x; // current x on edge
 	var pcy = p0.y; // current y on edge
-	var steps = (stepSize > 0) ? Math.floor(dist / stepSize) : 0;
+	var steps = (stepSize > 0) ? Math.max(1, Math.min(1000, Math.floor(dist / stepSize))) : 1;
 
 	c.begin();
 	

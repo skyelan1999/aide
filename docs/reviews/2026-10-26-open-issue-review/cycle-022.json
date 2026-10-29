@@ -1,0 +1,129 @@
+{
+  "cycle": 22,
+  "baseline": "0336d2c8",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    123,
+    126,
+    127
+  ],
+  "commits": {
+    "123": "19aa4848a67229fbe8df47b30abc20488058fec2",
+    "126": "831ceab3cb6697d723aa1111326c8f386021de04",
+    "127": "1dab3508eb81e3823aaea6133aaefb0a01d8bf06"
+  },
+  "shared126FollowupCommit": "1dab3508eb81e3823aaea6133aaefb0a01d8bf06",
+  "verificationRegistrationCommit": "b0e9dee4ca9810dcd2bf369b5439000320008804",
+  "cumulativeProductFixes": 63,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 64,
+  "original272RemainingFollowup": 220,
+  "red": [
+    {
+      "issue": 123,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue123' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 8.642,
+      "observed": "All9 full/nil/unbuffered channel ×3indices returned429 but removed prompt/flipped display; later save persisted rejected conversion. Duplicate prompts/interleaved nonqueued display included."
+    },
+    {
+      "issue": 126,
+      "command": "node scripts/test_dxf_preview_bounds.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Cyclic INSERT/DIMENSION silently swallowed stack error and left SVG; no explicit preview rejection."
+    },
+    {
+      "issue": 127,
+      "command": "node scripts/test_docx_preview_bounds.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "Declared64MiB OOXML part reached docx renderer1call vs expected0."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue123|^TestQueueUpdate|^TestStartTaskSteer|^TestToolLoopSteer' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 16.348
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "node scripts/test_dxf_preview_bounds.cjs",
+      "result": "PASS",
+      "scope": "Actual renderer source VM: mixed cycles/deep chains, repeated valid blocks, exponential fanout, SVG/point/text budgets, oversized header cancellation before parser and pre-parser line count. PartialSVG removed."
+    },
+    {
+      "command": "node scripts/test_docx_preview_bounds.cjs",
+      "result": "PASS",
+      "scope": "Actual viewer source plus real vendoredJSZip: renderer not called on declared/per-entry actual/count/aggregate/malformed limits; normal archive and exact8MiB part accepted. Unknown-length download canceled. Lying32MiB stream paused before all compressed input; bounded current chunk decoded without accumulating output. Actual aggregate counter separately fault-injected normalized loader lengths, because standard JSZip rejects length mismatches at each part end. Ten-second stalled-entry deadline exercised with virtual clock, not10s wall wait."
+    },
+    {
+      "command": "AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle22-browser node scripts/browser-preview-resource-bounds.cjs",
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle22-browser/result.json",
+      "scope": "One actualChromium page reused at light1440/dark390 with shipped DXF parser, JSZip and DOCX renderer. NormalLINE/TEXT render and pointer-wheel zoom; blockcycle and repeatedlargeTEXT reject withSVGclear. Real minimalWord package renders; declared/lying expanded sizes reject before DOCXrenderer and remove partial viewer. No pageerrors. Ownedpage/context/browser closed.",
+      "rejectedDocxMilliseconds": [
+        15.8,
+        224.3,
+        49.4,
+        179.6
+      ],
+      "visualReview": "Viewed light actual Word page and dark narrow DXF line; earlier normal screenshots replaced by final LINE/TEXT case; static renderer behavior and resource assertions rechecked.",
+      "screenshots": [
+        "light-dxf.png",
+        "dark-dxf.png",
+        "light-docx.png",
+        "dark-docx.png",
+        "light-rejected.png",
+        "dark-rejected.png"
+      ]
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T193806036353Z.log",
+      "fingerprint": "186d0a19d1c2ca4f2fbd98e638d1c092af6bddaeedb7ee4e8f8b81367e4e87fe"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "排队转插话先实际准入通道，再修改Queue/Steers；满、nil或无接收者返回429时内存及后续落盘完全不变；保留已有成功插话/编辑/删除行为。",
+    "DXF流式限4MiB及解析前10万行；定义/展开5万实体、5万SVG节点、20万几何点、32层块和循环检查；文本每实体16384字符、合计1Mi字符。INSERT/DIMENSION共用预算，超限清除部分SVG并报错。",
+    "DOCX有界读取16MiB，预读中央目录限512项、8MiB/项、32MiB总解压，再用固定JSZip3.10.1公开流逐块验证实际输出不累积；超限暂停拒绝进入渲染。正常原有渲染保留，10秒预检截止有虚拟时钟故障回归。",
+    "#123 fixes rejected admission state loss; it does not introduce transactional persistence for successful channel deliveries. Existing successful queueUpdate save semantics remain outside this report.",
+    "#126 text budget added after initial commit as followup in shared#127 commit, because node counts alone do not bound repeated large label memory. Normal repeated blocks are allowed; only current recursion path is a cycle.",
+    "#127 central metadata is bounded before JSZip allocation; actual stream counters reject lying values. Only the public pause API is used. Current pinned inflater input chunk can finish decoding after rejection, but further compressed chunks stop and later decoded output is ignored. No async()/accumulate() preflight buffering or vendor modification.",
+    "DOCX gate is ZIP/input/expansion validation, not a promise of bounded OOXML layout, XML semantics or image pixels. UnsupportedZIP/multivolume/encryption/version changes fail closed with download guidance. Limits do not alter raw files, upload/download protocols or plugin-provided preview implementations.",
+    "Browser verification is actual-source component with generated local fixtures and real libraries, not a full start.command workbench, native CAD/Word/WPS, SSH/device or production acceptance. No real user files, paid model, merge, release or deployment. Existing platform/full-gate blockers persist."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "verifiedRemoteCommit": "679463f98211666c7a36575669b5457590ce9333",
+    "issueComments": {
+      "123": "https://github.com/skyelan1999/aide/issues/123#issuecomment-6425694940",
+      "126": "https://github.com/skyelan1999/aide/issues/126#issuecomment-6425695795",
+      "127": "https://github.com/skyelan1999/aide/issues/127#issuecomment-6425696612"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/workflow.go": "4fc08b7228e808533e9f201cd66e4b5bd8df3e7fd40f80099a5105a010c296fd",
+    "internal/server/queue_admission_test.go": "ec32616e9a5e6fe188d37d1322da8fd61531fc7718c2603349a71ad8b7c48681",
+    "internal/server/web/app.js": "457c5f1e09ecf6c36c19c2a1bd4b16de580ffe16bb63aa00b5f14d18f33a7cf7",
+    "internal/server/web/preview-safety.js": "d72c420ccde105b66d5454b425b0365ad172f862de0406b3cf1fe68b2759fb00",
+    "internal/server/web/index.html": "686cbc33cca99eaa0ee5bf135a1321ea773ca7ecb3de3431c4904a415d49b203",
+    "internal/server/web/locales/en.js": "2f8d7b62464060115ed061dae31c4e5ea3f62a1c14ba0ba5e03cca3251662e6b",
+    "scripts/test_dxf_preview_bounds.cjs": "c829035d4fd02f75fca4eceadad14601c3dd7624d87364eb2cd31c776108939f",
+    "scripts/test_docx_preview_bounds.cjs": "64ed1c2e507018c4bc2f6ad2ef3e90556e9035ce01d7f73cf1474e96e9566fb3",
+    "scripts/browser-preview-resource-bounds.cjs": "389b92e00a45627524946422ceb217a0558649478c39de256d315ea5f0e922db",
+    "docs/agent/router.json": "46ea73240783492e6f81765aca29bfbe107b9383c966d42ab28cdb457f3452df"
+  }
+}

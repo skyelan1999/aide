@@ -562,6 +562,7 @@ mxGraphHierarchyModel.prototype.dfs = function(parent, root, connectingEdge, vis
 {
 	if (root != null)
 	{
+		if (layer > 256) throw new Error("Hierarchical model path limit exceeded (256)");
 		var rootId = root.id;
 
 		if (seen[rootId] == null)
@@ -635,6 +636,7 @@ mxGraphHierarchyModel.prototype.extendedDfs = function(parent, root, connectingE
 	// or if the first int does not match that of the current run.
 	if (root != null)
 	{
+		if (layer > 256) throw new Error("Hierarchical model path limit exceeded (256)");
 		if (parent != null)
 		{
 			// Form this nodes hash code if necessary, that is, if the

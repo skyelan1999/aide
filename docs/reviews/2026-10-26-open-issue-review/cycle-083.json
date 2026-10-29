@@ -1,0 +1,99 @@
+{
+  "cycle": 83,
+  "baseline": "4680cafa36fdfabaae27dab40a2e6ce32bfda885",
+  "issues": [
+    469,
+    515,
+    517,
+    521,
+    522,
+    523,
+    524,
+    525,
+    526,
+    527,
+    528
+  ],
+  "fixes": {
+    "469": "Use prototype-free block and style databases, including clear/reset.",
+    "515": "Retain prototype-named pie categories across parser resets.",
+    "517": "Reject orphan Timeline event rows with a descriptive error.",
+    "521": "Decode sanitized entities at the SVG text sink so titles display correctly.",
+    "522": "Reject empty/nonfinite Sankey values before adding links.",
+    "523": "Preserve requirement/element names with prototype-free databases.",
+    "524": "Store sequence participants and actor lifecycle IDs in prototype-free maps.",
+    "525": "Preserve class IDs through database, Graphlib and Dagre layout indexes.",
+    "526": "Reject nonfinite XY plot values before scale/layout.",
+    "527": "Store ER entities in a prototype-free map including resets.",
+    "528": "Retain prototype-named Gantt task indices and clear stale indices with the task list."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 11,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle83-red-final/result.json"
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 231,
+      "fingerprint": "74fa697d103bbcecb1ea0621cb37a8ecce16b28348300814dbe2f95502567955",
+      "receipt": ".agent-state/verify-20261028T121940018715Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 44,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle83-final/result.json",
+      "scope": "Actual Mermaid SVG rendering; ordinary/special/ordinary/special database resets, labels, title text, finite geometry, valid Gantt dates and descriptive invalid-input errors."
+    },
+    {
+      "result": "PASS",
+      "checks": 3,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle83-csp/browser-proof.json",
+      "scope": "Aide strict-CSP Markdown integration with 4 diagrams per check, light/dark, authenticated proof204, repeated rendering and detached stylesheet cleanup."
+    }
+  ],
+  "patchAudit": {
+    "baselineSHA256": "8d607d7ef1d077a8aa202e18e62212bfa992c68bfeabc5cf45d51a128fe6675d",
+    "patchedSHA256": "dc403c4ec804ef0378798d00208771b900131e249781d34908b6e0499659bb28",
+    "databaseMapInitializersOrResets": 17,
+    "sequenceActorMaps": 3,
+    "graphlibMaps": 16,
+    "dagreEmptyDictionaries": 29,
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle83-patch-audit.json",
+      "/workspace/scratch/issue-review-20261026/cycle83-dagre-audit.json"
+    ]
+  },
+  "harnessCorrections": [
+    "Actual flowchart title class is flowchartTitleText; Gantt task labels include trailing whitespace. Red-final uses the corrected selectors/trim."
+  ],
+  "notRun": [
+    "Full Aide workbench/start.command and Windows/macOS native.",
+    "Every Mermaid diagram/configuration; additional resource reports remain open.",
+    "Main merge, Release/tag, market/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "remoteSourceCommit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+    "issueComments": {
+      "469": "https://github.com/skyelan1999/aide/issues/469#issuecomment-6468839604",
+      "515": "https://github.com/skyelan1999/aide/issues/515#issuecomment-6468840527",
+      "517": "https://github.com/skyelan1999/aide/issues/517#issuecomment-6468841516",
+      "521": "https://github.com/skyelan1999/aide/issues/521#issuecomment-6468842694",
+      "522": "https://github.com/skyelan1999/aide/issues/522#issuecomment-6468843427",
+      "523": "https://github.com/skyelan1999/aide/issues/523#issuecomment-6468844642",
+      "524": "https://github.com/skyelan1999/aide/issues/524#issuecomment-6468845571",
+      "525": "https://github.com/skyelan1999/aide/issues/525#issuecomment-6468846150",
+      "526": "https://github.com/skyelan1999/aide/issues/526#issuecomment-6468846732",
+      "527": "https://github.com/skyelan1999/aide/issues/527#issuecomment-6468847419",
+      "528": "https://github.com/skyelan1999/aide/issues/528#issuecomment-6468848033"
+    }
+  },
+  "completedAt": "2026-10-28T12:21:58.327665+00:00",
+  "cumulativeFixedOnBranch": 360,
+  "cumulativeProductFixes": 359,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

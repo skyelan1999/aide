@@ -29,8 +29,8 @@ installed users do not clone source or compile the manager.
 The existing launcher invokes `scripts/codex-host-control.cjs` using Node and
 argument arrays. The helper resolves the selected image to an immutable ID,
 extracts only the matching native binary and its metadata, checks SHA-256 and
-starts it headlessly. Existing Windows launchers remain PowerShell-based; the
-new native component and Node lifecycle helper do not invoke PowerShell.
+starts it headlessly. The native Windows C++ launcher starts the Node helper inside its resident
+host job. No PowerShell is used on the new Windows distribution path.
 
 The manager listens on port 17888 (distinct from legacy port 8788). Windows and
 macOS use loopback; Linux uses a verified local Docker bridge interface. It

@@ -25,7 +25,7 @@
 			this.createVertexTemplateEntry(s + 'abap_business_application_platform;',
 				d * 1.82, d * 1.65, '', 'ABAP Business Application Platform', false, null, this.getTagsForStencil(gn, 'abap business application platform', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'acms_application_configuration_manangement;',
-				d * 1.7, d * 1.58, '', 'ACMS Application Configuration Manangement', false, null, this.getTagsForStencil(gn, 'acms application configuration manangement', dt).join(' ')),
+				d * 1.7, d * 1.58, '', 'ACMS Application Configuration Management', false, null, this.getTagsForStencil(gn, 'acms application configuration management', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'acr_cloud_container_registry;',
 				d * 1.62, d * 1.88, '', 'ACR Cloud Container Registry', false, null, this.getTagsForStencil(gn, 'acr cloud container registry', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'actiontrail;',

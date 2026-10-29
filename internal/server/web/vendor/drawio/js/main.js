@@ -17,6 +17,8 @@ if (typeof AJS === 'undefined') // conf insists on pulling in this file into bat
 	}
 	else
 	{
+		window.AideDrawioSafety.install();
+		window.AideDrawioLayouts.install();
 		App.main();
 	}
 }

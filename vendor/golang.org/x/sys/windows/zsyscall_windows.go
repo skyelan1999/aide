@@ -601,7 +601,7 @@ func AdjustTokenPrivileges(token Token, disableAllPrivileges bool, newstate *Tok
 		_p0 = 1
 	}
 	r1, _, e1 := syscall.SyscallN(procAdjustTokenPrivileges.Addr(), uintptr(token), uintptr(_p0), uintptr(unsafe.Pointer(newstate)), uintptr(buflen), uintptr(unsafe.Pointer(prevstate)), uintptr(unsafe.Pointer(returnlen)))
-	if r1 == 0 {
+	if r1 == 0 || e1 == ERROR_NOT_ALL_ASSIGNED {
 		err = errnoErr(e1)
 	}
 	return

@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pkg/sftp"
@@ -15,6 +17,31 @@ type transferSFTPStdio struct{}
 func (transferSFTPStdio) Read(b []byte) (int, error)  { return os.Stdin.Read(b) }
 func (transferSFTPStdio) Write(b []byte) (int, error) { return os.Stdout.Write(b) }
 func (transferSFTPStdio) Close() error                { return nil }
+
+// attachOwnedSFTPProtocol retains the SSH lifecycle/CLI stubs but gives the
+// subsystem channel an actual SFTP server over pipes. Only temporary test files
+// are addressed; no network listener, credentials or installed sshd is needed.
+func attachOwnedSFTPProtocol(t *testing.T, a *App, entered, release, failure string) {
+	t.Helper()
+	bin, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	script, err := os.ReadFile(a.sshBin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hook := "for arg do if [ \"$arg\" = sftp ]; then\n"
+	if entered != "" {
+		hook += "touch " + shellQuote(entered) + "\nwhile [ ! -f " + shellQuote(release) + " ]; do sleep 0.01; done\n"
+	}
+	if failure != "" {
+		hook += "printf '%s\\n' " + shellQuote(failure) + " >&2\nexit 1\n"
+	}
+	hook += "exec env AIDE_TRANSFER_SFTP_HELPER=1 " + shellQuote(bin) + " -test.run='^TestTransferSFTPProcess$'\nfi; done\n"
+	writeStub(t, a.sshBin, strings.Replace(string(script), "#!/bin/sh\n", "#!/bin/sh\n"+hook, 1))
+}
+
 func TestTransferSFTPProcess(t *testing.T) {
 	if os.Getenv("AIDE_TRANSFER_SFTP_HELPER") != "1" {
 		t.Skip("subprocess protocol helper")
@@ -95,5 +122,39 @@ func TestLargeTransferSFTPRandomAccessAndResume(t *testing.T) {
 	if _, e = fs.Open("escape/private", os.O_RDONLY); e == nil {
 		t.Fatal("SFTP escaped root")
 	}
+
+	t.Run("issue69 archive publication and failure cleanup", func(t *testing.T) {
+		files, err := readArchiveFiles(makeZIP(t, map[string]string{"nested/readme.txt": "remote archive"}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := writeExtractedArchive(fs, "extracted", files); err != nil {
+			t.Fatal(err)
+		}
+		content, err := os.ReadFile(filepath.Join(remote, "extracted/nested/readme.txt"))
+		if err != nil || string(content) != "remote archive" {
+			t.Fatalf("SFTP archive output = %q, %v", content, err)
+		}
+		bad := []extractedArchiveFile{{path: "good.txt", data: []byte("staged")}, {path: strings.Repeat("x", 256) + "/bad.txt", data: []byte("fail")}}
+		if err := writeExtractedArchive(fs, "failed", bad); err == nil {
+			t.Fatal("SFTP accepted an unwritable extraction path")
+		}
+		if err := writeExtractedArchive(fs, "extracted", files); !errors.Is(err, os.ErrExist) {
+			t.Fatalf("SFTP publication did not preserve existing destination: %v", err)
+		}
+		entries, err := os.ReadDir(remote)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, item := range entries {
+			if item.Name() == "failed" || strings.HasPrefix(item.Name(), ".aide-unpack-") {
+				t.Fatalf("SFTP extraction failure left staging output: %v", entries)
+			}
+		}
+		content, err = os.ReadFile(filepath.Join(remote, "extracted/nested/readme.txt"))
+		if err != nil || string(content) != "remote archive" {
+			t.Fatal("failed publication changed existing received content", err)
+		}
+	})
 
 }

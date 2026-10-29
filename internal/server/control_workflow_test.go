@@ -63,7 +63,7 @@ func TestControlWorkflowConfirmationAndRevocation(t *testing.T) {
 					if action == "decline" {
 						answer = "取消"
 					}
-					requireStatus(t, request(a, "POST", "/api/sessions/"+session.ID+"/runs/"+task.ID+"/answer", map[string]string{"answer": answer}), 200)
+					requireStatus(t, request(a, "POST", "/api/sessions/"+session.ID+"/runs/"+task.ID+"/answer", boundQuestionAnswerForTest(t, a, task, answer)), 200)
 				}
 				select {
 				case got := <-result:

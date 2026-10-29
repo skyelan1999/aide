@@ -10,7 +10,7 @@
 - **独立令牌**：调试令牌与浏览器普通 `access-token` 物理分离，只存 SHA-256 哈希，明文仅创建时返回一次。
 - **权限隔离**：调试令牌**只能**访问 `/api/debug/*`，不能访问普通 `/api/*`；管理面（`/admin`、`/audit`）只认普通访问令牌。
 - **全程审计**：每次访问落盘 `data/debug-audit.jsonl`。
-- **白名单脱敏**：绝不返回 API Key、密码哈希、人格密文、请求快照正文、`access-token`。
+- **白名单脱敏**：不返回 API Key、密码哈希、人格密文、请求快照正文、`access-token`，也不返回工具结果预览、模型正文/思考链、澄清问题、工具参数或自由文本错误。错误仅保留`[redacted]`标记；会话标题省略，步骤名使用顺序编号。普通访问令牌调用诊断端点时也使用相同投影；所有者可通过原有普通会话接口查看完整内容。
 
 ## 鉴权
 
@@ -29,9 +29,9 @@ Authorization: Bearer <调试令牌>
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/debug/overview` | 总览：状态/版本/uptime/配置脱敏/挂载/provider 连通性 |
-| GET | `/api/debug/sessions` | 会话+最近 run 列表；`?status=running\|failed` 过滤 |
-| GET | `/api/debug/sessions/{id}/runs/{run}` | run 回放：步骤/工具名/错误/失败计数（不含消息原文） |
-| GET | `/api/debug/sessions/{id}/runs/{run}/events` | SSE 实时观察 run |
+| GET | `/api/debug/sessions` | 会话ID+最近run元数据，不含标题/错误原文；`?status=running\|failed`过滤 |
+| GET | `/api/debug/sessions/{id}/runs/{run}` | 步骤顺序/状态、工具名、用量/失败计数及错误存在标记，不含工具结果预览 |
+| GET | `/api/debug/sessions/{id}/runs/{run}/events` | SSE仅发step/tool/intent/status/done/compaction的状态、工具名、轮次和数值进度；忽略内容事件与未知事件 |
 | GET | `/api/debug/errors` | 最近 50 条错误 + 跨 run 失败循环 Top10 |
 | GET | `/api/debug/stats` | 复用 token 用量统计 |
 | POST | `/api/debug/actions/ping-provider` | 只读探测 Provider 连通性+延迟（不回传模型列表） |

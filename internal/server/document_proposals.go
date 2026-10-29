@@ -70,6 +70,7 @@ type proposalTarget struct {
 	identity   string
 	source     Source
 	socket     string
+	noSymlinks bool
 }
 
 func (t proposalTarget) close() {
@@ -86,9 +87,12 @@ func (a *App) proposalTargetLocked(f Change) (proposalTarget, error) {
 			return proposalTarget{}, errors.New("工作目录提案不能指定文档绑定")
 		}
 		if a.workspaceMode() == "ssh" {
+			if f.NoSymlinks {
+				return proposalTarget{}, errors.New("文件绑定提案仅支持本地工作区")
+			}
 			return proposalTarget{remote: a.wsConfig.Workspace.Path, socket: sshControlSocket, generation: a.sshSessionGeneration(sshControlSocket), identity: "workspace:" + a.wsID()}, nil
 		}
-		return proposalTarget{root: a.workspace, identity: "workspace:" + a.wsID()}, nil
+		return proposalTarget{root: a.workspace, identity: "workspace:" + a.wsID(), noSymlinks: f.NoSymlinks}, nil
 	}
 	src, binding, err := a.proposalSourceLocked(f.Source)
 	if err != nil {
@@ -108,6 +112,9 @@ func (a *App) proposalTargetLocked(f Change) (proposalTarget, error) {
 }
 func (a *App) readProposalTarget(t proposalTarget, p string) ([]byte, error) {
 	if t.root != nil {
+		if t.noSymlinks {
+			return readBoundRawBytes(t.root, p)
+		}
 		return readRawBytes(t.root, p)
 	}
 	if t.source.ID != "" {
@@ -118,6 +125,9 @@ func (a *App) readProposalTarget(t proposalTarget, p string) ([]byte, error) {
 func (a *App) writeProposalTarget(t proposalTarget, f Change) error {
 	return a.withMarkdownHistory(t.identity, f.Path, []byte(f.Content), func(p string) ([]byte, error) { return a.readProposalTarget(t, p) }, func() error {
 		if t.root != nil {
+			if t.noSymlinks {
+				return putBoundText(t.root, f.Path, []byte(f.Content))
+			}
 			return putText(t.root, f.Path, []byte(f.Content))
 		}
 		if t.source.ID != "" {
@@ -210,9 +220,14 @@ func (a *App) newProposalTargetEligibleLocked(f Change) bool {
 		return false
 	}
 	defer t.close()
-	return t.root != nil && checkVersion(t.root, f.Path, "") == nil
+	check := checkVersion
+	if t.noSymlinks {
+		check = checkBoundVersion
+	}
+	return t.root != nil && check(t.root, f.Path, "") == nil
 }
-func (a *App) readAppliedProposalLocked(f Change) ([]byte, error) {
+func (a *App) readAppliedProposalLocked(task *Task, f Change) ([]byte, error) {
+	f.NoSymlinks = pwChangeNoSymlinks(task, f)
 	t, err := a.proposalTargetLocked(f)
 	if err != nil {
 		return nil, err
@@ -221,7 +236,7 @@ func (a *App) readAppliedProposalLocked(f Change) ([]byte, error) {
 	if t.root == nil {
 		return nil, errors.New("远程文档未进行本地字节读回验证")
 	}
-	return readRawBytes(t.root, f.Path)
+	return a.readProposalTarget(t, f.Path)
 }
 
 // Enters/returns with a.mu and filesMu held. Pin all local roots and remote
@@ -276,6 +291,12 @@ func (a *App) applyDocumentProposalLocked(w http.ResponseWriter, r *http.Request
 			continue
 		}
 		t, err := a.proposalTargetLocked(f)
+		if err == nil && pwChangeNoSymlinks(task, f) {
+			t.noSymlinks = true
+			if t.root == nil {
+				err = errors.New("文件绑定提案仅支持本地工作区")
+			}
+		}
 		if err != nil {
 			fail(w, 409, err)
 			return

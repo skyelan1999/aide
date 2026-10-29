@@ -147,6 +147,7 @@ Bridge.define('RPOrgChart',
         	
             var graph = RPOrgChart.graph;
             var cells = graph.getChildVertices(RPOrgChart.parent);
+            var included = new Set(cells.filter(function(cell) { return cell.geometry != null && cell.vertex && cell.parent == RPOrgChart.parent; }).map(function(cell) { return cell.id; }));
             
             for (var i = 0; i < cells.length; i++)
         	{
@@ -157,7 +158,7 @@ Bridge.define('RPOrgChart',
             		// Find cell parent. If it has more than one parent, take first parent (should be an error?)
             		var parentId = null;
             		
-            		var incomingEdge = graph.getIncomingEdges(cell)[0];
+                    var incomingEdge = graph.getIncomingEdges(cell).filter(function(edge) { return edge.source != null && included.has(edge.source.id); })[0];
             		
             		if (incomingEdge != null && incomingEdge.source != null)
            			{
@@ -340,11 +341,11 @@ Bridge.define('RPOrgChart',
         },
 
         branchOptimizerAllSingleColumnLeft: function (node) {
-            return node.getIsAssistantRoot() ? null : "singleColumnRight";
+            return node.getIsAssistantRoot() ? null : "singleColumnLeft";
         },
 
         branchOptimizerAllSingleColumnRight: function (node) {
-            return node.getIsAssistantRoot() ? null : "singleColumnLeft";
+            return node.getIsAssistantRoot() ? null : "singleColumnRight";
         },
 
         branchOptimizerStackers: function(node) {
@@ -457,7 +458,7 @@ Bridge.define('RPOrgChart',
                 	for (var ix = 0; ix < node.State.Connector.Segments.length; ix++) 
                     {
                 		var edge = node.State.Connector.Segments[ix];
-                		edge.mark = 1 << ix; //TODO Support up to 31 segments. In this a limit?
+                        edge.mark = new Set([ix]);
                         edge.From.X += offsetx;
                         edge.To.X += offsetx;
                         var fx = edge.From.X, fy = edge.From.Y, tx = edge.To.X, ty = edge.To.Y;
@@ -477,12 +478,12 @@ Bridge.define('RPOrgChart',
                         var fx = edge.From.X, fy = edge.From.Y, tx = edge.To.X, ty = edge.To.Y;
                         var fp = new mxPoint(fx, fy);
 						pointsList.push(fp);
-                        fp.mark = edge.mark;
+                        fp.mark = new Set(edge.mark);
                         var up = uniquePoints[fx + ',' + fy];
                         
                         if (up != null)
                     	{
-                        	up.mark |= fp.mark;
+                            fp.mark.forEach(function(index) { up.mark.add(index); });
                     	}
                         else
                         {
@@ -491,12 +492,12 @@ Bridge.define('RPOrgChart',
                         
                         var tp = new mxPoint(tx, ty);
 						pointsList.push(tp);
-                        tp.mark = edge.mark;
+                        tp.mark = new Set(edge.mark);
                         var up = uniquePoints[tx + ',' + ty];
                         
                         if (up != null)
                     	{
-                        	up.mark |= tp.mark;
+                            tp.mark.forEach(function(index) { up.mark.add(index); });
                     	}
                         else
                         {
@@ -513,12 +514,13 @@ Bridge.define('RPOrgChart',
                     		{
                         		var ip = new mxPoint(fx, fy2);
 								pointsList.push(ip);
-                        		ip.mark = edge.mark | e2.mark;
+                                ip.mark = new Set(edge.mark);
+                        e2.mark.forEach(function(index) { ip.mark.add(index); });
                         		var up = uniquePoints[fx + ',' + fy2];
                                 
                                 if (up != null)
                             	{
-                                	up.mark |= ip.mark;
+                                    ip.mark.forEach(function(index) { up.mark.add(index); });
                             	}
                                 else
                                 {
@@ -529,12 +531,13 @@ Bridge.define('RPOrgChart',
                     		{
                         		var ip = new mxPoint(fx2, fy);
 								pointsList.push(ip);
-                        		ip.mark = edge.mark | e2.mark;
+                                ip.mark = new Set(edge.mark);
+                        e2.mark.forEach(function(index) { ip.mark.add(index); });
                         		var up = uniquePoints[fx2 + ',' + fy]
                                 
                                 if (up != null)
                             	{
-                                	up.mark |= ip.mark;
+                                    ip.mark.forEach(function(index) { up.mark.add(index); });
                             	}
                                 else
                                 {
@@ -620,7 +623,7 @@ Bridge.define('RPOrgChart',
                         		var p = pointsArr[i];
                         		if (selected[p.x + ',' + p.y]) continue;
                         		
-                        		if (p.mark & lp.mark)
+                                if (Array.from(p.mark).some(function(index) { return lp.mark.has(index); }))
                     			{
                         			selected[p.x + ',' + p.y] = true;
                         			return p;

@@ -1,0 +1,516 @@
+{
+  "at": "2026-10-29T00:21:17.761143+00:00",
+  "scope": "Actual Chromium component regressions against merged production source; controlled local fixtures, no paid model calls, real devices or production deployment",
+  "suites": 37,
+  "passed": 37,
+  "initialFailures": 2,
+  "initialFailureCause": "Outdated test fixtures: missing product preview lifecycle/style dependencies and direct destruction of ChatWindow inner window, bypassing its resize cleanup. Both repaired under #596 and rerun without suppressing errors.",
+  "fullWorkbench": false,
+  "runs": [
+    {
+      "name": "transfer-snapshot",
+      "command": [
+        "node",
+        "scripts/browser-transfer-snapshot.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.57,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/transfer-snapshot"
+    },
+    {
+      "name": "reminder-voice-regressions",
+      "command": [
+        "node",
+        "scripts/browser-reminder-voice-regressions.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.53,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/reminder-voice-regressions"
+    },
+    {
+      "name": "starmap-identity-race",
+      "command": [
+        "node",
+        "scripts/browser-starmap-identity-race.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.77,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/starmap-identity-race"
+    },
+    {
+      "name": "mermaid-proof-auth",
+      "command": [
+        "node",
+        "scripts/browser-mermaid-proof-auth.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.63,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/mermaid-proof-auth"
+    },
+    {
+      "name": "ui-acceptance-scope",
+      "command": [
+        "node",
+        "scripts/browser-ui-acceptance-scope.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.32,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/ui-acceptance-scope"
+    },
+    {
+      "name": "preview-resource-bounds",
+      "command": [
+        "node",
+        "scripts/browser-preview-resource-bounds.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 1,
+      "seconds": 1.77,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/preview-resource-bounds",
+      "initialStatus": "FAIL",
+      "correctedEvidence": "/workspace/scratch/issue-review-20261026/merge-preview-harness-final/result.json",
+      "repairIssue": 596
+    },
+    {
+      "name": "obj-preview-bounds",
+      "command": [
+        "node",
+        "scripts/browser-obj-preview-bounds.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.98,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/obj-preview-bounds"
+    },
+    {
+      "name": "docx-issue-review",
+      "command": [
+        "node",
+        "scripts/browser-docx-issue-review.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.17,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/docx-issue-review"
+    },
+    {
+      "name": "zip-preview-review",
+      "command": [
+        "node",
+        "scripts/browser-zip-preview-review.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.52,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/zip-preview-review"
+    },
+    {
+      "name": "highlight-grammar-review",
+      "command": [
+        "node",
+        "scripts/browser-highlight-grammar-review.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 9.55,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/highlight-grammar-review"
+    },
+    {
+      "name": "mathjax-issue-review",
+      "command": [
+        "node",
+        "scripts/browser-mathjax-issue-review.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.27,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/mathjax-issue-review"
+    },
+    {
+      "name": "mathjax-layout-issues",
+      "command": [
+        "node",
+        "scripts/browser-mathjax-layout-issues.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.17,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/mathjax-layout-issues"
+    },
+    {
+      "name": "cad-asset-budgets",
+      "command": [
+        "node",
+        "scripts/browser-cad-asset-budgets.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.07,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/cad-asset-budgets"
+    },
+    {
+      "name": "markdown-boundaries",
+      "command": [
+        "node",
+        "scripts/browser-markdown-boundaries.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.82,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/markdown-boundaries"
+    },
+    {
+      "name": "pdf-preview-lifecycle",
+      "command": [
+        "node",
+        "scripts/browser-pdf-preview-lifecycle.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.83,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/pdf-preview-lifecycle"
+    },
+    {
+      "name": "marked-link-scans",
+      "command": [
+        "node",
+        "scripts/browser-marked-link-scans.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.02,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/marked-link-scans"
+    },
+    {
+      "name": "mermaid-svg-issues",
+      "command": [
+        "node",
+        "scripts/browser-mermaid-svg-issues.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 13.68,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/mermaid-svg-issues"
+    },
+    {
+      "name": "mermaid-resource-review",
+      "command": [
+        "node",
+        "scripts/browser-mermaid-resource-review.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 7.13,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/mermaid-resource-review"
+    },
+    {
+      "name": "freehand-corners",
+      "command": [
+        "node",
+        "scripts/browser-freehand-corners.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.25,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/freehand-corners"
+    },
+    {
+      "name": "assistant-call-review",
+      "command": [
+        "node",
+        "scripts/browser-assistant-call-review.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 2.12,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/assistant-call-review"
+    },
+    {
+      "name": "drawio-message-origin",
+      "command": [
+        "node",
+        "scripts/browser-drawio-message-origin.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.33,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-message-origin"
+    },
+    {
+      "name": "mathjax-cases",
+      "command": [
+        "node",
+        "scripts/browser-mathjax-cases.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.42,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/mathjax-cases"
+    },
+    {
+      "name": "marked-resource-scans",
+      "command": [
+        "node",
+        "scripts/browser-marked-resource-scans.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.69,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/marked-resource-scans"
+    },
+    {
+      "name": "html2canvas-scans",
+      "command": [
+        "node",
+        "scripts/browser-html2canvas-scans.cjs"
+      ],
+      "env": {},
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 1.67,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/html2canvas-scans"
+    },
+    {
+      "name": "dompurify-stack",
+      "command": [
+        "node",
+        "scripts/browser-dompurify-stack.cjs"
+      ],
+      "env": {
+        "AIDE_PURIFY_STACK_KB": "256"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 3.24,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/dompurify-stack"
+    },
+    {
+      "name": "drawio-layout",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_SELECT_TABLE": "1",
+        "AIDE_DRAWIO_LAYOUT_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_CLONE_CONSTRAINT_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_GEOMETRY_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_LIFECYCLE_ACCEPTANCE": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 32.94,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-layout"
+    },
+    {
+      "name": "drawio-templates",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_AI_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_TEMPLATE_ACCEPTANCE": "1"
+      },
+      "status": "PASS",
+      "exit": 1,
+      "seconds": 33.72,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-templates",
+      "initialStatus": "FAIL",
+      "correctedEvidence": "/workspace/scratch/issue-review-20261026/merge-chat-template-final/result.json",
+      "repairIssue": 596
+    },
+    {
+      "name": "drawio-imports",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_VISIO_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_NURBS_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_POLYLINE_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_MEDIA_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_LUCID_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_TRELLO_ACCEPTANCE": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 38.21,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-imports"
+    },
+    {
+      "name": "drawio-freehand",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_FREEHAND_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_ANIMATION_FOOTER_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_ANIMATION_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_GIF_ACCEPTANCE": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 61.2,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-freehand"
+    },
+    {
+      "name": "drawio-sdk",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_SDK_REVIEW": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 26.27,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-sdk"
+    },
+    {
+      "name": "drawio-search",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_CAPTION_METADATA_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_STATE_SEARCH_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_SIDEBAR_METADATA_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_AWS_SEARCH_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_PALETTE_SEARCH_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_BPMN_PALETTE_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_BOOTSTRAP_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_FIFTY_PALETTE_ACCEPTANCE": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 60.75,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-search"
+    },
+    {
+      "name": "drawio-edit",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_EDITING_REVIEW": "1",
+        "AIDE_DRAWIO_DATA_REVIEW": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 30.22,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-edit"
+    },
+    {
+      "name": "drawio-workbench",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_WORKBENCH_REVIEW": "1",
+        "AIDE_DRAWIO_IMPORT_PLUGIN_REVIEW": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 52.92,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-workbench"
+    },
+    {
+      "name": "drawio-parsers",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_CORS_REVIEW": "1",
+        "AIDE_DRAWIO_DEVICE_SHAPE_REVIEW": "1",
+        "AIDE_DRAWIO_RESOURCE_REVIEW": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 35.64,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-parsers"
+    },
+    {
+      "name": "drawio-uml",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_PLANTUML_ISSUE_REVIEW": "1",
+        "AIDE_DRAWIO_MERMAID_NATIVE_REVIEW": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 25.47,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-uml"
+    },
+    {
+      "name": "drawio-ui",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_UI_ROBUSTNESS_REVIEW": "1",
+        "AIDE_DRAWIO_ORGCHART_REVIEW": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 25.92,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-ui"
+    },
+    {
+      "name": "drawio-runtime",
+      "command": [
+        "node",
+        "scripts/browser-drawio-preview-bounds.cjs"
+      ],
+      "env": {
+        "AIDE_DRAWIO_SECOND_LAYOUT_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_RUNTIME_ISSUE_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_ENTERPRISE_PALETTE_ACCEPTANCE": "1",
+        "AIDE_DRAWIO_IMPORT_SECURITY_ACCEPTANCE": "1"
+      },
+      "status": "PASS",
+      "exit": 0,
+      "seconds": 60.23,
+      "evidence": "/workspace/scratch/issue-review-20261026/merge-browser-20261029/drawio-runtime"
+    }
+  ]
+}

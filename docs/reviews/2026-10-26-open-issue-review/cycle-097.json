@@ -1,0 +1,56 @@
+{
+  "cycle": 97,
+  "issues": [
+    391
+  ],
+  "baseline": "1a779591",
+  "fix": "Skip actual TeX comments and complete escaped commands in the numcases condition pre-scan; leave raw text to the actual TeX parser so token boundaries remain correct.",
+  "red": {
+    "status": "EXPECTED_FAIL",
+    "checks": 18,
+    "failed": 10,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle97-browser-red/result.json",
+    "scope": "Both environments ordinary control valid; commented &/braces/commands and escaped commands fail on baseline."
+  },
+  "green": [
+    {
+      "status": "PASS",
+      "checks": 18,
+      "pageErrors": [],
+      "scope": "Actual MathJax4.1.3 cases component, glyph equivalence,escaped%/&,CRLF,true-extra-tab refusal",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle97-browser-green/result.json"
+    },
+    {
+      "status": "PASS",
+      "checks": 6,
+      "pageErrors": [],
+      "scope": "Prior MathJax regression browser",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle97-prior-browser/result.json"
+    },
+    {
+      "status": "PASS",
+      "checks": 254,
+      "fingerprint": "97d87f9771ba89ab2e79852c628dd5ceffd13661ab760ba37fafb623b09aaf69",
+      "receipt": ".agent-state/verify-20261028T180313059128Z.log"
+    }
+  ],
+  "assetSHA256": {
+    "baseline": "6805d481aaee3f78d82bb9f0b6b9ac47b0804c30f10253394724459d95d41a8c",
+    "patched": "39a26043e889d8ca1e5824f773ac107e9b8b0b732a488fe10802af6503c1e652"
+  },
+  "notRun": [
+    "Default Aide configuration is not claimed to enable cases tags; explicit cases loader/tags used.",
+    "Report example has text-mode condition\\le; use$...$ or valid text. No global numbering/config change.",
+    "Full start.command workbench,native devices,main merge/release/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "commit": "20914cd2",
+    "comment": "https://github.com/skyelan1999/aide/issues/391#issuecomment-6476845114",
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnBranch": 421,
+  "productFixed": 419,
+  "toolingFixes": 2,
+  "remainingOriginal104": 73
+}

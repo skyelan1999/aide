@@ -38,10 +38,19 @@ class WindowsPortLifecycleTests(unittest.TestCase):
         text = (ROOT / 'scripts/update-agent.sh').read_text()
         self.assertIn('COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml}"', text)
 
-    def test_release_packager_includes_watcher_in_windows_and_full_bundles(self):
+    def test_native_entrypoints_and_packaging_replace_legacy_agents(self):
+        # Wiring check only; runtime transaction and Win32 tests are separate.
+        for name, action in [('start.bat', 'start'), ('stop.bat', 'stop'), ('clean-docker-cache.bat', 'clean-cache')]:
+            text = (ROOT / name).read_text()
+            self.assertIn('"%~dp0aide-launcher.exe" ' + action + ' %*', text)
+            self.assertNotIn('.ps1', text)
+            self.assertNotIn('powershell', text.lower())
         packager = (ROOT / "scripts/package-release-assets.sh").read_text()
-        self.assertIn('if [[ "$TARGET" == windows-* ]]; then cp "$ROOT/scripts/watch-port.ps1"', packager)
-        self.assertIn('"$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh"', packager)
+        self.assertIn('LAUNCHERS=(start.bat stop.bat clean-docker-cache.bat)', packager)
+        self.assertIn('"$WINDOWS_LAUNCHER" "$PACKAGE/aide-launcher.exe"', packager)
+        self.assertIn('"$ROOT/scripts/watch-port.sh"', packager)
+        self.assertNotIn('.ps1', packager)
+
 
 
 if __name__ == "__main__":

@@ -182,6 +182,54 @@ func unmarshalAttrs(b []byte) (*FileStat, []byte, error) {
 	return unmarshalFileStat(flags, b)
 }
 
+// AIDE #164: NAME replies have an ID/count header, then at least two
+// string prefixes and an attribute-flags word per entry (12 bytes).
+func unmarshalNameHeader(id uint32, b []byte) (uint32, []byte, error) {
+	sid, b, err := unmarshalUint32Safe(b)
+	if err != nil {
+		return 0, b, err
+	}
+	if sid != id {
+		return 0, b, &unexpectedIDErr{id, sid}
+	}
+	count, b, err := unmarshalUint32Safe(b)
+	if err != nil {
+		return 0, b, err
+	}
+	if uint64(count) > uint64(len(b))/12 {
+		return 0, b, errShortPacket
+	}
+	return count, b, nil
+}
+
+func unmarshalNameEntry(b []byte) (string, *FileStat, []byte, error) {
+	filename, b, err := unmarshalStringSafe(b)
+	if err != nil {
+		return "", nil, b, err
+	}
+	_, b, err = unmarshalStringSafe(b) // longname is unused, but must be well formed
+	if err != nil {
+		return "", nil, b, err
+	}
+	attr, b, err := unmarshalAttrs(b)
+	if err != nil {
+		return "", nil, b, err
+	}
+	return filename, attr, b, nil
+}
+
+func unmarshalSingleName(id uint32, b []byte) (string, error) {
+	count, b, err := unmarshalNameHeader(id, b)
+	if err != nil {
+		return "", err
+	}
+	if count != 1 {
+		return "", unexpectedCount(1, count)
+	}
+	filename, _, _, err := unmarshalNameEntry(b)
+	return filename, err
+}
+
 func unmarshalFileStat(flags uint32, b []byte) (*FileStat, []byte, error) {
 	var fs FileStat
 	var err error
@@ -223,6 +271,12 @@ func unmarshalFileStat(flags uint32, b []byte) (*FileStat, []byte, error) {
 		count, b, err = unmarshalUint32Safe(b)
 		if err != nil {
 			return nil, b, err
+		}
+
+		// Each extended entry contains two uint32-prefixed strings. Bound the
+		// remote count before allocating (upstream c1bc2fffcb14f580c4d365ae9660fa149ec1dba5).
+		if uint64(count) > uint64(len(b))/8 {
+			return nil, b, errShortPacket
 		}
 
 		ext := make([]StatExtended, count)

@@ -1,0 +1,150 @@
+{
+  "cycle": 72,
+  "baseline": "1f21b0246a727791bdb23b3d96e4ee8ffddc1342",
+  "issues": [
+    307,
+    308,
+    309,
+    310,
+    312,
+    313,
+    314,
+    315,
+    316,
+    317,
+    318,
+    319,
+    320,
+    321,
+    322,
+    323,
+    324,
+    325
+  ],
+  "fixes": {
+    "307": "Reset hierarchical roots on every execution; reused layouts include disconnected components",
+    "308": "Treat cells without geometry as non-ports instead of throwing",
+    "309": "Restore print renderer overlay and control hooks on success and rendering failure",
+    "310": "Keep HTML print labels, filter geHint class tokens, and correct the base text-label node reference",
+    "312": "Qualify orthogonal route pattern tables on mxEdgeStyle",
+    "313": "Restore model.updateEdgeParent when a model listener throws during cellsAdded",
+    "314": "Restore negative-coordinate policy when movement listeners throw",
+    "315": "Hit-test the actual scaled and flipped swimlane content rectangle",
+    "316": "Cancel pending tap-and-hold timers and invalidate flags when graph is destroyed",
+    "317": "Release the outline window resize listener with the outline",
+    "318": "Validate source newEdgeStyle before inserting an edge into the model",
+    "319": "Preserve rejected vertex/self-loop errors while respecting dangling-edge policy and parent promotion",
+    "320": "Keep overlapping bend handle dimensions local",
+    "321": "Return null for malformed percent-encoded PNG metadata while preserving size limits",
+    "322": "Remove unused writes to global detected during page preset selection",
+    "323": "Reject non-finite and non-positive imported page dimensions",
+    "324": "Capture each array-color index for getter and refresh callbacks",
+    "325": "Preserve focused end-spacing input during unrelated model changes"
+  },
+  "cumulativeProductFixes": 238,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 239,
+  "original272RemainingFollowup": 48,
+  "batchTarget": 50,
+  "batchVerified": 50,
+  "batchPushed": 50,
+  "design": "Focused source repairs; synchronize only matching function spans in five shipped drawio assets with pinned Terser 5.39.0. Preserve minified wrapper aliases and all bytes outside reviewed spans.",
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle72-red-final/result.json",
+      "/workspace/scratch/issue-review-20261026/cycle72-red/light-editing-source.json"
+    ],
+    "scope": "Seventeen reports reproduce from fixed pre-repair commit 1f21b024; #314 reproduces in the original pre-edit browser run. After bundle repair, Graph.moveCells retains its captured fixed base method, so replacing only the prototype does not recreate #314. No product failures inferred from harness errors.",
+    "corrections": [
+      "Self-loop test explicitly disables loops: current editor enables loops; the report default assertion is inaccurate, but forbidden-loop bypass is reproducible.",
+      "Bend test disables custom image handles to exercise the overlap branch.",
+      "Page preset test uses actual addPageFormatPanel through the real dialog constructor."
+    ]
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 32,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle72-final4/result.json",
+      "scope": "Real bundled iframe; source/app/integrate replacements at light 1440 and dark 390. Eighteen editing reports, 512 scaled swimlane header assertions per variant, self-loop/normal/dangling/edge-target positive and negative controls, actual HTML print page, controlled renderer/model/movement failures, timer teardown; prior layout and import-budget regressions; pageerrors[].",
+      "limits": "Isolated owned component. Hidden child marker case supplies an mxCellState to the public API; it is not a visible pointer gesture. Screenshot inspected."
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle72-bundle-audit.json",
+      "scope": "All five asset copies parse; bytes outside the eighteen assigned functions and the route-pattern property remain unchanged. Variant subsets contain only their relevant methods."
+    },
+    {
+      "result": "PASS",
+      "scope": "PNG regression: source/app/integrate malformed, double-encoded and valid metadata, existing decompression and byte caps."
+    }
+  ],
+  "quick": {
+    "result": "PASS",
+    "checks": 195,
+    "fingerprint": "68e50c149dc7bea9de588e863324d35201d13881b5bd8f9863d1c64871984b4c",
+    "receipt": ".agent-state/verify-20261028T052216055041Z.log"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "454ec34cba8d2fe2f687092ae126b63ecc2d20174c0d4755f971cd055cabb487",
+    "internal/server/web/vendor/drawio/js/app.min.js": "74b4d15c01a79b7504d65eec5110f05d6a0db15e281306b91231c043977b69a6",
+    "internal/server/web/vendor/drawio/js/grapheditor/Editor.js": "0b2949710a4974af93c2648b7504287e574ae4b6c8e1415194654d19f0d8af2e",
+    "internal/server/web/vendor/drawio/js/grapheditor/EditorUi.js": "dfa23a5b6ab239a4c12744707eab6eec170bc46505de4d9499cc2edad2a2f08e",
+    "internal/server/web/vendor/drawio/js/grapheditor/Format.js": "90784ea52bf28f3b8cac13b6df64db0dbb295f2bbc3ad3bfc651692272feae62",
+    "internal/server/web/vendor/drawio/js/grapheditor/Graph.js": "1f31afd1757a0a1075b3a9bade3c80fb4850ac4bb3a5ecc870b3ef5bd89e959b",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "f51d7f8201cd14c29899633a45920c6ae838762493c7acc2ed08958576a9590e",
+    "internal/server/web/vendor/drawio/js/viewer-static.min.js": "ef789d27fc79f9d50a4f3389f252305e9152d66c2193978560b48c947659c504",
+    "internal/server/web/vendor/drawio/js/viewer.min.js": "d885f503e5721515786cb4945a22cc9699fa5175ee4922ad63c214f7bd853740",
+    "internal/server/web/vendor/drawio/mxgraph/mxClient.js": "8ba0da1a355c02e33ff9a58fc9d8bfaa4182687f55268494d1275196998d65b8",
+    "internal/server/web/vendor/drawio/mxgraph/src/handler/mxEdgeHandler.js": "7007d3a5192357a8c239f7f1d5106115786538ebd9723b5ea9dc6b296a0ab1e2",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/mxHierarchicalLayout.js": "980c8080268e213193cec9a8d53b509fd23f7e4a2675a39e489bb146e2aa6443",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/mxSwimlaneLayout.js": "5e91d0281b8cd4762582490cac51ac7ec0af08b7fa603e41483343f4747bfd07",
+    "internal/server/web/vendor/drawio/mxgraph/src/view/mxEdgeStyle.js": "2689f6c67450a21342b02046009d436a3db2ec8e7c1934f51e2aa4bf176f2fb4",
+    "internal/server/web/vendor/drawio/mxgraph/src/view/mxGraph.js": "551104de3edafe9eca93200b44838f0fb10c5450ab678d300c8a678a580471ca",
+    "internal/server/web/vendor/drawio/mxgraph/src/view/mxPrintPreview.js": "9328d1b11daf0955f4c4f57841d7bde4290d0af614b44f2246e7a3b5e947a12d",
+    "scripts/browser-drawio-preview-bounds.cjs": "3e168bf02dbec26f67f220dfca9fcf0df2ba1f4793ba3f7f3a6db900858af341",
+    "scripts/test_drawio_png_import.cjs": "8fdcde4b088fa5e68a3a4a38a32463baf1b82f1f11c1de6998bd275d4f898964",
+    "scripts/drawio-editing-review.cjs": "8b2412321d154c8a7f7ece62875a0880c5e7bdebf7c5a45e86967564e6a2f02a",
+    "scripts/drawio-editing-browser-cases.cjs": "0e75e844246afba84663fb3ac4ea74b4e1be7c4108f1c9c574584ff883d2c8b5",
+    "scripts/sync_drawio_editing_review.cjs": "84a2059ad241b1bebe2ccf5fa7d5bc11000bc04411c854e36c4d24ebd83168bc"
+  },
+  "securityReview": [
+    "No new network endpoint or native execution. Test origin is owned and browser contexts close in finally.",
+    "Percent-decode recovery does not catch or suppress earlier AIDE_DRAWIO_LIMIT errors.",
+    "Invalid newEdgeStyle is rejected before any edge model mutation; normal styles retain existing behavior.",
+    "Only report-scoped vendor methods changed; licenses and unrelated bundled bytes preserved."
+  ],
+  "notRun": [
+    "Full Aide workbench started with start.command and manual printer output.",
+    "Windows/macOS native or real device acceptance; no native code changed in this cycle.",
+    "Main merge, Release/tag, image build or production deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {
+      "307": "https://github.com/skyelan1999/aide/issues/307#issuecomment-6461412878",
+      "308": "https://github.com/skyelan1999/aide/issues/308#issuecomment-6461413204",
+      "309": "https://github.com/skyelan1999/aide/issues/309#issuecomment-6461413680",
+      "310": "https://github.com/skyelan1999/aide/issues/310#issuecomment-6461414070",
+      "312": "https://github.com/skyelan1999/aide/issues/312#issuecomment-6461414380",
+      "313": "https://github.com/skyelan1999/aide/issues/313#issuecomment-6461414704",
+      "314": "https://github.com/skyelan1999/aide/issues/314#issuecomment-6461415013",
+      "315": "https://github.com/skyelan1999/aide/issues/315#issuecomment-6461415343",
+      "316": "https://github.com/skyelan1999/aide/issues/316#issuecomment-6461415694",
+      "317": "https://github.com/skyelan1999/aide/issues/317#issuecomment-6461416072",
+      "318": "https://github.com/skyelan1999/aide/issues/318#issuecomment-6461416401",
+      "319": "https://github.com/skyelan1999/aide/issues/319#issuecomment-6461416815",
+      "320": "https://github.com/skyelan1999/aide/issues/320#issuecomment-6461417179",
+      "321": "https://github.com/skyelan1999/aide/issues/321#issuecomment-6461417605",
+      "322": "https://github.com/skyelan1999/aide/issues/322#issuecomment-6461418053",
+      "323": "https://github.com/skyelan1999/aide/issues/323#issuecomment-6461418451",
+      "324": "https://github.com/skyelan1999/aide/issues/324#issuecomment-6461418829",
+      "325": "https://github.com/skyelan1999/aide/issues/325#issuecomment-6461419135"
+    },
+    "remoteSourceCommit": "b7b8c1f1731753a79b33cdcd052669d26d34fca1"
+  },
+  "completedAt": "2026-10-28T05:27:16.807909+00:00"
+}

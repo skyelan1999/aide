@@ -57,8 +57,8 @@ func TestPluginExperienceLifecycle(t *testing.T) {
 	if entries[0].OK || entries[0].Used != 2 {
 		t.Fatalf("应更新为失败且计数 2，得到 %+v", entries[0])
 	}
-	if !strings.Contains(entries[0].Detail, "no such table") {
-		t.Fatalf("应更新失败细节，得到 %q", entries[0].Detail)
+	if entries[0].Detail != "调用失败" {
+		t.Fatalf("只保留主机成败记录，得到 %q", entries[0].Detail)
 	}
 	// 不同工具 → 新条目
 	a.recordPluginExperience("terminal-run", "terminal", true, "ls 输出")

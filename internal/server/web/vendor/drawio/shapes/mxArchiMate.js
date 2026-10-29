@@ -674,7 +674,7 @@ mxArchiMateApplication.prototype.foreground = function(c, x, y, w, h)
 		c.ellipse(w * 0.45, h * 0.6, w * 0.3, h * 0.4);
 		c.fill();
 	}
-	else if (type === mxArchiMateApplication.prototype.cst.COMM_PATH)
+	else if (type === mxArchiMateApplication.prototype.cst.COMM_PATH || type === 'path')
 	{
 		c.translate(0, 5);
 		h = h - 10;

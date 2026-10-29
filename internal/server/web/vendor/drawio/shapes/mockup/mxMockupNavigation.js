@@ -554,7 +554,8 @@ Graph.handleFactory[mxShapeMockupScrollBar.prototype.cst.SHAPE_SCROLL_BAR] = fun
 				return new mxPoint(bounds.x + ((bounds.width - 100) * barPos / bounds.width) / 100 * bounds.width + 50, bounds.y + 10);
 			}, function(bounds, pt)
 			{
-				this.state.style['barPos'] = Math.round(1000 * Math.max(0, Math.min(100, (pt.x - bounds.x - 50) * 100 / (bounds.width - 100)))) / 1000;
+				var range = bounds.width - 100;
+				this.state.style['barPos'] = range <= 0 ? 0 : Math.round(1000 * Math.max(0, Math.min(100, (pt.x - bounds.x - 50) * 100 / range))) / 1000;
 			})];
 
 	return handles;

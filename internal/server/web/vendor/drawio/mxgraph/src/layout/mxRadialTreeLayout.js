@@ -155,12 +155,21 @@ mxRadialTreeLayout.prototype.isVertexIgnored = function(vertex)
 mxRadialTreeLayout.prototype.execute = function(parent, root)
 {
 	this.parent = parent;
+	this.root = null;
+	this.node = null;
+	this.row = [];
+	this.rowMinX = [];
+	this.rowMaxX = [];
+	this.rowMinCenX = [];
+	this.rowMaxCenX = [];
+	this.rowRadi = [];
 	
 	this.useBoundingBox = false;
 	this.edgeRouting = false;
 	//this.horizontal = false;
 
 	mxCompactTreeLayout.prototype.execute.apply(this, arguments);
+	if (this.root == null || this.node == null) return;
 	
 	var bounds = null;
 	var rootBounds = this.getVertexBounds(this.root);
