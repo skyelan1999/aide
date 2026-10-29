@@ -1,0 +1,47 @@
+{
+  "name": "re2js",
+  "version": "2.9.1",
+  "license": "MIT",
+  "repository": "git+https://github.com/le0pard/re2js.git",
+  "origin": {
+    "tarball": "https://registry.npmjs.org/re2js/-/re2js-2.9.1.tgz",
+    "integrity": "sha512-JIT3bEEUZTOR2YS1walNEIfH4cF/cQeZcBUFq7ldqO6lR6g0X5CBq/S8rsa9omzZcsNf8qc36jCkWpKKtncrZg==",
+    "archiveBytes": 228323,
+    "originalESMSHA256": "4e31fa6284914b14a23cc677be509f7ad8e43c00ff8d48bbe3486a30e3120373",
+    "verification": "downloaded tarball SHA512 matches registry integrity"
+  },
+  "localPatches": {
+    "Parser.MAX_SIZE": {
+      "upstream": 1398101,
+      "local": 512
+    },
+    "Parser.MAX_RUNES": {
+      "upstream": 33554432,
+      "local": 32768
+    }
+  },
+  "build": {
+    "tool": "esbuild",
+    "version": "0.25.12",
+    "arguments": [
+      "<patched upstream build/index.js>",
+      "--bundle",
+      "--minify",
+      "--format=iife",
+      "--global-name=AidePlantUmlRE2",
+      "--target=es2022",
+      "--legal-comments=inline",
+      "--outfile=re2js.min.js"
+    ]
+  },
+  "payload": {
+    "file": "re2js.min.js",
+    "bytes": 150469,
+    "sha256": "d811be127eccd0d7ba372fffe41b7e9748522b8fd8472b908d9f3c58fd26f352"
+  },
+  "licenseFile": {
+    "file": "re2js-LICENSE.txt",
+    "sha256": "b80a94f2c3c0b8bd6af849511cef624ad9feecbc0151d08bacad86ebab4cb46e"
+  },
+  "runtime": "Private inside the existing offline PlantUML converter; no external fetch or JavaScript eval; regex programs are compiled under the recorded bounds. Native RegExp is used only to validate syntax."
+}

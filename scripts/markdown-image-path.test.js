@@ -1,8 +1,9 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
 const source=fs.readFileSync('internal/server/web/app.js','utf8');
-const start=source.indexOf('function resolveMarkdownImagePath('),end=source.indexOf('function renderMarkdown(',start);
-const context={};vm.createContext(context);vm.runInContext(source.slice(start,end),context);
+const ast=require('../internal/server/code_analysis/acorn.cjs').parse(source,{ecmaVersion:'latest'});
+const pathFunction=ast.body.find(node=>node.type==='FunctionDeclaration'&&node.id.name==='resolveMarkdownImagePath');assert(pathFunction);
+const context={};vm.createContext(context);vm.runInContext(source.slice(pathFunction.start,pathFunction.end),context);
 const path=context.resolveMarkdownImagePath;
 assert.equal(path('docs/readme.md','images/test.png'),'docs/images/test.png');
 assert.equal(path('docs/readme.md','../images/test.png'),'images/test.png');

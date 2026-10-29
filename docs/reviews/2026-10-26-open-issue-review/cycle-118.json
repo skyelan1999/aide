@@ -1,0 +1,23 @@
+{
+  "cycle": 118,
+  "issues": [
+    602
+  ],
+  "implementationRepository": "skyelan1999/aide-pkg-CodexBridge",
+  "branch": "codex/issue-602-gui-cli-discovery",
+  "commit": "07c3f09",
+  "PR": "https://github.com/skyelan1999/aide-pkg-CodexBridge/pull/10",
+  "version": "0.3.1 candidate",
+  "acceptance": "https://github.com/skyelan1999/aide-pkg-CodexBridge/blob/07c3f09/docs/ACCEPTANCE-0.3.1.json",
+  "green": [
+    "44 synthetic Node tests",
+    "native Go race/vet, including unverified paths, unknown numeric fields and concurrent edit retention",
+    "6 OS/architecture native build candidates",
+    "actual Linux manager HTTP/page at1280/390,200verified persistence and409invalidCLI with config unchanged"
+  ],
+  "notRun": [
+    "real macOS/Windows GUI and account model catalog",
+    "main merge/Release/market update"
+  ],
+  "delivery": "source pushed; protected review and exact-head cross-platform CI pending; keep602open"
+}

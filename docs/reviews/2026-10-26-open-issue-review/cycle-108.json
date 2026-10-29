@@ -1,0 +1,65 @@
+{
+  "cycle": 108,
+  "issues": [
+    598
+  ],
+  "baseline": "8f995346c053e5417984c14850f60ffbf92552c5",
+  "branch": "codex/remaining-83-20261029",
+  "fix": [
+    "Decode explicit image/* data URIs locally within the remaining32MiB resource budget; preserve base64, escaped bytes, UTF8/SVG and query semantics.",
+    "Bound image metadata512chars and encoded input4xremaining budget+512; reject malformed base64 and non-image media.",
+    "Cancel and clean FileReader waits; retain original workbench CSP and normal same-origin HTTP image path."
+  ],
+  "red": {
+    "actualChromiumValidImageFailures": 8,
+    "controlsInvalidRejection": 2,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle108/red/result.json"
+  },
+  "green": [
+    {
+      "scope": "Actual strict-CSP Chromium4image encodings×PNG/PDF; normal image pixels324each PNG;2invalid controls",
+      "checks": 10,
+      "errors": [],
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle108/green/result.json"
+    },
+    {
+      "scope": "13independent native data URL byte oracles, exact/over budget base64/binary, malformed/header/input caps and active/pre-aborted FileReader cancellation",
+      "command": "node scripts/markdown-inline-image.test.cjs",
+      "status": "PASS"
+    },
+    {
+      "scope": "Actual426cancellation/resource cases11 plus normal same-origin PNG/PDF and image pixels1260",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle108/cancel-regression/result.json"
+    },
+    {
+      "scope": "Quick",
+      "status": "pass",
+      "checks": 266,
+      "fingerprint": "715203973897042185fcc2084e3800637874e036516516e5601dc553970573fe",
+      "receipt": ".agent-state/verify-20261029T021523973984Z.log"
+    }
+  ],
+  "notRun": [
+    "Complete workbench, remote user resources, native user devices, paid models",
+    "Main integration/release/deploy"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "commit": "1f261f31"
+  },
+  "sourceFixedThisContinuation": [
+    426,
+    598
+  ],
+  "original83SourceFixed": [
+    426
+  ],
+  "newAdditionalFixed": [
+    598
+  ],
+  "newOtherReportPending": [
+    597
+  ]
+}

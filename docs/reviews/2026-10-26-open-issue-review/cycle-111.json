@@ -1,0 +1,61 @@
+{
+  "cycle": 111,
+  "issues": [
+    432,
+    433
+  ],
+  "fix": "PredictorStream validates supported safe-integer parameters and8MiBrow limit before underlying reads;no32bit size wrap;EOF/truncation checked before output allocation. Actual PDF preview sets16Miimage pixels/32MiBcanvas area options before worker decoding.",
+  "red": {
+    "predictor": "2of4 groups fail on unchanged vendor;parameter acceptance and EOF allocation trap",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle111-predictor-red.json",
+    "image": "actual getDocument production call lacksmaxImageSize; source-confirmed,not browser OOM reproduction"
+  },
+  "green": [
+    {
+      "scope": "actual fullworker module with test-only exports;14invalid params,exact8MiBrow,EOF/truncation allocation traps;5TIFF+15PNGnormal controls",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle111-predictor-green.json"
+    },
+    {
+      "scope": "Chromium actual preview function+localPDFmodule+worker;normalcolored image actualpixels/zoom/fit/close;large row rejected before predictor decode with existing2x2 fallback;20M-pixel image skipped before image op;no pageerrors",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle111-pdf-browser/result.json"
+    },
+    {
+      "scope": "existing actual PDF lifecycle5cases:pagecap,earlyclose,latesuccess,passwordafterclose,normal3pages",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle111-pdf-lifecycle.log"
+    },
+    {
+      "scope": "quick",
+      "checks": 270,
+      "status": "pass",
+      "fingerprint": "a7f6dc015f0422b20986fa169ee619fb8549fa01a0b641c586f6e183a93395fb",
+      "log": ".agent-state/verify-20261029T031558825998Z.log"
+    }
+  ],
+  "intermediateFailures": [
+    "Initial browser assertion expected no operator for invalid-row image;actual PDF.js tolerates invalid streams with a declared2x2 fallback,verified16bytes. Corrected evidence rather than weakening implementation.",
+    "Initial quick checks all passed but receipt failed source identity because browser fixture changed during run;reran after fixture stabilized."
+  ],
+  "vendor": {
+    "version": "4.4.168+local-resource-backport",
+    "upstreamWorkerSHA256": "a7cf858ab0bbe21a00ef438c24a4ef5833c3d05935a294382c8d0773a8958f50",
+    "patchedWorkerSHA256": "57f94b2bfde73e441bb6e496227926662182810979956ec335381719ad3e3e3e",
+    "license": "Apache-2.0 header preserved"
+  },
+  "limits": [
+    "Preview policy may omit over-budget images;filename tooltip explains viewing original.",
+    "Not a total PDF memory/CPU budget;other queued parser/font/native decoder issues remain separate.",
+    "Component browser fixture,not fullworkbench/userdeviceacceptance."
+  ],
+  "notRun": [
+    "intentional OOM/crash",
+    "full runtime image/device acceptance",
+    "main merge/release"
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "status": "verified pendingpush"
+  }
+}

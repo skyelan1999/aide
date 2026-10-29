@@ -1,0 +1,27 @@
+{
+  "source": "https://raw.githubusercontent.com/mozilla/pdf.js/a72eb1599fb7712ffd31c96656fc79464aaf9ba9/external/openjpeg/openjpeg_nowasm_fallback.js",
+  "upstreamPR": "https://github.com/mozilla/pdf.js/pull/22169",
+  "upstreamCommit": "a72eb1599fb7712ffd31c96656fc79464aaf9ba9",
+  "sourceSHA256": "e166d573c8ed56f378ecd2e66352a58169cfac913301928c7d03de908c996c18",
+  "sourceGitBlobSHA1": "00d27f512e24c18f5f5aa2da875bd72a698ea7af",
+  "license": "BSD-2-Clause; both upstream copyright/license files included",
+  "upstreamNativeBuild": "Official generated wasm2js fallback; not locally recompiled from C. Upstream build instructions in external/openjpeg/README.md; source https://github.com/mozilla/pdf.js.openjpeg/",
+  "localAdapter": [
+    "Remove outer async and final await; replace private run with synchronous init (only warn option is exposed, no async init/status hooks).",
+    "Embed unchanged native wasm2js body within existing private oi factory.",
+    "Bridge synchronous decode using malloc/write/jp2_decode(numComponents,indexed,smask,reduce0,padComponents)/free; clear owned image/error fields on completion.",
+    "PDFImage uses last filter and actual numComps, with DeviceRGBA requesting automatic RGBA output."
+  ],
+  "sync": "node scripts/sync_pdf_openjpeg.cjs; --check compares generated factory bytes",
+  "upstreamFixtures": [
+    {
+      "file": "jpx_numcomps.pdf",
+      "sha256": "fa0e65f443c750bc899fe1601b72e817b8160ceff5ad1db95247ddacd4cb15d4",
+      "md5": "a4752b9782fa721e34fb2027ee32de13"
+    },
+    {
+      "file": "jpx_subsampling.pdf",
+      "sha256": "01f92ae453f8f6d2e8c61574054c1ca3160e3481a3f9c8cc365aa1ff7cd3e1f3"
+    }
+  ]
+}

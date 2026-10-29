@@ -1,0 +1,394 @@
+{
+  "cycle": 125,
+  "issues": [
+    535,
+    536,
+    537,
+    538
+  ],
+  "implementation": [
+    "JBIG2positiveintegerpageextent<=16MipixelsandmatchouterPDFbeforepackedbitmapallocation",
+    "JPEG SOF<=16Mipixels,1..4components/sampling,allblockplans<=128MiBvalidatedbeforefirstInt16buffer;originalPDFdimensionspassedthroughconstructorandDNLreparse",
+    "537 alreadyfixedby506pinnedupstreamdecoder;validateoriginsratherthanapplyduplicatepatch",
+    "CFFINDEXoffSize1..4,tablebytebounds,unsignedorderedoffsets/first1/dataendcheckedbeforeobjectconstruction"
+  ],
+  "red": {
+    "checks": 7,
+    "rows": [
+      {
+        "name": "535 embedded JBIG2 dimensions reject before page buffer allocation",
+        "status": "FAIL",
+        "error": "The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned JBIG2 allocation trap"
+      },
+      {
+        "name": "535 actual chunk/stream dimensions and16Mipixel boundary",
+        "status": "FAIL",
+        "error": "Missing expected exception."
+      },
+      {
+        "name": "536 SOF pixel/mismatch/sampling/block-plan limits precede component buffers",
+        "status": "FAIL",
+        "error": "The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned JPEG block allocation trap"
+      },
+      {
+        "name": "536 gray/RGB/CMYK decoder controls and PDF stream expected dimensions",
+        "status": "FAIL",
+        "error": "Missing expected exception."
+      },
+      {
+        "name": "537 nonzero JPX origins use extents in current upstream decoder",
+        "status": "PASS",
+        "detail": {
+          "cases": 12,
+          "origin": 32,
+          "productChange": "Already covered by pinned decoder update for506; no further native patch"
+        }
+      },
+      {
+        "name": "538 offSize/truncation/offset bounds reject before prolonged scans",
+        "status": "FAIL",
+        "error": "The validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned CFF read trap"
+      },
+      {
+        "name": "538 valid empty, variable-offSize and zero-length INDEX objects",
+        "status": "PASS"
+      }
+    ]
+  },
+  "green": {
+    "checks": 7,
+    "rows": [
+      {
+        "name": "535 embedded JBIG2 dimensions reject before page buffer allocation",
+        "status": "PASS"
+      },
+      {
+        "name": "535 actual chunk/stream dimensions and16Mipixel boundary",
+        "status": "PASS"
+      },
+      {
+        "name": "536 SOF pixel/mismatch/sampling/block-plan limits precede component buffers",
+        "status": "PASS"
+      },
+      {
+        "name": "536 gray/RGB/CMYK decoder controls and PDF stream expected dimensions",
+        "status": "PASS"
+      },
+      {
+        "name": "537 nonzero JPX origins use extents in current upstream decoder",
+        "status": "PASS",
+        "detail": {
+          "cases": 12,
+          "origin": 32,
+          "productChange": "Already covered by pinned decoder update for506; no further native patch"
+        }
+      },
+      {
+        "name": "538 offSize/truncation/offset bounds reject before prolonged scans",
+        "status": "PASS"
+      },
+      {
+        "name": "538 valid empty, variable-offSize and zero-length INDEX objects",
+        "status": "PASS"
+      }
+    ]
+  },
+  "browser": [
+    {
+      "mode": "jbig2-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 8,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "save",
+        "transform",
+        "dependency",
+        "paintImageXObject",
+        "restore"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "jbig2-mismatch",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 8,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "save",
+        "transform",
+        "dependency",
+        "paintImageXObject",
+        "restore"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Unable to decode image \"img_p0_1\": \"Jbig2Error: JBIG2 page dimensions differ from PDF image\".",
+        "Warning: Unable to decode image \"img_p0_2\": \"Jbig2Error: JBIG2 page dimensions differ from PDF image\"."
+      ]
+    },
+    {
+      "mode": "jbig2-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 8,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "save",
+        "transform",
+        "dependency",
+        "paintImageXObject",
+        "restore"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Unable to decode image \"img_p0_1\": \"Jbig2Error: JBIG2 page dimensions exceed preview limit\".",
+        "Warning: Unable to decode image \"img_p0_2\": \"Jbig2Error: JBIG2 page dimensions exceed preview limit\"."
+      ]
+    },
+    {
+      "mode": "jpeg-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 8,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "save",
+        "transform",
+        "dependency",
+        "paintImageXObject",
+        "restore"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "jpeg-mismatch",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 8,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "save",
+        "transform",
+        "dependency",
+        "paintImageXObject",
+        "restore"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Unable to decode image \"img_p0_1\": \"JpegError: JPEG dimensions differ from PDF image\".",
+        "Warning: Unable to decode image \"img_p0_2\": \"JpegError: JPEG dimensions differ from PDF image\"."
+      ]
+    },
+    {
+      "mode": "jpeg-large",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 8,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "save",
+        "transform",
+        "dependency",
+        "paintImageXObject",
+        "restore"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Unable to decode image \"img_p0_1\": \"JpegError: JPEG dimensions or components exceed preview limit\".",
+        "Warning: Unable to decode image \"img_p0_2\": \"JpegError: JPEG dimensions or components exceed preview limit\"."
+      ]
+    },
+    {
+      "mode": "jpx-origin",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 8,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "save",
+        "transform",
+        "dependency",
+        "paintImageXObject",
+        "restore"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "cff-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "cff-invalid",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 9,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: FormatError: Invalid CFF INDEX offset table"
+      ]
+    }
+  ],
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "4ea1cdc537ed6f3330d7d6e92b16362ac5dc38b7f895878db387a9f7af98328d",
+    "head": "154b3bda0703e81bd78c123a5021d042e9bd2c2c",
+    "time": "20261029T080526606046Z",
+    "log": ".agent-state/verify-20261029T080526606046Z.log"
+  },
+  "quickChecks": 297,
+  "limits": [
+    "Per-image/blockallocationbudgetsnotdocumenttotalmemory.",
+    "Invalidimages/fontsrecoverbyomission/fallback;notfullinvaliddocumentrendering.",
+    "Actualbrowsercomponentlocalworker,notfullworkbench/device.",
+    "DNLpathpreservesconstructoroptions/zeroinitialheight;no dedicatedrealDNLfileacceptance.",
+    "JPXorigin32controlsproveoutputextentcalculationwithoutoriginal8000-originlargeallocation."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verifiedreadytopush,mainreviewpending"
+  },
+  "next": {
+    "cycle": 126,
+    "issues": [
+      540,
+      542
+    ]
+  }
+}

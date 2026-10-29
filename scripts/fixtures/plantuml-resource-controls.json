@@ -1,0 +1,38 @@
+[
+  {
+    "source": "@startuml\nstate Outer {\nstate Inner {\nstate Leaf\n}\n}\nOuter --> Done\n@enduml",
+    "sha256": "5abe2e68d383c5466a3089f0f5a51578271486c07c234179ca8b05eac46d5fd9"
+  },
+  {
+    "source": "@startuml\npackage P {\npackage Q {\nclass A\n}\nclass B\n}\nA --> B\n@enduml",
+    "sha256": "e854f754aa1bfa85742adbe255b2002d4111da5330ad1e460b817e05fe72e407"
+  },
+  {
+    "source": "@startuml\nmap M {\na *-> A\nb *-> B\n}\nA --> B\n@enduml",
+    "sha256": "28c90a2f56bd2f1458ebf0672f9cdc8ef1d6a50b69d06d0601ddf6b276871478"
+  },
+  {
+    "source": "@startuml\nobject A\nnote right of A: first\nnote right of A: second\n@enduml",
+    "sha256": "e8bf06dfa0c9eafe8214b7f9643ccbae9f6a6985fa4099dd598f3609110d0c87"
+  },
+  {
+    "source": "@startuml\nif (ready) then (yes)\nif (ok) then (yes)\n:work;\nelse (no)\n:retry;\nendif\nelse (no)\n:stop;\nendif\n@enduml",
+    "sha256": "fcf26ac9ca641faed3013a55b188f0b41cb2fc38fc6f1066310c14c6d0e5460a"
+  },
+  {
+    "source": "@startuml\n!$parts = %splitstr_regex(\"one, two;three\", \"[,;] *\")\nAlice -> Bob: $parts\n@enduml",
+    "sha256": "d65ce0b5c5af99f58612e96901e918e632cbb120dca29f98bee35cb61186372f"
+  },
+  {
+    "source": "@startuml\nstate Parallel {\nstate Left\n--\nstate Right\n}\nLeft --> Right\n@enduml",
+    "sha256": "d6439662c0cca8919671620d432f34955cc476730c0018d63f811ff3f7d42a1b"
+  },
+  {
+    "source": "@startuml\nmap M {\na *-> A\nb *-> A\n}\nA --> A\n@enduml",
+    "sha256": "3914c9df7d62fffddbbd73db6536239e0c747ce5d194038544e24db7374b0d90"
+  },
+  {
+    "source": "@startuml\nmap M {\na *-> A\na *-> B\n}\n@enduml",
+    "sha256": "188e690f391908d4f39c95ab60a35813510abe247579df69610dd19ced6ad82f"
+  }
+]

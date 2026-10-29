@@ -1,0 +1,71 @@
+{
+  "at": "2026-10-29T02:57:43.201728+00:00",
+  "scope": "independent-plugin-integration",
+  "issuesClosed": [
+    585,
+    587
+  ],
+  "plugins": [
+    {
+      "repo": "aide-pkg-VideoPreview",
+      "issue": 587,
+      "fixPR": 3,
+      "versionPR": 4,
+      "archivePR": 5,
+      "sourceCommit": "0b6aec0746d8b37ef208889796ebb5e38d42dc72",
+      "archiveCommit": "60fd2ab172cd251019de0c16236949f2a19f1c13",
+      "release": "v0.1.1",
+      "sha256": "77205a8c3e5b5a6041ea3216773d26428ebbe395fc1f5a083a48137739b4af8a",
+      "bytes": 45081,
+      "checks": "22 Python +4 Node; exact16file ZIP equals source; anonymous fixed-commit download SHA256 verified"
+    },
+    {
+      "repo": "aide-pkg-STEPViewer",
+      "issue": 585,
+      "fixPR": 2,
+      "versionPR": 3,
+      "archivePR": 4,
+      "sourceCommit": "bd3a45d521f0b5d345528ec7ca0d0883c63ec208",
+      "archiveCommit": "b69b844b1efe2b63d006e1c2583c29b8d3cb4e6b",
+      "release": "v0.1.2",
+      "sha256": "164c30404f3697fd03aa18ac906d596dc973f2f3959dab80b987530daf11f87a",
+      "bytes": 210937,
+      "checks": "2 Python; real bridge offset; assembly+metrology; exact24file ZIP equals source; anonymous fixed-commit download SHA256 verified"
+    }
+  ],
+  "market": {
+    "pr": 18,
+    "repo": "aide-pkg-shop",
+    "commit": "4c69047",
+    "status": "normal merge blocked by required review",
+    "live": false,
+    "checks": "catalog integrity;3public+3private+4routing tests;Node routing search"
+  },
+  "blocked": [
+    {
+      "repo": "aide-pkg-terminal",
+      "pr": 1,
+      "issues": [
+        588
+      ],
+      "reason": "required review; no administrator exception used"
+    },
+    {
+      "repo": "aide-pkg-sqlite",
+      "pr": 1,
+      "issues": [
+        583,
+        584,
+        586
+      ],
+      "reason": "required review; no administrator exception used"
+    }
+  ],
+  "uploadLimit": "uploads.github.com returned HTTP401; Release notes link exact verified package and SHA256SUMS at fixed public repository commit; no Release assets claimed",
+  "notRun": [
+    "live video conversion",
+    "full3M-triangle OCP/GPU conversion",
+    "new real device acceptance"
+  ],
+  "coreSourceUnchanged": true
+}

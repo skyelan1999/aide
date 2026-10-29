@@ -1,0 +1,64 @@
+{
+  "cycle": 109,
+  "issues": [
+    429
+  ],
+  "baseline": "1f261f31",
+  "branch": "codex/remaining-83-20261029",
+  "fix": [
+    "Add optional non-negative aggregate triangle budget to actual OBJLoader.parse; count fan expansion before face token arrays and addFace.",
+    "Keep counter across objects/materials and preserve omitted-budget upstream parsing.",
+    "Production URDF passes current remaining scene budget and maps resource-limit error to existing localized warning.",
+    "Retain upstream provenance hash and record patched checksum; advance URDF/app cache versions."
+  ],
+  "red": {
+    "scope": "Original actual library and URDF path; new guard contracts fail, seven normal geometry controls pass. Large-input allocation trap deliberately stops original code before its huge token allocation.",
+    "nodeEvidence": "/workspace/scratch/issue-review-20261026/cycle109/red.log",
+    "browserEvidence": "/workspace/scratch/issue-review-20261026/cycle109/browser-red/result.json"
+  },
+  "green": [
+    {
+      "scope": "Six Node groups including sevennormal geometry controls, invalid/new budget contract, productionremaining1then0 and allocation-trapped6MBpressure in192MiB child",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle109/green-final.log"
+    },
+    {
+      "scope": "Actual Chromium3budget paths plus exact12trianglecube recovery",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle109/browser-final/result.json",
+      "errors": []
+    },
+    {
+      "scope": "Existing actual URDF component and WebGL9/121links,1280/390professional/comfortlight/dark, camera/inspector/coordinates/pagination/teardown; screenshot visually inspected",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle109/urdf-ui/result.json",
+      "errors": []
+    },
+    {
+      "scope": "Existing URDF validation/transforms/bounded resources/provenance",
+      "command": "node scripts/urdf-preview.test.cjs",
+      "status": "PASS"
+    },
+    {
+      "scope": "Quick",
+      "status": "pass",
+      "checks": 268,
+      "fingerprint": "8c11b2438b4c28eee0899d41aa824db98188e993e24ca7ba4018006abce6fac0",
+      "receipt": ".agent-state/verify-20261029T022926692509Z.log"
+    }
+  ],
+  "environmentNote": "Restricted executor returned empty pressure-child stdout; same final suite passed in permitted subprocess environment. Not treated as product defect.",
+  "notRun": [
+    "Actual3M-valid-triangle GPU model, complete workbench, native user devices",
+    "Main merge,release,deployment"
+  ],
+  "delivery": {
+    "pushed": false,
+    "mergedToMain": false,
+    "released": false
+  },
+  "original83SourceFixed": [
+    426,
+    429
+  ],
+  "additionalSourceFixed": [
+    598
+  ]
+}
