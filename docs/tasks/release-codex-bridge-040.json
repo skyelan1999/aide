@@ -1,0 +1,79 @@
+{
+  "id": "release-codex-bridge-040",
+  "request": "用户授权在 CI 通过后管理员合并 Aide PR #616、必要版本 PR，发布配套 Aide release，并完成已准备好的市场发布。保持 weekly cadence 常规限制；此次若不足 7 天，仅用带审计原因的 workflow_dispatch 一次性例外。不得部署 9999。Codex Bridge 0.4.0 已发布、market PR #25 已合并部署；Aide PR #616 已合并到 main b6401f3d。",
+  "baseline": "b6401f3d0928a4bbd9bd8e70003dc9b4576fe634",
+  "initial_status": "M .github/workflows/aide-delivery.yml\n M scripts/ci/delivery_gate.py\n M scripts/ci/test_delivery_gate.py\n M version.md\n?? docs/releases/v0.1.17.6-RC1.md",
+  "acceptance": [
+    "Aide host-manager integration is merged to main and an Aide version release with ARM64 and AMD64 full packages is publicly published and hash-verified.",
+    "Normal release cadence remains seven days; any earlier publication is possible only through a manual workflow dispatch with a recorded 20-500 character reason.",
+    "Codex Bridge 0.4.0 is listed in the public plugin market after Aide release metadata is current.",
+    "9999 is not deployed or restarted; Windows desktop/real Codex account acceptance is not claimed."
+  ],
+  "scope": [
+    ".github/workflows/aide-delivery.yml",
+    "scripts/ci/delivery_gate.py",
+    "scripts/ci/test_delivery_gate.py",
+    "docs/releases/v0.1.17.6-RC1.md",
+    "docs/tasks/release-codex-bridge-040.json",
+    "version.md (only via scripts/version.sh on main after merge)"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Aide PR #616 is already merged; user authorized the necessary Aide and market admin merge/release once checks pass. Do not deploy 9999.",
+      "evidence": [
+        "User authorization: “授权本次管理员合并并完成发布” (2026-10-29 turn)."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep seven-day cadence as default. Add a manual-dispatch-only, reason-required one-off exception to the existing delivery gate; use scripts/version.sh on main for the daily version bump and tag.",
+      "evidence": [
+        "docs/agent/WORKFLOW.md release rules",
+        "docs/prd/2026-09-21-version-management.md",
+        "scripts/version.sh enforces main-only version bump/tag"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Added workflow input, gate validation, focused tests and reviewed bilingual release notes; version.md will be generated through the required main-only script after PR merge.",
+      "evidence": [
+        ".github/workflows/aide-delivery.yml",
+        "scripts/ci/delivery_gate.py",
+        "scripts/ci/test_delivery_gate.py",
+        "docs/releases/v0.1.17.6-RC1.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused gate unit tests and version format check pass. Full local quick gate has three unrelated macOS/environment failures; hosted PR checks remain required.",
+      "evidence": [
+        "python3.12 -m unittest discover -s scripts/ci -p test_delivery_gate.py -v: 10/10 pass",
+        "bash scripts/version.sh check: pass",
+        "python3.12 scripts/agent-route.py verify quick: failed at scripts/test_prebuild_wheels.py (/usr/bin/mv missing), scripts/test_avatar_pack_paths.cjs (source path fixture), scripts/test_mermaid_proof_auth.py (HTTP test timeout); all other listed quick checks passed. Log .agent-state/verify-20261029T141131294348Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual user-facing release note is prepared with limitations and explicit non-deployment status.",
+      "evidence": [
+        "docs/releases/v0.1.17.6-RC1.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Only release gate, focused tests, release note and this task record are in scope; no user data or unrelated files touched.",
+      "evidence": [
+        "git diff --check passed"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User authorized: “授权本次管理员合并并完成发布”. Scope includes required Aide version bump/tag and market publication after checks. Cadence exception reason will be recorded in the manual workflow input. No 9999 deployment.",
+  "rollback": "No service deployment. If pre-publication checks fail, do not publish; leave main integration merged and correct through a new PR. A published immutable Release is not overwritten; publish a superseding patch/tag only through version.sh.",
+  "handoff": "Pending: finish CI, merge cadence-gate PR using exact verified head if checks pass, run scripts/version.sh bump daily on main, push generated commit/tag, run Aide Delivery and verify all native packages and remote hashes, then update/verify market listing. Keep 9999 unchanged."
+}
