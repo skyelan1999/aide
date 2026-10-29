@@ -281,8 +281,9 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 	addText := func(root, apath, body string) error {
 		header := fmt.Sprintf("\n<untrusted-file root=%q path=%q>\n", root, apath)
 		const footer = "\n</untrusted-file>\n"
-		if len(body) > maxAttachmentContextBytes-contextText.Len()-len(header)-len(footer) {
-			return fmt.Errorf("附件内联文本超过 %d MiB 资源上限，请减少附件，或让 aide 使用 read_file 按行/范围分段读取；是否适合完整发送还取决于所选模型的上下文窗口", maxAttachmentContextBytes>>20)
+		// Check before growing/copying the body; never silently send partial files.
+		if len(header)+len(body)+len(footer) > maxAttachmentTextBytes-contextText.Len() {
+			return fmt.Errorf("附件提取文本超过 %d MiB 处理预算；请分批附加或使用文件工具分段读取。模型上下文容量另按所选模型检查", maxAttachmentTextBytes>>20)
 		}
 		contextText.WriteString(header)
 		contextText.WriteString(body)

@@ -24,10 +24,9 @@ import (
 const (
 	// maxDocExtractChars 单个文档提取文本上限（按 rune 计），超出截断并标注。
 	maxDocExtractChars = 60000
-	// maxAttachmentContextBytes bounds assembly memory, not model capacity.
-	// The shared preview/start context meter applies the selected model's window.
-	// Larger inputs remain available through read_file's bounded range/line path.
-	maxAttachmentContextBytes = 64 << 20
+	// maxAttachmentTextBytes bounds extraction/assembly memory independently of the
+	// selected model's token window. It is not an upload or model-context limit.
+	maxAttachmentTextBytes = 16 << 20
 	// maxImageAttachment 单张图片大小上限。
 	maxImageAttachment = 5 << 20
 )

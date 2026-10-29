@@ -17,7 +17,7 @@ func TestAttachmentContextResourceBoundary(t *testing.T) {
 	const name = "boundary.txt"
 	const footer = "\n</untrusted-file>\n"
 	header := fmt.Sprintf("\n<untrusted-file root=%q path=%q>\n", "workspace", name)
-	body := strings.Repeat("x", (64<<20)/8-len(header)-len(footer))
+	body := strings.Repeat("x", maxAttachmentTextBytes/8-len(header)-len(footer))
 	file := filepath.Join(a.workPath, name)
 	if err := os.WriteFile(file, []byte(body), 0600); err != nil {
 		t.Fatal(err)
@@ -27,7 +27,7 @@ func TestAttachmentContextResourceBoundary(t *testing.T) {
 		atts[i] = Attachment{Root: "workspace", Path: name}
 	}
 	text, _, _, err := a.attachmentContext(atts)
-	if err != nil || len(text) != 64<<20 {
+	if err != nil || len(text) != maxAttachmentTextBytes {
 		t.Fatalf("exact resource boundary rejected: bytes=%d, err=%v", len(text), err)
 	}
 	text = ""
@@ -35,7 +35,7 @@ func TestAttachmentContextResourceBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	text, images, versions, err := a.attachmentContext(atts)
-	if err == nil || !strings.Contains(err.Error(), "64 MiB") || !strings.Contains(err.Error(), "read_file") || text != "" || images != nil || versions != nil {
+	if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("%d MiB", maxAttachmentTextBytes>>20)) || !strings.Contains(err.Error(), "分段读取") || text != "" || images != nil || versions != nil {
 		t.Fatalf("over-resource input must reject before assembly with range-read guidance: %v", err)
 	}
 }
