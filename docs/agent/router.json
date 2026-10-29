@@ -1390,6 +1390,15 @@
         "node",
         "--check",
         "scripts/browser-obj-triangle-budget.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-predictor-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-resource-budgets.cjs"
       ]
     ],
     "full": [

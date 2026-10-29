@@ -8024,8 +8024,8 @@ let _pdfjsPromise = null;
 function ensurePdfJs() {
   if (_pdfjsPromise) return _pdfjsPromise;
   _pdfjsPromise = (async () => {
-    const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs');
-    pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs';
+    const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs?v=2');
+    pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=2';
     return pdfjs;
   })();
   return _pdfjsPromise;
@@ -8037,6 +8037,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   const viewer = el('div', 'pdf-viewer');
   const toolbar = el('div', 'pdf-toolbar');
   const info = el('span', 'pdf-info', filePath.split('/').pop());
+  info.title = t('PDF 预览会略过超过 16 Mi 像素的嵌入图片；完整内容请下载原文件查看。');
   const meta = el('span', 'pdf-meta', t('加载中…'));
   const btnPrev = el('button', 'pdf-ctrl', '‹');
   const pageInput = el('input', 'pdf-page-input'); pageInput.type = 'text'; pageInput.inputMode = 'numeric'; pageInput.value = '–';
@@ -8103,7 +8104,8 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   if (cancelled) return;
 
   // 3) 打开文档（加密 PDF 走 onPassword 回调）
-  const task = loadingTask = pdfjs.getDocument({ data: buf });
+  // Apply the worker's image guard before any full-resolution decode/resize.
+  const task = loadingTask = pdfjs.getDocument({ data: buf, maxImageSize: 16 * 1024 * 1024, canvasMaxAreaInBytes: 32 * 1024 * 1024 });
   task.onPassword = (updatePassword, reason) => {
     if (cancelled) return;
     // reason: 0 = NEED_PASSWORD，1 = INCORRECT_PASSWORD

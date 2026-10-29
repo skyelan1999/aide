@@ -2275,6 +2275,7 @@ window.aideEnglish = {
   "加载失败": "Load failed",
   "无法读取 PDF：": "Cannot read PDF:",
   "PDF 渲染组件加载失败（离线 vendor 缺失？）：": "PDF renderer failed to load (missing offline vendor?):",
+  "PDF 预览会略过超过 16 Mi 像素的嵌入图片；完整内容请下载原文件查看。": "PDF preview skips embedded images above 16 Mi pixels; download the original file to view the complete content.",
   "密码不正确，请重试": "Incorrect password; please retry",
   "该 PDF 已加密，请输入打开密码": "This PDF is encrypted; enter password",
   "已取消：需要密码才能打开该 PDF": "Cancelled: password required to open this PDF",
