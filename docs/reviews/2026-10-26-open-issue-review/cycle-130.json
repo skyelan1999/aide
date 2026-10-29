@@ -1,0 +1,279 @@
+{
+  "cycle": 130,
+  "issues": [
+    566,
+    567
+  ],
+  "red": {
+    "checks": 5,
+    "rows": [
+      {
+        "name": "566 untrusted Length1 recovers before large decode reservation",
+        "status": "FAIL",
+        "error": "The expression evaluated to a falsy value:\n\n  assert(largest<=2048)\n"
+      },
+      {
+        "name": "566 valid Type1/PFB hint and short header retain bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "566 header recovery scan has bounded reads",
+        "status": "FAIL",
+        "error": "Missing expected exception."
+      },
+      {
+        "name": "567 preview annotation globals skip eager catalog attachment content",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+      },
+      {
+        "name": "567 metadata-only FileSpec never fetches data; normal extraction retained",
+        "status": "PASS"
+      }
+    ]
+  },
+  "green": {
+    "checks": 5,
+    "rows": [
+      {
+        "name": "566 untrusted Length1 recovers before large decode reservation",
+        "status": "PASS"
+      },
+      {
+        "name": "566 valid Type1/PFB hint and short header retain bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "566 header recovery scan has bounded reads",
+        "status": "PASS"
+      },
+      {
+        "name": "567 preview annotation globals skip eager catalog attachment content",
+        "status": "PASS"
+      },
+      {
+        "name": "567 metadata-only FileSpec never fetches data; normal extraction retained",
+        "status": "PASS"
+      }
+    ]
+  },
+  "browser": [
+    {
+      "mode": "font-normal",
+      "status": "PASS",
+      "options": {
+        "disableEmbeddedFiles": true,
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "annotations": [],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "font-large",
+      "status": "PASS",
+      "options": {
+        "disableEmbeddedFiles": true,
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "annotations": [],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Invalid \"Length1\" property in Type1 font -- trying to recover."
+      ]
+    },
+    {
+      "mode": "font-zero",
+      "status": "PASS",
+      "options": {
+        "disableEmbeddedFiles": true,
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "annotations": [],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Invalid \"Length1\" property in Type1 font -- trying to recover."
+      ]
+    },
+    {
+      "mode": "attachment-normal",
+      "status": "PASS",
+      "options": {
+        "disableEmbeddedFiles": true,
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 3,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill"
+      ],
+      "annotations": [
+        {
+          "rect": [
+            10,
+            10,
+            20,
+            20
+          ],
+          "file": {
+            "filename": "owned.txt",
+            "content": null
+          }
+        }
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "extraction": {
+        "defaultAnnotation": "owned attachment bytes",
+        "defaultCatalog": "owned attachment bytes",
+        "explicitPreview": "owned attachment bytes"
+      },
+      "messages": []
+    },
+    {
+      "mode": "attachment-invalid",
+      "status": "PASS",
+      "options": {
+        "disableEmbeddedFiles": true,
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 3,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill"
+      ],
+      "annotations": [
+        {
+          "rect": [
+            10,
+            10,
+            20,
+            20
+          ],
+          "file": {
+            "filename": "owned.txt",
+            "content": null
+          }
+        }
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedPixel": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    }
+  ],
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "91bf615d76412bd5bc2c3444ac501553061e3595487fff6feb878d76e960c5e0",
+    "head": "b312aaadd55bcc1cd0f5793f7702c60b21739de8",
+    "time": "20261029T102637640502Z",
+    "log": ".agent-state/verify-20261029T102637640502Z.log"
+  },
+  "quickChecks": 307,
+  "implementation": [
+    "Length1 integer1..1Mi fast read; otherwise bounded eexec header recovery and bounded fallback; no huge decode reservation.",
+    "Aide opts into disableEmbeddedFiles for annotation metadata/catalog deferral. Default API unchanged; explicit getAttachments still extracts."
+  ],
+  "limits": [
+    "Header budget is not full font budget.",
+    "Ordinary preview avoids extracting attachments; explicit extraction still uses existing stream budgets.",
+    "Native build preparations are separate workspace tools, not shipped decoder changes."
+  ],
+  "delivery": {
+    "PR": 609,
+    "status": "verifiedreadytopush;mainreview/fullCIpending"
+  },
+  "next": {
+    "cycle": 131,
+    "issues": [
+      568,
+      569,
+      570
+    ],
+    "scope": "Current OpenJPEG provenance/allocated input/subsampling controls, then original native allocation/parser/arithmetic reports."
+  }
+}

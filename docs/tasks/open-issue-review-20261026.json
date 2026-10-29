@@ -1468,7 +1468,9 @@
         558,
         559,
         560,
-        617
+        617,
+        566,
+        567
       ],
       "retainedNative": [
         335,
@@ -1485,8 +1487,8 @@
         587,
         588
       ],
-      "currentIssue": 566,
-      "nextCycle": 130,
+      "currentIssue": 568,
+      "nextCycle": 131,
       "newReports": [
         597,
         598,
@@ -1552,10 +1554,12 @@
         558,
         559,
         560,
-        617
+        617,
+        566,
+        567
       ],
       "latestActualOpen": 91,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-129.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-130.json",
       "original83NewFixed": [
         426,
         429,
@@ -1610,7 +1614,9 @@
         557,
         558,
         559,
-        560
+        560,
+        566,
+        567
       ],
       "additionalFixed": [
         598,
@@ -1651,10 +1657,11 @@
         "615": "Independent CodexBridgePR15 and AidePR616 already implement plugin-first host lifecycle. PR616OPEN/REVIEW_REQUIRED, full distribution/release and real Windows desktop still pending; no duplicate implementation."
       },
       "verifiedLocalAwaitingPush": [
-        617
+        566,
+        567
       ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "1acfd359",
+      "lastPushedCommit": "b312aaad",
       "lastMetadataRefresh": "2026-10-29T10:15:39.529337+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,

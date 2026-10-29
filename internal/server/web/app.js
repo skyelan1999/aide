@@ -8048,8 +8048,8 @@ let _pdfjsPromise = null;
 function ensurePdfJs() {
   if (_pdfjsPromise) return _pdfjsPromise;
   _pdfjsPromise = (async () => {
-    const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs?v=12');
-    pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=12';
+    const pdfjs = await import('/vendor/pdfjs/pdf.min.mjs?v=13');
+    pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs?v=13';
     return pdfjs;
   })();
   return _pdfjsPromise;
@@ -8133,7 +8133,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
 
   // 3) 打开文档（加密 PDF 走 onPassword 回调）
   // Apply the worker's image guard before any full-resolution decode/resize.
-  const task = loadingTask = pdfjs.getDocument({ data: buf, maxImageSize: 16 * 1024 * 1024, canvasMaxAreaInBytes: 32 * 1024 * 1024 });
+  const task = loadingTask = pdfjs.getDocument({ data: buf, disableEmbeddedFiles: true, maxImageSize: 16 * 1024 * 1024, canvasMaxAreaInBytes: 32 * 1024 * 1024 });
   task.onPassword = (updatePassword, reason) => {
     if (cancelled) return;
     // reason: 0 = NEED_PASSWORD，1 = INCORRECT_PASSWORD

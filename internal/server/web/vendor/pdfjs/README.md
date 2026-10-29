@@ -12,8 +12,8 @@
 
 | 文件 | SHA-256 |
 |---|---|
-| `pdf.min.mjs` | `15a8b04625bb77e2af6e0d19b72baf7074ab6fdc9de0f9c87586f01a0f6c80b7` |
-| `pdf.worker.min.mjs` | `c1e1bc7c059acbbad187371d997d4d5e09fa21dab4ffaec930b9760b1e505c05` |
+| `pdf.min.mjs` | `d22d0aa0c37f79e6e99f64e2dd3d4cd5b4b7c4a9fd60b39cb8866cc6068f7654` |
+| `pdf.worker.min.mjs` | `e92c356981c782ff00c2e4d29deaca51dfcfb0d7d961bce74fc7448d5119045b` |
 
 校验：
 
@@ -150,3 +150,11 @@ TTC读取偏移前要求版本1/2、1–256字体及完整偏移表/签名尾部
 PostScript解析最多4096操作，表达式生成访问深度128。预算内深表达式回退既有解释器，过长程序受控失败；原128层条件块限制保留。XML实体替换只扫描截至最后分号的前缀，保留完整实体/未知实体语义，跳过没有闭合分号的长后缀。标注外观使用负无穷初始化最大坐标，负坐标矩形保持精确。表单没有可用区域时提前返回边框；多行自动字号以有界二分查找替代逐行递增，保留正常细小区域文本。
 
 API与worker对称修复流error后释放sink；终止后迟到的cancel仍返回完成确认，避免等待挂起。消息发送失败也释放引用。`pdf-parser-followup-review.cjs`含15组真实模块检查，`pdf-stream-sink-review.cjs`含6组消息通道检查；对应两个浏览器脚本分别验收15项真实PDF与4项实际API/worker流场景。字体夹具扩展为原创TTC/format12，固定时间戳可复现。以上为局部解析/几何预算和生命周期修复，不等于整份PDF总内存或时间上限。
+
+## Type1头部与附件延后读取（#566、#567）
+
+Type1只对1–1048576内的整数Length1使用快速读取；非法/过大提示直接走最多1MiB的eexec头部扫描，不把提示传给DecodeStream预分配。短流和普通/PFB头部继续容错，找不到标记的回退也有界；该限制不是整个字体程序的预算。
+
+新增内部getDocument选项disableEmbeddedFiles，默认false以保留原API。Aide普通预览显式启用：AnnotationFactory globals不提前读取catalog attachments，FileAttachment仅提供文件名/描述，content为null。显式getAttachments仍可提取，默认API下的附件标注与catalog内容也保持。跳过附件不是添加提取文件大小限制；显式提取仍使用既有解码预算。
+
+`pdf-font-attachment-review.cjs`含5组真实模块/分配读取陷阱；`browser-pdf-font-attachments.cjs`含5项真实PDF，正常/过大/零Length1均检查黑色字形，带NameTree和附件标注的页面检查蓝色像素/关闭释放；非法压缩附件不阻塞普通预览。正常附件同时验收默认标注、默认catalog和预览后的显式提取字节一致。

@@ -1558,6 +1558,15 @@
         "node",
         "--check",
         "scripts/browser-pdf-stream-lifecycle.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-font-attachment-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-font-attachments.cjs"
       ]
     ],
     "full": [
