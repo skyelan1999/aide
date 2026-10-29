@@ -53,6 +53,14 @@ def check_weekly_cadence(releases, now=None):
 def cadence():
     repo = os.environ['GH_REPO']
     require(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo), 'Invalid repository')
+    exception = os.environ.get('RELEASE_CADENCE_EXCEPTION_REASON', '').strip()
+    if exception:
+        event = os.environ.get('GH_EVENT_NAME', '')
+        require(event == 'workflow_dispatch', 'Cadence exception is only allowed for a manual workflow dispatch')
+        require(20 <= len(exception) <= 500 and not any(ord(c) < 32 and c not in '\t' for c in exception),
+                'Cadence exception reason must be 20-500 printable characters')
+        print('PASS: one-off weekly cadence exception; reason: ' + exception)
+        return
     records = json.loads(capture(['gh', 'api', f'repos/{repo}/releases?per_page=100']))
     check_weekly_cadence(records)
     print('PASS: weekly public release cadence')
@@ -74,6 +82,8 @@ def source():
     subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'origin/main'], cwd=ROOT, check=True)
     require(not capture(['git', 'status', '--porcelain']), 'Dirty checkout')
     tag = os.environ.get('RELEASE_TAG', '')
+    exception = os.environ.get('RELEASE_CADENCE_EXCEPTION_REASON', '').strip()
+    require(not exception or bool(tag), 'Cadence exception reason requires a release tag')
     if tag:
         require(tag == expected_tag(), 'Release tag must match scripts/version.sh')
         require(capture(['git', 'rev-parse', 'refs/tags/' + tag + '^{}']) == sha, 'Release tag must identify this main commit')

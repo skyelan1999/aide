@@ -10,6 +10,10 @@ on:
         description: 'Leave empty for candidate only; otherwise an existing version.sh tag on main'
         required: false
         type: string
+      cadence_exception_reason:
+        description: 'Optional one-off reason to publish before the normal 7-day cadence; manual dispatch only'
+        required: false
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -41,6 +45,8 @@ jobs:
         id: identity
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_CADENCE_EXCEPTION_REASON: ${{ inputs.cadence_exception_reason }}
+          GH_EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: python3 scripts/ci/delivery_gate.py source
@@ -131,6 +137,8 @@ jobs:
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ needs.source.outputs.tag }}
       RELEASE_SHA: ${{ needs.source.outputs.sha }}
+      RELEASE_CADENCE_EXCEPTION_REASON: ${{ inputs.cadence_exception_reason }}
+      GH_EVENT_NAME: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v4
         with:
