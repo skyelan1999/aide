@@ -216,6 +216,7 @@ func TestContextRecoveryCompactionInvalidatesOldUsageAnchor(t *testing.T) {
 		t.Fatal("compacted history still inherits pre-compaction token pressure")
 	}
 	anchor.CompactedAt = s.CompactedAt
+	anchor.SummaryFingerprint = contextSummaryFingerprint(a.buildContextPreview(s, "next", "chat", "", nil, a.settings, params, true).Messages)
 	if a.buildContextPreview(s, "next", "chat", "", nil, a.settings, params, false).Breakdown.UsageCalibration == 0 {
 		t.Fatal("new-generation calibration was disabled")
 	}
@@ -308,7 +309,7 @@ func TestContextRecoverySummaryFingerprintInvalidatesOldAnchor(t *testing.T) {
 
 }
 
-func TestContextRecoveryActiveLoopStopsBeforeOverflow(t *testing.T) {
+func TestContextRecoveryActiveCompactionFailureRetainsPartial(t *testing.T) {
 	a := testApp(t)
 	var requests atomic.Int32
 	partial := strings.Repeat("Z", 18000)
@@ -321,7 +322,9 @@ func TestContextRecoveryActiveLoopStopsBeforeOverflow(t *testing.T) {
 	task := &Task{ID: newID(), Prompt: "write", Mode: "chat", Status: "running", Steps: []Step{{Name: "chat"}}, Steer: make(chan string, 1)}
 	registerHarnessFixtureTask(t, a, task)
 	out, chain, e := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{MaxTokens: 128}, nil, task, nil, 0)
-	if e == nil || requests.Load() != 1 || !strings.Contains(out, partial) || len(chain) < 2 {
+	// First request produces the partial answer; a bounded summary attempt then
+	// fails validation. No oversized continuation is sent and the partial survives.
+	if e == nil || requests.Load() != 2 || !strings.Contains(e.Error(), "摘要不是有效 JSON") || !strings.Contains(out, partial) || len(chain) < 2 {
 		t.Fatalf("overflow not stopped with partial retained: requests%d outLen%d chain%d err%v", requests.Load(), len(out), len(chain), e)
 	}
 }
