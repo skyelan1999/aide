@@ -123,3 +123,15 @@ test('manual project save writes directly and never permits iframe commit',async
  assert.equal(f.nodes.some(n=>n.className==='plugin-native-save-card'),false);assert.equal(calls.length,1);assert.equal(calls[0].method,'file.save.commit');assert.equal(calls[0].arguments.hash,'original');assert.equal(port.received.at(-1).result.saved,true);assert.equal(port.received.at(-1).result.hash,'saved-hash');
  await port.postMessage({protocol:1,requestId:'manual_save',method:'file.save',arguments:{path:'x.pp',content:'replay',hash:'original'}});assert.equal(calls.length,1);
 });
+
+test('Codex host capability requires both the exact plugin and parent grant',async()=>{
+ for(const [id,granted,allowed] of [['codex-bridge',true,true],['codex-bridge',false,false],['test',true,false]]){
+  const response={...bridgeResponse,bridge:{...bridgeResponse.bridge,hostComponent:granted}};
+  const f=fixture(response),p={...bridgePlugin,id};await f.controller.open(p,f.services);
+  const frame=f.nodes.find(n=>n.tag==='iframe');f.events.message({source:frame.contentWindow,data:{type:'aide.workbench.ready',protocol:1}});
+  const connect=frame.contentWindow.messages[0];assert.equal(connect.data.capabilities.includes('host.component.codex-bridge'),allowed);
+  let calls=0;f.services.api=async()=>{calls++;return {status:'result',result:{available:true}};};
+  await connect.ports[0].postMessage({protocol:1,requestId:'host_1',method:'host.component',arguments:{action:'status'}});
+  assert.equal(calls,allowed?1:0);f.controller.close();
+ }
+});

@@ -36,6 +36,7 @@ jobs:
           python3 scripts/test_windows_native_host.py
           python3 scripts/test_windows_native_portable.py
           python3 scripts/agent-route.py verify quick
+          node --test scripts/codex-host-control.test.cjs
           python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
       - uses: actions/upload-artifact@v4
         if: failure()

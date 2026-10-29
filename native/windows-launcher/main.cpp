@@ -436,6 +436,15 @@ public:
   directoryAvailable=true;
  }
  std::string binding(const wchar_t* port){auto r=compose({L"port",L"aide",port});required(r,"Missing helper port mapping");auto value=trim(r.out);if(!std::regex_match(value,std::regex("127\\.0\\.0\\.1:[0-9]{1,5}")))throw std::runtime_error("Helper mapping must be loopback only");return value;}
+ void codexHost(){
+  auto helper=root/L"scripts/codex-host-control.cjs",node=findExe(L"node.exe");
+  if(!fs::exists(helper))return;
+  if(node.empty()){say("Codex Bridge requires host Node.js 18+; other Aide features remain available.");return;}
+  realPath(helper);
+  // Keep the headless manager in the resident host job. run() deliberately
+  // kills descendants on completion and must not be used for this bootstrap.
+  spawn(node,{helper.wstring(),L"start",L"--root",root.wstring(),L"--image",wide(image),L"--docker",docker.wstring()},stateRoot/L"codex-host.log");
+ }
  void helpers(){
   if(directoryAvailable)spawn(directoryHelper,{L"-root",root.wstring(),L"-docker",docker.wstring()},stateRoot/L"directory-helper.log");
   try{
@@ -444,6 +453,7 @@ public:
    required(run(binary,{L"-stop",L"-dir",dir.wstring()}),"Old LAN helper could not stop");
    spawn(binary,{L"-dir",dir.wstring(),L"-target",wide(binding(L"45840")),L"-capture-target",wide(binding(L"45841"))},stateRoot/L"lan-helper.log");
    bool ready=false;for(int i=0;i<30;i++){if(!run(binary,{L"-status",L"-dir",dir.wstring()},5000).code){ready=true;break;}Sleep(100);}if(!ready)throw std::runtime_error("LAN helper not ready; check its local log");say("LAN bridge ready.");
+   try{codexHost();}catch(const std::exception&){say("Codex host component unavailable; see native/codex-host.log.");}
   }catch(const std::exception&){throw;}
  }
  bool healthy(){auto h=compose({L"exec",L"-T",L"aide",L"curl",L"-fsSk",L"--connect-timeout",L"2",L"--max-time",L"3",L"https://127.0.0.1:8080/healthz"},6000);if(h.code)return false;auto j=json::parse(h.out,nullptr,false);return j.is_object()&&j.value("service","")=="aide"&&j.value("status","")=="ok";}

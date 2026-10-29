@@ -10,7 +10,7 @@ source_sha() {
     find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
+    for extra in scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -359,6 +359,7 @@ case "$MODE" in
     "$DOCKER_BIN" compose up -d --no-build --pull never
     fi
     bash scripts/local-mounts-control.sh start || echo "本地目录服务未启动，请检查 .aide-data/local-mounts/helper.log。"
+    if command -v node >/dev/null 2>&1; then node scripts/codex-host-control.cjs start --root "$PROJECT_DIR" --image "$IMG" || echo "Codex host component unavailable; see launcher output."; else echo "Codex Bridge requires host Node.js 18+."; fi
     bash scripts/message-lan-control.sh start || echo "消息局域网桥未启动；聊天发现请检查 .aide-data/message-lan/bridge.log，工作台仍可使用。"
     if [[ "$(uname -s)" == Darwin ]] && command -v node >/dev/null 2>&1; then
       bash scripts/safari-bridge-control.sh start || echo "Safari 桥接未启动；Aide 其他功能仍可用。"
@@ -453,7 +454,7 @@ case "$MODE" in
     WINDOWS_LAUNCHER="$(bash scripts/windows-launcher-asset.sh "${PLATFORM#linux/}" "$IMG")"
     mkdir -p "$BUNDLE/scripts" "$BUNDLE/docker-images" "$BUNDLE/workspace" "$BUNDLE/context"
     cp "$WINDOWS_LAUNCHER" "$BUNDLE/aide-launcher.exe"
-    cp scripts/windows-launcher-asset.sh "$BUNDLE/scripts/"
+    cp scripts/codex-host-control.cjs scripts/windows-launcher-asset.sh "$BUNDLE/scripts/"
     cp start.command start.sh start.bat stop.command stop.sh stop.bat clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat "$BUNDLE/"
     cp scripts/aide-maintenance.sh "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/update-agent.sh scripts/message-lan-control.sh "$BUNDLE/scripts/"

@@ -99,6 +99,11 @@ func (a *App) callWorkbenchBridge(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, err)
 		return
 	}
+	if req.Method == "host.component" {
+		a.mu.Unlock()
+		a.callWorkbenchHostComponent(w, r, req)
+		return
+	}
 	if req.Method == "project.messages" {
 		value, status, err := a.projectMessagesForBridgeLocked(req, id, b)
 		a.mu.Unlock()

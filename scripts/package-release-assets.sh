@@ -67,6 +67,7 @@ for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATF
   fi
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
   cp "$ROOT/docker/offline.env.example" "$PACKAGE/.env.example"
+  cp "$ROOT/scripts/codex-host-control.cjs" "$PACKAGE/scripts/"
   copy_control_runtime "$PACKAGE/scripts"
   cp "$ROOT/LICENSE" "$PACKAGE/"
   printf 'aide:slot-a %s %s %s\n' "$IMAGE_ID" "$PLATFORM" "$TAG" > "$PACKAGE/.aide-image"
@@ -109,6 +110,7 @@ cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-a
 cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/resource-guard.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
 cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
+cp "$ROOT/scripts/codex-host-control.cjs" "$FULL_PACKAGE/scripts/"
 copy_control_runtime "$FULL_PACKAGE/scripts"
 cp "$ROOT/LICENSE" "$FULL_PACKAGE/"
 cp "$OUT/$IMAGE_ASSET" "$FULL_PACKAGE/docker-images/"
