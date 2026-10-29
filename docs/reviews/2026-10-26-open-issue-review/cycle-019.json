@@ -1,0 +1,135 @@
+{
+  "cycle": 19,
+  "baseline": "f6a32c57",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    114,
+    115,
+    116
+  ],
+  "commits": {
+    "114": "5f06984cea5295a793555b424a7bae37d32bf84a",
+    "115": "5a7b9439437005008a8272b802f4843b82d9e4f9",
+    "116": "359f197561b5c8a8a83a4abf4dc8f36a1abc8846"
+  },
+  "verificationRegistrationCommit": "76c0ab404ba09f4869664676838fd9c768e74085",
+  "cumulativeProductFixes": 54,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 55,
+  "original272RemainingFollowup": 229,
+  "red": [
+    {
+      "issue": 114,
+      "command": "node scripts/test_starmap_identity_race.cjs",
+      "result": "EXPECTED_FAIL",
+      "observed": "After identityA/updateB, selected still private-A rather thannull."
+    },
+    {
+      "issue": 115,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue115' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 3.391,
+      "observed": "After5 alternating bad guesses, auth/verify, unlock and account/verify-password still accepted correct password200 with noRetry-After."
+    },
+    {
+      "issue": 116,
+      "command": "python3 scripts/test_prebuild_wheels.py",
+      "result": "EXPECTED_FAIL",
+      "observed": "6tests:5fail1error. Original cache deleted before failing download; resolver failures/emptysets not checked; old input already absent during successful download."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue115|^TestMasterAuth|^TestLockStatePassword|^TestLockStateLocalPassword|^TestFactoryReset|^TestWebAuthn|^TestNoPassword|^TestPasswordDoesNotRelockVault|^TestLegacyPasswordVault|^TestAssistantSession|^TestIssue67' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 35.522
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "node scripts/test_starmap_identity_race.cjs; node scripts/starmap-workspace-scene.test.cjs; node scripts/starmap-live-metadata.test.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test_prebuild_wheels.py; bash -n scripts/prebuild-wheels.sh",
+      "result": "PASS",
+      "cases": 6,
+      "scope": "FakeDocker, owned files: partial download, resolver failure, complete promotion, empty set, failed promotion rollback, held lock. No real Docker network/resolver acceptance."
+    },
+    {
+      "command": "AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle19-browser node scripts/browser-starmap-identity-race.cjs",
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle19-browser/result.json",
+      "scope": "Shipped starmap HTML/scripts/styles in Chromium, light1440/dark390; real selection click, identity/update mismatch, empty rendering/node lookup/results, immediate detail/fade clearance, search/question/AI/recovery cleanup, pendingAI aborted, fresh identity reload. API and lock boundary mocked; no full workbench/server/device claim. Pages/context/browser closed.",
+      "screenshots": [
+        "light-invalidated.png",
+        "dark-invalidated.png"
+      ],
+      "visualReview": "Viewed dark narrow screenshot:0actualnodes, empty source/results, no prior detail or private content."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T181648000249Z.log",
+      "fingerprint": "91e851f5243ebfda1c2b4215ec08013ecf985a806be4cc96318319b38243f460"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "intermediateFailures": [
+    {
+      "command": "Chromium starmap fixture",
+      "observed": "Initial HTTP synthetic origin lacks crypto.randomUUID; fixture uses secure HTTPS synthetic origin. Subsequent actual-page assertion caught old detail150ms fade; product reset now ends detail transitions and old graphFade immediately."
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261026T181500813531Z.log",
+      "result": "FAIL",
+      "observed": "Existing starmap-live-metadata fixture lacked replaceChildren/settlePanels now used by complete workspace reset; fixture completed, existing assertions retained; finalquickPASS."
+    }
+  ],
+  "notes": [
+    "身份/updates不一致走空图共享重置并立即重新读identity；清旧布局/选中/详情/搜索/AI/恢复投影，取消旧AI及旧画布/详情过渡动画，不应用或缓存不可信工作区响应。",
+    "全部直接账户VerifyPassword入口改用每App共享、串行KDF预算；一分钟连续5错后429+Retry-After，冷却一分钟，拒绝不延长；成功/窗口到期重置，无密码/Passkey不计密码预算。",
+    "同文件系统暂存新wheel集，容器离线忽略已装包dry-run解析验证成功后替换；失败保留旧集，提升失败尝试还原；独占锁拒绝并发，容器按宿主UID:GID写入。",
+    "Password budget state is bounded per-app memory, no IP/token/password retention, no distributed/durable rate limit; restarting resets it. Malicious token holder can still create repeated finite cooldowns. Existing access token, origin and Passkey validation preserved.",
+    "All direct account-password VerifyPassword calls now pass through the limiter; separately encrypted persona/voice secret unlocking is outside this account-password verifier change.",
+    "Wheel promotion uses two directory renames, not a power-loss atomic transaction. Hard kill can leave lock/stage; docs explain inspecting previous before manual recovery. Restore failure retains previous backup instead of deleting it.",
+    "MockDocker tests do not prove actual pinned wheel availability, real registry/network, native macOS/Windows behavior or complete image release. Existing platform/full-gate blockers remain; no paid model/device or user data accessed."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "verifiedRemoteCommit": "ae8cfbe9f056e4d446f038d68396e72815ebb29c",
+    "issueComments": {
+      "114": "https://github.com/skyelan1999/aide/issues/114#issuecomment-6423940060",
+      "115": "https://github.com/skyelan1999/aide/issues/115#issuecomment-6423941092",
+      "116": "https://github.com/skyelan1999/aide/issues/116#issuecomment-6423942040"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/web/starmap.js": "64eaf8eb09150104aa2f2742619f64b0379ee4f58337707882569e99684841a7",
+    "scripts/test_starmap_identity_race.cjs": "87e5dbd6225e5491ac1dcde082749636dba8b0301c95d5f2c7380fad6df46f31",
+    "scripts/browser-starmap-identity-race.cjs": "1f5623ebda6981afaf8ee8c66bee99460cac1a27ea4bf43d72084a2687247e0a",
+    "scripts/starmap-live-metadata.test.cjs": "5c80808f5fc19efd725ca95cb712613771bae56e962087578c21330e7ed6fc61",
+    "internal/server/master_password_limit.go": "bb014a64056de9062c4c460f8399213c791bb0bcaccdf77f8ca68e4aacaac2ce",
+    "internal/server/master_password_limit_test.go": "3c559d54320cc1eb4cb849e3738dcb1b131f5afcdd9a0e1a10aeea4efa21e3a7",
+    "internal/server/server.go": "7a60d9f6739adf736cd9695f45718b4a0c06c5554e43318f46c838ecfc566520",
+    "internal/server/auth_verify.go": "c2689160e67c9e1c0295da8b2fb0d0d332d76daf9005eb4a92663c8836179c21",
+    "internal/server/apikey_vault.go": "10ec6a242a4d7c163c6a94ad857a5f7e31bb672a6e7f92453e1095c017f0baa7",
+    "internal/server/vault_app.go": "53b6d1c3b3d41479d9158a293d23a298dede2a6ff0aa4d691a52542f6a0160a3",
+    "internal/server/webauthn.go": "d43246acbe4109319efa3580d5dd0806ff493ab3dae3f9d4170b6113216f757a",
+    "internal/server/workspace_config.go": "fc8350830757cbfd190b3cfc985a9d9b203d704c19aa0d1fb8775c69bc189075",
+    "internal/server/factory_reset.go": "3012cc161bd1a80af5a86a97ffbfdb29951d69eef53dcc48f1ee92d22b6ca76d",
+    "scripts/prebuild-wheels.sh": "f2fa4f664660e74599588181398ecf19ce1473eaa194c2523fb96d18e0ca9826",
+    "scripts/test_prebuild_wheels.py": "2bcae7e0cbcd19c5160238f0f4e419136deeb4f41de42308bf997612f7ed1110",
+    "docs/agent/router.json": "385cdae5f8c42ae8365bd648583340d1394a7c6d975d12e824f8ca246c3f249f"
+  }
+}

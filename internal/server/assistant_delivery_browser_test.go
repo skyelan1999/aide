@@ -44,6 +44,7 @@ func TestAssistantDeliveryBrowserFixture(t *testing.T) {
 	a.mu.Lock()
 	delivered := a.sessions["delivered-browser"].Runs[0]
 	delivered.Prompt = "生成WAV，内容：隔离验收"
+	delivered.MediaGeneration = &MediaGeneration{Kind: "speech", Asset: asset, Identity: "owned-fixture", RequestHash: hash(wav)}
 	delivered.Steps[0].Content = "[播放测试语音](" + asset + ")"
 	delivered.Delivery = a.inspectTaskDeliveryLocked(delivered, delivered.Steps[0].Content)
 	a.mu.Unlock()

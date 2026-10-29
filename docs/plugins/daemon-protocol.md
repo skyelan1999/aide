@@ -114,7 +114,8 @@ ctx.emit('log',    { level: 'warn', message: '重连中...' });
 ```
 
 - `type` 限定为 `traffic` | `event` | `log`，其余归一为 `event`。
-- Go 侧为每个 daemon 进程**环形缓存最近 1000 条**，经 `GET /api/plugins/daemons/{id}/events` 查询。
+- Go侧每个daemon最多保留1000条，单事件编码后最多32KiB、单进程缓存预算4MiB，整个管理器共享32MiB预算（含保守元数据开销）。元信息与message按JSON编码成本在UTF-8边界截断并标记`payloadTruncated`；预算不足时按留存顺序淘汰最旧事件。跨进程队列只记录仍留存的条目，已淘汰引用清空、空数组释放，局部数组按需压缩。`GET /api/plugins/daemons/{id}/events`只返回受该预算约束的历史。
+- 事件预算约束宿主留存，不限制插件自身进程的内存或当前JSON行的解析缓冲；原有4MiB扫描行限制仍保留。插件仍应主动减少敏感字段和大报文事件。
 - 出于安全与体积，**默认不上报报文正文**；需要时由插件在 `fields` 里显式携带，并自行截断。
 
 ## 6. 生命周期与崩溃恢复

@@ -1,0 +1,103 @@
+{
+  "cycle": 55,
+  "baseline": "f8ce48cf1cfb0a23953f12b0001e4605df219d2e",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    369
+  ],
+  "commits": {
+    "369": "ace42691040e7d12f0d707eb5601b811f835fa77"
+  },
+  "cumulativeProductFixes": 115,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 116,
+  "original272RemainingFollowup": 172,
+  "additionalFollowupIssues": [],
+  "additionalFollowupCount": 0,
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "python3 scripts/test_windows_update_agent.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh --case both-launcher-failure (before fix)",
+      "observed": "Recovery throws Target launcher failed out of outer catch; real agent exits without terminal result/fixture observation.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle54-agent-red.log"
+    },
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "go test ./internal/server -run ^TestUpdateAgentFailureResultDoesNotClaimRecovery$ -count=1 -timeout=45s (before one-line backend fix)",
+      "observed": "Failed recovery still displayed 槽切换失败并已回滚; pending cleared but message falsely claimed rollback.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle54-server-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_update_agent.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh",
+      "scope": "22 actual PS7/Linux agent flow cases with Docker/HTTP/process adapters: double failure, offline failure-result queue, termination-unconfirmed recovery suppression/blocker, dangling result rejection, retry/ack-loss/obsolete409 without relaunch or completing new pending, same version, progress failure and token rotation; original12 activation/rollback/ownership/containerd cases retained.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle55-369-agent-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_update_launcher_process.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh",
+      "scope": "8 cases with actual owned PS children and production functions/bootstrap: success, explicit exit7, thrown original error, permanent descendant still running while own launcher returns ~439ms, timeout/tree termination ~858ms, nonfatal last native exit status, rotation and dangling log refusal. Only Linux WindowStyle OS adapter; IDs+creation times identify owned descendant cleanup. Known token/URL/Bearer/quoted password absent from all logs; redaction env cleared before invoking start and restored in parent.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle55-369-real-process-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "GOCACHE=/tmp/aide-issue-review-go-cache GOPATH=/workspace/.aide-cloud/go-path GOMAXPROCS=4 /workspace/.aide-cloud/go/bin/go test -race ./internal/server -run '^Test(UpdateAgent|SourceModeSkipsABUpgrade|StageUpdatePackageAllowsSameVersionAndDowngrade)' -count=1 -timeout=90s",
+      "scope": "Targeted update API race tests; new test verifies original/recovery failure message, pending cleared, active good slot unchanged, stale result409 leaves newer pending intact. Existing source mode and same-version/downgrade controls included.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle55-369-go-race-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "go vet ./internal/server",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle55-369-go-vet.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 181,
+      "receipt": ".agent-state/verify-20261027T075737761626Z.log",
+      "fingerprint": "c01190d329a9f0a4b7566cc73e61740987460be6c7554b8eccd8342448311057"
+    },
+    {
+      "result": "PASS",
+      "command": "gofmt own Go files; python3 -m py_compile new/changed Python runners; python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links; update-agent UTF8 BOM retained."
+    }
+  ],
+  "securityReview": [
+    "Nested recovery protection preserves original failure separately; UI/API message no longer asserts rollback without evidence. Target/recovery stdout/error stacks are redacted before any diagnostic write, bounded2048 chars per item and ~1MiB+1backup per log; known-value/query/Bearer/password/API-key redaction is not a general secret classifier.",
+    "Launch wrapper is a fixed encoded script with paths passed as quoted literals, no token in command arguments. Token is transient child env, removed before start/monitor descendants; parent env restored. Normal wait covers only owned launcher. Timeout kills only its owned tree; unconfirmed termination writes durable blocker and suppresses recovery/new activation. Windows Desktop taskkill path remains unverified.",
+    "Terminal result envelope is atomically moved into private outbox before POST. Refresh port/token, retry before reading next command.409 is handled compatibly with existing servers by checking current operation; obsolete local receipt is discarded, remote new pending is never completed by old result. Existing backend409 guard retained. Canonical post-result sync remains best effort as before.",
+    "Logs/outbox/rotation paths reject live and dangling links. Existing private .aide-data created/protected by launcher remains the access boundary; no actual user data, tokens, Docker operations or live updates exercised in acceptance.",
+    "Root sequential review, no subagents. Real child fixtures only, no user processes killed. Native descendant creation-time comparison allows1s Linux boot-clock reading drift; identities outside that tolerance are not terminated."
+  ],
+  "notRun": [
+    "Native Windows PowerShell5.1/Windows process-tree/taskkill semantics, Docker Desktop and actual same-RC12 activation on the reporting host; initial failure cause remains unknown. Synthetic protocol and PS7/Linux child success do not replace these checks.",
+    "Full workbench UI/full application update, real Docker/HTTP adapters for Windows agent, arbitrary secret formats, disk-full/logging-permission failures and every updater startup failure. Old released server images retain their old failure prefix until upgraded; host retry protocol works with existing RC12.",
+    "No full server race suite repeated (targeted updates only). No main merge, Release, production restart/deployment or user archive changes. #464 remains deferred per user until new test log."
+  ],
+  "notes": [
+    "Work began as cycle54 then was scoped-stashed for explicit464 followup, resumed under55. Exact a00be49e stash retained as historical backup; final changes and tests supersede earlier19/6 preliminary cases.",
+    "First real-child cleanup fixture used exact StartTime ticks, which varies by scheduler ticks on Linux; corrected to bounded tolerance and final8cases rerun. No unknown process was killed on mismatch.",
+    "Owner369 is an additional report outside original272; coverage116 includes115product/acceptance+1tooling. Original172 remaining unchanged. Next resume182 scoped stash1ae8bb0, after refreshing owner metadata and latest body."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "369": "https://github.com/skyelan1999/aide/issues/369#issuecomment-6436812430"
+    },
+    "remoteCommit": "a7371b25fd19447fbd323a68ad736277025894f7"
+  },
+  "sourceSHA256": {
+    "scripts/update-agent.ps1": "7878ec74e83b6b74a215c32a7fd27d907d5a3e4ebb4321ca9c698e98091a41d2",
+    "scripts/test_windows_update_agent.py": "693d62758ca8654d75767e74c853e039d8aebad30d61f9952e2dcddb34b8b341",
+    "scripts/test_windows_update_launcher_process.py": "138beccc57210c1d5c391195b253c4f57970fdc4926da4f959be61fc70b7d34d",
+    "internal/server/updates.go": "1f883578dd4d737194cd08255eba4bddc558c8ad99f861ad61ea53472ccba395",
+    "internal/server/update_failure_recovery_test.go": "51785e9e2b04ac6c3cd74fbe8203d9913b8508a80b39693f869c687c4216dc07",
+    "docs/architecture/software-updates.md": "daf275a51bdac2b34448fc79cb9a46c12113a39dbf0afb1f9db2d336b7e1d112"
+  }
+}

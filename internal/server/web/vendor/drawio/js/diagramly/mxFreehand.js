@@ -21,8 +21,9 @@ function mxFreehand(graph)
 	//Code inspired by https://stackoverflow.com/questions/40324313/svg-smooth-freehand-drawing
 	var bufferSize = mxFreehand.prototype.MILD_SMOOTHING;
 	var path = null;
+	var previewPath = null;
+	var previewStart = 0;
 	var partPathes = [];
-	var strPath;
 	var drawPoints = [];
 	var lastPart;
 	var closedPath = false; 
@@ -359,6 +360,8 @@ function mxFreehand(graph)
 	        }
 	        
 	        path = null;
+	        previewPath = null;
+	        previewStart = 0;
 	        partPathes = [];
 	        drawPoints = [];
 	    }
@@ -404,11 +407,13 @@ function mxFreehand(graph)
 				strokeWidth = Math.max(1, strokeWidth * graph.view.scale);
 				var strokeColor = this.getStrokeColor();
 
-			    path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-			    path.setAttribute('fill', perfectFreehandMode? strokeColor : 'none');
-				path.setAttribute('pointer-events', 'none');
-			    path.setAttribute('stroke', strokeColor);
-			    path.setAttribute('stroke-width', strokeWidth);
+			    path = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			    previewPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			    path.appendChild(previewPath);
+			    previewPath.setAttribute('fill', perfectFreehandMode? strokeColor : 'none');
+				previewPath.setAttribute('pointer-events', 'none');
+			    previewPath.setAttribute('stroke', strokeColor);
+			    previewPath.setAttribute('stroke-width', strokeWidth);
 			    
 			    if (graph.currentVertexStyle[mxConstants.STYLE_DASHED] == '1')
 			    {
@@ -418,18 +423,18 @@ function mxFreehand(graph)
 					{
 			    		return parseFloat(p) * strokeWidth;
 					}).join(' ');
-			    	path.setAttribute('stroke-dasharray', dashPattern);
+					previewPath.setAttribute('stroke-dasharray', dashPattern);
 			    }
 			    
 			    buffer = [];
 			    var pt = getMousePosition(e);
 			    appendToBuffer(pt);
-			    strPath = 'M' + pt.x + ' ' + pt.y;
 			    drawPoints.push(pt);
+			    previewStart = drawPoints.length - 1;
 			    lastPart = [];
-			    path.setAttribute('d', perfectFreehandMode? 
+			    previewPath.setAttribute('d', perfectFreehandMode?
 					PerfectFreehand.getSvgPathFromStroke([[pt.x, pt.y]], perfectFreehandOptions)
-					: strPath);
+					: 'M' + pt.x + ' ' + pt.y);
 			    svgElement.appendChild(path);
 	
 				me.consume();
@@ -509,54 +514,51 @@ function mxFreehand(graph)
 	    return null;
 	};
 
-	var updateSvgPath = function () 
+	// Retain all committed samples, but update only a bounded preview tail.
+	// Frozen SVG children are cleaned up with the original stroke group.
+	var renderPreview = function(target, start, end, tail)
 	{
-	    var pt = getAveragePoint(0);
-
-	    if (pt) 
-	    {
-	        drawPoints.push(pt);
-
-			if (perfectFreehandMode)
+		if (perfectFreehandMode)
+		{
+			var points = [];
+			for (var i = start; i < end; i++)
 			{
-				var tmpPoints = [];
-
-				for (var i = 0; i < drawPoints.length; i++)
-				{
-					tmpPoints.push([drawPoints[i].x, drawPoints[i].y]);
-				}
-
-				lastPart = [];
-				
-				for (var offset = 2; offset < buffer.length; offset += 2) 
-				{
-					pt = getAveragePoint(offset);
-					tmpPoints.push([pt.x, pt.y]);
-					lastPart.push(pt);
-				}
-
-				path.setAttribute('d', PerfectFreehand.getSvgPathFromStroke(tmpPoints, perfectFreehandOptions));
+				points.push([drawPoints[i].x, drawPoints[i].y]);
 			}
-			else
+			for (var i = 0; i < tail.length; i++) points.push([tail[i].x, tail[i].y]);
+			target.setAttribute('d', PerfectFreehand.getSvgPathFromStroke(points, perfectFreehandOptions));
+		}
+		else
+		{
+			var value = 'M' + drawPoints[start].x + ' ' + drawPoints[start].y;
+			for (var i = start + 1; i < end; i++) value += ' L' + drawPoints[i].x + ' ' + drawPoints[i].y;
+			for (var i = 0; i < tail.length; i++) value += ' L' + tail[i].x + ' ' + tail[i].y;
+			target.setAttribute('d', value);
+		}
+	};
+
+	var updateSvgPath = function()
+	{
+		var pt = getAveragePoint(0);
+		if (pt)
+		{
+			drawPoints.push(pt);
+			if (drawPoints.length - previewStart >= 512)
 			{
-				// Get the smoothed part of the path that will not change
-				strPath += ' L' + pt.x + ' ' + pt.y;
-				// Get the last part of the path (close to the current mouse position)
-				// This part will change if the mouse moves again
-				var tmpPath = '';
-				lastPart = [];
-				
-				for (var offset = 2; offset < buffer.length; offset += 2) 
-				{
-					pt = getAveragePoint(offset);
-					tmpPath += ' L' + pt.x + ' ' + pt.y;
-					lastPart.push(pt);
-				}
-
-				// Set the complete current path coordinates
-				path.setAttribute('d', strPath + tmpPath);
+				renderPreview(previewPath, previewStart, drawPoints.length, []);
+				previewStart = drawPoints.length - (perfectFreehandMode ? 16 : 1);
+				previewPath = previewPath.cloneNode(false);
+				previewPath.removeAttribute('d');
+				path.appendChild(previewPath);
 			}
-	    }
+
+			lastPart = [];
+			for (var offset = 2; offset < buffer.length; offset += 2)
+			{
+				lastPart.push(getAveragePoint(offset));
+			}
+			renderPreview(previewPath, previewStart, drawPoints.length, lastPart);
+		}
 	};
 };
 

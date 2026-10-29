@@ -73,12 +73,17 @@ func (a *App) readHarnessSkill(task *Task, name string) string {
 			return skill.Instruction
 		}
 		a.mu.Lock()
+		if err := a.taskSSHBindingLocked(task); err != nil {
+			a.mu.Unlock()
+			return "错误：" + err.Error()
+		}
 		root := a.wsRoots[task.WorkspaceID]
 		if root == nil && task.WorkspaceID == a.wsID() {
 			root = a.workspace
 		}
 		mode := task.WorkspaceMode
 		remote := task.WorkspaceRemotePath
+		generation := a.sshSessionGeneration(sshControlSocket)
 		a.mu.Unlock()
 		var b []byte
 		var err error
@@ -89,7 +94,13 @@ func (a *App) readHarnessSkill(task *Task, name string) string {
 			return "错误：Skill 所属工作区不可用"
 		}
 		if mode == "ssh" {
-			b, err = a.sftpRead(pathJoinRemote(remote, skill.Path))
+			b, err = a.sftpReadAtGeneration(pathJoinRemote(remote, skill.Path), generation)
+			a.mu.Lock()
+			bindingErr := a.taskSSHBindingLocked(task)
+			a.mu.Unlock()
+			if bindingErr != nil {
+				return "错误：" + bindingErr.Error()
+			}
 		} else {
 			b, err = readText(root, skill.Path)
 		}
@@ -116,6 +127,10 @@ func (a *App) approvedShell(ctx context.Context, task *Task, command string, tim
 		return "工具 run_shell 已禁用", false
 	}
 	a.mu.Lock()
+	if err := a.taskSSHBindingLocked(task); err != nil {
+		a.mu.Unlock()
+		return err.Error(), false
+	}
 	mode := a.settings.SandboxMode
 	remote := a.workspaceMode() == "ssh"
 	a.mu.Unlock()

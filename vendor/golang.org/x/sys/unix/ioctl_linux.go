@@ -206,6 +206,9 @@ type FileDedupeRangeInfo struct {
 // descriptor srcFd to the value.Info destinations. See the
 // ioctl_fideduperange(2) man page for details.
 func IoctlFileDedupeRange(srcFd int, value *FileDedupeRange) error {
+	if len(value.Info) > 1<<16-1 {
+		return EINVAL
+	}
 	buf := make([]byte, SizeofRawFileDedupeRange+
 		len(value.Info)*SizeofRawFileDedupeRangeInfo)
 	rawrange := (*RawFileDedupeRange)(unsafe.Pointer(&buf[0]))

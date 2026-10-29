@@ -1,0 +1,50 @@
+{
+  "cycle": 105,
+  "issues": [
+    585
+  ],
+  "repository": "skyelan1999/aide-pkg-STEPViewer",
+  "branch": "codex/open-issue-review-20261028",
+  "baseline": "13e96e7",
+  "fix": "Shared native/limits.json;576MiB output file/bridge bound aligned with3M-triangle geometry and line/point payloads,64MiB metadata allowance; input/memory/cancellation bounds retained.",
+  "red": {
+    "nativeOutputBytes": 55,
+    "expectedSparseBytes": 432000000,
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle105-step-red-python.log",
+      "/workspace/scratch/issue-review-20261026/cycle105-step-red-node.log"
+    ]
+  },
+  "green": [
+    {
+      "scope": "Actual binary serializer sizing+actual job.py OS file bound,432MB sparse seek/write;disk allocation<1MiB",
+      "tests": 2,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle105-step-green-python.log"
+    },
+    {
+      "scope": "Actual IO reads192MiB offset and rejects over-cap;assembly/metrology regressions",
+      "testFiles": 3,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle105-step-final-node.log"
+    },
+    {
+      "scope": "Local candidate archive contains identical native/limits.json",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle105-step-package.json"
+    }
+  ],
+  "notRun": [
+    "3M-triangle real OCP CAD conversion or browser/GPU acceptance",
+    "Universal success based on triangle count alone",
+    "Main merge/release/market"
+  ],
+  "delivery": {
+    "commit": "60065c6",
+    "pushed": true,
+    "mergedToMain": false
+  },
+  "cumulativeFixedOnAideBranch": 428,
+  "independentPluginFixes": 6,
+  "remainingOriginal104": 67
+}

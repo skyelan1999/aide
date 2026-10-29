@@ -1,0 +1,145 @@
+{
+  "cycle": 51,
+  "baseline": "1aba53e402f1fb2d7c3648d95a671fa4a981a5cb",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    464
+  ],
+  "commits": {
+    "464": "17ab31ae060dc00fd090537ab60efde295614514"
+  },
+  "cumulativeProductFixes": 112,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 113,
+  "original272RemainingFollowup": 172,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "ownerReportsAwaitingTriage": [
+    467,
+    369
+  ],
+  "priorityPolicy": {
+    "ownerLogin": "skyelan1999",
+    "identityEvidence": "gh api user returned skyelan1999; issue464 author matches",
+    "userRequest": "添加策略，优先修复本账号新提的问题",
+    "order": [
+      "explicit user selection",
+      "unhandled owner reports, newest first",
+      "original remaining numbered queue"
+    ],
+    "refresh": "at each cycle; skip branch-covered/duplicate/known-blocked reports",
+    "next": [
+      467,
+      441,
+      369,
+      182
+    ],
+    "observedNewReport": {
+      "number": 467,
+      "createdAt": "2026-10-27T06:25:02Z",
+      "status": "metadata-read-awaiting-triage"
+    },
+    "paused182Stash": "1ae8bb0bb926630140df3c7483831b63b7e0e85c"
+  },
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "go test ./cmd/aide-local-mounts -run ^TestClearDeadLockOwnerUnlinksPIDAfterFirstRead$ -count=1 -timeout=15s (before fix)",
+      "observed": "Owned exited child PID delivered through FIFO; owner unlinks file before EOF. Real clearDeadLock returns ENOENT on second read.",
+      "evidence": "/workspace/scratch/issue-review-20261026/issue464-stop-red.log"
+    },
+    {
+      "result": "EXPECTED_FAIL",
+      "command": "scripts/test_windows_startup_recovery.py against baseline launcher/controllers",
+      "observed": "Actual browser statement throws after a simulated association failure; actual old controller rejects already-dead owner PID cleanup; old LAN controller fails when only its pinned image ID is unavailable. Native helper/Docker fixtures are disposable, not user services.",
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/issue464-powershell-red.log",
+        "/workspace/scratch/issue-review-20261026/issue464-directory-red.log",
+        "/workspace/scratch/issue-review-20261026/issue464-lan-red.log"
+      ]
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "GOCACHE=/tmp/aide-issue-review-go-cache GOPATH=/workspace/.aide-cloud/go-path GOMAXPROCS=4 /workspace/.aide-cloud/go/bin/go test -race ./cmd/aide-local-mounts -count=1 -timeout=90s",
+      "scope": "Whole changed helper package, including PID disappearance regression and existing live-owner timeout/in-flight cancellation/apply rollback/forwarder tests.",
+      "evidence": "/workspace/scratch/issue-review-20261026/issue464-go-race.log"
+    },
+    {
+      "result": "PASS",
+      "command": "go vet ./cmd/aide-local-mounts; GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o <scratch>/issue464-helper-windows-amd64.exe ./cmd/aide-local-mounts",
+      "scope": "Targeted vet and helper cross-compilation only; not native execution or full server Windows build."
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/test_windows_startup_recovery.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh --go /workspace/.aide-cloud/go/bin/go",
+      "scope": "17 actual PS7/Linux logic cases: throwing/disabled/successful opener with no fixture token in warning; legacy PID race recovery, live/replacement/generic failure rejection, freshly verified upgrade helper and absent PID; LAN digest fallback/direct source, mismatch/checksum/public mapping/invalid ref/missing image/inspect failure rejection; no copying running container, no pulls, owned temporary-container cleanup. Docker and native helper adapter are fixtures; no real Docker/browser/registry changes.",
+      "evidence": "/workspace/scratch/issue-review-20261026/issue464-powershell-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "POWERSHELL_TELEMETRY_OPTOUT=1 POWERSHELL_UPDATECHECK=Off python3 scripts/test_windows_directory_launcher.py --pwsh /workspace/.aide-cloud/powershell-issue-review/7.6.9/pwsh",
+      "scope": "Existing six directory precedence cases, two watcher Compose boundary cases and real AST parsing; disposable fixture loopback only. Restricted first attempt failed creating socket; rerun outside that restriction passed.",
+      "evidence": "/workspace/scratch/issue-review-20261026/issue464-directory-regression-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "checks": 181,
+      "receipt": ".agent-state/verify-20261027T062906467579Z.log",
+      "fingerprint": "1438be00397fec87a4aa2d6533356c8d8d40693d6b826bff98a13badc3705fab"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py check; python3 scripts/check_docs.py; git diff --check",
+      "observed": "Route files present; docs local links valid; BOM retained for start.ps1 and LAN controller."
+    }
+  ],
+  "environment": {
+    "powerShell": "Official PowerShell/PowerShell v7.6.9 portable Linux x64",
+    "archiveSHA256": "1da6d6d6035d651f20e70ddee7c4c15ac6ab8b9fb40ee92240d91263f28a884b",
+    "nativeWindows": false
+  },
+  "securityReview": [
+    "PID missing during second read/removal is successful cleanup; actual live-owner probe and original timeout remain. Script compatibility recovery requires captured positive PID, serve.pid-related failure, absent PID file, existing stop marker and OS-confirmed dead owner; unrelated errors and live/replacement owners remain fatal. No forced process termination.",
+    "Fresh SHA256-verified helper performs upgrade stop before replacing cached executable, avoiding old binary blocking its own upgrade. Initial PID capture also tolerates owner unlinking before the read.",
+    "LAN ref fallback is only a locator: a fresh stopped, network-none, no-pull container must have the exact running .Image identity before any cp. Existing SHA256 and loopback checks retained; no live-container executable/cache fallback or user-container deletion.",
+    "Browser exception cannot turn successful health into startup failure; warning omits exception details that may contain token URL. Actual issue464 comments contained a credential: no raw public comment copied into source, evidence or reply.",
+    "Root sequential review; no subagents. Original user untracked files retained and paused182 stash untouched."
+  ],
+  "notRun": [
+    "Windows PowerShell 5.1 / Windows desktop associations / Docker Desktop end-to-end startup and stop on owner machine. PS7/Linux fixtures and PE cross-build are not substitutes.",
+    "Actual Docker/containerd digest fallback on Windows, real LAN peer communication or full application Windows build. Identity mismatch deliberately remains a warning requiring matching image restoration/recreation.",
+    "RDP/VNC/device/model calls, full Go server race/vet, main merge, Release and deployment."
+  ],
+  "notes": [
+    "New owner priority saved in AGENTS.md, WORKFLOW.md and goal task. Explicit464 completed first; newly detected467 takes next slot before441/369 and original182. Original272 count unchanged by extra464.",
+    "Original272 review artifact SHA unchanged.182 remains uncounted/unpublished in scoped local stash; do not discard or blindly pop it.",
+    "Docker orphan/CAD warning and global resource budgets were not grounds to delete containers or alter user settings."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "464": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6435428813"
+    },
+    "remoteCommit": "df370b9dce3a30de3ac24f4c4ac342fbdefeb37b"
+  },
+  "sourceSHA256": {
+    "AGENTS.md": "fb8c960ff62e2134dd9d002eea6d01f76f9f1653beb071c856253dffeb7861ce",
+    "docs/agent/WORKFLOW.md": "33b9065a48d7e4a781a0d4f0bb469ff6578805b6a2fc65cbf3c92bce389efbac",
+    "cmd/aide-local-mounts/main.go": "f239228be25c7c5e69c7556f12641a9354b0f5524bf4db6fcd3c8d0493c3d6ba",
+    "cmd/aide-local-mounts/stop_race_unix_test.go": "09f36f26fa300a343524121ace9b8764bd767d12d006b938c7ed7f3dc93364d4",
+    "scripts/local-mounts-control.ps1": "1233eaea24701fa0d89625d509b28a1dd346bc71489c24de6790cba73dfaec19",
+    "scripts/message-lan-control.ps1": "e46a57efdf20d15104c8fe8d0dc74b31b469d86db68a0d9cedc027304caf5f16",
+    "scripts/test_windows_startup_recovery.py": "21b955af8f405b353a446d30be60bde39d72e698751054ab91fa6963f3eb835d",
+    "start.ps1": "a949de34edaf30744d21ce2f624adc7f808b70058d5258b77bc4225ac058a214",
+    "docs/installation.md": "aaaa49ad908cd746e248594423f9de275578ebb54477b45f1e63aa50656c8ec5",
+    "docs/architecture/decentralized-messages.md": "ac2fb973585695a2ef9f9278dc8bd8e0271055989c0d68015ea1ab88adabc90c"
+  }
+}

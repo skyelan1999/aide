@@ -1,0 +1,53 @@
+{
+  "cycle": 89,
+  "baseline": "eba2faa984e597d2265dd3b5947da33f1af67401",
+  "issues": [
+    417,
+    423
+  ],
+  "fixes": {
+    "417": "Evaluate negation per claim occurrence and contrastive clause, retain explicit retractions, and check later affirmative PDF claims against actual receipts.",
+    "423": "Redact complete double/single-quoted credential values including escaped quotes and unterminated values; preserve unrelated unquoted status fields."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "checks": 2,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle89-red.log",
+    "scope": "New Go tests overlaid read-only onto unmodified package; actual sourceCoverageCorrection and stored JSON/download log endpoints fail."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 243,
+      "fingerprint": "ded88623177fed2f3be2b2297c5fa5339e74da2a8f7596deaf5d029a7c038e55",
+      "receipt": ".agent-state/verify-20261028T132107526532Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 5,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle89-go-race.log",
+      "scope": "Go test -race: claim scope with partial/complete/no real PDF receipts; quoted/unquoted/multiple/escaped/unterminated credential cases; actual stored-log JSON/download endpoints; existing time-range/filter endpoint regressions."
+    }
+  ],
+  "notRun": [
+    "Full Go integration suite; baseline SSH fixture failures remain documented in cycle077.",
+    "Negation detection is a scoped heuristic, not a general natural-language proof system.",
+    "Full Aide workbench/start.command or native platforms.",
+    "Main merge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "remoteSourceCommit": "10cc846d04837fa8361254a3c8644c187ee6bc36",
+    "issueComments": {
+      "417": "https://github.com/skyelan1999/aide/issues/417#issuecomment-6470157356",
+      "423": "https://github.com/skyelan1999/aide/issues/423#issuecomment-6470158257"
+    }
+  },
+  "completedAt": "2026-10-28T13:24:05.527086+00:00",
+  "cumulativeFixedOnBranch": 387,
+  "cumulativeProductFixes": 386,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

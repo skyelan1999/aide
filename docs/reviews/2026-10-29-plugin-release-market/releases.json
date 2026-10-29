@@ -1,0 +1,24 @@
+[
+  {
+    "repo": "aide-pkg-terminal",
+    "tag": "v1.5.2",
+    "url": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.2",
+    "private": false,
+    "prerelease": true,
+    "targetCommit": "17227d72ef3017858de3f9e0c30bd06a9941668e",
+    "releaseAssetCount": 0,
+    "fixedCommitBlobDownloadVerified": true,
+    "bytes": 1063504,
+    "sha256": "36984e8e16e33f785f7128a08097271ade036b31cd7223c39be1a01a9fa6a10c"
+  },
+  {
+    "repo": "aide-pkg-Compare",
+    "tag": "v0.3.3",
+    "url": "https://github.com/skyelan1999/aide-pkg-Compare/releases/tag/v0.3.3",
+    "private": true,
+    "prerelease": true,
+    "targetCommit": "29418cecea45c8a002a07edbba121690b0c5da8f",
+    "releaseAssetCount": 0,
+    "fixedCommitBlobDownloadVerified": true
+  }
+]

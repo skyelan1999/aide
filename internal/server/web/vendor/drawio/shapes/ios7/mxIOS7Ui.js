@@ -1562,7 +1562,9 @@ mxShapeIOS7SelectBar.prototype.paintVertexShape = function(c, x, y, w, h)
 	c.lineTo(w - Math.max(20, r), h);
 	c.stroke();
 
-	var currDx = dx2;
+	// Zero means no field separators; small steps keep drawing bounded.
+	var step = dx2 > 0 ? Math.max(dx2, w / 1000) : w;
+	var currDx = step;
 	
 	c.begin();
 	
@@ -1571,7 +1573,7 @@ mxShapeIOS7SelectBar.prototype.paintVertexShape = function(c, x, y, w, h)
 		c.moveTo(currDx, 0);
 		c.lineTo(currDx, h);
 		
-		currDx = currDx + dx2;
+		currDx = currDx + step;
 	}
 	
 	c.stroke();

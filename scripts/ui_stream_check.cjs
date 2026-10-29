@@ -1,6 +1,8 @@
 'use strict';
 // 无头浏览器验收 aide SSE 流式显示（DSH/Codex 风格）。
 // 前置：npm i playwright-core（本机缓存亦可）；CHROME_PATH 指向 chromium/chrome-headless-shell。
+// Each execution creates isolated sessions and cancels/deletes them in finally, including assertion failures.
+// Use a disposable mock-provider instance; these UI flows can start model work in their own sessions.
 // 用法：BASE_URL=http://127.0.0.1:18097 AIDE_TOKEN=<token> CHROME_PATH=<path> node scripts/ui_stream_check.cjs [tool]
 //   chat 流程：思考点 → 流式文本+光标 → 完成持久化一致；
 //   tool 流程：叙述流 → live 工具行 → 轮次重置 → 最终回答不含叙述。
@@ -21,15 +23,10 @@ if (!CHROME) {
   process.exit(0);
 }
 
-function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
+function fail(msg) { throw new Error('FAIL: ' + msg); }
 
-(async () => {
-  const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await page.goto(BASE, { waitUntil: 'load' });
-  await page.evaluate(t => localStorage.setItem('aide-token', t), TOKEN);
-  await page.reload({ waitUntil: 'load' });
-  await page.waitForTimeout(1000);
+const {runOwnedUI} = require('./ui_acceptance_scope.cjs');
+runOwnedUI({chromium, base: BASE, token: TOKEN, chrome: CHROME, label: 'stream'}, async ({page}) => {
   await page.fill('#prompt', MODE === 'tool' ? '带工具调用的流式验证' : '流式显示验证');
   await page.click('#send');
 
@@ -65,7 +62,6 @@ function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
     status: state?.session?.runs?.[0]?.status,
     toolUses: state?.session?.runs?.[0]?.toolUses?.length || 0,
   }));
-  await browser.close();
 
   if (!sawLive) fail('未观察到任何 live 文本（EventSource 可能未连上）');
   if (!sawCursor) fail('流式期间未出现光标');
@@ -79,6 +75,8 @@ function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
     if (finalState.toolUses < 1) fail('工具调用未落库');
     if (finalText.includes('让我')) fail('最终回答混入第 1 轮叙述：' + finalText);
   }
-  console.log('PASS: ' + MODE + ' 流式显示（thinking=' + sawThinking + ' cursor=' + sawCursor + ' tool=' + sawTool + ' reset=' + sawReset + '）');
-  console.log('FINAL: ' + finalText.slice(0, 60));
-})().catch(e => { console.error('FATAL', e); process.exit(1); });
+  return {sawThinking, sawCursor, sawTool, sawReset, finalText};
+}).then(result => {
+  console.log('PASS: ' + MODE + ' 流式显示及自有数据清理（thinking=' + result.sawThinking + ' cursor=' + result.sawCursor + ' tool=' + result.sawTool + ' reset=' + result.sawReset + '）');
+  console.log('FINAL: ' + result.finalText.slice(0, 60));
+}).catch(e => { console.error('FATAL', e); process.exitCode = 1; });

@@ -150,7 +150,7 @@
 			this.createVertexTemplateEntry(s3 + 'dns;',
 					w * 11.2, h * 11.2, '', 'DNS', null, null, this.getTagsForStencil(gn, 'dns domain name server', dt).join(' ')),
 			this.createVertexTemplateEntry(s3 + 'encryption_key;',
-					w * 9.2, h * 12.7, '', 'Encryption key', null, null, this.getTagsForStencil(gn, 'dns domain name server', dt).join(' ')),
+					w * 9.2, h * 12.7, '', 'Encryption key', null, null, this.getTagsForStencil(gn, 'encryption key', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'file;',
 					w * 9.2, h * 12.7, '', 'File', null, null, this.getTagsForStencil(gn, 'file', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'folder;',
@@ -350,7 +350,7 @@
 			this.createVertexTemplateEntry(s3 + 'audio_file;',
 					w * 9.2, h * 12.7, '', 'Audio file', null, null, this.getTagsForStencil(gn, 'audio file', dt).join(' ')),
 			this.createVertexTemplateEntry(s3 + 'backup_file;',
-					w * 14.4, h * 13.3, '', 'Backup file', null, null, this.getTagsForStencil(gn, 'audio file', dt).join(' ')),
+					w * 14.4, h * 13.3, '', 'Backup file', null, null, this.getTagsForStencil(gn, 'backup file', dt).join(' ')),
 			this.createVertexTemplateEntry(s3 + 'data_file;',
 					w * 11.8, h * 15.2, '', 'Data file', null, null, this.getTagsForStencil(gn, 'data file', dt).join(' ')),
 			this.createVertexTemplateEntry(s3 + 'google_document;',
@@ -384,7 +384,7 @@
 
 		// Space savers
 		var sb = this;
-		var gn = 'mxgraph.veeam.storage';
+		var gn = 'mxgraph.veeam.users_and_status';
 		var dt = 'veeam vmware virtual machine users status';
 		
 		var w = 4.0;

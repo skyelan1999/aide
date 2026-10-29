@@ -1,0 +1,71 @@
+{
+  "cycle": 32,
+  "baseline": "eb66bebe68ba42f09d78a9d58407b7f67d0acebe",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    153
+  ],
+  "commits": {
+    "153": "986a761eafa113617986028037c596675187015c"
+  },
+  "cumulativeProductFixes": 87,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 88,
+  "original272RemainingFollowup": 196,
+  "red": [
+    {
+      "issue": 153,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue153' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 1.717,
+      "observed": "设置路径为无法替换的目录时，远端创建成功后API仍返回200/bound:true，预期500。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle32-153-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue153|^TestVoiceClone|^TestIssue151|^TestIssue152|^TestIssue98|^TestIssue99' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 34.606,
+      "scope": "真实本机mock克隆+HTTP保存故障：500/bound:false、返回新远端ID、旧内存绑定与原设置字节保留；消除故障重试200，磁盘设置包含新ID。原克隆正向/无配置、锁屏四入口/排队/损坏锁状态、删除错误/索引故障/部分结果/孤立音频、上传并发/取消及预算回归。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle32-final-race.log"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T230555715830Z.log",
+      "fingerprint": "747d0ecb4f32653cb2473f789dfca1040e9ac827c5796491a2e7ed7c6a34f87a"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "428Markdown/1466links"
+    }
+  ],
+  "notes": [
+    "克隆服务成功后先在a.mu内原子保存候选设置，再发布CloneVoiceID与bound:true；保存失败500/bound:false保留旧绑定，并返回已创建的远端voiceID供手动恢复，不自动重试或删除远端音色。",
+    "本轮只处理按编号下一项#153；#155涉及性格配置与回滚状态两个文件，将单独复现与修复；随后#156、#157最新正文已读。#154既有重复关闭，未计新处理。",
+    "候选设置在远端响应后于当前a.mu内复制，不持有模型请求之前的旧设置快照；JSON编码与落盘也在锁内，不再对解锁后的共享settings指针编码。",
+    "不声称跨服务事务：远端音色可能已创建，本地绑定失败不撤销或自动重建；新ID在错误响应中可恢复，重复用户创建请求仍可能创建更多远端音色。",
+    "本轮无UI变更；完整start.command工作台、Windows/macOS、断电/真实只读卷/真实克隆设备与付费模型验收NOT_RUN。所有mock服务退出，无新增驻留服务。只push审查分支，不合并main、不发行、不部署。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "153": "https://github.com/skyelan1999/aide/issues/153#issuecomment-6429458807"
+    },
+    "verifiedRemoteCommit": "741e03be5a3039f27e45c5683dc4dc37b4047544"
+  },
+  "sourceSHA256": {
+    "docs/security/voice-cloning.md": "f5f231dea77f163a2ff1e27902662f3eb57107a13284ecf82ea1132270a9154d",
+    "internal/server/voice_clone_persistence_test.go": "efac18c94bca8f631987579aef5480b7e74696a5427b9be1c6295714781042af",
+    "internal/server/voice_samples.go": "c5d4f0613645c3908b815a6b2f3cfda5cd41da426baec9bbdee718a6be2450e4"
+  }
+}

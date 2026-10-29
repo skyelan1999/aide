@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,7 +41,10 @@ func (a *App) exportConfigBackup(w http.ResponseWriter, r *http.Request) {
 		IncludeSecrets   bool `json:"includeSecrets"`
 		IncludeVoiceData bool `json:"includeVoiceData"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&in) // 请求体可空，默认都不包含
+	if err := decode(w, r, &in); err != nil && err != io.EOF {
+		fail(w, http.StatusBadRequest, err)
+		return
+	} // Empty legacy requests retain the non-secret defaults.
 
 	a.mu.Lock()
 	exportSettings := a.settings
@@ -183,18 +187,38 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		merged.PersonaCiphers = bkCiphers
 		merged.PersonaCipher = bkCipher
 		if len(bk.SourcesSecrets) != 0 {
-			_ = os.WriteFile(SourcesSecretsPath(a.dataPath), bk.SourcesSecrets, 0600)
+			if err := os.WriteFile(SourcesSecretsPath(a.dataPath), bk.SourcesSecrets, 0600); err != nil {
+				fail(w, 500, errors.New("来源凭据未能保存"))
+				return
+			}
 		}
 		// #38：工作空间凭据随附的是加密信封——合并进 vault（保持密文，不回退明文）。
 		// 旧备份若是明文 workspaceSecrets JSON，则仍写回旧文件，下次解锁时迁移入 vault。
 		if len(bk.WorkspaceSecrets) != 0 {
 			if a.vault != nil && IsEnvelope(bk.WorkspaceSecrets) {
 				localOnlyEnvelope := excludeCustodyKeysFromEnvelope(bk.WorkspaceSecrets)
-				if n, e := a.vault.ImportEnvelope(localOnlyEnvelope); e == nil && n > 0 {
-					_ = a.vault.Save()
+				previous := make(map[string]VaultEntry, len(a.vault.entries))
+				for id, entry := range a.vault.entries {
+					previous[id] = entry
 				}
+				n, err := a.vault.ImportEnvelope(localOnlyEnvelope)
+				if err != nil {
+					fail(w, 400, errors.New("无效凭据信封"))
+					return
+				}
+				if n > 0 {
+					if err := a.vault.Save(); err != nil {
+						a.vault.entries = previous
+						fail(w, 500, errors.New("凭据保险库未能保存"))
+						return
+					}
+				}
+
 			} else {
-				_ = os.WriteFile(WorkspaceSecretsPath(a.dataPath), bk.WorkspaceSecrets, 0600)
+				if err := os.WriteFile(WorkspaceSecretsPath(a.dataPath), bk.WorkspaceSecrets, 0600); err != nil {
+					fail(w, 500, errors.New("工作区凭据未能保存"))
+					return
+				}
 			}
 		}
 	}
@@ -202,7 +226,10 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 	// 旧备份可能仍带明文 API Key：收敛进加密 vault（未解锁则暂存待解锁迁移），settings.json 不留明文。
 	migratedKey := false
 	if key := strings.TrimSpace(merged.APIKey); key != "" {
-		a.storeModelAPIKeyPlaintextLocked(key)
+		if err := a.storeModelAPIKeyPlaintextLocked(key); err != nil {
+			fail(w, 500, errors.New("模型凭据未能安全导入"))
+			return
+		}
 		migratedKey = true
 	}
 	merged.APIKey = ""

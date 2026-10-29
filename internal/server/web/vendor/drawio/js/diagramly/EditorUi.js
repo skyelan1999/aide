@@ -3025,7 +3025,7 @@
 			var scale = graph.view.scale;
 			var x0 = Math.floor(bounds.x / scale - graph.view.translate.x);
 			var y0 = Math.floor(bounds.y / scale - graph.view.translate.y);
-			bg = graph.background;
+			bg = mxUtils.isValidColor(graph.background) ? graph.background : null;
 	
 			// Embed script only used if no redirect
 			if (redirect == null)
@@ -3087,7 +3087,7 @@
 				'</title>\n' : '') : '<title>draw.io</title>\n') +
 			((redirect != null) ? '<meta http-equiv="refresh" content="0;URL=\'' + redirect + '\'"/>\n' : '') +
 			'</head>\n<body' +
-			(((redirect == null && bg != null && bg != mxConstants.NONE) ? ' style="background-color:' + bg + ';">' : '>')) +
+			(((redirect == null && bg != null && bg != mxConstants.NONE) ? ' style="background-color:' + mxUtils.htmlEntities(bg) + ';">' : '>')) +
 			'\n<div class="mxgraph" style="' + style + '">\n' +
 			'<div style="width:1px;height:1px;overflow:hidden;">' + data + '</div>\n</div>\n' +
 			((redirect == null) ? '<script type="text/javascript" src="' + js + '"></script>' :
@@ -3200,7 +3200,7 @@
 				var nodes = node.getElementsByTagName('diagram');
 
 				// Checks for duplicate page IDs
-				var pages = {};
+				var pages = Object.create(null);
 
 				if (nodes.length > 0)
 				{
@@ -3758,7 +3758,7 @@
 	EditorUi.prototype.getHiddenTagsMap = function()
 	{
 		var graph = this.editor.graph;
-		var result = {};
+		var result = Object.create(null);
 		var hasHiddenTags = false;
 
 		if (this.pages != null)
@@ -8497,7 +8497,7 @@
 		
 		// Replaces alternate content with image of text
 		var switches = root.getElementsByTagName('switch');
-		counter = switches.length;
+		var counter = switches.length;
 
 		var done = mxUtils.bind(this, function()
 		{
@@ -8691,7 +8691,7 @@
 			}))(switches[i]);
 		}
 
-		if (counter == 0)
+		if (switches.length == 0)
 		{
 			callback(root);
 		}
@@ -9178,7 +9178,7 @@
 
 		if (linkPage != null && typeof linkPage.getId === 'function')
 		{
-			params.push('page-id=' + linkPage.getId());
+			params.push('page-id=' + encodeURIComponent(linkPage.getId()));
 		}
 
 		if (transparent)
@@ -11638,13 +11638,13 @@
 	 */
 	EditorUi.prototype.addLocalPagesToMapping = function(mapping)
 	{
-		mapping = (mapping != null) ? mapping : {};
+		mapping = (mapping != null) ? mapping : Object.create(null);
 
 		if (this.pages != null)
 		{
 			for (var i = 0; i < this.pages.length; i++)
 			{
-				mapping[this.pages[i].getId()] = this.pages[i].getId();
+				Object.defineProperty(mapping, this.pages[i].getId(), {value: this.pages[i].getId(), writable: true, enumerable: true, configurable: true});
 			}
 		}
 
@@ -11678,7 +11678,7 @@
 				try
 				{
 					var doc = mxUtils.parseXml(xml);
-					var mapping = {};
+					var mapping = Object.create(null);
 					
 					// Checks for mxfile with multiple pages
 					var node = this.editor.extractGraphModel(doc.documentElement, this.pages != null);
@@ -11906,7 +11906,8 @@
 	{
 		if (Graph.isPageLink(href))
 		{
-			var newId = mapping[href.substring(href.indexOf(',') + 1)];
+			var pageId = href.substring(href.indexOf(',') + 1);
+			var newId = Object.prototype.hasOwnProperty.call(mapping, pageId) ? mapping[pageId] : null;
 			href = (newId != null) ? 'data:page/id,' + newId : null;
 		}
 		else if (href.substring(0, 17) == 'data:action/json,')
@@ -13100,6 +13101,7 @@
 							this.tryAndHandle(mxUtils.bind(this, function()
 							{
 								var response = req.getText();
+								var result;
 
 								try
 								{
@@ -14645,102 +14647,76 @@
 	 * Imports the given zip file.
 	 */
 	EditorUi.prototype.importZipFile = function(file, success, onerror)
-	{
-		var ui = this;
-		
-		var delayed = mxUtils.bind(this, function()
-		{
-			this.loadingExtensions = false;
-			
-			if (typeof JSZip  !== 'undefined')
-			{
-				JSZip.loadAsync(file).then(function(zip) 
-		        {
-		        	if (mxUtils.isEmptyObject(zip.files))
-		        	{
-		        		onerror();
-		        	}
-		        	else
-		        	{
-		        		var gliffyLatestVer = {version: 0};
-		        		var drawioFound = false;
-		        		
-		                zip.forEach(function (relativePath, zipEntry) 
-		                {
-		                	var name = zipEntry.name.toLowerCase();
-							
-		                    if (name == 'diagram/diagram.xml') //draw.io zip format has the latest diagram version at diagram/diagram.xml
-		                    {
-		                    	drawioFound = true;
-		                    	
-			                    zipEntry.async("string").then(function(str){
-			                    	if (str.indexOf('<mxfile ') == 0)
-			                    	{
-			                    		success(str);
-			                    	}
-			                    	else
-		                    		{
-			                    		onerror();
-		                    		}
-			                    });
-		                    }
-		                    else if (name.indexOf('versions/') == 0) //Gliffy zip format has the versions inside versions folder
-		                   	{
-		                    	var version = parseInt(name.substr(9)); //9 is the length of versions/
-		                    	
-		                    	if (version > gliffyLatestVer.version)
-		                    	{
-		                    		gliffyLatestVer = {version: version, zipEntry: zipEntry}
-		                    	}
-		                   	}
-		                });
-		                
-		                if (gliffyLatestVer.version > 0)
-		            	{
-		                	gliffyLatestVer.zipEntry.async("string").then(function(data)
-		                	{
-		                		if (ui.isGliffyData(data, file.name))
-		                		{
-									ui.importGliffy(data, function(xml)
-									{
-										success(xml);
-									}, function()
-									{
-										onerror();
-									}, file.name);
-		                		}
-		                		else
-		            			{
-		                			onerror();
-		            			}
-		                	});
-		            	}
-		                else if (!drawioFound)
-		            	{
-		                	onerror();
-		            	}
-		        	}
-		        }, function (e) {
-		    		onerror(e);
-		        }); 
-			}
-			else
-			{
-				onerror();
-			}
-		});
-		
-		if (typeof JSZip === 'undefined' && !this.loadingExtensions && !this.isOffline(true))
-		{
-			this.loadingExtensions = true;
-			mxscript(window.DRAWIO_SERVER_URL + 'js/extensions.min.js', delayed,
-				null, null, null, onerror);
-		}
-		else
-		{
-			delayed();
-		}
-	};
+{
+    var ui = this;
+    var settled = false;
+    var maxCompressed = 32 * 1024 * 1024, maxExpanded = 8 * 1024 * 1024;
+    var size = file != null ? (file.size != null ? file.size : (file.byteLength != null ? file.byteLength : file.length)) : null;
+    function limit()
+    {
+        var error = new Error('Diagram ZIP import is limited to 32 MiB compressed and 8 MiB expanded.');
+        error.code = 'AIDE_DRAWIO_LIMIT';
+        return error;
+    }
+    function fail(error) { if (!settled) { settled = true; onerror(error || new Error(mxResources.get('invalidOrMissingFile'))); } }
+    function complete(xml) { if (!settled) { settled = true; success(xml); } }
+    if (typeof size !== 'number' || !isFinite(size) || size < 0 || size > maxCompressed) { fail(limit()); return; }
+    // Exactly one payload is chosen per archive, bounding aggregate expansion too.
+    function readEntry(entry)
+    {
+        return new Promise(function(resolve, reject)
+        {
+            if (entry._data != null && entry._data.uncompressedSize > maxExpanded) { reject(limit()); return; }
+            var bytes = 0, parts = [], decoder = new TextDecoder('utf-8'), done = false;
+            var stream = entry.internalStream('uint8array');
+            stream.on('data', function(chunk)
+            {
+                if (done) return;
+                bytes += chunk.byteLength;
+                if (bytes > maxExpanded) { done = true; stream.pause(); parts = []; reject(limit()); return; }
+                parts.push(decoder.decode(chunk, {stream: true}));
+            }).on('error', function(error) { if (!done) { done = true; parts = []; reject(error); } })
+            .on('end', function() { if (!done) { done = true; parts.push(decoder.decode()); resolve(parts.join('')); } }).resume();
+        });
+    }
+    var delayed = mxUtils.bind(this, function()
+    {
+        this.loadingExtensions = false;
+        if (typeof JSZip === 'undefined') { fail(); return; }
+        JSZip.loadAsync(file).then(function(zip)
+        {
+            var drawio = null, gliffy = null, latest = -1, count = 0;
+            zip.forEach(function(path, entry)
+            {
+                if (++count > 1000) throw limit();
+                var name = entry.name.toLowerCase();
+                if (!entry.dir && name === 'diagram/diagram.xml' && drawio == null) drawio = entry;
+                else if (!entry.dir && new RegExp('^versions/[0-9]+$').test(name))
+                {
+                    var version = Number(name.substring(9));
+                    if (version > latest) { latest = version; gliffy = entry; }
+                }
+            });
+            var entry = drawio || gliffy;
+            if (entry == null) { fail(); return; }
+            return readEntry(entry).then(function(data)
+            {
+                if (drawio != null)
+                {
+                    if (data.indexOf('<mxfile ') == 0 || data.indexOf('<mxfile>') == 0) complete(data); else fail();
+                }
+                else if (ui.isGliffyData(data, file.name)) ui.importGliffy(data, complete, fail, file.name);
+                else fail();
+            });
+        }).catch(fail);
+    });
+    if (typeof JSZip === 'undefined' && !this.loadingExtensions && !this.isOffline(true))
+    {
+        this.loadingExtensions = true;
+        mxscript(window.DRAWIO_SERVER_URL + 'js/extensions.min.js', delayed, null, null, null, fail);
+    }
+    else delayed();
+};
 	
 	/**
 	 * Imports the given XML into the existing diagram.
@@ -14984,10 +14960,13 @@
 				var count = files.length;
 				var remain = count;
 				var queue = [];
+				var completed = Object.create(null);
 				
 				// Barrier waits for all files to be loaded asynchronously
 				var barrier = mxUtils.bind(this, function(index, fnc)
 				{
+					if (completed[index]) return;
+					completed[index] = true;
 					queue[index] = fnc;
 					
 					if (--remain == 0)
@@ -15043,9 +15022,24 @@
 						if (file != null)
 						{
 							var reader = new FileReader();
+							var failed = mxUtils.bind(this, function()
+							{
+								if (completed[index]) return;
+								try
+								{
+									this.handleError(reader.error || new Error(mxResources.get('invalidOrMissingFile')));
+								}
+								finally
+								{
+									barrier(index, function() { return []; });
+								}
+							});
+							reader.onerror = failed;
+							reader.onabort = failed;
 							
 							reader.onload = mxUtils.bind(this, function(e)
 							{
+								if (completed[index]) return;
 								if (filterFn == null || filterFn(file))
 								{
 									try
@@ -27761,7 +27755,7 @@
 	 */
 	EditorUi.prototype.scopeLayoutsToCells = function(layouts, subset)
 	{
-		var cellSet = {};
+		var cellSet = Object.create(null);
 
 		for (var i = 0; i < subset.length; i++)
 		{
@@ -28047,63 +28041,47 @@
 	 * Loads orgchart layouts and executes the given function.
 	 */
 	EditorUi.prototype.loadOrgChartLayouts = function(fn, noSpinner)
-	{
-		this.createTimeout(null, mxUtils.bind(this, function(timeout)
-		{
-			var onload = mxUtils.bind(this, function()
-			{
-				this.loadingOrgChart = false;
-
-				if (timeout.clear())
-				{
-					Graph.layoutNames.push('mxOrgChartLayout');
-					this.spinner.stop();
-					fn();
-				}
-			});
-
-			var onerror = mxUtils.bind(this, function(e)
-			{
-				this.loadingOrgChart = false;
-
-				if (timeout.clear())
-				{
-					this.handleError(e);
-				}
-			});
-
-			if (typeof mxOrgChartLayout === 'undefined' && !this.loadingOrgChart && !this.isOffline(true))
-			{
-				if (noSpinner || this.spinner.spin(document.body, mxResources.get('loading')))
-				{
-					this.loadingOrgChart = true;
-
-					if (urlParams['dev'] == '1')
-					{
-						mxscript('js/orgchart/bridge.min.js', function()
-						{
-							mxscript('js/orgchart/bridge.collections.min.js', function()
-							{
-								mxscript('js/orgchart/OrgChart.Layout.min.js', function()
-								{
-									mxscript('js/orgchart/mxOrgChartLayout.js',
-										onload, null, null, null, onerror);											
-								}, null, null, null, onerror);		
-							}, null, null, null, onerror);	
-						}, null, null, null, onerror);
-					}
-					else
-					{
-						mxscript(window.DRAWIO_SERVER_URL + 'js/orgchart.min.js', onload, null, null, null, onerror);
-					}
-				}
-			}
-			else
-			{
-				onload();
-			}
-		}), onerror);
-	};
+{
+    if (typeof mxOrgChartLayout !== 'undefined') { fn(); return; }
+    if (this.orgChartLoadCallbacks != null) { this.orgChartLoadCallbacks.push(fn); return; }
+    if (this.isOffline(true)) { this.handleError(new Error(mxResources.get('errorLoadingFile'))); return; }
+    if (!noSpinner && !this.spinner.spin(document.body, mxResources.get('loading'))) return;
+    var callbacks = this.orgChartLoadCallbacks = [fn];
+    this.loadingOrgChart = true;
+    var settled = false;
+    var finish = mxUtils.bind(this, function(error)
+    {
+        if (settled) return;
+        settled = true;
+        this.orgChartLoadCallbacks = null;
+        this.loadingOrgChart = false;
+        if (!noSpinner) this.spinner.stop();
+        if (error != null) { this.handleError(error); return; }
+        if (Graph.layoutNames.indexOf('mxOrgChartLayout') < 0) Graph.layoutNames.push('mxOrgChartLayout');
+        var callbackError = null;
+        for (var i = 0; i < callbacks.length; i++)
+        {
+            try { callbacks[i](); } catch (e) { if (callbackError == null) callbackError = e; }
+        }
+        if (callbackError != null) this.handleError(callbackError);
+    });
+    this.createTimeout(null, mxUtils.bind(this, function(timeout)
+    {
+        var onerror = function(error) { if (timeout.clear()) finish(error || new Error(mxResources.get('errorLoadingFile'))); };
+        var files = urlParams['dev'] == '1' ? ['js/orgchart/bridge.min.js', 'js/orgchart/bridge.collections.min.js',
+            'js/orgchart/OrgChart.Layout.min.js', 'js/orgchart/mxOrgChartLayout.js'] : [window.DRAWIO_SERVER_URL + 'js/orgchart.min.js'];
+        var load = function(index)
+        {
+            if (settled) return;
+            if (index == files.length)
+            {
+                if (timeout.clear()) finish(typeof mxOrgChartLayout !== 'undefined' ? null : new Error(mxResources.get('errorLoadingFile')));
+            }
+            else mxscript(files[index], function() { load(index + 1); }, null, null, null, onerror);
+        };
+        load(0);
+    }), finish);
+};
 	
 	/**
 	 *
@@ -29634,7 +29612,7 @@
 		{
 			// Exports the selected cells and their descendants, skipping cells
 			// whose ancestor is also selected to avoid duplicates
-			var selected = {};
+			var selected = Object.create(null);
 
 			for (var i = 0; i < selectionCells.length; i++)
 			{
@@ -30852,7 +30830,7 @@
 
 					if (page.root != null)
 					{
-						var remaining = {};
+						var remaining = Object.create(null);
 						var count = 0;
 
 						for (var i = 0; i < ids.length; i++)
@@ -31096,7 +31074,7 @@
 			file.commentCache != null && !this.editor.isChromelessView())
 		{
 			var pageId = (this.currentPage != null) ? this.currentPage.getId() : null;
-			var cells = {};
+			var cells = Object.create(null);
 
 			for (var i = 0; i < file.commentCache.length; i++)
 			{
@@ -33312,7 +33290,7 @@ var CommentsWindow = function(editorUi, x, y, w, h, saveCallback)
 	});
 
 	//Periodically refresh time every one minute
-	setInterval(refreshCommentsTime, 60000);
+	var refreshCommentsThread = setInterval(refreshCommentsTime, 60000);
 	this.refreshCommentsTime = refreshCommentsTime;
 	
 	this.window = new mxWindow(mxResources.get('comments'), div, x, y, w, h, true, true);
@@ -33330,6 +33308,8 @@ var CommentsWindow = function(editorUi, x, y, w, h, saveCallback)
 
 	editorUi.installResizeHandler(this, true, function()
 	{
+		clearInterval(refreshCommentsThread);
+		refreshCommentsThread = null;
 		editorUi.removeListener(commentsChangedListener);
 	});
 };

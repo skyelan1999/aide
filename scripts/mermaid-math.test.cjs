@@ -1,0 +1,18 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{test}=require('node:test');
+const source=fs.readFileSync(process.env.AIDE_MERMAID_SVG_BASELINE||'internal/server/web/vendor/mermaid.min.js','utf8');let code;
+if(source.includes('/* Aide KaTeX replacement BEGIN */'))code=source.slice(source.indexOf('/* Aide KaTeX replacement BEGIN */'),source.indexOf('/* Aide KaTeX replacement END */'))+';globalThis.katex=QUt.default;globalThis.katexRaw=aideKaTeXRaw;';
+else code=source.slice(source.indexOf('class ki extends Error{'),source.indexOf('var jQ=function(){'))+';globalThis.katex=QUt.default;globalThis.katexRaw=QUt.default;';
+const sandbox={};vm.createContext(sandbox);vm.runInContext(code,sandbox);const{katex,katexRaw}=sandbox;
+test('497 embedded renderer is fixed KaTeX release',()=>assert.equal(katexRaw.version,'0.18.5'));
+test('497 inherited trust cannot enable HTML extensions',()=>{const options=Object.create({trust:true});options.throwOnError=true;options.strict=false;assert.doesNotMatch(katexRaw.renderToString('\\htmlClass{owned-prototype}{x}',options),/class="[^"]*owned-prototype/);assert.match(katexRaw.renderToString('\\htmlClass{owned-explicit}{x}',{trust:true,strict:false}),/owned-explicit/);});
+test('499 highest Unicode scalar remains accepted',()=>assert.doesNotThrow(()=>katex.renderToString('\\char"10FFFF',{strict:false,throwOnError:true})));
+test('530 deeply nested groups fail with bounded error',()=>assert.throws(()=>katex.renderToString('{'.repeat(5000)+'x'+'}'.repeat(5000)),/AIDE_MATH_LIMIT/));
+test('531 finite dimensions are clamped before layout',()=>{const result=katex.renderToString('\\rule{1000em}{1em}',{strict:false,output:'html'});assert(!result.includes('1000em'));assert(result.includes('20em'));});
+test('ordinary math and literal braces still render',()=>{for(const text of ['x^2+1','\\frac{a}{b}','\\{x\\}','\\text{owned math}'])assert.match(katex.renderToString(text),/katex/);});
+
+test('530 parser depth cannot be hidden by TeX comments',()=>assert.throws(()=>katexRaw.renderToString('{% } \n'.repeat(70)+'x'+'}'.repeat(70)),/AIDE_MATH_LIMIT/));
+test('530 explicit TeX groups share the parser budget',()=>assert.throws(()=>katexRaw.renderToString('\\begingroup'.repeat(70)+'x'+'\\endgroup'.repeat(70)),/AIDE_MATH_LIMIT/));
+test('literal braces in verbatim text do not consume group depth',()=>assert.match(katex.renderToString('\\verb|'+ '{'.repeat(80)+'|'),/katex/));
+
+test('530 depth accounting ignores polluted Object.prototype',()=>{vm.runInContext('Object.prototype._aideMathDepth=-Infinity',sandbox);try{assert.throws(()=>katexRaw.renderToString('{'.repeat(70)+'x'+'}'.repeat(70)),/AIDE_MATH_LIMIT/);}finally{vm.runInContext('delete Object.prototype._aideMathDepth',sandbox);}});

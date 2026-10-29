@@ -1,0 +1,11 @@
+{
+  "status": "PASS_CURRENT_SITE_NEW_VERSION_PENDING_REVIEW",
+  "url": "https://skyelan1999.github.io/aide-pkg-shop/",
+  "terminalVersion": "1.5.1",
+  "routingVersion": "1.5.1",
+  "sha256": "16955e057fc0e5176bae9bade29981cb56d5565fa9b1bef0e2a84e1b4c6338ed",
+  "bytes": 1063002,
+  "publicPlugins": 29,
+  "privateListings": 3,
+  "comparePrivateDisplayOnly": true
+}

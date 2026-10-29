@@ -1,0 +1,159 @@
+{
+  "cycle": 75,
+  "baseline": "27695c39cee7e2c6bba9320e3a06a888c20052ee",
+  "issues": [
+    363,
+    366,
+    367,
+    368,
+    371,
+    372,
+    374,
+    375,
+    376,
+    377,
+    378,
+    379,
+    380,
+    381
+  ],
+  "fixes": {
+    "363": "Reject malformed percent-encoded PDF diagram metadata without escaping the import path",
+    "366": "Normalize empty/out-of-range page ranges on change and immediately before print/export submission",
+    "367": "Bound ZIP inputs to 32MiB compressed, 1000 entries, and one 8MiB expanded payload; enforce actual streamed bytes even with dishonest metadata",
+    "368": "Find noncoincident marker directions and deduplicate sampled arrow polylines so finite nonzero paths remain visible",
+    "371": "Skip recursive SysML composite inclusion while retaining subsequent valid symbols",
+    "372": "Only call own function entries in BPMN background, outline and symbol painter tables",
+    "374": "Reject inherited emoji lookup values before SVG text rendering",
+    "375": "Replace wrapping 32-bit connector masks with independent sets of segment IDs; copy sets before merging point memberships",
+    "376": "Choose Org Chart parents only among the eligible direct vertices of the selected layer",
+    "377": "Keep Explore pagination values local to each explorer invocation",
+    "378": "Reject automatic Update-plugin XML POSTs to cross-origin or unsafe URLs before serializing graph data",
+    "379": "Reset SQL primary keys for each import and remove SQL row cloning dependence on the iOS global",
+    "380": "Parse MySQL FOREIGN KEY and REFERENCES keywords case-insensitively",
+    "381": "Honor replay-delay with finite nonnegative timer bounds and retain legacy delay-delay fallback"
+  },
+  "additionalFollowups": {
+    "551": "SQL AddRow had the same ambient Sidebar dependency; uses the equivalent direct cell clone. This is a follow-up to existing551, not a new counted fix."
+  },
+  "batchTarget": 50,
+  "batchVerified": 50,
+  "batchPushed": 50,
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle75-red-final/result.json",
+    "scope": "All fourteen reports reproduced before source edits. PDF URI exception, page ranges, ZIP limits, marker NaN, composite recursion under controlled draw budget, invalid BPMN/emoji dispatch, 35 segment collision, excluded-parent exception, globals, XML destination, repeated SQL import, SQL keyword cases and replay delay.",
+    "corrections": [
+      "PrintDialog.create populates this.container and export callback is (preview,args); harness corrected before final green.",
+      "ArrowConnector uses a fill/stroke constructor and configureCanvas before direct SVG painting; initial visibility probes without that setup were discarded, while finite connector-endpoint baseline remained valid.",
+      "Original ZIP entry rejection can leave its caller pending; first owned hung test runner was stopped. Dishonest-metadata streaming test runs on the repaired implementation, with ordinary expanded-limit baseline retained.",
+      "SQL baseline supplies the existing Sidebar helper to expose379/380 independently; green imports need no window.sb."
+    ]
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 34,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle75-combined/result.json",
+      "scope": "Combined third-batch source/app/integrate fixtures at light1440/dark390 in the actual owned iframe. Real File/JSZip decompression, SVG arrows, composite and emoji rendering, 3/34-child Org Chart layouts with 4/35 segments and no geometric jumps, nested-parent layout, explorer close, actual SQL popup inputs and resulting PK/FK cells. Update POST and replay scheduled delay use controlled substitutes. All pageerrors[]. Screenshot inspected.",
+      "limits": "Standalone SQL/Update/Replay assets are dynamically loaded; tested against each runtime, not claimed to be separate compiled copies. Straight duplicate arrow-point cases tested; no physical printer, external POST or wall-clock replay."
+    },
+    {
+      "result": "PASS",
+      "checks": 205,
+      "fingerprint": "4594e3d5d54da60ebaf02802b46cd8700e0daa0650dc9982b9df109be14cadad",
+      "receipt": ".agent-state/verify-20261028T065518830283Z.log"
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle75-audit.json",
+      "scope": "Eight assets parse and match pinned sync, byte-identical outside reviewed functions: app6/integrate12/shapes4/core2/viewer6/viewer-static10/orgchart2/extensions2."
+    }
+  ],
+  "securityReview": [
+    "ZIP compressed size checked before JSZip; entry count checked after directory parsing. Metadata and actual decompression bytes are both checked; stream paused and buffered parts released on excess. Exactly one entry chosen per archive; total expanded payload is at most8MiB. File transfer/download limits are unchanged.",
+    "Unsupported or cross-origin automatic Update destinations are rejected before getGraphXml/XML serialization. Same-origin payload still reaches the controlled request sink.",
+    "SysML self-inclusion is skipped and later valid symbols can still paint; BPMN and emoji require own keys.",
+    "Segment sets are copied when assigned to points, preventing merges from modifying original segment identity sets; temporary point marks retain existing cleanup.",
+    "No real credentials, production data, paid models or external request receivers."
+  ],
+  "notRun": [
+    "Full Aide workbench, physical printer, connected cloud/file services.",
+    "Windows/macOS native/device acceptance; this cycle changes JavaScript only.",
+    "All Org Chart strategies and arbitrary SQL dialect grammar; scoped cases are recorded above.",
+    "Main merge, Release/tag or deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {
+      "363": "https://github.com/skyelan1999/aide/issues/363#issuecomment-6462907151",
+      "366": "https://github.com/skyelan1999/aide/issues/366#issuecomment-6462907980",
+      "367": "https://github.com/skyelan1999/aide/issues/367#issuecomment-6462908688",
+      "368": "https://github.com/skyelan1999/aide/issues/368#issuecomment-6462909367",
+      "371": "https://github.com/skyelan1999/aide/issues/371#issuecomment-6462909776",
+      "372": "https://github.com/skyelan1999/aide/issues/372#issuecomment-6462910432",
+      "374": "https://github.com/skyelan1999/aide/issues/374#issuecomment-6462911349",
+      "375": "https://github.com/skyelan1999/aide/issues/375#issuecomment-6462911813",
+      "376": "https://github.com/skyelan1999/aide/issues/376#issuecomment-6462912387",
+      "377": "https://github.com/skyelan1999/aide/issues/377#issuecomment-6462912889",
+      "378": "https://github.com/skyelan1999/aide/issues/378#issuecomment-6462913356",
+      "379": "https://github.com/skyelan1999/aide/issues/379#issuecomment-6462913936",
+      "380": "https://github.com/skyelan1999/aide/issues/380#issuecomment-6462914426",
+      "381": "https://github.com/skyelan1999/aide/issues/381#issuecomment-6462914938"
+    },
+    "remoteSourceCommit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+    "additionalFollowupComments": {
+      "551": "https://github.com/skyelan1999/aide/issues/551#issuecomment-6462958994"
+    }
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "1a1509b3b77876ab45e5c9b427bac4729c6dfe1f0557e8e50e40abdb9a572342",
+    "internal/server/web/vendor/drawio/js/app.min.js": "1921e65e43411217eff111b92bbdc107dfce44789b78deff4402c75b2fbc60b1",
+    "internal/server/web/vendor/drawio/js/diagramly/Editor.js": "4f36f87e812488b525d7ca1c90e63b77a1923c9b33f2b9815894e4248af39537",
+    "internal/server/web/vendor/drawio/js/diagramly/EditorUi.js": "e05751f27857f9de403667d9bad0ab79b6f9794dca3389f27fd6113948567f71",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "c99fd43cfc3cdf0ae4b19cb65965906c884c5de7d5e09ca5358b4bf3fb0d8734",
+    "internal/server/web/vendor/drawio/js/grapheditor/Graph.js": "899ade0046561f397ba76b7a873fcd855290abc5e36a7e67a9700f2b253dbf62",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "04eb6466f81930d97c1d9a04a8d8852efaf4eac32517373f920f8a1786db1bef",
+    "internal/server/web/vendor/drawio/js/orgchart.min.js": "247fc2cf5d43d4aec13a06aeb003e5f2f72c2a52ec499617a02edd1c0e285f12",
+    "internal/server/web/vendor/drawio/js/orgchart/mxOrgChartLayout.js": "849b3d5f7e069c29c4d55334a909d4ec77addba7b09e73e60a49ad2e37e1094d",
+    "internal/server/web/vendor/drawio/js/shapes-14-6-5.min.js": "7095f6df5948ba71090233c2b290eb6be9d44fe621c17a2e33fba8b682c1d4f6",
+    "internal/server/web/vendor/drawio/js/viewer-static.min.js": "54c26b1a923b5ff3c56c6c0a1926615db62b6c78e9c02646920fa2fe4c078219",
+    "internal/server/web/vendor/drawio/js/viewer.min.js": "770b693998ed2f26ba4ab303ed21475e203a75bd75db084db14254b815fbd095",
+    "internal/server/web/vendor/drawio/mxgraph/mxClient.js": "68f205d3b03043ab93cbd96ec7e4c5ed7090ff772a8ff5fce707d794f8dfe3e6",
+    "internal/server/web/vendor/drawio/mxgraph/src/shape/mxArrowConnector.js": "7a372447ebff53eac8c6b16529adf3e0f690faa9ab377145a30fb9b05b06e330",
+    "internal/server/web/vendor/drawio/mxgraph/src/shape/mxConnector.js": "1346d0ad25a59e8b64ec95f7ce28213329b341e0df9652f706559b98c23994a9",
+    "internal/server/web/vendor/drawio/plugins/replay.js": "303a87b3e22073cfecb867035651a8d485dd5d20e633d520431f89818d993c1e",
+    "internal/server/web/vendor/drawio/plugins/sql.js": "ac9028377f257804841f480400f37b876f48ad115bf5afcf4a0acde521f8fd7f",
+    "internal/server/web/vendor/drawio/plugins/update.js": "c72f144f12869cacf238548a5c46dbcfb8cc6d835a3bbd142d86ec3b90e9698d",
+    "internal/server/web/vendor/drawio/shapes/bpmn/mxBpmnShape2.js": "8573b0145fe3eba8268a96cc142a281691ba52928188416cfcb0344d66f8cccc",
+    "internal/server/web/vendor/drawio/shapes/emoji/mxEmoji.js": "c38a549e32bad5e35c60830d0b410c0e1dacc6b06324921474c624a265b5fd6d",
+    "internal/server/web/vendor/drawio/shapes/mxSysML.js": "8c52099f71be9a32647404ec60e1d7c1befbb96bbaf92d9ad1178a88363d3e82",
+    "scripts/browser-drawio-preview-bounds.cjs": "0059522ef4c0b6f6fd0b00e62240773554d53e74138a96c0bc34b54fdf35db03",
+    "scripts/drawio-import-plugin-review.cjs": "fa882ea1898c5bdd0885ab58344e1560b4451650ab7a65054601f354dc9c163a",
+    "scripts/drawio-import-plugin-browser-cases.cjs": "939ce1677fa91d0c3a3ef2e91b6b86b66af2bcbefbe2263207655996288d9a85",
+    "scripts/sync_drawio_import_plugin_review.cjs": "a43a8a93685cc04cb4c67e020a5d60098a25735b045172c67b6feaa12a65b074"
+  },
+  "issueVerification": {
+    "363": "实际 PDF Subject 提取：畸形百分号返回 null，合法嵌入 mxfile 正常返回。",
+    "366": "真实打印对话框：清空任一范围、越界输入和未触发 change 的直接提交均得到合法页码。",
+    "367": "真实 File/JSZip：正常 draw.io、最新 Gliffy 版本、9MiB 膨胀拒绝及失真元数据下的流式字节阻断；压缩尺寸在解析前检查。",
+    "368": "实际 mxConnector/mxArrowConnector 与 SVG Canvas：首尾重复点及全重合点保持有限坐标，有长度的路径仍产生 SVG。",
+    "371": "实际 SysML 绘制器：symbol0/symbol1 自引用不再递归，后续正常矩形符号保留；使用受控绘图预算。",
+    "372": "浏览器内真实 BPMN 绘制器：__proto__/constructor/toString 在背景、轮廓、符号及事件路径不再作为 painter 调用，正常绘制分支保留。",
+    "374": "已知 emoji 返回文本，原型键不会返回对象/函数；实际图中该无效 emoji 渲染不再抛异常。",
+    "375": "实际组织结构图：3/34 子节点，最大4/35段连接器；段身份不重复，坐标有限，连续路点无几何跳跃。",
+    "376": "实际分组内节点连向图层节点的布局不再产生缺失父节点异常，分组和图层节点位置有效。",
+    "377": "实际打开/关闭 Explore：配置值使用本次作用域，window.pageSize/minSize 哨兵保持不变。",
+    "378": "独立插件在真实运行时加载：绝对/相对协议的跨域目标均无 POST；同源目标仍将合成 XML 传入受控请求接收器。",
+    "379": "实际 SQL 弹窗按钮与绘制结果：首次有PK、同名表第二次无PK；不提供 window.sb 仍能完成导入。",
+    "380": "实际 MySQL 导入控件：大写、小写、混合大小写 FOREIGN KEY/REFERENCES 均生成相应 FK 单元格。",
+    "381": "实际 Replay 插件调度调用：replay-delay=5000/0 及非法/负值对应5000/0/1000/1000；未执行真实等待播放。"
+  },
+  "completedAt": "2026-10-28T07:06:11.511022+00:00",
+  "cumulativeFixedOnBranch": 289,
+  "cumulativeProductFixes": 288,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

@@ -28,8 +28,14 @@ func (a *App) streamFileDownload(w http.ResponseWriter, r *http.Request) {
 		e := m.check(j)
 		ready := j.Operation == "download" && j.Status == "complete"
 		name := "download.zip"
+		stored := "download.zip"
+		version := j.DownloadVersion
 		if len(j.Tops) == 1 {
 			name = path.Base(j.Tops[0].Source) + ".zip"
+			if j.RawDownload {
+				name = path.Base(j.Tops[0].Source)
+				stored = "download.file"
+			}
 		}
 		j.mu.Unlock()
 		if e != nil {
@@ -40,7 +46,7 @@ func (a *App) streamFileDownload(w http.ResponseWriter, r *http.Request) {
 			fail(w, 409, errors.New("归档尚未准备完成"))
 			return
 		}
-		f, e := os.Open(filepath.Join(m.jobDir(j), "download.zip"))
+		f, e := os.Open(filepath.Join(m.jobDir(j), stored))
 		if e != nil {
 			fail(w, 500, e)
 			return
@@ -51,7 +57,7 @@ func (a *App) streamFileDownload(w http.ResponseWriter, r *http.Request) {
 			fail(w, 500, e)
 			return
 		}
-		serveTransferFile(w, r, name, j.ID, info, f)
+		serveTransferFile(w, r, name, j.ID+":"+version, info, f, true)
 		return
 	}
 	p := r.URL.Query().Get("path")
@@ -103,18 +109,21 @@ func (a *App) streamFileDownload(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("来源配置已变化"))
 		return
 	}
-	serveTransferFile(w, r, path.Base(p), binding+":"+p, info, f)
+	serveTransferFile(w, r, path.Base(p), binding+":"+p, info, f, false)
 }
-func serveTransferFile(w http.ResponseWriter, r *http.Request, name, identity string, info os.FileInfo, reader io.ReaderAt) {
+func serveTransferFile(w http.ResponseWriter, r *http.Request, name, identity string, info os.FileInfo, reader io.ReaderAt, immutable bool) {
 	tag := `"` + hash([]byte(identity+":"+strconv.FormatInt(info.Size(), 10)+":"+strconv.FormatInt(info.ModTime().UnixNano(), 10))) + `"`
+	modTime := info.ModTime().Truncate(time.Second)
+	if !immutable {
+		tag = "W/" + tag
+		modTime = time.Time{}
+	}
 	w.Header().Set("ETag", tag)
 	w.Header().Set("Cache-Control", "private, no-cache")
 	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("X-Transfer-Size", fmt.Sprint(info.Size()))
-	if expected := r.Header.Get("If-Match"); expected != "" && expected != tag {
-		fail(w, 412, errors.New("文件已变化，不能拼接旧下载"))
-		return
-	}
-	http.ServeContent(w, r, name, info.ModTime().Truncate(time.Second), io.NewSectionReader(reader, 0, info.Size()))
+	// ServeContent applies RFC strong comparison for If-Match/If-Range. Weak
+	// metadata validators on mutable files cannot authorize splicing ranges.
+	http.ServeContent(w, r, name, modTime, io.NewSectionReader(reader, 0, info.Size()))
 }

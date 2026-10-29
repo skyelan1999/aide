@@ -943,11 +943,11 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
 		}
 		else if (name == 'fillalpha')
 		{
-			canvas.setAlpha(node.getAttribute('alpha'));
+			canvas.setFillAlpha(node.getAttribute('alpha'));
 		}
 		else if (name == 'strokealpha')
 		{
-			canvas.setAlpha(node.getAttribute('alpha'));
+			canvas.setStrokeAlpha(node.getAttribute('alpha'));
 		}
 		else if (name == 'fontcolor')
 		{

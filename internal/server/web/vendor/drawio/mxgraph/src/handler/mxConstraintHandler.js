@@ -265,7 +265,7 @@ mxConstraintHandler.prototype.update = function(me, source, existingEdge, point)
 				this.reset();
 			});
 
-			mxEvent.addListener(this.graph.container, 'mouseleave', this.resetHandler);	
+			mxEvent.addListener(this.graph.container, 'mouseleave', this.mouseleaveHandler);
 		}
 		
 		var tol = this.getTolerance(me);

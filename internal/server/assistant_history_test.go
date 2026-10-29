@@ -146,6 +146,7 @@ func TestAssistantMessageRejectsNonAssistant(t *testing.T) {
 // TestVoiceFilterRecordsToAssistantSession 语音 filter 的决策也要归位到 assistant 会话。
 func TestVoiceFilterRecordsToAssistantSession(t *testing.T) {
 	a := testApp(t)
+	unlockAssistantSessionForTest(t, a)
 	before := 0
 	a.mu.Lock()
 	before = len(a.findAssistantSessionLocked().Messages)

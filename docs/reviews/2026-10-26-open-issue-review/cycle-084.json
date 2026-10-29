@@ -1,0 +1,110 @@
+{
+  "cycle": 84,
+  "baseline": "a27dc3bd1144864c194af3511a2f672336ad86f2",
+  "issues": [
+    452,
+    453,
+    454,
+    455,
+    456,
+    457,
+    459,
+    460,
+    461,
+    462,
+    465,
+    466
+  ],
+  "fixes": {
+    "452": "Retain the raw URI on malformed UTF-8 and complete/consume filename drops.",
+    "453": "Use a prototype-free set for custom stencil color keys.",
+    "454": "Use canonical own checks for object-valued shape-picker entries.",
+    "455": "Use default toolbar settings on malformed URI/JSON or non-object config.",
+    "456": "Anchor layer popups below the top viewer toolbar.",
+    "457": "Correct the base fallback serializer to mxUtils; full app Pages override already worked and the reported complete-app symptom was not reproduced.",
+    "459": "Keep selected cells for synchronous steps in mixed async layout chains.",
+    "460": "Reject non-positive/non-integer Explore page sizes before constructing a viewer.",
+    "461": "Declare the attribute-copy iterator locally.",
+    "462": "Clean up repeated click handlers and document/model/mouse listeners/highlight on destruction.",
+    "465": "Validate positive safe-integer Fit sheet counts before forwarding print/export arguments.",
+    "466": "Store duplicate-page IDs in a prototype-free dictionary."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "browserReports": 11,
+    "baseSerializerReports": 1,
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle84-red-final/light-ui-robustness.json",
+      "/workspace/scratch/issue-review-20261026/cycle84-red-final/dark-ui-robustness.json",
+      "/workspace/scratch/issue-review-20261026/cycle84-fallback-red.log"
+    ]
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 234,
+      "fingerprint": "4f90abfa80f0e4ff65d2c71c5bbfefdf660a853fcb8a9dc1aa9cd12bef6edd1f",
+      "receipt": ".agent-state/verify-20261028T123558229250Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 36,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle84-final/result.json",
+      "scope": "Actual editor component, 13 UI cases per light/dark including unchanged 458 and complete-app457 controls, plus10 preview/edit/save/bounds checks. Errors[]."
+    },
+    {
+      "result": "PASS",
+      "checks": 5,
+      "scope": "Base serializer definition in source and all four bundles, and a complete Graph identifier-boundary check."
+    },
+    {
+      "result": "PASS",
+      "checks": 5,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle84-bundle-audit.json",
+      "scope": "Syntax, unchanged bytes outside exactly reviewed bundle methods; mxClient unchanged. Pinned-Terser sync --check passed."
+    }
+  ],
+  "notFixedOrCounted": [
+    {
+      "issue": 458,
+      "status": "closed-not-planned",
+      "reason": "Mapped arguments preserve parameter clamps in these non-strict scripts. Actual viewport tests pass before changes.",
+      "comment": "https://github.com/skyelan1999/aide/issues/458#issuecomment-6469039188"
+    }
+  ],
+  "harnessCorrections": [
+    "Correct actual signatures, property membership and Fit field section.",
+    "Isolate temporary viewer UIs with embed=0 and retain original owner references; duplicate embed listeners otherwise consumed fixture messages after teardown.",
+    "Synchronizer enforces complete identifiers and the final PrintDialog override; corrected before final validation."
+  ],
+  "notRun": [
+    "Full Aide workbench/start.command, native Windows/macOS, OS printing.",
+    "#457 full-app symptom not reproduced; base fallback typo has a separate regression.",
+    "Main merge, Release/tag, market/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "remoteSourceCommit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+    "issueComments": {
+      "452": "https://github.com/skyelan1999/aide/issues/452#issuecomment-6469185034",
+      "453": "https://github.com/skyelan1999/aide/issues/453#issuecomment-6469186067",
+      "454": "https://github.com/skyelan1999/aide/issues/454#issuecomment-6469186711",
+      "455": "https://github.com/skyelan1999/aide/issues/455#issuecomment-6469187348",
+      "456": "https://github.com/skyelan1999/aide/issues/456#issuecomment-6469188301",
+      "457": "https://github.com/skyelan1999/aide/issues/457#issuecomment-6469189081",
+      "459": "https://github.com/skyelan1999/aide/issues/459#issuecomment-6469189796",
+      "460": "https://github.com/skyelan1999/aide/issues/460#issuecomment-6469190391",
+      "461": "https://github.com/skyelan1999/aide/issues/461#issuecomment-6469191059",
+      "462": "https://github.com/skyelan1999/aide/issues/462#issuecomment-6469191728",
+      "465": "https://github.com/skyelan1999/aide/issues/465#issuecomment-6469192440",
+      "466": "https://github.com/skyelan1999/aide/issues/466#issuecomment-6469193098"
+    }
+  },
+  "completedAt": "2026-10-28T12:38:44.967238+00:00",
+  "cumulativeFixedOnBranch": 372,
+  "cumulativeProductFixes": 371,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

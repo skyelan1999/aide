@@ -1096,7 +1096,7 @@ var mxEdgeStyle =
 		//console.log('sourceBuffer', sourceBuffer);
 		//console.log('targetBuffer', targetBuffer);
 		// Workaround for loop routing within buffer zone
-		if (source != null && target == source)
+		if (sourceScaled != null && targetScaled == sourceScaled)
 		{
 			targetBuffer = Math.max(sourceBuffer, targetBuffer);
 			sourceBuffer = targetBuffer;
@@ -1664,13 +1664,13 @@ var mxEdgeStyle =
 			targetIndex += 4;
 		}
 
-		var result = routePatterns[sourceIndex - 1][targetIndex - 1];
+		var result = mxEdgeStyle.routePatterns[sourceIndex - 1][targetIndex - 1];
 
 		if (dx == 0 || dy == 0)
 		{
-			if (inlineRoutePatterns[sourceIndex - 1][targetIndex - 1] != null)
+			if (mxEdgeStyle.inlineRoutePatterns[sourceIndex - 1][targetIndex - 1] != null)
 			{
-				result = inlineRoutePatterns[sourceIndex - 1][targetIndex - 1];
+				result = mxEdgeStyle.inlineRoutePatterns[sourceIndex - 1][targetIndex - 1];
 			}
 		}
 

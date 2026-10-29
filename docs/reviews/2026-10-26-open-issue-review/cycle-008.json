@@ -1,0 +1,127 @@
+{
+  "cycle": 8,
+  "type": "repairs-after-ordered-review",
+  "baseline": "bc14f208",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    80,
+    82,
+    83
+  ],
+  "commits": {
+    "80": "69015b31a6b2f0d87b8624d1c6043588caa3cad7",
+    "82": "502cad907b1c0a122d56f00612538d79eeb41a9b",
+    "83": "e647baa168f5e74d6d886b6b4f4e28e9bd2e4c70"
+  },
+  "cumulativeFixedOnBranch": 29,
+  "cumulativeProductFixes": 28,
+  "toolingFixes": 1,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "cache": "/tmp/aide-issue-review-go-cache",
+    "activation": "Existing explicit Go toolchain/cache environment; no AIDE_DATA import or user storage. Owned temporary data/subprocesses and Unix sockets; no real remote authentication/device, paid provider or application startup."
+  },
+  "red": [
+    {
+      "issues": [
+        80,
+        83
+      ],
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue80|^TestIssue83' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 9.266,
+      "observed": "4001 Unicode prompt, >1MiB request and multiple JSON objects were accepted and changed memory/disk. Oversized reply text/author accepted and persisted."
+    },
+    {
+      "issue": 82,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue82' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 3.402,
+      "observed": "Stale task read replacement-host-private-skill, dispatched to replacement SSH endpoint, and approval returned200/enqueued answer and saved user message."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue80|^TestIssue83|^TestPersonality|^TestComments' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 10.049
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue82' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 5.856,
+      "scope": "Stale dispatch rejection, matching Skill/approval controls, actual Unix socket inode pin/replacement and owned SSH command/cleanup argument tests. Final cancellation test is marker-driven, as exercised in final group below."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue80|^TestIssue82|^TestIssue83|^TestPersonality|^TestComments|^TestHarnessTaskSnapshot|^TestHarnessManagedWorktree|^TestHarnessManualApproval|^TestHarnessReadOnly|^TestShellCancel|^TestRemoteShell|^TestRemoteGroup|^TestSSHRemote|^TestRunEvents' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 24.134
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T134412425970Z.log",
+      "fingerprint": "605c274699cec63c681fe47a56b04b79f845188ec75896fd13468b4844322f86"
+    },
+    {
+      "command": "python3 scripts/check_docs.py && python3 scripts/agent-route.py check && git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "failedBroaderRun": {
+    "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue82|^TestHarness|^TestShell|^TestRemote|^TestSSHRemote|^TestRunEvents' -count=1 -timeout=3m",
+    "result": "FAIL",
+    "durationSeconds": 35.866,
+    "failures": [
+      {
+        "test": "TestHarnessSkillsToolsAndHookExecution",
+        "cause": "Linux Landlock ABI>=6 required; executor returns ABI0/function not implemented."
+      },
+      {
+        "test": "TestHarnessIndependentReviewerReleaseAndSandbox/workspace-write",
+        "cause": "Same Landlock kernel capability restriction; approved restricted command intentionally not executed."
+      },
+      {
+        "test": "TestRemoteWorkspaceDispatch",
+        "cause": "Cannot create /home/aide/.ssh under this UID; existing environment limitation."
+      }
+    ],
+    "resolution": "No sandbox weakening or outside directory creation. Dedicated final regression group passed; these three remain unvalidated here."
+  },
+  "notes": [
+    "#80 uses shared1MiB/single-object decoder and4000-Unicode-character hard limit before state changes. Empty defaults and exact4000 Unicode control retained. Existing persisted oversized configuration not auto-clipped.",
+    "#82 remote task Skill, approvedShell, execShellCommand and answerTask check workspace ID/revision/mode. Local-to-local root retention unchanged. Persisted tasks without verifiable remote binding fail closed; internal immediate commands without persisted task identity preserve their existing interface.",
+    "Bound remote commands capture original target/user/port/directory/cache and pin master socket inode using a unique private per-run hard link. Lifecycle gate is released before execution; no application mutex is held while running the process. SSH arguments include ControlMaster=no, BatchMode=yes, ProxyCommand=false to disable new-connection fallback.",
+    "Cancellation cleanup reuses the same captured binary/target/socket; task alias is removed on return and replacement shared socket survives. If the original master disappears, cleanup can fail explicitly; no fallback to the new workspace is attempted.",
+    "Actual Unix socket identity plus controlled process arguments were exercised, not a real authenticated OpenSSH master/server or remote process lifecycle. Windows/macOS and product UI not run.",
+    "#83 reply text4000/author100 Unicode characters, existing50-reply cap. Rejected requests preserve original file bytes even alongside text edits. Existing historical oversized records are preserved; no global listing pagination/migration claimed.",
+    "No merge, release, deploy or full release gate."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "comments": {
+      "80": "https://github.com/skyelan1999/aide/issues/80#issuecomment-6417636397",
+      "82": "https://github.com/skyelan1999/aide/issues/82#issuecomment-6417637257",
+      "83": "https://github.com/skyelan1999/aide/issues/83#issuecomment-6417638239"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/persona.go": "9828df3fb7c061dea58e1b210617707217fffd27d9075c4ad6d62afcc8c86c10",
+    "internal/server/personality_bounds_test.go": "b87ea254fce8fb86a9af423b4a315f701f20dda7c116b6e879b5c74fb7cb0653",
+    "internal/server/harness_runtime.go": "5f1111437aba342123e570c9cb2065f3add98b0c630a583ec7c0413ee40d6285",
+    "internal/server/workflow.go": "1af68395a2aacf3b64f4891c195a23157c3e91e5f11a05b5fd940b74e25a4787",
+    "internal/server/ssh_session.go": "14a86a87a652d5de16893aedd2670b52b309b64cf12f9963039f9f9e23ad6ce8",
+    "internal/server/task_ssh_binding.go": "bd86aa17202186aee287c626ff0e0937ee62cc9f1c5e7e01667d0f25374deed1",
+    "internal/server/task_ssh_pin_test.go": "dea55cb0cfac2787716663aa984df7bfa445abafb8b33b0a1bddeb234ffadaba",
+    "internal/server/task_workspace_guard_test.go": "0950acd8dffbd6679414c0f96aadd5d3485dbf4283b8d54ee8f7088eb2a60744",
+    "internal/server/comments.go": "21d16eade77405a8f22f4fc3f6f7af2ae472f07eebaf9ca52a79eef0498d52b2",
+    "internal/server/comment_reply_bounds_test.go": "a7eec49286f1df71b1730f12b43a78eb947e56b3746f6c0841a476dd26b4c80f"
+  }
+}

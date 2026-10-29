@@ -56,7 +56,7 @@
 			this.createVertexTemplateEntry(s + 'calloutDoubleArrow;dy=10;dx=20;notch=24;arrowHead=10;', 
 					100, 50, '', 'Callout with Double Arrow', null, null, this.getTagsForStencil(gn, 'arrow', dt + 'callout double two way').join(' ')),
 			this.createVertexTemplateEntry(s + 'calloutQuadArrow;dy=10;dx=20;notch=24;arrowHead=10;', 
-					100, 100, '', 'Callout with Quad Arrow', null, null, this.getTagsForStencil(gn, 'arrow', dt + 'callout quad four war').join(' ')),
+					100, 100, '', 'Callout with Quad Arrow', null, null, this.getTagsForStencil(gn, 'arrow', dt + 'callout quad four way').join(' ')),
 			this.createVertexTemplateEntry(s + 'calloutDouble90Arrow;dy1=10;dx1=20;dx2=70;dy2=70;arrowHead=10;', 
 					100, 100, '', 'Callout with Double Arrow 90' + String.fromCharCode(176), null, null, this.getTagsForStencil(gn, 'arrow', dt + 'callout double two way orthogonal').join(' ')),
 			this.createVertexTemplateEntry(s + 'quadArrow;dy=10;dx=20;notch=24;arrowHead=10;', 

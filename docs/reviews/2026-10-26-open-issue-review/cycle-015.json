@@ -1,0 +1,108 @@
+{
+  "cycle": 15,
+  "baseline": "7f62480d",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    98,
+    99,
+    100
+  ],
+  "commits": {
+    "98": "59245432bb676485f97a52098e41532b2db1bf17",
+    "99": "bcb1b32d4adb73c4852f1fed8d406d323e6d4488",
+    "100": "b20f7c5b5e7f06813e67027c7141524ca1f83505"
+  },
+  "cumulativeProductFixes": 42,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 43,
+  "original272RemainingFollowup": 241,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "scope": "Owned temporary sample data, synchronized HTTP upload bodies, synthetic opaque audio and local mock clone/model endpoints. No microphone, real clone model or paid service."
+  },
+  "red": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue98|^TestIssue99|^TestIssue100' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 9.898,
+      "observed": "4 successful uploads left only1 new index row; duplicate and17-ID clone selections both returned200 and reached mock; same-instance encrypted lock/unlock restored0 instead of2 rows; locked clear returned200 and changed saved cipher."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue98|^TestVoiceSample' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 12.722,
+      "scope": "Concurrent upload and delete, queued cancellation, independent other profile and existing sample APIs."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue98|^TestIssue99|^TestVoiceSample|^TestVoiceCloneCreate|^TestVoicePersonality' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 25.759,
+      "scope": "Duplicate/count/aggregate/per-cipher rejection,16 valid samples exact mock payload and existing sample/clone/personality tests."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue98|^TestIssue99|^TestIssue100|^TestVoice' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 35.21,
+      "scope": "All voice-prefixed tests plus98/99/100, same-instance latest cipher, unlocked clear remains empty after lock/restart with password verification, locked clear403, failed clear500 preserves state, failed enable/password/disable/rewrap rolls back in-memory transition."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T164745098507Z.log",
+      "fingerprint": "f8ed99ca06820d964ecd273727e56512674150f24a592c8bea9d12873a8b20fc"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427Markdown/1465local links"
+    }
+  ],
+  "intermediateFailures": [
+    {
+      "result": "FAIL_TEST_ASSERTION",
+      "durationSeconds": 33.25,
+      "reason": "Existing encryption test required compact JSON substring. Atomic writer emits valid indented JSON; replaced test with JSON decoding and encrypted-flag assertion; plaintext leakage assertions retained. No cryptographic expectation weakened."
+    },
+    {
+      "result": "FAIL_ENVIRONMENT",
+      "receipt": ".agent-state/verify-20261026T164425785964Z.log",
+      "reason": "Only test_offline_bundle failed existing10GiB temp-space gate; explicit generatedGo cache6.8GiB. After Go jobs completed, go clean -cache cleared only/tmp/aide-issue-review-go-cache and final quick passed."
+    },
+    {
+      "result": "EXECUTOR_TEMPORARILY_UNAVAILABLE",
+      "reason": "Commit/cache-clean/rerun command could not create process because exec-server transport disconnected. Environment restored; status verified pre-command state remained, then command completed. No claim of successful push during outage."
+    }
+  ],
+  "notes": [
+    "#98 independent FIFO queue per profile serializes file/index mutation in upload/delete/wipe. Upload input is buffered before admission. Cancellation does not mutate data; unrelated profiles proceed. Single-App serialization does not recover old orphaned files or coordinate external processes.",
+    "#99 reject duplicate/invalid IDs and>16 selections for all backends. GPT-SoVITS preflights all actual encrypted sizes under profile gate before any Base64 construction, limits each cipher to15MiB+GCM overhead and decoded total32MiB, and rechecks bounded actual decrypt lengths. Gate released before outbound HTTP; bytes.Reader avoids copying JSON through string. Limits are per request, not aggregate concurrency; cannot recall an already-sent request via later deletion.",
+    "#100 atomic history persistence refreshes cachedCipher only after success; encrypted locked clear403, failed unlocked clear500 preserves state. Failed encryption/key transitions restore prior in-memory state. Agentic history writes now hold VoiceAgent.mu rather than App.mu. Raw audio and actual secrets were not used.",
+    "Historical environment/platform/full-release blockers remain; no actual clone model quality, physical recording, native platform or full production workbench acceptance. No main merge, release or deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "comments": {
+      "98": "https://github.com/skyelan1999/aide/issues/98#issuecomment-6421886703",
+      "99": "https://github.com/skyelan1999/aide/issues/99#issuecomment-6421888181",
+      "100": "https://github.com/skyelan1999/aide/issues/100#issuecomment-6421889331"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/server.go": "5881dbf5167ea9b464a3c95680d49fc86f5fbfade6b06c1925d2450369e6fdea",
+    "internal/server/voice_samples.go": "1e4a6c31c3eb539bdb7f0c1e37063d4c52beb3fb35171c900498c1c362082db7",
+    "internal/server/voice_sample_index_race_test.go": "1bb85145e6c3ecf073a9e9885468bf4c187105ad49a629696456b55eea939249",
+    "internal/server/voice_clone_bounds_test.go": "5e9e6db6053525f5bf2178c143ac95d22a9ecf5929104f549111071143848b8a",
+    "internal/server/voice_agent.go": "24b7d0779b11792fe784b03c910d9df7abfa93fd23f94d78b264f9f1de20aa54",
+    "internal/server/voice_agent_test.go": "548cb8855961ad5cf5b9e49a5ceb4847dc1657e98d410969b2dd4b788aabc224",
+    "internal/server/voice_history_cipher_test.go": "b802bad32efefc9db1fce09fb00b55754208565f2d77a21a5c9ea72a5c8978f6"
+  }
+}

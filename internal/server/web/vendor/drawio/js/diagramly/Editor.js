@@ -2604,7 +2604,9 @@
 			result = Editor.extractGraphModelFromXref(obj);
 		}
 		
-		if (result != null)
+		try
+		{
+			if (result != null)
 		{
 			// Decodes the string escapes of external editors that rewrite
 			// the subject as a literal string (eg. Preview escapes the
@@ -2614,6 +2616,12 @@
 				replace(/\\([\\()])/g, '$1').
 				replace(/\\\(/g, "(").
 				replace(/\\\)/g, ")"));
+		}
+
+		}
+		catch (e)
+		{
+			return null;
 		}
 
 		return result;
@@ -5120,7 +5128,7 @@
 		}
 		
 		// Does not use proxy for same domain
-		if (url.substring(0, window.location.origin.length) == window.location.origin)
+		if (Graph.isSameOrigin(url))
 		{
 			return true;
 		}
@@ -5128,7 +5136,21 @@
 		// Blocked by CSP in production but allowed for hosted deployment
 		if (urlParams['cors'] != null && this.corsRegExp == null)
 		{
-			this.corsRegExp = new RegExp(decodeURIComponent(urlParams['cors']));
+			// Rejected rules are cached too. Never fall back to native RegExp.
+			this.corsRegExp = {test: function() { return false; }};
+			try
+			{
+				var raw = urlParams['cors'];
+				if (typeof raw == 'string' && raw.length <= 6144 && window.AideDrawioLinearRegex != null)
+				{
+					var matcher = window.AideDrawioLinearRegex.compile(decodeURIComponent(raw));
+					if (matcher != null) this.corsRegExp = matcher;
+				}
+			}
+			catch (e)
+			{
+				// Invalid URI escapes and unsupported regex syntax use normal proxy routing.
+			}
 		}
 		
 		// No access-control-allow-origin for some Iconfinder images, add this when fixed:
@@ -11400,7 +11422,7 @@
 				}
 				else
 				{
-					var temp = mapping[action[name][i]];
+					var temp = Object.prototype.hasOwnProperty.call(mapping, action[name][i]) ? mapping[action[name][i]] : null;
 					
 					if (temp != null)
 					{
@@ -11434,7 +11456,7 @@
 		// Union of cells from `cells` and `tags`. De-dup by id so a
 		// cell that matches both selectors doesn't get the action
 		// applied twice.
-		var seen = {};
+		var seen = Object.create(null);
 		var union = [];
 		var merge = function(cells)
 		{
@@ -11482,7 +11504,7 @@
 		// semantics on `cells`.
 		if (action.excludeCells != null && action.excludeCells.length > 0)
 		{
-			var excludeIds = {};
+			var excludeIds = Object.create(null);
 			var excludeAll = false;
 
 			for (var i = 0; i < action.excludeCells.length; i++)
@@ -11676,11 +11698,11 @@
 			cells = (cells != null) ? cells : this.model.getDescendants(this.model.getRoot());
 
 			var tagCount = 0;
-			var lookup = {};
+			var lookup = Object.create(null);
 
 			for (var i = 0; i < tagList.length; i++)
 			{
-				if (tagList[i].length > 0)
+				if (tagList[i].length > 0 && lookup[tagList[i]] !== true)
 				{
 					lookup[tagList[i]] = true;
 					tagCount++;
@@ -11702,14 +11724,16 @@
 						// OR mode matches as soon as one tag overlaps. AND mode
 						// keeps the original requirement (every listed tag must
 						// be present), short-circuiting once the count hits.
-						if (orMode || tmp.length >= tagList.length)
+						if (orMode || tmp.length >= tagCount)
 						{
 							var matchCount = 0;
+							var matched = Object.create(null);
 
 							for (var j = 0; j < tmp.length && (matchCount < tagCount); j++)
 							{
-								if (lookup[tmp[j]] != null)
+								if (lookup[tmp[j]] === true && matched[tmp[j]] !== true)
 								{
+									matched[tmp[j]] = true;
 									matchCount++;
 								}
 							}
@@ -12340,13 +12364,15 @@
 		});
 		
 		function validatePageRange()
-		{
-			pagesToInput.value = Math.max(1, Math.min(pageCount,
-				Math.max(parseInt(pagesToInput.value), parseInt(pagesFromInput.value))));
-			pagesFromInput.value = Math.max(1, Math.min(pageCount,
-				Math.min(parseInt(pagesToInput.value), parseInt(pagesFromInput.value))));
-		};
-		
+        {
+            var from = parseInt(pagesFromInput.value, 10);
+            var to = parseInt(pagesToInput.value, 10);
+            from = isFinite(from) ? Math.max(1, Math.min(pageCount, from)) : currentPage;
+            to = isFinite(to) ? Math.max(1, Math.min(pageCount, to)) : from;
+            pagesFromInput.value = Math.min(from, to);
+            pagesToInput.value = Math.max(from, to);
+        };
+
 		mxEvent.addListener(pagesFromInput, 'change', validatePageRange);
 		mxEvent.addListener(pagesToInput, 'change', validatePageRange);
 		
@@ -12782,6 +12808,14 @@
 		// Preview or print
 		function preview(print)
 		{
+			if (fitRadio.checked)
+			{
+				var across = Number(sheetsAcrossInput.value), down = Number(sheetsDownInput.value);
+				if (!Number.isSafeInteger(across) || across < 1 || !Number.isSafeInteger(down) || down < 1)
+				{
+					throw new Error('Fit sheet counts must be positive integers');
+				}
+			}
 			editorUi.lastPrintPagesRadioChecked = pagesRadio.checked;
 			editorUi.lastPrintSelectionOnlyChecked = selectionOnlyRadio.checked;
 			editorUi.lastPrintCropRadioChecked = cropRadio.checked;
@@ -12809,6 +12843,7 @@
 			editorUi.lastPrintSheetsAcross = sheetsAcrossInput.value;
 			editorUi.lastPrintSheetsDown = sheetsDownInput.value;
 
+			validatePageRange();
 			var args = {};
 			args.border = parseInt(borderInput.value);
 			args.scale = parseInt(zoomInput.value) / 100;
@@ -13359,6 +13394,57 @@
 		return {animation: {steps: steps}};
 	};
 
+	/* AIDE animation validation #168 */
+	Editor.validateAnimationData = function(data)
+	{
+		var pending = [{data: data, depth: 0}], count = 0;
+		var objectActions = ['fadeIn', 'fadeOut', 'fadeTo', 'opacity',
+			'wipeIn', 'wipeOut', 'popIn', 'popOut', 'flow', 'toggle',
+			'show', 'hide', 'select', 'style', 'toggleStyle', 'highlight',
+			'scroll', 'viewbox', 'tags', 'animation'];
+		var fail = function(index)
+		{
+			var error = new Error(mxResources.get('invalidInput') + ' (' + (index + 1) + ')');
+			error.animationData = data;
+			throw error;
+		};
+
+		for (var n = 0; n < pending.length; n++)
+		{
+			var entry = pending[n], steps = entry.data != null ? entry.data.steps : null;
+			if (!Array.isArray(steps) || entry.depth > 128) fail(0);
+			for (var i = 0; i < steps.length; i++)
+			{
+				var step = steps[i];
+				if (++count > 100000 || step == null || typeof step !== 'object' || Array.isArray(step)) fail(i);
+				for (var j = 0; j < objectActions.length; j++)
+				{
+					var key = objectActions[j];
+					if (Object.prototype.hasOwnProperty.call(step, key) &&
+						(step[key] == null || typeof step[key] !== 'object' || Array.isArray(step[key]))) fail(i);
+				}
+				if (Object.prototype.hasOwnProperty.call(step, 'wait') &&
+					((typeof step.wait !== 'number' && typeof step.wait !== 'string') ||
+					(typeof step.wait === 'string' && step.wait.trim() === '') ||
+					!isFinite(Number(step.wait)) || Number(step.wait) < 0)) fail(i);
+				if (Object.prototype.hasOwnProperty.call(step, 'open') && typeof step.open !== 'string') fail(i);
+				if (Object.prototype.hasOwnProperty.call(step, 'animation'))
+				{
+					if (!Array.isArray(step.animation.steps)) fail(i);
+					pending.push({data: step.animation, depth: entry.depth + 1});
+				}
+			}
+		}
+		return data;
+	};
+
+	Editor.getAnimationStepError = function(step)
+	{
+		try { Editor.validateAnimationData({steps: [step]}); }
+		catch (e) { return e.message; }
+		return null;
+	};
+
 	/**
 	 * Returns the normalized {steps: [...], loop} structure for an animation
 	 * value stored on a cell, page root, or custom-link action. Accepts:
@@ -13382,7 +13468,7 @@
 			// autoplay; `loop` toggles repeat playback.
 			data.loop = (data.loop == null) ? true : !!data.loop;
 			data.enabled = (data.enabled == null) ? true : !!data.enabled;
-			return data;
+			return Editor.validateAnimationData(data);
 		};
 
 		if (value == null || value === '')
@@ -13481,7 +13567,7 @@
 	Editor.AnimationPlayer.prototype.collectReferencedCells = function()
 	{
 		var steps = this.data.steps || [];
-		var seen = {};
+		var seen = Object.create(null);
 		var cells = [];
 
 		for (var i = 0; i < steps.length; i++)
@@ -13593,6 +13679,8 @@
 		{
 			return;
 		}
+
+		Editor.validateAnimationData(this.data);
 
 		opts = opts || {};
 		this.running = true;

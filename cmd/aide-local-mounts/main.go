@@ -4,7 +4,6 @@ package main
 import (
 	"aide/internal/localmounts"
 	"context"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -53,11 +52,17 @@ func compose(ctx context.Context, docker string, args ...string) ([]byte, error)
 }
 
 func refreshForwarders(ctx context.Context, root, docker string) error {
-	suffix := ".sh"
 	if runtime.GOOS == "windows" {
-		suffix = ".ps1"
+		launcher := nativeWindowsLauncher()
+		if info, err := os.Stat(launcher); err != nil || !info.Mode().IsRegular() {
+			return errors.New("native Windows launcher missing; restore aide-launcher.exe")
+		}
+		if _, err := command(ctx, launcher, "refresh-helpers", "--root", root, "--no-browser"); err != nil {
+			return fmt.Errorf("Aide restarted, but native forwarding refresh failed: %w", err)
+		}
+		return nil
 	}
-	script := filepath.Join(root, "scripts", "message-lan-control"+suffix)
+	script := filepath.Join(root, "scripts", "message-lan-control.sh")
 	if info, err := os.Stat(script); os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -65,13 +70,7 @@ func refreshForwarders(ctx context.Context, root, docker string) error {
 	} else if !info.Mode().IsRegular() {
 		return errors.New("message forwarding controller is not a regular file")
 	}
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		// Fixed PowerShell source; paths and implementation choice are data only.
-		cmd = exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-Command", `$ErrorActionPreference='Stop';$c=if($env:AIDE_LOCAL_MOUNTS_COMPOSE -and $env:AIDE_LOCAL_MOUNTS_COMPOSE -ne 'docker'){@($env:AIDE_LOCAL_MOUNTS_COMPOSE)}else{@($env:AIDE_REFRESH_DOCKER,'compose')}; & $env:AIDE_REFRESH_SCRIPT -Action start -DockerBin $env:AIDE_REFRESH_DOCKER -ComposeCommand $c`)
-	} else {
-		cmd = exec.CommandContext(ctx, "bash", script, "start")
-	}
+	cmd := exec.CommandContext(ctx, "bash", script, "start")
 	cmd.Env = append(os.Environ(), "DOCKER_BIN="+docker, "AIDE_REFRESH_DOCKER="+docker, "AIDE_REFRESH_SCRIPT="+script)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("Aide restarted, but message/mobile forwarding refresh failed; restart the launcher: %w", err)
@@ -102,6 +101,12 @@ func watchStop(ctx context.Context, cancel context.CancelFunc, dir string) {
 				cancel()
 				return
 			}
+			if runtime.GOOS == "windows" {
+				if _, e := os.Stat(filepath.Join(dir, "..", "..", "..", "native", "stop")); e == nil {
+					cancel()
+					return
+				}
+			}
 		}
 	}
 }
@@ -109,37 +114,9 @@ func processAlive(pid int) (bool, error) {
 	if pid <= 0 {
 		return false, errors.New("invalid directory helper PID")
 	}
-	if runtime.GOOS == "windows" {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		raw, err := command(ctx, "tasklist.exe", "/FO", "CSV", "/NH", "/FI", "PID eq "+strconv.Itoa(pid))
-		if err != nil {
-			return false, err
-		}
-		records, err := csv.NewReader(strings.NewReader(string(raw))).ReadAll()
-		if err != nil {
-			return false, err
-		}
-		for _, row := range records {
-			if len(row) > 1 && row[1] == strconv.Itoa(pid) {
-				return true, nil
-			}
-		}
-		return false, nil
-	}
-	p, err := os.FindProcess(pid)
-	if err != nil {
-		return false, err
-	}
-	err = p.Signal(syscall.Signal(0))
-	if err == nil || errors.Is(err, os.ErrPermission) {
-		return true, nil
-	}
-	if errors.Is(err, syscall.ESRCH) || errors.Is(err, os.ErrProcessDone) {
-		return false, nil
-	}
-	return false, err
+	return platformProcessAlive(pid)
 }
+
 func clearDeadLock(path string) (bool, error) {
 	raw, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
@@ -158,13 +135,20 @@ func clearDeadLock(path string) (bool, error) {
 	}
 	// Do not remove a replacement owner's lock.
 	again, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return true, nil // The exiting owner already removed its lock.
+	}
 	if err != nil {
 		return false, err
 	}
 	if string(again) != string(raw) {
 		return false, nil
 	}
-	return true, os.Remove(path)
+	err = os.Remove(path)
+	if os.IsNotExist(err) {
+		err = nil // Removal by the owner is also a successful cleanup.
+	}
+	return true, err
 }
 func stopHelper(dir string, timeout time.Duration) error {
 	if err := os.WriteFile(filepath.Join(dir, "stop"), []byte("stop"), 0600); err != nil {
@@ -233,14 +217,35 @@ func acquireHelper(dir string) (func(), error) {
 	return nil, errors.New("cannot acquire directory helper lock")
 }
 
+func nativeWindowsLauncher() string {
+	if configured := os.Getenv("AIDE_NATIVE_LAUNCHER_EXE"); configured != "" {
+		if info, err := os.Stat(configured); err == nil && info.Mode().IsRegular() && filepath.IsAbs(configured) && strings.EqualFold(filepath.Ext(configured), ".exe") {
+			return configured
+		}
+		return ""
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	launcher := filepath.Join(filepath.Dir(executable), "..", "..", "aide-launcher.exe")
+	if info, err := os.Stat(launcher); err != nil || !info.Mode().IsRegular() {
+		return ""
+	}
+	return launcher
+}
+
 func choose(ctx context.Context) (string, error) {
 	switch runtime.GOOS {
 	case "darwin":
 		out, err := command(ctx, "/usr/bin/osascript", "-e", `POSIX path of (choose folder with prompt "选择允许 Aide 访问的目录")`)
 		return strings.TrimRight(strings.TrimSpace(string(out)), "/"), err
 	case "windows":
-		out, err := command(ctx, "powershell.exe", "-NoProfile", "-STA", "-Command", `[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false);Add-Type -AssemblyName System.Windows.Forms;$d=New-Object System.Windows.Forms.FolderBrowserDialog;$d.Description='Choose a directory for Aide';if($d.ShowDialog() -eq 'OK'){[Console]::Write($d.SelectedPath)}else{exit 2}`)
-		return strings.TrimSpace(string(out)), err
+		if launcher := nativeWindowsLauncher(); launcher != "" {
+			out, err := command(ctx, launcher, "choose-directory")
+			return strings.TrimSpace(string(out)), err
+		}
+		return "", errors.New("native Windows launcher missing; restore aide-launcher.exe")
 	default:
 		return "", errors.New("native directory selection requires Windows or macOS; enter an absolute directory instead")
 	}
@@ -251,8 +256,11 @@ func confirmApply(ctx context.Context) error {
 		_, err := command(ctx, "/usr/bin/osascript", "-e", `display dialog "Aide 将按已保存的目录权限重新创建应用容器。请先保存工作，运行中的会话和手机连接将中断。" buttons {"取消", "应用并重启"} default button "取消" cancel button "取消"`)
 		return err
 	case "windows":
-		_, err := command(ctx, "powershell.exe", "-NoProfile", "-STA", "-Command", `Add-Type -AssemblyName System.Windows.Forms;if([System.Windows.Forms.MessageBox]::Show('Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.','Aide directories','OKCancel','Warning') -ne 'OK'){exit 2}`)
-		return err
+		if launcher := nativeWindowsLauncher(); launcher != "" {
+			_, err := command(ctx, launcher, "confirm-directory-restart")
+			return err
+		}
+		return errors.New("native Windows launcher missing; restore aide-launcher.exe")
 	default:
 		return errors.New("use the launcher to apply directory changes on this operating system")
 	}
@@ -273,7 +281,7 @@ func protected(ctx context.Context, docker string) ([]string, error) {
 	dirs := []string{}
 	for _, v := range cfg.Services["aide"].Volumes {
 		if v.Type == "bind" && !strings.HasPrefix(v.Target, "/mounts/") && v.Target != "/run/aide-local-mounts.json" {
-			dirs = append(dirs, v.Source)
+			dirs = append(dirs, platformComposePath(v.Source))
 		}
 	}
 	return dirs, nil
@@ -308,6 +316,11 @@ func apply(ctx context.Context, root, docker, revision string) error {
 	if err = confirmApplication(ctx); err != nil {
 		return errors.New("application cancelled on host")
 	}
+	unlock, err := lockNativeLifecycle(ctx, root)
+	if err != nil {
+		return err
+	}
+	defer unlock()
 	// Recheck after the native confirmation; never apply a substituted plan.
 	c, err = localmounts.Read(desired)
 	if err != nil || localmounts.Revision(c) != revision {
@@ -332,10 +345,25 @@ func apply(ctx context.Context, root, docker, revision string) error {
 				return fmt.Errorf("apply failed and rollback metadata failed: %w", e)
 			}
 		}
+		if runtime.GOOS == "windows" && ctx.Err() != nil {
+			// The controller will terminate its owned job on a requested stop.
+			// On an independent command timeout, pause other native mutations;
+			// never race an unconfirmed Docker descendant with automatic rollback.
+			if _, stopped := os.Stat(filepath.Join(root, ".aide-data/native/stop")); stopped != nil {
+				if e := localmounts.Write(filepath.Join(root, ".aide-data/native/host-stop-required"), map[string]any{
+					"source": "directory-apply", "controllerGeneration": os.Getenv("AIDE_NATIVE_CONTROLLER_GENERATION"),
+					"reason": "directory command timed out; confirm the owned controller has stopped",
+				}); e != nil {
+					return fmt.Errorf("directory command stopped; native blocker could not persist: %w", e)
+				}
+			}
+			return errors.New("directory command stopped; metadata restored, native stop/start is required")
+		}
 		rollbackCtx, rollbackCancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer rollbackCancel()
 		_, rollback := compose(rollbackCtx, docker, "up", "-d", "--no-deps", "--no-build", "--pull", "never", "--wait", "--wait-timeout", "90", "aide")
 		if rollback == nil {
+			unlock()
 			rollback = refreshForwarders(rollbackCtx, root, docker)
 		}
 		if rollback != nil {
@@ -343,6 +371,7 @@ func apply(ctx context.Context, root, docker, revision string) error {
 		}
 		return errors.New("application failed; original directory configuration restored")
 	}
+	unlock()
 	return refreshForwarders(ctx, root, docker)
 }
 func main() {

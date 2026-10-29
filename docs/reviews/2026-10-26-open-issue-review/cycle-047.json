@@ -1,0 +1,89 @@
+{
+  "cycle": 47,
+  "baseline": "5107fdfd581ce2199f65fe1572ebd6cdf7ece7e2",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    178
+  ],
+  "commits": {
+    "178": "70c146847d480a4cd33f98f32306af1b0fe78529"
+  },
+  "cumulativeProductFixes": 108,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 109,
+  "original272RemainingFollowup": 175,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "issue": 178,
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_visio_nurbs.cjs (before fix)",
+      "observed": "实际源码getControlPoints接受degree12/16内部控制点，生成17个点；预期AIDE_VISIO_LIMIT拒绝断言失败。有限输入约2ms路径探针先行，不声称已造成卡死或完成性能基准。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle47-nurbs-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_visio_nurbs.cjs (also in final quick)",
+      "scope": "源码/两分发完整getControlPoints方法，合成shape与几何类型，换算因子100：有效三次曲线、度数/控制点/公式拒绝、度数8/256控制点边界、单边多NURBS行累计工作拒绝以及新边预算重置。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle47-nurbs-green-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_NURBS_ACCEPTANCE=1 AIDE_DRAWIO_POLYLINE_ACCEPTANCE=1 AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle47-browser-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154，完整Visio源码/两分发转换器代码段清空旧命名空间后加载；真实XML行工厂与VsdxShape方法配合合成shape坐标getter，实际单位换算，NURBS拒绝/边界/重试、真实图编辑器边渲染并在1440明色/390暗色截图可见。联验176/177、Lucidchart/可信缓存/原资源预算，共43组，零pageerror，finally关闭context。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle47-browser-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261027T041752466204Z.log",
+      "fingerprint": "bb97f3e380f22718eaa7983838939d75803401c2a60a440775401be8ad6abed4"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_visio_nurbs.cjs --check; node --check (3 new scripts); python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links；两分发在getControlPoints方法外字节不变。"
+    }
+  ],
+  "securityReview": [
+    "原文先限65536 UTF-16代码单元再规范化/拆分，度数最多8，含当前点与末尾点共256控制点；在构建本行控制点/评估前扣除保守预算，不静默截断或降阶。",
+    "工作单位按最大采样数、De Boor度数二次工作、二分查找与规划遍历保守计数，每getControlPoints调用250000，跨单条边内NURBS行共享；新调用重新计数。未修改XML/ZIP/可信缓存预算或服务端权限。",
+    "分发同步捕获外部namespace到独立闭包，避免源码内部g局部循环变量遮蔽namespace；全量真实转换器初始化和单位方法均验收。",
+    "仅单边NURBS预算，不代表所有几何算法或文件总内存/时间上限；复杂合法高阶/多点曲线也可能拒绝。根协调者顺序复核，无子agent。"
+  ],
+  "notRun": [
+    "完整Aide工作台、含NURBS的真实微软压缩包、复杂权重与全部坐标/曲线语义、全部集成bootstrap、跨平台；正常浏览器曲线为合成XML及坐标getter且控制点共线，不冒称非线性曲面或全部曲线兼容。",
+    "Go race/vet未重复，本批前端几何预算和回归工具。"
+  ],
+  "notes": [
+    "原无效公式的直线回退保持，已接受曲线的算法主体未改；本轮不处理其他几何复杂度或BMP异步回调。",
+    "上一有限probe检查点已持久化，现在以本轮拒绝回归、最终单位/浏览器/quick替代仅路径执行的阶段状态。",
+    "保留用户原未跟踪文件，无常驻服务；只push修复分支，不合并main/发行/部署；下一179正文已读，尚未修改或新增回归。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "178": "https://github.com/skyelan1999/aide/issues/178#issuecomment-6433668648"
+    },
+    "remoteCommit": "97a37dcfc2e51b9196555a1eebb66337a49b2887"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "7908f14732c4c1eb53f2a6ebe2baabc486e263af25f669ea97e41b05f37f8f69",
+    "docs/architecture/office-viewer.md": "679c48c7b110b09a3b49b98a6f7e2793d34ac928547d14d5133cc77e0b605d2c",
+    "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js": "64a7f8cc9fdba474151f5e88352a353e2794a3346cf9aca1f238921bfa253130",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "f1d353f93d11fc7f2cf38fb1b8e64c43f6273b49f29ed329d370ee64d1a478a9",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "8fffdb67cb73baec4119c4c772cbd17d9c8f47858f3e5439dcdc3f994f47df59",
+    "scripts/drawio-visio-archive-browser-cases.cjs": "ab152e83a8f4e41635d969e0c16bd23d2f79b292cffa61729d4a7b7d38f4542a",
+    "scripts/drawio-visio-nurbs-browser-cases.cjs": "128f950bda7d34dec4102df9647049f0bae862403cd85c94109d403e300ce743",
+    "scripts/sync_drawio_visio_nurbs.cjs": "d0733c56bb4977b15a2e06b12d415ae93204e749c2ee4f4fb3ba486a8e9f9dd5",
+    "scripts/test_drawio_visio_nurbs.cjs": "ea5a5db9f2aadb4269f04363474cef1d54b03a3cb3fec46453bc361794efc739"
+  }
+}

@@ -262,8 +262,9 @@ func TestSourceProposalRejectsLockedCreation(t *testing.T) {
 func TestSourceProposalIndependentSFTP(t *testing.T) {
 	a := testApp(t)
 	reliabilitySSHStub(t, a, true)
-	src := registerReliabilitySource(a, Source{ID: "remote-ref", RW: true, Config: SourceConfig{Path: "/remote/reference", Host: "fixture.example", Username: "fixture", Auth: "none"}})
 	remote := t.TempDir()
+	attachOwnedSFTPProtocol(t, a, "", "", "")
+	src := registerReliabilitySource(a, Source{ID: "remote-ref", RW: true, Config: SourceConfig{Path: remote, Host: "fixture.example", Username: "fixture", Auth: "none"}})
 	log := filepath.Join(t.TempDir(), "batches")
 	a.sftpBin = filepath.Join(t.TempDir(), "sftp")
 	writeStub(t, a.sftpBin, `#!/bin/sh
@@ -287,7 +288,7 @@ done
 		t.Fatalf("SFTP destination: %s %v", b, err)
 	}
 	b, _ = os.ReadFile(log)
-	if !strings.Contains(string(b), "/remote/reference/report.md") {
+	if !strings.Contains(string(b), filepath.Join(remote, "report.md")) {
 		t.Fatal("source root not used")
 	}
 }

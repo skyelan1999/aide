@@ -170,7 +170,15 @@ mxArrowConnector.prototype.paintEdgeShape = function(c, pts)
 		}
 	}
 
-	// Base vector (between first points)
+	// Curve points have already been sampled into a polyline above.
+    var clean = [];
+    for (var i = 0; i < pts.length; i++)
+    {
+        if (clean.length == 0 || pts[i].x != clean[clean.length - 1].x || pts[i].y != clean[clean.length - 1].y) clean.push(pts[i]);
+    }
+    pts = clean;
+    if (pts.length < 2) return;
+    // Base vector (between first points)
 	var pe = pts[pts.length - 1];
 	var dx = pts[1].x - pts[0].x;
 	var dy = pts[1].y - pts[0].y;

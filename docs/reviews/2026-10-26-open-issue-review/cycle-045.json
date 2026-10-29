@@ -1,0 +1,106 @@
+{
+  "cycle": 45,
+  "baseline": "b75a3e78cc96a9b4dab8cc377bf066b06870115d",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    176
+  ],
+  "commits": {
+    "176": "98f33d5582a289bf942fcced73004d07ea3aaf82"
+  },
+  "cumulativeProductFixes": 106,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 107,
+  "original272RemainingFollowup": 177,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "issue": 176,
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_visio_archive.cjs (initial fixture)",
+      "observed": "真实源码decodeVsdx与分发JSZip把8433字节ZIP展开为8388646字符文本并送入parseXml；测试在解析入口主动停止，预期AIDE_VISIO_LIMIT未出现。未声称实际造成页面崩溃。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle45-visio-red.log"
+    },
+    {
+      "issue": 176,
+      "result": "REGRESSION_REPRODUCED",
+      "observed": "初次完整Visio浏览器验收：VSDX可报超限并恢复有效页，VSSX坏包10秒无回调。源码decodeVssx未把onerror传给decodeVsdx；补充转交后同入口报错恢复通过。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle45-browser-trace.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_visio_archive.cjs",
+      "scope": "源码/两分发真实方法+分发JSZip：有效XML/rels到原解析入口（转换后续人为停止）；媒体字节原样保留；精确8MiB成员/16MiB累计边界通过；压缩输入/条目数/单项及累计声明拒绝；修改JSZip解析后元数据为小值或隐藏声明时仍按真实流字节拒绝；同时间压缩展开1，超限不启动后续成员；损坏ZIP；VSSX错误回调仅一次；类发布前正确安装方法。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle45-visio-unit-final.log"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle45-browser-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154实际本地draw.io iframe，清空旧Visio命名空间后预载每份完整源码/分发Visio转换器段，真实doImportVisio调用VSDX/VSSX坏包错误+有效空白页面/空图库恢复，实际错误对象进入handleError窗口，1440明色/390暗色显示关闭；联验Lucidchart、内置缓存及原资源门禁共31组、零pageerror，finally关闭自建context。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle45-browser-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261027T033842919805Z.log",
+      "fingerprint": "34e18fadb6602757e15d20cb7f94dfb687d61fe074a22c4c30df5ce724ebc442"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_visio_archive.cjs --check; node --check (3 scripts); python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "observed": "429Markdown/1469links；两分发在同步的VSDX/VSSX两段之外字节不变；源码只新增loader、改一调用及转交onerror。"
+    }
+  ],
+  "preflightFailures": [
+    {
+      "result": "FAIL_TEST_FIXTURE",
+      "observed": "最初VM有效路径错误地把仅验证原始字节的BMP头部夹具送进实际BMP解码，而VM未加载BmpDecoder。已把转换正例限于XML/rels和普通媒体；BMP仅验证loader字节保留，不声称图像解码通过。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle45-visio-unit.log"
+    },
+    {
+      "result": "FAIL_IMPLEMENTATION_BOOTSTRAP",
+      "observed": "首次同步产物在构造器发布前用全局namespace赋方法，完整浏览器加载下一份转换器时发现decodeVsdx缺失。未提交该版本；生成器改为局部构造器赋值，新增发布前单测，清空旧命名空间重测完整转换器通过。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle45-browser-error-forwarded.log"
+    }
+  ],
+  "securityReview": [
+    "根协调者按安全skill顺序复核：不依赖声明大小作唯一门禁；受限压缩输入先于JSZip，实际每块累计先于保存，串行展开，超限pause/清空块列表并reject，不启动下一成员；未修改原文档XML预算、鉴权或可信缓存。",
+    "JSZip目录计数是loadAsync后保留的键数，含目录/未使用条目；不是原始中央目录物理记录逐项计数。输入大小另有限制。",
+    "流暂停以库块为粒度；不声称整个导入的严格进程内存或CPU上限。媒体像素解码与后续几何复杂度另界定，#177继续跟进。"
+  ],
+  "notRun": [
+    "完整Aide工作台、真实微软VSDX/VSSX复杂文件与主控形状兼容、复杂媒体解码/像素预算、完整integrate或独立vsdxImporter页面启动、跨平台。浏览器正常夹具仅单空白页/空图库；VM元数据变体在JSZip解析后修改，不冒称真实伪造中央目录文件。",
+    "Go race/vet未重复；本批为前端资源门禁与回归工具。"
+  ],
+  "notes": [
+    "源码与extensions.min.js、integrate.min.js同步。vsdxImporter.js是入口封装而非解压实现；app.min.js另一JSZip调用不是此Visio路径，未混改。",
+    "原始UTF-8/UTF-16/媒体转换流程继续读取已限制的原始字节，未声称真实UTF-16文件或BMP/EMF完整兼容均已验收。",
+    "根协调者承担前端、安全、验证角色，无子agent。保留用户未跟踪文件、无常驻服务、不合并main/发行/部署。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "176": "https://github.com/skyelan1999/aide/issues/176#issuecomment-6433181816"
+    },
+    "remoteCommit": "9494bef7c2a71472c78c2f8a1417518c2ccf1b4e"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "cfb611fcfc5eabb5ca068b48ae406d243f888fdede53aa2160c0fa294ab58a98",
+    "docs/architecture/office-viewer.md": "f16c263d5b93dca3b60c76c1f7f069415b824d2b4d1c6192ec0f8b35f325166c",
+    "internal/server/web/vendor/drawio/js/diagramly/vsdx/importer.js": "9a7d446e3f3cee2d0c0bbb64610c5e115b6bf0b487a3691f426753be5510dda6",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "90685608613629223095f21a567cfcc75bba7212c902a1837c13cd441abfd117",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "aa5cf5c00ca2197d63aaee8fba41584400bcea9bbd597742f72d7c5fc98519c3",
+    "scripts/browser-drawio-preview-bounds.cjs": "7ff777e3145c298ffd01a4e711b6f45215d66b2c5406c36e7016c3bf9570ab66",
+    "scripts/drawio-visio-archive-browser-cases.cjs": "103b47451d34fb860bf7405f7bf5552b20e11583d07831a340291cbd6418ea87",
+    "scripts/sync_drawio_visio_archive.cjs": "1eec06dc84b97e8d8a5c7a3e53cd2323ef95f49bf3a4c1b130bbfd0ebafc0364",
+    "scripts/test_drawio_visio_archive.cjs": "57896b89965c129231e68ed47ab57627c6af4347bb8b4616eb5b083b4ea75045"
+  }
+}

@@ -1115,6 +1115,11 @@ Graph = function(container, model, renderHint, stylesheet, themes, standalone)
 		// Applies newEdgeStyle
 		this.connectionHandler.insertEdge = function(parent, id, value, source, target, style)
 		{
+			// Validate before the base handler mutates the model.
+			if (source != null)
+			{
+				Graph.decodeNewEdgeStyle(this.graph.getCellStyle(source)['newEdgeStyle']);
+			}
 			var edge = mxConnectionHandler.prototype.insertEdge.apply(this, arguments);
 
 			if (source != null)
@@ -2727,8 +2732,12 @@ Graph.fadeNodes = function(nodes, start, end, done, delay)
  */
 Graph.exploreFromCell = function(sourceGraph, selectionCell, config)
 {
-	pageSize = (config != null && config.pageSize != null) ? config.pageSize : 8;
-	minSize = (config != null && config.minSize != null) ? config.minSize : 180;
+	var pageSize = (config != null && config.pageSize != null) ? config.pageSize : 8;
+	if (!Number.isSafeInteger(pageSize) || pageSize <= 0)
+	{
+		throw new Error('Explore page size must be a positive integer');
+	}
+	var minSize = (config != null && config.minSize != null) ? config.minSize : 180;
 
 	//
 	// Main function
@@ -7592,6 +7601,7 @@ var graphDestroy = Graph.prototype.destroy;
 Graph.prototype.destroy = function()
 {
 	this.destroyBrowserTranslate();
+	if (this.clickHandlerCleanup != null) this.clickHandlerCleanup();
 	graphDestroy.apply(this, arguments);
 };
 
@@ -17838,7 +17848,26 @@ if (typeof mxVertexHandler !== 'undefined')
 			{
 				var result = markerGetCell.apply(this, arguments);
 			
-				this.error = null;
+				// Ignore an invalid edge target as empty canvas, while retaining
+				// vertex validation errors such as a forbidden self-loop.
+				var cell = me.getCell();
+				if (cell == null && this.currentPoint != null)
+				{
+					cell = this.graph.getCellAt(this.currentPoint.x, this.currentPoint.y);
+				}
+				// Match the base marker's promotion to a connectable parent.
+				if (cell != null && !this.graph.isCellConnectable(cell))
+				{
+					var parent = this.graph.model.getParent(cell);
+					if (this.graph.model.isVertex(parent) && this.graph.isCellConnectable(parent))
+					{
+						cell = parent;
+					}
+				}
+				if (result == null && cell != null && this.graph.model.isEdge(cell))
+				{
+					this.error = this.graph.allowDanglingEdges ? null : '';
+				}
 				
 				return result;
 			});
@@ -17966,17 +17995,18 @@ if (typeof mxVertexHandler !== 'undefined')
 		 */
 		Graph.prototype.createCellMapping = function(mapping, lookup, cellMapping)
 		{
-			cellMapping = (cellMapping != null) ? cellMapping : new Object();
+			cellMapping = (cellMapping != null) ? cellMapping : Object.create(null);
 			
 			for (var objectId in mapping)
 			{
 				var cellId = lookup[objectId];
 				
-				if (cellMapping[cellId] == null)
+				if (!Object.prototype.hasOwnProperty.call(cellMapping, cellId) || cellMapping[cellId] == null)
 				{
 					// Uses empty string if clone ID was null which means
 					// the cell was cloned but not inserted into the model.
-					cellMapping[cellId] = mapping[objectId].getId() || '';
+					Object.defineProperty(cellMapping, cellId, {value: mapping[objectId].getId() || '',
+						writable: true, enumerable: true, configurable: true});
 				}
 			}
 			
@@ -20267,6 +20297,7 @@ if (typeof mxVertexHandler !== 'undefined')
 			var span = elt.ownerDocument.createElement((tagName != null) ? tagName : 'span');
 			var attributes = Array.prototype.slice.call(elt.attributes);
 			
+			var attr;
 			while (attr = attributes.pop())
 			{
 				span.setAttribute(attr.nodeName, attr.nodeValue);
@@ -21214,6 +21245,7 @@ if (typeof mxVertexHandler !== 'undefined')
 		 */
 		Graph.prototype.addClickHandler = function(highlight, beforeClick, onClick)
 		{
+			if (this.clickHandlerCleanup != null) this.clickHandlerCleanup();
 			// Replaces links in labels for consistent right-clicks
 			var checkLinks = mxUtils.bind(this, function()
 			{
@@ -21440,13 +21472,22 @@ if (typeof mxVertexHandler !== 'undefined')
 			};
 
 			// Ignores built-in click handling
-			graph.click = function(me) {};
+			var previousClick = graph.click;
+			var disabledClick = function(me) {};
+			graph.click = disabledClick;
 			graph.addMouseListener(mouseListener);
-			
-			mxEvent.addListener(document, 'mouseleave', function(evt)
+			var documentLeave = function(evt) { mouseListener.clear(); };
+			mxEvent.addListener(document, 'mouseleave', documentLeave);
+			graph.clickHandlerCleanup = function()
 			{
+				graph.clickHandlerCleanup = null;
+				mxEvent.removeListener(document, 'mouseleave', documentLeave);
+				graph.model.removeListener(checkLinks);
+				graph.removeMouseListener(mouseListener);
 				mouseListener.clear();
-			});
+				if (mouseListener.highlight != null) mouseListener.highlight.destroy();
+				if (graph.click === disabledClick) graph.click = previousClick;
+			};
 		};
 		
 		/**
@@ -25961,6 +26002,7 @@ if (typeof mxVertexHandler !== 'undefined')
 						{
 							var colState = graph.view.getState(cols[index]);
 							var geo = graph.getCellGeometry(cols[index]);
+							if (geo == null) return;
 							var g = (geo.alternateBounds != null) ? geo.alternateBounds : geo;
 
 							if (colState == null)

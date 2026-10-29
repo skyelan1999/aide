@@ -26,9 +26,9 @@ import (
 type IntegrityStatus string
 
 const (
-	IntegrityOK         IntegrityStatus = "ok"         // 一切正常
-	IntegrityDegraded    IntegrityStatus = "degraded"    // 可自愈/降级运行（程序疑似篡改、re-wrap 失败等）
-	IntegrityCorrupted   IntegrityStatus = "corrupted"  // 严重损坏，需人工介入
+	IntegrityOK        IntegrityStatus = "ok"        // 一切正常
+	IntegrityDegraded  IntegrityStatus = "degraded"  // 可自愈/降级运行（程序疑似篡改、re-wrap 失败等）
+	IntegrityCorrupted IntegrityStatus = "corrupted" // 严重损坏，需人工介入
 )
 
 // IntegrityCheck 单项校验结果。
@@ -40,20 +40,20 @@ type IntegrityCheck struct {
 
 // IntegrityReport 一次完整性校验/自愈的完整报告。
 type IntegrityReport struct {
-	Status     IntegrityStatus   `json:"status"`
-	Checks     []IntegrityCheck  `json:"checks"`
+	Status      IntegrityStatus  `json:"status"`
+	Checks      []IntegrityCheck `json:"checks"`
 	Quarantined []string         `json:"quarantined,omitempty"` // 移入隔离区的用户数据
-	Healed     []string          `json:"healed,omitempty"`        // 已自动恢复的项
-	Errors     []string          `json:"errors,omitempty"`       // 未解决的错误
-	CheckedAt  string            `json:"checkedAt"`
+	Healed      []string         `json:"healed,omitempty"`      // 已自动恢复的项
+	Errors      []string         `json:"errors,omitempty"`      // 未解决的错误
+	CheckedAt   string           `json:"checkedAt"`
 }
 
 // baselineManifest 程序层基线清单（首次启动生成，随运行期比对）。
 type baselineManifest struct {
-	Version       string `json:"version"`
-	Commit        string `json:"commit"`
-	BinarySHA256  string `json:"binarySha256"`
-	BuiltAt       string `json:"builtAt"`
+	Version      string `json:"version"`
+	Commit       string `json:"commit"`
+	BinarySHA256 string `json:"binarySha256"`
+	BuiltAt      string `json:"builtAt"`
 }
 
 // BuildBaseline 首次启动生成程序层基线：对运行二进制计算 SHA-256 写入 .integrity/baseline.json。
@@ -165,15 +165,19 @@ func VerifyIntegrity(data string) IntegrityReport {
 //   - 损坏关键文件 → 移入 .quarantine（用户数据不自动删）
 //   - 程序篡改 → 不修复，仅保持 degraded
 //   - 基线缺失 → 重新生成
+//
 // 返回更新后的报告（补充 healed/quarantined）。
 func SelfHeal(data string, rep IntegrityReport) IntegrityReport {
 	// 缺失目录重建
 	if err := EnsureDirs(data); err != nil {
 		rep.Errors = append(rep.Errors, "重建目录失败: "+err.Error())
 	} else {
-		for _, c := range rep.Checks {
-			if c.Name == "dirs" && !c.OK {
-				rep.Healed = append(rep.Healed, "missing-dirs-rebuilt")
+		for i, c := range rep.Checks {
+			if c.Name == "dirs" {
+				if !c.OK {
+					rep.Healed = append(rep.Healed, "missing-dirs-rebuilt")
+				}
+				rep.Checks[i].OK = true
 			}
 		}
 	}
@@ -219,6 +223,9 @@ func summarizeStatus(rep IntegrityReport) IntegrityStatus {
 			// 无基线：可自愈（重建），不算 fatal
 		default:
 			// dirs / keyfiles 等：若仍存在未处理的损坏文件则 fatal
+			if c.Name == "dirs" {
+				hasFatal = true
+			}
 			if c.Name == "keyfiles" && len(rep.Quarantined) == 0 && len(rep.Errors) > 0 {
 				hasFatal = true
 			}

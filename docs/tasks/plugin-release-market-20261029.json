@@ -1,0 +1,81 @@
+{
+  "id": "plugin-release-market-20261029",
+  "request": "插件相关的该release的release；市场该更新的也更新",
+  "baseline": "eaed6904a01c90d179c88976f205a20a558115aa",
+  "initial_status": "?? docs/reviews/2026-10-22-plugin-secret-design/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/plugin-secret-design-20261022.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "盘点当前账号插件Release与市场，补发已验收的未发布版本",
+    "Terminal新版本ZIP、Release和市场的版本/字节/摘要一致；真实打包运行与输入调度验证",
+    "Compare仅私有Release，不公开源码、商业安装包或许可证，不改变销售状态",
+    "市场线上catalog/routing/ZIP校验并确认Pages部署；Aide主程序不发版、不合main"
+  ],
+  "scope": [
+    "aide-pkg-terminal version/package/Release",
+    "aide-pkg-Compare private package/Release",
+    "aide-pkg-shop listings/catalog/routing/packages/Pages",
+    "docs/tasks/plugin-release-market-20261029.json",
+    "docs/reviews/2026-10-29-plugin-release-market"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly authorizes plugin Releases and market update; excludes Aide core release/main merge.",
+      "evidence": [
+        "docs/reviews/2026-10-29-plugin-release-market/inventory.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing plugin packagers and immutable archives; private Compare remains coming_soon without public binaries.",
+      "evidence": [
+        "docs/reviews/2026-10-29-plugin-release-market/verification.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Terminal1.5.2 and Compare0.3.3 private prereleases published; market branch/PR pushed, catalog/routing/ZIP synchronized.",
+      "evidence": [
+        "docs/reviews/2026-10-29-plugin-release-market/releases.json",
+        "docs/reviews/2026-10-29-plugin-release-market/market-pr.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Plugin focused runtime/package tests and market Chromium download pass. Current live1.5.1 verified; new Pages deployment blocked by required review, not recorded as PASS.",
+      "evidence": [
+        "docs/reviews/2026-10-29-plugin-release-market/terminal-release.json",
+        "docs/reviews/2026-10-29-plugin-release-market/terminal-latency.json",
+        "docs/reviews/2026-10-29-plugin-release-market/market-browser.json",
+        "docs/reviews/2026-10-29-plugin-release-market/current-live.json",
+        "docs/reviews/2026-10-29-plugin-release-market/aide-fingerprint.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Public evidence sanitized; private archive identities remain in private repository.",
+      "evidence": [
+        "docs/reviews/2026-10-29-plugin-release-market/verification.json",
+        "docs/reviews/2026-10-29-plugin-release-market/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned browser/server processes closed; pre-existing untracked files and offline archive untouched; no production services changed.",
+      "evidence": [
+        "docs/reviews/2026-10-29-plugin-release-market/verification.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Both plugin prereleases published. Market PR15 awaits resolution of REVIEW_REQUIRED/self-review deadlock; automatic merge disabled. No admin bypass, main push or Pages dispatch.",
+      "evidence": [
+        "docs/reviews/2026-10-29-plugin-release-market/releases.json",
+        "docs/reviews/2026-10-29-plugin-release-market/market-pr.json",
+        "docs/reviews/2026-10-29-plugin-release-market/current-live.json"
+      ]
+    }
+  },
+  "release_authorization": "用户：插件相关的该release的release；市场该更新的也更新",
+  "rollback": "Market not deployed: close/revert PR15 if rejected; prior main6d425fb and1.5.1 archive remain. Terminal upgrade ends connections, preserves configuration/logs; install retained1.5.1 only with prior state backup/host compatibility. Compare private binary upgrade requires documented backup/clean install. Releases use immutable commit archives; no production data touched.",
+  "handoff": "Need owner decision on one-time administrator merge for market PR15 or a review-policy path permitting a valid approval. Then normal Pages workflow must deploy merged commit, followed by live catalog/routing/browser download SHA verification. Do not claim1.5.2 is online before that. Aide issue-review branch only receives this evidence; no core release."
+}

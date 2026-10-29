@@ -1,0 +1,964 @@
+{
+  "request": "继续100，先看1999账号提交的内容",
+  "sequence": 4,
+  "startedAt": "2026-10-28T09:49:12.803816+00:00",
+  "baselineCommit": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
+  "target": 100,
+  "fixedCount": 100,
+  "fixedIssues": [
+    565,
+    563,
+    382,
+    383,
+    384,
+    385,
+    386,
+    387,
+    388,
+    389,
+    390,
+    392,
+    393,
+    394,
+    395,
+    396,
+    397,
+    398,
+    399,
+    400,
+    403,
+    404,
+    405,
+    406,
+    407,
+    435,
+    444,
+    468,
+    470,
+    471,
+    472,
+    473,
+    475,
+    476,
+    477,
+    478,
+    479,
+    481,
+    482,
+    483,
+    484,
+    485,
+    488,
+    490,
+    491,
+    492,
+    494,
+    495,
+    496,
+    434,
+    436,
+    445,
+    446,
+    447,
+    448,
+    449,
+    450,
+    451,
+    469,
+    515,
+    517,
+    521,
+    522,
+    523,
+    524,
+    525,
+    526,
+    527,
+    528,
+    452,
+    453,
+    454,
+    455,
+    456,
+    457,
+    459,
+    460,
+    461,
+    462,
+    465,
+    466,
+    408,
+    409,
+    410,
+    424,
+    539,
+    541,
+    543,
+    544,
+    401,
+    402,
+    418,
+    419,
+    421,
+    417,
+    423,
+    415,
+    416,
+    420,
+    430
+  ],
+  "issues": {
+    "565": {
+      "status": "fixed-verified-pushed",
+      "cycle": 77,
+      "summary": "Prioritize pending terminal input over queued background calls with bounded8-request fairness;retain strict single-flight and no replay.",
+      "commit": "756abfa118294eb92a182668ce1e4cef56b71a78",
+      "repository": "skyelan1999/aide-pkg-terminal",
+      "comment": "https://github.com/skyelan1999/aide/issues/565#issuecomment-6466006732"
+    },
+    "563": {
+      "status": "fixed-verified-pushed",
+      "cycle": 77,
+      "summary": "Resolve SSH tool list paths once against the task snapshot root, preserving relative result paths and containment checks.",
+      "commit": "0b0e2133ea84773392721050fd04e50526019e09",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/563#issuecomment-6466039896"
+    },
+    "382": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Interpret60 Rack/F5 boolean declarations as0/1 so rear,DC,ears andmask flags behave as stored.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/382#issuecomment-6466245920"
+    },
+    "383": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Normalize absent tree folding selections,copy cell arrays,and forward the retained cells to core folding.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/383#issuecomment-6466246749"
+    },
+    "384": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Use prototype-free WebCola active/parent/node-index maps for diagram IDs.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/384#issuecomment-6466247461"
+    },
+    "385": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Treat zero field size as no separators and bound very small iOS7SelectBar drawing steps to1000.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/385#issuecomment-6466248275"
+    },
+    "386": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Store finite zero barPos when the scroll-handle travel range is nonpositive.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/386#issuecomment-6466249190"
+    },
+    "387": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Render exposed ArchiMatePath appType through the existing communication-path foreground branch.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/387#issuecomment-6466249799"
+    },
+    "388": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Cap four EIP channel constraint arrays at10000 anchors,retaining ordinary10-unit spacing.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/388#issuecomment-6466250419"
+    },
+    "389": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Use at least1 and at most1000 dashed-arrow steps,skipping zero-length/nonfinite paths before division.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/389#issuecomment-6466250905"
+    },
+    "390": {
+      "status": "fixed-verified-pushed",
+      "cycle": 78,
+      "summary": "Clamp CalloutDouble90Arrow dy2 against height in both painter and connection constraints.",
+      "commit": "78ee39b52e397aaeec6ab266011422ee18091dd9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/390#issuecomment-6466251483"
+    },
+    "392": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Bound nested centerOver reparsing to8 shared levels and restore parser depth on every exit.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/392#issuecomment-6466651907"
+    },
+    "393": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Bound proof trees to64 inferences using a counter on the persistent proof stack item;clear rejected balancing lists.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/393#issuecomment-6466652602"
+    },
+    "394": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Bound nested UnderOverBracket reparsing to8 shared levels and preserve the original ordinary-formula implementation.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/394#issuecomment-6466653064"
+    },
+    "395": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Check mhchem group depth before its recursive state machine,rejecting depth above64.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/395#issuecomment-6466653778"
+    },
+    "396": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Apply existingSafe policy to AsciiMathMathML output;return the error root on filter failure and restore the caller root.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/396#issuecomment-6466654379"
+    },
+    "397": {
+      "status": "fixed-verified-pushed",
+      "cycle": 79,
+      "summary": "Check Physics matrix axes,cells and estimated expansion before allocation;retain ordinarymqty syntax.",
+      "commit": "0ada939f39df2f6db3ac37723eb0bba738cee616",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/397#issuecomment-6466655323"
+    },
+    "398": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Reject non-progressing LAYER,VPORT and POLYLINE records with parse errors;valid DXF previews remain available.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/398#issuecomment-6467128166"
+    },
+    "399": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Bound the three hierarchical path traversals to256 levels and report recoverable errors before stack overflow.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/399#issuecomment-6467128791"
+    },
+    "400": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Use explicit DFS frames for mxGraph.traverse,preserving edge-visited semantics,callback order,pruning and inverse traversal.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/400#issuecomment-6467129569"
+    },
+    "403": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Consume each ZIP64 extensible record exactly once and reject short headers or payloads crossing the declared record boundary.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/403#issuecomment-6467130055"
+    },
+    "404": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Use iterative WebCola component DFS and retain traversal/component ordering.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/404#issuecomment-6467130801"
+    },
+    "405": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Reject more than1000 visible vertices before WebCola conversion and dense allocation;hidden vertices do not consume that budget.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/405#issuecomment-6467131718"
+    },
+    "406": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Merge WebCola pairing-heap children iteratively while preserving pairing order and sorted pops.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/406#issuecomment-6467132380"
+    },
+    "407": {
+      "status": "fixed-verified-pushed",
+      "cycle": 80,
+      "summary": "Construct group parent-child links with a prototype-safe index map instead of all-group pair scans.",
+      "commit": "3502674c29740d1f125fbac60007ad8ceddff2f9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/407#issuecomment-6467133242"
+    },
+    "435": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use canonical own-property checks and prototype-free preprocessor maps/subpart dictionaries.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/435#issuecomment-6467898933"
+    },
+    "444": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Keep Gantt task aliases from replacing lookup methods.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/444#issuecomment-6467899868"
+    },
+    "468": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use canonical own checks and a prototype-free Salt popup dictionary.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/468#issuecomment-6467900834"
+    },
+    "470": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Define a background-aware Hacker foreground fallback while preserving caller colors.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/470#issuecomment-6467901509"
+    },
+    "471": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Emit valid #prefixed Mars theme colors.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/471#issuecomment-6467903101"
+    },
+    "472": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Recognize variable names in ifdef/ifndef and preserve an explicitly supplied Mono font.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/472#issuecomment-6467903745"
+    },
+    "473": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Consume complete NWDiag skinparam blocks so theme internals are not dropped-line warnings.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/473#issuecomment-6467904480"
+    },
+    "475": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use canonical own checks when measuring JSON objects containing hasOwnProperty.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/475#issuecomment-6467905465"
+    },
+    "476": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Resolve stylesheet variables with canonical own checks.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/476#issuecomment-6467906237"
+    },
+    "477": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Require own name/stereotype matches rather than inherited constructor entries.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/477#issuecomment-6467906899"
+    },
+    "478": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free sequence parser maps and canonical own checks.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/478#issuecomment-6467907561"
+    },
+    "479": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free state parser index and state renderer adjacency/layout caches.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/479#issuecomment-6467908396"
+    },
+    "481": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free class node,adjacency and layout caches.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/481#issuecomment-6467908959"
+    },
+    "482": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Index activity swimlanes in a prototype-free dictionary.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/482#issuecomment-6467909764"
+    },
+    "483": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free component ID/layout caches and canonical own checks.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/483#issuecomment-6467910383"
+    },
+    "484": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Key unordered component edge pairs using serialized tuples rather than ambiguous pipe joins.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/484#issuecomment-6467911006"
+    },
+    "485": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free object-diagram caches and canonical own checks.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/485#issuecomment-6467911622"
+    },
+    "488": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free use-case actor/node/adjacency/layout caches.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/488#issuecomment-6467912294"
+    },
+    "490": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free NWDiag node measurement and position caches.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/490#issuecomment-6467912829"
+    },
+    "491": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free C4 alias measurement/layout caches.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/491#issuecomment-6467913385"
+    },
+    "492": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use a prototype-free WBS alias map and canonical own checks.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/492#issuecomment-6467914290"
+    },
+    "494": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Use prototype-free Gantt period/layout caches and canonical own checks.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/494#issuecomment-6467914823"
+    },
+    "495": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Resolve ArchiMate relationship aliases from a prototype-free map.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/495#issuecomment-6467915364"
+    },
+    "496": {
+      "status": "fixed-verified-pushed",
+      "cycle": 81,
+      "summary": "Store timing state rows in a prototype-free dictionary.",
+      "commit": "ac7196e043d694d1c559affb132ec5217c64689f",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/496#issuecomment-6467916052"
+    },
+    "434": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Use canonical own checks for sequence links/GitGraph identifiers.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/434#issuecomment-6468666192"
+    },
+    "436": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Preserve special flowchart IDs with prototype-free parse/IR/layout indexes.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/436#issuecomment-6468667021"
+    },
+    "445": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Preserve special state IDs through parsing, layout and actual XML import.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/445#issuecomment-6468667733"
+    },
+    "446": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Allocate state note/group/region IDs against a reserved user-ID namespace.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/446#issuecomment-6468668507"
+    },
+    "447": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Skip Kanban style directives rather than creating phantom columns.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/447#issuecomment-6468669318"
+    },
+    "448": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Reject radar tick counts over 1000 in parser and direct layout before allocation.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/448#issuecomment-6468670144"
+    },
+    "449": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Use prototype-free Sankey node/degree indexes and canonical own checks.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/449#issuecomment-6468670939"
+    },
+    "450": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Retain explicit reset-frame source relations while suppressing inferred ones.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/450#issuecomment-6468671637"
+    },
+    "451": {
+      "status": "fixed-verified-pushed",
+      "cycle": 82,
+      "summary": "Limit nested flowchart groups to 64 and preflight public IR layout depth/work iteratively.",
+      "commit": "453d16fae2e4ab5f37acbc9dfe5573f38b557a77",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/451#issuecomment-6468672373"
+    },
+    "469": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Use prototype-free block and style databases, including clear/reset.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/469#issuecomment-6468839604"
+    },
+    "515": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Retain prototype-named pie categories across parser resets.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/515#issuecomment-6468840527"
+    },
+    "517": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Reject orphan Timeline event rows with a descriptive error.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/517#issuecomment-6468841516"
+    },
+    "521": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Decode sanitized entities at the SVG text sink so titles display correctly.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/521#issuecomment-6468842694"
+    },
+    "522": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Reject empty/nonfinite Sankey values before adding links.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/522#issuecomment-6468843427"
+    },
+    "523": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Preserve requirement/element names with prototype-free databases.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/523#issuecomment-6468844642"
+    },
+    "524": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Store sequence participants and actor lifecycle IDs in prototype-free maps.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/524#issuecomment-6468845571"
+    },
+    "525": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Preserve class IDs through database, Graphlib and Dagre layout indexes.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/525#issuecomment-6468846150"
+    },
+    "526": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Reject nonfinite XY plot values before scale/layout.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/526#issuecomment-6468846732"
+    },
+    "527": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Store ER entities in a prototype-free map including resets.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/527#issuecomment-6468847419"
+    },
+    "528": {
+      "status": "fixed-verified-pushed",
+      "cycle": 83,
+      "summary": "Retain prototype-named Gantt task indices and clear stale indices with the task list.",
+      "commit": "82076bf8d482031c4d6a5bd67df06bf7005c39c9",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/528#issuecomment-6468848033"
+    },
+    "452": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Retain the raw URI on malformed UTF-8 and complete/consume filename drops.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/452#issuecomment-6469185034"
+    },
+    "453": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Use a prototype-free set for custom stencil color keys.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/453#issuecomment-6469186067"
+    },
+    "454": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Use canonical own checks for object-valued shape-picker entries.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/454#issuecomment-6469186711"
+    },
+    "455": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Use default toolbar settings on malformed URI/JSON or non-object config.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/455#issuecomment-6469187348"
+    },
+    "456": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Anchor layer popups below the top viewer toolbar.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/456#issuecomment-6469188301"
+    },
+    "457": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Correct the base fallback serializer to mxUtils; full app Pages override already worked and the reported complete-app symptom was not reproduced.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/457#issuecomment-6469189081"
+    },
+    "459": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Keep selected cells for synchronous steps in mixed async layout chains.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/459#issuecomment-6469189796"
+    },
+    "460": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Reject non-positive/non-integer Explore page sizes before constructing a viewer.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/460#issuecomment-6469190391"
+    },
+    "461": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Declare the attribute-copy iterator locally.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/461#issuecomment-6469191059"
+    },
+    "462": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Clean up repeated click handlers and document/model/mouse listeners/highlight on destruction.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/462#issuecomment-6469191728"
+    },
+    "465": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Validate positive safe-integer Fit sheet counts before forwarding print/export arguments.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/465#issuecomment-6469192440"
+    },
+    "466": {
+      "status": "fixed-verified-pushed",
+      "cycle": 84,
+      "summary": "Store duplicate-page IDs in a prototype-free dictionary.",
+      "commit": "98c33e5578f12f14b37c00a264d77e405654c4c2",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/466#issuecomment-6469193098"
+    },
+    "408": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Fix downward enclosure-arrow redundant-strike spelling in both SVG and CHTML.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/408#issuecomment-6469292684"
+    },
+    "409": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Use a nonzero hypot divisor for zero-size enclosure-arrow geometry in both outputs.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/409#issuecomment-6469293567"
+    },
+    "410": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Bound column-repeat count and expanded template size before Array allocation.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/410#issuecomment-6469294320"
+    },
+    "424": {
+      "status": "fixed-verified-pushed",
+      "cycle": 85,
+      "summary": "Inspect the over child when inferring a munderover operator accent.",
+      "commit": "dc1f354f4219dd6a1e654457b29d31d337f87e79",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/424#issuecomment-6469294974"
+    },
+    "539": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Validate binary STL face count against available bytes and allocation budget before geometry arrays.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/539#issuecomment-6469539943"
+    },
+    "541": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Validate all DAE float-array declarations, finite values and aggregate count before loader token splitting.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/541#issuecomment-6469540508"
+    },
+    "543": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Detect Collada reference/containment cycles iteratively; bound expanded nodes and depth including reverse declarations.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/543#issuecomment-6469541253"
+    },
+    "544": {
+      "status": "fixed-verified-pushed",
+      "cycle": 86,
+      "summary": "Bound direct/expanded DAE lights before construction and aggregate imported lights across mesh assets.",
+      "commit": "e396c976ae3cc2454de6468556e2d6f0969ac123",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/544#issuecomment-6469542268"
+    },
+    "401": {
+      "status": "fixed-verified-pushed",
+      "cycle": 87,
+      "summary": "Strip global keyframes recursively from temporary/final adopted styles and serialized SVG while retaining scoped diagram styling.",
+      "commit": "0d5d5324f2f87ca1dfa389c2dabbf706661ea9f1",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/401#issuecomment-6469666130"
+    },
+    "402": {
+      "status": "fixed-verified-pushed",
+      "cycle": 87,
+      "summary": "Preflight DOM depth/node budgets before export recursion and after diagram rendering; return recoverable errors and release frames.",
+      "commit": "0d5d5324f2f87ca1dfa389c2dabbf706661ea9f1",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/402#issuecomment-6469666967"
+    },
+    "418": {
+      "status": "fixed-verified-pushed",
+      "cycle": 88,
+      "summary": "Observe the asynchronous factory before publishing Avoid; resolve readiness to unavailable on sync/async failures and preserve stderr filtering.",
+      "commit": "5c1664b2783770840b082c91f516810cb933d519",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/418#issuecomment-6470051939"
+    },
+    "419": {
+      "status": "fixed-verified-pushed",
+      "cycle": 88,
+      "summary": "Validate Org Chart height against the intended upper bound.",
+      "commit": "5c1664b2783770840b082c91f516810cb933d519",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/419#issuecomment-6470053052"
+    },
+    "421": {
+      "status": "fixed-verified-pushed",
+      "cycle": 88,
+      "summary": "Preflight box-parent relationships before tree construction and generated trees before recursive passes; bound depth/nodes and detect cycles.",
+      "commit": "5c1664b2783770840b082c91f516810cb933d519",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/421#issuecomment-6470054261"
+    },
+    "417": {
+      "status": "fixed-verified-pushed",
+      "cycle": 89,
+      "summary": "Evaluate negation per claim occurrence and contrastive clause, retain explicit retractions, and check later affirmative PDF claims against actual receipts.",
+      "commit": "10cc846d04837fa8361254a3c8644c187ee6bc36",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/417#issuecomment-6470157356"
+    },
+    "423": {
+      "status": "fixed-verified-pushed",
+      "cycle": 89,
+      "summary": "Redact complete double/single-quoted credential values including escaped quotes and unterminated values; preserve unrelated unquoted status fields.",
+      "commit": "10cc846d04837fa8361254a3c8644c187ee6bc36",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/423#issuecomment-6470158257"
+    },
+    "415": {
+      "status": "fixed-verified-pushed",
+      "cycle": 90,
+      "summary": "Reject invalid or >2000 PDF page counts before creating placeholders or issuing per-page metadata requests; destroy the rejected document loading task.",
+      "commit": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/415#issuecomment-6470421032"
+    },
+    "416": {
+      "status": "fixed-verified-pushed",
+      "cycle": 90,
+      "summary": "Keep loading tasks reachable by idempotent teardown; abort fetches, destroy the task owner, discard late completion and suppress password updates after closing.",
+      "commit": "efbae1dbe7f9a5432b39e0c7f65c16452c08141a",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/416#issuecomment-6470421923"
+    },
+    "420": {
+      "status": "fixed-verified-pushed",
+      "cycle": 91,
+      "summary": "Backport upstream c6a25bb bounded reference-label scanning while preserving long ordinary text runs and anchored tokenizers.",
+      "commit": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/420#issuecomment-6470560135"
+    },
+    "430": {
+      "status": "fixed-verified-pushed",
+      "cycle": 91,
+      "summary": "Backport upstream PR4013 nonempty href or immediate-close empty href alternative to avoid whitespace repartitioning.",
+      "commit": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
+      "repository": "skyelan1999/aide",
+      "comment": "https://github.com/skyelan1999/aide/issues/430#issuecomment-6470561375"
+    }
+  },
+  "blockedIssues": [
+    {
+      "number": 391,
+      "reason": "Need matching runtime reproduction;reported sample and invalid control not reliable under tested configuration. No source change or fixed count.",
+      "record": "cycle-079.json"
+    }
+  ],
+  "alreadyCovered": [
+    {
+      "number": 561,
+      "classification": "duplicate-consolidated-under563",
+      "comment": "https://github.com/skyelan1999/aide/issues/561#issuecomment-6466040789",
+      "counted": false
+    },
+    {
+      "number": 458,
+      "classification": "invalid-report-closed",
+      "reason": "Mapped arguments preserve clamps in the current non-strict scripts.",
+      "comment": "https://github.com/skyelan1999/aide/issues/458#issuecomment-6469039188",
+      "counted": false
+    },
+    {
+      "number": 422,
+      "classification": "invalid-report-closed",
+      "reason": "Actual Hanger2/4 layouts pass; vertical AdjustSpacer runs before horizontal merging.",
+      "comment": "https://github.com/skyelan1999/aide/issues/422#issuecomment-6469964081",
+      "counted": false
+    }
+  ],
+  "verifiedPendingPush": [],
+  "status": "completed",
+  "policy": "Only newly fixed,verified,pushed unique issues count; owner skyelan1999 first. Previous fixes excluded. Branch only; no main merge,Release or deploy.",
+  "completedAt": "2026-10-28T13:42:18.370551+00:00",
+  "completionReason": "requested-100-new-unique-verified-pushed-fixes-reached",
+  "completionReport": "docs/reviews/2026-10-26-open-issue-review/hundred-20261028-04.md",
+  "sourceCommit": "3e234e70cac966c490c4c457f76af7b8b4381fc4",
+  "verification": {
+    "quickChecks": 247,
+    "fingerprint": "afc4da50ae380ee8d5c0edb5bc0e0a9430063ff65b2692ab1a44a3899a5ac8a9",
+    "receipt": ".agent-state/verify-20261028T133733898919Z.log"
+  },
+  "duplicateCountValidation": {
+    "newUnique": 100,
+    "overlapWithEarlierCycles": 0
+  },
+  "ownerPriority": {
+    "newOwnerReportsHandled": [
+      565,
+      563
+    ],
+    "lastRefresh": "/workspace/scratch/issue-review-20261026/hundred-final-owner-refresh.json"
+  }
+}

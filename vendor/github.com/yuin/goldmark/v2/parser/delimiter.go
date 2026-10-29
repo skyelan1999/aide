@@ -196,7 +196,8 @@ func ParseDelimiter(block text.Reader, minimum int, processor DelimiterProcessor
 func parseSimpleDelimitedText(block text.Reader, line []byte, segment text.Segment,
 	c byte, openerLen int, canOpen, canClose bool,
 	processor DelimiterProcessor, pc Context) ast.Node {
-	if !canOpen {
+	// Bound the optimistic scan; the standard delimiter parser handles longer lines.
+	if !canOpen || len(line) > 256 {
 		return nil
 	}
 	pctx, ok := pc.(*parseContext)
@@ -229,8 +230,7 @@ func parseSimpleDelimitedText(block text.Reader, line []byte, segment text.Segme
 		// Cheap byte-level pre-filter. `absIdx >= openerLen >= 1`,
 		// so absIdx-1 is always a valid index.
 		if prev := line[absIdx-1]; prev == ' ' || prev == '\t' || prev == '\\' {
-			scanStart = k
-			continue
+			return nil
 		}
 
 		// Strict rune-based flanking.
@@ -241,8 +241,7 @@ func parseSimpleDelimitedText(block text.Reader, line []byte, segment text.Segme
 		}
 		closerCanOpen, closerCanClose := parseDelimiterOpenClose(beforeRune, afterRune, c)
 		if !closerCanClose {
-			scanStart = k
-			continue
+			return nil
 		}
 		// CommonMark Rule 9
 		if (canClose || closerCanOpen) && (openerLen+closerLen)%3 == 0 && closerLen%3 != 0 {

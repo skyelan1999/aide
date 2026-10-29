@@ -501,7 +501,7 @@
 			this.addDataEntry(dt + 'calendar date', 160, 175, 'Calendar',
 				'7Zxdc6IwFIZ/DbdOPkDktu62V529cGd6zUoUp2CcSLe6v37Dh7bm0K2dLjk2kRlnIBCF9wnkvMmRgE/L3Z1KN/m9zEQR8O8Bnyopq3at3E1FUQSMrLKAfwsYI/oTsNs39tJmL9mkSqyrcyqwtsLvtHgSbUlbsK32RVewrZR8FA+rrMp1AQ34zTZPM/msN4jeyNJtLrJuIy1Wy7Ven+ufF0oX5FVZvNTa1F9Z7pb15Y5KOX982owWUpXbkVJirk/4Rs1Wf+qDorpC88NTWUjVnAlPmkXvWayK4lX5oll0eXcxQlVi96YgTVGnxp2QpajUXh/y3F1gfcS4FY3kYrXMD9XiqC1Mt23B8lj3RV+90kncLzcHcv+YV/KXlooRRmiII366nue1ljcLua769D5LV9ava1eBd5Lu281Ju/VadNIjetd6P6V52NPEx0V1vCzsph7+u6mfIiFkMm+ael3efQE9HDfrroT+H2STd4ixaBhgUR+w5RXYu8Aoi5GQjQGye+nus4yePsv6dB7oWRYDnX8+uaszR9N5AnR+EO7qHKHpnMD2nLurc4ym8+GJ9UroW+Wu0Ame0BQIPUvdFZridYUUWteZw30hxesMKXStFEdoMxInH4nEB4wAQ4swoJ29kCEbNBgcDwa0qtxzGBEeDGhCkcbTLgZGjAcDOtXIcxgJHgxoZ8eewzADV5s0oOmNfaeB14Uz6IwnvtM4hTG2CAO658RzGBwPBjTYh5bhLY0Ij0aPCffdhcd4NKALP4xHeUsjwaMBbTj13YebAa5NHNCIY2W2XA4OxH4cWnHquxc3bo6JRRrQi1PfzbiZG2aRBvTi1HczHqHR4NCLU9/NeIxHA5px6rsbT/BoQDfOfHfjZoxrEwe049dJcbx+nPfMivvux42bgxKLOKAh935inCPigIbc+9nYGBEHNOTez8cmiDigI79OyGJ2HtCTX6dkEXuPELpy72dlzdvDYjZuCG05990ImneHTRzQl3PfjWCEiMOxXHXjn+5ZJsT5/3T/WARsk5JjSewDUjIDY5uUHMtuH5ASiJdtYnIs731ITJiBgmMZ8UNiMihZTAcO4WDAlx6aGZCSeS/ZpORYCv2AlMxY3CKlCA4cfOlxHIuxuE1KjuXcW4zFbVKCwwxfOxnfZjBuk5Nrafo2o3GbnHpGIC7ZNS0WRC+Q0/HVh6enyiC544vIBggqhpuN0JsvL8Ns9p28K/Mv'),
 				
-			this.addDataEntry(dt + 'calendar date', 400, 300, 'Email',
+			this.addDataEntry(dt + 'email mail', 400, 300, 'Email',
 				'7VhLU9swEP41vmacOLyOJQEu9FLa6VnI61igF3qQ0F/fXcmGdJzMtAOmh8QzcbyrfX6fV05cVAu1uXHMtl9NDbKoropq4YwJ+UptFiBlMStFXVTLYjYr8VPMrvesTtNqaZkDHf7GYZYdnpmMkDXXzqis9OFFdkofnHmEn6IOLSqmRXXpW1abNQolCjXzLdSdwKRYabzmWAI4VLRByTcvSyHVZkUtT5Thj9FOGuOUnzDNW+O2IjixagN5WcaFXn3L4nKGqsbosDCSzLG+6jQdqO/aARdgsxeSpOrwuAGjILgXNFl37eHqSUatbKHLSV7nWcd8llevnm/44kUH8W64qwHcD6bVxbx8yHjw/4W9c8AJ6kZIuYVrkw7UuzvxC7ok+7Dvk0totli7TdKyIk3qZMv1Ih3vpG3zJ2VbLFZj0Tgf0HgX7x8IwYMcnJce7gEDYxFwMiDgxgEE7PU4Pu8bn/1cjjZNpwMyv5uDHqSz4VY2FvZnA+wbhzgeH0gfPlE7SB1tos4HrC4WBz1R0/Lznk0XA/CPE/QhE7SLxNFGaFoOaLw89CGaf95zaTo9TtFIU7SDxfGmaPh+4dY4UGRifaTvOnWNxIpAyTBFMcO4JTfaI/QQIq2yWljhBU+/8EuQorPyyDDFIKWIXhkSAyibYgrNRS3qqCl0pJNk95ifrEOfmyTFVppRGimeIpvg1Q9aBy1USk4mIgvPqGQqZ3+KwuOXNkhgJCPYgOMisCCMppRSMsVNnzcbYxt9NSmdsMmRTiz1rbAL0yOA5QSqZ5lTsRioXuFiqrsHT1A2B9ZBC7oGl7BMymcjo8WCIJWecCvBexI53tJvFCRQIp6auBKMzDSVn281VERHZVxtONgAMTOWcDWcM+DJg0crahayd0LAOiNqulEzW5mJVBiP0rKMIQVpGiSX5Bo8uGynjMwFswy9SBD7Vx6jmhzkpkDbgeBMfulCBGNRu25FgDsMQ5nXWPQH7fpnw6fuvNy1X/T/yv9hwyjodWP/rjOt/fEq9Dc=')
 		];			
 		
@@ -789,9 +789,9 @@
 			this.createVertexTemplateEntry(s2 + 'misc.ruler2;dx=100;rulerOrient=up;unitSize=10;fontColor=#999999;spacingLeft=96;align=left;verticalAlign=middle;spacingBottom=0;spacingTop=10;spacingRight=0;spacing=0;' + skcl9, 
 					350, 30, '1', 'Horizontal Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'horizontal').join(' ')),
 			this.createVertexTemplateEntry(s2 + 'misc.ruler2;dx=100;rulerOrient=down;unitSize=10;fontColor=#999999;spacingLeft=96;align=left;verticalAlign=middle;spacingBottom=10;spacingTop=0;spacingRight=0;rotation=-90;spacing=0;' + skcl9, 
-					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'horizontal').join(' ')),
+					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'vertical').join(' ')),
 			this.createVertexTemplateEntry(s2 + 'misc.ruler2;dx=100;rulerOrient=up;unitSize=10;fontColor=#999999;spacingLeft=96;align=left;verticalAlign=middle;spacingBottom=0;spacingTop=10;spacingRight=0;rotation=-90;spacing=0;' + skcl9, 
-					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'horizontal').join(' ')),
+					350, 30, '1', 'Vertical Ruler', null, null, this.getTagsForStencil(gn, 'ruler', dt + 'vertical').join(' ')),
 					
 			this.addEntry(dt + 'revision table', function()
 			{
@@ -963,9 +963,9 @@
 			this.createVertexTemplateEntry(s2 + 'text.captcha;fontColor=#666666;fontSize=25;fillColor2=#88aaff;' + skcl6 + 'mainText=',
 					150, 50, 'fG2yQ23', 'Captcha', null, null, this.getTagsForStencil(gn, 'captcha', dt).join(' ')),
 			this.createVertexTemplateEntry(s2 + 'text.alphanumeric;linkText=;html=1;fontStyle=4;fontSize=17;fontColor=#0000ff;',
-					450, 50, '0-9 A B C D E F G H I J K L M N O P Q R S T U V X Y Z', 'Alphanumeric', null, null, this.getTagsForStencil(gn, 'alphanumeric', dt).join(' ')),
+					450, 50, '0-9 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z', 'Alphanumeric', null, null, this.getTagsForStencil(gn, 'alphanumeric', dt).join(' ')),
 			this.createVertexTemplateEntry('text;spacingTop=-5;whiteSpace=wrap;html=1;align=left;fontSize=12;fontFamily=Helvetica;fillColor=none;strokeColor=none;', 
-					250, 470, loremText, 'Paragraph of Text', null, null, this.getTagsForStencil(gn, 'peragraph of text', dt).join(' ')),
+					250, 470, loremText, 'Paragraph of Text', null, null, this.getTagsForStencil(gn, 'paragraph of text', dt).join(' ')),
 			
 	 		this.addDataEntry('table', 180, 80, 'Table', '7Zjfb9owEMf/mrxO+bHQ8krYuoftpUzas0sOYs3xRc6xkP71OyemrEDaBKpKZJWCZJ/Ph/392F9F8aIk394ZUWQ/MAXlRV+8KDGI1LbybQJKeaEvUy+ae2Ho888Lv3aMBs2oXwgDmvpMCNsJf4TaQBtpAyXVygXKTBS2SeLBhmYZ5bzMecDNKpMEi0Is7XjFm+BYScLQQj7akM/9JWoSUoNxc5aolChK2RRrMzKp0u+ixg3t/mbX42oGf8MvmVLGYyFH3ILBEGw7N92E3I7vAHMgU3NK5erYjNtWGD8Duc7ctF1MlG1//TR1LyE3nIqnFY0GKnqPlRUVjXy0SiknyqGMZSVzJTR8A5EehGaY1i5EWLiWghW55gMSYe46xu3WP4kiNVj8FGYNu5SVVCpBhZaeRm35Fyg1NQLFM35YssT/FHsx7yzhfrDv82PTDSWoGSSfAlsWREkVlNSXZXgey/Dmcpafj1ha+fkoh37QSZXXTlKoe1iS0Os+V4aviLbZew4nZB+GFlnUlbJHa57JNAVti/L5Wrj1Br2kj16VfjpQeVdsL87gakIRGC2Ij/1Gp+URzqd19iIcdxPuvrfjJ7x9zmNEwCcf9vwu9lw/h/mqW08ud+ubI7SG4TVWzXP9ZZt9hcbdi8PkPK9+Qfczru5Btbe9ure9+F6hbV/Cd6BTXxHu6YdTv6dTx1FPp36D9+rA77jK4X9h1dPRv1YHQS/AY/XqDsCjeavm7v4TVZv+7xesvw==')
 		];

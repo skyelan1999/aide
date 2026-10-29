@@ -1,0 +1,74 @@
+{
+  "baseline": "9cee2c88",
+  "branch": "codex/open-issue-review-20261026",
+  "issueNumbers": [
+    62,
+    65,
+    67,
+    70,
+    72,
+    74,
+    75,
+    81,
+    95,
+    96,
+    105,
+    111,
+    125
+  ],
+  "red": {
+    "status": "expected failure",
+    "issues": [
+      62,
+      70,
+      72
+    ],
+    "detail": "损坏导出返回200；SQLite没有前置分页错误；跨时区截断首条错误"
+  },
+  "newBoundsAndBackupRace": {
+    "status": "PASS",
+    "seconds": 14.526
+  },
+  "relatedRace": {
+    "status": "PASS",
+    "registeredFunctions": 134,
+    "seconds": 131.273,
+    "command": "go test -race ./internal/server -run 'Test.*(Session|Models|ConfigBackup|SourceSecrets|Passkey|WebAuthn|CompleteStream|ProfessionalWorkflow|PluginUpgrade|Integrity|Paths)|^TestIssue' -skip '^(TestSSHSessionLifecycleConcurrentConnect|TestSSHSessionTemporaryAskpassRemoved|TestSSHSourceSessionMustVerifyMaster|TestSSHSessionConnectHonorsCallerDeadline|TestSSHSessionInvalidatedMasterAfterKillTimeout)$' -count=1 -timeout 8m"
+  },
+  "environmentBlocked": [
+    "TestSSHSessionLifecycleConcurrentConnect",
+    "TestSSHSessionTemporaryAskpassRemoved",
+    "TestSSHSourceSessionMustVerifyMaster",
+    "TestSSHSessionConnectHonorsCallerDeadline",
+    "TestSSHSessionInvalidatedMasterAfterKillTimeout"
+  ],
+  "environmentReason": "现有测试需要写/home/aide，本环境无写权限；原139项运行失败，排除明确受限的5项后134项通过",
+  "windowsExistingFixTests": "NOT_RUN: PowerShell unavailable (attempts exit 2), no Windows native verification",
+  "vet": "go vet ./internal/server PASS",
+  "notRun": [
+    "full repository/release gate",
+    "production deployment",
+    "real hardware passkey",
+    "real SSH server",
+    "browser UI"
+  ],
+  "runtimeSha256": {
+    "internal/server/apikey_vault.go": "6b61dbbc1aba43afd052ac9c31c57e830493797e5e6d2fa673a46e838d2ece51",
+    "internal/server/auth_passkey_origin_test.go": "9e4b1bba7ede99e22b75b928bdbd392e53a0265e1023957835c06877796e76c3",
+    "internal/server/config_backup.go": "8c68fdb1cb77fa22a1e7a9d2920188fe186be86a174d6f1bd0f74ea0531fda03",
+    "internal/server/files.go": "4e0d9363f59e3532a2ad4f4b58f16e523d53f1e0cc4926ffc842540f2bd77aa5",
+    "internal/server/integrity.go": "0aae18673907fc2666639531410e99077efc30d926fb464560e116f73d56f821",
+    "internal/server/paths.go": "4f687e21cc5b3d9e61b12743dd04c5dd6d01d498d069701907ca68c70bc1f5b8",
+    "internal/server/plugin_upgrade.go": "12573c2a496a30bcedacd63b681feb99221c48f90ae599a77aa97aca281fcf2b",
+    "internal/server/professional_workflow.go": "e35c33279c31b9efb08b4fbb5bd1f2104429e9418b148dbd1dd3c78602f2bcb1",
+    "internal/server/project_briefing.go": "4a9dd226d10b8751443f3d3661088f150c1250621ff51f1c92f1550c651e7743",
+    "internal/server/provider.go": "4db32095d28f21f6d3a7a30c443152f0284f42deca3157ea89acf0ed57e0366c",
+    "internal/server/server.go": "43268feccaf641401388dfddbcacda085a881988485a6e8a2a3e6209b68d482e",
+    "internal/server/source_secrets_vault.go": "958ee06e6aeecd5951a801d1639ee96982df73c92ed6475e1b87d02074d7e1ba",
+    "internal/server/webauthn.go": "9e2b97a6807e6a7d89ca74bf1c8e2ff83e54fa15bcc3cd799d309bd053cfe4b2",
+    "internal/server/workspace_config.go": "217c6e92e9f10e44b539d3cdbe1f287e2c10f7eae44efd269c758ca19b93f690",
+    "internal/server/issue_review_bounds_test.go": "197727b71028043c0635fda84776afaca5cdd7908b660a8e3c8fda4e23bda50e"
+  },
+  "remainingUnreviewed": 273,
+  "mainMerge": "FORBIDDEN by user; branch only"
+}

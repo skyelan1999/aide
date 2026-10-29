@@ -16,7 +16,11 @@ import (
 
 func TestAssistantDeliveryEvidenceGate(t *testing.T) {
 	a := testApp(t)
-	task := &Task{Prompt: "生成MP3，内容：测试"}
+	task := &Task{ID: newID(), Prompt: "生成MP3，内容：测试"}
+	registerHarnessFixtureTask(t, a, task)
+	if err := a.prepareTaskDeliveryBaseline(context.Background(), task); err != nil {
+		t.Fatal(err)
+	}
 	if a.checkTaskDelivery(task, "已完成 [下载](missing.mp3)") == nil || task.Delivery.State != "missing" {
 		t.Fatal("missing file accepted")
 	}

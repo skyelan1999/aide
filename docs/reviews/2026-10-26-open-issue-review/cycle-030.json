@@ -1,0 +1,96 @@
+{
+  "cycle": 30,
+  "baseline": "95c9f363d3f57b9596c7085f57cb5bd8ef65c1ec",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    147,
+    148,
+    149
+  ],
+  "commits": {
+    "147": "792d42721ff8fc39d1f6a0e9c5224da1967e26f7",
+    "148": "792d42721ff8fc39d1f6a0e9c5224da1967e26f7",
+    "149": "792d42721ff8fc39d1f6a0e9c5224da1967e26f7"
+  },
+  "cumulativeProductFixes": 83,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 84,
+  "original272RemainingFollowup": 200,
+  "red": [
+    {
+      "issues": [
+        147,
+        148
+      ],
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue147|^TestIssue148|^TestIssue149' -count=1",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 7.841,
+      "observed": "链接/超限策略被接受；保存失败后内存策略改变。初版149测试误用不存在的路由，404不作为149复现。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle30-red.log"
+    },
+    {
+      "issues": [
+        149
+      ],
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue149' -count=1",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 2.869,
+      "observed": "修正为真实/api/voice-history/change-password路由后，错误/空旧密钥均返回200而非400。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle30-149-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue147|^TestIssue148|^TestIssue149|^TestProfile|^TestSystemProfiles|^TestAutoRouting|^TestIssue100|^Test.*ReWrap|^TestDeriveAES|^TestIssue146' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 35.572,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle30-final-race.log",
+      "scope": "策略链接/超限/精确1MiB/优先级/Markdown/FIFO非阻塞；真实PUT保存失败/GET/重试；真实HTTP错误与空旧密钥精确400、持久化字节不变；独立Argon2盐与旧SHA派生轮换、重启验证旧密码拒绝/新密码保留历史；锁定/空cipher；既有profile/KDF/#100回滚/#146安全打开回归。"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T224834762477Z.log",
+      "fingerprint": "2bc9a31a0d2a50b3390ff948a29ec41db032776d7d3e4c36620109772a62e286"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "428Markdown/1466links"
+    }
+  ],
+  "notes": [
+    "工程策略限定为1MiB普通文件，os.Root与非阻塞安全打开拒绝链接/管道，读取前后核对身份与大小/mtime，保留JSON优先和Markdown兜底。",
+    "配置先原子保存成功，再在原锁内发布内存状态；保存失败500保留原配置，支持重试。",
+    "历史轮换必须提供正确旧历史密钥，以常量时间比较验证当前/旧版派生密钥，错误或空值400不改状态；正确轮换保留历史，兼容旧密文。",
+    "初次quick在沙箱中两个socket测试EPERM且解析子进程超时；相关Go测试退出后，以所需本机监听权限完整重跑quick通过，未修改测试实现。",
+    "本轮为后端行为；未新增UI，完整start.command工作台/跨平台/真实用户数据验收NOT_RUN。历史密钥验证不并入账户密码尝试预算；不声称提供独立历史接口限流。",
+    "沿用安全普通文件打开工具；有界读取不防御能任意修改本机文件且同时伪造相同大小/mtime的攻击者。",
+    "只push审查分支，不合并main、不发行、不部署，合理issue保持open。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "147": "https://github.com/skyelan1999/aide/issues/147#issuecomment-6429196899",
+      "148": "https://github.com/skyelan1999/aide/issues/148#issuecomment-6429196938",
+      "149": "https://github.com/skyelan1999/aide/issues/149#issuecomment-6429197626"
+    },
+    "verifiedRemoteCommit": "28a9f9545308ecfed941073736ae21d154de094d"
+  },
+  "sourceSHA256": {
+    "docs/security/password-hashing.md": "bffbd063a4837185362a03e5d0f84508e5a094483b00a10b1a2142c3ebaee258",
+    "docs/user-guide.md": "f497db689b34edf250ff45cf49744e06f2264749c508ec1f86ad7440aa72e1c7",
+    "internal/server/profiles.go": "bca7490529bbea3fa82ac0c416369e2eb77eff033d4adee438e68575bedaec6c",
+    "internal/server/profiles_io_bounds_test.go": "04c5bcae3f672d71a5a3923e315c2a6f65b130fe31f22a47dc6cfd78322e1576",
+    "internal/server/profiles_io_unix_test.go": "6e80cd09708ae0dfcc303d3d22bdd465ce47729de7497f388b16d6ca667c4b8f",
+    "internal/server/voice_agent.go": "fca66d05be00182d9380b5d5546582584999e107a046a7d5d8f5037e6f41c5b6",
+    "internal/server/voice_password_confirmation_test.go": "1a21dc79ab782ffdc63ea08c7c23f0dd0a473bf3ad1b78762402c145d33a1bd4"
+  }
+}

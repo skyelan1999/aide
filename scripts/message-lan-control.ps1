@@ -16,6 +16,35 @@ function Get-LanCompose([string[]]$Items) {
     if ($LASTEXITCODE -ne 0) { throw 'LAN bridge Compose query failed.' }
     return $text
 }
+function Invoke-LanDocker([string[]]$Items) {
+    $previous=$ErrorActionPreference
+    try {
+        $ErrorActionPreference='Continue'
+        $text=((& $DockerBin @Items 2> $null)|Out-String).Trim()
+        return [pscustomobject]@{Code=$LASTEXITCODE;Text=$text}
+    } finally { $ErrorActionPreference=$previous }
+}
+function New-TrustedLanSource([string]$Container,[string]$Identity) {
+    $created=Invoke-LanDocker -Items @('create','--pull','never','--network','none','--entrypoint','/bin/true',$Identity)
+    if ($created.Code -ne 0 -or -not $created.Text) {
+        # Docker Desktop/containerd can retain the container's config digest
+        # without resolving it as an image reference. A recorded tag is only a
+        # locator: the new stopped container must still have the exact digest.
+        $reference=Invoke-LanDocker -Items @('inspect',$Container,'--format','{{.Config.Image}}')
+        if ($reference.Code -ne 0 -or $reference.Text -notmatch '^[A-Za-z0-9][A-Za-z0-9._:/@-]*$') { throw 'Cannot resolve the running image reference for the LAN helper.' }
+        $created=Invoke-LanDocker -Items @('create','--pull','never','--network','none','--entrypoint','/bin/true',$reference.Text)
+    }
+    if ($created.Code -ne 0 -or $created.Text -notmatch '^[A-Za-z0-9][A-Za-z0-9_.-]*$') { throw 'Cannot extract a trusted LAN helper; restore the running image or recreate Aide from the selected image.' }
+    $candidate=$created.Text
+    try {
+        $actual=Invoke-LanDocker -Items @('inspect',$candidate,'--format','{{.Image}}')
+        if ($actual.Code -ne 0 -or $actual.Text -cne $Identity) { throw 'LAN helper image identity changed; recreate Aide from the selected image before retrying.' }
+        return $candidate
+    } catch {
+        & $DockerBin rm $candidate *> $null
+        throw
+    }
+}
 $cid=Get-LanCompose -Items @('ps','-q','aide')
 if (-not $cid -or $cid -match '\s') { throw 'Cannot identify the Aide container.' }
 $binding=Get-LanCompose -Items @('port','aide','45840')
@@ -24,15 +53,15 @@ $target="127.0.0.1:$($Matches[1])"
 $captureBinding=Get-LanCompose -Items @('port','aide','45841')
 if ($captureBinding -notmatch '^127\.0\.0\.1:([0-9]{1,5})$') { throw 'Missing loopback collector mapping; restart Aide.' }
 $captureTarget='127.0.0.1:'+$Matches[1]
-$image=((& $DockerBin inspect $cid --format '{{.Image}}') | Out-String).Trim()
-if ($LASTEXITCODE -ne 0 -or $image -notmatch '^sha256:[a-f0-9]{64}$') { throw 'Invalid running image identity.' }
+$metadata=Invoke-LanDocker -Items @('inspect',$cid,'--format','{{.Image}}')
+$image=$metadata.Text
+if ($metadata.Code -ne 0 -or $image -notmatch '^sha256:[a-f0-9]{64}$') { throw 'Invalid running image identity.' }
 New-Item -ItemType Directory -Path $nativeDir,$lanDir -Force | Out-Null
 $temp=Join-Path $nativeDir ([Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $temp | Out-Null
 $source=''
 try {
-    $source=((& $DockerBin create --network none --entrypoint /bin/true $image) | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or -not $source) { throw 'Cannot extract a trusted LAN helper.' }
+    $source=New-TrustedLanSource -Container $cid -Identity $image
     & $DockerBin cp "${source}:/opt/aide/message-lan/$name" (Join-Path $temp $name)
     if ($LASTEXITCODE -ne 0) { throw 'This image does not ship the LAN helper; rebuild it first.' }
     & $DockerBin cp "${source}:/opt/aide/message-lan/SHA256SUMS" (Join-Path $temp 'SHA256SUMS')

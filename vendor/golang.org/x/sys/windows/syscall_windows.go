@@ -1192,7 +1192,7 @@ func LoadConnectEx() error {
 		if connectExFunc.err != nil {
 			return
 		}
-		defer CloseHandle(s)
+		defer Closesocket(s)
 		var n uint32
 		connectExFunc.err = WSAIoctl(s,
 			SIO_GET_EXTENSION_FUNCTION_POINTER,
@@ -1243,7 +1243,7 @@ func loadWSASendRecvMsg() error {
 		if sendRecvMsgFunc.err != nil {
 			return
 		}
-		defer CloseHandle(s)
+		defer Closesocket(s)
 		var n uint32
 		sendRecvMsgFunc.err = WSAIoctl(s,
 			SIO_GET_EXTENSION_FUNCTION_POINTER,
@@ -1822,7 +1822,7 @@ func (b PSAPI_WORKING_SET_EX_BLOCK) Win32Protection() uint64 {
 // Shared returns the shared status of this page.
 // If this bit is 1, the page can be shared.
 func (b PSAPI_WORKING_SET_EX_BLOCK) Shared() bool {
-	return (b & (1 << 15)) == 1
+	return (b & (1 << 15)) != 0
 }
 
 // Node is the NUMA node. The maximum value of this member is 63.
@@ -1833,19 +1833,19 @@ func (b PSAPI_WORKING_SET_EX_BLOCK) Node() uint64 {
 // Locked returns the locked status of this page.
 // If this bit is 1, the virtual page is locked in physical memory.
 func (b PSAPI_WORKING_SET_EX_BLOCK) Locked() bool {
-	return (b & (1 << 22)) == 1
+	return (b & (1 << 22)) != 0
 }
 
 // LargePage returns the large page status of this page.
 // If this bit is 1, the page is a large page.
 func (b PSAPI_WORKING_SET_EX_BLOCK) LargePage() bool {
-	return (b & (1 << 23)) == 1
+	return (b & (1 << 23)) != 0
 }
 
 // Bad returns the bad status of this page.
 // If this bit is 1, the page is has been reported as bad.
 func (b PSAPI_WORKING_SET_EX_BLOCK) Bad() bool {
-	return (b & (1 << 31)) == 1
+	return (b & (1 << 31)) != 0
 }
 
 // intField extracts an integer field in the PSAPI_WORKING_SET_EX_BLOCK union.

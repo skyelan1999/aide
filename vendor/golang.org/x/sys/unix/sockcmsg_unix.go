@@ -66,6 +66,9 @@ func ParseOneSocketControlMessage(b []byte) (hdr Cmsghdr, data []byte, remainder
 }
 
 func socketControlMessageHeaderAndData(b []byte) (*Cmsghdr, []byte, error) {
+	if len(b) < CmsgLen(0) {
+		return nil, nil, EINVAL
+	}
 	h := (*Cmsghdr)(unsafe.Pointer(&b[0]))
 	if h.Len < SizeofCmsghdr || uint64(h.Len) > uint64(len(b)) {
 		return nil, nil, EINVAL

@@ -422,6 +422,10 @@ func (a *App) wsRuntimeCredentials() (password, keyMaterial, passphrase, directK
 // 注意：workflow 的心跳只是本地定时 ticker，绝不能当作远端存活证据；远端是否被
 // 真正清理由 cleanupRemoteGroup 的复核行（AIDE-CLEANUP:reaped/...）证明。
 func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.Writer) (int, error) {
+	return a.execRemoteSession(ctx, command, stdout, stderr, nil)
+}
+
+func (a *App) execRemoteSession(ctx context.Context, command string, stdout, stderr io.Writer, session *taskSSHSession) (int, error) {
 	runID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), atomic.AddInt64(&remoteRunSeq, 1))
 	pgidFile := "/tmp/.aide-remote-" + runID + ".pgid"
 	// EXIT cleanup preserves the user's last status, including an explicit exit.
@@ -429,9 +433,15 @@ func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.
 	// SSH may launch us as a process-group leader; setsid then forks. Wait for
 	// that child so its status and lifetime, rather than the launcher, is observed.
 	wrapped := "setsid -w bash -c " + shellQuote(inner)
-	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
-	args = append(args, a.sshTarget(), wrapped)
-	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	var args []string
+	var bin string
+	if session != nil {
+		args, bin = session.args(wrapped), session.bin
+	} else {
+		args = append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
+		args, bin = append(args, a.sshTarget(), wrapped), a.sshBin
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -444,7 +454,7 @@ func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.
 	}
 	if ctx.Err() != nil {
 		// 用户取消或超时：显式清除远端进程组（详见 cleanupRemoteGroup）。
-		receipt := a.cleanupRemoteGroup(pgidFile)
+		receipt := a.cleanupRemoteGroupSession(pgidFile, session)
 		return -1, fmt.Errorf("远程命令已取消或超时；%s", receipt)
 	}
 	var ee *exec.ExitError
@@ -497,16 +507,29 @@ func (a *App) execRemotePTY(ctx context.Context, command string, stdin io.Reader
 // 返回形如 "AIDE-CLEANUP:reaped:1234" 的结果行（日志/取证用）；失败或未得到
 // 确认也返回对应收据。它使用独立 context，绝不复用已被取消的 ctx。
 func (a *App) cleanupRemoteGroup(pgidFile string) string {
-	if a.sshBin == "" {
+	return a.cleanupRemoteGroupSession(pgidFile, nil)
+}
+
+func (a *App) cleanupRemoteGroupSession(pgidFile string, session *taskSSHSession) string {
+	bin := a.sshBin
+	if session != nil {
+		bin = session.bin
+	}
+	if bin == "" {
 		return "AIDE-CLEANUP:unconfirmed:no-ssh-client"
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
 	inner := remoteGroupCleanupInner(pgidFile)
 	remote := "bash -c " + shellQuote(inner)
-	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
-	args = append(args, a.sshTarget(), remote)
-	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	var args []string
+	if session != nil {
+		args = session.args(remote)
+	} else {
+		args = append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
+		args = append(args, a.sshTarget(), remote)
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	var out strings.Builder
 	cmd.Stdout = &out
@@ -617,7 +640,19 @@ func (a *App) runSFTPBatch(ctx context.Context, args []string, batch string) ([]
 	cmd.Stdin = strings.NewReader(batch)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	cmd.WaitDelay = 2 * time.Second
-	out, err := cmd.CombinedOutput()
+	w := &knowledgeLimitWriter{max: 4 << 20, stop: func() {
+		if cmd.Process != nil {
+			_ = cmd.Process.Kill()
+		}
+	}}
+	// Using one writer for both streams keeps exec's capture serialized and
+	// preserves OpenSSH diagnostics without an unbounded CombinedOutput buffer.
+	cmd.Stdout, cmd.Stderr = w, w
+	err := cmd.Run()
+	out := w.buf.Bytes()
+	if w.overflow {
+		return nil, errors.New("SFTP 输出超过 4 MiB 限制")
+	}
 	// OpenSSH sftp's ls can print a readdir failure while exiting zero. Preserve
 	// command diagnostics as operation errors for reads and writes alike.
 	if err == nil && sftpCommandDiagnosticFailed(string(out)) {
@@ -765,17 +800,11 @@ func (a *App) sftpReadAtGeneration(remoteFile string, generation uint64) ([]byte
 }
 
 func (a *App) sftpReadExpected(remoteFile string, expected *uint64) ([]byte, error) {
-	tmp, err := os.CreateTemp("", "aide-sftp-*")
-	if err != nil {
-		return nil, err
-	}
-	tmpPath := tmp.Name()
-	tmp.Close()
-	defer os.Remove(tmpPath)
-	if _, err := a.sftpBatchExpected("get "+shellQuoteRemote(remoteFile)+" "+shellQuoteRemote(tmpPath)+"\n", expected); err != nil {
-		return nil, err
-	}
-	return os.ReadFile(tmpPath)
+	return a.readSFTPBounded("workspace", sshControlSocket, expected, func(fs *transferFS) (transferFile, error) {
+		// Workspace cache/system-document paths may intentionally be outside the
+		// workspace directory. Preserve this existing absolute-path interface.
+		return fs.client.Open(remoteFile)
+	})
 }
 
 func (a *App) sftpWrite(remoteFile string, b []byte) error {
@@ -1180,18 +1209,16 @@ func (a *App) sftpReadSource(src Source, p string) ([]byte, error) {
 	return a.sftpReadSourceExpected(src, p, nil)
 }
 func (a *App) sftpReadSourceExpected(src Source, p string, expected *uint64) ([]byte, error) {
-	remoteFile := pathJoinRemote(src.Config.Path, p)
-	tmp, err := os.CreateTemp("", "aide-src-sftp-*")
-	if err != nil {
-		return nil, err
+	a.mu.Lock()
+	current, ok := a.findSource(src.ID)
+	valid := ok && current.Enabled && markdownSourceIdentity(current) == markdownSourceIdentity(src)
+	a.mu.Unlock()
+	if !valid {
+		return nil, errors.New("SFTP 来源已变化或停用，请重新访问")
 	}
-	tmpPath := tmp.Name()
-	tmp.Close()
-	defer os.Remove(tmpPath)
-	if _, err := a.sftpBatchSourceExpected(src, "get "+shellQuoteRemote(remoteFile)+" "+shellQuoteRemote(tmpPath)+"\n", expected, false); err != nil {
-		return nil, err
-	}
-	return os.ReadFile(tmpPath)
+	return a.readSFTPBounded(src.ID, sourceSocket(src.ID), expected, func(fs *transferFS) (transferFile, error) {
+		return fs.Open(p, os.O_RDONLY)
+	})
 }
 
 func (a *App) sftpWriteSource(src Source, p string, b []byte) error {

@@ -93,6 +93,9 @@ mxConnector.prototype.createMarker = function(c, pts, source)
 		mxConstants.STYLE_STARTARROW : mxConstants.STYLE_ENDARROW);
 	var p0 = (source) ? pts[1] : pts[n - 2];
 	var pe = (source) ? pts[0] : pts[n - 1];
+    var index = source ? 1 : n - 2;
+    while (pe != null && index >= 0 && index < n && pts[index] != null && pts[index].x == pe.x && pts[index].y == pe.y) index += source ? 1 : -1;
+    p0 = pts[index];
 
 	if (type != null && p0 != null && pe != null)
 	{
@@ -101,6 +104,7 @@ mxConnector.prototype.createMarker = function(c, pts, source)
 		var dy = pe.y - p0.y;
 		var dist = Math.sqrt(dx * dx + dy * dy);
 		
+		if (dist == 0 || !isFinite(dist)) return null;
 		var unitX = dx / dist;
 		var unitY = dy / dist;
 		

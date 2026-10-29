@@ -1,0 +1,61 @@
+{
+  "cycle": 106,
+  "issues": [
+    425
+  ],
+  "baseline": "4f248716",
+  "fix": "Explicit work stacks for DOMPurify template-fragment sanitization and SAFE_FOR_TEMPLATES text traversal; retain hook nesting and ordinary output.",
+  "red": {
+    "scope": "Explicit256KiB JS stack,actualDOMPurify3.4.16,6000-level DOM input,8modes",
+    "failed": 8,
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle106-red-complete/result.json",
+    "defaultStackBoundary": "Original asset passed6000-level DOM and20000-level string inputs in current Chromium; no claim of default-stack failure."
+  },
+  "green": [
+    {
+      "scope": "Same8actualDOM modes,with/without hooks,IN_PLACE and SAFE_FOR_TEMPLATES switches;6000hook pairs balanced",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle106-green-complete/result.json"
+    },
+    {
+      "scope": "Actual draw.io iframe desktop/narrow light/dark,16ordinary golden outputs,template cases plus existing sanitization/PNG/edit/save checks",
+      "checks": 24,
+      "pageErrors": [],
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle106-browser-green/result.json"
+    },
+    {
+      "status": "pass",
+      "checks": 262,
+      "fingerprint": "8b84a6781618211467e055191795c0d494f76cbe73d5188bb7f968199df0f312",
+      "receipt": ".agent-state/verify-20261028T194015796025Z.log"
+    }
+  ],
+  "notRun": [
+    "All native DOM/shadow-root recursion paths",
+    "Full start.command workbench",
+    "Full final branch CI",
+    "Main merge/release/deploy"
+  ],
+  "delivery": {
+    "commit": "e34d994c68316bc7b641e89ebc54c73b75951ded",
+    "pushed": true,
+    "mergedToMainByThisTask": false
+  },
+  "cumulativeFixedOnAideBranch": 429,
+  "productFixed": 426,
+  "toolingFixes": 3,
+  "independentPluginFixes": 6,
+  "remainingOriginal104": 66,
+  "newPending": [
+    578,
+    579,
+    582,
+    590,
+    591,
+    592,
+    593,
+    594
+  ],
+  "liveOpen": 508,
+  "livePending": 74
+}

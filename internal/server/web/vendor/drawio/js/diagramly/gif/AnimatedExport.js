@@ -12,6 +12,36 @@ function AnimatedGifExport(editorUi)
 	this.editorUi = editorUi;
 };
 
+AnimatedGifExport.MAX_FRAMES = 300;
+
+AnimatedGifExport.frameLimitError = function()
+{
+	var error = new Error('Animated GIF export is limited to 300 frames. Reduce the animation duration or frame rate.');
+	error.code = 'AIDE_GIF_EXPORT_LIMIT';
+	return error;
+};
+
+AnimatedGifExport.validateFrameCount = function(count, fps)
+{
+	if (!Number.isFinite(fps) || fps <= 0 || !Number.isSafeInteger(count) ||
+		count < 2 || count > AnimatedGifExport.MAX_FRAMES)
+	{
+		throw AnimatedGifExport.frameLimitError();
+	}
+};
+
+AnimatedGifExport.getFrameCount = function(fps, duration)
+{
+	if (!Number.isFinite(duration) || duration <= 0)
+	{
+		throw AnimatedGifExport.frameLimitError();
+	}
+
+	var count = Math.max(2, Math.round(fps * duration / 1000));
+	AnimatedGifExport.validateFrameCount(count, fps);
+	return count;
+};
+
 /**
  * Exports the current diagram as an animated GIF.
  *
@@ -33,7 +63,7 @@ AnimatedGifExport.prototype.doExport = function(options, callback, errorCallback
 	var editor = this.editorUi.editor;
 	options = options || {};
 
-	var fps = options.fps || 15;
+	var fps = Number(options.fps || 15);
 	var scale = options.scale || 1;
 	var border = options.border || 0;
 	var transparent = options.transparent || false;
@@ -63,8 +93,8 @@ AnimatedGifExport.prototype.doExport = function(options, callback, errorCallback
 		}
 
 		// Auto-detect duration from animation CSS or use provided value
-		var duration = options.duration || AnimatedGifExport.detectDuration(animInfos) || 1000;
-		var totalFrames = Math.max(2, Math.round(fps * duration / 1000));
+		var duration = Number(options.duration || AnimatedGifExport.detectDuration(animInfos) || 1000);
+		var totalFrames = AnimatedGifExport.getFrameCount(fps, duration);
 
 		// Remove CSS animation from paths (we'll set offsets manually)
 		AnimatedGifExport.removeAnimationCss(svgRoot, animInfos);
@@ -101,6 +131,18 @@ AnimatedGifExport.prototype.doExport = function(options, callback, errorCallback
 AnimatedGifExport.prototype.renderFrames = function(svgRoot, animInfos,
 	totalFrames, fps, scale, transparent, repeat, bg, theme, callback, errorCallback)
 {
+	try
+	{
+		fps = Number(fps);
+		totalFrames = Number(totalFrames);
+		AnimatedGifExport.validateFrameCount(totalFrames, fps);
+	}
+	catch (e)
+	{
+		if (errorCallback != null) errorCallback(e);
+		return;
+	}
+
 	var w = parseInt(svgRoot.getAttribute('width'));
 	var h = parseInt(svgRoot.getAttribute('height'));
 
@@ -301,11 +343,11 @@ AnimatedGifExport.findAnimatedPaths = function(svgRoot)
 				// Parse duration from animation shorthand (e.g. "ge-flow-animation-xxx 500ms linear infinite normal")
 				var durationMs = 500;
 				var match = (typeof animation === 'string') ?
-					animation.match(/(\d+)ms/) : null;
+					animation.match(/(?:^|\s)((?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)(ms|s)(?=\s|$)/i) : null;
 
 				if (match != null)
 				{
-					durationMs = parseInt(match[1]);
+					durationMs = parseFloat(match[1]) * (match[2].toLowerCase() == 's' ? 1000 : 1);
 				}
 
 				results.push({

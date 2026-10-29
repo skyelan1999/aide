@@ -1,0 +1,2460 @@
+[
+  {
+    "markdown": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+    "options": {},
+    "html": "<p>Escaped *a* and _b_ and [c].</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "text": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "Escaped ",
+              "text": "Escaped "
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": "a",
+              "text": "a"
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": "b",
+              "text": "b"
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\[",
+              "text": "["
+            },
+            {
+              "type": "text",
+              "raw": "c",
+              "text": "c"
+            },
+            {
+              "type": "escape",
+              "raw": "\\]",
+              "text": "]"
+            },
+            {
+              "type": "text",
+              "raw": ".",
+              "text": "."
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p>Escaped *a* and _b_ and [c].</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "text": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "Escaped ",
+              "text": "Escaped "
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": "a",
+              "text": "a"
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": "b",
+              "text": "b"
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\[",
+              "text": "["
+            },
+            {
+              "type": "text",
+              "raw": "c",
+              "text": "c"
+            },
+            {
+              "type": "escape",
+              "raw": "\\]",
+              "text": "]"
+            },
+            {
+              "type": "text",
+              "raw": ".",
+              "text": "."
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p>Escaped *a* and _b_ and [c].</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "text": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "Escaped ",
+              "text": "Escaped "
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": "a",
+              "text": "a"
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": "b",
+              "text": "b"
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\[",
+              "text": "["
+            },
+            {
+              "type": "text",
+              "raw": "c",
+              "text": "c"
+            },
+            {
+              "type": "escape",
+              "raw": "\\]",
+              "text": "]"
+            },
+            {
+              "type": "text",
+              "raw": ".",
+              "text": "."
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p>Escaped *a* and _b_ and [c].</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "text": "Escaped \\*a\\* and \\_b\\_ and \\[c\\].",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "Escaped ",
+              "text": "Escaped "
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": "a",
+              "text": "a"
+            },
+            {
+              "type": "escape",
+              "raw": "\\*",
+              "text": "*"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": "b",
+              "text": "b"
+            },
+            {
+              "type": "escape",
+              "raw": "\\_",
+              "text": "_"
+            },
+            {
+              "type": "text",
+              "raw": " and ",
+              "text": " and "
+            },
+            {
+              "type": "escape",
+              "raw": "\\[",
+              "text": "["
+            },
+            {
+              "type": "text",
+              "raw": "c",
+              "text": "c"
+            },
+            {
+              "type": "escape",
+              "raw": "\\]",
+              "text": "]"
+            },
+            {
+              "type": "text",
+              "raw": ".",
+              "text": "."
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "[label *strong*][r]\n\n[r]: /target \"title\"",
+    "options": {},
+    "html": "<p><a href=\"/target\" title=\"title\">label <em>strong</em></a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[label *strong*][r]",
+          "text": "[label *strong*][r]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[label *strong*][r]",
+              "href": "/target",
+              "title": "title",
+              "text": "label *strong*",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "label ",
+                  "text": "label "
+                },
+                {
+                  "type": "em",
+                  "raw": "*strong*",
+                  "text": "strong",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "strong",
+                      "text": "strong"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target",
+          "title": "title"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[label *strong*][r]\n\n[r]: /target \"title\"",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p><a href=\"/target\" title=\"title\">label <em>strong</em></a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[label *strong*][r]",
+          "text": "[label *strong*][r]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[label *strong*][r]",
+              "href": "/target",
+              "title": "title",
+              "text": "label *strong*",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "label ",
+                  "text": "label "
+                },
+                {
+                  "type": "em",
+                  "raw": "*strong*",
+                  "text": "strong",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "strong",
+                      "text": "strong"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target",
+          "title": "title"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[label *strong*][r]\n\n[r]: /target \"title\"",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><a href=\"/target\" title=\"title\">label <em>strong</em></a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[label *strong*][r]",
+          "text": "[label *strong*][r]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[label *strong*][r]",
+              "href": "/target",
+              "title": "title",
+              "text": "label *strong*",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "label ",
+                  "text": "label "
+                },
+                {
+                  "type": "em",
+                  "raw": "*strong*",
+                  "text": "strong",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "strong",
+                      "text": "strong"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target",
+          "title": "title"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[label *strong*][r]\n\n[r]: /target \"title\"",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p><a href=\"/target\" title=\"title\">label <em>strong</em></a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[label *strong*][r]",
+          "text": "[label *strong*][r]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[label *strong*][r]",
+              "href": "/target",
+              "title": "title",
+              "text": "label *strong*",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "label ",
+                  "text": "label "
+                },
+                {
+                  "type": "em",
+                  "raw": "*strong*",
+                  "text": "strong",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "strong",
+                      "text": "strong"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target",
+          "title": "title"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[ref][R]\n\n[r]: /target",
+    "options": {},
+    "html": "<p><a href=\"/target\">ref</a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[ref][R]",
+          "text": "[ref][R]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[ref][R]",
+              "href": "/target",
+              "title": null,
+              "text": "ref",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "ref",
+                  "text": "ref"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[ref][R]\n\n[r]: /target",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p><a href=\"/target\">ref</a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[ref][R]",
+          "text": "[ref][R]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[ref][R]",
+              "href": "/target",
+              "title": null,
+              "text": "ref",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "ref",
+                  "text": "ref"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[ref][R]\n\n[r]: /target",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><a href=\"/target\">ref</a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[ref][R]",
+          "text": "[ref][R]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[ref][R]",
+              "href": "/target",
+              "title": null,
+              "text": "ref",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "ref",
+                  "text": "ref"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[ref][R]\n\n[r]: /target",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p><a href=\"/target\">ref</a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[ref][R]",
+          "text": "[ref][R]",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[ref][R]",
+              "href": "/target",
+              "title": null,
+              "text": "ref",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "ref",
+                  "text": "ref"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/target"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[unresolved][missing]",
+    "options": {},
+    "html": "<p>[unresolved][missing]</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[unresolved][missing]",
+          "text": "[unresolved][missing]",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "[unresolved][missing]",
+              "text": "[unresolved][missing]"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "[unresolved][missing]",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p>[unresolved][missing]</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[unresolved][missing]",
+          "text": "[unresolved][missing]",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "[unresolved][missing]",
+              "text": "[unresolved][missing]"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "[unresolved][missing]",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p>[unresolved][missing]</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[unresolved][missing]",
+          "text": "[unresolved][missing]",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "[unresolved][missing]",
+              "text": "[unresolved][missing]"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "[unresolved][missing]",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p>[unresolved][missing]</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[unresolved][missing]",
+          "text": "[unresolved][missing]",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "[unresolved][missing]",
+              "text": "[unresolved][missing]"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "**[ref][r]**\n\n[r]: /owned",
+    "options": {},
+    "html": "<p><strong><a href=\"/owned\">ref</a></strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "**[ref][r]**",
+          "text": "**[ref][r]**",
+          "tokens": [
+            {
+              "type": "strong",
+              "raw": "**[ref][r]**",
+              "text": "[ref][r]",
+              "tokens": [
+                {
+                  "type": "link",
+                  "raw": "[ref][r]",
+                  "href": "/owned",
+                  "title": null,
+                  "text": "ref",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "ref",
+                      "text": "ref"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/owned"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "**[ref][r]**\n\n[r]: /owned",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p><strong><a href=\"/owned\">ref</a></strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "**[ref][r]**",
+          "text": "**[ref][r]**",
+          "tokens": [
+            {
+              "type": "strong",
+              "raw": "**[ref][r]**",
+              "text": "[ref][r]",
+              "tokens": [
+                {
+                  "type": "link",
+                  "raw": "[ref][r]",
+                  "href": "/owned",
+                  "title": null,
+                  "text": "ref",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "ref",
+                      "text": "ref"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/owned"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "**[ref][r]**\n\n[r]: /owned",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><strong><a href=\"/owned\">ref</a></strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "**[ref][r]**",
+          "text": "**[ref][r]**",
+          "tokens": [
+            {
+              "type": "strong",
+              "raw": "**[ref][r]**",
+              "text": "[ref][r]",
+              "tokens": [
+                {
+                  "type": "link",
+                  "raw": "[ref][r]",
+                  "href": "/owned",
+                  "title": null,
+                  "text": "ref",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "ref",
+                      "text": "ref"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/owned"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "**[ref][r]**\n\n[r]: /owned",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p><strong><a href=\"/owned\">ref</a></strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "**[ref][r]**",
+          "text": "**[ref][r]**",
+          "tokens": [
+            {
+              "type": "strong",
+              "raw": "**[ref][r]**",
+              "text": "[ref][r]",
+              "tokens": [
+                {
+                  "type": "link",
+                  "raw": "[ref][r]",
+                  "href": "/owned",
+                  "title": null,
+                  "text": "ref",
+                  "tokens": [
+                    {
+                      "type": "text",
+                      "raw": "ref",
+                      "text": "ref"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/owned"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "![alt][r]\n\n[r]: /image.png",
+    "options": {},
+    "html": "<p><img src=\"/image.png\" alt=\"alt\"></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "![alt][r]",
+          "text": "![alt][r]",
+          "tokens": [
+            {
+              "type": "image",
+              "raw": "![alt][r]",
+              "href": "/image.png",
+              "title": null,
+              "text": "alt"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/image.png"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "![alt][r]\n\n[r]: /image.png",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p><img src=\"/image.png\" alt=\"alt\"></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "![alt][r]",
+          "text": "![alt][r]",
+          "tokens": [
+            {
+              "type": "image",
+              "raw": "![alt][r]",
+              "href": "/image.png",
+              "title": null,
+              "text": "alt"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/image.png"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "![alt][r]\n\n[r]: /image.png",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><img src=\"/image.png\" alt=\"alt\"></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "![alt][r]",
+          "text": "![alt][r]",
+          "tokens": [
+            {
+              "type": "image",
+              "raw": "![alt][r]",
+              "href": "/image.png",
+              "title": null,
+              "text": "alt"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/image.png"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "![alt][r]\n\n[r]: /image.png",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p><img src=\"/image.png\" alt=\"alt\"></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "![alt][r]",
+          "text": "![alt][r]",
+          "tokens": [
+            {
+              "type": "image",
+              "raw": "![alt][r]",
+              "href": "/image.png",
+              "title": null,
+              "text": "alt"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        }
+      ],
+      "links": {
+        "r": {
+          "href": "/image.png"
+        }
+      }
+    }
+  },
+  {
+    "markdown": "[a](https://owned.invalid/x(y))",
+    "options": {},
+    "html": "<p><a href=\"https://owned.invalid/x(y)\">a</a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[a](https://owned.invalid/x(y))",
+          "text": "[a](https://owned.invalid/x(y))",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[a](https://owned.invalid/x(y))",
+              "href": "https://owned.invalid/x(y)",
+              "title": null,
+              "text": "a",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "a",
+                  "text": "a"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "[a](https://owned.invalid/x(y))",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p><a href=\"https://owned.invalid/x(y)\">a</a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[a](https://owned.invalid/x(y))",
+          "text": "[a](https://owned.invalid/x(y))",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[a](https://owned.invalid/x(y))",
+              "href": "https://owned.invalid/x(y)",
+              "title": null,
+              "text": "a",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "a",
+                  "text": "a"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "[a](https://owned.invalid/x(y))",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><a href=\"https://owned.invalid/x(y\">a</a>)</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[a](https://owned.invalid/x(y))",
+          "text": "[a](https://owned.invalid/x(y))",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[a](https://owned.invalid/x(y)",
+              "href": "https://owned.invalid/x(y",
+              "title": null,
+              "text": "a",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "a",
+                  "text": "a"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "raw": ")",
+              "text": ")"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "[a](https://owned.invalid/x(y))",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p><a href=\"https://owned.invalid/x(y)\">a</a></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "[a](https://owned.invalid/x(y))",
+          "text": "[a](https://owned.invalid/x(y))",
+          "tokens": [
+            {
+              "type": "link",
+              "raw": "[a](https://owned.invalid/x(y))",
+              "href": "https://owned.invalid/x(y)",
+              "title": null,
+              "text": "a",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "a",
+                  "text": "a"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "`a\\*b\\*` inside **strong**",
+    "options": {},
+    "html": "<p><code>a\\*b\\*</code> inside <strong>strong</strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "`a\\*b\\*` inside **strong**",
+          "text": "`a\\*b\\*` inside **strong**",
+          "tokens": [
+            {
+              "type": "codespan",
+              "raw": "`a\\*b\\*`",
+              "text": "a\\*b\\*"
+            },
+            {
+              "type": "text",
+              "raw": " inside ",
+              "text": " inside "
+            },
+            {
+              "type": "strong",
+              "raw": "**strong**",
+              "text": "strong",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "strong",
+                  "text": "strong"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "`a\\*b\\*` inside **strong**",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p><code>a\\*b\\*</code> inside <strong>strong</strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "`a\\*b\\*` inside **strong**",
+          "text": "`a\\*b\\*` inside **strong**",
+          "tokens": [
+            {
+              "type": "codespan",
+              "raw": "`a\\*b\\*`",
+              "text": "a\\*b\\*"
+            },
+            {
+              "type": "text",
+              "raw": " inside ",
+              "text": " inside "
+            },
+            {
+              "type": "strong",
+              "raw": "**strong**",
+              "text": "strong",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "strong",
+                  "text": "strong"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "`a\\*b\\*` inside **strong**",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><code>a\\*b\\*</code> inside <strong>strong</strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "`a\\*b\\*` inside **strong**",
+          "text": "`a\\*b\\*` inside **strong**",
+          "tokens": [
+            {
+              "type": "codespan",
+              "raw": "`a\\*b\\*`",
+              "text": "a\\*b\\*"
+            },
+            {
+              "type": "text",
+              "raw": " inside ",
+              "text": " inside "
+            },
+            {
+              "type": "strong",
+              "raw": "**strong**",
+              "text": "strong",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "strong",
+                  "text": "strong"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "`a\\*b\\*` inside **strong**",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p><code>a\\*b\\*</code> inside <strong>strong</strong></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "`a\\*b\\*` inside **strong**",
+          "text": "`a\\*b\\*` inside **strong**",
+          "tokens": [
+            {
+              "type": "codespan",
+              "raw": "`a\\*b\\*`",
+              "text": "a\\*b\\*"
+            },
+            {
+              "type": "text",
+              "raw": " inside ",
+              "text": " inside "
+            },
+            {
+              "type": "strong",
+              "raw": "**strong**",
+              "text": "strong",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "strong",
+                  "text": "strong"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<kbd>literal_underscore</kbd>",
+    "options": {},
+    "html": "<p><kbd>literal_underscore</kbd></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "<kbd>literal_underscore</kbd>",
+          "text": "<kbd>literal_underscore</kbd>",
+          "tokens": [
+            {
+              "type": "html",
+              "raw": "<kbd>",
+              "inLink": false,
+              "inRawBlock": true,
+              "block": false,
+              "text": "<kbd>"
+            },
+            {
+              "type": "text",
+              "raw": "literal_underscore",
+              "text": "literal_underscore"
+            },
+            {
+              "type": "html",
+              "raw": "</kbd>",
+              "inLink": false,
+              "inRawBlock": false,
+              "block": false,
+              "text": "</kbd>"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<kbd>literal_underscore</kbd>",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p><kbd>literal_underscore</kbd></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "<kbd>literal_underscore</kbd>",
+          "text": "<kbd>literal_underscore</kbd>",
+          "tokens": [
+            {
+              "type": "html",
+              "raw": "<kbd>",
+              "inLink": false,
+              "inRawBlock": true,
+              "block": false,
+              "text": "<kbd>"
+            },
+            {
+              "type": "text",
+              "raw": "literal_underscore",
+              "text": "literal_underscore"
+            },
+            {
+              "type": "html",
+              "raw": "</kbd>",
+              "inLink": false,
+              "inRawBlock": false,
+              "block": false,
+              "text": "</kbd>"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<kbd>literal_underscore</kbd>",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><kbd>literal_underscore</kbd></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "<kbd>literal_underscore</kbd>",
+          "text": "<kbd>literal_underscore</kbd>",
+          "tokens": [
+            {
+              "type": "html",
+              "raw": "<kbd>",
+              "inLink": false,
+              "inRawBlock": true,
+              "block": false,
+              "text": "<kbd>"
+            },
+            {
+              "type": "text",
+              "raw": "literal_underscore",
+              "text": "literal_underscore"
+            },
+            {
+              "type": "html",
+              "raw": "</kbd>",
+              "inLink": false,
+              "inRawBlock": false,
+              "block": false,
+              "text": "</kbd>"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<kbd>literal_underscore</kbd>",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p><kbd>literal_underscore</kbd></p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "<kbd>literal_underscore</kbd>",
+          "text": "<kbd>literal_underscore</kbd>",
+          "tokens": [
+            {
+              "type": "html",
+              "raw": "<kbd>",
+              "inLink": false,
+              "inRawBlock": true,
+              "block": false,
+              "text": "<kbd>"
+            },
+            {
+              "type": "text",
+              "raw": "literal_underscore",
+              "text": "literal_underscore"
+            },
+            {
+              "type": "html",
+              "raw": "</kbd>",
+              "inLink": false,
+              "inRawBlock": false,
+              "block": false,
+              "text": "</kbd>"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<script>a</script>a</script>",
+    "options": {},
+    "html": "<script>a</script>a</script>",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<script>a</script>a</script>",
+          "pre": true,
+          "text": "<script>a</script>a</script>"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<script>a</script>a</script>",
+    "options": {
+      "gfm": false
+    },
+    "html": "<script>a</script>a</script>",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<script>a</script>a</script>",
+          "pre": true,
+          "text": "<script>a</script>a</script>"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<script>a</script>a</script>",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<script>a</script>a</script>",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<script>a</script>a</script>",
+          "pre": true,
+          "text": "<script>a</script>a</script>"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<script>a</script>a</script>",
+    "options": {
+      "breaks": true
+    },
+    "html": "<script>a</script>a</script>",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<script>a</script>a</script>",
+          "pre": true,
+          "text": "<script>a</script>a</script>"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<?owned?> tail",
+    "options": {},
+    "html": "<?owned?><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<?owned?>",
+          "pre": false,
+          "text": "<?owned?>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<?owned?> tail",
+    "options": {
+      "gfm": false
+    },
+    "html": "<?owned?><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<?owned?>",
+          "pre": false,
+          "text": "<?owned?>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<?owned?> tail",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><?owned?> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "<?owned?> tail",
+          "text": "<?owned?> tail",
+          "tokens": [
+            {
+              "type": "html",
+              "raw": "<?owned?>",
+              "inLink": false,
+              "inRawBlock": false,
+              "block": false,
+              "text": "<?owned?>"
+            },
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<?owned?> tail",
+    "options": {
+      "breaks": true
+    },
+    "html": "<?owned?><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<?owned?>",
+          "pre": false,
+          "text": "<?owned?>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<!DOCTYPE owned> tail",
+    "options": {},
+    "html": "<!DOCTYPE owned><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<!DOCTYPE owned>",
+          "pre": false,
+          "text": "<!DOCTYPE owned>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<!DOCTYPE owned> tail",
+    "options": {
+      "gfm": false
+    },
+    "html": "<!DOCTYPE owned><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<!DOCTYPE owned>",
+          "pre": false,
+          "text": "<!DOCTYPE owned>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<!DOCTYPE owned> tail",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><!DOCTYPE owned> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "<!DOCTYPE owned> tail",
+          "text": "<!DOCTYPE owned> tail",
+          "tokens": [
+            {
+              "type": "html",
+              "raw": "<!DOCTYPE owned>",
+              "inLink": false,
+              "inRawBlock": false,
+              "block": false,
+              "text": "<!DOCTYPE owned>"
+            },
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<!DOCTYPE owned> tail",
+    "options": {
+      "breaks": true
+    },
+    "html": "<!DOCTYPE owned><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<!DOCTYPE owned>",
+          "pre": false,
+          "text": "<!DOCTYPE owned>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<![CDATA[owned]]> tail",
+    "options": {},
+    "html": "<![CDATA[owned]]><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<![CDATA[owned]]>",
+          "pre": false,
+          "text": "<![CDATA[owned]]>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<![CDATA[owned]]> tail",
+    "options": {
+      "gfm": false
+    },
+    "html": "<![CDATA[owned]]><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<![CDATA[owned]]>",
+          "pre": false,
+          "text": "<![CDATA[owned]]>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<![CDATA[owned]]> tail",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p><![CDATA[owned]]> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "<![CDATA[owned]]> tail",
+          "text": "<![CDATA[owned]]> tail",
+          "tokens": [
+            {
+              "type": "html",
+              "raw": "<![CDATA[owned]]>",
+              "inLink": false,
+              "inRawBlock": false,
+              "block": false,
+              "text": "<![CDATA[owned]]>"
+            },
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "<![CDATA[owned]]> tail",
+    "options": {
+      "breaks": true
+    },
+    "html": "<![CDATA[owned]]><p> tail</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "html",
+          "block": true,
+          "raw": "<![CDATA[owned]]>",
+          "pre": false,
+          "text": "<![CDATA[owned]]>"
+        },
+        {
+          "type": "paragraph",
+          "raw": " tail",
+          "text": " tail",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": " tail",
+              "text": " tail"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "~~~~js\nowned\n~~~~\n",
+    "options": {},
+    "html": "<pre><code class=\"language-js\">owned\n</code></pre>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "code",
+          "raw": "~~~~js\nowned\n~~~~\n",
+          "lang": "js",
+          "text": "owned"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "~~~~js\nowned\n~~~~\n",
+    "options": {
+      "gfm": false
+    },
+    "html": "<pre><code class=\"language-js\">owned\n</code></pre>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "code",
+          "raw": "~~~~js\nowned\n~~~~\n",
+          "lang": "js",
+          "text": "owned"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "~~~~js\nowned\n~~~~\n",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p>~~~~js\nowned\n~~~~</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "~~~~js\nowned\n~~~~\n",
+          "text": "~~~~js\nowned\n~~~~",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "~~~~js\nowned\n~~~~",
+              "text": "~~~~js\nowned\n~~~~"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "~~~~js\nowned\n~~~~\n",
+    "options": {
+      "breaks": true
+    },
+    "html": "<pre><code class=\"language-js\">owned\n</code></pre>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "code",
+          "raw": "~~~~js\nowned\n~~~~\n",
+          "lang": "js",
+          "text": "owned"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "text\n~~~~~~~~",
+    "options": {},
+    "html": "<p>text\n~~~~~~~~</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "text\n~~~~~~~~",
+          "text": "text\n~~~~~~~~",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "text\n~~~~~~~~",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p>text\n~~~~~~~~</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "text\n~~~~~~~~",
+          "text": "text\n~~~~~~~~",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "text\n~~~~~~~~",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p>text\n~~~~~~~~</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "text\n~~~~~~~~",
+          "text": "text\n~~~~~~~~",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "text\n~~~~~~~~",
+    "options": {
+      "breaks": true
+    },
+    "html": "<p>text<br>~~~~~~~~</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "text\n~~~~~~~~",
+          "text": "text\n~~~~~~~~",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "> text\n> ~~~~~~~~",
+    "options": {},
+    "html": "<blockquote>\n<p>text\n~~~~~~~~</p>\n</blockquote>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "blockquote",
+          "raw": "> text\n> ~~~~~~~~",
+          "tokens": [
+            {
+              "type": "paragraph",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "text\n~~~~~~~~",
+                  "text": "text\n~~~~~~~~"
+                }
+              ]
+            }
+          ],
+          "text": "text\n~~~~~~~~"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "> text\n> ~~~~~~~~",
+    "options": {
+      "gfm": false
+    },
+    "html": "<blockquote>\n<p>text\n~~~~~~~~</p>\n</blockquote>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "blockquote",
+          "raw": "> text\n> ~~~~~~~~",
+          "tokens": [
+            {
+              "type": "paragraph",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "text\n~~~~~~~~",
+                  "text": "text\n~~~~~~~~"
+                }
+              ]
+            }
+          ],
+          "text": "text\n~~~~~~~~"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "> text\n> ~~~~~~~~",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<blockquote>\n<p>text\n~~~~~~~~</p>\n</blockquote>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "blockquote",
+          "raw": "> text\n> ~~~~~~~~",
+          "tokens": [
+            {
+              "type": "paragraph",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "text\n~~~~~~~~",
+                  "text": "text\n~~~~~~~~"
+                }
+              ]
+            }
+          ],
+          "text": "text\n~~~~~~~~"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "> text\n> ~~~~~~~~",
+    "options": {
+      "breaks": true
+    },
+    "html": "<blockquote>\n<p>text<br>~~~~~~~~</p>\n</blockquote>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "blockquote",
+          "raw": "> text\n> ~~~~~~~~",
+          "tokens": [
+            {
+              "type": "paragraph",
+              "raw": "text\n~~~~~~~~",
+              "text": "text\n~~~~~~~~",
+              "tokens": [
+                {
+                  "type": "text",
+                  "raw": "text\n~~~~~~~~",
+                  "text": "text\n~~~~~~~~"
+                }
+              ]
+            }
+          ],
+          "text": "text\n~~~~~~~~"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "|a|b|\n|-|-|\n|one|two|\n\n~~~~\ncode\n~~~~",
+    "options": {},
+    "html": "<table>\n<thead>\n<tr>\n<th>a</th>\n<th>b</th>\n</tr>\n</thead>\n<tbody><tr>\n<td>one</td>\n<td>two</td>\n</tr>\n</tbody></table>\n<pre><code>code\n</code></pre>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "|a|b|\n|-|-|\n|one|two|",
+          "text": "|a|b|\n|-|-|\n|one|two|",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "|a|b|\n|-|-|\n|one|two|",
+              "text": "|a|b|\n|-|-|\n|one|two|"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        },
+        {
+          "type": "code",
+          "raw": "~~~~\ncode\n~~~~",
+          "lang": "",
+          "text": "code"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "|a|b|\n|-|-|\n|one|two|\n\n~~~~\ncode\n~~~~",
+    "options": {
+      "gfm": false
+    },
+    "html": "<p>|a|b|\n|-|-|\n|one|two|</p>\n<pre><code>code\n</code></pre>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "|a|b|\n|-|-|\n|one|two|",
+          "text": "|a|b|\n|-|-|\n|one|two|",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "|a|b|\n|-|-|\n|one|two|",
+              "text": "|a|b|\n|-|-|\n|one|two|"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        },
+        {
+          "type": "code",
+          "raw": "~~~~\ncode\n~~~~",
+          "lang": "",
+          "text": "code"
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "|a|b|\n|-|-|\n|one|two|\n\n~~~~\ncode\n~~~~",
+    "options": {
+      "pedantic": true
+    },
+    "html": "<p>|a|b|\n|-|-|\n|one|two|</p>\n<p>~~~~\ncode\n~~~~</p>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "|a|b|\n|-|-|\n|one|two|",
+          "text": "|a|b|\n|-|-|\n|one|two|",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "|a|b|\n|-|-|\n|one|two|",
+              "text": "|a|b|\n|-|-|\n|one|two|"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        },
+        {
+          "type": "paragraph",
+          "raw": "~~~~\ncode\n~~~~",
+          "text": "~~~~\ncode\n~~~~",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "~~~~\ncode\n~~~~",
+              "text": "~~~~\ncode\n~~~~"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  },
+  {
+    "markdown": "|a|b|\n|-|-|\n|one|two|\n\n~~~~\ncode\n~~~~",
+    "options": {
+      "breaks": true
+    },
+    "html": "<table>\n<thead>\n<tr>\n<th>a</th>\n<th>b</th>\n</tr>\n</thead>\n<tbody><tr>\n<td>one</td>\n<td>two</td>\n</tr>\n</tbody></table>\n<pre><code>code\n</code></pre>\n",
+    "lexed": {
+      "tokens": [
+        {
+          "type": "paragraph",
+          "raw": "|a|b|\n|-|-|\n|one|two|",
+          "text": "|a|b|\n|-|-|\n|one|two|",
+          "tokens": [
+            {
+              "type": "text",
+              "raw": "|a|b|\n|-|-|\n|one|two|",
+              "text": "|a|b|\n|-|-|\n|one|two|"
+            }
+          ]
+        },
+        {
+          "type": "space",
+          "raw": "\n\n"
+        },
+        {
+          "type": "code",
+          "raw": "~~~~\ncode\n~~~~",
+          "lang": "",
+          "text": "code"
+        }
+      ],
+      "links": {}
+    }
+  }
+]

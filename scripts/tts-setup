@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tts-setup — 本地离线 sherpa-onnx 中文模型安装与校验（#44）。
 #
-# 联网环境：把选定的中文音色模型下载到 /data/tts/，做 SHA256 / 体积校验。
+# 联网环境：把选定的中文音色模型下载到 /data/tts/，做固定 SHA256 校验（体积仅供参考）。
 # 保密/空气隙环境：先在联网机下载，把 tar.bz2 拷进内网，用 --verify-only 校验并就地就位。
 # 模型外置在 /data/tts/（不进镜像控体积）；每个音色一个子目录，aide 启动后自动发现。
 set -euo pipefail
@@ -9,13 +9,15 @@ set -euo pipefail
 BASE_URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models"
 TARGET_DIR="/data/tts"
 
-# 模型注册表：name|tar包|约大小MB|gender|piper?|默认SHA256(空=下载后打印供锁定)
+# 模型注册表：name|tar包|约大小MB|gender|piper?|固定官方发布资产 SHA256
 MODELS="
-huayan|vits-piper-zh_CN-huayan-medium.tar.bz2|67.3|female|1|
-chaowen|vits-piper-zh_CN-chaowen-medium.tar.bz2|60.4|male|1|
-wnj|vits-zh-hf-fanchen-wnj.tar.bz2|119.2|male|0|
-theresa|vits-zh-hf-theresa.tar.bz2|120.6|female|0|
+huayan|vits-piper-zh_CN-huayan-medium.tar.bz2|67.3|female|1|dbdfec42b91d9cee31cce9ff4b3e9c305eb6fbf60546d071f7e46273554cce6b
+chaowen|vits-piper-zh_CN-chaowen-medium.tar.bz2|60.4|male|1|1b69bdcf10bb6331c7f8a7591940febeb175c6bb86caa3802d96531f8e4ad211
+wnj|vits-zh-hf-fanchen-wnj.tar.bz2|119.2|male|0|4035c68899e951ccc6e863e6088ba0898fba0ccd5a88df7f2b784a9b0da88503
+theresa|vits-zh-hf-theresa.tar.bz2|120.6|female|0|f337638c49689e1d87135c4e224daa1aacc0109e784b1cf78eafb1b14a1d9e92
 "
+
+ESPEAK_SHA256="4135ccf82e1f40613491c0874d4945ae9e9c7840933d8e25a6f9e003d9ebf533"
 
 usage() {
   cat <<'EOF'
@@ -27,7 +29,9 @@ tts-setup — 本地离线 sherpa-onnx 中文模型安装与校验（#44）
   scripts/tts-setup --model huayan          下载安装华严(女,piper,~67MB)到 /data/tts/
   scripts/tts-setup --model wnj --dir /data/tts
   scripts/tts-setup --model huayan --mirror https://hf-mirror.com
-  scripts/tts-setup --verify-only /path/to/model.tar.bz2   仅校验已下载包（空气隙手动放入后用）
+  scripts/tts-setup --verify-only /path/to/model.tar.bz2   按已知官方包名验证固定摘要
+
+  scripts/tts-setup --verify-only renamed.tar.bz2 --sha256 <可信SHA256>
 
 可用模型：
   huayan   华严（女，piper，~67MB，自然女声，推荐默认）
@@ -51,7 +55,7 @@ list_models() {
 }
 
 lookup() {
-  want="$1"
+  local want="$1"
   echo "${MODELS}" | grep -v '^$' | while IFS='|' read -r name tar size gender piper sha; do
     if [ "${name}" = "${want}" ]; then echo "${tar}|${size}|${gender}|${piper}|${sha}"; break; fi
   done
@@ -60,70 +64,87 @@ lookup() {
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "缺少命令：$1" >&2; exit 1; }; }
 
 verify_tarball() {
-  f="$1"; expsize="$2"; expsha="$3"
+  local f="$1" expsize="$2" expsha="$3" bytes actual_mb sha
+  expsha="$(printf '%s' "${expsha}" | tr 'A-F' 'a-f')"
+  [[ "${expsha}" =~ ^[0-9a-f]{64}$ ]] || { echo "缺少有效的可信 SHA256；已知官方包使用固定摘要，其他包需 --sha256" >&2; return 1; }
   [ -f "${f}" ] || { echo "文件不存在：${f}" >&2; return 1; }
   bytes="$(stat -f%z "${f}" 2>/dev/null || stat -c%s "${f}")"
   actual_mb=$(awk -v b="${bytes}" 'BEGIN{printf "%.1f", b/1048576}')
   echo "  大小：${actual_mb}MB（标称约 ${expsize}MB）"
   sha="$(shasum -a 256 "${f}" | awk '{print $1}')"
   echo "  SHA256：${sha}"
-  if [ -n "${expsha}" ]; then
-    if [ "${sha}" != "${expsha}" ]; then
-      echo "  x SHA256 不匹配！期望 ${expsha}" >&2; return 1
-    fi
-    echo "  OK SHA256 校验通过"
-  else
-    echo "  （注册表未固定哈希——请把上面的 SHA256 回填脚本 MODELS 表以复现）"
+  if [ "${sha}" != "${expsha}" ]; then
+    echo "  x SHA256 不匹配！期望 ${expsha}" >&2; return 1
   fi
+  echo "  OK SHA256 校验通过"
 }
 
 install_model() {
-  name="$1"; mirror="$2"
+  local name="$1" mirror="$2" tar size gender piper sha url work src onnx piper_js staging
   IFS='|' read -r tar size gender piper sha <<<"$(lookup "${name}")"
   [ -n "${tar:-}" ] || { echo "未知模型：${name}（--list 查看可用）" >&2; exit 1; }
   need_cmd curl; need_cmd tar; need_cmd shasum
 
   url="${mirror%/}/${tar}"
   work="$(mktemp -d)"
+  trap "rm -rf -- $(printf '%q' "${work}")" EXIT
   echo "==> 下载 ${name} -> ${url}"
   curl -fSL --retry 5 --retry-delay 3 -o "${work}/${tar}" "${url}"
   echo "==> 校验"
   verify_tarball "${work}/${tar}" "${size}" "${sha}"
 
   echo "==> 解压到 ${TARGET_DIR}/${name}"
-  mkdir -p "${TARGET_DIR}/${name}"
   tar xjf "${work}/${tar}" -C "${work}"
   src="$(find "${work}" -maxdepth 1 -mindepth 1 -type d ! -name "$(basename "${work}")" | head -1)"
   [ -d "${src}" ] || src="${work}"
+  [ -s "${src}/tokens.txt" ] || { echo "模型缺少 tokens.txt" >&2; rm -rf -- "${work}"; return 1; }
+  onnx="$(find "${src}" -maxdepth 1 -type f -name '*.onnx' ! -name '*.int8.onnx' | head -1)"
+  [ -n "${onnx}" ] && [ -s "${onnx}" ] || { echo "模型缺少可用 ONNX 文件" >&2; rm -rf -- "${work}"; return 1; }
+  if [ "${piper}" != "1" ] && [ ! -s "${src}/lexicon.txt" ]; then
+    echo "VITS 模型缺少 lexicon.txt" >&2; rm -rf -- "${work}"; return 1
+  fi
+  staging="${work}/ready"
+  mkdir -p "${staging}"
 
-  cp "${src}"/*.onnx "${TARGET_DIR}/${name}/" 2>/dev/null || true
-  cp "${src}"/lexicon.txt "${TARGET_DIR}/${name}/" 2>/dev/null || true
-  cp "${src}"/tokens.txt "${TARGET_DIR}/${name}/" 2>/dev/null || true
-  cp "${src}"/*.fst "${TARGET_DIR}/${name}/" 2>/dev/null || true
-  [ -d "${src}/dict" ] && cp -R "${src}/dict" "${TARGET_DIR}/${name}/" || true
-  [ -d "${src}/espeak-ng-data" ] && cp -R "${src}/espeak-ng-data" "${TARGET_DIR}/${name}/" || true
+  cp "${src}"/*.onnx "${staging}/" 2>/dev/null || true
+  cp "${src}"/lexicon.txt "${staging}/" 2>/dev/null || true
+  cp "${src}"/tokens.txt "${staging}/" 2>/dev/null || true
+  cp "${src}"/*.fst "${staging}/" 2>/dev/null || true
+  [ -d "${src}/dict" ] && cp -R "${src}/dict" "${staging}/" || true
+  [ -d "${src}/espeak-ng-data" ] && cp -R "${src}/espeak-ng-data" "${staging}/" || true
 
-  onnx="$(find "${TARGET_DIR}/${name}" -maxdepth 1 -name '*.onnx' ! -name '*.int8.onnx' | head -1)"
-  if [ -n "${onnx}" ] && [ ! -e "${TARGET_DIR}/${name}/model.onnx" ]; then
-    ln -sf "$(basename "${onnx}")" "${TARGET_DIR}/${name}/model.onnx"
+  onnx="$(find "${staging}" -maxdepth 1 -name '*.onnx' ! -name '*.int8.onnx' | head -1)"
+  if [ -n "${onnx}" ] && [ ! -e "${staging}/model.onnx" ]; then
+    ln -sf "$(basename "${onnx}")" "${staging}/model.onnx"
   fi
 
-  if [ "${piper}" = "1" ] && [ ! -d "${TARGET_DIR}/${name}/espeak-ng-data" ]; then
+  if [ "${piper}" = "1" ] && [ ! -d "${staging}/espeak-ng-data" ]; then
     echo "==> piper 模型需要 espeak-ng-data，下载共享包"
     curl -fSL --retry 5 -o "${work}/espeak.tar.bz2" "${mirror%/}/espeak-ng-data.tar.bz2"
-    tar xjf "${work}/espeak.tar.bz2" -C "${TARGET_DIR}/${name}"
+    verify_tarball "${work}/espeak.tar.bz2" "7" "${ESPEAK_SHA256}"
+    tar xjf "${work}/espeak.tar.bz2" -C "${staging}"
   fi
 
+  [ -s "${staging}/model.onnx" ] && [ -s "${staging}/tokens.txt" ] || { echo "模型安装文件不完整" >&2; return 1; }
+  if [ "${piper}" = "1" ] && [ ! -s "${staging}/espeak-ng-data/phontab" ]; then
+    echo "缺少完整 espeak-ng-data/phontab" >&2; return 1
+  fi
+  if [ "${piper}" != "1" ] && [ ! -s "${staging}/lexicon.txt" ]; then
+    echo "词典复制失败" >&2; return 1
+  fi
   piper_js=false; [ "${piper}" = "1" ] && piper_js=true
-  cat > "${TARGET_DIR}/${name}/meta.json" <<EOF
+  cat > "${staging}/meta.json" <<EOF
 {"name":"${name}","gender":"${gender}","nSpeakers":1,"piper":${piper_js}}
 EOF
+  mkdir -p "${TARGET_DIR}/${name}"
+  cp -R "${staging}/." "${TARGET_DIR}/${name}/"
   rm -rf "${work}"
+  trap - EXIT
   echo "==> 完成：${TARGET_DIR}/${name}"
   echo "    重启 aide 后，设置页「语音引擎」选「自动」即优先使用本地离线（${name}，${gender}）。"
 }
 
-MODEL="huayan"; MIRROR="${BASE_URL}"; VERIFY_ONLY=""
+MODEL="huayan"; MIRROR="${BASE_URL}"; VERIFY_ONLY=""; VERIFY_SHA256=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --help|-h) usage; exit 0;;
@@ -132,13 +153,25 @@ while [ $# -gt 0 ]; do
     --dir) TARGET_DIR="$2"; shift 2;;
     --mirror) MIRROR="$2"; shift 2;;
     --verify-only) VERIFY_ONLY="$2"; shift 2;;
+    --sha256) VERIFY_SHA256="$2"; shift 2;;
     *) echo "未知参数：$1" >&2; usage; exit 1;;
   esac
 done
 
 if [ -n "${VERIFY_ONLY}" ]; then
   echo "==> 仅校验已下载包：${VERIFY_ONLY}"
-  verify_tarball "${VERIFY_ONLY}" "?" ""
+  if [ -z "${VERIFY_SHA256}" ]; then
+    archive_name="$(basename "${VERIFY_ONLY}")"
+    if [ "${archive_name}" = "espeak-ng-data.tar.bz2" ]; then
+      VERIFY_SHA256="${ESPEAK_SHA256}"
+    else
+      while IFS='|' read -r model_name model_tar _size _gender _piper model_sha; do
+        if [ "${archive_name}" = "${model_tar}" ]; then VERIFY_SHA256="${model_sha}"; break; fi
+      done <<<"${MODELS}"
+    fi
+  fi
+  need_cmd shasum
+  verify_tarball "${VERIFY_ONLY}" "?" "${VERIFY_SHA256}"
   echo "请把该包解压到 ${TARGET_DIR}/<voice-name>/ 并保证含 model.onnx + tokens.txt"
   exit 0
 fi

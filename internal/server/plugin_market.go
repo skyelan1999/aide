@@ -422,6 +422,9 @@ func (a *App) marketPackage(ctx context.Context, s marketSnapshot, p marketPlugi
 		return int64(len(b)) == p.Bytes && hex.EncodeToString(sum[:]) == p.SHA256
 	}
 	if b, e := skillReadCache(root, name, maxPluginBundle); e == nil && matches(b) {
+		if err := validateMarketPackage(b, p); err != nil {
+			return nil, err
+		}
 		return b, nil
 	}
 	// Bound reusable public package cache without deleting any existing files.
@@ -452,17 +455,24 @@ func (a *App) marketPackage(ctx context.Context, s marketSnapshot, p marketPlugi
 	if !matches(b) {
 		return nil, errors.New("官方插件包摘要或大小不匹配，未安装")
 	}
-	manifest, _, err := parsePluginBundle(b)
-	if err != nil {
+	if err := validateMarketPackage(b, p); err != nil {
 		return nil, err
-	}
-	if manifest.ID != p.ID || manifest.Version != p.Version {
-		return nil, errors.New("插件包 ID 或版本与目录不符")
 	}
 	if err = skillCacheWrite(root, name, b); err != nil {
 		return nil, err
 	}
 	return b, nil
+}
+
+func validateMarketPackage(b []byte, p marketPlugin) error {
+	manifest, _, err := parsePluginBundle(b)
+	if err != nil {
+		return err
+	}
+	if manifest.ID != p.ID || manifest.Version != p.Version {
+		return errors.New("插件包 ID 或版本与目录不符")
+	}
+	return nil
 }
 func (a *App) marketSelected(ctx context.Context, id, revision string) (marketSnapshot, marketPlugin, error) {
 	s, _, err := a.loadMarket(ctx, false)

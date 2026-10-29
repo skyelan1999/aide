@@ -1,0 +1,442 @@
+{
+  "request": "继续修复50个",
+  "sequence": 3,
+  "startedAt": "2026-10-28T05:47:59.238790+00:00",
+  "baselineCommit": "c3b2ed78b395c5fab5e25197564eb3c029710f7f",
+  "target": 50,
+  "fixedCount": 50,
+  "fixedIssues": [
+    311,
+    326,
+    327,
+    328,
+    329,
+    330,
+    331,
+    332,
+    333,
+    334,
+    336,
+    337,
+    338,
+    339,
+    341,
+    342,
+    343,
+    344,
+    345,
+    346,
+    347,
+    349,
+    350,
+    351,
+    352,
+    353,
+    354,
+    355,
+    357,
+    358,
+    359,
+    360,
+    361,
+    362,
+    363,
+    365,
+    366,
+    367,
+    368,
+    371,
+    372,
+    374,
+    375,
+    376,
+    377,
+    378,
+    379,
+    380,
+    381,
+    551
+  ],
+  "verifiedPendingPush": [],
+  "blockedIssues": [],
+  "alreadyCovered": [],
+  "issues": {
+    "311": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Escape initial cell-editing text before HTML insertion; markup remains literal and event handlers cannot run",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/311#issuecomment-6461895900"
+    },
+    "326": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Use prototype-free requested-tag lookup; explicit prototype-named tags remain valid",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/326#issuecomment-6461896538"
+    },
+    "327": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Use prototype-free action union, exclusion and animation-reference ID sets",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/327#issuecomment-6461896989"
+    },
+    "328": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Validate the HTML export background as a CSS color and HTML-escape the attribute",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/328#issuecomment-6461897462"
+    },
+    "329": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Preserve hidden-tag serialization for arbitrary page IDs including __proto__",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/329#issuecomment-6461897945"
+    },
+    "330": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Make the SVG fallback conversion counter local and finish synchronous empty-switch paths once",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/330#issuecomment-6461898475"
+    },
+    "331": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "URL-encode page IDs in generated share links without corrupting embedded copy fragments",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/331#issuecomment-6461898921"
+    },
+    "332": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Use prototype-safe page remapping and own-key reads during real multi-page import",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/332#issuecomment-6461899300"
+    },
+    "333": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Keep generated response data local to the callback",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/333#issuecomment-6461899640"
+    },
+    "334": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Complete FileReader error/abort barrier slots once so successful files and spinner can finish",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/334#issuecomment-6461900015"
+    },
+    "365": {
+      "status": "fixed-verified-pushed",
+      "cycle": 73,
+      "summary": "Count distinct requested and actual tags in AND selectors",
+      "commit": "d2b77b626ab5c6641e07db16558e029578a967bf",
+      "comment": "https://github.com/skyelan1999/aide/issues/365#issuecomment-6461900427"
+    },
+    "336": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Queue concurrent Org Chart callbacks until the constructor loads; handle failure, timeout, retry, callback errors and spinner ownership",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/336#issuecomment-6462308960"
+    },
+    "337": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Use a prototype-free scoped-layout cell set",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/337#issuecomment-6462309674"
+    },
+    "338": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Preserve selected descendants of prototype-named unselected ancestors in JSON export",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/338#issuecomment-6462310085"
+    },
+    "339": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Use prototype-free sets for non-current comment anchors and current-page overlays",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/339#issuecomment-6462310785"
+    },
+    "341": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Clear the comments refresh interval when its window is destroyed",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/341#issuecomment-6462311163"
+    },
+    "342": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Validate Icon Grid dimensions and cap each rendering pass at 1000 icons",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/342#issuecomment-6462311594"
+    },
+    "343": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Sample oversized iOS stripes with at most about 1000 stripes while retaining normal spacing",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/343#issuecomment-6462311987"
+    },
+    "344": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Keep FilenameDialog row local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/344#issuecomment-6462312732"
+    },
+    "345": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Keep PNG parser ancillary chunk data local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/345#issuecomment-6462313208"
+    },
+    "346": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Keep shape-picker relative-parent traversal local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/346#issuecomment-6462313623"
+    },
+    "347": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Allow only same-origin Back/Refresh toolbar destinations; rejected Refresh targets reload locally",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/347#issuecomment-6462314074"
+    },
+    "349": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Install special keyboard dispatch on each key handler instance instead of the global prototype",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/349#issuecomment-6462314431"
+    },
+    "350": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Restore invalid geometry fields without duplicating their unit",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/350#issuecomment-6462314828"
+    },
+    "351": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Apply the intended margin to the superscript button",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/351#issuecomment-6462315186"
+    },
+    "352": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Keep table painting scale local",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/352#issuecomment-6462315560"
+    },
+    "353": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Remove the extra closing parenthesis from all 28 selection-control names",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/353#issuecomment-6462315967"
+    },
+    "354": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Correct two blue focus titles and three gray normal search tags, retaining the separate existing focus controls",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/354#issuecomment-6462316393"
+    },
+    "355": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Index all eleven Steppers under stepper instead of tab",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/355#issuecomment-6462316820"
+    },
+    "357": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Capture the iOS Sidebar locally and keep factories independent of window.sb",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/357#issuecomment-6462317198"
+    },
+    "358": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Index Email under email/mail and preserve Calendar search isolation",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/358#issuecomment-6462317651"
+    },
+    "359": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Make both SAP Area and Default Shapes collections searchable by category",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/359#issuecomment-6462318086"
+    },
+    "360": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Make the Full Port label part of its composite parent",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/360#issuecomment-6462318509"
+    },
+    "361": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Use the existing electrical AND stencil for AND Gate and the native OR renderer for OR Gate",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/361#issuecomment-6462318908"
+    },
+    "362": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Give Infrastructure/Tenant roles their own search terms while retaining their resource and color",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/362#issuecomment-6462319263"
+    },
+    "551": {
+      "status": "fixed-verified-pushed",
+      "cycle": 74,
+      "summary": "Capture each initializer Sidebar in seven factories that previously depended on the iOS global",
+      "commit": "5bdd3aee096639e10f64d43be02dbd25d61a482c",
+      "comment": "https://github.com/skyelan1999/aide/issues/551#issuecomment-6462319583",
+      "followups": [
+        {
+          "cycle": 75,
+          "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+          "comment": "https://github.com/skyelan1999/aide/issues/551#issuecomment-6462958994",
+          "summary": "SQL row cloning also independent of ambient Sidebar; not counted twice."
+        }
+      ]
+    },
+    "363": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Reject malformed percent-encoded PDF diagram metadata without escaping the import path",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/363#issuecomment-6462907151"
+    },
+    "366": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Normalize empty/out-of-range page ranges on change and immediately before print/export submission",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/366#issuecomment-6462907980"
+    },
+    "367": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Bound ZIP inputs to 32MiB compressed, 1000 entries, and one 8MiB expanded payload; enforce actual streamed bytes even with dishonest metadata",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/367#issuecomment-6462908688"
+    },
+    "368": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Find noncoincident marker directions and deduplicate sampled arrow polylines so finite nonzero paths remain visible",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/368#issuecomment-6462909367"
+    },
+    "371": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Skip recursive SysML composite inclusion while retaining subsequent valid symbols",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/371#issuecomment-6462909776"
+    },
+    "372": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Only call own function entries in BPMN background, outline and symbol painter tables",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/372#issuecomment-6462910432"
+    },
+    "374": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Reject inherited emoji lookup values before SVG text rendering",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/374#issuecomment-6462911349"
+    },
+    "375": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Replace wrapping 32-bit connector masks with independent sets of segment IDs; copy sets before merging point memberships",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/375#issuecomment-6462911813"
+    },
+    "376": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Choose Org Chart parents only among the eligible direct vertices of the selected layer",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/376#issuecomment-6462912387"
+    },
+    "377": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Keep Explore pagination values local to each explorer invocation",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/377#issuecomment-6462912889"
+    },
+    "378": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Reject automatic Update-plugin XML POSTs to cross-origin or unsafe URLs before serializing graph data",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/378#issuecomment-6462913356"
+    },
+    "379": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Reset SQL primary keys for each import and remove SQL row cloning dependence on the iOS global",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/379#issuecomment-6462913936"
+    },
+    "380": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Parse MySQL FOREIGN KEY and REFERENCES keywords case-insensitively",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/380#issuecomment-6462914426"
+    },
+    "381": {
+      "status": "fixed-verified-pushed",
+      "cycle": 75,
+      "summary": "Honor replay-delay with finite nonnegative timer bounds and retain legacy delay-delay fallback",
+      "commit": "1a3ae34b6eada381927c737cc26e06967bc6bffd",
+      "comment": "https://github.com/skyelan1999/aide/issues/381#issuecomment-6462914938"
+    }
+  },
+  "status": "completed",
+  "policy": "Only new fixed, verified and pushed issues count. Previous two batches excluded. No main merge, Release or deploy.",
+  "deferred": [
+    {
+      "number": 364,
+      "reason": "The cors parameter currently accepts arbitrary regex syntax. A bounded replacement still needs compatibility design and dedicated validation; no fix claimed or counted in this batch."
+    }
+  ],
+  "completedAt": "2026-10-28T07:08:53.784952+00:00",
+  "completionReason": "fifty-new-verified-pushed-fixes-reached",
+  "afterBatchFollowups": {
+    "364": {
+      "status": "resolved-after-batch",
+      "cycle": 76,
+      "commit": "7bf762b2431e9a2909d966b4877f98f3c425cfbf",
+      "record": "cycle-076.json",
+      "countedInThisFifty": false
+    }
+  }
+}

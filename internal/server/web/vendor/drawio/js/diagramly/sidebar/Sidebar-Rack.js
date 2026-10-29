@@ -25,14 +25,17 @@
 			}
             else if (rack[i].toLowerCase() === 'hpe aruba gateways controllers')
             {
+				this.setCurrentSearchEntryLibrary('rack', 'rackHPE Aruba Gateways Controllers');
                 this.addRackHPEArubaGatewaysControllersPalette();
             }
             else if (rack[i].toLowerCase() === 'hpe aruba security')
             {
+				this.setCurrentSearchEntryLibrary('rack', 'rackHPE Aruba Security');
                 this.addRackHPEArubaSecurityPalette();
             }
             else if (rack[i].toLowerCase() === 'hpe aruba switches')
             {
+				this.setCurrentSearchEntryLibrary('rack', 'rackHPE Aruba Switches');
                 this.addRackHPEArubaSwitchesPalette();
             }
             else
@@ -79,8 +82,8 @@
 			this.createVertexTemplateEntry(s + 'shape=mxgraph.rack.general.server_1;', 73, 150, '', 'Server 1', null, null, dt + 'server'),
 			this.createVertexTemplateEntry(s + 'shape=mxgraph.rack.general.server_2;', 73, 150, '', 'Server 2', null, null, dt + 'server'),
 			this.createVertexTemplateEntry(s + 'shape=mxgraph.rack.general.server_3;', 73, 150, '', 'Server 3', null, null, dt + 'server'),
-			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.general.switches_1;', 160, 30, '', 'Switches 1', null, null, dt + 'server'),
-			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.general.switches_2;', 160, 30, '', 'Switches 2', null, null, dt + 'server')
+			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.general.switches_1;', 160, 30, '', 'Switches 1', null, null, dt + 'switch'),
+			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.general.switches_2;', 160, 30, '', 'Switches 2', null, null, dt + 'switch')
 		]);
 		
 		this.setCurrentSearchEntryLibrary();
@@ -146,7 +149,7 @@
 			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_m610x;', 20, 148, '', 'PowerEdge M610x', null, null, dt + 'poweredge m610x'),
 			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_m620;', 20, 74, '', 'PowerEdge M620', null, null, dt + 'poweredge m620'),
 			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_m820;', 20, 143, '', 'PowerEdge M820', null, null, dt + 'poweredge m820'),
-			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_m915;', 20, 143, '', 'PowerEdge M915', null, null, dt + 'poweredge m820'),
+			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_m915;', 20, 143, '', 'PowerEdge M915', null, null, dt + 'poweredge m915'),
 			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_r240;', 162, 15, '', 'PowerEdge R240', null, null, dt + 'poweredge r240'),
 			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_r340;', 162, 15, '', 'PowerEdge R340', null, null, dt + 'poweredge r340'),
 			this.createVertexTemplateEntry(sr + 'shape=mxgraph.rack.dell.poweredge_r440;', 162, 15, '', 'PowerEdge R440', null, null, dt + 'poweredge r440'),
@@ -196,8 +199,8 @@
             this.createVertexTemplateEntry(s + 'aruba_7240_mobility_controller_rear;', 142, 15, '', 'Aruba 7240 Mobility Controller (rear)', null, null, dt + '7240 mobility rear'),
             this.createVertexTemplateEntry(s + 'aruba_7280_mobility_controller_front;', 142, 15, '', 'Aruba 7280 Mobility Controller (front)', null, null, dt + '7280 mobility front'),
             this.createVertexTemplateEntry(s + 'aruba_7280_mobility_controller_rear;', 142, 15, '', 'Aruba 7280 Mobility Controller (rear)', null, null, dt + '7280 mobility rear'),
-            this.createVertexTemplateEntry(s + 'aruba_9004_4_port_gbe_gateway_front;', 71, 15, '', 'Aruba 9004 4-Port GbE Gateway (back)', null, null, dt + '9004 port gbe front'),
-            this.createVertexTemplateEntry(s + 'aruba_9004_4_port_gbe_gateway_back;', 71, 15, '', 'Aruba 9004 4-Port GbE Gateway (front)', null, null, dt + '9004 port gbe back'),
+			this.createVertexTemplateEntry(s + 'aruba_9004_4_port_gbe_gateway_front;', 71, 15, '', 'Aruba 9004 4-Port GbE Gateway (front)', null, null, dt + '9004 port gbe front'),
+			this.createVertexTemplateEntry(s + 'aruba_9004_4_port_gbe_gateway_back;', 71, 15, '', 'Aruba 9004 4-Port GbE Gateway (back)', null, null, dt + '9004 port gbe back'),
             this.createVertexTemplateEntry(s + 'aruba_9004_dual_rackmount;', 142, 15, '', 'Aruba 9004 dual rackmount', null, null, dt + '9004 dual rackmount'),
             this.createVertexTemplateEntry(s + 'aruba_9012_10_port_gbe_gateway_front;', 142, 15, '', 'Aruba 9012 10-Port GbE Gateway (front)', null, null, dt + '9012 10 port gbe front'),
             this.createVertexTemplateEntry(s + 'aruba_9012_10_port_gbe_gateway_back;', 142, 15, '', 'Aruba 9012 10-Port GbE Gateway (back)', null, null, dt + '9012 10 port gbe back'),

@@ -77,29 +77,25 @@ func sshKeygenFingerprintFile(path, passphrase string) (string, error) {
 //   - 落地一个 0700 的 askpass 助手脚本（内容仅 "cat <&3"，不含任何口令材料），
 //     由 SSH_ASKPASS 指向它；SSH_ASKPASS_REQUIRE=force 强制非交互调用。
 //
-// 返回的 cleanup 关闭管道读端并删除助手临时目录。口令因此不进 cmd.Args、不进环境变量、
+// 写入在独立 goroutine 中等待子进程消费，不阻塞 cmd.Start 前的调用方。
+// 返回的 cleanup 关闭管道两端、等待写入退出并删除助手临时目录。口令因此不进 cmd.Args、不进环境变量、
 // 也不写成明文文件。
 func attachPassphraseAskpass(cmd *exec.Cmd, passphrase string) (func(), error) {
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		return nil, err
 	}
-	if _, err := pw.WriteString(passphrase); err != nil {
-		pr.Close()
-		pw.Close()
-		return nil, err
-	}
-	_ = pw.Close() // 写完即关：子进程 cat <&3 读到口令后遇 EOF 退出
-
 	tmpDir, err := os.MkdirTemp("", "aide-askpass-*")
 	if err != nil {
 		pr.Close()
+		pw.Close()
 		return nil, err
 	}
 	askPath := filepath.Join(tmpDir, "askpass.sh")
 	// 助手脚本：从继承的 fd 3 读口令并打印到 stdout。脚本本身无敏感内容。
 	if err := os.WriteFile(askPath, []byte("#!/bin/sh\ncat <&3\n"), 0o700); err != nil {
 		pr.Close()
+		pw.Close()
 		os.RemoveAll(tmpDir)
 		return nil, err
 	}
@@ -111,9 +107,17 @@ func attachPassphraseAskpass(cmd *exec.Cmd, passphrase string) (func(), error) {
 	)
 	// ExtraFiles 从 fd 3 开始继承（0/1/2 为 stdin/stdout/stderr）。
 	cmd.ExtraFiles = []*os.File{pr}
+	written := make(chan struct{})
+	go func() {
+		defer close(written)
+		defer pw.Close()
+		_, _ = pw.WriteString(passphrase)
+	}()
 
 	cleanup := func() {
 		_ = pr.Close()
+		_ = pw.Close() // interrupts a writer if Start failed or the child never read
+		<-written
 		_ = os.RemoveAll(tmpDir)
 	}
 	return cleanup, nil

@@ -1,0 +1,82 @@
+[
+  {
+    "mode": "graph",
+    "input": "<b title=\"ok\" onclick=\"bad\">safe</b>",
+    "output": "<b title=\"ok\">safe</b>"
+  },
+  {
+    "mode": "graph",
+    "input": "<div>before<template><i onerror=\"bad\">inert</i></template>after</div>",
+    "output": "<div>before<template><i>inert</i></template>after</div>"
+  },
+  {
+    "mode": "graph",
+    "input": "<template><template><span>nested</span></template></template>",
+    "output": ""
+  },
+  {
+    "mode": "graph",
+    "input": "<p>{{name}} ${value} &lt;safe&gt;</p>",
+    "output": "<p>{{name}} ${value} &lt;safe&gt;</p>"
+  },
+  {
+    "mode": "graph",
+    "input": "<svg><text>vector</text></svg>",
+    "output": "<svg><text>vector</text></svg>"
+  },
+  {
+    "mode": "graph",
+    "input": "<div>one<!-- comment -->two</div>",
+    "output": "<div>onetwo</div>"
+  },
+  {
+    "mode": "graph",
+    "input": "<img src=\"owned-invalid\" onerror=\"bad\">",
+    "output": "<img src=\"owned-invalid\">"
+  },
+  {
+    "mode": "graph",
+    "input": "<p><a href=\"javascript:bad()\">link</a></p>",
+    "output": "<p><a>link</a></p>"
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<b title=\"ok\" onclick=\"bad\">safe</b>",
+    "output": "<b title=\"ok\">safe</b>"
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<div>before<template><i onerror=\"bad\">inert</i></template>after</div>",
+    "output": "<div>before<template><i>inert</i></template>after</div>"
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<template><template><span>nested</span></template></template>",
+    "output": ""
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<p>{{name}} ${value} &lt;safe&gt;</p>",
+    "output": "<p> </p>"
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<svg><text>vector</text></svg>",
+    "output": "<svg><text>vector</text></svg>"
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<div>one<!-- comment -->two</div>",
+    "output": "<div>onetwo</div>"
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<img src=\"owned-invalid\" onerror=\"bad\">",
+    "output": "<img src=\"owned-invalid\">"
+  },
+  {
+    "mode": "safe-templates",
+    "input": "<p><a href=\"javascript:bad()\">link</a></p>",
+    "output": "<p><a>link</a></p>"
+  }
+]

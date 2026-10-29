@@ -331,6 +331,9 @@ else
         {
             mxscript('js/app.min.js', function()
             {
+                // Install against the bundled globals before either load gate can call App.main.
+                window.AideDrawioSafety.install();
+                window.AideDrawioLayouts.install();
                 mxScriptsLoaded = true;
                 checkAllLoaded();
                 

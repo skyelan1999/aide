@@ -11882,25 +11882,22 @@ var ChatWindow = function(editorUi, x, y, w, h)
 	// in string properties recursively
 	var populateTemplate = function(obj, resolver)
 	{
-		var result = new obj.constructor();
-
-		for (var key in obj)
+		// Custom request templates are JSON: retain primitives (including
+		// null), arrays and literal property names without invoking constructors.
+		if (obj === null || typeof obj !== 'object')
 		{
-			var value = obj[key];
-
-			if (typeof value === 'object')
-			{
-				result[key] = populateTemplate(value, resolver);
-			}
-			else if (typeof value === 'string')
-			{
-				result[key] = Editor.replacePlaceholders(value, resolver);
-			}
-			else
-			{
-				result[key] = value;
-			}
+			return (typeof obj === 'string') ?
+				Editor.replacePlaceholders(obj, resolver) : obj;
 		}
+
+		var result = Array.isArray(obj) ? [] : {};
+
+		Object.keys(obj).forEach(function(key)
+		{
+			Object.defineProperty(result, key, {value:
+				populateTemplate(obj[key], resolver), enumerable: true,
+				configurable: true, writable: true});
+		});
 
 		return result;
 	};
@@ -12238,11 +12235,21 @@ var ChatWindow = function(editorUi, x, y, w, h)
 				return value;
 			};
 
-			var params = populateTemplate(config.request, resolver);
-			threadHistory(params, historyTurns);
+			var params;
 
 			processMessage = function()
 			{
+				try
+				{
+					params = populateTemplate(config.request, resolver);
+					threadHistory(params, historyTurns);
+				}
+				catch (e)
+				{
+					handleError(e);
+					return;
+				}
+
 				showWaiting();
 
 				editorUi.createTimeout(editorUi.editor.generateTimeout, function(timeout)
@@ -12927,6 +12934,8 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		jsonValid = (msg == null);
 		jsonError.style.display = (msg == null) ? 'none' : 'block';
 		if (msg != null) jsonError.textContent = msg;
+		if (applyBtn != null) applyBtn.disabled = !jsonValid;
+		if (previewBtn != null) previewBtn.disabled = !jsonValid;
 	};
 
 	// Formats a JSON parse error for the inline message. Engines that
@@ -12992,9 +13001,9 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 			}
 			catch (e)
 			{
-				// Malformed JSON in the stored attribute — start empty
-				// rather than failing to open the dialog.
-				data = Editor.parseAnimationData(null);
+				// Retain parsed invalid steps so rows can be removed or repaired.
+				// Keep the existing malformed-JSON fallback when no data exists.
+				data = e.animationData || Editor.parseAnimationData(null);
 			}
 		}
 		else
@@ -13986,6 +13995,13 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	var renderList = function()
 	{
 		stepList.innerHTML = '';
+		try
+		{
+			Editor.validateAnimationData(data);
+			if (!advancedCheckbox.checked) showJsonError(null);
+		}
+		catch (e) { showJsonError(describeJsonError(list.value, e)); }
+		if (!Array.isArray(data.steps)) return;
 
 		if (data.steps.length == 0)
 		{
@@ -14635,6 +14651,24 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	// grouping/expanding logic is needed in the UI.
 	var makeStepRow = function(step, idx, isLast)
 	{
+		if (Editor.getAnimationStepError(step) != null)
+		{
+			var invalid = rowBase(isLast);
+			invalid.setAttribute('data-animation-invalid', idx);
+			var label = document.createElement('span');
+			label.style.cssText = 'flex:1;white-space:normal;word-break:break-word';
+			mxUtils.write(label, mxResources.get('invalidInput') + ' (' + (idx + 1) + ')');
+			invalid.appendChild(label);
+			invalid.appendChild(makeIconButton('✕', mxResources.get('delete'), true, function()
+			{
+				data.steps.splice(idx, 1);
+				selectedSteps.clear();
+				selectionAnchor = null;
+				refresh();
+			}));
+			return invalid;
+		}
+
 		var info = stepLabel(step);
 		var key = getStepKey(step);
 		var schema = (key != null) ? CustomActionDialog.SCHEMAS[key] : null;
@@ -14887,7 +14921,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		// the right side of the row out to the edge.)
 		var previewIconBtn = makeIconButton('▶',
 			mxResources.get('preview'),
-			true, function()
+			jsonValid, function()
 			{
 				startPreviewSession();
 				var single = JSON.parse(JSON.stringify(
@@ -14966,6 +15000,12 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 			// Surface the parse error and mark invalid (Save is blocked).
 			// data is intentionally left at the last valid state so an
 			// in-progress typo doesn't wipe the user's steps.
+			if (e.animationData != null)
+			{
+				data = e.animationData;
+				selectedSteps.clear();
+				selectionAnchor = null;
+			}
 			showJsonError(describeJsonError(list.value, e));
 		}
 	});
@@ -15404,11 +15444,17 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 
 	// Bottom action row — generous margin-top per docs/dialog-style-guide.md
 	// (CustomDialog uses 34px; we use 20px because mxWindow already has
-	// its own title-bar chrome above the content). No flex-wrap here —
-	// the spacer's behavior gets undefined when buttons wrap; the
-	// minimum dialog size (360px) keeps all buttons on one line.
+	// its own title-bar chrome above the content). Wrap at narrow sizes
+	// or with longer translations; keep wrapped actions right-aligned
+	// and let the step list absorb the footer's additional height.
 	var actions = document.createElement('div');
-	actions.style.cssText = 'margin-top:20px;display:flex;gap:6px;flex:0 0 auto';
+	actions.style.cssText = 'margin-top:20px;display:flex;gap:6px;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end;align-items:center';
+	var secondaryActions = document.createElement('div');
+	secondaryActions.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:100%';
+	var primaryActions = document.createElement('div');
+	primaryActions.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;max-width:100%;margin-left:auto';
+	actions.appendChild(secondaryActions);
+	actions.appendChild(primaryActions);
 
 	// `playingSteps` is hoisted to the top of the function — see comment
 	// there. It tracks the currently-playing step(s) as a Set so a parallel
@@ -15448,7 +15494,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	};
 
 	// Help button — opens the end-user manual in a new window.
-	actions.appendChild(editorUi.createHelpIcon(ANIMATION_HELP_URL));
+	secondaryActions.appendChild(editorUi.createHelpIcon(ANIMATION_HELP_URL));
 
 	var thisDialog = this;
 
@@ -15459,6 +15505,10 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	// serialize it however it stores the link.
 	var applyChanges = function()
 	{
+		if (!jsonValid) return false;
+		try { Editor.validateAnimationData(data); }
+		catch (e) { showJsonError(describeJsonError(list.value, e)); return false; }
+
 		if (kind == 'page')
 		{
 			var root = graph.getModel().getRoot();
@@ -15503,6 +15553,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 
 	previewBtn = mxUtils.button(mxResources.get('preview'), function()
 	{
+		if (!jsonValid) return;
 		stopPlayer();
 		startPreviewSession();
 		player = new Editor.AnimationPlayer(graph, data);
@@ -15526,7 +15577,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		previewBtn.title = mxResources.get('preview');
 	});
 	previewBtn.title = mxResources.get('preview');
-	actions.appendChild(previewBtn);
+	secondaryActions.appendChild(previewBtn);
 
 	// Reset — restores the canvas to its pre-preview state and stops
 	// any running playback. Disabled until a preview session is open.
@@ -15547,11 +15598,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	resetBtn.title = mxResources.get('reset');
 	resetBtnRef = resetBtn;
 	updateResetBtn();
-	actions.appendChild(resetBtn);
-
-	var spacer = document.createElement('span');
-	spacer.style.flex = '1 1 auto';
-	actions.appendChild(spacer);
+	secondaryActions.appendChild(resetBtn);
 
 	var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
 	{
@@ -15575,7 +15622,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 		cancelBtn.title = mxResources.get('cancel');
 	});
 	cancelBtn.title = mxResources.get('cancel');
-	actions.appendChild(cancelBtn);
+	primaryActions.appendChild(cancelBtn);
 
 	applyBtn = mxUtils.button(mxResources.get('save'), function()
 	{
@@ -15589,7 +15636,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 			return;
 		}
 
-		applyChanges();
+		if (applyChanges() === false) return;
 		thisDialog.window.setVisible(false);
 	});
 	applyBtn.className = 'geBtn gePrimaryBtn';
@@ -15597,9 +15644,13 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	{
 		applyBtn.textContent = mxResources.get('save');
 		applyBtn.title = mxResources.get('save');
+		applyBtn.disabled = !jsonValid;
+		previewBtn.disabled = !jsonValid;
 	});
 	applyBtn.title = mxResources.get('save');
-	actions.appendChild(applyBtn);
+	applyBtn.disabled = !jsonValid;
+	previewBtn.disabled = !jsonValid;
+	primaryActions.appendChild(applyBtn);
 
 	div.appendChild(actions);
 
@@ -15704,7 +15755,7 @@ var AnimationDialog = function(editorUi, x, y, w, h, opts)
 	{
 		if (visible === false && dirty)
 		{
-			applyChanges();
+			if (applyChanges() === false) return;
 		}
 		origSetVisible(visible);
 	};

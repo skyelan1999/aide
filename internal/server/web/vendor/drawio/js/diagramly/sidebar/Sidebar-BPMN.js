@@ -465,16 +465,6 @@
 			this.addEntry(dt + 'call choreography activity calling global task', function()
 		   	{
 			    var bg = new mxCell('', new mxGeometry(0, 0, 120, 100), 
-//				'rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;absoluteArcSize=1;');
-				'rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;absoluteArcSize=1;arcSize=20;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;');
-		    	bg.vertex = true;
-		    	
-			   	return sb.createVertexTemplateFromCells([bg], bg.geometry.width, bg.geometry.height, 'bzzzzt');
-			}),
-
-			this.addEntry(dt + 'call choreography activity calling global task', function()
-		   	{
-			    var bg = new mxCell('', new mxGeometry(0, 0, 120, 100), 
 				'rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;absoluteArcSize=1;arcSize=20;childLayout=stackLayout;horizontal=1;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;strokeWidth=8;');
 		    	bg.vertex = true;
 		    	
@@ -1518,7 +1508,7 @@
 			this.createVertexTemplateEntry(s2 + 'boundNonint;symbol=multiple;', w, h, '', 'Multiple Boundary (Non-Interrupting)', null, null, dt + 'multiple boundary non interrupting noninterrupting'),
 			this.createVertexTemplateEntry(s2 + 'throwing;symbol=multiple;', w, h, '', 'Multiple (Throwing)', null, null, dt + 'multiple throwing'),
 			this.createVertexTemplateEntry(s2 + 'end;symbol=multiple;', w, h, '', 'Multiple End', null, null, dt + 'multiple end'),
-			this.createVertexTemplateEntry(s2 + 'standard;symbol=star;', w, h, '', 'Multiple Start', null, null, dt + 'multiple end'),
+			this.createVertexTemplateEntry(s2 + 'standard;symbol=star;', w, h, '', 'Multiple Start', null, null, dt + 'multiple start'),
 			this.createVertexTemplateEntry(s2 + 'standard;symbol=parallelMultiple;', w, h, '', 'Parallel Multiple', null, null, dt + 'parallel multiple standard'),
 			this.createVertexTemplateEntry(s2 + 'eventInt;symbol=parallelMultiple;', w, h, '', 'Parallel Multiple (Interrupting)', null, null, dt + 'parallel multiple interrupting'),
 			this.createVertexTemplateEntry(s2 + 'eventNonint;symbol=parallelMultiple;', w, h, '', 'Parallel Multiple (Non-Interrupting)', null, null, dt + 'parallel multiple non interrupting noninterrupting'),

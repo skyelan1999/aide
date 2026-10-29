@@ -13,6 +13,8 @@ Configure the Qwen business-space HTTPS endpoint and its region-matching key. Ai
 
 The realtime model can request `assistant_work` through existing assistant authorization. Only the current user transcript received by the server can become that work input. Browsers cannot inject system instructions, arbitrary tool results or conversation history. Tool call IDs are deduplicated. The model gains no independent file, terminal or message permissions.
 
+The assistant's live text mirror is an in-memory cache: up to 100 KiB per session and 256 sessions (25 MiB of text, plus allocation overhead). Least recently used terminal entries are evicted before active entries. If all slots are active, a new run has no live mirror until capacity becomes available; primary session SSE and saved messages continue normally. Recent interrupted/failed output remains readable, while older entries may be evicted. Read persisted messages through the session API. Single deletion, archived-session bulk deletion and session reset remove both the mirror and its task bindings; delayed delta, finish or start callbacks cannot recreate a deleted session's cache. Cache contents do not survive a process restart.
+
 Transcripts are saved in the unlocked assistant session; raw microphone PCM is not written to disk. Each assistant session permits one native call, up to 30 minutes. There is no automatic paid reconnection. Severe network/playback backlog ends the call rather than accumulating audio indefinitely. Normal task notifications do not interrupt native playback.
 
 Provider audio billing is separate from the text-token pricing chart. Use the provider's audio billing console for costs. Downloadable MP3/WAV files remain the responsibility of TTS Tools.

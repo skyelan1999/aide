@@ -1598,16 +1598,18 @@ async function stopRunById(runId) {
     if (popupBusy || $('reminder-alert').open || document.visibilityState === 'hidden' || !center.messageUI?.allowReminderPopup()) return;
     popupBusy = true;
     try {
-      const due = await api('/reminders/due'); if (!due.length || !center.messageUI?.allowReminderPopup()) {popupBusy=false;return;}
+      const due = await api('/reminders/due'); if (!due.length || document.visibilityState === 'hidden' || !center.messageUI?.allowReminderPopup()) {popupBusy=false;return;}
       const host = $('reminder-alert-items'); host.replaceChildren();
       for (const item of due) {
         const row = el('div', 'reminder-alert-item'); row.append(el('strong', '', item.title));
         row.append(el('small', '', t('{0} 优先级 · {1}', t(item.priority), fmt(item.dueAt))));
         host.append(row);
-        await api('/reminders/' + encodeURIComponent(item.id) + '/popup-seen', {method:'POST', body:'{}'});
       }
       $('reminder-alert').showModal();
-      window.aideAvatarFeedback?.('notification');
+      try { window.aideAvatarFeedback?.('notification'); } catch (_) {}
+      for (const item of due) {
+        try { await api('/reminders/' + encodeURIComponent(item.id) + '/popup-seen', {method:'POST', body:'{}'}); } catch (_) {}
+      }
     } catch (_) { popupBusy = false; }
   }
   button.onclick = () => openCenter(false); $('reminder-center-close').onclick = () => { closeSidePanels(); button.focus(); };
@@ -7693,18 +7695,28 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
   }, 15000);
   if (window[handlerKey]) window.removeEventListener('message', window[handlerKey]);
   window[handlerKey] = (ev) => {
-    if (ev.source !== iframe.contentWindow) return;
+    if (ev.source !== iframe.contentWindow || ev.origin !== window.location.origin) return;
     let msg;
     try { msg = JSON.parse(ev.data); } catch (e) { return; }
-    if (msg.event === 'init') {
+    if (!msg || typeof msg !== 'object' || timedOut) return;
+    if (msg.event === 'aide-preview-error') {
       clearTimeout(timeoutId);
       loaded = true;
-      iframe.contentWindow.postMessage(JSON.stringify({ action: 'load', xml: xml || '<mxfile host="aide-local"><diagram></diagram></mxfile>' }), '*');
+      timedOut = true;
+      iframe.remove();
+      const error = document.createElement('p');
+      error.style.cssText = 'padding:24px;color:var(--text-dim)';
+      error.textContent = t('draw.io 内容超过安全预览限制，请下载后查看');
+      container.replaceChildren(error);
+    } else if (msg.event === 'init') {
+      clearTimeout(timeoutId);
+      loaded = true;
+      iframe.contentWindow.postMessage(JSON.stringify({ action: 'load', xml: xml || '<mxfile host="aide-local"><diagram></diagram></mxfile>' }), window.location.origin);
     } else if (msg.event === 'save') {
       const newXml = msg.xml;
       if (newXml && onSave) {
         onSave(newXml);
-        iframe.contentWindow.postMessage(JSON.stringify({ action: 'status', message: '已保存' }), '*');
+        iframe.contentWindow.postMessage(JSON.stringify({ action: 'status', message: '已保存' }), window.location.origin);
       }
     } else if (msg.event === 'exit') {
       // draw.io 请求关闭，忽略（由用户控制弹窗）
@@ -7949,6 +7961,9 @@ function setupStepPreview(container,filePath,root,source,viewerSpec) {
 }
 
 async function setupZipPreview(container, filePath, root, source, viewerSpec) {
+  teardownViewer(container);
+  let canceled = false;
+  bindViewerTeardown(container, () => { canceled = true; });
   container.innerHTML = '';
   const viewer = el('div', 'zip-viewer');
   const toolbar = el('div', 'zip-toolbar');
@@ -7961,18 +7976,43 @@ async function setupZipPreview(container, filePath, root, source, viewerSpec) {
     if (!window.JSZip) throw new Error('JSZip unavailable');
     const response = await fetch(fileRawUrl(filePath, root, source, viewerSpec));
     if (!response.ok) throw new Error('HTTP ' + response.status);
-    const zip = await window.JSZip.loadAsync(await response.arrayBuffer(), { createFolders: true });
+    const safety = window.AidePreviewSafety;
+    const bytes = await safety.readBytes(response, safety.limits.zipBytes);
+    safety.checkZipDirectory(bytes, {bytes: safety.limits.zipBytes, entries: safety.limits.zipEntries, partBytes: Infinity, expandedBytes: Infinity});
+    if (canceled) return;
+    const zip = await window.JSZip.loadAsync(bytes, { createFolders: false });
+    if (canceled) return;
     const entries = Object.values(zip.files).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    let files = 0, dirs = 0;
-    for (const entry of entries) {
-      if (entry.dir) dirs++; else files++;
-      const row = el('div', 'zip-entry' + (entry.dir ? ' zip-entry-dir' : ''));
-      row.append(el('span', 'zip-entry-icon', entry.dir ? '▱' : '≡'), el('span', 'zip-entry-name', entry.name));
-      list.append(row);
-    }
+    const files = entries.filter(entry => !entry.dir).length;
+    const dirs = entries.length - files;
     meta.textContent = t('{0} 个文件 · {1} 个文件夹', files, dirs);
-    if (!entries.length) list.append(el('div', 'zip-empty', t('压缩包为空')));
+    const pages = Math.max(1, Math.ceil(entries.length / safety.limits.zipPageRows));
+    let page = 0;
+    const pagination = el('div', 'zip-pagination');
+    const previous = el('button', 'zip-prev', t('上一页'));
+    const pageInfo = el('span', 'zip-page-info');
+    const next = el('button', 'zip-next', t('下一页'));
+    previous.type = next.type = 'button';
+    pagination.append(previous, pageInfo, next);
+    if (pages > 1) toolbar.append(pagination);
+    function renderPage() {
+      list.replaceChildren();
+      const start = page * safety.limits.zipPageRows;
+      for (const entry of entries.slice(start, start + safety.limits.zipPageRows)) {
+        const row = el('div', 'zip-entry' + (entry.dir ? ' zip-entry-dir' : ''));
+        row.append(el('span', 'zip-entry-icon', entry.dir ? '▱' : '≡'), el('span', 'zip-entry-name', entry.name));
+        list.append(row);
+      }
+      if (!entries.length) list.append(el('div', 'zip-empty', t('压缩包为空')));
+      previous.disabled = page === 0;
+      next.disabled = page === pages - 1;
+      pageInfo.textContent = (page + 1) + ' / ' + pages;
+    }
+    previous.onclick = () => { if (page > 0) { page--; renderPage(); } };
+    next.onclick = () => { if (page + 1 < pages) { page++; renderPage(); } };
+    renderPage();
   } catch (err) {
+    if (canceled) return;
     meta.textContent = t('加载失败');
     list.append(el('div', 'zip-error', t('压缩包加载失败：') + (err.message || String(err))));
   }
@@ -8021,7 +8061,13 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     else if (document.body.classList.contains('file-view-mode')) history.back();
   };
 
-  let cancelled = false, pdfDoc = null, io = null;
+  let cancelled = false, pdfDoc = null, loadingTask = null, io = null;
+  const abort = new AbortController(), destroyedResources = new WeakSet();
+  const destroyResource = (resource) => {
+    if (!resource || destroyedResources.has(resource)) return;
+    destroyedResources.add(resource);
+    try { Promise.resolve(resource.destroy()).catch(() => {}); } catch (e) {}
+  };
   const pageList = [], holders = [];
   const dpr = window.devicePixelRatio || 1;
   let scale = 1, baseWidth = 0, numPages = 0;
@@ -8030,45 +8076,64 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   const setMeta = (txt) => { meta.textContent = txt; };
   const fail = (msg) => { scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
   const teardown = () => {
+    if (cancelled) return;
     cancelled = true;
+    abort.abort();
     renderGeneration++;
     for (const h of holders) { if (h && h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; } }
     if (io) { io.disconnect(); io = null; }
-    if (pdfDoc) { try { pdfDoc.destroy(); } catch (e) {} pdfDoc = null; }
+    destroyResource(loadingTask || pdfDoc);
+    loadingTask = null; pdfDoc = null;
   };
   bindViewerTeardown(container, teardown);
 
   // 1) 取字节（复用图片/STL 的 raw 端点，带 access_token 查询参数）
   let buf;
   try {
-    const r = await fetch(rawUrl);
+    const r = await fetch(rawUrl, { signal: abort.signal });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     buf = await r.arrayBuffer();
-  } catch (e) { fail(t('无法读取 PDF：') + escapeHtml(e.message)); return; }
+  } catch (e) { if (!cancelled) fail(t('无法读取 PDF：') + escapeHtml(e.message)); return; }
+  if (cancelled) return;
 
   // 2) 加载本地 pdf.js 模块
   let pdfjs;
   try { pdfjs = await ensurePdfJs(); }
-  catch (e) { fail(t('PDF 渲染组件加载失败（离线 vendor 缺失？）：') + escapeHtml(e.message)); return; }
+  catch (e) { if (!cancelled) fail(t('PDF 渲染组件加载失败（离线 vendor 缺失？）：') + escapeHtml(e.message)); return; }
+  if (cancelled) return;
 
   // 3) 打开文档（加密 PDF 走 onPassword 回调）
-  const task = pdfjs.getDocument({ data: buf });
+  const task = loadingTask = pdfjs.getDocument({ data: buf });
   task.onPassword = (updatePassword, reason) => {
+    if (cancelled) return;
     // reason: 0 = NEED_PASSWORD，1 = INCORRECT_PASSWORD
     passwordPrompt(reason === 1 ? t('密码不正确，请重试') : t('该 PDF 已加密，请输入打开密码'))
       .then(pw => {
-        if (pw == null) { task.destroy(); fail(t('已取消：需要密码才能打开该 PDF')); return; }
+        if (cancelled) return;
+        if (pw == null) { teardown(); fail(t('已取消：需要密码才能打开该 PDF')); return; }
         updatePassword(pw);
       });
   };
-  try { pdfDoc = await task.promise; }
+  try {
+    const loaded = await task.promise;
+    if (cancelled) { destroyResource(task); return; }
+    pdfDoc = loaded;
+  }
   catch (e) {
+    if (cancelled) return;
+    teardown();
     if (e && e.name === 'PasswordException') return; // 取消/错误已由 onPassword 给出提示
     fail(t('PDF 已损坏或无法解析：') + escapeHtml(e.message)); return;
   }
   if (cancelled || !pdfDoc) return;
 
   numPages = pdfDoc.numPages;
+  // Bound DOM placeholders and sequential metadata requests before either allocation loop.
+  if (!Number.isSafeInteger(numPages) || numPages < 1 || numPages > 2000) {
+    teardown();
+    fail(t('PDF 页数无效或超过预览上限（2000 页），请拆分后查看'));
+    return;
+  }
   pageTotal.textContent = '/ ' + numPages;
   pageInput.value = '1';
 
@@ -8472,7 +8537,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     await ensureDxfParser();
     const r = await fetch(rawUrl);
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    text = await r.text();
+    text = new TextDecoder().decode(await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.dxfBytes));
   } catch (e) {
     meta.textContent = t('加载失败');
     canvas.innerHTML = '';
@@ -8480,9 +8545,11 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     return;
   }
 
-  let doc;
+  let doc, budget;
   try {
+    window.AidePreviewSafety.checkDxfText(text);
     doc = new DxfParser().parseSync(text);
+    budget = window.AidePreviewSafety.createDxfBudget(doc);
   } catch (e) {
     meta.textContent = t('解析失败');
     canvas.innerHTML = '';
@@ -8501,10 +8568,11 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
 
   // 包围盒（DXF Y-up 坐标）
   const bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
-  const grow = (x, y) => { if (!isFinite(x) || !isFinite(y)) return; if (x < bb.minX) bb.minX = x; if (x > bb.maxX) bb.maxX = x; if (y < bb.minY) bb.minY = y; if (y > bb.maxY) bb.maxY = y; };
+  const grow = (x, y) => { budget.point(); if (!isFinite(x) || !isFinite(y)) return; if (x < bb.minX) bb.minX = x; if (x > bb.maxX) bb.maxX = x; if (y < bb.minY) bb.minY = y; if (y > bb.maxY) bb.maxY = y; };
 
-  const svg = dxfSvgEl('svg', { class: 'dxf-svg', preserveAspectRatio: 'xMidYMid meet' });
-  const content = dxfSvgEl('g', { transform: 'scale(1,-1)' }); // DXF Y-up → SVG Y-down
+  const svgEl = (tag, attrs) => { budget.node(); return dxfSvgEl(tag, attrs); };
+  const svg = svgEl('svg', { class: 'dxf-svg', preserveAspectRatio: 'xMidYMid meet' });
+  const content = svgEl('g', { transform: 'scale(1,-1)' }); // DXF Y-up → SVG Y-down
   svg.appendChild(content);
   canvas.appendChild(svg);
 
@@ -8513,6 +8581,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
     return { stroke: dxfEntityColor(ent, layers), 'stroke-width': penWidth, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
   }
   function renderEntity(ent, parent, xform) {
+    budget.visit();
     const tx = (xform ? xform.dx : 0), ty = (xform ? xform.dy : 0);
     const sxp = (xform ? xform.sx : 1), syp = (xform ? xform.sy : 1);
     const rot = (xform ? (xform.rotDeg || 0) * Math.PI / 180 : 0);
@@ -8527,7 +8596,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           const v = ent.vertices || [];
           if (v.length >= 2) {
             const [x1, y1] = xf(v[0].x, v[0].y), [x2, y2] = xf(v[1].x, v[1].y);
-            parent.appendChild(dxfSvgEl('line', { ...strokeAttrs(ent), x1, y1, x2, y2 }));
+            parent.appendChild(svgEl('line', { ...strokeAttrs(ent), x1, y1, x2, y2 }));
             grow(x1, y1); grow(x2, y2);
           }
           break;
@@ -8535,7 +8604,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
         case 'POINT': {
           const p = ent.position || {};
           const [x, y] = xf(p.x || 0, p.y || 0);
-          parent.appendChild(dxfSvgEl('circle', { cx: x, cy: y, r: penWidth * 2, fill: dxfEntityColor(ent, layers), stroke: 'none' }));
+          parent.appendChild(svgEl('circle', { cx: x, cy: y, r: penWidth * 2, fill: dxfEntityColor(ent, layers), stroke: 'none' }));
           grow(x, y);
           break;
         }
@@ -8543,7 +8612,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           const c = ent.center || {};
           const [cx, cy] = xf(c.x || 0, c.y || 0);
           const r = (ent.radius || 0) * (Math.abs(sxp + syp) / 2 || 1);
-          parent.appendChild(dxfSvgEl('circle', { ...strokeAttrs(ent), cx, cy, r }));
+          parent.appendChild(svgEl('circle', { ...strokeAttrs(ent), cx, cy, r }));
           grow(cx - r, cy - r); grow(cx + r, cy + r);
           break;
         }
@@ -8553,7 +8622,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           const sa = xf(c.x + r * Math.cos(a0), c.y + r * Math.sin(a0));
           const ea = xf(c.x + r * Math.cos(a1), c.y + r * Math.sin(a1));
           const large = (ent.angleLength || 0) > Math.PI ? 1 : 0;
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d: 'M ' + sa[0] + ' ' + sa[1] + ' A ' + r + ' ' + r + ' 0 ' + large + ' 0 ' + ea[0] + ' ' + ea[1] }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d: 'M ' + sa[0] + ' ' + sa[1] + ' A ' + r + ' ' + r + ' 0 ' + large + ' 0 ' + ea[0] + ' ' + ea[1] }));
           const steps = 48;
           for (let i = 0; i <= steps; i++) { const a = a0 + (a1 - a0) * i / steps; const pt = xf(c.x + r * Math.cos(a), c.y + r * Math.sin(a)); grow(pt[0], pt[1]); }
           break;
@@ -8576,7 +8645,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
             d += (i === 0 ? 'M ' : ' L ') + pt[0] + ' ' + pt[1];
             grow(pt[0], pt[1]);
           }
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d }));
           break;
         }
         case 'LWPOLYLINE':
@@ -8597,7 +8666,7 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
             if (!ent.shape && i === verts.length - 1) break;
           }
           if (ent.shape) d += ' Z';
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d }));
           break;
         }
         case 'SPLINE': {
@@ -8606,21 +8675,22 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           let d = '';
           pts.forEach((p, i) => { const pt = xf(p.x || 0, p.y || 0); d += (i ? ' L ' : 'M ') + pt[0] + ' ' + pt[1]; grow(pt[0], pt[1]); });
           if (ent.closed) d += ' Z';
-          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          parent.appendChild(svgEl('path', { ...strokeAttrs(ent), d }));
           break;
         }
         case 'TEXT':
         case 'MTEXT': {
+          const label = String(ent.text || '');budget.text(label);
           const p = ent.startPoint || ent.position || {};
           const pt = xf(p.x || 0, p.y || 0);
           const h = ent.textHeight || ent.height || 1;
           const rot = ent.rotation || 0;
-          const g = dxfSvgEl('g', { transform: 'translate(' + pt[0] + ' ' + pt[1] + ') scale(1,-1)' });
-          const tx2 = dxfSvgEl('text', { 'font-size': h, fill: dxfEntityColor(ent, layers), 'text-anchor': 'start', 'dominant-baseline': 'alphabetic', 'font-family': 'var(--dxf-font, sans-serif)', transform: 'rotate(' + rot + ')' });
-          tx2.textContent = ent.text || '';
+          const g = svgEl('g', { transform: 'translate(' + pt[0] + ' ' + pt[1] + ') scale(1,-1)' });
+          const tx2 = svgEl('text', { 'font-size': h, fill: dxfEntityColor(ent, layers), 'text-anchor': 'start', 'dominant-baseline': 'alphabetic', 'font-family': 'var(--dxf-font, sans-serif)', transform: 'rotate(' + rot + ')' });
+          tx2.textContent = label;
           g.appendChild(tx2);
           parent.appendChild(g);
-          grow(pt[0] - h, pt[1] - h); grow(pt[0] + h * (ent.text || '').length, pt[1] + h);
+          grow(pt[0] - h, pt[1] - h); grow(pt[0] + h * label.length, pt[1] + h);
           break;
         }
         case 'INSERT': {
@@ -8628,18 +8698,22 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
           if (!blk || !blk.entities) break;
           const p = ent.position || {};
           const pt = xf(p.x || 0, p.y || 0);
-          const sub = dxfSvgEl('g', {});
-          parent.appendChild(sub);
-          blk.entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: ent.rotation || 0, sx: ent.xScale || 1, sy: ent.yScale || 1 }));
+          budget.block(ent.name, () => {
+            const sub = svgEl('g', {});
+            parent.appendChild(sub);
+            blk.entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: ent.rotation || 0, sx: ent.xScale || 1, sy: ent.yScale || 1 }));
+          });
           break;
         }
         case 'DIMENSION': {
           if (ent.block && blocks[ent.block] && blocks[ent.block].entities) {
             const p = ent.anchorPoint || ent.middleOfText || {};
             const pt = xf(p.x || 0, p.y || 0);
-            const sub = dxfSvgEl('g', {});
-            parent.appendChild(sub);
-            blocks[ent.block].entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: 0, sx: 1, sy: 1 }));
+            budget.block(ent.block, () => {
+              const sub = svgEl('g', {});
+              parent.appendChild(sub);
+              blocks[ent.block].entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: 0, sx: 1, sy: 1 }));
+            });
           }
           break;
         }
@@ -8649,17 +8723,23 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
             let d = '';
             pts.slice(0, 4).forEach((p, i) => { const pt = xf(p.x || 0, p.y || 0); d += (i ? ' L ' : 'M ') + pt[0] + ' ' + pt[1]; grow(pt[0], pt[1]); });
             d += ' Z';
-            parent.appendChild(dxfSvgEl('path', { d, fill: dxfEntityColor(ent, layers), stroke: 'none', opacity: '0.6' }));
+            parent.appendChild(svgEl('path', { d, fill: dxfEntityColor(ent, layers), stroke: 'none', opacity: '0.6' }));
           }
           break;
         }
         default:
           break;
       }
-    } catch (e) { /* 单实体异常不中断整图 */ }
+    } catch (e) { if (window.AidePreviewSafety.isLimitError(e)) throw e; /* 单实体格式异常不中断整图 */ }
   }
 
-  entities.forEach(ent => renderEntity(ent, content, null));
+  try { entities.forEach(ent => renderEntity(ent, content, null)); }
+  catch (e) {
+    meta.textContent = t('解析失败');
+    canvas.innerHTML = '';
+    canvas.append(el('div', 'dxf-error', t('DXF 解析失败：') + ' ' + e.message));
+    return;
+  }
 
   if (!isFinite(bb.minX) || bb.minX === bb.maxX) { bb.minX -= 1; bb.maxX += 1; }
   if (!isFinite(bb.minY) || bb.minY === bb.maxY) { bb.minY -= 1; bb.maxY += 1; }
@@ -8704,6 +8784,9 @@ async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
 
 /* ── docx-preview 渲染器：保留标题/表格/图片/列表，支持批注 ── */
 async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
+  teardownViewer(container);
+  let canceled = false, releaseStyles = () => {};
+  bindViewerTeardown(container, () => { canceled = true; releaseStyles(); });
   container.innerHTML = '';
   const loading = el('div', 'docx-loading', t('正在加载 Word 文档…'));
   loading.style.cssText = 'padding:40px;text-align:center;color:var(--text-dim)';
@@ -8722,7 +8805,9 @@ async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
   try {
     const r = await fetch(rawUrl);
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const buf = await r.arrayBuffer();
+    const buf = await window.AidePreviewSafety.readBytes(r, window.AidePreviewSafety.limits.docxBytes);
+    await window.AidePreviewSafety.checkDocx(buf, window.JSZip);
+    if (canceled) return;
 
     const toolbar = el('div', 'docx-toolbar');
     const info = el('span', 'docx-info', filePath.split('/').pop());
@@ -8742,13 +8827,16 @@ async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
 
     btnClose.onclick = () => { const dlg = container.closest('dialog'); if (dlg) dlg.close(); else if (document.body.classList.contains('file-view-mode')) history.back(); };
 
-    await window.docx.renderAsync(buf, docxBody, null, {
+    const docxStyles = document.createElement('div');
+    await window.docx.renderAsync(buf, docxBody, docxStyles, {
       className: 'docx-rendered',
       inWrapper: true,
       ignoreWidth: false,
       ignoreHeight: false,
       experimental: true,
     });
+    if (canceled) return;
+    releaseStyles = window.AideDocxStyles.apply(docxBody, docxStyles);
     loading.remove();
 
     // Knowledge views pin source identity and remain read-only. The existing
@@ -11250,34 +11338,38 @@ function renderVoiceCloneControl() {
   wrap.append(guide, guideText);
 
   // ── 录音 ──
-  let mediaRec = null, chunks = [];
+  let stopRecording = null;
   const recBtn = el('button','quiet',t('开始录音')); recBtn.type='button';
   const stopBtn = el('button','quiet',t('停止并上传')); stopBtn.type='button'; stopBtn.disabled=true;
   recBtn.onclick = action(async () => {
     if (!consent.checked) { toast(t('请先勾选同意')); return; }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      mediaRec = new MediaRecorder(stream);
-      chunks = [];
+      const mediaRec = new MediaRecorder(stream), chunks = [];
+      let stoppedAt = null;
       mediaRec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
       mediaRec.onstop = async () => {
         stream.getTracks().forEach(t=>t.stop());
+        const durationSec = Math.max(1, Math.round(((stoppedAt ?? performance.now()) - startedAt) / 1000));
         const blob = new Blob(chunks, {type: mediaRec.mimeType || 'audio/webm'});
-        await uploadSample(blob);
+        await uploadSample(blob, durationSec);
         recBtn.disabled=false; stopBtn.disabled=true;
         loadSamples();
       };
+      const startedAt = performance.now();
       mediaRec.start();
+      stopRecording = () => {
+        if (mediaRec.state !== 'inactive') { stoppedAt = performance.now(); mediaRec.stop(); }
+      };
       recBtn.disabled=true; stopBtn.disabled=false;
     } catch(e) { toast(t('无法访问麦克风：')+e.message); }
   });
-  stopBtn.onclick = () => { if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop(); };
+  stopBtn.onclick = () => { stopRecording?.(); };
   wrap.append(recBtn, stopBtn);
 
-  async function uploadSample(blob) {
-    const fd = new FormData();
+  async function uploadSample(blob, durationSec) {
     try {
-      const res = await fetch('/api/voice-sample/upload?consented=1&durationSec=5', {
+      const res = await fetch('/api/voice-sample/upload?consented=1&durationSec=' + encodeURIComponent(durationSec), {
         method:'POST', headers:{Authorization:'Bearer '+(state.token||'')}, body: blob
       });
       if (!res.ok) { const e=await res.json().catch(()=>({})); toast(t('上传失败：')+(e.error||res.status)); return; }

@@ -1,0 +1,84 @@
+{
+  "cycle": 93,
+  "issues": [],
+  "coveredIssues": [
+    248
+  ],
+  "existingResolved": [
+    57
+  ],
+  "sourceChanges": "No new runtime edits: main36c9dbf4 covers57; branch39acde7f covers248. Added browser acceptance helpers in0c824880.",
+  "green": [
+    {
+      "status": "PASS",
+      "command": "go test -mod=vendor -race ./internal/server -run ^(TestAssistantCall|TestAssistantRealtime|TestRealtime) -count=1",
+      "scope": "4 controlled provider/auth/audio/lock/call-guidance tests; opt-in paid test skipped, no credentials read",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle93-call-go.log"
+    },
+    {
+      "status": "PASS",
+      "command": "node scripts/assistant-live.test.cjs; node scripts/assistant-call.test.cjs; node scripts/assistant-realtime.test.cjs",
+      "scope": "Lifecycle, unfinished recognition, quiet notices, normal pacing, PCM and barge-in controls"
+    },
+    {
+      "status": "PASS",
+      "browser": {
+        "status": "PASS",
+        "scope": "Actual Chromium synthetic microphone, AudioWorklet PCM capture and WebAudio playback; Playwright intercepts only the owned WebSocket protocol. No paid provider, real microphone or full Aide host.",
+        "packets": 13,
+        "commands": [
+          "conversation.item.truncate",
+          "response.cancel",
+          "input_audio_buffer.clear"
+        ],
+        "details": {
+          "phases": [
+            "requesting",
+            "listening",
+            "thinking",
+            "speaking",
+            "listening",
+            "watching",
+            "listening",
+            "off",
+            "requesting",
+            "listening",
+            "off"
+          ],
+          "errors": []
+        },
+        "browser": "154.0.8037.57"
+      }
+    },
+    {
+      "status": "PASS",
+      "browser": {
+        "status": "PASS",
+        "sameOriginLoadAndSave": true,
+        "exactReplyTargets": true,
+        "wrongSourceRejected": true,
+        "sameWindowProxyAfterNavigation": true,
+        "foreignOriginInitAndSaveRejected": true,
+        "errors": [],
+        "scope": "Actual browser postMessage between owned origins, using current setupDrawioFrame. Standalone component omits production CSP to exercise the extra origin guard; not a demonstrated production CSP bypass."
+      }
+    }
+  ],
+  "notRun": [
+    "Real microphone/paid Qwen provider/conversational subjective acceptance; no full Aide host.",
+    "Production CSP exploitation was not reproduced; origin test intentionally omits CSP to exercise additional defense."
+  ],
+  "delivery": {
+    "pushed": true,
+    "commit": "0c824880",
+    "mergedToMain": false,
+    "released": false
+  },
+  "comments": {
+    "57": "https://github.com/skyelan1999/aide/issues/57#issuecomment-6475187967",
+    "248": "https://github.com/skyelan1999/aide/issues/248#issuecomment-6475190265"
+  },
+  "remainingAllSnapshot": 87,
+  "cumulativeNewBranchIssueCoverage": 406,
+  "countPolicy": "No duplicate source-fix count;248 is newly verified coverage of existing39acde7f.57 existing-main closure is separate."
+}

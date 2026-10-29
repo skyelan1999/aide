@@ -1,0 +1,122 @@
+{
+  "cycle": 11,
+  "baseline": "fa3ec643",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    90,
+    91,
+    92
+  ],
+  "commits": {
+    "90": "eafb3e12ba7b264fed43f3b18a3c09446ae8600f",
+    "91": "943c566794948b26321c6772e938f9814c49814e",
+    "92": "ded839fe0a8d3d1c7f47bdb357dba52346488c60"
+  },
+  "fixedProductIssues": [
+    91,
+    92
+  ],
+  "notSupportedIssues": [
+    90
+  ],
+  "cumulativeProductFixes": 36,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 37,
+  "original272RemainingFollowup": 247,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "fixtures": "Owned temporary workspace, synthetic plugin text, local Unix sockets and existing Node daemon regressions; no real remote host or paid model."
+  },
+  "reproduction": [
+    {
+      "issues": [
+        90,
+        91
+      ],
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue90|^TestIssue91' -count=1 -timeout=2m",
+      "result": "FAIL",
+      "durationSeconds": 4.02,
+      "observed": "#91 raw injected text persisted and entered hint. #90 did NOT reproduce: every protected path was already rejected by knowledgeSafePath -> safePath; initial test erroneously required new English host-policy error text instead of existing rejection."
+    },
+    {
+      "issue": 90,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue90' -count=1 -timeout=2m",
+      "result": "PASS_EXISTING_PROTECTION",
+      "durationSeconds": 3.004,
+      "observed": "Unchanged product guard rejects all 5 protected names at root and below folder for file/directory roots and absent descendants, with zero snapshot bytes and no destination entries. Ordinary .env.example/keep remain; user exclude remains additive."
+    },
+    {
+      "issue": 92,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue91|^TestIssue92|^TestPluginExperience|^TestPluginCapability|^TestRecordPluginExperience|^TestParseExperience|^TestSanitizeExpDetail|^TestTrimExperience' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL_92_ONLY",
+      "durationSeconds": 5.087,
+      "observed": "#91 and existing experience tests passed; #92 successive master restarts retained 3,4,5,6 links rather than only current + still-live original."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue90|^TestIssue91|^TestIssue92|^TestPluginExperience|^TestPluginCapability|^TestRecordPluginExperience|^TestParseExperience|^TestSanitizeExpDetail|^TestTrimExperience|^TestTerminalContext|^TestAppClose' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 16.333
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue90|^TestIssue91|^TestIssue92|^TestPluginExperience|^TestPluginCapability|^TestRecordPluginExperience|^TestParseExperience|^TestSanitizeExpDetail|^TestTrimExperience|^TestTerminalContext|^TestAppClose|^TestDaemon|^TestPluginResource' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 35.518,
+      "scope": "Final identity/cancellation checks, same-inode reuse, separate App ownership, 8 concurrent pin callers vs shutdown, existing daemon lifecycle/resource tests."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T154208566609Z.log",
+      "fingerprint": "b56b90cbd6b250cebd0349bc5b153f9dded2566c0c39063c93a304336bea5bf3"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427 Markdown,1465 local links"
+    }
+  ],
+  "intermediateVerification": [
+    {
+      "receipt": ".agent-state/verify-20261026T154002927303Z.log",
+      "result": "FAIL_INVALIDATED",
+      "reason": "Every command exit0, but source changed while quick ran, so fingerprint check correctly rejected receipt. Repeated against final unchanged inputs passed."
+    }
+  ],
+  "notes": [
+    "#90 historical source-confirmed review is preserved as reviewEvidence; runtime and complete call-chain examination supersede it. No product patch needed; close as not supported with regression evidence. Shared safePath protection also confirmed unchanged at upstream15e3130e and report baseline45f1d4f2.",
+    "#91 new records discard plugin result text, validate identifier spelling and emit only host outcome/count/date. Legacy detail never enters hint; next normal write replaces legacy detail with fixed status. No startup deletion of user files or promise to sanitize all other prompt sources.",
+    "#92 pins use per-App private temporary directories; same inode reuses link, only confirmed refused endpoints with unchanged inode are reaped at creation and scheduled30s; still-live old masters preserved. Stop rejects late pins and stops daemon before deleting owned links. Legacy deterministic directory gets dead-only sweep. Tests invoke reaper directly, not a30s timer acceptance test.",
+    "No native macOS/Windows or authenticated OpenSSH acceptance; existing Landlock and/home/aide restrictions remain. Abrupt process kill can leave instance temp directories; no crash-recovery guarantee.",
+    "No main merge, release or deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "comments": {
+      "90": "https://github.com/skyelan1999/aide/issues/90#issuecomment-6420336067",
+      "91": "https://github.com/skyelan1999/aide/issues/91#issuecomment-6420337062",
+      "92": "https://github.com/skyelan1999/aide/issues/92#issuecomment-6420338135"
+    },
+    "closedNotSupported": [
+      90
+    ]
+  },
+  "sourceSHA256": {
+    "internal/server/plugin_source_protected_test.go": "a77410fb925c9d8431a28ed4eeb863a5c25e46521e7cc8970d1cc8410514d721",
+    "internal/server/plugin_learning.go": "12b7f5c9738fcfcbd1483d0c65a9fc17b0b3ca4192bf5d61cc87fb942a9e238d",
+    "internal/server/plugin_learning_test.go": "41fcd553d1a3ef6f51aff25412bcb74805fceb71dade785ae34852ea5a466519",
+    "internal/server/plugin_experience_trust_test.go": "d4efcb0600e8814cddf4805990f0f8a09baa734b8cd9516715cefe021f37980d",
+    "internal/server/plugin_terminal_context.go": "f1543d65b66f9a76d2d402cf774d028e764a16ecf0ccff7a05f048f74de6d1de",
+    "internal/server/server.go": "606827cdc09dfca44ee189dfb51eb0e7f271db509896b6d273dce10e9da063e4",
+    "internal/server/terminal_master_pins.go": "2f9663556e6cd05494c03f470636defe75877841ad9deb73489dd837f994f032",
+    "internal/server/terminal_pin_lifecycle_test.go": "41869e96a635cb94c404da530aff0386b63423aa1e43bc6bb0c73ad5a15329c1"
+  }
+}

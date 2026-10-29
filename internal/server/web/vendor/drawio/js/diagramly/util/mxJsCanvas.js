@@ -202,7 +202,11 @@ mxJsCanvas.prototype.setFillColor = function(value)
 
 mxJsCanvas.prototype.setGradient = function(color1, color2, x, y, w, h, direction, alpha1, alpha2)
 {
-	var gradient = this.ctx.createLinearGradient(0, y, 0, y + h);
+	var x1 = x, y1 = y, x2 = x, y2 = y + h;
+	if (direction == mxConstants.DIRECTION_NORTH) { y1 = y + h; y2 = y; }
+	else if (direction == mxConstants.DIRECTION_EAST) { x2 = x + w; y2 = y; }
+	else if (direction == mxConstants.DIRECTION_WEST) { x1 = x + w; y2 = y; }
+	var gradient = this.ctx.createLinearGradient(x1, y1, x2, y2);
 	
 	var s = this.state;
 	s.fillColor = color1;
@@ -319,7 +323,7 @@ mxJsCanvas.prototype.setLineJoin = function(value)
 
 mxJsCanvas.prototype.setMiterLimit = function(value)
 {
-	this.ctx.lineJoin = value;
+	this.ctx.miterLimit = value;
 };
 
 mxJsCanvas.prototype.setFontColor = function(value)

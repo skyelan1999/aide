@@ -1,0 +1,109 @@
+{
+  "cycle": 95,
+  "issues": [
+    463,
+    497,
+    498,
+    499,
+    516,
+    518,
+    519,
+    520,
+    529,
+    530,
+    531,
+    562
+  ],
+  "baseline": "b47f01ff",
+  "fixes": "Replace old KaTeX with0.18.5 plus bounded actual parser; nongreedy separate formulas; strict HTML/MathML labels only for math; Mermaid preflight, actual directive sanitizer and CSS depth/length guards; remove no-progress scans; allow valid neutral stateBorder.",
+  "budgets": {
+    "diagramCharacters": 50000,
+    "whitespaceRun": 512,
+    "nonWhitespaceRun": 1024,
+    "structureDepth": 64,
+    "clusterDepth": 64,
+    "cssCharacters": 4096,
+    "mathCharacters": 4096,
+    "mathParserDepth": 64,
+    "mathMaxExpand": 512,
+    "mathMaxSizeEm": 20
+  },
+  "provenance": {
+    "version": "0.18.5",
+    "url": "https://registry.npmjs.org/katex/-/katex-0.18.5.tgz",
+    "integrity": "sha512-1FU5H3RjGJVj6GT9fMjf2uMIXmPQp232aXS3UEeQzf0dxefHg/CKMvNB3DuOC46LFG/E5PNxrE8dOwB782FDGg==",
+    "distSHA256": "30c9f7c07bf54d341ffd8f16dc6632766f12b16d0a064e2a08f2d6b1744396a6",
+    "oldKaTeXRemoved": true,
+    "upstreamFactorySHA256": "662b480cdec21431cddbd118fbef09342ffb2ecc7969db2869cf0049284dc61a",
+    "embeddedFactorySHA256": "bae16c6a83f73465c0de31d7c6f3afc6b38a4cddd610196a62c1c0a6000da0f3",
+    "localFactoryPatch": "parseExpression has64-frame budget, tracked in private WeakMap; TeX comments/macros cannot bypass and Object.prototype cannot initialize counter.",
+    "mermaidSHA256": "73a7d4236a90ce186f4b452305d0b65d8d491e7c85b362144cebaec3e4bbf937"
+  },
+  "red": {
+    "status": "EXPECTED_FAIL",
+    "node": "/workspace/scratch/issue-review-20261026/cycle95-math-depth-red.log",
+    "browser": "/workspace/scratch/issue-review-20261026/cycle95-browser-depth-red/result.json",
+    "scope": "Original bundle version/trust/Unicode/size/depth controls fail; original browser cases fail budgets/theme/consecutive-formula/no-progress expectations. Tests use controlled sizes."
+  },
+  "green": [
+    {
+      "status": "PASS",
+      "checks": 10,
+      "scope": "Actual embedded KaTeX module: inherited trust,explicit trust,Unicode,clamp,ordinary math,TeX comments/groups/verbatim,private depth accounting",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle95-math-depth-final.log"
+    },
+    {
+      "status": "PASS",
+      "checks": 19,
+      "scope": "Actual Aide wrapper,real Chromium,same-origin script/style strict CSP; Unicode whitespace,quoted closers,objects/arrays/CSS,semicolon clusters,formulas,HTML sanitization,neutral color,getter scan counts",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle95-browser-depth-final/result.json"
+    },
+    {
+      "status": "PASS",
+      "checks": 44,
+      "scope": "Prior bundled Mermaid regression/reset controls",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle95-prior-browser-depth-final/result.json"
+    },
+    {
+      "status": "PASS",
+      "checks": 252,
+      "fingerprint": "84a2e2794a659ad7ead7d94a19c02d7c985e4b3e17edd5419ec7bb461022a337",
+      "receipt": ".agent-state/verify-20261028T174445675883Z.log"
+    }
+  ],
+  "notRun": [
+    "Full start.command Aide,real Safari/mobile/native devices,production deploy.",
+    "Whole Aide branch CI is NOT PASS: baseline40726999602 failed shallow-history quick fixture and multiple Go SSH/briefing tests;Windows job passed on baseline only. New577 records confirmed tooling defect."
+  ],
+  "delivery": {
+    "pushed": true,
+    "commits": [
+      "e12db01c",
+      "bd3273ec"
+    ],
+    "comments": {
+      "463": "https://github.com/skyelan1999/aide/issues/463#issuecomment-6476118108",
+      "497": "https://github.com/skyelan1999/aide/issues/497#issuecomment-6476118922",
+      "498": "https://github.com/skyelan1999/aide/issues/498#issuecomment-6476119394",
+      "499": "https://github.com/skyelan1999/aide/issues/499#issuecomment-6476119830",
+      "516": "https://github.com/skyelan1999/aide/issues/516#issuecomment-6476120453",
+      "518": "https://github.com/skyelan1999/aide/issues/518#issuecomment-6476120898",
+      "519": "https://github.com/skyelan1999/aide/issues/519#issuecomment-6476121414",
+      "520": "https://github.com/skyelan1999/aide/issues/520#issuecomment-6476121931",
+      "529": "https://github.com/skyelan1999/aide/issues/529#issuecomment-6476122353",
+      "530": "https://github.com/skyelan1999/aide/issues/530#issuecomment-6476122823",
+      "531": "https://github.com/skyelan1999/aide/issues/531#issuecomment-6476123368",
+      "562": "https://github.com/skyelan1999/aide/issues/562#issuecomment-6476123869"
+    },
+    "mergedToMain": false,
+    "released": false
+  },
+  "remainingOriginal104": 74,
+  "additionalDiscoveredOpen": [
+    577
+  ],
+  "cumulativeFixedOnBranch": 419,
+  "partialMitigationOnly": [
+    411
+  ]
+}

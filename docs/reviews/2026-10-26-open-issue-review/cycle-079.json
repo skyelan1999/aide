@@ -1,0 +1,89 @@
+{
+  "cycle": 79,
+  "baseline": "78c490867d3949a4511796eaa4147a0acd0c77d8",
+  "issues": [
+    392,
+    393,
+    394,
+    395,
+    396,
+    397
+  ],
+  "fixes": {
+    "392": "Bound nested centerOver reparsing to8 shared levels and restore parser depth on every exit.",
+    "393": "Bound proof trees to64 inferences using a counter on the persistent proof stack item;clear rejected balancing lists.",
+    "394": "Bound nested UnderOverBracket reparsing to8 shared levels and preserve the original ordinary-formula implementation.",
+    "395": "Check mhchem group depth before its recursive state machine,rejecting depth above64.",
+    "396": "Apply existingSafe policy to AsciiMathMathML output;return the error root on filter failure and restore the caller root.",
+    "397": "Check Physics matrix axes,cells and estimated expansion before allocation;retain ordinarymqty syntax."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle79-math-red3/result.json",
+    "scope": "All6 reports reproduced using actual localMathJax:12-levelCenterNot12286parsercalls;UnderOverBracket8191calls;300proofrulesstackoverflow;80-levelchemicalinputaccepted;AsciiMatharbitraryid/classretained;70matrixaxisreachescontrolledallocationbudget. Initialredpreloadedextensions;finalgreenusesAideinitialloadlist andactualrequire path."
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 219,
+      "fingerprint": "130d0f4583ebd275ac67d6263aa677d4447860866625e6e807d12d2cc0ba82d9",
+      "receipt": ".agent-state/verify-20261028T102652837005Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 6,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle79-math-final/result.json",
+      "scope": "ActuallocalMathJax4.1.3,Chromium154,SVG,TeXrequire,AsciiMath,Safe. 12-levelworkbounded,8-leveloverlaysand64-ruleproofboundariesrender,ordinarychemistry/identitymatricesremainvalid,SafeallowlistedIDretained,forcedfilterfailureproduceserrorroot;pageerrors[].20-40msboundsnotclaimed."
+    }
+  ],
+  "compatibility": "Documented local resource limits intentionally reject previously accepted expensive formulas. They bound upstream algorithms rather than claiming linear-time reimplementation. See math4/LOCAL_PATCHES.md.",
+  "deferred": [
+    {
+      "issue": 391,
+      "status": "needs-matching-runtime-reproduction",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle79-math-production-config/result.json",
+      "reason": "Reportedcommentexampledoesnotfail,butnegativeextra-alignmentcontrolalsodidnotbehaveasexpected;do not declarefixedorclosebasedonthisfixture."
+    }
+  ],
+  "harnessCorrections": [
+    "LoggingvariableandSVGmerrorselectorcorrectedbeforevalidred3;Physicsrequiresmqtycontext.",
+    "Temporarynode-listscanresetduringnestedargumentparse;prooflimitmustliveonactualproofTreeitem.",
+    "FinaltestusesthesameinitialloaderlistasAide;extensionsloadviarequire."
+  ],
+  "notRun": [
+    "FullAideworkbench,start.command,Windows/macOSnative;isolatedactualMathJaxpageonly.",
+    "OptionalCHTMLoutput;thiscyclemodifiessharedTeXandSafepaths,buttestsdefaultSVG.",
+    "FullDockerprofile;noGochange.",
+    "Mainmerge,Release/tag,market/deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {
+      "392": "https://github.com/skyelan1999/aide/issues/392#issuecomment-6466651907",
+      "393": "https://github.com/skyelan1999/aide/issues/393#issuecomment-6466652602",
+      "394": "https://github.com/skyelan1999/aide/issues/394#issuecomment-6466653064",
+      "395": "https://github.com/skyelan1999/aide/issues/395#issuecomment-6466653778",
+      "396": "https://github.com/skyelan1999/aide/issues/396#issuecomment-6466654379",
+      "397": "https://github.com/skyelan1999/aide/issues/397#issuecomment-6466655323"
+    },
+    "remoteSourceCommit": "0ada939f39df2f6db3ac37723eb0bba738cee616"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "13890f73ef3a3e7859c2f3ca388aaff09658b9d24eea93017869ddcedf5a6bd6",
+    "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/bussproofs.js": "3d84e5ccfc17820e4ee669423d63795b85aedf0a96fec760c2c5cf0e00c586c4",
+    "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/centernot.js": "93495dae86c6f489d213295720382a64f8aebb3544c93b12df16ec6ad34a27de",
+    "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mathtools.js": "8e95255a6d827e23dbdeb2ac26a6d587db0b479d93187abef7f9e3f98d7aab8b",
+    "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/mhchem.js": "a703e5161f63c221c8b61382a19c323aaecf94244ec840204093d84f8b4591fb",
+    "internal/server/web/vendor/drawio/math4/es5/input/tex/extensions/physics.js": "4136d5b12601c8cc953412e56d97a1c1e138382be8aa29ebd8d0bef43a1cf379",
+    "internal/server/web/vendor/drawio/math4/es5/ui/safe.js": "010301f8d1259f90898138138daa0e5fe1c1193ecfd715e7b924d43ea0dc8125",
+    "internal/server/web/vendor/drawio/math4/LOCAL_PATCHES.md": "0510084aaff3c9ba23058c08a2b2bd3a68e3bfa08ed1218be52dfa78b1c3c33a",
+    "scripts/browser-mathjax-issue-review.cjs": "7eda653d60de38945ad71543c0ac6d7577bace861b6eb47a370f2bfb8db18928"
+  },
+  "completedAt": "2026-10-28T10:30:54.531954+00:00",
+  "cumulativeFixedOnBranch": 308,
+  "cumulativeProductFixes": 307,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

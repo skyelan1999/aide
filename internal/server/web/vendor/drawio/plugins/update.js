@@ -140,8 +140,13 @@ Draw.loadPlugin(function(editorUi)
 					updateUrl = root.value.getAttribute('updateUrl') || updateUrl;
 				}
 				
-				if (updateUrl != null)
-				{
+				if (updateUrl != null && updateUrl !== 'demo' && (Graph.sanitizeLink(updateUrl) == null || !Graph.isSameOrigin(updateUrl)))
+                {
+                    editorUi.handleError(new Error('Update URL must use the same origin as this editor.'));
+                    return false;
+                }
+                if (updateUrl != null)
+                {
 					var currentXml = mxUtils.getXml(editorUi.editor.getGraphXml());
 					
 					function doUpdate()

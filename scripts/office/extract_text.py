@@ -10,79 +10,108 @@
   .pptx  → python-pptx（逐幻灯片文本框）
   .pdf   → pypdf（逐页 extract_text）
 
-超长截断由 Go 侧统一处理（标注「已截断/共 N 字」），本脚本只负责完整提取。
+按字符数和文本块数量在提取时截断；Go 层保留额外的输出预算。
 """
 import os
 import sys
 
 
-def extract_docx(path: str) -> str:
-    from docx import Document  # noqa: WPS433（延迟导入，错误信息更清晰）
+# Bound output while iterating, before building one giant result string.
+# 240000 Unicode characters leave room for UTF-8 expansion under Go's 1MiB cap.
+MAX_TEXT_CHARS = 240000
+MAX_TEXT_BLOCKS = 4096
 
-    d = Document(path)
+
+def collect_text(lines):
     parts = []
-    for p in d.paragraphs:
-        t = (p.text or "").strip()
-        if t:
-            parts.append(t)
-    for ti, table in enumerate(d.tables):
-        parts.append(f"[表格 {ti + 1}]")
-        for row in table.rows:
-            cells = [(c.text or "").strip().replace("\n", " ") for c in row.cells]
-            if any(cells):
-                parts.append("\t".join(cells))
-    return "\n".join(parts)
+    chars = 0
+    truncated = False
+    try:
+        for line in lines:
+            text = str(line or '').strip()
+            if not text:
+                continue
+            remaining = MAX_TEXT_CHARS - chars
+            if remaining <= 0 or len(parts) >= MAX_TEXT_BLOCKS:
+                truncated = True
+                break
+            if len(text) > remaining:
+                parts.append(text[:remaining])
+                truncated = True
+                break
+            parts.append(text)
+            chars += len(text) + 1
+    finally:
+        close = getattr(lines, 'close', None)
+        if close:
+            close()
+    if truncated:
+        parts.append('…[truncated]')
+    return '\n'.join(parts)
+
+
+def extract_docx(path: str) -> str:
+    from docx import Document
+
+    def lines():
+        doc = Document(path)
+        for paragraph in doc.paragraphs:
+            yield paragraph.text or ''
+        for index, table in enumerate(doc.tables):
+            yield f"[表格 {index + 1}]"
+            for row in table.rows:
+                cells = [(c.text or '').strip().replace('\n', ' ') for c in row.cells]
+                if any(cells):
+                    yield '\t'.join(cells)
+    return collect_text(lines())
 
 
 def extract_xlsx(path: str) -> str:
-    from openpyxl import load_workbook  # noqa: WPS433
+    from openpyxl import load_workbook
 
-    wb = load_workbook(path, read_only=True, data_only=True)
-    parts = []
-    for ws in wb.worksheets:
-        parts.append(f"[Sheet: {ws.title}]")
-        for row in ws.iter_rows(values_only=True):
-            cells = ["" if v is None else str(v).strip() for v in row]
-            # 去掉行尾空单元格，保留中间空列的 tab
-            while cells and cells[-1] == "":
-                cells.pop()
-            if any(cells):
-                parts.append("\t".join(cells))
-    wb.close()
-    return "\n".join(parts)
+    def lines():
+        wb = load_workbook(path, read_only=True, data_only=True, keep_links=False)
+        try:
+            for sheet in wb.worksheets:
+                yield f"[Sheet: {sheet.title}]"
+                for row in sheet.iter_rows(values_only=True):
+                    cells = ['' if value is None else str(value).strip() for value in row]
+                    while cells and not cells[-1]:
+                        cells.pop()
+                    if any(cells):
+                        yield '\t'.join(cells)
+        finally:
+            wb.close()
+    return collect_text(lines())
 
 
 def extract_pptx(path: str) -> str:
-    from pptx import Presentation  # noqa: WPS433
+    from pptx import Presentation
 
-    prs = Presentation(path)
-    parts = []
-    for si, slide in enumerate(prs.slides):
-        parts.append(f"[幻灯片 {si + 1}]")
-        for shape in slide.shapes:
-            if not shape.has_text_frame:
-                continue
-            for para in shape.text_frame.paragraphs:
-                t = "".join(run.text for run in para.runs).strip()
-                if t:
-                    parts.append(t)
-    return "\n".join(parts)
+    def lines():
+        for index, slide in enumerate(Presentation(path).slides):
+            yield f"[幻灯片 {index + 1}]"
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for paragraph in shape.text_frame.paragraphs:
+                        yield ''.join(run.text for run in paragraph.runs)
+    return collect_text(lines())
 
 
 def extract_pdf(path: str) -> str:
     try:
-        from pypdf import PdfReader  # noqa: WPS433
+        from pypdf import PdfReader
     except ImportError:
-        print("容器未安装 pypdf，无法提取 PDF 文本（请在 Dockerfile pip 依赖中加入 pypdf）",
-              file=sys.stderr)
-        return ""  # 触发下方"无文本"错误
-    reader = PdfReader(path)
-    parts = []
-    for i, page in enumerate(reader.pages):
-        t = (page.extract_text() or "").strip()
-        if t:
-            parts.append(f"[第 {i + 1} 页]\n{t}")
-    return "\n".join(parts)
+        print('容器未安装 pypdf，无法提取 PDF 文本', file=sys.stderr)
+        return ''
+
+    def lines():
+        reader = PdfReader(path)
+        for index, page in enumerate(reader.pages):
+            text = (page.extract_text() or '').strip()
+            if text:
+                yield f"[第 {index + 1} 页]\n{text}"
+    return collect_text(lines())
 
 
 DISPATCH = {

@@ -30,7 +30,6 @@ func doinit() {
 	}
 	if isProcessorFeaturePresent(_PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE) {
 		ARM64.HasLRCPC = true
-		ARM64.HasSM3 = true
 	}
 	ARM64.HasSVE = isProcessorFeaturePresent(_PF_ARM_SVE_INSTRUCTIONS_AVAILABLE)
 	ARM64.HasSVE2 = isProcessorFeaturePresent(_PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE)

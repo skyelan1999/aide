@@ -1,0 +1,102 @@
+{
+  "cycle": 77,
+  "issues": [
+    565,
+    563
+  ],
+  "related": {
+    "561": "Same directory-root symptom consolidated under563;not counted separately."
+  },
+  "observedAt": "2026-10-28T09:55:41.371236+00:00",
+  "owner": "skyelan1999",
+  "terminal": {
+    "repository": "skyelan1999/aide-pkg-terminal",
+    "branch": "codex/open-issue-review-20261028",
+    "baseline": "0180d35ad9a96b925b7147fe735141611a0f9e99",
+    "scope": "Bounded input priority over queued background calls,strict single-flight,8request fairness,never replay uncertain input. Existing8ms/adaptive polling already in1.5.1 archive,not newly claimed."
+  },
+  "host": {
+    "baseline": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
+    "scope": "Use sftpListRemote with already-resolved task root;preserve snapshot and relative return paths."
+  },
+  "baseline": "512c4ff1cb238bc72ac9b4a9a9dfa8e27c3e545d",
+  "fixes": {
+    "565": "Prioritize pending terminal input over queued background calls with bounded8-request fairness;retain strict single-flight and no replay.",
+    "563": "Resolve SSH tool list paths once against the task snapshot root, preserving relative result paths and containment checks."
+  },
+  "red": [
+    {
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle77-scheduler-red.log",
+      "scope": "Two existing FIFO priority/fairness probes fail."
+    },
+    {
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle77-sftp-red.log",
+      "scope": "Actual tool dispatch emits repeated relative/absolute prefixes and loses task root after config change."
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 209,
+      "fingerprint": "1fced5d119dd39933872924b1706a509ec934734386969f299eddd4325ad9033",
+      "receipt": ".agent-state/verify-20261028T095332613650Z.log"
+    },
+    {
+      "result": "PASS",
+      "command": "go test -race -mod=vendor ./internal/server -run '^(TestIssue563ToolListsRemoteRootOnce|TestRemoteConfiguredDirectoryPaths|TestSFTPNotExistClassification)$' -count=1 -v",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle77-sftp-focused.log",
+      "scope": "Real tool dispatch into owned SSH/SFTP batch stubs;empty/dot/subdirectory,relative/absolute/empty roots,snapshot after switch,and path traversal rejection."
+    },
+    {
+      "result": "PASS",
+      "checks": 34,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle77-terminal-tests-final.log",
+      "scope": "Complete Terminal npm suite incl3scheduler cases. First run33/34 lackedpyserial;isolated scratchpyserial3.5 supplied and rerun34/34."
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle77-terminal-green/latency.json",
+      "scope": "Actual Chromium/xterm,loopbackOpenSSH,PythonTLSrelay;20rendered echo samples,paste ordering,no uncertain replay,maxInFlight1. HostBridge is12ms controlled substitute;not user-network acceptance."
+    }
+  ],
+  "limitations": [
+    {
+      "result": "FAIL_PREEXISTING",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle77-sftp-isolated.log",
+      "scope": "Broader SSH/SFTP race suite has seven existing failing top-level write/proposal fixture groups. The isolated home fixes initial permission failures but not legacy wire-protocol stubs."
+    },
+    {
+      "result": "EXPECTED_FAIL",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle77-unrelated-baseline.log",
+      "scope": "Repair-before overlay reproduces SSHApplyCompletesAndPersists and RemoteWorkspaceDispatch failures,including packet-too-long on legacy stub;not attributed to563."
+    }
+  ],
+  "notRun": [
+    "User SSH host,real hostBridge end-to-end performance,physical serial hardware.",
+    "Full Aide workbench;only isolated real browser component used.",
+    "Windows/macOS native acceptance,full Docker profile,main merge,Release,market/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "issueComments": {
+      "565": "https://github.com/skyelan1999/aide/issues/565#issuecomment-6466006732",
+      "563": "https://github.com/skyelan1999/aide/issues/563#issuecomment-6466039896",
+      "561": "https://github.com/skyelan1999/aide/issues/561#issuecomment-6466040789"
+    },
+    "externalSourceCommit": "756abfa118294eb92a182668ce1e4cef56b71a78",
+    "externalSourceBranch": "codex/open-issue-review-20261028",
+    "remoteSourceCommit": "0b0e2133ea84773392721050fd04e50526019e09"
+  },
+  "sourceSHA256": {
+    "internal/server/workflow.go": "32037c3336dae27be0cf3eec891fdc6781869883be883a9b3161311463559e5b",
+    "internal/server/workflow_remote_root_test.go": "25b86651e061cb293ccfe1fcd836539f0e4b0ddd303502a4c8c9b5bf451edb09"
+  },
+  "completedAt": "2026-10-28T10:03:35.088634+00:00",
+  "cumulativeFixedOnBranch": 293,
+  "cumulativeProductFixes": 292,
+  "toolingFixes": 1
+}

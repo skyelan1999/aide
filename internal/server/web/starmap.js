@@ -973,12 +973,17 @@ function applyLiveUpdate(update,initial=false){
  }
  const differentWorkspace=!!graph.workspace&&graph.workspace!==update.workspace;
  if(initial||differentWorkspace||!graph.workspace){
-  if(differentWorkspace)filePreview.close();
+  if(differentWorkspace){
+   filePreview.close();resetDocumentBatch();pendingRecoveredView=null;graphFade=null;
+   $('search').value='';$('question').value='';$('answer').textContent='';$('usage').textContent='';$('ai-found').replaceChildren();
+   for(const id of ['detail-name','detail-path','detail-region','detail-text','detail-source','neighbors'])$(id).textContent='';
+  }
   if(!initial)graphGeneration++;
   if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent=uiTextStarmap('工作区资料已更新，当前理解已中止；请重新探索。');aiExplorer.cancel();
+  if(differentWorkspace)aiAbort=null;
   liveGhosts=[];liveAnimationUntil=0;liveStableScenes.clear();liveReconcile=false;liveWireNodes=new Map(update.nodes.map(n=>[n.id,JSON.stringify(n)]));
   graph={workspace:update.workspace,nodes:update.nodes,edges:update.edges,sources:Array.isArray(update.sources)?update.sources:null,warnings:update.warnings||[],truncated:!!update.truncated,code:update.code};
-  documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;selected=null;revealPanel($('detail'),false);region='';layout();syncGraphChrome();search();const progress=progressiveSummary(graph);if(progress)say(progress);return;
+  documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;selected=null;revealPanel($('detail'),false);if(differentWorkspace)settlePanels();region='';layout();syncGraphChrome();search();const progress=progressiveSummary(graph);if(progress)say(progress);return;
  }
  const incoming=new Map(update.nodes.map(n=>[n.id,n])),removed=new Set(update.removedNodes||[]),oldNodes=new Map(graph.nodes.map(n=>[n.id,n]));
  if(update.reset)for(const id of oldNodes.keys())if(!incoming.has(id))removed.add(id);
@@ -1027,7 +1032,11 @@ async function load(){
   const cached=await window.AideStarmapCache?.read(mode?'code':'knowledge',cacheIdentity).catch(()=>null);if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say(uiTextStarmap('已载入本地星图 · 正在同步最新变化…'));}
   const update=await api('/updates?background=1&code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
-  if(update.workspace!==identity.workspace){cacheIdentity=null;graph={nodes:[],edges:[],sources:[],warnings:[]};liveCursor='';return;}
+  if(update.workspace!==identity.workspace){
+   cacheIdentity=null;liveCursor='';
+   applyLiveUpdate({workspace:update.workspace,revision:'pending',reset:true,nodes:[],edges:[],sources:[],warnings:[]},true);
+   graphGeneration++;return; // Finally retries identity; never render/cache data from an unverified workspace.
+  }
   if(cached?.revision===liveCursor){applyLiveUpdate(update);}
   else{beginGraphTransition();applyLiveUpdate(update,graph.workspace!==update.workspace);}
   generation=graphGeneration; // Own delta application must not invalidate this load.

@@ -120,3 +120,31 @@ Windows 代理兼容切换命令可选列中的 `-` 占位符及旧式空列。�
 更新代理使用操作系统排他文件句柄保持单实例，进程退出后锁自动释放，不再因空的 `.aide-update-agent.lock` 遗留目录永久停用。若首次替换脚本时仍有旧版后台代理运行，新代理不与其并发操作，需先重启 Windows 结束旧代理，再用新脚本启动。不要在切换进行中替换或删除锁文件。
 
 `python scripts/test_windows_update_agent.py --pwsh <PowerShell路径>` 执行真实代理代码，使用隔离的 Docker、HTTP 与子进程替身，覆盖 12 组切换、回退、并发锁及镜像身份场景。Mac 上 PowerShell 7 结果不替代 Windows PowerShell 5.1、Docker Desktop、原生进程树与完整升级实机验收。详见[任务记录](../tasks/release-manual-switch-20261026.json)。
+
+离线镜像发行脚本 `scripts/docker-release.sh` 的冒烟容器使用每次独立名称及私有 cidfile。证书复制、停止与退出清理均使用该次 Docker 写入的完整64位CID；没有有效CID时不按名称强制删除容器。因此名称冲突、未创建成功或CID格式异常不会删除既有 `aide-rel-test` 或其他工作负载。健康验证和镜像导出门槛保持不变。对应回归以临时目录中的模拟Docker执行，不代替真实镜像构建与导入验收。
+
+## Windows 官方回退镜像导入（2026-10-27）
+
+Windows 预构建导入接受 Docker 对受控清单固定引用返回的规范 config ID；固定引用导入后仍无法解析时，只允许本次成功 `docker image load` 回执中的唯一引用，随后严格核对架构、源码指纹及该旧版归档要求的 CAD 标签。不扫描本地任意标签，不修改公开清单。激活以规范 ID 为准，先保留原目标标签的回滚引用。错误分别标明身份、平台、源码或 CAD 字段，避免将合法的 manifest/config ID 差异合并为身份错误。
+
+完整包外层 SHA-256 通过后，.NET GZip 流只读取指定普通文件到本次私有临时目录，不执行外部 tar.exe；支持 USTAR、PAX 路径/尺寸与 GNU 长文件名/正数尺寸，PAX 元数据每项最多64KiB。其他成员只跳过，不按归档路径写盘；目标链接、坏校验头、截断或缺失成员拒绝导入。只导入后验证镜像不等于实际 Windows/Docker Desktop 启动验收，也不修复 Docker Hub 网络超时。
+
+`python scripts/test_windows_prebuilt_import.py --pwsh <PowerShell路径>` 运行真实 PowerShell 解包/校验配合隔离 Docker/HTTP 适配器；加 `--docker <docker路径>` 导入一个带唯一标签的微小空镜像，验证 manifest/config 身份与本次导入回执路径，不运行容器、不替换 Aide 标签，最后移除自建标签。Windows PowerShell5.1、用户机器的网络与完整官方镜像导入仍需分别验收。
+
+## Windows 回滚失败与持久诊断（2026-10-27）
+
+宿主更新代理保留目标启动的原始失败及恢复启动的独立结果。恢复再次抛错由内层保护处理，仍生成失败回执；服务端失败消息不再笼统宣称“已回滚”。同版本槽切换仍允许。
+
+诊断位于启动目录 `.aide-data/update-agent/`：`agent.log` 记录操作及重试，`activation.log` / `recovery.log` 记录对应子启动器输出。固定PowerShell包装器在写盘前脱敏当前令牌、token查询/片段、Bearer及常见密码/密钥字段，不落原始输出临时文件；每项截断为2048字符，每日志保留约1MiB加一份轮转。脱敏针对已知启动输出，不保证识别任意程序自行打印的所有秘密。日志与回执沿用私有`.aide-data`访问边界，拒绝链接及悬空链接。
+
+每次只等待拥有的启动器进程，正常结束不等待常驻监视器。启动器最长5分钟；超时才终止该启动器及其子进程树，最多再等5秒。无法确认终止时不启动恢复，写入`launcher-stop-required`，暂停后续激活；确认该进程及其启动操作确已停止后，才能移除这一阻塞文件再重试。Windows5.1使用taskkill分支，PS7使用Kill(entireProcessTree)；两个平台的原生行为需分别验收。
+
+终态先写入`pending-result.json`，API暂不可达时重新获取本机端口及令牌后重发，不再次执行同一激活。若服务器已处理回执或已有较新操作，409后查询当前operation再丢弃过期回执，不以旧结果完成新任务。此流程兼容既有RC12 API，不要求新增服务端协议；后端回归继续验证旧operation不能清除新pending。令牌轮换后轮询使用刷新后的Authorization。
+
+`python scripts/test_windows_update_agent.py --pwsh <PowerShell路径>` 测协议与失败状态；`python scripts/test_windows_update_launcher_process.py --pwsh <PowerShell路径>` 实际启动隔离PowerShell子进程，检查退出码、异常、常驻后代、超时和日志脱敏/轮转/链接。Linux适配器只省略不支持的WindowStyle，进程与包装器真实执行；Docker/HTTP状态测试使用替身，不等于用户Windows/Docker Desktop实机验收。
+
+原生 Windows 默认入口现由同一个 `aide-launcher.exe` 提供，BAT 不再调用 PS1。当前用户级 controller 监督同 EXE 的 port/update worker，目录/LAN 组件由 EXE 内嵌并落到私有缓存。不同后台任务可以运行，安装目录的生命周期锁串行执行端口、目录 Apply 与 A/B 切换；`host-status` 不等待该锁。它不注册 SCM 服务，不跨用户连接 Docker Desktop。
+
+原生 A/B 的准备、激活、结果和 canonical-ID 同步写入 `.aide-data/native/update/transaction.json`。激活前持久保存旧 marker；目标失败恢复并验证旧镜像，进程终止不确认则持久阻塞，不自动回滚。回执及同步重试不重复激活；过期 operation 不覆盖新状态。下载令牌仅送入固定 loopback API 的 WinHTTP 内存请求，不进入子进程参数。ZIP 固定成员解包/迁移仍在受控 Linux 容器内使用 Python，不要求宿主安装 Python。
+
+原生 controller 持有旧 updater 的安装锁，切换前要求旧代理退出，并接续既有 pending-result。原有 PS1 源码和测试保留为历史兼容对照，前文 PowerShell 命令不再描述默认入口。平台运行证据与交叉编译分开记录；生产事务核心测试不代替 Windows Job/ACL、Docker Desktop、真实 A/B 与数据迁移验收。具体命令和阻塞恢复边界见[原生主机说明](../../native/windows-launcher/README.md)。

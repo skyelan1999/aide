@@ -630,7 +630,7 @@ func (tml *Tokenmandatorylabel) Size() uint32 {
 //sys	RevertToSelf() (err error) = advapi32.RevertToSelf
 //sys	SetThreadToken(thread *Handle, token Token) (err error) = advapi32.SetThreadToken
 //sys	LookupPrivilegeValue(systemname *uint16, name *uint16, luid *LUID) (err error) = advapi32.LookupPrivilegeValueW
-//sys	AdjustTokenPrivileges(token Token, disableAllPrivileges bool, newstate *Tokenprivileges, buflen uint32, prevstate *Tokenprivileges, returnlen *uint32) (err error) = advapi32.AdjustTokenPrivileges
+//sys	AdjustTokenPrivileges(token Token, disableAllPrivileges bool, newstate *Tokenprivileges, buflen uint32, prevstate *Tokenprivileges, returnlen *uint32) (err error) [failretval == 0 || e1 == ERROR_NOT_ALL_ASSIGNED] = advapi32.AdjustTokenPrivileges
 //sys	AdjustTokenGroups(token Token, resetToDefault bool, newstate *Tokengroups, buflen uint32, prevstate *Tokengroups, returnlen *uint32) (err error) = advapi32.AdjustTokenGroups
 //sys	GetTokenInformation(token Token, infoClass uint32, info *byte, infoLen uint32, returnedLen *uint32) (err error) = advapi32.GetTokenInformation
 //sys	SetTokenInformation(token Token, infoClass uint32, info *byte, infoLen uint32) (err error) = advapi32.SetTokenInformation
@@ -1245,7 +1245,7 @@ func (sd *SECURITY_DESCRIPTOR) SetRMControl(rmControl uint8) {
 func (sd *SECURITY_DESCRIPTOR) DACL() (dacl *ACL, defaulted bool, err error) {
 	var present bool
 	err = getSecurityDescriptorDacl(sd, &present, &dacl, &defaulted)
-	if !present {
+	if err == nil && !present {
 		err = ERROR_OBJECT_NOT_FOUND
 	}
 	return
@@ -1262,7 +1262,7 @@ func (absoluteSD *SECURITY_DESCRIPTOR) SetDACL(dacl *ACL, present, defaulted boo
 func (sd *SECURITY_DESCRIPTOR) SACL() (sacl *ACL, defaulted bool, err error) {
 	var present bool
 	err = getSecurityDescriptorSacl(sd, &present, &sacl, &defaulted)
-	if !present {
+	if err == nil && !present {
 		err = ERROR_OBJECT_NOT_FOUND
 	}
 	return

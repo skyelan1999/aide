@@ -39,10 +39,11 @@ func approvalFilesFingerprint(files []Change) string {
 		Source                  string `json:",omitempty"`
 		Binding                 string `json:",omitempty"`
 		TargetPath              string `json:",omitempty"`
+		NoSymlinks              bool   `json:",omitempty"`
 	}
 	values := make([]item, 0, len(files))
 	for _, f := range files {
-		values = append(values, item{f.Path, f.BaseHash, f.Content, f.Source, f.Binding, f.TargetPath})
+		values = append(values, item{f.Path, f.BaseHash, f.Content, f.Source, f.Binding, f.TargetPath, f.NoSymlinks})
 	}
 	b, _ := json.Marshal(values)
 	return string(b)

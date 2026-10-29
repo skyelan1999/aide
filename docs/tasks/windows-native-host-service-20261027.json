@@ -1,0 +1,189 @@
+{
+  "id": "windows-native-host-service-20261027",
+  "request": "464可以把其他需要ps1做的事汇合成一个exe吗，做成windows service exe之类的，这样保证mac linux 和windows都可以正常运行",
+  "baseline": "278fb3230afe3d869c3e3c4be12c231bcd11332d",
+  "initial_status": "?? docs/reviews/2026-10-22-plugin-secret-design/\n?? docs/tasks/envguide-plugin-release-20261020.json\n?? docs/tasks/feedback-plugin-release-20261020.json\n?? docs/tasks/goal-plugin-release-20261019.json\n?? docs/tasks/plan-plugin-release-20261019.json\n?? docs/tasks/plugin-secret-design-20261022.json\n?? docs/tasks/skill-plugin-release-20261019.json\n?? docs/tasks/sqlite-plugin-release-20261020.json\n?? docs/tasks/subagent-plugin-release-20261020.json\n?? docs/tasks/terminal-plugin-release-20261020.json\n?? docs/tasks/todo-plugin-release-20261020.json\n?? docs/tasks/workflow-plugin-release-20261020.json",
+  "acceptance": [
+    "默认Windows入口执行同一个原生exe，不调用PowerShell/cmd脚本文本或宿主Python；CLI与后台守护复用同一实现。",
+    "移植原PS端口监控、A/B更新/回滚/持久回执、旧容器/卷迁移和资源检查，保留数据/目录/LAN/helper校验、安装归属隔离与源码指纹。",
+    "后台按安装根目录排他；停止只处理当前安装，超时确认子进程树退出后才恢复；持久状态和日志拒绝链接、保护ACL并脱敏。",
+    "按用户选定默认使用当前用户级原生后台驻留，不注册Windows Service/LocalSystem；Docker上下文及交互目录helper继承当前用户。",
+    "保持macOS/Linux启动/更新路径的行为；相关POSIX回归及源文件身份比对，Windowsamd64/arm64交叉编译、生产核心便携故障回归。",
+    "实际WindowsSCM/NTFS/Job/DockerDesktop与macOS本机验收若无法执行，明确NOT_RUN，不以便携检查/交叉编译保证所有电脑。",
+    "仅推送codex/open-issue-review-20261026，不合并main、不发布、不部署或实际注册本机服务。"
+  ],
+  "scope": [
+    "native/windows-launcher/",
+    "scripts/build-windows-launcher.py",
+    "scripts/test_windows_native*",
+    "scripts/native*",
+    "scripts/package-release-assets.sh",
+    "scripts/ci/",
+    "start.bat",
+    "stop.bat",
+    "clean-docker-cache.bat",
+    "docs/tasks/",
+    "docs/architecture/",
+    "docs/installation.md",
+    "docs/en/installation.md",
+    "docs/reviews/2026-10-26-open-issue-review/",
+    "cmd/aide-local-mounts/",
+    ".github/workflows/aide-ci.yml",
+    ".github/workflows/aide-delivery.yml",
+    "docs/agent/router.json",
+    "scripts/test_message_lan_launcher.py",
+    "scripts/test_windows_port_lifecycle.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求默认单个原生EXE并尽量多任务，明确选择当前用户级后台驻留以兼容Docker Desktop；只推修复分支。",
+      "evidence": [
+        "native/windows-launcher/main.cpp",
+        "scripts/update-agent.ps1",
+        "scripts/watch-port.ps1",
+        "scripts/launcher-data.ps1"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "一个分发EXE内嵌当前目录/LAN组件；controller监督同EXE的port/update worker，生命周期锁串行变更，host-status独立读取；不注册SCM或登录启动项。",
+      "evidence": [
+        "native/windows-launcher/README.md",
+        "native/windows-launcher/host_scheduler.hpp"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "原生启动/停止/端口协调/A-B事务与回滚/持久回执、归属检查及旧卷迁移、资源门禁、Win32对话框、同用户监督任务均已接入；默认BAT/包不再调用PS1，Go目录Apply共享生命周期锁。构建使用内容寻址S输入防incbin陈旧缓存，并强制核对内嵌PE完整字节/SHA。",
+      "evidence": [
+        "native/windows-launcher/main.cpp",
+        "native/windows-launcher/host_state.hpp",
+        "native/windows-launcher/host_windows.hpp",
+        "native/windows-launcher/host_scheduler.hpp",
+        "scripts/build-windows-launcher.py",
+        "cmd/aide-local-mounts/process_windows.go",
+        "scripts/package-release-assets.sh"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "源码/便携检查及双架构交叉编译通过；当前Linux环境不能执行Windows Job/NTFS/Docker Desktop实机验收，不能声明已解决所有电脑的运行问题。",
+      "evidence": [
+        "docs/reviews/2026-10-26-open-issue-review/cycle-065.json",
+        ".agent-state/verify-20261027T174306196964Z.log",
+        "scripts/test_windows_native_launcher.py"
+      ],
+      "passed": {
+        "quick": 185,
+        "productionTransactionAndManifestCore": 35,
+        "productionArchiveImageOwnershipSourceCore": 38,
+        "containerPackageAndIdleTests": 9,
+        "ciContractTests": 20,
+        "linuxGoRaceAndVet": "cmd/aide-local-mounts +internal/localmounts;message-lan compiles/no unit tests",
+        "crossCompile": "C++ WindowsAMD64/ARM64;GoWindows testsAMD64/ARM64 andDarwinARM64",
+        "binaryContent": "bothhelpers exactbytes +SHA strings +Go notices +system DLL imports"
+      },
+      "notRun": [
+        "Windows EXE execution/Job/NTFS ACL/DockerDesktop",
+        "Windows folder picker/browser/manual-stop during real A/B and legacy migration",
+        "Windows ARM64 and macOS native execution",
+        "Actual tagged thin-package WinHTTP download/import and production full candidate build",
+        "GitHub hosted workflow execution;YAML parsed locally,actionlint unavailable"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "实现说明、中英文安装与更新架构已更新，区分单文件分发/多进程运行/自动缓存和实机待验收。",
+      "evidence": [
+        "native/windows-launcher/README.md",
+        "docs/installation.md",
+        "docs/en/installation.md",
+        "docs/architecture/software-updates.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "明确文件归属并审阅diff；编译产物和缓存保持忽略，不提交二进制/凭据/用户配置。原用户未跟踪文件、暂停stash、785354752字节既有partial均保留；隔离测试容器--rm，无生产变更。",
+      "evidence": [
+        "git diff --check",
+        "docs/reviews/2026-10-26-open-issue-review/cycle-065.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前授权仅修复分支push；不合并main，不打tag/发布Release/部署，不实际注册系统服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "既有用户授权只push修复分支，禁止main/发行/部署；不实际安装系统服务。",
+  "rollback": "未合并main；可按提交revert源码。替换运行中的EXE前先stop。旧源卷/容器不删除，原生事务保留旧marker；未知进程终止阻塞需核查，不静默回退PS1或删除持久状态。",
+  "handoff": "源码5ea85f55已push指定修复分支，464已回填且保持OPEN。Windows Job/NTFS/DockerDesktop及真实A/B/迁移/HTTPS仍待实机验收；本轮无main/tag/Release/部署。后续第66轮可恢复201–205的owned helper stash，禁止覆盖本次任务。",
+  "pausedQueue": {
+    "cycle": 65,
+    "issues": [
+      201,
+      202,
+      203,
+      204,
+      205
+    ],
+    "stash": "569d896d53fe34ae4515b62d03d80c0d0af4efa7",
+    "state": "preliminary acceptance helpers only;no product edits;C4 uses runtimeglobal sb,helper isolation needs correction;do not classify as product failure"
+  },
+  "source_delivery": {
+    "branch": "codex/open-issue-review-20261026",
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "commit": "5ea85f555e0c787e6f0bb9d87380637d25fccc38",
+    "issueComment": "https://github.com/skyelan1999/aide/issues/464#issuecomment-6449493444"
+  },
+  "userChoice": "默认用户级后台驻留，兼容DockerDesktop；不自动注册系统服务。",
+  "userAdditionalRequest": "尽可能做成能够多任务运行的单个exe，到时候封装的时候会方便很多",
+  "designChoice": {
+    "distribution": "one native aide-launcher.exe;CLI and resident worker roles dispatch same binary",
+    "concurrency": "resident controller manages bounded port/update worker processes of same exe;read-only status remains available;mutating lifecycle uses per-installation exclusive lock",
+    "runtimeDependencies": "Windows system APIs +DockerDesktop/Compose;existing Python preparation/extraction only inside verified Linuxruntime container,no hostPS/Python",
+    "serviceChoice": "user explicitly chose default user-level background;noautomaticSCM registration",
+    "helperPackaging": "current Go helpers compiled and embedded in same distributed EXE;SHA256 checked before execution from private cache;content-addressed incbin input and build-time exact byte verification"
+  },
+  "updatedAt": "2026-10-28T01:47:04.650443+08:00",
+  "verificationFingerprint": "514c7f07318abcd3a098809da4da54bb8be650ba9e2366da26b3ca1cc3d1b72e",
+  "localBinaryArtifacts": [
+    {
+      "arch": "amd64",
+      "bytes": 9871872,
+      "sha256": "540728209d064c9c0519bc79b6e1bbf7ef0d49f370c466410e2cce2260f60513",
+      "components": {
+        "local-mounts": {
+          "bytes": 3211776,
+          "sha256": "bee41df00955c92f9cee78b789630480df0129557ef4b8bce50f30bb8ca2b221"
+        },
+        "message-lan": {
+          "bytes": 5087744,
+          "sha256": "8ab43445b44073ca18d457fdf42398ab28f38d6df79ab039925f8a9cf322a70a"
+        }
+      },
+      "systemImports": "pass",
+      "embeddedNotices": "pass"
+    },
+    {
+      "arch": "arm64",
+      "bytes": 9094656,
+      "sha256": "2079696e1d2673f3deb4585b096f0b8057b715b2759b10ebd62d47f84471d943",
+      "components": {
+        "local-mounts": {
+          "bytes": 2982912,
+          "sha256": "6d9a598d5416669fa8b519b7075457eb17b01455d4adb3e5225913c1bddd96e2"
+        },
+        "message-lan": {
+          "bytes": 4652032,
+          "sha256": "745d78f80d09fc903d0aa8eb35d2b41d4e1de5d75d541f0e823eeacf9dae28e3"
+        }
+      },
+      "systemImports": "pass",
+      "embeddedNotices": "pass"
+    }
+  ]
+}

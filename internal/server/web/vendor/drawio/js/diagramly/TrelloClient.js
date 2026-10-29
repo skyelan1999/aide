@@ -323,10 +323,12 @@ TrelloClient.prototype.writeFile = function(filename, data, cardId, success, err
 {
 	if (filename != null && data != null)
 	{
-		if (data.length >= this.maxFileSize)
+		var fileData = (typeof data === 'string') ? new Blob([data]) : data;
+
+		if (fileData.size >= this.maxFileSize)
 		{
 			error({message: mxResources.get('drawingTooLarge') + ' (' +
-				this.ui.formatFileSize(data.length) + ' / 10 MB)'});
+				this.ui.formatFileSize(fileData.size) + ' / 10 MB)'});
 			
 			return;
 		}
@@ -344,7 +346,7 @@ TrelloClient.prototype.writeFile = function(filename, data, cardId, success, err
 		  var formData = new FormData();
 		  formData.append('key', Trello.key());
 		  formData.append('token', Trello.token());
-		  formData.append('file', typeof data === 'string' ? new Blob([data]) : data, filename);
+		  formData.append('file', fileData, filename);
 		  formData.append('name', filename);
 
 		  var request = new XMLHttpRequest();

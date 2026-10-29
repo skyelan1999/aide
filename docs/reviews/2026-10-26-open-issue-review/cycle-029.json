@@ -1,0 +1,85 @@
+{
+  "cycle": 29,
+  "baseline": "be495e60d5147655dd58512c03f052bd0a3de8f3",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    146
+  ],
+  "commits": {
+    "146": "1ac0f7d4965ffe65304cc32c7c2558d45261bbee"
+  },
+  "cumulativeProductFixes": 80,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 81,
+  "original272RemainingFollowup": 203,
+  "red": [
+    {
+      "issue": 146,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue146' -count=1 -timeout=3m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 2.164,
+      "observed": "--- FAIL: TestIssue146UnchangedArtifactCannotCompleteTask (2.09s)\n    --- FAIL: TestIssue146UnchangedArtifactCannotCompleteTask/false (1.08s)\n        task_delivery_provenance_test.go:41: unchanged old file accepted as current delivery (touch=false): error=<nil> delivery=&{State:delivered Kind:file Artifacts:[old-report.pdf] Reason: CheckedAt:2026-10-26T21:24:16.006339633Z}\n    --- FAIL: TestIssue146UnchangedArtifactCannotCompleteTask/true (1.01s)\n        task_delivery_provenance_test.go:41: unchanged old file accepted as current delivery (touch=true): error=<nil> delivery=&{State:delivered Kind:file Artifacts:[old-report.pdf] Reason: CheckedAt:2026-10-26T21:24:17.013987174Z}\nFAIL\nFAIL\taide/internal/server\t2.164s\nFAIL"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue146|^TestAssistantDelivery|^TestNative|^TestQwen|^TestMedia|^TestParallel' -count=1 -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 19.79,
+      "scope": "Real toolLoop with local synthetic provider: unchanged/touch-only stale PDF rejected; new/root/new-directory/same-size-changed accepted. JSON baseline recovery, introduced directory symlink, revision mismatch, same-task native resume and unrelated asset rejection, applied bytes/binding checks, sparse128MiB unchanged/change-size/new-path, partial metadata coverage, baseline-save failure before provider, complete execute clears persisted baseline. Existing assistant/native/Qwen/media/parallel cases retained."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T221828788888Z.log",
+      "fingerprint": "3f2083afb39abf91aa9df3ddcd3124f5c93bf2afc9c99c619eaf6ac5ca7ddf59"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "428Markdown/1466links"
+    }
+  ],
+  "notRun": [
+    {
+      "command": "go test -mod=vendor ./internal/server -run '^TestIssue146CaseAliasesAreNotNewPaths$' -v -count=1",
+      "result": "SKIP",
+      "observed": "Current volume case sensitive; test explicitly skips. Case-insensitive Windows/macOS volume acceptance remains NOT_RUN.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle29-146-case-volume.log"
+    }
+  ],
+  "notes": [
+    "交付前验证本任务文件状态变化或服务端生成/审批写入记录；工具/模型之前有界采集并持久化目录及SHA基线，旧文件及只改mtime不算交付。新建/改写、原生恢复、已应用写入保留；根/任务证据变化拒绝提交，哈希在全局锁外，完成后清除基线。",
+    "Baseline BFS: batched128 directory entries,20000 entry limit,128KiB estimated metadata,64MiB streaming hash budget; protected/cached/symlink trees excluded. Completed directories and existing directories prove absence/new subtree without treating unvisited trees as empty. NonUTF8 keys do not enter JSON evidence.",
+    "Validation32 links max,64MiB total hashing,20000 directory entries for canonical namespace lookup; os.Root, nonblocking regular-file open and before/after/linked identity checks. Actual directory spelling plus file identity prevents aliases appearing absent; ambiguous/incomplete alias lookup rejects.",
+    "New files and proven size changes need no full-content hash, so tested128MiB sparse artifacts can succeed. An old same-size file without a captured hash needs trusted task write evidence; mtime alone is insufficient. Generic files retain extension-only validation and media retain prior signature sniffing, not full document-quality QA.",
+    "Native MediaGeneration.Asset is server-assigned after successful write and bound to generation identity/request hash; it remains valid evidence for that logical task on resume. This preserves paid-generation reuse, not a cryptographic attestation against local storage modification. Applied workspace proposals additionally require correct binding and exact current bytes.",
+    "Current-file IO/hashing runs under filesMu with an immutable task/workspace snapshot, outside global a.mu; revalidate scope, owner and evidence before adoption. Baseline saves before any provider call. Completed successful save clears baseline; failed final save restores it, unresolved tasks retain it for resume.",
+    "Existing direct audio-evidence fixture now captures baseline before fixture writes; browser fixture marks its explicitly written synthetic native asset as owned. No new browser/workbench acceptance claimed for this backend cycle.",
+    "State comparison cannot assign exclusive authorship when external processes or concurrent commands alter the same files; it does not prove semantic report correctness. Remote workspace delivery boundary unchanged. Windows/macOS, full start.command workbench and real paid provider acceptance NOT_RUN. No merge/release/deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "verifiedRemoteCommit": "09964c29378481bffaa06d15e0ed7c2eaae72f61",
+    "issueComments": {
+      "146": "https://github.com/skyelan1999/aide/issues/146#issuecomment-6428827490"
+    }
+  },
+  "sourceSHA256": {
+    "docs/architecture/task-artifact-delivery.md": "a23f435a580b636a1a2409b511b0094b21fafa8c93518e82e523d1f456c3df8a",
+    "docs/user-guide.md": "a142eb98bfa4d08f97d33d4832100e1e7bb1a6268871ffba490799dd17c97cce",
+    "internal/server/assistant_delivery_browser_test.go": "bed385767d6d252c324567b03c18bc66da91db4f51294a318b407585dfc86d69",
+    "internal/server/assistant_delivery_loop_test.go": "a9c2d4dbc80e2f093319ad6dd1d7464f533a816fd58f4af1e978e68e151a6e42",
+    "internal/server/task_delivery.go": "0cb94a10fb2ff1baad44636e1ae9fc49ebae6e792228af21612af047bce28d1b",
+    "internal/server/task_delivery_baseline.go": "cd31e0348c0c2bd9a723672beab580c51c1f611f5a4764c24a6752abb3670f3b",
+    "internal/server/task_delivery_provenance_test.go": "b33780f29fc90421680660cd465779cd2c0b7754eaa7323386fe6a73c855fa14",
+    "internal/server/workflow.go": "41118a4401fbdbe48cbc758261e92ab1b3a0e43ed53192912e008add6c17b304"
+  }
+}

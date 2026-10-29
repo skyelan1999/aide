@@ -153,10 +153,10 @@
 						
 			this.createVertexTemplateEntry(s2 + 'contact_badge_focused;strokeColor=none;fillColor=none;sketch=0;', 40, 40, '', 'Contact Badge Focused', null, null, dt + 'contact badge focused'),
 			this.createVertexTemplateEntry(s2 + 'contact_badge_focused;strokeColor=none;fillColor=none;sketch=0;', 60, 60, '', 'Contact Badge Focused', null, null, dt + 'contact badge focused'),
-			this.createVertexTemplateEntry(s2 + 'contact_badge_focused;strokeColor=none;fillColor=none;sketch=0;', 40, 40, '', 'Contact Badge Normal', null, null, dt + 'contact badge normal'),
-			this.createVertexTemplateEntry(s2 + 'contact_badge_focused;strokeColor=none;fillColor=none;sketch=0;', 60, 60, '', 'Contact Badge Normal', null, null, dt + 'contact badge normal'),
-			this.createVertexTemplateEntry(s2 + 'contact_badge_focused;strokeColor=none;fillColor=none;sketch=0;', 40, 40, '', 'Contact Badge Pressed', null, null, dt + 'contact badge pressed'),
-			this.createVertexTemplateEntry(s2 + 'contact_badge_focused;strokeColor=none;fillColor=none;sketch=0;', 60, 60, '', 'Contact Badge Pressed', null, null, dt + 'contact badge pressed'),
+			this.createVertexTemplateEntry(s2 + 'contact_badge_normal;strokeColor=none;fillColor=none;sketch=0;', 40, 40, '', 'Contact Badge Normal', null, null, dt + 'contact badge normal'),
+			this.createVertexTemplateEntry(s2 + 'contact_badge_normal;strokeColor=none;fillColor=none;sketch=0;', 60, 60, '', 'Contact Badge Normal', null, null, dt + 'contact badge normal'),
+			this.createVertexTemplateEntry(s2 + 'contact_badge_pressed;strokeColor=none;fillColor=none;sketch=0;', 40, 40, '', 'Contact Badge Pressed', null, null, dt + 'contact badge pressed'),
+			this.createVertexTemplateEntry(s2 + 'contact_badge_pressed;strokeColor=none;fillColor=none;sketch=0;', 60, 60, '', 'Contact Badge Pressed', null, null, dt + 'contact badge pressed'),
 
 			this.addEntry(dt + 'contextual action bar dark portrait', function()
 			{

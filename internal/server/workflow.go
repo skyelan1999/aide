@@ -50,6 +50,8 @@ type Change struct {
 	BaseHash   string `json:"baseHash"`
 	Before     string `json:"before"`
 	Applied    bool   `json:"applied,omitempty"`
+
+	NoSymlinks bool `json:"noSymlinks,omitempty"` // captured host file-binding constraint
 }
 type ToolUse struct {
 	Tool    string `json:"tool"`
@@ -102,6 +104,8 @@ type Task struct {
 	approvalReviewRound      int64
 	approvalReviewGeneration uint64
 	approvalAnswered         bool
+
+	DeliveryBaseline *TaskDeliveryBaseline `json:"deliveryBaseline,omitempty"`
 
 	Delivery             *TaskDelivery        `json:"delivery,omitempty"`
 	MediaPrompt          string               `json:"mediaPrompt,omitempty"`
@@ -284,6 +288,18 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			}
 			if existing.StopRequested {
 				fail(w, 409, errors.New("当前任务正在停止，请稍后发送"))
+				return
+			}
+			var pending struct {
+				Kind string `json:"approvalKind"`
+				Type string `json:"type"`
+			}
+			if err := json.Unmarshal(existing.PendingQuestion, &pending); err != nil && len(existing.PendingQuestion) > 0 {
+				fail(w, 409, errors.New("当前问题信息无效，请刷新后重试"))
+				return
+			}
+			if pending.Kind != "" || pending.Type == "confirm" {
+				fail(w, 409, errors.New("当前任务等待明确确认，请使用对应审批卡片"))
 				return
 			}
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, Type: assistantMessageType(assistantManaged)})
@@ -795,7 +811,12 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		s.Archived = true
 		s.AutoArchived = true
 	}
+	baseline := task.DeliveryBaseline
+	if task.Status == "completed" && task.Delivery != nil && task.Delivery.State == "delivered" {
+		task.DeliveryBaseline = nil
+	}
 	if saveErr := a.save(s); saveErr != nil {
+		task.DeliveryBaseline = baseline
 		task.Status = "failed"
 		task.Error = "会话保存失败: " + saveErr.Error()
 	}
@@ -1293,14 +1314,27 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, t := range s.Runs {
 		if t.ID == r.PathValue("run") && t.Status == "awaiting_clarification" && t.AnswerCh != nil {
+			if err := a.taskSSHBindingLocked(t); err != nil {
+				fail(w, 409, err)
+				return
+			}
 			if t.StopRequested {
 				fail(w, 409, errors.New("当前任务正在停止，不能继续应答"))
 				return
 			}
 			var currentQuestion struct {
-				ID string `json:"questionId"`
+				ID   string `json:"questionId"`
+				Kind string `json:"approvalKind"`
+				Type string `json:"type"`
 			}
-			_ = json.Unmarshal(t.PendingQuestion, &currentQuestion)
+			if err := json.Unmarshal(t.PendingQuestion, &currentQuestion); err != nil && len(t.PendingQuestion) > 0 {
+				fail(w, 409, errors.New("当前问题信息无效，请刷新后重试"))
+				return
+			}
+			if (currentQuestion.Kind != "" || currentQuestion.Type == "confirm") && (currentQuestion.ID == "" || in.QuestionID == "" || in.Round == "") {
+				fail(w, 409, errors.New("审批必须绑定当前问题和轮次，请刷新审批卡片"))
+				return
+			}
 			if in.QuestionID != "" && in.QuestionID != currentQuestion.ID {
 				fail(w, 409, errors.New("审批请求已过期，请刷新"))
 				return
@@ -1459,6 +1493,12 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		return
 	}
 	if a.workspaceMode() == "ssh" {
+		for _, f := range task.Files {
+			if pwChangeNoSymlinks(task, f) {
+				fail(w, 409, errors.New("文件绑定提案仅支持本地工作区"))
+				return
+			}
+		}
 		a.applySSHProposalLocked(w, r, s, task)
 		return
 	}
@@ -1466,7 +1506,11 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		if f.Applied {
 			continue
 		}
-		if err := checkVersion(a.workspace, f.Path, f.BaseHash); err != nil {
+		check := checkVersion
+		if pwChangeNoSymlinks(task, f) {
+			check = checkBoundVersion
+		}
+		if err := check(a.workspace, f.Path, f.BaseHash); err != nil {
 			fail(w, 409, fmt.Errorf("%s: %w", f.Path, err))
 			return
 		}
@@ -1483,8 +1527,13 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		original := *f
 		root := a.workspace
 		identity := a.wsID()
+		bound := pwChangeNoSymlinks(task, original)
 		a.mu.Unlock()
-		writeErr := a.withMarkdownHistory("workspace:"+identity, original.Path, []byte(original.Content), func(p string) ([]byte, error) { return readRawBytes(root, p) }, func() error { return putText(root, original.Path, []byte(original.Content)) })
+		read, write := readRawBytes, putText
+		if bound {
+			read, write = readBoundRawBytes, putBoundText
+		}
+		writeErr := a.withMarkdownHistory("workspace:"+identity, original.Path, []byte(original.Content), func(p string) ([]byte, error) { return read(root, p) }, func() error { return write(root, original.Path, []byte(original.Content)) })
 		a.mu.Lock()
 		if i >= len(task.Files) || task.Files[i] != original || a.wsID() != identity {
 			fail(w, 409, errors.New("保存期间提案已变化，请检查文件状态"))
@@ -1869,10 +1918,45 @@ func (a *App) finishStream(taskID, status, errMsg string) {
 
 // beginLiveRun 标记某会话开始一轮运行：重置实时缓冲，并记录 taskID→sessionID 映射。
 func (a *App) beginLiveRun(sessionID, taskID string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if session := a.sessions[sessionID]; session == nil || session.Deleted {
+		return
+	}
 	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	if a.liveTaskSess == nil {
+		a.liveTaskSess = map[string]string{}
+	}
+	// A replacement run also fences delayed deltas/finish events from its predecessor.
+	for id, sid := range a.liveTaskSess {
+		if sid == sessionID {
+			delete(a.liveTaskSess, id)
+		}
+	}
 	a.liveTaskSess[taskID] = sessionID
-	a.liveTaskMu.Unlock()
 	a.liveBroker.Publish(sessionID, "", streamRunning)
+}
+
+// Deletion holds a.mu, then liveTaskMu; delta publication holds liveTaskMu
+// through the broker write. No publisher may retain an ID across eviction.
+func (a *App) forgetLiveSessionLocked(sessionID string) {
+	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	for taskID, sid := range a.liveTaskSess {
+		if sid == sessionID {
+			delete(a.liveTaskSess, taskID)
+		}
+	}
+	a.liveBroker.Delete(sessionID)
+}
+
+func (a *App) publishLiveDelta(taskID, delta string) {
+	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	if sessionID := a.liveTaskSess[taskID]; sessionID != "" {
+		a.liveBroker.Publish(sessionID, delta, "")
+	}
 }
 
 // liveSessionID 返回 taskID 所属会话 ID（进行中运行期间有效）。
@@ -1885,8 +1969,11 @@ func (a *App) liveSessionID(taskID string) string {
 // finishLiveRun 标记一轮运行终态并清理映射。cancelled→interrupted（保留已产出），failed→failed。
 func (a *App) finishLiveRun(sessionID, taskID, taskStatus string) {
 	a.liveTaskMu.Lock()
+	defer a.liveTaskMu.Unlock()
+	if sessionID == "" || a.liveTaskSess[taskID] != sessionID {
+		return
+	}
 	delete(a.liveTaskSess, taskID)
-	a.liveTaskMu.Unlock()
 	status := streamDone
 	switch taskStatus {
 	case "cancelled", "paused":
@@ -1930,6 +2017,9 @@ func maxToolCallsForRounds(rounds int) int {
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
 func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int, checkpoints ...func(string, []Message)) (string, []Message, error) {
+	if err := a.prepareTaskDeliveryBaseline(ctx, task); err != nil {
+		return "", input, err
+	}
 	if mediaTask(cfg) {
 		cfg = a.routedModel(task, cfg, input, params, nil, "chat")
 		if cfg.generationError != "" {
@@ -2013,7 +2103,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		var contextErr error
 		input, contextErr = a.fitActiveContext(ctx, cfg, input, params, tools, task)
 		if contextErr != nil {
-			return "", input, contextErr
+			return partialResult(round, lastOut, input, contextErr)
 		}
 		saveCheckpoint()
 		if parallelSession != nil && stepName == "chat" {
@@ -2027,7 +2117,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		cfg = a.routedModel(task, cfg, input, params, tools, stepName)
 		input, contextErr = a.fitActiveContext(ctx, cfg, input, params, tools, task)
 		if contextErr != nil {
-			return "", input, contextErr
+			return partialResult(round, lastOut, input, contextErr)
 		}
 		saveCheckpoint()
 		rec := func(body []byte) {
@@ -2055,9 +2145,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		onDelta := func(delta string) {
 			a.publishStream(task.ID, streamEvent{Event: "delta", Text: delta, Round: round})
 			// #35：把 aide 正文增量桥到会话维度的实时输出缓冲，供小秘拉取。
-			if sid := a.liveSessionID(task.ID); sid != "" {
-				a.liveBroker.Publish(sid, delta, "")
-			}
+			a.publishLiveDelta(task.ID, delta)
 		}
 		onReasoning := func(rc string) {
 			a.publishStream(task.ID, streamEvent{Event: "reasoning", Reasoning: rc, Round: round})
@@ -2145,10 +2233,12 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			compactedAt = session.CompactedAt
 		}
 		task.ContextAnchor = &ContextUsageAnchor{
-			Scope: scope, CompactedAt: compactedAt,
+			Scope: scope,
 			Usage: usage, PromptEstimate: estimateProviderPromptTokens(input, tools),
 			CompletionEstimate: contextMessageTokens(Message{Role: "assistant", Content: out, ToolCalls: calls}),
 			HeaderFingerprint:  contextHeaderFingerprint(cfg, system, tools),
+			CompactedAt:        compactedAt,
+			SummaryFingerprint: contextSummaryFingerprint(input),
 		}
 		lastOut = out
 		a.mu.Unlock()
@@ -3912,8 +4002,13 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 		return "", -1, err
 	}
 	a.mu.Lock()
+	if err := a.taskSSHBindingLocked(task); err != nil {
+		a.mu.Unlock()
+		return "", -1, err
+	}
 	mode := a.settings.SandboxMode
 	timeoutSec := a.settings.ShellTimeout
+	remoteMode := a.workspaceMode() == "ssh"
 	a.mu.Unlock()
 	if mode == "" {
 		mode = "workspace-write"
@@ -3924,33 +4019,30 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 	if timeoutSec > 300 {
 		timeoutSec = 300
 	}
-	if err := shellSandboxPolicy(mode, command, a.workspaceMode() == "ssh", false); err != nil {
+	if err := shellSandboxPolicy(mode, command, remoteMode, false); err != nil {
 		return "", -1, err
 	}
 
-	if a.workspaceMode() == "ssh" {
+	if remoteMode {
 		// SSH 工作区与命令面板共用同一 ControlMaster。让 agent 在同一远程
 		// 工作目录执行命令，避免“已连接但 run_shell 不可用”的能力断层。
-		remotePath := task.WorkspaceRemotePath
-		if remotePath == "" {
-			a.mu.Lock()
-			remotePath = a.wsConfig.Workspace.Path
-			a.mu.Unlock()
+		ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
+		defer cancel()
+		session, release, err := a.taskSSHSession(ctx, task)
+		if err != nil {
+			return "", -1, err
 		}
+		defer release()
+		remotePath := session.directory
 		remote := command
 		if strings.TrimSpace(remotePath) != "" {
 			remote = "cd " + shellQuote(remotePath) + " && " + remote
 		}
-		if cache := a.workspaceRemoteCachePath(); cache != "" {
+		if cache := session.cache; cache != "" {
 			remote = "mkdir -p " + shellQuote(cache) + " && export AIDE_CACHE=" + shellQuote(cache) + " GOCACHE=" + shellQuote(cache) + " && " + remote
 		}
-		ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
-		defer cancel()
-		if err := a.ensureSSHSession(ctx); err != nil {
-			return "", -1, err
-		}
 		var stdoutBuf, stderrBuf strings.Builder
-		code, err := a.execRemote(ctx, remote, &stdoutBuf, &stderrBuf)
+		code, err := a.execRemoteSession(ctx, remote, &stdoutBuf, &stderrBuf, session)
 		stdout, stderr := stdoutBuf.String(), stderrBuf.String()
 		if len(stdout) > 64<<10 {
 			stdout = stdout[:64<<10] + "\n…（stdout已截断 64KB）"
@@ -4149,7 +4241,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	if args == nil {
 		args = map[string]any{}
 	}
-	if err := a.pwBindingToolError(task, call.Function.Name, args); err != nil {
+	bound, err := a.pwBindingAccess(task, call.Function.Name, args)
+	if err != nil {
 		return failure(err.Error())
 	}
 	str := func(k string) string { v, _ := args[k].(string); return strings.TrimSpace(v) }
@@ -4194,7 +4287,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			if err := safePath(p); err != nil {
 				return nil, err
 			}
-			return a.sftpList(pathJoinRemote(remotePath, p))
+			// remotePath is already the task root; sftpList would add the current root again.
+			return a.sftpListRemote(pathJoinRemote(remotePath, p), p)
+		}
+		if bound {
+			return a.listBoundLocalDir(wsRoot, p)
 		}
 		return a.listLocalDir(wsRoot, p)
 	}
@@ -4212,6 +4309,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 				return nil, err
 			}
 			return b, nil
+		}
+		if bound {
+			return readBoundText(wsRoot, p)
 		}
 		return readText(wsRoot, p)
 	}
@@ -4330,7 +4430,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			} else if mode == "ssh" {
 				raw, err = a.sftpRead(pathJoinRemote(remotePath, p))
 			} else {
-				raw, err = readRawBytes(wsRoot, p)
+				read := readRawBytes
+				if bound {
+					read = readBoundRawBytes
+				}
+				raw, err = read(wsRoot, p)
 			}
 			if err != nil {
 				return failure("读取失败: " + err.Error())
@@ -4344,7 +4448,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		// 本地工作区大文件分段：offset(行,0起)/limit(行数) 流式只读窗口，不全量入上下文
 		if sourceID == "" && mode != "ssh" {
 			if off, lim := toolInt("offset"), toolInt("limit"); off > 0 || lim > 0 {
-				pb, total, rerr := readTextLines(wsRoot, p, off, lim)
+				opener := wsRoot.Open
+				if bound {
+					opener = boundFileOpener(wsRoot)
+				}
+				pb, total, rerr := readTextLinesWithOpener(p, off, lim, opener)
 				if rerr != nil {
 					return failure("读取失败: " + rerr.Error())
 				}
@@ -4451,7 +4559,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return string(raw)
 	case "write_file":
 		pathStr, content := str("path"), rawStr("content")
-		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "source": sourceID, "path": pathStr, "content": content})
+		var bindingRoot *os.Root
+		if bound {
+			bindingRoot = wsRoot
+		}
+		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "source": sourceID, "path": pathStr, "content": content}, bindingRoot)
 		if err != nil {
 			return failure("写入提案被拒绝: " + err.Error())
 		}
@@ -4803,7 +4915,7 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 }
 
 // recordToolProposal 把工具写操作转为待批准提案。
-func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[string]any) (string, error) {
+func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[string]any, bindingRoots ...*os.Root) (string, error) {
 	if err := a.nativeEditorWriteError(); err != nil {
 		return "", err
 	}
@@ -4837,12 +4949,26 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 		if totalBytes > maxProposalTotal {
 			return "", fmt.Errorf("提案内容总量超过 %d MiB", maxProposalTotal>>20)
 		}
-		change := Change{Path: pathStr, Content: content, Applied: false}
+		var bindingRoot *os.Root
+		if len(bindingRoots) > 0 {
+			bindingRoot = bindingRoots[0]
+		}
+		change := Change{Path: pathStr, Content: content, Applied: false, NoSymlinks: bindingRoot != nil}
 		if v, ok := versions[pathStr]; ok {
 			change.BaseHash = v.BaseHash
 			change.Before = v.Before
 		} else {
-			if a.workspaceStatExists(pathStr) {
+			var exists bool
+			if bindingRoot != nil {
+				var err error
+				exists, err = boundPathExists(bindingRoot, pathStr)
+				if err != nil {
+					return "", err
+				}
+			} else {
+				exists = a.workspaceStatExists(pathStr)
+			}
+			if exists {
 				return "", fmt.Errorf("现有文件 %s 未附加到任务，请先附加再生成修改", pathStr)
 			}
 			change.BaseHash = ""
@@ -5173,7 +5299,34 @@ func (a *App) snapshotForCompactBudget(sess *Session, keepBudget int) (compactSn
 	if split <= 0 {
 		return compactSnapshot{}, 0
 	}
+	// A retained tool result must keep the assistant call that owns it, even
+	// when the complete exchange exceeds the preferred recent-history budget.
+	split = compactProtocolBoundary(sess.Messages, split)
+	if split <= 0 {
+		return compactSnapshot{}, 0
+	}
 	return compactSnapshot{prevCompact: sess.Compact, prevCount: sess.CompactedMessages, messages: cloneCompactMessages(sess.Messages[:split])}, split
+}
+
+// Return the last boundary at or before limit with no outstanding tool calls.
+// This also handles assistants issuing multiple calls with separate results.
+func compactProtocolBoundary(messages []Message, limit int) int {
+	pending := map[string]bool{}
+	safe := 0
+	for i, message := range messages[:limit] {
+		if message.Role == "assistant" {
+			for _, call := range message.ToolCalls {
+				pending[call.ID] = true
+			}
+		}
+		if message.Role == "tool" {
+			delete(pending, message.ToolCallID)
+		}
+		if len(pending) == 0 {
+			safe = i + 1
+		}
+	}
+	return safe
 }
 
 func cloneCompactMessages(messages []Message) []Message {
@@ -5215,6 +5368,11 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	if sess == nil {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	if sess.Kind == assistantSessionKind && !a.isAssistantUnlocked(sess.ID) {
+		a.mu.Unlock()
+		fail(w, 403, errors.New("请先解锁小秘会话"))
 		return
 	}
 	if a.settings.Model == "" {
@@ -5275,6 +5433,11 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "folding", BeforeTokens: beforeTokens, Folded: split})
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if sess.Kind == assistantSessionKind && !a.isAssistantUnlocked(sess.ID) {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "小秘会话已锁定，压缩结果未保存"}, UpdatedAt: time.Now()}
+		fail(w, 403, errors.New("请先解锁小秘会话"))
+		return
+	}
 	// 提交校验：消息前缀必须仍与快照一致（未被并发修改）
 	if len(sess.Messages) != baseLen {
 		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话已被修改，压缩取消；原会话内容已保留"}, UpdatedAt: time.Now()}
@@ -5659,6 +5822,10 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 // 先订阅、后复查任务状态：任务在“检查状态”与“订阅”之间结束时，订阅者仍能通过
 // channel close 或复查得到终态，不会永久挂起；订阅时已结束的任务立即回发 status+done 并关闭。
 func (a *App) runEvents(w http.ResponseWriter, r *http.Request) {
+	a.serveRunEvents(w, r, false)
+}
+
+func (a *App) serveRunEvents(w http.ResponseWriter, r *http.Request, diagnostic bool) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		fail(w, 500, errors.New("streaming unsupported"))
@@ -5689,6 +5856,13 @@ func (a *App) runEvents(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 
 	writeEvent := func(ev streamEvent) {
+		if diagnostic {
+			var allowed bool
+			ev, allowed = debugStreamMetadata(ev)
+			if !allowed {
+				return
+			}
+		}
 		body, _ := json.Marshal(ev)
 		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", ev.Event, body)
 		flusher.Flush()
@@ -5800,6 +5974,14 @@ func (a *App) queueUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 	case "steer":
 		content := task.Queue[index]
+		// Admission may fail (including nil/no receiver). A rejected conversion
+		// must leave both the prompt queue and its display record untouched.
+		select {
+		case task.Steer <- content:
+		default:
+			fail(w, 429, errors.New("插话通道已满"))
+			return
+		}
 		task.Queue = append(task.Queue[:index], task.Queue[index+1:]...)
 		steerIdx := -1
 		for i, st := range task.Steers {
@@ -5810,12 +5992,6 @@ func (a *App) queueUpdate(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 			}
-		}
-		select {
-		case task.Steer <- content:
-		default:
-			fail(w, 429, errors.New("插话通道已满"))
-			return
 		}
 	default:
 		fail(w, 400, errors.New("未知操作"))

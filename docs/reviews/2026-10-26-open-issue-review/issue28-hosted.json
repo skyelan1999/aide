@@ -1,0 +1,16 @@
+{
+  "issue": 28,
+  "status": "RESOLVED_EXISTING_MAIN_FIX_HOSTED_VERIFIED",
+  "mainCommit": "a26214e596d4cbe147bb0e224dfa305cf04fc6cb",
+  "runURL": "https://github.com/skyelan1999/aide/actions/runs/40663202500",
+  "runConclusion": "success",
+  "goJob": {
+    "id": 122731083193,
+    "conclusion": "success",
+    "startedAt": "2026-10-28T09:18:26Z",
+    "completedAt": "2026-10-28T09:42:39Z"
+  },
+  "snapshotBudgetSeconds": 4500,
+  "jobBudgetMinutes": 90,
+  "scope": "Full Go race suite and vet succeeded on GitHub-hosted runner after existing budget fix; not a claim current repair branch entire suite passed."
+}

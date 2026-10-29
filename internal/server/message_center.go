@@ -2,6 +2,7 @@ package server
 
 import (
 	"aide/internal/messaging"
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -273,6 +274,28 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 		fail(w, 423, errors.New("请先解锁工作台"))
 		return
 	}
+	if r.Method != http.MethodGet && r.Method != http.MethodHead && path != "cancel" && path != "voice-release" {
+		// Read bounded input before admission: a slow body must not hold up a
+		// screen lock, and its original generation must still match afterwards.
+		limit := int64(1 << 20)
+		if strings.HasPrefix(path, "chunks/") && r.Method == http.MethodPut {
+			limit = messaging.ChunkSize
+		}
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, limit))
+		_ = r.Body.Close()
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		ctx, finish, err := a.beginMessageMutation(r.Context(), lock.Gen)
+		if err != nil {
+			fail(w, 423, err)
+			return
+		}
+		defer finish()
+		r = r.WithContext(ctx)
+		r.Body = io.NopCloser(bytes.NewReader(body))
+	}
 	if path == "notifications" {
 		a.messageNotificationsAPI(w, r, lock.Gen)
 		return
@@ -381,7 +404,7 @@ func (a *App) messageAPI(w http.ResponseWriter, r *http.Request) {
 			Blocked bool   `json:"blocked"`
 		}
 		if err = decode(w, r, &input); err == nil {
-			err = s.Block(input.Peer, input.Blocked)
+			err = s.BlockContext(ctx, input.Peer, input.Blocked)
 		}
 	case (path == "read" || path == "read-all") && r.Method == http.MethodPost:
 		var input struct {

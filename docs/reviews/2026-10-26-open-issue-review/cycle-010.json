@@ -1,0 +1,98 @@
+{
+  "cycle": 10,
+  "baseline": "82024e82",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    87,
+    88,
+    89
+  ],
+  "commits": {
+    "87": "a41a7cf3c4943be9c99b5dae113c85a7c06f2712",
+    "88": "a0f7bb92acaef707893ac734904dec42757d8f52",
+    "89": "d8bfaf186d588bb93c77791d13216baaf48ac92f"
+  },
+  "cumulativeProductFixes": 34,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 35,
+  "environment": {
+    "go": "go1.26.0 linux/amd64",
+    "cache": "/tmp/aide-issue-review-go-cache",
+    "scope": "Owned temporary local HTTP, TLS and workbench API fixtures; no user storage, real devices, paid model or UI acceptance."
+  },
+  "red": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue87|^TestIssue88|^TestIssue89' -count=1 -timeout=2m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 7.295,
+      "observed": "Unrelated AI/ID-substring prompts selected; standalone project/mobile capabilities lacked bridge; cached manifest ID/version mismatches accepted."
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue87|^TestIssue88|^TestIssue89|^TestProjectMessages|^TestMarket' -count=1 -timeout=2m",
+      "result": "PASS",
+      "durationSeconds": 17.745,
+      "scope": "First focused suite; TestMarket regex does not select TestPluginMarket."
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue87|^TestIssue88|^TestIssue89|^TestProjectMessage|^TestPluginMarket|^TestPluginWorkbench|^TestMobileCapture' -count=1 -timeout=4m",
+      "result": "PASS",
+      "durationSeconds": 68.033,
+      "scope": "Final regression includes actual capability-specific API calls, undeclared tool denial and existing market/workbench/mobile capture tests."
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T152500480007Z.log",
+      "fingerprint": "922cb33fb602c0ed4c49da21e80f8fb5736fccd6d5784729e2f1f305522fc6bf"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "427 Markdown files, 1465 local links"
+    }
+  ],
+  "intermediateFailures": [
+    {
+      "result": "FAIL",
+      "durationSeconds": 64.711,
+      "reason": "New test request IDs contained hyphens forbidden by existing bridge protocol. Corrected test IDs to underscores; protocol unchanged."
+    },
+    {
+      "result": "FAIL",
+      "receipt": ".agent-state/verify-20261026T152210540709Z.log",
+      "reason": "test_offline_bundle temporary filesystem free space below existing 10GiB gate. Cleared only generated /tmp/aide-issue-review-go-cache using go clean -cache; quick rerun passed."
+    }
+  ],
+  "notes": [
+    "#87 plain names/ID substrings no longer qualify: explicit complete [project-name:NAME], [project-id:ID] markers or exact PP attachment. Existing date/workspace/capability/output caps remain. Historic unmarked prompts excluded; compatibility contract documented.",
+    "#88 standalone projectMessages/mobileCapture independently get a scoped bridge, never undeclared tools. Backend fixtures are not real phone/full workbench acceptance.",
+    "#89 cache hits and downloads both parse bundle and compare exact manifest ID/version to selected catalog. Valid cached packages work offline; mismatches rejected before fallback network.",
+    "No main merge, release or deployment. Previously documented Landlock and SSH platform fixture limitations remain."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "comments": {
+      "87": "https://github.com/skyelan1999/aide/issues/87#issuecomment-6420016015",
+      "88": "https://github.com/skyelan1999/aide/issues/88#issuecomment-6420017072",
+      "89": "https://github.com/skyelan1999/aide/issues/89#issuecomment-6420018315"
+    }
+  },
+  "sourceSHA256": {
+    "internal/server/project_briefing.go": "2bcb3c8b1a304b9535a4176142816ce174a6090df1cc2bd2d6bbe0a56f017079",
+    "internal/server/project_briefing_test.go": "3c440f4df2132e5596a592b72e4178a3e9dfdfb4958b5e08e0d75805a0e826c4",
+    "internal/server/project_reference_bounds_test.go": "0999bb96b7a0122baf39bc773777452ddc547c102ad6e0f866159ed6697e346c",
+    "internal/server/plugin_workbench.go": "cdad14bb92a3e177ca38d9c71d217ba01152861b673f1965ac9ddf7625a1078d",
+    "internal/server/workbench_capability_test.go": "742c5b3326832dbdc6e7fcb4bdd35f6c0eec33ce153b4f864b89f362b4298fe5",
+    "internal/server/plugin_market.go": "6a4ca028722c5aed39140e9c9ca44658293e03285b65ef3f1f169b5af5ab0b7c",
+    "internal/server/market_cache_binding_test.go": "720f04f4bc15ef2a4fcc553faad3e3a450f664cec6b6eeb3e56b07a9c38376f7"
+  }
+}

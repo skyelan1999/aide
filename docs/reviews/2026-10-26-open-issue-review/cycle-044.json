@@ -1,0 +1,73 @@
+{
+  "cycle": 44,
+  "baseline": "e7cafaa96db1e04820716b26d807441ce6b95f59",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    175
+  ],
+  "commits": {
+    "175": "451ac35385d76899a8efcd062f0dbf5db40ced4f"
+  },
+  "testEvidenceCommit": "792bd9836b258e799e04a9f9a63a3e3990e658a5",
+  "cumulativeProductFixes": 105,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 106,
+  "original272RemainingFollowup": 178,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "red": [
+    {
+      "issue": 175,
+      "result": "EXPECTED_FAIL",
+      "observed": "实际源码转换后IoT_AlexaVoiceServiceAWS19.shape为alexa_skill，Alexa Skill对照正确。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle44-browser-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle44-browser-final node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "源码/两份分发Importer完整转换闭包预载后调用真实EditorUi.convertLucidChart、模型、注册stencil/实际renderer；两种Alexa身份独立且在1440明色/390暗色截图可见；含原消息/图形/缓存/资源预算共25组，零pageerror。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle44-browser-final/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261027T032648019234Z.log",
+      "fingerprint": "4c7eec1992d05d535be2f8186092c68998a674a2a96cda1ac2120673ea416566"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links"
+    }
+  ],
+  "notes": [
+    "Sidebar-AWS4及实际私有缓存目录均提供独立alexa_voice_service_2与alexa_skill。仅修正Voice Service映射，正确Skill保持。",
+    "初次窄屏截图画布滚动后图形不可见，未用作视觉通过证据；截图前调用实际fitWindow并增加两图形可视范围断言，最终截图已人工检查。样式字号检查仍在缩放之前。",
+    "用户文件保留，无常驻服务；只push分支不合并main/发行/部署。"
+  ],
+  "notRun": [
+    "完整Aide工作台、真实Lucidchart账号/文件选择、完整integrate启动、跨平台、所有外部格式语义。",
+    "Go race/vet未重复，本批前端静态映射及浏览器回归。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "175": "https://github.com/skyelan1999/aide/issues/175#issuecomment-6433019799"
+    },
+    "remoteCommit": "aafe7beeb1235716bad43c79c97e10efb23c3ce2"
+  },
+  "sourceSHA256": {
+    "docs/architecture/office-viewer.md": "4c19c2522f3ee6ad9e6e78b59ba2604201c2db7fdd1379d6274ec974cb8a8008",
+    "internal/server/web/vendor/drawio/js/diagramly/Extensions.js": "78d0179930753d465ce940847c525e6ed524a8e6c09ba97f12c2d6be5f36054f",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "9f1f50eb83bca68a2b06d9589d9088b37b2ba42e8c6b8e04915b7f7205e4c8ec",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "06c954c090a4ec48da0e5737faf79a113e8c8670afc68ebee8ac7b81d9a66b1d",
+    "scripts/drawio-lucid-message-browser-cases.cjs": "d527fa5f01bd68ad8d54bed2d6bc20b64d1e3608a4afd6b2cbbe95d7a45d0ea6"
+  }
+}

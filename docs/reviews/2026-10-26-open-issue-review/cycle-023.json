@@ -1,0 +1,157 @@
+{
+  "cycle": 23,
+  "baseline": "53697b10222ad11aec6b7eb4e9712598c80536cc",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    128,
+    130,
+    131
+  ],
+  "commits": {
+    "128": "39acde7fa769a43e21c1ff86d5041f1444b4a881",
+    "130": "39acde7fa769a43e21c1ff86d5041f1444b4a881",
+    "131": "39acde7fa769a43e21c1ff86d5041f1444b4a881"
+  },
+  "cumulativeProductFixes": 66,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 67,
+  "original272RemainingFollowup": 217,
+  "red": [
+    {
+      "issue": 128,
+      "command": "node scripts/test_drawio_preview_bounds.cjs inflate",
+      "result": "EXPECTED_FAIL",
+      "observed": "Missing expected exception (limit): actual bundled Graph.decompress must reject expanded data before accumulating it"
+    },
+    {
+      "issue": 130,
+      "command": "node scripts/test_drawio_preview_bounds.cjs xml",
+      "result": "EXPECTED_FAIL",
+      "observed": "Missing expected exception (limit): deep XML must reject before native parser and recursive index"
+    },
+    {
+      "issue": 131,
+      "command": "node scripts/test_drawio_preview_bounds.cjs cells",
+      "result": "EXPECTED_FAIL",
+      "observed": "Missing expected exception (limit): deep actual cell tree must reject before recursive root registration"
+    }
+  ],
+  "green": [
+    {
+      "command": "node scripts/test_drawio_preview_bounds.cjs",
+      "result": "PASS",
+      "scope": "Actual bundled decompressor plus runtime-hook fixtures; exact8MiB, zlib/raw, early32MiB stream stop, XML byte/node/depth/DTD, cell counts/cycles/shared children, flat parents and decode-depth unwind."
+    },
+    {
+      "command": "AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle23-browser node scripts/browser-drawio-preview-bounds.cjs",
+      "result": "PASS",
+      "browserResult": {
+        "checks": [
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "light",
+            "width": 1440,
+            "result": "PASS"
+          },
+          {
+            "case": "normal compressed multi-page, edit and save",
+            "theme": "dark",
+            "width": 390,
+            "result": "PASS"
+          },
+          {
+            "case": "expanded",
+            "result": "PASS",
+            "elapsedMs": 1852
+          },
+          {
+            "case": "xml-depth",
+            "result": "PASS",
+            "elapsedMs": 1841
+          },
+          {
+            "case": "cell-depth",
+            "result": "PASS",
+            "elapsedMs": 1790
+          },
+          {
+            "case": "cell-cycle",
+            "result": "PASS",
+            "elapsedMs": 1877
+          },
+          {
+            "case": "inactive-page",
+            "result": "PASS",
+            "elapsedMs": 1830
+          },
+          {
+            "case": "page-count",
+            "result": "PASS",
+            "elapsedMs": 2047
+          },
+          {
+            "case": "aggregate-expansion",
+            "result": "PASS",
+            "elapsedMs": 1813
+          },
+          {
+            "case": "lazy-reference-depth",
+            "result": "PASS",
+            "elapsedMs": 1840
+          }
+        ],
+        "errors": [],
+        "browser": "154.0.8037.57",
+        "actualBundledIframe": true,
+        "fullWorkbench": false
+      },
+      "scope": "Actual vendor index/bootstrap/app.min iframe, installed before App.main; real editor keyboard input/save and graph value assertion; same-origin/source/null-message rejection. Components only, not full workbench.",
+      "visualReview": "Viewed light1440 and dark390 screenshots: edited rectangle, Save and page tabs visible; bad input shows fixed download guidance.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle23-browser/result.json"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261026T201722408198Z.log",
+      "fingerprint": "dd75b8c442a371e59d4253024b230c14dace035292597764bca868068ebdc8b2"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check; node --check internal/server/web/vendor/drawio/js/bootstrap.js; node --check internal/server/web/vendor/drawio/js/main.js",
+      "result": "PASS",
+      "observed": "427Markdown/1465links"
+    }
+  ],
+  "notes": [
+    "draw.io逐块解压限8MiB；8MiB XML/base64输入、64页/16MiB压缩页总展开，检查非激活页；超限移除iframe并显示固定提示。",
+    "DOMParser前词法限128层/50000节点和8MiB，排除注释/CDATA/引号中的标记；拒绝DTD；DOM及首次索引再次迭代检查。",
+    "解码前检查每模型父ID链/循环及包装对象ID，实际对象解码限128层；注册根前检查10000节点/128层/循环及共享子节点。",
+    "Hooks install against actual compiled runtime before either production load gate or dev App.main; no manual minified replacement. Underlying draw.io licenses retained.",
+    "Preview budgets do not guarantee bounded work for every shape/layout/import format. XML/base64 limits apply at embedded runtime parsing, not the generic file transfer protocol.",
+    "Browser fixture routes only local shipped files and generated diagrams; owned contexts/browser closed. Initial harness waits/theme/value-normalization errors were corrected; reported final run passes all10 cases with no pageerrors.",
+    "No Go code change; no Go test claimed. Full start.command workbench, other browser engines, Windows/macOS and production acceptance NOT_RUN. Existing platform blockers retained."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "verifiedRemoteCommit": "13f68ddcfa876644c5bfa240ecfda2ce81366c9f",
+    "issueComments": {
+      "128": "https://github.com/skyelan1999/aide/issues/128#issuecomment-6426402412",
+      "130": "https://github.com/skyelan1999/aide/issues/130#issuecomment-6426403374",
+      "131": "https://github.com/skyelan1999/aide/issues/131#issuecomment-6426404077"
+    }
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "e753a9bbb6163a44db1b31ec48d6b93e48dc0579c0aacb72a8c68e682d0e5151",
+    "docs/architecture/office-viewer.md": "9b6a19e2237e262a610731301b5791d9523f3416b22cb5daf2558cd1a291a353",
+    "internal/server/web/app.js": "454d421f670e3c0580f084c6bd0cf525ce749b9797d3b6e956f09ce22b84c8d1",
+    "internal/server/web/drawio-preview-safety.js": "a890474f4935909bbd4db60561022e1d1d4c730fe6d95a5a4fafef63fc7b5d42",
+    "internal/server/web/locales/en.js": "03beeddb124939444468c01bfafdce3bdea53669d6b8e103bb5aac95bbbe56a9",
+    "internal/server/web/vendor/drawio/index.html": "38de8d912c3c69a552965bc2dce287a3b540b5cf7af124841659cf47e7a7a412",
+    "internal/server/web/vendor/drawio/js/bootstrap.js": "fa02073c8ac7ba879dabf4197cb418c03704bfdcf04b7a41419b8f8118167658",
+    "internal/server/web/vendor/drawio/js/main.js": "20a219aa5958882987d806678d170eaa6fa2ac5e8ca7bc0c5c9b91192e46a354",
+    "scripts/browser-drawio-preview-bounds.cjs": "7d5f7971a8ee5429880a27f9b456fb81581c4674ae4292a4b777a95d4339b191",
+    "scripts/test_drawio_preview_bounds.cjs": "91ab9b9a686141360a535dde74aafeb6566caaba117cb541f8b920f798b1c744"
+  }
+}

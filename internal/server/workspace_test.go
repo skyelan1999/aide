@@ -140,6 +140,11 @@ func TestLocalWorkspacePathAIReadFix(t *testing.T) {
 func TestRemoteWorkspaceDispatch(t *testing.T) {
 	a := testApp(t)
 	dir := t.TempDir()
+	remote := t.TempDir()
+	at := func(s string) string { return strings.ReplaceAll(s, "/srv/app", remote) }
+	if err := os.WriteFile(filepath.Join(remote, "readme.md"), []byte("remote-content"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	socket := sshControlSocket // 全局常量，mock 用固定 socket
 	sshStub := filepath.Join(dir, "ssh")
 	sftpStub := filepath.Join(dir, "sftp")
@@ -165,7 +170,7 @@ exit 0
 `)
 	writeStub(t, sftpStub, `#!/bin/sh
 batch=$(cat)
-printf '%s\n' "$batch" >> "`+sftpLog+`"
+printf '%s\n' "$batch" >> "`+sftpLog+at(`"
 case "$batch" in
 	*"ls -l"*"/srv/app/drop"*)
 	    echo "Couldn't stat remote file: No such file" >&2
@@ -193,12 +198,13 @@ case "$batch" in
     ;;
 esac
 exit 0
-`)
+`))
 	_ = socket
 	a.sshBin = sshStub
 	a.sftpBin = sftpStub
+	attachOwnedSFTPProtocol(t, a, "", "", "")
 	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
-		"workspace": map[string]any{"mode": "ssh", "path": "/srv/app", "host": "remote.example", "port": 22, "username": "deploy", "auth": "none"},
+		"workspace": map[string]any{"mode": "ssh", "path": at("/srv/app"), "host": "remote.example", "port": 22, "username": "deploy", "auth": "none"},
 	}), 200)
 	// 远程文件列表
 	w := request(a, "GET", "/api/files?root=workspace&path=.", nil)
@@ -220,12 +226,15 @@ exit 0
 	if batch.Summary.Succeeded != 1 || batch.Summary.Failed != 0 {
 		t.Fatalf("nested SFTP batch upload: %+v", batch)
 	}
-	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), `put -P`) || !strings.Contains(string(b), `/srv/app/drop/nested/deep/a.txt.aide-tmp`) || !strings.Contains(string(b), `mkdir "/srv/app/drop/nested"`) {
+	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), `put -P`) || !strings.Contains(string(b), at(`/srv/app/drop/nested/deep/a.txt.aide-tmp`)) || !strings.Contains(string(b), at(`mkdir "/srv/app/drop/nested"`)) {
 		t.Fatalf("nested SFTP batch upload commands: %s", b)
 	}
-	// 远程读（sftp get 输出到 stdout 的是 ls 假数据，读返回该内容——仅验证走 sftp 通道）
+	// Read through the real binary SFTP subsystem; verify the returned bytes.
 	w = request(a, "GET", "/api/file?root=workspace&path=readme.md", nil)
 	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "remote-content") {
+		t.Fatalf("SFTP read lost file content: %s", w.Body.String())
+	}
 	// 远程写
 	requireStatus(t, request(a, "PUT", "/api/file", map[string]string{"path": "x.txt", "content": "hi", "hash": ""}), 200)
 	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "put -P") || !strings.Contains(string(b), "rename") {
@@ -233,23 +242,23 @@ exit 0
 	}
 	// 首次写入嵌套目录时，SFTP 要先创建缺失父目录，不能把 No such file
 	// 直接暴露给工作流提案应用。
-	if err := a.sftpWrite("/srv/app/.cache/aide/patch.py", []byte("print(1)")); err != nil {
+	if err := a.sftpWrite(at("/srv/app/.cache/aide/patch.py"), []byte("print(1)")); err != nil {
 		t.Fatalf("nested sftp write: %v", err)
 	}
-	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "mkdir \"/srv/app/.cache\"") || !strings.Contains(string(b), "mkdir \"/srv/app/.cache/aide\"") {
+	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), at("mkdir \"/srv/app/.cache\"")) || !strings.Contains(string(b), at("mkdir \"/srv/app/.cache/aide\"")) {
 		t.Fatalf("sftp write must create parents: %s", string(b))
 	}
 	// Office 成品走相同 SFTP 原子上传通道，无需容器内映射远端目录。
-	created := a.officeCreateTool(a.workspace, "ssh", "/srv/app", "generated.docx", "docx", map[string]any{"title": "Remote"})
+	created := a.officeCreateTool(a.workspace, "ssh", at("/srv/app"), "generated.docx", "docx", map[string]any{"title": "Remote"})
 	if !strings.Contains(created, "已生成") {
 		t.Fatalf("remote Office create: %s", created)
 	}
-	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "/srv/app/generated.docx.aide-tmp") {
+	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), at("/srv/app/generated.docx.aide-tmp")) {
 		t.Fatalf("remote Office file was not uploaded: %s", string(b))
 	}
 	// Restricted SSH must fail before dispatch; this fixture's transport checks
 	// then explicitly select full access instead of bypassing that policy.
-	if _, _, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: "/srv/app"}, "echo rejected"); err == nil || !strings.Contains(err.Error(), "远程SSH尚未接入内核沙箱") {
+	if _, _, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: at("/srv/app")}, "echo rejected"); err == nil || !strings.Contains(err.Error(), "远程SSH尚未接入内核沙箱") {
 		t.Fatal("restricted remote shell dispatched", err)
 	}
 	a.mu.Lock()
@@ -259,8 +268,8 @@ exit 0
 	defer func() { a.mu.Lock(); a.settings.SandboxMode = originalSandbox; a.mu.Unlock() }()
 	// Agent run_shell now shares the same remote SSH session and starts in the
 	// task's remote workspace, matching the command panel behavior.
-	out, code, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: "/srv/app"}, "echo agent-remote")
-	if err != nil || code != 0 || !strings.Contains(out, `cd '\''/srv/app'\'' && echo agent-remote`) {
+	out, code, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: at("/srv/app")}, "echo agent-remote")
+	if err != nil || code != 0 || !strings.Contains(out, at(`cd '\''/srv/app'\'' && echo agent-remote`)) {
 		t.Fatalf("agent remote command: code=%d err=%v out=%q", code, err, out)
 	}
 	// 远程命令（单会话）
@@ -269,7 +278,7 @@ exit 0
 	var commandEvent struct {
 		Text string `json:"text"`
 	}
-	if err := json.Unmarshal([]byte(strings.SplitN(w.Body.String(), "\n", 2)[0]), &commandEvent); err != nil || !strings.Contains(commandEvent.Text, `cd '\''/srv/app'\'' && echo hi`) {
+	if err := json.Unmarshal([]byte(strings.SplitN(w.Body.String(), "\n", 2)[0]), &commandEvent); err != nil || !strings.Contains(commandEvent.Text, at(`cd '\''/srv/app'\'' && echo hi`)) {
 		t.Fatalf("remote command must enter remote dir: %s", w.Body.String())
 	}
 	// 会话只建立一次（master 复用）

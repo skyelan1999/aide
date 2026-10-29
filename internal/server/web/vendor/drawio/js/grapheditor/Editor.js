@@ -856,6 +856,34 @@ Editor.repairTruncatedXml = function(text)
 Editor.extractGraphModelFromPng = function(data)
 {
 	var result = null;
+	var maxBytes = 8 * 1024 * 1024;
+	function limit()
+	{
+		var error = new Error('PNG diagram resource limit exceeded');
+		error.code = 'AIDE_DRAWIO_LIMIT';
+		throw error;
+	}
+	function inflateText(buffer, raw)
+	{
+		var stream = new pako.Inflate({raw: raw, windowBits: raw ? -15 : 15, chunkSize: 16384});
+		var chunks = [], size = 0;
+		stream.onData = function(chunk)
+		{
+			size += chunk.length;
+			if (size > maxBytes) limit();
+			chunks.push(chunk);
+		};
+		for (var pos = 0; pos < buffer.length; pos += 4096)
+		{
+			stream.push(buffer.subarray(pos, pos + 4096), pos + 4096 >= buffer.length);
+			if (stream.err) throw new Error('Invalid PNG diagram metadata');
+		}
+		if (!stream.ended) throw new Error('Incomplete PNG diagram metadata');
+		var output = new Uint8Array(size), offset = 0;
+		for (var i = 0; i < chunks.length; i++) { output.set(chunks[i], offset); offset += chunks[i].length; }
+		return new TextDecoder('utf-8').decode(output);
+	}
+	if (typeof data != 'string' || data.length > 12 * 1024 * 1024) limit();
 	
 	try
 	{
@@ -863,6 +891,7 @@ Editor.extractGraphModelFromPng = function(data)
 
 		// Workaround for invalid character error in Safari
 		var binary = (window.atob && !mxClient.IS_SF) ? atob(base64) : Base64.decode(base64, true);
+		if (binary.length > maxBytes) limit();
 		
 		EditorUi.parsePng(binary, mxUtils.bind(this, function(pos, type, length)
 		{
@@ -883,13 +912,14 @@ Editor.extractGraphModelFromPng = function(data)
 					try
 					{
 						// Spec-compliant zTXt is a zlib (RFC 1950) datastream
-						xmlData = pako.inflate(buffer, {to: 'string'});
+						xmlData = inflateText(buffer, false);
 					}
 					catch (e)
 					{
+						if (e.code == 'AIDE_DRAWIO_LIMIT') throw e;
 						// Fallback for PNGs written by the pre-fix CLI, which
 						// stored a raw DEFLATE stream [jgraph/drawio-desktop#2425]
-						xmlData = pako.inflateRaw(buffer, {to: 'string'});
+						xmlData = inflateText(buffer, true);
 					}
 
 					// Workaround for Java URL Encoder using + for spaces, which isn't compatible with JS
@@ -923,18 +953,26 @@ Editor.extractGraphModelFromPng = function(data)
 	}
 	catch (e)
 	{
+		if (e.code == 'AIDE_DRAWIO_LIMIT') throw e;
 		// ignores decoding errors
 	}
 	
-	if (result != null && result.charAt(0) == '%')
+	try
 	{
-		result = decodeURIComponent(result);
-	}
+		if (result != null && result.charAt(0) == '%')
+		{
+			result = decodeURIComponent(result);
+		}
 	
-	// Workaround for double encoded content
-	if (result != null && result.charAt(0) == '%')
+		// Workaround for double encoded content
+		if (result != null && result.charAt(0) == '%')
+		{
+			result = decodeURIComponent(result);
+		}
+	}
+	catch (e)
 	{
-		result = decodeURIComponent(result);
+		return null;
 	}
 	
 	return result;
@@ -1477,7 +1515,7 @@ Editor.prototype.readGraphState = function(node)
 	var pw = parseFloat(node.getAttribute('pageWidth'));
 	var ph = parseFloat(node.getAttribute('pageHeight'));
 	
-	if (!isNaN(pw) && !isNaN(ph))
+	if (isFinite(pw) && isFinite(ph) && pw > 0 && ph > 0)
 	{
 		this.graph.pageFormat = new mxRectangle(0, 0, pw, ph);
 	}
@@ -2745,7 +2783,7 @@ PrintDialog.createPrintPreview = function(graph, scale, pf, border, x0, y0, auto
 
 	preview.isTextLabel = function(node)
 	{
-		return !node.className == 'geHint' && isTextLabel.apply(this, arguments);
+		return !/(^|\s)geHint(\s|$)/.test(node.getAttribute('class') || '') && isTextLabel.apply(this, arguments);
 	};
 
 	// Makes relative links absolute
@@ -3334,7 +3372,7 @@ PageSetupDialog.addPageFormatPanel = function(div, namePostfix, pageFormat, page
 					landscapeCheckBox.removeAttribute('checked');
 					landscapeCheckBox.defaultChecked = false;
 					landscapeCheckBox.checked = false;
-					detected = true;
+
 				}
 				else if (pageFormat.width == f.format.height && pageFormat.height == f.format.width)
 				{
@@ -3345,7 +3383,7 @@ PageSetupDialog.addPageFormatPanel = function(div, namePostfix, pageFormat, page
 					landscapeCheckBox.setAttribute('checked', 'checked');
 					landscapeCheckBox.defaultChecked = true;
 					landscapeCheckBox.checked = true;
-					detected = true;
+
 				}
 			}
 		}
@@ -3632,7 +3670,9 @@ var FilenameDialog = function(editorUi, filename, buttonText, fn, label,
 	
 				    if (mxUtils.indexOf(evt.dataTransfer.types, 'text/uri-list') >= 0)
 				    {
-				    	nameInput.value = decodeURIComponent(evt.dataTransfer.getData('text/uri-list'));
+					var uri = evt.dataTransfer.getData('text/uri-list');
+					try { uri = decodeURIComponent(uri); } catch (e) { /* Keep the original URI on invalid UTF-8. */ }
+					nameInput.value = uri;
 				    	genericBtn.click();
 				    }
 	
@@ -3683,7 +3723,7 @@ var FilenameDialog = function(editorUi, filename, buttonText, fn, label,
 		table.appendChild(content);
 	}
 	
-	row = document.createElement('div');
+	var row = document.createElement('div');
 	row.style.gridColumn = '1 / span 2';
 	row.style.paddingTop = (hints != null) ? '6px' : '14px';
 	row.style.whiteSpace = 'nowrap';

@@ -1,0 +1,103 @@
+{
+  "cycle": 49,
+  "baseline": "578f257b79808e40ab2589849752e3426f1d816d",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    180
+  ],
+  "commits": {
+    "180": "fb46de0e650311206bd1f48f7549bf7463601780"
+  },
+  "cumulativeProductFixes": 110,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 111,
+  "original272RemainingFollowup": 173,
+  "additionalFollowupIssues": [
+    441
+  ],
+  "additionalFollowupCount": 1,
+  "optionalPath": {
+    "defaultAideIntegrationEnabled": false,
+    "scope": "可选Trello客户端库；默认AIDE嵌入App初始化会把全局TrelloClient清为空，本轮不启用该集成。"
+  },
+  "red": [
+    {
+      "issue": 180,
+      "result": "EXPECTED_FAIL",
+      "command": "node scripts/test_drawio_trello_limits.cjs (before fix)",
+      "observed": "VM用16字节缩小配置，源码/分发方法对Blob17、File16、中文18、emoji20及emoji精确16字节共10个应拒绝场景都进入mock授权/上传并成功；ASCII边界/小载荷对照正确。未真实上传。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle49-trello-red.log"
+    }
+  ],
+  "green": [
+    {
+      "result": "PASS",
+      "command": "node scripts/test_drawio_trello_limits.cjs (also in final quick)",
+      "scope": "源码/分发真实writeFile、实际Blob/File/FormData，16字节缩小配置，Blob/File/中文/emoji/ASCII/空值及精确边界拒绝或通过，提示实际字节，实际提交File.size与计数一致；XHR/授权纯mock。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle49-trello-green.log"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_DRAWIO_TRELLO_ACCEPTANCE=1 AIDE_DRAWIO_VISIO_ACCEPTANCE=1 AIDE_DRAWIO_MEDIA_ACCEPTANCE=1 AIDE_DRAWIO_NURBS_ACCEPTANCE=1 AIDE_DRAWIO_POLYLINE_ACCEPTANCE=1 AIDE_DRAWIO_LUCID_ACCEPTANCE=1 AIDE_COMPONENT_EVIDENCE_DIR=/workspace/scratch/issue-review-20261026/cycle49-browser-optional node scripts/browser-drawio-preview-bounds.cjs",
+      "scope": "Chromium154，App.main前捕获真实分发Trello构造器，源码方法与原app.min已加载方法分别检查原10000000配置、真实Blob/File/UTF8拒绝、FormData正常字节、实际insertFile/saveFile的PNG超限分支（PNG生成stub）不上传或删除旧附件、真实错误窗口。4个Trello场景加既有Visio/Lucidchart等共53组、零pageerror，1440明色/390暗色，全部断言全局TrelloClient仍为null；finally恢复原方法/XHR/SDK/Editor flag并关闭自建context。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle49-browser-optional/result.json"
+    },
+    {
+      "result": "PASS",
+      "command": "python3 scripts/agent-route.py verify quick",
+      "receipt": ".agent-state/verify-20261027T044822874640Z.log",
+      "fingerprint": "d8c1338480e0b3e8ea5e596f16a674d74b6b0ca4008e0570801e04a21808c82c"
+    },
+    {
+      "result": "PASS",
+      "command": "AIDE_TERSER_MODULE=/workspace/.aide-cloud/issue-review-tools/node_modules/terser node scripts/sync_drawio_trello_limits.cjs --check; node --check (3 new scripts, source TrelloClient, whole app.min); python3 scripts/check_docs.py; git diff --check",
+      "observed": "429Markdown/1469links；app.min在writeFile之外字节不变。"
+    }
+  ],
+  "preflightFailures": [
+    {
+      "result": "FAIL_TEST_ASSUMPTION_OPTIONAL_DISABLED",
+      "observed": "首次浏览器测试直接读TrelloClient.prototype得到null错误，复核既有inventory的optional结论及App清理逻辑。改为App.main前捕获真实已加载构造器做隔离调用，保持全局null，不把它算成产品连接失败或默认可达证据。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle49-browser-final.log"
+    },
+    {
+      "result": "FAIL_WHITESPACE",
+      "observed": "最初新增空行继承tab产生diff trailing whitespace，quick前清掉；同步产物字节不变，最终diff/quick通过。"
+    }
+  ],
+  "securityReview": [
+    "字符串按原上传方式变为Blob，按该对象size检查并提交同一对象；Blob/File保留原对象。保持>=边界及原10MB配置，消息用实际附件字节。",
+    "默认Trello集成仍禁用；测试捕获的是清理前构造器，不把全局重新启用。授权及XHR全部mock，发送地址为owned-upload.invalid且不走网络，未读取用户真实SDK凭据或发送真实上传/删除。",
+    "不改变通用文件传输或声称限制整个进程内存；这里只管Trello附件本体字节，不计multipart其他字段。根协调者顺序承担角色，无子agent。"
+  ],
+  "notRun": [
+    "完整Aide工作台Trello菜单、真实Trello账户/授权/网络上传/401重试、PNG真实生成、其他云端集成及跨平台。默认AIDE入口未启用此可选路径，不能把库测试算成默认集成上线。",
+    "Go race/vet未重复，本批前端可选客户端与回归工具。"
+  ],
+  "notes": [
+    "该项原reviewVerdict为source-confirmed-optional，保留该历史结论；修复与测试可选库路径，不夸大默认产品影响。",
+    "现有大小边界保持为达到10000000字节即拒绝；字符串Blob的UTF-8转换与实际FormData一致。",
+    "只更新TrelloClient.js/app.min对应writeFile；无Trello实现的extensions/integrate未改。",
+    "保留用户原未跟踪文件，无常驻服务；只push修复分支，不合并main/发行/部署。下一181最新正文已读，未改代码或新增回归。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "180": "https://github.com/skyelan1999/aide/issues/180#issuecomment-6434054719"
+    },
+    "remoteCommit": "d5808f510f28e174b6c702e2df0196d1c5edfb67"
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "ed1fa6b1455b1181cf46b6b0db6ef87725b2efe9bf5b81ba172e303e14eaf6fc",
+    "docs/architecture/office-viewer.md": "4c51f1ec965053a5a07813c9910f77017dcfe67eedc5338111a6925ef45326ae",
+    "internal/server/web/vendor/drawio/js/app.min.js": "087c2d11bc28ad518d0e1462ef2307c9edf09964330ae73d677735257ae5a3c2",
+    "internal/server/web/vendor/drawio/js/diagramly/TrelloClient.js": "6c7efef4097dc8c7c69fdb3ad498e9e8318b1f983872f0caf7f6d8d418f99263",
+    "scripts/browser-drawio-preview-bounds.cjs": "dcfba5bf3f62d3a459009a9798db09ef77c7c83359eb2be3bedc0f4346b51da5",
+    "scripts/drawio-trello-browser-cases.cjs": "e57bed8f473f9f00e43ec551320423244f12711ca82992ba0d096059a6a17d5d",
+    "scripts/sync_drawio_trello_limits.cjs": "ac034c16358226f66af1d757fe3592812fc3157f25f4d5ad7b00ddf2d90ddd79",
+    "scripts/test_drawio_trello_limits.cjs": "617b2375d23351520fbf75f64e6d171537b66d93f6f4ec834a543a6cc93f0f86"
+  }
+}

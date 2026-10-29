@@ -29,21 +29,63 @@ const (
 // liveOutputMaxBytes 每个会话保留的最近输出上限（约 100KB），超出后截断不再追加。
 const liveOutputMaxBytes = 100 << 10
 
+// The live mirror is a bounded cache, not a transcript store. Active entries are
+// pinned; at saturation a new mirror is omitted rather than dropping active output.
+const liveOutputMaxRuns = 256
+
 type liveRun struct {
 	buf    strings.Builder
 	status string
 	bytes  int
+	used   uint64
 }
 
 // StreamBroker 按 sessionID 隔离的实时输出缓冲。零值不可用，用 NewStreamBroker 构造。
 type StreamBroker struct {
-	mu   sync.Mutex
-	runs map[string]*liveRun
+	mu    sync.Mutex
+	runs  map[string]*liveRun
+	clock uint64
 }
 
 // NewStreamBroker 构造一个空 broker。
 func NewStreamBroker() *StreamBroker {
 	return &StreamBroker{runs: map[string]*liveRun{}}
+}
+
+// Caller holds b.mu. Evict the least recently used terminal entry first.
+func (b *StreamBroker) newRunLocked(sessionID, status string) *liveRun {
+	if b.runs[sessionID] == nil && len(b.runs) >= liveOutputMaxRuns {
+		oldestID := ""
+		var oldest uint64
+		for id, run := range b.runs {
+			if run.status != streamRunning && (oldestID == "" || run.used < oldest) {
+				oldestID, oldest = id, run.used
+			}
+		}
+		if oldestID == "" {
+			return nil
+		}
+		delete(b.runs, oldestID)
+	}
+	run := &liveRun{status: status}
+	b.runs[sessionID] = run
+	return run
+}
+
+func (b *StreamBroker) touchLocked(run *liveRun) {
+	b.clock++
+	run.used = b.clock
+}
+
+// Delete releases a deleted session's cache. App live-task fencing prevents
+// delayed callbacks from recreating it; the broker needs no unbounded tombstones.
+func (b *StreamBroker) Delete(sessionID string) {
+	if b == nil {
+		return
+	}
+	b.mu.Lock()
+	delete(b.runs, sessionID)
+	b.mu.Unlock()
 }
 
 // Publish 发布一次流式事件。
@@ -62,22 +104,30 @@ func (b *StreamBroker) Publish(sessionID, chunk, status string) {
 	switch status {
 	case streamRunning:
 		// 新一轮开始：重置缓冲（最近一次运行的输出）。
-		b.runs[sessionID] = &liveRun{status: streamRunning}
+		if run := b.newRunLocked(sessionID, streamRunning); run != nil {
+			b.touchLocked(run)
+		}
 		return
 	case streamDone, streamInterrupted, streamFailed:
 		run := b.runs[sessionID]
 		if run == nil {
-			run = &liveRun{}
-			b.runs[sessionID] = run
+			run = b.newRunLocked(sessionID, status)
+			if run == nil {
+				return
+			}
 		}
 		run.status = status
+		b.touchLocked(run)
 		return
 	default: // 增量（status==""）
 		run := b.runs[sessionID]
 		if run == nil || run.status != streamRunning {
-			run = &liveRun{status: streamRunning}
-			b.runs[sessionID] = run
+			run = b.newRunLocked(sessionID, streamRunning)
+			if run == nil {
+				return
+			}
 		}
+		b.touchLocked(run)
 		if chunk == "" || run.bytes >= liveOutputMaxBytes {
 			return
 		}
@@ -104,5 +154,6 @@ func (b *StreamBroker) GetSessionLiveOutput(sessionID string) (text, status stri
 	if !ok {
 		return "", "", false
 	}
+	b.touchLocked(run)
 	return run.buf.String(), run.status, true
 }

@@ -1,0 +1,98 @@
+[
+  {
+    "issue": 435,
+    "source": "@startuml\n!$hasOwnProperty = \"x\"\nAlice -> Bob\n@enduml"
+  },
+  {
+    "issue": 444,
+    "source": "@startgantt\n[hasOwnProperty] lasts 1 day\n[Other] starts at [hasOwnProperty]'s end\n@endgantt"
+  },
+  {
+    "issue": 468,
+    "source": "@startsalt\n{*\n  File | Edit\n  hasOwnProperty | New | Open File\n}\n@endsalt"
+  },
+  {
+    "issue": 470,
+    "source": "@startuml\n!$BGCOLOR = \"#111111\"\n!theme hacker\nAlice -> Bob: hello\n@enduml"
+  },
+  {
+    "issue": 471,
+    "source": "@startuml\n!theme mars\nparticipant Client\n@enduml"
+  },
+  {
+    "issue": 472,
+    "source": "@startuml\n!$FNT = \"Courier New\"\n!theme mono\nAlice -> Bob: hello\n@enduml"
+  },
+  {
+    "issue": 473,
+    "source": "@startnwdiag\n!theme sandstone\nnetwork dmz {\n  web01;\n  web02;\n}\n@endnwdiag"
+  },
+  {
+    "issue": 475,
+    "source": "@startuml\n!$obj = { \"hasOwnProperty\": \"x\" }\n!assert %size($obj) == 1\nAlice -> Bob\n@enduml"
+  },
+  {
+    "issue": 476,
+    "source": "@startuml\n<style>\nroot {\n--hasOwnProperty: 12\nFontSize var(--hasOwnProperty)\n}\n</style>\nAlice -> Bob\n@enduml"
+  },
+  {
+    "issue": 477,
+    "source": "@startuml\n<style>\nclassDiagram {\n.constructor { BackGroundColor red }\n}\n</style>\nclass Alice\n@enduml"
+  },
+  {
+    "issue": 478,
+    "source": "@startuml\nparticipant hasOwnProperty\nparticipant Bob\nhasOwnProperty -> Bob : call\n@enduml"
+  },
+  {
+    "issue": 479,
+    "source": "@startuml\nstate \"__proto__\"\nstate A\n\"__proto__\" --> A\n@enduml"
+  },
+  {
+    "issue": 481,
+    "source": "@startuml\nclass \"constructor\"\nclass A\n\"constructor\" --> A\n@enduml"
+  },
+  {
+    "issue": 482,
+    "source": "@startuml\n|__proto__|\nstart\n:work;\nstop\n@enduml"
+  },
+  {
+    "issue": 483,
+    "source": "@startuml\n[__proto__]\n[B]\n[__proto__] --> [B]\n@enduml"
+  },
+  {
+    "issue": 484,
+    "source": "@startuml\n[A|B]\n[C]\n[A|B] --> [C]\n[A]\n[B|C]\n[A] --> [B|C]\n@enduml"
+  },
+  {
+    "issue": 485,
+    "source": "@startuml\nobject hasOwnProperty\n@enduml"
+  },
+  {
+    "issue": 488,
+    "source": "@startuml\nactor constructor\nusecase A\nconstructor --> A\n@enduml"
+  },
+  {
+    "issue": 490,
+    "source": "@startnwdiag\nnwdiag {\n  network dmz {\n    constructor;\n  }\n}\n@endnwdiag"
+  },
+  {
+    "issue": 491,
+    "source": "@startuml\nPerson(constructor, \"Constructor\")\n@enduml"
+  },
+  {
+    "issue": 492,
+    "source": "@startwbs\n*(root) Root\n**(hasOwnProperty) Task A\n**(B) Task B\nhasOwnProperty --> B\n@endwbs"
+  },
+  {
+    "issue": 494,
+    "source": "@startgantt\nProject starts 2021-01-01\n2021-01-01 to 2021-01-02 are named [hasOwnProperty]\n@endgantt"
+  },
+  {
+    "issue": 495,
+    "source": "@startuml\n    !include <archimate/Archimate>\n    Application_Service(__proto__, \"Source\")\n    Application_Component(Target, \"Target\")\n    Rel_Assignment(__proto__, Target, \"assigns\")\n    @enduml"
+  },
+  {
+    "issue": 496,
+    "source": "@startuml\nrobust Robust as R\n@0\nR is Idle\n@100\nR is __proto__\n@enduml"
+  }
+]

@@ -18,8 +18,8 @@ var (
 )
 
 type localRootOpening struct {
-	started time.Time
-	done    chan struct{}
+	deadline time.Time
+	done     chan struct{}
 }
 type localRootOpenState struct {
 	mu      sync.Mutex
@@ -38,6 +38,7 @@ type localRootResult struct {
 func (a *App) openLocalSourceRoot(ctx context.Context, candidate string) (*os.Root, error) {
 	bounded, cancel := context.WithTimeout(ctx, localRootOpenTimeout)
 	defer cancel()
+	deadline, _ := bounded.Deadline()
 	var stopped <-chan struct{}
 	if a.bgCtx != nil {
 		stopped = a.bgCtx.Done()
@@ -61,7 +62,7 @@ func (a *App) openLocalSourceRoot(ctx context.Context, candidate string) (*os.Ro
 		}
 		if prior := state.pending[candidate]; prior != nil {
 			state.mu.Unlock()
-			if time.Since(prior.started) >= localRootOpenTimeout {
+			if !time.Now().Before(prior.deadline) {
 				return nil, errLocalRootPending
 			}
 			select {
@@ -80,7 +81,9 @@ func (a *App) openLocalSourceRoot(ctx context.Context, candidate string) (*os.Ro
 			state.mu.Unlock()
 			return nil, errLocalRootCapacity
 		}
-		entry := &localRootOpening{started: time.Now(), done: make(chan struct{})}
+		// Reuse the initiating request's deadline: admission may happen later,
+		// and the caller may also have supplied a shorter timeout.
+		entry := &localRootOpening{deadline: deadline, done: make(chan struct{})}
 		state.pending[candidate] = entry
 		opener := state.open
 		if opener == nil {

@@ -1,0 +1,198 @@
+{
+  "cycle": 69,
+  "baseline": "c1cd5842c86af56e9b404234db17206e517823e8",
+  "issues": [
+    234,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    256,
+    257,
+    258
+  ],
+  "fixes": {
+    "234": "DOCX 超链接仅允许 HTTP/HTTPS/mailto 和相对/片段地址；不宣称默认CSP下已复现脚本执行",
+    "240": "异步库闭包捕获 entry/k，预载回调也设置并重置索引归属",
+    "241": "Canvas miterLimit 正确写入 miterLimit 而不改 lineJoin",
+    "242": "Canvas 渐变按东南西北方向生成实际坐标",
+    "243": "DOCX 符号仅解析合法 Unicode 十六进制码点并写 textContent",
+    "244": "DOCX 生成样式在隔离作用域的 CSSOM stylesheet 中应用，保持默认CSP；支持编号伪元素和释放",
+    "245": "三份 DOMPurify 升至官方3.4.16，保留 Graph 的 SVG 安全hook",
+    "246": "RoughJS 零/非有限周期停止生成填充虚线，超额次数在循环前拒绝",
+    "250": "Goldmark 强调快速路径有界，长行/不匹配候选回到标准解析器",
+    "251": "Goldmark 引用定义移除改成一次线性压紧段落行",
+    "252": "TTS 四模型及 espeak 固定 SHA256，离线验证支持可信摘要，缺失/不匹配即失败；临时目录验证完整再安装",
+    "253": "PNG 图纸元数据流式有界解压，zlib/raw 兼容；解码前限制输入且超限不退到第二次解压",
+    "254": "超大 XML/SVG 导出 fallback 使用传入 data",
+    "255": "Rect2 双线/框架右上内轮廓保留选定角样式",
+    "256": "零长度段采用有限方向，空/单点安全退出；真实link/pipe/flexArrow句柄无NaN",
+    "257": "层次布局边标签几何临时变量本地声明",
+    "258": "view XML 注册函数样式按名称序列化，未知函数省略"
+  },
+  "cumulativeProductFixes": 188,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 189,
+  "original272RemainingFollowup": 98,
+  "batchTarget": 50,
+  "batchVerified": 50,
+  "batchPushed": 50,
+  "priorityRefresh": "2026-10-28 owner report set unchanged;464/467 have no new runtime log.",
+  "red": {
+    "runtime": "/workspace/scratch/issue-review-20261026/cycle69-red/result.json",
+    "docx": "/workspace/scratch/issue-review-20261026/cycle69-docx-red/observed.json",
+    "purify": "/workspace/scratch/issue-review-20261026/cycle69-purify-red.json",
+    "rough": "/workspace/scratch/issue-review-20261026/cycle69-rough-red.json",
+    "png": "/workspace/scratch/issue-review-20261026/cycle69-png-red.log",
+    "tts": "/workspace/scratch/issue-review-20261026/cycle69-tts-red.log",
+    "goldmark": "/workspace/scratch/issue-review-20261026/cycle69-goldmark-red.log"
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 22,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle69-final/result.json",
+      "scope": "Owned actual iframe,source/app/integrate × light1440/dark390;real Canvas pixels,asynchronous callback attribution,layout/view XML,actual link/pipe/flexArrow handles,DOMPurify hooks,RoughJS and PNG limits. integrate does not bundle mxJsCanvas;its separately shipped source is tested,not a nonexistent bundle copy."
+    },
+    {
+      "result": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle69-docx-final/observed.json",
+      "scope": "Real DOCX under actual server CSP:unsafe/safe/fragment links,Unicode/injected markup,styled span andpage layout,numbered pseudo-element,Range,two previews isolated andadopted styles removed. Screenshot inspected."
+    },
+    {
+      "result": "PASS",
+      "checks": 188,
+      "fingerprint": "4213c535e609aee793cfafa8c765d884f525481ab82b54098642dc711708eda0",
+      "receipt": ".agent-state/verify-20261028T032307645196Z.log"
+    },
+    {
+      "result": "PASS",
+      "command": "go test ./scripts/goldmark-review -run Test -bench . -benchtime=1x -count=1 -v",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle69-goldmark-green.log",
+      "scope": "3 semantic/scaling tests;64KiB pathological emphasis about1.5s to11ms on this host;single-run timing only,not throughput guarantee."
+    },
+    {
+      "result": "PASS",
+      "command": "go test ./internal/server -run 'TestKnowledge.*(Markdown|Reference|Conclusion)' -count=1",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle69-server-green.log"
+    },
+    {
+      "result": "PASS",
+      "scope": "CommonMark0.31.2 all652 examples:node kinds,positions anddecoded values identical to original via readonly Gooverlay",
+      "proof": {
+        "examples": 652,
+        "ASTkindPositionAndValueIdentical": true,
+        "sha256": "fb3aacfb7800402cc60b960d1fa16e5223228871cb3067c5bbe08a499cdf8001"
+      }
+    },
+    {
+      "result": "PASS",
+      "scope": "9 synthetic actual shell installer tests andall5 real official archives verify expected fixed SHA256. No model installation/execution.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle69-tts-real-archives.json"
+    },
+    {
+      "result": "PASS",
+      "scope": "Three bundles byte-identical outside reviewed function spans and2vendor bodies;Terser runtime/palette sync;docs anddiff checks.",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle69-bundle-scope.json"
+    },
+    {
+      "result": "PASS",
+      "checks": 34,
+      "evidence": "/workspace/scratch/issue-review-20261026/fifty-final/result.json",
+      "scope": "All three batches combined after vendor/runtime changes,light/dark andsource/app/integrate;previous33palette fixes rechecked. Errors[]."
+    }
+  ],
+  "corrections": [
+    "First sync implementation removed a closing brace from a function-declaration minification result;fixed using terminal-semicolon removal only,restored only owned bundle edits from committed baseline andresynced;final syntax/browser passed.",
+    "Official DOMPurify download lacks terminal newline;explicit newline retained when embedding toavoid swallowing followinglicense comment;final syntax/browser passed.",
+    "Initial quick sandbox denied local sockets/controlled subprocesses;rerun with isolated test permissions passed all188.",
+    "View XML harness first modified temporary states that are rebuilt by getViewXml;now registers styles onstylesheet beforetesting.",
+    "DOCX fixture expected paragraph style but actual rule targets span;corrected actual span assertion;numbering,scopeandcleanup checked."
+  ],
+  "securityReview": [
+    "No rootCSP weakening:scoped CSSOM selectors preserve pseudo-elements;preview font names isolated andowned stylesheet cleanup guarded against canceled loads.",
+    "Untrusted hyperlink schemes rejected andsymbolmarkup never parsed;no AIDE-origin exploit claimed from staticreport.",
+    "PNG limits stop stream retention before oversized XML;limiterrors bypass raw fallback;ordinary/raw/tEXt controls preserved.",
+    "DOMPurifyofficial3.4.16 compared toofficialtagdiff;license retained;SVG hooks remain andunsafe detachedattributes removed without executing payloads.",
+    "TTS initial pins trust official HTTPS release assets andexactAPI sizes;chaowen also matches API digest;these areintegrity pins,notvendorsignatures. Mirrors cannotchoosehash.",
+    "Only synthetic documents/archives/browser contexts;no realdevices,paidmodels,usercredentiallogs orproductionchanges."
+  ],
+  "notRun": [
+    "Full workbench File-menu import/export/custom-library UI ormanualpointer acceptance.",
+    "Native Windows/macOS runtime andlive TTS inference;Windows464/467 remain pendingfeedback.",
+    "Embedded DOCX fonts underdefaultfontpolicy andfullcommenteditworkflow;DOM Range compatibility checked.",
+    "Main merge,Release/tag,deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "remoteSourceCommit": "df4f5152dd0503fcc63f956c1c37af162b0f9d93",
+    "issueComments": {
+      "234": "https://github.com/skyelan1999/aide/issues/234#issuecomment-6459871470",
+      "240": "https://github.com/skyelan1999/aide/issues/240#issuecomment-6459871955",
+      "241": "https://github.com/skyelan1999/aide/issues/241#issuecomment-6459872372",
+      "242": "https://github.com/skyelan1999/aide/issues/242#issuecomment-6459872855",
+      "243": "https://github.com/skyelan1999/aide/issues/243#issuecomment-6459873319",
+      "244": "https://github.com/skyelan1999/aide/issues/244#issuecomment-6459873720",
+      "245": "https://github.com/skyelan1999/aide/issues/245#issuecomment-6459874150",
+      "246": "https://github.com/skyelan1999/aide/issues/246#issuecomment-6459874592",
+      "250": "https://github.com/skyelan1999/aide/issues/250#issuecomment-6459874977",
+      "251": "https://github.com/skyelan1999/aide/issues/251#issuecomment-6459875409",
+      "252": "https://github.com/skyelan1999/aide/issues/252#issuecomment-6459875867",
+      "253": "https://github.com/skyelan1999/aide/issues/253#issuecomment-6459876232",
+      "254": "https://github.com/skyelan1999/aide/issues/254#issuecomment-6459876722",
+      "255": "https://github.com/skyelan1999/aide/issues/255#issuecomment-6459877144",
+      "256": "https://github.com/skyelan1999/aide/issues/256#issuecomment-6459877681",
+      "257": "https://github.com/skyelan1999/aide/issues/257#issuecomment-6459878098",
+      "258": "https://github.com/skyelan1999/aide/issues/258#issuecomment-6459878494"
+    }
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "2017dd7cdb3037ebac76bd8398d2d37894f6debc3b21c7a2ec44720aa9321174",
+    "docs/security/tts-local.md": "bfb5d98d70c596473b840788a6764e59c1687fc94b0c4c931dab4a8c7b7cbe4f",
+    "internal/server/web/app.js": "2f7d1ed2ce7b4d96c545324d28d9d1989412dbf58b833414d62f4799ec08c292",
+    "internal/server/web/index.html": "f1516c1fdf18c374feeadf98c9f22cd993a771ae7f8cea4798dcaddbaf8bb3b6",
+    "internal/server/web/vendor/docx-preview/README.md": "93bd8a323db9ea7545bec27565241bd0050361454cc3a7b4fc5ff7f522b76a7f",
+    "internal/server/web/vendor/docx-preview/docx-preview.min.js": "8a221472fbb5b3c2291766ab643e3b38eeb9322ba0df122ae4f0fa25868f3aa9",
+    "internal/server/web/vendor/drawio/js/app.min.js": "4857b1f16e4096ad362d02db59f52b4ef7761bef269850abb3db38d298e6677a",
+    "internal/server/web/vendor/drawio/js/diagramly/sidebar/Sidebar.js": "cde91f19f08c38ae7eb26a9a152ef12778713c6e3f1b65a45577ad7b9d613e1e",
+    "internal/server/web/vendor/drawio/js/diagramly/util/mxJsCanvas.js": "14860dda6044623b076884e34f360b5ec9f65b54d7de15313dadbc5360f6922a",
+    "internal/server/web/vendor/drawio/js/grapheditor/Dialogs.js": "aeeeb4e7df64d513534abcf7a63b1962c798dd888420c1a49f50ffb5fdbcc126",
+    "internal/server/web/vendor/drawio/js/grapheditor/Editor.js": "7a8f54aa361b92db2b5e82056c343aa014693d6125af85dceb6e6500b6e4a20a",
+    "internal/server/web/vendor/drawio/js/grapheditor/Shapes.js": "15594506e6f655d8d65bcf85001ad63d3ea83a32d1a74c4f0e08454b23a1c468",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "af5987cf679aae61cbe42fb0d2b5e76e3ecfc4998c3bbd84e92d64c5f4f8426d",
+    "internal/server/web/vendor/drawio/js/rough/README.md": "495005f87e6c5823c6fa1810b8f07fe11e925f50ed8365347ceabfc5853d12d5",
+    "internal/server/web/vendor/drawio/js/rough/rough.min.js": "8ca416f989883943aa2a5e833d3fc953d38d52017042337a2fb75c57de4c846e",
+    "internal/server/web/vendor/drawio/js/sanitizer/purify.min.js": "a701508f037a33500e987d2c555e5c9c0ae307bdd41e20b0b8110ef0a4eed07b",
+    "internal/server/web/vendor/drawio/mxgraph/mxClient.js": "b8aa11a385d8e8d811a883fa55d440c243f681134edbb9e3fe0f6b8fd923d778",
+    "internal/server/web/vendor/drawio/mxgraph/src/io/mxGraphViewCodec.js": "c812f7c6f4e4efe6aea9cc8093999f054416d65c72226e9380a17a8a26309f2f",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/stage/mxCoordinateAssignment.js": "e9f70bbf0b262f0e263084078aa790db6d543a5bf506c66e76b0b29ed8e57e46",
+    "scripts/browser-drawio-preview-bounds.cjs": "2c9b5257aa43d70ee2439b78c23e6f9741e24e1b9715c2c97de76cebeee156fc",
+    "scripts/test_docx_preview_bounds.cjs": "e4dd472be42d43c39db05ccb33e4cb101852ce3c6091c53ebc5c47dd3fce5f1c",
+    "scripts/tts-setup": "7e96d3869301ac4a8aba97ff7bb001def6a167577cec919d9800f3d13332b292",
+    "vendor/github.com/yuin/goldmark/v2/parser/delimiter.go": "d36aa08f49336b53c3fd63e15b1f65a6c19fab43702f3c9aefefae2a9f006c73",
+    "vendor/github.com/yuin/goldmark/v2/parser/link_ref.go": "374176bde24629e230b32e28122b99bb29192ee1628a03662f317222c302447b",
+    "docs/security/tts-model-checksums.json": "c12780d1c0a839b55d4385b0d783e79ccf58799df840fce573f38d0a2726e49c",
+    "internal/server/web/docx-style-bridge.js": "4ab254c09d1bc44c9d2d1bb0851f8dd05a6a4ef6465c0aac515f5b2c57d4ace3",
+    "scripts/browser-docx-issue-review.cjs": "c5a4e58f1d9620ba7ee41bd6d39a58fddd75291158fd1a1f857e5ccc96334596",
+    "scripts/drawio-import-security-browser-cases.cjs": "6713cc4b1ab468e251ef75a4201598e92be808de7b17e32df8466cffec624c3e",
+    "scripts/drawio-runtime-issue-browser-cases.cjs": "6972b2f82a0609085af48333cda9e6f22b5fc76f067a6c49b9e7172f3f848a7d",
+    "scripts/drawio-runtime-issue-review.cjs": "a9adc6bfa841f8fab90bdfad235b272d6dd0613529fee135519320367d6297c6",
+    "scripts/goldmark-review/main_test.go": "6bbd6505b698990b40eba985f7480a97338d09610485d2976f0317de1fb2fcfb",
+    "scripts/sync_drawio_runtime_issues.cjs": "8ff94c0d2e7c42783e44397ae5cf8075b5d338002414a891a88c697a9c4e6f1c",
+    "scripts/test_drawio_png_import.cjs": "3b7f48283630a5be99a0d7752deadc352b6e518518475bd7f1eb0a332a7f0a97",
+    "scripts/test_tts_archive_integrity.py": "9e045b25c9f69ca6aae8ce7a46b32c1f784dd53538859b7921d5ba066a7b871d",
+    "vendor/github.com/yuin/goldmark/v2/AIDE_PATCHES.md": "d72c80ca278792020cb31c0187db0c22bd635595a572db480a1efbc017a4ba40"
+  }
+}

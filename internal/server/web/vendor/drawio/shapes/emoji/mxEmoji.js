@@ -1919,7 +1919,7 @@ mxShapeEmoji.prototype.getUnicodeText = function(emoji)
 
     if (emoji != '')
     {
-        emojiUnicode = this.emojis[emoji];
+        emojiUnicode = Object.prototype.hasOwnProperty.call(this.emojis, emoji) ? this.emojis[emoji] : null;
 
         if (emojiUnicode == null)
         {

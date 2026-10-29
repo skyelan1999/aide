@@ -1,0 +1,141 @@
+{
+  "cycle": 70,
+  "baseline": "5c7ce8b96cc9e82718e7e3640852500672351271",
+  "issues": [
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    306
+  ],
+  "fixes": {
+    "259": "Swimlane rank uses reachable DAG topological longest chains;cycles explicitly rejected after documented cycle-removal prerequisite",
+    "260": "Cache opposite terminals andaggregate signed parallel-edge counts once;preserve directed/undirected incoming offset semantics",
+    "261": "Consume sorted median rank by cursor whilepreserving reserved cells",
+    "262": "Reset six row arrays androot/node perradial execution;different instances anddeep-to-shallow remainisolated",
+    "263": "SingleColumnLeft/Right choose matching actualOrgChart strategies inall3bundles",
+    "264": "ZIP preview checksrawbytes/centralmetadata beforeJSZip,cap1000 entries,render100rows/page;downloadpreserved",
+    "265": "Resolve gradient colors before endpointtransparency;stops0/1 retain configureCanvas opacitywithout doublemultiplication",
+    "266": "Generic appliance dotsusehalf incoming alpha,resource restoresincoming alpha inclmissingstyle",
+    "267": "Monitoring referencesexisting cloud_monitoring;unsupportedResourceManager duplicate removed;oldIAMsavedvaluesretained",
+    "306": "Adjacent radial method nowreturns safelywhenno usable root/node remains"
+  },
+  "cumulativeProductFixes": 198,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 199,
+  "original272RemainingFollowup": 88,
+  "batchTarget": 50,
+  "batchVerified": 10,
+  "batchPushed": 10,
+  "red": {
+    "layout": "/workspace/scratch/issue-review-20261026/cycle70-layout-red.log",
+    "render": "/workspace/scratch/issue-review-20261026/cycle70-browser-red/light-second-layout-source.json",
+    "org": "/workspace/scratch/issue-review-20261026/cycle70-org-red.json",
+    "zip": "/workspace/scratch/issue-review-20261026/cycle70-zip-red/result.json"
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 20,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle70-browser-green/result.json",
+      "scope": "Real ownediframe,source/app+shapes/integrate/core+viewer ×light/dark;radialinstances,emptytree,SVGgradientstops,Canvasalpha,resourceIDs;actualOrgChart mode5/6 usesoriginalloadedBridge."
+    },
+    {
+      "result": "PASS",
+      "checks": 2,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle70-zip-final/result.json",
+      "scope": "ActualZIPviewer withrealthemeCSS at1440/390;205entries page100/100/5,prevnextbuttons,1001entries rejectedbeforeJSZip,downloadlinkretained."
+    },
+    {
+      "result": "PASS",
+      "command": "node scripts/drawio-layout-second-review.cjs",
+      "scope": "4implementations:18-layerDAG clonebudget,40independent brute-forceDAGoracles,linear terminalaccesses,parallel edge controls,reservedmedianorder."
+    },
+    {
+      "result": "PASS",
+      "command": "node scripts/test_zip_preview_bounds.cjs",
+      "scope": "Centralcount/malformed/truncated/headerbyteguard;normal/empty controls;DOCX/DXFexistingtestsalso pass."
+    },
+    {
+      "result": "PASS",
+      "checks": 190,
+      "fingerprint": "6916cfa1d5c6ca4e270a292fec4a071c1e9c16a4825f299374c6bee4895584d1",
+      "receipt": ".agent-state/verify-20261028T042659839820Z.log"
+    }
+  ],
+  "corrections": [
+    "Initial shape harness omittedstate.view;filledrealgraphview andreran baseline.",
+    "Radial control initially observedroot geometry affectedbyparent layout;disableparentresize andobserveunrelateddeep leafinstead;test nowmatchesreportedstale-rowbehavior.",
+    "Source DAGoracle normalizedholes toavoidfailingonsparsearray representation.",
+    "OrgChart alreadyloadedBridge fromextensions;reloadingruntimecausedhashhelperconflict.Harness nowreusesactualruntimeandpatchesextensions/orgchart/integrate copies.",
+    "ZIP initial isolatedbody retainedworkbenchgridand lackedthemes;finalharnessusesrealthemeCSSandcomponent-sizedhost.Screenshotinspected."
+  ],
+  "deferred": [
+    {
+      "number": 249,
+      "reason": "Upstream reproduction pointsequence secured;PR113 and116 remainunmerged withconflictingcorner/vector/endcapchanges.No narrowgeometryfixverified;continueotherreports,notcounted."
+    }
+  ],
+  "securityReview": [
+    "ZIPonlylistmetadata,noextraction/decompression;64MiBpreviewbounddoesnotlimitfiletransfer/download.",
+    "Genericcentralpreflight retainsDOCXdefaultsandpart/aggregatechecks;ZIPownconfigurationdoesnotinflatepayload.",
+    "No userfiles/productionservices/realdevices/models changed;ownedbrowser contextsclosed."
+  ],
+  "notRun": [
+    "Fullworkbenchmanualmenus/nativeWindows;allshapesvisualcatalogue.",
+    "SwimlaneAPIactualUIcallerunestablished;nodeDAGandrankoraclesverified.",
+    "ZIP64/multidisk/encryptedpreviewunsupportedandrejected;downloadfallbackpreserved.",
+    "Mainmerge,Release/tag,deployment."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "remoteSourceCommit": "e567424c8ccccf85a4ba7fad35ef77f2d5b4fccf",
+    "issueComments": {
+      "259": "https://github.com/skyelan1999/aide/issues/259#issuecomment-6460742743",
+      "260": "https://github.com/skyelan1999/aide/issues/260#issuecomment-6460743333",
+      "261": "https://github.com/skyelan1999/aide/issues/261#issuecomment-6460744237",
+      "262": "https://github.com/skyelan1999/aide/issues/262#issuecomment-6460744797",
+      "263": "https://github.com/skyelan1999/aide/issues/263#issuecomment-6460745103",
+      "264": "https://github.com/skyelan1999/aide/issues/264#issuecomment-6460745460",
+      "265": "https://github.com/skyelan1999/aide/issues/265#issuecomment-6460745866",
+      "266": "https://github.com/skyelan1999/aide/issues/266#issuecomment-6460746216",
+      "267": "https://github.com/skyelan1999/aide/issues/267#issuecomment-6460746605",
+      "306": "https://github.com/skyelan1999/aide/issues/306#issuecomment-6460746893"
+    }
+  },
+  "sourceSHA256": {
+    "docs/agent/router.json": "e9141c64191a442d63b05e4e723e2c9a76e58ebc1ad09fdee64218dea16bb3f1",
+    "internal/server/web/app.js": "ded41e7b9780cdae6641a29482ca567832f537ee402d92b19ffcd1e62d2ccf07",
+    "internal/server/web/locales/en.js": "22fc820ae2474e56f4df3580a1cf68fa6217aa3d5e4682488dfa13ca46631b15",
+    "internal/server/web/preview-safety.js": "5a2fe444bfcc0f595aeec3b8ff136f2f89bd3f2efd8cb2127a884ccc2d55ed62",
+    "internal/server/web/style.css": "32dfa5d5d528a5766016b31391096d2949dd853cecab0a5ef6a35109b0e0cc4b",
+    "internal/server/web/vendor/drawio/js/app.min.js": "13e4cdae2c680b700b04bb5752426c6c1f78232a8e3c8d5a4b3cb9e74f7785d3",
+    "internal/server/web/vendor/drawio/js/extensions.min.js": "c3a283911188a06e37da72b35f0e49b69d0eec88a44a954371aa1db85bd72898",
+    "internal/server/web/vendor/drawio/js/integrate.min.js": "7a46c07e80d6d3a1db232eff682abb23abe01ac77d865afc9af5029d67ef2ae2",
+    "internal/server/web/vendor/drawio/js/orgchart.min.js": "20adbef93ab77b2f1289206cce48b558258642011f0ffae54f08469b26e50d5d",
+    "internal/server/web/vendor/drawio/js/orgchart/mxOrgChartLayout.js": "c7dcef5ddf3b3cdf0b393e6327760f9994d24900cf870db9ceefcce123bfd1ae",
+    "internal/server/web/vendor/drawio/js/shapes-14-6-5.min.js": "fabfc366c75ad4d11b141d2cd7eb38cdb19e98e6ab4d80bf84e7f6558125819f",
+    "internal/server/web/vendor/drawio/js/viewer-static.min.js": "a4510d615b88a3a7fc6970c4a3b7224f5236f09d1cead98905061ec8692ee6f3",
+    "internal/server/web/vendor/drawio/mxgraph/mxClient.js": "f9f216a2590b3b08e7d207949800e54ba23bd3ccb39d3651b0bb83be0482c211",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/model/mxSwimlaneModel.js": "1ced67fbd5b3842a50cd540f7d096160fe2408879090af97639c41f21da5b62b",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/mxHierarchicalLayout.js": "96ce7a62faeb3e0766f265a8a4cb7844e4691c45711f8fbecde8e6a88f437bc8",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/hierarchical/stage/mxMedianHybridCrossingReduction.js": "e6013e8ef9ee62bc81d604091349fa9a8e4515e1f0784bded880d971e06b4a11",
+    "internal/server/web/vendor/drawio/mxgraph/src/layout/mxRadialTreeLayout.js": "2bfb5ae5dcdae8cf87cdaba7d0d62129aa64d437e3794c7d9089ae8c222dddf7",
+    "internal/server/web/vendor/drawio/shapes/mxAWS4.js": "8e8f7125db32842cd5633a2b69e118f98e9d726cf77c451e0286e419d7ebb8bc",
+    "internal/server/web/vendor/drawio/shapes/mxCiscoSafe.js": "df82a5fa0f49d0d85d17325a165ebd5cb54ddbd4cdcf630503f0fce051c5e17a",
+    "internal/server/web/vendor/drawio/shapes/mxGCP2.js": "54d858ca16fd9db9c34456028a2704ec0ebe024d2f1ebfd009b4f7f1c8f773d2",
+    "scripts/browser-drawio-preview-bounds.cjs": "dad3576ac1b93ddf30045eb8f1feee3e09bdfbc568d539ed2630ef6312b9e8c8",
+    "scripts/drawio-layout-second-review.cjs": "649f07f5a420d63c068111cf60ec022ed70bc5a60e5975ccebfd020737126cba",
+    "scripts/drawio-second-layout-browser-cases.cjs": "5a9d00d335af105bf294be99929df3cf97f4efe88c8fd590059341b994b0fbbf",
+    "scripts/sync_drawio_second_layout.cjs": "e5eb4a054a7ffcffbc630d4ae9bc4a598ed9825b7db237cb44b0fc7b5400031d",
+    "scripts/browser-zip-preview-review.cjs": "06d7ba54dd942f0e2dffd41b1a84b2ae0fe57526cbd10751904aff41ecb58361",
+    "scripts/test_zip_preview_bounds.cjs": "a04bff0fcf7260eb10c3158f80a380da8adcc0c88bf8d49c009a6eca72bb1bcb"
+  }
+}

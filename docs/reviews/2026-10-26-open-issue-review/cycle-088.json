@@ -1,0 +1,90 @@
+{
+  "cycle": 88,
+  "baseline": "5df6252df150bc3125e29df415308ac67bc6c0a0",
+  "issues": [
+    418,
+    419,
+    421
+  ],
+  "fixes": {
+    "418": "Observe the asynchronous factory before publishing Avoid; resolve readiness to unavailable on sync/async failures and preserve stderr filtering.",
+    "419": "Validate Org Chart height against the intended upper bound.",
+    "421": "Preflight box-parent relationships before tree construction and generated trees before recursive passes; bound depth/nodes and detect cycles."
+  },
+  "red": {
+    "result": "EXPECTED_FAIL",
+    "reports": 3,
+    "evidence": [
+      "/workspace/scratch/issue-review-20261026/cycle88-libavoid-red.log",
+      "/workspace/scratch/issue-review-20261026/cycle88-red2/light-orgchart-review.json"
+    ]
+  },
+  "green": [
+    {
+      "result": "PASS",
+      "checks": 243,
+      "fingerprint": "2490d5ca0db78fb9196e3ce3ebec9675ac9f78508c6c8856651f1501c7c797df",
+      "receipt": ".agent-state/verify-20261028T131509740089Z.log"
+    },
+    {
+      "result": "PASS",
+      "checks": 18,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle88-runtime-final/result.json",
+      "scope": "Actual embedded Org Chart, oversized dimensions, pre-recursion rejection with transaction cleanup, unchanged Hanger/Linear/SingleColumn layouts with finite nonoverlapping boxes and all connectors; actual libavoid readiness and Router construction/deletion, light/dark, preview boundaries. Errors[]."
+    },
+    {
+      "result": "PASS",
+      "checks": 3,
+      "scope": "Pending factory is not ready, delayed success publishes constructors, synchronous/asynchronous failures resolve null without unhandled rejection."
+    }
+  ],
+  "patchAudit": {
+    "orgchart": [
+      {
+        "file": "orgchart.min.js",
+        "outsideAssembly": "UNCHANGED",
+        "sha256": "dea538a798b7f80eed64ee8d6af8eaf5d5782ba41cdcda2a7e8d438c5ba90326"
+      },
+      {
+        "file": "extensions.min.js",
+        "outsideAssembly": "UNCHANGED",
+        "sha256": "7024fd3dabae0d3cf54a41b4a28b03284f7d824bba06ac07074e2834e73afe9d"
+      },
+      {
+        "file": "integrate.min.js",
+        "outsideAssembly": "UNCHANGED",
+        "sha256": "a73e088d4b5505d255ef3b0bb5dbfd8ca37de41088980c33f75b3492e5d6557a"
+      }
+    ],
+    "libavoidGeneratedFactoryUnchanged": true
+  },
+  "notFixedOrCounted": [
+    {
+      "issue": 422,
+      "status": "closed-not-planned",
+      "reason": "Actual Hanger2/4 strategies pass normal multirow cases; vertical AdjustSpacer sets geometry before horizontal merging.",
+      "comment": "https://github.com/skyelan1999/aide/issues/422#issuecomment-6469964081"
+    }
+  ],
+  "notRun": [
+    "Full Aide workbench/start.command,native Windows/macOS.",
+    "Every Org Chart strategy/option; 422 is a preserved passing control, not a fix.",
+    "Main merge,Release/tag,market/deploy."
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "remoteSourceCommit": "5c1664b2783770840b082c91f516810cb933d519",
+    "issueComments": {
+      "418": "https://github.com/skyelan1999/aide/issues/418#issuecomment-6470051939",
+      "419": "https://github.com/skyelan1999/aide/issues/419#issuecomment-6470053052",
+      "421": "https://github.com/skyelan1999/aide/issues/421#issuecomment-6470054261"
+    }
+  },
+  "completedAt": "2026-10-28T13:19:18.489827+00:00",
+  "cumulativeFixedOnBranch": 385,
+  "cumulativeProductFixes": 384,
+  "toolingFixes": 1,
+  "original272RemainingFollowup": 18
+}

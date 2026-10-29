@@ -23,6 +23,7 @@ EXPECTED_SRC_SHA="$(bash scripts/aide.sh source-sha)"
 SHORT_ID="${IMAGE_ID#sha256:}"
 SHORT_ID="${SHORT_ID:0:12}"
 IMAGE_ASSET="aide-${TAG}-linux-${PLATFORM#linux/}-image.tar.gz"
+WINDOWS_LAUNCHER="$(bash "$ROOT/scripts/windows-launcher-asset.sh" "${PLATFORM#linux/}" "$IMAGE")"
 echo "== Exporting $IMAGE ($PLATFORM, $IMAGE_ID) =="
 "$DOCKER_BIN" image save "$IMAGE" | gzip -1 > "$OUT/$IMAGE_ASSET.partial"
 mv "$OUT/$IMAGE_ASSET.partial" "$OUT/$IMAGE_ASSET"
@@ -53,20 +54,17 @@ trap 'rm -rf "$STAGING"' EXIT
 for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATFORM#linux/}; do
   case "$TARGET" in
     macos-*) LAUNCHERS=(start.command stop.command clean-docker-cache.command);;
-    windows-*) LAUNCHERS=(start.bat start.ps1 stop.bat stop.ps1 clean-docker-cache.bat clean-docker-cache.ps1);;
+    windows-*) LAUNCHERS=(start.bat stop.bat clean-docker-cache.bat);;
     ubuntu-*) LAUNCHERS=(start.sh stop.sh clean-docker-cache.sh);;
   esac
   PACKAGE="$STAGING/aide-$TAG-$TARGET"
   mkdir -p "$PACKAGE/scripts" "$PACKAGE/docker-images" "$PACKAGE/workspace" "$PACKAGE/context"
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
-  cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$PACKAGE/scripts/"
-  cp "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/local-mounts-control.ps1" "$PACKAGE/scripts/"
-  cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$ROOT/scripts/message-lan-control.ps1" "$PACKAGE/scripts/"
-  cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/prebuilt-image.ps1" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/resource-guard.ps1" "$PACKAGE/scripts/"
-  cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
-  if [[ "$TARGET" == windows-* ]]; then cp "$ROOT/scripts/watch-port.ps1" "$PACKAGE/scripts/"; fi
-  cp "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
-  cp "$ROOT/scripts/update-agent.ps1" "$PACKAGE/scripts/"
+  if [[ "$TARGET" == windows-* ]]; then cp "$WINDOWS_LAUNCHER" "$PACKAGE/aide-launcher.exe"; fi
+  if [[ "$TARGET" != windows-* ]]; then
+    cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$PACKAGE/scripts/"
+    cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
+  fi
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
   cp "$ROOT/docker/offline.env.example" "$PACKAGE/.env.example"
   copy_control_runtime "$PACKAGE/scripts"
@@ -101,12 +99,14 @@ done
 FULL_TARGET="aide-$TAG-full-linux-${PLATFORM#linux/}"
 FULL_PACKAGE="$STAGING/$FULL_TARGET"
 mkdir -p "$FULL_PACKAGE/scripts" "$FULL_PACKAGE/docker-images" "$FULL_PACKAGE/workspace" "$FULL_PACKAGE/context"
-cp "$ROOT"/stop.{command,sh,ps1,bat} "$ROOT"/clean-docker-cache.{command,sh,ps1,bat} "$FULL_PACKAGE/"
-cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$FULL_PACKAGE/scripts/"
-cp "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/local-mounts-control.ps1" "$ROOT/scripts/message-lan-control.sh" "$ROOT/scripts/message-lan-control.ps1" "$FULL_PACKAGE/scripts/"
-cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.ps1" "$ROOT/start.bat" "$FULL_PACKAGE/"
-cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
-cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/prebuilt-image.ps1" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/resource-guard.ps1" "$FULL_PACKAGE/scripts/"
+cp "$ROOT"/stop.{command,sh,bat} "$ROOT"/clean-docker-cache.{command,sh,bat} "$FULL_PACKAGE/"
+cp "$ROOT/scripts/aide-maintenance.sh" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/message-lan-control.sh" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.bat" "$FULL_PACKAGE/"
+cp "$WINDOWS_LAUNCHER" "$FULL_PACKAGE/aide-launcher.exe"
+cp "$ROOT/scripts/windows-launcher-asset.sh" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/resource-guard.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
 cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
 copy_control_runtime "$FULL_PACKAGE/scripts"
@@ -125,7 +125,7 @@ English documentation: https://github.com/skyelan1999/aide/blob/$TAG/docs/en/REA
 This single ZIP supports both a new installation and an in-app A/B upgrade.
 It includes the platform launchers and one verified Docker image archive.
 
-First run: extract this folder, then run start.command (macOS), start.ps1/start.bat (Windows), or start.sh (Ubuntu). The launcher verifies and imports the included image without downloading it, then starts aide. Docker Desktop / Docker Engine with Compose v2 is required.
+First run: extract this folder, then run start.command (macOS), aide-launcher.exe or start.bat (Windows), or start.sh (Ubuntu). The launcher verifies and imports the included image without downloading it, then starts aide. Docker Desktop / Docker Engine with Compose v2 is required.
 
 Upgrade an existing Release installation: in aide open Settings > Software Update and select this same ZIP. If macOS automatically extracts it, choose the extracted package folder instead. The updater locates docker-images/manifest.json, SHA256SUMS and the image archive, ignores launcher/workspace files, validates the package, and stages it in the inactive slot. Confirm the manual activation in Settings to switch.
 

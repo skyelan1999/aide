@@ -3,7 +3,7 @@ const createUiContext=require('./fixtures/ui-i18n-context.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 function harness(providedNodes){
- const els=new Map(),el=id=>{if(!els.has(id))els.set(id,{disabled:false,hidden:false,textContent:'',value:''});return els.get(id);};
+ const els=new Map(),el=id=>{if(!els.has(id))els.set(id,{disabled:false,hidden:false,textContent:'',value:'',replaceChildren(){this.textContent='';}});return els.get(id);};
  const nodes=providedNodes||[{id:'F1',name:'one.go',kind:'file',region:'workspace',root:'workspace',path:'one.go',text:'old text',readState:'pending',modified:'old',size:3,contentHash:'old-hash',x:.1,y:.2},{id:'F2',name:'two.go',kind:'file',region:'workspace',root:'workspace',path:'two.go',text:'stable',x:.3,y:.4}];
  const graph={workspace:'W',nodes,edges:[{from:'F1',to:'F2',kind:'mention'}],sources:[],warnings:[]};
  const c=createUiContext(vm, {window:{},performance,graph,documentBatch:null,resetDocumentBatch(){c.documentBatch=null;c.resetDocumentCount=(c.resetDocumentCount||0)+1;el('document-next').hidden=true;el('document-progress').hidden=true;},graphGeneration:1,layoutGeneration:1,documentGeneration:0,pathAbort:null,pathResult:null,liveCursor:'R1',liveWireNodes:new Map(nodes.map(n=>[n.id,JSON.stringify(n,(key,value)=>key==='x'||key==='y'?undefined:value)])),selected:null,nodeByID:new Map(nodes.map(n=>[n.id,n])),edgeAdjacency:new Map(),liveGhosts:[],liveStableScenes:new Map(),liveReconcile:false,liveAnimationUntil:0,cosmicStars:[],cosmicSceneCache:new Map(),cosmicScene:null,cosmos:null,cosmicScopeKey:'',cosmicEnabled:true,locked:false,region:'workspace',codeView:false,edgeMode:'all',focusCode:false,callDepth:'all',cosmicKey:'',cosmicFocusID:'',cosmicHover:'',cosmicSelected:'',graphFade:null,renderNodes:nodes,yaw:.4,pitch:.2,zoom:1.5,$:el,motionEnabled:()=>false,mapPalette:{star:'#fff'},layoutCalls:0,modelBuilds:0,resultCalls:0,refreshCalls:0,redrawCalls:0,clearCalls:0,aiAbort:null,documentAbort:null,filePreview:{close(){c.previewClosed=true}},aiExplorer:{updated(){c.aiUpdated=true;},cancel(){c.aiAbort?.abort();}},
@@ -23,6 +23,7 @@ function harness(providedNodes){
  const wireNode=n=>Object.fromEntries([...vm.runInContext('nodeFields',c)].filter(k=>n[k]!==undefined).map(k=>[k,n[k]]));
  c.liveWireNodes=new Map(nodes.map(n=>[n.id,JSON.stringify(wireNode(n))]));
  c.ensureCosmicView();c.modelBuilds=0;
+ c.settlePanels=()=>{};
  return {c,els,delta(changes={},extra={}){const raw={...wireNode(c.graph.nodes[0]),...changes};return {workspace:'W',revision:'R2',nodes:[JSON.parse(JSON.stringify(raw))],edges:[],removedNodes:[],removedEdges:[],sources:[],warnings:[],...extra};}};
 }
 const h=harness(),priorModel=h.c.cosmos,priorScene=h.c.cosmicScene,priorNode=h.c.graph.nodes[0];h.c.selected={...priorNode,documentCitation:{hash:'old-hash'}};h.c.pathResult={found:true,nodes:[priorNode],steps:[],revision:'R1'};h.c.query='new';h.c.documentAbort={abort(){h.c.documentAborted=true}};h.c.aiAbort={signal:{aborted:false},abort(){h.c.aiAborted=true}};h.els.set('ask',{disabled:true,textContent:''});

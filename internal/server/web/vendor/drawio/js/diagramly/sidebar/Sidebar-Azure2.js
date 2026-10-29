@@ -1588,7 +1588,7 @@
 			this.createVertexTemplateEntry('image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/identity/App_Registrations.svg;',
 					r * 0.1673, r * 0.17, '', 'App Registrations', null, null, this.getTagsForStencil(gn, 'app registrations', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'App_Space_Component.svg;',
-					r * 0.1417, r * 0.17, '', 'App Space Compoment', null, null, this.getTagsForStencil(gn, 'app space component', dt).join(' ')),
+					r * 0.1417, r * 0.17, '', 'App Space Component', null, null, this.getTagsForStencil(gn, 'app space component', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'Aquila.svg;',
 					r * 0.17, r * 0.167, '', 'Aquila', null, null, this.getTagsForStencil(gn, 'aquila', dt).join(' ')),
 			this.createVertexTemplateEntry(s + 'Arc_Data_Services.svg;',

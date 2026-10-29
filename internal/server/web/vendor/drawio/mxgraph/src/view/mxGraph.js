@@ -4942,8 +4942,14 @@ mxGraph.prototype.cellsAdded = function(cells, parent, index, source, target, ab
 						}
 					};
 
-					this.model.add(parent, cells[i], index + i);
-					this.model.updateEdgeParent = updateEdgeParent;
+					try
+					{
+						this.model.add(parent, cells[i], index + i);
+					}
+					finally
+					{
+						this.model.updateEdgeParent = updateEdgeParent;
+					}
 					
 					if (this.autoSizeCellsOnAdd)
 					{
@@ -6625,11 +6631,16 @@ mxGraph.prototype.moveCells = function(cells, dx, dy, clone, target, evt, mappin
 				this.setAllowNegativeCoordinates(true);
 			}
 			
-			this.cellsMoved(cells, dx, dy, !clone && this.isDisconnectOnMove()
+			try
+			{
+				this.cellsMoved(cells, dx, dy, !clone && this.isDisconnectOnMove()
 					&& this.isAllowDanglingEdges(), target == null,
 					this.isExtendParentsOnMove() && target == null);
-			
-			this.setAllowNegativeCoordinates(previous);
+			}
+			finally
+			{
+				this.setAllowNegativeCoordinates(previous);
+			}
 
 			if (target != null)
 			{
@@ -12147,25 +12158,13 @@ mxGraph.prototype.intersects = function(state, x, y)
 mxGraph.prototype.hitsSwimlaneContent = function(swimlane, x, y)
 {
 	var state = this.getView().getState(swimlane);
-	var size = this.getStartSize(swimlane);
-	
-	if (state != null)
-	{
-		var scale = this.getView().getScale();
-		x -= state.x;
-		y -= state.y;
-		
-		if (size.width > 0 && x > 0 && x > size.width * scale)
-		{
-			return true;
-		}
-		else if (size.height > 0 && y > 0 && y > size.height * scale)
-		{
-			return true;
-		}
-	}
-	
-	return false;
+	if (state == null) return false;
+	var size = this.getActualStartSize(swimlane);
+	var scale = this.getView().getScale();
+	x -= state.x;
+	y -= state.y;
+	return x > size.x * scale && y > size.y * scale &&
+		x < state.width - size.width * scale && y < state.height - size.height * scale;
 };
 
 /**
@@ -12748,38 +12747,33 @@ mxGraph.prototype.findTreeRoots = function(parent, isolate, invert)
  */
 mxGraph.prototype.traverse = function(vertex, directed, func, edge, visited, inverse)
 {
-	if (func != null && vertex != null)
-	{
-		directed = (directed != null) ? directed : true;
-		inverse = (inverse != null) ? inverse : false;
-		visited = visited || new mxDictionary();
-		
-		if (edge == null || !visited.get(edge))
-		{
-			visited.put(edge, true);
-			var result = func(vertex, edge);
-			
-			if (result == null || result)
-			{
-				var edgeCount = this.model.getEdgeCount(vertex);
-				
-				if (edgeCount > 0)
-				{
-					for (var i = 0; i < edgeCount; i++)
-					{
-						var e = this.model.getEdgeAt(vertex, i);
-						var isSource = this.model.getTerminal(e, true) == vertex;
-						
-						if (!directed || (!inverse == isSource))
-						{
-							var next = this.model.getTerminal(e, !isSource);
-							this.traverse(next, directed, func, e, visited, inverse);
-						}
-					}
-				}
-			}
-		}
-	}
+ if (func == null || vertex == null) return;
+ directed = directed != null ? directed : true;
+ inverse = inverse != null ? inverse : false;
+ visited = visited || new mxDictionary();
+ // Frames preserve recursive order, visitor pruning and live edge lookups.
+ var stack = [{vertex:vertex, edge:edge, entered:false}];
+ while (stack.length)
+ {
+  var frame = stack[stack.length - 1];
+  if (!frame.entered)
+  {
+   if (frame.vertex == null || (frame.edge != null && visited.get(frame.edge))) { stack.pop(); continue; }
+   visited.put(frame.edge, true);
+   var result = func(frame.vertex, frame.edge);
+   if (result != null && !result) { stack.pop(); continue; }
+   frame.entered = true;
+   frame.edgeCount = this.model.getEdgeCount(frame.vertex);
+   frame.index = 0;
+  }
+  if (frame.index >= frame.edgeCount) { stack.pop(); continue; }
+  var e = this.model.getEdgeAt(frame.vertex, frame.index++);
+  var isSource = this.model.getTerminal(e, true) == frame.vertex;
+  if (!directed || (!inverse == isSource))
+  {
+   stack.push({vertex:this.model.getTerminal(e, !isSource), edge:e, entered:false});
+  }
+ }
 };
 
 /**
@@ -13964,6 +13958,18 @@ mxGraph.prototype.destroy = function()
 	if (!this.destroyed)
 	{
 		this.destroyed = true;
+		if (this.tapAndHoldThread != null)
+		{
+			window.clearTimeout(this.tapAndHoldThread);
+			this.tapAndHoldThread = null;
+		}
+		this.tapAndHoldValid = false;
+		this.tapAndHoldInProgress = false;
+		if (this.panningManager != null)
+		{
+			this.panningManager.destroy();
+			this.panningManager = null;
+		}
 		
 		if (this.tooltipHandler != null)
 		{

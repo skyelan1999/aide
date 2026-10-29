@@ -15,7 +15,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -421,39 +420,12 @@ func validatePluginUpgradeDependents(before, after []byte, target string) error 
 	}
 	return nil
 }
+
+// Use the same numeric/prerelease ordering as catalog compatibility, ignoring build metadata.
 func pluginVersionDowngrade(oldVersion, newVersion string) bool {
-	parse := func(value string) ([]int, string, bool) {
-		parts := strings.SplitN(strings.SplitN(strings.TrimPrefix(value, "v"), "+", 2)[0], "-", 2)
-		core := strings.Split(parts[0], ".")
-		if len(core) < 2 || len(core) > 4 {
-			return nil, "", false
-		}
-		numbers := make([]int, 4)
-		for i, part := range core {
-			n, err := strconv.Atoi(part)
-			if err != nil || n < 0 {
-				return nil, "", false
-			}
-			numbers[i] = n
-		}
-		suffix := ""
-		if len(parts) > 1 {
-			suffix = parts[1]
-		}
-		return numbers, suffix, true
-	}
-	old, oldPre, ok := parse(oldVersion)
-	next, newPre, nextOK := parse(newVersion)
-	if !ok || !nextOK {
-		return false
-	}
-	for i := range old {
-		if old[i] != next[i] {
-			return next[i] < old[i]
-		}
-	}
-	return oldPre == "" && newPre != ""
+	return marketVersionOlder(strings.SplitN(newVersion, "+", 2)[0], strings.SplitN(oldVersion, "+", 2)[0])
 }
+
 func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 	if !a.pluginUpgradeMu.TryLock() {
 		fail(w, 409, errors.New("已有插件正在升级，请稍后重试"))

@@ -1,0 +1,91 @@
+{
+  "cycle": 40,
+  "baseline": "51e95322e235dd96be973008ca2438988819e1f9",
+  "branch": "codex/open-issue-review-20261026",
+  "issues": [
+    164
+  ],
+  "commits": {
+    "164": "207ae52e88dde795c0f6fb3ddc6db96440e09f5a"
+  },
+  "cumulativeProductFixes": 96,
+  "toolingFixes": 1,
+  "cumulativeFixedOnBranch": 97,
+  "original272RemainingFollowup": 187,
+  "red": [
+    {
+      "issue": 164,
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue164' -count=1 -v -timeout=1m",
+      "result": "EXPECTED_FAIL",
+      "durationSeconds": 0.054,
+      "observed": "实际客户端内存管道响应中缺count/文件名/长名长度或声明越界产生caller panic，由测试recover记录；RealPath/ReadLink还接受缺失或错误占位属性。44个组合中有既有正确拒绝控制，不声称全部原来都会panic。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle40-164-red.log"
+    }
+  ],
+  "green": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run '^TestIssue164|^TestIssue163|^TestIssue79|^TestIssue78SFTPFileSnapshot$|^TestIssue71DirectoryEnumerationStopsAndCancels$' -count=1 -v -timeout=3m",
+      "result": "PASS",
+      "durationSeconds": 10.23,
+      "scope": "44畸形NAME操作组合、原有短/错ID拒绝、合法路径/链接、文件size/mode、点过滤、空目录、visitor提前停止/取消；163分配预算/UINT32_MAX及既有读取/快照/目录取消。",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle40-final-race.log"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/agent-route.py verify quick (rerun after task cache cleanup)",
+      "result": "PASS",
+      "receipt": ".agent-state/verify-20261027T013203226847Z.log",
+      "fingerprint": "73dcb889c051d026f80b9c88f7929e0050dce4a11d76ca8b69fec29e7d213400"
+    },
+    {
+      "command": "python3 scripts/check_docs.py; python3 scripts/agent-route.py check; git diff --check",
+      "result": "PASS",
+      "observed": "429Markdown/1469links"
+    }
+  ],
+  "environmentLimitedRuns": [
+    {
+      "command": "python3 scripts/agent-route.py verify quick",
+      "result": "FAIL_ENVIRONMENT",
+      "observed": "仅offline_bundle测试因/tmp剩10357468KiB不足启动门槛10GiB失败。全部Go测试/vet结束后仅清理GOCACHE=/tmp/aide-issue-review-go-cache（约6.8GiB），未删除用户文件或证据，完整quick复跑通过且源指纹相同。",
+      "evidence": ".agent-state/verify-20261027T013033940616Z.log",
+      "fingerprint": "73dcb889c051d026f80b9c88f7929e0050dce4a11d76ca8b69fec29e7d213400"
+    }
+  ],
+  "notRun": [
+    {
+      "result": "NOT_RUN",
+      "scope": "真实SSH服务器/设备兼容、完整工作台、Windows/macOS/32位；用实际客户端与模拟对端协议，无凭据、无网络监听、未制造真实进程崩溃。"
+    }
+  ],
+  "notes": [
+    "ReadDir/ReadDirEachContext/RealPath/ReadLink采用安全NAME头部与条目解码，按每项至少12字节验证数量，逐个校验filename/longname/attrs，保留单路径count=1、目录属性/点过滤/visitor取消；实际客户端44种畸形操作组合拒绝且无panic，既有ID路由拒绝与163分配保护通过。",
+    "接收线程原本已用unmarshalUint32Safe检查路由ID；新测试确认此控制。成立的panic主要位于NAME count/string，方法内部二次ID读取也统一checked，不把已有保护说成新漏洞。",
+    "按SFTP v3完整条目结构校验RealPath/ReadLink的占位longname/attrs；依赖原先省略字段的非标准对端会收到协议错误，真实服务端兼容未验收。",
+    "流式目录访客仍按条目执行；后续坏条目不回滚既有回调副作用。未修改71的早停、取消、handle关闭扩展；163测试复用新的通用管道夹具，语义不变。",
+    "只加固NAME路径，不声称其他回复类型全面安全；模块仍v1.13.10，后续vendor刷新须保留本地checked NAME和71扩展及163回补。",
+    "165已关闭、166是已合并PR，两者不在原272清单，不计新增关闭/修复。下一项167自定义AI模板null，最新正文和Dialogs源码已读，实际bundled入口尚待验证。",
+    "无常驻服务，原用户未跟踪文件保留；只push分支，不合并main/发行/部署，合理issue保持open。"
+  ],
+  "delivery": {
+    "pushed": true,
+    "mergedToMain": false,
+    "released": false,
+    "deployed": false,
+    "issueComments": {
+      "164": "https://github.com/skyelan1999/aide/issues/164#issuecomment-6431534253"
+    },
+    "verifiedRemoteCommit": "2932c25341d40619c0d14572ff0a74b22928c632"
+  },
+  "sourceSHA256": {
+    "docs/architecture/ssh-storage.md": "b4d67966235ae5e4e5640d2b524692f00c3249f8c606c140191b6b3f4067381d",
+    "internal/server/sftp_attribute_bounds_test.go": "de31e870a684d6896eaf0b1a44e8f5892de8e3059f3413e2e00bc36071a74d7e",
+    "internal/server/sftp_name_bounds_test.go": "d1cc68ff5860ecf4d44fb53b30d37a017dec4821123dd67e17a376794bf9599b",
+    "internal/server/sftp_packet_fixture_test.go": "f2bb981cb5a1dc461a38d65a7ebad990ed1ca5fdda0e79f2e26fd6ffdef04862",
+    "vendor/github.com/pkg/sftp/client.go": "88f0285c521771b85a47c74173bd03643f6dc72e78eeb55ebb62a0038f3ff070",
+    "vendor/github.com/pkg/sftp/packet.go": "1dfcf448886a7b37e8cbe6f9e7ec0703d23f6d0721c8fc0ecd0591427c1b2a94"
+  }
+}
