@@ -1,0 +1,46 @@
+name: Public plugin / 公开插件问题与需求
+description: Track Aide public-plugin bugs, feature requests and acceptance centrally / 统一管理公开插件的缺陷、需求与验收
+title: "[Plugin name] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Public plugins extend Aide. Keep the Issue here and implementation/design/delivery records in the plugin repository. Do not include API keys, passwords, real chat histories or private implementation details.
+        公开插件是 Aide 能力的一部分。Issue 留在此处；代码、方案、Release 留在插件仓库。请勿上传密钥、密码、真实聊天或私有实现。
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type / 类型
+      options:
+        - Bug / 缺陷
+        - Feature / 需求
+        - Compatibility / 兼容性
+        - Acceptance summary / 验收总结
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Plugin and repository / 插件及实现仓库
+      placeholder: Codex Bridge — skyelan1999/aide-pkg-CodexBridge
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions and environment / 版本与环境
+      description: Aide version, plugin/host version, OS/CPU and deployment mode / Aide、插件/宿主版本、系统架构及部署方式
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Reproduction or request / 复现或需求
+      description: Expected and observed behavior; synthetic inputs if possible / 预期与实际行为，尽量使用合成输入
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and current state / 证据与当前状态
+      description: Link implementation PRs, tests, release/market records. Distinguish implemented, locally tested, live accepted and published. / 关联实现PR、测试、发行和市场记录；区分已实现、本地通过、真实验收与已发布。

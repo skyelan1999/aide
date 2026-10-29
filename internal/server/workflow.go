@@ -466,6 +466,19 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, true, policy, harness, task, in.AvatarFeedback)
 	// 阶段/自动编排提示会追加到同一首条 system 消息，必须先计入再检查窗口。
 	a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
+	if preview.OverLimit {
+		// History compaction cannot shrink the current prompt, attachments or tool
+		// schemas. Preserve session kind (persona/tools), but exclude history and
+		// its usage calibration before deciding whether compaction can help.
+		currentSession := &Session{ID: s.ID, Kind: s.Kind}
+		current := a.buildContextPreviewWithTask(currentSession, in.Prompt, in.Mode, contextText, images, cfg, params, false, policy, harness, task, in.AvatarFeedback)
+		a.applyWorkflowContextWithPolicy(current, in.Mode, in.WorkflowPhase, policy)
+		if current.OverLimit {
+			s.Title = oldTitle
+			fail(w, 400, fmt.Errorf("当前输入已超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；压缩历史无法缩小当前输入，请选择更大窗口的模型、减少附件/提示或使用文件工具分段读取", current.InputEstimate, current.OutputReserve, current.TotalEstimate, current.ContextWindow))
+			return
+		}
+	}
 	preflightDeadline := time.Now().Add(contextCompactionTimeout)
 	for preview.OverLimit {
 		foldedBefore := s.CompactedMessages

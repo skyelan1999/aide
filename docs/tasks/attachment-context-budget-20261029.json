@@ -1,0 +1,80 @@
+{
+  "id": "attachment-context-budget-20261029",
+  "request": "附件总量超过195KB；公开插件的缺陷、需求与验收总结统一提到Aide Issue",
+  "baseline": "d1a77ac9307bcb31bd7f9576190af4e2f05d04c7",
+  "initial_status": "",
+  "acceptance": [
+    "超过旧200000 UTF-8字节门槛的英文/中文及多附件可按选定模型预算预览和发送",
+    "超出模型窗口的当前附件/提示明确报告token预算，不无谓调用模型压缩历史",
+    "提取文本资源处理预算与模型token窗口分离；超限不返回部分附件",
+    "公开插件Issue集中Aide，保留转移历史和实现/验收/发布边界，私有内容不外泄"
+  ],
+  "scope": [
+    "internal/server/attachments.go、context.go、workflow.go与相邻测试",
+    "AGENTS.md、docs/agent/WORKFLOW.md、公开插件Issue表单及任务/验收文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认准确提示为附件总量超过195KB，并要求公开插件Issue统一集中Aide。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/601",
+        "https://github.com/skyelan1999/aide/issues/600",
+        "https://github.com/skyelan1999/aide/issues/602"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "去掉200000字节硬门槛，以独立16MiB提取处理护栏和现有模型上下文预算约束；在扩展字符串前检查容量。当前输入单独超窗时直接给精确预算错误。",
+      "evidence": [
+        "context.go attachmentContext",
+        "workflow.go startTask preflight"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "去掉195KB固定门槛；16MiB提取处理护栏、模型当前输入超窗预检及公开插件集中Issue规范已实现。",
+      "evidence": [
+        "internal/server/attachment_budget_test.go",
+        "docs/reviews/2026-10-29/attachment-context-budget.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Linux相关Go race/vet及263项quick通过，实际handler到合成HTTP提供商保留完整附件。macOS首轮3项失败和未执行浏览器/真实模型验收单独披露。",
+      "evidence": [
+        "docs/reviews/2026-10-29/attachment-context-budget.md",
+        ".agent-state/attachment-budget-linux.log",
+        ".agent-state/quick.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文使用说明、集中Issue规则、表单和验收记录已更新；check_docs通过。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        ".github/ISSUE_TEMPLATE/public-plugin.yml"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "变更逐项审阅，新增文件均属于本任务，未删除运行数据、未跟踪用户文件或其他改动。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权本任务发版或部署9999；本地合成验收与PR交付。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "独立fix/attachment-context-budget-20261029分支；不修改现用9999及提供商配置。",
+  "handoff": "准备源码PR，未合并、未发版、未部署9999；#601保持打开待交付与用户环境验收。",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/601"
+  ],
+  "operator": "skyelan1999"
+}
