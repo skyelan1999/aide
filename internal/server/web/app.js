@@ -8037,7 +8037,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   const viewer = el('div', 'pdf-viewer');
   const toolbar = el('div', 'pdf-toolbar');
   const info = el('span', 'pdf-info', filePath.split('/').pop());
-  info.title = t('PDF 预览会略过超过 16 Mi 像素的嵌入图片；完整内容请下载原文件查看。');
+  info.title = t('PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。');
   const meta = el('span', 'pdf-meta', t('加载中…'));
   const btnPrev = el('button', 'pdf-ctrl', '‹');
   const pageInput = el('input', 'pdf-page-input'); pageInput.type = 'text'; pageInput.inputMode = 'numeric'; pageInput.value = '–';
@@ -8071,17 +8071,21 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   };
   const pageList = [], holders = [];
   const dpr = window.devicePixelRatio || 1;
-  let scale = 1, baseWidth = 0, numPages = 0;
+  let scale = 1, baseWidth = 0, numPages = 0, sizeLimited = false;
   let renderGeneration = 0; // 渲染代次：layoutPages/缩放使其递增，旧 renderVisible 循环发现过期即退出
 
-  const setMeta = (txt) => { meta.textContent = txt; };
-  const fail = (msg) => { scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
+  const setMeta = (txt) => { meta.textContent = txt + (sizeLimited ? ' · ' + t('预览尺寸已受限') : ''); };
+  const fail = (msg) => { sizeLimited = false; scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
   const teardown = () => {
     if (cancelled) return;
     cancelled = true;
     abort.abort();
     renderGeneration++;
-    for (const h of holders) { if (h && h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; } }
+    for (const h of holders) {
+      if (!h) continue;
+      if (h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; }
+      h.canvas.width = h.canvas.height = 0;
+    }
     if (io) { io.disconnect(); io = null; }
     destroyResource(loadingTask || pdfDoc);
     loadingTask = null; pdfDoc = null;
@@ -8140,10 +8144,38 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   pageInput.value = '1';
 
   async function getPage(n) { if (!pageList[n]) pageList[n] = await pdfDoc.getPage(n); return pageList[n]; }
-  const fitWidthScale = () => { const cw = scroll.clientWidth - 24; return baseWidth ? Math.max(0.4, Math.min(3, cw / baseWidth)) : 1; };
+  const fitWidthScale = () => { const cw = Math.max(1, scroll.clientWidth - 24); return baseWidth ? Math.min(3, cw / baseWidth) : 1; };
+
+  // Bound geometry before CSS layout or native canvas allocation. Image decoding has its own guard.
+  function pdfPageMetrics(page, requestedScale, pixelRatio) {
+    const maxSide = 8192, maxPixels = 16 * 1024 * 1024;
+    const valid = vp => vp && Number.isFinite(vp.width) && vp.width > 0 && Number.isFinite(vp.height) && vp.height > 0 &&
+      Array.isArray(vp.transform) && vp.transform.length === 6 && vp.transform.every(Number.isFinite);
+    const base = page.getViewport({ scale: 1 });
+    if (!valid(base) || !Number.isFinite(requestedScale) || requestedScale <= 0) throw new Error('invalid PDF page geometry');
+    const displayScale = Math.min(requestedScale, maxSide / base.width, maxSide / base.height);
+    const viewport = page.getViewport({ scale: displayScale });
+    if (!valid(viewport) || viewport.width > maxSide + 1e-6 || viewport.height > maxSide + 1e-6) throw new Error('invalid PDF page geometry');
+    const desiredRatio = Number.isFinite(pixelRatio) && pixelRatio > 0 ? pixelRatio : 1;
+    let outputScale = Math.min(desiredRatio, maxSide / viewport.width, maxSide / viewport.height);
+    const area = (viewport.width * outputScale) * (viewport.height * outputScale);
+    if (area > maxPixels) outputScale *= Math.sqrt(maxPixels / area);
+    const width = Math.max(1, Math.min(maxSide, Math.floor(viewport.width * outputScale)));
+    const height = Math.max(1, Math.min(maxSide, Math.floor(viewport.height * outputScale)));
+    if (width * height > maxPixels) throw new Error('invalid PDF canvas geometry');
+    return { viewport, width, height, cssWidth: Math.max(1, Math.floor(viewport.width)), cssHeight: Math.max(1, Math.floor(viewport.height)),
+      outputScale, baseWidth: base.width, limited: displayScale < requestedScale * (1 - 1e-9) || outputScale < desiredRatio * (1 - 1e-9) };
+  }
 
   // 4) 逐页占位 + IntersectionObserver 懒渲染
-  await getPage(1); baseWidth = pageList[1].getViewport({ scale: 1 }).width;
+  try {
+    const first = await getPage(1);
+    if (cancelled) return;
+    baseWidth = pdfPageMetrics(first, 1, 1).baseWidth;
+  } catch (e) {
+    if (!cancelled) { teardown(); fail(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。')); }
+    return;
+  }
   scale = fitWidthScale();
   for (let i = 1; i <= numPages; i++) {
     const holder = el('div', 'pdf-page');
@@ -8152,6 +8184,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     holders[i] = { el: holder, canvas: holder.firstChild, page: i, renderedScale: 0, visible: false, renderTask: null };
   }
   await layoutPages();
+  if (cancelled) return;
 
   io = new IntersectionObserver(entries => {
     for (const en of entries) {
@@ -8169,45 +8202,57 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
     if (h && h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; }
   }
   async function layoutPages() {
-    renderGeneration++; // 代次递增：旧 renderVisible 循环在下次检查时立即退出
+    const gen = ++renderGeneration, requestedScale = scale;
+    let limited = false;
     for (const h of holders) cancelHolderRender(h);
-    for (let i = 1; i <= numPages; i++) {
-      if (cancelled) return;
-      const p = await getPage(i);
-      if (cancelled) return;
-      const vp = p.getViewport({ scale });
-      const h = holders[i];
-      h.el.style.width = Math.floor(vp.width) + 'px';
-      h.el.style.height = Math.floor(vp.height) + 'px';
-      h.renderedScale = 0;
+    try {
+      for (let i = 1; i <= numPages; i++) {
+        if (cancelled || gen !== renderGeneration) return;
+        const p = await getPage(i);
+        if (cancelled || gen !== renderGeneration) return;
+        const metrics = pdfPageMetrics(p, requestedScale, dpr), h = holders[i];
+        h.metrics = metrics;
+        h.el.style.width = metrics.cssWidth + 'px';
+        h.el.style.height = metrics.cssHeight + 'px';
+        h.renderedScale = 0;
+        limited ||= metrics.limited;
+      }
+    } catch (e) {
+      if (!cancelled && gen === renderGeneration) { teardown(); fail(t('PDF 页面尺寸无效，无法预览；请下载原文件查看。')); }
+      return;
     }
+    sizeLimited = limited;
+    setMeta(numPages + ' ' + t('页'));
     renderVisible();
   }
-  // 渲染单页：开始前取消同 holder 旧任务；带超时兜底；区分取消异常与真实错误
+  // Keep synchronous allocation/render errors inside the same lifecycle as asynchronous rendering.
   async function renderPage(h, gen) {
-    cancelHolderRender(h);
     if (gen !== renderGeneration || cancelled) return;
     const p = await getPage(h.page);
-    if (gen !== renderGeneration || cancelled) return;
-    const vp = p.getViewport({ scale });
-    const c = h.canvas;
-    c.width = Math.floor(vp.width * dpr);
-    c.height = Math.floor(vp.height * dpr);
-    c.style.width = Math.floor(vp.width) + 'px';
-    c.style.height = Math.floor(vp.height) + 'px';
-    const task = p.render({ canvasContext: c.getContext('2d'), viewport: vp, transform: [dpr, 0, 0, dpr, 0, 0] });
-    h.renderTask = task;
-    h.renderedScale = scale;
-    let timer = 0;
-    const timeout = new Promise((_, rej) => {
-      timer = setTimeout(() => { try { task.cancel(); } catch (e) {} rej(new Error('render-timeout')); }, 20000);
-    });
+    if (gen !== renderGeneration || cancelled || h.renderedScale === scale) return;
+    cancelHolderRender(h);
+    const metrics = h.metrics, c = h.canvas, renderScale = scale;
+    let task = null, timer = 0;
     try {
+      // Reset both dimensions first: the previous height must not multiply a new width.
+      c.width = c.height = 0;
+      c.width = metrics.width; c.height = metrics.height;
+      c.style.width = metrics.cssWidth + 'px'; c.style.height = metrics.cssHeight + 'px';
+      const context = c.getContext('2d');
+      if (!context) throw new Error('canvas unavailable');
+      const ratio = metrics.outputScale;
+      task = p.render({ canvasContext: context, viewport: metrics.viewport, transform: [ratio, 0, 0, ratio, 0, 0] });
+      h.renderTask = task; h.renderedScale = renderScale;
+      const timeout = new Promise((_, rej) => {
+        timer = setTimeout(() => { try { task.cancel(); } catch (e) {} rej(new Error('render-timeout')); }, 20000);
+      });
       await Promise.race([task.promise, timeout]);
     } catch (e) {
-      // 取消（缩放/翻页/teardown）或超时：按失败处理，重置 renderedScale 以便后续重试
+      if (cancelled || gen !== renderGeneration) return;
       if ((e && e.name === 'RenderingCancelledException') || (e && e.message === 'render-timeout')) {
-        if (h.renderedScale === scale) h.renderedScale = 0;
+        if (h.renderTask === task && h.renderedScale === renderScale) h.renderedScale = 0;
+      } else {
+        teardown(); fail(t('PDF 页面渲染失败，请下载原文件查看。'));
       }
     } finally {
       clearTimeout(timer);
@@ -8237,7 +8282,7 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   btnNext.onclick = () => gotoPage((parseInt(pageInput.value, 10) || 1) + 1);
   pageInput.onchange = () => gotoPage(parseInt(pageInput.value, 10) || 1);
   btnZoomIn.onclick = () => { scale = Math.min(3, scale * 1.2); layoutPages(); };
-  btnZoomOut.onclick = () => { scale = Math.max(0.4, scale / 1.2); layoutPages(); };
+  btnZoomOut.onclick = () => { scale = Math.max(Math.min(0.4, fitWidthScale() / 16), scale / 1.2); layoutPages(); };
   btnFit.onclick = () => { scale = fitWidthScale(); layoutPages(); };
 }
 

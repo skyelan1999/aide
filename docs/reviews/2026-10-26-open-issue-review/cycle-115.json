@@ -1,0 +1,44 @@
+{
+  "cycle": 115,
+  "issues": [
+    500
+  ],
+  "fix": "Bound PDF page CSS/backing edges to8192 and backing area16Mi pixels before native allocation; allow fit below0.4; lower output resolution with visible notice; reject nonfinite geometry; clear canvas on reset/teardown and handle synchronous/asynchronous render failures.",
+  "red": {
+    "scope": "actual local API/worker/native canvas setter trap",
+    "result": "baseline requested width40000; allocation intercepted before native call",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle115-canvas-red.log"
+  },
+  "green": [
+    {
+      "scope": "2240 geometry combinations, normal DPR controls,15 invalid cases",
+      "status": "PASS"
+    },
+    {
+      "scope": "actual Chromium wide/tall/20xDPR/overflow-MediaBox/normal vectors, zoom/fit, pixel readback and close cleanup",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle115-canvas-green/result.json"
+    },
+    {
+      "scope": "existing6 PDF resource and5 lifecycle cases",
+      "status": "PASS",
+      "evidence": [
+        "/workspace/scratch/issue-review-20261026/cycle115-resource-regression.log",
+        "/workspace/scratch/issue-review-20261026/cycle115-lifecycle-regression.log"
+      ]
+    },
+    {
+      "scope": "quick",
+      "checks": 279,
+      "status": "pass",
+      "fingerprint": "11a0385457e7fbfcd10c725498793a197590a5dd98df6ffb0b15419161309c72",
+      "log": ".agent-state/verify-20261029T044735469896Z.log"
+    }
+  ],
+  "fixtureCorrection": "PDF.js4.4 getViewport ignores UserUnit; final actual malformed geometry fixture uses finite huge opposite MediaBox coordinates whose difference overflows.",
+  "limits": "Per-page geometry/canvas policy; not aggregate document memory or all decoder work. Full workbench/device acceptance not run.",
+  "delivery": {
+    "status": "verified local, GitHub credentials unavailable",
+    "lastRemoteCommit": "0fc630bd"
+  }
+}

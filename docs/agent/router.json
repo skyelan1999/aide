@@ -1431,6 +1431,15 @@
         "node",
         "--check",
         "scripts/drawio-plantuml-resource-browser-cases.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-page-canvas-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-page-canvas-budget.cjs"
       ]
     ],
     "full": [
