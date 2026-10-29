@@ -48,7 +48,7 @@ module.exports = async (frame, out, theme) => {
             }
         }), row);
         assert(result.native && result.svg);
-        
+
         checks.push({
             issue: row.issue,
             case: "actual Mermaid native conversion and import",

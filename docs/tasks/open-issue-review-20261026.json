@@ -1453,7 +1453,7 @@
     "localQuick": {
       "status": "pass",
       "checks": 263,
-      "fingerprint": "932fc8636e45d5a457c322942fe8fff935c577a80882721441606cd7c0876cb7"
+      "fingerprint": "a84e2f451d6f6a44ef7cc9533d7ac295754a3c66c47c060e2cbd2c08f981ae88"
     },
     "browsers": {
       "status": "pass",
