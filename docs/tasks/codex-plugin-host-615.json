@@ -1,0 +1,84 @@
+{
+  "id": "codex-plugin-host-615",
+  "request": "用户授权修改 Aide 启动器发行包，实现 Codex Bridge 插件内完整管理，无需单独下载 EXE，快速 push",
+  "baseline": "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
+  "initial_status": "M start.command",
+  "acceptance": [
+    "五项日常操作集中在插件工作台，新 Aide 不要求另外下载或打开管理器",
+    "宿主组件随完整发行包镜像分发，三端 x64/ARM64 可构建",
+    "固定手动 capability，模型不可执行任意宿主命令或取得管理密钥",
+    "快速 push 可审阅 PR；不修改 9999，不把交叉构建称为 Windows 桌面实测"
+  ],
+  "scope": [
+    "Aide 工作台手动宿主能力",
+    "启动器和完整发行包组件装配",
+    "公开 Codex Bridge 配套 PR #15",
+    "Issue #615 验收与接口文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确授权 Aide 可以改；插件内五项操作和快速 push",
+      "evidence": [
+        "用户消息：Aide可以改",
+        "https://github.com/skyelan1999/aide/issues/615"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "固定声明、固定路由、私有凭据、镜像内置原生组件",
+      "evidence": [
+        "docs/architecture/codex-plugin-host.md",
+        "docker/codex-host-source.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "三端组件构建、启动器 bootstrap 和手动工作台接口已实现",
+      "evidence": [
+        "internal/server/plugin_host_component.go",
+        "scripts/codex-host-control.cjs",
+        "https://github.com/skyelan1999/aide-pkg-CodexBridge/pull/15"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "定向 Go race/vet、24 项 Node 测试、六平台构建通过；macOS 真实启动与容器认证通过。Windows 桌面与完整发行安装尚未验收。",
+      "evidence": [
+        "go test -race -mod=vendor ./internal/server -run TestHostComponent|TestPluginWorkbench -count=1: PASS (23.486s)",
+        "go vet -mod=vendor ./internal/server: PASS",
+        "node --test scripts/codex-host-control.test.cjs scripts/plugin-workbench.test.cjs: 24 PASS",
+        "scripts/build-codex-host.py --archive: six binaries PASS",
+        "macOS bootstrap extract/start/reuse/stop; UID 1000 container authenticated status: PASS",
+        "Plugin PR #15: nine Windows/macOS/Linux CI jobs SUCCESS",
+        "Chromium desktop and 390px dark English: five lifecycle operations PASS against actual Linux manager with synthetic Codex; parent fixture only",
+        "python3 scripts/agent-route.py verify quick: PASS; .agent-state/verify-20261029T095138498211Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "操作、兼容、凭据边界、实测限制和回滚已记录",
+      "evidence": [
+        "docs/architecture/codex-plugin-host.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "测试浏览器和隔离 manager 已关闭；生产未改，已有 start.command 改动保留不提交",
+      "evidence": [
+        "temporary container codex-managed-ui-615 stopped",
+        "start.command excluded from staging"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "本轮快速 push 配套 PR；尚未合并、发版或上架 0.4.0。完整 Aide 发行验收仍待完成。",
+      "evidence": [
+        "Public market remains 0.3.4"
+      ]
+    }
+  },
+  "release_authorization": "用户要求快速 push，并明确允许修改 Aide；历史发布授权存在，当前未通过完整发行门禁。",
+  "rollback": "保留旧完整发行包和镜像；切回前停止认证的新 helper，保留用户安装数据。",
+  "handoff": "先完成配套 Aide CI 与发行验收，再协调 Codex Bridge 0.4.0 与市场发布。9999 未部署。"
+}

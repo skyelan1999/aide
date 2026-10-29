@@ -427,6 +427,7 @@ if ((Invoke-Compose @startArguments).Code -ne 0) {
 
 try { & (Join-Path $PSScriptRoot 'scripts/local-mounts-control.ps1') -Action start -DockerBin $dockerExe -ComposeCommand $ComposeCmd } catch { Write-Warning ('Local directory helper unavailable: '+$_.Exception.Message) }
 
+if (Get-Command node -ErrorAction SilentlyContinue) { & node (Join-Path $PSScriptRoot 'scripts/codex-host-control.cjs') start --root $PSScriptRoot --image $dataImage.Text --docker $dockerExe; if ($LASTEXITCODE -ne 0) { Write-Warning 'Codex host component unavailable; see launcher output.' } } else { Write-Warning 'Codex Bridge requires host Node.js 18+.' }
 try { & (Join-Path $PSScriptRoot 'scripts/message-lan-control.ps1') -Action start -DockerBin $dockerExe -ComposeCommand $ComposeCmd } catch { Write-Warning ('Message LAN bridge unavailable: '+$_.Exception.Message) }
 
 Write-Host "等待健康检查…"
