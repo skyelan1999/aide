@@ -1,0 +1,131 @@
+{
+  "cycle": 121,
+  "issues": [
+    610,
+    602
+  ],
+  "scope": "Codex Bridge owner-priority continuation",
+  "implementation": "Independent PR11/main65e1ddd already implemented five native actions and complete0.3.2 bundles; no duplicate product implementation",
+  "release": {
+    "version": "0.3.2",
+    "url": "https://github.com/skyelan1999/aide-pkg-CodexBridge/releases/tag/v0.3.2",
+    "status": "published prerelease",
+    "publicAssetVerification": [
+      {
+        "archive": "codex-bridge-manager-0.3.2-darwin-amd64.zip",
+        "sha256": "20e955aa9fdd1e346503aa743762012828389e340d9d3b390b16ab85beaa1642",
+        "embeddedPluginMatch": true
+      },
+      {
+        "archive": "codex-bridge-manager-0.3.2-darwin-arm64.zip",
+        "sha256": "8707c5ee71c113f2280bc99d0e6c698ed58858a86e43b5f0fdb0aa6659f28606",
+        "embeddedPluginMatch": true
+      },
+      {
+        "archive": "codex-bridge-manager-0.3.2-linux-amd64.tar.gz",
+        "sha256": "06d100b3f726811f959984e04c40b0dd37c49f98ee899c3d4795a2fe9afe8829",
+        "embeddedPluginMatch": true
+      },
+      {
+        "archive": "codex-bridge-manager-0.3.2-linux-arm64.tar.gz",
+        "sha256": "6eae8d73864bfeadcad16aefb1b64a42926565a9c853bdae9d7c77d817261257",
+        "embeddedPluginMatch": true
+      },
+      {
+        "archive": "codex-bridge-manager-0.3.2-windows-amd64.zip",
+        "sha256": "2f5b91e276a0d4e6e6e9a480474babdfb718a300e9aca702ace7c09fbd28a480",
+        "embeddedPluginMatch": true
+      },
+      {
+        "archive": "codex-bridge-manager-0.3.2-windows-arm64.zip",
+        "sha256": "e1ca14e5ce50b739026de7b2dc211739afebc20b7ac4efdc41444aa6e7edc8f2",
+        "embeddedPluginMatch": true
+      }
+    ]
+  },
+  "acceptance": {
+    "rows": [
+      {
+        "width": 1280,
+        "colorScheme": "light",
+        "locale": "zh-CN",
+        "status": "PASS",
+        "fiveActions": true,
+        "syntheticModels200": true,
+        "keyReused": true,
+        "configRetained": true,
+        "inlineCancelAndConfirm": true
+      },
+      {
+        "width": 390,
+        "colorScheme": "dark",
+        "locale": "zh-CN",
+        "status": "PASS",
+        "fiveActions": true,
+        "syntheticModels200": true,
+        "keyReused": true,
+        "configRetained": true,
+        "inlineCancelAndConfirm": true
+      },
+      {
+        "width": 1280,
+        "colorScheme": "dark",
+        "locale": "en-US",
+        "status": "PASS",
+        "fiveActions": true,
+        "syntheticModels200": true,
+        "keyReused": true,
+        "configRetained": true,
+        "inlineCancelAndConfirm": true
+      },
+      {
+        "width": 390,
+        "colorScheme": "light",
+        "locale": "en-US",
+        "status": "PASS",
+        "fiveActions": true,
+        "syntheticModels200": true,
+        "keyReused": true,
+        "configRetained": true,
+        "inlineCancelAndConfirm": true
+      },
+      {
+        "status": "PASS",
+        "invalidCLI409": true,
+        "configUnchanged": true,
+        "errorSurvivesStatusPoll": true
+      }
+    ],
+    "errors": [],
+    "realAccount": "NOT_RUN",
+    "otherOSGUI": "NOT_RUN"
+  },
+  "publicationTooling": {
+    "PR": 12,
+    "head": "619155e5a690f681e69b2b76929f08c304d1f361",
+    "CI": 40835326709,
+    "CIJobs": 9,
+    "status": "all9pass;normal merge11b3caa15c5bfb2ec4f42b25f6a73db53417d740",
+    "unitTests": 4,
+    "old031Draft": "427514038 retained unpublished; superseded by current0.3.2 fixes; no redundant dispatch"
+  },
+  "records": "https://github.com/skyelan1999/aide-pkg-CodexBridge/blob/11b3caa/docs/ACCEPTANCE-0.3.2-POSTPUBLICATION.md",
+  "issueOutcome": {
+    "610": "closed after implementation/main integration, public release and proposed acceptance",
+    "602": "retained open; original macOS GUI/account acceptance remains pending"
+  },
+  "market": "Latest market main6de00ae already independently registered0.3.2 and exact ZIP;PR21 only refreshes source/acceptance/current screenshot;reviewpending.",
+  "limits": [
+    "Actual downloaded Linux amd64 manager tested with synthetic Codex CLI only.",
+    "Real Windows/macOS interactive desktop and account/quota/live inference NOT_RUN.",
+    "No Aide provider/9999/network/account changes."
+  ],
+  "next": {
+    "cycle": 122,
+    "issues": [
+      510,
+      511
+    ]
+  },
+  "marketPR": "https://github.com/skyelan1999/aide-pkg-shop/pull/21"
+}

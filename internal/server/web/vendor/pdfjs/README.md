@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `895c72c332dbd608a07ae54003e5e42741c566ade52ddbd2a00c8e57ffa35d9d` |
-| `pdf.worker.min.mjs` | `972154f38ce697fee94fac08dfe6afe8be8b2efce496555ef0234489fc117acf` |
+| `pdf.worker.min.mjs` | `1c00ec15e9aaec2563fa01e409cddecbc574f789011090bdde2fa5e14420e65a` |
 
 校验：
 
@@ -94,3 +94,9 @@ Type0 采样函数先校验 Domain/Range 与 Size/Encode/Decode 的维度，再�
 PostScript 条件块最多同时进入 128 层，解析错误后恢复计数。原有 if/ifelse 跳转输出保留；该限制不等于全部 PostScript 指令数或求值工作量预算。PDF.js 原有容错可能略过非法颜色图片或替换异常渐变，不保证超限文档完整显示。
 
 `node scripts/pdf-function-depth-review.cjs` 验证实际 worker 中的循环/边界/清理、分配前拦截、采样精度、普通渐变函数及条件控制；`scripts/browser-pdf-function-depth.cjs` 验证七个实际 PDF/worker 场景及灰色图片、常规/32 位采样渐变、PostScript 常量渐变的像素。
+
+## Form 与平铺图案展开（#510、#511）
+
+每个 PartialEvaluator 按 WorkerTask 分别跟踪正在展开的 Form/Pattern 字典（优先采用 objId），进入时拒绝循环，二者合计最多128层。Promise 完成/失败时通过 finally 释放记录；平铺图案必须等待内部展开结束后再释放，不能在返回 Promise 时提前释放。相同资源在已完成的兄弟分支可继续复用，不同任务不会互相判成循环。保留原有容错路径，异常资源可能被略过。
+
+`node scripts/pdf-resource-depth-review.cjs` 覆盖自循环、互循环、混合资源循环、128/129层边界、取消后恢复、重复资源和独立并发任务。`AIDE_COMPONENT_EVIDENCE_DIR=<目录> node scripts/browser-pdf-resource-depth.cjs` 使用实际预览函数及本地PDF模块/worker检查循环、深层Form、普通Form/Pattern蓝色像素与关闭释放。该限制不保证宽而无循环的资源图、整页累计操作符或全部PDF工作量有总预算。

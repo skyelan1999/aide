@@ -1439,7 +1439,9 @@
         508,
         509,
         611,
-        599
+        599,
+        510,
+        511
       ],
       "retainedNative": [
         335,
@@ -1456,8 +1458,8 @@
         587,
         588
       ],
-      "currentIssue": 610,
-      "nextCycle": 121,
+      "currentIssue": 512,
+      "nextCycle": 123,
       "newReports": [
         597,
         598,
@@ -1494,10 +1496,12 @@
         508,
         509,
         611,
-        599
+        599,
+        510,
+        511
       ],
       "latestActualOpen": 90,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-120.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-122.json",
       "original83NewFixed": [
         426,
         429,
@@ -1524,7 +1528,9 @@
         506,
         507,
         508,
-        509
+        509,
+        510,
+        511
       ],
       "additionalFixed": [
         598,
@@ -1538,7 +1544,8 @@
       },
       "closedIndependentPluginIssues": [
         585,
-        587
+        587,
+        610
       ],
       "pluginIntegrationRecord": "docs/reviews/2026-10-26-open-issue-review/plugin-integration-20261029.json",
       "newOwnerReports": [
@@ -1554,12 +1561,16 @@
         "599": "Explicit user clarified allraw. Actual assistant timeline textContent bypass fixed;20browsercases and finalquick287PASS. Two old VM harnesses corrected after firstquickFAIL. SourcePR609; main/environment pending.",
         "600": "external independent CodexBridgePR8 candidate95ef575;do notduplicate",
         "604": "Independent CodexBridgePR8 now merged065822e; source integrated; real account quota/device acceptance not claimed",
-        "602": "PR10 merged948b345,9CIpassed40824171637. 0.3.1draft427514038 has0assets afterupload401; notpublished. Checkedpublisher localff7d48,3unitpass, notpushed/dispatched. RealMac/WindowsGUI/accountacceptancepending."
+        "602": "Source fix normalmergedPR10 and included published0.3.2; actual Linux GUI syntheticmodels200. OriginalmacOS/WindowsGUI/accountacceptancepending;retainedopen.",
+        "610": "Implemented by independent PR11/main65e1ddd;0.3.2 published. Actual public Linux executable passed4browserprofiles/5actions and all6archives hashes/payloads verified. PR12 acceptance/tooling normalmerged11b3caa after9CI. Closed;marketregistrationpending. Marketmain6de00aealready0.3.2;acceptance/screenshotrefreshPR21reviewpending."
       },
-      "verifiedLocalAwaitingPush": [],
+      "verifiedLocalAwaitingPush": [
+        510,
+        511
+      ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "fc9a55d3",
-      "lastMetadataRefresh": "2026-10-29T05:10:11.227296+00:00",
+      "lastPushedCommit": "921c74b0",
+      "lastMetadataRefresh": "2026-10-29T07:31:17.124795+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,
       "ownerPriorityRepository": "/workspace/aide-pkg-CodexBridge",

@@ -1477,6 +1477,15 @@
         "node",
         "--check",
         "scripts/browser-markdown-recovery.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-resource-depth-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-resource-depth.cjs"
       ]
     ],
     "full": [
