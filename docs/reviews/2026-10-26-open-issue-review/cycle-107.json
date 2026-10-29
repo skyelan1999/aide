@@ -63,9 +63,10 @@
     }
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
-    "released": false
+    "released": false,
+    "commit": "8f995346c053e5417984c14850f60ffbf92552c5"
   },
   "newSourceFixedThisContinuation": 1
 }

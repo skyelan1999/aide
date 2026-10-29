@@ -49,6 +49,48 @@
    for(let i=0;i<node.childNodes.length;i++)pending.push({node:node.childNodes[i],depth:depth+1});
   }
  }
+ // Decode image data locally: connect-src intentionally excludes data: fetches.
+ function inlineImageBlob(url,budget){
+  const invalid=()=>Error(uiTextMarkdownExport('图片渲染失败'));
+  const limit=()=>Error(uiTextMarkdownExport('图片资源总量超过 32 MiB'));
+  if(url.protocol!=='data:')throw invalid();
+  if(url.href.length>budget*4+512)throw limit();
+  let content=url.href.slice(5),fragment=content.indexOf('#');if(fragment>=0)content=content.slice(0,fragment);
+  const comma=content.indexOf(',');if(comma<0||comma>512)throw invalid();
+  const header=content.slice(0,comma).trim(),base64=/;[ \t]*base64$/i.test(header);
+  const media=(base64?header.replace(/;[ \t]*base64$/i,''):header).trim();
+  if(!/^image\/[a-z0-9][a-z0-9.+-]*$/i.test(media.split(';',1)[0].trim()))throw invalid();
+  const body=content.slice(comma+1);let bytes;
+  if(base64){
+   let text;try{text=decodeURIComponent(body).replace(/[\t\n\f\r ]/g,'');}catch(_){throw invalid();}
+   const padding=text.endsWith('==')?2:text.endsWith('=')?1:0;
+   if(Math.floor(text.length*3/4)-padding>budget)throw limit();
+   let binary;try{binary=atob(text);}catch(_){throw invalid();}
+   if(binary.length>budget)throw limit();bytes=new Uint8Array(binary.length);
+   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  }else{
+   bytes=new Uint8Array(Math.min(body.length*3,budget));let used=0;
+   const write=value=>{if(used>=budget)throw limit();bytes[used++]=value;};
+   const hex=c=>c>=48&&c<=57?c-48:c>=65&&c<=70?c-55:c>=97&&c<=102?c-87:-1;
+   for(let i=0;i<body.length;i++){
+    const c=body.charCodeAt(i),a=c===37?hex(body.charCodeAt(i+1)):-1,b=c===37?hex(body.charCodeAt(i+2)):-1;
+    if(a>=0&&b>=0){write((a<<4)|b);i+=2;}
+    else if(c<128)write(c);
+    else{const cp=body.codePointAt(i);for(const byte of new TextEncoder().encode(String.fromCodePoint(cp)))write(byte);if(cp>65535)i++;}
+   }
+   bytes=bytes.subarray(0,used);
+  }
+  return new Blob([bytes],{type:media});
+ }
+ function imageDataURL(blob,signal){
+  return new Promise((resolve,reject)=>{
+   const reader=new FileReader();let done=false;
+   const finish=(error,value)=>{if(done)return;done=true;signal.removeEventListener('abort',cancel);reader.onload=reader.onerror=reader.onabort=null;error?reject(error):resolve(value);};
+   const cancel=()=>{reader.abort();finish(new DOMException('Cancelled','AbortError'));};
+   reader.onload=()=>finish(null,reader.result);reader.onerror=()=>finish(reader.error||Error(uiTextMarkdownExport('图片渲染失败')));reader.onabort=()=>finish(new DOMException('Cancelled','AbortError'));
+   signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)cancel();else try{reader.readAsDataURL(blob);}catch(error){finish(error);}
+  });
+ }
  async function snapshot(o,job){
   if(job.controller.signal.aborted)throw new DOMException('Cancelled','AbortError');
   const frame=document.createElement('iframe');frame.className='markdown-print-frame';frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;document.body.append(frame);job.frame=frame;
@@ -60,8 +102,9 @@
   let total=0;
   for(const img of body.querySelectorAll('img')){
    const url=img.getAttribute('src');if(!url)throw Error(uiTextMarkdownExport('图片地址为空'));
-   const blob=await readBounded(await fetch(url,{signal:job.controller.signal,credentials:new URL(url,location.href).origin===location.origin?'same-origin':'omit'}),job.controller.signal);total+=blob.size;if(total>LIMIT)throw Error(uiTextMarkdownExport('图片资源总量超过 32 MiB'));
-   const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob);});
+   const signal=job.controller.signal;if(signal.aborted)throw new DOMException('Cancelled','AbortError');
+   const parsed=new URL(url,location.href),blob=parsed.protocol==='data:'?inlineImageBlob(parsed,LIMIT-total):await readBounded(await fetch(url,{signal,credentials:parsed.origin===location.origin?'same-origin':'omit'}),signal);total+=blob.size;if(total>LIMIT)throw Error(uiTextMarkdownExport('图片资源总量超过 32 MiB'));
+   const data=await imageDataURL(blob,signal);
    await new Promise((resolve,reject)=>{const signal=job.controller.signal;const finish=(err)=>{clearTimeout(timer);signal.removeEventListener('abort',cancel);img.onload=img.onerror=null;err?reject(err):resolve();};const cancel=()=>finish(new DOMException('Cancelled','AbortError')),timer=setTimeout(()=>finish(Error(uiTextMarkdownExport('图片渲染超时'))),15000);signal.addEventListener('abort',cancel,{once:true});img.onload=()=>finish();img.onerror=()=>finish(Error(uiTextMarkdownExport('图片渲染失败')));if(signal.aborted)cancel();else img.src=data;});
   }
   await job.wait(doc.fonts?.ready);
