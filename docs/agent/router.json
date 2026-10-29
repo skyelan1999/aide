@@ -1408,6 +1408,10 @@
         "node",
         "--check",
         "scripts/browser-highlight-work-budgets.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-structure-budget-review.cjs"
       ]
     ],
     "full": [

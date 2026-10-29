@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `895c72c332dbd608a07ae54003e5e42741c566ade52ddbd2a00c8e57ffa35d9d` |
-| `pdf.worker.min.mjs` | `57f94b2bfde73e441bb6e496227926662182810979956ec335381719ad3e3e3e` |
+| `pdf.worker.min.mjs` | `8594047b1180bf302374a56a0af1484c3629b4539ee0a7fb84fea20e9c70edc8` |
 
 校验：
 
@@ -48,3 +48,11 @@ Worker 的 Apache-2.0 许可头保持。原始上游 worker SHA-256 为
 定向检查：`node scripts/pdf-predictor-budget-review.cjs`；
 `AIDE_COMPONENT_EVIDENCE_DIR=<证据目录> node scripts/browser-pdf-resource-budgets.cjs`。
 脚本从仓库根目录运行；浏览器脚本使用实际本地模块、worker、预览函数和合成 PDF，不连接外部来源。
+
+### 对象结构与交叉引用（#442、#443）
+
+`Parser.getObj` 最多同时进入 128 层，退出（包括异常）时恢复计数。普通平坦数组的元素数不计为嵌套深度；密文转换参数保持传递。过深结构返回格式错误，避免消耗调用栈。
+
+每个 XRef 实例最多处理 1,000,000 条声明记录，记录地址范围也必须在该边界内。流的 `/Index` 最多 2,048 个范围，`/W` 必须有三个 0–8 字节的字段；先校验全部范围并预留处理预算，再读取或构造记录。断点重入同一流不重复预留。经典 XRef 表与损坏文件的对象索引恢复同样使用该预算，不能通过恢复路径绕过。已预留或恢复尝试消耗的预算不回退；某些异常/超大文件可能被拒绝，完整查看请使用原文件。
+
+`node scripts/pdf-structure-budget-review.cjs` 检查深度、流/经典表、恢复索引、精确边界、非法字段、累计预算和重入；不分配百万条测试记录。浏览器资源回归另包含正常 XRef 流及超限文档的可恢复错误/受限恢复路径。以上不是对其他 PDF 解析器、字体或原生编解码路径的全面资源保证。

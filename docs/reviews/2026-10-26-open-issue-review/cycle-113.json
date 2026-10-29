@@ -1,0 +1,67 @@
+{
+  "cycle": 113,
+  "issues": [
+    442,
+    443
+  ],
+  "fix": "Parser128simultaneousobjectlevels withfinally-restored depth. XRefpreflight:1Mdeclaredrecords acrossstreams/classictables/recovery,IDswithinrange,atmost2048Indexranges,Wthree0..8bytefields;reservebeforeallocationandnotagainonresume. CacheURLsapp229/PDF3.",
+  "red": [
+    {
+      "scope": "actual worker defaultNode parser12000nestedarraylevels",
+      "result": "RangeError Maximumcallstacksizeexceeded",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle113-parser-stack-red.json"
+    },
+    {
+      "scope": "actual worker structure validation with bounded entry-read/allocation traps",
+      "result": "all5initialgroups fail:missingdepthpolicy,entryallocation/readtraps reached",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle113-structure-red.json"
+    },
+    {
+      "scope": "actual Chromium API with baselineworker and256nestedCatalogNoise;boundedinput,notstackstress",
+      "result": "baselineaccepts,guardedversionrejectsrecoverably",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle113-browser-red.log"
+    }
+  ],
+  "green": [
+    {
+      "scope": "actual fullworker;7groups incl13invalidXReffield/rangecases;exactdepth,count,lastIDboundaries;flat5000objects;decryptparameter;classicandstreamnormal;aggregatework;resumechargedonce;recoverypath",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle113-structure-green.json"
+    },
+    {
+      "scope": "actual Chromium production ensurePdfJs/setup+API+worker;6PDFcases:normalpredictorimage,large row,largeimage,deepobjects,normalXRefstream,over-budgetXRefstream;pixels/zoom/fit/close;noRangeError/pageerror",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle113-pdf-browser/result.json"
+    },
+    {
+      "scope": "priorpredictorunit4groups",
+      "status": "PASS"
+    },
+    {
+      "scope": "quick",
+      "checks": 273,
+      "status": "pass",
+      "fingerprint": "d46186b25344274f685dc67b31283431c8fd5133c965295d267768cb34865352",
+      "log": ".agent-state/verify-20261029T034213036705Z.log"
+    }
+  ],
+  "intermediateFailures": [
+    "Recoveryindexallocationtrapinitiallyinterceptednormalentries.length=0reset;fixtureadjustedtoallowresetbuttraprecordwrites.",
+    "Small--stack_size=256couldnotimportlargeupstreammodule;notusedasparserreproduction. Default-stackactualparserproofstoredseparately.",
+    "Firstbrowserfixtureassumedallinternalformaterrorsappearconsole;normalXRefrecoverymayhideinnererror. Testsnowassertrecoverableoutcome/noRangeError;actualworkerunittrapsverifyexactpreallocationguard."
+  ],
+  "limits": [
+    "Declaredrecordprocessingbudgetincludesfailedattempts/recovery;mayrejectexceptionallylargeordamagedPDFs.",
+    "DoesnotboundallflatPDFobjects,font/nativecodecwork;remainingreportsseparate.",
+    "Million-recordnegativefixturesusetrappinginstead ofconstructingmillionobjects."
+  ],
+  "vendor": {
+    "license": "Apache-2.0 preserved",
+    "sha256": "8594047b1180bf302374a56a0af1484c3629b4539ee0a7fb84fea20e9c70edc8"
+  },
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "status": "verifiedlocal;GitHubcredentialsunavailable",
+    "lastRemoteCommit": "0fc630bd"
+  }
+}
