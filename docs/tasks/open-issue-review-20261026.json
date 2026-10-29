@@ -1415,7 +1415,25 @@
         429,
         601,
         432,
-        433
+        433,
+        437,
+        438,
+        439,
+        440,
+        442,
+        443,
+        474,
+        480,
+        486,
+        487,
+        489,
+        493,
+        500,
+        501,
+        502,
+        503,
+        504,
+        505
       ],
       "retainedNative": [
         335,
@@ -1432,11 +1450,13 @@
         587,
         588
       ],
-      "currentIssue": 506,
-      "nextCycle": 117,
+      "currentIssue": 602,
+      "nextCycle": 118,
       "newReports": [
         597,
-        598
+        598,
+        607,
+        608
       ],
       "sourceFixedAwaitingIntegration": [
         426,
@@ -1444,15 +1464,51 @@
         429,
         601,
         432,
-        433
+        433,
+        437,
+        438,
+        439,
+        440,
+        442,
+        443,
+        474,
+        480,
+        486,
+        487,
+        489,
+        493,
+        500,
+        501,
+        502,
+        503,
+        504,
+        505
       ],
-      "latestActualOpen": 85,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-116.json",
+      "latestActualOpen": 90,
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-117.json",
       "original83NewFixed": [
         426,
         429,
         432,
-        433
+        433,
+        437,
+        438,
+        439,
+        440,
+        442,
+        443,
+        474,
+        480,
+        486,
+        487,
+        489,
+        493,
+        500,
+        501,
+        502,
+        503,
+        504,
+        505
       ],
       "additionalFixed": [
         598,
@@ -1477,32 +1533,18 @@
       "ownerReportFollowup": {
         "599": "raw example has no newlines;strong/code parse;awaiting display/source clarification,keepopen",
         "600": "external independent CodexBridgePR8 candidate95ef575;do notduplicate",
-        "604": "external independent CodexBridgePR8 candidate95ef575;quota acceptance recordedinissuecomment",
-        "602": "GUI CLI lookup remains in external plugin queue,no source fixclaimed"
+        "604": "Independent CodexBridgePR8 now merged065822e; source integrated; real account quota/device acceptance not claimed",
+        "602": "Current report remains open; inspect independent plugin main after #506 checkpoint; GUI PATH discovery is next owner-priority actionable item"
       },
       "verifiedLocalAwaitingPush": [
-        437,
-        438,
-        439,
-        440,
-        442,
-        443,
-        474,
-        480,
-        486,
-        487,
-        489,
-        493,
-        500,
-        501,
-        502,
-        503,
-        504,
-        505
+        506
       ],
-      "githubAuthBlocked": true,
-      "lastPushedCommit": "0fc630bd",
-      "metadataRefreshBlocked": "GitHub API401;latestActualOpen retains prior successful snapshot,not a current count"
+      "githubAuthBlocked": false,
+      "lastPushedCommit": "5577720b",
+      "lastMetadataRefresh": "2026-10-29T05:10:11.227296+00:00",
+      "corePR": "https://github.com/skyelan1999/aide/pull/609",
+      "resumeAfterOwnerPriority": 507,
+      "ownerPriorityRepository": "/workspace/aide-pkg-CodexBridge"
     }
   },
   "orderedReview": {

@@ -1449,6 +1449,20 @@
         "node",
         "--check",
         "scripts/browser-pdf-decoder-followups.cjs"
+      ],
+      [
+        "node",
+        "scripts/sync_pdf_openjpeg.cjs",
+        "--check"
+      ],
+      [
+        "node",
+        "scripts/pdf-jpx-components-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-jpx-components.cjs"
       ]
     ],
     "full": [

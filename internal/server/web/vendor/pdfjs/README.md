@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `895c72c332dbd608a07ae54003e5e42741c566ade52ddbd2a00c8e57ffa35d9d` |
-| `pdf.worker.min.mjs` | `7613c0cb197cd2a4a2200183fbddb06d424f8b38f790d6b32a7c30bf09947925` |
+| `pdf.worker.min.mjs` | `2a0565629f7d8c787624251fb80ddfba93ce2345f2a970da4c0856ad93009a8f` |
 
 校验：
 
@@ -74,3 +74,13 @@ Worker 的 Apache-2.0 许可头保持。原始上游 worker SHA-256 为
 - 内联图片拼图的边缘填充写入目标 atlas，保留源图片。每张图片仅填充自己的顶/底及两侧，换行后仍预留左边缘；普通、不同高度和跨行图片都检查实际像素。
 
 `node scripts/pdf-decoder-followup-review.cjs` 验证实际 worker 导出的解码器、缓存与优化器；浏览器脚本 `scripts/browser-pdf-decoder-followups.cjs` 使用实际离线模块/worker和合成 PDF。测试专用钩子仅记录 LZW 限制异常及 display 拼图优化是否运行，不改变其返回值或异常。公开 `getOperatorList()` 路径自身关闭优化，不能用其未优化列表冒充 display 拼图验收。
+
+## JPX 分量与子采样（#506）
+
+PDF.js API/其余 worker 仍为 4.4.168 加上述本地补丁。仅替换私有同步 OpenJPEG 解码模块为 Mozilla PDF.js 固定提交 `a72eb1599fb7712ffd31c96656fc79464aaf9ba9`（上游 PR22169）的官方生成 wasm2js 版本，原生部分支持缺失分量补零及子采样上采样；这不是将整套 PDF.js 升为新版本，也不是宣称采用新的稳定版发布。
+
+[来源与摘要](openjpeg/provenance.json)、原始生成文件和两份 BSD-2-Clause 许可保存在 `openjpeg/`。本地 `scripts/sync_pdf_openjpeg.cjs` 将仅接受 warn 回调的私有工厂改为同步初始化，保留原生生成函数；分配输入后无论成功或失败均释放输入，及时清除图片/错误字段。没有额外网络、动态 eval 或 WebAssembly 编译依赖，现有离线预览与 CSP 保持。嵌入于 worker 的代码通过 `--check` 与原始生成文件及本地适配器逐字校验。未在本地重新编译 C 解码器。
+
+`PDFImage` 识别过滤器列表中的最后一项，修正 `numComp` 拼写并传递实际颜色分量；DeviceRGBA 使用自动 RGBA 模式，避免把缺失 alpha 补零为透明。正常指定颜色空间时依上游行为丢弃多余分量或为缺失分量补零。已有图片尺寸、行、解析结构、缓存和 LZW 预算保留；不声称此更新解决所有原生编解码报告。
+
+`node scripts/pdf-jpx-components-review.cjs` 验证 18 种原生分量/填充及 24 种 PDFImage 参数/过滤器组合、短流失败和清理后再次解码。合成 4×4 图像由 Pillow 生成，保存在 `scripts/fixtures/pdf-jpx-components.json`。真实浏览器脚本 `scripts/browser-pdf-jpx-components.cjs` 验证六种颜色/透明度/多过滤器场景的像素；可设置 `AIDE_PDF_UPSTREAM_JPX_DIR` 加跑固定提交的两份上游回归 PDF（从上游下载到临时目录，不随产品分发），检查全部十张图片均有解码结果且无解码错误。

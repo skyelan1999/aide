@@ -1,0 +1,48 @@
+{
+  "cycle": 117,
+  "issues": [
+    506
+  ],
+  "fix": "Pin official OpenJPEG wasm2js decoder at MozillaPDFjs a72eb1599fb7712ffd31c96656fc79464aaf9ba9 (PR22169); private synchronous factory adapter, native component padding/upsampling; fix PDFImage last-filter detection/numComps/DeviceRGBA auto output. Keep existing PDF.js4.4 API/worker guards.",
+  "dependencyProvenance": "internal/server/web/vendor/pdfjs/openjpeg/provenance.json",
+  "red": {
+    "scope": "actual existing native decoder/PDFImage on generated solid JP2 controls",
+    "result": "2groupsfail (null component output and undefined option); truncated clean-recovery control passes",
+    "evidence": "/workspace/scratch/issue-review-20261026/cycle117-red.json"
+  },
+  "green": [
+    {
+      "scope": "18 native component/autoRGBA cases,24 PDFImage color/filter combinations, truncated error/redecode/cleanup",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle117-green.json"
+    },
+    {
+      "scope": "6 actual browser synthetic color/alpha/filter cases, pixel controls;2 upstream regression PDFs, all10images decoded,no errors",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle117-browser-final/result.json"
+    },
+    {
+      "scope": "previous6decoder+6resource+5canvas+5lifecycle real browser cases",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle117-*-regression.log"
+    },
+    {
+      "scope": "quick",
+      "checks": 284,
+      "status": "pass",
+      "fingerprint": "12f0ebae02b448b3d4603738ed5712e595355ea4818158bf2af7b1a1229b8633",
+      "log": ".agent-state/verify-20261029T050853335916Z.log"
+    }
+  ],
+  "limits": [
+    "Official generated native body is pinned and retained unchanged; private factory initialization/adapter changed to synchronous. Not locally rebuilt from C.",
+    "Uses upstream commit from PR22169, not a claim that PDF.js core was upgraded to a new stable release.",
+    "Does not claim all native decoder issues are fixed; newer607/608 reports remain to inspect.",
+    "No full workbench/device acceptance; current30 browser cases are actual component/module/worker tests."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verified; ready to commit/push, main integration pending"
+  }
+}
