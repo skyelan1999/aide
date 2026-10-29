@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `fc1cc3bae4b1b7ca11ec614a5816c5ce68307c3a9a19eab7c7da436c9d05d558` |
-| `pdf.worker.min.mjs` | `2730926f0f82be02b5212501491aa42185a16ce5f29a131a864867bf8a965a66` |
+| `pdf.worker.min.mjs` | `248562754740d04a6a0ea759866ffcd3d499d3f4f16e8ea367fb1968fc8426f6` |
 
 校验：
 
@@ -120,3 +120,12 @@ CCITT在扫描线数组和底层数据读取前验证正整数Columns，默认17
 图片路径读够所需字节后取消DecompressionStream读取，不保留无用尾随解压块；完整读取模式累计最多64MiB，预算错误不回退再解压。读取器在成功/失败后取消，pipeThrough管理输入写入的关闭/拒绝，避免未处理的writer Promise。手动回退解码器的buffer增长及构造提示也限制在64MiB，防止单个同步块绕过上限。
 
 只需前缀的预览不会为了检查尾随校验和而继续解码全部内容。原生解压不支持或普通解码错误时沿用手动回退；预算超限明确失败。这是单流输出/缓冲预算，完整模式在复制期间可同时持有块和目标，不代表整份PDF累计内存上限。`pdf-flate-image-budget-review.cjs`检查提前取消、预算拒绝且不回退、分配前拦截、EOF/零长度和手动回退；对应浏览器脚本验证真实压缩图片、1MiB无用尾随输出及禁用原生解压后三个红色像素场景。
+
+## 内嵌图像尺寸与CFF索引（#535–#538）
+
+- JBIG2 PageInformation要求正整数宽高及最多16Mi像素，使用ceil(width/8)计算行字节；分配前核对与所属PDF图像尺寸一致。Jbig2Stream把原图像Width/Height传入解析器；直接解析器调用仍有本地像素上限。
+- JPEG在分配任一组件blockData前校验内嵌尺寸、最多16Mi像素、1–4组件及1–4采样因子，并预先计算所有组件合计最多128MiB的Int16块缓冲。PDF流传入原图声明尺寸进行核对；DNL重解析保留这组期望尺寸，初次0行声明保留原有DNL路径。此预算只涵盖块数据，非整个JPEG解码内存。
+- 非零JPX原点按extents而非绝对坐标确定输出（#537），已随#506固定的OpenJPEG更新解决；不再修改原生生成代码。12组小原点32对照严格比较输出长度/字节，避免运行旧8000原点的大分配样本；浏览器真实JPX像素验证通过。
+- CFF INDEX在扫描前检查count/offSize字节、合法1–4字节offset及完整偏移表；用无符号算术校验首项1、非递减偏移和数据终点在文件内。允许空INDEX和零长度对象；合法最小完整CFF字体也通过。
+
+`pdf-embedded-dimension-review.cjs`含7组实际模块/分配前陷阱及JPEG灰度/RGB/CMYK、16Mi边界、正常CFF控制。`browser-pdf-embedded-dimensions.cjs`含9项真实PDF预览：正常与不符/超限JBIG2/JPEG、非零原点JPX、合法/非法CFF。异常图片/字体可能被原有容错略过；以上不是对原文件的完整渲染保证。

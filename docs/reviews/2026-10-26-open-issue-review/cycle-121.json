@@ -111,8 +111,9 @@
   },
   "records": "https://github.com/skyelan1999/aide-pkg-CodexBridge/blob/11b3caa/docs/ACCEPTANCE-0.3.2-POSTPUBLICATION.md",
   "issueOutcome": {
-    "610": "Reopened:0.3.2 proposed Linux/component acceptance passed, but newer0.3.3 delivery explicitly retains unconfirmed Windows no-response field report. Earlier closure corrected; real Windows remains pending.",
-    "602": "retained open; original macOS GUI/account acceptance remains pending"
+    "610": "Completed five-action scope;temporaryreopenreconciledafternew612explicitlytracksunconfirmedWindowsinstall. Closed610;612remainsopenpendingoriginalenvironment.",
+    "602": "retained open; original macOS GUI/account acceptance remains pending",
+    "612": "IndependentPR13/0.3.3mitigationpublished/marketlive;9CIandrealmacOSbrowserpassed,originalWindowsunreproduced. Retainedopen;no duplicate productimplementation or claimed fieldfix."
   },
   "market": "Independent release/market advanced to0.3.3. Anonymous live catalog and ZIP verified34656bytes sha256ba76043b2e7900dd43cc58d15289b655a89aa50f9571db39920ebcdbf68082a7. Superseded marketPR21 closed unmerged to prevent downgrade.",
   "limits": [

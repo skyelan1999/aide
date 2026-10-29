@@ -1447,7 +1447,11 @@
         514,
         532,
         533,
-        534
+        534,
+        535,
+        536,
+        537,
+        538
       ],
       "retainedNative": [
         335,
@@ -1464,8 +1468,8 @@
         587,
         588
       ],
-      "currentIssue": 535,
-      "nextCycle": 125,
+      "currentIssue": 540,
+      "nextCycle": 126,
       "newReports": [
         597,
         598,
@@ -1510,10 +1514,14 @@
         514,
         532,
         533,
-        534
+        534,
+        535,
+        536,
+        537,
+        538
       ],
       "latestActualOpen": 90,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-124.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-125.json",
       "original83NewFixed": [
         426,
         429,
@@ -1548,7 +1556,11 @@
         514,
         532,
         533,
-        534
+        534,
+        535,
+        536,
+        537,
+        538
       ],
       "additionalFixed": [
         598,
@@ -1562,7 +1574,8 @@
       },
       "closedIndependentPluginIssues": [
         585,
-        587
+        587,
+        610
       ],
       "pluginIntegrationRecord": "docs/reviews/2026-10-26-open-issue-review/plugin-integration-20261029.json",
       "newOwnerReports": [
@@ -1572,22 +1585,25 @@
         602,
         604,
         610,
-        611
+        611,
+        612
       ],
       "ownerReportFollowup": {
         "599": "Explicit user clarified allraw. Actual assistant timeline textContent bypass fixed;20browsercases and finalquick287PASS. Two old VM harnesses corrected after firstquickFAIL. SourcePR609; main/environment pending.",
         "600": "external independent CodexBridgePR8 candidate95ef575;do notduplicate",
         "604": "Independent CodexBridgePR8 now merged065822e; source integrated; real account quota/device acceptance not claimed",
         "602": "Source fix normalmergedPR10 and included published0.3.2; actual Linux GUI syntheticmodels200. OriginalmacOS/WindowsGUI/accountacceptancepending;retainedopen.",
-        "610": "Independent0.3.3nowpublished/live;anonZIP34656sha256ba76043verified.0.3.2actualLinuxpublicbinary4browserprofilespassed and all6archivesverified;PR12normalmerged11b3caa. Reopened610afternewreleaseexplicitlyretainsunconfirmedWindowsnoresponse;realdesktopfieldacceptanceblocked. SupersededmarketPR21closedunmerged."
+        "610": "Five-action0.3.2feature/main/Releaseverified;actualpublicLinuxbinary4browserprofilesand6archivesPASS.Closed610;separate612tracksremainingWindowsinstallwith0.3.3mitigation,notclaimedfieldfixed.OvertakenmarketPR21closedunmerged.",
+        "612": "Checkednewreportat124checkpoint. IndependentPR13/51feb7b,0.3.3publishedandmarketlive,9CI/realmacOSUIpass;originalWindowsbuild/browser/errorunknown. Keepopenpendingfielddiagnostic;noexecutableLinux-onlyfixleft."
       },
       "verifiedLocalAwaitingPush": [
-        532,
-        533,
-        534
+        535,
+        536,
+        537,
+        538
       ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "4649fbb0",
+      "lastPushedCommit": "154b3bda",
       "lastMetadataRefresh": "2026-10-29T07:31:17.124795+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,

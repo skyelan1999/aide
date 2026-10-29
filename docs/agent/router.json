@@ -1513,6 +1513,15 @@
         "node",
         "--check",
         "scripts/browser-pdf-flate-image-budgets.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-embedded-dimension-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-embedded-dimensions.cjs"
       ]
     ],
     "full": [
