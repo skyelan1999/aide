@@ -862,7 +862,7 @@ function sessionRunRenderSignature(run, view = {}) {
     run.pendingQuestion, run.canResume, run.pauseRequested, run.stopRequested, run.attachments, run.steers,
     run.steps?.map(step => [step.name, step.status, step.content, step.reasoning, step.outputSegments]),
     run.files?.map(file => [file.source, file.targetPath, file.binding, file.path, file.before, file.content, file.applied]),
-    run.commands, run.toolUses, view.language, view.ignoredProposal,
+    run.commands, run.toolUses, view.language, view.ignoredProposal, view.markdownReady,
   ];
   return sessionValueFingerprint(rendered);
 }
@@ -2210,6 +2210,38 @@ function renderTaskPrompt(run){
   if(run.assistantManaged)bubble.prepend(el('span','run-origin-label',t('助理代发')));
   return bubble;
 }
+function assistantMessageRenderSignature(msg, view = {}) {
+  return sessionValueFingerprint([msg.type,msg.role,msg.content,msg.text,msg.reply,
+    msg.dispatched ? [msg.dispatched.number,msg.dispatched.title,msg.dispatched.sessionId] : null,
+    view.language,view.markdownReady]);
+}
+function renderAssistantMessage(msg) {
+  const type = msg.type || '';
+  const row = el('div', 'assistant-msg am-' + (type || 'chat'));
+  const iconMap = { 'voice-in': '🎤', 'text-in': '⌨️', 'voice-note': '💬', 'voice-ask': '📋', 'reminder': '⏰' };
+  const icon = iconMap[type] || '💬';
+  row.append(el('span', 'am-icon', icon));
+  const body = el('div', 'am-body');
+  const content = msg.content || msg.text || '';
+  const appendReply = text => {
+    const reply = el('div', 'am-reply md-body');
+    reply.innerHTML = renderMarkdown(text);
+    body.append(reply);
+  };
+  if (content) {
+    if (msg.role === 'assistant') appendReply(content);
+    else body.append(el('div', 'am-text', content));
+  }
+  if (msg.reply) appendReply(msg.reply);
+  if (msg.dispatched) {
+    const card = el('button', 'am-dispatched');
+    card.textContent = t('已创建会话 #{0}：{1}', msg.dispatched.number || '?', msg.dispatched.title || '');
+    card.onclick = action(() => selectSession(msg.dispatched.sessionId));
+    body.append(card);
+  }
+  row.append(body);
+  return row;
+}
 function renderSession() {
   const pluginPlanFocus = document.activeElement?.dataset?.pluginPlanFocus;
   const pluginPlanSessionId = state.session?.id;
@@ -2226,6 +2258,9 @@ function renderSession() {
   const nearBottom = conversation.scrollHeight - previousScroll - conversation.clientHeight < 100;
   const previousRuns = new Map([...$('timeline').querySelectorAll('article.run[data-run]')]
     .map(box => [box.dataset.run, { node: box, signature: box.dataset.renderSignature }]));
+  const previousAssistantMessages = new Map([...$('timeline').querySelectorAll('.assistant-msg[data-message-index]')]
+    .filter(node => node.dataset.assistantSession === state.session?.id)
+    .map(node => [node.dataset.messageIndex, {node,signature:node.dataset.renderSignature}]));
   const openDetails = new Set([...$('timeline').querySelectorAll('details[open][data-key]')].map(d => d.dataset.key));
   const isAssistantSess = state.session?.kind === 'assistant';
   document.body.classList.toggle('assistant-mode', !!isAssistantSess);
@@ -2260,23 +2295,11 @@ function renderSession() {
 
   // #62扩展：小蜜会话渲染 messages 时间线（voice-in/text-in/voice-note/voice-ask）
   if (isAssistantSess && (state.session?.messages || []).length) {
-    for (const msg of state.session.messages) {
-      const type = msg.type || '';
-      const row = el('div', 'assistant-msg am-' + (type || 'chat'));
-      const iconMap = { 'voice-in': '🎤', 'text-in': '⌨️', 'voice-note': '💬', 'voice-ask': '📋', 'reminder': '⏰' };
-      const icon = iconMap[type] || '💬';
-      row.append(el('span', 'am-icon', icon));
-      const body = el('div', 'am-body');
-      const content = msg.content || msg.text || '';
-      if (content) body.append(el('div', msg.role === 'assistant' ? 'am-reply' : 'am-text', content));
-      if (msg.reply) body.append(el('div', 'am-reply', msg.reply));
-      if (msg.dispatched) {
-        const card = el('button', 'am-dispatched');
-        card.textContent = t('已创建会话 #{0}：{1}', msg.dispatched.number || '?', msg.dispatched.title || '');
-        card.onclick = action(() => selectSession(msg.dispatched.sessionId));
-        body.append(card);
-      }
-      row.append(body);
+    for (const [index,msg] of state.session.messages.entries()) {
+      const key=String(index),signature=assistantMessageRenderSignature(msg,{language:window.aideI18n?.language()||'',markdownReady:markdownRendererReady()});
+      const cached=previousAssistantMessages.get(key);
+      if(cached?.signature===signature){$('timeline').append(cached.node);continue;}
+      const row=renderAssistantMessage(msg);row.dataset.messageIndex=key;row.dataset.assistantSession=state.session.id;row.dataset.renderSignature=signature;
       $('timeline').append(row);
     }
   }
@@ -2287,6 +2310,7 @@ function renderSession() {
     const renderSignature = sessionRunRenderSignature(run, {
       language: window.aideI18n?.language() || '',
       ignoredProposal: ignoredProposals.has(run.id),
+      markdownReady: typeof window.marked?.parse === 'function',
     });
     if (appendCachedSessionRun(run, renderSignature, previousRuns, $('timeline'))) continue;
     const box = el('article', 'run'); box.dataset.run = run.id;box.append(renderTaskPrompt(run));
@@ -9203,6 +9227,52 @@ function decorateGeneratedMedia(body, viewerSpec) {
     link.parentNode.insertBefore(media, link);
   });
 }
+// Recover a failed initial Markdown script without retaining a plain-text card forever.
+const markdownRecovery = {pending:null, failed:false};
+function markdownRendererReady() { return typeof window.marked?.parse === 'function'; }
+function refreshRecoveredMarkdown() {
+  clearStableMarkdownCache();
+  state.liveStable = {};
+  if (lockScreen.locked || !state.token) return;
+  renderSession();
+  // Read current editor values, never a captured file/session snapshot or a saved draft.
+  for (const [editorId, previewId, panelId, spec] of [
+    ['editor','editor-preview','editor-dialog',state.file],
+    ['file-view-editor','file-view-preview','file-view',fileView.spec]
+  ]) {
+    const host=$(previewId), panel=$(panelId), editor=$(editorId);
+    if (!spec || !host || !editor || !panel || host.classList.contains('hidden') ||
+        (panelId==='editor-dialog' ? !panel.open : panel.classList.contains('hidden')) ||
+        !host.querySelector('.md-render-unavailable')) continue;
+    const scroll=host.scrollTop;
+    setupMarkdownPreview(host,editor.value,spec.path,spec);host.scrollTop=scroll;
+  }
+}
+function updateMarkdownRecoveryHints() {
+  document.querySelectorAll('.md-render-unavailable').forEach(host=>{
+    const button=host.querySelector('.md-render-retry'),status=host.querySelector('.md-render-status');
+    if (button) button.disabled=!!markdownRecovery.pending;
+    if (status) status.textContent=t(markdownRecovery.pending?'正在恢复排版…':'暂以纯文本显示');
+  });
+}
+function requestMarkdownRecovery(force=false) {
+  if (markdownRendererReady()) return Promise.resolve(true);
+  if (markdownRecovery.pending) return markdownRecovery.pending;
+  if (markdownRecovery.failed && !force) return Promise.resolve(false);
+  // Queue the load after the current render; synchronous callers still receive readable text.
+  const pending=Promise.resolve().then(()=>ensureVendorScript('/vendor/marked.min.js?v=68',markdownRendererReady))
+    .then(()=>{markdownRecovery.failed=false;refreshRecoveredMarkdown();return true;})
+    .catch(()=>{markdownRecovery.failed=true;return false;})
+    .finally(()=>{if(markdownRecovery.pending===pending)markdownRecovery.pending=null;updateMarkdownRecoveryHints();});
+  markdownRecovery.pending=pending;updateMarkdownRecoveryHints();return pending;
+}
+document.addEventListener('click',event=>{
+  const button=event.target.closest?.('.md-render-retry');
+  if(!button || lockScreen.locked || !state.token)return;
+  event.preventDefault();event.stopPropagation();
+  if(markdownRendererReady()){refreshRecoveredMarkdown();return;}
+  requestMarkdownRecovery(true);
+});
 function renderMarkdown(src, live, basePath, viewerSpec) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const fixed = fixCjkEmphasis(String(src || ''));
@@ -9235,7 +9305,9 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
     }
     return body.innerHTML;
   }
-  return '<div class="md-code-copy-wrap"><pre>' + escapeHtml(String(src || '')) + '</pre></div>';
+  requestMarkdownRecovery();
+  const status=t(markdownRecovery.pending?'正在恢复排版…':'暂以纯文本显示');
+  return '<div class="md-render-unavailable"><p class="muted"><span class="md-render-status" role="status">'+escapeHtml(status)+'</span> <button type="button" class="quiet quiet-sm md-render-retry"'+(markdownRecovery.pending?' disabled':'')+'>'+escapeHtml(t('重新排版'))+'</button></p><div class="md-code-copy-wrap"><pre>'+escapeHtml(String(src||''))+'</pre></div></div>';
 }
 /* ── 单文件视图（新标签页）：路径 + 可编辑内容（保存带哈希校验）+ md 渲染预览 ── */
 const fileView = { spec: null, hash: '' };
@@ -9997,11 +10069,14 @@ new MutationObserver(scheduleMermaid).observe(document.documentElement,{attribut
 const originalMarkdownRender=renderMarkdown;
 const stableMarkdownCache = new Map();
 let stableMarkdownCacheBytes = 0;
+let stableMarkdownRenderer = null;
 const STABLE_MARKDOWN_CACHE_MAX_BYTES = 2 * 1024 * 1024;
 function clearStableMarkdownCache() { stableMarkdownCache.clear(); stableMarkdownCacheBytes = 0; }
 renderMarkdown=function(src,live,basePath,viewerSpec){
   const text=String(src||'');
-  const cacheable=!live&&!basePath&&!viewerSpec&&text.length<=256*1024;
+  const renderer=window.marked?.parse;
+  if(stableMarkdownRenderer!==renderer){clearStableMarkdownCache();stableMarkdownRenderer=renderer;}
+  const cacheable=typeof renderer==='function'&&!live&&!basePath&&!viewerSpec&&text.length<=256*1024;
   let html, cached=cacheable?stableMarkdownCache.get(text):null;
   if(cached){
     stableMarkdownCache.delete(text);stableMarkdownCache.set(text,cached);

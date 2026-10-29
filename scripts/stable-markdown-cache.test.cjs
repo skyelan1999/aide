@@ -10,6 +10,7 @@ assert(start >= 0 && end > start, 'stable Markdown cache wrapper should be prese
 const rendered = [];
 let mermaidScheduled = 0;
 const context = {
+  window: {marked:{parse(){}}},
   rendered,
   renderMarkdown(text) { rendered.push(text); return `html:${text}`; },
   scheduleMermaid() { mermaidScheduled++; },
@@ -69,4 +70,17 @@ tailContext.updateTail(active, longPrefix + '\n\nnext tail', longPrefix.length +
 assert.equal(active.firstChild.text, 'next tail', 'when a block closes, the new active offset gets a fresh text node');
 tailContext.updateTail(active, longPrefix + '\n\nx', longPrefix.length + 2);
 assert.equal(active.firstChild.text, 'x', 'rewound active text resets instead of retaining stale suffixes');
-console.log('PASS: stable Markdown reuse, incremental large-tail appends, path isolation, Mermaid scheduling, and bounded eviction');
+
+context.clearStable();
+context.window.marked=null;
+const beforeRecovery=context.rendered.length;
+context.renderStable('await renderer');context.renderStable('await renderer');
+assert.equal(context.rendered.length,beforeRecovery+2,'plain fallback is never cached');
+context.window.marked={parse(){}};
+context.renderStable('await renderer');context.renderStable('await renderer');
+assert.equal(context.rendered.length,beforeRecovery+3,'restored renderer caches only its formatted output');
+context.window.marked={parse(){}};
+context.renderStable('await renderer');
+assert.equal(context.rendered.length,beforeRecovery+4,'a replaced parser invalidates old HTML');
+
+console.log('PASS: stable Markdown reuse, plain fallback bypass, renderer replacement, bounded eviction and live tails');

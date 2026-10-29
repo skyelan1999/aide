@@ -1438,7 +1438,8 @@
         507,
         508,
         509,
-        611
+        611,
+        599
       ],
       "retainedNative": [
         335,
@@ -1455,8 +1456,8 @@
         587,
         588
       ],
-      "currentIssue": 510,
-      "nextCycle": 120,
+      "currentIssue": 610,
+      "nextCycle": 121,
       "newReports": [
         597,
         598,
@@ -1492,10 +1493,11 @@
         507,
         508,
         509,
-        611
+        611,
+        599
       ],
       "latestActualOpen": 90,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-119.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-120.json",
       "original83NewFixed": [
         426,
         429,
@@ -1527,7 +1529,8 @@
       "additionalFixed": [
         598,
         601,
-        611
+        611,
+        599
       ],
       "mainBaselineCI": {
         "run": 40798417426,
@@ -1544,20 +1547,21 @@
         601,
         602,
         604,
+        610,
         611
       ],
       "ownerReportFollowup": {
-        "599": "raw example has no newlines;strong/code parse;awaiting display/source clarification,keepopen",
+        "599": "Explicit user clarified allraw. Actual assistant timeline textContent bypass fixed;20browsercases and finalquick287PASS. Two old VM harnesses corrected after firstquickFAIL. SourcePR609; main/environment pending.",
         "600": "external independent CodexBridgePR8 candidate95ef575;do notduplicate",
         "604": "Independent CodexBridgePR8 now merged065822e; source integrated; real account quota/device acceptance not claimed",
-        "602": "Source fix07c3f09 in independent CodexBridgePR10,0.3.1candidate;44Node/nativeGo race/vet/6builds/actualLinuxpage pass; protectedreview,CI and realMac/WindowsaccountGUI acceptance pending"
+        "602": "PR10 merged948b345,9CIpassed40824171637. 0.3.1draft427514038 has0assets afterupload401; notpublished. Checkedpublisher localff7d48,3unitpass, notpushed/dispatched. RealMac/WindowsGUI/accountacceptancepending."
       },
       "verifiedLocalAwaitingPush": [],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "442bde1a",
+      "lastPushedCommit": "fc9a55d3",
       "lastMetadataRefresh": "2026-10-29T05:10:11.227296+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
-      "resumeAfterOwnerPriority": 507,
+      "resumeAfterOwnerPriority": 510,
       "ownerPriorityRepository": "/workspace/aide-pkg-CodexBridge",
       "latestIntegratedMain": "1ca40079",
       "mainSyncRecord": "docs/reviews/2026-10-26-open-issue-review/main-sync-20261029.json",

@@ -5,6 +5,8 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
 const signature = source.match(/function sessionRunRenderSignature\(run, view = \{\}\) \{[\s\S]*?\n\}/)?.[0];
+const assistantSignature = source.match(/function assistantMessageRenderSignature\(msg, view = \{\}\) \{[\s\S]*?\n\}/)?.[0];
+assert.ok(assistantSignature);
 const reuse = source.match(/function appendCachedSessionRun\(run, signature, previous, timeline\) \{[\s\S]*?\n\}/)?.[0];
 const textRevision = source.match(/function sessionTextRevision\(value\) \{[\s\S]*?\n\}/)?.[0];
 const sessionRevision = source.match(/function sessionRevision\(s\) \{[\s\S]*?\n\}/)?.[0];
@@ -15,7 +17,7 @@ assert.ok(planView);
 const context = {Math, state:{historyLimit:30}};
 vm.createContext(context);
 assert.ok(valueFingerprint, 'large run-card content uses a streaming value fingerprint');
-vm.runInContext(`${planView}; ${textRevision}; ${sessionRevision}; ${valueFingerprint}; ${signature}; ${reuse}; this.textRevision=sessionTextRevision; this.sessionRevision=sessionRevision; this.valueFingerprint=sessionValueFingerprint; this.signature=sessionRunRenderSignature; this.reuse=appendCachedSessionRun;`, context);
+vm.runInContext(`${planView}; ${textRevision}; ${sessionRevision}; ${valueFingerprint}; ${signature}; ${assistantSignature}; ${reuse}; this.assistantSignature=assistantMessageRenderSignature; this.textRevision=sessionTextRevision; this.sessionRevision=sessionRevision; this.valueFingerprint=sessionValueFingerprint; this.signature=sessionRunRenderSignature; this.reuse=appendCachedSessionRun;`, context);
 
 const base = {
   id: 'run-1', mode: 'chat', prompt: 'summarize', status: 'completed', created: '2026-10-14T00:00:00Z',
@@ -64,4 +66,14 @@ assert.equal(context.reuse(base, original, new Map([['run-1',{node,signature:ori
 assert.equal(timeline.children[0], node, 'unchanged card DOM is preserved');
 assert.equal(context.reuse(base, 'changed', new Map([['run-1',{node,signature:original}]]), timeline), false, 'changed cards are rebuilt');
 assert.match(source, /box\.dataset\.renderSignature = renderSignature/);
-console.log('session run-card reuse preserves unchanged DOM and invalidates changed content: PASS');
+
+assert.notEqual(context.signature(base,{markdownReady:false}),context.signature(base,{markdownReady:true}),'restored Markdown engine must rebuild a formerly plain card');
+
+const assistantMessage={role:'assistant',content:'**原始回复**',reply:'',type:'voice-note',dispatched:{number:12,title:'task',sessionId:'one'}};
+const assistantOriginal=context.assistantSignature(assistantMessage,{markdownReady:true});
+assert.equal(context.assistantSignature(structuredClone(assistantMessage),{markdownReady:true}),assistantOriginal);
+assert.notEqual(context.assistantSignature({...assistantMessage,content:'**更改回复**'},{markdownReady:true}),assistantOriginal);
+assert.notEqual(context.assistantSignature({...assistantMessage,dispatched:{...assistantMessage.dispatched,sessionId:'two'}},{markdownReady:true}),assistantOriginal);
+assert.notEqual(context.assistantSignature(assistantMessage,{markdownReady:false}),assistantOriginal);
+assert.notEqual(context.assistantSignature(assistantMessage,{markdownReady:true,language:'en'}),assistantOriginal);
+console.log('PASS: run and assistant-message DOM reuse; content, dispatch, language and Markdown availability invalidate cards');

@@ -4194,5 +4194,8 @@ window.aideEnglish = {
   "请先解锁助理会话": "Unlock the assistant session first",
   "会话已切换": "Session switched",
   "权重": "Weight",
-  "更正": "Correct"
+  "更正": "Correct",
+  "正在恢复排版…": "Restoring formatting…",
+  "暂以纯文本显示": "Showing plain text temporarily",
+  "重新排版": "Retry formatting",
 };

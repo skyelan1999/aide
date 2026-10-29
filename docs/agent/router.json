@@ -1472,6 +1472,11 @@
         "node",
         "--check",
         "scripts/browser-pdf-function-depth.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-markdown-recovery.cjs"
       ]
     ],
     "full": [
