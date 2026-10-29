@@ -44,9 +44,10 @@
     "Main integration/release/deploy"
   ],
   "delivery": {
-    "pushed": false,
+    "pushed": true,
     "mergedToMain": false,
-    "released": false
+    "released": false,
+    "commit": "1f261f31"
   },
   "sourceFixedThisContinuation": [
     426,

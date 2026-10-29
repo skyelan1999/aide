@@ -18,8 +18,14 @@
     "gitHead": "d4aa9e00ea29808534a3e082f602c544e5f2419c",
     "files": {
       "ColladaLoader.js": "637adbe8f9f9707719d05fa128fda0a5dc5709c2f9e806530f0113e18d2edbb1",
-      "OBJLoader.js": "e3c4cf3a6b061b6956e8e8d5cc360cf95da456dcced32961f859c8be6849a579",
+      "OBJLoader.js": "4b9c86e0c7787f65bd61ee9e90d36573ea9f7a3926e91c321af2e835e36ebe62",
       "three-LICENSE.txt": "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f"
+    },
+    "originalFiles": {
+      "OBJLoader.js": "e3c4cf3a6b061b6956e8e8d5cc360cf95da456dcced32961f859c8be6849a579"
+    },
+    "aideBackports": {
+      "OBJLoader.js": "Issue429: optional aggregate triangle budget checked before per-face token arrays and fan expansion; omitted budget retains upstream behavior; MIT license unchanged."
     }
   }
 ]

@@ -247,12 +247,12 @@
   "handoff": "截至第106轮：Aide累计429项源码/证据覆盖（426产品+3工具），4个独立插件分支另修6项，均push。实时508个open中434项已有源码覆盖，74项待处理（原104剩66+新8）；覆盖不代表合并/上线/已关闭。下一项426尚未改代码。最新main由其他流程合入PR589关闭580，本分支有独立580实现，集成前先比较。详见HANDOFF-2026-10-28.md及remaining-2026-10-28-handoff.json。无后台修复进程；保留原有未跟踪文件。",
   "source_delivery": {
     "branch": "codex/remaining-83-20261029",
-    "commit": "8f995346c053e5417984c14850f60ffbf92552c5",
+    "commit": "1f261f31",
     "pushed": true,
     "mergedToMain": false,
     "released": false,
     "reviewArtifact": "docs/reviews/2026-10-26-open-issue-review/ordered-review.md",
-    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-108.json",
+    "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-109.json",
     "mainMergeCommit": "d1a77ac9307bcb31bd7f9576190af4e2f05d04c7",
     "pullRequest": "https://github.com/skyelan1999/aide/pull/595"
   },
@@ -285,7 +285,7 @@
       "授权/工具/环境使所有剩余工作受阻，报告具体原因"
     ],
     "resumeFrom": "remaining83 live queue, owner covered/blocked first; cycle107 #426 actual render cancellation",
-    "nextCycle": 109,
+    "nextCycle": 110,
     "lastCompletedBatch": {
       "cycle": 106,
       "issues": [
@@ -314,7 +314,7 @@
       "recordedAt": "2026-10-28T09:49:12.803816+00:00",
       "instruction": "New target100; first inspect unhandled skyelan1999 reports."
     },
-    "currentCycle": 108,
+    "currentCycle": 109,
     "additionalFollowupIssues": [],
     "remainingAdditionalFollowupTargets": 0,
     "priorityPolicy": {
@@ -1216,7 +1216,9 @@
         411,
         414,
         427,
-        425
+        425,
+        426,
+        429
       ],
       "blocked": [],
       "falseReports": [
@@ -1226,7 +1228,7 @@
         28,
         57
       ],
-      "remainingUncovered": 66,
+      "remainingUncovered": 64,
       "coveredExistingBranch": [
         248
       ],
@@ -1335,6 +1337,14 @@
           "number": 594,
           "status": "pending-review",
           "reason": "New non-owner PDF/OpenJPEG report in final live open snapshot"
+        },
+        {
+          "number": 597,
+          "status": "pending-PDF-review"
+        },
+        {
+          "number": 598,
+          "status": "fixed-on-new-branch-awaiting-integration"
         }
       ]
     },
@@ -1390,7 +1400,7 @@
     ],
     "executionCheckpoint": {
       "at": "2026-10-29T01:37:20.990772+00:00",
-      "state": "cycle108-verified-pending-push",
+      "state": "cycle109-verified-pending-push",
       "backgroundWorkerRunning": false,
       "pending": 85
     },
@@ -1402,7 +1412,8 @@
       "initialOpen": 83,
       "newFixed": [
         426,
-        598
+        598,
+        429
       ],
       "retainedNative": [
         335,
@@ -1419,20 +1430,22 @@
         587,
         588
       ],
-      "currentIssue": 429,
-      "nextCycle": 109,
+      "currentIssue": 432,
+      "nextCycle": 110,
       "newReports": [
         597,
         598
       ],
       "sourceFixedAwaitingIntegration": [
         426,
-        598
+        598,
+        429
       ],
       "latestActualOpen": 85,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-108.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-109.json",
       "original83NewFixed": [
-        426
+        426,
+        429
       ],
       "additionalFixed": [
         598

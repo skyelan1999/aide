@@ -1381,6 +1381,15 @@
         "node",
         "--check",
         "scripts/browser-markdown-inline-images.cjs"
+      ],
+      [
+        "node",
+        "scripts/obj-triangle-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-obj-triangle-budget.cjs"
       ]
     ],
     "full": [
