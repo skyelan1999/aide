@@ -1467,7 +1467,8 @@
         557,
         558,
         559,
-        560
+        560,
+        617
       ],
       "retainedNative": [
         335,
@@ -1485,7 +1486,7 @@
         588
       ],
       "currentIssue": 566,
-      "nextCycle": 129,
+      "nextCycle": 130,
       "newReports": [
         597,
         598,
@@ -1550,10 +1551,11 @@
         557,
         558,
         559,
-        560
+        560,
+        617
       ],
       "latestActualOpen": 91,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-128.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-129.json",
       "original83NewFixed": [
         426,
         429,
@@ -1614,7 +1616,8 @@
         598,
         601,
         611,
-        599
+        599,
+        617
       ],
       "mainBaselineCI": {
         "run": 40798417426,
@@ -1634,7 +1637,9 @@
         604,
         610,
         611,
-        612
+        612,
+        615,
+        617
       ],
       "ownerReportFollowup": {
         "599": "Explicit user clarified allraw. Actual assistant timeline textContent bypass fixed;20browsercases and finalquick287PASS. Two old VM harnesses corrected after firstquickFAIL. SourcePR609; main/environment pending.",
@@ -1642,21 +1647,15 @@
         "604": "Independent CodexBridgePR8 now merged065822e; source integrated; real account quota/device acceptance not claimed",
         "602": "Source fix normalmergedPR10 and included published0.3.2; actual Linux GUI syntheticmodels200. OriginalmacOS/WindowsGUI/accountacceptancepending;retainedopen.",
         "610": "Five-action0.3.2feature/main/Releaseverified;actualpublicLinuxbinary4browserprofilesand6archivesPASS.Closed610;separate612tracksremainingWindowsinstallwith0.3.3mitigation,notclaimedfieldfixed.OvertakenmarketPR21closedunmerged.",
-        "612": "Checkednewreportat124checkpoint. IndependentPR13/51feb7b,0.3.3publishedandmarketlive,9CI/realmacOSUIpass;originalWindowsbuild/browser/errorunknown. Keepopenpendingfielddiagnostic;noexecutableLinux-onlyfixleft."
+        "612": "Checkednewreportat124checkpoint. IndependentPR13/51feb7b,0.3.3publishedandmarketlive,9CI/realmacOSUIpass;originalWindowsbuild/browser/errorunknown. Keepopenpendingfielddiagnostic;noexecutableLinux-onlyfixleft.",
+        "615": "Independent CodexBridgePR15 and AidePR616 already implement plugin-first host lifecycle. PR616OPEN/REVIEW_REQUIRED, full distribution/release and real Windows desktop still pending; no duplicate implementation."
       },
       "verifiedLocalAwaitingPush": [
-        552,
-        553,
-        554,
-        556,
-        557,
-        558,
-        559,
-        560
+        617
       ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "58cbc688",
-      "lastMetadataRefresh": "2026-10-29T08:38:48.145240+00:00",
+      "lastPushedCommit": "1acfd359",
+      "lastMetadataRefresh": "2026-10-29T10:15:39.529337+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,
       "ownerPriorityRepository": "/workspace/aide-pkg-CodexBridge",
