@@ -1412,6 +1412,25 @@
       [
         "node",
         "scripts/pdf-structure-budget-review.cjs"
+      ],
+      [
+        "node",
+        "scripts/sync_plantuml_resource_helpers.cjs",
+        "--check"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/plantuml-resource-helpers.js"
+      ],
+      [
+        "node",
+        "scripts/plantuml-resource-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/drawio-plantuml-resource-browser-cases.cjs"
       ]
     ],
     "full": [

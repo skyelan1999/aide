@@ -112,6 +112,7 @@ async function main() {
       if (process.env.AIDE_DRAWIO_UI_ROBUSTNESS_REVIEW) checks.push(...await require('./drawio-ui-robustness-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_MERMAID_NATIVE_REVIEW) checks.push(...await require('./drawio-mermaid-native-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_PLANTUML_ISSUE_REVIEW) checks.push(...await require('./drawio-plantuml-browser-cases.cjs')(frame,out,theme));
+      if (process.env.AIDE_DRAWIO_PLANTUML_RESOURCE_REVIEW) checks.push(...await require('./drawio-plantuml-resource-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_RESOURCE_REVIEW) checks.push(...await require('./drawio-resource-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_DEVICE_SHAPE_REVIEW) checks.push(...await require('./drawio-device-shape-browser-cases.cjs')(frame,out,theme));
       if (process.env.AIDE_DRAWIO_CORS_REVIEW) checks.push(...await require('./drawio-cors-browser-cases.cjs')(frame,out,theme));

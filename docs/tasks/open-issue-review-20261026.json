@@ -1399,8 +1399,8 @@
       }
     ],
     "executionCheckpoint": {
-      "at": "2026-10-29T03:47:30.089160+00:00",
-      "state": "cycle113-verified-local-auth-blocked-continue-local-queue",
+      "at": "2026-10-29T04:32:55.044722+00:00",
+      "state": "cycle114-verified-local-auth-blocked-continue-local-queue",
       "backgroundWorkerRunning": false
     },
     "continuation83": {
@@ -1432,8 +1432,8 @@
         587,
         588
       ],
-      "currentIssue": 474,
-      "nextCycle": 114,
+      "currentIssue": 500,
+      "nextCycle": 115,
       "newReports": [
         597,
         598
@@ -1447,7 +1447,7 @@
         433
       ],
       "latestActualOpen": 85,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-113.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-114.json",
       "original83NewFixed": [
         426,
         429,
@@ -1486,10 +1486,17 @@
         439,
         440,
         442,
-        443
+        443,
+        474,
+        480,
+        486,
+        487,
+        489,
+        493
       ],
       "githubAuthBlocked": true,
-      "lastPushedCommit": "0fc630bd"
+      "lastPushedCommit": "0fc630bd",
+      "metadataRefreshBlocked": "GitHub API401;latestActualOpen retains prior successful snapshot,not a current count"
     }
   },
   "orderedReview": {

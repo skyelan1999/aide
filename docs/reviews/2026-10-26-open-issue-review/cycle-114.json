@@ -1,0 +1,97 @@
+{
+  "cycle": 114,
+  "issues": [
+    474,
+    480,
+    486,
+    487,
+    489,
+    493
+  ],
+  "fix": "Privateper-conversionresourcehelpers. BoundedRE2JS2.9.1regexengine+syntax/input/program/output/aggregatecaps;stateWeakMapmemoization;mapdegree/firstrowindexes;noteplacementcandidatecap;package/activitydepth128. Existingloader/errorcallbackpreserved.",
+  "red": [
+    {
+      "scope": "ownednativeRegExp.exec trap,notactualexpensivematch",
+      "result": "userpatternreachesnativeexecutor;counter1",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle114-plantuml-red.json"
+    },
+    {
+      "scope": "23nestedstates",
+      "result": "owned10000measuretrapreached"
+    },
+    {
+      "scope": "1000maprows",
+      "measuredInnerIterations": 1000000,
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle114-map-red-count.json"
+    },
+    {
+      "scope": "3000notes,5000packages,500activitybranches",
+      "result": "noexplicitnotelimit;controlledpackage/activitydepthtrapsreachedbeforestackstress"
+    }
+  ],
+  "green": [
+    {
+      "scope": "10Nodegroups:payload/licenseprovenance;21nativeJSoraclesforcommondelimiters/captures/zero-width/BMPwhitespace;nativeexecutiontrap;resource/cache/cumulativequota/cleanup;layout/depthcontrols;9normalXMLSHAcontrols",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle114-plantuml-final.json"
+    },
+    {
+      "scope": "23nestedstates",
+      "measurements": 47,
+      "status": "PASS"
+    },
+    {
+      "scope": "1000maprows",
+      "oldLoopIterations": 0,
+      "status": "PASS"
+    },
+    {
+      "scope": "previous24converterreports+smoke/integritychecks",
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle114-plantuml-existing.log"
+    },
+    {
+      "scope": "actualEditorUi.parsePlantUmlDiagram+realGraph/SVG;1440light/390dark;18newcasesperthemeinclsuccessaftereachrejection;24oldcasespertheme;existingedit/save/corruptpreviewcontrols",
+      "newCases": 36,
+      "allNewPass": true,
+      "status": "PASS",
+      "evidence": "/workspace/scratch/issue-review-20261026/cycle114-plantuml-browser-final/result.json"
+    },
+    {
+      "scope": "quick",
+      "checks": 277,
+      "status": "pass",
+      "fingerprint": "aea29657a8c00aad5c0007720b1e8c52135dc3a03ec61ed5b25e295eb8d2a885",
+      "log": ".agent-state/verify-20261029T041858402279Z.log"
+    }
+  ],
+  "compatibility": [
+    "Regexinput16384UTF16units/pattern256/program512/groups32/output4096parts percall;conversion64cachedpatterns/16384parts/16Miweightedworkunits.",
+    "RE2subsetexplicitlyrejectsunsupportednativevalidbackreferences/lookarounds;Unicodecodepointmatchingdiffersfromlegacynon-UnicodeJS.Endanchorwithtrailinglinebreakrejectsratherthansilentlydiffer.",
+    "CommonBMPwhitespace,dotlinebreakexclusions,captures/emptyresultsandinvalidsyntaxfallbackpreserved;9normaldiagramXMLoutputsidentical.",
+    "Notesmax2000andcollisioncandidates<=4M;depth128perkind.",
+    "Notawholeconverter/browserpaintdeadline guarantee."
+  ],
+  "dependency": {
+    "name": "re2js",
+    "version": "2.9.1",
+    "license": "MIT",
+    "provenance": "internal/server/web/vendor/drawio/js/plantuml/re2js-provenance.json",
+    "originArchiveSHA512Verified": true,
+    "localCompilerCaps": {
+      "instructions": 512,
+      "runeEntries": 32768
+    },
+    "distribution": "privateinsideofflineconverter;noexternalfetchorJS eval"
+  },
+  "intermediateFixtureCorrection": "PlantUMLquotedstringsretainbackslashes;JSONescapedbackreference/newlinedidnotreachintendedvalues. Correctedfixturesuseoneliteralregexbackslashand%chr(10),verifiedreceivedargumentsbeforefinalbrowserrun.",
+  "notRun": [
+    "fullAideworkbench/deviceacceptance",
+    "coremainmerge/release"
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "status": "verifiedlocal;GitHubcredentialslost",
+    "lastRemoteCommit": "0fc630bd"
+  }
+}
