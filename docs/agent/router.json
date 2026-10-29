@@ -1399,6 +1399,15 @@
         "node",
         "--check",
         "scripts/browser-pdf-resource-budgets.cjs"
+      ],
+      [
+        "node",
+        "scripts/highlight-work-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-highlight-work-budgets.cjs"
       ]
     ],
     "full": [
