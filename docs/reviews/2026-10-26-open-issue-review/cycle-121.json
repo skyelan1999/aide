@@ -111,10 +111,10 @@
   },
   "records": "https://github.com/skyelan1999/aide-pkg-CodexBridge/blob/11b3caa/docs/ACCEPTANCE-0.3.2-POSTPUBLICATION.md",
   "issueOutcome": {
-    "610": "closed after implementation/main integration, public release and proposed acceptance",
+    "610": "Reopened:0.3.2 proposed Linux/component acceptance passed, but newer0.3.3 delivery explicitly retains unconfirmed Windows no-response field report. Earlier closure corrected; real Windows remains pending.",
     "602": "retained open; original macOS GUI/account acceptance remains pending"
   },
-  "market": "Latest market main6de00ae already independently registered0.3.2 and exact ZIP;PR21 only refreshes source/acceptance/current screenshot;reviewpending.",
+  "market": "Independent release/market advanced to0.3.3. Anonymous live catalog and ZIP verified34656bytes sha256ba76043b2e7900dd43cc58d15289b655a89aa50f9571db39920ebcdbf68082a7. Superseded marketPR21 closed unmerged to prevent downgrade.",
   "limits": [
     "Actual downloaded Linux amd64 manager tested with synthetic Codex CLI only.",
     "Real Windows/macOS interactive desktop and account/quota/live inference NOT_RUN.",

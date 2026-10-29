@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `895c72c332dbd608a07ae54003e5e42741c566ade52ddbd2a00c8e57ffa35d9d` |
-| `pdf.worker.min.mjs` | `1c00ec15e9aaec2563fa01e409cddecbc574f789011090bdde2fa5e14420e65a` |
+| `pdf.worker.min.mjs` | `f6406ced52149891be56ff7c0d152a829123faa19b0c84e19dbfb9a6f1a0bcd9` |
 
 校验：
 
@@ -100,3 +100,11 @@ PostScript 条件块最多同时进入 128 层，解析错误后恢复计数。�
 每个 PartialEvaluator 按 WorkerTask 分别跟踪正在展开的 Form/Pattern 字典（优先采用 objId），进入时拒绝循环，二者合计最多128层。Promise 完成/失败时通过 finally 释放记录；平铺图案必须等待内部展开结束后再释放，不能在返回 Promise 时提前释放。相同资源在已完成的兄弟分支可继续复用，不同任务不会互相判成循环。保留原有容错路径，异常资源可能被略过。
 
 `node scripts/pdf-resource-depth-review.cjs` 覆盖自循环、互循环、混合资源循环、128/129层边界、取消后恢复、重复资源和独立并发任务。`AIDE_COMPONENT_EVIDENCE_DIR=<目录> node scripts/browser-pdf-resource-depth.cjs` 使用实际预览函数及本地PDF模块/worker检查循环、深层Form、普通Form/Pattern蓝色像素与关闭释放。该限制不保证宽而无循环的资源图、整页累计操作符或全部PDF工作量有总预算。
+
+## 字体映射与标注预算（#512–#514）
+
+- Composite 字体W/W2的CID必须在0–65535内，范围不得倒序，数组不得越界，垂直数组为完整三元组；每次extractWidths共享最多131072次声明宽度写入，包含水平/垂直及重叠声明。在展开前预留预算。完整16位水平与垂直范围各一次仍可用。
+- Squiggly默认外观的所有Quad共享最多65536段波浪线，先校验有限坐标和预计段数，再输出路径。每步也检查确实前进；极大Float32坐标或超长范围会被略过，避免不终止或巨大路径。
+- 每个CMap按包含端点的范围预留最多131072次映射工作；cidrange、bfrange、数组范围与mapOne共享预算，重复覆盖也计数，短数组按声明范围计数。要求合法无符号32位字符编码，继承通过mapOne同样计数。原有容错可略过无效声明/字体。
+
+`node scripts/pdf-font-annotation-budget-review.cjs`验证写入前拒绝、精确预算、正常映射、波浪几何与累计Quad预算；浏览器脚本`browser-pdf-font-annotation-budgets.cjs`覆盖正常/超限CID、垂直CID、CMap及Squiggly实际预览。基线测试使用受控赋值/路径追加钩子，不真正运行大分配或不终止循环。这些是局部预览预算，不表示整份文档所有字体/标注累计内存有总上限；复杂内容请查看原文件。

@@ -1486,6 +1486,15 @@
         "node",
         "--check",
         "scripts/browser-pdf-resource-depth.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-font-annotation-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-font-annotation-budgets.cjs"
       ]
     ],
     "full": [

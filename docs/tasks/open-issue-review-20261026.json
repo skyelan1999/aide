@@ -1441,7 +1441,10 @@
         611,
         599,
         510,
-        511
+        511,
+        512,
+        513,
+        514
       ],
       "retainedNative": [
         335,
@@ -1458,8 +1461,8 @@
         587,
         588
       ],
-      "currentIssue": 512,
-      "nextCycle": 123,
+      "currentIssue": 532,
+      "nextCycle": 124,
       "newReports": [
         597,
         598,
@@ -1498,10 +1501,13 @@
         611,
         599,
         510,
-        511
+        511,
+        512,
+        513,
+        514
       ],
       "latestActualOpen": 90,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-122.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-123.json",
       "original83NewFixed": [
         426,
         429,
@@ -1530,7 +1536,10 @@
         508,
         509,
         510,
-        511
+        511,
+        512,
+        513,
+        514
       ],
       "additionalFixed": [
         598,
@@ -1544,8 +1553,7 @@
       },
       "closedIndependentPluginIssues": [
         585,
-        587,
-        610
+        587
       ],
       "pluginIntegrationRecord": "docs/reviews/2026-10-26-open-issue-review/plugin-integration-20261029.json",
       "newOwnerReports": [
@@ -1562,14 +1570,15 @@
         "600": "external independent CodexBridgePR8 candidate95ef575;do notduplicate",
         "604": "Independent CodexBridgePR8 now merged065822e; source integrated; real account quota/device acceptance not claimed",
         "602": "Source fix normalmergedPR10 and included published0.3.2; actual Linux GUI syntheticmodels200. OriginalmacOS/WindowsGUI/accountacceptancepending;retainedopen.",
-        "610": "Implemented by independent PR11/main65e1ddd;0.3.2 published. Actual public Linux executable passed4browserprofiles/5actions and all6archives hashes/payloads verified. PR12 acceptance/tooling normalmerged11b3caa after9CI. Closed;marketregistrationpending. Marketmain6de00aealready0.3.2;acceptance/screenshotrefreshPR21reviewpending."
+        "610": "Independent0.3.3nowpublished/live;anonZIP34656sha256ba76043verified.0.3.2actualLinuxpublicbinary4browserprofilespassed and all6archivesverified;PR12normalmerged11b3caa. Reopened610afternewreleaseexplicitlyretainsunconfirmedWindowsnoresponse;realdesktopfieldacceptanceblocked. SupersededmarketPR21closedunmerged."
       },
       "verifiedLocalAwaitingPush": [
-        510,
-        511
+        512,
+        513,
+        514
       ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "921c74b0",
+      "lastPushedCommit": "867fa8cf",
       "lastMetadataRefresh": "2026-10-29T07:31:17.124795+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,
