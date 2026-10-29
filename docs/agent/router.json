@@ -1540,6 +1540,24 @@
         "node",
         "--check",
         "scripts/browser-pdf-font-program-budgets.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-parser-followup-review.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-stream-sink-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-parser-followups.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-stream-lifecycle.cjs"
       ]
     ],
     "full": [
