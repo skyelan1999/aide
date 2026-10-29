@@ -1440,6 +1440,15 @@
         "node",
         "--check",
         "scripts/browser-pdf-page-canvas-budget.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-decoder-followup-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-decoder-followups.cjs"
       ]
     ],
     "full": [

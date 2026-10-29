@@ -1432,8 +1432,8 @@
         587,
         588
       ],
-      "currentIssue": 501,
-      "nextCycle": 116,
+      "currentIssue": 506,
+      "nextCycle": 117,
       "newReports": [
         597,
         598
@@ -1447,7 +1447,7 @@
         433
       ],
       "latestActualOpen": 85,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-115.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-116.json",
       "original83NewFixed": [
         426,
         429,
@@ -1493,7 +1493,12 @@
         487,
         489,
         493,
-        500
+        500,
+        501,
+        502,
+        503,
+        504,
+        505
       ],
       "githubAuthBlocked": true,
       "lastPushedCommit": "0fc630bd",
