@@ -1444,7 +1444,10 @@
         511,
         512,
         513,
-        514
+        514,
+        532,
+        533,
+        534
       ],
       "retainedNative": [
         335,
@@ -1461,8 +1464,8 @@
         587,
         588
       ],
-      "currentIssue": 532,
-      "nextCycle": 124,
+      "currentIssue": 535,
+      "nextCycle": 125,
       "newReports": [
         597,
         598,
@@ -1504,10 +1507,13 @@
         511,
         512,
         513,
-        514
+        514,
+        532,
+        533,
+        534
       ],
       "latestActualOpen": 90,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-123.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-124.json",
       "original83NewFixed": [
         426,
         429,
@@ -1539,7 +1545,10 @@
         511,
         512,
         513,
-        514
+        514,
+        532,
+        533,
+        534
       ],
       "additionalFixed": [
         598,
@@ -1573,12 +1582,12 @@
         "610": "Independent0.3.3nowpublished/live;anonZIP34656sha256ba76043verified.0.3.2actualLinuxpublicbinary4browserprofilespassed and all6archivesverified;PR12normalmerged11b3caa. Reopened610afternewreleaseexplicitlyretainsunconfirmedWindowsnoresponse;realdesktopfieldacceptanceblocked. SupersededmarketPR21closedunmerged."
       },
       "verifiedLocalAwaitingPush": [
-        512,
-        513,
-        514
+        532,
+        533,
+        534
       ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "867fa8cf",
+      "lastPushedCommit": "4649fbb0",
       "lastMetadataRefresh": "2026-10-29T07:31:17.124795+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,

@@ -12,8 +12,8 @@
 
 | 文件 | SHA-256 |
 |---|---|
-| `pdf.min.mjs` | `895c72c332dbd608a07ae54003e5e42741c566ade52ddbd2a00c8e57ffa35d9d` |
-| `pdf.worker.min.mjs` | `f6406ced52149891be56ff7c0d152a829123faa19b0c84e19dbfb9a6f1a0bcd9` |
+| `pdf.min.mjs` | `fc1cc3bae4b1b7ca11ec614a5816c5ce68307c3a9a19eab7c7da436c9d05d558` |
+| `pdf.worker.min.mjs` | `2730926f0f82be02b5212501491aa42185a16ce5f29a131a864867bf8a965a66` |
 
 校验：
 
@@ -108,3 +108,15 @@ PostScript 条件块最多同时进入 128 层，解析错误后恢复计数。�
 - 每个CMap按包含端点的范围预留最多131072次映射工作；cidrange、bfrange、数组范围与mapOne共享预算，重复覆盖也计数，短数组按声明范围计数。要求合法无符号32位字符编码，继承通过mapOne同样计数。原有容错可略过无效声明/字体。
 
 `node scripts/pdf-font-annotation-budget-review.cjs`验证写入前拒绝、精确预算、正常映射、波浪几何与累计Quad预算；浏览器脚本`browser-pdf-font-annotation-budgets.cjs`覆盖正常/超限CID、垂直CID、CMap及Squiggly实际预览。基线测试使用受控赋值/路径追加钩子，不真正运行大分配或不终止循环。这些是局部预览预算，不表示整份文档所有字体/标注累计内存有总上限；复杂内容请查看原文件。
+
+## 图形状态与传真解码（#532、#533）
+
+StateManager的save栈最多256层；EvalState/TextState/CanvasExtraState的clone祖先链同样最多256层，防止跨嵌套Form的新StateManager绕过限制。CanvasGraphics在保存原生上下文或改变栈前检查限制。超过上限通过原有格式错误路径中止/省略内容；优化器可将未完成的空操作压缩，不保证所有超限页都出现同一种错误界面。
+
+CCITT在扫描线数组和底层数据读取前验证正整数Columns，默认1728，最大65536；Rows为非负整数（0保留未知行数语义），已知行数的声明像素最多16Mi。这不替代未知行数的整体解码输出预算。`pdf-graphics-fax-budget-review.cjs`验证深度边界/恢复/跨实例祖先、原生画布调用前拒绝和扫描线分配前拒绝。对应浏览器脚本验证正常蓝色绘制、32000对输入被限定为512操作、正常传真白色像素和无效流替代为空图像，关闭均释放文档。
+
+## Flate图片解压（#534）
+
+图片路径读够所需字节后取消DecompressionStream读取，不保留无用尾随解压块；完整读取模式累计最多64MiB，预算错误不回退再解压。读取器在成功/失败后取消，pipeThrough管理输入写入的关闭/拒绝，避免未处理的writer Promise。手动回退解码器的buffer增长及构造提示也限制在64MiB，防止单个同步块绕过上限。
+
+只需前缀的预览不会为了检查尾随校验和而继续解码全部内容。原生解压不支持或普通解码错误时沿用手动回退；预算超限明确失败。这是单流输出/缓冲预算，完整模式在复制期间可同时持有块和目标，不代表整份PDF累计内存上限。`pdf-flate-image-budget-review.cjs`检查提前取消、预算拒绝且不回退、分配前拦截、EOF/零长度和手动回退；对应浏览器脚本验证真实压缩图片、1MiB无用尾随输出及禁用原生解压后三个红色像素场景。

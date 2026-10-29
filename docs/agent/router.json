@@ -1495,6 +1495,24 @@
         "node",
         "--check",
         "scripts/browser-pdf-font-annotation-budgets.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-graphics-fax-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-graphics-fax-budgets.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-flate-image-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-flate-image-budgets.cjs"
       ]
     ],
     "full": [

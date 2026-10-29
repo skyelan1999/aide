@@ -45,7 +45,7 @@ async function main(){
     assert.equal(info.pages,1);assert(!messages.some(message=>/RangeError|Maximum call stack/.test(message)),messages.join('\n'));
     assert(info.operations<3000,JSON.stringify(info));
     if(!mode.endsWith('-normal')){
-     const message=mode==='form-depth'?/resource expansion exceeds preview depth limit/:/Recursive PDF resource expansion/;assert(messages.some(m=>message.test(m)),messages.join('\n'));
+     const message=mode==='form-depth'?/resource expansion exceeds preview depth limit|graphics-state depth exceeds preview limit/:/Recursive PDF resource expansion/;assert(messages.some(m=>message.test(m)),messages.join('\n'));
     }else{
      await page.waitForFunction(()=>{const c=document.querySelector('.pdf-canvas');if(!c?.width)return false;const p=c.getContext('2d').getImageData(Math.floor(c.width/2),Math.floor(c.height/2),1,1).data;return p[0]<10&&p[1]<10&&p[2]>245&&p[3]===255;});
      info.expectedPixel=[0,0,255,255];await page.screenshot({path:path.join(out,mode+'.png')});
