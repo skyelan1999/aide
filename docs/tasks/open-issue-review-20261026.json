@@ -1426,7 +1426,7 @@
   "integration20261029": {
     "request": "请将现在的分支和到main上，进行测试，并回归已经改或的issue，没问题的在推送后关闭",
     "authorization": "Explicit user authorization supersedes prior branch-only/no-main constraint for reviewed integration; no protection bypass or unrelated deployment.",
-    "status": "in_progress",
+    "status": "awaiting-final-ci-and-required-review",
     "baselineBranch": "da8ac4631877ed464528e6257a6a236a6fac132a",
     "baselineMain": "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
     "acceptance": [
@@ -1447,6 +1447,23 @@
     ],
     "issueClosure": "Pending integration, test receipts and verified remote main containment",
     "pullRequest": "https://github.com/skyelan1999/aide/pull/595",
-    "additionalIssue": 596
+    "additionalIssue": 596,
+    "regressionRecord": "docs/reviews/2026-10-26-open-issue-review/integration-2026-10-29.json",
+    "report": "docs/reviews/2026-10-26-open-issue-review/integration-2026-10-29.md",
+    "localQuick": {
+      "status": "pass",
+      "checks": 263,
+      "fingerprint": "932fc8636e45d5a457c322942fe8fff935c577a80882721441606cd7c0876cb7"
+    },
+    "browsers": {
+      "status": "pass",
+      "suites": 37
+    },
+    "contextRecoveryRace": "pass",
+    "vetAllPackages": "pass",
+    "candidateClosures": 426,
+    "retainedIssues": 83,
+    "merged": false,
+    "closed": 0
   }
 }

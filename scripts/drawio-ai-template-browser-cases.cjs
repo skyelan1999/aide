@@ -37,7 +37,7 @@ module.exports=async function(frame,out,theme,requests){
   await frame.page().screenshot({path:path.join(out,theme+'-ai-recovered.png')});
   checks.push({case:'setup error visible with retry, no failed transport, corrected template retry preserves conversation',theme,result:'PASS'});
  }finally{
-  await frame.evaluate(()=>{ownedChat.window.destroy();const p=ownedAIOriginal;Editor.aiActions=p.actions;Editor.aiModels=p.models;Editor.aiConfigs=p.configs;Editor.aiGlobals=p.globals;delete window.ownedChat;delete window.ownedAIOriginal;});
+  await frame.evaluate(()=>{ownedChat.destroy();const p=ownedAIOriginal;Editor.aiActions=p.actions;Editor.aiModels=p.models;Editor.aiConfigs=p.configs;Editor.aiGlobals=p.globals;delete window.ownedChat;delete window.ownedAIOriginal;});
  }
  return checks;
 };
