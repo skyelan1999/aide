@@ -1531,6 +1531,15 @@
         "node",
         "--check",
         "scripts/browser-urdf-interaction-budgets.cjs"
+      ],
+      [
+        "node",
+        "scripts/pdf-font-program-budget-review.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "scripts/browser-pdf-font-program-budgets.cjs"
       ]
     ],
     "full": [

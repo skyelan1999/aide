@@ -1453,7 +1453,13 @@
         537,
         538,
         540,
-        542
+        542,
+        545,
+        546,
+        547,
+        548,
+        549,
+        550
       ],
       "retainedNative": [
         335,
@@ -1470,8 +1476,8 @@
         587,
         588
       ],
-      "currentIssue": 545,
-      "nextCycle": 127,
+      "currentIssue": 552,
+      "nextCycle": 128,
       "newReports": [
         597,
         598,
@@ -1522,10 +1528,16 @@
         537,
         538,
         540,
-        542
+        542,
+        545,
+        546,
+        547,
+        548,
+        549,
+        550
       ],
       "latestActualOpen": 91,
-      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-126.json",
+      "verificationRecord": "docs/reviews/2026-10-26-open-issue-review/cycle-127.json",
       "original83NewFixed": [
         426,
         429,
@@ -1566,7 +1578,13 @@
         537,
         538,
         540,
-        542
+        542,
+        545,
+        546,
+        547,
+        548,
+        549,
+        550
       ],
       "additionalFixed": [
         598,
@@ -1603,11 +1621,15 @@
         "612": "Checkednewreportat124checkpoint. IndependentPR13/51feb7b,0.3.3publishedandmarketlive,9CI/realmacOSUIpass;originalWindowsbuild/browser/errorunknown. Keepopenpendingfielddiagnostic;noexecutableLinux-onlyfixleft."
       },
       "verifiedLocalAwaitingPush": [
-        540,
-        542
+        545,
+        546,
+        547,
+        548,
+        549,
+        550
       ],
       "githubAuthBlocked": false,
-      "lastPushedCommit": "352815b3",
+      "lastPushedCommit": "9ada978b",
       "lastMetadataRefresh": "2026-10-29T08:38:48.145240+00:00",
       "corePR": "https://github.com/skyelan1999/aide/pull/609",
       "resumeAfterOwnerPriority": 510,

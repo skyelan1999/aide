@@ -13,7 +13,7 @@
 | 文件 | SHA-256 |
 |---|---|
 | `pdf.min.mjs` | `fc1cc3bae4b1b7ca11ec614a5816c5ce68307c3a9a19eab7c7da436c9d05d558` |
-| `pdf.worker.min.mjs` | `248562754740d04a6a0ea759866ffcd3d499d3f4f16e8ea367fb1968fc8426f6` |
+| `pdf.worker.min.mjs` | `4ad09c1b478ad830eb831aead82a99503d3de72e3b717813455bd109a44548cd` |
 
 校验：
 
@@ -129,3 +129,14 @@ CCITT在扫描线数组和底层数据读取前验证正整数Columns，默认17
 - CFF INDEX在扫描前检查count/offSize字节、合法1–4字节offset及完整偏移表；用无符号算术校验首项1、非递减偏移和数据终点在文件内。允许空INDEX和零长度对象；合法最小完整CFF字体也通过。
 
 `pdf-embedded-dimension-review.cjs`含7组实际模块/分配前陷阱及JPEG灰度/RGB/CMYK、16Mi边界、正常CFF控制。`browser-pdf-embedded-dimensions.cjs`含9项真实PDF预览：正常与不符/超限JBIG2/JPEG、非零原点JPX、合法/非法CFF。异常图片/字体可能被原有容错略过；以上不是对原文件的完整渲染保证。
+
+## 内联缓存与字形程序（#545–#550）
+
+- 内联图片只有字典与数据合计不超过16KiB才生成缓存键，确保fromCharCode最多8192参数；长字典仅跳过缓存，继续正常解码。
+- CFF自定义charset在读取前校验格式和范围字节完整、字形数最多65535；每次最多展开剩余字形数，超长SID声明保留既有裁剪容错，SID算术不越16位。特别兼容现有CFFCompiler生成的CID范围，而不把正常字形路径丢弃。FDSelect按字形数和完整范围表预检，要求连续且有序、范围不超过剩余字形；保留首GID修复语义。
+- Type2 CharString操作数栈最多48项（包括产生额外栈项的操作），每字形跨子程序最多100000个token；超限只标记该字形无效，子调用退出时恢复深度。已有Type2子程序深度10边界保留。
+- Type1转换跟踪活动程序并限制根调用合计最多64层；循环/超限返回无效字形，finally释放活动记录和深度。TrueType复合字形同时限制活动字形/64层嵌套和100000条内部路径命令，避免循环和宽资源图反复展开，失败由原有字形路径回退处理。
+
+`pdf-font-program-budget-review.cjs`含11组真实模块检查、分配/调用陷阱、精确边界和字体编译再解析控制。浏览器脚本`browser-pdf-font-program-budgets.cjs`含12项真实PDF，字体场景明确强制disableFontFace以验收内建路径回退；生产选项保持原样。正常Type1/TrueType检查实际黑色字形像素，长字典内联图片检查红色像素；异常仅省略相应字形/字体。TTF控制由`generate-pdf-glyph-fixtures.py`（可选开发依赖fontTools）生成，包含自创三角形和循环组件，未复制系统字体；固定时间戳可重复生成。其余字体为脚本中的原创极小程序。
+
+这些是每次解析/每字形边界，不代表整份文档所有字体缓存或操作符都有累计预算。首次完整截断字体基线缺少读取陷阱，隔离进程进入旧循环后已停止；最终基线只运行受控目标路径并使用15秒外部超时，避免重复跑整字体的旧耗时/展开路径。不得把这个初轮失败记录成PASS。

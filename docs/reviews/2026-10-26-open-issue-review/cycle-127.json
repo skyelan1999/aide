@@ -1,0 +1,540 @@
+{
+  "cycle": 127,
+  "issues": [
+    545,
+    546,
+    547,
+    548,
+    549,
+    550
+  ],
+  "implementation": [
+    "Inlinecombineddictionary/imagecachekeyinput<=16KiB;largerdictionarybypassescachingwithoutomittingimage",
+    "Charsetbyteboundsand<=65535glyphs;SIDrangesclippedtoremainingglyphcounttocarrylegacyCIDcompilercompatibility",
+    "FDSelectcomplete/range-count/continuity/glyph-countchecks beforeexpansion",
+    "Type2stack<=48includingstackproducingops;shared100000tokenbudgetandfinallyrestoredsubrdepth",
+    "Type1activeprograms/depth64returninvalidglyphandrelease;TrueTypeactiveglyphs/depth64/pathcommands100000guardbuilt-infallback"
+  ],
+  "red": {
+    "checks": 11,
+    "rows": [
+      {
+        "name": "545 long inline dictionary bypasses cache without losing image bytes",
+        "status": "FAIL",
+        "error": "Maximum call stack size exceeded"
+      },
+      {
+        "name": "546 truncated formats1/2 reject before nonprogressing loops",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned charset read trap"
+      },
+      {
+        "name": "546 valid explicit/range charsets and complete tiny font",
+        "status": "PASS"
+      },
+      {
+        "name": "547 malformed FDSelect ranges reject before append amplification",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned FDSelect append trap"
+      },
+      {
+        "name": "547 valid formats0/3, full16bit glyph count and complete CID font",
+        "status": "PASS"
+      },
+      {
+        "name": "548 stack48 boundary and stack-producing operators reject before write49",
+        "status": "FAIL",
+        "error": "owned Type2 stack write trap"
+      },
+      {
+        "name": "548 shared token/subroutine work bound and depth cleanup",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\ntrue !== false\n"
+      },
+      {
+        "name": "549 recursive Type1 subr invalidates only glyph and releases state",
+        "status": "FAIL",
+        "error": "owned Type1 recursion trap"
+      },
+      {
+        "name": "549 allowed Type1 nesting64 and overflow65",
+        "status": "FAIL",
+        "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+      },
+      {
+        "name": "550 composite self/mutual cycles fail before owned command trap",
+        "status": "FAIL",
+        "error": "The \"format\" validation function is expected to return \"true\". Received false\n\nCaught error:\n\nError: owned composite command trap"
+      },
+      {
+        "name": "550 combined depth and repeated-component command budget with sibling reuse",
+        "status": "FAIL",
+        "error": "Missing expected exception (format)."
+      }
+    ]
+  },
+  "green": {
+    "checks": 11,
+    "rows": [
+      {
+        "name": "545 long inline dictionary bypasses cache without losing image bytes",
+        "status": "PASS"
+      },
+      {
+        "name": "546 truncated formats1/2 reject before nonprogressing loops",
+        "status": "PASS"
+      },
+      {
+        "name": "546 valid explicit/range charsets and complete tiny font",
+        "status": "PASS"
+      },
+      {
+        "name": "547 malformed FDSelect ranges reject before append amplification",
+        "status": "PASS"
+      },
+      {
+        "name": "547 valid formats0/3, full16bit glyph count and complete CID font",
+        "status": "PASS"
+      },
+      {
+        "name": "548 stack48 boundary and stack-producing operators reject before write49",
+        "status": "PASS"
+      },
+      {
+        "name": "548 shared token/subroutine work bound and depth cleanup",
+        "status": "PASS"
+      },
+      {
+        "name": "549 recursive Type1 subr invalidates only glyph and releases state",
+        "status": "PASS"
+      },
+      {
+        "name": "549 allowed Type1 nesting64 and overflow65",
+        "status": "PASS"
+      },
+      {
+        "name": "550 composite self/mutual cycles fail before owned command trap",
+        "status": "PASS"
+      },
+      {
+        "name": "550 combined depth and repeated-component command budget with sibling reuse",
+        "status": "PASS"
+      }
+    ]
+  },
+  "browser": [
+    {
+      "mode": "inline-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "save",
+        "transform",
+        "paintInlineImageXObject",
+        "restore"
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "inline-long",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 4,
+      "operationNames": [
+        "save",
+        "transform",
+        "paintInlineImageXObject",
+        "restore"
+      ],
+      "forcedFontFallback": false,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "charset-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "charset-truncated",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: FormatError: Truncated CFF charset range"
+      ]
+    },
+    {
+      "mode": "fdselect-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "fdselect-invalid",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: FormatError: parseFDSelect: Invalid range count"
+      ]
+    },
+    {
+      "mode": "type2-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "type2-stack",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Type2 CharString exceeds operand stack limit"
+      ]
+    },
+    {
+      "mode": "type1-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "type1-cycle",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: Type1 CharString recursive or excessive subroutine"
+      ]
+    },
+    {
+      "mode": "ttf-normal",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": []
+    },
+    {
+      "mode": "ttf-cycle",
+      "status": "PASS",
+      "options": {
+        "maxImageSize": 16777216,
+        "canvasMaxAreaInBytes": 33554432
+      },
+      "operations": 10,
+      "operationNames": [
+        "setFillRGBColor",
+        "constructPath",
+        "fill",
+        "setFillRGBColor",
+        "beginText",
+        "dependency",
+        "setFont",
+        "moveText",
+        "showText",
+        "endText"
+      ],
+      "forcedFontFallback": true,
+      "pages": 1,
+      "note": "PDF 预览会略过超过 16 Mi 像素的嵌入图片；页面最长边 8192 像素、画布最多 16 Mi 像素，超出时降低预览分辨率。完整内容请下载原文件查看。",
+      "expectedBackground": [
+        0,
+        0,
+        255,
+        255
+      ],
+      "messages": [
+        "Warning: buildFontPaths - ignoring g_d0_f1_path_ glyph: \"FormatError: Recursive or excessive TrueType composite glyph\"."
+      ]
+    }
+  ],
+  "quick": {
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "b255397e6f6a93955bc1b85eab79e7508f5da2f9e714d64935f5e8e39fb59d0b",
+    "head": "9ada978b824e9807cabb5122e67bbdb1b927db2b",
+    "time": "20261029T090728523654Z",
+    "log": ".agent-state/verify-20261029T090728523654Z.log"
+  },
+  "quickChecks": 301,
+  "iterationCorrections": [
+    "Firstcomplete-fontbaselinefor546lackedreadtrapandenteredoldloop. StoppedownedNodeandparentshell338626/338623;added15ssupervisorandskipunsafeoldintegrationnegativeswhileretainingcontrolledtarget-methodredprobes. Earlier trace timedout15s,notPASS.",
+    "InitialinlineunitfixtureomittedtrailingQ/whitespaceafterEI;fixedtoexistingvalidPDFoperatorsequencebeforefinalreceipt.",
+    "FirstnewcharsetguardrejectedexistingCIDcompileroversizedrangeandcausednormalfontpathomission. Changedtoboundedclipping,preservedfirstglyphentries,addedcompile/reparseroundtripandstrictnoignored-glyphwarningfornormalbrowsercontrols.",
+    "Acornboundariesusedforrecursiveglyffunction;Type2stackDeltaguardexplicitlyverifiedafterearliertextsliceendedatreturnopcode."
+  ],
+  "fixtures": {
+    "TTF": "Originaltwo-glyphfonts;fixedtimestamps/deterministicgeneratorwithfontTools;nosystemfontredistribution",
+    "CFF/Type1": "Originaltinyfontprogrambuilderscommittedinreviewscript"
+  },
+  "limits": [
+    "Per-parser/per-glyphbudgets,notallfontcache/documentwork.",
+    "FontbrowsercasesexplicitlydisableFontFacetoexercisebuilt-inpathfallback;productionoptionsunchanged.",
+    "NormalType1/TrueTypeactualblackglyphpixelsandinlineactualredpixelsverified;invalidglyphs/fontsmaybeomitted.",
+    "Finalreduseswrite/read/calltraps;onlyinitialfullcharsetfixtureenteredoldloopandwasstoppedasrecorded."
+  ],
+  "delivery": {
+    "branch": "codex/remaining-83-20261029",
+    "PR": 609,
+    "status": "verifiedreadytopush;mainreviewpending"
+  },
+  "next": {
+    "cycle": 128,
+    "issues": [
+      552,
+      553,
+      554,
+      556,
+      557,
+      558,
+      559,
+      560
+    ]
+  }
+}
