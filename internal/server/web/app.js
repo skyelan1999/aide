@@ -762,13 +762,24 @@ function scheduleSessionsRefresh() {
     action(loadSessions)().catch(() => {});
   }, 300);
 }
+let assistantResultRefreshBusy=false;
+async function refreshAssistantResults(){
+  if(assistantResultRefreshBusy||state.session?.kind!=='assistant'||lockScreen.locked)return;
+  assistantResultRefreshBusy=true;const id=state.session.id,seq=sessionSeq.value;
+  try{
+    const loaded=await getSessionWindow(id);
+    if(state.session?.id!==id||sessionSeq.value!==seq)return;
+    const revision=sessionRevision(loaded);
+    if(revision!==state.sessionJSON){state.session=loaded;state.sessionJSON=revision;renderSession();}
+  }catch(_){}finally{assistantResultRefreshBusy=false;}
+}
 function setupGlobalEvents() {
   if (sessionsEv || typeof EventSource !== 'function') return;
   try {
     sessionsEv = new EventSource('/api/events?access_token=' + encodeURIComponent(state.token));
     sessionsEv.addEventListener('sessions-changed', event => {
       scheduleSessionsRefresh();window.AideManagement?.refresh();
-      try{const changed=JSON.parse(event.data);if(typeof changed.sessionId==='string')window.AideTaskOutcome?.refreshSession(changed.sessionId);}catch{}
+      try{const changed=JSON.parse(event.data);if(typeof changed.sessionId==='string'){window.AideTaskOutcome?.refreshSession(changed.sessionId);if(state.session?.kind==='assistant'&&changed.sessionId===state.session.id)void refreshAssistantResults();}}catch{}
     });
     sessionsEv.addEventListener('approval-policy-changed', async () => {
       try { await refreshApprovalPolicy(); if(state.session) await selectSession(state.session.id); } catch (_) {}
@@ -10446,6 +10457,7 @@ function initAssistantLive(){
   const paint=()=>{
     let value=(window.aideAssistantCall?.active()?window.aideAssistantRealtime?.snapshot():window.aideAssistantLive?.snapshot())||{enabled:false,phase:'off'};
     window.aideAssistantCall?.paint(value);
+    void window.aideAssistantMemory?.sync();
     value=(window.aideAssistantCall?.active()?window.aideAssistantRealtime?.snapshot():window.aideAssistantLive?.snapshot())||value;
     work.hidden=state.session?.kind!=='assistant';if(state.session?.kind!=='assistant'&&!value.enabled){$('voice-btn').setAttribute('aria-label',t('语音输入'));return;}
     if(value.enabled&&value.microphone&&state.session?.kind==='assistant'){if(value.phase!=='listening')voice.interim='';$('voice-panel').classList.toggle('hidden',!!window.aideAssistantCall?.active());$('voice-title').textContent=voice.name();voiceSetStatus(value.phase==='listening'?'listening':'standby',t(names[value.phase]||'工作统筹中'));}
@@ -10453,6 +10465,7 @@ function initAssistantLive(){
     if(assistantEntrySession)$('assistant-entry')?.querySelector('.assistant-entry-dot')?.classList.toggle('live',value.enabled&&!value.paused);
     $('voice-btn').classList.toggle('recording',value.enabled&&value.microphone&&!value.paused);$('voice-btn').setAttribute('aria-label',t(value.enabled&&value.microphone?'结束持续语音':'开始持续语音'));
   };
+  let initiativeQuiet=false;
   window.aideAssistantLive=window.AideAssistantLive.create({valid,state:paint,
     loadSeen:()=>{try{return JSON.parse(sessionStorage.getItem('assistant-work-seen:'+assistantEntrySession.id)||'[]');}catch(_){return [];}},
     saveSeen:ids=>{try{sessionStorage.setItem('assistant-work-seen:'+assistantEntrySession.id,JSON.stringify(ids));}catch(_){}},
@@ -10465,22 +10478,26 @@ function initAssistantLive(){
     },
     send:(text,signal)=>api(`/sessions/${state.session.id}/assistant-message`,{method:'POST',signal,body:JSON.stringify({text,inputSource:window.aideAssistantCall?.active()?'call':'voice',avatarFeedback:!!window.aideAvatarEnabled?.()})}),
     reply:async(result,text)=>{voiceLog('sent',text);if(result.avatarCue)window.aideAvatarCue?.(result.avatarCue);if(result.reply)voiceLog('reply',result.reply);const id=state.session?.id;if(id)await selectSession(id);},
-    watch:async()=>{const result=await api(`/sessions/${assistantEntrySession.id}/assistant-watch`);return result.events||[];},
+    watch:async()=>{const result=await api(`/sessions/${assistantEntrySession.id}/assistant-watch`);initiativeQuiet=!!result.proactiveQuiet;if(state.session?.kind==='assistant')await refreshAssistantResults();return result.events||[];},
+    canInitiate:()=>!initiativeQuiet&&state.session?.kind==='assistant'&&document.visibilityState!=='hidden'&&!window.aideAssistantCall?.active()&&!$('prompt').value.trim()&&!narration.active&&!ttsPlayer._audio&&!ttsPlayer._ctrl&&!window.speechSynthesis?.speaking&&!$('login-dialog').open,
+    initiative:signal=>api(`/sessions/${assistantEntrySession.id}/assistant-initiative`,{method:'POST',signal,body:'{}'}),
+    proactiveReply:async text=>{voiceLog('reply',text,t('主动交流'));const id=state.session?.id;if(id)await selectSession(id);},
     work:paintWork,
-    announceEvents:()=>!window.aideAssistantCall?.active(),
+    announceEvents:()=>!initiativeQuiet&&!window.aideAssistantCall?.active(),
     deferRecognitionEnd:()=>!!window.aideAssistantCall?.active(),
     turnDelay:(text,interim)=>{
       if(!window.aideAssistantCall?.active())return 1100;
       if(/(?:我比较|我觉得|就是|因为|但是|然后|之后|之前|如果|假如|所以|一个|一种|想要)[，,\s]*$/.test(text))return 1800;
       return interim?1200:650;
     },
-    events:events=>{for(const event of events)voiceLog('reply',event.text,t('主动跟进'));},
+    events:events=>{for(const event of events)if(event.kind!=='task')voiceLog('reply',event.text,t('主动跟进'));},
     speak:text=>!window.aideAssistantCall?.active()&&state.config?.voiceReplyEnabled&&document.visibilityState!=='hidden'?ttsSpeak(stripMarkdownForSpeech(text),{awaitMode:true,colloquial:false}):Promise.resolve(),
     interrupted:()=>{voiceLog('standby',t('已打断，正在听你说'));},
     cancelSpeech:ttsCancel,error:message=>{if(message)toast(t(message));},
     transcript:(final,interim)=>{voice.interim=final+interim;voiceRenderStatus();}
   });
-  window.aideAssistantLiveSync=()=>{if(!valid())return;const value=window.aideAssistantLive.snapshot();if(!value.enabled)void window.aideAssistantLive.start(false);else if(value.paused)window.aideAssistantLive.resume();};
+  for(const type of ['keydown','pointerdown'])document.addEventListener(type,()=>window.aideAssistantLive?.activity(),{passive:true});
+  window.aideAssistantLiveSync=()=>{if(!valid())return;const value=window.aideAssistantLive.snapshot();if(!value.enabled)void window.aideAssistantLive.start(false);else if(value.paused)window.aideAssistantLive.resume();paint();};
   if(window.AideAssistantRealtime){
     window.aideAssistantRealtime=window.AideAssistantRealtime.create({
       valid:()=>valid()&&state.session?.kind==='assistant'&&document.visibilityState!=='hidden',
@@ -10494,12 +10511,13 @@ function initAssistantLive(){
   }
   if(window.AideAssistantCall){
     window.aideAssistantCall=window.AideAssistantCall.create({
-      translate:t,valid:()=>valid()&&state.session?.kind==='assistant'&&document.visibilityState!=='hidden',
+      translate:t,valid:()=>valid()&&state.session?.kind==='assistant',
       supported:()=>!!(navigator.mediaDevices?.getUserMedia&&(window.AudioContext||window.webkitAudioContext)&&window.AudioWorkletNode&&window.WebSocket),
       live:()=>window.aideAssistantRealtime,unlockAudio:ttsUnlockAudio,cancelSpeech:ttsCancel,error:toast
     });
-    work.before(window.aideAssistantCall.element);
+    work.before(window.aideAssistantCall.element);window.aideAssistantCall.element.classList.add('composer-call-panel');document.querySelector('.input-actions')?.prepend(window.aideAssistantCall.entry);
   }
+  if(window.AideAssistantMemory){window.aideAssistantMemory=window.AideAssistantMemory.create({translate:t,valid:()=>valid()&&state.session?.kind==='assistant',session:()=>assistantEntrySession?.id,api:(id,data)=>api(`/sessions/${id}/assistant-memory`,{method:'POST',body:JSON.stringify(data)})});work.before(window.aideAssistantMemory.element);document.querySelector('.input-actions')?.prepend(window.aideAssistantMemory.entry);}
   window.aideAssistantLiveUI=paint;paintWork([]);paint();
   window.addEventListener('pagehide',()=>{window.aideAssistantCall?.end();window.aideAssistantLive.stop();});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){window.aideAssistantCall?.end();window.aideAssistantLive.setMicrophone(false);ttsCancel();}else window.aideAssistantLiveSync();});

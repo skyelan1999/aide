@@ -137,6 +137,8 @@ var tokenUsageRecorder atomic.Value // func(TokenUsage)
 // emptyCompletionError 上游正常结束（HTTP 200、流跑完）但既无正文也无工具调用。
 // 这是“空返回”根因分类里的 d 类：模型在长工具链后什么都没说就停了。
 // toolLoop 据此区分“可兜底续接”与“真·上游错误”，避免盲重试把空响应原样重放。
+var errIncompleteProviderStream = errors.New("模型流式响应提前结束")
+
 type emptyCompletionError struct {
 	finish string // 上游最后一个 finish_reason（stop/length/content_filter/…），可能为空
 }
@@ -240,6 +242,9 @@ func modelCapabilityStatus(cfg Settings, capability string) string {
 }
 
 func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte)) (string, []ToolCall, TokenUsage, error) {
+	if err := gateMessageImages(cfg, messages); err != nil {
+		return "", nil, TokenUsage{}, err
+	}
 	if isBailianEndpoint(cfg.BaseURL) && !isQwenRealtime(cfg.Model) && (strings.HasPrefix(cfg.Model, "qwen3.5-omni-") || strings.HasPrefix(cfg.Model, "qwen3-omni-")) {
 		out, calls, usage, _, err := completeStream(ctx, cfg, messages, params, tools, rec, nil, nil)
 		return out, calls, usage, err
@@ -379,6 +384,9 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 }
 
 func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string), idleTimeout time.Duration) (string, []ToolCall, TokenUsage, string, error) {
+	if err := gateMessageImages(cfg, messages); err != nil {
+		return "", nil, TokenUsage{}, "", err
+	}
 	if isQwenRealtime(cfg.Model) {
 		return completeQwenRealtime(ctx, cfg, messages, tools, rec, onDelta)
 	}
@@ -481,13 +489,13 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	var content strings.Builder
 	toolCallsByIndex := map[int]*ToolCall{}
 	var finishReason string
+	streamEnded := false
 	var usage *providerUsage
 	idleWatch := startStreamIdleWatch(streamCtx, cancelStream, idleTimeout)
 	defer idleWatch.stop()
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64<<10), 1<<20) // 单个 chunk 上限 1 MiB
 	streamBytes := 0
-	streamEnded := false
 	for scanner.Scan() {
 		streamBytes += len(scanner.Bytes())
 		if streamBytes > 8<<20 {
@@ -603,9 +611,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		return text, nil, tu, finishReason, streamCtx.Err()
 	}
 	if !streamEnded && finishReason == "" {
-		// HTTP EOF is not a completion marker. In particular, never dispatch
-		// potentially incomplete tool calls from a truncated stream.
-		return text, nil, tu, "", fmt.Errorf("模型流式响应在完成标记前中断，已保留部分输出: %w", io.ErrUnexpectedEOF)
+		return text, nil, tu, "", fmt.Errorf("%w: %w，已保留部分正文；请从检查点继续", errIncompleteProviderStream, io.ErrUnexpectedEOF)
 	}
 	return text, calls, tu, finishReason, nil
 }

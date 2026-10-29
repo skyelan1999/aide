@@ -1393,7 +1393,7 @@
     ],
     "executionCheckpoint": {
       "at": "2026-10-28T23:36:39.762686+00:00",
-      "state": "checkpointed-for-requested-handoff",
+      "state": "integrating-main-at-explicit-user-request",
       "backgroundWorkerRunning": false,
       "liveOpen": 508,
       "pending": 74,
@@ -1422,5 +1422,29 @@
     "machineRecord": "docs/reviews/2026-10-26-open-issue-review/ordered-review.json",
     "artifactSHA256": "78a6be98c47990d95d9867694d0b677d397a7cd76d550a740feccef99f07783a",
     "repairsComplete": false
+  },
+  "integration20261029": {
+    "request": "请将现在的分支和到main上，进行测试，并回归已经改或的issue，没问题的在推送后关闭",
+    "authorization": "Explicit user authorization supersedes prior branch-only/no-main constraint for reviewed integration; no protection bypass or unrelated deployment.",
+    "status": "in_progress",
+    "baselineBranch": "da8ac4631877ed464528e6257a6a236a6fac132a",
+    "baselineMain": "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
+    "acceptance": [
+      "Resolve main and branch conflicts without losing independent fixes",
+      "Run merged-source quick and complete hosted Go race/vet/Windows CI",
+      "Rerun browser regressions for affected previews",
+      "Push integration and merge main through existing branch protection",
+      "Close only issues with source in remote main and adequate passing regression evidence; retain native/pending/plugin-only issues"
+    ],
+    "scope": [
+      "Aide current repair branch and main integration",
+      "Affected regression harnesses and task/evidence documentation",
+      "Evidence-backed GitHub issue comments and state"
+    ],
+    "unavailable": [
+      "Native Windows user devices and Docker Desktop user installation",
+      "Paid/live provider calls"
+    ],
+    "issueClosure": "Pending integration, test receipts and verified remote main containment"
   }
 }

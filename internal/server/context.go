@@ -58,7 +58,7 @@ func hasParallelBriefing(input []Message) bool {
 }
 
 type ContextUsageAnchor struct {
-	Scope string `json:"scope,omitempty"` // parallel_merge contains transient working notes, absent from later baseline
+	Scope string `json:"scope,omitempty"` // transient parallel/active summaries are absent from later baseline
 
 	Usage              TokenUsage `json:"usage"`
 	PromptEstimate     int        `json:"promptEstimate"`
@@ -457,8 +457,9 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 			conversation[i].SourceRunID = ""
 			conversation[i].CreatedAt = ""
 		}
-		// All uncompacted messages participate in preview and admission. A fixed
-		// tail cap silently discards constraints and can orphan tool results.
+		// Meter all unsummarized history. Silently taking a fixed suffix loses
+		// constraints and can start inside a tool exchange. Preflight compaction
+		// owns fitting this request to the selected model's actual budget.
 		history = append(history, conversation...)
 		historyCount = len(conversation)
 	}
@@ -524,7 +525,7 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 			// Parallel working notes are not persisted in conversation history. Their
 			// tokenization delta must not inflate the next ordinary request's baseline.
 			run := s.Runs[i]
-			if anchor != nil && (anchor.Scope == "parallel_merge" || anchor.Scope == "" && run.ParallelPrepared && run.Parallel != nil && run.Parallel.Phase != "fallback" && len(run.Parallel.Parts) > 1) {
+			if anchor != nil && (anchor.Scope == "parallel_merge" || anchor.Scope == "active_compact" || anchor.Scope == "" && run.ParallelPrepared && run.Parallel != nil && run.Parallel.Phase != "fallback" && len(run.Parallel.Parts) > 1) {
 				break
 			}
 			if anchor != nil && (anchor.CompactedAt != s.CompactedAt || anchor.SummaryFingerprint != contextSummaryFingerprint(history)) {

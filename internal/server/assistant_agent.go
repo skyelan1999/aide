@@ -43,6 +43,7 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 用户明确要做一件工作（写代码、改文件、跑命令、查资料、产出正式内容）：调用 dispatch_to_aide，把啰嗦/重复/口头禅去掉，总结成一句清晰可执行的意图放进 summary；mode 默认 queue，只有"马上/立刻/现在就要"或中止止损（停/取消/不对/等一下）才用 insert；中止止损把 urgent 设为 true。aide 会话创建后会立即排队启动任务；如果必要条件缺失或启动失败，如实告诉用户原因和会话编号。
 - 听上去是电视/广播/视频的背景声，或用户在跟身边真人打电话、闲聊：调用 be_silent，不要转达、不要搭话。
 - 意图不清楚（缺对象、缺要做什么）：不要乱猜，直接用一句话追问最关键的一个问题（不调工具，正文就是那个问题）。
+- 用户要求清理跟进台账时，调用 clear_followups；仅取消跟进，保留原任务和会话，不把清理台账误解为删除任务或转交执行器。只有工具返回成功后才说已清理。
 - 用户提到某个历史任务/会话、要你跟进或把结论写过去：先用 search_sessions 找到它，旧约束用 search_history 获取带来源的命中片段，必要时 get_session 读近期消息，再 follow_session 标记或 push_to_session 推送；新独立任务用 push_to_session（ref 留空/"new"）新建会话承接。push_to_session 会立即启动或排队任务，不要把它描述为仅创建草稿。
 - 用户询问你是否记得/能否翻历史，或在刚才的历史查询后只补充一个关键词/主题：要把它当作查历史的延续，主动用 search_sessions 检索；找到后用 get_session 查看相关上下文，再结合事实回答。找不到时如实说明，不要假装记得。
 - 用户询问市场有哪些插件、是否有某项插件能力或插件详情：直接使用内置 browse_plugin_market，即使尚未安装插件也可查询；缓存过期时先刷新再判断是否缺少插件，查询不会安装或启用插件。
@@ -70,6 +71,7 @@ const assistantCallGuidance = `【当前是用户主动发起的语音通话】
 // 不含 run_shell/write_file 等高危工具——小秘不直接操作工作区，只做调度与陪聊）。
 func assistantAgentToolSchemas(allowSilent bool) []any {
 	base := crossSessionToolSchemas() // search_sessions/get_session/follow_session/push_to_session
+	base = append(base, map[string]any{"type": "function", "function": map[string]any{"name": "clear_followups", "description": "用户明确要求清理跟进台账时调用。仅取消助理跟进，保留任务和会话，不终止运行、不删除记录。全部清理需本轮明确说全部/都；否则仅处理本轮明确的 #编号。无需转交 aide。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"all": map[string]any{"type": "boolean", "description": "仅用户明确要求全部清理时为 true；否则 false，按用户本轮 #编号处理"}}, "required": []string{"all"}}}})
 	base = append(base, pluginMarketBrowseTool)
 	extra := []any{
 		map[string]any{"type": "function", "function": map[string]any{
@@ -128,6 +130,15 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	a.mu.Unlock()
 	if scopeErr != nil {
 		return assistantDecision{}, scopeErr
+	}
+	if provider, err := a.selectedMixSoul(); err != nil {
+		return assistantDecision{}, fmt.Errorf("%w: %v", errMixSoulActive, err)
+	} else if provider != nil {
+		decision, agentErr := a.runMixSoul(ctx, cfg, *provider, heard, inputSource)
+		if agentErr != nil {
+			return decision, fmt.Errorf("%w: %v", errMixSoulActive, agentErr)
+		}
+		return decision, nil
 	}
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
@@ -268,6 +279,12 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		return a.executeMessageAssistant(context.Background(), call)
 	}
 	switch call.Function.Name {
+	case "clear_followups":
+		heard := ""
+		if len(authorization) > 0 {
+			heard = authorization[0]
+		}
+		return a.clearAssistantFollowups(ctx, args, heard)
 	case "browse_plugin_market":
 		return a.browsePluginMarket(ctx, call.Function.Arguments)
 	case "dispatch_to_aide":
@@ -287,7 +304,7 @@ func (a *App) execAssistantToolWithContext(ctx context.Context, call ToolCall, d
 		if urgent {
 			dec.Mode = "insert"
 		}
-		return fmt.Sprintf("已记录要转达给 aide 的意图：%s（mode=%s，urgent=%v）。请在收尾回复里用一句话告诉用户你已经转交。", summary, dec.Mode, urgent)
+		return fmt.Sprintf("已记录要转达给 aide 的意图：%s（mode=%s，urgent=%v）。宿主确认任务启动后才向用户确认，不要把待执行意图说成已转交或已启动。", summary, dec.Mode, urgent)
 	case "be_silent":
 		dec.Action = "silent"
 		dec.Reason = str("reason")
