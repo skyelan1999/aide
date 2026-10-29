@@ -275,14 +275,19 @@ func (a *App) modelWindow(modelID string) int {
 // 图片作为多模态附件返回，视觉能力门禁由调用方持锁后调 visionGateLocked 完成
 // （不在此加锁，避免与已持锁的 retryTask 死锁）。
 func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[string]Change, error) {
-	contextText := ""
+	var contextText strings.Builder
 	var images []MessageImage
 	versions := map[string]Change{}
 	addText := func(root, apath, body string) error {
-		contextText += fmt.Sprintf("\n<untrusted-file root=%q path=%q>\n%s\n</untrusted-file>\n", root, apath, body)
-		if len(contextText) > maxAttachmentChars {
-			return fmt.Errorf("附件总量超过 %d KB，请减少附件或缩短文件", maxAttachmentChars>>10)
+		header := fmt.Sprintf("\n<untrusted-file root=%q path=%q>\n", root, apath)
+		const footer = "\n</untrusted-file>\n"
+		// Check before growing/copying the body; never silently send partial files.
+		if len(header)+len(body)+len(footer) > maxAttachmentTextBytes-contextText.Len() {
+			return fmt.Errorf("附件提取文本超过 %d MiB 处理预算；请分批附加或使用文件工具分段读取。模型上下文容量另按所选模型检查", maxAttachmentTextBytes>>20)
 		}
+		contextText.WriteString(header)
+		contextText.WriteString(body)
+		contextText.WriteString(footer)
 		return nil
 	}
 	for _, att := range atts {
@@ -371,7 +376,7 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 			versions[path.Clean(att.Path)] = Change{BaseHash: hash(b), Before: string(b)}
 		}
 	}
-	return contextText, images, versions, nil
+	return contextText.String(), images, versions, nil
 }
 
 // systemPromptForSession 按会话 Kind 选 system 设定：
