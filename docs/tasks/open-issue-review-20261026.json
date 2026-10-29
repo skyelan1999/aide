@@ -263,9 +263,9 @@
     "backgroundScheduler": "not-available-in-current-client",
     "branch": "codex/open-issue-review-20261026",
     "constraints": [
-      "只push该分支，禁止合并main、自动合并、发布或部署",
+      "当前用户2026-10-29明确授权：回归后通过正常保护流程合并并推送main；其他未授权发布/部署仍禁止",
       "仅以源码/复现/测试证据判定，不成立或重复才评论关闭",
-      "合理问题修复且测试通过后push并评论，未合并main保持open",
+      "合理问题修复并回归，通过且已进入远端main后评论关闭；未完成、实机待验收、独立插件尚未合入者保持open",
       "缺信息或环境受限时记录阻塞，继续其他可处理条目",
       "保留用户数据、原有未跟踪文件，不调用付费模型或真实设备"
     ],
@@ -1445,6 +1445,8 @@
       "Native Windows user devices and Docker Desktop user installation",
       "Paid/live provider calls"
     ],
-    "issueClosure": "Pending integration, test receipts and verified remote main containment"
+    "issueClosure": "Pending integration, test receipts and verified remote main containment",
+    "pullRequest": "https://github.com/skyelan1999/aide/pull/595",
+    "additionalIssue": 596
   }
 }

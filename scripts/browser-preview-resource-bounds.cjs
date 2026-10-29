@@ -35,17 +35,24 @@ async function main() {
     });
     await page.goto('https://aide-preview-owned.test/', {waitUntil: 'load'});
     await page.addStyleTag({content: ['themes/dark/tokens.css', 'themes/light/tokens.css', 'style.css', 'macos.css', 'workbench.css'].map(file => fs.readFileSync('internal/server/web/' + file, 'utf8')).join('\n')});
-    for (const file of ['vendor/jszip.min.js', 'vendor/docx-preview/docx-preview.min.js', 'vendor/dxf-parser/dxf-parser.js', 'preview-safety.js']) await page.addScriptTag({content: fs.readFileSync('internal/server/web/' + file, 'utf8')});
+    for (const file of ['vendor/jszip.min.js', 'vendor/docx-preview/docx-preview.min.js', 'vendor/dxf-parser/dxf-parser.js', 'preview-safety.js', 'docx-style-bridge.js']) await page.addScriptTag({content: fs.readFileSync('internal/server/web/' + file, 'utf8')});
     await page.evaluate(() => {
       window.t = value => value;window.escapeHtml = value => String(value).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
       window.el = (tag, cls = '', text = '') => {const node = document.createElement(tag);node.className = cls;node.textContent = text;return node;};
       window.ensureDxfParser = async () => {};window.fileRawUrl = name => '/fixture/' + name;
       window.isDocPath = () => false;window.isBackupPath = () => false;
-      window.ownedTeardowns = [];window.bindViewerTeardown = (_host, fn) => ownedTeardowns.push(fn);
+      window.ownedTeardowns = [];
       window.ownedRenderCalls = 0;const render = window.docx.renderAsync;
       window.docx.renderAsync = (...args) => {ownedRenderCalls++;return render(...args);};
     });
-    await page.addScriptTag({content: dxfSource() + '\n' + docxSource()});
+    const app = fs.readFileSync('internal/server/web/app.js', 'utf8');
+    const lifecycle = app.slice(app.indexOf('function teardownViewer('), app.indexOf('async function setupStlPreview('));
+    assert.ok(lifecycle.includes('function bindViewerTeardown('), 'exercise current product lifecycle helpers');
+    await page.addScriptTag({content: lifecycle + '\n' + dxfSource() + '\n' + docxSource()});
+    await page.evaluate(() => {
+      const bind = window.bindViewerTeardown;
+      window.bindViewerTeardown = (host, release) => {bind(host, release);ownedTeardowns.push(host._aideViewerTeardown);};
+    });
     for (const [theme, width] of [['light',1440], ['dark',390]]) {
       await page.setViewportSize({width, height: 1000});await page.evaluate(theme => {document.documentElement.dataset.theme = theme;}, theme);
       await page.evaluate(async () => {for (const fn of ownedTeardowns.splice(0)) fn();await setupDxfPreview(document.querySelector('#preview'), 'normal.dxf', 'workspace', '');});
@@ -60,6 +67,7 @@ async function main() {
       await page.evaluate(async () => {await setupDxfPreview(document.querySelector('#preview'),'textloop.dxf','workspace','');});
       assert.equal(await page.locator('#preview svg').count(),0);assert.match(await page.locator('.dxf-error').textContent(),/预览限制/);
       await page.evaluate(async () => {await setupDocxPreview(document.querySelector('#preview'), 'normal.docx', 'workspace', '', {readOnly:true,origin:'owned'});});
+      assert.equal(await page.locator('.docx-error').count(), 0, await page.locator('#preview').textContent());
       await page.getByText('Owned normal DOCX preview', {exact:true}).waitFor();
       const accepted = await page.evaluate(() => ownedRenderCalls);
       await page.screenshot({path: path.join(out, theme + '-docx.png')});
