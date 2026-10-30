@@ -269,7 +269,7 @@ case "$MODE" in
     source scripts/prebuilt-image.sh
     # Normal startup prefers a complete installed native runtime. Force/source
     # requests bypass this reuse so updating code does not require deleting it.
-    if [[ "$MODE" == start && "${AIDE_FORCE_REBUILD:-0}" != 1 && "${AIDE_BUILD_FROM_SOURCE:-auto}" != 1 ]]; then
+    if [[ "$MODE" == start && "${AIDE_FORCE_REBUILD:-0}" != 1 ]] && ! launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
       IMG="$("$DOCKER_BIN" compose config --images aide)"
       if launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
         echo "== 本地完整镜像可用，直接复用；更新源码请强制重编译 =="

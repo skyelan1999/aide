@@ -46,12 +46,13 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本地静态检查通过。PR #628 的 Windows CI 通过；quick CI 首次失败，定位为旧回退测试夹具未提供新 helper，已更新夹具并准备推送重跑；Go race/vet 当时仍在运行。Docker 真实导入/启动/回滚未执行。",
+      "summary": "42 项启动数据和回退回归通过；源码工作区不复用过期镜像。真实下载/镜像切换尚未验证。",
       "evidence": [
         "bash -n start.command scripts/aide.sh scripts/prebuilt-image.sh：PASS",
         "Python AST parse scripts/latest-release-runtime.py 与 scripts/test_launcher_data.py：PASS",
         "git diff --check：PASS",
-        "PR #628 initial Windows CI：PASS；quick：FAIL（test fixture 缺 latest-release-runtime.py，已修）；Go：pending"
+        "PR #628 initial Windows CI：PASS；quick：FAIL（test fixture 缺 latest-release-runtime.py，已修）；Go：pending",
+        "python3 scripts/test_launcher_data.py: 42 tests OK"
       ]
     },
     "documentation": {
@@ -72,13 +73,13 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "用户明确要求只 push；不合并、不创建 tag、不发布 Release、不部署/重启 9999。",
+      "summary": "等待最终提交 CI 全部通过后管理员合并 PR #628；不发版。",
       "evidence": [
         "用户原话：你做一下，只push。"
       ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户授权本次管理员合并 #628；不发版。",
   "rollback": "如 Docker compose 启动或容器健康检查失败，将原镜像 ID 重新标记回 Compose target，并尝试重建服务。旧镜像不会删除；本次未执行运行时变更。",
   "handoff": "需后续合并并发行含此脚本的启动包，用户本机下载/同步新启动器代码后，Start 的源码构建 fallback 才能采用最新 Release。当前只推分支，不修改 9999。"
 }

@@ -353,17 +353,21 @@ print(os.environ.get("FIX_RELEASE_RECEIPT", "v0.1.17.6-RC1|sha256:"+"4"*64+"||up
     def test_invalid_latest_release_receipt_fails_closed_after_build_failure(self):
         self.env['FIX_RELEASE_RECEIPT']='invalid'
         r=self.run_build_recovery(7);self.assertEqual(r.returncode,1,r.stderr)
-        self.assertIn('invalid',r.stderr);self.assertNotIn('"load"',self.calls());self.assertNotIn('"tag"',self.calls())
+        self.assertIn('回执无效',r.stderr);self.assertNotIn('"load"',self.calls());self.assertNotIn('"tag"',self.calls())
     def test_native_runtime_reuse_is_bypassed_by_force_and_source_modes(self):
         source=(ROOT/'scripts/aide.sh').read_text()
         start=source.index('    # Normal startup prefers')
         end=source.index('    if [[ "$MODE" == start ]] && ! launcher_should_build_source',start)
-        script='set -euo pipefail\nfixture_docker() { echo aide:local; }; launcher_local_runtime_ready() { return "$FIX_LOCAL"; };\n'+source[start:end]+'echo RESULT:$MODE\n'
+        script='set -euo pipefail\nsource "$1"\nfixture_docker() { echo aide:local; }; launcher_local_runtime_ready() { return "$FIX_LOCAL"; };\n'+source[start:end]+'echo RESULT:$MODE\n'
         for force,mode,local,expected in [('0','auto','0','start-image'),('1','auto','0','start'),('0','1','0','start'),('0','auto','1','start')]:
             with self.subTest(force=force,mode=mode,local=local):
-                env=dict(os.environ,MODE='start',DOCKER_BIN='fixture_docker',AIDE_FORCE_REBUILD=force,AIDE_BUILD_FROM_SOURCE=mode,FIX_LOCAL=local)
-                r=subprocess.run(['bash','-c',script],env=env,text=True,capture_output=True)
+                env=dict(os.environ,MODE='start',PROJECT_DIR=str(self.root),DOCKER_BIN='fixture_docker',AIDE_FORCE_REBUILD=force,AIDE_BUILD_FROM_SOURCE=mode,FIX_LOCAL=local)
+                r=subprocess.run(['bash','-c',script,'fixture',str(ROOT/'scripts/prebuilt-image.sh')],env=env,text=True,capture_output=True)
                 self.assertEqual(r.returncode,0,r.stderr);self.assertIn('RESULT:'+expected,r.stdout)
+        (self.root/'.git').mkdir()
+        env=dict(os.environ,MODE='start',PROJECT_DIR=str(self.root),DOCKER_BIN='fixture_docker',AIDE_FORCE_REBUILD='0',AIDE_BUILD_FROM_SOURCE='auto',FIX_LOCAL='0')
+        r=subprocess.run(['bash','-c',script,'fixture',str(ROOT/'scripts/prebuilt-image.sh')],env=env,text=True,capture_output=True)
+        self.assertEqual(r.returncode,0,r.stderr);self.assertIn('RESULT:start\n',r.stdout)
     def test_source_checkout_and_windows_entry_build_policy(self):
         shell=(ROOT/'scripts/aide.sh').read_text();ps=(ROOT/'start.ps1').read_text(encoding='utf-8-sig')
         self.assertIn('launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}"',shell);self.assertIn('launcher_prebuilt_image "$DOCKER_BIN" "$IMG"',shell)
