@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Run actual root BATs via Windows CMD; native/Docker boundaries stay disposable."""
 import os
+import ctypes
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -59,6 +61,25 @@ def check(binary, folder, installation):
     calls=folder/'calls.log'
     env=dict(os.environ,AIDE_LAUNCHER_NO_PAUSE='1',FIXTURE_CALLS=str(calls),FIXTURE_NEW_EXE=str(folder/'new.exe'),
         PATH=str(toolbin)+os.pathsep+str(Path(os.environ['SystemRoot'])/'System32'))
+    # Real host-stop from a new EXE must wait for an older, different EXE.
+    root=fixture('previous-controller');state=root/'.aide-data/native';state.mkdir(parents=True)
+    old_controller=state/'previous-controller.exe';shutil.copy2(folder/'new.exe',old_controller);calls.write_text('')
+    previous=subprocess.Popen([str(old_controller),'--wait-stop',str(root)],env=env)
+    try:
+        deadline=time.monotonic()+10
+        while time.monotonic()<deadline and 'previous:started' not in calls.read_text():time.sleep(.05)
+        from ctypes import wintypes
+        kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+        kernel.GetProcessTimes.argtypes=[wintypes.HANDLE]+[ctypes.POINTER(wintypes.FILETIME)]*4
+        created,exited,kernel_time,user_time=[wintypes.FILETIME() for _ in range(4)]
+        assert kernel.GetProcessTimes(wintypes.HANDLE(int(previous._handle)),ctypes.byref(created),ctypes.byref(exited),ctypes.byref(kernel_time),ctypes.byref(user_time))
+        identity={'version':1,'root':str(root.resolve()),'pid':previous.pid,'created':(created.dwHighDateTime<<32)|created.dwLowDateTime,'state':'running'}
+        (state/'host-status.json').write_text(json.dumps(identity),encoding='utf-8')
+        result=subprocess.run([str(binary),'host-stop','--root',str(root)],capture_output=True,text=True,timeout=20,env=env)
+        assert result.returncode==0,(result.stdout,result.stderr)
+        assert previous.poll()==0,'host-stop returned while the previous EXE was still alive'
+    finally:
+        if previous.poll() is None:previous.kill();previous.wait()
     old=fixture('stale',exe=folder/'old.exe')
     result=run(old,'verify',env=env,expected=1);assert 'outdated' in result.stdout
     assert 'legacy:verify' not in calls.read_text()

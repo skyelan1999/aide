@@ -18,6 +18,10 @@ int wmain(int argc,wchar_t** argv){
  return 0;
 #else
  std::wstring action=argc>1?argv[1]:L"";std::string a(action.begin(),action.end());
+ if(action==L"--wait-stop"&&argc==3){
+  auto stop=fs::path(argv[2])/L".aide-data/native/stop";log("previous:started");
+  for(int i=0;i<300;i++){if(GetFileAttributesW(stop.c_str())!=INVALID_FILE_ATTRIBUTES){Sleep(500);return 0;}Sleep(100);}return 34;
+ }
 #ifdef FIXTURE_LEGACY
  log("legacy:"+a);return 17;
 #else

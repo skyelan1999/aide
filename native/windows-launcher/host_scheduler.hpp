@@ -80,8 +80,16 @@ inline int nativeSupervise(Launcher& app){
  status["state"]="stopped";write(stateRoot/L"host-status.json",status.dump());return 0;
 }
 inline void nativeStopController(){
- write(stateRoot/L"stop","");auto status=nativeControllerStatus();if(!status.value("running",false))return;
- for(int i=0;i<150;i++){if(!nativeAlive(status))return;Sleep(100);}throw aide_host::Unsafe("Native controller did not stop; lifecycle action refused");
+ write(stateRoot/L"stop","");auto status=nativeControllerStatus();if(!status.contains("pid"))return;
+ // A fresh bootstrap is a different executable from the previous controller.
+ // The private, installation-scoped status and creation time identify the old
+ // process. Wait on that exact handle; never terminate an unfamiliar process.
+ if(!status["pid"].is_number_unsigned()||!status.contains("created")||!status["created"].is_number_unsigned())throw aide_host::Unsafe("Invalid native controller process identity");
+ auto pid=status["pid"].get<uint64_t>();if(!pid||pid>MAXDWORD)throw aide_host::Unsafe("Invalid native controller PID");
+ Handle process(OpenProcess(SYNCHRONIZE|PROCESS_QUERY_LIMITED_INFORMATION,FALSE,DWORD(pid)));
+ if(!process.valid()){if(GetLastError()==ERROR_INVALID_PARAMETER)return;throw aide_host::Unsafe("Cannot confirm previous native controller exit");}
+ if(nativeIdentity(process.h,DWORD(pid))["created"]!=status["created"])return;
+ if(WaitForSingleObject(process.h,15000)!=WAIT_OBJECT_0)throw aide_host::Unsafe("Native controller did not stop; lifecycle action refused");
 }
 // Only the known directory timeout marker can be cleared by a verified full
 // stop. Unknown child/legacy update blockers still require operator inspection.
