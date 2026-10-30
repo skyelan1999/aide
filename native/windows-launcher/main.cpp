@@ -216,7 +216,8 @@ public:
   for(auto relative:{L".env",L".aide-image",L".aide-data/launcher.env",L".aide-data/image",L".aide-data/compose-project",L".aide-data/storage"})realPath(root/relative);
   if(!fs::exists(root/L".env")&&fs::exists(root/L".aide-data/launcher.env"))write(root/L".env",read(root/L".aide-data/launcher.env"));
   if(!fs::exists(root/L".aide-image")&&fs::exists(root/L".aide-data/image"))write(root/L".aide-image",read(root/L".aide-data/image"));
-  settings=dotenv(root/L".env");offline=fs::exists(root/L".aide-image");
+  settings=dotenv(root/L".env");bool sourceCheckout=fs::exists(root/L"Dockerfile")&&fs::exists(root/L"go.mod")&&env(L"AIDE_BUILD_FROM_SOURCE")!=L"0";offline=fs::exists(root/L".aide-image")&&!sourceCheckout;
+  if(sourceCheckout&&fs::exists(root/L".aide-image"))setenvw(L"AIDE_IMAGE",L"aide:local");
   if(offline){std::istringstream marker(read(root/L".aide-image"));std::string ref;marker>>ref;if(!ref.empty())setenvw(L"AIDE_IMAGE",wide(ref));}
   else if(configured("AIDE_IMAGE").empty())setenvw(L"AIDE_IMAGE",L"aide:local");
   if(!fs::exists(root/L"compose.yaml"))write(root/L"compose.yaml",embedded_compose);
@@ -359,7 +360,7 @@ public:
   auto c=config();image=c["services"]["aide"].value("image","");if(image.empty())throw std::runtime_error("Compose has no application image");
   bool source=fs::exists(root/L"Dockerfile")&&fs::exists(root/L"go.mod")&&env(L"AIDE_BUILD_FROM_SOURCE")!=L"0";std::string expectedSource;
   if(source){auto fingerprint=stateRoot/L"source-input.txt";std::string hashes;for(const auto& name:aide_source::inputs(root,parseJson(embedded_source_manifest)))hashes+=sha256(root/fs::u8path(name))+"  "+name+"\n";write(fingerprint,hashes);expectedSource=sha256(fingerprint);}
-  auto m=inspect(image);bool build=force||env(L"AIDE_BUILD_FROM_SOURCE")==L"1"||env(L"AIDE_FORCE_REBUILD")==L"1";
+  auto m=inspect(image);if(m.is_null()&&source&&fs::exists(root/L".aide-image")){std::istringstream marker(read(root/L".aide-image"));std::string previous;marker>>previous;m=inspect(previous);}bool build=force||env(L"AIDE_BUILD_FROM_SOURCE")==L"1"||env(L"AIDE_FORCE_REBUILD")==L"1";
   if(!build&&!m.is_null()&&runtime(m,platform)&&(!source||label(m,"aide.srcsha")==expectedSource)){say("Using validated immutable local runtime.");image=m.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}
   if(source){
    std::smatch versionMatch;auto versionText=read(root/L"version.md");if(!std::regex_search(versionText,versionMatch,std::regex("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+ RC[0-9]+")))throw std::runtime_error("Source version.md has no valid version");setenvw(L"AIDE_VERSION",wide(versionMatch[0].str()));

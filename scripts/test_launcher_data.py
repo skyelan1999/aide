@@ -374,6 +374,17 @@ print(os.environ.get("FIX_RELEASE_RECEIPT", "v0.1.17.6-RC1|sha256:"+"4"*64+"||up
         self.assertIn("$env:AIDE_BUILD_FROM_SOURCE -ne '0'",ps);self.assertIn('if ((Invoke-Compose build aide).Code -ne 0)',ps);self.assertIn("$env:AIDE_RELEASE_FALLBACK -eq '0'",ps)
         self.assertIn('AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start',(ROOT/'scripts/install.sh').read_text())
 
+    def test_source_checkout_is_not_hidden_by_stale_bundle_marker(self):
+        (self.root/'.aide-image').write_text('old pinned runtime')
+        script='source "$1"; launcher_start_mode "$2" "$3" "$4"'
+        def mode(request, policy):
+            return subprocess.check_output(['bash','-ec',script,'fixture',str(ROOT/'scripts/prebuilt-image.sh'),request,policy,str(self.root)],text=True).strip()
+        self.assertEqual(mode('start','auto'),'start-bundle')
+        (self.root/'.git').mkdir()
+        self.assertEqual(mode('start','auto'),'start')
+        self.assertEqual(mode('start','0'),'start-bundle')
+        self.assertEqual(mode('start-bundle','auto'),'start-bundle')
+
 class RunningRuntimeReuseTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)

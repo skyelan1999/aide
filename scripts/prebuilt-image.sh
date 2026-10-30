@@ -30,6 +30,14 @@ launcher_should_build_source() {
   esac
 }
 
+launcher_start_mode() {
+  if [[ "$1" == start && -f "$3/.aide-image" ]] && ! launcher_should_build_source "$2" "$3"; then
+    printf '%s\n' start-bundle
+  else
+    printf '%s\n' "$1"
+  fi
+}
+
 launcher_prebuilt_image() {
   local docker_bin="$1" target="$2" manifest="${3:-docker/prebuilt-images.tsv}" purpose="${4:-runtime}"
   local platform row image src digest url kind extra archive actual current rollback

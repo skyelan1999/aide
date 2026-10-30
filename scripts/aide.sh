@@ -70,7 +70,8 @@ if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; 
   aide_check_disk start
   source scripts/launcher-data.sh
   launcher_env_restore
-  if [[ "$MODE" == start && -f .aide-image ]]; then MODE=start-bundle; fi
+  source scripts/prebuilt-image.sh
+  MODE="$(launcher_start_mode "$MODE" "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR")"
 fi
 DOCKER_BIN="$(command -v docker || true)"
 if [[ -z "$DOCKER_BIN" && -x "$HOME/.docker/bin/docker" ]]; then DOCKER_BIN="$HOME/.docker/bin/docker"; fi
@@ -101,7 +102,11 @@ fi
 
 if [[ -f .aide-image ]]; then
   read -r BUNDLE_IMAGE BUNDLE_ID BUNDLE_PLATFORM BUNDLE_RELEASE_TAG < .aide-image
-  export AIDE_IMAGE="$BUNDLE_IMAGE" COMPOSE_FILE=compose.yaml
+  if [[ "$MODE" == start ]] && launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
+    export AIDE_IMAGE=aide:local
+  else
+    export AIDE_IMAGE="$BUNDLE_IMAGE" COMPOSE_FILE=compose.yaml
+  fi
 fi
 if [[ "$MODE" == start-bundle ]]; then
   [[ -f .aide-image ]] || { echo "当前目录不是离线包：缺少 .aide-image。" >&2; exit 1; }

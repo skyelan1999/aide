@@ -31,7 +31,9 @@ function Test-AideDirectorySetting([string]$Name) {
 # Release bundles contain a prebuilt, architecture-specific Linux image. Use it
 # directly and never invoke Compose build/pull for an offline installation.
 $offlineMarker = Join-Path $PSScriptRoot '.aide-image'
-$offlineBundle = Test-Path -LiteralPath $offlineMarker
+$sourceCheckout = ((Test-Path -LiteralPath (Join-Path $PSScriptRoot 'go.mod')) -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'Dockerfile')) -and $env:AIDE_BUILD_FROM_SOURCE -ne '0')
+$offlineBundle = ((Test-Path -LiteralPath $offlineMarker) -and -not $sourceCheckout)
+if ($sourceCheckout -and (Test-Path -LiteralPath $offlineMarker)) { $env:AIDE_IMAGE = 'aide:local' }
 if ($offlineBundle) {
     $marker = (Get-Content -Raw -LiteralPath $offlineMarker).Trim() -split '\s+'
     if ($marker.Count -lt 3) { throw '离线包 .aide-image 格式无效。' }
