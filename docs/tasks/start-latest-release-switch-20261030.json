@@ -1,0 +1,82 @@
+{
+  "id": "start-latest-release-switch-20261030",
+  "request": "用户要求修复：点击 Start 后自动切换到最新可用 Aide release。只 push，不发版、不部署 9999。",
+  "baseline": "4b56f5c1dd305d5b2270f5af12304dd656fda161",
+  "initial_status": "## main...origin/main (clean)",
+  "acceptance": [
+    "点击 start.command 时若已有健康旧容器，启动流程能识别官方最新公开 Release；安全校验并切换到对应平台镜像后启动最新版本。",
+    "无新版时不重复下载/切换，服务健康检查失败时保留并恢复旧镜像。",
+    "数据卷、工作区和密钥配置保持原样。",
+    "实现仅本地分支并推送，不发布 Release、不部署/重启 9999。"
+  ],
+  "scope": [
+    "start.command",
+    "scripts/aide.sh",
+    "scripts/prebuilt-image.sh",
+    "必要的发行升级脚本与对应回归",
+    "docs/architecture/software-updates.md",
+    "docs/tasks/start-latest-release-switch-20261030.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认期望为点击 Start 后切换最新主程序；本次只 push，不发布、不部署 9999。",
+      "evidence": [
+        "当前 start.command 仅调用 scripts/aide.sh start；启动器会先复用健康旧容器。",
+        "docker/prebuilt-images.tsv 仍固定到 v0.1.17.1-RC1，故启动回退会选旧运行时。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用源码构建失败后的现有 Release fallback，仅将过期 tar.gz 固定回退替换为官方最新完整 ZIP；已有 source build 优先级、数据卷及 Compose 项目不变。",
+      "evidence": [
+        "GitHub 当前最新公开发布 v0.1.17.6-RC1 只有 full/devtools ZIP，不含旧式 offline tar.gz。",
+        "官方发布资产 digest 可从 Releases API 取得；完整包内部含 image manifest、SHA256SUMS 与 image archive。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增 Linux AMD64/ARM64 官方完整 ZIP 发现、校验与镜像导入；仅当源码构建失败且 fallback 启用时运行。容器启动/健康失败恢复旧镜像标签；成功后记录最新 Release。更新完整发行包和离线包清单。",
+      "evidence": [
+        "scripts/latest-release-runtime.py 实现 GitHub API 元数据选择、资产 SHA256、ZIP CRC、包内 manifest/SHA256SUMS、导入后镜像身份/平台/source/CAD 校验。",
+        "scripts/prebuilt-image.sh 与 scripts/aide.sh 接入 fallback、健康确认及失败回退。",
+        "scripts/package-release-assets.sh 与 export-bundle 携带新运行时脚本。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "静态语法检查通过；未运行 Docker、真实下载/导入、启动、回滚或集成测试，未部署 9999。",
+      "evidence": [
+        "bash -n start.command scripts/aide.sh scripts/prebuilt-image.sh：PASS",
+        "python3 ast.parse(scripts/latest-release-runtime.py)：PASS",
+        "git diff --check：PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新软件升级架构说明，明确触发条件、完整包校验、回退及 Windows 源码模式尚未接入的边界。",
+      "evidence": [
+        "docs/architecture/software-updates.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅范围仅含启动器、Release 包装载脚本、升级说明与任务账本；无额外未跟踪内容。变更将只推送功能分支。",
+      "evidence": [
+        "git diff --check：PASS",
+        "bash -n start.command scripts/aide.sh scripts/prebuilt-image.sh：PASS",
+        "Python AST parse scripts/latest-release-runtime.py：PASS"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户明确要求只 push；不合并、不创建 tag、不发布 Release、不部署/重启 9999。",
+      "evidence": [
+        "用户原话：你做一下，只push。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "如 Docker compose 启动或容器健康检查失败，将原镜像 ID 重新标记回 Compose target，并尝试重建服务。旧镜像不会删除；本次未执行运行时变更。",
+  "handoff": "需后续合并并发行含此脚本的启动包，用户本机下载/同步新启动器代码后，Start 的源码构建 fallback 才能采用最新 Release。当前只推分支，不修改 9999。"
+}

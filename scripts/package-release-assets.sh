@@ -63,7 +63,7 @@ for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATF
   if [[ "$TARGET" == windows-* ]]; then cp "$WINDOWS_LAUNCHER" "$PACKAGE/aide-launcher.exe"; fi
   if [[ "$TARGET" != windows-* ]]; then
     cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$PACKAGE/scripts/"
-    cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
+    cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/latest-release-runtime.py" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
   fi
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
   cp "$ROOT/docker/offline.env.example" "$PACKAGE/.env.example"
@@ -107,7 +107,7 @@ cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.bat" "$FULL_PACKAGE/"
 cp "$WINDOWS_LAUNCHER" "$FULL_PACKAGE/aide-launcher.exe"
 cp "$ROOT/scripts/windows-launcher-asset.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$FULL_PACKAGE/scripts/"
-cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/resource-guard.sh" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/latest-release-runtime.py" "$ROOT/scripts/resource-guard.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
 cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
 cp "$ROOT/scripts/codex-host-control.cjs" "$FULL_PACKAGE/scripts/"
