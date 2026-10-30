@@ -1,12 +1,14 @@
 package server
 
 import (
+	"archive/zip"
 	"bufio"
 	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/pem"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -194,6 +196,7 @@ func TestSFTPRelayActualSSH(t *testing.T) {
 	if e != nil || !bytes.Equal(back, bulk) {
 		t.Fatal("bulk readback mismatch:", e)
 	}
+	testSFTPRelayTransfer(t, a, src, root)
 	src.Config.Auth = "key"
 	save(map[string]string{"key": key})
 	if _, e := a.readSourceRaw(src, "hello.md"); e != nil {
@@ -304,4 +307,82 @@ func TestSFTPRelayRejectMalformedExistingCredentials(t *testing.T) {
 	if err != nil || string(original) != "bad-json" {
 		t.Fatal("malformed credential overwritten")
 	}
+}
+
+func testSFTPRelayTransfer(t *testing.T, a *App, src Source, root string) {
+	t.Helper()
+	m := a.transfers()
+	size := 2*transferChunkSize + 37
+	j, err := m.create(context.Background(), transferCreate{Operation: "upload", Destination: src.ID, Name: "upload.bin", Size: size})
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireStatus(t, transferTestPut(a, j.ID, 1, transferTestChunk(1, transferChunkSize)), 200)
+	testTransferRestart(a)
+	m = a.transfers()
+	j = m.jobs[j.ID]
+	if j.Status != "paused" || len(j.UploadChunks) != 1 {
+		t.Fatal("SFTP upload resume journal lost")
+	}
+	requireStatus(t, request(a, "POST", "/api/file/transfers/"+j.ID+"/resume", map[string]any{}), 200)
+	requireStatus(t, transferTestPut(a, j.ID, 0, transferTestChunk(0, transferChunkSize)), 200)
+	requireStatus(t, transferTestPut(a, j.ID, 2, transferTestChunk(2, 37)), 200)
+	if _, err := os.Stat(filepath.Join(root, "upload.bin")); !os.IsNotExist(err) {
+		t.Fatal("partial upload published")
+	}
+	requireStatus(t, request(a, "POST", "/api/file/transfers/"+j.ID+"/commit", map[string]any{}), 200)
+	testTransferWait(t, m, j)
+	expected := append(transferTestChunk(0, transferChunkSize), transferTestChunk(1, transferChunkSize)...)
+	expected = append(expected, transferTestChunk(2, 37)...)
+	if testFileDigest(t, filepath.Join(root, "upload.bin")) != hash(expected) {
+		t.Fatal("SFTP upload digest")
+	}
+	raw := request(a, "GET", "/api/file/download?source="+src.ID+"&path=upload.bin", nil)
+	requireStatus(t, raw, 200)
+	if !bytes.Equal(raw.Body.Bytes(), expected) {
+		t.Fatal("SFTP direct download mismatch")
+	}
+	download, err := m.create(context.Background(), transferCreate{Operation: "download", Source: src.ID, Paths: []string{"upload.bin"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = m.start(download); err != nil {
+		t.Fatal(err)
+	}
+	testTransferWait(t, m, download)
+	archive, err := zip.OpenReader(filepath.Join(m.jobDir(download), "download.zip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer archive.Close()
+	if len(archive.File) != 1 {
+		t.Fatal("unexpected SFTP archive entries")
+	}
+	f, err := archive.File[0].Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := io.ReadAll(f)
+	f.Close()
+	if err != nil || !bytes.Equal(b, expected) {
+		t.Fatal("SFTP archive download mismatch", err)
+	}
+	copyJob, err := m.create(context.Background(), transferCreate{Operation: "copy", Source: src.ID, Paths: []string{"upload.bin"}, Destination: "workspace"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = m.start(copyJob); err != nil {
+		t.Fatal(err)
+	}
+	testTransferWait(t, m, copyJob)
+	if testFileDigest(t, filepath.Join(a.workPath, "upload.bin")) != hash(expected) {
+		t.Fatal("SFTP-to-workspace copy digest")
+	}
+	src.RW = false
+	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []Source{src}}), 200)
+	if _, err = m.create(context.Background(), transferCreate{Operation: "upload", Destination: src.ID, Name: "denied.bin", Size: 1}); err == nil {
+		t.Fatal("read-only SFTP upload accepted")
+	}
+	src.RW = true
+	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []Source{src}}), 200)
 }

@@ -26,3 +26,10 @@ Safari 本次新增的一个验收标签已关闭，返回用户原 `localhost:9
 ## 状态与未验收项
 
 本次是 macOS Safari + 本机 Docker Linux 的真实协议与界面验收；没有远程 Windows 主机和用户实际 SFTP 网络入口，跨主机部署/Windows 脚本执行记为 NOT_RUN。探测只验证中继和目标 TCP 可达，不能冒充 SSH 登录验收。完整 Go/vet、当前提交 CI 和必需审阅由 PR 门禁确认。用户原安装的完整性告警及启动器 PR #650 不在本功能分支中更改。
+
+
+## 用户要求补充测试（2026-10-31）
+
+继续在一次性 Linux 容器、全新 App 数据和临时 SSH/SFTP 服务中，使用 API 下载并运行实际中继脚本。新增 8 MiB + 37 字节分块上传：乱序上传第 2 块后重建传输管理器，确认恢复为暂停且保留已确认块，再通过 resume/chunks/commit 完成发布，并校验目标文件 SHA-256。未完成前目标文件不存在。随后验证普通下载内容、传输任务 ZIP 下载解压内容以及 SFTP → 工作目录复制的摘要相同；重新锁为只读后新的上传任务被拒绝。
+
+扩展后的 `TestSFTPRelayActualSSH` 在 race 模式通过（39.72 秒），涵盖现有密码/私钥、错误密钥、旧部署和变更 SSH 主机密钥拒绝。日志 `.agent-state/sftp-relay/transfer-retest.log`。这些是隔离环境中的真实协议与接口调用；远程 Windows 和用户外部 SFTP 实机仍未执行。

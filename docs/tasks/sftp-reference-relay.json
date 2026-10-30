@@ -8,7 +8,8 @@
     "A downloaded bridge on a remote device connects only to the configured SFTP host/port; Aide retains SSH authentication and host-key verification.",
     "Relay key generated separately, privately persisted and never returned in source listing; download/probe authenticated and no-store.",
     "Actual generated-agent connection, SSH/SFTP file listing/read/write, read-only denial, wrong relay identity/configuration and changed SSH host key verified with disposable fixtures.",
-    "UI save/edit/download/probe works; no user data or running production instance modified."
+    "UI save/edit/download/probe works; no user data or running production instance modified.",
+    "User follow-up: test after completion; real chunked upload/restart/resume/publish, direct and ZIP download, source-to-workspace copy and re-locked upload denial verified."
   ],
   "scope": [
     "Source configuration/credentials, SSH ProxyCommand bridge, downloaded Python agent, UI/localization, focused integration tests and docs."
@@ -40,7 +41,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "21 top-level focused Go race tests passed, including real generated-agent SSH/SFTP password/key authentication, listing/read/write, read-only denial, wrong relay identity, stale deployment and SSH host-key change. Existing relay regression and vault partial/locked/malformed tests passed. Node UI regression and quick gate passed. Safari fixture: probe, list/read, unlock, editor save, actual SFTP target file readback, relock and disabled Save, source editor configuration/blank-secret retention verified. Windows remote-agent execution and real external SFTP deployment NOT_RUN. Additional ~4 MiB actual SFTP write/readback race test passed.",
+      "summary": "21 top-level focused Go race tests passed, including real generated-agent SSH/SFTP password/key authentication, listing/read/write, read-only denial, wrong relay identity, stale deployment and SSH host-key change. Existing relay regression and vault partial/locked/malformed tests passed. Node UI regression and quick gate passed. Safari fixture: probe, list/read, unlock, editor save, actual SFTP target file readback, relock and disabled Save, source editor configuration/blank-secret retention verified. Windows remote-agent execution and real external SFTP deployment NOT_RUN. Additional ~4 MiB actual SFTP write/readback race test passed. Follow-up real transfer path passed: 8MiB+37-byte out-of-order chunked upload, transfer-manager restart/resume, target SHA-256, direct/ZIP download, SFTP-to-workspace copy and relocked upload rejection (39.72s race test).",
       "evidence": [
         ".agent-state/sftp-relay/go-race-final.log",
         ".agent-state/sftp-relay/ui-tests-final.log",
@@ -48,7 +49,8 @@
         ".agent-state/sftp-relay/safari-config.png",
         ".agent-state/sftp-relay/safari-readonly.png",
         "internal/server/source_sftp_relay_test.go",
-        ".agent-state/sftp-relay/go-bulk.log"
+        ".agent-state/sftp-relay/go-bulk.log",
+        ".agent-state/sftp-relay/transfer-retest.log"
       ]
     },
     "documentation": {
