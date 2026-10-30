@@ -80,6 +80,20 @@ def check(binary, folder, installation):
         log=calls.read_text();assert 'native:host-stop' in log and 'native:build' in log and 'proxy:wrong' not in log,log
         assert log.count('proxy:inherited')>=4,log
         assert 'synthetic-secret' not in result.stdout+result.stderr
+    for pac in (False,True):
+        root=fixture('proxy-refusal-'+str(pac),exe=folder/'old.exe');calls.write_text('')
+        environment={k:v for k,v in env.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY')}
+        if pac:
+            environment['FIXTURE_PROXY_PAC']='https://pac.example/proxy.pac'
+        else:
+            environment.update(FIXTURE_PROXY_ENABLE='1',FIXTURE_PROXY_SERVER='127.0.0.1:18797',FIXTURE_BUILD_FAIL='1')
+        result=run(root,'build',args='',env=environment,expected=1)
+        assert 'HTTPS_PROXY' in result.stdout
+        assert (root/'aide-launcher.exe').read_bytes()==(folder/'old.exe').read_bytes()
+        if pac:
+            assert not calls.read_text() and 'PAC' in result.stdout
+        else:
+            assert 'auth.docker.io' in result.stdout and 'container proxy' in result.stdout
     # Real host-stop from a new EXE must wait for an older, different EXE.
     root=fixture('previous-controller');state=root/'.aide-data/native';state.mkdir(parents=True)
     old_controller=state/'previous-controller.exe';shutil.copy2(folder/'new.exe',old_controller);calls.write_text('')

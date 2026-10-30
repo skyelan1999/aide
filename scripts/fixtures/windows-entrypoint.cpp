@@ -12,10 +12,12 @@ std::wstring env(const wchar_t* n){wchar_t b[32768];DWORD len=GetEnvironmentVari
 void log(const std::string& s){std::ofstream out(fs::path(env(L"FIXTURE_CALLS")),std::ios::app);out<<s<<std::endl;}
 std::string utf8(const std::wstring& s){if(s.empty())return {};int n=WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),nullptr,0,nullptr,nullptr);std::string out(n,0);WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),out.data(),n,nullptr,nullptr);return out;}
 int wmain(int argc,wchar_t** argv){
+#ifndef FIXTURE_REG
  if(env(L"FIXTURE_CHECK_PROXY")==L"1"){
   for(auto pair:{std::pair<const wchar_t*,const wchar_t*>{L"HTTP_PROXY",L"FIXTURE_EXPECT_HTTP"},{L"HTTPS_PROXY",L"FIXTURE_EXPECT_HTTPS"},{L"NO_PROXY",L"FIXTURE_EXPECT_NO"}})if(env(pair.first)!=env(pair.second)){log("proxy:wrong-environment");return 27;}
   log("proxy:inherited");
  }
+#endif
 #ifdef FIXTURE_REG
  if(argc==2&&std::wstring(argv[1])==L"--record-env"){
   nlohmann::json values=nlohmann::json::object();for(auto name:{L"HTTP_PROXY",L"HTTPS_PROXY",L"ALL_PROXY",L"NO_PROXY"})values[utf8(name)]=utf8(env(name));
