@@ -3,7 +3,9 @@ const assert = require('node:assert/strict'), fs = require('node:fs'), os = requ
 const crypto = require('node:crypto'), {spawnSync} = require('node:child_process');
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 function fixture(script) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aide-avatar-path-test-'));
+  // Node resolves the copied script through macOS's /var -> /private/var alias.
+  // Use that same physical root for valid absolute-source fixture metadata.
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'aide-avatar-path-test-')));
   const enhanced = script.includes('enhanced');
   const input = path.join(root, '.agent-state', enhanced ? 'avatar-enhanced' : 'avatar-generation');
   const audit = path.join(root, '.agent-state', enhanced ? 'avatar-enhanced-packed' : 'avatar-packed');

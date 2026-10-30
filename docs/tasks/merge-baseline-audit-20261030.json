@@ -1,0 +1,97 @@
+{
+  "id": "merge-baseline-audit-20261030",
+  "request": "检查最近一周（2026-10-24 至 2026-10-30）aide 的版本大型合并基线，怀疑合并基线不对导致后面的全乱了；确认问题后在主分支调整",
+  "baseline": "18aa325fc07b16ec2315281bb792f2afdf11c6c0",
+  "initial_status": "",
+  "acceptance": [
+    "Audit every first-parent integration from 2026-10-24 through 2026-10-30 against actual parent and head trees, including squash #575.",
+    "Review nested merge conflict resolutions and preservation of prior main changes.",
+    "Reproduce any confirmed integration regression, repair it on local main, and record focused validation and limitations.",
+    "Preserve original checkout changes and runtime data; distinguish local main, remote main, installed runtime and release."
+  ],
+  "scope": [
+    "Git history and refs (read-only, no rewrite)",
+    "scripts and related tests only for confirmed integration defects",
+    "docs/tasks/merge-baseline-audit-20261030.json",
+    "docs/reviews/2026-10-30-merge-baseline/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested last-week baseline audit and confirmed adjustments on main; acceptance and scope recorded.",
+      "evidence": [
+        "User messages in this task",
+        "Live GitHub main SHA matches origin/main."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "16 first-parent merges, squash #575, seven nested merges and six release tags audited. Preserve current product history; narrowly repair three macOS validation fixtures.",
+      "evidence": [
+        "docs/reviews/2026-10-30-merge-baseline/audit.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Fixed portable mv resolution and locale, canonical avatar fixture root, non-blocking Mermaid test logging and HTTPError resource closure; no production source changed.",
+      "evidence": [
+        "scripts/test_prebuild_wheels.py",
+        "scripts/test_avatar_pack_paths.cjs",
+        "scripts/test_mermaid_proof_auth.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "308/308 quick commands passed outside socket-restricted sandbox; source fingerprint unchanged. Selected Go race integration: 40 passed, 1 intentionally skipped paid/live-provider opt-in, 40.570s. Initial missing-dependency image attempt retained as failed environment evidence.",
+      "evidence": [
+        "docs/reviews/2026-10-30-merge-baseline/audit.json",
+        ".agent-state/verify-20261030T043317858316Z.log",
+        ".agent-state/merge-baseline-audit/focused-go-complete-env.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Stored full SHA/parent/tree audit, manual conflict-resolution findings, release tag ancestry, reproduced fixture defects and honest validation boundaries.",
+      "evidence": [
+        "docs/reviews/2026-10-30-merge-baseline/audit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed only three regression-fixture edits and owned audit/task records. Existing checkout, launcher override, private data, Docker images and running services preserved. Disposable Go snapshot runner completed and removed its own container.",
+      "evidence": [
+        "git diff --check",
+        "git status --short --branch",
+        "Original checkout still feat/codex-plugin-host-615 with only pre-existing M start.command"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No version/tag/Release or production deployment requested. Source change is prepared on local main; remote delivery is verified separately after the local-validation snapshot.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Changes affect only three regression fixtures and audit records. Revert the resulting ordinary fix commit if needed; no history rewrite, runtime migration or service replacement required.",
+  "handoff": "Audit complete: 16 regular main merges plus squash #575, seven nested merges and six live-verified release tags have correct ancestry/tree identity. Three macOS validation fixtures fixed under #637/#638. 308 quick commands and 40 Go race tests passed; one live-model test deliberately skipped. Dedicated main worktree used; original feature checkout/start.command and local-only MIXSoul service at 9999 unchanged. No history rewrite or product rollback warranted. Remote source delivery follows this local-validation snapshot.",
+  "audit_context": {
+    "remote_main": "18aa325fc07b16ec2315281bb792f2afdf11c6c0",
+    "local_main_before": "ac96e7fa9ec4a7b98ea60d4af9885086e610ac1c",
+    "worktree": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide-main-baseline-audit",
+    "original_checkout_head": "1d01dc56927467213b62d686b2d11316fcd5f22b",
+    "original_checkout_branch": "feat/codex-plugin-host-615",
+    "original_dirty_paths": [
+      "start.command"
+    ],
+    "date_range_inclusive": [
+      "2026-10-24",
+      "2026-10-30"
+    ],
+    "timezone": "Asia/Shanghai",
+    "authenticated_github_login": "skyelan1999"
+  },
+  "issues": [
+    637,
+    638
+  ]
+}

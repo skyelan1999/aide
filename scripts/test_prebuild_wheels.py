@@ -44,7 +44,7 @@ else: raise AssertionError(args)
 import os,sys
 if os.environ['WHEEL_FIXTURE_MODE']=='promotion-failure' and sys.argv[-2].endswith('/next'):
     sys.exit(19)
-os.execv('/usr/bin/mv',['mv']+sys.argv[1:])
+os.execv(os.environ['WHEEL_FIXTURE_REAL_MV'],['mv']+sys.argv[1:])
 """)
 
     def write(self, relative, text):
@@ -54,7 +54,8 @@ os.execv('/usr/bin/mv',['mv']+sys.argv[1:])
 
     def run_prebuild(self, mode):
         env = dict(os.environ, PATH=str(self.root / "bin") + os.pathsep + os.environ["PATH"],
-                   WHEEL_FIXTURE_ROOT=str(self.root), WHEEL_FIXTURE_MODE=mode)
+                   WHEEL_FIXTURE_ROOT=str(self.root), WHEEL_FIXTURE_MODE=mode,
+                   WHEEL_FIXTURE_REAL_MV=shutil.which("mv"), LC_ALL="C")
         return subprocess.run(["bash", "scripts/prebuild-wheels.sh"], cwd=self.root, env=env,
                               capture_output=True, text=True, timeout=15)
 

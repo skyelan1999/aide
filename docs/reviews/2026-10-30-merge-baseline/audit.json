@@ -1,0 +1,560 @@
+{
+  "schema_version": 1,
+  "task": "merge-baseline-audit-20261030",
+  "period": {
+    "start_inclusive": "2026-10-24T00:00:00+08:00",
+    "end_inclusive": "2026-10-30T23:59:59+08:00",
+    "timezone": "Asia/Shanghai"
+  },
+  "audited_remote_main": "18aa325fc07b16ec2315281bb792f2afdf11c6c0",
+  "remote_main_verified_with_github_connector": true,
+  "conclusion": "No wrong merge parent, dropped prior-main ancestry or mismatch between reviewed head and any of the 17 top-level integration trees found. Repaired three macOS verification fixtures introduced by #595; all 308 quick commands and 40 selected Go race tests pass. Existing production code and history retained. This does not prove absence of all product bugs.",
+  "first_parent_merges": [
+    {
+      "commit": "18aa325fc07b16ec2315281bb792f2afdf11c6c0",
+      "subject": "Merge pull request #635 from skyelan1999/codex/openai-support-20261030",
+      "parents": [
+        "ac96e7fa9ec4a7b98ea60d4af9885086e610ac1c",
+        "61e65743a04a8b01e6d0e7fd127e78ddb0844d0b"
+      ],
+      "merge_base": "ac96e7fa9ec4a7b98ea60d4af9885086e610ac1c",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 2,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "15 files changed, 372 insertions(+), 59 deletions(-)"
+    },
+    {
+      "commit": "ac96e7fa9ec4a7b98ea60d4af9885086e610ac1c",
+      "subject": "Merge pull request #632 from skyelan1999/feat/mixsoul-runtime-parity",
+      "parents": [
+        "8f107df4584a703c9b1c5e743de2d2c267429161",
+        "cf0f65c4afd74759f0205d41721a9af5371ada8c"
+      ],
+      "merge_base": "8f107df4584a703c9b1c5e743de2d2c267429161",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 4,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "13 files changed, 404 insertions(+), 16 deletions(-)"
+    },
+    {
+      "commit": "8f107df4584a703c9b1c5e743de2d2c267429161",
+      "subject": "Merge pull request #628 from skyelan1999/fix/start-auto-latest-release",
+      "parents": [
+        "4b56f5c1dd305d5b2270f5af12304dd656fda161",
+        "29c105c172438c588bfd0244e03d5e2131665c3e"
+      ],
+      "merge_base": "4b56f5c1dd305d5b2270f5af12304dd656fda161",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 8,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "15 files changed, 552 insertions(+), 43 deletions(-)"
+    },
+    {
+      "commit": "4b56f5c1dd305d5b2270f5af12304dd656fda161",
+      "subject": "Merge pull request #620 from skyelan1999/release/codex-bridge-040-version",
+      "parents": [
+        "5f5ae70776b241b879ba3eb302f65d498da25593",
+        "f2570bf51cb7922f6a3728942312f3c85b65553b"
+      ],
+      "merge_base": "5f5ae70776b241b879ba3eb302f65d498da25593",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 2,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "2 files changed, 25 insertions(+), 17 deletions(-)"
+    },
+    {
+      "commit": "5f5ae70776b241b879ba3eb302f65d498da25593",
+      "subject": "Merge pull request #619 from skyelan1999/release/codex-bridge-040-aide",
+      "parents": [
+        "b6401f3d0928a4bbd9bd8e70003dc9b4576fe634",
+        "e306e79258bca7e80113dad8198a10cce06638f5"
+      ],
+      "merge_base": "b6401f3d0928a4bbd9bd8e70003dc9b4576fe634",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 1,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "5 files changed, 156 insertions(+)"
+    },
+    {
+      "commit": "b6401f3d0928a4bbd9bd8e70003dc9b4576fe634",
+      "subject": "feat: integrate Codex Bridge host component",
+      "parents": [
+        "155455943107d1c7e96064c305d01e8fabdbe6a3",
+        "7b680431730eb86aad3779e8b9b74aa13a84dd9f"
+      ],
+      "merge_base": "155455943107d1c7e96064c305d01e8fabdbe6a3",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 3,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "21 files changed, 741 insertions(+), 7 deletions(-)"
+    },
+    {
+      "commit": "155455943107d1c7e96064c305d01e8fabdbe6a3",
+      "subject": "Merge pull request #609 from skyelan1999/codex/remaining-83-20261029",
+      "parents": [
+        "1ca4007929fec23b09382d65e3a41c1c211dccdb",
+        "2fa54c7282dc3692f2a9caba4fc8d6ae81f7b9cb"
+      ],
+      "merge_base": "1ca4007929fec23b09382d65e3a41c1c211dccdb",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 23,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "120 files changed, 8837 insertions(+), 156 deletions(-)"
+    },
+    {
+      "commit": "1ca4007929fec23b09382d65e3a41c1c211dccdb",
+      "subject": "Merge pull request #606 from skyelan1999/fix/attachment-context-budget-20261029",
+      "parents": [
+        "d1a77ac9307bcb31bd7f9576190af4e2f05d04c7",
+        "4860600e8a9cbdb7d4c89a04cc8692c23dc2d631"
+      ],
+      "merge_base": "d1a77ac9307bcb31bd7f9576190af4e2f05d04c7",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 1,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "11 files changed, 319 insertions(+), 11 deletions(-)"
+    },
+    {
+      "commit": "d1a77ac9307bcb31bd7f9576190af4e2f05d04c7",
+      "subject": "Merge pull request #595 from skyelan1999/codex/open-issue-review-20261026",
+      "parents": [
+        "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
+        "2ab42fcdeec4253b4444f5d0ed820d9a2e5a7d55"
+      ],
+      "merge_base": "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 310,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "795 files changed, 104194 insertions(+), 13515 deletions(-)"
+    },
+    {
+      "commit": "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
+      "subject": "Merge pull request #589 from skyelan1999/fix/context-recovery-20261029",
+      "parents": [
+        "757fc347dda31979ddf230898a90777fa3cd65de",
+        "6c6cbe792b0e63ee2011135481724e133cf4ae92"
+      ],
+      "merge_base": "757fc347dda31979ddf230898a90777fa3cd65de",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 3,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "13 files changed, 1860 insertions(+), 35 deletions(-)"
+    },
+    {
+      "commit": "a26214e596d4cbe147bb0e224dfa305cf04fc6cb",
+      "subject": "Merge pull request #555 from skyelan1999/feat/file-preview-images",
+      "parents": [
+        "15e3130ecd0dc7a2a4c6b1813c9d2082d072ed58",
+        "79e19b305083dd687237211413c8b2b03bd986cb"
+      ],
+      "merge_base": "15e3130ecd0dc7a2a4c6b1813c9d2082d072ed58",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 2,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "10 files changed, 384 insertions(+), 3 deletions(-)"
+    },
+    {
+      "commit": "15e3130ecd0dc7a2a4c6b1813c9d2082d072ed58",
+      "subject": "Merge pull request #356 from skyelan1999/release/rc12-20261026",
+      "parents": [
+        "9cee2c8899cde51c3cd051a8458b433bcb70bdcd",
+        "ae58c17a0c0f7d9ec208098cf4f256cc5c24c8c4"
+      ],
+      "merge_base": "9cee2c8899cde51c3cd051a8458b433bcb70bdcd",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 2,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "2 files changed, 26 insertions(+), 14 deletions(-)"
+    },
+    {
+      "commit": "9cee2c8899cde51c3cd051a8458b433bcb70bdcd",
+      "subject": "Merge pull request #348 from skyelan1999/feat/core-market-discovery-20261026",
+      "parents": [
+        "74e156326c39bedb904f511f63537d36b4dce7e7",
+        "dee952a251c9f548b5ea7f2dbe7a7ff8dc69155c"
+      ],
+      "merge_base": "74e156326c39bedb904f511f63537d36b4dce7e7",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 4,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "28 files changed, 1369 insertions(+), 37 deletions(-)"
+    },
+    {
+      "commit": "74e156326c39bedb904f511f63537d36b4dce7e7",
+      "subject": "Merge pull request #284 from skyelan1999/release/english-rc11-20261026",
+      "parents": [
+        "c01276eaaecf0d0eadabd48c2daccfb5429a449f",
+        "02e6a0c6d9785f07abeae2f3c5ea31d7f44b0d18"
+      ],
+      "merge_base": "c01276eaaecf0d0eadabd48c2daccfb5429a449f",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 1,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "3 files changed, 53 insertions(+), 6 deletions(-)"
+    },
+    {
+      "commit": "c01276eaaecf0d0eadabd48c2daccfb5429a449f",
+      "subject": "Merge pull request #166 from skyelan1999/feat/english-completion-20261025",
+      "parents": [
+        "45f1d4f2cf8b2f1e0e5a76ae3096dc525bff64f0",
+        "28c6427a8b2e74e321c805e677e832ddf664d564"
+      ],
+      "merge_base": "45f1d4f2cf8b2f1e0e5a76ae3096dc525bff64f0",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 7,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "68 files changed, 2812 insertions(+), 1072 deletions(-)"
+    },
+    {
+      "commit": "74fe40d04c90834de7515f6b47441f6e8eedf28a",
+      "subject": "Merge pull request #58 from skyelan1999/feat/assistant-voice-call-20261023",
+      "parents": [
+        "6b4af0b4f9d227730b26a020067737d0220b0e36",
+        "b6fa0a98b5e2dd532eeb3325a621a5e53ce1ec76"
+      ],
+      "merge_base": "6b4af0b4f9d227730b26a020067737d0220b0e36",
+      "first_parent_is_merge_base": true,
+      "first_parent_commits_after_merge_base": 0,
+      "incoming_commits_after_merge_base": 10,
+      "result_tree_equals_incoming_head": true,
+      "change_from_first_parent": "59 files changed, 3257 insertions(+), 205 deletions(-)"
+    }
+  ],
+  "squash_integration": {
+    "pr": 575,
+    "commit": "757fc347dda31979ddf230898a90777fa3cd65de",
+    "reviewed_head": "5e56d4f41514230764d6ef613eca5ddc24c083a7",
+    "first_parent": "a26214e596d4cbe147bb0e224dfa305cf04fc6cb",
+    "merge_base": "a26214e596d4cbe147bb0e224dfa305cf04fc6cb",
+    "result_tree_equals_reviewed_head": true,
+    "change_from_first_parent": "61 files changed, 5155 insertions(+), 40 deletions(-)"
+  },
+  "nested_merges": [
+    {
+      "commit": "61e65743a04a8b01e6d0e7fd127e78ddb0844d0b",
+      "subject": "Merge branch 'main' into codex/openai-support-20261030",
+      "parents": [
+        "40b6e96bead57e19f2f4e5121b147df0a1aeb1db",
+        "ac96e7fa9ec4a7b98ea60d4af9885086e610ac1c"
+      ],
+      "merge_base": "155455943107d1c7e96064c305d01e8fabdbe6a3",
+      "first_parent_is_merge_base": false,
+      "first_parent_commits_after_merge_base": 1,
+      "incoming_commits_after_merge_base": 23,
+      "result_tree_equals_incoming_head": false,
+      "change_from_first_parent": "47 files changed, 1847 insertions(+), 52 deletions(-)",
+      "conflict_paths": [],
+      "resolution_delta": "",
+      "manual_review": "Clean synchronization of main before USD pricing integration."
+    },
+    {
+      "commit": "7b680431730eb86aad3779e8b9b74aa13a84dd9f",
+      "subject": "Merge remote-tracking branch 'origin/main' into HEAD [版本 0.1.17.5 RC12]",
+      "parents": [
+        "5d323dbcf88b0616f0d078f22c0cbbe8873782df",
+        "155455943107d1c7e96064c305d01e8fabdbe6a3"
+      ],
+      "merge_base": "1ca4007929fec23b09382d65e3a41c1c211dccdb",
+      "first_parent_is_merge_base": false,
+      "first_parent_commits_after_merge_base": 2,
+      "incoming_commits_after_merge_base": 24,
+      "result_tree_equals_incoming_head": false,
+      "change_from_first_parent": "120 files changed, 8837 insertions(+), 156 deletions(-)",
+      "conflict_paths": [],
+      "resolution_delta": "",
+      "manual_review": "Clean synchronization of main after Codex host reconciliation."
+    },
+    {
+      "commit": "5d323dbcf88b0616f0d078f22c0cbbe8873782df",
+      "subject": "Merge main and wire Codex host into native Windows launcher",
+      "parents": [
+        "1d01dc56927467213b62d686b2d11316fcd5f22b",
+        "1ca4007929fec23b09382d65e3a41c1c211dccdb"
+      ],
+      "merge_base": "6d57928910ac7126dd9d1d98cc1005c73a9e3c13",
+      "first_parent_is_merge_base": false,
+      "first_parent_commits_after_merge_base": 1,
+      "incoming_commits_after_merge_base": 313,
+      "result_tree_equals_incoming_head": false,
+      "change_from_first_parent": "802 files changed, 104533 insertions(+), 13532 deletions(-)",
+      "conflict_paths": [
+        "internal/server/plugin_workbench.go",
+        "scripts/aide.sh",
+        "scripts/package-release-assets.sh"
+      ],
+      "resolution_delta": "docs/architecture/codex-plugin-host.md |  4 ++--\n docs/tasks/codex-plugin-host-615.json  | 10 ++++++----\n internal/server/plugin_workbench.go    |  6 +-----\n native/windows-launcher/main.cpp       | 10 ++++++++++\n scripts/aide.sh                        | 15 ++-------------\n scripts/ci/build_candidate.py          |  2 +-\n scripts/package-release-assets.sh      | 22 ++--------------------\n 7 files changed, 24 insertions(+), 45 deletions(-)",
+      "manual_review": "Workbench bridge retains Codex host, project messages, mobile capture, tools and document access. Source fingerprint and distribution include both native launcher and Codex helpers; Windows lifecycle wired into native resident host."
+    },
+    {
+      "commit": "442bde1ac39e5814ee3e143177356d6003a66606",
+      "subject": "merge: synchronize latest main attachment budgeting and public issue workflow",
+      "parents": [
+        "36e5a3f36f0d65272aec7a2af15fac95078d4976",
+        "1ca4007929fec23b09382d65e3a41c1c211dccdb"
+      ],
+      "merge_base": "d1a77ac9307bcb31bd7f9576190af4e2f05d04c7",
+      "first_parent_is_merge_base": false,
+      "first_parent_commits_after_merge_base": 11,
+      "incoming_commits_after_merge_base": 2,
+      "result_tree_equals_incoming_head": false,
+      "change_from_first_parent": "13 files changed, 315 insertions(+), 13 deletions(-)",
+      "conflict_paths": [
+        "internal/server/attachments.go",
+        "internal/server/context.go"
+      ],
+      "resolution_delta": "docs/architecture/office-viewer.md                | 2 +-\n internal/server/attachment_context_budget_test.go | 6 +++---\n internal/server/attachments.go                    | 7 -------\n internal/server/context.go                        | 5 -----\n 4 files changed, 4 insertions(+), 16 deletions(-)",
+      "manual_review": "Adopted current main 16-MiB attachment assembly guard and model-window admission; exact-boundary fixture adapted to shared constant. This is deliberate supersession of older branch 64-MiB guard."
+    },
+    {
+      "commit": "a12ac94973547fcef43497cb9c574bbd8ca0d107",
+      "subject": "merge: integrate latest main and reconcile context recovery",
+      "parents": [
+        "da8ac4631877ed464528e6257a6a236a6fac132a",
+        "6d57928910ac7126dd9d1d98cc1005c73a9e3c13"
+      ],
+      "merge_base": "9cee2c8899cde51c3cd051a8458b433bcb70bdcd",
+      "first_parent_is_merge_base": false,
+      "first_parent_commits_after_merge_base": 305,
+      "incoming_commits_after_merge_base": 11,
+      "result_tree_equals_incoming_head": false,
+      "change_from_first_parent": "85 files changed, 7402 insertions(+), 158 deletions(-)",
+      "conflict_paths": [
+        "docs/agent/router.json",
+        "internal/server/context.go",
+        "internal/server/context_recovery_test.go",
+        "internal/server/provider.go",
+        "internal/server/web/index.html",
+        "internal/server/workflow.go"
+      ],
+      "resolution_delta": "docs/agent/router.json                     |   6 +-\n docs/tasks/open-issue-review-20261026.json |  26 +++-\n internal/server/context.go                 |  11 +-\n internal/server/context_recovery_test.go   | 217 +++++++++--------------------\n internal/server/provider.go                |  10 +-\n internal/server/web/index.html             |   9 +-\n internal/server/workflow.go                |  33 +----\n 7 files changed, 98 insertions(+), 214 deletions(-)",
+      "manual_review": "Both context-recovery implementations reconciled: scope, compaction generation and summary fingerprints retained; fitted active context and partial-result checkpoints retained; incomplete SSE cannot dispatch partial tool calls. index.html preserves preview-safety, docx-style-bridge, corrected cache versions and MIXSoul memory assets. Router retains both review and memory suites."
+    },
+    {
+      "commit": "c11f9613f62068a463724e5b5df6a59d98cd3d68",
+      "subject": "Merge reviewed native Windows launcher with compatible startup and recovery fixes (#464)",
+      "parents": [
+        "5e6f2d7a4ebb0657f362137598c9f8162e2b84aa",
+        "268bde94cd71a2fe420f36f4194dc6a76fa3b2c9"
+      ],
+      "merge_base": "0ed5ab87fa83d608d53e9674396f06f1ad9cd6a3",
+      "first_parent_is_merge_base": false,
+      "first_parent_commits_after_merge_base": 19,
+      "incoming_commits_after_merge_base": 1,
+      "result_tree_equals_incoming_head": false,
+      "change_from_first_parent": "46 files changed, 28406 insertions(+), 47 deletions(-)",
+      "conflict_paths": [
+        "scripts/prebuilt-image.ps1",
+        "scripts/test_windows_update_agent.py",
+        "scripts/update-agent.ps1"
+      ],
+      "resolution_delta": ".gitattributes                                     |   4 +\n clean-docker-cache.bat                             |  22 +-\n clean-docker-cache.ps1                             |   3 +\n cmd/aide-local-mounts/main.go                      |  47 +-\n docs/agent/router.json                             |   4 +\n docs/architecture/launcher-storage.md              |   4 +-\n docs/architecture/software-updates.md              |   3 +-\n docs/docker-maintenance.md                         |   4 +-\n docs/en/docker-maintenance.md                      |   4 +-\n docs/en/installation.md                            |  18 +-\n docs/en/security/tls.md                            |   2 +-\n docs/installation.md                               |  26 +-\n docs/reviews/2026-10-26-open-issue-review/GOAL.md  |   6 +-\n .../2026-10-26-open-issue-review/cycle-061.json    | 196 ++++++\n docs/security/tls.md                               |   2 +-\n docs/tasks/open-issue-review-20261026.json         |  53 +-\n docs/tasks/windows-native-launcher-20261027.json   |   4 +\n docs/tasks/windows-runtime-fallback-20261027.json  |   4 +\n native/windows-launcher/README.md                  |  65 +-\n native/windows-launcher/archive.hpp                | 101 +++\n native/windows-launcher/image.hpp                  |  24 +\n native/windows-launcher/installation.hpp           |   9 +\n native/windows-launcher/main.cpp                   |  59 +-\n native/windows-launcher/source_inputs.hpp          |  22 +\n native/windows-launcher/third_party/README.md      |   9 +\n native/windows-launcher/third_party/miniz/LICENSE  |  22 +\n native/windows-launcher/third_party/miniz/miniz.h  |   9 +\n .../third_party/miniz/miniz_common.h               |  97 +++\n .../third_party/miniz/miniz_export.h               |   2 +\n .../third_party/miniz/miniz_tinfl.c                | 770 +++++++++++++++++++++\n .../third_party/miniz/miniz_tinfl.h                | 150 ++++\n scripts/aide-maintenance.ps1                       |  31 +\n scripts/aide.sh                                    |  12 +-\n scripts/build-windows-launcher.py                  |  68 +-\n scripts/ci/build_candidate.py                      |  36 +-\n scripts/ci/test_build_candidate.py                 |   7 +\n scripts/launcher-data.ps1                          | 148 ++++\n scripts/local-mounts-control.ps1                   |  72 ++\n scripts/message-lan-control.ps1                    |  81 +++\n scripts/native_launcher_portable.cpp               |  22 +\n scripts/package-release-assets.sh                  |  31 +-\n scripts/prebuilt-image.ps1                         |  32 +-\n scripts/resource-guard.ps1                         |  23 +\n scripts/test_launcher_data.py                      |   4 +-\n scripts/test_launcher_data_docker.py               |   2 +-\n scripts/test_message_lan_launcher.ps1              |  26 +\n scripts/test_message_lan_launcher.py               |   4 +-\n scripts/test_native_distribution.py                |  77 ++-\n scripts/test_offline_bundle.py                     |   2 +-\n scripts/test_optional_step.py                      |   2 +-\n scripts/test_source_fingerprint.py                 |  12 +-\n scripts/test_windows_directory_launcher.py         | 116 ++++\n scripts/test_windows_image_slot.py                 | 109 +++\n scripts/test_windows_launcher_acl.py               | 124 ++++\n scripts/test_windows_native_launcher.py            |  47 +-\n scripts/test_windows_native_portable.py            | 151 ++++\n scripts/test_windows_port_lifecycle.py             |  48 ++\n scripts/test_windows_prebuilt_import.py            |  12 +-\n scripts/test_windows_startup_recovery.py           | 205 ++++++\n scripts/watch-port.ps1                             |  72 ++\n scripts/windows-launcher-asset.sh                  |  15 +-\n start.bat                                          |  27 +-\n start.ps1                                          | 474 +++++++++++++\n stop.bat                                           |  22 +-\n stop.ps1                                           |   3 +\n 65 files changed, 3627 insertions(+), 235 deletions(-)",
+      "manual_review": "Windows native launcher intentionally integrated. Modified PowerShell compatibility helpers retained; startup ownership, bounded archive import, canonical image identity and helper lifecycle reconciled explicitly. No wholesale delete of compatibility paths."
+    },
+    {
+      "commit": "b6fa0a98b5e2dd532eeb3325a621a5e53ce1ec76",
+      "subject": "Merge main and retain native audio and SDK verification checks",
+      "parents": [
+        "d5902a572ca48719af916448d473bd6e52af592d",
+        "6b4af0b4f9d227730b26a020067737d0220b0e36"
+      ],
+      "merge_base": "4cdef5964f9f744a5b493282b3414f529d8a31ae",
+      "first_parent_is_merge_base": false,
+      "first_parent_commits_after_merge_base": 9,
+      "incoming_commits_after_merge_base": 1,
+      "result_tree_equals_incoming_head": false,
+      "change_from_first_parent": "27 files changed, 936 insertions(+), 20 deletions(-)",
+      "conflict_paths": [
+        "docs/agent/router.json"
+      ],
+      "resolution_delta": "docs/agent/router.json | 5 ++---\n 1 file changed, 2 insertions(+), 3 deletions(-)",
+      "manual_review": "Native voice tests and SDK checks both retained in router.json."
+    }
+  ],
+  "release_tag_ancestry": [
+    {
+      "tag": "v0.1.17.5-RC8",
+      "commit": "45cb23e53998bc164e7d9f517e4156efc7950f39",
+      "is_ancestor_of_main": true,
+      "remote_tag_resolved_with_github_connector": true
+    },
+    {
+      "tag": "v0.1.17.5-RC9",
+      "commit": "03fa1298f7cebd89a13026aed8a22c9a5bd0b6e7",
+      "is_ancestor_of_main": true,
+      "remote_tag_resolved_with_github_connector": true
+    },
+    {
+      "tag": "v0.1.17.5-RC10",
+      "commit": "c6d4334d95b350765c9288dacd03d82d5d360480",
+      "is_ancestor_of_main": true,
+      "remote_tag_resolved_with_github_connector": true
+    },
+    {
+      "tag": "v0.1.17.5-RC11",
+      "commit": "74e156326c39bedb904f511f63537d36b4dce7e7",
+      "is_ancestor_of_main": true,
+      "remote_tag_resolved_with_github_connector": true
+    },
+    {
+      "tag": "v0.1.17.5-RC12",
+      "commit": "15e3130ecd0dc7a2a4c6b1813c9d2082d072ed58",
+      "is_ancestor_of_main": true,
+      "remote_tag_resolved_with_github_connector": true
+    },
+    {
+      "tag": "v0.1.17.6-RC1",
+      "commit": "4b56f5c1dd305d5b2270f5af12304dd656fda161",
+      "is_ancestor_of_main": true,
+      "remote_tag_resolved_with_github_connector": true
+    }
+  ],
+  "method": {
+    "first_parent": "git log origin/main --first-parent --merges --since=2026-10-23T16:00:00Z --format=%H %P",
+    "base": "git merge-base <first-parent> <incoming-head>",
+    "tree_identity": "git rev-parse <merge>^{tree}; git rev-parse <incoming-head>^{tree}",
+    "nested_resolution": "git show --remerge-diff --format= <merge>",
+    "release_ancestry": "git merge-base --is-ancestor <tag>^{commit} <audited-main>"
+  },
+  "confirmed_findings": [
+    {
+      "issue": 637,
+      "url": "https://github.com/skyelan1999/aide/issues/637",
+      "introduced_by": [
+        "359f1975",
+        "9af9b26c"
+      ],
+      "integrated_by": 595,
+      "classification": "test portability",
+      "details": "Wheelhouse fake mv hard-coded /usr/bin/mv and host locale; avatar fixture temporary-directory alias differs from Node resolved __dirname. Repair fixture paths and locale; keep product boundary checks unchanged."
+    },
+    {
+      "issue": 638,
+      "url": "https://github.com/skyelan1999/aide/issues/638",
+      "integrated_by": 595,
+      "classification": "test subprocess lifecycle",
+      "details": "Undrained stderr PIPE blocks local proof server on repeated refusal logs on macOS. Replacing it with a temporary file changed stable 3-second timeout into all five cases passing in 0.196 seconds, before the additional HTTPError close cleanup."
+    }
+  ],
+  "operational_state": {
+    "original_checkout": "feat/codex-plugin-host-615 at 1d01dc56",
+    "original_checkout_commits_behind_audited_main": 362,
+    "original_checkout_dirty_paths": [
+      "start.command"
+    ],
+    "installed_9999": "Independent local-only MIXSoul runtime, not current main. No replacement, restart, private data access or deployment performed.",
+    "audit_checkout": "Dedicated worktree on local main, fast-forwarded from ac96e7fa to audited remote main."
+  },
+  "validation": {
+    "initial_macos_quick": {
+      "total_commands": 308,
+      "passed_commands": 303,
+      "failed_commands": 5,
+      "distinction": "Three failures included socket-binding sandbox denials; two fixture portability failures were real. Unsandboxed Mermaid retest exposed separate logging deadlock.",
+      "source_fingerprint": "3b0eee0f1b66c882e76f37a18950fb7e0c73989335d045dadda552c05b7282b6"
+    },
+    "focused_after_repairs": {
+      "wheelhouse_lifecycle": "6 passed",
+      "avatar_path_controls": "both packers passed; traversal, external and symlink rejection preserved",
+      "mermaid_proof_auth": "5 passed",
+      "launcher_data": "43 passed outside socket-restricted sandbox",
+      "mixsoul_and_assistant_js": "101 passed outside socket-restricted sandbox"
+    },
+    "aggregate_quick": {
+      "status": "pass",
+      "fingerprint": "17ee8069f9ce521db27e56a519cd8a73fa765ec7fb8947c1c44427c7a9742a12",
+      "head": "18aa325fc07b16ec2315281bb792f2afdf11c6c0",
+      "time": "20261030T043317858316Z",
+      "commands_passed": 308,
+      "local_log": ".agent-state/verify-20261030T043317858316Z.log"
+    },
+    "focused_go_race": {
+      "status": "pass",
+      "image": "aide:ci-fulltest",
+      "network": "none",
+      "source_snapshot_files": 7779,
+      "seconds": 40.57,
+      "top_level_passed": 40,
+      "top_level_skipped": 1,
+      "skipped_test": "TestContextRecoveryLiveModels: explicit live model opt-in required; no paid-provider calls authorized",
+      "run_regex": "^Test(ContextRecovery|AttachmentContext|PluginToolImage|PluginWorkbench|HostComponent)",
+      "executed_tests": [
+        "TestAttachmentContextResourceBoundary",
+        "TestAttachmentContextUsesModelBudget",
+        "TestAttachmentContextUnreadableDoesNotSilentlyOmit",
+        "TestAttachmentContextLargeDocumentsKeepTruncationNotice",
+        "TestAttachmentContextDocx",
+        "TestAttachmentContextXlsx",
+        "TestAttachmentContextPdf",
+        "TestAttachmentContextUnsupportedBinary",
+        "TestAttachmentContextDirectory",
+        "TestContextRecoveryLiveModels",
+        "TestContextRecoveryRetainsUncompactedHistory",
+        "TestContextRecoveryCompactionKeepsToolExchange",
+        "TestContextRecoverySummarySeesMiddleContent",
+        "TestContextRecoveryStreamEOFIsNotSuccess",
+        "TestContextRecoveryActiveBudgetPreservesScopeAndProtocol",
+        "TestContextRecoveryActiveFailurePreservesInput",
+        "TestContextRecoveryOversizedLastMessageCanBeSummarized",
+        "TestContextRecoveryPrematureStreamKeepsResumableCheckpoint",
+        "TestContextRecoveryCompactionInvalidatesOldUsageAnchor",
+        "TestContextRecoverySummaryNormalizesTextShapesOnly",
+        "TestContextRecoveryPreflightCompactsMultipleHistoryBatches",
+        "TestContextRecoverySummaryFingerprintInvalidatesOldAnchor",
+        "TestContextRecoveryActiveCompactionFailureRetainsPartial",
+        "TestContextRecoveryTruncatedToolCallNeverDispatches",
+        "TestHostComponentProjectionAndRoutes",
+        "TestHostComponentMetadata",
+        "TestHostComponentScopeReplayAndMissingHost",
+        "TestHostComponentQuotaProjection",
+        "TestPluginWorkbenchBridgeOwnToolsReplayAndPolicy",
+        "TestPluginWorkbenchBridgeProposalStaysPendingUntilHostApproval",
+        "TestPluginWorkbenchBridgeScopeCloseAndPackageRevocation",
+        "TestPluginWorkbenchBridgeManifestTools",
+        "TestPluginWorkbenchBridgeCancelsDispatchedCallOnScopeChange",
+        "TestPluginWorkbenchBridgeRejectsReadOnlySandbox",
+        "TestPluginWorkbenchBridgeRejectsProposalFromReadOnlyContract",
+        "TestPluginWorkbenchBridgeRenewRotatesAndPreservesScope",
+        "TestPluginWorkbenchDetachFinishesOneCallButCannotEscapeRevocation",
+        "TestPluginWorkbenchAuthSandboxAndOneUse",
+        "TestPluginWorkbenchRevocationChangeAndBound",
+        "TestPluginWorkbenchPackageAndPathValidation",
+        "TestPluginWorkbenchFileExtensions"
+      ],
+      "local_log": ".agent-state/merge-baseline-audit/focused-go-complete-env.log",
+      "log_sha256": "1a1fcb59a291a4e3d269b0809cf2e304a3014eefa5226bec3f8f0c196ed054c2"
+    },
+    "full_suite": "NOT_RUN: no Go production source changes; selected cross-feature integration race tests and complete quick suite used",
+    "real_provider_or_browser_or_physical_windows": "NOT_RUN: no product/UI behavior changed; no such acceptance claimed",
+    "focused_go_race_initial": {
+      "status": "environment failure",
+      "image": "golang:1.26-bookworm",
+      "selected_top_level_tests": 41,
+      "failure_cause": "Missing Node.js plugin runtime and python-docx/openpyxl/pypdf fixture dependencies. Not counted as passing validation. All available context recovery and host-component checks passed. Retrying same cases using existing aide:ci-fulltest with verified dependencies."
+    },
+    "source_file_hashes": {
+      "scripts/test_prebuild_wheels.py": "9fef96f6160a2f367b25dd01c37065efd38753cdc82d5d935d7c73a772560e8a",
+      "scripts/test_avatar_pack_paths.cjs": "05aa4e023d956ce957ef104a9eb3e20114235faad509abb2dd14bbeba50e2ecf",
+      "scripts/test_mermaid_proof_auth.py": "ec71fb11b9acecccdfcf1b1601633027afc427f615101cb0e008b65ee6c92b14"
+    }
+  },
+  "delivery": {
+    "local_main": "validated changes and audit record included in this commit",
+    "remote_push": "NOT_YET_PERFORMED at local-validation snapshot; see actual remote ref/PR for delivery outcome",
+    "release_or_tag_or_deployment": "NOT_RUN: no version change, tag, release or 9999 replacement"
+  }
+}

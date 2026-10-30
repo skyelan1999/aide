@@ -25,9 +25,13 @@ class MermaidProofAuthenticationTests(unittest.TestCase):
             reserved.bind(("127.0.0.1", 0))
             port = reserved.getsockname()[1]
         self.origin = f"http://127.0.0.1:{port}"
+        # Rejection cases log multiple requests before the parent reads output.
+        # A regular temporary file cannot block the server on a full stderr pipe.
+        self.server_log = tempfile.TemporaryFile(mode="w+t")
+        self.addCleanup(self.server_log.close)
         self.server = subprocess.Popen([sys.executable, "-u", "scripts/fixtures/serve-mermaid-csp.py",
                                         "--port", str(port), "--proof", str(self.proof)], cwd=ROOT,
-                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                                       stdout=subprocess.PIPE, stderr=self.server_log, text=True)
         self.addCleanup(self.stop)
         ready, _, _ = select.select([self.server.stdout], [], [], 5)
         self.assertTrue(ready, "owned proof server did not start")
@@ -42,14 +46,14 @@ class MermaidProofAuthenticationTests(unittest.TestCase):
                 self.server.kill()
                 self.server.wait(timeout=3)
         self.server.stdout.close()
-        self.server.stderr.close()
 
     def post(self, body=b'{"status":"pass","forged":true}', headers=None):
         try:
             with urlopen(Request(self.origin + "/proof", data=body, headers=headers or {}, method="POST"), timeout=3) as response:
                 return response.status, dict(response.headers)
         except HTTPError as error:
-            return error.code, dict(error.headers)
+            with error:
+                return error.code, dict(error.headers)
 
     def token(self):
         with urlopen(self.origin + "/fixture.js", timeout=3) as response:
