@@ -49,7 +49,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Selected local verification, actual Safari privacy component acceptance and remote native Windows SDK/quick checks pass. Full Go race is a separate required PR gate: query the linked live run before merging. Full product runtime stop and real Windows Docker Desktop/ARM64 execution remain NOT_RUN.",
+      "summary": "Selected local and browser privacy acceptance pass; full PR gate remains required. CI exposed a stream-test framing assumption; corrected test only, product behavior unchanged. Native Windows runtime and actual production stop remain NOT_RUN.",
       "evidence": [
         "20 source/build/cleanup/release/actual ZIP assembly regressions pass",
         "20 focused Go race tests and server vet pass in aide:ci-fulltest, no-network disposable source snapshot",
@@ -62,7 +62,8 @@
         "Remote quick and windows checks PASS on 43e80b45; Windows includes real SDK compile/self-test and all standard command dry runs",
         "Safari actual normal close and forced close-refusal to about:blank PASS; local beacon confirms document/token/session/file cleared, draft preserved and stream/command/call/live/voice disposal invoked",
         "docs/reviews/2026-10-30-launcher-stop-privacy.md",
-        "Required full Go gate live status: https://github.com/skyelan1999/aide/actions/runs/41010514883 ; running at evidence snapshot, not claimed passed"
+        "Required full Go gate live status: https://github.com/skyelan1999/aide/actions/runs/41010514883 ; running at evidence snapshot, not claimed passed",
+        "CI 41012375360 on 73ef02b3: quick/windows PASS, full Go FAIL solely in TestAssistantResultTriggerRealHTTP because one TCP read returned the SSE connection comment. Consume complete frames until the session event instead; 30 consecutive race runs PASS (21.413s), server vet exit 0. Required full CI must rerun on updated head."
       ]
     },
     "documentation": {
@@ -94,7 +95,7 @@
   },
   "release_authorization": "",
   "rollback": "Not deployed. Revert the integration commit to restore former launcher behavior; preserve .env, .aide-data, offline archives and ownership receipts. Source build selects only an installation-scoped image after validation.",
-  "handoff": "PR #643 targets main. Safari component privacy acceptance passed after user enabled access; full Windows Docker Desktop and full-product runtime stop remain NOT_RUN. Keep #640 open. No tag, public Release or production deployment.",
+  "handoff": "PR #643 targets main. Safari component privacy acceptance passed after user enabled access; full Windows Docker Desktop and full-product runtime stop remain NOT_RUN. Keep #640 open. No tag, public Release or production deployment. Follow-up: SSE CI fixture now consumes complete frames; 30 race repetitions and vet pass. New full CI pending; no admin override authorization.",
   "issue": 640,
   "operator": "skyelan1999",
   "proposal_url": "https://github.com/skyelan1999/aide/issues/640",
