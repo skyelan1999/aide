@@ -114,6 +114,26 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn('USER_SETTING=preserved', (self.root / '.env').read_text())
         self.assertTrue(self.launcher.owner())
 
+    def test_build_executes_real_disk_child_without_inherited_project_dir(self):
+        # Keep the Docker boundary disposable, but execute the actual Bash child
+        # and production guard that the old all-call mock accidentally skipped.
+        scripts=self.root/'scripts';scripts.mkdir()
+        shutil.copy2(ROOT/'scripts/resource-guard.sh',scripts/'resource-guard.sh')
+        tools=self.root/'tools';tools.mkdir()
+        df=tools/'df'
+        df.write_text('#!/bin/sh\n[ "$2" = / ] || [ "$2" = "$EXPECTED_PROJECT" ] || exit 42\nprintf "fixture 99999999 0 99999999 1%% /\\n"\n')
+        df.chmod(0o700)
+        original=self.launcher.call
+        def real_disk(args,**kwargs):
+            if args[:2]==['bash','-ec']:
+                return module.Launcher.call(self.launcher,args,**kwargs)
+            return original(args,**kwargs)
+        for inherited in (None,'','/wrong-parent-project'):
+            with self.subTest(inherited=inherited),patch.dict(os.environ,{'PATH':str(tools)+os.pathsep+os.environ['PATH'],'EXPECTED_PROJECT':str(self.root)}):
+                os.environ.pop('PROJECT_DIR',None)
+                if inherited is not None:os.environ['PROJECT_DIR']=inherited
+                with patch.object(self.launcher,'call',side_effect=real_disk):self.launcher.build()
+
     def test_failed_build_cannot_switch_image_or_start_release(self):
         (self.root / '.env').write_text('AIDE_IMAGE=aide:previous\n')
         self.launcher.fail_build = True

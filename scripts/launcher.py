@@ -129,7 +129,8 @@ class Launcher:
                               'steps': ['compile current source and embedded host components', 'verify image identity', 'start']}, indent=2))
             return
         self.d('info', capture=True)
-        self.call(['bash', '-ec', 'source scripts/resource-guard.sh; aide_check_disk build'])
+        self.call(['bash', '-ec', 'source scripts/resource-guard.sh; aide_check_disk build "$1"',
+                   'aide-build-disk', str(self.root)])
         source = self.call(['bash', 'scripts/aide.sh', 'source-sha'], capture=True)
         if not re.fullmatch(r'[a-f0-9]{64}', source):
             raise ValueError('Invalid current source fingerprint')

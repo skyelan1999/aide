@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Read-only host/engine checks; never prune, delete data or change global settings.
 aide_check_disk() {
-  local phase="${1:-start}" minimum=10485760 path available
+  local phase="${1:-start}" project_dir="${2:-${PROJECT_DIR:-.}}" minimum=10485760 path available
   [[ "$phase" != build ]] || minimum=20971520
-  for path in / "$PROJECT_DIR"; do
+  for path in / "$project_dir"; do
     available="$(LC_ALL=C df -Pk "$path" | awk 'END {print $4}')" || return 1
     if [[ ! "$available" =~ ^[0-9]+$ ]]; then
       echo "AIDE: cannot determine free disk space for $path; startup stopped." >&2; return 1

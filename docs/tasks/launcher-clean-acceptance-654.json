@@ -1,0 +1,74 @@
+{
+  "id": "launcher-clean-acceptance-654",
+  "request": "这个也不行啊，你好好的用干净的环境测一遍；所有的接口都重新测一遍；用干净的环境测试",
+  "baseline": "7a1e4b6766fe5f32cdaf5c14204738679218d9fc; candidate includes PR #650 a8a9805d",
+  "initial_status": "",
+  "acceptance": [
+    "Reproduce the reported empty df path with PROJECT_DIR absent. Pass the actual installation path to the real disk-check child shell; preserve low-disk rejection.",
+    "Start from a committed fresh checkout with spaces/Chinese in its path, new HOME and Docker config, no inherited PROJECT_DIR or model credentials, new data/workspace/context/local directories and a dedicated project/port/Buildx cache.",
+    "Actually execute all seven native POSIX entrypoints: cold build, healthy reopen/start, running/stopped verify, stop, cold clean rebuild, scoped docker_clean and release rejection without publication.",
+    "Verify pinned HTTPS health, served HTML, authenticated read-only API, stable healthy reopen, persistent-data sentinels and unrelated Docker image preservation.",
+    "Run macOS locally and Linux in an isolated CI runner. Windows actual host testing deferred by direct user answer: 暂时没有，后面测; retain actual CMD/native SDK CI regression separately.",
+    "Report real platform tests, boundary fixtures, deferred and release/deployment states separately; never use dry-run/mock Docker as proof of full build acceptance."
+  ],
+  "scope": [
+    "scripts/launcher.py, scripts/resource-guard.sh, focused tests, opt-in real Docker acceptance runner, Linux CI job and canonical task/review docs.",
+    "Extend existing PR #650 to cover #649/#654; preserve original dirty aide checkout, existing services/data, and no global Docker prune, tag, release or production deployment."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requested all launcher interfaces retested in clean environments. Windows host unavailable and explicitly deferred by user; macOS/Linux real builds authorized.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/654",
+        "User messages: 所有的接口都重新测一遍; 用干净的环境测试; 暂时没有，后面测"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Pass project root as a quoted positional shell argument instead of relying on exported shell state; disk guard supports an explicit root and cwd fallback. Real acceptance uses isolated state and owned builders, not global cleanup.",
+      "evidence": [
+        "scripts/launcher.py",
+        "scripts/resource-guard.sh",
+        "scripts/test_launcher_clean_environment.py"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Disk propagation fixed and regression cases added. Preparing full clean-platform lifecycle acceptance and Linux CI coverage.",
+      "evidence": [
+        "scripts/test_resource_guard.py",
+        "scripts/test_launcher_contract.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Original empty-path failure reproduced. 9 resource-guard and 21 launcher/package tests passed, including the real child shell with absent/empty/stale parent environment. Real cold build/lifecycle remain pending.",
+      "evidence": [
+        ".agent-state/launcher-clean-654/resource.log",
+        ".agent-state/launcher-clean-654/contract.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User authorized fixing and full clean-environment testing. No admin exception, actual release, tag or production deployment authorized.",
+  "rollback": "Revert only this repair; original checkout and user data remain untouched. Dedicated acceptance project can be stopped/removed by its ownership metadata; no global prune.",
+  "handoff": "In progress. Windows full Docker Desktop run deferred by user. PR #650 prior CI all passed but is not merged and does not validate this expanded scope.",
+  "issue": 654,
+  "operator": "skyelan1999",
+  "pull_request": "https://github.com/skyelan1999/aide/pull/650"
+}
