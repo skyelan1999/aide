@@ -17,7 +17,8 @@
     "scripts/aide.sh, maintenance, build, diagnostics, packaging and focused tests",
     "native/windows-launcher and existing compiler driver",
     "Application shutdown privacy signal and runtime package capability",
-    "Current launcher/installation/update documentation and task evidence"
+    "Current launcher/installation/update documentation and task evidence",
+    "scripts/auto-model-router-ui.test.cjs fixture compatibility with current main session selection module"
   ],
   "stages": {
     "requirements": {
@@ -48,14 +49,17 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused tests passed; final current-main integration and remote required checks pending. Real browser blocked by Work settings; real Windows Docker Desktop not available.",
+      "summary": "All available local checks pass on latest-main integration. Remote required CI pending. UI/real Windows Docker Desktop acceptance remains NOT_RUN; Work settings disable browser access.",
       "evidence": [
         "20 source/build/cleanup/release/actual ZIP assembly regressions pass",
         "20 focused Go race tests and server vet pass in aide:ci-fulltest, no-network disposable source snapshot",
         "35 production native core checks and 38 portable checks pass",
         "Windows AMD64 and ARM64 cross-compilation and system-only PE imports pass; not Win32 execution",
-        "311 quick checks pass on original baseline before synchronizing newer main",
-        "Browser NOT_RUN: Local browser use is disabled in Work settings"
+        "Browser NOT_RUN: Local browser use is disabled in Work settings",
+        "311 quick checks PASS; fingerprint a5d52feaaf83997ff59336bf42d6ba5605889676f906905ff3a38e77cccaddfb; receipt .agent-state/verify-20261030T054641771364Z.log",
+        "Latest-main integration: 20 focused Go race tests and server vet PASS, 16.435s",
+        "Actual Release ZIP assembly PASS inside the 20 launcher-contract cases; synthetic image boundary, no product image built",
+        "New main d012e092 introduced reasoningOptions; Auto router fixture now loads production session-model-selection.js, restoring its regression without changing product behavior"
       ]
     },
     "documentation": {
@@ -69,14 +73,20 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed 63 implementation/docs paths plus one current-main test fixture adaptation; explicit staging, no generated EXE/log/private data included. Original dirty start.command and running 9999 image retained.",
+      "evidence": [
+        "git diff --check PASS",
+        "aide-aide-1 still aide:mixsoul-local-fa9550d6, running, 127.0.0.1:9999",
+        "Original checkout still feat/codex-plugin-host-615 with pre-existing M start.command"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "blocked",
+      "summary": "PR #643 targets main; reviewDecision REVIEW_REQUIRED. No protected-main bypass, version/tag, public Release or production deployment. Required CI is pending and real browser/Windows Docker Desktop acceptance is not complete.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/643"
+      ]
     }
   },
   "release_authorization": "",
@@ -91,5 +101,19 @@
     "cleanup_acceptance": "Only disposable synthetic owned fixtures/containers; no system/volume prune or unrelated workloads",
     "release_authority": "Implement release entry only; do not invoke tag/publication/deployment",
     "delivery": "Feature branch and PR targeting main; no protected-main bypass"
+  },
+  "integration_base": "d012e0928d095cbbfa31653299deace06f1bb839",
+  "pull_request": "https://github.com/skyelan1999/aide/pull/643",
+  "native_builds": {
+    "amd64": {
+      "bytes": 10001408,
+      "sha256": "1ca46d5443c3031cce1dc9de1d71902e3d5a3d7bd3f3b8518935c9de68eb0fce",
+      "machine": "0x8664"
+    },
+    "arm64": {
+      "bytes": 9204224,
+      "sha256": "957a2ea8027edab402473cf34817e3182dfd9de9444c3e7617502947ef22fee1",
+      "machine": "0xaa64"
+    }
   }
 }
