@@ -48,18 +48,21 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "All available local checks pass on latest-main integration. Remote required CI pending. UI/real Windows Docker Desktop acceptance remains NOT_RUN; Work settings disable browser access.",
+      "status": "pass",
+      "summary": "Selected local verification, actual Safari privacy component acceptance and remote native Windows SDK/quick checks pass. Full Go race is a separate required PR gate: query the linked live run before merging. Full product runtime stop and real Windows Docker Desktop/ARM64 execution remain NOT_RUN.",
       "evidence": [
         "20 source/build/cleanup/release/actual ZIP assembly regressions pass",
         "20 focused Go race tests and server vet pass in aide:ci-fulltest, no-network disposable source snapshot",
         "35 production native core checks and 38 portable checks pass",
         "Windows AMD64 and ARM64 cross-compilation and system-only PE imports pass; not Win32 execution",
-        "Browser NOT_RUN: Local browser use is disabled in Work settings",
-        "311 quick checks PASS; fingerprint a5d52feaaf83997ff59336bf42d6ba5605889676f906905ff3a38e77cccaddfb; receipt .agent-state/verify-20261030T054641771364Z.log",
         "Latest-main integration: 20 focused Go race tests and server vet PASS, 16.435s",
         "Actual Release ZIP assembly PASS inside the 20 launcher-contract cases; synthetic image boundary, no product image built",
-        "New main d012e092 introduced reasoningOptions; Auto router fixture now loads production session-model-selection.js, restoring its regression without changing product behavior"
+        "New main d012e092 introduced reasoningOptions; Auto router fixture now loads production session-model-selection.js, restoring its regression without changing product behavior",
+        "Final code 43e80b45: 311 quick PASS; fingerprint 6bdbc2800e6c365d6c1df7993b271a3dfedc4810da69a67961f162d0bc75ec65",
+        "Remote quick and windows checks PASS on 43e80b45; Windows includes real SDK compile/self-test and all standard command dry runs",
+        "Safari actual normal close and forced close-refusal to about:blank PASS; local beacon confirms document/token/session/file cleared, draft preserved and stream/command/call/live/voice disposal invoked",
+        "docs/reviews/2026-10-30-launcher-stop-privacy.md",
+        "Required full Go gate live status: https://github.com/skyelan1999/aide/actions/runs/41010514883 ; running at evidence snapshot, not claimed passed"
       ]
     },
     "documentation": {
@@ -82,8 +85,8 @@
       ]
     },
     "release": {
-      "status": "blocked",
-      "summary": "PR #643 targets main; reviewDecision REVIEW_REQUIRED. No protected-main bypass, version/tag, public Release or production deployment. Required CI is pending and real browser/Windows Docker Desktop acceptance is not complete.",
+      "status": "not_run",
+      "summary": "No version bump, tag, public Release or production deployment is authorized in this implementation task. Main integration follows PR #643 and its live checks/review policy; this task file is an evidence snapshot rather than live GitHub merge state.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/643"
       ]
@@ -91,7 +94,7 @@
   },
   "release_authorization": "",
   "rollback": "Not deployed. Revert the integration commit to restore former launcher behavior; preserve .env, .aide-data, offline archives and ownership receipts. Source build selects only an installation-scoped image after validation.",
-  "handoff": "Feature branch targeting main. No tag, public Release or production deployment. Issue stays open pending real Windows Docker Desktop and browser privacy acceptance.",
+  "handoff": "PR #643 targets main. Safari component privacy acceptance passed after user enabled access; full Windows Docker Desktop and full-product runtime stop remain NOT_RUN. Keep #640 open. No tag, public Release or production deployment.",
   "issue": 640,
   "operator": "skyelan1999",
   "proposal_url": "https://github.com/skyelan1999/aide/issues/640",
@@ -115,5 +118,17 @@
       "sha256": "957a2ea8027edab402473cf34817e3182dfd9de9444c3e7617502947ef22fee1",
       "machine": "0xaa64"
     }
+  },
+  "evidence_snapshot": {
+    "at": "2026-10-30T06:08:41.351299+00:00",
+    "code_revision": "43e80b45ea5844d6ddbb4b9a69873fdca08aa210",
+    "content_fingerprint": "6bdbc2800e6c365d6c1df7993b271a3dfedc4810da69a67961f162d0bc75ec65",
+    "remote_checks": {
+      "quick": "success",
+      "windows": "success",
+      "go": "in_progress"
+    },
+    "review_decision": "REVIEW_REQUIRED",
+    "main_integration": "pending; live PR state is authoritative"
   }
 }
