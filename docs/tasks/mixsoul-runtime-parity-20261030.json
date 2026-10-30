@@ -19,7 +19,9 @@
     "docs/agent/router.json",
     "docs/tasks/mixsoul-runtime-parity-20261030.json",
     "scripts/package-release-assets.sh",
-    "scripts/mixsoul-embedding-service.py"
+    "scripts/mixsoul-embedding-service.py",
+    ".github/workflows/aide-ci.yml",
+    "docs/tasks/start-latest-release-switch-20261030.json"
   ],
   "stages": {
     "requirements": {
@@ -75,5 +77,6 @@
   "release_authorization": "",
   "rollback": "",
   "handoff": "Startup #628 merged by user. This follow-up needs CI/review before main merge. Existing private supervisors are not automatically adopted; real model weights and prior research stay local.",
-  "issue": "https://github.com/skyelan1999/aide/issues/631"
+  "issue": "https://github.com/skyelan1999/aide/issues/631",
+  "pr": "https://github.com/skyelan1999/aide/pull/632"
 }
