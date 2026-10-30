@@ -20,7 +20,7 @@ class OfflineBundleTests(unittest.TestCase):
             (self.root / name).mkdir()
         shutil.copy(ROOT / 'start.command', self.root)
         shutil.copy(ROOT / 'scripts/aide.sh', self.root / 'scripts')
-        for name in ('launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'resource-guard.sh', 'prebuilt-image.sh'):
+        for name in ('launcher-data.sh', 'launcher-data.py', 'resource-guard.sh', 'prebuilt-image.sh'):
             shutil.copy(ROOT / 'scripts' / name, self.root / 'scripts')
         # Native extraction/preparation is exercised independently against real Docker.
         # This fixture tests launcher orchestration without running host programs.

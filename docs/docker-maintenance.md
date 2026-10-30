@@ -9,7 +9,7 @@
 | 清理后重新构建（源码包） | `clean.command` | `bash clean.sh` | `clean.bat` |
 | 版本/依赖/故障诊断 | `verify.command` | `bash verify.sh` | `verify.bat` |
 
-Windows 标准入口直接调用原生 C++ EXE，无 PowerShell 回退。源码包首次缺少 EXE 时使用 `build.bat` 在 Docker 内生成；Release 包应恢复完整包。POSIX 清理与原生接口支持 `--dry-run`；诊断本身不启动或构建服务。
+Windows 标准入口直接调用原生 C++ EXE，无 PowerShell 回退。源码包使用 `build.bat` 在 Docker 内编译当前原生启动器，已有旧 EXE 也会刷新；Release 包应恢复完整包。POSIX 清理与原生接口支持 `--dry-run`；诊断本身不启动或构建服务。
 
 stop 通知在线工作台清空敏感内容并关闭/转为空白页，取消任务并停止自托管插件、登记的宿主桥接和本安装全部 Compose 服务。重复停止可安全执行；组件未确认退出会报告失败，继续停止其余组件。手动停止标记阻止后台监视器自动重建。正常 start 清除此标记。不要在升级事务中并行清理。
 

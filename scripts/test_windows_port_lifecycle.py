@@ -9,20 +9,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class WindowsPortLifecycleTests(unittest.TestCase):
     def test_launcher_selects_and_persists_fallback_port(self):
-        launcher = (ROOT / "start.ps1").read_text(encoding="utf-8-sig")
+        launcher = (ROOT / 'scripts/fixtures/legacy-windows/start.ps1').read_text(encoding="utf-8-sig")
         self.assertIn("Test-LocalHostPortAvailable $configuredPort", launcher)
         self.assertIn("$candidate -le [Math]::Min($configuredPort + 100, 65535)", launcher)
         self.assertIn('"AIDE_PORT=$selectedPort"', launcher)
 
     def test_launcher_starts_host_port_watcher_for_offline_bundles(self):
-        launcher = (ROOT / "start.ps1").read_text(encoding="utf-8-sig")
+        launcher = (ROOT / 'scripts/fixtures/legacy-windows/start.ps1').read_text(encoding="utf-8-sig")
         self.assertIn("scripts/watch-port.ps1", launcher)
         self.assertIn("if ($offlineBundle -and (Test-Path", launcher)
         self.assertIn("('\"{0}\"' -f $portWatcherPath)", launcher)
         self.assertIn("('\"{0}\"' -f $updateAgentPath)", launcher)
 
     def test_watcher_applies_saved_port_without_changing_shared_data_mounts(self):
-        watcher = (ROOT / "scripts/watch-port.ps1").read_text(encoding="utf-8-sig")
+        watcher = (ROOT / 'scripts/fixtures/legacy-windows/scripts/watch-port.ps1').read_text(encoding="utf-8-sig")
         self.assertIn("cat /data/config/host-port", watcher)
         self.assertIn("'compose', 'port', 'aide', '8080'", watcher)
         self.assertIn("'up', '-d', '--no-build', '--pull', 'never'", watcher)
@@ -31,7 +31,7 @@ class WindowsPortLifecycleTests(unittest.TestCase):
 
     def test_host_agents_keep_launcher_compose_overrides(self):
         for name in ('watch-port.ps1', 'update-agent.ps1'):
-            text = (ROOT / 'scripts' / name).read_text(encoding='utf-8-sig')
+            text = (ROOT / 'scripts/fixtures/legacy-windows/scripts' / name).read_text(encoding='utf-8-sig')
             self.assertIn("if (-not $env:COMPOSE_FILE) { $env:COMPOSE_FILE = 'compose.yaml' }", text)
             self.assertNotIn("'-f', 'compose.yaml'", text)
             self.assertNotIn('compose -f compose.yaml', text)
@@ -42,7 +42,7 @@ class WindowsPortLifecycleTests(unittest.TestCase):
         # Wiring check only; runtime transaction and Win32 tests are separate.
         for name, action in [('start.bat', 'start'), ('stop.bat', 'stop'), ('clean-docker-cache.bat', 'clean-cache')]:
             text = (ROOT / name).read_text()
-            self.assertIn('"%~dp0aide-launcher.exe" ' + action + ' %*', text)
+            self.assertIn('windows-entrypoint.bat" ' + action + ' %*', text)
             self.assertNotIn('.ps1', text)
             self.assertNotIn('powershell', text.lower())
         packager = (ROOT / "scripts/package-release-assets.sh").read_text()

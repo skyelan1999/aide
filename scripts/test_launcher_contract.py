@@ -364,6 +364,8 @@ sys.exit('Unexpected package Docker action: '+repr(a))
                         for action in ('build','clean','release','clean-docker-cache'):
                             self.assertNotIn(action+'.'+suffix,names)
                     self.assertFalse(any(n.endswith('.ps1') for n in names))
+                    if target.startswith(('windows-', 'full-')):
+                        self.assertIn('windows-entrypoint.bat',names)
                     self.assertNotIn('.env',names)
                     self.assertNotIn('owner.json',names)
 

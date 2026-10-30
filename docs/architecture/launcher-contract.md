@@ -20,6 +20,12 @@ macOS 使用根目录的 `名称.command`，Linux 使用 `bash 名称.sh`，Wind
 
 ## 构建与资源归属
 
+Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/646)。根目录 BAT 经统一 CMD 入口调用原生 EXE，并显示操作和退出码；通过双击（`cmd /c`）启动时会停留等待确认，自动化设置 `AIDE_LAUNCHER_NO_PAUSE=1` 可禁用停留，仍保留真实退出码。
+
+源码更新后运行 `build.bat`，不必手动删除 EXE。显式 `build/clean` 总是从当前源码编译原生启动器，在成功编译且本安装后台控制器确认停止后替换旧 EXE，然后执行运行镜像构建。失败保留旧 EXE 和持久数据，不转用 Release。普通 `start/stop/verify` 等入口检测旧版启动器并提示先 build；`start` 不编译。旧编译收据不再使 build/clean 回到旧 EXE；普通委派也会检查原生命令版本。
+
+活动根目录及 `scripts/` 中的 PS1 已迁入 `scripts/fixtures/legacy-windows/`，仅供历史兼容回归，不进入 Docker 上下文、Release 包或源码构建身份。当前 Git 源码的 `.bat`、原生 EXE 和新打包入口都不调用 PowerShell。原生失败信息写入 `.aide-data/native/launcher.log`；启动器尚未编译或 Docker bootstrap 失败时，CMD 窗口显示实际错误和失败退出码。
+
 源码 build 需要 Git、Docker Compose、Buildx；POSIX 协调器还需要 Bash/Python 3。Windows 首次 `build.bat` 通过 Docker 的 `native-launcher` 目标生成引导 EXE，再由原生启动器编排当前运行镜像和当前原生宿主构建；宿主无需安装 PowerShell、Python 或 C++ 编译器。当前编译产物使用校验过的不可变 `launcher-<sha256>.exe`，入口按本安装收据转交，避免覆盖正在执行的 EXE。
 
 每个安装目录拥有独立的 `aide-<目录摘要>` docker-container Buildx 构建器、`aide:source-<目录摘要>` 镜像和 `.aide-data/build/owner.json` 归属收据。已有同名构建器但无匹配收据时拒绝接管。构建器限制为 4 GiB / 2 核；增量层和 cache mount 留在该构建器中。冷启动需要获取 BuildKit、基础镜像、固定工具链及依赖；默认 Docker 引擎已有基础镜像 tag 不代表专用构建器已有离线缓存。无网络的机器优先使用完整 Release 包，或预先准备该专用构建环境。

@@ -85,7 +85,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pwsh', default=shutil.which('pwsh'))
     parser.add_argument('--go', default=shutil.which('go'))
-    parser.add_argument('--source-root', type=Path, default=ROOT)
+    parser.add_argument('--source-root', type=Path, default=ROOT / 'scripts/fixtures/legacy-windows')
     parser.add_argument('--only', choices=('browser', 'directory', 'lan'))
     args = parser.parse_args()
     if not args.pwsh or not args.go:

@@ -19,3 +19,6 @@ native/windows-launcher/third_party/miniz/miniz_tinfl.c -text
 native/windows-launcher/third_party/miniz/miniz_tinfl.h -text
 native/windows-launcher/third_party/miniz/miniz_common.h -text
 native/windows-launcher/third_party/miniz/LICENSE -text whitespace=cr-at-eol
+
+# CMD entrypoints need stable Windows line endings even in Git source checkouts.
+*.bat text eol=crlf

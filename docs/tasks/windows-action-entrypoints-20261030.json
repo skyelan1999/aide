@@ -1,0 +1,86 @@
+{
+  "id": "windows-action-entrypoints-20261030",
+  "request": "当前除了start的脚本外，所有的bat都闪一下就没，然后不工作，目录中仍然有ps1的脚本存在",
+  "baseline": "820c18d8d0a918176a3c49fedaa22105369b4d9f",
+  "initial_status": "",
+  "acceptance": [
+    "All standard BAT entrypoints execute native commands with visible action/result and preserved exit code; double-click retains diagnostics, automation can disable pause.",
+    "Git build/clean rebuild current native host even with an existing stale EXE; start never compiles.",
+    "Legacy PowerShell moves out of active entry/runtime directories into explicit test fixtures; package and native source identity exclude retired scripts.",
+    "Run actual Windows cmd wrappers with compiled native executable for source/release, missing/stale EXE, failure/success, Unicode/spaces paths and bootstrap boundary; preserve user data."
+  ],
+  "scope": [
+    "Windows BAT dispatcher/bootstrap and native lifecycle dispatch",
+    "Archived legacy Windows test fixture paths, source inventory and packaging",
+    "Windows cmd regression, docs/task evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed Git source checkout. Preserve original dirty aide/start.command, runtime 9999 and persistent data; do not publish or deploy.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/646"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Shared CMD entrypoint owns interactive result lifetime. Explicit build/clean bootstraps fresh native host and stops only owned controller before replacing bootstrap EXE; normal actions validate launcher contract. Keep legacy PowerShell only as archived regression fixtures.",
+      "evidence": [
+        "build.bat",
+        "native/windows-launcher/main.cpp"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Unified CMD entrypoint, current-source bootstrap with compatibility probe and safe staging, diagnostics/pause/exit-code handling, retired PowerShell fixture migration and actual Windows BAT harness implemented.",
+      "evidence": [
+        "scripts/windows-entrypoint.bat",
+        "scripts/windows-bootstrap.bat",
+        "native/windows-launcher/main.cpp",
+        "scripts/test_windows_bat_entrypoints.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Selected regression scope passes: 313 quick, 20 lifecycle/real ZIP, 40 data, 38 portable, complete AMD64/ARM64 PE builds and imports; Windows real BAT/CMD + owned console and legacy PS5/7 CI pass at 0509137c. User Docker Desktop runtime remains NOT_RUN; required full Go/gate remain a separate PR merge gate. Follow-up 275c458f adds actual prior-controller process/creation-time exit waiting, validated by all Windows job steps and both native architectures.",
+      "evidence": [
+        "docs/reviews/2026-10-30-windows-entrypoints.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41027014024/job/123967676884",
+        "Content fingerprint 401596127d4d2bdaf73fb6e93b1f01d4ba29d29ac21b1bc2448fd504efde9db2",
+        "https://github.com/skyelan1999/aide/actions/runs/41028992918/job/123974453263"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated canonical contract and current English/Chinese startup guidance; legacy fixtures have an explicit retired/testing-only boundary.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md",
+        "docs/docker-maintenance.md",
+        "docs/en/installation.md",
+        "native/windows-launcher/README.md",
+        "scripts/fixtures/legacy-windows/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed; historical PS1 retained byte-identically as retired fixtures, no active PS1 remains. Own cross-build containers exited and no production services or original user edits changed.",
+      "evidence": [
+        ".agent-state/windows-action-entrypoints/audit-final.json",
+        "git diff --check",
+        "scripts/fixtures/legacy-windows/README.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "User explicitly authorized administrator merge of PR #647 after all required CI passes. Await full Go/gate; no tag, public release or deployment authorized.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/647"
+      ]
+    }
+  },
+  "release_authorization": "Direct user answer for PR #647: CI passes then administrator merge. Authorization applies only after all required CI succeeds; no tag, release or deployment.",
+  "rollback": "Revert only this PR to restore previous tracked launcher layout; preserve .env, .aide-data, workspaces and volumes. New bootstrap writes only its owned staging paths and does not replace old EXE on compile failure.",
+  "handoff": "Code and selected acceptance complete. User authorized PR #647 administrator merge only after every required CI succeeds. Pending full Go/gate; verify exact head and main ancestry after merge. User Windows Docker Desktop runtime remains NOT_RUN; keep Issue #646 open until affected-host recheck. Once updated, Git source operator runs build.bat to refresh the stale EXE. Production 9999 and original dirty checkout preserved.",
+  "issue": 646,
+  "operator": "skyelan1999"
+}

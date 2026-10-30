@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pwsh', default=shutil.which('pwsh'))
-    parser.add_argument('--source', type=Path, default=ROOT / 'scripts/launcher-data.ps1')
+    parser.add_argument('--source', type=Path, default=ROOT / 'scripts/fixtures/legacy-windows/scripts/launcher-data.ps1')
     parser.add_argument('--require-native', action='store_true')
     args = parser.parse_args()
     if not args.pwsh:

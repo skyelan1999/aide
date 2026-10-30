@@ -352,7 +352,7 @@ print(os.environ.get("FIX_RELEASE_RECEIPT", "v0.1.17.6-RC1|sha256:"+"4"*64+"||up
         self.assertIn('bash scripts/aide.sh build',(ROOT/'scripts/install.sh').read_text())
         for name in ['start','stop','build','clean','docker_clean','verify','release']:
             entry=(ROOT/(name+'.bat')).read_text()
-            self.assertIn('aide-launcher.exe',entry);self.assertNotIn('.ps1',entry.lower());self.assertNotIn('powershell',entry.lower())
+            self.assertIn('windows-entrypoint.bat',entry);self.assertNotIn('.ps1',entry.lower());self.assertNotIn('powershell',entry.lower())
 
     def test_source_checkout_is_not_hidden_by_stale_bundle_marker(self):
         (self.root/'.aide-image').write_text('old pinned runtime')

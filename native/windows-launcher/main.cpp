@@ -540,16 +540,17 @@ int wmain(int argc,wchar_t** argv){
    else if(a==L"--self-test")return selfTest();
    else if(a==L"--licenses"){std::cout<<embedded_json_license<<'\n'<<embedded_miniz_license<<'\n'<<embedded_helper_licenses;return 0;}
    else if(a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
+   else if(a==L"--launcher-contract"){std::cout<<"aide-launcher-contract=2\n";return 0;}
    else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|build|clean|docker_clean|verify|release|status|host-status|host-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
    else throw std::runtime_error("Unknown launcher argument");
   }
   auto compiledRoot=fs::absolute(root)/L".aide-data/native";auto compiledReceipt=compiledRoot/L"compiled-launcher.json";
   realPath(root/L".aide-data");realPath(compiledRoot);realPath(compiledReceipt);
-  if(fs::exists(compiledReceipt)&&!dryRun){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}
+  if(fs::exists(compiledReceipt)&&!dryRun&&action!=L"build"&&action!=L"clean"&&action!=L"host-stop"){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){stateRoot=compiledRoot;auto probe=run(target,{L"--launcher-contract"},5000);if(!probe.code&&trim(probe.out)=="aide-launcher-contract=2"){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}}
   if(action==L"choose-directory")return chooseDirectory();
   if(action==L"confirm-directory-restart")return MessageBoxW(nullptr,L"Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.",L"Aide directories",MB_OKCANCEL|MB_ICONWARNING|MB_DEFBUTTON2)==IDOK?0:2;
   if(force&&action!=L"build"&&action!=L"clean")throw std::runtime_error("--force-build is valid only with build or clean; start never compiles");
-  if(dryRun&&(action==L"stop"||action==L"build"||action==L"clean"||action==L"docker_clean"||action==L"release")){
+  if(dryRun&&(action==L"stop"||action==L"build"||action==L"clean"||action==L"docker_clean"||action==L"release"||action==L"verify")){
    bool source=fs::exists(root/L".git")||(fs::exists(root/L"go.mod")&&fs::exists(root/L"Dockerfile"));if(!source&&(action==L"build"||action==L"clean"||action==L"release"))throw std::runtime_error("Source-only command is unavailable in a Release package");
    std::cout<<"Dry run: "<<utf8(action)<<"; current-installation resources only; no commands executed.\n";return 0;
   }
@@ -589,5 +590,5 @@ int wmain(int argc,wchar_t** argv){
    if(!nativeStopping())app.browser();
   }
   return 0;
- }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{write(stateRoot/L"host-stop-required",aide_host::diagnostic(e.what()));}catch(...){}std::cerr<<"Native host action failed: "<<aide_host::diagnostic(e.what(),{},1024)<<std::endl;if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
+ }catch(const std::exception& e){if(dynamic_cast<const aide_host::Unsafe*>(&e)&&!stateRoot.empty())try{write(stateRoot/L"host-stop-required",aide_host::diagnostic(e.what()));}catch(...){}auto message="Native host action failed: "+aide_host::diagnostic(e.what(),{},1024);std::cerr<<message<<std::endl;if(!stateRoot.empty())try{std::ofstream log(stateRoot/L"launcher.log",std::ios::app);log<<message<<std::endl;}catch(...){}if(pause){std::cerr<<"Press Enter to close...";std::cin.get();}return 1;}
 }

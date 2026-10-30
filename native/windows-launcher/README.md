@@ -26,7 +26,7 @@ build instead of substituting a Release. `--force-build` is valid only for build
 or clean. The [standard contract](../../docs/architecture/launcher-contract.md)
 defines start/stop/build/clean/docker_clean/verify/release and package differences.
 
-First Git `build.bat` can bootstrap a missing EXE entirely inside Docker. The
+Git `build.bat` and `clean.bat` bootstrap the current native EXE entirely inside Docker, including when an older EXE exists. The
 native host then incrementally builds the runtime and the current host using an
 installation-scoped Buildx builder. A verified immutable host under
 `.aide-data/native/compiled` receives subsequent commands via a checksum-verified
@@ -132,3 +132,10 @@ Job/NTFS ACL behavior, Docker Desktop, folder dialogs, actual legacy migration,
 real A/B updates, ARM64 execution or macOS behavior. These require platform
 acceptance; no claim that every Windows computer is supported follows from a
 successful build.
+
+The root BAT shortcuts use `scripts/windows-entrypoint.bat` to display results and
+retain an Explorer-style CMD window until acknowledgement. Set
+`AIDE_LAUNCHER_NO_PAUSE=1` for unattended automation; exit codes are preserved.
+Retired PowerShell is archived under `scripts/fixtures/legacy-windows/` for tests
+only and is excluded from runtime packages. The Windows SDK test now executes
+the actual BAT shortcuts, not only direct EXE dry runs (Issue #646).
