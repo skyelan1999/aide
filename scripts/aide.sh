@@ -10,7 +10,7 @@ source_sha() {
     find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
+    for extra in scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/latest-release-runtime.py scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -70,7 +70,8 @@ if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; 
   aide_check_disk start
   source scripts/launcher-data.sh
   launcher_env_restore
-  if [[ "$MODE" == start && -f .aide-image ]]; then MODE=start-bundle; fi
+  source scripts/prebuilt-image.sh
+  MODE="$(launcher_start_mode "$MODE" "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR")"
 fi
 DOCKER_BIN="$(command -v docker || true)"
 if [[ -z "$DOCKER_BIN" && -x "$HOME/.docker/bin/docker" ]]; then DOCKER_BIN="$HOME/.docker/bin/docker"; fi
@@ -101,7 +102,11 @@ fi
 
 if [[ -f .aide-image ]]; then
   read -r BUNDLE_IMAGE BUNDLE_ID BUNDLE_PLATFORM BUNDLE_RELEASE_TAG < .aide-image
-  export AIDE_IMAGE="$BUNDLE_IMAGE" COMPOSE_FILE=compose.yaml
+  if [[ "$MODE" == start ]] && launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
+    export AIDE_IMAGE=aide:local
+  else
+    export AIDE_IMAGE="$BUNDLE_IMAGE" COMPOSE_FILE=compose.yaml
+  fi
 fi
 if [[ "$MODE" == start-bundle ]]; then
   [[ -f .aide-image ]] || { echo "当前目录不是离线包：缺少 .aide-image。" >&2; exit 1; }
@@ -269,7 +274,7 @@ case "$MODE" in
     source scripts/prebuilt-image.sh
     # Normal startup prefers a complete installed native runtime. Force/source
     # requests bypass this reuse so updating code does not require deleting it.
-    if [[ "$MODE" == start && "${AIDE_FORCE_REBUILD:-0}" != 1 && "${AIDE_BUILD_FROM_SOURCE:-auto}" != 1 ]]; then
+    if [[ "$MODE" == start && "${AIDE_FORCE_REBUILD:-0}" != 1 ]] && ! launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
       IMG="$("$DOCKER_BIN" compose config --images aide)"
       if launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
         echo "== 本地完整镜像可用，直接复用；更新源码请强制重编译 =="
@@ -356,7 +361,13 @@ case "$MODE" in
     fi
     launcher_env_save
     rm -f .cache/aide-manual-stop
-    "$DOCKER_BIN" compose up -d --no-build --pull never
+    if ! "$DOCKER_BIN" compose up -d --no-build --pull never; then
+      if [[ -n "${AIDE_STARTUP_PREVIOUS_IMAGE_ID:-}" ]]; then
+        echo "Release 启动命令失败，恢复原镜像。" >&2
+        "$DOCKER_BIN" image tag "$AIDE_STARTUP_PREVIOUS_IMAGE_ID" "$IMG" && "$DOCKER_BIN" compose up -d --no-build --pull never || echo "自动恢复启动失败；旧镜像仍保留为 $AIDE_STARTUP_PREVIOUS_IMAGE_ID。" >&2
+      fi
+      exit 1
+    fi
     fi
     bash scripts/local-mounts-control.sh start || echo "本地目录服务未启动，请检查 .aide-data/local-mounts/helper.log。"
     if command -v node >/dev/null 2>&1; then node scripts/codex-host-control.cjs start --root "$PROJECT_DIR" --image "$IMG" || echo "Codex host component unavailable; see launcher output."; else echo "Codex Bridge requires host Node.js 18+."; fi
@@ -370,7 +381,14 @@ case "$MODE" in
     if ! CONTAINER_HEALTH="$("$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz)"; then
       echo "AIDE 未就绪，下面是启动错误；浏览器尚未打开。" >&2
       "$DOCKER_BIN" compose logs --tail=30 aide >&2
+      if [[ -n "${AIDE_STARTUP_PREVIOUS_IMAGE_ID:-}" ]]; then
+        echo "最新 Release 健康检查失败，恢复原镜像并重建服务。" >&2
+        "$DOCKER_BIN" image tag "$AIDE_STARTUP_PREVIOUS_IMAGE_ID" "$IMG" && "$DOCKER_BIN" compose up -d --no-build --pull never || echo "自动恢复启动失败；旧镜像仍保留为 $AIDE_STARTUP_PREVIOUS_IMAGE_ID。" >&2
+      fi
       exit 1
+    fi
+    if [[ -n "${AIDE_STARTUP_RELEASE_TAG:-}" ]]; then
+      python3 scripts/latest-release-runtime.py commit --tag "$AIDE_STARTUP_RELEASE_TAG" --image-id "$AIDE_STARTUP_RELEASE_IMAGE_ID" --state .agent-state/startup/active-release.json --cache .cache/aide/releases || echo "Release 已通过容器健康检查，但版本标记写入失败；下次启动将重新核对。" >&2
     fi
     ADDRESS="$("$DOCKER_BIN" compose port aide 8080)" || {
       echo 'AIDE 容器健康，但无法查询宿主端口；浏览器尚未打开。请检查 Compose 端口与网络配置。' >&2

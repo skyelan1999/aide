@@ -216,7 +216,8 @@ public:
   for(auto relative:{L".env",L".aide-image",L".aide-data/launcher.env",L".aide-data/image",L".aide-data/compose-project",L".aide-data/storage"})realPath(root/relative);
   if(!fs::exists(root/L".env")&&fs::exists(root/L".aide-data/launcher.env"))write(root/L".env",read(root/L".aide-data/launcher.env"));
   if(!fs::exists(root/L".aide-image")&&fs::exists(root/L".aide-data/image"))write(root/L".aide-image",read(root/L".aide-data/image"));
-  settings=dotenv(root/L".env");offline=fs::exists(root/L".aide-image");
+  settings=dotenv(root/L".env");bool sourceCheckout=fs::exists(root/L"Dockerfile")&&fs::exists(root/L"go.mod")&&env(L"AIDE_BUILD_FROM_SOURCE")!=L"0";offline=fs::exists(root/L".aide-image")&&!sourceCheckout;
+  if(sourceCheckout&&fs::exists(root/L".aide-image"))setenvw(L"AIDE_IMAGE",L"aide:local");
   if(offline){std::istringstream marker(read(root/L".aide-image"));std::string ref;marker>>ref;if(!ref.empty())setenvw(L"AIDE_IMAGE",wide(ref));}
   else if(configured("AIDE_IMAGE").empty())setenvw(L"AIDE_IMAGE",L"aide:local");
   if(!fs::exists(root/L"compose.yaml"))write(root/L"compose.yaml",embedded_compose);
@@ -275,9 +276,9 @@ public:
  }
  void save(){if(fs::exists(root/L".env"))write(root/L".aide-data/launcher.env",read(root/L".env"));if(fs::exists(root/L".aide-image"))write(root/L".aide-data/image",read(root/L".aide-image"));}
  void rollbackTag(const std::string& target,const std::string& next){auto old=inspect(target);if(!old.is_null()&&old.value("Id","")!=next)required(d({L"image",L"tag",wide(old.value("Id","")),wide("aide:rollback-native-"+std::to_string(GetTickCount64()))}),"Cannot retain rollback image");}
- void loadVerified(const fs::path& archive,const std::string& expected,const std::string& osarch){
+ std::string loadVerified(const fs::path& archive,const std::string& expected,const std::string& osarch){
   auto loaded=d({L"image",L"load",L"-i",archive.wstring()},900000);required(loaded,"Docker image import failed");
-  auto m=inspect(expected);if(m.is_null()||m.value("Id","")!=expected||m.value("Os","")+"/"+m.value("Architecture","")!=osarch)throw std::runtime_error("Imported image ID/platform mismatch; activation refused");
+  auto m=inspect(expected);if(m.is_null())m=inspect(aide_image::receipt(loaded.out));if(!runtime(m,osarch))throw std::runtime_error("Imported image runtime/platform mismatch; activation refused");return m.value("Id","");
  }
  // Shared native downloader for pinned snapshots and tagged thin packages.
  void downloadFile(const fs::path& destination,const std::string& url,const std::string& expected,uint64_t budget){
@@ -310,13 +311,28 @@ public:
      downloadFile(metadata,"https://github.com/skyelan1999/aide/releases/download/"+tag+"/SHA256SUMS","",1048576);expected=aide_host::checksum(read(metadata,1048576),name);
     }
     if(!fs::exists(archive)){if(tag.empty())throw std::runtime_error("Matching offline image archive is missing");say("Downloading the tagged Release image with native HTTPS...");downloadFile(archive,"https://github.com/skyelan1999/aide/releases/download/"+tag+"/"+name,expected,uint64_t(64)<<30);}
-    if(sha256(archive)!=expected)throw std::runtime_error("Offline image SHA256 mismatch");loadVerified(archive,id,platform);
+    if(sha256(archive)!=expected)throw std::runtime_error("Offline image SHA256 mismatch");id=loadVerified(archive,id,platform);
    }
    rollbackTag(ref,id);required(d({L"image",L"tag",wide(id),wide(ref)}),"Cannot activate offline image");
   }
   if(!runtime(inspect(id),platform))throw std::runtime_error("Offline runtime/platform/source labels are invalid");image=id;setenvw(L"AIDE_IMAGE",wide(image));
  }
- void releaseImage(){
+ void releaseImage(const std::string& seed=""){
+  auto extraction=inspect(seed.empty()?image:seed);if(image.rfind("sha256:",0)==0)image="aide:local";
+  if(!extraction.is_null()&&runtime(extraction,platform)){
+   auto response=aide_http::request("https://api.github.com/repos/skyelan1999/aide/releases?per_page=100","GET","","",{},8*1024*1024);
+   if(response.status!=200)throw std::runtime_error("Cannot check official Release metadata; existing runtime retained");
+   auto releases=parseJson(response.body);json selected;std::string published,tag,url,hash;
+   for(auto& r:releases){if(r.value("draft",false)||!r.contains("published_at")||!r["published_at"].is_string())continue;auto t=r.value("tag_name","");if(!std::regex_match(t,std::regex("v[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(?:-RC[0-9]+)?")))continue;
+    for(auto& a:r["assets"])if(a.value("name","")=="aide-"+t+"-full-linux-"+platform.substr(6)+".zip"&&r["published_at"].get<std::string>()>published){selected=a;tag=t;published=r["published_at"].get<std::string>();}}
+   if(selected.is_null())throw std::runtime_error("No matching official full Release package");url=selected.value("browser_download_url","");hash=selected.value("digest","");
+   if(url!="https://github.com/skyelan1999/aide/releases/download/"+tag+"/aide-"+tag+"-full-linux-"+platform.substr(6)+".zip"||hash.rfind("sha256:",0)!=0||!digest(hash.substr(7)))throw std::runtime_error("Invalid official Release digest or URL");
+   auto receipt=stateRoot/L"latest-release.json";if(fs::exists(receipt)){auto saved=parseJson(read(receipt));auto cached=inspect(saved.value("imageId",""));if(saved.value("tag","")==tag&&saved.value("digest","")==hash&&runtime(cached,platform)){image=cached.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));say("Using cached verified latest Release: "+tag);return;}}
+   auto stage=stateRoot/(L"latest-release-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64()));fs::create_directory(stage);struct Cleanup{fs::path p;~Cleanup(){std::error_code e;fs::remove_all(p,e);}}cleanup{stage};
+   auto zip=stage/L"package.zip",archive=stage/L"image.tar.gz";say("Downloading latest verified full Release: "+tag);downloadFile(zip,url,hash.substr(7),uint64_t(2)<<30);
+   auto extracted=ownedRun({L"run",L"--rm",L"--pull",L"never",L"--network",L"none",L"--user",L"0:0",L"--memory",L"256m",L"--cpus",L"1",L"-v",stage.wstring()+L":/stage",L"--entrypoint",L"python3",wide(extraction.value("Id","")),L"-c",wide(embedded_host_data),L"extract-full",L"/stage/package.zip",L"/stage/image.tar.gz",wide(tag),wide(platform)},1200000);required(extracted,"Full Release package verification failed");
+   auto metadata=parseJson(extracted.out);auto canonical=loadVerified(archive,metadata.value("imageId",""),platform);rollbackTag(image,canonical);required(d({L"image",L"tag",wide(canonical),wide(image)}),"Cannot activate latest Release");write(receipt,json{{"tag",tag},{"digest",hash},{"imageId",canonical}}.dump());image=canonical;setenvw(L"AIDE_IMAGE",wide(image));return;
+  }
   auto manifest=root/L"docker/prebuilt-images.tsv";
   std::istringstream lines(fs::exists(manifest)?read(manifest):std::string(embedded_prebuilt_manifest));std::string line,id,src,hash,url,kind;int count=0;
   while(std::getline(lines,line)){std::istringstream row(line);std::string p;row>>p;if(p==platform){std::string extra;row>>id>>src>>hash>>url>>kind;if(row>>extra)throw std::runtime_error("Invalid Release manifest");count++;}}
@@ -342,17 +358,18 @@ public:
  void selectImage(){
   if(offline){offlineImage();return;}
   auto c=config();image=c["services"]["aide"].value("image","");if(image.empty())throw std::runtime_error("Compose has no application image");
-  bool source=fs::exists(root/L"Dockerfile")&&(force||env(L"AIDE_BUILD_FROM_SOURCE")==L"1"||env(L"AIDE_FORCE_REBUILD")==L"1");std::string expectedSource;
+  bool source=fs::exists(root/L"Dockerfile")&&fs::exists(root/L"go.mod")&&env(L"AIDE_BUILD_FROM_SOURCE")!=L"0";std::string expectedSource;
   if(source){auto fingerprint=stateRoot/L"source-input.txt";std::string hashes;for(const auto& name:aide_source::inputs(root,parseJson(embedded_source_manifest)))hashes+=sha256(root/fs::u8path(name))+"  "+name+"\n";write(fingerprint,hashes);expectedSource=sha256(fingerprint);}
-  auto m=inspect(image);bool build=force||env(L"AIDE_BUILD_FROM_SOURCE")==L"1"||env(L"AIDE_FORCE_REBUILD")==L"1";
+  auto m=inspect(image);if(m.is_null()&&source&&fs::exists(root/L".aide-image")){std::istringstream marker(read(root/L".aide-image"));std::string previous;marker>>previous;m=inspect(previous);}bool build=force||env(L"AIDE_BUILD_FROM_SOURCE")==L"1"||env(L"AIDE_FORCE_REBUILD")==L"1";
   if(!build&&!m.is_null()&&runtime(m,platform)&&(!source||label(m,"aide.srcsha")==expectedSource)){say("Using validated immutable local runtime.");image=m.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}
   if(source){
+   std::smatch versionMatch;auto versionText=read(root/L"version.md");if(!std::regex_search(versionText,versionMatch,std::regex("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+ RC[0-9]+")))throw std::runtime_error("Source version.md has no valid version");setenvw(L"AIDE_VERSION",wide(versionMatch[0].str()));
    auto seed=inspect("aide:dependencies-v2");if(!seed.is_null()&&label(seed,"aide.local-base")=="v2"){setenvw(L"AIDE_DOCKERFILE",L"Dockerfile.local");setenvw(L"AIDE_BUILD_NETWORK",L"none");}
    setenvw(L"AIDE_SRC_SHA",wide(expectedSource));if(image.rfind("sha256:",0)==0){image="aide:local";setenvw(L"AIDE_IMAGE",wide(image));}
-   disk(true);say("Building source runtime locally...");auto result=compose({L"build",L"aide"},3600000);if(!result.code){auto built=inspect(image);if(!runtime(built,platform)||label(built,"aide.srcsha")!=expectedSource)throw std::runtime_error("Built runtime identity/source fingerprint did not verify");image=built.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}
+   bool space=true;try{disk(true);}catch(const std::exception&){if(env(L"AIDE_RELEASE_FALLBACK")==L"0")throw;space=false;say("Insufficient source build space; checking latest verified Release.");}if(space){say("Building source runtime locally...");auto result=compose({L"build",L"aide"},3600000);if(!result.code){auto built=inspect(image);if(!runtime(built,platform)||label(built,"aide.srcsha")!=expectedSource)throw std::runtime_error("Built runtime identity/source fingerprint did not verify");image=built.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}}
    if(env(L"AIDE_RELEASE_FALLBACK")==L"0")throw std::runtime_error("Source build failed; Release fallback disabled");say("Source build failed; checking verified Release fallback.");
   }
-  releaseImage();setenvw(L"AIDE_IMAGE",wide(image));
+  releaseImage(m.is_null()?"":m.value("Id",""));setenvw(L"AIDE_IMAGE",wide(image));
  }
  int mappedPort(){auto r=compose({L"port",L"aide",L"8080"});std::smatch m;auto s=trim(r.out);return !r.code&&std::regex_search(s,m,std::regex(":([0-9]+)$"))?std::stoi(m[1]):0;}
  std::string container(){auto r=compose({L"ps",L"--status",L"running",L"-q",L"aide"});return r.code?"":trim(r.out);}

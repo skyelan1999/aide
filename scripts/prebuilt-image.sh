@@ -13,11 +13,11 @@ launcher_running_ready() {
 # Reuse only a complete, platform-matching runtime already installed locally.
 # This is startup, not an implicit software update or a source-build fallback.
 launcher_local_runtime_ready() {
-  local docker_bin="$1" target="$2" platform metadata image actual src cad extra
+  local docker_bin="$1" target="$2" platform metadata image actual src cad profile extra
   platform="$("$docker_bin" info --format '{{.OSType}}/{{.Architecture}}' | sed 's|/aarch64$|/arm64|;s|/x86_64$|/amd64|')" || return 1
-  metadata="$("$docker_bin" image inspect "$target" --format '{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}|{{index .Config.Labels "aide.cad-runtime"}}' 2>/dev/null)" || return 1
-  IFS='|' read -r image actual src cad extra <<< "$metadata"
-  [[ "$image" =~ ^sha256:[a-f0-9]{64}$ && "$actual" == "$platform" && "$src" =~ ^[a-f0-9]{64}$ && "$cad" == 8.0.1.1.0 && -z "$extra" ]]
+  metadata="$("$docker_bin" image inspect "$target" --format '{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}|{{index .Config.Labels "aide.cad-runtime"}}|{{index .Config.Labels "aide.runtime-profile"}}' 2>/dev/null)" || return 1
+  IFS='|' read -r image actual src cad profile extra <<< "$metadata"
+  [[ "$image" =~ ^sha256:[a-f0-9]{64}$ && "$actual" == "$platform" && "$src" =~ ^[a-f0-9]{64}$ && -z "$extra" && ( "$cad" == 8.0.1.1.0 || ( "$profile" == slim && ( -z "$cad" || "$cad" == '<no value>' ) ) ) ]]
 }
 
 # Git checkouts are development installations; bundles keep installed-image mode.
@@ -28,6 +28,14 @@ launcher_should_build_source() {
     auto) [[ -d "$2/.git" || -f "$2/.git" || ( -f "$2/go.mod" && -d "$2/cmd" ) ]] ;;
     *) return 1 ;;
   esac
+}
+
+launcher_start_mode() {
+  if [[ "$1" == start && -f "$3/.aide-image" ]] && ! launcher_should_build_source "$2" "$3"; then
+    printf '%s\n' start-bundle
+  else
+    printf '%s\n' "$1"
+  fi
 }
 
 launcher_prebuilt_image() {
@@ -94,11 +102,19 @@ launcher_local_build_seed() {
 # Build first, then recover a verified published runtime. A corrupt local
 # archive or incompatible Release remains fatal inside the existing importer.
 launcher_build_or_release() {
-  local docker_bin="$1" target="$2" build_status
+  local docker_bin="$1" target="$2" build_status platform result
   shift 2
   if "$@"; then return 0; else build_status=$?; fi
   if [[ "${AIDE_RELEASE_FALLBACK:-1}" != 1 ]]; then return "$build_status"; fi
-  echo "本地编译失败（退出码 ${build_status}）；尝试已校验的官方 Release 镜像。" >&2
-  launcher_prebuilt_image "$docker_bin" "$target" || return $?
-  echo "已回退到 Release 镜像；运行版本以镜像实际版本为准。" >&2
+  echo "本地编译失败（退出码 ${build_status}）；检查官方最新 Release 镜像。" >&2
+  platform="$("$docker_bin" info --format '{{.OSType}}/{{.Architecture}}' | sed 's|/aarch64$|/arm64|;s|/x86_64$|/amd64|')" || return $?
+  result="$(python3 scripts/latest-release-runtime.py prepare --docker "$docker_bin" --platform "$platform" --target "$target" --cache .cache/aide/releases --state .agent-state/startup/active-release.json)" || {
+    echo "无法安全获取并校验最新 Release；保留现有镜像，不回退到过期镜像清单。" >&2; return 1;
+  }
+  IFS='|' read -r AIDE_STARTUP_RELEASE_TAG AIDE_STARTUP_RELEASE_IMAGE_ID AIDE_STARTUP_PREVIOUS_IMAGE_ID AIDE_STARTUP_RELEASE_ACTION <<< "$result"
+  [[ "$AIDE_STARTUP_RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(-RC[0-9]+)?$ && "$AIDE_STARTUP_RELEASE_IMAGE_ID" =~ ^sha256:[0-9a-f]{64}$ && ( -z "$AIDE_STARTUP_PREVIOUS_IMAGE_ID" || "$AIDE_STARTUP_PREVIOUS_IMAGE_ID" =~ ^sha256:[0-9a-f]{64}$ ) ]] || {
+    echo "最新 Release 导入回执无效；停止启动。" >&2; return 1;
+  }
+  export AIDE_STARTUP_RELEASE_TAG AIDE_STARTUP_RELEASE_IMAGE_ID AIDE_STARTUP_PREVIOUS_IMAGE_ID AIDE_STARTUP_RELEASE_ACTION
+  echo "已校验官方 Release ${AIDE_STARTUP_RELEASE_TAG}（${platform}）；启动后完成健康检查再确认。" >&2
 }

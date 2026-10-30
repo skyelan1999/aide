@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise the exact Python helper embedded in the native exe (Linux container role)."""
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import stat
@@ -38,6 +39,28 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(helper.extract(self.zip, self.output, NAME), {'bytes': 11})
         self.assertEqual(self.output.read_bytes(), b'fixed image')
         self.assertEqual(set(p.name for p in self.root.iterdir()), {'package.zip', 'image.tar.gz'})
+
+    def test_full_release_uses_verified_nested_image(self):
+        prefix = 'aide-package/docker-images/'
+        manifest = {'format':'aide-update-package', 'version':1, 'releaseTag':'v0.1.17.5-RC12',
+                    'platform':'linux/amd64', 'imageArchive':NAME, 'imageId':'sha256:'+'a'*64}
+        payload = b'owned image'
+        self.package([(prefix+'manifest.json', json.dumps(manifest)),
+                      (prefix+'SHA256SUMS', hashlib.sha256(payload).hexdigest()+'  '+NAME+'\n'),
+                      (prefix+NAME, payload), ('../../outside', b'ignored')])
+        self.assertEqual(helper.extract_full(self.zip, self.output, manifest['releaseTag'], 'linux/amd64'), manifest)
+        self.assertEqual(self.output.read_bytes(), payload)
+        self.output.unlink()
+        with self.assertRaisesRegex(ValueError, 'identity mismatch'):
+            helper.extract_full(self.zip, self.output, manifest['releaseTag'], 'linux/arm64')
+        self.assertFalse(self.output.exists())
+
+    def test_full_release_rejects_wrong_image_digest(self):
+        prefix='aide/docker-images/'
+        manifest={'format':'aide-update-package','version':1,'releaseTag':'v0.1.17.5-RC12','platform':'linux/amd64','imageArchive':NAME,'imageId':'sha256:'+'a'*64}
+        self.package([(prefix+'manifest.json',json.dumps(manifest)),(prefix+'SHA256SUMS','0'*64+'  '+NAME),(prefix+NAME,b'corrupt')])
+        with self.assertRaisesRegex(ValueError,'checksum mismatch'):
+            helper.extract_full(self.zip,self.output,manifest['releaseTag'],'linux/amd64')
 
     def test_missing_or_duplicate_member(self):
         for entries in [[], [(NAME, b'a'), (NAME, b'b')]]:
