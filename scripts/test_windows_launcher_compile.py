@@ -33,6 +33,20 @@ def main():
             'if errorlevel 1 exit /b 1\ncl /nologo /std:c++17 /EHsc /I"' + str(folder) + '" "' + str(ROOT / 'native/windows-launcher/main.cpp') + '" "' + str(ROOT / 'native/windows-launcher/third_party/miniz/miniz_tinfl.c') + '" /Fe:launcher-test.exe /link advapi32.lib bcrypt.lib ws2_32.lib shell32.lib ole32.lib uuid.lib winhttp.lib user32.lib\n'
             'if errorlevel 1 exit /b 1\nlauncher-test.exe --self-test\n')
         subprocess.run(['cmd.exe', '/d', '/c', str(command)], check=True, cwd=folder)
+        binary = folder / 'launcher-test.exe'
+        for source in (False, True):
+            root = folder / ('source fixture' if source else 'release fixture')
+            root.mkdir()
+            if source:
+                (root / '.git').mkdir()
+            for action in ('start', 'stop', 'build', 'clean', 'docker_clean', 'release'):
+                result = subprocess.run([str(binary), action, '--root', str(root), '--dry-run'],
+                    cwd=folder, input='', capture_output=True, text=True, timeout=15)
+                allowed = source or action in ('start', 'stop', 'docker_clean')
+                assert (result.returncode == 0) == allowed, (source, action, result.stdout, result.stderr)
+                assert not (root / '.aide-data').exists(), 'dry run mutated launcher state'
+                if allowed:
+                    assert 'Dry run:' in result.stdout
     print('PASS real Win32 launcher compile/link and native self-test; fixture executable removed')
 
 

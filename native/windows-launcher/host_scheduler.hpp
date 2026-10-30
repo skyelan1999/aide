@@ -47,7 +47,7 @@ inline int nativeWorkerLoop(Launcher& app,const std::string& role,const std::str
      catch(const aide_host::Unsafe&){throw;}
      catch(...){if(existed)write(file,previous);else fs::remove(file);if(processPort.empty())SetEnvironmentVariableW(L"AIDE_PORT",nullptr);else setenvw(L"AIDE_PORT",processPort);if(!nativeStopping()){app.required(app.compose({L"up",L"-d",L"--no-build",L"--pull",L"never"},300000),"Native previous port could not recover");app.waitHealthy();app.helpers();}throw;}
     }}
-   }else if(role=="update"&&(fs::exists(app.root/L".aide-image")||!fs::exists(app.root/L"Dockerfile"))){
+   }else if(role=="update"&&!app.sourcePackage()){
     NativeUpdateHost host(app);if(!host.legacyResult()){nativeTaskStatus(role,"waiting","Retrying the durable previous update result");continue;}
     if(!seeded&&host.load().is_null()){if(!host.seed()){nativeTaskStatus(role,"not-applicable","Source runtime does not support application A/B updates");continue;}seeded=true;}
     aide_host::Supervisor<NativeUpdateHost>(host).tick();auto transaction=host.load();if(transaction.is_object()&&transaction.value("phase","")=="blocked"){write(stateRoot/L"host-stop-required",transaction.value("reason","Native update needs inspection"));nativeTaskStatus(role,"blocked",transaction.value("reason","Native update needs inspection"));continue;}

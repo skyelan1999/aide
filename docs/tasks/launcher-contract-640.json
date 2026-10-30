@@ -1,0 +1,95 @@
+{
+  "id": "launcher-contract-640",
+  "request": "我写了一个方案，请针对 issue640 的提案进行整改：标准 aide 启动器流程规范",
+  "baseline": "5446e616f04ea776bccfcb7b8c506758c8164be4",
+  "initial_status": "",
+  "acceptance": [
+    "Source and Release start never compile, including when legacy build environment variables are set; repeat healthy start opens existing workbench.",
+    "Source build is explicit and incremental, orchestrates runtime/host compilation and starts only the successfully built source image; failure never substitutes a Release.",
+    "Source clean clears build outputs/cache then builds; docker_clean removes only this installation runtime resources while preserving persistent user data.",
+    "Both packages provide stop and verify; stop cancels tasks, stops hosted daemons/owned helpers and removes sensitive active-page content.",
+    "Source packages expose release with existing version/tag/notes and trusted delivery workflow; source app upgrade is disabled; Release A/B remains supported.",
+    "All standard Windows interfaces execute the native C++ host and ship generated EXEs, with no PowerShell fallback.",
+    "Run focused lifecycle, real browser privacy, portable native and cross-compilation checks; keep native Windows acceptance distinct."
+  ],
+  "scope": [
+    "Root platform launcher wrappers",
+    "scripts/aide.sh, maintenance, build, diagnostics, packaging and focused tests",
+    "native/windows-launcher and existing compiler driver",
+    "Application shutdown privacy signal and runtime package capability",
+    "Current launcher/installation/update documentation and task evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Issue #640 author proposal is the requested product contract; authenticated operator skyelan1999. Source/Release differences, command scope and acceptance are recorded.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/640"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Explicit source build uses installation-scoped buildx cache and source image; start only reopens/starts existing runtime. Windows compiles current native host inside Docker and selects an immutable checksum-verified executable. Stop prioritizes a terminal SSE privacy event, cancels work and stops hosted daemons before joining callers. Source package identity overrides Release-image A/B capability.",
+      "evidence": [
+        "scripts/launcher.py",
+        "native/windows-launcher/lifecycle_commands.hpp",
+        "internal/server/global_events.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented explicit source/Release command contracts, scoped build/cleanup, native Windows bootstrap/rebuild, source upgrade capability boundary and graceful stop privacy signal. Build applies the new verified image rather than reopening an old healthy image.",
+      "evidence": [
+        "scripts/launcher.py",
+        "native/windows-launcher/lifecycle_commands.hpp",
+        "scripts/test_launcher_contract.py",
+        "internal/server/runtime_shutdown_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused tests passed; final current-main integration and remote required checks pending. Real browser blocked by Work settings; real Windows Docker Desktop not available.",
+      "evidence": [
+        "20 source/build/cleanup/release/actual ZIP assembly regressions pass",
+        "20 focused Go race tests and server vet pass in aide:ci-fulltest, no-network disposable source snapshot",
+        "35 production native core checks and 38 portable checks pass",
+        "Windows AMD64 and ARM64 cross-compilation and system-only PE imports pass; not Win32 execution",
+        "311 quick checks pass on original baseline before synchronizing newer main",
+        "Browser NOT_RUN: Local browser use is disabled in Work settings"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated current installation, maintenance, source update and Windows build guidance; canonical command matrix describes package identity, scoped resource ownership, privacy limits and existing release gates.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md",
+        "docs/docker-maintenance.md",
+        "docs/en/installation.md",
+        "native/windows-launcher/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Not deployed. Revert the integration commit to restore former launcher behavior; preserve .env, .aide-data, offline archives and ownership receipts. Source build selects only an installation-scoped image after validation.",
+  "handoff": "Feature branch targeting main. No tag, public Release or production deployment. Issue stays open pending real Windows Docker Desktop and browser privacy acceptance.",
+  "issue": 640,
+  "operator": "skyelan1999",
+  "proposal_url": "https://github.com/skyelan1999/aide/issues/640",
+  "safety": {
+    "original_checkout": "feat/codex-plugin-host-615 at 1d01dc56; pre-existing M start.command preserved",
+    "installed_9999": "No stop, cleanup, build replacement or deployment against this installation",
+    "cleanup_acceptance": "Only disposable synthetic owned fixtures/containers; no system/volume prune or unrelated workloads",
+    "release_authority": "Implement release entry only; do not invoke tag/publication/deployment",
+    "delivery": "Feature branch and PR targeting main; no protected-main bypass"
+  }
+}

@@ -19,3 +19,7 @@ macOS 双击 `start.command`；Windows 双击 `start.bat`；Ubuntu 执行 `bash 
 停止应用：macOS 双击 `stop.command`，Windows 双击 `stop.bat`，Linux 执行 `bash stop.sh`；也可运行 `bash scripts/aide.sh stop`。停止脚本按当前启动目录定位并停止工作台及 CAD 服务。`clean-docker-cache` 入口仅清理当前引擎默认构建器的未使用构建缓存，不删除镜像、数据目录或工作区。
 
 `BUILD.txt` 记录版本、镜像 ID、平台、构建输入指纹及 CAD 运行时版本；`docker-images/SHA256SUMS` 校验包内镜像，外层归档摘要随交付提供。此包是已验收的构建快照；是否创建正式版本、标签或 GitHub Release，以仓库发布记录为准。
+
+## 标准启动器入口（#640）
+
+新 Release 完整包仅提供各平台的 start、stop、docker_clean、verify 与生成的 Windows 原生 EXE。start 校验/导入镜像，不编译；docker_clean 保留归档与用户数据，便于下次重新导入。build、clean、release 仅在源码包提供。源码更新使用 git pull 后执行 build，不再由 start 隐式编译。参见[标准启动器规范](../docs/architecture/launcher-contract.md)。

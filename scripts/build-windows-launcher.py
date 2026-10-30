@@ -9,6 +9,8 @@ import argparse
 import hashlib
 import json
 import os
+import platform
+import sys
 import re
 import shlex
 import shutil
@@ -25,7 +27,7 @@ COMPILERS = {
 JSON_SHA256 = 'aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63'
 
 
-def host_helpers(build, arch, go):
+def host_helpers(build, arch, go, assembly_root="/build"):
     """Build current host components into the single distributed PE, not the image's old helpers."""
     if not go:
         raise SystemExit('An existing Go 1.26+ compiler is required to embed the native host components')
@@ -54,7 +56,7 @@ def host_helpers(build, arch, go):
     assembly = '.section .rdata,"dr"\n'
     for role, (name, _) in output.items():
         assembly += ('.balign 16\n.globl aide_' + role + '_begin\naide_' + role + '_begin:\n'
-                     '.incbin "/build/' + name + '"\n.globl aide_' + role + '_end\naide_' + role + '_end:\n')
+                     '.incbin "' + assembly_root + '/' + name + '"\n.globl aide_' + role + '_end\naide_' + role + '_end:\n')
     # The compiler does not track .incbin dependencies. A content-addressed
     # source/object path prevents reuse of an older embedded PE from its cache.
     payload_key = hashlib.sha256(''.join(item[1] for item in output.values()).encode()).hexdigest()
@@ -84,16 +86,23 @@ def main():
     parser.add_argument('--arch', choices=('amd64', 'arm64'), default='amd64')
     parser.add_argument('--go', default=os.environ.get('AIDE_NATIVE_GO', shutil.which('go')),
                         help='Existing Go compiler used to embed the current host helpers')
+    parser.add_argument('--in-container', action='store_true', help='Compile directly inside the Docker native-launcher build stage')
+    parser.add_argument('--output', type=Path)
     args = parser.parse_args()
-    metadata = subprocess.check_output(['docker', 'image', 'inspect', args.image, '--format', '{{.Id}}|{{.Os}}/{{.Architecture}}'], text=True).strip().split('|')
-    if len(metadata) != 2 or not re.fullmatch(r'sha256:[a-f0-9]{64}', metadata[0]) or metadata[1] not in COMPILERS:
-        raise SystemExit('A local Linux amd64/arm64 build image with Python 3.12+ is required')
+    if args.in_container:
+        machine = {'x86_64': 'amd64', 'aarch64': 'arm64', 'arm64': 'arm64'}.get(platform.machine())
+        metadata = ['container-build-stage', 'linux/' + str(machine)]
+    else:
+        metadata = subprocess.check_output(['docker', 'image', 'inspect', args.image, '--format', '{{.Id}}|{{.Os}}/{{.Architecture}}'], text=True).strip().split('|')
+        if len(metadata) != 2 or not re.fullmatch(r'sha256:[a-f0-9]{64}', metadata[0]) or metadata[1] not in COMPILERS:
+            raise SystemExit('A local Linux amd64/arm64 build image with Python 3.12+ is required')
     identity = metadata[0]
     compiler_arch, compiler_hash = COMPILERS[metadata[1]]
     archive_name = f'zig-{compiler_arch}-linux-{VERSION}.tar.xz'
     build = ROOT / '.agent-state/native-toolchain'
     build.mkdir(parents=True, exist_ok=True)
-    archive = build / (f'zig-linux-{VERSION}.tar.xz' if compiler_arch == 'x86_64' else archive_name)
+    archive = (Path('/toolchain') / archive_name) if args.in_container else build / (f'zig-linux-{VERSION}.tar.xz' if compiler_arch == 'x86_64' else archive_name)
+    archive.parent.mkdir(parents=True, exist_ok=True)
     if not archive.exists():
         partial = archive.with_suffix('.partial')
         urllib.request.urlretrieve(f'https://ziglang.org/download/{VERSION}/{archive_name}', partial)
@@ -115,7 +124,7 @@ def main():
         if hashlib.file_digest(path.open('rb'), 'sha256').hexdigest() != expected:
             raise SystemExit('Pinned miniz 3.1.0 source SHA256 mismatch: ' + name)
     embedded = '#pragma once\n'
-    helpers, helper_licenses, helpers_source = host_helpers(build, args.arch, args.go)
+    helpers, helper_licenses, helpers_source = host_helpers(build, args.arch, args.go, str(build) if args.in_container else "/build")
     for name, path in [('compose', ROOT / 'docker/compose.offline.yaml'),
                        ('data', ROOT / 'scripts/launcher-data.py'),
                        ('host_data', ROOT / 'native/windows-launcher/package_image.py'),
@@ -152,15 +161,19 @@ subprocess.run([str(compiler),'c++','-std=c++17','-O2','-target',TARGET,
     '-municode','-static','-I/build','-ladvapi32','-lbcrypt','-lws2_32','-lshell32','-lole32','-luuid','-lwinhttp',
     '/src/native/windows-launcher/main.cpp',object_file,helpers_object,'-o',OUTPUT],check=True)
 '''.replace('COMPILER', repr(compiler)).replace('ARCHIVE_PATH', repr('/build/' + archive.name)).replace('READY_FILE', repr('/toolchain/extracted-' + compiler_arch + '-' + VERSION)).replace('TARGET', repr('x86_64-windows-gnu' if args.arch == 'amd64' else 'aarch64-windows-gnu')).replace('HELPERS_SOURCE', repr('/build/' + helpers_source.name)).replace('HELPERS_OBJECT', repr('/build/' + helpers_source.stem + '.o'))
-    output = '/src/aide-launcher.exe' if args.arch == 'amd64' else '/src/bin/aide-launcher-arm64.exe'
-    (ROOT / 'bin').mkdir(exist_ok=True)
+    destination = args.output or ROOT / ('aide-launcher.exe' if args.arch == 'amd64' else 'bin/aide-launcher-arm64.exe')
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    output = str(destination) if args.in_container else ('/src/aide-launcher.exe' if args.arch == 'amd64' else '/src/bin/aide-launcher-arm64.exe')
     container_code = container_code.replace('OUTPUT', repr(output))
-    subprocess.run(['docker', 'run', '--rm', '--pull', 'never', '--network', 'none',
-                    '--memory', '4g', '--cpus', '4', '--user', '0:0', '--no-healthcheck',
-                    '-v', f'{ROOT}:/src', '-v', f'{build}:/build',
-                    '--mount', 'type=volume,source=aide-native-launcher-toolchain-v0152,target=/toolchain',
-                    '--entrypoint', 'python3', identity, '-c', container_code], check=True)
-    destination = ROOT / ('aide-launcher.exe' if args.arch == 'amd64' else 'bin/aide-launcher-arm64.exe')
+    if args.in_container:
+        container_code = container_code.replace('/build/' + archive.name, str(archive)).replace('/build/', str(build) + '/').replace("'-I/build'", repr('-I' + str(build)))
+        subprocess.run([sys.executable, '-c', container_code], check=True)
+    else:
+        subprocess.run(['docker', 'run', '--rm', '--pull', 'never', '--network', 'none',
+                        '--memory', '4g', '--cpus', '4', '--user', '0:0', '--no-healthcheck',
+                        '-v', f'{ROOT}:/src', '-v', f'{build}:/build',
+                        '--mount', 'type=volume,source=aide-native-launcher-toolchain-v0152,target=/toolchain',
+                        '--entrypoint', 'python3', identity, '-c', container_code], check=True)
     binary = destination.read_bytes()
     for role, (name, digest) in helpers.items():
         payload = (build / name).read_bytes()

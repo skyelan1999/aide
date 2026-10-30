@@ -193,11 +193,11 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 
 ## 普通设备快速启动与开发构建
 
-源码仓库和 Release 启动包都默认使用预构建完整镜像。源码目录的 start.command、start.sh 和 start.bat 按 docker/prebuilt-images.tsv 选择 Docker 引擎架构匹配的镜像；优先复用已导入镜像及本地归档，缺少时从该仓库的 Release 下载，校验 SHA256、镜像 ID、平台、源码指纹和原生 CAD 运行时后启动。不会因为清理 Docker 缓存或本地源码指纹变化而自动编译。已有私有 .env、.aide-data 和工作区继续保留。
+源码目录首次运行和 `git pull` 更新后，使用 `build.command` / `bash build.sh` / `build.bat`。它统一编排增量构建，验证当前源码镜像后自动启动；Windows 同时在 Docker 内编译当前 C++ 启动器。失败不会换用公开 Release。需要 Docker Compose、Buildx 与 Git；首次构建需要基础镜像、BuildKit 和依赖，不能把本机默认镜像缓存等同于专用构建器的离线缓存。
 
-开发者需要运行尚未发布的本地代码时，macOS/Linux 执行 `AIDE_BUILD_FROM_SOURCE=1 bash scripts/aide.sh start`；Windows 运行 `aide-launcher.exe --force-build`。`scripts/install.sh --source` 也会显式选择源码构建。预构建模式使用清单指定的发布快照，不执行未打包的本地改动。
+日常使用 `start.command` / `bash start.sh` / `start.bat`，只复用健康实例或启动已存在且通过校验的镜像。start 不编译，即使设置旧 `AIDE_BUILD_FROM_SOURCE=1` / `AIDE_FORCE_REBUILD=1` 也不编译。源码目录缺镜像会提示先 build，不下载 Release 来替代本地源码。
 
-完整 Release 包解压后启动时直接校验并导入包内镜像，后续复用本地镜像。缺少匹配架构的已发布镜像会明确停止并指出需要对应包，不会误用 ARM64 镜像启动 x64 引擎，也不会悄悄回退到编译。当前 ARM64 验收不代表 x64 或 Windows 实机通过。Windows 源码目录的官方回退导入使用 .NET GZip/tar 流读取固定的 `aide-offline/docker-images/aide-local.tar` 普通文件，不再执行 `tar.exe`，不提取其他归档路径；需预留内层镜像的磁盘空间，本次临时文件随后删除。外层归档 SHA-256 仍先校验，清单固定引用或本次成功导入的唯一回执用于定位，平台、源码指纹及旧版归档的 CAD 标签校验通过后，使用 Docker 返回的规范镜像 ID 激活。真实不匹配会指出具体字段并拒绝激活。保留压缩包供下次离线恢复。Windows 本地轻量核心镜像复用只要求有效平台和源码标签，独立 CAD 插件不再作为核心镜像复用的条件。
+Release 完整包保留 `start`、`stop`、`docker_clean`、`verify` 四组入口；首次 start 校验并导入包内匹配架构镜像，后续复用本地镜像。缺少匹配归档时明确报错；Windows 单 EXE/薄包保留经固定摘要校验的官方包恢复能力。均不回退源码编译。保留原 `.env`、`.aide-data`、工作区和离线归档。源码安装关闭 A/B 安装与切换；Release 安装保留在线 A/B 升级。详见[标准接口及清理边界](architecture/launcher-contract.md)。
 
 发布时须从已验证镜像执行 export-bundle（package-release-assets.sh 已接入），一同提交更新后的预构建清单与校验记录，并上传清单引用的完整包及 SHA256SUMS。仓库入口与 Release 解压入口都要实际验收，核对下载附件的大小、摘要和镜像身份；不能只推代码或薄启动器。保留旧附件作为回滚，不覆盖已发布的同名文件。
 

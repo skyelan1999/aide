@@ -32,6 +32,41 @@ func (a *App) broadcastSessionsChanged(sessionID string) {
 	}
 }
 
+// beginRuntimeShutdown prioritizes the terminal privacy event over queued
+// refreshes and waits a bounded time for event writers to flush it. New work is
+// rejected as soon as runtimeStopping becomes true.
+func (a *App) beginRuntimeShutdown() {
+	if !a.runtimeStopping.CompareAndSwap(false, true) {
+		return
+	}
+	a.eventMu.Lock()
+	for ch := range a.globalSubs {
+		select {
+		case ch <- "runtime-stopping:":
+		default:
+			select {
+			case <-ch:
+			default:
+			}
+			select {
+			case ch <- "runtime-stopping:":
+			default:
+			}
+		}
+	}
+	a.eventMu.Unlock()
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		a.eventMu.Lock()
+		remaining := len(a.globalSubs)
+		a.eventMu.Unlock()
+		if remaining == 0 {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 // globalEvents GET /api/events：全局事件 SSE。
 func (a *App) globalEvents(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
@@ -52,6 +87,16 @@ func (a *App) globalEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	a.globalSubs[ch] = struct{}{}
 	a.eventMu.Unlock()
+	if a.runtimeStopping.Load() {
+		fmt.Fprint(w, "event: runtime-stopping\ndata: {\"event\":\"runtime-stopping\"}\n\n")
+		flusher.Flush()
+		a.eventMu.Lock()
+		delete(a.globalSubs, ch)
+		a.eventMu.Unlock()
+		return
+	}
+	fmt.Fprint(w, ": connected\n\n")
+	flusher.Flush()
 	defer func() {
 		a.eventMu.Lock()
 		delete(a.globalSubs, ch)
@@ -74,12 +119,17 @@ func (a *App) globalEvents(w http.ResponseWriter, r *http.Request) {
 				sid = parts[1]
 			}
 			event := "sessions-changed"
-			if parts[0] == "approval" {
+			if parts[0] == "runtime-stopping" {
+				event = "runtime-stopping"
+			} else if parts[0] == "approval" {
 				event = "approval-policy-changed"
 			}
 			data, _ := json.Marshal(map[string]any{"event": event, "sessionId": sid})
 			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, data)
 			flusher.Flush()
+			if event == "runtime-stopping" {
+				return
+			}
 		}
 	}
 }

@@ -27,7 +27,7 @@ USER aide
 WORKDIR /src
 
 # ── build stage：编译 aide 二进制 ──────────────────────────────────────────────
-# 热路径优化（#43）：默认不再跑全量 go test。日常 start 走层缓存，只做 vet+build；
+# 热路径优化（#43）：默认不再跑全量 go test。显式 build 走层缓存，只做 vet+build；
 # 全量测试移到发布门禁——release/CI 必须 --build-arg AIDE_RUN_TESTS=1。
 FROM toolchain AS build
 WORKDIR /src
@@ -76,6 +76,17 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     -o /usr/local/bin/aide ./cmd/aide && \
     CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags "-s -w" -o /usr/local/bin/aide-message-relay ./cmd/aide-message-relay && \
     sh scripts/build-message-lan.sh /opt/aide-message-lan
+
+# Explicit Windows build/release target. It never runs during ordinary start or
+# enters the slim application image. Go, Python and the pinned C++ toolchain stay
+# inside the user's dedicated build environment.
+FROM toolchain AS native-launcher
+WORKDIR /src
+COPY . .
+ARG AIDE_LAUNCHER_ARCH=amd64
+RUN --mount=type=cache,target=/toolchain \
+    --mount=type=cache,target=/root/.cache/go-build \
+    python3 scripts/build-windows-launcher.py --in-container --arch "${AIDE_LAUNCHER_ARCH}" --output /out/aide-launcher.exe
 
 # ── runtime stage：运行时镜像 ──────────────────────────────────────────────────
 # 层缓存优化（#46）：把「稳定层」（系统用户 + pip 依赖）放在 COPY 业务二进制【之前】，

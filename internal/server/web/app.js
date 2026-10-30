@@ -781,6 +781,17 @@ function setupGlobalEvents() {
       scheduleSessionsRefresh();window.AideManagement?.refresh();
       try{const changed=JSON.parse(event.data);if(typeof changed.sessionId==='string'){window.AideTaskOutcome?.refreshSession(changed.sessionId);if(state.session?.kind==='assistant'&&changed.sessionId===state.session.id)void refreshAssistantResults();}}catch{}
     });
+    sessionsEv.addEventListener('runtime-stopping', () => {
+      window.AideRuntimeLifecycle?.shutdown(() => {
+        state.token = ''; state.session = null; state.file = null;
+        for (const dispose of [
+          () => localStorage.removeItem('aide-token'),
+          () => sessionsEv?.close(), () => state.stream?.close(), () => state.commandAbort?.abort(),
+          () => window.aideAssistantCall?.end(), () => window.aideAssistantLive?.stop(),
+          () => voiceHardStop(),
+        ]) { try { dispose(); } catch (_) {} }
+      });
+    });
     sessionsEv.addEventListener('approval-policy-changed', async () => {
       try { await refreshApprovalPolicy(); if(state.session) await selectSession(state.session.id); } catch (_) {}
     });
@@ -4764,8 +4775,8 @@ function renderSoftwareUpdates() {
     const result = await api('/updates/slots');
     const sourceMode = result.runtimeMode === 'source';
     modeNotice.hidden = !sourceMode;
-    modeNotice.textContent = sourceMode ? t('当前由源代码启动；源码更新无需应用内升级。通过 Git 更新代码并按开发流程重新启动。A/B 软件槽只适用于 Release 镜像。') : '';
-    intro.textContent = sourceMode ? t('此处可检查公开 Release。当前由源代码启动，更新时通过 Git 更新并重启即可。') : releaseIntro;
+    modeNotice.textContent = sourceMode ? t('当前由源代码启动；源码更新无需应用内升级。通过 git pull 更新代码，再运行 build 编译并启动。A/B 软件槽只适用于 Release 镜像。') : '';
+    intro.textContent = sourceMode ? t('此处可检查公开 Release。当前由源代码启动，更新时运行 git pull，再运行 build 编译并启动。') : releaseIntro;
     packageHint.textContent = sourceMode ? t('源码启动无需应用内升级；Release 完整发行包同时包含首次启动运行文件和 A/B 升级所需镜像。') : t('完整发行包同时包含各平台启动器与一个校验过的 Docker 镜像。可用同一 ZIP 首次启动，也可上传到非活动槽；宿主启动代理负责切换，数据卷共用。');
     slotsTitle.hidden = sourceMode;
     slots.hidden = sourceMode;

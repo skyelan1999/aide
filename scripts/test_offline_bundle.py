@@ -47,7 +47,8 @@ elif a[:2] == ['image','inspect']:
     if not (root/'image-id').exists(): sys.exit(1)
     local_id=(root/'image-id').read_text()
     if os.environ.get('PUBLISHER_ID_MISSING') == '1' and a[2] == os.environ['EXPECTED_ID'] and local_id != os.environ['EXPECTED_ID']: sys.exit(1)
-    if '|' in a[-1]: print(local_id+'|'+os.environ.get('LOADED_PLATFORM','linux/arm64'))
+    if 'aide.srcsha' in a[-1]: print(local_id+'|'+os.environ.get('LOADED_PLATFORM','linux/arm64')+'|'+'b'*64+'||slim')
+    elif '|' in a[-1]: print(local_id+'|'+os.environ.get('LOADED_PLATFORM','linux/arm64'))
     else: print(local_id)
 elif a[:2] == ['image','load']:
     (root/'image-id').write_text(os.environ.get('LOADED_ID',os.environ['EXPECTED_ID']))
@@ -100,6 +101,12 @@ sys.exit(int(os.environ.get('HOST_HEALTH_EXIT','0')))
     def calls(self):
         return (self.root / 'calls').read_text()
 
+    def assert_no_service_mutation(self):
+        import json
+        for command in map(json.loads, self.calls().splitlines()):
+            if command and command[0] == 'compose':
+                self.assertEqual(command[1], 'ps', 'Only a read-only running-instance query is allowed before archive admission')
+
     def test_first_start_loads_checked_image_without_building(self):
         result = self.run_start()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -125,7 +132,7 @@ sys.exit(int(os.environ.get('HOST_HEALTH_EXIT','0')))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('架构', result.stdout + result.stderr)
         self.assertNotIn('"load"', self.calls())
-        self.assertNotIn('"compose"', self.calls())
+        self.assert_no_service_mutation()
 
     def test_invalid_published_ports_never_report_ready_or_open(self):
         for address in ('', 'invalid IP:0', '127.0.0.1:0', '127.0.0.1:65536',
@@ -188,12 +195,12 @@ sys.exit(int(os.environ.get('HOST_HEALTH_EXIT','0')))
         (self.root / 'docker-images/aide-local.tar').write_bytes(b'corrupt')
         self.assertNotEqual(self.run_start().returncode, 0)
         self.assertNotIn('"load"', self.calls())
-        self.assertNotIn('"compose"', self.calls())
+        self.assert_no_service_mutation()
 
     def test_wrong_loaded_identity_never_starts(self):
         self.env['LOADED_ID'] = 'sha256:' + 'b' * 64
         self.assertNotEqual(self.run_start().returncode, 0)
-        self.assertNotIn('"compose"', self.calls())
+        self.assert_no_service_mutation()
 
     def test_cross_engine_id_resolves_only_current_import_reference(self):
         actual='sha256:'+'b'*64
@@ -211,7 +218,7 @@ sys.exit(int(os.environ.get('HOST_HEALTH_EXIT','0')))
                 self.env.update(PUBLISHER_ID_MISSING='1',LOADED_ID='sha256:'+'b'*64,LOAD_OUTPUT=output,LOADED_PLATFORM=platform)
                 result=self.run_start()
                 self.assertNotEqual(result.returncode,0)
-                self.assertNotIn('"compose"',self.calls())
+                self.assert_no_service_mutation()
 
     def test_release_image_download_resumes_after_interruption(self):
         tag = 'v0.1.14.0-RC99'

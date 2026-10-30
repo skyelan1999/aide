@@ -1571,6 +1571,19 @@
       [
         "python3",
         "scripts/test_mixsoul_embedding_follow.py"
+      ],
+      [
+        "python3",
+        "scripts/test_launcher_contract.py"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/runtime-lifecycle.js"
+      ],
+      [
+        "node",
+        "scripts/runtime-lifecycle.test.cjs"
       ]
     ],
     "full": [

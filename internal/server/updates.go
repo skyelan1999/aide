@@ -98,7 +98,7 @@ type onlineRelease struct {
 }
 
 func (a *App) updateRuntimeMode() string {
-	if a.buildRuntimeMode == "release-image" {
+	if os.Getenv("AIDE_INSTALLATION_KIND") != "source" && a.buildRuntimeMode == "release-image" {
 		return "release-image"
 	}
 	return "source"

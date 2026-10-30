@@ -183,7 +183,7 @@ bool runtime(const json& m,const std::string& platform){
 #include "native_http.hpp"
 class Launcher {
 public:
- fs::path root,docker,composeExe;bool noBrowser=false,force=false,offline=false,deferHelpers=false,allowDesktop=true;std::string platform,image;std::map<std::string,std::string> settings;
+ fs::path root,docker,composeExe;bool noBrowser=false,force=false,offline=false,deferHelpers=false,allowDesktop=true,reusedRunning=false,openExisting=false;std::string platform,image;std::map<std::string,std::string> settings;
  explicit Launcher(fs::path r):root(fs::absolute(r)){}
  void say(const std::string& s){std::cout<<s<<std::endl;std::ofstream f(stateRoot/L"launcher.log",std::ios::app);f<<s<<'\n';}
  Result d(Args a,DWORD timeout=120000){return run(docker,a,timeout);}
@@ -216,8 +216,8 @@ public:
   for(auto relative:{L".env",L".aide-image",L".aide-data/launcher.env",L".aide-data/image",L".aide-data/compose-project",L".aide-data/storage"})realPath(root/relative);
   if(!fs::exists(root/L".env")&&fs::exists(root/L".aide-data/launcher.env"))write(root/L".env",read(root/L".aide-data/launcher.env"));
   if(!fs::exists(root/L".aide-image")&&fs::exists(root/L".aide-data/image"))write(root/L".aide-image",read(root/L".aide-data/image"));
-  settings=dotenv(root/L".env");bool sourceCheckout=fs::exists(root/L"Dockerfile")&&fs::exists(root/L"go.mod")&&env(L"AIDE_BUILD_FROM_SOURCE")!=L"0";offline=fs::exists(root/L".aide-image")&&!sourceCheckout;
-  if(sourceCheckout&&fs::exists(root/L".aide-image"))setenvw(L"AIDE_IMAGE",L"aide:local");
+  settings=dotenv(root/L".env");bool sourceCheckout=sourcePackage();offline=fs::exists(root/L".aide-image")&&!sourceCheckout;setenvw(L"AIDE_INSTALLATION_KIND",sourceCheckout?L"source":L"release");
+
   if(offline){std::istringstream marker(read(root/L".aide-image"));std::string ref;marker>>ref;if(!ref.empty())setenvw(L"AIDE_IMAGE",wide(ref));}
   else if(configured("AIDE_IMAGE").empty())setenvw(L"AIDE_IMAGE",L"aide:local");
   if(!fs::exists(root/L"compose.yaml"))write(root/L"compose.yaml",embedded_compose);
@@ -358,17 +358,9 @@ public:
  void selectImage(){
   if(offline){offlineImage();return;}
   auto c=config();image=c["services"]["aide"].value("image","");if(image.empty())throw std::runtime_error("Compose has no application image");
-  bool source=fs::exists(root/L"Dockerfile")&&fs::exists(root/L"go.mod")&&env(L"AIDE_BUILD_FROM_SOURCE")!=L"0";std::string expectedSource;
-  if(source){auto fingerprint=stateRoot/L"source-input.txt";std::string hashes;for(const auto& name:aide_source::inputs(root,parseJson(embedded_source_manifest)))hashes+=sha256(root/fs::u8path(name))+"  "+name+"\n";write(fingerprint,hashes);expectedSource=sha256(fingerprint);}
-  auto m=inspect(image);if(m.is_null()&&source&&fs::exists(root/L".aide-image")){std::istringstream marker(read(root/L".aide-image"));std::string previous;marker>>previous;m=inspect(previous);}bool build=force||env(L"AIDE_BUILD_FROM_SOURCE")==L"1"||env(L"AIDE_FORCE_REBUILD")==L"1";
-  if(!build&&!m.is_null()&&runtime(m,platform)&&(!source||label(m,"aide.srcsha")==expectedSource)){say("Using validated immutable local runtime.");image=m.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}
-  if(source){
-   std::smatch versionMatch;auto versionText=read(root/L"version.md");if(!std::regex_search(versionText,versionMatch,std::regex("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+ RC[0-9]+")))throw std::runtime_error("Source version.md has no valid version");setenvw(L"AIDE_VERSION",wide(versionMatch[0].str()));
-   auto seed=inspect("aide:dependencies-v2");if(!seed.is_null()&&label(seed,"aide.local-base")=="v2"){setenvw(L"AIDE_DOCKERFILE",L"Dockerfile.local");setenvw(L"AIDE_BUILD_NETWORK",L"none");}
-   setenvw(L"AIDE_SRC_SHA",wide(expectedSource));if(image.rfind("sha256:",0)==0){image="aide:local";setenvw(L"AIDE_IMAGE",wide(image));}
-   bool space=true;try{disk(true);}catch(const std::exception&){if(env(L"AIDE_RELEASE_FALLBACK")==L"0")throw;space=false;say("Insufficient source build space; checking latest verified Release.");}if(space){say("Building source runtime locally...");auto result=compose({L"build",L"aide"},3600000);if(!result.code){auto built=inspect(image);if(!runtime(built,platform)||label(built,"aide.srcsha")!=expectedSource)throw std::runtime_error("Built runtime identity/source fingerprint did not verify");image=built.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}}
-   if(env(L"AIDE_RELEASE_FALLBACK")==L"0")throw std::runtime_error("Source build failed; Release fallback disabled");say("Source build failed; checking verified Release fallback.");
-  }
+  auto m=inspect(image);
+  if(runtime(m,platform)){say("Using validated immutable local runtime; source compilation is an explicit build command.");image=m.value("Id","");setenvw(L"AIDE_IMAGE",wide(image));return;}
+  if(sourcePackage())throw std::runtime_error("No usable compiled source image. Run build.bat; start never compiles or substitutes a different Release");
   releaseImage(m.is_null()?"":m.value("Id",""));setenvw(L"AIDE_IMAGE",wide(image));
  }
  int mappedPort(){auto r=compose({L"port",L"aide",L"8080"});std::smatch m;auto s=trim(r.out);return !r.code&&std::regex_search(s,m,std::regex(":([0-9]+)$"))?std::stoi(m[1]):0;}
@@ -487,12 +479,23 @@ public:
   if(reinterpret_cast<INT_PTR>(ShellExecuteW(nullptr,L"open",wide(url).c_str(),nullptr,nullptr,SW_SHOWNORMAL))<=32){auto browser=installedBrowser();if(browser.empty()){say("Warning: no usable installed browser; open the displayed address manually.");return;}spawn(browser,{wide(url)},fs::path(L"NUL"));say("HTTPS association unavailable; opened the installed browser directly.");}
  }
  void start(){
-  if(nativeInterrupted()||fs::exists(stateRoot/L"stop"))throw std::runtime_error("Native startup stopped by operator");disk();engine(allowDesktop);cleanOwnedContainers();write(root/L".cache/aide-manual-stop","");selectImage();data();port();prepareDirectory();if(nativeInterrupted())throw std::runtime_error("Native startup stopped by operator");say("Starting Aide...");required(compose({L"up",L"-d",L"--no-build",L"--pull",L"never"},300000),"Compose startup failed");if(!deferHelpers)helpers();
+  if(nativeInterrupted()||fs::exists(stateRoot/L"stop"))throw std::runtime_error("Native startup stopped by operator");disk();engine(allowDesktop);cleanOwnedContainers();
+  if(openExisting&&!container().empty()&&healthy()){reusedRunning=true;say("Aide is already healthy; reopening its existing workbench.");return;}
+  write(root/L".cache/aide-manual-stop","");selectImage();data();port();prepareDirectory();if(nativeInterrupted())throw std::runtime_error("Native startup stopped by operator");say("Starting Aide...");required(compose({L"up",L"-d",L"--no-build",L"--pull",L"never"},300000),"Compose startup failed");if(!deferHelpers)helpers();
   waitHealthy();save();if(!deferHelpers)browser();
  }
- bool stop(){write(root/L".cache/aide-manual-stop","");write(stateRoot/L"stop","");for(auto kind:{"local-mounts","message-lan"}){auto name=std::string("aide-")+kind+"-windows-"+hostArch()+".exe";auto file=root/L".aide-data"/wide(kind)/wide(name);if(fs::exists(file)){file=embeddedHelper(kind);if(std::string(kind)=="local-mounts")stopDirectory(file);else required(run(file,{L"-stop",L"-dir",(root/L".aide-data/storage/data/messages/lan-bridge").wstring()}),"Host helper did not stop");}}
-  if(docker.empty()||!fs::exists(docker)||d({L"info"},15000).code){say("Native host tasks stopped; Docker engine/CLI is unavailable, data retained.");return false;}engine(false);cleanOwnedContainers();required(compose({L"stop"}),"Cannot stop current Aide project");say("Current Aide project stopped; data retained.");return true;}
+ bool stop(){
+  write(root/L".cache/aide-manual-stop","");write(stateRoot/L"stop","");bool helpersStopped=true;
+  for(auto kind:{"local-mounts","message-lan"})try{auto name=std::string("aide-")+kind+"-windows-"+hostArch()+".exe";auto file=root/L".aide-data"/wide(kind)/wide(name);if(fs::exists(file)){file=embeddedHelper(kind);if(std::string(kind)=="local-mounts")stopDirectory(file);else required(run(file,{L"-stop",L"-dir",(root/L".aide-data/storage/data/messages/lan-bridge").wstring()}),"Host helper did not stop");}}
+   catch(const std::exception&){helpersStopped=false;say("An owned host helper did not confirm stop; application stop will still run.");}
+  auto component=root/L"scripts/codex-host-control.cjs",connection=root/L".aide-data/storage/data/host-components/codex-bridge.json";realPath(component);realPath(connection);
+  if(fs::exists(component)&&fs::exists(connection))try{auto node=findExe(L"node.exe");if(node.empty())throw std::runtime_error("Host Node.js unavailable");required(run(node,{component.wstring(),L"stop",L"--root",root.wstring(),L"--docker",docker.wstring()},15000),"Codex host component did not confirm stop");}catch(const std::exception&){helpersStopped=false;say("Codex host component stop is unconfirmed; application stop will still run.");}
+  if(docker.empty()||!fs::exists(docker)||d({L"info"},15000).code){say("Native host tasks stopped; Docker engine/CLI is unavailable, data retained.");return false;}
+  engine(false);cleanOwnedContainers();required(compose({L"stop"}),"Cannot stop current Aide project");say("Current Aide project stopped; connected workbenches erase visible content; data retained.");return helpersStopped;
+ }
  void cleanCache(bool dryRun){engine(false);if(dryRun){say("Dry run: docker builder prune --all --force (build cache only).");return;}required(d({L"builder",L"prune",L"--all",L"--force"},900000),"Build cache cleanup failed");say("Unused build cache removed; containers, images, volumes and user files retained.");}
+#include "lifecycle_commands.hpp"
+
 };
 #include "host_windows.hpp"
 #include "host_scheduler.hpp"
@@ -514,6 +517,10 @@ int chooseDirectory(){
  std::wstring selected;if(SUCCEEDED(result)){IShellItem* item=nullptr;if(SUCCEEDED(dialog->GetResult(&item))){PWSTR path=nullptr;if(SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH,&path))){selected=path;CoTaskMemFree(path);}item->Release();}}
  dialog->Release();CoUninitialize();if(selected.empty())return 2;std::cout<<utf8(selected);return 0;
 }
+int delegateNative(const fs::path& executable,const Args& args){
+ std::wstring command=quote(executable.wstring());for(const auto& arg:args)command+=L" "+quote(arg);STARTUPINFOW startup{};startup.cb=sizeof(startup);PROCESS_INFORMATION process{};
+ if(!CreateProcessW(executable.c_str(),command.data(),nullptr,nullptr,FALSE,0,nullptr,nullptr,&startup,&process))throw std::runtime_error("Cannot start the compiled native host");Handle child(process.hProcess),thread(process.hThread);if(WaitForSingleObject(child.h,INFINITE)!=WAIT_OBJECT_0)throw std::runtime_error("Compiled native host exit is unknown");DWORD code=1;if(!GetExitCodeProcess(child.h,&code))throw std::runtime_error("Cannot read compiled native host result");return int(code);
+}
 BOOL WINAPI nativeConsoleControl(DWORD event){
  if(event==CTRL_C_EVENT||event==CTRL_BREAK_EVENT||event==CTRL_CLOSE_EVENT){if(!nativeStopPath.empty()){HANDLE file=CreateFileW(nativeStopPath.c_str(),GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);if(file!=INVALID_HANDLE_VALUE)CloseHandle(file);}return TRUE;}return FALSE;
 }
@@ -532,12 +539,20 @@ int wmain(int argc,wchar_t** argv){
    else if(a==L"--dry-run")dryRun=true;
    else if(a==L"--self-test")return selfTest();
    else if(a==L"--licenses"){std::cout<<embedded_json_license<<'\n'<<embedded_miniz_license<<'\n'<<embedded_helper_licenses;return 0;}
-   else if(a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
-   else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|status|host-status|host-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
+   else if(a==L"start-built"||a==L"build"||a==L"clean"||a==L"docker_clean"||a==L"verify"||a==L"release"||a==L"start"||a==L"stop"||a==L"status"||a==L"host-status"||a==L"host-stop"||a==L"supervise"||a==L"worker-port"||a==L"worker-update"||a==L"open"||a==L"refresh-helpers"||a==L"clean-cache"||a==L"choose-directory"||a==L"confirm-directory-restart")action=a;
+   else if(a==L"--help"){std::cout<<"aide-launcher.exe [start|stop|build|clean|docker_clean|verify|release|status|host-status|host-stop|supervise|open|clean-cache] [--root DIR] [--project NAME] [--no-browser] [--force-build] [--dry-run] [--licenses]\n";return 0;}
    else throw std::runtime_error("Unknown launcher argument");
   }
+  auto compiledRoot=fs::absolute(root)/L".aide-data/native";auto compiledReceipt=compiledRoot/L"compiled-launcher.json";
+  realPath(root/L".aide-data");realPath(compiledRoot);realPath(compiledReceipt);
+  if(fs::exists(compiledReceipt)&&!dryRun){auto value=parseJson(read(compiledReceipt,4096));auto hash=value.value("sha256",""),file=value.value("file","");if(!digest(hash)||file!="launcher-"+hash+".exe")throw std::runtime_error("Invalid compiled native host receipt");auto dir=compiledRoot/L"compiled";realPath(dir);auto target=dir/wide(file);realPath(target);if(sha256(target)!=hash)throw std::runtime_error("Compiled native host checksum mismatch");if(!fs::equivalent(target,module())){Args args;for(int i=1;i<argc;i++)args.push_back(argv[i]);args.insert(args.end(),{L"--root",root.wstring()});return delegateNative(target,args);}}
   if(action==L"choose-directory")return chooseDirectory();
   if(action==L"confirm-directory-restart")return MessageBoxW(nullptr,L"Apply saved directory permissions and recreate Aide? Save your work first. Running tasks and phone connections will stop.",L"Aide directories",MB_OKCANCEL|MB_ICONWARNING|MB_DEFBUTTON2)==IDOK?0:2;
+  if(force&&action!=L"build"&&action!=L"clean")throw std::runtime_error("--force-build is valid only with build or clean; start never compiles");
+  if(dryRun&&(action==L"stop"||action==L"build"||action==L"clean"||action==L"docker_clean"||action==L"release")){
+   bool source=fs::exists(root/L".git")||(fs::exists(root/L"go.mod")&&fs::exists(root/L"Dockerfile"));if(!source&&(action==L"build"||action==L"clean"||action==L"release"))throw std::runtime_error("Source-only command is unavailable in a Release package");
+   std::cout<<"Dry run: "<<utf8(action)<<"; current-installation resources only; no commands executed.\n";return 0;
+  }
   if(dryRun&&action==L"start"){std::cout<<"Dry run: native environment/image validation, data preparation, current-project startup, embedded components and user-session workers; no commands executed.\n";return 0;}
   if(action==L"host-status"){
    stateRoot=fs::absolute(root)/L".aide-data/native";realPath(root/L".aide-data");realPath(stateRoot);
@@ -545,25 +560,32 @@ int wmain(int argc,wchar_t** argv){
    for(auto role:{"port","update"}){auto file=stateRoot/wide(std::string("task-")+role+".json");realPath(file);if(fs::exists(file)){auto task=parseJson(read(file,8192));task["running"]=nativeAlive(task);status["tasks"][role]=task;}}
    status["stopRequired"]=fs::exists(stateRoot/L"host-stop-required");std::cout<<status.dump(2)<<'\n';return 0;
   }
-  Launcher app(root);app.noBrowser=noBrowser;app.force=force;privateDirectory(app.root/L".aide-data");stateRoot=app.root/L".aide-data/native";privateDirectory(stateRoot);nativeStopPath=stateRoot/L"stop";
+  Launcher app(root);app.noBrowser=noBrowser;app.force=force;app.openExisting=action==L"start";privateDirectory(app.root/L".aide-data");stateRoot=app.root/L".aide-data/native";privateDirectory(stateRoot);nativeStopPath=stateRoot/L"stop";
+  if(action==L"verify")return app.verify();
   if(action==L"supervise"){pause=false;SetConsoleCtrlHandler(nativeConsoleControl,TRUE);return nativeSupervise(app);}
   if(action==L"worker-port"||action==L"worker-update"){pause=false;if(!std::regex_match(generation,std::regex("[a-f0-9]{32}")))throw std::runtime_error("Missing native worker generation");return nativeWorkerLoop(app,action==L"worker-port"?"port":"update",generation);}
   if(action==L"status"||action==L"open"){NativeLock lifecycle(stateRoot/L"startup.lock");if(!lifecycle.owns())throw std::runtime_error("Lifecycle is busy; use host-status for nonblocking task status");app.restore();app.engine(false);if(!app.healthy())return 1;if(action==L"status")app.noBrowser=true;app.browser();return 0;}
   std::unique_ptr<NativeLock> control;
-  if(action==L"stop"||action==L"host-stop"){
+  if(action==L"stop"||action==L"host-stop"||action==L"clean"||action==L"docker_clean"){
    for(int i=0;i<150;i++){write(nativeStopPath,"");control=std::make_unique<NativeLock>(stateRoot/L"control.lock");if(control->owns())break;control.reset();Sleep(100);}if(!control)throw std::runtime_error("Another explicit host action has not stopped yet");nativeStopController();
   }else{control=std::make_unique<NativeLock>(stateRoot/L"control.lock");if(!control->owns())throw std::runtime_error("Another explicit native host action is active");}
   if(action==L"host-stop")return 0;
+  fs::path builtHost;
   {
    NativeLock lifecycle(stateRoot/L"startup.lock");if(!lifecycle.owns())throw std::runtime_error("Another lifecycle operation owns this installation");app.restore(action!=L"stop");
-   if(action==L"stop"){if(app.stop())nativeClearDirectoryBlocker();}
+   if(action==L"stop"){if(!app.stop())throw std::runtime_error("Some owned components did not confirm stop; data and stop marker retained");nativeClearDirectoryBlocker();}
    else if(action==L"clean-cache")app.cleanCache(dryRun);
+   else if(action==L"docker_clean")app.dockerClean();
+   else if(action==L"release")app.release();
+   else if(action==L"build"||action==L"clean"){app.requireSource();if(action==L"clean")app.dockerClean();fs::remove(nativeStopPath);observeNativeStop=true;builtHost=app.buildSource();nativeStopController();fs::remove(nativeStopPath);}
+
    else if(action==L"refresh-helpers"){nativeCheckPreviousAgent(app);observeNativeStop=true;app.engine(false);auto cid=app.container();auto m=app.d({L"inspect",wide(cid),L"--format",L"{{.Image}}"});app.required(m,"Cannot resolve running image");app.image=trim(m.out);setenvw(L"AIDE_IMAGE",wide(app.image));app.helpers();}
-   else{nativeCheckPreviousAgent(app);nativeRestoreInterruptedMarker(app);fs::remove(nativeStopPath);observeNativeStop=true;app.deferHelpers=true;app.start();write(stateRoot/L"helper-refresh",std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));}
+   else{nativeCheckPreviousAgent(app);nativeRestoreInterruptedMarker(app);fs::remove(nativeStopPath);observeNativeStop=true;app.deferHelpers=true;app.start();if(!app.reusedRunning)write(stateRoot/L"helper-refresh",std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));}
   }
-  if(action==L"start"){
+  if(!builtHost.empty()){control.reset();Args args={L"start-built",L"--root",app.root.wstring()};if(noBrowser)args.push_back(L"--no-browser");return delegateNative(builtHost,args);}
+  if(action==L"start"||action==L"start-built"){
    if(nativeStopping())throw std::runtime_error("Native startup stopped by operator");
-   try{nativeLaunchController(app);}catch(const aide_host::Unsafe&){throw;}catch(const std::exception& e){app.say(std::string("Background warning: ")+e.what());}
+   try{if(!app.reusedRunning)nativeLaunchController(app);}catch(const aide_host::Unsafe&){throw;}catch(const std::exception& e){app.say(std::string("Background warning: ")+e.what());}
    if(!nativeStopping())app.browser();
   }
   return 0;

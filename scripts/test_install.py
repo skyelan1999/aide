@@ -42,7 +42,7 @@ exit 0
         p=self.root/'.env';p.write_text('PRIVATE_SETTING=preserve\n')
         r=self.run_install('--source');self.assertEqual(r.returncode,0,r.stderr)
         self.assertEqual(p.read_text(),'PRIVATE_SETTING=preserve\n')
-        self.assertEqual((self.root/'actions').read_text(),'start\n')
+        self.assertEqual((self.root/'actions').read_text(),'build\n')
     def test_image_initializes_versioned_configuration(self):
         r=self.run_install('--image',self.archive());self.assertEqual(r.returncode,0,r.stderr)
         self.assertIn('AIDE_IMAGE=aide:0.1.6.0-RC1',(self.root/'.env').read_text())

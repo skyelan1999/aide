@@ -131,12 +131,14 @@ def validate_windows_launcher_architecture(data, arch):
 
 FULL_PACKAGE_STARTUP_FILES = (
     'aide-launcher.exe', 'scripts/windows-launcher-asset.sh',
-    'start.command', 'start.sh', 'start.bat', 'stop.bat', 'clean-docker-cache.bat',
+    'start.command', 'start.sh', 'start.bat', 'stop.command', 'stop.sh', 'stop.bat',
     'compose.yaml', '.env.example',
     'scripts/aide.sh', 'scripts/launcher-data.sh', 'scripts/launcher-data.py',
     'scripts/resource-guard.sh', 'scripts/prebuilt-image.sh',
     'scripts/local-mounts-control.sh', 'scripts/message-lan-control.sh',
     'scripts/watch-port.sh', 'scripts/update-agent.sh', 'scripts/codex-host-control.cjs',
+    'docker_clean.command', 'docker_clean.sh', 'docker_clean.bat',
+    'verify.command', 'verify.sh', 'verify.bat', 'scripts/launcher.py',
 )
 
 
