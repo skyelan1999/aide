@@ -8,7 +8,17 @@
     const state = config.state;
     return {strategy:state.profiles?.strategy || 'auto', profile:state.profiles?.activeProfile || 'default', model:state.config?.activeModel || state.config?.model || '', reasoningEffort:state.config?.reasoningEffort || 'auto'};
   }
+  function reasoningOptions(model) {
+    return config?.state.config?.models?.find(item => item.id === model)?.reasoningEfforts || ['auto','off','low','medium','high'];
+  }
+  function adapt(choice) {
+    if (!choice) return choice;
+    return {...choice, reasoningEffort:reasoningOptions(choice.model).includes(choice.reasoningEffort) ? choice.reasoningEffort : 'auto'};
+  }
   function current(session = config?.state.session) {
+    return adapt(rawCurrent(session));
+  }
+  function rawCurrent(session = config?.state.session) {
     if (!config) return null;
     const base = defaults();
     if (session?.kind === 'assistant') return base;
@@ -25,7 +35,7 @@
   }
   function changed(id) { if (id === key(config.state.session)) config.changed(); }
   async function change(patch) {
-    const session = config.state.session, id = key(session), choice = {...current(session), ...patch};
+    const session = config.state.session, id = key(session), choice = adapt({...current(session), ...patch});
     if (session?.kind === 'assistant') throw new Error('Assistant model source is managed separately');
     if (!session) { drafts.set(id, choice); changed(id); return choice; }
     const token = {}, epoch = epochs.get(id) || 0;
@@ -66,5 +76,5 @@
     session.modelSelection = reply.modelSelection; session.modelSelectionRevision = reply.revision;
     saved.set(key(session), {choice:reply.modelSelection, revision:reply.revision});
   }
-  window.AideSessionModelSelection = {install(options){config=options;}, current, change, flush, applyDraft};
+  window.AideSessionModelSelection = {install(options){config=options;}, current, change, flush, applyDraft, reasoningOptions};
 })();

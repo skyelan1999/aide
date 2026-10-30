@@ -395,15 +395,17 @@ type ToolCall struct {
 	} `json:"function"`
 }
 type Message struct {
-	CreatedAt   string         `json:"createdAt,omitempty"`   // Local message time; stripped at provider boundary.
-	SourceRunID string         `json:"sourceRunId,omitempty"` // Local conversation provenance; stripped at provider boundary.
-	Role        string         `json:"role"`
-	Content     string         `json:"content"`
-	Type        string         `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
-	ReminderID  string         `json:"reminderId,omitempty"`
-	Images      []MessageImage `json:"-"` // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
-	ToolCalls   []ToolCall     `json:"tool_calls,omitempty"`
-	ToolCallID  string         `json:"tool_call_id,omitempty"`
+	ResponseItems []json.RawMessage `json:"responseItems,omitempty"` // Stateless OpenAI reasoning/tool continuation; never sent to Chat Completions.
+	ResponseModel string            `json:"responseModel,omitempty"`
+	CreatedAt     string            `json:"createdAt,omitempty"`   // Local message time; stripped at provider boundary.
+	SourceRunID   string            `json:"sourceRunId,omitempty"` // Local conversation provenance; stripped at provider boundary.
+	Role          string            `json:"role"`
+	Content       string            `json:"content"`
+	Type          string            `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
+	ReminderID    string            `json:"reminderId,omitempty"`
+	Images        []MessageImage    `json:"-"` // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
+	ToolCalls     []ToolCall        `json:"tool_calls,omitempty"`
+	ToolCallID    string            `json:"tool_call_id,omitempty"`
 }
 type Session struct {
 	AssistantResultNotices map[string]string      `json:"assistantResultNotices,omitempty"` // Persisted executor-event receipts, local only.
@@ -1901,7 +1903,7 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch in.ReasoningEffort {
-	case "", "auto", "off", "low", "medium", "high":
+	case "", "auto", "off", "low", "medium", "high", "xhigh", "max":
 	default:
 		fail(w, 400, errors.New("无效推理强度"))
 		return

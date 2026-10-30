@@ -132,12 +132,12 @@ func (a *App) selectionSettingsLocked(choice SessionModelSelection) (Settings, e
 		}
 	}
 	switch choice.ReasoningEffort {
-	case "auto", "off", "low", "medium", "high":
+	case "auto", "off", "low", "medium", "high", "xhigh", "max":
 	default:
 		return Settings{}, errors.New("无效会话推理强度")
 	}
 	cfg, err := settingsForSelectedModel(a.settings, choice.Model)
-	cfg.ReasoningEffort = choice.ReasoningEffort
+	cfg.ReasoningEffort = adaptedReasoningEffort(cfg, choice.ReasoningEffort)
 	return cfg, err
 }
 func (a *App) modelAPIKeyForConfigLocked(cfg Settings) (string, error) {
@@ -212,9 +212,11 @@ func (a *App) sessionModelSelectionHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 	}
-	if _, err := a.selectionSettingsLocked(choice); err != nil {
+	if cfg, err := a.selectionSettingsLocked(choice); err != nil {
 		fail(w, 400, err)
 		return
+	} else {
+		choice.ReasoningEffort = cfg.ReasoningEffort
 	}
 	old, updated, revision := s.ModelSelection, s.Updated, s.ModelSelectionRevision
 	s.ModelSelectionRevision++

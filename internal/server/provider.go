@@ -72,6 +72,7 @@ func (w *streamIdleWatch) stop() {
 
 // TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
 type TokenUsage struct {
+	responseOutput *openAIResponse
 	ProviderID     string `json:"providerId,omitempty"`
 	KeyID          string `json:"keyId,omitempty"`
 	KeyLabel       string `json:"keyLabel,omitempty"`
@@ -91,6 +92,7 @@ type TokenUsage struct {
 // providerUsage carries both DeepSeek's explicit cache counters and the
 // OpenAI-compatible prompt_tokens_details.cached_tokens fallback.
 type providerUsage struct {
+	ResponseOutput    *openAIResponse `json:"aide_response,omitempty"`
 	CompletionDetails struct {
 		ReasoningTokens *int `json:"reasoning_tokens"`
 	} `json:"completion_tokens_details"`
@@ -105,6 +107,7 @@ type providerUsage struct {
 }
 
 func applyPromptCacheUsage(dst *TokenUsage, src providerUsage) {
+	dst.responseOutput = src.ResponseOutput
 	if src.CompletionDetails.ReasoningTokens != nil && *src.CompletionDetails.ReasoningTokens > 0 {
 		dst.ReasoningKnown = true
 		dst.Reasoning = *src.CompletionDetails.ReasoningTokens > 0
@@ -209,17 +212,39 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 		// 多数 OpenAI 兼容端点通过该字段在最后一个 chunk 返回 usage；不支持的端点忽略它。
 		body["stream_options"] = map[string]any{"include_usage": true}
 	}
-	// Only Auto-selected declarations adapt wire parameters. Legacy/manual
-	// requests retain their existing behavior and configuration semantics.
-	if profile := cfg.routedProfile; profile != nil && profile.WireFormat != "deepseek" {
+	// Official OpenAI requests need their native parameters even in manual mode.
+	wireFormat := "deepseek"
+	if profile := cfg.routedProfile; profile != nil {
+		wireFormat = profile.WireFormat
+	}
+	if isOpenAIEndpoint(cfg.BaseURL) {
+		wireFormat = "openai-compatible"
+		if isOpenAIReasoningModel(cfg.Model) || modelCapabilityStatus(cfg, "reasoning") == "supported" {
+			wireFormat = "openai-reasoning"
+		}
+	}
+	if wireFormat != "deepseek" {
 		delete(body, "thinking")
-		if profile.WireFormat == "openai-reasoning" {
+		if wireFormat == "openai-reasoning" {
 			if value, ok := body["max_tokens"]; ok {
 				body["max_completion_tokens"] = value
 				delete(body, "max_tokens")
 			}
-			if cfg.ReasoningEffort == "off" {
+			if modelCapabilityStatus(cfg, "reasoning") == "unsupported" {
+				delete(body, "reasoning_effort")
+			} else if cfg.ReasoningEffort == "off" {
 				body["reasoning_effort"] = "none"
+				// These models require reasoning; use their lowest supported effort.
+				if isOpenAIEndpoint(cfg.BaseURL) && openAIRequiresReasoning(cfg.Model) {
+					body["reasoning_effort"] = "low"
+				}
+			} else if isOpenAIEndpoint(cfg.BaseURL) {
+				switch cfg.ReasoningEffort {
+				case "low", "medium", "high", "xhigh", "max":
+					if effort := adaptedReasoningEffort(cfg, cfg.ReasoningEffort); effort != "auto" {
+						body["reasoning_effort"] = effort
+					}
+				}
 			}
 			for _, key := range []string{"temperature", "top_p", "frequency_penalty", "presence_penalty", "stop"} {
 				delete(body, key)
@@ -266,6 +291,11 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		return "", nil, TokenUsage{}, fmt.Errorf("模型 %q 已标记为不支持结构化输出；请切换模型，或先核验并更新能力设置", cfg.Model)
 	}
 	body := buildChatBody(cfg, messages, params, tools, false)
+	endpoint := "/chat/completions"
+	if usesOpenAIResponses(cfg) {
+		body = buildResponsesBody(cfg, messages, params, tools, false)
+		endpoint = "/responses"
+	}
 	promptEstimate := estimateProviderPromptTokens(messages, tools)
 	b, err := json.Marshal(body)
 	if err != nil {
@@ -274,7 +304,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if rec != nil {
 		rec(b)
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(b))
+	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(cfg.BaseURL, "/")+endpoint, bytes.NewReader(b))
 	if err != nil {
 		return "", nil, TokenUsage{}, err
 	}
@@ -287,7 +317,12 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if err != nil {
 		return "", nil, TokenUsage{}, fmt.Errorf("模型连接失败: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { resp.Body.Close() }()
+	if usesOpenAIResponses(cfg) && resp.StatusCode == http.StatusOK {
+		if err := normalizeOpenAIResponse(resp, false); err != nil {
+			return "", nil, TokenUsage{}, err
+		}
+	}
 	if resp.StatusCode != 200 {
 		// Keep a short provider message in the error for the caller's redacted diagnostic
 		// log. Do not include response headers or the request body (which may contain secrets).
@@ -397,11 +432,16 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 		return "", nil, TokenUsage{}, "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := buildChatBody(cfg, messages, params, tools, true)
+	endpoint := "/chat/completions"
+	if usesOpenAIResponses(cfg) {
+		body = buildResponsesBody(cfg, messages, params, tools, true)
+		endpoint = "/responses"
+	}
 	streamCtx, cancelStream := context.WithCancel(ctx)
 	defer cancelStream()
 	promptEstimate := estimateProviderPromptTokens(messages, tools)
 	send := func(bodyBytes []byte) (*http.Response, error) {
-		req, err := http.NewRequestWithContext(streamCtx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(bodyBytes))
+		req, err := http.NewRequestWithContext(streamCtx, "POST", strings.TrimRight(cfg.BaseURL, "/")+endpoint, bytes.NewReader(bodyBytes))
 		if err != nil {
 			return nil, err
 		}
@@ -424,7 +464,7 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 	if err != nil {
 		return "", nil, TokenUsage{}, "", fmt.Errorf("模型连接失败: %w", err)
 	}
-	if resp.StatusCode == 400 {
+	if resp.StatusCode == 400 && !usesOpenAIResponses(cfg) {
 		// 兼容性重试：去掉 stream_options 再试一次（只重试 400，且只此一次）。
 		resp.Body.Close()
 		delete(body, "stream_options")
@@ -440,7 +480,12 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			return "", nil, TokenUsage{}, "", fmt.Errorf("模型连接失败: %w", err)
 		}
 	}
-	defer resp.Body.Close()
+	defer func() { resp.Body.Close() }()
+	if usesOpenAIResponses(cfg) && resp.StatusCode == http.StatusOK {
+		if err := normalizeOpenAIResponse(resp, true); err != nil {
+			return "", nil, TokenUsage{}, "", err
+		}
+	}
 	if resp.StatusCode != 200 {
 		rb, _ := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 		detail := strings.TrimSpace(string(rb))

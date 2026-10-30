@@ -5747,7 +5747,8 @@ function refreshStrategyUI() {
   const reasoningCol = el('div', 'strategy-menu-col strategy-reasoning-col');
   reasoningCol.append(el('div', 'strategy-menu-sep', t("推理强度")));
   const curEffort = choice.reasoningEffort || 'auto';
-  for (const [val, name, desc] of [['auto', t("自动"), t("按任务自动选择")], ['off', t("关闭"), t("不启用推理")], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")]]) {
+  const reasoningOptions = window.AideSessionModelSelection?.reasoningOptions(choice.model) || ['auto','off','low','medium','high'];
+  for (const [val, name, desc] of [['auto', t("自动"), t("使用模型默认推理强度")], ['off', t("关闭"), t("不启用推理")], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")], ['xhigh', t("超高"), 'xhigh'], ['max', t("最高"), 'max']].filter(([value]) => reasoningOptions.includes(value))) {
     reasoningCol.append(strategyMenuOption('reasoning', val, name, desc, curEffort === val));
   }
   reasoningCol.append(el('div', 'strategy-menu-sep strategy-parallel-title', t('并行倍率')));

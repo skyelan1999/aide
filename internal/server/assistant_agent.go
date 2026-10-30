@@ -183,7 +183,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	var toolsUsed []string
 	maxRounds := 8
 	for round := 0; round < maxRounds; round++ {
-		out, calls, _, err := complete(ctx, cfg, messages, params, tools, nil)
+		out, calls, usage, err := complete(ctx, cfg, messages, params, tools, nil)
 		if err != nil {
 			// 空响应/上游错误：带已收集的结论返回，不硬失败
 			if strings.TrimSpace(dec.Reply) != "" || dec.Action != "chat" {
@@ -218,7 +218,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 			}
 			break
 		}
-		messages = append(messages, Message{Role: "assistant", Content: out, ToolCalls: calls})
+		messages = append(messages, providerAssistantMessage(cfg, out, calls, usage))
 		for _, call := range calls {
 			a.mu.Lock()
 			scopeErr := a.validateScheduledWorkspaceLocked(ctx)

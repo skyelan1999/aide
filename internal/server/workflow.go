@@ -2413,7 +2413,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			return out, input, nil
 		}
-		input = append(input, Message{Role: "assistant", Content: out, ToolCalls: calls})
+		input = append(input, providerAssistantMessage(cfg, out, calls, usage))
 		if ctx.Err() != nil {
 			for _, call := range calls {
 				input = append(input, Message{Role: "tool", ToolCallID: call.ID, Content: "因任务暂停，此调用尚未执行；恢复时请根据已有上下文判断是否需要重新调用。"})

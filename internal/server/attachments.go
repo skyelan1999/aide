@@ -239,6 +239,8 @@ func outgoingMessages(msgs []Message) []any {
 		m := &msgs[i]
 		if len(m.Images) == 0 {
 			copy := *m
+			copy.ResponseItems = nil
+			copy.ResponseModel = ""
 			if copy.Type == "tool_visual_evidence" {
 				copy.Type = ""
 				copy.Content += "\n[Image payload absent in this request. Regenerate before making further visual claims.]"

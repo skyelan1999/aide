@@ -325,6 +325,7 @@ func shredFile(path string) {
 // modelConfigItem 是 /api/config 返回的单个模型条目：在 ModelRef 基础上追加 hasApiKey 标记，
 // 绝不回显明文 key。单 provider 场景下所有模型共享同一把 key，故 hasApiKey 取值一致。
 type modelConfigItem struct {
+	ReasoningEfforts    []string          `json:"reasoningEfforts"`
 	SupportsVision      bool              `json:"supportsVision"`
 	ID                  string            `json:"id"`
 	Name                string            `json:"name,omitempty"`
@@ -341,6 +342,7 @@ type modelConfigItem struct {
 func (a *App) modelConfigOut() []modelConfigItem {
 	out := make([]modelConfigItem, 0, len(a.settings.Models))
 	for _, m := range a.settings.Models {
+		cfg, _ := settingsForSelectedModel(a.settings, m.ID)
 		has := false
 		for _, provider := range a.settings.ModelProviders {
 			if provider.ID == m.ProviderID {
@@ -349,7 +351,8 @@ func (a *App) modelConfigOut() []modelConfigItem {
 			}
 		}
 		out = append(out, modelConfigItem{
-			SupportsVision: modelSupportsVision(m.ID, a.settings.Models), ID: m.ID, Name: m.Name, ProviderID: m.ProviderID, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
+			ReasoningEfforts: modelReasoningEfforts(cfg),
+			SupportsVision:   modelSupportsVision(m.ID, a.settings.Models), ID: m.ID, Name: m.Name, ProviderID: m.ProviderID, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
 			Capabilities: m.Capabilities, CapabilitiesSource: m.CapabilitiesSource, CapabilitiesChecked: m.CapabilitiesChecked,
 		})
 	}

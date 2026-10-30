@@ -18,7 +18,7 @@ func validatePWInference(n pwNode) error {
 		return nil
 	}
 	switch n.ReasoningEffort {
-	case "", "auto", "off", "low", "medium", "high":
+	case "", "auto", "off", "low", "medium", "high", "xhigh", "max":
 	default:
 		return errors.New("无效节点推理强度")
 	}
