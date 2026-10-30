@@ -25,7 +25,7 @@ def main():
         folder = Path(temporary)
         sources = '\n'.join(p.read_text() for p in (ROOT / 'native/windows-launcher').glob('*') if p.suffix in ('.cpp', '.hpp'))
         declarations = ['#pragma once']
-        declarations += [f'inline const char* {name}="";' for name in sorted(set(re.findall(r'\bembedded_[a-z_]+\b', sources)))]
+        declarations += [f'inline const char* {name}="";' for name in sorted(set(re.findall(r'\bembedded_[a-z_0-9]+\b', sources)))]
         declarations += [f'extern "C" const unsigned char {name}[];' for name in sorted(set(re.findall(r'\baide_(?:local_mounts|message_lan)_(?:begin|end)\b', sources)))]
         (folder / 'embedded.hpp').write_text('\n'.join(declarations))
         command = folder / 'check.cmd'
