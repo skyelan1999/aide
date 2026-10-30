@@ -13,7 +13,7 @@ int wmain(int argc,wchar_t** argv){
  std::string a(first.begin(),first.end()),b(second.begin(),second.end());log("docker:"+a+":"+b);
  if(first==L"image"&&second==L"inspect")return 1;
  if(first==L"buildx"&&second==L"build"&&env(L"FIXTURE_BUILD_FAIL")==L"1")return 9;
- if(first==L"create"){for(int i=2;i+1<argc;i++)if(std::wstring(argv[i])==L"--cidfile"){std::ofstream file{fs::path(argv[i+1])};file<<std::string(64,'a')<<std::endl;}}
+ if(first==L"create"){for(int i=2;i+1<argc;i++)if(std::wstring(argv[i])==L"--cidfile"){std::ofstream file{fs::path(argv[i+1])};auto bad=env(L"FIXTURE_CID_BAD");file<<(bad==L"short"?std::string(63,'a'):bad==L"nonhex"?std::string(63,'a')+"&":bad==L"extra"?std::string(64,'a')+"\n&echo unsafe>injected":std::string(64,'a'))<<std::endl;}}
  if(first==L"cp")return argc==4&&CopyFileW(env(L"FIXTURE_NEW_EXE").c_str(),argv[3],FALSE)?0:7;
  return 0;
 #else

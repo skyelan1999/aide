@@ -77,6 +77,12 @@ def check(binary, folder, installation):
                 assert 'native:host-stop' in log and 'native:'+action in log,log
                 assert (root/'aide-launcher.exe').read_bytes()==(folder/'new.exe').read_bytes()
     current=fixture('failure-code',exe=folder/'new.exe')
+    for invalid in ('short','nonhex','extra'):
+        root=fixture('invalid-cid-'+invalid,exe=folder/'old.exe');calls.write_text('')
+        run(root,'build',args='',env=dict(env,FIXTURE_CID_BAD=invalid),expected=1)
+        assert 'docker:cp:' not in calls.read_text() and 'native:build' not in calls.read_text()
+        assert (root/'aide-launcher.exe').read_bytes()==(folder/'old.exe').read_bytes()
+        assert not (root/'injected').exists()
     run(current,'verify',args='',env=dict(env,FIXTURE_ACTION_FAIL='1'),expected=23)
     run(current,'clean-docker-cache',args='',env=env)
 

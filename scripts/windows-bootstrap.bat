@@ -25,13 +25,13 @@ docker.exe buildx build --builder "%AIDE_BOOT_BUILDER%" --load --target native-l
 if errorlevel 1 goto bootstrap_failed
 docker.exe create --cidfile "%AIDE_BOOT_CIDFILE%" --network none --entrypoint /bin/true "%AIDE_BOOT_IMAGE%" >nul
 if errorlevel 1 goto bootstrap_failed
-REM Validate every line and the total size before expanding CID into any command.
+REM Validate the stored CID before it can enter a command. FINDSTR patterns
+REM repeating 64 character classes exceed Windows FINDSTR's search budget.
+if not exist "%AIDE_BOOT_CIDFILE%" goto bootstrap_failed
 for %%Z in ("%AIDE_BOOT_CIDFILE%") do if %%~zZ GTR 66 goto bootstrap_failed
-findstr.exe /r /x /v "[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]" "%AIDE_BOOT_CIDFILE%" >nul
-if not errorlevel 1 goto bootstrap_failed
-findstr.exe /r /x "[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]" "%AIDE_BOOT_CIDFILE%" >nul
-if errorlevel 1 goto bootstrap_failed
 set /p AIDE_BOOT_CID=<"%AIDE_BOOT_CIDFILE%"
+call :validate_cid
+if errorlevel 1 goto bootstrap_failed
 docker.exe cp "%AIDE_BOOT_CID%:/out/aide-launcher.exe" "%AIDE_BOOT_EXE%"
 if errorlevel 1 goto bootstrap_failed
 "%AIDE_BOOT_EXE%" host-stop --root "%CD%"
@@ -56,4 +56,14 @@ if exist "%AIDE_BOOT_CIDFILE%" del "%AIDE_BOOT_CIDFILE%"
 :cleanup_builder
 docker.exe image rm "%AIDE_BOOT_IMAGE%" >nul 2>nul
 docker.exe buildx rm "%AIDE_BOOT_BUILDER%" >nul 2>nul
+exit /b 0
+
+:validate_cid
+setlocal EnableDelayedExpansion
+set "AIDE_CID_INVALID=!AIDE_BOOT_CID!"
+for %%H in (0 1 2 3 4 5 6 7 8 9 a b c d e f) do set "AIDE_CID_INVALID=!AIDE_CID_INVALID:%%H=!"
+if defined AIDE_CID_INVALID (endlocal & exit /b 1)
+if "!AIDE_BOOT_CID:~63,1!"=="" (endlocal & exit /b 1)
+if not "!AIDE_BOOT_CID:~64,1!"=="" (endlocal & exit /b 1)
+endlocal
 exit /b 0
