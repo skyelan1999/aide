@@ -21,6 +21,13 @@ int wmain(int argc,wchar_t** argv){
 #ifdef FIXTURE_LEGACY
  log("legacy:"+a);return 17;
 #else
+ if(action==L"--ack-console"&&argc==3){
+  FreeConsole();if(!AttachConsole(DWORD(_wtoi(argv[2]))))return 31;
+  HANDLE input=CreateFileW(L"CONIN$",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);
+  if(input==INVALID_HANDLE_VALUE)return 32;
+  INPUT_RECORD keys[2]{};for(auto& key:keys){key.EventType=KEY_EVENT;key.Event.KeyEvent.wRepeatCount=1;key.Event.KeyEvent.wVirtualKeyCode=VK_RETURN;key.Event.KeyEvent.uChar.UnicodeChar=L'\r';}
+  keys[0].Event.KeyEvent.bKeyDown=TRUE;DWORD written=0;BOOL ok=WriteConsoleInputW(input,keys,2,&written);CloseHandle(input);FreeConsole();return ok&&written==2?0:33;
+ }
  if(action==L"--launcher-contract"){std::cout<<"aide-launcher-contract=2\n";return 0;}
  log("native:"+a);std::cout<<"Native fixture action finished\n";
  return action==L"host-stop"?0:env(L"FIXTURE_ACTION_FAIL")==L"1"?23:0;

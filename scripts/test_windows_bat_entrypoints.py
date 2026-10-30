@@ -90,14 +90,20 @@ def check(binary, folder, installation):
     driver=folder/'interactive.cmd';driver.write_bytes(('@echo off\r\ncall "'+str(current/'stop.bat')+'"\r\nexit /b %ERRORLEVEL%\r\n').encode('utf-8'))
     interactive=dict(env);interactive.pop('AIDE_LAUNCHER_NO_PAUSE')
     output=folder/'interactive-output.txt'
-    with output.open('wb') as capture:
-        process=subprocess.Popen(cmd('chcp 65001 >nul & call "'+str(driver)+'"'),stdin=subprocess.PIPE,stdout=capture,stderr=subprocess.STDOUT,env=interactive)
-        try:
-            deadline=time.monotonic()+10
-            while time.monotonic()<deadline and b'finished with exit code' not in output.read_bytes():time.sleep(.05)
-            assert b'finished with exit code 0' in output.read_bytes(),output.read_bytes()
-            assert process.poll() is None,'Double-click console closed before acknowledgement'
-            process.communicate(b'\n',timeout=10);assert process.returncode==0
-        finally:
-            if process.poll() is None:process.kill();process.wait()
+    # PAUSE reads a console, not a pipe. Create an owned console exactly as
+    # Explorer does, redirect only output, and acknowledge through CONIN$.
+    process=subprocess.Popen(cmd('chcp 65001 >nul & call "'+str(driver)+'" >"'+str(output)+'" 2>&1'),
+        creationflags=subprocess.CREATE_NEW_CONSOLE,env=interactive)
+    try:
+        deadline=time.monotonic()+10
+        while time.monotonic()<deadline:
+            if output.exists() and b'finished with exit code' in output.read_bytes():break
+            time.sleep(.05)
+        assert b'finished with exit code 0' in output.read_bytes(),output.read_bytes()
+        time.sleep(.1)
+        assert process.poll() is None,('Double-click console closed before acknowledgement',output.read_bytes())
+        subprocess.run([str(folder/'new.exe'),'--ack-console',str(process.pid)],check=True,env=env,timeout=10)
+        process.wait(timeout=10);assert process.returncode==0
+    finally:
+        if process.poll() is None:process.kill();process.wait()
     print('PASS actual BAT/CMD: source/release, missing/stale EXE, fresh bootstrap success/failure, preserved data/exit code and interactive pause')

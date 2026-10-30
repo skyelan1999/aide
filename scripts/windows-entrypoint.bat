@@ -44,6 +44,8 @@ exit /b %AIDE_ENTRY_RC%
 if defined AIDE_LAUNCHER_NO_PAUSE exit /b 0
 REM Delayed expansion makes CMDCMDLINE inspection safe even for quoted paths.
 setlocal EnableDelayedExpansion
-if not "!cmdcmdline:/c =!"=="!cmdcmdline!" pause
+set "AIDE_ENTRY_CMDLINE=!cmdcmdline!"
+set AIDE_ENTRY_CMDLINE | "%SystemRoot%\System32\findstr.exe" /i /c:" /c " >nul
+if not errorlevel 1 pause
 endlocal
 exit /b 0
