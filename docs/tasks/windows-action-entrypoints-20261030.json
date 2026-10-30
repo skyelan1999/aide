@@ -31,19 +31,36 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Unified CMD entrypoint, current-source bootstrap with compatibility probe and safe staging, diagnostics/pause/exit-code handling, retired PowerShell fixture migration and actual Windows BAT harness implemented.",
+      "evidence": [
+        "scripts/windows-entrypoint.bat",
+        "scripts/windows-bootstrap.bat",
+        "native/windows-launcher/main.cpp",
+        "scripts/test_windows_bat_entrypoints.py"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Local 20 lifecycle/ZIP assembly, 40 migration and 38 portable checks pass. Production AMD64 EXE cross-compiles; actual Windows CMD CI is running. First Windows run found a CMD quoting error in test driver; fixed before claiming product-entrypoint acceptance.",
+      "evidence": [
+        ".agent-state/windows-action-entrypoints/contract.log",
+        ".agent-state/windows-action-entrypoints/data.log",
+        ".agent-state/windows-action-entrypoints/portable.log",
+        ".agent-state/windows-action-entrypoints/native-amd64.log",
+        "https://github.com/skyelan1999/aide/pull/647"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Updated canonical contract and current English/Chinese startup guidance; legacy fixtures have an explicit retired/testing-only boundary.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md",
+        "docs/docker-maintenance.md",
+        "docs/en/installation.md",
+        "native/windows-launcher/README.md",
+        "scripts/fixtures/legacy-windows/README.md"
+      ]
     },
     "cleanup": {
       "status": "pending",
@@ -58,7 +75,7 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "",
+  "handoff": "PR #647 draft on main 820c18d8; no merge, publication or deployment. User confirmed Git source folder. Need Windows CMD CI and affected-host Docker Desktop rerun; preserve real .env/data, original aide checkout and production 9999.",
   "issue": 646,
   "operator": "skyelan1999"
 }

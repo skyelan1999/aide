@@ -123,7 +123,7 @@ The [standard launcher contract](../architecture/launcher-contract.md) separates
 | `verify` | Report version, Docker/Compose/configuration and runtime health | Same |
 | `release` | Dispatch existing delivery workflow for a clean, tagged, gated main commit with reviewed notes | Not shipped |
 
-Use `bash build.sh` after cloning or `git pull`; use `bash start.sh` for everyday access. On macOS use `.command`, on Windows use `.bat`. Windows commands call the native C++ executable; the first Git `build.bat` bootstraps it inside Docker. No host PowerShell/Python/compiler is required. Legacy build environment variables cannot make start compile. Builds use an installation-scoped Buildx cache and image; the first build needs BuildKit, base images and dependencies. Shared host image tags alone do not guarantee an offline build.
+Use `bash build.sh` after cloning or `git pull`; use `bash start.sh` for everyday access. On macOS use `.command`, on Windows use `.bat`. Windows commands call the native C++ executable; Git `build.bat` and `clean.bat` compile the current native host inside Docker, including when an older EXE already exists. No host PowerShell/Python/compiler is required. Legacy build environment variables cannot make start compile. Builds use an installation-scoped Buildx cache and image; the first build needs BuildKit, base images and dependencies. Shared host image tags alone do not guarantee an offline build.
 
 For full race/vet checks use `python3 scripts/agent-route.py verify full`; publication continues to use the existing version and delivery gates. `AIDE_RUN_TESTS=1 bash scripts/aide.sh build` enables the image build's full Go tests.
 
