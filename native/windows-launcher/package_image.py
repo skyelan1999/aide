@@ -3,12 +3,43 @@
 Embedded in the Windows executable. The Windows host never runs Python or PS1.
 """
 import json
+import hashlib
 from pathlib import Path
 import re
 import shutil
 import stat
 import sys
 import zipfile
+
+
+def extract_full(archive, output, tag, platform):
+    with zipfile.ZipFile(archive) as z:
+        names = z.namelist()
+        candidates = [n for n in names if n.endswith('/docker-images/manifest.json')]
+        if len(candidates) != 1 or len(names) != len(set(names)):
+            raise ValueError('Full package manifest must be unique')
+        prefix = candidates[0][:-len('manifest.json')]
+        manifest = json.loads(z.read(candidates[0]))
+        name = f'aide-{tag}-linux-{platform.split("/")[-1]}-image.tar.gz'
+        if (manifest.get('format') != 'aide-update-package' or manifest.get('version') != 1
+                or manifest.get('releaseTag') != tag or manifest.get('platform') != platform
+                or manifest.get('imageArchive') != name
+                or not re.fullmatch('sha256:[a-f0-9]{64}', manifest.get('imageId', ''))):
+            raise ValueError('Full package identity mismatch')
+        sums = z.read(prefix + 'SHA256SUMS').decode('ascii').split()
+        if len(sums) != 2 or sums[1] != name or not re.fullmatch('[a-f0-9]{64}', sums[0]):
+            raise ValueError('Invalid image checksum')
+        info = z.getinfo(prefix + name)
+        if not 0 < info.file_size <= 2 * 1024**3 or stat.S_ISLNK(info.external_attr >> 16):
+            raise ValueError('Invalid image member')
+        h = hashlib.sha256()
+        with z.open(info) as src, Path(output).open('xb') as dst:
+            while data := src.read(65536):
+                h.update(data)
+                dst.write(data)
+        if h.hexdigest() != sums[0]:
+            raise ValueError('Full package image checksum mismatch')
+        return manifest
 
 
 def extract(archive, output, name):
@@ -55,7 +86,9 @@ def idle(data):
 
 
 def main():
-    if sys.argv[1] == 'extract-update' and len(sys.argv) == 5:
+    if sys.argv[1] == 'extract-full' and len(sys.argv) == 6:
+        result = extract_full(*sys.argv[2:])
+    elif sys.argv[1] == 'extract-update' and len(sys.argv) == 5:
         result = extract(*sys.argv[2:])
     elif sys.argv[1] == 'check-idle' and len(sys.argv) == 3:
         result = idle(sys.argv[2])

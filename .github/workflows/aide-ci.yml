@@ -76,6 +76,9 @@ jobs:
           go test ./cmd/aide-local-mounts -run ^TestNative -count=1
           if errorlevel 1 exit /b 1
           go test ./scripts/xsys-review -count=1
+      - name: Compile-check native Windows launcher against Windows SDK
+        shell: cmd
+        run: python scripts/test_windows_launcher_compile.py
       - name: Windows PowerShell 5.1 launcher regression
         shell: cmd
         run: |

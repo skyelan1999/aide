@@ -291,7 +291,7 @@ if (-not $offlineBundle) {
     . (Join-Path $PSScriptRoot 'scripts/prebuilt-image.ps1')
     $prebuiltTarget = Get-ComposeResult config --images aide
     if ($prebuiltTarget.Code -ne 0 -or -not $prebuiltTarget.Text -or $prebuiltTarget.Text -match '\r|\n') { throw 'Cannot resolve application image target.' }
-    $reuseLocal = ($env:AIDE_BUILD_FROM_SOURCE -ne '1' -and $env:AIDE_FORCE_REBUILD -ne '1' -and (Test-AideLocalRuntime $dockerExe $prebuiltTarget.Text))
+    $reuseLocal = (-not $sourceBuild -and $env:AIDE_FORCE_REBUILD -ne '1' -and (Test-AideLocalRuntime $dockerExe $prebuiltTarget.Text))
     if ($reuseLocal) {
         $sourceBuild = $false
         Write-Host '本地完整镜像可用，直接复用；源码更新请强制重编译。'

@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import tarfile
 import urllib.error
 import urllib.request
 import zipfile
@@ -158,25 +159,51 @@ def prepare(args):
 
     image_cache = cache / "current-image.tar.gz"
     os.replace(image_tmp, image_cache)
+    # Docker Desktop may expose an OCI manifest ID instead of the archive's
+    # config ID. Bind the canonical receipt to the verified config bytes.
+    expected_config = None
+    config_digest = manifest['imageId'].split(':')[1]
+    with tarfile.open(image_cache, 'r|gz') as archive:
+        for member in archive:
+            if member.name in (config_digest + '.json', 'blobs/sha256/' + config_digest):
+                if not member.isfile() or member.size > 1024 * 1024:
+                    raise ValueError('Invalid image config member')
+                data = archive.extractfile(member).read()
+                if hashlib.sha256(data).hexdigest() != config_digest:
+                    raise ValueError('Image config identity mismatch')
+                expected_config = json.loads(data)
+                break
+    if expected_config is None:
+        raise ValueError('Verified archive has no matching image config')
     loaded = subprocess.run([args.docker, "image", "load", "--input", str(image_cache)], text=True, capture_output=True)
     if loaded.returncode:
         raise RuntimeError("Docker image load failed: " + (loaded.stderr[-1200:] or loaded.stdout[-1200:]))
     image = inspect(args.docker, manifest["imageId"])
+    if not image:
+        receipts = set(re.findall(r'^Loaded image(?: ID)?: ([A-Za-z0-9][A-Za-z0-9._:/@-]*)\s*$', loaded.stdout, re.MULTILINE))
+        if len(receipts) == 1:
+            image = inspect(args.docker, receipts.pop())
     if not image:
         raise ValueError("Loaded Release image ID could not be inspected")
     config = image.get("Config", {})
     labels = config.get("Labels") or {}
     actual_platform = f"{image.get('Os')}/{image.get('Architecture')}"
     src = labels.get("aide.srcsha", "")
+    expected_labels = expected_config.get('config', {}).get('Labels') or {}
     if (actual_platform != args.platform or not re.fullmatch(r"[0-9a-f]{64}", src)
-            or labels.get("aide.cad-runtime") != "8.0.1.1.0"):
+            or labels != expected_labels
+            or not (labels.get('aide.cad-runtime') == '8.0.1.1.0' or
+                    (labels.get('aide.runtime-profile') == 'slim' and not labels.get('aide.cad-runtime')))):
         raise ValueError("Loaded image platform or runtime identity is invalid")
+    canonical = image.get('Id', '')
+    if not re.fullmatch(r'sha256:[0-9a-f]{64}', canonical):
+        raise ValueError('Invalid canonical Docker image ID')
     previous = current.get("Id", "") if current else ""
-    if previous and previous != manifest["imageId"]:
+    if previous and previous != canonical:
         rollback = f"aide:rollback-start-{hashlib.sha256(previous.encode()).hexdigest()[:16]}"
         subprocess.run([args.docker, "image", "tag", previous, rollback], check=True)
-    subprocess.run([args.docker, "image", "tag", manifest["imageId"], args.target], check=True)
-    print(f"{tag}|{manifest['imageId']}|{previous}|updated")
+    subprocess.run([args.docker, "image", "tag", canonical, args.target], check=True)
+    print(f"{tag}|{canonical}|{previous}|updated")
 
 
 def commit(args):

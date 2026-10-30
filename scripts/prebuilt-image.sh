@@ -13,11 +13,11 @@ launcher_running_ready() {
 # Reuse only a complete, platform-matching runtime already installed locally.
 # This is startup, not an implicit software update or a source-build fallback.
 launcher_local_runtime_ready() {
-  local docker_bin="$1" target="$2" platform metadata image actual src cad extra
+  local docker_bin="$1" target="$2" platform metadata image actual src cad profile extra
   platform="$("$docker_bin" info --format '{{.OSType}}/{{.Architecture}}' | sed 's|/aarch64$|/arm64|;s|/x86_64$|/amd64|')" || return 1
-  metadata="$("$docker_bin" image inspect "$target" --format '{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}|{{index .Config.Labels "aide.cad-runtime"}}' 2>/dev/null)" || return 1
-  IFS='|' read -r image actual src cad extra <<< "$metadata"
-  [[ "$image" =~ ^sha256:[a-f0-9]{64}$ && "$actual" == "$platform" && "$src" =~ ^[a-f0-9]{64}$ && "$cad" == 8.0.1.1.0 && -z "$extra" ]]
+  metadata="$("$docker_bin" image inspect "$target" --format '{{.Id}}|{{.Os}}/{{.Architecture}}|{{index .Config.Labels "aide.srcsha"}}|{{index .Config.Labels "aide.cad-runtime"}}|{{index .Config.Labels "aide.runtime-profile"}}' 2>/dev/null)" || return 1
+  IFS='|' read -r image actual src cad profile extra <<< "$metadata"
+  [[ "$image" =~ ^sha256:[a-f0-9]{64}$ && "$actual" == "$platform" && "$src" =~ ^[a-f0-9]{64}$ && -z "$extra" && ( "$cad" == 8.0.1.1.0 || ( "$profile" == slim && ( -z "$cad" || "$cad" == '<no value>' ) ) ) ]]
 }
 
 # Git checkouts are development installations; bundles keep installed-image mode.

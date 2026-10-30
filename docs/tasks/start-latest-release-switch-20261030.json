@@ -16,7 +16,12 @@
     "必要的发行升级脚本与对应回归",
     "docs/architecture/software-updates.md",
     "docs/tasks/start-latest-release-switch-20261030.json",
-    "scripts/test_launcher_data.py"
+    "scripts/test_launcher_data.py",
+    "native/windows-launcher",
+    "start.ps1",
+    ".github/workflows/aide-ci.yml",
+    "scripts/test_windows_launcher_compile.py",
+    "scripts/test_windows_native_package.py"
   ],
   "stages": {
     "requirements": {
@@ -52,7 +57,11 @@
         "Python AST parse scripts/latest-release-runtime.py 与 scripts/test_launcher_data.py：PASS",
         "git diff --check：PASS",
         "PR #628 initial Windows CI：PASS；quick：FAIL（test fixture 缺 latest-release-runtime.py，已修）；Go：pending",
-        "python3 scripts/test_launcher_data.py: 42 tests OK"
+        "python3 scripts/test_launcher_data.py: 42 tests OK",
+        "真实 ARM64 官方完整包导入 PASS，Docker Desktop canonical ID 与包 config ID 不同，已兼容。",
+        "隔离容器 API 返回 0.1.17.6 RC1，buildCommit 4b56f5c1。",
+        "Native host 35 checks + portable 38 checks PASS；full package helper 11 tests PASS。",
+        "新增 Windows SDK 编译检查等待 CI；Windows 实机桌面生命周期未验收。"
       ]
     },
     "documentation": {

@@ -4,7 +4,7 @@
 
 当前策略以[启动与回退说明](../runtime-bundle.md)为准：Git 源码工作区默认核对当前源码哈希，变化时重新构建；显式设置 AIDE_BUILD_FROM_SOURCE=0 或发行安装模式才优先复用完整本地镜像。构建失败后按官方 Release 元数据校验回退。严格源码模式可设置 `AIDE_RELEASE_FALLBACK=0`。Git LFS 总包及当前属性已移除；旧版本在历史提交中的记录不会被强制重写。下文涉及更早默认行为的记录属于历史证据。
 
-2026-10-30 起，macOS/Linux 源码启动器在源码构建失败且 Release fallback 开启时，优先从 GitHub 官方 Releases API 选择该 Docker 架构最新发布的完整运行 ZIP。它核对官方资产 SHA256、ZIP CRC、包内 Release tag/平台/镜像 ID、镜像归档 SHA256，以及导入后的 Docker 镜像 ID、平台、源码与 CAD 标签；容器健康检查通过后才记录版本切换完成。Compose 启动或容器健康检查失败时恢复原镜像标签。若官方元数据不可用或校验/导入失败，启动会停止，不再静默退到旧的静态清单镜像。设置 `AIDE_RELEASE_FALLBACK=0` 可禁用此路径。下载包和验证后的镜像归档缓存于 `.cache/aide/releases/`；健康确认后删除冗余 ZIP，缓存中只保留当前镜像归档。Windows PowerShell 源码启动器尚未接入此自动检查；Windows 正式发行包仍按发行包启动与应用内升级流程工作。
+2026-10-30 起，macOS/Linux 源码启动器在源码构建失败且 Release fallback 开启时，优先从 GitHub 官方 Releases API 选择该 Docker 架构最新发布的完整运行 ZIP。它核对官方资产 SHA256、ZIP CRC、包内 Release tag/平台/镜像 ID、镜像归档 SHA256，以及导入后的 Docker 镜像 ID、平台、源码与 CAD 标签；容器健康检查通过后才记录版本切换完成。Compose 启动或容器健康检查失败时恢复原镜像标签。若官方元数据不可用或校验/导入失败，启动会停止，不再静默退到旧的静态清单镜像。设置 `AIDE_RELEASE_FALLBACK=0` 可禁用此路径。下载包和验证后的镜像归档缓存于 `.cache/aide/releases/`；健康确认后删除冗余 ZIP，缓存中只保留当前镜像归档。Windows 原生 EXE 在源码目录按源码指纹构建并从 version.md 注入版本；已有可信运行镜像时，构建失败后可通过原生 HTTPS 校验最新完整 ZIP，再用已验证镜像内的固定 Python helper 解出镜像。Windows 宿主无需 PowerShell 或 Python。完整发行包仍按随包镜像与应用内升级流程工作。旧 EXE 不会随 Git 分支切换自动重新编译，必须替换为包含此修复的构建。
 
 ## 适用范围
 
