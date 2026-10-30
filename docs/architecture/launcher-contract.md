@@ -30,6 +30,26 @@ Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/
 
 每个安装目录拥有独立的 `aide-<目录摘要>` docker-container Buildx 构建器、`aide:source-<目录摘要>` 镜像和 `.aide-data/build/owner.json` 归属收据。已有同名构建器但无匹配收据时拒绝接管。构建器限制为 4 GiB / 2 核；增量层和 cache mount 留在该构建器中。冷启动需要获取 BuildKit、基础镜像、固定工具链及依赖；默认 Docker 引擎已有基础镜像 tag 不代表专用构建器已有离线缓存。无网络的机器优先使用完整 Release 包，或预先准备该专用构建环境。
 
+### Windows 源码构建代理（#649）
+
+`build.bat` / `clean.bat` 在编译第一个 EXE 前读取当前用户的 Windows 手动系统代理；同一次调用中的 Docker bootstrap 和后续原生源码构建继承相同的进程环境。直接执行原生 EXE 的 `build/clean` 时也会读取当前用户设置。宿主仍无需 PowerShell、Python 或额外编译器。
+
+已有非空 `HTTP_PROXY`、`HTTPS_PROXY` 或 `ALL_PROXY` 时，保持整组显式代理配置，不再混入系统代理；`NO_PROXY` 始终优先保留。没有显式代理时，支持单一 HTTP/HTTPS 代理地址、`http=...;https=...` 分协议地址以及方括号 IPv6 地址，不硬编码端口。系统代理的等价绕过规则转换为 `NO_PROXY`；`<local>` 只映射本机回环地址，短主机名及不兼容通配规则会提示显式设置 `NO_PROXY`。凭据、复杂地址或无法识别的手动格式应使用显式环境变量，诊断不输出代理值。
+
+只有 PAC URL 而没有手动地址时，入口明确提示配置显式代理。构建客户端不执行 PAC/WPAD；无手动代理且无 PAC URL 时继续使用现有 Docker Desktop 网络设置，自动发现代理的环境可用以下方式指定地址。把 `HOST:PORT` 换成自己的实际 HTTP 代理地址和端口，在同一个 CMD 中运行：
+
+```bat
+set "HTTP_PROXY=http://HOST:PORT"
+set "HTTPS_PROXY=http://HOST:PORT"
+call build.bat
+```
+
+自动读取仅影响本次构建进程及其子进程；不执行 `setx`、不修改注册表、Docker 全局设置或镜像中的 `ENV`。`--dry-run` 不查询系统代理、不联网、不创建构建状态；普通 `start/stop/verify` 不因系统 PAC 设置而被构建代理检查阻止。
+
+这里处理的是 **Windows Docker CLI / Buildx 客户端** 的认证请求。`docker pull` 成功不能证明 Buildx 的令牌请求可用。BuildKit 容器与 Dockerfile `RUN` 联网另由 Docker Desktop 容器代理、已有 Docker 配置或构建参数负责；入口不将宿主机 `127.0.0.1` 地址原样注入 Linux 容器，也不改动已有专用构建器的代理环境和缓存。需要容器访问宿主服务时，按 Docker Desktop 网络配置使用可达地址（例如 `host.docker.internal`），并检查代理的监听范围。认证/连接超时会提示检查代理是否运行、`HTTPS_PROXY` / `NO_PROXY` 以及容器代理。
+
+代理作用域见 [Docker Desktop networking](https://docs.docker.com/desktop/features/networking/)、[Docker CLI proxy](https://docs.docker.com/engine/cli/proxy/) 和 [container-to-host networking](https://docs.docker.com/desktop/features/networking/networking-how-tos/)。本问题的实际测试及受影响 Windows 完整构建状态见[任务账本](../tasks/issue-649-windows-build-proxy.json)。
+
 实际 build 结果先核对镜像 ID、源码指纹和本安装标签，再更新 `.env` 的镜像选择。构建失败保留此前启动配置。Windows 还核对当前宿主产物后才选择新运行镜像。编译和临时提取容器属于构建流程，不属于普通 start。
 
 Docker 的专用缓存与驱动行为见 [docker-container driver](https://docs.docker.com/build/builders/drivers/docker-container/)；移除专用构建器会移除其缓存，本接口不使用 `--keep-state`，见 [buildx rm](https://docs.docker.com/reference/cli/docker/buildx/rm/)。

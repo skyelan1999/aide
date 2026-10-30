@@ -1,0 +1,82 @@
+{
+  "id": "issue-649-windows-build-proxy",
+  "request": "看下issue 649；你处理一下",
+  "baseline": "7a1e4b6766fe5f32cdaf5c14204738679218d9fc",
+  "initial_status": "",
+  "acceptance": [
+    "Keep explicit HTTP_PROXY, HTTPS_PROXY, ALL_PROXY and NO_PROXY opaque and unchanged; use current-user manual Windows proxy only when no explicit network proxy exists.",
+    "Both first-EXE CMD bootstrap and subsequent native builds receive the resolved host CLI environment. Native direct build/clean also resolves the system proxy.",
+    "PAC/unsupported manual formats fail with actionable guidance; network/authentication failures explain HTTPS_PROXY, NO_PROXY and Docker Desktop container proxy scopes.",
+    "No PowerShell/host Python dependency, hardcoded proxy port, global network edits, credential output or host-loopback injection into containers.",
+    "Run production C++ policy tests, actual CMD/BAT scenarios on Windows CI, launcher/package checks, quick gate and native cross-builds. Keep affected-host full Aide build explicitly NOT_RUN until exercised."
+  ],
+  "scope": [
+    "Windows CMD build proxy helper, entrypoint/bootstrap and native build proxy policy; relevant tests, canonical startup docs and task evidence.",
+    "User authorized fixing #649. Prepare a reviewable PR; no current admin-merge authorization for this issue, no release/tag/deployment or production restart."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested inspection. Issue #649 is open with zero comments. Reporter established system-proxy HTTP 200, docker pull success and a minimal independent BuildKit success after explicit HTTP_PROXY/HTTPS_PROXY; full Aide build is explicitly unverified. User subsequently instructed: 你处理一下; scope now includes implementation and validation.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/649",
+        "GitHub connector issue/comments snapshots on 2026-10-30"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Confirmed missing Windows system-proxy discovery in both the CMD bootstrap and native source-build path. Docker CLI plugins require their own process proxy environment; a successful docker pull does not validate Buildx token requests. BuildKit container environment and Dockerfile build arguments are additional scopes, not substitutes for the host CLI environment. Preserve explicit variables; fill manual system settings only when appropriate; preserve bypass rules and explain PAC/unreachable-proxy behavior. Ensure both build phases receive settings, and avoid copying host loopback URLs directly into container settings. Existing owned persistent builders need proxy-change handling if their environment is updated. First-build support must work before the new EXE exists, and retain the PowerShell-free runtime requirement. Selected fix targets the host Buildx process environment only, matching the reporter-established workaround. Existing BuildKit container env/cache is deliberately unchanged, with separate container-network guidance.",
+      "evidence": [
+        "scripts/windows-entrypoint.bat:10-16,24-28",
+        "scripts/windows-bootstrap.bat:1-28",
+        "native/windows-launcher/lifecycle_commands.hpp:12-30",
+        "native/windows-launcher/main.cpp: CreateProcessW inherits the existing process environment; no proxy discovery found",
+        "https://docs.docker.com/desktop/features/networking/",
+        "https://docs.docker.com/build/builders/drivers/docker-container/",
+        "https://docs.docker.com/engine/cli/proxy/",
+        "https://docs.docker.com/desktop/features/networking/networking-how-tos/",
+        "https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpgetieproxyconfigforcurrentuser"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Added CMD pre-EXE registry resolution and native WinHTTP/manual proxy policy with explicit env precedence; source fingerprint includes the helper. Adding real Windows boundary tests.",
+      "evidence": [
+        "scripts/windows-build-proxy.bat",
+        "native/windows-launcher/build_proxy.hpp",
+        "native/windows-launcher/build_proxy_windows.hpp"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "64 portable production native checks passed, including 26 proxy policy cases. Actual Windows CMD and affected-host full build are not yet verified.",
+      "evidence": [
+        ".agent-state/issue-649-portable.log"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Canonical launcher contract updated with exact precedence, supported manual formats, PAC guidance and host/container proxy scopes.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "Final diff and scoped artifact review remain.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Prepare PR and required CI; no admin merge, tag, release or deployment authorized for #649.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert this PR to restore previous build-client proxy behavior; retain .env, .aide-data, workspaces, Docker settings and builder cache.",
+  "handoff": "Implementation/verification in progress. Issue #649 remains open for full build.bat acceptance on the affected Windows Docker Desktop host.",
+  "issue": 649,
+  "operator": "skyelan1999",
+  "client": "Codex local API and shell on macOS; GitHub connector and official vendor docs",
+  "runtime_acceptance": "NOT_RUN: affected Windows host is unavailable in this investigation"
+}
