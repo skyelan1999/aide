@@ -54,6 +54,23 @@ call build.bat
 
 Docker 的专用缓存与驱动行为见 [docker-container driver](https://docs.docker.com/build/builders/drivers/docker-container/)；移除专用构建器会移除其缓存，本接口不使用 `--keep-state`，见 [buildx rm](https://docs.docker.com/reference/cli/docker/buildx/rm/)。
 
+## 干净环境验收（#654）
+
+POSIX 构建协调器把实际项目路径作为独立、带引号的参数传入磁盘检查子 shell，不依赖调用者导出 `PROJECT_DIR`。资源检查也支持显式路径和当前目录回退；低磁盘空间和无法识别的磁盘报告仍拒绝继续。在线 Python 依赖安装发生中途下载失败时，按原索引、原版本和原参数最多重试三次完整安装；离线安装不改为联网。
+
+`scripts/test_launcher_clean_environment.py` 是显式启用的真实 Docker 验收工具。它要求已提交、没有运行数据的独立源码 checkout，并为 HOME、Docker 客户端配置、工作区/资料/本地目录、应用数据、项目名、端口、镜像和 Buildx 缓存建立新状态。宿主 Docker 引擎和已安装 CLI 属于测试前提；工具不会清空共享引擎或复制原安装的数据、代理环境及模型凭据。
+
+```sh
+python3 scripts/test_launcher_clean_environment.py \
+  --root "/path/to/fresh source checkout" \
+  --evidence "/path/to/private-evidence" \
+  --allow-real-build
+```
+
+验收实际执行七个接口：缺镜像时 start 拒绝、首次冷 build、健康实例重开、运行/停止状态 verify、stop、删除专用缓存后的 clean 冷重建、保留数据的 docker_clean、清理后再次拒绝启动。HTTPS 健康、HTML 与带令牌的只读 API 均通过真实服务请求检查。release 在非 main 的验收 checkout 中验证真实拒绝门禁，不创建 tag 或分派发行。
+
+每组记录包含 17 次入口调用、两次冷构建、数据/工作区哨兵与退出码，输出为私有目录中的 `result.json` 和逐项日志。Linux CI 的 `launcher` job 是汇总 gate 的必需依赖，使用全新 checkout 并显式选择已有的 PyPI 索引配置；macOS 使用仓库默认索引在本机实测。Windows SDK/CMD 夹具回归与 Windows Docker Desktop 完整实机验收分别记录。完整证据和限制见 [#654 验收记录](../reviews/2026-10-31-launcher-clean-acceptance-654.md)。
+
 ## 停止、隐私与清理
 
 停止先发出终止 SSE 事件，页面同步清空标题和文档，再尝试关闭标签；浏览器拒绝脚本关闭用户标签时转为 `about:blank`。清理连接、任务流、语音和本地登录令牌，不删除草稿或用户设置。只能保证收到停止事件的在线页面执行此流程；断网、旧版页面、浏览器崩溃或强制杀进程不能被声明为已关页。此机制不删除浏览器历史记录。

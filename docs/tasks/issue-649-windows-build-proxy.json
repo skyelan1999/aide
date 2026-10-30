@@ -87,7 +87,7 @@
   },
   "release_authorization": "User authorized fixing Issue #649 (你处理一下). Prepare the fix/PR and validate; no administrator exception for this PR, no tag, release or deployment authorized.",
   "rollback": "Revert this PR to restore previous build-client proxy behavior; retain .env, .aide-data, workspaces, Docker settings and builder cache.",
-  "handoff": "PR #650 contains the repair and passed focused native/actual Windows tests. Final Go/gate and normal review remain separate gates on the PR. Keep Issue #649 open pending a complete build.bat run on the affected Windows Docker Desktop host; review report distinguishes synthetic registry/Docker boundaries from that full runtime acceptance.",
+  "handoff": "PR #650 now also includes #654 POSIX clean-environment repair and full lifecycle testing. macOS/Linux real seven-interface acceptance passed independently; see launcher-clean-acceptance-654.json. Windows native SDK/CMD fixture CI passed, but user explicitly deferred a real Windows host run (暂时没有，后面测); keep #649 open. Current-head CI/review gates remain mandatory; no admin exception, tag, release or deployment authorization.",
   "issue": 649,
   "operator": "skyelan1999",
   "client": "Codex local API and shell on macOS; GitHub connector and official vendor docs",

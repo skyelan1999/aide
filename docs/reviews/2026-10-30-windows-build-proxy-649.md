@@ -22,7 +22,7 @@
 | 原生 AMD64 完整交叉构建 | 10,024,960 字节；SHA256 `6c87c00b13b2599306fd42ed712b8cedf50f67f7cc2d48ecb6b9de2ac3f3d1d1`。完整嵌入当前 Go 宿主组件及许可证；PE 架构和系统 DLL 依赖检查通过。 |
 | 原生 ARM64 完整交叉构建 | 9,226,752 字节；SHA256 `c2035a539d38913251b46ef0eca613b82910b194283a5976ea28ab272a0874c2`。同样通过组件、许可证、PE 架构及系统 DLL 检查。 |
 
-上述 Windows job 对应产品提交 `53c17bec5c9c4ed51b6d458bf128d3db5911f63a`；之后仅补充本验收记录/任务账本。最终 PR 的全部 required checks 和正常审阅状态以 PR 页面为准，文档记录不替代远端门禁。
+上述 Windows job 对应代理修复阶段的产品提交 `53c17bec5c9c4ed51b6d458bf128d3db5911f63a`。PR 后续按用户要求扩展了 [#654 全接口干净环境验收](2026-10-31-launcher-clean-acceptance-654.md)，不能用本阶段记录替代后续共享构建链路的验证。最终 PR 的全部 required checks 和正常审阅状态以 PR 页面为准，文档记录不替代远端门禁。
 
 CMD 测试使用原生 reg.exe 查询夹具提供合成系统设置，并以原生 Docker/启动器夹具检查实际 BAT 进程传递；不改 Windows 当前用户的真实代理配置。它验证脚本/策略/进程边界，不能冒充真实 Docker Desktop 完整构建验收。直接原生读取 WinHTTP 的代码已由 Windows SDK 和完整双架构构建覆盖，实际受影响用户配置仍待现场验收。
 

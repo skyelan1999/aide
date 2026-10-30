@@ -34,45 +34,58 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Explicit disk-root propagation implemented. Added opt-in real POSIX acceptance and a required Linux launcher CI lane. The first genuine cold build exposed a pip wheel-body timeout; whole-install retries now preserve the exact configured index/options/pinned requirements and remain bounded to three attempts.",
+      "status": "pass",
+      "summary": "Explicit project-root propagation and safe disk fallback implemented; online pip whole-install retries bounded at three without index/pin changes. Added opt-in real acceptance and required Linux launcher CI lane; corrected stale start/build documentation.",
       "evidence": [
-        "scripts/test_resource_guard.py",
-        "scripts/test_launcher_contract.py"
+        "scripts/launcher.py",
+        "scripts/resource-guard.sh",
+        "scripts/pip-install-retry.sh",
+        "scripts/test_launcher_clean_environment.py",
+        ".github/workflows/aide-ci.yml"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "9 disk/resource checks, 21 launcher/package tests, 3 pip recovery tests, 22 CI contract checks and 66 portable native checks passed. First clean macOS attempt passed fresh verify/release rejection/stop/docker_clean/start rejection and reached the actual runtime build, then failed on an Aliyun wheel read timeout. Its owned builder was removed through docker_clean with exit 0. A new independent fresh checkout will rerun the whole sequence; no full-platform pass claimed yet.",
+      "status": "pass",
+      "summary": "Final uninterrupted macOS and Linux clean-environment acceptance each passed 17 actual launcher calls and two cold builds, with real host HTTPS/HTML/authenticated API, reopen, stop, deep data/directory sentinel preservation, and scoped cleanup. macOS 284.75s build/203.99s clean; Linux 301.02s/309.27s. Release genuine rejection plus valid synthetic local dry-run/dirty refusal tested; no publication. 9 resource, 21 launcher/package, 3 pip, 22 CI contract and 66 portable native checks passed. All required code-commit CI (quick/go/windows/launcher/gate at 685c5e1e) passed. Current-head CI and normal review remain separate PR gates; Windows actual host deferred by explicit user answer.",
       "evidence": [
-        ".agent-state/launcher-clean-654/resource.log",
-        ".agent-state/launcher-clean-654/contract.log",
-        ".agent-state/launcher-clean-654/mac-real/result.json",
-        ".agent-state/launcher-clean-654/mac-real/06-build.log",
-        ".agent-state/launcher-clean-654/mac-real/failed-attempt-cleanup.log",
-        ".agent-state/launcher-clean-654/portable.log",
-        ".agent-state/launcher-clean-654/ci-contract.log"
+        "docs/reviews/2026-10-31-launcher-clean-acceptance-654.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41088223840/job/124175647603",
+        "https://github.com/skyelan1999/aide/actions/runs/41088223840/artifacts/12993796297",
+        ".agent-state/launcher-clean-654/final-posix-summary.json",
+        ".agent-state/launcher-clean-654/release-local-gates.json",
+        "Runtime source SHA ff4ecee16eec407b4ec4c87dfa8e4065e670782767a538d724dd21c429901fd5",
+        "https://github.com/skyelan1999/aide/actions/runs/41088223840"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Canonical launcher contract, configuration comments, historical proxy evidence scope and final clean acceptance report updated to distinguish actual platform runs, fixtures, deferred Windows host and no release.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md",
+        "docs/reviews/2026-10-31-launcher-clean-acceptance-654.md",
+        ".env.example"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "No owned Mac app containers, source image, builder or helper PID files remain. Isolated data/evidence retained. Original local source fix applied with provenance hashes; pre-existing start override and other task files preserved, no real installation restart.",
+      "evidence": [
+        ".agent-state/launcher-clean-654/final-posix-summary.json",
+        "Original source .agent-state/launcher-clean-654/local-repair.json",
+        "git diff --check"
+      ]
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "PR #650 carries the combined repair. Main requires normal review; no current admin exception for this PR. Required current-head CI remains enforced; no tag, release or production deployment performed.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/650"
+      ]
     }
   },
   "release_authorization": "User authorized fixing and full clean-environment testing. No admin exception, actual release, tag or production deployment authorized.",
   "rollback": "Revert only this repair; original checkout and user data remain untouched. Dedicated acceptance project can be stopped/removed by its ownership metadata; no global prune.",
-  "handoff": "Fresh macOS attempt A found an additional dependency-download failure, now bounded by full-install retry. All actual acceptance remains in progress. Windows actual Docker Desktop host deferred by user; existing Windows native/CMD fixture CI is a separate result. Existing PR #650 will carry the expanded repair/test scope.",
+  "handoff": "All seven POSIX launcher interfaces passed in fresh macOS and Linux environments, each 17 real calls and two cold builds. Original local source fix is applied and recorded, preserving unrelated edits and user data. Windows actual Docker Desktop run explicitly deferred by user; fixture CI separate. Keep #654 open pending main merge and #649 open for Windows real-host acceptance. Review PR #650 current-head CI/review gates before any merge; no admin authorization yet.",
   "issue": 654,
   "operator": "skyelan1999",
   "pull_request": "https://github.com/skyelan1999/aide/pull/650"
