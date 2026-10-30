@@ -18,7 +18,9 @@
 - 双击链路使用独立 `CREATE_NEW_CONSOLE`，验证 CMD 在输出结果后仍存活，并仅在向其专属 `CONIN$` 注入确认键后退出。没有把 headless PIPE 的 PAUSE 结果冒充真实控制台等待。
 - Windows CI 的原生进程/锁、文件中继、MIXSoul、PS 5.1 和 PS 7 历史 fixture 回归全部通过。不可将历史 PS 测试误认为产品仍依赖 PowerShell。
 
-已通过的 [Windows job](https://github.com/skyelan1999/aide/actions/runs/41027014024/job/123967676884) 对应产品提交 `0509137c`。原始失败、最终 PASS 和本地编译日志保留在忽略的 `.agent-state/windows-action-entrypoints/`。后续仅任务/验收文档变化不改变上述内容指纹；当前 PR 全量 Go/总 gate 仍需以实时 CI 状态为准。
+上述初次通过的 [Windows job](https://github.com/skyelan1999/aide/actions/runs/41027014024/job/123967676884) 对应产品提交 `0509137c`。原始失败、最终 PASS 和本地编译日志保留在忽略的 `.agent-state/windows-action-entrypoints/`。当前 PR 全量 Go/总 gate 仍需以实时 CI 状态为准。
+
+补充核对后，`275c458f` 修正了跨 EXE 的控制器退出确认：先校验安装目录和 PID 创建时间，再等待原进程句柄退出，不再把“程序路径不同”误当作“进程已停止”，也不终止不熟悉的进程。新增真实旧版本进程延迟响应停止标记的 Windows 用例，确认 host-stop 返回时原进程确实退出。[补充 Windows job](https://github.com/skyelan1999/aide/actions/runs/41028992918/job/123974453263) 全部通过；AMD64/ARM64 完整 EXE 重新编译通过。后续变更仅更新验收与任务记录。
 
 ## 边界与操作
 

@@ -42,11 +42,12 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Selected regression scope passes: 313 quick, 20 lifecycle/real ZIP, 40 data, 38 portable, complete AMD64/ARM64 PE builds and imports; Windows real BAT/CMD + owned console and legacy PS5/7 CI pass at 0509137c. User Docker Desktop runtime remains NOT_RUN; required full Go/gate remain a separate PR merge gate.",
+      "summary": "Selected regression scope passes: 313 quick, 20 lifecycle/real ZIP, 40 data, 38 portable, complete AMD64/ARM64 PE builds and imports; Windows real BAT/CMD + owned console and legacy PS5/7 CI pass at 0509137c. User Docker Desktop runtime remains NOT_RUN; required full Go/gate remain a separate PR merge gate. Follow-up 275c458f adds actual prior-controller process/creation-time exit waiting, validated by all Windows job steps and both native architectures.",
       "evidence": [
         "docs/reviews/2026-10-30-windows-entrypoints.md",
         "https://github.com/skyelan1999/aide/actions/runs/41027014024/job/123967676884",
-        "Content fingerprint 401596127d4d2bdaf73fb6e93b1f01d4ba29d29ac21b1bc2448fd504efde9db2"
+        "Content fingerprint 401596127d4d2bdaf73fb6e93b1f01d4ba29d29ac21b1bc2448fd504efde9db2",
+        "https://github.com/skyelan1999/aide/actions/runs/41028992918/job/123974453263"
       ]
     },
     "documentation": {
@@ -71,15 +72,15 @@
     },
     "release": {
       "status": "pending",
-      "summary": "PR #647 prepared; no protected-main bypass authorization for this new PR, no release/tag/deployment. Full CI/review and affected-host runtime acceptance remain separate.",
+      "summary": "User explicitly authorized administrator merge of PR #647 after all required CI passes. Await full Go/gate; no tag, public release or deployment authorized.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/647"
       ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "Direct user answer for PR #647: CI passes then administrator merge. Authorization applies only after all required CI succeeds; no tag, release or deployment.",
   "rollback": "Revert only this PR to restore previous tracked launcher layout; preserve .env, .aide-data, workspaces and volumes. New bootstrap writes only its owned staging paths and does not replace old EXE on compile failure.",
-  "handoff": "Implementation and selected Windows acceptance pass. PR #647 pending required full CI/review; ask explicitly before any administrator exception for this new PR. Once merged, Windows Git source operator runs git pull then build.bat to refresh stale EXE. User Docker Desktop real runtime NOT_RUN; keep Issue #646 open. Production 9999 and original dirty checkout preserved.",
+  "handoff": "Code and selected acceptance complete. User authorized PR #647 administrator merge only after every required CI succeeds. Pending full Go/gate; verify exact head and main ancestry after merge. User Windows Docker Desktop runtime remains NOT_RUN; keep Issue #646 open until affected-host recheck. Once updated, Git source operator runs build.bat to refresh the stale EXE. Production 9999 and original dirty checkout preserved.",
   "issue": 646,
   "operator": "skyelan1999"
 }
