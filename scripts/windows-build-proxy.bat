@@ -29,9 +29,12 @@ REM Only this small manual-address grammar is exported through ENDLOCAL.
 REM Do not CALL/ECHO raw registry contents or proxy URLs containing credentials.
 set "AIDE_PROXY_CHECK=!AIDE_PROXY_SERVER!"
 call :strip_address_chars
-set "AIDE_PROXY_UNSAFE="
-for /f "tokens=* delims=;= " %%A in ("!AIDE_PROXY_CHECK!") do set "AIDE_PROXY_UNSAFE=1"
-if defined AIDE_PROXY_UNSAFE goto unsupported
+if defined AIDE_PROXY_CHECK (
+  REM SET streams data without interpolating it into a pipe's command text.
+  REM This fixed short pattern avoids FINDSTR's long-search limitation.
+  set AIDE_PROXY_CHECK | findstr.exe /r /x /c:"AIDE_PROXY_CHECK=[;= ]*" >nul
+  if errorlevel 1 goto unsupported
+)
 set "AIDE_PROXY_HTTP="
 set "AIDE_PROXY_HTTPS="
 set "AIDE_PROXY_REST=!AIDE_PROXY_SERVER!"

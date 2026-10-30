@@ -71,7 +71,21 @@ def check_cmd(folder, toolbin):
             FIXTURE_PROXY_BYPASS=system.get('bypass',''), FIXTURE_PROXY_PAC=system.get('pac',''))
         result=subprocess.run(cmd('call "'+str(driver)+'"'), cwd=folder, env=environment, input='',
                               capture_output=True, text=True, timeout=10)
-        assert (result.returncode==0)==item['success'],(item['name'],result.returncode,result.stdout,result.stderr)
+        if (result.returncode==0)!=item['success']:
+            # Instrument only a disposable copy and report source line numbers,
+            # never raw registry/proxy data. Useful for CMD-specific failures.
+            helper=root/'scripts/windows-build-proxy.bat'; labels=[]; lines=[]
+            for number,line in enumerate(helper.read_text().splitlines(),1):
+                for instruction,target in (('goto unsupported','goto unsupported'),('exit /b 1','exit /b 1')):
+                    if instruction in line:
+                        label='proxy_trace_'+str(number)+'_'+str(len(labels))
+                        line=line.replace(instruction,'goto '+label)
+                        labels.extend([':'+label,'echo TRACE source line '+str(number),target])
+                lines.append(line)
+            traced=folder/'proxy-traced.cmd';traced.write_text('\n'.join(lines+labels)+'\n')
+            diagnostic=subprocess.run(cmd('call "'+str(traced)+'"'),cwd=folder,env=environment,input='',capture_output=True,text=True,timeout=10)
+            trace=[line for line in diagnostic.stdout.splitlines() if line.startswith('TRACE ')]
+            raise AssertionError((item['name'],result.returncode,result.stdout,result.stderr,trace))
         assert not (folder/'injected').exists(), item['name']
         assert 'private-user' not in result.stdout+result.stderr and 'private-password' not in result.stdout+result.stderr
         if item['success']:
