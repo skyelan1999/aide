@@ -26,7 +26,7 @@ int wmain(int argc,wchar_t** argv){
  else if(key==L"ProxyServer")value=env(L"FIXTURE_PROXY_SERVER");
  else if(key==L"ProxyOverride")value=env(L"FIXTURE_PROXY_BYPASS");
  else if(key==L"AutoConfigURL")value=env(L"FIXTURE_PROXY_PAC");else return 1;
- if(value.empty())return 1;
+ if(value.empty()&&key!=L"AutoConfigURL")return 1;
  std::cout<<"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\n    "<<utf8(key)<<"    "<<utf8(type)<<"    "<<utf8(value)<<"\n";return 0;
 #elif defined(FIXTURE_DOCKER)
  std::wstring first=argc>1?argv[1]:L"",second=argc>2?argv[2]:L"";

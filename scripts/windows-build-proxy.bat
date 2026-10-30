@@ -14,7 +14,7 @@ if errorlevel 1 goto registry_missing
 for /f "tokens=1,2,*" %%A in ('reg.exe query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable 2^>nul') do if /i "%%A"=="ProxyEnable" if "%%C"=="0x1" set "AIDE_PROXY_ENABLED=1"
 for /f "tokens=1,2,*" %%A in ('reg.exe query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer 2^>nul') do if /i "%%A"=="ProxyServer" set "AIDE_PROXY_SERVER=%%C"
 for /f "tokens=1,2,*" %%A in ('reg.exe query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyOverride 2^>nul') do if /i "%%A"=="ProxyOverride" set "AIDE_PROXY_BYPASS=%%C"
-for /f "tokens=1,2,*" %%A in ('reg.exe query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v AutoConfigURL 2^>nul') do if /i "%%A"=="AutoConfigURL" set "AIDE_PROXY_PAC=1"
+for /f "tokens=1,2,*" %%A in ('reg.exe query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v AutoConfigURL 2^>nul') do if /i "%%A"=="AutoConfigURL" set "AIDE_PROXY_PAC=%%C"
 setlocal EnableDelayedExpansion
 if defined AIDE_PROXY_ENABLED goto manual
 if defined AIDE_PROXY_PAC goto pac
@@ -29,16 +29,19 @@ REM Only this small manual-address grammar is exported through ENDLOCAL.
 REM Do not CALL/ECHO raw registry contents or proxy URLs containing credentials.
 set "AIDE_PROXY_CHECK=!AIDE_PROXY_SERVER!"
 call :strip_address_chars
-if defined AIDE_PROXY_CHECK set "AIDE_PROXY_CHECK=!AIDE_PROXY_CHECK:;=!"
-if defined AIDE_PROXY_CHECK set "AIDE_PROXY_CHECK=!AIDE_PROXY_CHECK:==!"
-if defined AIDE_PROXY_CHECK set "AIDE_PROXY_CHECK=!AIDE_PROXY_CHECK: =!"
-if defined AIDE_PROXY_CHECK goto unsupported
+set "AIDE_PROXY_UNSAFE="
+for /f "tokens=* delims=;= " %%A in ("!AIDE_PROXY_CHECK!") do set "AIDE_PROXY_UNSAFE=1"
+if defined AIDE_PROXY_UNSAFE goto unsupported
 set "AIDE_PROXY_HTTP="
 set "AIDE_PROXY_HTTPS="
 set "AIDE_PROXY_REST=!AIDE_PROXY_SERVER!"
 :server_loop
 set "AIDE_PROXY_ITEM="
-for /f "tokens=1,* delims=; " %%A in ("!AIDE_PROXY_REST!") do (set "AIDE_PROXY_ITEM=%%A" & set "AIDE_PROXY_REST=%%B")
+for /f "tokens=1,* delims=;" %%A in ("!AIDE_PROXY_REST!") do (set "AIDE_PROXY_ITEM=%%A" & set "AIDE_PROXY_REST=%%B")
+set "AIDE_PROXY_TRIM=!AIDE_PROXY_ITEM!"
+call :trim_spaces
+set "AIDE_PROXY_ITEM=!AIDE_PROXY_TRIM!"
+if not defined AIDE_PROXY_ITEM if defined AIDE_PROXY_REST goto server_loop
 if not defined AIDE_PROXY_ITEM goto server_done
 call :server_item
 if errorlevel 1 goto unsupported
@@ -53,7 +56,11 @@ if not "!AIDE_PROXY_BYPASS:~2048,1!"=="" goto bypass_warning
 set "AIDE_PROXY_REST=!AIDE_PROXY_BYPASS!"
 :bypass_loop
 set "AIDE_PROXY_ITEM="
-for /f "tokens=1,* delims=; " %%A in ("!AIDE_PROXY_REST!") do (set "AIDE_PROXY_ITEM=%%A" & set "AIDE_PROXY_REST=%%B")
+for /f "tokens=1,* delims=;" %%A in ("!AIDE_PROXY_REST!") do (set "AIDE_PROXY_ITEM=%%A" & set "AIDE_PROXY_REST=%%B")
+set "AIDE_PROXY_TRIM=!AIDE_PROXY_ITEM!"
+call :trim_spaces
+set "AIDE_PROXY_ITEM=!AIDE_PROXY_TRIM!"
+if not defined AIDE_PROXY_ITEM if defined AIDE_PROXY_REST goto bypass_loop
 if not defined AIDE_PROXY_ITEM goto export
 if /i "!AIDE_PROXY_ITEM!"=="<local>" (
   set "AIDE_PROXY_ITEM=localhost,127.0.0.1,[::1]"
@@ -82,7 +89,8 @@ exit /b 0
 :server_item
 set "AIDE_PROXY_PROTOCOL="
 set "AIDE_PROXY_VALUE="
-if "!AIDE_PROXY_ITEM!"=="!AIDE_PROXY_ITEM:==!" (
+for /f "tokens=1,* delims==" %%A in ("!AIDE_PROXY_ITEM!") do (set "AIDE_PROXY_PROTOCOL=%%A" & set "AIDE_PROXY_VALUE=%%B")
+if not defined AIDE_PROXY_VALUE (
   if defined AIDE_PROXY_HTTP exit /b 1
   if defined AIDE_PROXY_HTTPS exit /b 1
   set "AIDE_PROXY_VALUE=!AIDE_PROXY_ITEM!"
@@ -92,7 +100,9 @@ if "!AIDE_PROXY_ITEM!"=="!AIDE_PROXY_ITEM:==!" (
   set "AIDE_PROXY_HTTPS=!AIDE_PROXY_VALUE!"
   exit /b 0
 )
-for /f "tokens=1,* delims==" %%A in ("!AIDE_PROXY_ITEM!") do (set "AIDE_PROXY_PROTOCOL=%%A" & set "AIDE_PROXY_VALUE=%%B")
+set "AIDE_PROXY_TRIM=!AIDE_PROXY_PROTOCOL!"
+call :trim_spaces
+set "AIDE_PROXY_PROTOCOL=!AIDE_PROXY_TRIM!"
 if /i "!AIDE_PROXY_PROTOCOL!"=="http" (
   if defined AIDE_PROXY_HTTP exit /b 1
   call :endpoint
@@ -107,6 +117,9 @@ if /i "!AIDE_PROXY_PROTOCOL!"=="https" (
 )
 exit /b 0
 :endpoint
+set "AIDE_PROXY_TRIM=!AIDE_PROXY_VALUE!"
+call :trim_spaces
+set "AIDE_PROXY_VALUE=!AIDE_PROXY_TRIM!"
 if not defined AIDE_PROXY_VALUE exit /b 1
 set "AIDE_PROXY_HOST=!AIDE_PROXY_VALUE!"
 if /i "!AIDE_PROXY_HOST:~0,7!"=="http://" (set "AIDE_PROXY_HOST=!AIDE_PROXY_HOST:~7!" & goto host)
@@ -123,6 +136,13 @@ if defined AIDE_PROXY_CHECK exit /b 1
 exit /b 0
 :strip_address_chars
 for %%H in (0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z - . _ : [ ] /) do if defined AIDE_PROXY_CHECK set "AIDE_PROXY_CHECK=!AIDE_PROXY_CHECK:%%H=!"
+exit /b 0
+:trim_spaces
+if not defined AIDE_PROXY_TRIM exit /b 0
+for /f "tokens=* delims= " %%A in ("!AIDE_PROXY_TRIM!") do set "AIDE_PROXY_TRIM=%%A"
+:trim_tail
+if not defined AIDE_PROXY_TRIM exit /b 0
+if "!AIDE_PROXY_TRIM:~-1!"==" " (set "AIDE_PROXY_TRIM=!AIDE_PROXY_TRIM:~0,-1!" & goto trim_tail)
 exit /b 0
 :pac
 echo [Aide] Windows PAC proxy detected. PAC/WPAD is not evaluated by the build client.

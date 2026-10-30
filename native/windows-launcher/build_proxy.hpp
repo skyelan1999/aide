@@ -37,6 +37,7 @@ inline Plan resolve(const Environment& existing,const System& system){
  }
  if(result.additions.empty())throw unsupported();result.source="system";
  if(!has(existing,"NO_PROXY")&&!system.bypass.empty()){
+  if(system.bypass.size()>2048){result.bypassWarning=true;return result;}
   std::string bypass;
   for(auto part:split(system.bypass)){
    if(lower(part)=="<local>"){part="localhost,127.0.0.1,[::1]";result.bypassWarning=true;}
