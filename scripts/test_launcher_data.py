@@ -262,6 +262,13 @@ sys.exit(91)
 """
         for name in ['docker','curl']:
             f=self.bin/name;f.write_text(program);f.chmod(0o755)
+        (self.root/'scripts').mkdir()
+        helper='''import json, os, pathlib, sys
+root=pathlib.Path(os.environ["FIX_ROOT"])
+with (root/"calls").open("a") as f: f.write(json.dumps(["latest-release-runtime", *sys.argv[1:]])+"\\n")
+print(os.environ.get("FIX_RELEASE_RECEIPT", "v0.1.17.6-RC1|sha256:"+"4"*64+"||updated"))
+'''
+        (self.root/'scripts/latest-release-runtime.py').write_text(helper)
         self.env=dict(os.environ,PATH=str(self.bin)+os.pathsep+os.environ['PATH'],FIX_ROOT=str(self.root))
     def write_manifest(self,platform='linux/arm64',url=None):
         self.manifest.write_text(' '.join([platform,self.image,self.source,self.digest,url or self.url,'bundle'])+'\n')
@@ -335,19 +342,18 @@ sys.exit(91)
         return subprocess.run(['bash','-ec','source "$1"; build_source() { echo BUILD_ATTEMPT; return "$FIX_BUILD_EXIT"; }; launcher_build_or_release docker aide:local build_source','fixture',str(ROOT/'scripts/prebuilt-image.sh')],cwd=self.root,env=env,text=True,capture_output=True)
     def test_successful_build_does_not_contact_release(self):
         r=self.run_build_recovery(0);self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(self.calls(),'')
-    def test_failed_build_recovers_verified_local_release_archive(self):
-        shutil.copyfile(self.archive,self.root/'docker-images/fixture.tar.gz')
+    def test_failed_build_uses_latest_release_runtime_helper(self):
         r=self.run_build_recovery(7);self.assertEqual(r.returncode,0,r.stderr)
-        self.assertIn('BUILD_ATTEMPT',r.stdout);self.assertIn('"load"',self.calls());self.assertIn('"tag"',self.calls());self.assertNotIn('"curl"',self.calls())
-    def test_failed_build_fetches_release_only_when_no_cache(self):
+        self.assertIn('BUILD_ATTEMPT',r.stdout);self.assertIn('latest-release-runtime',self.calls());self.assertNotIn('"load"',self.calls());self.assertNotIn('"curl"',self.calls())
+    def test_failed_build_selects_official_latest_release(self):
         r=self.run_build_recovery(7);self.assertEqual(r.returncode,0,r.stderr)
-        self.assertIn('"curl"',self.calls());self.assertIn('"load"',self.calls())
+        self.assertIn('latest-release-runtime',self.calls());self.assertIn('prepare',self.calls());self.assertIn('v0.1.17.6-RC1',r.stderr)
     def test_strict_build_preserves_failure_and_never_downloads(self):
         r=self.run_build_recovery(7,strict=True);self.assertEqual(r.returncode,7,r.stderr);self.assertEqual(self.calls(),'')
-    def test_corrupt_release_cache_remains_fatal_after_build_failure(self):
-        (self.root/'docker-images/fixture.tar.gz').write_bytes(b'corrupt')
+    def test_invalid_latest_release_receipt_fails_closed_after_build_failure(self):
+        self.env['FIX_RELEASE_RECEIPT']='invalid'
         r=self.run_build_recovery(7);self.assertEqual(r.returncode,1,r.stderr)
-        self.assertNotIn('"load"',self.calls());self.assertNotIn('"tag"',self.calls())
+        self.assertIn('invalid',r.stderr);self.assertNotIn('"load"',self.calls());self.assertNotIn('"tag"',self.calls())
     def test_native_runtime_reuse_is_bypassed_by_force_and_source_modes(self):
         source=(ROOT/'scripts/aide.sh').read_text()
         start=source.index('    # Normal startup prefers')

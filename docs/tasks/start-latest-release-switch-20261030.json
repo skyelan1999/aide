@@ -15,7 +15,8 @@
     "scripts/prebuilt-image.sh",
     "必要的发行升级脚本与对应回归",
     "docs/architecture/software-updates.md",
-    "docs/tasks/start-latest-release-switch-20261030.json"
+    "docs/tasks/start-latest-release-switch-20261030.json",
+    "scripts/test_launcher_data.py"
   ],
   "stages": {
     "requirements": {
@@ -36,7 +37,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "新增 Linux AMD64/ARM64 官方完整 ZIP 发现、校验与镜像导入；仅当源码构建失败且 fallback 启用时运行。容器启动/健康失败恢复旧镜像标签；成功后记录最新 Release。更新完整发行包和离线包清单。",
+      "summary": "新增最新官方完整 ZIP 发现、校验与镜像导入；启动/健康失败恢复旧镜像；更新发行包及测试夹具。",
       "evidence": [
         "scripts/latest-release-runtime.py 实现 GitHub API 元数据选择、资产 SHA256、ZIP CRC、包内 manifest/SHA256SUMS、导入后镜像身份/平台/source/CAD 校验。",
         "scripts/prebuilt-image.sh 与 scripts/aide.sh 接入 fallback、健康确认及失败回退。",
@@ -44,12 +45,13 @@
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "静态语法检查通过；未运行 Docker、真实下载/导入、启动、回滚或集成测试，未部署 9999。",
+      "status": "in_progress",
+      "summary": "本地静态检查通过。PR #628 的 Windows CI 通过；quick CI 首次失败，定位为旧回退测试夹具未提供新 helper，已更新夹具并准备推送重跑；Go race/vet 当时仍在运行。Docker 真实导入/启动/回滚未执行。",
       "evidence": [
         "bash -n start.command scripts/aide.sh scripts/prebuilt-image.sh：PASS",
-        "python3 ast.parse(scripts/latest-release-runtime.py)：PASS",
-        "git diff --check：PASS"
+        "Python AST parse scripts/latest-release-runtime.py 与 scripts/test_launcher_data.py：PASS",
+        "git diff --check：PASS",
+        "PR #628 initial Windows CI：PASS；quick：FAIL（test fixture 缺 latest-release-runtime.py，已修）；Go：pending"
       ]
     },
     "documentation": {
