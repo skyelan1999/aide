@@ -30,7 +30,7 @@ def main():
         (folder / 'embedded.hpp').write_text('\n'.join(declarations))
         command = folder / 'check.cmd'
         command.write_text('@echo off\ncall "' + installation + '\\Common7\\Tools\\VsDevCmd.bat" -arch=x64\n'
-            'if errorlevel 1 exit /b 1\ncl /nologo /std:c++17 /EHsc /I"' + str(folder) + '" "' + str(ROOT / 'native/windows-launcher/main.cpp') + '" "' + str(ROOT / 'native/windows-launcher/third_party/miniz/miniz_tinfl.c') + '" /Fe:launcher-test.exe /link advapi32.lib bcrypt.lib ws2_32.lib shell32.lib ole32.lib uuid.lib winhttp.lib\n'
+            'if errorlevel 1 exit /b 1\ncl /nologo /std:c++17 /EHsc /I"' + str(folder) + '" "' + str(ROOT / 'native/windows-launcher/main.cpp') + '" "' + str(ROOT / 'native/windows-launcher/third_party/miniz/miniz_tinfl.c') + '" /Fe:launcher-test.exe /link advapi32.lib bcrypt.lib ws2_32.lib shell32.lib ole32.lib uuid.lib winhttp.lib user32.lib\n'
             'if errorlevel 1 exit /b 1\nlauncher-test.exe --self-test\n')
         subprocess.run(['cmd.exe', '/d', '/c', str(command)], check=True, cwd=folder)
     print('PASS real Win32 launcher compile/link and native self-test; fixture executable removed')
