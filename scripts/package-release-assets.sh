@@ -53,16 +53,16 @@ STAGING="$(mktemp -d "$ROOT/.agent-state/release-package.XXXXXX")"
 trap 'rm -rf "$STAGING"' EXIT
 for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATFORM#linux/}; do
   case "$TARGET" in
-    macos-*) LAUNCHERS=(start.command stop.command clean-docker-cache.command);;
-    windows-*) LAUNCHERS=(start.bat stop.bat clean-docker-cache.bat);;
-    ubuntu-*) LAUNCHERS=(start.sh stop.sh clean-docker-cache.sh);;
+    macos-*) LAUNCHERS=(start.command stop.command docker_clean.command verify.command);;
+    windows-*) LAUNCHERS=(start.bat stop.bat docker_clean.bat verify.bat);;
+    ubuntu-*) LAUNCHERS=(start.sh stop.sh docker_clean.sh verify.sh);;
   esac
   PACKAGE="$STAGING/aide-$TAG-$TARGET"
   mkdir -p "$PACKAGE/scripts" "$PACKAGE/docker-images" "$PACKAGE/workspace" "$PACKAGE/context"
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
   if [[ "$TARGET" == windows-* ]]; then cp "$WINDOWS_LAUNCHER" "$PACKAGE/aide-launcher.exe"; fi
   if [[ "$TARGET" != windows-* ]]; then
-    cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$PACKAGE/scripts/"
+    cp "$ROOT/scripts/launcher.py" "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$PACKAGE/scripts/"
     cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/latest-release-runtime.py" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
   fi
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
@@ -100,8 +100,8 @@ done
 FULL_TARGET="aide-$TAG-full-linux-${PLATFORM#linux/}"
 FULL_PACKAGE="$STAGING/$FULL_TARGET"
 mkdir -p "$FULL_PACKAGE/scripts" "$FULL_PACKAGE/docker-images" "$FULL_PACKAGE/workspace" "$FULL_PACKAGE/context"
-cp "$ROOT"/stop.{command,sh,bat} "$ROOT"/clean-docker-cache.{command,sh,bat} "$FULL_PACKAGE/"
-cp "$ROOT/scripts/aide-maintenance.sh" "$FULL_PACKAGE/scripts/"
+cp "$ROOT"/stop.{command,sh,bat} "$ROOT"/docker_clean.{command,sh,bat} "$ROOT"/verify.{command,sh,bat} "$FULL_PACKAGE/"
+cp "$ROOT/scripts/launcher.py" "$ROOT/scripts/aide-maintenance.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/message-lan-control.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.bat" "$FULL_PACKAGE/"
 cp "$WINDOWS_LAUNCHER" "$FULL_PACKAGE/aide-launcher.exe"

@@ -600,11 +600,17 @@ func (m *DaemonManager) StopAll() {
 		procs = append(procs, p)
 	}
 	m.mu.Unlock()
+	var stopped sync.WaitGroup
 	for _, p := range procs {
-		p.lifecycleMu.Lock()
-		p.stop()
-		p.lifecycleMu.Unlock()
+		stopped.Add(1)
+		go func(p *daemonProc) {
+			defer stopped.Done()
+			p.lifecycleMu.Lock()
+			defer p.lifecycleMu.Unlock()
+			p.stop()
+		}(p)
 	}
+	stopped.Wait()
 }
 
 // Call 经 IPC 转发一次工具调用，等待结果。

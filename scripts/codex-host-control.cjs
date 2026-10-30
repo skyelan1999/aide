@@ -22,7 +22,7 @@ async function main(argv){
   const gateway=run(['network','inspect','bridge','--format','{{(index .IPAM.Config 0).Gateway}}']);
   if(!/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(gateway)||!os.networkInterfaces||!Object.values(os.networkInterfaces()).flat().some(x=>x?.address===gateway))throw Error('No local private Docker gateway found');bind=gateway;
  }
- if(action==='stop'){await rpc(connection,'quit','POST',bind);console.log('Codex host component stopped.');return;}
+ if(action==='stop'){if(!fs.existsSync(connection)){console.log('Codex host component already stopped.');return;}try{await rpc(connection,'quit','POST',bind);}catch(error){if(error.code!=='ENOENT'&&error.cause?.code!=='ECONNREFUSED')throw error;}console.log('Codex host component stopped.');return;}
  if(!options['--image'])throw Error('Selected Aide image required');
  const image=run(['image','inspect','--format','{{.Id}}',options['--image']]);if(!/^sha256:[a-f0-9]{64}$/.test(image))throw Error('Invalid image identity');
  fs.mkdirSync(state,{recursive:true,mode:0o700});const destination=path.join(state,image.slice(7));noLinks(destination);fs.mkdirSync(destination,{recursive:true,mode:0o700});

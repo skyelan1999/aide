@@ -23,16 +23,30 @@ def main():
         raise SystemExit('Windows C++ compiler unavailable')
     with tempfile.TemporaryDirectory(prefix='aide-native-syntax-') as temporary:
         folder = Path(temporary)
-        sources = '\n'.join(p.read_text() for p in (ROOT / 'native/windows-launcher').glob('*') if p.suffix in ('.cpp', '.hpp'))
+        sources = '\n'.join(p.read_text(encoding='utf-8') for p in (ROOT / 'native/windows-launcher').glob('*') if p.suffix in ('.cpp', '.hpp'))
         declarations = ['#pragma once']
         declarations += [f'inline const char* {name}="";' for name in sorted(set(re.findall(r'\bembedded_[a-z_0-9]+\b', sources)))]
         declarations += [f'extern "C" const unsigned char {name}[]={{0}};' for name in sorted(set(re.findall(r'\baide_(?:local_mounts|message_lan)_(?:begin|end)\b', sources)))]
-        (folder / 'embedded.hpp').write_text('\n'.join(declarations))
+        (folder / 'embedded.hpp').write_text('\n'.join(declarations), encoding='utf-8')
         command = folder / 'check.cmd'
         command.write_text('@echo off\ncall "' + installation + '\\Common7\\Tools\\VsDevCmd.bat" -arch=x64\n'
-            'if errorlevel 1 exit /b 1\ncl /nologo /std:c++17 /EHsc /I"' + str(folder) + '" "' + str(ROOT / 'native/windows-launcher/main.cpp') + '" "' + str(ROOT / 'native/windows-launcher/third_party/miniz/miniz_tinfl.c') + '" /Fe:launcher-test.exe /link advapi32.lib bcrypt.lib ws2_32.lib shell32.lib ole32.lib uuid.lib winhttp.lib user32.lib\n'
+            'if errorlevel 1 exit /b 1\ncl /nologo /utf-8 /std:c++17 /EHsc /I"' + str(folder) + '" "' + str(ROOT / 'native/windows-launcher/main.cpp') + '" "' + str(ROOT / 'native/windows-launcher/third_party/miniz/miniz_tinfl.c') + '" /Fe:launcher-test.exe /link advapi32.lib bcrypt.lib ws2_32.lib shell32.lib ole32.lib uuid.lib winhttp.lib user32.lib\n'
             'if errorlevel 1 exit /b 1\nlauncher-test.exe --self-test\n')
         subprocess.run(['cmd.exe', '/d', '/c', str(command)], check=True, cwd=folder)
+        binary = folder / 'launcher-test.exe'
+        for source in (False, True):
+            root = folder / ('source fixture' if source else 'release fixture')
+            root.mkdir()
+            if source:
+                (root / '.git').mkdir()
+            for action in ('start', 'stop', 'build', 'clean', 'docker_clean', 'release'):
+                result = subprocess.run([str(binary), action, '--root', str(root), '--dry-run'],
+                    cwd=folder, input='', capture_output=True, text=True, timeout=15)
+                allowed = source or action in ('start', 'stop', 'docker_clean')
+                assert (result.returncode == 0) == allowed, (source, action, result.stdout, result.stderr)
+                assert not (root / '.aide-data').exists(), 'dry run mutated launcher state'
+                if allowed:
+                    assert 'Dry run:' in result.stdout
     print('PASS real Win32 launcher compile/link and native self-test; fixture executable removed')
 
 

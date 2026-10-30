@@ -11,9 +11,13 @@ elif [[ $# != 1 ]]; then echo "Usage: $0 {stop|clean-cache} [--dry-run]" >&2; ex
 case "$MODE" in stop|clean-cache) ;; *) echo "Unknown maintenance action: $MODE" >&2; exit 2;; esac
 DOCKER_BIN="$(command -v docker || true)"
 if [[ -z "$DOCKER_BIN" && -x "$HOME/.docker/bin/docker" ]]; then DOCKER_BIN="$HOME/.docker/bin/docker"; fi
-[[ -n "$DOCKER_BIN" ]] || { echo "Docker CLI not found." >&2; exit 1; }
-"$DOCKER_BIN" info >/dev/null 2>&1 || { echo "Docker engine unavailable; maintenance did not start it." >&2; exit 1; }
+ENGINE_READY=1
+if [[ -z "$DOCKER_BIN" ]] || ! "$DOCKER_BIN" info >/dev/null 2>&1; then
+  ENGINE_READY=0
+  echo "Docker engine/CLI unavailable; container stop cannot be confirmed. Docker was not started." >&2
+fi
 if [[ "$MODE" == clean-cache ]]; then
+  (( ENGINE_READY )) || exit 1
   echo "Clearing unused build cache in the current Docker engine's default builder (shared by projects)."
   echo "Containers, images, volumes, settings, workspace files and offline archives are preserved."
   if (( DRY_RUN )); then echo "[dry-run] docker builder prune --all --force"; exit 0; fi
@@ -21,26 +25,38 @@ if [[ "$MODE" == clean-cache ]]; then
   exit
 fi
 if (( ! DRY_RUN )); then mkdir -p .cache; touch .cache/aide-manual-stop; fi
-# Exact Compose working-directory + service labels avoid other AIDE copies,
-# custom project names, Docmost, and unrelated containers. No Compose file needed.
-IDS="$(
-  for service in aide cad; do
-    "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT_LOGICAL" --filter "label=com.docker.compose.service=$service" || exit "$?"
-    if [[ "$ROOT_LOGICAL" != "$ROOT" ]]; then
-      "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT" --filter "label=com.docker.compose.service=$service" || exit "$?"
-    fi
-  done
-)"
+STOP_RESULT=$(( 1 - ENGINE_READY ))
+# Every service belonging to this root is part of the installation lifecycle,
+# including compose-hosted third-party plugins. Never guess by port or name.
+IDS=""
+if (( ENGINE_READY )); then
+if ! IDS="$(
+  "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT_LOGICAL" || exit "$?"
+  if [[ "$ROOT_LOGICAL" != "$ROOT" ]]; then
+    "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT" || exit "$?"
+  fi
+)"; then STOP_RESULT=1; fi
+fi
 IDS="$(printf '%s\n' "$IDS" | sort -u)"
-if (( DRY_RUN )); then printf '[dry-run] stop AIDE in %s; containers: %s\n' "$ROOT" "${IDS:-none}"; exit 0; fi
-if [[ -f scripts/local-mounts-control.sh ]]; then bash scripts/local-mounts-control.sh stop; fi
-if [[ -f scripts/message-lan-control.sh ]]; then bash scripts/message-lan-control.sh stop; fi
+if (( DRY_RUN )); then printf '[dry-run] stop AIDE in %s; containers: %s\n' "$ROOT" "${IDS:-none}"; exit "$STOP_RESULT"; fi
+# A helper failure must not prevent stopping the application or other plugins.
+for helper in local-mounts-control message-lan-control; do
+  if [[ -f "scripts/$helper.sh" ]]; then bash "scripts/$helper.sh" stop || STOP_RESULT=$?; fi
+done
+if [[ -f .aide-data/storage/data/host-components/codex-bridge.json && -f scripts/codex-host-control.cjs ]]; then
+  if command -v node >/dev/null 2>&1; then node scripts/codex-host-control.cjs stop --root "$ROOT" || STOP_RESULT=$?;
+  else echo 'Cannot confirm the registered Codex host component stopped: Node.js is unavailable.' >&2; STOP_RESULT=1; fi
+fi
 if [[ -n "$IDS" ]]; then
-  while IFS= read -r id; do [[ -z "$id" ]] || "$DOCKER_BIN" stop --time 30 "$id"; done <<< "$IDS"
-else echo "This AIDE copy is already stopped."; fi
+  while IFS= read -r id; do
+    [[ -z "$id" ]] || "$DOCKER_BIN" stop --time 30 "$id" || STOP_RESULT=$?
+  done <<< "$IDS"
+elif (( ENGINE_READY )); then echo "This AIDE copy has no running containers."; fi
 if [[ "$(uname -s)" == Darwin ]]; then
   for bridge in safari-bridge-control computer-bridge-control headless-browser-control; do
-    if [[ -f "scripts/$bridge.sh" ]]; then bash "scripts/$bridge.sh" stop; fi
+    if [[ -f "scripts/$bridge.sh" ]]; then bash "scripts/$bridge.sh" stop || STOP_RESULT=$?; fi
   done
 fi
-echo "AIDE stopped. Data and images retained; use the normal start launcher to resume."
+if (( STOP_RESULT )); then echo 'Some owned components did not confirm stop; inspect their local logs. Data retained.' >&2;
+else echo 'AIDE stopped. Connected workbenches erase their visible content; data and images retained.'; fi
+exit "$STOP_RESULT"

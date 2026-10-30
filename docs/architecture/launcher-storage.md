@@ -1,6 +1,6 @@
 # 启动目录持久化
 
-通过 `start.command`、`start.sh`、`start.ps1` 或开发启动脚本启动时，应用数据保存在启动器所在目录的 `.aide-data/`，不再依赖 Docker 命名卷。项目自己的 `.cache`、构建目录和仓库文件仍归项目管理；原生二进制的 `AIDE_DATA` 路径约定不变。
+通过 `start.command`、`start.sh`、`start.bat → aide-launcher.exe` 或开发启动脚本启动时，应用数据保存在启动器所在目录的 `.aide-data/`，不再依赖 Docker 命名卷。项目自己的 `.cache`、构建目录和仓库文件仍归项目管理；原生二进制的 `AIDE_DATA` 路径约定不变。
 
 | 宿主路径 | 容器路径及用途 |
 | --- | --- |

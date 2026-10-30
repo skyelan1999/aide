@@ -32,6 +32,7 @@ services:
       # Dedicated plugin phone TLS service; host relay opens LAN only during use.
       - "127.0.0.1::45841"
     environment:
+      AIDE_INSTALLATION_KIND: ${AIDE_INSTALLATION_KIND:-source}
       AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge
       AIDE_ASSISTANT_ENGINE: ${AIDE_ASSISTANT_ENGINE:-builtin}
       AIDE_ASSISTANT_TIMEZONE: ${AIDE_ASSISTANT_TIMEZONE:-UTC}

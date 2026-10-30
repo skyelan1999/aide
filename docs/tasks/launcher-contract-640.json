@@ -1,0 +1,135 @@
+{
+  "id": "launcher-contract-640",
+  "request": "我写了一个方案，请针对 issue640 的提案进行整改：标准 aide 启动器流程规范",
+  "baseline": "5446e616f04ea776bccfcb7b8c506758c8164be4",
+  "initial_status": "",
+  "acceptance": [
+    "Source and Release start never compile, including when legacy build environment variables are set; repeat healthy start opens existing workbench.",
+    "Source build is explicit and incremental, orchestrates runtime/host compilation and starts only the successfully built source image; failure never substitutes a Release.",
+    "Source clean clears build outputs/cache then builds; docker_clean removes only this installation runtime resources while preserving persistent user data.",
+    "Both packages provide stop and verify; stop cancels tasks, stops hosted daemons/owned helpers and removes sensitive active-page content.",
+    "Source packages expose release with existing version/tag/notes and trusted delivery workflow; source app upgrade is disabled; Release A/B remains supported.",
+    "All standard Windows interfaces execute the native C++ host and ship generated EXEs, with no PowerShell fallback.",
+    "Run focused lifecycle, real browser privacy, portable native and cross-compilation checks; keep native Windows acceptance distinct."
+  ],
+  "scope": [
+    "Root platform launcher wrappers",
+    "scripts/aide.sh, maintenance, build, diagnostics, packaging and focused tests",
+    "native/windows-launcher and existing compiler driver",
+    "Application shutdown privacy signal and runtime package capability",
+    "Current launcher/installation/update documentation and task evidence",
+    "scripts/auto-model-router-ui.test.cjs fixture compatibility with current main session selection module"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Issue #640 author proposal is the requested product contract; authenticated operator skyelan1999. Source/Release differences, command scope and acceptance are recorded.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/640"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Explicit source build uses installation-scoped buildx cache and source image; start only reopens/starts existing runtime. Windows compiles current native host inside Docker and selects an immutable checksum-verified executable. Stop prioritizes a terminal SSE privacy event, cancels work and stops hosted daemons before joining callers. Source package identity overrides Release-image A/B capability.",
+      "evidence": [
+        "scripts/launcher.py",
+        "native/windows-launcher/lifecycle_commands.hpp",
+        "internal/server/global_events.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented explicit source/Release command contracts, scoped build/cleanup, native Windows bootstrap/rebuild, source upgrade capability boundary and graceful stop privacy signal. Build applies the new verified image rather than reopening an old healthy image.",
+      "evidence": [
+        "scripts/launcher.py",
+        "native/windows-launcher/lifecycle_commands.hpp",
+        "scripts/test_launcher_contract.py",
+        "internal/server/runtime_shutdown_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Selected local and browser privacy acceptance pass; full PR gate remains required. CI exposed a stream-test framing assumption; corrected test only, product behavior unchanged. Native Windows runtime and actual production stop remain NOT_RUN.",
+      "evidence": [
+        "20 source/build/cleanup/release/actual ZIP assembly regressions pass",
+        "20 focused Go race tests and server vet pass in aide:ci-fulltest, no-network disposable source snapshot",
+        "35 production native core checks and 38 portable checks pass",
+        "Windows AMD64 and ARM64 cross-compilation and system-only PE imports pass; not Win32 execution",
+        "Latest-main integration: 20 focused Go race tests and server vet PASS, 16.435s",
+        "Actual Release ZIP assembly PASS inside the 20 launcher-contract cases; synthetic image boundary, no product image built",
+        "New main d012e092 introduced reasoningOptions; Auto router fixture now loads production session-model-selection.js, restoring its regression without changing product behavior",
+        "Final code 43e80b45: 311 quick PASS; fingerprint 6bdbc2800e6c365d6c1df7993b271a3dfedc4810da69a67961f162d0bc75ec65",
+        "Remote quick and windows checks PASS on 43e80b45; Windows includes real SDK compile/self-test and all standard command dry runs",
+        "Safari actual normal close and forced close-refusal to about:blank PASS; local beacon confirms document/token/session/file cleared, draft preserved and stream/command/call/live/voice disposal invoked",
+        "docs/reviews/2026-10-30-launcher-stop-privacy.md",
+        "Required full Go gate live status: https://github.com/skyelan1999/aide/actions/runs/41010514883 ; running at evidence snapshot, not claimed passed",
+        "CI 41012375360 on 73ef02b3: quick/windows PASS, full Go FAIL solely in TestAssistantResultTriggerRealHTTP because one TCP read returned the SSE connection comment. Consume complete frames until the session event instead; 30 consecutive race runs PASS (21.413s), server vet exit 0. Required full CI must rerun on updated head."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated current installation, maintenance, source update and Windows build guidance; canonical command matrix describes package identity, scoped resource ownership, privacy limits and existing release gates.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md",
+        "docs/docker-maintenance.md",
+        "docs/en/installation.md",
+        "native/windows-launcher/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed 63 implementation/docs paths plus one current-main test fixture adaptation; explicit staging, no generated EXE/log/private data included. Original dirty start.command and running 9999 image retained.",
+      "evidence": [
+        "git diff --check PASS",
+        "aide-aide-1 still aide:mixsoul-local-fa9550d6, running, 127.0.0.1:9999",
+        "Original checkout still feat/codex-plugin-host-615 with pre-existing M start.command"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No version bump, tag, public Release or production deployment is authorized in this implementation task. Main integration follows PR #643 and its live checks/review policy; this task file is an evidence snapshot rather than live GitHub merge state.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/643"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Not deployed. Revert the integration commit to restore former launcher behavior; preserve .env, .aide-data, offline archives and ownership receipts. Source build selects only an installation-scoped image after validation.",
+  "handoff": "PR #643 targets main. Safari component privacy acceptance passed after user enabled access; full Windows Docker Desktop and full-product runtime stop remain NOT_RUN. Keep #640 open. No tag, public Release or production deployment. Follow-up: SSE CI fixture now consumes complete frames; 30 race repetitions and vet pass. New full CI pending; no admin override authorization.",
+  "issue": 640,
+  "operator": "skyelan1999",
+  "proposal_url": "https://github.com/skyelan1999/aide/issues/640",
+  "safety": {
+    "original_checkout": "feat/codex-plugin-host-615 at 1d01dc56; pre-existing M start.command preserved",
+    "installed_9999": "No stop, cleanup, build replacement or deployment against this installation",
+    "cleanup_acceptance": "Only disposable synthetic owned fixtures/containers; no system/volume prune or unrelated workloads",
+    "release_authority": "Implement release entry only; do not invoke tag/publication/deployment",
+    "delivery": "Feature branch and PR targeting main; no protected-main bypass"
+  },
+  "integration_base": "d012e0928d095cbbfa31653299deace06f1bb839",
+  "pull_request": "https://github.com/skyelan1999/aide/pull/643",
+  "native_builds": {
+    "amd64": {
+      "bytes": 10001408,
+      "sha256": "1ca46d5443c3031cce1dc9de1d71902e3d5a3d7bd3f3b8518935c9de68eb0fce",
+      "machine": "0x8664"
+    },
+    "arm64": {
+      "bytes": 9204224,
+      "sha256": "957a2ea8027edab402473cf34817e3182dfd9de9444c3e7617502947ef22fee1",
+      "machine": "0xaa64"
+    }
+  },
+  "evidence_snapshot": {
+    "at": "2026-10-30T06:08:41.351299+00:00",
+    "code_revision": "43e80b45ea5844d6ddbb4b9a69873fdca08aa210",
+    "content_fingerprint": "6bdbc2800e6c365d6c1df7993b271a3dfedc4810da69a67961f162d0bc75ec65",
+    "remote_checks": {
+      "quick": "success",
+      "windows": "success",
+      "go": "in_progress"
+    },
+    "review_decision": "REVIEW_REQUIRED",
+    "main_integration": "pending; live PR state is authoritative"
+  }
+}

@@ -27,8 +27,8 @@ sys.exit('Forbidden unexpected operation: '+repr(a))
  def launcher(self,name):return str(self.root/name)
  def test_stop_exact_root_and_service(self):
   r=self.run_action(self.launcher('stop.command'));self.assertEqual(r.returncode,0,r.stderr)
-  self.assertEqual(self.calls()[1],['ps','-q','--filter','label=com.docker.compose.project.working_dir='+str(self.root),'--filter','label=com.docker.compose.service=aide'])
-  self.assertTrue(any('label=com.docker.compose.service=cad' in a for a in self.calls() if a[0]=='ps'))
+  self.assertEqual(self.calls()[1],['ps','-q','--filter','label=com.docker.compose.project.working_dir='+str(self.root)])
+  self.assertFalse(any('label=com.docker.compose.service=' in x for a in self.calls() for x in a), 'Stop must include owned hosted plugin services')
   self.assertEqual([a for a in self.calls() if a[0]=='stop'],[['stop','--time','30','one'],['stop','--time','30','two']]);self.assertTrue((self.root/'.cache/aide-manual-stop').exists())
  def test_existing_cli_dispatch_uses_same_scoped_stop(self):
   r=self.run_action(str(self.root/'scripts/aide.sh'),'stop','--dry-run');self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(self.calls()[1][0:2],['ps','-q']);self.assertFalse((self.root/'.cache').exists())
@@ -43,8 +43,12 @@ sys.exit('Forbidden unexpected operation: '+repr(a))
   r=self.run_action(self.launcher('clean-docker-cache.command'));self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(self.calls(),[['info'],['builder','prune','--all','--force']])
  def test_cache_preview(self):
   r=self.run_action(self.launcher('clean-docker-cache.command'),'--dry-run');self.assertEqual(r.returncode,0);self.assertEqual(self.calls(),[['info']])
- def test_engine_unavailable_never_starts_or_mutates(self):
-  self.env['ENGINE_EXIT']='1';r=self.run_action(self.launcher('stop.command'));self.assertNotEqual(r.returncode,0);self.assertEqual(self.calls(),[['info']]);self.assertFalse((self.root/'.cache').exists())
+ def test_engine_unavailable_still_stops_owned_helpers_and_blocks_restart(self):
+  (self.root/'scripts/message-lan-control.sh').write_text('#!/bin/sh\ntouch helper-stopped\n')
+  self.env['ENGINE_EXIT']='1';r=self.run_action(self.launcher('stop.command'));self.assertNotEqual(r.returncode,0);self.assertEqual(self.calls(),[['info']]);self.assertTrue((self.root/'.cache/aide-manual-stop').exists());self.assertTrue((self.root/'helper-stopped').exists())
+ def test_helper_failure_still_stops_application_containers(self):
+  (self.root/'scripts/message-lan-control.sh').write_text('#!/bin/sh\nexit 9\n')
+  r=self.run_action(self.launcher('stop.command'));self.assertEqual(r.returncode,9);self.assertEqual(len([c for c in self.calls() if c[0]=='stop']),2)
  def test_errors_propagate(self):
   self.env['PRUNE_EXIT']='7';r=self.run_action(self.launcher('clean-docker-cache.command'));self.assertEqual(r.returncode,7)
   self.env['STOP_EXIT']='8';r=self.run_action(self.launcher('stop.command'));self.assertEqual(r.returncode,8)

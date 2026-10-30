@@ -571,6 +571,7 @@ type App struct {
 	updateAPIBase             string
 	updatesMu                 sync.Mutex
 	eventMu                   sync.Mutex
+	runtimeStopping           atomic.Bool
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
 	globalSubs                map[chan string]struct{}                 // #60 全局 SSE 订阅者（sessions-changed）
 	knowledgeUpdates          knowledgeUpdateState                     // bounded live star-map snapshots
@@ -1156,6 +1157,7 @@ func New(work, reference, data string) (*App, error) {
 }
 func (a *App) Close() {
 	a.closeOnce.Do(func() {
+		a.beginRuntimeShutdown()
 		a.bgMu.Lock()
 		a.bgClosing = true
 		if a.bgCancel != nil {
@@ -1193,6 +1195,9 @@ func (a *App) Close() {
 			a.messages = nil
 		}
 		a.messageMu.Unlock()
+		if a.daemons != nil {
+			a.daemons.StopAll() // Release in-flight plugin IPC before joining callers.
+		}
 		a.bgWg.Wait()
 		a.mu.Lock()
 		for key, b := range a.pluginWorkbenchBridges {
@@ -1203,9 +1208,6 @@ func (a *App) Close() {
 
 		if a.webAuthn != nil {
 			a.webAuthn.Close()
-		}
-		if a.daemons != nil {
-			a.daemons.StopAll() // 协议 v1.2：终止常驻守护插件子进程并释放端口
 		}
 		a.closeTerminalMasterPins()
 		a.workspace.Close()
@@ -1768,6 +1770,10 @@ func (a *App) buildHandler() {
 			w.Header().Set("Strict-Transport-Security", hsts)
 		}
 		w.Header().Set("Cache-Control", "no-store")
+		if a.runtimeStopping.Load() {
+			fail(w, http.StatusServiceUnavailable, errors.New("Aide is stopping"))
+			return
+		}
 		if strings.HasPrefix(r.URL.Path, "/api/debug/") {
 			a.serveDebug(w, r) // 独立令牌/审计/脱敏；不走下方普通 access-token 校验
 			return
@@ -3286,22 +3292,18 @@ func Run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	go func() {
-		<-ctx.Done()
-		a.mu.Lock()
-		for _, cancel := range a.cancels {
-			cancel()
-		}
-		a.mu.Unlock()
-		c, done := context.WithTimeout(context.Background(), 8*time.Second)
-		defer done()
-		_ = s.Shutdown(c)
-		_ = redirectSrv.Close()
-		_ = rawLn.Close()
-	}()
 	log.Printf("aide listening on https://%s (单端口自适应 http→https 308); cert=%s; token saved in %s", s.Addr, certFile, AccessTokenPath(a.dataPath))
 	select {
 	case <-ctx.Done():
+		// Flush the privacy event before sockets/processes disappear. Close also
+		// cancels executions and stops hosted daemons before joining them.
+		a.Close()
+		c, done := context.WithTimeout(context.Background(), 8*time.Second)
+		defer done()
+		_ = s.Shutdown(c)
+		_ = s.Close()
+		_ = redirectSrv.Close()
+		_ = rawLn.Close()
 		return nil
 	case err := <-serveErr:
 		if errors.Is(err, http.ErrServerClosed) {

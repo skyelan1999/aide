@@ -27,3 +27,6 @@ plugins/surface.json
 plugins/*
 !plugins/testdata
 !plugins/testdata/**
+
+# Generated native entrypoint; compiled explicitly by the build target.
+aide-launcher.exe

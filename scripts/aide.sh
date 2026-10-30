@@ -3,14 +3,16 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
 MODE="${1:-start}"
+START_BUILT=0
+if [[ "$MODE" == start-built ]]; then START_BUILT=1; MODE=start; fi
 # source_sha：覆盖应用与构建资源；排除启动时重写的插件能力快照。
-# 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
+# 哈希写进镜像 label aide.srcsha，供显式 build 和打包核对当前输入。
 source_sha() {
   (
     find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/latest-release-runtime.py scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
+    for extra in build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/local-mounts-control.sh scripts/local-mounts-control.ps1 scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/prebuilt-image.ps1 scripts/latest-release-runtime.py scripts/resource-guard.sh scripts/resource-guard.ps1 start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh scripts/message-lan-control.ps1; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -56,6 +58,16 @@ record_prebuilt_image() {
   echo "候选镜像清单：${candidate}；公开附件验证通过后再更新默认下载清单。"
 }
 if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
+# #640: source compilation and delivery have their own explicit interfaces.
+case "$MODE" in
+  build|clean|docker_clean|verify|release) exec python3 scripts/launcher.py "$@" ;;
+esac
+# Legacy environment switches cannot turn start into a compiler entrypoint.
+if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
+  export AIDE_BUILD_FROM_SOURCE=0 AIDE_FORCE_REBUILD=0
+  if [[ -e .git || ( -f go.mod && -f Dockerfile ) ]]; then export AIDE_INSTALLATION_KIND=source;
+  else export AIDE_INSTALLATION_KIND=release; fi
+fi
 if [[ "$MODE" == stop || "$MODE" == clean-cache ]]; then
   exec bash scripts/aide-maintenance.sh "$@"
 fi
@@ -100,7 +112,13 @@ fi
 
 
 
-if [[ -f .aide-image ]]; then
+# A healthy owned instance is reopened before archive imports, migration or
+# package-image selection, including when a Release marker has changed.
+if [[ "$START_BUILT" != 1 && ( "$MODE" == start || "$MODE" == start-bundle || "$MODE" == start-image ) ]] && launcher_running_ready "$DOCKER_BIN"; then
+  MODE=start-image
+fi
+
+if [[ -f .aide-image && "${AIDE_INSTALLATION_KIND:-release}" == release ]]; then
   read -r BUNDLE_IMAGE BUNDLE_ID BUNDLE_PLATFORM BUNDLE_RELEASE_TAG < .aide-image
   if [[ "$MODE" == start ]] && launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
     export AIDE_IMAGE=aide:local
@@ -272,88 +290,23 @@ case "$MODE" in
     export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
     REUSE_RUNNING=0
     source scripts/prebuilt-image.sh
-    # Normal startup prefers a complete installed native runtime. Force/source
-    # requests bypass this reuse so updating code does not require deleting it.
-    if [[ "$MODE" == start && "${AIDE_FORCE_REBUILD:-0}" != 1 ]] && ! launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
-      IMG="$("$DOCKER_BIN" compose config --images aide)"
-      if launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
-        echo "== 本地完整镜像可用，直接复用；更新源码请强制重编译 =="
-        export AIDE_IMAGE="$IMG"
-        MODE=start-image
-      fi
-    fi
-    if [[ "$MODE" == start ]] && ! launcher_should_build_source "${AIDE_BUILD_FROM_SOURCE:-auto}" "$PROJECT_DIR"; then
-      if launcher_running_ready "$DOCKER_BIN"; then
-        echo "== Aide 已在运行且健康，直接打开现有界面；不下载或替换镜像 =="
-        REUSE_RUNNING=1
-      else
-        IMG="$("$DOCKER_BIN" compose config --images aide)"
-        if launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
-          echo "== 使用本地已安装的完整运行镜像；启动无需下载，更新请使用软件升级 =="
-        else
-          launcher_prebuilt_image "$DOCKER_BIN" "$IMG"
-        fi
-        export AIDE_IMAGE="$IMG"
-        MODE=start-image
-      fi
-    fi
-    if [[ "$REUSE_RUNNING" != 1 ]]; then
-    if [[ "$MODE" == start-image ]]; then
+    if [[ "$START_BUILT" != 1 ]] && launcher_running_ready "$DOCKER_BIN"; then
+      echo "== Aide 已在运行且健康，重新打开现有工作台 =="
+      REUSE_RUNNING=1
       IMG="$("$DOCKER_BIN" compose config --images aide)"
     else
-      export AIDE_VERSION="${AIDE_VERSION:-$(bash scripts/version.sh show)}"
-      if [[ -z "${AIDE_COMMIT:-}" ]]; then
-        AIDE_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf source-archive)"
-        if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then AIDE_COMMIT="${AIDE_COMMIT}-dirty"; fi
-        export AIDE_COMMIT
-      fi
-      # #43 快捷路径：比对镜像 aide.srcsha label 与当前源码哈希。
-      # 命中（镜像存在且构建输入未变）→ --no-build 直起，跳过 buildkit 上下文发送与层检查；
-      # 未命中 → --build（默认不跑全量 test；层缓存命中时仅 vet+增量 build，秒级）。
-      SRCSHA="$(source_sha)"
-      # Compose resolves shell variables and .env; never execute .env as shell code.
       IMG="$("$DOCKER_BIN" compose config --images aide)"
-      cur_label=""
-      if "$DOCKER_BIN" image inspect "$IMG" >/dev/null 2>&1; then
-        cur_label="$("$DOCKER_BIN" image inspect "$IMG" --format '{{ index .Config.Labels "aide.srcsha" }}' 2>/dev/null || true)"
-      fi
-      if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" && "${AIDE_FORCE_REBUILD:-0}" != 1 ]] && launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
-        echo "== 源码哈希未变（${SRCSHA}）→ 快捷路径：跳过构建，直接启动 =="
-      else
-        launcher_build_source() {
-        aide_check_disk build || return $?
-        echo "== 源码哈希变化（image=${cur_label:-<无>} → worktree=${SRCSHA}）→ 重新构建（默认不跑全量 test，仅 vet+build）=="
-        export AIDE_SRC_SHA="$SRCSHA"
-        if [[ "${AIDE_LOCAL_DEPENDENCIES:-1}" != 0 ]]; then
-          BUILD_SEED="$IMG"
-          # A cleared Docker engine may retain a complete bundle on the host.
-          # Recover only dependency layers, never activate that older application.
-          if ! launcher_local_runtime_ready "$DOCKER_BIN" "$IMG" && {
-            [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v2 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" != v2 ]];
-          }; then
-            seed_status=0
-            RECOVERED_SEED="$(launcher_local_build_seed "$DOCKER_BIN")" || seed_status=$?
-            if (( seed_status == 0 )); then BUILD_SEED="$RECOVERED_SEED";
-            elif (( seed_status != 3 )); then
-              echo "本地完整包依赖恢复失败；停止，不改用联网构建。" >&2; return "$seed_status"
-            fi
-          fi
-          base_status=0
-          LOCAL_BASE="$(bash scripts/prepare-local-base.sh "$BUILD_SEED")" || base_status=$?
-          if (( base_status == 0 )); then
-            export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
-            echo "== 使用完整本地依赖镜像，应用构建禁止联网 =="
-          elif (( base_status != 3 )); then
-            echo "本地依赖镜像准备失败；停止，不转为联网构建。" >&2; return "$base_status"
-          else
-            echo "== 首次缺少完整本地镜像；执行原始构建，完成后可固化本地依赖 =="
-          fi
+      if ! launcher_local_runtime_ready "$DOCKER_BIN" "$IMG"; then
+        if [[ "$AIDE_INSTALLATION_KIND" == source ]]; then
+          echo "当前源码安装缺少可用的已编译镜像；请先运行 build.command / build.sh。start 不会编译或替换成其他版本。" >&2
+        else
+          echo "缺少此 Release 的可用镜像；请恢复完整发行包及其校验过的镜像归档。" >&2
         fi
-        "$DOCKER_BIN" compose build aide
-        }
-        launcher_build_or_release "$DOCKER_BIN" "$IMG" launcher_build_source
+        exit 1
       fi
+      export AIDE_IMAGE="$IMG"
     fi
+    if [[ "$REUSE_RUNNING" != 1 ]]; then
     launcher_data_prepare "$DOCKER_BIN" "$IMG"
     MOUNT_OVERRIDE="$(bash scripts/local-mounts-control.sh prepare "$IMG")"
     if [[ -n "$MOUNT_OVERRIDE" ]];then
@@ -369,6 +322,7 @@ case "$MODE" in
       exit 1
     fi
     fi
+    if [[ "$REUSE_RUNNING" != 1 ]]; then
     bash scripts/local-mounts-control.sh start || echo "本地目录服务未启动，请检查 .aide-data/local-mounts/helper.log。"
     if command -v node >/dev/null 2>&1; then node scripts/codex-host-control.cjs start --root "$PROJECT_DIR" --image "$IMG" || echo "Codex host component unavailable; see launcher output."; else echo "Codex Bridge requires host Node.js 18+."; fi
     bash scripts/message-lan-control.sh start || echo "消息局域网桥未启动；聊天发现请检查 .aide-data/message-lan/bridge.log，工作台仍可使用。"
@@ -376,6 +330,7 @@ case "$MODE" in
       bash scripts/safari-bridge-control.sh start || echo "Safari 桥接未启动；Aide 其他功能仍可用。"
       bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
       bash scripts/headless-browser-control.sh start || echo "无头浏览器未启动；可先运行 bash scripts/headless-browser-control.sh install。"
+    fi
     fi
     for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
     if ! CONTAINER_HEALTH="$("$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz)"; then
@@ -425,9 +380,11 @@ case "$MODE" in
       echo 'AIDE 容器健康，但宿主 HTTPS 连接、证书或实例核对未通过；浏览器尚未打开。请检查端口发布、防火墙和启动目录证书。容器和数据已保留。' >&2
       exit 1
     fi
+    if [[ "$REUSE_RUNNING" != 1 ]]; then
     (nohup bash scripts/watch-port.sh >/dev/null 2>&1 </dev/null &)
-    if [[ -f .aide-image && -x scripts/update-agent.sh ]]; then
+    if [[ "$AIDE_INSTALLATION_KIND" == release && -f .aide-image && -x scripts/update-agent.sh ]]; then
       (nohup bash scripts/update-agent.sh >/dev/null 2>&1 </dev/null &)
+    fi
     fi
     # #31 数据分层后令牌位于 /data/auth/access-token；兼容旧路径，读取失败不中断启动
     TOKEN="$("$DOCKER_BIN" compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' || true)"
@@ -455,7 +412,7 @@ case "$MODE" in
     # Package the already-built image. Never include .env, host files or data volumes.
     IMG="$("$DOCKER_BIN" compose config --images aide)"
     if [[ "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.srcsha"}}')" != "$(source_sha)" ]]; then
-      echo "镜像与当前构建输入不一致，请先运行 start.command 完成构建。" >&2
+      echo "镜像与当前构建输入不一致，请先运行 build.command / build.sh 完成构建。" >&2
       exit 1
     fi
     IMAGE_ID="$("$DOCKER_BIN" image inspect "$IMG" --format '{{.Id}}')"
@@ -473,8 +430,8 @@ case "$MODE" in
     mkdir -p "$BUNDLE/scripts" "$BUNDLE/docker-images" "$BUNDLE/workspace" "$BUNDLE/context"
     cp "$WINDOWS_LAUNCHER" "$BUNDLE/aide-launcher.exe"
     cp scripts/codex-host-control.cjs scripts/windows-launcher-asset.sh "$BUNDLE/scripts/"
-    cp start.command start.sh start.bat stop.command stop.sh stop.bat clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat "$BUNDLE/"
-    cp scripts/aide-maintenance.sh "$BUNDLE/scripts/"
+    cp start.command start.sh start.bat stop.command stop.sh stop.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat "$BUNDLE/"
+    cp scripts/launcher.py scripts/aide-maintenance.sh "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/update-agent.sh scripts/message-lan-control.sh "$BUNDLE/scripts/"
     cp scripts/launcher-data.sh scripts/launcher-data.py scripts/prebuilt-image.sh scripts/resource-guard.sh "$BUNDLE/scripts/"
     cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js \
@@ -506,5 +463,5 @@ case "$MODE" in
     echo "离线启动包已导出：$ARCHIVE"
     ;;
   load) "$DOCKER_BIN" image load -i "$PROJECT_DIR/docker-images/aide-local.tar.gz" ;;
-  *) echo "用法：scripts/aide.sh {start|start-image|start-bundle|stop|clean-cache|status|logs|test|export|export-bundle|load|source-sha}" >&2; exit 1 ;;
+  *) echo "用法：scripts/aide.sh {start|stop|build|clean|docker_clean|verify|release|start-image|start-bundle|clean-cache|status|logs|test|export|export-bundle|load|source-sha}" >&2; exit 1 ;;
 esac

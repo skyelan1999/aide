@@ -111,21 +111,21 @@ flowchart TD
 
 ## 4. Build, test, and release gate (source development)
 
-`bash scripts/aide.sh start` is already optimized for the startup hot path; you do not need the details below to use it. They describe how it works and the offline/release caveats.
+The [standard launcher contract](../architecture/launcher-contract.md) separates source compilation from everyday startup.
 
-**Two launch modes**
-
-| Command | Behavior | Use when |
+| Command | Source package | Release package |
 | --- | --- | --- |
-| `bash scripts/aide.sh start` | Build from source. Hashes the Go source set (cmd+internal+go.mod/go.sum/vendor + Dockerfile/compose.yaml) and stores it in the image label `aide.srcsha`; on a second launch with an unchanged hash it goes straight up with `--no-build` (skips buildkit, seconds to ready), and rebuilds only when the hash changes | You changed source locally |
-| `bash scripts/aide.sh start-image` | Start the imported image with `--no-build --pull never`; never builds/pulls | Release image / offline machine |
+| `start` | Reopen a healthy instance or start a validated installed image; never compile | Reopen/start; import the packaged image when needed; never compile |
+| `build` | Incremental runtime build, plus native Windows host on Windows; verify and automatically start | Not shipped |
+| `stop` | Cancel work, stop owned helpers/plugins/containers and clear connected pages | Same |
+| `clean` | Remove owned cache/images, then build | Not shipped |
+| `docker_clean` | Remove this installation's Docker environment, preserving user data | Same; retain offline archive for recovery |
+| `verify` | Report version, Docker/Compose/configuration and runtime health | Same |
+| `release` | Dispatch existing delivery workflow for a clean, tagged, gated main commit with reviewed notes | Not shipped |
 
-**Tests and the release gate (#43)**
+Use `bash build.sh` after cloning or `git pull`; use `bash start.sh` for everyday access. On macOS use `.command`, on Windows use `.bat`. Windows commands call the native C++ executable; the first Git `build.bat` bootstraps it inside Docker. No host PowerShell/Python/compiler is required. Legacy build environment variables cannot make start compile. Builds use an installation-scoped Buildx cache and image; the first build needs BuildKit, base images and dependencies. Shared host image tags alone do not guarantee an offline build.
 
-- The default `start` Docker build **does not run the full `go test`** (`AIDE_RUN_TESTS=0`); it only runs `go vet` + incremental `go build`. After a frontend/Go change the layer cache hits, so vet+build is ~5s and end-to-end ~12s; an unchanged second start takes the quick path at ~3s.
-- The full `go test` moved from "every startup" to "the release gate": `scripts/docker-release.sh` and CI builds **must** pass `--build-arg AIDE_RUN_TESTS=1` to force the full suite (~160s) before shipping. The gate is not bypassed.
-- To run the full suite locally (with the race detector) manually: `bash scripts/aide.sh test` (in-container `go test -race -count=1 ./... && go vet ./...`).
-- To enable tests for one build: `AIDE_RUN_TESTS=1 bash scripts/aide.sh start`.
+For full race/vet checks use `python3 scripts/agent-route.py verify full`; publication continues to use the existing version and delivery gates. `AIDE_RUN_TESTS=1 bash scripts/aide.sh build` enables the image build's full Go tests.
 
 **Runtime pip layer caching and offline (#46)**
 
@@ -145,7 +145,7 @@ AIDE_CONTEXT=/absolute/path/to/references
 AIDE_LOCAL_ROOT=/absolute/path/to/projects
 ```
 
-For subsequent image runs use `bash scripts/aide.sh start-image`. For custom source, set a separate image name such as `my-aide:local` and use `bash scripts/aide.sh start`. Do not rebuild custom code under a published release label.
+For subsequent image runs use `bash scripts/aide.sh start`. Apply custom source changes with `bash scripts/aide.sh build`; it selects an installation-scoped source image instead of overwriting a published release label.
 
 The workspace and local roots are writable. References mounted at `/context` are read-only. Sessions, keys, rates, and configuration are in the `/data` volume; development caches are in `/home/aide`. An image archive is not a data backup.
 

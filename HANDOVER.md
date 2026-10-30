@@ -20,8 +20,9 @@ bash scripts/aide.sh status
 
 ## 本地运行与诊断
 
-- 常规启动：`./start.command` 或 `bash scripts/aide.sh start`。Git 开发仓库自动对比源码哈希：有变化就构建并更新，没有变化就跳过构建。离线发行包/非 Git 安装复用健康实例或本地完整镜像，缺少镜像时才获取经校验的预构建包。
-- 应用源码修改并更新本机：`AIDE_BUILD_FROM_SOURCE=1 ./start.command`。可显式强制选择源码路径；`AIDE_BUILD_FROM_SOURCE=0` 则只用已安装版本。原数据挂载保留，执行前确认目标实例和更新授权。
+- 常规启动：`./start.command` 或 `bash scripts/aide.sh start`。只复用/启动已安装的镜像，健康实例直接重新打开工作台；不编译，也不因源码变化自动构建。
+- 源码首次构建或 `git pull` 后应用改动：`./build.command` / `bash scripts/aide.sh build`；Windows 使用 `build.bat`。成功校验后自动启动新源码镜像，失败不替换为 Release。旧 `AIDE_BUILD_FROM_SOURCE` 开关不能让 start 编译。
+- `clean` 清除本安装构建缓存与可移除镜像后调用 build；`docker_clean` 清除本安装 Docker 环境，不重新构建。保留用户持久数据与离线归档，见[接口规范](docs/architecture/launcher-contract.md)。
 - 只读状态：`bash scripts/aide.sh status`；日志：`bash scripts/aide.sh logs`。
 - 默认端口 `8097`，由 `.env` 的 `AIDE_PORT` 控制。生产或用户正在使用的服务不得作为测试实例；在临时实例上验证。
 - Go 服务嵌入前端。改动后必须重建目标测试镜像；仅刷新页面不会更新旧二进制。

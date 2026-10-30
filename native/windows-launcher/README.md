@@ -20,9 +20,20 @@ aide-launcher.exe --root "C:\path with spaces\aide" --project my-install
 The default root is the executable's directory. An empty directory can bootstrap
 from a validated local image or the embedded, SHA256-pinned official image
 manifest. Existing Compose/environment files and data remain in place. Explicit
-source builds use `AIDE_BUILD_FROM_SOURCE=1` or `--force-build` and the same source
-fingerprint inventory as the POSIX launcher. Normal startup prefers a validated
-local runtime or the published runtime. No native failure silently invokes PS1.
+source builds use `build.bat` or `aide-launcher.exe build`. `start` never compiles,
+even with legacy build environment variables; a missing source runtime instructs
+build instead of substituting a Release. `--force-build` is valid only for build
+or clean. The [standard contract](../../docs/architecture/launcher-contract.md)
+defines start/stop/build/clean/docker_clean/verify/release and package differences.
+
+First Git `build.bat` can bootstrap a missing EXE entirely inside Docker. The
+native host then incrementally builds the runtime and the current host using an
+installation-scoped Buildx builder. A verified immutable host under
+`.aide-data/native/compiled` receives subsequent commands via a checksum-verified
+receipt. Build success applies the new image before opening the workbench;
+ordinary repeated start only reopens a healthy instance. New Release packages
+ship start/stop/docker_clean/verify and the generated EXE, with source-only build,
+clean and release omitted. No native failure silently invokes PS1.
 
 ## One distributed executable, concurrent tasks
 

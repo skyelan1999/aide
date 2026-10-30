@@ -4,6 +4,7 @@
 
 | 当前文档 | 范围 |
 | --- | --- |
+| 启动、编译、停止、清理与发布接口 | [标准启动器接口](architecture/launcher-contract.md) · [Docker 维护](docker-maintenance.md) |
 | [功能说明](features.md) | 工作台、文档绑定、管理权限、消息、助理与语音 |
 | [实际截图演示](demo-guide.md) | 按真实操作顺序演示，未执行步骤明确标出 |
 | [当前交互设计](design/current-workbench.md) | 根据实际界面描述布局与交互 |

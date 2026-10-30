@@ -99,13 +99,13 @@ AIDE_LOCAL_ROOT=/absolute/path/to/your/projects
 
 **挂载范围要点**：仓库的 Compose 默认 `AIDE_LOCAL_ROOT=$HOME`，即将整个用户主目录可读写挂载到 `/local`。按需改为较小的已存在目录；容器命令和可信插件能访问其权限内的挂载内容。`/context` 保持只读。
 
-### 3. 启动并登录
+### 3. 构建、启动并登录
 
 ```bash
-bash scripts/aide.sh start
+bash scripts/aide.sh build
 ```
 
-macOS 也可以双击 `start.command`。脚本会构建并启动容器，打开浏览器完成本地令牌登录。默认地址为 `http://127.0.0.1:8097`。首次构建需要下载基础镜像；启动会重建当前源码，不是只读查看操作。
+源码目录首次运行或 `git pull` 后执行 `build`（macOS 双击 `build.command`，Windows 运行 `build.bat`），增量构建成功后自动启动。日常使用 `start.command` / `start.sh` / `start.bat`：只启动已安装镜像，已运行时重新打开工作台，不编译代码或镜像。Release 完整包直接使用 `start`。默认地址为 `https://localhost:8097`。首次源码构建需要获取基础镜像与依赖，详见[标准启动器接口](docs/architecture/launcher-contract.md)。
 
 **macOS 发布包首次启动**：当前 ZIP 尚未使用 Apple Developer ID 签名并公证，Safari 下载后可能被 Gatekeeper 拦截。仅在确认文件来自 aide 官方 Release 且未被篡改后，先尝试运行一次 `start.command`，再打开「系统设置 → 隐私与安全性」，在“安全性”区域选择仍要打开并确认。若系统没有提供“仍要打开”，可在终端切换到解压后的包目录，只移除启动脚本的隔离标记：`xattr -d com.apple.quarantine start.command`，然后双击启动。不要对来源不明的软件执行此操作。免此提示分发需要配置 Developer ID 签名和 Apple 公证。
 

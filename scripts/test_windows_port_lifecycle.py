@@ -46,7 +46,7 @@ class WindowsPortLifecycleTests(unittest.TestCase):
             self.assertNotIn('.ps1', text)
             self.assertNotIn('powershell', text.lower())
         packager = (ROOT / "scripts/package-release-assets.sh").read_text()
-        self.assertIn('LAUNCHERS=(start.bat stop.bat clean-docker-cache.bat)', packager)
+        self.assertIn('LAUNCHERS=(start.bat stop.bat docker_clean.bat verify.bat)', packager)
         self.assertIn('"$WINDOWS_LAUNCHER" "$PACKAGE/aide-launcher.exe"', packager)
         self.assertIn('"$ROOT/scripts/watch-port.sh"', packager)
         self.assertNotIn('.ps1', packager)
