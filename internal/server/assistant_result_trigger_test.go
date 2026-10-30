@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"io"
@@ -120,9 +121,24 @@ func TestAssistantResultTriggerRealHTTP(t *testing.T) {
 			return
 		}
 		defer res.Body.Close()
-		buf := make([]byte, 4096)
-		n, _ := res.Body.Read(buf)
-		done <- string(buf[:n])
+		// SSE is a stream: the connection comment may be its own TCP read.
+		// Keep consuming complete frames until this session's notification arrives.
+		scanner := bufio.NewScanner(res.Body)
+		var frame strings.Builder
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" {
+				if strings.Contains(frame.String(), id) {
+					done <- frame.String()
+					return
+				}
+				frame.Reset()
+			} else {
+				frame.WriteString(line)
+				frame.WriteByte('\n')
+			}
+		}
+		done <- frame.String()
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
