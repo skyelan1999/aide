@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Execute the standard launcher coordinator with owned external boundaries."""
 import importlib.util
+import contextlib
+import io
+import time
 import json
 import os
 from pathlib import Path
@@ -37,7 +40,7 @@ class BoundaryLauncher(module.Launcher):
         self.tagged = 'd' * 40
         self.gate = True
 
-    def call(self, args, capture=False, check=True, timeout=180, env=None):
+    def call(self, args, capture=False, check=True, timeout=180, env=None, progress=None):
         args = [str(x) for x in args]
         self.commands.append(args)
         short = args[1:]
@@ -99,6 +102,31 @@ class LauncherContractTests(unittest.TestCase):
         (self.root / 'version.md').write_text('# aide 版本记录\n\n**当前版本：0.1.17.6 RC1**\n')
         (self.root / '.env.example').write_text('AIDE_IMAGE=aide:previous\nUSER_SETTING=preserved\n')
         self.launcher = BoundaryLauncher(self.root)
+
+    def test_slow_fingerprint_shows_progress_without_polluting_digest(self):
+        output = io.StringIO()
+        with patch.object(module, 'PROGRESS_INTERVAL', .05), contextlib.redirect_stderr(output):
+            digest = module.Launcher.call(self.launcher,
+                [sys.executable, '-c', 'import time;time.sleep(.16);print("c"*64)'],
+                capture=True, timeout=2, progress='Computing source fingerprint')
+        self.assertEqual(digest, FINGERPRINT)
+        self.assertIn('仍在读取源码', output.getvalue())
+        self.assertIn('源码指纹计算完成', output.getvalue())
+
+    def test_fingerprint_timeout_kills_pipeline_descendants(self):
+        pidfile = self.root / 'child.pid'
+        script = 'sleep 30 & child=$!; echo "$child" > "$1"; wait'
+        with patch.object(module, 'PROGRESS_INTERVAL', .05), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                module.Launcher.call(self.launcher, ['bash', '-c', script, 'fixture', str(pidfile)],
+                                    capture=True, timeout=1.5, progress='Computing source fingerprint')
+        pid = pidfile.read_text().strip()
+        for _ in range(20):
+            state = subprocess.run(['ps', '-p', pid, '-o', 'stat='], text=True, capture_output=True).stdout.strip()
+            if not state or state.startswith('Z'):
+                break
+            time.sleep(.05)
+        self.assertTrue(not state or state.startswith('Z'), state)
 
     def test_build_is_explicit_scoped_and_starts_verified_source(self):
         self.launcher.build()

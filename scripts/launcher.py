@@ -11,12 +11,15 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE_ID = re.compile(r"sha256:[a-f0-9]{64}\Z")
+PROGRESS_INTERVAL = 10
 CONTAINER_ID = re.compile(r"[a-f0-9]{12,64}\Z")
 
 
@@ -62,7 +65,9 @@ class Launcher:
         self.receipt = self.state / 'owner.json'
         self.docker = shutil.which('docker') or str(Path.home() / '.docker/bin/docker')
 
-    def call(self, args, capture=False, check=True, timeout=180, env=None):
+    def call(self, args, capture=False, check=True, timeout=180, env=None, progress=None):
+        if progress:
+            return self.capture_with_progress(args, timeout, env, progress)
         result = subprocess.run(args, cwd=self.root, env=env, text=True,
                                 stdout=subprocess.PIPE if capture else None,
                                 stderr=subprocess.PIPE if capture else None,
@@ -70,6 +75,42 @@ class Launcher:
         if check and result.returncode:
             raise RuntimeError(f'{Path(args[0]).name} {args[1] if len(args) > 1 else ""} failed ({result.returncode}); see local launcher output')
         return result.stdout.strip() if capture and result.returncode == 0 else result
+
+    def capture_with_progress(self, args, timeout, env, progress):
+        """Keep slow source reads visible and reap the whole reader pipeline."""
+        print(progress, file=sys.stderr, flush=True)
+        started = time.monotonic()
+        with subprocess.Popen(args, cwd=self.root, env=env, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              start_new_session=True) as process:
+            try:
+                while True:
+                    remaining = timeout - (time.monotonic() - started)
+                    if remaining <= 0:
+                        raise subprocess.TimeoutExpired(args, timeout)
+                    try:
+                        out, err = process.communicate(timeout=min(PROGRESS_INTERVAL, remaining))
+                        break
+                    except subprocess.TimeoutExpired:
+                        elapsed = int(time.monotonic() - started)
+                        print(f'AIDE: 仍在读取源码计算指纹（{elapsed} 秒）；云盘目录可能需要下载文件。',
+                              file=sys.stderr, flush=True)
+            except (subprocess.TimeoutExpired, KeyboardInterrupt):
+                # A shell pipeline has grandchildren; killing only bash leaves
+                # shasum/xargs reading cloud files after the launcher has exited.
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.communicate()
+                raise
+        if process.returncode:
+            if err:
+                print(err.rstrip(), file=sys.stderr, flush=True)
+            raise RuntimeError('Source fingerprint failed; build was not started')
+        print(f'AIDE: 源码指纹计算完成（{time.monotonic() - started:.1f} 秒）。',
+              file=sys.stderr, flush=True)
+        return out.strip()
 
     def d(self, *args, **kwargs):
         return self.call([self.docker, *args], **kwargs)
@@ -128,12 +169,15 @@ class Launcher:
             print(json.dumps({'action': 'build', 'builder': self.builder, 'image': self.image,
                               'steps': ['compile current source and embedded host components', 'verify image identity', 'start']}, indent=2))
             return
+        print('AIDE: 检查 Docker 和可用磁盘空间…', flush=True)
         self.d('info', capture=True)
         self.call(['bash', '-ec', 'source scripts/resource-guard.sh; aide_check_disk build "$1"',
                    'aide-build-disk', str(self.root)])
-        source = self.call(['bash', 'scripts/aide.sh', 'source-sha'], capture=True)
+        source = self.call(['bash', 'scripts/aide.sh', 'source-sha'], capture=True, timeout=1800,
+                           progress='AIDE: 正在读取源码计算构建指纹；此阶段尚未进入 Docker 编译…')
         if not re.fullmatch(r'[a-f0-9]{64}', source):
             raise ValueError('Invalid current source fingerprint')
+        print('AIDE: 读取构建配置，准备专用构建器…', flush=True)
         display, _ = version(self.root)
         commit = self.call(['git', 'rev-parse', 'HEAD'], capture=True)
         if self.call(['git', 'status', '--porcelain'], capture=True):
@@ -151,6 +195,7 @@ class Launcher:
         for key, value in sorted(arguments.items()):
             if value is not None:
                 command += ['--build-arg', key + '=' + str(value)]
+        print('AIDE: 开始 Docker 源码构建…', flush=True)
         self.d(*command, '.', timeout=7200)
         metadata = json.loads(self.d('image', 'inspect', self.image, '--format', '{{json .}}', capture=True))
         labels = metadata.get('Config', {}).get('Labels', {})
@@ -295,6 +340,9 @@ def main():
         else:
             return getattr(launcher, args.action)() or 0
         return 0
+    except KeyboardInterrupt:
+        print('AIDE: 构建已取消。', file=sys.stderr, flush=True)
+        return 130
     except (ValueError, RuntimeError, OSError, subprocess.SubprocessError) as error:
         print(str(error), file=sys.stderr)
         return 1

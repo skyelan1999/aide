@@ -9,7 +9,8 @@
     "Actually execute all seven native POSIX entrypoints: cold build, healthy reopen/start, running/stopped verify, stop, cold clean rebuild, scoped docker_clean and release rejection without publication.",
     "Verify pinned HTTPS health, served HTML, authenticated read-only API, stable healthy reopen, persistent-data sentinels and unrelated Docker image preservation.",
     "Run macOS locally and Linux in an isolated CI runner. Windows actual host testing deferred by direct user answer: 暂时没有，后面测; retain actual CMD/native SDK CI regression separately.",
-    "Report real platform tests, boundary fixtures, deferred and release/deployment states separately; never use dry-run/mock Docker as proof of full build acceptance."
+    "Report real platform tests, boundary fixtures, deferred and release/deployment states separately; never use dry-run/mock Docker as proof of full build acceptance.",
+    "Follow-up: show an immediate stage banner and a 10-second heartbeat during slow source hashing; preserve digest stdout; timeout/interruption must reap source-reader descendants."
   ],
   "scope": [
     "scripts/launcher.py, scripts/resource-guard.sh, focused tests, opt-in real Docker acceptance runner, Linux CI job and canonical task/review docs.",
@@ -35,7 +36,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Explicit project-root propagation and safe disk fallback implemented; online pip whole-install retries bounded at three without index/pin changes. Added opt-in real acceptance and required Linux launcher CI lane; corrected stale start/build documentation.",
+      "summary": "Explicit project-root propagation and safe disk fallback implemented; online pip whole-install retries bounded at three without index/pin changes. Added opt-in real acceptance and required Linux launcher CI lane; corrected stale start/build documentation. Follow-up fixes silent source hashing with immediate stage banners, 10-second wait feedback, a bounded 30-minute source-read timeout and process-group cleanup.",
       "evidence": [
         "scripts/launcher.py",
         "scripts/resource-guard.sh",
@@ -46,7 +47,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Final uninterrupted macOS and Linux clean-environment acceptance each passed 17 actual launcher calls and two cold builds, with real host HTTPS/HTML/authenticated API, reopen, stop, deep data/directory sentinel preservation, and scoped cleanup. macOS 284.75s build/203.99s clean; Linux 301.02s/309.27s. Release genuine rejection plus valid synthetic local dry-run/dirty refusal tested; no publication. 9 resource, 21 launcher/package, 3 pip, 22 CI contract and 66 portable native checks passed. All required code-commit CI (quick/go/windows/launcher/gate at 685c5e1e) passed. Current-head CI and normal review remain separate PR gates; Windows actual host deferred by explicit user answer.",
+      "summary": "Final uninterrupted macOS and Linux clean-environment acceptance each passed 17 actual launcher calls and two cold builds, with real host HTTPS/HTML/authenticated API, reopen, stop, deep data/directory sentinel preservation, and scoped cleanup. macOS 284.75s build/203.99s clean; Linux 301.02s/309.27s. Release genuine rejection plus valid synthetic local dry-run/dirty refusal tested; no publication. 9 resource, 21 launcher/package, 3 pip, 22 CI contract and 66 portable native checks passed. All required code-commit CI (quick/go/windows/launcher/gate at 685c5e1e) passed. Current-head CI and normal review remain separate PR gates; Windows actual host deferred by explicit user answer. Follow-up: 23 launcher tests include real slow-child heartbeat/digest and timeout descendant cleanup; original-path PTY showed immediate banners and transition into real Docker build. Native Terminal app visual access was denied by computer-use policy, so native window acceptance is NOT_RUN. Earlier cold runs remain historical evidence for their recorded source, not the new follow-up commit.",
       "evidence": [
         "docs/reviews/2026-10-31-launcher-clean-acceptance-654.md",
         "https://github.com/skyelan1999/aide/actions/runs/41088223840/job/124175647603",
@@ -84,7 +85,7 @@
     }
   },
   "release_authorization": "User authorized fixing and full clean-environment testing. No admin exception, actual release, tag or production deployment authorized.",
-  "rollback": "Revert only this repair; original checkout and user data remain untouched. Dedicated acceptance project can be stopped/removed by its ownership metadata; no global prune.",
+  "rollback": "Original checkout has a local repair recorded with per-file hashes in .agent-state/launcher-clean-654/local-repair.json. Reverse only owned changes when hashes match, preserving pre-existing start.command, task files and all user data.",
   "handoff": "All seven POSIX launcher interfaces passed in fresh macOS and Linux environments, each 17 real calls and two cold builds. Original local source fix is applied and recorded, preserving unrelated edits and user data. Windows actual Docker Desktop run explicitly deferred by user; fixture CI separate. Keep #654 open pending main merge and #649 open for Windows real-host acceptance. Review PR #650 current-head CI/review gates before any merge; no admin authorization yet.",
   "issue": 654,
   "operator": "skyelan1999",
