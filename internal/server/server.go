@@ -699,6 +699,7 @@ func (a *App) probeEdgeAsync() {
 type Pricing struct {
 	PriceIn  float64 `json:"priceIn"`
 	PriceOut float64 `json:"priceOut"`
+	Currency string  `json:"currency,omitempty"`
 }
 
 // PricingState 服务端计价状态：按模型费率 + 未配置模型的刊例默认价。
@@ -717,6 +718,7 @@ type TokenCallRec struct {
 	Time             string  `json:"time"`
 	Model            string  `json:"model"`
 	Provider         string  `json:"provider,omitempty"`
+	Currency         string  `json:"currency,omitempty"`
 	Prompt           int     `json:"prompt"`
 	CacheHit         int     `json:"cacheHit,omitempty"`
 	CacheMiss        int     `json:"cacheMiss,omitempty"`
@@ -1016,7 +1018,7 @@ func New(work, reference, data string) (*App, error) {
 			log.Printf("token-stats.json 缺少有效 days（保留原文件，未清零）")
 		}
 	}
-	a.pricing = PricingState{Rates: map[string]Pricing{}, Default: Pricing{PriceIn: 2, PriceOut: 8}}
+	a.pricing = PricingState{Rates: map[string]Pricing{}, Default: Pricing{PriceIn: 2, PriceOut: 8, Currency: "CNY"}}
 	if b, err := os.ReadFile(TokenPricingPath(data)); err == nil {
 		var raw map[string]json.RawMessage
 		if json.Unmarshal(b, &raw) != nil {
@@ -1025,6 +1027,9 @@ func New(work, reference, data string) (*App, error) {
 			// 旧单费率格式：整体迁移为默认刊例价，不冒充任何模型的精确费率
 			var legacy Pricing
 			if json.Unmarshal(b, &legacy) == nil && legacy.PriceIn >= 0 && legacy.PriceOut >= 0 {
+				if legacy.Currency == "" {
+					legacy.Currency = "CNY"
+				}
 				a.pricing.Default = legacy
 				log.Printf("token-pricing.json 旧单费率已迁移为默认刊例价")
 			}
@@ -1035,18 +1040,29 @@ func New(work, reference, data string) (*App, error) {
 					pr.Rates = map[string]Pricing{}
 				}
 				for m, v := range pr.Rates {
-					if !validSupportPrice(v.PriceIn) || !validSupportPrice(v.PriceOut) {
+					if v.Currency == "" {
+						v.Currency = "CNY"
+						pr.Rates[m] = v
+					}
+					if !validSupportPrice(v.PriceIn) || !validSupportPrice(v.PriceOut) || !validSupportCurrency(v.Currency) {
 						delete(pr.Rates, m) // 非法费率不采纳
 					}
 				}
 				for k, v := range pr.KeyRates {
 					var parts []string
-					if json.Unmarshal([]byte(k), &parts) != nil || len(parts) != 3 || !validSupportPrice(v.PriceIn) || !validSupportPrice(v.PriceOut) {
+					if v.Currency == "" {
+						v.Currency = "CNY"
+						pr.KeyRates[k] = v
+					}
+					if json.Unmarshal([]byte(k), &parts) != nil || len(parts) != 3 || !validSupportPrice(v.PriceIn) || !validSupportPrice(v.PriceOut) || !validSupportCurrency(v.Currency) {
 						delete(pr.KeyRates, k)
 					}
 				}
-				if !validSupportPrice(pr.Default.PriceIn) || !validSupportPrice(pr.Default.PriceOut) {
-					pr.Default = Pricing{PriceIn: 2, PriceOut: 8}
+				if pr.Default.Currency == "" {
+					pr.Default.Currency = "CNY"
+				}
+				if !validSupportPrice(pr.Default.PriceIn) || !validSupportPrice(pr.Default.PriceOut) || !validSupportCurrency(pr.Default.Currency) {
+					pr.Default = Pricing{PriceIn: 2, PriceOut: 8, Currency: "CNY"}
 				}
 				a.pricing = pr
 			}
@@ -3321,13 +3337,18 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 		entry = scoped
 		configured = true
 	}
-	rec := TokenCallRec{ProviderID: u.ProviderID, KeyID: u.KeyID, KeyLabel: u.KeyLabel, Time: now.UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, CacheHit: u.CacheHit, CacheMiss: u.CacheMiss, CacheKnown: u.CacheKnown, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, CostEstimated: u.Estimated, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
+	currency := entry.Currency
+	if currency == "" {
+		currency = "CNY"
+	}
+	rec := TokenCallRec{ProviderID: u.ProviderID, KeyID: u.KeyID, KeyLabel: u.KeyLabel, Time: now.UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Currency: currency, Prompt: u.Prompt, CacheHit: u.CacheHit, CacheMiss: u.CacheMiss, CacheKnown: u.CacheKnown, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, CostEstimated: u.Estimated, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
 	if configured {
 		rec.RateSource = "custom"
 	} else {
 		rec.RateSource = "default-estimate"
 	}
 	if quote != nil {
+		rec.Currency = quote.Currency
 		rec.RateSource = "plugin:" + quote.Source + ":" + quote.Revision
 		rec.Defaulted = false
 		rec.Peak = quote.Peak
@@ -3414,6 +3435,7 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 		Model      string   `json:"model"`
 		PriceIn    *float64 `json:"priceIn"`
 		PriceOut   *float64 `json:"priceOut"`
+		Currency   string   `json:"currency"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -3452,6 +3474,13 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("费率必须 ≥ 0（0 为合法免费，不等于留空）"))
 		return
 	}
+	if in.Currency == "" {
+		in.Currency = "CNY"
+	}
+	if !validSupportCurrency(in.Currency) {
+		fail(w, 400, errors.New("currency must be CNY or USD"))
+		return
+	}
 	if in.ProviderID == "" && in.KeyID != "" {
 		fail(w, 400, errors.New("providerId and keyId must be supplied together"))
 		return
@@ -3473,14 +3502,14 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 			delete(a.pricing.Rates, in.Model)
 		}
 	} else if in.Scope == "default" {
-		a.pricing.Default = Pricing{PriceIn: priceIn, PriceOut: priceOut}
+		a.pricing.Default = Pricing{PriceIn: priceIn, PriceOut: priceOut, Currency: in.Currency}
 	} else if in.ProviderID != "" {
 		if a.pricing.KeyRates == nil {
 			a.pricing.KeyRates = map[string]Pricing{}
 		}
-		a.pricing.KeyRates[billingScope(in.ProviderID, in.KeyID, in.Model)] = Pricing{PriceIn: priceIn, PriceOut: priceOut}
+		a.pricing.KeyRates[billingScope(in.ProviderID, in.KeyID, in.Model)] = Pricing{PriceIn: priceIn, PriceOut: priceOut, Currency: in.Currency}
 	} else {
-		a.pricing.Rates[in.Model] = Pricing{PriceIn: priceIn, PriceOut: priceOut}
+		a.pricing.Rates[in.Model] = Pricing{PriceIn: priceIn, PriceOut: priceOut, Currency: in.Currency}
 	}
 	err := atomicJSON(TokenPricingPath(a.dataPath), a.pricing)
 	a.tokenStatsMu.Unlock()
@@ -3488,7 +3517,7 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	jsonOut(w, 200, map[string]any{"model": in.Model, "priceIn": priceIn, "priceOut": priceOut})
+	jsonOut(w, 200, map[string]any{"model": in.Model, "priceIn": priceIn, "priceOut": priceOut, "currency": in.Currency})
 }
 
 func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
@@ -3528,13 +3557,22 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 	totalCost := 0.0
 	estimatedCost := 0.0
 	modelCost := map[string]float64{}
+	costByCurrency := map[string]float64{}
+	estimatedCostByCurrency := map[string]float64{}
+	modelCostByCurrency := map[string]map[string]float64{}
 	perModel := map[string]TokenDay{}
 	keyCost := map[string]float64{}
 	keyModelCost := map[string]float64{}
 	keyEstimatedCost := map[string]float64{}
 	keyModelEstimatedCost := map[string]float64{}
+	keyCostByCurrency := map[string]map[string]float64{}
+	keyEstimatedCostByCurrency := map[string]map[string]float64{}
 	perKey := map[string]TokenDay{}
 	for _, c := range a.tokenCalls {
+		currency := c.Currency
+		if currency == "" { // Version 2 records were CNY before currency was explicit.
+			currency = "CNY"
+		}
 		scope := c.ProviderID + ":" + c.KeyID
 		if c.ProviderID == "" || c.KeyID == "" {
 			scope = "unknown"
@@ -3545,11 +3583,32 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		kd.Total += c.Total
 		kd.Calls++
 		perKey[scope] = kd
-		keyCost[scope] += c.Cost
-		keyModelCost[billingScope(c.ProviderID, c.KeyID, c.Model)] += c.Cost
+		if keyCostByCurrency[currency] == nil {
+			keyCostByCurrency[currency] = map[string]float64{}
+			keyEstimatedCostByCurrency[currency] = map[string]float64{}
+		}
+		keyCostByCurrency[currency][scope] += c.Cost
+		keyModelScope := billingScope(c.ProviderID, c.KeyID, c.Model)
+		if currency == "CNY" {
+			keyCost[scope] += c.Cost
+			keyModelCost[keyModelScope] += c.Cost
+		}
 		if c.CostEstimated || c.Defaulted {
-			keyEstimatedCost[scope] += c.Cost
-			keyModelEstimatedCost[billingScope(c.ProviderID, c.KeyID, c.Model)] += c.Cost
+			keyEstimatedCostByCurrency[currency][scope] += c.Cost
+			if currency == "CNY" {
+				keyEstimatedCost[scope] += c.Cost
+				keyModelEstimatedCost[keyModelScope] += c.Cost
+			}
+		} else {
+			costByCurrency[currency] += c.Cost
+			if modelCostByCurrency[currency] == nil {
+				modelCostByCurrency[currency] = map[string]float64{}
+			}
+			modelCostByCurrency[currency][c.Model] += c.Cost
+			if currency == "CNY" {
+				totalCost += c.Cost
+				modelCost[c.Model] += c.Cost
+			}
 		}
 		m := perModel[c.Model]
 		m.Prompt += c.Prompt
@@ -3558,11 +3617,12 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		m.Calls++
 		perModel[c.Model] = m
 		if c.Defaulted || c.CostEstimated {
-			estimatedCost += c.Cost // 未配置费率的模型：刊例默认价估算，不算精确费用
+			estimatedCostByCurrency[currency] += c.Cost
+			if currency == "CNY" {
+				estimatedCost += c.Cost // Keep legacy CNY totals stable for existing clients.
+			}
 			continue
 		}
-		totalCost += c.Cost
-		modelCost[c.Model] += c.Cost
 	}
 	jsonOut(w, 200, map[string]any{
 		"days":          a.tokenStats,
@@ -3572,9 +3632,12 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		"estimatedCost": estimatedCost,
 		"modelCost":     modelCost,
 		"keyCost":       keyCost, "perKey": perKey, "keyModelCost": keyModelCost, "keyEstimatedCost": keyEstimatedCost, "keyModelEstimatedCost": keyModelEstimatedCost,
-		"perModel": perModel,
-		"pricing":  pricingSnapshot,
-		"calls":    len(a.tokenCalls),
+		"costByCurrency": costByCurrency, "estimatedCostByCurrency": estimatedCostByCurrency,
+		"modelCostByCurrency": modelCostByCurrency, "keyCostByCurrency": keyCostByCurrency,
+		"keyEstimatedCostByCurrency": keyEstimatedCostByCurrency,
+		"perModel":                   perModel,
+		"pricing":                    pricingSnapshot,
+		"calls":                      len(a.tokenCalls),
 		// R08：已计价/未计价拆分；旧版汇总没有逐调用与计价证据，费用必须显示为未知
 		"pricedTotals":   priced,
 		"unpricedTotals": unpriced,

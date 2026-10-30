@@ -61,6 +61,7 @@ type supportQuote struct {
 	Tier      supportTier
 	Peak      bool
 	Estimated bool
+	Currency  string
 	Source    string
 	Name      string
 	Revision  string
@@ -69,9 +70,10 @@ type supportQuote struct {
 func validSupportPrice(v float64) bool {
 	return !math.IsNaN(v) && !math.IsInf(v, 0) && v >= 0 && v <= 1e9
 }
+func validSupportCurrency(v string) bool { return v == "CNY" || v == "USD" }
 func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 	var c supportCatalog
-	if len(raw) == 0 || len(raw) > 128<<10 || json.Unmarshal(raw, &c) != nil || c.Protocol != 1 || !pluginIDPattern.MatchString(c.ID) || c.Name == "" || len(c.Name) > 128 || c.Revision == "" || len(c.Revision) > 80 || c.Currency != "CNY" || len(c.Providers) == 0 || len(c.Providers) > 16 || len(c.Models) > 128 || len(c.Sources) > 16 {
+	if len(raw) == 0 || len(raw) > 128<<10 || json.Unmarshal(raw, &c) != nil || c.Protocol != 1 || !pluginIDPattern.MatchString(c.ID) || c.Name == "" || len(c.Name) > 128 || len(c.Revision) == 0 || len(c.Revision) > 80 || !validSupportCurrency(c.Currency) || len(c.Providers) == 0 || len(c.Providers) > 16 || len(c.Models) > 128 || len(c.Sources) > 16 {
 		return nil, errors.New("invalid provider support catalog")
 	}
 	for _, p := range c.Providers {
@@ -227,7 +229,7 @@ func (a *App) providerQuote(base, model string, input int, at time.Time) *suppor
 			if t.MaxInput != 0 && input > t.MaxInput {
 				continue
 			}
-			q := &supportQuote{Tier: t, Source: sourceID, Name: c.Name, Revision: c.Revision}
+			q := &supportQuote{Tier: t, Source: sourceID, Name: c.Name, Revision: c.Revision, Currency: c.Currency}
 			if peak := c.Peak; peak != nil {
 				loc, _ := time.LoadLocation(peak.Timezone)
 				local := at.In(loc)
@@ -367,8 +369,12 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 	hit, miss := 0.0, 0.0
 	peak := false
 	supporter := ""
+	if entry.Currency == "" {
+		entry.Currency = "CNY"
+	}
 	if quote != nil {
 		entry.PriceIn, entry.PriceOut = quote.Tier.PriceIn, quote.Tier.PriceOut
+		entry.Currency = quote.Currency
 		configured = true
 		miss = entry.PriceIn
 		peak = quote.Peak
@@ -390,5 +396,5 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 			scopes = append(scopes, map[string]any{"providerId": parts[0], "keyId": parts[1], "model": parts[2], "priceIn": v.PriceIn, "priceOut": v.PriceOut})
 		}
 	}
-	return map[string]any{"priceIn": entry.PriceIn, "priceOut": entry.PriceOut, "model": model, "providerId": pid, "keyId": kid, "defaulted": !configured, "rates": rates, "keyRates": keyRates, "scopes": scopes, "default": a.pricing.Default, "official": quote != nil, "supporter": supporter, "balanceAuth": balanceAuth, "standards": standards, "priceInCacheHit": hit, "priceInCacheMiss": miss, "peak": peak}
+	return map[string]any{"priceIn": entry.PriceIn, "priceOut": entry.PriceOut, "currency": entry.Currency, "model": model, "providerId": pid, "keyId": kid, "defaulted": !configured, "rates": rates, "keyRates": keyRates, "scopes": scopes, "default": a.pricing.Default, "official": quote != nil, "supporter": supporter, "balanceAuth": balanceAuth, "standards": standards, "priceInCacheHit": hit, "priceInCacheMiss": miss, "peak": peak}
 }

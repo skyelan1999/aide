@@ -1,0 +1,46 @@
+{
+  "protocol": 1,
+  "id": "openai",
+  "name": "OpenAI",
+  "revision": "2026-10-30",
+  "currency": "USD",
+  "sources": [
+    "https://developers.openai.com/api/docs/pricing/"
+  ],
+  "providers": [
+    {
+      "host": "api.openai.com",
+      "paths": ["/v1"]
+    }
+  ],
+  "models": [
+    {
+      "names": ["gpt-6-astra"],
+      "tiers": [{"maxInput": 0, "priceIn": 10, "priceInCacheHit": 1, "priceOut": 50}]
+    },
+    {
+      "names": ["gpt-6.1-sol"],
+      "tiers": [{"maxInput": 0, "priceIn": 2, "priceInCacheHit": 0.1, "priceOut": 10}]
+    },
+    {
+      "names": ["gpt-6.1-terra"],
+      "tiers": [{"maxInput": 0, "priceIn": 1, "priceInCacheHit": 0.05, "priceOut": 5}]
+    },
+    {
+      "names": ["gpt-6-luna"],
+      "tiers": [{"maxInput": 0, "priceIn": 0.1, "priceInCacheHit": 0.01, "priceOut": 0.5}]
+    },
+    {
+      "names": ["gpt-5.6-sol"],
+      "tiers": [{"maxInput": 0, "priceIn": 4, "priceInCacheHit": 0.4, "priceOut": 20}]
+    },
+    {
+      "names": ["gpt-5.3-codex"],
+      "tiers": [{"maxInput": 0, "priceIn": 1.75, "priceInCacheHit": 0.175, "priceOut": 14}]
+    },
+    {
+      "names": ["chat-latest"],
+      "tiers": [{"maxInput": 0, "priceIn": 5, "priceInCacheHit": 0.5, "priceOut": 30}]
+    }
+  ]
+}

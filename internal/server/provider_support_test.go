@@ -141,6 +141,65 @@ func TestProviderSupportExactHostPathAndModel(t *testing.T) {
 		}
 	}
 }
+
+func TestProviderSupportOpenAIUsdIsMatchedAndAggregatedSeparately(t *testing.T) {
+	a := testApp(t)
+	supporterInstall(t, a, "openai")
+	supporterInstall(t, a, "deepseek")
+	at := time.Now()
+	q := a.providerQuote("https://api.openai.com/v1", "gpt-6.1-sol", 1000, at)
+	if q == nil || q.Currency != "USD" || q.Tier.PriceIn != 2 || q.Tier.PriceOut != 10 || q.Tier.PriceInCacheHit == nil || *q.Tier.PriceInCacheHit != .1 {
+		t.Fatalf("OpenAI USD price snapshot not applied: %+v", q)
+	}
+	for _, base := range []string{"http://api.openai.com/v1", "https://api.openai.com.evil.invalid/v1", "https://proxy.example/v1", "https://api.openai.com/v1/extra"} {
+		if a.providerQuote(base, "gpt-6.1-sol", 1000, at) != nil {
+			t.Fatalf("non-official OpenAI endpoint accepted: %s", base)
+		}
+	}
+	if a.providerQuote("https://api.openai.com/v1", "gpt-6.1-sol-preview", 1000, at) != nil {
+		t.Fatal("unknown model alias guessed an official rate")
+	}
+	a.recordTokenUsage(TokenUsage{Provider: "https://api.openai.com/v1", Model: "gpt-6.1-sol", Prompt: 1000000, CacheHit: 500000, CacheMiss: 500000, CacheKnown: true, Completion: 1000000, Total: 2000000})
+	if got := supporterLast(a); got.Currency != "USD" || math.Abs(got.Cost-11.05) > 1e-9 {
+		t.Fatalf("USD per-call snapshot wrong: %+v", got)
+	}
+	a.recordTokenUsage(TokenUsage{Provider: "https://api.deepseek.com", Model: "deepseek-flash", Prompt: 1000000, CacheMiss: 1000000, CacheKnown: true, Total: 1000000})
+	cnyCost := supporterLast(a).Cost
+	response := request(a, "GET", "/api/token-stats", nil)
+	requireStatus(t, response, 200)
+	var stats map[string]any
+	if err := json.Unmarshal(response.Body.Bytes(), &stats); err != nil {
+		t.Fatal(err)
+	}
+	costs := stats["costByCurrency"].(map[string]any)
+	if costs["USD"].(float64) < 11.049 || costs["USD"].(float64) > 11.051 || costs["CNY"].(float64) != cnyCost {
+		t.Fatalf("currencies were combined or mispriced: %#v", costs)
+	}
+	if stats["cost"].(float64) != cnyCost {
+		t.Fatalf("legacy cost field must continue to contain only CNY: %#v", stats["cost"])
+	}
+}
+
+func TestManualTokenPricingCurrencyDefaultsToCNYAndAcceptsUSD(t *testing.T) {
+	a := testApp(t)
+	response := request(a, "PUT", "/api/token-pricing", map[string]any{"model": "manual-usd", "priceIn": 3, "priceOut": 12, "currency": "USD"})
+	requireStatus(t, response, 200)
+	var saved map[string]any
+	if err := json.Unmarshal(response.Body.Bytes(), &saved); err != nil || saved["currency"] != "USD" {
+		t.Fatalf("USD pricing currency was not saved: %s (%v)", response.Body.String(), err)
+	}
+	a.recordTokenUsage(TokenUsage{Provider: "https://api.openai.com/v1", Model: "manual-usd", Prompt: 1000000, Completion: 1000000, Total: 2000000})
+	if got := supporterLast(a); got.Currency != "USD" || got.Cost != 15 {
+		t.Fatalf("manual USD snapshot was not recorded: %+v", got)
+	}
+	response = request(a, "PUT", "/api/token-pricing", map[string]any{"model": "manual-cny", "priceIn": 2, "priceOut": 8})
+	requireStatus(t, response, 200)
+	if err := json.Unmarshal(response.Body.Bytes(), &saved); err != nil || saved["currency"] != "CNY" {
+		t.Fatalf("legacy pricing update must default to CNY: %s (%v)", response.Body.String(), err)
+	}
+	response = request(a, "PUT", "/api/token-pricing", map[string]any{"model": "unsupported-currency", "priceIn": 1, "priceOut": 2, "currency": "EUR"})
+	requireStatus(t, response, 400)
+}
 func TestProviderSupportMalformedEscapingAndAmbiguousCatalogs(t *testing.T) {
 	a := testApp(t)
 	m := supporterInstall(t, a, "deepseek")
@@ -184,7 +243,7 @@ func TestProviderSupportCatalogValidationRejectsInvalidPricesTiersAndBalanceHost
 	if e != nil {
 		t.Fatal(e)
 	}
-	for _, mutate := range []func(*supportCatalog){func(c *supportCatalog) { c.Models[0].Tiers[0].PriceIn = -1 }, func(c *supportCatalog) { c.Models = append(c.Models, c.Models[0]) }, func(c *supportCatalog) { c.Models[0].Tiers = append(c.Models[0].Tiers, supportTier{MaxInput: 100}) }, func(c *supportCatalog) { c.Balance.Endpoint = "https://attacker.invalid/user/balance" }, func(c *supportCatalog) { c.Balance.Endpoint = "http://api.deepseek.com/user/balance" }, func(c *supportCatalog) { c.Peak.Hours = [][2]int{{18, 9}} }} {
+	for _, mutate := range []func(*supportCatalog){func(c *supportCatalog) { c.Currency = "JPY" }, func(c *supportCatalog) { c.Models[0].Tiers[0].PriceIn = -1 }, func(c *supportCatalog) { c.Models = append(c.Models, c.Models[0]) }, func(c *supportCatalog) { c.Models[0].Tiers = append(c.Models[0].Tiers, supportTier{MaxInput: 100}) }, func(c *supportCatalog) { c.Balance.Endpoint = "https://attacker.invalid/user/balance" }, func(c *supportCatalog) { c.Balance.Endpoint = "http://api.deepseek.com/user/balance" }, func(c *supportCatalog) { c.Peak.Hours = [][2]int{{18, 9}} }} {
 		var c supportCatalog
 		json.Unmarshal(files["provider-support.json"], &c)
 		mutate(&c)

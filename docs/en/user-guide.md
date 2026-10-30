@@ -40,7 +40,7 @@ Language switching updates product-owned text and starter prompts. It does **not
 
 English mode covers product-owned labels, settings, source/viewer errors, knowledge-map exploration/history and the phone capture page. It does not translate user text or installed plugins. See [Localization](localization.md) for validation scope.
 
-The login screen and standalone file view also provide a language selector. UI language does not convert currencies: CNY pricing remains CNY.
+The login screen and standalone file view also provide a language selector. UI language does not convert currencies. Official OpenAI Supporter snapshots remain USD and DeepSeek snapshots remain CNY; totals are shown separately without exchange-rate conversion.
 
 Under **Appearance**, select Professional, Comfort or Classic, independently of Light, Dark or System mode. System appearance and browser-default language are independent settings. **About** shows the running build version and the GitHub repository.
 
@@ -381,9 +381,9 @@ flowchart TD
 
 ## 8. Usage and pricing
 
-**Settings → Usage** shows token totals and a daily heatmap. For DeepSeek's official `deepseek-flash` (also the legacy IDs `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp`) and `deepseek-v4-pro` models, input cache hits, input cache misses, and output use separate official rates. Calls are priced using China Standard Time and the peak/off-peak window in effect when the call was made. Cache counts returned by DeepSeek appear in the daily detail; if a compatible endpoint omits them, input is conservatively treated as all cache misses and the cost is labeled an estimate.
+**Settings → Usage** shows token totals and a daily heatmap. For DeepSeek's official `deepseek-flash` (also the legacy IDs `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp`) and `deepseek-v4-pro` models, input cache hits, input cache misses, and output use separate official rates. Calls are priced using China Standard Time and the peak/off-peak window in effect when the call was made. Cache counts returned by DeepSeek appear in the daily detail; if a compatible endpoint omits them, input is conservatively treated as all cache misses and the cost is labeled an estimate. OpenAI Supporter applies its dated USD standard-rate snapshot to exact model IDs, including cached input. CNY and USD totals are shown separately without conversion. Batch/Fast service tiers, cache writes, regional surcharges and non-token charges are outside this plugin's rate model. The ordinary OpenAI model API key has no balance endpoint, so the plugin does not claim to show an account balance.
 
-Other models retain configurable input/output rates per million tokens. Zero means free; blank pricing is invalid. Rates and costs are snapshotted per call, so changing a rate does not rewrite historical records. Legacy aggregate records without per-call evidence remain unpriced. Official pricing and holiday schedules may change; keep the maintained schedule aligned with DeepSeek's [pricing page](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/) and the State Council's [2026 holiday notice](https://www.gov.cn/zhengce/content/202511/content_7047091.htm). Local accounting is an estimate rather than a provider invoice; provider billing rules can differ.
+Other models retain configurable input/output rates per million tokens; the default rate editor offers CNY or USD. Zero means free; blank pricing is invalid. Rates and costs are snapshotted per call, so changing a rate does not rewrite historical records. Legacy aggregate records without per-call evidence remain unpriced. Official pricing and holiday schedules may change; keep the maintained schedule aligned with DeepSeek's [pricing page](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/), the OpenAI [pricing page](https://developers.openai.com/api/docs/pricing/) and the State Council's [2026 holiday notice](https://www.gov.cn/zhengce/content/202511/content_7047091.htm). Local accounting is an estimate rather than a provider invoice; provider billing rules can differ.
 
 ## 9. Plugins
 

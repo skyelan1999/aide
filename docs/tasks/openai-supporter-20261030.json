@@ -1,0 +1,97 @@
+{
+  "id": "openai-supporter-20261030",
+  "request": "仿照 DeepSeekSupporter 开发 OpenAISupporter，核实官方功能，补足 Aide 所需计价能力并发布到插件市场。",
+  "baseline": "155455943107d1c7e96064c305d01e8fabdbe6a3",
+  "initial_status": "Clean branch from main merge commit 155455943107d1c7e96064c305d01e8fabdbe6a3; isolated branch codex/openai-support-20261030. Marketplace main worktree was clean at e0d0664 before creating an isolated market branch. GitHub CLI GH_TOKEN is invalid; the OpenAISupporter repo is absent from the public account repo list.",
+  "acceptance": [
+    "Enabled OpenAI provider support applies only to exact HTTPS api.openai.com /v1 endpoints and exact model IDs in a dated official-price snapshot.",
+    "Aide records USD plugin prices as USD and displays currency correctly without mixing USD and CNY totals; existing CNY data remains compatible.",
+    "The package is data-only and never receives API keys. It does not claim account balance support where OpenAI exposes no model-key balance endpoint.",
+    "Marketplace listing and release archive point to the same immutable package bytes and SHA-256."
+  ],
+  "scope": [
+    "internal/server/provider_support.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "Aide token-cost docs/locales as required",
+    "new aide-pkg-OpenAISupporter repository checkout",
+    "aide-pkg-shop listing/catalog/routing package artifacts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "DeepSeekSupporter is a provider pricing/balance declaration, not a chat client. OpenAI official pricing is USD and includes service tiers beyond the host protocol. The standard OpenAI key has no DeepSeek-style balance endpoint; organization costs require separate admin credentials and are not a balance.",
+      "evidence": [
+        "Market package and listing for deepseek-supporter inspected.",
+        "Official OpenAI price page fetched 2026-10-30: https://developers.openai.com/api/docs/pricing/.",
+        "No OpenAISupporter checkout exists; public account profile list contains no OpenAI Support repo."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Add explicit currency snapshots to per-call rates; preserve old CNY records and CNY-only legacy aggregate fields; return new per-currency aggregates. OpenAISupporter contains exact standard USD rates only and explicitly omits unsupported tiers and balance claims.",
+      "evidence": [
+        "ProviderSupport contract currently matches exact HTTPS host/path and model ID.",
+        "Token stats were previously hardcoded to CNY in API and usage UI."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Aide now supports CNY/USD provider catalogs and manual pricing, records currency per call, separates usage cost totals in API/UI, and defaults legacy settings/records to CNY. OpenAISupporter data-only package and local marketplace entry are prepared.",
+      "evidence": [
+        "OpenAISupporter source commit 5b7b2f5140adf5e7b6dc0108b795a979e5edab41 in local /workspace/aide-pkg-OpenAISupporter repository.",
+        "Marketplace listing/package commit bc8d5c203ffefa6ade3e050c85d554e3806d357f on codex/openai-support-market-20261030.",
+        "Package: packages/openai-supporter/0.1.0-e059f906c6c8.zip; SHA-256 e059f906c6c8a583cfa53da01ebc0036ab2669fe074734c921aa36644983db10.",
+        "Aide implementation committed on branch codex/openai-support-20261030."
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "Focused backend tests passed normally and with race; Aide quick gate passed. The full gate stops because images aide:local and aide:dev are absent. start.command tried an isolated source build but container pip could not trust the proxy certificate for mirrors.aliyun.com, so browser UI acceptance was not reached. Marketplace verification passed; one unrelated existing public-screenshot test fails in both task and baseline worktrees.",
+      "evidence": [
+        "PASS: Go focused regression via /workspace/.aide-cloud/go/bin/go and temporary replacement pointing to repository-vendored SFTP patch; rerun after commit passed normally (ok 1.418s) and with -race (ok 4.513s).",
+        "PASS: python3 scripts/agent-route.py verify quick; fingerprint 10c923e810a2792822c6934368b6d9ba61061a84a975a0268fe2828731142ad1.",
+        "BLOCKED: python3 scripts/agent-route.py verify full; Docker images aide:local and aide:dev unavailable; three dependent Docker checks exit 125.",
+        "BLOCKED: start.command temp preview; image build failed while downloading python-docx because of SSL certificate verify failure for mirrors.aliyun.com. No app container was launched and no browser UI was tested.",
+        "PASS: python3 scripts/verify_catalog.py (33 listings, 30 public packages, 3 private listings); python3 scripts/test_routing.py (4 tests); python3 scripts/test_private_catalog.py.",
+        "BASELINE FAILURE: scripts/test_public_catalog.py fails on missing screenshots/codex-bridge/manager-0.3.2-linux-mobile.png; same error reproduced in original untouched market checkout.",
+        "PASS: OpenAISupporter npm test (2 assertions); package rebuilt twice to identical SHA-256; node --check index.js."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Added Chinese and English Aide usage notes, data layout and API notes; plugin README/research record documents exact prices and excludes unsupported tiers/balance.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/architecture/data-layout.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "OpenAISupporter README.md and docs/RESEARCH-20261030.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Final source, UI, docs, fixtures and package metadata were reviewed; local feature and market changes are committed on isolated branches. Working tree contains no user issue files.",
+      "evidence": [
+        "Aide branch codex/openai-support-20261030 committed after diff review.",
+        "Marketplace branch codex/openai-support-market-20261030 committed after catalog and package hash checks.",
+        "Plugin source repository is committed and clean; generated dist archive is ignored and reproducible."
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "User authorized publication. The Aide feature branch and marketplace branch were pushed successfully, but neither is merged or deployed. Creating the OpenAISupporter public source repository remains blocked by GitHub integration permissions; the market listing points to that missing repository. Aide RC13 also cannot be released until the Docker/browser acceptance gates pass.",
+      "evidence": [
+        "PASS: pushed codex/openai-support-20261030 to skyelan1999/aide; GitHub returned the branch compare/PR URL.",
+        "PASS: pushed codex/openai-support-market-20261030 to skyelan1999/aide-pkg-shop; GitHub returned the branch compare/PR URL.",
+        "BLOCKED: gh repo create skyelan1999/aide-pkg-OpenAISupporter --public ... returned GraphQL: Resource not accessible by integration (createRepository).",
+        "BLOCKED: gh auth status reports GH_TOKEN invalid; git ls-remote confirms the requested plugin repository does not exist.",
+        "BLOCKED: Aide full Docker gate needs aide:local and aide:dev images; isolated start.command build failed on proxy certificate validation, so browser acceptance and RC13 release are incomplete.",
+        "No pull request, merge to main, GitHub Release, marketplace main update or site deployment has occurred."
+      ]
+    }
+  },
+  "release_authorization": "User authorized implementation, plugin release and market update (2026-10-30: “授权” in response to plan to add Aide USD accounting and publish OpenAI Support).",
+  "rollback": "Only remove the dedicated OpenAISupporter/Aide/market branches and worktrees after preserving or reviewing them. No remote/main/release change was made. Failed start.command build did not launch an application container.",
+  "handoff": "The Aide feature branch and marketplace branch are pushed to GitHub, but not merged/released. The source plugin repository cannot be created with the current GitHub integration permission, so its market source link is not live. The host release also needs successful Docker/browser acceptance before Aide RC13 can be published. Reconnect an integration with repository-creation permission, create the public OpenAISupporter repo, push source and v0.1.0 Release, complete Aide full/browser validation and release RC13, then merge/publish the market update."
+}
