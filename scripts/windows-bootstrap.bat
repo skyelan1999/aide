@@ -15,6 +15,8 @@ if /i "%PROCESSOR_ARCHITEW6432%"=="ARM64" set "AIDE_BOOT_ARCH=arm64"
 if not exist ".agent-state" mkdir ".agent-state"
 set "AIDE_BOOT_CIDFILE=%~dp0..\.agent-state\%AIDE_BOOT_BUILDER%.cid"
 if exist "%AIDE_BOOT_CIDFILE%" exit /b 1
+set "AIDE_BOOT_EXE=%~dp0..\.agent-state\%AIDE_BOOT_BUILDER%.exe"
+if exist "%AIDE_BOOT_EXE%" exit /b 1
 docker.exe image inspect "%AIDE_BOOT_IMAGE%" >nul 2>nul
 if not errorlevel 1 (echo Bootstrap image name already exists; retry. & exit /b 1)
 docker.exe buildx create --name "%AIDE_BOOT_BUILDER%" --driver docker-container --driver-opt memory=4g,memory-swap=4g,cpu-period=100000,cpu-quota=200000,restart-policy=no
@@ -30,11 +32,11 @@ if not errorlevel 1 goto bootstrap_failed
 findstr.exe /r /x "[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]" "%AIDE_BOOT_CIDFILE%" >nul
 if errorlevel 1 goto bootstrap_failed
 set /p AIDE_BOOT_CID=<"%AIDE_BOOT_CIDFILE%"
-docker.exe cp "%AIDE_BOOT_CID%:/out/aide-launcher.exe" "%~dp0..\aide-launcher.bootstrap.exe"
+docker.exe cp "%AIDE_BOOT_CID%:/out/aide-launcher.exe" "%AIDE_BOOT_EXE%"
 if errorlevel 1 goto bootstrap_failed
-"%~dp0..\aide-launcher.bootstrap.exe" host-stop --root "%CD%"
+"%AIDE_BOOT_EXE%" host-stop --root "%CD%"
 if errorlevel 1 goto bootstrap_failed
-move /y "%~dp0..\aide-launcher.bootstrap.exe" "%~dp0..\aide-launcher.exe" >nul
+move /y "%AIDE_BOOT_EXE%" "%~dp0..\aide-launcher.exe" >nul
 if errorlevel 1 goto bootstrap_failed
 call :bootstrap_cleanup
 if errorlevel 1 exit /b 1
@@ -42,6 +44,7 @@ exit /b 0
 
 :bootstrap_failed
 call :bootstrap_cleanup
+if exist "%AIDE_BOOT_EXE%" del "%AIDE_BOOT_EXE%"
 echo Native bootstrap failed. No application start or Release substitution was performed.
 exit /b 1
 

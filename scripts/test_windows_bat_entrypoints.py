@@ -9,6 +9,10 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 ACTIONS=('start','stop','build','clean','docker_clean','verify','release','clean-docker-cache')
 
+def cmd(command):
+    # list2cmdline targets the C runtime; CMD does not unescape its backslash quotes.
+    return 'cmd.exe /d /s /c "'+command+'"'
+
 
 def check(binary, folder, installation):
     def fixture(name, source=True, exe=binary):
@@ -25,7 +29,7 @@ def check(binary, folder, installation):
         driver.write_bytes(('@echo off\r\ncall "'+str(root/(action+'.bat'))+'" '+args+'\r\nexit /b %ERRORLEVEL%\r\n').encode('utf-8'))
         # Set UTF-8 before CMD parses the path containing Chinese characters.
         command='chcp 65001 >nul & call "'+str(driver)+'"'
-        result=subprocess.run(['cmd.exe','/d','/c',command],input='',capture_output=True,encoding='utf-8',errors='replace',
+        result=subprocess.run(cmd(command),input='',capture_output=True,encoding='utf-8',errors='replace',
             timeout=30,env=env or dict(os.environ,AIDE_LAUNCHER_NO_PAUSE='1'))
         assert result.returncode==expected,(action,expected,result.returncode,result.stdout,result.stderr)
         assert '[Aide]' in result.stdout and 'finished with exit code' in result.stdout,(action,result.stdout)
@@ -50,7 +54,7 @@ def check(binary, folder, installation):
     for name,define in (('new',''),('old','/DFIXTURE_LEGACY'),('docker','/DFIXTURE_DOCKER')):
         lines+=['cl /nologo /utf-8 /std:c++17 /EHsc '+define+' "'+str(fixture_source)+'" /Fe:'+name+'.exe','if errorlevel 1 exit /b 1']
     build.write_bytes(('\r\n'.join(lines)+'\r\n').encode('utf-8'))
-    subprocess.run(['cmd.exe','/d','/c',str(build)],cwd=folder,check=True)
+    subprocess.run(cmd('call "'+str(build)+'"'),cwd=folder,check=True)
     toolbin=folder/'fixture-tools';toolbin.mkdir();shutil.copy2(folder/'docker.exe',toolbin/'docker.exe')
     calls=folder/'calls.log'
     env=dict(os.environ,AIDE_LAUNCHER_NO_PAUSE='1',FIXTURE_CALLS=str(calls),FIXTURE_NEW_EXE=str(folder/'new.exe'),
@@ -81,7 +85,7 @@ def check(binary, folder, installation):
     interactive=dict(env);interactive.pop('AIDE_LAUNCHER_NO_PAUSE')
     output=folder/'interactive-output.txt'
     with output.open('wb') as capture:
-        process=subprocess.Popen(['cmd.exe','/d','/c','chcp 65001 >nul & call "'+str(driver)+'"'],stdin=subprocess.PIPE,stdout=capture,stderr=subprocess.STDOUT,env=interactive)
+        process=subprocess.Popen(cmd('chcp 65001 >nul & call "'+str(driver)+'"'),stdin=subprocess.PIPE,stdout=capture,stderr=subprocess.STDOUT,env=interactive)
         try:
             deadline=time.monotonic()+10
             while time.monotonic()<deadline and b'finished with exit code' not in output.read_bytes():time.sleep(.05)
