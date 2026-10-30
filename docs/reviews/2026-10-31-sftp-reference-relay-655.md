@@ -1,6 +1,6 @@
 # SFTP 下载脚本中继验收（#655）
 
-用户确认：脚本部署在能访问 SFTP 服务的远程设备上，Aide 经脚本访问原 SFTP，保留用户名、密码/私钥及 SSH 主机校验。基线 main `7a1e4b6766fe5f32cdaf5c14204738679218d9fc`，实现分支 `feat/sftp-reference-relay`。当前仅候选实现与隔离验收；用户的 `localhost:9999` 原安装未升级，未执行合并、tag 或发行。
+用户确认：脚本部署在能访问 SFTP 服务的远程设备上，Aide 经脚本访问原 SFTP，保留用户名、密码/私钥及 SSH 主机校验。基线 main `7a1e4b6766fe5f32cdaf5c14204738679218d9fc`，实现分支 `feat/sftp-reference-relay`，[PR #656](https://github.com/skyelan1999/aide/pull/656)。当前仅候选实现与隔离验收；用户的 `localhost:9999` 原安装未升级，未执行合并、tag 或发行。
 
 ## 实现
 

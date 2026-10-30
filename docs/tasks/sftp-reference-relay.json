@@ -69,14 +69,15 @@
     },
     "release": {
       "status": "pending",
-      "summary": "Prepare PR against main; no admin exception, merge, publication or production deployment authorized for this feature.",
+      "summary": "PR #656 is open; current-head CI and required review pending. No merge/admin exception, tag, publication or production deployment.",
       "evidence": [
-        "https://github.com/skyelan1999/aide/issues/655"
+        "https://github.com/skyelan1999/aide/pull/656"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "SFTP downloadable-script relay implemented and actual protocol/Safari fixture verified. Production localhost:9999 is unchanged; use PR review and current-head CI before merge/deploy. Windows remote relay and external real-host SFTP acceptance not run.",
-  "issue": 655
+  "handoff": "SFTP downloadable-script relay implemented and actual protocol/Safari fixture verified. Production localhost:9999 is unchanged; use PR review and current-head CI before merge/deploy. Windows remote relay and external real-host SFTP acceptance not run. PR #656 is open and attached to the chat.",
+  "issue": 655,
+  "pull_request": "https://github.com/skyelan1999/aide/pull/656"
 }
