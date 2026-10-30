@@ -13,10 +13,8 @@ import os
 from pathlib import Path
 import shutil
 import socket
-import ssl
 import subprocess
 import time
-import urllib.request
 
 
 class Acceptance:
@@ -77,6 +75,7 @@ class Acceptance:
             head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=self.root,text=True).strip(),
             initial_state='new HOME/config/data/project/image/builder; no inherited PROJECT_DIR or model credentials',
             pip_index='explicit CLI override' if self.pip_index else 'repository default',
+            baseline_images=self.baseline_images,
             windows='DEFERRED_BY_USER: no Windows host currently available')
         self.save()
 
@@ -103,18 +102,24 @@ class Acceptance:
 
     def health(self):
         cert=self.root/'.aide-data/storage/data/certs/cert.pem'
-        context=ssl.create_default_context(cafile=str(cert))
-        opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),urllib.request.HTTPSHandler(context=context))
         base='https://localhost:'+self.env['AIDE_PORT']
-        with opener.open(base+'/healthz',timeout=10) as response:body=json.load(response)
+        def fetch(path,token=None):
+            # Match the launcher's explicit leaf-certificate trust. Python 3.9
+            # OpenSSL does not accept every non-CA self-signed leaf as a CA.
+            # No insecure mode or global trust/proxy change is involved.
+            args=['curl','--fail','--silent','--show-error','--noproxy','*','--connect-timeout','3','--max-time','10','--cacert',str(cert)]
+            config=''
+            if token:
+                args+=['--config','-'];config='header = '+json.dumps('Authorization: Bearer '+token)+'\n'
+            p=subprocess.run(args+[base+path],env=self.env,input=config,capture_output=True,text=True,timeout=15)
+            if p.returncode:raise RuntimeError('Pinned HTTPS probe failed: '+path+'; '+p.stderr)
+            return p.stdout
+        body=json.loads(fetch('/healthz'))
         assert body['service']=='aide' and body['status']=='ok'
-        with opener.open(base+'/',timeout=10) as response:
-            assert response.status==200 and b'<html' in response.read().lower()
+        assert '<html' in fetch('/').lower()
         token=self.docker('compose','exec','-T','aide','sh','-c','cat /data/auth/access-token')
-        request=urllib.request.Request(base+'/api/sessions',headers={'Authorization':'Bearer '+token})
-        with opener.open(request,timeout=10) as response:
-            assert response.status==200;json.load(response)
-        self.result.setdefault('health_samples',[]).append({'instanceId':body.get('instanceId'),'https_certificate':'verified','html':200,'authenticated_sessions':200})
+        json.loads(fetch('/api/sessions',token))
+        self.result.setdefault('health_samples',[]).append({'instanceId':body.get('instanceId'),'https_certificate':'explicit local leaf pin verified by curl','html':200,'authenticated_sessions':200})
         self.save();return body
 
     def execute(self):
@@ -124,7 +129,10 @@ class Acceptance:
         self.run('stop');self.run('docker_clean')
         text=self.run('start',1);assert 'build.command' in text and 'start' in text
         assert self.docker('buildx','inspect',self.builder,check=False).returncode!=0
-        self.run('build');first=self.runtime();assert first;self.health();self.run('verify')
+        self.run('build');self.lifecycle()
+
+    def lifecycle(self):
+        first=self.runtime();assert first;self.health();self.run('verify')
         self.run('start');assert self.runtime()==first;self.health()
         sentinel=self.root/'.aide-data/storage/data/acceptance-654-sentinel'
         sentinel.write_text('fresh acceptance data must survive clean and docker_clean\n')
@@ -146,6 +154,25 @@ class Acceptance:
             persistent_data='sentinels preserved across clean and docker_clean',cleanup='owned runtime, image and builder removed; evidence/data retained')
         self.save();print('PASS all seven real POSIX launcher interfaces in isolated clean environment',flush=True)
 
+    def resume_after_build(self):
+        self.result=json.loads((self.evidence/'result.json').read_text())
+        assert self.result['root']==str(self.root) and self.result['scope']==self.scope,'Acceptance receipt belongs to another root'
+        self.commands=self.result['commands'];assert any(c['action']=='build' and c.get('exit')==0 for c in self.commands)
+        self.env=json.loads((self.evidence/'environment.json').read_text())
+        self.docker_exe=str(self.evidence/'tools/docker')
+        assert self.env['DOCKER_HOST'].startswith('unix://') and self.env['AIDE_IMAGE']==self.image
+        source=subprocess.check_output(['bash','scripts/aide.sh','source-sha'],cwd=self.root,env=self.env,text=True).strip()
+        metadata=json.loads(self.docker('image','inspect',self.image))[0]
+        assert metadata['Config']['Labels']['aide.srcsha']==source,'Product input changed after the recorded cold build'
+        self.baseline_images=self.result.get('baseline_images')
+        if self.baseline_images is None:
+            self.baseline_images=[]
+            for item in json.loads('['+self.docker('image','ls','--format','json').replace('\n',',')+']'):
+                value=json.loads(self.docker('image','inspect',item['ID']))[0]
+                if (value.get('Config',{}).get('Labels') or {}).get('aide.installation')!=self.scope:self.baseline_images.append(item)
+        self.result.update(status='in_progress',harness_resume='Retained successful cold-build receipt; product source fingerprint verified unchanged')
+        self.result.pop('error',None);self.save();self.lifecycle()
+
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -153,10 +180,13 @@ def main():
     parser.add_argument('--evidence',type=Path,required=True)
     parser.add_argument('--allow-real-build',action='store_true',help='Allow two real cold builds and this isolated runtime lifecycle')
     parser.add_argument('--pip-index-url',help='Explicit existing build index override; ambient host proxy/model/index variables are not inherited')
+    parser.add_argument('--resume-after-build',action='store_true',help='Resume lifecycle after a verified recorded cold build when repairing the acceptance harness only')
     args=parser.parse_args()
     if not args.allow_real_build:parser.error('--allow-real-build is required')
     acceptance=Acceptance(args.root,args.evidence,args.pip_index_url)
-    try:acceptance.execute()
+    try:
+        if args.resume_after_build:acceptance.resume_after_build()
+        else:acceptance.execute()
     except Exception as error:
         acceptance.result.update(status='failed',error=str(error));acceptance.save();raise
 
