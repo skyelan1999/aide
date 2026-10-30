@@ -17,7 +17,9 @@
     "scripts/test_mixsoul_embedding_follow.py",
     "docs/architecture/mixsoul.md",
     "docs/agent/router.json",
-    "docs/tasks/mixsoul-runtime-parity-20261030.json"
+    "docs/tasks/mixsoul-runtime-parity-20261030.json",
+    "scripts/package-release-assets.sh",
+    "scripts/mixsoul-embedding-service.py"
   ],
   "stages": {
     "requirements": {
@@ -32,7 +34,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Compose env parity and portable supervisor; loopback endpoint, model/dimension/token contract checked; foreign sidecar retained.",
+      "summary": "Compose env parity and portable supervisor; loopback endpoint, model/dimension/token contract checked; foreign sidecar retained. Full Release packaging carries the operator helper, service source/Dockerfile and public deployment guide.",
       "evidence": [
         "compose.yaml",
         "docker/compose.offline.yaml",

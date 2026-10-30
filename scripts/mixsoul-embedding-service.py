@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Private CPU embedding sidecar. Run in Aide's network namespace, no published ports."""
+"""Optional local CPU embedding sidecar; no published ports or model downloads."""
 import hmac
 import json
 import os
