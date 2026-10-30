@@ -1,0 +1,82 @@
+{
+  "id": "sftp-reference-relay",
+  "request": "stfp也需要支持远程中继模式",
+  "baseline": "7a1e4b6766fe5f32cdaf5c14204738679218d9fc",
+  "initial_status": "",
+  "acceptance": [
+    "SFTP supports direct and script-relay modes; defaults to read-only and preserves AI visibility and write controls.",
+    "A downloaded bridge on a remote device connects only to the configured SFTP host/port; Aide retains SSH authentication and host-key verification.",
+    "Relay key generated separately, privately persisted and never returned in source listing; download/probe authenticated and no-store.",
+    "Actual generated-agent connection, SSH/SFTP file listing/read/write, read-only denial, wrong relay identity/configuration and changed SSH host key verified with disposable fixtures.",
+    "UI save/edit/download/probe works; no user data or running production instance modified."
+  ],
+  "scope": [
+    "Source configuration/credentials, SSH ProxyCommand bridge, downloaded Python agent, UI/localization, focused integration tests and docs."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed a downloadable script on a device with access to the SFTP service; not an SSH jump-host feature.",
+      "evidence": [
+        "User confirmation: 是，通过脚本中转连接 SFTP（推荐）"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Pinned TLS/challenge tunnel carries existing OpenSSH/SFTP protocol to one embedded target. Independent relay key; original SSH host and authentication unchanged.",
+      "evidence": [
+        "internal/server/source_sftp_relay.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "SFTP direct/relay choice; separate fixed-target TLS bridge, authenticated downloadable script/probe, OpenSSH ProxyCommand and independent third credential field with partial-update preservation.",
+      "evidence": [
+        "internal/server/source_sftp_relay.go",
+        "internal/server/relay/sftp_agent.py",
+        "internal/server/relay/sftp_proxy.py",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "21 top-level focused Go race tests passed, including real generated-agent SSH/SFTP password/key authentication, listing/read/write, read-only denial, wrong relay identity, stale deployment and SSH host-key change. Existing relay regression and vault partial/locked/malformed tests passed. Node UI regression and quick gate passed. Safari fixture: probe, list/read, unlock, editor save, actual SFTP target file readback, relock and disabled Save, source editor configuration/blank-secret retention verified. Windows remote-agent execution and real external SFTP deployment NOT_RUN. Additional ~4 MiB actual SFTP write/readback race test passed.",
+      "evidence": [
+        ".agent-state/sftp-relay/go-race-final.log",
+        ".agent-state/sftp-relay/ui-tests-final.log",
+        ".agent-state/sftp-relay/quick.log",
+        ".agent-state/sftp-relay/safari-config.png",
+        ".agent-state/sftp-relay/safari-readonly.png",
+        "internal/server/source_sftp_relay_test.go",
+        ".agent-state/sftp-relay/go-bulk.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Deployment steps, endpoint/probe semantics, SSH identity preservation, read/write policy and API fields documented.",
+      "evidence": [
+        "docs/reference-relay.md",
+        "docs/reviews/2026-10-31-sftp-reference-relay-655.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned Safari test tab closed; user tab/form and live 9999 instance preserved. Disposable fixture container stopped; test logs/screenshots retained. No global Docker cleanup or user-data changes.",
+      "evidence": [
+        "Browser returned to unchanged user localhost:9999 source form",
+        "docker stop aide-sftp-browser"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Prepare PR against main; no admin exception, merge, publication or production deployment authorized for this feature.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/655"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "SFTP downloadable-script relay implemented and actual protocol/Safari fixture verified. Production localhost:9999 is unchanged; use PR review and current-head CI before merge/deploy. Windows remote relay and external real-host SFTP acceptance not run.",
+  "issue": 655
+}

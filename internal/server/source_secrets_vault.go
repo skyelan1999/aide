@@ -29,6 +29,7 @@ func sourceVaultID(sourceID string) string { return "source:" + sourceID }
 // sourceCredPayload 单来源凭据的明文载荷（密封进 vault 前的 JSON 结构）。
 // 与 sourcesSecrets.Secrets[id] 同构，便于迁移时直接序列化。
 type sourceCredPayload struct {
+	RelayKey string `json:"relayKey,omitempty"`
 	Password string `json:"password,omitempty"`
 	Key      string `json:"key,omitempty"`
 }
@@ -37,25 +38,30 @@ type sourceCredPayload struct {
 // vault 未解锁、无条目或载荷损坏时，回退到内存中的旧明文 map，保证来源在迁移/锁定期间可用。
 // 调用方持有 a.mu。
 func (a *App) sourceCredentialLocked(id string) (password, key string) {
+	p := a.sourceCredentialEntryLocked(id)
+	return p.Password, p.Key
+}
+
+func (a *App) sourceCredentialEntryLocked(id string) sourceCredPayload {
 	if a.vault != nil && a.vault.Unlocked() && a.vault.Has(sourceVaultID(id)) {
 		if pt, err := a.vault.Get(sourceVaultID(id)); err == nil {
 			defer zeroBytes(pt)
 			var p sourceCredPayload
 			if json.Unmarshal(pt, &p) == nil {
-				return p.Password, p.Key
+				return p
 			}
 			// 载荷损坏：不吞错，落日志后回退明文，避免单个坏条目永久阻断来源。
 			log.Printf("来源 %s 的 vault 凭据载荷损坏，回退旧明文", id)
 		}
 	}
 	sec := a.sourceSecrets.Secrets[id]
-	return sec.Password, sec.Key
+	return sourceCredPayload{Password: sec.Password, Key: sec.Key, RelayKey: sec.RelayKey}
 }
 
 // sourceHasSecretLocked 报告某来源是否持有任一凭据（password 或 key）。调用方持有 a.mu。
 func (a *App) sourceHasSecretLocked(id string) bool {
-	pw, key := a.sourceCredentialLocked(id)
-	return pw != "" || key != ""
+	p := a.sourceCredentialEntryLocked(id)
+	return p.Password != "" || p.Key != "" || p.RelayKey != ""
 }
 
 // storeSourceCredentialLocked 把用户新录入/清空的来源凭据收敛进 vault 与回退明文。
@@ -64,11 +70,15 @@ func (a *App) sourceHasSecretLocked(id string) bool {
 //   - vault 未解锁或密封失败：保留内存明文作为回退，由后续 migrateLegacySourceSecretsLocked 重试。
 //
 // 调用方持有 a.mu。
-func (a *App) storeSourceCredentialLocked(id, password, key string) {
+func (a *App) storeSourceCredentialLocked(id, password, key string, relayKeys ...string) {
+	relayKey := ""
+	if len(relayKeys) > 0 {
+		relayKey = relayKeys[0]
+	}
 	vaultID := sourceVaultID(id)
 	// 始终维护回退明文 map；vault 路径成功后再清掉对应项。
-	if password != "" || key != "" {
-		a.sourceSecrets.Secrets[id] = sourceSecretEntry{Password: password, Key: key}
+	if password != "" || key != "" || relayKey != "" {
+		a.sourceSecrets.Secrets[id] = sourceSecretEntry{Password: password, Key: key, RelayKey: relayKey}
 	} else {
 		delete(a.sourceSecrets.Secrets, id)
 	}
@@ -76,7 +86,7 @@ func (a *App) storeSourceCredentialLocked(id, password, key string) {
 	if a.vault == nil {
 		return
 	}
-	if password == "" && key == "" {
+	if password == "" && key == "" && relayKey == "" {
 		a.vault.Delete(vaultID)
 		_ = a.vault.Save()
 		return
@@ -84,7 +94,7 @@ func (a *App) storeSourceCredentialLocked(id, password, key string) {
 	if !a.vault.Unlocked() {
 		return // 未解锁：保留内存明文，待解锁后迁移。
 	}
-	payload, err := json.Marshal(sourceCredPayload{Password: password, Key: key})
+	payload, err := json.Marshal(sourceCredPayload{Password: password, Key: key, RelayKey: relayKey})
 	if err != nil {
 		log.Printf("来源 %s 凭据序列化失败（保留明文备用）: %v", id, err)
 		return
@@ -112,14 +122,14 @@ func (a *App) migrateLegacySourceSecretsLocked() {
 	}
 	migrated := 0
 	for id, sec := range a.sourceSecrets.Secrets {
-		if sec.Password == "" && sec.Key == "" {
+		if sec.Password == "" && sec.Key == "" && sec.RelayKey == "" {
 			continue
 		}
 		vaultID := sourceVaultID(id)
 		if a.vault.Has(vaultID) {
 			continue // 已在 vault：跳过，幂等。
 		}
-		payload, err := json.Marshal(sourceCredPayload{Password: sec.Password, Key: sec.Key})
+		payload, err := json.Marshal(sourceCredPayload{Password: sec.Password, Key: sec.Key, RelayKey: sec.RelayKey})
 		if err != nil {
 			log.Printf("迁移来源 %s 凭据序列化失败（保留明文）: %v", id, err)
 			continue

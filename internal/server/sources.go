@@ -49,6 +49,8 @@ type Source struct {
 // A reference source is never executed through a shell, so spaces, quoting and
 // shell metacharacters in a command field cannot turn into an extra command.
 type SourceConfig struct {
+	RelayHost     string    `json:"relayHost,omitempty"` // SFTP optional pinned TLS bridge
+	RelayPort     int       `json:"relayPort,omitempty"`
 	Path          string    `json:"path,omitempty"`          // local/skill 宿主机路径
 	URL           string    `json:"url,omitempty"`           // link/ftp/ftps/smb
 	Host          string    `json:"host,omitempty"`          // sftp
@@ -75,6 +77,7 @@ type sourcesRegistry struct {
 
 // sourceSecretEntry 单来源凭据（旧明文回退存储用；新凭据一律进加密 vault）。
 type sourceSecretEntry struct {
+	RelayKey string `json:"relayKey,omitempty"`
 	Password string `json:"password,omitempty"`
 	Key      string `json:"key,omitempty"`
 }
@@ -516,6 +519,7 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		Secrets map[string]struct {
 			Password string `json:"password"`
 			Key      string `json:"key"`
+			RelayKey string `json:"relayKey"`
 			Clear    bool   `json:"clear"`
 		} `json:"secrets"`
 	}
@@ -568,6 +572,10 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case "sftp":
+			if err := validateSFTPRelay(s); err != nil {
+				fail(w, 400, err)
+				return
+			}
 			if strings.TrimSpace(s.Config.Host) == "" {
 				fail(w, 400, errors.New("SFTP 来源需要主机"))
 				return
@@ -641,11 +649,11 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	// the decrypted payload instead of silently dropping its other field.
 	credentials := make(map[string]sourceCredPayload, len(in.Secrets))
 	for id, sec := range in.Secrets {
-		if !sec.Clear && sec.Password == "" && sec.Key == "" {
+		if !sec.Clear && sec.Password == "" && sec.Key == "" && sec.RelayKey == "" {
 			continue // An empty patch leaves existing credentials untouched.
 		}
 		var entry sourceCredPayload
-		if !sec.Clear && (sec.Password == "" || sec.Key == "") {
+		if !sec.Clear && (sec.Password == "" || sec.Key == "" || sec.RelayKey == "") {
 			if a.vault != nil && a.vault.Has(sourceVaultID(id)) {
 				if !a.vault.Unlocked() {
 					fail(w, http.StatusLocked, fmt.Errorf("来源 %s 的凭据保险库未解锁，无法保留未修改字段；请先解锁后再更新", id))
@@ -663,7 +671,7 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			} else {
-				entry.Password, entry.Key = a.sourceCredentialLocked(id)
+				entry = a.sourceCredentialEntryLocked(id)
 			}
 		}
 		if sec.Password != "" {
@@ -671,6 +679,13 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		}
 		if sec.Key != "" {
 			entry.Key = sec.Key
+		}
+		if sec.RelayKey != "" {
+			if _, err := sourceRelayKey(sec.RelayKey); err != nil {
+				fail(w, 400, err)
+				return
+			}
+			entry.RelayKey = sec.RelayKey
 		}
 		credentials[id] = entry
 	}
@@ -704,9 +719,52 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		}
 		credentials[src.ID] = entry
 	}
+	for _, src := range in.Sources {
+		if !isSFTPRelay(src) {
+			continue
+		}
+		entry, patched := credentials[src.ID]
+		if !patched {
+			// Enabling a relay must not overwrite unreadable sealed SSH fields.
+			if a.vault != nil && a.vault.Has(sourceVaultID(src.ID)) {
+				if !a.vault.Unlocked() {
+					fail(w, http.StatusLocked, errors.New("请先解锁凭据保险库"))
+					return
+				}
+				payload, err := a.vault.Get(sourceVaultID(src.ID))
+				if err != nil {
+					fail(w, 500, errors.New("现有来源凭据无法读取"))
+					return
+				}
+				err = json.Unmarshal(payload, &entry)
+				zeroBytes(payload)
+				if err != nil {
+					fail(w, 500, errors.New("现有来源凭据载荷损坏"))
+					return
+				}
+			} else {
+				entry = a.sourceCredentialEntryLocked(src.ID)
+			}
+		}
+		if entry.RelayKey == "" {
+			if a.vault != nil && a.vault.Has(sourceVaultID(src.ID)) && !a.vault.Unlocked() {
+				fail(w, http.StatusLocked, errors.New("请先解锁凭据保险库"))
+				return
+			}
+			var err error
+			entry.RelayKey, err = newSourceRelayKey()
+			if err != nil {
+				fail(w, 500, err)
+				return
+			}
+		}
+		if patched || a.sourceCredentialEntryLocked(src.ID).RelayKey == "" {
+			credentials[src.ID] = entry
+		}
+	}
 	for id, entry := range credentials {
 		// 同步收敛进加密 vault（已解锁则密封并清掉回退明文；未解锁则保留明文回退，稍后迁移）。
-		a.storeSourceCredentialLocked(id, entry.Password, entry.Key)
+		a.storeSourceCredentialLocked(id, entry.Password, entry.Key, entry.RelayKey)
 	}
 	// 回退明文文件仍需落盘：vault 未解锁时它是唯一持久化凭据；已解锁时此处已无明文。
 	if err := a.saveSourcesSecrets(); err != nil {
