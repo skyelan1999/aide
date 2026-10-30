@@ -41,14 +41,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Local 20 lifecycle/ZIP assembly, 40 migration and 38 portable checks pass. Production AMD64 EXE cross-compiles; actual Windows CMD CI is running. First Windows run found a CMD quoting error in test driver; fixed before claiming product-entrypoint acceptance.",
+      "status": "pass",
+      "summary": "Selected regression scope passes: 313 quick, 20 lifecycle/real ZIP, 40 data, 38 portable, complete AMD64/ARM64 PE builds and imports; Windows real BAT/CMD + owned console and legacy PS5/7 CI pass at 0509137c. User Docker Desktop runtime remains NOT_RUN; required full Go/gate remain a separate PR merge gate.",
       "evidence": [
-        ".agent-state/windows-action-entrypoints/contract.log",
-        ".agent-state/windows-action-entrypoints/data.log",
-        ".agent-state/windows-action-entrypoints/portable.log",
-        ".agent-state/windows-action-entrypoints/native-amd64.log",
-        "https://github.com/skyelan1999/aide/pull/647"
+        "docs/reviews/2026-10-30-windows-entrypoints.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41027014024/job/123967676884",
+        "Content fingerprint 401596127d4d2bdaf73fb6e93b1f01d4ba29d29ac21b1bc2448fd504efde9db2"
       ]
     },
     "documentation": {
@@ -63,19 +61,25 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Scoped diff reviewed; historical PS1 retained byte-identically as retired fixtures, no active PS1 remains. Own cross-build containers exited and no production services or original user edits changed.",
+      "evidence": [
+        ".agent-state/windows-action-entrypoints/audit-final.json",
+        "git diff --check",
+        "scripts/fixtures/legacy-windows/README.md"
+      ]
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "PR #647 prepared; no protected-main bypass authorization for this new PR, no release/tag/deployment. Full CI/review and affected-host runtime acceptance remain separate.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/647"
+      ]
     }
   },
   "release_authorization": "",
-  "rollback": "",
-  "handoff": "PR #647 draft on main 820c18d8; no merge, publication or deployment. User confirmed Git source folder. Need Windows CMD CI and affected-host Docker Desktop rerun; preserve real .env/data, original aide checkout and production 9999.",
+  "rollback": "Revert only this PR to restore previous tracked launcher layout; preserve .env, .aide-data, workspaces and volumes. New bootstrap writes only its owned staging paths and does not replace old EXE on compile failure.",
+  "handoff": "Implementation and selected Windows acceptance pass. PR #647 pending required full CI/review; ask explicitly before any administrator exception for this new PR. Once merged, Windows Git source operator runs git pull then build.bat to refresh stale EXE. User Docker Desktop real runtime NOT_RUN; keep Issue #646 open. Production 9999 and original dirty checkout preserved.",
   "issue": 646,
   "operator": "skyelan1999"
 }
