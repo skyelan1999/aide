@@ -98,7 +98,7 @@ class FollowerTests(unittest.TestCase):
             base={k:v for k,v in os.environ.items() if not k.startswith(('AIDE_','AI_','COMPOSE_'))}
             for file in ['compose.yaml','docker/compose.offline.yaml']:
                 for enabled in [False,True]:
-                    env=dict(base,AIDE_IMAGE='aide:synthetic-fixture')
+                    env=dict(base,AIDE_IMAGE='aide:synthetic-fixture',AIDE_LOCAL_ROOT=t,AIDE_WORKSPACE=t,AIDE_CONTEXT=t)
                     if enabled: env.update(AIDE_ASSISTANT_ENGINE='mixsoul',AIDE_MIXSOUL_LOCAL_EMBEDDING=json.dumps(CFG))
                     r=subprocess.run(['docker','compose','--project-directory',t,'-f',str(ROOT/file),'config','--format','json'],
                                      env=env,text=True,capture_output=True,check=True)

@@ -79,6 +79,9 @@ jobs:
       - name: Compile-check native Windows launcher against Windows SDK
         shell: cmd
         run: python scripts/test_windows_launcher_compile.py
+      - name: MIXSoul operator lifecycle regression
+        shell: cmd
+        run: python scripts/test_mixsoul_embedding_follow.py
       - name: Windows PowerShell 5.1 launcher regression
         shell: cmd
         run: |
