@@ -50,18 +50,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "42 项启动数据和回退回归通过；源码工作区不复用过期镜像。真实下载/镜像切换尚未验证。",
+      "status": "pass",
+      "summary": "43 launcher regressions, 11 native package tests, 35 native host checks and 38 portable checks passed locally. Official ARM64 and AMD64 packages were verified/imported and isolated containers returned 0.1.17.6 RC1 at 4b56f5c1. Windows runner compiled/linked the Win32 source and ran EXE self-test; the actual Windows Docker Desktop startup/rollback remains NOT_RUN.",
       "evidence": [
-        "bash -n start.command scripts/aide.sh scripts/prebuilt-image.sh：PASS",
-        "Python AST parse scripts/latest-release-runtime.py 与 scripts/test_launcher_data.py：PASS",
-        "git diff --check：PASS",
-        "PR #628 initial Windows CI：PASS；quick：FAIL（test fixture 缺 latest-release-runtime.py，已修）；Go：pending",
-        "python3 scripts/test_launcher_data.py: 42 tests OK",
-        "真实 ARM64 官方完整包导入 PASS，Docker Desktop canonical ID 与包 config ID 不同，已兼容。",
-        "隔离容器 API 返回 0.1.17.6 RC1，buildCommit 4b56f5c1。",
-        "Native host 35 checks + portable 38 checks PASS；full package helper 11 tests PASS。",
-        "新增 Windows SDK 编译检查等待 CI；Windows 实机桌面生命周期未验收。"
+        "PR #628 head 29c105c1: quick PASS, windows PASS, Go race/vet PASS (35m42s), gate PASS",
+        "Native x64 PE built; SHA256 66ecc26fc6d553b4efdf128d0a0986368e6c40856ec4b19a53daaad2f79d7f55",
+        "Issue #630 kept open for real Windows Docker Desktop acceptance"
       ]
     },
     "documentation": {
@@ -82,13 +76,22 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "等待最终提交 CI 全部通过后管理员合并 PR #628；不发版。",
+      "summary": "User merged #628 into main at 8f107df4. No version bump, tag, Release or 9999 deployment; post-merge main CI is still running.",
       "evidence": [
-        "用户原话：你做一下，只push。"
+        "GitHub state MERGED; main ancestry verified; active development worktree switched to clean main."
       ]
     }
   },
   "release_authorization": "用户授权本次管理员合并 #628；不发版。",
   "rollback": "如 Docker compose 启动或容器健康检查失败，将原镜像 ID 重新标记回 Compose target，并尝试重建服务。旧镜像不会删除；本次未执行运行时变更。",
-  "handoff": "需后续合并并发行含此脚本的启动包，用户本机下载/同步新启动器代码后，Start 的源码构建 fallback 才能采用最新 Release。当前只推分支，不修改 9999。"
+  "handoff": "Startup source merged; use a rebuilt native EXE on Windows, since Git switching does not replace a compiled binary. Full Windows Docker Desktop acceptance remains open in #630. MIXSoul deployment parity follows separately under #631 / PR #632. No private plans, memory, credentials or local-only deployment launchers were pushed.",
+  "user_update": "User merged PR #628 and requested post-merge CI/flow completion; no public Release.",
+  "merge": {
+    "pr": 628,
+    "commit": "8f107df4584a703c9b1c5e743de2d2c267429161",
+    "mergedBy": "user",
+    "head": "29c105c172438c588bfd0244e03d5e2131665c3e",
+    "prCI": "all checks PASS (quick/windows/go/gate)",
+    "mainCI": "in progress: https://github.com/skyelan1999/aide/actions/runs/40994350046"
+  }
 }
