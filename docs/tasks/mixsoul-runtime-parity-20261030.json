@@ -1,0 +1,77 @@
+{
+  "id": "mixsoul-runtime-parity-20261030",
+  "request": "补齐本地 MIXSoul 已有功能的公开部署配套，保留私有研究方案和数据；启动器优先完成后再合并部署配套。",
+  "baseline": "8f107df4584a703c9b1c5e743de2d2c267429161",
+  "initial_status": "clean at start; startup PR #628 fast-forwarded while preserving this task edits",
+  "acceptance": [
+    "Source and Release Compose forward optional engine/timezone/vector settings with builtin default.",
+    "Operator supervisor rebinds the sidecar after main restart without replacing foreign containers, logging credentials or publishing ports.",
+    "Private research, real memory, model weights and credentials remain excluded."
+  ],
+  "scope": [
+    "compose.yaml",
+    "docker/compose.offline.yaml",
+    ".env.example",
+    "docker/offline.env.example",
+    "scripts/mixsoul-embedding-follow.py",
+    "scripts/test_mixsoul_embedding_follow.py",
+    "docs/architecture/mixsoul.md",
+    "docs/agent/router.json",
+    "docs/tasks/mixsoul-runtime-parity-20261030.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Track public deployment parity in Aide #631.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Forward documented opt-in; use an explicit operator-side supervisor with scoped ownership and no Docker socket in the app.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Compose env parity and portable supervisor; loopback endpoint, model/dimension/token contract checked; foreign sidecar retained.",
+      "evidence": [
+        "compose.yaml",
+        "docker/compose.offline.yaml",
+        ".env.example",
+        "docker/offline.env.example",
+        "scripts/mixsoul-embedding-follow.py",
+        "scripts/test_mixsoul_embedding_follow.py",
+        "docs/architecture/mixsoul.md",
+        "docs/agent/router.json",
+        "docs/tasks/mixsoul-runtime-parity-20261030.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "6 tests passed including actual Compose rendering; isolated real Docker main restart re-created its sidecar and restored authenticated synthetic 384-dimensional HTTP transport. This does not establish model inference or real Windows Docker Desktop acceptance.",
+      "evidence": [
+        "python3 scripts/test_mixsoul_embedding_follow.py: 6 tests PASS",
+        "Real Docker synthetic lifecycle probe: PASS; no host ports; production9999 unchanged",
+        "git diff --check: PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Document default/opt-in, prerequisites, process supervision boundary and private exclusion.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped source/docs and synthetic tests; temporary probe containers removed; no production data read or changed.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Prepare a separate reviewable PR; no release or deployment authorized for this phase.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Startup #628 merged by user. This follow-up needs CI/review before main merge. Existing private supervisors are not automatically adopted; real model weights and prior research stay local.",
+  "issue": "https://github.com/skyelan1999/aide/issues/631"
+}

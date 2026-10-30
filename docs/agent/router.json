@@ -1567,6 +1567,10 @@
         "node",
         "--check",
         "scripts/browser-pdf-font-attachments.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_mixsoul_embedding_follow.py"
       ]
     ],
     "full": [

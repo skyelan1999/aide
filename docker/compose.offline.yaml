@@ -11,6 +11,9 @@ services:
       - "127.0.0.1::45841"
     environment:
       AIDE_MESSAGE_LAN_BRIDGE: /data/messages/lan-bridge
+      AIDE_ASSISTANT_ENGINE: ${AIDE_ASSISTANT_ENGINE:-builtin}
+      AIDE_ASSISTANT_TIMEZONE: ${AIDE_ASSISTANT_TIMEZONE:-UTC}
+      AIDE_MIXSOUL_LOCAL_EMBEDDING: ${AIDE_MIXSOUL_LOCAL_EMBEDDING:-}
       AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}
       AI_MODEL: ${AI_MODEL:-}
       AI_API_KEY: ${AI_API_KEY:-}
