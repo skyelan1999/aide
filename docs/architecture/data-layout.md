@@ -46,7 +46,7 @@ aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定�
 │   └─ <sha256(docPath)>/<commentID>.json   单条批注（含 replies）
 ├─ certs/                    TLS 证书与私钥（#29，0600）
 
-`stats/token-stats.json` 按调用保存用量和不可变费用快照，包括模型、提供商、输入缓存命中/未命中数量、费率档位和费用。DeepSeek 官方模型按该次调用对应的费率及时段保存；缺少缓存拆分时会标记为估算。`stats/token-pricing.json` 继续为其他兼容提供商保存可编辑的备用费率。修改费率不会改写历史快照。
+`stats/token-stats.json` 按调用保存用量和不可变费用快照，包括模型、提供商、币种、输入缓存命中/未命中数量、费率档位和费用。DeepSeek 官方模型按该次调用对应的费率及时段保存；OpenAI 插件可按 USD 标准费率保存。缺少缓存拆分时会标记为估算。历史记录没有币种字段时按 CNY 读取。API 的 `costByCurrency` 和相应明细按币种分别汇总；旧的 `cost` 字段只代表 CNY，避免混加美元与人民币。`stats/token-pricing.json` 保存可编辑的备用费率和币种，旧配置默认为 CNY。修改费率不会改写历史快照。
 │   ├─ cert.pem
 │   └─ key.pem
 ├─ .integrity/               完整性清单 / 基线 / 恢复日志

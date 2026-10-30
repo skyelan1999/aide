@@ -192,7 +192,7 @@ h1 span { color: var(--brand); }
 .token-chip.balance { background: var(--selected); color: var(--brand-text); }
 .token-price-row { border-top: 1px solid var(--line); padding-top: 17px; gap: 12px; margin-bottom: 20px; }
 .token-price-row label { font-size: 11px; }
-.token-price-row input { width: 70px; font-size: 12px; padding: 7px 8px; }
+.token-price-row input, .token-price-row select { width: auto; min-width: 70px; font-size: 12px; padding: 7px 8px; }
 .token-price-row small { font-size: 10px; line-height: 1.6; flex-basis: 100%; }
 .token-heatmap { justify-content: flex-start; gap: 5px; padding: 8px 2px; }
 .token-week { gap: 5px; }

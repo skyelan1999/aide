@@ -1,0 +1,14 @@
+{
+  "id": "openai-supporter",
+  "name": "OpenAISupporter",
+  "version": "0.1.0",
+  "description": "OpenAI 官方 USD 模型费率与缓存命中计价快照；凭证由 Aide 保管。",
+  "author": "skyelan1999",
+  "license": "MIT",
+  "main": "index.js",
+  "homepage": "https://github.com/skyelan1999/aide-pkg-OpenAISupporter",
+  "providerSupport": {
+    "protocol": 1,
+    "catalog": "provider-support.json"
+  }
+}

@@ -5933,6 +5933,15 @@ function renderTokenStats(control) {
   const detail = el('div', 'token-day-detail hidden');
   const priceRow = el('div', 'token-price-row');
   const priceFields = el('div', 'token-price-fields');
+  const currencyLabel = el('label', '', t('计价币种'));
+  const currencySelect = el('select', 'token-price-currency');
+  currencySelect.setAttribute('aria-label', t('计价币种'));
+  for (const currency of ['CNY', 'USD']) {
+    const option = el('option', '', currency);
+    option.value = currency;
+    currencySelect.append(option);
+  }
+  currencyLabel.append(currencySelect);
   const priceNote = el('small', 'token-price-note', '');
   const defaultTitle = el('div', 'token-title', t('默认计价标准'));
   const balanceHost = el('div', '');
@@ -5951,14 +5960,23 @@ function renderTokenStats(control) {
     // Statistics retain historical snapshots; the editor resolves its selected scope separately.
     await loadScopePricing(data.pricing);
     const cost = data.cost ?? 0;
+    const costByCurrency = data.costByCurrency || { CNY: cost };
+    const estimatedByCurrency = data.estimatedCostByCurrency || { CNY: data.estimatedCost ?? 0 };
+    const money = (amount, currency = 'CNY', digits = 2) => (currency === 'USD' ? '$' : '¥') + Number(amount || 0).toFixed(digits);
+    const moneyTotals = (amounts, digits = 2) => Object.entries(amounts || {}).filter(([, value]) => Number(value) !== 0).map(([currency, value]) => money(value, currency, digits)).join(' · ') || '—';
     const callRecords = data.callRecords || [];
     const dayCost = {};
     const dayEstimated = {};
     const dayCache = {};
     callRecords.forEach(c => {
       const k = (c.time || '').slice(0, 10);
-      dayCost[k] = (dayCost[k] || 0) + (c.cost || 0);
-      if (c.defaulted || c.costEstimated) dayEstimated[k] = (dayEstimated[k] || 0) + (c.cost || 0);
+      const currency = c.currency || 'CNY';
+      dayCost[k] ||= {};
+      dayCost[k][currency] = (dayCost[k][currency] || 0) + (c.cost || 0);
+      if (c.defaulted || c.costEstimated) {
+        dayEstimated[k] ||= {};
+        dayEstimated[k][currency] = (dayEstimated[k][currency] || 0) + (c.cost || 0);
+      }
       if (c.cacheKnown) {
         const entry = dayCache[k] || { hit: 0, miss: 0, knownCalls: 0 };
         entry.hit += c.cacheHit || 0; entry.miss += c.cacheMiss || 0; entry.knownCalls++;
@@ -5966,7 +5984,6 @@ function renderTokenStats(control) {
       }
     });
     // R08：费用仅由服务端逐调用记录汇总；未计价历史（旧版汇总）单独提示，不并入费用
-    const estimatedCost = data.estimatedCost ?? 0;
     const metrics = head.querySelector('.control-value');
     metrics.replaceChildren();
     const metric = (label, value, caption) => {
@@ -5975,30 +5992,32 @@ function renderTokenStats(control) {
       return card;
     };
     metrics.append(metric(t("累计用量"), fmtStatTokens(totalsObj.total || 0), t("tokens · {0} 次调用", totalsObj.calls || 0)),
-      metric(t("已计价费用"), '¥' + cost.toFixed(2), t("按调用时刻的费率快照")));
-    if (estimatedCost > 0) metrics.append(metric(t("刊例价估算"), '¥' + estimatedCost.toFixed(2), t("与已计价费用分开统计")));
+      metric(t("已计价费用"), moneyTotals(costByCurrency), t("按调用时刻的费率快照")));
+    if (Object.values(estimatedByCurrency).some(value => Number(value) > 0)) metrics.append(metric(t("刊例价估算"), moneyTotals(estimatedByCurrency), t("与已计价费用分开统计")));
     chips.replaceChildren();
     chips.append(
-      el('span', 'token-chip', todayStats.priced !== false ? t("今日 {0} tokens · ¥{1}", fmtStatTokens(todayStats.total || 0), (dayCost[Object.keys(days).sort().pop()] || 0).toFixed(2)) : t("今日 {0} tokens · 未计价", fmtStatTokens(todayStats.total || 0))),
+      el('span', 'token-chip', todayStats.priced !== false ? t("今日 {0} tokens · {1}", fmtStatTokens(todayStats.total || 0), moneyTotals(dayCost[Object.keys(days).sort().pop()])) : t("今日 {0} tokens · 未计价", fmtStatTokens(todayStats.total || 0))),
       el('span', 'token-chip', t("调用 {0} 次", totalsObj.calls || 0))
     );
-    Object.entries(data.modelCost || {}).forEach(([model, mc]) => {
-      const chip = el('span', 'token-chip', model + ' ¥' + mc.toFixed(2));
+    const modelCostByCurrency = data.modelCostByCurrency || { CNY: data.modelCost || {} };
+    Object.entries(modelCostByCurrency).forEach(([currency, models]) => Object.entries(models || {}).forEach(([model, value]) => {
+      const chip = el('span', 'token-chip', model + ' ' + money(value, currency));
       chip.title = t("该模型逐调用计价快照合计");
       chips.append(chip);
-    });
-    Object.entries(data.keyCost || {}).forEach(([identity, value]) => {
+    }));
+    const keyCostByCurrency = data.keyCostByCurrency || { CNY: data.keyCost || {} };
+    Object.entries(keyCostByCurrency).forEach(([currency, costs]) => Object.entries(costs || {}).forEach(([identity, value]) => {
       const aggregate = data.perKey?.[identity] || {};
       const provider = (scopeConfig.modelProviders || []).find(p => p.id === aggregate.providerId || identity.startsWith(p.id + ':'));
       const key = (provider?.keys || []).find(k => k.id === aggregate.keyId || identity === provider.id + ':' + k.id);
       const label = [provider?.name || aggregate.providerId, key?.label || aggregate.keyLabel || aggregate.keyId || t('未记录密钥')].filter(Boolean).join(' · ');
       const cost = typeof value === 'number' ? value : value.cost || 0;
-      const chip = el('span', 'token-chip', label + ' ¥' + cost.toFixed(2));
-      const estimated = Number(data.keyEstimatedCost?.[identity] || 0);
+      const chip = el('span', 'token-chip', label + ' ' + money(cost, currency));
+      const estimated = Number((data.keyEstimatedCostByCurrency?.[currency] || data.keyEstimatedCost || {})[identity] || 0);
       chip.title = t('该密钥逐调用快照合计，包含估算；历史记录不按当前费率重算。');
-      if (estimated > 0) chip.textContent += t('（其中估算 ¥{0}）', estimated.toFixed(4));
+      if (estimated > 0) chip.textContent += t('（其中估算 {0}）', money(estimated, currency, 4));
       chips.append(chip);
-    });
+    }));
     if (unpriced.total) {
       const chip = el('span', 'token-chip', t("未计价历史 {0} tokens · {1} 次", fmtStatTokens(unpriced.total), unpriced.calls || 0));
       chip.title = t("旧版统计没有逐调用与计价证据，费用未知；未按当前费率冒充已发生费用");
@@ -6028,7 +6047,7 @@ function renderTokenStats(control) {
     const showTip = (cell, date, day, weekTotal) => {
       tip.replaceChildren();
       const pricedDay = day.priced !== false;
-      const fee = pricedDay ? t("费用 ¥{0}", (dayCost[date] || 0).toFixed(4)) : t("费用未知（旧数据未计价）");
+      const fee = pricedDay ? t("费用 {0}", moneyTotals(dayCost[date], 4)) : t("费用未知（旧数据未计价）");
       tip.append(
         el('strong', '', date + ' · ' + fmtStatTokens(day.total || 0) + ' tokens'),
         el('br'),
@@ -6080,7 +6099,7 @@ function renderTokenStats(control) {
           detail.classList.remove('hidden');
           detail.replaceChildren();
           const pricedDay = day.priced !== false;
-          const fee = pricedDay ? t("费用 ¥{0}（调用快照；其中估算 ¥{1}）", (dayCost[key] || 0).toFixed(4), (dayEstimated[key] || 0).toFixed(4)) : t("费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充");
+          const fee = pricedDay ? t("费用 {0}（调用快照；其中估算 {1}）", moneyTotals(dayCost[key], 4), moneyTotals(dayEstimated[key], 4)) : t("费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充");
           detail.append(
             el('strong', '', key),
             el('span', '', t("输入 {0} tokens · 输出 {1} tokens", fmtStatTokens(day.prompt || 0), fmtStatTokens(day.completion || 0))),
@@ -6096,7 +6115,7 @@ function renderTokenStats(control) {
               const provider = (scopeConfig.modelProviders || []).find(p => p.id === call.providerId);
               const modelKey = (provider?.keys || []).find(k => k.id === call.keyId);
               const identity = [provider?.name || call.providerId, modelKey?.label || call.keyLabel || call.keyId || t('未记录密钥')].filter(Boolean).join(' · ');
-              list.append(el('p', '', [call.model || t('未记录模型'), identity, '¥' + Number(call.cost || 0).toFixed(6), call.costEstimated || call.defaulted ? t('估算') : t('调用快照')].join(' · ')));
+              list.append(el('p', '', [call.model || t('未记录模型'), identity, money(call.cost || 0, call.currency || 'CNY', 6), call.costEstimated || call.defaulted ? t('估算') : t('调用快照')].join(' · ')));
             }
             detail.append(list);
           }
@@ -6136,7 +6155,7 @@ function renderTokenStats(control) {
       }
       // 以两个输入框的当前值为准（避免第二次修改用过期的模块缓存覆盖第一次的值）
       const readOther = key => { const raw = wrap.querySelector('input[data-price="' + key + '"]')?.value; const n = parseFloat(raw); return Number.isFinite(n) && n >= 0 ? n : pricing[key]; };
-      const next = { scope:'default', priceIn: readOther('priceIn'), priceOut: readOther('priceOut') };
+      const next = { scope:'default', priceIn: readOther('priceIn'), priceOut: readOther('priceOut'), currency: currencySelect.value };
       next[key] = v;
       action(async () => {
         try {
@@ -6151,13 +6170,15 @@ function renderTokenStats(control) {
     lab.append(input);
     return lab;
   };
-  priceFields.append(mkPrice('priceIn', t("输入 ¥/百万")), mkPrice('priceOut', t("输出 ¥/百万")));
+  priceFields.append(currencyLabel, mkPrice('priceIn', t("输入费率 /百万")), mkPrice('priceOut', t("输出费率 /百万")));
+  currencySelect.addEventListener('change', () => wrap.querySelector('input[data-price="priceIn"]')?.dispatchEvent(new Event('change')));
   priceRow.append(priceFields, priceNote);
   async function loadScopePricing(fallback) {
     const request = ++scopeRequest;
     const resolved = await api('/token-pricing?scope=default');
     if (request !== scopeRequest || !wrap.isConnected) return;
     pricing = resolved || fallback || pricing;
+    currencySelect.value = pricing.currency === 'USD' ? 'USD' : 'CNY';
     const standards = (pricing.standards || []).map(name => t('{0} 计价标准已启用', name));
     priceNote.textContent = standards.length ? standards.join(' · ') + '。' + t('未匹配插件时使用手动默认单价；历史费用不会重算。') : t('未启用计价插件，使用手动默认单价；历史费用不会重算。');
     for (const field of ['priceIn', 'priceOut']) { const input = wrap.querySelector('input[data-price="' + field + '"]'); if (input && document.activeElement !== input) input.value = pricing[field] ?? 0; }

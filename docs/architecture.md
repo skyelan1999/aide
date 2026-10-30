@@ -140,8 +140,8 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 | POST | `/api/context-preview` | 与运行请求共用构造器的预算预览 |
 | GET | `/api/search` | 会话全文搜索 |
 | POST | `/api/sessions/{id}/compact` | 手动摘要压缩 |
-| GET | `/api/token-stats` | 用量与费用汇总；逐调用缓存命中/未命中与价格快照 |
-| GET / PUT | `/api/token-pricing` | 官方 DeepSeek 费率预览；其他模型的自定义费率管理 |
+| GET | `/api/token-stats` | 用量与费用汇总；逐调用缓存命中/未命中、币种与价格快照；`costByCurrency` 分币种汇总，兼容字段 `cost` 只计 CNY |
+| GET / PUT | `/api/token-pricing` | 官方 DeepSeek/OpenAI 费率预览；可编辑自定义费率与 CNY/USD 币种 |
 | GET / POST | `/api/plugins` | 插件列表/上传 |
 | PUT / DELETE | `/api/plugins/{id}` | 启停/删除 |
 | GET | `/api/plugin-surface` | 插件能力清单 |
