@@ -35,7 +35,7 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "Disk propagation fixed and regression cases added. Preparing full clean-platform lifecycle acceptance and Linux CI coverage.",
+      "summary": "Explicit disk-root propagation implemented. Added opt-in real POSIX acceptance and a required Linux launcher CI lane. The first genuine cold build exposed a pip wheel-body timeout; whole-install retries now preserve the exact configured index/options/pinned requirements and remain bounded to three attempts.",
       "evidence": [
         "scripts/test_resource_guard.py",
         "scripts/test_launcher_contract.py"
@@ -43,10 +43,15 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Original empty-path failure reproduced. 9 resource-guard and 21 launcher/package tests passed, including the real child shell with absent/empty/stale parent environment. Real cold build/lifecycle remain pending.",
+      "summary": "9 disk/resource checks, 21 launcher/package tests, 3 pip recovery tests, 22 CI contract checks and 66 portable native checks passed. First clean macOS attempt passed fresh verify/release rejection/stop/docker_clean/start rejection and reached the actual runtime build, then failed on an Aliyun wheel read timeout. Its owned builder was removed through docker_clean with exit 0. A new independent fresh checkout will rerun the whole sequence; no full-platform pass claimed yet.",
       "evidence": [
         ".agent-state/launcher-clean-654/resource.log",
-        ".agent-state/launcher-clean-654/contract.log"
+        ".agent-state/launcher-clean-654/contract.log",
+        ".agent-state/launcher-clean-654/mac-real/result.json",
+        ".agent-state/launcher-clean-654/mac-real/06-build.log",
+        ".agent-state/launcher-clean-654/mac-real/failed-attempt-cleanup.log",
+        ".agent-state/launcher-clean-654/portable.log",
+        ".agent-state/launcher-clean-654/ci-contract.log"
       ]
     },
     "documentation": {
@@ -67,7 +72,7 @@
   },
   "release_authorization": "User authorized fixing and full clean-environment testing. No admin exception, actual release, tag or production deployment authorized.",
   "rollback": "Revert only this repair; original checkout and user data remain untouched. Dedicated acceptance project can be stopped/removed by its ownership metadata; no global prune.",
-  "handoff": "In progress. Windows full Docker Desktop run deferred by user. PR #650 prior CI all passed but is not merged and does not validate this expanded scope.",
+  "handoff": "Fresh macOS attempt A found an additional dependency-download failure, now bounded by full-install retry. All actual acceptance remains in progress. Windows actual Docker Desktop host deferred by user; existing Windows native/CMD fixture CI is a separate result. Existing PR #650 will carry the expanded repair/test scope.",
   "issue": 654,
   "operator": "skyelan1999",
   "pull_request": "https://github.com/skyelan1999/aide/pull/650"

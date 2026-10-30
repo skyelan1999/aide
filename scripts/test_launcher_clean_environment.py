@@ -20,11 +20,12 @@ import urllib.request
 
 
 class Acceptance:
-    def __init__(self, root, evidence):
+    def __init__(self, root, evidence, pip_index=None):
         self.root=root.resolve();self.evidence=evidence.resolve()
         self.scope=hashlib.sha256(os.fsencode(str(self.root))).hexdigest()[:20]
         self.image='aide:source-'+self.scope;self.builder='aide-'+self.scope
         self.extension='.command' if os.uname().sysname=='Darwin' else '.sh'
+        self.pip_index=pip_index
         self.commands=[];self.env={};self.result={'status':'in_progress','root':str(self.root),'scope':self.scope,'commands':self.commands}
 
     def save(self):
@@ -66,6 +67,7 @@ class Acceptance:
             AIDE_PORT=str(port),AIDE_OPEN_BROWSER='0',AIDE_WORKSPACE=str(self.evidence/'workspace'),
             AIDE_CONTEXT=str(self.evidence/'context'),AIDE_LOCAL_ROOT=str(self.evidence/'local'),BUILDKIT_PROGRESS='plain')
         assert 'PROJECT_DIR' not in self.env
+        if self.pip_index:self.env['PIP_INDEX_URL']=self.pip_index
         (self.evidence/'environment.json').write_text(json.dumps(self.env,ensure_ascii=False,indent=2)+'\n')
         (self.evidence/'environment.json').chmod(0o600)
         self.baseline_images=json.loads('['+self.docker('image','ls','--format','json').replace('\n',',')+']')
@@ -74,6 +76,7 @@ class Acceptance:
         self.result.update(platform=os.uname().sysname,extension=self.extension,port=port,
             head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=self.root,text=True).strip(),
             initial_state='new HOME/config/data/project/image/builder; no inherited PROJECT_DIR or model credentials',
+            pip_index='explicit CLI override' if self.pip_index else 'repository default',
             windows='DEFERRED_BY_USER: no Windows host currently available')
         self.save()
 
@@ -149,9 +152,10 @@ def main():
     parser.add_argument('--root',type=Path,required=True)
     parser.add_argument('--evidence',type=Path,required=True)
     parser.add_argument('--allow-real-build',action='store_true',help='Allow two real cold builds and this isolated runtime lifecycle')
+    parser.add_argument('--pip-index-url',help='Explicit existing build index override; ambient host proxy/model/index variables are not inherited')
     args=parser.parse_args()
     if not args.allow_real_build:parser.error('--allow-real-build is required')
-    acceptance=Acceptance(args.root,args.evidence)
+    acceptance=Acceptance(args.root,args.evidence,args.pip_index_url)
     try:acceptance.execute()
     except Exception as error:
         acceptance.result.update(status='failed',error=str(error));acceptance.save();raise
