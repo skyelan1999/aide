@@ -39,44 +39,58 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Added CMD pre-EXE registry resolution and native WinHTTP/manual proxy policy with explicit env precedence; source fingerprint includes the helper. Adding real Windows boundary tests.",
+      "status": "pass",
+      "summary": "Implemented CMD pre-EXE registry resolution plus native WinHTTP/manual policy, explicit proxy precedence, bypass conversion/warnings and redacted network/PAC guidance. Both build phases inherit the host client environment; Docker container configuration is untouched.",
       "evidence": [
         "scripts/windows-build-proxy.bat",
         "native/windows-launcher/build_proxy.hpp",
-        "native/windows-launcher/build_proxy_windows.hpp"
+        "native/windows-launcher/build_proxy_windows.hpp",
+        "https://github.com/skyelan1999/aide/pull/650"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "64 portable production native checks passed, including 26 proxy policy cases. Actual Windows CMD and affected-host full build are not yet verified.",
+      "status": "pass",
+      "summary": "66 portable production native checks (28 proxy cases), 35 native host checks, 20 launcher/package checks, actual Windows SDK/28 CMD policy cases/root BAT handoff/console regressions and quick CI passed. Both complete native PE architectures built; architecture/system DLL/license gates passed. Full required Go/gate is separately tracked on PR #650; affected Windows full Aide build remains NOT_RUN.",
       "evidence": [
-        ".agent-state/issue-649-portable.log"
+        "docs/reviews/2026-10-30-windows-build-proxy-649.md",
+        "https://github.com/skyelan1999/aide/actions/runs/41038456698/job/124005018716",
+        "https://github.com/skyelan1999/aide/actions/runs/41038456698/job/124005019102",
+        "Product fingerprint 1f1524ea03ebd114a2790a49f5cada3041f850bfb26e08698db27867c4bc3eb9"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Canonical launcher contract updated with exact precedence, supported manual formats, PAC guidance and host/container proxy scopes.",
+      "status": "pass",
+      "summary": "Canonical launcher contract and focused acceptance report describe final behavior, proxy scopes and actual test limits.",
       "evidence": [
-        "docs/architecture/launcher-contract.md"
+        "docs/architecture/launcher-contract.md",
+        "docs/reviews/2026-10-30-windows-build-proxy-649.md",
+        "python3 scripts/check_docs.py"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "Final diff and scoped artifact review remain.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Scoped diff and test fixtures reviewed. Only owned disposable native builds ran; no production services, original dirty checkout, system proxy settings or existing Docker builder caches changed.",
+      "evidence": [
+        "git diff --check",
+        "git status --short",
+        "Native build commands use --rm --network none and an existing verified compiler archive"
+      ]
     },
     "release": {
       "status": "pending",
-      "summary": "Prepare PR and required CI; no admin merge, tag, release or deployment authorized for #649.",
-      "evidence": []
+      "summary": "PR #650 prepared; final required CI and normal main review are remote gates. No current administrator exception, tag, release or deployment authorization.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/650",
+        "GitHub reviewDecision REVIEW_REQUIRED"
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "User authorized fixing Issue #649 (你处理一下). Prepare the fix/PR and validate; no administrator exception for this PR, no tag, release or deployment authorized.",
   "rollback": "Revert this PR to restore previous build-client proxy behavior; retain .env, .aide-data, workspaces, Docker settings and builder cache.",
-  "handoff": "Implementation/verification in progress. Issue #649 remains open for full build.bat acceptance on the affected Windows Docker Desktop host.",
+  "handoff": "PR #650 contains the repair and passed focused native/actual Windows tests. Final Go/gate and normal review remain separate gates on the PR. Keep Issue #649 open pending a complete build.bat run on the affected Windows Docker Desktop host; review report distinguishes synthetic registry/Docker boundaries from that full runtime acceptance.",
   "issue": 649,
   "operator": "skyelan1999",
   "client": "Codex local API and shell on macOS; GitHub connector and official vendor docs",
-  "runtime_acceptance": "NOT_RUN: affected Windows host is unavailable in this investigation"
+  "runtime_acceptance": "NOT_RUN: affected Windows host is unavailable in this investigation",
+  "pull_request": "https://github.com/skyelan1999/aide/pull/650"
 }
