@@ -39,14 +39,16 @@ def main():
             root.mkdir()
             if source:
                 (root / '.git').mkdir()
-            for action in ('start', 'stop', 'build', 'clean', 'docker_clean', 'release'):
+            for action in ('start', 'stop', 'build', 'clean', 'docker_clean', 'release', 'verify'):
                 result = subprocess.run([str(binary), action, '--root', str(root), '--dry-run'],
                     cwd=folder, input='', capture_output=True, text=True, timeout=15)
-                allowed = source or action in ('start', 'stop', 'docker_clean')
+                allowed = source or action in ('start', 'stop', 'docker_clean', 'verify')
                 assert (result.returncode == 0) == allowed, (source, action, result.stdout, result.stderr)
                 assert not (root / '.aide-data').exists(), 'dry run mutated launcher state'
                 if allowed:
                     assert 'Dry run:' in result.stdout
+        from test_windows_bat_entrypoints import check
+        check(binary, folder, installation)
     print('PASS real Win32 launcher compile/link and native self-test; fixture executable removed')
 
 

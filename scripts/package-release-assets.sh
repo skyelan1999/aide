@@ -60,7 +60,7 @@ for TARGET in macos-${PLATFORM#linux/} windows-${PLATFORM#linux/} ubuntu-${PLATF
   PACKAGE="$STAGING/aide-$TAG-$TARGET"
   mkdir -p "$PACKAGE/scripts" "$PACKAGE/docker-images" "$PACKAGE/workspace" "$PACKAGE/context"
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
-  if [[ "$TARGET" == windows-* ]]; then cp "$WINDOWS_LAUNCHER" "$PACKAGE/aide-launcher.exe"; fi
+  if [[ "$TARGET" == windows-* ]]; then cp "$WINDOWS_LAUNCHER" "$PACKAGE/aide-launcher.exe"; cp "$ROOT/scripts/windows-entrypoint.bat" "$PACKAGE/scripts/"; fi
   if [[ "$TARGET" != windows-* ]]; then
     cp "$ROOT/scripts/launcher.py" "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/aide.sh" "$ROOT/scripts/message-lan-control.sh" "$PACKAGE/scripts/"
     cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/latest-release-runtime.py" "$ROOT/scripts/resource-guard.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
@@ -105,6 +105,7 @@ cp "$ROOT/scripts/launcher.py" "$ROOT/scripts/aide-maintenance.sh" "$FULL_PACKAG
 cp "$ROOT/scripts/local-mounts-control.sh" "$ROOT/scripts/message-lan-control.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.bat" "$FULL_PACKAGE/"
 cp "$WINDOWS_LAUNCHER" "$FULL_PACKAGE/aide-launcher.exe"
+cp "$ROOT/scripts/windows-entrypoint.bat" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/scripts/windows-launcher-asset.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.py" "$ROOT/scripts/prebuilt-image.sh" "$ROOT/scripts/latest-release-runtime.py" "$ROOT/scripts/resource-guard.sh" "$FULL_PACKAGE/scripts/"

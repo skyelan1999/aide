@@ -30,3 +30,6 @@ plugins/*
 
 # Generated native entrypoint; compiled explicitly by the build target.
 aide-launcher.exe
+
+# Retired PowerShell is a regression fixture, never a product runtime.
+scripts/fixtures/legacy-windows

@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pwsh', default=shutil.which('pwsh'))
-    parser.add_argument('--source', type=Path, default=ROOT / 'start.ps1')
+    parser.add_argument('--source', type=Path, default=ROOT / 'scripts/fixtures/legacy-windows/start.ps1')
     args = parser.parse_args()
     if not args.pwsh:
         parser.error('PowerShell is required; pass --pwsh PATH')
@@ -71,7 +71,7 @@ def main():
             root = Path(folder)
             (root / 'scripts').mkdir()
             watcher = root / 'scripts/watch-port.ps1'
-            shutil.copy2(ROOT / 'scripts/watch-port.ps1', watcher)
+            shutil.copy2(ROOT / 'scripts/fixtures/legacy-windows/scripts/watch-port.ps1', watcher)
             driver = root / 'driver.ps1'
             # Run the unmodified watcher: one real port-change iteration with a
             # Docker fixture, then exit. Capture the Compose environment on up.
@@ -108,7 +108,7 @@ function Invoke-FixtureDocker {
         with tempfile.TemporaryDirectory(prefix='aide-ps-parse-') as folder:
             script = Path(folder) / 'parse.ps1'
             script.write_text(code, encoding='utf-8-sig')
-            subprocess.run([args.pwsh, '-NoLogo', '-NoProfile', '-File', str(script), str(ROOT / name)], check=True)
+            subprocess.run([args.pwsh, '-NoLogo', '-NoProfile', '-File', str(script), str(ROOT / 'scripts/fixtures/legacy-windows' / name)], check=True)
     print('PASS: actual PowerShell directory/watcher checks; Docker and native dialogs not exercised')
 
 

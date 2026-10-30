@@ -118,7 +118,7 @@ def archive(case):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pwsh', default=shutil.which('pwsh'))
-    parser.add_argument('--source', type=Path, default=ROOT / 'scripts/prebuilt-image.ps1')
+    parser.add_argument('--source', type=Path, default=ROOT / 'scripts/fixtures/legacy-windows/scripts/prebuilt-image.ps1')
     parser.add_argument('--case', action='append', dest='selected')
     parser.add_argument('--docker', help='Also import a tiny owned image through a real daemon; never run it')
     args = parser.parse_args()
@@ -218,7 +218,7 @@ if($metadata.Code -ne 0){throw 'Owned imported target missing'}
 @{identity=$metadata.Text}|ConvertTo-Json -Compress
 ''', encoding='utf-8-sig')
         env = dict(os.environ, POWERSHELL_TELEMETRY_OPTOUT='1', POWERSHELL_UPDATECHECK='Off',
-                   FIXTURE_START=str(ROOT / 'start.ps1'), FIXTURE_SOURCE=str(args.source.resolve()),
+                   FIXTURE_START=str(ROOT / 'scripts/fixtures/legacy-windows/start.ps1'), FIXTURE_SOURCE=str(args.source.resolve()),
                    FIXTURE_DOCKER=args.docker, FIXTURE_TARGET=target_tag)
         try:
             run = subprocess.run([args.pwsh, '-NoLogo', '-NoProfile', '-File', str(driver)], env=env, text=True,

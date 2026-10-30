@@ -9,7 +9,7 @@ import tempfile
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--pwsh', default=shutil.which('pwsh'))
-parser.add_argument('--source', default=str(Path(__file__).resolve().parents[1] / 'start.ps1'))
+parser.add_argument('--source', default=str(Path(__file__).resolve().parents[1] / 'scripts/fixtures/legacy-windows/start.ps1'))
 args = parser.parse_args()
 if not args.pwsh:
     parser.error('PowerShell is required; pass --pwsh PATH')

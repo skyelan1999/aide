@@ -67,7 +67,7 @@ try:
         port = probe.getsockname()[1]
     (folder / 'workspace').mkdir(); (folder / 'context').mkdir(); (folder / 'scripts').mkdir()
     for name in ('start.command',): shutil.copy2(ROOT / name, folder / name)
-    for name in ('aide.sh', 'launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py', 'watch-port.sh', 'prebuilt-image.sh'):
+    for name in ('aide.sh', 'launcher-data.sh', 'launcher-data.py', 'watch-port.sh', 'prebuilt-image.sh'):
         shutil.copy2(ROOT / 'scripts' / name, folder / 'scripts' / name)
     shutil.copy2(ROOT / 'docker/offline.env.example', folder / '.env.example')
     (folder / '.aide-image').write_text(f'{tag} {info["Id"]} {info["Os"]}/{info["Architecture"]}\n')

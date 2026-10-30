@@ -66,7 +66,7 @@ try {
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pwsh', default=shutil.which('pwsh'))
-    parser.add_argument('--source', type=Path, default=ROOT / 'scripts/update-agent.ps1')
+    parser.add_argument('--source', type=Path, default=ROOT / 'scripts/fixtures/legacy-windows/scripts/update-agent.ps1')
     args = parser.parse_args()
     if not args.pwsh:
         parser.error('PowerShell required; pass --pwsh')

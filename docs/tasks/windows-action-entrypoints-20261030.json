@@ -1,0 +1,64 @@
+{
+  "id": "windows-action-entrypoints-20261030",
+  "request": "当前除了start的脚本外，所有的bat都闪一下就没，然后不工作，目录中仍然有ps1的脚本存在",
+  "baseline": "820c18d8d0a918176a3c49fedaa22105369b4d9f",
+  "initial_status": "",
+  "acceptance": [
+    "All standard BAT entrypoints execute native commands with visible action/result and preserved exit code; double-click retains diagnostics, automation can disable pause.",
+    "Git build/clean rebuild current native host even with an existing stale EXE; start never compiles.",
+    "Legacy PowerShell moves out of active entry/runtime directories into explicit test fixtures; package and native source identity exclude retired scripts.",
+    "Run actual Windows cmd wrappers with compiled native executable for source/release, missing/stale EXE, failure/success, Unicode/spaces paths and bootstrap boundary; preserve user data."
+  ],
+  "scope": [
+    "Windows BAT dispatcher/bootstrap and native lifecycle dispatch",
+    "Archived legacy Windows test fixture paths, source inventory and packaging",
+    "Windows cmd regression, docs/task evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed Git source checkout. Preserve original dirty aide/start.command, runtime 9999 and persistent data; do not publish or deploy.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/646"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Shared CMD entrypoint owns interactive result lifetime. Explicit build/clean bootstraps fresh native host and stops only owned controller before replacing bootstrap EXE; normal actions validate launcher contract. Keep legacy PowerShell only as archived regression fixtures.",
+      "evidence": [
+        "build.bat",
+        "native/windows-launcher/main.cpp"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "",
+  "issue": 646,
+  "operator": "skyelan1999"
+}
