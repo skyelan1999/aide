@@ -39,6 +39,7 @@ var pluginIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 type PluginWorkbench struct {
 	ProfessionalWorkflow bool `json:"professionalWorkflow,omitempty"`
 
+	HostComponent   string             `json:"hostComponent,omitempty"`
 	ProjectMessages bool               `json:"projectMessages,omitempty"`
 	MobileCapture   bool               `json:"mobileCapture,omitempty"`
 	FileHandler     *PluginFileHandler `json:"fileHandler,omitempty"`

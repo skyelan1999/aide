@@ -136,7 +136,7 @@ FULL_PACKAGE_STARTUP_FILES = (
     'scripts/aide.sh', 'scripts/launcher-data.sh', 'scripts/launcher-data.py',
     'scripts/resource-guard.sh', 'scripts/prebuilt-image.sh',
     'scripts/local-mounts-control.sh', 'scripts/message-lan-control.sh',
-    'scripts/watch-port.sh', 'scripts/update-agent.sh',
+    'scripts/watch-port.sh', 'scripts/update-agent.sh', 'scripts/codex-host-control.cjs',
 )
 
 

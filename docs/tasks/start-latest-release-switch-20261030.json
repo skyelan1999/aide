@@ -1,0 +1,97 @@
+{
+  "id": "start-latest-release-switch-20261030",
+  "request": "用户要求修复：点击 Start 后自动切换到最新可用 Aide release。只 push，不发版、不部署 9999。",
+  "baseline": "4b56f5c1dd305d5b2270f5af12304dd656fda161",
+  "initial_status": "## main...origin/main (clean)",
+  "acceptance": [
+    "点击 start.command 时若已有健康旧容器，启动流程能识别官方最新公开 Release；安全校验并切换到对应平台镜像后启动最新版本。",
+    "无新版时不重复下载/切换，服务健康检查失败时保留并恢复旧镜像。",
+    "数据卷、工作区和密钥配置保持原样。",
+    "实现仅本地分支并推送，不发布 Release、不部署/重启 9999。"
+  ],
+  "scope": [
+    "start.command",
+    "scripts/aide.sh",
+    "scripts/prebuilt-image.sh",
+    "必要的发行升级脚本与对应回归",
+    "docs/architecture/software-updates.md",
+    "docs/tasks/start-latest-release-switch-20261030.json",
+    "scripts/test_launcher_data.py",
+    "native/windows-launcher",
+    "start.ps1",
+    ".github/workflows/aide-ci.yml",
+    "scripts/test_windows_launcher_compile.py",
+    "scripts/test_windows_native_package.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认期望为点击 Start 后切换最新主程序；本次只 push，不发布、不部署 9999。",
+      "evidence": [
+        "当前 start.command 仅调用 scripts/aide.sh start；启动器会先复用健康旧容器。",
+        "docker/prebuilt-images.tsv 仍固定到 v0.1.17.1-RC1，故启动回退会选旧运行时。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用源码构建失败后的现有 Release fallback，仅将过期 tar.gz 固定回退替换为官方最新完整 ZIP；已有 source build 优先级、数据卷及 Compose 项目不变。",
+      "evidence": [
+        "GitHub 当前最新公开发布 v0.1.17.6-RC1 只有 full/devtools ZIP，不含旧式 offline tar.gz。",
+        "官方发布资产 digest 可从 Releases API 取得；完整包内部含 image manifest、SHA256SUMS 与 image archive。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增最新官方完整 ZIP 发现、校验与镜像导入；启动/健康失败恢复旧镜像；更新发行包及测试夹具。",
+      "evidence": [
+        "scripts/latest-release-runtime.py 实现 GitHub API 元数据选择、资产 SHA256、ZIP CRC、包内 manifest/SHA256SUMS、导入后镜像身份/平台/source/CAD 校验。",
+        "scripts/prebuilt-image.sh 与 scripts/aide.sh 接入 fallback、健康确认及失败回退。",
+        "scripts/package-release-assets.sh 与 export-bundle 携带新运行时脚本。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "43 launcher regressions, 11 native package tests, 35 native host checks and 38 portable checks passed locally. Official ARM64 and AMD64 packages were verified/imported and isolated containers returned 0.1.17.6 RC1 at 4b56f5c1. Windows runner compiled/linked the Win32 source and ran EXE self-test; the actual Windows Docker Desktop startup/rollback remains NOT_RUN.",
+      "evidence": [
+        "PR #628 head 29c105c1: quick PASS, windows PASS, Go race/vet PASS (35m42s), gate PASS",
+        "Native x64 PE built; SHA256 66ecc26fc6d553b4efdf128d0a0986368e6c40856ec4b19a53daaad2f79d7f55",
+        "Issue #630 kept open for real Windows Docker Desktop acceptance"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新软件升级架构说明，明确触发条件、完整包校验、回退及 Windows 源码模式尚未接入的边界。",
+      "evidence": [
+        "docs/architecture/software-updates.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅范围仅含启动器、Release 包装载脚本、升级说明与任务账本；无额外未跟踪内容。变更将只推送功能分支。",
+      "evidence": [
+        "git diff --check：PASS",
+        "bash -n start.command scripts/aide.sh scripts/prebuilt-image.sh：PASS",
+        "Python AST parse scripts/latest-release-runtime.py：PASS"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User merged #628 into main at 8f107df4. No version bump, tag, Release or 9999 deployment; post-merge main CI is still running.",
+      "evidence": [
+        "GitHub state MERGED; main ancestry verified; active development worktree switched to clean main."
+      ]
+    }
+  },
+  "release_authorization": "用户授权本次管理员合并 #628；不发版。",
+  "rollback": "如 Docker compose 启动或容器健康检查失败，将原镜像 ID 重新标记回 Compose target，并尝试重建服务。旧镜像不会删除；本次未执行运行时变更。",
+  "handoff": "Startup source merged; use a rebuilt native EXE on Windows, since Git switching does not replace a compiled binary. Full Windows Docker Desktop acceptance remains open in #630. MIXSoul deployment parity follows separately under #631 / PR #632. No private plans, memory, credentials or local-only deployment launchers were pushed.",
+  "user_update": "User merged PR #628 and requested post-merge CI/flow completion; no public Release.",
+  "merge": {
+    "pr": 628,
+    "commit": "8f107df4584a703c9b1c5e743de2d2c267429161",
+    "mergedBy": "user",
+    "head": "29c105c172438c588bfd0244e03d5e2131665c3e",
+    "prCI": "all checks PASS (quick/windows/go/gate)",
+    "mainCI": "in progress: https://github.com/skyelan1999/aide/actions/runs/40994350046"
+  }
+}

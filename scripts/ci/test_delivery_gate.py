@@ -132,6 +132,31 @@ class DeliveryGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Weekly release limit'):
             gate.check_weekly_cadence([dict(draft=False, prerelease=True, published_at='2026-10-23T12:00:01Z')], now)
 
+    def test_one_off_cadence_exception_requires_a_manual_dispatch_and_a_reason(self):
+        reason = 'Owner-authorized Codex Bridge integration release on 2026-10-29; preserve weekly cadence afterward.'
+        with patch.dict(os.environ, {'GH_REPO': 'owner/repo', 'RELEASE_CADENCE_EXCEPTION_REASON': reason,
+                                     'GH_EVENT_NAME': 'workflow_dispatch'}), patch.object(gate, 'capture', side_effect=AssertionError('exception must not fetch releases')):
+            gate.cadence()
+        for event, invalid_reason in (('push', reason), ('workflow_dispatch', 'too short'),
+                                      ('workflow_dispatch', reason + '\nforged log line')):
+            with self.subTest(event=event, reason=invalid_reason), patch.dict(os.environ, {
+                    'GH_REPO': 'owner/repo', 'RELEASE_CADENCE_EXCEPTION_REASON': invalid_reason,
+                    'GH_EVENT_NAME': event}), self.assertRaises(ValueError):
+                gate.cadence()
+
+    def test_cadence_exception_cannot_be_supplied_for_candidate_only(self):
+        def fake(args):
+            if args == ['git', 'rev-parse', 'HEAD']:
+                return self.sha
+            if args == ['git', 'status', '--porcelain']:
+                return ''
+            return '0.1.17.5 RC3'
+        with patch.dict(os.environ, {'RELEASE_CADENCE_EXCEPTION_REASON': 'A sufficiently detailed release exception reason.',
+                                     'RELEASE_TAG': ''}), patch.object(gate, 'capture', side_effect=fake), \
+                patch.object(gate.subprocess, 'run'):
+            with self.assertRaisesRegex(ValueError, 'requires a release tag'):
+                gate.source()
+
     def test_notes_require_exact_tag_and_user_facing_sections(self):
         with tempfile.TemporaryDirectory() as temporary, patch.object(gate, 'ROOT', Path(temporary)):
             notes = Path(temporary) / 'docs/releases'

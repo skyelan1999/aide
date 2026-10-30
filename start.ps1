@@ -31,7 +31,9 @@ function Test-AideDirectorySetting([string]$Name) {
 # Release bundles contain a prebuilt, architecture-specific Linux image. Use it
 # directly and never invoke Compose build/pull for an offline installation.
 $offlineMarker = Join-Path $PSScriptRoot '.aide-image'
-$offlineBundle = Test-Path -LiteralPath $offlineMarker
+$sourceCheckout = ((Test-Path -LiteralPath (Join-Path $PSScriptRoot 'go.mod')) -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'Dockerfile')) -and $env:AIDE_BUILD_FROM_SOURCE -ne '0')
+$offlineBundle = ((Test-Path -LiteralPath $offlineMarker) -and -not $sourceCheckout)
+if ($sourceCheckout -and (Test-Path -LiteralPath $offlineMarker)) { $env:AIDE_IMAGE = 'aide:local' }
 if ($offlineBundle) {
     $marker = (Get-Content -Raw -LiteralPath $offlineMarker).Trim() -split '\s+'
     if ($marker.Count -lt 3) { throw '离线包 .aide-image 格式无效。' }
@@ -291,7 +293,7 @@ if (-not $offlineBundle) {
     . (Join-Path $PSScriptRoot 'scripts/prebuilt-image.ps1')
     $prebuiltTarget = Get-ComposeResult config --images aide
     if ($prebuiltTarget.Code -ne 0 -or -not $prebuiltTarget.Text -or $prebuiltTarget.Text -match '\r|\n') { throw 'Cannot resolve application image target.' }
-    $reuseLocal = ($env:AIDE_BUILD_FROM_SOURCE -ne '1' -and $env:AIDE_FORCE_REBUILD -ne '1' -and (Test-AideLocalRuntime $dockerExe $prebuiltTarget.Text))
+    $reuseLocal = (-not $sourceBuild -and $env:AIDE_FORCE_REBUILD -ne '1' -and (Test-AideLocalRuntime $dockerExe $prebuiltTarget.Text))
     if ($reuseLocal) {
         $sourceBuild = $false
         Write-Host '本地完整镜像可用，直接复用；源码更新请强制重编译。'
@@ -435,6 +437,7 @@ if ((Invoke-Compose @startArguments).Code -ne 0) {
 
 try { & (Join-Path $PSScriptRoot 'scripts/local-mounts-control.ps1') -Action start -DockerBin $dockerExe -ComposeCommand $ComposeCmd } catch { Write-Warning ('Local directory helper unavailable: '+$_.Exception.Message) }
 
+if (Get-Command node -ErrorAction SilentlyContinue) { & node (Join-Path $PSScriptRoot 'scripts/codex-host-control.cjs') start --root $PSScriptRoot --image $dataImage.Text --docker $dockerExe; if ($LASTEXITCODE -ne 0) { Write-Warning 'Codex host component unavailable; see launcher output.' } } else { Write-Warning 'Codex Bridge requires host Node.js 18+.' }
 try { & (Join-Path $PSScriptRoot 'scripts/message-lan-control.ps1') -Action start -DockerBin $dockerExe -ComposeCommand $ComposeCmd } catch { Write-Warning ('Message LAN bridge unavailable: '+$_.Exception.Message) }
 
 Write-Host "等待健康检查…"

@@ -36,6 +36,7 @@ jobs:
           python3 scripts/test_windows_native_host.py
           python3 scripts/test_windows_native_portable.py
           python3 scripts/agent-route.py verify quick
+          node --test scripts/codex-host-control.test.cjs
           python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
       - uses: actions/upload-artifact@v4
         if: failure()
@@ -75,6 +76,12 @@ jobs:
           go test ./cmd/aide-local-mounts -run ^TestNative -count=1
           if errorlevel 1 exit /b 1
           go test ./scripts/xsys-review -count=1
+      - name: Compile-check native Windows launcher against Windows SDK
+        shell: cmd
+        run: python scripts/test_windows_launcher_compile.py
+      - name: MIXSoul operator lifecycle regression
+        shell: cmd
+        run: python scripts/test_mixsoul_embedding_follow.py
       - name: Windows PowerShell 5.1 launcher regression
         shell: cmd
         run: |
