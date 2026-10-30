@@ -1253,6 +1253,11 @@ func (a *App) createDirectory(w http.ResponseWriter, r *http.Request) {
 				fail(w, 400, err)
 				return
 			}
+		case "relay":
+			if err := a.relayMutateSource(src, "mkdir", newPath, ""); err != nil {
+				fail(w, 400, err)
+				return
+			}
 		case "sftp":
 			if _, err := a.sftpBatchSource(src, "mkdir "+shellQuoteRemote(pathJoinRemote(src.Config.Path, newPath))+"\n"); err != nil {
 				fail(w, 400, err)

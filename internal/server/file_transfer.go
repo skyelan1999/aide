@@ -41,7 +41,7 @@ func (a *App) transferLocation(id string, writable bool) (transferLocation, erro
 	if !ok || !src.Enabled {
 		return transferLocation{}, errors.New("来源不存在或已停用")
 	}
-	if writable && (!src.RW || (src.Type != "local" && src.Type != "skill" && src.Type != "sftp" && src.Type != "workspace-sftp")) {
+	if writable && (!src.RW || (src.Type != "local" && src.Type != "skill" && src.Type != "sftp" && src.Type != "workspace-sftp" && src.Type != "relay")) {
 		return transferLocation{}, errors.New("目标来源不可写")
 	}
 	return transferLocation{source: src, hasSource: true}, nil
@@ -92,6 +92,9 @@ func (a *App) transferRemote(loc transferLocation, p string) (string, bool) {
 	return "", false
 }
 func (a *App) transferIdentity(loc transferLocation, p string) (string, error) {
+	if loc.hasSource && loc.source.Type == "relay" {
+		return "relay:" + loc.source.ID + ":" + sourceRelayDigest(loc.source) + ":" + path.Clean(p), nil
+	}
 	if remote, ok := a.transferRemote(loc, p); ok {
 		host := "workspace"
 		if loc.hasSource && loc.source.Type == "sftp" {
@@ -135,6 +138,9 @@ func (a *App) transferMkdir(loc transferLocation, p string) error {
 	if err := validTransferPath(p); err != nil {
 		return err
 	}
+	if loc.hasSource && loc.source.Type == "relay" {
+		return a.relayMutateSource(loc.source, "mkdir", p, "")
+	}
 	if remote, ok := a.transferRemote(loc, p); ok {
 		return a.transferRemoteBatch(loc, "mkdir "+shellQuoteRemote(remote)+"\n")
 	}
@@ -150,6 +156,9 @@ func (a *App) transferMkdir(loc transferLocation, p string) error {
 func (a *App) transferWrite(loc transferLocation, p string, b []byte) error {
 	if err := validTransferPath(p); err != nil {
 		return err
+	}
+	if loc.hasSource && loc.source.Type == "relay" {
+		return a.relayWriteSource(loc.source, p, b, true)
 	}
 	if remote, ok := a.transferRemote(loc, p); ok {
 		if loc.hasSource && loc.source.Type == "sftp" {
@@ -186,6 +195,9 @@ func (a *App) transferRename(loc transferLocation, oldPath, newPath string) erro
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	if loc.hasSource && loc.source.Type == "relay" {
+		return a.relayMutateSource(loc.source, "rename", oldPath, newPath)
+	}
 	if remoteOld, ok := a.transferRemote(loc, oldPath); ok {
 		remoteNew, _ := a.transferRemote(loc, newPath)
 		return a.transferRemoteBatch(loc, "rename "+shellQuoteRemote(remoteOld)+" "+shellQuoteRemote(remoteNew)+"\n")
@@ -217,6 +229,9 @@ func (a *App) transferRemoveTree(loc transferLocation, p string, dir bool, depth
 				return err
 			}
 		}
+	}
+	if loc.hasSource && loc.source.Type == "relay" {
+		return a.relayMutateSource(loc.source, "remove", p, "")
 	}
 	if remote, ok := a.transferRemote(loc, p); ok {
 		command := "rm "

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -134,6 +135,14 @@ func (a *App) historyRestoreWriter(source string) (string, func(string, []byte) 
 		case "workspace-sftp":
 			base = a.workspaceRemoteSourcePath(src.Config.Path, ".")
 			remote = true
+		case "relay":
+			digest, err := a.relayCredentialDigestLocked(src.ID)
+			if err != nil {
+				return "", nil, nil, err
+			}
+			return identity, func(p string, b []byte) error {
+				return a.relayWriteSourceContext(relayExpectedContext(context.Background(), digest), src, p, b, false)
+			}, func() {}, nil
 		case "sftp":
 			return identity, func(p string, b []byte) error { return a.sftpWriteSource(src, p, b) }, func() {}, nil
 		default:

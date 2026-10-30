@@ -25,6 +25,7 @@ type transferFile interface {
 	Sync() error
 }
 type transferFS struct {
+	relay   *sourceRelayFS
 	root    *os.Root
 	client  *sftp.Client
 	base    string
@@ -39,7 +40,7 @@ func (a *App) transferSourceStreaming(id string) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	src, ok := a.findSource(id)
-	return ok && (src.Type == "local" || src.Type == "skill" || src.Type == "sftp" || src.Type == "workspace-sftp")
+	return ok && (src.Type == "local" || src.Type == "skill" || src.Type == "sftp" || src.Type == "workspace-sftp" || src.Type == "relay")
 }
 
 func (a *App) streamTransferFS(ctx context.Context, id string, write bool) (*transferFS, error) {
@@ -49,6 +50,10 @@ func (a *App) streamTransferFS(ctx context.Context, id string, write bool) (*tra
 	}
 	if !a.transferSourceStreaming(id) {
 		return nil, errors.New("此引用驱动不支持随机文件读写，请使用其原有下载或复制入口")
+	}
+	if loc.hasSource && loc.source.Type == "relay" {
+		relay, err := a.newSourceRelayFS(ctx, loc.source, write)
+		return &transferFS{relay: relay}, err
 	}
 	a.mu.Lock()
 	remote, ok := a.transferRemote(loc, ".")
@@ -146,6 +151,10 @@ func (f *transferFS) checkRemoteDirectories(p string) error {
 	return nil
 }
 func (f *transferFS) Close() {
+	if f.relay != nil {
+		f.relay.Close()
+		return
+	}
 	if f.root != nil {
 		_ = f.root.Close()
 	}
@@ -190,6 +199,9 @@ func (f *transferFS) remotePath(p string) (string, error) {
 	return full, nil
 }
 func (f *transferFS) Stat(p string) (os.FileInfo, error) {
+	if f.relay != nil {
+		return f.relay.Stat(p)
+	}
 	if p != "." {
 		if err := validTransferPath(p); err != nil {
 			return nil, err
@@ -205,6 +217,9 @@ func (f *transferFS) Stat(p string) (os.FileInfo, error) {
 	return f.client.Stat(v)
 }
 func (f *transferFS) Open(p string, flags int) (transferFile, error) {
+	if f.relay != nil {
+		return f.relay.Open(p, flags)
+	}
 	if err := validTransferPath(p); err != nil {
 		return nil, err
 	}
@@ -222,6 +237,9 @@ func (f *transferFS) Open(p string, flags int) (transferFile, error) {
 	return f.client.OpenFile(v, flags)
 }
 func (f *transferFS) ReadDir(p string) ([]os.FileInfo, error) {
+	if f.relay != nil {
+		return f.relay.ReadDir(p)
+	}
 	if f.root != nil {
 		d, e := f.root.Open(p)
 		if e != nil {
@@ -240,6 +258,21 @@ func (f *transferFS) ReadDir(p string) ([]os.FileInfo, error) {
 // Directory inventories must be bounded before materializing a manifest.
 // Each recursion level retains at most one local batch or one SFTP packet.
 func (f *transferFS) readDirEach(ctx context.Context, p string, visit func(os.FileInfo) error) error {
+	if f.relay != nil {
+		entries, err := f.relay.ReadDir(p)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			if err = ctx.Err(); err != nil {
+				return err
+			}
+			if err = visit(entry); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -277,6 +310,12 @@ func (f *transferFS) readDirEach(ctx context.Context, p string, visit func(os.Fi
 	}
 }
 func (f *transferFS) Mkdir(p string) error {
+	if f.relay != nil {
+		if p == "." {
+			return nil
+		}
+		return f.relay.mutate("mkdir", p, "")
+	}
 	if p == "." {
 		return nil
 	}
@@ -315,6 +354,9 @@ func (f *transferFS) MkdirAll(p string) error {
 	return nil
 }
 func (f *transferFS) Remove(p string, dir bool) error {
+	if f.relay != nil {
+		return f.relay.mutate("remove", p, "")
+	}
 	if err := validTransferPath(p); err != nil {
 		return err
 	}
@@ -331,6 +373,9 @@ func (f *transferFS) Remove(p string, dir bool) error {
 	return f.client.Remove(v)
 }
 func (f *transferFS) Publish(old, new string) error {
+	if f.relay != nil {
+		return f.relay.mutate("rename", old, new)
+	}
 	if _, e := f.Stat(new); e == nil {
 		return os.ErrExist
 	} else if !os.IsNotExist(e) {
@@ -353,6 +398,9 @@ func (f *transferFS) Publish(old, new string) error {
 // A free-space reserve is a resource guard, not a file-size limit. Remote
 // servers without StatVFS still report write/space errors per bounded chunk.
 func (f *transferFS) CheckSpace(additional int64) error {
+	if f.relay != nil {
+		return f.relay.CheckSpace(additional)
+	}
 	var available int64
 	var e error
 	if f.root != nil {

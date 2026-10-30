@@ -1577,6 +1577,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/unlock", a.unlockApp)
 	mux.HandleFunc("POST /api/auth/verify", a.verifyMasterIdentity) // #43 统一主身份认证（密码/指纹二选一）
 	mux.HandleFunc("GET /api/sources", a.listSources)
+	mux.HandleFunc("GET /api/sources/{id}/relay-script", a.downloadSourceRelay)
+	mux.HandleFunc("POST /api/sources/{id}/relay-probe", a.probeSourceRelay)
 	mux.HandleFunc("POST /api/sources/{id}/test", a.testMCPSource)
 	mux.HandleFunc("POST /api/sources/browse", a.browseSFTPSource)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)

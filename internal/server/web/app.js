@@ -7431,7 +7431,26 @@ function defaultContextSourceID() {
 function sourceUpdatePayload(change) {
   return state.sources.filter(x => !x.builtin).map(src => src.id === change.id ? { ...src, ...change } : src);
 }
-function sourceCanSetRW(src) { return ['local', 'skill', 'sftp'].includes(src.type); }
+function sourceCanSetRW(src) { return ['local', 'skill', 'sftp', 'relay'].includes(src.type); }
+async function downloadSourceRelay(src) {
+  const token = state.token, binding = JSON.stringify(src.config), rw = src.rw, epoch = chatRecoveryEpoch, scope = recoveryScope();
+  if (!token || lockScreen.locked) throw new Error(t('来源配置已变化，请重新下载'));
+  const response = await fetch('/api/sources/' + encodeURIComponent(src.id) + '/relay-script', {headers:{Authorization:'Bearer ' + token}});
+  if (!response.ok) { const error = await response.json().catch(() => ({})); throw new Error(error.error || t('下载中继脚本失败')); }
+  const blob = await response.blob();
+  const current = state.sources.find(x => x.id === src.id);
+  if (lockScreen.locked || chatRecoveryEpoch !== epoch || recoveryScope() !== scope || state.token !== token || !current || JSON.stringify(current.config) !== binding || current.rw !== rw) throw new Error(t('来源配置已变化，请重新下载'));
+  const url = URL.createObjectURL(blob), link = document.createElement('a');
+  link.href = url; link.download = 'aide-reference-relay-' + src.id + '.py'; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(t('请在远程设备运行下载的脚本，然后检测中继'));
+}
+async function probeSourceRelay(src) {
+  const result = await api('/sources/' + encodeURIComponent(src.id) + '/relay-probe', {method:'POST'});
+  if (!result.online) throw new Error(result.error || t('中继未连接，请检查远程脚本和网络'));
+  toast(result.rw && !result.remoteWritable ? t('中继已连接；远程脚本只读，写入前请重新下载部署') : t(result.remoteWritable && result.rw ? '中继已连接 · 读写' : '中继已连接 · 只读'));
+  if (state.source === src.id) await loadFiles();
+}
 async function loadSourcesList() {
   state.sources = (await api('/sources')).sources || [];
   if (state.root === 'context' && !state.source) state.source = defaultContextSourceID();
@@ -7440,7 +7459,7 @@ async function loadSourcesList() {
 function sourceIconSVG(type) {
   const p = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
   if (type === 'local' || type === 'skill') return p + '<path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>';
-  if (type === 'sftp' || type === 'workspace-sftp' || type === 'ftp' || type === 'ftps') return p + '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
+  if (type === 'relay' || type === 'sftp' || type === 'workspace-sftp' || type === 'ftp' || type === 'ftps') return p + '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
   if (type === 'link') return p + '<path d="M10 13a5 5 0 0 0 7.07.5l2-2a5 5 0 0 0-7.07-7.07l-1 1"/><path d="M14 11a5 5 0 0 0-7.07-.5l-2 2a5 5 0 0 0 7.07 7.07l1-1"/></svg>';
   if (type === 'smb') return p + '<rect x="2" y="9" width="20" height="11" rx="2"/><path d="M6 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/><path d="M6 13h.01"/></svg>';
   if (type === 'mcp') return p + '<path d="M9 3v4M15 3v4M7 7h10v4a5 5 0 0 1-10 0Z"/><path d="M12 16v5"/></svg>';
@@ -7466,7 +7485,7 @@ function renderSourceChips() {
   const ordered = [systemDocs, ...enabled.filter(x => !x.builtin && x.id !== 'context')].filter(Boolean);
   ordered.forEach(src => {
     const displayName = src.builtin ? t(src.name) : src.name;
-    const loc = src.config.path || src.config.command || src.config.url || (src.config.host ? ('//' + src.config.host + (src.config.path || '')) : '');
+    const loc = src.type === 'relay' ? src.config.host + ':' + src.config.port + ' · ' + src.config.path : src.config.path || src.config.command || src.config.url || (src.config.host ? ('//' + src.config.host + (src.config.path || '')) : '');
     const wrap = el('div', 'src-chip' + (state.source === src.id ? ' active' : '') + (src.id === 'system-docs' ? ' system-docs' : ''));
     const main = el('button', 'src-main');
     main.type = 'button';
@@ -7501,6 +7520,13 @@ function renderSourceChips() {
     })(); };
     wrap.append(visibility);
     if (!src.builtin) {
+      if (src.type === 'relay') {
+        [[t('下载脚本'), () => downloadSourceRelay(src)], [t('检测中继'), () => probeSourceRelay(src)]].forEach(([label, run]) => {
+          const button = el('button', 'src-test', label); button.type = 'button'; button.title = label; button.setAttribute('aria-label', label + '：' + displayName);
+          button.onclick = ev => { ev.stopPropagation(); action(async () => { button.disabled = true; try { await run(); } finally { button.disabled = false; } })(); };
+          wrap.append(button);
+        });
+      }
       if (src.type === 'mcp') {
         const test = el('button', 'src-test', t('测试 MCP'));
         test.type = 'button';
@@ -7529,7 +7555,7 @@ function renderSourceChips() {
         await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: sourceUpdatePayload({ id: src.id, rw: !src.rw }) }) });
         await loadSourcesList();
         if (state.source === src.id) await loadFiles();
-        toast(src.rw ? t('已切换为只读') : t('已切换为读写'));
+        toast(src.type === 'relay' && !src.rw ? t('已允许读写；远程脚本也须允许写入，请重新下载部署') : src.rw ? t('已切换为只读') : t('已切换为读写'));
       })(); };
       wrap.append(lock);
       const del = el('button', 'src-del');
@@ -7568,7 +7594,11 @@ function openSourceEditor(src) {
   $('src-name').value = src.name || '';
   $('src-rw').checked = !!src.rw;
   if (src.type === 'local' || src.type === 'skill') $('src-path').value = src.config.path || '';
-  else if (src.type === 'sftp') {
+  else if (src.type === 'relay') {
+    $('src-host').value = src.config.host || '';
+    $('src-port').value = src.config.port || 8767;
+    $('src-remote').value = src.config.path || '';
+  } else if (src.type === 'sftp') {
     $('src-host').value = src.config.host || '';
     $('src-port').value = src.config.port || 22;
     $('src-user').value = src.config.username || '';
@@ -7585,7 +7615,7 @@ function openSourceEditor(src) {
     if ($('src-user')) $('src-user').value = src.config.username || '';
   }
   const keepSecretHint = src.hasSecret ? t('留空 = 保留现有凭据') : '';
-  ['src-password', 'src-key'].forEach(id => { if ($(id) && keepSecretHint) $(id).placeholder = keepSecretHint; });
+  ['src-password', 'src-key', 'src-relay-key'].forEach(id => { if ($(id) && keepSecretHint) $(id).placeholder = keepSecretHint; });
   setSourceDialogMode(true);
   $('source-dialog').showModal();
 }
@@ -7594,7 +7624,7 @@ function renderSourceFields() {
   const type = $('src-type').value;
   const mcpOption = [...$('src-type').options].find(option => option.value === 'mcp');
   if (mcpOption) { mcpOption.textContent = t('MCP 工具服务'); mcpOption.dataset.i18n = 'MCP 工具服务'; }
-  $('src-rw').disabled = !['local', 'skill', 'sftp'].includes(type);
+  $('src-rw').disabled = !sourceCanSetRW({type});
   if ($('src-rw').disabled) $('src-rw').checked = false;
   const host = $('src-fields');
   host.replaceChildren();
@@ -7626,6 +7656,14 @@ function renderSourceFields() {
     transport.onchange();
     host.append(el('p', 'muted', t('本地程序在 AIDE 容器内运行。Docker MCP 可连接宿主机 HTTP 网关；测试仅发现工具，AI 仍只调用服务明确声明为只读的工具。')));
   }
+  else if (type === 'relay') {
+    addField(t('中继主机'), 'src-host', '192.168.1.10').required = true;
+    const port = addField(t('端口'), 'src-port', '8767'); port.type = 'number'; port.min = '1'; port.max = '65535'; port.value = '8767'; port.required = true;
+    addField(t('远程共享目录（绝对路径）'), 'src-remote', '/srv/refs 或 C:\\Refs').required = true;
+    addField(t('中继密钥（可选，32 字节 Base64）'), 'src-relay-key', editingSourceID ? t('留空 = 保留现有凭据') : t('留空自动生成')).type = 'password';
+    host.append(el('p', 'muted', t('先保存配置，再下载脚本到远程设备。安装 Python 3.10+ 和 cryptography（python -m pip install cryptography），用 python 脚本文件名.py 运行，再点击检测中继。')));
+    host.append(el('p', 'muted', t('脚本含访问密钥，请保存在共享目录外。Aide 必须能连接中继端口；默认只读，修改共享目录或开放写入后需重新下载部署脚本。')));
+  }
   else if (type === 'sftp') {
     addField(t("主机"), 'src-host', '192.168.1.10');
     addField(t("端口"), 'src-port', '22').type = 'number';
@@ -7649,6 +7687,7 @@ function suggestedSourceName(type) {
     return parts.pop() || (type === 'skill' ? 'Skill' : '本机');
   }
   if (type === 'sftp') return ($('src-host')?.value || '').trim() || 'SFTP';
+  if (type === 'relay') return ($('src-host')?.value || '').trim() || t('远程中继目录');
   if (type === 'link' || type === 'ftp' || type === 'ftps' || type === 'smb') {
     const value = ($('src-url')?.value || '').trim();
     try { return new URL(value).hostname || type.toUpperCase(); } catch { return type.toUpperCase(); }
@@ -7670,6 +7709,7 @@ $('source-form').onsubmit = action(async event => {
   const src = { id, name, type, enabled: previous?.enabled ?? true, rw: $('src-rw').checked, config: {} };
   const secrets = {};
   if (type === 'local' || type === 'skill') src.config.path = $('src-path').value.trim();
+  else if (type === 'relay') { src.config = {host:$('src-host').value.trim(),port:Number($('src-port').value),path:$('src-remote').value.trim()}; const key = $('src-relay-key').value.trim(); if (key) secrets[id] = {key}; }
   else if (type === 'mcp') { src.config = $('src-mcp-transport')?.value === 'streamable-http' ? { transport: 'streamable-http', url: ($('src-url')?.value || '').trim(), dockerGateway: !!$('src-mcp-docker')?.checked } : { transport: 'stdio', command: ($('src-command')?.value || '').trim(), args: ($('src-mcp-args')?.value || '').split(/\r?\n/).filter(value => value.length > 0) }; if (src.config.transport === 'streamable-http' && $('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
   else if (type === 'sftp') { const pw = $('src-password').value, key = $('src-key').value; src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: key ? 'key' : pw ? 'password' : previous?.config.auth || 'none' }; if (pw || key) secrets[id] = { password: pw, key }; }
   else { src.config.url = $('src-url').value.trim(); if ($('src-user')) src.config.username = $('src-user').value.trim(); if ($('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
@@ -7681,6 +7721,11 @@ $('source-form').onsubmit = action(async event => {
   $('source-dialog').close();
   editingSourceID = '';
   await loadSourcesList();
+  if (type === 'relay') {
+    // Saving a new relay must work before the remote script exists.
+    if (previous && state.source === id) { state.dir = '.'; try { await loadFiles(); } catch {} }
+    toast(t('配置已保存，请下载脚本到远程设备运行后检测中继')); return;
+  }
   state.source = id; state.dir = '.'; await loadFiles();
   toast(previous ? t('来源配置已保存') : t("已添加来源：{0}", name));
 });
