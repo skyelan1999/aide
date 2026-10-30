@@ -37,7 +37,7 @@ var sourceIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 type Source struct {
 	ID                 string       `json:"id"`
 	Name               string       `json:"name"`
-	Type               string       `json:"type"` // local | skill | link | mcp | sftp | workspace-sftp | ftp | ftps | smb
+	Type               string       `json:"type"` // local | skill | link | mcp | sftp | workspace-sftp | ftp | ftps | smb | relay
 	Enabled            bool         `json:"enabled"`
 	RW                 bool         `json:"rw,omitempty"`
 	Builtin            bool         `json:"builtin,omitempty"`
@@ -248,6 +248,8 @@ func (a *App) listSourceDir(src Source, p string) ([]map[string]any, error) {
 		}
 		defer root.Close()
 		return a.listLocalDir(root, p)
+	case "relay":
+		return a.relayListSource(context.Background(), src, p)
 	case "sftp":
 		return a.sftpListSource(src, p)
 	case "workspace-sftp":
@@ -269,6 +271,12 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 		}
 		defer root.Close()
 		return readText(root, p)
+	case "relay":
+		b, err := a.relayReadSource(context.Background(), src, p, sourceRelayMaxFile)
+		if err != nil {
+			return nil, err
+		}
+		return validateTextFileContent(p, b)
 	case "sftp":
 		// R03：路径校验先于 SFTP 传输；内容策略统一
 		if err := safePath(p); err != nil {
@@ -306,6 +314,8 @@ func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
 		}
 		defer root.Close()
 		return readRawBytes(root, p)
+	case "relay":
+		return a.relayReadSource(context.Background(), src, p, sourceRelayMaxFile)
 	case "sftp":
 		if err := safePath(p); err != nil {
 			return nil, err
@@ -338,6 +348,8 @@ func (a *App) writeSourceTextRaw(src Source, p string, b []byte) error {
 		}
 		defer root.Close()
 		return putText(root, p, b)
+	case "relay":
+		return a.relayWriteSource(src, p, b, false)
 	case "sftp":
 		return a.sftpWriteSource(src, p, b)
 	case "workspace-sftp":
@@ -476,7 +488,7 @@ func defaultSourceName(s Source) string {
 				return name
 			}
 		}
-	case "sftp":
+	case "sftp", "relay":
 		if host := strings.TrimSpace(s.Config.Host); host != "" {
 			return host
 		}
@@ -547,6 +559,11 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if _, _, err := a.resolveHostPath(s.Config.Path); err != nil {
+				fail(w, 400, err)
+				return
+			}
+		case "relay":
+			if err := validateSourceRelay(s); err != nil {
 				fail(w, 400, err)
 				return
 			}
@@ -656,6 +673,36 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 			entry.Key = sec.Key
 		}
 		credentials[id] = entry
+	}
+	// Relay keys stay in the existing private source credential store. A new
+	// offline source needs no network access and receives a strong key here.
+	for _, src := range in.Sources {
+		if src.Type != "relay" {
+			continue
+		}
+		entry, patched := credentials[src.ID]
+		old, exists := a.findSource(src.ID)
+		hasSecret := a.sourceHasSecretLocked(src.ID) || (a.vault != nil && a.vault.Has(sourceVaultID(src.ID)))
+		if !patched && exists && old.Type == "relay" && hasSecret {
+			continue
+		}
+		if entry.Password != "" {
+			fail(w, 400, errors.New("中继来源仅使用独立的 256 位密钥"))
+			return
+		}
+		if entry.Key == "" {
+			var err error
+			entry.Key, err = newSourceRelayKey()
+			if err != nil {
+				fail(w, 500, errors.New("无法生成中继密钥"))
+				return
+			}
+		}
+		if _, err := sourceRelayKey(entry.Key); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		credentials[src.ID] = entry
 	}
 	for id, entry := range credentials {
 		// 同步收敛进加密 vault（已解锁则密封并清掉回退明文；未解锁则保留明文回退，稍后迁移）。

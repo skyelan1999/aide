@@ -754,6 +754,8 @@ func (a *App) knowledgeAreaList(ctx context.Context, ar knowledgeArea, p string)
 		return nil, fmt.Errorf("来源路径或配置已变化")
 	}
 	switch ar.kind {
+	case "relay":
+		return a.relayListSource(ctx, ar.src, p)
 	case "ssh", "workspace-sftp", "sftp":
 		if strings.ContainsAny(knowledgeRemoteBase(ar), "\x00\r\n\t\\") {
 			return nil, fmt.Errorf("来源远端目录包含不支持的控制字符")
@@ -980,6 +982,8 @@ func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string,
 			return nil, fmt.Errorf("文件状态已变化或超过读取上限")
 		}
 		b, err = io.ReadAll(io.LimitReader(f, maxBytes+1))
+	case "relay":
+		b, err = a.relayReadSource(ctx, ar.src, p, maxBytes)
 	case "mcp":
 		b, err = mcpVirtualFile(ar.src, p)
 	case "link", "smb", "ftp", "ftps":

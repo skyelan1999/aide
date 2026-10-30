@@ -252,7 +252,7 @@ func capabilityWriteSupported(item CapabilityItem) bool {
 	case "workspace":
 		return true
 	case "source":
-		return item.source.RW && (item.source.Type == "local" || item.source.Type == "skill" || item.source.Type == "sftp" || item.source.Type == "workspace-sftp")
+		return item.source.RW && (item.source.Type == "local" || item.source.Type == "skill" || item.source.Type == "sftp" || item.source.Type == "workspace-sftp" || item.source.Type == "relay")
 	default:
 		return false
 	}
@@ -316,6 +316,13 @@ func (a *App) probeCapabilityWrite(ctx context.Context, item CapabilityItem) (st
 			if item.source.Type == "workspace-sftp" {
 				remote = a.workspaceRemoteSourcePath(item.source.Config.Path, name)
 				if err := a.probeRemoteWrite(remote, nil); err != nil {
+					return "", err
+				}
+			} else if item.source.Type == "relay" {
+				if err := a.relayWriteSource(item.source, name, nil, true); err != nil {
+					return "", err
+				}
+				if err := a.relayMutateSource(item.source, "remove", name, ""); err != nil {
 					return "", err
 				}
 			} else if item.source.Type == "sftp" {

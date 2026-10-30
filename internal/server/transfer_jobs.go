@@ -154,6 +154,13 @@ func (a *App) transferBinding(id string, write bool) (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if loc.hasSource {
+		if loc.source.Type == "relay" {
+			digest, err := a.relayCredentialDigestLocked(loc.source.ID)
+			if err != nil {
+				return "", err
+			}
+			return hash([]byte(markdownSourceIdentity(loc.source) + digest)), nil
+		}
 		return markdownSourceIdentity(loc.source), nil
 	}
 	b, _ := json.Marshal(a.wsConfig.Workspace)

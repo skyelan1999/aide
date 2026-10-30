@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,7 +20,7 @@ func (a *App) proposalSourceLocked(sourceID string) (Source, string, error) {
 	if !ok || !src.RW || !sourceAIVisible(src, a.wsID()) {
 		return Source{}, "", errors.New("引用来源对当前工作区不可见或不可写")
 	}
-	if src.Type != "local" && src.Type != "skill" && src.Type != "workspace-sftp" && src.Type != "sftp" {
+	if src.Type != "local" && src.Type != "skill" && src.Type != "workspace-sftp" && src.Type != "sftp" && src.Type != "relay" {
 		return Source{}, "", errors.New("该类型引用不支持文件写入")
 	}
 	if sourceID == systemDocsSource {
@@ -32,6 +33,13 @@ func (a *App) proposalSourceLocked(sourceID string) (Source, string, error) {
 		src.Config.Path = a.workspaceRemoteConfiguredDir(src.Config.Path)
 	}
 	binding := hash([]byte(a.wsID() + "\x00" + markdownSourceIdentity(src)))
+	if src.Type == "relay" {
+		digest, err := a.relayCredentialDigestLocked(src.ID)
+		if err != nil {
+			return Source{}, "", err
+		}
+		binding = hash([]byte(binding + digest))
+	}
 	return src, binding, nil
 }
 
@@ -63,14 +71,15 @@ func proposalDisplayPath(f Change) string {
 }
 
 type proposalTarget struct {
-	root       *os.Root
-	owned      bool
-	remote     string
-	generation uint64
-	identity   string
-	source     Source
-	socket     string
-	noSymlinks bool
+	relayCredential string
+	root            *os.Root
+	owned           bool
+	remote          string
+	generation      uint64
+	identity        string
+	source          Source
+	socket          string
+	noSymlinks      bool
 }
 
 func (t proposalTarget) close() {
@@ -101,6 +110,10 @@ func (a *App) proposalTargetLocked(f Change) (proposalTarget, error) {
 	if binding != f.Binding || sourceProposalPath(src, f.Path) != f.TargetPath {
 		return proposalTarget{}, errors.New("自动系统文档绑定已变化，请重新生成提案")
 	}
+	if src.Type == "relay" {
+		digest, err := a.relayCredentialDigestLocked(src.ID)
+		return proposalTarget{source: src, identity: markdownSourceIdentity(src), relayCredential: digest}, err
+	}
 	if src.Type == "sftp" {
 		return proposalTarget{source: src, socket: sourceSocket(src.ID), generation: a.sshSessionGeneration(sourceSocket(src.ID)), identity: markdownSourceIdentity(src)}, nil
 	}
@@ -111,6 +124,9 @@ func (a *App) proposalTargetLocked(f Change) (proposalTarget, error) {
 	return proposalTarget{root: root, owned: true, identity: markdownSourceIdentity(src)}, err
 }
 func (a *App) readProposalTarget(t proposalTarget, p string) ([]byte, error) {
+	if t.source.Type == "relay" {
+		return a.relayReadSource(relayExpectedContext(context.Background(), t.relayCredential), t.source, p, sourceRelayMaxFile)
+	}
 	if t.root != nil {
 		if t.noSymlinks {
 			return readBoundRawBytes(t.root, p)
@@ -129,6 +145,9 @@ func (a *App) writeProposalTarget(t proposalTarget, f Change) error {
 				return putBoundText(t.root, f.Path, []byte(f.Content))
 			}
 			return putText(t.root, f.Path, []byte(f.Content))
+		}
+		if t.source.Type == "relay" {
+			return a.relayWriteSourceContext(relayExpectedContext(context.Background(), t.relayCredential), t.source, f.Path, []byte(f.Content), false)
 		}
 		if t.source.ID != "" {
 			return a.sftpWriteSourceExpected(t.source, f.Path, []byte(f.Content), &t.generation)

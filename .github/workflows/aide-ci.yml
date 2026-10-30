@@ -79,6 +79,9 @@ jobs:
       - name: Compile-check native Windows launcher against Windows SDK
         shell: cmd
         run: python scripts/test_windows_launcher_compile.py
+      - name: Remote file relay Windows filesystem boundaries
+        shell: cmd
+        run: python scripts/test_reference_relay_agent.py
       - name: MIXSoul operator lifecycle regression
         shell: cmd
         run: python scripts/test_mixsoul_embedding_follow.py

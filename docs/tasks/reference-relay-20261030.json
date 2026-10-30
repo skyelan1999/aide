@@ -1,0 +1,92 @@
+{
+  "id": "reference-relay-20261030",
+  "request": "项目文件引用中需要支持类似于terminal 中实现的中继形式，通过下载脚本在远程部署实现访问",
+  "baseline": "d012e0928d095cbbfa31653299deace06f1bb839",
+  "initial_status": "Clean isolated worktree at origin/main d012e092; original aide and prior #640 worktree preserved.",
+  "acceptance": [
+    "Save a remote relay directory while offline, download a configured Python deployment script, explicitly probe then browse/read/preview/download.",
+    "Support file editing/upload and directory operations behind both the existing source RW lock and the deployed script write permission; default read-only.",
+    "TLS 1.3 with a 256-bit random key, pinned derived identity and challenge authentication; no credentials in ordinary source metadata or AI discovery.",
+    "Fixed remote root; reject traversal, symlinks/reparse escapes, special files, own secret script and temporary PKI; bounded responses and cancelled connections.",
+    "Existing source enabled/AI visibility, content validation, source identity and retrieval isolation continue to apply.",
+    "Exercise the actual downloaded agent and Go client, cancellation/bounds/permissions, plus production UI in Safari."
+  ],
+  "scope": [
+    "New native relay source client and embedded remote agent",
+    "Source registry credentials, file/transfer/knowledge adapters and source UI/localization",
+    "Focused agent/backend/frontend regressions and architecture/task documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed read/write support with read-only default. New relay directory follows Terminal save/download/manual-deploy/probe workflow. No remote target credentials or physical deployment environment provided.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/644",
+        "Current user confirmation: 支持读写，默认只读（推荐）"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Separate relay source kind uses fixed-root Python agent over authenticated TLS, shared secret in existing source vault, config-bound handshake, bounded per-request RPC. Existing file source interfaces and permission gates are reused. Writes remain denied unless host and deployed agent both allow them.",
+      "evidence": [
+        "internal/server/sources.go",
+        "internal/server/file_transfer.go",
+        "internal/server/knowledge_sources.go",
+        "Terminal relay agent/client (read-only reference)"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented relay source registry, private key storage, pinned TLS client, embedded fixed-root agent, source UI and durable transfer/knowledge/proposal/history adapters.",
+      "evidence": [
+        "internal/server/source_relay.go",
+        "internal/server/source_relay_fs.go",
+        "internal/server/relay/agent.py",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Selected local agent, UI, Go race/vet and actual Safari desktop flows pass. This stage does not claim Windows/WAN/customer-host execution or full Go gate success.",
+      "evidence": [
+        "docs/reviews/2026-10-30-reference-relay.md",
+        "310 quick checks PASS; fingerprint 2698900e3f21c12bdebb285310cbbb580316bf1d1da6334af1e5d19f51696555",
+        "27 top-level focused Go race tests PASS, 30.418s; server vet exit 0",
+        "9 Python filesystem tests PASS on macOS; real downloaded agent integration PASS on Linux",
+        "Safari actual offline save/download/probe/browse/edit/save/RO/error-list-clear observations; synthetic isolated workbench"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented manual deployment, double write gate, root/credential boundaries, transfer limits, revocation, API and validation limits.",
+      "evidence": [
+        "docs/reference-relay.md",
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff; own test containers/tab and synthetic download cleaned; retained source/log evidence. No real data, plugin state, or production runtime changed.",
+      "evidence": [
+        "docs/reviews/2026-10-30-reference-relay.md",
+        ".agent-state/reference-relay/audit.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Prepared for main through a dedicated PR. No deployment, tag, package publication, or protected-main exception authorized. Required CI/review and actual target-host acceptance remain distinct.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Before merge, discard only this isolated feature checkout; after merge, revert its feature commits and stop deployed relay processes. Source data is not migrated. Existing source configs and production remain intact.",
+  "handoff": "Implementation ready for review against main d012e092. Issue #644 remains open pending CI/target-platform evidence. Remote Python dependencies and reachable TCP port required; no real host deployed. Prior #643 kept separate; its SSE test CI failure is tracked separately.",
+  "issue": 644,
+  "operator": "skyelan1999",
+  "safety": {
+    "original_checkout": "Preserve pre-existing dirty start.command and installed Terminal plugin/session state",
+    "production": "No stop/build/deployment of 9999",
+    "previous_work": "PR #643 remains separate; no protected-main/admin exception authorization received",
+    "remote_deployment": "Deliver/test script with synthetic isolated targets; no customer host deployment or publication"
+  }
+}

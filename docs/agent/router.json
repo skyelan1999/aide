@@ -982,6 +982,14 @@
       ],
       [
         "python3",
+        "scripts/test_reference_relay_agent.py"
+      ],
+      [
+        "node",
+        "scripts/source-relay-ui.test.cjs"
+      ],
+      [
+        "python3",
         "scripts/test_windows_native_package.py"
       ],
       [

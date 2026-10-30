@@ -14,6 +14,7 @@ registry.get('src-type').value='mcp';registry.get('src-type').options=[{value:'m
 const submitted=[];
 const context=vm.createContext({console,URL,Math,$:id=>registry.get(id),el:(tag)=>element(tag),t:s=>s,document:{createTextNode:s=>s},editingSourceID:'',state:{sources:[],config:{}},action:fn=>fn,api:async(path,options)=>{submitted.push(JSON.parse(options.body));},sourceUpdatePayload:change=>[change],loadSourcesList:async()=>{},loadFiles:async()=>{},toast:()=>{}});
 const start=source.indexOf('function renderSourceFields()');const end=source.indexOf("$('src-type').addEventListener",start);
+vm.runInContext(source.match(/function sourceCanSetRW\(src\) \{[^\n]+/)[0],context);
 assert(start>=0&&end>start);vm.runInContext(source.slice(start,end),context);
 const submitStart=source.indexOf("$('source-form').onsubmit = action(async event => {");const submitEnd=source.indexOf('/* ── Markdown 渲染',submitStart);
 assert(submitStart>=0&&submitEnd>submitStart);vm.runInContext(source.slice(submitStart,submitEnd),context);
