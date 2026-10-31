@@ -46,31 +46,32 @@ type marketCommerce struct {
 	PublicKeys  map[string]string `json:"publicKeys,omitempty"`
 }
 type marketPlugin struct {
-	Routing        *pluginRouteMetadata `json:"routing,omitempty"`
-	Distribution   string               `json:"distribution,omitempty"`
-	Commerce       *marketCommerce      `json:"commerce,omitempty"`
-	Dependencies   []string             `json:"dependencies"`
-	ID             string               `json:"id"`
-	Kind           string               `json:"kind"`
-	Name           string               `json:"name"`
-	Description    string               `json:"description"`
-	Version        string               `json:"version"`
-	Author         string               `json:"author"`
-	Category       string               `json:"category"`
-	Icon           string               `json:"icon"`
-	Package        string               `json:"package"`
-	SHA256         string               `json:"sha256"`
-	Bytes          int64                `json:"bytes"`
-	MinAideVersion string               `json:"minAideVersion"`
-	Platforms      []string             `json:"platforms"`
-	Features       []string             `json:"features"`
-	Permissions    string               `json:"permissions"`
-	TrustNotice    string               `json:"trustNotice"`
-	Source         string               `json:"source"`
-	License        string               `json:"license"`
-	Readme         string               `json:"readme"`
-	Screenshots    []string             `json:"screenshots"`
-	Changelog      string               `json:"changelog"`
+	SourceCompatibility *marketSourceCompatibility `json:"sourceCompatibility,omitempty"`
+	Routing             *pluginRouteMetadata       `json:"routing,omitempty"`
+	Distribution        string                     `json:"distribution,omitempty"`
+	Commerce            *marketCommerce            `json:"commerce,omitempty"`
+	Dependencies        []string                   `json:"dependencies"`
+	ID                  string                     `json:"id"`
+	Kind                string                     `json:"kind"`
+	Name                string                     `json:"name"`
+	Description         string                     `json:"description"`
+	Version             string                     `json:"version"`
+	Author              string                     `json:"author"`
+	Category            string                     `json:"category"`
+	Icon                string                     `json:"icon"`
+	Package             string                     `json:"package"`
+	SHA256              string                     `json:"sha256"`
+	Bytes               int64                      `json:"bytes"`
+	MinAideVersion      string                     `json:"minAideVersion"`
+	Platforms           []string                   `json:"platforms"`
+	Features            []string                   `json:"features"`
+	Permissions         string                     `json:"permissions"`
+	TrustNotice         string                     `json:"trustNotice"`
+	Source              string                     `json:"source"`
+	License             string                     `json:"license"`
+	Readme              string                     `json:"readme"`
+	Screenshots         []string                   `json:"screenshots"`
+	Changelog           string                     `json:"changelog"`
 }
 type marketCatalog struct {
 	SchemaVersion   int            `json:"schemaVersion"`
@@ -98,6 +99,18 @@ func validateMarket(s marketSnapshot) error {
 	}
 	seen := map[string]bool{}
 	for _, p := range s.Catalog.entries() {
+		if c := p.SourceCompatibility; c != nil {
+			if !marketVersion.MatchString(c.MinAideVersion) || len(c.Features) == 0 || len(c.Features) > 16 {
+				return errors.New("源码兼容条件无效")
+			}
+			seenFeatures := map[string]bool{}
+			for _, f := range c.Features {
+				if len(f) == 0 || len(f) > 80 || seenFeatures[f] || strings.ContainsAny(f, " \t\r\n\x00") {
+					return errors.New("源码兼容能力无效")
+				}
+				seenFeatures[f] = true
+			}
+		}
 		if err := validatePluginRouting(p.Routing); err != nil {
 			return err
 		}
@@ -380,12 +393,15 @@ func (a *App) marketCatalogAPI(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	entries := []map[string]any{}
 	for _, p := range snapshot.Catalog.entries() {
-		compatible, reason := marketCompatible(p, version)
+		compatible, reason := marketCompatibleForRuntime(p, version, a.buildRuntimeMode)
 		b, _ := json.Marshal(p)
 		item := map[string]any{}
 		_ = json.Unmarshal(b, &item)
 		item["official"] = true
 		item["compatible"] = compatible
+		if baseOK, _ := marketCompatible(p, version); compatible && !baseOK {
+			item["compatibilityMode"] = "source-capabilities"
+		}
 		item["incompatibility"] = reason
 		if p.Distribution != "private" {
 			item["downloadURL"] = "/api/plugin-market/" + p.ID + "/download?revision=" + snapshot.Revision
@@ -582,7 +598,7 @@ func (a *App) marketInstall(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("插件版本或摘要已变化，请重新确认"))
 		return
 	}
-	if ok, reason := marketCompatible(p, a.buildVersion); !ok {
+	if ok, reason := marketCompatibleForRuntime(p, a.buildVersion, a.buildRuntimeMode); !ok {
 		fail(w, 409, errors.New(reason))
 		return
 	}

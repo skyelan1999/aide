@@ -1,0 +1,68 @@
+{
+  "id": "openai-supporter-compat",
+  "request": "同步看下 OpenAISupporter 不兼容的问题；CI 由子 agent 盯守",
+  "baseline": "027d46e08bad5bde3cdc5c591adc5b28dff061c1",
+  "initial_status": "独立工作树基于 027d46e0，无继承改动；Issue #661；原 9999 源码和用户数据保留。",
+  "acceptance": [
+    "正式 RC1 继续拒绝仅支持 USD 的 OpenAISupporter；满足明确能力条件的源码 RC1 可安装。",
+    "市场 UI、AI 市场发现、安装、路由与升级共享同一判断；未知能力拒绝。",
+    "使用原发布 ZIP 验证安装、启停与合成 USD 记账，并在 Safari 实际验收。"
+  ],
+  "scope": [
+    "Aide 插件市场兼容判断、UI 说明、回归测试与文档。",
+    "aide-pkg-shop 单独 PR 增加显式源码兼容条件；不修改 ZIP、费率、版本号或已发布 RC1。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "源码已含 40b6e96 的 USD 支持，但发行身份仍为 RC1，被 RC2 版本条件拦截。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/661"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "目录可选 sourceCompatibility，仅 source runtime 检查宿主内置能力集合与单独最低源码版本；发行门槛与原 feature 条件保留。",
+      "evidence": [
+        "docs/architecture/plugin-market.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "统一市场入口兼容判断，返回源码能力说明；配套市场目录只增元数据，不改包。",
+      "evidence": [
+        "internal/server/plugin_market_source_compat.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "quick 成功；46 项相关 Go race 测试成功（最终合并后收据另见 review）；实际公开 ZIP 安装/启停/USD 合成计账通过；Safari 隔离实例显示安装后启用/使用中。",
+      "evidence": [
+        "docs/reviews/2026-10-31-openai-supporter-compat-661.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构契约与验收边界记录完成。",
+      "evidence": [
+        "docs/architecture/plugin-market.md",
+        "docs/reviews/2026-10-31-openai-supporter-compat-661.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅任务文件进入提交；测试标签已关闭、隔离服务已停止；用户 9999 未更改。",
+      "evidence": [
+        "docs/reviews/2026-10-31-openai-supporter-compat-661.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "准备宿主与市场两个 PR；未合并、未部署 9999、未发行新版本。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户仅授权 PR #650/#656 CI 全通过后管理员合并；本兼容修复尚未获管理员例外授权。",
+  "rollback": "未部署；如后续合并，分别回退宿主与目录 PR。目录回退不影响原 ZIP，旧宿主仍按 RC2 门槛拒绝。",
+  "handoff": "宿主与目录须配套；本地实际 9999 仍显示旧兼容结果，待合并和部署后重新验收。真实账户/付费模型未调用。"
+}

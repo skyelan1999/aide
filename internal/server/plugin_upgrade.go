@@ -562,7 +562,7 @@ func (a *App) upgradePlugin(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				found = true
-				if compatible, reason := marketCompatible(entry, a.buildVersion); !compatible {
+				if compatible, reason := marketCompatibleForRuntime(entry, a.buildVersion, a.buildRuntimeMode); !compatible {
 					err = errors.New(reason)
 					break
 				}
