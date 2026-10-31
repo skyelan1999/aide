@@ -9,7 +9,7 @@
     "Relay key generated separately, privately persisted and never returned in source listing; download/probe authenticated and no-store.",
     "Actual generated-agent connection, SSH/SFTP file listing/read/write, read-only denial, wrong relay identity/configuration and changed SSH host key verified with disposable fixtures.",
     "UI save/edit/download/probe works; no user data or running production instance modified.",
-    "User follow-up: test after completion; real chunked upload/restart/resume/publish, direct and ZIP download, source-to-workspace copy and re-locked upload denial verified."
+    "User follow-up: test after completion; real chunked upload/restart/resume/publish, direct and ZIP download, source-to-workspace copy and re-locked upload denial verified. Local deployment after user follow-up must preserve data and visibly expose the selector on localhost:9999."
   ],
   "scope": [
     "Source configuration/credentials, SSH ProxyCommand bridge, downloaded Python agent, UI/localization, focused integration tests and docs."
@@ -71,15 +71,21 @@
     },
     "release": {
       "status": "pending",
-      "summary": "PR #656 is open; current-head CI and required review pending. No merge/admin exception, tag, publication or production deployment.",
+      "summary": "PR #656 implementation commit 7bdf2d90 quick/go/windows/gate SUCCESS. Local candidate applied with per-file hashes, previous image/config rollback point and original data mounts; build exit0, verify pass, HTTPS status ok and exact served UI match. After user unlock, Safari localhost:9999 visibly shows SFTP connection selector, remote-script mode, relay host/port/key and default read-only. New page retained at configuration for user; no source saved. Remote main review/merge and public release remain pending.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/656"
       ]
     }
   },
-  "release_authorization": "",
-  "rollback": "",
-  "handoff": "SFTP downloadable-script relay implemented and actual protocol/Safari fixture verified. Production localhost:9999 is unchanged; use PR review and current-head CI before merge/deploy. Windows remote relay and external real-host SFTP acceptance not run. PR #656 is open and attached to the chat.",
+  "release_authorization": "User follow-up: 没看到, with screenshot of current localhost:9999 old SFTP form; interpreted as reversible local update to make requested feature available. No admin merge, tag or publication.",
+  "rollback": "Original source .agent-state/sftp-relay-deploy/receipt.json records owned file hashes and previous image; env.before stores configuration privately. Keep persistent data mounts unchanged and restore only owned files when hashes match. Pre-existing source/launcher edits are outside this feature rollback.",
+  "handoff": "Local 9999 candidate is installed and healthy; Safari actual localhost:9999 SFTP relay selector and all fields verified after user unlock. Page left in relay configuration; no real source/credential was added. Existing data, unrelated source edits and rollback image/config preserved. Remote main remains unmerged; remote Windows/external SFTP acceptance not run.",
   "issue": 655,
-  "pull_request": "https://github.com/skyelan1999/aide/pull/656"
+  "pull_request": "https://github.com/skyelan1999/aide/pull/656",
+  "local_deployment": {
+    "status": "pass",
+    "candidate": "7bdf2d908078399beb6383c5aa79be64b2546ea7",
+    "receipt": "Original source .agent-state/sftp-relay-deploy/receipt.json",
+    "browser": "Safari https://localhost:9999/; SFTP → 通过远程脚本中继; relay host, port8768, private key input and unchecked RW visible. Existing lock screen unlocked by user. No source configuration saved."
+  }
 }

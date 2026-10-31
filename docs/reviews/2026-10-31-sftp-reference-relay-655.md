@@ -1,6 +1,6 @@
 # SFTP 下载脚本中继验收（#655）
 
-用户确认：脚本部署在能访问 SFTP 服务的远程设备上，Aide 经脚本访问原 SFTP，保留用户名、密码/私钥及 SSH 主机校验。基线 main `7a1e4b6766fe5f32cdaf5c14204738679218d9fc`，实现分支 `feat/sftp-reference-relay`，[PR #656](https://github.com/skyelan1999/aide/pull/656)。当前仅候选实现与隔离验收；用户的 `localhost:9999` 原安装未升级，未执行合并、tag 或发行。
+用户确认：脚本部署在能访问 SFTP 服务的远程设备上，Aide 经脚本访问原 SFTP，保留用户名、密码/私钥及 SSH 主机校验。基线 main `7a1e4b6766fe5f32cdaf5c14204738679218d9fc`，实现分支 `feat/sftp-reference-relay`，[PR #656](https://github.com/skyelan1999/aide/pull/656)。最初验收使用隔离候选；后续本机 9999 更新和可见入口验收见末节。远端 main 未合并，未执行 tag 或公开发行。
 
 ## 实现
 
@@ -33,3 +33,10 @@ Safari 本次新增的一个验收标签已关闭，返回用户原 `localhost:9
 继续在一次性 Linux 容器、全新 App 数据和临时 SSH/SFTP 服务中，使用 API 下载并运行实际中继脚本。新增 8 MiB + 37 字节分块上传：乱序上传第 2 块后重建传输管理器，确认恢复为暂停且保留已确认块，再通过 resume/chunks/commit 完成发布，并校验目标文件 SHA-256。未完成前目标文件不存在。随后验证普通下载内容、传输任务 ZIP 下载解压内容以及 SFTP → 工作目录复制的摘要相同；重新锁为只读后新的上传任务被拒绝。
 
 扩展后的 `TestSFTPRelayActualSSH` 在 race 模式通过（39.72 秒），涵盖现有密码/私钥、错误密钥、旧部署和变更 SSH 主机密钥拒绝。日志 `.agent-state/sftp-relay/transfer-retest.log`。这些是隔离环境中的真实协议与接口调用；远程 Windows 和用户外部 SFTP 实机仍未执行。
+
+
+## 后续：本机 9999 候选更新
+
+用户再次给出原 SFTP 表单“没看到”的截图后，将已完成 quick/完整 Go race-vet/Windows/gate 的 `7bdf2d90` 候选应用至原源码目录；逐文件校验旧基线后覆盖，原有启动器修复及其他任务改动保留。保存旧镜像和私有配置回退点，原地构建退出 0；数据挂载沿用。现 `verify` 全部 pass、HTTPS status=ok，服务返回的 app.js 与新源码逐字节相同且包含 SFTP 连接方式。旧完整性基线告警保留，没有覆盖安全基线。
+
+Safari 新页由用户解锁后，在实际 `https://localhost:9999/` 打开新增引用，选择 SFTP，确认“连接方式”包含“直接连接/通过远程脚本中继”。已选择中继模式并滚动核对中继主机、默认 8768 端口、密钥输入、依赖说明及未勾选的读写控制；保留该配置页供用户填写，没有保存任何真实来源或凭据。原始截图保留在原目录 `.agent-state/sftp-relay-deploy/safari-mode.png` 和 `safari-fields.png`。原目录私有收据 `.agent-state/sftp-relay-deploy/receipt.json`；未执行 main 合并、tag 或公开发行。
