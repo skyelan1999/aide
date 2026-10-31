@@ -92,12 +92,14 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "按用户此前授权推送当前功能分支；不合并到 main，不部署或切换运行实例。",
-      "evidence": []
+      "status": "pass",
+      "summary": "已推送当前功能分支 feat/selfdev-ab-proposals；未合并 main，未部署或切换运行实例。",
+      "evidence": [
+        "实现提交 494f238591c819cd5cfae4fa9cc75189b01c1aa7 已在 origin/feat/selfdev-ab-proposals；远程 main 保持 bc8e8da2baffe0b85a3116cc36c5a53ecaba09c1。"
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户此前明确指示：先推上去，不和到 main 上先；本次只推送当前功能分支。",
   "rollback": "尚未提交；需要撤销时只回滚本任务改动文件，并保留之前已有的 feat/selfdev-ab-proposals 提交。",
-  "handoff": "修复 AI read_file 大文件路径：本地/SSH 工作区流式计算完整 SHA-256，仅保留约 48 KiB 窗口；支持行段和 UTF-8 字节段，超长单行可续读；全覆盖、同哈希后才形成提案基线。定向回归及 Go 服务构建在断网 Go 1.26 Docker 容器通过。完整 server 包回归因资源开销主动中止，未通过验收。更新了中英文用户指南、PRD、系统概览。遵照用户“先推上去，不和到 main 上先”，只推送当前功能分支，不合并 main、不部署。"
+  "handoff": "修复 AI read_file 大文件路径：本地/SSH 工作区流式计算完整 SHA-256，仅保留约 48 KiB 窗口；支持行段和 UTF-8 字节段，超长单行可续读；全覆盖、同哈希后才形成提案基线。定向回归及 Go 服务构建在断网 Go 1.26 Docker 容器通过。完整 server 包回归因资源开销主动中止，未通过验收。更新了中英文用户指南、PRD、系统概览。遵照用户“先推上去，不和到 main 上先”，已推送当前功能分支（494f238591c819cd5cfae4fa9cc75189b01c1aa7），未合并 main、不部署。"
 }
