@@ -44,5 +44,9 @@ PY
 # only these two metadata attributes from our generated bundle.
 xattr -dr com.apple.FinderInfo "$DEST" 2>/dev/null || true
 xattr -dr com.apple.ResourceFork "$DEST" 2>/dev/null || true
-codesign --force --sign - --identifier local.aide.computer-bridge "$DEST"
+# An ad-hoc signature otherwise designates this app by the executable cdhash.
+# Every rebuild then creates a new TCC identity and macOS forgets the grants.
+# Pin the designated requirement to the stable bundle identifier instead.
+codesign --force --sign - --identifier local.aide.computer-bridge \
+  --requirements '=designated => identifier "local.aide.computer-bridge"' "$DEST"
 echo "$DEST"

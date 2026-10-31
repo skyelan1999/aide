@@ -112,3 +112,11 @@ This section supersedes the earlier current-state statements; earlier records re
 - Production browser plugin is enabled with seven executable tools; actual Docker handler calls read example.com and DJI Chinese homepage. Dynamic specification tables, downloads and uploads are not verified. Download/upload tools are not implemented.
 - Native computer bridge is ready, but both OS permissions are false. Real desktop screenshot, inspection, click and input are NOT_RUN. Service readiness is not operation acceptance.
 - Text models can use body text and accessible control text. Computer screenshots are not yet passed as vision input to the model.
+
+## 2026-10-31: macOS bridge authorization identity and status refresh
+
+The local bridge bundle is ad-hoc signed. Without an explicit designated requirement, macOS binds its TCC identity to the executable cdhash, which changes on every rebuild. The bridge build now pins the requirement to `local.aide.computer-bridge`, so future builds retain one TCC identity. The first install using this stable requirement may need the user to re-enable Screen Recording and Accessibility once; later rebuilds should keep that identity.
+
+The permission window now refreshes every two seconds and when it becomes active after returning from System Settings. A false Screen Recording preflight is shown as “not detected” with the relaunch guidance because the current process may need to be restarted after the macOS setting changes. The authenticated `/healthz` response still reports the permissions observed by the running process; it does not cache them.
+
+Observed on this machine before installing the fix: `/healthz` reported Accessibility=true and Screen Recording=false. `codesign -dr -` showed the installed app designated by cdhash `df2d9ac14bed81680cc21eeffce58ebb54ce3ba3`. The fixed bridge is now installed and `/healthz` reports both permissions false under the new identity. The user must re-enable them once; actual post-grant refresh and real capture remain NOT_RUN.

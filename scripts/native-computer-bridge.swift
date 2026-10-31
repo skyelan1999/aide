@@ -17,7 +17,11 @@ var bridgeToken = ""
 var serviceState = "Starting"
 
 func refresh() {
-    status.stringValue = "Aide 电脑控制桥接\n服务：\(serviceState)\n屏幕录制：\(CGPreflightScreenCaptureAccess() ? "已授权" : "未授权")\n辅助功能：\(AXIsProcessTrusted() ? "已授权" : "未授权")\nAide 按允许的前台应用限制操作；输入、点击、按键仍需 Aide 确认。"
+    let screenRecording = CGPreflightScreenCaptureAccess()
+    let accessibility = AXIsProcessTrusted()
+    let screenState = screenRecording ? "已授权" : "未检测到授权（请在系统设置启用；启用后若状态未更新，请退出并重开桥接）"
+    let accessibilityState = accessibility ? "已授权" : "未检测到授权（请在系统设置启用；返回本窗口后会自动刷新）"
+    status.stringValue = "Aide 电脑控制桥接\n服务：\(serviceState)\n屏幕录制：\(screenState)\n辅助功能：\(accessibilityState)\nAide 按允许的前台应用限制操作；输入、点击、按键仍需 Aide 确认。"
 }
 final class PermissionActions: NSObject {
     @objc func screen() { _ = CGRequestScreenCaptureAccess(); refresh() }
@@ -33,6 +37,16 @@ for (title, selector, x) in [("申请屏幕录制", #selector(PermissionActions.
     button.frame = NSRect(x: x, y: 35, width: 155, height: 36)
     window.contentView?.addSubview(button)
 }
+
+// TCC state may change while the user is in System Settings. Refresh when the
+// app becomes active again and periodically so the displayed state does not
+// remain stuck at the value sampled when the permission prompt was opened.
+NotificationCenter.default.addObserver(
+    forName: NSApplication.didBecomeActiveNotification,
+    object: app,
+    queue: .main
+) { _ in refresh() }
+Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in refresh() }
 
 func error(_ message: String) -> NSError { NSError(domain: "AideBridge", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
 func allowedApp(_ input: [String: Any]) throws -> NSRunningApplication {
