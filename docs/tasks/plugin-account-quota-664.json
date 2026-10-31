@@ -1,0 +1,68 @@
+{
+  "id": "plugin-account-quota-664",
+  "request": "Connect plugin-provided account quota to the account pool; distinguish pricing-only support; issue664",
+  "baseline": "9af5077f29ed1055a6981fd2e122cc436406d57a",
+  "initial_status": "Clean worktree based on9af5077f. Current installed plugin0.1.2; current pool has monetary balance protocol only.",
+  "acceptance": [
+    "Plugin catalog owns endpoint matching and quota capability; no provider name special cases or JS credential access.",
+    "Selected-key same-origin GET only; redirects, unavailable data and disabled/inflight plugins handled.",
+    "Percent windows and reset times separate from money; pricing-only account labelled accurately.",
+    "Actual ZIP, isolated Safari and local read-only host acceptance recorded separately from publication."
+  ],
+  "scope": [
+    "Generic provider-support quota adapter and account-pool UI/tests/docs",
+    "Codex Bridge0.4.1 candidate catalog/package; existing published host0.4.0 read-only upgrade and local acceptance"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Issue664 user request and plugin ownership clarified.",
+      "evidence": [
+        "docs/reviews/2026-10-31-plugin-account-quota-664.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Explicit local origins and same-origin path in data-only catalog. No prices/currency for quota-only catalog.",
+      "evidence": [
+        "docs/reviews/2026-10-31-plugin-account-quota-664.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Generic parser/normalizer plus source capability, UI windows/status and plugin metadata.",
+      "evidence": [
+        "docs/reviews/2026-10-31-plugin-account-quota-664.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Quick passed; focused Go race tests including actual ZIP passed; 11 UI unit tests, 53 plugin tests and native manager Go race passed. Safari isolated fixture displayed two windows and pricing-only status. Published host0.4.0 real read returned available quota.",
+      "evidence": [
+        "docs/reviews/2026-10-31-plugin-account-quota-664.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Catalog contract and acceptance report recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-31-plugin-account-quota-664.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Isolated browser tab/container stopped; local rollback snapshots kept.",
+      "evidence": [
+        "docs/reviews/2026-10-31-plugin-account-quota-664.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "PRs and market update being prepared; no new admin merge/publication authorization. Local9999 candidate acceptance still pending.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requests plugin-provided account capability. Prior per-PR admin authorizations do not cover new PRs.",
+  "rollback": "Local previous source/image snapshot and normal plugin-upgrade backup; native host configuration/key hashes preserved with program-file rollback snapshot.",
+  "handoff": "New host/plugin source and candidate ZIP ready. Separate main merge, plugin Release, market publication and actual local account-pool states."
+}

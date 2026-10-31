@@ -18,6 +18,8 @@ type PluginProviderSupport struct {
 }
 type supportProvider struct {
 	Host            string   `json:"host,omitempty"`
+	Scheme          string   `json:"scheme,omitempty"`
+	Port            string   `json:"port,omitempty"`
 	WorkspaceRegion string   `json:"workspaceRegion,omitempty"`
 	Paths           []string `json:"paths"`
 }
@@ -41,6 +43,7 @@ type supportPeak struct {
 }
 type supportBalance struct {
 	Endpoint  string `json:"endpoint"`
+	Path      string `json:"path,omitempty"`
 	Auth      string `json:"auth"`
 	TotalPath string `json:"totalPath"`
 	Format    string `json:"format"`
@@ -73,10 +76,13 @@ func validSupportPrice(v float64) bool {
 func validSupportCurrency(v string) bool { return v == "CNY" || v == "USD" }
 func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 	var c supportCatalog
-	if len(raw) == 0 || len(raw) > 128<<10 || json.Unmarshal(raw, &c) != nil || c.Protocol != 1 || !pluginIDPattern.MatchString(c.ID) || c.Name == "" || len(c.Name) > 128 || len(c.Revision) == 0 || len(c.Revision) > 80 || !validSupportCurrency(c.Currency) || len(c.Providers) == 0 || len(c.Providers) > 16 || len(c.Models) > 128 || len(c.Sources) > 16 {
+	if len(raw) == 0 || len(raw) > 128<<10 || json.Unmarshal(raw, &c) != nil || c.Protocol != 1 || !pluginIDPattern.MatchString(c.ID) || c.Name == "" || len(c.Name) > 128 || len(c.Revision) == 0 || len(c.Revision) > 80 || (!validSupportCurrency(c.Currency) && !(c.Currency == "" && len(c.Models) == 0 && c.Balance != nil && c.Balance.Format == "quota-windows")) || len(c.Providers) == 0 || len(c.Providers) > 16 || len(c.Models) > 128 || len(c.Sources) > 16 {
 		return nil, errors.New("invalid provider support catalog")
 	}
 	for _, p := range c.Providers {
+		if err := validateLocalSupportProvider(p); err != nil {
+			return nil, err
+		}
 		if (p.Host == "" && p.WorkspaceRegion != "cn-beijing") || (p.Host != "" && p.WorkspaceRegion != "") || strings.ContainsAny(p.Host, "/:@ \\?#*") || len(p.Paths) == 0 || len(p.Paths) > 16 {
 			return nil, errors.New("invalid provider match")
 		}
@@ -122,6 +128,17 @@ func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 		}
 	}
 	if b := c.Balance; b != nil {
+		if b.Path != "" {
+			if err := validateSupportQuotaPath(b); err != nil {
+				return nil, err
+			}
+			return &c, nil
+		}
+		for _, p := range c.Providers {
+			if p.Scheme != "" {
+				return nil, errors.New("local provider requires same-origin quota path")
+			}
+		}
 		u, e := url.Parse(b.Endpoint)
 		if e != nil || u.Scheme != "https" || u.User != nil || u.Port() != "" || u.RawQuery != "" || u.Fragment != "" || (b.Auth != "model-bearer" && b.Auth != "aliyun-rpc") {
 			return nil, errors.New("invalid balance endpoint")
@@ -143,10 +160,13 @@ func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 }
 func supportMatches(c *supportCatalog, base string) bool {
 	u, e := url.Parse(base)
-	if e != nil || u.Scheme != "https" || u.User != nil || (u.Port() != "" && u.Port() != "443") || u.RawQuery != "" || u.Fragment != "" {
+	if e != nil || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return false
 	}
 	for _, p := range c.Providers {
+		if !supportProviderOriginMatches(p, u) {
+			continue
+		}
 		matched := strings.EqualFold(u.Hostname(), p.Host)
 		if p.WorkspaceRegion == "cn-beijing" {
 			host := strings.ToLower(u.Hostname())
@@ -337,7 +357,7 @@ func (a *App) resolvedPricing(base, model, pid, kid string, defaultOnly bool) ma
 	standards := []string{}
 	seenStandards := map[string]bool{}
 	for _, provider := range a.settings.ModelProviders {
-		if catalog, owner := a.providerSupportLocked(provider.BaseURL); catalog != nil && owner != nil && !seenStandards[owner.ID] {
+		if catalog, owner := a.providerSupportLocked(provider.BaseURL); catalog != nil && len(catalog.Models) > 0 && owner != nil && !seenStandards[owner.ID] {
 			standards = append(standards, catalog.Name)
 			seenStandards[owner.ID] = true
 		}

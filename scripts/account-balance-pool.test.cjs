@@ -75,3 +75,15 @@ test('closing the settings sheet clears unsaved RAM fields',async()=>{
  f.sheet.open=false;f.observers[1]();assert.equal(inputs[0].value,'');assert.equal(inputs[1].value,'');
  const app=fs.readFileSync('internal/server/web/app.js','utf8');assert.match(app,/active:\(\)=>!lockScreen.locked && !!\$\('settings-sheet'\)\?\.classList.contains\('open'\)/);
 });
+
+test('plugin quota windows render as percentages without currency amounts or pricing controls',async()=>{
+ const f=fixture(async path=>({supported:true,kind:'quota',supporter:'Fixture quota',providerId:'provider',keyId:new URLSearchParams(path.split('?')[1]).get('keyId'),quota_infos:[{id:'shared/primary',label:'Shared',window:'primary',remainingPercent:75,windowDurationMins:300,resetsAt:1793450000},{id:'shared/secondary',label:'Shared',window:'secondary',remainingPercent:5,windowDurationMins:10080}]}));
+ await f.start();assert(f.cards().every(c=>c.dataset.state==='low'));assert(f.all('div').some(x=>x.className==='balance-amount'&&x.textContent==='75.0%'));assert.equal(f.all('input').filter(x=>x.attributes['aria-label']?.includes('报警线')).length,0);assert(f.all('span').some(x=>x.textContent==='账户共享额度 · 剩余百分比'));
+});
+test('pricing-only and unavailable quota are distinct and unknown never becomes zero',async()=>{
+ const p=fixture(async()=>({supported:false,pricingSupported:true,supporter:'Pricing fixture'}));await p.start();assert(p.all('span').some(x=>x.textContent==='仅支持计价'));
+ const q=fixture(async path=>({supported:true,kind:'quota',providerId:'provider',keyId:new URLSearchParams(path.split('?')[1]).get('keyId'),quota_infos:[]}));await q.start();assert(q.all('span').some(x=>x.textContent==='额度不可查'));assert.equal(q.all('div').filter(x=>x.className==='balance-amount').length,0);
+});
+test('expired quota response cannot populate a current card',async()=>{
+ const q=fixture(async path=>({supported:true,kind:'quota',checkedAt:'2020-01-01T00:00:00Z',providerId:'provider',keyId:new URLSearchParams(path.split('?')[1]).get('keyId'),quota_infos:[{id:'q',remainingPercent:99}]}));await q.start();assert(q.cards().every(c=>c.dataset.state==='stale'));assert.equal(q.all('div').filter(x=>x.className==='balance-amount').length,0);
+});

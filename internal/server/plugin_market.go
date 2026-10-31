@@ -363,7 +363,7 @@ func marketCompare(a, b string) (int, bool) {
 func marketVersionOlder(a, b string) bool { n, ok := marketCompare(a, b); return ok && n < 0 }
 func marketCompatible(p marketPlugin, version string) (bool, string) {
 	for _, f := range p.Features {
-		if f != "plugin-tool-images-v1" && f != "skill-library-v1" && f != "plugin-authoring-v1" && f != "private-plugin-v1" && f != "terminal-workbench-v1" && f != "terminal-ssh-workspace-v1" && f != "terminal-communications-v1" && f != "terminal-relay-v1" {
+		if f != "provider-account-quota-v1" && f != "plugin-tool-images-v1" && f != "skill-library-v1" && f != "plugin-authoring-v1" && f != "private-plugin-v1" && f != "terminal-workbench-v1" && f != "terminal-ssh-workspace-v1" && f != "terminal-communications-v1" && f != "terminal-relay-v1" {
 			return false, "当前 Aide 不支持此插件所需能力"
 		}
 	}
