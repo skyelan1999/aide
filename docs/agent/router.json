@@ -646,6 +646,10 @@
         "scripts/test_resource_guard.py"
       ],
       [
+        "python3",
+        "scripts/test_pip_install_retry.py"
+      ],
+      [
         "node",
         "scripts/mcp-source-form.test.cjs"
       ],

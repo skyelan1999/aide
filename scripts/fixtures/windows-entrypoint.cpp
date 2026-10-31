@@ -4,11 +4,33 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#ifdef FIXTURE_REG
+#include "../../native/windows-launcher/third_party/json.hpp"
+#endif
 namespace fs=std::filesystem;
 std::wstring env(const wchar_t* n){wchar_t b[32768];DWORD len=GetEnvironmentVariableW(n,b,32768);return len&&len<32768?std::wstring(b,len):L"";}
 void log(const std::string& s){std::ofstream out(fs::path(env(L"FIXTURE_CALLS")),std::ios::app);out<<s<<std::endl;}
+std::string utf8(const std::wstring& s){if(s.empty())return {};int n=WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),nullptr,0,nullptr,nullptr);std::string out(n,0);WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),out.data(),n,nullptr,nullptr);return out;}
 int wmain(int argc,wchar_t** argv){
-#ifdef FIXTURE_DOCKER
+#ifndef FIXTURE_REG
+ if(env(L"FIXTURE_CHECK_PROXY")==L"1"){
+  for(auto pair:{std::pair<const wchar_t*,const wchar_t*>{L"HTTP_PROXY",L"FIXTURE_EXPECT_HTTP"},{L"HTTPS_PROXY",L"FIXTURE_EXPECT_HTTPS"},{L"NO_PROXY",L"FIXTURE_EXPECT_NO"}})if(env(pair.first)!=env(pair.second)){log("proxy:wrong-environment");return 27;}
+  log("proxy:inherited");
+ }
+#endif
+#ifdef FIXTURE_REG
+ if(argc==2&&std::wstring(argv[1])==L"--record-env"){
+  nlohmann::json values=nlohmann::json::object();for(auto name:{L"HTTP_PROXY",L"HTTPS_PROXY",L"ALL_PROXY",L"NO_PROXY"})values[utf8(name)]=utf8(env(name));
+  std::ofstream{fs::path(env(L"FIXTURE_PROXY_RECORD"))}<<values.dump();return 0;
+ }
+ if(argc<2)return 1;std::wstring key=argv[argc-1],value,type=L"REG_SZ";
+ if(key==L"ProxyEnable"){value=env(L"FIXTURE_PROXY_ENABLE")==L"1"?L"0x1":L"0x0";type=L"REG_DWORD";}
+ else if(key==L"ProxyServer")value=env(L"FIXTURE_PROXY_SERVER");
+ else if(key==L"ProxyOverride")value=env(L"FIXTURE_PROXY_BYPASS");
+ else if(key==L"AutoConfigURL")value=env(L"FIXTURE_PROXY_PAC");else return 1;
+ if(value.empty()&&key!=L"AutoConfigURL")return 1;
+ std::cout<<"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\n    "<<utf8(key)<<"    "<<utf8(type)<<"    "<<utf8(value)<<"\n";return 0;
+#elif defined(FIXTURE_DOCKER)
  std::wstring first=argc>1?argv[1]:L"",second=argc>2?argv[2]:L"";
  std::string a(first.begin(),first.end()),b(second.begin(),second.end());log("docker:"+a+":"+b);
  if(first==L"image"&&second==L"inspect")return 1;

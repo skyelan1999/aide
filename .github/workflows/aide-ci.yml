@@ -59,6 +59,30 @@ jobs:
           AIDE_TEST_IMAGE: aide:ci-test
           AIDE_TEST_WORKERS: '2'
         run: python3 scripts/test_go_snapshot.py
+  launcher:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Real clean Linux launcher build and complete lifecycle
+        run: |
+          acceptance_root="$RUNNER_TEMP/aide launcher clean 中文"
+          git worktree add --detach "$acceptance_root" HEAD
+          python3 scripts/test_launcher_clean_environment.py --root "$acceptance_root" --evidence "$GITHUB_WORKSPACE/.agent-state/launcher-clean-linux" --allow-real-build --pip-index-url https://pypi.org/simple
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clean-linux-launcher-acceptance
+          path: |
+            .agent-state/launcher-clean-linux/result.json
+            .agent-state/launcher-clean-linux/*.log
+          include-hidden-files: true
+          retention-days: 3
   windows:
     runs-on: windows-2025
     timeout-minutes: 10
@@ -100,7 +124,7 @@ jobs:
           python scripts/test_windows_update_agent.py --pwsh pwsh.exe
   gate:
     if: always()
-    needs: [quick, go, windows]
+    needs: [quick, go, windows, launcher]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
