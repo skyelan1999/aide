@@ -8,7 +8,7 @@
 
 > 第一次浏览仓库可先看[代码目录导航](architecture/code-layout.md)，再按下方模块职责进入具体实现。
 
-项目引用的下载脚本远程中继实现、读写边界与部署步骤见 [远程目录中继](reference-relay.md)（Issue #644，源码功能，发行状态见任务账本）。
+项目引用的下载脚本远程目录及 SFTP 中继实现、读写边界与部署步骤见 [远程目录中继](reference-relay.md)（Issue #644，源码功能，发行状态见任务账本）。
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 

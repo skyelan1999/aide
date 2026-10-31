@@ -7452,13 +7452,14 @@ async function downloadSourceRelay(src) {
   const current = state.sources.find(x => x.id === src.id);
   if (lockScreen.locked || chatRecoveryEpoch !== epoch || recoveryScope() !== scope || state.token !== token || !current || JSON.stringify(current.config) !== binding || current.rw !== rw) throw new Error(t('来源配置已变化，请重新下载'));
   const url = URL.createObjectURL(blob), link = document.createElement('a');
-  link.href = url; link.download = 'aide-reference-relay-' + src.id + '.py'; link.click();
+  link.href = url; link.download = (src.type === 'sftp' ? 'aide-sftp-relay-' : 'aide-reference-relay-') + src.id + '.py'; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast(t('请在远程设备运行下载的脚本，然后检测中继'));
 }
 async function probeSourceRelay(src) {
   const result = await api('/sources/' + encodeURIComponent(src.id) + '/relay-probe', {method:'POST'});
   if (!result.online) throw new Error(result.error || t('中继未连接，请检查远程脚本和网络'));
+  if (src.type === 'sftp') { toast(t('中继及目标端口可达；SFTP 认证和主机密钥将在访问目录时检查')); return; }
   toast(result.rw && !result.remoteWritable ? t('中继已连接；远程脚本只读，写入前请重新下载部署') : t(result.remoteWritable && result.rw ? '中继已连接 · 读写' : '中继已连接 · 只读'));
   if (state.source === src.id) await loadFiles();
 }
@@ -7531,7 +7532,7 @@ function renderSourceChips() {
     })(); };
     wrap.append(visibility);
     if (!src.builtin) {
-      if (src.type === 'relay') {
+      if (src.type === 'relay' || (src.type === 'sftp' && src.config.relayHost)) {
         [[t('下载脚本'), () => downloadSourceRelay(src)], [t('检测中继'), () => probeSourceRelay(src)]].forEach(([label, run]) => {
           const button = el('button', 'src-test', label); button.type = 'button'; button.title = label; button.setAttribute('aria-label', label + '：' + displayName);
           button.onclick = ev => { ev.stopPropagation(); action(async () => { button.disabled = true; try { await run(); } finally { button.disabled = false; } })(); };
@@ -7612,6 +7613,10 @@ function openSourceEditor(src) {
   } else if (src.type === 'sftp') {
     $('src-host').value = src.config.host || '';
     $('src-port').value = src.config.port || 22;
+    $('src-sftp-mode').value = src.config.relayHost ? 'relay' : 'direct';
+    $('src-sftp-mode').dispatchEvent(new Event('change'));
+    $('src-sftp-relay-host').value = src.config.relayHost || '';
+    $('src-sftp-relay-port').value = src.config.relayPort || 8768;
     $('src-user').value = src.config.username || '';
     $('src-remote').value = src.config.path || '';
   } else if (src.type === 'mcp') {
@@ -7626,7 +7631,7 @@ function openSourceEditor(src) {
     if ($('src-user')) $('src-user').value = src.config.username || '';
   }
   const keepSecretHint = src.hasSecret ? t('留空 = 保留现有凭据') : '';
-  ['src-password', 'src-key', 'src-relay-key'].forEach(id => { if ($(id) && keepSecretHint) $(id).placeholder = keepSecretHint; });
+  ['src-password', 'src-key', 'src-relay-key', 'src-sftp-relay-key'].forEach(id => { if ($(id) && keepSecretHint) $(id).placeholder = keepSecretHint; });
   setSourceDialogMode(true);
   $('source-dialog').showModal();
 }
@@ -7684,10 +7689,23 @@ function renderSourceFields() {
     const browse=el('button','quiet',t('浏览…'));browse.type='button';browse.onclick=()=>openBrowse('src-remote');remoteRow.append(browse);
     addField(t("密码（可选）"), 'src-password', editingSourceID ? t('留空 = 保留现有凭据') : t("留空 = 无密码认证")).type = 'password';
     addField(t("私钥（可选，优先于密码）"), 'src-key', editingSourceID ? t('留空 = 保留现有凭据') : t("粘贴私钥内容")).type = 'password';
+    const modeLabel = el('label', '', t('SFTP 连接方式'));
+    const mode = el('select'); mode.id = 'src-sftp-mode';
+    [['direct', t('直接连接')], ['relay', t('通过远程脚本中继')]].forEach(([value, text]) => { const option = el('option', '', text); option.value = value; mode.append(option); });
+    modeLabel.append(mode); host.prepend(modeLabel);
+    const relayHost = addField(t('中继主机'), 'src-sftp-relay-host', '192.168.1.20');
+    const relayPort = addField(t('中继端口'), 'src-sftp-relay-port', '8768'); relayPort.type = 'number'; relayPort.min = '1'; relayPort.max = '65535'; relayPort.value = '8768';
+    const relayKey = addField(t('中继密钥（可选，32 字节 Base64）'), 'src-sftp-relay-key', editingSourceID ? t('留空 = 保留现有凭据') : t('留空自动生成')); relayKey.type = 'password';
+    const hint = el('p','muted',t('先保存，再下载脚本到能访问 SFTP 服务的远程设备运行。安装 Python 3.10+ 和 cryptography。脚本只连接指定的 SFTP 主机，不含 SFTP 密码或私钥；默认只读，读写锁在 Aide 控制。修改目标主机、端口或目录后需重新部署。'));
+    const secretHint = el('p','muted',t('脚本含中继访问密钥，请保存在 SFTP 共享目录外并限制文件访问权限。'));
+    host.append(hint, secretHint);
+    mode.onchange = () => { const relay = mode.value === 'relay'; [relayHost.parentNode, relayPort.parentNode, relayKey.parentNode, hint, secretHint].forEach(node => { node.hidden = !relay; }); relayHost.required = relay; browse.disabled = relay; browse.title = relay ? t('先保存并部署中继，再从来源浏览目录') : t('浏览…'); };
+    mode.onchange();
   }
 }
 $('src-type').addEventListener('change', renderSourceFields);
 async function browseSourceDraft(path) {
+  if ($('src-sftp-mode')?.value === 'relay') throw new Error(t('先保存并部署中继，再从来源浏览目录'));
   const previous=editingSourceID?state.sources.find(x=>x.id===editingSourceID):null;
   const password=$('src-password').value,key=$('src-key').value;
   return api('/sources/browse',{method:'POST',body:JSON.stringify({id:editingSourceID,path,password,key,config:{host:$('src-host').value.trim(),port:Number($('src-port').value)||22,username:$('src-user').value.trim(),auth:key?'key':password?'password':previous?.config.auth||'none'}})});
@@ -7722,7 +7740,7 @@ $('source-form').onsubmit = action(async event => {
   if (type === 'local' || type === 'skill') src.config.path = $('src-path').value.trim();
   else if (type === 'relay') { src.config = {host:$('src-host').value.trim(),port:Number($('src-port').value),path:$('src-remote').value.trim()}; const key = $('src-relay-key').value.trim(); if (key) secrets[id] = {key}; }
   else if (type === 'mcp') { src.config = $('src-mcp-transport')?.value === 'streamable-http' ? { transport: 'streamable-http', url: ($('src-url')?.value || '').trim(), dockerGateway: !!$('src-mcp-docker')?.checked } : { transport: 'stdio', command: ($('src-command')?.value || '').trim(), args: ($('src-mcp-args')?.value || '').split(/\r?\n/).filter(value => value.length > 0) }; if (src.config.transport === 'streamable-http' && $('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
-  else if (type === 'sftp') { const pw = $('src-password').value, key = $('src-key').value; src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: key ? 'key' : pw ? 'password' : previous?.config.auth || 'none' }; if (pw || key) secrets[id] = { password: pw, key }; }
+  else if (type === 'sftp') { const pw = $('src-password').value, key = $('src-key').value; src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: key ? 'key' : pw ? 'password' : previous?.config.auth || 'none' }; if (pw || key) secrets[id] = { password: pw, key }; if ($('src-sftp-mode').value === 'relay') { src.config.relayHost = $('src-sftp-relay-host').value.trim(); src.config.relayPort = Number($('src-sftp-relay-port').value) || 8768; const relayKey = $('src-sftp-relay-key').value; if (relayKey) secrets[id] = {...(secrets[id] || {}), relayKey}; } }
   else { src.config.url = $('src-url').value.trim(); if ($('src-user')) src.config.username = $('src-user').value.trim(); if ($('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
   const payload = previous
     ? { sources: sourceUpdatePayload(src) }
@@ -7732,7 +7750,7 @@ $('source-form').onsubmit = action(async event => {
   $('source-dialog').close();
   editingSourceID = '';
   await loadSourcesList();
-  if (type === 'relay') {
+  if (type === 'relay' || (type === 'sftp' && src.config.relayHost)) {
     // Saving a new relay must work before the remote script exists.
     if (previous && state.source === id) { state.dir = '.'; try { await loadFiles(); } catch {} }
     toast(t('配置已保存，请下载脚本到远程设备运行后检测中继')); return;

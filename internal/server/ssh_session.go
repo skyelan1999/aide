@@ -1002,7 +1002,11 @@ func (a *App) sftpTargetOf(src Source) string {
 
 // sftpConnIdentity 取决定 ControlMaster 连接对象的关键字段；任一变化即应重建会话。
 func sftpConnIdentity(src Source) string {
-	return fmt.Sprintf("%s|%d|%s|%s", src.Config.Host, src.Config.Port, src.Config.Username, src.Config.Auth)
+	identity := fmt.Sprintf("%s|%d|%s|%s", src.Config.Host, src.Config.Port, src.Config.Username, src.Config.Auth) + fmt.Sprintf("|%s|%d", src.Config.RelayHost, src.Config.RelayPort)
+	if isSFTPRelay(src) {
+		identity += "|" + src.Config.Path
+	}
+	return identity
 }
 
 // killSourceSession 关闭某来源的 ControlMaster 并清理其 socket/凭据临时文件
@@ -1056,6 +1060,14 @@ func (a *App) ensureSourceSessionCredentials(ctx context.Context, src Source, se
 		return fmt.Errorf("SFTP 连接配置已变化，请重新访问目录")
 	}
 	base := sshConnectionArgs(sock, src.Config.Port)
+	if isSFTPRelay(src) {
+		proxy, cleanup, err := a.sftpRelayProxy(src)
+		if err != nil {
+			return err
+		}
+		defer cleanup()
+		base = append(base, "-o", "ProxyCommand="+proxy)
+	}
 	if err := a.prepareSSHMaster(ctx, sock, a.sftpTargetOf(src), generation); err != nil {
 		return err
 	}
