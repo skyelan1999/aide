@@ -1,0 +1,73 @@
+{
+  "id": "issue-close-main-20261030",
+  "request": "你看看aide issue已经修复并合并到main的就关了吧",
+  "baseline": "1d01dc56927467213b62d686b2d11316fcd5f22b",
+  "initial_status": "M start.command",
+  "acceptance": [
+    "Enumerate every currently open Aide issue and identify fixes merged to remote main with completed relevant verification.",
+    "Close only verified completed items, then read back remote states; preserve unresolved, partially fixed, unmerged and target-environment pending issues.",
+    "Record issue-to-fix and acceptance evidence without altering product code, existing local changes, services or release state."
+  ],
+  "scope": [
+    "GitHub skyelan1999/aide issue states only",
+    "Read-only GitHub pull request, commit and CI metadata",
+    "docs/tasks/issue-close-main-20261030.json",
+    "docs/reviews/2026-10-30-issue-close-main/audit.json",
+    ".agent-state/issue-close-main-20261030/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "110 open issues inventoried from live GitHub; 60 have complete PR609 fix and verification records, 50 retained.",
+      "evidence": [
+        ".agent-state/issue-close-main-20261030/remote-audit.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Match individual issues to cycles107-130, successful PR609 full CI, identical reviewed-head/merge tree and current-main ancestry; retain explicit acceptance gaps.",
+      "evidence": [
+        ".agent-state/issue-close-main-20261030/source-identity.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Closed 60 verified issues as completed; no comment, label or product code changes.",
+      "evidence": [
+        "docs/reviews/2026-10-30-issue-close-main/audit.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "60/60 independently re-read closed/completed; 50/50 retained issues remain open. Remote main unchanged. 24 targeted current-main suites passed; historical PR609 full CI and component/browser evidence verified. Current overall main CI failure retained as a separate boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-30-issue-close-main/audit.json",
+        ".agent-state/issue-close-main-20261030/regressions.json",
+        "https://github.com/skyelan1999/aide/actions/runs/40857995620"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded every closed/retained issue, fix PR, acceptance cycle, CI boundary and independent remote readback.",
+      "evidence": [
+        "docs/reviews/2026-10-30-issue-close-main/audit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned task/audit records and regenerable ignored evidence added; pre-existing start.command and other task worktrees preserved.",
+      "evidence": [
+        "git status --short --branch",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Issue state cleanup only. No source commit, push, tag, release or runtime deployment.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Issue state changes are reversible by reopening individual issue numbers in the final audit.",
+  "handoff": "Completed: 60 accepted PR609 fixes closed and independently confirmed; 50 unresolved, unmerged or target-environment pending issues remain open. 24 targeted current-main suites passed. No source commit/push, new merge, release or runtime change."
+}

@@ -1,0 +1,1433 @@
+{
+  "task": "issue-close-main-20261030",
+  "repository": "https://github.com/skyelan1999/aide",
+  "requestedAction": "Close issues already fixed, accepted and merged to main.",
+  "mainBefore": "d012e0928d095cbbfa31653299deace06f1bb839",
+  "mainAfter": "d012e0928d095cbbfa31653299deace06f1bb839",
+  "initialOpenIssues": 110,
+  "closedCompleted": 60,
+  "finalOpenIssues": 50,
+  "fixPR": {
+    "number": 609,
+    "url": "https://github.com/skyelan1999/aide/pull/609",
+    "verifiedHead": "2fa54c7282dc3692f2a9caba4fc8d6ae81f7b9cb",
+    "mergeCommit": "155455943107d1c7e96064c305d01e8fabdbe6a3",
+    "base": "main",
+    "merged": true,
+    "headAndMergeTreesIdentical": true,
+    "mergeIsAncestorOfCurrentMain": true
+  },
+  "verification": {
+    "mergedPRCI": {
+      "run": "https://github.com/skyelan1999/aide/actions/runs/40857995620",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "go",
+          "conclusion": "success"
+        },
+        {
+          "name": "windows",
+          "conclusion": "success"
+        },
+        {
+          "name": "quick",
+          "conclusion": "success"
+        },
+        {
+          "name": "gate",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "currentMainRegressions": {
+      "scope": "24 targeted Node suites on an isolated export of exact current-main sources, all passed. This is not a fresh full-workbench or Windows-device acceptance.",
+      "log": ".agent-state/issue-close-main-20261030/regressions.json"
+    },
+    "existingBrowserEvidence": "Individual cycle107-130 records contain actual Chromium component/worker/WebGL, pixels, normal controls and lifecycle acceptance. Read from current main; not rerun as full product UI.",
+    "currentMainCI": [
+      {
+        "name": "native",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41011466001/job/123918080353"
+      },
+      {
+        "name": "publish",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41011466001/job/123918080143"
+      },
+      {
+        "name": "windows",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41011466001/job/123918079954"
+      },
+      {
+        "name": "source",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41011466001/job/123918079481"
+      },
+      {
+        "name": "gate",
+        "status": "completed",
+        "conclusion": "failure",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41008963830/job/123918042432"
+      },
+      {
+        "name": "quick",
+        "status": "completed",
+        "conclusion": "failure",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41008963830/job/123910254713"
+      },
+      {
+        "name": "go",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41008963830/job/123910254673"
+      },
+      {
+        "name": "windows",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/skyelan1999/aide/actions/runs/41008963830/job/123910254369"
+      }
+    ],
+    "currentMainCIBoundary": "Current main overall quick/gate were failing at inspection; do not claim current whole-main CI success. Existing PR609 complete CI and current passing issue-related suites establish this closure scope. No unrelated CI repair performed.",
+    "readback": "Every one of the 60 issues was independently re-read from the live closed-issues collection; all state=closed and state_reason=completed. All 50 retained issues were independently re-read as open.",
+    "sourceIdentity": ".agent-state/issue-close-main-20261030/source-identity.json",
+    "harnessCorrections": [
+      "System Python lacks tarfile.extractall(filter=...); validated member names/types before extraction. Initial scripts did not exist and were recorded as harness failures.",
+      "OBJ suite initially lacked cube.obj in the minimal export; copied the exact-main fixture and reran successfully without product changes."
+    ]
+  },
+  "closedIssues": [
+    {
+      "number": 426,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:07Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:07Z",
+      "title": "[P2] Stop Markdown export renders when the job is cancelled or times out",
+      "url": "https://github.com/skyelan1999/aide/issues/426",
+      "evidenceCycles": [
+        107
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-107.json"
+      ]
+    },
+    {
+      "number": 429,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:25Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:25Z",
+      "title": "[P2] Enforce the triangle budget before parsing OBJ assets",
+      "url": "https://github.com/skyelan1999/aide/issues/429",
+      "evidenceCycles": [
+        109
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-109.json"
+      ]
+    },
+    {
+      "number": 432,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:40Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:40Z",
+      "title": "[P2] Bound PDF.js predictor rows derived from untrusted DecodeParms",
+      "url": "https://github.com/skyelan1999/aide/issues/432",
+      "evidenceCycles": [
+        111
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-111.json"
+      ]
+    },
+    {
+      "number": 433,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:42Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:42Z",
+      "title": "[P2] Bound memory use when decoding oversized PDF images",
+      "url": "https://github.com/skyelan1999/aide/issues/433",
+      "evidenceCycles": [
+        111
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-111.json"
+      ]
+    },
+    {
+      "number": 437,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:43Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:43Z",
+      "title": "[P2] Prevent quadratic backtracking in C/C++ highlighting",
+      "url": "https://github.com/skyelan1999/aide/issues/437",
+      "evidenceCycles": [
+        112
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-112.json"
+      ]
+    },
+    {
+      "number": 438,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:44Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:44Z",
+      "title": "[P2] Prevent quadratic backtracking in C# highlighting",
+      "url": "https://github.com/skyelan1999/aide/issues/438",
+      "evidenceCycles": [
+        112
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-112.json"
+      ]
+    },
+    {
+      "number": 439,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:46Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:46Z",
+      "title": "P2 Avoid quadratic backtracking in INI/TOML key highlighting",
+      "url": "https://github.com/skyelan1999/aide/issues/439",
+      "evidenceCycles": [
+        112
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-112.json"
+      ]
+    },
+    {
+      "number": 440,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:47Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:47Z",
+      "title": "P2 Prevent quadratic scans in Ruby heredoc detection",
+      "url": "https://github.com/skyelan1999/aide/issues/440",
+      "evidenceCycles": [
+        112
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-112.json"
+      ]
+    },
+    {
+      "number": 442,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:49Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:49Z",
+      "title": "[P2] Bound recursive PDF object parsing depth",
+      "url": "https://github.com/skyelan1999/aide/issues/442",
+      "evidenceCycles": [
+        113
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-113.json"
+      ]
+    },
+    {
+      "number": 443,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:51Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:51Z",
+      "title": "[P2] Bound XRef stream entry expansion during PDF parsing",
+      "url": "https://github.com/skyelan1999/aide/issues/443",
+      "evidenceCycles": [
+        113
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-113.json"
+      ]
+    },
+    {
+      "number": 474,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:52Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:52Z",
+      "title": "[P2] Bound regex evaluation in PlantUML splitstr_regex",
+      "url": "https://github.com/skyelan1999/aide/issues/474",
+      "evidenceCycles": [
+        114
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-114.json"
+      ]
+    },
+    {
+      "number": 480,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:54Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:54Z",
+      "title": "[P2] Bound repeated layout work for nested PlantUML states",
+      "url": "https://github.com/skyelan1999/aide/issues/480",
+      "evidenceCycles": [
+        114
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-114.json"
+      ]
+    },
+    {
+      "number": 486,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:55Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:55Z",
+      "title": "[P2] Avoid quadratic scans for PlantUML object map links",
+      "url": "https://github.com/skyelan1999/aide/issues/486",
+      "evidenceCycles": [
+        114
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-114.json"
+      ]
+    },
+    {
+      "number": 487,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:57Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:57Z",
+      "title": "[P2] Bound quadratic note placement in PlantUML object diagrams",
+      "url": "https://github.com/skyelan1999/aide/issues/487",
+      "evidenceCycles": [
+        114
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-114.json"
+      ]
+    },
+    {
+      "number": 489,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:58Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:58Z",
+      "title": "[P3] Bound recursion for deeply nested PlantUML class packages",
+      "url": "https://github.com/skyelan1999/aide/issues/489",
+      "evidenceCycles": [
+        114
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-114.json"
+      ]
+    },
+    {
+      "number": 493,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:06:59Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:06:59Z",
+      "title": "[P3] Bound recursion for deeply nested PlantUML activity branches",
+      "url": "https://github.com/skyelan1999/aide/issues/493",
+      "evidenceCycles": [
+        114
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-114.json"
+      ]
+    },
+    {
+      "number": 500,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:06Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:06Z",
+      "title": "[P2] Limit canvas dimensions when rendering unusually large PDF pages",
+      "url": "https://github.com/skyelan1999/aide/issues/500",
+      "evidenceCycles": [
+        115
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-115.json"
+      ]
+    },
+    {
+      "number": 501,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:07Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:07Z",
+      "title": "[P2] Bound PDF.js LZW stream expansion during PDF preview",
+      "url": "https://github.com/skyelan1999/aide/issues/501",
+      "evidenceCycles": [
+        116
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-116.json"
+      ]
+    },
+    {
+      "number": 502,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:09Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:09Z",
+      "title": "[P2] Prevent infinite loops in PDF.js JBIG2 segment parsing",
+      "url": "https://github.com/skyelan1999/aide/issues/502",
+      "evidenceCycles": [
+        116
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-116.json"
+      ]
+    },
+    {
+      "number": 503,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:10Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:10Z",
+      "title": "[P2] Bound global PDF image cache entries when image decoding fails",
+      "url": "https://github.com/skyelan1999/aide/issues/503",
+      "evidenceCycles": [
+        116
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-116.json"
+      ]
+    },
+    {
+      "number": 504,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:12Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:12Z",
+      "title": "[P2] Cap Indexed color-space lookup table allocations",
+      "url": "https://github.com/skyelan1999/aide/issues/504",
+      "evidenceCycles": [
+        116
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-116.json"
+      ]
+    },
+    {
+      "number": 505,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:13Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:13Z",
+      "title": "[P2] Preserve edge pixels when grouping inline images",
+      "url": "https://github.com/skyelan1999/aide/issues/505",
+      "evidenceCycles": [
+        116
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-116.json"
+      ]
+    },
+    {
+      "number": 506,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:14Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:14Z",
+      "title": "[P2] Handle JPX images whose component count differs from the PDF ColorSpace",
+      "url": "https://github.com/skyelan1999/aide/issues/506",
+      "evidenceCycles": [
+        117
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-117.json"
+      ]
+    },
+    {
+      "number": 507,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:16Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:16Z",
+      "title": "[P3] Detect cyclic named ColorSpace resource aliases",
+      "url": "https://github.com/skyelan1999/aide/issues/507",
+      "evidenceCycles": [
+        119
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-119.json"
+      ]
+    },
+    {
+      "number": 508,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:17Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:17Z",
+      "title": "[P2] Bound PDF.js sampled-function allocations from untrusted /Size",
+      "url": "https://github.com/skyelan1999/aide/issues/508",
+      "evidenceCycles": [
+        119
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-119.json"
+      ]
+    },
+    {
+      "number": 509,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:19Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:19Z",
+      "title": "[P3] Bound recursive parsing of nested PDF PostScript conditionals",
+      "url": "https://github.com/skyelan1999/aide/issues/509",
+      "evidenceCycles": [
+        119
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-119.json"
+      ]
+    },
+    {
+      "number": 510,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:20Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:20Z",
+      "title": "[P2] Prevent recursive PDF Form XObject expansion",
+      "url": "https://github.com/skyelan1999/aide/issues/510",
+      "evidenceCycles": [
+        122
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-122.json"
+      ]
+    },
+    {
+      "number": 511,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:22Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:22Z",
+      "title": "[P2] Bound recursive PDF tiling-pattern expansion",
+      "url": "https://github.com/skyelan1999/aide/issues/511",
+      "evidenceCycles": [
+        122
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-122.json"
+      ]
+    },
+    {
+      "number": 512,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:23Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:23Z",
+      "title": "[P2] Bound PDF.js CID font width table expansion",
+      "url": "https://github.com/skyelan1999/aide/issues/512",
+      "evidenceCycles": [
+        123
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-123.json"
+      ]
+    },
+    {
+      "number": 513,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:24Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:24Z",
+      "title": "[P2] Prevent PDF.js Squiggly annotations from trapping the render worker",
+      "url": "https://github.com/skyelan1999/aide/issues/513",
+      "evidenceCycles": [
+        123
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-123.json"
+      ]
+    },
+    {
+      "number": 514,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:26Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:26Z",
+      "title": "[P2] Bound PDF.js CMap expansion to avoid hundreds of megabytes from a tiny PDF",
+      "url": "https://github.com/skyelan1999/aide/issues/514",
+      "evidenceCycles": [
+        123
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-123.json"
+      ]
+    },
+    {
+      "number": 532,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:27Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:27Z",
+      "title": "[P2] Bound nested PDF graphics-state depth during rendering",
+      "url": "https://github.com/skyelan1999/aide/issues/532",
+      "evidenceCycles": [
+        124
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-124.json"
+      ]
+    },
+    {
+      "number": 533,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:29Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:29Z",
+      "title": "[P2] Bound CCITTFaxDecode Columns before allocating scanline arrays",
+      "url": "https://github.com/skyelan1999/aide/issues/533",
+      "evidenceCycles": [
+        124
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-124.json"
+      ]
+    },
+    {
+      "number": 534,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:31Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:31Z",
+      "title": "[P2] Bound FlateDecode image expansion before buffering",
+      "url": "https://github.com/skyelan1999/aide/issues/534",
+      "evidenceCycles": [
+        124
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-124.json"
+      ]
+    },
+    {
+      "number": 535,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:32Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:32Z",
+      "title": "[P2] Bound JBIG2 Page Information dimensions before allocation",
+      "url": "https://github.com/skyelan1999/aide/issues/535",
+      "evidenceCycles": [
+        125
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-125.json"
+      ]
+    },
+    {
+      "number": 536,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:34Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:34Z",
+      "title": "[P2] Bound JPEG SOF dimensions before allocating decoder blocks",
+      "url": "https://github.com/skyelan1999/aide/issues/536",
+      "evidenceCycles": [
+        125
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-125.json"
+      ]
+    },
+    {
+      "number": 537,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:35Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:35Z",
+      "title": "[P2] Bound JPX output allocation by image extents",
+      "url": "https://github.com/skyelan1999/aide/issues/537",
+      "evidenceCycles": [
+        125
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-125.json"
+      ]
+    },
+    {
+      "number": 538,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:37Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:37Z",
+      "title": "[P2] Reject invalid CFF INDEX offSize before scanning offsets",
+      "url": "https://github.com/skyelan1999/aide/issues/538",
+      "evidenceCycles": [
+        125
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-125.json"
+      ]
+    },
+    {
+      "number": 540,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:48Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:48Z",
+      "title": "[P2] Bound URDF mesh-picking intersections for dense STL assets",
+      "url": "https://github.com/skyelan1999/aide/issues/540",
+      "evidenceCycles": [
+        126
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-126.json"
+      ]
+    },
+    {
+      "number": 542,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:50Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:50Z",
+      "title": "[P2] Bound decoded dimensions of URDF DAE textures",
+      "url": "https://github.com/skyelan1999/aide/issues/542",
+      "evidenceCycles": [
+        126
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-126.json"
+      ]
+    },
+    {
+      "number": 545,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:51Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:51Z",
+      "title": "[P3] Bound PDF inline-image cache-key conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/545",
+      "evidenceCycles": [
+        127
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-127.json"
+      ]
+    },
+    {
+      "number": 546,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:53Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:53Z",
+      "title": "[P2] Reject truncated CFF charset ranges before looping",
+      "url": "https://github.com/skyelan1999/aide/issues/546",
+      "evidenceCycles": [
+        127
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-127.json"
+      ]
+    },
+    {
+      "number": 547,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:54Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:54Z",
+      "title": "[P2] Bound PDF CFF FDSelect expansion by glyph count",
+      "url": "https://github.com/skyelan1999/aide/issues/547",
+      "evidenceCycles": [
+        127
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-127.json"
+      ]
+    },
+    {
+      "number": 548,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:56Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:56Z",
+      "title": "[P2] Bound PDF Type 2 CharString operand stack growth",
+      "url": "https://github.com/skyelan1999/aide/issues/548",
+      "evidenceCycles": [
+        127
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-127.json"
+      ]
+    },
+    {
+      "number": 549,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:57Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:57Z",
+      "title": "[P3] Bound Type 1 CharString subroutine recursion",
+      "url": "https://github.com/skyelan1999/aide/issues/549",
+      "evidenceCycles": [
+        127
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-127.json"
+      ]
+    },
+    {
+      "number": 550,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:07:58Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:07:58Z",
+      "title": "[P3] Guard recursive TrueType composite glyph compilation",
+      "url": "https://github.com/skyelan1999/aide/issues/550",
+      "evidenceCycles": [
+        127
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-127.json"
+      ]
+    },
+    {
+      "number": 552,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:00Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:00Z",
+      "title": "[P2] Bound TrueType Collection font count before allocating offsets",
+      "url": "https://github.com/skyelan1999/aide/issues/552",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 553,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:02Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:02Z",
+      "title": "[P2] Bound TrueType format-12 cmap expansion before mapping glyphs",
+      "url": "https://github.com/skyelan1999/aide/issues/553",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 554,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:03Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:03Z",
+      "title": "[P2] Bound PDF mesh shading vertex expansion",
+      "url": "https://github.com/skyelan1999/aide/issues/554",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 556,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:05Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:05Z",
+      "title": "[P3] Bound recursive traversal of Type 4 PostScript expressions",
+      "url": "https://github.com/skyelan1999/aide/issues/556",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 557,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:06Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:06Z",
+      "title": "[P2] Avoid quadratic XML entity scans in XFA datasets",
+      "url": "https://github.com/skyelan1999/aide/issues/557",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 558,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:07Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:07Z",
+      "title": "[P3] Preserve negative bounds when building default annotation appearances",
+      "url": "https://github.com/skyelan1999/aide/issues/558",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 559,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:09Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:09Z",
+      "title": "[P2] Stop auto-size loop when a multiline widget has no usable height",
+      "url": "https://github.com/skyelan1999/aide/issues/559",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 560,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:10Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:10Z",
+      "title": "[P2] Delete worker stream sinks after stream errors",
+      "url": "https://github.com/skyelan1999/aide/issues/560",
+      "evidenceCycles": [
+        128
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-128.json"
+      ]
+    },
+    {
+      "number": 566,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:11Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:11Z",
+      "title": "[P2] Bound Type 1 Length1 before allocating font decode buffers",
+      "url": "https://github.com/skyelan1999/aide/issues/566",
+      "evidenceCycles": [
+        130
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-130.json"
+      ]
+    },
+    {
+      "number": 567,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:13Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:13Z",
+      "title": "[P2] Avoid eagerly decoding embedded files during PDF preview",
+      "url": "https://github.com/skyelan1999/aide/issues/567",
+      "evidenceCycles": [
+        130
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-130.json"
+      ]
+    },
+    {
+      "number": 598,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:14Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:14Z",
+      "title": "Markdown export rejects inline data images under the workbench CSP",
+      "url": "https://github.com/skyelan1999/aide/issues/598",
+      "evidenceCycles": [
+        108
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-108.json"
+      ]
+    },
+    {
+      "number": 599,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:16Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:16Z",
+      "title": "助理输出类似md格式但未按md进行渲染",
+      "url": "https://github.com/skyelan1999/aide/issues/599",
+      "evidenceCycles": [
+        120
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-120.json"
+      ]
+    },
+    {
+      "number": 611,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:17Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:17Z",
+      "title": "[P3] Decode unsigned 32-bit PDF sampled-function values correctly",
+      "url": "https://github.com/skyelan1999/aide/issues/611",
+      "evidenceCycles": [
+        119
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-119.json"
+      ]
+    },
+    {
+      "number": 617,
+      "state": "closed",
+      "state_reason": "completed",
+      "closed_at": "2026-10-30T06:08:18Z",
+      "readbackState": "closed",
+      "readbackReason": "completed",
+      "readbackClosedAt": "2026-10-30T06:08:18Z",
+      "title": "[P2] Preserve SFTP directory cancellation at the final visitor boundary",
+      "url": "https://github.com/skyelan1999/aide/issues/617",
+      "evidenceCycles": [
+        129
+      ],
+      "evidence": [
+        "https://github.com/skyelan1999/aide/blob/d012e0928d095cbbfa31653299deace06f1bb839/docs/reviews/2026-10-26-open-issue-review/cycle-129.json"
+      ]
+    }
+  ],
+  "retainedIssues": [
+    {
+      "number": 335,
+      "title": "Windows Release launcher pins local directories to bundled workspace and overrides .env paths",
+      "url": "https://github.com/skyelan1999/aide/issues/335",
+      "reason": "Real Windows/Docker Desktop acceptance remains pending; explicit keep-open boundary."
+    },
+    {
+      "number": 340,
+      "title": "Windows Release manual slot activation is ignored or hangs in host updater",
+      "url": "https://github.com/skyelan1999/aide/issues/340",
+      "reason": "Real Windows/Docker Desktop acceptance remains pending; explicit keep-open boundary."
+    },
+    {
+      "number": 369,
+      "title": "Windows RC12 slot activation can remain at 95% during rollback without durable diagnostics",
+      "url": "https://github.com/skyelan1999/aide/issues/369",
+      "reason": "Real Windows/Docker Desktop acceptance remains pending; explicit keep-open boundary."
+    },
+    {
+      "number": 464,
+      "title": "Run start.bat in (codex/open-issue-review-20261026) commit 1aba53e402f1fb2d7c3648d95a671fa4a981a5cb report error",
+      "url": "https://github.com/skyelan1999/aide/issues/464",
+      "reason": "Real Windows/Docker Desktop acceptance remains pending; explicit keep-open boundary."
+    },
+    {
+      "number": 467,
+      "title": "issue of release aide-v0.1.17.5-RC12-full-linux-amd64.zip",
+      "url": "https://github.com/skyelan1999/aide/issues/467",
+      "reason": "Real Windows/Docker Desktop acceptance remains pending; explicit keep-open boundary."
+    },
+    {
+      "number": 568,
+      "title": "[P2] Cap SIZ-derived JPX component buffers during tile updates",
+      "url": "https://github.com/skyelan1999/aide/issues/568",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 569,
+      "title": "[P2] Check OpenJPEG input allocation before copying into Wasm",
+      "url": "https://github.com/skyelan1999/aide/issues/569",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 570,
+      "title": "[P2] Upsample subsampled JPX component planes before copying",
+      "url": "https://github.com/skyelan1999/aide/issues/570",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 571,
+      "title": "[P3] Avoid using the old MCT base pointer after realloc in bundled OpenJPEG",
+      "url": "https://github.com/skyelan1999/aide/issues/571",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 572,
+      "title": "[P2] Bound memory growth from oversized JP2 FTYP compatibility lists",
+      "url": "https://github.com/skyelan1999/aide/issues/572",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 573,
+      "title": "[P2] Cap per-tile JPX metadata allocation from SIZ tile counts",
+      "url": "https://github.com/skyelan1999/aide/issues/573",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 574,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPM headers",
+      "url": "https://github.com/skyelan1999/aide/issues/574",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 576,
+      "title": "[P2] Bound Tier-2 segment growth from attacker-declared coding passes",
+      "url": "https://github.com/skyelan1999/aide/issues/576",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 578,
+      "title": "[P3] Check signed arithmetic in reversible MCT decoding",
+      "url": "https://github.com/skyelan1999/aide/issues/578",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 579,
+      "title": "[P2] Bound ICC profile copies during JP2 header parsing",
+      "url": "https://github.com/skyelan1999/aide/issues/579",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 582,
+      "title": "[P2] Sign-extend signed int16 MCT offsets before conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/582",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 583,
+      "title": "[P2] sqlite_execute misses unscoped writes after whitespace or earlier statements",
+      "url": "https://github.com/skyelan1999/aide/issues/583",
+      "reason": "Independent plugin fix PR is still open and unmerged, verified live."
+    },
+    {
+      "number": 584,
+      "title": "[P2] sqlite_export CSV follows symlinks outside the allowed roots",
+      "url": "https://github.com/skyelan1999/aide/issues/584",
+      "reason": "Independent plugin fix PR is still open and unmerged, verified live."
+    },
+    {
+      "number": 586,
+      "title": "[P2] sqlite_execute lets any safe string satisfy the ATTACH path check",
+      "url": "https://github.com/skyelan1999/aide/issues/586",
+      "reason": "Independent plugin fix PR is still open and unmerged, verified live."
+    },
+    {
+      "number": 588,
+      "title": "[P2] TCP proxy ignores socket backpressure and can buffer unbounded traffic",
+      "url": "https://github.com/skyelan1999/aide/issues/588",
+      "reason": "Independent plugin fix PR is still open and unmerged, verified live."
+    },
+    {
+      "number": 590,
+      "title": "[P2] Check Wasm32 calloc byte-size overflow in JPEG 2000 packet iterator",
+      "url": "https://github.com/skyelan1999/aide/issues/590",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 591,
+      "title": "[P3] Reject unsupported progression-order values in POC markers",
+      "url": "https://github.com/skyelan1999/aide/issues/591",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 592,
+      "title": "[P3] Reject reserved ROI styles in RGN markers",
+      "url": "https://github.com/skyelan1999/aide/issues/592",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 593,
+      "title": "[P2] Cap main-header marker-index growth from repeated COM markers",
+      "url": "https://github.com/skyelan1999/aide/issues/593",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 594,
+      "title": "[P3] Free nested decoder allocations when precinct code-block growth fails",
+      "url": "https://github.com/skyelan1999/aide/issues/594",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 597,
+      "title": "[P2] Bound JP2 PCLR channel expansion to prevent excessive Wasm memory growth",
+      "url": "https://github.com/skyelan1999/aide/issues/597",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 602,
+      "title": "[Codex Bridge] GUI-launched bridge cannot locate Codex CLI and returns 502 for model catalog",
+      "url": "https://github.com/skyelan1999/aide/issues/602",
+      "reason": "Target desktop or real-account acceptance remains pending."
+    },
+    {
+      "number": 603,
+      "title": "[P3] Report multipart header read failures instead of returning 201",
+      "url": "https://github.com/skyelan1999/aide/issues/603",
+      "reason": "No completed, accepted main fix established for this multipart-upload report."
+    },
+    {
+      "number": 604,
+      "title": "[Codex Bridge] Display remaining account quota percentages and reset times in connection settings",
+      "url": "https://github.com/skyelan1999/aide/issues/604",
+      "reason": "Target desktop or real-account acceptance remains pending."
+    },
+    {
+      "number": 607,
+      "title": "[P3] Avoid transient duplicate allocation for JPX PPT headers",
+      "url": "https://github.com/skyelan1999/aide/issues/607",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 608,
+      "title": "[P2] Reject unsupported PCLR precision instead of truncating palette values",
+      "url": "https://github.com/skyelan1999/aide/issues/608",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 612,
+      "title": "[Codex Bridge] Windows Install appears unresponsive and remains Not installed",
+      "url": "https://github.com/skyelan1999/aide/issues/612",
+      "reason": "Target desktop or real-account acceptance remains pending."
+    },
+    {
+      "number": 614,
+      "title": "[P2] Bounds-check packet precinct indexes before array access",
+      "url": "https://github.com/skyelan1999/aide/issues/614",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 615,
+      "title": "[Codex Bridge] Windows manager runs without opening a page; simplify plugin host setup",
+      "url": "https://github.com/skyelan1999/aide/issues/615",
+      "reason": "Target desktop or real-account acceptance remains pending."
+    },
+    {
+      "number": 618,
+      "title": "[P2] Avoid wrapped packet indexes aliasing distinct JPEG 2000 packets",
+      "url": "https://github.com/skyelan1999/aide/issues/618",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 621,
+      "title": "[P1] Prevent HTJ2K terminal SPP writes past the coefficient allocation",
+      "url": "https://github.com/skyelan1999/aide/issues/621",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 622,
+      "title": "[P2] Abort JPX decode when output component-header allocation fails",
+      "url": "https://github.com/skyelan1999/aide/issues/622",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 623,
+      "title": "[P2] Advance the MCC record pointer when selecting an MCO transform",
+      "url": "https://github.com/skyelan1999/aide/issues/623",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 624,
+      "title": "[P2] Decode JPEG 2000 inclusion layers above 999 correctly",
+      "url": "https://github.com/skyelan1999/aide/issues/624",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 625,
+      "title": "[P2] Preserve fractional values in irreversible MCT offset arrays",
+      "url": "https://github.com/skyelan1999/aide/issues/625",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 626,
+      "title": "[P2] Bound OpenJPEG Tier-2 unary increments before overflow",
+      "url": "https://github.com/skyelan1999/aide/issues/626",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 627,
+      "title": "[P2] Normalize signed JPX grayscale samples before RGBA conversion",
+      "url": "https://github.com/skyelan1999/aide/issues/627",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 629,
+      "title": "[P2] Bound JPEG 2000 packet-iterator memory by layer and precinct counts",
+      "url": "https://github.com/skyelan1999/aide/issues/629",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 630,
+      "title": "Startup can keep an older runtime after source updates",
+      "url": "https://github.com/skyelan1999/aide/issues/630",
+      "reason": "Real Windows/Docker Desktop acceptance remains pending; explicit keep-open boundary."
+    },
+    {
+      "number": 633,
+      "title": "[P3] Avoid beyond-array pointer arithmetic in terminal HT MRP loop",
+      "url": "https://github.com/skyelan1999/aide/issues/633",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 634,
+      "title": "[P3] Avoid beyond-array cursor increments in full-stripe HT MRP loop",
+      "url": "https://github.com/skyelan1999/aide/issues/634",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 636,
+      "title": "Separate build-and-start and clean-build from normal startup",
+      "url": "https://github.com/skyelan1999/aide/issues/636",
+      "reason": "Launcher workflow work remains in an open PR."
+    },
+    {
+      "number": 640,
+      "title": "标准aide启动器流程规范",
+      "url": "https://github.com/skyelan1999/aide/issues/640",
+      "reason": "Launcher workflow work remains in an open PR."
+    },
+    {
+      "number": 641,
+      "title": "[P2] Reset the cached OpenJPEG Wasm module after RuntimeError",
+      "url": "https://github.com/skyelan1999/aide/issues/641",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    },
+    {
+      "number": 642,
+      "title": "[P2] Validate JPEG 2000 segmentation symbols during cleanup pass",
+      "url": "https://github.com/skyelan1999/aide/issues/642",
+      "reason": "No completed issue-specific accepted fix established; native decoder follow-up remains outside the verified PR609 batch."
+    }
+  ],
+  "operationBoundary": "Only issue state/reason changed on GitHub. No comments, labels, source pushes, merges, tags, release or service changes.",
+  "originalCheckout": "feat/codex-plugin-host-615; pre-existing start.command modification preserved.",
+  "rawEvidence": ".agent-state/issue-close-main-20261030/remote-audit.json"
+}
