@@ -41,7 +41,7 @@ Office 插件提供 `office_comments(path)`，返回批注 ID、作者、正文�
 
 API：`GET /api/office/docx/comments?path=...&source=...` 返回 `comments,hash,workspaceId,readOnly`；`POST` 以 `{path,source?,hash,workspaceId,quote,anchorIndex?,text,author?}` 新增；`PUT` 以 `{path,source?,hash,workspaceId,id,expectedText,newText}` 精确替换。预览器仅支持同一段落内的普通文本选区。修改使用 `python-docx` 保存原文件，复杂 Word 扩展、修订、宏不承诺完整往返；重要文件建议先备份。OOXML 结构已通过自动测试，WPS 桌面实际打开仍需单独验收。
 
-## Office 输出目录的实际配置（源码 0fef6411）
+## Office 输出目录配置截图（2026-10-17 源码基线 0fef6411）
 
 2026-10-17：生成的正式文档跟随工作空间自动系统文档绑定。用户指定普通引用时，以来源 ID 和相对路径表达目标，仍校验启用、可见和可写。截图仅记录绑定配置，不证明 DOCX/XLSX/PPTX 的实际生成或版式验收。
 

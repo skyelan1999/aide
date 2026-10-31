@@ -1,0 +1,80 @@
+{
+  "id": "computer-bridge-auth-status-20261031",
+  "request": "电脑控制桥接授权状态老不对；定位并修复 macOS Aide Computer Bridge 屏幕录制/辅助功能授权状态探测、缓存及 UI 同步。",
+  "baseline": "a05e9e686ee2d65283bf1a7b626b8e5c1434501a",
+  "initial_status": "Clean main at a05e9e686ee2d65283bf1a7b626b8e5c1434501a; new task record only.",
+  "acceptance": [
+    "Repeated rebuilds of the native bridge use the same designated code requirement for TCC consent.",
+    "The permission window refreshes after returning from System Settings and does not describe an unobserved Screen Recording state as confirmed denial.",
+    "Bridge service health continues to report live permission probes without caching.",
+    "A clean temporary native app build passes signature verification; no real screen content or credentials are captured."
+  ],
+  "scope": [
+    "scripts/native-computer-bridge.swift",
+    "scripts/build-native-computer-bridge.sh",
+    "docs/plugins/computer-browser-control.md",
+    "docs/tasks/computer-bridge-auth-status-20261031.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Observed mismatch in authenticated native /healthz: accessibility=true and screenRecording=false. Existing installed helper is ad-hoc signed with designated requirement bound to its current cdhash; every rebuilt binary changes that identity, invalidating macOS TCC consent. Existing UI refreshes only immediately after request or on button click, so status can remain stale after returning from System Settings.",
+      "evidence": [
+        "GET /healthz returned service=aide-native-computer-bridge, accessibility=true, screenRecording=false; token was not printed.",
+        "codesign -dr - on installed app returned designated => cdhash H\"df2d9ac14bed81680cc21eeffce58ebb54ce3ba3\".",
+        "No matching open/closed Aide issue found by read-only GitHub search; public issue creation is not authorized in this request."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use a stable custom designated requirement tied to the existing bundle identifier under the current ad-hoc signing setup. Refresh permission UI on app activation and every two seconds; label screen preflight false as not detected and provide the process-restart guidance. Leave the live installed app untouched pending separate runtime acceptance.",
+      "evidence": [
+        "Temporary signature experiment accepted `--requirements '=designated => identifier \"local.aide.computer-bridge\"'` and codesign verification passed."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Pinned the bundle designated requirement to its stable identifier, added periodic/activation refresh, clarified not-detected status and relaunch guidance, and documented the identity behavior and current-runtime limits.",
+      "evidence": [
+        "scripts/build-native-computer-bridge.sh",
+        "scripts/native-computer-bridge.swift",
+        "docs/plugins/computer-browser-control.md"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "Temporary native build compiled and codesign verification passed. Old and new app copies have the same designated requirement while their cdhash values differ. Installed helper was then backed up, replaced and restarted; authenticated /healthz returns HTTP 200 from the new service and reports screenRecording=false/accessibility=false. The new stable code identity requires the user to re-enable both macOS grants before UI refresh-after-return and real screen capture can be accepted; no screen contents were captured.",
+      "evidence": [
+        "Temporary build: scripts/build-native-computer-bridge.sh with AIDE_NATIVE_BRIDGE_APP directed to a TemporaryDirectory; codesign --verify --deep --strict PASS.",
+        "Old/new designated requirement: identifier \"local.aide.computer-bridge\"; old/new cdhash values differ.",
+        "bash scripts/computer-bridge-control.sh stop; temporary-safe backup created at .agent-state/computer-bridge-auth-status-20261031/previous-bridge.app; rebuilt installed bundle and restarted bridge.",
+        "Authenticated GET /healthz: HTTP 200, service aide-native-computer-bridge, screenRecording=false, accessibility=false; secret token omitted.",
+        "bash -n scripts/build-native-computer-bridge.sh; git diff --check; python3 scripts/check_docs.py PASS (447 Markdown files, 1519 local links).",
+        "Automated tests were not run or added.",
+        "Native Aide Computer Bridge UI accessibility state matched authenticated /healthz: service ready, Screen Recording not detected, Accessibility not detected. Post-grant UI refresh and desktop capture await user reauthorization."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented stable designated identity, first-use reauthorization, automatic status refresh, screen-capture relaunch guidance and the current unverified runtime boundary.",
+      "evidence": [
+        "docs/plugins/computer-browser-control.md, section 2026-10-31."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped source, documentation and task record changed; pre-change installed bridge bundle retained for rollback in ignored .agent-state.",
+      "evidence": [
+        "git status and diff inspection."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "The pre-change app bundle is backed up at .agent-state/computer-bridge-auth-status-20261031/previous-bridge.app. To restore, stop the computer bridge, replace the installed Aide Computer Bridge.app bundle with that backup, then start the bridge. This would restore the prior cdhash-based TCC identity and may restore its existing OS grants.",
+  "handoff": "User requested pushing this fix. Source, docs and task record are committed to a dedicated fix branch and pushed. PR/merge/public issue remain separate actions. Installed stable-identity bridge is running; current OS grants are false because the designated requirement changed from the old cdhash. User must enable Aide Computer Bridge under System Settings > Privacy & Security > Screen Recording and Accessibility. The window polls every two seconds and on activation; if Screen Recording remains undetected after enabling, quit and reopen the bridge."
+}
