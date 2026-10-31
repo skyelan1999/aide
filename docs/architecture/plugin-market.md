@@ -98,3 +98,34 @@ OpenAISupporter 的目录改动只增加该显式条件，正式 RC1 仍不兼�
 The provider-support data catalog may declare local HTTP providers with an explicit localhost, 127.0.0.1 or host.docker.internal host, scheme=http and numeric port. Legacy declarations remain HTTPS/443 only. A quota-only catalog has no model prices or currency and must declare a balance path (same origin as the selected provider), auth=model-bearer and format=quota-windows. Absolute endpoints remain governed by the legacy HTTPS rules; local providers require the relative quota path. Plugin JS never receives credentials. The host performs a GET with the selected provider key, refuses redirects and returns only allowlisted quota windows. Metadata is revalidated after an in-flight call; disabled or replaced plugins cannot retain results.
 
 Quota windows carry remainingPercent, windowDurationMins and resetsAt; they never become a currency balance. Missing/invalid data remains unavailable. Pricing-only catalogs are labelled separately from missing plugins. Source hosts advertise provider-account-quota-v1, and matching marketplace entries must require this feature as well as declaring their version/source compatibility floors.
+# Browser page balances
+
+A data-only provider catalog may declare `balance.auth=browser-page` and
+`format=page-balance`, with an HTTPS `pageURL`, plain `label` and `accountMarker`,
+a same-origin `identityLinkPrefix`, and `refreshSeconds` between 300 and 3600.
+This requires the `provider-browser-balance-v1` host capability and an updated
+macOS Aide Computer Bridge with Accessibility permission. Pricing stays separate.
+
+The account owner opens a dedicated ordinary Safari window identified by a random
+URL fragment. Minimal popup chrome is unsuitable because it omits the reload
+button. If Safari opens the source as a tab, the owner separates it once with
+Window → Move Tab to New Window before leaving it in the background.
+The native reader accepts only that exact source URL and returns the
+amount, currency, account display label, visible project-link identity and read
+time. It returns no DOM, Cookie, screenshot, model key or arbitrary script result.
+Only the dedicated window's Safari reload button can be pressed by this route.
+
+`POST /api/provider-page-balance` provides prepare/read/confirm/disable actions
+under the existing management guard. A fresh preview must be explicitly confirmed
+as belonging to the selected API key before automatic reads are enabled. Private
+snapshots bind workspace, provider URL, key fingerprint, plugin/catalog identity,
+source-window nonce and website project identity. Website identity/label changes
+require confirmation again. A 20-second scheduler checks whether the declared
+five-minute interval has elapsed, independently of the settings panel being open.
+
+Disabling a source or plugin, changing keys/workspaces, missing native permission,
+closing Safari/the source window, malformed data or stale snapshots prevents a
+current balance from being returned. A remembered amount is never an inferred zero.
+The account-to-key association is an owner confirmation, not proof derived from
+the display name or an undocumented billing API. Windows/Linux page reads are
+unavailable; normal plugin pricing remains supported.

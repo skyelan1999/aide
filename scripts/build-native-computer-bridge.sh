@@ -34,9 +34,12 @@ payload = b"".join(chunks)
 output.write_bytes(b"icns" + struct.pack(">I", len(payload) + 8) + payload)
 PY
 python3 - "$DEST" "$ROOT/.env" <<'PY'
-import plistlib, sys
+import os, plistlib, stat, sys
 from pathlib import Path
 dest=Path(sys.argv[1])
+# Generated apps can inherit the iCloud staging directory's hidden flag.
+# Keep the installed app selectable in the macOS privacy permission picker.
+os.chflags(dest, dest.stat().st_flags & ~stat.UF_HIDDEN)
 info={'CFBundleIdentifier':'local.aide.computer-bridge','CFBundleName':'Aide Computer Bridge','CFBundleDisplayName':'Aide Computer Bridge','CFBundleExecutable':'AideComputerBridge','CFBundleIconFile':'AppIcon','CFBundlePackageType':'APPL','CFBundleVersion':'1','CFBundleShortVersionString':'1.0.0','LSMinimumSystemVersion':'14.0','NSHighResolutionCapable':True,'AideConfigurationFile':sys.argv[2]}
 (dest/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
 PY
