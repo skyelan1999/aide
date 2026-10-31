@@ -129,9 +129,9 @@ func (a *App) readProposalTarget(t proposalTarget, p string) ([]byte, error) {
 	}
 	if t.root != nil {
 		if t.noSymlinks {
-			return readBoundRawBytes(t.root, p)
+			return readBoundText(t.root, p)
 		}
-		return readRawBytes(t.root, p)
+		return readText(t.root, p)
 	}
 	if t.source.ID != "" {
 		return a.sftpReadSourceExpected(t.source, p, &t.generation)
@@ -176,9 +176,6 @@ func (a *App) recordDocumentProposal(task *Task, versions map[string]Change, sou
 	if p == "." {
 		return "", errors.New("无效路径")
 	}
-	if len(content) > maxFile {
-		return "", errors.New("文件内容超过提案限额")
-	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
 	a.mu.Lock()
@@ -211,17 +208,11 @@ func (a *App) recordDocumentProposal(task *Task, versions map[string]Change, sou
 	if err = proposalVersion(b, readErr, f); err != nil {
 		return "", fmt.Errorf("%s：请先附加现有文档后生成修改，或检查原文件版本: %w", p, err)
 	}
-	count, total, index := 0, len(content), -1
+	index := -1
 	for i, old := range task.Files {
 		if old.Source == source && old.Path == p {
 			index = i
-			continue
 		}
-		count++
-		total += len(old.Content)
-	}
-	if count >= 10 || total > maxProposalTotal {
-		return "", errors.New("文件提案数量或总量超过限额")
 	}
 	if index >= 0 {
 		task.Files[index] = f

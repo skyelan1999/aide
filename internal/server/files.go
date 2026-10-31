@@ -25,15 +25,12 @@ import (
 	"unicode/utf8"
 )
 
-// maxFile 为文本文件单次读/写的上限（UTF-8 文本，编辑器与模型工具共用）。
-// 与 maxRawFile(64 MiB) 对齐：原始字节查看器能打开的文件，文本端点也应能读取。
-// OOM 防护由两路构成：文件读取用 LimitReader(maxFile+1) 不越界；
-// 校验为零拷贝（utf8.Valid 直接扫 []byte，NUL 用 bytes.IndexByte，不再 string(b) 复制一份）。
-const maxFile = 64 << 20
+// These limits apply to external reference/plugin processing, not workspace
+// text file reads or writes. Workspace text proposals have no fixed byte cap.
+const maxExternalTextFile = 64 << 20
+const maxPluginDocumentFile = 64 << 20
 
-// maxProposalTotal 为单次写文件提案（write_file 工具/方案解析）的内容合计上限。
-// 远小于单文件上限：提案由模型逐次产出，主要防一次性灌入过大的多文件方案。
-const maxProposalTotal = 8 << 20
+const maxReadSnapshotPreview = 16 << 10
 
 func safePath(p string) error {
 	if p == "" || strings.Contains(p, "\\") || strings.HasPrefix(p, "/") {
@@ -48,13 +45,10 @@ func safePath(p string) error {
 }
 func hash(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
 
-// validateTextContent 统一内容策略（R03）：maxFile 上限、UTF-8、无 NUL。
+// validateTextContent 统一文本内容策略（R03）：UTF-8、无 NUL。
 // 入参均为已落地的 []byte/string 缓冲（HTTP 已解码、文件已读入），此处做零拷贝校验，
 // 不再 string(b) 复制一份大缓冲。
 func validateTextContent(b []byte) error {
-	if len(b) > maxFile {
-		return fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
-	}
 	if !utf8.Valid(b) || bytes.IndexByte(b, 0) >= 0 {
 		return errors.New("不支持二进制文件")
 	}
@@ -137,12 +131,9 @@ func readTextWithOpener(p string, openFile func(string) (*os.File, error)) ([]by
 	if !info.Mode().IsRegular() {
 		return nil, errors.New("只支持普通文本文件")
 	}
-	b, err := io.ReadAll(io.LimitReader(f, maxFile+1))
+	b, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
-	}
-	if len(b) > maxFile {
-		return nil, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
 	}
 	return validateTextFileContent(p, b)
 }
@@ -189,9 +180,6 @@ func readTextLinesWithOpener(p string, offset, limit int, openFile func(string) 
 	}
 	if !info.Mode().IsRegular() {
 		return nil, 0, errors.New("只支持普通文本文件")
-	}
-	if info.Size() > maxFile {
-		return nil, 0, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
 	}
 	if offset < 0 {
 		offset = 0
@@ -271,9 +259,6 @@ func readTextRange(root *os.Root, p string, off, limit int64) ([]byte, int64, er
 		return nil, 0, errors.New("只支持普通文本文件")
 	}
 	size := info.Size()
-	if size > maxFile {
-		return nil, 0, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
-	}
 	if off < 0 {
 		off = 0
 	}
@@ -1534,7 +1519,7 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if origin := r.URL.Query().Get("knowledgeOrigin"); origin != "" {
 		q := r.URL.Query()
-		b, err = a.knowledgeReadViewer(r.Context(), q.Get("root"), q.Get("source"), q.Get("path"), origin, q.Get("knowledgeWorkspace"), maxFile)
+		b, err = a.knowledgeReadViewer(r.Context(), q.Get("root"), q.Get("source"), q.Get("path"), origin, q.Get("knowledgeWorkspace"), maxExternalTextFile)
 		if err == nil {
 			b, err = validateTextFileContent(q.Get("path"), b)
 		}
@@ -1618,8 +1603,6 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		Source      string `json:"source"`
 		WorkspaceID string `json:"workspaceId"`
 	}
-	// writeFile 允许大文本：body 上限放宽到 maxFile + JSON 信封开销（默认 decode 仅 1 MiB）。
-	r.Body = http.MaxBytesReader(w, r.Body, maxFile+1<<20)
 	d := json.NewDecoder(r.Body)
 	if err := d.Decode(&in); err != nil {
 		fail(w, 400, err)
@@ -1632,10 +1615,6 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := safePath(in.Path); err != nil {
 		fail(w, 400, err)
-		return
-	}
-	if len(in.Content) > maxFile {
-		fail(w, 400, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20))
 		return
 	}
 	// R02：保存必须携带读取时的工作区身份；缺失身份仅允许新建文件

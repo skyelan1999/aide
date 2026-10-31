@@ -1,0 +1,96 @@
+{
+  "id": "self-dev-proposals-20261031",
+  "request": "完善 Aide 自我开发链路：既有文件完整读取后允许任意规模提案（文件数、累计内容和单文件无固定应用层上限）；运行沙箱命令；由受控宿主流程构建和测试源码；提供与常规服务/数据隔离的 A/B 候选启动与失败恢复。不得降低其它项目开发能力或影响其工作区、容器、数据和服务。",
+  "baseline": "bc8e8da2baffe0b85a3116cc36c5a53ecaba09c1",
+  "initial_status": "main and origin/main both at bc8e8da2baffe0b85a3116cc36c5a53ecaba09c1; worktree initially clean.",
+  "acceptance": [
+    "An existing workspace text file can be proposed for modification after a complete read_file in the current task or attachment; an unread existing file is still rejected.",
+    "Large files require segmented reads covering every line from one stable content hash; partial or mixed-version reads do not authorize a proposal.",
+    "No fixed proposal file-count, aggregate-content, or workspace text-file size cap remains; safe-path, workspace identity, version-conflict, UTF-8/text validation, and approval gates remain enforced.",
+    "Existing run_shell remains task-bound, sandboxed and approval-gated; Aide source work does not change command behavior for other project workspaces.",
+    "A host-side A/B candidate script runs full Go tests, vet/build, and a health-checked candidate in an isolated Compose project, with separate data, home and loopback port; the normal Aide service and other projects remain untouched.",
+    "Candidate A/B activation and health-failure recovery are limited to this isolated development instance; no production port, .env, user account settings or data migration is touched."
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/files.go",
+    "internal/server/document_proposals.go",
+    "internal/server/sftp_bounded_read.go",
+    "internal/server/ssh_session.go",
+    "internal/server/sources.go",
+    "internal/server/plugin_file_document.go",
+    "internal/server/plugin_workbench_native.go",
+    "internal/server/files_limit_test.go",
+    "internal/server/source_curl_bounds_test.go",
+    "scripts/selfdev-ab.py",
+    "scripts/aide.sh",
+    "docs/PRD.md",
+    "docs/en/user-guide.md",
+    "docs/user-guide.md",
+    "docs/system-overview.md",
+    "docs/architecture/software-updates.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认以源码自我开发全链路为目标；覆盖提案读写、受控命令、构建测试和隔离 A/B 候选。",
+      "evidence": [
+        "本地需求记录及差异审阅；未改变任务工作区绑定、审批和冲突门禁。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "以任务内完整读取的 SHA-256 建立短暂基准；大文件按行段累积覆盖区间，全部段须同哈希；提案仍走现有审批。构建/测试保留宿主与应用容器边界；A/B 开发候选单独 Compose 项目、回环端口、数据和 home，避免正式服务与其它工作区受影响。",
+      "evidence": [
+        "仅把哈希与有界 Before 预览存于运行任务，不持久化整份读取文件。",
+        "分段覆盖按任务和路径维护，不设固定文件数量上限；合并重叠区间以避免重复记录。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "移除提案文件数量、总正文大小和工作区文本单文件字节上限；本地与 SSH 文本读写路径不再按64MiB拒绝。新增 selfdev-ab.py：用专用限资源 Buildx builder 强制完整 Go 测试/vet/build，验证镜像源码指纹后运行隔离候选槽，并支持候选端口 A/B 激活及失败恢复。普通 Aide 镜像仍无 Docker socket。",
+      "evidence": [
+        "Plan/Propose、write_file、文档来源提案不限制文件数或累计正文大小。",
+        "工作区文本读写、SFTP读取、提案版本检查和保存不再采用64MiB文本上限。",
+        "保留 UTF-8/NUL 文本校验、安全路径、审批、工作区身份与哈希冲突校验。",
+        "selfdev-ab.py 在 .agent-state/selfdev-ab 下只写自身候选配置/数据，使用独立 Buildx builder、不同 Compose project 与 18097 候选入口；不修改主 .env，不访问正常 /data、/home/aide、/local 或其它项目。",
+        "候选激活失败时，即使失败候选清理出错也继续尝试恢复之前的隔离候选槽，并在错误中分别报告激活、清理和恢复结果。",
+        "run_shell 未改变；启用设备终端插件时可经 terminal-run 按插件授权显式调用宿主脚本，未启用时仍可从宿主终端运行；标准容器不接 Docker socket。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "未运行测试或构建。",
+      "evidence": [
+        "按当前开发指令未运行测试。",
+        "当前环境无 gofmt；没有编译验证。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD、用户指南、系统概览和升级架构文档说明源码读写审批、候选 A/B 隔离方式、完整测试门槛及宿主/容器边界。",
+      "evidence": [
+        "PRD、系统概览、中英文用户指南和升级架构文档已更新。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "静态审阅脚本、隔离 Compose 配置生成、源指纹和产品文档；未启动候选服务。",
+      "evidence": [
+        "git diff --check 通过。",
+        "工作区本地和SSH文本读取/写入路径无64MiB硬拒绝，提案文件数与累计内容也无固定上限。",
+        "候选配置动态落在 .agent-state/selfdev-ab；每个槽独立数据，不自动删除或迁移；候选服务仅回环绑定 18097 或临时空闲端口。",
+        "未构建镜像、执行测试、启动候选、切换候选、访问真实账户或部署。",
+        "修改仅在本地main，未提交、推送或部署。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "保持本地 main 工作区修改，未提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "尚未提交。可用 git restore -- <scope paths> 丢弃跟踪文件修改，并移除 docs/tasks/self-dev-proposals-20261031.json；执行前应确认无后续修改。",
+  "handoff": "已移除工作区文本提案及读写的固定文件数、累计字节数、单文件64MiB上限；本地与SSH工作区保留完整读/哈希/审批保护。新增 scripts/selfdev-ab.py，stage 通过全量 Go 测试/vet/build 后运行独立候选，activate 在专用候选端口进行 A/B 激活并在健康失败时恢复原候选。启用设备终端插件时，Aide 可经 terminal-run 按插件授权调用宿主脚本；普通 run_shell 仍严格绑定当前任务项目沙箱，Aide 容器不接 Docker socket。变更仅本地 main，未提交/推送/部署；未运行构建/测试，也未启动或切换候选。"
+}

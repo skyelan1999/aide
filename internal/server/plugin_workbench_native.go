@@ -93,7 +93,7 @@ func (a *App) callWorkbenchNative(w http.ResponseWriter, r *http.Request, req wo
 		} else if req.Method == "file.save.commit" {
 			content, ok := req.Arguments["content"].(string)
 			version, hasHash := req.Arguments["hash"].(string)
-			if !ok || !hasHash || len(content) > maxFile {
+			if !ok || !hasHash || len(content) > maxPluginDocumentFile {
 				fail(w, 400, errors.New("save requires text and original version"))
 				return
 			}

@@ -459,7 +459,7 @@ func (a *App) curlReadSource(src Source, p string) ([]byte, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), curlTimeout)
 	defer cancel()
-	out, err := knowledgeRun(ctx, exec.CommandContext(ctx, a.curlBin, a.curlArgs(src, p)...), maxFile)
+	out, err := knowledgeRun(ctx, exec.CommandContext(ctx, a.curlBin, a.curlArgs(src, p)...), maxExternalTextFile)
 	if err != nil {
 		return nil, fmt.Errorf("读取失败: %v", err)
 	}

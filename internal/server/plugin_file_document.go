@@ -551,8 +551,8 @@ func (a *App) commitPluginDocument(ctx context.Context, s pluginDocumentSelectio
 	}
 	var content []byte
 	if strings.EqualFold(path.Ext(s.Path), ".md") || strings.EqualFold(path.Ext(s.Path), ".markdown") {
-		if stage.Size > maxFile {
-			return "", fmt.Errorf("Markdown edits retain the native %dMiB limit", maxFile>>20)
+		if stage.Size > maxPluginDocumentFile {
+			return "", fmt.Errorf("Markdown edits retain the native %dMiB limit", maxPluginDocumentFile>>20)
 		}
 		content, e = os.ReadFile(stage.Path)
 		if e != nil {

@@ -3,13 +3,11 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
-	"io"
 )
 
-// Preview/legacy reads use an independent channel on the authenticated SSH
-// master, bounded in memory. Large transfers keep their separate streaming API.
-func (a *App) readSFTPBounded(source, socket string, expected *uint64, open func(*transferFS) (transferFile, error)) ([]byte, error) {
+// Workspace text reads use an independent channel on the authenticated SSH
+// master. Callers that need bounded memory use the separate streaming APIs.
+func (a *App) readSFTPContent(source, socket string, expected *uint64, open func(*transferFS) (transferFile, error)) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sftpTimeout)
 	defer cancel()
 	generation := a.sshSessionGeneration(socket)
@@ -31,14 +29,14 @@ func (a *App) readSFTPBounded(source, socket string, expected *uint64, open func
 		return nil, err
 	}
 	defer f.Close()
-	data, err := readBoundedSFTPFile(f)
+	data, err := readSFTPFile(f)
 	if changed() {
 		return nil, configError
 	}
 	return data, err
 }
 
-func readBoundedSFTPFile(f transferFile) ([]byte, error) {
+func readSFTPFile(f transferFile) ([]byte, error) {
 	info, err := f.Stat()
 	if err != nil {
 		return nil, err
@@ -46,17 +44,9 @@ func readBoundedSFTPFile(f transferFile) ([]byte, error) {
 	if !info.Mode().IsRegular() || info.Size() < 0 {
 		return nil, errors.New("仅支持普通 SFTP 文件")
 	}
-	if info.Size() > maxRawFile {
-		return nil, fmt.Errorf("SFTP 文件超过 %d MiB 限制", maxRawFile>>20)
-	}
-	// The extra byte also catches files that grow after STAT or report a false
-	// size. LimitReader prevents io.ReadAll from invoking unbounded fast paths.
-	data, err := io.ReadAll(io.LimitReader(f, maxRawFile+1))
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
-	}
-	if len(data) > maxRawFile {
-		return nil, fmt.Errorf("SFTP 文件超过 %d MiB 限制", maxRawFile>>20)
 	}
 	return data, nil
 }
