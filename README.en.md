@@ -1,24 +1,37 @@
 <div align="center">
 
-> Documentation baseline: source `0fef6411`, 17 October 2026. [Actual screenshots](docs/ui-evidence.md) · [Demo walkthrough](docs/demo-guide.md) · [Feature scope](docs/features.md) · [Module design](docs/architecture/modules.md). All current UI images are unmodified captures of a running isolated instance with demonstration data, not mockups or release acceptance evidence.
-
-> **Startup configuration:** `.env` is the local source of truth. `start.command` → `scripts/aide.sh` → Docker Compose, using `AIDE_PORT` (default 8097) and `COMPOSE_FILE`. Temporary review ports are not user startup entries. See [workspace mount modes](docs/workspace-paths.md).
-
 # aide
 
-### AI+IDE. Turn ideas into your next step.
+### A self-hosted AI workspace for developers: connect local or SSH projects, use your chosen models, review changes, and move work forward.
 
-AI and an integrated work environment · Understand information · Analyze problems · Get work done
+Keep project files, AI workflows, plugins, and controlled execution in one workspace. You control the source and data, and choose the model provider.
 
 [简体中文](README.md) · **English**
 
-[Installation](docs/en/installation.md) · [User guide](docs/en/user-guide.md) · [Development workflow](docs/agent/WORKFLOW.md) · [GitHub](https://github.com/skyelan1999/aide)
+[![GitHub stars](https://img.shields.io/github/stars/skyelan1999/aide?style=social)](https://github.com/skyelan1999/aide/stargazers) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+[Install and releases](docs/en/installation.md) · [UI walkthrough](docs/demo-guide.md) · [User guide](docs/en/user-guide.md) · [Remote/SFTP relay](docs/reference-relay.md) · [Feature scope](docs/en/features.md) · [Releases](https://github.com/skyelan1999/aide/releases)
 
 </div>
 
 ![aide workbench with conversations, project files, and task input](docs/images/current-20261017/01-workbench.jpg)
 
-> **Latest source tag:** `v0.1.16.0-RC1` (see [release record](docs/reviews/release-0.1.16.0-RC1-2026-10-08.md)). The knowledge map, approval menu, and UI updates below describe candidate source changes after RC1; they are not included merely by running the published RC1 image. The preview uses an isolated workspace. Build, browser acceptance, Release assets, and production deployment are recorded separately.
+> This README describes capabilities in the current source tree; that does not mean every capability is included in the latest release package. Check the matching [Release notes](https://github.com/skyelan1999/aide/releases) and [version record](version.md) before using a release.
+
+## Run it in three steps
+
+You need Git, Docker Engine, and Docker Compose (Docker Desktop works on macOS). The installer checks prerequisites, configures the checkout, builds it, and starts the source version:
+
+```bash
+git clone https://github.com/skyelan1999/aide.git
+cd aide
+bash scripts/install.sh --check
+bash scripts/install.sh --source
+```
+
+After startup, configure your model under **Model settings** and choose a workspace. See [installation](docs/en/installation.md) for directory scopes, release packages, and troubleshooting.
+
+⭐ If aide helps with your project, please [star it on GitHub](https://github.com/skyelan1999/aide).
 
 ## Focus on your professional work
 
@@ -37,20 +50,21 @@ Data is persisted locally. When using a cloud model, task content, context, and 
 | Capability | How it works | Boundary |
 | --- | --- | --- |
 | AI chat and workflows | Chat, or follow Plan → Propose → Review | Model review is not a passing test; responses appear by step |
+| Parallel analysis | Ordinary chat offers 1x, 2x, 3x, 4x, 5x and 10x analysis concurrency limits | The main task verifies evidence and returns one answer; more requests increase usage and do not guarantee proportional speed |
 | Files and Markdown | Browse, edit, preview, open in a new tab, and attach files | Text/size limits apply; saves check file hashes |
-| Workspaces and references | Local, SSH/SFTP, Skill directories, links, FTP/FTPS/SMB | MCP registration is not a working MCP connection |
+| Workspaces and references | Local, SSH/SFTP, Skill directories, links, FTP/FTPS/SMB, MCP stdio/Streamable HTTP; script relay directories and SFTP relay | Relays are read-only by default and need a script deployed manually on the remote device |
 | Models and strategies | Multiple model IDs, parameter profiles, automatic/manual routing | Models bind to their own provider and named encrypted key |
-| Approval selection (candidate UI) | A separate Approval column in the input's Strategy menu selects manual or assisted review | Reviews one exact command using the task model and records usage; uncertainty returns to manual confirmation and permissions are unchanged |
-| Knowledge map (candidate) | Open an independent star-map page from Project files; search file, session, and code IDs and insert references into the original draft | Bounded local index; static calls are candidates; checks roughly every 4 seconds merge changes while preserving valid camera and selection state |
-| Original text and RAG (candidate) | Exact text search or local TF-IDF excerpt ranking; click AI for an answer with citations | No OCR, vector database, or persistent index; local retrieval uses no model, while AI sends excerpts and incurs provider usage; [scope and limits](docs/architecture/knowledge-map.md) |
+| Approval selection | A separate Approval column in the input's Strategy menu selects manual or assisted review | Reviews one exact command using the task model and records usage; uncertainty returns to manual confirmation and permissions are unchanged |
+| Knowledge map | Open an independent star-map page from Project files; search file, session, and code IDs and insert references into the original draft | Bounded local index; static code relationships are candidates; incremental updates preserve valid camera and selection state |
+| Original text and retrieval | Exact text search or local TF-IDF excerpt ranking; click AI for an answer with citations | TF-IDF retrieval is on-demand and uses no model; AI sends retrieved excerpts and incurs provider usage; optional vector retrieval is configured separately; [scope and limits](docs/architecture/knowledge-map.md) |
 | Trajectory, search, compaction | Inspect events, search conversation history, summarize old context | Compaction is summarization, not lossless compression or ZIP |
-| Usage and cost | Heatmap, daily details, rate snapshots, provider balance | Priced, estimated, and unpriced usage differ; this is not an invoice |
-| Command panel | Run, inspect, and cancel individual shell commands | No PTY or persistent shell session |
+| Usage, cost and account quota | Token heatmap, daily details, rate snapshots, and plugin-provided monetary balances or quota windows | Currency and percentage quotas stay separate; unsupported data is unavailable rather than zero; alerts do not recharge or stop work |
+| Command panel | Run, inspect, and cancel individual shell commands | This panel runs one-off commands; see the terminal plugin for persistent sessions |
 | Plugins | Upload, enable, and call tools with executable handlers; built-in draw.io diagram tool | Plugins are trusted code, not a security sandbox |
 | Permissions, voice & personalization | Three-level sandbox (read-only/workspace-write/full-access), per-tool toggles, lock screen; page-owned work coordination, continuous voice, Qwen/Bailian TTS and persistent personas; config backup export/import | The sandbox bounds container privileges, not malicious plugins; speech recognition runs in the browser |
 | Appearance and language | Professional/Comfort/Classic palettes; light/dark/system; Chinese/English | Browser-local preferences; language does not translate your content |
 
-## Quick start
+## Source configuration details
 
 Install Git and Docker Engine/Desktop with Compose v2. Image checksum validation also needs Python 3. Host Go/npm are not needed for ordinary use.
 
@@ -80,7 +94,7 @@ Open `http://127.0.0.1:8097`. The startup script opens a local token login autom
 
 ## Your first task
 
-1. Open **Model settings** and configure a Chat Completions-compatible provider, model ID, and key.
+1. Open **Model settings** and configure a provider, model ID, and key. Official OpenAI GPT-6 models use the Responses API; other models use their provider-compatible endpoint.
 2. Confirm the workspace. Open a file and select **Attach to task**.
 3. Choose a model and profile under **Strategy**.
 4. Use **Chat** to understand the project or **AI workflow** to propose changes.
@@ -131,3 +145,11 @@ Settings → Appearance → Workbench background → Whale girl uses the bundled
 ## English documentation
 
 The [English documentation center](docs/en/README.md) covers current operation, workspace permissions, knowledge search, native voice calls, plugin development, diagnostics and release/maintenance procedures. Dated evidence and third-party/plugin internals retain their own language and publication boundary.
+
+## Documentation scope and versions
+
+This README summarizes capabilities described by the current source tree. Check the matching Release notes and release receipt to confirm what is included in a specific package. Candidate builds, static screenshots, and local checks are not formal release results.
+
+The workbench screenshots were captured from source baseline `0fef6411` on 17 October 2026, in an isolated instance with dedicated sample data. They may not reflect the latest UI and are not production or release acceptance evidence. See [screenshot evidence and validation scope](docs/ui-evidence.md), the [UI walkthrough](docs/demo-guide.md), and [current interaction design](docs/design/current-workbench.md).
+
+For source checkouts, `.env` is the startup configuration source: `start.command` → `scripts/aide.sh` → Docker Compose, using `AIDE_PORT` (default 8097) and `COMPOSE_FILE`. Temporary review ports are not user startup entries. See [workspace configuration](docs/workspace-paths.md).

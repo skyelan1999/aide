@@ -1,11 +1,14 @@
 # aide 文档中心
 
-> 当前说明按 2026-10-17 源码 `0fef6411` 核对；实际界面、示例数据、截图原图及验证范围见[实际使用截图](ui-evidence.md)。源码、浏览器观察与发行验收分别记录，截图中的版本文字不代表已发布本提交。
+> 文档入口按 2026-10-31 源码 `82378d2a` 更新；实际界面截图来自 2026-10-17 隔离实例，源码、浏览器观察与发行验收分别记录，不能由截图推定发行状态。
 
 | 当前文档 | 范围 |
 | --- | --- |
 | 启动、编译、停止、清理与发布接口 | [标准启动器接口](architecture/launcher-contract.md) · [Docker 维护](docker-maintenance.md) |
 | [功能说明](features.md) | 工作台、文档绑定、管理权限、消息、助理与语音 |
+| [用户指南](user-guide.md) | 账户余额/额度卡片、辅助资料来源和远程/SFTP 中继操作边界 |
+| [远程目录中继](reference-relay.md) | 目录与 SFTP 中继脚本部署、检测和读写限制 |
+| [插件市场与账户能力架构](architecture/plugin-market.md) | 插件目录、市场兼容、账户余额/额度协议及未合入候选 |
 | [实际截图演示](demo-guide.md) | 按真实操作顺序演示，未执行步骤明确标出 |
 | [当前交互设计](design/current-workbench.md) | 根据实际界面描述布局与交互 |
 | [软件模块说明](architecture/modules.md) | 模块职责、依赖与关键调用链 |
@@ -19,11 +22,11 @@
 
 全部项目文档统一在 `docs/`。根目录仅保留 README、HANDOVER、version、许可证及客户端入口。不再创建 `doc/`。
 
-最近在本索引保留收据的历史发行基线为 `0.1.17.0 RC2`，验收／交付状态见[发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md)。功能实现、隔离运行、浏览器验收、标签与远端附件分别记账；此前 `v0.1.16.0-RC1` 的收据保留为历史，不能代替本轮结果。
+最近公开发行基线为 `0.1.17.6 RC1`，发布说明见[发行记录](releases/v0.1.17.6-RC1.md)，当前版本字符串见根目录 [version.md](../version.md)。本文档按源码提交核对不代表该源码已进入发行包。早期 `0.1.17.0 RC2` 与 `v0.1.16.0-RC1` 收据是历史证据，不能代替当前运行或新一轮验收。
 
 星图按钮修整与增强漂移为 RC2 之后的本地候选；相关源码已纳入后续开发提交，尚未包含在已发布包中。见[按钮验收](reviews/starmap-controls-20261008.md)、[漂移验收](reviews/starmap-drift-20261008.md)与[文档推送范围](tasks/starmap-docs-push-20261009.json)。
 
-当前连续工作、Markdown历史、授权、成果与星图的统一状态见[详细交接](continuity-handoff.md)和[主账本](tasks/aide-continuity-knowledge-20261009.json)；[整体目标](architecture/continuity-roadmap.md)继续进行中。[2026-10-09检查点](reviews/continuity-checkpoint-20261009.md)保留为历史。页首0fef6411只标识截图文档基线，不代表后续源码、镜像或生产已同步。
+当前连续工作、Markdown历史、授权、成果与星图的统一状态见[详细交接](continuity-handoff.md)和[主账本](tasks/aide-continuity-knowledge-20261009.json)；[整体目标](architecture/continuity-roadmap.md)继续进行中。[2026-10-09检查点](reviews/continuity-checkpoint-20261009.md)保留为历史。页首 `82378d2a` 仅是当前工作分支的文档核对基线，不代表远端 main、镜像或生产已同步。
 
 - [内置鲸鱼娘背景](builtin-background.md)：直接选择随应用安装的视频，附真实运行截图。
 
@@ -45,11 +48,11 @@
 | 维护独立产品主页 | [主页预览与手动 Pages 发布](website.md) · [主页任务](tasks/homepage-20261008.json) |
 | 配置执行循环、模型路由与命令审批 | [执行策略](architecture/execution-policy.md) · [能力仪表](architecture/capability-dashboard.md) · [审批检查点](reviews/approval-checkpoint-20261009.md) · [Harness 集成](architecture/harness-integration.md) |
 | 看系统整体方案、状态机和运行机制 | [系统方案总览](system-overview.md) |
-| 写插件 | [插件协议 v1.1](plugin-protocol.md) |
+| 写插件 | [插件协议 v1.2 与 v1.3 工作台扩展](plugin-protocol.md) |
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入与 skill 路由](agent/ADAPTERS.md) · `python3 scripts/agent-route.py route --request "需求原文"` |
 | 看当前设计与验证边界 | [当前工作台](design/current-workbench.md) · [历史 macOS UI](design/macos-ui.md) |
-| 看当前0.1.17.0 RC2发行与附件收据 | [RC2发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md) |
+| 查看历史0.1.17.0 RC2发行与附件收据 | [RC2发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md) |
 | 查看上一发行的记录与验收边界 | [0.1.16.0 RC1 发布记录](reviews/release-0.1.16.0-RC1-2026-10-08.md) · [发布任务验收](tasks/harness-release-20261007.json) |
 | 查看星图分任务实施记录 | [自动差量同步任务](tasks/starmap-live-updates-20261008.json) · [多来源任务](tasks/starmap-sources-20261008.json) · [多来源检查报告](reviews/2026-10-08-starmap-sources.md) |
 | 查看较早 RC5 跨平台资产 | [0.1.14.0 RC5 资产记录](reviews/release-assets-2026-10-01.md) · [发布任务账本](tasks/release-assets-2026-10-01.json) |

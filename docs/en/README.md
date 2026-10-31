@@ -2,7 +2,7 @@
 
 [简体中文](../README.md) · **English**
 
-**AI + IDE. Turn ideas into your next step.**
+**A self-hosted AI workspace for developers, connecting local and SSH projects with models you choose and reviewable work.**
 
 The maintained English guides below describe the public application. They distinguish source behavior, browser checks, provider/hardware integration and release delivery. A historical screenshot or source feature does not establish that a particular installed image passed a new test.
 
@@ -12,10 +12,12 @@ The maintained English guides below describe the public application. They distin
 | Install and sign in | [Installation](installation.md) |
 | Use conversations, models and files | [User guide](user-guide.md) |
 | Configure directories and references | [Workspace paths](workspace-paths.md) |
+| Deploy a remote directory or SFTP relay | [Relay deployment guide](../reference-relay.md) |
 | Explore sources and code | [Knowledge map](knowledge-map.md) |
 | Talk to the assistant | [Native voice calls](assistant-voice-call.md) |
 | Customize the workbench | [Customization](customization.md) |
 | Read the system/API design | [Architecture](architecture.md) · [Data layout](architecture/data-layout.md) |
+| Understand plugin market and account-balance capabilities | [Plugin market architecture](../architecture/plugin-market.md) |
 | Build plugins | [Plugin protocol](plugin-protocol.md) · [Daemon protocol](plugins/daemon-protocol.md) |
 | Stop, recover and update | [Operations](operations.md) · [Docker maintenance](docker-maintenance.md) · [Runtime fallback](runtime-bundle.md) |
 | Develop with an AI client | [Development workflow](development-workflow.md) |

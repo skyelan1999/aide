@@ -7,11 +7,14 @@ This describes public Aide source capabilities. A feature's presence in source, 
 | Area | What to use | Boundaries |
 | --- | --- | --- |
 | Conversations and workflows | Choose mode, strategy, model and approval policy beside the input. Queue or interrupt work while it runs. | Context budgets, enabled tools and approvals still govern execution. |
+| Parallel analysis | Ordinary chat offers 1x, 2x, 3x, 4x, 5x and 10x analysis concurrency limits. | Analysis requests are tool-free; the main task verifies and returns one answer. More requests increase usage and do not guarantee proportional speed. Workflows and assistant chats keep their existing scheduling. |
 | Tasks and proposals | Inspect stage output, tool records, status and trajectory. | A proposed file is not a saved file. Verify the application receipt and destination. |
 | Usage and compaction | View cumulative session usage separately from the latest request's context window. | Parallel requests have separate windows. Missing upstream usage is unknown; estimates are labeled. Compaction does not promise smaller session files. |
 | Files | Browse workspace/reference sources; edit Markdown and text; use installed viewers for Office and CAD. | Preview, generation, export and successful reopening require separate validation. |
 | Knowledge map | Explore files, conversations, source code and document excerpts in a separate page. | Index budgets and source visibility apply. Static relationships do not prove runtime behavior. Keyword retrieval and optional vector retrieval are separate. |
 | Models | Configure providers, named credentials, compatible model catalogs and routing profiles. | Provider protocols, capability support, quotas and availability differ. Auto selection alone does not prove an image/audio/video was produced. |
+| Account balances and quotas | Settings → System → Usage shows plugin-provided currency balances or quota windows per API key and refreshes about once a minute. | Percentage quotas are not money. Unsupported or unavailable data is shown as unavailable, not zero; alerts only notify. |
+| Remote references | Browse and read a fixed remote directory through a deployed relay script; SFTP can also use a script relay. | Read-only by default. Writes still require the Aide source lock, remote account permissions and existing proposal rules. See [relay guide](../reference-relay.md). |
 | Plugins | Inspect, install, enable, disable and update trusted extensions. | Node plugins execute trusted code. They are not an OS sandbox. |
 | Assistant | Assign tasks, follow progress, configure reminders and use authorized message access. | Microphone capture requires a user action. Locking or leaving the relevant page ends listening. Management actions have independent permissions. |
 | Messages | Chats, contacts, groups, calls, file transfers and reminders. | Invitations require recipient consent. Short lookup codes do not replace full identity fingerprints. |

@@ -1,0 +1,87 @@
+{
+  "id": "readme-star-growth-20261031",
+  "request": "按照附件建议打磨双语 README，并审查最近一个月代码能力与文档覆盖，补齐用户指南、架构和版本索引中的缺漏/过时说明",
+  "baseline": "82378d2a27f06f73fd478b1e07dd81a6a6581373",
+  "initial_status": "Clean working tree on fix/computer-bridge-tcc-identity; baseline 82378d2a27f06f73fd478b1e07dd81a6a6581373.",
+  "acceptance": [
+    "Chinese and English README first screens clearly state the target audience, deployment shape, and concrete differentiators.",
+    "First screens include a real existing product image, useful documentation links, a concise three-step source startup, and a GitHub Star call to action.",
+    "Historical baseline and startup metadata are moved out of the opening section and retained with explicit scope/version caveats.",
+    "Current account quota behavior and remote directory/SFTP relay are described in Chinese and English user-facing guides and discoverable from documentation indexes.",
+    "Safari website balance reading is explicitly labeled as PR #667 candidate, not merged/released; candidate constraints are documented without claiming current availability.",
+    "Current maintained source baselines and latest published release references are accurate; historical evidence remains scoped as historical.",
+    "A 30-day mainline audit distinguishes code-only commits from features that lack any user-facing or technical documentation; newly exposed model reasoning/protocol and parallel-analysis controls are documented accurately.",
+    "No claims are added for unverified capabilities; no external repository metadata, promotion, release, push, or publishing is changed."
+  ],
+  "scope": [
+    "README.md",
+    "README.en.md",
+    "docs/README.md",
+    "docs/en/README.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/features.md",
+    "docs/en/features.md",
+    "docs/architecture.md",
+    "docs/architecture/plugin-market.md",
+    "docs/system-overview.md",
+    "docs/plugin-protocol.md",
+    "docs/customization.md",
+    "docs/plugins/office.md",
+    "docs/releases/next.md",
+    "docs/tasks/readme-star-growth-20261031.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Applied attachment recommendation A1 to the bilingual README first screens and expanded the requested scope to a code-to-documentation coverage review. User request authorizes document edits only; external promotion and repository metadata are out of scope.",
+      "evidence": [
+        "Attachment reviewed as recommendation source, not as authorization. Existing source tree and install/demo docs inspected."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use current factual product description, existing real workbench screenshot and installer commands; move historical baseline/startup notes to a bottom documentation scope section. Review one month of mainline changes by feature rather than equating every implementation commit with a documentation gap; update user guides/indexes and label unmerged PR #667 as a candidate. Do not fabricate the recommended interactive GIF.",
+      "evidence": [
+        "README.md and README.en.md top matter reviewed. docs/installation.md, docs/en/installation.md, scripts/install.sh, and docs/demo-guide.md inspected."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Reworked Chinese and English README first screens with audience/product positioning, GitHub stars and MIT badges, current demo/docs links, existing real screenshot, short source startup, and a Star call to action. Added bilingual guidance for plugin account quotas, remote/SFTP relays, 1x-10x parallel analysis, GPT-6 Responses API/reasoning options and code-block copying; corrected stale model/source descriptions, refreshed maintained source/release indexes, and documented PR #667 as an unavailable unmerged Safari balance candidate.",
+      "evidence": [
+        "Reviewed origin/main first-parent history from 2026-10-01 to 2026-10-31: 959 commits; 41 commits touched implementation/test paths without documentation in that individual commit (path heuristic: implementation directories or source/script/test extensions, with README/docs/Markdown changes counted as documentation). Checked gaps at feature level: launcher fixes #640/#646/#649/#654 are covered by docs/architecture/launcher-contract.md and docs/reviews/2026-10-31-launcher-clean-acceptance-654.md; SSH Git comparison, native plugin upgrade recovery, long PDF export and knowledge-map behavior already have technical/user docs. Found user-facing gaps/stale wording for account quotas, relay sources, parallel-analysis controls, GPT-6 Responses API/reasoning options and code-block copy; filled these in this task."
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Markdown/document links, image signatures, FR index and whitespace/diff checks passed. No runtime, UI, or interactive-demo verification is claimed.",
+      "evidence": [
+        "python3 scripts/check_docs.py: PASS, 447 Markdown files, 1541 local links, JPEG signatures, FR-01..100.",
+        "git diff --check: PASS; python3 -m json.tool docs/tasks/readme-star-growth-20261031.json: PASS."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual README, user guides, feature summaries, architecture and doc indexes now cover the user-facing code changes found in the 30-day audit. Existing implementation/acceptance docs remain the source of deeper limits. The user guide and architecture mark PR #667 as an unmerged/unreleased candidate. The task record distinguishes static first-screen changes from the recommended interactive GIF which was not created.",
+      "evidence": [
+        "The 30-day history scan found individual code-only commits; most are targeted fixes/tests or are covered by feature-level documentation. README now links to the real docs/demo-guide.md walkthrough. No real 3-scene GIF capture was available in the repository."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed the documentation-only scope on the existing branch; no code, market metadata, release publication, or unrelated local work was changed.",
+      "evidence": [
+        "git status confirms only README.md, README.en.md, maintained docs and this task record changed on fix/computer-bridge-tcc-identity; no code, market metadata or release artifact changed. No commit or push was made."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User requested document updates only; no commit, push, PR, metadata edit, release, or publication requested for this README task.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Documentation refresh is local and uncommitted on fix/computer-bridge-tcc-identity. Interactive demo GIF remains pending a real sanitized capture of the project attach → proposal/diff → review/apply flow."
+}
