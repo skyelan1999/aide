@@ -14,7 +14,9 @@ Keep project files, AI workflows, plugins, and controlled execution in one works
 
 </div>
 
-![aide workbench with conversations, project files, and task input](docs/images/current-20261017/01-workbench.jpg)
+![aide workbench and reference panel showing project files, source visibility and write locks, plus the task input](docs/images/current-20261017/03-references.jpg)
+
+*Real UI capture: the workbench and reference panel in a dedicated demo environment on 17 October 2026. It shows where project references live; it does not show every feature below or certify the latest release. See the [UI walkthrough](docs/demo-guide.md) for more operations.*
 
 > This README describes capabilities in the current source tree; that does not mean every capability is included in the latest release package. Check the matching [Release notes](https://github.com/skyelan1999/aide/releases) and [version record](version.md) before using a release.
 

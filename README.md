@@ -14,7 +14,9 @@
 
 </div>
 
-![aide 工作台预览：会话、项目文件与 AI 任务输入](docs/images/current-20261017/01-workbench.jpg)
+![aide 工作台与辅助资料面板：显示项目文件、来源可见性与读写锁，以及任务输入框](docs/images/current-20261017/03-references.jpg)
+
+*真实界面截图：工作台与引用面板，使用 2026-10-17 专用示例环境。它展示项目资料入口，不代表所有下方功能都在此图中，也不是最新发行包的验收截图。更多操作见[实际界面演示](docs/demo-guide.md)。*
 
 > README 介绍当前源码中的产品能力，不代表每项能力都已包含在最新发行包中。使用发行版前请对照对应的 [Release 说明](https://github.com/skyelan1999/aide/releases)与[版本记录](version.md)。
 
