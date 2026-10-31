@@ -132,7 +132,7 @@ func (a *App) selectionSettingsLocked(choice SessionModelSelection) (Settings, e
 		}
 	}
 	switch choice.ReasoningEffort {
-	case "auto", "off", "low", "medium", "high", "xhigh", "max":
+	case "auto", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra":
 	default:
 		return Settings{}, errors.New("无效会话推理强度")
 	}
