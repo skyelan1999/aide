@@ -31,6 +31,209 @@ const maxExternalTextFile = 64 << 20
 const maxPluginDocumentFile = 64 << 20
 
 const maxReadSnapshotPreview = 16 << 10
+const maxReadToolWindow = 48 << 10
+
+type streamedTextWindow struct {
+	Content    []byte
+	Preview    []byte
+	Hash       string
+	Size       int64
+	TotalLines int
+	LineStart  int64
+	LineEnd    int64
+	ByteStart  int64
+	ByteEnd    int64
+	TooLarge   bool
+}
+
+// streamTextWindow hashes and validates the canonical UTF-8 text while keeping
+// only the requested line or byte window in memory. JSON BOM-marked UTF-16 is
+// converted incrementally, matching readText's canonical representation.
+func streamTextWindow(p string, input io.Reader, lineOffset, lineLimit int, byteMode bool, byteOffset, byteLimit int64) (streamedTextWindow, error) {
+	if err := safePath(p); err != nil {
+		return streamedTextWindow{}, err
+	}
+	reader := bufio.NewReaderSize(input, 64<<10)
+	jsonText := strings.EqualFold(path.Ext(p), ".json") || strings.EqualFold(path.Ext(p), ".jsonl") || strings.EqualFold(path.Ext(p), ".jsonc")
+	var nextRune func() (rune, int, error)
+	if jsonText {
+		prefix, err := reader.Peek(2)
+		if err == nil && (bytes.Equal(prefix, []byte{0xff, 0xfe}) || bytes.Equal(prefix, []byte{0xfe, 0xff})) {
+			littleEndian := bytes.Equal(prefix, []byte{0xff, 0xfe})
+			_, _ = reader.Discard(2)
+			nextRune = func() (rune, int, error) {
+				var pair [2]byte
+				n, readErr := io.ReadFull(reader, pair[:])
+				if readErr == io.EOF && n == 0 {
+					return 0, 0, io.EOF
+				}
+				if readErr != nil {
+					return 0, 0, errors.New("JSON 文件的 UTF-16 编码不完整")
+				}
+				unit := uint16(pair[0]) | uint16(pair[1])<<8
+				if !littleEndian {
+					unit = uint16(pair[0])<<8 | uint16(pair[1])
+				}
+				var value rune
+				switch {
+				case unit >= 0xd800 && unit <= 0xdbff:
+					if _, err := io.ReadFull(reader, pair[:]); err != nil {
+						return 0, 0, errors.New("JSON 文件包含无效的 UTF-16 字符")
+					}
+					low := uint16(pair[0]) | uint16(pair[1])<<8
+					if !littleEndian {
+						low = uint16(pair[0])<<8 | uint16(pair[1])
+					}
+					if low < 0xdc00 || low > 0xdfff {
+						return 0, 0, errors.New("JSON 文件包含无效的 UTF-16 字符")
+					}
+					value = utf16.DecodeRune(rune(unit), rune(low))
+				case unit >= 0xdc00 && unit <= 0xdfff:
+					return 0, 0, errors.New("JSON 文件包含无效的 UTF-16 字符")
+				default:
+					value = rune(unit)
+				}
+				return value, utf8.RuneLen(value), nil
+			}
+		}
+	}
+	if nextRune == nil {
+		nextRune = func() (rune, int, error) {
+			value, size, err := reader.ReadRune()
+			if err == nil && value == utf8.RuneError && size == 1 {
+				return 0, 0, errors.New("不支持二进制文件")
+			}
+			return value, size, err
+		}
+	}
+	if lineOffset < 0 {
+		lineOffset = 0
+	}
+	if byteOffset < 0 {
+		byteOffset = 0
+	}
+	if byteLimit <= 0 || byteLimit > maxReadToolWindow {
+		byteLimit = maxReadToolWindow
+	}
+	requestedEnd := byteOffset + byteLimit
+	if requestedEnd < byteOffset {
+		requestedEnd = int64(^uint64(0) >> 1)
+	}
+	window := streamedTextWindow{ByteStart: byteOffset}
+	if byteMode {
+		window.ByteEnd = byteOffset
+	}
+	buffer := bytes.NewBuffer(make([]byte, 0, maxReadToolWindow))
+	tooLarge := false
+	hasher := sha256.New()
+	lineIndex := 0
+	lastWasNewline := false
+	for {
+		value, _, err := nextRune()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return streamedTextWindow{}, err
+		}
+		if value == 0 {
+			return streamedTextWindow{}, errors.New("不支持二进制文件")
+		}
+		var encoded [utf8.UTFMax]byte
+		n := utf8.EncodeRune(encoded[:], value)
+		chunk := encoded[:n]
+		if _, err := hasher.Write(chunk); err != nil {
+			return streamedTextWindow{}, err
+		}
+		start, end := window.Size, window.Size+int64(n)
+		window.Size = end
+		if len(window.Preview) < maxReadSnapshotPreview {
+			keep := min(n, maxReadSnapshotPreview-len(window.Preview))
+			window.Preview = append(window.Preview, chunk[:keep]...)
+		}
+		if byteMode {
+			if end > byteOffset && start < requestedEnd {
+				if buffer.Len()+n > maxReadToolWindow+utf8.UTFMax {
+					tooLarge = true
+				} else if !tooLarge {
+					if buffer.Len() == 0 {
+						window.ByteStart = start
+					}
+					buffer.Write(chunk)
+					window.ByteEnd = end
+				}
+			}
+		} else {
+			selectedLine := lineIndex >= lineOffset && (lineLimit <= 0 || lineIndex-lineOffset < lineLimit)
+			if selectedLine {
+				if window.LineEnd == 0 && lineIndex == lineOffset {
+					window.LineStart = start
+				}
+				window.LineEnd = end
+				if buffer.Len()+n > maxReadToolWindow {
+					tooLarge = true
+					buffer.Reset()
+				} else if !tooLarge {
+					buffer.Write(chunk)
+				}
+			}
+		}
+		if value == '\n' {
+			lineIndex++
+			lastWasNewline = true
+		} else {
+			lastWasNewline = false
+		}
+	}
+	window.TotalLines = lineIndex
+	if window.Size > 0 && !lastWasNewline {
+		window.TotalLines++
+	}
+	if window.LineStart > window.Size {
+		window.LineStart = window.Size
+	}
+	if window.LineEnd == 0 && lineOffset >= window.TotalLines {
+		window.LineStart = window.Size
+		window.LineEnd = window.Size
+	}
+	window.Hash = hex.EncodeToString(hasher.Sum(nil))
+	window.TooLarge = tooLarge
+	if !tooLarge {
+		window.Content = buffer.Bytes()
+	}
+	if byteMode && window.ByteStart > window.Size {
+		window.ByteStart = window.Size
+		window.ByteEnd = window.Size
+	}
+	return window, nil
+}
+
+func readTextWindowWithOpener(p string, openFile func(string) (*os.File, error), lineOffset, lineLimit int, byteMode bool, byteOffset, byteLimit int64) (streamedTextWindow, error) {
+	if err := safePath(p); err != nil {
+		return streamedTextWindow{}, err
+	}
+	f, err := openFile(p)
+	if err != nil {
+		return streamedTextWindow{}, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return streamedTextWindow{}, err
+	}
+	if !info.Mode().IsRegular() {
+		return streamedTextWindow{}, errors.New("只支持普通文本文件")
+	}
+	window, err := streamTextWindow(p, f, lineOffset, lineLimit, byteMode, byteOffset, byteLimit)
+	if err != nil {
+		return streamedTextWindow{}, err
+	}
+	after, err := f.Stat()
+	if err != nil || info.Size() != after.Size() || !info.ModTime().Equal(after.ModTime()) {
+		return streamedTextWindow{}, errors.New("读取期间文件发生变化，请重新读取")
+	}
+	return window, nil
+}
 
 func safePath(p string) error {
 	if p == "" || strings.Contains(p, "\\") || strings.HasPrefix(p, "/") {

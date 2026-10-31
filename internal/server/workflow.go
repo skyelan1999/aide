@@ -178,8 +178,11 @@ type Task struct {
 
 type readCoverage struct {
 	Hash             string
+	Unit             string
 	TotalLines       int
 	Ranges           [][2]int
+	TotalBytes       int64
+	ByteRanges       [][2]int64
 	Preview          string
 	PreviewTruncated bool
 }
@@ -204,7 +207,7 @@ var builtinTools = []any{
 	recordResearchTool,
 	map[string]any{"type": "function", "function": map[string]any{"name": "list_sources", "description": "List enabled reference source IDs and capabilities, without credentials. Use source ID in list_files/read_file to access file references, or mcp_call for a discovered read-only MCP tool.", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "list_files", "description": "列出当前工作目录（或指定相对路径）的内容", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径，默认 ."}}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）。默认返回全文（受上下文大小自动截断）；对大文件用 offset(0 起始行号)/limit(行数) 分段读取，逐段翻页，避免一次读入超大文件。若要修改已有文件，必须完整覆盖所有行；系统会校验各段来自同一内容版本，单段不超过 60KiB。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}, "offset": map[string]any{"type": "integer", "description": "可选：起始行号（0 起始），仅本地工作区文件支持"}, "limit": map[string]any{"type": "integer", "description": "可选：最多返回行数，仅本地工作区文件支持"}}, "required": []string{"path"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）。大文件使用 offset(0 起始行号)/limit(行数) 分段；超长单行使用 byteOffset(0 起始 UTF-8 字节位置)/byteLimit(字节数) 分段。默认和每段读取都会流式计算完整文件 SHA-256，不把整个大文件载入内存；写入提案前需完整覆盖行或字节范围，系统校验所有段来自同一版本。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}, "offset": map[string]any{"type": "integer", "description": "可选：起始行号（0 起始），仅工作区文件支持"}, "limit": map[string]any{"type": "integer", "description": "可选：最多返回行数，仅工作区文件支持；单段最多约 48 KiB"}, "byteOffset": map[string]any{"type": "integer", "description": "可选：长行/字节模式的起始 UTF-8 字节位置（0 起始），仅工作区文件支持"}, "byteLimit": map[string]any{"type": "integer", "description": "可选：字节模式最多返回字节数，单段最多 48 KiB"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "mcp_call", "description": "Call one discovered read-only MCP tool from a reference source. First call list_sources. Never use this for a tool not marked readOnly.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Enabled MCP reference source ID from list_sources"}, "tool": map[string]any{"type": "string", "description": "Discovered MCP tool name marked readOnly"}, "arguments": map[string]any{"type": "object", "description": "Arguments accepted by that MCP tool"}}, "required": []string{"source", "tool"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_structure", "description": "读取 .docx 的结构（标题层级/段落前50字/表格行列数/原生批注数）。处理 Word 文档时先调用本工具了解结构，再用 docx_list_comments 读批注。仅支持本地工作区的 .docx。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string", "description": "工作区相对路径，如 方案.docx"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_list_comments", "description": "列出 .docx 文件内的原生 Word 批注及精确锚点；支持本地和 SSH 工作区。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}}, "required": []string{"path"}}}},
@@ -987,27 +990,22 @@ func (a *App) rememberWorkspaceRead(task *Task, p string, content []byte) {
 	task.readSnapshots[p] = change
 }
 
-func (a *App) rememberWorkspaceReadRange(task *Task, p string, content []byte, totalLines, offset, returnedLines int) {
-	if task == nil || safePath(p) != nil || totalLines < 0 {
+func (a *App) rememberWorkspaceReadRange(task *Task, p, fileHash string, preview []byte, totalLines, offset, returnedLines int, totalBytes int64) {
+	if task == nil || safePath(p) != nil || totalLines < 0 || fileHash == "" {
 		return
 	}
 	p = path.Clean(p)
-	base := Change{Path: p, BaseHash: hash(content)}
-	preview := content
-	if len(preview) > maxReadSnapshotPreview {
-		preview = preview[:maxReadSnapshotPreview]
-	}
-	base.Before = string(preview)
 	start := max(0, min(offset, totalLines))
 	end := max(start, min(start+returnedLines, totalLines))
+	previewText := string(preview[:min(len(preview), maxReadSnapshotPreview)])
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if task.readCoverage == nil {
 		task.readCoverage = map[string]readCoverage{}
 	}
 	coverage := task.readCoverage[p]
-	if coverage.Hash != base.BaseHash || coverage.TotalLines != totalLines {
-		coverage = readCoverage{Hash: base.BaseHash, TotalLines: totalLines, Preview: base.Before, PreviewTruncated: len(content) > maxReadSnapshotPreview}
+	if coverage.Hash != fileHash || coverage.Unit != "lines" || coverage.TotalLines != totalLines {
+		coverage = readCoverage{Hash: fileHash, Unit: "lines", TotalLines: totalLines, TotalBytes: totalBytes, Preview: previewText, PreviewTruncated: totalBytes > int64(len(preview))}
 	}
 	if end > start {
 		coverage.Ranges = append(coverage.Ranges, [2]int{start, end})
@@ -1034,16 +1032,64 @@ func (a *App) rememberWorkspaceReadRange(task *Task, p string, content []byte, t
 		}
 	}
 	if covered >= totalLines {
-		base.Before = coverage.Preview
-		if coverage.PreviewTruncated {
-			base.Before += "\n…（原文件预览截断；应用仍按完整内容哈希校验）"
-		}
-		if task.readSnapshots == nil {
-			task.readSnapshots = map[string]Change{}
-		}
-		task.readSnapshots[p] = base
+		a.storeWorkspaceReadSnapshotLocked(task, p, coverage)
 	}
 	task.readCoverage[p] = coverage
+}
+
+func (a *App) rememberWorkspaceByteRange(task *Task, p string, window streamedTextWindow) {
+	if task == nil || safePath(p) != nil || window.Hash == "" || window.Size < 0 {
+		return
+	}
+	p = path.Clean(p)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if task.readCoverage == nil {
+		task.readCoverage = map[string]readCoverage{}
+	}
+	coverage := task.readCoverage[p]
+	if coverage.Hash != window.Hash || coverage.Unit != "bytes" || coverage.TotalBytes != window.Size {
+		coverage = readCoverage{Hash: window.Hash, Unit: "bytes", TotalBytes: window.Size, TotalLines: window.TotalLines, Preview: string(window.Preview[:min(len(window.Preview), maxReadSnapshotPreview)]), PreviewTruncated: window.Size > int64(len(window.Preview))}
+	}
+	if window.ByteEnd > window.ByteStart {
+		coverage.ByteRanges = append(coverage.ByteRanges, [2]int64{window.ByteStart, window.ByteEnd})
+	}
+	sort.Slice(coverage.ByteRanges, func(i, j int) bool { return coverage.ByteRanges[i][0] < coverage.ByteRanges[j][0] })
+	merged := coverage.ByteRanges[:0]
+	for _, interval := range coverage.ByteRanges {
+		if len(merged) == 0 || interval[0] > merged[len(merged)-1][1] {
+			merged = append(merged, interval)
+			continue
+		}
+		if interval[1] > merged[len(merged)-1][1] {
+			merged[len(merged)-1][1] = interval[1]
+		}
+	}
+	coverage.ByteRanges = merged
+	covered := int64(0)
+	for _, interval := range coverage.ByteRanges {
+		if interval[0] > covered {
+			break
+		}
+		if interval[1] > covered {
+			covered = interval[1]
+		}
+	}
+	if window.Size == 0 || covered >= window.Size {
+		a.storeWorkspaceReadSnapshotLocked(task, p, coverage)
+	}
+	task.readCoverage[p] = coverage
+}
+
+func (a *App) storeWorkspaceReadSnapshotLocked(task *Task, p string, coverage readCoverage) {
+	if task.readSnapshots == nil {
+		task.readSnapshots = map[string]Change{}
+	}
+	before := coverage.Preview
+	if coverage.PreviewTruncated {
+		before += "\n…（原文件预览截断；应用仍按完整内容哈希校验）"
+	}
+	task.readSnapshots[p] = Change{Path: p, BaseHash: coverage.Hash, Before: before}
 }
 func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	avatarOverride, err := readAvatarFeedbackOverride(w, r)
@@ -4369,6 +4415,19 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		return 0
 	}
+	toolInt64 := func(k string) int64 {
+		switch v := args[k].(type) {
+		case float64:
+			if v <= 0 {
+				return 0
+			}
+			if v >= float64(math.MaxInt64) {
+				return math.MaxInt64
+			}
+			return int64(v)
+		}
+		return 0
+	}
 	// The schema filter is only a hint to the model. Enforce deny again here
 	// because callers can submit tool calls that were not advertised.
 	if err := a.sandboxToolError(call.Function.Name); err != nil {
@@ -4557,61 +4616,47 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			}
 			return out
 		}
-		// 工作区大文件分段：返回有界行窗口；所有段必须来自同一文件哈希且覆盖全文件，才可用于写提案。
-		if sourceID == "" && mode == "ssh" {
-			if off, lim := toolInt("offset"), toolInt("limit"); off > 0 || lim > 0 {
-				content, err := readTextFile(p)
-				if err != nil {
-					return failure("读取失败: " + err.Error())
-				}
-				lines := bytes.Split(content, []byte{'\n'})
-				if len(content) == 0 {
-					lines = nil
-				} else if content[len(content)-1] == '\n' {
-					lines = lines[:len(lines)-1]
-				}
-				start := max(0, min(off, len(lines)))
-				end := len(lines)
-				if lim > 0 && start+lim < end {
-					end = start + lim
-				}
-				pb := bytes.Join(lines[start:end], []byte{'\n'})
-				if len(pb) > 60<<10 {
-					return failure("分段内容超过 60KiB，请缩小 limit 后重新读取；该段未计入完整读取范围")
-				}
-				a.rememberWorkspaceReadRange(task, p, content, len(lines), start, end-start)
-				return fmt.Sprintf("（%s 共 %d 行，以下从第 %d 行起）\n%s", p, len(lines), start+1, string(pb))
-			}
-		}
-		// 本地工作区大文件分段：offset(行,0起)/limit(行数) 流式只读窗口，不全量入上下文
-		if sourceID == "" && mode != "ssh" {
-			if off, lim := toolInt("offset"), toolInt("limit"); off > 0 || lim > 0 {
+		// Workspace files are streamed once for the complete-file fingerprint;
+		// only the requested line/byte window is retained in memory.
+		if sourceID == "" {
+			_, hasOffset := args["offset"]
+			_, hasLimit := args["limit"]
+			_, hasByteOffset := args["byteOffset"]
+			_, hasByteLimit := args["byteLimit"]
+			byteMode := hasByteOffset || hasByteLimit
+			segmented := byteMode || hasOffset || hasLimit
+			off, lim := toolInt("offset"), toolInt("limit")
+			byteOff, byteLim := toolInt64("byteOffset"), toolInt64("byteLimit")
+			var window streamedTextWindow
+			var readErr error
+			if mode == "ssh" {
+				window, readErr = a.readSFTPTextWindow(p, off, lim, byteMode || !segmented, byteOff, byteLim)
+			} else {
 				opener := wsRoot.Open
 				if bound {
 					opener = boundFileOpener(wsRoot)
 				}
-				baseline, berr := readTextFile(p)
-				if berr != nil {
-					return failure("读取基准失败: " + berr.Error())
-				}
-				pb, total, rerr := readTextLinesWithOpener(p, off, lim, opener)
-				if rerr != nil {
-					return failure("读取失败: " + rerr.Error())
-				}
-				if len(pb) > 60<<10 {
-					return failure("分段内容超过 60KiB，请缩小 limit 后重新读取；该段未计入完整读取范围")
-				}
-				after, aerr := readTextFile(p)
-				if aerr != nil || hash(baseline) != hash(after) {
-					return failure("分段读取期间文件发生变化，请重新读取")
-				}
-				returnedLines := bytes.Count(pb, []byte{'\n'})
-				if len(pb) > 0 && pb[len(pb)-1] != '\n' {
-					returnedLines++
-				}
-				a.rememberWorkspaceReadRange(task, p, baseline, total, off, returnedLines)
-				return fmt.Sprintf("（%s 共 %d 行，以下从第 %d 行起）\n%s", p, total, off+1, string(pb))
+				window, readErr = readTextWindowWithOpener(p, opener, off, lim, byteMode || !segmented, byteOff, byteLim)
 			}
+			if readErr != nil {
+				return failure("读取失败: " + readErr.Error())
+			}
+			if window.TooLarge {
+				return failure(fmt.Sprintf("该行或字节段超过约 48 KiB，未计入完整读取基线；请使用 byteOffset=%d 和 byteLimit=%d 按 UTF-8 字节分段，后续从返回的 byteEnd 继续", window.LineStart, maxReadToolWindow))
+			}
+			if byteMode || !segmented {
+				a.rememberWorkspaceByteRange(task, p, window)
+				if window.Size > int64(len(window.Content)) {
+					return fmt.Sprintf("（%s：完整文件 %d 字节，当前 UTF-8 字节范围 [%d,%d)，SHA-256 %s；继续时传 byteOffset=%d，单段最多 48 KiB）\n%s", p, window.Size, window.ByteStart, window.ByteEnd, window.Hash, window.ByteEnd, string(window.Content))
+				}
+				return string(window.Content)
+			}
+			returnedLines := window.TotalLines - min(off, window.TotalLines)
+			if lim > 0 && returnedLines > lim {
+				returnedLines = lim
+			}
+			a.rememberWorkspaceReadRange(task, p, window.Hash, window.Preview, window.TotalLines, off, returnedLines, window.Size)
+			return fmt.Sprintf("（%s 共 %d 行，SHA-256 %s，以下从第 %d 行起）\n%s", p, window.TotalLines, window.Hash, off+1, string(window.Content))
 		}
 		b, err := readTextFile(p)
 		if err != nil {
