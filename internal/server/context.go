@@ -272,7 +272,7 @@ func (a *App) modelWindow(modelID string) int {
 // attachmentContext 读取任务附件（与 startTask 实际使用同一条路径）。
 // 返回注入上下文的文本、需随消息发送的多模态图片、workspace 版本快照。
 // 可解析文档（docx/pdf/xlsx/pptx）由后端提取文本，不依赖模型视觉；
-// 图片作为多模态附件返回，视觉能力门禁由调用方持锁后调 visionGateLocked 完成
+// 图片作为多模态附件返回；发送时不按模型视觉能力预先拦截。
 // （不在此加锁，避免与已持锁的 retryTask 死锁）。
 func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[string]Change, error) {
 	var contextText strings.Builder
@@ -317,7 +317,7 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 			continue
 		}
 
-		// 1) 图片 → 多模态（是否可发送由调用方 visionGateLocked 判定）
+		// 1) 图片 → 多模态，原样交由模型接口处理。
 		if _, isImg := imageAttachmentTypes[ext]; isImg {
 			img, err := a.readLocalImage(att)
 			if err != nil {

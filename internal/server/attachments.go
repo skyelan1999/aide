@@ -114,7 +114,7 @@ func recommendedVisionModels() []string {
 	return []string{"gpt-4o", "gpt-4.1", "qwen-vl-max", "qwen-vl-plus", "glm-4v", "deepseek-vl", "gemini-2.0-flash", "claude-3.5-sonnet"}
 }
 
-// visionGateLocked 校验图片附件与当前模型视觉能力是否匹配。调用方必须持有 a.mu。
+// visionGateLocked 保留旧调用接口；图片始终透传，音频/视频仍按格式与模型要求校验。调用方必须持有 a.mu。
 func (a *App) visionGateLocked(images []MessageImage) error {
 	return visionGateForConfig(a.settings, images)
 }

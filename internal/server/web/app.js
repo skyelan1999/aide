@@ -3656,6 +3656,81 @@ $('files').addEventListener('drop', action(async event => {
   const items = await collectDroppedItems(event.dataTransfer);
   if (items.length) await uploadCollected(items, currentFileTarget());
 }));
+
+// Chat composer files are stored in the writable workspace, then attached through
+// the same attachment state and send path as files selected from the file panel.
+let composerFileQueue = Promise.resolve();
+function composerUploadName(file) {
+  const base = String(file.name || 'attachment').replace(/\\/g, '/').split('/').pop().replace(/[\x00-\x1f]/g, '_').trim();
+  return base || 'attachment';
+}
+function queueComposerFiles(files) {
+  const incoming = Array.from(files || []).filter(file => file && typeof file.size === 'number');
+  if (!incoming.length) return Promise.resolve();
+  composerFileQueue = composerFileQueue.catch(() => {}).then(async () => {
+    if (lockScreen.locked || !state.token) { toast(t('请先解锁并连接工作区，再添加附件')); return; }
+    const available = Math.max(0, 8 - state.attachments.length);
+    if (incoming.length > available) toast(t('最多附加 8 个文件；超出的文件已忽略'));
+    for (const file of incoming.slice(0, available)) {
+      try {
+        if (file.size > 64 * 1024 * 1024) throw new Error(t('文件超过 64 MiB 限制'));
+        const name = composerUploadName(file);
+        const path = 'attachments/chat-' + crypto.randomUUID() + '-' + name;
+        const query = new URLSearchParams({path});
+        if (state.workspaceId) query.set('workspaceId', state.workspaceId);
+        const response = await fetch('/api/file/upload?' + query, {
+          method: 'POST',
+          headers: {Authorization: 'Bearer ' + state.token, 'Content-Type': file.type || 'application/octet-stream'},
+          body: file
+        });
+        let result = {};
+        try { result = await response.json(); } catch (_) {}
+        if (!response.ok) throw new Error(result.error || t('附件上传失败'));
+        attachFileEntry({path}, {root: 'workspace'});
+      } catch (error) {
+        toast(t('添加附件失败：{0}', error.message || String(error)));
+      }
+    }
+  });
+  return composerFileQueue;
+}
+const taskForm = $('task-form');
+taskForm.dataset.dropLabel = t('释放文件即可添加为附件');
+function hasDraggedFiles(event) { return Array.from(event.dataTransfer?.types || []).includes('Files'); }
+taskForm.addEventListener('dragenter', event => {
+  if (!hasDraggedFiles(event)) return;
+  event.preventDefault();
+  taskForm.classList.add('drag-over');
+});
+taskForm.addEventListener('dragover', event => {
+  if (!hasDraggedFiles(event)) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+  taskForm.classList.add('drag-over');
+});
+taskForm.addEventListener('dragleave', event => {
+  if (!taskForm.contains(event.relatedTarget)) taskForm.classList.remove('drag-over');
+});
+taskForm.addEventListener('drop', action(async event => {
+  if (!hasDraggedFiles(event)) return;
+  event.preventDefault();
+  taskForm.classList.remove('drag-over');
+  await queueComposerFiles(event.dataTransfer.files);
+}));
+$('prompt').addEventListener('paste', event => {
+  const images = Array.from(event.clipboardData?.items || [])
+    .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+    .map(item => item.getAsFile()).filter(Boolean);
+  if (!images.length) return;
+  event.preventDefault();
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const files = images.map((blob, index) => {
+    if (blob.name) return blob;
+    const ext = ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','image/svg+xml':'svg','image/bmp':'bmp'})[blob.type] || 'png';
+    return new File([blob], `pasted-image-${stamp}-${index + 1}.${ext}`, {type: blob.type || 'image/png', lastModified: Date.now()});
+  });
+  void queueComposerFiles(files);
+});
 $('task-form').onsubmit = action(async event => {
   event.preventDefault();
   if (state.submitting || state.approvalModeBusy) return; // Enter 连击与点击不可重复创建 run
@@ -4373,9 +4448,6 @@ function attachFileEntry(file, target = {root:file.root,source:file.source || ''
   const att = {root:target.source ? 'source' : target.root,path:file.path};
   if (target.source) att.source = target.source;
   if (file.dir) att.directory = true;
-  if (!file.dir && isImagePath(file.path) && !(activeModel()?.supportsVision ?? (sessionModelPreferences().model === state.config?.model ? state.config?.vision : activeModel()?.vision))) {
-    toast(t('当前模型不支持图片输入，请切换到支持视觉的模型')); return false;
-  }
   if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) {
     if (state.attachments.length >= 8) { toast(t('最多附加 8 个文件或文件夹')); return false; }
     state.attachments.push(att);

@@ -165,8 +165,12 @@ class Launcher:
 
     def build(self):
         self.require_source()
+        builder_mode = os.environ.get('AIDE_BUILDX_BUILDER', 'dedicated')
+        if builder_mode not in ('dedicated', 'default'):
+            raise ValueError('AIDE_BUILDX_BUILDER must be dedicated or default')
+        builder = 'default' if builder_mode == 'default' else self.builder
         if self.dry_run:
-            print(json.dumps({'action': 'build', 'builder': self.builder, 'image': self.image,
+            print(json.dumps({'action': 'build', 'builder': builder, 'image': self.image,
                               'steps': ['compile current source and embedded host components', 'verify image identity', 'start']}, indent=2))
             return
         print('AIDE: 检查 Docker 和可用磁盘空间…', flush=True)
@@ -177,7 +181,7 @@ class Launcher:
                            progress='AIDE: 正在读取源码计算构建指纹；此阶段尚未进入 Docker 编译…')
         if not re.fullmatch(r'[a-f0-9]{64}', source):
             raise ValueError('Invalid current source fingerprint')
-        print('AIDE: 读取构建配置，准备专用构建器…', flush=True)
+        print('AIDE: 读取构建配置，准备' + ('Docker 默认构建器…' if builder_mode == 'default' else '专用构建器…'), flush=True)
         display, _ = version(self.root)
         commit = self.call(['git', 'rev-parse', 'HEAD'], capture=True)
         if self.call(['git', 'status', '--porcelain'], capture=True):
@@ -186,8 +190,13 @@ class Launcher:
         build = configuration['services']['aide']['build']
         arguments = dict(build.get('args') or {})
         arguments.update(AIDE_VERSION=display, AIDE_COMMIT=commit, AIDE_SRC_SHA=source, AIDE_RUNTIME_MODE='source')
-        self.ensure_builder()
-        command = ['buildx', 'build', '--builder', self.builder, '--load', '--pull=false',
+        if builder_mode == 'default':
+            details = self.d('buildx', 'inspect', 'default', capture=True, check=False)
+            if not isinstance(details, str) or not re.search(r'(?m)^Driver:\s*docker\s*$', details):
+                raise RuntimeError('Buildx default builder is not available with the docker driver; dedicated builder was not changed')
+        else:
+            self.ensure_builder()
+        command = ['buildx', 'build', '--builder', builder, '--load', '--pull=false',
                    '--label', 'aide.installation=' + self.scope, '--label', 'aide.build-role=runtime',
                    '--file', build.get('dockerfile', 'Dockerfile'), '--tag', self.image]
         if build.get('network'):

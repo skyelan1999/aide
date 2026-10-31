@@ -1794,3 +1794,21 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 [data-theme="dark"] .token-stats .account-balance-pool{--wb-field-height:26px;--wb-field-pad-y:3px;--wb-field-pad-x:6px;--wb-field-font:10px;--balance-alert:#ff7080}
 
 .file-preview-unavailable{margin:auto;padding:24px;line-height:1.7;text-align:center;color:var(--text)}
+
+/* Dragging files into the chat composer previews the attachment drop target. */
+#task-form { position: relative; }
+#task-form.drag-over { outline: 2px dashed var(--brand); outline-offset: 3px; }
+#task-form.drag-over::after {
+  content: attr(data-drop-label);
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--brand-text);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}

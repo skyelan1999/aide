@@ -254,10 +254,6 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 	}
 	preference, _ := p.Settings["preference"].(string)
 	required := estimateProviderPromptTokens(input, tools) + params.MaxTokens
-	hasImages := false
-	for _, m := range input {
-		hasImages = hasImages || len(m.Images) > 0
-	}
 	type candidate struct {
 		cfg      Settings
 		profile  string
@@ -296,7 +292,7 @@ func (a *App) routeModelLocked(task *Task, fallback Settings, input []Message, p
 		if profile.ContextWindow < window {
 			window = profile.ContextWindow
 		}
-		if required > window || hasImages && (!profile.Vision || !modelSupportsVision(m.ID, cfg.Models)) || len(tools) > 0 && (!profile.Tools || modelCapabilityStatus(cfg, "tool_calls") == "unsupported") || params.ResponseFormat != "" && (!profile.Structured || modelCapabilityStatus(cfg, "structured_output") == "unsupported") {
+		if required > window || len(tools) > 0 && (!profile.Tools || modelCapabilityStatus(cfg, "tool_calls") == "unsupported") || params.ResponseFormat != "" && (!profile.Structured || modelCapabilityStatus(cfg, "structured_output") == "unsupported") {
 			continue
 		}
 		mediaOK := true
