@@ -1,0 +1,70 @@
+{
+  "id": "browser-account-balance-667",
+  "request": "OpenAISupporter 官网余额；复用 Safari 登录，首次关联后自动查询，不要求每次手动同步；恢复因来源关窗暂停的同步，并默认折叠长说明",
+  "baseline": "f9062f56d13c33c1f0a344b999fc621be18d1ad4",
+  "initial_status": "Clean dedicated worktree at f9062f56, separate from pending #666 publication. Plugin worktree starts at be30cef.",
+  "acceptance": [
+    "Plugin owns HTTPS source URL, balance/account labels and polling interval; host stays generic.",
+    "Dedicated owner-opened Safari source window identified by nonce; no cookies, arbitrary JS, screenshots, model keys or other pages returned.",
+    "Explicit account-to-Key confirmation before enabling automatic 5-minute refresh; identity changes invalidate consent.",
+    "Disabled plugins, changed keys/workspaces, closed sources and expired data fail closed; no unknown balance becomes zero.",
+    "Synthetic parser/API/UI checks and actual Safari/native helper acceptance recorded separately.",
+    "Website guidance defaults collapsed; expansion survives UI polling; confirmation identity remains visible."
+  ],
+  "scope": [
+    "Generic plugin page-balance catalog, account-pool adapter and native Safari reader",
+    "OpenAISupporter candidate metadata/package; preserve pricing and existing account settings"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User selected Safari reuse and then clarified automatic queries after initial setup.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/667"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Plugin-owned source and visible project identity; dedicated nonce window; user-confirmed Key binding; independent five-minute background scheduler.",
+      "evidence": [
+        "docs/architecture/plugin-market.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Plugin declaration, generic host transport/cache/scheduler, account confirmation UI and native Safari reader implemented; actual Safari findings fixed in normal-window setup and bounded background load waiting.",
+      "evidence": [
+        "docs/reviews/2026-10-31-browser-account-balance-667.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Real native/product read, explicit Key binding, natural five-minute background interval, closed-source fail-closed/restoration, default collapsed help and expansion preservation verified. Focused race, actual ZIP host test, UI and quick checks passed.",
+      "evidence": [
+        "docs/reviews/2026-10-31-browser-account-balance-667.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Final contract, runtime constraints, actual Safari acceptance and deployment state documented.",
+      "evidence": [
+        "docs/reviews/2026-10-31-browser-account-balance-667.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Isolated Safari test window/container closed; original user pages preserved. Native program/image rollback retained.",
+      "evidence": [
+        "docs/reviews/2026-10-31-browser-account-balance-667.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Local implementation and acceptance authorized. Prior per-PR admin and v0.4.1 release authority covers #666/#16/#30 only, not this new feature.",
+  "rollback": "Known scope source-file preimages and previous image retained; native app rollback at existing Application Support sibling. Configuration path and launcher override preserved.",
+  "handoff": "Local candidate restored and running with source window open, automatic syncing enabled and long guidance collapsed. Accessibility=true; Screen Recording=false. No feature PR/merge/release/market publication."
+}

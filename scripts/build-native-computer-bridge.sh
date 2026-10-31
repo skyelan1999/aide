@@ -34,7 +34,7 @@ payload = b"".join(chunks)
 output.write_bytes(b"icns" + struct.pack(">I", len(payload) + 8) + payload)
 PY
 python3 - "$DEST" "$ROOT/.env" <<'PY'
-import plistlib, sys
+import os, plistlib, stat, sys
 from pathlib import Path
 dest=Path(sys.argv[1])
 info={'CFBundleIdentifier':'local.aide.computer-bridge','CFBundleName':'Aide Computer Control Service','CFBundleDisplayName':'Aide Computer Control Service','CFBundleExecutable':'AideComputerBridge','CFBundleIconFile':'AppIcon','CFBundlePackageType':'APPL','CFBundleVersion':'1','CFBundleShortVersionString':'1.0.0','LSMinimumSystemVersion':'14.0','LSUIElement':True,'NSHighResolutionCapable':True,'AideConfigurationFile':sys.argv[2]}

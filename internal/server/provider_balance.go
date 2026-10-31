@@ -121,6 +121,16 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	b := *c.Balance
+	if b.Auth == "browser-page" {
+		out, err := a.pageBalanceResultLocked(p, kid, c, owner)
+		a.mu.Unlock()
+		if err != nil {
+			fail(w, 423, err)
+			return
+		}
+		jsonOut(w, 200, out)
+		return
+	}
 	declared, revision, scopePath, workspaceRevision := b, c.Revision, a.pluginsPath, a.wsRevision
 	if b.Path != "" {
 		u, err := url.Parse(p.BaseURL)
