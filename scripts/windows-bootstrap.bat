@@ -55,6 +55,11 @@ exit /b 0
 call :bootstrap_cleanup
 if exist "%AIDE_BOOT_EXE%" del "%AIDE_BOOT_EXE%"
 echo Native bootstrap failed at %AIDE_BOOT_STAGE%. No application start or Release substitution was performed.
+if "%AIDE_BOOT_STAGE%"=="native-build" (
+  echo [Aide] For network/authentication timeouts, check that your proxy is running and HTTPS_PROXY/NO_PROXY permit auth.docker.io.
+  echo [Aide] Set HTTP_PROXY and HTTPS_PROXY in this CMD before build.bat, or check the Windows manual proxy settings.
+  echo [Aide] BuildKit and Dockerfile RUN networking use Docker Desktop's container proxy. A host 127.0.0.1 proxy must not be copied unchanged into Linux containers.
+)
 exit /b 1
 
 :bootstrap_cleanup

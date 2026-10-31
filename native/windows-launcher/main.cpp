@@ -54,6 +54,7 @@ std::string trim(std::string s){auto b=s.find_first_not_of(" \r\n\t");return b==
 json parseJson(const std::string& text){try{return json::parse(text);}catch(const json::exception&){throw std::runtime_error("Invalid JSON metadata; contents omitted to protect private configuration");}}
 std::wstring env(const wchar_t* key){DWORD n=GetEnvironmentVariableW(key,nullptr,0);if(!n)return {};std::wstring v(n,0);GetEnvironmentVariableW(key,v.data(),n);v.resize(n-1);return v;}
 void setenvw(const wchar_t* k,const std::wstring& v){if(!SetEnvironmentVariableW(k,v.c_str()))throw std::runtime_error("Cannot set launcher process environment");}
+#include "build_proxy_windows.hpp"
 std::string read(const fs::path& p,size_t max=32*1024*1024){
  // Readers allow atomic rename of live status/journal files. CRT ifstream
  // sharing semantics can otherwise make a concurrent status read kill a writer.
@@ -202,6 +203,10 @@ public:
  }
  Result compose(Args a,DWORD timeout=120000){if(!composeExe.empty())return run(composeExe,a,timeout);a.insert(a.begin(),L"compose");return d(std::move(a),timeout);}
  void required(const Result& r,const char* message){if(r.code)throw std::runtime_error(std::string(message)+" (exit "+std::to_string(r.code)+")");}
+ void requiredBuild(const Result& r,const char* message){
+  if(r.code){auto detail=aide_build_proxy::lower(r.out+"\n"+r.err);for(auto marker:{"oauth token","proxy","connectex","timeout","connection refused","network is unreachable","could not resolve","certificate"})if(detail.find(marker)!=detail.npos){say(aide_build_proxy::failureMessage());break;}}
+  required(r,message);
+ }
  json inspect(const std::string& ref){auto r=d({L"image",L"inspect",wide(ref),L"--format",L"{{json .}}"});return r.code?json():parseJson(r.out);}
  json config(){auto r=compose({L"config",L"--format",L"json"});required(r,"Cannot resolve Compose configuration");return parseJson(r.out);}
  std::string configured(const std::string& key){auto value=utf8(env(wide(key).c_str()));return value.empty()?settings[key]:value;}

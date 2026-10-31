@@ -11,6 +11,8 @@ goto launch
 if not exist "go.mod" goto source_required
 if not exist "Dockerfile" goto source_required
 for %%A in (%*) do if /i "%%~A"=="--dry-run" goto build_dry_run
+call "%~dp0windows-build-proxy.bat"
+if errorlevel 1 goto finish
 call "%~dp0windows-bootstrap.bat"
 if errorlevel 1 goto finish
 goto launch

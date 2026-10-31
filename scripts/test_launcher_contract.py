@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Execute the standard launcher coordinator with owned external boundaries."""
 import importlib.util
+import contextlib
+import io
+import time
 import json
 import os
 from pathlib import Path
@@ -37,7 +40,7 @@ class BoundaryLauncher(module.Launcher):
         self.tagged = 'd' * 40
         self.gate = True
 
-    def call(self, args, capture=False, check=True, timeout=180, env=None):
+    def call(self, args, capture=False, check=True, timeout=180, env=None, progress=None):
         args = [str(x) for x in args]
         self.commands.append(args)
         short = args[1:]
@@ -100,6 +103,31 @@ class LauncherContractTests(unittest.TestCase):
         (self.root / '.env.example').write_text('AIDE_IMAGE=aide:previous\nUSER_SETTING=preserved\n')
         self.launcher = BoundaryLauncher(self.root)
 
+    def test_slow_fingerprint_shows_progress_without_polluting_digest(self):
+        output = io.StringIO()
+        with patch.object(module, 'PROGRESS_INTERVAL', .05), contextlib.redirect_stderr(output):
+            digest = module.Launcher.call(self.launcher,
+                [sys.executable, '-c', 'import time;time.sleep(.16);print("c"*64)'],
+                capture=True, timeout=2, progress='Computing source fingerprint')
+        self.assertEqual(digest, FINGERPRINT)
+        self.assertIn('仍在读取源码', output.getvalue())
+        self.assertIn('源码指纹计算完成', output.getvalue())
+
+    def test_fingerprint_timeout_kills_pipeline_descendants(self):
+        pidfile = self.root / 'child.pid'
+        script = 'sleep 30 & child=$!; echo "$child" > "$1"; wait'
+        with patch.object(module, 'PROGRESS_INTERVAL', .05), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                module.Launcher.call(self.launcher, ['bash', '-c', script, 'fixture', str(pidfile)],
+                                    capture=True, timeout=1.5, progress='Computing source fingerprint')
+        pid = pidfile.read_text().strip()
+        for _ in range(20):
+            state = subprocess.run(['ps', '-p', pid, '-o', 'stat='], text=True, capture_output=True).stdout.strip()
+            if not state or state.startswith('Z'):
+                break
+            time.sleep(.05)
+        self.assertTrue(not state or state.startswith('Z'), state)
+
     def test_build_is_explicit_scoped_and_starts_verified_source(self):
         self.launcher.build()
         calls = self.launcher.commands
@@ -113,6 +141,26 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn('AIDE_IMAGE=' + self.launcher.image, (self.root / '.env').read_text())
         self.assertIn('USER_SETTING=preserved', (self.root / '.env').read_text())
         self.assertTrue(self.launcher.owner())
+
+    def test_build_executes_real_disk_child_without_inherited_project_dir(self):
+        # Keep the Docker boundary disposable, but execute the actual Bash child
+        # and production guard that the old all-call mock accidentally skipped.
+        scripts=self.root/'scripts';scripts.mkdir()
+        shutil.copy2(ROOT/'scripts/resource-guard.sh',scripts/'resource-guard.sh')
+        tools=self.root/'tools';tools.mkdir()
+        df=tools/'df'
+        df.write_text('#!/bin/sh\n[ "$2" = / ] || [ "$2" = "$EXPECTED_PROJECT" ] || exit 42\nprintf "fixture 99999999 0 99999999 1%% /\\n"\n')
+        df.chmod(0o700)
+        original=self.launcher.call
+        def real_disk(args,**kwargs):
+            if args[:2]==['bash','-ec']:
+                return module.Launcher.call(self.launcher,args,**kwargs)
+            return original(args,**kwargs)
+        for inherited in (None,'','/wrong-parent-project'):
+            with self.subTest(inherited=inherited),patch.dict(os.environ,{'PATH':str(tools)+os.pathsep+os.environ['PATH'],'EXPECTED_PROJECT':str(self.root)}):
+                os.environ.pop('PROJECT_DIR',None)
+                if inherited is not None:os.environ['PROJECT_DIR']=inherited
+                with patch.object(self.launcher,'call',side_effect=real_disk):self.launcher.build()
 
     def test_failed_build_cannot_switch_image_or_start_release(self):
         (self.root / '.env').write_text('AIDE_IMAGE=aide:previous\n')

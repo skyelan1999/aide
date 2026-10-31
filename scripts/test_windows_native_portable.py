@@ -144,6 +144,18 @@ def main():
             assert (result.returncode == 0) == success, name
             print('PASS installation ownership ' + name)
             count += 1
+        from test_windows_build_proxy import CASES
+        for case in CASES:
+            result = subprocess.run([str(executable), 'build-proxy'], input=json.dumps(case['input']), text=True, capture_output=True, timeout=5)
+            assert (result.returncode == 0) == case.get('success', True), (case['name'], result.stdout, result.stderr)
+            if result.returncode == 0:
+                assert json.loads(result.stdout) == case['expected'], (case['name'], result.stdout)
+            else:
+                assert 'HTTP_PROXY' in result.stderr and 'HTTPS_PROXY' in result.stderr, (case['name'], result.stderr)
+                for private in ('private-user', 'private-password'):
+                    assert private not in result.stderr
+            print('PASS build proxy ' + case['name'])
+            count += 1
     print(f'PASS {count} portable native checks; Win32 lifecycle NOT_RUN')
 
 

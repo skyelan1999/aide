@@ -12,6 +12,31 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ResourceGuardTests(unittest.TestCase):
+    def test_disk_guard_without_exported_project_dir_uses_current_directory(self):
+        with tempfile.TemporaryDirectory(prefix='aide clean \u4e2d\u6587 ') as name:
+            root=Path(name)
+            df=root/'df'
+            df.write_text('#!/bin/sh\n[ "$#" = 2 ] && [ -n "$2" ] || exit 42\nprintf "fixture 99999999 0 99999999 1%% /\\n"\n')
+            df.chmod(0o700)
+            for supplied in (None,''):
+                environment=dict(os.environ,PATH=str(root)+os.pathsep+os.environ['PATH'])
+                environment.pop('PROJECT_DIR',None)
+                if supplied is not None:environment['PROJECT_DIR']=supplied
+                result=subprocess.run(['bash','-euc','source "$1"; aide_check_disk build','guard-test',str(ROOT/'scripts/resource-guard.sh')],
+                    cwd=root,env=environment,capture_output=True,text=True,timeout=10)
+                self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_explicit_disk_path_overrides_stale_parent_environment(self):
+        with tempfile.TemporaryDirectory(prefix='aide explicit \u4e2d\u6587 ') as name:
+            root=Path(name)
+            df=root/'df'
+            df.write_text('#!/bin/sh\n[ "$2" = / ] || [ "$2" = "$EXPECTED_PROJECT" ] || exit 42\nprintf "fixture 99999999 0 99999999 1%% /\\n"\n')
+            df.chmod(0o700)
+            result=subprocess.run(['bash','-euc','source "$1"; aide_check_disk build "$2"','guard-test',str(ROOT/'scripts/resource-guard.sh'),str(root)],
+                cwd=root,env=dict(os.environ,PROJECT_DIR='/wrong-parent-project',EXPECTED_PROJECT=str(root),PATH=str(root)+os.pathsep+os.environ['PATH']),
+                capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stderr)
+
     def run_guard(self, available, phase='start', memory=6 << 30):
         with tempfile.TemporaryDirectory() as name:
             directory = Path(name)

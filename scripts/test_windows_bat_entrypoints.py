@@ -20,7 +20,7 @@ def check(binary, folder, installation):
     def fixture(name, source=True, exe=binary):
         root=folder/('BAT '+name+' \u4e2d\u6587 space');root.mkdir();(root/'scripts').mkdir()
         for action in ACTIONS:shutil.copy2(ROOT/(action+'.bat'),root)
-        for script in ('windows-entrypoint.bat','windows-bootstrap.bat'):shutil.copy2(ROOT/'scripts'/script,root/'scripts')
+        for script in ('windows-entrypoint.bat','windows-bootstrap.bat','windows-build-proxy.bat'):shutil.copy2(ROOT/'scripts'/script,root/'scripts')
         if source:
             (root/'go.mod').touch();(root/'Dockerfile').touch()
         if exe:shutil.copy2(exe,root/'aide-launcher.exe')
@@ -53,14 +53,47 @@ def check(binary, folder, installation):
     build=folder/'fixture-build.cmd'
     fixture_source=ROOT/'scripts/fixtures/windows-entrypoint.cpp'
     lines=['@echo off','call "'+installation+'\\Common7\\Tools\\VsDevCmd.bat" -arch=x64']
-    for name,define in (('new',''),('old','/DFIXTURE_LEGACY'),('docker','/DFIXTURE_DOCKER')):
+    for name,define in (('new',''),('old','/DFIXTURE_LEGACY'),('docker','/DFIXTURE_DOCKER'),('reg','/DFIXTURE_REG')):
         lines+=['cl /nologo /utf-8 /std:c++17 /EHsc '+define+' "'+str(fixture_source)+'" /Fe:'+name+'.exe','if errorlevel 1 exit /b 1']
     build.write_bytes(('\r\n'.join(lines)+'\r\n').encode('utf-8'))
     subprocess.run(cmd('call "'+str(build)+'"'),cwd=folder,check=True)
     toolbin=folder/'fixture-tools';toolbin.mkdir();shutil.copy2(folder/'docker.exe',toolbin/'docker.exe')
+    shutil.copy2(folder/'reg.exe',toolbin/'reg.exe')
+    from test_windows_build_proxy import check_cmd
+    check_cmd(folder, toolbin)
     calls=folder/'calls.log'
     env=dict(os.environ,AIDE_LAUNCHER_NO_PAUSE='1',FIXTURE_CALLS=str(calls),FIXTURE_NEW_EXE=str(folder/'new.exe'),
         PATH=str(toolbin)+os.pathsep+str(Path(os.environ['SystemRoot'])/'System32'))
+    # The actual root build BAT must carry the resolved environment through
+    # Docker bootstrap, temporary host-stop and the second native build phase.
+    for name,explicit,system,expected in (
+        ('direct',{}, {},{}),
+        ('system',{},dict(FIXTURE_PROXY_ENABLE='1',FIXTURE_PROXY_SERVER='127.0.0.1:18797'),dict(HTTP_PROXY='http://127.0.0.1:18797',HTTPS_PROXY='http://127.0.0.1:18797')),
+        ('explicit',dict(HTTPS_PROXY='http://user:synthetic-secret@proxy.example:18800',NO_PROXY='keep.local'),dict(FIXTURE_PROXY_ENABLE='1',FIXTURE_PROXY_SERVER='ignored.example:80'),dict(HTTPS_PROXY='http://user:synthetic-secret@proxy.example:18800',NO_PROXY='keep.local')),
+    ):
+        root=fixture('proxy-'+name,exe=folder/'old.exe');calls.write_text('')
+        environment={k:v for k,v in env.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY')}
+        environment.update(explicit);environment.update(system)
+        environment.update(FIXTURE_CHECK_PROXY='1',FIXTURE_EXPECT_HTTP=expected.get('HTTP_PROXY',''),
+                           FIXTURE_EXPECT_HTTPS=expected.get('HTTPS_PROXY',''),FIXTURE_EXPECT_NO=expected.get('NO_PROXY',''))
+        result=run(root,'build',args='',env=environment)
+        log=calls.read_text();assert 'native:host-stop' in log and 'native:build' in log and 'proxy:wrong' not in log,log
+        assert log.count('proxy:inherited')>=4,log
+        assert 'synthetic-secret' not in result.stdout+result.stderr
+    for pac in (False,True):
+        root=fixture('proxy-refusal-'+str(pac),exe=folder/'old.exe');calls.write_text('')
+        environment={k:v for k,v in env.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY')}
+        if pac:
+            environment['FIXTURE_PROXY_PAC']='https://pac.example/proxy.pac'
+        else:
+            environment.update(FIXTURE_PROXY_ENABLE='1',FIXTURE_PROXY_SERVER='127.0.0.1:18797',FIXTURE_BUILD_FAIL='1')
+        result=run(root,'build',args='',env=environment,expected=1)
+        assert 'HTTPS_PROXY' in result.stdout
+        assert (root/'aide-launcher.exe').read_bytes()==(folder/'old.exe').read_bytes()
+        if pac:
+            assert not calls.read_text() and 'PAC' in result.stdout
+        else:
+            assert 'auth.docker.io' in result.stdout and 'container proxy' in result.stdout
     # Real host-stop from a new EXE must wait for an older, different EXE.
     root=fixture('previous-controller');state=root/'.aide-data/native';state.mkdir(parents=True)
     old_controller=state/'previous-controller.exe';shutil.copy2(folder/'new.exe',old_controller);calls.write_text('')

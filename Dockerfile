@@ -6,6 +6,7 @@ ARG PYTHON_BASE=python:3.12-slim-bookworm
 FROM node:24-bookworm-slim AS node
 FROM ${PYTHON_BASE} AS python
 FROM golang:1.26-bookworm AS toolchain
+COPY scripts/pip-install-retry.sh /usr/local/lib/aide/pip-install-retry.sh
 COPY --from=python /usr/local /usr/local
 RUN ldconfig
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
@@ -17,7 +18,7 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # runtime while retaining Go and Node for `go run` and plugin hosting.
 FROM toolchain AS dev
 ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
-RUN pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+RUN sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
       python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0 \
     && groupadd -g 1000 aide \
     && useradd -m -u 1000 -g aide aide \
@@ -64,7 +65,7 @@ ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 # not enter the final runtime stage from this build stage.
 RUN if [ "${AIDE_RUN_TESTS}" = "1" ]; then \
       mkdir -p /workspace && \
-      pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+      sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     fi
 RUN --mount=type=cache,target=/root/.cache/go-build \
@@ -93,6 +94,7 @@ RUN --mount=type=cache,target=/toolchain \
 # 把随每次代码/前端改动而变的 COPY 二进制放到最后。这样改 Go/前端只失效最末 COPY 层，
 # pip 层稳定 CACHED、不重复联网下载；运行期镜像自包含、绝不联网 pip。
 FROM ${PYTHON_BASE} AS runtime
+COPY scripts/pip-install-retry.sh /usr/local/lib/aide/pip-install-retry.sh
 # A fresh root is essential: deleting SDK files from toolchain retains its layers.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git openssh-client procps bzip2 \
@@ -123,7 +125,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     else \
       echo "[runtime] 在线模式：从 ${PIP_INDEX_URL} 安装"; \
-      pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+      sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     fi
 
