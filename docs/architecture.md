@@ -39,6 +39,8 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 
 OpenAI 官方端点（`api.openai.com`）在手动和自动模型选择下均自动适配请求格式，不发送其他提供商的 `thinking` 扩展。Chat Completions 路径使用 `reasoning_effort` 和 `max_completion_tokens`；“自动”省略推理强度，“低/中/高”对应 `low/medium/high`。GPT-6.1 Sol 与 GPT-6 Astra 的界面选项为自动、低、中、高、超高（`xhigh`）、最高（`max`），不显示关闭；GPT-6 Sol/Luna 还支持关闭。`/api/config` 的模型条目通过 `reasoningEfforts` 提供档位，界面按所选模型显示，切换模型保留仍支持的档位，否则回到自动（模型默认强度）。历史直接请求关闭时，Sol/Astra 仍兜底为 `low`。显式标记不支持推理的模型不发送推理参数；其他提供商继续使用既有协议。官方 GPT-6 系列请求自动使用 Responses API（`reasoning.effort`、`max_output_tokens`），以支持推理与工具调用共存；流式输出、工具结果和用量统一映射回现有内部协议。请求设 `store:false`，工具轮次保留并重放加密推理输出；其他 Chat Completions 提供商不接收这些协议元数据。
 
+自定义 OpenAI Chat Completions 提供商默认保留原有参数格式。明确支持 `reasoning_effort` 的端点可在模型设置中选择 OpenAI 或 Codex Bridge 格式；两者的 `auto` 均省略字段，`minimal/low/medium/high/xhigh/max/ultra` 原样传递。OpenAI 格式把 `off` 编码为 `none`；Codex Bridge 格式保留 `off`，让桥接服务查询模型能力并选择最低可用档（上游未报告能力时回退到 `low`）。两种显式格式均使用 `max_completion_tokens`。显式标记不支持推理的模型仍不发送该字段。
+
 | 文件 | 责任 |
 | --- | --- |
 | `cmd/aide/main.go` | 启动与退出 |

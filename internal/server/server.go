@@ -57,12 +57,13 @@ type ModelRef struct {
 
 // ModelProvider stores non-secret connection metadata. API keys live only in SecretVault.
 type ModelProvider struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	BaseURL     string             `json:"baseURL"`
-	Protocol    string             `json:"protocol,omitempty"`
-	Keys        []ModelProviderKey `json:"keys,omitempty"`
-	ActiveKeyID string             `json:"activeKeyId,omitempty"`
+	ID                    string             `json:"id"`
+	Name                  string             `json:"name"`
+	BaseURL               string             `json:"baseURL"`
+	Protocol              string             `json:"protocol,omitempty"`
+	ReasoningEffortFormat string             `json:"reasoningEffortFormat,omitempty"`
+	Keys                  []ModelProviderKey `json:"keys,omitempty"`
+	ActiveKeyID           string             `json:"activeKeyId,omitempty"`
 }
 
 type ModelProviderKey struct {
@@ -241,6 +242,9 @@ func normalizeModelProviders(providers []ModelProvider) ([]ModelProvider, error)
 		}
 		if p.Protocol != "openai-compatible" {
 			return nil, fmt.Errorf("提供商 %s 使用了不支持的 API 协议", p.Name)
+		}
+		if p.ReasoningEffortFormat != "" && p.ReasoningEffortFormat != "openai" && p.ReasoningEffortFormat != "codex-bridge" {
+			return nil, fmt.Errorf("提供商 %s 使用了不支持的推理强度格式", p.Name)
 		}
 		if len(p.Keys) > maxProviderKeys {
 			return nil, fmt.Errorf("提供商 %s 最多保存 %d 个密钥", p.Name, maxProviderKeys)
@@ -1911,7 +1915,7 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch in.ReasoningEffort {
-	case "", "auto", "off", "low", "medium", "high", "xhigh", "max":
+	case "", "auto", "off", "minimal", "low", "medium", "high", "xhigh", "max", "ultra":
 	default:
 		fail(w, 400, errors.New("无效推理强度"))
 		return
