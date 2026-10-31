@@ -57,6 +57,64 @@ func TestOpenAIEndpointIsolation(t *testing.T) {
 	}
 }
 
+func TestCustomProviderReasoningEffortOptIn(t *testing.T) {
+	cfg := Settings{
+		BaseURL: "http://127.0.0.1:8787/v1", Model: "gpt-6-luna", ReasoningEffort: "high",
+		Models:         []ModelRef{{ID: "gpt-6-luna", ProviderID: "codex"}},
+		ModelProviders: []ModelProvider{{ID: "codex", BaseURL: "http://127.0.0.1:8787/v1", Protocol: "openai-compatible", ReasoningEffortFormat: "codex-bridge"}},
+	}
+	if got := modelReasoningEfforts(cfg); len(got) != 9 || got[0] != "auto" || got[2] != "minimal" || got[5] != "high" || got[6] != "xhigh" || got[7] != "max" || got[8] != "ultra" {
+		t.Fatal("opted-in provider did not expose aligned Aide choices", got)
+	}
+	for _, stream := range []bool{false, true} {
+		for _, tc := range []struct{ effort, want string }{{"auto", ""}, {"off", "off"}, {"minimal", "minimal"}, {"low", "low"}, {"medium", "medium"}, {"high", "high"}, {"xhigh", "xhigh"}, {"max", "max"}, {"ultra", "ultra"}} {
+			cfg.ReasoningEffort = tc.effort
+			body := buildChatBody(cfg, []Message{{Role: "user", Content: "hello"}}, ProfileParams{MaxTokens: 2048}, nil, stream)
+			if _, ok := body["thinking"]; ok {
+				t.Fatalf("stream=%v effort=%s leaked DeepSeek thinking extension: %#v", stream, tc.effort, body)
+			}
+			if tc.want == "" {
+				if _, ok := body["reasoning_effort"]; ok {
+					t.Fatalf("auto must omit reasoning_effort: %#v", body)
+				}
+			} else if body["reasoning_effort"] != tc.want {
+				t.Fatalf("stream=%v effort=%s got %#v", stream, tc.effort, body["reasoning_effort"])
+			}
+			if body["max_completion_tokens"] != 2048 || body["max_tokens"] != nil {
+				t.Fatalf("OpenAI reasoning request tokens not normalized: %#v", body)
+			}
+		}
+	}
+	cfg.ModelProviders[0].ReasoningEffortFormat = ""
+	cfg.ReasoningEffort = "high"
+	body := buildChatBody(cfg, nil, ProfileParams{}, nil, false)
+	if body["reasoning_effort"] != "high" || body["thinking"] == nil {
+		t.Fatalf("default custom-provider wire behavior changed: %#v", body)
+	}
+	cfg.ModelProviders[0].ReasoningEffortFormat = "openai"
+	cfg.ReasoningEffort = "off"
+	body = buildChatBody(cfg, nil, ProfileParams{}, nil, false)
+	if body["reasoning_effort"] != "none" {
+		t.Fatalf("OpenAI format should encode off as none: %#v", body)
+	}
+}
+
+func TestNormalizeModelProviderReasoningEffortFormat(t *testing.T) {
+	base := ModelProvider{ID: "codex", Name: "Codex Bridge", BaseURL: "http://127.0.0.1:8787/v1", Protocol: "openai-compatible"}
+	base.ReasoningEffortFormat = "openai"
+	if _, err := normalizeModelProviders([]ModelProvider{base}); err != nil {
+		t.Fatal(err)
+	}
+	base.ReasoningEffortFormat = "codex-bridge"
+	if _, err := normalizeModelProviders([]ModelProvider{base}); err != nil {
+		t.Fatal(err)
+	}
+	base.ReasoningEffortFormat = "unsupported"
+	if _, err := normalizeModelProviders([]ModelProvider{base}); err == nil {
+		t.Fatal("unsupported reasoning format was accepted")
+	}
+}
+
 func TestOpenAIReasoningOffModelSupport(t *testing.T) {
 	for _, tc := range []struct{ model, want string }{
 		{"gpt-6.1-sol", "low"},

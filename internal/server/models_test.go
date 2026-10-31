@@ -148,6 +148,55 @@ func TestLegacySingleModelSettingsWriteUsesDefaultProvider(t *testing.T) {
 	}
 }
 
+func TestModelProviderReasoningFormatSettingsRoundTrip(t *testing.T) {
+	a := testApp(t)
+	providerURL := "http://127.0.0.1:8787/v1"
+	w := request(a, "PUT", "/api/settings", map[string]any{
+		"baseURL": providerURL,
+		"modelProviders": []any{map[string]any{
+			"id": "codex", "name": "Codex Bridge", "baseURL": providerURL,
+			"protocol": "openai-compatible", "reasoningEffortFormat": "codex-bridge",
+			"keys": []any{map[string]any{"id": "primary", "label": "Primary"}}, "activeKeyId": "primary",
+		}},
+		"models":      []any{map[string]any{"id": "gpt-6-luna", "providerId": "codex"}},
+		"activeModel": "gpt-6-luna",
+	})
+	requireStatus(t, w, 200)
+
+	w = request(a, "GET", "/api/config", nil)
+	requireStatus(t, w, 200)
+	var cfg struct {
+		ModelProviders []ModelProvider `json:"modelProviders"`
+		Models         []ModelRef      `json:"models"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.ModelProviders) != 1 || cfg.ModelProviders[0].ReasoningEffortFormat != "codex-bridge" {
+		t.Fatalf("provider reasoning format did not round-trip through /api/config: %+v", cfg.ModelProviders)
+	}
+	if len(cfg.Models) != 1 || cfg.Models[0].ProviderID != "codex" {
+		t.Fatalf("model did not retain selected provider: %+v", cfg.Models)
+	}
+	settings, err := a.selectionSettingsLocked(SessionModelSelection{Strategy: "auto", Profile: "default", Model: "gpt-6-luna", ReasoningEffort: "high"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !providerUsesOpenAIReasoningEffort(settings) {
+		t.Fatal("selected model settings did not retain the provider reasoning format")
+	}
+	for _, effort := range []string{"minimal", "ultra"} {
+		settings, err := a.selectionSettingsLocked(SessionModelSelection{Strategy: "auto", Profile: "default", Model: "gpt-6-luna", ReasoningEffort: effort})
+		if err != nil {
+			t.Fatalf("session selection rejected Codex Bridge effort %q: %v", effort, err)
+		}
+		body := buildChatBody(settings, nil, ProfileParams{}, nil, false)
+		if body["reasoning_effort"] != effort {
+			t.Fatalf("session selection failed to pass Codex Bridge effort %q: %#v", effort, body)
+		}
+	}
+}
+
 func TestModelListProxy(t *testing.T) {
 	a := testApp(t)
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -4104,7 +4104,7 @@ $('settings-form').onsubmit = action(async event => {
       const apiKey = draft.providerSecrets.get(`${provider.id}:${key.id}`) || '';
       if (apiKey) providerKeyWrites.push({ providerId: provider.id, keyId: key.id, apiKey });
     }
-    return { id: provider.id, name: provider.name, baseURL: provider.baseURL.trim(), protocol: 'openai-compatible', activeKeyId: provider.activeKeyId || '', keys: (provider.keys || []).map(({ id, label }) => ({ id, label })) };
+    return { id: provider.id, name: provider.name, baseURL: provider.baseURL.trim(), protocol: 'openai-compatible', reasoningEffortFormat: provider.reasoningEffortFormat || '', activeKeyId: provider.activeKeyId || '', keys: (provider.keys || []).map(({ id, label }) => ({ id, label })) };
   });
   const active = draft.models.find(model => model.id === draft.activeModel) || draft.models[0];
   try {
@@ -5759,7 +5759,7 @@ function refreshStrategyUI() {
   reasoningCol.append(el('div', 'strategy-menu-sep', t("推理强度")));
   const curEffort = choice.reasoningEffort || 'auto';
   const reasoningOptions = window.AideSessionModelSelection?.reasoningOptions(choice.model) || ['auto','off','low','medium','high'];
-  for (const [val, name, desc] of [['auto', t("自动"), t("使用模型默认推理强度")], ['off', t("关闭"), t("不启用推理")], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")], ['xhigh', t("超高"), 'xhigh'], ['max', t("最高"), 'max']].filter(([value]) => reasoningOptions.includes(value))) {
+  for (const [val, name, desc] of [['auto', t("自动"), t("使用模型默认推理强度")], ['off', t("关闭"), t("不启用推理")], ['minimal', t("最小"), 'minimal'], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")], ['xhigh', t("超高"), 'xhigh'], ['max', t("最高"), 'max'], ['ultra', t("极高"), 'ultra']].filter(([value]) => reasoningOptions.includes(value))) {
     reasoningCol.append(strategyMenuOption('reasoning', val, name, desc, curEffort === val));
   }
   reasoningCol.append(el('div', 'strategy-menu-sep strategy-parallel-title', t('并行倍率')));
@@ -5896,7 +5896,7 @@ function strategyMenuOption(kind, value, name, desc, selected, disabled = false)
       await api('/settings', { method: 'PUT', body: JSON.stringify({ reasoningEffort: value }) });
       closeStrategyMenu();
       await refreshConfig();
-      const eff = ({auto:t("自动"),off:t("关闭"),low:t("低"),medium:t("中"),high:t("高")}[value] || value);
+      const eff = ({auto:t("自动"),off:t("关闭"),minimal:t("最小"),low:t("低"),medium:t("中"),high:t("高"),ultra:t("极高")}[value] || value);
       toast(t("已切换推理强度：{0}", eff));
       return;
     }
@@ -6247,6 +6247,14 @@ function renderModelList() {
       endpoint.setAttribute('aria-label', `${provider.name} ${t('API 地址')}`);
       endpoint.addEventListener('input', () => { provider.baseURL = endpoint.value; });
       endpointLabel.append(endpoint); body.append(endpointLabel);
+
+      const reasoningLabel = el('label', 'model-provider-field', t('推理参数格式'));
+      const reasoningFormat = el('select');
+      for (const [value, label] of [['', t('默认格式')], ['openai', t('OpenAI reasoning_effort')], ['codex-bridge', t('Codex Bridge reasoning_effort')]]) reasoningFormat.add(new Option(label, value));
+      reasoningFormat.value = provider.reasoningEffortFormat || '';
+      reasoningFormat.setAttribute('aria-label', `${provider.name} ${t('推理参数格式')}`);
+      reasoningFormat.addEventListener('change', () => { provider.reasoningEffortFormat = reasoningFormat.value; });
+      reasoningLabel.append(reasoningFormat); body.append(reasoningLabel);
 
       const keySection = el('div', 'model-key-section');
       const keyHeader = el('div', 'model-subsection-head');
