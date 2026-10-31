@@ -4227,6 +4227,8 @@ window.aideEnglish = {
   "配置已保存，请下载脚本到远程设备运行后检测中继": "Configuration saved. Download and run the script on the remote device, then test the relay.",
   "先保存配置，再下载脚本到远程设备。安装 Python 3.10+ 和 cryptography（python -m pip install cryptography），用 python 脚本文件名.py 运行，再点击检测中继。": "Save first, then download the script to the remote device. Install Python 3.10+ and cryptography (python -m pip install cryptography). Run python script-name.py, then test the relay.",
   "脚本含访问密钥，请保存在共享目录外。Aide 必须能连接中继端口；默认只读，修改共享目录或开放写入后需重新下载部署脚本。": "The script contains an access key; store it outside the shared directory. Aide must reach the relay port. Read-only by default. Download and redeploy after changing the shared directory or enabling writes.",
+  "当前源码构建已满足插件能力要求；正式发行版仍遵守最低版本要求。": "This source build meets the plugin capability requirements; released builds still require the minimum version.",
+  "当前 Aide 源码构建缺少插件要求的能力": "This Aide source build lacks a required plugin capability.",
   "SFTP 连接方式": "SFTP connection",
   "直接连接": "Direct connection",
   "通过远程脚本中继": "Via a remote relay script",

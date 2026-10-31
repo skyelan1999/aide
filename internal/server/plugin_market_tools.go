@@ -141,7 +141,7 @@ func (a *App) browsePluginMarket(ctx context.Context, raw string) string {
 	for _, m := range matches[start:end] {
 		p := m.plugin
 		local, present := installed[p.ID]
-		compatible, reason := marketCompatible(p, version)
+		compatible, reason := marketCompatibleForRuntime(p, version, a.buildRuntimeMode)
 		distribution := p.Distribution
 		if distribution == "" {
 			distribution = "public"

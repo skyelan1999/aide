@@ -232,7 +232,7 @@ func (a *App) routeMatchesWithSchemasLocked(query string, surface pluginRoutingS
 		if len(summary) > 1024 {
 			summary = ""
 		}
-		ok, _ := marketCompatible(p, a.buildVersion)
+		ok, _ := marketCompatibleForRuntime(p, a.buildVersion, a.buildRuntimeMode)
 		items[p.ID] = pluginRouteMatch{ID: p.ID, Name: p.Name, Summary: summary, Score: score, Reasons: reasons, AutoInstallable: ok && p.Distribution != "private" && p.Commerce == nil}
 	}
 	for _, p := range a.pluginRegistry.Plugins {

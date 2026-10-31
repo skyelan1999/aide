@@ -47,7 +47,7 @@
    for(const[k,v]of [[t('版本'),p.version],[t('最低 Aide 版本'),p.minAideVersion],[t('运行依赖'),(p.dependencies||[]).join('；')||t('使用 Aide 内置运行环境')],[t('适用平台'),p.platforms.join(' / ')],[t('许可证'),p.license],[t('权限说明'),p.permissions],[t(p.distribution==='private'?'交付方式':'SHA-256'),p.distribution==='private'?t('私有交付 · 安装包不公开'):p.sha256]])facts.append(node('dt','',k),node('dd','',v));modal.append(facts,node('p','market-trust',p.trustNotice));
    if(p.readme){const d=node('details','market-readme');d.append(node('summary','',t('使用说明')),node('pre','',p.readme));modal.append(d);}
    modal.append(node('p','muted',p.changelog));
-   if(!p.compatible)modal.append(node('p','task-error',t(p.incompatibility)));if(p.installedVersion)modal.append(node('p','muted',t('已安装版本')+' '+p.installedVersion+' · '+t('更新保留设置、启用状态及数据；同版本内容变化不自动覆盖。')));
+   if(!p.compatible)modal.append(node('p','task-error',t(p.incompatibility)));if(p.compatibilityMode==='source-capabilities')modal.append(node('p','muted',t('当前源码构建已满足插件能力要求；正式发行版仍遵守最低版本要求。')));if(p.installedVersion)modal.append(node('p','muted',t('已安装版本')+' '+p.installedVersion+' · '+t('更新保留设置、启用状态及数据；同版本内容变化不自动覆盖。')));
    if(p.distribution==='private'){
     const commerce=p.commerce||{},notice=node('p','market-status'),actions=node('div','dialog-actions');notice.setAttribute('role','status');
     modal.append(node('p','',t(commerce.priceLabel||'价格待公布')),node('p','muted',t('一次购买可永久使用已购版本；大版本升级单独授权。')));
