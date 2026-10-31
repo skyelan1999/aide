@@ -366,9 +366,23 @@ func (a *App) relayMutateSource(src Source, mode, p, destination string) error {
 func (a *App) downloadSourceRelay(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	src, ok := a.findSource(r.PathValue("id"))
-	if !ok || src.Type != "relay" || src.Builtin {
+	if !ok || (src.Type != "relay" && !isSFTPRelay(src)) || src.Builtin {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("中继来源不存在"))
+		return
+	}
+	if isSFTPRelay(src) {
+		config, err := a.sftpRelayConfigLocked(src)
+		a.mu.Unlock()
+		if err != nil {
+			fail(w, http.StatusLocked, err)
+			return
+		}
+		w.Header().Set("Content-Type", "text/x-python; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="aide-sftp-relay-%s.py"`, src.ID))
+		io.WriteString(w, sftpRelayScript(config))
 		return
 	}
 	key, err := a.relayKeyLocked(src.ID)
@@ -395,12 +409,21 @@ func (a *App) probeSourceRelay(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	src, ok := a.findSource(r.PathValue("id"))
 	a.mu.Unlock()
-	if !ok || src.Type != "relay" || !src.Enabled {
+	if !ok || (src.Type != "relay" && !isSFTPRelay(src)) || !src.Enabled {
 		fail(w, 404, errors.New("中继来源不存在或已停用"))
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 12*time.Second)
 	defer cancel()
+	if isSFTPRelay(src) {
+		err := a.probeSFTPRelay(ctx, src)
+		if err != nil {
+			jsonOut(w, 200, map[string]any{"online": false, "error": err.Error()})
+			return
+		}
+		jsonOut(w, 200, map[string]any{"online": true, "rw": src.RW, "transport": "sftp", "message": "中继及目标端口可达；SFTP 认证和主机密钥将在访问目录时检查"})
+		return
+	}
 	_, result, err := a.relayCall(ctx, src, "probe", nil, nil, 0)
 	if err != nil {
 		jsonOut(w, 200, map[string]any{"online": false, "error": err.Error()})

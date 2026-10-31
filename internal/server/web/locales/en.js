@@ -4229,4 +4229,12 @@ window.aideEnglish = {
   "脚本含访问密钥，请保存在共享目录外。Aide 必须能连接中继端口；默认只读，修改共享目录或开放写入后需重新下载部署脚本。": "The script contains an access key; store it outside the shared directory. Aide must reach the relay port. Read-only by default. Download and redeploy after changing the shared directory or enabling writes.",
   "当前源码构建已满足插件能力要求；正式发行版仍遵守最低版本要求。": "This source build meets the plugin capability requirements; released builds still require the minimum version.",
   "当前 Aide 源码构建缺少插件要求的能力": "This Aide source build lacks a required plugin capability.",
+  "SFTP 连接方式": "SFTP connection",
+  "直接连接": "Direct connection",
+  "通过远程脚本中继": "Via a remote relay script",
+  "中继端口": "Relay port",
+  "先保存并部署中继，再从来源浏览目录": "Save and deploy the relay first, then browse the source.",
+  "中继及目标端口可达；SFTP 认证和主机密钥将在访问目录时检查": "Relay and target port reachable; SFTP authentication and host keys are checked when browsing.",
+  "先保存，再下载脚本到能访问 SFTP 服务的远程设备运行。安装 Python 3.10+ 和 cryptography。脚本只连接指定的 SFTP 主机，不含 SFTP 密码或私钥；默认只读，读写锁在 Aide 控制。修改目标主机、端口或目录后需重新部署。": "Save first, then download and run the script on a device that can reach the SFTP server. Install Python 3.10+ and cryptography. The script connects only to the configured SFTP host and contains no SFTP password or private key. Sources default to read-only; Aide controls write access. Redeploy after changing the target host, port or directory.",
+  "脚本含中继访问密钥，请保存在 SFTP 共享目录外并限制文件访问权限。": "The script contains a relay access key. Keep it outside the SFTP shared directory and restrict file permissions.",
 };

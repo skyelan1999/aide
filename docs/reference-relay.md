@@ -53,3 +53,20 @@
 `scripts/test_reference_relay_agent.py` 验证实际内嵌脚本的目录边界、链接/私有文件、写入中断、校验失败和句柄限制；Go `TestReferenceRelay*` 用 API 实际下载并启动脚本，验证 TLS、读写、权限、撤销、知识、提案和断点传输。前端行为回归在 `scripts/source-relay-ui.test.cjs`。Windows 文件边界测试加入原有 Windows CI；尚未通过的目标平台不能据此宣称已验收。
 
 浏览器验收可显式运行 `AIDE_RELAY_BROWSER_FIXTURE=1 go test -v -timeout=26m ./internal/server -run '^TestReferenceRelayBrowserFixture$'`，使用一次性目录和合成令牌，在 `18977` 端口提供真实工作台与中继。该入口仅用于隔离开发环境，测试结束后退出并清理；不读取真实会话、不调用模型。当前任务验收与未验证项见 [任务账本](tasks/reference-relay-20261030.json)。
+
+
+## SFTP 脚本中继（#655）
+
+SFTP 来源可选择“直接连接”或“通过远程脚本中继”。中继设备只需能够访问目标 SFTP 服务；SFTP 主机名按该设备所在网络填写。Aide 必须能访问中继主机及其监听端口，端口默认 `8768`。
+
+1. 添加来源，类型选 SFTP，连接方式选“通过远程脚本中继”。填写目标 SFTP 主机/端口、用户名、密码或私钥、远程目录，再填写中继主机/端口。保持读写复选框未选中即为只读；中继密钥留空自动生成。
+2. 先保存来源，再在来源条目下载 `aide-sftp-relay-来源ID.py`。脚本包含独立的中继访问密钥；放在 SFTP 共享目录之外并限制读取权限。脚本不含 SFTP 密码或 SSH 私钥。
+3. 在中继设备安装 Python 3.10+ 和 cryptography（`python -m pip install cryptography`），前台运行 `python aide-sftp-relay-来源ID.py`。默认监听所有 IPv4 接口；中继地址为 IPv6 字面值时监听 IPv6。脚本不自动修改防火墙或安装后台服务。
+4. 点击“检测中继”，检查 TLS 身份、挑战证明、固定部署配置和目标端口可达性；打开来源目录才实际执行 SSH 主机密钥与 SFTP 认证。检测成功不代表 SFTP 登录成功。编辑器中的草稿目录选择暂不支持未部署中继；部署后从来源浏览目录。
+5. 需要写入时在 Aide 打开读写锁；仍须满足 SFTP 账户权限与既有提案/审批规则。SFTP 中继采用现有 SFTP 读写控制，不使用本地目录中继脚本的 `rw` 开关。改变目标主机、端口、目录或中继监听端口后重新下载部署；更换 SSH 账号、密码、私钥及 Aide 读写锁无需重发脚本。
+
+实现保留 `Source.type="sftp"`，可选公开配置为 `config.relayHost / relayPort`，独立密钥通过 `secrets[id].relayKey` 更新。SFTP 密码、SSH 私钥和中继密钥合并存入既有每来源凭据保险库，部分更新保留其他字段；普通来源列表不回传密钥。脚本下载与探测复用上表 API。SSH 连接使用原目标身份与既有主机密钥策略（首次接受并记录，后续变更拒绝），通过私有临时 ProxyCommand 客户端传输；临时文件权限 0600，连接建立或失败返回后清理。目标/中继/目录及凭据变化会关闭旧 SSH 主连接。
+
+外层中继采用独立协议域的 TLS 1.3、密钥派生的 Ed25519 身份固定和每连接挑战 HMAC；认证完成前不发送 SSH 凭据。远程脚本只连接内嵌的单个目标，不从请求接收目标地址；SFTP 协议仍由 Aide 的 OpenSSH 客户端与原服务处理。最多 8 个并发连接，握手超时 15 秒，目标连接超时 10 秒，空闲转发超时 60 秒（既有 SSH 保活每 15 秒）。中继检测只建立目标 TCP 连接后关闭，不执行 SFTP 操作。
+
+`TestSFTPRelayActualSSH` 使用 API 实际下载启动代理，并与临时 SSH/SFTP 服务交互；覆盖密码/私钥认证、列表/读/写、只读拒绝、错误中继身份、过期部署和 SSH 主机密钥更换。`TestSFTPRelayVaultPatch` 验证三字段凭据部分更新及锁定保护；`TestSFTPRelayRejectMalformedExistingCredentials` 验证启用中继不覆盖损坏的既有密文。前端回归扩展在 `scripts/source-relay-ui.test.cjs`。实际浏览器可用 `AIDE_SFTP_RELAY_BROWSER_FIXTURE=1 go test -v -timeout=25m ./internal/server -run '^TestSFTPRelayBrowserFixture$'`，仅临时数据，在 `18978` 端口提供工作台。

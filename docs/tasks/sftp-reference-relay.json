@@ -1,0 +1,91 @@
+{
+  "id": "sftp-reference-relay",
+  "request": "stfp也需要支持远程中继模式",
+  "baseline": "7a1e4b6766fe5f32cdaf5c14204738679218d9fc",
+  "initial_status": "",
+  "acceptance": [
+    "SFTP supports direct and script-relay modes; defaults to read-only and preserves AI visibility and write controls.",
+    "A downloaded bridge on a remote device connects only to the configured SFTP host/port; Aide retains SSH authentication and host-key verification.",
+    "Relay key generated separately, privately persisted and never returned in source listing; download/probe authenticated and no-store.",
+    "Actual generated-agent connection, SSH/SFTP file listing/read/write, read-only denial, wrong relay identity/configuration and changed SSH host key verified with disposable fixtures.",
+    "UI save/edit/download/probe works; no user data or running production instance modified.",
+    "User follow-up: test after completion; real chunked upload/restart/resume/publish, direct and ZIP download, source-to-workspace copy and re-locked upload denial verified. Local deployment after user follow-up must preserve data and visibly expose the selector on localhost:9999."
+  ],
+  "scope": [
+    "Source configuration/credentials, SSH ProxyCommand bridge, downloaded Python agent, UI/localization, focused integration tests and docs."
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User confirmed a downloadable script on a device with access to the SFTP service; not an SSH jump-host feature.",
+      "evidence": [
+        "User confirmation: 是，通过脚本中转连接 SFTP（推荐）"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Pinned TLS/challenge tunnel carries existing OpenSSH/SFTP protocol to one embedded target. Independent relay key; original SSH host and authentication unchanged.",
+      "evidence": [
+        "internal/server/source_sftp_relay.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "SFTP direct/relay choice; separate fixed-target TLS bridge, authenticated downloadable script/probe, OpenSSH ProxyCommand and independent third credential field with partial-update preservation.",
+      "evidence": [
+        "internal/server/source_sftp_relay.go",
+        "internal/server/relay/sftp_agent.py",
+        "internal/server/relay/sftp_proxy.py",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "21 top-level focused Go race tests passed, including real generated-agent SSH/SFTP password/key authentication, listing/read/write, read-only denial, wrong relay identity, stale deployment and SSH host-key change. Existing relay regression and vault partial/locked/malformed tests passed. Node UI regression and quick gate passed. Safari fixture: probe, list/read, unlock, editor save, actual SFTP target file readback, relock and disabled Save, source editor configuration/blank-secret retention verified. Windows remote-agent execution and real external SFTP deployment NOT_RUN. Additional ~4 MiB actual SFTP write/readback race test passed. Follow-up real transfer path passed: 8MiB+37-byte out-of-order chunked upload, transfer-manager restart/resume, target SHA-256, direct/ZIP download, SFTP-to-workspace copy and relocked upload rejection (39.72s race test).",
+      "evidence": [
+        ".agent-state/sftp-relay/go-race-final.log",
+        ".agent-state/sftp-relay/ui-tests-final.log",
+        ".agent-state/sftp-relay/quick.log",
+        ".agent-state/sftp-relay/safari-config.png",
+        ".agent-state/sftp-relay/safari-readonly.png",
+        "internal/server/source_sftp_relay_test.go",
+        ".agent-state/sftp-relay/go-bulk.log",
+        ".agent-state/sftp-relay/transfer-retest.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Deployment steps, endpoint/probe semantics, SSH identity preservation, read/write policy and API fields documented.",
+      "evidence": [
+        "docs/reference-relay.md",
+        "docs/reviews/2026-10-31-sftp-reference-relay-655.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned Safari test tab closed; user tab/form and live 9999 instance preserved. Disposable fixture container stopped; test logs/screenshots retained. No global Docker cleanup or user-data changes.",
+      "evidence": [
+        "Browser returned to unchanged user localhost:9999 source form",
+        "docker stop aide-sftp-browser"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "PR #656 implementation commit 7bdf2d90 quick/go/windows/gate SUCCESS. Local candidate applied with per-file hashes, previous image/config rollback point and original data mounts; build exit0, verify pass, HTTPS status ok and exact served UI match. After user unlock, Safari localhost:9999 visibly shows SFTP connection selector, remote-script mode, relay host/port/key and default read-only. New page retained at configuration for user; no source saved. Remote main review/merge and public release remain pending.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/656"
+      ]
+    }
+  },
+  "release_authorization": "User follow-up: 没看到, with screenshot of current localhost:9999 old SFTP form; interpreted as reversible local update to make requested feature available. No admin merge, tag or publication.",
+  "rollback": "Original source .agent-state/sftp-relay-deploy/receipt.json records owned file hashes and previous image; env.before stores configuration privately. Keep persistent data mounts unchanged and restore only owned files when hashes match. Pre-existing source/launcher edits are outside this feature rollback.",
+  "handoff": "Local 9999 candidate is installed and healthy; Safari actual localhost:9999 SFTP relay selector and all fields verified after user unlock. Page left in relay configuration; no real source/credential was added. Existing data, unrelated source edits and rollback image/config preserved. Remote main remains unmerged; remote Windows/external SFTP acceptance not run.",
+  "issue": 655,
+  "pull_request": "https://github.com/skyelan1999/aide/pull/656",
+  "local_deployment": {
+    "status": "pass",
+    "candidate": "7bdf2d908078399beb6383c5aa79be64b2546ea7",
+    "receipt": "Original source .agent-state/sftp-relay-deploy/receipt.json",
+    "browser": "Safari https://localhost:9999/; SFTP → 通过远程脚本中继; relay host, port8768, private key input and unchecked RW visible. Existing lock screen unlocked by user. No source configuration saved."
+  }
+}

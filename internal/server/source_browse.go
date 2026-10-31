@@ -25,6 +25,10 @@ func (a *App) browseSFTPSource(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	if in.Config.RelayHost != "" {
+		fail(w, 400, errors.New("先保存并部署中继，再从来源浏览目录"))
+		return
+	}
 	if in.Path == "" {
 		in.Path = "."
 	}
