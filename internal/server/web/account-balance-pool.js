@@ -12,6 +12,9 @@
     const limit=Math.max(1,ceiling,threshold,value);
     return {level:Math.max(0,Math.min(100,value/limit*100)),line:Math.max(0,Math.min(100,threshold/limit*100)),low:value<=threshold,empty:value<=0};
   }
+  function quotas(response) {
+    return (Array.isArray(response?.quota_infos)?response.quota_infos:[]).filter(q=>q&&typeof q.id==='string'&&typeof q.remainingPercent==='number'&&Number.isFinite(q.remainingPercent)&&q.remainingPercent>=0&&q.remainingPercent<=100);
+  }
   function preference(value,currency) {
     const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1e9;
     return {threshold:valid(value?.threshold)?value.threshold:currency==='USD'?2:10,ceiling:valid(value?.ceiling)&&value.ceiling>0?value.ceiling:currency==='USD'?20:100};
@@ -21,9 +24,9 @@
     const doc=root.document, initialScope=scope();
     const node=(tag,cls,text)=>{const n=doc.createElement(tag);n.className=cls;if(text!==undefined)n.textContent=text;return n;};
     const button=(text,fn)=>{const b=node('button','balance-pool-action',text);b.type='button';b.onclick=fn;return b;};
-    const pool=node('section','account-balance-pool');pool.setAttribute('aria-label',t('账户余额'));
+    const pool=node('section','account-balance-pool');pool.setAttribute('aria-label',t('账户余额与额度'));
     const header=node('div','balance-pool-header'), copy=node('div','');
-    copy.append(node('h4','',t('账户余额')),node('p','balance-pool-caption',t('API Key 账户池 · 每分钟自动刷新')));
+    copy.append(node('h4','',t('账户余额与额度')),node('p','balance-pool-caption',t('API Key 账户池 · 每分钟自动刷新')));
     const summary=node('div','balance-pool-summary');summary.setAttribute('role','status');summary.setAttribute('aria-live','polite');
     const refresh=button(t('刷新余额'),()=>run());header.append(copy,refresh);
     const cards=node('div','balance-pool-grid');
@@ -34,7 +37,7 @@
       const top=node('div','balance-account-head'), title=node('div','');
       title.append(node('strong','',provider.name||provider.id),node('span','balance-account-key',key.label||key.id));
       const badge=node('span','balance-account-badge',t('等待刷新'));top.append(title,badge);
-      const body=node('div','balance-account-body'), footer=node('div','balance-account-updated',t('尚未更新'));
+      const source=node('div','balance-pool-caption'),body=node('div','balance-account-body'), footer=node('div','balance-account-updated',t('尚未更新'));
       const credentials=node('details','balance-credentials');credentials.hidden=true;
       credentials.append(node('summary','',t('配置 RAM 费用凭证')));
       credentials.append(node('p','balance-pool-caption',t('仅绑定此 API Key。使用可查询账户余额的 RAM AccessKey，与模型 API Key 分开保存。')));
@@ -46,7 +49,7 @@
       const form=node('div','balance-credentials-form'), ak=node('input',''),sk=node('input','');
       for(const [input,label] of [[ak,'AccessKey ID'],[sk,'AccessKey Secret']]) {input.type='password';input.placeholder=label;input.setAttribute('aria-label',(provider.name||provider.id)+' / '+(key.label||key.id)+' / '+label);input.autocomplete='new-password';input.spellcheck=false;}
       const error=node('p','balance-pool-error','');error.setAttribute('role','status');
-      const account={provider,key,card,badge,body,footer,credentials,error,last:null,updated:0,stale:false,gauges:[],preferences:{}};accounts.push(account);
+      const account={provider,key,card,badge,body,footer,source,credentials,error,last:null,updated:0,stale:false,gauges:[],preferences:{}};accounts.push(account);
       const write=async clear=>{
         if(!live())return;
         if(!clear&&(!ak.value.trim()||!sk.value.trim())) {error.textContent=t('请填写完整费用凭证');return;}
@@ -57,7 +60,7 @@
         finally{save.disabled=remove.disabled=false;}
       };
       const save=button(t('保存费用凭证'),()=>write(false)),remove=button(t('清除费用凭证'),()=>write(true));
-      form.append(ak,sk,save,remove);credentials.append(form);card.append(top,body,footer,credentials,error);cards.append(card);
+      form.append(ak,sk,save,remove);credentials.append(form);card.append(top,source,body,footer,credentials,error);cards.append(card);
     }
     if(!accounts.length) cards.append(node('p','balance-pool-caption',t('尚无 API Key 账户，请先在模型设置中添加。')));
     const controller=new AbortController();let disposed=false,busy=false,timer=null;
@@ -69,7 +72,7 @@
       if(!live())return;
       const low=accounts.filter(a=>!a.stale&&a.gauges.some(g=>g.low)).length;
       const ready=accounts.filter(a=>!a.stale&&a.last).length;
-      summary.textContent=t('{0} 个 Key 账户 · {1} 个已连接 · {2} 个低余额',accounts.length,ready,low);
+      summary.textContent=t('{0} 个 Key 账户 · {1} 个已连接 · {2} 个余额或额度不足',accounts.length,ready,low);
       summary.dataset.warning=String(low>0);
     };
     function render(account) {
@@ -97,9 +100,18 @@
         controls.append(apply);
         row.append(tank,detail);account.body.append(row,controls);
       }
-      const critical=account.gauges.some(g=>g.empty),low=account.gauges.some(g=>g.low);
+      for(const q of quotas(account.last)) {
+        const row=node('div','balance-water-row'),tank=node('div','balance-water-tank');tank.setAttribute('aria-hidden','true');
+        const water=node('div','balance-water');water.style.height=q.remainingPercent+'%';water.hidden=q.remainingPercent===0;tank.append(water);
+        const detail=node('div','balance-water-detail');
+        detail.append(node('strong','',String(q.label||q.id)),node('div','balance-amount',q.remainingPercent.toFixed(1)+'%'),node('span','balance-currency',t('账户共享额度 · 剩余百分比')));
+        detail.append(node('p','balance-pool-caption',q.windowDurationMins?t('窗口 {0} 分钟',q.windowDurationMins):t(q.window==='secondary'?'次要窗口':'主要窗口')));
+        if(q.resetsAt)detail.append(node('p','balance-pool-caption',t('重置于 {0}',new Date(q.resetsAt*1000).toLocaleString())));
+        row.append(tank,detail);account.body.append(row);account.gauges.push(gauge(q.remainingPercent,10,100));
+      }
+      const isQuota=account.last?.kind==='quota',critical=account.gauges.some(g=>g.empty),low=account.gauges.some(g=>g.low);
       account.card.dataset.state=account.stale?'stale':critical?'empty':low?'low':'ready';
-      account.badge.textContent=account.stale?t('数据已过期'):critical?t('余额耗尽'):low?t('低于报警线'):t('余额正常');
+      account.badge.textContent=account.stale?t('数据已过期'):critical?t(isQuota?'额度耗尽':'余额耗尽'):low?t(isQuota?'额度不足':'低于报警线'):t(isQuota?'额度正常':'余额正常');
     }
     async function load(account) {
       if(!available())return;
@@ -109,11 +121,13 @@
         const result=await api('/balance?'+query,{signal:controller.signal});if(!available())return;
         // A response for another key must never be displayed in this card.
         if(result.supported!==false&&(result.providerId!==account.provider.id||result.keyId!==account.key.id))throw new Error('identity mismatch');
+        account.source.textContent=typeof result.supporter==='string'?t('来自插件：{0}',result.supporter.slice(0,128)):'';
+        if(result.kind==='quota'&&result.checkedAt&&(!Number.isFinite(Date.parse(result.checkedAt))||Math.abs(Date.now()-Date.parse(result.checkedAt))>120000))throw new Error('stale quota');
         account.credentials.hidden=!result.billingCredentialsRequired&&result.balanceAuth!=='aliyun-rpc';
         account.updated=Date.now();account.stale=false;
-        if(result.supported===false||result.billingCredentialsRequired||!amounts(result).length) {
-          account.last=null;account.gauges=[];account.card.dataset.state='pending';account.badge.textContent=result.supported===false?t('无支持插件'):result.billingCredentialsRequired?t('待配置 RAM'):t('余额不可查');
-          account.body.replaceChildren(node('p','balance-pool-caption',result.billingCredentialsRequired?t('展开下方配置，绑定此 Key 的 RAM 费用凭证。'):t('此账户暂时无法返回余额，不计作零余额。')));
+        if(result.supported===false||result.billingCredentialsRequired||(!amounts(result).length&&!quotas(result).length)) {
+          account.last=null;account.gauges=[];account.card.dataset.state='pending';account.badge.textContent=result.supported===false?t(result.pricingSupported?'仅支持计价':'无支持插件'):result.upgradeRequired?t('待更新宿主'):result.billingCredentialsRequired?t('待配置 RAM'):t(result.kind==='quota'?'额度不可查':'余额不可查');
+          account.body.replaceChildren(node('p','balance-pool-caption',result.upgradeRequired?t('额度接口不可用，请更新对应插件的宿主组件。'):result.pricingSupported?t('插件已提供计价，此账户没有余额查询能力。'):result.billingCredentialsRequired?t('展开下方配置，绑定此 Key 的 RAM 费用凭证。'):t('此账户暂时无法返回余额或额度，不计作零值。')));
         } else {account.last=result;render(account);}
         account.footer.textContent=t('更新于 {0}',new Date(account.updated).toLocaleTimeString());
       }catch(e){if(!live()||controller.signal.aborted)return;account.stale=true;if(account.last)render(account);else{account.card.dataset.state='stale';account.badge.textContent=t('更新失败');account.body.replaceChildren(node('p','balance-pool-caption',t('查询失败，稍后重试；未将未知余额记为零。')));}account.footer.textContent=account.updated?t('上次更新 {0}',new Date(account.updated).toLocaleTimeString()):t('尚未更新');}
@@ -135,6 +149,6 @@
     if(dialog)visibilityObserver.observe(dialog,{attributes:true,attributeFilter:['class']});
     timer=setTimeout(tick,300);return pool;
   }
-  const api={amounts,gauge,preference,create};
+  const api={amounts,quotas,gauge,preference,create};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.AideAccountBalancePool=api;
 })(typeof window==='object'?window:globalThis);

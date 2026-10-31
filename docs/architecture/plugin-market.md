@@ -92,3 +92,9 @@ Aide「插件」侧栏增加「已安装 / 市场」。保留上传、设置、�
 当前已实现源码能力 `provider-support-usd-v1`，其回归覆盖 USD 档案校验、缓存价/阶梯和 USD/CNY 分币种计账。目录、人工安装、AI 发现/路由及目录驱动升级使用同一规则；允许源码替代时 API 返回 `compatibilityMode=source-capabilities`，界面说明正式发行版最低版本仍适用。
 
 OpenAISupporter 的目录改动只增加该显式条件，正式 RC1 仍不兼容，原始 ZIP/SHA-256 保持不变。宿主与市场元数据两项更改均到位才会显示允许安装。不得通过改市场缓存、降低 RC2 门槛或将 RC1 标成 RC2 来伪造兼容。
+
+## Plugin account quotas
+
+The provider-support data catalog may declare local HTTP providers with an explicit localhost, 127.0.0.1 or host.docker.internal host, scheme=http and numeric port. Legacy declarations remain HTTPS/443 only. A quota-only catalog has no model prices or currency and must declare a balance path (same origin as the selected provider), auth=model-bearer and format=quota-windows. Absolute endpoints remain governed by the legacy HTTPS rules; local providers require the relative quota path. Plugin JS never receives credentials. The host performs a GET with the selected provider key, refuses redirects and returns only allowlisted quota windows. Metadata is revalidated after an in-flight call; disabled or replaced plugins cannot retain results.
+
+Quota windows carry remainingPercent, windowDurationMins and resetsAt; they never become a currency balance. Missing/invalid data remains unavailable. Pricing-only catalogs are labelled separately from missing plugins. Source hosts advertise provider-account-quota-v1, and matching marketplace entries must require this feature as well as declaring their version/source compatibility floors.

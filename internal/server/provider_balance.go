@@ -111,11 +111,27 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	}
 	c, owner := a.providerSupportLocked(p.BaseURL)
 	if c == nil || c.Balance == nil {
+		out := map[string]any{"supported": false, "balance_infos": []any{}}
+		if c != nil {
+			out["pricingSupported"] = len(c.Models) > 0
+			out["supporter"] = c.Name
+		}
 		a.mu.Unlock()
-		jsonOut(w, 200, map[string]any{"supported": false, "balance_infos": []any{}})
+		jsonOut(w, 200, out)
 		return
 	}
 	b := *c.Balance
+	declared, revision, scopePath, workspaceRevision := b, c.Revision, a.pluginsPath, a.wsRevision
+	if b.Path != "" {
+		u, err := url.Parse(p.BaseURL)
+		if err != nil || validateSupportQuotaPath(&b) != nil {
+			a.mu.Unlock()
+			fail(w, 400, errors.New("invalid plugin quota target"))
+			return
+		}
+		u.Path, u.RawPath = b.Path, ""
+		b.Endpoint = u.String()
+	}
 	name := c.Name
 	pluginID := owner.ID
 	var key string
@@ -123,7 +139,7 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	if b.Auth == "model-bearer" {
 		endpointURL, endpointErr := url.Parse(b.Endpoint)
 		providerURL, providerErr := url.Parse(p.BaseURL)
-		if endpointErr != nil || providerErr != nil || !strings.EqualFold(endpointURL.Hostname(), providerURL.Hostname()) {
+		if endpointErr != nil || providerErr != nil || !strings.EqualFold(endpointURL.Hostname(), providerURL.Hostname()) || (b.Path != "" && (endpointURL.Scheme != providerURL.Scheme || endpointURL.Host != providerURL.Host)) {
 			a.mu.Unlock()
 			fail(w, 400, errors.New("balance credentials cannot cross provider hosts"))
 			return
@@ -176,6 +192,18 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
+		if resp.StatusCode == 404 && b.Format == "quota-windows" {
+			a.mu.Lock()
+			currentCatalog, current := a.providerSupportLocked(p.BaseURL)
+			active := current != nil && current.ID == pluginID && currentCatalog.Revision == revision && currentCatalog.Balance != nil && *currentCatalog.Balance == declared && a.pluginsPath == scopePath && a.wsRevision == workspaceRevision
+			a.mu.Unlock()
+			if !active {
+				fail(w, 409, errors.New("provider balance extension changed"))
+				return
+			}
+			jsonOut(w, 200, map[string]any{"supported": true, "kind": "quota", "upgradeRequired": true, "providerId": p.ID, "keyId": kid, "supporter": name, "quota_infos": []any{}})
+			return
+		}
 		fail(w, 502, fmt.Errorf("balance service returned HTTP %d", resp.StatusCode))
 		return
 	}
@@ -191,8 +219,8 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	}
 	// Do not apply an in-flight result after disabling/uninstalling its provider extension.
 	a.mu.Lock()
-	_, current := a.providerSupportLocked(p.BaseURL)
-	active := current != nil && current.ID == pluginID
+	currentCatalog, current := a.providerSupportLocked(p.BaseURL)
+	active := current != nil && current.ID == pluginID && currentCatalog.Revision == revision && currentCatalog.Balance != nil && *currentCatalog.Balance == declared && a.pluginsPath == scopePath && a.wsRevision == workspaceRevision
 	a.mu.Unlock()
 	if !active {
 		fail(w, 409, errors.New("provider balance extension changed"))
@@ -207,6 +235,9 @@ func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, out)
 }
 func normalizeBalance(raw []byte, format string) (map[string]any, error) {
+	if format == "quota-windows" {
+		return normalizeQuotaWindows(raw)
+	}
 	if format == "balance-infos" {
 		var src struct {
 			Available bool `json:"is_available"`
