@@ -1,3 +1,5 @@
+Final status: merged, market published, local 9999 installed/enabled and four USD quote checks passed. Earlier sections preserve the pre-merge checkpoint; the final acceptance supplement supersedes its pending deployment status.
+
 # OpenAISupporter 源码兼容验收 · Issue #661
 
 问题：源码构建已包含 USD 支持，但版本身份仍为 0.1.17.6 RC1。市场为避免不含 USD 的已发布 RC1 安装该插件，将最低发行版本设为 RC2，因此也拦截了具备能力的源码构建。
@@ -17,3 +19,15 @@
 ## 交付边界
 
 宿主修复与市场目录需配套合并。当前用户 9999 未部署本修复，未变更真实来源、会话或插件。未调用真实 OpenAI 账户或付费模型，未升版、打 tag 或发布新 Aide。测试标签和独立服务已关闭；CI 在 PR 上单独执行。Issue 在合并与发布验收完成前保持打开。
+
+## Authorized merge and actual local acceptance
+
+User authorized both admin merges, catalog publication and local acceptance. Host #663 merged as 9af5077f29ed1055a6981fd2e122cc436406d57a after quick/go/windows/launcher/gate all succeeded. Catalog #29 merged as 3fd69a3f6936133fe83864989b5c24fc3e9b5ef9; Pages run41155991922 succeeded. Public catalog and actual 6430-byte ZIP with the original SHA-256 reverified.
+
+Nine code files were checked against their expected baseline, backed up and applied from the merged tree. The original build.command completed with exit0 and started the new runtime. verify.command: six checks pass, buildRequired=false. Runtime image: sha256:265e6fc2affb25c20e268a226fcf434c446a15adab007fff802e4358cd2f95fc. Container healthy; healthz status=ok. Existing integrity=degraded retained. Mounts and unrelated local-file hashes matched the before snapshot. The original dirty checkout was preserved rather than reset or forcibly advanced.
+
+Actual Safari https://localhost:9999: source compatibility explanation and enabled install button observed; marketplace install succeeded; installed view showed OpenAISupporter v0.1.0 enabled/in use. Four exact model token-pricing GETs returned official=true, USD, and the catalog display name from the unchanged published ZIP. No model requests were initiated.
+
+The combined provider/model snapshot changed while the user actively used the app; it is not evidence that every model selection stayed unchanged. This task made no settings writes or attempted settings restoration. Local file/mount preservation assertions passed.
+
+Final local evidence: .agent-state/openai-compat-deploy/runtime.json, verify.json, pricing-after.json, safari-compatible.png and safari-installed.png. One current workbench tab retained as handoff; user tabs were not closed.

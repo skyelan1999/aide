@@ -1,0 +1,83 @@
+{
+  "id": "sync-main-20261030",
+  "request": "帮我把aide拉到mian最新",
+  "baseline": "1d01dc56927467213b62d686b2d11316fcd5f22b",
+  "initial_status": "M start.command\n?? docs/reviews/2026-10-30-issue-close-main/\n?? docs/tasks/issue-close-main-20261030.json",
+  "acceptance": [
+    "Checked-out branch is main and HEAD equals freshly fetched origin/main.",
+    "Original local edits and untracked records remain recoverable with verified content.",
+    "No image build, service restart, push, release, or runtime-data modification."
+  ],
+  "scope": [
+    "Local Git branch and remote-tracking references",
+    "Preserve pre-existing start.command edit and untracked records",
+    "docs/tasks/sync-main-20261030.json",
+    ".agent-state/sync-main-20261030/ local backup and receipts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested latest main; typo interpreted from repository branch naming. Source synchronization only.",
+      "evidence": [
+        "Original user request recorded.",
+        "Baseline Git status and linked worktrees inspected."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Fast-forward main by 20 commits; temporarily stash only the existing tracked launcher edit, then reapply it. Untracked records do not collide with origin/main.",
+      "evidence": [
+        "git fetch origin main completed.",
+        "git rev-list --left-right --count main...origin/main = 0 20.",
+        "origin/main = 7a1e4b6766fe5f32cdaf5c14204738679218d9fc.",
+        "Remote start.command change removes legacy image auto-start selection; it is separate from the local launcher override."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Switched from feat/codex-plugin-host-615 to main, fast-forwarded local main by 20 commits, and restored the exact pre-existing launcher override.",
+      "evidence": [
+        "git switch main; git merge --ff-only --quiet origin/main; git stash apply <recorded temporary stash>.",
+        "HEAD = 7a1e4b6766fe5f32cdaf5c14204738679218d9fc"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Local main equals both origin/main and the GitHub main ref. Existing launcher edit preserved exactly; two pre-existing untracked files retain their SHA-256 hashes.",
+      "evidence": [
+        "git ls-remote origin refs/heads/main = 7a1e4b6766fe5f32cdaf5c14204738679218d9fc",
+        "git diff --check: PASS",
+        "git diff --cached --exit-code: PASS",
+        "bash -n start.command: PASS",
+        ".agent-state/sync-main-20261030/verification.json",
+        "Application tests and live runtime acceptance: NOT_RUN, because no product changes or deployment were requested."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded scope, preservation, commands, source identity, and runtime limits in this task record.",
+      "evidence": [
+        "docs/tasks/sync-main-20261030.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed only this task’s temporary stash after verified restoration. Retained intentional local backups and all pre-existing records; no reset or clean.",
+      "evidence": [
+        ".agent-state/sync-main-20261030/initial-manifest.json",
+        ".agent-state/sync-main-20261030/files/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User requested source synchronization only. No build, push, release, deployment, Docker pull, or service restart.",
+      "evidence": [
+        "Original user request and acceptance scope."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Original branch: feat/codex-plugin-host-615; exact original files and local patch are retained under .agent-state/sync-main-20261030/. No reset or clean is permitted.",
+  "handoff": "Complete: checked-out main matches GitHub main at 7a1e4b6766fe5f32cdaf5c14204738679218d9fc. Local start.command launcher override and both original untracked records preserved. This task record is a new untracked file. Existing service/runtime state unchanged; no runtime acceptance or release performed.",
+  "interpretation": "mian is interpreted as main; update source checkout without building, deploying, restarting services, or touching Docker."
+}
