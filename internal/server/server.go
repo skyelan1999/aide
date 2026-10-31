@@ -505,6 +505,8 @@ type App struct {
 	profileState              ProfilesState
 	version                   string
 	pluginsPath               string
+	pageBalances              map[string]*pageBalanceRecord
+	pageBalanceClient         *http.Client
 	pluginRegistry            pluginRegistry
 	nativeEditorAdmission     sync.RWMutex
 	nativeEditorOpening       bool
@@ -1152,6 +1154,7 @@ func New(work, reference, data string) (*App, error) {
 	a.background(func() { a.reminderLoop(a.bgCtx) })
 	a.background(func() { a.mixSoulPulseLoop(a.bgCtx) })
 	a.background(func() { a.assistantResultLoop(a.bgCtx) })
+	a.background(func() { a.pageBalanceLoop(a.bgCtx) })
 	a.startMessagesIfEnabled()
 	return a, nil
 }
@@ -1532,6 +1535,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PUT /api/plugin-routing", a.pluginRoutingAPI)
 	mux.HandleFunc("GET /api/plugin-routing/search", a.pluginRoutingSearch)
 	mux.HandleFunc("GET /api/plugin-market", a.marketCatalogAPI)
+	mux.HandleFunc("POST /api/provider-page-balance", a.providerPageBalance)
 	mux.HandleFunc("POST /api/plugin-license/device", a.pluginLicenseDeviceAPI)
 	mux.HandleFunc("POST /api/plugin-market/{id}/install", a.marketInstall)
 	mux.HandleFunc("GET /api/plugin-market/{id}/download", a.marketDownload)

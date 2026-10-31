@@ -42,11 +42,16 @@ type supportPeak struct {
 	Holidays    []string `json:"holidays"`
 }
 type supportBalance struct {
-	Endpoint  string `json:"endpoint"`
-	Path      string `json:"path,omitempty"`
-	Auth      string `json:"auth"`
-	TotalPath string `json:"totalPath"`
-	Format    string `json:"format"`
+	Endpoint           string `json:"endpoint"`
+	Path               string `json:"path,omitempty"`
+	Auth               string `json:"auth"`
+	TotalPath          string `json:"totalPath"`
+	Format             string `json:"format"`
+	PageURL            string `json:"pageURL,omitempty"`
+	Label              string `json:"label,omitempty"`
+	AccountMarker      string `json:"accountMarker,omitempty"`
+	IdentityLinkPrefix string `json:"identityLinkPrefix,omitempty"`
+	RefreshSeconds     int    `json:"refreshSeconds,omitempty"`
 }
 type supportCatalog struct {
 	Protocol  int               `json:"protocol"`
@@ -128,6 +133,12 @@ func validateSupportCatalog(raw []byte) (*supportCatalog, error) {
 		}
 	}
 	if b := c.Balance; b != nil {
+		if b.Auth == "browser-page" || b.Format == "page-balance" {
+			if err := validatePageBalance(b); err != nil {
+				return nil, err
+			}
+			return &c, nil
+		}
 		if b.Path != "" {
 			if err := validateSupportQuotaPath(b); err != nil {
 				return nil, err
