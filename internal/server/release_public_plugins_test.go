@@ -314,7 +314,47 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 		if _, err := a.callPluginToolContext(context.Background(), id, "sqlite_query", map[string]any{"db": db, "sql": "DELETE FROM release_test"}); err == nil {
 			t.Fatal("default readonly write accepted")
 		}
-		return []string{"installed SQLite handler creates/inserts/reads exact bound values", "default read-only rejects write"}
+		t.Run("unscoped-write-confirmation", func(t *testing.T) {
+			for _, script := range []string{" DELETE FROM release_test", "SELECT 1; DELETE FROM release_test"} {
+				if _, err := a.callPluginToolContext(context.Background(), id, "sqlite_execute", map[string]any{"db": db, "script": script}); err == nil {
+					t.Error("unscoped delete accepted without confirmation", script)
+				}
+			}
+		})
+		t.Run("attach-outside-root", func(t *testing.T) {
+			outside := filepath.Join(t.TempDir(), "must-not-create.db")
+			sql := "ATTACH DATABASE '" + outside + "' AS ext; SELECT '" + dir + "/unrelated-safe-string'"
+			if _, err := a.callPluginToolContext(context.Background(), id, "sqlite_execute", map[string]any{"db": db, "script": sql, "confirm": true}); err == nil {
+				t.Error("unrelated literal authorized outside ATTACH")
+			}
+			if _, err := os.Stat(outside); !os.IsNotExist(err) {
+				t.Error("outside database created", err)
+			}
+			outside = filepath.Join(t.TempDir(), "must-not-create-transaction.db")
+			if _, err := a.callPluginToolContext(context.Background(), id, "sqlite_transaction", map[string]any{"db": db, "statements": []any{map[string]any{"sql": "ATTACH DATABASE '" + outside + "' AS ext"}}, "confirm": true}); err == nil {
+				t.Error("transaction authorized outside ATTACH")
+			}
+			if _, err := os.Stat(outside); !os.IsNotExist(err) {
+				t.Error("outside transaction database created", err)
+			}
+		})
+		t.Run("csv-no-symlink-write", func(t *testing.T) {
+			outside := filepath.Join(t.TempDir(), "sentinel")
+			if err := os.WriteFile(outside, []byte("unchanged-outside"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			link := filepath.Join(dir, "export-link.csv")
+			if err := os.Symlink(outside, link); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := a.callPluginToolContext(context.Background(), id, "sqlite_export", map[string]any{"db": db, "format": "csv", "outputPath": link, "query": "SELECT 1 AS value"}); err == nil {
+				t.Error("CSV export accepted symlink target")
+			}
+			if data, err := os.ReadFile(outside); err != nil || string(data) != "unchanged-outside" {
+				t.Error("outside sentinel changed", err)
+			}
+		})
+		return []string{"installed SQLite handler creates/inserts/reads exact bound values", "default read-only rejects write", "every unscoped write requires confirmation", "execute and transaction cannot ATTACH outside declared roots", "CSV export cannot overwrite outside symlink sentinel"}
 	case "tts-tools":
 		got := releasePublicNative(t, a, "tts_voices", map[string]any{})
 		if len(got) < 20 {

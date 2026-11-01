@@ -214,14 +214,13 @@ class DeliveryGateTests(unittest.TestCase):
                 gate.source()
 
     def test_host_only_repairs_cannot_publish_a_release(self):
-        with patch.dict(os.environ, {'RELEASE_TAG': self.tag, 'VALIDATION_SCOPE': 'hosts'}), \
-                patch.object(gate, 'capture', return_value=self.sha), \
-                patch.object(gate.subprocess, 'run') as run:
-            # The clean-tree precondition is separate from this scope guard.
-            gate.capture.side_effect = lambda command: '' if 'status' in command else self.sha
-            with self.assertRaisesRegex(ValueError, 'full validation scope'):
-                gate.source()
-            run.assert_not_called()
+        for scope in ('hosts', 'browser'):
+            with self.subTest(scope=scope), patch.dict(os.environ, {'RELEASE_TAG': self.tag, 'VALIDATION_SCOPE': scope}), \
+                    patch.object(gate, 'capture', side_effect=lambda command: '' if 'status' in command else self.sha), \
+                    patch.object(gate.subprocess, 'run') as run:
+                with self.assertRaisesRegex(ValueError, 'full validation scope'):
+                    gate.source()
+                run.assert_not_called()
 
 
 if __name__ == '__main__':

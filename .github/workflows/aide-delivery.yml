@@ -6,7 +6,7 @@ on:
         description: 'Full release candidate, or host-only repair verification (never publishes)'
         type: choice
         default: full
-        options: [full, hosts]
+        options: [full, hosts, browser]
       release_tag:
         description: 'Leave empty for candidate only; otherwise an existing version.sh tag on main'
         required: false
@@ -53,7 +53,7 @@ jobs:
           python3 scripts/agent-route.py verify quick
           python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
   native:
-    if: inputs.validation_scope != 'hosts'
+    if: inputs.validation_scope != 'hosts' && inputs.validation_scope != 'browser'
     needs: source
     strategy:
       fail-fast: false
@@ -116,7 +116,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   launcher:
-    if: inputs.validation_scope != 'hosts'
+    if: inputs.validation_scope != 'hosts' && inputs.validation_scope != 'browser'
     needs: source
     runs-on: ubuntu-24.04
     timeout-minutes: 90
@@ -143,6 +143,7 @@ jobs:
           include-hidden-files: true
           retention-days: 30
   windows:
+    if: inputs.validation_scope != 'browser'
     needs: source
     runs-on: windows-2025
     timeout-minutes: 30
@@ -165,6 +166,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   macos:
+    if: inputs.validation_scope != 'browser'
     needs: source
     strategy:
       fail-fast: false
@@ -224,7 +226,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   public_plugins:
-    if: inputs.validation_scope != 'hosts'
+    if: inputs.validation_scope != 'hosts' && inputs.validation_scope != 'browser'
     needs: [source, native]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -242,7 +244,7 @@ jobs:
           RELEASE_SHA: ${{ needs.source.outputs.sha }}
         run: python3 scripts/ci/public_plugins.py verify --root .agent-state/public-plugin-reports
   publish:
-    if: always() && inputs.validation_scope != 'hosts' && needs.source.outputs.publish == 'true' && needs.source.result == 'success' && needs.native.result == 'success' && needs.windows.result == 'success' && needs.macos.result == 'success' && needs.browser.result == 'success' && needs.launcher.result == 'success' && needs.public_plugins.result == 'success'
+    if: always() && inputs.validation_scope != 'hosts' && inputs.validation_scope != 'browser' && needs.source.outputs.publish == 'true' && needs.source.result == 'success' && needs.native.result == 'success' && needs.windows.result == 'success' && needs.macos.result == 'success' && needs.browser.result == 'success' && needs.launcher.result == 'success' && needs.public_plugins.result == 'success'
     needs: [source, native, windows, macos, browser, launcher, public_plugins]
     concurrency:
       group: aide-public-release

@@ -10,15 +10,16 @@ fs.mkdirSync(out,{recursive:true});
 (async()=>{
  let index=0;
  for(const name of (process.env.AIDE_BROWSER_DEBUG_ENGINE?[process.env.AIDE_BROWSER_DEBUG_ENGINE]:['chromium','firefox','webkit'])){
-  const browser=await engines[name].launch({headless:true});
-  try{for(const language of ['zh-CN','en'])for(const palette of ['blue','comfort'])for(const theme of ['light','dark'])for(const width of [1440,390]){
+  for(const language of ['zh-CN','en'])for(const palette of ['blue','comfort'])for(const theme of ['light','dark'])for(const width of [1440,390]){
    const id=index++,label=[name,language,palette,theme,width].join('-');
    const row={id:label,status:'fail',checks:[]};report.cases.push(row);
    let page;let phase="initial";const readRequests=new Set();let oldDocumentReads=new Set();
-   const context=await browser.newContext({viewport:{width,height:960},locale:language==='en'?'en-US':'zh-CN',reducedMotion:'reduce'});
+   const browser=await engines[name].launch({headless:true});let context;
+   row.engineVersion=browser.version();row.browserCrash=false;
    try{
+    context=await browser.newContext({viewport:{width,height:960},locale:language==='en'?'en-US':'zh-CN',reducedMotion:'reduce'});
     await context.addInitScript(({token,language,palette,theme})=>{localStorage.setItem('aide-token',token);localStorage.setItem('aide.ui',JSON.stringify({version:1,language,palette,theme,motion:'reduced',startupAnimation:'off'}));},{token,language,palette,theme});
-    page=await context.newPage();const errors=[];page.setDefaultTimeout(15000);page.on('pageerror',error=>errors.push({message:error.message,phase}));row.failedRequests=[];page.on('request',request=>{const url=new URL(request.url());if(request.method()==='GET'&&url.origin===new URL(base).origin)readRequests.add(url.pathname+url.search);});page.on('requestfailed',request=>row.failedRequests.push({path:new URL(request.url()).pathname,error:request.failure()?.errorText,phase}));
+    page=await context.newPage();page.on('crash',()=>{row.browserCrash=true;});const errors=[];page.setDefaultTimeout(15000);page.on('pageerror',error=>errors.push({message:error.message,phase}));row.failedRequests=[];page.on('request',request=>{const url=new URL(request.url());if(request.method()==='GET'&&url.origin===new URL(base).origin)readRequests.add(url.pathname+url.search);});page.on('requestfailed',request=>row.failedRequests.push({path:new URL(request.url()).pathname,error:request.failure()?.errorText,phase}));
     await page.goto(base,{waitUntil:'networkidle'});
     // Select a real persisted pending shell approval, inspect original command,
     // and reject through the product endpoint (not a route stub).
@@ -67,8 +68,8 @@ fs.mkdirSync(out,{recursive:true});
     row.navigationCancellations=navigationErrors.map(error=>({phase:error.phase,path:new URL(error.message.slice(prefix.length,-suffix.length),base).pathname}));
     assert.deepEqual(errors.filter(error=>!navigationErrors.includes(error)),[]);row.checks.push('composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded');
     await page.screenshot({path:path.join(out,label+'.png')});row.status='pass';console.log('PASS '+label);
-   }catch(error){row.error=String(error);if(page){await page.screenshot({path:path.join(out,label+'-failed.png')}).catch(()=>{});row.visibleText=(await page.locator('body').innerText().catch(()=>'' )).slice(-3500);}throw error;}finally{await context.close();}
-  }}finally{await browser.close();}
+   }catch(error){row.error=String(error);row.probes=[];for(const resource of ['/healthz','/style.css','/app.js']){try{const response=await fetch(base+resource,{signal:AbortSignal.timeout(5000)});const data=await response.arrayBuffer();row.probes.push({path:resource,status:response.status,bytes:data.byteLength});}catch(_){row.probes.push({path:resource,status:'unreachable'});}}if(page){await page.screenshot({path:path.join(out,label+'-failed.png')}).catch(()=>{});row.visibleText=(await page.locator('body').innerText().catch(()=>'' )).slice(-3500);}throw error;}finally{try{await context?.close();}finally{await browser.close();}}
+  }
  }
  assert.equal(report.cases.length,48);assert.ok(report.cases.every(c=>c.status==='pass'));report.status='pass';
  console.log('PASS: 48 real browser/locale/palette/theme/viewport scenarios');

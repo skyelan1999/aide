@@ -84,7 +84,7 @@ def source():
     require(not capture(['git', 'status', '--porcelain']), 'Dirty checkout')
     tag = os.environ.get('RELEASE_TAG', '')
     scope = os.environ.get('VALIDATION_SCOPE', 'full')
-    require(scope in ('full', 'hosts'), 'Unknown validation scope')
+    require(scope in ('full', 'hosts', 'browser'), 'Unknown validation scope')
     require(not tag or scope == 'full', 'Publication requires the full validation scope')
     ref = os.environ.get('GITHUB_REF', 'refs/heads/main')
     if tag or ref == 'refs/heads/main':

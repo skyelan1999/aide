@@ -4069,7 +4069,7 @@
     {
       "path": "internal/server/release_public_plugins_test.go",
       "kind": "go",
-      "sha256": "8820987e3fa000e6ef5973ecb93dcdb08538360776dadbbefe831860e1d4002b",
+      "sha256": "a5cea08026b7e3f58d82d6d91ad5b0d9e9829c1a746e49e4f0035454566ce3fa",
       "cases": [
         "TestReleasePublicPackageFunctions"
       ],
@@ -6520,7 +6520,7 @@
     {
       "path": "scripts/browser-release-matrix.cjs",
       "kind": "browser",
-      "sha256": "03dfbdb0cb909198f8754a959b21f861697fa7de5dd1ab81d41341c9d3cade75",
+      "sha256": "8e2f9c8aa3e93250c3b2c3b6d3039e4dcabe65108777db9c63cb97c0345d7870",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
@@ -6664,7 +6664,7 @@
     {
       "path": "scripts/ci/test_delivery_gate.py",
       "kind": "python",
-      "sha256": "606bd2a4ec1dfc9b73bea53ff2ae31ff43a65c45a71044982ad2e0c280bea3ee",
+      "sha256": "9cadc5f2dc9a294023d7c8a61d074252cb65623e4d9c7d3d9feabd3269a9ead9",
       "cases": [
         "test_branch_candidate_is_read_only_and_cannot_publish",
         "test_both_architectures_required_and_digest_tampering_rejected",

@@ -6,6 +6,7 @@
 
 | 范围 | 记录阶段 | 关联信息 |
 | --- | --- | --- |
+| 页面脚本/异步/资源与服务可达性 | 复用独立的 [崩溃监测](crash-diagnostics.md)，含初始化阶段 | 浏览器本机事件编号、源文件/行列、仅标签内的脱敏堆栈；不自动上传，不把断连误判成已证明的服务崩溃 |
 | 已鉴权 HTTP API | `http`，包括文件、资料源、设置、更新、知识、消息、命令和任务模块；`fail` 的 4xx/5xx 及未经过 fail 的 5xx | 服务端生成的 requestId、HTTP 状态、模块；错误响应头给 incidentId |
 | 请求 panic | `panic`；原有 HTTP 恢复和流中止语义保留 | 与原 panic 日志相同 incidentId、panic 类型、源代码位置 |
 | 插件聚合 | `load-host` / `surface-decode` / `load-plugin` | 进程失败、surface 解码失败、单插件加载异常；可识别时包含 pluginId |
