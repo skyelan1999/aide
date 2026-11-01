@@ -2082,6 +2082,38 @@ async function setComposerAutoReview(next) {
   } catch(e) { await refreshApprovalPolicy().catch(() => {}); toast(e.message); }
   finally { state.approvalModeBusy=false; syncComposerApproval(); }
 }
+function shellApprovalExecutionIntentForUI(run, question) {
+  if (question.executionIntent) return question.executionIntent;
+  return {
+    action: '运行待审批的 shell 命令',
+    workingDirectory: run.agentRoot?.containerAbs || '',
+    targetScopeWarning: '命令实际涉及的对象需以完整命令及其参数为准；此摘要未静态解析目标。',
+    impact: '命令可能修改文件、访问网络或改变外部状态；实际影响与可逆性无法仅由摘要确认。',
+  };
+}
+function renderApprovalIntent(container, intent) {
+  if (!intent) return;
+  const panel = el('section', 'approval-intent');
+  panel.append(el('strong', '', t('批准后执行意图')));
+  if (intent.action) panel.append(el('p', '', t('操作：{0}', t(intent.action))));
+  if (intent.workingDirectory) panel.append(el('p', '', t('工作目录：{0}', intent.workingDirectory)));
+  for (const target of intent.targets || []) panel.append(el('p', '', t('目标：{0} · {1}', t(target.action), target.path)));
+  if (intent.targetScopeWarning) panel.append(el('p', 'muted', t(intent.targetScopeWarning)));
+  if (intent.impact) panel.append(el('p', 'muted', t(intent.impact)));
+  container.append(panel);
+}
+function fileApprovalExecutionIntent(files) {
+  const pending = (files || []).filter(file => !file.applied);
+  if (!pending.length) return null;
+  return {
+    action: '应用文件提案',
+    targets: pending.map(file => ({
+      action: !file.baseHash && !file.before ? '创建新文件' : '写入/修改文件',
+      path: proposalFileLabel(file),
+    })),
+    impact: '批准后将把提案内容写入下列未应用目标；能否撤销取决于目标状态与备份，摘要不保证可逆。',
+  };
+}
 function renderApprovalReviews(run, box) {
   if (!run.approvalReviews?.length) return;
   const details = el('details', 'approval-reviews');
@@ -2121,13 +2153,16 @@ function renderClarification(run, box, inTaskHub = false) {
   if (q.approvalKind === 'shell' && run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
     const status = el('div', 'approval-review');
     status.setAttribute('role', 'status');
-    status.append(el('p', '', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作')), el('pre', 'approval-command', q.command));
+    status.append(el('p', '', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作')));
+    renderApprovalIntent(status, shellApprovalExecutionIntentForUI(run, q));
+    status.append(el('pre', 'approval-command', q.command));
     box.append(status); return;
   }
   const card = el('div', q.approvalKind === 'shell' ? 'clarify-card shell-approval-card' : 'clarify-card');
   if (q.progressTotal) card.append(el('div', 'clarify-progress', t('澄清 {0}/{1}', q.progressCurrent || 1, q.progressTotal)));
   if (q.approvalKind === 'shell') {
     card.append(el('div', 'clarify-question', t('执行命令前确认')));
+    renderApprovalIntent(card, shellApprovalExecutionIntentForUI(run, q));
     const command = el('details', 'task-command-detail');
     command.append(el('summary', '', t('查看完整命令 · {0} 行', String(q.command || '').split('\n').length)), el('pre', 'approval-command', q.command));
     card.append(el('div', 'task-command-preview', String(q.command || '').split('\n').find(line => line.trim())?.slice(0,240) || ''), command);
@@ -2444,6 +2479,7 @@ function renderSession() {
     });
     if (run.files?.length) {
       const proposal = el('div', 'proposal'); proposal.append(el('h4', '', t("文件修改 · {0} 个文件", run.files.length)));
+      if (run.status === 'awaiting_approval') renderApprovalIntent(proposal, fileApprovalExecutionIntent(run.files));
       for (const file of run.files) {
         const details = el('details'); details.dataset.key = run.id + ':' + (file.source || '') + ':' + file.path; details.open = openDetails.has(details.dataset.key);
         details.append(el('summary', '', (file.applied ? '✓ ' : '+ ') + proposalFileLabel(file)));
@@ -3669,11 +3705,8 @@ function queueComposerFiles(files) {
   if (!incoming.length) return Promise.resolve();
   composerFileQueue = composerFileQueue.catch(() => {}).then(async () => {
     if (lockScreen.locked || !state.token) { toast(t('请先解锁并连接工作区，再添加附件')); return; }
-    const available = Math.max(0, 8 - state.attachments.length);
-    if (incoming.length > available) toast(t('最多附加 8 个文件；超出的文件已忽略'));
-    for (const file of incoming.slice(0, available)) {
+    for (const file of incoming) {
       try {
-        if (file.size > 64 * 1024 * 1024) throw new Error(t('文件超过 64 MiB 限制'));
         const name = composerUploadName(file);
         const path = 'attachments/chat-' + crypto.randomUUID() + '-' + name;
         const query = new URLSearchParams({path});
@@ -4449,7 +4482,6 @@ function attachFileEntry(file, target = {root:file.root,source:file.source || ''
   if (target.source) att.source = target.source;
   if (file.dir) att.directory = true;
   if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) {
-    if (state.attachments.length >= 8) { toast(t('最多附加 8 个文件或文件夹')); return false; }
     state.attachments.push(att);
   }
   renderAttachments(); $('prompt').focus(); return true;
@@ -9334,7 +9366,6 @@ function resolveMarkdownImagePath(basePath, imagePath) {
   return parts.join('/');
 }
 async function uploadMarkdownAsset(path, blob, spec) {
-  if (blob.size > 64 * 1024 * 1024) throw new Error(t('文件超过 64 MiB 限制'));
   const query = new URLSearchParams({path});
   if (spec.source) query.set('source', spec.source); else if (spec.wsId) query.set('workspaceId', spec.wsId);
   const response = await fetch('/api/file/upload?' + query, {method:'POST',headers:{Authorization:'Bearer '+state.token,'Content-Type':blob.type||'application/octet-stream'},body:blob});
@@ -12902,7 +12933,7 @@ $('open-starmap').onclick = () => {
       if (n.kind === 'file' || n.kind === 'symbol') {
         const att = {root:n.root, path:n.path}; if (n.source) att.source=n.source;
         const exists = state.attachments.some(a=>a.root===att.root && a.path===att.path && (a.source||'')===(att.source||''));
-        if (!exists) { if (state.attachments.length >= 8) throw Error(t('最多附加 8 个文件')); state.attachments.push(att); renderAttachments(); }
+        if (!exists) { state.attachments.push(att); renderAttachments(); }
       } else if (n.kind !== 'session') { throw Error(t('请选择文件或会话节点')); }
       const provenance = n.sourceName ? ' · 来源：' + n.sourceName + (n.sourceType ? '（' + n.sourceType + '）' : '') + (n.source ? ' [' + n.source + ']' : '') : '';
       const reference = (n.kind === 'symbol' ? '[代码 ' + n.id + '] ' + n.path + ':' + n.line + '–' + n.endLine + ' · ' + n.name : n.kind === 'session' ? '[会话 ' + n.id + ' / #' + n.number + '] ' + n.name : '[文件 ' + n.id + '] ' + n.path) + provenance;

@@ -133,6 +133,10 @@ func (a *App) approvedShell(ctx context.Context, task *Task, command string, tim
 	}
 	mode := a.settings.SandboxMode
 	remote := a.workspaceMode() == "ssh"
+	cwd := task.AgentRoot.ContainerAbs
+	if cwd == "" {
+		cwd = a.containerAbs
+	}
 	a.mu.Unlock()
 	if err := shellSandboxPolicy(mode, command, remote, false); err != nil {
 		return err.Error(), false
@@ -146,7 +150,7 @@ func (a *App) approvedShell(ctx context.Context, task *Task, command string, tim
 		}
 	}
 	if !readOnlyAllowed(command) && !remembered {
-		q, _ := json.Marshal(map[string]any{"question": "即将执行可能修改文件、改变外部状态或访问网络的命令。请检查完整命令后决定是否继续：\n\n" + command, "type": "confirm", "approvalKind": "shell", "command": command})
+		q, _ := json.Marshal(map[string]any{"question": "即将执行可能修改文件、改变外部状态或访问网络的命令。请检查完整命令后决定是否继续：\n\n" + command, "type": "confirm", "approvalKind": "shell", "command": command, "executionIntent": shellApprovalExecutionIntent(cwd)})
 		if a.awaitUserAnswer(ctx, task, q) != "确认" {
 			return "用户未批准执行该命令；命令没有运行。", false
 		}

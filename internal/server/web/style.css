@@ -1812,3 +1812,4 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
   font-weight: 600;
   pointer-events: none;
 }
+.approval-intent{margin:.65rem 0;padding:.7rem .85rem;border:1px solid var(--border-color,rgba(127,127,127,.3));border-left:3px solid var(--accent,#6b8afd);border-radius:.5rem;background:var(--surface-secondary,rgba(127,127,127,.06));font-size:.92em}.approval-intent p{margin:.35rem 0}.approval-intent strong{display:block;margin-bottom:.35rem}

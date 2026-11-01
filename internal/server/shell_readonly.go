@@ -27,6 +27,8 @@ func readOnlyAllowed(command string) bool {
 }
 
 func literalShellCommands(command string) ([][]string, []string, bool) {
+	// Bound parser resource use by bytes, not by an arbitrary number of simple
+	// commands. A 16 KiB command remains finite while supporting long pipelines.
 	if len(command) > 16000 || strings.ContainsAny(command, "\x00\n\r") {
 		return nil, nil, false
 	}
@@ -111,7 +113,7 @@ func literalShellCommands(command string) ([][]string, []string, bool) {
 		return nil, nil, false
 	}
 	flushWord()
-	if len(words) == 0 || len(commands) > 15 {
+	if len(words) == 0 {
 		return nil, nil, false
 	}
 	return append(commands, words), joins, true
