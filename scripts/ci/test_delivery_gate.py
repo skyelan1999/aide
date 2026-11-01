@@ -17,7 +17,7 @@ class DeliveryGateTests(unittest.TestCase):
         # Test inputs must not inherit the real branch/dispatch/tag that runs CI.
         environment = patch.dict(os.environ, {'GITHUB_REF': 'refs/heads/main',
             'GH_EVENT_NAME': 'workflow_dispatch', 'RELEASE_TAG': '',
-            'RELEASE_CADENCE_EXCEPTION_REASON': ''})
+            'RELEASE_CADENCE_EXCEPTION_REASON': '', 'VALIDATION_SCOPE': 'full'})
         environment.start()
         self.addCleanup(environment.stop)
 
@@ -212,6 +212,16 @@ class DeliveryGateTests(unittest.TestCase):
         with patch.dict(os.environ, {'RELEASE_TAG': self.tag}), patch.object(gate, 'capture', side_effect=fake), patch.object(gate.subprocess, 'run'):
             with self.assertRaisesRegex(ValueError, 'must identify'):
                 gate.source()
+
+    def test_host_only_repairs_cannot_publish_a_release(self):
+        with patch.dict(os.environ, {'RELEASE_TAG': self.tag, 'VALIDATION_SCOPE': 'hosts'}), \
+                patch.object(gate, 'capture', return_value=self.sha), \
+                patch.object(gate.subprocess, 'run') as run:
+            # The clean-tree precondition is separate from this scope guard.
+            gate.capture.side_effect = lambda command: '' if 'status' in command else self.sha
+            with self.assertRaisesRegex(ValueError, 'full validation scope'):
+                gate.source()
+            run.assert_not_called()
 
 
 if __name__ == '__main__':

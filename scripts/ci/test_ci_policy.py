@@ -48,6 +48,9 @@ class CIPolicyTests(unittest.TestCase):
         with patch.dict(os.environ, {'SystemRoot': 'C:/Windows'}):
             windows = host_validation.plan('windows', 'temporary')
         self.assertEqual(sum('--pwsh' in command for command in windows), 6)
+        self.assertEqual(len(windows), 10)
+        self.assertTrue(any('scripts/test_windows_launcher_compile.py' in command for command in windows))
+        self.assertFalse(any('scripts/test_launcher_contract.py' in command for command in windows), 'POSIX launcher uses Bash/process-group contracts, Windows uses real Win32/BAT fixtures')
         macos = host_validation.plan('macos', '/tmp/isolated')
         self.assertIn(['codesign', '--verify', '--deep', '--strict', '/tmp/isolated/Aide Computer Bridge.app'], macos)
         self.assertNotIn('./scripts/xsys-review',macos[0], 'xsys-review contains no Darwin implementation')

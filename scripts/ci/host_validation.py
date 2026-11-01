@@ -22,7 +22,6 @@ def plan(host, temporary):
         ['go', 'test', '-json', '-mod=vendor', '-count=1', './cmd/aide-local-mounts', './internal/messaging'] + (['./scripts/xsys-review'] if host == 'windows' else []),
         [sys.executable, 'scripts/test_reference_relay_agent.py'],
         [sys.executable, 'scripts/test_mixsoul_embedding_follow.py'],
-        [sys.executable, 'scripts/test_launcher_contract.py'],
     ]
     if host == 'windows':
         powershell = str(Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe')
@@ -31,6 +30,7 @@ def plan(host, temporary):
             for script in ('test_windows_image_slot.py', 'test_windows_directory_launcher.py', 'test_windows_update_agent.py'):
                 common.append([sys.executable, 'scripts/' + script, '--pwsh', shell])
     else:
+        common.append([sys.executable, 'scripts/test_launcher_contract.py'])
         bridge = str(Path(temporary) / 'Aide Computer Bridge.app')
         common += [
             ['bash', 'scripts/build-native-computer-bridge.sh'],
@@ -71,17 +71,17 @@ def main():
               'limits': ['No privacy grants changed', 'No physical device, paid account or Docker Desktop lifecycle claim']}
     try:
         with tempfile.TemporaryDirectory(prefix='aide release host ') as temporary:
-            env = dict(os.environ, AIDE_NATIVE_BRIDGE_APP=str(Path(temporary) / 'Aide Computer Bridge.app'))
+            env = dict(os.environ, PYTHONUTF8='1', AIDE_NATIVE_BRIDGE_APP=str(Path(temporary) / 'Aide Computer Bridge.app'))
             if args.host == 'windows':
                 env['PSModulePath'] = str(Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/Modules')
             for index, command in enumerate(plan(args.host, temporary)):
                 start = time.monotonic()
-                with (out / f'{index:02d}.log').open('w') as stream:
+                with (out / f'{index:02d}.log').open('w', encoding='utf-8') as stream:
                     result = subprocess.run(command, cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=600)
                 report['checks'].append({'command': command, 'status': 'pass' if result.returncode == 0 else 'fail',
                                          'seconds': round(time.monotonic() - start, 3)})
                 if not result.returncode and command[:2] == ['go','test']:
-                    report['checks'][-1]['goTests']=go_receipt((out / f'{index:02d}.log').read_text(),command)
+                    report['checks'][-1]['goTests']=go_receipt((out / f'{index:02d}.log').read_text(encoding='utf-8'),command)
                 if result.returncode:
                     raise RuntimeError('Host check failed: ' + ' '.join(command))
         report['status'] = 'pass'

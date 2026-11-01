@@ -83,6 +83,9 @@ def source():
     sha = capture(['git', 'rev-parse', 'HEAD'])
     require(not capture(['git', 'status', '--porcelain']), 'Dirty checkout')
     tag = os.environ.get('RELEASE_TAG', '')
+    scope = os.environ.get('VALIDATION_SCOPE', 'full')
+    require(scope in ('full', 'hosts'), 'Unknown validation scope')
+    require(not tag or scope == 'full', 'Publication requires the full validation scope')
     ref = os.environ.get('GITHUB_REF', 'refs/heads/main')
     if tag or ref == 'refs/heads/main':
         require(ref == 'refs/heads/main', 'Publication requires main; a branch candidate cannot publish')

@@ -17,7 +17,7 @@
 | 原生 Linux | Ubuntu 24.04 ARM64、AMD64 | 原生编译、普通 Go 全量、独立 race/vet、运行资源、可选引擎边界 | 两套 candidate-proof、Go 分片日志 |
 | Go 完整性 | `test_go_snapshot.py` | Git 列表完整快照；注册 Test/Fuzz seed/Example 全部互斥分片，每项恰有一个终态；其他包 race、平台合约、vet | inventory/selected/results/missing/pass/skip 分离记录 |
 | 全部公开插件 | `public_plugins.py run`，两个原生工具链容器 | 原 ZIP 字节/摘要/安全结构；真实宿主上传安装、启用、能力声明；实际功能调用和独立结果断言 | 每插件 inspection/installation/function/cases，缺项或 skip 阻止发布 |
-| Windows | Windows 2025 AMD64 | 原生 Go helper、消息/mTLS、Windows xsys 审查断言；启动器编译；PowerShell 5.1 和 7 各自验证目录启动、镜像槽、升级代理 | 11 项宿主命令、日志、平台与 SHA |
+| Windows | Windows 2025 AMD64 | 原生 Go helper、消息/mTLS、Windows xsys 审查断言；启动器编译；PowerShell 5.1 和 7 各自验证目录启动、镜像槽、升级代理 | 10 项宿主命令（Windows 使用真实 Win32/BAT 套件，不执行 POSIX 专用启动器）、日志、平台与 SHA |
 | macOS | macOS 15 ARM、Intel | 原生 helper、消息/mTLS、relay/launcher（不在 Darwin 调用无实现的 xsys 子包）；临时目录构建 Swift Computer Bridge，codesign 深度验证 | 每平台 8 项命令与实际 Go 测试终态；不修改系统授权 |
 | 浏览器 | Chromium/Firefox/WebKit × 中文/英文 × blue/comfort × 明/暗 × 1440/390 | 48 格真实 App：审批意图/原始命令/拒绝；文件拖入及图片粘贴；附件实际发送；流式 Markdown 与刷新持久化；未授权和路径穿越拒绝；输入框可见和无脚本异常 | 48 个截图与逐格 checks；WebKit 刷新旧文档时旧文档中实际发出的同源 GET 取消按请求集合匹配单独记录，不豁免活动文档异常；不能用空匹配 Go test 代替报告 |
 | 新装与生命周期 | 独立 Linux checkout，路径含空格和中文 | 新 HOME/config/data/project/builder/image、构建启动、停止/重启/清理、数据哨兵、拒绝未经满足门禁的 release | clean-linux-launcher result 与命令/健康记录 |
@@ -94,7 +94,7 @@ CI 本身不授予任意工作流自动改代码/写仓库的权限。本轮由�
 
 ## 发布、升级与回滚
 
-候选可在已包含最新 main 的功能分支显式触发 Delivery，`release_tag` 留空，只产出候选证据。正式发行要求 main、干净工作区、仓库 full/release-check 门禁，以及现有 `scripts/version.sh` 产生的精确 tag，不另造版本机制。
+候选可在已包含最新 main 的功能分支显式触发 Delivery，`release_tag` 留空，只产出候选证据。修复原生宿主检查时可显式选择 `validation_scope=hosts`，只运行三套宿主检查并生成报告；该模式禁止携带发布 tag，不能发布，也不能替代完整 Release 验收。完整候选与发行使用默认 `validation_scope=full`。正式发行要求 main、干净工作区、仓库 full/release-check 门禁，以及现有 `scripts/version.sh` 产生的精确 tag，不另造版本机制。
 
 沿用每 7 天至多一个公开版本；用户明确要求本轮即时发行时，可使用已有的手动一次性 `cadence_exception_reason` 并记录原因，不修改默认节奏。先创建全新草稿，禁止覆盖既有 Release/附件。远端 tag、资产大小、SHA256、说明和精确附件集合全部一致后才公开。
 

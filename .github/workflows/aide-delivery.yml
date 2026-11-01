@@ -2,6 +2,11 @@ name: Aide Delivery
 on:
   workflow_dispatch:
     inputs:
+      validation_scope:
+        description: 'Full release candidate, or host-only repair verification (never publishes)'
+        type: choice
+        default: full
+        options: [full, hosts]
       release_tag:
         description: 'Leave empty for candidate only; otherwise an existing version.sh tag on main'
         required: false
@@ -13,7 +18,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: aide-delivery-${{ github.ref }}
+  group: aide-delivery-${{ github.ref }}-${{ inputs.validation_scope || 'full' }}
   cancel-in-progress: false
 jobs:
   source:
@@ -41,12 +46,14 @@ jobs:
           GH_EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          VALIDATION_SCOPE: ${{ inputs.validation_scope || 'full' }}
         run: python3 scripts/ci/delivery_gate.py source
       - name: Recheck current source contracts
         run: |
           python3 scripts/agent-route.py verify quick
           python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
   native:
+    if: inputs.validation_scope != 'hosts'
     needs: source
     strategy:
       fail-fast: false
@@ -109,6 +116,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   launcher:
+    if: inputs.validation_scope != 'hosts'
     needs: source
     runs-on: ubuntu-24.04
     timeout-minutes: 90
@@ -183,6 +191,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   browser:
+    if: inputs.validation_scope != 'hosts'
     needs: source
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -215,6 +224,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   public_plugins:
+    if: inputs.validation_scope != 'hosts'
     needs: [source, native]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -232,7 +242,7 @@ jobs:
           RELEASE_SHA: ${{ needs.source.outputs.sha }}
         run: python3 scripts/ci/public_plugins.py verify --root .agent-state/public-plugin-reports
   publish:
-    if: always() && needs.source.outputs.publish == 'true' && needs.source.result == 'success' && needs.native.result == 'success' && needs.windows.result == 'success' && needs.macos.result == 'success' && needs.browser.result == 'success' && needs.launcher.result == 'success' && needs.public_plugins.result == 'success'
+    if: always() && inputs.validation_scope != 'hosts' && needs.source.outputs.publish == 'true' && needs.source.result == 'success' && needs.native.result == 'success' && needs.windows.result == 'success' && needs.macos.result == 'success' && needs.browser.result == 'success' && needs.launcher.result == 'success' && needs.public_plugins.result == 'success'
     needs: [source, native, windows, macos, browser, launcher, public_plugins]
     concurrency:
       group: aide-public-release

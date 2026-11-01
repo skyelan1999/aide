@@ -6649,7 +6649,7 @@
     {
       "path": "scripts/ci/test_ci_policy.py",
       "kind": "python",
-      "sha256": "ef1248bc5f76e5d70042cc8121ec3f714ad224dbdb59e303953f9b31dd74cc92",
+      "sha256": "9ac3c4b54b29dfc1bb06f71b2c127c5499cd2450c8cf505142e3b7c5714dcd53",
       "cases": [
         "test_daily_keeps_gate_without_heavy_builds",
         "test_delivery_is_explicit_and_every_gate_is_required",
@@ -6664,7 +6664,7 @@
     {
       "path": "scripts/ci/test_delivery_gate.py",
       "kind": "python",
-      "sha256": "55c780f97625834309d44aec9bdf0563054fda3f25ea974467063454770f1e9e",
+      "sha256": "606bd2a4ec1dfc9b73bea53ff2ae31ff43a65c45a71044982ad2e0c280bea3ee",
       "cases": [
         "test_branch_candidate_is_read_only_and_cannot_publish",
         "test_both_architectures_required_and_digest_tampering_rejected",
@@ -6676,9 +6676,10 @@
         "test_one_off_cadence_exception_requires_a_manual_dispatch_and_a_reason",
         "test_cadence_exception_cannot_be_supplied_for_candidate_only",
         "test_notes_require_exact_tag_and_user_facing_sections",
-        "test_manual_tag_must_name_current_main_commit"
+        "test_manual_tag_must_name_current_main_commit",
+        "test_host_only_repairs_cannot_publish_a_release"
       ],
-      "caseCount": 11,
+      "caseCount": 12,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },

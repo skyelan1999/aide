@@ -44,7 +44,7 @@ def host(report, sha, name):
     machine = {'windows': ('AMD64', 'x86_64'), 'macos-15': ('arm64', 'aarch64'), 'macos-15-intel': ('x86_64', 'AMD64')}[name]
     require(report.get('host') == kind and report.get('machine') in machine, 'Native host architecture mismatch')
     checks = report.get('checks', [])
-    require(len(checks) == (11 if kind == 'windows' else 8) and all(c.get('status') == 'pass' for c in checks), 'Missing native host checks')
+    require(len(checks) == (10 if kind == 'windows' else 8) and all(c.get('status') == 'pass' for c in checks), 'Missing native host checks')
     required={'aide/cmd/aide-local-mounts','aide/internal/messaging'}
     if kind=='windows':required.add('aide/scripts/xsys-review')
     tests=checks[0].get('goTests',[])

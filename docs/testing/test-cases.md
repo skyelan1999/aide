@@ -5,7 +5,7 @@
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
 | go | 377 | 1679 |
-| python | 62 | 274 |
+| python | 62 | 275 |
 | node | 178 | 181 |
 | browser | 104 | 0 |
 
@@ -5294,7 +5294,7 @@
 
 </details>
 
-<details><summary>scripts/ci/test_delivery_gate.py · python · 11 个命名用例</summary>
+<details><summary>scripts/ci/test_delivery_gate.py · python · 12 个命名用例</summary>
 
 [源码入口](../../scripts/ci/test_delivery_gate.py)
 
@@ -5309,6 +5309,7 @@
 - `test_cadence_exception_cannot_be_supplied_for_candidate_only`
 - `test_notes_require_exact_tag_and_user_facing_sections`
 - `test_manual_tag_must_name_current_main_commit`
+- `test_host_only_repairs_cannot_publish_a_release`
 
 </details>
 
