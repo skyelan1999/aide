@@ -68,6 +68,9 @@ type debugAuditEntry struct {
 
 // pushError 把一条错误放入环形缓冲（线程安全）。message 调用方需已脱敏。
 func (a *App) pushError(kind, sessionID, runID, message string) {
+	if message != "" {
+		a.recordIncident(context.Background(), incident{Module: "workflow", Phase: kind, Task: runID, Session: sessionID}, errors.New(message), time.Time{})
+	}
 	if message == "" {
 		return
 	}
@@ -152,6 +155,12 @@ func (a *App) serveDebug(w http.ResponseWriter, r *http.Request) {
 		a.debugAuditWrite(r, false, tokenFP, "401_unauthorized")
 		fail(w, 401, errors.New("调试令牌无效或已过期"))
 		return
+	}
+
+	if ownerOK {
+		if recorder, ok := w.(interface{ markIncidentAuthenticated() }); ok {
+			recorder.markIncidentAuthenticated()
+		}
 	}
 
 	// 段3：审计（按降噪规则决定是否记录）+ 段4：分发到 mux。
@@ -586,14 +595,24 @@ func (a *App) debugDiagnosticBundle(w http.ResponseWriter, r *http.Request) {
 		Failures  int    `json:"failures,omitempty"`
 		Error     string `json:"error,omitempty"`
 	}
+	type bundlePlugin struct {
+		ID      string `json:"id"`
+		Version string `json:"version"`
+		Enabled bool   `json:"enabled"`
+		Daemon  bool   `json:"daemon"`
+	}
 	type bundle struct {
-		GeneratedAt  string        `json:"generatedAt"`
-		Version      string        `json:"version"`
-		Revision     string        `json:"revision"`
-		UptimeSec    int64         `json:"uptimeSec"`
-		ProviderHost string        `json:"providerHost"`
-		Errors       []recentError `json:"recentErrors"`
-		Runs         []bundleRun   `json:"recentRuns"`
+		GeneratedAt      string             `json:"generatedAt"`
+		Version          string             `json:"version"`
+		Revision         string             `json:"revision"`
+		UptimeSec        int64              `json:"uptimeSec"`
+		ProviderHost     string             `json:"providerHost"`
+		Errors           []recentError      `json:"recentErrors"`
+		Incidents        []incident         `json:"incidents"`
+		Plugins          []bundlePlugin     `json:"plugins"`
+		Daemons          []daemonStatusInfo `json:"daemons"`
+		DiagnosticHealth map[string]uint64  `json:"diagnosticHealth"`
+		Runs             []bundleRun        `json:"recentRuns"`
 	}
 	b := bundle{
 		GeneratedAt:  time.Now().UTC().Format(time.RFC3339Nano),
@@ -613,6 +632,7 @@ func (a *App) debugDiagnosticBundle(w http.ResponseWriter, r *http.Request) {
 		errs = errs[len(errs)-50:]
 	}
 	b.Errors = errs
+	b.Incidents, b.DiagnosticHealth = a.incidentSnapshot()
 
 	type st struct {
 		Updated string
@@ -620,6 +640,12 @@ func (a *App) debugDiagnosticBundle(w http.ResponseWriter, r *http.Request) {
 	}
 	var recent []st
 	a.mu.Lock()
+	for _, p := range a.pluginRegistry.Plugins {
+		b.Plugins = append(b.Plugins, bundlePlugin{ID: incidentIdentifier(p.ID), Version: incidentIdentifier(p.Version), Enabled: p.Enabled, Daemon: p.Daemon})
+	}
+	if a.daemons != nil {
+		b.Daemons = a.daemons.List()
+	}
 	for _, s := range a.sessions {
 		if s.Deleted {
 			continue

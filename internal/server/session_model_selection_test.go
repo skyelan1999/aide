@@ -183,13 +183,22 @@ func TestSessionModelSelectionLegacyAndVision(t *testing.T) {
 	if s.ModelSelection.Model != "model-b" || s.ModelSelection.ReasoningEffort != "auto" {
 		t.Fatal("legacy choice migration failed")
 	}
-	image := []MessageImage{{}}
+	image := []MessageImage{{MediaType: "image/png", DataURL: "data:image/png;base64," + previewRaster(t)}}
 	a.mu.Lock()
 	cfgB, err := a.selectionSettingsLocked(*s.ModelSelection)
 	cfgA, _ := a.selectionSettingsLocked(SessionModelSelection{Strategy: "auto", Profile: "default", Model: "model-a", ReasoningEffort: "auto"})
 	a.mu.Unlock()
-	if err != nil || visionGateForConfig(cfgB, image) != nil || visionGateForConfig(cfgA, image) == nil {
-		t.Fatal("vision gate ignores selected model")
+	if err != nil || visionGateForConfig(cfgB, image) != nil || visionGateForConfig(cfgA, image) != nil {
+		t.Fatal("image input must reach the selected model without a metadata pre-gate")
+	}
+	// #696: removal of the pre-gate must not drop the actual image payload
+	// or silently substitute another model/provider.
+	for _, cfg := range []Settings{cfgA, cfgB} {
+		body := buildChatBody(cfg, []Message{{Role: "user", Content: "inspect image", Images: image}}, ProfileParams{}, nil, false)
+		encoded, marshalErr := json.Marshal(body)
+		if marshalErr != nil || body["model"] != cfg.Model || !strings.Contains(string(encoded), `"image_url"`) || strings.Count(string(encoded), image[0].DataURL) != 1 {
+			t.Fatal("selected model lost multimodal payload", cfg.Model, marshalErr)
+		}
 	}
 	a.settings.Models = a.settings.Models[:1]
 	_, err = a.selectionSettingsLocked(*s.ModelSelection)

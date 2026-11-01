@@ -13,6 +13,8 @@ import re
 import subprocess
 
 from build_candidate import verification_plan
+from public_plugins import load_lock, verify_report
+import release_evidence
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -79,9 +81,16 @@ def release_notes(tag):
 
 def source():
     sha = capture(['git', 'rev-parse', 'HEAD'])
-    subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'origin/main'], cwd=ROOT, check=True)
     require(not capture(['git', 'status', '--porcelain']), 'Dirty checkout')
     tag = os.environ.get('RELEASE_TAG', '')
+    ref = os.environ.get('GITHUB_REF', 'refs/heads/main')
+    if tag or ref == 'refs/heads/main':
+        require(ref == 'refs/heads/main', 'Publication requires main; a branch candidate cannot publish')
+        subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'origin/main'], cwd=ROOT, check=True)
+    else:
+        require(os.environ.get('GH_EVENT_NAME') == 'workflow_dispatch' and ref.startswith('refs/heads/'),
+                'Branch candidates require an explicit read-only manual dispatch')
+        subprocess.run(['git', 'merge-base', '--is-ancestor', 'origin/main', sha], cwd=ROOT, check=True)
     exception = os.environ.get('RELEASE_CADENCE_EXCEPTION_REASON', '').strip()
     require(not exception or bool(tag), 'Cadence exception reason requires a release tag')
     if tag:
@@ -92,7 +101,7 @@ def source():
     output = f'sha={sha}\ntag={tag}\npublish={str(bool(tag)).lower()}\n'
     with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
         stream.write(output)
-    print('PASS: trusted main commit; ' + ('release requested' if tag else 'candidate only'))
+    print('PASS: source ancestry and publication boundary; ' + ('main release requested' if tag else 'read-only candidate only'))
 
 
 def validate_candidates(root, tag, sha):
@@ -108,6 +117,8 @@ def validate_candidates(root, tag, sha):
         require((proof.get('tag'), proof.get('commit'), proof.get('platform')) == (tag, sha, 'linux/' + arch), 'Candidate identity mismatch')
         for key in ('smoke', 'privacy', 'packageValidation', 'importValidation'):
             require(proof.get(key, {}).get('status') == 'pass', 'Missing successful ' + key)
+        verify_report(proof.get('publicPlugins', {}), load_lock(), sha, arch)
+        release_evidence.go_suite(proof.get('goSuite', {}))
         image = f'aide:ci-{sha[:12]}-{arch}'
         require(proof.get('image') == image, 'Unexpected candidate image')
         plan = [{'command': command, 'environmentOverrides': env, 'status': 'pass'}
@@ -147,11 +158,16 @@ def artifacts(root):
     require(tag == expected_tag() and capture(['git', 'rev-parse', 'HEAD']) == sha, 'Publisher checkout identity mismatch')
     expected, source_hash = validate_candidates(root, tag, sha)
     require(source_hash == capture(['bash', 'scripts/aide.sh', 'source-sha']), 'Candidate source differs from publisher checkout')
+    validation = release_evidence.collect(root, sha)
+    validation['native'] = {arch: json.loads((root / ('aide-candidate-' + arch) / 'candidate-proof.json').read_text()) for arch in ('arm64', 'amd64')}
+    validation['publicPluginLock'] = load_lock()
+    (root / 'RELEASE-VALIDATION.json').write_text(json.dumps(validation, ensure_ascii=False, indent=2) + '\n')
+    expected['RELEASE-VALIDATION.json'] = {'bytes': (root / 'RELEASE-VALIDATION.json').stat().st_size, 'sha256': digest(root / 'RELEASE-VALIDATION.json')}
     notes = {'tag': tag, 'commit': sha, 'sourceSHA256': source_hash, 'pluginsBundled': False,
              'architectures': ['linux/arm64', 'linux/amd64'], 'assets': expected,
              'optionalDevelopmentTools': True, 'cadence': 'at most one public release every 7 days',
-             'checks': 'Native build, full repository verification, isolated auth/runtime smoke, all image layers, package CRC and SHA256; Windows PowerShell 5.1 and 7 launcher fixtures.',
-             'limits': 'No native Windows Docker Desktop or macOS host launch acceptance; no production deployment.'}
+             'checks': 'Full race/vet with runtime inventory; native ARM64/AMD64 runtime and SDK; every frozen public package installed and function-tested; 48 cross-browser cells; Windows PowerShell 5.1/7, signed macOS ARM/Intel bridge; clean Linux lifecycle; all-layer privacy, import, CRC and SHA256.',
+             'limits': 'No native Windows/macOS Docker Desktop lifecycle, paid-provider or physical-device acceptance; no production deployment. Optional integration skips remain explicit in RELEASE-VALIDATION.json.'}
     (root / 'RELEASE-NOTES.md').write_text(release_notes(tag))
     (root / 'RELEASE-ASSETS.txt').write_text(json.dumps(notes, ensure_ascii=False, indent=2) + '\n')
     expected['RELEASE-ASSETS.txt'] = {'bytes': (root / 'RELEASE-ASSETS.txt').stat().st_size, 'sha256': digest(root / 'RELEASE-ASSETS.txt')}
@@ -162,7 +178,7 @@ def artifacts(root):
 def remote(root):
     tag, sha, repo = os.environ['RELEASE_TAG'], os.environ['RELEASE_SHA'], os.environ['GH_REPO']
     expected, _ = validate_candidates(root, tag, sha)
-    for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt'):
+    for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt', 'RELEASE-VALIDATION.json'):
         expected[name] = {'bytes': (root / name).stat().st_size, 'sha256': digest(root / name)}
     require(re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo), 'Invalid repository')
     ref = json.loads(capture(['gh', 'api', f'repos/{repo}/git/ref/tags/{tag}']))['object']
@@ -183,6 +199,9 @@ def remote(root):
     require(set(assets) == set(expected), 'Unexpected or missing remote assets')
     for name, value in expected.items():
         require(assets[name]['size'] == value['bytes'] and assets[name].get('digest') == 'sha256:' + value['sha256'], 'Independent remote digest mismatch: ' + name)
+    lock = load_lock()
+    market_head = json.loads(capture(['gh', 'api', 'repos/' + lock['marketRepository'] + '/commits/main']))['sha']
+    require(market_head == lock['marketRevision'], 'Public market changed after freeze; refresh lock and rerun installation/function checks')
     print('PASS: exact remote asset set, SHA256 digests and immutable source identity')
 
 

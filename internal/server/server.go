@@ -476,6 +476,7 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 const assistantSessionKind = "assistant"
 
 type App struct {
+	incidents                 incidentJournal
 	executionEnvironment      *executionEnvironment
 	assistantEngine           string // operator-selected startup choice; never a plugin capability
 	mixSoulCalls              pluginCallQueues
@@ -785,6 +786,11 @@ func jsonOut(w http.ResponseWriter, code int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 func fail(w http.ResponseWriter, code int, err error) {
+	if recorder, ok := w.(interface{ recordFailure(int, error) string }); ok {
+		if id := recorder.recordFailure(code, err); id != "" {
+			w.Header().Set("X-AIDE-Incident-ID", id)
+		}
+	}
 	jsonOut(w, code, map[string]string{"error": err.Error()})
 }
 func decode(w http.ResponseWriter, r *http.Request, v any) error {
@@ -1516,6 +1522,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/virtual-avatar-settings", a.getVirtualAvatarSettings)
 	mux.HandleFunc("PUT /api/virtual-avatar-settings", a.putVirtualAvatarSettings)
 	mux.HandleFunc("GET /api/system-logs", a.systemLogsHandler)
+	mux.HandleFunc("GET /api/diagnostics/incidents", a.incidentsHandler)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
 	mux.HandleFunc("GET /api/xiaomi/model", a.xiaomiModelSettings)
 	mux.HandleFunc("PUT /api/xiaomi/model", a.updateXiaomiModelSettings)
@@ -1753,7 +1760,7 @@ func (a *App) buildHandler() {
 		}
 		fileServer.ServeHTTP(w, r)
 	}))
-	a.handler = recoverHTTP(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	a.handler = recoverHTTPWithApp(a, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 鉴权现状：全程 Bearer Token（Authorization 头 / 受信路径上的 ?access_token=），不使用 Cookie。
 		// 未来若引入 Cookie，必须同时设置 Secure、HttpOnly、SameSite=Lax，且仅在 HTTPS 连接下发。
 		w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -1803,6 +1810,9 @@ func (a *App) buildHandler() {
 				fail(w, 401, errors.New("请输入访问令牌，或用 start.command 打开"))
 				return
 			}
+		}
+		if recorder, ok := w.(interface{ markIncidentAuthenticated() }); ok {
+			recorder.markIncidentAuthenticated()
 		}
 		if nativeEditorMutationRoute(r) {
 			ctx, release := a.nativeEditorEnter(r.Context())

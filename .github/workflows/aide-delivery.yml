@@ -1,9 +1,5 @@
 name: Aide Delivery
 on:
-  workflow_run:
-    workflows: [Aide CI]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -17,15 +13,11 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: aide-delivery-${{ github.event.workflow_run.head_sha || github.sha }}
+  group: aide-delivery-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   source:
-    if: >-
-      github.repository == 'skyelan1999/aide' &&
-      ((github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository) ||
-       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    if: github.repository == 'skyelan1999/aide' && github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || inputs.release_tag == '')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     outputs:
@@ -35,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -65,7 +57,7 @@ jobs:
           - arch: amd64
             runner: ubuntu-24.04
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 180
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,11 +67,16 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Free disposable hosted runner SDK space
         run: |
           test "$GITHUB_ACTIONS" = true
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
       - name: Build and verify Aide-only native candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 scripts/ci/build_candidate.py --arch ${{ matrix.arch }} --out .agent-state/ci-candidate/${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
@@ -91,11 +88,56 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           compression-level: 0
-          retention-days: 3
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-public-plugins-${{ matrix.arch }}
+          path: |
+            .agent-state/public-plugins/${{ matrix.arch }}/report.json
+            .agent-state/public-plugins/${{ matrix.arch }}/functions.json
+            .agent-state/public-plugins/${{ matrix.arch }}/functions.log
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-go-${{ matrix.arch }}
+          path: .agent-state/native-verification/${{ matrix.arch }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+  launcher:
+    needs: source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Real clean Linux launcher build and complete lifecycle
+        run: |
+          acceptance_root="$RUNNER_TEMP/aide launcher clean 中文"
+          git worktree add --detach "$acceptance_root" HEAD
+          python3 scripts/test_launcher_clean_environment.py --root "$acceptance_root" --evidence "$GITHUB_WORKSPACE/.agent-state/launcher-clean-linux" --allow-real-build --pip-index-url https://pypi.org/simple
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clean-linux-launcher-acceptance
+          path: |
+            .agent-state/launcher-clean-linux/result.json
+            .agent-state/launcher-clean-linux/*.log
+          include-hidden-files: true
+          retention-days: 30
   windows:
     needs: source
     runs-on: windows-2025
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -104,26 +146,94 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: false
-      - name: Native Windows process and lifecycle lock regression
-        shell: cmd
-        run: go test ./cmd/aide-local-mounts -run ^TestNative -count=1
-      - name: Windows PowerShell 5.1 launcher regression
-        shell: cmd
+      - name: Native Windows, both PowerShell generations and relay boundaries
+        run: python scripts/ci/host_validation.py --host windows --out .agent-state/host-validation/windows
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-host-windows
+          path: .agent-state/host-validation/windows
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+  macos:
+    needs: source
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Native host helpers, launcher contracts and isolated signed Swift bridge
+        run: python3 scripts/ci/host_validation.py --host macos --out .agent-state/host-validation/${{ matrix.runner }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-host-${{ matrix.runner }}
+          path: .agent-state/host-validation/${{ matrix.runner }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+  browser:
+    needs: source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pinned browser runtime and all three engines
         run: |
-          set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules"
-          python scripts/test_windows_image_slot.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-          python scripts/test_windows_directory_launcher.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-          python scripts/test_windows_update_agent.py --pwsh "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-      - name: PowerShell 7 launcher regression
-        shell: pwsh
-        run: |
-          python scripts/test_windows_image_slot.py --pwsh pwsh.exe
-          python scripts/test_windows_directory_launcher.py --pwsh pwsh.exe
-          python scripts/test_windows_update_agent.py --pwsh pwsh.exe
+          npm ci --prefix scripts/browser-runtime
+          scripts/browser-runtime/node_modules/.bin/playwright install --with-deps chromium firefox webkit
+      - name: Real isolated app cross-browser regression
+        env:
+          AIDE_RELEASE_BROWSER: '1'
+          AIDE_EVIDENCE_DIR: ${{ github.workspace }}/.agent-state/release-browser
+        run: go test -mod=vendor -count=1 -timeout=20m -v ./internal/server -run '^TestReleaseBrowserMatrix$'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-browser
+          path: .agent-state/release-browser
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+  public_plugins:
+    needs: [source, native]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-public-plugins-*
+          path: .agent-state/public-plugin-reports
+      - name: Require every frozen public package installation and function result on both architectures
+        env:
+          RELEASE_SHA: ${{ needs.source.outputs.sha }}
+        run: python3 scripts/ci/public_plugins.py verify --root .agent-state/public-plugin-reports
   publish:
-    if: needs.source.outputs.publish == 'true'
-    needs: [source, native, windows]
+    if: always() && needs.source.outputs.publish == 'true' && needs.source.result == 'success' && needs.native.result == 'success' && needs.windows.result == 'success' && needs.macos.result == 'success' && needs.browser.result == 'success' && needs.launcher.result == 'success' && needs.public_plugins.result == 'success'
+    needs: [source, native, windows, macos, browser, launcher, public_plugins]
     concurrency:
       group: aide-public-release
       cancel-in-progress: false
@@ -149,6 +259,18 @@ jobs:
         with:
           pattern: aide-candidate-*
           path: .agent-state/delivery
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-host-*
+          path: .agent-state/delivery
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-browser
+          path: .agent-state/delivery/release-browser
+      - uses: actions/download-artifact@v4
+        with:
+          name: clean-linux-launcher-acceptance
+          path: .agent-state/delivery/clean-linux-launcher-acceptance
       - name: Verify both architectures and prepare checksums
         run: python3 scripts/ci/delivery_gate.py artifacts --root .agent-state/delivery
       - name: Create a new draft only
@@ -159,7 +281,7 @@ jobs:
           fi
           python3 scripts/ci/delivery_gate.py cadence
           gh release create "$RELEASE_TAG" --verify-tag --target "$RELEASE_SHA" --draft --prerelease --title "aide $RELEASE_TAG" --notes-file .agent-state/delivery/RELEASE-NOTES.md
-          gh release upload "$RELEASE_TAG" .agent-state/delivery/aide-candidate-*/*.zip .agent-state/delivery/SHA256SUMS .agent-state/delivery/RELEASE-ASSETS.txt
+          gh release upload "$RELEASE_TAG" .agent-state/delivery/aide-candidate-*/*.zip .agent-state/delivery/SHA256SUMS .agent-state/delivery/RELEASE-ASSETS.txt .agent-state/delivery/RELEASE-VALIDATION.json
       - name: Verify independently reported remote hashes before publication
         run: |
           python3 scripts/ci/delivery_gate.py remote --root .agent-state/delivery

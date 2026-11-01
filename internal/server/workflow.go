@@ -161,8 +161,9 @@ type AgentRoot struct {
 }
 
 type Task struct {
-	Environments *ExecutionEnvironmentProgress `json:"environments,omitempty"`
-	PW           *pwExecution                  `json:"pw,omitempty"`
+	DiagnosticTraceID string                        `json:"diagnosticTraceId,omitempty"`
+	Environments      *ExecutionEnvironmentProgress `json:"environments,omitempty"`
+	PW                *pwExecution                  `json:"pw,omitempty"`
 	// readSnapshots holds hashes captured from full workspace text reads during
 	// this run. The proposal persists the expected hash, not another full file copy.
 	readSnapshots map[string]Change
@@ -532,7 +533,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), AssistantManaged: assistantManaged, AssistantAuthorization: assistantAuthorization, ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled || assistantManaged && a.settings.AssistantAutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	task.MediaPrompt = mediaPrompt
 	if initialRoute != nil {
 		task.ModelRoutes = append(task.ModelRoutes, *initialRoute)
@@ -1254,7 +1255,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	if avatarOverride != nil {
 		avatarEnabled = *avatarOverride
 	}
-	task := &Task{MediaPrompt: orig.MediaPrompt, ModelSelection: cloneModelSelection(&choice), Parallelism: orig.Parallelism, ID: newID(), AssistantManaged: orig.AssistantManaged, AssistantAuthorization: orig.AssistantAuthorization, AutoReview: a.taskAutoReviewLocked(orig), WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{DiagnosticTraceID: incidentTrace(r.Context()), MediaPrompt: orig.MediaPrompt, ModelSelection: cloneModelSelection(&choice), Parallelism: orig.Parallelism, ID: newID(), AssistantManaged: orig.AssistantManaged, AssistantAuthorization: orig.AssistantAuthorization, AutoReview: a.taskAutoReviewLocked(orig), WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -2261,6 +2262,8 @@ func maxToolCallsForRounds(rounds int) int {
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
 func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int, checkpoints ...func(string, []Message)) (string, []Message, error) {
+	ctx = withIncidentTask(ctx, task)
+	defer a.observeIncidentPanic(ctx, incident{Module: "workflow", Phase: "execute"})
 	if err := a.prepareTaskDeliveryBaseline(ctx, task); err != nil {
 		return "", input, err
 	}
@@ -2463,6 +2466,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		requestStarted := time.Now()
 		out, calls, usage, finish, err := completeStream(ctx, cfg, input, params, tools, rec, onDelta, onReasoning)
 		markSnapshotComplete(requestStarted, time.Now())
+		if err != nil {
+			a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
+		}
 		a.mu.Lock()
 		task.Usage = addUsage(task.Usage, usage)
 		a.mu.Unlock()
@@ -2508,6 +2514,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			requestStarted = time.Now()
 			out, calls, usage, finish, err = completeStream(ctx, cfg, input, params, tools, rec, onDelta, onReasoning)
 			markSnapshotComplete(requestStarted, time.Now())
+			if err != nil {
+				a.recordIncident(withIncidentTask(ctx, task), incident{Module: "provider", Phase: "stream"}, err, requestStarted)
+			}
 			a.mu.Lock()
 			task.Usage = addUsage(task.Usage, usage)
 			a.mu.Unlock()
@@ -4387,7 +4396,19 @@ func legacyReadOnlyAllowed(command string) bool {
 	return false
 }
 
-func (a *App) execShellCommand(parent context.Context, task *Task, command string) (string, int, error) {
+func (a *App) execShellCommand(parent context.Context, task *Task, command string) (output string, exit int, shellErr error) {
+	started := time.Now()
+	parent = withIncidentTask(parent, task)
+	defer func() {
+		if shellErr != nil || exit != 0 {
+			err := shellErr
+			if err == nil {
+				err = fmt.Errorf("shell exit %d", exit)
+			}
+			a.recordIncident(parent, incident{Module: "shell", Phase: "execute"}, err, started)
+		}
+	}()
+
 	parent, editorRelease := a.nativeEditorEnter(parent)
 	defer editorRelease()
 	if err := a.nativeEditorWriteError(); err != nil {
@@ -4606,7 +4627,13 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 }
 
 func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, versions map[string]Change) string {
-	failure := func(message string) string { return recordToolDispatchFailure(ctx, message) }
+	started := time.Now()
+	ctx = withIncidentTask(ctx, task)
+	defer a.observeIncidentPanic(ctx, incident{Module: "tools", Phase: "execute", Tool: call.Function.Name})
+	failure := func(message string) string {
+		a.recordIncident(ctx, incident{Module: "tools", Phase: "execute", Tool: call.Function.Name}, errors.New(message), started)
+		return recordToolDispatchFailure(ctx, message)
+	}
 	ctx, editorRelease := a.nativeEditorEnter(ctx)
 	defer editorRelease()
 	if !nativeEditorReadTool(call.Function.Name) {
@@ -6189,7 +6216,14 @@ func (a *App) summarizeCompactionBatch(ctx context.Context, cfg Settings, messag
 // same budgeted pipeline as source messages so a long continuity chain cannot
 // create a single oversized provider request. Source messages remain untouched
 // until the caller validates and commits the complete result.
-func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg Settings, prevCompact string, progress ...func(stage string, batch, batches int)) (string, error) {
+func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg Settings, prevCompact string, progress ...func(stage string, batch, batches int)) (summary string, compactErr error) {
+	started := time.Now()
+	defer func() {
+		if compactErr != nil {
+			a.recordIncident(ctx, incident{Module: "context", Phase: "summary"}, compactErr, started)
+		}
+	}()
+
 	if len(folded) == 0 {
 		return "", errors.New("没有可压缩的历史消息")
 	}

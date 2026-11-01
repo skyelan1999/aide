@@ -11,6 +11,27 @@
 const fs = require('fs');
 const path = require('path');
 
+// Metadata only. Never put the first stack line (the error message), arguments,
+// user paths outside this package, or source lines into diagnostic records.
+function pluginDiagnostic(error, directory) {
+ try {
+  const type = ['Error','TypeError','RangeError','SyntaxError','ReferenceError','AggregateError','URIError','EvalError'].includes(error?.name) ? error.name : 'Error';
+  const code = typeof error?.code === 'string' && /^[A-Z][A-Z0-9_]{0,40}$/.test(error.code) ? error.code : '';
+  const frames=[];
+  for(const line of String(error?.stack||'').slice(0,8192).split('\n').slice(1)) {
+    const match=line.match(/(?:\(|\s)([^()]+):(\d+):(\d+)\)?$/);
+    if(!match)continue;
+    const relative=path.relative(directory,match[1].trim());
+    if(!relative||path.isAbsolute(relative)||relative.split(path.sep).includes('..'))continue;
+    const lineNumber=Number(match[2]),columnNumber=Number(match[3]);
+    if(relative.length>180||!Number.isSafeInteger(lineNumber)||lineNumber<1||lineNumber>10000000||!Number.isSafeInteger(columnNumber)||columnNumber<1||columnNumber>1000000)continue;
+    frames.push({file:relative.split(path.sep).join('/'),line:lineNumber,column:columnNumber});
+    if(frames.length===8)break;
+  }
+  return {type,code,frames};
+ }catch(_){return {type:'Error',code:'',frames:[]};}
+}
+
 const command = process.argv[1];
 const args = process.argv.slice(2);
 
@@ -23,7 +44,7 @@ function loadPlugin(file) {
     delete require.cache[require.resolve(file)];
     mod = require(file);
   } catch (err) {
-    return { error: '模块加载失败: ' + (err && err.message ? String(err.message).slice(0, 300) : String(err)) };
+    return { error: '模块加载失败: ' + (err && err.message ? String(err.message).slice(0, 300) : String(err)),diagnostic:pluginDiagnostic(err,path.dirname(file)) };
   }
   let candidate = mod;
   if (mod && mod.default !== undefined) candidate = mod.default;
@@ -33,7 +54,7 @@ function loadPlugin(file) {
     try {
       produced = candidate({});
     } catch (err) {
-      return { error: '工厂函数执行失败: ' + String(err && err.message).slice(0, 300) };
+      return { error: '工厂函数执行失败: ' + String(err && err.message).slice(0, 300),diagnostic:pluginDiagnostic(err,path.dirname(file)) };
     }
     if (!produced || typeof produced.apply !== 'function') return { error: '工厂函数未返回含 apply(ctx) 的插件对象' };
     return { plugin: produced };
@@ -170,18 +191,18 @@ function assemblePlugins(pluginsDir, enabled, target = '', reserved = []) {
     return values;
   };
   for (const entry of enabled) {
-    const item = {id: entry.id, name: entry.name || entry.id, error: '', tools: [], slots: [], provided: [], requires: []};
+    const item = {id: entry.id, version:entry.version||'',name: entry.name || entry.id, error: '', tools: [], slots: [], provided: [], requires: []};
     item.__pluginId = entry.id; out.plugins.push(item);
     try {
       if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(entry.id) || String(entry.main || 'index.js').startsWith('/') || String(entry.main || 'index.js').split(/[\\/]/).includes('..')) throw new Error('插件入口路径无效');
       if (modules.has(entry.id)) throw new Error('插件ID重复');
       const loaded = loadPlugin(path.join(pluginsDir, entry.id, entry.main || 'index.js'));
-      if (loaded.error) throw new Error(loaded.error);
+      if (loaded.error) {item.diagnostic=loaded.diagnostic;throw new Error(loaded.error);}
       const requires = names(loaded.plugin.requires), provides = names(loaded.plugin.provides);
       item.requires = requires;
       modules.set(entry.id, {entry, item, plugin: loaded.plugin, requires, provides});
       for (const name of provides) { if (!providers.has(name)) providers.set(name, []); providers.get(name).push(entry.id); }
-    } catch (error) { item.error = String(error.message || error).slice(0, 300); }
+    } catch (error) { item.error = String(error.message || error).slice(0, 300); item.diagnostic=item.diagnostic||pluginDiagnostic(error,path.join(pluginsDir,typeof entry.id==='string'?entry.id:'')); }
   }
   const visit = id => {
     const mod = modules.get(id); if (!mod) throw new Error('依赖插件不可用: ' + id);
@@ -203,6 +224,7 @@ function assemblePlugins(pluginsDir, enabled, target = '', reserved = []) {
       states.set(id, 'ready');
     } catch (error) {
       mod.item.error = String(error.message || error).slice(0, 300);
+      mod.item.diagnostic=pluginDiagnostic(error,path.join(pluginsDir,id));
       for (const [name, entry] of registry) if (entry.plugin === id) registry.delete(name);
       for (const [name, entry] of services) if (entry.owner === id) services.delete(name);
       mod.item.tools = []; states.set(id, 'failed'); throw error;
@@ -280,7 +302,7 @@ function callCommand(pluginsDir, requestJSON, outFile) {
       finished = true;
       clearTimeout(timer);
       assembled.dispose();
-      write({ ok: false, error: String(err && err.message).slice(0, 500) });
+      write({ ok: false, error: String(err && err.message).slice(0, 500), diagnostic:pluginDiagnostic(err,pluginDir) });
       console.log(JSON.stringify({ ok: false }));
     });
 }
@@ -307,7 +329,7 @@ function daemonCommand(pluginPath) {
     process.exit(1);
   }
   if (loaded.error) {
-    sendLine({ method: 'event', params: { type: 'log', level: 'error', message: '插件加载失败: ' + loaded.error, time: new Date().toISOString() } });
+    sendLine({ method: 'event', params: { type: 'log', level: 'error', message: '插件加载失败: ' + loaded.error, diagnostic:loaded.diagnostic,time: new Date().toISOString() } });
     process.exit(1);
   }
   const plugin = loaded.plugin;
@@ -367,7 +389,7 @@ function daemonCommand(pluginPath) {
           Promise.resolve()
             .then(() => entry.handler(params.args || {}, makeToolAPI(path.dirname(pluginPath), params.workspace, pluginId === 'terminal' ? params.terminalContext : undefined)))
             .then((value) => sendLine({ jsonrpc: '2.0', id: msg.id, result: value === undefined ? null : value }))
-            .catch((err) => sendLine({ jsonrpc: '2.0', id: msg.id, error: { code: -32000, message: String(err && err.message).slice(0, 500) } }));
+            .catch((err) => sendLine({ jsonrpc: '2.0', id: msg.id, error: { code: -32000, message: String(err && err.message).slice(0, 500), diagnostic:pluginDiagnostic(err,path.dirname(pluginPath)) } }));
         }
       });
       rl.on('close', shutdown);
@@ -375,7 +397,7 @@ function daemonCommand(pluginPath) {
       process.on('SIGINT', shutdown);
     })
     .catch((err) => {
-      emit('log', { level: 'error', message: 'daemon 启动失败: ' + String(err && err.message).slice(0, 300) });
+      emit('log', { level: 'error', message: 'daemon 启动失败: ' + String(err && err.message).slice(0, 300), diagnostic:pluginDiagnostic(err,path.dirname(pluginPath)) });
       process.exit(1);
     });
 }

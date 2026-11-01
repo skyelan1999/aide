@@ -6,12 +6,13 @@
 
 用户指定后续实际桌面验收从仓库根 `start.command` 打开，当前以 `aide/start.command` 为准。保留启动日志并核对实际容器、端口和浏览器；测试夹具与只读 API 不能代替这一步。原生证书提示由用户手动处理。详见[本地镜像与启动恢复](local-dependency-image.md)。
 
-## 现行验证入口（2026-10-17核对）
+## 现行验证入口（2026-11-02核对）
 
 当前以统一开发工作流脚本为准，不以下文历史测试数量为准：
 
 - 快速门禁：`python3 scripts/agent-route.py verify quick`（git diff --check、`node --check` 前端 JS、`scripts/version.sh check`、`test_agent_route.py`、`check_docs.py`、`bash -n` 脚本、i18n/stream/local-root 回归等，清单见 `docs/agent/router.json` 的 `checks.quick`）。
-- 完整门禁：`python3 scripts/agent-route.py verify full` = quick + 当前 `checks.full` 中的运行资源、Go快照及CAD几何验证。Go快照脚本将实际文件送入一次性隔离容器，在容器本地编译server race二进制，再运行12个互斥串行分片，其他Go包race与vet完整执行；不是直接使用旧的共享目录 `aide.sh test`。具体命令见 `scripts/test_go_snapshot.py`、`scripts/run_go_test_shards.py` 和 `docs/agent/router.json`。
+- 完整门禁：`python3 scripts/agent-route.py verify full` = quick + 当前 `checks.full` 中的运行资源、Go快照及CAD几何验证。Go快照脚本将实际文件送入一次性隔离容器，在容器本地编译server race二进制，再运行24个互斥分片（默认1个 worker，显式可选2个），其他Go包race与vet完整执行；不是直接使用旧的共享目录 `aide.sh test`。具体命令见 `scripts/test_go_snapshot.py`、`scripts/run_go_test_shards.py` 和 `docs/agent/router.json`。
+- Release CI 与公开插件安装/功能、原生平台和 48 格浏览器矩阵：[完整验收策略](testing/release-validation.md)。源码用例入口见[测试用例目录](testing/test-cases.md)，目录数量不代表执行通过。
 - 发布门禁：`python3 scripts/agent-route.py release-check <id>`（只检查不发布）。
 - 后端测试已从历史记录时点的 9 个函数持续扩展；具体覆盖以当前 `go test` 结果和 `internal/server/*_test.go` 为准。
 

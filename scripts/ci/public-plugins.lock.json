@@ -1,0 +1,518 @@
+{
+  "schemaVersion": 1,
+  "marketRepository": "skyelan1999/aide-pkg-shop",
+  "marketRevision": "bae8769151ed8e67043b2ebf4a439c688aaeb939",
+  "plugins": [
+    {
+      "id": "ali-bailian-supporter",
+      "marketVersion": "0.1.2",
+      "package": "packages/ali-bailian-supporter/0.1.2-b88098def971.zip",
+      "bytes": 6140,
+      "sha256": "b88098def971e2afcb3db042d71e29c3d771f6c4fb742d9307ecb0e66f28ed47",
+      "repository": "skyelan1999/aide-pig-ALiBaiLianSupporter",
+      "packageSourceCommit": "f009b4fb5f1ebfef61dd0cf7570d43fa64a5fd0c",
+      "latestPublicTag": "v0.1.2",
+      "latestPublicCommit": "9321c865381be8fb5e3b150ddd048103d7e4447c",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "almanac",
+      "marketVersion": "1.1.0",
+      "package": "packages/almanac/1.1.0-5f82efc98e80.zip",
+      "bytes": 171917,
+      "sha256": "5f82efc98e80feeab726038ca4e1fb4e09d8f79ff28af2981a0898fade26fd56",
+      "repository": "skyelan1999/aide-pkg-almanac",
+      "packageSourceCommit": "c42b56e8a384e113d5f3533e182cc04e0bb09996",
+      "latestPublicTag": "v1.1.0",
+      "latestPublicCommit": "c42b56e8a384e113d5f3533e182cc04e0bb09996",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "archive-tools",
+      "marketVersion": "1.0.0",
+      "package": "packages/archive-tools/1.0.0-78bf74c22911.zip",
+      "bytes": 1932,
+      "sha256": "78bf74c2291120fc0102419b3512ac7a61264dc5ed6f418f6f232462252b8eee",
+      "repository": "skyelan1999/aide-pkg-ArchiveTools",
+      "packageSourceCommit": "c4d2286083c650dd4de94ce5b12936858993f8c3",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "c4d2286083c650dd4de94ce5b12936858993f8c3",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "auto-ai-model-router",
+      "marketVersion": "0.1.2",
+      "package": "packages/auto-ai-model-router/0.1.2-8418518ccc48.zip",
+      "bytes": 7866,
+      "sha256": "8418518ccc48fd154d3b579293513bb439ec2d4150ec282ed8fee8ae93ab2060",
+      "repository": "skyelan1999/aide-pkg-AutoAiModelRouter",
+      "packageSourceCommit": "9e7878109d80f317f526109f406cc65e85886352",
+      "latestPublicTag": "v0.1.2",
+      "latestPublicCommit": "9e7878109d80f317f526109f406cc65e85886352",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "browser-control",
+      "marketVersion": "1.1.0",
+      "package": "packages/browser-control/1.1.0-9e67c3194f59.zip",
+      "bytes": 5465,
+      "sha256": "9e67c3194f59eb2ce27ea2c7d4384d04d652198605be6494f68e9a6e9641c7e2",
+      "repository": "skyelan1999/aide-pkg-BrowserControl",
+      "packageSourceCommit": "e0f62b3bb67795dbeeb06818e529af1cb08ec125",
+      "latestPublicTag": "v1.1.0",
+      "latestPublicCommit": "e0f62b3bb67795dbeeb06818e529af1cb08ec125",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "computer-control",
+      "marketVersion": "1.2.0",
+      "package": "packages/computer-control/1.2.0-16c147b479ce.zip",
+      "bytes": 5746,
+      "sha256": "16c147b479ceacb0da20b96994e29f19d2623625a2534e6f5cf1853969a4e8f2",
+      "repository": "skyelan1999/aide-pkg-ComputerControl",
+      "packageSourceCommit": "cc92cd730b8120ac3a0cf7224dbfad4774fdce11",
+      "latestPublicTag": "v1.2.0",
+      "latestPublicCommit": "d37d767485ea6f44e9405e3a2ad47705cdfbd99c",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "current-time",
+      "marketVersion": "1.1.0",
+      "package": "packages/current-time/1.1.0-3959e61044b8.zip",
+      "bytes": 12517,
+      "sha256": "3959e61044b8e3a4a123b466ace916cf061c0f19d63680df8989c3d8341b793d",
+      "repository": "skyelan1999/aide-pkg-CurrentTime",
+      "packageSourceCommit": "1f8098ff1ba6384e917df5b5b417978f01780c22",
+      "latestPublicTag": "v1.1.0",
+      "latestPublicCommit": "1f8098ff1ba6384e917df5b5b417978f01780c22",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "deepseek-supporter",
+      "marketVersion": "0.1.0",
+      "package": "packages/deepseek-supporter/0.1.0-77e9591d2f44.zip",
+      "bytes": 6092,
+      "sha256": "77e9591d2f443d09cc24a5c5647952c30b47f58848a542e6e92632ea83e49465",
+      "repository": "skyelan1999/aide-pkg-DeepSeekSupporter",
+      "packageSourceCommit": "acc4b94a2c629761f310d81370e4f30a133de49b",
+      "latestPublicTag": "v0.1.0",
+      "latestPublicCommit": "acc4b94a2c629761f310d81370e4f30a133de49b",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "environment-guide",
+      "marketVersion": "1.0.0",
+      "package": "packages/environment-guide/1.0.0-1ccef42c7a51.zip",
+      "bytes": 2931,
+      "sha256": "1ccef42c7a51802ff4cb17c33408ffbcbac57e705489094acb0c0f692384dc63",
+      "repository": "skyelan1999/aide-pkg-EnvGuide",
+      "packageSourceCommit": "4103e0e742b0b4da71a5a981ee1aa1250bc0e3d6",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "4103e0e742b0b4da71a5a981ee1aa1250bc0e3d6",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "feedback",
+      "marketVersion": "1.0.0",
+      "package": "packages/feedback/1.0.0-907e5964c7cf.zip",
+      "bytes": 1657,
+      "sha256": "907e5964c7cf42cf302a78735f4b6aad015db0f2c91f10591571e7bf55eb60cc",
+      "repository": "skyelan1999/aide-pkg-feedback",
+      "packageSourceCommit": "8302f3577ea572186e2f940ca10e40e5604cf13b",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "8302f3577ea572186e2f940ca10e40e5604cf13b",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "goal",
+      "marketVersion": "1.0.0",
+      "package": "packages/goal/1.0.0-81bba34cb0b8.zip",
+      "bytes": 1663,
+      "sha256": "81bba34cb0b8d16138749ef0bcaac1e68558148bca969330eab8222943c744c1",
+      "repository": "skyelan1999/aide-pkg-goal",
+      "packageSourceCommit": "72fbb16cd37f115a3843988bc6f31c2a35f05a25",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "9c34d516f14982168b7b8a88e90439f251530d26",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "lunar-calendar",
+      "marketVersion": "1.1.0",
+      "package": "packages/lunar-calendar/1.1.0-70f14e9538bf.zip",
+      "bytes": 53159,
+      "sha256": "70f14e9538bf5a645c63d9f16ce231852944d83dd9fd27428c29065509a9e964",
+      "repository": "skyelan1999/aide-pkg-LunarCalendar",
+      "packageSourceCommit": "983384b311ee26c51a7ac352ef0169c61e49d589",
+      "latestPublicTag": "v1.1.0",
+      "latestPublicCommit": "983384b311ee26c51a7ac352ef0169c61e49d589",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "markdown-history",
+      "marketVersion": "1.0.0",
+      "package": "packages/markdown-history/1.0.0-064b9a593932.zip",
+      "bytes": 1990,
+      "sha256": "064b9a593932ebd657a5db4e668e451a9cbe22524c2b1d7f5d6b6cbefd737edd",
+      "repository": "skyelan1999/aide-pkg-MarkdownHistory",
+      "packageSourceCommit": "251a214346c08ee7e80e64f37bc93d08b40786fd",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "251a214346c08ee7e80e64f37bc93d08b40786fd",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "office",
+      "marketVersion": "1.1.0",
+      "package": "packages/office/1.1.0-34b4d01a5714.zip",
+      "bytes": 4287,
+      "sha256": "34b4d01a5714cad3530471b3de86c4d81eee6ca0452b85ba149b31b8ad94553f",
+      "repository": "skyelan1999/aide-pkg-office",
+      "packageSourceCommit": "1d56ad23c7d028afe65882a534b44a9270ff406f",
+      "latestPublicTag": "v1.1.0",
+      "latestPublicCommit": "1d56ad23c7d028afe65882a534b44a9270ff406f",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "plan",
+      "marketVersion": "1.0.0",
+      "package": "packages/plan/1.0.0-c30939a8d166.zip",
+      "bytes": 1653,
+      "sha256": "c30939a8d1662fde2f2c08e811731bf66cf4f750ea076c94c8567315e98cda53",
+      "repository": "skyelan1999/aide-pkg-plan",
+      "packageSourceCommit": "c89648ba468ca0410d30c44b7e592bb37127234a",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "24fd837e659360631b693e1281fbbc3dfefc7681",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "plugin-authoring",
+      "marketVersion": "1.0.0",
+      "package": "packages/plugin-authoring/1.0.0-7e323cb5235e.zip",
+      "bytes": 2117,
+      "sha256": "7e323cb5235e1231df12eacc9ed69aa0632ef2da3ac9ae40fb9509aba1262cba",
+      "repository": "skyelan1999/aide-pkg-PluginAuthoring",
+      "packageSourceCommit": "e44b69f0f8a11c9cd9c0eab43e6b1ed0afc6afb6",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "e44b69f0f8a11c9cd9c0eab43e6b1ed0afc6afb6",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "rviz",
+      "marketVersion": "0.1.1",
+      "package": "packages/rviz/0.1.1-c0a685b9281a.zip",
+      "bytes": 201276,
+      "sha256": "c0a685b9281a2c911d2a649ee27de08712ad16b0cd2f3feeb643e06b9920a5b9",
+      "repository": "skyelan1999/aide-pkg-RViz",
+      "packageSourceCommit": "da01e9db62ce87aaddf07c953a70019ea46100ad",
+      "latestPublicTag": "v0.1.1",
+      "latestPublicCommit": "da01e9db62ce87aaddf07c953a70019ea46100ad",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "skill",
+      "marketVersion": "1.1.0",
+      "package": "packages/skill/1.1.0-d020157344ef.zip",
+      "bytes": 7294,
+      "sha256": "d020157344ef540cb614ab4cc8c4ce00c935719649eef35664e2c6381fe3bed2",
+      "repository": "skyelan1999/aide-pkg-skill",
+      "packageSourceCommit": "9fbe996c3ede074a3d02ff8de13f321d9f5a22a5",
+      "latestPublicTag": "v1.1.0",
+      "latestPublicCommit": "a39167ae2b67b1e6a47f15bcf1fad9580769adcd",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "sqlite",
+      "marketVersion": "1.0.0",
+      "package": "packages/sqlite/1.0.0-015e0f6d6032.zip",
+      "bytes": 11602,
+      "sha256": "015e0f6d60326fcf2d343639565c94e114067694139edbce0f06c55f4d554e95",
+      "repository": "skyelan1999/aide-pkg-sqlite",
+      "packageSourceCommit": "45db2e291b5ca27fcd891460c3e5b3f0f84e5ece",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "45db2e291b5ca27fcd891460c3e5b3f0f84e5ece",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "starlink",
+      "marketVersion": "0.1.4",
+      "package": "packages/starlink/0.1.4-98795650fd6b.zip",
+      "bytes": 38501,
+      "sha256": "98795650fd6b4306b958174e8bb196d82fceccf13eb8a79e18349c8296a72440",
+      "repository": "skyelan1999/aide-pkg-StarLink",
+      "packageSourceCommit": "b07fa70427bf5137050feebfde30b12359dfcaa7",
+      "latestPublicTag": "v0.1.4",
+      "latestPublicCommit": "b07fa70427bf5137050feebfde30b12359dfcaa7",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "step-viewer",
+      "marketVersion": "0.1.1",
+      "package": "packages/step-viewer/0.1.1-d19162b4784c.zip",
+      "bytes": 210001,
+      "sha256": "d19162b4784c48c0d7c6229c2e2ac13eb4fc4298f586e0772fdd1751f32c8e81",
+      "repository": "skyelan1999/aide-pkg-STEPViewer",
+      "packageSourceCommit": "13e96e7f14d5eb5bce391d044afa9fcfdd2c93a0",
+      "latestPublicTag": "v0.1.2",
+      "latestPublicCommit": "b69b844b1efe2b63d006e1c2583c29b8d3cb4e6b",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "subagent",
+      "marketVersion": "1.0.0",
+      "package": "packages/subagent/1.0.0-d346c2210467.zip",
+      "bytes": 1673,
+      "sha256": "d346c221046743bc7f508209c0c0d6eb28615b814b96c08b7c3f2fd5be37bcba",
+      "repository": "skyelan1999/aide-pkg-subagent",
+      "packageSourceCommit": "f9584cbfc128007e4ecdfed587cc93f231c776e0",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "f9584cbfc128007e4ecdfed587cc93f231c776e0",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "terminal",
+      "marketVersion": "1.5.1",
+      "package": "packages/terminal/1.5.1-16955e057fc0.zip",
+      "bytes": 1063002,
+      "sha256": "16955e057fc0e5176bae9bade29981cb56d5565fa9b1bef0e2a84e1b4c6338ed",
+      "repository": "skyelan1999/aide-pkg-terminal",
+      "packageSourceCommit": "d140f369220c9cff6cc4a741554516bff2896465",
+      "latestPublicTag": "v1.5.2",
+      "latestPublicCommit": "17227d72ef3017858de3f9e0c30bd06a9941668e",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "todo",
+      "marketVersion": "1.0.0",
+      "package": "packages/todo/1.0.0-8c85249e4a76.zip",
+      "bytes": 1650,
+      "sha256": "8c85249e4a760279d9e4dbf4e0a51d1d58beb7da12df4633ac749631fe3c2452",
+      "repository": "skyelan1999/aide-pkg-todo",
+      "packageSourceCommit": "cfe72f5d187737893ea3aca44e7f788f92e18d03",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "cfe72f5d187737893ea3aca44e7f788f92e18d03",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "tts-tools",
+      "marketVersion": "0.1.0",
+      "package": "packages/tts-tools/0.1.0-a42b4cbab8aa.zip",
+      "bytes": 2964,
+      "sha256": "a42b4cbab8aaf9929d307133e202c8eea14c8f4fa460d4259fd04876e350b515",
+      "repository": "skyelan1999/aide-pkg-TTSTools",
+      "packageSourceCommit": "a5774b4af5ea9d1eedc6f2c8b1f3ce74d2acc42b",
+      "latestPublicTag": "v0.1.0",
+      "latestPublicCommit": "a5774b4af5ea9d1eedc6f2c8b1f3ce74d2acc42b",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "video-preview",
+      "marketVersion": "0.1.0",
+      "package": "packages/video-preview/0.1.0-652e923f0a61.zip",
+      "bytes": 45079,
+      "sha256": "652e923f0a6158681974486b91dfafe2723b8ce18de325de208be9bee31ce396",
+      "repository": "skyelan1999/aide-pkg-VideoPreview",
+      "packageSourceCommit": "3935bcde407a85be372909f9fabca697b2da151c",
+      "latestPublicTag": "v0.1.1",
+      "latestPublicCommit": "60fd2ab172cd251019de0c16236949f2a19f1c13",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "workflow",
+      "marketVersion": "1.0.0",
+      "package": "packages/workflow/1.0.0-db2fa93c32f2.zip",
+      "bytes": 1657,
+      "sha256": "db2fa93c32f2762cd26cb23774df8888fb87369a0cf6d136a9b6c26532b4f979",
+      "repository": "skyelan1999/aide-pkg-workflow",
+      "packageSourceCommit": "e7b732e79b5e8489d6418bb97456860216000e7b",
+      "latestPublicTag": "v1.0.0",
+      "latestPublicCommit": "e7b732e79b5e8489d6418bb97456860216000e7b",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "file-preview",
+      "marketVersion": "0.1.0",
+      "package": "packages/file-preview/0.1.0-f57eb56e0b65.zip",
+      "bytes": 41100,
+      "sha256": "f57eb56e0b65de5c6e11a651b44fd57f97c6b2f40bed6b0ce7f3cad1e84b6d9e",
+      "repository": "skyelan1999/aide-pkg-FilePreview",
+      "packageSourceCommit": "d945229598d455d069b1dc377a7fa0ed4c0e6fcf",
+      "latestPublicTag": "v0.1.0",
+      "latestPublicCommit": "d945229598d455d069b1dc377a7fa0ed4c0e6fcf",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "codex-bridge",
+      "marketVersion": "0.4.1",
+      "package": "packages/codex-bridge/0.4.1-6fc6bad3d1f4.zip",
+      "bytes": 38403,
+      "sha256": "6fc6bad3d1f4643b85cd8353a4a05f42f2c28328cc82f3caa5fba9f2df84cc84",
+      "repository": "skyelan1999/aide-pkg-CodexBridge",
+      "packageSourceCommit": "747e6f4c76b7299c9bab6d632bc1b2bf74ff7a1c",
+      "latestPublicTag": "v0.4.1",
+      "latestPublicCommit": "83a68417a9a25ef99a56605ba98cec6b39b9f4b6",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    },
+    {
+      "id": "openai-supporter",
+      "marketVersion": "0.1.0",
+      "package": "packages/openai-supporter/0.1.0-dae0cbbf00cf.zip",
+      "bytes": 6430,
+      "sha256": "dae0cbbf00cf955df0c086575583e90ccabbc45e72c1a495d27b4dcda71672c1",
+      "repository": "skyelan1999/aide-pkg-OpenAISupporter",
+      "packageSourceCommit": "be30cefdbe467478a13f64bcc63c1020cb7b7c10",
+      "latestPublicTag": "v0.1.0",
+      "latestPublicCommit": "be30cefdbe467478a13f64bcc63c1020cb7b7c10",
+      "checks": {
+        "package": "required",
+        "hostInstallAndDisclosure": "required",
+        "function": "required"
+      },
+      "public": true
+    }
+  ],
+  "policy": "Every current public market package must pass inspection, real isolated Aide installation and meaningful function cases. Missing/failed/skipped required cases block publication. Use already-published ZIPs without rebuilding plugins. Latest upstream versions are compared and documented; they do not silently replace current market packages. Private listings are excluded."
+}
