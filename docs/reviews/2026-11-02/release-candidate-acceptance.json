@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "verdict": "scoped-candidate-checks-pass-not-a-release-receipt",
+  "candidateCommit": "eb97d1446bf28c7568175c3b4570b2ffa4bae877",
+  "candidateVersion": "v0.1.17.6-RC1",
+  "candidateSourceSHA256": "dfaac9616ea4c869a2e93f27394e0e0fb651f0cc3be6557aacce8a61563e2f6d",
+  "candidateOnly": true,
+  "aideReleasePublished": false,
+  "productionDeployed": false,
+  "fullRun": "https://github.com/skyelan1999/aide/actions/runs/41356355299",
+  "fullRunConclusion": "failure: original browser cancellation classifier; all other required jobs passed",
+  "browserRepairRun": "https://github.com/skyelan1999/aide/actions/runs/41357546514",
+  "native": {
+    "arm64": {
+      "status": "pass",
+      "serverRegistered": 1587,
+      "serverPassed": 1509,
+      "serverSkipped": 78,
+      "shards": 24,
+      "publicPackages": 30,
+      "marketRevision": "943f6a90f08c4f5ba09e4d09031247b64ee29295",
+      "packageInstallFunction": "pass",
+      "runtimeSdkImportSmokePrivacy": "pass"
+    },
+    "amd64": {
+      "status": "pass",
+      "serverRegistered": 1587,
+      "serverPassed": 1509,
+      "serverSkipped": 78,
+      "shards": 24,
+      "publicPackages": 30,
+      "marketRevision": "943f6a90f08c4f5ba09e4d09031247b64ee29295",
+      "packageInstallFunction": "pass",
+      "runtimeSdkImportSmokePrivacy": "pass"
+    }
+  },
+  "hosts": {
+    "windows": {
+      "status": "pass",
+      "checks": 10,
+      "commit": "eb97d1446bf28c7568175c3b4570b2ffa4bae877",
+      "machine": "AMD64"
+    },
+    "macos-15": {
+      "status": "pass",
+      "checks": 8,
+      "commit": "eb97d1446bf28c7568175c3b4570b2ffa4bae877",
+      "machine": "arm64"
+    },
+    "macos-15-intel": {
+      "status": "pass",
+      "checks": 8,
+      "commit": "eb97d1446bf28c7568175c3b4570b2ffa4bae877",
+      "machine": "x86_64"
+    }
+  },
+  "assets": {
+    "aide-v0.1.17.6-RC1-devtools-linux-amd64.zip": {
+      "bytes": 577805842,
+      "sha256": "4e47cdd69097f84b9a9d18df1af1cbfb6363c17c024114cfc9f35041fb745075"
+    },
+    "aide-v0.1.17.6-RC1-full-linux-amd64.zip": {
+      "bytes": 417308052,
+      "sha256": "cefc4aa0a69565114dfa9fe3712be8ec9bcbc06f24316a53be3606a5ed1333a4"
+    },
+    "aide-v0.1.17.6-RC1-devtools-linux-arm64.zip": {
+      "bytes": 562715506,
+      "sha256": "1cf29ef1e423a0efe1e13378385e91480944b3066050680df0162e747cedc02d"
+    },
+    "aide-v0.1.17.6-RC1-full-linux-arm64.zip": {
+      "bytes": 412830549,
+      "sha256": "93d5337946034646a66fd5e1eabf6f59dd8531b8dda78346f1376f185771170c"
+    }
+  },
+  "limitations": [
+    "Staged evidence crosses a test-runner-only repair commit; cannot be published as final same-source Release evidence.",
+    "Formal clean-main full/release-check/version.sh and full tagged Delivery remain.",
+    "No paid model/provider, private package, hardware or production acceptance."
+  ],
+  "browser": {
+    "status": "pass",
+    "cases": 48,
+    "commit": "a0265d4d42c4567134d592ad366bb6600715bed8",
+    "navigationCancellationRecords": 20
+  },
+  "cleanLinux": {
+    "status": "pass",
+    "commands": 17,
+    "healthSamples": 4,
+    "commit": "eb97d1446bf28c7568175c3b4570b2ffa4bae877"
+  }
+}

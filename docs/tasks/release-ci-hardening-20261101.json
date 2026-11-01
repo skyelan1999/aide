@@ -57,7 +57,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Formal market 943f6a90 and published SQLite1.0.1/Terminal1.5.3 verified online. Aide eb97d144 Linux ARM64 actual public ZIP inspection/install/function:30/30 pass, including negative and installed backpressure tests. Full run41356355299: source, Windows10, macOS ARM/Intel8 each, clean Linux17 commands/four HTTPS health samples pass; native ARM/AMD full candidates still running. Browser #709 fixed at a0265d4d: focused rejection cases, local48/48 (193.29s), cloud41357546514 48/48 and independent report identity/case checks pass;20 old-document cancellations retained. a026 changes only test runner/CI/docs; product code equals eb97. Staged cross-commit reports are not a final same-source Release receipt. Final clean-main full/version/tagged Delivery and Aide PR698 protection remain.",
+      "summary": "Candidate eb97d144 native ARM64 and AMD64 complete: each 1509 passed,78 explicit skips,24 complete shards,other Go packages/platform/vet pass; each30/30 formal public ZIP inspection/install/function pass. Downloaded all4 runtime/SDK ZIPs and independently validated size/SHA/CRC, imports/smoke/privacy receipts and shared source fingerprint dfaac9616ea4c869a2e93f27394e0e0fb651f0cc3be6557aacce8a61563e2f6d. Windows10/macOS8+8 and clean Linux17 commands/4health samples pass. Original full run retains failed browser result; test-only fix a026 cloud48/48 and20 cancellation records independently validated. Plugin bugs583/584/586/588 closed after public releases+dual-native actual installs. Final same-source tagged Delivery and clean-main full remain; staged reports are not a final Release receipt.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/698",
         ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
@@ -74,7 +74,8 @@
         ".agent-state/release-ci-hardening-20261101/published-final-arm64/report.json",
         ".agent-state/release-ci-hardening-20261101/browser-issue709/report.json",
         "https://github.com/skyelan1999/aide/actions/runs/41357546514",
-        ".agent-state/release-ci-hardening-20261101/remote-a0265d4d/release-browser/report.json"
+        ".agent-state/release-ci-hardening-20261101/remote-a0265d4d/release-browser/report.json",
+        "docs/reviews/2026-11-02/release-candidate-acceptance.json"
       ]
     },
     "documentation": {
@@ -89,15 +90,16 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "仅暂停本轮闲置Terminal测试容器，保留诊断/测试证据、构建缓存和用户生产服务；最终发布后再核对候选资源。",
+      "status": "pass",
+      "summary": "Only task-owned idle QA containers stopped/removed; source changes reviewed, no unrelated files staged. User production and existing builder untouched. Test logs, candidate archives and reusable build caches retained as evidence, not treated as garbage. Git tree will be rechecked after this documentation commit.",
       "evidence": [
+        "docs/reviews/2026-11-02/release-readiness.md",
         ".agent-state/release-ci-hardening-20261101/cleanup-manifest.json"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "User explicitly authorized the three specific administrator exception merges. SQLite PR2 -> 9d9cbd9a (v1.0.1 published), Terminal PR2 -> 221147d2 (v1.5.3 prerelease published); remote tags/ZIP sizes/SHA sums independently verified. Market PR32 -> 943f6a90. No protection settings changed. Aide lock now fixes this formal marketplace and both new packages; final full Delivery and Aide PR698 integration remain. This exception does not authorize bypassing Aide PR protection.",
+      "status": "blocked",
+      "summary": "The three explicitly authorized plugin/market exceptions were executed and published/verified. Aide PR698 still independently requires one owner review; sole owner is also author. No authorization to bypass Aide main has been given. Preparing a concrete request for PR698 and bounded release-result documentation only; no protection settings changed. Formal clean-main full/release-check/version/tagged Delivery remain after integration.",
       "evidence": [
         "https://github.com/skyelan1999/aide-pkg-sqlite/pull/2",
         "https://github.com/skyelan1999/aide-pkg-terminal/pull/2",
@@ -110,7 +112,7 @@
   },
   "release_authorization": "用户当前要求做一次完整release；包含必要集成、版本及公开发行；不推定管理员绕过保护，也不替换生产服务",
   "rollback": "保留现行发布、镜像和用户数据；失败仅留草稿/候选，修复后重新绑定源代码验证，禁止覆盖旧附件",
-  "handoff": "Continue full Delivery after updated formal marketplace lock. Verify both native candidates, complete race/vet inventories, all 30 published packages, 48 browser cases, native hosts and clean launcher. Keep production unchanged. PR698 requires its own protection to be satisfied; the three plugin/market exceptions do not extend to it. Then clean main full/release-check/version.sh and independently verify remote Release assets.",
+  "handoff": "Candidate validation summary is in docs/reviews/2026-11-02/release-candidate-acceptance.json. Need current owner authorization for Aide main protection (PR698; plugin/market exceptions do not extend). After authorized merge: keep production untouched, clean main run full and release-check using existing SDK override, version.sh bump feature -> expected0.1.18.0RC1, push, dispatch full tagged Delivery with truthful owner-requested one-off cadence reason. Do not splice staged cross-commit candidate reports into final Release evidence. Validate exact remote assets/hashes, then backfill result documentation and close remaining integrated Aide issues. Legacy prebuilt fallback manifest already verified; do not replace it with unpublished or differently shaped assets.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/696",
     "https://github.com/skyelan1999/aide/issues/699",
