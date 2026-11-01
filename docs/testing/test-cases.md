@@ -6,8 +6,8 @@
 | --- | ---: | ---: |
 | go | 377 | 1679 |
 | python | 62 | 275 |
-| node | 179 | 181 |
-| browser | 104 | 0 |
+| node | 180 | 181 |
+| browser | 105 | 0 |
 
 详见[Release 测试矩阵](release-validation.md)，包含基本/全量、平台、插件、人工与外部依赖的通过标准。
 
@@ -5266,6 +5266,22 @@
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
 环境引用：`AIDE_COMPONENT_EVIDENCE_DIR`, `AIDE_ZIP_CATALOG`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>scripts/ci/browser-navigation-errors.cjs · browser · 0 个命名用例</summary>
+
+[源码入口](../../scripts/ci/browser-navigation-errors.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
+
+</details>
+
+<details><summary>scripts/ci/browser-navigation-errors.test.cjs · node · 0 个命名用例</summary>
+
+[源码入口](../../scripts/ci/browser-navigation-errors.test.cjs)
+
+- 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
 </details>
 

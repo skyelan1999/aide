@@ -51,6 +51,7 @@ jobs:
       - name: Recheck current source contracts
         run: |
           python3 scripts/agent-route.py verify quick
+          node scripts/ci/browser-navigation-errors.test.cjs
           python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
   native:
     if: inputs.validation_scope != 'hosts' && inputs.validation_scope != 'browser'

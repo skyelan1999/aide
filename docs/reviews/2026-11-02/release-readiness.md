@@ -42,3 +42,11 @@ Windows 首轮误用了 POSIX 专属测试、Linux WebKit 同进程连续场景�
 用户随后明确授权上述三个 PR 管理员例外合并，未修改分支保护规则。SQLite PR #2 已合并到 `9d9cbd9a4291c1ddcb6f0d7ef310ff21f6efa374`，Terminal PR #2 合并到 `221147d2f33cff377f2c854a5b97dbbfbe1525c6`；分别发布 [SQLite v1.0.1](https://github.com/skyelan1999/aide-pkg-sqlite/releases/tag/v1.0.1) 和 [Terminal v1.5.3 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.3)。两个公开 tag 指向对应合并提交，远端 ZIP 字节数和 SHA256SUMS 均与上文候选摘要相符，沿用仓库固定提交下载，没有声称上传 Release 二进制附件。
 
 市场 PR #32 已合并到 `943f6a90f08c4f5ba09e4d09031247b64ee29295`；Aide public lock 固定此提交和两个新版本，另外 28 项身份保持不变。市场源码检查再次确认 33 个展示条目、30 个 public 包、3 个 private 展示条目；Aide 的 34 项 CI 合约通过。Aide 主程序尚未发布，随后以更新后的正式包启动完整候选验收；此前的旧市场报告不作为最终放行依据。
+
+## 新市场与完整候选验收
+
+公开市场 Pages 发布运行 `41356294112` 通过；实际公开 `catalog.json` 已核对两个版本和摘要。Aide `eb97d1446bf28c7568175c3b4570b2ffa4bae877` 在 Linux ARM64 隔离宿主下载、检查并真实安装全部 30 个正式 public ZIP，逐包功能检查通过，包含 SQLite 的全部新增否定回归和 Terminal 已安装模块双向 32 MiB 背压/字节 SHA 校验。报告的 marketRevision、commit、architecture、30 项身份与必需阶段均另经验证器核对。
+
+完整 [Delivery 41356355299](https://github.com/skyelan1999/aide/actions/runs/41356355299) 的源码门禁、Windows 10 项、macOS ARM64/Intel 各 8 项通过；下载的原生报告已独立核对提交与实际 Go 断言。此运行浏览器在第 47 格失败，登记 [#709](https://github.com/skyelan1999/aide/issues/709)：WebKit 刷新旧页面时，测试只识别已观察到的 GET 取消，未识别旧页面实际发出的 context-preview POST 和 session-check PATCH。该场景已完成审批、附件、聊天、刷新持久化及权限断言，失败截图完整渲染，服务/脚本/CSS 独立探测均为 200。原失败保留，不能因为功能断言通过就放行。
+
+修复按文档代际跟踪实际方法/路径，并保留导航提交前旧页面最后发出的请求；仅精确匹配 WebKit 旧代际刷新取消，POST/PATCH 取消不算写入成功。活动页面、新代际、未观察路径、跨域及普通脚本/引擎错误均由专门反例继续拒绝。真实 48 格复验尚在进行；双架构构建继续执行，不复用失败运行作为最终 Release 收据。

@@ -57,7 +57,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "a0ff1acb日常CI通过。本地0aa765a2阶段快照完整race/vet通过：1587项，1509通过、78选择性/环境相关跳过，24分片无失败；其余Go包和11项平台合约通过。跳过不是功能通过，旧快照不是最终发行收据。云端48格浏览器通过(16b48d08)，Windows 10项、macOS ARM/Intel各8项通过(d6cc5a81)。Docker夹具遗漏#702已补COPY(a0ff1acb)，实际新构建待最终全量运行。旧public SQLite/Terminal的#583/#584/#586/#588经原包复现，候选ZIP真实Aide导入和否定/拥塞回归通过，双架构CI通过；市场PR32仅更新2包。三个修复PR的owner保护需具体管理员例外授权，已询问尚未收到回复；正式市场发布与最终同源全量验收尚未完成。 Formal public fixes are now published and the immutable market lock refreshed; a new full Delivery will validate final source and all 30 published ZIPs.",
+      "summary": "New formal market 943f6a90 verified online. Aide eb97d144 Linux ARM64 actual public ZIP inspection/install/function: 30/30 pass, independently verified including SQLite negative cases and installed Terminal TCP backpressure. Full Delivery 41356355299: source and all three native hosts passed; browser cell47 exposed #709 old-document POST/PATCH cancellation misclassification. Document-generation classifier plus negative cases implemented; actual 48-cell local retest in progress. ARM64/AMD64 full builds and launcher still running. No final Release receipt or publication claimed. Issue709 local actual Chromium/Firefox/WebKit matrix now 48/48 pass (193.29s), 19 narrowly classified navigation cancellation records retained. Cloud clean Linux lifecycle passed. Cloud browser repair still required; native full builds continue.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/698",
         ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
@@ -69,7 +69,10 @@
         "https://github.com/skyelan1999/aide-pkg-shop/pull/32",
         "docs/reviews/2026-11-02/release-readiness.md",
         ".agent-state/release-ci-hardening-20261101/full-go-reviewed/report.json",
-        "https://github.com/skyelan1999/aide/actions/runs/41331751852"
+        "https://github.com/skyelan1999/aide/actions/runs/41331751852",
+        "https://github.com/skyelan1999/aide/actions/runs/41356355299",
+        ".agent-state/release-ci-hardening-20261101/published-final-arm64/report.json",
+        ".agent-state/release-ci-hardening-20261101/browser-issue709/report.json"
       ]
     },
     "documentation": {
@@ -113,6 +116,7 @@
     "https://github.com/skyelan1999/aide/issues/584",
     "https://github.com/skyelan1999/aide/issues/586",
     "https://github.com/skyelan1999/aide/issues/588",
-    "https://github.com/skyelan1999/aide/issues/702"
+    "https://github.com/skyelan1999/aide/issues/702",
+    "https://github.com/skyelan1999/aide/issues/709"
   ]
 }

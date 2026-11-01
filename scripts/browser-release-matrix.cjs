@@ -3,6 +3,7 @@
 // isolated by the Go fixture; dispatching browser drop/paste is synthetic input.
 const engines=require('./browser-runtime/node_modules/playwright');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {navigationCancellation}=require('./ci/browser-navigation-errors.cjs');
 const base=process.env.AIDE_TEST_URL,token=process.env.AIDE_TEST_TOKEN,out=process.env.AIDE_EVIDENCE_DIR;
 if(!base||!token||!out)throw Error('Use the isolated Go Release browser fixture');
 const report={status:'fail',commit:process.env.AIDE_TEST_COMMIT||require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),cases:[],limits:['Synthetic provider, no paid inference','Linux WebKit does not prove native Safari or OS permission grants']};
@@ -13,13 +14,17 @@ fs.mkdirSync(out,{recursive:true});
   for(const language of ['zh-CN','en'])for(const palette of ['blue','comfort'])for(const theme of ['light','dark'])for(const width of [1440,390]){
    const id=index++,label=[name,language,palette,theme,width].join('-');
    const row={id:label,status:'fail',checks:[]};report.cases.push(row);
-   let page;let phase="initial";const readRequests=new Set();let oldDocumentReads=new Set();
+   let page;let phase="initial",documentGeneration=0,oldDocumentGeneration=-1;let documentRequests=new Map(),oldDocumentRequests=new Map();
    const browser=await engines[name].launch({headless:true});let context;
    row.engineVersion=browser.version();row.browserCrash=false;
    try{
     context=await browser.newContext({viewport:{width,height:960},locale:language==='en'?'en-US':'zh-CN',reducedMotion:'reduce'});
     await context.addInitScript(({token,language,palette,theme})=>{localStorage.setItem('aide-token',token);localStorage.setItem('aide.ui',JSON.stringify({version:1,language,palette,theme,motion:'reduced',startupAnimation:'off'}));},{token,language,palette,theme});
-    page=await context.newPage();page.on('crash',()=>{row.browserCrash=true;});const errors=[];page.setDefaultTimeout(15000);page.on('pageerror',error=>errors.push({message:error.message,phase}));row.failedRequests=[];page.on('request',request=>{const url=new URL(request.url());if(request.method()==='GET'&&url.origin===new URL(base).origin)readRequests.add(url.pathname+url.search);});page.on('requestfailed',request=>row.failedRequests.push({path:new URL(request.url()).pathname,error:request.failure()?.errorText,phase}));
+    page=await context.newPage();page.on('crash',()=>{row.browserCrash=true;});const errors=[];page.setDefaultTimeout(15000);
+    page.on('framenavigated',frame=>{if(frame===page.mainFrame()){documentGeneration++;documentRequests=new Map();}});
+    page.on('pageerror',error=>errors.push({message:error.message,phase,documentGeneration}));row.failedRequests=[];
+    page.on('request',request=>{const url=new URL(request.url());if(!request.isNavigationRequest()&&url.origin===new URL(base).origin){const key=url.pathname+url.search;if(!documentRequests.has(key))documentRequests.set(key,new Set());documentRequests.get(key).add(request.method());}});
+    page.on('requestfailed',request=>row.failedRequests.push({path:new URL(request.url()).pathname,method:request.method(),error:request.failure()?.errorText,phase,documentGeneration}));
     await page.goto(base,{waitUntil:'networkidle'});
     // Select a real persisted pending shell approval, inspect original command,
     // and reject through the product endpoint (not a route stub).
@@ -49,7 +54,7 @@ fs.mkdirSync(out,{recursive:true});
     const request=JSON.parse(response.request().postData());assert.equal(request.attachments.length,2);
     await page.locator('#timeline').getByText('RELEASE_BROWSER_REPLY:',{exact:false}).first().waitFor({timeout:45000});
     const run=await response.json();const sessionID=run.sessionId||new URL(response.url()).pathname.split('/')[3];
-    oldDocumentReads=new Set(readRequests);readRequests.clear();phase='reload';await page.reload({waitUntil:'networkidle'});phase='active';
+    oldDocumentGeneration=documentGeneration;oldDocumentRequests=documentRequests;phase='reload';await page.reload({waitUntil:'networkidle'});phase='active';
     if(width===390)await page.locator('#sidebar-toggle').click();
     await page.locator('[data-session-id="'+sessionID+'"]').click();
     if(width===390&&await page.locator('#sidebar-scrim').isVisible())await page.locator('#sidebar-scrim').click({position:{x:width-8,y:80}});
@@ -61,11 +66,12 @@ fs.mkdirSync(out,{recursive:true});
     const prompt=await page.locator('#prompt').boundingBox();assert.ok(prompt&&prompt.width>100&&prompt.x>=0&&prompt.x+prompt.width<=width+1);
     // WebKit reports canceled same-origin read fetches as page errors while
     // destroying the old document on reload. Keep these explicit in evidence;
-    // never suppress active-document, new-document or script exceptions. Only observed same-origin GETs
-    // from the destroyed document can qualify, not arbitrary URL-like errors.
-    const prefix='/'+new URL(base).host,suffix=' due to access control checks.';
-    const navigationErrors=errors.filter(error=>name==='webkit'&&error.phase==='reload'&&error.message.startsWith(prefix+'/api/')&&error.message.endsWith(suffix)&&oldDocumentReads.has(error.message.slice(prefix.length,-suffix.length)));
-    row.navigationCancellations=navigationErrors.map(error=>({phase:error.phase,path:new URL(error.message.slice(prefix.length,-suffix.length),base).pathname}));
+    // never suppress active-document, new-document or script exceptions. Only
+    // observed API method/path pairs from the destroyed document can qualify.
+    // Canceled writes are recorded as canceled, not counted as successful writes.
+    const cancellationScope={engine:name,base,documentGeneration:oldDocumentGeneration,requests:oldDocumentRequests};
+    const navigationErrors=errors.filter(error=>navigationCancellation(error,cancellationScope));
+    row.navigationCancellations=navigationErrors.map(error=>navigationCancellation(error,cancellationScope));
     assert.deepEqual(errors.filter(error=>!navigationErrors.includes(error)),[]);row.checks.push('composer stays in viewport and no active-document script errors; known WebKit reload cancellations separately recorded');
     await page.screenshot({path:path.join(out,label+'.png')});row.status='pass';console.log('PASS '+label);
    }catch(error){row.error=String(error);row.probes=[];for(const resource of ['/healthz','/style.css','/app.js']){try{const response=await fetch(base+resource,{signal:AbortSignal.timeout(5000)});const data=await response.arrayBuffer();row.probes.push({path:resource,status:response.status,bytes:data.byteLength});}catch(_){row.probes.push({path:resource,status:'unreachable'});}}if(page){await page.screenshot({path:path.join(out,label+'-failed.png')}).catch(()=>{});row.visibleText=(await page.locator('body').innerText().catch(()=>'' )).slice(-3500);}throw error;}finally{try{await context?.close();}finally{await browser.close();}}

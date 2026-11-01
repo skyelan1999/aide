@@ -6520,7 +6520,7 @@
     {
       "path": "scripts/browser-release-matrix.cjs",
       "kind": "browser",
-      "sha256": "8e2f9c8aa3e93250c3b2c3b6d3039e4dcabe65108777db9c63cb97c0345d7870",
+      "sha256": "e6b435914bb284e1c973b355d6f0dba7a5a9fb0b93129f492c75c8b55175fc6d",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
@@ -6628,6 +6628,24 @@
         "AIDE_COMPONENT_EVIDENCE_DIR",
         "AIDE_ZIP_CATALOG"
       ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/ci/browser-navigation-errors.cjs",
+      "kind": "browser",
+      "sha256": "ba2b3e1abd631ed3e828a5c3a811a2caafd2bafca2841cbbc0856af10646d301",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/ci/browser-navigation-errors.test.cjs",
+      "kind": "node",
+      "sha256": "fbf563d6a55db37f8d9520dd85a265dbb04edf4cb0df7a485cd99740784830d6",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {

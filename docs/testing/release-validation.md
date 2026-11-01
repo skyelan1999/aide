@@ -19,7 +19,7 @@
 | 全部公开插件 | `public_plugins.py run`，两个原生工具链容器 | 原 ZIP 字节/摘要/安全结构；真实宿主上传安装、启用、能力声明；实际功能调用和独立结果断言 | 每插件 inspection/installation/function/cases，含已知缺陷的否定回归；缺项或 skip 阻止发布 |
 | Windows | Windows 2025 AMD64 | 原生 Go helper、消息/mTLS、Windows xsys 审查断言；启动器编译；PowerShell 5.1 和 7 各自验证目录启动、镜像槽、升级代理 | 10 项宿主命令（Windows 使用真实 Win32/BAT 套件，不执行 POSIX 专用启动器）、日志、平台与 SHA |
 | macOS | macOS 15 ARM、Intel | 原生 helper、消息/mTLS、relay/launcher（不在 Darwin 调用无实现的 xsys 子包）；临时目录构建 Swift Computer Bridge，codesign 深度验证 | 每平台 8 项命令与实际 Go 测试终态；不修改系统授权 |
-| 浏览器 | Chromium/Firefox/WebKit × 中文/英文 × blue/comfort × 明/暗 × 1440/390 | 48 格真实 App：审批意图/原始命令/拒绝；文件拖入及图片粘贴；附件实际发送；流式 Markdown 与刷新持久化；未授权和路径穿越拒绝；输入框可见和无脚本异常 | 48 个截图与逐格 checks；WebKit 刷新旧文档时旧文档中实际发出的同源 GET 取消按请求集合匹配单独记录，不豁免活动文档异常；不能用空匹配 Go test 代替报告 |
+| 浏览器 | Chromium/Firefox/WebKit × 中文/英文 × blue/comfort × 明/暗 × 1440/390 | 48 格真实 App：审批意图/原始命令/拒绝；文件拖入及图片粘贴；附件实际发送；流式 Markdown 与刷新持久化；未授权和路径穿越拒绝；输入框可见和无脚本异常 | 48 个截图与逐格 checks；WebKit 旧文档取消按实际同源 API 方法/路径及文档代际匹配单独记录；旧文档在导航提交前发出的请求仍跟踪，POST/PATCH 取消不算写入成功，新文档/活动阶段/未知路径/引擎异常仍失败；不能用空匹配 Go test 代替报告 |
 | 新装与生命周期 | 独立 Linux checkout，路径含空格和中文 | 新 HOME/config/data/project/builder/image、构建启动、停止/重启/清理、数据哨兵、拒绝未经满足门禁的 release | clean-linux-launcher result 与命令/健康记录 |
 | 包与镜像 | 已有 packager，两个架构 | 全层隐私扫描；Aide 不带插件和开发工具；SDK 单独交付；ZIP CRC/身份/摘要；导出后移除自建 tag、导入并再次运行健康和鉴权检查 | package/import/privacy/smoke/SDK 证明 |
 | 发布 | main 上现有 version.sh tag | 所有 job 成功且具体报告完备；市场冻结未漂移；先草稿上传，远端 API 独立摘要与精确附件集合验证 | RELEASE-VALIDATION.json、RELEASE-ASSETS.txt、SHA256SUMS |
