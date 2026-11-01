@@ -32,3 +32,5 @@
 - 其他全部 Go 包 race、全仓 `go vet`、34 个待提交 Go 文件格式检查通过。
 - 阶段计时分析器 3 个测试通过；468 份 Markdown、1587 个本地链接通过；暂存 diff 检查通过。
 - 没有运行完整服务端全套测试、重新进行付费 Luna 基准或部署后的 Safari 验收。此前历史报告只作为对应版本/样本的证据。
+
+源码提交 [`42e4b4cb`](https://github.com/skyelan1999/aide/commit/42e4b4cbad977d02aa57e9978a214e4efef48015) 已推送到 `feat/selfdev-ab-proposals`，`ls-remote` 与本地 HEAD 一致，推送后工作树为空。此前两笔本地提交一并推送。随后补充本交接回执；未合并 main、未部署。仅清理本轮可再生测试二进制与两个源码传输 tar，原始工作备份、测试日志、指纹及历史实测证据保留。

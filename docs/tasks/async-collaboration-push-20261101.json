@@ -59,19 +59,23 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "86个路径逐项暂存；密钥模式、JSON/UTF-8、34个Go文件格式及暂存差异检查通过；两份完全重复的iCloud记录保留备份并移出源码；生产和原始证据保留",
+      "summary": "86个路径逐项暂存；密钥模式、JSON/UTF-8、34个Go文件格式及暂存差异检查通过；两份完全重复的iCloud记录保留备份并移出源码；生产和原始证据保留；仅删除本轮可再生server.test和两份验证源码tar，释放约941MB，保留原始备份、内容指纹与日志",
       "evidence": [
         ".agent-state/async-collaboration-push-20261101/untracked-manifest.json",
-        ".agent-state/async-collaboration-push-20261101/staging-paths.json"
+        ".agent-state/async-collaboration-push-20261101/staging-paths.json",
+        ".agent-state/async-collaboration-push-20261101/regenerable-cleanup.json"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "只进行功能分支提交和push；main合并、升版、镜像发布及生产部署不在授权范围",
-      "evidence": []
+      "status": "pass",
+      "summary": "功能分支源码提交42e4b4cb及此前a5138061/18887f62均已push，ls-remote与本地HEAD一致，首次推送后工作树干净；main合并、升版、正式发布和部署未执行",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/commit/42e4b4cbad977d02aa57e9978a214e4efef48015",
+        ".agent-state/async-collaboration-push-20261101/code-push-receipt.json"
+      ]
     }
   },
   "release_authorization": "只提交和推送当前功能分支，不合main、不发布、不部署",
   "rollback": "原始tracked.patch与所有未跟踪文件SHA256备份在忽略目录.agent-state/async-collaboration-push-20261101；两个iCloud重复记录逐字节验证后保留备份",
-  "handoff": "源码就绪，待功能分支push与远端HEAD、干净工作树复核；生产aide-aide-1保持原服务。旧任务记录及历史性能样本保留原状态，不声称全部旧功能已重新实测。"
+  "handoff": "异步协同源码已在功能分支远端42e4b4cb，现补充此交接回执并继续push；生产aide-aide-1保持健康原服务。后续若要部署或重新Luna性能实测应单独执行，不能把本次源码push当作运行态更新。未合并main，未创建Release。"
 }
