@@ -7,26 +7,35 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
-// Parallel analysis never executes tools or writes files. The original task is
-// the only executor and publishes the single, reconciled final answer.
+// Analysis workers never execute tools or write files. The original main task
+// may register validated worker drafts through write_file and normal approval.
 type ParallelPart struct {
-	Model    string          `json:"model,omitempty"`
-	Provider string          `json:"provider,omitempty"`
-	Round    int             `json:"round,omitempty"`
-	Context  *RequestContext `json:"context,omitempty"`
-	Title    string          `json:"title"`
-	Status   string          `json:"status"`
-	Content  string          `json:"content,omitempty"`
-	Error    string          `json:"error,omitempty"`
+	Model         string          `json:"model,omitempty"`
+	Provider      string          `json:"provider,omitempty"`
+	Round         int             `json:"round,omitempty"`
+	Scope         string          `json:"scope,omitempty"`
+	DraftPath     string          `json:"draftPath,omitempty"`
+	Context       *RequestContext `json:"context,omitempty"`
+	StartedAt     string          `json:"startedAt,omitempty"`
+	CompletedAt   string          `json:"completedAt,omitempty"`
+	ElapsedMillis int64           `json:"elapsedMillis,omitempty"`
+	Title         string          `json:"title"`
+	Status        string          `json:"status"`
+	Content       string          `json:"content,omitempty"`
+	Error         string          `json:"error,omitempty"`
 }
 type ParallelProgress struct {
 	Scope           string            `json:"scope,omitempty"`
 	ScopeStartRound int               `json:"scopeStartRound,omitempty"`
 	Round           int               `json:"round,omitempty"`
+	AssembledAnswer string            `json:"assembledAnswer,omitempty"`
+	DraftProposals  int               `json:"draftProposals,omitempty"`
 	Evidence        string            `json:"evidence,omitempty"`
 	PlannerHistory  []*RequestContext `json:"plannerHistory,omitempty"`
 	PlannerContext  *RequestContext   `json:"plannerContext,omitempty"`
@@ -109,6 +118,28 @@ func validParallelism(value int) bool {
 	return value >= 1 && value <= 5 || value == 10
 }
 
+const (
+	defaultParallelWorkerTokens = 2048
+	maxParallelWorkerTokens     = 8192
+)
+
+func parallelWorkerTokenBudget(requested, contextWindow int) int {
+	if requested <= 0 {
+		requested = defaultParallelWorkerTokens
+	}
+	if requested > maxParallelWorkerTokens {
+		requested = maxParallelWorkerTokens
+	}
+	// Reserve at least half of a known-small context for the shared evidence
+	// and worker instructions. Large-context models retain the normal profile
+	// output budget, so detailed independent subtasks aren't silently capped at
+	// 2048 tokens.
+	if contextWindow > 0 && requested > contextWindow/2 {
+		requested = contextWindow / 2
+	}
+	return requested
+}
+
 func parseParallelPlan(text string, limit int) ([]string, error) {
 	text = strings.TrimSpace(text)
 	if strings.HasPrefix(text, "```") {
@@ -136,6 +167,325 @@ func parseParallelPlan(text string, limit int) ([]string, error) {
 	}
 	return plan.Tasks, nil
 }
+
+var explicitParallelItem = regexp.MustCompile(`(?i)^\s*(?:[-*]\s*)?(?:\d{1,3}[.)、]\s*)?\[((?:CASE|TASK|SUBTASK)[-_ ]?\d+)\]\s*(.{3,})\s*$`)
+var numberedParallelItem = regexp.MustCompile(`^\s*(?:[-*]\s*)?([0-9]{1,3}[.)、]|[（(][0-9]{1,3}[）)]|[一二三四五六七八九十百千零〇两]+[.)、]|[（(][一二三四五六七八九十百千零〇两]+[）)])\s*(.{6,})\s*$`)
+
+func parseParallelListMarker(marker string) (int, string, bool) {
+	style := marker
+	numeralStyle := "chinese:"
+	for _, r := range marker {
+		if r >= '0' && r <= '9' {
+			numeralStyle = "arabic:"
+		}
+		if r >= '0' && r <= '9' || strings.ContainsRune("一二三四五六七八九十百千零〇两", r) {
+			style = strings.ReplaceAll(style, string(r), "")
+		}
+	}
+	if n, err := strconv.Atoi(strings.Map(func(r rune) rune {
+		if r >= '0' && r <= '9' {
+			return r
+		}
+		return -1
+	}, marker)); err == nil {
+		return n, numeralStyle + style, true
+	}
+	values := map[rune]int{'零': 0, '〇': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9}
+	n := 0
+	digit := 0
+	hasChinese := false
+	for _, r := range marker {
+		if v, ok := values[r]; ok {
+			digit = v
+			hasChinese = true
+			continue
+		}
+		switch r {
+		case '十', '百', '千':
+			hasChinese = true
+			unit := map[rune]int{'十': 10, '百': 100, '千': 1000}[r]
+			if digit == 0 {
+				digit = 1
+			}
+			n += digit * unit
+			digit = 0
+		default:
+			// Delimiters are part of the list style; ignore them while parsing.
+		}
+	}
+	if !hasChinese {
+		return 0, style, false
+	}
+	n += digit
+	return n, numeralStyle + style, n > 0 && n <= 9999
+}
+
+// explicitParallelTasks cheaply recognizes user-authored independent work
+// items. These labels are a stronger signal than a model planner guessing
+// whether a task is divisible, so dispatch them directly and avoid a serial
+// planning request. Unlabelled prose remains on the model-planned path.
+func explicitParallelTasks(prompt string, limit int) []string {
+	if limit < 2 || len(prompt) > 64*1024 {
+		return nil
+	}
+	lower := strings.ToLower(prompt)
+	for _, marker := range []string{"按顺序执行", "依次执行", "逐项执行", "sequentially execute", "execute in sequence"} {
+		if strings.Contains(lower, strings.ToLower(marker)) {
+			return nil
+		}
+	}
+	independent := false
+	for _, marker := range []string{"相互独立", "彼此独立", "独立分析", "单独研究", "分别分析", "each independently", "independent subtasks", "independent sections"} {
+		if strings.Contains(lower, strings.ToLower(marker)) {
+			independent = true
+			break
+		}
+	}
+	if !independent {
+		return nil
+	}
+	var items []string
+	seen := map[string]bool{}
+	for _, line := range strings.Split(prompt, "\n") {
+		match := explicitParallelItem.FindStringSubmatch(strings.TrimSpace(line))
+		if len(match) != 3 {
+			continue
+		}
+		item := strings.TrimSpace(line)
+		label := strings.ToUpper(match[1])
+		if len([]rune(match[2])) < 3 || len([]rune(item)) > 1200 || seen[label] {
+			return nil
+		}
+		seen[label] = true
+		items = append(items, item)
+	}
+	// A clearly independent, numbered list is also a user-authored decomposition.
+	// Require one uninterrupted sequence beginning at 1; this avoids treating
+	// arbitrary numbered facts or a few unrelated numbers as dispatch instructions.
+	if len(items) == 0 {
+		var numbered []string
+		lastNumber := 0
+		style := ""
+		for _, line := range strings.Split(prompt, "\n") {
+			match := numberedParallelItem.FindStringSubmatch(strings.TrimSpace(line))
+			if len(match) != 3 {
+				continue
+			}
+			n, currentStyle, ok := parseParallelListMarker(match[1])
+			if !ok || n != lastNumber+1 || (style != "" && currentStyle != style) || len([]rune(strings.TrimSpace(match[2]))) > 1200 {
+				return nil
+			}
+			style = currentStyle
+			lastNumber = n
+			numbered = append(numbered, strings.TrimSpace(line))
+		}
+		if len(numbered) < 2 {
+			return nil
+		}
+		items = numbered
+	}
+	if len(items) < 2 {
+		return nil
+	}
+	if len(items) <= limit {
+		return items
+	}
+	// Preserve every explicit item when the user lists more topics than the
+	// selected fanout; group adjacent cases instead of silently dropping work.
+	groups := make([]string, 0, limit)
+	for i := 0; i < limit; i++ {
+		start := i * len(items) / limit
+		end := (i + 1) * len(items) / limit
+		groups = append(groups, "Analyze these independent items and retain each label:\n"+strings.Join(items[start:end], "\n"))
+	}
+	return groups
+}
+
+func parallelNoToolDraft(prompt string) bool {
+	lower := strings.ToLower(prompt)
+	noTools := []string{"不执行工具", "不要使用工具", "无需使用工具", "不要调用工具", "do not use tools", "without tools", "no tools"}
+	draft := []string{"分析", "研究", "草案", "建议", "编制", "总结", "analyze", "analysis", "draft", "recommend"}
+	hasNoTools, hasDraftIntent := false, false
+	for _, marker := range noTools {
+		hasNoTools = hasNoTools || strings.Contains(lower, marker)
+	}
+	for _, marker := range draft {
+		hasDraftIntent = hasDraftIntent || strings.Contains(lower, marker)
+	}
+	return hasNoTools && hasDraftIntent
+}
+
+func explicitParallelLabels(titles []string) ([]string, bool) {
+	labels := make([]string, 0, len(titles))
+	seen := map[string]bool{}
+	for _, title := range titles {
+		label, ok := parallelTaskLabel(title)
+		if !ok {
+			return nil, false
+		}
+		key := strings.ToUpper(label)
+		if seen[key] {
+			return nil, false
+		}
+		seen[key] = true
+		labels = append(labels, label)
+	}
+	return labels, len(labels) >= 2
+}
+
+func parallelTaskLabel(title string) (string, bool) {
+	if matches := explicitParallelItem.FindAllStringSubmatch(title, -1); len(matches) == 1 {
+		return "[" + matches[0][1] + "]", true
+	}
+	if match := numberedParallelItem.FindStringSubmatch(strings.TrimSpace(title)); len(match) == 3 {
+		return strings.TrimSpace(match[1]), true
+	}
+	return "", false
+}
+
+func parallelLabelOccurrences(content, label string) int {
+	if strings.HasPrefix(label, "[") {
+		return strings.Count(strings.ToUpper(content), strings.ToUpper(label))
+	}
+	count := 0
+	for _, line := range strings.Split(content, "\n") {
+		if parallelLineHasLabelHeading(line, label) {
+			count++
+		}
+	}
+	return count
+}
+
+func parallelLineHasLabelHeading(line, label string) bool {
+	line = strings.TrimSpace(strings.TrimLeft(strings.TrimSpace(line), "# \t"))
+	line = strings.TrimPrefix(line, "**")
+	if !strings.HasPrefix(line, label) {
+		return false
+	}
+	rest := strings.TrimPrefix(line, label)
+	return rest == "" || strings.HasPrefix(rest, " ") || strings.HasPrefix(rest, "\t") || strings.HasPrefix(rest, "**") || strings.HasSuffix(label, "、") || strings.HasSuffix(label, "）") || strings.HasSuffix(label, ")")
+}
+
+// Rebuild the complete explicit assignment order after a retry wave. Only the
+// latest attempt for each exact assignment enters the merge; history remains
+// intact for accounting and diagnostics.
+func latestRequestedParallelParts(history []ParallelPart, titles []string) []ParallelPart {
+	parts := make([]ParallelPart, 0, len(titles))
+	for _, title := range titles {
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].Title == title {
+				parts = append(parts, history[i])
+				break
+			}
+		}
+	}
+	return parts
+}
+
+func assembleExplicitParallelParts(parts []ParallelPart, labels []string) (string, bool) {
+	if len(parts) < 2 || len(parts) != len(labels) {
+		return "", false
+	}
+	content := make([]string, len(parts))
+	for i, part := range parts {
+		if part.Status != "completed" || strings.TrimSpace(part.Content) == "" || parallelLabelOccurrences(part.Content, labels[i]) != 1 {
+			return "", false
+		}
+		for j, label := range labels {
+			if i != j && parallelLabelOccurrences(part.Content, label) > 0 {
+				return "", false
+			}
+		}
+		content[i] = strings.TrimSpace(part.Content)
+	}
+	return strings.Join(content, "\n\n"), true
+}
+
+func parallelDraftMeetsExplicitRequirements(prompt string, parts []ParallelPart, answer string) bool {
+	lowerPrompt := strings.ToLower(prompt)
+	requiresChecks := strings.Contains(prompt, "检查") || strings.Contains(lowerPrompt, "check")
+	requiresEvidence := strings.Contains(prompt, "证据") || strings.Contains(lowerPrompt, "evidence")
+	requiresUnknowns := strings.Contains(prompt, "未知") || strings.Contains(lowerPrompt, "unknown")
+	requiresTwoChecks := strings.Contains(prompt, "两条") || strings.Contains(prompt, "两项") || strings.Contains(prompt, "2条") || strings.Contains(prompt, "2项") || (strings.Contains(lowerPrompt, "two") && (strings.Contains(lowerPrompt, "check") || strings.Contains(lowerPrompt, "test") || strings.Contains(lowerPrompt, "verification")))
+	requiresRisk := strings.Contains(prompt, "风险") || strings.Contains(lowerPrompt, "risk")
+	requiresDependencies := strings.Contains(prompt, "依赖") || strings.Contains(lowerPrompt, "dependenc")
+	requiresPassCriteria := strings.Contains(prompt, "通过标准") || strings.Contains(prompt, "通过条件") || strings.Contains(prompt, "验收标准") || strings.Contains(lowerPrompt, "pass criteria") || strings.Contains(lowerPrompt, "acceptance criteria")
+	for _, part := range parts {
+		text := strings.ToLower(part.Content)
+		if requiresChecks && !strings.Contains(part.Content, "检查") && !strings.Contains(text, "check") && !strings.Contains(text, "test") {
+			return false
+		}
+		if requiresEvidence && !strings.Contains(part.Content, "证据") && !strings.Contains(text, "evidence") {
+			return false
+		}
+		if requiresUnknowns && !strings.Contains(part.Content, "未知") && !strings.Contains(text, "unknown") {
+			return false
+		}
+		if requiresTwoChecks && !parallelDraftHasTwoItems(part.Content) {
+			return false
+		}
+		if requiresRisk && !strings.Contains(part.Content, "风险") && !strings.Contains(text, "risk") {
+			return false
+		}
+		if requiresDependencies && !strings.Contains(part.Content, "依赖") && !strings.Contains(text, "dependenc") {
+			return false
+		}
+		if requiresPassCriteria && !strings.Contains(part.Content, "通过标准") && !strings.Contains(part.Content, "通过条件") && !strings.Contains(part.Content, "验收标准") && !strings.Contains(text, "pass criteria") && !strings.Contains(text, "acceptance criteria") {
+			return false
+		}
+	}
+	if strings.Contains(prompt, "不把建议称为已执行") || strings.Contains(prompt, "未执行验证") || strings.Contains(lowerPrompt, "do not claim") || strings.Contains(lowerPrompt, "not executed") {
+		lowerAnswer := strings.ToLower(answer)
+		disclaimed := false
+		for _, marker := range []string{"未执行", "尚未执行", "未实施", "不代表已经检查", "不代表已检查", "不代表已完成验证", "尚未完成验证", "并非已执行", "待执行事项", "not executed", "not performed", "not run"} {
+			if strings.Contains(lowerAnswer, strings.ToLower(marker)) {
+				disclaimed = true
+				break
+			}
+		}
+		if !disclaimed {
+			return false
+		}
+	}
+	return true
+}
+
+func parallelDraftHasTwoItems(content string) bool {
+	if strings.Count(content, "检查建议") >= 2 || strings.Count(strings.ToLower(content), "check recommendation") >= 2 {
+		return true
+	}
+	for _, pair := range [][2]string{{"1.", "2."}, {"1、", "2、"}, {"①", "②"}, {"（1）", "（2）"}, {"检查建议 1", "检查建议 2"}, {"检查建议1", "检查建议2"}, {"第一条", "第二条"}} {
+		if strings.Contains(content, pair[0]) && strings.Contains(content, pair[1]) {
+			return true
+		}
+	}
+	// Some models compact two Chinese recommendations into one labeled line,
+	// separating the two actionable clauses with a semicolon rather than list
+	// numbering. Treat that as two items only when the section explicitly marks
+	// the content as check recommendations.
+	if start := strings.Index(content, "检查建议"); start >= 0 {
+		checks := content[start:]
+		for _, boundary := range []string{"证据", "风险", "依赖", "未知", "通过标准"} {
+			if end := strings.Index(checks, boundary); end >= 0 {
+				checks = checks[:end]
+			}
+		}
+		if strings.ContainsAny(checks, "；;") {
+			return true
+		}
+		if strings.Count(checks, "•") >= 2 {
+			items := 0
+			for _, item := range strings.Split(checks, "•")[1:] {
+				if len([]rune(strings.TrimSpace(item))) >= 6 {
+					items++
+				}
+			}
+			return items >= 2
+		}
+	}
+	return false
+}
+
 func parallelClip(text string, limit int) string {
 	runes := []rune(text)
 	if len(runes) <= limit {
@@ -158,18 +508,27 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 		callContext.ContextWindow = window
 		a.mu.Unlock()
 	}
+	snapshotIndex := -1
 	rec := func(body []byte) {
 		sum := sha256.Sum256(body)
 		a.mu.Lock()
 		defer a.mu.Unlock()
 		if len(task.RequestSnapshots) < 12 && !task.SnapshotsTruncated {
 			task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{Purpose: purpose, Model: cfg.Model, MaxTokens: params.MaxTokens, Messages: append([]Message(nil), input...), Body: append(json.RawMessage(nil), body...), SHA256: hex.EncodeToString(sum[:]), At: time.Now().UTC().Format(time.RFC3339Nano)})
+			snapshotIndex = len(task.RequestSnapshots) - 1
 		} else {
 			task.SnapshotsTruncated = true
 		}
 	}
+	started := time.Now()
 	out, calls, usage, err := complete(ctx, cfg, input, params, nil, rec)
+	completed := time.Now()
 	a.mu.Lock()
+	if snapshotIndex >= 0 && snapshotIndex < len(task.RequestSnapshots) {
+		snapshot := &task.RequestSnapshots[snapshotIndex]
+		snapshot.CompletedAt = completed.UTC().Format(time.RFC3339Nano)
+		snapshot.ElapsedMillis = completed.Sub(started).Milliseconds()
+	}
 	task.Usage = addUsage(task.Usage, usage)
 	if callContext != nil {
 		callContext.Usage = usage
@@ -217,6 +576,9 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	a.mu.Lock()
 	if task.Parallel == nil {
 		task.Parallel = &ParallelProgress{Requested: limit}
+	}
+	if !unchanged {
+		task.Parallel.AssembledAnswer = ""
 	}
 	scope := parallelUserScope(input)
 	if task.Parallel.Scope != "" && task.Parallel.Scope != scope {
@@ -269,63 +631,91 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	var previous []string
 	if task.Parallel != nil {
 		for _, part := range task.Parallel.Parts {
-			if part.Title != "" {
+			if part.Title != "" && part.Status == "completed" {
 				previous = append(previous, part.Title)
 			}
 		}
 	}
 	a.mu.Unlock()
-	planning := append(append([]Message(nil), input...), Message{Role: "system", Content: fmt.Sprintf("[parallel planner]\nYou are the read-only scheduling component, not the main executor. Instructions to execute tools, maintain ledgers or finish the user deliverable in earlier executor context do not apply to this scheduling response. You MUST return only the tasks JSON, never a tool call or prose answer. At this execution checkpoint, identify 2 to %d NEW independent analysis or drafting subtasks for the REMAINING work, using the latest tool results, working plan and user updates. Earlier uncertainty is not a permanent decision: new evidence can unlock parallel work. Do not repeat completed work or redo already delivered sections. Completed analysis titles: %q. General technical knowledge MAY be used to draft documents; lack of attachments alone does not prevent a draft. For multi-section documents such as ROS2, consider distinct remaining architecture, setup, communication, example or testing sections. Return only JSON {\"tasks\":[\"...\"]}. Return {\"tasks\":[]} when more discovery or sequential execution is needed first, or no useful parallel work remains; the main executor will continue and reconsider after new evidence. Each subtask must be independent of the other outputs, concrete and nonduplicate; do not pad to fill slots. Flag facts needing verification. Tools, plugins and writes remain with the main executor; never claim to have executed them.", limit, previous)})
-	small := params
-	small.MaxTokens = 2048
-	small.ResponseFormat = ""
-	if modelCapabilityStatus(cfg, "structured_output") != "unsupported" {
-		small.ResponseFormat = "json_object"
+	titles := explicitParallelTasks(task.Prompt, limit)
+	directDispatch := len(titles) >= 2
+	editTargets := parallelEditTargets(task.Prompt, titles)
+	editMode, editBases := a.parallelEditBases(task, editTargets)
+	if editMode && editBases == nil {
+		return fallback("独立文件修改先由主任务完整读取现有文件，获得版本快照后再并行拟稿")
 	}
-	small.Stop = nil
-	planning = parallelAnalysisMessages(input, planning[len(planning)-1].Content, true)
-	planCfg := a.routedModel(task, cfg, planning, small, nil, "parallel/plan")
-	a.mu.Lock()
-	plannerContext := requestContext(planning, nil, small.MaxTokens, a.modelWindow(planCfg.Model))
-	if task.Parallel == nil {
-		task.Parallel = &ParallelProgress{Requested: limit}
+	if budget, _ := ctx.Value(parallelEditBudgetKey{}).(*parallelEditBudget); editMode && budget != nil && len(editTargets) > budget.Remaining {
+		return fallback("剩余工具预算不足以登记全部文件草稿，由主任务继续")
 	}
-	if task.Parallel.PlannerContext != nil {
-		task.Parallel.PlannerHistory = append(task.Parallel.PlannerHistory, task.Parallel.PlannerContext)
-	}
-	task.Parallel.Round++
-	wave := task.Parallel.Round
-	task.Parallel.PlannerContext = plannerContext
-	task.ParallelPrepared = false
-	a.mu.Unlock()
-	if err := update("planning", ""); err != nil {
-		return input, err
-	}
-	planCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
-	planCfg.ReasoningEffort = "off" // Scheduling JSON should not exhaust its small output budget on hidden reasoning.
-	text, err := a.parallelCall(planCtx, task, planCfg, planning, small, fmt.Sprintf("parallel/plan-%d", wave), plannerContext)
-	cancel()
-	if ctx.Err() != nil {
-		_ = update("interrupted", "")
-		return input, ctx.Err()
-	}
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return fallback("本次规划超过90秒，主任务继续；获得新信息后重新评估")
+	wave := 0
+	if directDispatch {
+		// User-provided independent cases are already a valid decomposition.
+		// Skip the extra planner round to save latency and make requested fanout
+		// reliable for this unambiguous class of complex tasks.
+		a.mu.Lock()
+		task.Parallel.Round++
+		wave = task.Parallel.Round
+		task.ParallelPrepared = false
+		a.mu.Unlock()
+		a.publishStream(task.ID, streamEvent{Event: "note", Text: fmt.Sprintf("已识别 %d 个明确独立分项，直接并行分析…", len(titles))})
+		if err := update("planning", "按用户列出的独立分项直接派发"); err != nil {
+			return input, err
 		}
-		if errors.Is(err, errParallelToolCall) {
-			return fallback("本次规划返回工具调用，调度器未执行；主任务继续，获得新信息后重新评估")
+	} else {
+		planning := append(append([]Message(nil), input...), Message{Role: "system", Content: fmt.Sprintf("[parallel planner]\nYou are the read-only scheduling component, not the main executor. Instructions to execute tools, maintain ledgers or finish the user deliverable in earlier executor context do not apply to this scheduling response. You MUST return only one JSON object with a tasks array; never return prose or a tool call. At this execution checkpoint, identify 2 to %d NEW independent analysis or drafting subtasks for the REMAINING work, using the latest tool results, working plan and user updates. If the user supplied clearly independent sections, you MUST create work for them rather than returning an empty list. Earlier uncertainty is not a permanent decision: new evidence can unlock parallel work. Do not repeat completed work or redo already delivered sections. Completed analysis titles: %q. General technical knowledge MAY be used to draft documents; lack of attachments alone does not prevent a draft. Each subtask must be independent of the others, concrete and nonduplicate; do not pad to fill slots. Return {\"tasks\":[]} only when discovery/sequential execution is required first or no useful independent work remains. Flag facts needing verification. Tools, plugins and writes remain with the main executor; never claim to have executed them.", limit, previous)})
+		small := params
+		small.MaxTokens = 2048
+		small.ResponseFormat = ""
+		if modelCapabilityStatus(cfg, "structured_output") != "unsupported" {
+			small.ResponseFormat = "json_object"
 		}
-		if isEmptyCompletionErr(err) {
-			return fallback("本次规划未返回调度正文，主任务继续；获得新信息后重新评估")
+		small.Stop = nil
+		planning = parallelAnalysisMessages(input, planning[len(planning)-1].Content, true)
+		planCfg := a.routedModel(task, cfg, planning, small, nil, "parallel/plan")
+		a.mu.Lock()
+		plannerContext := requestContext(planning, nil, small.MaxTokens, a.modelWindow(planCfg.Model))
+		if task.Parallel == nil {
+			task.Parallel = &ParallelProgress{Requested: limit}
 		}
-		return fallback("本次规划请求失败或返回空内容，主任务继续；获得新信息后重新评估")
+		if task.Parallel.PlannerContext != nil {
+			task.Parallel.PlannerHistory = append(task.Parallel.PlannerHistory, task.Parallel.PlannerContext)
+		}
+		task.Parallel.Round++
+		wave = task.Parallel.Round
+		task.Parallel.PlannerContext = plannerContext
+		task.ParallelPrepared = false
+		a.mu.Unlock()
+		if err := update("planning", ""); err != nil {
+			return input, err
+		}
+		planCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+		planCfg.ReasoningEffort = "off" // Scheduling JSON should not exhaust its small output budget on hidden reasoning.
+		text, err := a.parallelCall(planCtx, task, planCfg, planning, small, fmt.Sprintf("parallel/plan-%d", wave), plannerContext)
+		cancel()
+		if ctx.Err() != nil {
+			_ = update("interrupted", "")
+			return input, ctx.Err()
+		}
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return fallback("本次规划超过90秒，主任务继续；获得新信息后重新评估")
+			}
+			if errors.Is(err, errParallelToolCall) {
+				return fallback("本次规划返回工具调用，调度器未执行；主任务继续，获得新信息后重新评估")
+			}
+			if isEmptyCompletionErr(err) {
+				return fallback("本次规划未返回调度正文，主任务继续；获得新信息后重新评估")
+			}
+			return fallback("本次规划请求失败或返回空内容，主任务继续；获得新信息后重新评估")
+		}
+		var parseErr error
+		titles, parseErr = parseParallelPlan(text, limit)
+		if parseErr != nil {
+			return fallback("本次规划格式无效，主任务继续；获得新信息后重新评估")
+		}
 	}
-	titles, err := parseParallelPlan(text, limit)
-	if err != nil {
-		return fallback("本次规划格式无效，主任务继续；获得新信息后重新评估")
-	}
-	// Exclude exact completed titles even if the planner ignores its ledger.
+	requestedTitles := append([]string(nil), titles...)
+	// Exclude completed titles; failed/cancelled attempts remain eligible on a new checkpoint.
 	filtered := titles[:0]
 	for _, title := range titles {
 		done := false
@@ -344,43 +734,101 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		}
 	}
 	titles = filtered
-	if len(titles) < 2 {
+	if len(titles) == 0 || len(titles) < 2 && !directDispatch {
 		return fallback("当前先由主任务推进，获得新信息后继续寻找并行机会")
 	}
 	workerParams := params
 	workerParams.ResponseFormat = ""
-	workerParams.Stop = nil
-	if workerParams.MaxTokens <= 0 || workerParams.MaxTokens > 2048 {
-		workerParams.MaxTokens = 2048
+	if editMode && modelCapabilityStatus(cfg, "structured_output") != "unsupported" {
+		workerParams.ResponseFormat = "json_object"
 	}
+	workerParams.Stop = nil
+	workerParams.MaxTokens = parallelWorkerTokenBudget(workerParams.MaxTokens, 0)
 	workerInputs := make([][]Message, len(titles))
 	workerConfigs := make([]Settings, len(titles))
+	workerSource := input
+	if directDispatch {
+		workerSource = withoutExplicitParallelItems(input, task.Prompt)
+	}
+	templateIndex := 0
 	for i, title := range titles {
-		workerInputs[i] = parallelWorkerMessages(input, title)
+		workerInputs[i] = parallelWorkerMessages(workerSource, title)
+		if editMode {
+			workerInputs[i][len(workerInputs[i])-1].Content = parallelEditInstruction(title, editTargets[title], editBases[editTargets[title]].Before)
+		}
+		if !editMode && len([]rune(title)) > len([]rune(titles[templateIndex])) || editMode && estimateProviderPromptTokens(workerInputs[i], nil) > estimateProviderPromptTokens(workerInputs[templateIndex], nil) {
+			templateIndex = i
+		}
 		workerConfigs[i] = a.routedModel(task, cfg, workerInputs[i], workerParams, nil, "parallel/part")
+	}
+	for _, workerCfg := range workerConfigs {
+		if modelCapabilityStatus(workerCfg, "structured_output") == "unsupported" {
+			workerParams.ResponseFormat = ""
+		}
+	}
+	// All workers share the same evidence context. Fit one longest-title
+	// template against the smallest selected model window, then substitute each
+	// worker's assignment. This avoids N concurrent compaction requests when a
+	// long task needs trimming before fanout.
+	fitIndex := 0
+	fitWindow := int(^uint(0) >> 1)
+	a.mu.Lock()
+	for i, workerCfg := range workerConfigs {
+		window := a.modelWindow(workerCfg.Model)
+		if window < fitWindow {
+			fitIndex, fitWindow = i, window
+		}
+	}
+	a.mu.Unlock()
+	workerParams.MaxTokens = parallelWorkerTokenBudget(workerParams.MaxTokens, fitWindow)
+	var fitErr error
+	workerInputs[templateIndex], fitErr = a.fitActiveContext(ctx, workerConfigs[fitIndex], workerInputs[templateIndex], workerParams, nil, task)
+	if fitErr != nil {
+		return fallback("并行分析上下文无法在模型预算内安全整理，由主任务继续处理")
+	}
+	template := workerInputs[templateIndex]
+	fastAssembly := directDispatch && parallelNoToolDraft(task.Prompt)
+	labels, labelsFitWorkers := explicitParallelLabels(requestedTitles)
+	fastAssembly = fastAssembly && labelsFitWorkers
+	for i, title := range titles {
+		workerInputs[i] = append([]Message(nil), template...)
+		includeOpening := fastAssembly && title == requestedTitles[0]
+		workerInputs[i][len(workerInputs[i])-1].Content = parallelWorkerInstruction(title, includeOpening, fastAssembly)
+		if editMode {
+			workerInputs[i][len(workerInputs[i])-1].Content = parallelEditInstruction(title, editTargets[title], editBases[editTargets[title]].Before)
+		}
 	}
 	a.mu.Lock()
 	offset := len(task.Parallel.Parts)
 	for i, title := range titles {
-		workerInputs[i] = parallelWorkerMessages(input, title)
-		task.Parallel.Parts = append(task.Parallel.Parts, ParallelPart{Model: workerConfigs[i].Model, Provider: routerProviderID(workerConfigs[i]), Round: wave, Title: title, Status: "running", Context: requestContext(workerInputs[i], nil, workerParams.MaxTokens, a.modelWindow(workerConfigs[i].Model))})
+		task.Parallel.Parts = append(task.Parallel.Parts, ParallelPart{Model: workerConfigs[i].Model, Provider: routerProviderID(workerConfigs[i]), Round: wave, Scope: scope, DraftPath: func() string {
+			if editMode {
+				return editTargets[title]
+			}
+			return ""
+		}(), Title: title, Status: "running", Context: requestContext(workerInputs[i], nil, workerParams.MaxTokens, a.modelWindow(workerConfigs[i].Model))})
 	}
 	a.mu.Unlock()
 	if err := update("running", ""); err != nil {
 		return input, err
 	}
 	type result struct {
-		index int
-		text  string
-		err   error
+		index         int
+		text          string
+		startedAt     time.Time
+		completedAt   time.Time
+		elapsedMillis int64
+		err           error
 	}
 	results := make(chan result, len(titles))
 	workersCtx, stopWorkers := context.WithCancel(ctx)
 	defer stopWorkers()
 	for i, title := range titles {
 		go func(index int, title string) {
+			startedAt := time.Now()
 			out, callErr := a.parallelCall(workersCtx, task, workerConfigs[index], workerInputs[index], workerParams, fmt.Sprintf("parallel/wave-%d/part-%d", wave, index+1), task.Parallel.Parts[offset+index].Context)
-			results <- result{index, out, callErr}
+			completedAt := time.Now()
+			results <- result{index: index, text: out, startedAt: startedAt, completedAt: completedAt, elapsedMillis: completedAt.Sub(startedAt).Milliseconds(), err: callErr}
 		}(i, title)
 	}
 	ticker := time.NewTicker(10 * time.Second)
@@ -392,6 +840,9 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 			done++
 			a.mu.Lock()
 			part := &task.Parallel.Parts[offset+item.index]
+			part.StartedAt = item.startedAt.UTC().Format(time.RFC3339Nano)
+			part.CompletedAt = item.completedAt.UTC().Format(time.RFC3339Nano)
+			part.ElapsedMillis = item.elapsedMillis
 			if item.err != nil {
 				part.Status = "failed"
 				part.Error = "分析请求未完成"
@@ -401,6 +852,9 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 			} else {
 				part.Status = "completed"
 				part.Content = parallelClip(item.text, 12000)
+				if editMode {
+					part.Content = item.text
+				}
 			}
 			a.mu.Unlock()
 			if err := update("running", ""); err != nil && saveErr == nil {
@@ -424,21 +878,57 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	successes := 0
 	a.mu.Lock()
 	parts := append([]ParallelPart(nil), task.Parallel.Parts[offset:]...)
+	if directDispatch {
+		parts = latestRequestedParallelParts(task.Parallel.Parts, requestedTitles)
+	}
 	window := a.modelWindow(cfg.Model)
 	a.mu.Unlock()
 	for i, part := range parts {
+		// Earlier human scopes and legacy notes remain useful evidence for the
+		// main executor, but cannot satisfy a revised request by concatenation.
+		if part.Scope != scope {
+			fastAssembly = false
+		}
 		if part.Status == "completed" {
 			successes++
 		}
 		fmt.Fprintf(&briefing, "\nPart %d: %s\nStatus: %s\n%s\n", i+1, part.Title, part.Status, parallelClip(part.Content, 4000))
 	}
+	if successes == 0 {
+		return fallback("所有子分析未完成，由主任务继续处理")
+	}
+	if editMode && successes == len(parts) {
+		chain, registered, err := a.registerParallelEditDrafts(ctx, task, cfg, input, parts, editTargets, editBases, scope)
+		if err != nil {
+			return chain, err
+		}
+		input = chain
+		if registered {
+			a.mu.Lock()
+			task.ParallelPrepared = true
+			task.Parallel.Evidence = parallelEvidence(chain)
+			task.CheckpointMessages = append([]Message(nil), chain...)
+			task.Parallel.MainContext = requestContext(chain, a.contextToolsFor(s), params.MaxTokens, window)
+			a.mu.Unlock()
+			return chain, update("merging", "独立文件草稿已通过正常工具入口登记为待审批提案，主任务只作最终说明")
+		}
+	}
+	if fastAssembly {
+		answer, ok := assembleExplicitParallelParts(parts, labels)
+		if ok && parallelDraftMeetsExplicitRequirements(task.Prompt, parts, answer) && a.checkTaskDelivery(task, answer) == nil {
+			a.mu.Lock()
+			task.Parallel.AssembledAnswer = answer
+			task.Parallel.Evidence = evidence
+			task.ParallelPrepared = true
+			a.mu.Unlock()
+			return input, update("completed", "明确独立的无工具分析已校验标签后按原顺序合并")
+		}
+		a.publishStream(task.ID, streamEvent{Event: "note", Text: "并行分项未通过快速合并检查，交由主任务整合…"})
+	}
 	// Keep the original deliverable explicit after the working notes. In long
 	// contexts the model can otherwise acknowledge the analysis instead of
 	// producing the document or answer the user actually requested.
 	fmt.Fprintf(&briefing, "\n[original user request]\n%s\n[end original user request]\nNow deliver the actual answer or document requested above, using the notes as supporting material. Include its substantive content in your reply; a completion acknowledgement, status report, or claim that drafting is done is not a deliverable. Honor the latest user updates and real execution progress; complete remaining work without repeating already delivered sections. Preserve tool restrictions.\n", task.Prompt)
-	if successes == 0 {
-		return fallback("所有子分析未完成，由主任务继续处理")
-	}
 	merged := append(append([]Message(nil), input...), Message{Role: "user", Content: briefing.String()})
 	// Preserve the normal executor's context reserve and tool schemas. If the
 	// briefing cannot fit, keep the original validated input rather than overflow.
@@ -462,5 +952,64 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 }
 
 func parallelWorkerMessages(input []Message, title string) []Message {
-	return parallelAnalysisMessages(input, "[parallel analysis subtask]\n"+title+"\nYou are a read-only analysis worker, not the main executor. Earlier executor instructions to use tools, maintain ledgers or finish other work do not apply to this worker response. Analyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile.", false)
+	return parallelAnalysisMessages(input, parallelWorkerInstruction(title, false, false), false)
+}
+
+func parallelWorkerInstruction(title string, includeOpening, assemblyMode bool) string {
+	opening := "Output only this assigned section."
+	label, hasLabel := parallelTaskLabel(title)
+	if includeOpening {
+		opening = "Include the overall title, required opening facts and shared framing requested by the user once at the top, then output only this assigned section. Do not include other assignments or mention other task labels."
+		if hasLabel {
+			opening += fmt.Sprintf(" Start the assigned section with the exact label %q followed by a space and its title; do not add punctuation to the label.", label)
+		}
+	} else if assemblyMode {
+		opening = "Output only this assigned section; do not repeat an overall title, opening facts or other sections. Do not omit, normalize, or mention other task labels."
+		if hasLabel {
+			opening += fmt.Sprintf(" Start the first line with the exact label %q followed by a space and its title; do not add punctuation to the label.", label)
+		}
+	}
+	return "[parallel analysis subtask]\n" + title + "\nYou are a read-only analysis worker, not the main executor. Earlier executor instructions to use tools, maintain ledgers or finish other work do not apply to this worker response. Analyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. " + opening + " Retain the user-requested field names verbatim. Put each requested check recommendation on its own labeled line instead of merging multiple checks into one sentence. Keep output concise and self-contained."
+}
+
+func withoutExplicitParallelItems(input []Message, taskPrompt string) []Message {
+	if taskPrompt == "" {
+		return input
+	}
+	cleaned := stripExplicitParallelItems(taskPrompt)
+	if cleaned == taskPrompt {
+		return input
+	}
+	result := append([]Message(nil), input...)
+	for i := len(result) - 1; i >= 0; i-- {
+		if result[i].Role != "user" || !strings.HasPrefix(result[i].Content, taskPrompt) {
+			continue
+		}
+		result[i].Content = cleaned + strings.TrimPrefix(result[i].Content, taskPrompt)
+		break
+	}
+	return result
+}
+
+func stripExplicitParallelItems(prompt string) string {
+	lines := strings.Split(prompt, "\n")
+	kept := lines[:0]
+	hasLabeledItems := false
+	for _, line := range lines {
+		if explicitParallelItem.MatchString(strings.TrimSpace(line)) {
+			hasLabeledItems = true
+			break
+		}
+	}
+	for _, line := range lines {
+		isTaskLine := explicitParallelItem.MatchString(strings.TrimSpace(line))
+		if !hasLabeledItems {
+			isTaskLine = numberedParallelItem.MatchString(strings.TrimSpace(line))
+		}
+		if isTaskLine {
+			continue
+		}
+		kept = append(kept, line)
+	}
+	return strings.Join(kept, "\n")
 }

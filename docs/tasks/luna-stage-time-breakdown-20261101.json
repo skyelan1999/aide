@@ -1,0 +1,78 @@
+{
+  "id": "luna-stage-time-breakdown-20261101",
+  "request": "那这样，你能把那个阶段的时间消耗统计一下吗，按照3-5分钟的方式为例子",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_routing.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/parallel-chat.js\n M internal/server/workflow.go\n M scripts/parallel-chat.test.cjs\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/luna-large-engineering-benchmark-20261101.json\n?? docs/tasks/luna-static-audit-benchmark-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? docs/tasks/virtual-execution-environments-20261101.json\n?? internal/server/benchmark_phase_timing_test.go\n?? internal/server/execution_environments.go\n?? internal/server/execution_environments_live_test.go\n?? internal/server/execution_environments_test.go\n?? internal/server/execution_result_receipt.go\n?? internal/server/execution_result_receipt_test.go\n?? internal/server/execution_scheduler_receipt.go\n?? internal/server/execution_scheduler_receipt_test.go\n?? internal/server/large_engineering_benchmark_test.go\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/static_audit_benchmark_test.go\n?? internal/server/static_audit_fixture_test.go\n?? internal/server/workflow_parallel_read_test.go\n?? scripts/benchmarks/",
+  "acceptance": [
+    "以此前约3-5分钟的20模块Luna任务作为例子，1X/5X各自独立目录和会话并行实跑。",
+    "完整统计主环境模型HTTP请求、压缩、读/搜索及入库、提案、调度、等待收集、独立验证和未细分时间；并行重叠只按墙钟归类一次。",
+    "模型HTTP耗时包含网络、上游排队与推理，不声称可分出纯模型推理。",
+    "记录子任务各自完整耗时及并行窗口，不把它们累加到主任务总时间。",
+    "计时记录不存提示词、源码、API密钥、工具参数/正文或推理内容；仅测试进程生效。",
+    "无动作首请求失败只记录失败，不伪造分钟样本；正常候选验收与质量边界照常保留。"
+  ],
+  "scope": [
+    "internal/server/benchmark_phase_timing_test.go",
+    "internal/server/large_engineering_benchmark_test.go",
+    "scripts/benchmarks/analyze-stage-timing.py",
+    "scripts/benchmarks/test-stage-timing-analysis.py",
+    "docs/tasks/luna-stage-time-breakdown-20261101.json",
+    "docs/reviews/2026-11-01/luna-stage-time-breakdown.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求3-5分钟例子分阶段统计并明确允许多会话并行。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "测试进程RoundTripper只记录API时段，订阅主任务SSE意图/结果和压缩边界；验证器添加测试观察钩子，独占墙钟分区避免重叠重复。",
+      "evidence": [
+        "internal/server/benchmark_phase_timing_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成测试进程计时器、观察钩子和独占墙钟分析器，无产品埋点。",
+      "evidence": [
+        "internal/server/benchmark_phase_timing_test.go",
+        "scripts/benchmarks/analyze-stage-timing.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "真实Luna并发1X213.384秒/5X165.835秒；标准113与变体226均全通过，额外差分1295/1330与1330/1330。计时无事件缺口；载荷/EOF重复单测及Python3项回归通过。",
+      "evidence": [
+        ".agent-state/luna-phase-1x-20261101-analysis.json",
+        ".agent-state/luna-phase-5x-20261101-analysis.json",
+        "scripts/benchmarks/test-stage-timing-analysis.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录同轮22.28%耗时降低、阶段与子任务重叠、质量差异及前轮反向结果，不能视为稳定5倍提速。",
+      "evidence": [
+        "docs/reviews/2026-11-01/luna-stage-time-breakdown.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "1X/5X测试容器已退出；计时与候选证据保留；生产容器持续healthy。全文档检查被既有索引非UTF8阻止，新报告UTF8/相对链接与git diff --check单独通过。",
+      "evidence": [
+        "docs/reviews/2026-11-01/luna-stage-time-breakdown.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户未要求部署、推送或合并。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "仅分项测试，不推送/部署/合并。",
+  "rollback": "",
+  "handoff": "本轮分项比较已完成；长源码审查另在luna-static-audit-benchmark-20261101任务继续，不能把未完成覆盖算成速度胜利。",
+  "clarifications": [
+    "用户允许同时启动多个测试会话；本轮1X、5X与长源码审查并发，必须单独标注，不能冒充此前顺序基准。"
+  ]
+}

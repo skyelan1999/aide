@@ -1,0 +1,125 @@
+{
+  "id": "parallelism-cost-luna-20261101",
+  "request": "使用 GPT-6 Luna 对比 1x/10x 简单与复杂任务，并按用户提出的 10 分钟级复杂任务在 10x 下 1 分钟内完成目标改进调度逻辑。",
+  "baseline": "paired benchmark harness from parallelism-cost-benchmark-20261101",
+  "initial_status": "Existing Aide worktree edits preserved; added gpt-6-luna as explicit live-model selection",
+  "acceptance": [
+    "相同合成输入对比 Luna 1x/10x 简单与复杂任务",
+    "记录上游报告的总 Token（含上下文压缩）、任务本身 Token、耗时和实际 worker 数",
+    "如 10x 未派生 worker，明确标记不是实际并行验收",
+    "非常复杂的任务：若 1x 基准耗时约 10 分钟，则 10x 必须在 1 分钟内完成，且质量/覆盖等价；需专门负载和重复样本验证。",
+    "最新用户提示明确列出且标记为独立的分项时，确定性拆分并直派 worker，省去额外 planner 请求",
+    "分项数超过并发上限时分组且不遗漏；重复标签或无效列表不自动派工",
+    "明确独立的连续编号清单（含阿拉伯及中文数字）无需强制 CASE 标签，可跳过串行 planner；不连续、混合格式或顺序任务不得误派",
+    "本地 read_file/list_files 的同批并行必须保持策略钩子、审计顺序、结果顺序和有界并发",
+    "同批本地 semantic_search 查询共享一次仅限该批次的不可变语料扫描；引用源查询仍串行，不缓存到后续调用",
+    "10 分钟级复杂任务 1x/10x 配对验收：10x 不超过 60 秒且质量和覆盖等价（尚待专门负载验证）",
+    "并行 worker 继承所选 profile 输出预算（最多 8192），小上下文预留输入空间；通过 Luna 请求快照验证实际 reserve",
+    "本地独立 DOCX 结构读取仅在安全相对路径、无引用源、无相关 hook 时纳入有界并行；评论读写、SSH 与非法路径仍串行",
+    "用户明确速度优先，用量仅记录，不以降低 Token 为优化门槛。",
+    "engineering负载使用十个18候选的确定性约束选择问题；独立穷举核对可行性、精确总量和全局最优，未求解或次优不得计作速度达标。",
+    "显式并行分项在新检查点只重试未完成分项；单个未完成项可重试；跨轮保留全部分项的最新结果；旧用户范围或legacy候选必须主模型复核。",
+    "无工具上下文压缩遇到EOF/UnexpectedEOF时最多重试一次，200ms可取消退避；HTTP错误、超时、取消不得重复；失败不得写入残缺摘要。",
+    "coding开发基准必须通过read_file/write_file真实提案与版本化apply，再执行模型不可编辑的隐藏回归；原始缺陷全部失败、参考修复全部通过，分别记录模型阶段与应用测试阶段耗时。",
+    "独立既有文件草稿仅在完整原文及版本快照齐备时生成；整批严格path/content校验后由主执行器复用write_file策略、预算、审计、检查点和审批，禁止工作者直接写盘或审批；截断原文不走快速替换。"
+  ],
+  "scope": [
+    "internal/server/context_recovery_live_test.go",
+    "docs/reviews/2026-11-01/parallelism-cost-luna-benchmark.*",
+    "docs/tasks/parallelism-cost-luna-20261101.json",
+    "internal/server/conversation_parallel.go",
+    "internal/server/conversation_parallel_test.go",
+    "internal/server/workflow.go",
+    "internal/server/workflow_parallel_read_test.go",
+    "internal/server/parallel_engineering_benchmark_test.go",
+    "internal/server/context_recovery_test.go",
+    "internal/server/context.go",
+    "docs/architecture/context-recovery.md",
+    "internal/server/parallel_coding_benchmark_test.go",
+    "internal/server/parallel_edit_drafts.go",
+    "internal/server/parallel_edit_drafts_test.go",
+    "docs/designs/parallel-file-drafts-20261101.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户指定使用 Luna 进行相同基准。",
+      "evidence": [
+        "用户消息"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用相同合成简单/复杂输入矩阵，仅选 gpt-6-luna；采集全部 provider token calls。",
+      "evidence": [
+        "internal/server/context_recovery_live_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "直接派工现支持 CASE/TASK/SUBTASK 标签，以及明确声明独立的连续阿拉伯或中文编号清单；跳过额外 planner 请求，保留超过并发上限时相邻分组、不遗漏任务的行为。非连续、混合编号样式或顺序任务不自动派工。另为同批本地只读文件读取增加最多 10 路并发，混合/远程/带 hook 批次仍串行；主执行器工具输出保持模型调用顺序。同批本地语义查询共享一次批次级 TF-IDF 语料扫描，引用源查询不缓存、不并行。并行 worker 的输出预算现继承 profile，最多 8,192 tokens；已知小上下文限制为窗口一半。本地只读批次现支持安全相对路径的 docx_structure，Office 解析器自身仍限制 2 路。 编号分项合并改为识别章节标题，避免阈值 27.4 MHz 中的 7. 被误判为额外章节并触发串行主模型整合。 统一生产与基准的Markdown标题识别；修正第一worker标签标点指令；检查建议圆点列表只在建议区间计数；并行请求快照现记录实际耗时。 新增engineering精确工程资源负载与独立穷举校验，记录相同问题指纹，模型执行计时在本地答案评分前冻结。 修复显式分项续跑：只排除完成项、允许最后一个失败项重试、按原顺序合并跨轮最新结果；分项绑定用户scope，旧scope与legacy结果禁止直接合并。 无工具压缩摘要单次请求遇EOF/UnexpectedEOF时增加一次200ms可取消重试，API错误/超时/取消不重放，完整验证后仍原子提交。 新增coding隔离开发流程基准：十个Go函数缺陷、受限文件工具、正常提案批准API和隐藏执行回归；只在临时工作区应用。 新增独立既有文件JSON草稿候选：先完整读取并固定原文，主执行器经write_file登记提案，保留审批/版本/策略/预算/审计/检查点，取消补齐未执行回执；预览截断时回普通流程。",
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "internal/server/workflow.go",
+        "internal/server/workflow_parallel_read_test.go",
+        "docs/architecture/context-recovery.md",
+        "internal/server/conversation_parallel_test.go",
+        "internal/server/workflow_parallel_read_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Luna 编号极高强度草案 1x/10x 配对通过质量条件：1x 16.25 秒、8,933 实报 tokens；10x 10/10 workers、18.34 秒、37,315 tokens。该短文本负载未加速，且 1x 远低于目标 10 分钟；所需性能目标仍未验证。本地并行读取通过聚焦单测与 race 子集检查，未做全包回归。 Worker 预算调整后的 Luna 配对同样通过质量检查：1x 执行 20.50 秒/8,922 tokens；10x 10/10 worker、28.60 秒/37,395 tokens，worker reserve=8,192。该短样本仍未加速。聚焦 race 子集通过，全包未运行。 增加 DOCX 结构读取资格及 hook/路径拒绝覆盖，race 子集通过；本扩展未宣称新的 Luna 加速收益。 2026-11-01 最新同负载 Luna/off 配对：1x 执行17.202s/总23.34s；10x 执行4.364s/总9.85s，10/10 workers，覆盖/现有内容检查通过并直接合并；仍是短合成负载，不证明10分钟到1分钟。高推理尝试在压缩预检遇到EOF，未形成任务性能样本。 修复后的10x重复样本执行3.965s/总9.06s，10/10 worker且直接合并，现有内容/覆盖/预算检查通过；聚焦race检查通过。 新版固定字段极复杂短草案在Luna/high配对通过：1x执行19.013s/总24.78s，10x执行9.906s/总15.89s，10/10 worker且直接合并，现有内容/覆盖/预算检查通过。相同新版prompt仅一组高推理样本，仍非10分钟负载；目标尚未证明。最终聚焦race检查通过。 新engineering Luna/high配对未通过：1x11.677s但全部明确未求解；10x85.132s，3/10 worker返回精确最优解、6个耗尽8192 completion预算、1请求失败，最终整合未保留三个正确候选，最终0/10题解。不得将此作为成功速度基线。 HTTP fixture和聚焦race验证完成项只调用一次、失败项新证据后重试、旧检查点不重试、跨轮结果保留及legacy候选转主模型复核。该改动未复跑Luna重负载，也不宣称重计算速度达标。 真实HTTP连接中断fixture及race通过：瞬时EOF第二次成功、持续EOF最多两次、HTTP401不重试、取消不重试；原上下文保留和畸形摘要回滚回归通过。中等推理重负载第一次预检EOF失败，无任务性能样本；第二次已结束，验收失败：1x6.100s全部未求解；10x87.274s，10/10返回正文但仅5/10精确最优，其他明确未求解；无成功十分钟基线，未自动更改产品推理偏好。 coding pilot源码基线10/10失败、参考修复10/10通过；Luna/high实际修改后1x与10x均10/10回归通过：1x任务43.981s/应用测试44.190s，10x任务37.223s/应用测试37.412s，题目hash相同，单配对约1.18x；仍是小函数负载，不构成十分钟级验收。最初1x预检EOF失败，成功1x为单独重跑。 文件草稿策略/JSON/版本冲突/预算/范围/取消等race通过；Luna/high同coding题目配对1x应用测试27.978s、10x22.447s，均10/10回归通过，约1.25x；固定原文10x复测19.658s，仍10/10通过，无新配对1x，仍非十分钟级任务。",
+      "evidence": [
+        ".agent-state/parallelism-cost-luna-numbered-extreme-20261101.json",
+        ".agent-state/parallelism-cost-luna-direct-fanout-20261101.json",
+        "docs/reviews/2026-11-01/parallelism-cost-luna-benchmark.md",
+        "live output: TestContextRecoveryLiveModels/gpt-6-luna-complex-10x PASS",
+        ".agent-state/parallelism-cost-luna-worker-budget-20261101.json",
+        "focused race output: parallel read/DOCX eligibility suite PASS",
+        ".agent-state/parallelism-cost-luna-heading-fixed-20261101.json",
+        ".agent-state/parallelism-cost-luna-heading-fixed-repeat-20261101.json",
+        "targeted race: TestNumberedParallelAssemblyPreservesDecimalFacts/TestParallelExplicitNoToolDraftFastAssembly/TestParallelDraftQualityRejectsMissingRequestedContent PASS",
+        ".agent-state/parallelism-cost-luna-high-structured-retry-20261101.json",
+        ".agent-state/parallelism-cost-luna-engineering-20261101.json",
+        "TestExplicitParallelRetryReusesCompletedAssignments and focused scheduling/fanout/cancellation/end-to-end race suite PASS",
+        "TestCompactionTransportRetryIsBoundedAndCancelable + history retention/malformed-summary race subset PASS",
+        ".agent-state/parallelism-cost-luna-engineering-medium-retry-20261101.json",
+        ".agent-state/parallelism-cost-luna-coding-20261101.json",
+        ".agent-state/parallelism-cost-luna-coding-1x-retry-20261101.json",
+        "TestCodingBenchmarkFixture PASS",
+        ".agent-state/parallelism-cost-luna-coding-parallel-drafts-retry-20261101.json",
+        ".agent-state/parallelism-cost-luna-coding-parallel-drafts-pinned-20261101.json",
+        "TestParallelEdit* focused race suite PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录新的分项直派逻辑、Luna 实测证据、未验证的 10 分钟到 1 分钟目标和串行阶段限制。",
+      "evidence": [
+        "docs/architecture/context-recovery.md",
+        "docs/reviews/2026-11-01/parallelism-cost-luna-benchmark.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "结果仅含合成数据与汇总 Token，无密钥或真实会话。",
+      "evidence": [
+        "docs/reviews/2026-11-01/parallelism-cost-luna-benchmark.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "源码、测试与文档仅在当前功能分支工作区；未提交、推送、合并或发布。",
+      "evidence": []
+    }
+  },
+  "handoff": "目标继续，未达十分钟到一分钟。独立既有文件草稿候选已实现正常write_file提案登记，完整原文固定、版本审批及策略预算保留，截断预览回普通流程。最新同coding配对1x27.978s/10x22.447s（含应用测试），10/10回归通过，约1.25x；固定原文10x复测19.658s仍通过，无新增1x配对。覆盖策略/快照/冲突/取消/预算的race已通过。后续需要大文件完整原文绑定、轻量完整请求时序及十分钟级真实开发基准；不能用小函数负载定义目标完成。未提交推送或部署。",
+  "documentation": {
+    "status": "pass",
+    "summary": "记录初次无 worker、10x 诊断复测成功派工，以及用户新增的 10 分钟到 1 分钟验收目标和当前未验证状态。",
+    "evidence": [
+      "docs/reviews/2026-11-01/parallelism-cost-luna-benchmark.md"
+    ]
+  }
+}

@@ -11,7 +11,7 @@ class Node {
 const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id)};
 const run={id:'r',prompt:'生成汽车模型',status:'awaiting_clarification',pendingQuestion:{type:'confirm',approvalKind:'shell',command:'printf safe\n'.repeat(200),questionId:'q1',approvalRound:'round1'}};
 const state={session:{id:'s',runs:[run]},runPhase:{}};let calls=[];
-const ctx={state,$,el:(...a)=>new Node(...a),t:(s,...a)=>s.replace(/\{(\d+)\}/g,(_,i)=>a[i]),document:{querySelectorAll:()=>[]},composerControlRun:()=>state.session?.runs[0],clarificationSubmissions:new Set(),toast(){},refreshSessionSoon(){},schedulePoll(){},api:async(path,args)=>calls.push({path,body:JSON.parse(args.body)})};vm.createContext(ctx);vm.runInContext(['approvalValidityPicker','renderClarification','syncTaskActionHub'].map(fn).join('\n'),ctx);
+const ctx={state,$,el:(...a)=>new Node(...a),t:(s,...a)=>s.replace(/\{(\d+)\}/g,(_,i)=>a[i]),document:{querySelectorAll:()=>[]},composerControlRun:()=>state.session?.runs[0],clarificationSubmissions:new Set(),toast(){},refreshSessionSoon(){},schedulePoll(){},api:async(path,args)=>calls.push({path,body:JSON.parse(args.body)})};vm.createContext(ctx);vm.runInContext(['shellApprovalExecutionIntentForUI','renderApprovalIntent','approvalValidityPicker','renderClarification','syncTaskActionHub'].map(fn).join('\n'),ctx);
 const all=(n,tag)=>n.children.flatMap(c=>[...(c.tag===tag?[c]:[]),...all(c,tag)]);
 (async()=>{
  const history=new Node();ctx.renderClarification(run,history);assert.equal(all(history,'button').length,1);assert.equal(all(history,'pre').length,0,'history is a locator, not duplicate actions');

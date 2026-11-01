@@ -130,3 +130,8 @@
 .model-route-progress .parallel-part>small:nth-of-type(n+2){grid-column:1/-1;line-height:1.6}
 
 .assistant-work-item > .assistant-work-blocker { color: var(--danger, #b44838); }
+
+/* Environment receipts keep long assignments and release/merge states readable. */
+.environment-progress .parallel-part{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:4px}
+.environment-progress .parallel-part>span{line-height:1.6}
+.environment-progress .parallel-part>small:nth-of-type(n+2){grid-column:1/-1;min-width:0;overflow-wrap:anywhere;white-space:normal}

@@ -476,6 +476,7 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 const assistantSessionKind = "assistant"
 
 type App struct {
+	executionEnvironment      *executionEnvironment
 	assistantEngine           string // operator-selected startup choice; never a plugin capability
 	mixSoulCalls              pluginCallQueues
 	mu                        sync.Mutex

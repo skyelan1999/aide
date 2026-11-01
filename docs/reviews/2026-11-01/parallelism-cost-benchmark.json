@@ -1,0 +1,105 @@
+{
+  "recordedAt": "2026-11-01",
+  "method": "One paired synthetic benchmark run per task type and parallelism; same task prompt and synthetic history for 1x/10x within each task type.",
+  "model": "deepseek-flash",
+  "results": [
+    {
+      "model": "deepseek-flash",
+      "taskType": "simple",
+      "parallelism": 1,
+      "elapsedSeconds": 5.89,
+      "workersStarted": 0,
+      "workersCompleted": 0,
+      "tokens": {
+        "prompt": 6951,
+        "completion": 671,
+        "total": 7622,
+        "source": "DeepSeek upstream usage; includes preflight context compaction",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 2399,
+        "completion": 48,
+        "total": 2447
+      },
+      "allTenLabelsExactlyOnce": true,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    },
+    {
+      "model": "deepseek-flash",
+      "taskType": "simple",
+      "parallelism": 10,
+      "elapsedSeconds": 4.25,
+      "workersStarted": 0,
+      "workersCompleted": 0,
+      "tokens": {
+        "prompt": 8825,
+        "completion": 339,
+        "total": 9164,
+        "source": "DeepSeek upstream usage; includes preflight context compaction",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 4454,
+        "completion": 50,
+        "total": 4504
+      },
+      "allTenLabelsExactlyOnce": true,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    },
+    {
+      "model": "deepseek-flash",
+      "taskType": "complex",
+      "parallelism": 1,
+      "elapsedSeconds": 10.16,
+      "workersStarted": 0,
+      "workersCompleted": 0,
+      "tokens": {
+        "prompt": 6879,
+        "completion": 1274,
+        "total": 8153,
+        "source": "DeepSeek upstream usage; includes preflight context compaction",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 2530,
+        "completion": 1030,
+        "total": 3560
+      },
+      "allTenLabelsExactlyOnce": false,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    },
+    {
+      "model": "deepseek-flash",
+      "taskType": "complex",
+      "parallelism": 10,
+      "elapsedSeconds": 24.43,
+      "workersStarted": 10,
+      "workersCompleted": 10,
+      "tokens": {
+        "prompt": 36143,
+        "completion": 9311,
+        "total": 45454,
+        "source": "DeepSeek upstream usage; includes preflight context compaction",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 31803,
+        "completion": 9085,
+        "total": 40888
+      },
+      "allTenLabelsExactlyOnce": true,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    }
+  ],
+  "limits": [
+    "Single sample per case; wall time is sensitive to provider/network variance.",
+    "Simple task selected zero workers at both settings, so 10x did not fan out.",
+    "Complex 1x completed without worker fanout but failed the exact-once coverage check; 10x completed ten workers and passed coverage.",
+    "No monetary cost calculated; usage is upstream-reported tokens."
+  ]
+}

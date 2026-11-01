@@ -131,6 +131,16 @@ func (a *App) runPluginHost(ctx context.Context) {
 	cctx, cancel := context.WithTimeout(ctx, pluginRunTimeout)
 	defer cancel()
 	cmd := exec.CommandContext(cctx, "node", "-e", pluginHostJS, "run", pluginsPath, string(listJSON), surfacePath)
+	if a.executionEnvironment != nil {
+		var cleanup func()
+		var err error
+		cmd, cleanup, err = a.executionEnvironment.command(cctx, []string{"run", pluginsPath, string(listJSON), surfacePath}, nil)
+		if err != nil {
+			return
+		}
+		defer cleanup()
+		configurePluginProcess(cmd, true)
+	}
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	_ = cmd.Run() // 失败时保留旧 surface；stdout 结果不依赖（结果写入 surface 文件）
 	if b, err := os.ReadFile(surfacePath); err == nil && len(b) <= 2<<20 {
@@ -787,6 +797,34 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 }
 
 func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (any, error) {
+	if a.executionEnvironment != nil {
+		main := a.executionEnvironment.pool.parent
+		main.mu.Lock()
+		enabled := false
+		for _, p := range main.pluginRegistry.Plugins {
+			if p.ID == pluginID && p.Enabled {
+				enabled = true
+			}
+		}
+		denied := toolDeniedIn(main.settings.DisabledTools, toolName)
+		main.mu.Unlock()
+		if !enabled || denied || taskToolDenied(a.executionEnvironment.pool.task, toolName) {
+			return nil, errors.New("parent project revoked this plugin/tool")
+		}
+		a.mu.Lock()
+		privateFootprint := a.pluginFootprintLocked(pluginID, toolName, args)
+		a.mu.Unlock()
+		// A complete workspace/plugin-only contract is private to this runtime.
+		// Unknown footprints keep the main shared lease rather than assuming safety.
+		if privateFootprint.exclusive {
+			release, err := main.pluginResources.acquire(parent, pluginFootprint{exclusive: true})
+			if err != nil {
+				return nil, err
+			}
+			defer release()
+		}
+	}
+
 	parent, editorRelease := a.nativeEditorEnter(parent)
 	defer editorRelease()
 	if pluginID != "brdplan" || !nativeEditorReadTool(toolName) {
@@ -885,10 +923,21 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 		return nil, err
 	}
 	outFile := filepath.Join(os.TempDir(), "aide-plugin-call-"+newID()+".json")
+	if a.executionEnvironment != nil {
+		outFile = filepath.Join(filepath.Dir(a.executionEnvironment.root), "call-"+newID()+".json")
+	}
 	defer os.Remove(outFile)
 	ctx, cancel := context.WithTimeout(parent, 310*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", scope, string(req), outFile)
+	if a.executionEnvironment != nil {
+		var cleanup func()
+		cmd, cleanup, err = a.executionEnvironment.command(ctx, []string{"call", scope, string(req), outFile}, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer cleanup()
+	}
 	configurePluginProcess(cmd, true)
 	if workspace != "" {
 		cmd.Dir = workspace
@@ -1022,7 +1071,7 @@ func (a *App) pluginSurfaceHandler(w http.ResponseWriter, r *http.Request) {
 
 func builtinToolNames() []string {
 	names := []string{}
-	for _, tool := range builtinTools {
+	for _, tool := range append(append([]any{}, builtinTools...), executionEnvironmentTools...) {
 		if entry, ok := tool.(map[string]any); ok {
 			if fn, ok := entry["function"].(map[string]any); ok {
 				if name, ok := fn["name"].(string); ok {

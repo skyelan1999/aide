@@ -11,7 +11,7 @@
     const {select, mode, assistant, t} = config;
     select.disabled = mode() !== 'chat' || assistant();
     select.value = String(selected);
-    select.title = select.disabled ? t('并行分析仅用于普通对话') : t('并行分析上限；规划后汇总为一个回答，更多请求会增加 Token 用量，不保证等比例提速');
+    select.title = select.disabled ? t('执行环境容量仅用于普通对话') : t('环境总容量包含主环境；调度按需创建临时环境，不强制占满，不保证等比例提速');
   }
   function set(value) {
     selected = normalize(value);
@@ -28,6 +28,26 @@
   }
   function value(mode, assistant) { return mode === 'chat' && !assistant ? selected : 1; }
   function render(run, {el, t, open, initial = false}) {
+    const environments = run.environments;
+    if (environments && run.parallelism > 1) {
+      const jobs = environments.results || [];
+      const finished = jobs.filter(job => !['queued', 'running'].includes(job.status)).length;
+      const panel = el('details', 'parallel-progress environment-progress');
+      panel.dataset.key = run.id + ':environments';
+      panel.open = !!open?.has(panel.dataset.key) || (initial && environments.active > 0);
+      panel.append(el('summary', '', t('环境容量 {0}X · 活跃 {1} · 已结束 {2}/{3}', environments.capacity, environments.active || 0, finished, jobs.length)));
+      panel.append(el('p', 'parallel-reason', t('包含主环境；临时环境按需创建，最多 {0} 个。', Math.max(0, environments.capacity - 1))));
+      const statuses = {queued:'等待资源', running:'执行中', completed:'已完成', failed:'失败', cancelled:'已取消', interrupted:'已中断'};
+      for (const job of jobs) {
+        const row = el('div', 'parallel-part');
+        row.append(el('span', '', job.assignment || job.id), el('small', '', t(statuses[job.status] || '未知')));
+        if (job.released) row.append(el('small', '', t('临时资源已释放')));
+        if (job.merged) row.append(el('small', '', t('候选已汇入待审批提案')));
+        if (job.error) row.append(el('small', '', job.error));
+        panel.append(row);
+      }
+      return panel;
+    }
     const progress = run.parallel;
     if (!progress || !(run.parallelism > 1)) return null;
     const phases = {planning:'规划拆分', running:'并行分析', merging:'汇总回答', completed:'已汇总', fallback:run.status === 'running' ? '继续执行，等待并行机会' : '主任务处理', interrupted:'已中断'};

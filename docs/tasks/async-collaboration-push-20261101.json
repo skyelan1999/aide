@@ -1,0 +1,77 @@
+{
+  "id": "async-collaboration-push-20261101",
+  "request": "先切换到异步协同，把代码push，保持工作区干净",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_routing.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/parallel-chat.js\n M internal/server/workflow.go\n M scripts/parallel-chat.test.cjs\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/luna-large-engineering-benchmark-20261101.json\n?? docs/tasks/luna-random-queue-1x5x-retest-20261101.json\n?? docs/tasks/luna-random-queue-repeat-20261101.json\n?? docs/tasks/luna-random-queue-third-20261101.json\n?? docs/tasks/luna-stage-time-breakdown-20261101.json\n?? docs/tasks/luna-static-audit-benchmark-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? docs/tasks/virtual-execution-environments-20261101.json\n?? docs/tasks/virtual-work-queue-20261101.json\n?? docs/tasks/work-queue-all-slots-20261101.json\n?? internal/server/benchmark_phase_timing_test.go\n?? internal/server/execution_environments.go\n?? internal/server/execution_environments_live_test.go\n?? internal/server/execution_environments_test.go\n?? internal/server/execution_queue_drain.go\n?? internal/server/execution_queue_drain_test.go\n?? internal/server/execution_result_receipt.go\n?? internal/server/execution_result_receipt_test.go\n?? internal/server/execution_scheduler_perf_test.go\n?? internal/server/execution_scheduler_receipt.go\n?? internal/server/execution_scheduler_receipt_test.go\n?? internal/server/execution_work_queue.go\n?? internal/server/execution_work_queue_test.go\n?? internal/server/large_engineering_benchmark_test.go\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_atomic_test.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/static_audit_benchmark_test.go\n?? internal/server/static_audit_fixture_test.go\n?? internal/server/workflow_parallel_read_test.go\n?? scripts/benchmarks/",
+  "acceptance": [
+    "普通多X聊天默认异步提交，主环境参与实际工作，先完成先收集",
+    "保留显式同步排空、上下文恢复、提案和普通1X/SSH开发能力",
+    "相关检查通过，当前功能分支推送，最终工作树干净；不合main、不部署"
+  ],
+  "scope": [
+    "当前未提交源码、测试与文档",
+    "异步调度指令、工具披露与执行入口",
+    "修复文档索引编码，保留完全重复记录的备份"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确授权切换、提交、推送和干净工作树；保留功能分支",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "异步submit_batch为默认，主环境+至多X-1子环境；同步run_queue仅显式AgentToolsSet工具范围启用",
+      "evidence": [
+        "internal/server/execution_environments.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "异步默认、显式同步兼容、恢复时更新现行策略且避免预览重复；保留当前待提交实现和历史测试资料",
+      "evidence": [
+        "internal/server/execution_environments.go",
+        "internal/server/execution_scheduler_perf_test.go",
+        "internal/server/execution_work_queue_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "quick 314项通过；服务端选定范围race 245项顶层测试、151个子例通过，12项显式opt-in检查跳过；最终Go策略增量race通过10.473s；其余Go包race及最终全仓vet通过。未运行全仓完整server套件、未新增Luna付费实测或生产Safari验收",
+      "evidence": [
+        ".agent-state/async-collaboration-push-20261101/quick-final.log",
+        ".agent-state/async-collaboration-push-20261101/runtime-regression.log",
+        ".agent-state/async-collaboration-push-20261101/runtime-source-manifest.json",
+        ".agent-state/async-collaboration-push-20261101/final-delta.log",
+        ".agent-state/async-collaboration-push-20261101/verification-source-manifest.json",
+        ".agent-state/async-collaboration-push-20261101/compile-other-vet.log",
+        ".agent-state/async-collaboration-push-20261101/timing-analysis.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构/设计更新异步默认，历史证据不改写为速度保证；UTF-8索引和本地证据引用修复；468份Markdown及1587个链接检查通过",
+      "evidence": [
+        "docs/reviews/2026-11-01/async-collaboration-push.md",
+        "docs/architecture.md",
+        "docs/designs/execution-environments-20261101.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "86个路径逐项暂存；密钥模式、JSON/UTF-8、34个Go文件格式及暂存差异检查通过；两份完全重复的iCloud记录保留备份并移出源码；生产和原始证据保留",
+      "evidence": [
+        ".agent-state/async-collaboration-push-20261101/untracked-manifest.json",
+        ".agent-state/async-collaboration-push-20261101/staging-paths.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "只进行功能分支提交和push；main合并、升版、镜像发布及生产部署不在授权范围",
+      "evidence": []
+    }
+  },
+  "release_authorization": "只提交和推送当前功能分支，不合main、不发布、不部署",
+  "rollback": "原始tracked.patch与所有未跟踪文件SHA256备份在忽略目录.agent-state/async-collaboration-push-20261101；两个iCloud重复记录逐字节验证后保留备份",
+  "handoff": "源码就绪，待功能分支push与远端HEAD、干净工作树复核；生产aide-aide-1保持原服务。旧任务记录及历史性能样本保留原状态，不声称全部旧功能已重新实测。"
+}

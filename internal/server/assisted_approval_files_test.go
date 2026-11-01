@@ -27,6 +27,11 @@ func TestAssistedApprovalLocalFiles(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
+			if mode == "update" {
+				// A legitimate existing-file proposal carries the exact read version.
+				task.Files[0].Before = "original"
+				task.Files[0].BaseHash = hash([]byte("original"))
+			}
 			if mode == "readonly" {
 				a.settings.SandboxMode = "read-only"
 			}

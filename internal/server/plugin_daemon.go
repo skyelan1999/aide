@@ -75,6 +75,7 @@ type rpcResp struct {
 
 // daemonProc 单个 daemon 插件的运行态。
 type daemonProc struct {
+	environment  *executionEnvironment
 	id           string
 	pluginPath   string
 	settingsJSON string
@@ -239,6 +240,7 @@ func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[st
 	p, exists := m.procs[id]
 	if !exists {
 		p = &daemonProc{
+			environment:  m.app.executionEnvironment,
 			id:           id,
 			pluginPath:   pluginMain,
 			settingsJSON: string(settingsBytes),
@@ -366,6 +368,19 @@ func (p *daemonProc) spawn() {
 	settingsJSON := p.settingsJSON
 	// 与 v1.1 短命进程同一受限环境；AIDE_DAEMON_BIND 告知协议插件仅绑回环。
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1", "AIDE_PLUGIN_SETTINGS=" + settingsJSON}
+	var cleanup = func() {}
+	if p.environment != nil {
+		var err error
+		cmd, cleanup, err = p.environment.command(p.environment.ctx, []string{"daemon", p.pluginPath}, cmd.Env)
+		if err != nil {
+			p.doneCh = make(chan struct{})
+			close(p.doneCh)
+			p.mu.Unlock()
+			p.setStatus(dsCrashed)
+			return
+		}
+		configurePluginProcess(cmd, true)
+	}
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		p.mu.Unlock()
@@ -394,6 +409,7 @@ func (p *daemonProc) spawn() {
 	p.mu.Unlock()
 
 	if err := cmd.Start(); err != nil {
+		cleanup()
 		log.Printf("[daemon] %s 启动失败: %v", p.id, err)
 		p.setStatus(dsCrashed)
 		close(doneCh)
@@ -406,7 +422,7 @@ func (p *daemonProc) spawn() {
 	p.setStatus(dsRunning)
 	go p.readLoop(stdout, doneCh, cmd)
 	go p.heartbeat(doneCh)
-	go func() { _ = cmd.Wait() }() // 回收进程；stdout EOF 由 readLoop 处理
+	go func() { _ = cmd.Wait(); cleanup() }() // 回收进程；stdout EOF 由 readLoop 处理
 }
 
 // readLoop 逐行解析子进程 stdout：响应路由到 pending，事件入缓存，pong 更新心跳。

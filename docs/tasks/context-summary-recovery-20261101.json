@@ -1,0 +1,76 @@
+{
+  "id": "context-summary-recovery-20261101",
+  "request": "修复长运行上下文压缩失败：上下文摘要模型偶发输出截断或非 JSON 导致任务终止。增加安全的解析修复/重试与原文保留回退，保留结构化摘要和源历史完整性。",
+  "baseline": "a513806155e98eafb80408571fd05ca2306c2533",
+  "initial_status": "M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/harness_runtime.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n?? docs/designs/\n?? docs/requirements/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? internal/server/approval_intent.go\n?? internal/server/approval_intent_test.go",
+  "acceptance": [
+    "有效 JSON 即使被 Markdown 围栏或简短说明包裹也可提取，字段和类型仍严格校验",
+    "摘要首次输出格式错误或截断时，对同一有界源批次最多重试一次；不修补/猜测缺失内容",
+    "重试仍无效、取消或提供方失败时，不折叠或覆盖原始会话/运行上下文，并返回可诊断状态",
+    "正常摘要 map/reduce、进度与现有会话快照并发校验行为保持兼容"
+  ],
+  "scope": [
+    "internal/server/workflow.go 中的摘要提取与重试",
+    "internal/server/context_recovery_test.go 相关既有回归断言",
+    "docs/architecture/context-recovery.md 与本任务记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "以 Safari 截图中“摘要不是有效 JSON: unexpected end of JSON input”及后续长任务终止为复现线索；要求保留原上下文，不接受截断补全。",
+      "evidence": [
+        "用户提供的 2026-11-01 Aide 截图与任务记录"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "提取完整 JSON 对象时容忍围栏/简短外层说明；结构仍严格校验；格式错误时从原批次进行一次简洁重试，禁止修补不完整 JSON。",
+      "evidence": [
+        "internal/server/workflow.go: parseCompactSummary/summarizeCompactionBatch",
+        "docs/architecture/context-recovery.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完整运行中压缩路径已增加包装 JSON 提取和单次受限重试；长循环验证覆盖超窗整理、摘要进入候选上下文、预算复核及源输入保持。",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/context_recovery_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "本地隔离 httptest 假服务验证通过。摘要生成器的 100 次测试运行共完成 10,000 次截断重试；完整 fitActiveContext 流程 10 次测试运行共完成 1,000 次超窗压缩，均校验预算与源输入未变。相关上下文恢复回归组通过。没有调用真实模型或浏览器。",
+      "evidence": [
+        "docker run --rm --network=none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run ^TestContextRecoverySummaryRetriesAndSurvivesRepeatedRuns$ -count=100 -timeout=5m (pass, 42.249s; builder-only stress version)",
+        "docker run --rm --network=none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run ^TestContextRecoverySummaryRetriesAndSurvivesRepeatedRuns$ -count=10 -timeout=5m (pass; 1,000 complete active compactions)",
+        "docker run --rm --network=none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run ContextRecovery|CompactionSummary|MalformedCompaction|CompactionSnapshot -count=1 -timeout=3m (pass, 4.221s)",
+        "gofmt completed; git diff --check and task JSON parse passed"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构说明与任务验收记录已更新。",
+      "evidence": [
+        "docs/architecture/context-recovery.md",
+        "docs/tasks/context-summary-recovery-20261101.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "改动范围仅包含摘要解析/重试、对应既有回归断言、架构说明和本任务记录；其他审批改动及未跟踪用户文件保持原样。",
+      "evidence": [
+        "git status --short --branch",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "本地隔离压力测试与相关回归通过：完整运行中压缩 1,000 次；摘要生成器另 10,000 次截断重试循环通过。未运行整个 internal/server 包全量测试；未使用真实模型、未进行 Safari 长会话验收。未提交、未推送、未合并、未重启 Aide；其他已有审批改动和未跟踪文件保留。"
+}

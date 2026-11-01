@@ -827,7 +827,7 @@ function sessionRevision(s) {
   // state. Keep those small control fields in the polling snapshot so a stale
   // card is not kept merely because the last answer text did not move.
   const runStates = runs.map(run => [
-    JSON.stringify(run?.modelRoutes || []), run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
+    JSON.stringify(run?.modelRoutes || []), sessionTextRevision(JSON.stringify(run?.environments || null)), run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
     run?.pauseRequested, run?.stopRequested, run?.canResume, run?.approvalState, run?.autoReview,
     sessionTextRevision(JSON.stringify(sessionPluginPlanView(run))),
     sessionTextRevision(JSON.stringify(run?.steps?.map(s => s.outputSegments) || [])),
@@ -866,7 +866,7 @@ function sessionRunRenderSignature(run, view = {}) {
   const rendered = [
     sessionPluginPlanView(run),
 
-    run.modelRoutes || [], run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
+    run.modelRoutes || [], run.environments || null, run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
     run.pw, run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
 
     run.strategy, run.profile, run.autoReview, run.assistantManaged, run.approvalState, run.approvalReviews,
@@ -4031,7 +4031,7 @@ async function refreshContextPreview() {
   try {
     const strategy = sessionModelPreferences().strategy;
     const profile = strategy === 'auto' ? '' : sessionModelPreferences().profile;
-    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ modelSelection: sessionModelPreferences(), sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ modelSelection: sessionModelPreferences(), sessionId: state.session?.id || '', parallelism: window.AideParallelChat?.value(state.mode, state.session?.kind === 'assistant') || 1, prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     if (seq !== state.previewSeq.value || scope !== contextMeterScope() || contextMeterTransitioning()) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
     renderContextPreview(data);
   } catch (error) {
@@ -6786,7 +6786,7 @@ async function refreshContextMeter() {
   const strategy = sessionModelPreferences().strategy;
   const profile = strategy === 'auto' ? '' : sessionModelPreferences().profile;
   try {
-    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ modelSelection: sessionModelPreferences(), sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.(), baseline: true }) });
+    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ modelSelection: sessionModelPreferences(), sessionId: state.session?.id || '', parallelism: window.AideParallelChat?.value(state.mode, state.session?.kind === 'assistant') || 1, prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.(), baseline: true }) });
     if (seq !== state.contextMeterSeq.value || contextMeterKey() !== key || state.contextMeterDraft || contextMeterTransitioning() || !state.config?.configured) return;
     if (!data?.breakdown) return;
     state.contextMeterKey = key; // 只缓存属于当前会话的成功响应。
