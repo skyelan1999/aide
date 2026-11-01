@@ -57,7 +57,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "New formal market 943f6a90 verified online. Aide eb97d144 Linux ARM64 actual public ZIP inspection/install/function: 30/30 pass, independently verified including SQLite negative cases and installed Terminal TCP backpressure. Full Delivery 41356355299: source and all three native hosts passed; browser cell47 exposed #709 old-document POST/PATCH cancellation misclassification. Document-generation classifier plus negative cases implemented; actual 48-cell local retest in progress. ARM64/AMD64 full builds and launcher still running. No final Release receipt or publication claimed. Issue709 local actual Chromium/Firefox/WebKit matrix now 48/48 pass (193.29s), 19 narrowly classified navigation cancellation records retained. Cloud clean Linux lifecycle passed. Cloud browser repair still required; native full builds continue.",
+      "summary": "Formal market 943f6a90 and published SQLite1.0.1/Terminal1.5.3 verified online. Aide eb97d144 Linux ARM64 actual public ZIP inspection/install/function:30/30 pass, including negative and installed backpressure tests. Full run41356355299: source, Windows10, macOS ARM/Intel8 each, clean Linux17 commands/four HTTPS health samples pass; native ARM/AMD full candidates still running. Browser #709 fixed at a0265d4d: focused rejection cases, local48/48 (193.29s), cloud41357546514 48/48 and independent report identity/case checks pass;20 old-document cancellations retained. a026 changes only test runner/CI/docs; product code equals eb97. Staged cross-commit reports are not a final same-source Release receipt. Final clean-main full/version/tagged Delivery and Aide PR698 protection remain.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/698",
         ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
@@ -72,7 +72,9 @@
         "https://github.com/skyelan1999/aide/actions/runs/41331751852",
         "https://github.com/skyelan1999/aide/actions/runs/41356355299",
         ".agent-state/release-ci-hardening-20261101/published-final-arm64/report.json",
-        ".agent-state/release-ci-hardening-20261101/browser-issue709/report.json"
+        ".agent-state/release-ci-hardening-20261101/browser-issue709/report.json",
+        "https://github.com/skyelan1999/aide/actions/runs/41357546514",
+        ".agent-state/release-ci-hardening-20261101/remote-a0265d4d/release-browser/report.json"
       ]
     },
     "documentation": {
