@@ -53,6 +53,7 @@ class NativeDeliveryGateTests(unittest.TestCase):
             source = (root / name).read_text()
             self.assertIn('go test -mod=vendor -count=1 -timeout=30m ./...', source)
             self.assertIn('AIDE_RUN_TESTS', source)
+            self.assertIn('COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs', source)
 
     def test_both_helper_families_are_complete_and_tampering_is_rejected(self):
         import hashlib

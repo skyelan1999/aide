@@ -4069,7 +4069,7 @@
     {
       "path": "internal/server/release_public_plugins_test.go",
       "kind": "go",
-      "sha256": "a5cea08026b7e3f58d82d6d91ad5b0d9e9829c1a746e49e4f0035454566ce3fa",
+      "sha256": "2c9d5f87f3dfa019fa7e352b364b30c03840f867727de25a44fb7db82538ecc3",
       "cases": [
         "TestReleasePublicPackageFunctions"
       ],
@@ -6631,6 +6631,17 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "scripts/ci/terminal-proxy-backpressure.test.cjs",
+      "kind": "node",
+      "sha256": "f7613de1726218093eeae62e394f2da3ee936d27e6c408c87102d05c5864db13",
+      "cases": [],
+      "caseCount": 0,
+      "environmentReferences": [
+        "AIDE_TERMINAL_RUNTIME"
+      ],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "scripts/ci/test_build_candidate.py",
       "kind": "python",
       "sha256": "8e9e8b7f1f04c3b3bcbc60eb4df308b149067b5efa0a87cb8d617f4fc2f0d025",
@@ -6720,7 +6731,7 @@
     {
       "path": "scripts/ci/test_snapshot_environment.py",
       "kind": "python",
-      "sha256": "99ddd5134fe70b19461f2d732aae09604356f461056f73abb5e249d6c661beb7",
+      "sha256": "d4075d88a06a63d305d0e3f8d76423b6ffccf23519e48f6af8c261b372ffc9a9",
       "cases": [
         "test_current_snapshot_office_overrides_image_environment",
         "test_host_deadline_allows_suite_and_cleanup",

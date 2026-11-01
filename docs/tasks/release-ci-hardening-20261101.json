@@ -57,11 +57,16 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本地 30 个公开原包 ARM64 实装/功能、48 格真实 Chromium/Firefox/WebKit 场景和8个诊断故障场景专项 race 通过；远端基础 Go 编译/关键回归/vet通过。clean CI发现 #699 文档指向忽略证据、快照测试替身未生成新收据两项问题，已修复并通过9项资源守卫/33项CI合约/文档检查；继续远端及当前源码完整race验收。旧全量24分片仅 #696 旧视觉断言失败，已修正并由专项覆盖。正式 Release 尚未发布。",
+      "summary": "日常基础CI通过。云端真实48格浏览器在每格独立进程后通过(16b48d08)；Windows 10项、macOS ARM/Intel各8项原生宿主通过。首次完整Docker构建发现#702只遗漏工程测试夹具，两个构建阶段已补COPY，不进入运行镜像。旧public SQLite/Terminal的#583/#584/#586/#588经原包复现；修复候选ZIP通过真实Aide导入、SQLite否定回归及已安装TCP拥塞/32MiB摘要测试；SQLite 33+25、Terminal 36源码+27解包均通过，且两插件原生ARM64/AMD64 CI通过。市场候选PR32仅更新2包，其余28个public包及3个private展示元数据保持。正式市场发布和最终全量绑定源码验收尚未完成，不作为Release完成。",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/698",
         ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
-        ".agent-state/release-ci-hardening-20261101/public-with-diagnostics/report.json"
+        ".agent-state/release-ci-hardening-20261101/public-with-diagnostics/report.json",
+        "https://github.com/skyelan1999/aide/actions/runs/41330840791",
+        "https://github.com/skyelan1999/aide/actions/runs/41330227847",
+        "https://github.com/skyelan1999/aide-pkg-sqlite/pull/2",
+        "https://github.com/skyelan1999/aide-pkg-terminal/pull/2",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/32"
       ]
     },
     "documentation": {
@@ -91,6 +96,11 @@
   "handoff": "",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/696",
-    "https://github.com/skyelan1999/aide/issues/699"
+    "https://github.com/skyelan1999/aide/issues/699",
+    "https://github.com/skyelan1999/aide/issues/583",
+    "https://github.com/skyelan1999/aide/issues/584",
+    "https://github.com/skyelan1999/aide/issues/586",
+    "https://github.com/skyelan1999/aide/issues/588",
+    "https://github.com/skyelan1999/aide/issues/702"
   ]
 }

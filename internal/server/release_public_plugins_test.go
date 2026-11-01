@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -331,8 +332,18 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 				t.Error("outside database created", err)
 			}
 			outside = filepath.Join(t.TempDir(), "must-not-create-transaction.db")
-			if _, err := a.callPluginToolContext(context.Background(), id, "sqlite_transaction", map[string]any{"db": db, "statements": []any{map[string]any{"sql": "ATTACH DATABASE '" + outside + "' AS ext"}}, "confirm": true}); err == nil {
-				t.Error("transaction authorized outside ATTACH")
+			result, err := a.callPluginToolContext(context.Background(), id, "sqlite_transaction", map[string]any{"db": db, "statements": []any{map[string]any{"sql": "ATTACH DATABASE '" + outside + "' AS ext"}}, "confirm": true})
+			if err == nil {
+				// Transaction failures are returned as committed:false, not RPC errors.
+				var transaction map[string]any
+				if text, ok := result.(string); ok {
+					_ = json.Unmarshal([]byte(text), &transaction)
+				} else {
+					transaction, _ = result.(map[string]any)
+				}
+				if transaction["committed"] != false || transaction["error"] == nil || transaction["error"] == "" {
+					t.Error("transaction authorized outside ATTACH", result)
+				}
 			}
 			if _, err := os.Stat(outside); !os.IsNotExist(err) {
 				t.Error("outside transaction database created", err)
@@ -365,6 +376,15 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 		}
 		return releasePublicSpeech(t, a)
 	case "terminal":
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		proxyTest := exec.CommandContext(ctx, "node", "--test", "../../scripts/ci/terminal-proxy-backpressure.test.cjs")
+		proxyTest.Env = append(os.Environ(), "AIDE_TERMINAL_RUNTIME="+filepath.Join(a.pluginsPath, id))
+		if output, err := proxyTest.CombinedOutput(); err != nil {
+			t.Fatalf("installed proxy congestion regression: %v\n%s", err, output)
+		} else {
+			t.Log(string(output))
+		}
 		got := releasePublicCall(t, a, id, "terminal_session_create", map[string]any{"kind": "local", "cols": 80, "rows": 24})
 		var session map[string]any
 		if json.Unmarshal([]byte(got), &session) != nil {
@@ -385,7 +405,7 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 		for time.Now().Before(deadline) {
 			got = releasePublicCall(t, a, id, "terminal_session_poll", map[string]any{"id": sid, "offset": 0})
 			if strings.Contains(got, "published-terminal-ok") {
-				return []string{"published terminal creates a real local process, sends input, polls output and closes"}
+				return []string{"published terminal creates a real local process, sends input, polls output and closes", "installed proxy pauses congested sources in both directions and transfers exact 32 MiB payloads"}
 			}
 			var output map[string]any
 			_ = json.Unmarshal([]byte(got), &output)
@@ -396,7 +416,7 @@ func releasePublicFunction(t *testing.T, a *App, id string) []string {
 				if encoded, ok := output[key].(string); ok {
 					decoded, _ := base64.StdEncoding.DecodeString(encoded)
 					if strings.Contains(string(decoded), "published-terminal-ok") {
-						return []string{"published terminal process I/O and explicit cleanup"}
+						return []string{"published terminal process I/O and explicit cleanup", "installed proxy pauses congested sources in both directions and transfers exact 32 MiB payloads"}
 					}
 				}
 			}

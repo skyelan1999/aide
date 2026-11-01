@@ -12,6 +12,7 @@ COPY cmd ./cmd
 COPY internal ./internal
 COPY plugins/testdata ./plugins/testdata
 COPY scripts/office ./scripts/office
+COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs
 COPY scripts/build-message-lan.sh ./scripts/build-message-lan.sh
 COPY scripts/build-codex-host.py ./scripts/build-codex-host.py
 COPY docker/codex-host-source.json ./docker/codex-host-source.json
