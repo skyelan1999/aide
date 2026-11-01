@@ -1,0 +1,105 @@
+{
+  "recordedAt": "2026-11-01",
+  "model": "gpt-6-luna",
+  "method": "One paired synthetic benchmark run per task type and parallelism setting; same synthetic history and same prompt within each task type.",
+  "results": [
+    {
+      "model": "gpt-6-luna",
+      "taskType": "simple",
+      "parallelismSetting": 1,
+      "elapsedSeconds": 7.83,
+      "workersStarted": 0,
+      "workersCompleted": 0,
+      "tokens": {
+        "prompt": 6384,
+        "completion": 286,
+        "total": 6670,
+        "source": "OpenAI upstream-reported usage",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 1954,
+        "completion": 29,
+        "total": 1983
+      },
+      "allTenLabelsExactlyOnce": true,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    },
+    {
+      "model": "gpt-6-luna",
+      "taskType": "simple",
+      "parallelismSetting": 10,
+      "elapsedSeconds": 7.58,
+      "workersStarted": 0,
+      "workersCompleted": 0,
+      "tokens": {
+        "prompt": 8653,
+        "completion": 262,
+        "total": 8915,
+        "source": "OpenAI upstream-reported usage",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 4249,
+        "completion": 57,
+        "total": 4306
+      },
+      "allTenLabelsExactlyOnce": true,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    },
+    {
+      "model": "gpt-6-luna",
+      "taskType": "complex",
+      "parallelismSetting": 1,
+      "elapsedSeconds": 14.97,
+      "workersStarted": 0,
+      "workersCompleted": 0,
+      "tokens": {
+        "prompt": 6802,
+        "completion": 1576,
+        "total": 8378,
+        "source": "OpenAI upstream-reported usage",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 2386,
+        "completion": 1363,
+        "total": 3749
+      },
+      "allTenLabelsExactlyOnce": true,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    },
+    {
+      "model": "gpt-6-luna",
+      "taskType": "complex",
+      "parallelismSetting": 10,
+      "elapsedSeconds": 21.63,
+      "workersStarted": 0,
+      "workersCompleted": 0,
+      "tokens": {
+        "prompt": 9263,
+        "completion": 2138,
+        "total": 11401,
+        "source": "OpenAI upstream-reported usage",
+        "estimated": false
+      },
+      "taskOnlyTokensExcludingPreflight": {
+        "prompt": 4830,
+        "completion": 1891,
+        "total": 6721
+      },
+      "allTenLabelsExactlyOnce": true,
+      "requestBudgetsFit": true,
+      "status": "completed"
+    }
+  ],
+  "testCommandExit": "1 because the harness requires multi-x fanout; the complex 10x run started zero workers. All four answers passed label/content coverage.",
+  "limits": [
+    "Single sample per case; wall time is sensitive to provider/network variance.",
+    "All four runs started zero workers, including the complex 10x setting; these results do not demonstrate actual 10-way parallel execution.",
+    "No monetary cost calculated; usage values are upstream-reported tokens."
+  ]
+}

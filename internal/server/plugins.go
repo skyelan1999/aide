@@ -113,7 +113,7 @@ func (a *App) runPluginHost(ctx context.Context) {
 	enabled := []map[string]any{}
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.Enabled {
-			enabled = append(enabled, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "settings": p.Settings})
+			enabled = append(enabled, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "version": p.Version, "settings": p.Settings})
 		}
 	}
 	pluginsPath := a.pluginsPath
@@ -131,12 +131,41 @@ func (a *App) runPluginHost(ctx context.Context) {
 	cctx, cancel := context.WithTimeout(ctx, pluginRunTimeout)
 	defer cancel()
 	cmd := exec.CommandContext(cctx, "node", "-e", pluginHostJS, "run", pluginsPath, string(listJSON), surfacePath)
+	if a.executionEnvironment != nil {
+		var cleanup func()
+		var err error
+		cmd, cleanup, err = a.executionEnvironment.command(cctx, []string{"run", pluginsPath, string(listJSON), surfacePath}, nil)
+		if err != nil {
+			return
+		}
+		defer cleanup()
+		configurePluginProcess(cmd, true)
+	}
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
-	_ = cmd.Run() // 失败时保留旧 surface；stdout 结果不依赖（结果写入 surface 文件）
+	if err := cmd.Run(); err != nil {
+		a.recordIncident(ctx, incident{Module: "plugins", Phase: "load-host"}, err, time.Time{})
+	} // Preserve existing surface on failure.
 	if b, err := os.ReadFile(surfacePath); err == nil && len(b) <= 2<<20 {
 		a.mu.Lock()
 		a.pluginSurface = b
 		a.mu.Unlock()
+		var loaded struct {
+			Plugins []struct {
+				ID         string                 `json:"id"`
+				Version    string                 `json:"version"`
+				Error      string                 `json:"error"`
+				Diagnostic *pluginFailureMetadata `json:"diagnostic,omitempty"`
+			} `json:"plugins"`
+		}
+		if err := json.Unmarshal(b, &loaded); err != nil {
+			a.recordIncident(ctx, incident{Module: "plugins", Phase: "surface-decode"}, err, time.Time{})
+		} else {
+			for _, p := range loaded.Plugins {
+				if p.Error != "" {
+					a.recordIncident(ctx, incident{Module: "plugins", Phase: "load-plugin", Plugin: p.ID, PluginVersion: p.Version}, &pluginCallFailure{message: p.Error, diagnostic: p.Diagnostic}, time.Time{})
+				}
+			}
+		}
 	}
 }
 
@@ -163,9 +192,10 @@ func (a *App) validatePluginCode(code string) (string, error) {
 		return "", fmt.Errorf("插件校验失败: %s", strings.TrimSpace(string(out)))
 	}
 	var result struct {
-		OK    bool   `json:"ok"`
-		Name  string `json:"name"`
-		Error string `json:"error"`
+		OK         bool                   `json:"ok"`
+		Name       string                 `json:"name"`
+		Error      string                 `json:"error"`
+		Diagnostic *pluginFailureMetadata `json:"diagnostic,omitempty"`
 	}
 	if err := json.Unmarshal(out, &result); err != nil {
 		return "", errors.New("插件校验结果无法解析")
@@ -300,8 +330,9 @@ func (a *App) updatePluginSettings(w http.ResponseWriter, r *http.Request) {
 func (a *App) pluginError(id string) string {
 	var surface struct {
 		Plugins []struct {
-			ID    string `json:"id"`
-			Error string `json:"error"`
+			ID         string                 `json:"id"`
+			Error      string                 `json:"error"`
+			Diagnostic *pluginFailureMetadata `json:"diagnostic,omitempty"`
 		} `json:"plugins"`
 	}
 	if err := json.Unmarshal(a.pluginSurface, &surface); err != nil {
@@ -786,7 +817,60 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 	return a.callPluginToolContext(context.Background(), pluginID, toolName, args)
 }
 
-func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (any, error) {
+func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (value any, callErr error) {
+	started := time.Now()
+	defer a.observeIncidentPanic(parent, incident{Module: "plugins", Phase: "call", Plugin: pluginID, Tool: toolName})
+	defer func() {
+		if callErr == nil && !incidentReportedFailure(value) {
+			return
+		}
+		version := ""
+		a.mu.Lock()
+		for _, p := range a.pluginRegistry.Plugins {
+			if p.ID == pluginID {
+				version = p.Version
+			}
+		}
+		a.mu.Unlock()
+		event := incident{Module: "plugins", Phase: "call", Plugin: pluginID, PluginVersion: version, Tool: toolName}
+		observed := callErr
+		if observed == nil {
+			event.Phase = "result-status"
+			event.Code = "REPORTED_FAILURE"
+			event.Severity = "error"
+			observed = errors.New("plugin explicitly reported failure")
+		}
+		a.recordIncident(parent, event, observed, started)
+	}()
+
+	if a.executionEnvironment != nil {
+		main := a.executionEnvironment.pool.parent
+		main.mu.Lock()
+		enabled := false
+		for _, p := range main.pluginRegistry.Plugins {
+			if p.ID == pluginID && p.Enabled {
+				enabled = true
+			}
+		}
+		denied := toolDeniedIn(main.settings.DisabledTools, toolName)
+		main.mu.Unlock()
+		if !enabled || denied || taskToolDenied(a.executionEnvironment.pool.task, toolName) {
+			return nil, errors.New("parent project revoked this plugin/tool")
+		}
+		a.mu.Lock()
+		privateFootprint := a.pluginFootprintLocked(pluginID, toolName, args)
+		a.mu.Unlock()
+		// A complete workspace/plugin-only contract is private to this runtime.
+		// Unknown footprints keep the main shared lease rather than assuming safety.
+		if privateFootprint.exclusive {
+			release, err := main.pluginResources.acquire(parent, pluginFootprint{exclusive: true})
+			if err != nil {
+				return nil, err
+			}
+			defer release()
+		}
+	}
+
 	parent, editorRelease := a.nativeEditorEnter(parent)
 	defer editorRelease()
 	if pluginID != "brdplan" || !nativeEditorReadTool(toolName) {
@@ -868,7 +952,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	enabledPlugins := []map[string]any{}
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.Enabled && (footprint.exclusive || p.ID == pluginID) {
-			enabledPlugins = append(enabledPlugins, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "settings": p.Settings})
+			enabledPlugins = append(enabledPlugins, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "version": p.Version, "settings": p.Settings})
 		}
 		if p.ID == pluginID {
 			settings = pluginSettingsOrEmpty(p.Settings)
@@ -885,10 +969,21 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 		return nil, err
 	}
 	outFile := filepath.Join(os.TempDir(), "aide-plugin-call-"+newID()+".json")
+	if a.executionEnvironment != nil {
+		outFile = filepath.Join(filepath.Dir(a.executionEnvironment.root), "call-"+newID()+".json")
+	}
 	defer os.Remove(outFile)
 	ctx, cancel := context.WithTimeout(parent, 310*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", scope, string(req), outFile)
+	if a.executionEnvironment != nil {
+		var cleanup func()
+		cmd, cleanup, err = a.executionEnvironment.command(ctx, []string{"call", scope, string(req), outFile}, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer cleanup()
+	}
 	configurePluginProcess(cmd, true)
 	if workspace != "" {
 		cmd.Dir = workspace
@@ -933,15 +1028,16 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 		return nil, fmt.Errorf("工具结果读取失败: %w", err)
 	}
 	var result struct {
-		OK     bool   `json:"ok"`
-		Result any    `json:"result"`
-		Error  string `json:"error"`
+		OK         bool                   `json:"ok"`
+		Result     any                    `json:"result"`
+		Error      string                 `json:"error"`
+		Diagnostic *pluginFailureMetadata `json:"diagnostic,omitempty"`
 	}
 	if err := json.Unmarshal(b, &result); err != nil {
 		return nil, errors.New("工具结果解析失败")
 	}
 	if !result.OK {
-		return nil, errors.New(result.Error)
+		return nil, &pluginCallFailure{message: result.Error, diagnostic: result.Diagnostic}
 	}
 	return pluginResourceResult(footprint, workspace, result.Result, nil)
 }
@@ -1022,7 +1118,7 @@ func (a *App) pluginSurfaceHandler(w http.ResponseWriter, r *http.Request) {
 
 func builtinToolNames() []string {
 	names := []string{}
-	for _, tool := range builtinTools {
+	for _, tool := range append(append([]any{}, builtinTools...), executionEnvironmentTools...) {
 		if entry, ok := tool.(map[string]any); ok {
 			if fn, ok := entry["function"].(map[string]any); ok {
 				if name, ok := fn["name"].(string); ok {

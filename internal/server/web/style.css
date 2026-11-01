@@ -1794,3 +1794,22 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 [data-theme="dark"] .token-stats .account-balance-pool{--wb-field-height:26px;--wb-field-pad-y:3px;--wb-field-pad-x:6px;--wb-field-font:10px;--balance-alert:#ff7080}
 
 .file-preview-unavailable{margin:auto;padding:24px;line-height:1.7;text-align:center;color:var(--text)}
+
+/* Dragging files into the chat composer previews the attachment drop target. */
+#task-form { position: relative; }
+#task-form.drag-over { outline: 2px dashed var(--brand); outline-offset: 3px; }
+#task-form.drag-over::after {
+  content: attr(data-drop-label);
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--brand-text);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.approval-intent{margin:.65rem 0;padding:.7rem .85rem;border:1px solid var(--border-color,rgba(127,127,127,.3));border-left:3px solid var(--accent,#6b8afd);border-radius:.5rem;background:var(--surface-secondary,rgba(127,127,127,.06));font-size:.92em}.approval-intent p{margin:.35rem 0}.approval-intent strong{display:block;margin-bottom:.35rem}

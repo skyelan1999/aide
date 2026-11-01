@@ -19,7 +19,7 @@ func TestIssue76CurlOutputProcess(t *testing.T) {
 	}
 	amount := int64(12 << 20)
 	if mode == "file" {
-		amount = maxFile + (8 << 20)
+		amount = maxExternalTextFile + (8 << 20)
 	}
 	buf := []byte(strings.Repeat("x", 32<<10))
 	for amount > 0 {

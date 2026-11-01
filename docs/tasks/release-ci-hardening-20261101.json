@@ -1,0 +1,126 @@
+{
+  "id": "release-ci-hardening-20261101",
+  "request": "做一次完整release，改善CI：日常提交只触发基本CI，release全量全面复杂交叉检验，整理测试用例和完整文档",
+  "baseline": "a4121784c035cbb0d58638215e23e0a197cede6e",
+  "initial_status": "",
+  "acceptance": [
+    "日常push/PR只运行基础静态/合约及关键Go smoke，不触发镜像/全面回归",
+    "显式Release必须通过完整race/vet、原生ARM64/AMD64运行包和开发工具、Windows/macOS宿主、跨浏览器、升级/回滚/身份/隐私/摘要交叉校验",
+    "所有现行public插件逐一检查包/协议/权限与实际功能，固定市场及公开Release身份；不把安装成功或被跳过算作功能通过，缺项不发布",
+    "生成并维护测试用例目录、执行命令/前提/通过标准/不适用项、发布说明和回滚指南",
+    "按原version.sh规则在main打版本，远端附件哈希核对后发布，保留客户及当前服务数据",
+    "插件无需全量重编译：以当前public市场已发布安装包为对象，隔离宿主实际安装及功能测试；源码单测不能替代安装包验收",
+    "本轮不满足检查/功能验收的可修复项自动定位、修复、重跑并提交；插件仅重建确需修复的包，发布仍等待全部门禁",
+    "增加跨插件/模块异常检测和可回溯诊断：请求/任务关联、插件版本与失败阶段、分类/耗时/构建身份、有界持久化、鉴权查询和诊断包，故障注入验证且不记录正文凭据"
+  ],
+  "scope": [
+    ".github/workflows",
+    "scripts/ci",
+    "scripts/run_go_test_shards.py",
+    "scripts/test_go_snapshot.py",
+    "internal/server release synthetic browser fixture",
+    "docs/testing、发布与架构/Agent流程文档",
+    "现有功能分支的已提交变更合入本次Release；不替换用户生产服务",
+    "公开插件市场冻结快照、逐插件功能用例、宿主安装/调用交叉验证和Release门禁；私有插件隔离",
+    "不对所有插件重新编译；只下载校验并安装已发布public包，按需阅读公开源码设计功能用例",
+    "授权本轮失败项的主程序/公开插件修复与提交，按集中Issue记录确认缺陷，不修改断言伪造通过",
+    "internal/server 模块异常诊断与调用链埋点",
+    "docs/architecture/diagnostics.md、故障注入回归和发行门禁"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户授权完整release及CI/测试文档；当前用户skyelan1999，main需要gate和1次代码owner审批，后续按实际保护规则处理",
+      "evidence": [
+        "AGENTS.md",
+        ".github/workflows/aide-ci.yml",
+        ".github/workflows/aide-delivery.yml"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "日常基本gate与显式Delivery分开；30个公开市场包冻结、原ZIP安装/功能双架构验证；48格真实浏览器和原生宿主；独立收据校验及远端摘要发布门禁",
+      "evidence": [
+        "docs/testing/release-validation.md",
+        "scripts/ci/public-plugins.lock.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "日常/Release CI 分层、双架构 public 原包实装与功能、48 格浏览器、原生宿主、完整执行收据及跨模块/插件结构化异常诊断已实现；失败修复仍经后续验收闭环。",
+      "evidence": [
+        "scripts/ci/build_candidate.py",
+        "scripts/ci/release_evidence.py",
+        "internal/server/incidents.go",
+        "internal/server/plugin_host.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Candidate eb97d144 native ARM64 and AMD64 complete: each 1509 passed,78 explicit skips,24 complete shards,other Go packages/platform/vet pass; each30/30 formal public ZIP inspection/install/function pass. Downloaded all4 runtime/SDK ZIPs and independently validated size/SHA/CRC, imports/smoke/privacy receipts and shared source fingerprint dfaac9616ea4c869a2e93f27394e0e0fb651f0cc3be6557aacce8a61563e2f6d. Windows10/macOS8+8 and clean Linux17 commands/4health samples pass. Original full run retains failed browser result; test-only fix a026 cloud48/48 and20 cancellation records independently validated. Plugin bugs583/584/586/588 closed after public releases+dual-native actual installs. Final same-source tagged Delivery and clean-main full remain; staged reports are not a final Release receipt.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/698",
+        ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
+        ".agent-state/release-ci-hardening-20261101/public-with-diagnostics/report.json",
+        "https://github.com/skyelan1999/aide/actions/runs/41330840791",
+        "https://github.com/skyelan1999/aide/actions/runs/41330227847",
+        "https://github.com/skyelan1999/aide-pkg-sqlite/pull/2",
+        "https://github.com/skyelan1999/aide-pkg-terminal/pull/2",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/32",
+        "docs/reviews/2026-11-02/release-readiness.md",
+        ".agent-state/release-ci-hardening-20261101/full-go-reviewed/report.json",
+        "https://github.com/skyelan1999/aide/actions/runs/41331751852",
+        "https://github.com/skyelan1999/aide/actions/runs/41356355299",
+        ".agent-state/release-ci-hardening-20261101/published-final-arm64/report.json",
+        ".agent-state/release-ci-hardening-20261101/browser-issue709/report.json",
+        "https://github.com/skyelan1999/aide/actions/runs/41357546514",
+        ".agent-state/release-ci-hardening-20261101/remote-a0265d4d/release-browser/report.json",
+        "docs/reviews/2026-11-02/release-candidate-acceptance.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "完整测试矩阵、逐插件功能/外部边界、源码用例目录、诊断定位/隐私/保留策略、候选发布与升级回滚及预备发行说明已补齐。",
+      "evidence": [
+        "docs/testing/release-validation.md",
+        "docs/testing/test-cases.md",
+        "docs/testing/test-catalog.json",
+        "docs/architecture/diagnostics.md",
+        "docs/releases/v0.1.18.0-RC1.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only task-owned idle QA containers stopped/removed; source changes reviewed, no unrelated files staged. User production and existing builder untouched. Test logs, candidate archives and reusable build caches retained as evidence, not treated as garbage. Git tree will be rechecked after this documentation commit.",
+      "evidence": [
+        "docs/reviews/2026-11-02/release-readiness.md",
+        ".agent-state/release-ci-hardening-20261101/cleanup-manifest.json"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "The three explicitly authorized plugin/market exceptions were executed and published/verified. Aide PR698 still independently requires one owner review; sole owner is also author. No authorization to bypass Aide main has been given. Preparing a concrete request for PR698 and bounded release-result documentation only; no protection settings changed. Formal clean-main full/release-check/version/tagged Delivery remain after integration.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-sqlite/pull/2",
+        "https://github.com/skyelan1999/aide-pkg-terminal/pull/2",
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/32",
+        "https://github.com/skyelan1999/aide/pull/698",
+        "https://github.com/skyelan1999/aide-pkg-sqlite/releases/tag/v1.0.1",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.3"
+      ]
+    }
+  },
+  "release_authorization": "用户当前要求做一次完整release；包含必要集成、版本及公开发行；不推定管理员绕过保护，也不替换生产服务",
+  "rollback": "保留现行发布、镜像和用户数据；失败仅留草稿/候选，修复后重新绑定源代码验证，禁止覆盖旧附件",
+  "handoff": "Candidate validation summary is in docs/reviews/2026-11-02/release-candidate-acceptance.json. Need current owner authorization for Aide main protection (PR698; plugin/market exceptions do not extend). After authorized merge: keep production untouched, clean main run full and release-check using existing SDK override, version.sh bump feature -> expected0.1.18.0RC1, push, dispatch full tagged Delivery with truthful owner-requested one-off cadence reason. Do not splice staged cross-commit candidate reports into final Release evidence. Validate exact remote assets/hashes, then backfill result documentation and close remaining integrated Aide issues. Legacy prebuilt fallback manifest already verified; do not replace it with unpublished or differently shaped assets.",
+  "issues": [
+    "https://github.com/skyelan1999/aide/issues/696",
+    "https://github.com/skyelan1999/aide/issues/699",
+    "https://github.com/skyelan1999/aide/issues/583",
+    "https://github.com/skyelan1999/aide/issues/584",
+    "https://github.com/skyelan1999/aide/issues/586",
+    "https://github.com/skyelan1999/aide/issues/588",
+    "https://github.com/skyelan1999/aide/issues/702",
+    "https://github.com/skyelan1999/aide/issues/709"
+  ]
+}

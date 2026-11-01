@@ -35,8 +35,8 @@ class SnapshotEnvironmentTests(unittest.TestCase):
     def test_host_deadline_allows_suite_and_cleanup(self):
         suite_seconds = int(re.search(r"--kill-after=10s (\d+)s", snapshot.COMMAND).group(1))
         self.assertGreaterEqual(snapshot.HOST_TIMEOUT_SECONDS, suite_seconds + 20)
-        workflow = (Path(__file__).parents[2] / ".github/workflows/aide-ci.yml").read_text()
-        job_minutes = int(re.search(r"  go:.*?timeout-minutes: (\d+)", workflow, re.S).group(1))
+        workflow = (Path(__file__).parents[2] / ".github/workflows/aide-delivery.yml").read_text()
+        job_minutes = int(re.search(r"  native:.*?timeout-minutes: (\d+)", workflow, re.S).group(1))
         self.assertGreater(job_minutes * 60, snapshot.HOST_TIMEOUT_SECONDS + 5 * 60)
 
     def test_invalid_parallel_resource_request_never_runs_docker(self):
@@ -53,6 +53,7 @@ class NativeDeliveryGateTests(unittest.TestCase):
             source = (root / name).read_text()
             self.assertIn('go test -mod=vendor -count=1 -timeout=30m ./...', source)
             self.assertIn('AIDE_RUN_TESTS', source)
+            self.assertIn('COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs', source)
 
     def test_both_helper_families_are_complete_and_tampering_is_rejected(self):
         import hashlib

@@ -179,33 +179,17 @@ func TestAttachmentContextUnsupportedBinary(t *testing.T) {
 	}
 }
 
-func TestVisionGateLocked(t *testing.T) {
+func TestVisionGateLockedDoesNotFilterImagesByModel(t *testing.T) {
 	a := testApp(t)
-	a.mu.Lock()
-	a.settings.Model = "deepseek-chat" // 非视觉
-	a.mu.Unlock()
 	imgs := []MessageImage{{MediaType: "image/png", DataURL: "data:..."}}
-	a.mu.Lock()
-	err := a.visionGateLocked(imgs)
-	a.mu.Unlock()
-	if err == nil || !strings.Contains(err.Error(), "不支持图片") {
-		t.Fatalf("非视觉模型+图片应报错: %v", err)
-	}
-	// 切到视觉模型
-	a.mu.Lock()
-	a.settings.Model = "gpt-4o"
-	err = a.visionGateLocked(imgs)
-	a.mu.Unlock()
-	if err != nil {
-		t.Fatalf("视觉模型应放行: %v", err)
-	}
-	// 无图片直接放行
-	a.mu.Lock()
-	a.settings.Model = "deepseek-chat"
-	err = a.visionGateLocked(nil)
-	a.mu.Unlock()
-	if err != nil {
-		t.Fatalf("无图片应放行: %v", err)
+	for _, model := range []string{"deepseek-chat", "gpt-4o", "luna-custom"} {
+		a.mu.Lock()
+		a.settings.Model = model
+		err := a.visionGateLocked(imgs)
+		a.mu.Unlock()
+		if err != nil {
+			t.Fatalf("图片不应因模型能力标记被拦截（模型 %s）: %v", model, err)
+		}
 	}
 }
 

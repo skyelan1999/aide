@@ -6,12 +6,46 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
 
 // File proposals use the same independent reviewer, then the normal versioned
-// apply path. Only new local files are eligible; existing originals stay manual.
+// apply path. Local workspace updates require exact original bytes and bound paths.
+func (a *App) prepareAssistedLocalProposalLocked(f Change) (Change, bool) {
+	if f.Source != "" || f.Applied || safePath(f.Path) != nil {
+		return f, false
+	}
+	f.NoSymlinks = true
+	t, err := a.proposalTargetLocked(f)
+	if err != nil {
+		return f, false
+	}
+	defer t.close()
+	if t.root == nil {
+		return f, false
+	}
+	t.noSymlinks = true
+	original, err := readBoundText(t.root, f.Path)
+	if errors.Is(err, os.ErrNotExist) {
+		if f.BaseHash != "" || f.Before != "" {
+			return f, false
+		}
+		return f, true
+	}
+	if err != nil || f.BaseHash == "" || hash(original) != f.BaseHash {
+		return f, false
+	}
+	if f.Before != "" && !bytes.Equal([]byte(f.Before), original) {
+		return f, false
+	}
+	// Give the reviewer the exact original bytes whose digest will be checked
+	// again by the apply path; an omitted original is not treated as evidence.
+	f.Before = string(original)
+	return f, true
+}
+
 func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	if a.applyRememberedFiles(task) {
 		return
@@ -45,15 +79,25 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	if cwd == "" {
 		cwd = a.containerAbs
 	}
-	eligible := keyErr == nil && authorized && a.settings.SandboxMode != "read-only" && a.workspaceMode() != "ssh"
+	sandbox, workspaceMode := sandboxMode(a.settings.SandboxMode), a.workspaceMode()
+	workspaceID, workspaceRevision := a.wsID(), a.wsRevision
+	eligible := keyErr == nil && authorized && sandbox != "read-only" && workspaceMode != "ssh"
 	paths := []string{}
-	for _, f := range files {
-		paths = append(paths, proposalDisplayPath(f))
-		if f.BaseHash != "" || f.Before != "" || f.Applied || safePath(f.Path) != nil || !a.newProposalTargetEligibleLocked(f) {
+	for i, f := range files {
+		if f.Source == "" {
+			prepared, ok := a.prepareAssistedLocalProposalLocked(f)
+			files[i] = prepared
+			task.Files[i] = prepared
+			if !ok {
+				eligible = false
+			}
+		} else if f.BaseHash != "" || f.Before != "" || f.Applied || safePath(f.Path) != nil || !a.newProposalTargetEligibleLocked(f) {
+			// Configured document destinations remain eligible only for new files.
 			eligible = false
 		}
+		paths = append(paths, proposalDisplayPath(files[i]))
 	}
-	record := ApprovalReview{Command: "write_file: " + strings.Join(paths, ", "), Status: "reviewing", Reason: "正在独立审核新文件提案", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "files", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(approvalFilesFingerprint(files))}
+	record := ApprovalReview{Command: "write_file: " + strings.Join(paths, ", "), Status: "reviewing", Reason: "正在独立审核文件提案及目标版本", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "files", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(approvalFilesFingerprint(files))}
 	if task.AssistantManaged && a.settings.AssistantAutoReview {
 		record.Source = "assistant"
 	}
@@ -62,17 +106,20 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	}
 	task.ApprovalReviews = append(task.ApprovalReviews, record)
 	index := len(task.ApprovalReviews) - 1
-	_ = a.save(s)
+	statePersisted := a.save(s) == nil
+	if !statePersisted {
+		eligible = false
+	}
 	a.mu.Unlock()
 	a.broadcastSessionsChanged(s.ID)
 	defer cancel()
 	approved := false
-	reason := "现有文件覆盖、远程写入、只读沙箱或已变化的提案需要手动确认"
+	reason := "现有文件、远程目标、只读沙箱、符号链接或已变化的提案需要手动确认"
 	var usage TokenUsage
 	if eligible {
-		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "create new files using write_file; no existing file replacement", "files": files, "documentDestination": "system-docs is the configured document binding; authorize only the exact recorded targetPath, never arbitrary external paths"})
+		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "apply exact local workspace file proposals; configured document sources may create new files only", "executionIntent": fileApprovalExecutionIntent(files), "sandboxMode": sandbox, "workspaceMode": workspaceMode, "files": files, "documentDestination": "仅认可已记录的本地目标；已有工作区文件修改必须是用户明确要求，且 Before 与 BaseHash 对应将再次校验的原文"})
 		if len(payload) <= 64000 {
-			out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy + "\n本次待审对象是 files 新文件提案，不是 shell command。逐项判断路径与完整内容是否符合用户授权。"}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
+			out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy + "\n本次待审对象是 files 提案，不是 shell command。逐项判断路径、原文、完整新内容及用户授权。只有低/中风险且目标精确时才批准。"}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
 			usage = u
 			var v struct {
 				Decision        string
@@ -85,14 +132,14 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 				reason = v.Reason
 				approved = v.Decision == "approve" && (v.Risk == "low" || v.Risk == "medium") && v.WithinWorkspace && v.Authorized
 			} else {
-				reason = "新文件审核失败或响应格式无效，请手动确认"
+				reason = "文件提案审核失败或响应格式无效，请手动确认"
 			}
 		} else {
 			reason = "提案超出独立审核内容限额，请手动确认"
 		}
 	}
 	current := func(t *Task) error {
-		if t != task || !t.AutoReview || t.approvalGeneration != gen || t.Status != "awaiting_approval" || ctx.Err() != nil || a.settings.SandboxMode == "read-only" || a.workspaceMode() == "ssh" || a.sessions[s.ID] != s || s.Deleted || len(t.Files) != len(files) {
+		if t != task || !t.AutoReview || t.approvalGeneration != gen || t.Status != "awaiting_approval" || ctx.Err() != nil || sandboxMode(a.settings.SandboxMode) != sandbox || a.workspaceMode() != workspaceMode || a.wsID() != workspaceID || a.wsRevision != workspaceRevision || a.sessions[s.ID] != s || s.Deleted || len(t.Files) != len(files) {
 			return errors.New("审批已取消或提案环境已变化")
 		}
 		for i, f := range files {
@@ -119,7 +166,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		task.ApprovalReviews[index].Status = status
 		task.ApprovalReviews[index].Reason = reason
 	}
-	if a.save(s) != nil {
+	if !statePersisted || a.save(s) != nil {
 		approved = false
 		if task.approvalGeneration == gen && task.Status == "awaiting_approval" {
 			task.ApprovalState = "manual"

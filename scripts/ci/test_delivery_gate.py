@@ -13,6 +13,30 @@ from build_candidate import verification_plan
 
 
 class DeliveryGateTests(unittest.TestCase):
+    def setUp(self):
+        # Test inputs must not inherit the real branch/dispatch/tag that runs CI.
+        environment = patch.dict(os.environ, {'GITHUB_REF': 'refs/heads/main',
+            'GH_EVENT_NAME': 'workflow_dispatch', 'RELEASE_TAG': '',
+            'RELEASE_CADENCE_EXCEPTION_REASON': '', 'VALIDATION_SCOPE': 'full'})
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def test_branch_candidate_is_read_only_and_cannot_publish(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temporary:
+            output = str(Path(temporary) / 'outputs')
+            def capture(args):
+                return self.sha if args == ['git', 'rev-parse', 'HEAD'] else ''
+            with patch.dict(os.environ, {'RELEASE_TAG': '', 'RELEASE_CADENCE_EXCEPTION_REASON': '',
+                    'GITHUB_REF': 'refs/heads/release/qa', 'GH_EVENT_NAME': 'workflow_dispatch', 'GITHUB_OUTPUT': output}), \
+                    patch.object(gate, 'capture', side_effect=capture), patch.object(gate.subprocess, 'run') as run:
+                gate.source()
+                self.assertIn('publish=false', Path(output).read_text())
+                self.assertEqual(run.call_args.args[0], ['git', 'merge-base', '--is-ancestor', 'origin/main', self.sha])
+                with patch.dict(os.environ, {'RELEASE_TAG': self.tag}), self.assertRaisesRegex(ValueError, 'requires main'):
+                    gate.source()
+
     tag = 'v0.1.17.5-RC3'
     sha = 'a' * 40
 
@@ -39,6 +63,10 @@ class DeliveryGateTests(unittest.TestCase):
                 checks=dict(status='pass'), privacy=dict(status='pass', pluginPayloads=0),
                 importValidation=dict(status='pass'), packageValidation=dict(status='pass'),
                 asset=dict(name=sdk_name, bytes=sdk_path.stat().st_size, sha256=gate.digest(sdk_path)))
+            lock = gate.load_lock()
+            proof['publicPlugins'] = dict(status='pass', commit=self.sha, architecture=arch, marketRevision=lock['marketRevision'],
+                plugins=[dict(id=p['id'], version=p['marketVersion'], sha256=p['sha256'], inspection='pass', installation='pass', function='pass', cases=['synthetic independent positive assertion']) for p in lock['plugins']])
+            proof['goSuite'] = dict(status='pass', server=dict(status='pass', inventory=['TestFixture'], inventoryCount=1, passed=['TestFixture'], skipped=[], shards=[dict(exit=0, missing=[], selected=['TestFixture'], results={'TestFixture':'pass'})]))
             (folder / 'candidate-proof.json').write_text(json.dumps(proof))
         return root / 'aide-candidate-amd64/candidate-proof.json'
 
@@ -96,10 +124,10 @@ class DeliveryGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.fixture(root)
-            for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt'):
+            for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt', 'RELEASE-VALIDATION.json'):
                 (root / name).write_text('synthetic manifest')
             expected, _ = gate.validate_candidates(root, self.tag, self.sha)
-            for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt'):
+            for name in ('SHA256SUMS', 'RELEASE-ASSETS.txt', 'RELEASE-VALIDATION.json'):
                 expected[name] = dict(bytes=(root / name).stat().st_size, sha256=gate.digest(root / name))
             (root / 'RELEASE-NOTES.md').write_text('Reviewed human release notes')
             release = dict(id=123, tag_name=self.tag, body='Reviewed human release notes', draft=True, assets=[dict(name=n, size=v['bytes'], digest='sha256:' + v['sha256']) for n, v in expected.items()])
@@ -111,6 +139,8 @@ class DeliveryGateTests(unittest.TestCase):
                         return json.dumps(dict(databaseId=identity))
                     if args == ['gh', 'api', 'repos/owner/repo/releases/123']:
                         return json.dumps(record)
+                    if args == ['gh', 'api', 'repos/' + gate.load_lock()['marketRepository'] + '/commits/main']:
+                        return json.dumps(dict(sha=gate.load_lock()['marketRevision']))
                     raise AssertionError('Unexpected remote operation: ' + str(args))
                 with patch.dict(os.environ, dict(RELEASE_TAG=self.tag, RELEASE_SHA=self.sha, GH_REPO='owner/repo')), patch.object(gate, 'capture', side_effect=fake):
                     gate.remote(root)
@@ -182,6 +212,15 @@ class DeliveryGateTests(unittest.TestCase):
         with patch.dict(os.environ, {'RELEASE_TAG': self.tag}), patch.object(gate, 'capture', side_effect=fake), patch.object(gate.subprocess, 'run'):
             with self.assertRaisesRegex(ValueError, 'must identify'):
                 gate.source()
+
+    def test_host_only_repairs_cannot_publish_a_release(self):
+        for scope in ('hosts', 'browser'):
+            with self.subTest(scope=scope), patch.dict(os.environ, {'RELEASE_TAG': self.tag, 'VALIDATION_SCOPE': scope}), \
+                    patch.object(gate, 'capture', side_effect=lambda command: '' if 'status' in command else self.sha), \
+                    patch.object(gate.subprocess, 'run') as run:
+                with self.assertRaisesRegex(ValueError, 'full validation scope'):
+                    gate.source()
+                run.assert_not_called()
 
 
 if __name__ == '__main__':

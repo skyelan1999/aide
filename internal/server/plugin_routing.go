@@ -295,6 +295,18 @@ func (a *App) routedPluginSchemasLocked(task *Task, tools []any, query string) [
 	if task == nil {
 		return tools
 	}
+	if a.executionEnvironment != nil {
+		names := map[string]bool{}
+		for _, schema := range tools {
+			names[pluginSchemaName(schema)] = true
+		}
+		for _, schema := range a.pluginToolSchemas() {
+			if !names[pluginSchemaName(schema)] {
+				tools = append(tools, schema)
+			}
+		}
+		return filterTaskTools(task, tools)
+	}
 	surface := a.pluginRoutingSchemasLocked()
 	pluginNames := map[string]bool{}
 	for name := range task.pluginRouteToolNames {

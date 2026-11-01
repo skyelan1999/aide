@@ -33,6 +33,8 @@
 ## 从这里开始
 
 | 目标 | 文档 |
+| 模块与插件异常、事件编号、回溯和诊断包 | [异常定位](architecture/diagnostics.md) |
+| 日常 CI、完整发行矩阵、公开插件安装与功能验收 | [Release 验收](testing/release-validation.md) · [测试用例目录](testing/test-cases.md) |
 | --- | --- |
 | 了解定位、安装与主要功能 | [项目首页](../README.md) |
 | 让 AI 定制专属工作台 | [场景定制指南](customization.md) |

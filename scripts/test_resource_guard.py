@@ -102,9 +102,15 @@ class ResourceGuardTests(unittest.TestCase):
         spec.loader.exec_module(snapshot)
         with tempfile.TemporaryDirectory() as name:
             snapshot.ROOT = Path(name)
-            with mock.patch.dict(os.environ, {'AIDE_TEST_WORKERS': '1'}), \
+            evidence = Path(name) / 'evidence'
+            def container_result(command, **kwargs):
+                if command[:2] == ['docker', 'cp']:
+                    report = evidence / 'server/report.json'
+                    report.parent.mkdir(parents=True, exist_ok=True)
+                    report.write_text('{"status":"pass"}')
+            with mock.patch.dict(os.environ, {'AIDE_TEST_WORKERS': '1', 'AIDE_TEST_EVIDENCE_DIR': str(evidence)}), \
                  mock.patch.object(snapshot.subprocess, 'check_output', return_value=b''), \
-                 mock.patch.object(snapshot.subprocess, 'run') as run:
+                 mock.patch.object(snapshot.subprocess, 'run', side_effect=container_result) as run:
                 snapshot.main()
             args = run.call_args_list[0].args[0]
             for flag, value in (('--memory', '4g'), ('--memory-swap', '4g'),
@@ -114,7 +120,11 @@ class ResourceGuardTests(unittest.TestCase):
             self.assertIn(f'{snapshot.SUITE_TIMEOUT_SECONDS}s', args[-1])
             self.assertIn('run_go_test_shards.py', args[-1])
             self.assertNotIn('-v', args)
-            self.assertEqual(run.call_args_list[1].args[0][:3], ['docker', 'rm', '-f'])
+            commands = [call.args[0] for call in run.call_args_list]
+            self.assertEqual(commands[1][:2], ['docker', 'cp'])
+            self.assertEqual(commands[-1][:3], ['docker', 'rm', '-f'])
+            self.assertEqual(commands[1][2].split(':', 1)[0], args[args.index('--name')+1])
+            self.assertEqual(commands[-1][3], args[args.index('--name')+1])
 
     def test_healthy_budget_allows_start(self):
         result = self.run_guard(30 * 1048576)

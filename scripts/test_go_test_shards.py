@@ -2,6 +2,7 @@
 import contextlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -13,6 +14,28 @@ spec.loader.exec_module(shards)
 
 
 class ShardTests(unittest.TestCase):
+    def test_receipts_keep_skips_separate_and_missing_execution_fails(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            binary = root / 'binary.py'
+            binary.write_text('import sys\n'
+                              'print("--- PASS: TestDone (0.01s)")\n'
+                              'print("--- SKIP: TestNeedsDevice (0.00s)")\n')
+            with contextlib.redirect_stdout(io.StringIO()):
+                shards.run_shards([sys.executable, str(binary)], ['TestDone', 'TestNeedsDevice'],
+                                  root, count=1, report_dir=root / 'evidence')
+            report = json.loads((root / 'evidence/report.json').read_text())
+            self.assertEqual(report['status'], 'pass')
+            self.assertEqual(report['passed'], ['TestDone'])
+            self.assertEqual(report['skipped'], ['TestNeedsDevice'])
+            self.assertTrue((root / 'evidence/shard-01.log').exists())
+            with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(RuntimeError, 'shards failed'):
+                shards.run_shards([sys.executable, str(binary)], ['TestDone', 'TestMissing'],
+                                  root, count=1, report_dir=root / 'incomplete')
+            report = json.loads((root / 'incomplete/report.json').read_text())
+            self.assertEqual(report['status'], 'fail')
+            self.assertEqual(report['shards'][0]['missing'], ['TestMissing'])
+
     def test_inventory_preserves_examples_and_fuzz_seeds(self):
         names = shards.test_names('TestOne\nTest中文\nFuzzParser\nExample\nExampleWriter\nBenchmarkOne\nPASS\n')
         self.assertEqual(names, ['TestOne', 'Test中文', 'FuzzParser', 'Example', 'ExampleWriter'])

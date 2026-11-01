@@ -1,0 +1,72 @@
+{
+  "id": "luna-static-audit-benchmark-20261101",
+  "request": "我是觉得最起码静态代码检查什么的应该是可以提速的",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_routing.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/parallel-chat.js\n M internal/server/workflow.go\n M scripts/parallel-chat.test.cjs\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/luna-large-engineering-benchmark-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? docs/tasks/virtual-execution-environments-20261101.json\n?? internal/server/execution_environments.go\n?? internal/server/execution_environments_live_test.go\n?? internal/server/execution_environments_test.go\n?? internal/server/execution_result_receipt.go\n?? internal/server/execution_result_receipt_test.go\n?? internal/server/execution_scheduler_receipt.go\n?? internal/server/execution_scheduler_receipt_test.go\n?? internal/server/large_engineering_benchmark_test.go\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/workflow_parallel_read_test.go\n?? scripts/benchmarks/",
+  "acceptance": [
+    "同组使用相同真实源码快照、6类受控逻辑缺陷、Luna high及采样参数，仅容量不同；由真实1X耗时校准时长档位。",
+    "原始源码的6项不变式全部通过；只在私有overlay注入后的同6项全部失败，Go语法仍合法。",
+    "不改真实代码或运行服务；模型只读；缺陷真值与测试不进入模型工作区。",
+    "记录实际read_file返回源码的覆盖、有效完成时间、已确认缺陷召回、额外待核验发现、Token与实际环境使用。",
+    "仅无任何工具动作/提案/环境的首请求EOF允许最多两次重试，时间与错误保留；有执行的失败不整轮重放。",
+    "手工复核自动命中与额外发现；源码阅读覆盖不等于理解或无遗漏，6类召回不等于全项目准确率。"
+  ],
+  "scope": [
+    "internal/server/static_audit_fixture_test.go",
+    "internal/server/static_audit_benchmark_test.go",
+    "docs/tasks/luna-static-audit-benchmark-20261101.json",
+    "docs/reviews/2026-11-01/luna-static-audit-benchmark.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将用户关于静态审查提速的判断纳入大型Luna实测；保留同组匹配、完成与准确性指标。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "中组取最大24个Go源文件加真值所在文件，大组取全部非测试Go服务器源码；仅私有副本/overlay植入6类可验证缺陷。",
+      "evidence": [
+        "internal/server/static_audit_fixture_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "真实源码夹具、6类隔离缺陷、只读控制器、实际返回字节覆盖和缺陷定位匹配已实现。",
+      "evidence": [
+        "internal/server/static_audit_fixture_test.go",
+        "internal/server/static_audit_benchmark_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "原始6项不变式全部PASS，私有overlay同6项全部FAIL且可编译，移除overlay后恢复PASS；覆盖统计拒绝错误内容/搜索声明并支持主/子环境范围合并。待付费四组实跑。",
+      "evidence": [
+        ".agent-state/luna-static-audit-preflight-20261101/mutant-results.jsonl",
+        ".agent-state/luna-static-audit-preflight-20261101/oracle.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "仅授权已请求的Luna测试与必要实现；不推送、不部署、不合并。",
+  "rollback": "",
+  "handoff": "",
+  "clarifications": [
+    "承接已授权的Luna实测，10分钟级1X/5X、30分钟级1X/10X，并检查完成度和准确性。",
+    "本轮把AI源码静态审查与Node语法检查分开。"
+  ]
+}

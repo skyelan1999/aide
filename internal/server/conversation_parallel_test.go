@@ -9,10 +9,31 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 )
+
+func TestParallelWorkerTokenBudgetPreservesDetailWithinContext(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		asked  int
+		window int
+		want   int
+	}{
+		{name: "default", asked: 0, window: 65536, want: defaultParallelWorkerTokens},
+		{name: "profile detail budget", asked: 8192, window: 65536, want: 8192},
+		{name: "small context reserve", asked: 8192, window: 4096, want: 2048},
+		{name: "bounded by supported cap", asked: 16384, window: 65536, want: maxParallelWorkerTokens},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := parallelWorkerTokenBudget(tc.asked, tc.window); got != tc.want {
+				t.Fatalf("parallelWorkerTokenBudget(%d, %d) = %d, want %d", tc.asked, tc.window, got, tc.want)
+			}
+		})
+	}
+}
 
 func TestConversationParallelAdaptiveEvidence(t *testing.T) {
 	for _, first := range []string{`{"tasks":[]}`, `invalid JSON`} {
@@ -290,10 +311,263 @@ func TestConversationParallelPlan(t *testing.T) {
 		}
 	}
 }
+
+func TestExplicitParallelTasks(t *testing.T) {
+	prompt := "请分析以下相互独立的验收项，并分别给出建议：\n[CASE01] 身份与权限边界\n[CASE02] 备份恢复\n[CASE03] 数据一致性"
+	got := explicitParallelTasks(prompt, 3)
+	if len(got) != 3 || !strings.Contains(got[0], "CASE01") || !strings.Contains(got[2], "CASE03") {
+		t.Fatalf("explicit tasks not extracted: %#v", got)
+	}
+	if got := explicitParallelTasks("以下验收项相互独立，但必须依次执行：\n[CASE01] 第一步\n[CASE02] 第二步", 2); len(got) != 0 {
+		t.Fatalf("sequential work was split: %#v", got)
+	}
+	if got := explicitParallelTasks(strings.Replace(prompt, "[CASE02]", "[CASE01]", 1), 3); len(got) != 0 {
+		t.Fatalf("duplicate labels were dispatched: %#v", got)
+	}
+	grouped := explicitParallelTasks(prompt, 2)
+	if len(grouped) != 2 {
+		t.Fatalf("expected two groups, got %#v", grouped)
+	}
+	combined := strings.Join(grouped, "\n")
+	for _, label := range []string{"[CASE01]", "[CASE02]", "[CASE03]"} {
+		if strings.Count(combined, label) != 1 {
+			t.Fatalf("grouping dropped or duplicated %s: %s", label, combined)
+		}
+	}
+	cleaned := stripExplicitParallelItems(prompt)
+	if strings.Contains(cleaned, "[CASE") || !strings.Contains(cleaned, "相互独立") || !strings.Contains(cleaned, "分别给出建议") {
+		t.Fatalf("worker shared context did not preserve common instructions: %q", cleaned)
+	}
+
+	numbered := "请分别完成以下相互独立的检查草案，不执行工具，每项给检查建议、证据和未知项：\n1. 身份认证与角色权限边界\n2. 备份恢复与灾难演练"
+	got = explicitParallelTasks(numbered, 10)
+	if len(got) != 2 || got[0] != "1. 身份认证与角色权限边界" || got[1] != "2. 备份恢复与灾难演练" {
+		t.Fatalf("independent numbered tasks not extracted: %#v", got)
+	}
+	labels, ok := explicitParallelLabels(got)
+	if !ok || labels[0] != "1." || labels[1] != "2." {
+		t.Fatalf("numbered labels not preserved for assembly: %#v, %v", labels, ok)
+	}
+	cleaned = stripExplicitParallelItems(numbered)
+	if strings.Contains(cleaned, "1. 身份认证") || strings.Contains(cleaned, "2. 备份恢复") || !strings.Contains(cleaned, "相互独立") {
+		t.Fatalf("numbered task list not isolated from common worker context: %q", cleaned)
+	}
+	if got := explicitParallelTasks("依次完成以下相互独立的步骤：\n1. 检查身份\n2. 检查权限", 2); len(got) != 0 {
+		t.Fatalf("sequential numbered steps were dispatched: %#v", got)
+	}
+	if got := explicitParallelTasks("请分析以下相互独立的事项：\n1. 身份认证与权限边界\n3. 备份恢复与灾难演练", 2); len(got) != 0 {
+		t.Fatalf("noncontiguous numbered items were dispatched: %#v", got)
+	}
+	chineseNumbered := "请分别分析以下相互独立的部分：\n一、身份认证与角色权限边界\n二、备份恢复与灾难演练\n三、数据一致性与并发处理"
+	got = explicitParallelTasks(chineseNumbered, 10)
+	if len(got) != 3 || !strings.HasPrefix(got[0], "一、") || !strings.HasPrefix(got[2], "三、") {
+		t.Fatalf("independent Chinese-numbered tasks not extracted: %#v", got)
+	}
+	if labels, ok := explicitParallelLabels(got); !ok || len(labels) != 3 || labels[1] != "二、" {
+		t.Fatalf("Chinese-numbered labels not preserved for assembly: %#v, %v", labels, ok)
+	}
+	if got := explicitParallelTasks("分别分析相互独立的部分：\n一、身份认证与权限边界\n三、备份恢复与灾难演练", 2); len(got) != 0 {
+		t.Fatalf("noncontiguous Chinese-numbered items were dispatched: %#v", got)
+	}
+	if got := explicitParallelTasks("分别分析以下相互独立的事项：\n1. 身份认证与权限边界\n二、备份恢复与灾难演练", 2); len(got) != 0 {
+		t.Fatalf("mixed numbering styles were dispatched: %#v", got)
+	}
+}
+
+func TestParallelExplicitNoToolDraftFastAssembly(t *testing.T) {
+	a, _, task := parallelFixture(t, 2)
+	task.Prompt = "请分析以下相互独立的验收项，形成建议草案，每项给两条具体检查建议、应留存证据和未知项，不执行工具；开头写明全局识别码 R-42。\n[CASE01] 身份认证\n[CASE02] 备份恢复"
+	a.settings.Models = []ModelRef{{ID: "fixture", ContextWindow: 32768}}
+	var calls atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+			Tools    []any     `json:"tools"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if len(body.Tools) != 0 {
+			t.Error("parallel worker unexpectedly received tools")
+		}
+		last := body.Messages[len(body.Messages)-1].Content
+		label := "[CASE01]"
+		if strings.Contains(last, "[CASE02]") {
+			label = "[CASE02]"
+		}
+		content := "### " + label + " 建议\n1. 检查建议：验证边界。\n2. 检查建议：核对失败路径。\n应留存证据：测试记录。\n未知项：策略待确认。"
+		if strings.Contains(last, "required opening facts") {
+			content = "全局识别码：R-42。\n\n" + content
+		}
+		calls.Add(1)
+		parallelReply(w, content)
+	}))
+	defer provider.Close()
+	input := []Message{{Role: "user", Content: task.Prompt}}
+	out, chain, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, input, ProfileParams{MaxTokens: 2048}, builtinTools, task, map[string]Change{}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calls.Load() != 2 {
+		t.Fatalf("fast assembly should make only the two worker calls, got %d", calls.Load())
+	}
+	if !parallelDraftMeetsExplicitRequirements(task.Prompt, task.Parallel.Parts, out) {
+		t.Fatalf("fast assembly did not satisfy explicit content requirements: %s", out)
+	}
+	for _, want := range []string{"R-42", "[CASE01]", "[CASE02]", "检查建议：", "证据：", "未知项："} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("assembled answer missing %q: %s", want, out)
+		}
+	}
+	for _, label := range []string{"[CASE01]", "[CASE02]"} {
+		if strings.Count(out, label) != 1 {
+			t.Fatalf("label %s was not present exactly once: %s", label, out)
+		}
+	}
+	if len(chain) == 0 || chain[len(chain)-1].Role != "assistant" || task.Parallel.AssembledAnswer != out || task.Parallel.Phase != "completed" {
+		t.Fatalf("fast assembled response not checkpointed: phase=%s chain=%#v", task.Parallel.Phase, chain)
+	}
+}
+
+func TestNumberedParallelAssemblyPreservesDecimalFacts(t *testing.T) {
+	if !parallelLineHasLabelHeading("## **7. Keyboard**", "7.") || parallelLineHasLabelHeading("27.4 MHz", "7.") || parallelLineHasLabelHeading("1.. Wrong", "1.") {
+		t.Fatal("markdown headings and decimal boundaries were not distinguished")
+	}
+	parts := make([]ParallelPart, 10)
+	labels := make([]string, 10)
+	for i := range parts {
+		labels[i] = fmt.Sprintf("%d.", i+1)
+		parts[i] = ParallelPart{Status: "completed", Content: labels[i] + " Section\n检查建议：核验边界；检查建议：核验恢复。证据：日志。未知项：环境。"}
+	}
+	parts[0].Content = "尚未执行验证；阈值 27.4 MHz，版本 7.1。\n" + parts[0].Content
+	answer, ok := assembleExplicitParallelParts(parts, labels)
+	if !ok || !strings.Contains(answer, "27.4 MHz") {
+		t.Fatal("decimal facts triggered an unnecessary main synthesis")
+	}
+	parts[0].Content += "\n## 7. Unexpected extra section"
+	if _, ok := assembleExplicitParallelParts(parts, labels); ok {
+		t.Fatal("cross-assignment section must still reject direct assembly")
+	}
+	parts[0].Content = "1. First\n1. Duplicate"
+	if _, ok := assembleExplicitParallelParts(parts, labels); ok {
+		t.Fatal("duplicate assigned heading must reject direct assembly")
+	}
+}
+
+func TestExplicitParallelRetryReusesCompletedAssignments(t *testing.T) {
+	a, s, task := parallelFixture(t, 2)
+	task.Prompt = "分析以下相互独立的草案，不执行工具：\n[CASE01] 第一项分析内容\n[CASE02] 第二项分析内容"
+	var first, second atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		last := body.Messages[len(body.Messages)-1].Content
+		if strings.Contains(last, "[CASE01]") {
+			first.Add(1)
+			parallelReply(w, "[CASE01] 已返回第一项候选内容。")
+			return
+		}
+		if strings.Contains(last, "[CASE02]") {
+			if second.Add(1) == 1 {
+				http.Error(w, "temporary failure", 503)
+				return
+			}
+			if strings.Contains(last, "Include the overall title") {
+				t.Error("retry duplicated the global opening")
+			}
+			parallelReply(w, "[CASE02] 已返回第二项候选内容。")
+			return
+		}
+		t.Error("explicit retry unexpectedly used the planner")
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "fixture"}
+	input := []Message{{Role: "user", Content: task.Prompt}}
+	if _, err := a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 512}); err != nil {
+		t.Fatal(err)
+	}
+	if len(task.Parallel.Parts) != 2 || task.Parallel.AssembledAnswer != "" {
+		t.Fatal("partial wave should not pass full delivery")
+	}
+	// The unchanged checkpoint must not automatically replay failed requests.
+	if _, err := a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 512}); err != nil {
+		t.Fatal(err)
+	}
+	if second.Load() != 1 {
+		t.Fatal("unchanged evidence retried the failed worker")
+	}
+	input = append(input, Message{Role: "tool", ToolCallID: "new-evidence", Content: "connection restored"})
+	if _, err := a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 512}); err != nil {
+		t.Fatal(err)
+	}
+	if first.Load() != 1 || second.Load() != 2 || len(task.Parallel.Parts) != 3 {
+		t.Fatalf("wrong retry dispatch: first=%d second=%d history=%d", first.Load(), second.Load(), len(task.Parallel.Parts))
+	}
+	if task.Parallel.Phase != "completed" || !strings.Contains(task.Parallel.AssembledAnswer, "第一项候选") || !strings.Contains(task.Parallel.AssembledAnswer, "第二项候选") {
+		t.Fatalf("retry lost earlier completed output: %+v", task.Parallel)
+	}
+	// A legacy checkpoint has no per-part human scope. Preserve its candidate
+	// for main review, but never directly assemble it as satisfying current scope.
+	task.Parallel.Parts[0].Scope = ""
+	task.Parallel.Parts[2].Status = "failed"
+	input = append(input, Message{Role: "tool", ToolCallID: "another-checkpoint", Content: "retry after verification"})
+	merged, err := a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 512})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Load() != 1 || second.Load() != 3 || task.Parallel.AssembledAnswer != "" || task.Parallel.Phase != "merging" {
+		t.Fatalf("legacy candidates bypassed main reconciliation: %+v", task.Parallel)
+	}
+	if !strings.Contains(merged[len(merged)-1].Content, "第一项候选") || !strings.Contains(merged[len(merged)-1].Content, "第二项候选") {
+		t.Fatal("main reconciliation lost a retained candidate")
+	}
+}
+
+func TestParallelDraftQualityRejectsMissingRequestedContent(t *testing.T) {
+	if !parallelDraftHasTwoItems("检查建议：\n• 核验登录失效后的会话处理。\n• 核验低权限用户的访问边界。\n证据：日志。") {
+		t.Fatal("two explicit recommendation bullets were rejected")
+	}
+	if parallelDraftHasTwoItems("检查建议：核验登录。\n证据：• 登录日志。• 访问记录；审计记录。") {
+		t.Fatal("evidence bullets were mistaken for check recommendations")
+	}
+	prompt := "每项提供两条具体检查建议、应留存证据和未知项，不把建议称为已执行"
+	good := []ParallelPart{
+		{Status: "completed", Content: "[CASE01] 1. 检查A。2. 检查B。证据：记录。未知项：环境。"},
+		{Status: "completed", Content: "[CASE02] ①检查A。②检查B。证据：记录。未知项：环境。"},
+	}
+	answer := "未执行。\n" + good[0].Content + "\n" + good[1].Content
+	if !parallelDraftMeetsExplicitRequirements(prompt, good, answer) {
+		t.Fatal("complete draft should pass requested-content validation")
+	}
+	if !parallelDraftMeetsExplicitRequirements(prompt, good, "建议为待执行事项，不代表已经检查或通过。\n"+good[0].Content+"\n"+good[1].Content) {
+		t.Fatal("clear Chinese non-execution caveat should pass validation")
+	}
+	bad := append([]ParallelPart(nil), good...)
+	bad[1].Content = "[CASE02] 只给一个检查建议。证据：记录。未知项：环境。"
+	if parallelDraftMeetsExplicitRequirements(prompt, bad, answer) {
+		t.Fatal("draft missing the second requested check should fail validation")
+	}
+	if parallelDraftMeetsExplicitRequirements(prompt, good, "[CASE01] [CASE02]") {
+		t.Fatal("draft without a non-execution caveat should fail validation")
+	}
+	extremePrompt := "每个独立领域都提供两条具体检查建议、证据、主要风险、前置依赖、通过标准和未知项；不把建议称为已执行"
+	extremePart := []ParallelPart{{Status: "completed", Content: "[CASE01] 检查建议：核验边界；检查建议：核验恢复。证据：审计日志。主要风险：权限绕过。前置依赖：测试账户。通过标准：未授权请求全部拒绝。未知项：生产策略。"}}
+	if !parallelDraftMeetsExplicitRequirements(extremePrompt, extremePart, "未执行。"+extremePart[0].Content) {
+		t.Fatal("complete complex section should pass risk/dependency/pass-criteria validation")
+	}
+	for _, missing := range []string{"主要风险", "前置依赖", "通过标准"} {
+		candidate := append([]ParallelPart(nil), extremePart...)
+		candidate[0].Content = strings.Replace(candidate[0].Content, missing+"：", "遗漏：", 1)
+		if parallelDraftMeetsExplicitRequirements(extremePrompt, candidate, "未执行。"+candidate[0].Content) {
+			t.Fatalf("section missing %s passed complex quality validation", missing)
+		}
+	}
+}
+
 func parallelFixture(t *testing.T, limit int) (*App, *Session, *Task) {
 	t.Helper()
 	a := testApp(t)
-	task := &Task{ID: "parallel-fixture", Mode: "chat", Parallelism: limit, Prompt: "Analyze independent sections.", Status: "running", Steps: []Step{{Name: "chat", Status: "running"}}}
+	task := &Task{Parallel: &ParallelProgress{Requested: limit}, ID: "parallel-fixture", Mode: "chat", Parallelism: limit, Prompt: "Analyze independent sections.", Status: "running", Steps: []Step{{Name: "chat", Status: "running"}}}
 	s := &Session{ID: "parallel-session", Runs: []*Task{task}}
 	a.sessions[s.ID] = s
 	return a, s, task
@@ -306,6 +580,74 @@ func TestConversationParallelFanout(t *testing.T) {
 		t.Run(fmt.Sprint(limit), func(t *testing.T) { parallelFanout(t, limit) })
 	}
 }
+
+func TestConversationParallelFitsSharedWorkerContextOnce(t *testing.T) {
+	a, s, task := parallelFixture(t, 10)
+	task.Prompt = "审查以下相互独立的十项，并分别给出结论：\n" + strings.Join([]string{
+		"[CASE01] 身份权限", "[CASE02] 备份恢复", "[CASE03] 数据迁移", "[CASE04] 幂等重试", "[CASE05] 时钟漂移",
+		"[CASE06] 并发容量", "[CASE07] 无障碍", "[CASE08] 文件编码", "[CASE09] 密钥轮换", "[CASE10] 审计证据",
+	}, "\n")
+	a.settings.Models = []ModelRef{{ID: "fixture", ContextWindow: 4096}}
+	var summaries, workers atomic.Int32
+	var workerMu sync.Mutex
+	var workerContexts []string
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+			Tools    []any     `json:"tools"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if len(body.Tools) != 0 {
+			t.Error("parallel workers and compaction must not receive tools")
+		}
+		if strings.Contains(body.Messages[0].Content, "压缩给定历史") {
+			summaries.Add(1)
+			parallelReply(w, `{"goal":"基于提供的历史证据分析验收","decisions":[],"files":[],"facts":["保留所有精确标识符"],"pending":[]}`)
+			return
+		}
+		last := body.Messages[len(body.Messages)-1].Content
+		if !strings.HasPrefix(last, "[parallel analysis subtask]") {
+			t.Errorf("explicit cases unexpectedly used a planner: %q", last)
+			parallelReply(w, `{"tasks":[]}`)
+			return
+		}
+		workers.Add(1)
+		workerMu.Lock()
+		workerContexts = append(workerContexts, strings.Join(func() []string {
+			contents := make([]string, 0, len(body.Messages))
+			for _, message := range body.Messages {
+				contents = append(contents, message.Content)
+			}
+			return contents
+		}(), "\n"))
+		workerMu.Unlock()
+		parallelReply(w, "分析完成；未执行外部验证。")
+	}))
+	defer provider.Close()
+	input := []Message{{Role: "system", Content: "只依据当前任务和历史证据。"}, {Role: "assistant", Content: strings.Repeat("historical evidence; retain exact identifiers. ", 1600)}, {Role: "user", Content: task.Prompt}}
+	merged, err := a.prepareParallel(context.Background(), s, task, Settings{BaseURL: provider.URL, Model: "fixture"}, input, ProfileParams{MaxTokens: 512})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summaries.Load() == 0 || summaries.Load() >= int32(task.Parallelism) {
+		t.Fatalf("expected shared context compression, summaries=%d", summaries.Load())
+	}
+	if workers.Load() != int32(task.Parallelism) || len(task.Parallel.Parts) != task.Parallelism {
+		t.Fatalf("fanout incomplete: workers=%d parts=%d", workers.Load(), len(task.Parallel.Parts))
+	}
+	workerMu.Lock()
+	defer workerMu.Unlock()
+	if len(workerContexts) != task.Parallelism {
+		t.Fatalf("captured %d worker contexts, want %d", len(workerContexts), task.Parallelism)
+	}
+	for i, context := range workerContexts {
+		if strings.Contains(context, "historical evidence; retain exact identifiers. historical evidence") || !strings.Contains(context, "保留所有精确标识符") {
+			t.Fatalf("worker %d did not receive the fitted shared context: bytes=%d", i, len(context))
+		}
+	}
+	_ = merged // The original main context may exceed the merge budget and safely fall back unchanged.
+}
+
 func parallelFanout(t *testing.T, limit int) {
 	a, s, task := parallelFixture(t, limit)
 	started := make(chan struct{}, limit)
@@ -382,12 +724,26 @@ func parallelFanout(t *testing.T, limit int) {
 	if task.Parallel.PlannerContext == nil || task.Parallel.PlannerContext.Usage.Total != 20 || task.Parallel.MainContext == nil || task.Parallel.MainContext.InputEstimate != estimateProviderPromptTokens(merged, a.contextToolsFor(s)) {
 		t.Fatal("missing independent planner/merge context")
 	}
+	for _, snapshot := range task.RequestSnapshots {
+		if snapshot.CompletedAt == "" || snapshot.ElapsedMillis < 0 {
+			t.Fatalf("parallel request timing was not completed: purpose=%s", snapshot.Purpose)
+		}
+	}
 	for _, part := range task.Parallel.Parts {
-		if part.Context == nil || part.Context.Usage.Total != 20 || part.Context.OutputReserve != 2048 || part.Context.ContextWindow <= 0 || part.Context.Usage.Prompt >= task.Usage.Prompt || part.Context.InputEstimate != estimateProviderPromptTokens(parallelWorkerMessages(input, part.Title), nil) {
+		if part.Context == nil || part.Context.Usage.Total != 20 || part.Context.OutputReserve != 4096 || part.Context.ContextWindow <= 0 || part.Context.Usage.Prompt >= task.Usage.Prompt || part.Context.InputEstimate != estimateProviderPromptTokens(parallelWorkerMessages(input, part.Title), nil) {
 			t.Fatalf("worker context confused with aggregate %+v", part.Context)
 		}
 		if part.Status != "completed" {
 			t.Fatal(part)
+		}
+		if part.StartedAt == "" || part.CompletedAt == "" || part.ElapsedMillis < 0 {
+			t.Fatalf("worker timing evidence missing: %+v", part)
+		}
+		if _, err := time.Parse(time.RFC3339Nano, part.StartedAt); err != nil {
+			t.Fatalf("invalid worker start timestamp: %q", part.StartedAt)
+		}
+		if _, err := time.Parse(time.RFC3339Nano, part.CompletedAt); err != nil {
+			t.Fatalf("invalid worker completion timestamp: %q", part.CompletedAt)
 		}
 	}
 }
@@ -522,7 +878,16 @@ func parallelEndToEnd(t *testing.T, limit int) {
 	defer provider.Close()
 	a.settings = Settings{BaseURL: provider.URL, Model: "fixture"}
 	s := createSession(t, a)
-	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "Compare independent sections in supplied text.", "parallelism": limit}), 202)
+	// A checkpoint produced before environment scheduling retains legacy fanout.
+	legacy := &Task{ID: newID(), Mode: "chat", Prompt: "Compare independent sections in supplied text.", Model: "fixture", Status: "running", Parallelism: limit, Parallel: &ParallelProgress{Requested: limit}, Steer: make(chan string, 4)}
+	a.mu.Lock()
+	s = a.sessions[s.ID]
+	s.Runs = append(s.Runs, legacy)
+	s.Messages = append(s.Messages, Message{Role: "user", Content: legacy.Prompt, SourceRunID: legacy.ID})
+	a.mu.Unlock()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go a.execute(ctx, s, legacy, a.settings, []Message{{Role: "user", Content: legacy.Prompt}}, nil, nil, ProfileParams{MaxTokens: 4096})
 	waitTaskDone(t, a, s.ID)
 	response := request(a, "GET", "/api/sessions/"+s.ID, nil)
 	var saved Session
@@ -588,7 +953,9 @@ func TestConversationParallelROS2Document(t *testing.T) {
 		last := body.Messages[len(body.Messages)-1].Content
 		switch {
 		case strings.HasPrefix(last, "[parallel planner]"):
-			if !strings.Contains(last, "General technical knowledge MAY be used") || !strings.Contains(last, "ROS2") {
+			// User scope belongs in the reference-context message, not in the
+			// scheduler's instruction message after role isolation.
+			if !strings.Contains(last, "General technical knowledge MAY be used") || len(body.Messages) != 3 || !strings.Contains(body.Messages[1].Content, "ROS2") {
 				t.Error("document planning still limited to supplied attachments")
 			}
 			parallelReply(w, `{"tasks":["ROS2 architecture","workspace setup","communication","implementation examples","testing and deployment"]}`)
@@ -620,7 +987,15 @@ func TestConversationParallelROS2Document(t *testing.T) {
 	defer provider.Close()
 	a.settings = Settings{BaseURL: provider.URL, Model: "fixture"}
 	s := createSession(t, a)
-	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "请写一个ROS2的文档", "parallelism": 5}), 202)
+	legacy := &Task{ID: newID(), Mode: "chat", Prompt: "请写一个ROS2的文档", Model: "fixture", Status: "running", Parallelism: 5, Parallel: &ParallelProgress{Requested: 5}, Steer: make(chan string, 4)}
+	a.mu.Lock()
+	s = a.sessions[s.ID]
+	s.Runs = append(s.Runs, legacy)
+	s.Messages = append(s.Messages, Message{Role: "user", Content: legacy.Prompt, SourceRunID: legacy.ID})
+	a.mu.Unlock()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go a.execute(ctx, s, legacy, a.settings, []Message{{Role: "user", Content: legacy.Prompt}}, nil, nil, ProfileParams{MaxTokens: 4096})
 	for i := 0; i < 5; i++ {
 		select {
 		case <-started:

@@ -195,14 +195,16 @@ type ContextPreview struct {
 
 // RequestSnapshot 实际发出的 Provider 请求快照（含工具续跑轮次）。
 type RequestSnapshot struct {
-	Purpose   string          `json:"purpose"`
-	Model     string          `json:"model"`
-	MaxTokens int             `json:"maxTokens,omitempty"`
-	Messages  []Message       `json:"messages"`
-	Tools     []any           `json:"tools,omitempty"`
-	Body      json.RawMessage `json:"body"`
-	SHA256    string          `json:"sha256"`
-	At        string          `json:"at"`
+	Purpose       string          `json:"purpose"`
+	Model         string          `json:"model"`
+	MaxTokens     int             `json:"maxTokens,omitempty"`
+	Messages      []Message       `json:"messages"`
+	Tools         []any           `json:"tools,omitempty"`
+	Body          json.RawMessage `json:"body"`
+	SHA256        string          `json:"sha256"`
+	At            string          `json:"at"`
+	CompletedAt   string          `json:"completedAt,omitempty"`
+	ElapsedMillis int64           `json:"elapsedMillis,omitempty"`
 }
 
 // contextTools 任务可用工具（与 toolLoop 使用的完全一致）；按设置过滤被禁用的工具。
@@ -272,7 +274,7 @@ func (a *App) modelWindow(modelID string) int {
 // attachmentContext 读取任务附件（与 startTask 实际使用同一条路径）。
 // 返回注入上下文的文本、需随消息发送的多模态图片、workspace 版本快照。
 // 可解析文档（docx/pdf/xlsx/pptx）由后端提取文本，不依赖模型视觉；
-// 图片作为多模态附件返回，视觉能力门禁由调用方持锁后调 visionGateLocked 完成
+// 图片作为多模态附件返回；发送时不按模型视觉能力预先拦截。
 // （不在此加锁，避免与已持锁的 retryTask 死锁）。
 func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[string]Change, error) {
 	var contextText strings.Builder
@@ -317,7 +319,7 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 			continue
 		}
 
-		// 1) 图片 → 多模态（是否可发送由调用方 visionGateLocked 判定）
+		// 1) 图片 → 多模态，原样交由模型接口处理。
 		if _, isImg := imageAttachmentTypes[ext]; isImg {
 			img, err := a.readLocalImage(att)
 			if err != nil {
@@ -410,6 +412,9 @@ func (a *App) buildContextPreviewWithHarness(s *Session, prompt, mode, contextTe
 func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool, policy ExecutionPolicy, harness HarnessConfig, task *Task, avatarFeedback ...bool) *ContextPreview {
 	// 按会话 Kind 选基础 system 设定（小秘系统会话恒为小秘人格；普通会话跟随全局活动人格）
 	history := []Message{{Role: "system", Content: a.systemPromptForSession(s) + "\n" + a.cwdPromptLineLocked() + "\n可用工具: " + a.toolListHint()}}
+	if scheduler := executionSchedulerInstruction(task); scheduler != "" {
+		history[0].Content += "\n" + scheduler
+	}
 	if enabled, embedded := a.markdownHistoryConfig(); enabled {
 		history[0].Content += fmt.Sprintf("\nMarkdown 历史追踪已启用（嵌入资源追踪=%t）。先读取现有 MD，再通过 write_file 提案修改原文件，不为备份另建副本；除非用户明确要求复制。实际保存才归档，未保存不算历史。可用 markdown_history 核实状态及版本。shell 或外部编辑不经过保存钩子，不能宣称已记录历史。", embedded)
 	}
@@ -477,7 +482,7 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 	if task == nil {
 		task = &Task{HarnessConfig: &harness}
 	}
-	tools := a.routedPluginSchemasLocked(task, filterTaskTools(task, withAvatarCueTool(a.contextToolsFor(s), avatarEnabled)), prompt)
+	tools := a.routedPluginSchemasLocked(task, filterTaskTools(task, withAvatarCueTool(a.executionToolsLocked(task, a.contextToolsFor(s)), avatarEnabled)), prompt)
 	instruction += "\n" + runtimeCapabilityInstruction(tools, prompt, mode, policy)
 	var first []Message
 	if mode == "chat" {
@@ -764,6 +769,7 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		ModelSelection *SessionModelSelection `json:"modelSelection,omitempty"`
 		SessionID      string                 `json:"sessionId"`
+		Parallelism    int                    `json:"parallelism,omitempty"`
 		Prompt         string                 `json:"prompt"`
 		Mode           string                 `json:"mode"`
 		Strategy       string                 `json:"strategy,omitempty"`
@@ -850,7 +856,16 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = profileID
-	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, cfg, params, !in.Baseline, in.AvatarFeedback)
+	if in.Parallelism == 0 {
+		in.Parallelism = 1
+	}
+	if !validParallelism(in.Parallelism) {
+		fail(w, 400, errors.New("invalid parallelism"))
+		return
+	}
+	harness, _ := a.loadHarnessConfig()
+	previewTask := &Task{Mode: in.Mode, Parallelism: in.Parallelism, WorkspaceMode: a.workspaceMode(), HarnessConfig: &harness}
+	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, !in.Baseline, a.currentExecutionPolicy(), harness, previewTask, in.AvatarFeedback)
 	a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
 	jsonOut(w, 200, preview)
 }

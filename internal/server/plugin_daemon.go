@@ -23,6 +23,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"sync"
@@ -53,19 +54,21 @@ const (
 
 // daemonEvent 是守护进程上报的一条事件（traffic/event/log），Go 侧环形缓存最近 N 条。
 type daemonEvent struct {
-	Type             string `json:"type"`
-	Time             string `json:"time,omitempty"`
-	Direction        string `json:"direction,omitempty"`
-	Length           int    `json:"length,omitempty"`
-	PayloadTruncated bool   `json:"payloadTruncated,omitempty"`
-	Subtype          string `json:"subtype,omitempty"`
-	Message          string `json:"message,omitempty"`
-	Level            string `json:"level,omitempty"`
+	Type             string                 `json:"type"`
+	Time             string                 `json:"time,omitempty"`
+	Direction        string                 `json:"direction,omitempty"`
+	Length           int                    `json:"length,omitempty"`
+	PayloadTruncated bool                   `json:"payloadTruncated,omitempty"`
+	Subtype          string                 `json:"subtype,omitempty"`
+	Message          string                 `json:"message,omitempty"`
+	Level            string                 `json:"level,omitempty"`
+	Diagnostic       *pluginFailureMetadata `json:"diagnostic,omitempty"`
 }
 
 type rpcError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code       int                    `json:"code"`
+	Message    string                 `json:"message"`
+	Diagnostic *pluginFailureMetadata `json:"diagnostic,omitempty"`
 }
 
 type rpcResp struct {
@@ -75,6 +78,9 @@ type rpcResp struct {
 
 // daemonProc 单个 daemon 插件的运行态。
 type daemonProc struct {
+	app          *App
+	version      string
+	environment  *executionEnvironment
 	id           string
 	pluginPath   string
 	settingsJSON string
@@ -228,6 +234,17 @@ func (m *DaemonManager) StartWithPath(id, pluginMain string) error {
 
 // StartWithSettings starts a daemon with its workspace-local non-secret settings snapshot.
 func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[string]any) error {
+	version := ""
+	// Read the package being started, not the old registry entry during upgrade.
+	if file, openErr := os.Open(filepath.Join(filepath.Dir(pluginMain), "manifest.json")); openErr == nil {
+		var manifest struct {
+			Version string `json:"version"`
+		}
+		if json.NewDecoder(io.LimitReader(file, 64<<10)).Decode(&manifest) == nil {
+			version = manifest.Version
+		}
+		file.Close()
+	}
 	settingsBytes, err := json.Marshal(pluginSettingsOrEmpty(settings))
 	if err != nil || len(settingsBytes) > 32<<10 {
 		return errors.New("daemon 插件设置无法序列化或超过 32 KiB")
@@ -239,6 +256,8 @@ func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[st
 	p, exists := m.procs[id]
 	if !exists {
 		p = &daemonProc{
+			app:          m.app,
+			environment:  m.app.executionEnvironment,
 			id:           id,
 			pluginPath:   pluginMain,
 			settingsJSON: string(settingsBytes),
@@ -273,6 +292,7 @@ func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[st
 	// 重新进入运行：重置 stopCh 与退避
 	p.mu.Lock()
 	p.pluginPath = pluginMain
+	p.version = version
 	p.stopCh = make(chan struct{})
 	readyCh := make(chan struct{})
 	p.readyCh = readyCh
@@ -321,6 +341,9 @@ func (p *daemonProc) supervise() {
 		}
 
 		// 异常退出：退避重启
+		if p.app != nil {
+			p.recordIncident("daemon-restart", errors.New("daemon process exited unexpectedly"))
+		}
 		p.statusMu.Lock()
 		p.crashCount++
 		uptime := time.Since(p.startedAt)
@@ -366,6 +389,19 @@ func (p *daemonProc) spawn() {
 	settingsJSON := p.settingsJSON
 	// 与 v1.1 短命进程同一受限环境；AIDE_DAEMON_BIND 告知协议插件仅绑回环。
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1", "AIDE_PLUGIN_SETTINGS=" + settingsJSON}
+	var cleanup = func() {}
+	if p.environment != nil {
+		var err error
+		cmd, cleanup, err = p.environment.command(p.environment.ctx, []string{"daemon", p.pluginPath}, cmd.Env)
+		if err != nil {
+			p.doneCh = make(chan struct{})
+			close(p.doneCh)
+			p.mu.Unlock()
+			p.setStatus(dsCrashed)
+			return
+		}
+		configurePluginProcess(cmd, true)
+	}
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		p.mu.Unlock()
@@ -394,6 +430,7 @@ func (p *daemonProc) spawn() {
 	p.mu.Unlock()
 
 	if err := cmd.Start(); err != nil {
+		cleanup()
 		log.Printf("[daemon] %s 启动失败: %v", p.id, err)
 		p.setStatus(dsCrashed)
 		close(doneCh)
@@ -406,7 +443,7 @@ func (p *daemonProc) spawn() {
 	p.setStatus(dsRunning)
 	go p.readLoop(stdout, doneCh, cmd)
 	go p.heartbeat(doneCh)
-	go func() { _ = cmd.Wait() }() // 回收进程；stdout EOF 由 readLoop 处理
+	go func() { _ = cmd.Wait(); cleanup() }() // 回收进程；stdout EOF 由 readLoop 处理
 }
 
 // readLoop 逐行解析子进程 stdout：响应路由到 pending，事件入缓存，pong 更新心跳。
@@ -430,7 +467,11 @@ func (p *daemonProc) readLoop(stdout io.ReadCloser, doneCh chan struct{}, cmd *e
 		if msg.Method == "event" {
 			var ev daemonEvent
 			_ = json.Unmarshal(msg.Params, &ev)
+			ev.Diagnostic = sanitizedPluginFault(ev.Diagnostic)
 			p.appendEvent(ev)
+			if p.app != nil && ev.Type == "log" && ev.Level == "error" {
+				p.recordIncident("daemon-event", &pluginCallFailure{message: ev.Message, diagnostic: ev.Diagnostic})
+			}
 			if ev.Subtype == "ready" {
 				p.mu.Lock()
 				select {
@@ -484,6 +525,9 @@ func (p *daemonProc) heartbeat(doneCh chan struct{}) {
 		case <-ch:
 		case <-time.After(daemonPingTimeout):
 			log.Printf("[daemon] %s 心跳超时，判定崩溃", p.id)
+			if p.app != nil {
+				p.recordIncident("daemon-heartbeat", context.DeadlineExceeded)
+			}
 			p.killGeneration(doneCh)
 			return
 		case <-doneCh:
@@ -672,7 +716,7 @@ func (p *daemonProc) callContext(ctx context.Context, tool string, args map[stri
 	select {
 	case resp := <-ch:
 		if resp.err != nil {
-			return nil, errors.New(resp.err.Message)
+			return nil, &pluginCallFailure{message: resp.err.Message, diagnostic: resp.err.Diagnostic}
 		}
 		var v any
 		if len(resp.result) > 0 {
@@ -830,4 +874,11 @@ func (a *App) daemonEventsHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	events := a.daemons.Events(id)
 	jsonOut(w, 200, map[string]any{"id": id, "events": events})
+}
+
+func (p *daemonProc) recordIncident(phase string, err error) {
+	p.mu.Lock()
+	version := p.version
+	p.mu.Unlock()
+	p.app.recordIncident(context.Background(), incident{Module: "plugins", Phase: phase, Plugin: p.id, PluginVersion: version}, err, time.Time{})
 }

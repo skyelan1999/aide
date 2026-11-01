@@ -6,8 +6,7 @@ package server
 // 本扩展：
 //   1. 可解析文档（docx/pdf/xlsx/pptx）由后端调 scripts/office/extract_text.py 提取文本，
 //      注入 <untrusted-file> 文本上下文——不依赖模型视觉能力，任何模型都能读。
-//   2. 图片（png/jpg/jpeg/gif/webp）：检测当前模型视觉能力，支持则按多模态 image_url 附加，
-//      不支持则在发送前给出可操作提示。
+//   2. 图片（png/jpg/jpeg/gif/webp）按多模态 image_url 附加，不在本地读取阶段设置固定文件大小上限。
 //   3. 大文件截断标注；提取失败明确报错；确实无法解析的二进制改友好文案。
 //
 // 后端只提供提取与发送能力；附件 chip 的保留/删除由前端处理。
@@ -27,8 +26,6 @@ const (
 	// maxAttachmentTextBytes bounds extraction/assembly memory independently of the
 	// selected model's token window. It is not an upload or model-context limit.
 	maxAttachmentTextBytes = 16 << 20
-	// maxImageAttachment 单张图片大小上限。
-	maxImageAttachment = 5 << 20
 )
 
 // documentAttachmentExts 可由后端提取文本的文档扩展名 → 展示名。
@@ -114,7 +111,7 @@ func recommendedVisionModels() []string {
 	return []string{"gpt-4o", "gpt-4.1", "qwen-vl-max", "qwen-vl-plus", "glm-4v", "deepseek-vl", "gemini-2.0-flash", "claude-3.5-sonnet"}
 }
 
-// visionGateLocked 校验图片附件与当前模型视觉能力是否匹配。调用方必须持有 a.mu。
+// visionGateLocked 保留旧调用接口；图片始终透传，音频/视频仍按格式与模型要求校验。调用方必须持有 a.mu。
 func (a *App) visionGateLocked(images []MessageImage) error {
 	return visionGateForConfig(a.settings, images)
 }
@@ -191,12 +188,9 @@ func (a *App) readLocalMedia(att Attachment, mediaType string) (MessageImage, er
 	if !info.Mode().IsRegular() {
 		return MessageImage{}, errors.New("只支持普通图片文件")
 	}
-	b, err := io.ReadAll(io.LimitReader(f, maxImageAttachment+1))
+	b, err := io.ReadAll(f)
 	if err != nil {
 		return MessageImage{}, err
-	}
-	if len(b) > maxImageAttachment {
-		return MessageImage{}, fmt.Errorf("图片超过 %d MB 上限", maxImageAttachment>>20)
 	}
 	mt := mediaType
 	if mt == "" {

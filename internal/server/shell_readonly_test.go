@@ -21,6 +21,24 @@ func TestBasicReadOnlyShellClassification(t *testing.T) {
 		}
 	}
 }
+
+func TestReadOnlyShellCommandLengthBoundsWithoutCommandCountCap(t *testing.T) {
+	parts := make([]string, 256)
+	for i := range parts {
+		parts[i] = "pwd"
+	}
+	command := strings.Join(parts, " && ")
+	if len(command) >= 16000 {
+		t.Fatal("test command unexpectedly exceeds the byte limit")
+	}
+	if !readOnlyAllowed(command) {
+		t.Fatal("long chain of literal read-only commands was rejected by a command-count cap")
+	}
+	if readOnlyAllowed(strings.Repeat("x", 16001)) {
+		t.Fatal("command exceeding the byte limit was accepted")
+	}
+}
+
 func TestBasicReadOnlyShellExecutesWithoutReviewer(t *testing.T) {
 	a := testApp(t)
 	task := &Task{ID: "routine-read", Status: "running"}

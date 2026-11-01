@@ -1,0 +1,71 @@
+{
+  "id": "parallelism-cost-benchmark-20261101",
+  "request": "实测 1x 和 10x 在简单任务、复杂任务上的耗时和 Token 消耗差异。",
+  "baseline": "working tree at benchmark start; paired synthetic prompts fixed within each task type",
+  "initial_status": "M internal/server/context_recovery_live_test.go; existing unrelated worktree changes preserved",
+  "acceptance": [
+    "同一模型、同一任务输入分别比较 1x/10x 的简单与复杂任务",
+    "记录总耗时、上游 prompt/completion/total tokens、实际 worker 数及复杂任务覆盖",
+    "计入上下文预压缩 Token，并把任务本身 Token 单独列出",
+    "明确样本数及不通过的质量检查，不把不同质量输出当作等价结果"
+  ],
+  "scope": [
+    "internal/server/context_recovery_live_test.go",
+    "docs/architecture/context-recovery.md",
+    "docs/reviews/2026-11-01/parallelism-cost-benchmark.*",
+    "docs/tasks/parallelism-cost-benchmark-20261101.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求比较 1x/10x 简单与复杂任务的时间和 Token。",
+      "evidence": [
+        "用户消息"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用 DeepSeek Flash 上游用量、配对合成输入；四种组合固定同一 task type 的识别码和历史上下文。",
+      "evidence": [
+        "internal/server/context_recovery_live_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "live harness 支持任务类型与模型筛选，并聚合 app token recorder 中包括预压缩的所有请求用量。",
+      "evidence": [
+        "internal/server/context_recovery_live_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "四个 live cases 均完成；3 个覆盖检查通过。复杂 1x 未通过十项编号覆盖，复杂 10x 完成十个 worker 且全覆盖。",
+      "evidence": [
+        "docs/reviews/2026-11-01/parallelism-cost-benchmark.json",
+        "docs/reviews/2026-11-01/parallelism-cost-benchmark.md",
+        "live test output: 44.788s; command exit 1 because complex 1x coverage=false"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录结果、分项用量、上游来源和单次样本限制。",
+      "evidence": [
+        "docs/reviews/2026-11-01/parallelism-cost-benchmark.md",
+        "docs/architecture/context-recovery.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "公开证据只保留合成数据，不含凭证、真实会话或模型密钥。",
+      "evidence": [
+        "docs/reviews/2026-11-01/parallelism-cost-benchmark.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次仅执行基准，不提交、推送、合并或发布。",
+      "evidence": []
+    }
+  },
+  "handoff": "单次配对 live 基准结果及限制见 docs/reviews/2026-11-01/parallelism-cost-benchmark.md。简单任务两档均未扇出；复杂 10x 覆盖完整但耗时和 Token 较高，复杂 1x 覆盖检查失败。未进行重复统计采样。"
+}

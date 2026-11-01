@@ -1,0 +1,86 @@
+{
+  "id": "work-queue-all-slots-20261101",
+  "request": "随机分配，不必有一个倍速管理；就绪任务由代码调度，所有X可工作，不固定占一X做管理",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_routing.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/parallel-chat.js\n M internal/server/workflow.go\n M scripts/parallel-chat.test.cjs\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/luna-large-engineering-benchmark-20261101.json\n?? docs/tasks/luna-stage-time-breakdown-20261101.json\n?? docs/tasks/luna-static-audit-benchmark-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? docs/tasks/virtual-execution-environments-20261101.json\n?? docs/tasks/virtual-work-queue-20261101.json\n?? internal/server/benchmark_phase_timing_test.go\n?? internal/server/execution_environments.go\n?? internal/server/execution_environments_live_test.go\n?? internal/server/execution_environments_test.go\n?? internal/server/execution_result_receipt.go\n?? internal/server/execution_result_receipt_test.go\n?? internal/server/execution_scheduler_receipt.go\n?? internal/server/execution_scheduler_receipt_test.go\n?? internal/server/execution_work_queue.go\n?? internal/server/execution_work_queue_test.go\n?? internal/server/large_engineering_benchmark_test.go\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/static_audit_benchmark_test.go\n?? internal/server/static_audit_fixture_test.go\n?? internal/server/workflow_parallel_read_test.go\n?? scripts/benchmarks/",
+  "acceptance": [
+    "就绪队列可随机选择任务，依赖未满足不运行，仍保留FIFO兼容路径。",
+    "工作阶段主模型暂停推理，把原来预留给主模型的一个名额借给执行池；10X可以同时10项实际工作，不是10子项加1管理模型并发。",
+    "不创建固定管理子代理；批次收集由代码完成，主模型只在拆分、异常/验收和最终答复需要时运行。",
+    "取消/关闭/错误时归还借用名额前收束全部临时任务，不遗留超并发工作；1X/远程与普通项目主工具保持原路径。",
+    "代码收集仍沿用普通候选、版本、冲突与审批；输出精简且不把完成/汇入当作正确。",
+    "10X峰值及50任务受控race、现有环境回归和真实Luna运行验证；不据短任务承诺固定倍速。"
+  ],
+  "scope": [
+    "internal/server/execution_environments.go",
+    "internal/server/execution_work_queue.go",
+    "internal/server/execution_queue_drain.go",
+    "internal/server/execution_queue_drain_test.go",
+    "internal/server/execution_environments_test.go",
+    "internal/server/execution_scheduler_receipt.go",
+    "internal/server/workflow.go",
+    "internal/server/benchmark_phase_timing_test.go",
+    "internal/server/large_engineering_benchmark_test.go",
+    "docs/designs/execution-environments-20261101.md",
+    "docs/reviews/2026-11-01/work-queue-all-slots.md",
+    "docs/tasks/work-queue-all-slots-20261101.json",
+    "docs/architecture.md",
+    "scripts/benchmarks/analyze-stage-timing.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确不需要固定一X管理，并提出随机分配；解释为轻量代码调度可执行小任务，工作阶段所有X可计算，非完全无协调或随机拆分依赖。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新增阻塞式run_queue：主模型在工具期间暂停，执行池借用其名额到X，随机选择已就绪任务并代码收集；归还前全部收束。异步接口仍X-1，与正在推理的主模型合计X。",
+      "evidence": [
+        "internal/server/execution_work_queue.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "就绪随机/FIFO、同步代码排队执行与收集、主暂停时借满X名额、取消join归还、精简清单接入。",
+      "evidence": [
+        "internal/server/execution_queue_drain.go",
+        "internal/server/execution_work_queue.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "受控50任务10项工作峰值、依赖/取消join/冲突/1X兼容等race与既有环境回归35.671秒、vet、Python3项通过。真实Luna18项队列峰值10、队列内主模型HTTP重叠0秒，全部收集释放。1X255.882秒/10X444.226秒，标准113/变体226/扩展1330均全过；性能目标未达到，传输失败单列。",
+      "evidence": [
+        "internal/server/execution_queue_drain_test.go",
+        ".agent-state/luna-all-slots-10x-retry1-20261101-slot-evidence.json",
+        ".agent-state/luna-all-slots-10x-retry1-20261101-analysis.json",
+        "docs/reviews/2026-11-01/work-queue-all-slots.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新主架构、详细设计和验收，说明主暂停借槽、随机就绪边界、异步兼容、steering时机及实测未提速。全局文档检查受既有索引编码阻止，新增内容单独编码和链接通过。",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/designs/execution-environments-20261101.md",
+        "docs/reviews/2026-11-01/work-queue-all-slots.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "本轮测试容器均已退出；保留全部计时/候选/失败证据和既有改动。生产持续healthy、未重启；独立长期源码审查仍运行。",
+      "evidence": [
+        "docs/reviews/2026-11-01/work-queue-all-slots.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权部署、提交、推送或合并。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "未授权部署/推送/合并。",
+  "rollback": "未部署；仅逐块撤回本任务借槽与随机run_queue改动，不整体回滚同文件既存队列/环境/提案改动。",
+  "handoff": "随机就绪代码队列与无固定管理槽位实现完成，未部署。Luna验证工作阶段10项实际工作且主模型不推理；整轮444.226秒慢于1X255.882秒。后续需处理主阶段集成/重复读取/86.832秒压缩；不声称速度目标达成。长期源码审查为独立任务，开发继续时跨组源码指纹必须一致才可比较，禁止把不同指纹样本配对。"
+}

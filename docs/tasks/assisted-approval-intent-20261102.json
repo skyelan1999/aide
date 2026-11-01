@@ -1,0 +1,48 @@
+{
+  "id": "assisted-approval-intent-20261102",
+  "request": "另外在维修一下辅助审批，添加审批内容执行意图",
+  "baseline": "a513806155e98eafb80408571fd05ca2306c2533",
+  "initial_status": "?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

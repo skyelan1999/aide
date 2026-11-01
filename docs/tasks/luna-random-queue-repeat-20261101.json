@@ -1,0 +1,69 @@
+{
+  "id": "luna-random-queue-repeat-20261101",
+  "request": "再测一轮相同Luna 1X/5X，对比完整时间、阶段与质量",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_routing.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/parallel-chat.js\n M internal/server/workflow.go\n M scripts/parallel-chat.test.cjs\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/luna-large-engineering-benchmark-20261101.json\n?? docs/tasks/luna-random-queue-1x5x-retest-20261101.json\n?? docs/tasks/luna-stage-time-breakdown-20261101.json\n?? docs/tasks/luna-static-audit-benchmark-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? docs/tasks/virtual-execution-environments-20261101.json\n?? docs/tasks/virtual-work-queue-20261101.json\n?? docs/tasks/work-queue-all-slots-20261101.json\n?? internal/server/benchmark_phase_timing_test.go\n?? internal/server/execution_environments.go\n?? internal/server/execution_environments_live_test.go\n?? internal/server/execution_environments_test.go\n?? internal/server/execution_queue_drain.go\n?? internal/server/execution_queue_drain_test.go\n?? internal/server/execution_result_receipt.go\n?? internal/server/execution_result_receipt_test.go\n?? internal/server/execution_scheduler_perf_test.go\n?? internal/server/execution_scheduler_receipt.go\n?? internal/server/execution_scheduler_receipt_test.go\n?? internal/server/execution_work_queue.go\n?? internal/server/execution_work_queue_test.go\n?? internal/server/large_engineering_benchmark_test.go\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_atomic_test.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/static_audit_benchmark_test.go\n?? internal/server/static_audit_fixture_test.go\n?? internal/server/workflow_parallel_read_test.go\n?? scripts/benchmarks/",
+  "acceptance": [
+    "重复上一轮同一源码/二进制、相同20模块工程、Luna/high参数和默认1X/5X调度。",
+    "独立干净会话同时启动；完整耗时、阶段、113标准/226变体/1330扩展质量及Token均核对。",
+    "保留新旧样本，不挑选最好结果；首请求0动作连接失败单列且有界重试。",
+    "不改产品逻辑，不部署/推送/合并，保留全部既有工作树。"
+  ],
+  "scope": [
+    "docs/tasks/luna-random-queue-repeat-20261101.json",
+    "docs/reviews/2026-11-01/luna-random-queue-repeat.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求再测，按相同条件重复上一对比，不混入后续开发。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用上一轮冻结源码与测试二进制，核对5981项及二进制摘要；新证据目录与临时会话独立。仅两个测试容器并发，无其他长审查模型容器重叠。",
+      "evidence": [
+        ".agent-state/luna-random-1x5x-repeat-20261101-01/run-manifest.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "复用现有测试，不改产品或夹具。",
+      "evidence": [
+        "internal/server/large_engineering_benchmark_test.go",
+        "internal/server/benchmark_phase_timing_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "重复测量完成，非性能验收通过：1X225.054秒、5X375.104秒，5X慢66.67%；两轮均更慢。标准113/隐藏226均过；扩展1X1330/1330、5X1326/1330，4项reservations错误已人工核对。5X5项/峰值5，队列内主HTTP重叠0秒，全部收集释放。源/二进制复核不变。",
+      "evidence": [
+        ".agent-state/luna-random-1x5x-repeat-20261101-01/comparison-two-rounds.json",
+        ".agent-state/luna-random-1x5x-repeat-20261101-01/repeat-random-5x-slot-evidence.json",
+        "docs/reviews/2026-11-01/luna-random-queue-repeat.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录两轮完整结果、阶段、质量遗漏、相同源码/二进制与有限样本边界；新增文档单独编码和链接检查通过，全局文档检查受既有索引编码阻止。",
+      "evidence": [
+        "docs/reviews/2026-11-01/luna-random-queue-repeat.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "本轮临时测试容器退出，保留原始数据/候选/快照，不清理其他既有工作；生产healthy且未重启，未改系统代理/DNS。",
+      "evidence": [
+        "docs/reviews/2026-11-01/luna-random-queue-repeat.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅授权重复测试，无部署/提交/推送/合并。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "仅测试，不推送/部署/合并。",
+  "rollback": "",
+  "handoff": "同条件重复完成；1X3:45/5X6:15。与上轮3:18/6:02同方向，不能称已提速。5X队列110.874秒，之后238.056秒，其中主压缩102.468秒；扩展4项候选错误未回调。"
+}

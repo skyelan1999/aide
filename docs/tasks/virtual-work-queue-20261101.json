@@ -1,0 +1,86 @@
+{
+  "id": "virtual-work-queue-20261101",
+  "request": "工作切割成小块，比如50个小任务，一个完成之后拉新的到坑位",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_routing.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/parallel-chat.js\n M internal/server/workflow.go\n M scripts/parallel-chat.test.cjs\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/luna-large-engineering-benchmark-20261101.json\n?? docs/tasks/luna-stage-time-breakdown-20261101.json\n?? docs/tasks/luna-static-audit-benchmark-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? docs/tasks/virtual-execution-environments-20261101.json\n?? internal/server/benchmark_phase_timing_test.go\n?? internal/server/execution_environments.go\n?? internal/server/execution_environments_live_test.go\n?? internal/server/execution_environments_test.go\n?? internal/server/execution_result_receipt.go\n?? internal/server/execution_result_receipt_test.go\n?? internal/server/execution_scheduler_receipt.go\n?? internal/server/execution_scheduler_receipt_test.go\n?? internal/server/large_engineering_benchmark_test.go\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/static_audit_benchmark_test.go\n?? internal/server/static_audit_fixture_test.go\n?? internal/server/workflow_parallel_read_test.go\n?? scripts/benchmarks/",
+  "acceptance": [
+    "核心调度可一次批量提交多于槽位的独立小任务；50项不是固定上限或固定拆分数。",
+    "最多X-1个临时环境，完成即自动补就绪任务，不等待主模型下一轮；阻塞依赖不占槽位。",
+    "整批验证重复标识、缺失依赖和环；无效整批不产生部分执行。",
+    "排队/运行取消及前置失败不会继续执行下游，等待可取消；完成者优先收集。",
+    "保留私有工作区、插件按需加载、正常提案与版本/冲突/审批；1X与普通其他项目工具不变。",
+    "受控50任务回归验证补位与尾部，并真实Luna验证批量队列与候选交付，不承诺固定倍速。"
+  ],
+  "scope": [
+    "internal/server/execution_environments.go",
+    "internal/server/execution_work_queue.go",
+    "internal/server/execution_work_queue_test.go",
+    "internal/server/execution_scheduler_receipt.go",
+    "internal/server/execution_scheduler_receipt_test.go",
+    "internal/server/workflow.go",
+    "internal/server/execution_environments_test.go",
+    "internal/server/benchmark_phase_timing_test.go",
+    "docs/designs/execution-environments-20261101.md",
+    "docs/reviews/2026-11-01/virtual-work-queue.md",
+    "docs/tasks/virtual-work-queue-20261101.json",
+    "internal/server/large_engineering_benchmark_test.go",
+    "internal/server/conversation_parallel_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户提出细粒度任务池并自动补位，沿用此前速度优先、其他项目兼容与普通审批。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用执行池，补原子批量注册/依赖就绪FIFO调度、队列查询、完成者优先收集；不固定任务数，不跨任务复用临时环境。依赖只控制执行先后，不隐式应用前置候选。",
+      "evidence": [
+        "internal/server/execution_environments.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "原子批量注册、就绪FIFO自动补位、完成者优先收集、队列分页与运行态计数接入；保留普通审批与1X。",
+      "evidence": [
+        "internal/server/execution_work_queue.go",
+        "internal/server/execution_environments.go",
+        "internal/server/execution_scheduler_receipt.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "8项队列回归通过；相关环境/插件/审批/账本race17.696秒，关闭与保存失败race重复3遍通过，vet与既存tag修正对应测试通过。真实Luna18项批量队列全收集/释放、标准113和变体226全过，但442.142秒慢于1X250.479/自由5X190.376，额外差分1309/1330，不宣称稳定提速或全契约正确。",
+      "evidence": [
+        "internal/server/execution_work_queue_test.go",
+        ".agent-state/luna-small-queue-5x-20261101-proof.json",
+        ".agent-state/luna-small-queue-5x-20261101-analysis.json",
+        ".agent-state/luna-small-queue-5x-20261101-queue-evidence.json",
+        "docs/reviews/2026-11-01/virtual-work-queue.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "接口、队列语义、兼容边界、受控/真实证据、开销与隐藏质量遗漏已记录；全局文档检查受既有索引非UTF8阻止，本次编码/相对链接单独通过。",
+      "evidence": [
+        "docs/designs/execution-environments-20261101.md",
+        "docs/reviews/2026-11-01/virtual-work-queue.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅本任务测试容器结束；保留候选/计时证据与全部既有工作树改动。生产持续healthy；长期静态审查测试独立运行，未混入本任务完成声明。",
+      "evidence": [
+        "docs/reviews/2026-11-01/virtual-work-queue.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权发布、部署、提交、推送或合并。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "未授权部署/提交/推送/合并。",
+  "rollback": "源码功能未部署；可按本任务范围逐块撤回队列改动，须保留此前同文件的环境/压缩/提案改动，禁止整体回滚。",
+  "handoff": "批量队列/自动补位能力已完成，未部署。Luna自由分工仍选择4大块，显式18小块实验更慢且扩展检查有21项coupon错误；不强制细分，不声称达到速度目标。主要后续性能线索为主读取126次、压缩124.472秒以及粒度/上下文开销。长源码审查独立任务仍在运行。"
+}

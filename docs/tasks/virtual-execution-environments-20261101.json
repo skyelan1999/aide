@@ -1,0 +1,89 @@
+{
+  "id": "virtual-execution-environments-20261101",
+  "request": "按已确认架构实现1X主环境和最多X-1个按需临时执行环境，由核心调度动态分工、按需加载插件、共享任务交换区、合并产物后释放；不影响正常项目开发，保留已有有用改动，完成后Luna实测。",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/workflow.go\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/workflow_parallel_read_test.go",
+  "acceptance": [
+    "1X 与多 X 复用主工具循环。主模型按需提交、等待、取消任务，依赖失败不执行下游，不按清单强制扇出。",
+    "每个临时环境有私有源码快照、工具状态、插件副本及守护实例；不切换全局工作区，不复制真实会话、引用配置或磁盘凭据。",
+    "Shell 和私有插件进程使用 Linux Landlock；不可用时拒绝执行，不降级为无隔离进程。主项目原有能力不受限制。",
+    "任务交换区带版本、来源及未验证标记；并发更新比较版本。调度根据结果进一步分工。",
+    "浏览器、电脑及设备通过主协调器的原工具、审批和资源队列执行，不复制设备会话。",
+    "合并先检查工作区身份、所有候选路径与完整内容哈希、已有提案冲突，然后走普通 write_file 策略、钩子、审计、检查点及审批；不得直接应用主项目文件。",
+    "成功、失败、取消均回收临时环境，保留候选与工具证据。暂停后保留已结束结果，恢复不得自动重复副作用。",
+    "Luna 实测同时记录实际环境数、插件调用、待审批状态、最终应用后断言、耗时和 Token。耗时不等同于倍率承诺。"
+  ],
+  "scope": [
+    "internal/server/execution_environments*.go",
+    "internal/server/workflow.go",
+    "internal/server/plugin{_daemon,_routing,s}.go",
+    "internal/server/server.go",
+    "docs/requirements/execution-environments-20261101.md",
+    "docs/designs/execution-environments-20261101.md",
+    "internal/server/context.go",
+    "internal/server/web/app.js",
+    "internal/server/web/parallel-chat.js",
+    "internal/server/web/conversation.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "scripts/parallel-chat.test.cjs",
+    "docs/architecture.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户确认架构建档",
+      "evidence": [
+        "docs/requirements/execution-environments-20261101.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按需运行态、交换、资源协调与版本化合并；主项目能力不变",
+      "evidence": [
+        "docs/designs/execution-environments-20261101.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "按需环境、动态调度工具、私有工具/插件/daemon、交换/依赖/取消、普通提案合并与状态 UI 已实现；保留此前有用改动",
+      "evidence": [
+        "internal/server/execution_environments.go",
+        "docs/designs/execution-environments-20261101.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "race 兼容与最终增量回归、Luna 1X/10X 实测、真实插件及 apply 后断言、Chromium 组件桌面/窄屏通过；短任务未证明速度优势",
+      "evidence": [
+        "docs/reviews/2026-11-01/execution-environments.md",
+        ".agent-state/environment-luna-final-20261101.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "需求、设计、架构入口、验证结果与边界已更新",
+      "evidence": [
+        "docs/requirements/execution-environments-20261101.md",
+        "docs/designs/execution-environments-20261101.md",
+        "docs/reviews/2026-11-01/execution-environments.md",
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "一次性测试项目与私有环境已释放，验收浏览器关闭；保留审计证据、用户既有修改和当前服务",
+      "evidence": [
+        "docs/reviews/2026-11-01/execution-environments.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前任务未授权 commit/push/部署/发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "无发布、部署、commit、push授权；Luna实测已获授权。",
+  "rollback": "新环境运行时与主项目根隔离；修改未提交，不清理既有改动。",
+  "handoff": "本地功能分支实现及验收完成；尚未部署。短任务 1X 24.664s / 10X 26.521s，均3/3通过；不宣称速度目标达标。"
+}

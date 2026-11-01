@@ -71,10 +71,12 @@ class CandidateContract(unittest.TestCase):
 
     def test_runtime_checks_use_candidate_and_race_uses_separate_toolchain(self):
         plan = candidate.verification_plan('aide:ci-test-arm64')
-        self.assertEqual(len(plan), 4)
+        self.assertEqual(len(plan), 5)
         self.assertIn('aide:ci-test-arm64', plan[1][0])
-        self.assertEqual(plan[2][1], {'AIDE_TEST_TOOLCHAIN_IMAGE': 'aide:ci-test-arm64-test-tools', 'AIDE_TEST_WORKERS': '2'})
+        self.assertEqual(plan[2][1], {'AIDE_TEST_TOOLCHAIN_IMAGE': 'aide:ci-test-arm64-test-tools', 'AIDE_TEST_WORKERS': '2', 'AIDE_TEST_EVIDENCE_DIR': '.agent-state/native-verification/arm64/go'})
         self.assertIn('aide:ci-test-arm64', plan[3][0])
+        self.assertIn('scripts/ci/public_plugins.py', plan[4][0])
+        self.assertIn('.agent-state/public-plugins/arm64', plan[4][0])
         self.assertFalse(any('verify' in command and 'full' in command for command, _ in plan))
 
     def test_source_excludes_every_installed_plugin(self):

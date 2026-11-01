@@ -42,3 +42,11 @@ const detail=el('div');meter.renderParallelContextDetail(detail);
 assert.ok(detail.children.some(n=>n.textContent?.includes('第 1 轮规划请求')&&n.textContent.includes('31')),'prior planner has its own context row');
 assert.ok(detail.children.some(n=>n.textContent?.includes('规划请求')&&n.textContent.includes('41')),'latest planner context is retained');
 console.log('adaptive parallel PASS: sequential discovery, multi-wave ledger, terminal labels and separate historical planner contexts');
+
+const envRun={id:'environments',parallelism:10,environments:{capacity:10,active:0,results:[{id:'one',assignment:'<img onerror=alert(1)>',status:'completed',released:true,merged:true},{id:'two',assignment:'cancelled work',status:'cancelled',released:true}]}};
+const envPanel=api.render(envRun,{el,t,open:new Set(['environments:environments'])});
+assert.equal(envPanel.open,true);assert.match(envPanel.children[0].textContent,/容量 10X.*活跃 0.*已结束 2\/2/);
+assert.equal(envPanel.children[2].children[0].textContent,'<img onerror=alert(1)>');assert.equal(envPanel.children[2].children[0].children.length,0);
+const envSession={id:'env-session',runs:[envRun],messages:[]};const envBefore=c.sessionRevision(envSession);envRun.environments.active=1;assert.notEqual(c.sessionRevision(envSession),envBefore);
+assert.equal(api.render({id:'one-x',parallelism:1,environments:{capacity:1,results:[]}},{el,t}),null);
+console.log('execution environments PASS: actual capacity/status, safe literal text, release/merge receipts, repaint and 1X isolation');

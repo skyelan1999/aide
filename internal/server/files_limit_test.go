@@ -11,15 +11,12 @@ import (
 	"unicode/utf16"
 )
 
-// 旧上限 256 KiB 已提升到 64 MiB：这里用 300 KiB 文本验证“超过旧限制但低于新上限”可正常读写。
+// 工作区文本无固定大小上限；这里用 300 KiB 文本验证普通大文本可正常读写。
 func TestTextFileAboveOld256KiBNowOK(t *testing.T) {
 	a := testApp(t)
 	content := strings.Repeat("abcdefgh\n", 30000) // ~300 KB
 	if len(content) <= 256<<10 {
 		t.Fatalf("fixture must exceed old 256 KiB, got %d", len(content))
-	}
-	if len(content) > maxFile {
-		t.Fatalf("fixture must stay under new cap, got %d", len(content))
 	}
 	body := map[string]string{"path": "big.txt", "content": content, "hash": ""}
 	requireStatus(t, request(a, "PUT", "/api/file", body), 200)
@@ -40,32 +37,23 @@ func TestTextFileAboveOld256KiBNowOK(t *testing.T) {
 	}
 }
 
-// 超过新上限必须明确 400 错误，不静默截断、不 OOM。
-func TestTextFileOverNewCapRejected(t *testing.T) {
+// 超过旧 64 MiB 上限的工作区文本仍可读写；不静默截断。
+func TestTextFileAboveFormerCapAccepted(t *testing.T) {
 	a := testApp(t)
-	// 单字节超过 maxFile：触发 writeFile 的大小兜底（body 上限 maxFile+1MiB 仍容纳此请求）
-	big := strings.Repeat("a", maxFile+1)
+	big := strings.Repeat("a", maxExternalTextFile+1)
 	body := map[string]string{"path": "huge.txt", "content": big, "hash": ""}
 	w := request(a, "PUT", "/api/file", body)
-	requireStatus(t, w, 400)
-	if !strings.Contains(w.Body.String(), "MiB") {
-		t.Fatalf("error should state MiB cap, got: %s", w.Body.String())
-	}
-	// 不应落盘
-	if _, err := os.Stat(filepath.Join(a.workPath, "huge.txt")); !os.IsNotExist(err) {
-		t.Fatal("oversized file must not be written")
+	requireStatus(t, w, 200)
+	if st, err := os.Stat(filepath.Join(a.workPath, "huge.txt")); err != nil || st.Size() != int64(len(big)) {
+		t.Fatalf("large file should be fully written, stat=%v err=%v", st, err)
 	}
 }
 
-// validateTextContent 边界：恰好 maxFile 通过，maxFile+1 拒绝；NUL/二进制拒绝。
-func TestValidateTextContentBoundary(t *testing.T) {
-	atCap := bytes.Repeat([]byte("a"), maxFile) // 全 'a'：合法 UTF-8、无 NUL
-	if err := validateTextContent(atCap); err != nil {
-		t.Fatalf("at cap should pass: %v", err)
-	}
-	overCap := bytes.Repeat([]byte("a"), maxFile+1)
-	if err := validateTextContent(overCap); err == nil {
-		t.Fatal("over cap should fail")
+// UTF-8 与 NUL 校验保留，但不再限制文本字节数。
+func TestValidateTextContentUnbounded(t *testing.T) {
+	large := bytes.Repeat([]byte("a"), 1<<20)
+	if err := validateTextContent(large); err != nil {
+		t.Fatalf("large valid text should pass: %v", err)
 	}
 	if err := validateTextContent([]byte("hello\x00world")); err == nil {
 		t.Fatal("NUL byte must be rejected")

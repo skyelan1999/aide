@@ -75,13 +75,8 @@ func (a *App) legacyLargeCopy(w http.ResponseWriter, r *http.Request) {
 }
 func containsConflict(e error) bool { return e != nil && strings.Contains(e.Error(), "已存在") }
 func (a *App) legacyLargeUpload(w http.ResponseWriter, r *http.Request) {
-	// Compatibility raw requests retain their request budget. Large/resumable
-	// uploads use the declared-size, 4MiB chunk endpoints instead.
-	if r.ContentLength > maxRawFile {
-		fail(w, 413, errors.New("请使用文件传输中的分块上传通道"))
-		return
-	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxRawFile)
+	// Stream raw uploads in bounded chunks through the durable transfer engine.
+	// Keep no fixed file-size limit; available destination space remains enforced.
 	p := r.URL.Query().Get("path")
 	if e := validTransferPath(p); e != nil {
 		fail(w, 400, e)

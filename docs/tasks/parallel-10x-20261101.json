@@ -1,0 +1,92 @@
+{
+  "id": "parallel-10x-20261101",
+  "request": "持续极致优化 Aide 10x 并行处理，使非常复杂任务从 1x 约 10 分钟提升到 10x 不超过 1 分钟，保持质量并用 Luna 端到端基准验证",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture/context-recovery.md\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/workflow.go\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"",
+  "acceptance": [
+    "以相同模型和等价工作量比较 1x 与 10x；记录墙钟时间、上下游 token、完成 worker 数、覆盖率和上下文预算。",
+    "非常复杂的任务若 1x 约 10 分钟，10x 目标不超过 60 秒，并保持等价覆盖与证据质量；缺少匹配样本时不得宣称达标。",
+    "用户明确声明独立并带有效编号的分项可跳过串行 planner；超过并发上限时分组且不丢项；顺序任务、重复或无效编号不得自动直派。",
+    "长上下文 worker fanout 共享一次安全压缩后的上下文；每个 worker 收到精确任务分配，且维持只读、无工具权限。",
+    "最终主任务保留原始请求和证据；上下文预算不足时走现有安全回退。",
+    "工具执行、构建、测试、审批、写入和最终汇总的串行限制需在文档及结果中明确。"
+  ],
+  "scope": [
+    ".agent-state/parallelism-cost-luna-shared-context-fixed-20261101.json",
+    "docs/architecture/context-recovery.md",
+    "docs/reviews/2026-11-01/parallelism-cost-luna-benchmark.md",
+    "docs/tasks/parallel-10x-20261101.json",
+    "internal/server/context.go",
+    "internal/server/context_recovery_live_test.go",
+    "internal/server/context_recovery_live_test.go (preexisting task work; do not rewrite)",
+    "internal/server/conversation_parallel.go",
+    "internal/server/conversation_parallel_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标为极复杂 1x 约 10 分钟时，10x 尽量低于 60 秒且等价质量；用户要求 Luna 实测。",
+      "evidence": [
+        "用户消息：使用 Luna 测试；非常复杂的 10 分钟任务 10x 最低达到 1 分钟；持续优化尽可能达到。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "明确独立分项跳过 planner；长 worker 上下文共用一次拟合；worker 仍只读无工具；主任务原始历史、工具及验收逻辑不变。",
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "docs/architecture/context-recovery.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已完成显式独立分项直派、共享 worker context 一次拟合、快速合并用户明确要求的无工具草案，并加入按请求检查/证据/未知项/两项数量的质量门槛；不满足则回退主模型整合。模型快照现记录耗时。",
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "internal/server/conversation_parallel_test.go:TestConversationParallelFitsSharedWorkerContextOnce"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "定向 Go 回归测试通过。Luna 匹配合成复杂样例的最终文本质量检查：1x 执行 12.17s、8,463 tokens；10x 10/10 worker、执行 4.876s、28,785 tokens，跳过串行 synthesis；两者均保留十个标签、两条检查/节、证据、未知项、合成识别码及非执行说明，预算通过。10x tokens 约为 1x 的 3.4 倍。10 分钟级任务目标仍未验证。完整 internal/server 套件运行超过 7 分钟，停留于 SSH/SFTP fixture 测试后停止，整包结果未完成。",
+      "evidence": [
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run 'TestExplicitParallelTasks|TestConversationParallelFitsSharedWorkerContextOnce|TestConversationParallelFanout|TestConversationParallelPlan' -count=1 -timeout=5m (PASS)",
+        "docker run ... AIDE_CONTEXT_LIVE_MODELS=gpt-6-luna AIDE_CONTEXT_LIVE_TASKS=complex AIDE_CONTEXT_LIVE_PARALLELISM=10 ... TestContextRecoveryLiveModels (PASS; 30.28s; 10/10)",
+        " .agent-state/parallelism-cost-luna-shared-context-fixed-20261101.json",
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run 'TestParallelExplicitNoToolDraftFastAssembly|TestParallelDraftQualityRejectsMissingRequestedContent|TestExplicitParallelTasks|TestConversationParallelFitsSharedWorkerContextOnce|TestConversationParallelFanout|TestConversationParallelPlan|TestConversationParallelCancel|TestConversationParallelEndToEnd' -count=1 -timeout=5m (PASS)",
+        "Luna complex 10x quality repeat: PASS; 10/10 workers; 4.26s execution, 6.489s preflight, 28,766 upstream tokens; contentRequirementsMet=true; .agent-state/parallelism-cost-luna-fast-assembly-10x-quality-repeat-20261101.json",
+        "First fast assembly Luna complex 10x: PASS; 10/10 workers; 4.481s execution, 7.370s preflight, 29,026 upstream tokens; .agent-state/parallelism-cost-luna-fast-assembly-10x-20261101.json",
+        "Matched short synthetic Luna complex 1x reference: 13.193s execution, 7.161s preflight, 8,369 upstream tokens; .agent-state/parallelism-cost-luna-fast-assembly-pair-20261101.json",
+        "docker run ... go test ./internal/server -count=1 -timeout=10m：运行约 7 分钟后停止；进程仍处于 TestSFTPDirectoryReconnectIsReadOnly... 的 fixture SSH 调用，不报告整包通过。",
+        "Luna complex 1x strict final-text check: PASS; execution 12.171s, preflight 6.373s, 8,463 upstream tokens; contentRequirementsMet=true; .agent-state/parallelism-cost-luna-fast-assembly-quality-pair-1x-20261101.json",
+        "Luna complex 10x strict final-text check: PASS; 10/10 workers, assembly shortcut used, execution 4.876s, preflight 5.428s, 28,785 upstream tokens; contentRequirementsMet=true; .agent-state/parallelism-cost-luna-fast-assembly-quality-final-10x-20261101.json",
+        "A 10x attempt initially fell back to main synthesis because Luna used an equivalent “不代表已经检查或通过” disclaimer rather than the literal “未执行”; the validator was widened to accept explicit equivalent caveats and the next live run passed the strict final-text check."
+      ]
+    },
+    "documentation": {
+      "status": "partial",
+      "summary": "更新架构说明与基准报告，记录快速合并适用范围、质量门槛、两次 10x Luna 实测及匹配短 1x 样例；目标仍未达成或证明。仓库级 docs 检查仍被既存未跟踪的 docs/designs/designs-index.md 非 UTF-8 内容阻断。 git diff --check 及本任务文档 UTF-8/JSON 校验通过。",
+      "evidence": [
+        "docs/architecture/context-recovery.md",
+        "docs/reviews/2026-11-01/parallelism-cost-luna-benchmark.md",
+        "docs/tasks/parallel-10x-20261101.json",
+        "python3 scripts/check_docs.py: blocked at docs/designs/designs-index.md UnicodeDecodeError"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "测试只使用合成请求与历史；凭证从既有本地只读凭证封装加载；证据文件只包含模型输出、请求汇总与用量，不含原始密钥或真实会话。",
+      "evidence": [
+        ".agent-state/parallelism-cost-luna-shared-context-fixed-20261101.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、推送、合并、部署或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "仅授权本地性能优化与验证；无发布授权。",
+  "rollback": "只回退本任务对 conversation_parallel.go/test.go 与两份文档的变更；保留原有工作区及未跟踪内容。",
+  "handoff": "最新同提示 Luna 合成复杂样例通过最终文本质量核验：1x 12.171s/8,463 tokens；10x 4.876s/28,785 tokens、10/10 worker。执行阶段约 2.5x 快，含独立上下文预检的 harness wall time 约 1.8x 快，token 用量约 3.4x；目标仍未证明，因为样例远短于 10 分钟 1x 基线。快速合并仅用于明确分项、无工具草案；缺项时保留主模型 synthesis 回退。定向测试通过。整包 internal/server 测试在 SSH/SFTP fixture 调用处超过 7 分钟后停止，结果不完整。"
+}

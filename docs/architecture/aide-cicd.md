@@ -1,31 +1,32 @@
 # Aide 本体 CI/CD
 
-仅构建 Aide 主仓库。不会收集工作区、安装的插件、商业插件源码或插件安装包；仓库内 `plugins/testdata` 仅用于主程序协议回归。流水线不访问生产 Docker、真实会话、密钥或模型 API。
+构建产物只包含 Aide 主仓库。公开插件以既有发布包单独下载安装验收，不进入运行包/SDK；不收集用户工作区、用户安装的插件、商业源码或私有安装包。仓库内 `plugins/testdata` 仅用于主程序协议回归。流水线不访问生产 Docker、真实会话、密钥或模型 API。
 
 ## 自动检查与候选包
 
-- `Aide CI`：main 的 PR、main 推送以及手动运行，执行现有 quick 门禁、CI 交付合同测试、完整 Go race/vet，以及 Windows PowerShell 5.1 / PowerShell 7 启动脚本隔离回归。`gate` 是汇总检查；任一依赖失败或取消均不通过。
-- `Aide Delivery`：仅在同仓库 main 推送对应的 CI 成功后构建；也可在 main 手动构建。它只采用 main 的提交，不采用 PR 的产物或脚本。
-- ARM64 使用原生 `ubuntu-24.04-arm`，AMD64 使用原生 `ubuntu-24.04`。沿用 Dockerfile、version.sh 和 package-release-assets.sh，构建时强制 `AIDE_RUN_TESTS=1`。
-- 云端完整 Go 测试保留全部 24 个互斥分片，使用两个进程、8 GiB / 4 CPU 上限；本地默认仍为单进程、4 GiB / 2 CPU。Office 脚本明确绑定当前源码快照，不依赖测试镜像中的旧副本。完整 Go 快照总时限为 75 分钟（宿主额外保留 50 秒退出清理），CI 作业预算 90 分钟；原生候选作业预算 180 分钟，涵盖构建、完整检查及打包。
-- 每个候选镜像再运行 quick、候选镜像资源检查、完整 Go race/vet、CAD 检查和隔离 HTTPS 冒烟；不把旧镜像的验证收据用于候选。检查全部镜像层、ZIP CRC、镜像身份及摘要，拒绝插件载荷。
-- Actions 仅保存两份完整 ZIP 和各自 proof，保留三天，不上传插件市场。候选包沿用源码内版本名称，下载时须同时看 proof 的提交 SHA；候选构建不会创建标签、修改 Release 或更改默认更新源。
+- `Aide CI`：所有分支 push、main PR 和手动运行，只做 quick/CI 合约、所有包编译、关键 Go 回归和 vet。`gate` 汇总所有基本检查，失败/取消不通过；日常不触发完整镜像、race 或发布。
+- `Aide Delivery`：显式 workflow_dispatch，完整矩阵见[Release 验收策略](../testing/release-validation.md)。main 可请求准确 tag 公开发行；包含最新 main 的功能分支只允许空 tag 的只读候选，不能发布。
+- 原生 Ubuntu ARM64/AMD64 各自构建运行包和独立 SDK。`AIDE_RUN_TESTS=1`、24 个完整 race 分片、其他包和 vet、候选资源、可选引擎边界、镜像层隐私扫描、ZIP CRC、导入/鉴权/健康全部必需。云端两 worker 8 GiB/4 CPU 上限，本地默认单 worker 4 GiB/2 CPU。Go 总时限 75 分钟，原生候选作业预算 240 分钟。
+- 公开市场固定提交的所有 public ZIP 不重新编译，逐一校验、实际安装到临时宿主并运行功能断言；两架构结果都必需。市场变化需重新冻结与验收。原生宿主、48 格浏览器和新装生命周期是独立必需 job，具体收据缺项仍拒绝发布。
+- 候选产物和执行证据保留 30 天。候选不会创建 tag 或修改更新默认源；插件包仅用于独立验收，不打入运行包/SDK。原始日志与截图保留为 Actions artifacts，发布附件只带脱敏摘要。
 
 ## 手动发布
 
 1. 在干净 main 按现有发布流程完成任务验收与 `release-check`，使用 `scripts/version.sh` 的既有版本机制更新版本并推送提交、标签。现有已发布标签不可覆盖。
 2. 在 Actions 的 `Aide Delivery` 选择 **Run workflow**，分支 main；`release_tag` 填该已有标签。留空仅生成候选。标签必须等于 version.sh 当前输出，并指向本次 main 提交。
-3. 流水线重新验证源码、两种原生架构和 Windows 启动回归，然后进入 `aide-release` 环境。仓库管理员可为该环境配置审核人；环境未配置审核规则时，手动触发即执行发布，代码没有虚构人工审批。
-4. 发布任务只下载本次运行的候选，检查两份 proof 的共同源码身份、完整验证计划、无插件标志、文件大小和 SHA256。创建全新草稿后上传两个完整包、SHA256SUMS 和 RELEASE-ASSETS.txt；再次核对 GitHub 独立报告的摘要及标签目标，最后公开为预发布。
+3. 流水线重新验证源码、两种原生架构、所有 public 包安装与功能、Windows/macOS 宿主、三引擎浏览器和干净 Linux 生命周期，然后进入 `aide-release` 环境。仓库管理员可为该环境配置审核人；环境未配置审核规则时，手动触发即执行发布，代码没有虚构人工审批。
+4. 发布任务只下载本次运行的候选，检查两份 proof 的共同源码身份、完整验证计划、无插件标志、文件大小和 SHA256。创建全新草稿后上传双架构运行包与 SDK 共四个 ZIP、SHA256SUMS、RELEASE-ASSETS.txt 和 RELEASE-VALIDATION.json；再次核对 GitHub 独立报告的摘要及标签目标，最后公开为预发布。
 5. 任一步失败都不会把草稿公开。上传失败可保留草稿供检查；重跑不会覆盖既有草稿或 Release，排查后由维护者处理草稿再重试。不要对已有公开版本重跑发布。
 
-发布不自动部署本地服务，不自动更新 `docker/prebuilt-images.tsv` 的默认下载版本，不包含 macOS / Windows Docker Desktop 真机启动验收，也不代表插件兼容验收。后续正式版本若调整预发布规则，应单独评审。
+发布不自动部署本地服务，不自动更新 `docker/prebuilt-images.tsv` 的默认下载版本，不包含 macOS / Windows Docker Desktop 真机启动验收，公开插件的兼容范围以逐包功能报告为准，不代表私有插件、物理硬件或真实付费服务全部验收。后续正式版本若调整预发布规则，应单独评审。
+
+运行时异常定位和故障注入说明见[模块诊断](diagnostics.md)，它与 Release 验收证据相互补充。
 
 ## 权限与维护
 
-PR 流水线仅有 contents:read，不使用 pull_request_target、不读取仓库 secrets，checkout 不保留推送凭证。写权限只给手动发布任务；候选构建不持有发布 token。所有文件名、标签和源码身份先校验后用于发布。并发构建按提交串行，同一 PR 的过时 CI 会取消。
+PR 流水线仅有 contents:read，不使用 pull_request_target、不读取仓库 secrets，checkout 不保留推送凭证。写权限只给手动发布任务；候选构建不持有发布 token。所有文件名、标签和源码身份先校验后用于发布。完整构建按分支串行，公开发布全局串行，同一 PR 的过时 CI 会取消。
 
-现有 RC3 专用工作流与其固定提交脚本作为历史流程保留，新版本使用上述通用流程。`pages.yml` 独立维护主页。
+现有 RC3 专用工作流已改为明确拒绝发布的历史入口，其固定提交脚本只作历史资料，新版本使用上述通用流程。`pages.yml` 独立维护主页。
 
 本地检查：
 

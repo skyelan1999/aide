@@ -145,7 +145,7 @@ func TestPluginImagesProtocolAndRoundBudget(t *testing.T) {
 		t.Fatal("restored checkpoint implies images are present")
 	}
 }
-func TestPluginImagesAutoRouteRequiresVision(t *testing.T) {
+func TestPluginImagesAutoRouteDoesNotGateOnVisionMetadata(t *testing.T) {
 	a := testApp(t)
 	routerFixture(t, a)
 	cfg := routerSettings(t, a, "http://a.invalid", "http://b.invalid")
@@ -168,7 +168,7 @@ func TestPluginImagesAutoRouteRequiresVision(t *testing.T) {
 	input := appendPluginImages([]Message{{Role: "user", Content: "code implement"}}, &pluginImageSink{images: []MessageImage{{MediaType: "image/png", DataURL: "data:image/png;base64," + previewRaster(t)}}})
 	task := &Task{Prompt: "code implement", ModelSelection: &SessionModelSelection{ModelRouter: "auto"}}
 	selected := a.routedModel(task, cfg, input, ProfileParams{MaxTokens: 1024}, nil, "chat")
-	if selected.Model != "write-model" {
-		t.Fatal("router selected a text-only profile for actual images", selected.Model)
+	if selected.Model != "code-model" {
+		t.Fatal("image metadata filtered out the task-appropriate model", selected.Model)
 	}
 }

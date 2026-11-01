@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -26,6 +27,53 @@ func TestContextRecoveryRetainsUncompactedHistory(t *testing.T) {
 	}
 	if !found || p.Breakdown.HistoryMessages != len(s.Messages) {
 		t.Fatal("uncompacted history silently discarded")
+	}
+}
+
+func TestCompactionTransportRetryIsBoundedAndCancelable(t *testing.T) {
+	for _, mode := range []string{"recover", "permanent EOF", "API error", "cancel"} {
+		t.Run(mode, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			var calls atomic.Int32
+			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				n := calls.Add(1)
+				_, _ = io.Copy(io.Discard, r.Body)
+				if mode == "API error" {
+					http.Error(w, "no authorization", 401)
+					return
+				}
+				if mode == "recover" && n > 1 {
+					parallelReply(w, `{"goal":"preserve evidence","facts":["ID-R42"]}`)
+					return
+				}
+				if mode == "cancel" {
+					cancel()
+				}
+				conn, _, err := w.(http.Hijacker).Hijack()
+				if err == nil {
+					_ = conn.Close()
+				}
+			}))
+			defer provider.Close()
+			out, err := completeCompactionRequest(ctx, Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: "ID-R42"}})
+			want := int32(2)
+			if mode == "API error" || mode == "cancel" {
+				want = 1
+			}
+			if calls.Load() != want {
+				t.Fatalf("got %d requests; want %d", calls.Load(), want)
+			}
+			if mode == "recover" && (err != nil || !strings.Contains(out, "ID-R42")) {
+				t.Fatalf("transient EOF did not recover: %q %v", out, err)
+			}
+			if mode != "recover" && err == nil {
+				t.Fatal("failure hidden by retry")
+			}
+			if mode == "permanent EOF" && !errors.Is(err, io.EOF) {
+				t.Fatalf("original EOF was not retained: %v", err)
+			}
+		})
 	}
 }
 
@@ -243,6 +291,62 @@ func TestContextRecoverySummaryNormalizesTextShapesOnly(t *testing.T) {
 	}
 }
 
+func TestContextRecoverySummaryExtractsWrappedJSON(t *testing.T) {
+	valid := `{"goal":"continue","decisions":[],"files":[],"facts":[],"pending":[]}`
+	for _, output := range []string{"Summary:\n" + valid + "\nDone.", "```json\n" + valid + "\n```"} {
+		if _, err := parseCompactSummary(output); err != nil {
+			t.Fatalf("wrapped valid summary rejected: %v", err)
+		}
+	}
+	if _, err := parseCompactSummary(`{"goal":"truncated","decisions":[]`); err == nil {
+		t.Fatal("truncated summary was accepted")
+	}
+}
+
+func TestContextRecoverySummaryRetriesAndSurvivesRepeatedRuns(t *testing.T) {
+	a := testApp(t)
+	cfg := Settings{Model: "test", Models: []ModelRef{{ID: "test", ContextWindow: 4096}}}
+	a.settings = cfg
+	var requests atomic.Int32
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		call := requests.Add(1)
+		if call == 1 {
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: `{"goal":"truncated`}}}})
+			return
+		}
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: `{"goal":"stable","decisions":[],"files":[],"facts":[],"pending":[]}`}}}})
+	}))
+	defer provider.Close()
+	cfg.BaseURL = provider.URL
+	for i := 0; i < 100; i++ {
+		input := []Message{{Role: "system", Content: "policy"}, {Role: "assistant", Content: fmt.Sprintf("synthetic run %d: %s", i, strings.Repeat("historical context ", 1000))}, {Role: "user", Content: "CURRENT_REQUEST"}}
+		before, _ := json.Marshal(input)
+		candidate, err := a.fitActiveContext(context.Background(), cfg, input, ProfileParams{MaxTokens: 512}, nil, nil)
+		if err != nil {
+			t.Fatalf("run %d failed to recover: %v", i, err)
+		}
+		after, _ := json.Marshal(input)
+		if string(before) != string(after) {
+			t.Fatalf("run %d mutated original input", i)
+		}
+		if estimateProviderPromptTokens(candidate, nil)+512 > 4096 {
+			t.Fatalf("run %d returned over-budget context", i)
+		}
+		foundSummary := false
+		for _, message := range candidate {
+			if strings.Contains(message.Content, `"goal":"stable"`) {
+				foundSummary = true
+			}
+		}
+		if !foundSummary {
+			t.Fatalf("run %d did not include recovered compaction summary", i)
+		}
+	}
+	if got := requests.Load(); got < 100 || got > 1000 {
+		t.Fatalf("got unexpected request count %d across 100 bounded compactions", got)
+	}
+}
+
 func TestContextRecoveryPreflightCompactsMultipleHistoryBatches(t *testing.T) {
 	a := testApp(t)
 	p := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -324,7 +428,7 @@ func TestContextRecoveryActiveCompactionFailureRetainsPartial(t *testing.T) {
 	out, chain, e := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{MaxTokens: 128}, nil, task, nil, 0)
 	// First request produces the partial answer; a bounded summary attempt then
 	// fails validation. No oversized continuation is sent and the partial survives.
-	if e == nil || requests.Load() != 2 || !strings.Contains(e.Error(), "摘要不是有效 JSON") || !strings.Contains(out, partial) || len(chain) < 2 {
+	if e == nil || requests.Load() != 3 || !strings.Contains(e.Error(), "摘要两次输出均无法校验") || !strings.Contains(out, partial) || len(chain) < 2 {
 		t.Fatalf("overflow not stopped with partial retained: requests%d outLen%d chain%d err%v", requests.Load(), len(out), len(chain), e)
 	}
 }
@@ -338,5 +442,17 @@ func TestContextRecoveryTruncatedToolCallNeverDispatches(t *testing.T) {
 	_, calls, usage, _, err := completeStream(context.Background(), Settings{BaseURL: provider.URL, Model: "fixture"}, nil, ProfileParams{}, nil, nil, nil, nil)
 	if !errors.Is(err, io.ErrUnexpectedEOF) || len(calls) != 0 || usage.Total == 0 {
 		t.Fatalf("truncated calls escaped or usage lost: calls%d usage%d err%v", len(calls), usage.Total, err)
+	}
+}
+
+func TestLiveParallelNumberedHeadingCoverageIgnoresDecimals(t *testing.T) {
+	answer := "识别码 R73186；阈值 27.4 MHz。\n\n### 1. 身份\n内容\n\n### 2. 备份\n内容\n"
+	labels := []string{"1.", "2.", "7."}
+	if liveLabelHeadingCount(answer, labels[0]) != 1 || liveLabelHeadingCount(answer, labels[1]) != 1 || liveLabelHeadingCount(answer, labels[2]) != 0 {
+		t.Fatal("numbered label detection should count section headings and ignore decimal facts")
+	}
+	parts := liveComplexDraftParts(answer, labels[:2])
+	if len(parts) != 2 || !strings.HasPrefix(parts[0].Content, "### 1.") || !strings.HasPrefix(parts[1].Content, "### 2.") {
+		t.Fatalf("numbered sections were not isolated correctly: %#v", parts)
 	}
 }

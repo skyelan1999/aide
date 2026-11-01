@@ -1,0 +1,86 @@
+{
+  "id": "luna-large-engineering-benchmark-20261101",
+  "request": "用 Luna 跑一个真正复杂的任务，重点看非常大的任务，10分钟左右的对比1X和5X对比一下 1X 和 10X。",
+  "baseline": "18887f6281f78cc9d91548cf38aa6607294a6b24",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/context-recovery.md\n M internal/server/context.go\n M internal/server/context_recovery_live_test.go\n M internal/server/context_recovery_test.go\n M internal/server/conversation_parallel.go\n M internal/server/conversation_parallel_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_routing.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/parallel-chat.js\n M internal/server/workflow.go\n M scripts/parallel-chat.test.cjs\n?? docs/designs/\n?? docs/requirements/\n?? docs/reviews/2026-11-01/\n?? docs/tasks/assisted-approval-intent-20261102.json\n?? docs/tasks/chat-attachment-drop-paste.json\n?? \"docs/tasks/computer-bridge-auth-status-20261031 2.json\"\n?? docs/tasks/context-summary-recovery-20261101.json\n?? docs/tasks/parallel-10x-20261101.json\n?? docs/tasks/parallelism-cost-benchmark-20261101.json\n?? docs/tasks/parallelism-cost-luna-20261101.json\n?? \"docs/tasks/readme-star-growth-20261031 2.json\"\n?? docs/tasks/virtual-execution-environments-20261101.json\n?? internal/server/execution_environments.go\n?? internal/server/execution_environments_live_test.go\n?? internal/server/execution_environments_test.go\n?? internal/server/parallel_coding_benchmark_test.go\n?? internal/server/parallel_edit_drafts.go\n?? internal/server/parallel_edit_drafts_test.go\n?? internal/server/parallel_engineering_benchmark_test.go\n?? internal/server/workflow_parallel_read_test.go",
+  "acceptance": [
+    "四次Luna实跑：medium 1X/5X、large 1X/10X；同组同源码、需求、参数、oracle",
+    "实际1X耗时决定是否达到约10/30分钟负载档位，不用sleep补时长",
+    "工程同时含多模块实现与跨模块集成；基线桩全部失败、参考实现及隐藏变体全部通过",
+    "所有模式使用相同候选验证口径，允许测试主环境待审批候选而不提前应用真实文件",
+    "记录首次正确率、修复后正确率、模块完成率、集成通过率、遗漏、实际环境数量、耗时与Token；失败不计有效加速",
+    "仅在一次性测试项目应用候选；保留既有工作区变更，不重启或部署生产"
+  ],
+  "scope": [
+    "scripts/benchmarks/luna-large-workload.cjs",
+    "internal/server/large_engineering_benchmark_test.go",
+    "docs/tasks/luna-large-engineering-benchmark-20261101.json",
+    "docs/reviews/2026-11-01/luna-large-engineering-benchmark.md",
+    "internal/server/execution_scheduler_receipt.go",
+    "internal/server/execution_scheduler_receipt_test.go",
+    "internal/server/workflow.go",
+    "docs/designs/execution-environments-20261101.md",
+    "scripts/benchmarks/luna-large-robustness.cjs",
+    "internal/server/execution_environments.go",
+    "internal/server/execution_result_receipt.go",
+    "internal/server/execution_result_receipt_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已纳入两档任务、完成度、准确性和静态检查的用户澄清",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "两档同源合同、标准用例与隐藏变体；主环境提案覆盖层和私有环境同口径验证；只在夹具中应用候选。",
+      "evidence": [
+        "scripts/benchmarks/luna-large-workload.cjs",
+        "internal/server/large_engineering_benchmark_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "正式1X已通过；5X暴露完整worker历史回传与报告冲突的成本，新增默认精简收集、按需完整证据及精确候选路径选择，待回归。当前四组仍为账本修正版旧二进制。",
+      "evidence": [
+        "scripts/benchmarks/luna-large-workload.cjs",
+        "internal/server/large_engineering_benchmark_test.go",
+        "internal/server/execution_scheduler_receipt.go",
+        ".agent-state/luna-large-final-source-20261101.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Four valid Luna engineering runs completed predefined acceptance; no speedup. Additional quality checks found contract gaps. Actual 1X duration 3-5m, not requested long-workload class; continuing real source audit.",
+      "evidence": [
+        ".agent-state/luna-large-engineering-comparison-20261101.json",
+        "docs/reviews/2026-11-01/luna-large-engineering-benchmark.md"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Engineering results recorded; source audit pending.",
+      "evidence": [
+        "docs/reviews/2026-11-01/luna-large-engineering-benchmark.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "授权Luna付费实测与必要基准实现；无部署、推送或发布授权。",
+  "rollback": "",
+  "handoff": "Engineering comparisons complete; duration and speed targets not achieved. Continue luna-static-audit-benchmark-20261101.",
+  "clarifications": [
+    "10分钟左右负载对比1X/5X；30分钟左右负载对比1X/10X。",
+    "同时查看完成度和准确性。",
+    "单独记录可并行静态语法检查及验证耗时。"
+  ]
+}

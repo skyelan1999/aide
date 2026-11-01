@@ -220,13 +220,17 @@ def reload_archive(image, archive, arch, image_id, source, commit, version):
 
 
 def verification_plan(image):
+    arch = image.rsplit("-", 1)[-1]
+    if arch not in ("arm64", "amd64"):
+        raise ValueError("Candidate image must name its native architecture")
     # The standard full profile defaults runtime/optional-plugin boundary to aide:local. Use explicit
     # image arguments here instead of retagging a shared local image globally.
     return [
         (['python3', 'scripts/agent-route.py', 'verify', 'quick'], {}),
         (['python3', 'scripts/test_runtime_assets.py', image, '--require-lan-bridge'], {}),
-        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_TOOLCHAIN_IMAGE': image + '-test-tools', 'AIDE_TEST_WORKERS': '2'}),
+        (['python3', 'scripts/test_go_snapshot.py'], {'AIDE_TEST_TOOLCHAIN_IMAGE': image + '-test-tools', 'AIDE_TEST_WORKERS': '2', 'AIDE_TEST_EVIDENCE_DIR': '.agent-state/native-verification/' + arch + '/go'}),
         (['python3', 'scripts/test_optional_step.py', image], {}),
+        (['python3', 'scripts/ci/public_plugins.py', 'run', '--image', image + '-test-tools', '--out', '.agent-state/public-plugins/' + arch], {}),
     ]
 
 
@@ -263,6 +267,12 @@ def main():
     for command, extra_env in verification_plan(image):
         run(command, env=dict(os.environ, **extra_env))
         verification.append({'command': command, 'environmentOverrides': extra_env, 'status': 'pass'})
+    from public_plugins import load_lock, verify_report
+    public_report = json.loads((ROOT / '.agent-state/public-plugins' / args.arch / 'report.json').read_text())
+    verify_report(public_report, load_lock(), commit, args.arch)
+    go_report = json.loads((ROOT / '.agent-state/native-verification' / args.arch / 'go/report.json').read_text())
+    if go_report.get('status') != 'pass':
+        raise ValueError('Missing complete race/vet receipt')
     quick = json.loads((ROOT / '.agent-state/quick.json').read_text())
     if quick['status'] != 'pass':
         raise ValueError('Quick verification receipt did not pass')
@@ -283,7 +293,7 @@ def main():
              'version': version, 'tag': tag, 'image': image, 'imageId': info['Id'],
              'verification': verification, 'verificationProfile': 'quick plus explicit candidate-image runtime/race/vet/optional-plugin boundary; not a standard full-profile receipt',
              'smoke': result, 'privacy': privacy, 'packageValidation': package, 'importValidation': imported,
-             'toolbox': toolbox,
+             'toolbox': toolbox, 'publicPlugins': public_report, 'goSuite': go_report,
              'asset': {'name': bundle.name, 'sha256': sha256(bundle), 'bytes': bundle.stat().st_size}}
     (out / 'candidate-proof.json').write_text(json.dumps(proof, indent=2) + '\n')
     print(json.dumps(proof))

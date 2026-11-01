@@ -175,8 +175,8 @@ func visionGateForConfig(cfg Settings, images []MessageImage) error {
 			if !isBailianEndpoint(cfg.BaseURL) || isQwenRealtime(cfg.Model) || !qwenModernVision(cfg.Model) {
 				return fmt.Errorf("会话模型 %q 不支持此视频附件；请选择千问多模态模型", cfg.Model)
 			}
-		} else if !modelSupportsVision(cfg.Model, cfg.Models) {
-			return fmt.Errorf("会话模型 %q 不支持图片输入", cfg.Model)
+		} else {
+			// Images are forwarded as multimodal input; let the provider handle capability errors.
 		}
 	}
 	return nil

@@ -800,7 +800,7 @@ func (a *App) sftpReadAtGeneration(remoteFile string, generation uint64) ([]byte
 }
 
 func (a *App) sftpReadExpected(remoteFile string, expected *uint64) ([]byte, error) {
-	return a.readSFTPBounded("workspace", sshControlSocket, expected, func(fs *transferFS) (transferFile, error) {
+	return a.readSFTPContent("workspace", sshControlSocket, expected, func(fs *transferFS) (transferFile, error) {
 		// Workspace cache/system-document paths may intentionally be outside the
 		// workspace directory. Preserve this existing absolute-path interface.
 		return fs.client.Open(remoteFile)
@@ -1228,7 +1228,7 @@ func (a *App) sftpReadSourceExpected(src Source, p string, expected *uint64) ([]
 	if !valid {
 		return nil, errors.New("SFTP 来源已变化或停用，请重新访问")
 	}
-	return a.readSFTPBounded(src.ID, sourceSocket(src.ID), expected, func(fs *transferFS) (transferFile, error) {
+	return a.readSFTPContent(src.ID, sourceSocket(src.ID), expected, func(fs *transferFS) (transferFile, error) {
 		return fs.Open(p, os.O_RDONLY)
 	})
 }

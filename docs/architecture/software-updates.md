@@ -10,7 +10,7 @@
 
 ## 适用范围
 
-应用内 A/B 升级仅适用于通过正式 Release 镜像启动、并由随包宿主启动器管理的 aide。源码开发模式仍可检查公开 Release，但不显示 A/B 安装和切换控件；源码更新使用 `git pull` 后执行显式 `build`，成功后自动启动；普通 `start` 不编译。包身份通过 `AIDE_INSTALLATION_KIND` 传入，源码目录即使复用 Release 二进制也不能启用 A/B。参见[标准启动器接口](launcher-contract.md)。
+应用内 A/B 升级仅适用于通过正式 Release 镜像启动、并由随包宿主启动器管理的 aide。源码开发模式仍可检查公开 Release，但不显示应用内发行升级控件；普通源码升级仍由显式 `build` 执行。另提供宿主侧 `scripts/selfdev-ab.py` 开发候选 A/B：`stage A|B` 用独立构建镜像完成全量 Go 测试、构建并临时启动健康检查；`activate A|B` 在候选专用回环端口运行所选槽，失败时恢复此前候选槽。该开发候选与正式服务使用不同 Compose 项目、端口、数据卷、home 和本地目录；它不读写普通 `.env`，不挂载真实 `/local` 或 `/context`，不迁移账户配置，也不会调用正式服务端口。候选工作区只挂载当前 Aide 源码仓库。槽数据互相独立，切换不复制数据。已启用设备终端插件时，Aide 可经 `terminal-run` 在宿主执行该脚本并遵循该插件的授权；内置 `run_shell` 仍不访问 Docker socket，只在任务绑定的项目沙箱中执行。没有宿主终端能力时，用户可从源码仓库手动运行脚本。包身份仍通过 `AIDE_INSTALLATION_KIND` 区分。参见[标准启动器接口](launcher-contract.md)。
 
 升级服务负责访问令牌鉴权、发行包解析与校验、槽状态持久化和进度报告。它不访问 Docker socket，也不执行上传包中的脚本。宿主启动器仅在用户手动激活槽后导入镜像并重启服务。
 
@@ -19,6 +19,7 @@
 | 场景 | 实际行为 | 更新方式 |
 | --- | --- | --- |
 | Git源码目录，AIDE_BUILD_FROM_SOURCE=auto | 检测.git后走源码模式；镜像source-sha相同则跳过编译，缺镜像或不同则编译 | 先同步目标分支，保留依赖，重新构建并核对commit及源码身份 |
+| Aide 自我开发候选 A/B | 设备终端 `terminal-run` 经授权执行 `python3 scripts/selfdev-ab.py stage A` 或 `stage B`，在专用受限 Buildx builder 中跑全量 Go 测试、vet、编译，并健康启动隔离候选；`activate A|B` 显式切换候选端口 | 候选服务、数据、镜像、工作区与常规运行完全分开；`stop` 保留两槽数据与镜像。内置 `run_shell` 仍限于当前项目沙箱 |
 | 完整离线启动目录，含.aide-image | 校验平台与包内镜像摘要，按本地归档导入；日常启动复用镜像 | 若应用也是release-image构建模式且有宿主代理，可使用正式升级包；不能仅凭.aide-image推断A/B可用 |
 | 正式Release镜像及升级代理 | 服务器校验并暂存升级包，手动切换，健康失败尝试恢复旧槽 | 同平台的完整升级ZIP／升级ZIP；保留旧镜像与数据备份 |
 
