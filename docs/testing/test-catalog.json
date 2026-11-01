@@ -1564,7 +1564,7 @@
     {
       "path": "internal/server/incidents_test.go",
       "kind": "go",
-      "sha256": "0df33d35d44dbb1e07f075f7d9de7304bd00f748cc012e352339025db5f774ae",
+      "sha256": "bb00f8d2208ca79e4b6662e6f46e20f4bb6edecd56ccaa6f88ed0708da79c00c",
       "cases": [
         "TestIncidentsPluginFailureIsCorrelatedAndNeverStoresPayload",
         "TestIncidentsHTTPAuthenticationAndCrossRequestIdentity",
@@ -6649,7 +6649,7 @@
     {
       "path": "scripts/ci/test_ci_policy.py",
       "kind": "python",
-      "sha256": "debd7adae477f63f54de3403f5948f51514c6a7acfad3c74a1eff8f86c145b5c",
+      "sha256": "ef1248bc5f76e5d70042cc8121ec3f714ad224dbdb59e303953f9b31dd74cc92",
       "cases": [
         "test_daily_keeps_gate_without_heavy_builds",
         "test_delivery_is_explicit_and_every_gate_is_required",
@@ -6664,7 +6664,7 @@
     {
       "path": "scripts/ci/test_delivery_gate.py",
       "kind": "python",
-      "sha256": "a72286b319544bab342833f912ff85b5f5fbfd5e5e918770de9ba290c08489dd",
+      "sha256": "55c780f97625834309d44aec9bdf0563054fda3f25ea974467063454770f1e9e",
       "cases": [
         "test_branch_candidate_is_read_only_and_cannot_publish",
         "test_both_architectures_required_and_digest_tampering_rejected",

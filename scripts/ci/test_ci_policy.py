@@ -15,6 +15,7 @@ class CIPolicyTests(unittest.TestCase):
         ci = (ROOT / '.github/workflows/aide-ci.yml').read_text()
         self.assertIn('needs: [quick, go]', ci)
         self.assertIn('basic_go.py', ci)
+        self.assertIn('github.head_ref || github.ref_name', ci)
         self.assertNotIn('docker build', ci)
         self.assertNotIn('test_go_snapshot.py', ci)
         self.assertNotIn('launcher_clean_environment', ci)

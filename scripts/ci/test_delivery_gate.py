@@ -13,6 +13,14 @@ from build_candidate import verification_plan
 
 
 class DeliveryGateTests(unittest.TestCase):
+    def setUp(self):
+        # Test inputs must not inherit the real branch/dispatch/tag that runs CI.
+        environment = patch.dict(os.environ, {'GITHUB_REF': 'refs/heads/main',
+            'GH_EVENT_NAME': 'workflow_dispatch', 'RELEASE_TAG': '',
+            'RELEASE_CADENCE_EXCEPTION_REASON': ''})
+        environment.start()
+        self.addCleanup(environment.stop)
+
     def test_branch_candidate_is_read_only_and_cannot_publish(self):
         import tempfile
         from pathlib import Path

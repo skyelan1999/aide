@@ -219,6 +219,13 @@ func (j *incidentJournal) loadLocked(data string) {
 	if data == "" {
 		return
 	}
+	if info, err := os.Lstat(filepath.Join(data, "diagnostics")); err == nil && !info.IsDir() {
+		j.persistenceErrors++
+		return
+	} else if err != nil && !os.IsNotExist(err) {
+		j.persistenceErrors++
+		return
+	}
 	for _, suffix := range []string{".2", ".1", ""} {
 		path := filepath.Join(data, "diagnostics", "incidents.jsonl") + suffix
 		if info, err := os.Lstat(path); err == nil && !info.Mode().IsRegular() {
@@ -277,6 +284,9 @@ func (j *incidentJournal) persist(data string, e incident) error {
 		return errors.New("non-directory incident store")
 	}
 	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+	if err := os.Chmod(dir, 0700); err != nil {
 		return err
 	}
 	file := filepath.Join(dir, "incidents.jsonl")

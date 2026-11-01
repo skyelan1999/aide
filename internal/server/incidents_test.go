@@ -139,6 +139,25 @@ func TestIncidentsPersistenceFailureRemainsObservable(t *testing.T) {
 	if len(rows) != 1 || h["persistenceErrors"] < 1 || rows[0].Code != "ACCESS_DENIED" {
 		t.Fatal(rows, h)
 	}
+	outside := t.TempDir()
+	marker := []byte(`{"incidentId":"12345678901234567890123456789012","module":"outside-must-not-load"}` + "\n")
+	if err := os.WriteFile(filepath.Join(outside, "incidents.jsonl"), marker, 0600); err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(root, "diagnostics")); err != nil {
+		t.Fatal(err)
+	}
+	linked := &App{dataPath: root}
+	rows, h = linked.incidentSnapshot()
+	if len(rows) != 0 || h["persistenceErrors"] == 0 {
+		t.Fatal("followed diagnostic directory link", rows, h)
+	}
+	linked.recordIncident(context.Background(), incident{Module: "files", Phase: "write"}, os.ErrPermission, time.Time{})
+	data, err := os.ReadFile(filepath.Join(outside, "incidents.jsonl"))
+	if err != nil || string(data) != string(marker) {
+		t.Fatal("modified outside diagnostic store", err)
+	}
 }
 
 func TestIncidentsContextFailureAndCancellationAreDifferent(t *testing.T) {
