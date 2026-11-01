@@ -36,3 +36,9 @@ Windows 首轮误用了 POSIX 专属测试、Linux WebKit 同进程连续场景�
 4. [Aide PR #698](https://github.com/skyelan1999/aide/pull/698) 仍是草稿；它的集成需满足自身分支保护，三个插件/市场的管理员例外不延伸到该 PR。满足后沿用干净 main 的 full、release-check 和 version.sh，实际发布并核对远端附件才算完成。
 
 暂存、推送、PR、测试通过、合并和 Release 发布分别记录。当前没有给新版本打正式 tag、上传或公开 Release，也没有重启本机 9999 生产服务。
+
+## 收到授权后的执行回执
+
+用户随后明确授权上述三个 PR 管理员例外合并，未修改分支保护规则。SQLite PR #2 已合并到 `9d9cbd9a4291c1ddcb6f0d7ef310ff21f6efa374`，Terminal PR #2 合并到 `221147d2f33cff377f2c854a5b97dbbfbe1525c6`；分别发布 [SQLite v1.0.1](https://github.com/skyelan1999/aide-pkg-sqlite/releases/tag/v1.0.1) 和 [Terminal v1.5.3 预发布](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.3)。两个公开 tag 指向对应合并提交，远端 ZIP 字节数和 SHA256SUMS 均与上文候选摘要相符，沿用仓库固定提交下载，没有声称上传 Release 二进制附件。
+
+市场 PR #32 已合并到 `943f6a90f08c4f5ba09e4d09031247b64ee29295`；Aide public lock 固定此提交和两个新版本，另外 28 项身份保持不变。市场源码检查再次确认 33 个展示条目、30 个 public 包、3 个 private 展示条目；Aide 的 34 项 CI 合约通过。Aide 主程序尚未发布，随后以更新后的正式包启动完整候选验收；此前的旧市场报告不作为最终放行依据。

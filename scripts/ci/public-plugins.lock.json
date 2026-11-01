@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "marketRepository": "skyelan1999/aide-pkg-shop",
-  "marketRevision": "bae8769151ed8e67043b2ebf4a439c688aaeb939",
+  "marketRevision": "943f6a90f08c4f5ba09e4d09031247b64ee29295",
   "plugins": [
     {
       "id": "ali-bailian-supporter",
@@ -311,14 +311,14 @@
     },
     {
       "id": "sqlite",
-      "marketVersion": "1.0.0",
-      "package": "packages/sqlite/1.0.0-015e0f6d6032.zip",
-      "bytes": 11602,
-      "sha256": "015e0f6d60326fcf2d343639565c94e114067694139edbce0f06c55f4d554e95",
+      "marketVersion": "1.0.1",
+      "package": "packages/sqlite/1.0.1-641ed1d4d86e.zip",
+      "bytes": 15479,
+      "sha256": "641ed1d4d86e2a83482f93f2465b7803521dd0fbf077914da4f66a4bef04f789",
       "repository": "skyelan1999/aide-pkg-sqlite",
-      "packageSourceCommit": "45db2e291b5ca27fcd891460c3e5b3f0f84e5ece",
-      "latestPublicTag": "v1.0.0",
-      "latestPublicCommit": "45db2e291b5ca27fcd891460c3e5b3f0f84e5ece",
+      "packageSourceCommit": "8098ba73c1ca588f037805dba1aa51f239615c71",
+      "latestPublicTag": "v1.0.1",
+      "latestPublicCommit": "9d9cbd9a4291c1ddcb6f0d7ef310ff21f6efa374",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",
@@ -379,14 +379,14 @@
     },
     {
       "id": "terminal",
-      "marketVersion": "1.5.1",
-      "package": "packages/terminal/1.5.1-16955e057fc0.zip",
-      "bytes": 1063002,
-      "sha256": "16955e057fc0e5176bae9bade29981cb56d5565fa9b1bef0e2a84e1b4c6338ed",
+      "marketVersion": "1.5.3",
+      "package": "packages/terminal/1.5.3-0f6810cf1e63.zip",
+      "bytes": 1063899,
+      "sha256": "0f6810cf1e637621aca25b414af5fafb1db089134653dd8e7b8aedef4df43813",
       "repository": "skyelan1999/aide-pkg-terminal",
-      "packageSourceCommit": "d140f369220c9cff6cc4a741554516bff2896465",
-      "latestPublicTag": "v1.5.2",
-      "latestPublicCommit": "17227d72ef3017858de3f9e0c30bd06a9941668e",
+      "packageSourceCommit": "a7e790c10eee389f99ba646f99ca60648f1d56f9",
+      "latestPublicTag": "v1.5.3",
+      "latestPublicCommit": "221147d2f33cff377f2c854a5b97dbbfbe1525c6",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",

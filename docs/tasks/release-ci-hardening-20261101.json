@@ -57,7 +57,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "a0ff1acb日常CI通过。本地0aa765a2阶段快照完整race/vet通过：1587项，1509通过、78选择性/环境相关跳过，24分片无失败；其余Go包和11项平台合约通过。跳过不是功能通过，旧快照不是最终发行收据。云端48格浏览器通过(16b48d08)，Windows 10项、macOS ARM/Intel各8项通过(d6cc5a81)。Docker夹具遗漏#702已补COPY(a0ff1acb)，实际新构建待最终全量运行。旧public SQLite/Terminal的#583/#584/#586/#588经原包复现，候选ZIP真实Aide导入和否定/拥塞回归通过，双架构CI通过；市场PR32仅更新2包。三个修复PR的owner保护需具体管理员例外授权，已询问尚未收到回复；正式市场发布与最终同源全量验收尚未完成。",
+      "summary": "a0ff1acb日常CI通过。本地0aa765a2阶段快照完整race/vet通过：1587项，1509通过、78选择性/环境相关跳过，24分片无失败；其余Go包和11项平台合约通过。跳过不是功能通过，旧快照不是最终发行收据。云端48格浏览器通过(16b48d08)，Windows 10项、macOS ARM/Intel各8项通过(d6cc5a81)。Docker夹具遗漏#702已补COPY(a0ff1acb)，实际新构建待最终全量运行。旧public SQLite/Terminal的#583/#584/#586/#588经原包复现，候选ZIP真实Aide导入和否定/拥塞回归通过，双架构CI通过；市场PR32仅更新2包。三个修复PR的owner保护需具体管理员例外授权，已询问尚未收到回复；正式市场发布与最终同源全量验收尚未完成。 Formal public fixes are now published and the immutable market lock refreshed; a new full Delivery will validate final source and all 30 published ZIPs.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/698",
         ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
@@ -91,19 +91,21 @@
       ]
     },
     "release": {
-      "status": "blocked",
-      "summary": "SQLite PR2、Terminal PR2、市场PR32各要求一次owner审阅，唯一owner同时为作者不能自审。已准备结果并请求仅这三个PR的管理员例外授权，未收到答复，不更改保护规则、不合并、不发布。Aide PR698仍为草稿，最终市场锁定、全量同源验证和main门禁仍待完成。",
+      "status": "in_progress",
+      "summary": "User explicitly authorized the three specific administrator exception merges. SQLite PR2 -> 9d9cbd9a (v1.0.1 published), Terminal PR2 -> 221147d2 (v1.5.3 prerelease published); remote tags/ZIP sizes/SHA sums independently verified. Market PR32 -> 943f6a90. No protection settings changed. Aide lock now fixes this formal marketplace and both new packages; final full Delivery and Aide PR698 integration remain. This exception does not authorize bypassing Aide PR protection.",
       "evidence": [
         "https://github.com/skyelan1999/aide-pkg-sqlite/pull/2",
         "https://github.com/skyelan1999/aide-pkg-terminal/pull/2",
         "https://github.com/skyelan1999/aide-pkg-shop/pull/32",
-        "https://github.com/skyelan1999/aide/pull/698"
+        "https://github.com/skyelan1999/aide/pull/698",
+        "https://github.com/skyelan1999/aide-pkg-sqlite/releases/tag/v1.0.1",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.3"
       ]
     }
   },
   "release_authorization": "用户当前要求做一次完整release；包含必要集成、版本及公开发行；不推定管理员绕过保护，也不替换生产服务",
   "rollback": "保留现行发布、镜像和用户数据；失败仅留草稿/候选，修复后重新绑定源代码验证，禁止覆盖旧附件",
-  "handoff": "先检查三个PR的用户授权回复及最新HEAD/CI；获授权后先合并并发布SQLite1.0.1、Terminal1.5.3，校验公开tag/ZIP，再合并市场和更新public lock。随后同一最终Aide源码重跑完整Delivery及30个正式包双架构验收；旧快照和hosts/browser子范围不可代替。Aide PR698自身保护另行满足，插件/市场例外不延伸到Aide。干净main沿用full/release-check/version.sh发行并验证远端附件；9999生产容器未替换。",
+  "handoff": "Continue full Delivery after updated formal marketplace lock. Verify both native candidates, complete race/vet inventories, all 30 published packages, 48 browser cases, native hosts and clean launcher. Keep production unchanged. PR698 requires its own protection to be satisfied; the three plugin/market exceptions do not extend to it. Then clean main full/release-check/version.sh and independently verify remote Release assets.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/696",
     "https://github.com/skyelan1999/aide/issues/699",
