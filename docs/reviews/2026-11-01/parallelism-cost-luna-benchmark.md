@@ -8,6 +8,8 @@ Input: synthetic only; within each task type, 1x and 10x received the same promp
 
 Usage source: OpenAI upstream-reported token usage, including preflight context compaction. No monetary cost is estimated.
 
+Evidence availability: references below identified as local-only are ignored `.agent-state/` files from the original test machine. They are not included in a clean checkout or public release, and cannot serve as independently downloadable proof. In-repository reports remain linked; the recorded measurements and limitations below are unchanged.
+
 | Task | Setting | Wall time | Total tokens | Prompt / completion | Workers | Coverage |
 |---|---:|---:|---:|---:|---:|---|
 | Simple extraction | 1x | 7.83s | 6,670 | 6,384 / 286 | 0 | pass |
@@ -43,7 +45,7 @@ The implementation now recognizes explicitly labeled independent items in the us
 
 The target is now **a very complex task that takes about 10 minutes at 1x should finish within 1 minute at 10x**, with equivalent required coverage and evidence quality. This benchmark does not validate that target: its 1x workload took about 15 seconds, and its 10x diagnostic rerun took about 36 seconds. A dedicated 10-minute-class paired workload and repeated runs are still needed before claiming the target is met.
 
-Raw synthetic proofs: [initial matrix](parallelism-cost-luna-benchmark.json), [planner-based rerun](../../../.agent-state/parallelism-cost-luna-diagnose-20261101.json), and [direct-dispatch rerun](../../../.agent-state/parallelism-cost-luna-direct-fanout-20261101.json).
+Raw synthetic proofs: [initial matrix](parallelism-cost-luna-benchmark.json), planner-based rerun (local-only: `.agent-state/parallelism-cost-luna-diagnose-20261101.json`), and direct-dispatch rerun (local-only: `.agent-state/parallelism-cost-luna-direct-fanout-20261101.json`).
 
 ## Shared worker-context fitting and fixed-path rerun
 
@@ -61,7 +63,7 @@ Task-only usage excluding preflight was 32,582 tokens (27,164 prompt / 5,418 com
 
 The 1x reference is still the earlier 14.97s small synthetic case, not a matched 10-minute-class workload. The requested 10-minute 1x to 60-second 10x target remains unproven. Main executor tools, verification, writes, approvals, and final synthesis are serial and cannot be accelerated by the current read-only worker pool.
 
-Fixed-path proof: [Luna shared-context fixed rerun](../../../.agent-state/parallelism-cost-luna-shared-context-fixed-20261101.json).
+Fixed-path proof: Luna shared-context fixed rerun (local-only: `.agent-state/parallelism-cost-luna-shared-context-fixed-20261101.json`).
 
 ## Fast assembly and quality-checked repeat
 
@@ -78,7 +80,7 @@ The live test now validates the synthetic complex brief's requested checks, evid
 
 The latest final-text checked 10x run was about 2.5x faster in model execution and 1.8x faster in harness wall time than the quality-checked 1x call, and avoids the 15.85s or 21.31s synthesis calls observed in earlier 10x runs. The 10x case used roughly 3.4x the total upstream-reported tokens and returned a longer draft. Harness wall time includes the separately measured context-recovery preflight (about 11s for 10x and 19s for 1x). There is one quality-checked 1x sample and one final-text checked 10x sample, plus an earlier worker-level repeat. This is not a 10-minute baseline and does not establish the requested 60-second goal. Parallel calls, rate limits, context fitting, output volume, and serial tool/verification/write work remain relevant bottlenecks.
 
-Proofs: [quality-checked 1x reference](../../../.agent-state/parallelism-cost-luna-fast-assembly-quality-pair-1x-20261101.json), [fast assembly 10x](../../../.agent-state/parallelism-cost-luna-fast-assembly-10x-20261101.json), [worker-quality 10x repeat](../../../.agent-state/parallelism-cost-luna-fast-assembly-10x-quality-repeat-20261101.json), and [latest final-text quality 10x](../../../.agent-state/parallelism-cost-luna-fast-assembly-quality-final-10x-20261101.json). An older exploratory pair (before the fast-assembly shortcut was active) remains [here](../../../.agent-state/parallelism-cost-luna-fast-assembly-pair-20261101.json).
+Proofs: quality-checked 1x reference (local-only: `.agent-state/parallelism-cost-luna-fast-assembly-quality-pair-1x-20261101.json`), fast assembly 10x (local-only: `.agent-state/parallelism-cost-luna-fast-assembly-10x-20261101.json`), worker-quality 10x repeat (local-only: `.agent-state/parallelism-cost-luna-fast-assembly-10x-quality-repeat-20261101.json`), and latest final-text quality 10x (local-only: `.agent-state/parallelism-cost-luna-fast-assembly-quality-final-10x-20261101.json`). An older exploratory pair (before the fast-assembly shortcut was active) remains here (local-only: `.agent-state/parallelism-cost-luna-fast-assembly-pair-20261101.json`).
 
 ## Regression test note
 
@@ -93,7 +95,7 @@ The scheduler now also recognizes an explicitly independent, consecutive numbere
 | 1x | 16.25s | 5.02s | 8,933 | 0 | pass |
 | 10x | 18.34s | 4.25s | 37,315 | 10/10 | pass |
 
-This sample is more demanding than the prior short prompt, but still completes in seconds at 1x; the 10x run is about 2.1 seconds slower and uses about 4.2x the tokens. It demonstrates that parallel fanout does not automatically accelerate a single concise response, and it does not validate the 10-minute-to-1-minute target. Proof: [numbered extreme Luna pair](../../../.agent-state/parallelism-cost-luna-numbered-extreme-20261101.json).
+This sample is more demanding than the prior short prompt, but still completes in seconds at 1x; the 10x run is about 2.1 seconds slower and uses about 4.2x the tokens. It demonstrates that parallel fanout does not automatically accelerate a single concise response, and it does not validate the 10-minute-to-1-minute target. Proof: numbered extreme Luna pair (local-only: `.agent-state/parallelism-cost-luna-numbered-extreme-20261101.json`).
 
 ## Bounded local read batching
 
@@ -107,7 +109,7 @@ Local `semantic_search` calls without a reference source may now join the same b
 
 Review found that parallel workers were always capped at 2,048 output tokens even though Aide's default and precise profiles allow 8,192. This could truncate a genuinely detailed independent subtask while the main executor retained its larger budget. Worker output now inherits the requested profile budget up to 8,192; when the selected model has a known small context window, the reserve is limited to half that window so evidence and instructions still fit. A focused test covers default, profile, cap, and small-window cases.
 
-The Luna `extreme` pair was rerun after this change. Both answers passed the existing content, identifier, coverage, and context-budget checks; the 10x run started and completed all ten workers and each worker snapshot reserved 8,192 output tokens. The workload itself remained short: 1x used 20.50s execution / 28s test wall time and 8,922 tokens; 10x used 28.60s execution / 35s test wall time and 37,395 tokens (5,056 completion tokens). This is slower at 10x and substantially more expensive in tokens. It verifies the larger reserve reaches Luna, but does not demonstrate that a task requiring that output completes within 60 seconds or that 10x achieves the 10-minute-to-1-minute target. Proof: [worker-budget Luna pair](../../../.agent-state/parallelism-cost-luna-worker-budget-20261101.json).
+The Luna `extreme` pair was rerun after this change. Both answers passed the existing content, identifier, coverage, and context-budget checks; the 10x run started and completed all ten workers and each worker snapshot reserved 8,192 output tokens. The workload itself remained short: 1x used 20.50s execution / 28s test wall time and 8,922 tokens; 10x used 28.60s execution / 35s test wall time and 37,395 tokens (5,056 completion tokens). This is slower at 10x and substantially more expensive in tokens. It verifies the larger reserve reaches Luna, but does not demonstrate that a task requiring that output completes within 60 seconds or that 10x achieves the 10-minute-to-1-minute target. Proof: worker-budget Luna pair (local-only: `.agent-state/parallelism-cost-luna-worker-budget-20261101.json`).
 
 The latest focused race-detector set, including the worker budget, worker fanout, and local read batch tests, passed. Full-package regression remains unverified.
 
@@ -127,22 +129,22 @@ The latest unchanged `extreme` Luna/off workload exposed a production assembly m
 | After fix 1x | 17.202s | 23.34s | 9,123 | 0 | content/coverage pass |
 | After fix 10x | 4.364s | 9.85s | 29,784 | 10/10 | content/coverage pass; direct assembly |
 
-The paired execution ratio is about 3.94x, and test-wall ratio about 2.37x. These remain short synthetic drafting tasks, not a ten-minute baseline. Marker/content checks do not establish general engineering correctness. Proofs: [before fix](../../../.agent-state/parallelism-cost-luna-current-20261101.json), [after fix pair](../../../.agent-state/parallelism-cost-luna-heading-fixed-20261101.json).
+The paired execution ratio is about 3.94x, and test-wall ratio about 2.37x. These remain short synthetic drafting tasks, not a ten-minute baseline. Marker/content checks do not establish general engineering correctness. Proofs: before fix (local-only: `.agent-state/parallelism-cost-luna-current-20261101.json`), after fix pair (local-only: `.agent-state/parallelism-cost-luna-heading-fixed-20261101.json`).
 
 The user explicitly prioritizes elapsed time over token cost. Live benchmarks now accept `AIDE_CONTEXT_LIVE_REASONING_EFFORT` (default `off`) and `AIDE_CONTEXT_LIVE_TIMEOUT_SECONDS` (30–1800, default 900), making reasoning and long-run limits explicit without changing product settings. A high-effort attempt failed during compaction preflight with EOF; neither task started, so it contributes no performance sample.
 
-A second 10x run also passed the content, coverage and context-budget checks, with 10/10 completed workers and direct assembly: execution **3.965s**, preflight **4.640s**, total **9.06s**, 30,106 reported tokens. Targeted race tests for decimal facts, direct assembly and quality rejection passed. [Repeat proof](../../../.agent-state/parallelism-cost-luna-heading-fixed-repeat-20261101.json).
+A second 10x run also passed the content, coverage and context-budget checks, with 10/10 completed workers and direct assembly: execution **3.965s**, preflight **4.640s**, total **9.06s**, 30,106 reported tokens. Targeted race tests for decimal facts, direct assembly and quality rejection passed. Repeat proof (local-only: `.agent-state/parallelism-cost-luna-heading-fixed-repeat-20261101.json`).
 
 
 ## High-effort format and critical-path follow-up
 
 High reasoning is now explicitly selected by environment, and is tested separately from the earlier off-effort pairs. The first high-effort pair failed the harness's label check because the completed answers used bold numbered headings. Production and benchmark heading parsing now share the same function, including markdown heading/bold wrappers, while retaining numeric boundaries and rejecting duplicated/misattributed sections. A first-worker instruction that rendered `1.` next to sentence-ending punctuation could also elicit `1..`; labels are now quoted with an explicit trailing-space requirement.
 
-The subsequent high-effort pair produced complete heading coverage, but was not an accepted quality-equivalent pair: 1x used the shortened field `通过` rather than `通过标准`, and 10x required main synthesis when individual workers condensed checks or field names. 1x execution was 16.439s, 10x 27.588s. The 10x worker request times were 5.2–11.1s followed by a 16.353s main synthesis call. These timing records are now populated for every parallel request snapshot as well as each worker's whole duration; previously parallel request snapshots reported zero duration. Proof: [high-effort diagnostic](../../../.agent-state/parallelism-cost-luna-high-markdown-fixed-20261101.json).
+The subsequent high-effort pair produced complete heading coverage, but was not an accepted quality-equivalent pair: 1x used the shortened field `通过` rather than `通过标准`, and 10x required main synthesis when individual workers condensed checks or field names. 1x execution was 16.439s, 10x 27.588s. The 10x worker request times were 5.2–11.1s followed by a 16.353s main synthesis call. These timing records are now populated for every parallel request snapshot as well as each worker's whole duration; previously parallel request snapshots reported zero duration. Proof: high-effort diagnostic (local-only: `.agent-state/parallelism-cost-luna-high-markdown-fixed-20261101.json`).
 
 Recommendation bullet recognition now accepts two explicit `•` items within the check-recommendation section; bullets/semicolons in later evidence fields cannot satisfy that requirement. Positive and negative fixtures and targeted race tests cover it. Worker instructions preserve user-requested field names and separate check recommendations. The live extreme prompt now explicitly requires the same field layout for both 1x and 10x, so later pairs must be treated as a new workload version. The initial attempt of that version failed during compaction preflight with EOF; it contributes no task-performance sample. None of these short synthetic prompts establishes the ten-minute baseline or general correctness target.
 
-The bounded retry of the new structured prompt **passed** at Luna/high: 1x execution **19.013s**, preflight **5.388s**, test wall **24.78s**, reported tokens 9,602; 10x execution **9.906s**, preflight **5.645s**, test wall **15.89s**, reported tokens 35,390. All ten workers completed; direct assembly succeeded without a main synthesis call. Both passed current content, label coverage, history preservation and context-budget checks. Execution speedup is about **1.92x**, test-wall speedup about **1.56x**. This is one accepted pair for this new prompt/high-effort configuration, not a ten-minute task or a repeated high-effort performance claim. [Accepted structured high-effort pair](../../../.agent-state/parallelism-cost-luna-high-structured-retry-20261101.json). Targeted race tests passed after the final instruction changes.
+The bounded retry of the new structured prompt **passed** at Luna/high: 1x execution **19.013s**, preflight **5.388s**, test wall **24.78s**, reported tokens 9,602; 10x execution **9.906s**, preflight **5.645s**, test wall **15.89s**, reported tokens 35,390. All ten workers completed; direct assembly succeeded without a main synthesis call. Both passed current content, label coverage, history preservation and context-budget checks. Execution speedup is about **1.92x**, test-wall speedup about **1.56x**. This is one accepted pair for this new prompt/high-effort configuration, not a ten-minute task or a repeated high-effort performance claim. Accepted structured high-effort pair (local-only: `.agent-state/parallelism-cost-luna-high-structured-retry-20261101.json`). Targeted race tests passed after the final instruction changes.
 
 
 ## Exact engineering-resource workload (new workload class)
@@ -158,7 +160,7 @@ First Luna/high pair on the engineering workload:
 
 Both runs **failed** acceptance. Labels/context budgets passing did not count as success. The three completed worker candidates (cases 3, 8, 9) independently match optimum values **294, 323, 287**, with recomputed resource totals (74,55), (70,51), (72,50). A separate Python subset enumeration agreed with the Go oracle for those cases. Six other workers consumed exactly the 8,192 completion-token ceiling without a final answer; another failed request returned no usage. Worker durations were 39.2–70.7s, followed by a 14.228s main synthesis. The main synthesis discarded even the three correct candidate solutions; the final answer therefore remains a failure. This shows output/reasoning budget exhaustion and incomplete-result handling as material limits of the current model-only worker path. Increasing the cap alone is not a demonstrated speed fix. No ten-minute-to-one-minute speedup can be inferred because the 1x baseline did not solve the task.
 
-[Engineering failure proof](../../../.agent-state/parallelism-cost-luna-engineering-20261101.json). Synthetic fixtures and oracle: `internal/server/parallel_engineering_benchmark_test.go`; no real project data or artificial delays are used.
+Engineering failure proof (local-only: `.agent-state/parallelism-cost-luna-engineering-20261101.json`). Synthetic fixtures and oracle: `internal/server/parallel_engineering_benchmark_test.go`; no real project data or artificial delays are used.
 
 
 ## Retry checkpoint preserves completed assignments
@@ -183,7 +185,7 @@ The subsequent same-input Luna/medium engineering pair completed but **failed** 
 
 Correct final cases were 1, 5, 7, 8 and 10; cases 2, 3, 4, 6 and 9 explicitly reported unsolved and were rejected by the oracle. All worker calls returning text is therefore not equivalent to all assignments being solved. The paired prompt SHA-256 was identical: `9ac801d2fa182f70d9fc86453a700a72b66ce1529ef4db2aaa2aa7bad6884765`. Direct assembly succeeded, so the 87-second critical path was a worker, not main synthesis. This single medium-effort sample improves exact returned case count versus the earlier high-effort sample, but neither effort mode meets the target and neither has a successful 1x ten-minute baseline. No product reasoning preference was automatically changed.
 
-[Medium-effort engineering pair](../../../.agent-state/parallelism-cost-luna-engineering-medium-retry-20261101.json). The exact combinatorial stress test reveals model-only computation limitations; it is not a substitute for the requested real coding/development workflow benchmark.
+Medium-effort engineering pair (local-only: `.agent-state/parallelism-cost-luna-engineering-medium-retry-20261101.json`). The exact combinatorial stress test reveals model-only computation limitations; it is not a substitute for the requested real coding/development workflow benchmark.
 
 
 ## Coding pipeline pilot: actual proposals, approval and executed tests
@@ -201,7 +203,7 @@ The initial paired test's 1x compaction failed with EOF, while 10x succeeded. A 
 
 The apply/test-inclusive ratio is approximately 1.18x for this single pair, with no ten-minute baseline. The 10x run completed ten analysis workers; workers did not execute tools or apply patches. Ordinary main-executor tool calls, file proposals, approval and tests remained downstream. The snapshot log reaches its 12-body cap in 10x, so it is incomplete for attributing later main-executor latency; it must not be used as a complete critical-path trace. 1x token accounting was partly estimated; tokens are not the optimization gate per the user's instruction. Model elapsed time is frozen before application/test scoring; `endToEndElapsedMillis` records through those stages and excludes preflight, while test wall includes preflight and harness overhead.
 
-[10x successful pilot](../../../.agent-state/parallelism-cost-luna-coding-20261101.json), [1x successful retry](../../../.agent-state/parallelism-cost-luna-coding-1x-retry-20261101.json). Only these isolated temporary fixtures were applied; no user's project or running Aide service was modified.
+10x successful pilot (local-only: `.agent-state/parallelism-cost-luna-coding-20261101.json`), 1x successful retry (local-only: `.agent-state/parallelism-cost-luna-coding-1x-retry-20261101.json`). Only these isolated temporary fixtures were applied; no user's project or running Aide service was modified.
 
 
 ## Parallel file-draft candidate
@@ -218,4 +220,4 @@ The first live attempt failed both compaction preflights with EOF. The retry on 
 
 The paired apply/test-inclusive ratio is about 1.25x. The repeat has no newly paired 1x reference and must not imply a stable larger ratio. All ten worker parts identify their assigned draft paths; all ten applied source regressions passed. A lightweight registered-proposal counter was subsequently added and locally tested, so these earlier live files do not yet contain that counter. The 12-body request-snapshot limit still truncates later main-call timings. This is still the small coding pilot, not the ten-minute-class target. Generic drafting, cancellation, fanout, end-to-end and ROS2 fixtures were checked with race; a stale ROS2 assertion was corrected to inspect the reference-context message containing the user task, rather than require it to be copied into the isolated scheduler instruction. New policy/version/JSON/budget/cancellation fixtures passed.
 
-[Paired coding drafts](../../../.agent-state/parallelism-cost-luna-coding-parallel-drafts-retry-20261101.json), [pinned-original 10x repeat](../../../.agent-state/parallelism-cost-luna-coding-parallel-drafts-pinned-20261101.json), [candidate design](../../designs/parallel-file-drafts-20261101.md). No production service or user's project was updated during these model tests.
+Paired coding drafts (local-only: `.agent-state/parallelism-cost-luna-coding-parallel-drafts-retry-20261101.json`), pinned-original 10x repeat (local-only: `.agent-state/parallelism-cost-luna-coding-parallel-drafts-pinned-20261101.json`), [candidate design](../../designs/parallel-file-drafts-20261101.md). No production service or user's project was updated during these model tests.

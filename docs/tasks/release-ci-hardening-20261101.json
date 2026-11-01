@@ -57,8 +57,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "33 项 CI 合约、actionlint、quick 已通过；public 30 包 ARM64 实装/功能两轮通过，后轮包含新诊断、真实渲染像素/摘要、DOCX正文、星图搜索、WAV续跑断言。8个诊断故障场景及daemon/插件计划/HTTP/旧视觉断言专项race通过(65.483秒)；vet抓到新增测试字段标签误改，已修正，后续云端复核。旧快照全量继续收集，唯一已知失败为 #696 旧视觉预拦截断言，修正已被专项覆盖。48格实际浏览器继续运行；跨系统和双架构云端尚未执行，不作为正式发布通过。",
-      "evidence": []
+      "summary": "本地 30 个公开原包 ARM64 实装/功能、48 格真实 Chromium/Firefox/WebKit 场景和8个诊断故障场景专项 race 通过；远端基础 Go 编译/关键回归/vet通过。clean CI发现 #699 文档指向忽略证据、快照测试替身未生成新收据两项问题，已修复并通过9项资源守卫/33项CI合约/文档检查；继续远端及当前源码完整race验收。旧全量24分片仅 #696 旧视觉断言失败，已修正并由专项覆盖。正式 Release 尚未发布。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/698",
+        ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
+        ".agent-state/release-ci-hardening-20261101/public-with-diagnostics/report.json"
+      ]
     },
     "documentation": {
       "status": "pass",
@@ -86,6 +90,7 @@
   "rollback": "保留现行发布、镜像和用户数据；失败仅留草稿/候选，修复后重新绑定源代码验证，禁止覆盖旧附件",
   "handoff": "",
   "issues": [
-    "https://github.com/skyelan1999/aide/issues/696"
+    "https://github.com/skyelan1999/aide/issues/696",
+    "https://github.com/skyelan1999/aide/issues/699"
   ]
 }

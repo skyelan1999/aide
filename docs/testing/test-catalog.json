@@ -9102,7 +9102,7 @@
     {
       "path": "scripts/test_resource_guard.py",
       "kind": "python",
-      "sha256": "b7ebee8b4df288ff26c4e1fa21c489f01d48db3ab554f82f759ce89dba2ffcb7",
+      "sha256": "8d29bf6d24bd3d292b2302760628ac46a5c116440bcb526bbfaa47488940535b",
       "cases": [
         "test_disk_guard_without_exported_project_dir_uses_current_directory",
         "test_explicit_disk_path_overrides_stale_parent_environment",
