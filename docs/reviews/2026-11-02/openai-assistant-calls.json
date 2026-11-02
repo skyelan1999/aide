@@ -122,8 +122,37 @@
     "subjective_voice_quality": "PENDING_USER_LISTENING"
   },
   "runtime": {
-    "production_9999": "unchanged",
-    "review_18096": "updated native isolated review using existing local review data"
+    "production_9999": "Updated under user authorization; original data mounts retained; independent voice key retained",
+    "review_18096": "Stopped after production update; private data and generated audio retained"
   },
-  "release": "not pushed, published or deployed"
+  "release": "Local source integration and authorized local deployment only; not pushed or published",
+  "deployment": {
+    "authorization": "User explicitly selected update localhost9999 on2026-11-02",
+    "source_commit": "36ce0dee",
+    "image": "sha256:2691ebcdc6669ddc27f18025edce8df548e6c236dc4b551160b066a7ecc770eb",
+    "tag": "aide:openai-calls-738-36ce0de",
+    "source_fingerprint": "13a42bea876487c9e6fd51a123243ee0f87d040b01ec4c3aaf9a8baa8d1879e4",
+    "health": "healthy",
+    "candidate_smoke": "PASS fresh isolated image instance: health200, authenticated config200, independent key not echoed, selected voice saved, current embedded call/worklet scripts",
+    "production_config": {
+      "default_provider_before": "qwen",
+      "default_provider_after": "openai",
+      "mode": "realtime",
+      "model": "gpt-realtime-2.1-mini",
+      "voice": "cedar",
+      "openai_key_preserved": true,
+      "qwen_key_preserved": true
+    },
+    "production_call_preflight": "200 after user unlock; actual provider follows saved selection. User later selected Qwen.",
+    "backup": "Private ignored .agent-state/openai-calls-update-20261102 in installation root; settings/env copies mode0600",
+    "previous_image": "sha256:8e537868ac150b7a1169ee53ab3fa3e911b493e064c17f201db3e8494f5dcd78"
+  },
+  "safari_websocket_diagnosis": {
+    "before": "Real page/script + WebKit with certificate errors ignored connected; strict certificate check failed with invalid localhost certificate. System verification CSSMERR_TP_NOT_TRUSTED. Not a provider key failure.",
+    "authorization": "User explicitly approved user-keychain SSL trust for current localhost certificate only",
+    "certificate_sha256": "31:FD:07:A8:65:9A:E5:41:1C:78:D4:64:F0:43:65:93:53:27:78:9F:18:31:3F:0B:1B:58:94:29:29:C6:60:A7",
+    "trust_scope": "login keychain, user trust store, SSL policy, localhost only; no system root changes",
+    "after": "security verify-cert successful. WebKit default certificate checking (ignoreHTTPSErrors=false) health200 and Qwen/Tina aide.ready. No microphone used.",
+    "actual_safari_user_call": "PENDING_USER_RETRY"
+  }
 }

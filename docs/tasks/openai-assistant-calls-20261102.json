@@ -65,12 +65,13 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "Local integration follows user instruction to merge locally first; no remote push or publication. Production replacement requires separate next step.",
+      "summary": "No formal release/push/publication. Local main36ce0de integrated and candidate image2691ebcd deployed to9999 with explicit user approval. Health/config/scripts pass. Production native call preflight currently423 awaiting assistant unlock.",
       "evidence": []
     }
   },
   "release_authorization": "",
-  "rollback": "Local source can revert the scoped fix commit; production not replaced. Review server retains previous data and key.",
-  "handoff": "Native review18096 has the complete OpenAI call adapter; production9999 still needs an updated build/start. Original layout retained. No real microphone/Safari acceptance yet.",
-  "issue": "https://github.com/skyelan1999/aide/issues/738"
+  "rollback": "Previous production image8e537868 retained; startup used AIDE_STARTUP_PREVIOUS_IMAGE_ID. Private0600 env/settings backup retained in installation .agent-state/openai-calls-update-20261102. Keep data mounts unchanged when restoring image.",
+  "handoff": "Local fix36ce0de deployed to9999 under explicit approval. User-selected Qwen currently preserved. Both keys retained. Root cause of Safari-side handshake failure reproduced as untrusted self-signed localhost certificate; user approved SSL-only localhost user-keychain trust, and strict WebKit handshake now succeeds. Actual Safari microphone/listening retry pending. Model/key centralization and removal of global gender selector are new follow-up requirements.",
+  "issue": "https://github.com/skyelan1999/aide/issues/738",
+  "deployment_authorization": "User selected update9999 after candidate image and all scoped acceptance passed"
 }
