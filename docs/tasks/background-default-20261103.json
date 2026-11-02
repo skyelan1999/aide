@@ -41,13 +41,15 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Existing background lifecycle/navigation/experience regressions pass. Real Chromium component page uses production settings-init, schema, actual segmented renderer, background module and styles; verified defaults, explicit off persistence, old motion normalization, system reduced motion, cross-tab sync, 1440/390 layouts, zero page errors. Stable quick gate and local deployed-asset checks remain.",
+      "status": "pass",
+      "summary": "Stable quick gate: 320 checks pass. Existing background/navigation/experience regressions pass. Real Chromium component page uses production settings-init/schema, extracted actual segmented renderer, background module/styles: fresh studio default, explicit-off reload, legacy-motion normalization, OS reduced-motion pause, cross-tab sync and 1440/390 layouts verified, zero page errors. Canonical build.command succeeded; running service healthy, data mounts unchanged, served changed assets byte-match source, deployed schema has no motion control. Actual Aide window observed at its existing lock screen; no account bypass or full unlocked-native-settings claim.",
       "evidence": [
+        ".agent-state/background-default/quick.log",
         ".agent-state/background-default/browser-result.json",
         ".agent-state/background-default/desktop-dark.png",
         ".agent-state/background-default/narrow-light.png",
-        ".agent-state/background-default/background-tests.log"
+        "primary: .agent-state/background-default/build-actual.log",
+        "primary: .agent-state/background-default/deployment.json"
       ]
     },
     "documentation": {
@@ -58,18 +60,32 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only scoped source/test/docs changed. Closed owned QA browser/pages and server. Private reproducible fixture/screenshots/logs retained under ignored evidence directory; no user preferences or local media modified.",
+      "evidence": [
+        ".agent-state/background-default/qa-inventory.json",
+        ".agent-state/background-default/browser-result.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "No public push, release, tag or version bump requested; local source build/deployment is acceptance, recorded separately.",
+      "evidence": [
+        "docs/tasks/background-default-20261103.json"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "",
-  "issue": "https://github.com/skyelan1999/aide/issues/747"
+  "handoff": "Implemented, locally committed/merged, compiled and deployed. Public push/release not performed. Component UI verified and Aide native window remains normally locked after service update; unlock normally to view settings. Prior native plugin-page acceptance in #746 remains separate and pending.",
+  "issue": "https://github.com/skyelan1999/aide/issues/747",
+  "local_deployment": {
+    "image": "sha256:992d24c73a77076af179f75fde12a2cf49e839cdcb09a09b3a16f9737c0c5575",
+    "sourceSHA256": "53390968ba4fd3c2cf5bbf5b9bf50f43e2664ce228eeb35dcc079267c1dadbc1",
+    "codeCommit": "0796230e",
+    "health": "healthy",
+    "mountsUnchanged": true,
+    "servedAssetsMatch": true,
+    "motionControlAbsent": true
+  }
 }
