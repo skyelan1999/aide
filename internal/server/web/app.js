@@ -6824,7 +6824,22 @@ function reviewPluginWorkbenchProposal(id){
  }
  return selectSession(id);
 }
-function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled)};}
+function pluginWorkbenchServices(){return {api,t,toast,reviewProposal:reviewPluginWorkbenchProposal,blocked:()=>lockScreen.locked||!state.token,scope:()=>recoveryScope()+':'+chatRecoveryEpoch,enabled:id=>state.plugins.some(item=>item.id===id&&item.enabled),openPage:(plugin,selection)=>window.AidePluginWorkbenchTabs.open(plugin,{t,toast,selection,blocked:()=>lockScreen.locked||!state.token,workspace:recoveryScope})};}
+let pluginPageOpening=false,pluginPageKey='';
+async function openRoutedPluginWorkbench(){
+ const route=window.AidePluginWorkbenchTabs?.read();if(!route||lockScreen.locked||!state.token||pluginPageOpening)return;
+ const key=JSON.stringify(route);if(key===pluginPageKey)return;
+ pluginPageOpening=true;const scope=recoveryScope(),epoch=chatRecoveryEpoch;
+ try{
+  if(route.workspace!==scope)throw Error(t('工作区已切换，请从当前工作区重新打开插件'));
+  await loadPluginsPanel();
+  if(lockScreen.locked||epoch!==chatRecoveryEpoch||scope!==recoveryScope())return;
+  const plugin=state.plugins.find(p=>p.id===route.id&&p.enabled&&!p.error&&p.workbench?.protocol===1);
+  if(!plugin)throw Error(t('插件工作台不可用，请检查插件是否已启用'));
+  const opened=await window.AidePluginWorkbench.open(plugin,{...pluginWorkbenchServices(),inPage:true,selection:route.selection,onClose:()=>{pluginPageKey='';}});
+  if(opened){pluginPageKey=key;document.title=(plugin.workbench.title||plugin.name)+' · aide';}
+ }catch(error){toast(error.message);}finally{pluginPageOpening=false;}
+}
 async function loadPluginsPanel() {
   const data = await api('/plugins');
   state.plugins = data.plugins || [];
@@ -10173,6 +10188,7 @@ async function initialize() {
   }
   if (window.syncVirtualAvatarSettings) await window.syncVirtualAvatarSettings();
   if (window.AideFileRoute?.read()) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); if(!fileView.spec)await openFileViewMode(); return; }
+  if (window.AidePluginWorkbenchTabs?.read()) { await Promise.all([loadProfiles(),loadWorkspaceConfig(),loadSourcesList()]); setupGlobalEvents(); return; }
   await Promise.all([loadSessions(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
   const recovered=window.AideContinuity?await AideContinuity.readTab(recoveryScope(),'scene','workbench').catch(()=>null):null;
   if(recovered){
@@ -10195,7 +10211,7 @@ async function initialize() {
   setupGlobalEvents(); // #60
 }
 initialize()
-  .then(() => { resetIdleTimer(); })
+  .then(() => { resetIdleTimer(); return openRoutedPluginWorkbench(); })
   .catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
 
 /* Compact-window navigation. Keeps session navigation reachable on iPhone/iPad. */
@@ -12122,7 +12138,7 @@ function releaseLockVisual() {
   veil.hidden = true;
   veil.classList.remove('joining');
   if(!lockScreen.unlocking)lockScreen.wasVoiceListening=false;
-  if(wasLocked)resumeUnlockedState();
+  if(wasLocked){resumeUnlockedState();void openRoutedPluginWorkbench();}
 }
 /* 加入窗口期中性面纱：不露内容、不抢密码框。 */
 function showJoiningVeil() {

@@ -94,6 +94,8 @@ AIDE_LOCAL_ROOT=/absolute/path/to/projects
 
 Open `http://127.0.0.1:8097`. The startup script opens a local token login automatically when a desktop opener is available. The local access token is separate from your model API key; do not share either.
 
+**macOS desktop app**: source installations can run `desktop.command` to compile and open `~/Applications/Aide.app`, with the existing workbench, native tabs, menus and file panels. Daily `start.command` opens the compiled app; explicit `build.command` updates both the image and Mac host. Closing the UI preserves shared backend tasks. See [Mac desktop host](docs/architecture/macos-desktop.md).
+
 ## Your first task
 
 1. Open **Model settings** and configure a provider, model ID, and key. Official OpenAI GPT-6 models use the Responses API; other models use their provider-compatible endpoint.

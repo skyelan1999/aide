@@ -1593,6 +1593,17 @@
         "scripts/test_launcher_contract.py"
       ],
       [
+        "python3",
+        "scripts/test_macos_desktop.py"
+      ],
+      [
+        "node", "--check", "internal/server/web/plugin-workbench-tabs.js"
+      ],
+      [
+        "node", "scripts/plugin-workbench-tabs.test.cjs"
+      ],
+
+      [
         "node",
         "--check",
         "internal/server/web/runtime-lifecycle.js"

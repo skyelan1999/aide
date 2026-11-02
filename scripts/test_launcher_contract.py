@@ -149,6 +149,33 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn('USER_SETTING=preserved', (self.root / '.env').read_text())
         self.assertTrue(self.launcher.owner())
 
+    def test_mac_host_build_precedes_configuration_and_start(self):
+        native = self.root / 'native/macos-desktop/main.swift'
+        native.parent.mkdir(parents=True)
+        native.write_text('// fixture')
+        with patch.object(module.sys, 'platform', 'darwin'):
+            self.launcher.build()
+        native_call = [sys.executable, 'scripts/build-macos-desktop.py', '--root', str(self.root), '--install']
+        calls = self.launcher.commands
+        self.assertIn(native_call, calls)
+        self.assertLess(calls.index(native_call), calls.index(['bash', 'scripts/aide.sh', 'start-built']))
+        self.assertIn('AIDE_IMAGE=' + self.launcher.image, (self.root / '.env').read_text())
+
+    def test_mac_host_failure_keeps_previous_startup_configuration(self):
+        native = self.root / 'native/macos-desktop/main.swift'
+        native.parent.mkdir(parents=True)
+        native.write_text('// fixture')
+        original = self.launcher.call
+        def fail_native(args, **kwargs):
+            if len(args) > 1 and args[1] == 'scripts/build-macos-desktop.py':
+                raise RuntimeError('synthetic Swift failure')
+            return original(args, **kwargs)
+        with patch.object(module.sys, 'platform', 'darwin'), patch.object(self.launcher, 'call', side_effect=fail_native):
+            with self.assertRaisesRegex(RuntimeError, 'Swift failure'):
+                self.launcher.build()
+        self.assertFalse((self.root / '.env').exists())
+        self.assertNotIn(['bash', 'scripts/aide.sh', 'start-built'], self.launcher.commands)
+
     def test_host_source_is_prepared_before_docker_without_changing_scope(self):
         self.launcher.build()
         calls = self.launcher.commands

@@ -1,0 +1,80 @@
+{
+  "id": "macos-desktop-20261103",
+  "request": "搞一下：基于浏览器内核，实际像独立软件运行；先交付 Mac Aide.app，复用现有页面和本地服务，独立窗口图标菜单，自动启动登录，验证语音权限与退出行为；追加：插件打开工作台统一进入新页面，保留原聊天/工作区",
+  "baseline": "dc9f1ef49a65ca166f6c1c8e0c95d45c124a1990",
+  "initial_status": "",
+  "acceptance": [
+    "Build and install an actual macOS Aide.app with an independent WKWebView window, icon, native menus and shortcuts",
+    "Reuse existing local startup/service and token bootstrap without showing secrets or restarting an already healthy installation",
+    "Constrain embedded navigation and media permissions to the verified local origin, with exact local certificate pinning and normal external TLS validation",
+    "Native upload/download and JavaScript dialogs work; default page/voice UI remains unchanged",
+    "Close hides/reopen restores the workbench; quit ends the desktop UI and preserves shared service/tasks; explicit stop-and-quit requires confirmation",
+    "Actual native app startup and visible UI verification, native permission/capability probes, focused regressions and clean artifacts",
+    "Plugin workbench launch actions open separate scoped pages/native tabs; existing sandbox/bridge and approval boundaries remain; actual Compare/ProfessionalProject pages render"
+  ],
+  "scope": [
+    "native/macos-desktop Swift host and tests",
+    "scripts/build-macos-desktop.py and desktop-session.py",
+    "desktop.command and existing POSIX startup/build integration",
+    "installation-scoped generated app bundle and user Applications entry",
+    "task/architecture documentation; Mac implementation only, native Windows unchanged",
+    "existing plugin workbench host, safe page route and focused tests",
+    "local embedded web-asset rebuild through build.command and native runtime acceptance"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User accepted independent desktop-shell proposal. Current client is Mac; initial implementation uses WKWebView over the existing local Go/Docker service and unchanged web UI. No public release or backend rewrite.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "WKWebView desktop host with verified installation-scoped session bootstrap. Plugin workbench commands create same-origin scoped page routes; each page recreates the existing sandbox/MessagePort bridge. File rendering lifecycle remains separate. Generated native bundles use local Library/Caches to avoid iCloud FinderInfo signature damage.",
+      "evidence": [
+        "docs/architecture/macos-desktop.md"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Native app and scoped local cache compile successfully. Canonical build/start integration and plugin workbench new-page routing implemented; native close/quit respects plugin dirty state. Local source integration/web-asset deployment is next.",
+      "evidence": [
+        "native/macos-desktop/main.swift",
+        "scripts/build-macos-desktop.py",
+        "internal/server/web/plugin-workbench-tabs.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Mac arm64 app compiled/installed; actual AppKit tabs, shared data store, close/reopen, native dialog and upload/download cancellation paths passed. User confirmed unlock. Focused Python 10+launcher35+fingerprint4 tests and plugin bridge21/page routing5 tests pass. New plugin page rendering after local source build remains. No live mic capture/paid model call or real file transfer claimed.",
+      "evidence": [
+        ".agent-state/macos-desktop/native-panels-smoke.json",
+        ".agent-state/macos-desktop/python-tests.log",
+        ".agent-state/macos-desktop/launcher-tests.log",
+        ".agent-state/macos-desktop/plugin-tabs-tests.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "README and existing launcher contract link the Mac app entry; architecture documents startup, scoped cache, plugin tabs, account/media limits and rollback.",
+      "evidence": [
+        "docs/architecture/macos-desktop.md",
+        "docs/architecture/launcher-contract.md",
+        "README.md",
+        "README.en.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Quit Aide.app and use the existing localhost Safari entry; backend data is shared. Existing running image was retained before source deployment. New public Release is not part of this request.",
+  "handoff": "In progress: integrate source, build local embedded web assets, verify native plugin pages, finish scoped cleanup. Microphone TCC remains notDetermined; platform WebAuthn authenticator unavailable in this host; original password fallback preserved."
+}

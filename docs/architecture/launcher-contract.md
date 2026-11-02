@@ -18,6 +18,8 @@ macOS 使用根目录的 `名称.command`，Linux 使用 `bash 名称.sh`，Wind
 
 `start` 永不编译代码或镜像；`AIDE_BUILD_FROM_SOURCE=1`、`AIDE_FORCE_REBUILD=1` 也不改变这一点。健康实例的普通重复 start 不重新创建容器或刷新后台组件。显式 build 完成后的内部启动路径则必须应用新镜像，不能只打开旧实例。源码更新流程为 `git pull` → `build` → 自动启动；失败不切换成公开 Release 来掩盖构建错误。
 
+Mac 源码版的显式 `build` 同步编译安装 WKWebView 桌面宿主；日常 `start` 优先打开本安装已编译的 `Aide.app`，不存在时保留浏览器入口。独立的 `desktop.command` 可只构建安装 Mac 窗口，不重编译后台镜像。参见 [macOS 独立工作台](macos-desktop.md)。
+
 ## 构建与资源归属
 
 Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/646)。根目录 BAT 经统一 CMD 入口调用原生 EXE，并显示操作和退出码；通过双击（`cmd /c`）启动时会停留等待确认，自动化设置 `AIDE_LAUNCHER_NO_PAUSE=1` 可禁用停留，仍保留真实退出码。

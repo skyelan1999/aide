@@ -48,6 +48,25 @@ class SourceFingerprintTests(unittest.TestCase):
             (root/'internal/a.go').write_text('changed source')
             self.assertNotEqual(first, fingerprint('C'))
 
+    def test_desktop_host_inputs_change_shared_source_identity(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name in ['cmd', 'internal', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa', 'native/macos-desktop']:
+                (root/name).mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
+            for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md',
+                         'scripts/launcher-data.sh', 'scripts/launcher-data.py']:
+                (root/name).write_text(name)
+            def fingerprint():
+                return subprocess.check_output(['bash', 'scripts/aide.sh', 'source-sha'], cwd=root, text=True)
+            previous = fingerprint()
+            for name in ['native/macos-desktop/main.swift', 'desktop.command', 'scripts/build-macos-desktop.py',
+                         'scripts/desktop-session.py', 'scripts/render-computer-bridge-icon.swift']:
+                (root/name).write_text('fixture')
+                current = fingerprint()
+                self.assertNotEqual(previous, current, name)
+                previous = current
+
     def test_installed_plugin_state_is_excluded(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

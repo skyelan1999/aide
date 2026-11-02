@@ -10,11 +10,12 @@
  }
  function close(force=false,reason='close'){if(!active)return;const item=active;if(item.documentDirty&&!force&&!window.confirm(item.services.t('插件中有未保存修改，仍要离开吗？')))return false;active=null;clearInterval(item.timer);if(item.startupTimer)clearTimeout(item.startupTimer);item.themeObserver?.disconnect();if(item.themeFrame)cancelAnimationFrame(item.themeFrame);const release=()=>{item.abort.abort();if(item.bridge)item.services.api('/plugins/'+encodeURIComponent(item.plugin.id)+'/workbench/'+item.bridge.instanceId,{method:'DELETE',keepalive:true}).catch(()=>{});};if(!force&&item.plugin.daemon&&item.plugin.workbench.closeBehavior==='detach'&&item.inflight)item.inflight.then(release,release);else release();if(item.port){try{item.port.postMessage({protocol:1,event:'scope.revoked'});}catch(_){}item.port.close();}if(item.editorId)item.services.api('/plugins/brdplan/editor/'+item.editorId,{method:'DELETE'}).catch(()=>{});if(item.download)URL.revokeObjectURL(item.download.url);if(item.listener)window.removeEventListener('message',item.listener);item.frame.src='about:blank';item.host.remove();item.reviewBack?.remove();item.focus?.focus();item.services.onClose?.(reason,!!item.documentDirty);return true;}
  async function open(plugin,services){
+  if(!services.document&&!services.inPage&&services.openPage)return services.openPage(plugin,services.selection);
   if(close(false,'replace')===false)return false;if(services.blocked()||!plugin.enabled)return false;
   const focus=document.activeElement,scope=services.scope(),abort=new AbortController();
-  const host=document.createElement('section');host.className='plugin-workbench';host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
+  const host=document.createElement('section');host.className='plugin-workbench'+(services.inPage?' plugin-workbench-page':'');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.setAttribute('aria-label',plugin.workbench.title);
   const header=document.createElement('header'),title=document.createElement('strong'),notice=document.createElement('span'),button=document.createElement('button'),frame=document.createElement('iframe');
-  title.textContent=plugin.workbench.title;notice.textContent=services.t('插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>close();
+  title.textContent=plugin.workbench.title;notice.textContent=services.t('插件工作台 · 本地计算');button.textContent=services.t('关闭工作台');button.type='button';button.onclick=()=>{if(close()!==false&&services.inPage)window.close();};
   frame.title=plugin.workbench.title;frame.setAttribute('allow','fullscreen *');frame.setAttribute('allowfullscreen','');frame.setAttribute('sandbox','allow-scripts allow-downloads');frame.referrerPolicy='no-referrer';
   header.append(title,notice,button);host.append(header,frame);document.body.append(host);
   const reviewBack=document.createElement('button');reviewBack.type='button';reviewBack.className='plugin-workbench-return';reviewBack.hidden=true;reviewBack.textContent=services.t('返回插件工作台');document.body.append(reviewBack);
@@ -109,10 +110,10 @@
    frame.src=result.url;return true;
   }catch(error){if(active===item){close(true,'error');if(error.name!=='AbortError')services.toast(error.message);}return false;}
  }
- document.addEventListener('keydown',e=>{if(active&&!active.reviewing&&e.key==='Escape'){e.preventDefault();close();}});
+ document.addEventListener('keydown',e=>{if(active&&!active.reviewing&&e.key==='Escape'){e.preventDefault();const page=active.services.inPage;if(close()!==false&&page)window.close();}});
  window.addEventListener('beforeunload',event=>{if(active?.documentDirty){event.preventDefault();event.returnValue='';}});
  window.addEventListener('pagehide',()=>close(true,'unload'));
- window.AidePluginWorkbench={open,close,selection,prepareFileOpen(){if(!active?.services.document)return true;return close(false,'replace')!==false;}};
+ window.AidePluginWorkbench={open,close,selection,isDirty:()=>active?.documentDirty===true,prepareFileOpen(){if(!active?.services.document)return true;return close(false,'replace')!==false;}};
 })();
 
 function uiTextPluginWorkbench(key, ...values) { return globalThis.window?.aideI18n?.t(key, ...values) ?? String(key).replace(/\{(\d+)\}/g, (match, index) => index < values.length ? String(values[index]) : match); }

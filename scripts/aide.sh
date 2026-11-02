@@ -12,7 +12,7 @@ source_sha() {
     find cmd internal vendor scripts/office docker/wheels docker/sherpa -type d -name node_modules -prune -o -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     if [[ -d native/windows-launcher ]]; then find native/windows-launcher -type f -print0; fi
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.py
-    for extra in stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
+    for extra in native/macos-desktop/main.swift desktop.command scripts/build-macos-desktop.py scripts/desktop-session.py scripts/render-computer-bridge-icon.swift stop.command stop.sh stop.bat build.command build.sh build.bat clean.command clean.sh clean.bat docker_clean.command docker_clean.sh docker_clean.bat verify.command verify.sh verify.bat release.command release.sh release.bat scripts/launcher.py scripts/selfdev-ab.py scripts/pip-install-retry.sh scripts/codex-host-control.cjs scripts/build-codex-host.py docker/codex-host-source.json scripts/build-windows-launcher.py scripts/windows-launcher-asset.sh scripts/windows-entrypoint.bat scripts/windows-bootstrap.bat scripts/windows-build-proxy.bat scripts/local-mounts-control.sh scripts/build-message-lan.sh Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prebuilt-image.sh scripts/latest-release-runtime.py scripts/resource-guard.sh start.command start.sh start.bat docker/compose.offline.yaml docker/offline.env.example scripts/build-message-lan.sh scripts/message-lan-control.sh; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -392,7 +392,9 @@ case "$MODE" in
     echo "aide 已就绪：https://localhost:$HOSTPORT/ （自签证书，浏览器告警需由用户确认）"
     if [[ -z "$TOKEN" ]]; then echo "未自动读到令牌，已打开登录页；可运行：$DOCKER_BIN compose exec -T aide cat /data/auth/access-token"; fi
     if [[ "${AIDE_OPEN_BROWSER:-1}" == 0 ]]; then :;
-    elif [[ "$(uname -s)" == Darwin ]]; then open "$LOGIN_URL";
+    elif [[ "$(uname -s)" == Darwin ]]; then
+      if [[ -f scripts/build-macos-desktop.py ]] && python3 scripts/build-macos-desktop.py --root "$PROJECT_DIR" --open-existing >/dev/null; then :;
+      else open "$LOGIN_URL"; fi;
     elif command -v xdg-open >/dev/null; then xdg-open "$LOGIN_URL";
     else echo "在浏览器打开 $LOGIN_URL ；令牌位于容器 /data/auth/access-token，自签证书浏览器会告警，选择继续。"; fi
     ;;

@@ -1,0 +1,49 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const code=fs.readFileSync('internal/server/web/plugin-workbench-tabs.js','utf8');
+function fixture(){
+ const calls=[],errors=[],page={opener:{}};
+ let blocked=false,workspace='workspace_1',popup=page;
+ const window={AidePluginWorkbench:{selection(value){if(!value?.left?.path||value.left.path.includes('..'))return undefined;return value;}},open:(...args)=>(calls.push(args),popup)};
+ const context={window,URL,URLSearchParams,location:{href:'https://localhost:9999/#token=private-fixture',hash:''}};
+ vm.runInNewContext(code,context);
+ return {tabs:window.AidePluginWorkbenchTabs,calls,errors,page,context,services:{t:x=>x,toast:e=>errors.push(e),blocked:()=>blocked,workspace:()=>workspace},block:()=>blocked=true,popup:()=>popup=null,foreign:()=>workspace='../foreign'};
+}
+const plugin={id:'compare',enabled:true,workbench:{protocol:1}};
+test('workbench opens a fresh same-origin page with scoped selection and no credentials',()=>{
+ const f=fixture(),selection={left:{source:'workspace',path:'docs/a b.md',directory:false}};
+ assert.equal(f.tabs.open(plugin,{...f.services,selection}),true);
+ const [address,target]=f.calls[0],url=new URL(address),route=f.tabs.read(url.hash);
+ assert.equal(url.origin,'https://localhost:9999');assert.equal(url.pathname,'/');assert.equal(target,'_blank');
+ assert.equal(route.id,'compare');assert.equal(route.workspace,'workspace_1');assert.equal(JSON.stringify(route.selection),JSON.stringify(selection));
+ assert(!address.includes('private-fixture'));assert.equal(f.page.opener,null);
+ f.tabs.open(plugin,f.services);assert.equal(f.calls.length,2);assert.equal(f.calls[1][1],'_blank');
+});
+test('blocked popup reports failure without replacing current workbench',()=>{
+ const f=fixture();f.popup();assert.equal(f.tabs.open(plugin,f.services),false);assert.equal(f.errors.length,1);
+ assert.equal(f.calls.length,1);
+});
+test('locked, disabled, broken or malformed plugin routes cannot open a page',()=>{
+ for(const variant of [{...plugin,enabled:false},{...plugin,error:'bad'},{...plugin,id:'../other'},{...plugin,workbench:{protocol:2}}]){
+  const f=fixture();assert.equal(f.tabs.open(variant,f.services),false);assert.equal(f.calls.length,0);
+ }
+ const f=fixture();f.block();assert.equal(f.tabs.open(plugin,f.services),false);assert.equal(f.calls.length,0);
+ const g=fixture();g.foreign();assert.equal(g.tabs.open(plugin,g.services),false);assert.equal(g.calls.length,0);
+});
+test('deep link parser rejects traversal, bad selections and missing workspace',()=>{
+ const f=fixture();
+ for(const hash of ['','#pluginWorkbench=compare','#pluginWorkbench=../other&workspace=valid','#pluginWorkbench=compare&workspace=../foreign','#pluginWorkbench=compare&workspace=valid&selection=%7Bbad','#pluginWorkbench=compare&workspace=valid&selection='+encodeURIComponent(JSON.stringify({left:{path:'../outside'}}))])assert.equal(f.tabs.read(hash),null,hash);
+});
+test('routed page rechecks workspace, current enabled plugin and lock before creating a bridge',async()=>{
+ const app=fs.readFileSync('internal/server/web/app.js','utf8'),start=app.indexOf('let pluginPageOpening='),end=app.indexOf('async function loadPluginsPanel()',start);
+ const calls=[],errors=[],state={token:'fixture',plugins:[]},lockScreen={locked:false};let scope='workspace_1';
+ const route={id:'compare',workspace:scope,selection:undefined};
+ const context={window:{AidePluginWorkbenchTabs:{read:()=>route},AidePluginWorkbench:{open:async(p,s)=>(calls.push({p,s}),true)}},state,lockScreen,recoveryScope:()=>scope,chatRecoveryEpoch:0,
+  loadPluginsPanel:async()=>{state.plugins=[plugin];},pluginWorkbenchServices:()=>({}),document:{title:''},t:x=>x,toast:e=>errors.push(e)};
+ vm.runInNewContext(app.slice(start,end),context);
+ lockScreen.locked=true;await context.openRoutedPluginWorkbench();assert.equal(calls.length,0);
+ lockScreen.locked=false;scope='foreign';await context.openRoutedPluginWorkbench();assert.equal(calls.length,0);assert.equal(errors.length,1);
+ scope='workspace_1';await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);assert.equal(calls[0].s.inPage,true);
+ await context.openRoutedPluginWorkbench();assert.equal(calls.length,1,'no duplicate after repeated unlock/reconciliation');
+ calls[0].s.onClose();context.loadPluginsPanel=async()=>{state.plugins=[{...plugin,enabled:false}];};await context.openRoutedPluginWorkbench();assert.equal(calls.length,1);
+});

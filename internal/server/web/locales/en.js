@@ -1,6 +1,9 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  '请允许 Aide 打开新页面后重试': 'Allow Aide to open a new tab, then try again',
+  '工作区已切换，请从当前工作区重新打开插件': 'The workspace changed. Open the plugin again from the current workspace.',
+  '插件工作台不可用，请检查插件是否已启用': 'The plugin workbench is unavailable. Check that the plugin is enabled.',
   '设置已在其他窗口更改，请重新选择。': 'Settings changed in another window. Please choose again.',
   '等待浏览器通知授权…': 'Waiting for browser notification permission…',
   '浏览器未允许桌面通知。': 'The browser did not allow desktop notifications.',

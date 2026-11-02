@@ -325,6 +325,10 @@ class Launcher:
                 or labels.get('aide.runtime-profile') != 'slim'
                 or labels.get('aide.srcsha') != source or labels.get('aide.installation') != self.scope):
             raise ValueError('Built image identity/source/installation did not verify; existing startup configuration retained')
+        # Explicit source builds refresh the Mac host before changing startup state.
+        # Ordinary start only opens a previously compiled app and never invokes Swift.
+        if sys.platform == 'darwin' and (self.root / 'native/macos-desktop/main.swift').is_file():
+            self.call([sys.executable, 'scripts/build-macos-desktop.py', '--root', str(self.root), '--install'], timeout=600)
         self.configure_image()
         print('Source build verified; starting this installation from ' + self.image, flush=True)
         env = dict(os.environ, AIDE_IMAGE=self.image, AIDE_INSTALLATION_KIND='source')

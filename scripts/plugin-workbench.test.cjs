@@ -135,3 +135,11 @@ test('Codex host capability requires both the exact plugin and parent grant',asy
   assert.equal(calls,allowed?1:0);f.controller.close();
  }
 });
+
+test('launching another workbench delegates to a fresh page without closing the current document or creating a bridge',async()=>{
+ const f=fixture();f.services.document={path:'draft.md',root:'workspace'};
+ await f.controller.open(plugin,f.services);const frame=f.nodes.find(n=>n.tag==='iframe'),previous=frame.src;
+ const pages=[];let apiCalls=0;
+ await f.controller.open(plugin,{...f.services,document:undefined,selection:{left:{source:'workspace',path:'a.md'}},api:async()=>{apiCalls++;},openPage:(p,selection)=>(pages.push({p,selection}),true)});
+ assert.equal(pages.length,1);assert.equal(pages[0].selection.left.path,'a.md');assert.equal(apiCalls,0);assert.equal(frame.src,previous);
+});
