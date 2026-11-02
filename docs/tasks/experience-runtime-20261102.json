@@ -41,11 +41,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Unmodified full script reproduced the reported exception in Node and live WebKit. Corrected asset injected only in owned browser: authenticated workbench startup, file panel close/reopen and settings open passed with zero page errors. Complete browser fixture passed normal intro (one), reduced intro (zero) and immediate panel callbacks. Existing full settings browser regression passed desktop/narrow. Final quick and candidate image pending.",
+      "status": "pass",
+      "summary": "Full-script Node regression and final quick passed. Original source reproduced the Safari-reported error in live WebKit; fix verified first via owned override, then without overrides in built candidate and updated 9999. Live desktop 1440x1000 and reduced-motion narrow 390x844: zero page errors, motion API ready, file-panel transitions and settings opened; narrow sheet fits viewport. Complete settings browser regression passed desktop/narrow. Candidate health and served asset equality verified.",
       "evidence": [
-        ".agent-state/experience-runtime/webkit-desktop.png",
-        ".agent-state/experience-runtime/settings-browser.log"
+        "scripts/experience-runtime.test.cjs",
+        "scripts/browser-settings-autosave.cjs",
+        ".agent-state/experience-runtime/quick.log",
+        ".agent-state/experience-runtime/live-result.json",
+        "docs/reviews/20261102/experience-runtime-744.md"
       ]
     },
     "documentation": {
@@ -57,17 +60,19 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Owned browser contexts and fixture server closed; no user tab/settings changed.",
+      "summary": "Owned browser contexts, fixture servers and temporary candidate containers closed/removed. Production container preserved through build validation, then intentionally updated. No user browser tabs or saved settings edited.",
       "evidence": []
     },
     "release": {
-      "status": "not_run",
-      "summary": "No push, release or production restart. Existing live service remains unchanged.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Local main integrated; canonical build-only candidate verified, then local 9999 updated using configure_image + start-built under prior user update-9999 authorization. Production healthy; WebKit rechecked live asset v5. No remote push or public release.",
+      "evidence": [
+        "docs/reviews/20261102/experience-runtime-744.md"
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "User previously selected 更新9999（推荐） in this same ongoing local Aide repair session; update is reversible and preserves installation/data mounts.",
   "rollback": "Revert the scoped fix commits; existing production image retained.",
-  "handoff": "Focused/browser verification passed. Finish final quick and image build-only before any runtime update.",
+  "handoff": "9999 is healthy on aide:experience-runtime-744-e70300c. User Safari tab still contains the old loaded script until refreshed. Existing rollback image and private .env backup retained; no public release/push.",
   "issue": "https://github.com/skyelan1999/aide/issues/744"
 }
