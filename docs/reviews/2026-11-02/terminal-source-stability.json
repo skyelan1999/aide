@@ -58,5 +58,20 @@
     "productionRestarted": false,
     "ownTestContainersRemoved": true,
     "completedUTC": "2026-11-02T05:26:10.964786+00:00"
+  },
+  "localGitReferenceRecovery": {
+    "observedError": "fatal: bad object refs/heads/docs/release-review-integration-20261102 2",
+    "invalidNumericCopyRefs": [
+      "refs/heads/docs/release-review-integration-20261102 2",
+      "refs/heads/main 2",
+      "refs/remotes/origin/main 2"
+    ],
+    "rejectedByGitCheckRefFormat": true,
+    "eachPreservedBytes": 41,
+    "eachSHA256": "d018f8756f0e9490aa9230f37198c2059fd07894680a44e3f36a3d5eff5704bb",
+    "preservedUnchangedBeforeRemovalFromRefs": true,
+    "validLooseRefBytesUnchangedDuringRecovery": true,
+    "normalFetchAndFastForwardSucceeded": true,
+    "cause": "Not proven; invalid numbered copies were isolated, without modifying valid branches or system sync settings."
   }
 }

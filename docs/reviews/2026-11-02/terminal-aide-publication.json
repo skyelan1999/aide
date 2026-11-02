@@ -1,0 +1,139 @@
+{
+  "status": "pass",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3",
+  "tag": "v0.1.18.0-RC3",
+  "commit": "86f83431ec3fceb67dc4e4722ab67cf603dffaaa",
+  "sourceSHA256": "27cae693b5029dbebb10b2e8c51d2b1a7261d9e86ff4b2c14b02d8e9b276de2f",
+  "draft": false,
+  "prerelease": false,
+  "latest": true,
+  "publishedAt": "2026-11-02T06:55:25Z",
+  "assets": [
+    {
+      "name": "aide-v0.1.18.0-RC3-devtools-linux-amd64.zip",
+      "size": 578983413,
+      "digest": "sha256:ae2f6c79222d6e93561ab091a8bebfc8e67433c8a5be9c75c468957512880868"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC3-devtools-linux-arm64.zip",
+      "size": 563905958,
+      "digest": "sha256:47ac99d404d55034f158dcad871c3f6816ed524b37f4bc111cb1e8942d4efff0"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC3-full-linux-amd64.zip",
+      "size": 418500452,
+      "digest": "sha256:185b495d70dedc22934bb3613d189490f7ca787ec4bebf4eedcb136e3b4badec"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC3-full-linux-arm64.zip",
+      "size": 413990534,
+      "digest": "sha256:7dcb8616da9903d3fcd0132c553d584a4ab0dead9417944040c649d4e27825da"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "size": 1687,
+      "digest": "sha256:426bb23d8ca86d46c973a8bee051cfc44441d0bdc4535b990777cf7b957e481f"
+    },
+    {
+      "name": "RELEASE-VALIDATION.json",
+      "size": 953070,
+      "digest": "sha256:fdf8eec3ed765f00499ac56b6e75270d212a8380e55939ae9f06689e8724a133"
+    },
+    {
+      "name": "SHA256SUMS",
+      "size": 607,
+      "digest": "sha256:d905e68da09c64b694ff09ad05947ea9686d5579911d03f8a8a73bd6c7b41f12"
+    }
+  ],
+  "native": {
+    "arm64": {
+      "inventory": 1594,
+      "passed": 1515,
+      "skipped": 79,
+      "shards": 24,
+      "publicPlugins": 30
+    },
+    "amd64": {
+      "inventory": 1594,
+      "passed": 1515,
+      "skipped": 79,
+      "shards": 24,
+      "publicPlugins": 30
+    }
+  },
+  "browser": 48,
+  "hosts": {
+    "windows": 10,
+    "macos-15": 8,
+    "macos-15-intel": 8
+  },
+  "productionDeployed": false,
+  "limits": "Server digests checked against manifests and downloaded small manifest bytes; candidate pipeline independently imported/CRC/smoked ZIPs. No paid-provider/hardware/native Docker Desktop lifecycle acceptance.",
+  "delivery": "https://github.com/skyelan1999/aide/actions/runs/41396578224",
+  "deliveryJobsPassed": 10,
+  "marketRevision": "582effee8fc2530b6c552ff3fad24ef9d519dbae",
+  "pluginRelease": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0",
+  "nativeDetails": {
+    "arm64": {
+      "imageId": "sha256:e2e8464e67b8e603a8012e339001db30ea0071c19e9cbe1b0cc07c55ac27d417",
+      "runtimeXauth": {
+        "status": "pass",
+        "version": "1.1.2"
+      },
+      "reimportXauth": {
+        "status": "pass",
+        "version": "1.1.2"
+      },
+      "bundledPlugins": 0,
+      "sdkBundledPlugins": 0,
+      "terminal": {
+        "cases": [
+          "published terminal process I/O and explicit cleanup",
+          "installed proxy pauses congested sources in both directions and transfers exact 32 MiB payloads",
+          "original public ZIP copy/Telnet admission, independent lifecycle and dynamic input policy"
+        ],
+        "function": "pass",
+        "id": "terminal",
+        "inspection": "pass",
+        "installation": "pass",
+        "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+        "version": "1.6.0"
+      }
+    },
+    "amd64": {
+      "imageId": "sha256:fb9329616bcdff15be93fb88823d9a85a143407ea72ef05a777f5d49754a47a6",
+      "runtimeXauth": {
+        "status": "pass",
+        "version": "1.1.2"
+      },
+      "reimportXauth": {
+        "status": "pass",
+        "version": "1.1.2"
+      },
+      "bundledPlugins": 0,
+      "sdkBundledPlugins": 0,
+      "terminal": {
+        "cases": [
+          "published terminal process I/O and explicit cleanup",
+          "installed proxy pauses congested sources in both directions and transfers exact 32 MiB payloads",
+          "original public ZIP copy/Telnet admission, independent lifecycle and dynamic input policy"
+        ],
+        "function": "pass",
+        "id": "terminal",
+        "inspection": "pass",
+        "installation": "pass",
+        "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+        "version": "1.6.0"
+      }
+    }
+  },
+  "productionImageUnchanged": "sha256:e4b3040c61c64835833bfc2e28101b0da263842ea51efd1d588df20a75f3e84b",
+  "retainedFailedTag": {
+    "tag": "v0.1.18.0-RC2",
+    "commit": "e3ef7d079cdf3fc8b114c60d970fd45fbd55f4ef",
+    "published": false,
+    "nativeAcceptance": "not_run",
+    "reason": "Source note format gate failed; preserved immutable and corrected via next version.sh patch"
+  },
+  "verifiedUTC": "2026-11-02T07:00:37.000597+00:00"
+}
