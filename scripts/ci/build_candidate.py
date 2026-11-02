@@ -201,7 +201,12 @@ console.log(JSON.stringify({status:'pass',commit:COMMIT,version:VERSION,installe
         run(['docker', 'exec', name, 'sh', '-c',
              'for i in $(seq 1 60); do curl --cacert /data/certs/cert.pem -fsS https://localhost:8080/healthz >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1'])
         result = run(['docker', 'exec', '-i', name, 'node'], input=script, text=True, capture_output=True)
-        return json.loads(result.stdout)
+        proof = json.loads(result.stdout)
+        xauth = capture(['docker', 'exec', name, 'xauth', '-V']).strip()
+        if not xauth:
+            raise ValueError('Runtime xauth version is empty')
+        proof['xauth'] = {'status': 'pass', 'version': xauth}
+        return proof
     finally:
         subprocess.run(['docker', 'rm', '-f', name], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 

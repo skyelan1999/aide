@@ -4,8 +4,8 @@
 
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
-| go | 378 | 1684 |
-| python | 63 | 278 |
+| go | 379 | 1686 |
+| python | 63 | 279 |
 | node | 180 | 182 |
 | browser | 105 | 0 |
 
@@ -2787,7 +2787,7 @@
 
 </details>
 
-<details><summary>internal/server/plugin_terminal_context_test.go · go · 5 个命名用例</summary>
+<details><summary>internal/server/plugin_terminal_context_test.go · go · 6 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_terminal_context_test.go)
 
@@ -2796,6 +2796,7 @@
 - `TestTerminalContextPinnedMasterNeverRetargets`
 - `TestTerminalContextCommunicationPolicyAndReferenceKey`
 - `TestTerminalRelayContextPrivateStateAndTrustedWorkbench`
+- `TestTerminalCopyContextCanonicalIdentityAndVisibility`
 
 </details>
 
@@ -4024,6 +4025,16 @@
 - `TestIssue92AppOwnsPinsAndShutdownPreservesOtherOwners`
 - `TestIssue92ReaperPreservesUnknownAndReplacedPaths`
 - `TestIssue92ConcurrentPinShutdownHasNoLateLinks`
+
+</details>
+
+<details><summary>internal/server/terminal_session_features_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/terminal_session_features_test.go)
+
+- `TestTerminalSessionFeaturesInstalledCandidate`
+
+环境引用：`AIDE_TERMINAL_FEATURE_BUNDLE_PATH`, `AIDE_TERMINAL_FEATURE_BUNDLE_SHA256`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 
@@ -5333,13 +5344,14 @@
 
 </details>
 
-<details><summary>scripts/ci/test_delivery_gate.py · python · 12 个命名用例</summary>
+<details><summary>scripts/ci/test_delivery_gate.py · python · 13 个命名用例</summary>
 
 [源码入口](../../scripts/ci/test_delivery_gate.py)
 
 - `test_branch_candidate_is_read_only_and_cannot_publish`
 - `test_both_architectures_required_and_digest_tampering_rejected`
 - `test_crossed_or_incomplete_candidate_fails_closed`
+- `test_runtime_and_reimport_require_actual_xauth_smoke`
 - `test_sdk_is_required_and_tampering_rejected`
 - `test_malicious_release_ref_rejected_before_remote_operations`
 - `test_remote_draft_uses_id_and_rejects_wrong_identity_or_digest`

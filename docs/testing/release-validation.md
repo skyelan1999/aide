@@ -107,3 +107,19 @@ CI 本身不授予任意工作流自动改代码/写仓库的权限。本轮由�
 沿用每 7 天至多一个公开版本；用户明确要求本轮即时发行时，可使用已有的手动一次性 `cadence_exception_reason` 并记录原因，不修改默认节奏。先创建全新草稿，禁止覆盖既有 Release/附件。远端 tag、资产大小、SHA256、说明和精确附件集合全部一致后才公开。
 
 此次开发与 CI 不替换当前生产服务。客户升级前备份数据目录与配置，保留旧运行镜像和发布包。失败使用现有 A/B 槽与升级代理回滚，不清理用户工作区、历史、插件、凭据或旧镜像。原生宿主 helper 合约测试不等于 Windows/macOS Docker Desktop 的真实升级全生命周期；未完成的原生设备验收必须在发行报告标为未验证。
+
+### Terminal 1.6.0 paired release
+
+For Terminal 1.6.0 and newer the public-package job additionally invokes
+`TestTerminalSessionFeaturesInstalledCandidate` against the exact frozen market
+ZIP and expected SHA256. The raw multipart upload is not reconstructed. Assertions
+cover independent copy lifecycle, hidden-session isolation, actual loopback
+Telnet traffic, and dynamic send denial. The upstream plugin protocol/browser
+suite separately validates relay and X11 behavior.
+
+Candidate runtime smoke and image reimport smoke both execute `xauth -V` inside
+the disposable runtime container. Publication rejects missing, failed or empty
+xauth evidence; SDK presence alone does not satisfy this runtime dependency.
+Native X Server and customer-device acceptance remain separate from isolated
+Linux fixtures. Terminal 1.6.0 requires market minimum Aide `0.1.18.0 RC2`, without
+a source-compatibility bypass for older releases.

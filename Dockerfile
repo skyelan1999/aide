@@ -98,7 +98,7 @@ FROM ${PYTHON_BASE} AS runtime
 COPY scripts/pip-install-retry.sh /usr/local/lib/aide/pip-install-retry.sh
 # A fresh root is essential: deleting SDK files from toolchain retains its layers.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl git openssh-client procps bzip2 \
+      ca-certificates curl git openssh-client xauth procps bzip2 \
       libstdc++6 libgcc-s1 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=node /usr/local/bin/node /usr/local/bin/node

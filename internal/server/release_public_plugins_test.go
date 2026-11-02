@@ -124,6 +124,12 @@ func TestReleasePublicPackageFunctions(t *testing.T) {
 			}
 			row["installation"] = "pass"
 			cases := releasePublicFunction(t, a, p.ID)
+			if p.ID == "terminal" && !marketVersionOlder(p.Version, "1.6.0") {
+				t.Setenv("AIDE_TERMINAL_FEATURE_BUNDLE_PATH", filepath.Join(root, filepath.FromSlash(p.Package)))
+				t.Setenv("AIDE_TERMINAL_FEATURE_BUNDLE_SHA256", p.SHA256)
+				TestTerminalSessionFeaturesInstalledCandidate(t)
+				cases = append(cases, "original public ZIP copy/Telnet admission, independent lifecycle and dynamic input policy")
+			}
 			if len(cases) == 0 {
 				t.Fatal("missing meaningful function assertions")
 			}
