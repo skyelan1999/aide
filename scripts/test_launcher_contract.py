@@ -493,6 +493,7 @@ class RecycleLauncher(module.Launcher):
         self.commands = []
         self.active = 'sha256:' + 'a' * 64
         self.current_health = 'healthy'
+        self.health_sequence = []
         self.current_owner = str(self.root)
         self.images = {}
         self.tags = {}
@@ -519,6 +520,8 @@ class RecycleLauncher(module.Launcher):
             output = CID
         elif c[0] == 'inspect':
             user = c[1]
+            if user == CID and self.health_sequence:
+                self.current_health = self.health_sequence.pop(0)
             output = json.dumps({'Image': self.users[user], 'State': {
                 'Running': user == CID, 'Health': {'Status': self.current_health}},
                 'Config': {'Labels': {'com.docker.compose.project.working_dir': self.current_owner}}})
@@ -601,7 +604,7 @@ class RecycleTests(unittest.TestCase):
         for bad in ('unhealthy', 'foreign', 'wrong-image'):
             with self.subTest(bad=bad):
                 self.launcher.commands.clear()
-                self.launcher.current_health = 'starting' if bad == 'unhealthy' else 'healthy'
+                self.launcher.current_health = 'unhealthy' if bad == 'unhealthy' else 'healthy'
                 self.launcher.current_owner = '/foreign' if bad == 'foreign' else str(self.launcher.root)
                 with self.assertRaises(ValueError):
                     self.launcher.recycle_build_artifacts(expected_image='sha256:'+'b'*64 if bad == 'wrong-image' else self.current)
@@ -616,6 +619,21 @@ class RecycleTests(unittest.TestCase):
         self.assertIn(old, self.launcher.images)
         self.assertIn(alias, self.launcher.images)
         self.assertFalse(self.removals())
+
+    def test_starting_health_is_waited_for_and_timeout_does_not_delete(self):
+        old = self.launcher.add_image('b', ['aide:old'])
+        self.launcher.health_sequence = ['starting', 'starting', 'healthy']
+        with patch.object(module.time, 'sleep') as pause:
+            self.launcher.recycle_build_artifacts(expected_image=self.current)
+        self.assertEqual(pause.call_count, 2)
+        self.assertNotIn(old, self.launcher.images)
+        self.launcher.commands.clear()
+        self.launcher.current_health = 'starting'
+        with patch.object(module.time, 'sleep') as pause, self.assertRaisesRegex(ValueError, 'health check'):
+            self.launcher.recycle_build_artifacts(expected_image=self.current)
+        self.assertEqual(pause.call_count, 30)
+        self.assertFalse(self.removals())
+        self.assertFalse(any('prune' in c for c in self.launcher.commands))
 
     def test_removal_failure_and_gc_failure_are_visible_and_not_forced(self):
         self.launcher.add_image('b', ['aide:old'])

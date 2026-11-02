@@ -32,7 +32,7 @@ Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/
 
 ### POSIX 构建自动回收（#745）
 
-macOS `build.command` 与 Linux `build.sh` 在镜像身份校验、应用及健康检查成功后，自动回收本安装不再被容器引用的过时 slim 运行镜像。归属标签逐项复核，移除过时 tag 后按完整 ID 处理遗留的无 tag 镜像，不使用强制镜像删除。保留当前运行镜像、任何运行中或已退出容器仍引用的镜像、其他安装镜像、构建参数指定的依赖镜像、`dependencies/dependency-seed/sdk-seed` 及 toolbox 编译/验收工具镜像；不停止容器、不删除数据卷或工作区。
+macOS `build.command` 与 Linux `build.sh` 在镜像身份校验、应用及健康检查成功后（Docker 状态为 starting 时最多等候 30 秒），自动回收本安装不再被容器引用的过时 slim 运行镜像。归属标签逐项复核，移除过时 tag 后按完整 ID 处理遗留的无 tag 镜像，不使用强制镜像删除。保留当前运行镜像、任何运行中或已退出容器仍引用的镜像、其他安装镜像、构建参数指定的依赖镜像、`dependencies/dependency-seed/sdk-seed` 及 toolbox 编译/验收工具镜像；不停止容器、不删除数据卷或工作区。
 
 随后仅对有匹配归属收据的专用构建器执行 `type=regular`、`until=24h`、`--max-used-space 20GB` 的定向缓存回收。保留最近 24 小时使用的增量层以及所有编译/下载 cache mount；因此 20GB 是回收目标，不是缓存总量的硬上限。使用 Docker 默认构建器时跳过缓存回收，避免清理共享构建器。Docker 过滤及空间策略见 [Buildx prune](https://docs.docker.com/reference/cli/docker/buildx/prune/)。
 

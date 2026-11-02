@@ -176,16 +176,24 @@ class Launcher:
         cid = self.d('compose', 'ps', '--status', 'running', '-q', 'aide', capture=True)
         if not CONTAINER_ID.fullmatch(cid):
             raise ValueError('Automatic recycling requires the running Aide instance')
-        current = json.loads(self.d('inspect', cid, '--format', '{{json .}}', capture=True))
-        labels = current.get('Config', {}).get('Labels', {})
-        running = current.get('State', {})
-        active_image = current.get('Image', '')
-        owner_dir = labels.get('com.docker.compose.project.working_dir', '')
-        if (not owner_dir or Path(owner_dir).resolve() != self.root
-                or not running.get('Running') or running.get('Health', {}).get('Status') != 'healthy'
-                or not IMAGE_ID.fullmatch(active_image)
-                or expected_image is not None and active_image != expected_image):
-            raise ValueError('Automatic recycling requires the verified healthy image of this installation')
+        for attempt in range(31):
+            current = json.loads(self.d('inspect', cid, '--format', '{{json .}}', capture=True))
+            labels = current.get('Config', {}).get('Labels', {})
+            running = current.get('State', {})
+            active_image = current.get('Image', '')
+            owner_dir = labels.get('com.docker.compose.project.working_dir', '')
+            if (not owner_dir or Path(owner_dir).resolve() != self.root
+                    or not running.get('Running') or not IMAGE_ID.fullmatch(active_image)
+                    or expected_image is not None and active_image != expected_image):
+                raise ValueError('Automatic recycling requires the verified running image of this installation')
+            health_status = running.get('Health', {}).get('Status')
+            if health_status == 'healthy':
+                break
+            if health_status != 'starting' or attempt == 30:
+                raise ValueError('Automatic recycling requires a healthy instance; health check did not pass')
+            if attempt == 0:
+                print('AIDE: 等待新实例健康检查完成后自动回收…', flush=True)
+            time.sleep(1)
         health = json.loads(self.d('exec', cid, 'curl', '-fsSk', '--connect-timeout', '2',
                                    '--max-time', '3', 'https://127.0.0.1:8080/healthz', capture=True))
         if health.get('service') != 'aide' or health.get('status') != 'ok':

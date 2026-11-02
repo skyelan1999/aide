@@ -1,6 +1,6 @@
 {
   "id": "disk-space-recovery-20261102",
-  "request": "build.command 磁盘预检失败，回收确认可重建的旧缓存并实际跑通构建启动；用户补充：镜像编译完除了必要的编译依赖其他的过时产物都删掉，注意自动编译回收",
+  "request": "build.command 磁盘预检失败，回收确认可重建的旧缓存并实际跑通构建启动；用户补充：镜像编译完除了必要的编译依赖其他的过时产物都删掉，注意自动编译回收；另明确要求清理 Docker Desktop 中无用镜像与卷",
   "baseline": "ef7f0196b2a7c0b620ab5563e77493ebe119e5d5",
   "initial_status": "",
   "acceptance": [
@@ -16,7 +16,8 @@
     "scripts/test_launcher_contract.py",
     "docs/architecture/launcher-contract.md",
     "docs/tasks/disk-space-recovery-20261102.json",
-    "Scoped local Docker cache/obsolete artifact recovery; no global prune or volume deletion"
+    "Scoped local Docker cache/obsolete artifact recovery; no global prune or volume deletion",
+    "One-time explicit inventory of legacy unused Go-cache volumes; preserve credential/data/report volumes"
   ],
   "stages": {
     "requirements": {
@@ -38,7 +39,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "32 launcher contract tests passed, including ownership, live/foreign/exited references, named/toolbox dependencies, dangling/multiple tags, races, low-disk retry, failed startup and cleanup failures. Actual build.command and final quick pending.",
+      "summary": "33 launcher contract tests passed, including delayed healthy status and bounded timeout. First actual build.command compiled and started successfully; revealed Docker health marker delay before recycling. Added wait and regression; rerun final actual lifecycle and quick after fix.",
       "evidence": [
         "scripts/test_launcher_contract.py"
       ]
