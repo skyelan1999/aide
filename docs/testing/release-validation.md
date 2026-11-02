@@ -72,6 +72,12 @@ python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
 # 本机完整 Go（Docker；运行时源码快照与独立 SDK）
 AIDE_TEST_TOOLCHAIN_IMAGE=aide:dev AIDE_TEST_WORKERS=1 python3 scripts/test_go_snapshot.py
 
+# 本机完整预检查：先选择并检查已存在的本地运行镜像与 SDK；可使用镜像 ID。
+# test_runtime_assets.py/test_optional_step.py 都读取 AIDE_TEST_IMAGE，且禁止隐式 pull。
+AIDE_TEST_IMAGE="${AIDE_TEST_IMAGE:?请设置已有本地运行镜像}" \
+AIDE_TEST_TOOLCHAIN_IMAGE="${AIDE_TEST_TOOLCHAIN_IMAGE:?请设置已有SDK镜像}" \
+AIDE_TEST_WORKERS=1 python3 scripts/agent-route.py verify full
+
 # 只使用当前公开发布包；toolbox 必须带 Go/Node/Python
 python3 scripts/ci/public_plugins.py run --image aide:dev --out .agent-state/public-plugins/arm64
 

@@ -4,6 +4,7 @@ import subprocess
 import json
 import uuid
 import argparse
+import os
 from pathlib import Path
 
 
@@ -81,14 +82,14 @@ print(json.dumps({'status': 'pass', 'uid': os.geteuid(), 'readableFiles': len(fi
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('image', nargs='?', default='aide:local')
+    parser.add_argument('image', nargs='?', default=os.environ.get('AIDE_TEST_IMAGE') or 'aide:local')
     parser.add_argument('--require-lan-bridge', action='store_true')
     args = parser.parse_args()
     check_build_inputs()
     image = args.image
     container = 'aide-assets-' + uuid.uuid4().hex[:12]
     try:
-        subprocess.run(['docker', 'run', '--rm', '--name', container, '--network', 'none',
+        subprocess.run(['docker', 'run', '--rm', '--pull=never', '--name', container, '--network', 'none',
                         '--workdir', '/tmp',
                         '-e', 'AIDE_REQUIRE_LAN_BRIDGE=' + ('1' if args.require_lan_bridge else '0'),
                         '--entrypoint', 'python3', image, '-c', PROGRAM],
