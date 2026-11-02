@@ -1,10 +1,10 @@
 {
   "id": "terminal-release-20261102",
-  "request": "Continue verification and publish Terminal1.6.0 with paired Aide release after required gates pass; preserve immutable failed RC2 tag and advance the same code to RC3 using version.sh.",
+  "request": "Verify and publish Terminal1.6.0 and its paired Aide host, preserve old artifacts and production, document complete source-bound acceptance.",
   "baseline": "0800f15b090d337faba21ad8310385ef4adb7b87",
   "initial_status": "Clean feature source at 0800f15b; existing Terminal1.5.3 public and AideRC1 untouched.",
   "acceptance": [
-    "Publish paired Terminal1.6.0 and AideRC2 only after source-bound full gates pass",
+    "Publish Terminal1.6.0 with a paired compatible Aide host only after required source-bound gates; RC2 code floor remains, final immutable release attempt is RC3 after the documented RC2 source-note failure.",
     "All current public packages install and function on both architectures; Terminal exact original ZIP receives copy/Telnet assertions",
     "Actual XServer isolated validation and runtime/reimport xauth dependency checks",
     "Market minimum Aide0.1.18.0RC2; retain 29 unrelated public artifacts unchanged",
@@ -43,17 +43,18 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Clean unsynced main official full PASS318/318, stable exact input fingerprintcc8ced...; Go1594 registered,1515pass/79conditional skips,24 complete shards, remaining race packages/platform contracts/vet pass. Final ZIP c682 original App/daemon race1/1; source56/extracted53/actualX11 windows2; original Chromium4 plus12 actual host palette cells; anonymous13HTTP paths PASS. All30 public package identities frozen/inspected; final same-tag native/runtime/public30 install+functions/48 browser/host Delivery remains a release gate. First drifted profile retained asFAIL, duplicate preserved; no receipt rewritten.",
+      "summary": "Clean unsynced main official full PASS318/318, stable exact input fingerprintcc8ced...; Go1594 registered,1515pass/79conditional skips,24 complete shards, remaining race packages/platform contracts/vet pass. Final ZIP c682 original App/daemon race1/1; source56/extracted53/actualX11 windows2; original Chromium4 plus12 actual host palette cells; anonymous13HTTP paths PASS. All30 public package identities frozen/inspected; final same-tag native/runtime/public30 install+functions/48 browser/host Delivery remains a release gate. First drifted profile retained asFAIL, duplicate preserved; no receipt rewritten. Final same-tag Delivery41396578224 PASS10/10: both native architectures1594registered/1515pass/79explicit skips/24shards,30public exact ZIP inspection+install+function each, Terminal new originalZIP case present; all four runtime/reimport xauth1.1.2 proofs pass;48 real App browser cells, Windows10/macOS8+8 checks, cleanLinux lifecycle PASS;7uploaded assets and downloaded manifests/source/tag identities independently checked.",
       "evidence": [
         "docs/reviews/2026-11-02/terminal-local-full.json",
         "docs/reviews/2026-11-02/terminal-source-stability.json",
         "docs/reviews/2026-11-02/terminal-plugin-publication.json",
-        "docs/reviews/2026-11-02/terminal-ui-themes.json"
+        "docs/reviews/2026-11-02/terminal-ui-themes.json",
+        "docs/reviews/2026-11-02/terminal-aide-publication.json"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "RC2 notes, host pairing/X11 prerequisites, rollback and public package/runtime smoke tests documented; final publication facts will be backfilled.",
+      "summary": "Source cases, release matrix, paired host/plugin requirements, original ZIP/runtime proofs, three-theme12-cell screenshots, rollback, anonymous customer entries and all actual failed/successful release attempts documented. Failed receipts/tags retained as facts, no gate relaxation.",
       "evidence": [
         "docs/releases/v0.1.18.0-RC2.md",
         "docs/architecture/terminal-session-features.md",
@@ -63,28 +64,24 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Own tests/browser fixtures stopped and disposable Go containers removed. Only owned docs remain in this isolated doc worktree pending commit; primary main and unsynced release clone clean. Production original image remains healthy; old assets,29 other public/3 private records and all session data retained. Identical extra Go source preserved privately before removal from build directory.",
+      "summary": "Only owned code/docs committed in isolated worktrees. Test containers/browser fixtures stopped; production original image/session data unchanged. Byte-identical extra source and invalid numbered Git refs preserved before isolation, valid refs retained and normal fetch restored. Old tags/assets and29 other public/3private listings unchanged.",
       "evidence": [
         "docs/architecture/terminal-session-features.md"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Terminal1.6 and market published. Local stable full318 PASS. RC2 version/tag e3ef7d0 pushed after release-check; Delivery41394850003 failed source validation on release note section headings, native/public30/runtime not run and no Aide release published. Preserve RC2 tag, correct RC3 notes with unchanged validator, then CI-conditioned docs merge, release-check, version.sh patch and new full tagged Delivery.",
+      "status": "pass",
+      "summary": "Terminal1.6.0 and Aidev0.1.18.0-RC3 are public, non-draft, non-prerelease, Latest. Aide7 assets/source86f83431/hash27ca verified after Delivery10/10; market582effe exactTerminalc682 and minimumRC2code floor retained. RC2tag e3ef7d0 retained without release. No production deployment.",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-shop/pull/33",
-        "https://github.com/skyelan1999/aide/pull/731",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3",
         "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0",
-        "https://github.com/skyelan1999/aide-pkg-terminal/actions/runs/41389492911",
-        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/41389520050",
-        "https://github.com/skyelan1999/aide/actions/runs/41389663889",
-        "docs/reviews/2026-11-02/terminal-rc2-source-gate.json"
+        "docs/reviews/2026-11-02/terminal-aide-publication.json"
       ]
     }
   },
-  "release_authorization": "User explicitly authorized this Terminal issuance administrator exception for plugin PR3, Aide PR731, market PR33, necessary repair/validation-doc PRs and version.sh RC2 version/tag push; every PR requires passing CI and final same-source full gates. No protection change or production restart.",
+  "release_authorization": "User authorized this issuance administrator exception for Terminal3/Aide731/market33, necessary repairs and verification-doc PRs, and version.sh publication, conditional on CI/full gates. The original planned version was RC2; after a source-only note-format failure, the same authorized issuance used version.sh patch for RC3 while retaining RC2 immutable, with no product-code/feature/deployment scope expansion. Branch protection and production remain unchanged.",
   "rollback": "Retain prior immutable Terminal1.5.3 and AideRC1 releases and local production; revert market listing/source separately if needed.",
-  "handoff": "RC2 source gate failure is documented, not counted as runtime/native acceptance. RC2 tag remains e3ef7d0. Corrected RC3 notes validated before the next version tag; product source and successful local full fingerprint unchanged. Proceed after this repair PR CI.",
+  "handoff": "Publication complete: AideRC3/Terminal1.6 formal Latest, market updated, full tagged gates and7assets verified. UseRC3 or newer host before plugin1.6. Production not restarted; keep previous packages/data backups for rollback. Final facts-only documentation merge/primarymain sync tracked by this commit.",
   "final_plugin_package": {
     "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
     "bytes": 1071482,
@@ -121,5 +118,8 @@
     "ownTestContainersRemoved": true,
     "completedUTC": "2026-11-02T05:26:10.964786+00:00"
   },
-  "planned_tag": "v0.1.18.0-RC3"
+  "planned_tag": "v0.1.18.0-RC3",
+  "published_tag": "v0.1.18.0-RC3",
+  "published_commit": "86f83431ec3fceb67dc4e4722ab67cf603dffaaa",
+  "published_source_sha256": "27cae693b5029dbebb10b2e8c51d2b1a7261d9e86ff4b2c14b02d8e9b276de2f"
 }

@@ -1467,5 +1467,12 @@
     "terminal-ui/classic-dark-mobile-x11.png",
     "terminal-ui/comfort-light-mobile-copy.png"
   ],
-  "manualReview": "Feature agent inspected one representative per12cells; root independently viewed the two retained mobile examples. X11 screenshot is scrolled to bottom controls."
+  "manualReview": "Feature agent inspected one representative per12cells; root independently viewed the two retained mobile examples. X11 screenshot is scrolled to bottom controls.",
+  "releaseSourceByteMatch": {
+    "tag": "v0.1.18.0-RC3",
+    "commit": "86f83431ec3fceb67dc4e4722ab67cf603dffaaa",
+    "checkedInputFiles": 20,
+    "status": "pass",
+    "scope": "UI input byte identity to tested sources, not a repeated or installed-host UI run"
+  }
 }

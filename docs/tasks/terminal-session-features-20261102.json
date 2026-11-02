@@ -59,17 +59,18 @@
       "evidence": []
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Terminal v1.6.0 public/formal/Latest, exact anonymous assets verified; market582effe published and anonymous catalog/package checks pass. Paired AideRC2 full/tag publication still pending; tracked in terminal-release-20261102.",
+      "status": "pass",
+      "summary": "Terminal1.6.0 and paired AideRC3 public/formal/Latest after pinned tag CI and full Delivery10/10; market582effe exactc682 package published. Both native30/30 actual installations/functions and all runtime/reimportxauth1.1.2 proofs passed;7Aideassets verified. No production restart.",
       "evidence": [
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3",
         "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0",
-        "docs/reviews/2026-11-02/terminal-plugin-publication.json"
+        "docs/reviews/2026-11-02/terminal-aide-publication.json"
       ]
     }
   },
   "release_authorization": "User explicitly authorized verification/publication and this issuance administrator exception for plugin3, Aide731, market33, necessary fixes/docs and version.sh RC2 version/tag push, conditional on CI/full gates. No protection change or production restart.",
   "rollback": "Do not install feature branches into production. Reviewable changes can be reverted separately; preserve all existing sessions, logs and relay deployment secrets.",
-  "handoff": "Terminal1.6.0 and market published; paired AideRC2 waits for source-bound complete release gates. See terminal-release-20261102 for current publication facts.",
+  "handoff": "Feature and publication complete. Paired formal host is AideRC3; Terminal1.6 marketcode minimumRC2 remains compatible. Native XQuartz/Windows XServer, customer devices and physical hardware remain outside fixture acceptance. Preserve old packages and session backups; production unchanged.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/726",
     "https://github.com/skyelan1999/aide/issues/728",

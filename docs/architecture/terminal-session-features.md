@@ -63,3 +63,16 @@ See the [per-cell report](../reviews/2026-11-02/terminal-ui-themes.json),
 and [Classic dark X11 form, scrolled to submit](../reviews/2026-11-02/terminal-ui/classic-dark-mobile-x11.png).
 The original8 blue/comfort cases were retained; only the missing4 green Classic
 cases were added after correcting an initial Comfort/Classic naming error.
+
+
+## Published paired host
+
+The paired formal host is [Aide v0.1.18.0-RC3](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC3).
+Both native architectures passed current30 public package inspection, actual
+installation and functions, including Terminal original-ZIP copy/Telnet checks.
+Runtime and reimport checks both executed real xauth1.1.2. The same-tag Delivery
+passed all10 jobs;7 uploaded assets, manifests, source and tag identities were
+independently verified before/after formal Latest promotion. See the
+[publication receipt](../reviews/2026-11-02/terminal-aide-publication.json).
+The earlier RC2 source-note failure/tag remains recorded and immutable. No
+production service or user session was restarted by publication.
