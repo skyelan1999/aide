@@ -1,0 +1,130 @@
+{
+  "id": "settings-archive-scroll-20261102",
+  "request": "归档会话列表不要嵌套滚动条，统一随设置页滚动",
+  "baseline": "e1f21606826b876d1b6310598d3897bffff4b1cc",
+  "initial_status": "",
+  "acceptance": [
+    "Archive list has natural height and no nested vertical scroller",
+    "Wheel over archive rows scrolls the outer settings page",
+    "Last archive row and restore/delete controls remain reachable at desktop/narrow sizes"
+  ],
+  "scope": [
+    "internal/server/web/style.css archived-list rule",
+    "Scoped task and local browser evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Remove archived-list max-height and overflow; settings-content remains the scroll container.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed archived-list fixed height, internal scrolling and scrollbar padding; settings content owns vertical scrolling.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual archive renderer/CSS with 80 synthetic rows: Chromium/WebKit at 1440px light and 390px dark, natural list height, wheel scrolls outer settings, last Delete button reachable and focusable. Waited for existing sheet transitions before geometry checks. No archive action executed. Existing settings navigation and UI response regressions passed.",
+      "evidence": [
+        "node .agent-state/archive-scroll/review.cjs",
+        "node scripts/settings-navigation.test.cjs",
+        "node scripts/ui-response-latency.test.cjs",
+        "git diff --check"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Issue and task capture reproduction, scoped fix and browser measurements.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only archived-list CSS and this record changed. Synthetic review artifacts remain ignored under .agent-state.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No remote push, localhost:9999 restart or formal release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped CSS commit before deployment; no data migration.",
+  "handoff": "Local source ready for main integration; production remains on prior image, user archive data untouched.",
+  "issue": "https://github.com/skyelan1999/aide/issues/742",
+  "browser_acceptance": {
+    "status": "pass",
+    "scope": "Actual archived-session renderer and CSS, synthetic archives; no restore/delete/export actions invoked; no production changes",
+    "results": [
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "theme": "light",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 4474,
+          "listScrollHeight": 4474,
+          "outerHeight": 557,
+          "outerScrollHeight": 4622
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "theme": "dark",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 4474,
+          "listScrollHeight": 4474,
+          "outerHeight": 584,
+          "outerScrollHeight": 4600
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      },
+      {
+        "engine": "webkit",
+        "width": 1440,
+        "theme": "light",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 4474,
+          "listScrollHeight": 4474,
+          "outerHeight": 562,
+          "outerScrollHeight": 4618
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "theme": "dark",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 4474,
+          "listScrollHeight": 4474,
+          "outerHeight": 589,
+          "outerScrollHeight": 4596
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      }
+    ]
+  },
+  "source_sha256": {
+    "internal/server/web/style.css": "98f2b3c97d822ae4c262a9d4cd0a02db581213f8d629b802dcbf2f0b8c7b8d24"
+  }
+}
