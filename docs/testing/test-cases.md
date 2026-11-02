@@ -4,7 +4,7 @@
 
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
-| go | 378 | 1684 |
+| go | 379 | 1686 |
 | python | 63 | 278 |
 | node | 180 | 182 |
 | browser | 105 | 0 |
@@ -2787,7 +2787,7 @@
 
 </details>
 
-<details><summary>internal/server/plugin_terminal_context_test.go · go · 5 个命名用例</summary>
+<details><summary>internal/server/plugin_terminal_context_test.go · go · 6 个命名用例</summary>
 
 [源码入口](../../internal/server/plugin_terminal_context_test.go)
 
@@ -2796,6 +2796,7 @@
 - `TestTerminalContextPinnedMasterNeverRetargets`
 - `TestTerminalContextCommunicationPolicyAndReferenceKey`
 - `TestTerminalRelayContextPrivateStateAndTrustedWorkbench`
+- `TestTerminalCopyContextCanonicalIdentityAndVisibility`
 
 </details>
 
@@ -4024,6 +4025,16 @@
 - `TestIssue92AppOwnsPinsAndShutdownPreservesOtherOwners`
 - `TestIssue92ReaperPreservesUnknownAndReplacedPaths`
 - `TestIssue92ConcurrentPinShutdownHasNoLateLinks`
+
+</details>
+
+<details><summary>internal/server/terminal_session_features_test.go · go · 1 个命名用例</summary>
+
+[源码入口](../../internal/server/terminal_session_features_test.go)
+
+- `TestTerminalSessionFeaturesInstalledCandidate`
+
+环境引用：`AIDE_TERMINAL_FEATURE_BUNDLE_PATH`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 

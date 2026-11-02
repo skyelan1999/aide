@@ -33,7 +33,7 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 	dataPath := a.dataPath
 	disabledTools := append([]string(nil), a.settings.DisabledTools...)
 	a.mu.Unlock()
-	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1, "relayVersion": 1, "workbench": ctx.Value(terminalWorkbenchContextKey{}) == true}
+	result := map[string]any{"version": 1, "storageRoot": local, "mode": config.Mode, "disabledTools": disabledTools, "communicationsVersion": 1, "relayVersion": 1, "sessionCopyVersion": 1, "workbench": ctx.Value(terminalWorkbenchContextKey{}) == true}
 	// State and relay secrets must not be reachable through workspace file tools.
 	stateIdentity, _ := json.Marshal([]any{scope, config.Mode, config.Port, config.Username, local})
 	stateHash := sha256.Sum256(stateIdentity)
@@ -76,9 +76,9 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 		if username == "" {
 			username = "root"
 		}
-		result["remote"] = map[string]any{"host": config.Host, "port": config.Port, "username": username, "path": config.Path, "socket": sshControlSocket}
+		result["remote"] = map[string]any{"host": config.Host, "port": config.Port, "username": username, "path": config.Path, "socket": sshControlSocket, "masterSocket": sshControlSocket}
 		kind, _ := args["kind"].(string)
-		if tool == "terminal_session_create" && (kind == "" || kind == "local") {
+		if tool == "terminal_session_create" && args["copyFrom"] == nil && (kind == "" || kind == "local") {
 			if err := a.ensureSSHSession(ctx); err != nil {
 				return nil, errors.New("工作区 SSH 连接不可用，请检查工作区认证设置")
 			}
@@ -87,11 +87,17 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 				return nil, err
 			}
 			result["remote"].(map[string]any)["socket"] = pinned
+			result["remote"].(map[string]any)["pinned"] = true
 		}
 	}
 	effective := args
-	if tool == "terminal_session_relay_connect" {
+	copyValue, copyRequested := args["copyFrom"]
+	copying := tool == "terminal_session_create" && copyRequested
+	if tool == "terminal_session_relay_connect" || copying {
 		id, _ := args["id"].(string)
+		if copying {
+			id, _ = copyValue.(string)
+		}
 		decoded, err := hex.DecodeString(id)
 		if err != nil || len(decoded) != 12 {
 			return nil, errors.New("此工作区中不存在该会话")
@@ -106,6 +112,7 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 			return nil, errors.New("此工作区中不存在该会话")
 		}
 		var record struct {
+			Kind           string `json:"kind"`
 			Auth           string `json:"auth"`
 			IdentityFile   string `json:"identityFile"`
 			IdentitySource string `json:"identitySource"`
@@ -124,6 +131,21 @@ func (a *App) terminalToolContext(ctx context.Context, tool string, args map[str
 		// The configured identity, not model/browser-supplied overrides, controls
 		// reference key reads for an existing relay session.
 		effective = map[string]any{"auth": record.Auth, "identityFile": record.IdentityFile, "identitySource": record.IdentitySource}
+		connect := !copying || args["connect"] == true
+		if copying && !connect {
+			effective = map[string]any{}
+		}
+		if connect && record.Kind == "workspace" && config.Mode == "ssh" {
+			if err := a.ensureSSHSession(ctx); err != nil {
+				return nil, errors.New("Workspace SSH connection is unavailable")
+			}
+			pinned, err := a.pinTerminalMaster(sshControlSocket)
+			if err != nil {
+				return nil, err
+			}
+			result["remote"].(map[string]any)["socket"] = pinned
+			result["remote"].(map[string]any)["pinned"] = true
+		}
 	}
 	if tool == "terminal_session_comm" {
 		if action, ok := args["action"].(string); ok && toolDeniedIn(disabledTools, "terminal_"+action) {

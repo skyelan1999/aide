@@ -3499,15 +3499,16 @@
     {
       "path": "internal/server/plugin_terminal_context_test.go",
       "kind": "go",
-      "sha256": "cc1e5f32ee467b12768d0ac4e7b49f0881db0eb1027f1014444d5d2931c07d49",
+      "sha256": "c1dc9cb7ac981562682e6e6855324d06b40f0bcb123a4b02a84d01cebceaee2b",
       "cases": [
         "TestTerminalContextReferenceKeysAndBoundaries",
         "TestTerminalContextSSHStorageIsolationWithoutLocalFallback",
         "TestTerminalContextPinnedMasterNeverRetargets",
         "TestTerminalContextCommunicationPolicyAndReferenceKey",
-        "TestTerminalRelayContextPrivateStateAndTrustedWorkbench"
+        "TestTerminalRelayContextPrivateStateAndTrustedWorkbench",
+        "TestTerminalCopyContextCanonicalIdentityAndVisibility"
       ],
-      "caseCount": 5,
+      "caseCount": 6,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -5052,6 +5053,19 @@
       ],
       "caseCount": 4,
       "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "internal/server/terminal_session_features_test.go",
+      "kind": "go",
+      "sha256": "308b56e83e7a45150789614df904cb591c81550f013f56ae99aad10a24593cc1",
+      "cases": [
+        "TestTerminalSessionFeaturesInstalledCandidate"
+      ],
+      "caseCount": 1,
+      "environmentReferences": [
+        "AIDE_TERMINAL_FEATURE_BUNDLE_PATH"
+      ],
       "execution": "not_run_by_inventory"
     },
     {

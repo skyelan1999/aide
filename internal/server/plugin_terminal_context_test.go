@@ -224,3 +224,51 @@ func TestTerminalRelayContextPrivateStateAndTrustedWorkbench(t *testing.T) {
 	}
 
 }
+
+func TestTerminalCopyContextCanonicalIdentityAndVisibility(t *testing.T) {
+	a := testApp(t)
+	ui := context.WithValue(context.Background(), terminalWorkbenchContextKey{}, true)
+	initial, err := a.terminalToolContext(ui, "terminal_session_list", nil)
+	if err != nil || initial["sessionCopyVersion"] != 1 {
+		t.Fatal("missing copy capability", err)
+	}
+	directory := filepath.Join(initial["stateRoot"].(string), ".aide", "terminal-workbench")
+	if err := os.MkdirAll(directory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	id := strings.Repeat("c", 24)
+	record := []byte(`{"kind":"ssh","auth":"key","identityFile":"canonical.key","visibleToAide":false}`)
+	if err := os.WriteFile(filepath.Join(directory, id+".json"), record, 0600); err != nil {
+		t.Fatal(err)
+	}
+	args := map[string]any{"copyFrom": id, "connect": false, "workbench": true, "identityFile": "../forged.key"}
+	if _, err := a.terminalToolContext(context.Background(), "terminal_session_create", args); err == nil {
+		t.Fatal("model spoofed access to hidden source")
+	}
+	copyOnly, err := a.terminalToolContext(ui, "terminal_session_create", args)
+	if err != nil || copyOnly["identityMaterial"] != nil {
+		t.Fatal("copy-only must not read even a missing referenced key", err)
+	}
+	canonical := []byte("-----BEGIN OPENSSH PRIVATE KEY-----\ncanonical-test-fixture\n-----END OPENSSH PRIVATE KEY-----\n")
+	if err := os.WriteFile(filepath.Join(a.workPath, "canonical.key"), canonical, 0600); err != nil {
+		t.Fatal(err)
+	}
+	args["connect"] = true
+	connected, err := a.terminalToolContext(ui, "terminal_session_create", args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	material, _ := base64.StdEncoding.DecodeString(connected["identityMaterial"].(string))
+	if string(material) != string(canonical) {
+		t.Fatal("copy-and-connect did not use saved canonical identity")
+	}
+	for _, invalid := range []any{"", "../escape", strings.Repeat("a", 23), 123, nil} {
+		if _, err := a.terminalToolContext(ui, "terminal_session_create", map[string]any{"copyFrom": invalid}); err == nil {
+			t.Fatalf("accepted invalid copy identity %v", invalid)
+		}
+	}
+	other := testApp(t)
+	if _, err := other.terminalToolContext(ui, "terminal_session_create", args); err == nil {
+		t.Fatal("copy crossed private workspace state")
+	}
+}
