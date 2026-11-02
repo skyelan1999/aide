@@ -35,22 +35,26 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Native app and scoped local cache compile successfully. Canonical build/start integration and plugin workbench new-page routing implemented; native close/quit respects plugin dirty state. Local source integration/web-asset deployment is next.",
+      "status": "pass",
+      "summary": "Mac host compiled, signed and installed. Code integrated locally; canonical build.command compiled/deployed web assets and starts the desktop app. Plugin workbench actions create separate scoped pages and reuse existing bridge. Subsequent native sandbox UI compatibility fix is host-only; backend not restarted again.",
       "evidence": [
         "native/macos-desktop/main.swift",
-        "scripts/build-macos-desktop.py",
-        "internal/server/web/plugin-workbench-tabs.js"
+        "internal/server/web/plugin-workbench-tabs.js",
+        "scripts/build-macos-desktop.py"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Mac arm64 app compiled/installed; actual AppKit tabs, shared data store, close/reopen, native dialog and upload/download cancellation paths passed. User confirmed unlock. Focused Python 10+launcher35+fingerprint4 tests and plugin bridge21/page routing5 tests pass. New plugin page rendering after local source build remains. No live mic capture/paid model call or real file transfer claimed.",
+      "status": "blocked",
+      "summary": "320-check quick gate passed on final source, plus actual Swift compilation/signature/origin/bound-root checks; Python desktop11/launcher35/fingerprint4 and plugin bridge/page35 regressions passed. Actual installed WKWebView top-frame dialogs, upload/download cancellation, native tabs/shared store and close/reopen passed. Canonical build.command deployed healthy runtime with unchanged data mounts; embedded app/plugin assets match source. Service restart re-locked the workbench; final native Compare/ProfessionalProject rendering and opaque-plugin panel checks await the pending user unlock. No live mic/upstream call, real file transfer, Safari tab UI or Windows app acceptance claimed.",
       "evidence": [
+        ".agent-state/macos-desktop/quick-final-host.log",
         ".agent-state/macos-desktop/native-panels-smoke.json",
         ".agent-state/macos-desktop/python-tests.log",
-        ".agent-state/macos-desktop/launcher-tests.log",
-        ".agent-state/macos-desktop/plugin-tabs-tests.log"
+        ".agent-state/macos-desktop/plugin-suite.log",
+        ".agent-state/macos-desktop/plugin-tabs-tests.log",
+        "primary installation: .agent-state/macos-desktop/build-actual.log",
+        "primary installation: .agent-state/macos-desktop/deployment-validation.json",
+        "primary installation: .agent-state/macos-desktop/native-final.json"
       ]
     },
     "documentation": {
@@ -64,17 +68,36 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed/staged only scoped source, tests and docs. App updates recycled old owned native bundles, leaving one local build and zero old iCloud bundles. Standard source build removed one superseded runtime image and reclaimed 1.78GB old BuildKit layers while preserving current image/dependencies/cache mounts and user data. Private logs/screenshots retained only in ignored evidence directories.",
+      "evidence": [
+        "scripts/test_macos_desktop.py",
+        "primary installation: .aide-data/build/recycle-last.json",
+        "primary installation: .agent-state/macos-desktop/build-actual.log"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "Public push/release, notarization, Windows desktop shell and cross-architecture publication are not authorized for this new feature. Local source deployment is part of acceptance and recorded separately.",
+      "evidence": [
+        "docs/architecture/macos-desktop.md"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "Quit Aide.app and use the existing localhost Safari entry; backend data is shared. Existing running image was retained before source deployment. New public Release is not part of this request.",
-  "handoff": "In progress: integrate source, build local embedded web assets, verify native plugin pages, finish scoped cleanup. Microphone TCC remains notDetermined; platform WebAuthn authenticator unavailable in this host; original password fallback preserved."
+  "handoff": "Local source merged and compiled; Aide.app installed and opened. Runtime code/image is dcd7b0db; host-only sandbox dialog/download compatibility is 09648514, installed without another backend restart. Current backend is healthy with original data mounts. Required next step: user unlocks current Aide window (async request pending), then native smoke completes Compare/ProfessionalProject/sandbox panel checks. Keep issue #746 open until this acceptance is done. No public push, Release, signing/notarization or platform matrix claimed.",
+  "local_deployment": {
+    "runtimeCodeCommit": "dcd7b0db8d63bc274d026a301ea0f194b2369ade",
+    "nativeHostCodeCommit": "096485141b5aacdaea443ce1139df28d9ddcd092",
+    "image": "sha256:b23467508e589eaa953be0261626b43eec5b51749425bfe03f0d39a024afd86c",
+    "app": "~/Applications/Aide.app",
+    "appBuildDigest": "49b0287e376512639c10c0b6681b5c611dd40ee73fa3b9a7a9ed1f09348a2fd5",
+    "dataMountsUnchanged": true,
+    "runtimeHealth": "healthy",
+    "oldRuntimeImagesRemoved": 1,
+    "buildkitReclaimed": "1.78GB",
+    "publicPush": false,
+    "publicRelease": false
+  }
 }
