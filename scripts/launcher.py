@@ -208,7 +208,7 @@ class Launcher:
         dependencies = set(dependencies) | {os.environ.get('AIDE_TEST_IMAGE', ''),
                                              os.environ.get('AIDE_TEST_TOOLCHAIN_IMAGE', '')}
         retained_prefixes = ('aide:dependencies-', 'aide:dependency-seed-', 'aide:sdk-seed-')
-        images = set(self.d('image', 'ls', '-q', '--no-trunc',
+        images = set(self.d('image', 'ls', '-a', '-q', '--no-trunc',
                             '--filter', 'label=aide.installation=' + self.scope,
                             '--filter', 'label=aide.build-role=runtime', capture=True).split())
         removed, retained = [], []

@@ -535,7 +535,8 @@ class RecycleLauncher(module.Launcher):
                 output = 'f' * 64
         elif c[:2] == ['image', 'ls']:
             # Include a foreign result to test the second ownership check.
-            output = '\n'.join(self.images)
+            output = '\n'.join(image for image, data in self.images.items()
+                               if '-a' in c or data['RepoTags'])
         elif c[:2] == ['image', 'inspect']:
             image = self.tags.get(c[2], c[2])
             if image not in self.images:
@@ -588,6 +589,7 @@ class RecycleTests(unittest.TestCase):
         targets = [c[3] for c in self.removals()]
         self.assertIn(old, targets)
         self.assertIn(dangling, targets)
+        self.assertIn('-a', next(c for c in self.launcher.commands if c[1:3] == ['image', 'ls']))
         self.assertIn('aide:old-one', targets)
         self.assertIn('aide:old-two', targets)
         prune = next(c for c in self.launcher.commands if c[1:3] == ['buildx', 'prune'])
