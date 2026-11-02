@@ -22,6 +22,7 @@ assert(out,'Set an owned AIDE_COMPONENT_EVIDENCE_DIR');fs.mkdirSync(out,{recursi
     window.t=text=>lang==='en'?(window.aideEnglish[text]||text):text;
     window.action=fn=>fn;window.notices=[];window.toast=s=>notices.push(s);window.requests=[];window.previewCalls=[];
     window.ttsUnlockAudio=()=>{};window.ttsCancel=()=>{};window.ttsSpeak=async(text,opts)=>previewCalls.push({text,...opts});
+    window.callEnds=0;window.aideAssistantCall={active:()=>true,end:()=>callEnds++};
     window.setTimeout=()=>0; // preview Promise.race guard must not leave 65s timers in this fixture
     window.state={config:{ttsProvider:'auto',edgeAvailable:false,sherpaAvailable:false,ttsModel:'qwen3-tts-flash',ttsVoice:'Cherry',hasTTSKey:true,qwenTTSCatalog:{models:[{id:'qwen3-tts-flash'}],voices:[{id:'Cherry'}]}}};
     window.api=async(url,options)=>{requests.push({url,body:options?JSON.parse(options.body):null});
@@ -50,6 +51,9 @@ assert(out,'Set an owned AIDE_COMPONENT_EVIDENCE_DIR');fs.mkdirSync(out,{recursi
    let saved=await page.evaluate(()=>requests.filter(r=>r.url==='/settings').at(-1).body);
    assert.equal(saved.openaiTTSModel,'tts-1-hd');assert.equal(saved.openaiTTSVoice,'nova');assert.equal(saved.openaiTTSAPIKey,'synthetic-browser-key');assert.equal(saved.ttsAPIKey,'');assert(!('ttsVoice'in saved));
    assert.equal(await label('OpenAI 语音 API Key').inputValue(),'');
+   assert.equal(await page.evaluate(()=>callEnds),1,'provider/model changes must end an existing call');
+   await page.getByRole('button',{name:lang==='en'?'Save':'保存',exact:true}).click();
+   assert.equal(await page.evaluate(()=>callEnds),1,'saving unchanged settings must not end a call');
    await page.getByRole('button',{name:lang==='en'?'Preview':'试听',exact:true}).click();
    const preview=await page.evaluate(()=>previewCalls.at(-1));assert.equal(preview.provider,'openai');assert.equal(preview.voice,'nova');
    await label('清除已保存的 OpenAI 语音密钥').check();await page.getByRole('button',{name:lang==='en'?'Save':'保存',exact:true}).click();

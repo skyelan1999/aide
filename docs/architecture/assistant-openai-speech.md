@@ -32,6 +32,16 @@
 
 本轮不改实时双向语音通话链路、语音识别或独立 `tts-tools` 文件生成插件。生产服务保持原版本。
 
+## 双向通话接入修复（Issue #738）
+
+以上是最初朗读版本的范围。后续发现「语音通话」仍固定走千问／Tina，因此另行接入 OpenAI 双向通话。显式选择 OpenAI 时，通话复用独立的语音密钥、基础地址、Realtime 模型和音色；缺少密钥或选择旧 Speech 接口时明确拒绝，不再扫描千问账户作为回退。其他原有引擎的千问原生通话解析保留兼容行为。
+
+通话状态接口和 `aide.ready` 返回实际 `provider/model/voice/inputRate/outputRate`。OpenAI 输入为 24 kHz PCM16，千问仍为 16 kHz；输出均为 24 kHz。AudioWorklet 在预检后按接口返回的采样率生成 20 ms 数据包。OpenAI GA 的 session 和输出音频／转写事件在服务端适配到原有通话状态机，复用鉴权、打断、工具交办、工作区检查、锁屏断连和记忆写入逻辑。
+
+通话栏显示实际提供商和音色，模型可通过标题提示查看。「当前引擎」仍表示最近一次 **TTS 朗读**，不表示已经建立的双向通话。修改通话提供商、模型、密钥、地址或音色后，旧通话会结束，需要重新拨通；服务端也检查跨页面配置变化，不在旧连接内静默换账户。语速滑块仍只影响朗读，原生双向通话保持正常速度。
+
+验收范围和未完成项见[通话修复任务](../tasks/openai-assistant-calls-20261102.json)。本节不代表正式发行或生产部署；独立 `tts-tools` 插件和整体 UI 布局不变。
+
 ## 官方接口依据
 
 核对日期：2026-11-02。[文字转语音](https://developers.openai.com/api/docs/guides/text-to-speech)说明旧 TTS 模型将于 2027-01-06 停用，新的 Realtime 模型不能发往旧 Speech API。[Realtime 会话](https://developers.openai.com/api/docs/guides/realtime-conversations)描述 GA 事件、音频格式和无历史独立响应；[停用公告](https://developers.openai.com/api/docs/deprecations)为迁移时间依据。此处不是模型永久可用性承诺。

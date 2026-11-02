@@ -1,12 +1,12 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const tick=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
-function fixture(){
+function fixture(config){
  let stopped=0,freed=0,pending=null,valid=true,timer,states=[],errors=[];
  class AC{constructor(){this.currentTime=1;this.destination={};this.audioWorklet={addModule:async()=>{}};this.sources=[];}resume(){return Promise.resolve();}close(){this.closed=true;return Promise.resolve();}createMediaStreamSource(){return {connect(){},disconnect(){}}}createGain(){return {gain:{value:1},connect(){},disconnect(){}}}createBuffer(n,size,rate){return {duration:size/rate,getChannelData:()=>new Float32Array(size)}}createBufferSource(){const p={connect(){},start(){},stop(){stopped++}};this.sources.push(p);return p;}}
- class Worklet{constructor(ctx){this.port={};Worklet.last=this;}connect(){}disconnect(){}}
+ class Worklet{constructor(ctx,name,options){this.port={};this.options=options;Worklet.last=this;}connect(){}disconnect(){}}
  class WS{constructor(url,protocols){this.url=url;this.protocols=protocols;this.readyState=1;this.bufferedAmount=0;this.sent=[];WS.last=this;}send(s){this.sent.push(JSON.parse(s));}close(){this.closed=true;}event(e){this.onmessage({data:JSON.stringify(e)});}}
  const c={window:{AudioContext:AC},navigator:{mediaDevices:{getUserMedia:async()=>pending||{getTracks:()=>[{stop(){freed++}}]}}},location:{href:'https://localhost:9999/',protocol:'https:'},AudioWorkletNode:Worklet,WebSocket:WS,URL,Uint8Array,DataView,Float32Array,ArrayBuffer,Set,JSON,atob,btoa,setInterval:fn=>{timer=fn;return 1},clearInterval:()=>{timer=null}};vm.createContext(c);vm.runInContext(fs.readFileSync('internal/server/web/assistant-realtime.js','utf8'),c);
- const live=c.window.AideAssistantRealtime.create({valid:()=>valid,session:()=> 'assistant',token:()=> 'synthetic-token',state:s=>states.push(s.phase),error:e=>errors.push(e)});
+ const live=c.window.AideAssistantRealtime.create({valid:()=>valid,session:()=> 'assistant',token:()=> 'synthetic-token',preflight:async()=>config,state:s=>states.push(s.phase),error:e=>errors.push(e)});
  return {live,WS,Worklet,states,errors,freed:()=>freed,stopped:()=>stopped,permission:p=>pending=p,setValid:v=>valid=v,poll:()=>timer?.(),timer:()=>timer};
 }
 (async()=>{
@@ -21,5 +21,7 @@ function fixture(){
  const raced=fixture();let doneA,doneB,freedA=0,freedB=0;raced.permission(new Promise(r=>doneA=r));const racing=raced.live.start();await tick();await raced.live.setMicrophone(false);raced.permission(new Promise(r=>doneB=r));const resume=raced.live.setMicrophone(true);await tick();doneA({getTracks:()=>[{stop(){freedA++}}]});await racing;assert.equal(freedA,1,'superseded permission cannot attach a second live capture');doneB({getTracks:()=>[{stop(){freedB++}}]});await resume;raced.live.stop();assert.equal(freedB,1);
  const congested=fixture();await congested.live.start();congested.WS.last.event({type:'aide.ready'});congested.WS.last.bufferedAmount=300000;congested.Worklet.last.port.onmessage({data:new ArrayBuffer(640)});assert.equal(congested.live.snapshot().enabled,false);assert.equal(congested.errors.length,1);
  let processor;const work={AudioWorkletProcessor:class{constructor(){this.port={postMessage:b=>work.packets.push(b)}}},sampleRate:48000,registerProcessor:(n,p)=>processor=p,Int16Array,ArrayBuffer,DataView,Math,packets:[]};vm.runInNewContext(fs.readFileSync('internal/server/web/assistant-pcm-worklet.js','utf8'),work);const pcm=new processor();for(let i=0;i<15;i++)pcm.process([[new Float32Array(128).fill(.5)]]);assert.equal(work.packets.length,2);assert.equal(work.packets[0].byteLength,640);assert.equal(new DataView(work.packets[0]).getInt16(0,true),16384);
- console.log('PASS native audio: authenticated socket, streaming PCM, 16k resampling, 24k playback, barge-in, stale audio, mute/release, late permission, lock, backpressure');
+ const openai=fixture({provider:'openai',model:'gpt-realtime-2.1-mini',voice:'cedar',inputRate:24000});await openai.live.start();assert.equal(openai.Worklet.last.options.processorOptions.inputRate,24000);openai.WS.last.event({type:'aide.ready',provider:'openai',model:'gpt-realtime-2.1-mini',voice:'cedar'});assert.equal(openai.live.snapshot().voice,'cedar');assert.equal(openai.live.snapshot().provider,'openai');openai.live.stop();
+ work.packets=[];const pcm24=new processor({processorOptions:{inputRate:24000}});for(let i=0;i<15;i++)pcm24.process([[new Float32Array(128).fill(.5)]]);assert.equal(work.packets.length,2);assert.equal(work.packets[0].byteLength,960);assert.equal(new DataView(work.packets[0]).getInt16(0,true),16384);
+ console.log('PASS native audio: authenticated socket, negotiated16k/24k resampling, selected provider/voice, streaming playback, barge-in, stale audio, mute/release, late permission, lock, backpressure');
 })().catch(e=>{console.error(e);process.exitCode=1});

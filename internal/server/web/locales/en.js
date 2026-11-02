@@ -3294,6 +3294,8 @@ window.aideEnglish = {
   "取消静音": "Unmute",
   "静音": "Mute",
   "原生实时通话": "Native realtime call",
+  "语音通话配置已更改，请重新拨通": "Voice call settings changed. Please start a new call.",
+  "原生实时连接失败，请检查所选语音模型、密钥和网络": "Realtime connection failed. Check the selected voice model, API key and network.",
   "双向音频 · 可随时打断": "Duplex audio · Interrupt anytime",
   "当前浏览器不支持实时音频，请使用新版 Safari 或 Chrome": "Realtime audio requires a recent Safari or Chrome browser",
   "静域": "Studio",

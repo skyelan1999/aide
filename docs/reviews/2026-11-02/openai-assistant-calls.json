@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-02",
+  "issue": 738,
+  "baseline": "ab249e57",
+  "scope": "OpenAI native duplex calls selected by independent speech settings; original layout retained",
+  "source_sha256": {
+    "internal/server/assistant_realtime.go": "6b30db54aae31074675f3a3024f048c72eeb233f65561ca556d93b0cbb794d4c",
+    "internal/server/assistant_realtime_provider.go": "4d678d67638e5914af4e69097de6ca50b5ff42190947f34bd60fbc0ad4006e93",
+    "internal/server/web/app.js": "26af22884ddbac11d4c931c9ad1bf9defa23dfdc36efb7d7105c07d64ae84ea4",
+    "internal/server/web/assistant-realtime.js": "8bcd784fe111f34c87c3a87a3311336549f729b13fd732f93c6846cd9862fc55",
+    "internal/server/web/assistant-call.js": "c674cb6104bb32d20e598ebbc0d2132a5759aa5573e164555bd7705db28a4c01",
+    "internal/server/web/assistant-pcm-worklet.js": "d181e84a9509452a3cd449d02f2711b9507104fb46d5523497d9ce06a6dd6593"
+  },
+  "go_race": {
+    "status": "PASS",
+    "counts": {
+      "pass": 33,
+      "fail": 0,
+      "skip": 2
+    },
+    "selection": "Assistant OpenAI/Realtime/Native; native turn/speech/clock/quotation; MixSoulNative; QwenRealtime",
+    "runtime": "local aide:release-ci-test-tools with Go and Node",
+    "initial_environment_failures": "Plain Go image lacks Office and Node runtime; those initial broad attempts failed. Reran voice-specific suite in complete local CI image."
+  },
+  "go_vet": "PASS internal/server",
+  "javascript": "PASS realtime and call lifecycles; TTS playback; settings save ends changed call, unchanged save preserves call",
+  "browser": {
+    "status": "PASS",
+    "scope": "Actual Chromium synthetic microphone, negotiated16k/24k AudioWorklet PCM and WebAudio playback for Qwen and OpenAI; owned WebSocket protocol fixture, no paid provider or real microphone.",
+    "providers": [
+      {
+        "provider": "qwen",
+        "model": "qwen3.8-omni-flash-realtime",
+        "voice": "Tina",
+        "inputRate": 16000,
+        "packets": 12,
+        "commands": [
+          "conversation.item.truncate",
+          "response.cancel",
+          "input_audio_buffer.clear"
+        ],
+        "details": {
+          "phases": [
+            "requesting",
+            "listening",
+            "thinking",
+            "speaking",
+            "listening",
+            "watching",
+            "listening",
+            "off",
+            "requesting",
+            "listening",
+            "off"
+          ],
+          "errors": []
+        }
+      },
+      {
+        "provider": "openai",
+        "model": "gpt-realtime-2.1-mini",
+        "voice": "cedar",
+        "inputRate": 24000,
+        "packets": 10,
+        "commands": [
+          "conversation.item.truncate",
+          "response.cancel",
+          "input_audio_buffer.clear"
+        ],
+        "details": {
+          "phases": [
+            "requesting",
+            "listening",
+            "thinking",
+            "speaking",
+            "listening",
+            "watching",
+            "listening",
+            "off",
+            "requesting",
+            "listening",
+            "off"
+          ],
+          "errors": []
+        }
+      }
+    ],
+    "browser": "153.0.8010.12"
+  },
+  "settings_browser": {
+    "status": "PASS",
+    "cells": 4,
+    "scope": "actual renderer with mock config and playback; unchanged-save and changed-call checks"
+  },
+  "quick": "PASS python3 scripts/agent-route.py verify quick",
+  "live_provider": {
+    "status": "PASS",
+    "model": "gpt-realtime-2.1-mini",
+    "voice": "cedar",
+    "elapsed_seconds": 10.5,
+    "output_pcm_bytes": 492000,
+    "synthetic_input_transcribed": true,
+    "source": "direct native provider probe"
+  },
+  "live_authenticated_aide_relay": {
+    "status": "PASS",
+    "provider": "openai",
+    "model": "gpt-realtime-2.1-mini",
+    "voice": "cedar",
+    "elapsed_seconds": 9.65,
+    "output_pcm_bytes": 463200,
+    "audio": {
+      "rate": 24000,
+      "channels": 1,
+      "sample_bytes": 2,
+      "frames": 231600,
+      "duration_seconds": 9.65
+    },
+    "scope": "fresh Aide test assistant, real authentication and host relay, operator-owned synthetic WAV; independent review key never echoed or copied",
+    "human_microphone": "NOT_RUN",
+    "safari": "NOT_RUN",
+    "subjective_voice_quality": "PENDING_USER_LISTENING"
+  },
+  "runtime": {
+    "production_9999": "unchanged",
+    "review_18096": "updated native isolated review using existing local review data"
+  },
+  "release": "not pushed, published or deployed"
+}

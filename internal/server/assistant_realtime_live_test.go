@@ -31,6 +31,9 @@ func TestAssistantRealtimeLiveSyntheticAudio(t *testing.T) {
 	if json.Unmarshal(b, &cfg) != nil {
 		t.Fatal("settings format")
 	}
+	if voice := os.Getenv("AIDE_NATIVE_LIVE_VOICE"); voice != "" && openAINativeCall(cfg) {
+		cfg.OpenAITTSVoice = voice
+	}
 	token, e := os.ReadFile(filepath.Join(data, "auth", "access-token"))
 	if e != nil {
 		t.Fatal("local token unavailable")
@@ -81,6 +84,7 @@ func TestAssistantRealtimeLiveSyntheticAudio(t *testing.T) {
 		if ws.ReadJSON(&event) != nil {
 			t.Fatal("provider stream ended before audio response")
 		}
+		realtimeCallNormalizeEvent(cfg, event)
 		var kind string
 		json.Unmarshal(event["type"], &kind)
 		switch kind {
@@ -91,7 +95,11 @@ func TestAssistantRealtimeLiveSyntheticAudio(t *testing.T) {
 			session["tools"] = []any{}
 			delete(session, "tool_choice")
 			if round == 0 {
-				session["turn_detection"] = nil
+				if openAINativeCall(cfg) {
+					session["audio"].(map[string]any)["input"].(map[string]any)["turn_detection"] = nil
+				} else {
+					session["turn_detection"] = nil
+				}
 			}
 			ws.WriteJSON(map[string]any{"type": "session.update", "session": session})
 		case "session.updated":
@@ -109,15 +117,20 @@ func TestAssistantRealtimeLiveSyntheticAudio(t *testing.T) {
 					j := i * 3 / 2
 					binary.LittleEndian.PutUint16(pcm[i*2:], binary.LittleEndian.Uint16(firstPCM[j*2:]))
 				}
+				rate := 16000
+				if openAINativeCall(cfg) {
+					rate = 24000
+					pcm = append([]byte(nil), firstPCM...)
+				}
 				// Optional local synthetic fixture, never human microphone audio.
 				if output := os.Getenv("AIDE_NATIVE_LIVE_PCM_OUTPUT"); output != "" {
 					if e := os.WriteFile(output, pcm, 0600); e != nil {
 						t.Fatal("synthetic PCM fixture write failed")
 					}
 				}
-				pcm = append(pcm, make([]byte, 32000)...)
-				for offset := 0; offset < len(pcm); offset += 640 {
-					end := offset + 640
+				pcm = append(pcm, make([]byte, rate*2)...)
+				for offset := 0; offset < len(pcm); offset += rate / 25 {
+					end := offset + rate/25
 					if end > len(pcm) {
 						end = len(pcm)
 					}
@@ -171,7 +184,7 @@ func TestAssistantRealtimeLiveSyntheticAudio(t *testing.T) {
 			if !transcribed {
 				t.Fatal("synthetic spoken input was not transcribed")
 			}
-			t.Logf("real provider: native PCM output %d bytes; synthetic speech input transcribed and semantic VAD triggered response; no human microphone tested", audioBytes)
+			t.Logf("real provider %v model %v voice %v: native PCM output %d bytes; synthetic speech input transcribed and VAD triggered response; no human microphone tested", realtimeCallMetadata(cfg)["provider"], realtimeCallMetadata(cfg)["model"], realtimeCallMetadata(cfg)["voice"], audioBytes)
 			return
 		}
 	}

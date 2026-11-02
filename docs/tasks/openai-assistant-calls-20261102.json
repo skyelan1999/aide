@@ -1,0 +1,76 @@
+{
+  "id": "openai-assistant-calls-20261102",
+  "request": "Fix assistant calls continuing to use Qwen after selecting OpenAI speech",
+  "baseline": "ab249e57ca0a3e2b582c5f08ffd590d72be738dd",
+  "initial_status": "",
+  "acceptance": [
+    "Explicit OpenAI selection uses independent voice key/base/model/voice for duplex calls and never scans Qwen as fallback",
+    "GA session and events normalized into existing authenticated interruption/tool/persistence chain",
+    "Microphone uses negotiated24kHz for OpenAI and16kHz for Qwen; output24kHz",
+    "Status reflects actual provider/model/voice; keep original layout",
+    "Focused provider/relay/auth/lock/browser regressions and bounded live call acceptance"
+  ],
+  "scope": [
+    "Assistant native call provider adapter and existing relay",
+    "Realtime browser microphone worklet and call metadata",
+    "Regression tests and architecture/acceptance docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Confirmed native calls hard-code Qwen/Tina even after OpenAI narration selection. Issue738 recorded before implementation. UI redesign and publication excluded.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/738"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "OpenAI independent voice settings take explicit precedence. Normalize GA session/events into shared lifecycle; negotiate input rate. Keep Qwen behavior unchanged and never silently switch paid provider.",
+      "evidence": [
+        "https://developers.openai.com/api/docs/guides/realtime-conversations"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Independent OpenAI native duplex provider and GA event/session adapter; negotiated sampling and actual call label. Same-page and cross-page configuration changes terminate old calls. Existing Qwen behavior retained.",
+      "evidence": [
+        "internal/server/assistant_realtime.go",
+        "internal/server/assistant_realtime_provider.go",
+        "internal/server/web/app.js",
+        "internal/server/web/assistant-realtime.js",
+        "internal/server/web/assistant-call.js",
+        "internal/server/web/assistant-pcm-worklet.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Selected Go race33 passes/2 opt-in skips; server vet, JS lifecycles, four settings browser cells, actual browser16k/24k worklets and quick passed. Two paid synthetic probes passed: direct provider and real authenticated Aide relay using cedar. Human microphone/Safari/listening not verified.",
+      "evidence": [
+        "docs/reviews/2026-11-02/openai-assistant-calls.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and scope/acceptance boundaries updated. Issue738 tracks native-call correction separately from original read-aloud-only work.",
+      "evidence": [
+        "docs/architecture/assistant-openai-speech.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped voice/CI/docs files changed. Credentials and generated audio remain in ignored local test data. Original production service unchanged.",
+      "evidence": [
+        "docs/reviews/2026-11-02/openai-assistant-calls.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local integration follows user instruction to merge locally first; no remote push or publication. Production replacement requires separate next step.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Local source can revert the scoped fix commit; production not replaced. Review server retains previous data and key.",
+  "handoff": "Native review18096 has the complete OpenAI call adapter; production9999 still needs an updated build/start. Original layout retained. No real microphone/Safari acceptance yet.",
+  "issue": "https://github.com/skyelan1999/aide/issues/738"
+}

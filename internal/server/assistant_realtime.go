@@ -32,6 +32,9 @@ func assistantSocketToken(r *http.Request) string {
 }
 
 func realtimeCallURL(cfg Settings) (string, error) {
+	if openAINativeCall(cfg) {
+		return openAINativeCallURL(cfg)
+	}
 	u, err := url.Parse(cfg.BaseURL)
 	if err != nil || u.User != nil || u.RawQuery != "" || u.Fragment != "" || !isBailianEndpoint(cfg.BaseURL) {
 		return "", errors.New("原生通话需要已配置的千问业务空间提供商")
@@ -49,6 +52,10 @@ func realtimeCallURL(cfg Settings) (string, error) {
 }
 
 func (a *App) realtimeCallConfigLocked() (Settings, error) {
+	// An explicit OpenAI voice selection must never borrow a Qwen/chat key.
+	if openAINativeCall(a.settings) {
+		return openAINativeCallConfig(a.settings)
+	}
 	cfg, err := a.xiaomiModelConfigLocked()
 	if err == nil {
 		if _, e := realtimeCallURL(cfg); e == nil && cfg.APIKey != "" {
@@ -97,13 +104,13 @@ func (a *App) assistantRealtimeStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
-	_, err := a.realtimeCallConfigLocked()
+	cfg, err := a.realtimeCallConfigLocked()
 	a.mu.Unlock()
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	jsonOut(w, 200, map[string]any{"model": "qwen3.8-omni-flash-realtime", "voice": "Tina", "transport": "native-duplex", "inputRate": 16000, "outputRate": 24000})
+	jsonOut(w, 200, realtimeCallMetadata(cfg))
 }
 
 type realtimeCallDial func(context.Context, string, http.Header) (*websocket.Conn, *http.Response, error)
@@ -196,9 +203,11 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		status := 0
 		if resp != nil {
 			status = resp.StatusCode
-			resp.Body.Close()
+			if resp.Body != nil {
+				resp.Body.Close()
+			}
 		}
-		report(fmt.Sprintf("原生实时通话连接失败（HTTP %d），请检查业务空间、模型开通和网络", status))
+		report(fmt.Sprintf("原生实时通话连接失败（HTTP %d），请检查所选语音模型、密钥和网络", status))
 		return
 	}
 	defer upstream.Close()
@@ -206,6 +215,9 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		upMu.Lock()
 		defer upMu.Unlock()
 		upstream.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		if event, ok := v.(map[string]any); ok {
+			v = realtimeCallWireEvent(cfg, event)
+		}
 		return upstream.WriteJSON(v)
 	}
 	// Qwen Omni documents instructions on session.update, not response.create.
@@ -216,7 +228,7 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 		upMu.Lock()
 		defer upMu.Unlock()
 		upstream.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		if e := upstream.WriteJSON(map[string]any{"type": "session.update", "session": map[string]any{"instructions": instructions}}); e != nil {
+		if e := upstream.WriteJSON(realtimeCallWireEvent(cfg, map[string]any{"type": "session.update", "session": map[string]any{"instructions": instructions}})); e != nil {
 			return e
 		}
 		nativeInstructionOverride = true
@@ -245,6 +257,14 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 
 				if !a.realtimeCallValid(id, workspace) || (agentBinding != nil && !a.mixSoulCurrent(*agentBinding)) {
 					report("助理已锁定或工作区已变化，通话结束")
+					cancel()
+					return
+				}
+				a.mu.Lock()
+				current, configErr := a.realtimeCallConfigLocked()
+				a.mu.Unlock()
+				if configErr != nil || !sameRealtimeCallProvider(cfg, current) {
+					report("语音通话配置已更改，请重新拨通")
 					cancel()
 					return
 				}
@@ -520,6 +540,7 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 			}
 			event = e
 		}
+		realtimeCallNormalizeEvent(cfg, event)
 		var kind string
 		_ = json.Unmarshal(event["type"], &kind)
 		str := func(key string) string { var s string; _ = json.Unmarshal(event[key], &s); return s }
@@ -531,7 +552,9 @@ func (a *App) assistantRealtimeSocketWithDial(w http.ResponseWriter, r *http.Req
 			}
 		case "session.updated":
 			if !nativeReady.Swap(true) {
-				_ = emit(map[string]any{"type": "aide.ready", "model": "qwen3.8-omni-flash-realtime", "voice": "Tina", "inputRate": 16000, "outputRate": 24000})
+				ready := realtimeCallMetadata(cfg)
+				ready["type"] = "aide.ready"
+				_ = emit(ready)
 			}
 		case "error":
 			// Do not forward provider bodies or URLs containing account details.
@@ -909,6 +932,9 @@ func (a *App) realtimeCallWork(ctx context.Context, id, workspace, heard string)
 func realtimeCallSession(cfg Settings) map[string]any {
 	instruction := voiceIdentityPrompt(cfg) + "\n" + assistantCallGuidance + "\n你通过原生音频实时交谈。遇到用户明确交办工作、查询任务进展或管理事项，调用 assistant_work；它将用户本轮原话交给现有助理权限链处理。工具成功前不要声称已经完成或交办。闲聊直接回答。不要自行执行工作区命令。"
 	tool := map[string]any{"type": "function", "name": "assistant_work", "description": "用户明确交办任务或查询工作时，通过现有助理安全权限链处理本轮原话；闲聊不用。", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}
+	if openAINativeCall(cfg) {
+		return openAINativeCallSession(cfg, instruction, tool)
+	}
 	session := map[string]any{"modalities": []string{"text", "audio"}, "instructions": instruction, "turn_detection": map[string]any{"type": nativeVADMode(), "silence_duration_ms": 650}, "input_audio_transcription": map[string]any{"model": "qwen3-asr-flash-realtime"}, "audio": map[string]any{"input": map[string]any{"format": map[string]any{"type": "pcm", "sample_rate": 16000, "sample_format": "s16le", "channels": 1, "packing": "interleaved", "channel_layout": "mono"}}, "output": map[string]any{"voice": "Tina", "format": map[string]any{"type": "pcm", "sample_rate": 24000}}}, "tools": []any{tool}, "tool_choice": "auto"}
 	return session
 }

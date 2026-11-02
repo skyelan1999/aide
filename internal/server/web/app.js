@@ -11547,6 +11547,10 @@ function renderTTSEngineControl() {
   const save = el('button', 'primary', t('保存')); save.type = 'button';
   const preview = el('button', 'quiet', t('试听')); preview.type = 'button';
   save.onclick = action(async () => {
+    const oldSpeech=state.config||{};
+    const callConfigChanged=eng.value!==(oldSpeech.ttsProvider||'auto')||(eng.value==='openai'&&(
+      openaiMode.value!==(oldSpeech.openaiTTSMode||'realtime')||openaiModel.value.trim()!==(oldSpeech.openaiTTSModel||'gpt-realtime-2.1-mini')||
+      openaiVoice.value!==(oldSpeech.openaiTTSVoice||'marin')||openaiBase.value.trim()!==(oldSpeech.openaiTTSBaseURL||'https://api.openai.com/v1')||!!openaiKey.value||clearOpenaiKey.checked));
     await api('/settings', { method: 'PUT', body: JSON.stringify({
       ttsProvider: eng.value, ...(eng.value==='openai'?{}:{ttsVoice:eng.value==='qwen'?qwenVoice.value.trim()||'Cherry':voice.value}),
       openaiTTSMode:openaiMode.value,openaiTTSModel:openaiModel.value.trim(),openaiTTSVoice:openaiVoice.value,
@@ -11557,6 +11561,7 @@ function renderTTSEngineControl() {
     }) });
     key.value = ''; clearKey.checked = false; openaiKey.value='';clearOpenaiKey.checked=false;
     await refreshConfig();
+    if(callConfigChanged&&window.aideAssistantCall?.active()){window.aideAssistantCall.end();toast(t('语音通话配置已更改，请重新拨通'));}
     toast(t('语音引擎设置已保存'));
   });
   preview.onclick = action(async () => {
