@@ -47,11 +47,18 @@ func realtimeCallURL(cfg Settings) (string, error) {
 	}
 	u.Scheme = "wss"
 	u.Path = "/api-ws/v1/realtime"
-	u.RawQuery = url.Values{"model": {"qwen3.8-omni-flash-realtime"}}.Encode()
+	model := "qwen3.8-omni-flash-realtime"
+	if cfg.AssistantCallModelRef != "" {
+		model = cfg.Model
+	}
+	u.RawQuery = url.Values{"model": {model}}.Encode()
 	return u.String(), nil
 }
 
 func (a *App) realtimeCallConfigLocked() (Settings, error) {
+	if a.settings.AssistantCallModelRef != "" {
+		return a.voiceModelConfigLocked(a.settings.AssistantCallModelRef, true)
+	}
 	// An explicit OpenAI voice selection must never borrow a Qwen/chat key.
 	if openAINativeCall(a.settings) {
 		return openAINativeCallConfig(a.settings)
@@ -935,6 +942,6 @@ func realtimeCallSession(cfg Settings) map[string]any {
 	if openAINativeCall(cfg) {
 		return openAINativeCallSession(cfg, instruction, tool)
 	}
-	session := map[string]any{"modalities": []string{"text", "audio"}, "instructions": instruction, "turn_detection": map[string]any{"type": nativeVADMode(), "silence_duration_ms": 650}, "input_audio_transcription": map[string]any{"model": "qwen3-asr-flash-realtime"}, "audio": map[string]any{"input": map[string]any{"format": map[string]any{"type": "pcm", "sample_rate": 16000, "sample_format": "s16le", "channels": 1, "packing": "interleaved", "channel_layout": "mono"}}, "output": map[string]any{"voice": "Tina", "format": map[string]any{"type": "pcm", "sample_rate": 24000}}}, "tools": []any{tool}, "tool_choice": "auto"}
+	session := map[string]any{"modalities": []string{"text", "audio"}, "instructions": instruction, "turn_detection": map[string]any{"type": nativeVADMode(), "silence_duration_ms": 650}, "input_audio_transcription": map[string]any{"model": "qwen3-asr-flash-realtime"}, "audio": map[string]any{"input": map[string]any{"format": map[string]any{"type": "pcm", "sample_rate": 16000, "sample_format": "s16le", "channels": 1, "packing": "interleaved", "channel_layout": "mono"}}, "output": map[string]any{"voice": realtimeCallMetadata(cfg)["voice"], "format": map[string]any{"type": "pcm", "sample_rate": 24000}}}, "tools": []any{tool}, "tool_choice": "auto"}
 	return session
 }

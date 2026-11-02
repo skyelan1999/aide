@@ -97,7 +97,7 @@
     doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
     doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
-    doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
+    doc.startupAnimation = 'on';
     doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : parsed.background === 'whale' ? 'studio' : 'off';
     doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
@@ -192,7 +192,7 @@
       doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
     doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
-    doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
+    doc.startupAnimation = 'on';
     doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : parsed.background === 'whale' ? 'studio' : 'off';
     doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
@@ -226,7 +226,7 @@
     },
     set: function (name, value) {
       if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'background' ? (['off','aurora','studio','local'].indexOf(value)>=0 ? value : value==='whale'?'studio':'off') : name === 'startupAnimation' ? (value==='off' ? 'off' : 'on') : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'background' ? (['off','aurora','studio','local'].indexOf(value)>=0 ? value : value==='whale'?'studio':'off') : name === 'startupAnimation' ? 'on' : value;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion') applyTheme();
       notifyAll();

@@ -1,0 +1,127 @@
+{
+  "issue": "https://github.com/skyelan1999/aide/issues/739",
+  "baseline": "c4528e366818432834e98c0e929b457294d12703",
+  "scope": "Voice model bindings and settings auto-save; original workbench layout retained",
+  "verification": {
+    "go-final.jsonl": {
+      "passed": [
+        "TestAssistantOpenAINativeConfig",
+        "TestAssistantOpenAINativeSessionAndEvents",
+        "TestAssistantOpenAIRealtimeRelayAndLock/lock",
+        "TestAssistantOpenAIRealtimeRelayAndLock/voice-change",
+        "TestAssistantOpenAIRealtimeRelayAndLock",
+        "TestModelSupportsVision",
+        "TestModelLedWorkflowCompatibility",
+        "TestModelLedPlanValidationAndJSONPersistence",
+        "TestModelLedLoopPlansReceiptsAndSingleReview",
+        "TestSettingsMigrationFromSingleModel",
+        "TestModelListProxy",
+        "TestModelDiscoveryDraft/new_address_no_old_key",
+        "TestModelDiscoveryDraft/draft_key",
+        "TestModelDiscoveryDraft/clear_key",
+        "TestModelDiscoveryDraft",
+        "TestOpenAITTSSettingsAndIsolation",
+        "TestOpenAITTSSynthesisUsesSeparateConfig",
+        "TestOpenAITTSPersistenceAndImport",
+        "TestQwenTTSSettings",
+        "TestQwenCatalogReadOnly",
+        "TestSettingsNeverReturnKey",
+        "TestSettingsPartialPutPreservesFields",
+        "TestSettingsPartialPutPreservesVoiceDispatch",
+        "TestVoiceModelBindingsIsolationAndPersistence",
+        "TestVoiceModelBindingsSynthesisUsesVault",
+        "TestVoiceModelBindingsQwenProtocols",
+        "TestVoiceModelBindingsUnavailableKey"
+      ],
+      "skipped": [
+        "TestManagementPermissionsPersistAndRoles"
+      ],
+      "failed": []
+    },
+    "go-permissions.jsonl": {
+      "passed": [
+        "TestVoiceModelBindingsIsolationAndPersistence",
+        "TestVoiceModelBindingsSynthesisUsesVault",
+        "TestVoiceModelBindingsQwenProtocols",
+        "TestVoiceModelBindingsUnavailableKey",
+        "TestSettingsAutoSavePermissionsPersistence"
+      ],
+      "skipped": [],
+      "failed": []
+    },
+    "go_race_and_vet": {
+      "status": "pass",
+      "environment": "Local aide:release-ci-test-tools container; network disabled",
+      "note": "Optional TestManagementPermissionsPersistAndRoles skipped because plugin-authoring source fixture is not present. Independent permissions API/disk-failure regression passed without that plugin."
+    },
+    "browser": {
+      "results": [
+        {
+          "theme": "light",
+          "width": 1440,
+          "languages": [
+            "zh",
+            "en"
+          ],
+          "passed": true,
+          "scope": "actual renderers and CSS; deterministic API failure/latency fixture"
+        },
+        {
+          "theme": "dark",
+          "width": 390,
+          "languages": [
+            "zh",
+            "en"
+          ],
+          "passed": true,
+          "scope": "actual renderers and CSS; deterministic API failure/latency fixture"
+        }
+      ],
+      "errors": [],
+      "liveProvider": false,
+      "scenarios": [
+        "permission grant/revoke, failed write rollback and retry of original intent",
+        "serialized rapid edits, persisted remount and independent active chat model",
+        "name/dispatch/approval/personality auto-save and flush on leaving section",
+        "preview waits for save, configured TTS/call models and voices",
+        "legacy key input cleared after save, no provider key fields on voice page",
+        "legacy startupAnimation=off migrates to on, default intro and no replay API",
+        "Chinese/English desktop light and narrow dark, no page overflow"
+      ]
+    },
+    "focused_javascript": {
+      "status": "pass",
+      "commands": [
+        "node scripts/qwen-tts.test.cjs",
+        "node scripts/tts-playback.test.cjs",
+        "node scripts/assistant-realtime.test.cjs",
+        "node scripts/assistant-call.test.cjs",
+        "node scripts/test_i18n_coverage.cjs",
+        "node scripts/ui-response-latency.test.cjs",
+        "node scripts/xiaomi-model-picker.test.cjs",
+        "node scripts/assistant-delegation.test.cjs",
+        "node scripts/management-permissions.test.cjs",
+        "node scripts/settings-navigation.test.cjs"
+      ]
+    },
+    "quick": {
+      "status": "pass",
+      "fingerprint": "556cf77325ff9c86af946db7262e5dca44305092e1b87008ecdf709c2f81bc09",
+      "head": "c4528e366818432834e98c0e929b457294d12703",
+      "time": "20261102T141050953639Z",
+      "checks": 315
+    }
+  },
+  "not_run": [
+    "Paid provider synthesis and human microphone/listening acceptance",
+    "Deployment to localhost:9999",
+    "Formal release and full release matrix"
+  ],
+  "source_fingerprints": {
+    "internal/server/voice_model_bindings.go": "e9d447b3c5da2acd93a3c0963913d6adfc2ce9a4a73c22bf85aa56405b54c7b7",
+    "internal/server/web/app.js": "64991c9a17136f430bdc82271dcd292afccf74dfed9587c98fb8962d0bd131c4",
+    "internal/server/web/experience.js": "2cdc7116c2e9c93c1b524d7e2a71d4401925ba80c4a32cbc092d673464481e00",
+    "internal/server/web/settings-schema.json": "01cd942215378e932c4320aac03d3d6c4f280ed8d8e824f68d6ba1a0f2af0ae4",
+    "scripts/browser-settings-autosave.cjs": "0da178ece46f318f6b06719a355909e8936a182ed1801f106933b5a3e0a18e6d"
+  }
+}

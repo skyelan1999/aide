@@ -5,14 +5,14 @@ const walk=n=>[n,...n.childNodes.flatMap(walk)];
 (async()=>{
  const calls=[],wrap=new Element('div');
  const state={token:'fixture',config:{workspaceId:'fixture-workspace',agentManagement:{aidePlugins:true,assistantPlugins:false,aideReferences:false,assistantReferences:true}}};
- const context=vm.createContext({state,el:(...args)=>new Element(...args),t:x=>x,action:x=>x,toast:()=>{},api:async(path,opts)=>{calls.push([path,opts]);},refreshConfig:async()=>{},controlRenderers:{}});
- const app=fs.readFileSync('internal/server/web/app.js','utf8');vm.runInContext(app.slice(app.indexOf('function renderAgentManagementControl()')),context);
+ const context=vm.createContext({setTimeout,clearTimeout,structuredClone,state,el:(...args)=>new Element(...args),t:x=>x,action:x=>x,toast:()=>{},api:async(path,opts)=>{calls.push([path,opts]);},refreshConfig:async()=>{},controlRenderers:{}});
+ const app=fs.readFileSync('internal/server/web/app.js','utf8');vm.runInContext(app.slice(app.indexOf('let settingsWriteQueue ='),app.indexOf('// 设置面板：语音助理名称输入'))+app.slice(app.indexOf('function renderAgentManagementControl()'),app.indexOf("controlRenderers['agent-management']")),context);
  const form=vm.runInContext('renderAgentManagementControl()',context),inputs=walk(form).filter(n=>n.tag==='input');assert.equal(inputs.length,4);
  assert.deepEqual(inputs.map(x=>[x.name,x.checked]),[['assistantPlugins',false],['assistantReferences',true],['aidePlugins',true],['aideReferences',false]]);
- inputs[0].checked=true;await walk(form).find(n=>n.tag==='button').onclick();assert.deepEqual(JSON.parse(calls[0][1].body),{agentManagement:{assistantPlugins:true,assistantReferences:true,aidePlugins:true,aideReferences:false}});
+ inputs[0].checked=true;inputs[0].onchange();await vm.runInContext('flushSettingsAutosaves()',context);assert.deepEqual(JSON.parse(calls[0][1].body),{agentManagement:{assistantPlugins:true,assistantReferences:true,aidePlugins:true,aideReferences:false}});
  // Exercise the real proposal UI: code is text only; confirmation requires opening the preview.
  const proposal={id:'test',actor:'assistant',kind:'plugins',action:'prepare',target:'fixture',reason:'fixture',status:'pending'};
- const ui=vm.createContext({state,lockScreen:{locked:false},t:x=>x,window:{},document:{hidden:false,createElement:tag=>new Element(tag),getElementById:id=>id==='management-proposals'?wrap:null,querySelector:()=>new Element('div'),addEventListener(){}},setInterval(){},setTimeout(){},URL,toast(){},api:async path=>path.endsWith('/test')?{manifest:{name:'<script>not executable</script>'},files:{'index.js':'globalThis.MUST_NOT_RUN=true'}}:{proposals:[proposal]}});
+ const ui=vm.createContext({setTimeout,clearTimeout,structuredClone,state,lockScreen:{locked:false},t:x=>x,window:{},document:{hidden:false,createElement:tag=>new Element(tag),getElementById:id=>id==='management-proposals'?wrap:null,querySelector:()=>new Element('div'),addEventListener(){}},setInterval(){},setTimeout(){},URL,toast(){},api:async path=>path.endsWith('/test')?{manifest:{name:'<script>not executable</script>'},files:{'index.js':'globalThis.MUST_NOT_RUN=true'}}:{proposals:[proposal]}});
  vm.runInContext(fs.readFileSync('internal/server/web/async-action.js','utf8'),ui);ui.action=ui.window.AideAsyncAction.wrap;
  vm.runInContext(fs.readFileSync('internal/server/web/management.js','utf8'),ui);await new Promise(r=>setImmediate(r));
  let confirm=walk(wrap).find(n=>n.tag==='button'&&n.textContent==='确认执行');assert.ok(confirm.disabled);

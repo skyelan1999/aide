@@ -1,25 +1,27 @@
 # 助理 OpenAI 朗读
 
-本功能让助理回复、导览与已有朗读队列选择 OpenAI 语音，保留千问和自动／本地／Edge／浏览器引擎。实现分支为 `feat/assistant-openai-speech`，基线为 `0e1b02fa`；本页不代表已发布或已部署。
+本功能让助理回复、导览与已有朗读队列选择 OpenAI 语音，保留千问和自动／本地／Edge／浏览器引擎。最初实现基线为 `0e1b02fa`，后续增加独立通话与模型绑定；本页不代表已发布或已部署。
 
 ## 设置与使用
 
-在「设置 → 助理与语音 → 语音引擎」选择 **OpenAI 语音**，填写独立的语音 API Key、API Base URL、接口、模型与音色，保存后试听。默认基础地址为 `https://api.openai.com/v1`，不会从聊天模型或千问中读取密钥。密钥输入留空保留，勾选清除仅删除 OpenAI 语音密钥；切换引擎保留千问的模型、地域、音色和密钥。
+在「设置 → AI 与权限 → 模型与参数」配置厂商、API 地址和密钥，并添加具体语音模型。在模型高级参数中选择语音接口类型（已知模型 ID 可自动识别）。随后在「助理与语音 → 语音助理」分别选择朗读模型、通话模型及音色；修改自动保存，试听等待保存完成。此选择不改变工作台聊天模型。
+
+原有独立 OpenAI、千问和自托管克隆配置保留在模型设置的「原有语音连接与密钥」折叠项中，不会合并或覆盖已有厂商密钥。密钥留空保留，清除操作仅影响对应旧配置。语音页中可继续选择原有配置，以兼容尚未迁移的安装。
 
 | 接口 | 内置模型示例 | 传输／输出 |
 | --- | --- | --- |
 | Realtime 朗读（默认） | `gpt-realtime-2.1-mini`、`gpt-realtime-2.1` | 服务端 WebSocket `/v1/realtime`，收集完整 24 kHz、单声道 PCM16 后封装 WAV |
 | Speech API（旧版） | `gpt-4o-mini-tts`、`tts-1`、`tts-1-hd` | 服务端 HTTP `/v1/audio/speech`，返回 MP3 |
 
-模型可手填，必须与所选接口匹配，目录不是账户权限证明。旧 `tts-1`／`tts-1-hd` 显示其六个传统音色；其他 Speech 模型显示较完整的音色目录。Realtime 使用单次无历史朗读请求，不向远端发送工作区、聊天记录、工具或麦克风音频；提示模型按原文朗读。生成式语音仍可能改变读法，需实际听音验收，不能视为确定性逐字 TTS。
+模型在模型设置中配置，必须与所选接口匹配，目录不是账户权限证明。旧 `tts-1`／`tts-1-hd` 显示其六个传统音色；其他 Speech 模型显示较完整的音色目录。Realtime 使用单次无历史朗读请求，不向远端发送工作区、聊天记录、工具或麦克风音频；提示模型按原文朗读。生成式语音仍可能改变读法，需实际听音验收，不能视为确定性逐字 TTS。
 
 按 280 个 Unicode 字符分段，复用原播放队列、暂停、停止、浏览器播放授权及取消清理逻辑。语速在播放端调整一次并保持音调。OpenAI 显式选择失败时保留文字并显示错误，只有勾选「失败时使用浏览器语音」才切换浏览器声音。此回退偏好沿用现有全局 `ttsBrowserFallback`，并非每个提供商独立保存。
 
 ## 接口与数据
 
 - `PUT /api/settings`：`ttsProvider: "openai"`，新增 `openaiTTSMode`、`openaiTTSModel`、`openaiTTSVoice`、`openaiTTSBaseURL`、`openaiTTSAPIKey`、`clearOpenAITTSKey`。未传字段保留；接口模式、URL 中凭据／查询／片段在写入前校验。
-- `GET /api/config`：仅回显非敏感配置与 `hasOpenAITTSKey`。非敏感备份剔除密钥；普通导入保留本机密钥，仅显式导入含密钥备份才恢复备份密钥。持久化沿用现有 TTS 设置机制及配置文件权限，不宣称迁入聊天模型的加密 vault。
-- `POST /api/tts/synthesize`：沿用 `text/voice/provider` 请求；浏览器不携带第三方密钥，服务端按 OpenAI 专属配置发起调用。WAV／MP3 的 MIME 与实际接口相符。
+- `GET /api/config`：仅回显非敏感配置与 `hasOpenAITTSKey`。非敏感备份剔除密钥；普通导入保留本机密钥，仅显式导入含密钥备份才恢复备份密钥。旧独立配置仍沿用现有 TTS 设置文件；新模型绑定仅保存引用，密钥复用厂商加密 vault，不复制到 TTS 字段。
+- `POST /api/tts/synthesize`：沿用 `text/voice/provider` 请求；浏览器不携带第三方密钥，服务端优先按绑定模型解析厂商密钥；没有绑定时沿用原有 OpenAI 专属配置。WAV／MP3 的 MIME 与实际接口相符。
 - HTTP 不跟随重定向，不回传上游错误正文或带密钥的请求信息。Realtime 在取消／超时后关闭连接；不完整、错误、空或无效音频整体失败，不播放成功前的部分结果。单请求 60 秒，Realtime 音频累计最多 16 MiB，单事件最多 2 MiB。建连时的临时 EOF、连接重置／拒绝或超时最多重试一次（间隔 200 ms）；HTTP 拒绝、证书错误、取消及已建立会话后的失败不重试，不重发可能已计费的生成。错误仅显示固定分类，不暴露代理地址或原始连接错误。
 
 打开 OpenAI 设置不请求账户或产生合成费用；保存、切换也不调用语音 API。只有实际朗读／试听发送文本并可能计费。可配置兼容端点，凭据与朗读文本会发送到用户填写的地址。
@@ -45,3 +47,17 @@
 ## 官方接口依据
 
 核对日期：2026-11-02。[文字转语音](https://developers.openai.com/api/docs/guides/text-to-speech)说明旧 TTS 模型将于 2027-01-06 停用，新的 Realtime 模型不能发往旧 Speech API。[Realtime 会话](https://developers.openai.com/api/docs/guides/realtime-conversations)描述 GA 事件、音频格式和无历史独立响应；[停用公告](https://developers.openai.com/api/docs/deprecations)为迁移时间依据。此处不是模型永久可用性承诺。
+
+## Model bindings and automatic persistence (Issue #739)
+
+Voice provider connections and keys are managed in **AI & permissions → Model & parameters**. Add a model under a provider using its existing encrypted key slot; a model's advanced **Voice API** chooses OpenAI Realtime, OpenAI Speech, Qwen TTS, or Qwen realtime. Known model IDs can infer their protocol. This is protocol selection, not proof of account access or voice quality.
+
+**Assistant & voice → Voice assistant** selects independent read-aloud and call models and voices. The `ttsModelRef` and `assistantCallModelRef` settings reference model IDs. A voice binding resolves that model's provider and active key for each request under the existing settings lock; it never changes the active chat model or stores a duplicate vault key. Missing models, unavailable keys, incompatible protocols and unsupported Qwen endpoints fail with a configuration error. A selected binding never silently borrows another provider's key. Qwen native TTS uses the official Beijing/Singapore endpoint derived from its provider host; Qwen calls retain the business-space endpoint requirement.
+
+Existing independent OpenAI/Qwen credentials remain compatible and editable in the advanced **Legacy voice connections and keys** section of model settings. They are not merged with chat credentials. The old global male/female selector no longer controls read-aloud; the selected model voice is authoritative. Self-hosted cloning connection settings are also located in model settings, with sample recording and voice creation retained in voice settings. Old custom assistant text-model configurations remain usable as a read-only compatibility selection; new selections use configured models.
+
+Voice settings (including personality text) and the four AI management permission toggles save automatically. Toggles/selects save immediately; typing/sliders use a short debounce. Writes are serialized, detached forms retain their captured patch, and section closure flushes pending edits. Status reports pending/saved/failure, with retry. Failed management permission writes restore the last acknowledged values, and retry reapplies the original intended change. Preview waits for its pending configuration write. Separate call model/voice changes end the existing call; read-aloud changes do not interrupt an explicitly independent call model.
+
+General appearance no longer exposes a startup-animation switch or replay action. The introduction remains enabled by default, old disabled preferences normalize to enabled, and reduced-motion/background accessibility behavior remains in force.
+
+Validation uses `scripts/browser-settings-autosave.cjs` (also available through the existing `browser-openai-speech.cjs` entrypoint), actual renderers/CSS at desktop/narrow widths in Chinese/English with isolated APIs, plus Go race/vet and voice request regressions. These are local implementation checks; they do not establish live provider audio quality or deployment to a running installation.

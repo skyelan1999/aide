@@ -13,10 +13,9 @@
   dismissal=intro.animate([{opacity:getComputedStyle(intro).opacity},{opacity:0}],{duration:120,easing:'ease-out',fill:'forwards'});
   dismissal.finished.then(remove,()=>{});
  }
- function replay(manual){
+ function startIntro(){
   remove();
   if(!motionAllowed()||location.pathname!=='/'||location.hash.startsWith('#file'))return;
-  if(!manual&&window.aideUI?.get('startupAnimation')==='off')return;
   intro=document.createElement('div');intro.className='aide-intro';intro.setAttribute('aria-hidden','true');
   intro.innerHTML='<div class="aide-intro-mark"><svg viewBox="0 0 260 260" aria-hidden="true"><circle class="aide-intro-register" cx="130" cy="130" r="121" stroke-dasharray="1 12"/><path class="aide-intro-register" d="M130 1v13m0 232v13M1 130h13m232 0h13"/><path class="aide-intro-halo" d="M65 65a92 92 0 0 1 150 91"/><ellipse class="aide-intro-ring" cx="130" cy="130" rx="112" ry="70"/><circle class="aide-intro-ring inner" cx="130" cy="130" r="76"/><circle class="aide-intro-ray" cx="130" cy="130" r="95"/><path class="aide-intro-star" d="M208 55l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg><span class="aide-intro-core">a<span>·</span></span></div>';
   document.body.appendChild(intro);timer=setTimeout(remove,980);
@@ -24,8 +23,8 @@
  }
  function visibility(){root.toggleAttribute('data-ui-paused',document.hidden);if(document.hidden)remove();}
  document.addEventListener('visibilitychange',visibility);window.addEventListener('aide:motion',()=>{if(root.dataset.motion==='reduced')remove();});
- window.aideExperience={replay:()=>replay(true)};visibility();
- try{if(!sessionStorage.getItem('aide.intro.shown')){sessionStorage.setItem('aide.intro.shown','1');replay(false);}}catch(_){replay(false);}
+ visibility();
+ try{if(!sessionStorage.getItem('aide.intro.shown')){sessionStorage.setItem('aide.intro.shown','1');startIntro();}}catch(_){startIntro();}
 })();
 
 /* Observe only navigation surfaces. Streaming transcripts, rows and authentication

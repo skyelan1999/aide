@@ -18,8 +18,9 @@ func (a *App) ttsCatalog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		Region string `json:"region"`
-		APIKey string `json:"apiKey"`
+		ModelRef string `json:"modelRef,omitempty"`
+		Region   string `json:"region"`
+		APIKey   string `json:"apiKey"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -27,11 +28,27 @@ func (a *App) ttsCatalog(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	cfg := tts.Config{Region: a.settings.TTSRegion, APIKey: a.settings.TTSAPIKey}
+	var bindingErr error
+	if in.ModelRef != "" {
+		var bound Settings
+		bound, bindingErr = a.voiceModelConfigLocked(in.ModelRef, false)
+		if bindingErr == nil {
+			if bound.TTSProvider != "qwen" {
+				bindingErr = errors.New("请选择千问 TTS 模型后刷新目录")
+			} else {
+				cfg.Region, cfg.APIKey = bound.TTSRegion, bound.TTSAPIKey
+			}
+		}
+	}
 	a.mu.Unlock()
-	if in.Region != "" {
+	if bindingErr != nil {
+		fail(w, 400, bindingErr)
+		return
+	}
+	if in.ModelRef == "" && in.Region != "" {
 		cfg.Region = in.Region
 	}
-	if in.APIKey != "" {
+	if in.ModelRef == "" && in.APIKey != "" {
 		cfg.APIKey = in.APIKey
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 18*time.Second)

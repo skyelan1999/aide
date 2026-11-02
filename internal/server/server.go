@@ -43,6 +43,7 @@ import (
 var assets embed.FS
 
 type ModelRef struct {
+	VoiceAPI      string `json:"voiceAPI,omitempty"`
 	ID            string `json:"id"`
 	Name          string `json:"name,omitempty"`
 	ProviderID    string `json:"providerId,omitempty"`
@@ -123,22 +124,25 @@ type Settings struct {
 	DebugTokenExpiresAt string   `json:"debugTokenExpiresAt,omitempty"` // 调试令牌过期时间 RFC3339
 	DebugAllowOrigins   []string `json:"debugAllowOrigins,omitempty"`   // 浏览器来源白名单（curl 无 Origin 不受限）
 	// ── TTS 自然度：可插拔引擎（edge-tts 神经音 + 浏览器 Web Speech 兜底）──
-	TTSBrowserFallback bool    `json:"ttsBrowserFallback,omitempty"`
-	OpenAITTSMode      string  `json:"openaiTTSMode,omitempty"`
-	OpenAITTSModel     string  `json:"openaiTTSModel,omitempty"`
-	OpenAITTSVoice     string  `json:"openaiTTSVoice,omitempty"`
-	OpenAITTSBaseURL   string  `json:"openaiTTSBaseURL,omitempty"`
-	OpenAITTSAPIKey    string  `json:"openaiTTSAPIKey,omitempty"` // Independent narration key; never echoed by /api/config.
-	TTSModel           string  `json:"ttsModel,omitempty"`
-	TTSRegion          string  `json:"ttsRegion,omitempty"`
-	TTSProvider        string  `json:"ttsProvider,omitempty"`       // auto | edge | webspeech
-	TTSVoice           string  `json:"ttsVoice,omitempty"`          // edge 音色 id，空=按性别映射
-	TTSEndpoint        string  `json:"ttsEndpoint,omitempty"`       // 预留：自定义 edge/云端端点
-	TTSAPIKey          string  `json:"ttsAPIKey,omitempty"`         // 预留：云端引擎 key（edge 不需要，不回显）
-	TTSRate            float64 `json:"ttsRate,omitempty"`           // 语速倍率 0.8-1.3，默认 1.0
-	TTSExpressiveness  float64 `json:"ttsExpressiveness,omitempty"` // 表现力 0-1，映射 edge styledegree
-	TTSAzureKey        string  `json:"ttsAzureKey,omitempty"`       // Azure 官方 Speech key（可选，edge 后备；不回显）
-	TTSAzureRegion     string  `json:"ttsAzureRegion,omitempty"`    // Azure region，如 eastasia
+	TTSBrowserFallback    bool    `json:"ttsBrowserFallback,omitempty"`
+	OpenAITTSMode         string  `json:"openaiTTSMode,omitempty"`
+	OpenAITTSModel        string  `json:"openaiTTSModel,omitempty"`
+	OpenAITTSVoice        string  `json:"openaiTTSVoice,omitempty"`
+	OpenAITTSBaseURL      string  `json:"openaiTTSBaseURL,omitempty"`
+	OpenAITTSAPIKey       string  `json:"openaiTTSAPIKey,omitempty"` // Independent narration key; never echoed by /api/config.
+	TTSModel              string  `json:"ttsModel,omitempty"`
+	TTSRegion             string  `json:"ttsRegion,omitempty"`
+	TTSModelRef           string  `json:"ttsModelRef,omitempty"`
+	AssistantCallModelRef string  `json:"assistantCallModelRef,omitempty"`
+	AssistantCallVoice    string  `json:"assistantCallVoice,omitempty"`
+	TTSProvider           string  `json:"ttsProvider,omitempty"`       // auto | edge | webspeech
+	TTSVoice              string  `json:"ttsVoice,omitempty"`          // edge 音色 id，空=按性别映射
+	TTSEndpoint           string  `json:"ttsEndpoint,omitempty"`       // 预留：自定义 edge/云端端点
+	TTSAPIKey             string  `json:"ttsAPIKey,omitempty"`         // 预留：云端引擎 key（edge 不需要，不回显）
+	TTSRate               float64 `json:"ttsRate,omitempty"`           // 语速倍率 0.8-1.3，默认 1.0
+	TTSExpressiveness     float64 `json:"ttsExpressiveness,omitempty"` // 表现力 0-1，映射 edge styledegree
+	TTSAzureKey           string  `json:"ttsAzureKey,omitempty"`       // Azure 官方 Speech key（可选，edge 后备；不回显）
+	TTSAzureRegion        string  `json:"ttsAzureRegion,omitempty"`    // Azure region，如 eastasia
 	// ── 少样本音色克隆（#36）：自托管克隆服务接入，仅小秘可选；未配置不影响 edge/webspeech ──
 	CloneTTSBaseURL string `json:"cloneTTSBaseURL,omitempty"` // 克隆服务 BaseURL（如 http://127.0.0.1:9880），空=未配置
 	CloneTTSAPIKey  string `json:"cloneTTSAPIKey,omitempty"`  // 克隆服务 Bearer token（可选，不回显）
@@ -164,6 +168,12 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 	out := make([]ModelRef, 0, len(models))
 	for _, m := range models {
 		m.ID = strings.TrimSpace(m.ID)
+		switch m.VoiceAPI {
+		case "", "openai-realtime", "openai-speech", "qwen-tts", "qwen-realtime":
+		default:
+			return nil, errors.New("不支持的语音接口类型")
+		}
+
 		if m.ID == "" || len(m.ID) > 64 {
 			return nil, errors.New("模型 id 不能为空且最长 64 字符")
 		}
@@ -1844,7 +1854,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "professionalWorkflow": a.pwAvailableLocked(), "modelRouter": a.modelRouterStatusLocked(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceDefaultSendMode": a.settings.VoiceDefaultSendMode, "voiceInsertSensitivity": a.settings.VoiceInsertSensitivity, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "assistantAutoReview": a.settings.AssistantAutoReview, "agentManagement": a.settings.AgentManagement, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsModelRef": a.settings.TTSModelRef, "assistantCallModelRef": a.settings.AssistantCallModelRef, "assistantCallVoice": a.settings.AssistantCallVoice, "voiceBinding": voiceBindingMetadata(a.settings), "ttsProvider": ttsProviderName(a.settings.TTSProvider), "openaiTTSMode": a.settings.OpenAITTSMode, "openaiTTSModel": a.settings.OpenAITTSModel, "openaiTTSVoice": a.settings.OpenAITTSVoice, "openaiTTSBaseURL": a.settings.OpenAITTSBaseURL, "hasOpenAITTSKey": a.settings.OpenAITTSAPIKey != "", "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsBrowserFallback": a.settings.TTSBrowserFallback, "qwenTTSCatalog": tts.DefaultQwenCatalog(), "ttsModel": a.settings.TTSModel, "ttsRegion": a.settings.TTSRegion, "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -1900,19 +1910,23 @@ func (a *App) putVirtualAvatarSettings(w http.ResponseWriter, r *http.Request) {
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
-		AgentManagementInput     *AgentManagementPermissions `json:"agentManagement,omitempty"`
-		AssistantAutoReviewInput *bool                       `json:"assistantAutoReview,omitempty"`
-		ModelInput               *string                     `json:"model,omitempty"`
-		ActiveModelInput         *string                     `json:"activeModel,omitempty"`
-		ProviderKeyWrites        []providerKeyWrite          `json:"providerKeyWrites,omitempty"`
-		TTSBrowserFallback       *bool                       `json:"ttsBrowserFallback,omitempty"`
-		ClearOpenAITTSKey        bool                        `json:"clearOpenAITTSKey"`
-		ClearTTSKey              bool                        `json:"clearTTSKey"`
-		ClearKey                 bool                        `json:"clearKey"`
-		VoiceReplyEnabled        *bool                       `json:"voiceReplyEnabled,omitempty"`
-		AccessibilityAutoRead    *bool                       `json:"accessibilityAutoRead,omitempty"`
-		AccessibilityHostPort    *int                        `json:"accessibilityHostPort,omitempty"`
-		VoiceReplyGender         string                      `json:"voiceReplyGender,omitempty"`
+		TTSModelRefInput           *string                     `json:"ttsModelRef,omitempty"`
+		AssistantCallModelRefInput *string                     `json:"assistantCallModelRef,omitempty"`
+		AssistantCallVoiceInput    *string                     `json:"assistantCallVoice,omitempty"`
+		AgentManagementInput       *AgentManagementPermissions `json:"agentManagement,omitempty"`
+		AssistantAutoReviewInput   *bool                       `json:"assistantAutoReview,omitempty"`
+		ModelInput                 *string                     `json:"model,omitempty"`
+		ActiveModelInput           *string                     `json:"activeModel,omitempty"`
+		ProviderKeyWrites          []providerKeyWrite          `json:"providerKeyWrites,omitempty"`
+		TTSExpressivenessInput     *float64                    `json:"ttsExpressiveness,omitempty"`
+		TTSBrowserFallback         *bool                       `json:"ttsBrowserFallback,omitempty"`
+		ClearOpenAITTSKey          bool                        `json:"clearOpenAITTSKey"`
+		ClearTTSKey                bool                        `json:"clearTTSKey"`
+		ClearKey                   bool                        `json:"clearKey"`
+		VoiceReplyEnabled          *bool                       `json:"voiceReplyEnabled,omitempty"`
+		AccessibilityAutoRead      *bool                       `json:"accessibilityAutoRead,omitempty"`
+		AccessibilityHostPort      *int                        `json:"accessibilityHostPort,omitempty"`
+		VoiceReplyGender           string                      `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
 		UserName         *string `json:"userName,omitempty"`
 		LockTimeoutSec   *int    `json:"lockTimeoutSec,omitempty"`
@@ -2142,6 +2156,22 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	} else {
 		in.Settings.VoiceInputDevice = a.settings.VoiceInputDevice
 	}
+	in.Settings.TTSModelRef = a.settings.TTSModelRef
+	in.Settings.AssistantCallModelRef = a.settings.AssistantCallModelRef
+	in.Settings.AssistantCallVoice = a.settings.AssistantCallVoice
+	if in.TTSModelRefInput != nil {
+		in.Settings.TTSModelRef = strings.TrimSpace(*in.TTSModelRefInput)
+	}
+	if in.AssistantCallModelRefInput != nil {
+		in.Settings.AssistantCallModelRef = strings.TrimSpace(*in.AssistantCallModelRefInput)
+	}
+	if in.AssistantCallVoiceInput != nil {
+		in.Settings.AssistantCallVoice = strings.TrimSpace(*in.AssistantCallVoiceInput)
+		if len(in.Settings.AssistantCallVoice) > 64 {
+			fail(w, 400, errors.New("音色名称过长"))
+			return
+		}
+	}
 	// Provider-specific OpenAI fields never reuse Qwen/chat credentials.
 	if err := preserveOpenAITTS(&in.Settings, a.settings, in.ClearOpenAITTSKey); err != nil {
 		fail(w, 400, err)
@@ -2176,8 +2206,14 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.Settings.TTSRate == 0 {
 		in.Settings.TTSRate = a.settings.TTSRate
 	}
-	if in.Settings.TTSExpressiveness == 0 {
+	if in.TTSExpressivenessInput == nil {
 		in.Settings.TTSExpressiveness = a.settings.TTSExpressiveness
+	} else {
+		in.Settings.TTSExpressiveness = *in.TTSExpressivenessInput
+		if in.Settings.TTSExpressiveness < 0 || in.Settings.TTSExpressiveness > 1 {
+			fail(w, 400, errors.New("表现力须在 0–1 之间"))
+			return
+		}
 	}
 	// Azure key 同 TTSAPIKey：空且未 clear 时保留已存值
 	if in.Settings.TTSAzureKey == "" {
@@ -2232,6 +2268,18 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	for _, model := range models {
 		if model.ProviderID == "" || !providerIDs[model.ProviderID] {
 			fail(w, 400, fmt.Errorf("模型 %s 所属的提供商不存在", model.ID))
+			return
+		}
+	}
+	if in.TTSModelRefInput != nil && in.Settings.TTSModelRef != "" {
+		if _, err := voiceModel(in.Settings, in.Settings.TTSModelRef, false); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	}
+	if in.AssistantCallModelRefInput != nil && in.Settings.AssistantCallModelRef != "" {
+		if _, err := voiceModel(in.Settings, in.Settings.AssistantCallModelRef, true); err != nil {
+			fail(w, 400, err)
 			return
 		}
 	}
@@ -3740,7 +3788,22 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	cfg := a.settings
+	var bindingErr error
+	if cfg.TTSModelRef != "" {
+		cfg, bindingErr = a.voiceModelConfigLocked(cfg.TTSModelRef, false)
+	}
 	a.mu.Unlock()
+	if bindingErr != nil {
+		fail(w, 400, bindingErr)
+		return
+	}
+	if cfg.TTSModelRef != "" {
+		in.Provider = cfg.TTSProvider
+		in.Voice = cfg.TTSVoice
+		if cfg.TTSProvider == "openai" {
+			in.Voice = cfg.OpenAITTSVoice
+		}
+	}
 
 	providerName := strings.TrimSpace(in.Provider)
 	if providerName == "" {
@@ -3759,9 +3822,6 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 		rate = 1.0
 	}
 	gender := in.Gender
-	if gender == "" {
-		gender = cfg.VoiceReplyGender
-	}
 	pcfg := tts.Config{
 		Provider:       providerName,
 		Voice:          in.Voice,

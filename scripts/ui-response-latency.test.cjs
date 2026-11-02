@@ -9,7 +9,7 @@ function node(tag='div',cls='',text=''){
 }
 async function settings(){
  const nodes=Object.fromEntries(['settings-sheet','settings-backdrop','settings-sheet-close','settings-content','settings-nav'].map(k=>[k,node()]));let request=deferred(),requests=0,renders=0,frames=[];
- const c={settingsPanel:{schema:null,refreshers:[],trigger:null},$:id=>nodes[id],document:{querySelectorAll:()=>[]},closeTrajectory(){},t:x=>x,el:node,fetch:()=>{requests++;return request.promise;},renderSettingsSheet(){renders++;},requestAnimationFrame:fn=>frames.push(fn)};vm.createContext(c);
+ const c={flushSettingsAutosaves:async()=>{},settingsPanel:{schema:null,refreshers:[],trigger:null},$:id=>nodes[id],document:{querySelectorAll:()=>[]},closeTrajectory(){},t:x=>x,el:node,fetch:()=>{requests++;return request.promise;},renderSettingsSheet(){renders++;},requestAnimationFrame:fn=>frames.push(fn)};vm.createContext(c);
  vm.runInContext(excerpt('async function loadSettingsSchema() {','function renderSegmentedControl('),c);vm.runInContext(excerpt('function setSettingsOpen(open) {','function bindSettingsTrigger('),c);
  const first=c.openSettingsSheet();assert.equal(nodes['settings-sheet'].classList.contains('open'),true,'settings must open before schema download');assert.equal(nodes['settings-content'].attributes['aria-busy'],'true');assert.equal(renders,0);
  c.closeSettingsSheet();const second=c.openSettingsSheet();assert.equal(requests,1,'overlapping opens share one schema fetch');request.resolve({ok:true,json:async()=>({sections:[]})});await Promise.all([first,second]);assert.equal(renders,1,'closed predecessor cannot render into a newer opening');assert.equal(nodes['settings-content'].attributes['aria-busy'],undefined);

@@ -1823,3 +1823,16 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
   .tts-openai-settings .voice-reply-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 }
 .tts-openai-settings .voice-reply-row:has(input[type="checkbox"]) { grid-template-columns: minmax(0, 1fr) auto; }
+
+/* Voice settings keep labels aligned after removing the gender/save columns. */
+.voice-reply-options { grid-template-columns: auto auto minmax(0, 1fr); }
+.settings-save-status { display: block; margin-top: 6px; }
+.settings-save-status:empty { display: none; }
+.tts-engine-control label.voice-reply-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); }
+.tts-engine-control label.voice-reply-row > span { white-space: normal; }
+.tts-engine-control label.voice-reply-row > select { width: 100%; min-width: 0; }
+.tts-engine-control label.voice-reply-row:has(output) { grid-template-columns: 120px minmax(0, 1fr) auto; }
+.tts-engine-control label.voice-reply-row:has(input[type="checkbox"]) { grid-template-columns: minmax(0, 1fr) auto; }
+@media (max-width: 600px) {
+  .voice-reply-options select { grid-column: auto; }
+}

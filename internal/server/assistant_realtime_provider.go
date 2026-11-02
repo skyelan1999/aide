@@ -46,6 +46,12 @@ func openAINativeCallURL(cfg Settings) (string, error) {
 
 func realtimeCallMetadata(cfg Settings) map[string]any {
 	provider, model, voice, rate := "qwen", "qwen3.8-omni-flash-realtime", "Tina", 16000
+	if cfg.AssistantCallModelRef != "" {
+		model = cfg.Model
+		if cfg.AssistantCallVoice != "" {
+			voice = cfg.AssistantCallVoice
+		}
+	}
 	if openAINativeCall(cfg) {
 		provider, model, voice, rate = "openai", cfg.Model, strings.TrimSpace(cfg.OpenAITTSVoice), 24000
 		if model == "" {

@@ -5409,7 +5409,6 @@ function renderConfigDocument(endpoint, title, storedKey, effectiveKey, workspac
   return wrap;
 }
 
-function renderExperiencePreview() { const wrap=el('div','settings-control'); const b=el('button','quiet',t('重播启动动画')); b.type='button'; b.onclick=()=>{if(document.documentElement.dataset.motion==='reduced'){toast(t('当前已减少动态效果，启动动画已停用。'));return;}closeSettingsSheet();window.aideExperience?.replay();}; wrap.append(b,el('p','muted',t('短促星轨动画，不阻塞操作；系统减少动态效果优先。'))); return wrap; }
 function renderMarkdownHistoryControl() {
  const row=el('div','settings-control');const label=el('label','settings-file-checkbox');const check=document.createElement('input');check.type='checkbox';check.disabled=true;const copy=el('span','settings-file-copy');copy.append(el('strong','',t('Markdown 历史版本追踪')),el('span','',t('服务端插件状态；所有会话共享。直接修改原文，保存时去重，并追踪引用资源。')));label.append(check,copy);row.append(label);
  api('/plugins').then(data=>{const plugin=(data.plugins||[]).find(p=>p.id==='markdown-history');if(!plugin){copy.append(el('small','',t('需要安装 Markdown 历史版本插件。')));return;}check.checked=plugin.enabled;check.disabled=false;check.onchange=async()=>{check.disabled=true;try{await api('/plugins/markdown-history',{method:'PUT',body:JSON.stringify({enabled:check.checked})});}catch(e){check.checked=!check.checked;toast(e.message);}finally{check.disabled=false;}};}).catch(e=>copy.append(el('small','',e.message)));
@@ -5425,7 +5424,7 @@ const controlRenderers = { 'model-connections': renderModelConnectionsControl, '
   "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
   "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='accessibility'&&settingsPanel.activeChild==='interface-tests'&&$('settings-sheet').classList.contains('open')}),
   "markdown-history": renderMarkdownHistoryControl,
-  'workbench-background': () => window.AideBackground.renderSettings({t}), checkbox: renderCheckboxControl, 'experience-preview': renderExperiencePreview, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+  'workbench-background': () => window.AideBackground.renderSettings({t}), checkbox: renderCheckboxControl, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
   const wrap = el('div', 'settings-control system-logs-control');
@@ -5602,6 +5601,7 @@ function renderSettingsSheet() {
   settingsPanel.refreshers = [];
   nav.replaceChildren();
   content.replaceChildren();
+  for(const save of settingsAutosaves)save.cleanup();
   const schema = window.aideI18n ? window.aideI18n.schema(settingsPanel.schema || {}) : (settingsPanel.schema || {});
   const model=window.AideSettingsNavigation.build(schema);
   const page=window.AideSettingsNavigation.resolve(model,settingsPanel.active,settingsPanel.activeChild);
@@ -5653,6 +5653,7 @@ async function openSettingsSheet() {
   }
 }
 function closeSettingsSheet() {
+  void flushSettingsAutosaves().catch(()=>{});
   settingsPanel.openSequence=(settingsPanel.openSequence||0)+1;
   $('settings-content').removeAttribute('aria-busy');
   setSettingsOpen(false);
@@ -6434,6 +6435,10 @@ function renderModelList() {
         const context = el('input', 'model-context-input'); context.type = 'number'; context.min = 1024; context.max = 2097152; context.step = 1; context.value = model.contextWindow || 65536; context.setAttribute('aria-label', t('上下文窗口'));
         context.addEventListener('input', () => { const value = parseInt(context.value, 10); if (Number.isInteger(value)) model.contextWindow = value; });
         const contextLabel = el('label', 'model-provider-field', t('上下文窗口（tokens）')); contextLabel.append(context); advanced.append(contextLabel);
+        const voiceAPI=el('select');voiceAPI.setAttribute('aria-label',model.id+': '+t('语音接口'));
+        for(const [value,label] of [['','自动识别'],['openai-realtime','OpenAI Realtime'],['openai-speech','OpenAI Speech'],['qwen-tts','千问 TTS'],['qwen-realtime','千问实时通话']]){const option=el('option','',t(label));option.value=value;voiceAPI.append(option);}
+        voiceAPI.value=model.voiceAPI||'';voiceAPI.onchange=()=>{model.voiceAPI=voiceAPI.value;};
+        const voiceField=el('label','model-provider-field',t('语音接口'));voiceField.append(voiceAPI);advanced.append(voiceField);
         model.capabilities ||= {};
         if (model.vision && !model.capabilities.vision) model.capabilities.vision = 'supported';
         const capabilities = el('div', 'model-capabilities');
@@ -10549,8 +10554,9 @@ function ttsPlaybackStatus(phase, detail='', retry=null) {
   notice.append(el('span','',detail||t('浏览器等待播放授权')),button);
   (document.querySelector('dialog[open]')||document.body).append(notice);
 }
+function effectiveVoiceProvider(){return state.config?.voiceBinding?.provider||state.config?.ttsProvider||'auto';}
 function ttsWantsEdge(overrideProvider) {
-  const p = overrideProvider != null ? overrideProvider : ((state.config && state.config.ttsProvider) || 'auto');
+  const p = overrideProvider != null ? overrideProvider : effectiveVoiceProvider();
   if (p === 'webspeech') return false;
   if (p === 'auto') {
     const cfg = state.config || {};
@@ -10563,14 +10569,14 @@ async function ttsEdgeSynthOne(seg, overrideVoice, overrideProvider) {
   const ctrl = new AbortController();
   ttsPlayer._ctrl = ctrl;
   // 客户端 20s 硬超时：后端 sherpa 冷启动/edge 挂起时主动 abort，避免 fetch 永不返回卡死播放队列。
-  const provider = overrideProvider || state.config?.ttsProvider || 'auto';
+  const provider = overrideProvider || effectiveVoiceProvider();
   const timer = setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, ['qwen','openai'].includes(provider) ? 60000 : 20000);
-  const voice = overrideVoice != null ? overrideVoice : (provider==='openai'?(state.config?.openaiTTSVoice||''):((state.config && state.config.ttsVoice) || ''));
+  const voice = state.config?.ttsModelRef ? (state.config.voiceBinding?.voice||'') : overrideVoice != null ? overrideVoice : (provider==='openai'?(state.config?.openaiTTSVoice||''):((state.config && state.config.ttsVoice) || ''));
   try {
     const res = await fetch('/api/tts/synthesize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.token },
-      body: JSON.stringify({ text: seg, voice, provider, gender: state.config?.voiceReplyGender || 'female' }),
+      body: JSON.stringify({ text: seg, voice, provider, gender: '' }),
       signal: ctrl.signal,
     });
     if (!res.ok) {
@@ -10658,6 +10664,7 @@ async function ttsSpeak(text, { awaitMode = false, colloquial = false, voice = n
   ttsPlayer.cancelled = false;
   ttsPlayer.paused = false;
   if (!text) return;
+  if(state.config?.ttsModelRef&&state.config?.voiceBinding?.error){showTTSError(state.config.voiceBinding.error);return;}
   if (!ttsWantsEdge(provider)) { return awaitMode ? webSpeakAwait(text) : webSpeakReply(text); }
   let spoken = text;
   if (colloquial) {
@@ -10667,7 +10674,7 @@ async function ttsSpeak(text, { awaitMode = false, colloquial = false, voice = n
       if (r && r.spoken) spoken = r.spoken;
     } catch (_) { spoken = text; }
   }
-  const selected=provider||state.config?.ttsProvider||'auto';
+  const selected=provider||effectiveVoiceProvider();
   const segs = ['qwen','openai'].includes(selected)?qwenTTSSegments(spoken):ttsSegments(spoken);
   if (!segs.length || cancelled()) return;
   let index=0;
@@ -10702,8 +10709,8 @@ function webSpeakReply(text) {
   if (!segs.length) return;
   const synth = window.speechSynthesis;
   synth.cancel();
-  const voice = pickVoiceForGender(state.config && state.config.voiceReplyGender);
-  const isMale = (state.config && state.config.voiceReplyGender) === 'male';
+  const voice = pickVoiceForGender(null);
+  const isMale = false;
   const basePitch = isMale ? 0.99 : 1.1;
   const baseRate = 1.04;
   let i = 0;
@@ -11074,8 +11081,8 @@ function webSpeakAwait(text){
     const segs = ttsSegments(text);
     if(!segs.length) return res();
     const synth = window.speechSynthesis; synth.cancel();
-    const vc = pickVoiceForGender(state.config && state.config.voiceReplyGender);
-    const isMale = (state.config && state.config.voiceReplyGender)==='male';
+    const vc = pickVoiceForGender(null);
+    const isMale = false;
     const basePitch = isMale?0.99:1.1, baseRate=1.04;
     let i=0;
     function step(){
@@ -11260,6 +11267,46 @@ function toggleMechanicalRead(btn, text){
   setTimeout(next, 120);
 }
 
+// Capture edits before a settings section is detached. Serialize writes across
+// controls so partial settings requests and their config reads cannot overtake.
+let settingsWriteQueue = Promise.resolve();
+const settingsAutosaves = new Set();
+function settingsAutosave(wrap, read, {write, rollback, accepted, delay=350}={}) {
+  const status=el('small','settings-save-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+  const retry=el('button','quiet',t('重试'));retry.type='button';retry.hidden=true;
+  wrap.append(status,retry);
+  let timer=0,pending=null,failedValue=null,revision=0,lastError=null,running=Promise.resolve();
+  const send=()=>{
+    clearTimeout(timer);timer=0;
+    if(!pending)return running;
+    const value=pending,version=revision;pending=null;lastError=null;
+    status.textContent=t('正在保存…');retry.hidden=true;
+    const job=settingsWriteQueue.catch(()=>{}).then(async()=>{
+      if(write)await write(value);
+      else{await api('/settings',{method:'PUT',body:JSON.stringify(value)});Object.assign(state.config,value);await refreshConfig().catch(()=>{});}
+    });
+    settingsWriteQueue=job.catch(()=>{});
+    running=job.then(()=>{if(version===revision){status.textContent=t('已保存');lastError=null;failedValue=null;retry.hidden=true;accepted?.();}}).catch(error=>{
+      if(version===revision){lastError=error;failedValue=value;status.textContent=t('保存失败：{0}',error.message||t('连接失败'));retry.hidden=false;rollback?.();if(!wrap.isConnected)toast(status.textContent);}
+      throw error;
+    });
+    // Event handlers do not leave an unhandled rejection. flush still rejects.
+    running.catch(()=>{});return running;
+  };
+  const controller={
+    change(immediate=true){pending=structuredClone(read());revision++;lastError=null;retry.hidden=true;status.textContent=t('等待保存…');clearTimeout(timer);if(immediate)void send();else timer=setTimeout(send,delay);},
+    async flush(){await send();if(lastError)throw lastError;},
+  };
+  retry.onclick=()=>{if(failedValue){pending=structuredClone(failedValue);revision++;void send();}else controller.change();};
+  settingsAutosaves.add(controller);
+  // A detached form can finish its already captured write; it cannot read a
+  // later form's fields or refresh that form from an obsolete DOM snapshot.
+  const cleanup=()=>{if(!wrap.isConnected){clearTimeout(timer);void send().catch(()=>{});settingsAutosaves.delete(controller);}};
+  controller.cleanup=cleanup;
+  return controller;
+}
+async function flushSettingsAutosaves(){await Promise.all([...settingsAutosaves].map(save=>save.flush()));}
+
 // 设置面板：语音助理名称输入
 function renderVoiceNameControl() {
   const wrap = el('div', 'settings-control');
@@ -11270,74 +11317,33 @@ function renderVoiceNameControl() {
   input.maxLength = 12;
   input.placeholder = '小秘';
   input.value = voiceAssistantDisplayName();
-  input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); } };
-  const saveBtn = el('button', 'primary', t('保存'));
-  saveBtn.type = 'button';
-  saveBtn.onclick = action(async () => {
-    const name = input.value.trim() || '小秘';
-    await api('/settings', { method: 'PUT', body: JSON.stringify({ voiceAssistantName: name, activeModel: state.config ? state.config.activeModel : '' }) });
-    await refreshConfig();
-    toast(t('助理名称已保存'));
-  });
-  const row = el('div', 'voice-name-row');
-  row.append(input, saveBtn);
-  wrap.append(head, row, el('small', '', t('名称同步显示在小秘会话和锁屏界面；默认「小秘」。')));
+  const row=el('div','voice-name-row');row.append(input);
+  wrap.append(head,row,el('small','',t('名称同步显示在小秘会话和锁屏界面；默认「小秘」。')));
+  const autosave=settingsAutosave(wrap,()=>({voiceAssistantName:input.value.trim()||'小秘'}));
+  input.oninput=()=>autosave.change(false);input.onchange=()=>autosave.change();
+  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();void autosave.flush().catch(()=>{});}};
   return wrap;
 }
-function renderXiaomiModelControl() {
-  const wrap = el('div', 'settings-control');
-  const head = el('div', 'control-label'); head.append(el('span', '', t('助理模型')));
-  const source = el('select', 'input'); source.setAttribute('aria-label', t('助理模型')); source.disabled = true;
-  const addOption = (value, label) => { const option = el('option', '', label); option.value = value; source.append(option); return option; };
-  addOption('inherit', t('跟随工作台当前模型'));
-  for (const configured of state.config?.models || []) {
-    addOption('model:' + configured.id, [configured.name || configured.id, modelProviderName(configured.providerId)].filter(Boolean).join(' · '));
-  }
-  addOption('custom', t('自定义独立模型'));
-  const base = el('input', 'input'); base.placeholder = 'https://api.example.com/v1'; base.autocomplete = 'url';
-  const model = el('input', 'input'); model.placeholder = t('模型名称，例如 gpt-4o-mini'); model.autocomplete = 'off';
-  const key = el('input', 'input'); key.type = 'password'; key.placeholder = t('API Key（留空表示不更改）'); key.autocomplete = 'new-password';
-  const clearKey = el('input'); clearKey.type = 'checkbox';
-  const clearKeyLabel = el('label', 'xiaomi-clear-key'); clearKeyLabel.append(clearKey, el('span', '', t('清除已保存的独立 API Key')));
-  const status = el('small', 'muted', '');
-  const fields = el('div', 'xiaomi-model-fields'); fields.append(base, model, key, clearKeyLabel);
-  const save = el('button', 'primary', t('保存小秘模型设置')); save.type = 'button'; save.disabled = true;
-  let hasCustomKey = false;
-  const toggleFields = () => {
-    fields.classList.toggle('hidden', source.value !== 'custom');
-    status.textContent = source.value === 'custom' ? t(hasCustomKey ? '独立 API Key 已配置' : '独立 API Key 尚未配置')
-      : t(source.value === 'inherit' ? '跟随工作台当前模型及其密钥。' : '使用所选模型的提供商与已保存密钥，不影响工作台当前模型。');
-  };
-  source.onchange = toggleFields;
-  wrap.append(head, source, fields, status, save, el('small', 'muted', t('可直接选择模型参数中已配置的模型；自定义独立模型可另填接口与密钥。')));
-  api('/xiaomi/model').then(cfg => {
-    state.xiaomiModelSettings = cfg;
-    if (cfg.source === 'configured' && !(state.config?.models || []).some(m => m.id === cfg.model)) {
-      const missing = addOption('model:' + cfg.model, t('已不可用：{0}', cfg.model)); missing.disabled = true;
-    }
-    source.value = cfg.source === 'configured' ? 'model:' + cfg.model : cfg.source || 'inherit';
-    base.value = cfg.baseURL || ''; model.value = cfg.source === 'custom' ? cfg.model || '' : '';
-    hasCustomKey = !!cfg.hasKey; source.disabled = false; save.disabled = false;
-    toggleFields(); refreshStrategyUI();
-  }).catch(e => { status.textContent = e.message; });
-  save.onclick = action(async () => {
-    const configured = source.value.startsWith('model:');
-    const payload = { source: configured ? 'configured' : source.value, model: configured ? source.value.slice(6) : model.value.trim(), baseURL: base.value.trim() };
-    if (source.value === 'custom') Object.assign(payload, { apiKey: key.value.trim(), clearKey: clearKey.checked });
-    const cfg = await api('/xiaomi/model', { method: 'PUT', body: JSON.stringify(payload) });
-    state.xiaomiModelSettings = cfg; refreshStrategyUI();
-    key.value = ''; clearKey.checked = false; hasCustomKey = !!cfg.hasKey; toggleFields(); toast(t('小秘模型设置已保存'));
-  });
-  return wrap;
+function renderXiaomiModelControl(){
+  const wrap=el('div','settings-control');wrap.append(el('div','control-label',t('助理模型')));
+  const source=el('select');source.setAttribute('aria-label',t('助理模型'));source.disabled=true;
+  const add=(value,label)=>{const o=el('option','',label);o.value=value;source.append(o);};
+  add('inherit',t('跟随工作台当前模型'));for(const m of state.config?.models||[])add('model:'+m.id,[m.name||m.id,modelProviderName(m.providerId)].filter(Boolean).join(' · '));
+  wrap.append(source,el('small','muted',t('使用模型设置中已配置的厂商与密钥，不影响工作台当前模型。')));
+  const save=settingsAutosave(wrap,()=>({source:source.value.startsWith('model:')?'configured':source.value,model:source.value.startsWith('model:')?source.value.slice(6):''}),{write:async payload=>{
+    state.xiaomiModelSettings=await api('/xiaomi/model',{method:'PUT',body:JSON.stringify(payload)});refreshStrategyUI();
+  }});
+  api('/xiaomi/model').then(cfg=>{state.xiaomiModelSettings=cfg;if(cfg.source==='custom')add('custom',t('原有独立模型')+' · '+cfg.model);if(cfg.source==='configured'&&!(state.config?.models||[]).some(m=>m.id===cfg.model)){add('model:'+cfg.model,t('已不可用：{0}',cfg.model));source.lastElementChild.disabled=true;}source.value=cfg.source==='configured'?'model:'+cfg.model:cfg.source||'inherit';source.disabled=false;}).catch(e=>toast(e.message));
+  source.onchange=()=>{if(source.value!=='custom')save.change();};return wrap;
 }
 controlRenderers['xiaomi-model'] = renderXiaomiModelControl;
 function renderAssistantApprovalControl(){
   const wrap=el('div','settings-control');
   const row=el('label','voice-reply-row');const checkbox=el('input');checkbox.type='checkbox';checkbox.checked=!!state.config?.assistantAutoReview;
   row.append(checkbox,el('span','',t('允许助理代审交办任务')));
-  const save=el('button','primary',t('保存'));save.type='button';
-  save.onclick=action(async()=>{await api('/settings',{method:'PUT',body:JSON.stringify({assistantAutoReview:checkbox.checked})});await refreshConfig();toast(t('助理审批设置已保存'));});
-  wrap.append(el('div','control-label',t('助理审批')),row,el('small','',t('作用于助理交办的任务及其子任务，复用独立审批器判断具体命令和新文件提案并记录原因。无法确认授权、现有文件覆盖或受保护操作交由用户决定；不会代答业务澄清、指纹验证或消息邀请。关闭后遵循工作台原有审批模式。')),save);
+  wrap.append(el('div','control-label',t('助理审批')),row,el('small','',t('作用于助理交办的任务及其子任务，复用独立审批器判断具体命令和新文件提案并记录原因。无法确认授权、现有文件覆盖或受保护操作交由用户决定；不会代答业务澄清、指纹验证或消息邀请。关闭后遵循工作台原有审批模式。')));
+  const autosave=settingsAutosave(wrap,()=>({assistantAutoReview:checkbox.checked}),{rollback:()=>{checkbox.checked=!!state.config?.assistantAutoReview;}});
+  checkbox.onchange=()=>autosave.change();
   return wrap;
 }
 controlRenderers['assistant-approval']=renderAssistantApprovalControl;
@@ -11349,26 +11355,15 @@ function renderVoiceReplyControl() {
   const row = el('div', 'voice-reply-row voice-reply-options');
   const toggle = el('input'); toggle.type = 'checkbox';
   toggle.checked = !!(state.config && state.config.voiceReplyEnabled);
-  const gender = el('select');
-  const optF = el('option', '', t('女声')); optF.value = 'female';
-  const optM = el('option', '', t('男声')); optM.value = 'male';
-  gender.append(optF, optM);
-  gender.value = (state.config && state.config.voiceReplyGender) || 'female';
   const verb = el('select');
   const vb = el('option', '', t('简要概括（默认）')); vb.value = 'brief';
   const vf = el('option', '', t('完整朗读')); vf.value = 'full';
   verb.append(vb, vf);
   verb.value = (state.config && state.config.voiceReplyVerbosity) || 'brief';
-  const save = el('button', 'primary', t('保存'));
-  save.type = 'button';
-  save.onclick = action(async () => {
-    await api('/settings', { method: 'PUT', body: JSON.stringify({ voiceReplyEnabled: toggle.checked, voiceReplyGender: gender.value, voiceReplyVerbosity: verb.value, activeModel: state.config ? state.config.activeModel : '' }) });
-    await refreshConfig();
-    if (toggle.checked && !('speechSynthesis' in window)) toast(t('当前浏览器不支持语音朗读'));
-    else toast(t('语音回复设置已保存'));
-  });
-  row.append(toggle, el('span', '', t('语音回复')), gender, verb, save);
-  wrap.append(head, row, el('small', '', t('开启后：口述总结的意图以打字机效果填入输入框并自动发送；模型回复会被朗读（音色可选男女）。简要概括=抓结论数字，完整朗读=不删减。')));
+  row.append(toggle,el('span','',t('语音回复')),verb);
+  wrap.append(head,row,el('small','',t('模型回复按所选语音模型与音色朗读。简要概括抓结论和数字，完整朗读不删减。')));
+  const autosave=settingsAutosave(wrap,()=>({voiceReplyEnabled:toggle.checked,voiceReplyVerbosity:verb.value}));
+  toggle.onchange=verb.onchange=()=>autosave.change();
   return wrap;
 }
 controlRenderers['voice-reply'] = renderVoiceReplyControl;
@@ -11397,259 +11392,108 @@ function renderVoiceDispatchControl() {
   sens.value = cfg.voiceInsertSensitivity || 'conservative';
   row.append(sens);
 
-  const save = el('button', 'primary', t('保存')); save.type = 'button';
-  save.onclick = action(async () => {
-    await api('/settings', { method: 'PUT', body: JSON.stringify({
-      voiceDefaultSendMode: mode.value, voiceInsertSensitivity: sens.value,
-      activeModel: state.config ? state.config.activeModel : ''
-    }) });
-    await refreshConfig();
-    toast(t('发送调度已保存'));
-  });
-  row.append(save);
-  wrap.append(head, row, el('small', '', t('小秘把识别意图发给 aide 时自行判断排队还是插队：紧急/中止类立即插队，新任务/不紧急排队。保守=5秒内不重复插队，中止指令不受限。')));
+  wrap.append(head,row,el('small','',t('小秘把识别意图发给 aide 时自行判断排队还是插队：紧急/中止类立即插队，新任务/不紧急排队。保守=5秒内不重复插队，中止指令不受限。')));
+  const autosave=settingsAutosave(wrap,()=>({voiceDefaultSendMode:mode.value,voiceInsertSensitivity:sens.value}));
+  mode.onchange=sens.onchange=()=>autosave.change();
   return wrap;
 }
 controlRenderers['voice-dispatch'] = renderVoiceDispatchControl;
 
 // 设置 → 语音引擎：edge-tts 神经音 / 浏览器 Web Speech 兜底
 function renderTTSEngineControl() {
-  const wrap = el('div', 'settings-control tts-engine-control');
-  const head = el('div', 'control-label');
-  head.append(el('span', '', t('语音引擎')));
-  const cfg = state.config || {};
-
-  // 引擎下拉
-  const engRow = el('div', 'voice-reply-row tts-engine-select');
-  engRow.append(el('span', '', t('TTS引擎')));
-  const eng = el('select');
-  [['auto', t('自动（不可用时浏览器兜底）')], ['sherpa', t('本地离线')], ['edge', t('edge-tts 联网')], ['qwen', t('阿里云百炼 · 千问 TTS')], ['openai', t('OpenAI 语音')], ['clone', t('克隆音色（自托管）')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
-    const o = el('option', '', label); o.value = v; eng.append(o);
-  });
-  eng.value = cfg.ttsProvider || 'auto';
-  engRow.append(eng);
-
-  // 音色下拉（edge 音色列表）
-  const voiceRow = el('div', 'voice-reply-row');
-  voiceRow.append(el('span', '', t('音色')));
-  const voice = el('select');
-  const voices = cfg.ttsVoices || [];
-  const autoOpt = el('option', '', t('默认（按性别）')); autoOpt.value = ''; voice.append(autoOpt);
-  // 按性别分组（女声/男声），未保存的选择只改下拉，不写 state.config
-  [['female', t('女声')], ['male', t('男声')]].forEach(([g, label]) => {
-    const og = el('optgroup'); og.label = label;
-    voices.filter(v => v.gender === g).forEach(v => {
-      const o = el('option', '', v.name); o.value = v.id; og.append(o);
-    });
-    if (og.children.length) voice.append(og);
-  });
-  voice.value = cfg.ttsVoice || ''; // 回显已保存的音色；空值选中"默认（按性别）"
-  voiceRow.append(voice);
-
-  const qwenBox = el('div', 'tts-qwen-settings');
-  const field = (label, input) => {
-    const row = el('label', 'voice-reply-row'); input.setAttribute('aria-label',t(label)); row.append(el('span', '', t(label)), input); qwenBox.append(row);
-  };
-  const region = el('select');
-  [['beijing', t('北京')], ['singapore', t('新加坡')]].forEach(([v, label]) => {
-    const o = el('option', '', label); o.value = v; region.append(o);
-  });
-  region.value = cfg.ttsRegion || 'beijing'; field('百炼地域', region);
-  const model = el('select'); field('TTS 模型', model);
-  const qwenVoice = el('select'); field('音色', qwenVoice);
-  const fillOptions=(select,items,value)=>{
-    select.replaceChildren();
-    for(const item of items){const o=el('option','',item.name&&item.name!==item.id?item.name+' · '+item.id:item.id);o.value=item.id;select.append(o);}
-    if(value&&!items.some(item=>item.id===value)){const o=el('option','',value+' · '+t('已保存，未在目录中'));o.value=value;select.append(o);}
-    select.value=value||items[0]?.id||'';
-  };
-  const catalogStatus=el('small');let catalogLoaded=false,catalogEpoch=0;
-  const paintCatalog=(catalog)=>{
-    fillOptions(model,catalog.models||[],model.value||cfg.ttsModel||'qwen3-tts-flash');
-    fillOptions(qwenVoice,catalog.voices||[],qwenVoice.value||(cfg.ttsProvider==='qwen'?cfg.ttsVoice:'')||'Cherry');
-    catalogStatus.textContent=t(catalog.modelSource==='api'?'模型：百炼接口目录（未验证账户调用权限）':'模型：内置兼容目录')+' · '+t(catalog.voiceSource==='official'?'音色：已同步官方目录':'音色：内置官方目录')+(catalog.warning?' · '+catalog.warning:'');
-  };
-  paintCatalog(cfg.qwenTTSCatalog||{models:[{id:'qwen3-tts-flash',name:'千问3 TTS Flash'}],voices:[{id:'Cherry',name:'芊悦'}]});
-  const key = el('input'); key.type = 'password'; key.autocomplete = 'new-password';
-  key.placeholder = cfg.hasTTSKey ? t('已配置，留空保留') : t('填写百炼 API Key'); field('API Key', key);
-  const clearKey = el('input'); clearKey.type = 'checkbox'; field('清除已保存的 TTS 密钥', clearKey);
-  const fallback = el('input'); fallback.type='checkbox';fallback.checked=cfg.ttsBrowserFallback===true;field('失败时使用浏览器语音',fallback);
-  const refreshCatalog=el('button','quiet',t('刷新模型与音色'));refreshCatalog.type='button';
-  const loadCatalog=async()=>{
-    if(refreshCatalog.disabled)return;
-    const generation=++catalogEpoch,chosenRegion=region.value,chosenKey=key.value;
-    refreshCatalog.disabled=true;catalogStatus.textContent=t('正在查询模型与音色…');
-    try{const catalog=await api('/tts/catalog',{method:'POST',body:JSON.stringify({region:chosenRegion,apiKey:chosenKey.trim()})});
-      if(generation!==catalogEpoch||!qwenBox.isConnected||chosenRegion!==region.value||chosenKey!==key.value)return;
-      paintCatalog(catalog);catalogLoaded=true;
-    }catch(error){catalogStatus.textContent=error.message||t('目录查询失败，保留当前列表');}
-    finally{refreshCatalog.disabled=false;}
-  };
-  refreshCatalog.onclick=action(loadCatalog);qwenBox.append(refreshCatalog,catalogStatus,
-    el('small','',t('地域须与密钥一致。模型只显示当前非实时接口兼容型号；音色自动同步官方目录，网络不可用时保留内置列表。语速调整播放倍率并保持音调。合成文本会发送至百炼并计费；失败默认保留文字，不切换机械声。')));
-  region.onchange=()=>{catalogLoaded=false;catalogEpoch++;};
-
-  // OpenAI is an independent credential/model slot; opening settings is offline.
-  const openaiBox = el('div', 'tts-qwen-settings tts-openai-settings');
-  const openaiField = (label, input) => {
-    const row=el('label','voice-reply-row');input.setAttribute('aria-label',t(label));
-    row.append(el('span','',t(label)),input);openaiBox.append(row);
-  };
-  const openaiMode=el('select');
-  for(const [value,label] of [['realtime','Realtime 朗读'],['speech','Speech API（旧版）']]){const o=el('option','',t(label));o.value=value;openaiMode.append(o);}
-  openaiMode.value=cfg.openaiTTSMode||'realtime';openaiField('OpenAI 语音接口',openaiMode);
-  const openaiModel=el('input');openaiModel.type='text';openaiModel.setAttribute('list','openai-tts-models');
-  openaiField('OpenAI 语音模型',openaiModel);
-  const openaiModels=el('datalist');openaiModels.id='openai-tts-models';openaiBox.append(openaiModels);
-  const openaiVoice=el('select');openaiField('OpenAI 音色',openaiVoice);
-  const openaiBase=el('input');openaiBase.type='url';openaiBase.value=cfg.openaiTTSBaseURL||'https://api.openai.com/v1';openaiField('OpenAI 语音 API Base URL',openaiBase);
-  const openaiKey=el('input');openaiKey.type='password';openaiKey.autocomplete='new-password';openaiKey.placeholder=t(cfg.hasOpenAITTSKey?'已配置，留空保留':'填写 OpenAI API Key');openaiField('OpenAI 语音 API Key',openaiKey);
-  const clearOpenaiKey=el('input');clearOpenaiKey.type='checkbox';openaiField('清除已保存的 OpenAI 语音密钥',clearOpenaiKey);
-  const openaiFallback=el('input');openaiFallback.type='checkbox';openaiFallback.checked=cfg.ttsBrowserFallback===true;openaiField('失败时使用浏览器语音',openaiFallback);
-  const openaiNote=el('small');openaiBox.append(openaiNote);
-  const paintOpenaiMode=(initial=false)=>{
-    const realtime=openaiMode.value==='realtime';
-    const models=realtime?['gpt-realtime-2.1-mini','gpt-realtime-2.1']:['gpt-4o-mini-tts','tts-1','tts-1-hd'];
-    openaiModels.replaceChildren(...models.map(id=>{const o=el('option');o.value=id;return o;}));
-    openaiModel.value=initial&&cfg.openaiTTSModel?cfg.openaiTTSModel:models[0];
-    const voices=realtime?['marin','cedar','alloy','ash','ballad','coral','echo','sage','shimmer','verse']:['coral','alloy','ash','ballad','echo','fable','onyx','nova','sage','shimmer','verse','marin','cedar'];
-    fillOptions(openaiVoice,voices.map(id=>({id})),initial&&cfg.openaiTTSVoice?cfg.openaiTTSVoice:voices[0]);
-    openaiNote.textContent=t(realtime?'AI 生成语音。Realtime 按原文朗读，生成式语音可能有读法差异，需实听确认；文本会发送至所填接口并计费。':'AI 生成语音。Speech API 旧模型将于 2027-01-06 停用；Realtime 模型不能填写在此接口中。文本会发送至所填接口并计费。');
-  };
-  const legacyVoices=['alloy','echo','fable','onyx','nova','shimmer'];
-  openaiModel.oninput=()=>{if(openaiMode.value!=='speech')return;const old=openaiVoice.value;
-    const voices=['tts-1','tts-1-hd'].includes(openaiModel.value.trim())?legacyVoices:['coral','alloy','ash','ballad','echo','fable','onyx','nova','sage','shimmer','verse','marin','cedar'];
-    fillOptions(openaiVoice,voices.map(id=>({id})),voices.includes(old)?old:voices[0]);
-  };
-  openaiMode.onchange=()=>{paintOpenaiMode();openaiModel.oninput();};paintOpenaiMode(true);openaiModel.oninput();
-
-
-  // 语速滑块
-  const rateRow = el('div', 'voice-reply-row');
-  rateRow.append(el('span', '', t('语速')));
-  const rate = el('input'); rate.type = 'range'; rate.min = '0.8'; rate.max = '1.3'; rate.step = '0.05';
-  rate.value = cfg.ttsRate || 1.0;
-  const rateVal = el('span', '', Number(rate.value).toFixed(2) + 'x');
-  rate.oninput = () => { rateVal.textContent = Number(rate.value).toFixed(2) + 'x'; };
-  rateRow.append(rate, rateVal);
-
-  // 表现力滑块
-  const expRow = el('div', 'voice-reply-row');
-  expRow.append(el('span', '', t('表现力')));
-  const exp = el('input'); exp.type = 'range'; exp.min = '0'; exp.max = '1'; exp.step = '0.1';
-  exp.value = cfg.ttsExpressiveness || 0.5;
-  const expVal = el('span', '', Number(exp.value).toFixed(1));
-  exp.oninput = () => { expVal.textContent = Number(exp.value).toFixed(1); };
-  expRow.append(exp, expVal);
-
-  // 保存 + 试听
-  const btnRow = el('div', 'voice-reply-row');
-  const save = el('button', 'primary', t('保存')); save.type = 'button';
-  const preview = el('button', 'quiet', t('试听')); preview.type = 'button';
-  save.onclick = action(async () => {
-    const oldSpeech=state.config||{};
-    const callConfigChanged=eng.value!==(oldSpeech.ttsProvider||'auto')||(eng.value==='openai'&&(
-      openaiMode.value!==(oldSpeech.openaiTTSMode||'realtime')||openaiModel.value.trim()!==(oldSpeech.openaiTTSModel||'gpt-realtime-2.1-mini')||
-      openaiVoice.value!==(oldSpeech.openaiTTSVoice||'marin')||openaiBase.value.trim()!==(oldSpeech.openaiTTSBaseURL||'https://api.openai.com/v1')||!!openaiKey.value||clearOpenaiKey.checked));
-    await api('/settings', { method: 'PUT', body: JSON.stringify({
-      ttsProvider: eng.value, ...(eng.value==='openai'?{}:{ttsVoice:eng.value==='qwen'?qwenVoice.value.trim()||'Cherry':voice.value}),
-      openaiTTSMode:openaiMode.value,openaiTTSModel:openaiModel.value.trim(),openaiTTSVoice:openaiVoice.value,
-      openaiTTSBaseURL:openaiBase.value.trim(),openaiTTSAPIKey:openaiKey.value.trim(),clearOpenAITTSKey:clearOpenaiKey.checked,
-      ttsModel: model.value.trim(), ttsRegion: region.value, ttsAPIKey: key.value.trim(), clearTTSKey: clearKey.checked, ttsBrowserFallback: eng.value==='openai'?openaiFallback.checked:fallback.checked,
-      ttsRate: parseFloat(rate.value), ttsExpressiveness: parseFloat(exp.value),
-      activeModel: state.config ? state.config.activeModel : '',
-    }) });
-    key.value = ''; clearKey.checked = false; openaiKey.value='';clearOpenaiKey.checked=false;
-    await refreshConfig();
-    if(callConfigChanged&&window.aideAssistantCall?.active()){window.aideAssistantCall.end();toast(t('语音通话配置已更改，请重新拨通'));}
-    toast(t('语音引擎设置已保存'));
-  });
-  preview.onclick = action(async () => {
-    ttsUnlockAudio();
-    const savedTTS = state.config || {};
-    if (eng.value === 'qwen' && (savedTTS.ttsProvider !== 'qwen' || key.value || clearKey.checked || model.value.trim() !== (savedTTS.ttsModel || 'qwen3-tts-flash') || region.value !== (savedTTS.ttsRegion || 'beijing'))) {
-      toast(t('请先保存千问 TTS 设置，再试听')); return;
-    }
-    if(eng.value==='openai' && (savedTTS.ttsProvider!=='openai'||openaiKey.value||clearOpenaiKey.checked||openaiMode.value!==(savedTTS.openaiTTSMode||'realtime')||openaiModel.value.trim()!==(savedTTS.openaiTTSModel||'gpt-realtime-2.1-mini')||openaiBase.value.trim()!==(savedTTS.openaiTTSBaseURL||'https://api.openai.com/v1'))){toast(t('请先保存 OpenAI 语音设置，再试听'));return;}
-    ttsCancel();
-    const savedLabel = preview.textContent;
-    preview.disabled = true; preview.textContent = t('播放中…');
-    try {
-      // 试听严格用下拉当前所选（voice/provider 覆盖），不污染 state.config。
-      // 8s 硬超时：即使后端/播放链路卡死也强制恢复按钮，禁止停在"播放中…"。
-      await Promise.race([
-        ttsSpeak('你好，我是小秘，这是试听效果。', {
-          awaitMode: true, colloquial: false,
-          voice: eng.value === 'openai' ? openaiVoice.value : eng.value === 'qwen' ? qwenVoice.value.trim() || 'Cherry' : voice.value, provider: eng.value,
-        }),
-        new Promise(res => setTimeout(res, ['qwen','openai'].includes(eng.value)?65000:8000)),
-      ]);
-    } finally {
-      ttsCancel();
-      preview.disabled = false; preview.textContent = savedLabel;
-    }
-  });
-  btnRow.append(save, preview);
-
-  // edge 不可用时的持久提示（随 config 刷新；edge 恢复后自动消失）
-  const warn = el('small', '', '');
-  const prov = cfg.ttsProvider || 'auto';
-  // 显式选「本地离线」但未安装模型 → 明确引导（不静默降级 edge）
-  if (prov === 'sherpa' && !cfg.sherpaAvailable) {
-    warn.textContent = '⚠ ' + t('本地离线模型未安装') + '。' + t('请在容器内运行 scripts/tts-setup 下载模型到 /data/tts/，或手动放入后重启；当前回退联网/浏览器。');
-    warn.style.color = '#c0392b';
-  } else if ((prov === 'auto' || prov === 'edge' || prov === 'clone') && cfg.edgeAvailable === false && !cfg.sherpaAvailable) {
-    warn.textContent = '⚠ ' + t('神经音当前不可用') + (cfg.edgeLastError ? '（' + cfg.edgeLastError + '）' : '') + '，' + t('已临时使用浏览器机械音；联网恢复后自动切回神经音。');
-    warn.style.color = '#c0392b';
+  const wrap=el('div','settings-control tts-engine-control'),cfg=state.config||{};
+  const field=(label,input)=>{const row=el('label','voice-reply-row');input.setAttribute('aria-label',t(label));row.append(el('span','',t(label)),input);wrap.append(row);};
+  const model=el('select'),call=el('select');
+  const option=(select,value,label)=>{const o=el('option','',t(label));o.value=value;select.append(o);};
+  for(const [value,label] of [['auto','自动'],['sherpa','本地离线'],['edge','edge-tts 联网'],['webspeech','浏览器合成'],['clone','克隆音色（自托管）'],['qwen','千问 · 原有语音配置'],['openai','OpenAI · 原有语音配置']])option(model,'engine:'+value,label);
+  option(call,'','沿用原有通话配置');
+  for(const m of cfg.models||[]){
+    const label=[m.name||m.id,modelProviderName(m.providerId)].filter(Boolean).join(' · ');
+    if(['openai-realtime','openai-speech','qwen-tts'].includes(m.voiceAPI))option(model,'model:'+m.id,label);
+    if(['openai-realtime','qwen-realtime'].includes(m.voiceAPI))option(call,m.id,label);
   }
-  // 当前实际生效引擎（后端 /api/config 回显）——不再静默降级，明确告知用户
-  const engStatus = el('small', '');
-  const cur = cfg.currentTTSEngine;
-  if (prov === 'webspeech') {
-    engStatus.textContent = t('当前引擎') + ': ' + t('浏览器合成（机械音）');
-    engStatus.style.color = '#888';
-  } else if (cur === 'sherpa') {
-    const nv = (cfg.sherpaVoices && cfg.sherpaVoices.length) ? cfg.sherpaVoices.map(v=>v.name||v.dir).join('、') : '';
-    engStatus.textContent = t('当前引擎') + ': 本地离线 sherpa-onnx ✓' + (nv ? '（' + nv + '）' : '');
-    engStatus.style.color = '#27ae60';
-  } else if (cur === 'openai') {
-    engStatus.textContent=t('当前引擎')+': '+t('OpenAI 语音')+' ✓';engStatus.style.color='#27ae60';
-  } else if (cur === 'qwen') {
-    engStatus.textContent = t('当前引擎') + ': ' + t('阿里云百炼 · 千问 TTS') + ' ✓';
-    engStatus.style.color = '#27ae60';
-  } else if (cur === 'edge' || cur === 'azure') {
-    engStatus.textContent = t('当前引擎') + ': ' + (cur === 'edge' ? 'edge-tts 神经音' : 'Azure 神经音') + ' ✓' + (cfg.sherpaAvailable ? '（本地已装，下次优先本地）' : '');
-    engStatus.style.color = '#27ae60';
-  } else if (cur === 'unavailable') {
-    engStatus.textContent = t('当前引擎') + ': ⚠ ' + t(['qwen','openai'].includes(prov) && !cfg.ttsBrowserFallback ? '已保留文字，未切换机械声' : '神经音不可用，已降级浏览器机械音');
-    engStatus.style.color = '#c0392b';
-  } else {
-    engStatus.textContent = t('当前引擎') + ': ' + (cfg.sherpaAvailable ? t('本地离线已就绪，待首次合成确认') : t('待检测（合成一次后显示）'));
-    engStatus.style.color = '#888';
-  }
-  const paintProvider = () => {
-    const qwen = eng.value === 'qwen';
-    const openai=eng.value==='openai';
-    qwenBox.classList.toggle('hidden', !qwen);openaiBox.classList.toggle('hidden',!openai);voiceRow.classList.toggle('hidden', qwen||openai);
-    warn.style.display = qwen||openai ? 'none' : '';
-    rateRow.classList.remove('hidden'); expRow.classList.toggle('hidden', qwen||openai);
-    if(qwen&&!catalogLoaded)void loadCatalog();
+  const restoreMissing=(select,value)=>{if(![...select.options].some(o=>o.value===value))option(select,value,t('已不可用：{0}',value));select.value=value;};
+  restoreMissing(model,cfg.ttsModelRef?'model:'+cfg.ttsModelRef:'engine:'+(cfg.ttsProvider||'auto'));
+  restoreMissing(call,cfg.assistantCallModelRef||'');
+  field('朗读模型',model);field('通话模型',call);
+  const link=el('button','quiet',t('前往模型设置配置厂商与密钥'));link.type='button';link.onclick=()=>{settingsPanel.active='model';settingsPanel.activeChild='model-profiles';renderSettingsSheet();};wrap.append(link);
+  const legacyModel=el('select'),voice=el('select'),callVoice=el('select');
+  field('语音模型',legacyModel);field('音色',voice);field('通话音色',callVoice);
+  const fill=(select,items,value)=>{select.replaceChildren();for(const item of items)option(select,item.id||item,item.name||item.id||item);if(value&&![...select.options].some(o=>o.value===value))option(select,value,value);select.value=value||select.options[0]?.value||'';};
+  const openaiVoices=(kind,id='')=>['tts-1','tts-1-hd'].includes(id)?['alloy','echo','fable','onyx','nova','shimmer']:kind==='openai-speech'?['coral','alloy','ash','ballad','echo','fable','onyx','nova','sage','shimmer','verse','marin','cedar']:['marin','cedar','alloy','ash','ballad','coral','echo','sage','shimmer','verse'];
+  const selection=()=>{const ref=model.value.startsWith('model:')?model.value.slice(6):'',m=(cfg.models||[]).find(m=>m.id===ref);return{ref,kind:m?.voiceAPI||model.value.slice(7)};};
+  const voiceChoices={openai:cfg.openaiTTSVoice||'marin',qwen:(cfg.ttsProvider==='qwen'||cfg.voiceBinding?.provider==='qwen'?cfg.ttsVoice:'')||'Cherry',other:cfg.ttsProvider==='qwen'?'':cfg.ttsVoice||''},callChoices={};
+  let previousFamily='',previousCall=null;
+  const paint=(initial=false)=>{
+    if(previousFamily)voiceChoices[previousFamily]=voice.value;
+    if(previousCall!==null)callChoices[previousCall]=callVoice.value;
+    const {ref,kind}=selection();
+    const legacy=kind==='openai'||kind==='qwen';legacyModel.parentElement.classList.toggle('hidden',!legacy);
+    if(legacy){const ids=kind==='openai'?['gpt-realtime-2.1-mini','gpt-realtime-2.1','gpt-4o-mini-tts','tts-1','tts-1-hd']:(cfg.qwenTTSCatalog?.models||[{id:'qwen3-tts-flash'}]);fill(legacyModel,ids,kind==='openai'?cfg.openaiTTSModel:cfg.ttsModel);}
+    let items,value;
+    if(kind.startsWith('openai')){items=openaiVoices(kind,ref||legacyModel.value);value=voiceChoices.openai;}
+    else if(kind==='qwen'||kind==='qwen-tts'){items=cfg.qwenTTSCatalog?.voices||[{id:'Cherry',name:'芊悦 · Cherry'}];value=voiceChoices.qwen;}
+    else{items=[{id:'',name:t('模型默认音色')},...(cfg.ttsVoices||[])];value=voiceChoices.other;}
+    previousFamily=kind.startsWith('openai')?'openai':kind.startsWith('qwen')?'qwen':'other';fill(voice,items,value);
+    const cm=(cfg.models||[]).find(m=>m.id===call.value);const ckind=cm?.voiceAPI||(kind.startsWith('openai')||kind==='openai'?'openai-realtime':'qwen-realtime');
+    fill(callVoice,ckind==='openai-realtime'?openaiVoices(ckind):['Tina'],callChoices[call.value]||(initial?cfg.assistantCallVoice||(ckind==='openai-realtime'?cfg.openaiTTSVoice||'marin':'Tina'):ckind==='openai-realtime'?'marin':'Tina'));
+    previousCall=call.value;
+    callVoice.disabled=!call.value;voice.disabled=['webspeech','sherpa'].includes(kind);
   };
-  eng.onchange = paintProvider; paintProvider();
-  const failureStatus=el('small','',state.ttsLastError||'');failureStatus.dataset.ttsError='';failureStatus.setAttribute('role','status');
-  wrap.append(head, engRow, voiceRow, qwenBox, openaiBox, engStatus, rateRow, expRow, btnRow, failureStatus, warn,
-    el('small', '', t('自动模式依次尝试本地离线和可用的联网神经音；都不可用或播放失败时直接回退浏览器合成。可手动选择浏览器合成。主聊天的机械朗读按钮不受此设置影响。')));
+  const rate=el('input');rate.type='range';rate.min='.8';rate.max='1.3';rate.step='.05';rate.value=cfg.ttsRate||1;
+  const rateValue=el('output','',Number(rate.value).toFixed(2)+'x');field('语速',rate);rate.parentElement.append(rateValue);
+  const expressive=el('input');expressive.type='range';expressive.min='0';expressive.max='1';expressive.step='.1';expressive.value=cfg.ttsExpressiveness??.5;field('表现力',expressive);
+  const fallback=el('input');fallback.type='checkbox';fallback.checked=cfg.ttsBrowserFallback===true;field('失败时使用浏览器语音',fallback);
+  const read=()=>{const {ref,kind}=selection();const patch={ttsModelRef:ref,assistantCallModelRef:call.value,assistantCallVoice:callVoice.disabled?'':callVoice.value,ttsRate:Number(rate.value),ttsExpressiveness:Number(expressive.value),ttsBrowserFallback:fallback.checked};
+    if(!ref)patch.ttsProvider=kind;
+    if(kind.startsWith('openai'))patch.openaiTTSVoice=voice.value;else patch.ttsVoice=voice.value;
+    if(kind==='openai'){patch.openaiTTSModel=legacyModel.value;patch.openaiTTSMode=legacyModel.value===(cfg.openaiTTSModel||'gpt-realtime-2.1-mini')?(cfg.openaiTTSMode||'realtime'):legacyModel.value.startsWith('gpt-realtime')?'realtime':'speech';}
+    if(kind==='qwen')patch.ttsModel=legacyModel.value;
+    return patch;
+  };
+  let accepted=JSON.stringify(read());
+  const autosave=settingsAutosave(wrap,read,{write:async payload=>{
+    await api('/settings',{method:'PUT',body:JSON.stringify(payload)});await refreshConfig();
+    // Rate/fallback-only edits do not tear down a live call.
+    const previous=JSON.parse(accepted),changed=['assistantCallModelRef','assistantCallVoice'].some(key=>previous[key]!==payload[key])||!payload.assistantCallModelRef&&['ttsProvider','openaiTTSModel','openaiTTSMode','openaiTTSVoice'].some(key=>previous[key]!==payload[key]);
+    accepted=JSON.stringify(payload);
+    if(changed&&window.aideAssistantCall?.active()){window.aideAssistantCall.end();toast(t('语音通话配置已更改，请重新拨通'));}
+  }});
+  model.onchange=()=>{paint();autosave.change();};call.onchange=()=>{paint();autosave.change();};voice.onchange=callVoice.onchange=fallback.onchange=()=>autosave.change();legacyModel.onchange=()=>{if(selection().kind==='openai'){const voices=openaiVoices(legacyModel.value.startsWith('gpt-realtime')?'openai-realtime':'openai-speech',legacyModel.value);fill(voice,voices,voices.includes(voice.value)?voice.value:voices[0]);}autosave.change();};
+  rate.oninput=()=>{rateValue.textContent=Number(rate.value).toFixed(2)+'x';autosave.change(false);};rate.onchange=()=>autosave.change();
+  expressive.oninput=()=>autosave.change(false);expressive.onchange=()=>autosave.change();
+  paint(true);accepted=JSON.stringify(read());
+  const catalogButton=el('button','quiet',t('刷新模型与音色'));catalogButton.type='button';
+  catalogButton.onclick=action(async()=>{const chosen=model.value,{ref,kind}=selection();if(!['qwen','qwen-tts'].includes(kind))return;catalogButton.disabled=true;
+    try{await autosave.flush();const catalog=await api('/tts/catalog',{method:'POST',body:JSON.stringify({modelRef:ref})});if(model.value!==chosen)return;
+      cfg.qwenTTSCatalog=catalog;const selected=voice.value;fill(voice,catalog.voices||[],selected);if(!ref)fill(legacyModel,catalog.models||[],legacyModel.value);
+    }finally{catalogButton.disabled=false;}});
+  wrap.append(catalogButton);
+  const originalModelChange=model.onchange;model.onchange=()=>{originalModelChange();catalogButton.hidden=!['qwen','qwen-tts'].includes(selection().kind);};catalogButton.hidden=!['qwen','qwen-tts'].includes(selection().kind);
+  const preview=el('button','quiet',t('试听'));preview.type='button';preview.onclick=action(async()=>{ttsUnlockAudio();preview.disabled=true;try{await autosave.flush();ttsCancel();await ttsSpeak('你好，我是小秘，这是试听效果。',{awaitMode:true,colloquial:false});}finally{preview.disabled=false;}});
+  const failure=el('small','',state.ttsLastError||'');failure.dataset.ttsError='';failure.setAttribute('role','status');
+  wrap.append(preview,failure,el('small','muted',t('厂商、接口地址与密钥在模型设置中管理。朗读与通话分别选择模型；更改后自动保存，试听使用已保存配置。')));
   return wrap;
 }
-controlRenderers['tts-engine'] = renderTTSEngineControl;
-
-// 设置 → 个性化音色（#36）：克隆服务配置 + 录音样本 + 创建音色 + 性格推断
-function renderVoiceCloneControl() {
-  const wrap = el('div', 'settings-control');
-  const head = el('div', 'control-label'); head.append(el('span', '', t('个性化音色')));
-  wrap.append(head);
-  const cfg = state.config || {};
-
+// Compatibility credentials stay editable in model settings only. They are
+// never copied into another provider or silently merged with chat credentials.
+function renderVoiceProviderControl(){
+  const wrap=el('div','settings-control'),cfg=state.config||{};
+  wrap.append(el('p','muted',t('语音模型可使用上方厂商连接与密钥。原有独立语音配置保留在此，留空不会更改已保存密钥。')));
+  const controls={};
+  for(const [key,label,value,type] of [['openaiTTSBaseURL','OpenAI 语音 API Base URL',cfg.openaiTTSBaseURL||'https://api.openai.com/v1','url'],['openaiTTSAPIKey','OpenAI 语音 API Key','','password'],['clearOpenAITTSKey','清除已保存的 OpenAI 语音密钥',false,'checkbox'],['ttsRegion','百炼地域',cfg.ttsRegion||'beijing','select'],['ttsAPIKey','API Key','','password'],['clearTTSKey','清除已保存的 TTS 密钥',false,'checkbox']]){
+    const row=el('label','voice-reply-row'),input=el(type==='select'?'select':'input');if(type==='select'){for(const [id,name] of [['beijing','北京'],['singapore','新加坡']]){const o=el('option','',t(name));o.value=id;input.append(o);}}else input.type=type;
+    input.setAttribute('aria-label',t(label));if(type==='checkbox')input.checked=!!value;else input.value=value;
+    if(type==='password'){input.autocomplete='new-password';input.placeholder=t((key==='ttsAPIKey'?cfg.hasTTSKey:cfg.hasOpenAITTSKey)?'已配置，留空保留':'API Key');}
+    controls[key]=input;row.append(el('span','',t(label)),input);wrap.append(row);
+  }
+  const read=()=>Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.type==='checkbox'?input.checked:input.value.trim()]));
+  const save=settingsAutosave(wrap,read,{write:async payload=>{await api('/settings',{method:'PUT',body:JSON.stringify(payload)});for(const key of ['openaiTTSAPIKey','ttsAPIKey'])if(controls[key].value.trim()===payload[key])controls[key].value='';for(const key of ['clearOpenAITTSKey','clearTTSKey'])controls[key].checked=false;await refreshConfig();}});
+  for(const input of Object.values(controls)){input.onchange=()=>save.change();if(input.type!=='checkbox'&&input.tagName!=='SELECT')input.oninput=()=>save.change(false);}
+  wrap.append(renderCloneProviderControl());
+  return wrap;
+}
+function renderCloneProviderControl(){const wrap=el('div','settings-control'),cfg=state.config||{};wrap.append(el('div','control-label',t('克隆服务')));
   // ── 克隆服务配置 ──
   const baseRow = el('div', 'voice-reply-row');
   baseRow.append(el('span', '', t('服务地址')));
@@ -11671,18 +11515,24 @@ function renderVoiceCloneControl() {
   apiKey.style.flex = '1';
   keyRow.append(apiKey);
 
-  const saveCfg = el('button','primary',t('保存克隆配置')); saveCfg.type='button';
-  saveCfg.onclick = action(async () => {
-    await api('/settings', { method:'PUT', body: JSON.stringify({
-      cloneTTSBaseURL: baseURL.value.trim(),
-      cloneTTSBackend: be.value,
-      cloneTTSAPIKey: apiKey.value,
-      activeModel: state.config ? state.config.activeModel : '',
-    })});
-    await refreshConfig();
-    toast(t('克隆配置已保存'));
+  wrap.append(baseRow,beRow,keyRow);
+  const cloneSave=settingsAutosave(wrap,()=>({cloneTTSBaseURL:baseURL.value.trim(),cloneTTSBackend:be.value,cloneTTSAPIKey:apiKey.value}),{
+    write:async payload=>{await api('/settings',{method:'PUT',body:JSON.stringify(payload)});if(apiKey.value===payload.cloneTTSAPIKey)apiKey.value='';await refreshConfig();}
   });
-  wrap.append(baseRow, beRow, keyRow, saveCfg);
+  baseURL.oninput=apiKey.oninput=()=>cloneSave.change(false);baseURL.onchange=apiKey.onchange=be.onchange=()=>cloneSave.change();
+
+return wrap;}
+controlRenderers['voice-providers']=renderVoiceProviderControl;
+controlRenderers['tts-engine'] = renderTTSEngineControl;
+
+// 设置 → 个性化音色（#36）：克隆服务配置 + 录音样本 + 创建音色 + 性格推断
+function renderVoiceCloneControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label'); head.append(el('span', '', t('个性化音色')));
+  wrap.append(head);
+  const cfg = state.config || {};
+
+  wrap.append(el('small','muted',t('克隆服务地址与密钥在模型设置中管理。')));
 
   if (cfg.cloneConfigured) {
     wrap.append(el('small','', t('已绑定音色')+': '+(cfg.cloneVoiceID||t('未创建'))));
@@ -12116,10 +11966,9 @@ function renderPersonalityControl(control) {
 
   const btns = el('div', 'personality-btns');
   const mk = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
-  const saveBtn = mk('primary', t('保存'));
   const resetBtn = mk('quiet', t('重置默认'));
   const evolveBtn = mk('quiet', t('立即演化'));
-  btns.append(saveBtn, resetBtn, evolveBtn);
+  btns.append(resetBtn, evolveBtn);
 
   const meta = el('div', 'personality-meta');
   wrap.append(head, top, ta, btns, meta);
@@ -12138,20 +11987,17 @@ function renderPersonalityControl(control) {
     renderMeta(p);
   };
 
-  api('/personality?id=' + pid).then(apply).catch((e) => toast(e.message || String(e)));
+  cb.disabled=ta.disabled=true;
+  api('/personality?id=' + pid).then(p=>{apply(p);cb.disabled=ta.disabled=false;}).catch((e) => toast(e.message || String(e)));
 
-  cb.onchange = action(async () => {
-    const p = await api('/personality', { method: 'PUT', body: JSON.stringify({ id: pid, enabled: cb.checked, prompt: ta.value }) });
-    stateLbl.textContent = p.enabled ? t('已启用') : t('已关闭');
-    toast(p.enabled ? t('性格已启用') : t('性格已关闭'));
-  });
-  saveBtn.onclick = action(async () => {
-    const p = await api('/personality', { method: 'PUT', body: JSON.stringify({ id: pid, enabled: cb.checked, prompt: ta.value }) });
-    apply({ ...p, estTokens: Math.ceil((p.prompt || '').length / 4), evolutions: p.evolutions });
-    toast(t('已保存'));
-  });
+  const personalitySave=settingsAutosave(wrap,()=>({id:pid,enabled:cb.checked,prompt:ta.value}),{write:async payload=>{
+    const p=await api('/personality',{method:'PUT',body:JSON.stringify(payload)});
+    stateLbl.textContent=p.enabled?t('已启用'):t('已关闭');renderMeta(p);
+  }});
+  cb.onchange=()=>personalitySave.change();ta.oninput=()=>personalitySave.change(false);ta.onchange=()=>personalitySave.change();
   resetBtn.onclick = action(async () => {
     if (!confirm(t('确定重置为默认性格？自定义与演化结果会被清除。'))) return;
+    await personalitySave.flush();
     const p = await api('/personality/reset', { method: 'POST', body: JSON.stringify({ id: pid }) });
     apply({ ...p, estTokens: Math.ceil((p.prompt || '').length / 4), evolutions: 0 });
     toast(t('已重置'));
@@ -12159,6 +12005,7 @@ function renderPersonalityControl(control) {
   evolveBtn.onclick = action(async () => {
     evolveBtn.disabled = true; const orig = evolveBtn.textContent; evolveBtn.textContent = t('演化中…');
     try {
+      await personalitySave.flush();
       const p = await api('/personality/evolve', { method: 'POST', body: JSON.stringify({ id: pid }) });
       apply({ ...p, estTokens: Math.ceil((p.prompt || '').length / 4) });
       toast(t('性格已精简演化'));
@@ -13004,9 +12851,12 @@ function renderAgentManagementControl() {
     for(const [key,label] of items){const row=el('label','agent-management-option'),input=el('input');input.type='checkbox';input.checked=!!state.config?.agentManagement?.[key];input.name=key;values[key]=input;row.append(input,el('span','',t(label)));group.append(row);}
     wrap.append(group);
   }
-  const save=el('button','primary',t('保存'));save.type='button';
-  save.onclick=action(async()=>{await api('/settings',{method:'PUT',body:JSON.stringify({agentManagement:Object.fromEntries(Object.entries(values).map(([k,v])=>[k,v.checked]))})});await refreshConfig();toast(t('AI 管理权限已保存'));});
-  wrap.append(el('small','muted',t('管理变更先生成提案，由你审阅确认后执行。关闭权限后，尚未执行的提案也会被阻止。')),save);
+  wrap.append(el('small','muted',t('管理变更先生成提案，由你审阅确认后执行。关闭权限后，尚未执行的提案也会被阻止。')));
+  const autosave=settingsAutosave(wrap,()=>({agentManagement:Object.fromEntries(Object.entries(values).map(([k,v])=>[k,v.checked]))}),{
+    rollback:()=>{for(const [key,input] of Object.entries(values))input.checked=!!state.config?.agentManagement?.[key];},
+    accepted:()=>{for(const [key,input] of Object.entries(values))input.checked=!!state.config?.agentManagement?.[key];}
+  });
+  for(const input of Object.values(values))input.onchange=()=>autosave.change();
   return wrap;
 }
 controlRenderers['agent-management']=renderAgentManagementControl;

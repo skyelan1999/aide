@@ -67,27 +67,6 @@
               "label": "减少动态效果"
             }
           ]
-        },
-        {
-          "id": "startupAnimation",
-          "type": "segmented",
-          "label": "启动动画",
-          "options": [
-            {
-              "value": "on",
-              "label": "开启"
-            },
-            {
-              "value": "off",
-              "label": "关闭"
-            }
-          ]
-        },
-        {
-          "id": "experience-preview",
-          "type": "experience-preview",
-          "label": "重播启动动画",
-          "advanced": true
         }
       ]
     },
@@ -223,6 +202,12 @@
               "id": "model-connections",
               "type": "model-connections",
               "label": "模型连接与密钥"
+            },
+            {
+              "id": "voice-providers",
+              "type": "voice-providers",
+              "label": "原有语音连接与密钥",
+              "advanced": true
             },
             {
               "id": "model-profiles",

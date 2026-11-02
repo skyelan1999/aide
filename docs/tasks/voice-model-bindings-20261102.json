@@ -1,0 +1,70 @@
+{
+  "id": "voice-model-bindings-20261102",
+  "request": "Centralize voice provider credentials in model settings, select voice models here, remove global gender and save buttons, autosave changes, always default startup animation without controls",
+  "baseline": "c4528e366818432834e98c0e929b457294d12703",
+  "initial_status": "",
+  "acceptance": [
+    "Voice credentials managed in model settings and selected voice models use their provider without changing chat selection",
+    "No gender dropdown or Save buttons in voice settings; input and toggle changes persist with visible failure handling",
+    "AI management changes save immediately and roll back on failed writes",
+    "No startup animation toggle or replay entry; legacy off preference cannot suppress the default animation",
+    "Existing legacy voice settings and credentials remain compatible; keys are not exposed in config",
+    "Real browser checks cover persistence, rapid edits and request failures"
+  ],
+  "scope": [
+    "Voice provider/model bindings reuse existing model providers and vault",
+    "Voice settings and AI management autosave without layout redesign",
+    "Remove startup animation controls while preserving default animation",
+    "Focused backend and browser regression tests and documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Queued user requests captured from the voice, appearance and AI management screenshots.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reference existing ModelRef/ModelProvider/vault entries for independent TTS and call selection; legacy credentials are retained under model settings. Serialized auto-save captures partial patches and reports failures. Startup effects honor motion accessibility without a separate switch.",
+      "evidence": [
+        "internal/server/voice_model_bindings.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented queued voice/model/animation and AI management requirements; isolated feature worktree, no production configuration changes.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go race/vet, isolated browser settings acceptance, focused JavaScript regressions and final quick gate passed. One existing external-plugin management fixture was skipped; independent management persistence/disk-failure tests passed.",
+      "evidence": [
+        "docs/reviews/2026-11-02/settings-autosave-739.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated voice architecture and an evidence summary; local checks distinguished from paid audio and production acceptance.",
+      "evidence": [
+        "docs/architecture/assistant-openai-speech.md",
+        "docs/reviews/2026-11-02/settings-autosave-739.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed all scoped changes; fixtures and screenshots remain under ignored .agent-state, no user files or services removed.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local implementation only. No remote push, formal release or restart of localhost:9999.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped source commit before deployment; legacy voice credentials remain intact and no production data migration has run.",
+  "handoff": "Implementation and local checks complete. No remote push, paid-model retest, production restart or formal release performed. Source identity is the commit containing this record and the fingerprints in its linked review.",
+  "issue": "https://github.com/skyelan1999/aide/issues/739",
+  "local_merge_authorization": "User previously requested 先本地合并; retain local main integration, no remote merge or publication."
+}
