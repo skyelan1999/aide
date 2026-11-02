@@ -65,4 +65,14 @@ ARM64、AMD64 原生候选任务及 public_plugins 汇总门禁均通过。每�
 
 SQLite/Terminal 四个集中缺陷 #583/#584/#586/#588 已依据正式插件发布和双架构实装回归关闭。#696/#699/#702/#709 仍等待 Aide 主程序集成/正式发行闭环。原完整运行的浏览器失败记录保留；修复后的独立运行通过不改变原运行结论。
 
-`main` 已重新提取，仍为 `bc8e8da2baffe0b85a3116cc36c5a53ecaba09c1`，当前分支包含它。Aide PR #698 的基础 gate 通过，但它自己的 `main` 保护仍要求一次 owner 审阅；唯一 owner 同时是作者，无法自审。此前用户授权的三个管理员例外已全部用于指定的插件/市场 PR，不能自动延伸到 Aide。主程序整合前需要该独立授权，随后仍沿用干净 main 的 full/release-check/version.sh，以及主干标签上同源的完整发行验证。
+用户随后独立授权本次 Aide 发行例外，PR #698 已合并为 `f7f3a615`。近十次代码提交审阅发现的 #711/#712/#713 已在 [修复 PR #714](https://github.com/skyelan1999/aide/pull/714) 实现；35 项定向 Go race、全包 basic/vet、314 项 quick、35 项 Python CI 合约及全部 30 个当前市场 ZIP 的加强检查通过。远端 [CI 41366268506](https://github.com/skyelan1999/aide/actions/runs/41366268506) 的 quick、go、gate 全通过后，依据用户针对 #714 的补充授权合并为 `418a6ce0`。主工作区已检出该干净 main，保护规则未改；修复后完整 Go 验收与正式版本 Delivery 仍需完成。详见[审阅修复记录](release-review-remediation.md)。
+
+### 审阅后修复与当前 main 完整检查
+
+后续完整检查发现的测试夹具唯一匹配 #715、运行资产镜像选择 #719、relay socket/context 截止时间通知顺序 #722，分别由 [PR #716](https://github.com/skyelan1999/aide/pull/716)、[PR #720](https://github.com/skyelan1999/aide/pull/720)、[PR #724](https://github.com/skyelan1999/aide/pull/724) 修复；每个 PR 的远端 quick/go/gate 均通过，按用户“本次发行必要修复 PR”明确授权使用管理员例外合并，保护规则未改。旧逻辑故障注入/负向对照证据和失败运行均保留，没有降低断言或延长原取消测试截止时间。
+
+当前干净 main `b9c78eed3ed27c8b6fb5ed30a91a98a2fcf36db1` 的本地 full 已完整通过，内容指纹 `8242b62963a44563c9338b57e3040ce09daa653281002e9f74f708056f4c8257`：318 项 profile 检查；Go server 1,592 个注册项中 1,514 通过、78 明确跳过、24/24 race 分片通过，其余 Go 包、平台合约与 vet 通过。使用显式不可变依赖运行镜像和 SDK，在独立 QA 容器以 2 workers、6 GiB 上限执行；依赖镜像资产检查不替代新发行镜像验收。原始日志在忽略目录 `.agent-state/release-ci-hardening-20261101/post-relay-full/`，受控结论由本记录和任务账本保存。
+
+这完成的是正式版本前置检查；升版/tag 后仍必须在同一源码上重新完成双架构构建、30 个现行 public 原包实装/功能、48 格浏览器、原生宿主及安装生命周期门禁，上传并核对七个正式附件后才算发布。本地 9999 生产服务未替换。
+
+用户指出 Codex Bridge 未给出 API 网址，已补到[宿主接口说明](../../architecture/codex-plugin-host.md)：Docker Desktop 使用 `http://host.docker.internal:8787/v1`，本机原生使用 `http://127.0.0.1:8787/v1`，按实际配置端口替换；17888 是管理端口。实际本机 `/health` 返回桥接服务 0.4.0；未读取密钥、调用推理或修改服务。这是地址文档补充，未声称修复插件 UI。
