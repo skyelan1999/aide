@@ -174,6 +174,12 @@ func (a *App) relayCall(ctx context.Context, src Source, mode string, request ma
 	if ctx.Err() != nil {
 		return nil, header, ctx.Err()
 	}
+	// The socket deadline can wake I/O before the context timer goroutine
+	// publishes Err(). Do not misclassify that ordering as malformed protocol,
+	// or accept a payload that completed after the caller's deadline.
+	if deadline, ok := ctx.Deadline(); ok && !time.Now().Before(deadline) {
+		return nil, header, context.DeadlineExceeded
+	}
 	return payload, header, err
 }
 func (a *App) relayCallInner(ctx context.Context, src Source, mode string, request map[string]any, data []byte, limit int64) ([]byte, sourceRelayHeader, error) {

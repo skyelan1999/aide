@@ -4604,7 +4604,7 @@
     {
       "path": "internal/server/source_relay_test.go",
       "kind": "go",
-      "sha256": "e90ad338af5f6515a24a91eb601c813f203ff35cad3512ffd93a1076a4323244",
+      "sha256": "4edbb2f8e3280bab2c9286b6910c77162b24623a516c26519b98a4453656e8d9",
       "cases": [
         "TestReferenceRelayDownloadedAgent",
         "TestReferenceRelayRemoteReadOnly",
@@ -4612,9 +4612,11 @@
         "TestReferenceRelayDurableTransfer",
         "TestReferenceRelayProtocolBounds",
         "TestReferenceRelayVaultAndProposalBinding",
+        "TestReferenceRelayDeadlineOrdering",
+        "TestReferenceRelayFutureDeadlinePreservesResults",
         "TestReferenceRelayUntrustedPayloadAndCancellation"
       ],
-      "caseCount": 7,
+      "caseCount": 9,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },

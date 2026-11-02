@@ -4,7 +4,7 @@
 
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
-| go | 378 | 1682 |
+| go | 378 | 1684 |
 | python | 63 | 278 |
 | node | 180 | 181 |
 | browser | 105 | 0 |
@@ -3664,7 +3664,7 @@
 
 </details>
 
-<details><summary>internal/server/source_relay_test.go · go · 7 个命名用例</summary>
+<details><summary>internal/server/source_relay_test.go · go · 9 个命名用例</summary>
 
 [源码入口](../../internal/server/source_relay_test.go)
 
@@ -3674,6 +3674,8 @@
 - `TestReferenceRelayDurableTransfer`
 - `TestReferenceRelayProtocolBounds`
 - `TestReferenceRelayVaultAndProposalBinding`
+- `TestReferenceRelayDeadlineOrdering`
+- `TestReferenceRelayFutureDeadlinePreservesResults`
 - `TestReferenceRelayUntrustedPayloadAndCancellation`
 
 </details>

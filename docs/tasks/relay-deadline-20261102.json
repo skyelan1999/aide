@@ -1,0 +1,86 @@
+{
+  "id": "relay-deadline-20261102",
+  "request": "修复 #722 中继截止时间与上下文通知顺序导致错误分类；增加确定性及实际TLS回归，保持原取消断言与协议验证",
+  "baseline": "ac3db919a2cbdfdc0bd96ac6b0040c7d6010122f",
+  "initial_status": "M internal/server/source_relay.go\n M internal/server/source_relay_test.go\n M scripts/ci/basic_go.py",
+  "acceptance": [
+    "期限已耗尽而ctx.Err尚未通知时仍返回可识别的DeadlineExceeded并丢弃内容",
+    "显式取消优先保持Canceled；未来期限的有效读回和真实协议错误保留",
+    "原100ms实际TLS取消断言不变，新增确定性回归旧逻辑必须失败",
+    "基本CI仅加无额外依赖场景；完整SDK保留实际下载TLS代理控制组"
+  ],
+  "scope": [
+    "internal/server/source_relay.go",
+    "internal/server/source_relay_test.go",
+    "scripts/ci/basic_go.py",
+    "docs/reference-relay.md",
+    "docs/testing/test-cases.md",
+    "docs/testing/test-catalog.json",
+    "docs/tasks/relay-deadline-20261102.json",
+    "docs/reviews/2026-11-02/relay-deadline-ordering.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Issue722记录实际双worker全量失败；仅修复请求截止时间错误分类，不放宽超时/协议验证",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/722",
+        "docs/reviews/2026-11-02/relay-deadline-ordering.md",
+        ".agent-state/release-ci-hardening-20261101/relay-deadline-fix/report.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先保留ctx.Err取消优先，再判断已过的调用者截止时间，消除I/O与通知先后顺序差异",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/722",
+        "docs/reviews/2026-11-02/relay-deadline-ordering.md",
+        ".agent-state/release-ci-hardening-20261101/relay-deadline-fix/report.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "外层relayCall增加期限判定；新增确定性窗口与实际代理控制；基本CI覆盖轻量截止/取消",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/722",
+        "docs/reviews/2026-11-02/relay-deadline-ordering.md",
+        ".agent-state/release-ci-hardening-20261101/relay-deadline-fix/report.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "三组race用例各10次共30次通过，无data race；去掉修复的独立overlay在确定性用例按预期失败；全包basic编译/关键回归/vet通过。修复后full及tagged Delivery待主任务继续。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/722",
+        "docs/reviews/2026-11-02/relay-deadline-ordering.md",
+        ".agent-state/release-ci-hardening-20261101/relay-deadline-fix/report.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录触发条件、正常协议/成功返回控制及未改变的30s连接预算/协议限制",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/722",
+        "docs/reviews/2026-11-02/relay-deadline-ordering.md",
+        ".agent-state/release-ci-hardening-20261101/relay-deadline-fix/report.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅列明修改；专用QA容器在日志复制后删除，缓存与失败原始记录保留，生产未改",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/722",
+        "docs/reviews/2026-11-02/relay-deadline-ordering.md",
+        ".agent-state/release-ci-hardening-20261101/relay-deadline-fix/report.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户明确授权本次发行必要修复PR，在CI通过后使用管理员例外；不新增功能、不放宽门禁、不改保护。",
+  "rollback": "如需回退，可普通Git逆向提交恢复调用者截止时间分类；不自动重放已经超时的远端操作，也不改用户数据。",
+  "handoff": ""
+}
