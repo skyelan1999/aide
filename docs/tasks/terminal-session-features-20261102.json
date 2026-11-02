@@ -8,7 +8,7 @@
     "One deployed TLS relay supports two copied independent SSH/Telnet sessions; closing one leaves the other alive",
     "Direct and relay Telnet support fragmented IAC negotiation, TTYPE, NAWS, NVT, disconnect/reconnect and queue bounds",
     "Explicit untrusted OpenSSH X11 forwarding for independent SSH devices including relay; validate DISPLAY/xauth/Xauthority prerequisites; no OS/XServer changes",
-    "Tests and documentation distinguish protocol proof, real browser UI and native GUI NOT_RUN; no release/main/market/production change"
+    "Tests and documentation separate protocol, real browser, actual Linux X Server and native/hardware limitations; publication only after explicit user authorization and passing gates, without production restart or old asset mutation"
   ],
   "scope": [
     "Plugin repo aide-pkg-terminal isolated feat/session-copy-x11-telnet worktree",
@@ -31,7 +31,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Plugin1.6.0 candidate: independent copy, same-relay streams, Telnet codec/direct/relay, explicit independent SSH-X11; paired host canonical copy context, short pinned master, runtime xauth declaration.",
+      "summary": "Final Terminal1.6.0: independent copy, same-relay streams, direct/relay Telnet and explicit independent SSH-X11; paired host canonical copy context, short pinned master and runtime xauth dependency.",
       "evidence": [
         "internal/server/plugin_terminal_context.go",
         "https://github.com/skyelan1999/aide/issues/726"
@@ -39,7 +39,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Focused Go race8/8 no skip (11.308s) including new functional and legacy package-content admission2/2; go vet internal/server PASS. Plugin source56/56 and extracted ZIP53/53 no skip; Chromium1440/390px light/dark PASS. Real XServer GUI/user devices/nativeWindows/new host image explicitly NOT_RUN. Corrected final original-ZIP admission: multipart io.Copy (no reconstruction), expected SHA bound5139e8...,1071285bytes, race1/1 PASS3.060s; legacy bundle fixture validates contents/behavior only.",
+      "summary": "Focused Go race8/8 no skip (11.308s) including new functional and legacy package-content admission2/2; go vet internal/server PASS. Plugin source56/56 and extracted ZIP53/53 no skip; Chromium1440/390px light/dark PASS. Real XServer GUI/user devices/nativeWindows/new host image explicitly NOT_RUN. Corrected final original-ZIP admission: multipart io.Copy (no reconstruction), expected SHA bound5139e8...,1071285bytes, race1/1 PASS3.060s; legacy bundle fixture validates contents/behavior only. Final published c682f56 ZIP1071482bytes raw App/daemon race1/1 PASS3.500s; final extracted53, actual authenticated Xvfb/OpenSSH/xmessage direct+relay2 and tagCI four jobs PASS. Source56/browser4 use identical productJS/HTML. Native customer X Server and hardware remain NOT_RUN; AideRC2 same-source runtime gate separate.",
       "evidence": [
         "internal/server/terminal_session_features_test.go",
         "https://github.com/skyelan1999/aide-pkg-terminal/blob/feat/session-copy-x11-telnet/docs/session-features-validation.md"
@@ -47,7 +47,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Host architecture, plugin usage/compatibility/rollback/Docker DISPLAY and private Xauthority, validation boundaries; inventory2146 names, not execution count; check_docs478 files PASS.",
+      "summary": "Host architecture and plugin usage, RC2 compatibility floor, private Xauthority, relay ownership, rollback, actual XServer and original-ZIP acceptance documented. Historical candidate evidence retained with labels; source inventory is not an execution count.",
       "evidence": [
         "docs/architecture/terminal-session-features.md",
         "docs/testing/test-cases.md"
@@ -55,23 +55,27 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "No production restart, old assets/market unchanged; own disposable tests exited. Only owned feature files staged; private logs/screenshots/candidate ZIP ignored.",
+      "summary": "Only owned changes committed in isolated worktrees; own plugin QA containers removed. Terminal1.6/market now published under later explicit authorization; other29 public and3 private listings, old tag/assets, production sessions/data preserved.",
       "evidence": []
     },
     "release": {
       "status": "in_progress",
-      "summary": "User now requests verification and publication; tracked in terminal-release-20261102. Prior candidate facts remain historical.",
-      "evidence": []
+      "summary": "Terminal v1.6.0 public/formal/Latest, exact anonymous assets verified; market582effe published and anonymous catalog/package checks pass. Paired AideRC2 full/tag publication still pending; tracked in terminal-release-20261102.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0",
+        "docs/reviews/2026-11-02/terminal-plugin-publication.json"
+      ]
     }
   },
-  "release_authorization": "User now authorizes verification and publication if passing; production restart excluded. See terminal-release-20261102 for current release facts.",
+  "release_authorization": "User explicitly authorized verification/publication and this issuance administrator exception for plugin3, Aide731, market33, necessary fixes/docs and version.sh RC2 version/tag push, conditional on CI/full gates. No protection change or production restart.",
   "rollback": "Do not install feature branches into production. Reviewable changes can be reverted separately; preserve all existing sessions, logs and relay deployment secrets.",
-  "handoff": "Review only: plugin https://github.com/skyelan1999/aide-pkg-terminal/pull/3 and host https://github.com/skyelan1999/aide/pull/731. Original ZIP raw multipart installation race1/1 PASS3.060s; prior focused race8/8 and legacy package-content regression remain valid. No merge/release/market/production change. Remote CI tracked separately.",
+  "handoff": "Terminal1.6.0 and market published; paired AideRC2 waits for source-bound complete release gates. See terminal-release-20261102 for current publication facts.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/726",
     "https://github.com/skyelan1999/aide/issues/728",
     "https://github.com/skyelan1999/aide/issues/730"
   ],
   "released_baseline": "e86ce5b5d6e5d119e91381dc802b8f4201e89dab",
-  "candidate_sha256": "5139e8ac8153bdceb4e65a5a2b14fc416edd9ab90793f96c3f13f7531f49669f"
+  "candidate_sha256": "5139e8ac8153bdceb4e65a5a2b14fc416edd9ab90793f96c3f13f7531f49669f",
+  "published_plugin_sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b"
 }

@@ -34,3 +34,32 @@ Dockerfile.local 的保留依赖镜像、dev/native 自定义环境不会自动�
 Source, plugin and marketplace publication are tracked in `docs/tasks/terminal-release-20261102.json`; no production restart is part of publication. 回滚时分别还原宿主/插件提交，保留所有私有会话与中继密钥；安装/退回插件会断开连接，不自动重放输入。
 
 Historical development-candidate original-ZIP acceptance (not the final public artifact): SHA256 `5139e8ac8153bdceb4e65a5a2b14fc416edd9ab90793f96c3f13f7531f49669f`、1,071,285 bytes；原始multipart包安装与后续daemon断言race PASS1/1、3.060s（用例1.95s），日志明确no ZIP reconstruction。此前focused race8/8与既有安装回归继续有效，不用旧重打包夹具证明原档身份。
+
+
+## Final public plugin archive
+
+Terminal [v1.6.0](https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0)
+is public with the same exact market ZIP: SHA256
+`c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b`,
+1,071,482 bytes. The original ZIP (no reconstruction) passed isolated App/daemon
+Go race admission1/1 in3.500s. Source56, final extracted-runtime53, real
+Xvfb/xauth/OpenSSH/X-client rendering2 and Chromium desktop/mobile4 cells passed;
+[tag CI](https://github.com/skyelan1999/aide-pkg-terminal/actions/runs/41389492911)
+passed on AMD64/ARM64, browser and real X11 jobs. Native customer X Server and
+physical-device limitations above remain. The new paired Aide release must
+separately pass its own source-bound runtime/public-package/full Delivery gates.
+
+
+## Three host palettes
+
+Additional Chromium checks cover12 cells: Professional blue, Comfort comfort
+and Classic green, each light/dark at1440/390px. Colors are computed from the
+actual Aide CSS/bridge sources; the unchanged published HTML and real
+Sessions/loopback Telnet are used. Bridge/workspace profiles remain fixtures,
+not installed-Aide or native Safari acceptance. Copy controls, Telnet input and
+accessible output, visibility toggles and X11 form scrolling/overflow passed.
+See the [per-cell report](../reviews/2026-11-02/terminal-ui-themes.json),
+[mobile copy dialog](../reviews/2026-11-02/terminal-ui/comfort-light-mobile-copy.png)
+and [Classic dark X11 form, scrolled to submit](../reviews/2026-11-02/terminal-ui/classic-dark-mobile-x11.png).
+The original8 blue/comfort cases were retained; only the missing4 green Classic
+cases were added after correcting an initial Comfort/Classic naming error.

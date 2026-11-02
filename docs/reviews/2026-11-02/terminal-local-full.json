@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "scope": "Local pre-version official full profile from clean main outside sync-managed storage; not final RC2 runtime-image acceptance",
+  "head": "8983acea52925677104511d811e9716c66e710e7",
+  "inputFingerprint": "cc8cedc9367d3b8ac23d123b74206fdeabed7febc28920d79a8b96146d7ec70c",
+  "finalFingerprintMatched": true,
+  "checks": 318,
+  "allCheckExitsZero": true,
+  "goSuite": {
+    "status": "pass",
+    "inventory": 1594,
+    "passed": 1515,
+    "skipped": 79,
+    "shards": 24,
+    "registeredCasesOmitted": 0
+  },
+  "environment": {
+    "workers": 2,
+    "ownedTestContainerMemoryGiB": 6,
+    "sdkImage": "sha256:cbdab7d49e30518d58f6c61adc3b73d3be3d314e8d0ec2c283dbd4facb92b8ee",
+    "runtimePrerequisiteImage": "sha256:e4b3040c61c64835833bfc2e28101b0da263842ea51efd1d588df20a75f3e84b",
+    "runtimePrerequisiteIsNewReleaseProof": false
+  },
+  "productionRestarted": false,
+  "ownTestContainersRemoved": true,
+  "completedUTC": "2026-11-02T05:26:10.964786+00:00"
+}
