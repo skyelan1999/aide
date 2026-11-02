@@ -41,6 +41,15 @@ enum DesktopPolicy {
             && url.user == nil && url.password == nil
     }
 
+    static func pluginURL(_ url: URL, origin: URL) -> Bool {
+        local(url, origin: origin) && url.path.range(of: "^/plugin-workbench/[a-f0-9]{64}$", options: .regularExpression) != nil
+    }
+
+    static func uiFrame(_ frame: WKFrameInfo, expected: URL) -> Bool {
+        media(frame.securityOrigin, expected: expected)
+            || frame.request.url.map { pluginURL($0, origin: expected) } == true
+    }
+
     static func media(_ securityOrigin: WKSecurityOrigin, expected: URL) -> Bool {
         securityOrigin.protocol == expected.scheme && securityOrigin.host.lowercased() == expected.host?.lowercased()
             && securityOrigin.port == (expected.port ?? 443)
@@ -65,6 +74,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var smokeTabResults: [String: Any] = [:]
     weak var smokeComponentWeb: WKWebView?
     var smokeComponents: [String: Bool] = [:]
+    var smokePluginFrames: [ObjectIdentifier: WKFrameInfo] = [:]
     var downloads: [ObjectIdentifier: WKDownload] = [:]
     var configuredControllers = Set<ObjectIdentifier>()
     var titleObservers: [ObjectIdentifier: NSKeyValueObservation] = [:]
@@ -240,12 +250,12 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         if (window === top) {
           window.addEventListener('error', () => window.webkit.messageHandlers.aideDesktopDiagnostics.postMessage('runtime-error'));
           window.addEventListener('unhandledrejection', () => window.webkit.messageHandlers.aideDesktopDiagnostics.postMessage('promise-error'));
-        }
+        } else { window.webkit.messageHandlers.aideDesktopDiagnostics.postMessage('plugin-frame-ready'); }
         """
         if configuredControllers.insert(ObjectIdentifier(controller)).inserted {
             controller.add(self, name: "aideDesktopDiagnostics")
             controller.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart,
-                                                  forMainFrameOnly: true))
+                                                  forMainFrameOnly: smokeOutput == nil))
         }
         let web = WKWebView(frame: .zero, configuration: configuration)
         web.navigationDelegate = self
@@ -293,7 +303,10 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         guard let origin = origin, let url = navigationAction.request.url else {
             decisionHandler(.cancel); return
         }
-        if DesktopPolicy.local(url, origin: origin) || url.absoluteString == "about:blank" {
+        if navigationAction.shouldPerformDownload && url.absoluteString.hasPrefix("blob:null/")
+            && DesktopPolicy.uiFrame(navigationAction.sourceFrame, expected: origin) {
+            decisionHandler(.download)
+        } else if DesktopPolicy.local(url, origin: origin) || url.absoluteString == "about:blank" {
             decisionHandler(navigationAction.shouldPerformDownload ? .download : .allow)
         } else {
             // Embedded remote subframes are ordinary web content with no local media grant.
@@ -349,7 +362,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
                  initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
-        guard let origin = origin, DesktopPolicy.media(frame.securityOrigin, expected: origin) else {
+        guard let origin = origin, DesktopPolicy.uiFrame(frame, expected: origin) else {
             completionHandler(nil); return
         }
         let panel = NSOpenPanel()
@@ -367,7 +380,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
-        guard let origin = origin, DesktopPolicy.media(frame.securityOrigin, expected: origin) else {
+        guard let origin = origin, DesktopPolicy.uiFrame(frame, expected: origin) else {
             completionHandler(); return
         }
         let alert = NSAlert()
@@ -383,7 +396,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
-        guard let origin = origin, DesktopPolicy.media(frame.securityOrigin, expected: origin) else {
+        guard let origin = origin, DesktopPolicy.uiFrame(frame, expected: origin) else {
             completionHandler(false); return
         }
         let alert = NSAlert()
@@ -399,7 +412,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String,
                  defaultText: String?, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (String?) -> Void) {
-        guard let origin = origin, DesktopPolicy.media(frame.securityOrigin, expected: origin) else {
+        guard let origin = origin, DesktopPolicy.uiFrame(frame, expected: origin) else {
             completionHandler(nil); return
         }
         let alert = NSAlert()
@@ -446,6 +459,12 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if smokeOutput != nil, let origin = origin, let web = message.webView,
+           message.body as? String == "plugin-frame-ready", let url = message.frameInfo.request.url,
+           DesktopPolicy.pluginURL(url, origin: origin) {
+            smokePluginFrames[ObjectIdentifier(web)] = message.frameInfo
+            return
+        }
         guard let origin = origin, message.frameInfo.isMainFrame,
               DesktopPolicy.media(message.frameInfo.securityOrigin, expected: origin) else { return }
         if let kind = message.body as? String, ["runtime-error", "promise-error"].contains(kind) { pageErrors += 1 }
@@ -498,7 +517,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
                 record.merge(self.smokeTabResults) { _, new in new }
                 record["pageErrors"] = self.pageErrors
                 record["microphoneAuthorization"] = AVCaptureDevice.authorizationStatus(for: .audio).rawValue
-                record["ok"] = self.pageErrors == 0 && record["settings"] as? Bool == true && record["nativeTabs"] as? Bool == true && record["closeReopen"] as? Bool == true && record["nativePanels"] as? Bool == true && record["pluginPages"] as? Bool == true
+                record["ok"] = self.pageErrors == 0 && record["settings"] as? Bool == true && record["nativeTabs"] as? Bool == true && record["closeReopen"] as? Bool == true && record["nativePanels"] as? Bool == true && record["pluginPages"] as? Bool == true && record["sandboxPanels"] as? Bool == true
                 record["nativeApp"] = Bundle.main.bundleIdentifier ?? ""
                 self.writeSmoke(record)
                 if let destination = self.smokeOutput?.deletingLastPathComponent().appendingPathComponent("native-workbench.png") {
@@ -583,11 +602,18 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         group.notify(queue: .main) {
             if ready == 2 || attempt >= 20 {
                 self.smokeTabResults["pluginPages"] = ready == 2 && self.mainWindow.tabbedWindows?.count == 3
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                let finish = {
                     for child in children { child.performClose(nil) }
                     self.reopen()
                     completion()
                 }
+                if let child = children.first, let childWeb = self.views[child],
+                   let frame = self.smokePluginFrames[ObjectIdentifier(childWeb)] {
+                    self.checkNativePanels(childWeb, frame: frame) {
+                        self.smokeTabResults["sandboxPanels"] = self.smokeTabResults["nativePanels"]
+                        finish()
+                    }
+                } else { self.smokeTabResults["sandboxPanels"] = false; finish() }
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.waitForPluginPages(attempt: attempt + 1, completion: completion) }
             }
@@ -602,8 +628,9 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         smokeProbe(web)
     }
 
-    func checkNativePanels(_ web: WKWebView, completion: @escaping () -> Void) {
+    func checkNativePanels(_ web: WKWebView, frame: WKFrameInfo? = nil, completion: @escaping () -> Void) {
         smokeComponentWeb = web
+        smokeComponents = [:]
         // Controlled local UI fixtures only; no files selected, uploaded or saved.
         let script = """
         alert('Aide native dialog check');
@@ -616,7 +643,7 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         await new Promise(r=>setTimeout(r,1500)); link.remove(); URL.revokeObjectURL(url);
         return cancelled;
         """
-        web.callAsyncJavaScript(script, arguments: [:], in: nil, in: .page) { result in
+        web.callAsyncJavaScript(script, arguments: [:], in: frame, in: .page) { result in
             self.smokeTabResults["nativePanels"] = (try? result.get()) as? Bool == true
                 && ["alert", "confirm", "prompt", "upload", "download"].allSatisfy { self.smokeComponents[$0] == true }
             self.smokeComponentWeb = nil
@@ -767,6 +794,10 @@ func policyTests() {
     precondition(DesktopPolicy.external(URL(string: "https://example.com")!))
     precondition(!DesktopPolicy.external(URL(string: "file:///etc/passwd")!))
     precondition(!DesktopPolicy.external(URL(string: "ssh://host")!))
+    precondition(DesktopPolicy.pluginURL(URL(string: "https://localhost:9999/plugin-workbench/" + String(repeating: "a", count: 64))!, origin: origin))
+    for path in ["/api/config", "/plugin-workbench/short", "/plugin-workbench/" + String(repeating: "a", count: 64) + "/extra"] {
+        precondition(!DesktopPolicy.pluginURL(URL(string: "https://localhost:9999" + path)!, origin: origin))
+    }
     print("PASS desktop origin, blob, external-scheme policy")
 }
 
