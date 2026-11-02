@@ -52,8 +52,8 @@ class DeliveryGateTests(unittest.TestCase):
                          tag=self.tag, commit=self.sha, platform='linux/' + arch,
                          sourceSHA256='b' * 64, image=image,
                          verification=[dict(command=c, environmentOverrides=e, status='pass') for c, e in verification_plan(image)],
-                         smoke=dict(status='pass', installedPlugins=0), privacy=dict(status='pass', pluginPayloads=0),
-                         packageValidation=dict(status='pass'), importValidation=dict(status='pass'),
+                         smoke=dict(status='pass', installedPlugins=0, xauth=dict(status='pass', version='xauth 1.1.2')), privacy=dict(status='pass', pluginPayloads=0),
+                         packageValidation=dict(status='pass'), importValidation=dict(status='pass', smoke=dict(xauth=dict(status='pass', version='xauth 1.1.2'))),
                          asset=dict(name=name, bytes=path.stat().st_size, sha256=gate.digest(path)))
             sdk_name = f'aide-{self.tag}-devtools-linux-{arch}.zip'
             sdk_path = folder / sdk_name
@@ -98,6 +98,22 @@ class DeliveryGateTests(unittest.TestCase):
             (p.parent / 'extra.zip').write_bytes(b'unsolicited')
             with self.assertRaisesRegex(ValueError, 'Unexpected candidate files'):
                 gate.validate_candidates(root, self.tag, self.sha)
+
+    def test_runtime_and_reimport_require_actual_xauth_smoke(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            p = self.fixture(root)
+            original = json.loads(p.read_text())
+            for section in ('smoke', 'importValidation'):
+                for xauth in ({}, {'status': 'fail', 'version': 'xauth'},
+                              {'status': 'pass', 'version': '   '}):
+                    proof = copy.deepcopy(original)
+                    smoke = proof[section] if section == 'smoke' else proof[section]['smoke']
+                    smoke['xauth'] = xauth
+                    p.write_text(json.dumps(proof))
+                    with self.subTest(section=section, xauth=xauth):
+                        with self.assertRaisesRegex(ValueError, 'runtime xauth'):
+                            gate.validate_candidates(root, self.tag, self.sha)
 
     def test_sdk_is_required_and_tampering_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:

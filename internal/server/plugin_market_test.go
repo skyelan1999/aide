@@ -215,6 +215,16 @@ func TestPluginMarketCatalogIntegrityAndOfflineFallback(t *testing.T) {
 	}
 }
 func TestPluginMarketNumericVersionCompatibility(t *testing.T) {
+	p := marketPlugin{ID: "terminal", Version: "1.6.0", MinAideVersion: "0.1.18.0 RC2", Platforms: []string{"linux"}}
+	for _, x := range []struct {
+		version string
+		want    bool
+	}{{"0.1.18.0 RC1", false}, {"0.1.18.0 RC2", true}, {"0.1.18.0 RC10", true}} {
+		ok, reason := marketCompatible(p, x.version)
+		if ok != x.want {
+			t.Fatalf("Terminal paired host %s: got %v, want %v (%s)", x.version, ok, x.want, reason)
+		}
+	}
 	for _, x := range []struct {
 		a, b string
 		want int

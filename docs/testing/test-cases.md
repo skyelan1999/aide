@@ -5,7 +5,7 @@
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
 | go | 379 | 1686 |
-| python | 63 | 278 |
+| python | 63 | 279 |
 | node | 180 | 182 |
 | browser | 105 | 0 |
 
@@ -5344,13 +5344,14 @@
 
 </details>
 
-<details><summary>scripts/ci/test_delivery_gate.py · python · 12 个命名用例</summary>
+<details><summary>scripts/ci/test_delivery_gate.py · python · 13 个命名用例</summary>
 
 [源码入口](../../scripts/ci/test_delivery_gate.py)
 
 - `test_branch_candidate_is_read_only_and_cannot_publish`
 - `test_both_architectures_required_and_digest_tampering_rejected`
 - `test_crossed_or_incomplete_candidate_fails_closed`
+- `test_runtime_and_reimport_require_actual_xauth_smoke`
 - `test_sdk_is_required_and_tampering_rejected`
 - `test_malicious_release_ref_rejected_before_remote_operations`
 - `test_remote_draft_uses_id_and_rejects_wrong_identity_or_digest`

@@ -59,12 +59,12 @@
       "evidence": []
     },
     "release": {
-      "status": "skipped",
-      "summary": "No release/merge authorization for new features; reviewable PRs only.",
+      "status": "in_progress",
+      "summary": "User now requests verification and publication; tracked in terminal-release-20261102. Prior candidate facts remain historical.",
       "evidence": []
     }
   },
-  "release_authorization": "Implementation and reviewable commit/push/PR only. No merge, plugin publication, marketplace update, old tag/asset mutation or production restart.",
+  "release_authorization": "User now authorizes verification and publication if passing; production restart excluded. See terminal-release-20261102 for current release facts.",
   "rollback": "Do not install feature branches into production. Reviewable changes can be reverted separately; preserve all existing sessions, logs and relay deployment secrets.",
   "handoff": "Review only: plugin https://github.com/skyelan1999/aide-pkg-terminal/pull/3 and host https://github.com/skyelan1999/aide/pull/731. Original ZIP raw multipart installation race1/1 PASS3.060s; prior focused race8/8 and legacy package-content regression remain valid. No merge/release/market/production change. Remote CI tracked separately.",
   "issues": [

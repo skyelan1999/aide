@@ -1,0 +1,74 @@
+{
+  "id": "terminal-release-20261102",
+  "request": "Continue verification and publish Terminal1.6.0 with paired Aide0.1.18.0RC2 and safe marketplace compatibility after all required gates pass",
+  "baseline": "0800f15b090d337faba21ad8310385ef4adb7b87",
+  "initial_status": "Clean feature source at 0800f15b; existing Terminal1.5.3 public and AideRC1 untouched.",
+  "acceptance": [
+    "Publish paired Terminal1.6.0 and AideRC2 only after source-bound full gates pass",
+    "All current public packages install and function on both architectures; Terminal exact original ZIP receives copy/Telnet assertions",
+    "Actual XServer isolated validation and runtime/reimport xauth dependency checks",
+    "Market minimum Aide0.1.18.0RC2; retain 29 unrelated public artifacts unchanged",
+    "No production restart or old tag/asset mutation"
+  ],
+  "scope": [
+    "Terminal feature PR3, Aide PR731 and release verification/docs",
+    "Marketplace formal artifact and compatibility floor",
+    "Same-tag full Delivery and independent asset verification"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Paired plugin/host publication with exact public package and runtime dependency gates; preserve production and unrelated projects.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/726",
+        "docs/releases/v0.1.18.0-RC2.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Paired plugin/host publication with exact public package and runtime dependency gates; preserve production and unrelated projects.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/726",
+        "docs/releases/v0.1.18.0-RC2.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Mandatory original Terminal>=1.6 public ZIP copy/Telnet check; runtime/reimport real xauth version and fail-closed receipt validation.",
+      "evidence": [
+        "scripts/ci/build_candidate.py",
+        "scripts/ci/delivery_gate.py",
+        "internal/server/release_public_plugins_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Python CI unit36/36 and numeric market compatibility Go regression PASS. Real Xvfb/xauth/OpenSSH/xmessage direct+relay acceptance2/2 reported by feature agent, exact public package rerun pending.",
+      "evidence": [
+        "scripts/ci/test_delivery_gate.py",
+        "internal/server/plugin_market_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "RC2 notes, host feature docs and source test catalog updated; final package and publication facts pending.",
+      "evidence": [
+        "docs/releases/v0.1.18.0-RC2.md",
+        "docs/architecture/terminal-session-features.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User: continue, verify and publish if passing. New feature PR administrator exceptions are separate from prior release repair authorization.",
+  "rollback": "Retain prior immutable Terminal1.5.3 and AideRC1 releases and local production; revert market listing/source separately if needed.",
+  "handoff": "Preparing release gates and final package; no publication claimed."
+}

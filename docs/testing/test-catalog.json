@@ -3352,7 +3352,7 @@
     {
       "path": "internal/server/plugin_market_test.go",
       "kind": "go",
-      "sha256": "64e5371a5124cb92cbcdb538d6b3bce593770512fa064eee8a4a8d2aa9c78f99",
+      "sha256": "363ff126cb61eac24189b76d36dd727361e3fa2049ee84ec2a1b2b1dddf03011",
       "cases": [
         "TestPluginMarketInstallUpdateAndDownload",
         "TestPluginMarketRejectsUnreviewedOrRevokedInstall",
@@ -4084,7 +4084,7 @@
     {
       "path": "internal/server/release_public_plugins_test.go",
       "kind": "go",
-      "sha256": "2c9d5f87f3dfa019fa7e352b364b30c03840f867727de25a44fb7db82538ecc3",
+      "sha256": "dfeae28fb035bf64e97cdc43c22e861bf594bf2ae26b9f0b86a7a785b6fce886",
       "cases": [
         "TestReleasePublicPackageFunctions"
       ],
@@ -6724,11 +6724,12 @@
     {
       "path": "scripts/ci/test_delivery_gate.py",
       "kind": "python",
-      "sha256": "9cadc5f2dc9a294023d7c8a61d074252cb65623e4d9c7d3d9feabd3269a9ead9",
+      "sha256": "5247ad03c237f9a3e37fab1bc09c1f72104f423c6f7e4942de92364d70326592",
       "cases": [
         "test_branch_candidate_is_read_only_and_cannot_publish",
         "test_both_architectures_required_and_digest_tampering_rejected",
         "test_crossed_or_incomplete_candidate_fails_closed",
+        "test_runtime_and_reimport_require_actual_xauth_smoke",
         "test_sdk_is_required_and_tampering_rejected",
         "test_malicious_release_ref_rejected_before_remote_operations",
         "test_remote_draft_uses_id_and_rejects_wrong_identity_or_digest",
@@ -6739,7 +6740,7 @@
         "test_manual_tag_must_name_current_main_commit",
         "test_host_only_repairs_cannot_publish_a_release"
       ],
-      "caseCount": 12,
+      "caseCount": 13,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },

@@ -120,6 +120,10 @@ def validate_candidates(root, tag, sha):
         require((proof.get('tag'), proof.get('commit'), proof.get('platform')) == (tag, sha, 'linux/' + arch), 'Candidate identity mismatch')
         for key in ('smoke', 'privacy', 'packageValidation', 'importValidation'):
             require(proof.get(key, {}).get('status') == 'pass', 'Missing successful ' + key)
+        for runtime_smoke in (proof['smoke'], proof['importValidation'].get('smoke', {})):
+            xauth = runtime_smoke.get('xauth', {})
+            require(xauth.get('status') == 'pass' and bool(xauth.get('version', '').strip()),
+                    'Missing runtime xauth verification')
         verify_report(proof.get('publicPlugins', {}), load_lock(), sha, arch)
         release_evidence.go_suite(proof.get('goSuite', {}))
         image = f'aide:ci-{sha[:12]}-{arch}'
