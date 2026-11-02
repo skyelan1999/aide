@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "marketRepository": "skyelan1999/aide-pkg-shop",
-  "marketRevision": "943f6a90f08c4f5ba09e4d09031247b64ee29295",
+  "marketRevision": "582effee8fc2530b6c552ff3fad24ef9d519dbae",
   "plugins": [
     {
       "id": "ali-bailian-supporter",
@@ -379,14 +379,14 @@
     },
     {
       "id": "terminal",
-      "marketVersion": "1.5.3",
-      "package": "packages/terminal/1.5.3-0f6810cf1e63.zip",
-      "bytes": 1063899,
-      "sha256": "0f6810cf1e637621aca25b414af5fafb1db089134653dd8e7b8aedef4df43813",
+      "marketVersion": "1.6.0",
+      "package": "packages/terminal/1.6.0-c682f56ff469.zip",
+      "bytes": 1071482,
+      "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
       "repository": "skyelan1999/aide-pkg-terminal",
-      "packageSourceCommit": "a7e790c10eee389f99ba646f99ca60648f1d56f9",
-      "latestPublicTag": "v1.5.3",
-      "latestPublicCommit": "221147d2f33cff377f2c854a5b97dbbfbe1525c6",
+      "packageSourceCommit": "e71876627b457fd2bd64979d68a2fe44045e0634",
+      "latestPublicTag": "v1.6.0",
+      "latestPublicCommit": "28ca9f4132d03ad8e1137fd74d0998c3399ebd56",
       "checks": {
         "package": "required",
         "hostInstallAndDisclosure": "required",

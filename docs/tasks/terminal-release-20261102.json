@@ -43,32 +43,48 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Python CI unit36/36 and numeric market compatibility Go regression PASS. Real Xvfb/xauth/OpenSSH/xmessage direct+relay acceptance2/2 reported by feature agent, exact public package rerun pending.",
+      "summary": "Local quick315 PASS; Python CI36 PASS including missing/failed/empty runtime xauth proof rejection; paired market RC1 rejection/RC2 acceptance PASS. Final c682f56 original ZIP raw multipart App/daemon Go race1/1 PASS3.500s. Plugin source56 and Chromium4 cells PASS; unchanged runtimeJS/HTML final ZIP extracted53 and actual Xvfb/xauth/OpenSSH/xmessage direct+relay2 PASS. Final current-source/full/native release gates pending.",
       "evidence": [
         "scripts/ci/test_delivery_gate.py",
-        "internal/server/plugin_market_test.go"
+        "internal/server/plugin_market_test.go",
+        "https://github.com/skyelan1999/aide-pkg-terminal/pull/3",
+        "https://github.com/skyelan1999/aide/actions/runs/41388761765"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "RC2 notes, host feature docs and source test catalog updated; final package and publication facts pending.",
+      "status": "pass",
+      "summary": "RC2 notes, host pairing/X11 prerequisites, rollback and public package/runtime smoke tests documented; final publication facts will be backfilled.",
       "evidence": [
         "docs/releases/v0.1.18.0-RC2.md",
-        "docs/architecture/terminal-session-features.md"
+        "docs/architecture/terminal-session-features.md",
+        "docs/testing/release-validation.md"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only owned files staged in isolated worktrees. Own test containers removed; production healthy and unchanged. Prior package/tag/asset bytes preserved.",
+      "evidence": [
+        "docs/architecture/terminal-session-features.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Authorized admin merges: TerminalPR3 at28ca9f4, marketPR33 at582effe; plugin v1.6.0 annotated tag pushed with identical source tree, final tagCI pending. Freeze all30 current public packages for AideRC2; only Terminal bytes changed. Host PR731 lock update and source-bound full gates remain.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide-pkg-shop/pull/33",
+        "https://github.com/skyelan1999/aide/pull/731"
+      ]
     }
   },
-  "release_authorization": "User: continue, verify and publish if passing. New feature PR administrator exceptions are separate from prior release repair authorization.",
+  "release_authorization": "User explicitly authorized this Terminal issuance administrator exception for plugin PR3, Aide PR731, market PR33, necessary repair/validation-doc PRs and version.sh RC2 version/tag push; every PR requires passing CI and final same-source full gates. No protection change or production restart.",
   "rollback": "Retain prior immutable Terminal1.5.3 and AideRC1 releases and local production; revert market listing/source separately if needed.",
-  "handoff": "Preparing release gates and final package; no publication claimed."
+  "handoff": "Preparing release gates and final package; no publication claimed.",
+  "final_plugin_package": {
+    "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+    "bytes": 1071482,
+    "sourceCommit": "e71876627b457fd2bd64979d68a2fe44045e0634",
+    "package": "packages/terminal/1.6.0-c682f56ff469.zip"
+  },
+  "market_revision": "582effee8fc2530b6c552ff3fad24ef9d519dbae",
+  "plugin_tag_commit": "28ca9f4132d03ad8e1137fd74d0998c3399ebd56"
 }
