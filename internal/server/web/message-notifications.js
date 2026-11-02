@@ -61,7 +61,7 @@
   }
   function settingsForm({host,config,save,tr,labelFor}) {
     const form=make('form',null,'message-config-form notification-config-form');
-    const fields={};const add=(label,control)=>{const field=make('label',null,'message-field');field.append(make('span',tr(label)),control);form.append(field);return control;};
+    const fields={};const add=(label,control)=>{control.setAttribute('aria-label',tr(label));const field=make('label',null,'message-field');field.append(make('span',tr(label)),control);form.append(field);return control;};
     const select=(name,label,options,value)=>{const input=make('select');for(const[v,l]of options){const option=make('option',tr(l));option.value=v;input.append(option);}input.value=value;fields[name]=add(label,input);};
     const check=(name,label,value)=>{const input=make('input');input.type='checkbox';input.checked=!!value;fields[name]=add(label,input);input.parentNode.classList.add('message-checkbox');};
     const s=config.settings;
@@ -73,18 +73,60 @@
     form.append(make('h4',tr('新消息提示')));
     check('popup','应用内提示',s.popup);check('sound','提示音',s.sound);check('desktop','浏览器桌面通知',s.desktop);
     form.append(make('p',tr('关闭角标不会清除未读；查看提醒不会自动完成事项。声音和桌面通知默认关闭。'),'message-empty'));
-    const error=make('p',null,'message-empty');error.setAttribute('role','alert');const apply=make('button',tr('保存设置'),'primary');apply.type='submit';form.append(error,apply);
-    form.onsubmit=async event=>{event.preventDefault();apply.disabled=true;try{
-      if(fields.desktop.checked && !s.desktop){if(!('Notification' in window)||await window.Notification.requestPermission()!=='granted'){fields.desktop.checked=false;throw new Error(tr('浏览器未允许桌面通知，其他设置尚未保存。'));}}
-      const settings={badge:fields.badge.value,reminderScope:fields.reminderScope.value,categories:{},popup:fields.popup.checked,sound:fields.sound.checked,desktop:fields.desktop.checked,includeMuted:fields.includeMuted.checked};
-      for(const k of ['chats','groups','contacts','files','reminders'])settings.categories[k]=fields[k].checked;
-      await save({settings});
-    }catch(failure){error.textContent=failure.message;}finally{apply.disabled=false;}};
+    const error=make('p',null,'message-empty');error.setAttribute('role','alert');
+    const status=make('p',null,'message-empty');status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.hidden=error.hidden=true;form.append(status,error);
+    let accepted=JSON.parse(JSON.stringify(s)),revision=config.revision,queue=Promise.resolve(),edit=0,conflictEpoch=0,permissionEpoch=0;
+    let desktopAllowed=!!s.desktop;
+    const restore=()=>{for(const[name,input]of Object.entries(fields)){
+      if(name==='badge'||name==='reminderScope')input.value=accepted[name];
+      else input.checked=name in accepted.categories?!!accepted.categories[name]:!!accepted[name];
+    }desktopAllowed=!!accepted.desktop;};
+    const read=()=>{const settings={badge:fields.badge.value,reminderScope:fields.reminderScope.value,categories:{},popup:fields.popup.checked,sound:fields.sound.checked,desktop:fields.desktop.checked&&desktopAllowed,includeMuted:fields.includeMuted.checked};
+      for(const k of ['chats','groups','contacts','files','reminders'])settings.categories[k]=fields[k].checked;return settings;};
+    // Share the revision and write order with suppression rules on this page.
+    // A conflict invalidates queued stale snapshots; only a new user change
+    // may write again after displaying the server's current values.
+    const commit=(change)=>{
+      const epoch=conflictEpoch;
+      const job=queue.catch(()=>{}).then(async()=>{
+        if(epoch!==conflictEpoch)throw new Error(tr('设置已在其他窗口更改，请重新选择。'));
+        try{
+          const next=await save(change,revision);
+          revision=next?.revision??revision+1;accepted=JSON.parse(JSON.stringify(next?.settings||change.settings||accepted));
+          config.revision=revision;config.settings=JSON.parse(JSON.stringify(accepted));return next;
+        }catch(failure){if(failure.status===409){conflictEpoch++;if(failure.notificationConfig){revision=failure.notificationConfig.revision;accepted=JSON.parse(JSON.stringify(failure.notificationConfig.settings));}}
+          throw failure;
+        }
+      });queue=job.catch(()=>{});return job;
+    };
+    const changed=()=>{
+      const version=++edit,settings=read();status.textContent=tr('正在保存…');status.hidden=false;error.textContent='';error.hidden=true;
+      const job=commit({settings}).then(()=>{if(version===edit){status.textContent=tr('已保存');}}).catch(failure=>{
+        if(version===edit){restore();status.textContent='';status.hidden=true;error.hidden=false;error.textContent=failure.status===409?tr('设置已在其他窗口更改，请重新选择。'):tr('保存失败：{0}').replace('{0}',failure.message||tr('请求失败'));}
+      });return job;
+    };
+    for(const input of Object.values(fields))input.onchange=changed;
+    fields.desktop.onchange=async()=>{
+      const epoch=++permissionEpoch;
+      if(!fields.desktop.checked||desktopAllowed)return changed();
+      status.textContent=tr('等待浏览器通知授权…');status.hidden=false;error.textContent='';error.hidden=true;
+      try{
+        const allowed='Notification' in window&&await window.Notification.requestPermission()==='granted';
+        if(epoch!==permissionEpoch||form.isConnected===false)return;
+        if(!allowed)throw new Error(tr('浏览器未允许桌面通知。'));
+        desktopAllowed=true;return changed();
+      }catch(failure){if(epoch===permissionEpoch){fields.desktop.checked=false;desktopAllowed=false;status.textContent='';status.hidden=true;error.hidden=false;error.textContent=failure.message;}}
+    };
+    // Enter must not reload the page. Normal controls save on change.
+    form.onsubmit=event=>event.preventDefault();
     host.replaceChildren(form);
-    const rules=make('section',null,'notification-suppressed-list');rules.append(make('h4',tr('屏蔽与免打扰列表')));
-    const keys=Object.keys(config.conversations||{}).filter(key=>mode(config,key)!=='default');
-    if(!keys.length)rules.append(make('p',tr('暂无屏蔽或免打扰会话'),'message-empty'));
-    for(const key of keys){const row=make('div',null,'message-notification-suppressed');row.append(make('span',labelFor(key)),ruleControl({key,config,tr,save:conversation=>save({conversation})}));rules.append(row);}
+    const rules=make('section',null,'notification-suppressed-list');
+    const paintRules=()=>{
+      rules.replaceChildren(make('h4',tr('屏蔽与免打扰列表')));
+      const keys=Object.keys(config.conversations||{}).filter(key=>mode(config,key)!=='default');
+      if(!keys.length)rules.append(make('p',tr('暂无屏蔽或免打扰会话'),'message-empty'));
+      for(const key of keys){const row=make('div',null,'message-notification-suppressed');row.append(make('span',labelFor(key)),ruleControl({key,config,tr,save:async conversation=>{const next=await commit({conversation});if(next?.conversations)config.conversations=next.conversations;paintRules();}}));rules.append(row);}
+    };paintRules();
     host.append(rules);return form;
   }
   window.AideMessageNotifications=Object.freeze({keyOf,mode,badge,canRead,channels,batches,icon,ruleControl,settingsForm});

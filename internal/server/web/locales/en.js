@@ -1,6 +1,9 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  '设置已在其他窗口更改，请重新选择。': 'Settings changed in another window. Please choose again.',
+  '等待浏览器通知授权…': 'Waiting for browser notification permission…',
+  '浏览器未允许桌面通知。': 'The browser did not allow desktop notifications.',
   '连接失败': 'Connection failed',
   '原有独立模型': 'Legacy independent model',
   '克隆服务': 'Voice cloning service',

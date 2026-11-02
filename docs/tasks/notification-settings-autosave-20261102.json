@@ -1,0 +1,124 @@
+{
+  "id": "notification-settings-autosave-20261102",
+  "request": "通知与角标页面删掉保存设置按钮，修改即保存",
+  "baseline": "c47664655088cf130fb8e64053397a7b61e3c03d",
+  "initial_status": "",
+  "acceptance": [
+    "No Save settings button in notifications/badges settings",
+    "Selections and checkboxes persist immediately with ordered revision-aware requests",
+    "Failures are visible, desktop permission denial does not enable desktop notifications, and unrelated settings still save",
+    "Continuous changes, external revision conflicts, remount persistence and desktop/narrow rendering are verified"
+  ],
+  "scope": [
+    "internal/server/web/message-notifications.js",
+    "internal/server/web/message-center.js notification save integration only",
+    "Relevant notification tests, translations and task record",
+    "internal/server/web/index.html notification asset cache versions"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Serialize form writes with acknowledged revisions, preserve form DOM on save, cancel queued stale snapshots on conflicts, and gate desktop preference writes on explicit browser permission. Suppression rules share the same queue.",
+      "evidence": [
+        "internal/server/web/message-notifications.js",
+        "internal/server/web/message-center.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed Save settings on notification/badge form; controls save on change, permission failures and write failures remain visible, controls have explicit accessible labels, notification asset versions advanced.",
+      "evidence": [
+        "internal/server/web/message-notifications.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Four Chromium/WebKit desktop/narrow cells passed actual module/CSS behavior; notification/unit integration and i18n tests passed; four existing Go notification API race tests passed without skips. Final quick gate passed.",
+      "evidence": [
+        "scripts/browser-notification-autosave.cjs",
+        "scripts/message-notifications.test.cjs",
+        "go test -mod=vendor -race ./internal/server -run ^TestMessageNotification -count=1",
+        "python3 scripts/agent-route.py verify quick"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "This task and issue record behavior, scope, verification and publication limits.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped source/tests only. Synthetic screenshots/logs under ignored .agent-state; no user settings or service data changed.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No remote push, localhost:9999 restart or formal release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped commit before deployment; no data/configuration migration.",
+  "handoff": "Local implementation accepted in isolated browser/API fixtures; existing notification API race tests passed. Current production remains on its prior image.",
+  "issue": "https://github.com/skyelan1999/aide/issues/741",
+  "browser_acceptance": {
+    "status": "pass",
+    "scope": "Actual notification module and CSS; isolated revision-aware API and browser-permission fixtures; no real notifications or production edits",
+    "results": [
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "theme": "light",
+        "pass": true
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "theme": "dark",
+        "pass": true
+      },
+      {
+        "engine": "webkit",
+        "width": 1440,
+        "theme": "light",
+        "pass": true
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "theme": "dark",
+        "pass": true
+      }
+    ]
+  },
+  "backend_regression": {
+    "command": "go test -mod=vendor -race -json ./internal/server -run ^TestMessageNotification -count=1",
+    "network": "disabled",
+    "passed": [
+      "TestMessageNotificationMutationRejectsChangedLockGeneration",
+      "TestMessageNotificationPreferencesRevisionPersistenceAndLock",
+      "TestMessageNotificationAggregationDedupScopeAndMuteExpiry",
+      "TestMessageNotificationGroupVoiceInheritsGroupPolicy"
+    ],
+    "failed": [],
+    "skipped": []
+  },
+  "source_sha256": {
+    "internal/server/web/message-notifications.js": "3a510cf998c0efdc75f4a446c8001c4ca3b43188049a1c1c309b4cc886e7183d",
+    "internal/server/web/message-center.js": "d9f47db544d028676414cd2aae8a8fa96e944f21353c3a8559815179b629d90e",
+    "scripts/browser-notification-autosave.cjs": "22522393661a69082e664fb08b12ac3b502cf58fa356b8d180bb9dc7009d05dd"
+  },
+  "quick": {
+    "status": "pass",
+    "fingerprint": "933a1479de9355b409b1bd970b41aaab8f099d354e485bd4e2a668a69ebf0bc8",
+    "head": "c47664655088cf130fb8e64053397a7b61e3c03d",
+    "time": "20261102T143014942889Z",
+    "checks": 315
+  }
+}

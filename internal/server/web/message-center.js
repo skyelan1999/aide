@@ -20,7 +20,7 @@
   function mount({center, api, raw, t, toast, isLocked, openSettings}) {
     if (!center || center.dataset.messagesMounted) return;
     center.dataset.messagesMounted = 'true'; center.classList.add('message-center');
-    const tr = text => document.documentElement.lang.startsWith('en') ? (english[text] || text) : t(text);
+    const tr = text => document.documentElement.lang.startsWith('en') ? (english[text] || t(text)) : t(text);
     const post = (path, body, options = {}) => api('/messages/' + path, {method:'POST', body:JSON.stringify(body), ...options});
     const safe = fn => window.AideAsyncAction.wrap(fn, error => { if (error.name !== 'AbortError') toast(tr(error.message || '请求失败')); });
     const button = (label, fn, cls = 'quiet') => { const b = node('button', cls, tr(label)); b.type = 'button'; if (fn) b.onclick = safe(fn); return b; };
@@ -68,16 +68,17 @@
     }
     function prepareNotificationAudio(){if(!(notificationConfig()?.settings.sound)||notificationAudio?.state==='closed')return;try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;notificationAudio ||= new Audio();if(notificationAudio.state==='suspended')void notificationAudio.resume().catch(()=>{});}catch(_){}}
     window.addEventListener('pointerdown',prepareNotificationAudio,{passive:true});
-    async function saveNotifications(change,revision){
+    async function saveNotifications(change,revision,{preserveForm=false}={}){
       if(change.settings?.sound){try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio){notificationAudio ||= new Audio();void notificationAudio.resume().catch(()=>{});}}catch(_){}}
       try{
         const config=await api('/messages/notifications',{method:'PUT',body:JSON.stringify({revision:revision??notificationConfig()?.revision??0,...change})});
         if(snapshot)snapshot.notifications.config=config;
-        await refresh(true);toast(tr('设置已保存'));
-        if(notificationsBody?.isConnected)buildNotificationSettings();
-      }catch(error){if(error.status===409)await refresh(true);toast(tr(error.message||'请求失败'));throw error;}
+        await refresh(true);if(!preserveForm)toast(tr('设置已保存'));
+        if(!preserveForm&&notificationsBody?.isConnected)buildNotificationSettings();
+        return config;
+      }catch(error){if(error.status===409){await refresh(true);error.notificationConfig=await api('/messages/notifications').catch(()=>notificationConfig());}if(!preserveForm)toast(tr(error.message||'请求失败'));throw error;}
     }
-    function buildNotificationSettings(){if(!notificationsBody||!notificationConfig()||isLocked())return;const config=notificationConfig();notifications.settingsForm({host:notificationsBody,config,tr,labelFor,save:change=>saveNotifications(change,config.revision)});notificationsBody.dataset.notificationsReady='true';}
+    function buildNotificationSettings(){if(!notificationsBody||!notificationConfig()||isLocked())return;const config=notificationConfig();notifications.settingsForm({host:notificationsBody,config,tr,labelFor,save:(change,revision)=>saveNotifications(change,revision??config.revision,{preserveForm:true})});notificationsBody.dataset.notificationsReady='true';}
     function ruleControl(key){const config=notificationConfig();return notifications.ruleControl({key,config,tr,save:conversation=>saveNotifications({conversation},config.revision)});}
     function addThread(host,key,label,description,select){
       const row=node('div','message-thread-row'),open=button(label,select,'message-thread'),copy=node('span','message-thread-copy');copy.append(node('strong','',label),node('small','',description));open.replaceChildren(copy);
