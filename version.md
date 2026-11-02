@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.18.0 RC1**
+**当前版本：0.1.18.0 RC2**
+
+## 0.1.18.0 RC2（2026-11-02）
+
+- Terminal 1.6.0 paired host: independent session copies, relay Telnet and untrusted SSH X11; verified publication gates
+
 
 ## 0.1.18.0 RC1（2026-11-02）
 
