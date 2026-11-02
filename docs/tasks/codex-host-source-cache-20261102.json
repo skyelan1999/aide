@@ -21,7 +21,7 @@
   "stages": {
     "requirements": {
       "status": "pass",
-      "summary": "",
+      "summary": "Confirmed build.command fails at GitHub codeload in the Docker host-component step. Host download succeeds. Preserve pinned integrity, existing data/configuration and production lifecycle.",
       "evidence": []
     },
     "design": {
@@ -45,11 +45,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "8 source-cache fault/offline tests and 25 launcher contract tests passed. Real network-disabled host-component stage compiled all 6 binaries, checksums passed; application-file edit reused the host stage as CACHED. Full runtime image build remains to run.",
+      "status": "pass",
+      "summary": "8 focused source/cache tests, 25 launcher contract tests and the final quick profile passed. Actual Docker component build with RUN networking disabled compiled all six binaries; checksums and VERSION 0.4.0 passed. Changing an application file reused the host stage as CACHED. Full canonical launcher build-only completed, go vet and runtime compilation passed, source/image labels verified. Isolated candidate healthz passed with writable temporary data/workspace and a 768 MiB cap. Dockerfile.local was structurally tested; its complete build was not run.",
       "evidence": [
         "scripts/test_codex_host_source.py",
-        "scripts/test_launcher_contract.py"
+        "scripts/test_launcher_contract.py",
+        "docs/reviews/20261102/codex-host-source-cache-743.md"
       ]
     },
     "documentation": {
@@ -62,7 +63,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Source archives are scoped generated build inputs ignored by Git; temporary cache probe restored its owned file byte-for-byte. No service or user data changed.",
+      "summary": "Temporary probe restored its file byte-for-byte; isolated smoke containers removed. Generated source archive stays ignored and available for future builds. Production container identity/image and .env checksum unchanged; original service had already exited before this validation.",
       "evidence": []
     },
     "release": {
@@ -73,6 +74,6 @@
   },
   "release_authorization": "",
   "rollback": "Revert source commits before deployment. Existing service/image/configuration retained throughout build validation.",
-  "handoff": "Core source/cache tests and real offline component compilation passed; proceed with full image build-only verification, without calling start-built.",
+  "handoff": "Local main includes fix 92e95b842981cce06c8641d39a6330eabbd1d520. Verified candidate image aide:source-cache-743-92e95b8 retained. No push, release or production startup performed. Normal build.command is ready for the user to rerun.",
   "issue": "https://github.com/skyelan1999/aide/issues/743"
 }
