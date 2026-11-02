@@ -10,6 +10,8 @@
 
 ## Release 必需矩阵
 
+公开插件锁定记录必须逐项匹配冻结市场目录的版本、安装包路径、字节数和 SHA-256，并拒绝重复插件 ID；只验证历史 ZIP 自身正确不足以证明测试了现行公开版本。`test_public_plugins.py` 用同时保留有效旧版／新版 ZIP 的夹具，以及版本、路径、大小、摘要和重复 ID 反例验证这一门禁（[#713](https://github.com/skyelan1999/aide/issues/713)）。
+
 | 层次 | 执行入口与环境 | 核心断言 | 通过证据 |
 | --- | --- | --- | --- |
 | 异常诊断 | 完整 Go 故障注入与 race | 插件 worker/daemon/加载元数据、HTTP 关联、持久化轮转、取消/panic 语义和内容不泄露 | incidents 回归及诊断包，见[模块诊断](../architecture/diagnostics.md) |

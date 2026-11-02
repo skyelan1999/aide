@@ -9,6 +9,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 PATTERN = (r'^Test(AuthenticationAndOrigin|FileBoundariesAndConflicts|SettingsNeverReturnKey|'
+           r'ExecutionDiffLargeArtifactsUseBoundedMemory|ExecutionTextArtifactMatchesProposalTextContract|'
+           r'ExecutionCollectPartialFailureRetainsIdempotentReceipts|'
            r'ExecutionScheduler.*|Incidents.*|ContextRecoverySummaryExtractsWrappedJSON|'
            r'ParallelReadOnlyToolBatchEligibility|ShellPathGuard.*)$')
 COMMANDS = [
