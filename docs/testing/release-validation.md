@@ -141,3 +141,16 @@ the failed run and any extra file, and rerun the existing full profile. Moving
 verification out of a File Provider directory does not establish the provider
 as the root cause; identify any actual cause separately. Do not disable sync or
 change user system settings as part of release verification.
+
+
+### Release-note format preflight
+
+Before creating the next version tag, call the existing
+`scripts/ci/delivery_gate.py` module's `release_notes(planned_tag)` function on
+the prepared note. It checks the exact tag header and the four required sections
+新增与改进、修复、升级影响、已知问题. This is the same validator used by Delivery;
+do not weaken it to accept an incomplete note. A pushed tag remains immutable
+if this source gate fails: retain the failed attempt and use `version.sh patch`
+for the corrected next tag. Documentation-only repair does not invalidate a
+successful local full receipt when its source fingerprint is unchanged; final
+tagged runtime/public-package acceptance must still run afresh.

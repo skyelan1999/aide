@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "fail",
+  "tag": "v0.1.18.0-RC2",
+  "commit": "e3ef7d079cdf3fc8b114c60d970fd45fbd55f4ef",
+  "delivery": "https://github.com/skyelan1999/aide/actions/runs/41394850003",
+  "job": "https://github.com/skyelan1999/aide/actions/runs/41394850003/job/125113861861",
+  "phase": "source / Validate trusted main source and requested tag",
+  "cause": "Release notes use English section titles; existing release_notes validator requires four specified Chinese headings. First missing heading stopped the source gate.",
+  "missingSections": [
+    "新增与改进",
+    "修复",
+    "升级影响",
+    "已知问题"
+  ],
+  "tagIdentityFailure": false,
+  "native": "not_run",
+  "publicPackageInstallAndFunction": "not_run",
+  "runtimeXauth": "not_run",
+  "published": false,
+  "remediation": "Keep RC2 tag immutable; use existing required headings for RC3 notes, validate with the original release_notes function before tagging; no gate relaxation, no product code changes.",
+  "productionRestarted": false
+}
