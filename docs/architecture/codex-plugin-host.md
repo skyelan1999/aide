@@ -17,6 +17,35 @@ An image-only update without the companion launcher does not bootstrap the
 host service: use an updated full bundle. The capability reports unavailable
 rather than silently running downloads or falling back to unrestricted commands.
 
+## Model API address
+
+The model provider needs a **Base URL ending in `/v1`**, plus the bridge model
+API key obtained with **Generate key**. The default bridge port is **8787**:
+
+| Client location | Base URL |
+| --- | --- |
+| Aide in Docker Desktop on macOS or Windows | `http://host.docker.internal:8787/v1` |
+| Native Aide or another client on the same host | `http://127.0.0.1:8787/v1` |
+
+Use the actual bridge `port` returned by the workbench status if installation
+configuration changes it. The manager port **17888** (legacy **8788**) is a
+separate control service; it is **not** the model Base URL. Linux Docker requires
+an explicitly configured, reachable host address; do not substitute the
+container's loopback address or expose the bridge to the LAN just to connect it.
+
+Supported model routes are `GET /v1/models`, `POST /v1/chat/completions` (including
+SSE) and `GET /v1/usage`, authenticated with `Authorization: Bearer <bridge API
+key>`. Do not use the manager control token or a pairing code as that key. The
+unauthenticated `GET /health` reports service/version only; a successful health
+check does not prove model inference or account entitlement. For a default local
+installation, `curl --noproxy '*' http://127.0.0.1:8787/health` checks that service
+without sending a model request or reading a key.
+
+The in-Aide workbench currently places the returned port in its status details;
+the address table above supplies the provider configuration explicitly. No
+provider configuration, secret, login or running service is changed by reading
+this documentation.
+
 ## Packaging and startup
 
 `docker/codex-host-source.json` pins a public source commit, SHA-256 and version.

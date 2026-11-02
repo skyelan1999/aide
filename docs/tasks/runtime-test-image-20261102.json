@@ -71,12 +71,20 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "CI通过后必要测试修复已授权合并，本子任务不独立升版或发布；正式版本与同源Delivery由主任务管理。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/720"
+      ]
     }
   },
   "release_authorization": "用户明确选择：授权本次发行必要修复 PR（推荐）；仅CI通过的必要修复，不新增功能/放宽门禁/修改保护。独立版本发布由主任务管理。",
   "rollback": "如需回退，仅普通Git反向提交测试入口与流程文档；不改生产或镜像标签。",
-  "handoff": ""
+  "handoff": "",
+  "integration": {
+    "pr": "https://github.com/skyelan1999/aide/pull/720",
+    "merge": "ac3db919a2cbdfdc0bd96ac6b0040c7d6010122f",
+    "ci": "https://github.com/skyelan1999/aide/actions/runs/41371131413",
+    "authorization": "授权本次发行必要修复 PR（推荐）"
+  }
 }

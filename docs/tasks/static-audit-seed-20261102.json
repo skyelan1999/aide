@@ -65,12 +65,22 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "测试修复已通过CI并授权合并。本子任务不独立升版、打tag或发布安装包；完整Aide发行继续由release-ci-hardening-20261101管理。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/716"
+      ]
     }
   },
-  "release_authorization": "主任务已授权发行、自动修复与提交；新测试修复PR的管理员例外尚需具体授权，不能复用仅针对#714的授权。",
+  "release_authorization": "最初仅#714获具体授权；用户随后明确授权#716及本次发行后续必要修复PR在CI通过后管理员例外合并，不新增功能、不放宽门禁、不改保护。",
   "rollback": "本修复仅测试/基本CI/文档；如需回退，使用普通Git反向提交恢复种子锚点与basic模式，不改运行服务或数据。",
-  "handoff": ""
+  "handoff": "",
+  "integration": {
+    "status": "merged",
+    "pr": "https://github.com/skyelan1999/aide/pull/716",
+    "head": "84f226ae5fc1cadbbe3a8ff1e9ffb66c9aa70254",
+    "merge": "8b9f73fab48ad010a4b27044acb9262f0b9dc20b",
+    "ci": "https://github.com/skyelan1999/aide/actions/runs/41367430815",
+    "authorization": "用户回复 同意，授权CI通过后的本次发行必要修复例外合并。"
+  }
 }

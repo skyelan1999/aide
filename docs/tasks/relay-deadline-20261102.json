@@ -75,12 +75,20 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "not_run",
+      "summary": "必要修复已在CI通过后授权合并，本子任务不独立升版或发布；主任务继续当前源码full及正式同源Delivery。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/724"
+      ]
     }
   },
   "release_authorization": "用户明确授权本次发行必要修复PR，在CI通过后使用管理员例外；不新增功能、不放宽门禁、不改保护。",
   "rollback": "如需回退，可普通Git逆向提交恢复调用者截止时间分类；不自动重放已经超时的远端操作，也不改用户数据。",
-  "handoff": ""
+  "handoff": "",
+  "integration": {
+    "pr": "https://github.com/skyelan1999/aide/pull/724",
+    "merge": "b9c78eed3ed27c8b6fb5ed30a91a98a2fcf36db1",
+    "ci": "https://github.com/skyelan1999/aide/actions/runs/41373322178",
+    "authorization": "授权本次发行必要修复 PR（推荐）"
+  }
 }
