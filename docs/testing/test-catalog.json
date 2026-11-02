@@ -2793,8 +2793,9 @@
     {
       "path": "internal/server/mixsoul/store.test.cjs",
       "kind": "node",
-      "sha256": "045b06c06a82a532eb0e7e1692969abefe3193152d437fd022994446d033f525",
+      "sha256": "8f647c203dc03fb650d4f51ecfb8085dca8309302dc9c614e3c74156aabeb330",
       "cases": [
+        "ciphertext tamper fixture changes every decoded first byte including Base64 A",
         "encrypted persistence, wrong key/scope and modified data rejected",
         "pulse advances real elapsed time but does not create experiences or confirmations",
         "feedback bounded, idempotent turn, ephemeral state not personality diagnosis",
@@ -2804,7 +2805,7 @@
         "explicit no-store and native context reuse",
         "named embedding spaces remain separate and version transitions exclude old facts"
       ],
-      "caseCount": 8,
+      "caseCount": 9,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },

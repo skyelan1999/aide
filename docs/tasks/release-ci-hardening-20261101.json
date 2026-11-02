@@ -87,7 +87,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Implementation/test matrices, source catalog726files2143statically named cases, diagnostics, limitations, rollback, Bridge API address and final release facts documented. Static inventory exactly matched current checkout; execution evidence separate.",
+      "summary": "Release-tag catalog726files2143static named cases verified; post-publication fixture-only new control raises current catalog to2144. Runtime execution reports and static catalogs separate. Final release facts, limitations, rollback, Bridge API and later Terminal726/728 scope documented.",
       "evidence": [
         "docs/testing/release-validation.md",
         "docs/testing/test-cases.md",
@@ -286,5 +286,12 @@
     },
     "productionDeployed": false,
     "limits": "Server digests checked against manifests and downloaded small manifest bytes; candidate pipeline independently imported/CRC/smoked ZIPs. No paid-provider/hardware/native Docker Desktop lifecycle acceptance."
+  },
+  "postPublicationFixtureRepair": {
+    "issue": "https://github.com/skyelan1999/aide/issues/729",
+    "failedCI": "https://github.com/skyelan1999/aide/actions/runs/41382951814",
+    "scope": "Test-only deterministic ciphertext corruption; runtime unchanged; immutable release untouched",
+    "verification": "256 prefixes, old-mutator negative control,32 repeated actual-auth rounds,102 Node24 cases,315 local quick pass",
+    "task": "docs/tasks/store-tamper-fixture-20261102.json"
   }
 }

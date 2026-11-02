@@ -90,8 +90,14 @@ SQLite/Terminal 四个集中缺陷 #583/#584/#586/#588 已依据正式插件发�
 
 [Release](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC1) 于 `2026-11-02T03:17:30Z` 公开。用户明确“把这个版本推做正式的release 标签吧”：保留仓库既有版本 tag，将 GitHub Release 标为正式发行和 Latest；远端实际复核 `draft=false`、`prerelease=false`、Latest ID 相同。没有把 RC 命名改写为另一个版本，附件及已验证源码未改变。精确七项字节数与摘要见[受控核对摘要](release-publication.json)及 Release 附件 `SHA256SUMS`、`RELEASE-ASSETS.txt`、`RELEASE-VALIDATION.json`。
 
-测试用例源码目录与当前 checkout 逐项一致：726 个文件、2,143 个静态命名用例。静态目录不是执行或覆盖率证明。真实付费提供商/账户、物理设备、原生 Windows/macOS Docker Desktop 完整升级生命周期及原生 Safari 仍不在本轮实际验收范围；合成插件功能测试和 Linux WebKit 不代替这些环境。
+发行标签的测试用例源码目录与当时 checkout 逐项一致：726 个文件、2,143 个静态命名用例。静态目录不是执行或覆盖率证明。真实付费提供商/账户、物理设备、原生 Windows/macOS Docker Desktop 完整升级生命周期及原生 Safari 仍不在本轮实际验收范围；合成插件功能测试和 Linux WebKit 不代替这些环境。
 
 本机 9999 生产容器未被停止、重启或替换，仍使用原镜像。保留旧完整运行包、原镜像和数据，按既有 A/B 槽/启动器流程回退，不删除 `.aide-data` 或工作区。只移除本任务空闲 QA 容器；原始失败日志、成功回执及可复用缓存保留。
 
 本机 GitHub 域名解析曾返回连接拒绝地址；通过一次性进程内 CONNECT 转发及 TLS 验证的公开 DNS 查询恢复访问，保持 GitHub 端到端证书校验，没有改系统 DNS、代理、Git 全局配置或 SSH 主机校验。临时本机辅助程序不进入源码或发行包。
+
+## 发行后的独立跟进
+
+最终文档 PR 的 CI 发现原加密存储测试存在偶发夹具错误，已登记 [#729](https://github.com/skyelan1999/aide/issues/729)：固定把 Base64 首字符设为 A 时，随机密文约有 1/64 已以 A 开头，实际内容没有改变。修复改为翻转真实密文字节，保留原有加密恢复、错误密钥、错误作用域和认证失败断言。256 种首字节控制通过，恢复旧操作的负向对照被新用例正确拒绝；Node 24 隔离验证重复 32 轮通过，相关 102 项用例与本地 quick 315 项通过。仅改测试和目录，不改变运行加密代码、已公开 tag 或附件。修复后的静态目录为 726 个文件、2144 个命名用例；发行标签仍是上文的 2143 项静态目录。
+
+Terminal [新增能力 #726](https://github.com/skyelan1999/aide/issues/726) 和本次开发发现的 [1.5.3 侧栏分组缺陷 #728](https://github.com/skyelan1999/aide/issues/728) 由独立子任务在后续分支处理，未进入本次已发布源码、插件包或市场。现有发行的插件安装/功能回执只证明其实际列出的用例，不代表插件所有 UI 状态均已覆盖。

@@ -1,0 +1,75 @@
+{
+  "id": "store-tamper-fixture-20261102",
+  "request": "Fix issue729 ciphertext mutation no-op in encrypted-store test, preserve runtime encryption, validate all256 initial bytes and actual rejection, record publication CI facts",
+  "baseline": "a1d643a6c5a88776017f1d399c71aac590bcd29f",
+  "initial_status": "",
+  "acceptance": [
+    "Always mutate actual decoded ciphertext bytes, including when Base64 already starts with A",
+    "Preserve valid encrypted round trip, wrong key, wrong scope and authentication failure assertions",
+    "Validate deterministic256 initial-byte control plus repeated actual store cases; do not alter runtime encryption or Release assets"
+  ],
+  "scope": [
+    "internal/server/mixsoul/store.test.cjs",
+    "generated docs/testing/test-catalog.json and test-cases.md",
+    "docs/tasks and factual release documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Confirmed no-op Base64 mutation in CI failure729; valid ciphertext must not be treated as corrupted.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/729",
+        "https://github.com/skyelan1999/aide/actions/runs/41382951814"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Decode ciphertext, flip one bit, re-encode;256 byte prefix control and existing real AES-GCM rejection retained. Runtime untouched.",
+      "evidence": [
+        "internal/server/mixsoul/store.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Only store.test.cjs fixture changed: decode/flip one ciphertext bit/re-encode; deterministic256 first-byte control catches old no-op. Runtime store.cjs unchanged.",
+      "evidence": [
+        "internal/server/mixsoul/store.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Host9 store cases passed; Node24.22.2 network=none isolated SDK:32 repetitions of tamper+real-auth cases, all102 MIXSoul/assistant cases pass0skip. Old-mutator VM negative control fails new oracle as expected. Quick315 pass at input fingerprint290733c32a1af617a319c36b7da697b9df66262131899b30494e7abda7e6539f.",
+      "evidence": [
+        ".agent-state/release-ci-hardening-20261101/store-fixture-quick.log",
+        ".agent-state/quick.json",
+        "https://github.com/skyelan1999/aide/issues/729"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Generated source catalog2144 named cases/726files and factual post-publication CI record; static count distinguished from execution. check_docs and diff verified.",
+      "evidence": [
+        "docs/testing/test-catalog.json",
+        "docs/testing/test-cases.md",
+        "docs/reviews/2026-11-02/release-readiness.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned test/docs staged; SDK test container auto-removed, production untouched, failed CI retained.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/actions/runs/41382951814"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Test/doc-only post-publication fixture correction. Existing immutable Release/asset bytes unchanged; no independent runtime release or production change. CI and owner-authorized necessary-repair merge still required.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/pull/727"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly authorized necessary release repair PRs after CI and factual docs; no protection changes or runtime publication for this test-only fixture correction.",
+  "rollback": "Ordinary Git revert of test/doc-only commit; no production or published tag/asset changes.",
+  "handoff": "CI must pass PR727 latest head before owner-authorized necessary-release-repair admin merge. Do not overwrite/rebuild published Release for this fixture-only correction. Terminal feature agent separate."
+}
