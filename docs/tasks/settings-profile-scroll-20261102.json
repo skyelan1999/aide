@@ -1,0 +1,130 @@
+{
+  "id": "settings-profile-scroll-20261102",
+  "request": "参数配置列表不要嵌套滚动条，统一跟随设置页滚动",
+  "baseline": "27752f4547048607242f69531bb7c3c4f67564a2",
+  "initial_status": "",
+  "acceptance": [
+    "Profile cards grow to natural height and have no inner vertical scroll container",
+    "Mouse wheel over profile controls scrolls the outer settings content",
+    "The last profile remains reachable on desktop and narrow screens in light and dark themes"
+  ],
+  "scope": [
+    "internal/server/web/style.css profile-list rule",
+    "Scoped task and acceptance documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Remove the fixed 52vh/overflow:auto from the profile list; keep settings-content as the scroll owner.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed max-height, overflow and scrollbar padding from the parameter profile list. Settings content remains the sole vertical scroll owner.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual profile renderer/CSS passed Chromium/WebKit at 1440px light and 390px dark with 23 profiles: natural list height, wheel scrolling owned by settings content, last-field focus. Existing settings-navigation and UI-response regressions and git diff --check passed.",
+      "evidence": [
+        "node .agent-state/profile-scroll/review.cjs",
+        "node scripts/settings-navigation.test.cjs",
+        "node scripts/ui-response-latency.test.cjs",
+        "git diff --check"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped issue and this task capture reproduction, CSS fix and measured browser geometry.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only the profile-list CSS rule and task record changed; screenshots and local review script remain ignored under .agent-state.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source change only; no remote push, production restart or release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped commit before deployment; no data or configuration migration.",
+  "handoff": "Ready for local main integration. localhost:9999 remains on its previous running image.",
+  "issue": "https://github.com/skyelan1999/aide/issues/740",
+  "browser_acceptance": {
+    "status": "pass",
+    "scope": "Actual parameter-profile renderer and CSS, isolated profile data; no production changes",
+    "results": [
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "theme": "light",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 8034,
+          "listScrollHeight": 8034,
+          "outerHeight": 557,
+          "outerScrollHeight": 8168
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "theme": "dark",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 8538,
+          "listScrollHeight": 8538,
+          "outerHeight": 584,
+          "outerScrollHeight": 8650
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      },
+      {
+        "engine": "webkit",
+        "width": 1440,
+        "theme": "light",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 8022,
+          "listScrollHeight": 8022,
+          "outerHeight": 562,
+          "outerScrollHeight": 8152
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "theme": "dark",
+        "geometry": {
+          "overflow": "visible",
+          "maxHeight": "none",
+          "listHeight": 8526,
+          "listScrollHeight": 8526,
+          "outerHeight": 589,
+          "outerScrollHeight": 8634
+        },
+        "wheelScrollsOuter": true,
+        "lastFieldReachable": true
+      }
+    ]
+  },
+  "source_sha256": {
+    "internal/server/web/style.css": "601ba4814c11a9144f102b2a1ac54711fec237ef4889fd0095620fc0a6f568b7"
+  }
+}
