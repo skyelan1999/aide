@@ -211,6 +211,7 @@
   for(const node of running.keys())if(node!==document.body&&node.contains(event.target))cancel(node);
  },{capture:true,passive:true});
  window.addEventListener('resize',()=>{resumeSamples=new WeakMap();settlePanels();for(const node of exits.keys())settle(node);});
- Object.assign(window.aideExperience,{leave,settle,reopen,changePanels});
+ // Navigation owns this API even when the optional intro does not run.
+ window.aideExperience=Object.assign(window.aideExperience||{},{leave,settle,reopen,changePanels});
  root.dataset.motionLayer='ready';
 })();

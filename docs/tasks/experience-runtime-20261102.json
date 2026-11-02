@@ -1,0 +1,73 @@
+{
+  "id": "experience-runtime-20261102",
+  "request": "修复 Safari experience.js:214 Object.assign null undefined 页面启动异常",
+  "baseline": "96bc0f1d7a6ea886c9f615a9a2791d72fc73b19c",
+  "initial_status": "",
+  "acceptance": [
+    "Full experience.js initializes without error when its global API is absent",
+    "Public leave/settle/reopen/changePanels work with normal, hidden and reduced motion",
+    "Default intro remains and replay/settings controls stay removed",
+    "Real WebKit workbench startup and panel/settings interaction pass without page errors"
+  ],
+  "scope": [
+    "internal/server/web/experience.js",
+    "internal/server/web/index.html cache version",
+    "scripts/experience-runtime.test.cjs",
+    "scripts/browser-settings-autosave.cjs",
+    "docs/agent/router.json",
+    "docs/tasks/experience-runtime-20261102.json",
+    "docs/architecture.md startup/motion lifecycle"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Confirmed missing global initialization after replay removal; screenshot and full source export agree.",
+      "evidence": [
+        "internal/server/web/experience.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Navigation motion module creates its own API at export; no dependency on optional startup intro. Preserve an existing API object. Exercise the complete script in regression and browser tests.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Navigation module independently creates/preserves its API object; experience asset cache version bumped. Regression now evaluates the complete script, including normal, hidden, reduced and null states. Existing settings browser test loads the complete asset.",
+      "evidence": [
+        "internal/server/web/experience.js",
+        "scripts/experience-runtime.test.cjs",
+        "scripts/browser-settings-autosave.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Unmodified full script reproduced the reported exception in Node and live WebKit. Corrected asset injected only in owned browser: authenticated workbench startup, file panel close/reopen and settings open passed with zero page errors. Complete browser fixture passed normal intro (one), reduced intro (zero) and immediate panel callbacks. Existing full settings browser regression passed desktop/narrow. Final quick and candidate image pending.",
+      "evidence": [
+        ".agent-state/experience-runtime/webkit-desktop.png",
+        ".agent-state/experience-runtime/settings-browser.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture documents independent navigation API and removal of startup controls.",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned browser contexts and fixture server closed; no user tab/settings changed.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No push, release or production restart. Existing live service remains unchanged.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped fix commits; existing production image retained.",
+  "handoff": "Focused/browser verification passed. Finish final quick and image build-only before any runtime update.",
+  "issue": "https://github.com/skyelan1999/aide/issues/744"
+}

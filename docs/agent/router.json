@@ -1604,6 +1604,10 @@
       [
         "python3",
         "scripts/test_runtime_assets_config.py"
+      ],
+      [
+        "node",
+        "scripts/experience-runtime.test.cjs"
       ]
     ],
     "full": [
