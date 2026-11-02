@@ -447,6 +447,55 @@ func TestReferenceRelayVaultAndProposalBinding(t *testing.T) {
 	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs/"+task.ID+"/apply", nil), 409)
 }
 
+// Model the valid scheduling window where the deadline has elapsed but its
+// cancellation notification has not yet been delivered by the timer goroutine.
+type relayDelayedDeadlineContext struct {
+	context.Context
+	deadline time.Time
+}
+
+func (c relayDelayedDeadlineContext) Deadline() (time.Time, bool) { return c.deadline, true }
+
+func TestReferenceRelayDeadlineOrdering(t *testing.T) {
+	a := testApp(t)
+	root := t.TempDir()
+	src := relayTestSource(t, a, root, false)
+	past := relayDelayedDeadlineContext{context.Background(), time.Now().Add(-time.Second)}
+	if past.Err() != nil {
+		t.Fatal("fixture must delay the timer notification")
+	}
+	payload, err := a.relayReadSource(past, src, "sample.txt", 100)
+	if !errors.Is(err, context.DeadlineExceeded) || len(payload) != 0 {
+		t.Fatalf("exhausted deadline lost: payload=%q err=%v", payload, err)
+	}
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+	payload, err = a.relayReadSource(relayDelayedDeadlineContext{cancelled, past.deadline}, src, "sample.txt", 100)
+	if !errors.Is(err, context.Canceled) || len(payload) != 0 {
+		t.Fatalf("explicit cancellation lost priority: payload=%q err=%v", payload, err)
+	}
+}
+
+func TestReferenceRelayFutureDeadlinePreservesResults(t *testing.T) {
+	a := testApp(t)
+	root := t.TempDir()
+	src := relayTestSource(t, a, root, false)
+	if err := os.WriteFile(filepath.Join(root, "sample.txt"), []byte("verified content"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	// Independent positive/error controls use the real downloaded TLS agent.
+	relayTestStart(t, a, src)
+	future := relayDelayedDeadlineContext{context.Background(), time.Now().Add(time.Minute)}
+	payload, err := a.relayReadSource(future, src, "sample.txt", 100)
+	if err != nil || string(payload) != "verified content" {
+		t.Fatalf("future deadline rejected a valid read: payload=%q err=%v", payload, err)
+	}
+	payload, err = a.relayReadSource(future, src, "absent.txt", 100)
+	if !errors.Is(err, os.ErrNotExist) || len(payload) != 0 {
+		t.Fatalf("protocol error misclassified as deadline: payload=%q err=%v", payload, err)
+	}
+}
+
 func TestReferenceRelayUntrustedPayloadAndCancellation(t *testing.T) {
 	for _, mode := range []string{"oversize", "checksum", "truncated", "cancel"} {
 		t.Run(mode, func(t *testing.T) {
