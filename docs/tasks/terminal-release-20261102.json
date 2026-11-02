@@ -42,13 +42,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Local quick315 PASS; Python CI36 PASS including missing/failed/empty runtime xauth proof rejection; paired market RC1 rejection/RC2 acceptance PASS. Final c682f56 original ZIP raw multipart App/daemon Go race1/1 PASS3.500s. Plugin source56 and Chromium4 cells PASS; unchanged runtimeJS/HTML final ZIP extracted53 and actual Xvfb/xauth/OpenSSH/xmessage direct+relay2 PASS. Final current-source/full/native release gates pending.",
+      "status": "pass",
+      "summary": "Clean unsynced main official full PASS318/318, stable exact input fingerprintcc8ced...; Go1594 registered,1515pass/79conditional skips,24 complete shards, remaining race packages/platform contracts/vet pass. Final ZIP c682 original App/daemon race1/1; source56/extracted53/actualX11 windows2; original Chromium4 plus12 actual host palette cells; anonymous13HTTP paths PASS. All30 public package identities frozen/inspected; final same-tag native/runtime/public30 install+functions/48 browser/host Delivery remains a release gate. First drifted profile retained asFAIL, duplicate preserved; no receipt rewritten.",
       "evidence": [
-        "scripts/ci/test_delivery_gate.py",
-        "internal/server/plugin_market_test.go",
-        "https://github.com/skyelan1999/aide-pkg-terminal/pull/3",
-        "https://github.com/skyelan1999/aide/actions/runs/41388761765"
+        "docs/reviews/2026-11-02/terminal-local-full.json",
+        "docs/reviews/2026-11-02/terminal-source-stability.json",
+        "docs/reviews/2026-11-02/terminal-plugin-publication.json",
+        "docs/reviews/2026-11-02/terminal-ui-themes.json"
       ]
     },
     "documentation": {
@@ -57,28 +57,33 @@
       "evidence": [
         "docs/releases/v0.1.18.0-RC2.md",
         "docs/architecture/terminal-session-features.md",
-        "docs/testing/release-validation.md"
+        "docs/testing/release-validation.md",
+        "docs/reviews/2026-11-02/terminal-plugin-publication.json"
       ]
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Only owned files staged in isolated worktrees. Own test containers removed; production healthy and unchanged. Prior package/tag/asset bytes preserved.",
+      "summary": "Own tests/browser fixtures stopped and disposable Go containers removed. Only owned docs remain in this isolated doc worktree pending commit; primary main and unsynced release clone clean. Production original image remains healthy; old assets,29 other public/3 private records and all session data retained. Identical extra Go source preserved privately before removal from build directory.",
       "evidence": [
         "docs/architecture/terminal-session-features.md"
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "Authorized admin merges: TerminalPR3 at28ca9f4, marketPR33 at582effe; plugin v1.6.0 annotated tag pushed with identical source tree, final tagCI pending. Freeze all30 current public packages for AideRC2; only Terminal bytes changed. Host PR731 lock update and source-bound full gates remain.",
+      "summary": "Plugin1.6.0 public/formal/Latest and market582effe published after pinned CI pass. Host731 merged after CI; stable-source official local full nowPASS. Await docs PR CI/merge, release-check, version.sh RC2 version/tag and mandatory full tagged Delivery before Aide publication.",
       "evidence": [
         "https://github.com/skyelan1999/aide-pkg-shop/pull/33",
-        "https://github.com/skyelan1999/aide/pull/731"
+        "https://github.com/skyelan1999/aide/pull/731",
+        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0",
+        "https://github.com/skyelan1999/aide-pkg-terminal/actions/runs/41389492911",
+        "https://github.com/skyelan1999/aide-pkg-shop/actions/runs/41389520050",
+        "https://github.com/skyelan1999/aide/actions/runs/41389663889"
       ]
     }
   },
   "release_authorization": "User explicitly authorized this Terminal issuance administrator exception for plugin PR3, Aide PR731, market PR33, necessary repair/validation-doc PRs and version.sh RC2 version/tag push; every PR requires passing CI and final same-source full gates. No protection change or production restart.",
   "rollback": "Retain prior immutable Terminal1.5.3 and AideRC1 releases and local production; revert market listing/source separately if needed.",
-  "handoff": "Preparing release gates and final package; no publication claimed.",
+  "handoff": "Local full prerequisites PASS. Merge these validation docs after CI, release-check in clean unsynced main, then version.sh patch and full tagged Delivery. AideRC2 not yet published; production unchanged.",
   "final_plugin_package": {
     "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
     "bytes": 1071482,
@@ -86,5 +91,33 @@
     "package": "packages/terminal/1.6.0-c682f56ff469.zip"
   },
   "market_revision": "582effee8fc2530b6c552ff3fad24ef9d519dbae",
-  "plugin_tag_commit": "28ca9f4132d03ad8e1137fd74d0998c3399ebd56"
+  "plugin_tag_commit": "28ca9f4132d03ad8e1137fd74d0998c3399ebd56",
+  "local_full": {
+    "schemaVersion": 1,
+    "status": "pass",
+    "scope": "Local pre-version official full profile from clean main outside sync-managed storage; not final RC2 runtime-image acceptance",
+    "head": "8983acea52925677104511d811e9716c66e710e7",
+    "inputFingerprint": "cc8cedc9367d3b8ac23d123b74206fdeabed7febc28920d79a8b96146d7ec70c",
+    "finalFingerprintMatched": true,
+    "checks": 318,
+    "allCheckExitsZero": true,
+    "goSuite": {
+      "status": "pass",
+      "inventory": 1594,
+      "passed": 1515,
+      "skipped": 79,
+      "shards": 24,
+      "registeredCasesOmitted": 0
+    },
+    "environment": {
+      "workers": 2,
+      "ownedTestContainerMemoryGiB": 6,
+      "sdkImage": "sha256:cbdab7d49e30518d58f6c61adc3b73d3be3d314e8d0ec2c283dbd4facb92b8ee",
+      "runtimePrerequisiteImage": "sha256:e4b3040c61c64835833bfc2e28101b0da263842ea51efd1d588df20a75f3e84b",
+      "runtimePrerequisiteIsNewReleaseProof": false
+    },
+    "productionRestarted": false,
+    "ownTestContainersRemoved": true,
+    "completedUTC": "2026-11-02T05:26:10.964786+00:00"
+  }
 }

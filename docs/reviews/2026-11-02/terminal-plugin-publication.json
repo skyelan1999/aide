@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "scope": "Terminal1.6.0 plugin publication and anonymous customer entry only; paired AideRC2 release gates remain separate",
+  "release": {
+    "id": 431077773,
+    "tag_name": "v1.6.0",
+    "name": "Terminal 1.6.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-11-02T04:40:53Z",
+    "html_url": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0"
+  },
+  "tagCommit": "28ca9f4132d03ad8e1137fd74d0998c3399ebd56",
+  "tagCI": "https://github.com/skyelan1999/aide-pkg-terminal/actions/runs/41389492911",
+  "archive": {
+    "crc": "pass",
+    "members": 167,
+    "bytes": 1071482,
+    "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b"
+  },
+  "market": {
+    "mainCommitCompared": "582effee8fc2530b6c552ff3fad24ef9d519dbae",
+    "beforeCommit": "943f6a90f08c4f5ba09e4d09031247b64ee29295",
+    "terminal": {
+      "id": "terminal",
+      "version": "1.6.0",
+      "minAideVersion": "0.1.18.0 RC2",
+      "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+      "bytes": 1071482,
+      "package": "packages/terminal/1.6.0-c682f56ff469.zip"
+    },
+    "otherPublicUnchanged": 29,
+    "privateUnchanged": 3,
+    "pagesCatalogMatchesRaw": true,
+    "pagesCatalogByteEqualRaw": true,
+    "catalogSHA256": "51f21a0e303309601fab11cd037bf99b4444107d10cfa2fca6d16e9f6746fed3",
+    "otherPublicOrderUnchanged": true,
+    "frozenCatalogByteEqualRaw": true
+  },
+  "anonymousHTTP": {
+    "status": "pass",
+    "paths": [
+      {
+        "url": "https://github.com/skyelan1999/aide-pkg-terminal/releases/download/v1.6.0/SHA256SUMS",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 95,
+        "sha256": "b97260c6c2df662d6e60fb2516648fd7d25a83f47724cdca9925d64b44772729",
+        "redirects": 1
+      },
+      {
+        "url": "https://github.com/skyelan1999/aide-pkg-terminal/releases/download/v1.6.0/aide-pkg-terminal-v1.6.0.zip",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 1071482,
+        "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+        "redirects": 1
+      },
+      {
+        "url": "https://raw.githubusercontent.com/skyelan1999/aide-pkg-shop/943f6a90f08c4f5ba09e4d09031247b64ee29295/catalog.json",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 206831,
+        "sha256": "e4cb293b0b6e7863ca05ea85f8c412f6301344b93cca56d870212897b1573579",
+        "redirects": 0
+      },
+      {
+        "url": "https://raw.githubusercontent.com/skyelan1999/aide-pkg-shop/main/catalog.json",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 208975,
+        "sha256": "51f21a0e303309601fab11cd037bf99b4444107d10cfa2fca6d16e9f6746fed3",
+        "redirects": 0
+      },
+      {
+        "url": "https://api.github.com/repos/skyelan1999/aide-pkg-shop/commits/582effee8fc2530b6c552ff3fad24ef9d519dbae",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 131566,
+        "sha256": "c44780ca32259ca07fd1709cb13f440bbc126ebbf695a0e4fd1f9f57fc5c45dd",
+        "redirects": 0
+      },
+      {
+        "url": "https://skyelan1999.github.io/aide-pkg-shop/catalog.json",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 208975,
+        "sha256": "51f21a0e303309601fab11cd037bf99b4444107d10cfa2fca6d16e9f6746fed3",
+        "redirects": 0
+      },
+      {
+        "url": "https://skyelan1999.github.io/aide-pkg-shop/",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 3093,
+        "sha256": "89dd4a378d3673388b0fb8f7b9d6bd1f3dafc07846b032f6747e46c2052621b7",
+        "redirects": 0
+      },
+      {
+        "url": "https://api.github.com/repos/skyelan1999/aide-pkg-terminal/releases/tags/v1.6.0",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 7083,
+        "sha256": "83b0531ad1805596a6f971276a1248fb6c22c3b571033b9c039e643a5fa3e38b",
+        "redirects": 0
+      },
+      {
+        "url": "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.6.0",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 159862,
+        "sha256": "64f7675a0e8fa824882a4087017bfeaeef3494a1e3d52bf74c3f03150e84c610",
+        "redirects": 0
+      },
+      {
+        "url": "https://github.com/skyelan1999/aide-pkg-terminal/releases/latest",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "redirects": 1
+      },
+      {
+        "url": "https://raw.githubusercontent.com/skyelan1999/aide-pkg-shop/582effee8fc2530b6c552ff3fad24ef9d519dbae/catalog.json",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 208975,
+        "sha256": "51f21a0e303309601fab11cd037bf99b4444107d10cfa2fca6d16e9f6746fed3",
+        "redirects": 0
+      },
+      {
+        "url": "https://skyelan1999.github.io/aide-pkg-shop/packages/terminal/1.6.0-c682f56ff469.zip",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 1071482,
+        "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+        "redirects": 0
+      },
+      {
+        "url": "https://raw.githubusercontent.com/skyelan1999/aide-pkg-shop/582effee8fc2530b6c552ff3fad24ef9d519dbae/packages/terminal/1.6.0-c682f56ff469.zip",
+        "http": 200,
+        "sslVerifyResult": 0,
+        "curlExit": 0,
+        "bodyBytes": 1071482,
+        "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+        "redirects": 0
+      }
+    ],
+    "completedUTC": "2026-11-02T04:56:01.930107+00:00",
+    "credentialMode": "anonymous curl -q; no Authorization/cookie/netrc, credential environment removed",
+    "transport": "process-local CONNECT/DoH, normal end-to-end TLS certificate verification; no system network changes"
+  },
+  "validation": {
+    "sourceCases": 56,
+    "extractedFinalZIPCases": 53,
+    "realX11RenderCases": 2,
+    "browserLayoutCells": 4,
+    "originalZIPAppDaemonRaceCases": 1,
+    "originalZIPAppDaemonRaceSeconds": 3.5,
+    "additionalActualHostThemeCells": 12,
+    "additionalThemeEvidence": "terminal-ui-themes.json"
+  },
+  "limits": [
+    "Linux virtual X Server is actual rendering, not native XQuartz/Windows/customer X Server acceptance",
+    "Physical serial and customer devices are not run",
+    "Publication did not restart production or alter existing session data"
+  ]
+}

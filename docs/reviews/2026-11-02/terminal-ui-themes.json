@@ -1,0 +1,1471 @@
+{
+  "status": "pass",
+  "completedUTC": "2026-11-02T05:22:10.924807+00:00",
+  "matrix": {
+    "blue": "专业 / Professional",
+    "comfort": "舒适 / Comfort",
+    "green": "经典 / Classic",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 1000
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ]
+  },
+  "labelCorrection": "Previous blue/comfort eight-cell runtime results preserved; Comfort label corrected from Classic to Comfort using actual host locale/settings mapping. Only missing green Classic four cells were additionally executed.",
+  "labelProvenance": [
+    {
+      "path": "internal/server/web/locales/en.js",
+      "sha256": "f4022e3ab69a55d00976891094a7c6040da5889415e9ad59f6baa72c17bb8b5f"
+    },
+    {
+      "path": "internal/server/web/settings-init.js",
+      "sha256": "768c52b53eadcf22f259661691c4be773c605b8ff9a164d1fbab77be9ac4f0ae"
+    }
+  ],
+  "sameCSSAndBridgeBytesAcrossRuns": true,
+  "publishedZIP": {
+    "sha256": "c682f56ff469212b8da7f5e4e9e25052d5d8248c3f298345611558578c2b149b",
+    "htmlSHA256": "7cfe8ae3fbb926c449990484e91c4b3ec8fe37e11041d62ac2c0e742be5bbbd5"
+  },
+  "sourceInputHashes": [
+    {
+      "name": "index.html",
+      "bytes": 67909,
+      "sha256": "99c829a5a8286ee832b6e686d44bb3abf8c04e9d053c63a00d1ba7851f09d51c"
+    },
+    {
+      "name": "plugin-workbench.js",
+      "bytes": 18498,
+      "sha256": "6941e5aa1a533d7d8ba38a51cb22b978e3cc3709b3ea45fc5283ebbb4a445b8b"
+    },
+    {
+      "name": "crash-monitor.css",
+      "bytes": 2249,
+      "sha256": "eafa87d79d14cef796f64089340f4d12196334f0a16e6fbe1c71d70a7dd1c237"
+    },
+    {
+      "name": "themes/dark/tokens.css",
+      "bytes": 3483,
+      "sha256": "c7d71a55dd8a737b16b1c11964e5aac3bcf2238be869e5b7840ae82182cce38a"
+    },
+    {
+      "name": "themes/light/tokens.css",
+      "bytes": 3414,
+      "sha256": "9a11f5083e4a5023e099826ffdceecd132c7696a6139d09032a5e3edefdc29d6"
+    },
+    {
+      "name": "themes/green.css",
+      "bytes": 4383,
+      "sha256": "4b03ea70fa72544f95ee22f9ee1793dc642e1e17f24e21c2327e5edfb6807493"
+    },
+    {
+      "name": "themes/comfort.css",
+      "bytes": 4161,
+      "sha256": "8a0da9b02759b26ceb6ffeb46d9611289b882fc05375b12716e8b5928baee763"
+    },
+    {
+      "name": "style.css",
+      "bytes": 209706,
+      "sha256": "373658fefa1ab2ed0aefbb91f369ca7b874dbac319013fa4bca1dc460c9d480e"
+    },
+    {
+      "name": "urdf-preview.css",
+      "bytes": 8242,
+      "sha256": "3aafc41cf89c55fbec906c1cb4365aebeb5b28c683441364ba8532d3641926aa"
+    },
+    {
+      "name": "assistant-call.css",
+      "bytes": 1815,
+      "sha256": "360d1e0400dc46f884e903315bcad5e0e021faf78827219f6b3ab95676e72b77"
+    },
+    {
+      "name": "assistant-memory.css",
+      "bytes": 1941,
+      "sha256": "5d39b02e3b427889717b14f09ce7a37b1df236a5693b17efb4fff00067a77c18"
+    },
+    {
+      "name": "management.css",
+      "bytes": 2492,
+      "sha256": "ecc3859f3aa63d79a2e6c5510c21c519a95ee28fe0a607a717543c53ce29b737"
+    },
+    {
+      "name": "macos.css",
+      "bytes": 78138,
+      "sha256": "39422da57c7a7067a589dc35c6ec5a3073ded88e3bff5a4dfead317b5b2315e3"
+    },
+    {
+      "name": "experience.css",
+      "bytes": 8127,
+      "sha256": "321935a2f8257ce6112403f37d1786c17244d8c9210c1c5ba8bbc8d8c834efd1"
+    },
+    {
+      "name": "sanctum.css",
+      "bytes": 19809,
+      "sha256": "dce2acfb70dffa7f90df97409c8a5f45de9b835ab5937cfe44124687f61f352e"
+    },
+    {
+      "name": "conversation.css",
+      "bytes": 12194,
+      "sha256": "585847cdd2e5f13764051b6df089b8b849443a24b74595cf0eaa4fac251dcef9"
+    },
+    {
+      "name": "workbench.css",
+      "bytes": 24809,
+      "sha256": "a61365e47a6a62e119c5f7187b10d4f67b1f4714566b8d07a2d119343d5531ea"
+    },
+    {
+      "name": "message-center.css",
+      "bytes": 17929,
+      "sha256": "dabb22fc7036ed2908ce5e29e1ffd8601d57c1249ddc81cbe03303016f4f711f"
+    },
+    {
+      "name": "plugin-market.css",
+      "bytes": 4370,
+      "sha256": "926cae9b93a7a69f6f1421ecf9a77bdd7f036eaf7c88b656a007be1006dc5fb8"
+    },
+    {
+      "name": "plugin-workbench.css",
+      "bytes": 2318,
+      "sha256": "ab4f69caf3556c7a347f5d20fce89098bdc1a9e49813aaab8e0ccd055a1c24cd"
+    }
+  ],
+  "checks": [
+    {
+      "cell": "blue-light-1440",
+      "palette": "blue",
+      "mode": "light",
+      "width": 1440,
+      "height": 1000,
+      "actualHostColors": {
+        "bg": "#f1f3f6",
+        "panel": "#fafbfd",
+        "surface": "#fcfcfd",
+        "field": "#fcfcfd",
+        "text": "#293039",
+        "muted": "#596574",
+        "line": "#e1e4e9",
+        "field-border": "#cbd1da",
+        "brand-hi": "#42617f",
+        "brand-text": "#3e638b",
+        "on-brand": "#ffffff",
+        "chip-bg": "#edf1f6",
+        "selected": "#e2e9f2",
+        "focus-ring": "#356fae",
+        "danger": "#a83c36",
+        "warn": "#755512",
+        "success": "#4c765a"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 490,
+        "y": 355.46875,
+        "width": 460,
+        "height": 289.0625
+      },
+      "x11Bounds": {
+        "x": 490,
+        "y": 16,
+        "width": 460,
+        "height": 968
+      },
+      "telnetBounds": {
+        "root": 1440,
+        "viewport": 1440,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 886.796875,
+            "right": 924.796875
+          },
+          {
+            "id": "interrupt",
+            "x": 927.796875,
+            "right": 977.09375
+          },
+          {
+            "id": "logging",
+            "x": 1083,
+            "right": 1141
+          },
+          {
+            "id": "logs",
+            "x": 1144,
+            "right": 1202
+          },
+          {
+            "id": "copy-session",
+            "x": 1219,
+            "right": 1277
+          },
+          {
+            "id": "reconnect-session",
+            "x": 1280,
+            "right": 1338
+          },
+          {
+            "id": "close-session",
+            "x": 1341,
+            "right": 1379
+          },
+          {
+            "id": "delete-session",
+            "x": 1382,
+            "right": 1420
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        },
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 12.868124117221656,
+      "copyHintContrast": 5.731928225728463,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "blue-light-390",
+      "palette": "blue",
+      "mode": "light",
+      "width": 390,
+      "height": 844,
+      "actualHostColors": {
+        "bg": "#f1f3f6",
+        "panel": "#fafbfd",
+        "surface": "#fcfcfd",
+        "field": "#fcfcfd",
+        "text": "#293039",
+        "muted": "#596574",
+        "line": "#e1e4e9",
+        "field-border": "#cbd1da",
+        "brand-hi": "#42617f",
+        "brand-text": "#3e638b",
+        "on-brand": "#ffffff",
+        "chip-bg": "#edf1f6",
+        "selected": "#e2e9f2",
+        "focus-ring": "#356fae",
+        "danger": "#a83c36",
+        "warn": "#755512",
+        "success": "#4c765a"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 12,
+        "y": 274.125,
+        "width": 366,
+        "height": 295.75
+      },
+      "x11Bounds": {
+        "x": 12,
+        "y": 16,
+        "width": 366,
+        "height": 812
+      },
+      "telnetBounds": {
+        "root": 390,
+        "viewport": 390,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 12,
+            "right": 48
+          },
+          {
+            "id": "interrupt",
+            "x": 51,
+            "right": 98.296875
+          },
+          {
+            "id": "logging",
+            "x": 198.203125,
+            "right": 254.203125
+          },
+          {
+            "id": "logs",
+            "x": 257.203125,
+            "right": 313.203125
+          },
+          {
+            "id": "copy-session",
+            "x": 12,
+            "right": 68
+          },
+          {
+            "id": "reconnect-session",
+            "x": 71,
+            "right": 127
+          },
+          {
+            "id": "close-session",
+            "x": 130,
+            "right": 166
+          },
+          {
+            "id": "delete-session",
+            "x": 169,
+            "right": 205
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        },
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 12.868124117221656,
+      "copyHintContrast": 5.731928225728463,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "blue-dark-1440",
+      "palette": "blue",
+      "mode": "dark",
+      "width": 1440,
+      "height": 1000,
+      "actualHostColors": {
+        "bg": "#18202c",
+        "panel": "#1e2836",
+        "surface": "#243040",
+        "field": "#202b3a",
+        "text": "#dfe3e9",
+        "muted": "#b0b7c1",
+        "line": "#344254",
+        "field-border": "#485a70",
+        "brand-hi": "#416184",
+        "brand-text": "#aac2de",
+        "on-brand": "#ffffff",
+        "chip-bg": "#2e3947",
+        "selected": "#33445a",
+        "focus-ring": "#8aadd3",
+        "danger": "#e18c84",
+        "warn": "#d5b375",
+        "success": "#83b393"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 490,
+        "y": 355.46875,
+        "width": 460,
+        "height": 289.0625
+      },
+      "x11Bounds": {
+        "x": 490,
+        "y": 16,
+        "width": 460,
+        "height": 968
+      },
+      "telnetBounds": {
+        "root": 1440,
+        "viewport": 1440,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 886.796875,
+            "right": 924.796875
+          },
+          {
+            "id": "interrupt",
+            "x": 927.796875,
+            "right": 977.09375
+          },
+          {
+            "id": "logging",
+            "x": 1083,
+            "right": 1141
+          },
+          {
+            "id": "logs",
+            "x": 1144,
+            "right": 1202
+          },
+          {
+            "id": "copy-session",
+            "x": 1219,
+            "right": 1277
+          },
+          {
+            "id": "reconnect-session",
+            "x": 1280,
+            "right": 1338
+          },
+          {
+            "id": "close-session",
+            "x": 1341,
+            "right": 1379
+          },
+          {
+            "id": "delete-session",
+            "x": 1382,
+            "right": 1420
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        },
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 11.545322351303323,
+      "copyHintContrast": 7.358037009515553,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "blue-dark-390",
+      "palette": "blue",
+      "mode": "dark",
+      "width": 390,
+      "height": 844,
+      "actualHostColors": {
+        "bg": "#18202c",
+        "panel": "#1e2836",
+        "surface": "#243040",
+        "field": "#202b3a",
+        "text": "#dfe3e9",
+        "muted": "#b0b7c1",
+        "line": "#344254",
+        "field-border": "#485a70",
+        "brand-hi": "#416184",
+        "brand-text": "#aac2de",
+        "on-brand": "#ffffff",
+        "chip-bg": "#2e3947",
+        "selected": "#33445a",
+        "focus-ring": "#8aadd3",
+        "danger": "#e18c84",
+        "warn": "#d5b375",
+        "success": "#83b393"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 12,
+        "y": 274.125,
+        "width": 366,
+        "height": 295.75
+      },
+      "x11Bounds": {
+        "x": 12,
+        "y": 16,
+        "width": 366,
+        "height": 812
+      },
+      "telnetBounds": {
+        "root": 390,
+        "viewport": 390,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 12,
+            "right": 48
+          },
+          {
+            "id": "interrupt",
+            "x": 51,
+            "right": 98.296875
+          },
+          {
+            "id": "logging",
+            "x": 198.203125,
+            "right": 254.203125
+          },
+          {
+            "id": "logs",
+            "x": 257.203125,
+            "right": 313.203125
+          },
+          {
+            "id": "copy-session",
+            "x": 12,
+            "right": 68
+          },
+          {
+            "id": "reconnect-session",
+            "x": 71,
+            "right": 127
+          },
+          {
+            "id": "close-session",
+            "x": 130,
+            "right": 166
+          },
+          {
+            "id": "delete-session",
+            "x": 169,
+            "right": 205
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        },
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 11.545322351303323,
+      "copyHintContrast": 7.358037009515553,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "comfort-light-1440",
+      "palette": "comfort",
+      "mode": "light",
+      "width": 1440,
+      "height": 1000,
+      "actualHostColors": {
+        "bg": "#f3f3f0",
+        "panel": "#f9f9f6",
+        "surface": "#fbfbf8",
+        "field": "#fbfbf8",
+        "text": "#292b26",
+        "muted": "#5d6057",
+        "line": "#deded5",
+        "field-border": "#c9cabe",
+        "brand-hi": "#566a50",
+        "brand-text": "#53654c",
+        "on-brand": "#ffffff",
+        "chip-bg": "#e8ebe2",
+        "selected": "#e1e6db",
+        "focus-ring": "#63745d",
+        "danger": "#a83c36",
+        "warn": "#755512",
+        "success": "#557453"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 490,
+        "y": 355.46875,
+        "width": 460,
+        "height": 289.0625
+      },
+      "x11Bounds": {
+        "x": 490,
+        "y": 16,
+        "width": 460,
+        "height": 968
+      },
+      "telnetBounds": {
+        "root": 1440,
+        "viewport": 1440,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 886.796875,
+            "right": 924.796875
+          },
+          {
+            "id": "interrupt",
+            "x": 927.796875,
+            "right": 977.09375
+          },
+          {
+            "id": "logging",
+            "x": 1083,
+            "right": 1141
+          },
+          {
+            "id": "logs",
+            "x": 1144,
+            "right": 1202
+          },
+          {
+            "id": "copy-session",
+            "x": 1219,
+            "right": 1277
+          },
+          {
+            "id": "reconnect-session",
+            "x": 1280,
+            "right": 1338
+          },
+          {
+            "id": "close-session",
+            "x": 1341,
+            "right": 1379
+          },
+          {
+            "id": "delete-session",
+            "x": 1382,
+            "right": 1420
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        },
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 13.563620618632513,
+      "copyHintContrast": 6.0768458497279525,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "comfort-light-390",
+      "palette": "comfort",
+      "mode": "light",
+      "width": 390,
+      "height": 844,
+      "actualHostColors": {
+        "bg": "#f3f3f0",
+        "panel": "#f9f9f6",
+        "surface": "#fbfbf8",
+        "field": "#fbfbf8",
+        "text": "#292b26",
+        "muted": "#5d6057",
+        "line": "#deded5",
+        "field-border": "#c9cabe",
+        "brand-hi": "#566a50",
+        "brand-text": "#53654c",
+        "on-brand": "#ffffff",
+        "chip-bg": "#e8ebe2",
+        "selected": "#e1e6db",
+        "focus-ring": "#63745d",
+        "danger": "#a83c36",
+        "warn": "#755512",
+        "success": "#557453"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 12,
+        "y": 274.125,
+        "width": 366,
+        "height": 295.75
+      },
+      "x11Bounds": {
+        "x": 12,
+        "y": 16,
+        "width": 366,
+        "height": 812
+      },
+      "telnetBounds": {
+        "root": 390,
+        "viewport": 390,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 12,
+            "right": 48
+          },
+          {
+            "id": "interrupt",
+            "x": 51,
+            "right": 98.296875
+          },
+          {
+            "id": "logging",
+            "x": 198.203125,
+            "right": 254.203125
+          },
+          {
+            "id": "logs",
+            "x": 257.203125,
+            "right": 313.203125
+          },
+          {
+            "id": "copy-session",
+            "x": 12,
+            "right": 68
+          },
+          {
+            "id": "reconnect-session",
+            "x": 71,
+            "right": 127
+          },
+          {
+            "id": "close-session",
+            "x": 130,
+            "right": 166
+          },
+          {
+            "id": "delete-session",
+            "x": 169,
+            "right": 205
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        },
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 13.563620618632513,
+      "copyHintContrast": 6.0768458497279525,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "comfort-dark-1440",
+      "palette": "comfort",
+      "mode": "dark",
+      "width": 1440,
+      "height": 1000,
+      "actualHostColors": {
+        "bg": "#20231f",
+        "panel": "#22231f",
+        "surface": "#282923",
+        "field": "#252620",
+        "text": "#dee4da",
+        "muted": "#aeb0a4",
+        "line": "#373831",
+        "field-border": "#46483e",
+        "brand-hi": "#b8c8a8",
+        "brand-text": "#c3d0b5",
+        "on-brand": "#22251e",
+        "chip-bg": "#30332b",
+        "selected": "#34382e",
+        "focus-ring": "#b8c8a8",
+        "danger": "#e18c84",
+        "warn": "#d5b375",
+        "success": "#a4c59a"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 490,
+        "y": 355.46875,
+        "width": 460,
+        "height": 289.0625
+      },
+      "x11Bounds": {
+        "x": 490,
+        "y": 16,
+        "width": 460,
+        "height": 968
+      },
+      "telnetBounds": {
+        "root": 1440,
+        "viewport": 1440,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 886.796875,
+            "right": 924.796875
+          },
+          {
+            "id": "interrupt",
+            "x": 927.796875,
+            "right": 977.09375
+          },
+          {
+            "id": "logging",
+            "x": 1083,
+            "right": 1141
+          },
+          {
+            "id": "logs",
+            "x": 1144,
+            "right": 1202
+          },
+          {
+            "id": "copy-session",
+            "x": 1219,
+            "right": 1277
+          },
+          {
+            "id": "reconnect-session",
+            "x": 1280,
+            "right": 1338
+          },
+          {
+            "id": "close-session",
+            "x": 1341,
+            "right": 1379
+          },
+          {
+            "id": "delete-session",
+            "x": 1382,
+            "right": 1420
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        },
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 12.208621541549945,
+      "copyHintContrast": 7.187041820350212,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "comfort-dark-390",
+      "palette": "comfort",
+      "mode": "dark",
+      "width": 390,
+      "height": 844,
+      "actualHostColors": {
+        "bg": "#20231f",
+        "panel": "#22231f",
+        "surface": "#282923",
+        "field": "#252620",
+        "text": "#dee4da",
+        "muted": "#aeb0a4",
+        "line": "#373831",
+        "field-border": "#46483e",
+        "brand-hi": "#b8c8a8",
+        "brand-text": "#c3d0b5",
+        "on-brand": "#22251e",
+        "chip-bg": "#30332b",
+        "selected": "#34382e",
+        "focus-ring": "#b8c8a8",
+        "danger": "#e18c84",
+        "warn": "#d5b375",
+        "success": "#a4c59a"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 12,
+        "y": 274.125,
+        "width": 366,
+        "height": 295.75
+      },
+      "x11Bounds": {
+        "x": 12,
+        "y": 16,
+        "width": 366,
+        "height": 812
+      },
+      "telnetBounds": {
+        "root": 390,
+        "viewport": 390,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 12,
+            "right": 48
+          },
+          {
+            "id": "interrupt",
+            "x": 51,
+            "right": 98.296875
+          },
+          {
+            "id": "logging",
+            "x": 198.203125,
+            "right": 254.203125
+          },
+          {
+            "id": "logs",
+            "x": 257.203125,
+            "right": 313.203125
+          },
+          {
+            "id": "copy-session",
+            "x": 12,
+            "right": 68
+          },
+          {
+            "id": "reconnect-session",
+            "x": 71,
+            "right": 127
+          },
+          {
+            "id": "close-session",
+            "x": 130,
+            "right": 166
+          },
+          {
+            "id": "delete-session",
+            "x": 169,
+            "right": 205
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        },
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 12.208621541549945,
+      "copyHintContrast": 7.187041820350212,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "green-light-1440",
+      "palette": "green",
+      "mode": "light",
+      "width": 1440,
+      "height": 1000,
+      "actualHostColors": {
+        "bg": "#f4f9f5",
+        "panel": "#ffffff",
+        "surface": "#ffffff",
+        "field": "#ffffff",
+        "text": "#0f2318",
+        "muted": "#3f5a49",
+        "line": "#d2e3d8",
+        "field-border": "#6f8a7a",
+        "brand-hi": "#176040",
+        "brand-text": "#17603c",
+        "on-brand": "#ffffff",
+        "chip-bg": "#e3f0e7",
+        "selected": "#d3e9d8",
+        "focus-ring": "#1a6b42",
+        "danger": "#b3261e",
+        "warn": "#8a5a00",
+        "success": "#1a6b42"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 490,
+        "y": 355.46875,
+        "width": 460,
+        "height": 289.0625
+      },
+      "x11Bounds": {
+        "x": 490,
+        "y": 16,
+        "width": 460,
+        "height": 968
+      },
+      "telnetBounds": {
+        "root": 1440,
+        "viewport": 1440,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 886.796875,
+            "right": 924.796875
+          },
+          {
+            "id": "interrupt",
+            "x": 927.796875,
+            "right": 977.09375
+          },
+          {
+            "id": "logging",
+            "x": 1083,
+            "right": 1141
+          },
+          {
+            "id": "logs",
+            "x": 1144,
+            "right": 1202
+          },
+          {
+            "id": "copy-session",
+            "x": 1219,
+            "right": 1277
+          },
+          {
+            "id": "reconnect-session",
+            "x": 1280,
+            "right": 1338
+          },
+          {
+            "id": "close-session",
+            "x": 1341,
+            "right": 1379
+          },
+          {
+            "id": "delete-session",
+            "x": 1382,
+            "right": 1420
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        },
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 16.484630687530096,
+      "copyHintContrast": 7.581156485796803,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "green-light-390",
+      "palette": "green",
+      "mode": "light",
+      "width": 390,
+      "height": 844,
+      "actualHostColors": {
+        "bg": "#f4f9f5",
+        "panel": "#ffffff",
+        "surface": "#ffffff",
+        "field": "#ffffff",
+        "text": "#0f2318",
+        "muted": "#3f5a49",
+        "line": "#d2e3d8",
+        "field-border": "#6f8a7a",
+        "brand-hi": "#176040",
+        "brand-text": "#17603c",
+        "on-brand": "#ffffff",
+        "chip-bg": "#e3f0e7",
+        "selected": "#d3e9d8",
+        "focus-ring": "#1a6b42",
+        "danger": "#b3261e",
+        "warn": "#8a5a00",
+        "success": "#1a6b42"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 12,
+        "y": 274.125,
+        "width": 366,
+        "height": 295.75
+      },
+      "x11Bounds": {
+        "x": 12,
+        "y": 16,
+        "width": 366,
+        "height": 812
+      },
+      "telnetBounds": {
+        "root": 390,
+        "viewport": 390,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 12,
+            "right": 48
+          },
+          {
+            "id": "interrupt",
+            "x": 51,
+            "right": 98.296875
+          },
+          {
+            "id": "logging",
+            "x": 198.203125,
+            "right": 254.203125
+          },
+          {
+            "id": "logs",
+            "x": 257.203125,
+            "right": 313.203125
+          },
+          {
+            "id": "copy-session",
+            "x": 12,
+            "right": 68
+          },
+          {
+            "id": "reconnect-session",
+            "x": 71,
+            "right": 127
+          },
+          {
+            "id": "close-session",
+            "x": 130,
+            "right": 166
+          },
+          {
+            "id": "delete-session",
+            "x": 169,
+            "right": 205
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        },
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 16.484630687530096,
+      "copyHintContrast": 7.581156485796803,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "green-dark-1440",
+      "palette": "green",
+      "mode": "dark",
+      "width": 1440,
+      "height": 1000,
+      "actualHostColors": {
+        "bg": "#111513",
+        "panel": "#151a17",
+        "surface": "#1a241d",
+        "field": "#111713",
+        "text": "#e4eae5",
+        "muted": "#839087",
+        "line": "#29312c",
+        "field-border": "#29312c",
+        "brand-hi": "#cdf9dd",
+        "brand-text": "#c3edd1",
+        "on-brand": "#14291b",
+        "chip-bg": "#203026",
+        "selected": "#283a2e",
+        "focus-ring": "#b4efcc",
+        "danger": "#ffc0af",
+        "warn": "#efa999",
+        "success": "#83d9a8"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 490,
+        "y": 355.46875,
+        "width": 460,
+        "height": 289.0625
+      },
+      "x11Bounds": {
+        "x": 490,
+        "y": 16,
+        "width": 460,
+        "height": 968
+      },
+      "telnetBounds": {
+        "root": 1440,
+        "viewport": 1440,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 886.796875,
+            "right": 924.796875
+          },
+          {
+            "id": "interrupt",
+            "x": 927.796875,
+            "right": 977.09375
+          },
+          {
+            "id": "logging",
+            "x": 1083,
+            "right": 1141
+          },
+          {
+            "id": "logs",
+            "x": 1144,
+            "right": 1202
+          },
+          {
+            "id": "copy-session",
+            "x": 1219,
+            "right": 1277
+          },
+          {
+            "id": "reconnect-session",
+            "x": 1280,
+            "right": 1338
+          },
+          {
+            "id": "close-session",
+            "x": 1341,
+            "right": 1379
+          },
+          {
+            "id": "delete-session",
+            "x": 1382,
+            "right": 1420
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        },
+        {
+          "x": 517,
+          "right": 923,
+          "width": 406
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 14.428792404392782,
+      "copyHintContrast": 5.288700936181188,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    },
+    {
+      "cell": "green-dark-390",
+      "palette": "green",
+      "mode": "dark",
+      "width": 390,
+      "height": 844,
+      "actualHostColors": {
+        "bg": "#111513",
+        "panel": "#151a17",
+        "surface": "#1a241d",
+        "field": "#111713",
+        "text": "#e4eae5",
+        "muted": "#839087",
+        "line": "#29312c",
+        "field-border": "#29312c",
+        "brand-hi": "#cdf9dd",
+        "brand-text": "#c3edd1",
+        "on-brand": "#14291b",
+        "chip-bg": "#203026",
+        "selected": "#283a2e",
+        "focus-ring": "#b4efcc",
+        "danger": "#ffc0af",
+        "warn": "#efa999",
+        "success": "#83d9a8"
+      },
+      "appliedKeys": [
+        "bg",
+        "panel",
+        "text",
+        "muted",
+        "line"
+      ],
+      "copyBounds": {
+        "x": 12,
+        "y": 274.125,
+        "width": 366,
+        "height": 295.75
+      },
+      "x11Bounds": {
+        "x": 12,
+        "y": 16,
+        "width": 366,
+        "height": 812
+      },
+      "telnetBounds": {
+        "root": 390,
+        "viewport": 390,
+        "buttons": [
+          {
+            "id": "find",
+            "x": 12,
+            "right": 48
+          },
+          {
+            "id": "interrupt",
+            "x": 51,
+            "right": 98.296875
+          },
+          {
+            "id": "logging",
+            "x": 198.203125,
+            "right": 254.203125
+          },
+          {
+            "id": "logs",
+            "x": 257.203125,
+            "right": 313.203125
+          },
+          {
+            "id": "copy-session",
+            "x": 12,
+            "right": 68
+          },
+          {
+            "id": "reconnect-session",
+            "x": 71,
+            "right": 127
+          },
+          {
+            "id": "close-session",
+            "x": 130,
+            "right": 166
+          },
+          {
+            "id": "delete-session",
+            "x": 169,
+            "right": 205
+          }
+        ]
+      },
+      "fieldBounds": [
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        },
+        {
+          "x": 33,
+          "right": 357,
+          "width": 324
+        }
+      ],
+      "visibilityRoundTrip": true,
+      "realTelnetKeyboardAndAccessibleOutput": true,
+      "copyTextContrast": 14.428792404392782,
+      "copyHintContrast": 5.288700936181188,
+      "horizontalOverflow": false,
+      "scope": "Actual unchanged generated HTML + real Sessions/Telnet; host bridge and workspace profile are fixtures"
+    }
+  ],
+  "resources": {
+    "twoSequentialSinglePageRuns": true,
+    "rendererProcessLimit": 1,
+    "nicePriority": 10,
+    "memoryBudgetMiB": 768,
+    "observedOwnDescendantRSSPeakMiB": 595.28125,
+    "sampling": "ps descendant RSS, not a kernel cgroup limit"
+  },
+  "limitations": [
+    "Actual unchanged generated plugin HTML with real Sessions and loopback Telnet; bridge and saved workspace SSH profile remain fixtures",
+    "Colors read via browser getComputedStyle from actual host CSS in index stylesheet order, not synthetic or personal inline colors",
+    "Not installed-Aide/Safari/native X Server acceptance",
+    "No tracked source/package/CI changes, no production access, no Go or unit suite rerun"
+  ],
+  "sourceHead": "8983acea52925677104511d811e9716c66e710e7",
+  "representativeScreenshots": [
+    "terminal-ui/classic-dark-mobile-x11.png",
+    "terminal-ui/comfort-light-mobile-copy.png"
+  ],
+  "manualReview": "Feature agent inspected one representative per12cells; root independently viewed the two retained mobile examples. X11 screenshot is scrolled to bottom controls."
+}

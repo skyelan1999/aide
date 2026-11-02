@@ -123,3 +123,21 @@ xauth evidence; SDK presence alone does not satisfy this runtime dependency.
 Native X Server and customer-device acceptance remain separate from isolated
 Linux fixtures. Terminal 1.6.0 requires market minimum Aide `0.1.18.0 RC2`, without
 a source-compatibility bypass for older releases.
+
+### Source changes during full verification
+
+A full profile fails if its ending source fingerprint differs from its starting
+fingerprint, even when every check exits zero. Do not edit that receipt to pass
+or use it to authorize a release. Inspect the exact Git changes first; preserve
+untracked files and any distinct edits. A byte-identical numbered Go copy became
+visible during the Terminal release preflight: all318 checks succeeded, but the
+profile correctly failed its input-stability guard. The copy was retained and
+the complete official profile rerun from a clean Git checkout outside the
+sync-managed directory, with the same original input fingerprint. See the
+[source stability receipt](../reviews/2026-11-02/terminal-source-stability.json).
+
+For a similar incident, freeze the reviewed source in a clean checkout, retain
+the failed run and any extra file, and rerun the existing full profile. Moving
+verification out of a File Provider directory does not establish the provider
+as the root cause; identify any actual cause separately. Do not disable sync or
+change user system settings as part of release verification.
