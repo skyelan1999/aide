@@ -74,8 +74,40 @@ dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
 .workbench-background{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:strict;display:none}
 html[data-background=aurora] .workbench-background,html[data-background=local] .workbench-background,html[data-background=studio] .workbench-background{display:block}
 html[data-background]:not([data-background=off]) body{isolation:isolate;background:transparent}
-html[data-background]:not([data-background=off]) :is(.sidebar,.file-panel){background:color-mix(in srgb,var(--panel) 95%,transparent)}
-html[data-background]:not([data-background=off]) .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
+/* Shared materials sit after sanctum.css: let the backdrop softly show through
+   without changing text, fields, code surfaces, or primary button opacity. */
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .sidebar,.topbar,.file-panel,.plugin-panel,#reminder-center,
+  .composer,.settings-sheet,.settings-sheet.sheet-wide,dialog,
+  .strategy-menu,.search-results,.model-picker-menu{
+    -webkit-backdrop-filter:saturate(115%) blur(16px);
+    backdrop-filter:saturate(115%) blur(16px);
+  }
+  .sidebar,.file-panel,.plugin-panel,#reminder-center{background:color-mix(in srgb,var(--panel-alt) 84%,transparent)}
+  .topbar{background:color-mix(in srgb,var(--panel) 78%,transparent)}
+  .settings-sheet,.settings-sheet.sheet-wide,dialog{background:color-mix(in srgb,var(--panel) 88%,transparent)}
+  .composer{background:color-mix(in srgb,var(--panel) 92%,transparent)}
+  .strategy-menu,.search-results,.model-picker-menu{background:color-mix(in srgb,var(--panel) 94%,transparent)}
+  .settings-nav{background:color-mix(in srgb,var(--panel-alt) 28%,transparent)}
+  .file-panel-heading,.plugin-panel-heading,.sheet-head{background:linear-gradient(120deg,color-mix(in srgb,var(--panel) 48%,transparent),color-mix(in srgb,var(--panel-alt) 48%,transparent))}
+}
+/* Keep these after material rules, including when a background is enabled. */
+@media (prefers-reduced-transparency:reduce),(forced-colors:active){
+  .sidebar,.topbar,.file-panel,.plugin-panel,#reminder-center,
+  .composer,.settings-sheet,.settings-sheet.sheet-wide,dialog,
+  .strategy-menu,.search-results,.model-picker-menu,
+  .settings-nav,.file-panel-heading,.plugin-panel-heading,.sheet-head{
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+    background:var(--panel);
+  }
+}
+@media (forced-colors:active){
+  .sidebar,.topbar,.file-panel,.plugin-panel,#reminder-center,
+  .composer,.settings-sheet,.settings-sheet.sheet-wide,dialog,
+  .strategy-menu,.search-results,.model-picker-menu,
+  .settings-nav,.file-panel-heading,.plugin-panel-heading,.sheet-head{background:Canvas}
+}
 /* Continue the background around the input; the composer retains its reading surface. */
 html[data-background]:not([data-background=off]) .composer-wrap{background:transparent}
 .workbench-background{background:var(--bg)}

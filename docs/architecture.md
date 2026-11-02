@@ -516,3 +516,8 @@ A protocol1 workbench may opt into its own registered tools through manifest.wor
 启用插件可用 `workbench.fileHandler` 声明扩展名、优先级及可编辑性。工作区和流式引用优先匹配插件，停用或插件报告故障回落原生，标题栏可手动切换。iframe仅获当前文件/同目录资源的分块桥，不接收令牌；修改先暂存，用户在宿主保存，经来源RW和原版本检查后原子替换。详见[文件处理插件接口](architecture/plugin-file-handlers.md)。
 
 插件自动安装开关位于「设置 → AI 与权限 → AI 管理权限 → 插件路由」，仍使用 `/api/plugin-routing` 的实例级策略与 generation 并发校验。市场页只保留搜索、分类和按需求匹配；搜索匹配状态与设置保存状态分别显示。
+
+### 2026-11-03：工作台轻透明材质
+
+- `web/workbench.css` 在既有表现层之后统一侧栏、顶栏、设置弹窗和导航的轻透明材质；侧栏84%、顶栏78%、弹窗88%的主题色与16px背景模糊配合。输入区92%、菜单94%，文字、输入字段、代码和主要按钮继续使用原有清晰表面，不对容器整体降低 opacity。背景关闭时沿用同一材质，背景资源和强度偏好不变。
+- 仅支持标准或 WebKit `backdrop-filter` 时启用；不支持时保留既有实色。系统减少透明度时取消模糊并恢复实色，强制颜色模式使用系统 Canvas。无新增动画、网络素材或设置项。验收边界见 `docs/tasks/ui-translucency-20261103.json`。

@@ -1,0 +1,76 @@
+{
+  "id": "ui-translucency-20261103",
+  "request": "你把UI看看能不能做的稍微透明化一些",
+  "baseline": "1b877aba824811143f2bf900f9dd70169a340488",
+  "initial_status": "",
+  "acceptance": [
+    "工作台和设置浮层适度透出背景，文字、输入、主按钮保持原色和清晰度",
+    "桌面和390px、三配色明暗模式无新增溢出，设置键盘操作保持可用",
+    "减少透明度、强制颜色和无毛玻璃支持环境保留实色表面"
+  ],
+  "scope": [
+    "internal/server/web/workbench.css",
+    "internal/server/web/index.html",
+    "docs/architecture.md",
+    "docs/tasks/ui-translucency-20261103.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "依据用户要求轻微提高透明感，保留布局和控件对比度。",
+      "evidence": [
+        "Issue #748",
+        "inspected macos.css / sanctum.css / workbench.css cascade"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅在工作台末层材质规则启用有限透明；保留不支持毛玻璃、减少透明度、强制颜色的实色回退。",
+      "evidence": [
+        "Issue #748",
+        "inspected macos.css / sanctum.css / workbench.css cascade"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "仅更新 workbench.css 共享材质与 index.html 资源版本；语义配色、布局、交互和用户偏好均不变。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "320项quick通过；Chromium和WebKit各6组明暗配色；390px、输入/键盘、背景切换与透明度辅助功能回退通过。WebKit模糊另以系统窗口截图确认。仅隔离生产组件，未冒充已解锁原生设置验收。",
+      "evidence": [
+        ".agent-state/ui-translucency/quick-result.json",
+        "fingerprint d463b66b3b1a157805fc8befec9321730ffc01691dcdac7dacb26147f2f93fa9",
+        ".agent-state/ui-translucency/browser-result.json",
+        ".agent-state/ui-translucency/webkit-os-dark.png",
+        ".agent-state/ui-translucency/webkit-os-light.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构说明记录材质参数、回退和无新增偏好。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅3个既有受控文件和1个任务记录；私有测试页/截图/日志置于忽略目录。后续关闭测试浏览器和服务器。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未推送或发布；接下来仅按用户本机UI请求进行增量源码构建更新。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore workbench.css and index.html from baseline 1b877aba; canonical rebuild only if locally deployed.",
+  "handoff": "",
+  "issue": "https://github.com/skyelan1999/aide/issues/748"
+}
