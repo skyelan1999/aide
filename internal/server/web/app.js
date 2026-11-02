@@ -10564,8 +10564,8 @@ async function ttsEdgeSynthOne(seg, overrideVoice, overrideProvider) {
   ttsPlayer._ctrl = ctrl;
   // 客户端 20s 硬超时：后端 sherpa 冷启动/edge 挂起时主动 abort，避免 fetch 永不返回卡死播放队列。
   const provider = overrideProvider || state.config?.ttsProvider || 'auto';
-  const timer = setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, provider === 'qwen' ? 60000 : 20000);
-  const voice = overrideVoice != null ? overrideVoice : ((state.config && state.config.ttsVoice) || '');
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, ['qwen','openai'].includes(provider) ? 60000 : 20000);
+  const voice = overrideVoice != null ? overrideVoice : (provider==='openai'?(state.config?.openaiTTSVoice||''):((state.config && state.config.ttsVoice) || ''));
   try {
     const res = await fetch('/api/tts/synthesize', {
       method: 'POST',
@@ -10590,7 +10590,7 @@ function ttsPlayOne(url, provider) {
     const a = ttsAudioElement();
     a.src=url;
     a.playbackRate=1;
-    if((provider || state.config?.ttsProvider)==='qwen'){a.playbackRate=window.aideAssistantCall?.active()?1:(Number(state.config?.ttsRate)||1);a.preservesPitch=true;}
+    if(['qwen','openai'].includes(provider || state.config?.ttsProvider)){a.playbackRate=window.aideAssistantCall?.active()?1:(Number(state.config?.ttsRate)||1);a.preservesPitch=true;}
     ttsPlayer._audio = a;
     let done = false;
     const generation=ttsPlayer.generation;
@@ -10668,7 +10668,7 @@ async function ttsSpeak(text, { awaitMode = false, colloquial = false, voice = n
     } catch (_) { spoken = text; }
   }
   const selected=provider||state.config?.ttsProvider||'auto';
-  const segs = selected==='qwen'?qwenTTSSegments(spoken):ttsSegments(spoken);
+  const segs = ['qwen','openai'].includes(selected)?qwenTTSSegments(spoken):ttsSegments(spoken);
   if (!segs.length || cancelled()) return;
   let index=0;
   try {
@@ -10685,7 +10685,7 @@ async function ttsSpeak(text, { awaitMode = false, colloquial = false, voice = n
     if(!cancelled())ttsPlaybackStatus('complete');
   } catch (error) {
     if(cancelled())return; // A user's interruption must never start another voice.
-    const fallback=selected!=='qwen'||state.config?.ttsBrowserFallback===true;
+    const fallback=!['qwen','openai'].includes(selected)||state.config?.ttsBrowserFallback===true;
     const reason=error.name==='AbortError'?t('语音合成超时'):String(error.message||t('语音播放失败'));
     showTTSError(reason+' · '+t(fallback?'已切换浏览器语音':'已保留文字，未切换机械声'));
     if(!fallback)return;
@@ -11414,7 +11414,7 @@ controlRenderers['voice-dispatch'] = renderVoiceDispatchControl;
 
 // 设置 → 语音引擎：edge-tts 神经音 / 浏览器 Web Speech 兜底
 function renderTTSEngineControl() {
-  const wrap = el('div', 'settings-control');
+  const wrap = el('div', 'settings-control tts-engine-control');
   const head = el('div', 'control-label');
   head.append(el('span', '', t('语音引擎')));
   const cfg = state.config || {};
@@ -11423,7 +11423,7 @@ function renderTTSEngineControl() {
   const engRow = el('div', 'voice-reply-row tts-engine-select');
   engRow.append(el('span', '', t('TTS引擎')));
   const eng = el('select');
-  [['auto', t('自动（不可用时浏览器兜底）')], ['sherpa', t('本地离线')], ['edge', t('edge-tts 联网')], ['qwen', t('阿里云百炼 · 千问 TTS')], ['clone', t('克隆音色（自托管）')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
+  [['auto', t('自动（不可用时浏览器兜底）')], ['sherpa', t('本地离线')], ['edge', t('edge-tts 联网')], ['qwen', t('阿里云百炼 · 千问 TTS')], ['openai', t('OpenAI 语音')], ['clone', t('克隆音色（自托管）')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
     const o = el('option', '', label); o.value = v; eng.append(o);
   });
   eng.value = cfg.ttsProvider || 'auto';
@@ -11489,6 +11489,40 @@ function renderTTSEngineControl() {
     el('small','',t('地域须与密钥一致。模型只显示当前非实时接口兼容型号；音色自动同步官方目录，网络不可用时保留内置列表。语速调整播放倍率并保持音调。合成文本会发送至百炼并计费；失败默认保留文字，不切换机械声。')));
   region.onchange=()=>{catalogLoaded=false;catalogEpoch++;};
 
+  // OpenAI is an independent credential/model slot; opening settings is offline.
+  const openaiBox = el('div', 'tts-qwen-settings tts-openai-settings');
+  const openaiField = (label, input) => {
+    const row=el('label','voice-reply-row');input.setAttribute('aria-label',t(label));
+    row.append(el('span','',t(label)),input);openaiBox.append(row);
+  };
+  const openaiMode=el('select');
+  for(const [value,label] of [['realtime','Realtime 朗读'],['speech','Speech API（旧版）']]){const o=el('option','',t(label));o.value=value;openaiMode.append(o);}
+  openaiMode.value=cfg.openaiTTSMode||'realtime';openaiField('OpenAI 语音接口',openaiMode);
+  const openaiModel=el('input');openaiModel.type='text';openaiModel.setAttribute('list','openai-tts-models');
+  openaiField('OpenAI 语音模型',openaiModel);
+  const openaiModels=el('datalist');openaiModels.id='openai-tts-models';openaiBox.append(openaiModels);
+  const openaiVoice=el('select');openaiField('OpenAI 音色',openaiVoice);
+  const openaiBase=el('input');openaiBase.type='url';openaiBase.value=cfg.openaiTTSBaseURL||'https://api.openai.com/v1';openaiField('OpenAI 语音 API Base URL',openaiBase);
+  const openaiKey=el('input');openaiKey.type='password';openaiKey.autocomplete='new-password';openaiKey.placeholder=t(cfg.hasOpenAITTSKey?'已配置，留空保留':'填写 OpenAI API Key');openaiField('OpenAI 语音 API Key',openaiKey);
+  const clearOpenaiKey=el('input');clearOpenaiKey.type='checkbox';openaiField('清除已保存的 OpenAI 语音密钥',clearOpenaiKey);
+  const openaiFallback=el('input');openaiFallback.type='checkbox';openaiFallback.checked=cfg.ttsBrowserFallback===true;openaiField('失败时使用浏览器语音',openaiFallback);
+  const openaiNote=el('small');openaiBox.append(openaiNote);
+  const paintOpenaiMode=(initial=false)=>{
+    const realtime=openaiMode.value==='realtime';
+    const models=realtime?['gpt-realtime-2.1-mini','gpt-realtime-2.1']:['gpt-4o-mini-tts','tts-1','tts-1-hd'];
+    openaiModels.replaceChildren(...models.map(id=>{const o=el('option');o.value=id;return o;}));
+    openaiModel.value=initial&&cfg.openaiTTSModel?cfg.openaiTTSModel:models[0];
+    const voices=realtime?['marin','cedar','alloy','ash','ballad','coral','echo','sage','shimmer','verse']:['coral','alloy','ash','ballad','echo','fable','onyx','nova','sage','shimmer','verse','marin','cedar'];
+    fillOptions(openaiVoice,voices.map(id=>({id})),initial&&cfg.openaiTTSVoice?cfg.openaiTTSVoice:voices[0]);
+    openaiNote.textContent=t(realtime?'AI 生成语音。Realtime 按原文朗读，生成式语音可能有读法差异，需实听确认；文本会发送至所填接口并计费。':'AI 生成语音。Speech API 旧模型将于 2027-01-06 停用；Realtime 模型不能填写在此接口中。文本会发送至所填接口并计费。');
+  };
+  const legacyVoices=['alloy','echo','fable','onyx','nova','shimmer'];
+  openaiModel.oninput=()=>{if(openaiMode.value!=='speech')return;const old=openaiVoice.value;
+    const voices=['tts-1','tts-1-hd'].includes(openaiModel.value.trim())?legacyVoices:['coral','alloy','ash','ballad','echo','fable','onyx','nova','sage','shimmer','verse','marin','cedar'];
+    fillOptions(openaiVoice,voices.map(id=>({id})),voices.includes(old)?old:voices[0]);
+  };
+  openaiMode.onchange=()=>{paintOpenaiMode();openaiModel.oninput();};paintOpenaiMode(true);openaiModel.oninput();
+
 
   // 语速滑块
   const rateRow = el('div', 'voice-reply-row');
@@ -11514,12 +11548,14 @@ function renderTTSEngineControl() {
   const preview = el('button', 'quiet', t('试听')); preview.type = 'button';
   save.onclick = action(async () => {
     await api('/settings', { method: 'PUT', body: JSON.stringify({
-      ttsProvider: eng.value, ttsVoice: eng.value === 'qwen' ? qwenVoice.value.trim() || 'Cherry' : voice.value,
-      ttsModel: model.value.trim(), ttsRegion: region.value, ttsAPIKey: key.value.trim(), clearTTSKey: clearKey.checked, ttsBrowserFallback: fallback.checked,
+      ttsProvider: eng.value, ...(eng.value==='openai'?{}:{ttsVoice:eng.value==='qwen'?qwenVoice.value.trim()||'Cherry':voice.value}),
+      openaiTTSMode:openaiMode.value,openaiTTSModel:openaiModel.value.trim(),openaiTTSVoice:openaiVoice.value,
+      openaiTTSBaseURL:openaiBase.value.trim(),openaiTTSAPIKey:openaiKey.value.trim(),clearOpenAITTSKey:clearOpenaiKey.checked,
+      ttsModel: model.value.trim(), ttsRegion: region.value, ttsAPIKey: key.value.trim(), clearTTSKey: clearKey.checked, ttsBrowserFallback: eng.value==='openai'?openaiFallback.checked:fallback.checked,
       ttsRate: parseFloat(rate.value), ttsExpressiveness: parseFloat(exp.value),
       activeModel: state.config ? state.config.activeModel : '',
     }) });
-    key.value = ''; clearKey.checked = false;
+    key.value = ''; clearKey.checked = false; openaiKey.value='';clearOpenaiKey.checked=false;
     await refreshConfig();
     toast(t('语音引擎设置已保存'));
   });
@@ -11529,6 +11565,7 @@ function renderTTSEngineControl() {
     if (eng.value === 'qwen' && (savedTTS.ttsProvider !== 'qwen' || key.value || clearKey.checked || model.value.trim() !== (savedTTS.ttsModel || 'qwen3-tts-flash') || region.value !== (savedTTS.ttsRegion || 'beijing'))) {
       toast(t('请先保存千问 TTS 设置，再试听')); return;
     }
+    if(eng.value==='openai' && (savedTTS.ttsProvider!=='openai'||openaiKey.value||clearOpenaiKey.checked||openaiMode.value!==(savedTTS.openaiTTSMode||'realtime')||openaiModel.value.trim()!==(savedTTS.openaiTTSModel||'gpt-realtime-2.1-mini')||openaiBase.value.trim()!==(savedTTS.openaiTTSBaseURL||'https://api.openai.com/v1'))){toast(t('请先保存 OpenAI 语音设置，再试听'));return;}
     ttsCancel();
     const savedLabel = preview.textContent;
     preview.disabled = true; preview.textContent = t('播放中…');
@@ -11538,9 +11575,9 @@ function renderTTSEngineControl() {
       await Promise.race([
         ttsSpeak('你好，我是小秘，这是试听效果。', {
           awaitMode: true, colloquial: false,
-          voice: eng.value === 'qwen' ? qwenVoice.value.trim() || 'Cherry' : voice.value, provider: eng.value,
+          voice: eng.value === 'openai' ? openaiVoice.value : eng.value === 'qwen' ? qwenVoice.value.trim() || 'Cherry' : voice.value, provider: eng.value,
         }),
-        new Promise(res => setTimeout(res, eng.value==='qwen'?65000:8000)),
+        new Promise(res => setTimeout(res, ['qwen','openai'].includes(eng.value)?65000:8000)),
       ]);
     } finally {
       ttsCancel();
@@ -11570,6 +11607,8 @@ function renderTTSEngineControl() {
     const nv = (cfg.sherpaVoices && cfg.sherpaVoices.length) ? cfg.sherpaVoices.map(v=>v.name||v.dir).join('、') : '';
     engStatus.textContent = t('当前引擎') + ': 本地离线 sherpa-onnx ✓' + (nv ? '（' + nv + '）' : '');
     engStatus.style.color = '#27ae60';
+  } else if (cur === 'openai') {
+    engStatus.textContent=t('当前引擎')+': '+t('OpenAI 语音')+' ✓';engStatus.style.color='#27ae60';
   } else if (cur === 'qwen') {
     engStatus.textContent = t('当前引擎') + ': ' + t('阿里云百炼 · 千问 TTS') + ' ✓';
     engStatus.style.color = '#27ae60';
@@ -11577,7 +11616,7 @@ function renderTTSEngineControl() {
     engStatus.textContent = t('当前引擎') + ': ' + (cur === 'edge' ? 'edge-tts 神经音' : 'Azure 神经音') + ' ✓' + (cfg.sherpaAvailable ? '（本地已装，下次优先本地）' : '');
     engStatus.style.color = '#27ae60';
   } else if (cur === 'unavailable') {
-    engStatus.textContent = t('当前引擎') + ': ⚠ ' + t(prov === 'qwen' && !cfg.ttsBrowserFallback ? '已保留文字，未切换机械声' : '神经音不可用，已降级浏览器机械音');
+    engStatus.textContent = t('当前引擎') + ': ⚠ ' + t(['qwen','openai'].includes(prov) && !cfg.ttsBrowserFallback ? '已保留文字，未切换机械声' : '神经音不可用，已降级浏览器机械音');
     engStatus.style.color = '#c0392b';
   } else {
     engStatus.textContent = t('当前引擎') + ': ' + (cfg.sherpaAvailable ? t('本地离线已就绪，待首次合成确认') : t('待检测（合成一次后显示）'));
@@ -11585,14 +11624,15 @@ function renderTTSEngineControl() {
   }
   const paintProvider = () => {
     const qwen = eng.value === 'qwen';
-    qwenBox.classList.toggle('hidden', !qwen); voiceRow.classList.toggle('hidden', qwen);
+    const openai=eng.value==='openai';
+    qwenBox.classList.toggle('hidden', !qwen);openaiBox.classList.toggle('hidden',!openai);voiceRow.classList.toggle('hidden', qwen||openai);
     warn.classList.toggle('hidden', qwen);
-    rateRow.classList.remove('hidden'); expRow.classList.toggle('hidden', qwen);
+    rateRow.classList.remove('hidden'); expRow.classList.toggle('hidden', qwen||openai);
     if(qwen&&!catalogLoaded)void loadCatalog();
   };
   eng.onchange = paintProvider; paintProvider();
   const failureStatus=el('small','',state.ttsLastError||'');failureStatus.dataset.ttsError='';failureStatus.setAttribute('role','status');
-  wrap.append(head, engRow, voiceRow, qwenBox, engStatus, rateRow, expRow, btnRow, failureStatus, warn,
+  wrap.append(head, engRow, voiceRow, qwenBox, openaiBox, engStatus, rateRow, expRow, btnRow, failureStatus, warn,
     el('small', '', t('自动模式依次尝试本地离线和可用的联网神经音；都不可用或播放失败时直接回退浏览器合成。可手动选择浏览器合成。主聊天的机械朗读按钮不受此设置影响。')));
   return wrap;
 }

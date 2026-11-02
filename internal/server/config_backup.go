@@ -59,6 +59,7 @@ func (a *App) exportConfigBackup(w http.ResponseWriter, r *http.Request) {
 		// 除密码哈希外，还需清除：API Key、人格/小秘历史密文、调试令牌哈希等任何可解密封面的材料。
 		exportSettings.APIKey = ""
 		exportSettings.TTSAPIKey = ""
+		exportSettings.OpenAITTSAPIKey = ""
 		exportSettings.UserPasswordHash = ""
 		exportSettings.PersonaCiphers = nil
 		exportSettings.PersonaCipher = ""
@@ -167,11 +168,13 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 	// 先暂存备份侧敏感值，再用当前值覆盖。
 	bkAPIKey := merged.APIKey
 	bkTTSAPIKey := merged.TTSAPIKey
+	bkOpenAITTSAPIKey := merged.OpenAITTSAPIKey
 	bkPasswordHash := merged.UserPasswordHash
 	bkCiphers := merged.PersonaCiphers
 	bkCipher := merged.PersonaCipher
 	merged.APIKey = a.settings.APIKey
 	merged.TTSAPIKey = a.settings.TTSAPIKey
+	merged.OpenAITTSAPIKey = a.settings.OpenAITTSAPIKey
 	merged.UserPasswordHash = a.settings.UserPasswordHash
 	merged.PersonaCiphers = a.settings.PersonaCiphers
 	merged.PersonaCipher = a.settings.PersonaCipher
@@ -180,6 +183,7 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 	if req.ImportSecrets && bk.IncludeSecrets {
 		merged.APIKey = bkAPIKey
 		merged.TTSAPIKey = bkTTSAPIKey
+		merged.OpenAITTSAPIKey = bkOpenAITTSAPIKey
 		if bkPasswordHash != "" {
 			merged.UserPasswordHash = bkPasswordHash
 			passwordChanged = true

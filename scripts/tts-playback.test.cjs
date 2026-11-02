@@ -22,6 +22,7 @@ context.ttsPlaybackStatus=(phase,detail,callback)=>{phases.push(phase);retry=cal
 const tick=async()=>{for(let i=0;i<5;i++)await Promise.resolve();};
 (async()=>{
  context.ttsUnlockAudio();await tick();assert.equal(created,1);assert(context.player._unlocked);
+ const openai=context.ttsPlayOne('blob:openai','openai');await tick();assert.equal(context.player._audio.playbackRate,1.2);context.player._audio.onended();await openai;
  const first=context.ttsPlayOne('blob:first','qwen');await tick();const a=context.player._audio;
  assert.equal(created,1,'async synthesis must reuse the gesture-activated element');assert.equal(a.playbackRate,1.2);assert.equal(phases.at(-1),'playing');
  a.currentTime=1;a.onended();await first;assert(revoked.includes('blob:first'));assert.equal(intervals.size,0);

@@ -1813,3 +1813,13 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
   pointer-events: none;
 }
 .approval-intent{margin:.65rem 0;padding:.7rem .85rem;border:1px solid var(--border-color,rgba(127,127,127,.3));border-left:3px solid var(--accent,#6b8afd);border-radius:.5rem;background:var(--surface-secondary,rgba(127,127,127,.06));font-size:.92em}.approval-intent p{margin:.35rem 0}.approval-intent strong{display:block;margin-bottom:.35rem}
+
+/* Independent OpenAI speech settings: keep model/base/key fields readable. */
+.tts-engine-control .tts-engine-select > span { flex-shrink: 0; white-space: nowrap; }
+.tts-openai-settings .voice-reply-row { display: grid; grid-template-columns: minmax(150px, auto) minmax(0, 1fr); gap: 8px; align-items: center; }
+.tts-openai-settings input:not([type="checkbox"]), .tts-openai-settings select { width: 100%; min-width: 0; box-sizing: border-box; }
+.tts-openai-settings input[type="checkbox"] { justify-self: start; }
+@media (max-width: 500px) {
+  .tts-openai-settings .voice-reply-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+.tts-openai-settings .voice-reply-row:has(input[type="checkbox"]) { grid-template-columns: minmax(0, 1fr) auto; }

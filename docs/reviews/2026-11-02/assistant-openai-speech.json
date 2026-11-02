@@ -1,0 +1,105 @@
+{
+  "status": "pass",
+  "scope": "Local protocol/settings regressions and production settings-renderer browser fixtures; no live OpenAI API",
+  "baseline": "0e1b02fa2fe1a717de4fac50e14a72bad78b7464",
+  "issue": "https://github.com/skyelan1999/aide/issues/735",
+  "keySource": "synthetic fixtures only",
+  "docker": {
+    "image": "sha256:cbdab7d49e30518d58f6c61adc3b73d3be3d314e8d0ec2c283dbd4facb92b8ee",
+    "network": "none",
+    "memoryGiB": 4,
+    "cpus": 2,
+    "goRace": "pass",
+    "goVet": "pass"
+  },
+  "go": {
+    "aide/internal/server": {
+      "passedRecordsIncludingSubtests": 19,
+      "failed": 0,
+      "skipped": [],
+      "packageResult": [
+        "pass"
+      ]
+    },
+    "aide/internal/server/tts": {
+      "passedRecordsIncludingSubtests": 53,
+      "failed": 0,
+      "skipped": [
+        "TestEdgeLiveDial",
+        "TestVoiceDistinctMD5"
+      ],
+      "packageResult": [
+        "pass"
+      ]
+    }
+  },
+  "browser": {
+    "status": "pass",
+    "results": [
+      {
+        "theme": "light",
+        "width": 1440,
+        "lang": "zh",
+        "status": "pass",
+        "scope": "actual renderer/CSS with mock config and playback"
+      },
+      {
+        "theme": "dark",
+        "width": 390,
+        "lang": "zh",
+        "status": "pass",
+        "scope": "actual renderer/CSS with mock config and playback"
+      },
+      {
+        "theme": "light",
+        "width": 390,
+        "lang": "en",
+        "status": "pass",
+        "scope": "actual renderer/CSS with mock config and playback"
+      },
+      {
+        "theme": "dark",
+        "width": 1440,
+        "lang": "en",
+        "status": "pass",
+        "scope": "actual renderer/CSS with mock config and playback"
+      }
+    ],
+    "errors": [],
+    "liveProvider": false
+  },
+  "node": [
+    "node --check internal/server/web/app.js",
+    "node --check internal/server/web/locales/en.js",
+    "node --check scripts/browser-openai-speech.cjs",
+    "node scripts/qwen-tts.test.cjs",
+    "node scripts/tts-playback.test.cjs"
+  ],
+  "notRun": [
+    "Live OpenAI account/model access, audio quality, exact read-out and latency",
+    "Personal Safari playback and microphone/duplex call acceptance",
+    "New release/production deployment"
+  ],
+  "sourceSHA256": {
+    "internal/server/tts/openai.go": "b3c76b4edc7a2910c96cf87a81dd2899b10e359ecb92fb61e72fc2637cb34a9a",
+    "internal/server/tts/provider.go": "1a48b16138556d2b3159be9740236bca9abe0d0027fa8d32ba35b6483939363f",
+    "internal/server/openai_tts.go": "8c1639da9f95ffd99027713c83c32b86144c09761754e4b7257281fc2535ba90",
+    "internal/server/server.go": "8a1eac0d30bd36cb9d510ef7cc97b5fb77033cab447289685ffa03b65a9e79ed",
+    "internal/server/config_backup.go": "c9e39199d439f48908f1f771e55c115ebad98797522b9d7d79418d3d0039ee53",
+    "internal/server/web/app.js": "56be0f08729b1d1e674cd52c7d5c71d6913b278d2f77a252d48195fb621734f9",
+    "internal/server/web/locales/en.js": "ccbb04865ab7aef792f27af02b910a52fcf00282ed694d760ab2bb573069d384",
+    "internal/server/web/style.css": "ca0878302db3f4fb9f4486cdeb21dad63a9d378b9611be6ed533e1cf70edf5ab",
+    "internal/server/tts/openai_test.go": "730607ed7800ac1844f4800480263c226b73af4f838d4368111b1e0d2fcf3f50",
+    "internal/server/openai_tts_test.go": "0b7a19ef4db30da37e0e50a9cce21776aab76feafb853bb28583dafb6cb8738c",
+    "scripts/browser-openai-speech.cjs": "296db27e09596f314e8d69cc58895c9abe7d27e1e86cdc239e7448fa951cb35d",
+    "scripts/qwen-tts.test.cjs": "2902442fb031f700bcb9465a8dbc4be15729acb33ae0f5574ba308432d1b714f",
+    "scripts/tts-playback.test.cjs": "b71ce5e9da2a519c5a8cdcb2c0b51515d4eccf5216849270c21ea95fd7e270dc",
+    "scripts/ci/basic_go.py": "f9d0451d4bbf89e22c3fd8c1c391d00cd65dbd6abcdbe4cfe3c43bdf426e9c7f"
+  },
+  "basicCI": {
+    "status": "pass",
+    "command": "python3 scripts/ci/basic_go.py",
+    "scope": "all packages compile; critical regressions including new OpenAI protocol/settings cases; full go vet",
+    "network": "none"
+  }
+}

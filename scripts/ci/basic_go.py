@@ -14,7 +14,7 @@ PATTERN = (r'^Test(AuthenticationAndOrigin|FileBoundariesAndConflicts|SettingsNe
            r'TerminalCopyContextCanonicalIdentityAndVisibility|TerminalContextPinnedMasterNeverRetargets|'
            r'ReferenceRelayDeadlineOrdering|ReferenceRelayUntrustedPayloadAndCancellation|'
            r'ExecutionScheduler.*|Incidents.*|ContextRecoverySummaryExtractsWrappedJSON|'
-           r'ParallelReadOnlyToolBatchEligibility|ShellPathGuard.*)$')
+           r'ParallelReadOnlyToolBatchEligibility|OpenAI.*|QwenTTSSettings|QwenCatalogReadOnly|ShellPathGuard.*)$')
 COMMANDS = [
     ['go', 'test', '-mod=vendor', '-count=1', '-timeout=5m', '-run=' + PATTERN, './...'],
     ['go', 'vet', '-mod=vendor', './...'],

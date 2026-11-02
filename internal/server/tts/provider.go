@@ -32,7 +32,8 @@ type SynthOpts struct {
 
 // Config 是创建 Provider 所需的外部配置（由 server.Settings 转换而来，避免循环依赖）。
 type Config struct {
-	Provider       string // auto | edge | webspeech | qwen
+	Provider       string // auto | edge | webspeech | qwen | openai
+	Mode           string // OpenAI: realtime (default) | speech
 	Model          string // Qwen non-realtime model
 	Region         string // beijing | singapore
 	Voice          string
@@ -124,6 +125,8 @@ func NewProvider(name string, cfg Config) (TTSProvider, error) {
 		return newSherpa(cfg.SherpaBin, cfg.SherpaDir), nil
 	case "webspeech", "browser", "web":
 		return nil, ErrBrowserOnly
+	case "openai":
+		return newOpenAI(cfg), nil
 	case "qwen":
 		return newQwen(cfg), nil
 	case "clone", "voice-clone", "cloned":
@@ -172,6 +175,8 @@ func ChainSynth(ctx context.Context, text string, opts SynthOpts, cfg Config) (i
 func buildChain(cfg Config) []TTSProvider {
 	var chain []TTSProvider
 	switch strings.ToLower(strings.TrimSpace(cfg.Provider)) {
+	case "openai":
+		return []TTSProvider{newOpenAI(cfg)}
 	case "qwen":
 		return []TTSProvider{newQwen(cfg)}
 	case "clone", "voice-clone", "cloned":

@@ -211,6 +211,8 @@ slave 单独验证只在该页面设置 `localDismiss`，不解锁其他页面�
 
 ## TTS 分层架构
 
+新增 OpenAI 朗读适配的接口、独立设置、凭据与验证边界见[助理 OpenAI 朗读](architecture/assistant-openai-speech.md)；该开发分支尚未上线。
+
 小秘朗读是可插拔管线：后端 `internal/server/tts` 定义 `TTSProvider` 接口（`Name/Synth/Format/Available`），`NewProvider(name, Config)` 按名注册。当前实现 edge-tts——用标准库手写最小 RFC6455 WebSocket 客户端直连微软 Read-Aloud（`wss://speech.platform.bing.com/...`，公开 token + 时间派生的 `Sec-MS-GEC`，无需 key），SSML 映射语速/情感，回流式 MP3。Web Speech 是纯浏览器能力，后端不合成（`ErrBrowserOnly`），由前端兜底；自动模式在 sherpa/edge/Azure 均不可用时直接使用浏览器合成，自动模式的后端音频解码或播放失败也可回退浏览器；百炼模式仅在显式允许浏览器回退时切换，否则保留文字并显示失败。百炼模型/音色目录由 `tts_catalog.go` 提供，网络不可达使用内置兼容目录；语速在播放侧调整并保持音调。
 
 **音频流路径**：

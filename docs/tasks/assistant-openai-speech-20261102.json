@@ -1,0 +1,78 @@
+{
+  "id": "assistant-openai-speech-20261102",
+  "request": "助理语音支持OpenAI语音模型配置，保留千问；密钥晚上提供，当前不得调用真实付费API",
+  "baseline": "0e1b02fa2fe1a717de4fac50e14a72bad78b7464",
+  "initial_status": "Clean isolated feature worktree from main 0e1b02fa; existing release and production preserved.",
+  "acceptance": [
+    "Independent OpenAI read-aloud model, voice, API mode/base/key settings, no Qwen/chat credential reuse",
+    "Realtime GA narration and legacy audio/speech HTTP protocols correctly separated",
+    "Local mock tests cover audio format, cancellation, upstream errors, redaction, settings and backup isolation",
+    "Actual browser settings controls exercised without live provider credentials; real voice quality remains NOT_RUN"
+  ],
+  "scope": [
+    "internal/server/tts OpenAI narration adapter",
+    "Settings/config backup and browser TTS controls/locales",
+    "Focused tests and architecture/acceptance docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Add independent narration provider using explicit realtime/speech mode; preserve all existing engines and user credentials. No live provider key available. Real-time duplex call expansion is a separate scope question.",
+      "evidence": [
+        "https://developers.openai.com/api/docs/guides/text-to-speech",
+        "https://developers.openai.com/api/docs/guides/realtime-conversations"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Add independent narration provider using explicit realtime/speech mode; preserve all existing engines and user credentials. No live provider key available. Real-time duplex call expansion is a separate scope question.",
+      "evidence": [
+        "https://developers.openai.com/api/docs/guides/text-to-speech",
+        "https://developers.openai.com/api/docs/guides/realtime-conversations"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Independent OpenAI narration settings and explicit GA Realtime/legacy Speech providers implemented; existing Qwen configuration retained.",
+      "evidence": [
+        "docs/architecture/assistant-openai-speech.md",
+        "docs/reviews/2026-11-02/assistant-openai-speech.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Local Go race/vet pass; TTS package53 pass records including subtests,2 opt-in live Edge skips; selected server19 pass. Actual source/CSS four browser cells with mock API/playback pass. Real provider calls/listening NOT_RUN pending user key. Entire basic CI Go compile/critical-regression/vet profile also passed locally with new OpenAI cases enrolled.",
+      "evidence": [
+        "docs/architecture/assistant-openai-speech.md",
+        "docs/reviews/2026-11-02/assistant-openai-speech.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture/configuration/protocol boundaries and local acceptance documented; Issue735 remains open for real-key acceptance.",
+      "evidence": [
+        "docs/architecture/assistant-openai-speech.md",
+        "docs/reviews/2026-11-02/assistant-openai-speech.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only feature-specific source/tests/docs changed in isolated worktree. Owned test container/browser stopped; primary main/production untouched.",
+      "evidence": [
+        "docs/architecture/assistant-openai-speech.md",
+        "docs/reviews/2026-11-02/assistant-openai-speech.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "New feature development only; no release or production deployment authorized for this change.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Select the prior Qwen/auto narration provider; independent OpenAI fields may remain. No runtime deployment performed.",
+  "handoff": "Implemented on feat/assistant-openai-speech. Local mock protocol/UI verification pass; user will supply API key later for live voice and account checks. No merge/release/deployment for this feature. Prepared as a draft review branch; live-key acceptance pending.",
+  "issue": "https://github.com/skyelan1999/aide/issues/735",
+  "githubActor": "skyelan1999",
+  "scopeQuestion": "Optional scope question offered: narration or also duplex calls. No reply yet; this implementation completes narration first, duplex call expansion is not claimed."
+}
