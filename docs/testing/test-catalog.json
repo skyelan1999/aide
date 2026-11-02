@@ -4847,7 +4847,7 @@
     {
       "path": "internal/server/static_audit_fixture_test.go",
       "kind": "go",
-      "sha256": "f33e7308ea38a190251f4a614fe3d2f2a4cddb1cdfc62b4d2785f60e021841e3",
+      "sha256": "17e9ad67ccc761556a3e182651e3192c938216d27bf426bea92213d80ce88108",
       "cases": [
         "TestStaticAuditFixture",
         "TestStaticAuditSeedInvariants"
