@@ -4,8 +4,8 @@
 
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
-| go | 377 | 1679 |
-| python | 62 | 275 |
+| go | 378 | 1682 |
+| python | 62 | 276 |
 | node | 180 | 181 |
 | browser | 105 | 0 |
 
@@ -995,6 +995,15 @@
 
 </details>
 
+<details><summary>internal/server/execution_artifacts_test.go · go · 2 个命名用例</summary>
+
+[源码入口](../../internal/server/execution_artifacts_test.go)
+
+- `TestExecutionDiffLargeArtifactsUseBoundedMemory`
+- `TestExecutionTextArtifactMatchesProposalTextContract`
+
+</details>
+
 <details><summary>internal/server/execution_environments_live_test.go · go · 1 个命名用例</summary>
 
 [源码入口](../../internal/server/execution_environments_live_test.go)
@@ -1033,10 +1042,11 @@
 
 </details>
 
-<details><summary>internal/server/execution_result_receipt_test.go · go · 2 个命名用例</summary>
+<details><summary>internal/server/execution_result_receipt_test.go · go · 3 个命名用例</summary>
 
 [源码入口](../../internal/server/execution_result_receipt_test.go)
 
+- `TestExecutionCollectPartialFailureRetainsIdempotentReceipts`
 - `TestExecutionCollectCompactRetainsExplicitDetail`
 - `TestExecutionCollectSelectedPathsPreservesConflictAndApproval`
 
@@ -5347,10 +5357,11 @@
 
 </details>
 
-<details><summary>scripts/ci/test_public_plugins.py · python · 2 个命名用例</summary>
+<details><summary>scripts/ci/test_public_plugins.py · python · 3 个命名用例</summary>
 
 [源码入口](../../scripts/ci/test_public_plugins.py)
 
+- `test_frozen_packages_must_match_current_catalog_identity`
 - `test_only_exact_complete_success_is_accepted`
 - `test_installation_does_not_substitute_for_function_or_coverage`
 

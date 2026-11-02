@@ -57,7 +57,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Candidate eb97d144 native ARM64 and AMD64 complete: each 1509 passed,78 explicit skips,24 complete shards,other Go packages/platform/vet pass; each30/30 formal public ZIP inspection/install/function pass. Downloaded all4 runtime/SDK ZIPs and independently validated size/SHA/CRC, imports/smoke/privacy receipts and shared source fingerprint dfaac9616ea4c869a2e93f27394e0e0fb651f0cc3be6557aacce8a61563e2f6d. Windows10/macOS8+8 and clean Linux17 commands/4health samples pass. Original full run retains failed browser result; test-only fix a026 cloud48/48 and20 cancellation records independently validated. Plugin bugs583/584/586/588 closed after public releases+dual-native actual installs. Final same-source tagged Delivery and clean-main full remain; staged reports are not a final Release receipt.",
+      "summary": "Candidate eb97d144 native ARM64 and AMD64 complete: each 1509 passed,78 explicit skips,24 complete shards,other Go packages/platform/vet pass; each30/30 formal public ZIP inspection/install/function pass. Downloaded all4 runtime/SDK ZIPs and independently validated size/SHA/CRC, imports/smoke/privacy receipts and shared source fingerprint dfaac9616ea4c869a2e93f27394e0e0fb651f0cc3be6557aacce8a61563e2f6d. Windows10/macOS8+8 and clean Linux17 commands/4health samples pass. Original full run retains failed browser result; test-only fix a026 cloud48/48 and20 cancellation records independently validated. Plugin bugs583/584/586/588 closed after public releases+dual-native actual installs. Final same-source tagged Delivery and clean-main full remain; staged reports are not a final Release receipt. Subsequent ten-commit review found711/712/713; targeted remediation race35, basic Go/vet, quick314, Python35 and all30 strengthened package inspections pass. Old main-full was stopped as superseded; final source full and tagged Delivery remain required.",
       "evidence": [
         "https://github.com/skyelan1999/aide/pull/698",
         ".agent-state/release-ci-hardening-20261101/browser-v4/report.json",
@@ -75,7 +75,8 @@
         ".agent-state/release-ci-hardening-20261101/browser-issue709/report.json",
         "https://github.com/skyelan1999/aide/actions/runs/41357546514",
         ".agent-state/release-ci-hardening-20261101/remote-a0265d4d/release-browser/report.json",
-        "docs/reviews/2026-11-02/release-candidate-acceptance.json"
+        "docs/reviews/2026-11-02/release-candidate-acceptance.json",
+        "docs/reviews/2026-11-02/release-review-remediation.md"
       ]
     },
     "documentation": {
@@ -99,7 +100,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "The three explicitly authorized plugin/market exceptions were executed and published/verified. Aide PR698 still independently requires one owner review; sole owner is also author. No authorization to bypass Aide main has been given. Preparing a concrete request for PR698 and bounded release-result documentation only; no protection settings changed. Formal clean-main full/release-check/version/tagged Delivery remain after integration.",
+      "summary": "User authorized the bounded Aide administrator exception, and PR698 was merged as f7f3a615. Review remediation711/712/713 is locally verified on fix/review-release-boundaries, awaiting a concrete PR/gate and review. The existing exception covers PR698/version/docs, not an unreviewed additional code PR. No protection changes, version bump, new tag, formal publication or production deployment. Final same-source full and tagged Delivery remain mandatory.",
       "evidence": [
         "https://github.com/skyelan1999/aide-pkg-sqlite/pull/2",
         "https://github.com/skyelan1999/aide-pkg-terminal/pull/2",
@@ -122,5 +123,44 @@
     "https://github.com/skyelan1999/aide/issues/588",
     "https://github.com/skyelan1999/aide/issues/702",
     "https://github.com/skyelan1999/aide/issues/709"
-  ]
+  ],
+  "reviewRemediation": {
+    "baseline": "f7f3a6156ac66ef083acf323a466ea1154065415",
+    "branch": "fix/review-release-boundaries",
+    "issues": [
+      "https://github.com/skyelan1999/aide/issues/711",
+      "https://github.com/skyelan1999/aide/issues/712",
+      "https://github.com/skyelan1999/aide/issues/713"
+    ],
+    "status": "locally_verified_not_merged",
+    "verification": {
+      "goRaceTopLevelCases": 35,
+      "goRaceWarnings": 0,
+      "goBasicCompileAndVet": "pass",
+      "quickChecks": 314,
+      "quickStatus": "pass",
+      "pythonCIContractCases": 35,
+      "currentMarketPackageInspection": 30,
+      "marketRevision": "943f6a90f08c4f5ba09e4d09031247b64ee29295",
+      "unchanged64MiBAllocationMiB": 0.04,
+      "changedBinary64MiBAllocationMiB": 0.13,
+      "limits": "No UI/live-model/full tagged Delivery acceptance claimed; changed text remains memory-backed."
+    },
+    "evidence": [
+      "docs/reviews/2026-11-02/release-review-remediation.md",
+      ".agent-state/release-ci-hardening-20261101/review-fixes/"
+    ],
+    "integration": "PR and required gate pending; original PR698 exception does not automatically include a new code PR."
+  },
+  "aideReleaseAuthorization": {
+    "received": true,
+    "userReply": "授权本次 Aide 发行流程的管理员例外",
+    "scope": [
+      "PR698 merge after CI",
+      "existing version.sh main version commit/tag push",
+      "CI-passed factual release documentation PRs"
+    ],
+    "pr698MergedAs": "f7f3a6156ac66ef083acf323a466ea1154065415",
+    "protectionUnchanged": true
+  }
 }

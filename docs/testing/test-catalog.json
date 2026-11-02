@@ -1257,6 +1257,18 @@
       "execution": "not_run_by_inventory"
     },
     {
+      "path": "internal/server/execution_artifacts_test.go",
+      "kind": "go",
+      "sha256": "82043d7e3cfcf751022822862d294f460fba2c5b671f05649b3bc522e07f5747",
+      "cases": [
+        "TestExecutionDiffLargeArtifactsUseBoundedMemory",
+        "TestExecutionTextArtifactMatchesProposalTextContract"
+      ],
+      "caseCount": 2,
+      "environmentReferences": [],
+      "execution": "not_run_by_inventory"
+    },
+    {
       "path": "internal/server/execution_environments_live_test.go",
       "kind": "go",
       "sha256": "5de1d3f82a642515634b9edbdbc31cfeb3b75099b89165b6d81bb564fcf9ce41",
@@ -1307,12 +1319,13 @@
     {
       "path": "internal/server/execution_result_receipt_test.go",
       "kind": "go",
-      "sha256": "7d8c09295416b64f2d337eb44ff0e4aeccad9709e24b1396e16afcac49e03645",
+      "sha256": "ca9e14a8bda4c4e73da8cb2481dd27a090c8f0b78dcec0fc7f28132db9968c54",
       "cases": [
+        "TestExecutionCollectPartialFailureRetainsIdempotentReceipts",
         "TestExecutionCollectCompactRetainsExplicitDetail",
         "TestExecutionCollectSelectedPathsPreservesConflictAndApproval"
       ],
-      "caseCount": 2,
+      "caseCount": 3,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
@@ -6724,12 +6737,13 @@
     {
       "path": "scripts/ci/test_public_plugins.py",
       "kind": "python",
-      "sha256": "ee94f92b3f1209617ff436790ba477b65facd573f590d61e604198fd21fbdfdd",
+      "sha256": "4b761adc18e687dde6ea234f41db0b76eaed8eb08ff0365d6b459b667a16b5c2",
       "cases": [
+        "test_frozen_packages_must_match_current_catalog_identity",
         "test_only_exact_complete_success_is_accepted",
         "test_installation_does_not_substitute_for_function_or_coverage"
       ],
-      "caseCount": 2,
+      "caseCount": 3,
       "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },

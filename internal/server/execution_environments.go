@@ -516,24 +516,47 @@ func executionDiff(ctx context.Context, work string, base map[string]string, art
 			unsupported = append(unsupported, rel+": link/special artifact omitted")
 			return nil
 		}
-		b, e := root.ReadFile(rel)
+		f, e := root.Open(rel)
 		if e != nil {
 			return e
 		}
+		defer f.Close()
+		digest := sha256.New()
+		if _, e = io.Copy(digest, executionContextReader{ctx, f}); e != nil {
+			return e
+		}
 		seen[rel] = true
-		if base[rel] == hash(b) {
+		if base[rel] == hex.EncodeToString(digest.Sum(nil)) {
 			return nil
 		}
 		dest := filepath.Join(artifact, filepath.FromSlash(rel))
 		if e = os.MkdirAll(filepath.Dir(dest), 0700); e != nil {
 			return e
 		}
-		if e = os.WriteFile(dest, b, info.Mode().Perm()); e != nil {
+		if _, e = f.Seek(0, io.SeekStart); e != nil {
 			return e
 		}
-		if validateTextContent(b) != nil {
+		out, e := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode().Perm())
+		if e != nil {
+			return e
+		}
+		_, copyErr := io.Copy(out, executionContextReader{ctx, f})
+		if e = errors.Join(copyErr, out.Close()); e != nil {
+			return e
+		}
+		// Binary artifacts stay on disk. Only changed, validated text needs to
+		// enter the in-memory proposal contract; unchanged files are hash-only.
+		text, e := executionTextArtifact(ctx, dest)
+		if e != nil {
+			return e
+		}
+		if !text {
 			unsupported = append(unsupported, rel+": binary artifact retained")
 			return nil
+		}
+		b, e := os.ReadFile(dest)
+		if e != nil {
+			return e
 		}
 		changes = append(changes, Change{Path: rel, Content: string(b), BaseHash: base[rel], NoSymlinks: true})
 		return nil
@@ -677,6 +700,21 @@ func (p *executionPool) collectPaths(ctx context.Context, id string, wait, merge
 			p.parent.mu.Lock()
 			p.task.ToolUses = append(p.task.ToolUses, ToolUse{Tool: "write_file", Args: call.Function.Arguments, Result: receipt, Preview: "environment merge proposal", Who: "main"})
 			p.parent.mu.Unlock()
+			if outcome.err == nil {
+				// Registration already happened. Publish its exact successful subset
+				// before any fallible result checkpoint/hook, so retries skip it even
+				// when the rest of this batch is cancelled or fails. No disk apply.
+				merged[f.Path] = true
+				result.MergedPaths = nil
+				for path := range merged {
+					result.MergedPaths = append(result.MergedPaths, path)
+				}
+				sort.Strings(result.MergedPaths)
+				result.Merged = len(merged) == len(result.Changes)
+				if err := p.persistCollection(j, *result); err != nil {
+					return *result, err
+				}
+			}
 			if err := p.parent.checkpointExecution(p.task, "chat", chain, "tool_result", &call, receipt); err != nil {
 				return resultCopy, err
 			}
@@ -687,33 +725,31 @@ func (p *executionPool) collectPaths(ctx context.Context, id string, wait, merge
 				return *result, fmt.Errorf("merge proposal rejected: %s", receipt)
 			}
 		}
-		for _, f := range candidates {
-			merged[f.Path] = true
-		}
-		result.MergedPaths = nil
-		for path := range merged {
-			result.MergedPaths = append(result.MergedPaths, path)
-		}
-		sort.Strings(result.MergedPaths)
 		result.Merged = len(merged) == len(result.Changes)
-
 	}
 	result.Collected = true
+	if err := p.persistCollection(j, *result); err != nil {
+		return *result, err
+	}
+	return cloneExecutionValue(*result), nil
+}
+
+func (p *executionPool) persistCollection(j *executionJob, result ExecutionEnvironmentResult) error {
 	p.mu.Lock()
-	j.result = cloneExecutionValue(*result)
+	j.result = cloneExecutionValue(result)
 	p.publishLocked()
 	persistErr := p.persistErr
 	p.mu.Unlock()
 	if persistErr != nil {
-		return *result, persistErr
+		return persistErr
 	}
 
 	if result.ArtifactDirectory != "" {
-		if e := atomicJSON(filepath.Join(result.ArtifactDirectory, "result.json"), *result); e != nil {
-			return *result, e
+		if e := atomicJSON(filepath.Join(result.ArtifactDirectory, "result.json"), result); e != nil {
+			return e
 		}
 	}
-	return cloneExecutionValue(*result), nil
+	return nil
 }
 
 func (a *App) executeEnvironmentTool(ctx context.Context, call ToolCall, task *Task, versions map[string]Change) string {

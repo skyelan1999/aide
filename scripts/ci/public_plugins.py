@@ -61,8 +61,16 @@ def verify_report(report, lock, commit=None, arch=None):
 
 def inspect_packages(market, lock):
     catalog = json.loads((market / 'catalog.json').read_text())
-    require({p['id'] for p in catalog['plugins']} == {p['id'] for p in lock['plugins']}, 'Market inventory changed; freeze and review again')
+    rows = catalog['plugins']
+    current = {p['id']: p for p in rows}
+    require(len(current) == len(rows), 'Duplicate market plugin ID')
+    require(set(current) == {p['id'] for p in lock['plugins']}, 'Market inventory changed; freeze and review again')
     for item in lock['plugins']:
+        row = current[item['id']]
+        for locked, advertised in (('marketVersion', 'version'), ('package', 'package'),
+                                   ('bytes', 'bytes'), ('sha256', 'sha256')):
+            require(item[locked] == row.get(advertised),
+                    'Frozen package differs from market ' + advertised + ': ' + item['id'])
         path = market / item['package']
         raw = path.read_bytes()
         require(len(raw) == item['bytes'] and hashlib.sha256(raw).hexdigest() == item['sha256'], 'Public package identity mismatch: ' + item['id'])

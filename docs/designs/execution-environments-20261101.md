@@ -1,5 +1,15 @@
 # 按需执行环境设计（2026-11-01）
 
+## 大文件收尾与中断恢复
+
+环境收尾先以固定缓冲区流式计算文件摘要；未修改文件不加载到提案内存，也不复制为变更产物。变更文件流式保存到产物目录，再以跨块 UTF-8／无 NUL 校验识别文本；二进制只保留磁盘证据，变更文本仍进入既有完整内容提案流程。这里没有新增文件大小上限；大型文本提案仍需要与内容量相应的内存。流式读取逐块检查取消。
+
+候选合并先对本次所选文件做完整路径、版本和已有提案冲突预检，再逐项通过普通 `write_file` 登记。每个成功登记的路径立即与任务提案一同保存到会话，并更新产物收据，然后才执行可能失败的结果检查点或 after-tool hook。中断返回的 `MergedPaths` 表示实际已登记的成功子集，`Merged` 只在所有候选均登记后为真；两者都不表示文件已应用。重试或恢复执行池只登记剩余路径，保留原有提案、工具审计、预算消耗和审批边界，不自动重放失败 hook。
+
+回归覆盖大文件收尾内存、完整二进制产物摘要、跨块 Unicode、取消、after-tool hook 拒绝、产物收据写入失败、会话持久化与恢复后幂等重试。对应问题：[711](https://github.com/skyelan1999/aide/issues/711)、[712](https://github.com/skyelan1999/aide/issues/712)。
+
+## 调度与兼容
+
 默认采用异步协同：主工具循环用 environment_submit_batch 或 environment_submit 派出独立工作后，继续完成自己的实现、集成准备或有效验证；用 environment_collect_ready 优先收集先完成者，仅在没有其他有用工作时等待。X包含正在工作的主环境和最多X-1个临时环境，例如5X为主环境加最多4个子环境，10X为主环境加最多9个子环境。调度决定分工与占用，不设固定管理角色，不强制占满。1X仍只运行普通主环境，不创建子运行时。
 
 显式声明工具范围的自定义 Agent（AgentToolsSet=true 且 AgentTools 包含 environment_run_queue，且未被权限规则禁用）可选择保留的同步排空实验；普通聊天不披露该工具，旧历史中的同名调用也会返回异步用法提示，不启动工作。同步路径可原子提交并运行一个批次，或排空既有队列；environment_submit 单项异步提交，environment_submit_batch 原子批量异步入队，等待依赖和槽位后才建立临时目录。environment_collect 取回指定任务的真实工具证据并可登记提案，environment_collect_ready 收集先完成者；environment_cancel 中止单个任务；environment_exchange 提供仅限本任务的版本化交换；environment_load_plugin 复制当前项目已启用插件并动态披露工具；environment_shared_tool 将共享设备操作送回主协调器。
