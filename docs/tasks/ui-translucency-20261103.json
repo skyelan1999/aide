@@ -58,19 +58,36 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "仅3个既有受控文件和1个任务记录；私有测试页/截图/日志置于忽略目录。后续关闭测试浏览器和服务器。",
+      "summary": "已关闭自建 Chromium/WebKit 和组件服务器；仅范围内文件已提交；私有截图/日志保留在忽略目录。规范构建完成旧镜像回收。",
       "evidence": [
         "git diff --check"
       ]
     },
     "release": {
       "status": "not_run",
-      "summary": "未推送或发布；接下来仅按用户本机UI请求进行增量源码构建更新。",
-      "evidence": []
+      "summary": "仅完成本机源码构建与运行更新；未授权本轮推送，未推送、升版或发布公开Release。",
+      "evidence": [
+        "local_deployment"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "Restore workbench.css and index.html from baseline 1b877aba; canonical rebuild only if locally deployed.",
-  "handoff": "",
-  "issue": "https://github.com/skyelan1999/aide/issues/748"
+  "handoff": "本机已部署30cbff6，服务健康且资源与源码一致。原生窗口仍受既有锁屏保护，未声称在已解锁原生设置完成验收；显示检查为真实生产组件浏览器及WebKit系统窗口截图。与#746待解锁插件验收互不替代。",
+  "issue": "https://github.com/skyelan1999/aide/issues/748",
+  "local_deployment": {
+    "status": "pass",
+    "command": "bash build.command",
+    "commit": "30cbff6d7e93b44e1600302f3aa152c01dcd0c6d",
+    "image": "sha256:4b3c7fa56c9daa1be0b710e664df2f528b2d1c9afb5566e3d49477f89a8f1871",
+    "sourceFingerprint": "852b06f98bf88f3a52e76f0830a3f207865df855c06cc3a57c001abd2edef7ef",
+    "health": "healthy",
+    "data_mounts": "9 unchanged",
+    "served_assets": "index.html / workbench.css byte-identical to source",
+    "garbage_collection": "1 superseded runtime image removed; 4 current/dependency/referenced images retained; BuildKit reclaimed 0B",
+    "evidence": [
+      "primary installation .agent-state/ui-translucency/build-actual.log",
+      "primary installation .agent-state/ui-translucency/runtime-after.json"
+    ]
+  }
 }
