@@ -1,0 +1,82 @@
+{
+  "id": "runtime-test-image-20261102",
+  "request": "修复 #719 测试镜像配置不一致及离线检查隐式拉取；保留显式参数优先、增加快速回归、明确镜像前提，不改生产服务",
+  "baseline": "8b9f73fab48ad010a4b27044acb9262f0b9dc20b",
+  "initial_status": "M docs/agent/router.json\n M scripts/test_optional_step.py\n M scripts/test_runtime_assets.py\n?? scripts/test_runtime_assets_config.py",
+  "acceptance": [
+    "两入口支持非空AIDE_TEST_IMAGE，显式位置参数优先，空/未设仍使用旧默认",
+    "离线检查统一--pull=never，禁止隐式远端拉取",
+    "mock回归纳入quick，实际普通UID资产/DOCX与optional STEP检查通过",
+    "当前版本同源镜像与完整full仍需重新验收，不把旧依赖镜像冒充本次版本"
+  ],
+  "scope": [
+    "scripts/test_runtime_assets.py",
+    "scripts/test_optional_step.py",
+    "scripts/test_runtime_assets_config.py",
+    "docs/agent/WORKFLOW.md",
+    "docs/agent/router.json",
+    "docs/testing/release-validation.md",
+    "docs/testing/test-cases.md",
+    "docs/testing/test-catalog.json",
+    "docs/tasks/runtime-test-image-20261102.json",
+    "docs/reviews/2026-11-02/runtime-test-image-selection.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "集中Issue719记录镜像参数不一致和Docker隐式拉取；用户授权本次发行必要修复PR在CI通过后例外合并",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/719",
+        "docs/reviews/2026-11-02/runtime-test-image-selection.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "统一位置参数/环境/旧默认优先级，禁止pull，显式区分运行镜像与源码编译SDK，不改产品或宿主registry",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/719",
+        "docs/reviews/2026-11-02/runtime-test-image-selection.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "两入口修复，两个mock测试覆盖多种输入与无网络选择，并纳入quick；完整验收设置显式镜像参数",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/719",
+        "docs/reviews/2026-11-02/runtime-test-image-selection.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "两个mock测试及子场景通过；普通UID1000资产32文件/DOCX读回及optional STEP检查通过；35项Python CI合约及文档检查通过。完整新源码full与tagged Delivery由主任务继续。",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/719",
+        "docs/reviews/2026-11-02/runtime-test-image-selection.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新完整预检查的镜像前提和本地依赖镜像/新发行镜像验收边界",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/719",
+        "docs/reviews/2026-11-02/runtime-test-image-selection.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅修改列明测试/流程/文档；实际资产检查容器自动删除，未改镜像标签、代理、生产服务和用户数据",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/719",
+        "docs/reviews/2026-11-02/runtime-test-image-selection.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户明确选择：授权本次发行必要修复 PR（推荐）；仅CI通过的必要修复，不新增功能/放宽门禁/修改保护。独立版本发布由主任务管理。",
+  "rollback": "如需回退，仅普通Git反向提交测试入口与流程文档；不改生产或镜像标签。",
+  "handoff": ""
+}

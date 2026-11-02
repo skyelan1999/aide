@@ -5,7 +5,7 @@
 | 类型 | 文件数 | 可静态识别的命名用例 |
 | --- | ---: | ---: |
 | go | 378 | 1682 |
-| python | 62 | 276 |
+| python | 63 | 278 |
 | node | 180 | 181 |
 | browser | 105 | 0 |
 
@@ -7453,7 +7453,16 @@
 
 - 未静态识别命名用例；可能是文件级断言、浏览器入口或测试辅助工具，需看实际执行回执。
 
-环境引用：`AIDE_REQUIRE_LAN_BRIDGE`, `AIDE_RUNTIME_PROFILE`。缺少配置时可能跳过；必须核对运行日志。
+环境引用：`AIDE_REQUIRE_LAN_BRIDGE`, `AIDE_RUNTIME_PROFILE`, `AIDE_TEST_IMAGE`。缺少配置时可能跳过；必须核对运行日志。
+
+</details>
+
+<details><summary>scripts/test_runtime_assets_config.py · python · 2 个命名用例</summary>
+
+[源码入口](../../scripts/test_runtime_assets_config.py)
+
+- `test_default_and_configured_images_are_consistent`
+- `test_explicit_image_overrides_environment`
 
 </details>
 

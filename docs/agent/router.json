@@ -1596,6 +1596,10 @@
       [
         "node",
         "scripts/runtime-lifecycle.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_runtime_assets_config.py"
       ]
     ],
     "full": [

@@ -8992,7 +8992,7 @@
     {
       "path": "scripts/test_optional_step.py",
       "kind": "python",
-      "sha256": "bbf3acb5ee03e394dee20aab0871b3873c0f56856d87b1c38a77b92101cd1a91",
+      "sha256": "b4657858919af1c2d12f77f036930049cc2cc405642041c5d7bd19642e1c2236",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
@@ -9165,13 +9165,26 @@
     {
       "path": "scripts/test_runtime_assets.py",
       "kind": "python",
-      "sha256": "cb1f05b7fc318e67c9d7929e5b3cdeeb1b23457ad718df014fd420c96a8cd31c",
+      "sha256": "4e49bec79157bb441e34ee91c8fc55df370c8bf00ffb6f134ef1b95bb33c9b27",
       "cases": [],
       "caseCount": 0,
       "environmentReferences": [
         "AIDE_REQUIRE_LAN_BRIDGE",
-        "AIDE_RUNTIME_PROFILE"
+        "AIDE_RUNTIME_PROFILE",
+        "AIDE_TEST_IMAGE"
       ],
+      "execution": "not_run_by_inventory"
+    },
+    {
+      "path": "scripts/test_runtime_assets_config.py",
+      "kind": "python",
+      "sha256": "e0d3dd5ffd62f03900fea958d65b8a9a44490cb32e60b9ed9fb739530619b150",
+      "cases": [
+        "test_default_and_configured_images_are_consistent",
+        "test_explicit_image_overrides_environment"
+      ],
+      "caseCount": 2,
+      "environmentReferences": [],
       "execution": "not_run_by_inventory"
     },
     {

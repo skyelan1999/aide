@@ -14,7 +14,7 @@ def check_source():
  assert 'dxf-parser + SVG' in (web/'app.js').read_text()
  assert 'test ! -e /opt/aide-cad' in (ROOT/'docker/Dockerfile.local-base').read_text()
 check_source()
-image=sys.argv[1] if len(sys.argv)>1 else os.environ.get('AIDE_TEST_IMAGE','aide:local')
-subprocess.run(['docker','run','--rm','--network=none','--entrypoint','sh',image,'-ec',
+image=sys.argv[1] if len(sys.argv)>1 else (os.environ.get('AIDE_TEST_IMAGE') or 'aide:local')
+subprocess.run(['docker','run','--rm','--pull=never','--network=none','--entrypoint','sh',image,'-ec',
  'test ! -e /opt/aide-cad; test ! -e /opt/aide/cad; test ! -e /data/plugins/step-viewer'],check=True,timeout=30)
 print('PASS: default image has no STEP engine/plugin; DXF/STL assets retained')

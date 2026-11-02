@@ -43,6 +43,8 @@ Aide 主程序及所有公开插件是同一产品能力的一部分：所有 bu
 
 - `python3 scripts/agent-route.py verify quick`：JS 语法、diff、版本格式、路由自身回归，以及全局审批、会话切换、Markdown 图片与下载、星图红外/路径/时间线和锁屏期间恢复写入中止逻辑回归（使用 VM/模拟 API，不替代真实模型或浏览器验收）。
 - `python3 scripts/agent-route.py verify full`：quick + 隔离的一次性 Docker Go race/vet。
+
+  先用 `AIDE_TEST_IMAGE` 指定已有的本地运行镜像，用 `AIDE_TEST_TOOLCHAIN_IMAGE` 指定已有的 SDK 镜像（均可使用不可变镜像 ID）；前者验证资产，后者编译当前源码。两个资产检查的显式位置参数优先于环境变量，未设置时仅保留旧 `aide:local` 默认值，使用 `--pull=never`，不会替开发者从仓库隐式拉取默认镜像。先单独运行 `test_runtime_assets.py` 与 `test_optional_step.py` 验证镜像前提，再开始耗时的 full。当前版本运行包的同源验证仍由正式 Delivery 负责，不能把本地依赖镜像检查当作新发行镜像验收。
   Docker 不可用即失败；不重启生产，不自动调用付费模型。服务器测试包先编译 race 测试二进制，再按全部注册的 Test/Fuzz/Example 名称划分为二十四个互斥分片，默认单进程依次运行以控制 race 内存开销，在原包目录执行；每个注册项保留一次，任一分片失败则 full 失败。其他包与 vet 仍完整执行。
 - UI：实际查看桌面/窄屏、专业/经典明暗、键盘与核心交互；保留截图或具体观察记录。
 - 浏览器验收先盘点标签，优先复用已有测试页。同一实例最多保留一个自建工作台页和一个当前组件测试页；打开下一轮前关闭上一轮自建页，完成后立即关闭组件页。保留用户页面、未保存表单和草稿，不用关闭整个浏览器代替清理。实际工作台仍从用户指定的 `start.command` 启动；已有验收页时可设置 `AIDE_OPEN_BROWSER=0`，启动完成后复用该页。
