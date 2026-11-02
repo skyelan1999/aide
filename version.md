@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.18.0 RC2**
+**当前版本：0.1.18.0 RC3**
+
+## 0.1.18.0 RC3（2026-11-02）
+
+- Terminal 1.6.0 paired release; correct required release-note sections, preserve RC2 tag and all full validation gates
+
 
 ## 0.1.18.0 RC2（2026-11-02）
 
