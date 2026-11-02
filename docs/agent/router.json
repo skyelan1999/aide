@@ -1586,6 +1586,10 @@
       ],
       [
         "python3",
+        "scripts/test_codex_host_source.py"
+      ],
+      [
+        "python3",
         "scripts/test_launcher_contract.py"
       ],
       [

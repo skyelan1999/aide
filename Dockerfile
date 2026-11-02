@@ -27,12 +27,23 @@ RUN sh /usr/local/lib/aide/pip-install-retry.sh pip install --retries 5 --timeou
 USER aide
 WORKDIR /src
 
+# Stable public host components: UI/application edits do not invalidate this stage.
+FROM toolchain AS codex-host
+WORKDIR /src
+COPY scripts/build-codex-host.py ./scripts/build-codex-host.py
+COPY docker/codex-host-source.json ./docker/codex-host-source.json
+COPY docker/host-sources/ ./docker/host-sources/
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/root/.cache/aide/codex-host-sources \
+    python3 scripts/build-codex-host.py --cache-dir /root/.cache/aide/codex-host-sources
+
 # ── build stage：编译 aide 二进制 ──────────────────────────────────────────────
 # 热路径优化（#43）：默认不再跑全量 go test。显式 build 走层缓存，只做 vet+build；
 # 全量测试移到发布门禁——release/CI 必须 --build-arg AIDE_RUN_TESTS=1。
 FROM toolchain AS build
 WORKDIR /src
 ENV GOPROXY=https://goproxy.cn,direct GOSUMDB=sum.golang.google.cn
+COPY --from=codex-host /opt/aide-host-components /opt/aide-host-components
 COPY go.mod ./
 COPY go.sum ./
 COPY vendor ./vendor
@@ -42,9 +53,6 @@ COPY plugins/testdata ./plugins/testdata
 COPY scripts/office ./scripts/office
 COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs
 COPY scripts/build-message-lan.sh ./scripts/build-message-lan.sh
-COPY scripts/build-codex-host.py ./scripts/build-codex-host.py
-COPY docker/codex-host-source.json ./docker/codex-host-source.json
-RUN --mount=type=cache,target=/root/.cache/go-build python3 scripts/build-codex-host.py
 # Fail the build before shipping a page whose application script cannot parse.
 RUN node --check internal/server/web/app.js \
     && node --check internal/server/web/message-center.js \

@@ -142,6 +142,30 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn('USER_SETTING=preserved', (self.root / '.env').read_text())
         self.assertTrue(self.launcher.owner())
 
+    def test_host_source_is_prepared_before_docker_without_changing_scope(self):
+        self.launcher.build()
+        calls = self.launcher.commands
+        prepared = [c for c in calls if len(c)>1 and c[1]=='scripts/build-codex-host.py']
+        self.assertEqual(len(prepared),1)
+        self.assertIn('--prepare-only',prepared[0])
+        self.assertIn(str(self.root/'docker/host-sources'),prepared[0])
+        self.assertIn(str(self.launcher.state/'host-sources'),prepared[0])
+        build = next(c for c in calls if c[1:3]==['buildx','build'])
+        self.assertLess(calls.index(prepared[0]),calls.index(build))
+
+    def test_source_preparation_failure_preserves_current_installation(self):
+        original=self.launcher.call
+        def fail_source(args,**kwargs):
+            if len(args)>1 and args[1]=='scripts/build-codex-host.py':
+                raise RuntimeError('synthetic source download failure')
+            return original(args,**kwargs)
+        self.launcher.call=fail_source
+        with self.assertRaisesRegex(RuntimeError,'source download failure'):
+            self.launcher.build()
+        self.assertFalse(any(c[1:3]==['buildx','build'] for c in self.launcher.commands))
+        self.assertNotIn(['bash','scripts/aide.sh','start-built'],self.launcher.commands)
+        self.assertFalse((self.root/'.env').exists())
+
     def test_build_executes_real_disk_child_without_inherited_project_dir(self):
         # Keep the Docker boundary disposable, but execute the actual Bash child
         # and production guard that the old all-call mock accidentally skipped.

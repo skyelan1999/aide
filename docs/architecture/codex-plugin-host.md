@@ -55,6 +55,28 @@ bridge payload. The runtime image carries these binaries, checksums, version
 and license under `/opt/aide/host-components`. Build-time fetching is pinned;
 installed users do not clone source or compile the manager.
 
+Source builds use an independent `codex-host` Docker stage so editing `internal/`
+does not re-download or recompile unchanged host components. The POSIX source
+launcher prepares the pinned archive on the host before Docker starts and stages
+it in `docker/host-sources/<sha256>.tar.gz` (ignored by Git, included in Docker
+context). This avoids depending on BuildKit container access to GitHub when the
+host can reach it. Host download cache lives under `.aide-data/build/host-sources`.
+Every staged/cached/explicit archive is SHA-256 checked again; a corrupt staged
+archive fails rather than silently changing source. A corrupt download cache is
+replaced only after a fresh download passes the same check.
+
+Direct Docker and native Windows source builds can use the same staged file.
+Prepare it on a connected machine with
+`python3 scripts/build-codex-host.py --prepare-only`, or use `--archive <path>`
+with the exact pinned archive. This preparation mode needs no Go or Node and
+creates no binaries. Windows native launchers acquire no new host Python
+requirement: without a staged archive the existing container-side download path
+remains, with a persistent verified source cache and at most three bounded
+attempts. No TLS verification or source pin is disabled. A cold base-image
+resolution may still contact its registry; offline source preparation does not
+promise a fully offline first Docker build.
+
+
 The existing launcher invokes `scripts/codex-host-control.cjs` using Node and
 argument arrays. The helper resolves the selected image to an immutable ID,
 extracts only the matching native binary and its metadata, checks SHA-256 and

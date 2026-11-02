@@ -204,6 +204,10 @@ class Launcher:
         for key, value in sorted(arguments.items()):
             if value is not None:
                 command += ['--build-arg', key + '=' + str(value)]
+        print('AIDE: 准备并校验 Codex Bridge 宿主源码缓存…', flush=True)
+        self.call([sys.executable, 'scripts/build-codex-host.py', '--prepare-only',
+                   '--cache-dir', str(self.state / 'host-sources'),
+                   '--bundle-dir', str(self.root / 'docker/host-sources')], timeout=180)
         print('AIDE: 开始 Docker 源码构建…', flush=True)
         self.d(*command, '.', timeout=7200)
         metadata = json.loads(self.d('image', 'inspect', self.image, '--format', '{{json .}}', capture=True))

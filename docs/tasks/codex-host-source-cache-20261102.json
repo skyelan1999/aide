@@ -1,0 +1,78 @@
+{
+  "id": "codex-host-source-cache-20261102",
+  "request": "修复 build.command 下载 Codex Bridge 宿主源码连接拒绝；缓存校验源码包并隔离宿主组件构建阶段",
+  "baseline": "d3b7953cbaa06702b8199cce29fc88a1fbb61269",
+  "initial_status": "",
+  "acceptance": [
+    "Normal macOS source build can use a verified host-prepared source archive when container egress is unavailable",
+    "Downloaded, cached and explicitly supplied archives always match the pinned SHA-256; transient retries are bounded",
+    "UI edits do not invalidate the independent host-component stage",
+    "Actual Docker build completes with source/component identity checked; production is not restarted",
+    "Existing launcher ownership, image verification and failure preservation behavior remains intact"
+  ],
+  "scope": [
+    "scripts/build-codex-host.py source preparation and verified caching",
+    "scripts/launcher.py preparation before Docker build",
+    "Dockerfile and Dockerfile.local independent component stage",
+    "Scoped cache ignore rules, focused tests and build documentation",
+    "docker/host-sources/README.md staging contract",
+    "docs/agent/router.json register focused source-cache regression"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Host prepares and verifies the content-addressed source archive for Docker; direct Docker retains verified-cache/bounded-download fallback. Both Dockerfiles compile unchanged host inputs in an independent stage. Startup/configuration stays behind existing image verification.",
+      "evidence": [
+        "scripts/build-codex-host.py",
+        "scripts/launcher.py",
+        "Dockerfile",
+        "Dockerfile.local"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented verified host staging/cache, bounded fallback download and independent Docker host stages; existing launcher startup/image guards retained.",
+      "evidence": [
+        "scripts/build-codex-host.py",
+        "Dockerfile",
+        "Dockerfile.local",
+        "scripts/launcher.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "8 source-cache fault/offline tests and 25 launcher contract tests passed. Real network-disabled host-component stage compiled all 6 binaries, checksums passed; application-file edit reused the host stage as CACHED. Full runtime image build remains to run.",
+      "evidence": [
+        "scripts/test_codex_host_source.py",
+        "scripts/test_launcher_contract.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented staged archive/cache lifecycle, native Windows fallback and first-build network limits.",
+      "evidence": [
+        "docs/architecture/codex-plugin-host.md",
+        "docker/host-sources/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Source archives are scoped generated build inputs ignored by Git; temporary cache probe restored its owned file byte-for-byte. No service or user data changed.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No remote push, public release or production restart. Candidate build validation only.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert source commits before deployment. Existing service/image/configuration retained throughout build validation.",
+  "handoff": "Core source/cache tests and real offline component compilation passed; proceed with full image build-only verification, without calling start-built.",
+  "issue": "https://github.com/skyelan1999/aide/issues/743"
+}

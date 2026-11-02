@@ -62,3 +62,6 @@ docker-images/*.zip
 # Mutable installed plugins; pristine build/test inputs live in bundled-plugins.
 /plugins/*
 !/plugins/testdata/
+
+# Verified, pinned build input staged by the source launcher; not a Git artifact.
+/docker/host-sources/*.tar.gz

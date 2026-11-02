@@ -1,10 +1,22 @@
 # Application-only build; all toolchains and packages are already local.
 ARG AIDE_DEPENDENCY_IMAGE=aide:dependencies-v2
+FROM ${AIDE_DEPENDENCY_IMAGE} AS codex-host
+USER root
+ENV GOCACHE=/root/.cache/go-build
+WORKDIR /src
+COPY scripts/build-codex-host.py ./scripts/build-codex-host.py
+COPY docker/codex-host-source.json ./docker/codex-host-source.json
+COPY docker/host-sources/ ./docker/host-sources/
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/root/.cache/aide/codex-host-sources \
+    python3 scripts/build-codex-host.py --cache-dir /root/.cache/aide/codex-host-sources
+
 FROM ${AIDE_DEPENDENCY_IMAGE} AS build
 USER root
 ENV GOCACHE=/root/.cache/go-build
 WORKDIR /src
 ENV GOPROXY=https://goproxy.cn,direct GOSUMDB=sum.golang.google.cn
+COPY --from=codex-host /opt/aide-host-components /opt/aide-host-components
 COPY go.mod ./
 COPY go.sum ./
 COPY vendor ./vendor
@@ -14,9 +26,6 @@ COPY plugins/testdata ./plugins/testdata
 COPY scripts/office ./scripts/office
 COPY scripts/benchmarks/luna-large-workload.cjs ./scripts/benchmarks/luna-large-workload.cjs
 COPY scripts/build-message-lan.sh ./scripts/build-message-lan.sh
-COPY scripts/build-codex-host.py ./scripts/build-codex-host.py
-COPY docker/codex-host-source.json ./docker/codex-host-source.json
-RUN --mount=type=cache,target=/root/.cache/go-build python3 scripts/build-codex-host.py
 # Fail the build before shipping a page whose application script cannot parse.
 RUN node --check internal/server/web/app.js \
     && node --check internal/server/web/message-center.js \
