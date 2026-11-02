@@ -155,10 +155,18 @@ def install_app(app, root, destination=None):
         raise ValueError('Existing Applications entry is a symlink; it was preserved')
     if destination.exists() and not owned_bundle(destination, root):
         raise ValueError('An Aide.app belonging to another installation already exists; it was preserved')
+    if destination.exists():
+        source_info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
+        previous_info = plistlib.loads((destination / 'Contents/Info.plist').read_bytes())
+        if source_info.get('AideDesktopBuildDigest') and source_info['AideDesktopBuildDigest'] == previous_info.get('AideDesktopBuildDigest'):
+            return verified_app(destination)
     with tempfile.TemporaryDirectory(prefix='.aide-install-', dir=destination.parent) as temporary:
         staging = Path(temporary) / 'Aide.app'
         shutil.copytree(app, staging)
         subprocess.run(['codesign', '--verify', '--deep', '--strict', str(staging)], check=True)
+        # Request normal application quit, honoring its unsaved-plugin confirmation.
+        # Never force-kill a running UI or replace its on-disk executable first.
+        subprocess.run([str(app / 'Contents/MacOS/AideDesktop'), '--prepare-update'], check=True, timeout=25)
         previous = Path(temporary) / 'previous.app'
         if destination.exists():
             destination.rename(previous)

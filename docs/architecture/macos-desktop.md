@@ -12,7 +12,7 @@ python3 scripts/build-macos-desktop.py --install --open
 
 首次编译需要已有 Xcode Command Line Tools（`xcrun swiftc`）、Python 3 和 Docker Desktop。编译产物保存在安装专属的 `~/Library/Caches/local.aide.desktop.<目录摘要>/builds/`，避免 iCloud 给应用包附加属性而破坏签名校验；连接日志和当前构建收据仍在安装的 `.aide-data/desktop/`。生成本机架构的应用，安装到 `~/Applications/Aide.app`，可放入 Dock。应用绑定当前安装目录；移动源码目录后重新运行 `desktop.command`。若目标已有其他安装的同名应用，安装器保留它并报告冲突；可用 `--destination` 指定另一应用路径。
 
-`build.command` 成功验证 Docker 镜像后编译安装 Mac 宿主，随后更新启动配置并启动本安装；Swift 编译失败时不切换服务配置。`start.command` 只打开已经编译的宿主，尚无宿主时继续打开浏览器。常规启动不会调用 Swift 或 Docker 编译。源码构建后的回收仅删除本安装可确认的旧宿主 bundle，保留当前版本、仍运行的旧 bundle、共享 Swift 模块缓存与未知文件。
+`build.command` 成功验证 Docker 镜像后编译安装 Mac 宿主，随后更新启动配置并启动本安装；Swift 编译失败时不切换服务配置。桌面代码更新通过正常退出请求替换旧应用，未保存插件内容由原生确认保护；用户取消或应用未退出时停止替换，不强制杀进程。相同桌面构建直接复用。`start.command` 只打开已经编译的宿主，尚无宿主时继续打开浏览器。常规启动不会调用 Swift 或 Docker 编译。源码构建后的回收仅删除本安装可确认的旧宿主 bundle，保留当前版本、仍运行的旧 bundle、共享 Swift 模块缓存与未知文件。
 
 本地应用以稳定的安装专属 identifier 作 ad-hoc 签名。它不是已公证的公共发行包；本次没有发布新的 macOS Release 附件。
 

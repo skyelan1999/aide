@@ -178,6 +178,30 @@ class DesktopTests(unittest.TestCase):
         for preserved in (current, running, foreign, unknown):
             self.assertTrue(preserved.exists())
 
+    def test_installed_app_survives_cache_eviction_and_failed_install_keeps_receipt(self):
+        home = self.root / 'home'
+        app = home / 'Applications/Aide.app'
+        (app / 'Contents/MacOS').mkdir(parents=True)
+        (app / 'Contents/MacOS/AideDesktop').write_bytes(b'fixture')
+        digest = 'a' * 64
+        info = {'CFBundleIdentifier': builder.bundle_id(self.root), 'AideProjectRoot': str(self.root), 'AideDesktopBuildDigest': digest}
+        (app / 'Contents/Info.plist').write_bytes(plistlib.dumps(info))
+        directory = self.root / '.aide-data/desktop'
+        directory.mkdir()
+        receipt = directory / 'current.json'
+        receipt.write_text(json.dumps({'digest': digest}))
+        original = receipt.read_bytes()
+        with patch.object(Path, 'home', return_value=home):
+            self.assertEqual(builder.current_app(self.root), app)
+            self.assertFalse(builder.build_directory(self.root).exists())
+            with patch.object(sys, 'argv', ['build-macos-desktop.py', '--root', str(self.root), '--install']), \
+                    patch.object(builder, 'compile_app', return_value=app), \
+                    patch.object(builder, 'verified_app', side_effect=lambda app: app), \
+                    patch.object(builder, 'install_app', side_effect=OSError('fixture install failure')), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(builder.main(), 1)
+        self.assertEqual(receipt.read_bytes(), original)
+
     def test_receipt_traversal_and_symlinks_are_rejected(self):
         directory = self.root / '.aide-data/desktop'
         directory.mkdir()

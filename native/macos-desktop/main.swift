@@ -692,6 +692,10 @@ final class DesktopApp: NSObject, NSApplicationDelegate, NSWindowDelegate,
         return .terminateLater
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if startup == nil && (session == nil || views[mainWindow]?.url?.scheme == "about") {
+            showLoading("正在重新连接本地工作台…")
+            connect()
+        }
         reopen(); return true
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -768,6 +772,21 @@ func policyTests() {
 
 let arguments = CommandLine.arguments
 if arguments.contains("--policy-test") { policyTests(); exit(0) }
+if arguments.contains("--prepare-update") {
+    guard let identifier = Bundle.main.bundleIdentifier else { exit(2) }
+    let others = NSRunningApplication.runningApplications(withBundleIdentifier: identifier).filter { $0.processIdentifier != getpid() }
+    for app in others { _ = app.terminate() }
+    let deadline = Date().addingTimeInterval(20)
+    while others.contains(where: { !$0.isTerminated }) && Date() < deadline {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+    }
+    if others.contains(where: { !$0.isTerminated }) {
+        fputs("Finish or cancel unsaved plugin edits, quit Aide, then retry the desktop update.\n", stderr)
+        exit(1)
+    }
+    exit(0)
+}
+
 func argument(_ name: String) -> String? {
     guard let index = arguments.firstIndex(of: name), index + 1 < arguments.count else { return nil }
     return arguments[index + 1]
