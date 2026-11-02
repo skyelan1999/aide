@@ -38,10 +38,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "33 launcher contract tests passed, including delayed healthy status and bounded timeout. First actual build.command compiled and started successfully; revealed Docker health marker delay before recycling. Added wait and regression; rerun final actual lifecycle and quick after fix.",
+      "status": "pass",
+      "summary": "33 launcher contract tests and final quick passed. Actual primary-checkout bash build.command completed compile/image validation/start/automatic recycle with exit 0. Delayed Docker health transition and untagged intermediates were discovered in live runs and fixed, then accepted against final code. Final canonical verify checks all pass; live image healthy, original mounts unchanged, zero untagged images.",
       "evidence": [
-        "scripts/test_launcher_contract.py"
+        "scripts/test_launcher_contract.py",
+        "docs/reviews/20261102/build-recycle-745.md"
       ]
     },
     "documentation": {
@@ -52,18 +53,22 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Initial scoped cache recovery reclaimed 8.761 GB. Keep actual post-build cleanup evidence and confirm live service/data references unchanged.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Initial inventory 32 images/24 volumes; final 7 images/12 volumes. Removed 26 initial outdated images plus 2 superseded images created by integration builds, 3 unreferenced one-off QA image outputs included. Removed 12 explicitly reviewed, unreferenced legacy Go cache volumes (~26 GiB), and 3 confirmed stopped/never-run review/extraction containers without deleting host data. Regular cache reclamation reports 8.761 GB + 9.763 GB. Current runtime, dependency/tool images, credentials/data/report volumes, compiler cache mounts and unrelated stopped containers retained.",
+      "evidence": [
+        "docs/reviews/20261102/build-recycle-745.md"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Local main integrated. User-authorized actual build.command deployed current source on 9999 and ran automatic recycling successfully. No remote push or public release.",
+      "evidence": [
+        "docs/reviews/20261102/build-recycle-745.md"
+      ]
     }
   },
   "release_authorization": "User requested actual build recovery plus automatic recycling after compilation in this turn.",
   "rollback": "Failed compilation/start leaves previous images untouched; after successful recycling obsolete unreferenced outputs are intentionally removed and can be rebuilt. Data/volumes remain.",
-  "handoff": "Old private regular cache recovery already reclaimed 8.761 GB; finish focused tests, actual build.command and verify automatic recycling.",
+  "handoff": "Primary build.command is working and now recycles after a verified healthy handover. Current image sha256:4bce562e08fc1aafd021c162f6cfcd42562a9e8730608b79ceae46ab4f3005d9. Necessary images retained (7 total), no dangling images. Legacy volume cleanup was explicit one-time recovery; automatic builds never sweep data volumes. Windows native and selfdev A/B lifecycle unchanged.",
   "issue": "https://github.com/skyelan1999/aide/issues/745"
 }
