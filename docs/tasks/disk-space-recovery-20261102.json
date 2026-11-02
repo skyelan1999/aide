@@ -1,0 +1,68 @@
+{
+  "id": "disk-space-recovery-20261102",
+  "request": "build.command 磁盘预检失败，回收确认可重建的旧缓存并实际跑通构建启动；用户补充：镜像编译完除了必要的编译依赖其他的过时产物都删掉，注意自动编译回收",
+  "baseline": "ef7f0196b2a7c0b620ab5563e77493ebe119e5d5",
+  "initial_status": "",
+  "acceptance": [
+    "Free enough disk space without deleting volumes, workspace or referenced images",
+    "Real macOS build.command compiles and starts the verified current source",
+    "After healthy startup automatically remove unreferenced scoped obsolete slim runtime images including dangling IDs",
+    "Preserve current/foreign/referenced images, configured dependency images, development toolboxes and compilation/download cache mounts",
+    "Low-disk preflight attempts the same scoped recovery then rechecks; failed build/start never enters post-build recycling",
+    "A cleanup failure is reported and does not turn a healthy successful build into a compilation failure"
+  ],
+  "scope": [
+    "POSIX scripts/launcher.py build.command/build.sh lifecycle",
+    "scripts/test_launcher_contract.py",
+    "docs/architecture/launcher-contract.md",
+    "docs/tasks/disk-space-recovery-20261102.json",
+    "Scoped local Docker cache/obsolete artifact recovery; no global prune or volume deletion"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly authorized obsolete-build-output cleanup and automatic recycling; preserve necessary build inputs and operational references.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse installation ownership and health verification. Recycle only owned slim runtime outputs, recheck container/tag references without forced image removal, retain named dependencies/toolboxes and exec cache mounts. Scope to POSIX launcher used on this Mac; native Windows and isolated selfdev A/B are unchanged.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "POSIX launcher now recycles scoped obsolete runtime image tags/dangling IDs and old regular cache after verified healthy handover. Low-disk preflight retries after the same scoped recovery; reference/dependency/default-builder safeguards retained.",
+      "evidence": [
+        "scripts/launcher.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "32 launcher contract tests passed, including ownership, live/foreign/exited references, named/toolbox dependencies, dangling/multiple tags, races, low-disk retry, failed startup and cleanup failures. Actual build.command and final quick pending.",
+      "evidence": [
+        "scripts/test_launcher_contract.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented automatic recycling, protection boundaries, failure behavior and POSIX-only scope.",
+      "evidence": [
+        "docs/architecture/launcher-contract.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Initial scoped cache recovery reclaimed 8.761 GB. Keep actual post-build cleanup evidence and confirm live service/data references unchanged.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested actual build recovery plus automatic recycling after compilation in this turn.",
+  "rollback": "Failed compilation/start leaves previous images untouched; after successful recycling obsolete unreferenced outputs are intentionally removed and can be rebuilt. Data/volumes remain.",
+  "handoff": "Old private regular cache recovery already reclaimed 8.761 GB; finish focused tests, actual build.command and verify automatic recycling.",
+  "issue": "https://github.com/skyelan1999/aide/issues/745"
+}

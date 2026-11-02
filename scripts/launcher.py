@@ -163,6 +163,96 @@ class Launcher:
             finally:
                 temporary.unlink(missing_ok=True)
 
+    def recycle_build_artifacts(self, expected_image=None, builder_mode='dedicated', dependencies=()):
+        """Recycle this installation's obsolete outputs after a healthy handover.
+
+        No container/volume/global prune, forced image removal or cache-mount GC.
+        Referenced images and explicitly named dependency/tool images are retained.
+        """
+        if self.dry_run:
+            return
+        self.validate_state()
+        owned_builder = builder_mode == 'dedicated' and self.owner()
+        cid = self.d('compose', 'ps', '--status', 'running', '-q', 'aide', capture=True)
+        if not CONTAINER_ID.fullmatch(cid):
+            raise ValueError('Automatic recycling requires the running Aide instance')
+        current = json.loads(self.d('inspect', cid, '--format', '{{json .}}', capture=True))
+        labels = current.get('Config', {}).get('Labels', {})
+        running = current.get('State', {})
+        active_image = current.get('Image', '')
+        owner_dir = labels.get('com.docker.compose.project.working_dir', '')
+        if (not owner_dir or Path(owner_dir).resolve() != self.root
+                or not running.get('Running') or running.get('Health', {}).get('Status') != 'healthy'
+                or not IMAGE_ID.fullmatch(active_image)
+                or expected_image is not None and active_image != expected_image):
+            raise ValueError('Automatic recycling requires the verified healthy image of this installation')
+        health = json.loads(self.d('exec', cid, 'curl', '-fsSk', '--connect-timeout', '2',
+                                   '--max-time', '3', 'https://127.0.0.1:8080/healthz', capture=True))
+        if health.get('service') != 'aide' or health.get('status') != 'ok':
+            raise ValueError('Automatic recycling health check failed')
+        protected = {active_image}
+        # Include exited and foreign containers: an image reference is not garbage.
+        for user in self.d('ps', '-aq', '--no-trunc', capture=True).split():
+            if not CONTAINER_ID.fullmatch(user):
+                raise ValueError('Invalid container identity while inventorying references')
+            value = json.loads(self.d('inspect', user, '--format', '{{json .}}', capture=True))
+            protected.add(value.get('Image', ''))
+        dependencies = set(dependencies) | {os.environ.get('AIDE_TEST_IMAGE', ''),
+                                             os.environ.get('AIDE_TEST_TOOLCHAIN_IMAGE', '')}
+        retained_prefixes = ('aide:dependencies-', 'aide:dependency-seed-', 'aide:sdk-seed-')
+        images = set(self.d('image', 'ls', '-q', '--no-trunc',
+                            '--filter', 'label=aide.installation=' + self.scope,
+                            '--filter', 'label=aide.build-role=runtime', capture=True).split())
+        removed, retained = [], []
+        for image in sorted(images):
+            if not IMAGE_ID.fullmatch(image):
+                raise ValueError('Invalid scoped image identity')
+            value = json.loads(self.d('image', 'inspect', image, '--format', '{{json .}}', capture=True))
+            tags = value.get('RepoTags') or []
+            meta = value.get('Config', {}).get('Labels', {})
+            if value.get('Id') != image:
+                raise ValueError('Scoped image inspection identity changed')
+            if (image in protected or image in dependencies or any(t in dependencies for t in tags)
+                    or meta.get('aide.installation') != self.scope
+                    or meta.get('aide.build-role') != 'runtime'
+                    or meta.get('aide.runtime-profile') != 'slim' or meta.get('aide.local-base')
+                    or any(t.startswith(retained_prefixes) or not t.startswith('aide:') for t in tags)):
+                retained.append(image)
+                continue
+            # Recheck references immediately before deletion; Docker's non-forced
+            # removal also refuses new container references racing this inventory.
+            if self.d('ps', '-aq', '--filter', 'ancestor=' + image, capture=True):
+                retained.append(image)
+                continue
+            for tag in tags:
+                fresh = json.loads(self.d('image', 'inspect', tag, '--format', '{{json .}}', capture=True))
+                if fresh.get('Id') == image:
+                    self.d('image', 'rm', tag, check=False, capture=True)
+            remaining = self.d('image', 'inspect', image, '--format', '{{json .}}', capture=True, check=False)
+            if isinstance(remaining, str):
+                # Removing tags can leave an untagged image. Target its full ID.
+                self.d('image', 'rm', image, check=False, capture=True)
+                remaining = self.d('image', 'inspect', image, '--format', '{{json .}}', capture=True, check=False)
+            (retained if isinstance(remaining, str) else removed).append(image)
+        print(f'AIDE: 自动回收过时运行镜像 {len(removed)} 个；保留当前、依赖或仍有引用的镜像 {len(retained)} 个。', flush=True)
+        if owned_builder:
+            # Keep recent incremental layers and all Go/download cache mounts.
+            output = self.d('buildx', 'prune', '--builder', self.builder, '--force',
+                            '--filter', 'type=regular', '--filter', 'until=24h',
+                            '--max-used-space', '20GB', capture=True, timeout=180)
+            print('AIDE: 旧构建层回收完成；近期层和编译缓存保留。' +
+                  (' ' + output.splitlines()[-1] if output else ''), flush=True)
+        atomic_json(self.state / 'recycle-last.json', {'version': 1, 'scope': self.scope,
+                    'activeImage': active_image, 'removedImages': removed, 'retainedImages': retained,
+                    'builderCacheRecycled': bool(owned_builder)})
+
+    def try_recycle_build_artifacts(self, **kwargs):
+        try:
+            self.recycle_build_artifacts(**kwargs)
+        except (ValueError, RuntimeError, OSError, subprocess.SubprocessError) as error:
+            # A healthy build remains successful; failed recycling is visible.
+            print('AIDE: 自动回收未完成，现有服务和有引用的资源保留：' + str(error), file=sys.stderr, flush=True)
+
     def build(self):
         self.require_source()
         builder_mode = os.environ.get('AIDE_BUILDX_BUILDER', 'dedicated')
@@ -175,8 +265,18 @@ class Launcher:
             return
         print('AIDE: 检查 Docker 和可用磁盘空间…', flush=True)
         self.d('info', capture=True)
-        self.call(['bash', '-ec', 'source scripts/resource-guard.sh; aide_check_disk build "$1"',
-                   'aide-build-disk', str(self.root)])
+        disk_check = ['bash', '-ec', 'source scripts/resource-guard.sh; aide_check_disk build "$1"',
+                      'aide-build-disk', str(self.root)]
+        try:
+            self.call(disk_check)
+        except RuntimeError:
+            print('AIDE: 磁盘预检未通过，尝试回收本安装已过时的构建产物后复查…', flush=True)
+            configuration = json.loads(self.d('compose', 'config', '--format', 'json', capture=True))
+            build_args = configuration['services']['aide'].get('build', {}).get('args') or {}
+            self.try_recycle_build_artifacts(builder_mode=builder_mode,
+                                            dependencies=[str(value) for key, value in build_args.items()
+                                                          if key.endswith('_IMAGE') and value])
+            self.call(disk_check)
         source = self.call(['bash', 'scripts/aide.sh', 'source-sha'], capture=True, timeout=1800,
                            progress='AIDE: 正在读取源码计算构建指纹；此阶段尚未进入 Docker 编译…')
         if not re.fullmatch(r'[a-f0-9]{64}', source):
@@ -221,6 +321,9 @@ class Launcher:
         print('Source build verified; starting this installation from ' + self.image, flush=True)
         env = dict(os.environ, AIDE_IMAGE=self.image, AIDE_INSTALLATION_KIND='source')
         self.call(['bash', 'scripts/aide.sh', 'start-built'], env=env, timeout=240)
+        self.try_recycle_build_artifacts(expected_image=metadata['Id'], builder_mode=builder_mode,
+                                        dependencies=[str(value) for key, value in arguments.items()
+                                                      if key.endswith('_IMAGE') and value])
 
     def owned_containers(self):
         ids = self.d('ps', '-aq', '--no-trunc', '--filter', 'label=com.docker.compose.project.working_dir=' + str(self.root), capture=True)

@@ -39,6 +39,11 @@ class BoundaryLauncher(module.Launcher):
         self.dirty = ''
         self.tagged = 'd' * 40
         self.gate = True
+        self.recycle_calls = []
+
+    def recycle_build_artifacts(self, **kwargs):
+        # Image/health/GC boundaries are exercised separately by RecycleTests.
+        self.recycle_calls.append((len(self.commands), kwargs))
 
     def call(self, args, capture=False, check=True, timeout=180, env=None, progress=None):
         args = [str(x) for x in args]
@@ -138,6 +143,8 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn('AIDE_SRC_SHA=' + FINGERPRINT, builds[0])
         self.assertIn('AIDE_RUNTIME_MODE=source', builds[0])
         self.assertEqual(calls[-1], ['bash', 'scripts/aide.sh', 'start-built'])
+        self.assertEqual(self.launcher.recycle_calls[0][0], len(calls))
+        self.assertEqual(self.launcher.recycle_calls[0][1]['expected_image'], SCOPE_IMAGE)
         self.assertIn('AIDE_IMAGE=' + self.launcher.image, (self.root / '.env').read_text())
         self.assertIn('USER_SETTING=preserved', (self.root / '.env').read_text())
         self.assertTrue(self.launcher.owner())
@@ -152,6 +159,43 @@ class LauncherContractTests(unittest.TestCase):
         self.assertIn(str(self.launcher.state/'host-sources'),prepared[0])
         build = next(c for c in calls if c[1:3]==['buildx','build'])
         self.assertLess(calls.index(prepared[0]),calls.index(build))
+
+    def test_low_disk_attempts_scoped_recovery_then_rechecks_before_compiling(self):
+        original = self.launcher.call
+        disk_calls = []
+        def low_once(args, **kwargs):
+            if args[:2] == ['bash', '-ec']:
+                disk_calls.append(args)
+                if len(disk_calls) == 1:
+                    raise RuntimeError('synthetic low disk')
+            return original(args, **kwargs)
+        self.launcher.call = low_once
+        self.launcher.build()
+        self.assertEqual(len(disk_calls), 2)
+        self.assertEqual(len(self.launcher.recycle_calls), 2)
+        self.assertNotIn('expected_image', self.launcher.recycle_calls[0][1])
+        self.assertEqual(self.launcher.recycle_calls[1][1]['expected_image'], SCOPE_IMAGE)
+
+    def test_persistent_low_disk_and_failed_start_do_not_recycle_new_outputs(self):
+        original = self.launcher.call
+        def low_disk(args, **kwargs):
+            if args[:2] == ['bash', '-ec']:
+                raise RuntimeError('synthetic low disk')
+            return original(args, **kwargs)
+        self.launcher.call = low_disk
+        with self.assertRaises(RuntimeError):
+            self.launcher.build()
+        self.assertFalse(any(c[1:3] == ['buildx', 'build'] for c in self.launcher.commands))
+        self.assertFalse((self.root / '.env').exists())
+        self.launcher.recycle_calls.clear()
+        def bad_start(args, **kwargs):
+            if args == ['bash', 'scripts/aide.sh', 'start-built']:
+                raise RuntimeError('synthetic start failure')
+            return original(args, **kwargs)
+        self.launcher.call = bad_start
+        with self.assertRaisesRegex(RuntimeError, 'start failure'):
+            self.launcher.build()
+        self.assertEqual(self.launcher.recycle_calls, [])
 
     def test_source_preparation_failure_preserves_current_installation(self):
         original=self.launcher.call
@@ -193,6 +237,7 @@ class LauncherContractTests(unittest.TestCase):
             self.launcher.build()
         self.assertEqual((self.root / '.env').read_text(), 'AIDE_IMAGE=aide:previous\n')
         self.assertFalse(any(c[:3] == ['bash', 'scripts/aide.sh', 'start-built'] for c in self.launcher.commands))
+        self.assertEqual(self.launcher.recycle_calls, [])
         self.assertFalse(any('latest-release' in x for c in self.launcher.commands for x in c))
 
     def test_wrong_build_identity_retains_previous_configuration(self):
@@ -440,6 +485,156 @@ sys.exit('Unexpected package Docker action: '+repr(a))
                         self.assertIn('windows-entrypoint.bat',names)
                     self.assertNotIn('.env',names)
                     self.assertNotIn('owner.json',names)
+
+
+class RecycleLauncher(module.Launcher):
+    def __init__(self, root):
+        super().__init__(root)
+        self.commands = []
+        self.active = 'sha256:' + 'a' * 64
+        self.current_health = 'healthy'
+        self.current_owner = str(self.root)
+        self.images = {}
+        self.tags = {}
+        self.race_image = None
+        self.fail_remove = False
+        self.fail_prune = False
+        self.users = {CID: self.active}
+        module.atomic_json(self.receipt, {'version': 1, 'scope': self.scope, 'builder': self.builder})
+
+    def add_image(self, letter, tags=(), **labels):
+        image = 'sha256:' + letter * 64
+        self.images[image] = {'Id': image, 'RepoTags': list(tags), 'Config': {'Labels': {
+            'aide.installation': self.scope, 'aide.build-role': 'runtime',
+            'aide.runtime-profile': 'slim', **labels}}}
+        self.tags.update({tag: image for tag in tags})
+        return image
+
+    def call(self, args, capture=False, check=True, **kwargs):
+        args = [str(x) for x in args]
+        self.commands.append(args)
+        c = args[1:]
+        output = ''
+        if c[:2] == ['compose', 'ps']:
+            output = CID
+        elif c[0] == 'inspect':
+            user = c[1]
+            output = json.dumps({'Image': self.users[user], 'State': {
+                'Running': user == CID, 'Health': {'Status': self.current_health}},
+                'Config': {'Labels': {'com.docker.compose.project.working_dir': self.current_owner}}})
+        elif c[0] == 'exec':
+            output = json.dumps({'service': 'aide', 'status': 'ok'})
+        elif c[:2] == ['ps', '-aq']:
+            ancestor = next((x.split('=', 1)[1] for x in c if x.startswith('ancestor=')), None)
+            output = '\n'.join(user for user, image in self.users.items()
+                               if ancestor is None or image == ancestor)
+            if ancestor and ancestor == self.race_image:
+                output = 'f' * 64
+        elif c[:2] == ['image', 'ls']:
+            # Include a foreign result to test the second ownership check.
+            output = '\n'.join(self.images)
+        elif c[:2] == ['image', 'inspect']:
+            image = self.tags.get(c[2], c[2])
+            if image not in self.images:
+                if check:
+                    raise RuntimeError('missing image')
+                return subprocess.CompletedProcess(args, 1)
+            output = json.dumps(self.images[image])
+        elif c[:2] == ['image', 'rm']:
+            ref = c[2]
+            if self.fail_remove:
+                return subprocess.CompletedProcess(args, 1)
+            if ref in self.tags:
+                image = self.tags.pop(ref)
+                self.images[image]['RepoTags'].remove(ref)
+                # Deliberately retain an untagged object so full-ID cleanup runs.
+            elif ref in self.images:
+                assert ref not in self.users.values(), 'must never remove referenced image'
+                assert not self.images[ref]['RepoTags'], 'must detach all obsolete tags first'
+                del self.images[ref]
+        elif c[:2] == ['buildx', 'prune']:
+            if self.fail_prune:
+                raise RuntimeError('synthetic prune failure')
+            output = 'Total: 1GB'
+        else:
+            raise AssertionError('Unexpected recycling command: ' + str(c))
+        return output if capture else subprocess.CompletedProcess(args, 0)
+
+
+class RecycleTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix='aide-recycle-')
+        self.addCleanup(self.tmp.cleanup)
+        self.launcher = RecycleLauncher(Path(self.tmp.name))
+        self.current = self.launcher.add_image('a', ['aide:source-current'])
+
+    def removals(self):
+        return [c for c in self.launcher.commands if c[1:3] == ['image', 'rm']]
+
+    def test_deletes_obsolete_tags_and_dangling_ids_preserving_all_dependencies(self):
+        old = self.launcher.add_image('b', ['aide:old-one', 'aide:old-two'])
+        dangling = self.launcher.add_image('c')
+        seed = self.launcher.add_image('d', ['aide:sdk-seed-fixture'])
+        toolbox = self.launcher.add_image('e', ['aide:release-ci-test-tools'], **{'aide.runtime-profile': 'toolbox'})
+        foreign = self.launcher.add_image('f', ['aide:foreign'], **{'aide.installation': 'other-scope'})
+        referenced = self.launcher.add_image('1', ['aide:used-by-exited-container'])
+        self.launcher.users['2' * 64] = referenced
+        configured = self.launcher.add_image('3', ['aide:custom-compile-input'])
+        self.launcher.recycle_build_artifacts(expected_image=self.current, dependencies=['aide:custom-compile-input'])
+        self.assertEqual(set(self.launcher.images), {self.current, seed, toolbox, foreign, referenced, configured})
+        targets = [c[3] for c in self.removals()]
+        self.assertIn(old, targets)
+        self.assertIn(dangling, targets)
+        self.assertIn('aide:old-one', targets)
+        self.assertIn('aide:old-two', targets)
+        prune = next(c for c in self.launcher.commands if c[1:3] == ['buildx', 'prune'])
+        self.assertIn(self.launcher.builder, prune)
+        self.assertIn('type=regular', prune)
+        self.assertIn('until=24h', prune)
+        self.assertIn('20GB', prune)
+        receipt = json.loads((self.launcher.state / 'recycle-last.json').read_text())
+        self.assertEqual(set(receipt['removedImages']), {old, dangling})
+        self.assertEqual(receipt['activeImage'], self.current)
+
+    def test_unhealthy_foreign_or_wrong_runtime_never_deletes(self):
+        self.launcher.add_image('b', ['aide:old'])
+        for bad in ('unhealthy', 'foreign', 'wrong-image'):
+            with self.subTest(bad=bad):
+                self.launcher.commands.clear()
+                self.launcher.current_health = 'starting' if bad == 'unhealthy' else 'healthy'
+                self.launcher.current_owner = '/foreign' if bad == 'foreign' else str(self.launcher.root)
+                with self.assertRaises(ValueError):
+                    self.launcher.recycle_build_artifacts(expected_image='sha256:'+'b'*64 if bad == 'wrong-image' else self.current)
+                self.assertFalse(self.removals())
+                self.assertFalse(any('prune' in c for c in self.launcher.commands))
+
+    def test_reference_race_and_other_repository_tag_are_retained(self):
+        old = self.launcher.add_image('b', ['aide:old'])
+        alias = self.launcher.add_image('c', ['aide:old-alias', 'other-project:dependency'])
+        self.launcher.race_image = old
+        self.launcher.recycle_build_artifacts(expected_image=self.current)
+        self.assertIn(old, self.launcher.images)
+        self.assertIn(alias, self.launcher.images)
+        self.assertFalse(self.removals())
+
+    def test_removal_failure_and_gc_failure_are_visible_and_not_forced(self):
+        self.launcher.add_image('b', ['aide:old'])
+        self.launcher.fail_remove = True
+        self.launcher.fail_prune = True
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            self.launcher.try_recycle_build_artifacts(expected_image=self.current)
+        self.assertIn('synthetic prune failure', errors.getvalue())
+        self.assertTrue(all('--force' not in c and '-f' not in c for c in self.removals()))
+        self.assertEqual(len(self.launcher.images), 2)
+
+    def test_default_builder_and_dry_run_never_prune_shared_cache(self):
+        self.launcher.recycle_build_artifacts(expected_image=self.current, builder_mode='default')
+        self.assertFalse(any('prune' in c for c in self.launcher.commands))
+        self.launcher.commands.clear()
+        self.launcher.dry_run = True
+        self.launcher.recycle_build_artifacts()
+        self.assertEqual(self.launcher.commands, [])
 
 
 if __name__ == '__main__':

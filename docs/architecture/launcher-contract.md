@@ -30,6 +30,16 @@ Windows 源码入口修复见 [#646](https://github.com/skyelan1999/aide/issues/
 
 每个安装目录拥有独立的 `aide-<目录摘要>` docker-container Buildx 构建器、`aide:source-<目录摘要>` 镜像和 `.aide-data/build/owner.json` 归属收据。已有同名构建器但无匹配收据时拒绝接管。构建器限制为 4 GiB / 2 核；增量层和 cache mount 留在该构建器中。冷启动需要获取 BuildKit、基础镜像、固定工具链及依赖；默认 Docker 引擎已有基础镜像 tag 不代表专用构建器已有离线缓存。无网络的机器优先使用完整 Release 包，或预先准备该专用构建环境。
 
+### POSIX 构建自动回收（#745）
+
+macOS `build.command` 与 Linux `build.sh` 在镜像身份校验、应用及健康检查成功后，自动回收本安装不再被容器引用的过时 slim 运行镜像。归属标签逐项复核，移除过时 tag 后按完整 ID 处理遗留的无 tag 镜像，不使用强制镜像删除。保留当前运行镜像、任何运行中或已退出容器仍引用的镜像、其他安装镜像、构建参数指定的依赖镜像、`dependencies/dependency-seed/sdk-seed` 及 toolbox 编译/验收工具镜像；不停止容器、不删除数据卷或工作区。
+
+随后仅对有匹配归属收据的专用构建器执行 `type=regular`、`until=24h`、`--max-used-space 20GB` 的定向缓存回收。保留最近 24 小时使用的增量层以及所有编译/下载 cache mount；因此 20GB 是回收目标，不是缓存总量的硬上限。使用 Docker 默认构建器时跳过缓存回收，避免清理共享构建器。Docker 过滤及空间策略见 [Buildx prune](https://docs.docker.com/reference/cli/docker/buildx/prune/)。
+
+低磁盘空间预检首次失败时，若现有本安装实例健康，会先尝试上述定向回收，再按原 20 GiB 门槛复查；仍不足时停止，不降低保护阈值。新镜像编译或启动失败时不执行构建后的回收。回收失败会显示独立警告，健康的新实例继续运行；成功结果记录在 `.aide-data/build/recycle-last.json`。成功交接后过时镜像会被删除，需要历史源码回滚时应重新编译。
+
+本轮只接入 POSIX 标准源码构建协调器；Windows 原生启动器和隔离 selfdev A/B 流程沿用各自既有生命周期，未接入这项自动回收。
+
 ### Windows 源码构建代理（#649）
 
 `build.bat` / `clean.bat` 在编译第一个 EXE 前读取当前用户的 Windows 手动系统代理；同一次调用中的 Docker bootstrap 和后续原生源码构建继承相同的进程环境。直接执行原生 EXE 的 `build/clean` 时也会读取当前用户设置。宿主仍无需 PowerShell、Python 或额外编译器。
