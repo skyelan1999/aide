@@ -1,0 +1,76 @@
+{
+  "id": "static-audit-seed-20261102",
+  "request": "修复完整发行验收发现的 #715 静态审阅部分合并故障注入夹具；保留六项注入与原始通过/注入后失败证明，不改生产行为",
+  "baseline": "418a6ce00de53dd49839f46c63566f58894726ec",
+  "initial_status": "M docs/testing/test-catalog.json\n M internal/server/static_audit_fixture_test.go\n M scripts/ci/basic_go.py",
+  "acceptance": [
+    "六个静态故障种子继续唯一匹配当前源码并能生成 medium/large 快照",
+    "原始源码两项 fixture/invariants 测试通过；临时 overlay 注入后六个不变量逐一失败",
+    "不改生产行为、不放宽唯一匹配/解析/部分合并断言、不跳过测试",
+    "fixture 加入基本 CI，完整 full 与最终 Delivery 仍需重跑"
+  ],
+  "scope": [
+    "internal/server/static_audit_fixture_test.go",
+    "scripts/ci/basic_go.py",
+    "docs/testing/test-catalog.json",
+    "docs/reviews/2026-11-02/static-audit-seed-remediation.md",
+    "docs/tasks/static-audit-seed-20261102.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "完整 race 第5分片揭示源匹配失效，集中Issue715登记；修复范围仅基准夹具和基本CI",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/715",
+        "docs/reviews/2026-11-02/static-audit-seed-remediation.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "将partial-merge故障注入锚定到Collected前的批次结束赋值，保留六项种子及原始/注入双向验证",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/715",
+        "docs/reviews/2026-11-02/static-audit-seed-remediation.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修正唯一锚点；StaticAuditFixture纳入basic_go；用例源码摘要同步",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/715",
+        "docs/reviews/2026-11-02/static-audit-seed-remediation.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离ARM64 SDK中原始fixture与六个不变量race通过；临时故障overlay的六个对应不变量全部按预期失败；全包basic编译/关键回归/vet及文档检查通过。完整新源码full与正式Delivery仍由主发行任务负责，不冒称已经通过。",
+      "evidence": [
+        ".agent-state/release-ci-hardening-20261101/audit-seed-fix/report.json",
+        "docs/reviews/2026-11-02/static-audit-seed-remediation.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录原失败、修复语义、隔离overlay验证及不替代最终Release的边界",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/715",
+        "docs/reviews/2026-11-02/static-audit-seed-remediation.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只修改列明测试/CI/文档；临时故障源码与二进制随专用QA容器删除，证据日志和可复用编译缓存保留；生产未动。",
+      "evidence": [
+        "docs/reviews/2026-11-02/static-audit-seed-remediation.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "主任务已授权发行、自动修复与提交；新测试修复PR的管理员例外尚需具体授权，不能复用仅针对#714的授权。",
+  "rollback": "本修复仅测试/基本CI/文档；如需回退，使用普通Git反向提交恢复种子锚点与basic模式，不改运行服务或数据。",
+  "handoff": ""
+}
