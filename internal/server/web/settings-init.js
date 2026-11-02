@@ -96,9 +96,9 @@
     }
     doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
-    doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
+    doc.motion = 'system';
     doc.startupAnimation = 'on';
-    doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : parsed.background === 'whale' ? 'studio' : 'off';
+    doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
     doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
@@ -118,7 +118,7 @@
     root.setAttribute('data-theme', effectiveOf(doc.theme));
     root.setAttribute('data-theme-pref', doc.theme);
     root.setAttribute('data-palette', doc.palette);
-    root.setAttribute('data-motion', doc.motion === 'reduced' || motionMedia && motionMedia.matches ? 'reduced' : 'full');
+    root.setAttribute('data-motion', motionMedia && motionMedia.matches ? 'reduced' : 'full');
     window.dispatchEvent(new Event('aide:motion'));
     root.lang = doc.language === 'en' || (doc.language === 'system' && /^en(?:-|$)/i.test(window.navigator && window.navigator.language || '')) ? 'en' : 'zh-CN';
   }
@@ -191,9 +191,9 @@
       }
       doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
-    doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
+    doc.motion = 'system';
     doc.startupAnimation = 'on';
-    doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : parsed.background === 'whale' ? 'studio' : 'off';
+    doc.background = ['off', 'aurora', 'studio', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'studio';
     doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
@@ -226,7 +226,7 @@
     },
     set: function (name, value) {
       if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'background' ? (['off','aurora','studio','local'].indexOf(value)>=0 ? value : value==='whale'?'studio':'off') : name === 'startupAnimation' ? 'on' : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? 'system' : name === 'background' ? (['off','aurora','studio','local'].indexOf(value)>=0 ? value : 'studio') : name === 'startupAnimation' ? 'on' : value;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion') applyTheme();
       notifyAll();

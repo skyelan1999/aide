@@ -48,25 +48,6 @@
           "id": "background",
           "type": "workbench-background",
           "label": "工作台背景"
-        },
-        {
-          "id": "motion",
-          "type": "segmented",
-          "label": "动效强度",
-          "options": [
-            {
-              "value": "system",
-              "label": "跟随系统"
-            },
-            {
-              "value": "full",
-              "label": "轻盈动效"
-            },
-            {
-              "value": "reduced",
-              "label": "减少动态效果"
-            }
-          ]
         }
       ]
     },

@@ -64,7 +64,7 @@
     }
   }
   async function apply(force = false) {
-    const next = window.aideUI?.get('background') || 'off';
+    const next = window.aideUI?.get('background') || 'studio';
     const strength = window.aideUI?.get('backgroundStrength');
     root.style?.setProperty('--wb-background-strength', String(typeof strength === 'number' && Number.isFinite(strength) ? Math.min(50, Math.max(10, strength)) / 100 : .22));
     if (next === mode && !force) { lifecycle(); refreshPanels(); return; }

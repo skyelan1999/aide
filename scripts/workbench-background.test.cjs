@@ -30,7 +30,7 @@ function setup(initial='off'){
  return {root,body,window,document,events,listeners,urls,revoked,mediaQuery,set asset(v){asset=v;},get asset(){return asset;},set fail(v){fail=v;},set locked(v){locked=v;},setMode:v=>window.aideUI.set('background',v),layer:()=>body.children[0],render:()=>window.AideBackground.renderSettings(),update:()=>subscriptions.forEach(f=>f())};
 }
 (async()=>{
- let h=setup();assert.equal(h.root.dataset.background,'off');assert.equal(h.urls.length,0);assert.equal(h.body.children.length,1);
+ let h=setup();assert.equal(h.root.dataset.background,'off');const unset=setup(null);assert.equal(unset.root.dataset.background,'studio');assert.equal(unset.layer().children.length,3);assert.equal(h.urls.length,0);assert.equal(h.body.children.length,1);
  // The bundled choice works without browser storage and does not replace the user's uploaded asset.
  const bundled=setup('studio');assert.equal(bundled.layer().children.length,3);assert.equal(bundled.urls.length,0);
  bundled.asset={blob:{size:10},name:'keep.webm',type:'video/webm'};
@@ -70,11 +70,27 @@ function setup(initial='off'){
  // Persisted settings, invalid defaults, and cross-tab normalization use aideUI.
  const attrs={},store={'aide.ui':JSON.stringify({background:'aurora',theme:'light'})},ws={localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>store[k]=v,removeItem:k=>delete store[k]},navigator:{language:'en'},matchMedia:()=>({matches:false,addEventListener(){}}),dispatchEvent(){},addEventListener:(k,f)=>ws[k]=f};
  vm.runInNewContext(settings,{window:ws,document:{documentElement:{setAttribute:(k,v)=>attrs[k]=v}},Event:class{}});
- assert.equal(ws.aideUI.get('background'),'aurora');ws.aideUI.set('background','nonsense');assert.equal(ws.aideUI.get('background'),'off');
+ assert.equal(ws.aideUI.get('background'),'aurora');ws.aideUI.set('background','nonsense');assert.equal(ws.aideUI.get('background'),'studio');
  ws.aideUI.set('background','whale');assert.equal(ws.aideUI.get('background'),'studio');assert.equal(JSON.parse(store['aide.ui']).background,'studio');
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'whale'})});assert.equal(ws.aideUI.get('background'),'studio');
  assert.equal(ws.aideUI.get('backgroundStrength'),22);ws.aideUI.set('backgroundStrength',90);assert.equal(ws.aideUI.get('backgroundStrength'),50);ws.aideUI.set('backgroundStrength',NaN);assert.equal(ws.aideUI.get('backgroundStrength'),22);ws.aideUI.set('backgroundStrength',-1);assert.equal(ws.aideUI.get('backgroundStrength'),10);
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local',backgroundStrength:36})});assert.equal(ws.aideUI.get('backgroundStrength'),36);
- ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local'})});assert.equal(ws.aideUI.get('background'),'local');ws.storage({key:'aide.ui',newValue:'{}'});assert.equal(ws.aideUI.get('background'),'off');
+ ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local'})});assert.equal(ws.aideUI.get('background'),'local');ws.storage({key:'aide.ui',newValue:'{}'});assert.equal(ws.aideUI.get('background'),'studio');
+ // Fresh defaults, preserved explicit background choices and system-owned motion.
+ for(const background of [undefined,'off','aurora','studio','local'])for(const motion of ['full','reduced','system']){
+  const values={'aide.ui':JSON.stringify({background,motion,theme:'dark'})},attributes={},queries={};
+  const browser={localStorage:{getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=v,removeItem:k=>delete values[k]},navigator:{language:'zh-CN'},dispatchEvent(){},
+   matchMedia:query=>(queries[query]={matches:false,addEventListener:(kind,fn)=>queries[query].change=fn}),addEventListener:(kind,fn)=>browser[kind]=fn};
+  vm.runInNewContext(settings,{window:browser,document:{documentElement:{setAttribute:(k,v)=>attributes[k]=v}},Event:class{}});
+  assert.equal(browser.aideUI.get('background'),background??'studio');assert.equal(JSON.parse(values['aide.ui']).background,background??'studio');
+  assert.equal(browser.aideUI.get('motion'),'system');assert.equal(attributes['data-motion'],'full');
+  assert.equal(browser.aideUI.set('motion','reduced'),'system');assert.equal(attributes['data-motion'],'full');
+  browser.storage({key:'aide.ui',newValue:JSON.stringify({background:background??'studio',motion:'reduced'})});
+  assert.equal(browser.aideUI.get('motion'),'system');assert.equal(attributes['data-motion'],'full');
+  const system=queries['(prefers-reduced-motion: reduce)'];system.matches=true;system.change();assert.equal(attributes['data-motion'],'reduced');
+  system.matches=false;system.change();assert.equal(attributes['data-motion'],'full');
+ }
+ const schema=JSON.parse(fs.readFileSync('internal/server/web/settings-schema.json','utf8'));
+ assert(!schema.sections.find(s=>s.id==='appearance').controls.some(c=>c.id==='motion'),'manual motion choice removed from appearance');
  console.log('PASS background lifecycle, stale reads, local save/rollback, validation, release, motion, lock and preference persistence');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,0 +1,75 @@
+{
+  "id": "background-default-20261103",
+  "request": "工作台背景如果没有设置过默认就是静域，把动效强度的选择删掉，统一走默认",
+  "baseline": "31880803037071d2e2d7a9205193645c95cb1c35",
+  "initial_status": "",
+  "acceptance": [
+    "Synchronous aideUI preference and renderer default unset/invalid background to studio; stored valid selections remain",
+    "Motion strength setting is absent; boot, setter and cross-tab updates always use system motion while honoring prefers-reduced-motion",
+    "Existing local-media storage, background strength and theme choices remain; verify actual page at desktop/narrow sizes",
+    "Focused tests, stable quick gate and canonical local source build/update; no public push/release"
+  ],
+  "scope": [
+    "internal/server/web/settings-init.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/workbench-background.js and index.html cache versions",
+    "existing background/settings tests and architecture/task documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested studio as the unset background and removal of motion intensity selection. Preserve stored valid background choices, use existing system-motion default.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/747"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Normalize background at the existing synchronous aideUI boundary; force legacy motion values to system on boot/set/cross-tab sync, remove only the schema control; reuse background rendering/lifecycle.",
+      "evidence": [
+        "internal/server/web/settings-init.js",
+        "internal/server/web/settings-schema.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Background missing/invalid values normalize to studio; motion normalizes to system on boot, setters and cross-tab updates. Removed motion schema control; cache keys updated. Existing local assets/background strength kept.",
+      "evidence": [
+        "internal/server/web/settings-init.js",
+        "internal/server/web/settings-schema.json",
+        "internal/server/web/workbench-background.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Existing background lifecycle/navigation/experience regressions pass. Real Chromium component page uses production settings-init, schema, actual segmented renderer, background module and styles; verified defaults, explicit off persistence, old motion normalization, system reduced motion, cross-tab sync, 1440/390 layouts, zero page errors. Stable quick gate and local deployed-asset checks remain.",
+      "evidence": [
+        ".agent-state/background-default/browser-result.json",
+        ".agent-state/background-default/desktop-dark.png",
+        ".agent-state/background-default/narrow-light.png",
+        ".agent-state/background-default/background-tests.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated current architecture to describe studio default, preserved existing choices and system-owned motion.",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "",
+  "issue": "https://github.com/skyelan1999/aide/issues/747"
+}
