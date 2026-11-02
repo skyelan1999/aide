@@ -39,7 +39,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Focused Go race8/8 no skip (11.308s) including actual candidate ZIP installation2/2; go vet internal/server PASS. Plugin source56/56 and extracted ZIP53/53 no skip; Chromium1440/390px light/dark PASS. Real XServer GUI/user devices/nativeWindows/new host image explicitly NOT_RUN.",
+      "summary": "Focused Go race8/8 no skip (11.308s) including new functional and legacy package-content admission2/2; go vet internal/server PASS. Plugin source56/56 and extracted ZIP53/53 no skip; Chromium1440/390px light/dark PASS. Real XServer GUI/user devices/nativeWindows/new host image explicitly NOT_RUN. Corrected final original-ZIP admission: multipart io.Copy (no reconstruction), expected SHA bound5139e8...,1071285bytes, race1/1 PASS3.060s; legacy bundle fixture validates contents/behavior only.",
       "evidence": [
         "internal/server/terminal_session_features_test.go",
         "https://github.com/skyelan1999/aide-pkg-terminal/blob/feat/session-copy-x11-telnet/docs/session-features-validation.md"
@@ -66,7 +66,7 @@
   },
   "release_authorization": "Implementation and reviewable commit/push/PR only. No merge, plugin publication, marketplace update, old tag/asset mutation or production restart.",
   "rollback": "Do not install feature branches into production. Reviewable changes can be reverted separately; preserve all existing sessions, logs and relay deployment secrets.",
-  "handoff": "Review only: plugin https://github.com/skyelan1999/aide-pkg-terminal/pull/3 and host https://github.com/skyelan1999/aide/pull/731. Final ZIP actual isolated App/daemon install8/8 focused race, zero skip,11.308s; vet exit0. No merge/release/market/production change. Remote CI tracked separately.",
+  "handoff": "Review only: plugin https://github.com/skyelan1999/aide-pkg-terminal/pull/3 and host https://github.com/skyelan1999/aide/pull/731. Original ZIP raw multipart installation race1/1 PASS3.060s; prior focused race8/8 and legacy package-content regression remain valid. No merge/release/market/production change. Remote CI tracked separately.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/726",
     "https://github.com/skyelan1999/aide/issues/728",

@@ -1,13 +1,17 @@
 package server
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"io"
+	"mime/multipart"
 	"net"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -22,26 +26,37 @@ func TestTerminalSessionFeaturesInstalledCandidate(t *testing.T) {
 	if bundle == "" {
 		t.Skip("set AIDE_TERMINAL_FEATURE_BUNDLE_PATH to a paired Terminal feature candidate ZIP")
 	}
-	r, err := zip.OpenReader(bundle)
+	archive, err := os.Open(bundle)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer r.Close()
-	files := map[string]string{}
-	for _, entry := range r.File {
-		stream, err := entry.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		raw, err := io.ReadAll(stream)
-		stream.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-		files[entry.Name] = string(raw)
+	defer archive.Close()
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	part, err := writer.CreateFormFile("bundle", filepath.Base(bundle))
+	if err != nil {
+		t.Fatal(err)
 	}
+	hash := sha256.New()
+	size, err := io.Copy(io.MultiWriter(part, hash), archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	digest := hex.EncodeToString(hash.Sum(nil))
+	if expected := os.Getenv("AIDE_TERMINAL_FEATURE_BUNDLE_SHA256"); expected != "" && digest != expected {
+		t.Fatalf("original bundle SHA256 mismatch: got %s, want %s", digest, expected)
+	}
+	t.Logf("original multipart bundle: bytes=%d sha256=%s (no ZIP reconstruction)", size, digest)
 	a := testApp(t)
-	requireStatus(t, pluginBundleRequest(t, a, files), 201)
+	request := httptest.NewRequest("POST", "/api/plugins/bundle", &body)
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	request.Header.Set("Authorization", "Bearer "+a.token)
+	response := httptest.NewRecorder()
+	a.Handler().ServeHTTP(response, request)
+	requireStatus(t, response, 201)
 	ui := context.WithValue(context.Background(), terminalWorkbenchContextKey{}, true)
 	call := func(tool string, args map[string]any) map[string]any {
 		t.Helper()

@@ -25,9 +25,11 @@ Dockerfile.local 的保留依赖镜像、dev/native 自定义环境不会自动�
 ## 验证入口及范围
 
 - `TestTerminalCopyContextCanonicalIdentityAndVisibility`：规范认证来源、仅复制不读缺失私钥、隐藏/跨工作区/伪造身份拒绝；纳入基本 Go CI。
-- `AIDE_TERMINAL_FEATURE_BUNDLE_PATH=/absolute/candidate.zip go test -mod=vendor -race -count=1 ./internal/server -run TestTerminalSessionFeaturesInstalledCandidate`：将实际 ZIP 安装到真实隔离 App 与 Node daemon，验证本地 PTY 副本独立、关闭互不影响、隐藏复制、Telnet 真实 loopback 与动态禁止发送后远端零新增字节。无变量时显式 SKIP，不冒充安装通过。
-- 既有 `TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools` 可通过 `AIDE_TERMINAL_BUNDLE_PATH` 指向同一 ZIP，回归安装、工具集与既有行为。
+- `AIDE_TERMINAL_FEATURE_BUNDLE_PATH=/absolute/candidate.zip go test -mod=vendor -race -count=1 ./internal/server -run TestTerminalSessionFeaturesInstalledCandidate`：使用 multipart 直接 io.Copy 原始 ZIP（不重新封装），同时记录/可通过 AIDE_TERMINAL_FEATURE_BUNDLE_SHA256 校验其字节SHA；将它安装到真实隔离 App 与 Node daemon，验证本地 PTY 副本独立、关闭互不影响、隐藏复制、Telnet 真实 loopback 与动态禁止发送后远端零新增字节。无变量时显式 SKIP，不冒充安装通过。
+- 既有 `TestTerminalWorkbenchBundleInstallsStartsAndRetainsLegacyTools` 可通过 `AIDE_TERMINAL_BUNDLE_PATH` 指向同一 ZIP，回归安装、工具集与既有行为；此既有夹具按成员重新封装ZIP，不作为原档字节验收。
 - 插件源测试、解包运行时、真实 OpenSSH 与 TLS relay、Chromium UI 的详细证据单独记录。X11 使用合成 xauth helper、合成 X11 endpoint 和真实 SSH，三者明确区分。
 - 本轮不重建/部署宿主 runtime 镜像；真实 macOS XQuartz/native X Server 窗口显示、用户 Telnet 设备、硬件串口和原生 Windows 功能：NOT_RUN。
 
 本轮产物仅为两仓可审阅提交/PR；不合并、不发布插件、不更新市场、不重启现有服务。回滚时分别还原宿主/插件提交，保留所有私有会话与中继密钥；安装/退回插件会断开连接，不自动重放输入。
+
+原档字节验收：SHA256 `5139e8ac8153bdceb4e65a5a2b14fc416edd9ab90793f96c3f13f7531f49669f`、1,071,285 bytes；原始multipart包安装与后续daemon断言race PASS1/1、3.060s（用例1.95s），日志明确no ZIP reconstruction。此前focused race8/8与既有安装回归继续有效，不用旧重打包夹具证明原档身份。

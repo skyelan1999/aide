@@ -4034,7 +4034,7 @@
 
 - `TestTerminalSessionFeaturesInstalledCandidate`
 
-环境引用：`AIDE_TERMINAL_FEATURE_BUNDLE_PATH`。缺少配置时可能跳过；必须核对运行日志。
+环境引用：`AIDE_TERMINAL_FEATURE_BUNDLE_PATH`, `AIDE_TERMINAL_FEATURE_BUNDLE_SHA256`。缺少配置时可能跳过；必须核对运行日志。
 
 </details>
 

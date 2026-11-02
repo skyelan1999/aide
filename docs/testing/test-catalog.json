@@ -5058,13 +5058,14 @@
     {
       "path": "internal/server/terminal_session_features_test.go",
       "kind": "go",
-      "sha256": "308b56e83e7a45150789614df904cb591c81550f013f56ae99aad10a24593cc1",
+      "sha256": "edb8ca27733fe454752a0a58e0a8b7cd1711432b3565125f320c090594d2f945",
       "cases": [
         "TestTerminalSessionFeaturesInstalledCandidate"
       ],
       "caseCount": 1,
       "environmentReferences": [
-        "AIDE_TERMINAL_FEATURE_BUNDLE_PATH"
+        "AIDE_TERMINAL_FEATURE_BUNDLE_PATH",
+        "AIDE_TERMINAL_FEATURE_BUNDLE_SHA256"
       ],
       "execution": "not_run_by_inventory"
     },
