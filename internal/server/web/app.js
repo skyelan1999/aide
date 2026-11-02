@@ -11626,7 +11626,7 @@ function renderTTSEngineControl() {
     const qwen = eng.value === 'qwen';
     const openai=eng.value==='openai';
     qwenBox.classList.toggle('hidden', !qwen);openaiBox.classList.toggle('hidden',!openai);voiceRow.classList.toggle('hidden', qwen||openai);
-    warn.classList.toggle('hidden', qwen);
+    warn.style.display = qwen||openai ? 'none' : '';
     rateRow.classList.remove('hidden'); expRow.classList.toggle('hidden', qwen||openai);
     if(qwen&&!catalogLoaded)void loadCatalog();
   };

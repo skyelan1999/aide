@@ -11,9 +11,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -138,7 +140,7 @@ func (p *openAIProvider) realtime(ctx context.Context, u *url.URL, model, voice,
 	u.Scheme = map[string]string{"https": "wss", "http": "ws"}[u.Scheme]
 	u.RawQuery = url.Values{"model": {model}}.Encode()
 	header := http.Header{"Authorization": {"Bearer " + p.cfg.APIKey}}
-	conn, res, err := p.dialer.DialContext(ctx, u.String(), header)
+	conn, res, err := p.dialRealtime(ctx, u.String(), header)
 	if err != nil {
 		if res != nil {
 			if res.Body != nil {
@@ -146,7 +148,7 @@ func (p *openAIProvider) realtime(ctx context.Context, u *url.URL, model, voice,
 			}
 			return nil, fmt.Errorf("OpenAI Realtime HTTP %d，请检查密钥、模型与接口权限", res.StatusCode)
 		}
-		return nil, fmt.Errorf("%w: OpenAI Realtime 连接失败或超时", ErrUnavailable)
+		return nil, fmt.Errorf("%w: OpenAI Realtime 连接失败（%s），请检查网络或代理", ErrUnavailable, openAIConnectionReason(err))
 	}
 	defer conn.Close()
 	stop := context.AfterFunc(ctx, func() { _ = conn.Close() })
@@ -206,6 +208,47 @@ func (p *openAIProvider) realtime(ctx context.Context, u *url.URL, model, voice,
 			return nil, errors.New("OpenAI Realtime 拒绝请求，请检查模型、音色、密钥和配额")
 		}
 	}
+}
+
+// Retry only a transient failed handshake. Once a session opens, never replay
+// synthesis: a lost response could already have generated billable audio.
+func (p *openAIProvider) dialRealtime(ctx context.Context, endpoint string, header http.Header) (*websocket.Conn, *http.Response, error) {
+	for attempt := 0; ; attempt++ {
+		conn, res, err := p.dialer.DialContext(ctx, endpoint, header)
+		if err == nil || attempt == 1 || res != nil || ctx.Err() != nil || !openAITransientConnection(err) {
+			return conn, res, err
+		}
+		timer := time.NewTimer(200 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+}
+
+func openAITransientConnection(err error) bool {
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNREFUSED) {
+		return true
+	}
+	var timeout net.Error
+	return errors.As(err, &timeout) && timeout.Timeout()
+}
+
+// Do not expose arbitrary dial errors: they may contain a proxy URL or secrets.
+func openAIConnectionReason(err error) string {
+	if errors.Is(err, context.Canceled) {
+		return "请求已取消"
+	}
+	var timeout net.Error
+	if errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &timeout) && timeout.Timeout()) {
+		return "连接超时"
+	}
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return "连接握手提前断开"
+	}
+	return "网络或 TLS 握手失败"
 }
 
 func openAIWAV(pcm []byte) []byte {

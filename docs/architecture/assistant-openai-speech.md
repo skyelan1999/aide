@@ -20,7 +20,7 @@
 - `PUT /api/settings`：`ttsProvider: "openai"`，新增 `openaiTTSMode`、`openaiTTSModel`、`openaiTTSVoice`、`openaiTTSBaseURL`、`openaiTTSAPIKey`、`clearOpenAITTSKey`。未传字段保留；接口模式、URL 中凭据／查询／片段在写入前校验。
 - `GET /api/config`：仅回显非敏感配置与 `hasOpenAITTSKey`。非敏感备份剔除密钥；普通导入保留本机密钥，仅显式导入含密钥备份才恢复备份密钥。持久化沿用现有 TTS 设置机制及配置文件权限，不宣称迁入聊天模型的加密 vault。
 - `POST /api/tts/synthesize`：沿用 `text/voice/provider` 请求；浏览器不携带第三方密钥，服务端按 OpenAI 专属配置发起调用。WAV／MP3 的 MIME 与实际接口相符。
-- HTTP 不跟随重定向，不回传上游错误正文或带密钥的请求信息。Realtime 在取消／超时后关闭连接；不完整、错误、空或无效音频整体失败，不播放成功前的部分结果。单请求 60 秒，Realtime 音频累计最多 16 MiB，单事件最多 2 MiB。
+- HTTP 不跟随重定向，不回传上游错误正文或带密钥的请求信息。Realtime 在取消／超时后关闭连接；不完整、错误、空或无效音频整体失败，不播放成功前的部分结果。单请求 60 秒，Realtime 音频累计最多 16 MiB，单事件最多 2 MiB。建连时的临时 EOF、连接重置／拒绝或超时最多重试一次（间隔 200 ms）；HTTP 拒绝、证书错误、取消及已建立会话后的失败不重试，不重发可能已计费的生成。错误仅显示固定分类，不暴露代理地址或原始连接错误。
 
 打开 OpenAI 设置不请求账户或产生合成费用；保存、切换也不调用语音 API。只有实际朗读／试听发送文本并可能计费。可配置兼容端点，凭据与朗读文本会发送到用户填写的地址。
 
@@ -28,7 +28,9 @@
 
 本轮完成本地 HTTP/WebSocket 模拟服务的协议和取消测试、设置／导入导出／落盘测试、Go race 与 vet、既有千问／播放队列回归；浏览器验证使用真实产品渲染函数和 CSS，API 与播放为模拟，覆盖中英文和桌面／窄屏四格。证据见[任务记录](../tasks/assistant-openai-speech-20261102.json)。
 
-尚未提供真实密钥，因此 OpenAI 账号可用模型、实际中文音质、逐字准确性、真实延迟、实际 Safari 播放及收费调用均为 **NOT_RUN**。本轮不改实时双向语音通话链路、语音识别或独立 `tts-tools` 文件生成插件。生产服务保持原版本。
+2026-11-02 后续实测中，用户在独立测试实例自行填写了语音密钥。真实 Realtime 请求已返回有效 24 kHz WAV（129,644 字节、2.7 秒音频，单次请求耗时 3,212 ms）；Chromium 设置页另有 2.9 秒音频的 playing／ended 记录。Docker 测试网络同时发生连续 TLS 握手 EOF，不能将一次成功当作稳定性验收。早期浏览器 response.body 采集记录的零字节与实际播放矛盾，未作为音频有效性证据。后续范围和状态见[真实语音测试记录](../tasks/assistant-openai-speech-live-20261102.json)。主观音质、逐字准确性和实际 Safari 播放仍待验收。
+
+本轮不改实时双向语音通话链路、语音识别或独立 `tts-tools` 文件生成插件。生产服务保持原版本。
 
 ## 官方接口依据
 

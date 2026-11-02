@@ -5,10 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -172,5 +175,94 @@ func TestOpenAIExplicitChain(t *testing.T) {
 	}
 	if p, e := NewProvider("openai", Config{}); e != nil || p.Name() != "openai" {
 		t.Fatal("factory missing")
+	}
+}
+
+func TestOpenAIRealtimeHandshakeRetry(t *testing.T) {
+	for _, kind := range []string{"recover", "persistent-eof", "http-rejection", "cancel-backoff"} {
+		t.Run(kind, func(t *testing.T) {
+			var attempts atomic.Int32
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				n := attempts.Add(1)
+				if kind == "http-rejection" {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				if n == 1 || kind == "persistent-eof" {
+					c, _, err := w.(http.Hijacker).Hijack()
+					if err == nil {
+						_ = c.Close()
+					}
+					if kind == "cancel-backoff" {
+						cancel()
+					}
+					return
+				}
+				c, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
+				if err == nil {
+					_ = c.Close()
+				}
+			}))
+			defer srv.Close()
+			p := newOpenAI(Config{})
+			conn, res, err := p.dialRealtime(ctx, "ws"+strings.TrimPrefix(srv.URL, "http"), http.Header{})
+			if conn != nil {
+				defer conn.Close()
+			}
+			if res != nil && res.Body != nil {
+				defer res.Body.Close()
+			}
+			want := int32(2)
+			if kind == "http-rejection" || kind == "cancel-backoff" {
+				want = 1
+			}
+			if attempts.Load() != want {
+				t.Fatalf("attempts=%d want=%d", attempts.Load(), want)
+			}
+			if (err == nil) != (kind == "recover") {
+				t.Fatalf("unexpected handshake result: %v", err)
+			}
+		})
+	}
+}
+
+func TestOpenAIRealtimeNoRetryAfterSession(t *testing.T) {
+	var attempts atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		c, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		var message map[string]any
+		if c.ReadJSON(&message) != nil {
+			return
+		}
+		_ = c.WriteJSON(map[string]any{"type": "session.updated"})
+		if c.ReadJSON(&message) != nil {
+			return
+		}
+		// Simulate loss after response.create: never replay possible billable work.
+	}))
+	defer srv.Close()
+	_, err := newOpenAI(Config{APIKey: "fixture-key", Endpoint: srv.URL}).Synth(context.Background(), "hello", SynthOpts{})
+	if err == nil || attempts.Load() != 1 {
+		t.Fatalf("err=%v attempts=%d", err, attempts.Load())
+	}
+}
+
+func TestOpenAIRealtimeDialErrorRedaction(t *testing.T) {
+	p := newOpenAI(Config{APIKey: "fixture-key"})
+	calls := 0
+	p.dialer.NetDialContext = func(context.Context, string, string) (net.Conn, error) {
+		calls++
+		return nil, errors.New("TLS proxy fixture-secret")
+	}
+	_, err := p.Synth(context.Background(), "hello", SynthOpts{})
+	if err == nil || strings.Contains(err.Error(), "fixture-secret") || calls != 1 {
+		t.Fatalf("unsafe retry/error: %v calls=%d", err, calls)
 	}
 }

@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-02",
+  "baseline": "240d9d5cd387e57e25a3056f97a6af415186a756",
+  "source_sha256": {
+    "internal/server/tts/openai.go": "3cc9c569210fddfe4401cdd00063bd24add3ee717d7a296a3c3ce1f4fdc70159",
+    "internal/server/tts/openai_test.go": "d3af422f48621cd15d2e7c1e99f38e26df294c241a3297911b40a289f2e3287c",
+    "internal/server/web/app.js": "5834a1cd7e3ce74086d0e5831be04a3c1b926980bcf38b614b8b6a05a368b324",
+    "scripts/browser-openai-speech.cjs": "9f12d09238c8e08ade0a0ec37d73fde1c89b553a00ebc2249c2a7f0299b80a5c"
+  },
+  "isolated_review": "http://127.0.0.1:18096",
+  "configuration": {
+    "provider": "openai",
+    "mode": "realtime",
+    "model": "gpt-realtime-2.1-mini",
+    "voice": "marin",
+    "key_entered_by_user": true,
+    "key_in_evidence": false
+  },
+  "live": {
+    "direct_wav": {
+      "status": 200,
+      "bytes": 129644,
+      "duration_seconds": 2.7,
+      "request_ms": 3212,
+      "sample_rate": 24000
+    },
+    "native_chromium_previews": [
+      {
+        "status": 200,
+        "request_ms": 8677,
+        "duration_seconds": 3.05,
+        "playing": true,
+        "ended": true,
+        "media_error": false
+      },
+      {
+        "status": 200,
+        "request_ms": 3713,
+        "duration_seconds": 2.95,
+        "playing": true,
+        "ended": true,
+        "media_error": false
+      }
+    ],
+    "docker_connectivity": "Repeated TLS EOF reproduced before synthesis, including 3 unauthenticated TLS probes; one bounded handshake retry did not restore sustained connectivity. Native host HTTPS reached401 without credentials and native authenticated previews succeeded.",
+    "discarded_instrumentation": "Earlier Playwright response.body observations reported zero bytes despite actual playing/ended; excluded from audio-size conclusions.",
+    "subjective_quality": "PENDING_USER_LISTENING",
+    "verbatim_accuracy": "NOT_RUN",
+    "safari": "NOT_RUN",
+    "legacy_speech_api_live": "NOT_RUN"
+  },
+  "regressions": [
+    {
+      "command": "go test -mod=vendor -race ./internal/server/tts -run OpenAI -count=1",
+      "status": "PASS"
+    },
+    {
+      "command": "go vet -mod=vendor ./internal/server/tts",
+      "status": "PASS"
+    },
+    {
+      "command": "go test -mod=vendor -race ./internal/server -run ^TestOpenAITTS -count=1",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/tts-playback.test.cjs",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/qwen-tts.test.cjs",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/browser-openai-speech.cjs",
+      "status": "PASS",
+      "scope": "four real renderer/CSS browser cells with mock configuration and playback; transient Edge warning hidden for explicit OpenAI"
+    },
+    {
+      "command": "node --check app.js and browser-openai-speech.cjs; git diff --check; python3 scripts/check_docs.py",
+      "status": "PASS"
+    }
+  ],
+  "runtime": {
+    "production_9999": "unchanged",
+    "review_native": "running, same user-entered local configuration",
+    "owned_docker_review": "stopped, data preserved",
+    "ui_redesign": "paused"
+  },
+  "release": "Live acceptance snapshot before local integration. No remote publication or production deployment in this test."
+}

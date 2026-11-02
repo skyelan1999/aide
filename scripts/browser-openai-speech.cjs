@@ -23,7 +23,7 @@ assert(out,'Set an owned AIDE_COMPONENT_EVIDENCE_DIR');fs.mkdirSync(out,{recursi
     window.action=fn=>fn;window.notices=[];window.toast=s=>notices.push(s);window.requests=[];window.previewCalls=[];
     window.ttsUnlockAudio=()=>{};window.ttsCancel=()=>{};window.ttsSpeak=async(text,opts)=>previewCalls.push({text,...opts});
     window.setTimeout=()=>0; // preview Promise.race guard must not leave 65s timers in this fixture
-    window.state={config:{ttsProvider:'qwen',ttsModel:'qwen3-tts-flash',ttsVoice:'Cherry',hasTTSKey:true,qwenTTSCatalog:{models:[{id:'qwen3-tts-flash'}],voices:[{id:'Cherry'}]}}};
+    window.state={config:{ttsProvider:'auto',edgeAvailable:false,sherpaAvailable:false,ttsModel:'qwen3-tts-flash',ttsVoice:'Cherry',hasTTSKey:true,qwenTTSCatalog:{models:[{id:'qwen3-tts-flash'}],voices:[{id:'Cherry'}]}}};
     window.api=async(url,options)=>{requests.push({url,body:options?JSON.parse(options.body):null});
      if(url==='/settings'){Object.assign(state.config,JSON.parse(options.body));state.config.hasOpenAITTSKey=!!state.config.openaiTTSAPIKey;if(state.config.clearOpenAITTSKey)state.config.hasOpenAITTSKey=false;delete state.config.openaiTTSAPIKey;return{};}
      if(url==='/tts/catalog')return state.config.qwenTTSCatalog;throw Error('Unexpected fixture API '+url);
@@ -32,6 +32,7 @@ assert(out,'Set an owned AIDE_COMPONENT_EVIDENCE_DIR');fs.mkdirSync(out,{recursi
     (0,eval)(renderer);document.getElementById('fixture').append(renderTTSEngineControl());
    },{renderer,lang});
    const engine=page.locator('.tts-engine-select select');await engine.selectOption('openai');
+   for(const warning of await page.locator('#fixture small').filter({hasText:/^⚠/}).all())assert.equal(await warning.isVisible(),false,'OpenAI must hide the unrelated Edge warning');
    const label=text=>page.getByLabel(lang==='en'?({
     'OpenAI 语音接口':'OpenAI speech API','OpenAI 语音模型':'OpenAI speech model','OpenAI 音色':'OpenAI voice',
     'OpenAI 语音 API Key':'OpenAI speech API Key','OpenAI 语音 API Base URL':'OpenAI speech API Base URL',

@@ -1,0 +1,82 @@
+{
+  "id": "assistant-openai-speech-live-20261102",
+  "request": "UI暂停，基于PR736先测语音；用户确认独立OpenAI朗读密钥已准备好，打开本地配置页填写",
+  "baseline": "240d9d5cd387e57e25a3056f97a6af415186a756",
+  "initial_status": "Clean feature branch at 240d9d5 except this task; isolated review port18096, production9999 untouched. User saved separate key in local review settings.",
+  "acceptance": [
+    "Preserve original layout and production service; OpenAI key entered by user only in local review settings",
+    "Validate real OpenAI audio bytes and browser playing/ended lifecycle; record latency without secrets",
+    "Diagnose transient connection failures; retry only before generation, never replay after response.create",
+    "Run focused provider, settings and playback regressions; distinguish listening and Safari acceptance"
+  ],
+  "scope": [
+    "OpenAI narration connection resilience and safe diagnostics",
+    "Voice settings status correctness and focused regression tests",
+    "Isolated real-provider verification and documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "UI work paused. User authorized real voice testing with independently entered key. No release/deployment requested.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/issues/735"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "At most one retry for transient pre-WebSocket connection EOF/network failure; never retry HTTP rejection, TLS certificate failure, cancellation or post-handshake generation. Hide unrelated Edge warning for explicit OpenAI.",
+      "evidence": [
+        "internal/server/tts/openai.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "One transient handshake retry with cancellation, HTTP rejection, redaction and no post-generation replay regression coverage; hide unrelated Edge warning in explicit OpenAI settings.",
+      "evidence": [
+        "internal/server/tts/openai.go",
+        "internal/server/tts/openai_test.go",
+        "internal/server/web/app.js",
+        "scripts/browser-openai-speech.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused race/vet and playback/settings/browser regressions passed. Two actual native Chromium previews reached playing and ended at8677ms/3.05s and3713ms/2.95s. Docker TLS EOF remains an environmental failure, not stable live acceptance. Subjective quality, verbatim accuracy, Safari and live legacy Speech remain pending/not run.",
+      "evidence": [
+        "docs/reviews/2026-11-02/assistant-openai-speech-live.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current measured results and environmental limits recorded separately from historical mock acceptance.",
+      "evidence": [
+        "docs/architecture/assistant-openai-speech.md",
+        "docs/reviews/2026-11-02/assistant-openai-speech-live.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped files changed; user key/audio stay in ignored local review data. Native review page/server kept open for listening. Owned Docker review stopped; original main clean and production unchanged.",
+      "evidence": [
+        "docs/reviews/2026-11-02/assistant-openai-speech-live.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local commit and merge authorized separately. Remote push, PR merge, publication and deployment not requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Stop owned native review process; preserved Docker review container/data can be restarted. Production never replaced.",
+  "handoff": "OpenAI speech implementation and live-test fixes prepared for local main integration; verify exact integrated commit with Git. Native review on18096 retains the independently entered key. Native playback2/2 passed; Docker networking, subjective quality, Safari and live legacy Speech remain outstanding. Production9999 unchanged.",
+  "local_merge_authorization": "User requested local merge only on2026-11-02",
+  "local_merge_scope": "OpenAI speech branch and live-test fixes into local main in both the development clone and primary iCloud checkout. Excludes rejected UI branch, push, remote PR merge, release and production restart.",
+  "local_merge_checks": {
+    "quick": "PASS: python3 scripts/agent-route.py verify quick",
+    "source_fingerprints": "PASS: current source matches live receipt",
+    "diff": "PASS: git diff --cached --check",
+    "log": ".agent-state/openai-speech-review/local-merge-quick.log"
+  }
+}
