@@ -1,6 +1,8 @@
 # Release 与异常定位验收进度 · 2026-11-02
 
-任务：[release-ci-hardening-20261101](../../tasks/release-ci-hardening-20261101.json)。这是候选验收记录，**新 Release 尚未发布，当前生产服务未替换**。测试范围见[完整矩阵](../../testing/release-validation.md)，诊断接口和隐私边界见[异常定位](../../architecture/diagnostics.md)。
+最新状态：**[v0.1.18.0-RC1 已正式公开并标为 Latest](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC1)**，完整同源 Delivery 10/10 门禁通过。下文按发生顺序保留失败、待授权与阶段候选记录；最终事实见[正式发行回执](#正式发行回执)及[受控核对摘要](release-publication.json)。
+
+任务：[release-ci-hardening-20261101](../../tasks/release-ci-hardening-20261101.json)。下文保留最初候选验收阶段的记录；最终发行状态见文末正式发行回执，生产服务始终未替换。测试范围见[完整矩阵](../../testing/release-validation.md)，诊断接口和隐私边界见[异常定位](../../architecture/diagnostics.md)。
 
 ## 已执行的检查
 
@@ -76,3 +78,26 @@ SQLite/Terminal 四个集中缺陷 #583/#584/#586/#588 已依据正式插件发�
 这完成的是正式版本前置检查；升版/tag 后仍必须在同一源码上重新完成双架构构建、30 个现行 public 原包实装/功能、48 格浏览器、原生宿主及安装生命周期门禁，上传并核对七个正式附件后才算发布。本地 9999 生产服务未替换。
 
 用户指出 Codex Bridge 未给出 API 网址，已补到[宿主接口说明](../../architecture/codex-plugin-host.md)：Docker Desktop 使用 `http://host.docker.internal:8787/v1`，本机原生使用 `http://127.0.0.1:8787/v1`，按实际配置端口替换；17888 是管理端口。实际本机 `/health` 返回桥接服务 0.4.0；未读取密钥、调用推理或修改服务。这是地址文档补充，未声称修复插件 UI。
+
+## 正式发行回执
+
+既有 `version.sh bump feature` 生成并原子推送版本提交 `e86ce5b5d6e5d119e91381dc802b8f4201e89dab` 和 annotated tag `v0.1.18.0-RC1`，没有改写旧 tag。版本提交基础 CI [41375786514](https://github.com/skyelan1999/aide/actions/runs/41375786514) 通过；[正式同源 Delivery 41375800455](https://github.com/skyelan1999/aide/actions/runs/41375800455) 的 10/10 门禁全部通过。精确源码 SHA256 为 `dcd5df95d6163781897614aba7917c51d56f6a1f0fdc9965c80c7424c5c864f7`，它与上文 Agent 路由输入指纹用途不同，不混用。用户明确要求本次完整发行，使用现有一次性发行频率例外参数，保留正常每周发布策略。
+
+- Linux ARM64、AMD64：每架构 server 注册项 1,592，其中 1,514 通过、78 明确跳过、24 个完整 race 分片通过；其余 Go 包、平台合约与 vet 通过。跳过项保留在发行回执中，不能算作实际功能通过。
+- 两架构各自安装并验证当前冻结市场全部 30 个正式 public ZIP 的检查、安装和功能；版本、字节数、路径、SHA 均核对。市场固定 `943f6a90f08c4f5ba09e4d09031247b64ee29295`，没有重编译全部插件，没有捆绑公有或私有插件到主程序镜像。
+- 三浏览器 48/48 格、Windows 10 项、macOS ARM64/Intel 各 8 项、干净 Linux 生命周期 17 个命令和 4 次 HTTPS 页面/鉴权健康采样通过。各报告已下载并独立核对实际提交与必需断言。
+- 两个运行包和两个可选开发工具包的实际 CRC、导入、冒烟和逐层隐私检查通过；发布前门禁检查七个远端附件摘要。发布后又下载三份小型清单/回执，核对实际字节及服务端摘要、六项 SHA256SUMS 记录、完整七项集合、标签提交、共同源码身份及实际功能回执。未重复下载本轮约 1.97 GB 四个 ZIP；实际导入/CRC/冒烟由本次同源原生流水线执行，服务端字节身份由独立核验绑定。
+
+[Release](https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC1) 于 `2026-11-02T03:17:30Z` 公开。用户明确“把这个版本推做正式的release 标签吧”：保留仓库既有版本 tag，将 GitHub Release 标为正式发行和 Latest；远端实际复核 `draft=false`、`prerelease=false`、Latest ID 相同。没有把 RC 命名改写为另一个版本，附件及已验证源码未改变。精确七项字节数与摘要见[受控核对摘要](release-publication.json)及 Release 附件 `SHA256SUMS`、`RELEASE-ASSETS.txt`、`RELEASE-VALIDATION.json`。
+
+发行标签的测试用例源码目录与当时 checkout 逐项一致：726 个文件、2,143 个静态命名用例。静态目录不是执行或覆盖率证明。真实付费提供商/账户、物理设备、原生 Windows/macOS Docker Desktop 完整升级生命周期及原生 Safari 仍不在本轮实际验收范围；合成插件功能测试和 Linux WebKit 不代替这些环境。
+
+本机 9999 生产容器未被停止、重启或替换，仍使用原镜像。保留旧完整运行包、原镜像和数据，按既有 A/B 槽/启动器流程回退，不删除 `.aide-data` 或工作区。只移除本任务空闲 QA 容器；原始失败日志、成功回执及可复用缓存保留。
+
+本机 GitHub 域名解析曾返回连接拒绝地址；通过一次性进程内 CONNECT 转发及 TLS 验证的公开 DNS 查询恢复访问，保持 GitHub 端到端证书校验，没有改系统 DNS、代理、Git 全局配置或 SSH 主机校验。临时本机辅助程序不进入源码或发行包。
+
+## 发行后的独立跟进
+
+最终文档 PR 的 CI 发现原加密存储测试存在偶发夹具错误，已登记 [#729](https://github.com/skyelan1999/aide/issues/729)：固定把 Base64 首字符设为 A 时，随机密文约有 1/64 已以 A 开头，实际内容没有改变。修复改为翻转真实密文字节，保留原有加密恢复、错误密钥、错误作用域和认证失败断言。256 种首字节控制通过，恢复旧操作的负向对照被新用例正确拒绝；Node 24 隔离验证重复 32 轮通过，相关 102 项用例与本地 quick 315 项通过。仅改测试和目录，不改变运行加密代码、已公开 tag 或附件。修复后的静态目录为 726 个文件、2144 个命名用例；发行标签仍是上文的 2143 项静态目录。
+
+Terminal [新增能力 #726](https://github.com/skyelan1999/aide/issues/726) 和本次开发发现的 [1.5.3 侧栏分组缺陷 #728](https://github.com/skyelan1999/aide/issues/728) 由独立子任务在后续分支处理，未进入本次已发布源码、插件包或市场。现有发行的插件安装/功能回执只证明其实际列出的用例，不代表插件所有 UI 状态均已覆盖。

@@ -1,0 +1,72 @@
+{
+  "status": "pass",
+  "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC1",
+  "tag": "v0.1.18.0-RC1",
+  "commit": "e86ce5b5d6e5d119e91381dc802b8f4201e89dab",
+  "sourceSHA256": "dcd5df95d6163781897614aba7917c51d56f6a1f0fdc9965c80c7424c5c864f7",
+  "draft": false,
+  "prerelease": false,
+  "latest": true,
+  "publishedAt": "2026-11-02T03:17:30Z",
+  "assets": [
+    {
+      "name": "aide-v0.1.18.0-RC1-devtools-linux-amd64.zip",
+      "size": 577796872,
+      "digest": "sha256:c3b5bfc0876438079cb8e51c125c692965edef0727863f72be4f44a7ef4d5474"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC1-devtools-linux-arm64.zip",
+      "size": 562743447,
+      "digest": "sha256:ffe73a0d67c5d0ce2c7ff090ee31f34bb8cbc7b72d2df7eb41a828072f79117f"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC1-full-linux-amd64.zip",
+      "size": 417307771,
+      "digest": "sha256:80c43df4d2a9b65dd643fbc0f7a4252bce62d9442d1a72b3d7b9ce5d02ab06f9"
+    },
+    {
+      "name": "aide-v0.1.18.0-RC1-full-linux-arm64.zip",
+      "size": 412807770,
+      "digest": "sha256:4ce31b5dc4eaf7fe47d0989803c3dcaa0555430d999810839306963dbdcbe90d"
+    },
+    {
+      "name": "RELEASE-ASSETS.txt",
+      "size": 1687,
+      "digest": "sha256:a27b781e328240bb7ec4af57e6376863cd1bec43a4c449664c3ee6a99da05ac3"
+    },
+    {
+      "name": "RELEASE-VALIDATION.json",
+      "size": 949183,
+      "digest": "sha256:482c052b3407445b7472814e8a435944ed42f9af22126381cc797ce982f7e888"
+    },
+    {
+      "name": "SHA256SUMS",
+      "size": 607,
+      "digest": "sha256:5348dc28bd855fff8da5b465cbae7990fc84881968dc8a20fef28eba81b385b0"
+    }
+  ],
+  "native": {
+    "arm64": {
+      "inventory": 1592,
+      "passed": 1514,
+      "skipped": 78,
+      "shards": 24,
+      "publicPlugins": 30
+    },
+    "amd64": {
+      "inventory": 1592,
+      "passed": 1514,
+      "skipped": 78,
+      "shards": 24,
+      "publicPlugins": 30
+    }
+  },
+  "browser": 48,
+  "hosts": {
+    "windows": 10,
+    "macos-15": 8,
+    "macos-15-intel": 8
+  },
+  "productionDeployed": false,
+  "limits": "Server digests checked against manifests and downloaded small manifest bytes; candidate pipeline independently imported/CRC/smoked ZIPs. No paid-provider/hardware/native Docker Desktop lifecycle acceptance."
+}

@@ -6,7 +6,7 @@
 | --- | ---: | ---: |
 | go | 378 | 1684 |
 | python | 63 | 278 |
-| node | 180 | 181 |
+| node | 180 | 182 |
 | browser | 105 | 0 |
 
 详见[Release 测试矩阵](release-validation.md)，包含基本/全量、平台、插件、人工与外部依赖的通过标准。
@@ -2217,10 +2217,11 @@
 
 </details>
 
-<details><summary>internal/server/mixsoul/store.test.cjs · node · 8 个命名用例</summary>
+<details><summary>internal/server/mixsoul/store.test.cjs · node · 9 个命名用例</summary>
 
 [源码入口](../../internal/server/mixsoul/store.test.cjs)
 
+- `ciphertext tamper fixture changes every decoded first byte including Base64 A`
 - `encrypted persistence, wrong key/scope and modified data rejected`
 - `pulse advances real elapsed time but does not create experiences or confirmations`
 - `feedback bounded, idempotent turn, ephemeral state not personality diagnosis`

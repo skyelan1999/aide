@@ -87,39 +87,41 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "完整测试矩阵、逐插件功能/外部边界、源码用例目录、诊断定位/隐私/保留策略、候选发布与升级回滚及预备发行说明已补齐。",
+      "summary": "Release-tag catalog726files2143static named cases verified; post-publication fixture-only new control raises current catalog to2144. Runtime execution reports and static catalogs separate. Final release facts, limitations, rollback, Bridge API and later Terminal726/728 scope documented.",
       "evidence": [
         "docs/testing/release-validation.md",
         "docs/testing/test-cases.md",
         "docs/testing/test-catalog.json",
         "docs/architecture/diagnostics.md",
-        "docs/releases/v0.1.18.0-RC1.md"
+        "docs/releases/v0.1.18.0-RC1.md",
+        "docs/reviews/2026-11-02/release-publication.json",
+        "docs/reviews/2026-11-02/release-readiness.md",
+        "docs/architecture/codex-plugin-host.md"
       ]
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Only task-owned idle QA containers stopped/removed; source changes reviewed, no unrelated files staged. User production and existing builder untouched. Test logs, candidate archives and reusable build caches retained as evidence, not treated as garbage. Git tree will be rechecked after this documentation commit.",
+      "summary": "Only task-owned idle QA containers removed; evidence/archives/build caches retained. Production original image healthy, not restarted/replaced. Factual documentation isolated in own worktree and explicitly reviewed/staged; no unrelated source/data edits.",
       "evidence": [
         "docs/reviews/2026-11-02/release-readiness.md",
         ".agent-state/release-ci-hardening-20261101/cleanup-manifest.json"
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "PR698/714/716/720/724 merged after CI under explicit release-scoped administrator authorizations. Pre-release complete full passed on clean main b9c78eed, fingerprint8242b62963a44563c9338b57e3040ce09daa653281002e9f74f708056f4c8257. Version/tag and final same-source tagged Delivery/publication remain required. Superseded runs retain failures. No production deployment.",
+      "status": "pass",
+      "summary": "Published formal/latest GitHub Release v0.1.18.0-RC1 at exact immutable version.sh commit e86ce5b5d6e5d119e91381dc802b8f4201e89dab. Full same-source Delivery41375800455 ALL10/10 success; each architecture1592inventory1514pass78explicit skips24race shards and30/30 current public installs/function; browser48,Windows10,macARM8,macIntel8,cleanLinux17commands4samples pass. Seven remote assets independently verified by manifest bytes/server digests, tag/source and execution receipts. Explicit user formal request applied: draft=false,prerelease=false,Latest verified; tag/asset bytes unchanged. No production deploy.",
       "evidence": [
-        "https://github.com/skyelan1999/aide-pkg-sqlite/pull/2",
-        "https://github.com/skyelan1999/aide-pkg-terminal/pull/2",
-        "https://github.com/skyelan1999/aide-pkg-shop/pull/32",
-        "https://github.com/skyelan1999/aide/pull/698",
-        "https://github.com/skyelan1999/aide-pkg-sqlite/releases/tag/v1.0.1",
-        "https://github.com/skyelan1999/aide-pkg-terminal/releases/tag/v1.5.3"
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC1",
+        "https://github.com/skyelan1999/aide/actions/runs/41375800455",
+        "https://github.com/skyelan1999/aide/actions/runs/41375786514",
+        "docs/reviews/2026-11-02/release-publication.json",
+        "docs/reviews/2026-11-02/release-readiness.md"
       ]
     }
   },
   "release_authorization": "用户当前要求做一次完整release；包含必要集成、版本及公开发行；不推定管理员绕过保护，也不替换生产服务",
   "rollback": "保留现行发布、镜像和用户数据；失败仅留草稿/候选，修复后重新绑定源代码验证，禁止覆盖旧附件",
-  "handoff": "Explicit user authorization covers necessary release repair PRs after CI, version.sh main bump/tag and factual docs PRs; do not request it again or change protection. Pre-release full passed. Merge factual docs after CI, recheck clean main/release-check, version.sh feature bump to0.1.18.0RC1, push main/tag, dispatch full tagged Delivery with truthful owner-requested one-off cadence reason. Validate exact seven remote assets/hashes and publication; backfill facts and close final Aide issues. Keep production untouched. Do not combine staged cross-commit reports into final Release proof.",
+  "handoff": "Formal/latest v0.1.18.0-RC1 released; independent7asset/tag/source/execution validation passed. Final receipts in docs/reviews/2026-11-02/release-publication.json and RELEASE-VALIDATION.json. Immutable tag retained; weekly default unchanged. No local production upgrade. Preserve previous bundles/image/data for rollback. New Terminal feature request is a separate isolated follow-up, outside this tag/market freeze/tested source.",
   "issues": [
     "https://github.com/skyelan1999/aide/issues/696",
     "https://github.com/skyelan1999/aide/issues/699",
@@ -208,5 +210,88 @@
       "dockerDesktop": "http://host.docker.internal:8787/v1",
       "native": "http://127.0.0.1:8787/v1"
     }
+  },
+  "formalReleaseRequest": {
+    "quote": "把这个版本推做正式的release 标签吧",
+    "interpretation": "Retain existing version.sh tag; after full exact-tag gates pass, set GitHub Release prerelease=false and latest=true."
+  },
+  "publication": {
+    "status": "pass",
+    "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.18.0-RC1",
+    "tag": "v0.1.18.0-RC1",
+    "commit": "e86ce5b5d6e5d119e91381dc802b8f4201e89dab",
+    "sourceSHA256": "dcd5df95d6163781897614aba7917c51d56f6a1f0fdc9965c80c7424c5c864f7",
+    "draft": false,
+    "prerelease": false,
+    "latest": true,
+    "publishedAt": "2026-11-02T03:17:30Z",
+    "assets": [
+      {
+        "name": "aide-v0.1.18.0-RC1-devtools-linux-amd64.zip",
+        "size": 577796872,
+        "digest": "sha256:c3b5bfc0876438079cb8e51c125c692965edef0727863f72be4f44a7ef4d5474"
+      },
+      {
+        "name": "aide-v0.1.18.0-RC1-devtools-linux-arm64.zip",
+        "size": 562743447,
+        "digest": "sha256:ffe73a0d67c5d0ce2c7ff090ee31f34bb8cbc7b72d2df7eb41a828072f79117f"
+      },
+      {
+        "name": "aide-v0.1.18.0-RC1-full-linux-amd64.zip",
+        "size": 417307771,
+        "digest": "sha256:80c43df4d2a9b65dd643fbc0f7a4252bce62d9442d1a72b3d7b9ce5d02ab06f9"
+      },
+      {
+        "name": "aide-v0.1.18.0-RC1-full-linux-arm64.zip",
+        "size": 412807770,
+        "digest": "sha256:4ce31b5dc4eaf7fe47d0989803c3dcaa0555430d999810839306963dbdcbe90d"
+      },
+      {
+        "name": "RELEASE-ASSETS.txt",
+        "size": 1687,
+        "digest": "sha256:a27b781e328240bb7ec4af57e6376863cd1bec43a4c449664c3ee6a99da05ac3"
+      },
+      {
+        "name": "RELEASE-VALIDATION.json",
+        "size": 949183,
+        "digest": "sha256:482c052b3407445b7472814e8a435944ed42f9af22126381cc797ce982f7e888"
+      },
+      {
+        "name": "SHA256SUMS",
+        "size": 607,
+        "digest": "sha256:5348dc28bd855fff8da5b465cbae7990fc84881968dc8a20fef28eba81b385b0"
+      }
+    ],
+    "native": {
+      "arm64": {
+        "inventory": 1592,
+        "passed": 1514,
+        "skipped": 78,
+        "shards": 24,
+        "publicPlugins": 30
+      },
+      "amd64": {
+        "inventory": 1592,
+        "passed": 1514,
+        "skipped": 78,
+        "shards": 24,
+        "publicPlugins": 30
+      }
+    },
+    "browser": 48,
+    "hosts": {
+      "windows": 10,
+      "macos-15": 8,
+      "macos-15-intel": 8
+    },
+    "productionDeployed": false,
+    "limits": "Server digests checked against manifests and downloaded small manifest bytes; candidate pipeline independently imported/CRC/smoked ZIPs. No paid-provider/hardware/native Docker Desktop lifecycle acceptance."
+  },
+  "postPublicationFixtureRepair": {
+    "issue": "https://github.com/skyelan1999/aide/issues/729",
+    "failedCI": "https://github.com/skyelan1999/aide/actions/runs/41382951814",
+    "scope": "Test-only deterministic ciphertext corruption; runtime unchanged; immutable release untouched",
+    "verification": "256 prefixes, old-mutator negative control,32 repeated actual-auth rounds,102 Node24 cases,315 local quick pass",
+    "task": "docs/tasks/store-tamper-fixture-20261102.json"
   }
 }
